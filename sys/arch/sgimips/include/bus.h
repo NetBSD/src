@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.18.2.1 2006/05/24 10:57:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -514,7 +514,7 @@ typedef struct sgimips_bus_dmamap		*bus_dmamap_t;
 struct sgimips_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	vaddr_t		_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct sgimips_bus_dma_segment	bus_dma_segment_t;
 

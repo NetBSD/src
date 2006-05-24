@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.101 2006/02/05 05:01:55 cube Exp $
+#	$NetBSD: INSTALL_TINY,v 1.101.2.1 2006/05/24 10:56:51 yamt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -327,6 +327,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #aac*	at pci? dev ? function ?	# Adaptec AAC family
 #cac*	at eisa? slot ?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+#ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 #icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 #mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 #mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family

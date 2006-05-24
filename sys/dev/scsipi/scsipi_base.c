@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.134 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.134.2.1 2006/05/24 10:58:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.134 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.134.2.1 2006/05/24 10:58:24 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -1321,6 +1321,20 @@ scsipi_done(struct scsipi_xfer *xs)
 	/*
 	 * The resource this command was using is now free.
 	 */
+	if (xs->xs_status & XS_STS_DONE) {
+		/* XXX in certain circumstances, such as a device
+		 * being detached, a xs that has already been
+		 * scsipi_done()'d by the main thread will be done'd
+		 * again by scsibusdetach(). Putting the xs on the
+		 * chan_complete queue causes list corruption and
+		 * everyone dies. This prevents that, but perhaps
+		 * there should be better coordination somewhere such
+		 * that this won't ever happen (and can be turned into
+		 * a KASSERT().
+		 */
+		splx(s);
+		goto out;
+	}
 	scsipi_put_resource(chan);
 	xs->xs_periph->periph_sent--;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.40 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.40.8.1 2006/05/24 10:59:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.40 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.40.8.1 2006/05/24 10:59:14 yamt Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -277,8 +277,7 @@ nsipoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	 */
 	len = ntohs(idp->idp_len);
 	if (len & 1) len++;		/* Preserve Garbage Byte */
-	/* following clause not necessary on vax */
-	if (3 & (int)m->m_data) {
+	if (!ALIGNED_POINTER(m->m_data, m->m_data)) {
 		/* force longword alignment of ip hdr */
 		struct mbuf *m0 = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m0 == 0) {

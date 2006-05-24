@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32.8.1 2006/05/24 10:57:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
  * pmap specific data stored in the vm_physmem[] array
  */
 struct pmap_physseg {
-	struct pv_head *pvhead; 	/* pv_head array */
+	struct pv_head *pvhead;		/* pv_head array */
 	short *attrs;			/* attrs array */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.104.2.2 2006/04/11 11:55:17 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.104.2.3 2006/05/24 10:58:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.104.2.2 2006/04/11 11:55:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.104.2.3 2006/05/24 10:58:01 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1370,10 +1370,20 @@ SIP_DECL(start)(struct ifnet *ifp)
 		 * This apparently has to be on the last descriptor of
 		 * the packet.
 		 */
+
+		/*
+		 * Byte swapping is tricky. We need to provide the tag
+		 * in a network byte order. On a big-endian machine,
+		 * the byteorder is correct, but we need to swap it
+		 * anyway, because this will be undone by the outside
+		 * htole32(). That's why there must be an
+		 * unconditional swap instead of htons() inside.
+		 */
 		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 			sc->sc_txdescs[lasttx].sipd_extsts |=
-			    htole32(EXTSTS_VPKT |
-				    (VLAN_TAG_VALUE(mtag) & EXTSTS_VTCI));
+			    htole32(EXTSTS_VPKT | 
+					(bswap16(VLAN_TAG_VALUE(mtag)) &
+					 EXTSTS_VTCI));
 		}
 
 		/*
@@ -1995,8 +2005,19 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
+
+		/*
+		 * Again, byte swapping is tricky. Hardware provided
+		 * the tag in the network byte order, but extsts was
+		 * passed through le32toh() in the meantime. On a
+		 * big-endian machine, we need to swap it again. On a
+		 * little-endian machine, we need to convert from the
+		 * network to host byte order. This means that we must
+		 * swap it in any case, so unconditional swap instead
+		 * of htons() is used.
+		 */
 		if ((extsts & EXTSTS_VPKT) != 0) {
-			VLAN_INPUT_TAG(ifp, m, ntohs(extsts & EXTSTS_VTCI),
+			VLAN_INPUT_TAG(ifp, m, bswap16(extsts & EXTSTS_VTCI),
 			    continue);
 		}
 

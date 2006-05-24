@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: modelines2c.awk,v 1.1.2.1 2006/03/13 09:07:32 yamt Exp $
+#	$NetBSD: modelines2c.awk,v 1.1.2.2 2006/05/24 10:58:31 yamt Exp $
 #
 # Copyright (c) 2006 Itronix Inc.
 # All rights reserved.
@@ -94,16 +94,18 @@ NR == 1 {
 	if ($13 ~ "^-")
 		vflags = "VN";
 
+	ifactor=1.0;
 	if ($14 ~ "[Ii][Nn][Tt][Ee][Rr][Ll][Aa][Cc][Ee]") {
 		iflag = "i";
 		iflags = "|I";
+		ifactor = 2.0;
 	}
 
 	# why the additional .1 to vrefresh?  well it seems that awk likes to
 	# make some "rounding errors", and this will compensate
 
 	hrefresh= (dotclock * 1000000) / htotal;
-	vrefresh= int((hrefresh / vtotal) + .1);
+	vrefresh= int(((hrefresh * ifactor) / vtotal) + .1);
 
 	modestr = sprintf("%dx%dx%d%s", hdisplay, vdisplay, vrefresh, iflag);
 

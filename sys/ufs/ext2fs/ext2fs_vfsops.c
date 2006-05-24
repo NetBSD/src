@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.95.2.1 2006/04/01 12:07:51 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.95.2.2 2006/05/24 10:59:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95.2.1 2006/04/01 12:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95.2.2 2006/05/24 10:59:25 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95.2.1 2006/04/01 12:07:51 yamt 
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -314,14 +315,14 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && l->l_proc->p_ucred->cr_uid != 0) {
+	if (error == 0 && kauth_cred_geteuid(l->l_proc->p_cred) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -458,7 +459,7 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ext2fs_reload(struct mount *mountp, struct ucred *cred, struct lwp *l)
+ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 {
 	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
@@ -592,12 +593,12 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	dev_t dev;
 	struct partinfo dpart;
 	int error, i, size, ronly;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct proc *p;
 
 	dev = devvp->v_rdev;
 	p = l ? l->l_proc : NULL;
-	cred = p ? p->p_ucred : NOCRED;
+	cred = p ? p->p_cred : NOCRED;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -825,7 +826,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-ext2fs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
+ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;

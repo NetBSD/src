@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56.8.1 2006/04/11 11:53:26 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.8.2 2006/05/24 10:56:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.8.1 2006/04/11 11:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.8.2 2006/05/24 10:56:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,7 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.8.1 2006/04/11 11:53:26 yamt Exp $"
 
 #include <dev/cons.h>
 
-#include <arch/cobalt/dev/gtreg.h>
+#include <cobalt/cobalt/clockvar.h>
+
+#include <cobalt/dev/gtreg.h>
 #define GT_BASE		0x14000000	/* XXX */
 
 #ifdef KGDB
@@ -104,6 +106,23 @@ char *	root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
 
+int cpuspeed;
+
+struct evcnt hardclock_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "hardclock");
+
+u_int cobalt_id;
+static const char * const cobalt_model[] =
+{
+	NULL,
+	NULL,
+	NULL,
+	"Cobalt Qube 2700",
+	"Cobalt RaQ",
+	"Cobalt Qube 2",
+	"Cobalt RaQ 2"
+};
+#define COBALT_MODELS	__arraycount(cobalt_model)
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -111,6 +130,7 @@ int mem_cluster_cnt;
 void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
 static char *	strtok_light(char *, const char);
+static u_int read_board_id(void);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -181,6 +201,36 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	}
 #endif
 
+	cobalt_id = read_board_id();
+	if (cobalt_id >= COBALT_MODELS || cobalt_model[cobalt_id] == NULL)
+		sprintf(cpu_model, "Cobalt unknown model (board ID %u)",
+		    cobalt_id);
+	else
+		strcpy(cpu_model, cobalt_model[cobalt_id]);
+
+	switch (cobalt_id) {
+	case COBALT_ID_QUBE2700:
+	case COBALT_ID_RAQ:
+		cpuspeed = 150; /* MHz */
+		break;
+	case COBALT_ID_QUBE2:
+	case COBALT_ID_RAQ2:
+		cpuspeed = 250; /* MHz */
+		break;
+	default:
+		/* assume the fastest, so that delay(9) works */
+		cpuspeed = 250;
+		break;
+	}
+	curcpu()->ci_cpu_freq = cpuspeed * 1000 * 1000;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + (1000000 / 2)) / 1000000);
+	/* all models have Rm5200, which is CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cycles_per_hz /= 2;
+	curcpu()->ci_divisor_delay /= 2;
+	MIPS_SET_CI_RECIPRICAL(curcpu());
+
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
 	consinit();
@@ -227,8 +277,6 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 		kgdb_connect(0);
 #endif
 
-	strcpy(cpu_model, "Cobalt Microserver");
-
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
@@ -267,6 +315,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
+	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -293,7 +342,7 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 }
 
-int	waittime = -1;
+static int waittime = -1;
 
 void
 cpu_reboot(int howto, char *bootstr)
@@ -351,16 +400,6 @@ cpu_reboot(int howto, char *bootstr)
 		;
 }
 
-unsigned long cpuspeed;
-
-inline void
-delay(unsigned long n)
-{
-	volatile register long N = cpuspeed * n;
-
-	while (--N > 0);
-}
-
 #define NINTR	6
 
 static struct cobalt_intrhand intrtab[NINTR];
@@ -375,18 +414,24 @@ const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 void *
 cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
+	struct cobalt_intrhand *ih;
 
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
 
-	if (intrtab[level].ih_func != NULL)
+	ih = &intrtab[level];
+
+	if (ih->ih_func != NULL)
 		panic("cannot share CPU interrupts");
 
-	intrtab[level].cookie_type = COBALT_COOKIE_TYPE_CPU;
-	intrtab[level].ih_func = func;
-	intrtab[level].ih_arg = arg;
+	ih->ih_cookie_type = COBALT_COOKIE_TYPE_CPU;
+	ih->ih_func = func;
+	ih->ih_arg = arg;
+	snprintf(ih->ih_evname, sizeof(ih->ih_evname), "level %d", level);
+	evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR, NULL,
+	    "cpu", ih->ih_evname);
 
-	return &intrtab[level];
+	return ih;
 }
 
 void
@@ -394,9 +439,11 @@ cpu_intr_disestablish(void *cookie)
 {
 	struct cobalt_intrhand *ih = cookie;
 
-	if (ih->cookie_type == COBALT_COOKIE_TYPE_CPU) {
+	if (ih->ih_cookie_type == COBALT_COOKIE_TYPE_CPU) {
 		ih->ih_func = NULL;
 		ih->ih_arg = NULL;
+		ih->ih_cookie_type = 0;
+		evcnt_detach(&ih->ih_evcnt);
 	}
 }
 
@@ -405,11 +452,12 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	static uint32_t cycles;
-	int i;
+	struct cobalt_intrhand *ih;
 
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_0) {
+		/* GT64x11 timer0 for hardclock */
 		volatile uint32_t *irq_src =
 		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
@@ -420,16 +468,11 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			cf.sr = status;
 
 			hardclock(&cf);
+			hardclock_ev.ev_count++;
 		}
 		cause &= ~MIPS_INT_MASK_0;
 	}
-
-	for (i = 0; i < 5; i++) {
-		if (ipending & (MIPS_INT_MASK_0 << i))
-			if (intrtab[i].ih_func != NULL)
-				if ((*intrtab[i].ih_func)(intrtab[i].ih_arg))
-					cause &= ~(MIPS_INT_MASK_0 << i);
-	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_5) {
 		cycles = mips3_cp0_count_read();
@@ -443,7 +486,52 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #endif
 		cause &= ~MIPS_INT_MASK_5;
 	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
+	if (ipending & MIPS_INT_MASK_3) {
+		/* 16650 serial */
+		ih = &intrtab[3];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_3;
+				ih->ih_evcnt.ev_count++;
+			}
+		}
+	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	if (ipending & MIPS_INT_MASK_1) {
+		/* tulip primary */
+		ih = &intrtab[1];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_1;
+				ih->ih_evcnt.ev_count++;
+			}
+		}
+	}
+	if (ipending & MIPS_INT_MASK_2) {
+		/* tulip secondary */
+		ih = &intrtab[2];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_2;
+				ih->ih_evcnt.ev_count++;
+			}
+		}
+	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	if (ipending & MIPS_INT_MASK_4) {
+		/* ICU interrupts */
+		ih = &intrtab[4];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_4;
+				/* evcnt for ICU is done in icu_intr() */
+			}
+		}
+	}
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	/* software interrupt */
@@ -560,4 +648,35 @@ lookup_bootinfo(int type)
 	    (size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
 
 	return NULL;
+}
+
+/*
+ * Get board ID of cobalt models.
+ * 
+ * The board ID info is stored at the PCI config register
+ * on the PCI-ISA bridge part of the VIA VT82C586 chipset.
+ * We can't use pci_conf_read(9) yet here, so read it directly.
+ */
+static u_int
+read_board_id(void)
+{
+	volatile uint32_t *pcicfg_addr, *pcicfg_data;
+	uint32_t reg;
+
+#define PCIB_PCI_BUS		0
+#define PCIB_PCI_DEV		9
+#define PCIB_PCI_FUNC		0
+#define PCIB_BOARD_ID_REG	0x94
+#define COBALT_BOARD_ID(reg)	((reg & 0x000000f0) >> 4)
+
+	pcicfg_addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_ADDR);
+	pcicfg_data = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_DATA);
+
+	*pcicfg_addr = PCICFG_ENABLE |
+	    (PCIB_PCI_BUS << 16) | (PCIB_PCI_DEV << 11) | (PCIB_PCI_FUNC << 8) |
+	    PCIB_BOARD_ID_REG;
+	reg = *pcicfg_data;
+	*pcicfg_addr = 0;
+
+	return COBALT_BOARD_ID(reg); 
 }

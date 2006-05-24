@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.84.2.1 2006/04/11 11:55:13 yamt Exp $ */
+/* $NetBSD: vga.c,v 1.84.2.2 2006/05/24 10:57:42 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-/* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
+/* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
 /* for WSDISPLAY_CUSTOM_BORDER */
 #include "opt_wsdisplay_border.h"
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.84.2.1 2006/04/11 11:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.84.2.2 2006/05/24 10:57:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,18 +266,14 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-static int	vga_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	vga_mmap(void *, off_t, int);
+static int	vga_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	vga_mmap(void *, void *, off_t, int);
 static int	vga_alloc_screen(void *, const struct wsscreen_descr *,
 				 void **, int *, int *, long *);
 static void	vga_free_screen(void *, void *);
 static int	vga_show_screen(void *, void *, int,
 				void (*)(void *, int, int), void *);
 static int	vga_load_font(void *, void *, struct wsdisplay_font *);
-#ifdef WSDISPLAY_CHARFUNCS
-static int	vga_getwschar(void *, struct wsdisplay_char *);
-static int	vga_putwschar(void *, struct wsdisplay_char *);
-#endif /* WSDISPLAY_CHARFUNCS */
 #ifdef WSDISPLAY_CUSTOM_BORDER
 static int	vga_getborder(struct vga_config *, u_int *);
 static int	vga_setborder(struct vga_config *, u_int);
@@ -293,13 +289,6 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_show_screen,
 	vga_load_font,
 	NULL,
-#ifdef WSDISPLAY_CHARFUNCS
-	vga_getwschar,
-	vga_putwschar,
-#else /* WSDISPLAY_CHARFUNCS */
-	NULL,
-	NULL,
-#endif /* WSDISPLAY_CHARFUNCS */
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	vga_scroll,
 #else
@@ -768,9 +757,10 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vga_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
+	struct vgascreen *scr = vs;
 	const struct vga_funcs *vf = vc->vc_funcs;
 
 	switch (cmd) {
@@ -790,6 +780,16 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SVIDEO:
 		vga_set_video(vc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
 		return 0;
+
+	case WSDISPLAYIO_GETWSCHAR:
+		KASSERT(scr != NULL);
+		return pcdisplay_getwschar(&scr->pcs,
+		    (struct wsdisplay_char *)data);
+
+	case WSDISPLAYIO_PUTWSCHAR:
+		KASSERT(scr != NULL);
+		return pcdisplay_putwschar(&scr->pcs,
+		    (struct wsdisplay_char *)data);
 
 #ifdef WSDISPLAY_CUSTOM_BORDER
 	case WSDISPLAYIO_GBORDER:
@@ -820,7 +820,7 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-vga_mmap(void *v, off_t offset, int prot)
+vga_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -1416,27 +1416,6 @@ vga_putchar(void *c, int row, int col, u_int uc, long attr)
 
 	pcdisplay_putchar(c, row, col, uc, attr);
 }
-
-
-#ifdef WSDISPLAY_CHARFUNCS
-int
-vga_getwschar(void *cookie, struct wsdisplay_char *wschar)
-{
-	struct vgascreen *scr = cookie;
-
-	if (scr == NULL) return 0;
-	return (pcdisplay_getwschar(&scr->pcs, wschar));
-}
-
-int
-vga_putwschar(void *cookie, struct wsdisplay_char *wschar)
-{
-	struct vgascreen *scr = cookie;
-
-	if (scr == NULL) return 0;
-	return (pcdisplay_putwschar(&scr->pcs, wschar));
-}
-#endif /* WSDISPLAY_CHARFUNCS */
 
 #ifdef WSDISPLAY_CUSTOM_BORDER
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.7.8.1 2006/05/24 10:58:35 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.7.8.1 2006/05/24 10:58:35 yamt Exp $");
 
 /*
  * kernel include files.
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $"
 #include <sys/vnode.h>		/* to define vattr structure */
 #include <sys/errno.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 /*
  * msdosfs include files.
@@ -239,6 +240,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 				brelse(bp);
 			return (EIO);
 		}
+		KASSERT(bp != NULL);
 		if (FAT32(pmp))
 			cn = getulong(&bp->b_data[bo]);
 		else
@@ -872,6 +874,7 @@ freeclusterchain(pmp, cluster)
 			lbn = bn;
 		}
 		usemap_free(pmp, cluster);
+		KASSERT(bp != NULL);
 		switch (pmp->pm_fatmask) {
 		case FAT12_MASK:
 			readcn = getushort(&bp->b_data[bo]);

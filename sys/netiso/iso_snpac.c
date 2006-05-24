@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.34.8.1 2006/05/24 10:59:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34.8.1 2006/05/24 10:59:14 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp 
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -529,7 +530,7 @@ snpac_ioctl(
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+		if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.9 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.9.8.1 2006/05/24 10:57:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.9 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.9.8.1 2006/05/24 10:57:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.9 2005/12/11 12:19:56 christos Exp
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <compat/sys/signal.h>
 #include <compat/sys/mount.h>
@@ -127,7 +128,7 @@ darwin_sys_getattrlist(l, v, retval)
 	struct statfs12 f;
 	struct nameidata nd;
 	struct vnode *vp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	const char *path;
 	caddr_t sg = stackgap_init(p, 0);
 	int fl;
@@ -198,9 +199,9 @@ darwin_sys_getattrlist(l, v, retval)
 	 * vnode structure
 	 */
 
-	cred = crdup(p->p_ucred);
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
+	cred = kauth_cred_dup(p->p_cred);
+	kauth_cred_seteuid(cred, kauth_cred_getuid(p->p_cred));
+	kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
 
 	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
@@ -800,7 +801,7 @@ darwin_sys_getattrlist(l, v, retval)
 out3:
 	vput(vp);
 out2:
-	crfree(cred);
+	kauth_cred_free(cred);
 	free(tbuf, M_TEMP);
 
 	return error;

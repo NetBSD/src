@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.25.2.1 2006/04/01 12:06:30 yamt Exp $	*/
+/*	$NetBSD: sab.c,v 1.25.2.2 2006/05/24 10:57:14 yamt Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.2.1 2006/04/01 12:06:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.2.2 2006/05/24 10:57:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.2.1 2006/04/01 12:06:30 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -684,7 +685,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!suser(p->p_ucred, &p->p_acflag))) {
+	    (!kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -832,7 +833,7 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &
@@ -1109,7 +1110,7 @@ sabtty_reset(struct sabtty_softc *sc)
 	SAB_WRITE(sc, SAB_CCR1, SAB_CCR1_ODS | SAB_CCR1_BCR | SAB_CCR1_CM_7);
 	SAB_WRITE(sc, SAB_CCR2, SAB_CCR2_BDF | SAB_CCR2_SSEL | SAB_CCR2_TOE);
 	SAB_WRITE(sc, SAB_CCR3, 0);
-	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG);
+	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG | SAB_CCR4_ICD);
 	SAB_WRITE(sc, SAB_MODE, SAB_MODE_RTS | SAB_MODE_FCTS | SAB_MODE_RAC);
 	SAB_WRITE(sc, SAB_RFC,
 	    SAB_RFC_DPS | SAB_RFC_RFDF | SAB_RFC_RFTH_32CHAR);
@@ -1118,8 +1119,8 @@ sabtty_reset(struct sabtty_softc *sc)
 	sc->sc_imr0 = sc->sc_imr1 = 0xff;
 	SAB_WRITE(sc, SAB_IMR0, sc->sc_imr0);
 	SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
-	SAB_READ(sc, SAB_ISR0);
-	SAB_READ(sc, SAB_ISR1);
+	(void)SAB_READ(sc, SAB_ISR0);
+	(void)SAB_READ(sc, SAB_ISR1);
 }
 
 void

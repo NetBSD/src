@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.9 2005/12/11 12:17:50 christos Exp $
+#	$NetBSD: majors.ibmnws,v 1.9.8.1 2006/05/24 10:56:57 yamt Exp $
 #
 # Device majors for ibmnws
 #
@@ -30,24 +30,33 @@ device-major	lkm		char 28			lkm
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
-
+device-major	audio		char 42			audio
 device-major	svr4_net	char 43			compat_svr4
 device-major	ipl		char 44			ipfilter
 device-major	satlink		char 45			satlink
 device-major	rnd		char 46			rnd
+device-major	wsdisplay	char 47			wsdisplay
+device-major	wskbd		char 48			wskbd
+device-major	wsmouse		char 49			wsmouse
 
-device-major	scsibus		char 50			scsibus
-device-major	raid		char 51  block 18	raid
+device-major	midi		char 58			midi
+device-major	sequencer	char 59			sequencer
+device-major	vcoda		char 60			vcoda
+device-major	scsibus		char 61			scsibus
+device-major	raid		char 62  block 18	raid
 
-device-major	isdn		char 53			isdn
-device-major	isdnctl		char 54			isdnctl
-device-major	isdnbchan	char 55			isdnbchan
-device-major	isdntrc		char 56			isdntrc
-device-major	isdntel		char 57			isdntel
-device-major	clockctl	char 58			clockctl
-device-major	systrace	char 59			systrace
-device-major	cgd		char 60  block 19	cgd
-device-major	ksyms		char 61			ksyms
+device-major	wsmux		char 65			wsmux
+device-major	isdn		char 66			isdn
+device-major	isdnctl		char 67			isdnctl
+device-major	isdnbchan	char 68			isdnbchan
+device-major	isdntrc		char 69			isdntrc
+device-major	isdntel		char 70			isdntel
+device-major	wsfont		char 71			wsfont
+device-major	pci		char 72			pci
+device-major	clockctl	char 73			clockctl
+device-major	systrace	char 74			systrace
+device-major	cgd		char 75  block 19	cgd
+device-major	ksyms		char 76			ksyms
 
 device-major	nsmb		char 98			nsmb
 

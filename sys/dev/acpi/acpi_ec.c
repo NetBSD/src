@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.37 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.37.2.1 2006/05/24 10:57:36 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.37 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.37.2.1 2006/05/24 10:57:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,7 +643,7 @@ static void
 EcGpeQueryHandler(void *Context)
 {
 	struct acpi_ec_softc *sc = Context;
-	UINT8 Data;
+	UINT8 Data = 0;
 	ACPI_STATUS rv;
 	char qxx[5];
 

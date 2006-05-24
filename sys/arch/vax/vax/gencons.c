@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.42 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: gencons.c,v 1.42.8.1 2006/05/24 10:57:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.42 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.42.8.1 2006/05/24 10:57:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.42 2005/12/11 12:19:36 christos Exp $"
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -123,7 +124,7 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		gencnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE &&
-		   suser(p->p_ucred, &p->p_acflag) != 0)
+		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

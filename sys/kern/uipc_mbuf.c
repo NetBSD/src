@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.105.6.1 2006/04/01 12:07:40 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.105.6.2 2006/05/24 10:58:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105.6.1 2006/04/01 12:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105.6.2 2006/05/24 10:58:42 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -787,8 +787,9 @@ m_adj(struct mbuf *mp, int req_len)
 			}
 			count -= m->m_len;
 		}
-		while (m->m_next)
-			(m = m->m_next) ->m_len = 0;
+		if (m)
+			while (m->m_next)
+				(m = m->m_next)->m_len = 0;
 	}
 }
 

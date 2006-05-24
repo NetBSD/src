@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.12 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.12.8.1 2006/05/24 10:57:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.12 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.12.8.1 2006/05/24 10:57:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto badunlock;
 	}
 
-	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_cred, l)) != 0)
 		goto badunlock;
 
         if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {
@@ -258,7 +258,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * read the header, and make sure we got all of it.
 	 */
         if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
-	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_ucred,
+	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_cred,
 	    &resid, NULL)) != 0)
                 goto bad;
         if (resid != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13.8.1 2006/05/24 10:56:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13.8.1 2006/05/24 10:56:33 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -119,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2005/12/11 12:16:21 christos Exp $");
 
 #define	fninit()		__asm("fninit")
 #define fwait()			__asm("fwait")
+#define fnclex()		__asm("fnclex")
+#define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr))
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
@@ -276,8 +278,29 @@ fpudna(struct cpu_info *ci)
 		mxcsr = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr;
 		ldmxcsr(&mxcsr);
 		l->l_md.md_flags |= MDP_USEDFPU;
-	} else
+	} else {
+		/*
+		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
+		 * leaking other process's execution history. Clear them
+		 * manually.
+		 */
+		static const double zero = 0.0;
+		int status;
+		/*
+		 * Clear the ES bit in the x87 status word if it is currently
+		 * set, in order to avoid causing a fault in the upcoming load.
+		 */
+		fnstsw(&status);
+		if (status & 0x80)
+			fnclex();
+		/*
+		 * Load the dummy variable into the x87 stack.  This mangles
+		 * the x87 stack, but we don't care since we're about to call
+		 * fxrstor() anyway.
+		 */
+		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
+	}
 }
 
 
@@ -349,17 +372,15 @@ fpusave_lwp(struct lwp *l, int save)
 #ifdef DIAGNOSTIC
 		spincount = 0;
 #endif
-		while (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		while (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
 #ifdef DIAGNOSTIC
-		{
 			spincount++;
 			if (spincount > 10000000) {
 				panic("fp_save ipi didn't");
 			}
-		}
-#else
-		__insn_barrier();
 #endif
+			__insn_barrier();
+		}
 	}
 #else
 	KASSERT(ci->ci_fpcurlwp == l);

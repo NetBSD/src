@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.72 2006/01/16 21:45:38 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.72.6.1 2006/05/24 10:58:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.72 2006/01/16 21:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.72.6.1 2006/05/24 10:58:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			/* [mark the buffer wanted] */
 			obp->b_flags |= B_WANTED;
 			/* [wait until the buffer is available] */
-			ltsleep(obp, PRIBIO+1, "physbuf", 0, &bp->b_interlock);
+			ltsleep(obp, PRIBIO+1, "physbuf", 0, &obp->b_interlock);
 		}
 
 		/* Mark it busy, so nobody else will use it. */

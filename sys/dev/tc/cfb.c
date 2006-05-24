@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.47.8.1 2006/04/01 12:07:29 yamt Exp $ */
+/* $NetBSD: cfb.c,v 1.47.8.2 2006/05/24 10:58:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.47.8.1 2006/04/01 12:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.47.8.2 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,8 +163,8 @@ static const struct wsscreen_list cfb_screenlist = {
 	sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
-static int	cfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	cfbmmap(void *, off_t, int);
+static int	cfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	cfbmmap(void *, void *, off_t, int);
 
 static int	cfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -359,7 +359,7 @@ cfb_common_init(struct rasops_info *ri)
 }
 
 static int
-cfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct cfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -436,7 +436,7 @@ cfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 paddr_t
-cfbmmap(void *v, off_t offset, int prot)
+cfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct cfb_softc *sc = v;
 

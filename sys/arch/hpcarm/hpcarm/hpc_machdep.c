@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.78 2006/02/27 11:34:35 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.78.2.1 2006/05/24 10:56:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.78 2006/02/27 11:34:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.78.2.1 2006/05/24 10:56:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -281,6 +281,23 @@ cpu_reboot(int howto, char *bootstr)
 #ifndef DRAM_PAGES
 #define DRAM_PAGES	8192
 #endif
+
+/*
+ * Static device mappings. These peripheral registers are mapped at
+ * fixed virtual addresses very early in initarm() so that we can use
+ * them while booting the kernel and stay at the same address
+ * throughout whole kernel's life time.
+ */
+static const struct pmap_devmap sa11x0_devmap[] = {
+	/* Physical/virtual address for UART #3. */
+	{
+		SACOM3_VBASE,
+		SACOM3_BASE,
+		0x24,
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE
+	},
+	{ 0, 0, 0, 0, 0 }
+};
 
 /*
  * Initial entry point on startup. This gets called before main() is
@@ -587,10 +604,8 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-	/* Map any I/O modules here, as we don't have real bus_space_map() */
-	printf("mapping IO...");
-	pmap_map_entry(l1pagetable, SACOM3_BASE, SACOM3_HW_BASE,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	/* Map the statically mapped devices. */
+	pmap_devmap_bootstrap(l1pagetable, sa11x0_devmap);
 
 	pmap_map_chunk(l1pagetable, sa1_cache_clean_addr, 0xe0000000,
 	    CPU_SA110_CACHE_CLEAN_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.39.8.1 2006/03/13 09:07:20 yamt Exp $	*/
+/*	$NetBSD: cy.c,v 1.39.8.2 2006/05/24 10:57:41 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.39.8.1 2006/03/13 09:07:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.39.8.2 2006/05/24 10:57:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.39.8.1 2006/03/13 09:07:20 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -365,7 +366,9 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 		else
 			CLR(tp->t_state, TS_CARR_ON);
 	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
+		   kauth_authorize_generic(l->l_proc->p_cred,
+				     KAUTH_GENERIC_ISSUSER,
+				     &l->l_proc->p_acflag) != 0) {
 		return EBUSY;
 	} else {
 		s = spltty();
@@ -554,7 +557,8 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred,
+					  KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error != 0)
 			return EPERM;
 
@@ -642,7 +646,8 @@ cyparam(struct tty *tp, struct termios *t)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
-	int ibpr, obpr, i_clk_opt, o_clk_opt, s, opt;
+	int ibpr = 0, obpr = 0, i_clk_opt = 0, o_clk_opt = 0;	/* XXX: GCC */
+	int s, opt;
 
 	cy = CY_PORT(tp->t_dev);
 	sc = CY_BOARD(cy);
@@ -1130,8 +1135,8 @@ cy_intr(void *arg)
 				if (cy->cy_tty == NULL ||
 				    !ISSET(cy->cy_tty->t_state, TS_ISOPEN)) {
 					while (n_chars--)
-						cd_read_reg(sc, cy->cy_chip,
-							    CD1400_RDSR);
+						(void)cd_read_reg(sc,
+						    cy->cy_chip, CD1400_RDSR);
 					goto end_rx_serv;
 				}
 

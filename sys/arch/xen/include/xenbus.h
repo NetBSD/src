@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.1.4.3 2006/04/01 12:06:35 yamt Exp $ */
+/* $NetBSD: xenbus.h,v 1.1.4.4 2006/05/24 10:57:22 yamt Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -69,24 +69,47 @@ struct xenbus_watch {
  * sizeof(xenbus_device) to have the storage for xbusd_path, so xbusd_path
  * has to be the last entry.
  */
+typedef enum {
+	XENBUS_FRONTEND_DEVICE,
+	XENBUS_BACKEND_DEVICE
+} xenbusdev_type_t;
+
 struct xenbus_device {
 	SLIST_ENTRY(xenbus_device) xbusd_entries;
 	char *xbusd_otherend; /* the otherend path */
 	int xbusd_otherend_id; /* the otherend's id */
 	/* callback for otherend change */
-	void (*xbusd_otherend_changed)(struct device *, XenbusState);
-	struct device *xbusd_dev;
+	void (*xbusd_otherend_changed)(void *, XenbusState);
+	xenbusdev_type_t xbusd_type;
+	union {
+		struct {
+			struct device *f_dev;
+		} f;
+		struct {
+			void *b_cookie; /* private to backend driver */
+			int (*b_detach)(void *);
+		} b;
+	} xbusd_u;
 	int xbusd_has_error;
 	/* for xenbus internal use */
 	struct xenbus_watch xbusd_otherend_watch;
 	const char xbusd_path[1]; /* our path */
 };
 
-struct xenbus_device_id
-{
-	/* .../device/<device_type>/<identifier> */
-	char devicetype[32]; 	/* General class of device. */
+/*
+ * frontend devices use the normal autoconf(9) framework to attach.
+ * backend drivers need something more clever because we want the
+ * domain's name or uid in the device's name. Each backend driver registers
+ * to xenbus.
+ */
+
+struct xenbus_backend_driver {
+	SLIST_ENTRY(xenbus_backend_driver) xbakd_entries;
+	int (*xbakd_create) (struct xenbus_device *); /* called for new devs */
+	const char *xbakd_type; /* device type we register for */
 };
+
+void xenbus_backend_register(struct xenbus_backend_driver *);
 
 struct xenbus_transaction;
 

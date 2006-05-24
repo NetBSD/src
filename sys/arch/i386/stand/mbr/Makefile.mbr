@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mbr,v 1.7 2005/12/11 12:17:49 christos Exp $
+#	$NetBSD: Makefile.mbr,v 1.7.8.1 2006/05/24 10:56:53 yamt Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -20,11 +20,11 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/..
 
-LDFLAGS+= -e start
+LDFLAGS+= -nostdlib -Wl,-e,start
 CPPFLAGS+= -I. -I${.CURDIR}/../../lib -I${S}
 
 .if ${MACHINE} == "amd64"
-LDFLAGS+=  -m elf_i386
+LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
 .endif
 
@@ -48,7 +48,7 @@ ${OBJS}: machine x86
 CLEANFILES+= ${PROG}.tmp
 
 ${PROG}: ${OBJS}
-	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
+	${CC} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' | sed 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}

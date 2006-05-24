@@ -1,5 +1,6 @@
-/*	$NetBSD: types.h,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.2.8.1 2006/05/24 10:56:57 yamt Exp $	*/
 
-#define	__HAVE_NWSCONS
+#define __HAVE_NWSCONS
+#define __HAVE_GENERIC_SOFT_INTERRUPTS
 
 #include <powerpc/types.h>

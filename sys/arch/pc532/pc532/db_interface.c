@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14.8.1 2006/05/24 10:57:01 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14.8.1 2006/05/24 10:57:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,15 +63,15 @@ extern int	trap_types;
 int	db_active = 0;
 long	db_active_ipl;
 
-static void	kdbprinttrap __P((int, int));
+static void	kdbprinttrap(int, int);
 
 /*
  * Print trap reason.
  */
 static void
-kdbprinttrap(type, code)
-	int	type, code;
+kdbprinttrap(int type, int code)
 {
+
 	printf("kernel: ");
 	if (type >= trap_types || type < 0)
 		db_printf("type %d", type);
@@ -84,10 +84,9 @@ kdbprinttrap(type, code)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, code, regs)
-	int	type, code;
-	register db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
+
 	switch (type) {
 	case T_BPT:		/* breakpoint */
 	case T_WATCHPOINT:	/* watchpoint */

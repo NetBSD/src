@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.65.2.1 2006/03/13 09:07:03 yamt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.65.2.2 2006/05/24 10:57:18 yamt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -133,11 +133,11 @@ extern	struct  pv_entry *pv_table;
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\
-	*(vaddr_t *)&ptr = virtual_avail;		\
+	ptr = virtual_avail;		\
 	virtual_avail += (count) * VAX_NBPG;
 
 #define MAPPHYS(ptr, count, perm)			\
-	*(vaddr_t *)&ptr = avail_start + KERNBASE;	\
+	ptr = avail_start + KERNBASE;	\
 	avail_start += (count) * VAX_NBPG;
 
 #ifdef	_KERNEL

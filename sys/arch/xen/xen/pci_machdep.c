@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.7.6.1 2006/04/11 11:53:48 yamt Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.7.6.2 2006/05/24 10:57:23 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -89,6 +89,7 @@ pci_make_tag(pci_chipset_tag_t pcitag, int bus, int dev, int func)
 	tag.bus = bus;
 	tag.device = dev;
 	tag.function = func;
+	tag._pad = 0;
 
 	return tag;
 }

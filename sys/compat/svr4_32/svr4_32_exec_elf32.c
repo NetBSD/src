@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.14 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.14.8.1 2006/05/24 10:57:32 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.14 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.14.8.1 2006/05/24 10:57:32 yamt Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -142,19 +142,19 @@ svr4_32_copyargs(l, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(p->p_cred);
 		a++;
 
 		if (sun_hwcap) {

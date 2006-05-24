@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.78 2006/01/28 13:20:18 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.78.6.1 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -121,6 +121,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 #define	SO_TIMESTAMP	0x0400		/* timestamp received dgram traffic */
+
 
 /*
  * Additional options, not kept in so_options.
@@ -447,16 +448,17 @@ struct msghdr {
 	int		msg_flags;	/* flags on received message */
 };
 
-#define	MSG_OOB		0x1		/* process out-of-band data */
-#define	MSG_PEEK	0x2		/* peek at incoming message */
-#define	MSG_DONTROUTE	0x4		/* send without using routing tables */
-#define	MSG_EOR		0x8		/* data completes record */
-#define	MSG_TRUNC	0x10		/* data discarded before delivery */
-#define	MSG_CTRUNC	0x20		/* control data lost before delivery */
-#define	MSG_WAITALL	0x40		/* wait for full request or error */
-#define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
-#define	MSG_BCAST	0x100		/* this message was rcvd using link-level brdcst */
-#define	MSG_MCAST	0x200		/* this message was rcvd using link-level mcast */
+#define	MSG_OOB		0x0001		/* process out-of-band data */
+#define	MSG_PEEK	0x0002		/* peek at incoming message */
+#define	MSG_DONTROUTE	0x0004		/* send without using routing tables */
+#define	MSG_EOR		0x0008		/* data completes record */
+#define	MSG_TRUNC	0x0010		/* data discarded before delivery */
+#define	MSG_CTRUNC	0x0020		/* control data lost before delivery */
+#define	MSG_WAITALL	0x0040		/* wait for full request or error */
+#define	MSG_DONTWAIT	0x0080		/* this message should be nonblocking */
+#define	MSG_BCAST	0x0100		/* this message was rcvd using link-level brdcst */
+#define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
+#define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
 
 /*
  * Header for ancillary data objects in msg_control buffer.

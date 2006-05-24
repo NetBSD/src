@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.h,v 1.4 1999/08/15 02:36:03 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.h,v 1.4.70.1 2006/05/24 10:58:13 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,8 +47,8 @@ void rf_WriteGenerateFailedAccessASMs(RF_Raid_t * raidPtr,
 
 void rf_DoubleDegSmallWrite(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
             RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
-            RF_AllocListElem_t * allocList, char *redundantReadNodeName,
-            char *redundantWriteNodeName, char *recoveryNodeName,
+            RF_AllocListElem_t * allocList, const char *redundantReadNodeName,
+            const char *redundantWriteNodeName, const char *recoveryNodeName,
             int (*recovFunc) (RF_DagNode_t *));
 
 #endif				/* !_RF__RF_DAGDEGWR_H_ */

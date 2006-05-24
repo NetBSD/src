@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.12.2.1 2006/04/01 12:06:57 yamt Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.12.2.2 2006/05/24 10:57:41 yamt Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -243,7 +243,7 @@ static __inline void
 ahc_flush_device_writes(struct ahc_softc *ahc)
 {
 	/* XXX Is this sufficient for all architectures??? */
-	ahc_inb(ahc, INTSTAT);
+	(void)ahc_inb(ahc, INTSTAT);
 }
 
 /**************************** Locking Primitives ******************************/

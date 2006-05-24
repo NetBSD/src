@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.11 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.11.8.1 2006/05/24 10:58:14 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.11 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.11.8.1 2006/05/24 10:58:14 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -89,9 +89,6 @@ rf_ConfigureInterDecluster(
 		tmp = i / raidPtr->numCol;
 		info->stripeIdentifier[i][1] = (i + 1 + tmp) % raidPtr->numCol;
 	}
-
-	/* no spare tables */
-	RF_ASSERT(raidPtr->numRow == 1);
 
 	/* fill in the remaining layout parameters */
 
@@ -150,7 +147,6 @@ void
 rf_MapSectorInterDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
     int remap)
@@ -161,7 +157,6 @@ rf_MapSectorInterDecluster(
 	RF_StripeNum_t sparing_region_id, index_within_region;
 	int     col_before_remap;
 
-	*row = 0;
 	sparing_region_id = SUID / info->stripeUnitsPerSparingRegion;
 	index_within_region = SUID % info->stripeUnitsPerSparingRegion;
 	su_offset_into_disk = index_within_region % (raidPtr->numCol - 1);
@@ -189,7 +184,6 @@ void
 rf_MapParityInterDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
     int remap)
@@ -204,7 +198,6 @@ rf_MapParityInterDecluster(
 	mirror_su_offset_into_disk = index_within_region / raidPtr->numCol;
 	col_before_remap = (index_within_region + 1 + mirror_su_offset_into_disk) % raidPtr->numCol;
 
-	*row = 0;
 	if (!remap) {
 		*col = col_before_remap;
 		*diskSector = info->mirrorStripeOffset * raidPtr->Layout.sectorsPerStripeUnit;
@@ -227,8 +220,7 @@ void
 rf_IdentifyStripeInterDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+    RF_RowCol_t ** diskids)
 {
 	RF_InterdeclusterConfigInfo_t *info = (RF_InterdeclusterConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 	RF_StripeNum_t SUID;
@@ -236,7 +228,6 @@ rf_IdentifyStripeInterDecluster(
 	SUID = addr / raidPtr->Layout.sectorsPerStripeUnit;
 	SUID = SUID % info->stripeUnitsPerSparingRegion;
 
-	*outRow = 0;
 	*diskids = info->stripeIdentifier[SUID];
 }
 

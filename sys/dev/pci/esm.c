@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.32.8.1 2006/03/13 09:07:26 yamt Exp $      */
+/*      $NetBSD: esm.c,v 1.32.8.2 2006/05/24 10:58:00 yamt Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.32.8.1 2006/03/13 09:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.32.8.2 2006/05/24 10:58:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1289,10 +1289,10 @@ esm_set_params(void *sc, int setmode, int usemode,
 			hw_rec = p;
 	}
 
-	if (setmode & AUMODE_PLAY)
+	if (hw_play)
 		esmch_set_format(&ess->pch, hw_play);
 
-	if (setmode & AUMODE_RECORD)
+	if (hw_rec)
 		esmch_set_format(&ess->rch, hw_rec);
 
 	return 0;

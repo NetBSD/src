@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.20.6.2 2006/04/01 12:06:07 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.20.6.3 2006/05/24 10:56:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20.6.2 2006/04/01 12:06:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20.6.3 2006/05/24 10:56:33 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20.6.2 2006/04/01 12:06:07 ya
 #include <sys/vnode.h>
 #include <sys/ras.h>
 #include <sys/ptrace.h>
+#include <sys/kauth.h>
 
 #include <machine/fpu.h>
 #include <machine/frame.h>
@@ -613,7 +614,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error != 0)
 		return error;
 
@@ -680,7 +681,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error != 0)
 		return error;
 

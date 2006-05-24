@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.7.8.1 2006/05/24 10:58:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.8.1 2006/05/24 10:58:42 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $")
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #ifdef DEBUG_PTM
 #define DPRINTF(a)	printf a
@@ -112,7 +113,7 @@ pty_getfree(void)
 int
 pty_vn_open(struct vnode *vp, struct lwp *l)
 {
-	struct ucred *cred;
+	kauth_cred_t cred;
 	int error;
 
 	if (vp->v_type != VCHR) {
@@ -123,9 +124,9 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 	/*
 	 * Get us a fresh cred with root privileges.
 	 */
-	cred = crget();
+	cred = kauth_cred_alloc();
 	error = VOP_OPEN(vp, FREAD|FWRITE, cred, l);
-	crfree(cred);
+	kauth_cred_free(cred);
 
 	if (error) {
 		vput(vp);
@@ -216,12 +217,12 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
-		struct ucred *cred;
+		kauth_cred_t cred;
 		(*ptm->getvattr)(ptm, l->l_proc, &vattr);
 		/* Get a fake cred to pretend we're root. */
-		cred = crget();
+		cred = kauth_cred_alloc();
 		error = VOP_SETATTR(vp, &vattr, cred, l);
-		crfree(cred);
+		kauth_cred_free(cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
 			VOP_UNLOCK(vp, 0);
@@ -289,7 +290,7 @@ pty_sethandler(struct ptm_pty *nptm)
 }
 
 int
-pty_fill_ptmget(dev_t dev, int cfd, int sfd, void *data)
+pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
 {
 	struct ptmget *ptmg = data;
 	int error;
@@ -300,11 +301,11 @@ pty_fill_ptmget(dev_t dev, int cfd, int sfd, void *data)
 	ptmg->cfd = cfd == -1 ? minor(dev) : cfd;
 	ptmg->sfd = sfd == -1 ? minor(dev) : sfd;
 
-	error = (*ptm->makename)(ptm, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
+	error = (*ptm->makename)(ptm, l, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
 	if (error)
 		return error;
 
-	return (*ptm->makename)(ptm, ptmg->sn, sizeof(ptmg->sn), dev, 't');
+	return (*ptm->makename)(ptm, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
 }
 
 void
@@ -372,7 +373,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */
-		return pty_fill_ptmget(newdev, cfd, sfd, data);
+		return pty_fill_ptmget(l, newdev, cfd, sfd, data);
 	default:
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;

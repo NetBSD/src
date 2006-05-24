@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.16.8.1 2006/05/24 10:58:00 yamt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16.8.1 2006/05/24 10:58:00 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+
+#include <dev/firmload.h>
 
 #include <dev/pci/if_ipwreg.h>
 #include <dev/pci/if_ipwvar.h>
@@ -121,7 +123,7 @@ static void	ipw_stop_master(struct ipw_softc *);
 static int	ipw_reset(struct ipw_softc *);
 static int	ipw_load_ucode(struct ipw_softc *, u_char *, int);
 static int	ipw_load_firmware(struct ipw_softc *, u_char *, int);
-static int	ipw_cache_firmware(struct ipw_softc *, void *);
+static int	ipw_cache_firmware(struct ipw_softc *);
 static void	ipw_free_firmware(struct ipw_softc *);
 static int	ipw_config(struct ipw_softc *);
 static int	ipw_init(struct ifnet *);
@@ -218,6 +220,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = memt;
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
+	strlcpy(sc->sc_fwname, "ipw2100-1.2.fw", sizeof(sc->sc_fwname));
 
 	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
@@ -260,7 +263,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ipw_start;
 	ifp->if_watchdog = ipw_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -268,8 +271,12 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_SHPREAMBLE | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_PMGT | IEEE80211_C_IBSS | IEEE80211_C_MONITOR;
+	ic->ic_caps =
+	      IEEE80211_C_SHPREAMBLE	/* short preamble supported */
+	    | IEEE80211_C_TXPMGT	/* tx power management */
+	    | IEEE80211_C_IBSS		/* ibss mode */
+	    | IEEE80211_C_MONITOR	/* monitor mode */
+	    ;
 
 	/* read MAC address from EEPROM */
 	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 0);
@@ -300,6 +307,9 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	/* check support for radio transmitter switch in EEPROM */
 	if (!(ipw_read_prom_word(sc, IPW_EEPROM_RADIO) & 8))
 		sc->flags |= IPW_FLAG_HAS_RADIO_SWITCH;
+
+	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(ic->ic_myaddr));
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
@@ -1226,7 +1236,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 			break;
 
 		default:
-			aprint_debug("%s: unknown status code %u\n",
+			aprint_error("%s: unknown status code %u\n",
 			    sc->sc_dev.dv_xname, le16toh(status->code));
 		}
 
@@ -1737,22 +1747,19 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ipw_get_radio(sc, (int *)ifr->ifr_data);
 		break;
 
-	case SIOCSLOADFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
-			break;
+	case SIOCSIFMEDIA:
+		if (ifr->ifr_media & IFM_IEEE80211_ADHOC)
+			strlcpy(sc->sc_fwname, "ipw2100-1.2-i.fw",
+			    sizeof(sc->sc_fwname));
+		else if (ifr->ifr_media & IFM_IEEE80211_MONITOR)
+			strlcpy(sc->sc_fwname, "ipw2100-1.2-p.fw",
+			    sizeof(sc->sc_fwname));
+		else
+			strlcpy(sc->sc_fwname, "ipw2100-1.2.fw",
+			    sizeof(sc->sc_fwname));
 
-		error = ipw_cache_firmware(sc, ifr->ifr_data);
-		break;
-
-	case SIOCSKILLFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
-			break;
-
-		ipw_reset(sc);
-		break;
-
+		ipw_free_firmware(sc);
+		/* FALLTRHOUGH */		
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 		if (error != ENETRESET)
@@ -1968,39 +1975,51 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
  * e.g when the adapter wakes up from suspend mode.
  */
 static int
-ipw_cache_firmware(struct ipw_softc *sc, void *data)
+ipw_cache_firmware(struct ipw_softc *sc)
 {
 	struct ipw_firmware *fw = &sc->fw;
 	struct ipw_firmware_hdr hdr;
-	u_char *p = data;
+	firmware_handle_t fwh;
+	off_t fwsz, p;
 	int error;
 
 	ipw_free_firmware(sc);
 
-	if ((error = copyin(data, &hdr, sizeof hdr)) != 0)
-		goto fail1;
+	if ((error = firmware_open("if_ipw", sc->sc_fwname, &fwh)) != 0)
+		goto fail0;
+
+	fwsz = firmware_get_size(fwh);
+
+	if (fwsz < sizeof(hdr))
+		goto fail2;
+
+	if ((error = firmware_read(fwh, 0, &hdr, sizeof(hdr))) != 0)
+		goto fail2;
 
 	fw->main_size  = le32toh(hdr.main_size);
 	fw->ucode_size = le32toh(hdr.ucode_size);
-	p += sizeof hdr;
 
-	fw->main = malloc(fw->main_size, M_DEVBUF, M_NOWAIT);
+	fw->main = firmware_malloc(fw->main_size);
 	if (fw->main == NULL) {
 		error = ENOMEM;
 		goto fail1;
 	}
 
-	fw->ucode = malloc(fw->ucode_size, M_DEVBUF, M_NOWAIT);
+	fw->ucode = firmware_malloc(fw->ucode_size);
 	if (fw->ucode == NULL) {
 		error = ENOMEM;
 		goto fail2;
 	}
 
-	if ((error = copyin(p, fw->main, fw->main_size)) != 0)
+	p = sizeof(hdr);
+	if ((error = firmware_read(fwh, p, fw->main, fw->main_size)) != 0)
+		goto fail3;
+
+	if ((error = firmware_read(fwh, p, fw->main, fw->main_size)) != 0)
 		goto fail3;
 
 	p += fw->main_size;
-	if ((error = copyin(p, fw->ucode, fw->ucode_size)) != 0)
+	if ((error = firmware_read(fwh, p, fw->ucode, fw->ucode_size)) != 0)
 		goto fail3;
 
 	DPRINTF(("Firmware cached: main %u, ucode %u\n", fw->main_size,
@@ -2010,9 +2029,10 @@ ipw_cache_firmware(struct ipw_softc *sc, void *data)
 
 	return 0;
 
-fail3:	free(fw->ucode, M_DEVBUF);
-fail2:	free(fw->main, M_DEVBUF);
-fail1:
+fail3:	firmware_free(fw->ucode, 0);
+fail2:	firmware_free(fw->main, 0);
+fail1:  firmware_close(fwh);
+fail0:
 	return error;
 }
 
@@ -2022,8 +2042,8 @@ ipw_free_firmware(struct ipw_softc *sc)
 	if (!(sc->flags & IPW_FLAG_FW_CACHED))
 		return;
 
-	free(sc->fw.main, M_DEVBUF);
-	free(sc->fw.ucode, M_DEVBUF);
+	firmware_free(sc->fw.main, 0);
+	firmware_free(sc->fw.ucode, 0);
 
 	sc->flags &= ~IPW_FLAG_FW_CACHED;
 }
@@ -2180,8 +2200,8 @@ ipw_config(struct ipw_softc *sc)
 
 			wepkey.idx = i;
 			wepkey.len = k->wk_keylen;
-			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->wk_key, wepkey.key, k->wk_keylen);
+			memset(wepkey.key, 0, sizeof(wepkey.key));
+			memcpy(wepkey.key, k->wk_key, k->wk_keylen);
 			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,
@@ -2207,7 +2227,7 @@ ipw_config(struct ipw_softc *sc)
 #if 0
 	struct ipw_wpa_ie ie;
 
-	bzero(&ie, sizeof ie);
+	memset(&ie, 0 sizeof(ie));
 	ie.len = htole32(sizeof (struct ieee80211_ie_wpa));
 	DPRINTF(("Setting wpa ie\n"));
 	error = ipw_cmd(sc, IPW_CMD_SET_WPA_IE, &ie, sizeof ie);
@@ -2242,14 +2262,12 @@ ipw_init(struct ifnet *ifp)
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ipw_firmware *fw = &sc->fw;
 
-	/* exit immediately if firmware has not been ioctl'd */
 	if (!(sc->flags & IPW_FLAG_FW_CACHED)) {
-		if (!(sc->flags & IPW_FLAG_FW_WARNED))
-			aprint_error("%s: Please load firmware\n",
-			    sc->sc_dev.dv_xname);
-		sc->flags |= IPW_FLAG_FW_WARNED;
-		ifp->if_flags &= ~IFF_UP;
-		return EIO;
+		if (ipw_cache_firmware(sc) != 0) {
+			aprint_error("%s: could not cache the firmware (%s)\n",
+			    sc->sc_dev.dv_xname, sc->sc_fwname);
+			goto fail;
+		}
 	}
 
 	ipw_stop(ifp, 0);

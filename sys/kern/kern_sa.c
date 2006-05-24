@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.70.8.1 2006/04/01 12:07:39 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.70.8.2 2006/05/24 10:58:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #include "opt_ktrace.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70.8.1 2006/04/01 12:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70.8.2 2006/05/24 10:58:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1693,14 +1693,14 @@ sa_vp_repossess(struct lwp *l)
 	 */
 	l2 = vp->savp_lwp;
 	vp->savp_lwp = l;
-	if (l2->l_flag & L_SA_YIELD)
-		l2->l_flag &= ~(L_SA_YIELD|L_SA_IDLE);
-
-	DPRINTFN(1,("sa_vp_repossess(%d.%d) vp lwp %d state %d\n",
-		     p->p_pid, l->l_lid, l2->l_lid, l2->l_stat));
-
-	KDASSERT(l2 != l);
 	if (l2) {
+		if (l2->l_flag & L_SA_YIELD)
+			l2->l_flag &= ~(L_SA_YIELD|L_SA_IDLE);
+
+		DPRINTFN(1,("sa_vp_repossess(%d.%d) vp lwp %d state %d\n",
+			     p->p_pid, l->l_lid, l2->l_lid, l2->l_stat));
+
+		KDASSERT(l2 != l);
 		switch (l2->l_stat) {
 		case LSRUN:
 			remrunqueue(l2);

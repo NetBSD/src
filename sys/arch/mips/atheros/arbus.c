@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.2.2.2 2006/04/11 12:20:51 yamt Exp $ */
+/* $Id: arbus.c,v 1.2.2.3 2006/05/24 10:56:58 yamt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.2.2.2 2006/04/11 12:20:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.2.2.3 2006/05/24 10:56:58 yamt Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -195,7 +195,8 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 	arbus_init();
 
 	for (i = 0; arbus_devices[i].name; i++) {
-		if ((arbus_devices[i].mask & info->ab_config) == 0) {
+		if (arbus_devices[i].mask &&
+		    ((arbus_devices[i].mask & info->ab_config) == 0)) {
 			continue;
 		}
 		aa.aa_name = arbus_devices[i].name;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.47 2005/12/11 12:23:23 christos Exp $
+#	$NetBSD: files.pcmcia,v 1.47.8.1 2006/05/24 10:58:13 yamt Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -44,10 +44,10 @@ attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia
 
 # Digital RoamAbout / Lucent WaveLAN PCMCIA card
-attach	wl at pcmcia with wl_pcmcia
-file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
-defflag	opt_wl_pcmcia.h		WL_TIMER WLP_CC_DEBUG WL_DEBUG MMC_STATUS
-				WL_IFCNTRS WL_TIMING
+#attach	wl at pcmcia with wl_pcmcia
+#file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
+#defflag	opt_wl_pcmcia.h	WL_TIMER WLP_CC_DEBUG WL_DEBUG MMC_STATUS
+#				WL_IFCNTRS WL_TIMING
 
 # PCMCIA IDE controller
 attach	wdc at pcmcia with wdc_pcmcia

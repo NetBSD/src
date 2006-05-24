@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.13 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.13.8.1 2006/05/24 10:57:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13.8.1 2006/05/24 10:57:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13 2005/12/24 20:07:24 perry Exp $");
 #define	ADDWORD	{sum += *(u_short *)w;}
 
 int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(struct mbuf *m, int len)
 {
-	register u_char *w;
-	register unsigned sum = 0;
-	register int mlen = 0;
+	u_char *w;
+	unsigned sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	for (; m && len; m = m->m_next) {

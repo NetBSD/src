@@ -1,4 +1,4 @@
-/*	$NetBSD: interp_backslash.c,v 1.1.2.2 2006/04/11 11:53:40 yamt Exp $	*/
+/*	$NetBSD: interp_backslash.c,v 1.1.2.3 2006/05/24 10:56:53 yamt Exp $	*/
 
 /*-
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/common/interp_backslash.c,v 1.6 2003/08/25 23:30:41 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>

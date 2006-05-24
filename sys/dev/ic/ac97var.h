@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.17 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.17.8.1 2006/05/24 10:57:40 yamt Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -41,7 +41,8 @@ enum ac97_host_flags {
 	AC97_HOST_DONT_READ = 0x1,
 	AC97_HOST_SWAPPED_CHANNELS = 0x2,	/* l/r is reversed */
 	AC97_HOST_SKIP_AUDIO = 0x4,
-	AC97_HOST_SKIP_MODEM = 0x8
+	AC97_HOST_SKIP_MODEM = 0x8,
+	AC97_HOST_INVERTED_EAMP = 0x10
 };
 
 struct ac97_host_if {
@@ -68,6 +69,7 @@ struct ac97_codec_if_vtbl {
 	 * The AC97 codec driver records the various port settings.  This
 	 * function can be used to restore the port settings, e.g. after
 	 * resume from a laptop suspend to disk.
+	 * Also restores AC97_POWER_REG.
 	 */
 	void (*restore_ports)(struct ac97_codec_if *);
 

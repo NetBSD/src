@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.86 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: db_interface.c,v 1.86.2.1 2006/05/24 10:57:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86 2006/02/20 19:00:27 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86.2.1 2006/05/24 10:57:14 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1078,7 +1078,7 @@ db_cpus_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 #include <uvm/uvm.h>
 
 void db_uvmhistdump(db_expr_t, int, db_expr_t, const char *);
-/*extern void uvmhist_dump __P((struct uvm_history *));*/
+/*extern void uvmhist_dump(struct uvm_history *);*/
 #ifdef UVMHIST
 extern void uvmhist_dump(struct uvm_history *);
 #endif

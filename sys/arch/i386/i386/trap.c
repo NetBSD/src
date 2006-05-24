@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.207.8.1 2006/04/01 12:06:19 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.207.8.2 2006/05/24 10:56:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.8.1 2006/04/01 12:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.8.2 2006/05/24 10:56:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.8.1 2006/04/01 12:06:19 yamt Exp $");
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/kauth.h>
 
 #include <sys/ucontext.h>
 #include <sys/sa.h>
@@ -283,6 +284,7 @@ trap(frame)
 
 	if (!KVM86MODE && !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
+		KASSERT(l != NULL);
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;		
 	}
@@ -440,6 +442,7 @@ copyfault:
 			goto out;
 		}
 #endif
+		KASSERT(p != NULL);
 		/* If pmap_exec_fixup does something, let's retry the trap. */
 		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
 		    &l->l_addr->u_pcb)) {
@@ -673,8 +676,8 @@ copyfault:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 		}

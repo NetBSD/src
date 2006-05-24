@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.8 2005/12/20 07:51:38 skrll Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.8.8.1 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -93,6 +93,7 @@ struct ipw_softc {
 					    enum ieee80211_state, int);
 
 	struct ipw_firmware		fw;
+	char				sc_fwname[24];
 	uint32_t			flags;
 #define IPW_FLAG_FW_CACHED		(1 << 0)
 #define IPW_FLAG_FW_INITED		(1 << 1)
@@ -173,7 +174,5 @@ struct ipw_softc {
 
 #define	sc_if	sc_ec.ec_if
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)

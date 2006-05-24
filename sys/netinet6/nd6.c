@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.98.2.2 2006/04/01 12:07:50 yamt Exp $	*/
+/*	$NetBSD: nd6.c,v 1.98.2.3 2006/05/24 10:59:09 yamt Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.98.2.2 2006/04/01 12:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.98.2.3 2006/05/24 10:59:09 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -2124,6 +2124,7 @@ nd6_need_cache(ifp)
 	case IFT_ETHER:
 	case IFT_FDDI:
 	case IFT_IEEE1394:
+	case IFT_CARP:
 	case IFT_GIF:		/* XXX need more cases? */
 	case IFT_PPP:
 	case IFT_TUNNEL:
@@ -2297,11 +2298,11 @@ fill_drlist(oldp, oldlenp, ol)
 	}
 
 	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 		if (l > ol)
 			error = ENOMEM;
-	} else
-		*oldlenp = l;
+	}
+	if (oldlenp)
+		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 
 	splx(s);
 

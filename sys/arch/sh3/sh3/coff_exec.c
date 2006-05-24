@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.23 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.23.8.1 2006/05/24 10:57:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.23 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.23.8.1 2006/05/24 10:57:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ coff_find_section(struct lwp *l, struct vnode *vp, struct coff_filehdr *fp,
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
 		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
-		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
+		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 		    &resid, NULL);
 		if (error) {
 			DPRINTF(("section hdr %d read error %d\n", i, error));
@@ -334,7 +334,7 @@ exec_coff_prep_zmagic(struct lwp *l, struct exec_package *epp,
 
 		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
 		    len, sh.s_scnptr,
-		    UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
+		    UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 		    &resid, NULL);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
@@ -397,7 +397,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 
 	siz = sizeof(struct coff_filehdr);
 	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
-	    UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred, &resid, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred, &resid, NULL);
 	if (error) {
 		DPRINTF(("filehdr read error %d\n", error));
 		vrele(nd.ni_vp);

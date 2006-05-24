@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.2.2.2 2006/04/11 11:53:52 yamt Exp $
+ * $Id: ah_osdep.c,v 1.2.2.3 2006/05/24 10:57:35 yamt Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -44,6 +44,7 @@
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <machine/stdarg.h>
 
@@ -225,7 +226,8 @@ ath_hal_setlogging(int enable)
 	int error;
 
 	if (enable) {
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = kauth_authorize_generic(curproc->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &curproc->p_acflag);
 		if (error == 0) {
 			error = alq_open(&ath_hal_alq, ath_hal_logfile,
 				curproc->p_ucred,

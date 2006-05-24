@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.32 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.32.8.1 2006/05/24 10:59:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.32 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.32.8.1 2006/05/24 10:59:30 yamt Exp $");
+
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.32 2005/12/11 12:25:29 christos Exp $
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 #include <uvm/uvm.h>
 
@@ -94,9 +100,16 @@ sys_obreak(struct lwp *l, void *v, register_t *retval)
 	 */
 
 	if (new > old) {
+		vm_prot_t prot = UVM_PROT_READ | UVM_PROT_WRITE;
+		vm_prot_t maxprot = UVM_PROT_ALL;
+
+#ifdef PAX_MPROTECT
+		pax_mprotect(l, &prot, &maxprot);
+#endif /* PAX_MPROTECT */
+
 		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL,
+		    UVM_MAPFLAG(prot, maxprot,
 				UVM_INH_COPY,
 				UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 				UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));

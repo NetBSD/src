@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.163.8.1 2006/05/24 10:58:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.8.1 2006/05/24 10:58:56 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -144,6 +145,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX) || defined(LKM)
@@ -573,6 +579,13 @@ if_detach(struct ifnet *ifp)
 		altq_disable(&ifp->if_snd);
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
 		altq_detach(&ifp->if_snd);
+#endif
+
+
+#if NCARP > 0
+	/* Remove the interface from any carp group it is a part of.  */
+	if (ifp->if_carp && ifp->if_type != IFT_CARP)
+		carp_ifdetach(ifp);
 #endif
 
 #ifdef PFIL_HOOKS
@@ -1172,8 +1185,10 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		rt_ifmsg(ifp);
-		log(LOG_NOTICE, "%s: link state changed to %s\n", ifp->if_xname,
-		    (link_state == LINK_STATE_UP) ? "UP" : "DOWN" );
+#if NCARP > 0
+		if (ifp->if_carp)
+			carp_carpdev_state(ifp);
+#endif
 	}
 }
 
@@ -1193,6 +1208,10 @@ if_down(struct ifnet *ifp)
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
+#endif
 	rt_ifmsg(ifp);
 }
 
@@ -1215,6 +1234,10 @@ if_up(struct ifnet *ifp)
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
+#endif
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
@@ -1363,7 +1386,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
 		if (l) {
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_proc->p_cred,
+						  KAUTH_GENERIC_ISSUSER,
+						  &l->l_proc->p_acflag);
 			if (error)
 				return error;
 		}
@@ -1401,7 +1426,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 		if (l) {
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_proc->p_cred,
+						  KAUTH_GENERIC_ISSUSER,
+						  &l->l_proc->p_acflag);
 			if (error)
 				return error;
 		}

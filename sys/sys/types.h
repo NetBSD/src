@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.69.8.1 2006/03/13 09:07:43 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.69.8.2 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -292,6 +292,9 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #ifdef _NETBSD_SOURCE
 #include <sys/fd_set.h>
 #define	NBBY	__NBBY
+
+typedef struct kauth_cred *kauth_cred_t;
+
 #endif
 
 #if defined(__STDC__) && defined(_KERNEL)
@@ -305,7 +308,6 @@ struct	user;
 struct	__ucontext;
 struct	proc;
 struct	pgrp;
-struct	ucred;
 struct	rusage;
 struct	file;
 struct	buf;

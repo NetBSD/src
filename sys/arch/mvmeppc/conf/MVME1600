@@ -1,11 +1,11 @@
-# $NetBSD: MVME1600,v 1.24 2006/02/05 05:01:56 cube Exp $
+# $NetBSD: MVME1600,v 1.24.2.1 2006/05/24 10:57:00 yamt Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.24 $"
+#ident		"MVME1600-$Revision: 1.24.2.1 $"
 
 maxusers	8
 
@@ -107,7 +107,7 @@ options 	NFS_BOOT_DHCP
 # different kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4

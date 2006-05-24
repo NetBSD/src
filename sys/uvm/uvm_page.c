@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.111.2.2 2006/03/12 09:38:56 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.111.2.3 2006/05/24 10:59:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.2 2006/03/12 09:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.3 2006/05/24 10:59:30 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1471,10 +1471,24 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 void
 uvm_page_own(struct vm_page *pg, const char *tag)
 {
+	struct uvm_object *uobj;
+	struct vm_anon *anon;
+
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
+
+	uobj = pg->uobject;
+	anon = pg->uanon;
+	if (uobj != NULL) {
+		LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+	} else if (anon != NULL) {
+		LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+	}
+
+	KASSERT((pg->flags & PG_WANTED) == 0);
 
 	/* gain ownership? */
 	if (tag) {
+		KASSERT((pg->flags & PG_BUSY) != 0);
 		if (pg->owner_tag) {
 			printf("uvm_page_own: page %p already owned "
 			    "by proc %d [%s]\n", pg,
@@ -1487,6 +1501,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 	}
 
 	/* drop ownership */
+	KASSERT((pg->flags & PG_BUSY) == 0);
 	if (pg->owner_tag == NULL) {
 		printf("uvm_page_own: dropping ownership of an non-owned "
 		    "page (%p)\n", pg);

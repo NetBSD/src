@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.24 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.24.8.1 2006/05/24 10:59:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24.8.1 2006/05/24 10:59:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24 2005/12/11 12:25:16 christos Exp $")
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -92,7 +93,9 @@ ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct proc *p)
 	if (lport) {
 
 		if (ntohs(lport) < NSPORT_RESERVED &&
-		    (p == 0 || suser(p->p_ucred, &p->p_acflag)))
+		    (p == 0 || kauth_authorize_generic(p->p_cred,
+						 KAUTH_GENERIC_ISSUSER,
+						 &p->p_acflag)))
 			return (EACCES);
 		if (ns_pcblookup(&zerons_addr, lport, 0))
 			return (EADDRINUSE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.13 2005/12/24 20:07:37 perry Exp $	*/
+/*	$NetBSD: emul.c,v 1.13.8.1 2006/05/24 10:57:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.13 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.13.8.1 2006/05/24 10:57:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.13 2005/12/24 20:07:37 perry Exp $");
 #define GPR(tf, i)	((int32_t *) &tf->tf_global)[i]
 #define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
 #define FPR(l, i)	((int32_t) l->l_md.md_fpstate->fs_regs[i])
+#define FPRSET(l, i, v)	(l->l_md.md_fpstate->fs_regs[i] = (int32_t)(v))
 
 static inline int readgpreg(struct trapframe *, int, void *);
 static inline int readfpreg(struct lwp *, int, void *);
@@ -113,7 +114,7 @@ static inline int
 writefpreg(struct lwp *l, int i, const void *val)
 {
 
-	FPR(l, i) = *(const int32_t *) val;
+	FPRSET(l, i, *(const int32_t *) val);
 	return 0;
 }
 

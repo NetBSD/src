@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1.2.2 2006/04/11 11:53:43 yamt Exp $	*/
+/*	$NetBSD: start.S,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 	
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD$
+ *	$FreeBSD: src/sys/boot/efi/libefi/arch/ia64/start.S,v 1.7 2004/07/20 07:11:14 marcel Exp $
  */
 
 	.text
