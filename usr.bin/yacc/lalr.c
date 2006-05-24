@@ -1,4 +1,4 @@
-/*	$NetBSD: lalr.c,v 1.9 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: lalr.c,v 1.10 2006/05/24 18:06:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: lalr.c,v 1.9 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.10 2006/05/24 18:06:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ typedef
     }
   shorts;
 
-int tokensetsize;
 short *lookaheads;
 short *LAruleno;
 unsigned *LA;
@@ -62,6 +61,8 @@ reductions **reduction_table;
 short *goto_map;
 short *from_state;
 short *to_state;
+
+static int tokensetsize;
 
 static short **transpose(short **, int);
 static void set_state_table(void);

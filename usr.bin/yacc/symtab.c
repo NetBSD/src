@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.10 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.11 2006/05/24 18:06:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.10 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.11 2006/05/24 18:06:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,10 @@ __RCSID("$NetBSD: symtab.c,v 1.10 2006/05/24 18:01:43 christos Exp $");
 #define	TABLE_SIZE 1024
 
 
-static bucket **symbol_table;
 bucket *first_symbol;
 bucket *last_symbol;
+
+static bucket **symbol_table;
 
 static int hash(char *);
 
