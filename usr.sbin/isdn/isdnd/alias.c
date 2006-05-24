@@ -30,7 +30,7 @@
  *	NOTE:	this has to stay in sync with isdntel/alias.c to be able
  *		to share a common aliasfile!
  *		
- *      $Id: alias.c,v 1.4 2003/10/06 09:43:27 itojun Exp $
+ *      $Id: alias.c,v 1.5 2006/05/24 23:44:34 christos Exp $
  *
  * $FreeBSD$
  *
@@ -116,7 +116,7 @@ init_alias(char *filename)
 
 			newa->next = NULL;
 			
-			if (firsta == NULL)
+			if (firsta == NULL || lasta == NULL)
 			{
 				firsta = newa;
 			}
