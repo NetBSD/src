@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.27 2005/06/02 03:07:00 lukem Exp $	*/
+/*	$NetBSD: forward.c,v 1.28 2006/05/24 16:34:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.27 2005/06/02 03:07:00 lukem Exp $");
+__RCSID("$NetBSD: forward.c,v 1.28 2006/05/24 16:34:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -255,7 +255,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 					fp = freopen(fname, "r", fp);
 					if (fp == NULL) {
 						ierr();
-						break;
+						goto out;
 					}
 					*sbp = statbuf;
 					if (kq != -1)
@@ -266,7 +266,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 			break;
 		}
 	}
-
+out:
 	if (fflag && kq != -1)
 		close(kq);
 }
