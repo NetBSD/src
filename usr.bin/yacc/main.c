@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2006/05/24 18:06:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2006/05/24 18:06:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,14 +62,11 @@ char tflag;
 char vflag;
 
 char *symbol_prefix;
-static char *file_prefix = "y";
 char *myname = "yacc";
-static char *temp_form = "yacc.XXXXXXX";
+
 
 int lineno;
 int outline;
-
-static int explicit_file_name;
 
 char *action_file_name;
 char *code_file_name;
@@ -112,6 +109,11 @@ short *rprec;
 char  *rassoc;
 short **derives;
 char *nullable;
+
+static char *file_prefix = "y";
+static char *temp_form = "yacc.XXXXXXX";
+static int explicit_file_name;
+
 
 static __dead void onintr(int) __attribute__((__noreturn__));
 static void set_signals(void);

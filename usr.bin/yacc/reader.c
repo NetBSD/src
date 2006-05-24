@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.15 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.16 2006/05/24 18:06:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.15 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.16 2006/05/24 18:06:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,16 +50,17 @@ __RCSID("$NetBSD: reader.c,v 1.15 2006/05/24 18:01:43 christos Exp $");
 
 #define LINESIZE 100
 
+int ntags;
+char unionized;
+char *cptr, *line;
+
 static char *cache;
 static int cinc, cache_size;
 
-int ntags;
 static int tagmax;
 static char **tag_table;
 
 static char saw_eof;
-char unionized;
-char *cptr, *line;
 static int linesize;
 
 static bucket *goal;
