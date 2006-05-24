@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.30 2006/05/12 16:00:08 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.31 2006/05/24 02:38:43 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -262,4 +262,15 @@ sys/arch/xen/i386/npx.c				1.8
 	Apply fix from FreeBSD's advisory: fxrstor on AMD FPU's does not
 	restore FIP,FDP,FOP thus leaking other process's execution history.
 	[adrianp, ticket #10553]
+
+sys/dev/ata/wd.c				1.324 via patch
+
+	Add yet another broken 160Gb seagate drive.
+	[bouyer, ticket #10625]
+
+sys/netinet6/ip6_input.c			1.87 via patch
+
+	In ip6_savecontrol(), ignore IPv4 packets.
+	From JINMEI Tatuya (KAME). PR#33269.
+	[rpaulo, ticket #10626]
 
