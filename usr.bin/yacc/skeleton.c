@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.25 2003/08/07 11:17:54 agc Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.26 2006/05/24 18:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.25 2003/08/07 11:17:54 agc Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.26 2006/05/24 18:01:43 christos Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ const char * const banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.25 2003/08/07 11:17:54 agc Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.26 2006/05/24 18:01:43 christos Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
@@ -364,8 +364,7 @@ const char * const trailer[] =
 
 
 void
-write_section(section)
-const char * const section[];
+write_section(const char * const section[])
 {
     int c;
     int i;

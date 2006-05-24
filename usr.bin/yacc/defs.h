@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 2006/05/03 18:08:24 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 2006/05/24 18:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -65,8 +65,8 @@
 #define MINSHORT	-32768
 #define MAXTABLE	32500
 #define BITS_PER_WORD	32
-#define	WORDSIZE(n)	(((n)+(BITS_PER_WORD-1))/BITS_PER_WORD)
-#define	BIT(r, n)	((((r)[(n)>>5])>>((n)&31))&1)
+#define	WORDSIZE(n)	(((n)+(BITS_PER_WORD-1)/BITS_PER_WORD))
+#define	BIT(r, n)	((((r)[(n)>>5])>>((n)&31)&1))
 #define	SETBIT(r, n)	((r)[(n)>>5]|=((unsigned)1<<((n)&31)))
 
 
@@ -312,61 +312,68 @@ extern short final_state;
 
 /* global functions */
 
-extern char *allocate __P((unsigned));
-extern bucket *lookup __P((char *));
-extern bucket *make_bucket __P((char *));
+extern char *allocate(unsigned);
+extern bucket *lookup(char *);
+extern bucket *make_bucket(char *);
 
-extern void set_first_derives __P((void));
-extern void closure __P((short *, int));
-extern void finalize_closure __P((void));
+extern void set_first_derives(void);
+extern void closure(short *, int);
+extern void finalize_closure(void);
 
-extern __dead void fatal __P((char *));
+extern __dead void fatal(char *) __attribute__((__noreturn__));
 
-extern void reflexive_transitive_closure __P((unsigned *, int));
-extern __dead void done __P((int));
+extern void reflexive_transitive_closure(unsigned *, int);
+extern __dead void done(int) __attribute__((__noreturn__));
 
-extern __dead void no_space __P((void));
-extern __dead void open_error(char *);
-extern __dead void unexpected_EOF __P((void));
-extern void print_pos __P((char *, char *));
-extern __dead void syntax_error __P((int, char *, char *));
-extern __dead void unterminated_comment __P((int, char *, char *));
-extern __dead void unterminated_string __P((int, char *, char *));
-extern __dead void unterminated_text __P((int, char *, char *));
-extern __dead void unterminated_union __P((int, char *, char *));
-extern __dead void over_unionized __P((char *));
-extern void illegal_tag __P((int, char *, char *));
-extern void illegal_character __P((char *));
-extern void used_reserved __P((char *));
-extern void tokenized_start __P((char *));
-extern void retyped_warning __P((char *));
-extern void reprec_warning __P((char *));
-extern void revalued_warning __P((char *));
-extern __dead void terminal_start __P((char *));
-extern void restarted_warning __P((void));
-extern __dead void no_grammar __P((void));
-extern __dead void terminal_lhs __P((int));
-extern void prec_redeclared __P((void));
-extern __dead void unterminated_action __P((int, char *, char *));
-extern void dollar_warning __P((int, int));
-extern __dead void dollar_error __P((int, char *, char *));
-extern __dead void untyped_lhs __P((void));
-extern __dead void untyped_rhs __P((int, char *));
-extern __dead void unknown_rhs __P((int));
-extern void default_action_warning __P((void));
-extern __dead void undefined_goal __P((char *));
-extern void undefined_symbol_warning __P((char *));
+extern __dead void no_space(void) __attribute__((__noreturn__));
+extern __dead void open_error(char *) __attribute__((__noreturn__));
+extern __dead void unexpected_EOF(void) __attribute__((__noreturn__));
+extern void print_pos(char *, char *);
+extern __dead void syntax_error(int, char *, char *)
+    __attribute__((__noreturn__));
+extern __dead void unterminated_comment(int, char *, char *)
+    __attribute__((__noreturn__));
+extern __dead void unterminated_string(int, char *, char *)
+    __attribute__((__noreturn__));
+extern __dead void unterminated_text(int, char *, char *)
+    __attribute__((__noreturn__));
+extern __dead void unterminated_union(int, char *, char *)
+    __attribute__((__noreturn__));
+extern __dead void over_unionized(char *) __attribute__((__noreturn__));
+extern void illegal_tag(int, char *, char *);
+extern void illegal_character(char *);
+extern void used_reserved(char *);
+extern void tokenized_start(char *);
+extern void retyped_warning(char *);
+extern void reprec_warning(char *);
+extern void revalued_warning(char *);
+extern __dead void terminal_start(char *) __attribute__((__noreturn__));
+extern void restarted_warning(void);
+extern __dead void no_grammar(void) __attribute__((__noreturn__));
+extern __dead void terminal_lhs(int) __attribute__((__noreturn__));
+extern void prec_redeclared(void);
+extern __dead void unterminated_action(int, char *, char *)
+    __attribute__((__noreturn__));
+extern void dollar_warning(int, int);
+extern __dead void dollar_error(int, char *, char *)
+    __attribute__((__noreturn__));
+extern __dead void untyped_lhs(void) __attribute__((__noreturn__));
+extern __dead void untyped_rhs(int, char *) __attribute__((__noreturn__));
+extern __dead void unknown_rhs(int) __attribute__((__noreturn__));
+extern void default_action_warning(void);
+extern __dead void undefined_goal(char *) __attribute__((__noreturn__));
+extern void undefined_symbol_warning(char *);
 
-extern void lalr __P((void));
+extern void lalr(void);
 
-extern void reader __P((void));
-extern void lr0 __P((void));
-extern void make_parser __P((void));
-extern void verbose __P((void));
-extern void output __P((void));
-extern void free_parser __P((void));
-extern void write_section __P((const char * const []));
+extern void reader(void);
+extern void lr0(void);
+extern void make_parser(void);
+extern void verbose(void);
+extern void output(void);
+extern void free_parser(void);
+extern void write_section(const char * const []);
 
-extern void create_symbol_table __P((void));
-extern void free_symbol_table __P((void));
-extern void free_symbols __P((void));
+extern void create_symbol_table(void);
+extern void free_symbol_table(void);
+extern void free_symbols(void);

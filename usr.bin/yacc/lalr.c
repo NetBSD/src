@@ -1,4 +1,4 @@
-/*	$NetBSD: lalr.c,v 1.8 2003/08/07 11:17:53 agc Exp $	*/
+/*	$NetBSD: lalr.c,v 1.9 2006/05/24 18:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: lalr.c,v 1.8 2003/08/07 11:17:53 agc Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.9 2006/05/24 18:01:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,23 +63,23 @@ short *goto_map;
 short *from_state;
 short *to_state;
 
-short **transpose(short **, int);
-void set_state_table __P((void));
-void set_accessing_symbol __P((void));
-void set_shift_table __P((void));
-void set_reduction_table __P((void));
-void set_maxrhs __P((void));
-void initialize_LA __P((void));
-void set_goto_map __P((void));
-void initialize_F __P((void));
-void build_relations __P((void));
-void compute_FOLLOWS __P((void));
-void compute_lookaheads __P((void));
+static short **transpose(short **, int);
+static void set_state_table(void);
+static void set_accessing_symbol(void);
+static void set_shift_table(void);
+static void set_reduction_table(void);
+static void set_maxrhs(void);
+static void initialize_LA(void);
+static void set_goto_map(void);
+static void initialize_F(void);
+static void build_relations(void);
+static void compute_FOLLOWS(void);
+static void compute_lookaheads(void);
 
-int map_goto __P((int, int));
-void digraph __P((short **));
-void add_lookback_edge __P((int, int, int));
-void traverse __P((int));
+static int map_goto(int, int);
+static void digraph(short **);
+static void add_lookback_edge(int, int, int);
+static void traverse(int);
 
 
 static int infinity;
@@ -94,7 +94,7 @@ static short *VERTICES;
 static int top;
 
 void
-lalr()
+lalr(void)
 {
     tokensetsize = WORDSIZE(ntokens);
 
@@ -112,8 +112,8 @@ lalr()
 }
 
 
-void
-set_state_table()
+static void
+set_state_table(void)
 {
     core *sp;
 
@@ -123,8 +123,8 @@ set_state_table()
 }
 
 
-void
-set_accessing_symbol()
+static void
+set_accessing_symbol(void)
 {
     core *sp;
 
@@ -134,8 +134,8 @@ set_accessing_symbol()
 }
 
 
-void
-set_shift_table()
+static void
+set_shift_table(void)
 {
     shifts *sp;
 
@@ -145,8 +145,8 @@ set_shift_table()
 }
 
 
-void
-set_reduction_table()
+static void
+set_reduction_table(void)
 {
     reductions *rp;
 
@@ -156,8 +156,8 @@ set_reduction_table()
 }
 
 
-void
-set_maxrhs()
+static void
+set_maxrhs(void)
 {
   short *itemp;
   short *item_end;
@@ -184,8 +184,8 @@ set_maxrhs()
 }
 
 
-void
-initialize_LA()
+static void
+initialize_LA(void)
 {
   int i, j, k;
   reductions *rp;
@@ -222,8 +222,8 @@ initialize_LA()
 }
 
 
-void
-set_goto_map()
+static void
+set_goto_map(void)
 {
   shifts *sp;
   int i;
@@ -292,10 +292,8 @@ set_goto_map()
 
 /*  Map_goto maps a state/symbol pair into its numeric representation.	*/
 
-int
-map_goto(state, symbol)
-int state;
-int symbol;
+static int
+map_goto(int state, int symbol)
 {
     int high;
     int low;
@@ -320,8 +318,8 @@ int symbol;
 }
 
 
-void
-initialize_F()
+static void
+initialize_F(void)
 {
   int i;
   int j;
@@ -398,7 +396,7 @@ initialize_F()
 
 
 void
-build_relations()
+build_relations(void)
 {
   int i;
   int j;
@@ -490,9 +488,8 @@ build_relations()
 }
 
 
-void
-add_lookback_edge(stateno, ruleno, gotono)
-int stateno, ruleno, gotono;
+static void
+add_lookback_edge(int stateno, int ruleno, int gotono)
 {
     int i, k;
     int found;
@@ -518,10 +515,8 @@ int stateno, ruleno, gotono;
 
 
 
-short **
-transpose(R, n)
-short **R;
-int n;
+static short **
+transpose(short **R, int n)
 {
   short **new_R;
   short **temp_R;
@@ -575,15 +570,15 @@ int n;
 }
 
 
-void
-compute_FOLLOWS()
+static void
+compute_FOLLOWS(void)
 {
   digraph(includes);
 }
 
 
-void
-compute_lookaheads()
+static void
+compute_lookaheads(void)
 {
   int i, n;
   unsigned *fp1, *fp2, *fp3;
@@ -617,9 +612,8 @@ compute_lookaheads()
 }
 
 
-void
-digraph(relation)
-short **relation;
+static void
+digraph(short **relation)
 {
   int i;
 
@@ -644,9 +638,8 @@ short **relation;
 }
 
 
-void
-traverse(i)
-int i;
+static void
+traverse(int i)
 {
   unsigned *fp1;
   unsigned *fp2;

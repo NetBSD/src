@@ -1,4 +1,4 @@
-/*	$NetBSD: lr0.c,v 1.8 2006/04/22 18:16:13 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.9 2006/05/24 18:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lr0.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: lr0.c,v 1.8 2006/04/22 18:16:13 christos Exp $");
+__RCSID("$NetBSD: lr0.c,v 1.9 2006/05/24 18:01:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,27 +52,31 @@ core *first_state;
 shifts *first_shift;
 reductions *first_reduction;
 
-int get_state __P((int));
-core *new_state __P((int));
+static int get_state(int);
+static core *new_state(int);
 
-void allocate_itemsets __P((void));
-void allocate_storage __P((void));
-void append_states __P((void));
-void free_storage __P((void));
-void generate_states __P((void));
-void initialize_states __P((void));
-void new_itemsets __P((void));
-void show_cores __P((void));
-void show_ritems __P((void));
-void show_rrhs __P((void));
-void show_shifts __P((void));
-void save_shifts __P((void));
-void save_reductions __P((void));
-void set_derives __P((void));
-void print_derives __P((void));
-void set_nullable __P((void));
-void free_derives __P((void));
-void free_nullable __P((void));
+static void allocate_itemsets(void);
+static void allocate_storage(void);
+static void append_states(void);
+static void free_storage(void);
+static void generate_states(void);
+static void initialize_states(void);
+static void new_itemsets(void);
+#ifdef DEBUG
+static void show_cores(void);
+static void show_ritems(void);
+static void show_rrhs(void);
+static void show_shifts(void);
+#endif
+static void save_shifts(void);
+static void save_reductions(void);
+static void set_derives(void);
+static void set_nullable(void);
+#ifdef DEBUG
+static void print_derives(void);
+static void free_derives(void);
+static void free_nullable(void);
+#endif
 
 static core **state_set;
 static core *this_state;
@@ -90,8 +94,8 @@ static short **kernel_base;
 static short **kernel_end;
 static short *kernel_items;
 
-void
-allocate_itemsets()
+static void
+allocate_itemsets(void)
 {
     short *itemp;
     short *item_end;
@@ -132,8 +136,8 @@ allocate_itemsets()
     kernel_end = NEW2(nsyms, short *);
 }
 
-void
-allocate_storage()
+static void
+allocate_storage(void)
 {
     allocate_itemsets();
     shiftset = NEW2(nsyms, short);
@@ -141,8 +145,8 @@ allocate_storage()
     state_set = NEW2(nitems, core *);
 }
 
-void
-append_states()
+static void
+append_states(void)
 {
     int i;
     int j;
@@ -170,8 +174,8 @@ append_states()
     }
 }
 
-void
-free_storage()
+static void
+free_storage(void)
 {
     FREE(shift_symbol);
     FREE(redset);
@@ -183,8 +187,8 @@ free_storage()
 }
 
 
-void
-generate_states()
+static void
+generate_states(void)
 {
     allocate_storage();
     itemset = NEW2(nitems, short);
@@ -211,9 +215,8 @@ generate_states()
 
 
 
-int
-get_state(symbol)
-int symbol;
+static int
+get_state(int symbol)
 {
     int key;
     short *isp1;
@@ -275,8 +278,8 @@ int symbol;
 }
 
 
-void
-initialize_states()
+static void
+initialize_states(void)
 {
     int i;
     short *start_derives;
@@ -303,8 +306,8 @@ initialize_states()
 }
 
 
-void
-new_itemsets()
+static void
+new_itemsets(void)
 {
     int i;
     int shiftcount;
@@ -340,9 +343,8 @@ new_itemsets()
 
 
 
-core *
-new_state(symbol)
-int symbol;
+static core *
+new_state(int symbol)
 {
     int n;
     core *p;
@@ -378,10 +380,10 @@ int symbol;
     return (p);
 }
 
-
+#ifdef DEBUG
 /* show_cores is used for debugging */
-void
-show_cores()
+static void
+show_cores(void)
 {
     core *p;
     int i, j, k, n;
@@ -415,8 +417,8 @@ show_cores()
 
 
 /* show_ritems is used for debugging */
-void
-show_ritems()
+static void
+show_ritems(void)
 {
     int i;
 
@@ -426,8 +428,8 @@ show_ritems()
 
 
 /* show_rrhs is used for debugging */
-void
-show_rrhs()
+static void
+show_rrhs(void)
 {
     int i;
 
@@ -437,8 +439,8 @@ show_rrhs()
 
 
 /* show_shifts is used for debugging */
-void
-show_shifts()
+static void
+show_shifts(void)
 {
     shifts *p;
     int i, j, k;
@@ -454,10 +456,11 @@ show_shifts()
 	    printf("\t%d\n", p->shift[i]);
     }
 }
+#endif
 
 
-void
-save_shifts()
+static void
+save_shifts(void)
 {
     shifts *p;
     short *sp1;
@@ -490,8 +493,8 @@ save_shifts()
 }
 
 
-void
-save_reductions()
+static void
+save_reductions(void)
 {
     short *isp;
     short *rp1;
@@ -540,8 +543,8 @@ save_reductions()
 }
 
 
-void
-set_derives()
+static void
+set_derives(void)
 {
     int i, k;
     int lhs;
@@ -574,16 +577,18 @@ set_derives()
 #endif
 }
 
-void
-free_derives()
+#ifdef DEBUG
+static void
+free_derives(void)
 {
     FREE(derives[start_symbol]);
     FREE(derives);
 }
+#endif
 
 #ifdef	DEBUG
-void
-print_derives()
+static void
+print_derives(void)
 {
     int i;
     short *sp;
@@ -605,8 +610,8 @@ print_derives()
 #endif
 
 
-void
-set_nullable()
+static void
+set_nullable(void)
 {
     int i, j;
     int empty;
@@ -655,15 +660,17 @@ set_nullable()
 }
 
 
-void
-free_nullable()
+#ifdef DEBUG
+static void
+free_nullable(void)
 {
     FREE(nullable);
 }
+#endif
 
 
 void
-lr0()
+lr0(void)
 {
     set_derives();
     set_nullable();
