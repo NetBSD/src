@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.7 2003/04/20 00:17:22 christos Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.8 2006/05/25 00:27:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.7 2003/04/20 00:17:22 christos Exp $");
+__RCSID("$NetBSD: loop-bsd.c,v 1.8 2006/05/25 00:27:56 christos Exp $");
 #endif
 
 #include <errno.h>
@@ -118,7 +118,8 @@ Loop()
 	if (iflist->fd != -1) {
 		if (ioctl(iflist->fd, BIOCGBLEN, (caddr_t) & bufsize) < 0)
 			mopLogErr("BIOCGBLEN");
-	}
+	} else
+		mopLogErrX("cannot get buffer size");
 	buf = (u_char *) malloc((unsigned) bufsize);
 	if (buf == 0)
 		mopLogErr("malloc");
