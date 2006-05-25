@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.54 2006/05/25 02:01:40 christos Exp $	*/
+/*	$NetBSD: route6d.c,v 1.55 2006/05/25 02:05:40 christos Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.54 2006/05/25 02:01:40 christos Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.55 2006/05/25 02:05:40 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -2407,7 +2407,7 @@ krtread(int again)
 {
 	int mib[6];
 	size_t msize;
-	char *buf, *p, *lim;
+	char *buf = NULL, *p, *lim;
 	struct rt_msghdr *rtm;
 	int retry;
 	const char *errmsg;
@@ -2423,8 +2423,10 @@ krtread(int again)
 	do {
 		retry++;
 		errmsg = NULL;
-		if (buf)
+		if (buf) {
 			free(buf);
+			buf = NULL;
+		}
 		if (sysctl(mib, 6, NULL, &msize, NULL, 0) < 0) {
 			errmsg = "sysctl estimate";
 			continue;
@@ -2443,7 +2445,7 @@ krtread(int again)
 		    (u_long)msize);
 		/*NOTREACHED*/
 	} else if (1 < retry)
-		syslog(LOG_INFO, "NET_RT_DUMP %d retires", retry);
+		syslog(LOG_INFO, "NET_RT_DUMP %d retries", retry);
 
 	lim = buf + msize;
 	for (p = buf; p < lim; p += rtm->rtm_msglen) {
