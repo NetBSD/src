@@ -404,7 +404,7 @@ void pmksa_cache_clear_current(struct wpa_sm *sm)
  * pmksa_cache_set_current - Set the current PMKSA entry selection
  * @sm: Pointer to WPA state machine data from wpa_sm_init()
  * @pmkid: PMKID for selecting PMKSA or %NULL if not used
- * @bssid: BSSID for PMKSA  or %NULL if not used
+ * @bssid: BSSID for PMKSA or %NULL if not used
  * @ssid: The network configuration for the current network
  * @try_opportunistic: Whether to allow opportunistic PMKSA caching
  * Returns: 0 if PMKSA was found or -1 if no matching entry was found

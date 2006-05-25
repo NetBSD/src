@@ -713,7 +713,7 @@ static int eap_ttls_phase2_request(struct eap_sm *sm,
 	    data->phase2_type == EAP_TTLS_PHASE2_MSCHAP ||
 	    data->phase2_type == EAP_TTLS_PHASE2_PAP ||
 	    data->phase2_type == EAP_TTLS_PHASE2_CHAP) {
-		if (config == NULL || config->identity == NULL) {
+		if (config->identity == NULL) {
 			wpa_printf(MSG_INFO,
 				   "EAP-TTLS: Identity not configured");
 			eap_sm_request_identity(sm, config);
