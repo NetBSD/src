@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.15 2006/05/23 00:58:42 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.16 2006/05/25 15:27:35 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.15 2006/05/23 00:58:42 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.16 2006/05/25 15:27:35 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -843,7 +843,7 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
 	krb5_principal princ;
 	krb5_keyblock *keyblock;
 	krb5_data packet;
-	krb5_auth_context auth_context;
+	krb5_auth_context auth_context = NULL;
 	char phost[BUFSIZ];
 	const char *services[3], **service;
 
