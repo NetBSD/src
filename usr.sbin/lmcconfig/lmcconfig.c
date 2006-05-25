@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: lmcconfig.c,v 1.9 2006/05/25 00:12:31 christos Exp $
+ * $NetBSD: lmcconfig.c,v 1.10 2006/05/25 00:16:48 christos Exp $
  *
  * First author: Michael Graff.
  * Copyright (c) 1997-2000 Lan Media Corp.
@@ -2510,7 +2510,7 @@ int main(int argc, char **argv)
 
   /* 2) Open the device; decide if netgraph is being used, */
   /* use netgraph if ifname ends with ":" */
-  for (i=0; i<16; i++) if (ifname[i] == 0) break;
+  for (i=0; ifname[i] != 0; i++) continue;
 
   /* Get a socket type file descriptor. */
 #if defined(NETGRAPH)
