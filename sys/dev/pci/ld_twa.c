@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$netbsd: $ */
+/*	$NetBSD: ld_twa.c,v 1.2 2006/05/25 01:37:08 wrstuden Exp $ */
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.2 2006/05/25 01:37:08 wrstuden Exp $");
 
 #include "rnd.h"
 
