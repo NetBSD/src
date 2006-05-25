@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.11 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: route.c,v 1.12 2006/05/25 01:44:28 christos Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -287,6 +287,7 @@ create_route(u_int32_t origin, u_int32_t mask)
 				       (2 * numvifs * sizeof(u_int32_t)) +
 				       (numvifs * sizeof(u_int)))) == NULL) {
 	logit(LOG_ERR, 0, "ran out of memory");	/* fatal */
+	return;
     }
     r->rt_origin     = origin;
     r->rt_originmask = mask;
