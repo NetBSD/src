@@ -57,7 +57,9 @@ static u8 * eap_md5_process(struct eap_sm *sm, void *priv,
 	}
 
 	pos = eap_hdr_validate(EAP_TYPE_MD5, reqData, reqDataLen, &len);
-	if (pos == NULL) {
+	if (pos == NULL || len == 0) {
+		wpa_printf(MSG_INFO, "EAP-MD5: Invalid frame (pos=%p len=%lu)",
+			   pos, (unsigned long) len);
 		ret->ignore = TRUE;
 		return NULL;
 	}
@@ -66,7 +68,7 @@ static u8 * eap_md5_process(struct eap_sm *sm, void *priv,
 	if (challenge_len == 0 ||
 	    challenge_len > len - 1) {
 		wpa_printf(MSG_INFO, "EAP-MD5: Invalid challenge "
-			   "(challenge_len=%d len=%lu",
+			   "(challenge_len=%d len=%lu)",
 			   challenge_len, (unsigned long) len);
 		ret->ignore = TRUE;
 		return NULL;

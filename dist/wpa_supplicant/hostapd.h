@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-void hostapd_logger(void *ctx, u8 *addr, unsigned int module, int level,
+void hostapd_logger(void *ctx, const u8 *addr, unsigned int module, int level,
 		    char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
 
 struct hostapd_ip_addr;

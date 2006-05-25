@@ -1,5 +1,18 @@
 ChangeLog for wpa_supplicant
 
+2006-05-06 - v0.4.9
+	* fixed EAPOL re-authentication for sessions that used PMKSA caching
+	* reject WPA/WPA2 message 3/4 if it does not include any valid
+	  WPA/RSN IE
+	* driver_ndis: Fixed encryption mode configuration for unencrypted
+	  networks (some NDIS drivers ignored this, but others, e.g., Broadcom,
+	  refused to associate with open networks) [Bug 106]
+	* driver_wext: added support for WE-21 change to SSID configuration
+	* driver_wext: fixed privacy configuration for static WEP keys mode
+	  [Bug 140]
+	* driver_wext: added fallback to use SIOCSIWENCODE for setting auth_alg
+	  if the driver does not support SIOCSIWAUTH
+
 2006-02-08 - v0.4.8
 	* fixed PC/SC code to use correct length for GSM AUTH command buffer
 	  and to not use pioRecvPci with SCardTransmit() calls; these were not

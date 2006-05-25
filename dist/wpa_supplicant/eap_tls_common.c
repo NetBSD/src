@@ -56,12 +56,14 @@ int eap_tls_ssl_init(struct eap_sm *sm, struct eap_ssl_data *data,
 	int ret = -1, res;
 	struct tls_connection_params params;
 
+	if (config == NULL)
+		return -1;
+
 	data->eap = sm;
 	data->phase2 = sm->init_phase2;
 	memset(&params, 0, sizeof(params));
 	params.engine = config->engine;
-	if (config == NULL) {
-	} else if (data->phase2) {
+	if (data->phase2) {
 		params.ca_cert = (char *) config->ca_cert2;
 		params.ca_path = (char *) config->ca_path2;
 		params.client_cert = (char *) config->client_cert2;
@@ -139,7 +141,7 @@ int eap_tls_ssl_init(struct eap_sm *sm, struct eap_ssl_data *data,
 			data->tls_out_limit -= 100;
 	}
 
-	if (config && config->phase1 &&
+	if (config->phase1 &&
 	    strstr(config->phase1, "include_tls_length=1")) {
 		wpa_printf(MSG_DEBUG, "TLS: Include TLS Message Length in "
 			   "unfragmented packets");

@@ -230,7 +230,6 @@ int wpa_supplicant_driver_init(struct wpa_supplicant *wpa_s,
 struct wpa_blacklist * wpa_blacklist_get(struct wpa_supplicant *wpa_s,
 					 const u8 *bssid);
 int wpa_blacklist_add(struct wpa_supplicant *wpa_s, const u8 *bssid);
-int wpa_blacklist_del(struct wpa_supplicant *wpa_s, const u8 *bssid);
 void wpa_blacklist_clear(struct wpa_supplicant *wpa_s);
 int wpa_supplicant_set_suites(struct wpa_supplicant *wpa_s,
 			      struct wpa_scan_result *bss,

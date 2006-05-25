@@ -644,6 +644,7 @@ static void * eap_fast_init(struct eap_sm *sm)
 				_methods = realloc(methods, num_methods);
 				if (_methods == NULL) {
 					free(methods);
+					free(buf);
 					eap_fast_deinit(sm, data);
 					return NULL;
 				}
@@ -1925,7 +1926,15 @@ static int eap_fast_get_status(struct eap_sm *sm, void *priv, char *buf,
 			       size_t buflen, int verbose)
 {
 	struct eap_fast_data *data = priv;
-	return eap_tls_status(sm, &data->ssl, buf, buflen, verbose);
+	int len;
+
+	len = eap_tls_status(sm, &data->ssl, buf, buflen, verbose);
+	if (data->phase2_method) {
+		len += snprintf(buf + len, buflen - len,
+				"EAP-FAST Phase2 method=%s\n",
+				data->phase2_method->name);
+	}
+	return len;
 }
 
 

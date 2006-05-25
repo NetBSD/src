@@ -152,6 +152,7 @@ void wpa_sm_key_request(struct wpa_sm *sm, int error, int pairwise);
 int wpa_parse_wpa_ie(const u8 *wpa_ie, size_t wpa_ie_len,
 		     struct wpa_ie_data *data);
 
+void wpa_sm_aborted_cached(struct wpa_sm *sm);
 int wpa_sm_rx_eapol(struct wpa_sm *sm, const u8 *src_addr,
 		    const u8 *buf, size_t len);
 int wpa_sm_parse_own_wpa_ie(struct wpa_sm *sm, struct wpa_ie_data *data);
@@ -267,6 +268,10 @@ static inline int wpa_parse_wpa_ie(const u8 *wpa_ie, size_t wpa_ie_len,
 				   struct wpa_ie_data *data)
 {
 	return -1;
+}
+
+static inline void wpa_sm_aborted_cached(struct wpa_sm *sm)
+{
 }
 
 static inline int wpa_sm_rx_eapol(struct wpa_sm *sm, const u8 *src_addr,

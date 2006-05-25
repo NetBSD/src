@@ -257,7 +257,7 @@ struct wpa_config {
 };
 
 
-/* Protypes for common functions from config.c */
+/* Prototypes for common functions from config.c */
 
 void wpa_config_free(struct wpa_config *ssid);
 void wpa_config_free_ssid(struct wpa_ssid *ssid);

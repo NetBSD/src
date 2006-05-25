@@ -103,7 +103,7 @@ static u8 * eap_leap_process_request(struct eap_sm *sm, void *priv,
 	if (challenge_len != LEAP_CHALLENGE_LEN ||
 	    challenge_len > reqDataLen - sizeof(*req) - 4) {
 		wpa_printf(MSG_INFO, "EAP-LEAP: Invalid challenge "
-			   "(challenge_len=%d reqDataLen=%lu",
+			   "(challenge_len=%d reqDataLen=%lu)",
 			   challenge_len, (unsigned long) reqDataLen);
 		ret->ignore = TRUE;
 		return NULL;
@@ -233,7 +233,7 @@ static u8 * eap_leap_process_response(struct eap_sm *sm, void *priv,
 	if (response_len != LEAP_RESPONSE_LEN ||
 	    response_len > reqDataLen - sizeof(*resp) - 4) {
 		wpa_printf(MSG_INFO, "EAP-LEAP: Invalid response "
-			   "(response_len=%d reqDataLen=%lu",
+			   "(response_len=%d reqDataLen=%lu)",
 			   response_len, (unsigned long) reqDataLen);
 		ret->ignore = TRUE;
 		return NULL;
