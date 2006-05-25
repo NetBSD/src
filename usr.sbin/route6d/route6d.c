@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.57 2006/05/25 02:35:50 rpaulo Exp $	*/
+/*	$NetBSD: route6d.c,v 1.58 2006/05/25 02:40:58 rpaulo Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.57 2006/05/25 02:35:50 rpaulo Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.58 2006/05/25 02:40:58 rpaulo Exp $");
 #endif
 
 #include <stdio.h>
@@ -2109,6 +2109,7 @@ ifrt_p2p(struct ifc *ifcp, int again)
 		advert |= P2PADVERT_ADDR;
 		advert |= P2PADVERT_DEST;
 		ignore |= P2PADVERT_NETWORK;
+#endif
 #if BEHAVIOR == ROUTE6D
 		/*
 		 * just for testing.  actually the code is redundant
