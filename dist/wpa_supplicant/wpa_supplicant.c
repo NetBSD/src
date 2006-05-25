@@ -10,6 +10,10 @@
  * license.
  *
  * See README and COPYING for more details.
+ *
+ * This file implements functions for registering and unregistering
+ * %wpa_supplicant interfaces. In addition, this file contains number of
+ * functions for managing network connections.
  */
 
 #include <stdlib.h>
@@ -134,6 +138,7 @@ void wpa_msg(struct wpa_supplicant *wpa_s, int level, char *fmt, ...)
 }
 
 
+#if defined(IEEE8021X_EAPOL) || !defined(CONFIG_NO_WPA)
 static u8 * wpa_alloc_eapol(const struct wpa_supplicant *wpa_s, u8 type,
 			    const void *data, u16 data_len,
 			    size_t *msg_len, void **data_pos)
@@ -163,14 +168,15 @@ static u8 * wpa_alloc_eapol(const struct wpa_supplicant *wpa_s, u8 type,
 
 /**
  * wpa_ether_send - Send Ethernet frame
- * @wpa_s: pointer to wpa_supplicant data
+ * @wpa_s: Pointer to wpa_supplicant data
  * @dest: Destination MAC address
- * @proto: Ethertype
+ * @proto: Ethertype in host byte order
  * @buf: Frame payload starting from IEEE 802.1X header
  * @len: Frame payload length
+ * Returns: >=0 on success, <0 on failure
  */
-int wpa_ether_send(struct wpa_supplicant *wpa_s, const u8 *dest, u16 proto,
-		   const u8 *buf, size_t len)
+static int wpa_ether_send(struct wpa_supplicant *wpa_s, const u8 *dest,
+			  u16 proto, const u8 *buf, size_t len)
 {
 	if (wpa_s->l2) {
 		return l2_packet_send(wpa_s->l2, dest, proto, buf, len);
@@ -178,15 +184,17 @@ int wpa_ether_send(struct wpa_supplicant *wpa_s, const u8 *dest, u16 proto,
 
 	return wpa_drv_send_eapol(wpa_s, dest, proto, buf, len);
 }
+#endif /* IEEE8021X_EAPOL || !CONFIG_NO_WPA */
 
 
 #ifdef IEEE8021X_EAPOL
 /**
  * wpa_supplicant_eapol_send - Send IEEE 802.1X EAPOL packet to Authenticator
- * @ctx: pointer to wpa_supplicant data
+ * @ctx: Pointer to wpa_supplicant data (wpa_s)
  * @type: IEEE 802.1X packet type (IEEE802_1X_TYPE_*)
  * @buf: EAPOL payload (after IEEE 802.1X header)
  * @len: EAPOL payload length
+ * Returns: >=0 on success, <0 on failure
  *
  * This function adds Ethernet and IEEE 802.1X header and sends the EAPOL frame
  * to the current Authenticator.
@@ -257,13 +265,12 @@ static int wpa_supplicant_eapol_send(void *ctx, int type, const u8 *buf,
 
 /**
  * wpa_eapol_set_wep_key - set WEP key for the driver
- * @ctx: pointer to wpa_supplicant data
+ * @ctx: Pointer to wpa_supplicant data (wpa_s)
  * @unicast: 1 = individual unicast key, 0 = broadcast key
  * @keyidx: WEP key index (0..3)
- * @key: pointer to key data
- * @keylen: key length in bytes
- *
- * Returns 0 on success or < 0 on error.
+ * @key: Pointer to key data
+ * @keylen: Key length in bytes
+ * Returns: 0 on success or < 0 on error.
  */
 static int wpa_eapol_set_wep_key(void *ctx, int unicast, int keyidx,
 				 const u8 *key, size_t keylen)
@@ -274,6 +281,14 @@ static int wpa_eapol_set_wep_key(void *ctx, int unicast, int keyidx,
 			       (u8 *) "\xff\xff\xff\xff\xff\xff",
 			       keyidx, unicast, (u8 *) "", 0, key, keylen);
 }
+
+
+static void wpa_supplicant_aborted_cached(void *ctx)
+{
+	struct wpa_supplicant *wpa_s = ctx;
+	wpa_sm_aborted_cached(wpa_s->wpa);
+}
+
 #endif /* IEEE8021X_EAPOL */
 
 
@@ -371,6 +386,12 @@ static void wpa_supplicant_notify_eapol_done(void *ctx)
 #endif /* IEEE8021X_EAPOL */
 
 
+/**
+ * wpa_blacklist_get - Get the blacklist entry for a BSSID
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @bssid: BSSID
+ * Returns: Matching blacklist entry for the BSSID or %NULL if not found
+ */
 struct wpa_blacklist * wpa_blacklist_get(struct wpa_supplicant *wpa_s,
 					 const u8 *bssid)
 {
@@ -387,6 +408,22 @@ struct wpa_blacklist * wpa_blacklist_get(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_blacklist_add - Add an BSSID to the blacklist
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @bssid: BSSID to be added to the blacklist
+ * Returns: 0 on success, -1 on failure
+ *
+ * This function adds the specified BSSID to the blacklist or increases the
+ * blacklist count if the BSSID was already listed. It should be called when
+ * an association attempt fails either due to the selected BSS rejecting
+ * association or due to timeout.
+ *
+ * This blacklist is used to force %wpa_supplicant to go through all available
+ * BSSes before retrying to associate with an BSS that rejected or timed out
+ * association. It does not prevent the listed BSS from being used; it only
+ * changes the order in which they are tried.
+ */
 int wpa_blacklist_add(struct wpa_supplicant *wpa_s, const u8 *bssid)
 {
 	struct wpa_blacklist *e;
@@ -415,7 +452,7 @@ int wpa_blacklist_add(struct wpa_supplicant *wpa_s, const u8 *bssid)
 }
 
 
-int wpa_blacklist_del(struct wpa_supplicant *wpa_s, const u8 *bssid)
+static int wpa_blacklist_del(struct wpa_supplicant *wpa_s, const u8 *bssid)
 {
 	struct wpa_blacklist *e, *prev = NULL;
 
@@ -439,6 +476,10 @@ int wpa_blacklist_del(struct wpa_supplicant *wpa_s, const u8 *bssid)
 }
 
 
+/**
+ * wpa_blacklist_clear - Clear the blacklist of all entries
+ * @wpa_s: Pointer to wpa_supplicant data
+ */
 void wpa_blacklist_clear(struct wpa_supplicant *wpa_s)
 {
 	struct wpa_blacklist *e, *prev;
@@ -455,6 +496,20 @@ void wpa_blacklist_clear(struct wpa_supplicant *wpa_s)
 }
 
 
+/**
+ * wpa_ssid_txt - Convert SSID to a printable string
+ * @ssid: SSID (32-octet string)
+ * @ssid_len: Length of ssid in octets
+ * Returns: Pointer to a printable string
+ *
+ * This function can be used to convert SSIDs into printable form. In most
+ * cases, SSIDs do not use unprintable characters, but IEEE 802.11 standard
+ * does not limit the used character set, so anything could be used in an SSID.
+ *
+ * This function uses a static buffer, so only one call can be used at the
+ * time, i.e., this is not re-entrant and the returned buffer must be used
+ * before calling this again.
+ */
 const char * wpa_ssid_txt(u8 *ssid, size_t ssid_len)
 {
 	static char ssid_txt[MAX_SSID_LEN + 1];
@@ -472,6 +527,15 @@ const char * wpa_ssid_txt(u8 *ssid, size_t ssid_len)
 }
 
 
+/**
+ * wpa_supplicant_req_scan - Schedule a scan for neighboring access points
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @sec: Number of seconds after which to scan
+ * @usec: Number of microseconds after which to scan
+ *
+ * This function is used to schedule a scan for neighboring access points after
+ * the specified time.
+ */
 void wpa_supplicant_req_scan(struct wpa_supplicant *wpa_s, int sec, int usec)
 {
 	wpa_msg(wpa_s, MSG_DEBUG, "Setting scan request: %d sec %d usec",
@@ -481,6 +545,13 @@ void wpa_supplicant_req_scan(struct wpa_supplicant *wpa_s, int sec, int usec)
 }
 
 
+/**
+ * wpa_supplicant_cancel_scan - Cancel a scheduled scan request
+ * @wpa_s: Pointer to wpa_supplicant data
+ *
+ * This function is used to cancel a scan request scheduled with
+ * wpa_supplicant_req_scan().
+ */
 void wpa_supplicant_cancel_scan(struct wpa_supplicant *wpa_s)
 {
 	wpa_msg(wpa_s, MSG_DEBUG, "Cancelling scan request");
@@ -501,6 +572,15 @@ static void wpa_supplicant_timeout(void *eloop_ctx, void *timeout_ctx)
 }
 
 
+/**
+ * wpa_supplicant_req_auth_timeout - Schedule a timeout for authentication
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @sec: Number of seconds after which to time out authentication
+ * @usec: Number of microseconds after which to time out authentication
+ *
+ * This function is used to schedule a timeout for the current authentication
+ * attempt.
+ */
 void wpa_supplicant_req_auth_timeout(struct wpa_supplicant *wpa_s,
 				     int sec, int usec)
 {
@@ -515,6 +595,14 @@ void wpa_supplicant_req_auth_timeout(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_supplicant_cancel_auth_timeout - Cancel authentication timeout
+ * @wpa_s: Pointer to wpa_supplicant data
+ *
+ * This function is used to cancel authentication timeout scheduled with
+ * wpa_supplicant_req_auth_timeout() and it is called when authentication has
+ * been completed.
+ */
 void wpa_supplicant_cancel_auth_timeout(struct wpa_supplicant *wpa_s)
 {
 	wpa_msg(wpa_s, MSG_DEBUG, "Cancelling authentication timeout");
@@ -523,6 +611,13 @@ void wpa_supplicant_cancel_auth_timeout(struct wpa_supplicant *wpa_s)
 }
 
 
+/**
+ * wpa_supplicant_initiate_eapol - Configure EAPOL state machine
+ * @wpa_s: Pointer to wpa_supplicant data
+ *
+ * This function is used to configure EAPOL state machine based on the selected
+ * authentication mode.
+ */
 void wpa_supplicant_initiate_eapol(struct wpa_supplicant *wpa_s)
 {
 	struct eapol_config eapol_conf;
@@ -563,6 +658,15 @@ void wpa_supplicant_initiate_eapol(struct wpa_supplicant *wpa_s)
 }
 
 
+/**
+ * wpa_supplicant_set_non_wpa_policy - Set WPA parameters to non-WPA mode
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @ssid: Configuration data for the network
+ *
+ * This function is used to configure WPA state machine and related parameters
+ * to a mode where WPA is not enabled. This is called as part of the
+ * authentication configuration when the selected network does not use WPA.
+ */
 void wpa_supplicant_set_non_wpa_policy(struct wpa_supplicant *wpa_s,
 				       struct wpa_ssid *ssid)
 {
@@ -637,6 +741,14 @@ static void wpa_supplicant_cleanup(struct wpa_supplicant *wpa_s)
 }
 
 
+/**
+ * wpa_clear_keys - Clear keys configured for the driver
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @addr: Previously used BSSID or %NULL if not available
+ *
+ * This function clears the encryption keys that has been previously configured
+ * for the driver.
+ */
 void wpa_clear_keys(struct wpa_supplicant *wpa_s, const u8 *addr)
 {
 	u8 *bcast = (u8 *) "\xff\xff\xff\xff\xff\xff";
@@ -666,6 +778,11 @@ void wpa_clear_keys(struct wpa_supplicant *wpa_s, const u8 *addr)
 }
 
 
+/**
+ * wpa_supplicant_state_txt - Get the connection state name as a text string
+ * @state: State (wpa_state; WPA_*)
+ * Returns: The state name as a printable text string
+ */
 const char * wpa_supplicant_state_txt(int state)
 {
 	switch (state) {
@@ -691,6 +808,14 @@ const char * wpa_supplicant_state_txt(int state)
 }
 
 
+/**
+ * wpa_supplicant_set_state - Set current connection state
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @state: The new connection state
+ *
+ * This function is called whenever the connection state changes, e.g.,
+ * association is completed for WPA/WPA2 4-Way Handshake is started.
+ */
 void wpa_supplicant_set_state(struct wpa_supplicant *wpa_s, wpa_states state)
 {
 	wpa_printf(MSG_DEBUG, "State: %s -> %s",
@@ -711,6 +836,11 @@ void wpa_supplicant_set_state(struct wpa_supplicant *wpa_s, wpa_states state)
 }
 
 
+/**
+ * wpa_supplicant_get_state - Get the connection state
+ * @wpa_s: Pointer to wpa_supplicant data
+ * Returns: The current connection state (WPA_*)
+ */
 wpa_states wpa_supplicant_get_state(struct wpa_supplicant *wpa_s)
 {
 	return wpa_s->wpa_state;
@@ -730,6 +860,17 @@ static void wpa_supplicant_terminate(int sig, void *eloop_ctx,
 }
 
 
+/**
+ * wpa_supplicant_reload_configuration - Reload configuration data
+ * @wpa_s: Pointer to wpa_supplicant data
+ * Returns: 0 on success or -1 if configuration parsing failed
+ *
+ * This function can be used to request that the configuration data is reloaded
+ * (e.g., after configuration file change). This function is reloading
+ * configuration only for one interface, so this may need to be called multiple
+ * times if %wpa_supplicant is controlling multiple interfaces and all
+ * interfaces need reconfiguration.
+ */
 int wpa_supplicant_reload_configuration(struct wpa_supplicant *wpa_s)
 {
 	struct wpa_config *conf;
@@ -968,6 +1109,20 @@ static int wpa_supplicant_suites_from_ai(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_supplicant_set_suites - Set authentication and encryption parameters
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @bss: Scan results for the selected BSS, or %NULL if not available
+ * @ssid: Configuration data for the selected network
+ * @wpa_ie: Buffer for the WPA/RSN IE
+ * @wpa_ie_len: Maximum wpa_ie buffer size on input. This is changed to be the
+ * used buffer length in case the functions returns success.
+ * Returns: 0 on success or -1 on failure
+ *
+ * This function is used to configure authentication and encryption parameters
+ * based on the network configuration and scan result for the selected BSS (if
+ * available).
+ */
 int wpa_supplicant_set_suites(struct wpa_supplicant *wpa_s,
 			      struct wpa_scan_result *bss,
 			      struct wpa_ssid *ssid,
@@ -1089,6 +1244,14 @@ int wpa_supplicant_set_suites(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_supplicant_associate - Request association
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @bss: Scan results for the selected BSS, or %NULL if not available
+ * @ssid: Configuration data for the selected network
+ *
+ * This function is used to request %wpa_supplicant to associate with a BSS.
+ */
 void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 			      struct wpa_scan_result *bss,
 			      struct wpa_ssid *ssid)
@@ -1280,6 +1443,14 @@ void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_supplicant_disassociate - Disassociate the current connection
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @reason_code: IEEE 802.11 reason code for the disassociate frame
+ *
+ * This function is used to request %wpa_supplicant to disassociate with the
+ * current AP.
+ */
 void wpa_supplicant_disassociate(struct wpa_supplicant *wpa_s,
 				 int reason_code)
 {
@@ -1298,6 +1469,14 @@ void wpa_supplicant_disassociate(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_supplicant_deauthenticate - Deauthenticate the current connection
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @reason_code: IEEE 802.11 reason code for the deauthenticate frame
+ *
+ * This function is used to request %wpa_supplicant to disassociate with the
+ * current AP.
+ */
 void wpa_supplicant_deauthenticate(struct wpa_supplicant *wpa_s,
 				   int reason_code)
 {
@@ -1316,6 +1495,14 @@ void wpa_supplicant_deauthenticate(struct wpa_supplicant *wpa_s,
 }
 
 
+/**
+ * wpa_supplicant_get_scan_results - Get scan results
+ * @wpa_s: Pointer to wpa_supplicant data
+ * Returns: 0 on success, -1 on failure
+ *
+ * This function is request the current scan results from the driver and stores
+ * a local copy of the results in wpa_s->scan_results.
+ */
 int wpa_supplicant_get_scan_results(struct wpa_supplicant *wpa_s)
 {
 #define SCAN_AP_LIMIT 128
@@ -1407,10 +1594,9 @@ static int wpa_supplicant_get_beacon_ie(void *ctx)
 
 
 /**
- * wpa_supplicant_get_ssid - get a pointer to the current network structure
- * @wpa_s: pointer to wpa_supplicant data
- *
- * Returns: a pointer to the current network structure or %NULL on failure
+ * wpa_supplicant_get_ssid - Get a pointer to the current network structure
+ * @wpa_s: Pointer to wpa_supplicant data
+ * Returns: A pointer to the current network structure or %NULL on failure
  */
 struct wpa_ssid * wpa_supplicant_get_ssid(struct wpa_supplicant *wpa_s)
 {
@@ -1611,6 +1797,17 @@ void wpa_supplicant_rx_eapol(void *ctx, const u8 *src_addr,
 }
 
 
+/**
+ * wpa_supplicant_driver_init - Initialize driver interface parameters
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @wait_for_interface: 0 = do not wait for the interface (reports a failure if
+ * the interface is not present), 1 = wait until the interface is available
+ * Returns: 0 on success, -1 on failure
+ *
+ * This function is called to initialize driver interface parameters.
+ * wpa_drv_init() must have been called before this function to initialize the
+ * driver interface.
+ */
 int wpa_supplicant_driver_init(struct wpa_supplicant *wpa_s,
 			       int wait_for_interface)
 {
@@ -1803,6 +2000,7 @@ static int wpa_supplicant_init_eapol(struct wpa_supplicant *wpa_s)
 	ctx->set_wep_key = wpa_eapol_set_wep_key;
 	ctx->set_config_blob = wpa_supplicant_set_config_blob;
 	ctx->get_config_blob = wpa_supplicant_get_config_blob;
+	ctx->aborted_cached = wpa_supplicant_aborted_cached;
 	ctx->opensc_engine_path = wpa_s->conf->opensc_engine_path;
 	ctx->pkcs11_engine_path = wpa_s->conf->pkcs11_engine_path;
 	ctx->pkcs11_module_path = wpa_s->conf->pkcs11_module_path;
@@ -2107,13 +2305,13 @@ struct wpa_global * wpa_supplicant_init(struct wpa_params *params)
 	eloop_init(global);
 
 	if (wpa_supplicant_global_ctrl_iface_init(global)) {
-		eloop_destroy();
+		wpa_supplicant_deinit(global);
 		return NULL;
 	}
 
 	if (global->params.wait_for_interface && global->params.daemonize &&
 	    wpa_supplicant_daemon(global->params.pid_file)) {
-		eloop_destroy();
+		wpa_supplicant_deinit(global);
 		return NULL;
 	}
 

@@ -23,7 +23,7 @@ The source code and read-only access to %wpa_supplicant CVS repository
 is available from the project home page at
 http://hostap.epitest.fi/wpa_supplicant/. This developers' documentation
 is also available as a PDF file from
-http://hostap.epitest.fi/wpa_supplicant/wpa_supplicant-devel.pdf .
+http://hostap.epitest.fi/wpa_supplicant/wpa_supplicant-devel-04.pdf .
 
 The design goal for %wpa_supplicant was to use hardware, driver, and
 OS independent, portable C code for all WPA functionality. The source
