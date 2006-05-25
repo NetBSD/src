@@ -257,11 +257,9 @@ static void radius_msg_dump_attr(struct radius_attr_hdr *hdr)
 		break;
 
 	case RADIUS_ATTR_INT32:
-		if (len == 4) {
-			u32 *val = (u32 *) pos;
-			printf("      Value: %u\n",
-			       (unsigned int) ntohl(*val));
-		} else
+		if (len == 4)
+			printf("      Value: %u\n", WPA_GET_BE32(pos));
+		else
 			printf("      Invalid INT32 length %d\n", len);
 		break;
 
@@ -966,8 +964,8 @@ radius_msg_get_cisco_keys(struct radius_msg *msg, struct radius_msg *sent_msg,
 					    sent_msg->hdr->authenticator,
 					    secret, secret_len,
 					    &keys->recv_len);
-		free(key);
 	}
+	free(key);
 
 	return keys;
 }
