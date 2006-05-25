@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.14 2006/05/25 03:17:26 christos Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.15 2006/05/25 03:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.14 2006/05/25 03:17:26 christos Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.15 2006/05/25 03:17:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -114,7 +114,7 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 		}
 		if ((p = strchr(buf, '\n')) == NULL) {
 			warnx("line %d too long", lineno);
-			(void)fclose(fp);
+			(void)fclose(fpw);
 			RETURN(1);
 		}
 		/* get rid of trailing \n */
