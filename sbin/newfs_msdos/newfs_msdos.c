@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.20 2006/05/23 01:03:16 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.21 2006/05/25 15:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.20 2006/05/23 01:03:16 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.21 2006/05/25 15:32:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -759,15 +759,19 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 {
 #ifdef __FreeBSD__
     struct diskslices ds;
+    int slice = -1;
+#define NO_SLICE (slice == -1)
+#else
+#define NO_SLICE 0
 #endif
     struct disklabel dl, *lp;
     const char *s1, *s2;
     char *s;
-    int slice, part, fd1, i, e;
+    int part, fd1, i, e;
     int maxpartitions;
     u_int nsectors, ntracks;
 
-    slice = part = -1;
+    part = -1;
     s1 = fname;
     if ((s2 = strrchr(s1, '/')))
 	s1 = s2 + 1;
@@ -818,16 +822,12 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	    bpb->bsec = ds.dss_slices[slice].ds_size;
     }
 #endif
-    if (((
-#ifdef __FreeBSD__
-slice == -1 ||
-#endif
-	 part != -1) &&
+    if (((NO_SLICE || part != -1) &&
 	 ((!oflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
 	lp = &dl;
 	i = ioctl(fd, DIOCGDINFO, lp);
-	if (i == -1 && slice != -1 && part == -1) {
+	if (i == -1 && !NO_SLICE && part == -1) {
 	    e = errno;
 	    if (!(s = strdup(fname)))
 		err(1, NULL);
@@ -847,7 +847,7 @@ slice == -1 ||
 	    } else if (!(lp = getdiskbyname(dtype)))
 		errx(1, "%s: unknown disk type", dtype);
 	}
-	if (slice == -1 || part != -1) {
+	if (NO_SLICE || part != -1) {
 	    if (part == -1)
 		part = RAW_PART;
 	    if (part >= lp->d_npartitions ||
