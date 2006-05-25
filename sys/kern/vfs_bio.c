@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.160 2006/05/14 21:15:12 elad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.161 2006/05/25 14:27:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.160 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.161 2006/05/25 14:27:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,9 +179,9 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * Buffer pool for I/O buffers.
- * Access to this pool must be protected with splbio().
  */
-static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
+static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
+    &pool_allocator_nointr);
 
 
 /* XXX - somewhat gross.. */
@@ -377,8 +377,7 @@ bufinit(void)
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-					  bufmem_valimit, VM_MAP_PAGEABLE,
-					  FALSE, 0);
+					  bufmem_valimit, 0, FALSE, 0);
 		if (buf_map == NULL)
 			panic("bufinit: cannot allocate submap");
 	} else
@@ -395,6 +394,7 @@ bufinit(void)
 	use_std = 1;
 #endif
 
+	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
@@ -987,13 +987,13 @@ already_queued:
 	/* Allow disk interrupts. */
 	simple_unlock(&bp->b_interlock);
 	simple_unlock(&bqueue_slock);
+	splx(s);
 	if (bp->b_bufsize <= 0) {
 #ifdef DEBUG
 		memset((char *)bp, 0, sizeof(*bp));
 #endif
 		pool_put(&bufpool, bp);
 	}
-	splx(s);
 }
 
 /*
