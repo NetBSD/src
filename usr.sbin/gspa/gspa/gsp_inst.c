@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.6 2006/05/24 23:34:59 christos Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.7 2006/05/25 02:50:50 christos Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.6 2006/05/24 23:34:59 christos Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.7 2006/05/25 02:50:50 christos Exp $");
 #endif
 
 #include <string.h>
@@ -460,7 +460,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		op1 = NULL;
 	class = ip->class & CLASS;
 	flags = ip->class & ~CLASS;
-	if( class == MOVE && && op0 && op1 && op1->type == REG ){
+	if( class == MOVE && op0 && op1 && op1->type == REG ){
 		if (op0->type == REG ){
 			class = DYADIC;
 			if( (op0->reg_no & op1->reg_no & REGFILE) == 0 ){
