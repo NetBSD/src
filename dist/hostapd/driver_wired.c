@@ -105,7 +105,8 @@ static void wired_possible_new_sta(struct hostapd_data *hapd, u8 *addr)
 }
 
 
-static void handle_data(struct hostapd_data *hapd, char *buf, size_t len)
+static void handle_data(struct hostapd_data *hapd, unsigned char *buf,
+			size_t len)
 {
 	struct ieee8023_hdr *hdr;
 	u8 *pos, *sa;

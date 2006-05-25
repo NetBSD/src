@@ -662,9 +662,10 @@ u8 radius_client_get_id(struct radius_client_data *radius)
 			else
 				radius->msgs = entry->next;
 			remove = entry;
-		} else
+		} else {
 			remove = NULL;
-		prev = entry;
+			prev = entry;
+		}
 		entry = entry->next;
 
 		if (remove)
