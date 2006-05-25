@@ -1,4 +1,4 @@
-/* $NetBSD: uuid.c,v 1.1 2006/05/21 09:26:38 agc Exp $ */
+/* $NetBSD: uuid.c,v 1.2 2006/05/25 19:41:06 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -56,6 +56,7 @@
 #include <uuid.h>
 #endif
 
+#include "compat.h"
 #include "defs.h"
 
 #ifndef HAVE_UUID_CREATE
