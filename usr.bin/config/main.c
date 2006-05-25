@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2006/05/25 22:06:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2006/05/25 22:28:38 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,7 @@ int	yyparse(void);
 extern int yydebug;
 #endif
 
+static struct hashtab *obsopttab;
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
@@ -114,7 +115,7 @@ static	int	kill_orphans_cb(const char *, void *, void *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
 static	const char *strtolower(const char *);
 void	defopt(struct hashtab *ht, const char *fname,
-	     struct nvlist *opts, struct nvlist *deps);
+	     struct nvlist *opts, struct nvlist *deps, int obs);
 
 #define LOGCONFIG_LARGE "INCLUDE_CONFIG_FILE"
 #define LOGCONFIG_SMALL "INCLUDE_JUST_CONFIG"
@@ -270,6 +271,7 @@ main(int argc, char **argv)
 	defparamtab = ht_new();
 	defflagtab = ht_new();
 	optfiletab = ht_new();
+	obsopttab = ht_new();
 	bdevmtab = ht_new();
 	maxbdevm = 0;
 	cdevmtab = ht_new();
@@ -641,7 +643,7 @@ find_declared_option(const char *name)
  */
 void
 defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
-       struct nvlist *deps)
+       struct nvlist *deps, int obs)
 {
 	struct nvlist *nv, *nextnv, *oldnv, *dep;
 	struct attr *a;
@@ -698,6 +700,9 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 					error("option `%s' dependency `%s' "
 					    "is an interface attribute",
 					    nv->nv_name, a->a_name);
+			} else if (OPT_OBSOLETE(dep->nv_name)) {
+				error("option `%s' dependency `%s' "
+				    "is obsolete", nv->nv_name, dep->nv_name);
 			} else if (find_declared_option(dep->nv_name) == NULL) {
 				error("option `%s' dependency `%s' "
 				    "is an unknown option",
@@ -710,6 +715,14 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 		 * it to the list associated with this option file.
 		 */
 		nv->nv_next = NULL;
+
+		/*
+		 * Flag as obsolete, if requested.
+		 */
+		if (obs) {
+			nv->nv_flags |= NV_OBSOLETE;
+			(void)ht_insert(obsopttab, nv->nv_name, nv);
+		}
 
 		/*
 		 * Add this option file if we haven't seen it yet.
@@ -736,7 +749,7 @@ defoption(const char *fname, struct nvlist *opts, struct nvlist *deps)
 {
 
 	warn("The use of `defopt' is deprecated");
-	defopt(defopttab, fname, opts, deps);
+	defopt(defopttab, fname, opts, deps, 0);
 }
 
 
@@ -744,10 +757,10 @@ defoption(const char *fname, struct nvlist *opts, struct nvlist *deps)
  * Define an option for which a value is required. 
  */
 void
-defparam(const char *fname, struct nvlist *opts, struct nvlist *deps)
+defparam(const char *fname, struct nvlist *opts, struct nvlist *deps, int obs)
 {
 
-	defopt(defparamtab, fname, opts, deps);
+	defopt(defparamtab, fname, opts, deps, obs);
 }
 
 /*
@@ -755,10 +768,10 @@ defparam(const char *fname, struct nvlist *opts, struct nvlist *deps)
  * emits a "needs-flag" style output.
  */
 void
-defflag(const char *fname, struct nvlist *opts, struct nvlist *deps)
+defflag(const char *fname, struct nvlist *opts, struct nvlist *deps, int obs)
 {
 
-	defopt(defflagtab, fname, opts, deps);
+	defopt(defflagtab, fname, opts, deps, obs);
 }
 
 
@@ -770,7 +783,7 @@ void
 addoption(const char *name, const char *value)
 {
 	const char *n;
-	int is_fs, is_param, is_flag, is_opt, is_undecl;
+	int is_fs, is_param, is_flag, is_opt, is_undecl, is_obs;
 
 	/* 
 	 * Figure out how this option was declared (if at all.)
@@ -781,7 +794,14 @@ addoption(const char *name, const char *value)
 	is_param = OPT_DEFPARAM(name);
 	is_opt = OPT_DEFOPT(name);
 	is_flag =  OPT_DEFFLAG(name);
+	is_obs = OPT_OBSOLETE(name);
 	is_undecl = !DEFINED_OPTION(name);
+
+	/* Warn and pretend the user had not selected the option  */
+	if (is_obs) {
+		warn("obsolete option `%s' will be ignored", name);
+		return;
+	}
 
 	/* Make sure this is not a defined file system. */
 	if (is_fs) {
