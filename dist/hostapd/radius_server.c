@@ -404,7 +404,7 @@ static int radius_server_request(struct radius_server_data *data,
 {
 	u8 *eap = NULL;
 	size_t eap_len;
-	int res, state_included;
+	int res, state_included = 0;
 	u8 statebuf[4], resp_id;
 	unsigned int state;
 	struct radius_session *sess;

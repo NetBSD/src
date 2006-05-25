@@ -294,7 +294,7 @@ static void eap_mschapv2_process_response(struct eap_sm *sm,
 	resp = (struct eap_mschapv2_hdr *) respData;
 	pos = (u8 *) (resp + 1);
 
-	if (respDataLen < sizeof(resp) + 1 + 49 ||
+	if (respDataLen < sizeof(*resp) + 1 + 49 ||
 	    resp->op_code != MSCHAPV2_OP_RESPONSE ||
 	    pos[0] != 49) {
 		wpa_hexdump(MSG_DEBUG, "EAP-MSCHAPV2: Invalid response",

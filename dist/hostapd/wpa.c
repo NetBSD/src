@@ -1853,7 +1853,7 @@ static void wpa_send_eapol(struct hostapd_data *hapd, struct sta_info *sta,
 	if (hdr == NULL)
 		return;
 	memset(hdr, 0, len);
-	hdr->version = EAPOL_VERSION;
+	hdr->version = hapd->conf->eapol_version;
 	hdr->type = IEEE802_1X_TYPE_EAPOL_KEY;
 	hdr->length = htons(len  - sizeof(*hdr));
 	key = (struct wpa_eapol_key *) (hdr + 1);
@@ -2662,10 +2662,11 @@ static int wpa_sm_sta_entry_alive(struct hostapd_data *hapd, u8 *addr)
 
 static void wpa_sm_step(struct wpa_state_machine *sm)
 {
-	struct hostapd_data *hapd = sm->hapd;
+	struct hostapd_data *hapd;
 	u8 addr[6];
 	if (sm == NULL || sm->sta == NULL || sm->sta->wpa_sm == NULL)
 		return;
+	hapd = sm->hapd;
 
 	memcpy(addr, sm->sta->addr, 6);
 	do {

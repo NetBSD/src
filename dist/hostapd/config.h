@@ -57,6 +57,7 @@ struct hostapd_config {
 	char *dump_log_name; /* file name for state dump (SIGUSR1) */
 
 	int ieee802_1x; /* use IEEE 802.1X */
+	int eapol_version;
 	int eap_server; /* Use internal EAP server instead of external
 			 * RADIUS server */
 	struct hostapd_eap_user *eap_user;

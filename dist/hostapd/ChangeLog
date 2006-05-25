@@ -1,5 +1,12 @@
 ChangeLog for hostapd
 
+2006-05-06 - v0.4.9
+	* added a new configuration option, eapol_version, that can be used to
+	  set EAPOL version to 1 (default is 2) to work around broken client
+	  implementations that drop EAPOL frames which use version number 2
+	  [Bug 89]
+	* fixed EAP-MSCHAPv2 message length validation
+
 2006-02-08 - v0.4.8
 	* fixed stdarg use in hostapd_logger(): if both stdout and syslog
 	  logging was enabled, hostapd could trigger a segmentation fault in

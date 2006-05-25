@@ -1,7 +1,7 @@
 /*
  * Host AP (software wireless LAN access point) user space daemon for
  * Host AP kernel driver / IEEE 802.1X Authenticator
- * Copyright (c) 2002-2005, Jouni Malinen <jkmaline@cc.hut.fi>
+ * Copyright (c) 2002-2006, Jouni Malinen <jkmaline@cc.hut.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -74,7 +74,7 @@ static void ieee802_1x_send(hostapd *hapd, struct sta_info *sta, u8 type,
 #endif
 
 	xhdr = (struct ieee802_1x_hdr *) buf;
-	xhdr->version = EAPOL_VERSION;
+	xhdr->version = hapd->conf->eapol_version;
 	xhdr->type = type;
 	xhdr->length = htons(datalen);
 
@@ -322,7 +322,7 @@ static void ieee802_1x_tx_key_one(hostapd *hapd, struct sta_info *sta,
 
 	/* This header is needed here for HMAC-MD5, but it will be regenerated
 	 * in ieee802_1x_send() */
-	hdr->version = EAPOL_VERSION;
+	hdr->version = hapd->conf->eapol_version;
 	hdr->type = IEEE802_1X_TYPE_EAPOL_KEY;
 	hdr->length = htons(len);
 	hmac_md5(sm->eapol_key_sign, sm->eapol_key_sign_len,

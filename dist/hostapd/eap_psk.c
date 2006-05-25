@@ -393,7 +393,7 @@ static void eap_psk_process(struct eap_sm *sm, void *priv,
 	struct eap_psk_hdr *resp;
 
 	if (sm->user == NULL || sm->user->password == NULL) {
-		wpa_printf(MSG_INFO, "EAP-MSCHAPV2: Password not configured");
+		wpa_printf(MSG_INFO, "EAP-PSK: Password not configured");
 		data->state = FAILURE;
 		return;
 	}

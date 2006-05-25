@@ -67,7 +67,8 @@ test_driver_get_cli(struct test_driver_data *drv, struct sockaddr_un *from,
 
 	while (cli) {
 		if (cli->unlen == fromlen &&
-		    strncmp(cli->un.sun_path, from->sun_path, fromlen) == 0)
+		    strncmp(cli->un.sun_path, from->sun_path,
+			    fromlen - sizeof(cli->un.sun_family)) == 0)
 			return cli;
 		cli = cli->next;
 	}
@@ -248,7 +249,8 @@ static void test_driver_assoc(struct test_driver_data *drv,
 	cli->next = drv->cli;
 	drv->cli = cli;
 	wpa_hexdump_ascii(MSG_DEBUG, "test_socket: ASSOC sun_path",
-			  cli->un.sun_path, cli->unlen);
+			  cli->un.sun_path,
+			  cli->unlen - sizeof(cli->un.sun_family));
 
 	snprintf(cmd, sizeof(cmd), "ASSOCRESP " MACSTR " 0",
 		 MAC2STR(drv->hapd->own_addr));

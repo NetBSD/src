@@ -46,5 +46,4 @@ void old_nt_password_hash_encrypted_with_new_nt_password_hash(
 	const u8 *old_password, size_t old_password_len,
 	u8 *encrypted_password_hash);
 
-
 #endif /* MS_FUNCS_H */

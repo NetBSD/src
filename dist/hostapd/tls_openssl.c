@@ -1322,6 +1322,7 @@ static int tls_parse_pkcs12(SSL_CTX *ssl_ctx, SSL *ssl, PKCS12 *p12,
 	if (!PKCS12_parse(p12, passwd, &pkey, &cert, &certs)) {
 		tls_show_errors(MSG_DEBUG, __func__,
 				"Failed to parse PKCS12 file");
+		PKCS12_free(p12);
 		return -1;
 	}
 	wpa_printf(MSG_DEBUG, "TLS: Successfully parsed PKCS12 data");

@@ -23,7 +23,9 @@
 #ifndef ELOOP_H
 #define ELOOP_H
 
-/* Magic number for eloop_cancel_timeout() */
+/**
+ * ELOOP_ALL_CTX - eloop_cancel_timeout() magic number to match all timeouts
+ */
 #define ELOOP_ALL_CTX (void *) -1
 
 /**
@@ -133,7 +135,7 @@ void eloop_terminate(void);
 /**
  * eloop_destroy - Free any resources allocated for the event loop
  *
- * After calling eloop_destoy(), other eloop_* functions must not be called
+ * After calling eloop_destroy(), other eloop_* functions must not be called
  * before re-running eloop_init().
  */
 void eloop_destroy(void);
