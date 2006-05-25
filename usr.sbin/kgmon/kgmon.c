@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.17 2006/05/25 00:05:45 christos Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.18 2006/05/25 00:07:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.17 2006/05/25 00:05:45 christos Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.18 2006/05/25 00:07:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,6 +401,7 @@ dumpstate(struct kvmvars *kvp)
 			fwrite((char *)&rawarc, sizeof(rawarc), 1, fp);
 		}
 	}
+	free(tos);
 	fclose(fp);
 }
 
