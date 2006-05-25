@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.5 2006/02/11 20:15:53 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.6 2006/05/25 22:28:38 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,7 +109,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	IDENT
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
-%token	XOBJECT ON OPTIONS
+%token	XOBJECT OBSOLETE ON OPTIONS
 %token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE
 %token	ROOT
 %token	SOURCE
@@ -281,9 +281,11 @@ one_def:
 	DEFOPT optfile_opt defopts defoptdeps
 					{ defoption($2, $3, $4); } |
 	DEFFLAG optfile_opt defopts defoptdeps
-					{ defflag($2, $3, $4); } |
+					{ defflag($2, $3, $4, 0); } |
+	OBSOLETE DEFFLAG defopts	{ defflag(NULL, $3, NULL, 1); } |
 	DEFPARAM optfile_opt defopts defoptdeps
-					{ defparam($2, $3, $4); } |
+					{ defparam($2, $3, $4, 0); } |
+	OBSOLETE DEFPARAM defopts	{ defparam(NULL, $3, NULL, 1); } |
 	DEVICE devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
