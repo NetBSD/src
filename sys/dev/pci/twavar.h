@@ -1,4 +1,4 @@
-/*	$wasabi: twavar.h,v 1.11 2006/04/27 17:12:39 wrstuden Exp $	*/
+/*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 /*
  * Copyright (c) 2005-2006 Wasabi Systems, Inc.
  * All rights reserved.
@@ -192,7 +192,7 @@ struct twa_request {
 	struct ld_twa_softc	*tr_ld_sc;
 };
 
-static __inline__ size_t twa_get_maxsegs(void) {
+static __inline size_t twa_get_maxsegs(void) {
 	size_t max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
 #ifdef TWA_SG_SIZE
 	if (TWA_MAX_SG_ELEMENTS < max_segs)
@@ -201,7 +201,7 @@ static __inline__ size_t twa_get_maxsegs(void) {
 	return max_segs;
 }
 
-static __inline__ size_t twa_get_maxxfer(size_t maxsegs) {
+static __inline size_t twa_get_maxxfer(size_t maxsegs) {
 	return (maxsegs - 1) * PAGE_SIZE;
 }
 
