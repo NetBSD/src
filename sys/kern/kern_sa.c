@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.72 2006/04/13 18:55:49 christos Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.73 2006/05/25 14:13:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #include "opt_ktrace.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.72 2006/04/13 18:55:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.73 2006/05/25 14:13:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1290,8 +1290,15 @@ sa_upcall_userret(struct lwp *l)
 	KDASSERT((l->l_flag & L_SA_BLOCKING) == 0);
 
 	sast = NULL;
-	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL)
+	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL) {
 		sast = sa_getstack(sa);
+		if (sast == NULL) {
+			SA_LWP_STATE_UNLOCK(l, f);
+			KERNEL_PROC_UNLOCK(l);
+			preempt(1);
+			return;
+		}
+	}
 	SCHED_LOCK(s);
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL &&
 	    sast != NULL) {
