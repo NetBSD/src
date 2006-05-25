@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.16 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: vif.c,v 1.17 2006/05/25 01:38:41 christos Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -1197,10 +1197,7 @@ age_vifs(void)
 		v->uv_flags |= VIFF_LEAF;
 	}
 
-	for (prev_a = (struct listaddr *)&(v->uv_neighbors),
-	     a = v->uv_neighbors;
-	     a != NULL;
-	     prev_a = a, a = a->al_next) {
+	for (prev_a = a = v->uv_neighbors; a != NULL;) {
 
 	    if ((a->al_timer += TIMER_INTERVAL) < NEIGHBOR_EXPIRE_TIME)
 		continue;
@@ -1212,9 +1209,15 @@ age_vifs(void)
 	     * another neighbor with a lower IP address than mine.
 	     */
 	    addr = a->al_addr;
-	    prev_a->al_next = a->al_next;
-	    free((char *)a);
-	    a = prev_a;
+	    if (a == v->uv_neighbors) {
+		v->uv_neighbors = a->al_next;
+		free((char *)a);
+		prev_a = a = v->uv_neighbors;
+	    } else {
+		prev_a->al_next = a->al_next;
+		free((char *)a);
+		prev_a = a = prev_a->al_next;
+	    }
 
 	    delete_neighbor_from_routes(addr, vifi);
 
