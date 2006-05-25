@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.53 2006/05/25 01:58:39 christos Exp $	*/
+/*	$NetBSD: route6d.c,v 1.54 2006/05/25 02:01:40 christos Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.53 2006/05/25 01:58:39 christos Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.54 2006/05/25 02:01:40 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -700,7 +700,7 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 		}
 	}
 	error = sendpacket(sin6, RIPSIZE(nrt));
-	if (error == EAFNOSUPPORT) {
+	if (error == EAFNOSUPPORT && ifcp) {
 		/* Protocol not supported */
 		tracet(1, "Could not send info to %s (%s): "
 			"set IFF_UP to 0\n",
