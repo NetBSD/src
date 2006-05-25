@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.16 2006/05/12 01:27:27 mrg Exp $	*/
+/*	$NetBSD: prune.c,v 1.17 2006/05/25 01:41:13 christos Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -622,8 +622,10 @@ add_table_entry(u_int32_t origin, u_int32_t mcastgrp)
 
     if (gt == NULL || gt->gt_mcastgrp != mcastgrp) {
 	gt = (struct gtable *)malloc(sizeof(struct gtable));
-	if (gt == NULL)
+	if (gt == NULL) {
 	    logit(LOG_ERR, 0, "ran out of memory");
+	    return;
+	}
 
 	gt->gt_mcastgrp	    = mcastgrp;
 	gt->gt_timer   	    = CACHE_LIFETIME(cache_lifetime);
@@ -1194,8 +1196,10 @@ accept_prune(u_int32_t src, u_int32_t dst, char *p, int datalen)
 	} else {
 	    /* allocate space for the prune structure */
 	    pt = (struct ptable *)(malloc(sizeof(struct ptable)));
-	    if (pt == NULL)
+	    if (pt == NULL) {
 	      logit(LOG_ERR, 0, "pt: ran out of memory");
+	      return;
+	    }
 		
 	    pt->pt_vifi = vifi;
 	    pt->pt_router = src;
