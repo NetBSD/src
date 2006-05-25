@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.105 2006/05/25 00:33:24 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.106 2006/05/25 00:37:03 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.105 2006/05/25 00:33:24 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.106 2006/05/25 00:37:03 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1989,9 +1989,7 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	struct sockaddr_storage ss;
 	struct addrinfo *ai;
 	int addrlen;
-	char *cp = NULL;
 	int done;
-	char savedc = '\0';
 	struct export_args export;
 
 	export.ex_flags = exflags;
@@ -2033,8 +2031,6 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				syslog(LOG_ERR,
 				    "\"%s\", line %ld: Bad network flag",
 				    line, (unsigned long)lineno);
-				if (cp)
-					*cp = savedc;
 				return (1);
 			}
 			export.ex_mask = (struct sockaddr *)&ss;
@@ -2052,8 +2048,6 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		default:
 			syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
 			    line, (unsigned long)lineno);
-			if (cp)
-				*cp = savedc;
 			return (1);
 		};
 
@@ -2089,8 +2083,6 @@ skip:
 		} else
 			done = TRUE;
 	}
-	if (cp)
-		*cp = savedc;
 	return (0);
 }
 
