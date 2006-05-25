@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.2 2000/06/22 08:09:26 fvdl Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.3 2006/05/25 02:31:38 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -166,7 +166,7 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 		return (NULL);
 	if (check_bound(fdl, uaddr) == FALSE)
 		/* that server died */
-		return (nullstring);
+		return strdup(nullstring);
 	/*
 	 * If saddr is not NULL, the remote client may have included the
 	 * address by which it contacted us.  Use that for the "client" uaddr,
