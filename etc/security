@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.97 2006/04/17 07:38:53 veego Exp $
+#	$NetBSD: security,v 1.98 2006/05/25 02:38:10 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -608,15 +608,35 @@ fi
 if checkyesno check_devices; then
 	> $ERR
 	(
-	# Turn "foo !bar bax" into "-fstype foo -o ! -fstype bar -o -fstype bax"
-	ignfstypes=`echo $check_devices_ignore_fstypes | \
-		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' \
-		    -e's/^-o //'`
-	find / \( $ignfstypes \) -a -prune -o \
+
+	# Convert check_devices_ignore_fstypes="foo !bar bax"
+	#    into "-fstype foo -o ! -fstype bar -o -fstype bax"
+	# and check_devices_ignore_paths="/foo !/bar /bax"
+	#    into " -path /foo -o ! -path /bar -o -path /bax"
+	#
+	ignexpr=$(\
+	    echo $check_devices_ignore_fstypes | \
+		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' ; \
+	    echo $check_devices_ignore_paths | \
+		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -path \2/g' \
+	)
+
+	# Massage the expression into ( $ignexpr ) -a -prune -o
+	if [ -n "${ignexpr}" ]; then
+		ignexpr=$(\
+			echo $ignexpr | \
+			    sed -e 's/^-o /( /' \
+				-e 's/$/ ) -a -prune -o/' \
+		)
+	fi
+
+	find / $ignexpr \
 	    \( \( -perm -u+s -a ! -type d \) -o \
 	       \( -perm -g+s -a ! -type d \) -o \
 	       -type b -o -type c \) -print0 | \
-	xargs -0 ls -ldgTq | sort +9 > $LIST) 2> $OUTPUT
+	xargs -0 ls -ldgTq | sort +9 > $LIST
+
+	) 2> $OUTPUT
 
 	# Display any errors that occurred during system file walk.
 	if [ -s $OUTPUT ] ; then

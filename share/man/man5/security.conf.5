@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.29 2005/02/05 15:31:29 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.30 2006/05/25 02:38:10 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 5, 2005
+.Dd May 25, 2006
 .Dt SECURITY.CONF 5
 .Os
 .Sh NAME
@@ -175,6 +175,19 @@ will ignore
 .Ql procfs
 type filesystems and filesystems that are not
 .Ql local .
+.It Sy check_devices_ignore_paths
+Lists pathnames to ignore during the
+.Sy check_devices
+phase.
+Prefixing the path with a
+.Sq \&!
+inverts the match.
+For example,
+.Ql /tftp !/home
+will ignore paths under
+.Pa /tftp
+and paths that are not under
+.Pa /home .
 .It Sy check_mtree_follow_symlinks
 During the
 .Sy check_mtree
