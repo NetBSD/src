@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.10.14.8 2006/05/20 04:32:00 chap Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.10.14.9 2006/05/25 19:31:10 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct syn_timer {
 
 #define SEQ_MAXQ 256
 struct sequencer_queue {
-	seq_event_rec buf[SEQ_MAXQ];
+	seq_event_t buf[SEQ_MAXQ];
 	u_int	in;		/* input index in buf */
 	u_int	out;		/* output index in buf */
 	u_int	count;		/* filled slots in buf */
@@ -105,7 +105,7 @@ struct sequencer_softc {
 	u_long	input_stamp;
 };
 
-void seq_event_intr(void *, seq_event_rec *);
+void seq_event_intr(void *, seq_event_t *);
 
 #define SEQUENCERUNIT(d) ((d) & 0x7f)
 #define SEQ_IS_OLD(d) ((d) & 0x80)
