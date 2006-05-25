@@ -715,7 +715,7 @@ full_dump_block_zero(partition_map_header *map)
 	printf("           driver type: 0x%x\n", m[i].ddType);
     }
     printf("remainder of block -");
-    dump_block((unsigned char *)&m[i].ddBlock, (&zp->sbMap[247]-((unsigned short *)&m[i].ddBlock))*2);
+    dump_block((unsigned char *)(void *)&m[i].ddBlock, (&zp->sbMap[247]-((unsigned short *)(void *)&m[i].ddBlock))*2);
 }
 
 
