@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.2 2006/05/24 13:39:37 liamjfoy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.3 2006/05/25 15:22:05 liamjfoy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -1990,7 +1990,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		carpr.carpr_vhid = sc->sc_vhid;
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_advskew = sc->sc_advskew;
-			
+
 		if (p != 0 || !(error = kauth_authorize_generic(p->p_cred,
 		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			bcopy(sc->sc_key, carpr.carpr_key,
@@ -2326,7 +2326,7 @@ SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
-		       SYSCTL_DESCR("CARP statistics"), 
+		       SYSCTL_DESCR("CARP statistics"),
 		       NULL, 0, &carpstats, sizeof(carpstats),
 		       CTL_NET, PF_INET, IPPROTO_CARP, CARPCTL_STATS,
 		       CTL_EOL);
