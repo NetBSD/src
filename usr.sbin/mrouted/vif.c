@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.17 2006/05/25 01:38:41 christos Exp $	*/
+/*	$NetBSD: vif.c,v 1.18 2006/05/25 01:43:58 christos Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -574,8 +574,10 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group, int r_type)
      */
     if (g == NULL) {
 	g = (struct listaddr *)malloc(sizeof(struct listaddr));
-	if (g == NULL)
+	if (g == NULL) {
 	    logit(LOG_ERR, 0, "ran out of memory");    /* fatal */
+	    return;
+	}
 
 	g->al_addr   = group;
 	if (r_type == IGMP_v2_HOST_MEMBERSHIP_REPORT)
@@ -1059,8 +1061,10 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 	    level & 0xff, (level >> 8) & 0xff, (level >> 16) & 0xff);
 
 	n = (struct listaddr *)malloc(sizeof(struct listaddr));
-	if (n == NULL)
+	if (n == NULL) {
 	    logit(LOG_ERR, 0, "ran out of memory");    /* fatal */
+	    return FALSE;
+	}
 
 	n->al_addr      = addr;
 	n->al_pv	= level & 0xff;
