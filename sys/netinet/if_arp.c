@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.110 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.111 2006/05/25 21:33:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.110 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.111 2006/05/25 21:33:12 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -842,6 +842,8 @@ in_arpinput(struct mbuf *m)
 	caddr_t tha;
 	int s;
 
+	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
+		goto out;
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 
