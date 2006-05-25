@@ -1,3 +1,4 @@
+/*	$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $ */
 /*	$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $	*/
 /*
  * Copyright (c) 2004-2006 Wasabi Systems, Inc.
@@ -80,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
