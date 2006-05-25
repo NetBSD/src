@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2006/05/24 18:06:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2006/05/25 21:43:40 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2006/05/24 18:06:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2006/05/25 21:43:40 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ static void getargs(int, char *[]);
 static void create_file_names(void);
 static void open_files(void);
 
+/* coverity[+kill] */
 __dead void
 done(int k)
 {
