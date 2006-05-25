@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.48 2006/02/24 11:46:20 bjh21 Exp $	*/
+/*	$NetBSD: pool.h,v 1.49 2006/05/25 14:27:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/tree.h>
+#if defined(_KERNEL)
+#include <sys/callback.h>
+#endif /* defined(_KERNEL) */
 #endif
 
 #define	PCG_NOBJECTS		16
@@ -108,9 +111,17 @@ struct pool_allocator {
 	TAILQ_HEAD(, pool) pa_list;	/* list of pools using this allocator */
 	int		pa_flags;
 #define	PA_INITIALIZED	0x01
-#define	PA_WANT		0x02		/* wakeup any sleeping pools on free */
 	int		pa_pagemask;
 	int		pa_pageshift;
+	struct vm_map *pa_backingmap;
+#if defined(_KERNEL)
+	struct {
+		struct vm_map **i_backingmapptr;
+		SLIST_ENTRY(pool_allocator) i_q;
+	} pa_init;
+#define	pa_q			pa_init.i_q
+#define	pa_backingmapptr	pa_init.i_backingmapptr
+#endif /* defined(_KERNEL) */
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
@@ -205,6 +216,8 @@ struct pool {
 
 	const char	*pr_entered_file; /* reentrancy check */
 	long		pr_entered_line;
+
+	struct callback_entry pr_reclaimerentry;
 };
 #endif /* __POOL_EXPOSE */
 
@@ -239,7 +252,7 @@ static const struct link_pool_init _link_ ## pp[1] = {			\
 };									\
 __link_set_add_rodata(pools, _link_ ## pp)
 
-void		link_pool_init(void);
+void		pool_subsystem_init(void);
 
 void		pool_init(struct pool *, size_t, u_int, u_int,
 		    int, const char *, struct pool_allocator *);
