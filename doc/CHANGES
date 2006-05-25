@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.623 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.624 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -284,3 +284,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		paths to not traverse during the $check_devices
 		operation.  [lukem 20060525]
 	hostapd(8): Updated to version 0.4.9. [rpaulo 20060525]
+	wpa_supplicant(8): Updated to version 0.4.9. [rpaulo 20060525]
