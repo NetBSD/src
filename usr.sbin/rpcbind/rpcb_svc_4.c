@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.3 2005/06/02 09:32:57 lukem Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.4 2006/05/25 02:31:38 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -375,6 +375,7 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 #endif
 			/* The server died. Unset this combination */
 			delete_prog(regp->r_prog);
+			free(maddr);
 			continue;
 		}
 #ifdef RPCBIND_DEBUG
@@ -386,8 +387,10 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		 */
 		rp = (rpcb_entry_list_ptr)
 			malloc((u_int)sizeof (rpcb_entry_list));
-		if (rp == NULL)
+		if (rp == NULL) {
+			free(maddr);
 			goto fail;
+		}
 		a = &rp->rpcb_entry_map;
 		a->r_maddr = maddr;
 		a->r_nc_netid = nconf->nc_netid;
