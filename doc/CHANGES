@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.621 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.622 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -280,3 +280,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		options(4), sysctl(3), and paxctl(1). From PaX. [elad 20060515]
 	carp(4): Import Common Address Redundancy Protocol from OpenBSD
 		[liamjfoy 20060518]
+	security.conf(5): Add $check_devices_ignore_paths, to specify
+		paths to not traverse during the $check_devices
+		operation.  [lukem 20060525]
