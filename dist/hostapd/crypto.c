@@ -12,9 +12,12 @@
  * See README and COPYING for more details.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
+#include <openssl/opensslv.h>
 #include <openssl/md4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>

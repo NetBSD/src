@@ -64,6 +64,7 @@ struct eloop_data {
 	int pending_terminate;
 
 	int terminate;
+	int reader_table_changed;
 };
 
 static struct eloop_data eloop;
@@ -97,6 +98,7 @@ int eloop_register_read_sock(int sock,
 	eloop.readers = tmp;
 	if (sock > eloop.max_sock)
 		eloop.max_sock = sock;
+	eloop.reader_table_changed = 1;
 
 	return 0;
 }
@@ -121,6 +123,7 @@ void eloop_unregister_read_sock(int sock)
 			sizeof(struct eloop_sock));
 	}
 	eloop.reader_count--;
+	eloop.reader_table_changed = 1;
 }
 
 
@@ -348,12 +351,15 @@ void eloop_run(void)
 		if (res <= 0)
 			continue;
 
+		eloop.reader_table_changed = 0;
 		for (i = 0; i < eloop.reader_count; i++) {
 			if (FD_ISSET(eloop.readers[i].sock, rfds)) {
 				eloop.readers[i].handler(
 					eloop.readers[i].sock,
 					eloop.readers[i].eloop_data,
 					eloop.readers[i].user_data);
+				if (eloop.reader_table_changed)
+					break;
 			}
 		}
 	}
