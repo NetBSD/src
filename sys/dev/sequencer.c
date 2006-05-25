@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.18 2006/05/25 20:14:47 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.19 2006/05/25 21:05:29 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.18 2006/05/25 20:14:47 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.19 2006/05/25 21:05:29 chap Exp $");
 
 #include "sequencer.h"
 
@@ -91,47 +91,46 @@ int	sequencerdebug = 0;
 struct sequencer_softc seqdevs[NSEQUENCER];
 
 void sequencerattach(int);
-void seq_reset(struct sequencer_softc *);
-int seq_do_command(struct sequencer_softc *, seq_event_t *);
-int seq_do_extcommand(struct sequencer_softc *, seq_event_t *);
-int seq_do_chnvoice(struct sequencer_softc *, seq_event_t *);
-int seq_do_chncommon(struct sequencer_softc *, seq_event_t *);
-void seq_timer_waitabs(struct sequencer_softc *, uint32_t);
-int seq_do_timing(struct sequencer_softc *, seq_event_t *);
-int seq_do_local(struct sequencer_softc *, seq_event_t *);
-int seq_do_sysex(struct sequencer_softc *, seq_event_t *);
-int seq_do_fullsize(struct sequencer_softc *, seq_event_t *, struct uio *);
+static void seq_reset(struct sequencer_softc *);
+static int seq_do_command(struct sequencer_softc *, seq_event_t *);
+static int seq_do_chnvoice(struct sequencer_softc *, seq_event_t *);
+static int seq_do_chncommon(struct sequencer_softc *, seq_event_t *);
+static void seq_timer_waitabs(struct sequencer_softc *, uint32_t);
+static int seq_do_timing(struct sequencer_softc *, seq_event_t *);
+static int seq_do_local(struct sequencer_softc *, seq_event_t *);
+static int seq_do_sysex(struct sequencer_softc *, seq_event_t *);
+static int seq_do_fullsize(struct sequencer_softc *, seq_event_t *, struct uio *);
 static int seq_input_event(struct sequencer_softc *, seq_event_t *);
-int seq_drain(struct sequencer_softc *);
-void seq_startoutput(struct sequencer_softc *);
-void seq_timeout(void *);
-int seq_to_new(seq_event_t *, struct uio *);
+static int seq_drain(struct sequencer_softc *);
+static void seq_startoutput(struct sequencer_softc *);
+static void seq_timeout(void *);
+static int seq_to_new(seq_event_t *, struct uio *);
 static int seq_sleep_timo(int *, const char *, int);
 static int seq_sleep(int *, const char *);
 static void seq_wakeup(int *);
 
 struct midi_softc;
-int midiseq_out(struct midi_dev *, u_char *, u_int, int);
-struct midi_dev *midiseq_open(int, int);
-void midiseq_close(struct midi_dev *);
-void midiseq_reset(struct midi_dev *);
-int midiseq_noteon(struct midi_dev *, int, int, seq_event_t *);
-int midiseq_noteoff(struct midi_dev *, int, int, seq_event_t *);
-int midiseq_keypressure(struct midi_dev *, int, int, seq_event_t *);
-int midiseq_pgmchange(struct midi_dev *, int, seq_event_t *);
-int midiseq_chnpressure(struct midi_dev *, int, seq_event_t *);
-int midiseq_ctlchange(struct midi_dev *, int, seq_event_t *);
-int midiseq_pitchbend(struct midi_dev *, int, seq_event_t *);
-int midiseq_loadpatch(struct midi_dev *, struct sysex_info *, struct uio *);
+static int midiseq_out(struct midi_dev *, u_char *, u_int, int);
+static struct midi_dev *midiseq_open(int, int);
+static void midiseq_close(struct midi_dev *);
+static void midiseq_reset(struct midi_dev *);
+static int midiseq_noteon(struct midi_dev *, int, int, seq_event_t *);
+static int midiseq_noteoff(struct midi_dev *, int, int, seq_event_t *);
+static int midiseq_keypressure(struct midi_dev *, int, int, seq_event_t *);
+static int midiseq_pgmchange(struct midi_dev *, int, seq_event_t *);
+static int midiseq_chnpressure(struct midi_dev *, int, seq_event_t *);
+static int midiseq_ctlchange(struct midi_dev *, int, seq_event_t *);
+static int midiseq_pitchbend(struct midi_dev *, int, seq_event_t *);
+static int midiseq_loadpatch(struct midi_dev *, struct sysex_info *, struct uio *);
 void midiseq_in(struct midi_dev *, u_char *, int);
 
-dev_type_open(sequenceropen);
-dev_type_close(sequencerclose);
-dev_type_read(sequencerread);
-dev_type_write(sequencerwrite);
-dev_type_ioctl(sequencerioctl);
-dev_type_poll(sequencerpoll);
-dev_type_kqfilter(sequencerkqfilter);
+static dev_type_open(sequenceropen);
+static dev_type_close(sequencerclose);
+static dev_type_read(sequencerread);
+static dev_type_write(sequencerwrite);
+static dev_type_ioctl(sequencerioctl);
+static dev_type_poll(sequencerpoll);
+static dev_type_kqfilter(sequencerkqfilter);
 
 const struct cdevsw sequencer_cdevsw = {
 	sequenceropen, sequencerclose, sequencerread, sequencerwrite,
@@ -147,7 +146,7 @@ sequencerattach(int n)
 		callout_init(&seqdevs[n].sc_callout);
 }
 
-int
+static int
 sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	int unit = SEQUENCERUNIT(dev);
@@ -239,7 +238,7 @@ seq_wakeup(int *chan)
 	}
 }
 
-int
+static int
 seq_drain(struct sequencer_softc *sc)
 {
 	int error;
@@ -252,7 +251,7 @@ seq_drain(struct sequencer_softc *sc)
 	return (error);
 }
 
-void
+static void
 seq_timeout(void *addr)
 {
 	struct sequencer_softc *sc = addr;
@@ -268,7 +267,7 @@ seq_timeout(void *addr)
 
 }
 
-void
+static void
 seq_startoutput(struct sequencer_softc *sc)
 {
 	struct sequencer_queue *q = &sc->outq;
@@ -283,7 +282,7 @@ seq_startoutput(struct sequencer_softc *sc)
 	}
 }
 
-int
+static int
 sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -345,7 +344,7 @@ seq_event_intr(void *addr, seq_event_t *iev)
 	seq_input_event(sc, iev);
 }
 
-int
+static int
 sequencerread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -380,7 +379,7 @@ sequencerread(dev_t dev, struct uio *uio, int ioflag)
 	return error;
 }
 
-int
+static int
 sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -428,7 +427,7 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 	return error;
 }
 
-int
+static int
 sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -576,7 +575,7 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	return error;
 }
 
-int
+static int
 sequencerpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -657,7 +656,7 @@ filt_sequencerwrite(struct knote *kn, long hint)
 static const struct filterops sequencerwrite_filtops =
 	{ 1, NULL, filt_sequencerwdetach, filt_sequencerwrite };
 
-int
+static int
 sequencerkqfilter(dev_t dev, struct knote *kn)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -688,7 +687,7 @@ sequencerkqfilter(dev_t dev, struct knote *kn)
 	return (0);
 }
 
-void
+static void
 seq_reset(struct sequencer_softc *sc)
 {
 	int i, chn;
@@ -710,7 +709,7 @@ seq_reset(struct sequencer_softc *sc)
 	}
 }
 
-int
+static int
 seq_do_command(struct sequencer_softc *sc, seq_event_t *b)
 {
 	int dev;
@@ -740,7 +739,7 @@ seq_do_command(struct sequencer_softc *sc, seq_event_t *b)
 	}
 }
 
-int
+static int
 seq_do_chnvoice(struct sequencer_softc *sc, seq_event_t *b)
 {
 	int dev;
@@ -773,7 +772,7 @@ seq_do_chnvoice(struct sequencer_softc *sc, seq_event_t *b)
 	return error;
 }
 
-int
+static int
 seq_do_chncommon(struct sequencer_softc *sc, seq_event_t *b)
 {
 	int dev;
@@ -810,13 +809,13 @@ seq_do_chncommon(struct sequencer_softc *sc, seq_event_t *b)
 	return error;
 }
 
-int
+static int
 seq_do_local(struct sequencer_softc *sc, seq_event_t *b)
 {
 	return (EINVAL);
 }
 
-int
+static int
 seq_do_sysex(struct sequencer_softc *sc, seq_event_t *b)
 {
 	int dev, i;
@@ -842,7 +841,7 @@ seq_do_sysex(struct sequencer_softc *sc, seq_event_t *b)
 	return 0;
 }
 
-void
+static void
 seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 {
 	struct timeval when;
@@ -880,7 +879,7 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 #endif
 }
 
-int
+static int
 seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 {
 	struct syn_timer *t = &sc->timer;
@@ -940,7 +939,7 @@ seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 	return (error);
 }
 
-int
+static int
 seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 {
 	struct sysex_info sysex;
@@ -962,7 +961,7 @@ seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 }
 
 /* Convert an old sequencer event to a new one. */
-int
+static int
 seq_to_new(seq_event_t *ev, struct uio *uio)
 {
 	int cmd, chan, note, parm;
@@ -1103,7 +1102,7 @@ midiseq_in(struct midi_dev *md, u_char *msg, int len)
 	seq_event_intr(md->seq, &ev);
 }
 
-struct midi_dev *
+static struct midi_dev *
 midiseq_open(int unit, int flags)
 {
 	extern struct cfdriver midi_cd;
@@ -1137,7 +1136,7 @@ midiseq_open(int unit, int flags)
 	return (md);
 }
 
-void
+static void
 midiseq_close(struct midi_dev *md)
 {
 	extern const struct cdevsw midi_cdevsw;
@@ -1147,14 +1146,14 @@ midiseq_close(struct midi_dev *md)
 	free(md, M_DEVBUF);
 }
 
-void
+static void
 midiseq_reset(struct midi_dev *md)
 {
 	/* XXX send GM reset? */
 	DPRINTFN(3, ("midiseq_reset: %d\n", md->unit));
 }
 
-int
+static int
 midiseq_out(struct midi_dev *md, u_char *bf, u_int cc, int chk)
 {
 	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, bf[0]=0x%02x, cc=%d\n",
@@ -1169,21 +1168,21 @@ midiseq_out(struct midi_dev *md, u_char *bf, u_int cc, int chk)
  * we will simply write it that way; no need to special case it here,
  * as midi(4) will always canonicalize or compress as appropriate anyway.
  */
-int
+static int
 midiseq_noteon(struct midi_dev *md, int chan, int key, seq_event_t *ev)
 {
 	return midiseq_out(md, (uint8_t[]){
 	    MIDI_NOTEON | chan, key, ev->c_NOTEON.velocity & 0x7f}, 3, 1);
 }
 
-int
+static int
 midiseq_noteoff(struct midi_dev *md, int chan, int key, seq_event_t *ev)
 {
 	return midiseq_out(md, (uint8_t[]){
 	    MIDI_NOTEOFF | chan, key, ev->c_NOTEOFF.velocity & 0x7f}, 3, 1);
 }
 
-int
+static int
 midiseq_keypressure(struct midi_dev *md, int chan, int key, seq_event_t *ev)
 {
 	return midiseq_out(md, (uint8_t[]){
@@ -1191,7 +1190,7 @@ midiseq_keypressure(struct midi_dev *md, int chan, int key, seq_event_t *ev)
 	    ev->c_KEY_PRESSURE.pressure & 0x7f}, 3, 1);
 }
 
-int
+static int
 midiseq_pgmchange(struct midi_dev *md, int chan, seq_event_t *ev)
 {
 	if (ev->c_PGM_CHANGE.program > 127)
@@ -1200,7 +1199,7 @@ midiseq_pgmchange(struct midi_dev *md, int chan, seq_event_t *ev)
 	    MIDI_PGM_CHANGE | chan, ev->c_PGM_CHANGE.program}, 2, 1);
 }
 
-int
+static int
 midiseq_chnpressure(struct midi_dev *md, int chan, seq_event_t *ev)
 {
 	if (ev->c_CHN_PRESSURE.pressure > 127)
@@ -1209,7 +1208,7 @@ midiseq_chnpressure(struct midi_dev *md, int chan, seq_event_t *ev)
 	    MIDI_CHN_PRESSURE | chan, ev->c_CHN_PRESSURE.pressure}, 2, 1);
 }
 
-int
+static int
 midiseq_ctlchange(struct midi_dev *md, int chan, seq_event_t *ev)
 {
 	if (ev->c_CTL_CHANGE.controller > 127)
@@ -1220,7 +1219,7 @@ midiseq_ctlchange(struct midi_dev *md, int chan, seq_event_t *ev)
 	    }, 3, 1);
 }
 
-int
+static int
 midiseq_pitchbend(struct midi_dev *md, int chan, seq_event_t *ev)
 {
 	return midiseq_out(md, (uint8_t[]){
@@ -1229,7 +1228,7 @@ midiseq_pitchbend(struct midi_dev *md, int chan, seq_event_t *ev)
 	    (ev->c_PITCH_BEND.value >> 7) & 0x7f}, 3, 1);
 }
 
-int
+static int
 midiseq_loadpatch(struct midi_dev *md,
                   struct sysex_info *sysex, struct uio *uio)
 {
@@ -1289,8 +1288,8 @@ midiseq_loadpatch(struct midi_dev *md,
 
 #include "midi.h"
 #if NMIDI == 0
-dev_type_open(midiopen);
-dev_type_close(midiclose);
+static dev_type_open(midiopen);
+static dev_type_close(midiclose);
 
 const struct cdevsw midi_cdevsw = {
 	midiopen, midiclose, noread, nowrite, noioctl,
@@ -1308,7 +1307,7 @@ midi_unit_count()
 	return (0);
 }
 
-int
+static int
 midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	return (ENXIO);
@@ -1321,7 +1320,7 @@ midi_getinfo(dev_t dev, struct midi_info *mi)
 {
 }
 
-int
+static int
 midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	return (ENXIO);
