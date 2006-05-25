@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.104 2006/05/14 01:26:34 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.105 2006/05/25 00:33:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.104 2006/05/14 01:26:34 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.105 2006/05/25 00:33:24 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1163,8 +1163,9 @@ get_exportlist(n)
 			grphead = tgrp;
 		} else {
 			hang_dirp(dirhead, NULL, ep, opt_flags);
-			free_grp(grp);
+			free_grp(tgrp);
 		}
+		tgrp = NULL;
 		dirhead = NULL;
 		if ((ep->ex_flag & EX_LINKED) == 0) {
 			ep2 = exphead;
