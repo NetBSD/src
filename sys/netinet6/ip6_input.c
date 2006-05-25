@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.87 2006/05/23 14:20:56 rpaulo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.88 2006/05/25 21:32:47 bouyer Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.87 2006/05/23 14:20:56 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.88 2006/05/25 21:32:47 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -410,6 +410,10 @@ ip6_input(m)
 	 * dst are the loopback address and the receiving interface
 	 * is not loopback. 
 	 */
+	if (__predict_false(
+	    m_makewritable(&m, 0, sizeof(struct ip6_hdr), M_DONTWAIT)))
+		goto bad;
+	ip6 = mtod(m, struct ip6_hdr *);
 	if (in6_clearscope(&ip6->ip6_src) || in6_clearscope(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++; /* XXX */
 		goto bad;
