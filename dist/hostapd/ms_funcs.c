@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant / shared MSCHAPV2 helper functions / RFC 2433 / RFC 2759
- * Copyright (c) 2004-2005, Jouni Malinen <jkmaline@cc.hut.fi>
+ * Copyright (c) 2004-2006, Jouni Malinen <jkmaline@cc.hut.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -26,7 +26,7 @@
 /**
  * challenge_hash - ChallengeHash() - RFC 2759, Sect. 8.2
  * @peer_challenge: 16-octet PeerChallenge (IN)
- * @auth_challenge: 16-octet AuthChallenge (IN)
+ * @auth_challenge: 16-octet AuthenticatorChallenge (IN)
  * @username: 0-to-256-char UserName (IN)
  * @username_len: Length of username
  * @challenge: 8-octet Challenge (OUT)
@@ -53,35 +53,35 @@ static void challenge_hash(const u8 *peer_challenge, const u8 *auth_challenge,
 
 /**
  * nt_password_hash - NtPasswordHash() - RFC 2759, Sect. 8.3
- * @password: 0-to-256-unicode-char Password (IN)
+ * @password: 0-to-256-unicode-char Password (IN; ASCII)
  * @password_len: Length of password
  * @password_hash: 16-octet PasswordHash (OUT)
  */
 void nt_password_hash(const u8 *password, size_t password_len,
 		      u8 *password_hash)
 {
-	u8 *buf;
-	int i;
-	size_t len;
+	u8 buf[512], *pos;
+	size_t i, len;
+
+	if (password_len > 256)
+		return;
 
 	/* Convert password into unicode */
-	buf = malloc(password_len * 2);
-	if (buf == NULL)
-		return;
-	memset(buf, 0, password_len * 2);
-	for (i = 0; i < password_len; i++)
+	for (i = 0; i < password_len; i++) {
 		buf[2 * i] = password[i];
+		buf[2 * i + 1] = 0;
+	}
 
 	len = password_len * 2;
-	md4_vector(1, (const u8 **) &buf, &len, password_hash);
-	free(buf);
+	pos = buf;
+	md4_vector(1, (const u8 **) &pos, &len, password_hash);
 }
 
 
 /**
  * hash_nt_password_hash - HashNtPasswordHash() - RFC 2759, Sect. 8.4
  * @password_hash: 16-octet PasswordHash (IN)
- * @password_hash_hash: 16-octet PaswordHashHash (OUT)
+ * @password_hash_hash: 16-octet PasswordHashHash (OUT)
  */
 void hash_nt_password_hash(const u8 *password_hash, u8 *password_hash_hash)
 {
@@ -115,7 +115,7 @@ void challenge_response(const u8 *challenge, const u8 *password_hash,
  * @peer_hallenge: 16-octet PeerChallenge (IN)
  * @username: 0-to-256-char UserName (IN)
  * @username_len: Length of username
- * @password: 0-to-256-unicode-char Password (IN)
+ * @password: 0-to-256-unicode-char Password (IN; ASCII)
  * @password_len: Length of password
  * @response: 24-octet Response (OUT)
  */
@@ -143,7 +143,8 @@ void generate_nt_response(const u8 *auth_challenge, const u8 *peer_challenge,
  * @auth_challenge: 16-octet AuthenticatorChallenge (IN)
  * @username: 0-to-256-char UserName (IN)
  * @username_len: Length of username
- * @response: 42-octet AuthenticatorResponse (OUT)
+ * @response: 20-octet AuthenticatorResponse (OUT) (note: this value is usually
+ * encoded as a 42-octet ASCII string (S=<hexdump of response>)
  */
 void generate_authenticator_response(const u8 *password, size_t password_len,
 				     const u8 *peer_challenge,
@@ -192,7 +193,7 @@ void generate_authenticator_response(const u8 *password, size_t password_len,
 /**
  * nt_challenge_response - NtChallengeResponse() - RFC 2433, Sect. A.5
  * @challenge: 8-octet Challenge (IN)
- * @password: 0-to-256-unicode-char Password (IN)
+ * @password: 0-to-256-unicode-char Password (IN; ASCII)
  * @password_len: Length of password
  * @response: 24-octet Response (OUT)
  */
@@ -236,7 +237,7 @@ void get_master_key(const u8 *password_hash_hash, const u8 *nt_response,
  * get_asymetric_start_key - GetAsymetricStartKey() - RFC 3079, Sect. 3.4
  * @master_key: 16-octet MasterKey (IN)
  * @session_key: 8-to-16 octet SessionKey (OUT)
- * @session_key_len: SessionKeyLength (Length of session_key)
+ * @session_key_len: SessionKeyLength (Length of session_key) (IN)
  * @is_send: IsSend (IN, BOOLEAN)
  * @is_server: IsServer (IN, BOOLEAN)
  */
@@ -303,8 +304,8 @@ void get_asymetric_start_key(const u8 *master_key, u8 *session_key,
 #define PWBLOCK_LEN 516
 
 /**
- * encrypt_pw_block_with_password_hash - EncryptPwBlobkWithPasswordHash() - RFC 2759, Sect. 8.10
- * @password: 0-to-256-unicode-char Password (IN)
+ * encrypt_pw_block_with_password_hash - EncryptPwBlockWithPasswordHash() - RFC 2759, Sect. 8.10
+ * @password: 0-to-256-unicode-char Password (IN; ASCII)
  * @password_len: Length of password
  * @password_hash: 16-octet PasswordHash (IN)
  * @pw_block: 516-byte PwBlock (OUT)
@@ -321,8 +322,13 @@ static void encrypt_pw_block_with_password_hash(
 
 	memset(pw_block, 0, PWBLOCK_LEN);
 	offset = (256 - password_len) * 2;
+	hostapd_get_rand(pw_block, offset);
 	for (i = 0; i < password_len; i++)
 		pw_block[offset + i * 2] = password[i];
+	/*
+	 * PasswordLength is 4 octets, but since the maximum password length is
+	 * 256, only first two (in little endian byte order) can be non-zero.
+	 */
 	pos = &pw_block[2 * 256];
 	WPA_PUT_LE16(pos, password_len * 2);
 	rc4(pw_block, PWBLOCK_LEN, password_hash, 16);
@@ -331,9 +337,9 @@ static void encrypt_pw_block_with_password_hash(
 
 /**
  * new_password_encrypted_with_old_nt_password_hash - NewPasswordEncryptedWithOldNtPasswordHash() - RFC 2759, Sect. 8.9
- * @new_password: 0-to-256-unicode-char NewPassword (IN)
+ * @new_password: 0-to-256-unicode-char NewPassword (IN; ASCII)
  * @new_password_len: Length of new_password
- * @old_password: 0-to-256-unicode-char OldPassword (IN)
+ * @old_password: 0-to-256-unicode-char OldPassword (IN; ASCII)
  * @old_password_len: Length of old_password
  * @encrypted_pw_block: 516-octet EncryptedPwBlock (OUT)
  */
@@ -367,9 +373,9 @@ static void nt_password_hash_encrypted_with_block(const u8 *password_hash,
 
 /**
  * old_nt_password_hash_encrypted_with_new_nt_password_hash - OldNtPasswordHashEncryptedWithNewNtPasswordHash() - RFC 2759, Sect. 8.12
- * @new_password: 0-to-256-unicode-char NewPassword (IN)
+ * @new_password: 0-to-256-unicode-char NewPassword (IN; ASCII)
  * @new_password_len: Length of new_password
- * @old_password: 0-to-256-unicode-char OldPassword (IN)
+ * @old_password: 0-to-256-unicode-char OldPassword (IN; ASCII)
  * @old_password_len: Length of old_password
  * @encrypted_password_ash: 16-octet EncryptedPasswordHash (OUT)
  */

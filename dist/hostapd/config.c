@@ -1,7 +1,7 @@
 /*
  * Host AP (software wireless LAN access point) user space daemon for
  * Host AP kernel driver / Configuration file
- * Copyright (c) 2003-2005, Jouni Malinen <jkmaline@cc.hut.fi>
+ * Copyright (c) 2003-2006, Jouni Malinen <jkmaline@cc.hut.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -29,6 +29,7 @@
 #include "sha1.h"
 #include "eap.h"
 #include "radius_client.h"
+#include "ieee802_1x.h"
 
 
 static struct hostapd_config *hostapd_config_defaults(void)
@@ -60,6 +61,7 @@ static struct hostapd_config *hostapd_config_defaults(void)
 	conf->logger_stdout = (unsigned int) -1;
 
 	conf->auth_algs = HOSTAPD_AUTH_OPEN | HOSTAPD_AUTH_SHARED_KEY;
+	conf->eapol_version = EAPOL_VERSION;
 
 	conf->wpa_group_rekey = 600;
 	conf->wpa_gmk_rekey = 86400;
@@ -765,6 +767,17 @@ struct hostapd_config * hostapd_config_read(const char *fname)
 			conf->assoc_ap = 1;
 		} else if (strcmp(buf, "ieee8021x") == 0) {
 			conf->ieee802_1x = atoi(pos);
+		} else if (strcmp(buf, "eapol_version") == 0) {
+			conf->eapol_version = atoi(pos);
+			if (conf->eapol_version < 1 ||
+			    conf->eapol_version > 2) {
+				printf("Line %d: invalid EAPOL "
+				       "version (%d): '%s'.\n",
+				       line, conf->eapol_version, pos);
+				errors++;
+			} else
+				wpa_printf(MSG_DEBUG, "eapol_version=%d",
+					   conf->eapol_version);
 #ifdef EAP_SERVER
 		} else if (strcmp(buf, "eap_authenticator") == 0) {
 			conf->eap_server = atoi(pos);

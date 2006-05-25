@@ -92,9 +92,9 @@ Current hardware/software requirements:
 
 	madwifi driver for cards based on Atheros chip set (ar521x)
 	(http://sourceforge.net/projects/madwifi/)
-	Please note that you will need to modify the hostapd Makefile
-	to use correct path for madwifi driver root directory
-	(CFLAGS += -I../head line in Makefile).
+	Please note that you will need to add the correct path for
+	madwifi driver root directory in .config (see defconfig file for
+	an example: CFLAGS += -I<path>)
 
 	Prism54 driver for Intersil/Conexant Prism GT/Duette/Indigo
 	(http://www.prism54.org/)
