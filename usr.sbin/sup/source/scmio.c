@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.15 2003/08/27 08:15:16 itojun Exp $	*/
+/*	$NetBSD: scmio.c,v 1.16 2006/05/25 02:10:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -219,13 +219,13 @@ writedata(int count, char *data)
 
 	if (bufptr) {
 		if (bufptr->b_cnt + count <= FILEXFER) {
-			bcopy(data, bufptr->b_ptr, count);
+			memcpy(bufptr->b_ptr, data, count);
 			bufptr->b_cnt += count;
 			bufptr->b_ptr += count;
 			return (SCMOK);
 		}
 		bp = (bufptr == buffers) ? &buffers[1] : buffers;
-		bcopy(data, bp->b_data, count);
+		memcpy(bp->b_data, data, count);
 		bp->b_cnt = count;
 		bp->b_ptr = bp->b_data + count;
 		data = bufptr->b_data;
@@ -434,7 +434,7 @@ readdata(int count, char *data)
 			return (scmerr(-1, "No space in buffer %d", count));
 		bufptr += count;
 		bufcnt -= count;
-		bcopy(data, bufptr, -count);
+		memcpy(bufptr, data, -count);
 		return (SCMOK);
 	}
 	if (count == 0 && data == NULL) {
@@ -442,13 +442,13 @@ readdata(int count, char *data)
 		return (SCMOK);
 	}
 	if (count <= bufcnt) {
-		bcopy(bufptr, data, count);
+		memcpy(data, bufptr, count);
 		bufptr += count;
 		bufcnt -= count;
 		return (SCMOK);
 	}
 	if (bufcnt > 0) {
-		bcopy(bufptr, data, bufcnt);
+		memcpy(data, bufptr, bufcnt);
 		data += bufcnt;
 		count -= bufcnt;
 	}
@@ -476,7 +476,7 @@ readdata(int count, char *data)
 		m -= x;
 		bufcnt += x;
 	}
-	bcopy(bufptr, data, count);
+	memcpy(data, bufptr, count);
 	bufptr += count;
 	bufcnt -= count;
 	return (SCMOK);
