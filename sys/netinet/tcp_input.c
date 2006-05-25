@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.240 2006/04/15 02:32:22 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.241 2006/05/25 21:49:19 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.240 2006/04/15 02:32:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.241 2006/05/25 21:49:19 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1024,6 +1024,13 @@ tcp_input(struct mbuf *m, ...)
 	case 4:
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
+#if BYTE_ORDER == LITTLE_ENDIAN
+		if (__predict_false(m_makewritable(&m, toff,
+		    sizeof(struct tcphdr), M_DONTWAIT))) {
+			m_freem(m);
+			return;
+		}
+#endif
 		ip = mtod(m, struct ip *);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
@@ -1041,6 +1048,13 @@ tcp_input(struct mbuf *m, ...)
 		ip = NULL;
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
+#if BYTE_ORDER == LITTLE_ENDIAN
+		if (__predict_false(m_makewritable(&m, toff,
+		    sizeof(struct tcphdr), M_DONTWAIT))) {
+			m_freem(m);
+			return;
+		}
+#endif
 		ip6 = mtod(m, struct ip6_hdr *);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
