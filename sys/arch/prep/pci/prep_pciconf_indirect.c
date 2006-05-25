@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.6 2006/05/25 02:11:13 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.6 2006/05/25 02:11:13 garbled Exp $");
 
 #include "opt_openpic.h"
 
@@ -68,8 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 ch
 #include <dev/pci/pcidevs.h>
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
-#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
+
+extern volatile unsigned char *prep_pci_baseaddr;
+extern volatile unsigned char *prep_pci_basedata;
 
 #define	PCI_CBIO		0x10
 
@@ -171,9 +172,9 @@ prep_pci_indirect_conf_read(void *v, pcitag_t tag, int reg)
 	int s;
 
 	s = splhigh();
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	data = in32rb(PCI_MODE1_DATA_REG);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
+	out32rb(prep_pci_baseaddr, tag | reg);
+	data = in32rb(prep_pci_basedata);
+	out32rb(prep_pci_baseaddr, 0);
 	splx(s);
 
 	return data;
@@ -185,8 +186,8 @@ prep_pci_indirect_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	int s;
 
 	s = splhigh();
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	out32rb(PCI_MODE1_DATA_REG, data);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
+	out32rb(prep_pci_baseaddr, tag | reg);
+	out32rb(prep_pci_basedata, data);
+	out32rb(prep_pci_baseaddr, 0);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.16 2006/05/09 03:35:37 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.17 2006/05/25 02:11:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.16 2006/05/09 03:35:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.17 2006/05/25 02:11:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.16 2006/05/09 03:35:37 garbled Exp $"
 #include <powerpc/pio.h>
 
 static int nrofpcidevices = 0;
-
+volatile unsigned char *prep_pci_baseaddr = (unsigned char *)0x80000cf8;
+volatile unsigned char *prep_pci_basedata = (unsigned char *)0x80000cfc;
 struct pciroutinginfo *pciroutinginfo;
 
 extern void pci_intr_fixup_ibm_6015(int, int, int, int, int *);
@@ -263,14 +264,43 @@ pnp_small_pkt(void *v)
 	return tag_small_count(tag) + 1 /* tag */;
 }
 
+/*
+ * We look to see what kind of bridge this is, and return it.  If we have
+ * 1.1 residual, we also look up the bridge data, and get the config base
+ * address from it.  We set a default sane value for the config base addr
+ * at initialization, so it shouldn't matter if we can't find one here.
+ */
+
 int
 pci_chipset_tag_type(void)
 {
 	PPC_DEVICE *dev;
+	uint32_t addr, data, l;
+	unsigned char *p;
+	int size;
 
 	dev = find_nth_pnp_device("PNP0A03", 0, 0);
 	if (dev == NULL)
 		return PCIBridgeIndirect;
+
+	l = be32toh(dev->AllocatedOffset);
+	p = res->DevicePnPHeap + l;
+	if (p == NULL)
+		return PCIBridgeIndirect;
+
+	/* gather the pci base address from PNP */
+	for (; p[0] != END_TAG; p += size) {
+		if (tag_type(p[0]) == PNP_SMALL)
+			size = pnp_small_pkt(p);
+		else {
+			size = pnp_pci_configbase(p, &addr, &data);
+			if (addr != 0 && data != 0) {
+				prep_pci_baseaddr = (unsigned char *)addr;
+				prep_pci_basedata = (unsigned char *)data;
+				break;
+			}
+		}
+	}
 
 	return dev->DeviceId.Interface;
 }
