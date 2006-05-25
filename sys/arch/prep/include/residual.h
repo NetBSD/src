@@ -330,6 +330,8 @@ extern PnP_TAG_PACKET *PnP_find_large_vendor_packet(unsigned char *p,
 extern PPC_DEVICE *find_nth_pnp_device(const char *devid, int busid, int n);
 extern int count_pnp_devices(const char *devid);
 extern void pnp_devid_to_string(uint32_t devid, char *s);
+extern int pnp_pci_busno(void *, int *bus);
+extern int pnp_pci_configbase(void *v, uint32_t *addr, uint32_t *data);
 #endif /* __ASSEMBLY__ */
 #endif  /* ndef _RESIDUAL_ */
 

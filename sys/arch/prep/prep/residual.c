@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.10 2006/05/24 16:10:18 garbled Exp $     */
+/*      $NetBSD: residual.c,v 1.11 2006/05/25 02:11:13 garbled Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.10 2006/05/24 16:10:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.11 2006/05/25 02:11:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,12 +240,54 @@ find_nth_pnp_device(const char *devid, int busid, int n)
 }
 
 int
-pnp_pci_busno(void *v)
+pnp_pci_busno(void *v, int *bus)
 {
 	struct _L4_Pack *pack = v;
 	struct _L4_PPCPack *p = &pack->L4_Data.L4_PPCPack;
+	int item, size, tag = *(unsigned char *)v;
+	unsigned char *q = v;
 
-	return(p->PPCData[16]);
+	item = tag_large_item_name(tag);
+	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
+	*bus = -1;
+
+	if (res->Revision == 0)
+                return size;
+	if (item != LargeVendorItem)
+		return size;
+	if (p->Type != LV_PCIBridge) /* PCI Bridge type */
+		return size;	
+
+	*bus = p->PPCData[16];
+	return size;
+}
+
+/* Get the PCI config base and addr from PNP */
+
+int
+pnp_pci_configbase(void *v, uint32_t *addr, uint32_t *data)
+{
+	struct _L4_Pack *pack = v;
+	struct _L4_PPCPack *p = &pack->L4_Data.L4_PPCPack;
+	int item, size, tag = *(unsigned char *)v;
+	unsigned char *q = v;
+
+	item = tag_large_item_name(tag);
+	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
+	/* init to zero so we don't return garbage values */
+	*addr = 0;
+	*data = 0;
+
+	if (res->Revision == 0)
+		return size;
+	if (item != LargeVendorItem)
+		return size;
+	if (p->Type != LV_PCIBridge) /* PCI Bridge type */
+		return size;
+
+	*addr = (uint32_t)le64dec(&p->PPCData[0]);
+	*data = (uint32_t)le64dec(&p->PPCData[8]);
+	return size;
 }
 
 #ifdef RESIDUAL_DATA_DUMP

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25 2006/04/25 02:19:31 snj Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.26 2006/05/25 02:11:13 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2006/04/25 02:19:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2006/05/25 02:11:13 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
 
 	i = pci_chipset_tag_type();
 
-	if (i == PCIBridgeIndirect)
+	if (i == PCIBridgeIndirect || i == PCIBridgeRS6K)
 		prep_pci_get_chipset_tag_indirect(pc);
 	else if (i == PCIBridgeDirect)
 		prep_pci_get_chipset_tag_direct(pc);
