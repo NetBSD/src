@@ -1,4 +1,4 @@
-/*	$NetBSD: tdb.c,v 1.4 2003/10/16 06:28:47 itojun Exp $	*/
+/*	$NetBSD: tdb.c,v 1.5 2006/05/25 01:22:53 christos Exp $	*/
 
 /* 
  * Database functions
@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tdb.c,v 1.4 2003/10/16 06:28:47 itojun Exp $");
+__RCSID("$NetBSD: tdb.c,v 1.5 2006/05/25 01:22:53 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1182,7 +1182,7 @@ TDB_CONTEXT *tdb_open(char *name, int hash_size, int tdb_flags,
             fstat(tdb.fd, &st);
 
             /* map the database and fill in the return structure */
-            tdb.name = (char *)strdup(name);
+            tdb.name = name ? strdup(name) : NULL;
             tdb.map_size = st.st_size;
         }
 
