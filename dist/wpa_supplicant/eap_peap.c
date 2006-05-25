@@ -141,6 +141,7 @@ static void * eap_peap_init(struct eap_sm *sm)
 				_methods = realloc(methods, num_methods);
 				if (_methods == NULL) {
 					free(methods);
+					free(buf);
 					eap_peap_deinit(sm, data);
 					return NULL;
 				}

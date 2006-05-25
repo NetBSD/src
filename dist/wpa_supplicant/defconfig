@@ -6,7 +6,7 @@
 # just setting VARIABLE=n is not disabling that variable.
 #
 # This file is included in Makefile, so variables like CFLAGS and LIBS can also
-# be modified from here. In most cass, these lines should use += in order not
+# be modified from here. In most cases, these lines should use += in order not
 # to override previous values of the variables.
 
 
@@ -14,6 +14,11 @@
 # in non-default location
 #CFLAGS += -I/usr/local/openssl/include
 #LIBS += -L/usr/local/openssl/lib
+
+# Some Red Hat versions seem to include kerberos header files from OpenSSL, but
+# the kerberos files are not in the default include path. Following line can be
+# used to fix build issues on such systems (krb5.h not found).
+#CFLAGS += -I/usr/include/kerberos
 
 # Example configuration for various cross-compilation platforms
 
