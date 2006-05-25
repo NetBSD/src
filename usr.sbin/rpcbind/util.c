@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2005/06/07 22:21:57 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2006/05/25 02:37:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <assert.h>
 #include <ifaddrs.h>
 #include <poll.h>
 #include <rpc/rpc.h>
@@ -280,6 +281,7 @@ found:
 		break;				
 #ifdef INET6
 	case AF_INET6:
+		assert(newsin6);
 		memcpy(newsin6, ifsin6, clnt_sa->sa_len);
 		newsin6->sin6_port = servsin6->sin6_port;
 		tbuf.maxlen = sizeof (struct sockaddr_storage);
