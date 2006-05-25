@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.13.14.4 2006/05/21 17:28:48 chap Exp $	*/
+/*	$NetBSD: midiio.h,v 1.13.14.5 2006/05/25 19:31:10 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,8 @@ struct synth_info {
 #define MIDI_CTRL_BALANCE_MSB		8
 #define MIDI_CTRL_PAN_MSB		10
 #define MIDI_CTRL_EXPRESSION_MSB	11
+#define MIDI_CTRL_EFFECT_1_MSB		12
+#define MIDI_CTRL_EFFECT_2_MSB		13
 #define MIDI_CTRL_GENERAL_PURPOSE_1_MSB	16
 #define MIDI_CTRL_GENERAL_PURPOSE_2_MSB	17
 #define MIDI_CTRL_GENERAL_PURPOSE_3_MSB	18
@@ -186,6 +188,8 @@ struct synth_info {
 #define MIDI_CTRL_BALANCE_LSB		40
 #define MIDI_CTRL_PAN_LSB		42
 #define MIDI_CTRL_EXPRESSION_LSB	43
+#define MIDI_CTRL_EFFECT_1_LSB		44
+#define MIDI_CTRL_EFFECT_2_LSB		45
 #define MIDI_CTRL_GENERAL_PURPOSE_1_LSB	48
 #define MIDI_CTRL_GENERAL_PURPOSE_2_LSB	49
 #define MIDI_CTRL_GENERAL_PURPOSE_3_LSB	50
@@ -194,6 +198,7 @@ struct synth_info {
 #define MIDI_CTRL_PORTAMENTO		65
 #define MIDI_CTRL_SOSTENUTO		66
 #define MIDI_CTRL_SOFT_PEDAL		67
+#define MIDI_CTRL_LEGATO		68
 #define MIDI_CTRL_HOLD_2		69
 #define MIDI_CTRL_SOUND_VARIATION	70
 #define MIDI_CTRL_HARMONIC_INTENSITY	71
@@ -203,7 +208,9 @@ struct synth_info {
 #define MIDI_CTRL_DECAY_TIME		75
 #define MIDI_CTRL_VIBRATO_RATE		76
 #define MIDI_CTRL_VIBRATO_DEPTH		77
-#define MIDI_CTRL_VIBRATO_DECAY		78
+#define MIDI_CTRL_VIBRATO_DELAY		78
+#define MIDI_CTRL_VIBRATO_DECAY		MIDI_CTRL_VIBRATO_DELAY /*deprecated*/
+#define MIDI_CTRL_SOUND_10		79
 #define MIDI_CTRL_GENERAL_PURPOSE_5	80
 #define MIDI_CTRL_GENERAL_PURPOSE_6	81
 #define MIDI_CTRL_GENERAL_PURPOSE_7	82
@@ -222,7 +229,13 @@ struct synth_info {
 #define MIDI_CTRL_RPN_MSB		101
 #define MIDI_CTRL_SOUND_OFF		120
 #define MIDI_CTRL_RESET			121
-#define MIDI_CTRL_ALLOFF		123
+#define MIDI_CTRL_LOCAL			122
+#define MIDI_CTRL_NOTES_OFF		123
+#define MIDI_CTRL_ALLOFF		MIDI_CTRL_NOTES_OFF /*deprecated*/
+#define MIDI_CTRL_OMNI_OFF		124
+#define MIDI_CTRL_OMNI_ON		125
+#define MIDI_CTRL_POLY_OFF		126
+#define MIDI_CTRL_POLY_ON		127
 
 #define MIDI_BEND_NEUTRAL	(1<<13)
 
@@ -289,7 +302,7 @@ struct sbi_instrument {
 	sbi_instr_data	operators;
 };
 
-#define TMR_RESET		0
+#define TMR_RESET		0	/* beware: not an OSS event */
 #define TMR_WAIT_REL		1	/* Time relative to the prev time */
 #define TMR_WAIT_ABS		2	/* Absolute time since TMR_START */
 #define TMR_STOP		3
@@ -329,6 +342,8 @@ struct sbi_instrument {
  * TODO: determine OSS compatible structures for TMR_RESET and TMR_CLOCK,
  *       OSS values of EV_SYSTEM, SNDCTL_SEQ_ACTSENSE_ENABLE,
  *       SNDCTL_SEQ_TIMING_ENABLE, and SNDCTL_SEQ_RT_ENABLE.
+ * (TMR_RESET may be a NetBSD extension: it is generated in sequencer.c and
+ * has no args. To be corrected if a different definition is found anywhere.)
  */
 typedef union {
 
@@ -364,7 +379,7 @@ typedef union {
 	struct {
 		_TIMING_HDR;
 		uint32_t _zero;
-	} t_STOP, t_START, t_CONTINUE;
+	} t_STOP, t_START, t_CONTINUE, t_RESET;
 	
 	struct {
 		_TIMING_HDR;
