@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.4 2006/05/11 08:43:16 mrg Exp $ */
+/* $NetBSD: wlanctl.c,v 1.5 2006/05/25 02:48:09 christos Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -194,7 +194,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 /*68*/
 #endif
 	u_int i, ifindex;
-	size_t namelen, nodes_len;
+	size_t namelen, nodes_len, totallen;
 	int name[10];
 	int *vname;
 	char ifname[IFNAMSIZ];
@@ -215,6 +215,11 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 		return -1;
 	}
 
+	totallen = namelen + IEEE80211_SYSCTL_NODENAMELEN;
+	if (totallen >= NELTS(name)) {
+		warnx("Internal error finding sysctl mib");
+		return -1;
+	}
 	vname = &name[namelen];
 
 	vname[IEEE80211_SYSCTL_NODENAME_IF] = ifindex;
@@ -225,13 +230,12 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 	vname[IEEE80211_SYSCTL_NODENAME_ELTCOUNT] = INT_MAX;
 
 	/* how many? */
-	if (sysctl(name, namelen + IEEE80211_SYSCTL_NODENAMELEN,
-	    NULL, &nodes_len, NULL, 0) != 0) {
+	if (sysctl(name, totallen, NULL, &nodes_len, NULL, 0) != 0) {
 		warn("sysctl(count)");
 		return -1;
 	}
 
-	ns = (struct ieee80211_node_sysctl *)malloc(nodes_len);
+	ns = malloc(nodes_len);
 
 	if (ns == NULL) {
 		warn("malloc");
@@ -241,8 +245,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 	vname[IEEE80211_SYSCTL_NODENAME_ELTCOUNT] = nodes_len / sizeof(ns[0]);
 
 	/* Get them. */
-	if (sysctl(name, namelen + IEEE80211_SYSCTL_NODENAMELEN,
-	    ns, &nodes_len, NULL, 0) != 0) {
+	if (sysctl(name, totallen, ns, &nodes_len, NULL, 0) != 0) {
 		warn("sysctl(get)");
 		return -1;
 	}
