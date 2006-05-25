@@ -168,6 +168,12 @@ struct eapol_ctx {
 							  const char *name);
 
 	/**
+	 * aborted_cached - Notify that cached PMK attempt was aborted
+	 * @ctx: Callback context (ctx)
+	 */
+	void (*aborted_cached)(void *ctx);
+
+	/**
 	 * opensc_engine_path - Path to the OpenSSL engine for opensc
 	 *
 	 * This is an OpenSSL specific configuration option for loading OpenSC

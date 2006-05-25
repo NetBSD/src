@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant / PC/SC smartcard interface for USIM, GSM SIM
- * Copyright (c) 2004-2005, Jouni Malinen <jkmaline@cc.hut.fi>
+ * Copyright (c) 2004-2006, Jouni Malinen <jkmaline@cc.hut.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -10,6 +10,10 @@
  * license.
  *
  * See README and COPYING for more details.
+ *
+ * This file implements wrapper functions for accessing GSM SIM and 3GPP USIM
+ * cards through PC/SC smartcard library. These functions are used to implement
+ * authentication routines for EAP-SIM and EAP-AKA.
  */
 
 #include <stdlib.h>
@@ -183,6 +187,17 @@ static int scard_pin_needed(struct scard_data *scard,
 }
 
 
+/**
+ * scard_init - Initialize SIM/USIM connection using PC/SC
+ * @sim_type: Allowed SIM types (SIM, USIM, or both)
+ * Returns: Pointer to private data structure, or %NULL on failure
+ *
+ * This function is used to initialize SIM/USIM connection. PC/SC is used to
+ * open connection to the SIM/USIM card and the card is verified to support the
+ * selected sim_type. In addition, local flag is set if a PIN is needed to
+ * access some of the card functions. Once the connection is not needed
+ * anymore, scard_deinit() can be used to close it.
+ */
 struct scard_data * scard_init(scard_sim_type sim_type)
 {
 	long ret, len;
@@ -307,6 +322,12 @@ failed:
 }
 
 
+/**
+ * scard_set_pin - Set PIN (CHV1/PIN1) code for accessing SIM/USIM commands
+ * @scard: Pointer to private data from scard_init()
+ * pin: PIN code as an ASCII string (e.g., "1234")
+ * Returns: 0 on success, -1 on failure
+ */
 int scard_set_pin(struct scard_data *scard, const char *pin)
 {
 	if (scard == NULL)
@@ -330,6 +351,12 @@ int scard_set_pin(struct scard_data *scard, const char *pin)
 }
 
 
+/**
+ * scard_deinit - Deinitialize SIM/USIM connection
+ * @scard: Pointer to private data from scard_init()
+ *
+ * This function closes the SIM/USIM connect opened with scard_init().
+ */
 void scard_deinit(struct scard_data *scard)
 {
 	long ret;
@@ -541,6 +568,20 @@ static int scard_verify_pin(struct scard_data *scard, const char *pin)
 }
 
 
+/**
+ * scard_get_imsi - Read IMSI from SIM/USIM card
+ * @scard: Pointer to private data from scard_init()
+ * @imsi: Buffer for IMSI
+ * @len: Length of imsi buffer; set to IMSI length on success
+ * Returns: 0 on success, -1 if IMSI file cannot be selected, -2 if IMSI file
+ * selection returns invalid result code, -3 if parsing FSP template file fails
+ * (USIM only), -4 if IMSI does not fit in the provided imsi buffer (len is set
+ * to needed length), -5 if reading IMSI file fails.
+ *
+ * This function can be used to read IMSI from the SIM/USIM card. If the IMSI
+ * file is PIN protected, scard_set_pin() must have been used to set the
+ * correct PIN code before calling scard_get_imsi().
+ */
 int scard_get_imsi(struct scard_data *scard, char *imsi, size_t *len)
 {
 	char buf[100];
@@ -606,7 +647,22 @@ int scard_get_imsi(struct scard_data *scard, char *imsi, size_t *len)
 }
 
 
-int scard_gsm_auth(struct scard_data *scard, unsigned char *rand,
+/**
+ * scard_gsm_auth - Run GSM authentication command on SIM card
+ * @scard: Pointer to private data from scard_init()
+ * @rand: 16-byte RAND value from HLR/AuC
+ * @sres: 4-byte buffer for SRES
+ * @kc: 8-byte buffer for Kc
+ * Returns: 0 on success, -1 if SIM/USIM connection has not been initialized,
+ * -2 if authentication command execution fails, -3 if unknown response code
+ * for authentication command is received, -4 if reading of response fails,
+ * -5 if if response data is of unexpected length
+ *
+ * This function performs GSM authentication using SIM/USIM card and the
+ * provided RAND value from HLR/AuC. If authentication command can be completed
+ * successfully, SRES and Kc values will be written into sres and kc buffers.
+ */
+int scard_gsm_auth(struct scard_data *scard, const unsigned char *rand,
 		   unsigned char *sres, unsigned char *kc)
 {
 	unsigned char cmd[5 + 1 + 16] = { SIM_CMD_RUN_GSM_ALG };
@@ -684,8 +740,29 @@ int scard_gsm_auth(struct scard_data *scard, unsigned char *rand,
 }
 
 
-int scard_umts_auth(struct scard_data *scard, unsigned char *rand,
-		    unsigned char *autn, unsigned char *res, size_t *res_len,
+/**
+ * scard_umts_auth - Run UMTS authentication command on USIM card
+ * @scard: Pointer to private data from scard_init()
+ * @rand: 16-byte RAND value from HLR/AuC
+ * @autn: 16-byte AUTN value from HLR/AuC
+ * @res: 16-byte buffer for RES
+ * @res_len: Variable that will be set to RES length
+ * @ik: 16-byte buffer for IK
+ * @ck: 16-byte buffer for CK
+ * @auts: 14-byte buffer for AUTS
+ * Returns: 0 on success, -1 on failure, or -2 if USIM reports synchronization
+ * failure
+ *
+ * This function performs AKA authentication using USIM card and the provided
+ * RAND and AUTN values from HLR/AuC. If authentication command can be
+ * completed successfully, RES, IK, and CK values will be written into provided
+ * buffers and res_len is set to length of received RES value. If USIM reports
+ * synchronization failure, the received AUTS value will be written into auts
+ * buffer. In this case, RES, IK, and CK are not valid.
+ */
+int scard_umts_auth(struct scard_data *scard, const unsigned char *rand,
+		    const unsigned char *autn,
+		    unsigned char *res, size_t *res_len,
 		    unsigned char *ik, unsigned char *ck, unsigned char *auts)
 {
 	unsigned char cmd[5 + 1 + AKA_RAND_LEN + 1 + AKA_AUTN_LEN] =

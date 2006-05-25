@@ -1398,7 +1398,13 @@ static void eapol_sm_abort_cached(struct eapol_sm *sm)
 	sm->cached_pmk = FALSE;
 	sm->SUPP_PAE_state = SUPP_PAE_CONNECTING;
 	sm->suppPortStatus = Unauthorized;
-	sm->eapRestart= TRUE;
+
+	/* Make sure we do not start sending EAPOL-Start frames first, but
+	 * instead move to RESTART state to start EAPOL authentication. */
+	sm->startWhen = 3;
+
+	if (sm->ctx->aborted_cached)
+		sm->ctx->aborted_cached(sm->ctx->ctx);
 }
 
 

@@ -82,7 +82,7 @@ static struct eapol_test_data eapol_test;
 static void send_eap_request_identity(void *eloop_ctx, void *timeout_ctx);
 
 
-void hostapd_logger(void *ctx, u8 *addr, unsigned int module, int level,
+void hostapd_logger(void *ctx, const u8 *addr, unsigned int module, int level,
 		    char *fmt, ...)
 {
 	char *format;
