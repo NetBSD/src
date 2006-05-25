@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: lmcconfig.c,v 1.8 2006/04/20 16:53:19 christos Exp $
+ * $NetBSD: lmcconfig.c,v 1.9 2006/05/25 00:12:31 christos Exp $
  *
  * First author: Michael Graff.
  * Copyright (c) 1997-2000 Lan Media Corp.
@@ -972,13 +972,12 @@ void print_scrambler()
 
 double vga_dbs(u_int8_t vga)
   {
-  if  (vga <  0x0F)                   return  0.0;
-  if ((vga >= 0x0F) && (vga <= 0x1B)) return  0.0 + 0.77 * (vga - 0x0F);
-  if ((vga >= 0x1C) && (vga <= 0x33)) return 10.0 + 1.25 * (vga - 0x1C);
-  if ((vga >= 0x34) && (vga <= 0x39)) return 40.0 + 1.67 * (vga - 0x34);
-  if ((vga >= 0x3A) && (vga <= 0x3F)) return 50.0 + 2.80 * (vga - 0x3A);
-  if  (vga >  0x3F)                   return 64.0;
-  return 0.0; /* suppress compiler warning */
+  if  (vga <  0x0F)                   	   return  0.0;
+  else if ((vga >= 0x0F) && (vga <= 0x1B)) return  0.0 + 0.77 * (vga - 0x0F);
+  else if ((vga >= 0x1C) && (vga <= 0x33)) return 10.0 + 1.25 * (vga - 0x1C);
+  else if ((vga >= 0x34) && (vga <= 0x39)) return 40.0 + 1.67 * (vga - 0x34);
+  else if ((vga >= 0x3A) && (vga <= 0x3F)) return 50.0 + 2.80 * (vga - 0x3A);
+  else /* if  (vga >  0x3F) */             return 64.0;
   }
 
 void print_rx_gain_max()
