@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.52 2006/02/25 00:58:36 wiz Exp $	*/
+/*	$NetBSD: route6d.c,v 1.53 2006/05/25 01:58:39 christos Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.52 2006/02/25 00:58:36 wiz Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.53 2006/05/25 01:58:39 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -2059,7 +2059,10 @@ ifrt_p2p(struct ifc *ifcp, int again)
 #define P2PADVERT_ADDR		2
 #define P2PADVERT_DEST		4
 #define P2PADVERT_MAX		4
-	const enum { CISCO, GATED, ROUTE6D } behavior = GATED;
+#define	CISCO	0
+#define	GATED	1
+#define ROUTE6D	2
+#define BEHAVIOR GATED
 	const char *category = "";
 	const char *noadv;
 
@@ -2069,61 +2072,58 @@ ifrt_p2p(struct ifc *ifcp, int again)
 		applyplen(&addr, ifa->ifa_plen);
 		applyplen(&dest, ifa->ifa_plen);
 		advert = ignore = 0;
-		switch (behavior) {
-		case CISCO:
-			/*
-			 * honor addr/plen, just like normal shared medium
-			 * interface.  this may cause trouble if you reuse
-			 * addr/plen on other interfaces.
-			 *
-			 * advertise addr/plen.
-			 */
-			advert |= P2PADVERT_NETWORK;
-			break;
-		case GATED:
-			/*
-			 * prefixlen on p2p interface is meaningless.
-			 * advertise addr/128 and dest/128.
-			 *
-			 * do not install network route to route6d routing
-			 * table (if we do, it would prevent route installation
-			 * for other p2p interface that shares addr/plen).
-			 *
-			 * XXX what should we do if dest is ::?  it will not
-			 * get announced anyways (see following filter),
-			 * but we need to think.
-			 */
-			advert |= P2PADVERT_ADDR;
-			advert |= P2PADVERT_DEST;
-			ignore |= P2PADVERT_NETWORK;
-			break;
-		case ROUTE6D:
-			/*
-			 * just for testing.  actually the code is redundant
-			 * given the current p2p interface address assignment
-			 * rule for kame kernel.
-			 *
-			 * intent:
-			 *	A/n -> announce A/n
-			 *	A B/n, A and B share prefix -> A/n (= B/n)
-			 *	A B/n, do not share prefix -> A/128 and B/128
-			 * actually, A/64 and A B/128 are the only cases
-			 * permitted by the kernel:
-			 *	A/64 -> A/64
-			 *	A B/128 -> A/128 and B/128
-			 */
-			if (!IN6_IS_ADDR_UNSPECIFIED(&ifa->ifa_raddr)) {
-				if (IN6_ARE_ADDR_EQUAL(&addr, &dest))
-					advert |= P2PADVERT_NETWORK;
-				else {
-					advert |= P2PADVERT_ADDR;
-					advert |= P2PADVERT_DEST;
-					ignore |= P2PADVERT_NETWORK;
-				}
-			} else
+#if BEHAVIOR == CISCO
+		/*
+		 * honor addr/plen, just like normal shared medium
+		 * interface.  this may cause trouble if you reuse
+		 * addr/plen on other interfaces.
+		 *
+		 * advertise addr/plen.
+		 */
+		advert |= P2PADVERT_NETWORK;
+#endif
+#if BEHAVIOR == GATED
+		/*
+		 * prefixlen on p2p interface is meaningless.
+		 * advertise addr/128 and dest/128.
+		 *
+		 * do not install network route to route6d routing
+		 * table (if we do, it would prevent route installation
+		 * for other p2p interface that shares addr/plen).
+		 *
+		 * XXX what should we do if dest is ::?  it will not
+		 * get announced anyways (see following filter),
+		 * but we need to think.
+		 */
+		advert |= P2PADVERT_ADDR;
+		advert |= P2PADVERT_DEST;
+		ignore |= P2PADVERT_NETWORK;
+#if BEHAVIOR == ROUTE6D
+		/*
+		 * just for testing.  actually the code is redundant
+		 * given the current p2p interface address assignment
+		 * rule for kame kernel.
+		 *
+		 * intent:
+		 *	A/n -> announce A/n
+		 *	A B/n, A and B share prefix -> A/n (= B/n)
+		 *	A B/n, do not share prefix -> A/128 and B/128
+		 * actually, A/64 and A B/128 are the only cases
+		 * permitted by the kernel:
+		 *	A/64 -> A/64
+		 *	A B/128 -> A/128 and B/128
+		 */
+		if (!IN6_IS_ADDR_UNSPECIFIED(&ifa->ifa_raddr)) {
+			if (IN6_ARE_ADDR_EQUAL(&addr, &dest))
 				advert |= P2PADVERT_NETWORK;
-			break;
-		}
+			else {
+				advert |= P2PADVERT_ADDR;
+				advert |= P2PADVERT_DEST;
+				ignore |= P2PADVERT_NETWORK;
+			}
+		} else
+			advert |= P2PADVERT_NETWORK;
+#endif
 
 		for (i = 1; i <= P2PADVERT_MAX; i *= 2) {
 			if ((ignore & i) != 0)
