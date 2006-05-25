@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.7 2004/05/20 12:22:23 martin Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.8 2006/05/25 02:35:32 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -360,8 +360,8 @@ init_transport(struct netconfig *nconf)
 					nconf->nc_netid);
 			goto error;
 		}
-		pml = (struct pmaplist *)malloc((u_int)sizeof (struct pmaplist));
-		if (pml == (struct pmaplist *)NULL) {
+		pml = malloc(sizeof (struct pmaplist));
+		if (pml == NULL) {
 			syslog(LOG_ERR, "no memory!");
 			exit(1);
 		}
@@ -372,6 +372,7 @@ init_transport(struct netconfig *nconf)
 			if (tcptrans[0]) {
 				syslog(LOG_ERR,
 				"cannot have more than one TCP transport");
+				free(pml);
 				goto error;
 			}
 			tcptrans = strdup(nconf->nc_netid);
@@ -397,8 +398,8 @@ init_transport(struct netconfig *nconf)
 		list_pml = pml;
 
 		/* Add version 3 information */
-		pml = (struct pmaplist *)malloc((u_int)sizeof (struct pmaplist));
-		if (pml == (struct pmaplist *)NULL) {
+		pml = malloc(sizeof (struct pmaplist));
+		if (pml == NULL) {
 			syslog(LOG_ERR, "no memory!");
 			exit(1);
 		}
@@ -408,8 +409,8 @@ init_transport(struct netconfig *nconf)
 		list_pml = pml;
 
 		/* Add version 4 information */
-		pml = (struct pmaplist *)malloc((u_int)sizeof (struct pmaplist));
-		if (pml == (struct pmaplist *)NULL) {
+		pml = malloc(sizeof (struct pmaplist));
+		if (pml == NULL) {
 			syslog(LOG_ERR, "no memory!");
 			exit(1);
 		}
@@ -486,8 +487,8 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 {
 	rpcblist_ptr rbl;
 
-	rbl = (rpcblist_ptr)malloc((u_int)sizeof (rpcblist));
-	if (rbl == (rpcblist_ptr)NULL) {
+	rbl = malloc(sizeof(rpcblist));
+	if (rbl == NULL) {
 		syslog(LOG_ERR, "no memory!");
 		exit(1);
 	}
