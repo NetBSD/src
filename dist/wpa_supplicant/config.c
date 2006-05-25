@@ -59,7 +59,7 @@ static char * wpa_config_parse_string(const char *value, size_t *len)
 	if (*value == '"') {
 		char *pos;
 		value++;
-		pos = strchr(value, '"');
+		pos = strrchr(value, '"');
 		if (pos == NULL || pos[1] != '\0')
 			return NULL;
 		*pos = '\0';
@@ -97,7 +97,8 @@ static int wpa_config_parse_str(const struct parse_data *data,
 	*dst = wpa_config_parse_string(value, &res_len);
 	if (*dst == NULL) {
 		wpa_printf(MSG_ERROR, "Line %d: failed to parse %s '%s'.",
-			   line, data->name, value);
+			   line, data->name,
+			   data->key_data ? "[KEY DATA REMOVED]" : value);
 		return -1;
 	}
 	if (data->param2)
@@ -293,14 +294,15 @@ static int wpa_config_parse_psk(const struct parse_data *data,
 				const char *value)
 {
 	if (*value == '"') {
-		char *pos;
+		const char *pos;
 		size_t len;
 
 		value++;
 		pos = strrchr(value, '"');
 		if (pos)
-			*pos = '\0';
-		len = strlen(value);
+			len = pos - value;
+		else
+			len = strlen(value);
 		if (len < 8 || len > 63) {
 			wpa_printf(MSG_ERROR, "Line %d: Invalid passphrase "
 				   "length %lu (expected: 8..63) '%s'.",
@@ -309,8 +311,12 @@ static int wpa_config_parse_psk(const struct parse_data *data,
 		}
 		wpa_hexdump_ascii_key(MSG_MSGDUMP, "PSK (ASCII passphrase)",
 				      (u8 *) value, len);
-		ssid->passphrase = strdup(value);
-		return ssid->passphrase == NULL ? -1 : 0;
+		ssid->passphrase = malloc(len + 1);
+		if (ssid->passphrase == NULL)
+			return -1;
+		memcpy(ssid->passphrase, value, len);
+		ssid->passphrase[len] = '\0';
+		return 0;
 	}
 
 	if (hexstr2bin(value, ssid->psk, PMK_LEN) ||
@@ -981,7 +987,7 @@ static char * wpa_config_write_wep_key3(const struct parse_data *data,
 /*
  * Table of network configuration variables. This table is used to parse each
  * network configuration variable, e.g., each line in wpa_supplicant.conf file
- * that is insider a network block.
+ * that is inside a network block.
  *
  * This table is generated using the helper macros defined above and with
  * generous help from the C pre-processor. The field name is stored as a string
@@ -996,9 +1002,10 @@ static char * wpa_config_write_wep_key3(const struct parse_data *data,
  * function (.parser) is then called to parse the actual value of the field.
  *
  * This kind of mechanism makes it easy to add new configuration parameters,
- * since only one line needs to be added into this table and in struct wpa_ssid
- * definitions if the new variable is either a string or integer. More complex
- * types will need to use their own parser and writer functions.
+ * since only one line needs to be added into this table and into the
+ * struct wpa_ssid definition if the new variable is either a string or
+ * integer. More complex types will need to use their own parser and writer
+ * functions.
  */
 static const struct parse_data ssid_fields[] = {
 	{ STR_RANGE(ssid, 0, MAX_SSID_LEN) },
@@ -1066,6 +1073,7 @@ static const struct parse_data ssid_fields[] = {
 /**
  * wpa_config_add_prio_network - Add a network to priority lists
  * @config: Configuration data from wpa_config_read()
+ * @ssid: Pointer to the network configuration to be added to the list
  * Returns: 0 on success, -1 on failure
  *
  * This function is used to add a network block to the priority list of
@@ -1079,6 +1087,10 @@ int wpa_config_add_prio_network(struct wpa_config *config,
 	int prio;
 	struct wpa_ssid *prev, **nlist;
 
+	/*
+	 * Add to an existing priority list if one is available for the
+	 * configured priority level for this network.
+	 */
 	for (prio = 0; prio < config->num_prio; prio++) {
 		prev = config->pssid[prio];
 		if (prev->priority == ssid->priority) {
@@ -1089,7 +1101,7 @@ int wpa_config_add_prio_network(struct wpa_config *config,
 		}
 	}
 
-	/* First network for this priority - add new priority list */
+	/* First network for this priority - add a new priority list */
 	nlist = realloc(config->pssid,
 			(config->num_prio + 1) * sizeof(struct wpa_ssid *));
 	if (nlist == NULL)
@@ -1145,7 +1157,7 @@ static int wpa_config_update_prio_list(struct wpa_config *config)
  * wpa_config_free_ssid - Free network/ssid configuration data
  * @ssid: Configuration data for the network
  *
- * This function frees all resources allocated for the netowkr configuration
+ * This function frees all resources allocated for the network configuration
  * data.
  */
 void wpa_config_free_ssid(struct wpa_ssid *ssid)
@@ -1226,7 +1238,7 @@ void wpa_config_free(struct wpa_config *config)
 
 /**
  * wpa_config_allowed_eap_method - Check whether EAP method is allowed
- * @ssid: Pointer to a configuration data
+ * @ssid: Pointer to configuration data
  * @method: EAP type
  * Returns: 1 = allowed EAP method, 0 = not allowed
  */
@@ -1338,7 +1350,7 @@ int wpa_config_remove_network(struct wpa_config *config, int id)
 
 /**
  * wpa_config_set_network_defaults - Set network default values
- * @ssid: Pointer to a network configuration data
+ * @ssid: Pointer to network configuration data
  */
 void wpa_config_set_network_defaults(struct wpa_ssid *ssid)
 {
@@ -1353,7 +1365,7 @@ void wpa_config_set_network_defaults(struct wpa_ssid *ssid)
 
 /**
  * wpa_config_set - Set a variable in network configuration
- * @ssid: Pointer to a network configuration data
+ * @ssid: Pointer to network configuration data
  * @var: Variable name, e.g., "ssid"
  * @value: Variable value
  * @line: Line number in configuration file or 0 if not used
@@ -1400,7 +1412,7 @@ int wpa_config_set(struct wpa_ssid *ssid, const char *var, const char *value,
 
 /**
  * wpa_config_get - Get a variable in network configuration
- * @ssid: Pointer to a network configuration data
+ * @ssid: Pointer to network configuration data
  * @var: Variable name, e.g., "ssid"
  * Returns: Value of the variable or %NULL on failure
  *
@@ -1429,7 +1441,7 @@ char * wpa_config_get(struct wpa_ssid *ssid, const char *var)
 
 /**
  * wpa_config_update_psk - Update WPA PSK based on passphrase and SSID
- * @ssid: Pointer to a network configuration data
+ * @ssid: Pointer to network configuration data
  *
  * This function must be called to update WPA PSK when either SSID or the
  * passphrase has changed for the network configuration.

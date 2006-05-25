@@ -116,6 +116,18 @@ static u8 * eap_tls_process(struct eap_sm *sm, void *priv,
 		wpa_printf(MSG_DEBUG, "EAP-TLS: TLS processing failed");
 		ret->methodState = METHOD_MAY_CONT;
 		ret->decision = DECISION_FAIL;
+
+		if (res == -1) {
+			/*
+			 * The TLS handshake failed. So better forget the old
+			 * PIN. It may be wrong, we can't be sure but trying
+			 * the wrong one again might block it on the card - so
+			 * better ask the user again.
+			 */
+			free(config->pin);
+			config->pin = NULL;
+		}
+
 		if (resp) {
 			/* This is likely an alert message, so send it instead
 			 * of just ACKing the error. */
@@ -145,17 +157,6 @@ static u8 * eap_tls_process(struct eap_sm *sm, void *priv,
 		return eap_tls_build_ack(&data->ssl, respDataLen, id,
 					 EAP_TYPE_TLS, 0);
 	}
-
-#ifdef notdef
-	if (res == -1) {
-		/* The TLS handshake failed. So better forget the old PIN.
-		 * It may be wrong, we can't be sure but trying the wrong one
-		 * again might block it on the card - so better ask the user
-		 * again */
-		free(config->pin);
-		config->pin = NULL;
-	}
-#endif
 
 	return resp;
 }

@@ -145,6 +145,9 @@ static inline unsigned int wpa_swap_32(unsigned int v)
 		(a)[0] = ((u16) (val)) & 0xff;	\
 	} while (0)
 
+#define WPA_GET_BE32(a) ((((u32) (a)[0]) << 24) | (((u32) (a)[1]) << 16) | \
+			 (((u32) (a)[2]) << 8) | ((u32) (a)[3]))
+
 
 #ifndef ETH_ALEN
 #define ETH_ALEN 6

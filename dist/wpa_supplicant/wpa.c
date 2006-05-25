@@ -357,9 +357,8 @@ static int wpa_parse_wpa_ie_wpa(const u8 *wpa_ie, size_t wpa_ie_len,
 	}
 
 	if (left > 0) {
-		wpa_printf(MSG_DEBUG, "%s: ie has %u trailing bytes",
+		wpa_printf(MSG_DEBUG, "%s: ie has %u trailing bytes - ignored",
 			   __func__, left);
-		return -1;
 	}
 
 	return 0;
@@ -1442,6 +1441,15 @@ static int wpa_supplicant_validate_ie(struct wpa_sm *sm,
 		}
 	}
 
+	if (ie->wpa_ie == NULL && ie->rsn_ie == NULL &&
+	    (sm->ap_wpa_ie || sm->ap_rsn_ie)) {
+		wpa_report_ie_mismatch(sm, "IE in 3/4 msg does not match "
+				       "with IE in Beacon/ProbeResp (no IE?)",
+				       src_addr, ie->wpa_ie, ie->wpa_ie_len,
+				       ie->rsn_ie, ie->rsn_ie_len);
+		return -1;
+	}
+
 	if ((ie->wpa_ie && sm->ap_wpa_ie &&
 	     (ie->wpa_ie_len != sm->ap_wpa_ie_len ||
 	      memcmp(ie->wpa_ie, sm->ap_wpa_ie, ie->wpa_ie_len) != 0)) ||
@@ -1880,6 +1888,53 @@ static int wpa_supplicant_decrypt_key_data(struct wpa_sm *sm,
 
 
 /**
+ * wpa_sm_aborted_cached - Notify WPA that PMKSA caching was aborted
+ * @sm: Pointer to WPA state machine data from wpa_sm_init()
+ */
+void wpa_sm_aborted_cached(struct wpa_sm *sm)
+{
+	if (sm && sm->cur_pmksa) {
+		wpa_printf(MSG_DEBUG, "RSN: Cancelling PMKSA caching attempt");
+		sm->cur_pmksa = NULL;
+	}
+}
+
+
+static void wpa_eapol_key_dump(const struct wpa_eapol_key *key)
+{
+#ifndef CONFIG_NO_STDOUT_DEBUG
+	u16 key_info = WPA_GET_BE16(key->key_info);
+
+	wpa_printf(MSG_DEBUG, "  EAPOL-Key type=%d", key->type);
+	wpa_printf(MSG_DEBUG, "  key_info 0x%x (ver=%d keyidx=%d rsvd=%d %s"
+		   "%s%s%s%s%s%s%s)",
+		   key_info, key_info & WPA_KEY_INFO_TYPE_MASK,
+		   (key_info & WPA_KEY_INFO_KEY_INDEX_MASK) >>
+		   WPA_KEY_INFO_KEY_INDEX_SHIFT,
+		   (key_info & (BIT(13) | BIT(14) | BIT(15))) >> 13,
+		   key_info & WPA_KEY_INFO_KEY_TYPE ? "Pairwise" : "Group",
+		   key_info & WPA_KEY_INFO_INSTALL ? " Install" : "",
+		   key_info & WPA_KEY_INFO_ACK ? " Ack" : "",
+		   key_info & WPA_KEY_INFO_MIC ? " MIC" : "",
+		   key_info & WPA_KEY_INFO_SECURE ? " Secure" : "",
+		   key_info & WPA_KEY_INFO_ERROR ? " Error" : "",
+		   key_info & WPA_KEY_INFO_REQUEST ? " Request" : "",
+		   key_info & WPA_KEY_INFO_ENCR_KEY_DATA ? " Encr" : "");
+	wpa_printf(MSG_DEBUG, "  key_length=%u key_data_length=%u",
+		   WPA_GET_BE16(key->key_length),
+		   WPA_GET_BE16(key->key_data_length));
+	wpa_hexdump(MSG_DEBUG, "  replay_counter",
+		    key->replay_counter, WPA_REPLAY_COUNTER_LEN);
+	wpa_hexdump(MSG_DEBUG, "  key_nonce", key->key_nonce, WPA_NONCE_LEN);
+	wpa_hexdump(MSG_DEBUG, "  key_iv", key->key_iv, 16);
+	wpa_hexdump(MSG_DEBUG, "  key_rsc", key->key_rsc, 8);
+	wpa_hexdump(MSG_DEBUG, "  key_id (reserved)", key->key_id, 8);
+	wpa_hexdump(MSG_DEBUG, "  key_mic", key->key_mic, 16);
+#endif /* CONFIG_NO_STDOUT_DEBUG */
+}
+
+
+/**
  * wpa_sm_rx_eapol - Process received WPA EAPOL frames
  * @sm: Pointer to WPA state machine data from wpa_sm_init()
  * @src_addr: Source MAC address of the EAPOL packet
@@ -1931,12 +1986,6 @@ int wpa_sm_rx_eapol(struct wpa_sm *sm, const u8 *src_addr,
 	if (hdr->type != IEEE802_1X_TYPE_EAPOL_KEY) {
 		wpa_printf(MSG_DEBUG, "WPA: EAPOL frame (type %u) discarded, "
 			"not a Key frame", hdr->type);
-		if (sm->cur_pmksa) {
-			wpa_printf(MSG_DEBUG, "WPA: Cancelling PMKSA caching "
-				   "attempt - attempt full EAP "
-				   "authentication");
-			eapol_sm_notify_pmkid_attempt(sm->eapol, 0);
-		}
 		ret = 0;
 		goto out;
 	}
@@ -1948,7 +1997,6 @@ int wpa_sm_rx_eapol(struct wpa_sm *sm, const u8 *src_addr,
 		goto out;
 	}
 
-	wpa_printf(MSG_DEBUG, "  EAPOL-Key type=%d", key->type);
 	if (key->type != EAPOL_KEY_TYPE_WPA && key->type != EAPOL_KEY_TYPE_RSN)
 	{
 		wpa_printf(MSG_DEBUG, "WPA: EAPOL-Key type (%d) unknown, "
@@ -1956,6 +2004,7 @@ int wpa_sm_rx_eapol(struct wpa_sm *sm, const u8 *src_addr,
 		ret = 0;
 		goto out;
 	}
+	wpa_eapol_key_dump(key);
 
 	eapol_sm_notify_lower_layer_success(sm->eapol);
 	wpa_hexdump(MSG_MSGDUMP, "WPA: RX EAPOL-Key", tmp, len);
@@ -2200,7 +2249,7 @@ int wpa_sm_get_mib(struct wpa_sm *sm, char *buf, size_t buflen)
 
 /**
  * wpa_sm_init - Initialize WPA state machine
- * @ctx: Context pointer for callbacks
+ * @ctx: Context pointer for callbacks; this needs to be an allocated buffer
  * Returns: Pointer to the allocated WPA state machine data
  *
  * This function is used to allocate a new WPA state machine and the returned
@@ -2525,15 +2574,15 @@ int wpa_sm_get_status(struct wpa_sm *sm, char *buf, size_t buflen,
 int wpa_sm_set_assoc_wpa_ie_default(struct wpa_sm *sm, u8 *wpa_ie,
 				    size_t *wpa_ie_len)
 {
-	int len;
+	int res;
 
 	if (sm == NULL)
 		return -1;
 
-	len = wpa_gen_wpa_ie(sm, wpa_ie, *wpa_ie_len);
-	if (len < 0)
+	res = wpa_gen_wpa_ie(sm, wpa_ie, *wpa_ie_len);
+	if (res < 0)
 		return -1;
-	*wpa_ie_len = len;
+	*wpa_ie_len = res;
 
 	wpa_hexdump(MSG_DEBUG, "WPA: Set own WPA IE default",
 		    wpa_ie, *wpa_ie_len);
