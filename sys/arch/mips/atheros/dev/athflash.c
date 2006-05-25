@@ -1,4 +1,4 @@
-/* $NetBSD: flash_arbus.c,v 1.2 2006/05/17 07:11:48 gdamore Exp $ */
+/* $NetBSD: athflash.c,v 1.1 2006/05/25 06:37:47 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_arbus.c,v 1.2 2006/05/17 07:11:48 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.1 2006/05/25 06:37:47 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -131,9 +131,9 @@ static int toggle_bit_wait(struct flash_softc *, bus_size_t, int, int, int);
 static int flash_sector_erase(struct flash_softc *, bus_size_t);
 static int flash_sector_write(struct flash_softc *, bus_size_t);
 
-extern struct cfdriver flash_cd;
+extern struct cfdriver athflash_cd;
 
-CFATTACH_DECL(flash, sizeof(struct flash_softc),
+CFATTACH_DECL(athflash, sizeof(struct flash_softc),
 	      flash_probe, flash_attach, NULL, NULL);
 
 dev_type_open(flashopen);
@@ -141,7 +141,7 @@ dev_type_close(flashclose);
 dev_type_read(flashread);
 dev_type_write(flashwrite);
 
-const struct cdevsw flash_cdevsw = {
+const struct cdevsw athflash_cdevsw = {
 	flashopen, flashclose, flashread, flashwrite, noioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
@@ -263,7 +263,7 @@ flashopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
-	if ((sc = device_lookup(&flash_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup(&athflash_cd, minor(dev))) == NULL)
 		return ENXIO;
 	if (sc->sc_status & FLASH_ST_BUSY)
 		return EBUSY;
@@ -276,7 +276,7 @@ flashclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
-	sc = device_lookup(&flash_cd, minor(dev));
+	sc = device_lookup(&athflash_cd, minor(dev));
 	sc->sc_status &= ~FLASH_ST_BUSY;
 	return 0;
 }
@@ -292,7 +292,7 @@ flashread(dev_t dev, struct uio *uio, int flag)
 	int			count;
 	int			error;
 
-	sc = device_lookup(&flash_cd, minor(dev));
+	sc = device_lookup(&athflash_cd, minor(dev));
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -321,7 +321,7 @@ flashwrite(dev_t dev, struct uio *uio, int flag)
 	int			stat;
 	int			error;
 
-	sc = device_lookup(&flash_cd, minor(dev));
+	sc = device_lookup(&athflash_cd, minor(dev));
 
 	if (sc->sc_size < uio->uio_offset + uio->uio_resid)
 		return ENOSPC;
