@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.10 2005/06/02 11:29:01 lukem Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.11 2006/05/25 01:18:59 christos Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -81,7 +81,7 @@
 #if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd.c,v 1.10 2005/06/02 11:29:01 lukem Exp $");
+__RCSID("$NetBSD: ndbootd.c,v 1.11 2006/05/25 01:18:59 christos Exp $");
 #endif
 
 /* includes: */
@@ -242,7 +242,7 @@ _ndbootd_find_interface(const char *ifr_name_user)
 	}
 
 	/* if we don't have an interface to return: */
-	if (ifa == NULL || ifa_user == NULL) {
+	if (ifa_user == NULL) {
 		freeifaddrs(ifap);
 		errno = ENOENT;
 		return (NULL);
