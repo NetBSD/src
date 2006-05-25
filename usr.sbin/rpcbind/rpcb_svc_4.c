@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.4 2006/05/25 02:31:38 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.5 2006/05/25 02:33:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -401,7 +401,7 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		if (rlist == NULL) {
 			rlist = rp;
 			tail = rp;
-		} else {
+		} else if (tail) {
 			tail->rpcb_entry_next = rp;
 			tail = rp;
 		}
