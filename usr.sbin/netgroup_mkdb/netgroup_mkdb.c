@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.12 2002/07/20 08:40:18 grant Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.13 2006/05/25 01:20:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.12 2002/07/20 08:40:18 grant Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.13 2006/05/25 01:20:21 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -486,12 +486,14 @@ ng_print(e, str)
 	struct nentry  *e;
 	struct string  *str;
 {
-	char           *ptr = emalloc(e->n_size);
+	char           *ptr;
 
 	if (e->n_next == NULL) {
 		str_append(str, "", ' ');
 		return;
 	}
+
+	ptr = emalloc(e->n_size);
 
 	for (e = e->n_next; e != NULL; e = e->n_next) {
 		switch (e->n_type) {
