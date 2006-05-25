@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.16 2005/02/06 04:48:58 perry Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.17 2006/05/25 00:05:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.16 2005/02/06 04:48:58 perry Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.17 2006/05/25 00:05:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: kgmon.c,v 1.16 2005/02/06 04:48:58 perry Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <kvm.h>
+#include <err.h>
 #include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
@@ -58,7 +59,7 @@ __RCSID("$NetBSD: kgmon.c,v 1.16 2005/02/06 04:48:58 perry Exp $");
 #include <string.h>
 #include <unistd.h>
 
-struct nlist nl[] = {
+static struct nlist nl[] = {
 #define	N_GMONPARAM	0
 	{ "__gmonparam" },
 #define	N_PROFHZ	1
@@ -71,15 +72,15 @@ struct kvmvars {
 	struct gmonparam gpm;
 };
 
-int	bflag, hflag, kflag, rflag, pflag;
-int	debug = 0;
-void	setprof(struct kvmvars *kvp, int state);
-void	dumpstate(struct kvmvars *kvp);
-void	reset(struct kvmvars *kvp);
-int	openfiles(char *, char *, struct kvmvars *);
-int	getprof(struct kvmvars *);
-void	kern_readonly(int);
-int	getprofhz(struct kvmvars *);
+static int	bflag, hflag, kflag, rflag, pflag;
+static int	debug = 0;
+static void	setprof(struct kvmvars *kvp, int state);
+static void	dumpstate(struct kvmvars *kvp);
+static void	reset(struct kvmvars *kvp);
+static int	openfiles(char *, char *, struct kvmvars *);
+static int	getprof(struct kvmvars *);
+static void	kern_readonly(int);
+static int	getprofhz(struct kvmvars *);
 
 int
 main(int argc, char **argv)
@@ -88,6 +89,7 @@ main(int argc, char **argv)
 	struct kvmvars kvmvars;
 	char *system, *kmemf;
 
+	setprogname(argv[0]);
 	seteuid(getuid());
 	kmemf = NULL;
 	system = NULL;
@@ -157,15 +159,15 @@ main(int argc, char **argv)
 		reset(&kvmvars);
 	if (accessmode == O_RDWR)
 		setprof(&kvmvars, disp);
-	(void)fprintf(stdout, "kgmon: kernel profiling is %s.\n",
-		      disp == GMON_PROF_OFF ? "off" : "running");
+	(void)fprintf(stdout, "%s: kernel profiling is %s.\n",
+	     getprogname(), disp == GMON_PROF_OFF ? "off" : "running");
 	return (0);
 }
 
 /*
  * Check that profiling is enabled and open any ncessary files.
  */
-int
+static int
 openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 {
 	int mib[3], state, openmode;
@@ -177,11 +179,8 @@ openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 		mib[1] = KERN_PROF;
 		mib[2] = GPROF_STATE;
 		size = sizeof state;
-		if (sysctl(mib, 3, &state, &size, NULL, 0) < 0) {
-			(void)fprintf(stderr,
-			    "kgmon: profiling not defined in kernel.\n");
-			exit(20);
-		}
+		if (sysctl(mib, 3, &state, &size, NULL, 0) < 0)
+			err(1, "profiling not defined in kernel");
 		if (!(bflag || hflag || rflag ||
 		    (pflag && state == GMON_PROF_ON)))
 			return (O_RDONLY);
@@ -200,33 +199,25 @@ openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 			kvp->kd = kvm_openfiles(system, kmemf, NULL, O_RDONLY,
 			    errbuf);
 		}
-		if (kvp->kd == NULL) {
-			(void)fprintf(stderr, "kgmon: kvm_openfiles: %s\n",
-			    errbuf);
-			exit(2);
-		}
+		if (kvp->kd == NULL)
+			errx(1, "kvm_openfiles: %s", errbuf);
 		kern_readonly(GMON_PROF_ON);
 	}
-	if (kvm_nlist(kvp->kd, nl) < 0) {
-		(void)fprintf(stderr, "kgmon: %s: no namelist\n", system);
-		exit(3);
-	}
-	if (!nl[N_GMONPARAM].n_value) {
-		(void)fprintf(stderr,
-		    "kgmon: profiling not defined in kernel.\n");
-		exit(20);
-	}
+	if (kvm_nlist(kvp->kd, nl) < 0)
+		errx(1, "%s: no namelist", system);
+	if (!nl[N_GMONPARAM].n_value)
+		errx(1, "profiling not defined in kernel");
 	return (openmode);
 }
 
 /*
  * Suppress options that require a writable kernel.
  */
-void
+static void
 kern_readonly(int mode)
 {
 
-	(void)fprintf(stderr, "kgmon: kernel read-only: ");
+	(void)fprintf(stderr, "%s: kernel read-only: ", getprogname());
 	if (pflag && mode == GMON_PROF_ON)
 		(void)fprintf(stderr, "data may be inconsistent\n");
 	if (rflag)
@@ -241,7 +232,7 @@ kern_readonly(int mode)
 /*
  * Get the state of kernel profiling.
  */
-int
+static int
 getprof(struct kvmvars *kvp)
 {
 	int mib[3];
@@ -258,18 +249,16 @@ getprof(struct kvmvars *kvp)
 		if (sysctl(mib, 3, &kvp->gpm, &size, NULL, 0) < 0)
 			size = 0;
 	}
-	if (size != sizeof kvp->gpm) {
-		(void)fprintf(stderr, "kgmon: cannot get gmonparam: %s\n",
+	if (size != sizeof kvp->gpm)
+		errx(1, "cannot get gmonparam: %s",
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
-		exit (4);
-	}
 	return (kvp->gpm.state);
 }
 
 /*
  * Enable or disable kernel profiling according to the state variable.
  */
-void
+static void
 setprof(struct kvmvars *kvp, int state)
 {
 	struct gmonparam *p = (struct gmonparam *)nl[N_GMONPARAM].n_value;
@@ -295,14 +284,14 @@ setprof(struct kvmvars *kvp, int state)
 	    == sz)
 		return;
 bad:
-	(void)fprintf(stderr, "kgmon: warning: cannot turn profiling %s\n",
-	    state == GMON_PROF_OFF ? "off" : "on");
+	warnx("cannot turn profiling %s", state == GMON_PROF_OFF ?
+	    "off" : "on");
 }
 
 /*
  * Build the gmon.out file.
  */
-void
+static void
 dumpstate(struct kvmvars *kvp)
 {
 	FILE *fp;
@@ -318,7 +307,7 @@ dumpstate(struct kvmvars *kvp)
 	setprof(kvp, GMON_PROF_OFF);
 	fp = fopen("gmon.out", "w");
 	if (fp == 0) {
-		perror("gmon.out");
+		warn("cannot open `gmon.out'");
 		return;
 	}
 
@@ -338,10 +327,8 @@ dumpstate(struct kvmvars *kvp)
 	 */
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROF;
-	if ((tickbuf = (u_short *)malloc(kvp->gpm.kcountsize)) == NULL) {
-		fprintf(stderr, "kgmon: cannot allocate kcount space\n");
-		exit (5);
-	}
+	if ((tickbuf = malloc(kvp->gpm.kcountsize)) == NULL)
+		err(1, "cannot allocate kcount space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.kcount, (void *)tickbuf,
 		    kvp->gpm.kcountsize);
@@ -351,26 +338,19 @@ dumpstate(struct kvmvars *kvp)
 		if (sysctl(mib, 3, tickbuf, &i, NULL, 0) < 0)
 			i = 0;
 	}
-	if (i != kvp->gpm.kcountsize) {
-		(void)fprintf(stderr,
-		    "kgmon: read ticks: read %lu, got %lu: %s\n",
+	if (i != kvp->gpm.kcountsize)
+		errx(1, "read ticks: read %lu, got %lu: %s",
 		    kvp->gpm.kcountsize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
-		exit(6);
-	}
-	if ((fwrite(tickbuf, kvp->gpm.kcountsize, 1, fp)) != 1) {
-		perror("kgmon: writing tocks to gmon.out");
-		exit(7);
-	}
+	if ((fwrite(tickbuf, kvp->gpm.kcountsize, 1, fp)) != 1)
+		err(1, "writing tocks to gmon.out");
 	free(tickbuf);
 
 	/*
 	 * Write out the arc info.
 	 */
-	if ((froms = (u_short *)malloc(kvp->gpm.fromssize)) == NULL) {
-		fprintf(stderr, "kgmon: cannot allocate froms space\n");
-		exit (8);
-	}
+	if ((froms = malloc(kvp->gpm.fromssize)) == NULL)
+		err(1, "cannot allocate froms space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.froms, (void *)froms,
 		    kvp->gpm.fromssize);
@@ -380,17 +360,12 @@ dumpstate(struct kvmvars *kvp)
 		if (sysctl(mib, 3, froms, &i, NULL, 0) < 0)
 			i = 0;
 	}
-	if (i != kvp->gpm.fromssize) {
-		(void)fprintf(stderr,
-		   "kgmon: read froms: read %lu, got %lu: %s\n",
+	if (i != kvp->gpm.fromssize)
+		errx(1, "read froms: read %lu, got %lu: %s",
 		    kvp->gpm.fromssize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
-		exit(9);
-	}
-	if ((tos = (struct tostruct *)malloc(kvp->gpm.tossize)) == NULL) {
-		fprintf(stderr, "kgmon: cannot allocate tos space\n");
-		exit(10);
-	}
+	if ((tos = malloc(kvp->gpm.tossize)) == NULL)
+		err(1, "cannot allocate tos space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.tos, (void *)tos,
 		    kvp->gpm.tossize);
@@ -400,16 +375,13 @@ dumpstate(struct kvmvars *kvp)
 		if (sysctl(mib, 3, tos, &i, NULL, 0) < 0)
 			i = 0;
 	}
-	if (i != kvp->gpm.tossize) {
-		(void)fprintf(stderr,
-		    "kgmon: read tos: read %lu, got %lu: %s\n",
+	if (i != kvp->gpm.tossize)
+		errx(1, "read tos: read %lu, got %lu: %s",
 		    kvp->gpm.tossize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
-		exit(11);
-	}
 	if (debug)
-		(void)fprintf(stderr, "kgmon: lowpc 0x%lx, textsize 0x%lx\n",
-			      kvp->gpm.lowpc, kvp->gpm.textsize);
+		(void)fprintf(stderr, "%s: lowpc 0x%lx, textsize 0x%lx\n",
+		     getprogname(), kvp->gpm.lowpc, kvp->gpm.textsize);
 	endfrom = kvp->gpm.fromssize / sizeof(*froms);
 	for (fromindex = 0; fromindex < endfrom; ++fromindex) {
 		if (froms[fromindex] == 0)
@@ -421,7 +393,7 @@ dumpstate(struct kvmvars *kvp)
 			if (debug)
 			    (void)fprintf(stderr,
 			    "%s: [mcleanup] frompc 0x%lx selfpc 0x%lx count %ld\n",
-			    "kgmon", frompc, tos[toindex].selfpc,
+			    getprogname(), frompc, tos[toindex].selfpc,
 			    tos[toindex].count);
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = (u_long)tos[toindex].selfpc;
@@ -435,7 +407,7 @@ dumpstate(struct kvmvars *kvp)
 /*
  * Get the profiling rate.
  */
-int
+static int
 getprofhz(struct kvmvars *kvp)
 {
 	int mib[2], profrate;
@@ -446,8 +418,7 @@ getprofhz(struct kvmvars *kvp)
 		profrate = 1;
 		if (kvm_read(kvp->kd, nl[N_PROFHZ].n_value, &profrate,
 		    sizeof profrate) != sizeof profrate)
-			(void)fprintf(stderr, "kgmon: get clockrate: %s\n",
-				kvm_geterr(kvp->kd));
+			warnx("get clockrate: %s", kvm_geterr(kvp->kd));
 		return (profrate);
 	}
 	mib[0] = CTL_KERN;
@@ -455,15 +426,14 @@ getprofhz(struct kvmvars *kvp)
 	clockrate.profhz = 1;
 	size = sizeof clockrate;
 	if (sysctl(mib, 2, &clockrate, &size, NULL, 0) < 0)
-		(void)fprintf(stderr, "kgmon: get clockrate: %s\n",
-			strerror(errno));
+		warn("get clockrate");
 	return (clockrate.profhz);
 }
 
 /*
  * Reset the kernel profiling date structures.
  */
-void
+static void
 reset(struct kvmvars *kvp)
 {
 	char *zbuf;
@@ -477,53 +447,34 @@ reset(struct kvmvars *kvp)
 		biggest = kvp->gpm.fromssize;
 	if (kvp->gpm.tossize > biggest)
 		biggest = kvp->gpm.tossize;
-	if ((zbuf = (char *)malloc(biggest)) == NULL) {
-		fprintf(stderr, "kgmon: cannot allocate zbuf space\n");
-		exit(12);
-	}
+	if ((zbuf = malloc(biggest)) == NULL)
+		err(1, "cannot allocate zbuf space");
 	bzero(zbuf, biggest);
 	if (kflag) {
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.kcount, zbuf,
-		    kvp->gpm.kcountsize) != kvp->gpm.kcountsize) {
-			(void)fprintf(stderr, "kgmon: tickbuf zero: %s\n",
-			    kvm_geterr(kvp->kd));
-			exit(13);
-		}
+		    kvp->gpm.kcountsize) != kvp->gpm.kcountsize)
+			errx(1, "tickbuf zero: %s", kvm_geterr(kvp->kd));
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.froms, zbuf,
-		    kvp->gpm.fromssize) != kvp->gpm.fromssize) {
-			(void)fprintf(stderr, "kgmon: froms zero: %s\n",
-			    kvm_geterr(kvp->kd));
-			exit(14);
-		}
+		    kvp->gpm.fromssize) != kvp->gpm.fromssize)
+			errx(1, "froms zero: %s", kvm_geterr(kvp->kd));
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.tos, zbuf,
-		    kvp->gpm.tossize) != kvp->gpm.tossize) {
-			(void)fprintf(stderr, "kgmon: tos zero: %s\n",
-			    kvm_geterr(kvp->kd));
-			exit(15);
-		}
+		    kvp->gpm.tossize) != kvp->gpm.tossize)
+			errx(1, "tos zero: %s", kvm_geterr(kvp->kd));
+		free(zbuf);
 		return;
 	}
 	(void)seteuid(0);
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROF;
 	mib[2] = GPROF_COUNT;
-	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.kcountsize) < 0) {
-		(void)fprintf(stderr, "kgmon: tickbuf zero: %s\n",
-		    strerror(errno));
-		exit(13);
-	}
+	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.kcountsize) < 0)
+		err(1, "tickbuf zero");
 	mib[2] = GPROF_FROMS;
-	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.fromssize) < 0) {
-		(void)fprintf(stderr, "kgmon: froms zero: %s\n",
-		    strerror(errno));
-		exit(14);
-	}
+	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.fromssize) < 0)
+		err(1, "froms zero");
 	mib[2] = GPROF_TOS;
-	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.tossize) < 0) {
-		(void)fprintf(stderr, "kgmon: tos zero: %s\n",
-		    strerror(errno));
-		exit(15);
-	}
+	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.tossize) < 0)
+		err(1, "tos zero");
 	(void)seteuid(getuid());
 	free(zbuf);
 }
