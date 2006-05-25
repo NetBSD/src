@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.94 2006/03/17 21:01:02 elad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.95 2006/05/25 01:49:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.94 2006/03/17 21:01:02 elad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.95 2006/05/25 01:49:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -651,13 +651,15 @@ getmnt(struct mount *maddr)
 		struct mount mount;
 	} *mhead = NULL;
 	struct mtab *mt;
+	struct mount mb;
 
 	for (mt = mhead; mt != NULL; mt = mt->next)
 		if (maddr == mt->maddr)
 			return (&mt->mount);
+	KGETRET(maddr, &mb, sizeof(struct mount), "mount table");
 	if ((mt = malloc(sizeof(struct mtab))) == NULL)
 		err(1, "malloc");
-	KGETRET(maddr, &mt->mount, sizeof(struct mount), "mount table");
+	mt->mount = mb;
 	mt->maddr = maddr;
 	mt->next = mhead;
 	mhead = mt;
