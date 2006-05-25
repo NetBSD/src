@@ -1,3 +1,4 @@
+/*	$NetBSD: twaio.h,v 1.2 2006/05/25 01:37:08 wrstuden Exp $ */
 /*	$wasabi: twaio.h,v 1.8 2006/04/27 17:12:39 wrstuden Exp $ */
 /*
  * Copyright (c) 2005-2006 Wasabi Systems, Inc.
