@@ -1,4 +1,4 @@
-/*	$wasabi: twa.c,v 1.24 2006/04/27 17:12:39 wrstuden Exp $	*/
+/*	$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $	*/
 /*
  * Copyright (c) 2004-2006 Wasabi Systems, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$wasabi: twa.c,v 1.24 2006/04/27 17:12:39 wrstuden Exp $");
+__KERNEL_RCSID(0, "$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$wasabi: twa.c,v 1.24 2006/04/27 17:12:39 wrstuden Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/bswap.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/endian.h>
@@ -98,7 +99,6 @@ __KERNEL_RCSID(0, "$wasabi: twa.c,v 1.24 2006/04/27 17:12:39 wrstuden Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
@@ -135,8 +135,6 @@ static int 	twa_match(struct device *, struct cfdata *, void *);
 static int	twa_reset(struct twa_softc *);
 
 static int	twa_print(void *, const char *);
-static int	twa_submatch(struct device *, struct cfdata *,
-				const int *, void *);
 static int	twa_soft_reset(struct twa_softc *);
 
 static int	twa_check_ctlr_state(struct twa_softc *, u_int32_t);
@@ -152,15 +150,6 @@ static int	twa_done(struct twa_softc *);
 static int	twa_flash_firmware(struct twa_softc *sc);
 static int	twa_hard_reset(struct twa_softc *sc);
 #endif
-
-dev_type_open(twaopen);
-dev_type_close(twaclose);
-dev_type_ioctl(twaioctl);
-
-const struct cdevsw twa_cdevsw = {
-	twaopen, twaclose, noread, nowrite, twaioctl,
-	nostop, notty, nopoll, nommap,
-};
 
 extern struct	cfdriver twa_cd;
 extern uint32_t twa_fw_img_size;
@@ -958,6 +947,7 @@ twa_request_bus_scan(struct twa_softc *sc)
 	struct twa_drive *td;
 	struct twa_request *tr;
 	struct twa_attach_args twaa;
+	int locs[TWACF_NLOCS];
 	int s, unit;
 
 	s = splbio();
@@ -994,10 +984,11 @@ twa_request_bus_scan(struct twa_softc *sc)
 
 				twa_recompute_openings(sc);
 
+				locs[TWACF_UNIT] = unit;
+
 				sc->sc_units[unit].td_dev =
-				    	config_found_sm_loc(&sc->twa_dv, "twa",
-					    NULL, &twaa, twa_print,
-					    twa_submatch);
+				    	config_found_sm_loc(&sc->twa_dv, "twa", locs,
+					    &twaa, twa_print, config_stdsubmatch);
 			}
 		} else {
 			if (td->td_dev != NULL) {
@@ -1569,22 +1560,6 @@ twa_register_callbacks(struct twa_softc *sc, int unit,
 }
 
 
-static int
-twa_submatch(struct device *parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
-{
-	struct twa_attach_args *twaa;
-
-	twaa = aux;
-
-	if (cf->twaacf_unit != TWACF_UNIT_DEFAULT &&
-	    cf->twaacf_unit != twaa->twaa_unit)
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-
 /*
  * Print autoconfiguration message for a sub-device
  */
@@ -2023,7 +1998,7 @@ bail:
 /*
  * Accept an open operation on the control device.
  */
-int
+static int
 twaopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twa_softc *twa;
@@ -2042,7 +2017,7 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
 /*
  * Accept the last close on the control device.
  */
-int
+static int
 twaclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twa_softc *twa;
@@ -2066,7 +2041,7 @@ twaclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Return value:	0	-- success
  *			non-zero-- failure
  */
-int
+static int
 twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct twa_softc *sc;
@@ -2382,6 +2357,12 @@ fw_passthru_done:
 
 	return(error);
 }
+
+
+const struct cdevsw twa_cdevsw = {
+	twaopen, twaclose, noread, nowrite, twaioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 
 /*
@@ -2955,7 +2936,7 @@ twa_find_aen(struct twa_softc *sc, u_int16_t aen_code)
 	return(1);
 }
 
-static void __inline
+static void inline
 twa_request_init(struct twa_request *tr, int flags)
 {
 	tr->tr_data = NULL;
