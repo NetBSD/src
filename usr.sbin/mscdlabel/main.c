@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3 2005/07/25 11:26:40 drochner Exp $ */
+/* $NetBSD: main.c,v 1.4 2006/05/25 00:42:23 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2005
@@ -169,7 +169,8 @@ main(argc, argv)
 	 * to have more than one data track in one session, so we get
 	 * the same result.
 	 */
-	rawpart = getrawpartition();
+	if ((rawpart = getrawpartition()) == -1)
+		err(1, "Cannot get raw partition");
 	i = ntracks;
 	j = 0;
 	while (--i >= 0 && j < MAXPARTITIONS) {
