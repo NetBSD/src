@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.775 2006/05/18 09:05:51 liamjfoy Exp $
+#	$NetBSD: files,v 1.776 2006/05/25 14:27:28 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1254,6 +1254,7 @@ file	kern/kgdb_stub.c		kgdb
 file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
+file	kern/subr_callback.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_iostat.c
