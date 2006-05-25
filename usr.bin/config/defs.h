@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2005/11/07 03:26:20 erh Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 2006/05/25 22:28:38 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20051003
+#define CONFIG_VERSION		20060525
 #define CONFIG_MINVERSION	0
 
 /*
@@ -118,6 +118,7 @@ struct nvlist {
 	int	nv_ifunit;		/* XXX XXX XXX */
 	int	nv_flags;
 #define	NV_DEPENDED	1
+#define	NV_OBSOLETE	2
 };
 
 /*
@@ -483,8 +484,8 @@ void	appendmkoption(const char *, const char *);
 void	appendcondmkoption(const char *, const char *, const char *);
 void	deffilesystem(const char *, struct nvlist *);
 void	defoption(const char *, struct nvlist *, struct nvlist *);
-void	defflag(const char *, struct nvlist *, struct nvlist *);
-void	defparam(const char *, struct nvlist *, struct nvlist *);
+void	defflag(const char *, struct nvlist *, struct nvlist *, int);
+void	defparam(const char *, struct nvlist *, struct nvlist *, int);
 void	deloption(const char *);
 void	delfsoption(const char *);
 void	delmkoption(const char *);
@@ -498,6 +499,7 @@ void	setupdirs(void);
 #define OPT_DEFOPT(n)	(ht_lookup(defopttab, (n)) != NULL)
 #define OPT_DEFFLAG(n)	(ht_lookup(defflagtab, (n)) != NULL)
 #define OPT_DEFPARAM(n)	(ht_lookup(defparamtab, (n)) != NULL)
+#define OPT_OBSOLETE(n)	(ht_lookup(obsopttab, (n)) != NULL)
 #define DEFINED_OPTION(n) (find_declared_option((n)) != NULL)
 
 /* main.c */
