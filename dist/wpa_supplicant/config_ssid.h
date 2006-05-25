@@ -228,7 +228,7 @@ struct wpa_ssid {
 	size_t eappsk_len;
 
 	/**
-	 * nai - User NAI (for EAP-PSK)
+	 * nai - User NAI (for EAP-PSK/PAX)
 	 */
 	u8 *nai;
 

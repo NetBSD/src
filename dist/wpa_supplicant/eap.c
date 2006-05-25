@@ -10,6 +10,15 @@
  * license.
  *
  * See README and COPYING for more details.
+ *
+ * This file implements the Peer State Machine as defined in RFC 4137. The used
+ * states and state transitions match mostly with the RFC. However, there are
+ * couple of additional transitions for working around small issues noticed
+ * during testing. These exceptions are explained in comments within the
+ * functions in this file. The method functions, m.func(), are similar to the
+ * ones used in RFC 4137, but some small changes have used here to optimize
+ * operations and to add functionality needed for fast re-authentication
+ * (session resumption).
  */
 
 #include <stdlib.h>
@@ -138,8 +147,8 @@ static void eap_sm_processIdentity(struct eap_sm *sm, const u8 *req,
 static void eap_sm_processNotify(struct eap_sm *sm, const u8 *req, size_t len);
 static u8 * eap_sm_buildNotify(struct eap_sm *sm, int id, size_t *len);
 static void eap_sm_parseEapReq(struct eap_sm *sm, const u8 *req, size_t len);
-static const char * eap_sm_method_state_txt(int state);
-static const char * eap_sm_decision_txt(int decision);
+static const char * eap_sm_method_state_txt(EapMethodState state);
+static const char * eap_sm_decision_txt(EapDecision decision);
 
 
 /* Definitions for clarifying state machine implementation */
@@ -210,6 +219,11 @@ static void eap_deinit_prev_method(struct eap_sm *sm, const char *txt)
 }
 
 
+/*
+ * This state initializes state machine variables when the machine is
+ * activated (portEnabled = TRUE). This is also used when re-starting
+ * authentication (eapRestart == TRUE).
+ */
 SM_STATE(EAP, INITIALIZE)
 {
 	SM_ENTRY(EAP, INITIALIZE);
@@ -248,6 +262,11 @@ SM_STATE(EAP, INITIALIZE)
 }
 
 
+/*
+ * This state is reached whenever service from the lower layer is interrupted
+ * or unavailable (portEnabled == FALSE). Immediate transition to INITIALIZE
+ * occurs when the port becomes enabled.
+ */
 SM_STATE(EAP, DISABLED)
 {
 	SM_ENTRY(EAP, DISABLED);
@@ -255,12 +274,21 @@ SM_STATE(EAP, DISABLED)
 }
 
 
+/*
+ * The state machine spends most of its time here, waiting for something to
+ * happen. This state is entered unconditionally from INITIALIZE, DISCARD, and
+ * SEND_RESPONSE states.
+ */
 SM_STATE(EAP, IDLE)
 {
 	SM_ENTRY(EAP, IDLE);
 }
 
 
+/*
+ * This state is entered when an EAP packet is received (eapReq == TRUE) to
+ * parse the packet header.
+ */
 SM_STATE(EAP, RECEIVED)
 {
 	const u8 *eapReqData;
@@ -274,16 +302,28 @@ SM_STATE(EAP, RECEIVED)
 }
 
 
+/*
+ * This state is entered when a request for a new type comes in. Either the
+ * correct method is started, or a Nak response is built.
+ */
 SM_STATE(EAP, GET_METHOD)
 {
 	SM_ENTRY(EAP, GET_METHOD);
 	if (eap_sm_allowMethod(sm, sm->reqMethod)) {
 		int reinit = 0;
+		/*
+		 * RFC 4137 does not define specific operation for fast
+		 * re-authentication (session resumption). The design here is
+		 * to allow the previously used method data to be maintained
+		 * for re-authentication if the method support session
+		 * resumption. Otherwise, the previously used method data is
+		 * freed and a new method is allocated here.
+		 */
 		if (sm->fast_reauth &&
 		    sm->m && sm->m->method == sm->reqMethod &&
 		    sm->m->has_reauth_data &&
 		    sm->m->has_reauth_data(sm, sm->eap_method_priv)) {
-			wpa_printf(MSG_DEBUG, "EAP: using previous method data"
+			wpa_printf(MSG_DEBUG, "EAP: Using previous method data"
 				   " for fast re-authentication");
 			reinit = 1;
 		} else
@@ -292,7 +332,7 @@ SM_STATE(EAP, GET_METHOD)
 		if (sm->m == NULL)
 			sm->m = eap_sm_get_eap_methods(sm->selectedMethod);
 		if (sm->m) {
-			wpa_printf(MSG_DEBUG, "EAP: initialize selected EAP "
+			wpa_printf(MSG_DEBUG, "EAP: Initialize selected EAP "
 				   "method (%d, %s)",
 				   sm->selectedMethod, sm->m->name);
 			if (reinit)
@@ -340,6 +380,10 @@ SM_STATE(EAP, GET_METHOD)
 }
 
 
+/*
+ * The method processing happens here. The request from the authenticator is
+ * processed, and an appropriate response packet is built.
+ */
 SM_STATE(EAP, METHOD)
 {
 	u8 *eapReqData;
@@ -354,8 +398,20 @@ SM_STATE(EAP, METHOD)
 
 	eapReqData = eapol_get_eapReqData(sm, &eapReqDataLen);
 
-	/* Get ignore, methodState, decision, allowNotifications, and
-	 * eapRespData. */
+	/*
+	 * Get ignore, methodState, decision, allowNotifications, and
+	 * eapRespData. RFC 4137 uses three separate method procedure (check,
+	 * process, and buildResp) in this state. These have been combined into
+	 * a single function call to m->process() in order to optimize EAP
+	 * method implementation interface a bit. These procedures are only
+	 * used from within this METHOD state, so there is no need to keep
+	 * these as separate C functions.
+	 *
+	 * The RFC 4137 procedures return values as follows:
+	 * ignore = m.check(eapReqData)
+	 * (methodState, decision, allowNotifications) = m.process(eapReqData)
+	 * eapRespData = m.buildResp(reqId)
+	 */
 	memset(&ret, 0, sizeof(ret));
 	ret.ignore = sm->ignore;
 	ret.methodState = sm->methodState;
@@ -387,6 +443,10 @@ SM_STATE(EAP, METHOD)
 }
 
 
+/*
+ * This state signals the lower layer that a response packet is ready to be
+ * sent.
+ */
 SM_STATE(EAP, SEND_RESPONSE)
 {
 	SM_ENTRY(EAP, SEND_RESPONSE);
@@ -409,6 +469,10 @@ SM_STATE(EAP, SEND_RESPONSE)
 }
 
 
+/*
+ * This state signals the lower layer that the request was discarded, and no
+ * response packet will be sent at this time.
+ */
 SM_STATE(EAP, DISCARD)
 {
 	SM_ENTRY(EAP, DISCARD);
@@ -417,6 +481,9 @@ SM_STATE(EAP, DISCARD)
 }
 
 
+/*
+ * Handles requests for Identity method and builds a response.
+ */
 SM_STATE(EAP, IDENTITY)
 {
 	const u8 *eapReqData;
@@ -431,6 +498,9 @@ SM_STATE(EAP, IDENTITY)
 }
 
 
+/*
+ * Handles requests for Notification method and builds a response.
+ */
 SM_STATE(EAP, NOTIFICATION)
 {
 	const u8 *eapReqData;
@@ -445,6 +515,9 @@ SM_STATE(EAP, NOTIFICATION)
 }
 
 
+/*
+ * This state retransmits the previous response packet.
+ */
 SM_STATE(EAP, RETRANSMIT)
 {
 	SM_ENTRY(EAP, RETRANSMIT);
@@ -461,6 +534,11 @@ SM_STATE(EAP, RETRANSMIT)
 }
 
 
+/*
+ * This state is entered in case of a successful completion of authentication
+ * and state machine waits here until port is disabled or EAP authentication is
+ * restarted.
+ */
 SM_STATE(EAP, SUCCESS)
 {
 	SM_ENTRY(EAP, SUCCESS);
@@ -488,6 +566,10 @@ SM_STATE(EAP, SUCCESS)
 }
 
 
+/*
+ * This state is entered in case of a failure and state machine waits here
+ * until port is disabled or EAP authentication is restarted.
+ */
 SM_STATE(EAP, FAILURE)
 {
 	SM_ENTRY(EAP, FAILURE);
@@ -538,6 +620,9 @@ static int eap_success_workaround(struct eap_sm *sm, int reqId, int lastId)
 }
 
 
+/*
+ * RFC 4137 - Appendix A.1: EAP Peer State Machine - State transitions
+ */
 SM_STEP(EAP)
 {
 	int duplicate;
@@ -548,6 +633,14 @@ SM_STEP(EAP)
 	else if (!eapol_get_bool(sm, EAPOL_portEnabled) || sm->force_disabled)
 		SM_ENTER_GLOBAL(EAP, DISABLED);
 	else if (sm->num_rounds > EAP_MAX_AUTH_ROUNDS) {
+		/* RFC 4137 does not place any limit on number of EAP messages
+		 * in an authentication session. However, some error cases have
+		 * ended up in a state were EAP messages were sent between the
+		 * peer and server in a loop (e.g., TLS ACK frame in both
+		 * direction). Since this is quite undesired outcome, limit the
+		 * total number of EAP round-trips and abort authentication if
+		 * this limit is exceeded.
+		 */
 		if (sm->num_rounds == EAP_MAX_AUTH_ROUNDS + 1) {
 			wpa_msg(sm->msg_ctx, MSG_INFO, "EAP: more than %d "
 				"authentication rounds - abort",
@@ -565,6 +658,11 @@ SM_STEP(EAP)
 			SM_ENTER(EAP, INITIALIZE);
 		break;
 	case EAP_IDLE:
+		/*
+		 * The first three transitions are from RFC 4137. The last two
+		 * are local additions to handle special cases with LEAP and
+		 * PEAP server not sending EAP-Success in some cases.
+		 */
 		if (eapol_get_bool(sm, EAPOL_eapReq))
 			SM_ENTER(EAP, RECEIVED);
 		else if ((eapol_get_bool(sm, EAPOL_altAccept) &&
@@ -608,10 +706,15 @@ SM_STEP(EAP)
 			duplicate = 0;
 		}
 
-		if (sm->rxSuccess &&
+		/*
+		 * Two special cases below for LEAP are local additions to work
+		 * around odd LEAP behavior (EAP-Success in the middle of
+		 * authentication and then swapped roles). Other transitions
+		 * are based on RFC 4137.
+		 */
+		if (sm->rxSuccess && sm->decision != DECISION_FAIL &&
 		    (sm->reqId == sm->lastId ||
-		     eap_success_workaround(sm, sm->reqId, sm->lastId)) &&
-		    sm->decision != DECISION_FAIL)
+		     eap_success_workaround(sm, sm->reqId, sm->lastId)))
 			SM_ENTER(EAP, SUCCESS);
 		else if (sm->methodState != METHOD_CONT &&
 			 ((sm->rxFailure &&
@@ -697,7 +800,7 @@ static Boolean eap_sm_allowMethod(struct eap_sm *sm, EapType method)
 }
 
 
-static u8 *eap_sm_buildNak(struct eap_sm *sm, int id, size_t *len)
+static u8 * eap_sm_buildNak(struct eap_sm *sm, int id, size_t *len)
 {
 	struct wpa_ssid *config = eap_get_config(sm);
 	struct eap_hdr *resp;
@@ -748,6 +851,13 @@ static void eap_sm_processIdentity(struct eap_sm *sm, const u8 *req,
 	wpa_msg(sm->msg_ctx, MSG_INFO, WPA_EVENT_EAP_STARTED
 		"EAP authentication started");
 
+	/*
+	 * RFC 3748 - 5.1: Identity
+	 * Data field may contain a displayable message in UTF-8. If this
+	 * includes NUL-character, only the data before that should be
+	 * displayed. Some EAP implementasitons may piggy-back additional
+	 * options after the NUL.
+	 */
 	/* TODO: could save displayable message so that it can be shown to the
 	 * user in case of interaction is required */
 	wpa_hexdump_ascii(MSG_DEBUG, "EAP: EAP-Request Identity data",
@@ -816,8 +926,8 @@ static int eap_sm_get_scard_identity(struct eap_sm *sm, struct wpa_ssid *ssid)
  * eap_sm_buildIdentity - Build EAP-Identity/Response for the current network
  * @sm: Pointer to EAP state machine allocated with eap_sm_init()
  * @id: EAP identifier for the packet
- * @len: Pointer to variable that will be set to the length of the response
- * @encrypted: Whether the packet is for enrypted tunnel (EAP phase 2)
+ * @len: Pointer to a variable that will be set to the length of the response
+ * @encrypted: Whether the packet is for encrypted tunnel (EAP phase 2)
  * Returns: Pointer to the allocated EAP-Identity/Response packet or %NULL on
  * failure
  *
@@ -872,7 +982,6 @@ u8 * eap_sm_buildIdentity(struct eap_sm *sm, int id, size_t *len,
 		}
 	}
 
-
 	*len = sizeof(struct eap_hdr) + 1 + identity_len;
 	resp = malloc(*len);
 	if (resp == NULL)
@@ -919,7 +1028,7 @@ static void eap_sm_processNotify(struct eap_sm *sm, const u8 *req, size_t len)
 }
 
 
-static u8 *eap_sm_buildNotify(struct eap_sm *sm, int id, size_t *len)
+static u8 * eap_sm_buildNotify(struct eap_sm *sm, int id, size_t *len)
 {
 	struct eap_hdr *resp;
 	u8 *pos;
@@ -945,7 +1054,7 @@ static void eap_sm_parseEapReq(struct eap_sm *sm, const u8 *req, size_t len)
 	const struct eap_hdr *hdr;
 	size_t plen;
 
-	sm->rxReq = sm->rxSuccess = sm->rxFailure = FALSE;
+	sm->rxReq = sm->rxResp = sm->rxSuccess = sm->rxFailure = FALSE;
 	sm->reqId = 0;
 	sm->reqMethod = EAP_TYPE_NONE;
 
@@ -977,6 +1086,11 @@ static void eap_sm_parseEapReq(struct eap_sm *sm, const u8 *req, size_t len)
 		break;
 	case EAP_CODE_RESPONSE:
 		if (sm->selectedMethod == EAP_TYPE_LEAP) {
+			/*
+			 * LEAP differs from RFC 4137 by using reversed roles
+			 * for mutual authentication and because of this, we
+			 * need to accept EAP-Response frames if LEAP is used.
+			 */
 			sm->rxResp = TRUE;
 			if (plen > sizeof(*hdr))
 				sm->reqMethod = *((u8 *) (hdr + 1));
@@ -1012,7 +1126,10 @@ static void eap_sm_parseEapReq(struct eap_sm *sm, const u8 *req, size_t len)
  * Returns: Pointer to the allocated EAP state machine or %NULL on failure
  *
  * This function allocates and initializes an EAP state machine. In addition,
- * this initializes TLS library for the new EAP state machine.
+ * this initializes TLS library for the new EAP state machine. eapol_cb pointer
+ * will be in use until eap_sm_deinit() is used to deinitialize this EAP state
+ * machine. Consequently, the caller must make sure that this data structure
+ * remains alive while the EAP state machine is active.
  */
 struct eap_sm * eap_sm_init(void *eapol_ctx, struct eapol_callbacks *eapol_cb,
 			    void *msg_ctx, struct eap_config *conf)
@@ -1057,9 +1174,7 @@ void eap_sm_deinit(struct eap_sm *sm)
 	if (sm == NULL)
 		return;
 	eap_deinit_prev_method(sm, "EAP deinit");
-	free(sm->lastRespData);
-	free(sm->eapRespData);
-	free(sm->eapKeyData);
+	eap_sm_abort(sm);
 	tls_deinit(sm->ssl_ctx);
 	free(sm);
 }
@@ -1096,6 +1211,8 @@ int eap_sm_step(struct eap_sm *sm)
  */
 void eap_sm_abort(struct eap_sm *sm)
 {
+	free(sm->lastRespData);
+	sm->lastRespData = NULL;
 	free(sm->eapRespData);
 	sm->eapRespData = NULL;
 	free(sm->eapKeyData);
@@ -1138,7 +1255,7 @@ static const char * eap_sm_state_txt(int state)
 }
 
 
-static const char * eap_sm_method_state_txt(int state)
+static const char * eap_sm_method_state_txt(EapMethodState state)
 {
 	switch (state) {
 	case METHOD_NONE:
@@ -1157,7 +1274,7 @@ static const char * eap_sm_method_state_txt(int state)
 }
 
 
-static const char * eap_sm_decision_txt(int decision)
+static const char * eap_sm_decision_txt(EapDecision decision)
 {
 	switch (decision) {
 	case DECISION_FAIL:
@@ -1175,10 +1292,10 @@ static const char * eap_sm_decision_txt(int decision)
 /**
  * eap_sm_get_status - Get EAP state machine status
  * @sm: Pointer to EAP state machine allocated with eap_sm_init()
- * @buf: buffer for status information
- * @buflen: maximum buffer length
- * @verbose: whether to include verbose status information
- * Returns: number of bytes written to buf.
+ * @buf: Buffer for status information
+ * @buflen: Maximum buffer length
+ * @verbose: Whether to include verbose status information
+ * Returns: Number of bytes written to buf.
  *
  * Query EAP state machine for status information. This function fills in a
  * text area with current status information from the EAPOL state machine. If
@@ -1540,7 +1657,7 @@ u8 eap_get_phase2_type(const char *name)
 /**
  * eap_get_phase2_types - Get list of allowed EAP phase 2 types
  * @config: Pointer to a network configuration
- * @count: Pointer to variable filled with number of returned EAP types
+ * @count: Pointer to a variable to be filled with number of returned EAP types
  * Returns: Pointer to allocated type list or %NULL on failure
  *
  * This function generates an array of allowed EAP phase 2 (tunneled) types for
@@ -1574,7 +1691,7 @@ u8 *eap_get_phase2_types(struct wpa_ssid *config, size_t *count)
 /**
  * eap_set_fast_reauth - Update fast_reauth setting
  * @sm: Pointer to EAP state machine allocated with eap_sm_init()
- * @enabled: 1 = fast reauthentication is enabled, 0 = disabled
+ * @enabled: 1 = Fast reauthentication is enabled, 0 = Disabled
  */
 void eap_set_fast_reauth(struct eap_sm *sm, int enabled)
 {
@@ -1631,6 +1748,8 @@ void eap_notify_success(struct eap_sm *sm)
 		sm->EAP_state = EAP_SUCCESS;
 	}
 }
+
+
 /**
  * eap_notify_lower_layer_success - Notification of lower layer success
  * @sm: Pointer to EAP state machine allocated with eap_sm_init()
@@ -1713,7 +1832,7 @@ u8 * eap_get_eapRespData(struct eap_sm *sm, size_t *len)
 /**
  * eap_sm_register_scard_ctx - Notification of smart card context
  * @sm: Pointer to EAP state machine allocated with eap_sm_init()
- * @ctx: context data for smart card operations
+ * @ctx: Context data for smart card operations
  *
  * Notify EAP state machines of context data for smart card operations. This
  * context data will be used as a parameter for scard_*() functions.
@@ -1730,11 +1849,12 @@ void eap_register_scard_ctx(struct eap_sm *sm, void *ctx)
  * @eap_type: Expected EAP type number
  * @msg: EAP frame (starting with EAP header)
  * @msglen: Length of msg
- * @plen: Pointer for return payload length
+ * @plen: Pointer to variable to contain the returned payload length
  * Returns: Pointer to EAP payload (after type field), or %NULL on failure
  *
  * This is a helper function for EAP method implementations. This is usually
- * called in the beginning of struct eap_method::process() function.
+ * called in the beginning of struct eap_method::process() function to verify
+ * that the received EAP request packet has a valid header.
  */
 const u8 * eap_hdr_validate(EapType eap_type, const u8 *msg, size_t msglen,
 			    size_t *plen)

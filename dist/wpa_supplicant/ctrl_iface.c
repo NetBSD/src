@@ -146,7 +146,7 @@ static int wpa_supplicant_ctrl_iface_attach(struct wpa_supplicant *wpa_s,
 		   inet_ntoa(from->sin_addr), ntohs(from->sin_port));
 #else /* CONFIG_CTRL_IFACE_UDP */
 	wpa_hexdump(MSG_DEBUG, "CTRL_IFACE monitor attached",
-		    (u8 *) from->sun_path, fromlen);
+		    (u8 *) from->sun_path, fromlen - sizeof(from->sun_family));
 #endif /* CONFIG_CTRL_IFACE_UDP */
 	return 0;
 }
@@ -175,14 +175,16 @@ static int wpa_supplicant_ctrl_iface_detach(struct wpa_supplicant *wpa_s,
 		}
 #else /* CONFIG_CTRL_IFACE_UDP */
 		if (fromlen == dst->addrlen &&
-		    memcmp(from->sun_path, dst->addr.sun_path, fromlen) == 0) {
+		    memcmp(from->sun_path, dst->addr.sun_path,
+			   fromlen - sizeof(from->sun_family)) == 0) {
 			if (prev == NULL)
 				wpa_s->ctrl_dst = dst->next;
 			else
 				prev->next = dst->next;
 			free(dst);
 			wpa_hexdump(MSG_DEBUG, "CTRL_IFACE monitor detached",
-				    (u8 *) from->sun_path, fromlen);
+				    (u8 *) from->sun_path,
+				    fromlen - sizeof(from->sun_family));
 			return 0;
 		}
 #endif /* CONFIG_CTRL_IFACE_UDP */
@@ -215,9 +217,11 @@ static int wpa_supplicant_ctrl_iface_level(struct wpa_supplicant *wpa_s,
 		}
 #else /* CONFIG_CTRL_IFACE_UDP */
 		if (fromlen == dst->addrlen &&
-		    memcmp(from->sun_path, dst->addr.sun_path, fromlen) == 0) {
+		    memcmp(from->sun_path, dst->addr.sun_path,
+			   fromlen - sizeof(from->sun_family)) == 0) {
 			wpa_hexdump(MSG_DEBUG, "CTRL_IFACE changed monitor "
-				    "level", (u8 *) from->sun_path, fromlen);
+				    "level", (u8 *) from->sun_path,
+				    fromlen - sizeof(from->sun_family));
 			dst->debug_level = atoi(level);
 			return 0;
 		}
@@ -694,8 +698,10 @@ static int wpa_supplicant_ctrl_iface_set_network(
 	*value++ = '\0';
 
 	id = atoi(cmd);
-	wpa_printf(MSG_DEBUG, "CTRL_IFACE: SET_NETWORK id=%d name='%s' "
-		   "value='%s'", id, name, value);
+	wpa_printf(MSG_DEBUG, "CTRL_IFACE: SET_NETWORK id=%d name='%s'",
+		   id, name);
+	wpa_hexdump_ascii_key(MSG_DEBUG, "CTRL_IFACE: value",
+			      (u8 *) value, strlen(value));
 
 	ssid = wpa_config_get_network(wpa_s->conf, id);
 	if (ssid == NULL) {
@@ -706,7 +712,7 @@ static int wpa_supplicant_ctrl_iface_set_network(
 
 	if (wpa_config_set(ssid, name, value, 0) < 0) {
 		wpa_printf(MSG_DEBUG, "CTRL_IFACE: Failed to set network "
-			   "variable '%s' to '%s'", name, value);
+			   "variable '%s'", name);
 		return -1;
 	}
 
@@ -950,7 +956,8 @@ static void wpa_supplicant_ctrl_iface_receive(int sock, void *eloop_ctx,
 		return;
 	}
 	buf[res] = '\0';
-	if (strncmp(buf, WPA_CTRL_RSP, strlen(WPA_CTRL_RSP)) == 0) {
+	if (strncmp(buf, WPA_CTRL_RSP, strlen(WPA_CTRL_RSP)) == 0 ||
+	    strncmp(buf, "SET_NETWORK ", 12) == 0) {
 		wpa_hexdump_ascii_key(MSG_DEBUG, "RX ctrl_iface",
 				      (u8 *) buf, res);
 	} else {
@@ -1383,7 +1390,8 @@ void wpa_supplicant_ctrl_iface_send(struct wpa_supplicant *wpa_s, int level,
 		next = dst->next;
 		if (level >= dst->debug_level) {
 			wpa_hexdump(MSG_DEBUG, "CTRL_IFACE monitor send",
-				    (u8 *) dst->addr.sun_path, dst->addrlen);
+				    (u8 *) dst->addr.sun_path, dst->addrlen -
+				    sizeof(dst->addr.sun_family));
 			msg.msg_name = &dst->addr;
 			msg.msg_namelen = dst->addrlen;
 			if (sendmsg(wpa_s->ctrl_sock, &msg, 0) < 0) {
@@ -1576,9 +1584,6 @@ int wpa_supplicant_global_ctrl_iface_init(struct wpa_global *global)
 {
 	CTRL_IFACE_SOCK addr;
 	int s = -1;
-#ifndef CONFIG_CTRL_IFACE_UDP
-	char *fname = NULL;
-#endif /* CONFIG_CTRL_IFACE_UDP */
 
 	global->ctrl_sock = -1;
 
@@ -1655,12 +1660,6 @@ int wpa_supplicant_global_ctrl_iface_init(struct wpa_global *global)
 fail:
 	if (s >= 0)
 		close(s);
-#ifndef CONFIG_CTRL_IFACE_UDP
-	if (fname) {
-		unlink(fname);
-		free(fname);
-	}
-#endif /* CONFIG_CTRL_IFACE_UDP */
 	return -1;
 }
 

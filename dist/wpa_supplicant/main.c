@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 {
 	int c, i;
 	struct wpa_interface *ifaces, *iface;
-	int iface_count, exitcode;
+	int iface_count, exitcode = -1;
 	struct wpa_params params;
 	struct wpa_global *global;
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 			printf("Debugging disabled with "
 			       "CONFIG_NO_STDOUT_DEBUG=y build time "
 			       "option.\n");
-			return -1;
+			goto out;
 #else /* CONFIG_NO_STDOUT_DEBUG */
 			params.wpa_debug_level--;
 			break;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage();
-			return -1;
+			goto out;
 		case 'i':
 			iface->ifname = optarg;
 			break;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'L':
 			license();
-			return -1;
+			goto out;
 		case 'p':
 			iface->driver_param = optarg;
 			break;
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 			printf("%s\n", wpa_supplicant_version);
-			return -1;
+			goto out;
 		case 'w':
 			params.wait_for_interface++;
 			break;
@@ -200,17 +200,15 @@ int main(int argc, char *argv[])
 			iface_count++;
 			iface = realloc(ifaces, iface_count *
 					sizeof(struct wpa_interface));
-			if (iface == NULL) {
-				free(ifaces);
-				return -1;
-			}
+			if (iface == NULL)
+				goto out;
 			ifaces = iface;
 			iface = &ifaces[iface_count - 1]; 
 			memset(iface, 0, sizeof(*iface));
 			break;
 		default:
 			usage();
-			return -1;
+			goto out;
 		}
 	}
 
@@ -228,7 +226,8 @@ int main(int argc, char *argv[])
 			if (iface_count == 1 && params.ctrl_interface)
 				break;
 			usage();
-			return -1;
+			exitcode = -1;
+			break;
 		}
 		if (wpa_supplicant_add_iface(global, &ifaces[i]) == NULL)
 			exitcode = -1;
@@ -239,6 +238,7 @@ int main(int argc, char *argv[])
 
 	wpa_supplicant_deinit(global);
 
+out:
 	free(ifaces);
 	free(params.pid_file);
 
