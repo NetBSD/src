@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.16 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: majors.evbmips,v 1.17 2006/05/25 03:16:29 gdamore Exp $
 #
 # Device majors for evbmips
 #
@@ -77,6 +77,7 @@ device-major	cgd		char 75  block 18	cgd
 device-major	ksyms		char 76			ksyms
 
 device-major	nsmb		char 98			nsmb
+device-major	flash		char 99			flash
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
