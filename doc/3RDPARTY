@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.435 2006/05/25 03:58:30 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.436 2006/05/25 04:10:09 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -869,8 +869,8 @@ License:	GPLv2
 Notes:
 
 Package:	wpa_supplicant
-Version:	0.4.8
-Current Vers:	0.4.8
+Version:	0.4.9
+Current Vers:	0.4.9
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/
