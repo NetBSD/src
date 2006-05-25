@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.1 2006/05/23 21:10:42 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.2 2006/05/25 21:28:38 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -119,8 +119,6 @@ struct xnetback_instance {
 	grant_handle_t xni_rx_ring_handle;
 	vaddr_t xni_tx_ring_va; /* to unmap the ring */
 	vaddr_t xni_rx_ring_va;
-	vaddr_t xni_tx_pkt_map; /* XXX hack for receive path */
-
 };
 #define xni_if    xni_ec.ec_if
 #define xni_bpf   xni_if.if_bpf
@@ -191,17 +189,7 @@ struct _pages_pool_free {
 static inline void
 xni_pkt_unmap(struct xni_pkt *pkt, vaddr_t pkt_va)
 {
-	static gnttab_unmap_grant_ref_t op;
-	int ret;
-
-	op.host_addr = pkt_va;
-	op.dev_bus_addr = 0;
-	op.handle = pkt->pkt_handle;
-	ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-	    &op, 1);
-	if (ret)
-		panic("xni_pkt_unmap: unmap failed");
-	// uvm_km_free(kernel_map, pkt_va, PAGE_SIZE, UVM_KMF_VAONLY);
+	xen_shm_unmap(pkt_va, 1, pkt->pkt_handle);
 	pool_put(&xni_pkt_pool, pkt);
 }
 
@@ -349,8 +337,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
-	xneti->xni_tx_pkt_map = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
 	return 0;
 fail:
 	free(xneti, M_DEVBUF);
@@ -404,9 +390,6 @@ xennetback_xenbus_destroy(void *arg)
 	    PAGE_SIZE, UVM_KMF_VAONLY);
 	uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
 	    PAGE_SIZE, UVM_KMF_VAONLY);
-	uvm_km_free(kernel_map, xneti->xni_tx_pkt_map,
-	    PAGE_SIZE, UVM_KMF_VAONLY); /* XXX */
-
 	free(xneti, M_DEVBUF);
 	return 0;
 }
@@ -622,7 +605,6 @@ xennetback_evthandler(void *arg)
 	vaddr_t pkt_va;
 	struct mbuf *m;
 	int receive_pending, err;
-	gnttab_map_grant_ref_t op;
 	RING_IDX req_cons;
 
 	XENPRINTF(("xennetback_evthandler "));
@@ -699,12 +681,9 @@ xennetback_evthandler(void *arg)
 			m_freem(m);
 			continue;
 		}
-#if 0
-		pkt_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_NOWAIT | UVM_KMF_VAONLY);
-#endif
-		pkt_va = xneti->xni_tx_pkt_map;
-		if (pkt_va == 0) {
+		err = xen_shm_map(1, xneti->xni_domid, txreq->gref, &pkt_va,
+		    &pkt->pkt_handle, XSHM_RO);
+		if (__predict_false(err == ENOMEM)) {
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_DROPPED);
 			ifp->if_ierrors++;
@@ -713,17 +692,9 @@ xennetback_evthandler(void *arg)
 			continue;
 		}
 			
-
-		op.host_addr = pkt_va;
-		op.dom = xneti->xni_domid;
-		op.ref = txreq->gref;
-		op.flags = GNTMAP_host_map | GNTMAP_readonly;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-		if (err)
-			panic("HYPERVISOR_grant_table_op failed");
-		if (__predict_false(op.status)) {
+		if (__predict_false(err)) {
 			printf("%s: mapping foreing page failed: %d\n",
-			    xneti->xni_if.if_xname, op.status);
+			    xneti->xni_if.if_xname, err);
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_ERROR);
 			ifp->if_ierrors++;
@@ -732,7 +703,6 @@ xennetback_evthandler(void *arg)
 			continue;
 		}
 
-		pkt->pkt_handle = op.handle;
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh =
 			    (void*)(pkt_va + txreq->offset);
@@ -746,12 +716,8 @@ xennetback_evthandler(void *arg)
 				continue; /* packet is not for us */
 			}
 		}
-#if 0
 		if (((req_cons + 1) & (NET_TX_RING_SIZE - 1)) ==
 		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1))) {
-#else
-		if (1) { /* until we have a proper VA allocator */
-#endif
 			/*
 			 * This is the last TX buffer. Copy the data and
 			 * ack it. Delaying it until the mbuf is
@@ -778,6 +744,7 @@ xennetback_evthandler(void *arg)
 			MEXTADD(m, pkt_va + txreq->offset,
 			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt);
 			m->m_pkthdr.len = m->m_len = txreq->size;
+			m->m_flags |= M_EXT_ROMAP;
 		}
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
