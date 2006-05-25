@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.33 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.34 2006/05/25 11:24:00 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.33 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.34 2006/05/25 11:24:00 blymn Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.33 2006/05/14 21:42:26 elad Exp $\n$NetBSD: verified_exec.c,v 1.33 2006/05/14 21:42:26 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.34 2006/05/25 11:24:00 blymn Exp $\n$NetBSD: verified_exec.c,v 1.34 2006/05/25 11:24:00 blymn Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __RCSID("$Id: verified_exec.c,v 1.33 2006/05/14 21:42:26 elad Exp $\n$NetBSD: ve
 #include <sys/sysctl.h>
 #define VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
+#include <sys/kauth.h>
 
 /* count of number of times device is open (we really only allow one open) */
 static unsigned int veriexec_dev_usage;
@@ -162,11 +163,11 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 
 	if (veriexec_strict > 0) {
 		printf("Veriexec: veriexecioctl: Strict mode, modifying "
-		       "veriexec tables is not permitted.\n"); 
+		       "veriexec tables is not permitted.\n");
 
 		return (EPERM);
 	}
-	
+
 	switch (cmd) {
 	case VERIEXEC_TABLESIZE:
 		error = veriexec_newtable((struct veriexec_sizing_params *)
@@ -313,7 +314,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		printf("Veriexec: veriexecioctl: Invalid or unknown "
 		       "fingerprint type \"%s\" for file \"%s\" "
 		       "(dev=%ld, inode=%llu)\n", params->fp_type,
-		       params->file, va.va_fsid, 
+		       params->file, va.va_fsid,
 		       (unsigned long long)va.va_fileid);
 		return(EINVAL);
 	}
@@ -338,7 +339,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		free(e, M_TEMP);
 		return(EINVAL);
 	}
-			
+
 	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
 	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
 
