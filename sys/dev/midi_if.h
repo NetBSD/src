@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17.14.10 2006/05/20 04:31:59 chap Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.14.11 2006/05/26 20:28:27 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,12 @@ struct midi_hw_if {
  * method only for system realtime messages (all of which are single byte).
  * Other drivers that have no reason to change from the single-byte interface
  * simply don't call the register function, and nothing changes for them.
+ *
+ * IMPORTANT: any code that provides a midi_hw_if_ext struct MUST initialize
+ * its members BY NAME (typically with a C99-style initializer with designators)
+ * and assure that any unused members contain zeroes (which is what C99
+ * initializers will do), and make no assumptions about the size or order of
+ * the struct, to allow for further extension of this interface as needed.
  */
 struct midi_hw_if_ext {
 	int	(*channel)(void *, int, int, u_char *, int);
