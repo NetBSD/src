@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.95 2006/05/24 02:24:17 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.96 2006/05/26 16:33:41 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1708,4 +1708,10 @@ sys/netinet6/ip6_input.c			1.87 via patch
 	In ip6_savecontrol(), ignore IPv4 packets.
 	From JINMEI Tatuya (KAME). PR#33269.
 	[rpaulo, ticket #1338]
+
+usr.bin/su/su_pam.c				1.12
+
+	Restore elevated priority before launching command in
+	user context.
+	[mlelstv, ticket #1343]
 
