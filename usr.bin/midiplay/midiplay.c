@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.22.12.1 2006/05/26 22:52:34 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.22.12.1 2006/05/26 22:52:34 chap Exp $");
 #endif
 
 
@@ -88,7 +88,7 @@ static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
 void usage(void);
-void send_event(seq_event_rec *);
+void send_event(seq_event_t *);
 void dometa(u_int, u_char *, u_int);
 void midireset(void);
 void send_sysex(u_char *, u_int);
@@ -97,6 +97,10 @@ void playfile(FILE *, char *);
 void playdata(u_char *, u_int, char *);
 int main(int argc, char **argv);
 
+/*
+ * This plays at an apparent tempo of 120 bpm when the BASETEMPO is 150 bpm,
+ * because the quavers are 5 divisions (4 on 1 off) rather than 4 total.
+ */
 #define P(c) 1,0x90,c,0x7f,4,0x80,c,0
 #define PL(c) 1,0x90,c,0x7f,8,0x80,c,0
 #define C 0x3c
@@ -146,7 +150,7 @@ usage(void)
 
 int showmeta = 0;
 int verbose = 0;
-#define BASETEMPO 400000
+#define BASETEMPO 400000		/* 150 bpm */
 u_int tempo = BASETEMPO;		/* microsec / quarter note */
 u_int ttempo = 100;
 int unit = 0;
@@ -155,7 +159,7 @@ int fd = -1;
 int sameprogram = 0;
 
 void
-send_event(seq_event_rec *ev)
+send_event(seq_event_t *ev)
 {
 	/*
 	printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
@@ -225,31 +229,26 @@ void
 midireset(void)
 {
 	/* General MIDI reset sequence */
-	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
-
-	send_sysex(gm_reset, sizeof gm_reset);
+	send_event(&SEQ_MK_SYSEX(unit,[0]=0x7e, 0x7f, 0x09, 0x01, 0xf7));
 }
 
 #define SYSEX_CHUNK 6
 void
 send_sysex(u_char *p, u_int l)
 {
-	seq_event_rec event;
-	u_int n;
+	seq_event_t event;
 
-	event.arr[0] = SEQ_SYSEX;
-	event.arr[1] = unit;
-	do {
-		n = SYSEX_CHUNK;
-		if (l < n) {
-			memset(&event.arr[2], 0xff, SYSEX_CHUNK);
-			n = l;
-		}
-		memcpy(&event.arr[2], p, n);
+	while ( l >= SYSEX_CHUNK ) {
+		send_event(&SEQ_MK_SYSEX(unit,[0]=
+		    p[0],p[1],p[2],p[3],p[4],p[5]));
+		p += SYSEX_CHUNK;
+		l -= SYSEX_CHUNK;
+	}
+	if ( l > 0 ) {
+		event = SEQ_MK_SYSEX(unit);
+		memcpy(event.sysex.buffer, p, l);
 		send_event(&event);
-		l -= n;
-		p += n;
-	} while (l > 0);
+	}
 }
 
 void
@@ -296,7 +295,6 @@ playdata(u_char *buf, u_int tot, char *name)
 	struct track *tracks;
 	u_long bestcur, now;
 	struct track *tp;
-	seq_event_rec event;
 
 	end = buf + tot;
 	if (verbose)
@@ -402,14 +400,14 @@ playdata(u_char *buf, u_int tot, char *name)
 	 */
 	if (sameprogram) {
 		for(t = 0; t < 16; t++) {
-			SEQ_MK_CHN_COMMON(&event, unit, MIDI_PGM_CHANGE, t,
-			    sameprogram-1, 0, 0);
-			send_event(&event);
+			send_event(&SEQ_MK_CHN(PGM_CHANGE, .device=unit,
+			    .channel=t, .program=sameprogram-1));
 		}
 	}
 	/*
-	 * The ticks variable is the number of ticks that make up a quarter
-	 * note and is used as a reference value for the delays between
+	 * The ticks variable is the number of ticks that make up a beat
+	 * (beat: 24 MIDI clocks always, a quarter note by usual convention)
+	 * and is used as a reference value for the delays between
 	 * the MIDI events.
 	 */
 	now = 0;
@@ -429,22 +427,9 @@ playdata(u_char *buf, u_int tot, char *name)
 			fflush(stdout);
 		}
 		if (now < bestcur) {
-			union {
-				u_int32_t i;
-				u_int8_t b[4];
-			} u;
 			u_int32_t delta = bestcur - now;
 			delta = (int)((double)delta * tempo / (1000.0*ticks));
-			u.i = delta;
-			if (delta != 0) {
-				event.arr[0] = SEQ_TIMING;
-				event.arr[1] = TMR_WAIT_REL;
-				event.arr[4] = u.b[0];
-				event.arr[5] = u.b[1];
-				event.arr[6] = u.b[2];
-				event.arr[7] = u.b[3];
-				send_event(&event);
-			}
+			send_event(&SEQ_MK_TIMING(WAIT_REL,.divisions=delta));
 		}
 		now = bestcur;
 		tp = &tracks[besttrk];
@@ -475,39 +460,45 @@ playdata(u_char *buf, u_int tot, char *name)
 			chan = MIDI_GET_CHAN(tp->status);
 			switch (status) {
 			case MIDI_NOTEOFF:
+				send_event(&SEQ_MK_CHN(NOTEOFF, .device=unit,
+				.channel=chan, .key=msg[0], .velocity=msg[1]));
+				break;
 			case MIDI_NOTEON:
+				send_event(&SEQ_MK_CHN(NOTEON, .device=unit,
+				.channel=chan, .key=msg[0], .velocity=msg[1]));
+				break;
 			case MIDI_KEY_PRESSURE:
-				SEQ_MK_CHN_VOICE(&event, unit, status, chan,
-						 msg[0], msg[1]);
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(KEY_PRESSURE,
+				.device=unit, .channel=chan,
+				.key=msg[0], .pressure=msg[1]));
 				break;
 			case MIDI_CTL_CHANGE:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[0], 0, msg[1]);
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(CTL_CHANGE,
+				.device=unit, .channel=chan,
+				.controller=msg[0], .value=msg[1]));
 				break;
 			case MIDI_PGM_CHANGE:
-				if (sameprogram)
-					break;
+				if (!sameprogram)
+					send_event(&SEQ_MK_CHN(PGM_CHANGE,
+					.device=unit, .channel=chan,
+					.program=msg[0]));
+				break;
 			case MIDI_CHN_PRESSURE:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[0], 0, 0);
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(CHN_PRESSURE,
+				.device=unit, .channel=chan, .pressure=msg[0]));
 				break;
 			case MIDI_PITCH_BEND:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  0, 0, 
-						  (msg[0] & 0x7f) | 
-						  ((msg[1] & 0x7f) << 7));
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(PITCH_BEND,
+				.device=unit, .channel=chan,
+				.value=(msg[0] & 0x7f) | ((msg[1] & 0x7f)<<7)));
 				break;
 			case MIDI_SYSTEM_PREFIX:
 				mlen = getvar(tp);
-				if (tp->status == MIDI_SYSEX_START)
+				if (tp->status == MIDI_SYSEX_START) {
 					send_sysex(tp->start, mlen);
-				else
-					/* Sorry, can't do this yet */;
-				break;
+					break;
+				}
+				/* Sorry, can't do this yet; FALLTHROUGH */
 			default:
 				if (verbose)
 					printf("MIDI event 0x%02x ignored\n",
