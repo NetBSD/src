@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.49 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.50 2006/05/26 00:26:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -217,7 +217,9 @@ struct pool {
 	const char	*pr_entered_file; /* reentrancy check */
 	long		pr_entered_line;
 
+#if defined(_KERNEL)
 	struct callback_entry pr_reclaimerentry;
+#endif
 };
 #endif /* __POOL_EXPOSE */
 
