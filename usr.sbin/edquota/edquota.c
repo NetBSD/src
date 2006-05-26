@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.26 2006/05/23 01:23:49 christos Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.27 2006/05/26 13:21:47 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -545,8 +545,7 @@ readprivs(quplist, infd)
 		    &dqblk.dqb_ihardlimit);
 		if (cnt != 3) {
 			warnx("%s: %s: bad format", fsp, line2);
-out:
-			(void)fclose(fd);
+			goto out;
 		}
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
@@ -581,6 +580,7 @@ out:
 			break;
 		}
 	}
+out:
 	fclose(fd);
 	/*
 	 * Disable quotas for any filesystems that have not been found.
