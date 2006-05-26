@@ -5,7 +5,11 @@
 #include <sys/lkm.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
+#ifdef _KERNEL
 #include <sys/device.h>
+#else
+typedef struct device *device_t;
+#endif
 
 #define CTLFLAG_RW			CTLFLAG_READWRITE
 
