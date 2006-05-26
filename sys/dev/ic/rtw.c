@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.73 2006/05/14 05:42:43 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.74 2006/05/26 13:01:53 blymn Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.73 2006/05/14 05:42:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.74 2006/05/26 13:01:53 blymn Exp $");
 
 #include "bpfilter.h"
 
@@ -1777,7 +1777,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
 	}
-	/* no more pending transmissions, cancel watchdog */ 
+	/* no more pending transmissions, cancel watchdog */
 	if (ts == NULL)
 		tsb->tsb_tx_timer = 0;
 	rtw_reset_oactive(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.23 2006/05/16 22:39:24 pavel Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.24 2006/05/26 12:59:24 blymn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -747,7 +747,7 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_ioctl = re_ioctl;
 	sc->ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-	/* 
+	/*
 	 * This is a way to disable hw VLAN tagging by default
 	 * (RE_VLAN is undefined), as it is problematic. PR 32643
 	 */
@@ -1810,7 +1810,7 @@ re_init(struct ifnet *ifp)
 		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;;
 
 	if (1)  {/* not for 8169S ? */
-		reg |= 
+		reg |=
 #ifdef RE_VLAN
 		    RTK_CPLUSCMD_VLANSTRIP |
 #endif
