@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.96 2006/05/26 16:33:41 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.97 2006/05/26 16:48:10 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1714,4 +1714,9 @@ usr.bin/su/su_pam.c				1.12
 	Restore elevated priority before launching command in
 	user context.
 	[mlelstv, ticket #1343]
+
+usr.bin/ftp/util.c				1.135
+
+	Fix a NULL pointer dereference in ftp(1).
+	[jnemeth, ticket #1339]
 
