@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.5.2.6 2005/12/16 11:57:20 tron Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.5.2.7 2006/05/26 16:32:07 ghen Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.5.2.6 2005/12/16 11:57:20 tron Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.5.2.7 2006/05/26 16:32:07 ghen Exp $");
 #endif
 #endif /* not lint */
 
@@ -492,6 +492,9 @@ out:
 	if (ruid != 0)
 		syslog(LOG_NOTICE, "%s to %s%s",
 		    username, pwd->pw_name, ontty());
+
+	/* Raise our priority back to what we had before */
+	(void)setpriority(PRIO_PROCESS, 0, prio);
 
 	/*
 	 * Set user context, except for umask, and the stuff
