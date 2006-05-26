@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.24.6.5 2006/05/25 21:22:12 chap Exp $
+.\" $NetBSD: midi.4,v 1.24.6.6 2006/05/26 17:42:06 chap Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -659,7 +659,10 @@ for making them available to the user process.
 .Pp
 .Sy midisyn
 is too rudimentary at present to get satisfactory results from any
-onboard synth. Attention is needed in the areas of voice stealing algorithms and
+onboard synth.
+It lacks the required special interpretation of the
+General MIDI percussion channel in GM mode.
+Attention is needed in the areas of voice stealing algorithms and
 a common implementation of the standard
 .Tn MIDI
 controllers, and to the interface to the underlying synth drivers, which needs
