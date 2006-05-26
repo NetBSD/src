@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.45 2006/01/02 05:46:25 heas Exp $ */
+/*	$NetBSD: gem.c,v 1.46 2006/05/26 12:52:45 blymn Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.45 2006/01/02 05:46:25 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.46 2006/05/26 12:52:45 blymn Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -497,7 +497,7 @@ gem_bitwait(sc, r, clr, set)
 {
 	int i;
 	u_int32_t reg;
-	
+
 	for (i = TRIES; i--; DELAY(100)) {
 		reg = bus_space_read_4(sc->sc_bustag, sc->sc_h, r);
 		if ((r & clr) == 0 && (r & set) == set)
