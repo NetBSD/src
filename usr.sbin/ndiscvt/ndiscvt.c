@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.5 2006/05/26 09:25:27 jnemeth Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.6 2006/05/26 10:59:58 jnemeth Exp $");
 #endif
 
 
@@ -181,8 +181,12 @@ bincvt(char *sysfile, char *outfile, void *img, int fsize)
 	char			tname[] = "/tmp/ndiscvt.XXXXXX";
 	char			sysbuf[1024];
 	FILE			*binfp;
+	int			fd;
 
-	mkstemp(tname);
+	fd = mkstemp(tname);
+	if (fd == -1)
+		err(1, "creating temp file %s failed", tname);
+	close(fd);
 
 	binfp = fopen(tname, "a+");
 	if (binfp == NULL)
@@ -228,6 +232,7 @@ bincvt(char *sysfile, char *outfile, void *img, int fsize)
 	printf("%s", sysbuf);
 	system(sysbuf);
 
+	free(outfile);
 	return;
 }
    
