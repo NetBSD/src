@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.17 2006/05/21 09:26:38 agc Exp $ */
+/* $NetBSD: disk.c,v 1.18 2006/05/26 16:34:43 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -827,16 +827,15 @@ strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, cha
 
 /* handle REPORT LUNs SCSI command */
 static int
-report_luns(uint8_t *data, int64_t luns)
+report_luns(uint64_t *data, int64_t luns)
 {
 	uint64_t	lun;
 	int32_t		off;
 
 	for (lun = 0, off = 8 ; lun < luns ; lun++, off += sizeof(lun)) {
-		*((uint64_t *) (void *)data + off) = ISCSI_HTONLL(lun);
+		data[lun] = ISCSI_HTONLL(lun);
 	}
-	*((uint32_t *) (void *)data) = ISCSI_HTONL(off - 7);
-	return (int)(luns * sizeof(lun));
+	return off;
 }
 
 /* initialise the device */
@@ -1169,7 +1168,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case REPORT_LUNS:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "REPORT LUNS\n");
-		args->length = report_luns(args->send_data, disks.v[sess->d].luns);
+		args->length = report_luns((uint64_t *) &args->send_data[8], disks.v[sess->d].luns);
+		*((uint32_t *) (void *)args->send_data) = ISCSI_HTONL(disks.v[sess->d].luns * sizeof(uint64_t));
 		args->input = 8;
 		args->status = 0;
 		break;

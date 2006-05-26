@@ -42,20 +42,20 @@ size_t strlcpy(char *, const char *, size_t);
 #define __UNCONST(a)    ((void *)(unsigned long)(const void *)(a))
 #endif
 
-#ifndef HTOBE64
+#ifdef HAVE_HTOBE64
+#  define ISCSI_HTOBE64(x)	htobe64(x)
+#  define ISCSI_BE64TOH(x)	be64toh(x)
+#else
 #  if defined(HAVE_LIBKERN_OSBYTEORDER_H)
-#    define HTOBE64(x)	(x) = OSSwapBigToHostInt64((u_int64_t)(x))
+#    define ISCSI_HTOBE64(x)	(x) = OSSwapBigToHostInt64((u_int64_t)(x))
 #  elif _BYTE_ORDER == _BIG_ENDIAN
-#    define HTOBE64(x)	(x)
+#    define ISCSI_HTOBE64(x)	(x)
 #  elif defined(HAVE___BSWAP64)
-#    define HTOBE64(x)	(x) = __bswap64((u_int64_t)(x))
+#    define ISCSI_HTOBE64(x)	(x) = __bswap64((u_int64_t)(x))
 #  else   /* LITTLE_ENDIAN */
-#    define HTOBE64(x)	(((uint64_t)(ISCSI_NTOHL((uint32_t)(((x) << 32) >> 32))) << 32) | (uint32_t)ISCSI_NTOHL(((uint32_t)((x) >> 32))))
+#    define ISCSI_HTOBE64(x)	(((uint64_t)(ISCSI_NTOHL((uint32_t)(((x) << 32) >> 32))) << 32) | (uint32_t)ISCSI_NTOHL(((uint32_t)((x) >> 32))))
 #  endif  /* LITTLE_ENDIAN */
-#endif
-
-#ifndef BE64TOH
-#  define BE64TOH(x)  HTOBE64(x)
+#  define ISCSI_BE64TOH(x)	ISCSI_HTOBE64(x)
 #endif
 
 #ifndef _DIAGASSERT
