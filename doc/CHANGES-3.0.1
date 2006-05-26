@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.47 2006/05/24 02:24:26 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.48 2006/05/26 16:48:20 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -454,4 +454,9 @@ sys/netinet6/ip6_input.c			1.87 via patch
 	In ip6_savecontrol(), ignore IPv4 packets.
 	From JINMEI Tatuya (KAME). PR#33269.
 	[rpaulo, ticket #1338]
+
+usr.bin/ftp/util.c				1.135
+
+	Fix a NULL pointer dereference in ftp(1).
+	[jnemeth, ticket #1339]
 
