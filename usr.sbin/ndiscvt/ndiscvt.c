@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.7 2006/05/26 11:13:20 jnemeth Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.8 2006/05/26 11:45:31 jnemeth Exp $");
 #endif
 
 
@@ -186,11 +186,12 @@ bincvt(char *sysfile, char *outfile, void *img, int fsize)
 	fd = mkstemp(tname);
 	if (fd == -1)
 		err(1, "creating temp file %s failed", tname);
-	close(fd);
 
-	binfp = fopen(tname, "a+");
-	if (binfp == NULL)
+	binfp = fdopen(fd, "a+");
+	if (binfp == NULL) {
+		close(fd);
 		err(1, "opening %s failed", tname);
+	}
 
 	if (fwrite(img, fsize, 1, binfp) != 1)
 		err(1, "failed to output binary image");
