@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.25 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: mq200.c,v 1.26 2006/05/26 11:57:25 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.25 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.26 2006/05/26 11:57:25 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.25 2005/12/11 12:17:33 christos Exp $");
 
 #include "bivideo.h"
 #if NBIVIDEO > 0
-#include <dev/hpc/bivideovar.h>     
+#include <dev/hpc/bivideovar.h>
 #endif
 
 /*
@@ -196,7 +196,7 @@ mq200_attach(struct mq200_softc *sc)
 		mq200_dump_pll(sc);
 	}
 #endif
-	
+
 	/* Add a power hook to power saving */
 	sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
 	sc->sc_powerhook = powerhook_establish(mq200_power, sc);
@@ -250,18 +250,18 @@ mq200_update_powerstate(struct mq200_softc *sc, int updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void*)!(sc->sc_powerstate & 
+		    (void*)!(sc->sc_powerstate &
 			(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void*)(!(sc->sc_powerstate & 
+		    (void*)(!(sc->sc_powerstate &
 			(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			(sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
-static void 
+static void
 mq200_power(int why, void *arg)
 {
 	struct mq200_softc *sc = arg;
@@ -495,7 +495,7 @@ mq200_ioctl(v, cmd, data, flag, l)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
-	
+
 	case WSDISPLAYIO_SVIDEO:
 		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
 			sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
@@ -505,7 +505,7 @@ mq200_ioctl(v, cmd, data, flag, l)
 		return 0;
 
 	case WSDISPLAYIO_GVIDEO:
-		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
+		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ?
 		    WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
 		return 0;
 
@@ -547,7 +547,7 @@ mq200_ioctl(v, cmd, data, flag, l)
 				VPRINTF("ioctl: GET:CONTRAST EINVAL\n");
 				return (EINVAL);
 			}
-			break;	
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			VPRINTF("ioctl: GET:BRIGHTNESS\n");
 			mq200_init_brightness(sc, 0);
@@ -726,7 +726,7 @@ mq200_init_backlight(struct mq200_softc *sc, int inattach)
 	if (sc->sc_lcd_inited&BACKLIGHT_INITED)
 		return;
 
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
 		/* we can get real light state */
 		VPRINTF("init_backlight: real backlight=%d\n", val);
@@ -736,7 +736,7 @@ mq200_init_backlight(struct mq200_softc *sc, int inattach)
 			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 		sc->sc_lcd_inited |= BACKLIGHT_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real light state in attach time
 		   because light device not yet attached.
 		   we will retry in !inattach.
@@ -758,13 +758,13 @@ mq200_init_brightness(struct mq200_softc *sc, int inattach)
 		return;
 
 	VPRINTF("init_brightness\n");
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
 		/* we can get real brightness max */
 		VPRINTF("init_brightness: real brightness max=%d\n", val);
 		sc->sc_max_brightness = val;
 		val = -1;
-		if (config_hook_call(CONFIG_HOOK_GET, 
+		if (config_hook_call(CONFIG_HOOK_GET,
 		    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 			/* we can get real brightness */
 			VPRINTF("init_brightness: real brightness=%d\n", val);
@@ -775,7 +775,7 @@ mq200_init_brightness(struct mq200_softc *sc, int inattach)
 		}
 		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real brightness in attach time
 		   because brightness device not yet attached.
 		   we will retry in !inattach.
@@ -801,13 +801,13 @@ mq200_init_contrast(struct mq200_softc *sc, int inattach)
 		return;
 
 	VPRINTF("init_contrast\n");
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
 		/* we can get real contrast max */
 		VPRINTF("init_contrast: real contrast max=%d\n", val);
 		sc->sc_max_contrast = val;
 		val = -1;
-		if (config_hook_call(CONFIG_HOOK_GET, 
+		if (config_hook_call(CONFIG_HOOK_GET,
 		    CONFIG_HOOK_CONTRAST, &val) != -1) {
 			/* we can get real contrast */
 			VPRINTF("init_contrast: real contrast=%d\n", val);
@@ -817,7 +817,7 @@ mq200_init_contrast(struct mq200_softc *sc, int inattach)
 		}
 		sc->sc_lcd_inited |= CONTRAST_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real contrast in attach time
 		   because contrast device not yet attached.
 		   we will retry in !inattach.
@@ -839,7 +839,7 @@ mq200_set_brightness(struct mq200_softc *sc, int val)
 	sc->sc_brightness = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS, &val);
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 		sc->sc_brightness = val;
 	}
@@ -851,7 +851,7 @@ mq200_set_contrast(struct mq200_softc *sc, int val)
 	sc->sc_contrast = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST, &val);
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_CONTRAST, &val) != -1) {
 		sc->sc_contrast = val;
 	}
