@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.18 2006/03/04 16:51:56 peter Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.19 2006/05/26 11:54:54 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.18 2006/03/04 16:51:56 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.19 2006/05/26 11:54:54 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ sed1356_attach(struct device *parent, struct device *self, void *aux)
 		printf(", console");
 	}
 	printf("\n");
-	printf("%s: framebuffer address: 0x%08lx\n", 
+	printf("%s: framebuffer address: 0x%08lx\n",
 	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 
 	/* Add a suspend hook to power saving */
@@ -303,7 +303,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	return 0; /* no error */
 }
 
-static void 
+static void
 sed1356_power(int why, void *arg)
 {
 	struct sed1356_softc *sc = arg;
@@ -327,13 +327,13 @@ sed1356_update_powerstate(struct sed1356_softc *sc, int updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void *)!(sc->sc_powerstate & 
+		    (void *)!(sc->sc_powerstate &
 				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void *)(!(sc->sc_powerstate & 
+		    (void *)(!(sc->sc_powerstate &
 				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
@@ -353,7 +353,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		 * XXX should be able to handle color map in 4/8 bpp mode.
 		 */
 		return EINVAL;
-	
+
 	case WSDISPLAYIO_SVIDEO:
 		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
 			sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
@@ -363,7 +363,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return 0;
 
 	case WSDISPLAYIO_GVIDEO:
-		*(int *)data = (sc->sc_powerstate & PWRSTAT_VIDEOOFF) ? 
+		*(int *)data = (sc->sc_powerstate & PWRSTAT_VIDEOOFF) ?
 				WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
 		return 0;
 
@@ -416,7 +416,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 				    " current=%d\n", sc->sc_max_brightness,
 				    sc->sc_brightness));
 				return 0;
-			}	
+			}
 			VPRINTF(("sed1356_ioctl: GET:BRIGHTNESS EINVAL\n"));
 			return EINVAL;
 
@@ -474,7 +474,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef SED_DEBUG
 				int org = sc->sc_contrast;
 #endif
-				sed1356_set_contrast(sc, dispparam->curval);	
+				sed1356_set_contrast(sc, dispparam->curval);
 				VPRINTF(("sed1356_ioctl: SET:CONTRAST org=%d,"
 				    " current=%d\n", org, sc->sc_contrast));
 				return 0;
@@ -492,7 +492,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef SED_DEBUG
 				int org = sc->sc_brightness;
 #endif
-				sed1356_set_brightness(sc, dispparam->curval);	
+				sed1356_set_brightness(sc, dispparam->curval);
 				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS org=%d,"
 				    " current=%d\n", org, sc->sc_brightness));
 				return 0;
@@ -588,7 +588,7 @@ sed1356_init_backlight(struct sed1356_softc *sc, int inattach)
 			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 		sc->sc_lcd_inited |= BACKLIGHT_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real light state in attach time
 		   because light device not yet attached.
 		   we will retry in !inattach.
@@ -629,7 +629,7 @@ sed1356_init_brightness(struct sed1356_softc *sc, int inattach)
 		}
 		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		 * we cannot get real brightness in attach time
 		 * because brightness device not yet attached.
 		 * we will retry in !inattach.
@@ -670,7 +670,7 @@ sed1356_init_contrast(struct sed1356_softc *sc, int inattach)
 		}
 		sc->sc_lcd_inited |= CONTRAST_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		 * we cannot get real contrast in attach time
 		 * because contrast device not yet attached.
 		 * we will retry in !inattach.
