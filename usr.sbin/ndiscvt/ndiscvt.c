@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.4 2006/05/11 07:12:11 mrg Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.5 2006/05/26 09:25:27 jnemeth Exp $");
 #endif
 
 
@@ -343,10 +343,13 @@ main(int argc, char *argv[])
 	fseek (fp, 0L, SEEK_END);
 	fsize = ftell (fp);
 	rewind (fp);
-	img = calloc(fsize, 1);
+	img = malloc(fsize);
 	n = fread (img, fsize, 1, fp);
+	if (n < 1)
+		err(1, "reading .SYS file '%s' failed", sysfile);
 
 	fclose(fp);
+	fp = NULL;
 
 	if (insert_padding(&img, &fsize)) {
 		fprintf(stderr, "section relocation failed\n");
@@ -389,6 +392,7 @@ main(int argc, char *argv[])
 
 		inf_parse(fp, outfp);
 		fclose(fp);
+		fp = NULL;
 	}
 
 	fprintf(outfp, "\n#ifdef NDIS_IMAGE\n");
