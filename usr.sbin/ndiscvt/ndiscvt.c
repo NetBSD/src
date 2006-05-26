@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.6 2006/05/26 10:59:58 jnemeth Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.7 2006/05/26 11:13:20 jnemeth Exp $");
 #endif
 
 
@@ -347,6 +347,8 @@ main(int argc, char *argv[])
 		err(1, "opening .SYS file '%s' failed", sysfile);
 	fseek (fp, 0L, SEEK_END);
 	fsize = ftell (fp);
+	if (fsize == -1)
+		err(1, "getting size of .SYS file '%s' failed", sysfile);
 	rewind (fp);
 	img = malloc(fsize);
 	n = fread (img, fsize, 1, fp);
