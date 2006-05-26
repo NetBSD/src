@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.8 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9 2006/05/26 19:27:49 rittera Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -222,7 +222,9 @@ ndisdrv_modevent(mod, cmd)
 {
 	int			error = 0;
 
+#ifdef NDIS_DBG
 	printf("in ndisdrv_modevent\n");
+#endif
 	switch (cmd) {
 	case MOD_LOAD:
 		ndisdrv_loaded++;
@@ -587,7 +589,9 @@ ndis_attach(dev)
 	int			error = 0, len;
 	int			j;
 	
+#ifdef NDIS_DBG
 	printf("In ndis_attach()\n");
+#endif
 		
 	sc = device_get_softc(dev);
 	
@@ -1086,7 +1090,10 @@ ndis_detach (dev, flags)
 	int			s;
 #endif	
 
+#ifdef NDIS_DBG
 	printf("in ndis_detach\n");
+#endif
+
 	sc = device_get_softc(dev);
 #ifdef __FreeBSD__
 	KASSERT(mtx_initialized(&sc->ndis_mtx),
