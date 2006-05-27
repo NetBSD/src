@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2006/05/05 19:38:38 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 2006/05/27 19:57:15 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2006/05/05 19:38:38 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2006/05/27 19:57:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,14 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
-
+#ifdef XEN3
+	/*
+	 * set_timer_op doesn't doesn't seem to work right for us, the kernel
+	 * gets a continous flow of interrupts. As we're going to request one
+	 * interrupt every hz, HYPERVISOR_yield() is as good anyway.
+	 */
+	HYPERVISOR_yield();
+#else
 	/*
 	 * We set the timer to when we expect the next timer
 	 * interrupt.  We could set the timer to later if we could
@@ -487,4 +494,5 @@ idle_block(void)
 	 */
 	if (HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK) == 0)
 		HYPERVISOR_block();
+#endif
 }
