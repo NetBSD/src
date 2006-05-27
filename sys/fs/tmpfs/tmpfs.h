@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.19 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.20 2006/05/27 09:12:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -48,7 +48,9 @@
 #include <sys/queue.h>
 #include <sys/vnode.h>
 
+#if defined(_KERNEL)
 #include <fs/tmpfs/tmpfs_pool.h>
+#endif /* defined(_KERNEL) */
 
 /* --------------------------------------------------------------------- */
 
@@ -217,6 +219,9 @@ struct tmpfs_node {
 		} tn_reg;
 	} tn_spec;
 };
+
+#if defined(_KERNEL)
+
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
 /* --------------------------------------------------------------------- */
@@ -292,7 +297,6 @@ struct tmpfs_fid {
 
 /* --------------------------------------------------------------------- */
 
-#ifdef _KERNEL
 /*
  * Prototypes for tmpfs_subr.c.
  */
@@ -401,8 +405,6 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 /* Returns the available space for the given file system. */
 #define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
 
-#endif
-
 /* --------------------------------------------------------------------- */
 
 /*
@@ -423,6 +425,8 @@ VFS_TO_TMPFS(struct mount *mp)
 	return tmp;
 }
 
+#endif /* defined(_KERNEL) */
+
 static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_NODE(struct vnode *vp)
@@ -436,6 +440,8 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 	return node;
 }
 
+#if defined(_KERNEL)
+
 static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_DIR(struct vnode *vp)
@@ -448,6 +454,8 @@ VP_TO_TMPFS_DIR(struct vnode *vp)
 #endif
 	return node;
 }
+
+#endif /* defined(_KERNEL) */
 
 /* ---------------------------------------------------------------------
  * USER AND KERNEL DEFINITIONS
