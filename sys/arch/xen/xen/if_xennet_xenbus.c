@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.9 2006/05/23 21:07:56 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.9 2006/05/23 21:07:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -806,6 +806,7 @@ again:
 			m->m_len = m->m_pkthdr.len = rx->status;
 			MEXTADD(m, pktp, rx->status,
 			    M_DEVBUF, xennet_rx_mbuf_free, req);
+			m->m_flags |= M_EXT_RW; /* we own the buffer */
 			req->rxreq_gntref = GRANT_STACK_REF;
 		} else {
 			/*
