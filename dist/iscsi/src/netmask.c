@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.4 2006/03/27 22:26:28 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.5 2006/05/27 16:00:05 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -31,6 +31,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 
@@ -39,7 +41,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 
 #include "util.h"
 
