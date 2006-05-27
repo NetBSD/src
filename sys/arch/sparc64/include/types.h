@@ -1,3 +1,4 @@
-/*       $NetBSD: types.h,v 1.25 2005/12/11 12:19:10 christos Exp $        */
+/*       $NetBSD: types.h,v 1.25.6.1 2006/05/27 22:50:40 kardel Exp $        */
 
 #include <sparc/types.h>
+#undef __HAVE_TIMECOUNTER
