@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.50 2006/05/26 00:26:12 uebayasi Exp $	*/
+/*	$NetBSD: pool.h,v 1.51 2006/05/27 08:41:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -115,12 +115,8 @@ struct pool_allocator {
 	int		pa_pageshift;
 	struct vm_map *pa_backingmap;
 #if defined(_KERNEL)
-	struct {
-		struct vm_map **i_backingmapptr;
-		SLIST_ENTRY(pool_allocator) i_q;
-	} pa_init;
-#define	pa_q			pa_init.i_q
-#define	pa_backingmapptr	pa_init.i_backingmapptr
+	struct vm_map **pa_backingmapptr;
+	SLIST_ENTRY(pool_allocator) pa_q;
 #endif /* defined(_KERNEL) */
 };
 
