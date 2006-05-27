@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.65.6.1 2006/04/22 11:37:57 simonb Exp $ */
+/*	$NetBSD: sbus.c,v 1.65.6.2 2006/05/27 22:45:09 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.65.6.1 2006/04/22 11:37:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.65.6.2 2006/05/27 22:45:09 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -668,12 +668,12 @@ static	int straytime, nstray;
 	printf("\taddress: 0x%x%x\n", afsr & SBUS_AFSR_PAH, afva);
 
 	/* For now, do the same dance as on stray interrupts */
-	timesince = time.tv_sec - straytime;
+	timesince = time_uptime - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)
 			panic("too many SBus errors");
 	} else {
-		straytime = time.tv_sec;
+		straytime = time_uptime;
 		nstray = 1;
 	}
 
