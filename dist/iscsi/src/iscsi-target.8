@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsi-target.8,v 1.5 2006/03/11 11:58:53 wiz Exp $
+.\" $NetBSD: iscsi-target.8,v 1.6 2006/05/27 21:21:04 agc Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 4, 2006
+.Dd May 27, 2006
 .Dt ISCSI-TARGET 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl b Ar block length
 .Op Fl f Ar configuration file
 .Op Fl p Ar port number
+.Op Fl s Ar maximum number of sessions
 .Op Fl t Ar target name
 .Op Fl v Ar verbose arg
 .Sh DESCRIPTION
@@ -82,6 +83,9 @@ for more information.
 Use the port number provided as the argument as the port
 on which to listen for iSCSI service requests from
 initiators.
+.It Fl s Ar maximum number of sessions
+Allow the maximum number of sessions to be initiated when
+connecting to the target.
 .It Fl t Ar filename
 The target name (as it appears to the iSCSI initiator) can be specified
 using this flag.
