@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.14 2006/05/27 04:15:42 jnemeth Exp $	*/
+/*	$NetBSD: exf.c,v 1.15 2006/05/27 12:03:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #else
-__RCSID("$NetBSD: exf.c,v 1.14 2006/05/27 04:15:42 jnemeth Exp $");
+__RCSID("$NetBSD: exf.c,v 1.15 2006/05/27 12:03:37 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,9 +179,10 @@ file_init(sp, frp, rcv_name, flags)
 	 * Scan the user's path to find the file that we're going to
 	 * try and open.
 	 */
-	if (file_spath(sp, frp, &sb, &exists))
+	if (file_spath(sp, frp, &sb, &exists)) {
 		free(ep);
 		return (1);
+	}
 
 	/*
 	 * If no name or backing file, for whatever reason, create a backing
