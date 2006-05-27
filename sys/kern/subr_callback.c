@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_callback.c,v 1.1 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: subr_callback.c,v 1.2 2006/05/27 07:42:42 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_callback.c,v 1.1 2006/05/25 14:27:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_callback.c,v 1.2 2006/05/27 07:42:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,8 @@ callback_head_init(struct callback_head *ch)
 	TAILQ_INIT(&ch->ch_q);
 	ch->ch_next = NULL;
 	ch->ch_nentries = 0;
+	ch->ch_running = 0;
+	ch->ch_flags = 0;
 }
 
 void
