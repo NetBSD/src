@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.2 2006/05/25 21:28:38 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.3 2006/05/27 13:54:35 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -716,8 +716,13 @@ xennetback_evthandler(void *arg)
 				continue; /* packet is not for us */
 			}
 		}
+#ifdef notyet
+a lot of work is needed in the tcp stack to handle read-only ext storage
+so always copy for now.
 		if (((req_cons + 1) & (NET_TX_RING_SIZE - 1)) ==
 		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1))) {
+#endif /* notyet */
+		if (1) {
 			/*
 			 * This is the last TX buffer. Copy the data and
 			 * ack it. Delaying it until the mbuf is
@@ -738,6 +743,7 @@ xennetback_evthandler(void *arg)
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_OKAY);
 		} else {
+
 			pkt->pkt_id = txreq->id;
 			pkt->pkt_xneti = xneti;
 
