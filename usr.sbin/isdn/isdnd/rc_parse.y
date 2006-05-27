@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration parser
  *	-----------------------------------------
  *
- *	$Id: rc_parse.y,v 1.4 2003/09/05 13:31:04 pooka Exp $ 
+ *	$Id: rc_parse.y,v 1.5 2006/05/27 20:11:14 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -191,7 +191,7 @@ config:		sections
 sections:	possible_nullentries
 		syssect
 		optcontrollersects
-		entrysects
+		optentrysects
 		;
 
 possible_nullentries:
@@ -201,6 +201,10 @@ possible_nullentries:
 		;
 
 nullentry:	'\n'
+		;
+
+optentrysects:	entrysects
+		|
 		;
 
 entrysects:	entrysect
