@@ -161,11 +161,15 @@ add (argc, argv)
 	int j;
 
 	if (argc == 0)
+	{
 	    /* We snipped out all the arguments in the above sanity
 	       check.  We can just forget the whole thing (and we
 	       better, because if we fired up the server and passed it
 	       nothing, it would spit back a usage message).  */
+	    if (options)
+		free (options);
 	    return err;
+	}
 
 	start_server ();
 	ign_setup ();

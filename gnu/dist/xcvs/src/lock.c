@@ -718,6 +718,9 @@ readers_exist (repository)
 #endif
 
     lockdir = lock_name (repository, "");
+
+    assert (lockdir != NULL);
+
     lockdir[strlen (lockdir) - 1] = '\0';   /* remove trailing slash */
 
     do {
