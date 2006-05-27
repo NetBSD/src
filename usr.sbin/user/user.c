@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.108 2006/03/22 18:02:46 joerg Exp $ */
+/* $NetBSD: user.c,v 1.109 2006/05/27 03:41:48 jnemeth Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.108 2006/03/22 18:02:46 joerg Exp $");
+__RCSID("$NetBSD: user.c,v 1.109 2006/05/27 03:41:48 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -219,6 +219,7 @@ check_numeric(const char *val, const char *name)
 }
 
 /* if *cpp is non-null, free it, then assign `n' chars of `s' to it */
+/* coverity[-free] */
 static void
 memsave(char **cpp, const char *s, size_t n)
 {
@@ -1666,6 +1667,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 		}
 	}
 	(void)close(ptmpfd);
+	(void)fclose(master);
 #if PW_MKDB_ARGC == 2
 	if (up != NULL && strcmp(login_name, newlogin) == 0) {
 		error = pw_mkdb(login_name, 0);
@@ -2343,6 +2345,8 @@ groupmod(int argc, char **argv)
 			(cpp[1] == NULL) ? "" : ",");
 	}
 	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
+	if (newname != NULL)
+		free(newname);
 	openlog("groupmod", LOG_PID, LOG_USER);
 	if (!modify_gid(*argv, buf))
 		exit(EXIT_FAILURE);
