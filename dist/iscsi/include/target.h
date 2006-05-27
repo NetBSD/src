@@ -40,7 +40,7 @@
 
 /* Default configuration */
 
-#define DEFAULT_TARGET_MAX_SESSIONS 4	/* n+1 */
+#define DEFAULT_TARGET_MAX_SESSIONS 16	/* n+1 */
 #define DEFAULT_TARGET_NUM_LUNS     1
 #define DEFAULT_TARGET_BLOCK_LEN    512
 #define DEFAULT_TARGET_NUM_BLOCKS   204800
@@ -67,6 +67,7 @@ typedef struct globals_t {
 	char     	targetaddress[MAX_TGT_NAME_SIZE];	/* iSCSI TargetAddress set after iscsi_sock_accept() */
 	targv_t		*tv;					/* array of target devices */
 	int		address_family;				/* IP address family */
+	int		max_sessions;				/* maximum number of sessions */
 } globals_t;
 
 typedef struct target_session_t {

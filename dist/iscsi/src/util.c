@@ -218,8 +218,9 @@ iscsi_queue_insert(iscsi_queue_t * q, void *ptr)
 void           *
 iscsi_queue_remove(iscsi_queue_t * q)
 {
+	uint32_t	flags = 0;
 	void           *ptr;
-	uint32_t   flags = 0;
+
 	iscsi_spin_lock_irqsave(&q->lock, &flags);
 	if (!iscsi_queue_depth(q)) {
 		iscsi_trace(TRACE_QUEUE, __FILE__, __LINE__, "QUEUE EMPTY\n");
