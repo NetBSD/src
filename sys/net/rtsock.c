@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.84 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.85 2006/05/27 23:08:11 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.84 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.85 2006/05/27 23:08:11 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -1167,13 +1167,15 @@ struct domain routedomain = {
 
 SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 {
+	const struct sysctlnode *rnode = NULL;
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "route",
 		       SYSCTL_DESCR("PF_ROUTE information"),
@@ -1185,4 +1187,10 @@ SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 		       SYSCTL_DESCR("Routing table information"),
 		       sysctl_rtable, 0, NULL, 0,
 		       CTL_NET, PF_ROUTE, 0 /* any protocol */, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("Routing statistics"),
+		       NULL, 0, &rtstat, sizeof(rtstat),
+		       CTL_CREATE, CTL_EOL);
 }
