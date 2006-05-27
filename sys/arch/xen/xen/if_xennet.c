@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.47 2006/05/05 23:45:52 jld Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.48 2006/05/27 19:54:59 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.47 2006/05/05 23:45:52 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.48 2006/05/27 19:54:59 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -779,6 +779,7 @@ xen_network_handler(void *arg)
 			MEXTADD(m, pktp, rx->status,
 			    M_DEVBUF, xennet_rx_mbuf_free,
 			    &sc->sc_rx_bufa[rx->id]);
+			m->m_flags |= M_EXT_RW; /* we own the buffer */
 		} else {
 			/*
 			 * This was our last receive buffer, allocate
