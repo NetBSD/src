@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.17.6.1 2006/04/22 11:37:59 simonb Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.17.6.2 2006/05/27 22:49:52 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.1 2006/04/22 11:37:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.2 2006/05/27 22:49:52 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -183,6 +183,7 @@ clockintr_msiiep(void *cap)
 	volatile uint32_t junk;
 	
 	junk = mspcic_read_4(pcic_sclr); /* clear the interrupt */
+	tickle_tc();
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
