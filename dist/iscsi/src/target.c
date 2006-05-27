@@ -94,7 +94,7 @@ enum {
  * Private *
  ***********/
 
-static target_session_t	g_session[DEFAULT_TARGET_MAX_SESSIONS];
+static target_session_t	*g_session;
 static iscsi_queue_t	g_session_q;
 static iscsi_mutex_t	g_session_q_mutex;
 
@@ -1463,18 +1463,19 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName)
 {
 	int             i;
 
+	NEWARRAY(target_session_t, g_session, gp->max_sessions, "target_init", return -1);
 	(void) strlcpy(gp->targetname, TargetName, sizeof(gp->targetname));
 	if (gp->state == TARGET_INITIALIZING || gp->state == TARGET_INITIALIZED) {
 		iscsi_trace_error(__FILE__, __LINE__, "duplicate target initialization attempted\n");
 		return -1;
 	}
 	gp->state = TARGET_INITIALIZING;
-	if (iscsi_queue_init(&g_session_q, DEFAULT_TARGET_MAX_SESSIONS) != 0) {
+	if (iscsi_queue_init(&g_session_q, gp->max_sessions) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_queue_init() failed\n");
 		return -1;
 	}
 	gp->tv = tv;
-	for (i = 0; i < DEFAULT_TARGET_MAX_SESSIONS; i++) {
+	for (i = 0; i < gp->max_sessions; i++) {
 		g_session[i].id = i;
 		if (iscsi_queue_insert(&g_session_q, &g_session[i]) != 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_queue_insert() failed\n");
@@ -1513,7 +1514,7 @@ target_shutdown(globals_t *gp)
 	}
 	gp->state = TARGET_SHUTTING_DOWN;
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "shutting down target\n");
-	for (i = 0; i < DEFAULT_TARGET_MAX_SESSIONS; i++) {
+	for (i = 0; i < gp->max_sessions; i++) {
 		sess = &g_session[i];
 
 		/* Need to replace with a call to session_destroy() */

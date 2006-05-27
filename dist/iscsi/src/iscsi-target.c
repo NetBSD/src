@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.9 2006/03/31 23:22:24 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.10 2006/05/27 21:21:04 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -82,10 +82,11 @@ main(int argc, char **argv)
 	detach_me_harder = 1;
 	g.port = ISCSI_PORT;
 	g.address_family = ISCSI_IPv4;
+	g.max_sessions = DEFAULT_TARGET_MAX_SESSIONS;
 
 	cf = _PATH_ISCSI_TARGETS;
 
-	while ((i = getopt(argc, argv, "46b:Df:p:t:Vv:")) != -1) {
+	while ((i = getopt(argc, argv, "46b:Df:p:s:t:Vv:")) != -1) {
 		switch (i) {
 		case '4':
 			g.address_family = ISCSI_IPv4;
@@ -104,6 +105,11 @@ main(int argc, char **argv)
 			break;
 		case 'p':
 			g.port = (uint16_t) atoi(optarg);
+			break;
+		case 's':
+			if ((g.max_sessions = atoi(optarg)) <= 0) {
+				g.max_sessions = DEFAULT_TARGET_MAX_SESSIONS;
+			}
 			break;
 		case 't':
 			(void) strlcpy(TargetName, optarg, sizeof(TargetName));
