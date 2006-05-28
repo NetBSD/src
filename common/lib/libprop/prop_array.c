@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.3 2006/05/28 03:53:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -210,11 +210,11 @@ _prop_array_expand(prop_array_t pa, unsigned int capacity)
 
 	oarray = pa->pa_array;
 
-	array = _PROP_CALLOC(capacity * sizeof(prop_object_t), M_PROP_ARRAY);
+	array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_ARRAY);
 	if (array == NULL)
 		return (FALSE);
 	if (oarray != NULL)
-		memcpy(array, oarray, pa->pa_capacity * sizeof(prop_object_t));
+		memcpy(array, oarray, pa->pa_capacity * sizeof(*array));
 	pa->pa_array = array;
 	pa->pa_capacity = capacity;
 
@@ -362,7 +362,7 @@ prop_array_ensure_capacity(prop_array_t pa, unsigned int capacity)
 
 	_PROP_ASSERT(prop_object_is_array(pa));
 	if (capacity > pa->pa_capacity)
-		return (_prop_array_expand(pa, capacity - pa->pa_capacity));
+		return (_prop_array_expand(pa, capacity));
 	return (TRUE);
 }
 
