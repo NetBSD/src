@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.5 2006/05/18 16:35:33 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.6 2006/05/28 03:56:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
  */
 struct _prop_dictionary_keysym {
 	struct _prop_object		pdk_obj;
-	prop_object_t			pdk_objref;
 	size_t				pdk_size;
 	char 				pdk_key[1];
 	/* actually variable length */
@@ -78,9 +77,14 @@ _PROP_POOL_INIT(_prop_dictionary_keysym16_pool, PDK_SIZE_16, "pdict16")
 _PROP_POOL_INIT(_prop_dictionary_keysym32_pool, PDK_SIZE_32, "pdict32")
 _PROP_POOL_INIT(_prop_dictionary_keysym128_pool, PDK_SIZE_128, "pdict128")
 
+struct _prop_dict_entry {
+	prop_dictionary_keysym_t	pde_key;
+	prop_object_t			pde_objref;
+};
+
 struct _prop_dictionary {
 	struct _prop_object	pd_obj;
-	prop_dictionary_keysym_t *pd_array;
+	struct _prop_dict_entry	*pd_array;
 	unsigned int		pd_capacity;
 	unsigned int		pd_count;
 	int			pd_flags;
@@ -134,14 +138,76 @@ struct _prop_dictionary_iterator {
 	unsigned int		pdi_index;
 };
 
-static void
-_prop_dict_keysym_free(void *v)
-{
-	prop_dictionary_keysym_t pdk = v;
-	prop_object_t po;
+/*
+ * Dictionary key symbols are immutable, and we are likely to have many
+ * duplicated key symbols.  So, to save memory, we unique'ify key symbols
+ * so we only have to have one copy of each string.
+ */
+static struct {
+	prop_dictionary_keysym_t	*pdkt_array;
+	unsigned int			 pdkt_count;
+	unsigned int			 pdkt_capacity;
+} _prop_dict_keysym_table;
 
-	_PROP_ASSERT(pdk->pdk_objref != NULL);
-	po = pdk->pdk_objref;
+_PROP_MUTEX_DECL(_prop_dict_keysym_table_mutex)
+
+static boolean_t
+_prop_dict_keysym_table_expand(void)
+{
+	prop_dictionary_keysym_t *array, *oarray;
+	unsigned int capacity;
+
+	oarray = _prop_dict_keysym_table.pdkt_array;
+	capacity = _prop_dict_keysym_table.pdkt_capacity + EXPAND_STEP;
+
+	array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_DICT);
+	if (array == NULL)
+		return (FALSE);
+	if (oarray != NULL)
+		memcpy(array, oarray,
+		       _prop_dict_keysym_table.pdkt_capacity * sizeof(*array));
+	_prop_dict_keysym_table.pdkt_array = array;
+	_prop_dict_keysym_table.pdkt_capacity = capacity;
+
+	if (oarray != NULL)
+		_PROP_FREE(oarray, M_PROP_DICT);
+
+	return (TRUE);
+}
+
+static prop_dictionary_keysym_t
+_prop_dict_keysym_lookup(const char *key, unsigned int *idxp)
+{
+	prop_dictionary_keysym_t pdk;
+	unsigned int base, idx, distance;
+	int res;
+
+	for (idx = 0, base = 0, distance = _prop_dict_keysym_table.pdkt_count;
+	     distance != 0; distance >>= 1) {
+		idx = base + (distance >> 1);
+		pdk = _prop_dict_keysym_table.pdkt_array[idx];
+		_PROP_ASSERT(pdk != NULL);
+		res = strcmp(key, pdk->pdk_key);
+		if (res == 0) {
+			if (idxp != NULL)
+				*idxp = idx;
+			return (pdk);
+		}
+		if (res > 0) {	/* key > pdk_key: move right */
+			base = idx + 1;
+			distance--;
+		}		/* else move left */
+	}
+
+	/* idx points to the slot we look at last. */
+	if (idxp != NULL)
+		*idxp = idx;
+	return (NULL);
+}
+
+static void
+_prop_dict_keysym_put(prop_dictionary_keysym_t pdk)
+{
 
 	if (pdk->pdk_size <= PDK_SIZE_16)
 		_PROP_POOL_PUT(_prop_dictionary_keysym16_pool, pdk);
@@ -151,8 +217,26 @@ _prop_dict_keysym_free(void *v)
 		_PROP_ASSERT(pdk->pdk_size <= PDK_SIZE_128);
 		_PROP_POOL_PUT(_prop_dictionary_keysym128_pool, pdk);
 	}
-	
-	prop_object_release(po);
+}
+
+static void
+_prop_dict_keysym_free(void *v)
+{
+	prop_dictionary_keysym_t pdk = v;
+	prop_dictionary_keysym_t opdk;
+	unsigned int idx, jdx;
+
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
+	opdk = _prop_dict_keysym_lookup(pdk->pdk_key, &idx);
+	_PROP_ASSERT(pdk == opdk);
+	idx++;
+	memmove(&_prop_dict_keysym_table.pdkt_array[idx - 1],
+		&_prop_dict_keysym_table.pdkt_array[idx],
+		(_prop_dict_keysym_table.pdkt_count - idx) * sizeof(pdk));
+	_prop_dict_keysym_table.pdkt_count--;
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+
+	_prop_dict_keysym_put(pdk);
 }
 
 static boolean_t
@@ -188,10 +272,28 @@ _prop_dict_keysym_equals(void *v1, void *v2)
 }
 
 static prop_dictionary_keysym_t
-_prop_dict_keysym_alloc(const char *key, prop_object_t obj)
+_prop_dict_keysym_alloc(const char *key)
 {
-	prop_dictionary_keysym_t pdk;
+	prop_dictionary_keysym_t opdk, pdk;
 	size_t size;
+	unsigned int idx;
+
+	/*
+	 * See if this key is already in the keysym table.  If so,
+	 * retain the existing object and return it.
+	 */
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
+	opdk = _prop_dict_keysym_lookup(key, NULL);
+	if (opdk != NULL) {
+		prop_object_retain(opdk);
+		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+		return (opdk);
+	}
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+
+	/*
+	 * Not in the table.  Create a new one.
+	 */
 
 	size = sizeof(*pdk) + strlen(key) /* pdk_key[1] covers the NUL */;
 
@@ -209,11 +311,69 @@ _prop_dict_keysym_alloc(const char *key, prop_object_t obj)
 				  &_prop_object_type_dict_keysym);
 
 		strcpy(pdk->pdk_key, key);
-
-		prop_object_retain(obj);
-		pdk->pdk_objref = obj;
 		pdk->pdk_size = size;
 	}
+
+	/*
+	 * Before we return it, we need to insert it into the table.
+	 * But, because we dropped the mutex, we need to see if someone
+	 * beat us to it.
+	 */
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
+	opdk = _prop_dict_keysym_lookup(key, &idx);
+	if (opdk != NULL) {
+		prop_object_retain(opdk);
+		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+		_prop_dict_keysym_put(pdk);
+		return (opdk);
+	}
+
+	if (_prop_dict_keysym_table.pdkt_count ==
+	    _prop_dict_keysym_table.pdkt_capacity &&
+	    _prop_dict_keysym_table_expand() == FALSE) {
+		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+		prop_object_release(pdk);
+		return (NULL);
+	}
+
+	opdk = _prop_dict_keysym_table.pdkt_array[idx];
+
+	if (_prop_dict_keysym_table.pdkt_count == 0) {
+		_prop_dict_keysym_table.pdkt_array[0] = pdk;
+		_prop_dict_keysym_table.pdkt_count++;
+		goto out;
+	}
+
+	if (strcmp(key, opdk->pdk_key) < 0) {
+		/*
+		 * key < opdk->pdk_key: insert to the left.  This is the
+		 * same as inserting to the right, except we decrement
+		 * the current index first.
+		 *
+		 * Because we're unsigned, we have to special case 0
+		 * (grumble).
+		 */
+		if (idx == 0) {
+			memmove(&_prop_dict_keysym_table.pdkt_array[1],
+				&_prop_dict_keysym_table.pdkt_array[0],
+				_prop_dict_keysym_table.pdkt_count *
+				sizeof(pdk));
+			_prop_dict_keysym_table.pdkt_array[0] = pdk;
+			_prop_dict_keysym_table.pdkt_count++;
+			goto out;
+		}
+		idx--;
+	}
+
+	memmove(&_prop_dict_keysym_table.pdkt_array[idx + 2],
+		&_prop_dict_keysym_table.pdkt_array[idx + 1],
+		(_prop_dict_keysym_table.pdkt_count - (idx + 1)) *
+		sizeof(pdk));
+	_prop_dict_keysym_table.pdkt_array[idx + 1] = pdk;
+	_prop_dict_keysym_table.pdkt_count++;
+
+ out:
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
 	return (pdk);
 }
 
@@ -222,6 +382,7 @@ _prop_dictionary_free(void *v)
 {
 	prop_dictionary_t pd = v;
 	prop_dictionary_keysym_t pdk;
+	prop_object_t po;
 	unsigned int idx;
 
 	_PROP_ASSERT(pd->pd_count <= pd->pd_capacity);
@@ -229,9 +390,12 @@ _prop_dictionary_free(void *v)
 		     (pd->pd_capacity != 0 && pd->pd_array != NULL));
 
 	for (idx = 0; idx < pd->pd_count; idx++) {
-		pdk = pd->pd_array[idx];
+		pdk = pd->pd_array[idx].pde_key;
 		_PROP_ASSERT(pdk != NULL);
 		prop_object_release(pdk);
+		po = pd->pd_array[idx].pde_objref;
+		_PROP_ASSERT(po != NULL);
+		prop_object_release(po);
 	}
 
 	if (pd->pd_array != NULL)
@@ -253,7 +417,6 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	if (pd->pd_count == 0)
 		return (_prop_object_externalize_empty_tag(ctx, "dict"));
 
-	/* XXXJRT Hint "count" for the internalize step? */
 	if (_prop_object_externalize_start_tag(ctx, "dict") == FALSE ||
 	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
 		return (FALSE);
@@ -296,7 +459,7 @@ _prop_dictionary_equals(void *v1, void *v2)
 {
 	prop_dictionary_t dict1 = v1;
 	prop_dictionary_t dict2 = v2;
-	prop_dictionary_keysym_t pdk1, pdk2;
+	const struct _prop_dict_entry *pde1, *pde2;
 	unsigned int idx;
 
 	_PROP_ASSERT(prop_object_is_dictionary(dict1));
@@ -307,13 +470,14 @@ _prop_dictionary_equals(void *v1, void *v2)
 		return (FALSE);
 
 	for (idx = 0; idx < dict1->pd_count; idx++) {
-		pdk1 = dict1->pd_array[idx];
-		pdk2 = dict2->pd_array[idx];
+		pde1 = &dict1->pd_array[idx];
+		pde2 = &dict2->pd_array[idx];
 
-		if (prop_dictionary_keysym_equals(pdk1, pdk2) == FALSE)
+		if (prop_dictionary_keysym_equals(pde1->pde_key,
+						  pde2->pde_key) == FALSE)
 			return (FALSE);
-		if (prop_object_equals(pdk1->pdk_objref,
-				       pdk2->pdk_objref) == FALSE)
+		if (prop_object_equals(pde1->pde_objref,
+				       pde2->pde_objref) == FALSE)
 			return (FALSE);
 	}
 
@@ -324,12 +488,10 @@ static prop_dictionary_t
 _prop_dictionary_alloc(unsigned int capacity)
 {
 	prop_dictionary_t pd;
-	prop_dictionary_keysym_t *array;
+	struct _prop_dict_entry *array;
 
 	if (capacity != 0) {
-		array = _PROP_CALLOC(capacity *
-					sizeof(prop_dictionary_keysym_t),
-				     M_PROP_DICT);
+		array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_DICT);
 		if (array == NULL)
 			return (NULL);
 	} else
@@ -354,17 +516,15 @@ _prop_dictionary_alloc(unsigned int capacity)
 static boolean_t
 _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 {
-	prop_dictionary_keysym_t *array, *oarray;
+	struct _prop_dict_entry *array, *oarray;
 
 	oarray = pd->pd_array;
 
-	array = _PROP_CALLOC(capacity * sizeof(prop_dictionary_keysym_t),
-			     M_PROP_DICT);
+	array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_DICT);
 	if (array == NULL)
 		return (FALSE);
 	if (oarray != NULL)
-		memcpy(array, oarray,
-		       pd->pd_capacity * sizeof(prop_dictionary_keysym_t));
+		memcpy(array, oarray, pd->pd_capacity * sizeof(*array));
 	pd->pd_array = array;
 	pd->pd_capacity = capacity;
 
@@ -391,7 +551,7 @@ _prop_dictionary_iterator_next_object(void *v)
 	if (pdi->pdi_index == pd->pd_count)
 		return (NULL);	/* we've iterated all objects */
 
-	pdk = pd->pd_array[pdi->pdi_index];
+	pdk = pd->pd_array[pdi->pdi_index].pde_key;
 	pdi->pdi_index++;
 
 	return (pdk);
@@ -433,33 +593,32 @@ prop_dictionary_create_with_capacity(unsigned int capacity)
 
 /*
  * prop_dictionary_copy --
- *	Copy a dictionary.  The new dictionary contains refrences to
- *	the original dictionary's objects, not copies of those objects
- *	(i.e. a shallow copy).
+ *	Copy a dictionary.  The new dictionary has an initial capacity equal
+ *	to the number of objects stored int the original dictionary.  The new
+ *	dictionary contains refrences to the original dictionary's objects,
+ *	not copies of those objects (i.e. a shallow copy).
  */
 prop_dictionary_t
 prop_dictionary_copy(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
 	prop_dictionary_keysym_t pdk;
+	prop_object_t po;
 	unsigned int idx;
 
 	_PROP_ASSERT(prop_object_is_dictionary(opd));
 
-	if (prop_dictionary_is_immutable(opd) == FALSE)
-		return (prop_dictionary_copy_mutable(opd));
-
-	/*
-	 * Copies of immutable dictionaries refrence the same
-	 * dictionary entry objects to save space.
-	 */
-
 	pd = _prop_dictionary_alloc(opd->pd_count);
 	if (pd != NULL) {
 		for (idx = 0; idx < opd->pd_count; idx++) {
-			pdk = opd->pd_array[idx];
+			pdk = opd->pd_array[idx].pde_key;
+			po = opd->pd_array[idx].pde_objref;
+
 			prop_object_retain(pdk);
-			pd->pd_array[idx] = pdk;
+			prop_object_retain(po);
+
+			pd->pd_array[idx].pde_key = pdk;
+			pd->pd_array[idx].pde_objref = po;
 		}
 		pd->pd_count = opd->pd_count;
 		pd->pd_flags = opd->pd_flags;
@@ -476,25 +635,12 @@ prop_dictionary_t
 prop_dictionary_copy_mutable(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
-	prop_dictionary_keysym_t opdk, pdk;
-	unsigned int idx;
 
 	_PROP_ASSERT(prop_object_is_dictionary(opd));
+	pd = prop_dictionary_copy(opd);
+	if (pd != NULL)
+		pd->pd_flags &= ~PD_F_IMMUTABLE;
 
-	pd = _prop_dictionary_alloc(opd->pd_count);
-	if (pd != NULL) {
-		for (idx = 0; idx > opd->pd_count; idx++) {
-			opdk = opd->pd_array[idx];
-			pdk = _prop_dict_keysym_alloc(opdk->pdk_key,
-						     opdk->pdk_objref);
-			if (pdk == NULL) {
-				prop_object_release(pd);
-				return (NULL);
-			}
-			pd->pd_array[idx] = pdk;
-			pd->pd_count++;
-		}
-	}
 	return (pd);
 }
 
@@ -508,6 +654,22 @@ prop_dictionary_count(prop_dictionary_t pd)
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
 	return (pd->pd_count);
+}
+
+/*
+ * prop_dictionary_ensure_capacity --
+ *	Ensure that the dictionary has the capacity to store the specified
+ *	total number of objects (including the objects already stored in
+ *	the dictionary).
+ */
+boolean_t
+prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
+{
+
+	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (capacity > pd->pd_capacity)
+		return (_prop_dictionary_expand(pd, capacity));
+	return (TRUE);
 }
 
 /*
@@ -536,26 +698,26 @@ prop_dictionary_iterator(prop_dictionary_t pd)
 	return (&pdi->pdi_base);
 }
 
-static prop_dictionary_keysym_t
+static struct _prop_dict_entry *
 _prop_dict_lookup(prop_dictionary_t pd, const char *key,
 		  unsigned int *idxp)
 {
-	prop_dictionary_keysym_t pdk;
+	struct _prop_dict_entry *pde;
 	unsigned int base, idx, distance;
 	int res;
 
 	for (idx = 0, base = 0, distance = pd->pd_count; distance != 0;
 	     distance >>= 1) {
 		idx = base + (distance >> 1);
-		pdk = pd->pd_array[idx];
-		_PROP_ASSERT(pdk != NULL);
-		res = strcmp(key, pdk->pdk_key);
+		pde = &pd->pd_array[idx];
+		_PROP_ASSERT(pde->pde_key != NULL);
+		res = strcmp(key, pde->pde_key->pdk_key);
 		if (res == 0) {
 			if (idxp != NULL)
 				*idxp = idx;
-			return (pdk);
+			return (pde);
 		}
-		if (res > 0) {	/* key > pdk->pdk_key: move right */
+		if (res > 0) {	/* key > pdk_key: move right */
 			base = idx + 1;
 			distance--;
 		}		/* else move left */
@@ -574,14 +736,14 @@ _prop_dict_lookup(prop_dictionary_t pd, const char *key,
 prop_object_t
 prop_dictionary_get(prop_dictionary_t pd, const char *key)
 {
-	prop_dictionary_keysym_t pdk;
+	const struct _prop_dict_entry *pde;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
 
-	pdk = _prop_dict_lookup(pd, key, NULL);
-	if (pdk != NULL) {
-		_PROP_ASSERT(pdk->pdk_objref != NULL);
-		return (pdk->pdk_objref);
+	pde = _prop_dict_lookup(pd, key, NULL);
+	if (pde != NULL) {
+		_PROP_ASSERT(pde->pde_objref != NULL);
+		return (pde->pde_objref);
 	}
 	return (NULL);
 }
@@ -596,9 +758,8 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
 	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
-	_PROP_ASSERT(pdk->pdk_objref != NULL);
 
-	return (pdk->pdk_objref);
+	return (prop_dictionary_get(pd, pdk->pdk_key));
 }
 
 /*
@@ -609,7 +770,8 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 boolean_t
 prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 {
-	prop_dictionary_keysym_t pdk, opdk;
+	struct _prop_dict_entry *pde;
+	prop_dictionary_keysym_t pdk;
 	unsigned int idx;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
@@ -618,48 +780,54 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 	if (prop_dictionary_is_immutable(pd))
 		return (FALSE);
 
-	pdk = _prop_dict_lookup(pd, key, &idx);
-	if (pdk != NULL) {
-		prop_object_t opo = pdk->pdk_objref;
+	pde = _prop_dict_lookup(pd, key, &idx);
+	if (pde != NULL) {
+		prop_object_t opo = pde->pde_objref;
 		prop_object_retain(po);
-		pdk->pdk_objref = po;
+		pde->pde_objref = po;
 		prop_object_release(opo);
 		return (TRUE);
 	}
 
-	pdk = _prop_dict_keysym_alloc(key, po);
+	pdk = _prop_dict_keysym_alloc(key);
 	if (pdk == NULL)
 		return (FALSE);
 
 	if (pd->pd_count == pd->pd_capacity &&
-	    _prop_dictionary_expand(pd, EXPAND_STEP) == FALSE) {
-		_prop_dict_keysym_free(pdk);
+	    _prop_dictionary_expand(pd,
+	    			    pd->pd_capacity + EXPAND_STEP) == FALSE) {
+		prop_object_release(pdk);
 	    	return (FALSE);
 	}
 
+	/* At this point, the store will succeed. */
+	prop_object_retain(po);
+
 	if (pd->pd_count == 0) {
-		pd->pd_array[0] = pdk;
+		pd->pd_array[0].pde_key = pdk;
+		pd->pd_array[0].pde_objref = po;
 		pd->pd_count++;
 		pd->pd_version++;
 		return (TRUE);
 	}
 
-	opdk = pd->pd_array[idx];
-	_PROP_ASSERT(opdk != NULL);
+	pde = &pd->pd_array[idx];
+	_PROP_ASSERT(pde->pde_key != NULL);
 
-	if (strcmp(key, opdk->pdk_key) < 0) {
+	if (strcmp(key, pde->pde_key->pdk_key) < 0) {
 		/*
-		 * key < opdk->pdk_key: insert to the left.  This is
-		 * the same as inserting to the right, except we decrement
-		 * the current index first.
+		 * key < pdk_key: insert to the left.  This is the same as
+		 * inserting to the right, except we decrement the current
+		 * index first.
 		 *
 		 * Because we're unsigned, we have to special case 0
 		 * (grumble).
 		 */
 		if (idx == 0) {
 			memmove(&pd->pd_array[1], &pd->pd_array[0],
-				pd->pd_count * sizeof(*pdk));
-			pd->pd_array[0] = pdk;
+				pd->pd_count * sizeof(*pde));
+			pd->pd_array[0].pde_key = pdk;
+			pd->pd_array[0].pde_objref = po;
 			pd->pd_count++;
 			pd->pd_version++;
 			return (TRUE);
@@ -668,8 +836,9 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 	}
 
 	memmove(&pd->pd_array[idx + 2], &pd->pd_array[idx + 1],
-		(pd->pd_count - (idx + 1)) * sizeof(*pdk));
-	pd->pd_array[idx + 1] = pdk;
+		(pd->pd_count - (idx + 1)) * sizeof(*pde));
+	pd->pd_array[idx + 1].pde_key = pdk;
+	pd->pd_array[idx + 1].pde_objref = po;
 	pd->pd_count++;
 
 	pd->pd_version++;
@@ -686,38 +855,39 @@ boolean_t
 prop_dictionary_set_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
 			   prop_object_t po)
 {
-	prop_object_t opo;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
 	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
-	_PROP_ASSERT(pdk->pdk_objref != NULL);
 
 	if (prop_dictionary_is_immutable(pd))
 		return (FALSE);
 
-	opo = pdk->pdk_objref;
-	prop_object_retain(po);
-	pdk->pdk_objref = po;
-	prop_object_release(opo);
-	return (TRUE);
+	/*
+	 * XXX We could optimize out the _prop_dict_keysym_alloc() call
+	 * XXX if we re-factor the code a little.
+	 */
+	return (prop_dictionary_set(pd, pdk->pdk_key, po));
 }
 
 static void
-_prop_dictionary_remove(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
+_prop_dictionary_remove(prop_dictionary_t pd, struct _prop_dict_entry *pde,
     unsigned int idx)
 {
+	prop_dictionary_keysym_t pdk = pde->pde_key;
+	prop_object_t po = pde->pde_objref;
 
 	_PROP_ASSERT(pd->pd_count != 0);
 	_PROP_ASSERT(idx < pd->pd_count);
-	_PROP_ASSERT(pd->pd_array[idx] == pdk);
+	_PROP_ASSERT(pde == &pd->pd_array[idx]);
 
 	idx++;
 	memmove(&pd->pd_array[idx - 1], &pd->pd_array[idx],
-		(pd->pd_count - idx) * sizeof(*pdk));
+		(pd->pd_count - idx) * sizeof(*pde));
 	pd->pd_count--;
 	pd->pd_version++;
 
 	prop_object_release(pdk);
+	prop_object_release(po);
 }
 
 /*
@@ -728,7 +898,7 @@ _prop_dictionary_remove(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
 void
 prop_dictionary_remove(prop_dictionary_t pd, const char *key)
 {
-	prop_dictionary_keysym_t pdk;
+	struct _prop_dict_entry *pde;
 	unsigned int idx;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
@@ -737,12 +907,12 @@ prop_dictionary_remove(prop_dictionary_t pd, const char *key)
 	if (prop_dictionary_is_immutable(pd))
 		return;
 
-	pdk = _prop_dict_lookup(pd, key, &idx);
+	pde = _prop_dict_lookup(pd, key, &idx);
 	/* XXX Should this be a _PROP_ASSERT()? */
-	if (pdk == NULL)
+	if (pde == NULL)
 		return;
 
-	_prop_dictionary_remove(pd, pdk, idx);
+	_prop_dictionary_remove(pd, pde, idx);
 }
 
 /*
@@ -754,21 +924,15 @@ void
 prop_dictionary_remove_keysym(prop_dictionary_t pd,
 			      prop_dictionary_keysym_t pdk)
 {
-	prop_dictionary_keysym_t opdk;
-	unsigned int idx;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
 	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
-	_PROP_ASSERT(pdk->pdk_objref != NULL);
 
 	/* XXX Should this be a _PROP_ASSERT()? */
 	if (prop_dictionary_is_immutable(pd))
 		return;
 
-	opdk = _prop_dict_lookup(pd, pdk->pdk_key, &idx);
-	_PROP_ASSERT(opdk == pdk);
-
-	_prop_dictionary_remove(pd, opdk, idx);
+	prop_dictionary_remove(pd, pdk->pdk_key);
 }
 
 /*
