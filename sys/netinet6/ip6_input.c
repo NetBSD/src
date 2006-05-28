@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.73.2.1.4.1 2006/05/24 02:37:19 riz Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.73.2.1.4.2 2006/05/28 13:44:02 riz Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.73.2.1.4.1 2006/05/24 02:37:19 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.73.2.1.4.2 2006/05/28 13:44:02 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1017,7 +1017,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 #endif
 
 	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
-	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) !=3D IPV6_VERSION)
+	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
 		return;
 
 	if (in6p->in6p_flags & IN6P_RECVDSTADDR) {
