@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.132 2006/05/19 13:53:11 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.133 2006/05/28 06:47:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.132 2006/05/19 13:53:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.133 2006/05/28 06:47:58 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1001,7 +1001,6 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 		*rexmitp = 0;
 
 	acred = kauth_cred_alloc();
-	kauth_cred_hold(acred);	/* Just to be safe.. */
 
 tryagain_cred:
 	KASSERT(cred != NULL);
@@ -1034,7 +1033,8 @@ kerbauth:
 			if (error) {
 				free((caddr_t)rep, M_NFSREQ);
 				m_freem(mrest);
-				kauth_cred_destroy(acred);
+				KASSERT(kauth_cred_getrefcnt(acred) == 1);
+				kauth_cred_free(acred);
 				return (error);
 			}
 		}
@@ -1271,7 +1271,9 @@ tryagain:
 				use_opencred = !use_opencred;
 				if (mrest_backup == NULL) {
 					/* m_copym failure */
-					kauth_cred_destroy(acred);
+					KASSERT(
+					    kauth_cred_getrefcnt(acred) == 1);
+					kauth_cred_free(acred);
 					return ENOMEM;
 				}
 				mrest = mrest_backup;
@@ -1446,7 +1448,8 @@ tryagain:
 	m_freem(mrep);
 	error = EPROTONOSUPPORT;
 nfsmout:
-	kauth_cred_destroy(acred);
+	KASSERT(kauth_cred_getrefcnt(acred) == 1);
+	kauth_cred_free(acred);
 	m_freem(rep->r_mreq);
 	free((caddr_t)rep, M_NFSREQ);
 	m_freem(mrest_backup);
