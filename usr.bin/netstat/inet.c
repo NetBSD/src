@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.71 2006/05/21 21:01:55 liamjfoy Exp $	*/
+/*	$NetBSD: inet.c,v 1.72 2006/05/28 16:51:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.71 2006/05/21 21:01:55 liamjfoy Exp $");
+__RCSID("$NetBSD: inet.c,v 1.72 2006/05/28 16:51:40 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,14 +168,6 @@ protopr(off, name)
 	int istcp;
 	static int first = 1;
 
-	if (off == 0)
-		return;
-	istcp = strcmp(name, "tcp") == 0;
-	kread(off, (char *)&table, sizeof table);
-	prev = head =
-	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = (struct inpcb *)table.inpt_queue.cqh_first;
-
 	compact = 0;
 	if (Aflag) {
 		if (!numeric_addr)
@@ -238,6 +230,14 @@ protopr(off, name)
 		free(pcblist);
 		return;
 	}
+
+	if (off == 0)
+		return;
+	istcp = strcmp(name, "tcp") == 0;
+	kread(off, (char *)&table, sizeof table);
+	prev = head =
+	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
+	next = (struct inpcb *)table.inpt_queue.cqh_first;
 
 	while (next != head) {
 		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
