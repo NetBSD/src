@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.48 2006/05/14 21:45:00 elad Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.49 2006/05/28 13:12:42 blymn Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.48 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.49 2006/05/28 13:12:42 blymn Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -372,7 +372,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(ic->ic_myaddr));
 
 	/* read the NIC type from EEPROM */
-	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE); 
+	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE);
 	sc->nictype = val & 0xff;
 
 	DPRINTF(("%s: NIC type %d\n", sc->sc_dev.dv_xname, sc->nictype));
