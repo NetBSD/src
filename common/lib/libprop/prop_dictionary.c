@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.6 2006/05/28 03:56:29 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.7 2006/05/28 10:15:25 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ _prop_dict_keysym_free(void *v)
 {
 	prop_dictionary_keysym_t pdk = v;
 	prop_dictionary_keysym_t opdk;
-	unsigned int idx, jdx;
+	unsigned int idx;
 
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
 	opdk = _prop_dict_keysym_lookup(pdk->pdk_key, &idx);
