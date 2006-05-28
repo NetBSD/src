@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.8 2006/05/26 11:45:31 jnemeth Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.9 2006/05/28 11:33:56 jnemeth Exp $");
 #endif
 
 
@@ -189,12 +189,14 @@ bincvt(char *sysfile, char *outfile, void *img, int fsize)
 
 	binfp = fdopen(fd, "a+");
 	if (binfp == NULL) {
-		close(fd);
+		unlink(tname);
 		err(1, "opening %s failed", tname);
 	}
 
-	if (fwrite(img, fsize, 1, binfp) != 1)
+	if (fwrite(img, fsize, 1, binfp) != 1) {
+		unlink(tname);
 		err(1, "failed to output binary image");
+	}
 
 	fclose(binfp);
 
