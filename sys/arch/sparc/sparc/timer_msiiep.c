@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.17.6.2 2006/05/27 22:49:52 kardel Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.17.6.3 2006/05/28 08:15:37 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,12 +58,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.2 2006/05/27 22:49:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.3 2006/05/28 08:15:37 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 
@@ -102,6 +103,29 @@ timermatch_msiiep(struct device *parent, struct cfdata *cf, void *aux)
 	return (strcmp(msa->msa_name, "timer") == 0);
 }
 
+static u_int timer_get_timecount(struct timecounter *);
+
+/*
+ * timecounter local state
+ */
+static struct counter {
+	u_int limit;		/* limit we count up to */
+	u_int offset;		/* accumulated offet due to wraps */
+} cntr;
+
+/*
+ * define timecounter
+ */
+
+static struct timecounter counter_timecounter = {
+	timer_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	25000000,               /* frequency */
+	"timer-counter",	/* name */
+	0,			/* quality */
+	&cntr			/* private reference */
+};
 
 /*
  * Attach system and processor counters (kernel hard and stat clocks)
@@ -135,6 +159,7 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 		if (t >= 2501) /* (t - 1) / 25 >= 100 us */
 			break;
 	}
+
 	printf(": delay constant %d\n", timerblurb);
 
 	timer_init = timer_init_msiiep;
@@ -171,8 +196,46 @@ timer_init_msiiep(void)
 
 	mspcic_write_4(pcic_sclr, tmr_ustolimIIep(tick));
 	mspcic_write_4(pcic_pclr, tmr_ustolimIIep(statint));
+
+	cntr.limit = tmr_ustolimIIep(tick);
+	tc_init(&counter_timecounter);
 }
 
+/*
+ * timer_get_timecount provide current counter value
+ */
+static u_int
+timer_get_timecount(struct timecounter *tc)
+{
+	struct counter *ctr = (struct counter *)tc->tc_priv;
+
+	u_int c, res, r;
+	int s;
+
+
+	s = splhigh();
+
+	/*
+	 * XXX
+	 *    consider re-reading until increment
+	 * is detected
+	 */
+	res = c = mspcic_read_4(pcic_sccr);
+
+	res  &= 0x7FFFFFFF;
+
+	if (c != res) {
+		r = ctr->limit;
+	} else {
+		r = 0;
+	}
+	
+	res += r + ctr->offset;
+
+	splx(s);
+
+	return res;
+}
 
 /*
  * Level 10 (clock) interrupts from system counter.
@@ -183,7 +246,9 @@ clockintr_msiiep(void *cap)
 	volatile uint32_t junk;
 	
 	junk = mspcic_read_4(pcic_sclr); /* clear the interrupt */
-	tickle_tc();
+	if (timecounter->tc_get_timecount == timer_get_timecount) {
+		cntr.offset += cntr.limit;
+	}
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
