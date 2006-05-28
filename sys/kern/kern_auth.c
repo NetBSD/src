@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.5 2006/05/28 06:49:27 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.6 2006/05/28 06:52:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -83,16 +83,16 @@ struct kauth_scope {
 	SIMPLEQ_ENTRY(kauth_scope)	next_scope;	/* scope list */
 };
 
-POOL_INIT(kauth_scope_pool, sizeof(struct kauth_scope), 0, 0, 0,
+static POOL_INIT(kauth_scope_pool, sizeof(struct kauth_scope), 0, 0, 0,
 	  "kauth_scopepl", &pool_allocator_nointr);
-POOL_INIT(kauth_listener_pool, sizeof(struct kauth_listener), 0, 0, 0,
+static POOL_INIT(kauth_listener_pool, sizeof(struct kauth_listener), 0, 0, 0,
 	  "kauth_listenerpl", &pool_allocator_nointr);
-POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
+static POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
 	  "kauth_credpl", &pool_allocator_nointr);
 
 /* List of scopes and its lock. */
-SIMPLEQ_HEAD(, kauth_scope) scope_list;
-struct simplelock scopes_lock;
+static SIMPLEQ_HEAD(, kauth_scope) scope_list;
+static struct simplelock scopes_lock;
 
 /* Built-in scopes: generic, process. */
 static kauth_scope_t kauth_builtin_scope_generic;
