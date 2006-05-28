@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.4 2006/05/24 23:00:49 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.5 2006/05/28 06:49:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -123,14 +123,6 @@ kauth_cred_hold(kauth_cred_t cred)
         simple_unlock(&cred->cr_lock);
 }
 
-void
-kauth_cred_destroy(kauth_cred_t cred)
-{
-	KASSERT(cred != NULL);
-
-	pool_put(&kauth_cred_pool, cred);
-}
-
 /* Decrease reference count to cred. If reached zero, free it. */
 void
 kauth_cred_free(kauth_cred_t cred)
@@ -142,7 +134,7 @@ kauth_cred_free(kauth_cred_t cred)
 	simple_unlock(&cred->cr_lock);
 
 	if (cred->cr_refcnt == 0)
-		kauth_cred_destroy(cred);
+		pool_put(&kauth_cred_pool, cred);
 }
 
 void
