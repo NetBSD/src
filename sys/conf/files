@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.776 2006/05/25 14:27:28 yamt Exp $
+#	$NetBSD: files,v 1.777 2006/05/28 08:57:53 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -932,6 +932,10 @@ defflag	opt_pcdisplay.h		PCDISPLAY_SOFTCURSOR
 define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
+# an attribute used by arch specific config files to include /dev/fb* (or
+# equivalent) support - on most archs this is just a NOP (untill, maybe
+# someday when we might make /dev/fb* support MI)
+define	fb
 # VGA graphics
 #
 defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
