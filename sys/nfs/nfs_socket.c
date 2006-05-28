@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.133 2006/05/28 06:47:58 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.134 2006/05/28 13:23:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.133 2006/05/28 06:47:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.134 2006/05/28 13:23:08 blymn Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2641,14 +2641,14 @@ again:
 	nfsdreq_free(nd);
 
 	simple_lock(&slp->ns_lock);
-	KASSERT((slp->ns_flag & SLP_SENDING) != 0); 
+	KASSERT((slp->ns_flag & SLP_SENDING) != 0);
 	nd = SIMPLEQ_FIRST(&slp->ns_sendq);
 	if (nd != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&slp->ns_sendq, nd_sendq);
 		simple_unlock(&slp->ns_lock);
 		goto again;
 	}
-	slp->ns_flag &= ~SLP_SENDING; 
+	slp->ns_flag &= ~SLP_SENDING;
 	simple_unlock(&slp->ns_lock);
 
 	return error;
