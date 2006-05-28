@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.21.6.1 2006/05/27 22:49:52 kardel Exp $ */
+/*	$NetBSD: timer.c,v 1.21.6.2 2006/05/28 08:09:37 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.21.6.1 2006/05/27 22:49:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.21.6.2 2006/05/28 08:09:37 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,7 +94,7 @@ static struct counter {
  * define timecounter
  */
 
-struct timecounter counter_timecounter = {
+static struct timecounter counter_timecounter = {
 	timer_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
 	~0u,			/* counter_mask */
