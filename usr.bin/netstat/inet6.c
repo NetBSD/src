@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.37 2006/05/21 21:01:56 liamjfoy Exp $	*/
+/*	$NetBSD: inet6.c,v 1.38 2006/05/28 16:51:40 elad Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.37 2006/05/21 21:01:56 liamjfoy Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.38 2006/05/28 16:51:40 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,14 +224,6 @@ ip6protopr(off, name)
 	int istcp;
 	static int first = 1;
 
-	if (off == 0)
-		return;
-	istcp = strcmp(name, "tcp6") == 0;
-	kread(off, (char *)&table, sizeof (table));
-	head = prev =
-	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = (struct in6pcb *)table.inpt_queue.cqh_first;
-
 	compact = 0;
 	if (Aflag) {
 		if (!numeric_addr)
@@ -294,6 +286,14 @@ ip6protopr(off, name)
 		free(pcblist);
 		return;
 	}
+
+	if (off == 0)
+		return;
+	istcp = strcmp(name, "tcp6") == 0;
+	kread(off, (char *)&table, sizeof (table));
+	head = prev =
+	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
+	next = (struct in6pcb *)table.inpt_queue.cqh_first;
 
 	while (next != head) {
 		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2006/05/28 16:51:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.52 2006/05/18 09:05:51 liamjfoy Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 2006/05/28 16:51:40 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -450,7 +450,7 @@ main(argc, argv)
 			nlistf = optarg;
 			break;
 		case 'n':
-			numeric_addr = numeric_port = 1;
+			numeric_addr = numeric_port = nflag = 1;
 			break;
 		case 'P':
 			errno = 0;
@@ -529,7 +529,7 @@ main(argc, argv)
 
 	use_sysctl = (nlistf == NULL && memf == NULL);
 
-	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
+	if (!use_sysctl && (kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
 	    buf)) == NULL)
 		errx(1, "%s", buf);
 
@@ -547,7 +547,7 @@ main(argc, argv)
 	}
 #endif
 
-	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
+	if (!use_sysctl && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
 		if (nlistf)
 			errx(1, "%s: no namelist", nlistf);
 		else
@@ -599,9 +599,13 @@ main(argc, argv)
 	}
 	if (rflag) {
 		if (sflag)
-			rt_stats(nl[N_RTSTAT].n_value);
-		else
-			routepr(nl[N_RTREE].n_value);
+			rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
+		else {
+			if (use_sysctl)
+				p_rttables(af);
+			else
+				routepr(nl[N_RTREE].n_value);
+		}
 		exit(0);
 	}
 #ifndef SMALL
@@ -708,8 +712,9 @@ printproto(tp, name)
 		pr = tp->pr_cblocks;
 		off = nl[tp->pr_index].n_value;
 	}
-	if (pr != NULL && (off || af != AF_UNSPEC))
+	if (pr != NULL && ((off || af != AF_UNSPEC) || use_sysctl)) {
 		(*pr)(off, name);
+	}
 }
 
 /*
