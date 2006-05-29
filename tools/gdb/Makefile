@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/10/26 01:06:27 cl Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/29 19:11:57 nathanw Exp $
 
 .include <bsd.own.mk>
 
-MODULE=		gdb
+MODULE=		gdb6
 
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
@@ -16,3 +16,39 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
+CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+
+NEWCONFIGDIR?=	${.CURDIR}/../..
+MKNATIVE?=	${.CURDIR}/mknative-gdb
+
+native-gdb: .native/.configure_done
+	@echo 'Extracting GDB configury for a native toolchain.'
+	MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} gdb \
+		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
+
+.native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
+	mkdir .native 2>/dev/null || true
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native && ${CONFIGURE_ENV:NC*:NLD*} \
+			CC_FOR_BUILD=${HOST_CC:Q} \
+			CC=${CC:Q}' '${CCADDFLAGS:Q} \
+			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
+			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
+			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
+			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
+			LIBS=-lintl \
+			ac_cv_prog_cc_cross=yes \
+			ac_cv_func_strcoll_works=yes \
+			${HOST_SH} ${GNUHOSTDIST}/configure \
+			--build=`${GNUHOSTDIST}/config.guess` \
+			--host=${MACHINE_GNU_PLATFORM} \
+			--target=${MACHINE_GNU_PLATFORM}) && \
+		(cd .native && ${MAKE} configure-host) && \
+		(cd .native/bfd && ${MAKE} bfd.h bfdver.h) && \
+		(cd .native/gdb && ${MAKE} init.c version.c)
+	@touch $@
+
+clean: clean.native
+clean.native:
+	-rm -r -f .native
