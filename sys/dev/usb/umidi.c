@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.14 2006/05/21 17:28:48 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.15 2006/05/29 16:54:05 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.14 2006/05/21 17:28:48 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.15 2006/05/29 16:54:05 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1267,8 +1267,10 @@ static void
 dump_ep(struct umidi_endpoint *ep)
 {
 	int i;
-	for (i=0; i<ep->num_jacks; i++) {
-		DPRINTFN(10, ("\t\tjack(%p):\n", ep->jacks[i]));
+	for (i=0; i<UMIDI_MAX_EPJACKS; i++) {
+		if (NULL==ep->jacks[i])
+			continue;
+		DPRINTFN(10, ("\t\tjack[%d]:%p:\n", i, ep->jacks[i]));
 		dump_jack(ep->jacks[i]);
 	}
 }
@@ -1482,7 +1484,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 
 		if (!jack->binded || !jack->opened)
-			return;
+			continue;
 
 		DPRINTFN(500,("%s: input endpoint %p cable %d len %d: "
 		             "%02X %02X %02X\n",
