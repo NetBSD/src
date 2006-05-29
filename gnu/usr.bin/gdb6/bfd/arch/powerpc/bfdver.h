@@ -2,4 +2,6 @@
 /* Generated from: 	NetBSD */
 /* and from: NetBSD: mknative.common,v 1.6 2006/05/15 21:01:42 mrg Exp  */
 
-#include <config/nm-nbsd.h>
+#define BFD_VERSION_DATE 20051101
+#define BFD_VERSION 216910000
+#define BFD_VERSION_STRING "2.16.91 20051101"
