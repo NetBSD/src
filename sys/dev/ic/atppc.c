@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.20 2006/05/10 10:27:49 drochner Exp $ */
+/* $NetBSD: atppc.c,v 1.21 2006/05/29 15:17:29 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.20 2006/05/10 10:27:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.21 2006/05/29 15:17:29 drochner Exp $");
 
 #include "opt_atppc.h"
 
@@ -114,7 +114,7 @@ static void atppc_ecp_read_dma(struct atppc_softc *, unsigned int *,
 	unsigned char);
 static void atppc_ecp_read_pio(struct atppc_softc *, unsigned int *,
 	unsigned char);
-static void atppc_ecp_read_error(struct atppc_softc *, const unsigned int);
+static void atppc_ecp_read_error(struct atppc_softc *);
 
 
 /* Functions to write bytes to device's output buffer */
@@ -1858,7 +1858,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 		if (ecr & ATPPC_FIFO_EMPTY) {
 			/* Check for invalid state */
 			if (ecr & ATPPC_FIFO_FULL) {
-				atppc_ecp_read_error(atppc, worklen);
+				atppc_ecp_read_error(atppc);
 				break;
 			}
 
@@ -1905,7 +1905,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 		}
 
 		if (atppc->sc_inerr) {
-			atppc_ecp_read_error(atppc, worklen);
+			atppc_ecp_read_error(atppc);
 			break;
 		}
 
@@ -1970,7 +1970,7 @@ atppc_ecp_read_pio(struct atppc_softc *atppc, unsigned int *length,
 
 /* Handle errors for ECP reads */
 static void
-atppc_ecp_read_error(struct atppc_softc *atppc, const unsigned int worklen)
+atppc_ecp_read_error(struct atppc_softc *atppc)
 {
 	unsigned char ecr = atppc_r_ecr(atppc);
 
