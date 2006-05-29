@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.45 2006/04/02 03:26:03 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.46 2006/05/29 21:55:41 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.45 2006/04/02 03:26:03 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.46 2006/05/29 21:55:41 jnemeth Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -326,7 +326,11 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 				}
 				/* save the data; close frees it */
 				clen = strlen(record);
-				cbuf = malloc(clen + 1);
+				if ((cbuf = malloc(clen + 1)) == NULL) {
+					(void)capdbp->close(capdbp);
+					errno = ENOMEM;
+					return (-2);
+				}
 				memmove(cbuf, record, clen + 1);
 				if (capdbp->close(capdbp) < 0) {
 					int serrno = errno;
