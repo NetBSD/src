@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.11 2006/05/25 02:11:13 garbled Exp $     */
+/*      $NetBSD: residual.c,v 1.12 2006/05/29 22:11:15 garbled Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.11 2006/05/25 02:11:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.12 2006/05/29 22:11:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.11 2006/05/25 02:11:13 garbled Exp $"
 #include "opt_residual.h"
 
 #ifdef RESIDUAL_DATA_DUMP
+#include <machine/chpidpnp.h>
+
 static void make_pnp_device_tree(void *);
 static void bustype_subr(DEVICE_ID *);
 
@@ -542,6 +544,84 @@ make_pnp_device_tree(void *v)
 	}
 }
 
+static void small_vendor_chipid(void *v)
+{
+	ChipIDPack *p = v;
+	char chipid[8];
+	int16_t id;
+	int i, j;
+	struct _svid {
+		int16_t id;
+		const char *name;
+		int type;
+	} svid[] = {
+		{ Dakota,	"IBM North/South Dakota", Chip_MemCont },
+		{ Idaho,	"IBM Idaho", Chip_MemCont },
+		{ Eagle,	"Motorola Eagle", Chip_MemCont },
+		{ Kauai_Lanai,	"IBM Kauai/Lanai", Chip_MemCont },
+		{ Montana_Nevada,"IBM Montana/Nevada", Chip_MemCont },
+		{ Union,	"IBM Union", Chip_MemCont },
+		{ Cobra_Viper,	"IBM Cobra/Viper", Chip_MemCont },
+		{ Grackle,	"Motorola Grackle", Chip_MemCont },
+		{ SIO_ZB,	"Intel 82378ZB", Chip_ISABridge },
+		{ FireCoral,	"IBM FireCoral", Chip_ISABridge },
+		{ Python,	"IBM Python", Chip_PCIBridge },
+		{ DEC21050,	"PCI-PCI (DEC 21050)", Chip_PCIBridge },
+		{ IBM2782351,	"PCI-PCI (IBM 2782351)", Chip_PCIBridge },
+		{ IBM2782352,	"PCI-PCI (IBM 2782352)", Chip_PCIBridge },
+		{ INTEL_8236SL,	"Intel 8236SL", Chip_PCMCIABridge },
+		{ RICOH_RF5C366C,"RICOH RF5C366C", Chip_PCMCIABridge },
+		{ INTEL_82374,	"Intel 82374/82375", Chip_EISABridge },
+		{ MCACoral,	"MCA Coral", Chip_MCABridge },
+		{ Cheyenne,	"IBM Cheyenne", Chip_L2Cache },
+		{ IDT,		"IDT", Chip_L2Cache },
+		{ Sony1PB,	"Sony1PB", Chip_L2Cache },
+		{ Mamba,	"IBM Mamba", Chip_L2Cache },
+		{ Alaska,	"IBM Alaska", Chip_L2Cache },
+		{ Glance,	"IBM Glance", Chip_L2Cache },
+		{ Ocelot,	"IBM Ocelot", Chip_L2Cache },
+		{ Carrera,	"IBM Carrera", Chip_PM },
+		{ Sig750,	"Signetics 87C750", Chip_PM },
+		{ MPIC_2,	"IBM MPIC-2", Chip_IntrCont },
+		{ DallasRTC,	"Dallas 1385 compatible", Chip_MiscPlanar },
+		{ Dallas1585,	"Dallas 1585 compatible", Chip_MiscPlanar },
+		{ Timer8254,	"8254-compatible timer", Chip_MiscPlanar },
+		{ HarddiskLt,	"Op Panel HD light", Chip_MiscPlanar },
+		{ 0,		NULL, -1 },
+	};
+	const char *chiptype[] = {
+		"Memory Controller",
+		"ISA Bridge",
+		"PCI Bridge",
+		"PCMCIA Bridge",
+		"EISA Bridge",
+		"MCA Bridge",
+		"L2 Cache Controller",
+		"Power Management Controller",
+		"Interrupt Controller",
+		"Misc. Planar Device"
+	};
+
+	id = le16dec(&p->Name[0]);
+	snprintf(chipid, 8, "%c%c%c%0hX",
+	    ((p->VendorID0 >> 2) & 0x1f) + 'A' - 1,
+	    (((p->VendorID0 & 3) << 3) | ((p->VendorID1 >> 5) & 7)) + 'A' - 1,
+	    (p->VendorID1 & 0x1f) + 'A' - 1, id);
+	for (i = 0, j = -1; svid[i].name != NULL; i++) {
+		if (id == svid[i].id) {
+			j = i;
+			break;
+		}
+	}
+	printf("Chip ID: %s\n", chipid);
+	if (j == -1) {
+		printf("      Unknown Chip Type\n");
+		return;
+	}
+	printf("      %s: %s\n", chiptype[svid[j].type], svid[j].name);
+	return;
+}
+
 static int
 pnp_small_pkt(void *v)
 {
@@ -687,29 +767,28 @@ IRQout:
 		printf("    SmallVendorItem: ");
 		switch (p[1]) {
 		case 1:
-			printf("%c%c%c",
-			    ((p[2] >> 2) & 0x1f) + 'A' - 1,
-			    (((p[2] & 3) << 3) | ((p[3] >> 5) & 7)) + 'A' - 1,
-			    (p[3] & 0x1f) + 'A' - 1);
+			small_vendor_chipid(v);
+			break;
+
+		case 3:
+			printf("Processor Number: %d\n", p[2]);
 			break;
 
 		default:
+			printf("\n");
+			for (i = 0; i < size - 1; i++) {
+				if ((i % 16) == 0)
+					printf("      ");
+				printf("%02x ", p[i + 1]);
+				if ((i % 16) == 15)
+					printf("\n");
+			}
+			if ((i % 16) != 0)
+				printf("\n");
 			break;
 		}
-
-		printf("\n");
-		for (i = 0; i < size - 1; i++) {
-			if ((i % 16) == 0)
-				printf("      ");
-			printf("%02x ", p[i + 1]);
-			if ((i % 16) == 15)
-				printf("\n");
-		}
-		if ((i % 16) != 0)
-			printf("\n");
-		}
 		break;
-
+	}
 	default: {
 		unsigned char *p = v;
 
@@ -1516,11 +1595,17 @@ service_subr(DEVICE_ID *id)
 	const char *p, *q = NULL;
 
 	switch (id->SubType) {
-	case GeneralMemoryController:
-		p = "GeneralMemoryController";
+	case ServiceProcessorClass1:
+		p = "ServiceProcessorClass1";
+		break;
+	case ServiceProcessorClass2:
+		p = "ServiceProcessorClass2";
+		break;
+	case ServiceProcessorClass3:
+		p = "ServiceProcessorClass3";
 		break;
 	default:
-		p = "UnknownMemoryController";
+		p = "UnknownServiceProcessor";
 		break;
 	}
 
