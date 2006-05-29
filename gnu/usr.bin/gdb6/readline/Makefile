@@ -1,26 +1,23 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/15 16:31:37 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/29 19:27:22 nathanw Exp $
 
 .include <bsd.own.mk>
 
 MKPRIVATELIB=	yes
 
-TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/gdb6
-
-LIB=readline
+LIB=		readline
 
 NOGCCERROR=	yes
 
-CPPFLAGS+=-I${.CURDIR} -I${DIST} -DHAVE_CONFIG_H
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-SRCS=bind.c callback.c compat.c complete.c display.c funmap.c		\
-histexpand.c histfile.c history.c histsearch.c input.c isearch.c	\
-keymaps.c kill.c macro.c mbutil.c misc.c nls.c parens.c readline.c	\
-rltty.c search.c shell.c signals.c terminal.c text.c tilde.c undo.c	\
-util.c vi_mode.c xmalloc.c
+DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
 
-.include "../../Makefile.inc"
-.include <bsd.lib.mk>
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+		-I${DIST}/ \
+		${G_CCFLAGS:M-DRL_*} \
 
+SRCS=		${G_OBJECTS:.o=.c}
 
 .PATH: ${DIST}/readline
+
+.include <bsd.lib.mk>
