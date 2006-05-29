@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.10 2006/05/22 20:40:07 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.11 2006/05/29 21:27:16 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.10 2006/05/22 20:40:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.11 2006/05/29 21:27:16 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -116,7 +116,7 @@ static const struct wskbd_accessops hpf1275a_wskbd_accessops = {
 };
 
 
-static struct wskbd_mapdata hpf1275a_wskbd_keymapdata = {
+static const struct wskbd_mapdata hpf1275a_wskbd_keymapdata = {
 	pckbd_keydesctab, KB_US
 };
 
