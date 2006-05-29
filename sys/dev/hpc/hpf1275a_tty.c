@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.11 2006/05/29 21:27:16 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.12 2006/05/29 22:17:26 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.11 2006/05/29 21:27:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.12 2006/05/29 22:17:26 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -296,7 +296,7 @@ hpf1275a_detach(struct device *self, int flags)
 /*
  * Line discipline open routine.
  */
-int
+static int
 hpf1275a_open(dev_t dev, struct tty *tp)
 {
 	static struct cfdata hpf1275a_cfdata = {
@@ -332,7 +332,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 /*
  * Line discipline close routine.
  */
-int
+static int
 hpf1275a_close(struct tty *tp, int flag)
 {
 	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)tp->t_sc;
@@ -355,7 +355,7 @@ hpf1275a_close(struct tty *tp, int flag)
 /*
  * Feed input from the keyboard to wskbd(4).
  */
-int
+static int
 hpf1275a_input(int c, struct tty *tp)
 {
 	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)tp->t_sc;
