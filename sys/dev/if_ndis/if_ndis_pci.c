@@ -278,7 +278,7 @@ ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
 #endif
 	
 	while(t->ndis_name != NULL) {
-#ifdef NDIS_LKM
+#ifdef NDIS_DBG
 			printf("t->ndis_vid = %x, t->ndis_did = %x\n",
 			       t->ndis_vid, t->ndis_did);
 #endif
