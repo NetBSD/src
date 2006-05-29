@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.30 2006/05/25 02:38:10 lukem Exp $
+.\"	$NetBSD: security.conf.5,v 1.31 2006/05/29 22:07:25 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 25, 2006
+.Dd May 29, 2006
 .Dt SECURITY.CONF 5
 .Os
 .Sh NAME
@@ -183,10 +183,12 @@ Prefixing the path with a
 .Sq \&!
 inverts the match.
 For example,
-.Ql /tftp !/home
+.Ql /tftp
 will ignore paths under
 .Pa /tftp
-and paths that are not under
+while
+.Ql !/home
+will ignore paths that are not under
 .Pa /home .
 .It Sy check_mtree_follow_symlinks
 During the
