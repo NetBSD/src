@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/15 16:31:37 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/29 19:15:30 nathanw Exp $
 
 .include "Makefile.inc"
 
@@ -9,9 +9,7 @@ SUBDIR+=	readline
 
 SUBDIR+= .WAIT
 
-.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpcle"
 SUBDIR+= sim
-.endif
 
 SUBDIR+=  gdb
 .if ${USE_TUI} == yes
