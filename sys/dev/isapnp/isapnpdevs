@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.60 2006/04/27 21:33:23 christos Exp $
+$NetBSD: isapnpdevs,v 1.60.2.1 2006/05/29 16:25:18 chap Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -182,6 +182,7 @@ devlogic	mpu	AZT0002		0	Aztech AZT2320 MPU401 MIDI
 devlogic	mpu	AZT2001		0	Aztech MPU401 MIDI
 devlogic	mpu	AZT2004		0	Aztech AZT1020 MPU401 MIDI
 devlogic	mpu	CSC0003		0	CS4235 MPU401 MIDI
+devcompat	mpu	PNPB006		0	MPU401 compatible MIDI UART
 
 /*
  * ne
