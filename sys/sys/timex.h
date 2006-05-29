@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.10 2006/05/29 09:57:55 drochner Exp $	*/
+/*	$NetBSD: timex.h,v 1.11 2006/05/29 16:43:06 drochner Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -313,8 +313,9 @@ __END_DECLS
 #ifdef __NetBSD__
 #ifdef _KERNEL
 __BEGIN_DECLS
-int   ntp_settime1(struct timex *, register_t *);
-int   ntp_adjtime1(struct timex *, void *, register_t *);
+void ntp_gettime(struct ntptimeval *);
+int ntp_timestatus(void);
+int ntp_adjtime1(struct timex *, void *, register_t *);
 __END_DECLS
 #endif /* _KERNEL */
 #endif /* __NetBSD__ */
