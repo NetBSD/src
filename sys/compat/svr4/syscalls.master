@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.53 2006/04/02 06:34:18 macallan Exp $
+	$NetBSD: syscalls.master,v 1.54 2006/05/29 09:44:51 drochner Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -409,8 +409,7 @@
 246	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, int valsize); }
 247	UNIMPL		sockconfig
-; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-248	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+248	UNIMPL		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
 #if defined(NTP) || !defined(_KERNEL)
 249	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
