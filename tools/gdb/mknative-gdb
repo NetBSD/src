@@ -1,0 +1,144 @@
+#!/bin/sh
+#	$NetBSD: mknative-gdb,v 1.1 2006/05/29 19:10:58 nathanw Exp $
+#
+# Shell script for generating all the constants needed for a native
+# platform build of src/gnu/dist/gdb6.
+#
+
+# initialise
+
+_TMPDIR=$2
+_TOP=$3
+_PLATFORM=$4
+_VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
+
+. $_TOP/tools/gcc/mknative.common
+
+##### gnu/usr.bin/gdb6/bfd #####
+
+get_gdb_libbfd () {
+	mkdir -p $_TOP/gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH
+
+	{
+		getvars bfd/Makefile \
+			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
+			INCLUDES TDEFAULTS
+	} | write_mk gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/defs.mk
+
+	write_c gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
+	write_c gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/bfdver.h <$_TMPDIR/bfd/bfdver.h
+
+	{
+		cat $_TMPDIR/bfd/config.h
+	} | write_c gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/config.h
+}
+
+##### gnu/lib/opcodes #####
+
+get_gdb_libopcodes () {
+	mkdir -p $_TOP/gnu/usr.bin/gdb6/opcodes/arch/$MACHINE_ARCH
+
+	{
+		getvars opcodes/Makefile \
+			archdefs BFD_MACHINES libopcodes_la_SOURCES
+	} | write_mk gnu/usr.bin/gdb6/opcodes/arch/$MACHINE_ARCH/defs.mk
+
+	{
+		cat $_TMPDIR/opcodes/config.h
+	} | write_c gnu/usr.bin/gdb6/opcodes/arch/$MACHINE_ARCH/config.h
+}
+
+##### gnu/lib/libiberty #####
+
+get_gdb_libiberty () {
+	mkdir -p $_TOP/gnu/usr.bin/gdb6/libiberty/arch/$MACHINE_ARCH
+
+	getvars libiberty/Makefile \
+		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
+		| write_mk gnu/usr.bin/gdb6/libiberty/arch/$MACHINE_ARCH/defs.mk
+
+	write_c gnu/usr.bin/gdb6/libiberty/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/libiberty/config.h
+}
+
+##### gnu/usr.bin/gdb6/readline #####
+
+get_gdb_libreadline () {
+	mkdir -p $_TOP/gnu/usr.bin/gdb6/readline/arch/$MACHINE_ARCH
+
+	{
+		getvars readline/Makefile \
+			CCFLAGS OBJECTS
+	} | write_mk gnu/usr.bin/gdb6/readline/arch/$MACHINE_ARCH/defs.mk
+
+	write_c gnu/usr.bin/gdb6/readline/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/readline/config.h
+}
+
+##### gnu/usr.bin/gdb6 #####
+
+get_gdb () {
+	mkdir -p $_TOP/gnu/usr.bin/gdb6/arch/$MACHINE_ARCH
+
+	{
+		getvars gdb/Makefile \
+			INTERNAL_CFLAGS LIBGDB_OBS SIM_OBS
+	} | write_mk gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/defs.mk
+
+#	getvars gdb/gdbserver/Makefile \
+#		INTERNAL_CFLAGS OBS \
+#		| write_mk gnu/usr.bin/gdb/arch/$MACHINE_ARCH/gdbserver.mk
+
+	write_c gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/config.h \
+		< $_TMPDIR/gdb/config.h
+
+	for f in init version; do
+		write_c gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/$f.c <$_TMPDIR/gdb/$f.c
+	done
+
+	for f in nm tm xm; do
+		if [ -f $_TMPDIR/gdb/$f.h ]; then 
+			ls -l $_TMPDIR/gdb/$f.h | sed 's,^.*->.*/gdb/,,;s,^,#include <,;s,$,>,' \
+				| write_c gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/$f.h
+		fi
+	done
+
+	case $MACHINE_ARCH in
+	powerpc*)
+		mkdir -p $_TOP/gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH
+		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/config.h \
+			<$_TMPDIR/sim/ppc/config.h
+		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/cconfig.h \
+			<$_TMPDIR/sim/common/cconfig.h
+		;;
+	mips*)
+		mkdir -p $_TOP/gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH
+		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/config.h \
+			<$_TMPDIR/sim/mips/config.h
+		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/cconfig.h \
+			<$_TMPDIR/sim/common/cconfig.h
+		{
+			getvars sim/mips/Makefile \
+				LIB_OBJS CONFIG_CFLAGS \
+			    	BUILT_SRC_FROM_IGEN IGEN_OBJS
+		} | write_mk gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/defs.mk
+		;;
+	*)
+		;;
+	esac
+}
+
+##### main #####
+
+case $1 in
+all|gdb)	# everything (uses "canadian cross" temp environment)
+	get_gdb
+	get_gdb_libbfd
+	get_gdb_libopcodes
+	get_gdb_libiberty
+	get_gdb_libreadline
+	exit 0
+	;;
+
+*)	echo invalid arguments; exit 1;;
+esac
