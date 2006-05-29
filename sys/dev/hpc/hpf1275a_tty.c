@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.12 2006/05/29 22:17:26 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.13 2006/05/29 23:01:08 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.12 2006/05/29 22:17:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.13 2006/05/29 23:01:08 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -38,23 +38,22 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.12 2006/05/29 22:17:26 uwe Exp $"
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/fcntl.h>
-#include <sys/proc.h>		/* XXX: for curproc */
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
 
-#include <dev/wscons/wsksymvar.h>
-#include <dev/pckbport/wskbdmap_mfii.h>
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-#include <dev/hpc/pckbd_encode.h>
-#endif
-
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#include <dev/pckbport/wskbdmap_mfii.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <dev/hpc/pckbd_encode.h>
+#endif
 
 
 extern struct cfdriver hpf1275a_cd;
@@ -91,6 +90,10 @@ static int	hpf1275a_wskbd_ioctl(void *, u_long, caddr_t, int,
 				     struct lwp *);
 
 
+/* 
+ * It doesn't need to be exported, as only hpf1275aattach() uses it,
+ * but there's no "official" way to make it static.
+ */
 CFATTACH_DECL(hpf1275a, sizeof(struct hpf1275a_softc),
     hpf1275a_match, hpf1275a_attach, hpf1275a_detach, NULL);
 
@@ -309,13 +312,14 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	struct hpf1275a_softc *sc;
 	int error, s;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)) != 0)
-		return (error);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					&p->p_acflag);
+	if (error != 0)
+	    return (error);
 
 	s = spltty();
 
-	sc = (struct hpf1275a_softc *) config_attach_pseudo(&hpf1275a_cfdata);
+	sc = (struct hpf1275a_softc *)config_attach_pseudo(&hpf1275a_cfdata);
 	if (sc == NULL) {
 		splx(s);
 		return (EIO);
@@ -335,7 +339,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 static int
 hpf1275a_close(struct tty *tp, int flag)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)tp->t_sc;
+	struct hpf1275a_softc *sc = tp->t_sc;
 	int s;
 
 	s = spltty();
@@ -358,7 +362,7 @@ hpf1275a_close(struct tty *tp, int flag)
 static int
 hpf1275a_input(int c, struct tty *tp)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)tp->t_sc;
+	struct hpf1275a_softc *sc = tp->t_sc;
 	int code;
 	u_int type;
 	int xtscan;
