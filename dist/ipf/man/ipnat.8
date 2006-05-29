@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.8,v 1.9 2006/04/04 16:17:18 martti Exp $
+.\"	$NetBSD: ipnat.8,v 1.10 2006/05/29 16:09:46 chap Exp $
 .\"
 .TH IPNAT 8
 .SH NAME
@@ -25,15 +25,19 @@ is added to the kernels internal lists if there are no parsing problems.
 Rules are added to the end of the internal lists, matching the order in
 which they appear when given to \fBipnat\fP.
 .PP
-Note that if
+Note that
 \fBipf(8)\fP
-is not enabled when NAT is configured, it will be enabled
-automatically, as the same kernel facilities are used for
+must be enabled (with \fBipf -E\fP) before NAT is configured,
+as the same kernel facilities are used for
 NAT functionality.  In addition, packet forwarding must be
-enabled.  See
-\fBoptions(4)\fP
+enabled.
+These details may be handled automatically when \fBipnat\fP is
+run by \fBrc\fP at normal system startup.
+See
+\fBoptions(4)\fP,
+\fBsysctl(8)\fP,
 and
-\fBsysctl(8)\fP
+\fBrc.conf(5)\fP
 for more information.
 .SH OPTIONS
 .TP
@@ -71,5 +75,8 @@ and active rules/table entries.
 /dev/ipnat
 .br
 /usr/share/examples/ipf  Directory with examples.
+.SH DIAGNOSTICS
+\fBioctl(SIOCGNATS): Input/output error\fP Ensure that the necessary kernel
+functionality is present and \fBipf\fP enabled with \fBipf -E\fP.
 .SH SEE ALSO
-ipnat(5), ipf(8), ipfstat(8)
+ipnat(5), rc.conf(5), ipf(8), ipfstat(8)
