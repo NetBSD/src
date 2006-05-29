@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.15 2006/05/29 16:54:05 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.16 2006/05/29 20:36:09 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.15 2006/05/29 16:54:05 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.16 2006/05/29 20:36:09 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -882,6 +882,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->binded = 0;
 		jack->arg = NULL;
 		jack->u.out.intr = NULL;
+		jack->midiman_ppkt = NULL;
 		if ( cnglobal )
 			jack->cable_number = i;
 		jack++;
@@ -1051,6 +1052,7 @@ open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 
 	jack->arg = arg;
 	jack->u.out.intr = intr;
+	jack->midiman_ppkt = NULL;
 	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
 	s = splusb();
 	jack->opened = 1;
@@ -1328,7 +1330,10 @@ start_input_transfer(struct umidi_endpoint *ep)
 static usbd_status
 start_output_transfer(struct umidi_endpoint *ep)
 {
+	usbd_status rv;
 	u_int32_t length;
+	int i;
+	
 	length = (ep->next_slot - ep->buffer) * sizeof *ep->buffer;
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
@@ -1336,7 +1341,19 @@ start_output_transfer(struct umidi_endpoint *ep)
 			(usbd_private_handle)ep,
 			ep->buffer, length,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
-	return usbd_transfer(ep->xfer);
+	rv = usbd_transfer(ep->xfer);
+	
+	/*
+	 * Once the transfer is scheduled, no more adding to partial
+	 * packets within it.
+	 */
+	if (UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
+		for (i=0; i<UMIDI_MAX_EPJACKS; ++i)
+			if (NULL != ep->jacks[i])
+				ep->jacks[i]->midiman_ppkt = NULL;
+	}
+	
+	return rv;
 }
 
 #ifdef UMIDI_DEBUG
@@ -1365,9 +1382,10 @@ if ((unsigned char)(p)[1]!=0xFE)				\
  * three-byte MIDI message may arrive in three packets of data length 1, and
  * running status may be used. Happily, the midi(4) driver above us will put
  * it all back together, so the only cost is in USB bandwidth. The device
- * has an easier time with what it receives from us, as we'll just take
- * already formed, semantically reasonable USB MIDI packets and munge them
- * into Midiman form.
+ * has an easier time with what it receives from us: we'll pack messages in
+ * and across packets, but filling the packets whenever possible and,
+ * as midi(4) hands us a complete message at a time, we'll never send one
+ * in a dribble of short packets.
  */
 
 static int
@@ -1377,6 +1395,8 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	struct umidi_softc *sc = ep->sc;
 	unsigned char *packet;
 	int s;
+	int plen;
+	int poff;
 
 	if (sc->sc_dying)
 		return EIO;
@@ -1398,13 +1418,35 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	    (ep->next_slot - ep->buffer) * sizeof *ep->buffer);
 	memset(packet, 0, UMIDI_PACKET_SIZE);
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
-		memcpy(packet, src, len);
-		packet[3] = MIX_CN_CIN(out_jack->cable_number, len);
-	} else {
+		if (NULL != out_jack->midiman_ppkt) { /* fill out a prev pkt */
+			poff = 0x0f & (out_jack->midiman_ppkt[3]);
+			plen = 3 - poff;
+			if (plen > len)
+				plen = len;
+			memcpy(out_jack->midiman_ppkt+poff, src, plen);
+			src += plen;
+			len -= plen;
+			plen += poff;
+			out_jack->midiman_ppkt[3] =
+			    MIX_CN_CIN(out_jack->cable_number, plen);
+			DPR_PACKET(out+, sc, out_jack->midiman_ppkt);
+			if (3 == plen)
+				out_jack->midiman_ppkt = NULL; /* no more */
+		}
+		if (0 == len)
+			ep->next_slot--; /* won't be needed, nevermind */
+		else {
+			memcpy(packet, src, len);
+			packet[3] = MIX_CN_CIN(out_jack->cable_number, len);
+			DPR_PACKET(out, sc, packet);
+			if (len < 3)
+				out_jack->midiman_ppkt = packet;
+		}
+	} else { /* the nice simple USB class-compliant case */
 		packet[0] = MIX_CN_CIN(out_jack->cable_number, cin);
 		memcpy(packet+1, src, len);
+		DPR_PACKET(out, sc, packet);
 	}
-	DPR_PACKET(out, sc, packet);
 	ep->next_schedule |= 1<<(out_jack->cable_number);
 	++ ep->num_scheduled;
 	if ( !ep->armed  &&  !ep->soliciting ) {

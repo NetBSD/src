@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8.14.10 2006/05/20 03:43:59 chap Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.14.11 2006/05/29 20:36:09 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,6 +67,7 @@ struct umidi_jack {
 	void			*arg;
 	int			binded;
 	int			opened;
+	unsigned char		*midiman_ppkt;
 	union {
 		struct {
 			void			(*intr)(void *);
