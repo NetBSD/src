@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.31 2006/05/29 09:57:54 drochner Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.32 2006/05/29 16:43:05 drochner Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.31 2006/05/29 09:57:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.32 2006/05/29 16:43:05 drochner Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -105,14 +105,11 @@ extern long pps_errcnt;		/* calibration errors */
 extern long pps_stbcnt;		/* stability limit exceeded */
 #endif /* PPS_SYNC */
 
-static void ntp_gettime(struct ntptimeval *);
-static int ntp_timestatus(void);
-
 /*ARGSUSED*/
 /*
  * ntp_gettime() - NTP user application interface
  */
-static void
+void
 ntp_gettime(ntvp)
 	struct ntptimeval *ntvp;
 {
@@ -145,7 +142,7 @@ ntp_gettime(ntvp)
 	TIMEVAL_TO_TIMESPEC(&atv, &ntvp->time);
 }
 
-static int
+int
 ntp_timestatus()
 {
 	/*
