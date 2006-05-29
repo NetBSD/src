@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.9 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: timex.h,v 1.10 2006/05/29 09:57:55 drochner Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -250,9 +250,13 @@
  * estimated error = NTP dispersion.
  */
 struct ntptimeval {
-	struct timeval time;	/* current time (ro) */
+	struct timespec time;	/* current time (ro) */
 	long maxerror;		/* maximum error (us) (ro) */
 	long esterror;		/* estimated error (us) (ro) */
+
+	/* the following are placeholders for now */
+	long tai;		/* TAI offset */
+	int time_state;		/* time status */
 };
 
 /*
@@ -292,8 +296,14 @@ struct timex {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int ntp_gettime       (struct ntptimeval *);
-int ntp_adjtime       (struct timex *);
+#ifdef __NetBSD__
+#ifndef __LIBC12_SOURCE__
+int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime30);
+#endif
+#else
+int ntp_gettime(struct ntptimeval *);
+#endif
+int ntp_adjtime(struct timex *);
 __END_DECLS
 
 #endif /* not _KERNEL */
