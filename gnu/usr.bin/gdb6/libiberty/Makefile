@@ -1,24 +1,21 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/15 19:12:07 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2006/05/29 19:18:56 nathanw Exp $
 
 .include <bsd.own.mk>
 
 MKPRIVATELIB=	yes
 
-TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/gdb6
+LIB=		iberty
 
-LIB=iberty
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-CPPFLAGS+=-I${.CURDIR} -I${DIST}/include -DHAVE_CONFIG_H
+DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
 
-SRCS=argv.c concat.c cp-demangle.c cp-demint.c cplus-dem.c		\
-dyn-string.c floatformat.c getopt.c getopt1.c getruntime.c hashtab.c	\
-hex.c lbasename.c objalloc.c obstack.c regex.c safe-ctype.c		\
-splay-tree.c unlink-if-ordinary.c xexit.c xmalloc.c xstrdup.c		\
-xstrerror.c
+SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
+		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
-.include "../../Makefile.inc"
-.include <bsd.lib.mk>
-
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+		-I${DIST}/include
 
 .PATH: ${DIST}/libiberty
+
+.include <bsd.lib.mk>
