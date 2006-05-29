@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.152 2006/05/04 17:48:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.153 2006/05/29 09:57:55 drochner Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -360,7 +360,7 @@
 174	STD		{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	STD		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+175	COMPAT_30	{ int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL)
 176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
@@ -786,3 +786,4 @@
 			    off_t len, int advice); }
 392	STD		{ int sys___fhstat30(const fhandle_t *fhp, \
 			    struct stat *sb); }
+393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
