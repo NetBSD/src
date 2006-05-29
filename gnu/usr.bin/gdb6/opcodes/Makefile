@@ -1,24 +1,25 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/15 16:31:37 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/29 19:18:56 nathanw Exp $
 
 .include <bsd.own.mk>
 
-.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk)
 MKPRIVATELIB=	yes
 
-TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/gdb6
-
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
-
 LIB=		opcodes
-SRCS=		${G_OPCODES_OBJS:.o=.c}
-CPPFLAGS=	-I${.CURDIR}  -I${.CURDIR}/../arch/${MACHINE_ARCH} \
-		-I${DIST}/include -I${DIST}/bfd -I${.CURDIR}/../bfd \
-		-DHAVE_CONFIG_H
 
-.endif
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-.include "../../Makefile.inc"
-.include <bsd.lib.mk>
+DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
+
+GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
+CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../bfd/arch/${MACHINE_ARCH} \
+		-I${DIST}/include -I. \
+		-I${DIST}/bfd ${GCPPFLAGS:M-D*} \
+		${GCPPFLAGS:M-I*:N-I.*}
+
+GSRCS=		${G_BFD_MACHINES}
+SRCS=		${GSRCS:.lo=.c} ${G_libopcodes_la_SOURCES}
 
 .PATH: ${DIST}/opcodes
+
+.include <bsd.lib.mk>
