@@ -1,50 +1,35 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/15 16:31:37 nathanw Exp $
-
-MKPRIVATELIB=yes
+#	$NetBSD: Makefile,v 1.2 2006/05/29 19:20:05 nathanw Exp $
 
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
 
-.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk)
-MKPIC=no
-MKPROFILE=no  
+MKPRIVATELIB=	yes
 LIB=		gdb
-
-TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/gdb6
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
 
+DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
 
-
-SRCS=		${G_GDB_OBJS:.o=.c}
+SRCS=		${G_LIBGDB_OBS:.o=.c}
+GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS=	-I${.CURDIR} \
 		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
-		-I${DIST}/include \
 		-I${DIST}/include/opcode \
-		-I${DIST}/bfd \
-		-I${.CURDIR}/../bfd \
-		-I${DIST}/gdb/tui \
 		-I${DIST} \
-		-DHAVE_CONFIG_H \
-		-DLOCALEDIR='"/usr/share/locale"' \
-		-DUSE_INCLUDED_REGEX \
-		-DNETBSD_CORE
+		-I${.CURDIR}/../bfd/arch/${MACHINE_ARCH} \
+		-I${DIST}/bfd \
+		-I${DIST}/include \
+		${GCPPFLAGS:M-D*}
 
-.if ${USE_TUI} == "yes"
-SRCS+=		${G_TUI_OBJS:.o=.c}
-CPPFLAGS+=	-DUSE_TUI
-.endif
-
-.endif
+# XXX inf-ptrace.c has some bogus (PTRACE_TYPE_ARG3) casts, but in 
+# code that's never exercised on NetBSD.
+CPPFLAGS.inf-ptrace.c=	-Wno-error
 
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
-.include <bsd.info.mk>
-
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
