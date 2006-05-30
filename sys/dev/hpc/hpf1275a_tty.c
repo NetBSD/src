@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.13 2006/05/29 23:01:08 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.14 2006/05/30 01:14:38 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.13 2006/05/29 23:01:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.14 2006/05/30 01:14:38 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -318,6 +318,11 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	    return (error);
 
 	s = spltty();
+
+	if (tp->t_linesw == &hpf1275a_disc) {
+		splx(s);
+		return 0;
+	}
 
 	sc = (struct hpf1275a_softc *)config_attach_pseudo(&hpf1275a_cfdata);
 	if (sc == NULL) {
