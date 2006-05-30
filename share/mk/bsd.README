@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.178 2006/05/12 04:29:08 lukem Exp $
+#	$NetBSD: bsd.README,v 1.179 2006/05/30 00:52:11 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -234,9 +234,6 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 		Default: yes
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
-		Default: yes
-
-MKSENDMAIL	If "no", don't build or install sendmail(8).
 		Default: yes
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
