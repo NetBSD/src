@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/29 19:11:57 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2006/05/30 04:22:40 nathanw Exp $
 
 .include <bsd.own.mk>
 
@@ -27,9 +27,9 @@ native-gdb: .native/.configure_done
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
-	mkdir .native 2>/dev/null || true
+	mkdir ${.OBJDIR}/.native 2>/dev/null || true
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native && ${CONFIGURE_ENV:NC*:NLD*} \
+		(cd ${.OBJDIR}/.native && ${CONFIGURE_ENV:NC*:NLD*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
@@ -44,9 +44,9 @@ native-gdb: .native/.configure_done
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
-		(cd .native && ${MAKE} configure-host) && \
-		(cd .native/bfd && ${MAKE} bfd.h bfdver.h) && \
-		(cd .native/gdb && ${MAKE} init.c version.c)
+		(cd ${.OBJDIR}/.native && ${MAKE} configure-host) && \
+		(cd ${.OBJDIR}/.native/bfd && ${MAKE} bfd.h bfdver.h) && \
+		(cd ${.OBJDIR}/.native/gdb && ${MAKE} init.c version.c)
 	@touch $@
 
 clean: clean.native
