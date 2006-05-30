@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.93 2006/03/27 10:07:07 ghen Exp $
+#	$NetBSD: special,v 1.94 2006/05/30 00:40:22 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -87,7 +87,6 @@
 ./etc/mail/aliases.db		type=file mode=0644 optional tags=exclude
 ./etc/mail/helpfile		type=file mode=0444
 ./etc/mail/local-host-names	type=file mode=0644 optional
-./etc/mail/sendmail.cf		type=file mode=0644
 ./etc/mail.rc			type=file mode=0644
 ./etc/mailer.conf		type=file mode=0644
 ./etc/man.conf			type=file mode=0644
@@ -229,7 +228,6 @@
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
-./etc/rc.d/sendmail		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
 ./etc/rc.d/swap1		type=file mode=0555
 ./etc/rc.d/swap2		type=file mode=0555
@@ -362,7 +360,6 @@
 ./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
 ./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755
-./var/spool/clientmqueue	type=dir  mode=0770 uname=smmsp gname=smmsp
 ./var/spool/ftp			type=dir  mode=0755 optional
 ./var/spool/ftp/bin		type=dir  mode=0755 optional
 ./var/spool/ftp/bin/ls		type=file mode=0555 optional
