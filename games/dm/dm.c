@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.21 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: dm.c,v 1.21.2.1 2006/05/30 19:45:42 ghen Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.21 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: dm.c,v 1.21.2.1 2006/05/30 19:45:42 ghen Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,19 +134,19 @@ read_config()
 	while (fgets(lbuf, sizeof(lbuf), cfp))
 		switch (*lbuf) {
 		case 'b':		/* badtty */
-			if (sscanf(lbuf, "%s%s", f1, f2) != 2 ||
+			if (sscanf(lbuf, "%39s%39s", f1, f2) != 2 ||
 			    strcasecmp(f1, "badtty"))
 				break;
 			c_tty(f2);
 			break;
 		case 'g':		/* game */
-			if (sscanf(lbuf, "%s%s%s%s%s",
+			if (sscanf(lbuf, "%39s%39s%39s%39s%39s",
 			    f1, f2, f3, f4, f5) != 5 || strcasecmp(f1, "game"))
 				break;
 			c_game(f2, f3, f4, f5);
 			break;
 		case 't':		/* time */
-			if (sscanf(lbuf, "%s%s%s%s", f1, f2, f3, f4) != 4 ||
+			if (sscanf(lbuf, "%39s%39s%39s%39s", f1, f2, f3, f4) != 4 ||
 			    strcasecmp(f1, "time"))
 				break;
 			c_day(f2, f3, f4);
