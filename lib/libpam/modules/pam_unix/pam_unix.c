@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.10 2006/03/18 10:06:16 jnemeth Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.11 2006/05/30 19:48:07 jnemeth Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.10 2006/03/18 10:06:16 jnemeth Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.11 2006/05/30 19:48:07 jnemeth Exp $");
 #endif
 
 
@@ -404,7 +404,7 @@ PAM_EXTERN int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd, old_pwd;
+	struct passwd *pwd, new_pwd, old_pwd;
 	login_cap_t *lc;
 	const char *user, *passwd_db, *new_pass, *old_pass, *p;
 	int retval, tries, min_pw_len = 0, pw_expiry = 0;
@@ -600,6 +600,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			return (PAM_SERVICE_ERR);
 		}
 
+		new_pwd = old_pwd;
+		pwd = &new_pwd;
 		pwd->pw_passwd = crypt(new_pass, salt);
 		pwd->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
 
