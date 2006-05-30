@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.96.6.1 2006/05/27 22:49:52 kardel Exp $ */
+/*	$NetBSD: clock.c,v 1.96.6.2 2006/05/30 21:16:33 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96.6.1 2006/05/27 22:49:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96.6.2 2006/05/30 21:16:33 kardel Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -261,8 +261,8 @@ inittodr(time_t base)
 
 		sparc_clock_time_is_ok = 1;
 
-		ts.tv_sec = base;
-		ts.tv_nsec = 0;
+		ts.tv_sec = time.tv_sec;
+		ts.tv_nsec = time.tv_usec * 1000;
 		tc_setclock(&ts);
 
 		if (deltat < 0)
