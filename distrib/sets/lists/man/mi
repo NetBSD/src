@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.894 2006/05/22 12:32:20 dan Exp $
+# $NetBSD: mi,v 1.895 2006/05/30 00:42:28 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1478,7 +1478,7 @@
 ./usr/share/man/cat5/a.out.0			man-sys-catman		.cat
 ./usr/share/man/cat5/access.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/acct.0			man-sys-catman		.cat
-./usr/share/man/cat5/aliases.0			man-sendmail-catman	sendmail,.cat
+./usr/share/man/cat5/aliases.0			man-obsolete		obsolete
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
@@ -1791,7 +1791,7 @@
 ./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dumpfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dumplfs.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/editmap.0			man-sendmail-catman	sendmail,.cat
+./usr/share/man/cat8/editmap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/edquota.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/envstat.0			man-sysutil-catman	.cat
@@ -1951,14 +1951,14 @@
 ./usr/share/man/cat8/macppc/ofwboot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/macppc/ofwboot.elf.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/macppc/ofwboot.xcf.0	man-sysutil-catman	.cat
-./usr/share/man/cat8/mail.local.0		man-sendmail-catman	.cat
-./usr/share/man/cat8/mailstats.0		man-sendmail-catman	sendmail,.cat
+./usr/share/man/cat8/mail.local.0		man-obsolete		obsolete
+./usr/share/man/cat8/mailstats.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman	.cat
 ./usr/share/man/cat8/makedbm.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat8/makedev.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/makefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/makekey.0			man-crypto-catman	.cat
-./usr/share/man/cat8/makemap.0			man-sendmail-catman	sendmail,.cat
+./usr/share/man/cat8/makemap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/makewhatis.0		man-man-catman		.cat
 ./usr/share/man/cat8/map-mbone.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/master.0			man-postfix-catman	postfix,.cat
@@ -2209,7 +2209,7 @@
 ./usr/share/man/cat8/scan_ffs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scan_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/sendmail.0			man-sendmail-catman	sendmail,.cat
+./usr/share/man/cat8/sendmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/setkey.0			man-netutil-catman	.cat
@@ -2226,7 +2226,7 @@
 ./usr/share/man/cat8/slip.0			man-slip-catman		.cat
 ./usr/share/man/cat8/sliplogin.0		man-slip-catman		.cat
 ./usr/share/man/cat8/slstats.0			man-slip-catman		.cat
-./usr/share/man/cat8/smrsh.0			man-sendmail-catman	sendmail,.cat
+./usr/share/man/cat8/smrsh.0			man-obsolete		obsolete
 ./usr/share/man/cat8/smtp.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/smtpd.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/spamd-setup.0		man-obsolete		obsolete
@@ -3812,7 +3812,7 @@
 ./usr/share/man/man5/a.out.5			man-sys-man		.man
 ./usr/share/man/man5/access.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/acct.5			man-sys-man		.man
-./usr/share/man/man5/aliases.5			man-sendmail-man	sendmail,.man
+./usr/share/man/man5/aliases.5			man-obsolete		obsolete
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
@@ -4124,7 +4124,7 @@
 ./usr/share/man/man8/dump_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/dumpfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/dumplfs.8			man-sysutil-man		.man
-./usr/share/man/man8/editmap.8			man-sendmail-man	sendmail,.man
+./usr/share/man/man8/editmap.8			man-obsolete		obsolete
 ./usr/share/man/man8/edquota.8			man-sysutil-man		.man
 ./usr/share/man/man8/eeprom.8			man-sysutil-man		.man
 ./usr/share/man/man8/envstat.8			man-sysutil-man		.man
@@ -4285,14 +4285,14 @@
 ./usr/share/man/man8/macppc/ofwboot.8		man-sysutil-man		.man
 ./usr/share/man/man8/macppc/ofwboot.elf.8	man-sysutil-man		.man
 ./usr/share/man/man8/macppc/ofwboot.xcf.8	man-sysutil-man		.man
-./usr/share/man/man8/mail.local.8		man-sendmail-man	.man
-./usr/share/man/man8/mailstats.8		man-sendmail-man	sendmail,.man
+./usr/share/man/man8/mail.local.8		man-obsolete		obsolete
+./usr/share/man/man8/mailstats.8		man-obsolete		obsolete
 ./usr/share/man/man8/mailwrapper.8		man-mailwrapper-man	.man
 ./usr/share/man/man8/makedbm.8			man-nis-man		yp,.man
 ./usr/share/man/man8/makedev.8			man-sysutil-man		.man
 ./usr/share/man/man8/makefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/makekey.8			man-crypto-man		.man
-./usr/share/man/man8/makemap.8			man-sendmail-man	sendmail,.man
+./usr/share/man/man8/makemap.8			man-obsolete		obsolete
 ./usr/share/man/man8/makewhatis.8		man-man-man		.man
 ./usr/share/man/man8/map-mbone.8		man-netutil-man		.man
 ./usr/share/man/man8/master.8			man-postfix-man		postfix,.man
@@ -4462,7 +4462,7 @@
 ./usr/share/man/man8/pppdump.8			man-ppp-man		.man
 ./usr/share/man/man8/pppoectl.8			man-isdn-man		.man
 ./usr/share/man/man8/pppstats.8			man-ppp-man		.man
-./usr/share/man/man8/praliases.8		man-sendmail-man	sendmail,.man
+./usr/share/man/man8/praliases.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/mkbootimage.8	man-sys-man		.man
@@ -4543,7 +4543,7 @@
 ./usr/share/man/man8/scan_ffs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scan_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
-./usr/share/man/man8/sendmail.8			man-sendmail-man	sendmail,.man
+./usr/share/man/man8/sendmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man
 ./usr/share/man/man8/setencstat.8		man-sysutil-man		.man
 ./usr/share/man/man8/setkey.8			man-netutil-man		.man
@@ -4560,7 +4560,7 @@
 ./usr/share/man/man8/slip.8			man-slip-man		.man
 ./usr/share/man/man8/sliplogin.8		man-slip-man		.man
 ./usr/share/man/man8/slstats.8			man-slip-man		.man
-./usr/share/man/man8/smrsh.8			man-sendmail-man	sendmail,.man
+./usr/share/man/man8/smrsh.8			man-obsolete		obsolete
 ./usr/share/man/man8/smtp.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/smtpd.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/spamd-setup.8		man-obsolete		obsolete

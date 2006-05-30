@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.623 2006/05/22 12:32:20 dan Exp $
+# $NetBSD: mi,v 1.624 2006/05/30 00:42:28 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -73,7 +73,7 @@
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
-./etc/mail					base-sendmail-root
+./etc/mail					base-obsolete		obsolete
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
@@ -761,7 +761,7 @@
 ./usr/include/kadm5				base-c-usr
 ./usr/include/kerberosIV			base-obsolete		obsolete
 ./usr/include/krb5				base-c-usr
-./usr/include/libmilter				base-sendmail-usr
+./usr/include/libmilter				base-obsolete		obsolete
 ./usr/include/machine				base-c-usr
 ./usr/include/milter				base-obsolete		obsolete
 ./usr/include/miscfs				base-c-usr
@@ -920,11 +920,11 @@
 ./usr/libexec/rpc.rwalld			base-rpcserver-bin
 ./usr/libexec/rpc.sprayd			base-rpcserver-bin
 ./usr/libexec/rshd				base-netutil-bin
-./usr/libexec/sendmail				base-sendmail-bin
-./usr/libexec/sendmail/sendmail			base-sendmail-bin	sendmail
+./usr/libexec/sendmail				base-obsolete		obsolete
+./usr/libexec/sendmail/sendmail			base-obsolete		obsolete
 ./usr/libexec/sftp-server			base-secsh-bin		crypto
-./usr/libexec/sm.bin				base-sendmail-usr
-./usr/libexec/smrsh				base-sendmail-bin	sendmail
+./usr/libexec/sm.bin				base-obsolete		obsolete
+./usr/libexec/smrsh				base-obsolete		obsolete
 ./usr/libexec/pfspamd				base-obsolete		obsolete
 ./usr/libexec/spamd				base-obsolete		obsolete
 ./usr/libexec/pfspamd-setup			base-obsolete		obsolete
@@ -1054,7 +1054,7 @@
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
 ./usr/sbin/makefs				base-sysutil-bin
-./usr/sbin/makemap				base-sendmail-bin	sendmail
+./usr/sbin/makemap				base-obsolete		obsolete
 ./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
 ./usr/sbin/mdconfig				base-sysutil-bin
@@ -1132,7 +1132,7 @@
 ./usr/sbin/pppdump				base-ppp-bin
 ./usr/sbin/pppoectl				base-obsolete		obsolete
 ./usr/sbin/pppstats				base-ppp-bin
-./usr/sbin/praliases				base-sendmail-bin	sendmail
+./usr/sbin/praliases				base-obsolete		obsolete
 ./usr/sbin/pstat				base-sysutil-bin
 ./usr/sbin/pvcsif				base-netutil-bin
 ./usr/sbin/pvctxctl				base-netutil-bin
@@ -1293,8 +1293,8 @@
 ./usr/share/doc/smm/05.fastfs			base-smm-share
 ./usr/share/doc/smm/06.nfs			base-smm-share
 ./usr/share/doc/smm/07.lpd			base-smm-share
-./usr/share/doc/smm/08.sendmailop		base-smm-share
-./usr/share/doc/smm/09.sendmail			base-smm-share
+./usr/share/doc/smm/08.sendmailop		base-obsolete		obsolete
+./usr/share/doc/smm/09.sendmail			base-obsolete		obsolete
 ./usr/share/doc/smm/10.named			base-obsolete		obsolete
 ./usr/share/doc/smm/11.timedop			base-smm-share
 ./usr/share/doc/smm/12.timed			base-smm-share
@@ -2685,16 +2685,16 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
-./usr/share/sendmail				base-sendmail-share
-./usr/share/sendmail/cf				base-sendmail-share
-./usr/share/sendmail/domain			base-sendmail-share
-./usr/share/sendmail/feature			base-sendmail-share
-./usr/share/sendmail/hack			base-sendmail-share
-./usr/share/sendmail/m4				base-sendmail-share
-./usr/share/sendmail/mailer			base-sendmail-share
-./usr/share/sendmail/ostype			base-sendmail-share
-./usr/share/sendmail/sh				base-sendmail-share
-./usr/share/sendmail/siteconfig			base-sendmail-share
+./usr/share/sendmail				base-obsolete		obsolete
+./usr/share/sendmail/cf				base-obsolete		obsolete
+./usr/share/sendmail/domain			base-obsolete		obsolete
+./usr/share/sendmail/feature			base-obsolete		obsolete
+./usr/share/sendmail/hack			base-obsolete		obsolete
+./usr/share/sendmail/m4				base-obsolete		obsolete
+./usr/share/sendmail/mailer			base-obsolete		obsolete
+./usr/share/sendmail/ostype			base-obsolete		obsolete
+./usr/share/sendmail/sh				base-obsolete		obsolete
+./usr/share/sendmail/siteconfig			base-obsolete		obsolete
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
@@ -3762,13 +3762,13 @@
 ./var/run					base-sys-root
 ./var/rwho					base-netutil-root
 ./var/spool					base-sys-root
-./var/spool/clientmqueue			base-sendmail-root
+./var/spool/clientmqueue			base-obsolete		obsolete
 ./var/spool/ftp					base-netutil-root
 ./var/spool/ftp/bin				base-netutil-root
 ./var/spool/ftp/etc				base-netutil-root
 ./var/spool/ftp/hidden				base-netutil-root
 ./var/spool/lock				base-sys-root
-./var/spool/mqueue				base-sendmail-root
+./var/spool/mqueue				base-obsolete		obsolete
 ./var/spool/output				base-lpr-root
 ./var/spool/output/lpd				base-lpr-root
 ./var/spool/postfix				base-postfix-root
