@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17.14.11 2006/05/26 20:28:27 chap Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.14.12 2006/05/30 23:15:05 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct midi_hw_if_ext {
 	int	(*channel)(void *, int, int, u_char *, int);
 	int	(*common)(void *, int, u_char *, int);
 	int	(*sysex)(void *, u_char *, int);
+	int	compress:1; /* if hw wants channel msgs in compressed form */
 };
 void midi_register_hw_if_ext(struct midi_hw_if_ext *);
 
