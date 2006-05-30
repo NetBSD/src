@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.624 2006/05/30 00:42:28 christos Exp $
+# $NetBSD: mi,v 1.625 2006/05/30 19:33:26 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -982,7 +982,7 @@
 ./usr/sbin/dumpfs				base-sysutil-bin
 ./usr/sbin/dumplfs				base-sysutil-bin
 ./usr/sbin/eaytest				base-obsolete		obsolete
-./usr/sbin/editmap				base-sendmail-bin	sendmail
+./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
 ./usr/sbin/envstat				base-sysutil-bin
 ./usr/sbin/eshconfig				base-sysutil-bin
@@ -1050,7 +1050,7 @@
 ./usr/sbin/lpd					base-lpr-bin
 ./usr/sbin/lptest				base-lpr-bin
 ./usr/sbin/lwresd				base-bind-bin
-./usr/sbin/mailstats				base-mailwrapper-bin	sendmail
+./usr/sbin/mailstats				base-obsolete		obsolete
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
 ./usr/sbin/makefs				base-sysutil-bin
