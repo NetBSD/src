@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.67 2006/03/30 17:38:01 rpaulo Exp $
+$NetBSD: acronyms.comp,v 1.68 2006/05/30 03:54:20 jnemeth Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -33,6 +33,7 @@ BIOS	basic input/output system
 BLOB	binary large object
 BPS	bits per second
 BSD	berkeley software distribution
+BQS	berkeley quality software
 CAD	computer-aided design
 CAV	constant angular velocity (as opposed to CLV)
 CCD	charge coupled device
