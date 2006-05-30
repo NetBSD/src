@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.17 2006/05/21 17:28:47 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.18 2006/05/30 23:15:05 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.17 2006/05/21 17:28:47 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.18 2006/05/30 23:15:05 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -257,8 +257,8 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 }
 
 void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw) {
-	if ( hwif_softc != NULL )
-		hwif_softc->hw_if_ext = exthw;
+	if ( hwif_softc != NULL ) /* ignore calls resulting from non-init */
+		hwif_softc->hw_if_ext = exthw; /* uses of getinfo */
 }
 
 int
@@ -327,14 +327,25 @@ static char const midi_cats[] = "\0\0\0\0\0\0\0\0\2\2\2\2\1\1\2\3";
 #define FST_RETURN(offp,endp,ret) \
 	return (s->pos=s->msg+(offp)), (s->end=s->msg+(endp)), (ret)
 
-enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH,
-               FST_SXP };
+enum fst_ret { FST_CHN, FST_CHV, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR,
+               FST_HUH, FST_SXP };
+enum fst_form { FST_CANON, FST_COMPR, FST_VCOMP };
+static struct {
+	int off;
+	enum fst_ret tag;
+} const midi_forms[] = {
+	[FST_CANON] = { .off=0, .tag=FST_CHN },
+	[FST_COMPR] = { .off=1, .tag=FST_CHN },
+	[FST_VCOMP] = { .off=0, .tag=FST_CHV }
+};
+#define FST_CRETURN(endp) \
+	FST_RETURN(midi_forms[form].off,endp,midi_forms[form].tag)
 
 /*
  * A MIDI finite state transducer suitable for receiving or transmitting. It
  * will accept correct MIDI input that uses, doesn't use, or sometimes uses the
  * 'running status' compression technique, and transduce it to fully expanded
- * (compress==0) or fully compressed (compress==1) form.
+ * (form=FST_CANON) or fully compressed (form=FST_COMPR or FST_VCOMP) form.
  *
  * Returns FST_MORE if a complete message has not been parsed yet (SysEx
  * messages are the exception), FST_ERR or FST_HUH if the input does not
@@ -361,11 +372,19 @@ enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH,
  * have been parsed.
  *
  * For FST_CHN messages, s->msg[0] always contains the status byte even if
- * compression was requested (pos then points to msg[1]). That way, the
+ * FST_COMPR form was requested (pos then points to msg[1]). That way, the
  * caller can always identify the exact message if there is a need to do so.
  * For all other message types except FST_SYX, the status byte is at *pos
  * (which may not necessarily be msg[0]!). There is only one SysEx status
  * byte, so the return value FST_SYX is sufficient to identify it.
+ *
+ * To simplify some use cases, compression can also be requested with
+ * form=FST_VCOMP. In this form a compressible channel message is indicated
+ * by returning a classification of FST_CHV instead of FST_CHN, and pos points
+ * to the status byte rather than being advanced past it. If the caller in this
+ * case saves the bytes from pos to end, it will have saved the entire message,
+ * and can act on the FST_CHV tag to drop the first byte later. In this form,
+ * unlike FST_CANON, hidden note-off (i.e. note-on with velocity 0) may occur.
  *
  * Two obscure points in the MIDI protocol complicate things further, both to
  * do with the EndSysEx code, 0xf7. First, this code is permitted (and
@@ -379,15 +398,14 @@ enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH,
  * status byte other than 0xf7 during a system exclusive message will cause an
  * FST_SXP (sysex plus) return; the bytes from pos to end are the end of the
  * system exclusive message, and after handling those the caller should call
-   midi_fst again with the same input byte.
+ * midi_fst again with the same input byte.
  *
  * midi(4) will never produce either such form of rubbish.
  */
 static enum fst_ret
-midi_fst(struct midi_state *s, u_char c, int compress)
+midi_fst(struct midi_state *s, u_char c, enum fst_form form)
 {
 	int syxpos = 0;
-	compress = compress ? 1 : 0;
 
 	if ( c >= 0xf8 ) { /* All realtime messages bypass state machine */
 	        if ( c == 0xf9  ||  c == 0xfd ) {
@@ -478,7 +496,7 @@ midi_fst(struct midi_state *s, u_char c, int compress)
         case MIDI_IN_RNX0_1 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_RUN1_1;
 	        s->msg[1] = c;
-		FST_RETURN(compress,2,FST_CHN);
+		FST_CRETURN(2);
 
         case MIDI_IN_RUN0_2 | MIDI_CAT_DATA:
 	        s->state = MIDI_IN_RUN1_2;
@@ -486,7 +504,7 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 		break;
 
         case MIDI_IN_RUN1_2 | MIDI_CAT_DATA:
-		if ( !compress && c == 0 && (s->msg[0] & 0xf0) == 0x90 ) {
+		if ( FST_CANON == form && 0 == c && (s->msg[0]&0xf0) == 0x90 ) {
 			s->state = MIDI_IN_RXX2_2;
 			s->msg[0] ^= 0x10;
 			s->msg[2] = 64;
@@ -519,7 +537,7 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 
         case MIDI_IN_RNX1_2 | MIDI_CAT_DATA:
         case MIDI_IN_RNY1_2 | MIDI_CAT_DATA:
-		if ( !compress && c == 0 && (s->msg[0]&0xf0) == 0x90 ) {
+		if ( FST_CANON == form && 0 == c && (s->msg[0]&0xf0) == 0x90 ) {
 			s->state = MIDI_IN_RXX2_2;
 			s->msg[0] ^= 0x10;
 			s->msg[2] = 64;
@@ -527,16 +545,17 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 		}
 		s->state = MIDI_IN_RUN2_2;
 	        s->msg[2] = c;
-		FST_RETURN(compress,3,FST_CHN);
+		FST_CRETURN(3);
 
         case MIDI_IN_RXX1_2 | MIDI_CAT_DATA:
         case MIDI_IN_RXY1_2 | MIDI_CAT_DATA:
-		if ( (c ==  0 && (s->msg[0]&0xf0) == 0x90)
-		  || (c == 64 && (s->msg[0]&0xf0) == 0x80 && compress) ) {
+		if ( ( 0 == c && (s->msg[0]&0xf0) == 0x90)
+		  || (64 == c && (s->msg[0]&0xf0) == 0x80
+		      && FST_CANON != form) ) {
 			s->state = MIDI_IN_RXX2_2;
 			s->msg[0] ^= 0x10;
 			s->msg[2] = 64 - c;
-			FST_RETURN(compress,3,FST_CHN);
+			FST_CRETURN(3);
 		}
 		s->state = MIDI_IN_RUN2_2;
 	        s->msg[2] = c;
@@ -641,7 +660,7 @@ midi_in(void *addr, int data)
 	
 sxp_again:
 	do
-		got = midi_fst(&sc->rcv, data, 0);
+		got = midi_fst(&sc->rcv, data, FST_CANON);
 	while ( got == FST_HUH );
 	
 	switch ( got ) {
@@ -1015,7 +1034,8 @@ int midi_msg_out(struct midi_softc *sc,
 	int length;
 	int error;
 	u_char contig[3];
-	u_char *cp = contig;
+	u_char *cp;
+	u_char *ep;
 	
 	idx_cur = *idx;
 	idx_lim = *idxl;
@@ -1024,30 +1044,35 @@ int midi_msg_out(struct midi_softc *sc,
 	
 	length = MB_IDX_LEN(*idx_cur);
 	
-	while ( length --> 0 ) {
+	for ( cp = contig, ep = cp + length; cp < ep; ) {
 		*cp++ = *buf_cur++;
 		MIDI_BUF_WRAP(buf);
 	}
-	
+	cp = contig;
+
 	switch ( MB_IDX_CAT(*idx_cur) ) {
+	case FST_CHV: /* chnmsg to be compressed (for device that wants it) */
+		++ cp;
+		-- length;
+		/* FALLTHROUGH */
 	case FST_CHN:
 		error = sc->hw_if_ext->channel(sc->hw_hdl,
 		                               MIDI_GET_STATUS(contig[0]),
 					       MIDI_GET_CHAN(contig[0]),
-					       contig, cp - contig);
+					       cp, length);
 		break;
 	case FST_COM:
 		error = sc->hw_if_ext->common(sc->hw_hdl,
 		                              MIDI_GET_STATUS(contig[0]),
-					      contig, cp - contig);
+					      cp, length);
 		break;
 	case FST_SYX:
 	case FST_SXP:
 		error = sc->hw_if_ext->sysex(sc->hw_hdl,
-					     contig, cp - contig);
+					     cp, length);
 		break;
 	case FST_RT:
-		error = sc->hw_if->output(sc->hw_hdl, **buf);
+		error = sc->hw_if->output(sc->hw_hdl, *cp);
 		break;
 	default:
 		error = EIO;
@@ -1257,8 +1282,23 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 	int count;
 	int s;
 	int got;
+	enum fst_form form;
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
+	
+	/*
+	 * If the hardware uses the extended hw_if, pass it canonicalized
+	 * messages (or compressed ones if it specifically requests, using
+	 * VCOMP form so the bottom half can still pass the op and chan along);
+	 * if it does not, send it compressed messages (using COMPR form as
+	 * there is no need to preserve the status for the bottom half).
+	 */
+	if ( NULL == sc->hw_if_ext )
+		form = FST_COMPR;
+	else if ( sc->hw_if_ext->compress )
+		form = FST_VCOMP;
+	else
+		form = FST_CANON;
 
 	MIDI_OUT_LOCK(sc,s);
 	MIDI_BUF_PRODUCER_INIT(mb,idx);
@@ -1270,11 +1310,7 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 	
 	while ( ibuf < iend ) {
 		do {
-			/*
-			 * If the hardware uses the extended hw_if, pass it
-			 * canonicalized messages, else pass it compressed ones.
-			 */
-			got = midi_fst(&sc->xmt, *ibuf, !sc->hw_if_ext);
+			got = midi_fst(&sc->xmt, *ibuf, form);
 		} while ( got == FST_HUH );
 		++ ibuf;
 		switch ( got ) {
@@ -1287,6 +1323,7 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 			return EIO;
 #endif
 		case FST_CHN:
+		case FST_CHV: /* only occurs in VCOMP form */
 		case FST_COM:
 		case FST_RT:
 		case FST_SYX:
