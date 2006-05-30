@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.13 2006/05/14 15:46:40 simonb Exp $
+# $NetBSD: postinstall,v 1.14 2006/05/30 05:53:24 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -569,7 +569,7 @@ do_gid()
 	[ -n "$1" ] || err 2 "USAGE: do_gid  fix|check"
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
-	    named ntpd sshd smmsp authpf _pflogd _rwhod
+	    named ntpd sshd authpf _pflogd _rwhod
 }
 
 #
@@ -741,7 +741,7 @@ do_rc()
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
 		route6d routed rtadvd rtclocaltime rtsold rwho \
-		savecore screenblank sendmail securelevel smmsp sshd \
+		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wscons wsmoused \
@@ -751,7 +751,7 @@ do_rc()
 
 		# check for obsolete rc.d files
 	for f in NETWORK fsck.sh kerberos nfsiod servers systemfs \
-	    daemon gated login portmap sunndd xntpd; do
+	    daemon gated login portmap sendmail smmsp sunndd xntpd; do
 		fd=/etc/rc.d/${f}
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths ${op}
@@ -770,183 +770,6 @@ do_rc()
 		fi
 		shift 2
 	done
-
-	return ${failed}
-}
-
-#
-#	sendmail
-#
-additem sendmail "sendmail configuration being up to date"
-do_sendmail()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_sendmail  fix|check"
-	_op=$1
-
-	#
-	# check owner and mode of sendmail (and "root" setting)
-	# check .cf file version
-	# check submit.cf existence (and version)
-	# uid and gid are checked elsewhere
-	# look at clientmqueue's owner, group, and mode
-	#
-	failed=0
-	_etcmail="${DEST_DIR}/etc/mail"
-	_sendmailcf="${_etcmail}/sendmail.cf"
-	_submitcf="${_etcmail}/submit.cf"
-	_sample_sendmailcf="${DEST_DIR}/usr/share/sendmail/cf/netbsd-proto.cf"
-	_sample_submitcf="${DEST_DIR}/usr/share/sendmail/cf/netbsd-msp.cf"
-	_sendmail=${DEST_DIR}/usr/libexec/sendmail/sendmail
-
-	#
-	# check for "root" setting first, so that checks can be
-	# adjusted accordingly
-	#
-	_notfixed=""
-	_root=$(rcconf_is_set ${_op} sendmail sendmail_suidroot 3>&1 1>&4) 4>&1
-	if [ $? != 0 ]; then
-		if [ "${_op}" = "fix" ]; then
-			_notfixed=${NOT_FIXED}
-		fi
-		msg "sendmail_suidroot variable not set (assuming \`\`no'')${_notfixed}"
-		_root=NO
-		failed=1
-	fi
-
-	# normalize the "root" setting
-	_root=$(. ${DEST_DIR}/etc/rc.subr
-		warn() {} # eliminate complaints
-		if checkyesno _root; then
-		    echo true
-		else
-		    echo false
-		fi)
-
-	if "${_root}"; then
-	    _smownerfmt="%p %Su"
-	    _smownermode="4555"
-	    _smownerreq="root"
-	else
-	    _smownerfmt="%p %Su:%Sg"
-	    _smownermode="2555"
-	    _smownerreq="root:smmsp"
-	fi
-
-	# check that owner and mode match what it required
-	_notfixed=""
-	if ! stat "${_op}" "${_smownerfmt}" "${_sendmail}" \
-	    "10${_smownermode} ${_smownerreq}"; then
-		if [ "${_op}" = "fix" ]; then
-			_notfixed=${NOT_FIXED}
-			if chown "${_smownerreq}" "${_sendmail}" 2>/dev/null &&
-			    chmod "${_smownermode}" "${_sendmail}" 2>/dev/null
-			then
-				_notfixed=" [ FIXED ]"
-			else
-				failed=1
-			fi
-		else
-			_notfixed=""
-			failed=1
-		fi
-		msg "${_sendmail} binary has wrong owner/mode${_notfixed}"
-	fi
-
-	_notfixed=""
-	if [ ! -f "${_sendmailcf}" ]; then
-		if [ "${_op}" = "fix" ]; then
-			_notfixed=${NOT_FIXED}
-			if cp "${_sample_sendmailcf}" \
-			    "${_sendmailcf}" 2>/dev/null; then
-				_notfixed=" [ FIXED ]"
-			else
-				failed=1
-			fi
-		fi
-		msg "${_sendmailcf} is missing${_notfixed}"
-	fi
-	if [ ! -f "${_sendmailcf}" ]; then
-		_cfversion="10"		# pretend it's okay
-	else
-		_cfversion=$(sed -n 's/^V *\([0-9]*\).*/\1/p' "${_sendmailcf}")
-	fi
-
-	_notfixed=""
-	if [ "${_cfversion}" -lt 10 ]; then
-#XXX: no fix here
-		if [ "${_op}" = "fix" ]; then
-			_notfixed=${NOT_FIXED}
-		fi
-		msg "Version of ${_sendmailcf} is ${_cfversion}," \
-		    "should be 10${_notfixed}"
-		failed=1
-	fi
-
-	_notfixed=""
-	if $_root; then
-		if [ -f "${_submitcf}" ]; then
-			if [ "${_op}" = "fix" ]; then
-				_notfixed=${NOT_FIXED}
-				if rm -f "${_submitcf}" 2>/dev/null; then
-					_notfixed=" [ FIXED ]"
-				else
-					failed=1
-				fi
-			else
-				_notfixed=""
-				failed=1
-			fi
-			msg "${_submitcf} exists${_notfixed}"
-	       fi
-	       _checkcq=false
-	else
-		if [ ! -f "${_submitcf}" ]; then
-			_notfixed=""
-			if [ "${_op}" = "fix" ]; then
-				_notfixed=${NOT_FIXED}
-				if cp "${_sample_submitcf}" \
-				    "${_submitcf}" 2>/dev/null; then
-					_notfixed=" [ FIXED ]"
-				else
-					failed=1
-				fi
-			fi
-			msg "${_submitcf} is missing${_notfixed}"
-		fi
-		_checkcq=true
-	fi
-
-	_cqueuemode="770"
-	_cqueueowner="smmsp:smmsp"
-	if "${_checkcq}"; then
-		if [ -f "${_submitcf}" ]; then
-			_cqueuepath=$(awk 'match($0,"^O *QueueDirectory=") {
-				print(substr($0, RSTART+RLENGTH))
-				}' "${_submitcf}")
-		else
-			_cqueuepath="/var/spool/clientmqueue"
-		fi
-		_cqueuefmt="%.1Sp %Lp %Su:%Sg"
-	else
-		_cqueuepath="/"
-		_cqueuefmt="d ${_cqueuemode} ${_cqueueowner}"
-	fi
-
-	_notfixed=""
-	if ! stat "${_op}" "${_cqueuefmt}" "${_cqueuepath}" \
-	    "d ${_cqueuemode} ${_cqueueowner}"; then
-		if [ "${_op}" = "fix" ]; then
-			_notfixed=${NOT_FIXED}
-			mkdir -p "${_cqueuepath}" &&
-			    chown "${_cqueueowner}" "${_cqueuepath}" &&
-			    chmod "${_cqueuemode}" "${_cqueuepath}" &&
-			    _notfixed=" [ FIXED ]" ||
-			    failed=1
-		else
-			failed=1
-		fi
-		msg "Client queue ${_cqueuepath} has wrong owner/mode${_notfixed}"
-	fi
 
 	return ${failed}
 }
@@ -1134,7 +957,7 @@ do_uid()
 	[ -n "$1" ] || err 2 "USAGE: do_uid  fix|check"
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd sshd smmsp _pflogd _rwhod
+	    named ntpd sshd _pflogd _rwhod
 }
 
 
