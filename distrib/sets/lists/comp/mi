@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.884 2006/05/18 09:05:49 liamjfoy Exp $
+#	$NetBSD: mi,v 1.885 2006/05/30 00:42:28 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -829,8 +829,8 @@
 ./usr/include/langinfo.h			comp-c-include
 ./usr/include/libgen.h				comp-c-include
 ./usr/include/libintl.h				comp-c-include
-./usr/include/libmilter/mfapi.h			comp-sendmail-include	sendmail
-./usr/include/libmilter/mfdef.h			comp-sendmail-include	sendmail
+./usr/include/libmilter/mfapi.h			comp-obsolete		obsolete
+./usr/include/libmilter/mfdef.h			comp-obsolete		obsolete
 ./usr/include/limits.h				comp-c-include
 ./usr/include/link.h				comp-c-include
 ./usr/include/link_aout.h			comp-c-include
@@ -1681,7 +1681,7 @@
 ./usr/lib/libmagic_p.a				comp-c-proflib		profile
 ./usr/lib/libmenu.a				comp-c-lib
 ./usr/lib/libmenu_p.a				comp-c-proflib		profile
-./usr/lib/libmilter.a				comp-sendmail-lib	sendmail
+./usr/lib/libmilter.a				comp-obsolete		obsolete
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
@@ -1769,7 +1769,7 @@
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lmilter.ln		comp-sendmail-lintlib	lint,sendmail
+./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
