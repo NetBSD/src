@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.16 2006/05/29 20:36:09 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.17 2006/05/30 23:15:05 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.16 2006/05/29 20:36:09 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.17 2006/05/30 23:15:05 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,6 +149,13 @@ struct midi_hw_if_ext umidi_hw_if_ext = {
 	.channel = umidi_channelmsg,
 	.common  = umidi_commonmsg,
 	.sysex   = umidi_sysex,
+};
+
+struct midi_hw_if_ext umidi_hw_if_mm = {
+	.channel = umidi_channelmsg,
+	.common  = umidi_commonmsg,
+	.sysex   = umidi_sysex,
+	.compress = 1,
 };
 
 USB_DECLARE_DRIVER(umidi);
@@ -407,13 +414,14 @@ void
 umidi_getinfo(void *addr, struct midi_info *mi)
 {
 	struct umidi_mididev *mididev = addr;
-/*	struct umidi_softc *sc = mididev->sc; */
+	struct umidi_softc *sc = mididev->sc;
+	int mm = UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE);
 
 	mi->name = "USB MIDI I/F"; /* XXX: model name */
 	mi->props = MIDI_PROP_OUT_INTR;
 	if (mididev->in_jack)
 		mi->props |= MIDI_PROP_CAN_INPUT;
-	midi_register_hw_if_ext(&umidi_hw_if_ext);
+	midi_register_hw_if_ext(mm? &umidi_hw_if_mm : &umidi_hw_if_ext);
 }
 
 
