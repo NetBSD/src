@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.624 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.625 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -285,3 +285,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		operation.  [lukem 20060525]
 	hostapd(8): Updated to version 0.4.9. [rpaulo 20060525]
 	wpa_supplicant(8): Updated to version 0.4.9. [rpaulo 20060525]
+	sendmail: Removed. This removal was planned for post 4.0, but
+		core@ and security-officer@ decided the sooner the
+		better [christos 20060529]
