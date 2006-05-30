@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.325 2006/03/20 04:03:21 christos Exp $
+#	$NetBSD: Makefile,v 1.326 2006/05/30 00:40:22 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -17,7 +17,6 @@
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
 #   MKCRYPTO; if not `no', install crypto-related configuration
 #   MKPOSTFIX; if not `no', install postfix configuration
-#   MKSENDMAIL; if not `no', install sendmail configuration
 #   MKUNPRIVED; if not `no', allow non-root installs.
 #   MKUPDATE; if not `no', don't do a 'make clean' before kernel compile
 #
@@ -170,7 +169,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKKERBEROS MKLINKLIB MKLINT \
 		MKMAN MKMANZ MKNLS MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
-		MKSENDMAIL MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
+		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
 		MKUNPRIVED MKUPDATE MKUUCP MKX11 MKYP \
 		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
@@ -285,7 +284,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 		${BINOWN} ${BINGRP}	600	/var/log/maillog \
 		${BINOWN} ${BINGRP}	644	/var/log/messages \
 		${BINOWN} ${BINGRP}	600	/var/log/secure \
-		${BINOWN} ${BINGRP}	644	/var/log/sendmail.st \
 		${BINOWN} ${UTMPGRP}	664	/var/log/wtmp \
 		${BINOWN} ${UTMPGRP}	664	/var/log/wtmpx \
 		${BINOWN} ${BINGRP}	600	/var/log/xferlog \
@@ -323,9 +321,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .endif
 .if (${MKPOSTFIX} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
-.endif
-.if (${MKSENDMAIL} != "no")
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf configinstall
 .endif
 
 

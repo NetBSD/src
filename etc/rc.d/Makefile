@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.55 2006/05/14 15:43:54 simonb Exp $
+# $NetBSD: Makefile,v 1.56 2006/05/30 00:40:22 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ CONFIGFILES=\
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
 		route6d routed rtadvd rtclocaltime rtsold rwho \
-		savecore screenblank sendmail securelevel smmsp sshd \
+		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wscons wsmoused \

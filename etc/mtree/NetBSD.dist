@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.311 2006/05/12 01:57:59 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.312 2006/05/30 00:40:22 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -312,7 +312,6 @@
 ./usr/libexec/ching
 ./usr/libexec/lpr
 ./usr/libexec/postfix
-./usr/libexec/sendmail
 ./usr/libexec/sm.bin
 ./usr/libexec/uucp
 ./usr/lkm
@@ -365,8 +364,6 @@
 ./usr/share/doc/smm/05.fastfs
 ./usr/share/doc/smm/06.nfs
 ./usr/share/doc/smm/07.lpd
-./usr/share/doc/smm/08.sendmailop
-./usr/share/doc/smm/09.sendmail
 ./usr/share/doc/smm/11.timedop
 ./usr/share/doc/smm/12.timed
 ./usr/share/doc/smm/13.amd
@@ -1004,16 +1001,6 @@
 ./usr/share/nls/pl
 ./usr/share/nls/sk
 ./usr/share/nls/sv
-./usr/share/sendmail
-./usr/share/sendmail/cf
-./usr/share/sendmail/domain
-./usr/share/sendmail/feature
-./usr/share/sendmail/hack
-./usr/share/sendmail/m4
-./usr/share/sendmail/mailer
-./usr/share/sendmail/ostype
-./usr/share/sendmail/sh
-./usr/share/sendmail/siteconfig
 ./usr/share/tabset
 ./usr/share/tmac
 ./usr/share/tmac/mdoc
