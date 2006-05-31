@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2006/05/31 13:14:13 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2006/05/31 13:20:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2006/05/31 13:14:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2006/05/31 13:20:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,37 +63,23 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2006/05/31 13:14:13 tsutsui Exp $")
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/device.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
-#include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/autoconf.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/intr.h>
-#include <mips/locore.h>
-
-#include <machine/nvram.h>
 #include <machine/leds.h>
+#include <machine/psl.h>
+
+#include <mips/locore.h>
 
 #include <dev/cons.h>
 
