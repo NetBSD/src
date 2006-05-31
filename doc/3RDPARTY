@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.436 2006/05/25 04:10:09 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.437 2006/05/31 03:30:26 simonb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -738,21 +738,6 @@ Mailing List:	bug-gnats@gnu.org
 License:	GPLv2
 Responsible:
 Notes:
-
-Package:	sendmail
-Version:	8.13.3
-Current Vers:	8.13.6
-Maintainer:	Eric P. Allman
-Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
-Home Page:	http://www.sendmail.org/
-Mailing List:
-Responsible:	atatat
-License:	Specific. See src/gnu/dist/sendmail/LICENSE
-Notes:
-use gnu/dist/sendmail/sendmail2netbsd to strip off RCS tags.
-local changes:
-- do not reverse-resolve link-local addresses
-- syslog args change
 
 Package:	SoftFloat
 Version:	2a
