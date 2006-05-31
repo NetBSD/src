@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.99 2006/05/31 21:23:58 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.100 2006/05/31 21:54:53 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1730,4 +1730,10 @@ sys/kern/vfs_vnops.c				1.112
 	Limit the size of any kernel buffers allocated by the VOP_READDIR
 	routines to MAXBSIZE.
 	[simonb, ticket #1347]
+
+sys/dev/ic/rtl8169.c				1.23
+
+	Disable hardware VLAN tagging in re(4) to prevent untagged packets
+	from sometimes getting tagged incorrectly. This fixes PR kern/32643.
+	[pavel, ticket #1340]
 
