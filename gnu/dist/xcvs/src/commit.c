@@ -1746,6 +1746,8 @@ remove_file (finfo, tag, message)
 	if (!quiet)
 	    error (0, retcode == -1 ? errno : 0,
 		   "failed to commit dead revision for `%s'", finfo->fullname);
+	if (prev_rev != NULL)
+	    free (prev_rev);
 	return 1;
     }
     /* At this point, the file has been committed as removed.  We should

@@ -168,6 +168,8 @@ add (argc, argv)
 	       nothing, it would spit back a usage message).  */
 	    if (options)
 		free (options);
+	    if (message)
+		free (message);
 	    return err;
 	}
 
@@ -844,7 +846,10 @@ add_directory (finfo)
 	fileattr_write ();
 	fileattr_free ();
 	if (attrs != NULL)
+	{
 	    free (attrs);
+	    attrs = NULL;
+	}
 
 	/*
 	 * Set up an update list with a single title node for Update_Logfile
@@ -882,6 +887,8 @@ add_directory (finfo)
 
     free (rcsdir);
     free (message);
+    if (attrs != NULL)
+	free (attrs);
 
     return 0;
 
