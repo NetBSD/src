@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.52 2006/05/11 00:58:25 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.53 2006/05/31 09:52:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -570,10 +570,17 @@ struct netbsd32_statvfs {
 
 /* from <sys/timex.h> */
 typedef netbsd32_pointer_t netbsd32_ntptimevalp_t;
-struct netbsd32_ntptimeval {
+struct netbsd32_ntptimeval30 {
 	struct netbsd32_timeval time;	/* current time (ro) */
 	netbsd32_long maxerror;	/* maximum error (us) (ro) */
 	netbsd32_long esterror;	/* estimated error (us) (ro) */
+};
+struct netbsd32_ntptimeval {
+	struct netbsd32_timespec time;	/* current time (ro) */
+	netbsd32_long maxerror;	/* maximum error (us) (ro) */
+	netbsd32_long esterror;	/* estimated error (us) (ro) */
+	netbsd32_long tai;	/* TAI offset */
+	int time_state;		/* time status */
 };
 
 typedef netbsd32_pointer_t netbsd32_timexp_t;
