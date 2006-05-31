@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.22.12.1 2006/05/26 22:52:34 chap Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.22.12.2 2006/05/31 22:49:29 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.22.12.1 2006/05/26 22:52:34 chap Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.22.12.2 2006/05/31 22:49:29 chap Exp $");
 #endif
 
 
@@ -98,8 +98,8 @@ void playdata(u_char *, u_int, char *);
 int main(int argc, char **argv);
 
 /*
- * This plays at an apparent tempo of 120 bpm when the BASETEMPO is 150 bpm,
- * because the quavers are 5 divisions (4 on 1 off) rather than 4 total.
+ * This sample plays at an apparent tempo of 120 bpm when the BASETEMPO is 150
+ * bpm, because the quavers are 5 divisions (4 on 1 off) rather than 4 total.
  */
 #define P(c) 1,0x90,c,0x7f,4,0x80,c,0
 #define PL(c) 1,0x90,c,0x7f,8,0x80,c,0
@@ -143,15 +143,16 @@ void
 usage(void)
 {
 	printf("usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
-	       "[-t tempo] [-v] [-x] [file ...]\n",
+	       "[-t %%tempo] [-v] [-x] [file ...]\n",
 		getprogname());
 	exit(1);
 }
 
 int showmeta = 0;
 int verbose = 0;
-#define BASETEMPO 400000		/* 150 bpm */
-u_int tempo = BASETEMPO;		/* microsec / quarter note */
+#define BASETEMPO 400000		/* us/beat(=24 clks or qn) (150 bpm) */
+u_int tempo_set = 0;
+u_int tempo_abs = 0;
 u_int ttempo = 100;
 int unit = 0;
 int play = 1;
@@ -186,6 +187,15 @@ getvar(struct track *tp)
 void
 dometa(u_int meta, u_char *p, u_int len)
 {
+	static char const * const keys[] = {
+	        "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F",
+		"C",
+		"G", "D", "A", "E", "B", "F#", "C#",
+		"G#", "D#", "A#" /* for minors */
+	};
+	seq_event_t ev;
+	uint32_t usperbeat;
+	
 	switch (meta) {
 	case META_TEXT:
 	case META_COPYRIGHT:
@@ -201,23 +211,44 @@ dometa(u_int meta, u_char *p, u_int len)
 		}
 		break;
 	case META_SET_TEMPO:
-		tempo = GET24(p);
+		usperbeat = GET24(p);
+		ev = SEQ_MK_TIMING(TEMPO,
+		    .bpm=(60000000. / usperbeat) * (ttempo / 100.) + 0.5);
 		if (showmeta)
-			printf("Tempo: %d us / quarter note\n", tempo);
+			printf("Tempo: %u us/'beat'(24 midiclks)"
+			       " at %u%%; adjusted bpm = %u\n",
+			       usperbeat, ttempo, ev.t_TEMPO.bpm);
+		if (tempo_abs)
+			printf("Tempo: ignored in absolute-timed MIDI file\n");
+		else {
+			send_event(&ev);
+			if (!tempo_set) {
+				tempo_set = 1;
+				send_event(&SEQ_MK_TIMING(START));
+			}
+		}
 		break;
 	case META_TIMESIGN:
+		ev = SEQ_MK_TIMING(TIMESIG,
+		    .numerator=p[0],      .lg2denom=p[1],
+		    .clks_per_click=p[2], .dsq_per_24clks=p[3]);
 		if (showmeta) {
-			int n = p[1];
-			int d = 1;
-			while (n-- > 0)
-				d *= 2;
-			printf("Time signature: %d/%d %d,%d\n",
-			       p[0], d, p[2], p[3]);
+			printf("Time signature: %d/%d."
+			       " Click every %d midiclk%s"
+			       " (24 midiclks = %d 32nd note%s)\n",
+			       ev.t_TIMESIG.numerator,
+			       1 << ev.t_TIMESIG.lg2denom,
+			       ev.t_TIMESIG.clks_per_click,
+			       1 == ev.t_TIMESIG.clks_per_click ? "" : "s",
+			       ev.t_TIMESIG.dsq_per_24clks,
+			       1 == ev.t_TIMESIG.dsq_per_24clks ? "" : "s");
 		}
+		/* send_event(&ev); not implemented in sequencer */
 		break;
 	case META_KEY:
 		if (showmeta)
-			printf("Key: %d %s\n", (char)p[0],
+			printf("Key: %s %s\n",
+			       keys[((char)p[0]) + p[1] ? 10 : 7],
 			       p[1] ? "minor" : "major");
 		break;
 	default:
@@ -359,13 +390,46 @@ playdata(u_char *buf, u_int tot, char *name)
 	divfmt = GET8(buf + MARK_LEN + SIZE_LEN + 4);
 	ticks = GET8(buf + MARK_LEN + SIZE_LEN + 5);
 	p = buf + MARK_LEN + SIZE_LEN + HEADER_LEN;
-	if ((divfmt & 0x80) == 0)
+	/*
+	 * Set the timebase (or timebase and tempo, for absolute-timed files).
+	 * PORTABILITY: some sequencers actually check the timebase against
+	 * available timing sources and may adjust it accordingly (storing a
+	 * new value in the ioctl arg) which would require us to compensate
+	 * somehow. That possibility is ignored for now, as NetBSD's sequencer
+	 * currently synthesizes all timebases, for better or worse, from the
+	 * system clock.
+	 *
+	 * For a non-absolute file, if timebase is set to the file's divisions
+	 * value, and tempo set in the obvious way, then the timing deltas in
+	 * the MTrks require no scaling. A downside to this approach is that
+	 * the sequencer API wants tempo in (integer) beats per minute, which
+	 * limits how finely tempo can be specified. That might be got around
+	 * in some cases by frobbing tempo and timebase more obscurely, but this
+	 * player is meant to be simple and clear.
+	 */
+	if ((divfmt & 0x80) == 0) {
 		ticks |= divfmt << 8;
-	else
-		errx(1, "Absolute time codes not implemented yet");
+		if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &(int){ticks}) < 0)
+			err(1, "SEQUENCER_TMR_TIMEBASE");
+	} else {
+		tempo_abs = tempo_set = 1;
+		divfmt = -(int8_t)divfmt;
+		/*
+		 * divfmt is frames per second; multiplying by 60 to set tempo
+		 * in frames per minute could exceed sequencer's (arbitrary)
+		 * tempo limits, so factor 60 as 12*5, set tempo in frames per
+		 * 12 seconds, and account for the 5 in timebase.
+		 */
+		send_event(&SEQ_MK_TIMING(TEMPO,
+		    .bpm=(12*divfmt) * (ttempo/100.) + 0.5));
+		if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &(int){5*ticks}) < 0)
+			err(1, "SEQUENCER_TMR_TIMEBASE");
+	}
 	if (verbose > 1)
-		printf("format=%d ntrks=%d divfmt=%x ticks=%d\n",
-		       format, ntrks, divfmt, ticks);
+		printf(tempo_abs ?
+		       "format=%d ntrks=%d abs fps=%u subdivs=%u\n" :
+		       "format=%d ntrks=%d divisions=%u\n",
+		       format, ntrks, tempo_abs ? divfmt : ticks, ticks);
 	if (format != 0 && format != 1) {
 		warnx("Cannot play MIDI file of type %d", format);
 		return;
@@ -394,9 +458,8 @@ playdata(u_char *buf, u_int tot, char *name)
 		p += MARK_LEN + SIZE_LEN + len;
 	}
 
-	/* 
-	 * Play MIDI events by selecting the track with the lowest
-	 * curtime.  Execute the event, update the curtime and repeat.
+	/*
+	 * Force every channel to the same patch if requested by the user.
 	 */
 	if (sameprogram) {
 		for(t = 0; t < 16; t++) {
@@ -404,7 +467,10 @@ playdata(u_char *buf, u_int tot, char *name)
 			    .channel=t, .program=sameprogram-1));
 		}
 	}
-	/*
+	/* 
+	 * Play MIDI events by selecting the track with the lowest
+	 * curtime.  Execute the event, update the curtime and repeat.
+	 *
 	 * The ticks variable is the number of ticks that make up a beat
 	 * (beat: 24 MIDI clocks always, a quarter note by usual convention)
 	 * and is used as a reference value for the delays between
@@ -422,13 +488,23 @@ playdata(u_char *buf, u_int tot, char *name)
 		}
 		if (bestcur == ~0)
 			break;
-		if (verbose > 1) {
-			printf("DELAY %4ld TRACK %2d ", bestcur-now, besttrk);
+		if (verbose > 3) {
+			printf("DELAY %4ld TRACK %2d%s",
+			       bestcur-now, besttrk, verbose>4?" ":"\n");
 			fflush(stdout);
 		}
 		if (now < bestcur) {
+			if (!tempo_set) {
+				if (verbose || showmeta)
+					printf("No initial tempo;"
+					       " defaulting:\n");
+				dometa(META_SET_TEMPO, (u_char[]){
+				    BASETEMPO >> 16,
+				    (BASETEMPO >> 8) & 0xff,
+				    BASETEMPO & 0xff},
+				    3);
+			}
 			u_int32_t delta = bestcur - now;
-			delta = (int)((double)delta * tempo / (1000.0*ticks));
 			send_event(&SEQ_MK_TIMING(WAIT_REL,.divisions=delta));
 		}
 		now = bestcur;
@@ -437,7 +513,7 @@ playdata(u_char *buf, u_int tot, char *name)
 		if (byte == MIDI_META) {
 			meta = *tp->start++;
 			mlen = getvar(tp);
-			if (verbose > 1)
+			if (verbose > 2)
 				printf("META %02x (%d)\n", meta, mlen);
 			dometa(meta, tp->start, mlen);
 			tp->start += mlen;
@@ -448,7 +524,7 @@ playdata(u_char *buf, u_int tot, char *name)
 				tp->start--;
 			mlen = MIDI_LENGTH(tp->status);
 			msg = tp->start;
-			if (verbose > 1) {
+			if (verbose > 4) {
 			    if (mlen == 1)
 				printf("MIDI %02x (%d) %02x\n",
 				       tp->status, mlen, msg[0]);
@@ -525,7 +601,6 @@ main(int argc, char **argv)
 	int listdevs = 0;
 	int example = 0;
 	int nmidi;
-	int t;
 	const char *file = DEVMUSIC;
 	const char *sunit;
 	struct synth_info info;
@@ -589,24 +664,6 @@ main(int argc, char **argv)
 		}
 		exit(0);
 	}
-
-	/*
-	 * The sequencer has two "knobs": the TIMEBASE and the TEMPO.
-	 * The delay specified in TMR_WAIT_REL is specified in
-	 * sequencer time units.  The length of a unit is
-	 * 60*1000000 / (TIMEBASE * TEMPO).
-	 * Set it to 1ms/unit (adjusted by user tempo changes).
-	 */
-	t = 500 * ttempo / 100;
-	if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &t) < 0)
-		err(1, "SEQUENCER_TMR_TIMEBASE");
-	t = 120;
-	if (ioctl(fd, SEQUENCER_TMR_TEMPO, &t) < 0)
-		err(1, "SEQUENCER_TMR_TEMPO");
-	if (ioctl(fd, SEQUENCER_TMR_START, 0) < 0)
-		err(1, "SEQUENCER_TMR_START");
-
-	midireset();
 
  output:
 	if (example)
