@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.27 2006/03/19 06:50:13 tsutsui Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.28 2006/05/31 09:25:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.27 2006/03/19 06:50:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.28 2006/05/31 09:25:44 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.27 2006/03/19 06:50:13 tsutsui Exp $");
 
 #include <dev/cons.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/intiovar.h>
@@ -771,7 +772,7 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 		return (1);
 	}
 
-	if (scode > 132) {
+	if (DIO_ISDIOII(scode)) {
 		dioiidev = (uint8_t *)va;
 		size =  ((dioiidev[0x101] + 1) * 0x100000);
 	} else
