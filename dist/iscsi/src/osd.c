@@ -124,17 +124,17 @@ device_init(globals_t *gp, char *dev)
 
 		if (mkdir(base_dir, 0755) != 0) {
 			if (errno != EEXIST) {
-				iscsi_trace_error(__FILE__, __LINE__, "error creating directory \"%s\" for OSD: errno %i\n", base_dir, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "error creating directory \"%s\" for OSD: errno %d\n", base_dir, errno);
 				return -1;
 			}
 		}
 		/* Create directory for LU */
 
 		for (i = 0; i < osd_luns; i++) {
-			sprintf(FileName, "%s/lun_%i", base_dir, i);
+			sprintf(FileName, "%s/lun_%d", base_dir, i);
 			if (mkdir(FileName, 0755) != 0) {
 				if (errno != EEXIST) {
-					iscsi_trace_error(__FILE__, __LINE__, "error creating \"%s\" for LU %i: errno %i\n", FileName, i, errno);
+					iscsi_trace_error(__FILE__, __LINE__, "error creating \"%s\" for LU %d: errno %d\n", FileName, i, errno);
 					return -1;
 				}
 			}
@@ -298,7 +298,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx.0x%x.%u",
 					base_dir, args->lun, osd_args.GroupID, osd_args.UserID, page, attr);
 				if ((rc = open(FileName, O_WRONLY | O_CREAT, 0644)) == -1) {
-					iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %i\n", FileName, errno);
+					iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 					goto done;
 				}
 				if (write(rc, set_list + i, len) != len) {
@@ -330,7 +330,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_REMOVE_GROUP(lun %llu, 0x%x)\n", args->lun, osd_args.GroupID);
 			sprintf(FileName, "%s/lun_%llu/0x%x", base_dir, args->lun, osd_args.GroupID);
 			if ((rc = rmdir(FileName)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "rmdir(\"%s\") failed: errno %i\n", FileName, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "rmdir(\"%s\") failed: errno %d\n", FileName, errno);
 				goto done;
 			}
 			args->status = 0;
@@ -359,7 +359,7 @@ create_user_again:
 			sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx",
 				base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if ((rc = unlink(FileName)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "unlink(\"%s\") failed: errno %i\n", FileName, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "unlink(\"%s\") failed: errno %d\n", FileName, errno);
 				goto done;
 			}
 			sprintf(string, "rm -f %s/lun_%llu/0x%x/0x%llx.*", base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
@@ -376,11 +376,11 @@ create_user_again:
 			sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx",
 				base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if ((rc = open(FileName, O_WRONLY, 0644)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %i\n", FileName, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 				goto write_done;
 			}
 			if (lseek(rc, osd_args.offset, SEEK_SET) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\": errno %i\n", FileName, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\": errno %d\n", FileName, errno);
 				goto write_done;
 			}
 			if (write(rc, write_data, osd_args.length) != osd_args.length) {
@@ -398,7 +398,7 @@ write_done:
 			sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx",
 				base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if ((rc = open(FileName, O_RDONLY, 0644)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %i\n", FileName, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 				goto read_done;
 			}
 			if ((read_data = iscsi_malloc_atomic(osd_args.length)) == NULL) {
@@ -406,7 +406,7 @@ write_done:
 				goto read_done;
 			}
 			if (lseek(rc, osd_args.offset, SEEK_SET) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\": errno %i\n", FileName, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\": errno %d\n", FileName, errno);
 				goto read_done;
 			}
 			if (read(rc, read_data, osd_args.length) != osd_args.length) {
@@ -529,7 +529,7 @@ read_done:
 						sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx.0x%x.%u",
 							base_dir, args->lun, osd_args.GroupID, osd_args.UserID, page, index);
 						if ((rc = open(FileName, O_RDONLY, 0644)) == -1) {
-							iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %i\n", FileName, errno);
+							iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 						}
 						if (read(rc, get_data + attr_len, 480) != 480) {
 							iscsi_trace_error(__FILE__, __LINE__, "read() failed\n");
@@ -595,7 +595,7 @@ read_done:
 				sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx.0x%x.%u",
 					base_dir, args->lun, osd_args.GroupID, osd_args.UserID, page, index);
 				if ((rc = open(FileName, O_RDONLY, 0644)) == -1) {
-					iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %i\n", FileName, errno);
+					iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 				}
 				if (read(rc, get_data + attr_len, 480) != 480) {
 					iscsi_trace_error(__FILE__, __LINE__, "read() failed\n");
