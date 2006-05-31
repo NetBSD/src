@@ -139,7 +139,7 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 	case ISCSI_PARAM_TYPE_LIST:
 		break;
 	default:
-		iscsi_trace_error(__FILE__, __LINE__, "unknown parameter type %i\n", type);
+		iscsi_trace_error(__FILE__, __LINE__, "unknown parameter type %d\n", type);
 		return -1;
 	}
 
@@ -206,13 +206,13 @@ param_val_which(iscsi_parameter_t * head, const char *key, int which)
 			item_ptr = ptr->value_l;
 			for (i = 0; i != which; i++) {
 				if (item_ptr == NULL) {
-					iscsi_trace_error(__FILE__, __LINE__, "item %i in value list is NULL\n", i);
+					iscsi_trace_error(__FILE__, __LINE__, "item %d in value list is NULL\n", i);
 					return NULL;
 				}
 				item_ptr = item_ptr->next;
 			}
 			if (item_ptr == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "item %i in value list is NULL\n", which);
+				iscsi_trace_error(__FILE__, __LINE__, "item %d in value list is NULL\n", which);
 				return NULL;
 			}
 			return item_ptr->value;
@@ -689,7 +689,7 @@ param_text_parse(iscsi_parameter_t * head,
 	 */
 	/* text has offers that need an answer. */
 
-	iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "parsing %i %s bytes of text parameters\n", text_len_in, outgoing ? "outgoing" : "incoming");
+	iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "parsing %d %s bytes of text parameters\n", text_len_in, outgoing ? "outgoing" : "incoming");
 
 	if ((key = iscsi_malloc(ISCSI_PARAM_KEY_LEN)) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
@@ -1033,7 +1033,7 @@ numerical:
 								 * the two */
 				}
 			}
-			(void) snprintf(param->answer_tx, sizeof(param->answer_tx), "%i", answer_i);
+			(void) snprintf(param->answer_tx, sizeof(param->answer_tx), "%d", answer_i);
 			goto add_answer;
 
 		default:
@@ -1120,7 +1120,7 @@ numerical_negotiate:
 					negotiated_i = val1_i;
 				}
 			}
-			(void) snprintf(param->negotiated, sizeof(param->negotiated), "%i", negotiated_i);
+			(void) snprintf(param->negotiated, sizeof(param->negotiated), "%d", negotiated_i);
 			break;
 		case ISCSI_PARAM_TYPE_LIST:
 			if (outgoing) {
