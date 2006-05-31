@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.30 2006/05/31 09:25:44 tsutsui Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.31 2006/05/31 09:32:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.30 2006/05/31 09:25:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.31 2006/05/31 09:32:11 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -616,7 +616,6 @@ gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	caddr_t va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
-	uint8_t *dioiidev;
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
@@ -630,10 +629,9 @@ gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 		return (1);
 	}
 
-	if (DIO_ISDIOII(scode)) {
-		dioiidev = (uint8_t *)va;
-		size =  ((dioiidev[0x101] + 1) * 0x100000);
-	} else
+	if (DIO_ISDIOII(scode))
+		size = DIOII_SIZE(va);
+	else
 		size = DIOCSIZE;
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);
