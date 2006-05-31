@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.63 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.64 2006/05/31 10:01:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.63 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.64 2006/05/31 10:01:18 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -90,6 +90,7 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,		},
+	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -161,7 +162,8 @@ static const struct pci_class pci_subclass_system[] = {
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
-	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_RTC,		},
+	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG,		},
+	{ "SD Host Controller",	PCI_SUBCLASS_SYSTEM_SDHC,		},
 	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
 	{ 0 },
 };
@@ -780,6 +782,10 @@ pci_conf_print_caplist(
 #endif
     const pcireg_t *regs, int capoff)
 {
+	static const char unk[] = "unknown";
+	static const char *pmrev[8] = {
+		unk, "1.0", "1.1", "1.2", unk, unk, unk, unk
+	};
 	int off;
 	pcireg_t rval;
 
@@ -795,8 +801,8 @@ pci_conf_print_caplist(
 			printf("reserved");
 			break;
 		case PCI_CAP_PWRMGMT:
-			printf("Power Management, rev. %d.0",
-			       (rval >> 0) & 0x07); /* XXX not clear */
+			printf("Power Management, rev. %s",
+			       pmrev[(rval >> 0) & 0x07]);
 			break;
 		case PCI_CAP_AGP:
 			printf("AGP, rev. %d.%d",
