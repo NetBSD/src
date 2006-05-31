@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.166 2006/05/30 00:42:28 christos Exp $
+# $NetBSD: mi,v 1.167 2006/05/31 02:58:14 tron Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -62,7 +62,7 @@
 ./etc/localtime					etc-sys-etc
 ./etc/locate.conf				etc-sys-etc
 ./etc/mail.rc					etc-mail-etc
-./etc/mail/aliases				etc-obsolete		obsolete
+./etc/mail/aliases				etc-postfix-etc		postfix
 ./etc/mail/helpfile				etc-obsolete		obsolete
 ./etc/mail/local-host-names			etc-obsolete		obsolete
 ./etc/mail/sendmail.cf				etc-obsolete		obsolete
