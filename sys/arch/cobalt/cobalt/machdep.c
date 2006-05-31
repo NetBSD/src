@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2006/05/31 12:59:39 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2006/05/31 13:14:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2006/05/31 12:59:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2006/05/31 13:14:13 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -623,9 +623,9 @@ icu_intr(void *arg)
 	}
 
 	ih = &icu_intrtab[irq];
-	if (ih->ih_func == NULL) {
+	if (__predict_false(ih->ih_func == NULL)) {
 		printf("icu_intr(): spurious interrupt (irq = %d)\n", irq);
-	} else if ((*ih->ih_func)(ih->ih_arg)) {
+	} else if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 		ih->ih_evcnt.ev_count++;
 		handled = 1;
 	}
@@ -704,7 +704,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		volatile uint32_t *irq_src =
 		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
-		if ((*irq_src & T0EXP) != 0) {
+		if (__predict_true((*irq_src & T0EXP) != 0)) {
 			*irq_src = 0;
 
 			cf.pc = pc;
@@ -743,8 +743,8 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	if (ipending & MIPS_INT_MASK_3) {
 		/* 16650 serial */
 		ih = &cpu_intrtab[3];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_3;
 				ih->ih_evcnt.ev_count++;
 			}
@@ -755,8 +755,8 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	if (ipending & MIPS_INT_MASK_1) {
 		/* tulip primary */
 		ih = &cpu_intrtab[1];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_1;
 				ih->ih_evcnt.ev_count++;
 			}
@@ -765,8 +765,8 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	if (ipending & MIPS_INT_MASK_2) {
 		/* tulip secondary */
 		ih = &cpu_intrtab[2];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_2;
 				ih->ih_evcnt.ev_count++;
 			}
@@ -777,8 +777,8 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	if (ipending & MIPS_INT_MASK_4) {
 		/* ICU interrupts */
 		ih = &cpu_intrtab[4];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_4;
 				/* evcnt for ICU is done in icu_intr() */
 			}
