@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.10.14.9 2006/05/25 19:31:10 chap Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.10.14.10 2006/05/31 22:19:19 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,11 +41,12 @@
 struct midi_softc;
 
 struct syn_timer {
-	struct	timeval start, stop;
-	int	tempo, timebase;
-	u_long	last;
-	u_long	tick;
-	int	running;
+	struct	timeval reftime, stoptime;
+	uint16_t	tempo_beatpermin, timebase_divperbeat;
+	uint32_t	usperdiv;
+	uint32_t	divs_lastevent;
+	uint32_t	divs_lastchange;
+	int		running;
 };
 
 #define SEQ_MAXQ 256
