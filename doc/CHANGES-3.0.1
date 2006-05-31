@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.49 2006/05/30 19:47:00 ghen Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.50 2006/05/31 21:24:21 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -464,4 +464,10 @@ games/dm/dm.c					1.23
 
 	Read config more strictly.
 	[dan, ticket #1342]
+
+sys/kern/vfs_vnops.c				1.112
+
+	Limit the size of any kernel buffers allocated by the VOP_READDIR
+	routines to MAXBSIZE.
+	[simonb, ticket #1347]
 
