@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.20 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.21 2006/05/31 09:52:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.20 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.21 2006/05/31 09:52:27 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -78,87 +79,59 @@ netbsd32_ntp_gettime(l, v, retval)
 		syscallarg(netbsd32_ntptimevalp_t) ntvp;
 	} */ *uap = v;
 	struct netbsd32_ntptimeval ntv32;
-	struct timeval atv;
 	struct ntptimeval ntv;
 	int error = 0;
-	int s;
-
-	/* The following are NTP variables */
-	extern long time_maxerror;
-	extern long time_esterror;
-	extern int time_status;
-	extern int time_state;	/* clock state */
-	extern int time_status;	/* clock status bits */
 
 	if (SCARG(uap, ntvp)) {
-		s = splclock();
-#ifdef EXT_CLOCK
-		/*
-		 * The microtime() external clock routine returns a
-		 * status code. If less than zero, we declare an error
-		 * in the clock status word and return the kernel
-		 * (software) time variable. While there are other
-		 * places that call microtime(), this is the only place
-		 * that matters from an application point of view.
-		 */
-		if (microtime(&atv) < 0) {
-			time_status |= STA_CLOCKERR;
-			ntv.time = time;
-		} else
-			time_status &= ~STA_CLOCKERR;
-#else /* EXT_CLOCK */
-		microtime(&atv);
-#endif /* EXT_CLOCK */
-		ntv.time = atv;
-		ntv.maxerror = time_maxerror;
-		ntv.esterror = time_esterror;
-		(void) splx(s);
+		ntp_gettime(&ntv);
 
-		netbsd32_from_timeval(&ntv.time, &ntv32.time);
+		ntv32.time.tv_sec = ntv.time.tv_sec;
+		ntv32.time.tv_nsec = ntv.time.tv_nsec;
+		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
+		ntv32.esterror = (netbsd32_long)ntv.esterror;
+		ntv32.tai = (netbsd32_long)ntv.tai;
+		ntv32.time_state = ntv.time_state;
+		error = copyout((caddr_t)&ntv32,
+		    (caddr_t)NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
+	}
+	if (!error) {
+		*retval = ntp_timestatus();
+	}
+
+	return (error);
+}
+
+#ifdef COMPAT_30
+int
+compat_30_netbsd32_ntp_gettime(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_ntp_gettime_args /* {
+		syscallarg(netbsd32_ntptimevalp_t) ntvp;
+	} */ *uap = v;
+	struct netbsd32_ntptimeval30 ntv32;
+	struct ntptimeval ntv;
+	int error = 0;
+
+	if (SCARG(uap, ntvp)) {
+		ntp_gettime(&ntv);
+
+		ntv32.time.tv_sec = ntv.time.tv_sec;
+		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
 		ntv32.esterror = (netbsd32_long)ntv.esterror;
 		error = copyout((caddr_t)&ntv32,
 		    (caddr_t)NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
 	}
 	if (!error) {
-
-		/*
-		 * Status word error decode. If any of these conditions
-		 * occur, an error is returned, instead of the status
-		 * word. Most applications will care only about the fact
-		 * the system clock may not be trusted, not about the
-		 * details.
-		 *
-		 * Hardware or software error
-		 */
-		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-
-		/*
-		 * PPS signal lost when either time or frequency
-		 * synchronization requested
-		 */
-		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-		    !(time_status & STA_PPSSIGNAL)) ||
-
-		/*
-		 * PPS jitter exceeded when time synchronization
-		 * requested
-		 */
-		    (time_status & STA_PPSTIME &&
-		    time_status & STA_PPSJITTER) ||
-
-		/*
-		 * PPS wander exceeded or calibration error when
-		 * frequency synchronization requested
-		 */
-		    (time_status & STA_PPSFREQ &&
-		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
-			*retval = TIME_ERROR;
-		else
-			*retval = time_state;
+		*retval = ntp_timestatus();
 	}
+
 	return (error);
 }
+#endif
 
 int
 netbsd32_ntp_adjtime(l, v, retval)
@@ -271,7 +244,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 	}
 	return error;
 }
-#else
+#else /* !NTP */
 int
 netbsd32_ntp_gettime(l, v, retval)
 	struct lwp *l;
@@ -282,6 +255,18 @@ netbsd32_ntp_gettime(l, v, retval)
 	return (ENOSYS);
 }
 
+#ifdef COMPAT_30
+int
+compat_30_netbsd32_ntp_gettime(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+
+	return (ENOSYS);
+}
+#endif
+
 int
 netbsd32_ntp_adjtime(l, v, retval)
 	struct lwp *l;
@@ -291,7 +276,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 
 	return (ENOSYS);
 }
-#endif
+#endif /* NTP */
 
 int
 netbsd32_setitimer(l, v, retval)
