@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.625 2006/05/30 19:33:26 tron Exp $
+# $NetBSD: mi,v 1.626 2006/05/31 02:58:14 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -73,7 +73,7 @@
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
-./etc/mail					base-obsolete		obsolete
+./etc/mail					base-postfix-bin
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
