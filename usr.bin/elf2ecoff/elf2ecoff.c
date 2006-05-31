@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.21 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.22 2006/05/31 08:09:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -102,7 +102,7 @@ write_ecoff_symhdr(int outfile, struct ecoff_exechdr * ep,
     long strsize);
 
 void    pad16(int fd, int size, const char *msg);
-void	bswap32_region(u_int32_t* , int);
+void	bswap32_region(int32_t* , int);
 
 int    *symTypeTable;
 int	needswap;
@@ -212,12 +212,12 @@ usage:
 	ph = (Elf32_Phdr *) saveRead(infile, ex.e_phoff,
 	    ex.e_phnum * sizeof(Elf32_Phdr), "ph");
 	if (needswap)
-		bswap32_region((u_int32_t*)ph, sizeof(Elf32_Phdr) * ex.e_phnum);
+		bswap32_region((int32_t*)ph, sizeof(Elf32_Phdr) * ex.e_phnum);
 	/* Read the section headers... */
 	sh = (Elf32_Shdr *) saveRead(infile, ex.e_shoff,
 	    ex.e_shnum * sizeof(Elf32_Shdr), "sh");
 	if (needswap) 
-		bswap32_region((u_int32_t*)sh, sizeof(Elf32_Shdr) * ex.e_shnum);
+		bswap32_region((int32_t*)sh, sizeof(Elf32_Shdr) * ex.e_shnum);
 
 	/* Read in the section string table. */
 	shstrtab = saveRead(infile, sh[ex.e_shstrndx].sh_offset,
@@ -372,7 +372,7 @@ usage:
 		ep.a.data_start	= bswap32(ep.a.data_start);
 		ep.a.bss_start	= bswap32(ep.a.bss_start);
 		ep.a.gprmask	= bswap32(ep.a.gprmask);
-		bswap32_region((u_int32_t*)ep.a.cprmask, sizeof(ep.a.cprmask));
+		bswap32_region((int32_t*)ep.a.cprmask, sizeof(ep.a.cprmask));
 		ep.a.gp_value	= bswap32(ep.a.gp_value);
 		for (i = 0; i < sizeof(esecs) / sizeof(esecs[0]); i++) {
 			esecs[i].s_paddr	= bswap32(esecs[i].s_paddr);
@@ -665,7 +665,7 @@ write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
 		    (nesyms * sizeof(struct ecoff_extsym)));
 
 	if (needswap) {
-		bswap32_region((u_int32_t*)&symhdrp->ilineMax,
+		bswap32_region(&symhdrp->ilineMax,
 		    sizeof(*symhdrp) -  sizeof(symhdrp->magic) -
 		    sizeof(symhdrp->ilineMax));
 		symhdrp->magic = bswap16(symhdrp->magic);
@@ -857,10 +857,10 @@ pad16(int fd, int size, const char *msg)
 
 /* swap a 32bit region */
 void
-bswap32_region(u_int32_t* p, int len)
+bswap32_region(int32_t* p, int len)
 {
 	int i;
 
-	for (i = 0; i < len / sizeof(u_int32_t); i++, p++)
+	for (i = 0; i < len / sizeof(int32_t); i++, p++)
 		*p = bswap32(*p);
 }
