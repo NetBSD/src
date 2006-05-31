@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2006/05/31 13:45:46 perry Exp $
+#	$NetBSD: Makefile,v 1.12 2006/05/31 13:51:48 perry Exp $
 
 .include <bsd.own.mk>
 
 DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/man/man1
 .PATH:	${DIST}
 
+# This follows the order in COMMANDS= in src/gnu/dist/postfix/man/Makefile.in
 MAN=	postalias.1 postcat.1 postconf.1 postfix.1 \
 	postkick.1 postlock.1 postlog.1 postdrop.1 \
 	postmap.1 sendmail.1 \
