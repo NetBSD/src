@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2006/03/04 02:21:01 uwe Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12 2006/05/31 22:40:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2006/03/04 02:21:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2006/05/31 22:40:38 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -99,45 +99,45 @@ static void _bus_space_free(void *, bus_space_handle_t, bus_size_t);
 static void *_bus_space_vaddr(void *, bus_space_handle_t);
 
 static struct hpcsh_bus_space __default_bus_space = {
-	hbs_extent	: 0,
-	hbs_map		: _bus_space_map,
-	hbs_unmap	: _bus_space_unmap,
-	hbs_subregion	: _bus_space_subregion,
-	hbs_alloc	: _bus_space_alloc,
-	hbs_free	: _bus_space_free,
-	hbs_vaddr	: _bus_space_vaddr,
-	hbs_r_1		: _bus_space_read_1,
-	hbs_r_2		: _bus_space_read_2,
-	hbs_r_4		: _bus_space_read_4,
-	hbs_r_8		: _bus_space_read_8,
-	hbs_rm_1	: _bus_space_read_multi_1,
-	hbs_rm_2	: _bus_space_read_multi_2,
-	hbs_rm_4	: _bus_space_read_multi_4,
-	hbs_rm_8	: _bus_space_read_multi_8,
-	hbs_rr_1	: _bus_space_read_region_1,
-	hbs_rr_2	: _bus_space_read_region_2,
-	hbs_rr_4	: _bus_space_read_region_4,
-	hbs_rr_8	: _bus_space_read_region_8,
-	hbs_w_1		: _bus_space_write_1,
-	hbs_w_2		: _bus_space_write_2,
-	hbs_w_4		: _bus_space_write_4,
-	hbs_w_8		: _bus_space_write_8,
-	hbs_wm_1	: _bus_space_write_multi_1,
-	hbs_wm_2	: _bus_space_write_multi_2,
-	hbs_wm_4	: _bus_space_write_multi_4,
-	hbs_wm_8	: _bus_space_write_multi_8,
-	hbs_wr_1	: _bus_space_write_region_1,
-	hbs_wr_2	: _bus_space_write_region_2,
-	hbs_wr_4	: _bus_space_write_region_4,
-	hbs_wr_8	: _bus_space_write_region_8,
-	hbs_sm_1	: _bus_space_set_multi_1,
-	hbs_sm_2	: _bus_space_set_multi_2,
-	hbs_sm_4	: _bus_space_set_multi_4,
-	hbs_sm_8	: _bus_space_set_multi_8,
-	hbs_c_1		: _bus_space_copy_region_1,
-	hbs_c_2		: _bus_space_copy_region_2,
-	hbs_c_4		: _bus_space_copy_region_4,
-	hbs_c_8		: _bus_space_copy_region_8
+	.hbs_extent	= 0,
+	.hbs_map	= _bus_space_map,
+	.hbs_unmap	= _bus_space_unmap,
+	.hbs_subregion	= _bus_space_subregion,
+	.hbs_alloc	= _bus_space_alloc,
+	.hbs_free	= _bus_space_free,
+	.hbs_vaddr	= _bus_space_vaddr,
+	.hbs_r_1	= _bus_space_read_1,
+	.hbs_r_2	= _bus_space_read_2,
+	.hbs_r_4	= _bus_space_read_4,
+	.hbs_r_8	= _bus_space_read_8,
+	.hbs_rm_1	= _bus_space_read_multi_1,
+	.hbs_rm_2	= _bus_space_read_multi_2,
+	.hbs_rm_4	= _bus_space_read_multi_4,
+	.hbs_rm_8	= _bus_space_read_multi_8,
+	.hbs_rr_1	= _bus_space_read_region_1,
+	.hbs_rr_2	= _bus_space_read_region_2,
+	.hbs_rr_4	= _bus_space_read_region_4,
+	.hbs_rr_8	= _bus_space_read_region_8,
+	.hbs_w_1	= _bus_space_write_1,
+	.hbs_w_2	= _bus_space_write_2,
+	.hbs_w_4	= _bus_space_write_4,
+	.hbs_w_8	= _bus_space_write_8,
+	.hbs_wm_1	= _bus_space_write_multi_1,
+	.hbs_wm_2	= _bus_space_write_multi_2,
+	.hbs_wm_4	= _bus_space_write_multi_4,
+	.hbs_wm_8	= _bus_space_write_multi_8,
+	.hbs_wr_1	= _bus_space_write_region_1,
+	.hbs_wr_2	= _bus_space_write_region_2,
+	.hbs_wr_4	= _bus_space_write_region_4,
+	.hbs_wr_8	= _bus_space_write_region_8,
+	.hbs_sm_1	= _bus_space_set_multi_1,
+	.hbs_sm_2	= _bus_space_set_multi_2,
+	.hbs_sm_4	= _bus_space_set_multi_4,
+	.hbs_sm_8	= _bus_space_set_multi_8,
+	.hbs_c_1	= _bus_space_copy_region_1,
+	.hbs_c_2	= _bus_space_copy_region_2,
+	.hbs_c_4	= _bus_space_copy_region_4,
+	.hbs_c_8	= _bus_space_copy_region_8
 };
 
 /* create default bus_space_tag */
