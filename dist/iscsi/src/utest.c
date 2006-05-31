@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	}
 	if (target != -1) {
 		if (target >= CONFIG_INITIATOR_NUM_TARGETS) {
-			iscsi_trace_error(__FILE__, __LINE__, "initiator only configured with %i targets\n", CONFIG_INITIATOR_NUM_TARGETS);
+			iscsi_trace_error(__FILE__, __LINE__, "initiator only configured with %d targets\n", CONFIG_INITIATOR_NUM_TARGETS);
 			exit(EXIT_FAILURE);
 		}
 		tgtlo = target;
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 	}
 	for (j = 0; j < iterations; j++) {
 
-		printf("<ITERATION %i>\n", j);
+		printf("<ITERATION %d>\n", j);
 
 		/* Ignore sigpipe */
 

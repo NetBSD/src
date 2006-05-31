@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.18 2006/05/26 16:34:43 agc Exp $ */
+/* $NetBSD: disk.c,v 1.19 2006/05/31 19:53:13 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -838,6 +838,33 @@ report_luns(uint64_t *data, int64_t luns)
 	return off;
 }
 
+/* handle persistent reserve in command */
+static int
+persistent_reserve_in(uint8_t action, uint8_t *data)
+{
+	uint64_t	key;
+
+	switch(action) {
+	case PERSISTENT_RESERVE_IN_READ_KEYS:
+		key = 0; /* simulate "just powered on" */
+		*((uint32_t *) (void *)data) = (uint32_t) ISCSI_HTONL((uint32_t) 0);
+		*((uint32_t *) (void *)data + 4) = (uint32_t) ISCSI_HTONL((uint32_t) sizeof(key)); /* length in bytes of list of keys */
+		*((uint64_t *) (void *)data + 8) = (uint64_t) ISCSI_HTONLL(key);
+		return 8 + sizeof(key);
+	case PERSISTENT_RESERVE_IN_REPORT_CAPABILITIES:
+		(void) memset(data, 0x0, 8);
+		*((uint16_t *) (void *)data) = (uint16_t) ISCSI_HTONS((uint16_t) 8); /* length is fixed at 8 bytes */
+		data[2] = PERSISTENT_RESERVE_IN_CRH; /* also SIP_C, ATP_C and PTPL_C here */
+		data[3] = 0; /* also TMV and PTPL_A here */
+		data[4] = 0; /* also WR_EX_AR, EX_AC_RD, WR_EX_RD, EX_AC, WR_EX here */
+		data[5] = 0; /* also EX_AC_AR here */
+		return 8;
+	default:
+		iscsi_trace_error(__FILE__, __LINE__, "persistent_reserve_in: action %x unrecognised\n", action);
+		return 0;
+	}
+}
+
 /* initialise the device */
 int 
 device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
@@ -871,12 +898,14 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 #else
 	disks.v[disks.c].type = ISCSI_FS;
 #endif
-	printf("DISK: %" PRIu64 " logical units (%" PRIu64 " blocks, %" PRIu64 " bytes/block), type %s\n",
-	      disks.v[disks.c].luns, disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
+	printf("DISK: %" PRIu64 " logical unit%s (%" PRIu64 " blocks, %" PRIu64 " bytes/block), type %s\n",
+	      disks.v[disks.c].luns,
+	      (disks.v[disks.c].luns == 1) ? "" : "s",
+	      disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
 	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" :
 	      (disks.v[disks.c].type == ISCSI_FS_MMAP) ? "iscsi fs mmap" : "iscsi ramdisk");
 	for (i = 0; i < disks.v[disks.c].luns; i++) {
-		printf("DISK: LU %i: ", i);
+		printf("DISK: LUN %d: ", i);
 
 		if (disks.v[disks.c].type == ISCSI_RAMDISK) {
 			if ((disks.v[disks.c].ramdisk[i] = iscsi_malloc((unsigned)disks.v[disks.c].size)) == NULL) {
@@ -926,7 +955,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		initialized = 1;
 	}
 	if (!flag[lun]) {
-		printf("DISK: Simulating CHECK CONDITION with sense data (cdb 0x%x, lun %i)\n", cdb[0], lun);
+		printf("DISK: Simulating CHECK CONDITION with sense data (cdb %#x, lun %d)\n", cdb[0], lun);
 		flag[lun]++;
 		args->status = 0x02;
 		args->length = 1024;
@@ -952,7 +981,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->status = 0;
 		return 0;
 	}
-	iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SCSI op 0x%x (lun %i): \n", cdb[0], lun);
+	iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SCSI op %#x (lun %d): \n", cdb[0], lun);
 
 	switch (cdb[0]) {
 
@@ -984,7 +1013,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				/* add target port's IQN + LUN */
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
 				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
-				len = (uint8_t) snprintf((char *)&cp[4], (int)(cdb[4] - 7), "%s,t,0x%x", sess->globals->targetname, lun);
+				len = (uint8_t) snprintf((char *)&cp[4], (int)(cdb[4] - 7), "%s,t,%#x", sess->globals->targetname, lun);
 				cp[3] = len;
 				data[3] += len + 4;
 				cp += len + 4;
@@ -1090,7 +1119,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case MODE_SENSE_6:
-
 		cp = data = args->send_data;
 		len = ISCSI_MODE_SENSE_LEN;
 		mode_data_len = len + 3;
@@ -1110,7 +1138,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case WRITE_10:
-
 		cdb2lba(&lba, &len, cdb);
 
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_10(lba %u, len %u blocks)\n", lba, len);
@@ -1122,7 +1149,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case READ_10:
-
 		cdb2lba(&lba, &len, cdb);
 
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "READ_10(lba %u, len %u blocks)\n", lba, len);
@@ -1139,7 +1165,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case SYNC_CACHE:
-
 		cdb2lba(&lba, &len, cdb);
 
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SYNC_CACHE (lba %u, len %u blocks)\n", lba, len);
@@ -1153,17 +1178,15 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case LOG_SENSE:
-
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "LOG_SENSE\n");
 		args->status = 0;
 		args->length = 0;
 		break;
 
 	case PERSISTENT_RESERVE_IN:
-
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "PERSISTENT_RESERVE_IN\n");
+		args->length = persistent_reserve_in((cdb[1] & PERSISTENT_RESERVE_IN_SERVICE_ACTION_MASK), args->send_data);
 		args->status = 0;
-		args->length = 0;
 		break;
 
 	case REPORT_LUNS:
@@ -1174,13 +1197,37 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->status = 0;
 		break;
 
+	case RESERVE_6:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RESERVE_6\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
+	case RELEASE_6:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RELEASE_6\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
+	case RESERVE_10:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RESERVE_10\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
+	case RELEASE_10:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RELEASE_10\n");
+		args->status = 0;
+		args->length = 0;
+		break;
+
 	default:
-		iscsi_trace_error(__FILE__, __LINE__, "UNKNOWN OPCODE 0x%x\n", cdb[0]);
+		iscsi_trace_error(__FILE__, __LINE__, "UNKNOWN OPCODE %#x\n", cdb[0]);
 		/* to not cause confusion with some initiators */
 		args->status = 0x02;
 		break;
 	}
-	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "SCSI op 0x%x: done (status 0x%x)\n", cdb[0], args->status);
+	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "SCSI op %#x: done (status %#x)\n", cdb[0], args->status);
 	return 0;
 }
 
@@ -1191,7 +1238,7 @@ device_shutdown(target_session_t *sess)
 
 	if (disks.v[sess->d].type == ISCSI_RAMDISK) {
 		for (i = 0; i < disks.v[sess->d].luns; i++) {
-			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "freeing ramdisk[%i] (%p)\n", i, disks.v[sess->d].ramdisk[i]);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "freeing ramdisk[%d] (%p)\n", i, disks.v[sess->d].ramdisk[i]);
 			iscsi_free(disks.v[sess->d].ramdisk[i]);
 		}
 	}
@@ -1315,12 +1362,12 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 			}
 			rc = de_read(&disks.v[sess->d].tv->v[lun].de, ptr + n, (size_t)(num_bytes - n));
 			if (rc <= 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "read() failed: rc %i errno %i\n", rc, errno);
+				iscsi_trace_error(__FILE__, __LINE__, "read() failed: rc %d errno %d\n", rc, errno);
 				return -1;
 			}
 			n += rc;
 			if (n < num_bytes) {
-				iscsi_trace_error(__FILE__, __LINE__, "Got partial file read: %i bytes of %" PRIu64 "\n", rc, num_bytes - n + rc);
+				iscsi_trace_error(__FILE__, __LINE__, "Got partial file read: %d bytes of %" PRIu64 "\n", rc, num_bytes - n + rc);
 			}
 		} while (n < num_bytes);
 		break;
