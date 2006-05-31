@@ -1,3 +1,22 @@
+2006-05-31  Mark D. Baushke  <mdb@gnu.org>
+
+	* add.c (add): Fix memory leak.
+	[Fixes NetBSD coverity cid-3751.]
+	(add_directory): Fix memory leak.
+	[Fixes NetBSD coverity cid-3640.]
+
+	* commit.c (remove_file): Fix memory leak.
+	[Fixes NetBSD coverity cid-3752.]
+
+	* checkin.c (Checkin): Avoid possible NULL dereference.
+	[Fixes NetBSD coverity cid-2425.]
+
+	* client.c (auth_server): Fix memory leak.
+	[Fixes NetBSD coverity cid-3404.]
+
+	* rcs.c (RCS_checkin): Add assert (tip).
+	[Fixes NetBSD coverity cid-2424.]
+
 2006-05-25  Mark D. Baushke  <mdb@gnu.org>
 
 	* add.c (add): Do not leak memory.

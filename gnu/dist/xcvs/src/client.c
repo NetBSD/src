@@ -3970,6 +3970,7 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
 
         /* Paranoia. */
         memset (password, 0, strlen (password));
+	free (password);
 # else /* ! AUTH_CLIENT_SUPPORT */
 	error (1, 0, "INTERNAL ERROR: This client does not support pserver authentication");
 # endif /* AUTH_CLIENT_SUPPORT */
