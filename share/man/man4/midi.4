@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.24.6.7 2006/05/30 23:22:31 chap Exp $
+.\" $NetBSD: midi.4,v 1.24.6.8 2006/05/31 03:53:13 chap Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -493,11 +493,23 @@ should be used in new code. The
 .Pa /dev/sequencer
 emulation is implemented only for writing, and that might not be complete.
 .Sh IMPLEMENTATION NOTES
+Some hardware devices supporting
+.Nm
+lack transmit-ready interrupts, and some have the capability in
+hardware but currently lack driver support. They can be recognized by the
+annotation
+.Li "(cpu-intensive output)"
+in
+.Xr dmesg 8 .
+While suitable for music playback, they may have an objectionable impact on
+system responsiveness during bulk transmission such as patch downloads, and
+are best avoided for that purpose if other suitable devices are present.
+.Pp
 Buffer space in
 .Nm
 itself is adequate for about 200 ms of traffic at
 .Tn "MIDI 1.0"
-data rates.
+data rates, per stream.
 .Pp
 Event counters record bytes and messages discarded because of protocol
 errors or buffer overruns, and can be viewed with
@@ -577,13 +589,14 @@ sequencer events and
 operations are unimplemented, as
 .Aq Pa sys/midiio.h
 notes.
-.Pp The native
+.Pp
+.Tn OSS
+source-compatible sequencer macros should be added to
+.Aq Pa sys/soundcard.h ,
+implemented with the
 .Nx
-sequencer macros in
-.Aq Pa sys/midiio.h
-should be used as the basis for fully OSS source-compatible ones to be
-defined in
-.Aq Pa sys/soundcard.h
+ones in
+.Aq Pa sys/midiio.h ,
 so sources written for OSS can be easily compiled.
 .Pp
 The sequencer blocks (or returns
@@ -634,7 +647,8 @@ devices (that is, none was already open
 at its raw node when the sequencer was opened), but might not be the same
 otherwise.
 .Pp
-There is at present no way to make reception nonpromiscuous.
+There is at present no way to make reception nonpromiscuous,
+should anyone have a reason to want to.
 .Pp
 There should be ways to override default Active Sense behavior. As one obvious
 case, if an application is seen to send Active Sense explicitly,
