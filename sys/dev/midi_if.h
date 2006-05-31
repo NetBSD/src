@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17.14.12 2006/05/30 23:15:05 chap Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.14.13 2006/05/31 03:17:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ struct midi_info {
 };
 #define MIDI_PROP_OUT_INTR  1
 #define MIDI_PROP_CAN_INPUT 2
+#define MIDI_PROP_NO_OUTPUT 4
 
 struct midi_softc;
 
