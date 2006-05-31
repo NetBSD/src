@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.64 2006/05/31 20:22:52 rpaulo Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.65 2006/05/31 20:23:52 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.64 2006/05/31 20:22:52 rpaulo Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.65 2006/05/31 20:23:52 rpaulo Exp $");
 #endif
 #endif
 
@@ -1188,7 +1188,7 @@ decode_extensions(unsigned char *buf, int ip_len)
 					buf += sizeof(uint32_t);
 					obj_len -= sizeof(uint32_t);
  
-					printf(" [MPLS: Label %d Exp %d]"
+					printf(" [MPLS: Label %d Exp %d]",
 					    mpls.mpls.label, mpls.mpls.exp);
 				}
 				if (obj_len > 0) {
