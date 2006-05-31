@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:48:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/31 05:13:20 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -58,7 +58,7 @@ COPTS.reload1.c=		-O1
 
 # Headers that host objects depend on (except gen*rtl*)
 HH_NORTL=	${G_tm_file_list} ${G_build_xm_include_list}
-HH=		${HH_NORTL} genrtl.h
+HH=		${HH_NORTL} genrtl.h insn-modes.h
 
 #
 # Generate the various header files we need.
@@ -275,7 +275,7 @@ insn-${f}: gen${f:R} ${G_md_file}
 # "One of these things is not like the other"
 #
 CLEANFILES+=		genattrtab insn-attrtab.c
-genattrtab.lo: ${HH} gtype-desc.h insn-modes.h
+genattrtab.lo: ${HH} gtype-desc.h
 genautomata.lo: ${HH}
 genattrtab: genattrtab.lo genautomata.lo ${EXTRADEPENDS} ${G_BUILD_VARRAY:.o=.lo}
 	${_MKTARGET_LINK}
@@ -289,7 +289,7 @@ insn-attrtab.c: genattrtab ${G_md_file}
 #
 genextract.lo: insn-config.h
 insn-conditions.lo: insn-constants.h tm_p.h tm-preds.h
-genattr.c: insn-modes.h
+ggc-none.lo: gtype-desc.h
 
 insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
