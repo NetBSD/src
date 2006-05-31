@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.17 2006/05/30 23:15:05 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.18 2006/05/31 03:17:06 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.17 2006/05/30 23:15:05 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.18 2006/05/31 03:17:06 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,8 +113,7 @@ static usbd_status open_in_jack(struct umidi_jack *, void *,
 static void close_out_jack(struct umidi_jack *);
 static void close_in_jack(struct umidi_jack *);
 
-static usbd_status attach_mididev(struct umidi_softc *,
-				  struct umidi_mididev *);
+static usbd_status attach_mididev(struct umidi_softc *, struct umidi_mididev *);
 static usbd_status detach_mididev(struct umidi_mididev *, int);
 static usbd_status deactivate_mididev(struct umidi_mididev *);
 static usbd_status alloc_all_mididevs(struct umidi_softc *, int);
@@ -122,6 +121,7 @@ static void free_all_mididevs(struct umidi_softc *);
 static usbd_status attach_all_mididevs(struct umidi_softc *);
 static usbd_status detach_all_mididevs(struct umidi_softc *, int);
 static usbd_status deactivate_all_mididevs(struct umidi_softc *);
+static char *describe_mididev(struct umidi_mididev *);
 
 #ifdef UMIDI_DEBUG
 static void dump_sc(struct umidi_softc *);
@@ -417,7 +417,7 @@ umidi_getinfo(void *addr, struct midi_info *mi)
 	struct umidi_softc *sc = mididev->sc;
 	int mm = UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE);
 
-	mi->name = "USB MIDI I/F"; /* XXX: model name */
+	mi->name = mididev->label;
 	mi->props = MIDI_PROP_OUT_INTR;
 	if (mididev->in_jack)
 		mi->props |= MIDI_PROP_CAN_INPUT;
@@ -843,13 +843,12 @@ alloc_all_jacks(struct umidi_softc *sc)
 	int i, j;
 	struct umidi_endpoint *ep;
 	struct umidi_jack *jack;
-	int cnglobal;
 	unsigned char *cn_spec;
 	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_PER_EP))
-		cnglobal = 0;
+		sc->cblnums_global = 0;
 	else if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_GLOBAL))
-		cnglobal = 1;
+		sc->cblnums_global = 1;
 	else {
 		/*
 		 * I don't think this default is correct, but it preserves
@@ -863,7 +862,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 		 * listing neither quirk, and they'll easily be fixed by giving
 		 * them the CN_SEQ_GLOBAL quirk.
 		 */
-		cnglobal = 1;
+		sc->cblnums_global = 1;
 	}
 	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_FIXED))
@@ -891,7 +890,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->arg = NULL;
 		jack->u.out.intr = NULL;
 		jack->midiman_ppkt = NULL;
-		if ( cnglobal )
+		if ( sc->cblnums_global )
 			jack->cable_number = i;
 		jack++;
 	}
@@ -901,7 +900,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->binded = 0;
 		jack->arg = NULL;
 		jack->u.in.intr = NULL;
-		if ( cnglobal )
+		if ( sc->cblnums_global )
 			jack->cable_number = i;
 		jack++;
 	}
@@ -914,7 +913,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 			jack->endpoint = ep;
 			if ( cn_spec != NULL )
 				jack->cable_number = *cn_spec++;
-			else if ( !cnglobal )
+			else if ( !sc->cblnums_global )
 				jack->cable_number = j;
 			ep->jacks[jack->cable_number] = jack;
 			jack++;
@@ -928,7 +927,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 			jack->endpoint = ep;
 			if ( cn_spec != NULL )
 				jack->cable_number = *cn_spec++;
-			else if ( !cnglobal )
+			else if ( !sc->cblnums_global )
 				jack->cable_number = j;
 			ep->jacks[jack->cable_number] = jack;
 			jack++;
@@ -1151,6 +1150,8 @@ attach_mididev(struct umidi_softc *sc, struct umidi_mididev *mididev)
 		return USBD_IN_USE;
 
 	mididev->sc = sc;
+	
+	mididev->label = describe_mididev(mididev);
 
 	mididev->mdev = midi_attach_mi(&umidi_hw_if, mididev, &sc->sc_dev);
 
@@ -1170,6 +1171,11 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 
 	if (mididev->mdev)
 		config_detach(mididev->mdev, flags);
+	
+	if (NULL != mididev->label) {
+		free(mididev->label, M_USBDEV);
+		mididev->label = NULL;
+	}
 
 	mididev->sc = NULL;
 
@@ -1254,6 +1260,63 @@ deactivate_all_mididevs(struct umidi_softc *sc)
 		}
 
 	return USBD_NORMAL_COMPLETION;
+}
+
+/*
+ * TODO: the 0-based cable numbers will often not match the labeling of the
+ * equipment. Ideally:
+ *  For class-compliant devices: get the iJack string from the jack descriptor.
+ *  Otherwise:
+ *  - support a DISPLAY_BASE_CN quirk (add the value to each internal cable
+ *    number for display)
+ *  - support an array quirk explictly giving a char * for each jack.
+ * For now, you get 0-based cable numbers. If there are multiple endpoints and
+ * the CNs are not globally unique, each is shown with its associated endpoint
+ * address in hex also. That should not be necessary when using iJack values
+ * or a quirk array.
+ */
+static char *
+describe_mididev(struct umidi_mididev *md)
+{
+	char in_label[16];
+	char out_label[16];
+	char *unit_label;
+	char *final_label;
+	struct umidi_softc *sc;
+	int show_ep_in;
+	int show_ep_out;
+	size_t len;
+	
+	sc = md->sc;
+	show_ep_in  = sc-> sc_in_num_endpoints > 1 && !sc->cblnums_global;
+	show_ep_out = sc->sc_out_num_endpoints > 1 && !sc->cblnums_global;
+	
+	if ( NULL != md->in_jack )
+		snprintf(in_label, sizeof in_label,
+		    show_ep_in ? "<%d(%x) " : "<%d ",
+		    md->in_jack->cable_number,
+		    md->in_jack->endpoint->addr);
+	else
+		in_label[0] = '\0';
+	
+	if ( NULL != md->out_jack )
+		snprintf(out_label, sizeof out_label,
+		    show_ep_out ? ">%d(%x) " : ">%d ",
+		    md->out_jack->cable_number,
+		    md->out_jack->endpoint->addr);
+	else
+		in_label[0] = '\0';
+
+	unit_label = USBDEVNAME(sc->sc_dev);
+	
+	len = strlen(in_label) + strlen(out_label) + strlen(unit_label) + 4;
+	
+	final_label = malloc(len, M_USBDEV, M_WAITOK);
+	
+	snprintf(final_label, len, "%s%son %s",
+	    in_label, out_label, unit_label);
+
+	return final_label;
 }
 
 #ifdef UMIDI_DEBUG

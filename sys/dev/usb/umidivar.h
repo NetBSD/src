@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8.14.11 2006/05/29 20:36:09 chap Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.14.12 2006/05/31 03:17:06 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,6 +54,7 @@ struct umidi_mididev {
 	/* */
 	struct umidi_jack	*in_jack;
 	struct umidi_jack	*out_jack;
+	char			*label;
 	/* */
 	int			opened;
 	int			flags;
@@ -126,4 +127,5 @@ struct umidi_softc {
 	int			sc_in_num_endpoints;
 	struct umidi_endpoint	*sc_in_ep;
 	struct umidi_endpoint	*sc_endpoints;
+	int			cblnums_global;
 };
