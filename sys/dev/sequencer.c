@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.19 2006/05/25 21:05:29 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.20 2006/05/31 22:19:19 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.19 2006/05/25 21:05:29 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.20 2006/05/31 22:19:19 chap Exp $");
 
 #include "sequencer.h"
 
@@ -86,7 +86,8 @@ int	sequencerdebug = 0;
 #define SEQ_NOTE_MAX 128
 #define SEQ_NOTE_XXX 255
 
-#define RECALC_TICK(t) ((t)->tick = 60 * 1000000L / ((t)->tempo * (t)->timebase))
+#define RECALC_USPERDIV(t) \
+((t)->usperdiv = 60*1000000L/((t)->tempo_beatpermin*(t)->timebase_divperbeat))
 
 struct sequencer_softc seqdevs[NSEQUENCER];
 
@@ -186,12 +187,12 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 		}
 	}
 
-	sc->timer.timebase = 100;
-	sc->timer.tempo = 60;
+	sc->timer.timebase_divperbeat = 100;
+	sc->timer.tempo_beatpermin = 60;
 	sc->doingsysex = 0;
-	RECALC_TICK(&sc->timer);
-	sc->timer.last = 0;
-	microtime(&sc->timer.start);
+	RECALC_USPERDIV(&sc->timer);
+	sc->timer.divs_lastevent = sc->timer.divs_lastchange = 0;
+	microtime(&sc->timer.reftime);
 
 	SEQ_QINIT(&sc->inq);
 	SEQ_QINIT(&sc->outq);
@@ -332,14 +333,20 @@ seq_event_intr(void *addr, seq_event_t *iev)
 	struct sequencer_softc *sc = addr;
 	u_long t;
 	struct timeval now;
+	int s;
 
 	microtime(&now);
-	SUBTIMEVAL(&now, &sc->timer.start);
+	s = splsoftclock();
+	if (!sc->timer.running)
+		now = sc->timer.stoptime;
+	SUBTIMEVAL(&now, &sc->timer.reftime);
 	t = now.tv_sec * 1000000 + now.tv_usec;
-	t /= sc->timer.tick;
+	t /= sc->timer.usperdiv;
+	t += sc->timer.divs_lastchange;
+	splx(s);
 	if (t != sc->input_stamp) {
 		seq_input_event(sc, &SEQ_MK_TIMING(WAIT_ABS, .divisions=t));
-		sc->input_stamp = t;
+		sc->input_stamp = t; /* XXX wha hoppen if timer is reset? */
 	}
 	seq_input_event(sc, iev);
 }
@@ -435,6 +442,7 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	struct midi_dev *md;
 	int devno;
 	int error;
+	int s;
 	int t;
 
 	DPRINTFN(2, ("sequencerioctl: %p cmd=0x%08lx\n", sc, cmd));
@@ -510,28 +518,40 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 			t = 1;
 		if (t > 10000)
 			t = 10000;
-		sc->timer.timebase = t;
 		*(int *)addr = t;
-		RECALC_TICK(&sc->timer);
+		s = splsoftclock();
+		sc->timer.timebase_divperbeat = t;
+		sc->timer.divs_lastchange = sc->timer.divs_lastevent;
+		microtime(&sc->timer.reftime);
+		RECALC_USPERDIV(&sc->timer);
+		splx(s);
 		break;
 
 	case SEQUENCER_TMR_START:
+		s = splsoftclock();
 		error = seq_do_timing(sc, &SEQ_MK_TIMING(START));
+		splx(s);
 		break;
 
 	case SEQUENCER_TMR_STOP:
+		s = splsoftclock();
 		error = seq_do_timing(sc, &SEQ_MK_TIMING(STOP));
+		splx(s);
 		break;
 
 	case SEQUENCER_TMR_CONTINUE:
+		s = splsoftclock();
 		error = seq_do_timing(sc, &SEQ_MK_TIMING(CONTINUE));
+		splx(s);
 		break;
 
 	case SEQUENCER_TMR_TEMPO:
+		s = splsoftclock();
 		error = seq_do_timing(sc,
 		    &SEQ_MK_TIMING(TEMPO, .bpm=*(int *)addr));
+		splx(s);
 		if (!error)
-		    *(int *)addr = sc->timer.tempo;
+		    *(int *)addr = sc->timer.tempo_beatpermin;
 		break;
 
 	case SEQUENCER_TMR_SOURCE:
@@ -552,7 +572,10 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case SEQUENCER_CTRLRATE:
-		*(int *)addr = (sc->timer.tempo*sc->timer.timebase + 30) / 60;
+		s = splsoftclock();
+		*(int *)addr = (sc->timer.tempo_beatpermin
+		               *sc->timer.timebase_divperbeat + 30) / 60;
+		splx(s);
 		break;
 
 	case SEQUENCER_GETTIME:
@@ -560,9 +583,12 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		struct timeval now;
 		u_long tx;
 		microtime(&now);
-		SUBTIMEVAL(&now, &sc->timer.start);
+		s = splsoftclock();
+		SUBTIMEVAL(&now, &sc->timer.reftime);
 		tx = now.tv_sec * 1000000 + now.tv_usec;
-		tx /= sc->timer.tick;
+		tx /= sc->timer.usperdiv;
+		tx += sc->timer.divs_lastchange;
+		splx(s);
 		*(int *)addr = tx;
 		break;
 	}
@@ -700,7 +726,7 @@ seq_reset(struct sequencer_softc *sc)
 		midiseq_reset(md);
 		for (chn = 0; chn < MAXCHAN; chn++) {
 			midiseq_ctlchange(md, chn, &SEQ_MK_CHN(CTL_CHANGE,
-			    .controller=MIDI_CTRL_ALLOFF));
+			    .controller=MIDI_CTRL_NOTES_OFF));
 			midiseq_ctlchange(md, chn, &SEQ_MK_CHN(CTL_CHANGE,
 			    .controller=MIDI_CTRL_RESET));
 			midiseq_pitchbend(md, chn, &SEQ_MK_CHN(PITCH_BEND,
@@ -850,13 +876,14 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 	int ticks;
 
 	t = &sc->timer;
-	t->last = divs;
-	usec = (long long)divs * (long long)t->tick; /* convert to usec */
+	t->divs_lastevent = divs;
+	divs -= t->divs_lastchange;
+	usec = (long long)divs * (long long)t->usperdiv; /* convert to usec */
 	when.tv_sec = usec / 1000000;
 	when.tv_usec = usec % 1000000;
-	DPRINTFN(4, ("seq_timer_waitabs: divs=%d, sleep when=%ld.%06ld", divs,
-		     when.tv_sec, when.tv_usec));
-	ADDTIMEVAL(&when, &t->start); /* abstime for end */
+	DPRINTFN(4, ("seq_timer_waitabs: adjdivs=%d, sleep when=%ld.%06ld",
+	             divs, when.tv_sec, when.tv_usec));
+	ADDTIMEVAL(&when, &t->reftime); /* abstime for end */
 	ticks = hzto(&when);
 	DPRINTFN(4, (" when+start=%ld.%06ld, tick=%d\n",
 		     when.tv_sec, when.tv_usec, ticks));
@@ -889,42 +916,48 @@ seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 	error = 0;
 	switch(b->timing.op) {
 	case TMR_WAIT_REL:
-		seq_timer_waitabs(sc, b->t_WAIT_REL.divisions + t->last);
+		seq_timer_waitabs(sc,
+		                  b->t_WAIT_REL.divisions + t->divs_lastevent);
 		break;
 	case TMR_WAIT_ABS:
 		seq_timer_waitabs(sc, b->t_WAIT_ABS.divisions);
 		break;
 	case TMR_START:
-		microtime(&t->start);
+		microtime(&t->reftime);
+		t->divs_lastevent = t->divs_lastchange = 0;
 		t->running = 1;
 		break;
 	case TMR_STOP:
-		microtime(&t->stop);
+		microtime(&t->stoptime);
 		t->running = 0;
 		break;
 	case TMR_CONTINUE:
+		if (t->running)
+			break;
 		microtime(&when);
-		SUBTIMEVAL(&when, &t->stop);
-		ADDTIMEVAL(&t->start, &when);
+		SUBTIMEVAL(&when, &t->stoptime);
+		ADDTIMEVAL(&t->reftime, &when);
 		t->running = 1;
 		break;
 	case TMR_TEMPO:
 		/* bpm is unambiguously MIDI clocks per minute / 24 */
 		/* (24 MIDI clocks are usually but not always a quarter note) */
 		if (b->t_TEMPO.bpm < 8) /* where are these limits specified? */
-			t->tempo = 8;
+			t->tempo_beatpermin = 8;
 		else if (b->t_TEMPO.bpm > 360) /* ? */
-			t->tempo = 360;
+			t->tempo_beatpermin = 360;
 		else
-			t->tempo = b->t_TEMPO.bpm;
-		RECALC_TICK(t);
+			t->tempo_beatpermin = b->t_TEMPO.bpm;
+		t->divs_lastchange = t->divs_lastevent;
+		microtime(&t->reftime);
+		RECALC_USPERDIV(t);
 		break;
 	case TMR_ECHO:
 		error = seq_input_event(sc, b);
 		break;
 	case TMR_RESET:
-		t->last = 0;
-		microtime(&t->start);
+		t->divs_lastevent = t->divs_lastchange = 0;
+		microtime(&t->reftime);
 		break;
 	case TMR_SPP:
 	case TMR_TIMESIG:
