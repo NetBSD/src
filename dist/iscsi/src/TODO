@@ -33,3 +33,5 @@ clean up IPv6
 add socklen_t awareness
 add uuid
 Solaris initiator compatibility
+fix 64-byte swapping macros
+add reservations - RESERVE_6 and RELEASE_6 done

@@ -62,11 +62,11 @@
 int 
 iscsi_task_cmd_encap(uint8_t *header, iscsi_task_cmd_t * cmd)
 {
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %i\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %d\n", cmd->immediate);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Function:  %u\n", cmd->function);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:       %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Ref Tag:   0x%x\n", cmd->ref_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Ref Tag:   %#x\n", cmd->ref_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:     %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN: %u\n", cmd->ExpStatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "RefCmdSN:  %u\n", cmd->RefCmdSN);
@@ -113,11 +113,11 @@ iscsi_task_cmd_decap(uint8_t *header, iscsi_task_cmd_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 40-43", *((uint32_t *) (void *) (header + 40)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %i\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %d\n", cmd->immediate);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Function:  %u\n", cmd->function);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:       %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Ref Tag:   0x%x\n", cmd->ref_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Ref Tag:   %#x\n", cmd->ref_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:     %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN: %u\n", cmd->ExpStatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "RefCmdSN:  %u\n", cmd->RefCmdSN);
@@ -138,7 +138,7 @@ iscsi_task_rsp_encap(uint8_t *header, iscsi_task_rsp_t * rsp)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Response:  %u\n", rsp->response);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:    %u\n", rsp->length);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:    %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:  %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:  %u\n", rsp->MaxCmdSN);
@@ -182,7 +182,7 @@ iscsi_task_rsp_decap(uint8_t *header, iscsi_task_rsp_t * rsp)
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Response:  %u\n", rsp->response);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:       %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:    %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:  %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:  %u\n", rsp->MaxCmdSN);
@@ -200,11 +200,11 @@ iscsi_nop_out_encap(uint8_t *header, iscsi_nop_out_args_t * cmd)
 
 	uint32_t        length;
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %i\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %d\n", cmd->immediate);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:        %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:    %u\n", cmd->ExpStatSN);
 
@@ -249,11 +249,11 @@ iscsi_nop_out_decap(uint8_t *header, iscsi_nop_out_args_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 40-43", *((uint32_t *) (void *) (header + 40)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %i\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %d\n", cmd->immediate);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:        %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:    %u\n", cmd->ExpStatSN);
 
@@ -271,8 +271,8 @@ iscsi_nop_in_encap(uint8_t *header, iscsi_nop_in_args_t * cmd)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:       %u\n", cmd->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:     %u\n", cmd->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:     %u\n", cmd->MaxCmdSN);
@@ -320,8 +320,8 @@ iscsi_nop_in_decap(uint8_t *header, iscsi_nop_in_args_t * cmd)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:       %u\n", cmd->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:     %u\n", cmd->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:     %u\n", cmd->MaxCmdSN);
@@ -337,13 +337,13 @@ iscsi_text_cmd_encap(uint8_t *header, iscsi_text_cmd_args_t * cmd)
 {
 	uint32_t        length;
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %i\n", cmd->immediate);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %i\n", cmd->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %i\n", cmd->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %d\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %d\n", cmd->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %d\n", cmd->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:        %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:    %u\n", cmd->ExpStatSN);
 
@@ -397,13 +397,13 @@ iscsi_text_cmd_decap(uint8_t *header, iscsi_text_cmd_args_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 40-43", *((uint32_t *) (void *) (header + 40)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %i\n", cmd->immediate);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %i\n", cmd->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %i\n", cmd->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:    %d\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %d\n", cmd->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %d\n", cmd->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:        %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:    %u\n", cmd->ExpStatSN);
 
@@ -419,12 +419,12 @@ iscsi_text_rsp_encap(uint8_t *header, iscsi_text_rsp_args_t * rsp)
 {
 	uint32_t        length;
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %i\n", rsp->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %i\n", rsp->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %d\n", rsp->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %d\n", rsp->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", rsp->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", rsp->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", rsp->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", rsp->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", rsp->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:       %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:     %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:     %u\n", rsp->MaxCmdSN);
@@ -475,12 +475,12 @@ iscsi_text_rsp_decap(uint8_t *header, iscsi_text_rsp_args_t * rsp)
 	RETURN_NOT_EQUAL("Bytes 40-43", *((uint32_t *) (void *) (header + 40)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %i\n", rsp->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %i\n", rsp->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:        %d\n", rsp->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:     %d\n", rsp->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:       %u\n", rsp->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", rsp->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", rsp->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", rsp->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", rsp->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:       %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:     %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:     %u\n", rsp->MaxCmdSN);
@@ -497,8 +497,8 @@ iscsi_login_cmd_encap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 {
 	uint32_t        length;
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %i\n", cmd->transit);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %i\n", cmd->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %d\n", cmd->transit);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %d\n", cmd->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CSG:               %u\n", cmd->csg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "NSG:               %u\n", cmd->nsg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Version_min:       %u\n", cmd->version_min);
@@ -507,7 +507,7 @@ iscsi_login_cmd_encap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ISID:              %" PRIu64 "\n", cmd->isid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TSIH:              %hu\n", cmd->tsih);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", cmd->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CID:               %hu\n", cmd->cid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:             %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:         %u\n", cmd->ExpStatSN);
@@ -559,8 +559,8 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	cmd->CmdSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 24)));	/* CmdSN  */
 	cmd->ExpStatSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 28)));	/* ExpStatSN */
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %i\n", cmd->transit);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %i\n", cmd->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %d\n", cmd->transit);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %d\n", cmd->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CSG:               %u\n", cmd->csg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "NSG:               %u\n", cmd->nsg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Version_min:       %u\n", cmd->version_min);
@@ -569,7 +569,7 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ISID:              %" PRIu64 "\n", cmd->isid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TSIH:              %hu\n", cmd->tsih);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", cmd->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CID:               %hu\n", cmd->cid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:             %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:         %u\n", cmd->ExpStatSN);
@@ -600,8 +600,8 @@ int
 iscsi_login_rsp_encap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 {
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %i\n", rsp->transit);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %i\n", rsp->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %d\n", rsp->transit);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %d\n", rsp->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CSG:               %u\n", rsp->csg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "NSG:               %u\n", rsp->nsg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Version_max:       %u\n", rsp->version_max);
@@ -610,7 +610,7 @@ iscsi_login_rsp_encap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", rsp->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ISID:              %" PRIu64 "\n", rsp->isid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TSIH:              %u\n", rsp->tsih);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:            %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:          %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:          %u\n", rsp->MaxCmdSN);
@@ -670,8 +670,8 @@ iscsi_login_rsp_decap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	rsp->status_class = header[36];	/* Status-Class */
 	rsp->status_detail = header[37];	/* Status-Detail */
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %i\n", rsp->transit);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %i\n", rsp->cont);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transit:           %d\n", rsp->transit);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Continue:          %d\n", rsp->cont);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CSG:               %u\n", rsp->csg);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "NSG:               %u\n", rsp->nsg);
 
@@ -681,7 +681,7 @@ iscsi_login_rsp_decap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", rsp->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ISID:              %" PRIu64 "\n", rsp->isid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TSIH:              %u\n", rsp->tsih);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:            %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:          %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:          %u\n", rsp->MaxCmdSN);
@@ -706,9 +706,9 @@ int
 iscsi_logout_cmd_encap(uint8_t *header, iscsi_logout_cmd_args_t * cmd)
 {
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %i\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %d\n", cmd->immediate);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Reason:    %u\n", cmd->reason);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:  0x%x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:  %#x\n", cmd->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CID:       %hu\n", cmd->cid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:     %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN: %u\n", cmd->ExpStatSN);
@@ -741,9 +741,9 @@ iscsi_logout_cmd_decap(uint8_t *header, iscsi_logout_cmd_args_t * cmd)
 	cmd->CmdSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 24)));	/* CmdSN */
 	cmd->ExpStatSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 28)));	/* ExpStatSN */
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %i\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate: %d\n", cmd->immediate);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Reason:    %u\n", cmd->reason);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:  0x%x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:  %#x\n", cmd->tag);
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CID:       %hu\n", cmd->cid);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:     %u\n", cmd->CmdSN);
@@ -775,7 +775,7 @@ iscsi_logout_rsp_encap(uint8_t *header, iscsi_logout_rsp_args_t * rsp)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Response:    %u\n", rsp->response);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:      %u\n", rsp->length);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:    0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:    %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:      %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:    %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:    %u\n", rsp->MaxCmdSN);
@@ -826,7 +826,7 @@ iscsi_logout_rsp_decap(uint8_t *header, iscsi_logout_rsp_args_t * rsp)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Response:    %u\n", rsp->response);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Length:      %u\n", rsp->length);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:    0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:    %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:      %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:    %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:    %u\n", rsp->MaxCmdSN);
@@ -844,19 +844,19 @@ int
 iscsi_scsi_cmd_encap(uint8_t *header, iscsi_scsi_cmd_args_t * cmd)
 {
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:         %i\n", cmd->immediate);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %i\n", cmd->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Input:             %i\n", cmd->input);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Output:            %i\n", cmd->output);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ATTR:              %i\n", cmd->attr);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:         %d\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %d\n", cmd->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Input:             %d\n", cmd->input);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Output:            %d\n", cmd->output);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ATTR:              %d\n", cmd->attr);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TotalAHSLength:    %u\n", cmd->ahs_len);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:               %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", cmd->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Length:   %u\n", cmd->trans_len);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:             %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:         %u\n", cmd->ExpStatSN);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CDB:               0x%x\n", cmd->cdb[0]);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CDB:               %#x\n", cmd->cdb[0]);
 
 	(void) memset(header, 0x0, ISCSI_HEADER_LEN);
 
@@ -913,19 +913,19 @@ iscsi_scsi_cmd_decap(uint8_t *header, iscsi_scsi_cmd_args_t * cmd)
 	RETURN_NOT_EQUAL("Byte 2", header[2], 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Byte 3", header[3], 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:         %i\n", cmd->immediate);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %i\n", cmd->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Input:             %i\n", cmd->input);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Output:            %i\n", cmd->output);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ATTR:              %i\n", cmd->attr);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Immediate:         %d\n", cmd->immediate);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %d\n", cmd->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Input:             %d\n", cmd->input);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Output:            %d\n", cmd->output);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ATTR:              %d\n", cmd->attr);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TotalAHSLength:    %u\n", cmd->ahs_len);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:               %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", cmd->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Length:   %u\n", cmd->trans_len);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:             %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:         %u\n", cmd->ExpStatSN);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CDB:               0x%x\n", cmd->cdb[0]);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CDB:               %#x\n", cmd->cdb[0]);
 
 	return 0;
 }
@@ -938,14 +938,14 @@ int
 iscsi_scsi_rsp_encap(uint8_t *header, iscsi_scsi_rsp_t * rsp)
 {
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Overflow:       %i\n", rsp->bidi_overflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Underflow:      %i\n", rsp->bidi_underflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:            %i\n", rsp->overflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:           %i\n", rsp->underflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Overflow:       %d\n", rsp->bidi_overflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Underflow:      %d\n", rsp->bidi_underflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:            %d\n", rsp->overflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:           %d\n", rsp->underflow);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "iSCSI Response:      %u\n", rsp->response);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "SCSI Status:         %u\n", rsp->status);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength:   %u\n", rsp->length);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:            0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:            %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:              %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:            %u\n", rsp->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:            %u\n", rsp->MaxCmdSN);
@@ -1014,14 +1014,14 @@ iscsi_scsi_rsp_decap(uint8_t *header, iscsi_scsi_rsp_t * rsp)
 	RETURN_NOT_EQUAL("bidi_underflow", rsp->bidi_underflow, 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("overflow", rsp->overflow, 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Overflow:       %i\n", rsp->bidi_overflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Underflow:      %i\n", rsp->bidi_underflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:            %i\n", rsp->overflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:           %i\n", rsp->underflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Overflow:       %d\n", rsp->bidi_overflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Bidi Underflow:      %d\n", rsp->bidi_underflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:            %d\n", rsp->overflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:           %d\n", rsp->underflow);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "iSCSI Response:      %u\n", rsp->response);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "SCSI Status:         %u\n", rsp->status);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength:   %u\n", rsp->length);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:            0x%x\n", rsp->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:            %#x\n", rsp->tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Residual Count:      %u\n", rsp->basic_res_cnt);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:              %u\n", rsp->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:            %u\n", rsp->ExpCmdSN);
@@ -1044,8 +1044,8 @@ iscsi_r2t_encap(uint8_t *header, iscsi_r2t_t * cmd)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "TotalAHSLength:    %u\n", cmd->AHSlength);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:       %u\n", cmd->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:     %u\n", cmd->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:     %u\n", cmd->MaxCmdSN);
@@ -1098,8 +1098,8 @@ iscsi_r2t_decap(uint8_t *header, iscsi_r2t_t * cmd)
 
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "AHSLength:    %u\n", cmd->AHSlength);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:          %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: 0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Tag:          %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag: %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:       %u\n", cmd->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:     %u\n", cmd->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:     %u\n", cmd->MaxCmdSN);
@@ -1120,8 +1120,8 @@ iscsi_write_data_encap(uint8_t *header, iscsi_write_data_t * cmd)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:              %u\n", cmd->final);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength:  %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:                %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:           0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag:       0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:           %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag:       %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:          %u\n", cmd->ExpStatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSN:             %u\n", cmd->DataSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Buffer Offset:      %u\n", cmd->offset);
@@ -1168,8 +1168,8 @@ iscsi_write_data_decap(uint8_t *header, iscsi_write_data_t * cmd)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:              %u\n", cmd->final);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength:  %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:                %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:           0x%x\n", cmd->tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag:       0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:           %#x\n", cmd->tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag:       %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:          %u\n", cmd->ExpStatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSN:             %u\n", cmd->DataSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Buffer Offset:      %u\n", cmd->offset);
@@ -1185,16 +1185,16 @@ int
 iscsi_read_data_encap(uint8_t *header, iscsi_read_data_t * cmd)
 {
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %i\n", cmd->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Acknowledge:       %i\n", cmd->ack);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:          %i\n", cmd->overflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:         %i\n", cmd->underflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "S_bit:             %i\n", cmd->S_bit);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %d\n", cmd->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Acknowledge:       %d\n", cmd->ack);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:          %d\n", cmd->overflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:         %d\n", cmd->underflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "S_bit:             %d\n", cmd->S_bit);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Status:            %u\n", cmd->status);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", cmd->length);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "LUN:               %" PRIu64 "\n", cmd->lun);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", cmd->task_tag);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag:      0x%x\n", cmd->transfer_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", cmd->task_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Transfer Tag:      %#x\n", cmd->transfer_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:            %u\n", cmd->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:          %u\n", cmd->ExpCmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "MaxCmdSN:          %u\n", cmd->MaxCmdSN);
@@ -1272,14 +1272,14 @@ iscsi_read_data_decap(uint8_t *header, iscsi_read_data_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 12-15", *((uint32_t *) (void *) (header + 12)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 44-47", *((uint32_t *) (void *) (header + 44)), 0, NO_CLEANUP, 1);
 
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %i\n", cmd->final);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Acknowledge:       %i\n", cmd->ack);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:          %i\n", cmd->overflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:         %i\n", cmd->underflow);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "S_bit:             %i\n", cmd->S_bit);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Final:             %d\n", cmd->final);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Acknowledge:       %d\n", cmd->ack);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Overflow:          %d\n", cmd->overflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Underflow:         %d\n", cmd->underflow);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "S_bit:             %d\n", cmd->S_bit);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Status:            %u\n", cmd->status);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "DataSegmentLength: %u\n", cmd->length);
-	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          0x%x\n", cmd->task_tag);
+	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Task Tag:          %#x\n", cmd->task_tag);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Residual Count:    %u\n", cmd->res_count);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "StatSN:            %u\n", cmd->StatSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpCmdSN:          %u\n", cmd->ExpCmdSN);
