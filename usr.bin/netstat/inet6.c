@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.38 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: inet6.c,v 1.39 2006/05/31 13:26:17 rpaulo Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.38 2006/05/28 16:51:40 elad Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.39 2006/05/31 13:26:17 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ extern char *tcpstates[];
 #include <netdb.h>
 
 #include <err.h>
+#include <errno.h>
 #include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -247,8 +248,12 @@ ip6protopr(off, name)
 			err(1, "asprintf");
 
 		/* get dynamic pcblist node */
-		if (sysctlnametomib(mibname, mib, &namelen) == -1)
+		if (sysctlnametomib(mibname, mib, &namelen) == -1) {
+			if (errno == ENOENT)
+				return;
+
 			err(1, "sysctlnametomib");
+		}
 
 		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
 		    NULL, 0) == -1)
