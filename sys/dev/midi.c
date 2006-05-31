@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.18 2006/05/30 23:15:05 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.19 2006/05/31 03:17:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.18 2006/05/30 23:15:05 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.19 2006/05/31 03:17:06 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -253,7 +253,9 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 			sc->dev.dv_xname, "rcv incomplete msgs");
 	}
 	
-	printf(": %s\n", mi.name);
+	printf(": %s%s\n", mi.name,
+	    (sc->props & (MIDI_PROP_OUT_INTR|MIDI_PROP_NO_OUTPUT)) ?
+	    "" : " (cpu-intensive output)");
 }
 
 void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw) {

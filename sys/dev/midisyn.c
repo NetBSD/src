@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.10 2006/05/20 04:31:59 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.11 2006/05/31 03:17:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.10 2006/05/20 04:31:59 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.11 2006/05/31 03:17:06 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -136,6 +136,17 @@ midisyn_getinfo(void *addr, struct midi_info *mi)
 	midisyn *ms = addr;
 
 	mi->name = ms->name;
+	/*
+	 * I was going to add a property here to suppress midi(4)'s warning
+	 * about an output device that uses no transmit interrupt, on the
+	 * assumption that as an onboard synth we handle "output" internally
+	 * with nothing like the 320 us per byte busy wait of a dumb UART.
+	 * Then I noticed that opl (at least as currently implemented) seems
+	 * to need 40 us busy wait to set each register on an OPL2, and sets
+	 * about 21 registers for every note-on. (Half of that is patch loading
+	 * and could probably be reduced by different management of voices and
+	 * patches.) For now I won't bother suppressing that warning....
+	 */
 	mi->props = 0;
 	
 	midi_register_hw_if_ext(&midisyn_hw_if_ext);
