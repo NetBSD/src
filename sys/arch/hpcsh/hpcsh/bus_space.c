@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2006/05/31 22:40:38 uwe Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13 2006/05/31 22:48:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2006/05/31 22:40:38 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2006/05/31 22:48:48 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -99,7 +99,7 @@ static void _bus_space_free(void *, bus_space_handle_t, bus_size_t);
 static void *_bus_space_vaddr(void *, bus_space_handle_t);
 
 static struct hpcsh_bus_space __default_bus_space = {
-	.hbs_extent	= 0,
+	.hbs_extent	= NULL,
 	.hbs_map	= _bus_space_map,
 	.hbs_unmap	= _bus_space_unmap,
 	.hbs_subregion	= _bus_space_subregion,
@@ -145,7 +145,7 @@ bus_space_tag_t
 bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 		 bus_addr_t addr, bus_size_t size)
 {
-	if (hbs == 0)
+	if (hbs == NULL)
 		hbs = malloc(sizeof(*hbs), M_DEVBUF, M_NOWAIT);
 	KASSERT(hbs);
 
@@ -161,7 +161,7 @@ bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 	} else {
 		hbs->hbs_extent = extent_create(name, addr, addr + size - 1,
 						M_DEVBUF, 0, 0, EX_NOWAIT);
-		if (hbs->hbs_extent == 0) {
+		if (hbs->hbs_extent == NULL) {
 			panic("%s:: unable to create bus_space for "
 			      "0x%08lx-%#lx", __FUNCTION__, addr, size);
 		}
@@ -176,7 +176,7 @@ bus_space_destroy(bus_space_tag_t t)
 	struct hpcsh_bus_space *hbs = t;
 	struct extent *ex = hbs->hbs_extent;
 
-	if (ex != 0)
+	if (ex != NULL)
 		extent_destroy(ex);
 
 	free(t, M_DEVBUF);
@@ -191,7 +191,7 @@ _bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	struct extent *ex = hbs->hbs_extent;
 	int error;
 
-	if (ex == 0) {
+	if (ex == NULL) {
 		*bshp = (bus_space_handle_t)(bpa + hbs->hbs_base_addr);
 		return (0);
 	}
@@ -229,7 +229,7 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	u_long bpa, base;
 	int error;
 
-	if (ex == 0) {
+	if (ex == NULL) {
 		*bshp = *bpap = rstart + hbs->hbs_base_addr;
 		return (0);
 	}
@@ -250,7 +250,7 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 
 	*bshp = (bus_space_handle_t)bpa;
 
-	if (bpap)
+	if (bpap != NULL)
 		*bpap = bpa;
 
 	return (0);
@@ -262,7 +262,7 @@ _bus_space_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 	struct hpcsh_bus_space *hbs = t;
 	struct extent *ex = hbs->hbs_extent;
 	
-	if (ex != 0)
+	if (ex != NULL)
 		_bus_space_unmap(t, bsh, size);
 }
 
@@ -273,7 +273,7 @@ _bus_space_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	struct extent *ex = hbs->hbs_extent;
 	int error;
 
-	if (ex == 0)
+	if (ex == NULL)
 		return;
 
 	error = extent_free(ex, bsh, size, EX_NOWAIT);
