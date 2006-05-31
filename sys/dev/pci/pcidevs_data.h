@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.787 2006/05/19 01:24:46 markd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.788 2006/05/31 21:43:25 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.787 2006/05/19 01:22:58 markd Exp
+ *	NetBSD: pcidevs,v 1.788 2006/05/31 21:42:35 riz Exp
  */
 
 /*
@@ -5402,6 +5402,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
 	    "DGE-528T Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T,
+	    "DGE-560T Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
+	    "DGE-560T_2 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
@@ -11468,4 +11476,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2276;
+const int pci_nproducts = 2278;
