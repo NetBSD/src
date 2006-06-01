@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.37 2006/04/12 03:41:51 martti Exp $
+# $NetBSD: XEN0,v 1.38 2006/06/01 19:39:59 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -18,7 +18,7 @@ options 	DOM0OPS
 #options 	MCLSHIFT=12
 
 options 	I686_CPU
-makeoptions	COPTS="-O2 -mcpu=i686 -march=i686"
+makeoptions	COPTS="-O2 -march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
