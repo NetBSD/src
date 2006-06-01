@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.8 2006/04/24 19:38:21 kardel Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.9 2006/06/01 23:19:21 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.8 2006/04/24 19:38:21 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.9 2006/06/01 23:19:21 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -25,6 +25,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.8 2006/04/24 19:38:21 kardel E
 #include <sys/timepps.h>
 #include <sys/timetc.h>
 #include <sys/timex.h>
+#include <sys/evcnt.h>
 
 /*
  * maximum name length for TC names in sysctl interface
@@ -111,6 +112,7 @@ SYSCTL_NODE(_kern, OID_AUTO, timecounter, CTLFLAG_RW, 0, "");
 #endif /* __FreeBSD__ */
 
 static int timestepwarnings;
+
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
     &timestepwarnings, 0, "");
