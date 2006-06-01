@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.61.2.1 2006/04/22 11:39:58 simonb Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.61.2.2 2006/06/01 22:38:06 kardel Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.61.2.1 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.61.2.2 2006/06/01 22:38:06 kardel Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.61.2.1 2006/04/22 11:39:58 simonb 
 #include <sys/verified_exec.h>
 #endif /* VERIFIED_EXEC */
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -1310,7 +1311,9 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (CURTAIN(l->l_proc->p_ucred->cr_uid, fp->f_cred->cr_uid))
+		if (kauth_authorize_process(l->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
+		    NULL) != 0)
 			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
@@ -2028,8 +2031,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (CURTAIN(l->l_proc->p_ucred->cr_uid,
-				    fp->f_cred->cr_uid))
+			if (kauth_authorize_process(l->l_proc->p_cred,
+			    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
+			    NULL) != 0)
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
@@ -2055,8 +2059,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
 				continue;
-			if (CURTAIN(l->l_proc->p_ucred->cr_uid,
-				    p->p_ucred->cr_uid))
+			if (kauth_authorize_process(l->l_proc->p_cred,
+			    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
+			    NULL, NULL) != 0)
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2110,8 +2115,8 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 	kp->ki_msgcount =	fp->f_msgcount;
 	kp->ki_usecount =	fp->f_usecount;
 	kp->ki_fucred =		PTRTOUINT64(fp->f_cred);
-	kp->ki_fuid =		fp->f_cred->cr_uid;
-	kp->ki_fgid =		fp->f_cred->cr_gid;
+	kp->ki_fuid =		kauth_cred_geteuid(fp->f_cred);
+	kp->ki_fgid =		kauth_cred_getegid(fp->f_cred);
 	kp->ki_fops =		PTRTOUINT64(fp->f_ops);
 	kp->ki_foffset =	fp->f_offset;
 	kp->ki_fdata =		PTRTOUINT64(fp->f_data);
@@ -2188,7 +2193,9 @@ again:
 		if (p->p_stat == SIDL)
 			continue;
 
-		if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
+		if (kauth_authorize_process(l->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
+		    NULL, NULL) != 0)
 			continue;
 
 		/*
@@ -2229,22 +2236,22 @@ again:
 			break;
 
 		case KERN_PROC_UID:
-			if (p->p_ucred->cr_uid != (uid_t)arg)
+			if (kauth_cred_geteuid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_RUID:
-			if (p->p_cred->p_ruid != (uid_t)arg)
+			if (kauth_cred_getuid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_GID:
-			if (p->p_ucred->cr_gid != (uid_t)arg)
+			if (kauth_cred_getegid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_RGID:
-			if (p->p_cred->p_rgid != (uid_t)arg)
+			if (kauth_cred_getgid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
@@ -2359,16 +2366,17 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid)) {
+	if (kauth_authorize_process(l->l_proc->p_cred,
+	    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred, NULL, NULL) != 0) {
 		error = EPERM;
 		goto out_locked;
 	}
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (up->p_ucred->cr_uid != 0) {
-			if (up->p_cred->p_ruid != p->p_cred->p_ruid ||
-			    up->p_cred->p_ruid != p->p_cred->p_svuid) {
+		if (kauth_cred_geteuid(up->p_cred) != 0) {
+			if (kauth_cred_getuid(up->p_cred) != kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(up->p_cred) != kauth_cred_getsvuid(p->p_cred)) {
 				error = EPERM;
 				goto out_locked;
 			}
@@ -2856,16 +2864,16 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	ki->p_tpgid = NO_PGID;	/* may be changed if controlling tty below */
 
-	ki->p_uid = p->p_ucred->cr_uid;
-	ki->p_ruid = p->p_cred->p_ruid;
-	ki->p_gid = p->p_ucred->cr_gid;
-	ki->p_rgid = p->p_cred->p_rgid;
-	ki->p_svuid = p->p_cred->p_svuid;
-	ki->p_svgid = p->p_cred->p_svgid;
+	ki->p_uid = kauth_cred_geteuid(p->p_cred);
+	ki->p_ruid = kauth_cred_getuid(p->p_cred);
+	ki->p_gid = kauth_cred_getegid(p->p_cred);
+	ki->p_rgid = kauth_cred_getgid(p->p_cred);
+	ki->p_svuid = kauth_cred_getsvuid(p->p_cred);
+	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 
-	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
-	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
-	ki->p_ngroups = p->p_cred->pc_ucred->cr_ngroups;
+	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
+	kauth_cred_getgroups(p->p_cred, ki->p_groups,
+	    min(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])));
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
@@ -3041,11 +3049,15 @@ fill_eproc(struct proc *p, struct eproc *ep)
 {
 	struct tty *tp;
 	struct lwp *l;
+	struct pcred pc;
+	struct ucred uc;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
-	ep->e_pcred = *p->p_cred;
-	ep->e_ucred = *p->p_ucred;
+	kauth_cred_topcred(p->p_cred, &pc);
+	kauth_cred_toucred(p->p_cred, &uc);
+	ep->e_pcred = pc;
+	ep->e_ucred = uc;
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ep->e_vm.vm_rssize = 0;
 		ep->e_vm.vm_tsize = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.43.6.1 2006/04/22 11:40:06 simonb Exp $	*/
+/*	$NetBSD: if_media.h,v 1.43.6.2 2006/06/01 22:38:37 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -237,6 +237,11 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_FH	0x00040000	/* 2 GHz, GFSK mode */
 
 /*
+ * Common Access Redundancy Protocol
+ */
+#define	IFM_CARP		0x000000c0
+
+/*
  * Shared media sub-types
  */
 #define	IFM_AUTO	0		/* Autoselect best media */
@@ -332,6 +337,7 @@ struct ifmedia_description {
 	{ IFM_TOKEN,			"token" },			\
 	{ IFM_FDDI,			"FDDI" },			\
 	{ IFM_IEEE80211,		"IEEE802.11" },			\
+	{ IFM_CARP,			"CARP" },			\
 	{ 0, NULL },							\
 }
 
@@ -574,6 +580,9 @@ struct ifmedia_status_description {
 									\
 	{ IFM_IEEE80211,	IFM_AVALID,	IFM_ACTIVE,		\
 	  { "no network", "active" } },					\
+									\
+	{ IFM_CARP,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "backup", "master" } },					\
 									\
 	{ 0,			0,		0,			\
 	  { NULL, NULL } },						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.26 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.26.6.1 2006/06/01 22:37:51 kardel Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.26 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.26.6.1 2006/06/01 22:37:51 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.26 2005/12/11 12:24:25 christos Exp $
 #include <sys/queue.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <fs/adosfs/adosfs.h>
 
 void adosfs_init __P((void));
@@ -67,7 +68,7 @@ int adosfs_unmount __P((struct mount *, int, struct lwp *));
 int adosfs_root __P((struct mount *, struct vnode **));
 int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int adosfs_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int adosfs_vptofh __P((struct vnode *, struct fid *));
@@ -147,12 +148,12 @@ adosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_cred_geteuid(p->p_cred) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
 		if (error) {
 			vput(devvp);
 			return (error);
@@ -198,7 +199,7 @@ adosfs_mountfs(devvp, mp, l)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0))
 	    != 0)
 		return (error);
 
@@ -769,7 +770,7 @@ int
 adosfs_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	struct lwp *l;
 {
 #ifdef ADOSFS_DIAGNOSTIC

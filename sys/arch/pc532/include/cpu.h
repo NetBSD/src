@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44.6.1 2006/06/01 22:35:08 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,7 +65,7 @@ extern struct cpu_info cpu_info_store;
  * referenced in generic code
  */
 #define	cpu_proc_fork(p1, p2)		/* nothing */
-#define	cpu_swapin(p)           	/* nothing */
+#define	cpu_swapin(p)			/* nothing */
 #define	cpu_number()			0
 
 /*
@@ -107,28 +107,27 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(n)		delay(n)
-void	delay __P((int));
 
 /* ieee_handler.c */
-int	ieee_handle_exception __P((struct lwp *));
+int	ieee_handle_exception(struct lwp *);
 
 /* locore.s */
-void	delay __P((int));
 struct pcb;
-void	proc_trampoline __P((void));
-int	ram_size __P((void *));
-void	restore_fpu_context __P((struct pcb *));
-void	save_fpu_context __P((struct pcb *));
+void	delay(int);
+void	proc_trampoline(void);
+int	ram_size(void *);
+void	restore_fpu_context(struct pcb *);
+void	save_fpu_context(struct pcb *);
 
 /* machdep.c */
-void	dumpconf __P((void));
-void	softnet __P((void *));
+void	dumpconf(void);
+void	softnet(void *);
 
 /* mainbus.c */
-void	icu_init __P((u_char *));
+void	icu_init(u_char *);
 
 /* vm_machdep.c */
-int	kvtop __P((caddr_t));
+int	kvtop(caddr_t);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36.6.1 2006/04/22 11:37:53 simonb Exp $
+#	$NetBSD: INSTALL,v 1.36.6.2 2006/06/01 22:35:16 kardel Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -12,7 +12,8 @@ makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3500	# save space
+options		MEMORY_DISK_SERVER=0	# don't need for install
 
 maxusers	8
 
@@ -38,7 +39,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
@@ -46,6 +47,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
+options		NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -70,7 +72,6 @@ options 	PCDISPLAY_SOFTCURSOR
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
 
-
 #
 # Device configuration
 #
@@ -78,15 +79,12 @@ config	netbsd	root on ? type ?
 mainbus0 at root
 cpu0	at mainbus0
 
-
 # Basic Bus Support
 
 # PCI bus support
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
-
-options 	PCI_NETBSD_CONFIGURE
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -177,9 +175,6 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # IDE controller found on most Power Personal machines
 wdc*	at pnpbus?
 
-# ISA Plug-and-Play IDE controllers
-#wdc*	at isapnp?
-
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
 
@@ -246,6 +241,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+# Pull in optional local configuration
+include "arch/prep/conf/INSTALL.local"
 
 # Pseudo-Devices
 

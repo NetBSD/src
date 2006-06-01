@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.45.6.1 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.45.6.2 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.45.6.1 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.45.6.2 2006/06/01 22:38:09 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.45.6.1 2006/04/22 11:39:59 simonb E
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -56,7 +57,7 @@ struct	fileops socketops = {
 
 /* ARGSUSED */
 int
-soo_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+soo_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
@@ -66,7 +67,7 @@ soo_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 
 /* ARGSUSED */
 int
-soo_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+soo_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;

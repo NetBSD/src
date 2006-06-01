@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_decluster.h,v 1.6.6.1 2006/06/01 22:37:32 kardel Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -101,13 +101,13 @@ rf_ConfigureDeclusteredDS(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 
 void
 rf_MapSectorDeclustered(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void
 rf_MapParityDeclustered(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void
 rf_IdentifyStripeDeclustered(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
+    RF_RowCol_t ** diskids);
 void
 rf_MapSIDToPSIDDeclustered(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
@@ -125,7 +125,7 @@ rf_decluster_adjust_params(RF_RaidLayout_t * layoutPtr,
 void
 rf_remap_to_spare_space(
     RF_RaidLayout_t * layoutPtr,
-    RF_DeclusteredConfigInfo_t * info, RF_RowCol_t row, RF_StripeNum_t FullTableID,
+    RF_DeclusteredConfigInfo_t * info, RF_StripeNum_t FullTableID,
     RF_StripeNum_t TableID, RF_SectorNum_t BlockID, RF_StripeNum_t base_suid,
     RF_StripeNum_t SpareRegion, RF_RowCol_t * outCol, RF_StripeNum_t * outSU);
 int     rf_SetSpareTable(RF_Raid_t * raidPtr, void *data);

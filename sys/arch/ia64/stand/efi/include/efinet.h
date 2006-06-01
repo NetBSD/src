@@ -1,4 +1,6 @@
-/*	$NetBSD: efinet.h,v 1.2.2.2 2006/04/22 11:37:38 simonb Exp $	*/
+/*	$NetBSD: efinet.h,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efinet.h,v 1.2 2002/05/19 03:17:20 marcel Exp $ */
+
 #ifndef _EFINET_H
 #define _EFINET_H
 

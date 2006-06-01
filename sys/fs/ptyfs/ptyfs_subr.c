@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.5.6.1 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.5.6.2 2006/06/01 22:37:52 kardel Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5.6.1 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5.6.2 2006/06/01 22:37:52 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5.6.1 2006/04/22 11:39:58 simonb Ex
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -129,7 +130,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		int error;
 		struct nameidata nd;
 		char ttyname[64];
-		struct ucred *cred;
+		kauth_cred_t cred;
 		struct vattr va;
 		/*
 		 * We support traditional ptys, so we copy the info
@@ -144,9 +145,9 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		     l);
 		if ((error = namei(&nd)) != 0)
 			goto out;
-		cred = crget();
+		cred = kauth_cred_alloc();
 		error = VOP_GETATTR(nd.ni_vp, &va, cred, l);
-		crfree(cred);
+		kauth_cred_free(cred);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		vrele(nd.ni_vp);
 		if (error)

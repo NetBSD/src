@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.45.4.1 2006/04/22 11:37:12 simonb Exp $
+# $NetBSD: INSTALL,v 1.45.4.2 2006/06/01 22:34:11 kardel Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.45.4.1 $"
+#ident 		"INSTALL-$Revision: 1.45.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -346,6 +346,7 @@ pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers

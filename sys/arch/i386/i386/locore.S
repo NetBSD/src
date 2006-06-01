@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37.2.1 2006/04/22 11:37:32 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.37.2.2 2006/06/01 22:34:50 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@
 	.globl	_C_LABEL(cpu)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
 	.globl	_C_LABEL(idt)
@@ -193,7 +193,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.long	0
+_C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 
 	.space 512
@@ -599,9 +599,9 @@ begin:
 
 	/* Set up bootstrap stack. */
 	leal	(PROC0STACK+KERNBASE)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0paddr)
-	leal	(USPACE-FRAMESIZE)(%eax),%esp
-	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	movl	%eax,_C_LABEL(proc0uarea)
+	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
+	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
 #if defined(MULTIBOOT)
@@ -773,8 +773,8 @@ NENTRY(switch_error)
 
 /*
  * void cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * process is the same as the old one, we short-circuit the context save and
+ * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
+ * lwp is the same as the old one, we short-circuit the context save and
  * restore.
  *
  * Note that the stack frame layout is known to "struct switchframe"

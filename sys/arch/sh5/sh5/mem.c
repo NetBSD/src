@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.6.1 2006/06/01 22:35:24 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.6.1 2006/06/01 22:35:24 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2005/12/11 12:19:02 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -215,7 +216,7 @@ mmmmap(dev, off, prot)
 	/* minor device 0 is physical memory */
 
 	if (off >= ctob(physmem) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return -1;
 	return sh5_btop(off);
 }

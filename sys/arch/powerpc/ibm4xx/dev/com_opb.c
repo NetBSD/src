@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.13.6.1 2006/04/22 11:37:53 simonb Exp $ */
+/* $NetBSD: com_opb.c,v 1.13.6.2 2006/06/01 22:35:15 kardel Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13.6.1 2006/04/22 11:37:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13.6.2 2006/06/01 22:35:15 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,20 +110,22 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	struct com_opb_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct opb_attach_args *oaa = aux;
+	prop_number_t freq;
 
 	sc->sc_iot = oaa->opb_bt;
 	sc->sc_iobase = oaa->opb_addr;
 
 	/* XXX console check */
 
-	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0,
-	    &sc->sc_ioh);
+	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0, &sc->sc_ioh);
 
-	if (devprop_get(&sc->sc_dev, "frequency",
-		     &sc->sc_frequency, sizeof(sc->sc_frequency), NULL) == -1) {
+	freq = prop_dictionary_get(device_properties(&sc->sc_dev), "frequency");
+	if (freq == NULL) {
 		printf(": unable to get frequency property\n");
 		return;
 	}
+	KASSERT(prop_object_type(freq) == PROP_TYPE_NUMBER);
+	sc->sc_frequency = (int) prop_number_integer_value(freq);
 
 	com_attach_subr(sc);
 
@@ -166,12 +168,14 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 void
 com_opb_device_register(struct device *dev, int frequency)
 {
-	int com_freq = frequency;
-
 	/* Set the frequency of the on-chip UART. */
-	if (devprop_set(dev, "frequency",
-		&com_freq, sizeof(com_freq), PROP_INT, 0) != 0)
+	prop_number_t pn = prop_number_create_integer(frequency);
+	KASSERT(pn != NULL);
+
+	if (prop_dictionary_set(device_properties(dev),
+				"frequency", pn) == FALSE) {
 		printf("WARNING: unable to set frequency "
 			"property for %s\n", dev->dv_xname);
-	return;
+	}
+	prop_object_release(pn);
 }

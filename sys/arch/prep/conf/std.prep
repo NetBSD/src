@@ -1,4 +1,4 @@
-#	$NetBSD: std.prep,v 1.9.6.1 2006/04/22 11:37:53 simonb Exp $
+#	$NetBSD: std.prep,v 1.9.6.2 2006/06/01 22:35:16 kardel Exp $
 #
 # standard, required NetBSD/prep 'options'
 
@@ -14,3 +14,4 @@ options 	EXEC_AOUT	# exec a.out binaries
 
 options 	INTSTK=0x2000
 options		PCKBCNOTEST	# 7043 and 7248 fail this test.
+options		PCI_NETBSD_CONFIGURE

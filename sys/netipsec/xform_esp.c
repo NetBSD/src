@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.7.6.1 2006/04/22 11:40:13 simonb Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.7.6.2 2006/06/01 22:39:03 kardel Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.7.6.1 2006/04/22 11:40:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.7.6.2 2006/06/01 22:39:03 kardel Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -634,7 +634,15 @@ DPRINTF(("esp_input_cb: %x %x\n", lastthree[0], lastthree[1]));
 	m_adj(m, -(lastthree[1] + 2));
 
 	/* Restore the Next Protocol field */
-	m_copyback(m, protoff, sizeof (u_int8_t), lastthree + 2);
+	m = m_copyback_cow(m, protoff, sizeof (u_int8_t), lastthree + 2,
+			   M_DONTWAIT);
+
+	if (m == NULL) {
+		espstat.esps_crypto++;
+		DPRINTF(("esp_input_cb: failed to allocate mbuf\n"));
+		error = ENOBUFS;
+		goto bad;
+	}
 
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
 

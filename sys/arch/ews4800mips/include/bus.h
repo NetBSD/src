@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.6.1 2006/04/22 11:37:26 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.6.2 2006/06/01 22:34:30 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2005 The NetBSD Foundation, Inc.
@@ -530,15 +530,17 @@ void bus_space_destroy(bus_space_tag_t);
 	(*(t)->ebs_vaddr)((t)->ebs_cookie, (h))
 
 /*
- * Bus barrier operations.  The ews4800mips does not currently require
- * barriers, but we must provide the flags to MI code.
+ * Bus read/write barrier methods.
+ *
+ *	void bus_space_barrier(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    bus_size_t len, int flags);
+ *
+ * On the MIPS, we just flush the write buffer.
  */
 #define	bus_space_barrier(t, h, o, l, f)				\
-({									\
-	wbflush();							\
-})
-
-
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f),	\
+	 wbflush()))
 #define	BUS_SPACE_BARRIER_READ	0x01
 #define	BUS_SPACE_BARRIER_WRITE	0x02
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5.4.1 2006/06/01 22:35:36 kardel Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2006/01/15 22:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.4.1 2006/06/01 22:35:36 kardel Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2006/01/15 22:09:51 bouyer Exp $
 #include <sys/buf.h>
 #include <sys/signal.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -362,7 +363,7 @@ i386_iopl(l, args, retval)
 	if (securelevel > 1)
 		return EPERM;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -425,7 +426,7 @@ i386_set_ioperm(l, args, retval)
 	if (securelevel > 1)
 		return EPERM;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -470,7 +471,7 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error != 0)
 		return error;
 

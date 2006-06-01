@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.21 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.21.6.1 2006/06/01 22:35:42 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.21 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.21.6.1 2006/06/01 22:35:42 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.21 2005/12/11 12:19:56 christos Ex
 #include <sys/syslog.h>
 #include <sys/stat.h>
 #include <sys/core.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -277,6 +278,6 @@ compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval)
 	ksi.ksi_signo = SCARG(uap, signum);
 	ksi.ksi_code = SI_USER;
 	ksi.ksi_pid = p->p_pid;
-	ksi.ksi_uid = p->p_ucred->cr_uid;
+	ksi.ksi_uid = kauth_cred_geteuid(p->p_cred);
 	return (killpg1(p, &ksi, SCARG(uap, pgid), 0));
 }

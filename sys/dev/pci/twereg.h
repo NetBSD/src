@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.12 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: twereg.h,v 1.12.6.1 2006/06/01 22:36:49 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 struct twe_sgb {
 	u_int32_t	tsg_address;
 	u_int32_t	tsg_length;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * Command block.  This is 512 (really 508) bytes in size, and must be
@@ -174,16 +174,16 @@ struct twe_cmd {
 		struct {
 			u_int32_t	lba;
 			struct	twe_sgb sgl[TWE_SG_SIZE];
-		} io __attribute__ ((packed));
+		} io __attribute__ ((__packed__));
 		struct {
 			struct	twe_sgb sgl[TWE_SG_SIZE];
-		} param  __attribute__ ((packed));
+		} param;
 		struct {
 			u_int32_t	response_queue_pointer;
-		} init_connection  __attribute__ ((packed));
-	} tc_args __attribute__ ((packed));
+		} init_connection  __attribute__ ((__packed__));
+	} tc_args;
 	int32_t		tc_pad;
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /* Get/set parameter block. */
 struct twe_param {
@@ -191,7 +191,7 @@ struct twe_param {
 	u_int8_t	tp_param_id;
 	u_int8_t	tp_param_size;
 	u_int8_t	tp_data[1];
-} __attribute__ ((packed));
+} __attribute__ ((__packed__));
 
 /*
  * From 3ware's documentation:

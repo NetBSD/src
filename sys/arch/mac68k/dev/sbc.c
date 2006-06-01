@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.49 2006/01/17 16:41:29 chs Exp $	*/
+/*	$NetBSD: sbc.c,v 1.49.4.1 2006/06/01 22:35:01 kardel Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.49 2006/01/17 16:41:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.49.4.1 2006/06/01 22:35:01 kardel Exp $");
 
 #include "opt_ddb.h"
 
@@ -274,8 +274,8 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 		goto interrupt;
 	}
 
-#define R4	*((u_int32_t *)data)++ = *long_data
-#define R1	*((u_int8_t *)data)++ = *byte_data
+#define R4	*(u_int32_t *)data = *long_data, data += 4;
+#define R1	*(u_int8_t *)data = *byte_data, data += 1;
 	for (; resid >= 128; resid -= 128) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
@@ -345,8 +345,8 @@ sbc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 		panic("Unexpected bus error in sbc_pdma_out()");
 	}
 
-#define W1	*byte_data = *((u_int8_t *)data)++
-#define W4	*long_data = *((u_int32_t *)data)++
+#define W1	*byte_data = *(u_int8_t *)data, data += 1
+#define W4	*long_data = *(u_int32_t *)data, data += 4
 	for (resid = datalen; resid >= 64; resid -= 64) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;

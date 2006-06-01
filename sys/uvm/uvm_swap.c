@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.99.4.1 2006/06/01 22:39:45 kardel Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99.4.1 2006/06/01 22:39:45 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $");
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -506,7 +507,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)))
 		goto out;
 
 	/*
@@ -780,7 +782,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 * has already been opened when root was mounted (mountroot).
 	 */
 	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, l)))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_cred, l)))
 			return (error);
 	}
 
@@ -807,7 +809,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		break;
 
 	case VREG:
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
+		if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
@@ -950,7 +952,7 @@ bad:
 		blist_destroy(sdp->swd_blist);
 	}
 	if (vp != rootvp) {
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_cred, l);
 	}
 	return (error);
 }
@@ -1007,7 +1009,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	 */
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, l);
+		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_cred, l);
 	}
 
 	simple_lock(&uvm.swap_data_lock);

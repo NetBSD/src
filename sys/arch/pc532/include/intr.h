@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.6.1 2006/04/22 11:37:51 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.6.2 2006/06/01 22:35:08 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  * Structure of the software interrupt table
  */
 struct iv {
-	void (*iv_vec) __P((void *));
+	void (*iv_vec)(void *);
 	void *iv_arg;
 	long iv_level;
 	long iv_mask;
@@ -97,13 +97,13 @@ extern unsigned int imask[], Cur_pl, sirpending, astpending;
 # define INTR_INLINE __inline
 #endif
 
-void	intr_init __P((void));
-void	check_sir __P((void *));
-int	intr_establish __P((int, void (*)(void *), void *, const char *,
-				int, int, int));
+void	intr_init(void);
+void	check_sir(void *);
+int	intr_establish(int, void (*)(void *), void *, const char *, int, int,
+	    int);
 
-INTR_STATIC INTR_INLINE int splraise __P((unsigned int));
-INTR_STATIC INTR_INLINE int splx __P((unsigned int));
+INTR_STATIC INTR_INLINE int splraise(unsigned int);
+INTR_STATIC INTR_INLINE int splx(unsigned int);
 
 /*
  * Disable/Enable CPU-Interrupts
@@ -117,10 +117,10 @@ INTR_STATIC INTR_INLINE int splx __P((unsigned int));
  */
 #if !defined(NO_INLINE_SPLX) || defined(DEFINE_SPLX)
 INTR_STATIC INTR_INLINE int
-splraise(ncpl)
-	register unsigned int ncpl;
+splraise(unsigned int ncpl)
 {
-	register unsigned int ocpl;
+	unsigned int ocpl;
+
 	di();
 	ocpl = Cur_pl;
 	ncpl |= ocpl;
@@ -138,10 +138,10 @@ splraise(ncpl)
  * usually optimized away by the compiler.
  */
 INTR_STATIC INTR_INLINE int
-splx(ncpl)
-	register unsigned int ncpl;
+splx(unsigned int ncpl)
 {
-	register unsigned int ocpl;
+	unsigned int ocpl;
+
 	di();
 	ocpl = Cur_pl;
 	ICUW(IMSK) = ncpl;

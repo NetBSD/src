@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.59 2005/12/11 23:05:25 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.59.6.1 2006/06/01 22:38:37 kardel Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59.6.1 2006/06/01 22:38:37 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59 2005/12/11 23:05:25 thorpej Exp $");
 #include <sys/queue.h>
 #if __NetBSD__
 #include <sys/systm.h>
+#include <sys/kauth.h>
 #endif
 
 #include <machine/cpu.h>
@@ -363,7 +364,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		if ((ifr->ifr_flags & IFF_LINK0) != 0)
 			sc->g_proto = IPPROTO_GRE;
@@ -371,7 +372,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->g_proto = IPPROTO_MOBILE;
 		break;
 	case SIOCSIFMTU:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		if (ifr->ifr_mtu < 576) {
 			error = EINVAL;
@@ -403,7 +404,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GRESPROTO:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
@@ -423,7 +424,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case GRESADDRS:
 	case GRESADDRD:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		/*
 		 * set tunnel endpoints, compute a less specific route
@@ -462,7 +463,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_addr = *sa;
 		break;
 	case SIOCSLIFPHYADDR:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		if (lifr->addr.ss_family != AF_INET ||
 		    lifr->dstaddr.ss_family != AF_INET) {
@@ -479,7 +480,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
 		goto recompute;
 	case SIOCDIFPHYADDR:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		sc->g_src.s_addr = INADDR_ANY;
 		sc->g_dst.s_addr = INADDR_ANY;

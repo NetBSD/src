@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.28.6.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.28.6.2 2006/06/01 22:39:27 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.28.6.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.28.6.2 2006/06/01 22:39:27 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.28.6.1 2006/02/04 14:12:50 simonb
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -112,7 +113,7 @@ static daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, daddr_t);
  *	  available block is located.
  */
 int
-ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, struct ucred *cred,
+ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, kauth_cred_t cred,
 		daddr_t *bnp)
 {
 	struct m_ext2fs *fs;
@@ -127,7 +128,7 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, struct ucred *cred,
 #endif /* DIAGNOSTIC */
 	if (fs->e2fs.e2fs_fbcount == 0)
 		goto nospace;
-	if (cred->cr_uid != 0 && freespace(fs) <= 0)
+	if (kauth_cred_geteuid(cred) != 0 && freespace(fs) <= 0)
 		goto nospace;
 	if (bpref >= fs->e2fs.e2fs_bcount)
 		bpref = 0;
@@ -144,7 +145,7 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, struct ucred *cred,
 		return (0);
 	}
 nospace:
-	ext2fs_fserr(fs, cred->cr_uid, "file system full");
+	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->e2fs_fsmnt);
 	return (ENOSPC);
 }
@@ -165,7 +166,7 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
+ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
     struct vnode **vpp)
 {
 	struct inode *pip;
@@ -211,7 +212,7 @@ ext2fs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
 	ip->i_e2fs_gen = ext2gennumber;
 	return (0);
 noinodes:
-	ext2fs_fserr(fs, cred->cr_uid, "out of inodes");
+	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);
 	return (ENOSPC);
 }

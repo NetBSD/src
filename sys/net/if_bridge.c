@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.36.4.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.36.4.2 2006/06/01 22:38:37 kardel Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.4.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.4.2 2006/06/01 22:38:37 kardel Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.4.1 2006/02/04 14:18:52 simonb Ex
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -129,6 +130,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.4.1 2006/02/04 14:18:52 simonb Ex
 #endif
 
 #define	BRIDGE_RTHASH_MASK		(BRIDGE_RTHASH_SIZE - 1)
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_carp.h>
+#endif
 
 /*
  * Maximum number of addresses to cache.
@@ -478,7 +486,9 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (bc->bc_flags & BC_F_SUSER) {
-			error = suser(p->p_ucred, &p->p_acflag);
+			error = kauth_authorize_generic(p->p_cred,
+						  KAUTH_GENERIC_ISSUSER,
+						  &p->p_acflag);
 			if (error)
 				break;
 		}
@@ -1532,7 +1542,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			continue;
 		/* It is destined for us. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
-		    ETHER_ADDR_LEN) == 0) {
+		    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
+			eh, IFT_ETHER, 0) != NULL)
+#endif /* NCARP > 0 */
+		    ) {
 			if (bif->bif_flags & IFBIF_LEARNING)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
@@ -1550,7 +1565,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 
 		/* We just received a packet that we sent out. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_shost,
-		    ETHER_ADDR_LEN) == 0) {
+		    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
+			eh, IFT_ETHER, 1) != NULL)
+#endif /* NCARP > 0 */
+		    ) {
 			m_freem(m);
 			return (NULL);
 		}

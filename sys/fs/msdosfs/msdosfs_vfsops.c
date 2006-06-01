@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.29.6.1 2006/04/22 11:39:57 simonb Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.29.6.2 2006/06/01 22:37:51 kardel Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29.6.1 2006/04/22 11:39:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29.6.2 2006/06/01 22:37:51 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29.6.1 2006/04/22 11:39:57 simo
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/bootsect.h>
@@ -92,7 +93,7 @@ int msdosfs_unmount(struct mount *, int, struct lwp *);
 int msdosfs_root(struct mount *, struct vnode **);
 int msdosfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int msdosfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int msdosfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int msdosfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int msdosfs_vget(struct mount *, ino_t, struct vnode **);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int msdosfs_vptofh(struct vnode *, struct fid *);
@@ -307,11 +308,11 @@ msdosfs_mount(mp, path, data, ndp, l)
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
 			 */
-			if (p->p_ucred->cr_uid != 0) {
+			if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 				devvp = pmp->pm_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_proc->p_ucred, l);
+						   l->l_proc->p_cred, l);
 				VOP_UNLOCK(devvp, 0);
 				if (error)
 					return (error);
@@ -342,12 +343,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -428,7 +429,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	int	bsize = 0, dtype = 0, tmp;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
@@ -888,7 +889,7 @@ int
 msdosfs_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct vnode *vp, *nvp;

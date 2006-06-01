@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.68.6.1 2006/04/22 11:37:51 simonb Exp $ */
+/*	$NetBSD: scn.c,v 1.68.6.2 2006/06/01 22:35:07 kardel Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.6.1 2006/04/22 11:37:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.6.2 2006/06/01 22:35:07 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.6.1 2006/04/22 11:37:51 simonb Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -121,18 +122,18 @@ __KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.6.1 2006/04/22 11:37:51 simonb Exp $");
 static const char scnints[4] = {IR_TTY0, IR_TTY1, IR_TTY2, IR_TTY3};
 static const char rxints[4] = {IR_TTY0RDY, IR_TTY1RDY, IR_TTY2RDY, IR_TTY3RDY};
 
-int     scnprobe __P((struct device *, struct cfdata *, void *));
-void    scnattach __P((struct device *, struct device *, void *));
-int     scnparam __P((struct tty *, struct termios *));
-void    scnstart __P((struct tty *));
-void	scncnprobe __P((struct consdev *));
-void	scncninit __P((struct consdev *));
-int     scncngetc __P((void *));
-void    scncnputc __P((void *, int));
-void	scncnpollc __P((dev_t, int));
-int	scninit __P((dev_t, int));
-void	scncnreinit __P((void *));
-int     scnhwiflow __P((struct tty *, int));
+int     scnprobe(struct device *, struct cfdata *, void *);
+void    scnattach(struct device *, struct device *, void *);
+int     scnparam(struct tty *, struct termios *);
+void    scnstart(struct tty *);
+void	scncnprobe(struct consdev *);
+void	scncninit(struct consdev *);
+int     scncngetc(void *);
+void    scncnputc(void *, int);
+void	scncnpollc(dev_t, int);
+int	scninit(dev_t, int);
+void	scncnreinit(void *);
+int     scnhwiflow(struct tty *, int);
 
 CFATTACH_DECL(scn, sizeof(struct scn_softc),
     scnprobe, scnattach, NULL, NULL);
@@ -176,18 +177,18 @@ int     scnconsrate = CONSOLE_SPEED;
 #define SCN_ISCONSOLE(addr) \
 	(SCN_ADDR2DUART(addr) == SCN_CONSDUART && (SCN_ADDR2CHAN(addr) == SCN_CONSCHAN))
 
-static void scnintr __P((void *));
-static void scnrxintr __P((void *));
-static int scn_rxintr __P((struct scn_softc *));
-static void scnsoft __P((void *));
-static void scn_setchip __P((struct scn_softc *sc));
-static int scniter __P((int *, int, int*, int*, struct chan *, int));
-static int scn_config __P((int, int, int, int, u_char, u_char));
-static void scn_rxenable __P((struct scn_softc *));
-static void scn_rxdisable __P((struct scn_softc *));
-static void dcd_int __P((struct scn_softc *, struct tty *, u_char));
-static void scnoverrun __P((int, long *, const char *));
-static unsigned char opbits __P((struct scn_softc *, int));
+static void scnintr(void *);
+static void scnrxintr(void *);
+static int scn_rxintr(struct scn_softc *);
+static void scnsoft(void *);
+static void scn_setchip(struct scn_softc *sc);
+static int scniter(int *, int, int*, int*, struct chan *, int);
+static int scn_config(int, int, int, int, u_char, u_char);
+static void scn_rxenable(struct scn_softc *);
+static void scn_rxdisable(struct scn_softc *);
+static void dcd_int(struct scn_softc *, struct tty *, u_char);
+static void scnoverrun(int, long *, const char *);
+static unsigned char opbits(struct scn_softc *, int);
 
 static int scnsir = -1;		/* s/w intr number */
 #define setsoftscn()	softintr(scnsir)
@@ -323,13 +324,13 @@ static u_char bothgroups[16] = {
  * for minimum error (from some of Dave Rand's code)
  */
 const struct {
-	u_int16_t speed;
-	u_int16_t div;
+	uint16_t speed;
+	uint16_t div;
 } divs[] = {
 	{    50, 2303 },	/* 2304 is exact?? */
 	{   110, 1047 },	/* Should be 1047.27 */
-	{   134, 857 }, 	/* Should be 856.505576 */
-	{  1050, 110 }, 	/* Should be 109.7142857 */
+	{   134, 857 },		/* Should be 856.505576 */
+	{  1050, 110 },		/* Should be 109.7142857 */
 	{  2000, 57 }		/* Should be 57.6 */
 };
 #define DIVS (sizeof(divs)/sizeof(divs[0]))
@@ -376,8 +377,7 @@ extern int kgdb_debug_init;
  */
 
 static void
-scn_setchip(sc)
-	struct scn_softc *sc;
+scn_setchip(struct scn_softc *sc)
 {
 	struct duart *dp;
 	u_char acr, csr, mr1, mr2;
@@ -461,7 +461,7 @@ scn_setchip(sc)
 
 		/* program counter/timer only if necessary */
 		if (dp->counter != dp->ocounter) {
-			u_int16_t div;
+			uint16_t div;
 #ifdef DIVS
 			int i;
 
@@ -518,14 +518,10 @@ scn_setchip(sc)
  */
 
 static int
-scniter(index, wanted, counter, mode, other, c92)
-	int *index;		/* IN/OUT: index */
-	int wanted;		/* IN: speed wanted */
-	int *counter;		/* IN/OUT: counter/timer rate */
-	int *mode;		/* IN/OUT: mode */
-	struct chan *other;	/* IN: other channel, or NULL */
-	int c92;		/* IN: true for 26C92 */
+scniter(int *index, int wanted, int *counter, int *mode, struct chan *other,
+    int c92)
 {
+
 	while (*index < TABENTRIES) {
 		struct tabent *tp;
 
@@ -579,13 +575,7 @@ scniter(index, wanted, counter, mode, other, c92)
  * rewritten 2/97 -plb
  */
 static int
-scn_config(unit, chan, ispeed, ospeed, mr1, mr2)
-	int unit;
-	int chan;
-	int ispeed;	/* input speed in bps */
-	int ospeed;	/* output speed in bps */
-	u_char mr1;	/* new bits for MR1 */
-	u_char mr2;	/* new bits for MR2 */
+scn_config(int unit, int chan, int ispeed, int ospeed, u_char mr1, u_char mr2)
 {
 	struct scn_softc *sc;
 	struct duart *dp;
@@ -703,9 +693,9 @@ scn_config(unit, chan, ispeed, ospeed, mr1, mr2)
 	}
 	return EINVAL;
 
-    gotit:
+ gotit:
 	s = spltty();
-    gotit2:
+ gotit2:
 	dp->chan[chan].new_mr1 = mr1;
 	dp->chan[chan].new_mr2 = mr2;
 	dp->chan[chan].ispeed = ispeed;
@@ -723,10 +713,7 @@ scn_config(unit, chan, ispeed, ospeed, mr1, mr2)
 }
 
 int
-scnprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+scnprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	volatile u_char *ch_base;
@@ -762,8 +749,7 @@ scnprobe(parent, cf, aux)
  * they're only called on setup, open & close!
  */
 static inline void
-scn_rxenable(sc)
-	struct scn_softc *sc;
+scn_rxenable(struct scn_softc *sc)
 {
 	struct duart *dp;
 	int channel;
@@ -780,8 +766,7 @@ scn_rxenable(sc)
 }
 
 static inline void
-scn_rxdisable(sc)
-	struct scn_softc *sc;
+scn_rxdisable(struct scn_softc *sc)
 {
 	struct duart *dp;
 	int channel;
@@ -798,10 +783,7 @@ scn_rxdisable(sc)
 }
 
 void
-scnattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+scnattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct scn_softc *sc;
@@ -923,7 +905,7 @@ scnattach(parent, self, aux)
 		intr_establish(ca->ca_irq >> 4, scnrxintr, duart, intrname, IPL_ZERO,
 			       IPL_RTTY, LOW_LEVEL);
 
-  		duart->base = duart_base;
+		duart->base = duart_base;
 		duart->type = scntype;
 	}
 	/* Record channel, uart */
@@ -958,11 +940,11 @@ scnattach(parent, self, aux)
 	}
 
 	/*
-         * Set up the hardware to a base state, in particular:
-         * o reset transmitter and receiver
-         * o set speeds and configurations
-         * o receiver interrupts only (RxRDY and BREAK)
-         */
+	 * Set up the hardware to a base state, in particular:
+	 * o reset transmitter and receiver
+	 * o set speeds and configurations
+	 * o receiver interrupts only (RxRDY and BREAK)
+	 */
 
 	s = spltty();
 	/* RTS off... */
@@ -1073,11 +1055,7 @@ scnattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-scnopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+scnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	int unit = DEV_UNIT(dev);
@@ -1141,7 +1119,8 @@ scnopen(dev, flag, mode, l)
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
 		if (tp->t_state & TS_XCLUDE &&
-		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
+		    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+				      &l->l_proc->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		} else {
@@ -1221,11 +1200,7 @@ scnopen(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-scnclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+scnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = DEV_UNIT(dev);
 	struct scn_softc *sc = SOFTC(unit);
@@ -1262,10 +1237,7 @@ scnclose(dev, flag, mode, l)
 }
 
 int
-scnread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+scnread(dev_t dev, struct uio *uio, int flag)
 {
 	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1274,10 +1246,7 @@ scnread(dev, uio, flag)
 }
 
 int
-scnwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+scnwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1286,10 +1255,7 @@ scnwrite(dev, uio, flag)
 }
 
 int
-scnpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+scnpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1298,8 +1264,7 @@ scnpoll(dev, events, l)
 }
 
 struct tty *
-scntty(dev)
-	dev_t dev;
+scntty(dev_t dev)
 {
 	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 
@@ -1308,11 +1273,9 @@ scntty(dev)
 
 /* Worker routines for interrupt processing */
 static inline void
-dcd_int(sc, tp, new)
-	struct scn_softc *sc;
-	struct tty *tp;
-	u_char new;
+dcd_int(struct scn_softc *sc, struct tty *tp, u_char new)
 {
+
 	if (sc->sc_swflags & SCN_SW_SOFTCAR)
 		return;
 
@@ -1336,11 +1299,9 @@ dcd_int(sc, tp, new)
  * Print out a ring or fifo overrun error message.
  */
 static void
-scnoverrun(unit, ptime, what)
-	int unit;
-	long *ptime;
-	const char *what;
+scnoverrun(int unit, long *ptime, const char *what)
 {
+
 	if (*ptime != time.tv_sec) {
 		*ptime = time.tv_sec;
 		log(LOG_WARNING, "scn%d: %s overrun\n", unit, what);
@@ -1354,9 +1315,7 @@ scnoverrun(unit, ptime, what)
  * be set or cleared according to the "stop" arg passed.
  */
 int
-scnhwiflow(tp, stop)
-	struct tty *tp;
-	int stop;
+scnhwiflow(struct tty *tp, int stop)
 {
 	int unit = DEV_UNIT(tp->t_dev);
 	struct scn_softc *sc = SOFTC(unit);
@@ -1373,8 +1332,7 @@ scnhwiflow(tp, stop)
 }
 
 static void
-scnintr(arg)
-	void *arg;
+scnintr(void *arg)
 {
 	struct duart *duart = arg;
 	struct scn_softc *sc0 = duart->chan[0].sc;
@@ -1515,8 +1473,7 @@ scn_rxintr(struct scn_softc *sc)
 }
 
 static void
-scnrxintr(arg)
-	void *arg;
+scnrxintr(void *arg)
 {
 	struct duart *duart = arg;
 	int work = 0;
@@ -1550,8 +1507,7 @@ scnrxintr(arg)
  * -plb.
  */
 static void
-scnsoft(arg)
-	void *arg;
+scnsoft(void *arg)
 {
 	int s, unit;
 #ifdef SCN_TIMING
@@ -1663,21 +1619,15 @@ scnsoft(arg)
 
 /* Convert TIOCM_xxx bits to output port bits. */
 static unsigned char
-opbits(sc, tioc_bits)
-	struct scn_softc *sc;
-	int tioc_bits;
+opbits(struct scn_softc *sc, int tioc_bits)
 {
+
 	return ((((tioc_bits) & TIOCM_DTR) ? sc->sc_op_dtr : 0) |
 	    (((tioc_bits) & TIOCM_RTS) ? sc->sc_op_rts : 0));
 }
 
 int
-scnioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t	data;
-	int flag;
-	struct lwp *l;
+scnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = DEV_UNIT(dev);
 	struct scn_softc *sc = SOFTC(unit);
@@ -1786,7 +1736,9 @@ scnioctl(dev, cmd, data, flag, l)
 	case TIOCSFLAGS:{
 			int     userbits, driverbits = 0;
 
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_proc->p_cred,
+						  KAUTH_GENERIC_ISSUSER,
+						  &l->l_proc->p_acflag);
 			if (error != 0)
 				return (EPERM);
 
@@ -1812,9 +1764,7 @@ scnioctl(dev, cmd, data, flag, l)
 }
 
 int
-scnparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+scnparam(struct tty *tp, struct termios *t)
 {
 	int cflag = t->c_cflag;
 	int unit = DEV_UNIT(tp->t_dev);
@@ -1884,8 +1834,7 @@ scnparam(tp, t)
 }
 
 void
-scnstart(tp)
-	struct tty *tp;
+scnstart(struct tty *tp)
 {
 	int s, c;
 	int unit = DEV_UNIT(tp->t_dev);
@@ -1922,9 +1871,7 @@ out:
  */
 /*ARGSUSED*/
 void
-scnstop(tp, flag)
-	struct tty *tp;
-	int flag;
+scnstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -1952,41 +1899,41 @@ extern int _mapped;
 				   (SCN_CONSDUART * 2 + SCN_CONSCHAN) * CH_SZ)
 
 void
-scncnprobe(cp)
-	struct consdev *cp;
+scncnprobe(struct consdev *cp)
 {
+
 	/* initialize required fields */
 	cp->cn_dev = makedev(cdevsw_lookup_major(&scn_cdevsw), SCN_CONSOLE);
 	cp->cn_pri = CN_NORMAL;
 }
 
 void
-scncnreinit(v)
-	void *v;
+scncnreinit(void *v)
 {
 	volatile u_char *du_base = DUADDR();
 
-	du_base[DU_OPSET] = SCN_CONSCHAN ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
+	du_base[DU_OPSET] =
+	    SCN_CONSCHAN ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
 }
 
 void
-scncninit(cp)
-	struct consdev *cp;
+scncninit(struct consdev *cp)
 {
+
 	scninit(cp->cn_dev, scnconsrate);
 }
 
 /* Used by scncninit and kgdb startup. */
 int
-scninit(dev, rate)
-	dev_t dev;
-	int rate;
+scninit(dev_t dev, int rate)
 {
 	volatile u_char *du_base = DUADDR();
 	int unit = DEV_UNIT(dev);
 
-	du_base[DU_OPSET] = SCN_CONSCHAN ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
-	scn_config(unit, SCN_CONSCHAN, rate, rate, MR1_PNONE | MR1_CS8, MR2_STOP1);
+	du_base[DU_OPSET] =
+	    SCN_CONSCHAN ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
+	scn_config(unit, SCN_CONSCHAN, rate, rate,
+	    MR1_PNONE | MR1_CS8, MR2_STOP1);
 	return (0);
 }
 
@@ -2012,10 +1959,9 @@ scncngetc(void *arg)
 
 /* The pc532 does not turn off console polling. */
 void
-scncnpollc(dev, on)
-	dev_t dev;
-	int on;
+scncnpollc(dev_t dev, int on)
 {
+
 }
 
 /*

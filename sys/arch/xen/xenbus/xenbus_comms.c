@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.2.10.2 2006/04/22 11:38:11 simonb Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.2.10.3 2006/06/01 22:35:39 kardel Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.2.10.2 2006/04/22 11:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.2.10.3 2006/06/01 22:35:39 kardel Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -75,9 +75,10 @@ xenstore_domain_interface(void)
 static int
 wake_waiting(void *arg)
 {
-	if (__predict_false(xenstored_ready == 0)) {
+	if (__predict_false(xenstored_ready == 0 &&
+	    xen_start_info.flags & SIF_INITDOMAIN)) {
 		xenstored_ready = 1; 
-		// XXX implement schedule_work(&probe_work); 
+		wakeup(&xenstored_ready);
 	} 
 
 	wakeup(&xenstore_interface);

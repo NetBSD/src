@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.7.4.2 2006/04/22 11:38:11 simonb Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.7.4.3 2006/06/01 22:35:38 kardel Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.7.4.2 2006/04/22 11:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.7.4.3 2006/06/01 22:35:38 kardel Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -182,7 +182,7 @@ static paddr_t xennet_pages[NET_RX_RING_SIZE];
 static int  xennet_xenbus_match(struct device *, struct cfdata *, void *);
 static void xennet_xenbus_attach(struct device *, struct device *, void *);
 static int  xennet_xenbus_detach(struct device *, int);
-static void xennet_backend_changed(struct device *, XenbusState);
+static void xennet_backend_changed(void *, XenbusState);
 
 static int  xennet_xenbus_resume(void *);
 static void xennet_alloc_rx_buffer(struct xennet_xenbus_softc *);
@@ -475,22 +475,23 @@ abort_transaction:
 	return error;
 }
 
-static void xennet_backend_changed(struct device *dev, XenbusState new_state)
+static void xennet_backend_changed(void *arg, XenbusState new_state)
 {
-	struct xennet_xenbus_softc *sc = (void *)dev;
+	struct xennet_xenbus_softc *sc = arg;
 	DPRINTF(("%s: new backend state %d\n", sc->sc_dev.dv_xname, new_state));
 
 	switch (new_state) {
-	case XenbusStateUnknown:
 	case XenbusStateInitialising:
 	case XenbusStateInitWait:
 	case XenbusStateInitialised:
+		break;
 	case XenbusStateClosing:
 		sc->sc_backend_status = BEST_CLOSED;
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateConnected:
 		break;
+	case XenbusStateUnknown:
 	default:
 		panic("bad backend state %d", new_state);
 	}
@@ -741,6 +742,7 @@ again:
 		KASSERT(req->rxreq_gntref != GRANT_INVALID_REF);
 		ma = xengnt_revoke_transfer(req->rxreq_gntref);
 		if (ma == 0) {
+			DPRINTFN(XEDB_EVENT, ("xennet_handler ma == 0\n"));
 			/*
 			 * the remote could't send us a packet.
 			 * we can't free this rxreq as no page will be mapped
@@ -782,6 +784,8 @@ again:
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
 			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
+				DPRINTFN(XEDB_EVENT,
+				    ("xennet_handler bad dest\n"));
 				/* packet not for us */
 				xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE,
 				    req);
@@ -802,6 +806,7 @@ again:
 			m->m_len = m->m_pkthdr.len = rx->status;
 			MEXTADD(m, pktp, rx->status,
 			    M_DEVBUF, xennet_rx_mbuf_free, req);
+			m->m_flags |= M_EXT_RW; /* we own the buffer */
 			req->rxreq_gntref = GRANT_STACK_REF;
 		} else {
 			/*

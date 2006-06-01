@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.1.8.1 2006/04/22 11:39:14 simonb Exp $
+ * $NetBSD: if_lmc.h,v 1.1.8.2 2006/06/01 22:36:45 kardel Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1071,8 +1071,7 @@ typedef int intr_return_t;
 # define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
 # define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
 # define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
-# define CHECK_CAP		suser(curproc->p_ucred, &curproc->p_acflag)
-/* kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag) */
+# define CHECK_CAP		kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)
 # define DISABLE_INTR		int spl = splnet()
 # define ENABLE_INTR		splx(spl)
 # define IRQ_NONE		0

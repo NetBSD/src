@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.38.6.1 2006/04/22 11:38:54 simonb Exp $	*/
+/*	$NetBSD: an.c,v 1.38.6.2 2006/06/01 22:36:22 kardel Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.38.6.1 2006/04/22 11:38:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.38.6.2 2006/06/01 22:36:22 kardel Exp $");
 
 #include "bpfilter.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.38.6.1 2006/04/22 11:38:54 simonb Exp $");
 #include <sys/proc.h>
 #include <sys/md4.h>
 #include <sys/endian.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -320,8 +321,8 @@ an_attach(struct an_softc *sc)
 
 	ieee80211_media_init(ic, an_media_change, an_media_status);
 
-	/* 
-	 * radiotap BPF device 
+	/*
+	 * radiotap BPF device
 	 */
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -1298,7 +1299,9 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
 		/* do not show any keys to non-root user */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 		nwkey->i_key[i].i_keylen = sc->sc_wepkeys[i].an_wep_keylen;
 		if (nwkey->i_key[i].i_keylen < 0) {
@@ -1511,7 +1514,7 @@ an_rx_intr(struct an_softc *sc)
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_ERRSTAT) ||
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
-		
+
 		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
 	}
 #endif

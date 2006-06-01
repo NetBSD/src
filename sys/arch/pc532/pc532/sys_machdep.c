@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14.6.1 2006/06/01 22:35:08 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14.6.1 2006/06/01 22:35:08 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2005/12/11 12:18:31 christos Ex
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
+
 	return (ENOSYS);
 }

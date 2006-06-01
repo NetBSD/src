@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16.6.1 2006/04/22 11:37:55 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.6.2 2006/06/01 22:35:23 kardel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -460,8 +460,8 @@ __SGIMIPS_copy_region(4)
  * On the MIPS, we just flush the write buffer.
  */
 #define	bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)),	\
-	 wbflush())
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f),	\
+	 wbflush()))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 

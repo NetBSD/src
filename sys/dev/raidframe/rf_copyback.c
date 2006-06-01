@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.32 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.32.6.1 2006/06/01 22:37:32 kardel Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.32 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.32.6.1 2006/06/01 22:37:32 kardel Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -155,11 +155,11 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		 * getting a vp for it? */
 
 		if ((retcode = VOP_GETATTR(vp, &va,
-		    l->l_proc->p_ucred, l)) != 0) {
+		    l->l_proc->p_cred, l)) != 0) {
 			return;
 		}
 		retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_ucred, l);
+		    FREAD, l->l_proc->p_cred, l);
 		if (retcode) {
 			return;
 		}

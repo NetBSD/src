@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.5.6.1 2006/04/22 11:39:14 simonb Exp $ */
+/* $NetBSD: if_skreg.h,v 1.5.6.2 2006/06/01 22:36:45 kardel Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -421,6 +421,7 @@
 #define SK_CONFIG_SINGLEMAC	0x01
 #define SK_CONFIG_DIS_DSL_CLK	0x02
 
+#define SK_PMD_1000BASETX_ALT	0x31
 #define SK_PMD_1000BASELX	0x4C
 #define SK_PMD_1000BASESX	0x53
 #define SK_PMD_1000BASECX	0x43

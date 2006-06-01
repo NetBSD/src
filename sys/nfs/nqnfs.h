@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.17.6.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.17.6.2 2006/06/01 22:39:13 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,11 +201,11 @@ void	nqnfs_lease_updatetime __P((int));
 int	nqsrv_cmpnam __P((struct nfssvc_sock *,struct mbuf *,struct nqhost *));
 int	nqsrv_getlease __P((struct vnode *, u_int32_t *, int,
 		struct nfssvc_sock *, struct lwp *, struct mbuf *, int *,
-		u_quad_t *, struct ucred *));
-int	nqnfs_getlease __P((struct vnode *, int, struct ucred *,struct lwp *));
+		u_quad_t *, kauth_cred_t));
+int	nqnfs_getlease __P((struct vnode *, int, kauth_cred_t, struct lwp *));
 int	nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
 		caddr_t, struct lwp *));
-int	nqnfs_clientd __P((struct nfsmount *, struct ucred *,
+int	nqnfs_clientd __P((struct nfsmount *, kauth_cred_t,
 		struct nfsd_cargs *, int, caddr_t, struct lwp *));
 #endif /* _KERNEL */
 

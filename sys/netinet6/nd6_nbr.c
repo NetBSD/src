@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.59.4.1 2006/04/22 11:40:13 simonb Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.59.4.2 2006/06/01 22:39:03 kardel Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.59.4.1 2006/04/22 11:40:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.59.4.2 2006/06/01 22:39:03 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -67,6 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.59.4.1 2006/04/22 11:40:13 simonb Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #include <net/net_osdep.h>
@@ -198,7 +203,16 @@ nd6_ns_input(m, off, icmp6len)
 	 * (3) "tentative" address on which DAD is being performed.
 	 */
 	/* (1) and (3) check. */
+#if NCARP > 0
+	if (ifp->if_carp && ifp->if_type != IFT_CARP)
+		ifa = carp_iamatch6(ifp->if_carp, &taddr6);
+	else
+		ifa = NULL;
+	if (!ifa)
+		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+#else
 	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+#endif
 
 	/* (2) check. */
 	if (ifa == NULL) {
@@ -1016,6 +1030,7 @@ nd6_ifptomac(ifp)
 	case IFT_FDDI:
 	case IFT_IEEE1394:
 	case IFT_PROPVIRTUAL:
+	case IFT_CARP:
 	case IFT_L2VLAN:
 	case IFT_IEEE80211:
 		return LLADDR(ifp->if_sadl);

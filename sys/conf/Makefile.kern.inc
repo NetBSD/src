@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.73.6.1 2006/04/22 11:38:21 simonb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.73.6.2 2006/06/01 22:36:01 kardel Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -55,7 +55,8 @@ S!=	cd ../../../..; pwd
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
 _ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
-INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
+INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
+		-I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
@@ -75,6 +76,9 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
+. if ${HAVE_GCC} > 3
+CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+. endif
 .endif
 
 CFLAGS+=	-ffreestanding
@@ -86,6 +90,11 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE
 CWARNFLAGS+=	-Wno-uninitialized
 .else
 CFLAGS+=	-fno-zero-initialized-in-bss
+.endif
+
+# XXX
+.if ${HAVE_GCC} > 3
+CFLAGS+=	-fno-strict-aliasing
 .endif
 
 # Use the per-source COPTS variables to add -g to just those

@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.9.6.2 2006/04/30 18:11:54 kardel Exp $	*/
+/*	$NetBSD: timex.h,v 1.9.6.3 2006/06/01 22:39:27 kardel Exp $	*/
 
 #ifdef __HAVE_TIMECOUNTER
 /*-
@@ -492,9 +492,13 @@ __END_DECLS
  * estimated error = NTP dispersion.
  */
 struct ntptimeval {
-	struct timeval time;	/* current time (ro) */
+	struct timespec time;	/* current time (ro) */
 	long maxerror;		/* maximum error (us) (ro) */
 	long esterror;		/* estimated error (us) (ro) */
+
+	/* the following are placeholders for now */
+	long tai;		/* TAI offset */
+	int time_state;		/* time status */
 };
 
 /*
@@ -534,8 +538,14 @@ struct timex {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int ntp_gettime       (struct ntptimeval *);
-int ntp_adjtime       (struct timex *);
+#ifdef __NetBSD__
+#ifndef __LIBC12_SOURCE__
+int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime30);
+#endif
+#else
+int ntp_gettime(struct ntptimeval *);
+#endif
+int ntp_adjtime(struct timex *);
 __END_DECLS
 
 #endif /* not _KERNEL */
@@ -545,8 +555,9 @@ __END_DECLS
 #ifdef __NetBSD__
 #ifdef _KERNEL
 __BEGIN_DECLS
-int   ntp_settime1(struct timex *, register_t *);
-void  ntp_adjtime1(struct timex *, register_t *);
+void ntp_gettime(struct ntptimeval *);
+int ntp_timestatus(void);
+int ntp_adjtime1(struct timex *, void *, register_t *);
 __END_DECLS
 #endif /* _KERNEL */
 #endif /* __NetBSD__ */

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4.4.2 2006/04/22 11:37:24 simonb Exp $
+$NetBSD: README,v 1.4.4.3 2006/06/01 22:34:20 kardel Exp $
 
 NetBSD for the Linksys NSLU2 (a.k.a. "Slug")
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,8 +38,9 @@ The following bits of Slug hardware are not (yet?) supported:
 
    http://www.intel.com/design/network/products/npfamily/ixp425.htm
 
-   Look under "Tools & Software", then select "Register/Login" to download
-   "Intel(R) IXP400 Software". Documentation is available in the
+   Look under "Tools & Software", then select "Intel(R) IPXX400 Software"
+   to downlod the documentation.  If you aren't registered, select
+   "Register/Login" first.  Documentation is available in the
    "Technical Documents" section.
 
    The easiest option will be to download the non-crypto version of the

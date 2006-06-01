@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.30 2005/12/11 12:19:56 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.30.6.1 2006/06/01 22:35:42 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.30 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.30.6.1 2006/06/01 22:35:42 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,10 +170,10 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 		if ((error = namei(&ndroot)) != 0)
 			goto bad2;
 
-		if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_ucred, l)) != 0)
+		if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_cred, l)) != 0)
 			goto bad3;
 
-		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_ucred, l))
+		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_cred, l))
 		    != 0)
 			goto bad3;
 

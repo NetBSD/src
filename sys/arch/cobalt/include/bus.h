@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13.6.1 2006/04/22 11:37:21 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.6.2 2006/06/01 22:34:18 kardel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -453,6 +453,76 @@ __COBALT_copy_region(4)
 #undef __COBALT_copy_region
 
 /*
+ * Operations which handle byte stream data on word access.
+ *
+ * These functions are defined to resolve endian mismatch, by either
+ * - When normal (i.e. stream-less) operations perform byte swap
+ *   to resolve endian mismatch, these functions bypass the byte swap.
+ * or
+ * - When bus bridge performs automatic byte swap, these functions
+ *   perform byte swap once more, to cancel the bridge's behavior.
+ *
+ * Currently these are just same as normal operations, since all
+ * supported buses are same endian with CPU (i.e. little-endian).
+ *
+ */
+#define __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_read_stream_2(tag, bsh, offset)			\
+	bus_space_read_2(tag, bsh, offset)
+#define bus_space_read_stream_4(tag, bsh, offset)			\
+	bus_space_read_4(tag, bsh, offset)
+#define bus_space_read_stream_8(tag, bsh, offset)			\
+	bus_space_read_8(tag, bsh, offset)
+#define bus_space_read_multi_stream_2(tag, bsh, offset, datap, count)	\
+	bus_space_read_multi_2(tag, bsh, offset, datap, count)
+#define bus_space_read_multi_stream_4(tag, bsh, offset, datap, count)	\
+	bus_space_read_multi_4(tag, bsh, offset, datap, count)
+#define bus_space_read_multi_stream_8(tag, bsh, offset, datap, count)	\
+	bus_space_read_multi_8(tag, bsh, offset, datap, count)
+#define bus_space_read_region_stream_2(tag, bsh, offset, datap, count)	\
+	bus_space_read_region_2(tag, bsh, offset, datap, count)
+#define bus_space_read_region_stream_4(tag, bsh, offset, datap, count)	\
+	bus_space_read_region_4(tag, bsh, offset, datap, count)
+#define bus_space_read_region_stream_8(tag, bsh, offset, datap, count)	\
+	bus_space_read_region_8(tag, bsh, offset, datap, count)
+#define bus_space_write_stream_2(tag, bsh, offset, data)		\
+	bus_space_write_2(tag, bsh, offset, data)
+#define bus_space_write_stream_4(tag, bsh, offset, data)		\
+	bus_space_write_4(tag, bsh, offset, data)
+#define bus_space_write_stream_8(tag, bsh, offset, data)		\
+	bus_space_write_8(tag, bsh, offset, data)
+#define bus_space_write_multi_stream_2(tag, bsh, offset, datap, count)	\
+	bus_space_write_multi_2(tag, bsh, offset, datap, count)
+#define bus_space_write_multi_stream_4(tag, bsh, offset, datap, count)	\
+	bus_space_write_multi_4(tag, bsh, offset, datap, count)
+#define bus_space_write_multi_stream_8(tag, bsh, offset, datap, count)	\
+	bus_space_write_multi_8(tag, bsh, offset, datap, count)
+#define bus_space_write_region_stream_2(tag, bsh, offset, datap, count)	\
+	bus_space_write_region_2(tag, bsh, offset, datap, count)
+#define bus_space_write_region_stream_4(tag, bsh, offset, datap, count)	\
+	bus_space_write_region_4(tag, bsh, offset, datap, count)
+#define bus_space_write_region_stream_8(tag, bsh, offset, datap, count)	\
+	bus_space_write_region_8(tag, bsh, offset, datap, count)
+#define bus_space_write_region_stream_2(tag, bsh, offset, datap, count)	\
+	bus_space_write_region_2(tag, bsh, offset, datap, count)
+#define bus_space_write_region_stream_4(tag, bsh, offset, datap, count)	\
+	bus_space_write_region_4(tag, bsh, offset, datap, count)
+#define bus_space_write_region_stream_8(tag, bsh, offset, datap, count)	\
+	bus_space_write_region_8(tag, bsh, offset, datap, count)
+#define bus_space_set_multi_stream_2(tag, bsh, offset, data, count)	\
+	bus_space_set_multi_2(tag, bsh, offset, data, count)
+#define bus_space_set_multi_stream_4(tag, bsh, offset, data, count)	\
+	bus_space_set_multi_4(tag, bsh, offset, data, count)
+#define bus_space_set_multi_stream_8(tag, bsh, offset, data, count)	\
+	bus_space_set_multi_8(tag, bsh, offset, data, count)
+#define bus_space_set_region_stream_2(tag, bsh, offset, data, count)	\
+	bus_space_set_region_2(tag, bsh, offset, data, count)
+#define bus_space_set_region_stream_4(tag, bsh, offset, data, count)	\
+	bus_space_set_region_4(tag, bsh, offset, data, count)
+#define bus_space_set_region_stream_8(tag, bsh, offset, data, count)	\
+	bus_space_set_region_8(tag, bsh, offset, data, count)
+
+/*
  * Bus read/write barrier methods.
  *
  *	void bus_space_barrier(bus_space_tag_t tag,
@@ -462,8 +532,8 @@ __COBALT_copy_region(4)
  * On the MIPS, we just flush the write buffer.
  */
 #define	bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)),	\
-	 wbflush())
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f),	\
+	 wbflush()))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
