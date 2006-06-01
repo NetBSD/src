@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.22.12.2 2006/05/31 22:49:29 chap Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.22.12.3 2006/06/01 22:10:48 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.22.12.2 2006/05/31 22:49:29 chap Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.22.12.3 2006/06/01 22:10:48 chap Exp $");
 #endif
 
 
@@ -93,6 +93,7 @@ void dometa(u_int, u_char *, u_int);
 void midireset(void);
 void send_sysex(u_char *, u_int);
 u_long getvar(struct track *);
+u_long getlen(struct track *);
 void playfile(FILE *, char *);
 void playdata(u_char *, u_int, char *);
 int main(int argc, char **argv);
@@ -158,6 +159,8 @@ int unit = 0;
 int play = 1;
 int fd = -1;
 int sameprogram = 0;
+int insysex = 0;
+int svsysex = 0; /* number of sysex bytes saved internally */
 
 void
 send_event(seq_event_t *ev)
@@ -181,7 +184,17 @@ getvar(struct track *tp)
 		c = *tp->start++;
 		r = (r << 7) | (c & 0x7f);
 	} while ((c & 0x80) && tp->start < tp->end);
-	return (r);
+	return r;
+}
+
+u_long
+getlen(struct track *tp)
+{
+	u_long len;
+	len = getvar(tp);
+	if (tp->start + len > tp->end)
+		errx(1, "bogus item length exceeds remaining track size");
+	return len;
 }
 
 void
@@ -219,7 +232,8 @@ dometa(u_int meta, u_char *p, u_int len)
 			       " at %u%%; adjusted bpm = %u\n",
 			       usperbeat, ttempo, ev.t_TEMPO.bpm);
 		if (tempo_abs)
-			printf("Tempo: ignored in absolute-timed MIDI file\n");
+			warnx("tempo event ignored"
+			      " in absolute-timed MIDI file");
 		else {
 			send_event(&ev);
 			if (!tempo_set) {
@@ -268,7 +282,57 @@ void
 send_sysex(u_char *p, u_int l)
 {
 	seq_event_t event;
-
+	static u_char bf[6];
+	
+	if ( 0 == l ) {
+		warnx("zero-length system-exclusive event");
+		return;
+	}
+	
+	/*
+	 * This block is needed only to handle the possibility that a sysex
+	 * message is broken into multiple events in a MIDI file that do not
+	 * have length six; the /dev/music sequencer assumes a sysex message is
+	 * finished with the first SYSEX event carrying fewer than six bytes,
+	 * even if the last is not MIDI_SYSEX_END. So, we need to be careful
+	 * not to send a short sysex event until we have seen the end byte.
+	 * Instead, save some straggling bytes in bf, and send when we have a
+	 * full six (or an end byte). Note bf/saved/insysex should be per-
+	 * device, if we supported output to more than one device at a time.
+	 */
+	if ( svsysex > 0 ) {
+		if ( l > sizeof bf - svsysex ) {
+			memcpy(bf + svsysex, p, sizeof bf - svsysex);
+			l -= sizeof bf - svsysex;
+			p += sizeof bf - svsysex;
+			send_event(&SEQ_MK_SYSEX(unit,[0]=
+			    bf[0],bf[1],bf[2],bf[3],bf[4],bf[5]));
+			svsysex = 0;
+		} else {
+			memcpy(bf + svsysex, p, l);
+			svsysex += l;
+			p += l;
+			if ( MIDI_SYSEX_END == bf[svsysex-1] ) {
+				event = SEQ_MK_SYSEX(unit);
+				memcpy(event.sysex.buffer, bf, svsysex);
+				send_event(&event);
+				svsysex = insysex = 0;
+			} else
+				insysex = 1;
+			return;
+		}
+	}
+	
+	/*
+	 * l > 0. May as well test now whether we will be left 'insysex'
+	 * after processing this event.
+	 */	
+	insysex = ( MIDI_SYSEX_END != p[l-1] );
+	
+	/*
+	 * If not for multi-event sysexes and chunk-size weirdness, this
+	 * function could pretty much start here. :)
+	 */
 	while ( l >= SYSEX_CHUNK ) {
 		send_event(&SEQ_MK_SYSEX(unit,[0]=
 		    p[0],p[1],p[2],p[3],p[4],p[5]));
@@ -276,9 +340,14 @@ send_sysex(u_char *p, u_int l)
 		l -= SYSEX_CHUNK;
 	}
 	if ( l > 0 ) {
-		event = SEQ_MK_SYSEX(unit);
-		memcpy(event.sysex.buffer, p, l);
-		send_event(&event);
+		if ( insysex ) {
+			memcpy(bf, p, l);
+			svsysex = l;
+		} else { /* a <6 byte chunk is ok if it's REALLY the end */
+			event = SEQ_MK_SYSEX(unit);
+			memcpy(event.sysex.buffer, p, l);
+			send_event(&event);
+		}
 	}
 }
 
@@ -512,7 +581,7 @@ playdata(u_char *buf, u_int tot, char *name)
 		byte = *tp->start++;
 		if (byte == MIDI_META) {
 			meta = *tp->start++;
-			mlen = getvar(tp);
+			mlen = getlen(tp);
 			if (verbose > 2)
 				printf("META %02x (%d)\n", meta, mlen);
 			dometa(meta, tp->start, mlen);
@@ -531,6 +600,11 @@ playdata(u_char *buf, u_int tot, char *name)
 			    else   
 				printf("MIDI %02x (%d) %02x %02x\n",
 				       tp->status, mlen, msg[0], msg[1]);
+			}
+			if (insysex && tp->status != MIDI_SYSEX_END) {
+				warnx("incomplete system exclusive message"
+				      " aborted");
+				svsysex = insysex = 0;
 			}
 			status = MIDI_GET_STATUS(tp->status);
 			chan = MIDI_GET_CHAN(tp->status);
@@ -569,9 +643,24 @@ playdata(u_char *buf, u_int tot, char *name)
 				.value=(msg[0] & 0x7f) | ((msg[1] & 0x7f)<<7)));
 				break;
 			case MIDI_SYSTEM_PREFIX:
-				mlen = getvar(tp);
+				mlen = getlen(tp);
 				if (tp->status == MIDI_SYSEX_START) {
 					send_sysex(tp->start, mlen);
+					break;
+				} else if (tp->status == MIDI_SYSEX_END) {
+				/* SMF uses SYSEX_END as CONTINUATION/ESCAPE */
+					if (insysex) { /* CONTINUATION */
+						send_sysex(tp->start, mlen);
+					} else { /* ESCAPE */
+						for ( ; mlen > 0 ; -- mlen ) {
+							send_event(
+							    &SEQ_MK_EVENT(putc,
+							    SEQOLD_MIDIPUTC,
+							    .device=unit,
+							    .byte=*(tp->start++)
+							    ));
+						}
+					}
 					break;
 				}
 				/* Sorry, can't do this yet; FALLTHROUGH */
