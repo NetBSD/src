@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.25 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.25.6.1 2006/06/01 22:34:14 kardel Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25.6.1 2006/06/01 22:34:14 kardel Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -113,7 +113,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 	
 	/* make the stack aligned */
-	(u_int)fp = STACKALIGN(fp);
+	fp = (struct sigframe_siginfo *)STACKALIGN(fp);
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {

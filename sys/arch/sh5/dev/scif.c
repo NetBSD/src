@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.16.6.1 2006/04/22 11:37:56 simonb Exp $	*/
+/*	$NetBSD: scif.c,v 1.16.6.2 2006/06/01 22:35:24 kardel Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.16.6.1 2006/04/22 11:37:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.16.6.2 2006/06/01 22:35:24 kardel Exp $");
 
 #include "opt_kgdb.h"
 
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.16.6.1 2006/04/22 11:37:56 simonb Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #if 0
 #include <sys/kgdb.h>
@@ -780,7 +781,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    kauth_cred_geteuid(l->l_proc->p_cred) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -957,7 +958,9 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.6.2 2006/06/01 22:34:11 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.6.2 2006/06/01 22:34:11 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $")
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/acct.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -379,6 +380,7 @@ copyfault:
 			preempt(0);
 		goto out;
 
+#if 0 /* handled by fpudna() */
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
@@ -388,6 +390,7 @@ copyfault:
 		ksi.ksi_addr = (void *)frame->tf_rip;
 		goto trapsignal;
 	}
+#endif
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
@@ -518,8 +521,8 @@ faultcommon:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 		} else {
 #ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",

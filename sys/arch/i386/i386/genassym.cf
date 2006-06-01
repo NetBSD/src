@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2005/12/11 12:17:41 christos Exp $
+#	$NetBSD: genassym.cf,v 1.43.6.1 2006/06/01 22:34:49 kardel Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ define	LSONPROC		LSONPROC
 define	PTE_BASE		PTE_BASE
 define	UPAGES			UPAGES
 define	USPACE			USPACE
+define	KSTACK_SIZE		KSTACK_SIZE
 define	KERNBASE		KERNBASE
 define	KERNTEXTOFF		KERNTEXTOFF
 

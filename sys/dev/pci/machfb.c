@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.38.6.1 2006/04/22 11:39:15 simonb Exp $	*/
+/*	$NetBSD: machfb.c,v 1.38.6.2 2006/06/01 22:36:46 kardel Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.38.6.1 2006/04/22 11:39:15 simonb Exp $");
+	"$NetBSD: machfb.c,v 1.38.6.2 2006/06/01 22:36:46 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,6 +905,8 @@ static int
 mach64_modeswitch(struct mach64_softc *sc, struct videomode *mode)
 {
 	struct mach64_crtcregs crtc;
+
+	memset(&crtc, 0, sizeof crtc);	/* XXX gcc */
 
 	if (mach64_calc_crtcregs(sc, &crtc, mode))
 		return 1;

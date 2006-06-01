@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.192.4.1 2006/04/22 11:40:26 simonb Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.192.4.2 2006/06/01 22:39:43 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.192.4.1 2006/04/22 11:40:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.192.4.2 2006/06/01 22:39:43 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.192.4.1 2006/04/22 11:40:26 simonb 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -120,7 +121,7 @@ static boolean_t lfs_issequential_hole(const struct ufsmount *,
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
-    struct ucred *, int, int *, struct lwp *);
+    kauth_cred_t, int, int *, struct lwp *);
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
@@ -423,14 +424,14 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && p->p_ucred->cr_uid != 0) {
+	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -612,7 +613,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 }
 
 static int
-update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
+update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	      struct lwp *l)
 {
 	struct vnode *devvp, *vp;
@@ -704,7 +705,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 
 static daddr_t
 check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
-	     struct ucred *cred, int flags, int *pseg_flags, struct lwp *l)
+	     kauth_cred_t cred, int flags, int *pseg_flags, struct lwp *l)
 {
 	struct vnode *devvp;
 	struct buf *bp, *dbp;
@@ -916,7 +917,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct proc *p;
 	dev_t dev;
 	int error, i, ronly, secsize, fsbsize;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	int flags, dirty, do_rollforward;
@@ -924,7 +925,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int sn, curseg;
 
 	p = l ? l->l_proc : NULL;
-	cred = p ? p->p_ucred : NOCRED;
+	cred = p ? p->p_cred : NOCRED;
 
 	/*
 	 * Flush out any old buffers remaining from a previous use.
@@ -1053,6 +1054,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		fs->lfs_tstamp = fs->lfs_otstamp;
 		fs->lfs_fsbtodb = 0;
 	}
+	if (fs->lfs_resvseg == 0)
+		fs->lfs_resvseg = MIN(fs->lfs_minfreeseg - 1, \
+			MAX(MIN_RESV_SEGS, fs->lfs_minfreeseg / 2 + 1));
 
 	/*
 	 * If we aren't going to be able to write meaningfully to this
@@ -1149,6 +1153,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	TAILQ_INIT(&fs->lfs_dchainhd);
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
+	/* and delayed segment accounting for truncation list */
+	LIST_INIT(&fs->lfs_segdhd);
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -1408,7 +1414,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
 		return (error);
-	if ((error = VFS_SYNC(mp, 1, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VFS_SYNC(mp, 1, l->l_proc->p_cred, l)) != 0)
 		return (error);
 	s = splbio();
 	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
@@ -1505,7 +1511,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
+lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct lfs *fs;
@@ -1513,9 +1519,25 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
 	fs = VFSTOUFS(mp)->um_lfs;
 	if (fs->lfs_ronly)
 		return 0;
+
+	/* Snapshots should not hose the syncer */
+	/*
+	 * XXX Sync can block here anyway, since we don't have a very
+	 * XXX good idea of how much data is pending.  If it's more
+	 * XXX than a segment and lfs_nextseg is close to the end of
+	 * XXX the log, we'll likely block.
+	 */
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		simple_unlock(&fs->lfs_interlock);
+		return 0;
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	lfs_writer_enter(fs, "lfs_dirops");
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
+	DLOG((DLOG_FLUSH, "lfs_sync at 0x%x\n", fs->lfs_offset));
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
 #ifdef QUOTA
@@ -1545,6 +1567,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	dev_t dev;
 	int error, retries;
 	struct timespec ts;
+
+	memset(&ts, 0, sizeof ts);	/* XXX gcc */
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -1971,14 +1995,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	/* The Ifile lives in the buffer cache */
 	KASSERT(vp != fs->lfs_ivnode);
 
-        /*
-         * We don't want to fill the disk before the cleaner has a chance
-         * to make room for us.  If we're in danger of doing that, fail
-         * with EAGAIN.  The caller will have to notice this, unlock
-         * so the cleaner can run, relock and try again.
-         */
-        if (LFS_STARVED_FOR_SEGS(fs))
-                goto tryagain;
+	/*
+	 * We don't want to fill the disk before the cleaner has a chance
+	 * to make room for us.  If we're in danger of doing that, fail
+	 * with EAGAIN.  The caller will have to notice this, unlock
+	 * so the cleaner can run, relock and try again.
+	 *
+	 * We must write everything, however, if our vnode is being
+	 * reclaimed.
+	 */
+	if (LFS_STARVED_FOR_SEGS(fs) && vp != fs->lfs_flushvp)
+		goto tryagain;
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
@@ -2059,29 +2086,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	if ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
 				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
-		int vers;
-
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
 #if 0
 		      " with nfinfo=%d at offset 0x%x\n",
 		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
 		      (unsigned)fs->lfs_offset));
 #endif
-		if (sp->fip->fi_nblocks == 0) {
-			/* Don't write zero-length finfos */
-			--((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left += FINFOSIZE;
-		} else
-			lfs_updatemeta(sp);
-
-		vers = sp->fip->fi_version;
+		lfs_updatemeta(sp);
+		lfs_release_finfo(fs);
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = vers;
-		sp->fip->fi_ino = ip->i_number;
-		/* Add the current file to the segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= FINFOSIZE;
+		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
 		/*
 		 * Having given up all of the pager_map we were holding,
@@ -2139,15 +2154,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			int vers;
 
 			lfs_updatemeta(sp);
-
 			vers = sp->fip->fi_version;
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
-			sp->fip->fi_version = vers;
-			sp->fip->fi_ino = ip->i_number;
-			/* Add the current file to the segment summary. */
-			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -= FINFOSIZE;
+			lfs_acquire_finfo(fs, ip->i_number, vers);
 		}
 		/* Check both for space in segment and space in segsum */
 		iobytes = MIN(iobytes, (sp->seg_bytes_left >> fs_bshift)

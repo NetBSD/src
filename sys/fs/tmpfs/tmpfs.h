@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.13.6.1 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.13.6.2 2006/06/01 22:38:05 kardel Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -48,7 +48,9 @@
 #include <sys/queue.h>
 #include <sys/vnode.h>
 
+#if defined(_KERNEL)
 #include <fs/tmpfs/tmpfs_pool.h>
+#endif /* defined(_KERNEL) */
 
 /* --------------------------------------------------------------------- */
 
@@ -217,6 +219,9 @@ struct tmpfs_node {
 		} tn_reg;
 	} tn_spec;
 };
+
+#if defined(_KERNEL)
+
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
 /* --------------------------------------------------------------------- */
@@ -292,7 +297,6 @@ struct tmpfs_fid {
 
 /* --------------------------------------------------------------------- */
 
-#ifdef _KERNEL
 /*
  * Prototypes for tmpfs_subr.c.
  */
@@ -319,13 +323,12 @@ struct tmpfs_dirent *	tmpfs_dir_lookupbycookie(struct tmpfs_node *, off_t);
 int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *, off_t *);
 int	tmpfs_reg_resize(struct vnode *, off_t);
 size_t	tmpfs_mem_info(boolean_t);
-int	tmpfs_chflags(struct vnode *, int, struct ucred *, struct proc *);
-int	tmpfs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
-int	tmpfs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
-	    struct proc *);
-int	tmpfs_chsize(struct vnode *, u_quad_t, struct ucred *, struct proc *);
+int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct proc *);
+int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct proc *);
+int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct proc *);
+int	tmpfs_chsize(struct vnode *, u_quad_t, kauth_cred_t, struct proc *);
 int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
-	    int, struct ucred *, struct lwp *);
+	    int, kauth_cred_t, struct lwp *);
 void	tmpfs_itimes(struct vnode *, const struct timespec *,
 	    const struct timespec *);
 
@@ -402,8 +405,6 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 /* Returns the available space for the given file system. */
 #define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
 
-#endif
-
 /* --------------------------------------------------------------------- */
 
 /*
@@ -424,6 +425,8 @@ VFS_TO_TMPFS(struct mount *mp)
 	return tmp;
 }
 
+#endif /* defined(_KERNEL) */
+
 static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_NODE(struct vnode *vp)
@@ -437,6 +440,8 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 	return node;
 }
 
+#if defined(_KERNEL)
+
 static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_DIR(struct vnode *vp)
@@ -449,6 +454,8 @@ VP_TO_TMPFS_DIR(struct vnode *vp)
 #endif
 	return node;
 }
+
+#endif /* defined(_KERNEL) */
 
 /* ---------------------------------------------------------------------
  * USER AND KERNEL DEFINITIONS

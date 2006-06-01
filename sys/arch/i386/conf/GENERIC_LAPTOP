@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.172.2.1 2006/04/22 11:37:32 simonb Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.172.2.2 2006/06/01 22:34:34 kardel Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172.2.1 $"
+#ident 		"GENERIC-$Revision: 1.172.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -344,6 +344,7 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
+#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -356,6 +357,7 @@ agp* 	at pchb?
 
 # ISA bus support
 #isa0	at ichlpcib?
+#isa0	at piixpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pcib?
@@ -474,12 +476,18 @@ lpt2	at isa? port 0x3bc
 # Hardware monitors
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
 #viaenv* at viapm?
 
+# Intel PIIX4 power management controllers
+piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
+
+# iTE IT87xxF and compatible hardware monitors
+#it0    at isa? port 0x290              # other ports: 0xc00, 0xd00.
 
 # SCSI Controllers and Devices
 
@@ -591,6 +599,7 @@ ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
@@ -751,6 +760,9 @@ uyap* at uhub? port ?
 # USB Generic driver
 ugen*	at uhub? port ?
 
+# USB generic serial port (e.g., data over cellular)
+ugensa*	at uhub? port ?
+ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
 

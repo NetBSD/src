@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.48.6.1 2006/04/22 11:38:16 simonb Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.48.6.2 2006/06/01 22:35:52 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -570,10 +570,17 @@ struct netbsd32_statvfs {
 
 /* from <sys/timex.h> */
 typedef netbsd32_pointer_t netbsd32_ntptimevalp_t;
-struct netbsd32_ntptimeval {
+struct netbsd32_ntptimeval30 {
 	struct netbsd32_timeval time;	/* current time (ro) */
 	netbsd32_long maxerror;	/* maximum error (us) (ro) */
 	netbsd32_long esterror;	/* estimated error (us) (ro) */
+};
+struct netbsd32_ntptimeval {
+	struct netbsd32_timespec time;	/* current time (ro) */
+	netbsd32_long maxerror;	/* maximum error (us) (ro) */
+	netbsd32_long esterror;	/* estimated error (us) (ro) */
+	netbsd32_long tai;	/* TAI offset */
+	int time_state;		/* time status */
 };
 
 typedef netbsd32_pointer_t netbsd32_timexp_t;
@@ -645,7 +652,7 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #define NETBSD32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
 #define NETBSD32TOP(s32uap, uap, name, type) \
-	    SCARG(uap, name) = (type *)NETBSD32PTR64(SCARG(s32uap, name))
+	    SCARG(uap, name) = (type *)(uintptr_t)NETBSD32PTR64(SCARG(s32uap, name))
 #define NETBSD32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
 #define NETBSD32TOX64(s32uap, uap, name, type) \

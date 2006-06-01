@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.122 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.122.6.1 2006/06/01 22:34:52 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.122 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.122.6.1 2006/06/01 22:34:52 kardel Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -178,7 +178,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)l2->l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -323,8 +323,10 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 static void
 setredzone(struct lwp *l)
 {
-	pmap_remove(pmap_kernel(), (vaddr_t)l->l_addr + PAGE_SIZE,
-	    (vaddr_t)l->l_addr + 2 * PAGE_SIZE);
+	vaddr_t addr;
+
+	addr = USER_TO_UAREA(l->l_addr);
+	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
 	pmap_update(pmap_kernel());
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.29.6.5 2006/06/01 22:38:07 kardel Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.5 2006/06/01 22:38:07 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -1070,9 +1070,10 @@ sys_ntp_gettime(l, v, retval)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.5 2006/06/01 22:38:07 kardel Exp $");
 
 #include "opt_ntp.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1081,7 +1082,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/timex.h>
+#ifdef COMPAT_30
+#include <compat/sys/timex.h>
+#endif
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -1124,87 +1129,132 @@ extern long pps_stbcnt;		/* stability limit exceeded */
 /*
  * ntp_gettime() - NTP user application interface
  */
+void
+ntp_gettime(ntvp)
+	struct ntptimeval *ntvp;
+{
+	struct timeval atv;
+	int s;
+
+	memset(ntvp, 0, sizeof(struct ntptimeval));
+
+	s = splclock();
+#ifdef EXT_CLOCK
+	/*
+	 * The microtime() external clock routine returns a
+	 * status code. If less than zero, we declare an error
+	 * in the clock status word and return the kernel
+	 * (software) time variable. While there are other
+	 * places that call microtime(), this is the only place
+	 * that matters from an application point of view.
+	 */
+	if (microtime(&atv) < 0) {
+		time_status |= STA_CLOCKERR;
+		ntvp->time = time;
+	} else
+		time_status &= ~STA_CLOCKERR;
+#else /* EXT_CLOCK */
+	microtime(&atv);
+#endif /* EXT_CLOCK */
+	ntvp->maxerror = time_maxerror;
+	ntvp->esterror = time_esterror;
+	(void) splx(s);
+	TIMEVAL_TO_TIMESPEC(&atv, &ntvp->time);
+}
+
 int
-sys_ntp_gettime(l, v, retval)
+ntp_timestatus()
+{
+	/*
+	 * Status word error decode. If any of these conditions
+	 * occur, an error is returned, instead of the status
+	 * word. Most applications will care only about the fact
+	 * the system clock may not be trusted, not about the
+	 * details.
+	 *
+	 * Hardware or software error
+	 */
+	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+
+	/*
+	 * PPS signal lost when either time or frequency
+	 * synchronization requested
+	 */
+	    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+	     !(time_status & STA_PPSSIGNAL)) ||
+
+	/*
+	 * PPS jitter exceeded when time synchronization
+	 * requested
+	 */
+	    (time_status & STA_PPSTIME &&
+	     time_status & STA_PPSJITTER) ||
+
+	/*
+	 * PPS wander exceeded or calibration error when
+	 * frequency synchronization requested
+	 */
+	    (time_status & STA_PPSFREQ &&
+	     time_status & (STA_PPSWANDER | STA_PPSERROR)))
+		return (TIME_ERROR);
+	else
+		return ((register_t)time_state);
+}
+
+int
+sys___ntp_gettime30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
-
 {
-	struct sys_ntp_gettime_args /* {
+	struct sys___ntp_gettime30_args /* {
 		syscallarg(struct ntptimeval *) ntvp;
 	} */ *uap = v;
-	struct timeval atv;
 	struct ntptimeval ntv;
 	int error = 0;
-	int s;
 
 	if (SCARG(uap, ntvp)) {
-		s = splclock();
-#ifdef EXT_CLOCK
-		/*
-		 * The microtime() external clock routine returns a
-		 * status code. If less than zero, we declare an error
-		 * in the clock status word and return the kernel
-		 * (software) time variable. While there are other
-		 * places that call microtime(), this is the only place
-		 * that matters from an application point of view.
-		 */
-		if (microtime(&atv) < 0) {
-			time_status |= STA_CLOCKERR;
-			ntv.time = time;
-		} else
-			time_status &= ~STA_CLOCKERR;
-#else /* EXT_CLOCK */
-		microtime(&atv);
-#endif /* EXT_CLOCK */
-		ntv.time = atv;
-		ntv.maxerror = time_maxerror;
-		ntv.esterror = time_esterror;
-		(void) splx(s);
+		ntp_gettime(&ntv);
 
 		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, ntvp),
-		    sizeof(ntv));
+				sizeof(ntv));
 	}
-	if (!error) {
+	if (!error)
+		*retval = ntp_timestatus();
 
-		/*
-		 * Status word error decode. If any of these conditions
-		 * occur, an error is returned, instead of the status
-		 * word. Most applications will care only about the fact
-		 * the system clock may not be trusted, not about the
-		 * details.
-		 *
-		 * Hardware or software error
-		 */
-		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-
-		/*
-		 * PPS signal lost when either time or frequency
-		 * synchronization requested
-		 */
-		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-		    !(time_status & STA_PPSSIGNAL)) ||
-
-		/*
-		 * PPS jitter exceeded when time synchronization
-		 * requested
-		 */
-		    (time_status & STA_PPSTIME &&
-		    time_status & STA_PPSJITTER) ||
-
-		/*
-		 * PPS wander exceeded or calibration error when
-		 * frequency synchronization requested
-		 */
-		    (time_status & STA_PPSFREQ &&
-		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
-			*retval = TIME_ERROR;
-		else
-			*retval = (register_t)time_state;
-	}
-	return(error);
+	return (error);
 }
+
+#ifdef COMPAT_30
+int
+compat_30_sys_ntp_gettime(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_sys_ntp_gettime_args /* {
+		syscallarg(struct ntptimeval30 *) ontvp;
+	} */ *uap = v;
+	struct ntptimeval ntv;
+	struct ntptimeval30 ontv;
+	int error = 0;
+
+	if (SCARG(uap, ntvp)) {
+		ntp_gettime(&ntv);
+
+		TIMESPEC_TO_TIMEVAL(&ontv.time, &ntv.time);
+		ontv.maxerror = ntv.maxerror;
+		ontv.esterror = ntv.esterror;
+
+		error = copyout((caddr_t)&ontv, (caddr_t)SCARG(uap, ntvp),
+				sizeof(ontv));
+	}
+	if (!error)
+		*retval = ntp_timestatus();
+
+	return (error);
+}
+#endif
 
 /* ARGSUSED */
 /*
@@ -1228,7 +1278,8 @@ sys_ntp_adjtime(l, v, retval)
 			sizeof(ntv))) != 0)
 		return (error);
 
-	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if (ntv.modes != 0 && (error = kauth_authorize_generic(p->p_cred,
+				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	ntp_adjtime1(&ntv, &retval1);
@@ -1332,75 +1383,9 @@ static int
 sysctl_kern_ntptime(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	struct timeval atv;
 	struct ntptimeval ntv;
-	int s;
 
-	/*
-	 * Construct ntp_timeval.
-	 */
-
-	s = splclock();
-#ifdef EXT_CLOCK
-	/*
-	 * The microtime() external clock routine returns a
-	 * status code. If less than zero, we declare an error
-	 * in the clock status word and return the kernel
-	 * (software) time variable. While there are other
-	 * places that call microtime(), this is the only place
-	 * that matters from an application point of view.
-	 */
-	if (microtime(&atv) < 0) {
-		time_status |= STA_CLOCKERR;
-		ntv.time = time;
-	} else {
-		time_status &= ~STA_CLOCKERR;
-	}
-#else /* EXT_CLOCK */
-	microtime(&atv);
-#endif /* EXT_CLOCK */
-	ntv.time = atv;
-	ntv.maxerror = time_maxerror;
-	ntv.esterror = time_esterror;
-	splx(s);
-
-#ifdef notyet
-	/*
-	 * Status word error decode. If any of these conditions
-	 * occur, an error is returned, instead of the status
-	 * word. Most applications will care only about the fact
-	 * the system clock may not be trusted, not about the
-	 * details.
-	 *
-	 * Hardware or software error
-	 */
-	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-		ntv.time_state = TIME_ERROR;
-
-	/*
-	 * PPS signal lost when either time or frequency
-	 * synchronization requested
-	 */
-	   (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-	    !(time_status & STA_PPSSIGNAL)) ||
-
-	/*
-	 * PPS jitter exceeded when time synchronization
-	 * requested
-	 */
-	   (time_status & STA_PPSTIME &&
-	    time_status & STA_PPSJITTER) ||
-
-	/*
-	 * PPS wander exceeded or calibration error when
-	 * frequency synchronization requested
-	 */
-	   (time_status & STA_PPSFREQ &&
-	    time_status & (STA_PPSWANDER | STA_PPSERROR)))
-		ntv.time_state = TIME_ERROR;
-	else
-		ntv.time_state = time_state;
-#endif /* notyet */
+	ntp_gettime(&ntv);
 
 	node = *rnode;
 	node.sysctl_data = &ntv;
@@ -1429,7 +1414,7 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
-sys_ntp_gettime(l, v, retval)
+sys___ntp_gettime30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1437,5 +1422,17 @@ sys_ntp_gettime(l, v, retval)
 
 	return(ENOSYS);
 }
+
+#ifdef COMPAT_30
+int
+compat_30_sys_ntp_gettime(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+
+	return(ENOSYS);
+}
+#endif
 #endif /* !NTP */
 #endif /* !__HAVE_TIMECOUNTER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45.6.1 2006/04/22 11:37:20 simonb Exp $	*/
+/*	$NetBSD: zs.c,v 1.45.6.2 2006/06/01 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.6.1 2006/04/22 11:37:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.6.2 2006/06/01 22:34:17 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.6.1 2006/04/22 11:37:20 simonb Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/iomap.h>
@@ -402,7 +403,7 @@ struct lwp	*l;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s  = spltty();
@@ -907,7 +908,7 @@ struct lwp	*l;
 	case TIOCSFLAGS: {
 		int userbits = 0;
 
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if(error != 0)
 			return (EPERM);
 

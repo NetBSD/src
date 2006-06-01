@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.9 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.9.6.1 2006/06/01 22:35:40 kardel Exp $	*/
 
 /*
  *
@@ -114,7 +114,7 @@ struct coda_cache {
 	struct coda_cache	*lru_next, *lru_prev;	/* LRU list */
 	struct cnode	*cp;			/* vnode of the file */
 	struct cnode	*dcp;			/* parent's cnode */
-	struct ucred	*cred;			/* user credentials */
+	kauth_cred_t    cred;			/* user credentials */
 	char		name[CODA_NC_NAMELEN];	/* segment name */
 	int		namelen;		/* length of name */
 };
@@ -139,12 +139,14 @@ struct coda_hash {		/* Start of Hash chain */
 
 /* Prototypes of functions exported within cfs */
 extern void coda_nc_init(void);
-extern void coda_nc_enter(struct cnode *, const char *, int, struct ucred *, struct cnode *);
-extern struct cnode *coda_nc_lookup(struct cnode *, const char *, int, struct ucred *);
+extern void coda_nc_enter(struct cnode *, const char *, int,
+    kauth_cred_t, struct cnode *);
+extern struct cnode *coda_nc_lookup(struct cnode *, const char *, int, 
+    kauth_cred_t);
 
 extern void coda_nc_zapParentfid(CodaFid *, enum dc_status);
 extern void coda_nc_zapfid(CodaFid *, enum dc_status);
-extern void coda_nc_zapvnode(CodaFid *, struct ucred *, enum dc_status);
+extern void coda_nc_zapvnode(CodaFid *, kauth_cred_t, enum dc_status);
 extern void coda_nc_zapfile(struct cnode *, const char *, int);
 extern void coda_nc_purge_user(uid_t, enum dc_status);
 extern void coda_nc_flush(enum dc_status);

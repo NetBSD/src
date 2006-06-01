@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.100.6.1 2006/04/22 11:39:38 simonb Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.100.6.2 2006/06/01 22:37:41 kardel Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.6.1 2006/04/22 11:39:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.6.2 2006/06/01 22:37:41 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1706,6 +1706,8 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	ai.edesc1 = epdesc1;
 	ai.asf1desc = asf1d;
 	ai.sc_busy = 0;
+	ai.aformat = NULL;
+	ai.ifaceh = NULL;
 	uaudio_add_alt(sc, &ai);
 #ifdef UAUDIO_DEBUG
 	if (ai.attributes & UA_SED_FREQ_CONTROL)

@@ -1,5 +1,5 @@
 /*
- * $NetBSD: ls.c,v 1.2.2.2 2006/04/22 11:37:38 simonb Exp $
+ * $NetBSD: ls.c,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $
  */
 
 /*-
@@ -38,6 +38,8 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/common/ls.c,v 1.11 2003/08/25 23:30:41 obrien Exp $"); */
+
 
 #include <sys/param.h>
 #include <ufs/ufs/dinode.h>

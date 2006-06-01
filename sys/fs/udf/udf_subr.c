@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.2.2.1 2006/04/22 11:39:58 simonb Exp $ */
+/* $NetBSD: udf_subr.c,v 1.2.2.2 2006/06/01 22:38:05 kardel Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.2.2.1 2006/04/22 11:39:58 simonb Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.2.2.2 2006/06/01 22:38:05 kardel Exp $");
 #endif /* not lint */
 
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: udf_subr.c,v 1.2.2.1 2006/04/22 11:39:58 simonb Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
@@ -215,7 +216,7 @@ udf_validate_tag_sum(void *blob)
 
 /* --------------------------------------------------------------------- */
 
-/* assumes sector number of descriptor to be saved allready present */
+/* assumes sector number of descriptor to be saved already present */
 
 int
 udf_validate_tag_and_crc_sums(void *blob)
@@ -1727,7 +1728,7 @@ udf_dispose_node(struct udf_node *node)
 
 static int
 udf_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 	return 0;
 }

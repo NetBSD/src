@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $	*/
+/*	$NetBSD: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $
+ * $Id: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $")
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2030,7 +2030,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -4619,6 +4619,7 @@ uIntf *v;               /* working area: values in order of bit length */
   int y;                        /* number of dummy codes added */
   uInt z;                       /* number of entries in current table */
 
+  r.base = 0;	/* XXX gcc */
 
   /* Generate counts for each bit length */
   p = c;
@@ -5908,7 +5909,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.2 2006/06/01 22:38:38 kardel Exp $ */
 
 /* #include "zlib.h" */
 

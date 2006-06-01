@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.47 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.47.6.1 2006/06/01 22:35:40 kardel Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.47 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.47.6.1 2006/06/01 22:35:40 kardel Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.47 2005/12/11 12:19:50 christos Ex
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/select.h>
+#include <sys/kauth.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -353,7 +354,7 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
 	    }
     }
 
-    error = venus_root(vftomi(vfsp), p->p_cred->pc_ucred, p, &VFid);
+    error = venus_root(vftomi(vfsp), p->p_cred, p, &VFid);
 
     if (!error) {
 	/*
@@ -426,7 +427,7 @@ coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
      */
     /* Note: Normal fs's have a bsize of 0x400 == 1024 */
 
-    error = venus_statfs(vftomi(vfsp), p->p_cred->pc_ucred, l, &fsstat);
+    error = venus_statfs(vftomi(vfsp), p->p_cred, l, &fsstat);
 
     if (!error) {
 	sbp->f_bsize = 8192; /* XXX */
@@ -451,7 +452,7 @@ coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
  * Flush any pending I/O.
  */
 int
-coda_sync(struct mount *vfsp, int waitfor, struct ucred *cred, struct lwp *l)
+coda_sync(struct mount *vfsp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
     ENTRY;
     MARK_ENTRY(CODA_SYNC_STATS);
@@ -473,7 +474,7 @@ coda_vget(struct mount *vfsp, ino_t ino, struct vnode **vpp)
  */
 int
 coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
-	struct vnode **vpp, int *exflagsp, struct ucred **creadanonp)
+	struct vnode **vpp, int *exflagsp, kauth_cred_t *creadanonp)
 {
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
@@ -493,7 +494,7 @@ coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
 	return(0);
     }
 
-    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred->pc_ucred, p, &VFid, &vtype);
+    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred, p, &VFid, &vtype);
 
     if (error) {
 	CODADEBUG(CODA_VGET, myprintf(("vget error %d\n",error));)

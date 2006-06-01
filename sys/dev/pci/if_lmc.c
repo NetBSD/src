@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.23.6.1 2006/04/22 11:39:14 simonb Exp $ */
+/* $NetBSD: if_lmc.c,v 1.23.6.2 2006/06/01 22:36:44 kardel Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -166,6 +166,7 @@
 # include <sys/sockio.h>
 # include <sys/device.h>
 # include <sys/reboot.h>
+# include <sys/kauth.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>

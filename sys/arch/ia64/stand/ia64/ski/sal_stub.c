@@ -1,4 +1,4 @@
-/*	$NetBSD: sal_stub.c,v 1.2.2.2 2006/04/22 11:37:39 simonb Exp $	*/
+/*	$NetBSD: sal_stub.c,v 1.2.2.3 2006/06/01 22:35:00 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/sal_stub.c,v 1.2 2003/09/08 09:11:32 obrien Exp $"); */
 
 #include <sys/types.h>
 #include <machine/md_var.h>

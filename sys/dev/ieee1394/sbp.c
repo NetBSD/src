@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.4.6.1 2006/04/22 11:39:05 simonb Exp $	*/
+/*	$NetBSD: sbp.c,v 1.4.6.2 2006/06/01 22:36:41 kardel Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -964,12 +964,12 @@ SBP_DEBUG(0)
 	if (!alive)
 		printf("not alive\n");
 END_DEBUG
+	microtime(&sbp->last_busreset);
+
 	if (!alive)
 		return;
 
 	SBP_BUS_FREEZE(sbp);
-
-	microtime(&sbp->last_busreset);
 }
 
 static void
@@ -2130,10 +2130,8 @@ END_DEBUG
 				/*maxsize*/0x100000, /*nsegments*/SBP_IND_MAX,
 				/*maxsegsz*/SBP_SEG_MAX,
 				/*flags*/BUS_DMA_ALLOCNOW,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 				/*lockfunc*/busdma_lock_mutex,
 				/*lockarg*/&Giant,
-#endif
 				&sbp->dmat);
 	if (error != 0) {
 		printf("sbp_attach: Could not allocate DMA tag "

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.17 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: lockf.h,v 1.17.6.1 2006/06/01 22:39:26 kardel Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,39 +37,9 @@
 #ifndef _SYS_LOCKF_H_
 #define _SYS_LOCKF_H_
 
-/*
- * The lockf structure is a kernel structure which contains the information
- * associated with a byte range lock.  The lockf structures are linked into
- * the inode structure. Locks are sorted by the starting byte of the lock for
- * efficiency.
- *
- * lf_next is used for two purposes, depending on whether the lock is
- * being held, or is in conflict with an existing lock.  If this lock
- * is held, it indicates the next lock on the same vnode.
- * For pending locks, if lock->lf_next is non-NULL, then lock->lf_block
- * must be queued on the lf_blkhd TAILQ of lock->lf_next.
- */
-
-TAILQ_HEAD(locklist, lockf);
-
-struct lockf {
-	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
-	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
-	off_t	lf_start;	 /* The byte # of the start of the lock */
-	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
-	void	*lf_id;		 /* process or file description holding lock */
-	struct	lwp *lf_lwp;	 /* LWP waiting for lock */
-	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
-	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
-	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
-	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
-	uid_t	lf_uid;		 /* User ID responsible */
-};
-
-/* Maximum length of sleep chains to traverse to try and detect deadlock. */
-#define MAXDEPTH 50
-
 #ifdef _KERNEL
+struct lockf;
+
 int lf_advlock(struct vop_advlock_args *, struct lockf **, off_t);
 #endif /* _KERNEL */
 

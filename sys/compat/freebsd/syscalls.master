@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2005/12/11 12:20:02 christos Exp $
+	$NetBSD: syscalls.master,v 1.50.6.1 2006/06/01 22:35:48 kardel Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -538,9 +538,9 @@
 276	NOARGS		{ int sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
-278	NOARGS		{ int compat_30_sys___stat13(const char *path, struct stat30 *ub); }
-279	NOARGS		{ int compat_30_sys___fstat13(int fd, struct stat30 *sb); }
-280	NOARGS		{ int compat_30_sys___lstat13(const char *path, struct stat30 *ub);}
+278	NOARGS		{ int compat_30_sys___stat13(const char *path, struct stat13 *ub); }
+279	NOARGS		{ int compat_30_sys___fstat13(int fd, struct stat13 *sb); }
+280	NOARGS		{ int compat_30_sys___lstat13(const char *path, struct stat13 *ub);}
 281	UNIMPL
 282	UNIMPL
 283	UNIMPL
@@ -560,8 +560,8 @@
 297	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs12 *buf); }
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-299	NOARGS		{ int sys_fhstat(const fhandle_t *fhp, \
-			    struct stat *sb); }
+299	NOARGS		{ int compat_30_sys_fhstat(const fhandle_t *fhp, \
+			    struct stat13 *sb); }
 ; syscall numbers for FreeBSD
 300	UNIMPL		modnext
 301	UNIMPL		modstat

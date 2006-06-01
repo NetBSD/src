@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.68.6.1 2006/04/22 11:38:55 simonb Exp $	*/
+/*	$NetBSD: midway.c,v 1.68.6.2 2006/06/01 22:36:25 kardel Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.6.1 2006/04/22 11:38:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.6.2 2006/06/01 22:36:25 kardel Exp $");
 
 #include "opt_natm.h"
 
@@ -160,6 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.6.1 2006/04/22 11:38:55 simonb Exp $
 #include <sys/socketvar.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -1307,7 +1308,9 @@ caddr_t data;
 		if (ifp == &sc->enif) {
 		  struct ifnet *sifp;
 
-		  if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		  if ((error = kauth_authorize_generic(curproc->p_cred,
+						 KAUTH_GENERIC_ISSUSER,
+						 &curproc->p_acflag)) != 0)
 		    break;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
@@ -1335,7 +1338,9 @@ caddr_t data;
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) == 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 
@@ -2096,6 +2101,8 @@ int chan;
   int datalen = 0, dtqneed, len, ncells;
   u_int8_t *cp;
   struct ifnet *ifp;
+
+  memset(&launch, 0, sizeof launch);	/* XXX gcc */
 
 #ifdef EN_DEBUG
   printf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);

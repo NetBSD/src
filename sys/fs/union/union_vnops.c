@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.14.6.1 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.14.6.2 2006/06/01 22:38:06 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.6.1 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.6.2 2006/06/01 22:38:06 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.6.1 2006/04/22 11:39:58 simonb 
 #include <sys/buf.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/kauth.h>
+
 #include <fs/union/union.h>
 #include <miscfs/genfs/genfs.h>
 
@@ -300,7 +302,7 @@ union_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	int lockparent = cnp->cn_flags & LOCKPARENT;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(dvp->v_mount);
-	struct ucred *saved_cred = NULL;
+	kauth_cred_t saved_cred = NULL;
 	int iswhiteout;
 	struct vattr va;
 
@@ -664,13 +666,13 @@ union_open(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
 	struct vnode *tvp;
 	int mode = ap->a_mode;
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	struct lwp *l = ap->a_l;
 	int error;
 
@@ -726,7 +728,7 @@ union_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
@@ -769,7 +771,7 @@ union_access(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -837,7 +839,7 @@ union_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error;
@@ -926,7 +928,7 @@ union_setattr(v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
@@ -999,7 +1001,7 @@ union_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error;
 	struct vnode *vp = OTHERVP(ap->a_vp);
@@ -1043,7 +1045,7 @@ union_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error;
 	struct vnode *vp;
@@ -1077,7 +1079,7 @@ union_lease(v)
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flag;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
@@ -1095,7 +1097,7 @@ union_ioctl(v)
 		int  a_command;
 		void *a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
@@ -1145,7 +1147,7 @@ union_mmap(v)
 	struct vop_mmap_args /* {
 		struct vnode *a_vp;
 		int  a_fflags;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
@@ -1160,7 +1162,7 @@ union_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int  a_flags;
 		off_t offhi;
 		off_t offlo;
@@ -1207,7 +1209,7 @@ union_seek(v)
 		struct vnode *a_vp;
 		off_t  a_oldoff;
 		off_t  a_newoff;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 
@@ -1589,7 +1591,7 @@ union_readdir(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		u_long *a_cookies;
 		int a_ncookies;
@@ -1612,7 +1614,7 @@ union_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error;
 	struct vnode *vp = OTHERVP(ap->a_vp);

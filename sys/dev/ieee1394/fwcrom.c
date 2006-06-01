@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.2.6.1 2006/06/01 22:36:40 kardel Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -421,17 +421,15 @@ crom_add_quad(struct crom_chunk *chunk, uint32_t entry)
 int
 crom_add_entry(struct crom_chunk *chunk, int key, int val)
 {
-	struct csrreg *reg;
-	uint32_t i;
+	union {
+		struct csrreg reg;
+		uint32_t i;
+	} u;
 	
-#if defined(__FreeBSD__)
-	reg = (struct csrreg *)&i;
-#elif defined(__NetBSD__)
-	(uint32_t *)reg = &i;
-#endif
-	reg->key = key;
-	reg->val = val;
-	return(crom_add_quad(chunk, (uint32_t) i));
+	u.reg.key = key;
+	u.reg.val = val;
+
+	return(crom_add_quad(chunk, u.i));
 }
 
 int

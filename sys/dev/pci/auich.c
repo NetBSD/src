@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.101.6.1 2006/04/22 11:39:13 simonb Exp $	*/
+/*	$NetBSD: auich.c,v 1.101.6.2 2006/06/01 22:36:43 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.101.6.1 2006/04/22 11:39:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.101.6.2 2006/06/01 22:36:43 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -754,7 +754,9 @@ auich_finish_attach(struct device *self)
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 
+#if notyet
 	auich_powerhook(PWR_SUSPEND, sc);
+#endif
 
 	return;
 }
@@ -1419,6 +1421,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 static int
 auich_powerstate(void *v, int state)
 {
+#if notyet
 	struct auich_softc *sc;
 	int rv;
 
@@ -1440,6 +1443,9 @@ auich_powerstate(void *v, int state)
 	}
 
 	return rv;
+#else
+	return 0;
+#endif
 }
 
 static int

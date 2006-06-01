@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.12.6.1 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.12.6.2 2006/06/01 22:37:52 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.6.1 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.6.2 2006/06/01 22:37:52 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.6.1 2006/04/22 11:39:58 simonb
 #include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -71,7 +72,7 @@ int	ptyfs_start(struct mount *, int, struct lwp *);
 int	ptyfs_unmount(struct mount *, int, struct lwp *);
 int	ptyfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	ptyfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
-int	ptyfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	ptyfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	ptyfs_vget(struct mount *, ino_t, struct vnode **);
 
 static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
@@ -173,7 +174,7 @@ ptyfs__getvattr(struct ptm_pty *pt, struct proc *p, struct vattr *vattr)
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_uid = kauth_cred_getuid(p->p_cred);
 	vattr->va_gid = pmnt->pmnt_gid;
 	vattr->va_mode = pmnt->pmnt_mode;
 }
@@ -214,10 +215,6 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args args;
 
-	/* Don't allow more than one mount */
-	if (ptyfs_count)
-		return EBUSY;
-
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
 		return EINVAL;
@@ -232,6 +229,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 		args.gid = pmnt->pmnt_gid;
 		return copyout(&args, data, sizeof(args));
 	}
+
+	/* Don't allow more than one mount */
+	if (ptyfs_count)
+		return EBUSY;
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
@@ -343,7 +344,7 @@ ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
 
 /*ARGSUSED*/
 int
-ptyfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct lwp *p)
+ptyfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *p)
 {
 	return 0;
 }

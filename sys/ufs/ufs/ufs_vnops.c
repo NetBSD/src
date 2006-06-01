@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.138.6.2 2006/04/22 11:40:27 simonb Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.138.6.3 2006/06/01 22:39:44 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.2 2006/04/22 11:40:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.3 2006/06/01 22:39:44 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.2 2006/04/22 11:40:27 simonb E
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -78,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.2 2006/04/22 11:40:27 simonb E
 
 #include <uvm/uvm.h>
 
-static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
-static int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
+static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct proc *);
+static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
     struct proc *);
 
 /*
@@ -185,7 +186,7 @@ ufs_open(void *v)
 	struct vop_open_args /* {
 		struct vnode	*a_vp;
 		int		a_mode;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 
@@ -210,7 +211,7 @@ ufs_close(void *v)
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -231,7 +232,7 @@ ufs_access(void *v)
 	struct vop_access_args /* {
 		struct vnode	*a_vp;
 		int		a_mode;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -287,7 +288,7 @@ ufs_getattr(void *v)
 	struct vop_getattr_args /* {
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -358,13 +359,13 @@ ufs_setattr(void *v)
 	struct vop_setattr_args /* {
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
 	struct inode	*ip;
-	struct ucred	*cred;
+	kauth_cred_t	cred;
 	struct lwp	*l;
 	int		error;
 
@@ -386,10 +387,11 @@ ufs_setattr(void *v)
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (cred->cr_uid != ip->i_uid &&
-		    (error = suser(cred, &l->l_proc->p_acflag)))
+		if (kauth_cred_geteuid(cred) != ip->i_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+					       &l->l_proc->p_acflag)))
 			return (error);
-		if (cred->cr_uid == 0) {
+		if (kauth_cred_geteuid(cred) == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
 			    securelevel > 0)
 				return (EPERM);
@@ -459,8 +461,9 @@ ufs_setattr(void *v)
 			return (EROFS);
 		if ((ip->i_flags & SF_SNAPSHOT) != 0)
 			return (EPERM);
-		if (cred->cr_uid != ip->i_uid &&
-		    (error = suser(cred, &l->l_proc->p_acflag)) &&
+		if (kauth_cred_geteuid(cred) != ip->i_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+					       &l->l_proc->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -497,19 +500,21 @@ ufs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
+ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 {
 	struct inode	*ip;
-	int		error;
+	int		error, ismember = 0;
 
 	ip = VTOI(vp);
-	if (cred->cr_uid != ip->i_uid &&
-	    (error = suser(cred, &p->p_acflag)))
+	if (kauth_cred_geteuid(cred) != ip->i_uid &&
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)))
 		return (error);
-	if (cred->cr_uid) {
+	if (kauth_cred_geteuid(cred)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
-		if (!groupmember(ip->i_gid, cred) && (mode & ISGID))
+		if ((kauth_cred_ismember_gid(cred, ip->i_gid, &ismember) != 0 ||
+		    !ismember) && (mode & ISGID))
 			return (EPERM);
 	}
 	ip->i_mode &= ~ALLPERMS;
@@ -524,11 +529,11 @@ ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
  * inode must be locked prior to call.
  */
 static int
-ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
+ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     	struct proc *p)
 {
 	struct inode	*ip;
-	int		error;
+	int		error, ismember = 0;
 #ifdef QUOTA
 	uid_t		ouid;
 	gid_t		ogid;
@@ -548,10 +553,13 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	 * the caller's credentials must imply super-user privilege
 	 * or the call fails.
 	 */
-	if ((cred->cr_uid != ip->i_uid || uid != ip->i_uid ||
+	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
 	    (gid != ip->i_gid &&
-	     !(cred->cr_gid == gid || groupmember((gid_t)gid, cred)))) &&
-	    ((error = suser(cred, &p->p_acflag)) != 0))
+	     !(kauth_cred_getegid(cred) == gid ||
+	      (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
+	      ismember)))) &&
+	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+					&p->p_acflag)) != 0))
 		return (error);
 
 #ifdef QUOTA
@@ -1071,9 +1079,9 @@ ufs_rename(void *v)
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((dp->i_mode & S_ISTXT) && tcnp->cn_cred->cr_uid != 0 &&
-		    tcnp->cn_cred->cr_uid != dp->i_uid &&
-		    xp->i_uid != tcnp->cn_cred->cr_uid) {
+		if ((dp->i_mode & S_ISTXT) && kauth_cred_geteuid(tcnp->cn_cred) != 0 &&
+		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_uid &&
+		    xp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
 			error = EPERM;
 			goto bad;
 		}
@@ -1263,7 +1271,7 @@ ufs_mkdir(void *v)
 		goto out;
 	tvp = *ap->a_vpp;
 	ip = VTOI(tvp);
-	ip->i_uid = cnp->cn_cred->cr_uid;
+	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 	ip->i_gid = dp->i_gid;
 	DIP_ASSIGN(ip, gid, ip->i_gid);
@@ -1565,7 +1573,7 @@ ufs_readdir(void *v)
 	struct vop_readdir_args /* {
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		int		*a_eofflag;
 		off_t		**a_cookies;
 		int		*ncookies;
@@ -1690,7 +1698,7 @@ ufs_readlink(void *v)
 	struct vop_readlink_args /* {
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp = ap->a_vp;
 	struct inode	*ip = VTOI(vp);
@@ -1787,7 +1795,7 @@ ufsspec_read(void *v)
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
 		int		a_ioflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
 	/*
@@ -1808,7 +1816,7 @@ ufsspec_write(void *v)
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
 		int		a_ioflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
 	/*
@@ -1830,7 +1838,7 @@ ufsspec_close(void *v)
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -1855,7 +1863,7 @@ ufsfifo_read(void *v)
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
 		int		a_ioflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
 	/*
@@ -1875,7 +1883,7 @@ ufsfifo_write(void *v)
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
 		int		a_ioflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
 	/*
@@ -1896,7 +1904,7 @@ ufsfifo_close(void *v)
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -2052,7 +2060,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	struct inode	*ip, *pdir;
 	struct direct	*newdir;
 	struct vnode	*tvp;
-	int		error;
+	int		error, ismember = 0;
 
 	pdir = VTOI(dvp);
 #ifdef DIAGNOSTIC
@@ -2071,7 +2079,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip = VTOI(tvp);
 	ip->i_gid = pdir->i_gid;
 	DIP_ASSIGN(ip, gid, ip->i_gid);
-	ip->i_uid = cnp->cn_cred->cr_uid;
+	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
@@ -2092,9 +2100,9 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	DIP_ASSIGN(ip, nlink, 1);
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
-	if ((ip->i_mode & ISGID) &&
-		!groupmember(ip->i_gid, cnp->cn_cred) &&
-	    suser(cnp->cn_cred, NULL)) {
+	if ((ip->i_mode & ISGID) && (kauth_cred_ismember_gid(cnp->cn_cred,
+	    ip->i_gid, &ismember) != 0 || !ismember) &&
+	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		ip->i_mode &= ~ISGID;
 		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}
@@ -2148,7 +2156,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
  */
 int
 ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
         struct inode *ip = VTOI(vp);
         int error, delta, bshift, bsize;

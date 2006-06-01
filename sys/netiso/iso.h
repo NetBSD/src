@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.16 2005/12/11 00:01:36 elad Exp $	*/
+/*	$NetBSD: iso.h,v 1.16.6.1 2006/06/01 22:39:04 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -175,6 +175,8 @@ struct sockaddr_iso {
 #define	AFI_SNA		0x00	/* SubNetwork Address; invalid really... */
 
 #ifdef _KERNEL
+
+#include <sys/protosw.h>
 
 extern struct domain isodomain;
 extern const struct protosw isosw[];

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.150.6.1 2006/04/22 11:39:59 simonb Exp $
+	$NetBSD: syscalls.master,v 1.150.6.2 2006/06/01 22:38:09 kardel Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -360,7 +360,7 @@
 174	STD		{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	STD		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+175	COMPAT_30	{ int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL)
 176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
@@ -571,9 +571,9 @@
 276	STD		{ int sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	STD		{ int sys___msync13(void *addr, size_t len, int flags); }
-278	COMPAT_30	{ int sys___stat13(const char *path, struct stat30 *ub); }
-279	COMPAT_30	{ int sys___fstat13(int fd, struct stat30 *sb); }
-280	COMPAT_30	{ int sys___lstat13(const char *path, struct stat30 *ub); }
+278	COMPAT_30	{ int sys___stat13(const char *path, struct stat13 *ub); }
+279	COMPAT_30	{ int sys___fstat13(int fd, struct stat13 *sb); }
+280	COMPAT_30	{ int sys___lstat13(const char *path, struct stat13 *ub); }
 281	STD		{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
@@ -610,8 +610,8 @@
 296	STD		{ int sys___getcwd(char *bufp, size_t length); }
 297	STD		{ int sys_fchroot(int fd); }
 298	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-299	STD		{ int sys_fhstat(const fhandle_t *fhp, \
-			    struct stat *sb); }
+299	COMPAT_30	{ int sys_fhstat(const fhandle_t *fhp, \
+			    struct stat13 *sb); }
 300	COMPAT_20	{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
@@ -784,3 +784,6 @@
 390	STD		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	STD		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
+392	STD		{ int sys___fhstat30(const fhandle_t *fhp, \
+			    struct stat *sb); }
+393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }

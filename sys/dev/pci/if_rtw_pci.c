@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.4 2005/12/04 17:44:02 christos Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.4.6.1 2006/06/01 22:36:45 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.4 2005/12/04 17:44:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.4.6.1 2006/06/01 22:36:45 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ rtw_pci_enable(struct rtw_softc *sc)
 	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
 	    IPL_NET, rtw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt\n",
+		aprint_error("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
@@ -203,7 +203,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	printf(": %s, revision %d.%d\n", app->app_product_name,
+	aprint_normal(": %s, revision %d.%d\n", app->app_product_name,
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/*
@@ -221,7 +221,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
+			aprint_normal(": waking up from power state D%d\n%s",
 			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
@@ -232,8 +232,8 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf(": unable to wake up from power state D3, "
-			       "reboot required.\n");
+			aprint_normal(": unable to wake up from power state" 
+			    " D3, reboot required.\n");
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
@@ -258,7 +258,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 		regs->r_bt = iot;
 		regs->r_bh = ioh;
 	} else {
-		printf(": unable to map device registers\n");
+		aprint_error(": unable to map device registers\n");
 		return;
 	}
 
@@ -275,7 +275,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
-		printf("%s: unable to map interrupt\n",
+		aprint_error("%s: unable to map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -283,15 +283,15 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    rtw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt",
+		aprint_error("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
+			aprint_error(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_enable = rtw_pci_enable;
 	sc->sc_disable = rtw_pci_disable;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.277.2.4 2006/04/30 17:41:30 kardel Exp $
+#	$NetBSD: files.i386,v 1.277.2.5 2006/06/01 22:34:35 kardel Exp $
 #
 # new style config file for i386 architecture
 #
@@ -217,7 +217,7 @@ file	arch/i386/pci/pceb.c		pceb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | viapcib
+file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib
 
 # PCI-LPC bridges
 device	ichlpcib: isabus, sysmon_wdog
@@ -227,6 +227,10 @@ file	arch/i386/pci/ichlpcib.c	ichlpcib
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
+
+device	piixpcib: isabus, bioscall
+attach	piixpcib at pci
+file	arch/i386/pci/piixpcib.c	piixpcib
 
 device	viapcib: isabus, i2cbus
 attach	viapcib at pci

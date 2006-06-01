@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.96.4.2 2006/04/22 11:40:13 simonb Exp $	*/
+/*	$NetBSD: nd6.c,v 1.96.4.3 2006/06/01 22:39:03 kardel Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.96.4.2 2006/04/22 11:40:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.96.4.3 2006/06/01 22:39:03 kardel Exp $");
 
 #include "opt_ipsec.h"
 
@@ -2124,6 +2124,7 @@ nd6_need_cache(ifp)
 	case IFT_ETHER:
 	case IFT_FDDI:
 	case IFT_IEEE1394:
+	case IFT_CARP:
 	case IFT_GIF:		/* XXX need more cases? */
 	case IFT_PPP:
 	case IFT_TUNNEL:

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.9.2.2 2006/04/22 11:38:11 simonb Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.9.2.3 2006/06/01 22:35:38 kardel Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.9.2.2 2006/04/22 11:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.9.2.3 2006/06/01 22:35:38 kardel Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -124,7 +124,7 @@ static int  xbd_xenbus_detach(struct device *, int);
 static int  xbd_xenbus_resume(void *);
 static int  xbd_handler(void *);
 static int  xbdstart(struct dk_softc *, struct buf *);
-static void xbd_backend_changed(struct device *, XenbusState);
+static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
 static int  xbd_map_align(struct xbd_req *);
@@ -252,7 +252,8 @@ xbd_xenbus_detach(struct device *dev, int flags)
 	if (sc->sc_shutdown == 0) {
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
-		while (sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
+		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 	}
 	splx(s);
@@ -267,17 +268,19 @@ xbd_xenbus_detach(struct device *dev, int flags)
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
-	/* Delete all of our wedges. */
-	dkwedge_delall(&sc->sc_dksc.sc_dkdev);
+	if (sc->sc_backend_status == BLKIF_STATE_CONNECTED) {
+		/* Delete all of our wedges. */
+		dkwedge_delall(&sc->sc_dksc.sc_dkdev);
 
-	s = splbio();
-	/* Kill off any queued buffers. */
-	bufq_drain(sc->sc_dksc.sc_bufq);
-	bufq_free(sc->sc_dksc.sc_bufq);
-	splx(s);
+		s = splbio();
+		/* Kill off any queued buffers. */
+		bufq_drain(sc->sc_dksc.sc_bufq);
+		bufq_free(sc->sc_dksc.sc_bufq);
+		splx(s);
 
-	/* detach disk */
-	disk_detach(&sc->sc_dksc.sc_dkdev);
+		/* detach disk */
+		disk_detach(&sc->sc_dksc.sc_dkdev);
+	}
 
 	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
 	while (xengnt_status(sc->sc_ring_gntref)) {
@@ -359,9 +362,9 @@ abort_transaction:
 	return error;
 }
 
-static void xbd_backend_changed(struct device *dev, XenbusState new_state)
+static void xbd_backend_changed(void *arg, XenbusState new_state)
 {
-	struct xbd_xenbus_softc *sc = (void *)dev;
+	struct xbd_xenbus_softc *sc = arg;
 	struct dk_geom *pdg;
 	char buf[9];
 	int s;
@@ -377,14 +380,21 @@ static void xbd_backend_changed(struct device *dev, XenbusState new_state)
 		s = splbio();
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
-		while (sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
-			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
+		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach",
+			    hz/2);
 		splx(s);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateConnected:
-		xbd_connect(sc);
+		s = splbio();
+		if (sc->sc_backend_status == BLKIF_STATE_CONNECTED)
+			/* already connected */
+			return;
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
+		splx(s);
+		xbd_connect(sc);
 		sc->sc_shutdown = 0;
 		hypervisor_enable_event(sc->sc_evtchn);
 

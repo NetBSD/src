@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.76.6.1 2006/04/22 11:38:13 simonb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.76.6.2 2006/06/01 22:35:49 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.76.6.1 2006/04/22 11:38:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.76.6.2 2006/06/01 22:35:49 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.76.6.1 2006/04/22 11:38:13 simonb E
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/kauth.h>
 
 #include <netinet/in.h>
 #include <sys/sa.h>
@@ -1207,7 +1208,7 @@ ibcs2_sys_plock(l, v, retval)
 #define IBCS2_DATALOCK	4
 
 
-        if (suser(p->p_ucred, &p->p_acflag) != 0)
+        if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
@@ -1252,7 +1253,7 @@ ibcs2_sys_uadmin(l, v, retval)
 #define SCO_AD_GETCMAJ      1
 
 	/* XXX: is this the right place for this call? */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	switch(SCARG(uap, cmd)) {

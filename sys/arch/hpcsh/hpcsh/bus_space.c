@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10.6.1 2006/04/22 11:37:31 simonb Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.10.6.2 2006/06/01 22:34:33 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.6.1 2006/04/22 11:37:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.6.2 2006/06/01 22:34:33 kardel Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -99,45 +99,45 @@ static void _bus_space_free(void *, bus_space_handle_t, bus_size_t);
 static void *_bus_space_vaddr(void *, bus_space_handle_t);
 
 static struct hpcsh_bus_space __default_bus_space = {
-	hbs_extent	: 0,
-	hbs_map		: _bus_space_map,
-	hbs_unmap	: _bus_space_unmap,
-	hbs_subregion	: _bus_space_subregion,
-	hbs_alloc	: _bus_space_alloc,
-	hbs_free	: _bus_space_free,
-	hbs_vaddr	: _bus_space_vaddr,
-	hbs_r_1		: _bus_space_read_1,
-	hbs_r_2		: _bus_space_read_2,
-	hbs_r_4		: _bus_space_read_4,
-	hbs_r_8		: _bus_space_read_8,
-	hbs_rm_1	: _bus_space_read_multi_1,
-	hbs_rm_2	: _bus_space_read_multi_2,
-	hbs_rm_4	: _bus_space_read_multi_4,
-	hbs_rm_8	: _bus_space_read_multi_8,
-	hbs_rr_1	: _bus_space_read_region_1,
-	hbs_rr_2	: _bus_space_read_region_2,
-	hbs_rr_4	: _bus_space_read_region_4,
-	hbs_rr_8	: _bus_space_read_region_8,
-	hbs_w_1		: _bus_space_write_1,
-	hbs_w_2		: _bus_space_write_2,
-	hbs_w_4		: _bus_space_write_4,
-	hbs_w_8		: _bus_space_write_8,
-	hbs_wm_1	: _bus_space_write_multi_1,
-	hbs_wm_2	: _bus_space_write_multi_2,
-	hbs_wm_4	: _bus_space_write_multi_4,
-	hbs_wm_8	: _bus_space_write_multi_8,
-	hbs_wr_1	: _bus_space_write_region_1,
-	hbs_wr_2	: _bus_space_write_region_2,
-	hbs_wr_4	: _bus_space_write_region_4,
-	hbs_wr_8	: _bus_space_write_region_8,
-	hbs_sm_1	: _bus_space_set_multi_1,
-	hbs_sm_2	: _bus_space_set_multi_2,
-	hbs_sm_4	: _bus_space_set_multi_4,
-	hbs_sm_8	: _bus_space_set_multi_8,
-	hbs_c_1		: _bus_space_copy_region_1,
-	hbs_c_2		: _bus_space_copy_region_2,
-	hbs_c_4		: _bus_space_copy_region_4,
-	hbs_c_8		: _bus_space_copy_region_8
+	.hbs_extent	= NULL,
+	.hbs_map	= _bus_space_map,
+	.hbs_unmap	= _bus_space_unmap,
+	.hbs_subregion	= _bus_space_subregion,
+	.hbs_alloc	= _bus_space_alloc,
+	.hbs_free	= _bus_space_free,
+	.hbs_vaddr	= _bus_space_vaddr,
+	.hbs_r_1	= _bus_space_read_1,
+	.hbs_r_2	= _bus_space_read_2,
+	.hbs_r_4	= _bus_space_read_4,
+	.hbs_r_8	= _bus_space_read_8,
+	.hbs_rm_1	= _bus_space_read_multi_1,
+	.hbs_rm_2	= _bus_space_read_multi_2,
+	.hbs_rm_4	= _bus_space_read_multi_4,
+	.hbs_rm_8	= _bus_space_read_multi_8,
+	.hbs_rr_1	= _bus_space_read_region_1,
+	.hbs_rr_2	= _bus_space_read_region_2,
+	.hbs_rr_4	= _bus_space_read_region_4,
+	.hbs_rr_8	= _bus_space_read_region_8,
+	.hbs_w_1	= _bus_space_write_1,
+	.hbs_w_2	= _bus_space_write_2,
+	.hbs_w_4	= _bus_space_write_4,
+	.hbs_w_8	= _bus_space_write_8,
+	.hbs_wm_1	= _bus_space_write_multi_1,
+	.hbs_wm_2	= _bus_space_write_multi_2,
+	.hbs_wm_4	= _bus_space_write_multi_4,
+	.hbs_wm_8	= _bus_space_write_multi_8,
+	.hbs_wr_1	= _bus_space_write_region_1,
+	.hbs_wr_2	= _bus_space_write_region_2,
+	.hbs_wr_4	= _bus_space_write_region_4,
+	.hbs_wr_8	= _bus_space_write_region_8,
+	.hbs_sm_1	= _bus_space_set_multi_1,
+	.hbs_sm_2	= _bus_space_set_multi_2,
+	.hbs_sm_4	= _bus_space_set_multi_4,
+	.hbs_sm_8	= _bus_space_set_multi_8,
+	.hbs_c_1	= _bus_space_copy_region_1,
+	.hbs_c_2	= _bus_space_copy_region_2,
+	.hbs_c_4	= _bus_space_copy_region_4,
+	.hbs_c_8	= _bus_space_copy_region_8
 };
 
 /* create default bus_space_tag */
@@ -145,7 +145,7 @@ bus_space_tag_t
 bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 		 bus_addr_t addr, bus_size_t size)
 {
-	if (hbs == 0)
+	if (hbs == NULL)
 		hbs = malloc(sizeof(*hbs), M_DEVBUF, M_NOWAIT);
 	KASSERT(hbs);
 
@@ -161,7 +161,7 @@ bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 	} else {
 		hbs->hbs_extent = extent_create(name, addr, addr + size - 1,
 						M_DEVBUF, 0, 0, EX_NOWAIT);
-		if (hbs->hbs_extent == 0) {
+		if (hbs->hbs_extent == NULL) {
 			panic("%s:: unable to create bus_space for "
 			      "0x%08lx-%#lx", __FUNCTION__, addr, size);
 		}
@@ -176,7 +176,7 @@ bus_space_destroy(bus_space_tag_t t)
 	struct hpcsh_bus_space *hbs = t;
 	struct extent *ex = hbs->hbs_extent;
 
-	if (ex != 0)
+	if (ex != NULL)
 		extent_destroy(ex);
 
 	free(t, M_DEVBUF);
@@ -191,7 +191,7 @@ _bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	struct extent *ex = hbs->hbs_extent;
 	int error;
 
-	if (ex == 0) {
+	if (ex == NULL) {
 		*bshp = (bus_space_handle_t)(bpa + hbs->hbs_base_addr);
 		return (0);
 	}
@@ -229,7 +229,7 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	u_long bpa, base;
 	int error;
 
-	if (ex == 0) {
+	if (ex == NULL) {
 		*bshp = *bpap = rstart + hbs->hbs_base_addr;
 		return (0);
 	}
@@ -250,7 +250,7 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 
 	*bshp = (bus_space_handle_t)bpa;
 
-	if (bpap)
+	if (bpap != NULL)
 		*bpap = bpa;
 
 	return (0);
@@ -262,7 +262,7 @@ _bus_space_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 	struct hpcsh_bus_space *hbs = t;
 	struct extent *ex = hbs->hbs_extent;
 	
-	if (ex != 0)
+	if (ex != NULL)
 		_bus_space_unmap(t, bsh, size);
 }
 
@@ -273,7 +273,7 @@ _bus_space_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	struct extent *ex = hbs->hbs_extent;
 	int error;
 
-	if (ex == 0)
+	if (ex == NULL)
 		return;
 
 	error = extent_free(ex, bsh, size, EX_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.53.6.1 2006/04/22 11:37:51 simonb Exp $	*/
+/*	$NetBSD: ncr.c,v 1.53.6.2 2006/06/01 22:35:07 kardel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.53.6.1 2006/04/22 11:37:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.53.6.2 2006/06/01 22:35:07 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.53.6.1 2006/04/22 11:37:51 simonb Exp $");
 /*
  * Function declarations:
  */
-static int	ncr_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
-static int	ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
-static void	ncr_intr __P((void *));
-static void	ncr_attach __P((struct device *, struct device *, void *));
-static int	ncr_match __P((struct device *, struct cfdata *, void *));
-static int	ncr_ready __P((struct ncr5380_softc *sc));
-static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
+static int	ncr_pdma_in(struct ncr5380_softc *, int, int, u_char *);
+static int	ncr_pdma_out(struct ncr5380_softc *, int, int, u_char *);
+static void	ncr_intr(void *);
+static void	ncr_attach(struct device *, struct device *, void *);
+static int	ncr_match(struct device *, struct cfdata *, void *);
+static int	ncr_ready(struct ncr5380_softc *sc);
+static void	ncr_wait_not_req(struct ncr5380_softc *sc);
 
 /*
  * Some constants.
@@ -90,10 +90,7 @@ CFATTACH_DECL(ncr, sizeof(struct ncr5380_softc),
 static int ncr_attached;
 
 static int
-ncr_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ncr_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -106,9 +103,7 @@ ncr_match(parent, cf, aux)
 }
 
 static void
-ncr_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ncr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct ncr5380_softc *sc = (struct ncr5380_softc *) self;
@@ -174,8 +169,7 @@ ncr_attach(parent, self, aux)
 }
 
 static void
-ncr_intr(arg)
-	void *arg;
+ncr_intr(void *arg)
 {
 	struct ncr5380_softc *sc = arg;
 
@@ -218,15 +212,14 @@ ncr_intr(arg)
 #define TIMEOUT	1000000
 
 static inline int
-ncr_ready(sc)
-	struct ncr5380_softc *sc;
+ncr_ready(struct ncr5380_softc *sc)
 {
 	int i;
 
 	for (i = TIMEOUT; i > 0; i--) {
 		if ((*sc->sci_csr & (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH)) ==
 		    (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH))
-		    	return(1);
+			return(1);
 
 		if ((*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0 ||
 		    SCI_BUSY(sc) == 0)
@@ -237,10 +230,11 @@ ncr_ready(sc)
 }
 
 /* Return zero on success. */
-static inline void ncr_wait_not_req(sc)
-	struct ncr5380_softc *sc;
+static inline void
+ncr_wait_not_req(struct ncr5380_softc *sc)
 {
 	int timo;
+
 	for (timo = TIMEOUT; timo; timo--) {
 		if ((*sc->sci_bus_csr & SCI_BUS_REQ) == 0 ||
 		    (*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0 ||
@@ -252,10 +246,7 @@ static inline void ncr_wait_not_req(sc)
 }
 
 static int
-ncr_pdma_in(sc, phase, datalen, data)
-	struct ncr5380_softc *sc;
-	int phase, datalen;
-	u_char *data;
+ncr_pdma_in(struct ncr5380_softc *sc, int phase, int datalen, u_char *data)
 {
 	volatile u_char *pdma = (void *)PDMA_ADDRESS;
 	int resid, s;
@@ -327,10 +318,7 @@ interrupt:
 }
 
 static int
-ncr_pdma_out(sc, phase, datalen, data)
-	struct ncr5380_softc *sc;
-	int phase, datalen;
-	u_char *data;
+ncr_pdma_out(struct ncr5380_softc *sc, int phase, int datalen, u_char *data)
 {
 	u_char *pdma = (void *)PDMA_ADDRESS;
 	int i, s, resid;

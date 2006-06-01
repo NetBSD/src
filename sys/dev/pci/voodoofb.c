@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.4.4.2 2006/04/22 11:39:16 simonb Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.4.4.3 2006/06/01 22:36:49 kardel Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.4.4.2 2006/04/22 11:39:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.4.4.3 2006/06/01 22:36:49 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -907,6 +907,7 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 					}
 				}
 			}
+			return 0;
 	}
 	return EPASSTHROUGH;
 }

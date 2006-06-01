@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.54.4.1 2006/04/22 11:37:28 simonb Exp $
+#	$NetBSD: files.hpcarm,v 1.54.4.2 2006/06/01 22:34:32 kardel Exp $
 #
 # hpcarm specific configuration info
 #
@@ -112,5 +112,4 @@ include "dev/ata/files.ata"
 # Machine-independent SCSI/ATAPI drivers
 include "dev/scsipi/files.scsipi"
 
-include "arch/arm/conf/majors.arm32"
 include "arch/hpcarm/conf/majors.hpcarm"

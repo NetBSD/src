@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21.6.1 2006/04/22 11:38:05 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.21.6.2 2006/06/01 22:35:29 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21.6.1 2006/04/22 11:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21.6.2 2006/06/01 22:35:29 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21.6.1 2006/04/22 11:38:05 simonb Exp $")
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -590,8 +591,8 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;

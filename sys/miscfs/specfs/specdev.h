@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.29 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: specdev.h,v 1.29.6.1 2006/06/01 22:38:30 kardel Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -98,7 +98,6 @@ extern	struct vnode *speclisth[SPECHSZ];
 extern	int (**spec_vnodeop_p)(void *);
 struct	nameidata;
 struct	componentname;
-struct	ucred;
 struct	flock;
 struct	buf;
 struct	uio;

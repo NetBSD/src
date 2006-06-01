@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.3.4.2 2006/04/22 11:37:54 simonb Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.3.4.3 2006/06/01 22:35:17 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.3.4.2 2006/04/22 11:37:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.3.4.3 2006/06/01 22:35:17 kardel Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.3.4.2 2006/04/22 11:37:54 simonb Ex
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/isa_machdep.h>
+#include <machine/residual.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
@@ -77,6 +78,12 @@ wdc_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
 	int ret = 0;
+
+	/* XXX special case the Powerstack E1, it has wdc builtin on 14E
+	 * while the siop is builtin on 14L.  No idea how this works at all.
+	 */
+	if (strcmp(res->VitalProductData.PrintableModel, "(e1)") == 0)
+		return ret;
 
 	if (strcmp(pna->pna_devid, "PNP0600") == 0)
 		ret = 1;

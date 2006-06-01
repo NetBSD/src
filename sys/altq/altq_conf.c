@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.12 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.12.6.1 2006/06/01 22:34:09 kardel Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12.6.1 2006/06/01 22:34:09 kardel Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12 2005/12/11 12:16:03 christos Exp 
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #if defined(__FreeBSD__) && (__FreeBSD_version < 400000) && defined(DEVFS)
 #include <sys/devfsext.h>
 #endif /*DEVFS*/
@@ -275,7 +276,9 @@ altqioctl(dev, cmd, addr, flag, l)
 			if ((error = suser(p)) != 0)
 				return (error);
 #else
-			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			if ((error = kauth_authorize_generic(p->p_cred,
+						       KAUTH_GENERIC_ISSUSER,
+						       &p->p_acflag)) != 0)
 				return (error);
 #endif
 			break;

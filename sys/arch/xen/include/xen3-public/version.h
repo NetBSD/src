@@ -1,4 +1,4 @@
-/* $NetBSD: version.h,v 1.1.1.1.6.1 2006/04/22 11:38:11 simonb Exp $ */
+/* $NetBSD: version.h,v 1.1.1.1.6.2 2006/06/01 22:35:37 kardel Exp $ */
 /******************************************************************************
  * version.h
  * 
@@ -19,6 +19,7 @@
 /* arg == xen_extraversion_t. */
 #define XENVER_extraversion 1
 typedef char xen_extraversion_t[16];
+#define XEN_EXTRAVERSION_LEN (sizeof(xen_extraversion_t))
 
 /* arg == xen_compile_info_t. */
 #define XENVER_compile_info 2
@@ -31,14 +32,25 @@ typedef struct xen_compile_info {
 
 #define XENVER_capabilities 3
 typedef char xen_capabilities_info_t[1024];
+#define XEN_CAPABILITIES_INFO_LEN (sizeof(xen_capabilities_info_t))
 
 #define XENVER_changeset 4
 typedef char xen_changeset_info_t[64];
+#define XEN_CHANGESET_INFO_LEN (sizeof(xen_changeset_info_t))
 
 #define XENVER_platform_parameters 5
 typedef struct xen_platform_parameters {
     unsigned long virt_start;
 } xen_platform_parameters_t;
+
+#define XENVER_get_features 6
+typedef struct xen_feature_info {
+    unsigned int submap_idx;    /* IN: which 32-bit submap to return */
+    uint32_t     submap;        /* OUT: 32-bit submap */
+} xen_feature_info_t;
+
+/* Declares the features reported by XENVER_get_features. */
+#include "features.h"
 
 #endif /* __XEN_PUBLIC_VERSION_H__ */
 

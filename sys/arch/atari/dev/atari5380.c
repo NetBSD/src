@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.40 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.40.6.1 2006/06/01 22:34:16 kardel Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.40 2005/12/24 23:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.40.6.1 2006/06/01 22:34:16 kardel Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -432,12 +432,13 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 {
 	int	dmastat, dmstat;
 	u_char	*byte_p;
-	u_long	leftover;
+	u_long	leftover, ptr;
 
 	dmastat = SCSI_DMA->s_dma_ctrl;
 	dmstat  = GET_TT_REG(NCR5380_DMSTAT);
 	get_scsi_dma(SCSI_DMA->s_dma_cnt, leftover);
-	get_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)byte_p);
+	get_scsi_dma(SCSI_DMA->s_dma_ptr, ptr);
+	byte_p = (u_char *)ptr;
 
 	if (dmastat & SD_BUSERR) {
 		/*
@@ -493,7 +494,7 @@ int poll;
 extern	int			*nofault;
 	label_t			faultbuf;
 	int			write;
-	u_long	 		count;
+	u_long	 		count, t;
 	u_char			*data_p = (u_char*)(stio_addr+0x741);
 
 	/*
@@ -519,7 +520,8 @@ extern	int			*nofault;
 		/*
 		 * Determine number of bytes transferred
 		 */
-		get_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)ptr);
+		get_scsi_dma(SCSI_DMA->s_dma_ptr, tmp);
+		ptr = (u_char *)tmp;
 		cnt = dma_ptr - ptr;
 
 		if (cnt != 0) {
@@ -588,7 +590,8 @@ extern	int			*nofault;
 #endif
 
 	get_scsi_dma(SCSI_DMA->s_dma_cnt, count);
-	get_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)dma_ptr);
+	get_scsi_dma(SCSI_DMA->s_dma_ptr, t);
+	dma_ptr = (u_char *)t;
 
 	/*
 	 * Keep pushing bytes until we're done or a bus-error

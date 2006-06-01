@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.723.2.2 2006/04/22 11:37:32 simonb Exp $
+# $NetBSD: GENERIC,v 1.723.2.3 2006/06/01 22:34:33 kardel Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.723.2.2 $"
+#ident 		"GENERIC-$Revision: 1.723.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -417,6 +417,7 @@ gpio* 	at elansc?
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
+#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
@@ -437,6 +438,7 @@ eisa0	at pceb?
 
 # ISA bus support
 #isa0	at ichlpcib?
+#isa0	at piixpcib?
 #isa0	at gscpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
@@ -585,8 +587,15 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
 
+# Intel PIIX4 power management controllers
+piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
+
+# iTE IT87xxF and compatible hardware monitors
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00.
+
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310.
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
@@ -916,6 +925,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x
 #rtk*	at cardbus? function ?	# Realtek 8129/8139
+#ral*	at cardbus? function ?	# Ralink Technology
 #rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 #tlp*	at cardbus? function ?	# DECchip 21143
 

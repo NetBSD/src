@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.14.34.1 2006/04/22 11:37:11 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.14.34.2 2006/06/01 22:34:10 kardel Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -45,7 +45,7 @@ typedef struct trapframe db_regs_t;
 extern db_regs_t	*ddb_regp;	/* pointer to current register state */
 #define	DDB_REGS	(ddb_regp)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
+#define	PC_REGS(regs)	((regs)->tf_regs[FRAME_PC])
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x00000080	/* breakpoint instruction */

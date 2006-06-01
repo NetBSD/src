@@ -1,4 +1,4 @@
-/* $Id: ar531x_board.c,v 1.1.8.2 2006/04/22 11:37:42 simonb Exp $ */
+/* $Id: ar531x_board.c,v 1.1.8.3 2006/06/01 22:35:03 kardel Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,7 +40,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.1.8.2 2006/04/22 11:37:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.1.8.3 2006/06/01 22:35:03 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ ar531x_board_info(void)
 
 	fctl |=
 	    AR531X_FLASHCTL_E |
+	    AR531X_FLASHCTL_RBLE |
 	    AR531X_FLASHCTL_AC_8M |
 	    (1 << AR531X_FLASHCTL_IDCY_SHIFT) |
 	    (7 << AR531X_FLASHCTL_WST1_SHIFT) |

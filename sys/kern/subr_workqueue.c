@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.2 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.2.6.1 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.2 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.2.6.1 2006/06/01 22:38:09 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ workqueue_run(struct workqueue *wq)
 {
 	struct workqueue_queue *q = &wq->wq_queue;
 	
-	while (1 /* CONSTCOND */) {
+	for (;;) {
 		struct workqhead tmp;
 		int error;
 

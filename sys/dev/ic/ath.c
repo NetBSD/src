@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.66.6.1 2006/04/22 11:38:54 simonb Exp $	*/
+/*	$NetBSD: ath.c,v 1.66.6.2 2006/06/01 22:36:23 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.1 2006/04/22 11:38:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.2 2006/06/01 22:36:23 kardel Exp $");
 #endif
 
 /*
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.1 2006/04/22 11:38:54 simonb Exp $");
 #endif /* __NetBSD__ */
 
 #include <sys/param.h>
-#include <sys/reboot.h> 
-#include <sys/systm.h> 
+#include <sys/reboot.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.1 2006/04/22 11:38:54 simonb Exp $");
 #include <sys/endian.h>
 
 #include <machine/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.1 2006/04/22 11:38:54 simonb Exp $");
 #endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #endif
 
 #include <sys/device.h>
@@ -455,7 +455,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	if (!ath_tx_setup(sc, WME_AC_BE, HAL_WME_AC_BE) ||
 	    !ath_tx_setup(sc, WME_AC_VI, HAL_WME_AC_VI) ||
 	    !ath_tx_setup(sc, WME_AC_VO, HAL_WME_AC_VO)) {
-		/* 
+		/*
 		 * Not enough hardware tx queues to properly do WME;
 		 * just punt and assign them all to the same h/w queue.
 		 * We could do a better job of this if, for example,
@@ -471,7 +471,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		sc->sc_ac2q[WME_AC_VO] = sc->sc_ac2q[WME_AC_BK];
 	}
 
-	/* 
+	/*
 	 * Special case certain configurations.  Note the
 	 * CAB queue is handled by these specially so don't
 	 * include them when checking the txq setup mask.
@@ -683,7 +683,7 @@ ath_detach(struct ath_softc *sc)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	/* 
+	/*
 	 * NB: the order of these is important:
 	 * o call the 802.11 layer before detaching the hal to
 	 *   insure callbacks into the driver to delete global
@@ -1275,7 +1275,7 @@ ath_start(struct ifnet *ifp)
 				ATH_TXBUF_UNLOCK(sc);
 				break;
 			}
-			/* 
+			/*
 			 * Find the node for the destination so we can do
 			 * things like power save and fast frames aggregation.
 			 */
@@ -2393,7 +2393,7 @@ ath_beacon_config(struct ath_softc *sc)
 		if (bs.bs_sleepduration > bs.bs_dtimperiod)
 			bs.bs_sleepduration = roundup(bs.bs_sleepduration, bs.bs_dtimperiod);
 
-		DPRINTF(sc, ATH_DEBUG_BEACON, 
+		DPRINTF(sc, ATH_DEBUG_BEACON,
 			"%s: tsf %ju tsf:tu %u intval %u nexttbtt %u dtim %u nextdtim %u bmiss %u sleep %u cfp:period %u maxdur %u next %u timoffset %u\n"
 			, __func__
 			, tsf, tsftu
@@ -2909,7 +2909,7 @@ ath_rx_proc(void *arg, int npending)
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link));
 #ifdef AR_DEBUG
 		if (sc->sc_debug & ATH_DEBUG_RECV_DESC)
-			ath_printrxbuf(bf, status == HAL_OK); 
+			ath_printrxbuf(bf, status == HAL_OK);
 #endif
 		if (status == HAL_EINPROGRESS)
 			break;
@@ -3234,7 +3234,7 @@ ath_txq_update(struct ath_softc *sc, int ac)
 	ath_hal_gettxqueueprops(ah, txq->axq_qnum, &qi);
 	qi.tqi_aifs = wmep->wmep_aifsn;
 	qi.tqi_cwmin = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmin);
-	qi.tqi_cwmax = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmax);	
+	qi.tqi_cwmax = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmax);
 	qi.tqi_burstTime = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
 
 	if (!ath_hal_settxqueueprops(ah, txq->axq_qnum, &qi)) {
@@ -3747,7 +3747,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	}
 #endif
 
-	/* 
+	/*
 	 * Determine if a tx interrupt should be generated for
 	 * this descriptor.  We take a tx interrupt to reap
 	 * descriptors when the h/w hits an EOL condition or
@@ -4199,7 +4199,7 @@ ath_startrecv(struct ath_softc *sc)
 	return 0;
 }
 
-/* 
+/*
  * Update internal state after a channel change.
  */
 static void
@@ -4419,7 +4419,7 @@ ath_calibrate(void *arg)
 	ath_hal_process_noisefloor(ah);
 	/*
 	 * Poll more frequently when the IQ calibration is in
-	 * progress to speedup loading the final settings. 
+	 * progress to speedup loading the final settings.
 	 * We temper this aggressive polling with an exponential
 	 * back off after 4 tries up to ath_calinterval.
 	 */
@@ -4683,7 +4683,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc,
 	    cc, HAL_MODE_ALL, outdoor, xchanmode)) {
 		u_int32_t rd;
 
-		ath_hal_getregdomain(ah, &rd);
+		(void)ath_hal_getregdomain(ah, &rd);
 		if_printf(ifp, "unable to collect channel list from hal; "
 			"regdomain likely %u country code %u\n", rd, cc);
 		free(chans, M_TEMP);
@@ -4802,13 +4802,13 @@ ath_update_txpow(struct ath_softc *sc)
 	if (sc->sc_curtxpow != ic->ic_txpowlimit) {
 		ath_hal_settxpowlimit(ah, ic->ic_txpowlimit);
 		/* read back in case value is clamped */
-		ath_hal_gettxpowlimit(ah, &txpow);
+		(void)ath_hal_gettxpowlimit(ah, &txpow);
 		ic->ic_txpowlimit = sc->sc_curtxpow = txpow;
 	}
-	/* 
+	/*
 	 * Fetch max tx power level for status requests.
 	 */
-	ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
+	(void)ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
 	ic->ic_bss->ni_txpower = txpow;
 }
 
@@ -5130,7 +5130,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 		if (error == ENETRESET) {
-			if (IS_RUNNING(ifp) && 
+			if (IS_RUNNING(ifp) &&
 			    ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 				ath_init(sc);	/* XXX lose error */
 			error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.12.6.1 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.12.6.2 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.12.6.1 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.12.6.2 2006/06/01 22:38:09 kardel Exp $");
 
 #include "opt_posix.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.12.6.1 2006/04/22 11:39:59 simonb Exp
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 
@@ -243,13 +244,14 @@ ksem_drop_proc(struct ksem_proc *kp, struct ksem *ks)
 static int
 ksem_perm(struct proc *p, struct ksem *ks)
 {
-	struct ucred *uc;
+	kauth_cred_t uc;
 
 	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
-	uc = p->p_ucred;
-	if ((uc->cr_uid == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
-	    (uc->cr_gid == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
-	    (ks->ks_mode & S_IWOTH) != 0 || suser(uc, &p->p_acflag) == 0)
+	uc = p->p_cred;
+	if ((kauth_cred_geteuid(uc) == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
+	    (kauth_cred_getegid(uc) == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
+	    (ks->ks_mode & S_IWOTH) != 0 ||
+	    kauth_authorize_generic(uc, KAUTH_GENERIC_ISSUSER, &p->p_acflag) == 0)
 		return (0);
 	return (EPERM);
 }
@@ -287,10 +289,10 @@ ksem_create(struct proc *p, const char *name, struct ksem **ksret,
     mode_t mode, unsigned int value)
 {
 	struct ksem *ret;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	size_t len;
 
-	uc = p->p_ucred;
+	uc = p->p_cred;
 	if (value > SEM_VALUE_MAX)
 		return (EINVAL);
 	ret = malloc(sizeof(*ret), M_SEM, M_WAITOK | M_ZERO);
@@ -313,8 +315,8 @@ ksem_create(struct proc *p, const char *name, struct ksem **ksret,
 	ret->ks_value = value;
 	ret->ks_ref = 1;
 	ret->ks_waiters = 0;
-	ret->ks_uid = uc->cr_uid;
-	ret->ks_gid = uc->cr_gid;
+	ret->ks_uid = kauth_cred_geteuid(uc);
+	ret->ks_gid = kauth_cred_getegid(uc);
 	simple_lock_init(&ret->ks_interlock);
 
 	simple_lock(&ksem_slock);

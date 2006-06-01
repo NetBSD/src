@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11.34.1 2006/04/22 11:37:51 simonb Exp $
+#	$NetBSD: genassym.cf,v 1.11.34.2 2006/06/01 22:35:08 kardel Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -56,9 +56,9 @@ include <machine/vmparam.h>
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
-define	PDSHIFT 		PDSHIFT
-define	PGSHIFT 		PGSHIFT
-define	PGOFSET 		PGOFSET
+define	PDSHIFT			PDSHIFT
+define	PGSHIFT			PGSHIFT
+define	PGOFSET			PGOFSET
 define	NBPG			NBPG
 
 define	PDE_SIZE		sizeof(pd_entry_t)
@@ -71,18 +71,18 @@ define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_BACK			offsetof(struct lwp, l_back)
 define	L_FORW			offsetof(struct lwp, l_forw)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_PROC	 		offsetof(struct lwp, l_proc)
+define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_STAT			offsetof(struct lwp, l_stat)
-define	L_WCHAN 		offsetof(struct lwp, l_wchan)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	V_INTR			offsetof(struct uvmexp, intrs)
 
 define	PCB_ONSTACK		offsetof(struct pcb, pcb_onstack)
-define	PCB_FSR 		offsetof(struct pcb, pcb_fsr)
-define	PCB_KSP 		offsetof(struct pcb, pcb_ksp)
-define	PCB_KFP 		offsetof(struct pcb, pcb_kfp)
-define	PCB_PTB 		offsetof(struct pcb, pcb_ptb)
+define	PCB_FSR			offsetof(struct pcb, pcb_fsr)
+define	PCB_KSP			offsetof(struct pcb, pcb_ksp)
+define	PCB_KFP			offsetof(struct pcb, pcb_kfp)
+define	PCB_PTB			offsetof(struct pcb, pcb_ptb)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_F0			offsetof(struct pcb, pcb_freg[0])
 define	PCB_F1			offsetof(struct pcb, pcb_freg[1])
@@ -94,15 +94,15 @@ define	PCB_F6			offsetof(struct pcb, pcb_freg[6])
 define	PCB_F7			offsetof(struct pcb, pcb_freg[7])
 
 define	REGS_USP		offsetof(struct reg, r_sp)
-define	REGS_FP 		offsetof(struct reg, r_fp)
-define	REGS_SB 		offsetof(struct reg, r_sb)
+define	REGS_FP			offsetof(struct reg, r_fp)
+define	REGS_SB			offsetof(struct reg, r_sb)
 define	REGS_PSR		offsetof(struct reg, r_psr)
 
 define	IV_VEC			offsetof(struct iv, iv_vec)
 define	IV_ARG			offsetof(struct iv, iv_arg)
 define	IV_USE			offsetof(struct iv, iv_use)
-define	IV_MASK 		offsetof(struct iv, iv_mask)
+define	IV_MASK			offsetof(struct iv, iv_mask)
 define	IV_EVCNT		offsetof(struct iv, iv_evcnt)
-define	IV_SIZE 		sizeof(struct iv)
+define	IV_SIZE			sizeof(struct iv)
 
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
