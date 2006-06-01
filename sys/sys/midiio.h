@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.13.14.5 2006/05/25 19:31:10 chap Exp $	*/
+/*	$NetBSD: midiio.h,v 1.13.14.6 2006/06/01 22:06:58 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -485,6 +485,14 @@ typedef union {
 		uint8_t status;
 		uint8_t data[2];
 	} system;
+	
+	struct {
+		_EVT_HDR;
+		uint8_t byte;
+		uint8_t device;
+		uint8_t _zero0;
+		uint32_t _zero1;
+	} putc; /* a seqold event that's still needed at times, ugly as 'tis */
 
 	struct {
 		_EVT_HDR;
@@ -572,9 +580,9 @@ main(int argc, char **argv)
 	/*
 	 * Wait until the specified number of divisions from the timer start
 	 * (abs) or the preceding event (rel). The number of divisions to a
-	 * beat or to a MIDI clock is determined by the tempo and the timebase
-	 * (set by ioctl). The tempo is expressed in beats per minute, where a
-	 * beat is always 24 MIDI clocks (and usually equated to a quarter note,
+	 * beat or to a MIDI clock is determined by the timebase (set by
+	 * ioctl). The tempo is expressed in beats per minute, where a beat
+	 * is always 24 MIDI clocks (and usually equated to a quarter note,
 	 * but that can be changed with timesig)--that is, tempo is
 	 * (MIDI clocks per minute)/24. The timebase is the number of divisions
 	 * in a beat--that is, the number of divisions that make up 24 MIDI
@@ -656,9 +664,21 @@ main(int argc, char **argv)
 	 * with whether the underlying device is an onboard synth or a MIDI
 	 * link!) so there is surely a lot of code that relies on it being
 	 * broken :(.
+	 * (Note: as the OSS developers have ceased development of the
+	 * /dev/music API as of OSS4, it would be possible given a complete
+	 * list of the events defined in OSS4 to add some new ones for native
+	 * use without fear of future conflict, such as a better ctl_change.)
 	 */
 	e = SEQ_MK_CHN(CTL_CHANGE, .device=1, .channel=0,
-	               .controller=MIDI_CTRL_EXPRESSION_MSB, .value=8192);
+	               .controller=MIDI_CTRL_EXPRESSION_MSB, .value=8192);/*XX*/
+	/*
+	 * The way you really have to do it:
+	 */
+	e = SEQ_MK_CHN(CTL_CHANGE, .device=1, .channel=0,
+	               .controller=MIDI_CTRL_EXPRESSION_MSB, .value=8192>>7);
+	e = SEQ_MK_CHN(CTL_CHANGE, .device=1, .channel=0,
+	               .controller=MIDI_CTRL_EXPRESSION_LSB, .value=8192&0x7f);
+
 	e = SEQ_MK_CHN(PGM_CHANGE,   .device=1, .channel=0, .program=51);
 	e = SEQ_MK_CHN(CHN_PRESSURE, .device=1, .channel=0, .pressure=64);
 	e = SEQ_MK_CHN(PITCH_BEND,   .device=1, .channel=0, .value=8192);
@@ -679,7 +699,14 @@ main(int argc, char **argv)
 	 */
 	e = SEQ_MK_SYSEX(1);
 	for ( i = 0; i < 3; ++ i )
-		e.sysex.buffer[i] = i;	
+		e.sysex.buffer[i] = i;
+	/*
+	 * It would be nice to think the old /dev/sequencer MIDIPUTC event
+	 * obsolete, but it is still needed (absent any better API) by any MIDI
+	 * file player that will implement the ESCAPED events that may occur in
+	 * SMF. Sorry. Here's how to use it:
+	 */
+	e = SEQ_MK_EVENT(putc, SEQOLD_MIDIPUTC, .device=1, .byte=42);
 	
 	printf("confirm event size: %d (should be 8)\n", sizeof (seq_event_t));
 	return 0;
