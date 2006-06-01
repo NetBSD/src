@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.138.2.3 2006/04/22 02:54:47 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.138.2.4 2006/06/01 21:38:40 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.138.2.3 2006/04/22 02:54:47 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.138.2.4 2006/06/01 21:38:40 kardel Exp $");
 #endif
 #endif /* not lint */
 
@@ -888,8 +888,7 @@ drvstats(void)
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!drv_select[dn])
 			continue;
-		(void)printf("%2.0f ",
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
+		(void)printf("%2.0f ", (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
 	}
 }
 
@@ -1426,7 +1425,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 			    (long)curhash->offset,
 			    (unsigned long long)elemsize);
 		thissize = hashsize * elemsize;
-		if (thissize > hashbufsize) {
+		if (hashbuf == NULL || thissize > hashbufsize) {
 			if ((nhashbuf = realloc(hashbuf, thissize)) == NULL)
 				errx(1, "malloc hashbuf %llu",
 				    (unsigned long long)hashbufsize);
@@ -1540,7 +1539,7 @@ hist_traverse(int todo, const char *histname)
 	for (histkva = LIST_FIRST(&histhead); histkva != NULL;
 	    histkva = LIST_NEXT(&hist, list)) {
 		deref_kptr(histkva, &hist, sizeof(hist), "histkva");
-		if (hist.namelen > namelen) {
+		if (name == NULL || hist.namelen > namelen) {
 			if (name != NULL)
 				free(name);
 			namelen = hist.namelen;
@@ -1596,14 +1595,14 @@ hist_dodump(struct uvm_history *histp)
 	do {
 		e = &histents[i];
 		if (e->fmt != NULL) {
-			if (e->fmtlen > fmtlen) {
+			if (fmt == NULL || e->fmtlen > fmtlen) {
 				if (fmt != NULL)
 					free(fmt);
 				fmtlen = e->fmtlen;
 				if ((fmt = malloc(fmtlen + 1)) == NULL)
 					err(1, "malloc printf format");
 			}
-			if (e->fnlen > fnlen) {
+			if (fn == NULL || e->fnlen > fnlen) {
 				if (fn != NULL)
 					free(fn);
 				fnlen = e->fnlen;
