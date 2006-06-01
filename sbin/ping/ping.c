@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.78 2006/05/09 20:18:08 mrg Exp $	*/
+/*	$NetBSD: ping.c,v 1.79 2006/06/01 15:59:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.78 2006/05/09 20:18:08 mrg Exp $");
+__RCSID("$NetBSD: ping.c,v 1.79 2006/06/01 15:59:31 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -638,10 +638,14 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, prefinish);
 
 #if defined(SIGINFO) && defined(NOKERNINFO)
-	if (tcgetattr (0, &ts) != -1) {
-		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
-		ts.c_lflag |= NOKERNINFO;
-		tcsetattr (STDIN_FILENO, TCSANOW, &ts);
+	if (tcgetattr(STDIN_FILENO, &ts) != -1) {
+		pid_t ttypgrp = tcgetpgrp(STDIN_FILENO);
+		pid_t pgrp = getpgid(0);
+		if (ttypgrp != -1 && pgrp != -1 && ttypgrp == pgrp) {
+			reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
+			ts.c_lflag |= NOKERNINFO;
+			(void)tcsetattr(STDIN_FILENO, TCSANOW, &ts);
+		}
 	}
 #endif
 
@@ -1351,9 +1355,9 @@ finish(int dummy)
 #if defined(SIGINFO) && defined(NOKERNINFO)
 	struct termios ts;
 
-	if (reset_kerninfo && tcgetattr (0, &ts) != -1) {
+	if (reset_kerninfo && tcgetattr(STDIN_FILENO, &ts) != -1) {
 		ts.c_lflag &= ~NOKERNINFO;
-		tcsetattr (STDIN_FILENO, TCSANOW, &ts);
+		(void)tcsetattr(STDIN_FILENO, TCSANOW, &ts);
 	}
 	(void)signal(SIGINFO, SIG_IGN);
 #else
