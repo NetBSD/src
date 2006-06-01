@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.20 2006/05/31 22:19:19 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.21 2006/06/01 22:06:57 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.20 2006/05/31 22:19:19 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.21 2006/06/01 22:06:57 chap Exp $");
 
 #include "sequencer.h"
 
@@ -184,12 +184,12 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 		if (md) {
 			sc->devs[sc->nmidi++] = md;
 			md->seq = sc;
+			md->doingsysex = 0;
 		}
 	}
 
 	sc->timer.timebase_divperbeat = 100;
 	sc->timer.tempo_beatpermin = 60;
-	sc->doingsysex = 0;
 	RECALC_USPERDIV(&sc->timer);
 	sc->timer.divs_lastevent = sc->timer.divs_lastchange = 0;
 	microtime(&sc->timer.reftime);
@@ -755,10 +755,10 @@ seq_do_command(struct sequencer_softc *sc, seq_event_t *b)
 		return seq_do_sysex(sc, b);
 	/* COMPAT */
 	case SEQOLD_MIDIPUTC:
-		dev = b->unknown.byte[1];
+		dev = b->putc.device;
 		if (dev < 0 || dev >= sc->nmidi)
 			return (ENXIO);
-		return midiseq_out(sc->devs[dev], b->unknown.byte, 1, 0);
+		return midiseq_out(sc->devs[dev], &b->putc.byte, 1, 0);
 	default:
 		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n", b->tag));
 		return (EINVAL);
@@ -854,16 +854,16 @@ seq_do_sysex(struct sequencer_softc *sc, seq_event_t *b)
 	DPRINTF(("seq_do_sysex: dev=%d\n", dev));
 	md = sc->devs[dev];
 
-	if (!sc->doingsysex) {
+	if (!md->doingsysex) {
 		midiseq_out(md, (uint8_t[]){MIDI_SYSEX_START}, 1, 0);
-		sc->doingsysex = 1;
+		md->doingsysex = 1;
 	}
 
 	for (i = 0; i < 6 && bf[i] != 0xff; i++)
 		;
 	midiseq_out(md, bf, i, 0);
 	if (i < 6 || (i > 0 && bf[i-1] == MIDI_SYSEX_END))
-		sc->doingsysex = 0;
+		md->doingsysex = 0;
 	return 0;
 }
 
@@ -993,7 +993,12 @@ seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 	return (midiseq_loadpatch(sc->devs[dev], &sysex, uio));
 }
 
-/* Convert an old sequencer event to a new one. */
+/*
+ * Convert an old sequencer event to a new one.
+ * NOTE: on entry, *ev may contain valid data only in the first 4 bytes.
+ * That may be true even on exit (!) in the case of SEQOLD_MIDIPUTC; the
+ * caller will only look at the first bytes in that case anyway. Ugly? Sure.
+ */
 static int
 seq_to_new(seq_event_t *ev, struct uio *uio)
 {
