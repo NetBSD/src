@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.107 2006/05/28 13:07:21 blymn Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.108 2006/06/01 01:46:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.107 2006/05/28 13:07:21 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.108 2006/06/01 01:46:41 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2406,9 +2406,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Detect PCI-Express devices
 	 * XXX: guessed from Linux/FreeBSD; no documentation
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 &&
-	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
-	    NULL, NULL) != 0)
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	        NULL, NULL) != 0)
 		sc->bge_pcie = 1;
 	else
 		sc->bge_pcie = 0;
