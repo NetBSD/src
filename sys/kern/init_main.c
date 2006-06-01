@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.261.6.3 2006/06/01 22:38:06 kardel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.261.6.4 2006/06/01 23:21:08 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.6.3 2006/06/01 22:38:06 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.6.4 2006/06/01 23:21:08 kardel Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -290,6 +290,13 @@ main(void)
 #endif
 	vfsinit();
 
+
+#ifdef __HAVE_TIMECOUNTER
+#ifdef NTP
+	ntp_init();
+#endif
+#endif /* __HAVE_TIMECOUNTER */
+
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
@@ -418,12 +425,6 @@ main(void)
 	 * don't have a non-volatile time-of-day device.
 	 */
 	inittodr(rootfstime);
-
-#ifdef __HAVE_TIMECOUNTER
-#ifdef NTP
-	ntp_init();
-#endif
-#endif /* __HAVE_TIMECOUNTER */
 
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
 	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
