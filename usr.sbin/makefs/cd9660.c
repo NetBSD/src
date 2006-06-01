@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.12 2006/05/25 00:25:00 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.13 2006/06/01 21:06:37 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.12 2006/05/25 00:25:00 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.13 2006/06/01 21:06:37 hubertf Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -402,16 +402,19 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 		diskStructure.allow_multidot = 1;
 	else if (CD9660_IS_COMMAND_ARG(var, "omit-trailing-period"))
 		diskStructure.omit_trailing_period = 1;
-	else if (val == NULL) {
-		warnx("Option `%s' doesn't contain a value", var);
-		rv = 0;
-	} else if (CD9660_IS_COMMAND_ARG(var, "no-emul-boot") ||
-		    CD9660_IS_COMMAND_ARG(var, "no-boot") ||
-		    CD9660_IS_COMMAND_ARG(var, "hard-disk-boot") ||
-		    CD9660_IS_COMMAND_ARG(var, "boot-load-segment")) {
-		/* XXX check error! */
-		cd9660_eltorito_add_boot_option(var, val);
+	else if (CD9660_IS_COMMAND_ARG(var, "no-emul-boot") ||
+		 CD9660_IS_COMMAND_ARG(var, "no-boot") ||
+		 CD9660_IS_COMMAND_ARG(var, "hard-disk-boot")) {
+		cd9660_eltorito_add_boot_option(var, 0);
+		
 		/* End of flag variables */
+        } else if (CD9660_IS_COMMAND_ARG(var, "boot-load-segment")) {
+		if (val == NULL) {
+			warnx("Option `%s' doesn't contain a value", var);
+			rv = 0;
+		} else {
+			cd9660_eltorito_add_boot_option(var, val);
+		}
 	} else
 		rv = set_option(cd9660_options, var, val);
 
