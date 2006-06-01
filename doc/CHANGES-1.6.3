@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.180 2006/05/09 12:03:53 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.181 2006/06/01 06:03:17 simonb Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2176,3 +2176,8 @@ usr.sbin/rtadvd/rtadvd.c			patch
 	Process Source Link-Layer Address (SLLA) option correctly.
 	[martti, ticket #6074]
 
+sys/kern/vfs_vnops.c				1.112
+
+	Limit the size of any kernel buffers allocated by the VOP_READDIR
+	routines to MAXBSIZE.
+	[simonb, ok tron]
