@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.56.6.1 2006/04/22 11:38:02 simonb Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.56.6.2 2006/06/01 22:35:28 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.56.6.1 2006/04/22 11:38:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.56.6.2 2006/06/01 22:35:28 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -523,7 +523,7 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
-	native_sigset13_to_sigset(&scp->sc_mask, &mask);
+	native_sigset13_to_sigset((sigset13_t *)&scp->sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.20 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.20.6.1 2006/06/01 22:35:49 kardel Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.20 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.20.6.1 2006/06/01 22:35:49 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.20 2005/12/11 12:20:02 christos Ex
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_fcntl.h>
@@ -250,7 +251,7 @@ ibcs2_sys_eaccess(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct vnode *vp;
         int error, flags;
         struct nameidata nd;

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.84.6.1 2006/04/22 11:40:18 simonb Exp $ */
+/* $NetBSD: device.h,v 1.84.6.2 2006/06/01 22:39:26 kardel Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -78,8 +78,9 @@
 #define	_SYS_DEVICE_H_
 
 #include <sys/evcnt.h>
-#include <sys/properties.h>
 #include <sys/queue.h>
+
+#include <prop/proplib.h>
 
 /*
  * Minimal device structures.
@@ -120,6 +121,7 @@ struct device {
 					   (NULL if pesudo- or root node) */
 	int		dv_flags;	/* misc. flags; see below */
 	int		*dv_locators;	/* our actual locators (optional) */
+	prop_dictionary_t dv_properties;/* properties dictionary */
 };
 
 /* dv_flags */
@@ -350,12 +352,6 @@ void	config_pending_decr(void);
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
 
-int	devprop_set(device_t, const char *, void *, size_t, int, int);
-size_t	devprop_list(device_t, char *, size_t);
-size_t	devprop_get(device_t, const char *, void *, size_t, int *);
-int	devprop_delete(device_t, const char *);
-int	devprop_copy(device_t, device_t, int);
-
 void		*device_lookup(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
 void		device_register(device_t, void *);
@@ -371,6 +367,7 @@ device_t	device_parent(device_t);
 boolean_t	device_is_active(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
+prop_dictionary_t device_properties(device_t);
 
 boolean_t	device_is_a(device_t, const char *);
 

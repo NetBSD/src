@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.149.4.2 2006/04/22 11:38:13 simonb Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.149.4.3 2006/06/01 22:35:51 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149.4.2 2006/04/22 11:38:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149.4.3 2006/06/01 22:35:51 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149.4.2 2006/04/22 11:38:13 simonb 
 #include <sys/unistd.h>
 #include <sys/swap.h>		/* for SWAP_ON */
 #include <sys/sysctl.h>		/* for KERN_DOMAINNAME */
+#include <sys/kauth.h>
 
 #include <sys/ptrace.h>
 #include <machine/ptrace.h>
@@ -373,14 +374,14 @@ linux_sys_statfs(l, v, retval)
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs ltmp;
 	struct sys_statvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -391,12 +392,16 @@ linux_sys_statfs(l, v, retval)
 	if ((error = sys_statvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 
 int
@@ -410,14 +415,14 @@ linux_sys_fstatfs(l, v, retval)
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs ltmp;
 	struct sys_fstatvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
@@ -426,12 +431,16 @@ linux_sys_fstatfs(l, v, retval)
 	if ((error = sys_fstatvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 # endif /* !__amd64__ */
 
@@ -849,7 +858,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -1234,7 +1243,7 @@ linux_sys_getgroups16(l, v, retval)
 	struct sys_getgroups_args bsa;
 	gid_t *bset, *kbset;
 	linux_gid_t *lset;
-	struct pcred *pc = p->p_cred;
+	kauth_cred_t pc = p->p_cred;
 
 	n = SCARG(uap, gidsetsize);
 	if (n < 0)
@@ -1243,7 +1252,7 @@ linux_sys_getgroups16(l, v, retval)
 	bset = kbset = NULL;
 	lset = NULL;
 	if (n > 0) {
-		n = min(pc->pc_ucred->cr_ngroups, n);
+		n = min(kauth_cred_ngroups(pc), n);
 		sg = stackgap_init(p, 0);
 		bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
@@ -1266,7 +1275,7 @@ linux_sys_getgroups16(l, v, retval)
 		error = copyout(lset, SCARG(uap, gidset),
 		    n * sizeof (linux_gid_t));
 	} else
-		*retval = pc->pc_ucred->cr_ngroups;
+		*retval = kauth_cred_ngroups(pc);
 out:
 	if (kbset != NULL)
 		free(kbset, M_TEMP);
@@ -1346,7 +1355,7 @@ linux_sys_setfsuid(l, v, retval)
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
-	 if (p->p_cred->p_ruid != uid)
+	 if (kauth_cred_getuid(p->p_cred) != uid)
 		 return sys_nosys(l, v, retval);
 	 else
 		 return (0);
@@ -1401,8 +1410,9 @@ linux_sys_getresuid(l, v, retval)
 		syscallarg(uid_t *) suid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
+	kauth_cred_t pc = p->p_cred;
 	int error;
+	uid_t uid;
 
 	/*
 	 * Linux copies these values out to userspace like so:
@@ -1411,15 +1421,17 @@ linux_sys_getresuid(l, v, retval)
 	 *	2. If that succeeds, copy out euid.
 	 *	3. If both of those succeed, copy out suid.
 	 */
-	if ((error = copyout(&pc->p_ruid, SCARG(uap, ruid),
-			     sizeof(uid_t))) != 0)
+	uid = kauth_cred_getuid(pc);
+	if ((error = copyout(&uid, SCARG(uap, ruid), sizeof(uid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, euid),
-			     sizeof(uid_t))) != 0)
+	uid = kauth_cred_geteuid(pc);
+	if ((error = copyout(&uid, SCARG(uap, euid), sizeof(uid_t))) != 0)
 		return (error);
 
-	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
+	uid = kauth_cred_getsvuid(pc);
+
+	return (copyout(&uid, SCARG(uap, suid), sizeof(uid_t)));
 }
 
 int
@@ -1498,7 +1510,7 @@ linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return(error);
 
 	if (SCARG(uap, magic1) != LINUX_REBOOT_MAGIC1)

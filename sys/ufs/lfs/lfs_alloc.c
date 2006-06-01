@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.86.6.1 2006/04/22 11:40:25 simonb Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.86.6.2 2006/06/01 22:39:43 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.6.1 2006/04/22 11:40:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.6.2 2006/06/01 22:39:43 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.6.1 2006/04/22 11:40:25 simonb Ex
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/tree.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -96,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.6.1 2006/04/22 11:40:25 simonb Ex
 
 extern struct lock ufs_hashlock;
 
-static int extend_ifile(struct lfs *, struct ucred *);
+static int extend_ifile(struct lfs *, kauth_cred_t);
 static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
     struct vnode **);
 
@@ -227,7 +228,10 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
 		simple_unlock(&lfs_subsys_lock);
+		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+		wakeup(&lfs_dirvcount);
+		wakeup(&fs->lfs_dirvcount);
 		simple_unlock(&fs->lfs_interlock);
 	}
 	*vpp = vp;
@@ -239,7 +243,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
  * Called with the segment lock held.
  */
 static int
-extend_ifile(struct lfs *fs, struct ucred *cred)
+extend_ifile(struct lfs *fs, kauth_cred_t cred)
 {
 	struct vnode *vp;
 	struct inode *ip;
@@ -318,7 +322,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 /* ARGSUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_valloc(struct vnode *pvp, int mode, struct ucred *cred, struct vnode **vpp)
+lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, struct vnode **vpp)
 {
 	struct lfs *fs;
 	struct buf *bp, *cbp;
@@ -468,6 +472,7 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	ip->i_lfs_effnblks = 0;
 	SPLAY_INIT(&ip->i_lfs_lbtree);
 	ip->i_lfs_nbtree = 0;
+	LIST_INIT(&ip->i_lfs_segdhd);
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;
@@ -584,15 +589,38 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
 		simple_unlock(&lfs_subsys_lock);
+		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 		simple_unlock(&fs->lfs_interlock);
+		wakeup(&fs->lfs_dirvcount);
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
+
+		/*
+		 * If this inode is not going to be written any more, any
+		 * segment accounting left over from its truncation needs
+		 * to occur at the end of the next dirops flush.  Attach
+		 * them to the fs-wide list for that purpose.
+		 */
+		if (LIST_FIRST(&ip->i_lfs_segdhd) != NULL) {
+			struct segdelta *sd;
+	
+			while((sd = LIST_FIRST(&ip->i_lfs_segdhd)) != NULL) {
+				LIST_REMOVE(sd, list);
+				LIST_INSERT_HEAD(&fs->lfs_segdhd, sd, list);
+			}
+		}
+	} else {
+		/*
+		 * If it's not a dirop, we can finalize right away.
+		 */
+		lfs_finalize_ino_seguse(fs, ip);
 	}
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
 	ip->i_flag &= ~IN_ALLMOD;
-
+	ip->i_lfs_iflags |= LFSI_DELETED;
+	
 	/*
 	 * Set the ifile's inode entry to unused, increment its version number
 	 * and link it onto the free chain.

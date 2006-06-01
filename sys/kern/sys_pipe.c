@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.70.6.2 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.70.6.3 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70.6.2 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70.6.3 2006/06/01 22:38:09 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70.6.2 2006/04/22 11:39:59 simonb Exp
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <sys/pipe.h>
 
@@ -122,9 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.70.6.2 2006/04/22 11:39:59 simonb Exp
  * interfaces to the outside world
  */
 static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
-		struct ucred *cred, int flags);
+		kauth_cred_t cred, int flags);
 static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
-		struct ucred *cred, int flags);
+		kauth_cred_t cred, int flags);
 static int pipe_close(struct file *fp, struct lwp *l);
 static int pipe_poll(struct file *fp, int events, struct lwp *l);
 static int pipe_kqfilter(struct file *fp, struct knote *kn);
@@ -403,7 +404,7 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 
 /* ARGSUSED */
 static int
-pipe_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+pipe_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
@@ -782,7 +783,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 #endif /* !PIPE_NODIRECT */
 
 static int
-pipe_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct pipe *wpipe, *rpipe;
@@ -1205,8 +1206,8 @@ pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
-	ub->st_uid = fp->f_cred->cr_uid;
-	ub->st_gid = fp->f_cred->cr_gid;
+	ub->st_uid = kauth_cred_geteuid(fp->f_cred);
+	ub->st_gid = kauth_cred_getegid(fp->f_cred);
 	/*
 	 * Left as 0: st_dev, st_ino, st_nlink, st_rdev, st_flags, st_gen.
 	 * XXX (st_dev, st_ino) should be unique.

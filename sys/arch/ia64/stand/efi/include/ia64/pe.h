@@ -1,4 +1,6 @@
-/*	$NetBSD: pe.h,v 1.2.2.2 2006/04/22 11:37:39 simonb Exp $	*/
+/*	$NetBSD: pe.h,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/ia64/pe.h,v 1.1 2001/06/09 16:49:50 dfr Exp $ */
+
 /* 
     PE32+ header file
  */

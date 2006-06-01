@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.121.4.1 2006/04/22 11:40:05 simonb Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.121.4.2 2006/06/01 22:38:29 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.121.4.1 2006/04/22 11:40:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.121.4.2 2006/06/01 22:38:29 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.121.4.1 2006/04/22 11:40:05 simonb
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <sys/file.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -91,7 +92,7 @@ genfs_seek(void *v)
 		struct vnode *a_vp;
 		off_t a_oldoff;
 		off_t a_newoff;
-		struct ucred *a_ucred;
+		kauth_cred_t cred;
 	} */ *ap = v;
 
 	if (ap->a_newoff < 0)
@@ -121,7 +122,7 @@ genfs_fcntl(void *v)
 		u_int a_command;
 		caddr_t a_data;
 		int a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 
@@ -377,7 +378,7 @@ genfs_lease_check(void *v)
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flag;
 	} */ *ap = v;
 	u_int32_t duration = 0;
@@ -453,7 +454,7 @@ genfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
-	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curlwp */
+	kauth_cred_t cred = curproc->p_cred;		/* XXXUBC curlwp */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;
@@ -1578,7 +1579,7 @@ genfs_compat_getpages(void *v)
 	int i, error, orignpages, npages;
 	struct iovec iov;
 	struct uio uio;
-	struct ucred *cred = curproc->p_ucred;
+	kauth_cred_t cred = curproc->p_cred;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	error = 0;
@@ -1657,7 +1658,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	off_t offset;
 	struct iovec iov;
 	struct uio uio;
-	struct ucred *cred = curproc->p_ucred;
+	kauth_cred_t cred = curproc->p_cred;
 	struct buf *bp;
 	vaddr_t kva;
 	int s, error;

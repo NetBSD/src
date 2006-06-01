@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16.6.1 2006/06/01 22:35:08 kardel Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16.6.1 2006/06/01 22:35:08 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2005/12/11 12:18:31 christo
 extern struct lwp *fpu_lwp;
 
 int
-process_read_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct reg *pregs;
 
@@ -125,9 +123,7 @@ process_read_regs(l, regs)
 }
 
 int
-process_write_regs(l, regs)
-	struct lwp *l;
-	const struct reg *regs;
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct reg *pregs;
 
@@ -143,9 +139,7 @@ process_write_regs(l, regs)
 }
 
 int
-process_read_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 	if ((l->l_flag & L_INMEM) == 0)
 		return (EIO);
@@ -159,9 +153,7 @@ process_read_fpregs(l, regs)
 }
 
 int
-process_write_fpregs(l, regs)
-	struct lwp *l;
-	const struct fpreg *regs;
+process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 	if ((l->l_flag & L_INMEM) == 0)
 		return (EIO);
@@ -175,9 +167,7 @@ process_write_fpregs(l, regs)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp *l;
-	int sstep;
+process_sstep(struct lwp *l, int sstep)
 {
 	struct reg *pregs;
 
@@ -194,9 +184,7 @@ process_sstep(l, sstep)
 }
 
 int
-process_set_pc(l, addr)
-	struct lwp *l;
-	caddr_t addr;
+process_set_pc(struct lwp *l, caddr_t addr)
 {
 	struct reg *pregs;
 

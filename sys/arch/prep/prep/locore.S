@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.8.6.1 2006/06/01 22:35:17 kardel Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -79,22 +79,6 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-
-GLOBAL(intrnames)
-	.asciz	"clock", "irq1", "irq2", "irq3"
-	.asciz	"irq4", "irq5", "irq6", "irq7"
-	.asciz	"irq8", "irq9", "irq10", "irq11"
-	.asciz	"irq12", "irq13", "irq14", "irq15"
-	.asciz	"irq16", "irq17", "irq18", "irq19"
-	.asciz	"irq20", "irq21", "irq22", "irq23"
-	.asciz	"irq24", "irq25", "irq26", "irq27"
-	.asciz	"irq28", "softnet", "softclock", "softserial"
-GLOBAL(eintrnames)
-	.align	4
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to

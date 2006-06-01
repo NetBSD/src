@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6.6.1 2006/04/22 11:37:10 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.6.2 2006/06/01 22:34:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.6.1 2006/04/22 11:37:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.6.2 2006/06/01 22:34:09 kardel Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -112,12 +112,15 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_ETHERNET_P(pa)) {
-			if (devprop_set(dev, "mac-addr",
-				     algor_ethaddr,
-				     ETHER_ADDR_LEN, 0, 0) != 0) {
+			prop_data_t pd = prop_data_create_data_nocopy(
+			    algor_ethaddr, ETHER_ADDR_LEN);
+			KASSERT(pd != NULL);
+			if (prop_dictionary_set(device_properties(dev),
+						"mac-addr", pd) == FALSE) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);
 			}
+			prop_object_release(pd);
 #if defined(ALGOR_P4032)
 			/*
 			 * XXX This is gross, disgusting, and otherwise vile,

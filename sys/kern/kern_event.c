@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.25.6.2 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.6.3 2006/06/01 22:38:07 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.6.2 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.6.3 2006/06/01 22:38:07 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.6.2 2006/04/22 11:39:58 simonb E
 #include <sys/filedesc.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 static void	kqueue_wakeup(struct kqueue *kq);
 
@@ -61,9 +62,9 @@ static int	kqueue_scan(struct file *, size_t, struct kevent *,
     const struct timespec *, struct lwp *, register_t *,
     const struct kevent_ops *);
 static int	kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-		    struct ucred *cred, int flags);
+		    kauth_cred_t cred, int flags);
 static int	kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-		    struct ucred *cred, int flags);
+		    kauth_cred_t cred, int flags);
 static int	kqueue_ioctl(struct file *fp, u_long com, void *data,
 		    struct lwp *l);
 static int	kqueue_fcntl(struct file *fp, u_int com, void *data,
@@ -368,9 +369,10 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
 		(p->p_flag & P_SUGID))
-	    && suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    && kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+				 &curproc->p_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -1065,7 +1067,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 /*ARGSUSED*/
 static int
 kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-	struct ucred *cred, int flags)
+	kauth_cred_t cred, int flags)
 {
 
 	return (ENXIO);
@@ -1078,7 +1080,7 @@ kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
 /*ARGSUSED*/
 static int
 kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-	struct ucred *cred, int flags)
+	kauth_cred_t cred, int flags)
 {
 
 	return (ENXIO);

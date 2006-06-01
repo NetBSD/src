@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.7 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.7.6.1 2006/06/01 22:37:51 kardel Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.7 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.7.6.1 2006/06/01 22:37:51 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ adosfs_lookup(v)
 	struct anode *ap;	/* anode to find */
 	struct vnode *vdp;	/* vnode of search dir */
 	struct anode *adp;	/* anode of search dir */
-	struct ucred *ucp;	/* lookup credentials */
+	kauth_cred_t ucp;	/* lookup credentials */
 	u_long bn, plen, hval;
 	const u_char *pelt;
 

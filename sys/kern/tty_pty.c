@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.86.6.1 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.86.6.2 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.6.1 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.6.2 2006/06/01 22:38:09 kardel Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.6.1 2006/04/22 11:39:59 simonb Exp 
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
@@ -332,7 +333,7 @@ ptsopen(dev, flag, devtype, l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && kauth_cred_geteuid(p->p_cred) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);

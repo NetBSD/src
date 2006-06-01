@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.32.6.1 2006/04/22 11:40:18 simonb Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.32.6.2 2006/06/01 22:39:26 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,6 +91,14 @@ struct	lwp {
 	struct	user *l_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdlwp l_md;	/* Any machine-dependent fields. */
 };
+
+#if !defined(USER_TO_UAREA)
+#if !defined(UAREA_USER_OFFSET)
+#define	UAREA_USER_OFFSET	0
+#endif /* !defined(UAREA_USER_OFFSET) */
+#define	USER_TO_UAREA(user)	((vaddr_t)(user) - UAREA_USER_OFFSET)
+#define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
+#endif /* !defined(UAREA_TO_USER) */
 
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 

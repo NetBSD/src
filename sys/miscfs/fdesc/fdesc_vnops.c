@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.89.6.1 2006/04/22 11:40:05 simonb Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.89.6.2 2006/06/01 22:38:29 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.89.6.1 2006/04/22 11:40:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.89.6.2 2006/06/01 22:38:29 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.89.6.1 2006/04/22 11:40:05 simonb 
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fdesc/fdesc.h>
 #include <miscfs/genfs/genfs.h>
@@ -124,7 +125,7 @@ int	fdesc_pathconf(void *);
 #define fdesc_revoke	genfs_revoke
 #define fdesc_putpages	genfs_null_putpages
 
-static int fdesc_attr(int, struct vattr *, struct ucred *, struct lwp *);
+static int fdesc_attr(int, struct vattr *, kauth_cred_t, struct lwp *);
 
 int (**fdesc_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
@@ -426,7 +427,7 @@ fdesc_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -459,7 +460,7 @@ static int
 fdesc_attr(fd, vap, cred, l)
 	int fd;
 	struct vattr *vap;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct proc *p = l->l_proc;
@@ -533,7 +534,7 @@ fdesc_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -614,7 +615,7 @@ fdesc_setattr(v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct filedesc *fdp = ap->a_l->l_proc->p_fd;
@@ -673,7 +674,7 @@ fdesc_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -819,7 +820,7 @@ fdesc_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error;
@@ -845,7 +846,7 @@ fdesc_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
 	struct vnode *vp = ap->a_vp;
@@ -873,7 +874,7 @@ fdesc_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
 	struct vnode *vp = ap->a_vp;
@@ -903,7 +904,7 @@ fdesc_ioctl(v)
 		u_long a_command;
 		void *a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;

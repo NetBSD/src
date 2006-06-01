@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.19 2005/12/24 23:29:06 perry Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.19.6.1 2006/06/01 22:39:26 kardel Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -28,8 +28,17 @@
 #define	__weak_alias(alias,sym)						\
     __asm(".weak " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
+
+/* Do not use __weak_extern, use __weak_reference instead */
 #define	__weak_extern(sym)						\
     __asm(".weak " _C_LABEL_STRING(#sym));
+
+#if __GNUC_PREREQ__(4, 0)
+#define	__weak_reference(sym)	__attribute__((__weakref__))
+#else
+#define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
+#endif
+
 #define	__warn_references(sym,msg)					\
 	__asm(".stabs \"" msg "\",30,0,0,0");				\
 	__asm(".stabs \"_" #sym "\",1,0,0,0");
@@ -37,9 +46,18 @@
 #define	__weak_alias(alias,sym) ___weak_alias(_/**/alias,_/**/sym)
 #define	___weak_alias(alias,sym)					\
     __asm(".weak alias\nalias = sym");
+/* Do not use __weak_extern, use __weak_reference instead */
 #define	__weak_extern(sym) ___weak_extern(_/**/sym)
 #define	___weak_extern(sym)						\
     __asm(".weak sym");
+
+#if __GNUC_PREREQ__(4, 0)
+#define	__weak_reference(sym)	__attribute__((__weakref__))
+#else
+#define	___weak_reference(sym)	; __asm(".weak sym");
+#define	__weak_reference(sym)	___weak_reference(_/**/sym)
+#endif
+
 #define	__warn_references(sym,msg)					\
 	__asm(".stabs msg,30,0,0,0");					\
 	__asm(".stabs \"_/**/sym\",1,0,0,0");

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.85.6.1 2006/04/22 11:39:44 simonb Exp $ */
+/* $NetBSD: wskbd.c,v 1.85.6.2 2006/06/01 22:37:43 kardel Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85.6.1 2006/04/22 11:39:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85.6.2 2006/06/01 22:37:43 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85.6.1 2006/04/22 11:39:44 simonb Exp $"
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -1021,7 +1022,8 @@ getbell:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTBELL:
-		if (p && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if (p && (error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
@@ -1059,7 +1061,7 @@ getkeyrepeat:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto setkeyrepeat;
@@ -1328,7 +1330,7 @@ wskbd_cngetc(dev_t dev)
 				 * to deliver pure ASCII it is in a state that
 				 * it can not track press/release events
 				 * reliable - so we clear all previously
-				 * accuulated modifier state.
+				 * accumulated modifier state.
 				 */
 				wskbd_console_data.t_modifiers = 0;
 				return(data);

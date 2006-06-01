@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.100.6.2 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.100.6.3 2006/06/01 22:38:07 kardel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100.6.2 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100.6.3 2006/06/01 22:38:07 kardel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100.6.2 2006/04/22 11:39:58 simonb
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -981,7 +982,7 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 		vp = nd.ni_vp;
 		VOP_UNLOCK(vp, 0);
 		if (vp->v_type != VREG) {
-			(void) vn_close(vp, FREAD|FWRITE, curp->p_ucred, l);
+			(void) vn_close(vp, FREAD|FWRITE, curp->p_cred, l);
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
 			return (EACCES);
 		}
@@ -1010,7 +1011,7 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 	    SCARG(uap, pid), fp);
 done:
 	if (vp != NULL)
-		(void) vn_close(vp, FWRITE, curp->p_ucred, l);
+		(void) vn_close(vp, FWRITE, curp->p_cred, l);
 	if (fp != NULL) {
 		FILE_UNUSE(fp, l);	/* release file */
 		fdrelease(l, fd); 	/* release fd table slot */
@@ -1046,7 +1047,7 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs,
 			ktradref(p);
 		}
 		p->p_traceflag |= facs;
-		if (curp->p_ucred->cr_uid == 0)
+		if (kauth_cred_geteuid(curp->p_cred) == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
 	} else {
 		/* KTROP_CLEAR */
@@ -1259,16 +1260,16 @@ ktrace_thread(void *arg)
 int
 ktrcanset(struct proc *callp, struct proc *targetp)
 {
-	struct pcred *caller = callp->p_cred;
-	struct pcred *target = targetp->p_cred;
+	kauth_cred_t caller = callp->p_cred;
+	kauth_cred_t target = targetp->p_cred;
 
-	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
-	    target->p_ruid == target->p_svuid &&
-	    caller->p_rgid == target->p_rgid &&	/* XXX */
-	    target->p_rgid == target->p_svgid &&
+	if ((kauth_cred_geteuid(caller) == kauth_cred_getuid(target) &&
+	    kauth_cred_getuid(target) == kauth_cred_getsvuid(target) &&
+	    kauth_cred_getgid(caller) == kauth_cred_getgid(target) &&	/* XXX */
+	    kauth_cred_getgid(target) == kauth_cred_getsvgid(target) &&
 	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
 	    (targetp->p_flag & P_SUGID) == 0) ||
-	    caller->pc_ucred->cr_uid == 0)
+	    kauth_cred_geteuid(caller) == 0)
 		return (1);
 
 	return (0);

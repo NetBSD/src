@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.49.6.1 2006/04/22 11:38:17 simonb Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.49.6.2 2006/06/01 22:35:59 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.49.6.1 2006/04/22 11:38:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.49.6.2 2006/06/01 22:35:59 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -643,7 +643,7 @@ getdevinfo(fp, l)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VCHR)
 		return 0;
-	if (VOP_GETATTR(vp, &va, p->p_ucred, l))
+	if (VOP_GETATTR(vp, &va, p->p_cred, l))
 		return 0;
 	if (di->done && di->dev == va.va_rdev)
 		return di;

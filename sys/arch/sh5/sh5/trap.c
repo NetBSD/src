@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36.6.1 2006/04/22 11:37:56 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.36.6.2 2006/06/01 22:35:24 kardel Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36.6.1 2006/04/22 11:37:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36.6.2 2006/06/01 22:35:24 kardel Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36.6.1 2006/04/22 11:37:56 simonb Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -352,8 +353,8 @@ trap(struct lwp *l, struct trapframe *tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
-			    (p->p_cred && p->p_ucred) ?
-			    p->p_ucred->cr_uid : -1);
+			    p->p_cred ?
+			    kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else
 		if (rv == EACCES)

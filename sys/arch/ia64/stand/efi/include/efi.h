@@ -1,4 +1,5 @@
-/*	$NetBSD: efi.h,v 1.2.2.2 2006/04/22 11:37:38 simonb Exp $	*/
+/*	$NetBSD: efi.h,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efi.h,v 1.3 2002/05/19 03:17:20 marcel Exp $ */
 /*++
 
 Copyright (c) 1998  Intel Corporation

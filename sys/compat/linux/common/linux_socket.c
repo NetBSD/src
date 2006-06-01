@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.58.6.1 2006/04/22 11:38:13 simonb Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.58.6.2 2006/06/01 22:35:51 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58.6.1 2006/04/22 11:38:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58.6.2 2006/06/01 22:35:51 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58.6.1 2006/04/22 11:38:13 simonb
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/exec.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -122,7 +123,7 @@ int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
 static int linux_sa_get __P((struct lwp *, int, caddr_t *, struct sockaddr **,
-		const struct osockaddr *, int *));
+		const struct osockaddr *, socklen_t *));
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
 static int bsd_to_linux_msg_flags __P((int));
@@ -384,7 +385,7 @@ linux_sys_sendto(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_sendto_args bsa;
-	int tolen;
+	socklen_t tolen;
 
 	SCARG(&bsa, s) = SCARG(uap, s);
 	SCARG(&bsa, buf) = SCARG(uap, msg);
@@ -651,7 +652,7 @@ linux_sys_recvfrom(l, v, retval)
 	SCARG(&bra, len) = SCARG(uap, len);
 	SCARG(&bra, flags) = SCARG(uap, flags);
 	SCARG(&bra, from) = (struct sockaddr *) SCARG(uap, from);
-	SCARG(&bra, fromlenaddr) = SCARG(uap, fromlenaddr);
+	SCARG(&bra, fromlenaddr) = (socklen_t *)SCARG(uap, fromlenaddr);
 
 	if ((error = sys_recvfrom(l, &bra, retval)))
 		return (error);
@@ -1049,7 +1050,7 @@ linux_sys_getsockopt(l, v, retval)
 	SCARG(&bga, s) = SCARG(uap, s);
 	SCARG(&bga, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bga, val) = SCARG(uap, optval);
-	SCARG(&bga, avalsize) = SCARG(uap, optlen);
+	SCARG(&bga, avalsize) = (socklen_t *)SCARG(uap, optlen);
 
 	switch (SCARG(&bga, level)) {
 	case SOL_SOCKET:
@@ -1333,7 +1334,7 @@ linux_sys_connect(l, v, retval)
 	struct sockaddr *sa;
 	struct sys_connect_args bca;
 	caddr_t sg = stackgap_init(p, 0);
-	int namlen;
+	socklen_t namlen;
 
 	namlen = SCARG(uap, namelen);
 	error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
@@ -1343,7 +1344,7 @@ linux_sys_connect(l, v, retval)
 
 	SCARG(&bca, s) = SCARG(uap, s);
 	SCARG(&bca, name) = sa;
-	SCARG(&bca, namelen) = (unsigned int) namlen;
+	SCARG(&bca, namelen) =  namlen;
 
 	error = sys_connect(l, &bca, retval);
 
@@ -1387,7 +1388,8 @@ linux_sys_bind(l, v, retval)
 		syscallarg(int) namelen;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int		error, namlen;
+	int		error;
+	socklen_t	namlen;
 	struct sys_bind_args bsa;
 
 	namlen = SCARG(uap, namelen);
@@ -1465,13 +1467,13 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 	caddr_t *sgp;
 	struct sockaddr **sap;
 	const struct osockaddr *osa;
-	int *osalen;
+	socklen_t *osalen;
 {
 	int error=0, bdom;
 	struct sockaddr *sa, *usa;
 	struct osockaddr *kosa = (struct osockaddr *) &sa;
 	struct proc *p = l->l_proc;
-	int alloclen;
+	socklen_t alloclen;
 #ifdef INET6
 	int oldv6size;
 	struct sockaddr_in6 *sin6;
@@ -1528,8 +1530,7 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
 			sin6->sin6_scope_id = 0;
 		} else {
-			int uid = p->p_cred && p->p_ucred ?
-					p->p_ucred->cr_uid : -1;
+			int uid = p->p_cred ? kauth_cred_geteuid(p->p_cred) : -1;
 
 			log(LOG_DEBUG,
 			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "

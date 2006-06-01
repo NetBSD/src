@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.9 1998/03/21 22:02:42 mjacob Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.9.80.1 2006/06/01 22:34:10 kardel Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -67,10 +67,10 @@
  * (lacking I/O Node ID and Hose Numbers)
  */
 
-#define	DWLPX_PCI_DENSE		0x000000000LL
-#define	DWLPX_PCI_SPARSE	0x100000000LL
-#define	DWLPX_PCI_IOSPACE	0x200000000LL
-#define	DWLPX_PCI_CONF		0x300000000LL
+#define	DWLPX_PCI_DENSE		0x000000000UL
+#define	DWLPX_PCI_SPARSE	0x100000000UL
+#define	DWLPX_PCI_IOSPACE	0x200000000UL
+#define	DWLPX_PCI_CONF		0x300000000UL
 
 /*
  * PCIA Interface Adapter Register Addresses (Offsets from Node Address)
@@ -80,26 +80,26 @@
  * per bus. I/O Hose and TLSB Node I/D offsets must be added separately.
  */
 
-#define	_PCIA_CTL	0x380000000LL	/* PCI 0 Bus Control */
-#define	_PCIA_MRETRY	0x380000080LL	/* PCI 0 Master Retry Limit */
-#define	_PCIA_GPR	0x380000100LL	/* PCI 0 General Purpose */
-#define	_PCIA_ERR	0x380000180LL	/* PCI 0 Error Summary */
-#define	_PCIA_FADR	0x380000200LL	/* PCI 0 Failing Address */
-#define	_PCIA_IMASK	0x380000280LL	/* PCI 0 Interrupt Mask */
-#define	_PCIA_DIAG	0x380000300LL	/* PCI 0 Diagnostic  */
-#define	_PCIA_IPEND	0x380000380LL	/* PCI 0 Interrupt Pending */
-#define	_PCIA_IPROG	0x380000400LL	/* PCI 0 Interrupt in Progress */
-#define	_PCIA_WMASK_A	0x380000480LL	/* PCI 0 Window Mask A */
-#define	_PCIA_WBASE_A	0x380000500LL	/* PCI 0 Window Base A */
-#define	_PCIA_TBASE_A	0x380000580LL	/* PCI 0 Window Translated Base A */
-#define	_PCIA_WMASK_B	0x380000600LL	/* PCI 0 Window Mask B */
-#define	_PCIA_WBASE_B	0x380000680LL	/* PCI 0 Window Base B */
-#define	_PCIA_TBASE_B	0x380000700LL	/* PCI 0 Window Translated Base B */
-#define	_PCIA_WMASK_C	0x380000780LL	/* PCI 0 Window Mask C */
-#define	_PCIA_WBASE_C	0x380000800LL	/* PCI 0 Window Base C */
-#define	_PCIA_TBASE_C	0x380000880LL	/* PCI 0 Window Translated Base C */
-#define	_PCIA_ERRVEC	0x380000900LL	/* PCI 0 Error Interrupt Vector */
-#define	_PCIA_DEVVEC	0x380001000LL	/* PCI 0 Device Interrupt Vector */
+#define	_PCIA_CTL	0x380000000UL	/* PCI 0 Bus Control */
+#define	_PCIA_MRETRY	0x380000080UL	/* PCI 0 Master Retry Limit */
+#define	_PCIA_GPR	0x380000100UL	/* PCI 0 General Purpose */
+#define	_PCIA_ERR	0x380000180UL	/* PCI 0 Error Summary */
+#define	_PCIA_FADR	0x380000200UL	/* PCI 0 Failing Address */
+#define	_PCIA_IMASK	0x380000280UL	/* PCI 0 Interrupt Mask */
+#define	_PCIA_DIAG	0x380000300UL	/* PCI 0 Diagnostic  */
+#define	_PCIA_IPEND	0x380000380UL	/* PCI 0 Interrupt Pending */
+#define	_PCIA_IPROG	0x380000400UL	/* PCI 0 Interrupt in Progress */
+#define	_PCIA_WMASK_A	0x380000480UL	/* PCI 0 Window Mask A */
+#define	_PCIA_WBASE_A	0x380000500UL	/* PCI 0 Window Base A */
+#define	_PCIA_TBASE_A	0x380000580UL	/* PCI 0 Window Translated Base A */
+#define	_PCIA_WMASK_B	0x380000600UL	/* PCI 0 Window Mask B */
+#define	_PCIA_WBASE_B	0x380000680UL	/* PCI 0 Window Base B */
+#define	_PCIA_TBASE_B	0x380000700UL	/* PCI 0 Window Translated Base B */
+#define	_PCIA_WMASK_C	0x380000780UL	/* PCI 0 Window Mask C */
+#define	_PCIA_WBASE_C	0x380000800UL	/* PCI 0 Window Base C */
+#define	_PCIA_TBASE_C	0x380000880UL	/* PCI 0 Window Translated Base C */
+#define	_PCIA_ERRVEC	0x380000900UL	/* PCI 0 Error Interrupt Vector */
+#define	_PCIA_DEVVEC	0x380001000UL	/* PCI 0 Device Interrupt Vector */
 
 
 #define	PCIA_CTL(hpc)		(_PCIA_CTL	+ (0x200000 * (hpc)))
@@ -125,13 +125,13 @@
 #define	PCIA_DEVVEC(hpc, subslot, ipin)	\
  (_PCIA_DEVVEC + (0x200000 * (hpc)) + ((subslot) * 0x200) + ((ipin-1) * 0x80))
 
-#define	PCIA_SCYCLE	0x380002000LL	/* PCI Special Cycle */
-#define	PCIA_IACK	0x380002080LL	/* PCI Interrupt Acknowledge */
+#define	PCIA_SCYCLE	0x380002000UL	/* PCI Special Cycle */
+#define	PCIA_IACK	0x380002080UL	/* PCI Interrupt Acknowledge */
 
-#define	PCIA_PRESENT	0x380800000LL	/* PCI Slot Present */
-#define	PCIA_TBIT	0x380A00000LL	/* PCI TBIT */
-#define	PCIA_MCTL	0x380C00000LL	/* PCI Module Control */
-#define	PCIA_IBR	0x380E00000LL	/* PCI Information Base Repair */
+#define	PCIA_PRESENT	0x380800000UL	/* PCI Slot Present */
+#define	PCIA_TBIT	0x380A00000UL	/* PCI TBIT */
+#define	PCIA_MCTL	0x380C00000UL	/* PCI Module Control */
+#define	PCIA_IBR	0x380E00000UL	/* PCI Information Base Repair */
 
 /*
  * Bits in PCIA_CTL register

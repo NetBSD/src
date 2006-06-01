@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.42.6.1 2006/04/22 11:37:51 simonb Exp $	*/
+/*	$NetBSD: lpt.c,v 1.42.6.2 2006/06/01 22:35:06 kardel Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.6.1 2006/04/22 11:37:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.6.2 2006/06/01 22:35:06 kardel Exp $");
 
 #include "opt_inet.h"
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.6.1 2006/04/22 11:37:51 simonb Exp $");
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 
@@ -183,30 +184,30 @@ struct lpt_softc {
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)
 #define LPTSOFTC(n)	((struct lpt_softc *) lpt_cd.cd_devs[n])
 
-static int lptmatch __P((struct device *, struct cfdata *, void *aux));
-static void lptattach __P((struct device *, struct device *, void *));
-static void lptintr __P((void *));
-static int notready __P((u_char, struct lpt_softc *));
-static void lptout __P((void *));
-static int pushbytes __P((struct lpt_softc *));
+static int lptmatch(struct device *, struct cfdata *, void *aux);
+static void lptattach(struct device *, struct device *, void *);
+static void lptintr(void *);
+static int notready(u_char, struct lpt_softc *);
+static void lptout(void *);
+static int pushbytes(struct lpt_softc *);
 
 #if defined(INET) && defined(PLIP)
 /* Functions for the plip# interface */
-static void	plipattach __P((struct lpt_softc *,int));
-static void	plipinput __P((struct lpt_softc *));
-static int	plipioctl __P((struct ifnet *, u_long, caddr_t));
-static void	plipoutput __P((void *));
+static void	plipattach(struct lpt_softc *,int);
+static void	plipinput(struct lpt_softc *);
+static int	plipioctl(struct ifnet *, u_long, caddr_t);
+static void	plipoutput(void *);
 #ifndef __OPTIMIZE__
 static
 #endif
-	int	plipreceive __P((volatile struct i8255 *, u_char *, int));
-static void	pliprxenable __P((void *));
-static void	plipsoftint __P((void *));
-static void	plipstart __P((struct ifnet *));
+	int	plipreceive(volatile struct i8255 *, u_char *, int);
+static void	pliprxenable(void *);
+static void	plipsoftint(void *);
+static void	plipstart(struct ifnet *);
 #ifndef __OPTIMIZE__
 static
 #endif
-	int	pliptransmit __P((volatile struct i8255 *, u_char *, int));
+	int	pliptransmit(volatile struct i8255 *, u_char *, int);
 #endif
 
 CFATTACH_DECL(lpt, sizeof(struct lpt_softc),
@@ -225,10 +226,7 @@ const struct cdevsw lpt_cdevsw = {
 };
 
 static int
-lptmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lptmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	volatile struct i8255 *i8255 =
@@ -262,9 +260,7 @@ lptmatch(parent, cf, aux)
 }
 
 static void
-lptattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lptattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct lpt_softc *sc = (struct lpt_softc *) self;
@@ -294,11 +290,7 @@ lptattach(parent, self, aux)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct lpt_softc *sc;
 	volatile struct i8255 *i8255;
@@ -361,19 +353,19 @@ lptopen(dev, flag, mode, l)
 }
 
 static int
-notready(status, sc)
-	u_char status;
-	struct lpt_softc *sc;
+notready(u_char status, struct lpt_softc *sc)
 {
 	status ^= LPT_INVERT;
 
 	if (status != sc->sc_status) {
 		if (status & LPC_NOPAPER)
-			log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
+			log(LOG_NOTICE, "%s: out of paper\n",
+			    sc->sc_dev.dv_xname);
 		if (status & LPC_ONLINE)
 			log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
 		if (status & LPC_NERROR)
-			log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
+			log(LOG_NOTICE, "%s: output error\n",
+			    sc->sc_dev.dv_xname);
 		if (status & LPC_NACK)
 			log(LOG_NOTICE, "%s: NACK low\n", sc->sc_dev.dv_xname);
 		if (status & LPC_NBUSY)
@@ -384,9 +376,9 @@ notready(status, sc)
 }
 
 static void
-lptout(arg)
-	void *arg;
+lptout(void *arg)
 {
+
 	struct lpt_softc *sc = arg;
 	if (sc->sc_count > 0)
 		sc->sc_i8255->port_control = LPT_IRQENABLE;
@@ -396,11 +388,7 @@ lptout(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+lptclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
 
@@ -415,8 +403,7 @@ lptclose(dev, flag, mode, l)
 }
 
 static int
-pushbytes(sc)
-	struct lpt_softc *sc;
+pushbytes(struct lpt_softc *sc)
 {
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	int error;
@@ -435,10 +422,7 @@ pushbytes(sc)
  * get the chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+lptwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
 	size_t n;
@@ -467,8 +451,7 @@ lptwrite(dev, uio, flags)
  * another char.
  */
 static void
-lptintr(arg)
-	void *arg;
+lptintr(void *arg)
 {
 	struct lpt_softc *sc = arg;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
@@ -509,12 +492,7 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+lptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error = 0;
 
@@ -529,12 +507,10 @@ lptioctl(dev, cmd, data, flag, l)
 #if defined(INET) && defined(PLIP)
 
 static void
-plipattach(sc, unit)
-	struct lpt_softc *sc;
-	int unit;
+plipattach(struct lpt_softc *sc, int unit)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_plipout_ch);
 	callout_init(&sc->sc_pliprx_ch);
@@ -560,10 +536,7 @@ plipattach(sc, unit)
  * Process an ioctl request.
  */
 static int
-plipioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;	/* XXX ktrace-lwp */
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
@@ -639,7 +612,7 @@ plipioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFMTU:
-        	if ((error = suser(p->p_ucred, &p->p_acflag)))
+        	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
             		return(error);
 		if (ifp->if_mtu != ifr->ifr_mtu) {
 		        ifp->if_mtu = ifr->ifr_mtu;
@@ -659,8 +632,7 @@ plipioctl(ifp, cmd, data)
 }
 
 static void
-plipsoftint(arg)
-	void *arg;
+plipsoftint(void *arg)
 {
 	struct lpt_softc *sc = arg;
 	int pending = sc->sc_pending;
@@ -676,7 +648,8 @@ plipsoftint(arg)
 }
 
 #ifdef __OPTIMIZE__
-int plipreceive __P((volatile struct i8255 *, u_char *, int))
+int plipreceive(volatile struct i8255 *, u_char *, int)
+
 	__asm("plipreceive");
 __asm(" \
 plipreceive: \
@@ -732,10 +705,7 @@ plipreceive: \
 ");
 #else
 static int
-plipreceive(i8255, buf, len)
-	volatile struct i8255 *i8255;
-	u_char *buf;
-	int len;
+plipreceive(volatile struct i8255 *i8255, u_char *buf, int len)
 {
 	int i;
 	u_char cksum = 0, c;
@@ -757,17 +727,16 @@ plipreceive(i8255, buf, len)
 #endif
 
 static void
-pliprxenable(arg)
-	void *arg;
+pliprxenable(void *arg)
 {
+
 	struct lpt_softc *sc = arg;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 }
 
 static void
-plipinput(sc)
-	struct lpt_softc *sc;
+plipinput(struct lpt_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
@@ -879,7 +848,8 @@ err:
 }
 
 #ifdef __OPTIMIZE__
-int pliptransmit __P((volatile struct i8255 *, u_char *, int))
+int pliptransmit(volatile struct i8255 *, u_char *, int)
+
 	__asm("pliptransmit");
 __asm(" \
 pliptransmit: \
@@ -939,10 +909,7 @@ pliptransmit: \
 ");
 #else
 static int
-pliptransmit(i8255, buf, len)
-	volatile struct i8255 *i8255;
-	u_char *buf;
-	int len;
+pliptransmit(volatile struct i8255 *i8255, u_char *buf, int len)
 {
 	int i;
 	u_char cksum = 0, c;
@@ -968,17 +935,16 @@ pliptransmit(i8255, buf, len)
  * Setup output on interface.
  */
 static void
-plipstart(ifp)
-	struct ifnet *ifp;
+plipstart(struct ifnet *ifp)
 {
+
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	sc->sc_pending |= PLIP_OPENDING;
 	softintr(sc->sc_ifsoftint);
 }
 
 static void
-plipoutput(arg)
-	void *arg;
+plipoutput(void *arg)
 {
 	struct lpt_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1083,5 +1049,4 @@ retry:
 	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	sc->sc_ifoerrs++;
 }
-
 #endif

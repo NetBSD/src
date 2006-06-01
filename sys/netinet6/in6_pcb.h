@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.28 2006/01/26 18:59:18 rpaulo Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.28.4.1 2006/06/01 22:39:02 kardel Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -123,19 +123,20 @@ struct	in6pcb {
 #define IN6P_DSTOPTS		0x080000 /* receive dst options after rthdr */
 #define IN6P_RTHDR		0x100000 /* receive routing header */
 #define IN6P_RTHDRDSTOPTS	0x200000 /* receive dstoptions before rthdr */
+#define IN6P_TCLASS		0x400000 /* traffic class */
 
 #define IN6P_HIGHPORT		0x1000000 /* user wants "high" port binding */
 #define IN6P_LOWPORT		0x2000000 /* user wants "low" port binding */
 #define IN6P_ANONPORT		0x4000000 /* port chosen for user */
 #define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
-#if 0 /* obsoleted */
-#define IN6P_BINDV6ONLY		0x10000000 /* do not grab IPv4 traffic */
-#endif
-#define IN6P_MINMTU		0x20000000 /* use minimum MTU */
+
+#define IN6P_RFC2292		0x40000000 /* RFC2292 */
+#define IN6P_MTU		0x80000000 /* use minimum MTU */
 
 #define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
 				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
-				 IN6P_MINMTU)
+				 IN6P_TCLASS|IN6P_RFC2292|\
+				 IN6P_MTU)
 
 /* compute hash value for foreign and local in6_addr and port */
 #define IN6_HASH(faddr, fport, laddr, lport) 			\

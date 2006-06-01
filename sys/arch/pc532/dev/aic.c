@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.11 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: aic.c,v 1.11.6.1 2006/06/01 22:35:06 kardel Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic.c,v 1.11 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic.c,v 1.11.6.1 2006/06/01 22:35:06 kardel Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,13 +97,17 @@ struct scsi_switch dp_switch = {
 	0, 0, 0
 };
 
-int aicprobe(struct pc532_device *dvp)
+int
+aicprobe(struct pc532_device *dvp)
 {
-  return (0);	/* All pc532s should have one, but it is not working now. */
+
+	/* All pc532s should have one, but it is not working now. */
+	return (0);
 }
 
 
-int aicattach(struct pc532_device *dvp)
+int
+aicattach(struct pc532_device *dvp)
 {
 	int r;
 
@@ -113,7 +117,8 @@ int aicattach(struct pc532_device *dvp)
 	return(r);
 }
 
-void aicminphys(struct buf *bp)
+void
+aicminphys(struct buf *bp)
 {
 
 	if(bp->b_bcount > ((AIC_NSEG - 1) * PAGE_SIZE))
@@ -121,8 +126,10 @@ void aicminphys(struct buf *bp)
 	minphys(bp);
 }
 
-long int aic_adapter_info(int unit)
+long int
+aic_adapter_info(int unit)
 {
+
 	return (1);    /* only 1 outstanding request. */
 }
 
@@ -131,8 +138,10 @@ long int aic_adapter_info(int unit)
 
 struct scsipi_xfer *cur_xs;
 
-int aic_scsi_cmd(struct scsipi_xfer *xs)
+int
+aic_scsi_cmd(struct scsipi_xfer *xs)
 {
+
 printf ("aic_scsi_cmd: ... \n");
 	cur_xs = xs;
 
@@ -141,4 +150,5 @@ printf ("aic_scsi_cmd: ... \n");
 
 void aic_intr (struct intrframe frame)
 {
+
 }

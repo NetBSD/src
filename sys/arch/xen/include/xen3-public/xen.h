@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.2.6.1 2006/04/22 11:38:11 simonb Exp $ */
+/* $NetBSD: xen.h,v 1.2.6.2 2006/06/01 22:35:37 kardel Exp $ */
 /******************************************************************************
  * xen.h
  * 
@@ -38,7 +38,7 @@
 #define __HYPERVISOR_stack_switch          3
 #define __HYPERVISOR_set_callbacks         4
 #define __HYPERVISOR_fpu_taskswitch        5
-#define __HYPERVISOR_sched_op              6
+#define __HYPERVISOR_sched_op_compat       6 /* compat as of 0x00030101 */
 #define __HYPERVISOR_dom0_op               7
 #define __HYPERVISOR_set_debugreg          8
 #define __HYPERVISOR_get_debugreg          9
@@ -54,12 +54,13 @@
 #define __HYPERVISOR_grant_table_op       20
 #define __HYPERVISOR_vm_assist            21
 #define __HYPERVISOR_update_va_mapping_otherdomain 22
-#define __HYPERVISOR_switch_vm86          23 /* x86/32 only */
-#define __HYPERVISOR_switch_to_user       23 /* x86/64 only */
+#define __HYPERVISOR_iret                 23 /* x86 only */
 #define __HYPERVISOR_vcpu_op              24
 #define __HYPERVISOR_set_segment_base     25 /* x86/64 only */
 #define __HYPERVISOR_mmuext_op            26
 #define __HYPERVISOR_acm_op               27
+#define __HYPERVISOR_nmi_op               28
+#define __HYPERVISOR_sched_op             29
 
 /* 
  * VIRTUAL INTERRUPTS
@@ -68,12 +69,10 @@
  */
 #define VIRQ_TIMER      0  /* Timebase update, and/or requested timeout.  */
 #define VIRQ_DEBUG      1  /* Request guest to dump debug info.           */
-#define VIRQ_CONSOLE    2  /* (DOM0) bytes received on emergency console. */
+#define VIRQ_CONSOLE    2  /* (DOM0) Bytes received on emergency console. */
 #define VIRQ_DOM_EXC    3  /* (DOM0) Exceptional event for some domain.   */
-#define VIRQ_PARITY_ERR 4  /* (DOM0) NMI parity error.                    */
-#define VIRQ_IO_ERR     5  /* (DOM0) NMI I/O error.                       */
 #define VIRQ_DEBUGGER   6  /* (DOM0) A domain has paused for debugging.   */
-#define NR_VIRQS        7
+#define NR_VIRQS        8
 
 /*
  * MMU-UPDATE REQUESTS
@@ -145,10 +144,6 @@
  * cmd: MMUEXT_SET_LDT
  * linear_addr: Linear address of LDT base (NB. must be page-aligned).
  * nr_ents: Number of entries in LDT.
- * 
- * cmd: MMUEXT_REASSIGN_PAGE
- * mfn: Machine frame number to be reassigned to the FD.
- *      (NB. page must currently belong to the calling domain).
  */
 #define MMUEXT_PIN_L1_TABLE      0
 #define MMUEXT_PIN_L2_TABLE      1
@@ -164,14 +159,13 @@
 #define MMUEXT_INVLPG_ALL       11
 #define MMUEXT_FLUSH_CACHE      12
 #define MMUEXT_SET_LDT          13
-#define MMUEXT_REASSIGN_PAGE    14
 #define MMUEXT_NEW_USER_BASEPTR 15
 
 #ifndef __ASSEMBLY__
-struct mmuext_op {
+typedef struct mmuext_op {
     unsigned int cmd;
     union {
-        /* [UN]PIN_TABLE, NEW_BASEPTR, NEW_USER_BASEPTR, REASSIGN_PAGE */
+        /* [UN]PIN_TABLE, NEW_BASEPTR, NEW_USER_BASEPTR */
         unsigned long mfn;
         /* INVLPG_LOCAL, INVLPG_ALL, SET_LDT */
         unsigned long linear_addr;
@@ -182,7 +176,8 @@ struct mmuext_op {
         /* TLB_FLUSH_MULTI, INVLPG_MULTI */
         void *vcpumask;
     } arg2;
-};
+} mmuext_op_t;
+DEFINE_GUEST_HANDLE(mmuext_op_t);
 #endif
 
 /* These are passed as 'flags' to update_va_mapping. They can be ORed. */
@@ -245,21 +240,21 @@ typedef uint16_t domid_t;
  * Send an array of these to HYPERVISOR_mmu_update().
  * NB. The fields are natural pointer/address size for this architecture.
  */
-typedef struct
-{
+typedef struct mmu_update {
     uint64_t ptr;       /* Machine address of PTE. */
     uint64_t val;       /* New contents of PTE.    */
 } mmu_update_t;
+DEFINE_GUEST_HANDLE(mmu_update_t);
 
 /*
  * Send an array of these to HYPERVISOR_multicall().
  * NB. The fields are natural register size for this architecture.
  */
-typedef struct
-{
+typedef struct multicall_entry {
     unsigned long op, result;
     unsigned long args[6];
 } multicall_entry_t;
+DEFINE_GUEST_HANDLE(multicall_entry_t);
 
 /*
  * Event channel endpoints per domain:
@@ -392,8 +387,8 @@ typedef struct shared_info {
  *      a. relocated kernel image
  *      b. initial ram disk              [mod_start, mod_len]
  *      c. list of allocated page frames [mfn_list, nr_pages]
- *      d. bootstrap page tables         [pt_base, CR3 (x86)]
- *      e. start_info_t structure        [register ESI (x86)]
+ *      d. start_info_t structure        [register ESI (x86)]
+ *      e. bootstrap page tables         [pt_base, CR3 (x86)]
  *      f. bootstrap stack               [register ESP (x86)]
  *  5. Bootstrap elements are packed together, but each is 4kB-aligned.
  *  6. The initial ram disk may be omitted.
@@ -435,7 +430,18 @@ typedef uint64_t cpumap_t;
 
 typedef uint8_t xen_domain_handle_t[16];
 
+/* Turn a plain number into a C unsigned long constant. */
+#define __mk_unsigned_long(x) x ## UL
+#define mk_unsigned_long(x) __mk_unsigned_long(x)
+
+#else /* __ASSEMBLY__ */
+
+/* In assembly code we cannot use C numeric constant suffixes. */
+#define mk_unsigned_long(x) x
+
 #endif /* !__ASSEMBLY__ */
+
+#include "xen-compat.h"
 
 #endif /* __XEN_PUBLIC_XEN_H__ */
 

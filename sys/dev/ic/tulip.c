@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.141.6.1 2006/04/22 11:38:56 simonb Exp $	*/
+/*	$NetBSD: tulip.c,v 1.141.6.2 2006/06/01 22:36:26 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141.6.1 2006/04/22 11:38:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141.6.2 2006/06/01 22:36:26 kardel Exp $");
 
 #include "bpfilter.h"
 
@@ -1696,7 +1696,7 @@ tlp_init(struct ifnet *ifp)
 		if (sc->sc_maxburst == 0)
 			sc->sc_maxburst = 16;
 		break;
-	
+
 	case TULIP_CHIP_AX88140:
 	case TULIP_CHIP_AX88141:
 		if (sc->sc_maxburst == 0)
@@ -1941,7 +1941,7 @@ tlp_init(struct ifnet *ifp)
 	    {
 		u_int32_t reg;
 		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
-		    
+
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
 		      (enaddr[2] << 16) |
@@ -2998,7 +2998,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 
 /*
  * tlp_asix_filter_setup:
- * 
+ *
  * 	Set the ASIX AX8814x recieve filter.
  */
 static void
@@ -3041,7 +3041,7 @@ tlp_asix_filter_setup(struct tulip_softc *sc)
 			 */
 			goto allmulti;
 		}
-		hash = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) 
+		hash = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26)
 		       & 0x3f;
 		if (hash < 32)
 			mchash[0] |= (1 << hash);
@@ -3613,7 +3613,7 @@ tlp_pnic_preinit(struct tulip_softc *sc)
 
 /*
  * tlp_asix_preinit:
- * 
+ *
  * 	Pre-init function for the ASIX chipsets.
  */
 static void
@@ -3624,7 +3624,7 @@ tlp_asix_preinit(struct tulip_softc *sc)
 		case TULIP_CHIP_AX88140:
 		case TULIP_CHIP_AX88141:
 			/* XXX Handle PHY. */
-			sc->sc_opmode |= OPMODE_HBD|OPMODE_PS; 
+			sc->sc_opmode |= OPMODE_HBD|OPMODE_PS;
 			break;
 		default:
 			/* Nothing */
@@ -6173,7 +6173,7 @@ tlp_asix_tmsw_init(struct tulip_softc *sc)
 	    MII_OFFSET_ANY, 0);
 
 	/* XXX Figure how to handle the PHY. */
-	
+
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -6183,13 +6183,13 @@ tlp_asix_tmsw_init(struct tulip_softc *sc)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
-	
+
 }
 
 static void
 tlp_asix_tmsw_getmedia(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
-	
+
 	/* XXX PHY handling. */
 	tlp_mii_getmedia(sc, ifmr);
 }
@@ -6197,7 +6197,7 @@ tlp_asix_tmsw_getmedia(struct tulip_softc *sc, struct ifmediareq *ifmr)
 static int
 tlp_asix_tmsw_setmedia(struct tulip_softc *sc)
 {
-	
+
 	/* XXX PHY handling. */
 	return (tlp_mii_setmedia(sc));
 }
@@ -6248,4 +6248,3 @@ tlp_rs7112_tmsw_init(struct tulip_softc *sc)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 }
-

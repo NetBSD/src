@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.86.6.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.86.6.2 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.86.6.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.86.6.2 2006/06/01 22:38:09 kardel Exp $");
 
 #define SYSVSHM
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.86.6.1 2006/02/04 14:30:17 simonb Exp
 #include <sys/syscallargs.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -307,7 +308,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error, flags;
 	struct proc *p = l->l_proc;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct shmid_ds *shmseg;
 	struct shmmap_state *shmmap_s;
 	struct uvm_object *uobj;
@@ -405,7 +406,7 @@ sys___shmctl13(struct lwp *l, void *v, register_t *retval)
 int
 shmctl1(struct proc *p, int shmid, int cmd, struct shmid_ds *shmbuf)
 {
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct shmid_ds *shmseg;
 	int error = 0;
 
@@ -451,7 +452,7 @@ shmget_existing(struct proc *p, struct sys_shmget_args *uap, int mode,
     int segnum, register_t *retval)
 {
 	struct shmid_ds *shmseg;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	int error;
 
 	shmseg = &shmsegs[segnum];
@@ -483,7 +484,7 @@ shmget_allocate_segment(struct proc *p, struct sys_shmget_args *uap, int mode,
     register_t *retval)
 {
 	int i, segnum, shmid, size;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct shmid_ds *shmseg;
 	int error = 0;
 
@@ -518,8 +519,8 @@ shmget_allocate_segment(struct proc *p, struct sys_shmget_args *uap, int mode,
 
 	shmseg->_shm_internal = uao_create(size, 0);
 
-	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
-	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
+	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = kauth_cred_geteuid(cred);
+	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = kauth_cred_getegid(cred);
 	shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED) |
 	    (mode & (ACCESSPERMS|SHMSEG_RMLINGER)) | SHMSEG_ALLOCATED;
 	shmseg->shm_segsz = SCARG(uap, size);

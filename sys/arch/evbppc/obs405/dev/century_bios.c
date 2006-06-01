@@ -1,4 +1,4 @@
-/*	$NetBSD: century_bios.c,v 1.2 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: century_bios.c,v 1.2.6.1 2006/06/01 22:34:30 kardel Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.2 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.2.6.1 2006/06/01 22:34:30 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,34 +82,44 @@ bios_board_memsize_get(void)
 void
 bios_board_info_set(void)
 {
+	prop_number_t pn;
+	prop_data_t pd;
 
-	/* Initialize board properties database */
+	/* Initialize board properties dictionary */
 	board_info_init();
 
-	if (board_info_set("mem-size",
-		&board_mem_size, 
-		sizeof(board_mem_size), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_mem_size);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
 		panic("setting mem-size");
+	prop_object_release(pn);
 
-	if (board_info_set("emac0-mac-addr",
-		&board_bios.mac_address_local, 
-		sizeof(board_bios.mac_address_local), PROP_CONST, 0))
+	pd = prop_data_create_data_nocopy(board_bios.mac_address_local,
+					  sizeof(board_bios.mac_address_local));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
+				pd) == FALSE)
 		panic("setting emac0-mac-addr");
+	prop_object_release(pd);
 
-	if (board_info_set("processor-frequency",
-		&board_cpu_speed, 
-		sizeof(board_cpu_speed), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_cpu_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency",
+				pn) == FALSE)
 		panic("setting processor-frequency");
+	prop_object_release(pn);
 
-	if (board_info_set("plb-frequency",
-		&board_plb_speed, 
-		sizeof(board_plb_speed), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_plb_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "plb-frequency", pn) == FALSE)
 		panic("setting plb-frequency");
+	prop_object_release(pn);
 
-	if (board_info_set("pci-frequency",
-		&board_pci_speed, 
-		sizeof(board_pci_speed), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_pci_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "pci-frequency", pn) == FALSE)
 		panic("setting pci-frequency");
+	prop_object_release(pn);
 }
 
 

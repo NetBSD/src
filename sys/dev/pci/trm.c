@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.21.6.1 2006/04/22 11:39:16 simonb Exp $	*/
+/*	$NetBSD: trm.c,v 1.21.6.2 2006/06/01 22:36:49 kardel Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.21.6.1 2006/04/22 11:39:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.21.6.2 2006/06/01 22:36:49 kardel Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -634,7 +634,7 @@ trm_init(struct trm_softc *sc)
 	    bus_space_read_2(iot, ioh, TRM_DMA_CONFIG) | DMA_ENHANCE);
 
 	/* Clear pending interrupt status */
-	bus_space_read_1(iot, ioh, TRM_SCSI_INTSTATUS);
+	(void)bus_space_read_1(iot, ioh, TRM_SCSI_INTSTATUS);
 
 	/* Enable SCSI interrupt */
 	bus_space_write_1(iot, ioh, TRM_SCSI_INTEN,
@@ -1576,7 +1576,7 @@ trm_dataio_xfer(struct trm_softc *sc, int iodir)
 			if (iodir == XFERDATAOUT)
 				bus_space_write_2(iot, ioh, TRM_SCSI_FIFO, 0);
 			else
-				bus_space_read_2(iot, ioh, TRM_SCSI_FIFO);
+				(void)bus_space_read_2(iot, ioh, TRM_SCSI_FIFO);
 
 			sc->sc_state = TRM_XFERPAD;
 			/* it's important for atn stop */
@@ -1729,7 +1729,7 @@ trm_msgin_phase0(struct trm_softc *sc)
 
 		case MSG_IGN_WIDE_RESIDUE:
 			bus_space_write_4(iot, ioh, TRM_SCSI_XCNT, 1);
-			bus_space_read_1(iot, ioh, TRM_SCSI_FIFO);
+			(void)bus_space_read_1(iot, ioh, TRM_SCSI_FIFO);
 			break;
 
 		default:

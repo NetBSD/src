@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.19.6.1 2006/04/22 11:39:55 simonb Exp $	*/
+/*	$NetBSD: pf.c,v 1.19.6.2 2006/06/01 22:37:51 kardel Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -2785,8 +2785,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
 	int			 lookup = -1;
-	uid_t			 uid;
-	gid_t			 gid;
+	uid_t			 uid = 0;	/* XXX: GCC */
+	gid_t			 gid = 0;	/* XXX: GCC */
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_src_node	*nsn = NULL;
@@ -3161,8 +3161,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
 	int			 lookup = -1;
-	uid_t			 uid;
-	gid_t			 gid;
+	uid_t			 uid = 0;	/* XXX: GCC */
+	gid_t			 gid = 0;	/* XXX: GCC */
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_src_node	*nsn = NULL;
@@ -4690,6 +4690,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #endif /* INET6 */
 		int		ipoff2 = 0;
 		int		off2 = 0;
+
+		memset(&pd2, 0, sizeof pd2);	/* XXX gcc */
 
 		pd2.af = pd->af;
 		switch (pd->af) {

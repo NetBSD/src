@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.22 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.22.6.1 2006/06/01 22:39:44 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,6 @@ struct mount;
 struct nameidata;
 struct proc;
 struct statvfs;
-struct ucred;
 struct vnode;
 
 __BEGIN_DECLS

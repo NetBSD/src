@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.h,v 1.2 1998/01/05 07:03:06 perry Exp $	*/
+/*	$NetBSD: etherfun.h,v 1.2.84.1 2006/06/01 22:35:06 kardel Exp $	*/
 
 /*
  *
@@ -111,14 +111,14 @@ struct tftphr {
 
 /* globals */
 int last_ack;
-char buf[N];
+u_char buf[N];
 struct ether_header *eh = (struct ether_header *)buf;
 struct ether_arp *rarp = 
   (struct ether_arp *)(buf + sizeof(struct ether_header));
 struct ip *iph = (struct ip *)(buf + sizeof(struct ether_header));
 struct udp *udph = (struct udp *)(buf + sizeof(struct ether_header) + 
   sizeof(struct ip));
-char *tftp_r = buf + sizeof(struct ether_header) + sizeof(struct ip) + 
+u_char *tftp_r = buf + sizeof(struct ether_header) + sizeof(struct ip) + 
   sizeof(struct udp);
 struct tftph *tftp_a = (struct tftph *)(buf + sizeof(struct ether_header) + 
   sizeof(struct ip) + sizeof(struct udp));

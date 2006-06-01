@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.13 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.13.6.1 2006/06/01 22:38:30 kardel Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.13 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.13.6.1 2006/06/01 22:38:30 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -128,7 +128,7 @@ sync_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;

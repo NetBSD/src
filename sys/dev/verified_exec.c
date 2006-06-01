@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.31.6.1 2006/06/01 22:36:03 kardel Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31.6.1 2006/06/01 22:36:03 kardel Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $\n$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.31.6.1 2006/06/01 22:36:03 kardel Exp $\n$NetBSD: verified_exec.c,v 1.31.6.1 2006/06/01 22:36:03 kardel Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __RCSID("$Id: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $\n$NetBSD: ve
 #include <sys/sysctl.h>
 #define VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
+#include <sys/kauth.h>
 
 /* count of number of times device is open (we really only allow one open) */
 static unsigned int veriexec_dev_usage;
@@ -126,10 +127,12 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 	if (veriexec_verbose >= 2) {
 		printf("Veriexec: veriexecopen: Veriexec load device "
 		       "open attempt by uid=%u, pid=%u. (dev=%u)\n",
-		       l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid, dev);
+		       kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid, dev);
 	}
 
-	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &l->l_proc->p_acflag) != 0)
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
@@ -160,11 +163,11 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 
 	if (veriexec_strict > 0) {
 		printf("Veriexec: veriexecioctl: Strict mode, modifying "
-		       "veriexec tables is not permitted.\n"); 
+		       "veriexec tables is not permitted.\n");
 
 		return (EPERM);
 	}
-	
+
 	switch (cmd) {
 	case VERIEXEC_TABLESIZE:
 		error = veriexec_newtable((struct veriexec_sizing_params *)
@@ -260,9 +263,11 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	}
 
 	/* Get attributes for device and inode. */
-	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_ucred, l);
-	if (error)
+	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_cred, l);
+	if (error) {
+		vrele(nid.ni_vp);
 		return (error);
+	}
 
 	/* Release our reference to the vnode. (namei) */
 	vrele(nid.ni_vp);
@@ -309,7 +314,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		printf("Veriexec: veriexecioctl: Invalid or unknown "
 		       "fingerprint type \"%s\" for file \"%s\" "
 		       "(dev=%ld, inode=%llu)\n", params->fp_type,
-		       params->file, va.va_fsid, 
+		       params->file, va.va_fsid,
 		       (unsigned long long)va.va_fileid);
 		return(EINVAL);
 	}
@@ -334,7 +339,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		free(e, M_TEMP);
 		return(EINVAL);
 	}
-			
+
 	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
 	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
 

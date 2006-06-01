@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.108.4.1 2006/04/22 11:39:37 simonb Exp $ */
+/*	$NetBSD: ehci.c,v 1.108.4.2 2006/06/01 22:37:40 kardel Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.108.4.1 2006/04/22 11:39:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.108.4.2 2006/06/01 22:37:40 kardel Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2344,8 +2344,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		len -= curlen;
 
 		/*
-		 * Allocate another transfer if there's more data left, 
-		 * or if force last short transfer flag is set and we're 
+		 * Allocate another transfer if there's more data left,
+		 * or if force last short transfer flag is set and we're
 		 * allocating a multiple of the max packet size.
 		 */
 		if (len != 0 ||
@@ -2360,7 +2360,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			nextphys = EHCI_NULL;
 		}
 
-		for (i = 0; i * EHCI_PAGE_SIZE < 
+		for (i = 0; i * EHCI_PAGE_SIZE <
 		            curlen + EHCI_PAGE_OFFSET(dataphys); i++) {
 			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
 			if (i != 0) /* use offset only in first buffer */

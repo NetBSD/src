@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.20 2005/12/08 22:41:44 yamt Exp $	*/
+/*	$NetBSD: hydra.c,v 1.20.6.1 2006/06/01 22:34:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.20 2005/12/08 22:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.20.6.1 2006/06/01 22:34:09 kardel Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ hydra_match(struct device *parent, struct cfdata *cf, void *aux)
 
 fail:
 	bus_space_unmap(iot, ioh, HYDRA_PHYS_SIZE);
-	return 0;	
+	return 0;
 }
 
 static void
@@ -367,7 +367,7 @@ cpu_hydra_hatch(void)
 
 	cpu_setup(boot_args);
 	cpu_attach(curcpu()->ci_dev);
-	for (;;) { 
+	for (;;) {
 		bus_space_write_1(iot, ioh,
 		    HYDRA_HALT_SET, 1 << (cpunum & 3));
 		printf("%s: I am needed?\n", curcpu()->ci_dev->dv_xname);
@@ -381,7 +381,7 @@ cpu_boot_secondary_processors(void)
 	struct hydra_softc *sc = the_hydra;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	
+
 	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 0xf);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46.6.1 2006/04/22 11:37:53 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.6.2 2006/06/01 22:35:16 kardel Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -251,6 +251,24 @@ mfpvr(void)
 	__asm volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
 }
+
+#if defined(PPC_IBM4XX) || defined(PPC_IBM403)
+/*
+ * DCR (Device Control Register) access. These have to be
+ * macros because register address is encoded as immediate
+ * operand.
+ */
+#define mtdcr(reg, val) 					\
+	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
+
+#define mfdcr(reg)						\
+({								\
+	uint32_t __val;						\
+								\
+	__asm volatile("mfdcr %0,%1" : "=r"(__val) : "K"(reg)); \
+	__val;							\
+})
+#endif /* PPC_IBM4XX || PPC_IBM403 */
 
 /*
  * CLKF_BASEPRI is dependent on the underlying interrupt code

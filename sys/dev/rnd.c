@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.49.6.1 2006/04/22 11:38:46 simonb Exp $	*/
+/*	$NetBSD: rnd.c,v 1.49.6.2 2006/06/01 22:36:03 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49.6.1 2006/04/22 11:38:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49.6.2 2006/06/01 22:36:03 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49.6.1 2006/04/22 11:38:46 simonb Exp $");
 #include <sys/rnd.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #ifdef __HAVE_CPU_COUNTER
 #include <machine/cpu_counter.h>
@@ -511,7 +512,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETPOOLSTAT:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		s = splsoftclock();
@@ -520,7 +521,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNUM:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		rst = (rndstat_t *)addr;
@@ -563,7 +564,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNAME:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -586,7 +587,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDCTL:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -630,7 +631,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDADDDATA:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;

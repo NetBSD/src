@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.115.6.1 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.115.6.2 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.6.1 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.6.2 2006/06/01 22:38:09 kardel Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.6.1 2006/04/22 11:39:59 simonb
 #include <sys/pool.h>
 #include <sys/event.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -126,15 +127,7 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 
 #endif /* SOSEND_COUNTERS */
 
-void
-soinit(void)
-{
-
-	/* Set the initial adjusted socket buffer size. */
-	if (sb_max_set(sb_max))
-		panic("bad initial sb_max value: %lu", sb_max);
-
-}
+static struct callback_entry sokva_reclaimerentry;
 
 #ifdef SOSEND_NO_LOAN
 int use_sosend_loan = 0;
@@ -439,6 +432,32 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	return (space);
 }
 
+static int
+sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+{
+
+	KASSERT(ce == &sokva_reclaimerentry);
+	KASSERT(obj == NULL);
+
+	sodopendfree();
+	if (!vm_map_starved_p(kernel_map)) {
+		return CALLBACK_CHAIN_ABORT;
+	}
+	return CALLBACK_CHAIN_CONTINUE;
+}
+
+void
+soinit(void)
+{
+
+	/* Set the initial adjusted socket buffer size. */
+	if (sb_max_set(sb_max))
+		panic("bad initial sb_max value: %lu", sb_max);
+
+	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
+	    &sokva_reclaimerentry, NULL, sokva_reclaim_callback);
+}
+
 /*
  * Socket operation routines.
  * These routines are called by the routines in
@@ -478,7 +497,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
 	if (l != NULL) {
-		uid = l->l_proc->p_ucred->cr_uid;
+		uid = kauth_cred_geteuid(l->l_proc->p_cred);
 	} else {
 		uid = 0;
 	}

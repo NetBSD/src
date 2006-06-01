@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.15 2005/12/24 22:45:34 perry Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.15.6.1 2006/06/01 22:34:20 kardel Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.15 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.15.6.1 2006/06/01 22:34:20 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -633,6 +633,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.223.6.2 2006/04/22 11:40:10 simonb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.223.6.3 2006/06/01 22:38:47 kardel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.6.2 2006/04/22 11:40:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.6.3 2006/06/01 22:38:47 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -974,7 +974,7 @@ found:
 		goto bad;
 	}
 #endif
-#if FAST_IPSEC
+#ifdef FAST_IPSEC
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.18.6.2 2006/04/30 17:59:37 kardel Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.18.6.3 2006/06/01 22:35:54 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.2 2006/04/30 17:59:37 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.3 2006/06/01 22:35:54 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -46,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.2 2006/04/30 17:59:37 karde
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -80,10 +82,42 @@ netbsd32_ntp_gettime(l, v, retval)
 	struct netbsd32_ntptimeval ntv32;
 	struct ntptimeval ntv;
 	int error = 0;
-	register_t retval1 = TIME_ERROR;
 
 	if (SCARG(uap, ntvp)) {
-		ntp_gettime1(&ntv, &retval1);
+		ntp_gettime(&ntv);
+
+		ntv32.time.tv_sec = ntv.time.tv_sec;
+		ntv32.time.tv_nsec = ntv.time.tv_nsec;
+		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
+		ntv32.esterror = (netbsd32_long)ntv.esterror;
+		ntv32.tai = (netbsd32_long)ntv.tai;
+		ntv32.time_state = ntv.time_state;
+		error = copyout((caddr_t)&ntv32,
+		    (caddr_t)NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
+	}
+	if (!error) {
+		*retval = ntp_timestatus();
+	}
+
+	return (error);
+}
+
+#ifdef COMPAT_30
+int
+compat_30_netbsd32_ntp_gettime(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_ntp_gettime_args /* {
+		syscallarg(netbsd32_ntptimevalp_t) ntvp;
+	} */ *uap = v;
+	struct netbsd32_ntptimeval30 ntv32;
+	struct ntptimeval ntv;
+	int error = 0;
+
+	if (SCARG(uap, ntvp)) {
+		ntp_gettime(&ntv);
 
 		ntv32.time.tv_sec = ntv.time.tv_sec;
 		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
@@ -93,10 +127,13 @@ netbsd32_ntp_gettime(l, v, retval)
 		    (caddr_t)NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
 	}
 	if (!error) {
-		*retval = retval1;
+		*retval = ntp_timestatus();
+>>>>>>> 1.21
 	}
+
 	return (error);
 }
+#endif
 
 int
 netbsd32_ntp_adjtime(l, v, retval)
@@ -126,7 +163,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 	 * the assumption the superuser should know what it is doing.
 	 */
 	modes = ntv.modes;
-	if (modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)))
+	if (modes != 0 && (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
 	ntp_adjtime1(&ntv, &retval1);
@@ -139,7 +176,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 	}
 	return error;
 }
-#else
+#else /* !NTP */
 int
 netbsd32_ntp_gettime(l, v, retval)
 	struct lwp *l;
@@ -150,6 +187,18 @@ netbsd32_ntp_gettime(l, v, retval)
 	return (ENOSYS);
 }
 
+#ifdef COMPAT_30
+int
+compat_30_netbsd32_ntp_gettime(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+
+	return (ENOSYS);
+}
+#endif
+
 int
 netbsd32_ntp_adjtime(l, v, retval)
 	struct lwp *l;
@@ -159,7 +208,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 
 	return (ENOSYS);
 }
-#endif
+#endif /* NTP */
 
 int
 netbsd32_setitimer(l, v, retval)
@@ -276,7 +325,7 @@ netbsd32_settimeofday(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	/* Verify all parameters before changing time. */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	/*
@@ -313,7 +362,7 @@ netbsd32_adjtime(l, v, retval)
 	int error;
 	struct proc *p = l->l_proc;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 #ifdef __HAVE_TIMECOUNTER
 	{
@@ -436,7 +485,7 @@ netbsd32_clock_settime(l, v, retval)
 	int error;
 	struct proc *p = l->l_proc;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);

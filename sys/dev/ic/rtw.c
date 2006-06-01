@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.64.6.1 2006/04/22 11:38:56 simonb Exp $ */
+/* $NetBSD: rtw.c,v 1.64.6.2 2006/06/01 22:36:26 kardel Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64.6.1 2006/04/22 11:38:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.64.6.2 2006/06/01 22:36:26 kardel Exp $");
 
 #include "bpfilter.h"
 
@@ -1777,7 +1777,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
 	}
-	/* no more pending transmissions, cancel watchdog */ 
+	/* no more pending transmissions, cancel watchdog */
 	if (ts == NULL)
 		tsb->tsb_tx_timer = 0;
 	rtw_reset_oactive(sc);
@@ -3231,11 +3231,11 @@ rtw_start(struct ifnet *ifp)
 	struct ieee80211com	*ic;
 	struct ieee80211_duration *d0;
 	struct ieee80211_frame_min	*wh;
-	struct ieee80211_node	*ni;
+	struct ieee80211_node	*ni = NULL;	/* XXX: GCC */
 	struct mbuf		*m0;
 	struct rtw_softc	*sc;
-	struct rtw_txsoft_blk	*tsb;
-	struct rtw_txdesc_blk	*tdb;
+	struct rtw_txsoft_blk	*tsb = NULL;	/* XXX: GCC */
+	struct rtw_txdesc_blk	*tdb = NULL;	/* XXX: GCC */
 	struct rtw_txsoft	*ts;
 	struct rtw_txdesc	*td;
 	struct ieee80211_key	*k;

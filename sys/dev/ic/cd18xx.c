@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.13.6.1 2006/06/01 22:36:24 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.6.1 2006/06/01 22:36:24 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $");
 #include <sys/kernel.h>
 #include <sys/tty.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -432,7 +433,8 @@ cdttyopen(dev, flag, mode, p)
 	if (tp == NULL ||
 	    (ISSET(tp->t_state, TS_ISOPEN) &&
 	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     suser(p->p_ucred, &p->p_acflag) != 0))
+	     kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			       &p->p_acflag) != 0))
 		return (EBUSY);
 
 	s = spltty();
@@ -653,7 +655,8 @@ cdttyioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 		if (error)
 			return (error);
 		port->p_swflags = *(int *)data;

@@ -1,10 +1,9 @@
-#	$NetBSD: files.obs200,v 1.2.6.1 2006/04/22 11:37:25 simonb Exp $
+#	$NetBSD: files.obs200,v 1.2.6.2 2006/06/01 22:34:30 kardel Exp $
 #	Original Tag: files.obs405,v 1.9 2005/01/24 18:47:37 shige Exp
 #
 # obs200-specific configuration info
 
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
-file	arch/powerpc/ibm4xx/ibm4xxgpx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm40x_machdep.c
 file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 file	arch/powerpc/ibm4xx/intr.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.9.6.1 2006/04/22 11:39:55 simonb Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.9.6.2 2006/06/01 22:37:51 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.6.1 2006/04/22 11:39:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.6.2 2006/06/01 22:37:51 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.6.1 2006/04/22 11:39:55 simonb
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
@@ -126,7 +127,7 @@ cd9660_lookup(v)
 	const char *name;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 

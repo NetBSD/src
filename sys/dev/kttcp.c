@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.17 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.17.6.1 2006/06/01 22:36:03 kardel Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.17 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.17.6.1 2006/06/01 22:36:03 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -179,6 +179,8 @@ kttcp_recv(struct lwp *l, struct kttcp_io_args *kio)
 	int error;
 	struct timeval t0, t1;
 	unsigned long long len, done;
+
+	done = 0;	/* XXX gcc */
 
 	if (kio->kio_totalsize > KTTCP_MAX_XMIT)
 		return EINVAL;

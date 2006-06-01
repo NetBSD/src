@@ -1,4 +1,31 @@
-/*	$NetBSD: machdep.c,v 1.56.6.1 2006/04/22 11:37:21 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.6.2 2006/06/01 22:34:18 kardel Exp $	*/
+
+/*
+ * Copyright (c) 2006 Izumi Tsutsui.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.6.1 2006/04/22 11:37:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.6.2 2006/06/01 22:34:18 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -36,43 +63,34 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.6.1 2006/04/22 11:37:21 simonb Exp 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/device.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
-#include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/autoconf.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/bootinfo.h>
+#include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/leds.h>
+#include <machine/psl.h>
+
 #include <mips/locore.h>
 
-#include <machine/nvram.h>
-#include <machine/leds.h>
-
 #include <dev/cons.h>
+
+#include <dev/ic/i8259reg.h>
+#include <dev/isa/isareg.h>
 
 #include <cobalt/cobalt/clockvar.h>
 
 #include <cobalt/dev/gtreg.h>
 #define GT_BASE		0x14000000	/* XXX */
+#define PCIB_BASE	0x10000000	/* XXX */
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -400,9 +418,28 @@ cpu_reboot(int howto, char *bootstr)
 		;
 }
 
-#define NINTR	6
 
-static struct cobalt_intrhand intrtab[NINTR];
+#define NCPU_INT	6
+#define NICU_INT	16
+#define IRQ_SLAVE	2
+
+#define IO_ELCR		0x4d0
+#define IO_ELCRSIZE	2
+#define ELCR0		0
+#define ELCR1		1
+
+#define ICU1_READ(reg)		\
+    bus_space_read_1(icu_bst, icu1_bsh, (reg))
+#define ICU1_WRITE(reg, val)	\
+    bus_space_write_1(icu_bst, icu1_bsh, (reg), (val))
+#define ICU2_READ(reg)		\
+    bus_space_read_1(icu_bst, icu2_bsh, (reg))
+#define ICU2_WRITE(reg, val)	\
+    bus_space_write_1(icu_bst, icu2_bsh, (reg), (val))
+#define ELCR_READ(reg)		\
+    bus_space_read_1(icu_bst, elcr_bsh, (reg))
+#define ELCR_WRITE(reg, val)	\
+    bus_space_write_1(icu_bst, elcr_bsh, (reg), (val))
 
 const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -411,15 +448,195 @@ const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
+u_int icu_imen;
+
+static bus_space_tag_t icu_bst;
+static bus_space_handle_t icu1_bsh, icu2_bsh, elcr_bsh;
+static struct cobalt_intrhand cpu_intrtab[NCPU_INT];
+static struct cobalt_intrhand icu_intrtab[NICU_INT];
+
+static int	icu_intr(void *);
+static void	icu_reinit_irqs(void);
+static u_int	icu_setmask(u_int);
+
+
+void
+icu_init(void)
+{
+
+	icu_bst = 0;	/* XXX unused on cobalt */
+	bus_space_map(icu_bst, PCIB_BASE + IO_ICU1, IO_ICUSIZE, 0, &icu1_bsh);
+	bus_space_map(icu_bst, PCIB_BASE + IO_ICU2, IO_ICUSIZE, 0, &icu2_bsh);
+	bus_space_map(icu_bst, PCIB_BASE + IO_ELCR, IO_ELCRSIZE, 0, &elcr_bsh);
+
+	/* Initialize master PIC */
+
+	/* reset; program device, four bytes */
+	ICU1_WRITE(PIC_ICW1, ICW1_SELECT | ICW1_IC4);
+	/* starting at this vector index */
+	ICU1_WRITE(PIC_ICW2, 0);			/* XXX */
+	/* slave on line 2 */
+	ICU1_WRITE(PIC_ICW3, ICW3_CASCADE(IRQ_SLAVE));
+	/* special fully nested mode, 8086 mode */
+	ICU1_WRITE(PIC_ICW4, ICW4_SFNM | ICW4_8086);
+	/* special mask mode */
+	ICU1_WRITE(PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* read IRR by default */
+	ICU1_WRITE(PIC_OCW3, OCW3_SELECT | OCW3_RR);
+
+	/* Initialize slave PIC */
+
+	/* reset; program device, four bytes */
+	ICU2_WRITE(PIC_ICW1, ICW1_SELECT | ICW1_IC4);
+	/* starting at this vector index */
+	ICU2_WRITE(PIC_ICW2, 8);			/* XXX */
+	/* slave connected to line 2 of master */
+	ICU2_WRITE(PIC_ICW3, ICW3_SIC(IRQ_SLAVE));
+	/* special fully nested mode, 8086 mode */
+	ICU2_WRITE(PIC_ICW4, ICW4_SFNM | ICW4_8086);
+	/* special mask mode */
+	ICU2_WRITE(PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* read IRR by default */
+	ICU2_WRITE(PIC_OCW3, OCW3_SELECT | OCW3_RR);
+
+	icu_setmask(0xffff);	/* mask all interrupts */
+
+	/* default to edge-triggered */
+	ELCR_WRITE(ELCR0, 0);
+	ELCR_WRITE(ELCR1, 0);
+
+	wbflush();
+
+	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
+}
+
+void *
+icu_intr_establish(int irq, int type, int ipl, int (*func)(void *),
+    void *arg)
+{
+	struct cobalt_intrhand *ih;
+
+	ih = &icu_intrtab[irq];
+	if (ih->ih_func != NULL)
+		panic("icu_intr_establish(): irq %d is already in use", irq);
+
+	ih->ih_cookie_type = COBALT_COOKIE_TYPE_ICU;
+	ih->ih_func = func;
+	ih->ih_arg = arg;
+	ih->ih_type = type;
+	snprintf(ih->ih_evname, sizeof(ih->ih_evname), "irq %d", irq);
+	evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR, NULL, "icu",
+	    ih->ih_evname);
+
+	icu_reinit_irqs();
+
+	return ih;
+}
+
+void
+icu_intr_disestablish(void *cookie)
+{
+	struct cobalt_intrhand *ih = cookie;
+
+	if (ih->ih_cookie_type == COBALT_COOKIE_TYPE_ICU) {
+		ih->ih_func = NULL;
+		ih->ih_arg = NULL;
+		ih->ih_cookie_type = 0;
+		ih->ih_type = IST_NONE;
+		evcnt_detach(&ih->ih_evcnt);
+
+		icu_reinit_irqs();
+	}
+}
+
+void
+icu_reinit_irqs(void)
+{
+	u_int i, irqs, elcr;
+
+	/* unmask interrupts */
+	irqs = 0;
+	elcr = 0;
+	for (i = 0; i < NICU_INT; i++) {
+		if (icu_intrtab[i].ih_func) {
+			irqs |= 1 << i;
+			if (icu_intrtab[i].ih_type == IST_LEVEL)
+				elcr |= 1 << i;
+		}
+	}
+	if (irqs & 0xff00) /* any slave IRQs in use */
+		irqs |= 1 << IRQ_SLAVE;
+	icu_imen = ~irqs;
+
+	ICU1_WRITE(PIC_OCW1, icu_imen);
+	ICU2_WRITE(PIC_OCW1, icu_imen >> 8);
+
+	ELCR_WRITE(ELCR0, elcr);
+	ELCR_WRITE(ELCR1, elcr >> 8);
+}
+
+u_int
+icu_setmask(u_int mask)
+{
+	u_int old;
+
+	old = icu_imen;
+	icu_imen = mask;
+	ICU1_WRITE(PIC_OCW1, icu_imen);
+	ICU2_WRITE(PIC_OCW1, icu_imen >> 8);
+
+	return old;
+}
+
+int
+icu_intr(void *arg)
+{
+	struct cobalt_intrhand *ih;
+	int irq, handled;
+
+	handled = 0;
+
+	/* check requested irq */
+	ICU1_WRITE(PIC_OCW3, OCW3_SELECT | OCW3_POLL);
+	irq = ICU1_READ(PIC_OCW3);
+	if ((irq & OCW3_POLL_PENDING) == 0)
+		goto out;
+
+	irq = OCW3_POLL_IRQ(irq);
+	if (irq == IRQ_SLAVE) {
+		ICU2_WRITE(PIC_OCW3, OCW3_SELECT | OCW3_POLL);
+		irq = OCW3_POLL_IRQ(ICU2_READ(PIC_OCW3)) + 8;
+	}
+
+	ih = &icu_intrtab[irq];
+	if (__predict_false(ih->ih_func == NULL)) {
+		printf("icu_intr(): spurious interrupt (irq = %d)\n", irq);
+	} else if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
+		ih->ih_evcnt.ev_count++;
+		handled = 1;
+	}
+
+	/* issue EOI to ack */
+	if (irq >= 8) {
+		ICU2_WRITE(PIC_OCW2,
+		    OCW2_SELECT | OCW2_SL | OCW2_EOI | OCW2_ILS(irq - 8));
+		irq = IRQ_SLAVE;
+	}
+	ICU1_WRITE(PIC_OCW2, OCW2_SELECT | OCW2_SL | OCW2_EOI | OCW2_ILS(irq));
+
+ out:
+	return handled;
+}
+
 void *
 cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
 	struct cobalt_intrhand *ih;
 
-	if (level < 0 || level >= NINTR)
+	if (level < 0 || level >= NCPU_INT)
 		panic("invalid interrupt level");
 
-	ih = &intrtab[level];
+	ih = &cpu_intrtab[level];
 
 	if (ih->ih_func != NULL)
 		panic("cannot share CPU interrupts");
@@ -427,7 +644,7 @@ cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 	ih->ih_cookie_type = COBALT_COOKIE_TYPE_CPU;
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	snprintf(ih->ih_evname, sizeof(ih->ih_evname), "level %d", level);
+	snprintf(ih->ih_evname, sizeof(ih->ih_evname), "int %d", level);
 	evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR, NULL,
 	    "cpu", ih->ih_evname);
 
@@ -451,22 +668,57 @@ void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
-	static uint32_t cycles;
 	struct cobalt_intrhand *ih;
 
 	uvmexp.intrs++;
+
+	if (ipending & MIPS_INT_MASK_5) {
+		mips3_cp0_compare_write(mips3_cp0_count_read()); /* XXX */
+#if 0
+		cf.pc = pc;
+		cf.sr = status;
+
+		statclock(&cf);
+#endif
+
+		cause &= ~MIPS_INT_MASK_5;
+	}
+	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_0) {
 		/* GT64x11 timer0 for hardclock */
 		volatile uint32_t *irq_src =
 		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
-		if ((*irq_src & T0EXP) != 0) {
+		if (__predict_true((*irq_src & T0EXP) != 0)) {
 			*irq_src = 0;
 
 			cf.pc = pc;
 			cf.sr = status;
 
+			if ((status & MIPS_INT_MASK) == MIPS_INT_MASK) {
+				if ((ipending & MIPS_INT_MASK &
+				     ~MIPS_INT_MASK_0) == 0) {
+					/*
+					 * If all interrupts were enabled and
+					 * there is no pending interrupts,
+					 * set MIPS_SR_INT_IE so that
+					 * spllowerclock() in hardclock()
+					 * works properly.
+					 */
+#if 0					/* MIPS_SR_INT_IE is enabled above */
+					_splset(MIPS_SR_INT_IE);
+#endif
+ 				} else {
+					/*
+					 * If there are any pending interrputs,
+					 * clear MIPS_SR_INT_IE in cf.sr so that
+					 * spllowerclock() in hardclock() will
+					 * not happen.
+					 */
+					cf.sr &= ~MIPS_SR_INT_IE;
+				}
+			}
 			hardclock(&cf);
 			hardclock_ev.ev_count++;
 		}
@@ -474,25 +726,11 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	}
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
-	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + 1250000);	/* XXX */
-
-#if 0
-		cf.pc = pc;
-		cf.sr = status;
-
-		statclock(&cf);
-#endif
-		cause &= ~MIPS_INT_MASK_5;
-	}
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-
 	if (ipending & MIPS_INT_MASK_3) {
 		/* 16650 serial */
-		ih = &intrtab[3];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		ih = &cpu_intrtab[3];
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_3;
 				ih->ih_evcnt.ev_count++;
 			}
@@ -502,9 +740,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	if (ipending & MIPS_INT_MASK_1) {
 		/* tulip primary */
-		ih = &intrtab[1];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		ih = &cpu_intrtab[1];
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_1;
 				ih->ih_evcnt.ev_count++;
 			}
@@ -512,9 +750,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	}
 	if (ipending & MIPS_INT_MASK_2) {
 		/* tulip secondary */
-		ih = &intrtab[2];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		ih = &cpu_intrtab[2];
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_2;
 				ih->ih_evcnt.ev_count++;
 			}
@@ -524,9 +762,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	if (ipending & MIPS_INT_MASK_4) {
 		/* ICU interrupts */
-		ih = &intrtab[4];
-		if (ih->ih_func != NULL) {
-			if ((*ih->ih_func)(ih->ih_arg)) {
+		ih = &cpu_intrtab[4];
+		if (__predict_true(ih->ih_func != NULL)) {
+			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
 				cause &= ~MIPS_INT_MASK_4;
 				/* evcnt for ICU is done in icu_intr() */
 			}

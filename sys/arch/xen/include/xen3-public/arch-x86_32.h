@@ -1,4 +1,4 @@
-/* $NetBSD: arch-x86_32.h,v 1.2.6.1 2006/04/22 11:38:11 simonb Exp $ */
+/* $NetBSD: arch-x86_32.h,v 1.2.6.2 2006/06/01 22:35:36 kardel Exp $ */
 /******************************************************************************
  * arch-x86_32.h
  * 
@@ -9,6 +9,28 @@
 
 #ifndef __XEN_PUBLIC_ARCH_X86_32_H__
 #define __XEN_PUBLIC_ARCH_X86_32_H__
+
+#ifdef __XEN__
+#define __DEFINE_GUEST_HANDLE(name, type) \
+    typedef struct { type *p; } __guest_handle_ ## name
+#else
+#define __DEFINE_GUEST_HANDLE(name, type) \
+    typedef type * __guest_handle_ ## name
+#endif
+
+#define DEFINE_GUEST_HANDLE(name) __DEFINE_GUEST_HANDLE(name, name)
+#define GUEST_HANDLE(name)        __guest_handle_ ## name
+
+#ifndef __ASSEMBLY__
+/* Guest handles for primitive C types. */
+__DEFINE_GUEST_HANDLE(uchar, unsigned char);
+__DEFINE_GUEST_HANDLE(uint,  unsigned int);
+__DEFINE_GUEST_HANDLE(ulong, unsigned long);
+DEFINE_GUEST_HANDLE(char);
+DEFINE_GUEST_HANDLE(int);
+DEFINE_GUEST_HANDLE(long);
+DEFINE_GUEST_HANDLE(void);
+#endif
 
 /*
  * SEGMENT DESCRIPTOR TABLES
@@ -50,10 +72,15 @@
  * machine->physical mapping table starts at this address, read-only.
  */
 #ifdef CONFIG_X86_PAE
-# define HYPERVISOR_VIRT_START (0xF5800000UL)
+#define __HYPERVISOR_VIRT_START 0xF5800000
 #else
-# define HYPERVISOR_VIRT_START (0xFC000000UL)
+#define __HYPERVISOR_VIRT_START 0xFC000000
 #endif
+
+#ifndef HYPERVISOR_VIRT_START
+#define HYPERVISOR_VIRT_START mk_unsigned_long(__HYPERVISOR_VIRT_START)
+#endif
+
 #ifndef machine_to_phys_mapping
 #define machine_to_phys_mapping ((unsigned long *)HYPERVISOR_VIRT_START)
 #endif
@@ -76,6 +103,7 @@ typedef struct trap_info {
     uint16_t      cs;      /* code selector                                 */
     unsigned long address; /* code offset                                   */
 } trap_info_t;
+DEFINE_GUEST_HANDLE(trap_info_t);
 
 typedef struct cpu_user_regs {
     uint32_t ebx;
@@ -99,6 +127,7 @@ typedef struct cpu_user_regs {
     uint16_t fs, _pad4;
     uint16_t gs, _pad5;
 } cpu_user_regs_t;
+DEFINE_GUEST_HANDLE(cpu_user_regs_t);
 
 typedef uint64_t tsc_timestamp_t; /* RDTSC timestamp */
 
@@ -110,11 +139,11 @@ typedef struct vcpu_guest_context {
     /* FPU registers come first so they can be aligned for FXSAVE/FXRSTOR. */
     struct { char x[512]; } fpu_ctxt;       /* User-level FPU registers     */
 #define VGCF_I387_VALID (1<<0)
-#define VGCF_VMX_GUEST  (1<<1)
+#define VGCF_HVM_GUEST  (1<<1)
 #define VGCF_IN_KERNEL  (1<<2)
     unsigned long flags;                    /* VGCF_* flags                 */
     cpu_user_regs_t user_regs;              /* User-level CPU registers     */
-    trap_info_t   trap_ctxt[256];           /* Virtual IDT                  */
+    struct trap_info trap_ctxt[256];        /* Virtual IDT                  */
     unsigned long ldt_base, ldt_ents;       /* LDT (linear address, # ents) */
     unsigned long gdt_frames[16], gdt_ents; /* GDT (machine frames, # ents) */
     unsigned long kernel_ss, kernel_sp;     /* Virtual TSS (only SS1/SP1)   */
@@ -126,11 +155,13 @@ typedef struct vcpu_guest_context {
     unsigned long failsafe_callback_eip;
     unsigned long vm_assist;                /* VMASST_TYPE_* bitmap */
 } vcpu_guest_context_t;
+DEFINE_GUEST_HANDLE(vcpu_guest_context_t);
 
 typedef struct arch_shared_info {
     unsigned long max_pfn;                  /* max pfn that appears in table */
     /* Frame containing list of mfns containing list of mfns containing p2m. */
-    unsigned long pfn_to_mfn_frame_list_list; 
+    unsigned long pfn_to_mfn_frame_list_list;
+    unsigned long nmi_reason;
 } arch_shared_info_t;
 
 typedef struct {
@@ -138,7 +169,19 @@ typedef struct {
     unsigned long pad[5]; /* sizeof(vcpu_info_t) == 64 */
 } arch_vcpu_info_t;
 
-#endif /* __ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
+
+/*
+ * Prefix forces emulation of some non-trapping instructions.
+ * Currently only CPUID.
+ */
+#ifdef __ASSEMBLY__
+#define XEN_EMULATE_PREFIX .byte 0x0f,0x0b,0x78,0x65,0x6e ;
+#define XEN_CPUID          XEN_EMULATE_PREFIX cpuid
+#else
+#define XEN_EMULATE_PREFIX ".byte 0x0f,0x0b,0x78,0x65,0x6e ; "
+#define XEN_CPUID          XEN_EMULATE_PREFIX "cpuid"
+#endif
 
 #endif
 

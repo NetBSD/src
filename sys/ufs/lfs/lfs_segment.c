@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.169.4.2 2006/04/22 11:40:25 simonb Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.169.4.3 2006/06/01 22:39:43 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.4.2 2006/04/22 11:40:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.4.3 2006/06/01 22:39:43 kardel Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.4.2 2006/04/22 11:40:25 simonb
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -290,13 +291,24 @@ lfs_vflush(struct vnode *vp)
 	lfs_seglock(fs, SEGM_SYNC);
 
 	/* If we're supposed to flush a freed inode, just toss it */
-	/* XXX - seglock, so these buffers can't be gathered, right? */
-	if (ip->i_mode == 0) {
+	if (ip->i_lfs_iflags & LFSI_DELETED) {
 		DLOG((DLOG_VNODE, "lfs_vflush: ino %d freed, not flushing\n",
 		      ip->i_number));
 		s = splbio();
+		/* Drain v_numoutput */
+		simple_lock(&global_v_numoutput_slock);
+		while (vp->v_numoutput > 0) {
+			vp->v_flag |= VBWAIT;
+			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf4", 0,
+				&global_v_numoutput_slock);
+		}
+		simple_unlock(&global_v_numoutput_slock);
+		KASSERT(vp->v_numoutput == 0);
+	
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
+
+			KASSERT((bp->b_flags & B_GATHERED) == 0);
 			if (bp->b_flags & B_DELWRI) { /* XXX always true? */
 				fs->lfs_avail += btofsb(fs, bp->b_bcount);
 				wakeup(&fs->lfs_avail);
@@ -321,6 +333,9 @@ lfs_vflush(struct vnode *vp)
 		DLOG((DLOG_VNODE, "lfs_vflush: done not flushing ino %d\n",
 		      ip->i_number));
 		lfs_segunlock(fs);
+
+		KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+
 		return 0;
 	}
 
@@ -330,6 +345,21 @@ lfs_vflush(struct vnode *vp)
 		fs->lfs_flushvp = NULL;
 		KASSERT(fs->lfs_flushvp_fakevref == 0);
 		lfs_segunlock(fs);
+
+		/* Make sure that any pending buffers get written */
+		s = splbio();
+		simple_lock(&global_v_numoutput_slock);
+		while (vp->v_numoutput > 0) {
+			vp->v_flag |= VBWAIT;
+			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf3", 0,
+				&global_v_numoutput_slock);
+		}
+		simple_unlock(&global_v_numoutput_slock);
+		splx(s);
+	
+		KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+		KASSERT(vp->v_numoutput == 0);
+
 		return error;
 	}
 	sp = fs->lfs_sp;
@@ -370,6 +400,8 @@ lfs_vflush(struct vnode *vp)
 					 * cleaner to run; but we're
 					 * still not done with this vnode.
 					 */
+					lfs_writeinode(fs, sp, ip);
+					LFS_SET_UINO(ip, IN_MODIFIED);
 					lfs_writeseg(fs, sp);
 					lfs_segunlock(fs);
 					lfs_segunlock_relock(fs);
@@ -433,6 +465,9 @@ lfs_vflush(struct vnode *vp)
 	}
 	simple_unlock(&global_v_numoutput_slock);
 	splx(s);
+
+	KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+	KASSERT(vp->v_numoutput == 0);
 
 	fs->lfs_flushvp = NULL;
 	KASSERT(fs->lfs_flushvp_fakevref == 0);
@@ -534,6 +569,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 						 * over after the cleaner has
 						 * had a chance to run.
 						 */
+						lfs_writeinode(fs, sp, ip);
 						lfs_writeseg(fs, sp);
 						if (!VPISEMPTY(vp) &&
 						    !WRITEINPROG(vp) &&
@@ -624,7 +660,10 @@ lfs_segwrite(struct mount *mp, int flags)
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
+				/* In case writevnodes errored out */
+				lfs_flush_dirops(fs);
 				((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+				lfs_finalize_fs_seguse(fs);
 			}
 			if (do_ckp && um_error) {
 				lfs_segunlock_relock(fs);
@@ -780,10 +819,8 @@ lfs_segwrite(struct mount *mp, int flags)
 int
 lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 {
-	struct buf *bp;
 	struct finfo *fip;
 	struct inode *ip;
-	IFILE *ifp;
 	int i, frag;
 	int error;
 
@@ -791,22 +828,11 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	error = 0;
 	ip = VTOI(vp);
 
-	if (sp->seg_bytes_left < fs->lfs_bsize ||
-	    sp->sum_bytes_left < sizeof(struct finfo))
-		(void) lfs_writeseg(fs, sp);
-
-	sp->sum_bytes_left -= FINFOSIZE;
-	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	fip = sp->fip;
+	lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
 	if (vp->v_flag & VDIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
-
-	fip = sp->fip;
-	fip->fi_nblocks = 0;
-	fip->fi_ino = ip->i_number;
-	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
-	fip->fi_version = ifp->if_version;
-	brelse(bp);
 
 	if (sp->seg_flags & SEGM_CLEAN) {
 		lfs_gather(fs, sp, vp, lfs_match_fake);
@@ -817,7 +843,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * The same is true of the Ifile since checkpoints assume
 		 * that all valid Ifile blocks are written.
 		 */
-		if (IS_FLUSHING(fs,vp) || vp == fs->lfs_ivnode) {
+		if (IS_FLUSHING(fs, vp) || vp == fs->lfs_ivnode) {
 			lfs_gather(fs, sp, vp, lfs_match_data);
 			/*
 			 * Don't call VOP_PUTPAGES: if we're flushing,
@@ -873,14 +899,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		lfs_gather(fs, sp, vp, lfs_match_tindir);
 	}
 	fip = sp->fip;
-	if (fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)fip + FINFOSIZE +
-				   sizeof(int32_t) * (fip->fi_nblocks));
-		sp->start_lbp = &sp->fip->fi_blocks[0];
-	} else {
-		sp->sum_bytes_left += FINFOSIZE;
-		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
-	}
+	lfs_release_finfo(fs);
 
 	return error;
 }
@@ -956,6 +975,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	bp = sp->ibp;
 	cdp = ((struct ufs1_dinode *)bp->b_data) + (sp->ninodes % INOPB(fs));
 	*cdp = *ip->i_din.ffs1_din;
+
+	/* We can finish the segment accounting for truncations now */
+	lfs_finalize_ino_seguse(fs, ip);
 
 	/*
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk
@@ -1150,11 +1172,8 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 		vers = sp->fip->fi_version;
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = vers;
-		sp->fip->fi_ino = VTOI(sp->vp)->i_number;
 		/* Add the current file to the segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= FINFOSIZE;
+		lfs_acquire_finfo(fs, VTOI(sp->vp)->i_number, vers);
 
 		if (sptr)
 			*sptr = splbio();
@@ -1814,6 +1833,10 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	int32_t *daddrp;	/* XXX ondisk32 */
 	int changed;
 	u_int32_t sum;
+#ifdef DEBUG
+	FINFO *fip;
+	int findex;
+#endif
 
 	ASSERT_SEGLOCK(fs);
 	/*
@@ -1842,6 +1865,17 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	}
 
 	ssp = (SEGSUM *)sp->segsum;
+
+#ifdef DEBUG
+	/* Check for zero-length and zero-version FINFO entries. */
+	fip = (struct finfo *)((caddr_t)ssp + SEGSUM_SIZE(fs));
+	for (findex = 0; findex < ssp->ss_nfinfo; findex++) {
+		KDASSERT(fip->fi_nblocks > 0);
+		KDASSERT(fip->fi_version > 0);
+		fip = (FINFO *)((caddr_t)fip + FINFOSIZE +
+			sizeof(int32_t) * fip->fi_nblocks);
+	}
+#endif /* DEBUG */
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
 	DLOG((DLOG_SU, "seg %d += %d for %d inodes\n",
@@ -2627,3 +2661,44 @@ lfs_vunref_head(struct vnode *vp)
 	simple_unlock(&vp->v_interlock);
 }
 
+
+/*
+ * Set up an FINFO entry for a new file.  The fip pointer is assumed to 
+ * point at uninitialized space.
+ */
+void
+lfs_acquire_finfo(struct lfs *fs, ino_t ino, int vers)
+{
+	struct segment *sp = fs->lfs_sp;
+
+	KASSERT(vers > 0);
+
+	if (sp->seg_bytes_left < fs->lfs_bsize ||
+	    sp->sum_bytes_left < sizeof(struct finfo))
+		(void) lfs_writeseg(fs, fs->lfs_sp);
+	
+	sp->sum_bytes_left -= FINFOSIZE;
+	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	sp->fip->fi_nblocks = 0;
+	sp->fip->fi_ino = ino;
+	sp->fip->fi_version = vers;
+}
+
+/*
+ * Release the FINFO entry, either clearing out an unused entry or
+ * advancing us to the next available entry.
+ */
+void
+lfs_release_finfo(struct lfs *fs)
+{
+	struct segment *sp = fs->lfs_sp;
+
+	if (sp->fip->fi_nblocks != 0) {
+		sp->fip = (FINFO*)((caddr_t)sp->fip + FINFOSIZE +
+			sizeof(int32_t) * sp->fip->fi_nblocks);
+		sp->start_lbp = &sp->fip->fi_blocks[0];
+	} else {
+		sp->sum_bytes_left += FINFOSIZE;
+		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	}
+}

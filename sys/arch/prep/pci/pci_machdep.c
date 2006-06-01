@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21.6.1 2006/04/22 11:37:54 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.21.6.2 2006/06/01 22:35:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21.6.1 2006/04/22 11:37:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21.6.2 2006/06/01 22:35:17 kardel Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
 
 	i = pci_chipset_tag_type();
 
-	if (i == PCIBridgeIndirect)
+	if (i == PCIBridgeIndirect || i == PCIBridgeRS6K)
 		prep_pci_get_chipset_tag_indirect(pc);
 	else if (i == PCIBridgeDirect)
 		prep_pci_get_chipset_tag_direct(pc);
@@ -223,7 +223,7 @@ prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	    PCI_PRODUCT(id) == PCI_PRODUCT_WEITEK_P9100)
 		return 0;
 
-	/* We have allready mapped the MPIC2 if we have one, so leave it
+	/* We have already mapped the MPIC2 if we have one, so leave it
 	   alone */
 	if (PCI_VENDOR(id) == PCI_VENDOR_IBM &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2)

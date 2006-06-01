@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.36 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso.c,v 1.36.6.1 2006/06/01 22:39:03 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.36 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.36.6.1 2006/06/01 22:39:03 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.36 2005/12/11 12:25:12 christos Exp $");
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -476,7 +477,9 @@ iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 #endif
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+							 KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag)))
 			return (EPERM);
 
 		if (ifp == 0)

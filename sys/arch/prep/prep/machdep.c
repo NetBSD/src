@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55.6.1 2006/04/22 11:37:54 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.6.2 2006/06/01 22:35:17 kardel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.6.1 2006/04/22 11:37:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.6.2 2006/06/01 22:35:17 kardel Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -116,10 +116,7 @@ extern void *endsym, *startsym;
 #endif
 
 void
-initppc(startkernel, endkernel, args, btinfo)
-	u_long startkernel, endkernel;
-	u_int args;
-	void *btinfo;
+initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 
 	/*
@@ -183,10 +180,13 @@ initppc(startkernel, endkernel, args, btinfo)
 
 	/*
 	 * Now setup fixed bat registers
+	 * We setup the memory BAT, the IO space BAT, and a special
+	 * BAT for certain machines that have rs6k style PCI bridges
 	 */
 	oea_batinit(
 	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
 	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
+	    0xbf800000, BAT_BL_8M,
 	    0);
 
 	/*
@@ -227,8 +227,7 @@ initppc(startkernel, endkernel, args, btinfo)
 }
 
 void
-mem_regions(mem, avail)
-	struct mem_region **mem, **avail;
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
 
 	*mem = physmemr;
@@ -239,7 +238,7 @@ mem_regions(mem, avail)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	/*
 	 * Mapping PReP interrput vector register.
@@ -252,6 +251,11 @@ cpu_startup()
 	 * external interrupt handler install
 	 */
 	init_intr();
+
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
 
 	/*
 	 * Do common startup.
@@ -268,7 +272,6 @@ cpu_startup()
 		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
-
 	/*
 	 * Now safe for bus space allocation to use malloc.
 	 */
@@ -285,8 +288,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
@@ -306,7 +308,7 @@ lookup_bootinfo(type)
  * Soft tty interrupts.
  */
 void
-softserial()
+softserial(void)
 {
 
 #if (NCOM > 0)
@@ -318,8 +320,7 @@ softserial()
  * Stray interrupts.
  */
 void
-strayintr(irq)
-	int irq;
+strayintr(int irq)
 {
 
 	log(LOG_ERR, "stray interrupt %d\n", irq);
@@ -329,9 +330,7 @@ strayintr(irq)
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 
@@ -380,15 +379,15 @@ halt_sys:
  * splx() differing in that it returns the previous priority level.
  */
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
 	int oldcpl;
+	struct cpu_info *ci = curcpu();
 
 	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = ipl;
-	if (ipending & ~ipl)
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = ipl;
+	if (ci->ci_ipending & ~ipl)
 		do_pending_int();
 	__asm volatile("sync; eieio\n");	/* reorder protect */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.6.1 2006/06/01 22:35:00 kardel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,18 +71,12 @@
 
 #include <dev/cons.h>
 
-#include "com.h"
-#if (NCOM > 0)
-#include <sys/termios.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-void comsoft(void);
-#endif
-
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include "ksyms.h"
 
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
@@ -96,15 +91,12 @@ struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 extern void *endsym, *startsym;
 #endif
 
 void
-initppc(startkernel, endkernel, args, btinfo)
-	u_long startkernel, endkernel;
-	u_int args;
-	void *btinfo;
+initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 
 	/*
@@ -155,7 +147,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	ibmnws_bus_space_init();
 
-/* JG  - OK to here */
 	/*
 	 * Now setup fixed bat registers
 	 */
@@ -171,16 +162,13 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	consinit();
 
-/* JG - Fails here */
-
 	oea_init(NULL);
 
 	/*
 	 * external interrupt handler install
 	 */
 
-	/* init_intr_ivr(); */
-	init_intr();
+	init_intr_ivr();
 
         /*
 	 * Set the page size.
@@ -192,17 +180,18 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
-	ddb_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+#endif
 
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 }
 
 void
-mem_regions(mem, avail)
-	struct mem_region **mem, **avail;
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
 
 	*mem = physmemr;
@@ -213,7 +202,7 @@ mem_regions(mem, avail)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	/*
 	 * Mapping PReP interrput vector register.
@@ -227,6 +216,10 @@ cpu_startup()
 	 */
 	oea_startup("IBM NetworkStation 1000 (8362-XXX)");
 
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
 	/*
 	 * Now allow hardware interrupts.
 	 */
@@ -245,32 +238,10 @@ cpu_startup()
 }
 
 /*
- * Soft tty interrupts.
- */
-void
-softserial(void)
-{
-#if (NCOM > 0)
-	comsoft();
-#endif
-}
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 
@@ -339,15 +310,15 @@ halt_sys:
  * splx() differing in that it returns the previous priority level.
  */
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
 	int oldcpl;
+	struct cpu_info *ci = curcpu();
 
 	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = ipl;
-	if (ipending & ~ipl)
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = ipl;
+	if (ci->ci_ipending & ~ipl)
 		do_pending_int();
 	__asm volatile("sync; eieio\n");	/* reorder protect */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.23.6.1 2006/04/22 11:37:53 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.23.6.2 2006/06/01 22:35:15 kardel Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.23.6.1 2006/04/22 11:37:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.23.6.2 2006/06/01 22:35:15 kardel Exp $");
 
 #include "bpfilter.h"
 
@@ -304,7 +304,8 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = &sc->sc_mii;
 	bus_dma_segment_t seg;
 	int error, i, nseg;
-	uint8_t enaddr[ETHER_ADDR_LEN];
+	const uint8_t *enaddr;
+	prop_data_t ea;
 
 	sc->sc_st = oaa->opb_bt;
 	sc->sc_sh = oaa->opb_addr;
@@ -397,12 +398,15 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	emac_reset(sc);
 
 	/* Fetch the Ethernet address. */
-	if (devprop_get(&sc->sc_dev, "mac-addr", enaddr,
-		     sizeof(enaddr), NULL) != sizeof(enaddr)) {
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+	enaddr = prop_data_data_nocopy(ea);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));

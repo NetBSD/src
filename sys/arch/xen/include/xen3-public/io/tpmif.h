@@ -1,4 +1,4 @@
-/* $NetBSD: tpmif.h,v 1.1.1.1.6.1 2006/04/22 11:38:11 simonb Exp $ */
+/* $NetBSD: tpmif.h,v 1.1.1.1.6.2 2006/06/01 22:35:37 kardel Exp $ */
 /******************************************************************************
  * tpmif.h
  *
@@ -22,7 +22,7 @@
 typedef struct {
     unsigned long addr;   /* Machine address of packet.   */
     grant_ref_t ref;      /* grant table access reference */
-    uint16_t id;          /* Echoed in response message.  */
+    uint16_t unused;
     uint16_t size;        /* Packet size in bytes.        */
 } tpmif_tx_request_t;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: properties.h,v 1.6 2005/12/11 12:25:21 christos Exp $	*/
+/* $NetBSD: pax.h,v 1.2.6.2 2006/06/01 22:39:26 kardel Exp $ */
 
-/*
- * Copyright (c) 2001 Eduardo Horvath.
+/*-
+ * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,9 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Eduardo Horvath.
+ *      This product includes software developed by Elad Efrat.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,33 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_PROPERTIES_H_
-#define _SYS_PROPERTIES_H_
+#ifndef __SYS_PAX_H__
+#define	__SYS_PAX_H__
 
-typedef void *opaque_t;		/* Value large enough to hold a pointer */
+void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
+void pax_mprotect_adjust(struct lwp *, int);
 
-struct propdb;
-typedef struct propdb *propdb_t;
+#endif /* !__SYS_PAX_H__ */
 
-#define	MAX_KDBNAME		32
-
-#define	PROP_INT	0x10000000
-#define	PROP_STRING	0x20000000
-#define	PROP_AGGREGATE	0x30000000
-#define	PROP_TYPE(x)	((x)&0x30000000)
-
-#define	PROP_ARRAY	0x40000000
-#define	PROP_CONST	0x80000000
-#define	PROP_ELSZ(x)	0x0fffffff
-
-propdb_t propdb_create(const char *);
-void propdb_destroy(propdb_t);
-
-int prop_set(propdb_t, opaque_t, const char *, void *, size_t, int, int);
-size_t prop_objs(propdb_t, opaque_t *, size_t);
-size_t prop_list(propdb_t, opaque_t, char *, size_t);
-size_t prop_get(propdb_t, opaque_t, const char *, void *, size_t, int *);
-int prop_delete(propdb_t, opaque_t, const char *);
-int prop_copy(propdb_t, opaque_t, opaque_t, int);
-
-#endif

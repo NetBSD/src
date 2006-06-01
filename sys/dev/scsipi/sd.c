@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.244.6.1 2006/04/22 11:39:29 simonb Exp $	*/
+/*	$NetBSD: sd.c,v 1.244.6.2 2006/06/01 22:37:34 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244.6.1 2006/04/22 11:39:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244.6.2 2006/06/01 22:37:34 kardel Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 static void	sdminphys(struct buf *);
 static void	sdgetdefaultlabel(struct sd_softc *, struct disklabel *);
-static void	sdgetdisklabel(struct sd_softc *);
+static int	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
@@ -525,7 +525,10 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 			/* Load the partition info if not already loaded. */
 			if (param_error == 0) {
-				sdgetdisklabel(sd);
+				if (sdgetdisklabel(sd) != 0) {
+					error = EIO;
+					goto bad3;
+				}
 				SC_DEBUG(periph, SCSIPI_DB3,
 				     ("Disklabel loaded "));
 			}
@@ -1292,7 +1295,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 /*
  * Load the label information on the named device
  */
-static void
+static int
 sdgetdisklabel(struct sd_softc *sd)
 {
 	struct disklabel *lp = sd->sc_dk.dk_label;
@@ -1314,8 +1317,9 @@ sdgetdisklabel(struct sd_softc *sd)
 	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
-		return;
+		return EIO;
 	}
+	return 0;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcache.c,v 1.2.2.2 2006/04/22 11:37:38 simonb Exp $	*/
+/*	$NetBSD: bcache.c,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/common/bcache.c,v 1.12 2003/08/25 23:30:41 obrien Exp $"); */
 
 /*
  * Simple LRU block cache

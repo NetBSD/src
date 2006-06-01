@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.4.6.2 2006/05/02 21:01:14 kardel Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.4.6.3 2006/06/01 22:37:32 kardel Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.6.2 2006/05/02 21:01:14 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.6.3 2006/06/01 22:37:32 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -106,7 +106,7 @@ static int
 ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct pps_softc *sc;
-	int res;
+	int res, weg = 0;
 
 	sc = device_lookup(&pps_cd, minor(dev));
 	if (!sc)
@@ -118,6 +118,8 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (ppbus_request_bus(sc->ppbus, &sc->pps_dev.sc_dev,
 			      PPBUS_WAIT|PPBUS_INTR, 0))
 		return (EINTR);
+
+	ppbus_write_ivar(sc->ppbus, PPBUS_IVAR_IEEE, &weg);
 
 	/* attach the interrupt handler */
 	/* XXX priority should be set here */

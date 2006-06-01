@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.48.6.1 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.48.6.2 2006/06/01 22:38:08 kardel Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.6.1 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.6.2 2006/06/01 22:38:08 kardel Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.6.1 2006/04/22 11:39:59 s
 #include <crypto/ripemd160/rmd160.h>
 #include <sys/md5.h>
 #include <uvm/uvm_extern.h>
+#include <sys/kauth.h>
 
 int veriexec_verbose;
 int veriexec_strict;
@@ -183,6 +184,7 @@ veriexec_init_fp_ops(void)
 			MD5Init, MD5Update, MD5Final);
 	(void) veriexec_add_fp_ops(ops);
 #endif /* VERIFIED_EXEC_FP_MD5 */
+
 }
 
 struct veriexec_fp_ops *
@@ -191,7 +193,7 @@ veriexec_find_ops(u_char *name)
 	struct veriexec_fp_ops *ops;
 
 	name[VERIEXEC_TYPE_MAXLEN] = '\0';
-	
+
 	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
 		if ((strlen(name) == strlen(ops->type)) &&
 		    (strncasecmp(name, ops->type, sizeof(ops->type) - 1)
@@ -252,14 +254,14 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
 						    : PAGE_SIZE;
 
-		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
+		error = vn_rdwr(UIO_READ, vp, buf, len, offset,
 				UIO_SYSSPACE,
 #ifdef __FreeBSD__
 				IO_NODELOCKED,
 #else
 				0,
 #endif
-				l->l_proc->p_ucred, &resid, NULL);
+				l->l_proc->p_cred, &resid, NULL);
 
 		if (error) {
 			if (do_perpage) {
@@ -310,7 +312,7 @@ bad:
 
 	return (error);
 }
-	
+
 /* Compare two fingerprints of the same type. */
 int
 veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
@@ -589,7 +591,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	struct vattr va;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
 	if (error)
 		return (error);
 
@@ -639,7 +641,7 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 	struct vattr va;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
 	if (error)
 		return (error);
 
@@ -648,7 +650,8 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 		       "of \"%s\" [%ld:%llu] to \"%s\", uid=%u, pid=%u: "
 		       "Lockdown mode.\n", from, va.va_fsid,
 		       (unsigned long long)va.va_fileid,
-		       to, l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid);
+		       to, kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid);
 		return (EPERM);
 	}
 
@@ -660,7 +663,7 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 			       "uid=%u, pid=%u: IPS mode, file "
 			       "monitored.\n", from, va.va_fsid,
 			       (unsigned long long)va.va_fileid,
-			       to, l->l_proc->p_ucred->cr_uid,
+			       to, kauth_cred_geteuid(l->l_proc->p_cred),
 			       l->l_proc->p_pid);
 			return (EPERM);
 		}
@@ -668,7 +671,8 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 		printf("Veriexec: veriexec_rename: Monitored file \"%s\" "
 		       "[%ld:%llu] renamed to \"%s\", uid=%u, pid=%u.\n",
 		       from, va.va_fsid, (unsigned long long)va.va_fileid, to,
-		       l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid);
+		       kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid);
 	}
 
 	return (0);
@@ -708,7 +712,7 @@ veriexec_report(const u_char *msg, const u_char *filename,
 			f("veriexec: %s [%s, %ld:%" PRIu64 ", pid=%u, uid=%u, "
 			    "gid=%u%s", msg, filename, va->va_fsid,
 			    va->va_fileid, l->l_proc->p_pid,
-			    l->l_proc->p_cred->p_ruid,
-			    l->l_proc->p_cred->p_rgid, die ? "]" : "]\n");
+			    kauth_cred_getuid(l->l_proc->p_cred),
+			    kauth_cred_getgid(l->l_proc->p_cred), die ? "]" : "]\n");
 	}
 }

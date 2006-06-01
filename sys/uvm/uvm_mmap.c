@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.94.6.1 2006/04/22 11:40:29 simonb Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.94.6.2 2006/06/01 22:39:45 kardel Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,9 +51,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.94.6.1 2006/04/22 11:40:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.94.6.2 2006/06/01 22:39:45 kardel Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.94.6.1 2006/04/22 11:40:29 simonb Exp
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
+ 
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 #include <miscfs/specfs/specdev.h>
 
@@ -455,7 +460,7 @@ sys_mmap(l, v, retval)
 			 */
 			if (fp->f_flag & FWRITE) {
 				if ((error =
-				    VOP_GETATTR(vp, &va, p->p_ucred, l)))
+				    VOP_GETATTR(vp, &va, p->p_cred, l)))
 					return (error);
 				if ((va.va_flags &
 				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
@@ -499,6 +504,10 @@ sys_mmap(l, v, retval)
 			return (ENOMEM);
 		}
 	}
+
+#ifdef PAX_MPROTECT
+	pax_mprotect(l, &prot, &maxprot);
+#endif /* PAX_MPROTECT */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
@@ -1117,7 +1126,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			return (EACCES);
 
 		if (vp->v_type != VCHR) {
-			error = VOP_MMAP(vp, 0, curproc->p_ucred, curlwp);
+			error = VOP_MMAP(vp, 0, curproc->p_cred, curlwp);
 			if (error) {
 				return error;
 			}

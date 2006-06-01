@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.29.6.1 2006/04/22 11:37:57 simonb Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.29.6.2 2006/06/01 22:35:25 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.6.1 2006/04/22 11:37:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.6.2 2006/06/01 22:35:25 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.6.1 2006/04/22 11:37:57 simonb Exp $"
 #include <sys/device.h>
 #include <sys/envsys.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>
@@ -1173,7 +1174,8 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	/* this ioctl assumes the caller knows exactly what he is doing */
 	case TCTRL_CMD_REQ:
 		reqn = (struct tctrl_req *)data;
-		if ((i = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0 &&
+		if ((i = kauth_authorize_generic(l->l_proc->p_cred,
+					   KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0 &&
 		    (reqn->cmdbuf[0] == TS102_OP_CTL_BITPORT ||
 		    (reqn->cmdbuf[0] >= TS102_OP_CTL_WATCHDOG &&
 		    reqn->cmdbuf[0] <= TS102_OP_CTL_SECURITY_KEY) ||

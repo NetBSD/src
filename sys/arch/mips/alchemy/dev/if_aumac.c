@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.13.6.1 2006/04/22 11:37:41 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.13.6.2 2006/06/01 22:35:03 kardel Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.13.6.1 2006/04/22 11:37:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.13.6.2 2006/06/01 22:35:03 kardel Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -227,7 +227,8 @@ aumac_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 aumac_attach(struct device *parent, struct device *self, void *aux)
 {
-	uint8_t enaddr[ETHER_ADDR_LEN];
+	const uint8_t *enaddr;
+	prop_data_t ea;
 	struct aumac_softc *sc = (void *) self;
 	struct aubus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -243,12 +244,15 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = aa->aa_st;
 
 	/* Get the MAC address. */
-	if (devprop_get(&sc->sc_dev, "mac-addr", enaddr,
-		     sizeof(enaddr), NULL) != sizeof(enaddr)) {
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+	enaddr = prop_data_data_nocopy(ea);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));

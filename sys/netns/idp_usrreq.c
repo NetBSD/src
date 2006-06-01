@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.25.6.1 2006/04/22 11:40:14 simonb Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.25.6.2 2006/06/01 22:39:12 kardel Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25.6.1 2006/04/22 11:40:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25.6.2 2006/06/01 22:39:12 kardel Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25.6.1 2006/04/22 11:40:14 simonb E
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -497,7 +498,8 @@ idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}

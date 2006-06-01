@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.123.6.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.123.6.2 2006/06/01 22:38:07 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.123.6.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.123.6.2 2006/06/01 22:38:07 kardel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.123.6.1 2006/02/04 14:30:17 simonb E
 #include <sys/sched.h>
 #include <sys/signalvar.h>
 #include <sys/systrace.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -224,7 +225,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * processes, maxproc is the limit.
 	 */
 	p1 = l1->l_proc;
-	uid = p1->p_cred->p_ruid;
+	uid = kauth_cred_getuid(p1->p_cred);
 	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
 		static struct timeval lasttfm;
@@ -303,10 +304,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
-	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
-	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
-	p2->p_cred->p_refcnt = 1;
-	crhold(p1->p_ucred);
+
+	p2->p_cred = kauth_cred_alloc();
+	kauth_cred_clone(p1->p_cred, p2->p_cred);
 
 	LIST_INIT(&p2->p_raslist);
 #if defined(__HAVE_RAS)

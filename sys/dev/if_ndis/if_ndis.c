@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.4.4.2 2006/04/22 11:39:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.4.4.3 2006/06/01 22:36:41 kardel Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.4.4.2 2006/04/22 11:39:05 simonb Exp $
 
 #ifdef __NetBSD__
 #include <sys/device.h>
+#include <sys/kauth.h>
 #endif
 
 #ifdef __FreeBSD__
@@ -195,9 +196,6 @@ static void ndis_setmulti	(struct ndis_softc *);
 static void ndis_map_sclist	(void *, bus_dma_segment_t *,
 	int, bus_size_t, int);
 #ifdef __NetBSD__
-extern void device_printf(device_t, const char *fmt, ...);
-#endif
-#ifdef __NetBSD__
 static int ndisdrv_loaded = 0;
 #endif /* __NetBSD__ */
 #ifdef __FreeBSD__
@@ -224,7 +222,9 @@ ndisdrv_modevent(mod, cmd)
 {
 	int			error = 0;
 
+#ifdef NDIS_DBG
 	printf("in ndisdrv_modevent\n");
+#endif
 	switch (cmd) {
 	case MOD_LOAD:
 		ndisdrv_loaded++;
@@ -331,9 +331,10 @@ ndis_setmulti(sc)
 		len = sizeof(sc->ndis_filter);
 		error = ndis_set_info(sc, OID_GEN_CURRENT_PACKET_FILTER,
 		    &sc->ndis_filter, &len);
-        if (error) {     
-			device_printf (sc->ndis_dev,
-			    "set filter failed: %d\n", error);
+        if (error) {
+		aprint_error("%s : set filter failed: %d\n", 
+			     sc->ndis_dev->dv_xname,
+			     error);
         }
 		return;
 	}
@@ -370,11 +371,15 @@ ndis_setmulti(sc)
 		bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
 		    mclist + (ETHER_ADDR_LEN * len), ETHER_ADDR_LEN);
 #else /* __NetBSD__ */
-/* TODO: The NetBSD ether_multi structure (sys/net/if_ether.h) defines a range of addresses
-   TODO: (enm_addrlo to enm_addrhi), but FreeBSD's ifmultiaddr structure (in sys/net/if_var.h)
-   TODO: defines only a single address.  Do we need to add every address in the range to the 
-   TODO: list?  Seems like it to me.  But for right now I'm assuming there is only a single
-   TODO: address. */
+/*
+ *****************************************************************************
+ * TODO: The NetBSD ether_multi structure (sys/net/if_ether.h) defines a range 
+ * of addresses TODO: (enm_addrlo to enm_addrhi), but FreeBSD's ifmultiaddr 
+ * structure (in sys/net/if_var.h) defines only a single address.  Do we need 
+ * to add every address in the range to the list?  Seems like it to me.  
+ * But for right now I'm assuming there is only a single address.
+ *****************************************************************************
+ */
 		bcopy(ifma->enm_addrlo, mclist + (ETHER_ADDR_LEN * len),
 			ETHER_ADDR_LEN);
 #endif		    
@@ -389,7 +394,8 @@ ndis_setmulti(sc)
 	len = len * ETHER_ADDR_LEN;
 	error = ndis_set_info(sc, OID_802_3_MULTICAST_LIST, mclist, &len);
 	if (error) {    
-		device_printf (sc->ndis_dev, "set mclist failed: %d\n", error);      
+		aprint_error("%s: set mclist failed: %d\n", 
+			     sc->ndis_dev->dv_xname, error);
 		sc->ndis_filter |= NDIS_PACKET_TYPE_ALL_MULTICAST;
 		sc->ndis_filter &= ~NDIS_PACKET_TYPE_MULTICAST;
 	}
@@ -401,7 +407,8 @@ out:
 	error = ndis_set_info(sc, OID_GEN_CURRENT_PACKET_FILTER,
 	    &sc->ndis_filter, &len);
     if (error) {
-		device_printf (sc->ndis_dev, "set filter failed: %d\n", error);       
+		aprint_error("%s: set filter failed: %d\n", 
+			     sc->ndis_dev->dv_xname, error);
     }
 
 	return;
@@ -457,14 +464,11 @@ ndis_set_offload(sc)
 
 	nttc = (ndis_task_tcpip_csum *)nto->nto_taskbuf;
 
-/* TODO: How to deal with IFCAP_TXCSUM on NetBSD? */
-//#ifdef __FreeBSD__
 	if (ifp->if_capenable & IFCAP_TXCSUM)
 		nttc->nttc_v4tx = sc->ndis_v4tx;
 
 	if (ifp->if_capenable & IFCAP_RXCSUM)
 		nttc->nttc_v4rx = sc->ndis_v4rx;
-//#endif /* __FreeBSD__ */		
 
 	error = ndis_set_info(sc, OID_TCP_TASK_OFFLOAD, ntoh, &len);
 	free(ntoh, M_TEMP);
@@ -540,8 +544,7 @@ ndis_probe_offload(sc)
 
 	sc->ndis_v4tx = nttc->nttc_v4tx;
 	sc->ndis_v4rx = nttc->nttc_v4rx;
-/* TODO: I'm not really sure what to do here for NetBSD (sc->ndis_hwassist, CSUM_IP, IFCAP_RXCSUM, etc...) */		
-//#ifdef __FreeBSD__
+
 	if (nttc->nttc_v4tx & NDIS_TCPSUM_FLAGS_IP_CSUM)
 		sc->ndis_hwassist |= CSUM_IP;
 	if (nttc->nttc_v4tx & NDIS_TCPSUM_FLAGS_TCP_CSUM)
@@ -557,7 +560,6 @@ ndis_probe_offload(sc)
 		ifp->if_capabilities |= IFCAP_RXCSUM;
 	if (nttc->nttc_v4rx & NDIS_TCPSUM_FLAGS_UDP_CSUM)
 		ifp->if_capabilities |= IFCAP_RXCSUM;	
-//#endif			
 
 	free(ntoh, M_TEMP);
 	return(0);
@@ -587,7 +589,9 @@ ndis_attach(dev)
 	int			error = 0, len;
 	int			j;
 	
+#ifdef NDIS_DBG
 	printf("In ndis_attach()\n");
+#endif
 		
 	sc = device_get_softc(dev);
 	
@@ -616,20 +620,26 @@ ndis_attach(dev)
 		    ndis_intr, sc, &sc->ndis_intrhand);
 
 		if (error) {
-			device_printf(dev, "couldn't set up irq\n");
+			aprint_error("%s: couldn't set up irq\n", dev->dv_xname);
 			goto fail;
 		}
 	}
 #else /* __NetBSD__ */
-/* this was already done in if_ndis_pci.c */
+	/* 
+	 * For NetBSD, the interrupt is set up in the bus-dependent
+	 * code.  For PCI it's done in ndis_attach_pci()
+	 */
 #endif
-/* TODO: remove this #ifdef once if_ndis_pcmcia.c compiles */
+
+/* 
+ * TODO: remove this #ifdef once if_ndis_pcmcia.c compiles
+ */
 #ifdef __FreeBSD__
 	if (sc->ndis_iftype == PCMCIABus) {
 		error = ndis_alloc_amem(sc);
 		if (error) {
-			device_printf(dev, "failed to allocate "
-			    "attribute memory\n");
+			aprint_error("%s: failed to allocate attribute memory\n", 
+				     dev->dv_xname);
 			goto fail;
 		}
 	}
@@ -670,7 +680,8 @@ ndis_attach(dev)
 	img = drv_data;
 	drv = windrv_lookup((vm_offset_t)img, NULL);
 #ifdef __NetBSD__
-	/* Stash a pointer to the softc in the Windows device_object, since 
+	/* 
+	 * Stash a pointer to the softc in the Windows device_object, since 
 	 * we can't get it from the NetBSD device structure.
 	 */
 	pdo->pdo_sc = sc;
@@ -678,32 +689,29 @@ ndis_attach(dev)
 #endif	
 	
 	if (NdisAddDevice(drv, pdo) != STATUS_SUCCESS) {
-#ifdef __FreeBSD__	
-		device_printf(dev, "failed to create FDO!\n");
-#else /* __NetBSD__ */
-		printf("failed to create FDO!\n");
-#endif		
+		aprint_error("%s: failed to create FDO!\n", sc->ndis_dev->dv_xname);
 		error = ENXIO;
 		goto fail;
 	}
 
-#ifdef __FreeBSD__
 	/* Tell the user what version of the API the driver is using. */
-	device_printf(dev, "NDIS API version: %d.%d\n",
-#else /* __NetBSD__ */
-	printf("NDIS API version: %d.%d\n",
-#endif		   		  
-	    sc->ndis_chars->nmc_version_major,
-	    sc->ndis_chars->nmc_version_minor);
+	aprint_normal("%s: NDIS API version: %d.%d\n",
+		      sc->ndis_dev->dv_xname,
+		      sc->ndis_chars->nmc_version_major,
+		      sc->ndis_chars->nmc_version_minor);
 
-//For NetBSD we just do this in the PCI attach function	    
 #ifdef __FreeBSD__
 	/* Do resource conversion. */
 	if (sc->ndis_iftype == PCMCIABus || sc->ndis_iftype == PCIBus)
 		ndis_convert_res(sc);
 	else
 		sc->ndis_block->nmb_rlist = NULL;
-#endif		
+#else /* __NetBSD__ */
+	/* 
+	 * For NetBSD so far we do the resource conversion directly in
+	 * ndis_attach_pci()
+	 */
+#endif
 
 	/* Install our RX and TX interrupt handlers. */
 	sc->ndis_block->nmb_senddone_func = ndis_txeof_wrap;
@@ -711,24 +719,19 @@ ndis_attach(dev)
 	
 	/* Set up the resource list in the block */
 	sc->ndis_block->nmb_rlist = sc->ndis_rl;	
-	//sc->ndis_block->nmb_rlist = &sc->ndis_rl;
+	/* sc->ndis_block->nmb_rlist = &sc->ndis_rl; */
 	
 #ifdef __NetBSD__	
 	/* TODO: Free this memory! */
 	sc->arpcom.ec_if.if_sadl = 
-		malloc(sizeof(struct sockaddr_dl), M_DEVBUF, M_NOWAIT|M_ZERO);	
+		malloc(sizeof(struct sockaddr_dl), M_DEVBUF, M_NOWAIT|M_ZERO);
 #endif		
 
 	/* Call driver's init routine. */
 	if (ndis_init_nic(sc)) {
-#ifdef __FreeBSD__		
-		device_printf (dev, "init handler failed\n");
-#else /* __NetBSD__ */
-		printf ("init handler failed\n");
-#endif		
+		aprint_error("%s: init handler failed\n", 
+			     sc->ndis_dev->dv_xname);
 		error = ENXIO;
-/* just for testing */
-		//return 0;
 		goto fail;
 	}
 
@@ -767,7 +770,8 @@ ndis_attach(dev)
 
 	if (j != NDIS_STATUS_SUCCESS) {
 		sc->ndis_txpool = NULL;
-		device_printf(dev, "failed to allocate TX packet pool");
+		aprint_error("%s: failed to allocate TX packet pool",
+			     sc->ndis_dev->dv_xname);
 		error = ENOMEM;
 		goto fail;
 	}
@@ -807,7 +811,6 @@ ndis_attach(dev)
 #ifdef __FreeBSD__
 	if_initname(ifp, device_get_name(dev), device_get_unit(dev));
 #else /* __NetBSD__ */
-/* TODO: I'm not sure ndis_dev->dv_xname was innitalized */
 	strcpy(ifp->if_xname, sc->ndis_dev->dv_xname);
 #endif
 	ifp->if_mtu = ETHERMTU;
@@ -828,8 +831,12 @@ ndis_attach(dev)
 #ifdef __FreeBSD__	
 	ifp->if_hwassist = sc->ndis_hwassist;
 #else /* __NetBSD__ */
-/* TODO: I don't think NetBSD has this field describing "HW offload capabilities" as found in FreeBSD's 
-   TODO: if_data structure, but maybe there is something else that needs to be done here for NetBSD */
+	/* 
+	 * TODO: I don't think NetBSD has this field describing "HW offload 
+	 * capabilities" as found in FreeBSD's 
+	 * if_data structure, but maybe there is something else that 
+	 * needs to be done here for NetBSD
+	 */
 #endif
 
 	/* Do media setup */
@@ -885,7 +892,8 @@ nonettypes:
 		r = ndis_get_info(sc, OID_802_11_SUPPORTED_RATES,
 		    (void *)rates, &len);
 		if (r)
-			device_printf (dev, "get rates failed: 0x%x\n", r);
+			aprint_error("%s: get rates failed: 0x%x\n", 
+				     sc->ndis_dev->dv_xname, r);
 		/*
 		 * Since the supported rates only up to 8 can be supported,
 		 * if this is not 802.11b we're just going to be faking it
@@ -1082,7 +1090,10 @@ ndis_detach (dev, flags)
 	int			s;
 #endif	
 
+#ifdef NDIS_DBG
 	printf("in ndis_detach\n");
+#endif
+
 	sc = device_get_softc(dev);
 #ifdef __FreeBSD__
 	KASSERT(mtx_initialized(&sc->ndis_mtx),
@@ -1120,8 +1131,11 @@ ndis_detach (dev, flags)
 		bus_teardown_intr(dev, sc->ndis_irq, sc->ndis_intrhand);
 	if (sc->ndis_irq)
 		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->ndis_irq);
-#endif
-/* TODO: unmap interrupts when unloading in NetBSD once they are set up */		
+#else
+/* 
+ * TODO: unmap interrupts when unloading in NetBSD
+ */
+#endif /* __NetBSD__ */
 	if (sc->ndis_res_io)
 		bus_release_resource(dev, SYS_RES_IOPORT,
 		    sc->ndis_io_rid, sc->ndis_res_io);
@@ -1163,13 +1177,15 @@ ndis_detach (dev, flags)
 	if (drv == NULL)
 		panic("couldn't find driver object");
 	windrv_destroy_pdo(drv, dev);
-/* TODO: Unmap dma for NetBSD */
 #ifdef __FreeBSD__
 	if (sc->ndis_iftype == PCIBus)
 		bus_dma_tag_destroy(sc->ndis_parent_tag);
-#endif		
+#else /* __NetBSD__ */
+/* 
+ * TODO: Unmap dma for NetBSD
+ */
+#endif
 
-/* TODO: What is this? Do we need something like this for NetBSD? */
 #ifdef __FreeBSD__
 #if __FreeBSD_version < 502113
 	sysctl_ctx_free(&sc->ndis_ctx);
@@ -1199,8 +1215,7 @@ ndis_suspend(dev)
 
 	return(0);
 }
-#endif /* __FreeBSD__ */
-#ifdef __NetBSD__
+#else /* __NetBSD__ */
 /* TODO: write a NetBSD version of ndis_suspend() */
 #endif
 
@@ -1220,8 +1235,7 @@ ndis_resume(dev)
 
 	return(0);
 }
-#endif /* __FreeBSD__ */
-#ifdef __NetBSD__
+#else /* __NetBSD__ */
 /* TODO: write a NetBSD version of ndis_resume() */
 #endif
 
@@ -1253,10 +1267,8 @@ ndis_rxeof(adapter, packets, pktcnt)
 	struct ndis_softc	*sc;
 	ndis_miniport_block	*block;
 	ndis_packet		*p;
-//#ifdef __FreeBSD__    
 	uint32_t		s;
 	ndis_tcpip_csum		*csum;
-//#endif    
 	struct ifnet		*ifp;
 	struct mbuf		*m0, *m;
 	int			i;
@@ -1268,13 +1280,13 @@ ndis_rxeof(adapter, packets, pktcnt)
 	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
 #endif		
 	ifp = &sc->arpcom.ac_if;
-// 
+
 	for (i = 0; i < pktcnt; i++) {
 		p = packets[i];
 		/* Stash the softc here so ptom can use it. */
 		p->np_softc = sc;
 		if (ndis_ptom(&m0, p)) {
-			device_printf (sc->ndis_dev, "ptom failed\n");
+			aprint_error("%s: ptom failed\n", sc->ndis_dev->dv_xname);
 			if (p->np_oob.npo_status == NDIS_STATUS_SUCCESS)
 #ifdef __FreeBSD__			
 				ndis_return_packet(sc, p);
@@ -1327,7 +1339,10 @@ ndis_rxeof(adapter, packets, pktcnt)
 				}
 			}
 #else /* __NetBSD__ */
-/* TODO: deal with checksum offload in NetBSD (see IFCAP_XXX in sys/net/if.h, these differ from the FreeBSD ones) */
+/* 
+ * TODO: deal with checksum offload in NetBSD 
+ * (see IFCAP_XXX in sys/net/if.h, these differ from the FreeBSD ones)
+ */
 			if (ifp->if_capenable & IFCAP_RXCSUM &&
 			    p->np_ext.npe_info[ndis_tcpipcsum_info] != NULL) {
 				s = (uintptr_t)
@@ -1488,18 +1503,14 @@ ndis_intr(arg)
 	uint8_t			irql;
 	ndis_miniport_interrupt	*intr;
 	
-	/* This was getting annoying (it was getting printed every time
-	 * there was network activity, which is a good sign I guess)
-	 */
-	/* printf("in ndis_intr\n"); */
-
 	sc = arg;
 	ifp = &sc->arpcom.ac_if;
 
 #ifdef __NetBSD__
-	/* I was getting an interrupt before NdisAddDevice was called, which sets
-	 * up the ndis_block, so...
-	*/
+	/* 
+	 * I was getting an interrupt before NdisAddDevice was called, 
+	 * which sets up the ndis_block, so...
+	 */
 	if(sc->ndis_block == NULL) {
 		return 0;
 	}
@@ -1537,7 +1548,8 @@ ndis_intr(arg)
 #endif		
 }
 
-/* just here so I can wake up the SWI thread
+/* 
+ * just here so I can wake up the SWI thread
  * in ndis_ticktask
  */
 #ifdef __NetBSD__
@@ -1546,11 +1558,8 @@ struct ndisproc {
 	struct proc		*np_p;
 	int			np_state;
 	uint8_t			np_stack[PAGE_SIZE*NDIS_KSTACK_PAGES];
-#ifdef __NetBSD__
 	int			np_needs_wakeup;
-#endif
 };
-
 extern struct ndisproc ndis_iproc;
 #endif
 
@@ -1559,22 +1568,16 @@ ndis_tick(xsc)
 	void			*xsc;
 {
 	struct ndis_softc	*sc;
+
 #ifdef __FreeBSD__
 	mtx_unlock(&Giant);
+#else /* __NetBSD__ */
+	/* TODO: do we need the lock for NetBSD? */
 #endif
-/* TODO: do we need the lock for NetBSD? */
+
 	sc = xsc;
 
 	ndis_sched(ndis_ticktask, sc, NDIS_TASKQUEUE);
-	
-#ifdef __NetBSD__
-	/* There was one more call left in the SWI thread's queue that
-	 * wasn't getting run, so I thought I'd try this out.  This is
-	 * kind of a hack, so I shoud figure out something better to do.
-	 */
-	 //if(ndis_iproc.np_needs_wakeup)
-		//wakeup(&ndis_iproc.np_p->p_siglist);
-#endif
 	
 #ifdef __FreeBSD__	
 	sc->ndis_stat_ch = timeout(ndis_tick, sc, hz *
@@ -1624,17 +1627,12 @@ ndis_ticktask(xsc)
 	NDIS_LOCK(sc);
 
 	if (sc->ndis_link == 0 && linkstate == nmc_connected) {
-#ifdef __FreeBSD__	
-		device_printf(sc->ndis_dev, "link up\n");
-#else /* __NetBSD__ */
-		printf("link up\n");
-#endif		
+		aprint_normal("%s: link up\n", sc->ndis_dev->dv_xname);
 		sc->ndis_link = 1;
 	
 		NDIS_UNLOCK(sc);	
 		if (sc->ndis_80211)
 			ndis_getstate_80211(sc);
-
 		NDIS_LOCK(sc);
 		
 #ifdef LINK_STATE_UP
@@ -1644,11 +1642,7 @@ ndis_ticktask(xsc)
 	}
 
 	if (sc->ndis_link == 1 && linkstate == nmc_disconnected) {
-#ifdef __FreeBSD__	
-		device_printf(sc->ndis_dev, "link down\n");
-#else /* __NetBSD__ */
-		printf("link down\n");
-#endif		
+		aprint_normal("%s: link down\n", sc->ndis_dev->dv_xname);
 		sc->ndis_link = 0;
 #ifdef LINK_STATE_DOWN
 		sc->arpcom.ac_if.if_link_state = LINK_STATE_DOWN;
@@ -1788,17 +1782,23 @@ ndis_start(ifp)
 			    sc->ndis_tmaps[sc->ndis_txidx],
 			    BUS_DMASYNC_PREREAD);			    
 #else /* __NetBSD__ */
-/* TODO: NetBSD's bus_dmamap_load_mbuf dosen't provide a callback function argumet as FreeBSD's does 
-   TODO: figure out what to do about this. */
+/* 
+ * TODO: NetBSD's bus_dmamap_load_mbuf dosen't provide a callback function 
+ * argumet as FreeBSD's does figure out what to do about this. 
+ */
 			bus_dmamap_load_mbuf(sc->ndis_ttag,
 			    sc->ndis_tmaps[sc->ndis_txidx], m,
 			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			/* Just call the callback function ? */
-			ndis_map_sclist(&p->np_sclist, sc->ndis_tmaps[sc->ndis_txidx]->dm_segs, 
-					sc->ndis_tmaps[sc->ndis_txidx]->dm_nsegs, sc->ndis_tmaps[sc->ndis_txidx]->dm_mapsize, 0);
-/* TODO: Need an offset and length to pass to bus_dmamap_sync() (not needed in FreeBSD), I'm not sure 
-   TODO: I did this correctly, as man 9 bus_dma says that dm_segs is "an array of segments or a pointer
-   TODO: to an array of segments". */
+			ndis_map_sclist(&p->np_sclist, 
+					sc->ndis_tmaps[sc->ndis_txidx]->dm_segs,
+					sc->ndis_tmaps[sc->ndis_txidx]->dm_nsegs, 
+					sc->ndis_tmaps[sc->ndis_txidx]->dm_mapsize, 0);
+/* 
+ * TODO: Need an offset and length to pass to bus_dmamap_sync() (not needed in 
+ * FreeBSD), I'm not sure I did this correctly, as man 9 bus_dma says that 
+ * dm_segs is "an array of segments or a pointer to an array of segments". 
+ */
 			bus_dmamap_sync(sc->ndis_ttag,
 			    sc->ndis_tmaps[sc->ndis_txidx],
 			    sc->ndis_tmaps[sc->ndis_txidx]->dm_segs->ds_addr,
@@ -1809,7 +1809,6 @@ ndis_start(ifp)
 		}
 
 		/* Handle checksum offload. */
-//#ifdef __FreeBSD__
 		if (ifp->if_capenable & IFCAP_TXCSUM &&
 		    m->m_pkthdr.csum_flags) {
 			csum = (ndis_tcpip_csum *)
@@ -1823,9 +1822,7 @@ ndis_start(ifp)
 				csum->u.ntc_txflags |= NDIS_TXCSUM_DO_UDP;
 			p->np_private.npp_flags = NDIS_PROTOCOL_ID_TCP_IP;
 		}
-//#else /* __NetBSD__ */
-/* TODO: deal with checksum offload in NetBSD (see IFCAP_XXX in sys/net/if.h, these differ from the FreeBSD ones) */
-//#endif
+
 		NDIS_INC(sc);
 		sc->ndis_txpending--;
 
@@ -1894,10 +1891,6 @@ ndis_init(xsc)
 	int 			s;
 #endif
 	int			i, error;
-
-//#ifdef __NetBSD__
-//	s = splnet();
-//#endif	
 	
 	/*
 	 * Avoid reintializing the link unnecessarily.
@@ -1909,18 +1902,17 @@ ndis_init(xsc)
 #ifdef __FreeBSD__      
 		return;
 #else /* __NetBSD__ */
-		//splx(s);
-        return 0;
+		return 0;
 #endif
+
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-	ndis_stop(sc);
-	if (ndis_init_nic(sc)) {
+	 ndis_stop(sc);
+	 if (ndis_init_nic(sc)) {
 #ifdef __FreeBSD__      
 		return;
 #else /* __NetBSD__ */
-		//splx(s);
 		return 0;
 #endif
 	}
@@ -1943,7 +1935,9 @@ ndis_init(xsc)
 	    &sc->ndis_filter, &i);
 
 	if (error)
-		device_printf (sc->ndis_dev, "set filter failed: %d\n", error);
+		aprint_error("%s: set filter failed: %d\n", 
+			     sc->ndis_dev->dv_xname, 
+			     error);
 
 	/*
 	 * Program the multicast filter, if necessary.
@@ -1984,15 +1978,15 @@ ndis_init(xsc)
 	sc->ndis_stat_ch = timeout(ndis_tick, sc,
 	    hz * sc->ndis_block->nmb_checkforhangsecs);
 #else /* __NetBSD__ */
-	callout_reset(&sc->ndis_stat_ch, hz * sc->ndis_block->nmb_checkforhangsecs,
-		ndis_tick, sc);
+	callout_reset(&sc->ndis_stat_ch, 
+		      hz * sc->ndis_block->nmb_checkforhangsecs,
+		      ndis_tick, sc);
 #endif	    
 
 #ifdef __FreeBSD__      
 		return;
 #else /* __NetBSD__ */
-//	splx(s);
-       return 0;
+		return 0;
 #endif
 }
 
@@ -2011,7 +2005,6 @@ ndis_ifmedia_upd(ifp)
 #ifdef __FreeBSD__	
 		ndis_init(sc);
 #else /* __NetBSD__ */
-		//ndis_init((struct ifnet *)sc);
 		ndis_init(&sc->arpcom.ac_if);
 #endif		
 
@@ -2060,7 +2053,9 @@ ndis_ifmedia_sts(ifp, ifmr)
 		ifmr->ifm_active |= IFM_1000_T;
 		break;
 	default:
-		device_printf(sc->ndis_dev, "unknown speed: %d\n", media_info);
+		aprint_error("%s: unknown speed: %d\n", 
+			     sc->ndis_dev->dv_xname,
+			     media_info);
 		break;
 	}
 
@@ -2087,6 +2082,7 @@ ndis_setstate_80211(sc)
 #endif
 
 ic = &sc->ic;
+
 /* TODO: are these equivelant? */	
 #ifdef __FreeBSD__	
 	ifp = &sc->ic.ic_ac.ac_if;
@@ -2108,7 +2104,8 @@ ic = &sc->ic;
 	rval = ndis_set_info(sc, OID_802_11_INFRASTRUCTURE_MODE, &arg, &len);
 
 	if (rval)
-		device_printf (sc->ndis_dev, "set infra failed: %d\n", rval);
+		aprint_error("%s: set infra failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 	/* Set WEP */
 /* TODO: Clean up these #ifdef's */	
@@ -2144,16 +2141,17 @@ ic = &sc->ic;
 				rval = ndis_set_info(sc,
 				    OID_802_11_ADD_WEP, &wep, &len);
 				if (rval)
-					device_printf(sc->ndis_dev,
-					    "set wepkey failed: %d\n", rval);
+					aprint_error("%s: set wepkey failed: %d\n",
+						     sc->ndis_dev->dv_xname, rval);
 			}
 		}
 		arg = NDIS_80211_WEPSTAT_ENABLED;
 		len = sizeof(arg);
 		rval = ndis_set_info(sc, OID_802_11_WEP_STATUS, &arg, &len);
 		if (rval)
-			device_printf(sc->ndis_dev,
-			    "enable WEP failed: %d\n", rval);
+			aprint_error("%s: enable WEP failed: %d\n", 
+				     sc->ndis_dev->dv_xname,
+				     rval);
 #ifdef __FreeBSD__			    
 #ifndef IEEE80211_F_WEPON
 		if (ic->ic_wep_mode != IEEE80211_WEP_8021X &&
@@ -2187,7 +2185,8 @@ ic = &sc->ic;
 
 #ifdef notyet
 	if (rval)
-		device_printf (sc->ndis_dev, "set auth failed: %d\n", rval);
+		aprint_error("%s: set auth failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 #endif
 
 #ifdef notyet
@@ -2206,8 +2205,8 @@ ic = &sc->ic;
 		arg = NDIS_80211_NETTYPE_11OFDM24;
 		break;
 	default:
-		device_printf(sc->ndis_dev, "unknown mode: %d\n",
-		    ic->ic_curmode);
+		aprint_error("%s: unknown mode: %d\n",
+			     sc->ndis_dev->dv_xname, ic->ic_curmode);
 	}
 
 	if (arg) {
@@ -2215,8 +2214,8 @@ ic = &sc->ic;
 		rval = ndis_set_info(sc, OID_802_11_NETWORK_TYPE_IN_USE,
 		    &arg, &len);
 		if (rval)
-			device_printf (sc->ndis_dev,
-			    "set nettype failed: %d\n", rval);
+			aprint_error("%s: set nettype failed: %d\n", 
+				     sc->ndis_dev->dv_xname, rval);
 	}
 #endif
 
@@ -2254,13 +2253,16 @@ ic = &sc->ic;
 			rval = ndis_set_info(sc, OID_802_11_CONFIGURATION,
 			    &config, &len);
 			if (rval)
-				device_printf(sc->ndis_dev, "couldn't change "
-				    "DS config to %ukHz: %d\n",
-				    config.nc_dsconfig, rval);
+				aprint_error("%s: couldn't change "
+					     "DS config to %ukHz: %d\n",
+					     sc->ndis_dev->dv_xname,
+					     config.nc_dsconfig, 
+					     rval);
 		}
 	} else if (rval)
-		device_printf(sc->ndis_dev, "couldn't retrieve "
-		    "channel info: %d\n", rval);
+		aprint_error("%s: couldn't retrieve "
+			     "channel info: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 	/* Set SSID -- always do this last. */
 
@@ -2274,7 +2276,8 @@ ic = &sc->ic;
 	rval = ndis_set_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
-		device_printf (sc->ndis_dev, "set ssid failed: %d\n", rval);
+		aprint_error("%s: set ssid failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 	return;
 }
@@ -2327,7 +2330,10 @@ ndis_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 #ifdef __FreeBSD__		
         case IEEE80211_MODE_TURBO:
 #endif /* __NetBSD__ */
-/* TODO: is this correct? (IEEE80211_MODE_TURBO_A and IEEE80211_MODE_TURBO_G are defined in _ieee80211.h) */
+/* 
+ * TODO: is this correct? (IEEE80211_MODE_TURBO_A and IEEE80211_MODE_TURBO_G 
+ * are defined in _ieee80211.h)
+ */
 	case IEEE80211_MODE_TURBO_A:
 	case IEEE80211_MODE_TURBO_G:
                 imr->ifm_active |= IFM_MAKEMODE(IFM_IEEE80211_11A)
@@ -2352,13 +2358,13 @@ ndis_get_assoc(sc, assoc)
 	len = sizeof(bssid);
 	error = ndis_get_info(sc, OID_802_11_BSSID, &bssid, &len);
 	if (error) {
-		device_printf(sc->ndis_dev, "failed to get bssid\n");
+		aprint_error("%s: failed to get bssid\n", sc->ndis_dev->dv_xname);
 		return(ENOENT);
 	}
 	len = 0;
 	error = ndis_get_info(sc, OID_802_11_BSSID_LIST, NULL, &len);
 	if (error != ENOSPC) {
-		device_printf(sc->ndis_dev, "bssid_list failed\n");
+		aprint_error("%s: bssid_list failed\n", sc->ndis_dev->dv_xname);
 		return (error);
 	}
 
@@ -2366,7 +2372,7 @@ ndis_get_assoc(sc, assoc)
 	error = ndis_get_info(sc, OID_802_11_BSSID_LIST, bl, &len);
 	if (error) {
 		free(bl, M_TEMP);
-		device_printf(sc->ndis_dev, "bssid_list failed\n");
+		aprint_error("%s: bssid_list failed\n", sc->ndis_dev->dv_xname);
 		return (error);
 	}
 
@@ -2434,8 +2440,8 @@ ndis_getstate_80211(sc)
 			ic->ic_curmode = IEEE80211_MODE_11G;
 			break;
 		default:
-			device_printf(sc->ndis_dev,
-			    "unknown nettype %d\n", arg);
+			aprint_error("%s: unknown nettype %d\n", 
+				     sc->ndis_dev->dv_xname, arg);
 			break;
 		}
 		free(bs, M_TEMP);
@@ -2447,15 +2453,16 @@ ndis_getstate_80211(sc)
 	rval = ndis_get_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
-		device_printf (sc->ndis_dev, "get ssid failed: %d\n", rval);
+		aprint_error("%s: get ssid failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 	bcopy(ssid.ns_ssid, ic->ic_bss->ni_essid, ssid.ns_ssidlen);
 	ic->ic_bss->ni_esslen = ssid.ns_ssidlen;
 
 	len = sizeof(arg);
 	rval = ndis_get_info(sc, OID_GEN_LINK_SPEED, &arg, &len);
 	if (rval)
-		device_printf (sc->ndis_dev, "get link speed failed: %d\n",
-		    rval);
+		aprint_error("%s: get link speed failed: %d\n",
+			     sc->ndis_dev->dv_xname, rval);
 
 	if (ic->ic_modecaps & (1<<IEEE80211_MODE_11B)) {
 		ic->ic_bss->ni_rates = ic->ic_sup_rates[IEEE80211_MODE_11B];
@@ -2477,8 +2484,8 @@ ndis_getstate_80211(sc)
 	}
 
 	if (i == ic->ic_bss->ni_rates.rs_nrates)
-		device_printf(sc->ndis_dev, "no matching rate for: %d\n",
-		    arg / 5000);
+		aprint_error("%s: no matching rate for: %d\n",
+			     sc->ndis_dev->dv_xname, arg / 5000);
 	else
 		ic->ic_bss->ni_txrate = i;
 
@@ -2487,8 +2494,8 @@ ndis_getstate_80211(sc)
 		rval = ndis_get_info(sc, OID_802_11_POWER_MODE, &arg, &len);
 
 		if (rval)
-			device_printf(sc->ndis_dev,
-			    "get power mode failed: %d\n", rval);
+			aprint_error("%s: get power mode failed: %d\n", 
+				     sc->ndis_dev->dv_xname, rval);
 		if (arg == NDIS_80211_POWERMODE_CAM)
 			ic->ic_flags &= ~IEEE80211_F_PMGTON;
 		else
@@ -2506,15 +2513,17 @@ ndis_getstate_80211(sc)
 		chan = ieee80211_mhz2ieee(config.nc_dsconfig / 1000, 0);
 		if (chan < 0 || chan >= IEEE80211_CHAN_MAX) {
 			if (ifp->if_flags & IFF_DEBUG)
-				device_printf(sc->ndis_dev, "current channel "
-				    "(%uMHz) out of bounds\n", 
-				    config.nc_dsconfig / 1000);
+				aprint_error("%s: current channel "
+					     "(%uMHz) out of bounds\n", 
+					     sc->ndis_dev->dv_xname,
+					     config.nc_dsconfig / 1000);
 			ic->ic_bss->ni_chan = &ic->ic_channels[1];
 		} else
 			ic->ic_bss->ni_chan = &ic->ic_channels[chan];
 	} else
-		device_printf(sc->ndis_dev, "couldn't retrieve "
-		    "channel info: %d\n", rval);
+		aprint_error("%s: couldn't retrieve "
+			     "channel info: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 /*
 	len = sizeof(arg);
@@ -2575,8 +2584,6 @@ ndis_ioctl(ifp, command, data)
 #ifdef __FreeBSD__			
 				ndis_init(sc);
 #else /* __NetBSD__ */
-				//ndis_init((struct ifnet *)sc);
-				//ndis_init(&sc->arpcom.ac_if);
 				ndis_init(ifp);
 #endif
 		} else {
@@ -2589,20 +2596,13 @@ ndis_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 #ifdef __NetBSD__
-/* TODO: I'm really not sure this is the correct thing to do here, but multicast address
- * TODO: lists weren't getting set in ether_ioctl because they SIOCADDMULTI is routed to
- * TODO: ndis_setmulti here.
+/* 
+ * TODO: I'm really not sure this is the correct thing to do here, but multicast
+ * address lists weren't getting set in ether_ioctl because they SIOCADDMULTI 
+ * is routed to ndis_setmulti here.
  */
-//#ifdef __NetBSD__
-		/* ether_ioctl is supposed to be called at IPL_NET */
-//		s = splnet();
-//#endif		
 		error = ether_ioctl(ifp, command, data);
-//#ifdef __NetBSD__
-//		splx(s);
-//#endif
-
-#endif		
+#endif
 		ndis_setmulti(sc);
 		error = 0;
 		break;	
@@ -2612,7 +2612,7 @@ ndis_ioctl(ifp, command, data)
 #ifdef __FreeBSD__		
 			error = ieee80211_ioctl(ifp, command, data);
 #else /* __NetBSD__ */
-			error = ieee80211_ioctl(&sc->ic, command, data);			
+			error = ieee80211_ioctl(&sc->ic, command, data);
 #endif
 			if (error == ENETRESET) {
 				ndis_setstate_80211(sc);
@@ -2624,10 +2624,12 @@ ndis_ioctl(ifp, command, data)
 		break;
 	case SIOCSIFCAP:
 /* TODO: Probrably more needs to be done for SIOCSIFCAP */	
-#ifdef __FreeBSD__	
+#ifdef __FreeBSD__
 		ifp->if_capenable = ifr->ifr_reqcap;
-/* TODO: I couldn't find any equivilent to ifreq.ifr_reqcap for NetBSD, I'm not sure if
-   TODO  we need it or not */
+/* 
+ * TODO: I couldn't find any equivilent to ifreq.ifr_reqcap for NetBSD, I'm 
+ * not sure if TODO  we need it or not 
+ */
 		if (ifp->if_capenable & IFCAP_TXCSUM)
 			ifp->if_hwassist = sc->ndis_hwassist;
 		else
@@ -2655,34 +2657,12 @@ ndis_ioctl(ifp, command, data)
 			error = ieee80211_ioctl(&sc->ic, command, data);
 #endif
 
-//#ifdef __FreeBSD__
 			if (error == ENETRESET) {
 				ndis_setstate_80211(sc);
 				error = 0;
 			}
-//#else /* __NetBSD__ */
-			/* I'm copying if_iwi.c's ioctl here.  I'm not really sure this
-			 * is correct.
-			 */
-			 /*
-			if (error == ENETRESET && command != SIOCADDMULTI) {
-				if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-					(IFF_UP | IFF_RUNNING))
-						ndis_init(ifp);
-
-				ndis_setstate_80211(sc);
-				error = 0;
-			}
-			 */
-//#endif
 		} else {
-//#ifdef __NetBSD__
-//			s = splnet();
-//#endif	
 			error = ether_ioctl(ifp, command, data);
-//#ifdef __NetBSD__
-//			splx(s);
-//#endif			
 		}
 		sc->ndis_skip = 0;
 		break;
@@ -2791,7 +2771,8 @@ ndis_wi_ioctl_set(ifp, command, data)
 #ifdef __FreeBSD__
 	error = suser(curthread);
 #else /* __NetBSD__ */
-	error = suser(curproc->p_ucred, &curproc->p_acflag);
+	error = kauth_authorize_generic(curproc->p_cred,
+	    KAUTH_GENERIC_ISSUSER, &curproc->p_acflag);
 #endif	
 	if (error)
 		return (error);
@@ -2831,11 +2812,7 @@ ndis_watchdog(ifp)
 	NDIS_LOCK(sc);
 	
 	ifp->if_oerrors++;
-#ifdef __FreeBSD__	
-	device_printf(sc->ndis_dev, "watchdog timeout\n");
-#else /* __NetBSD__ */
-	printf("watchdog timeout\n");
-#endif
+	aprint_error("%s: watchdog timeout\n", sc->ndis_dev->dv_xname);
 	
 	NDIS_UNLOCK(sc);
 

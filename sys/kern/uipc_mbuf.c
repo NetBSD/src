@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.105.4.1 2006/04/22 11:39:59 simonb Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.105.4.2 2006/06/01 22:38:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105.4.1 2006/04/22 11:39:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105.4.2 2006/06/01 22:38:09 kardel Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -154,6 +154,7 @@ mbinit(void)
 	KASSERT(sizeof(struct _m_ext) <= MHLEN);
 	KASSERT(sizeof(struct mbuf) == MSIZE);
 
+	mclpool_allocator.pa_backingmap = mb_map;
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
 

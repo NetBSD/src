@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15.6.1 2006/04/22 11:38:17 simonb Exp $
+	$NetBSD: syscalls.master,v 1.15.6.2 2006/06/01 22:36:00 kardel Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -378,8 +378,7 @@
 			    size_t nbyte, int pad, off_t offset); }
 174	NOARGS		{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
-; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+175	UNIMPL		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
 #if defined(NTP) || !defined(_KERNEL)
 176	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
@@ -643,8 +642,12 @@
 296	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 297	NOARGS		{ int sys_fchroot(int fd); }
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-299	NOARGS		{ int sys_fhstat(const fhandle_t *fhp, \
-			    struct stat *sb); }
+#ifdef COMPAT_30
+299	NOARGS		{ int compat_30_sys_fhstat(const fhandle_t *fhp, \
+			    struct stat13 *sb); }
+#else
+299	EXCL		compat_30_sys_fhstat
+#endif
 #ifdef COMPAT_20
 300	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs12 *buf); }
@@ -821,3 +824,5 @@
 390	NOARGS		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
+392	NOARGS		{ int sys___fhstat30(const fhandle_t *fhp, \
+			    struct stat *sb); }

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $       */
+/*      $NetBSD: pccons.c,v 1.23.6.2 2006/06/01 22:35:24 kardel Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23.6.2 2006/06/01 22:35:24 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/kerndebug.h>
 
 #include <uvm/uvm_extern.h>
@@ -1207,7 +1208,8 @@ pcopen(dev_t       dev,
         pcparam(tp, &tp->t_termios);
         ttsetwater(tp);
     } 
-    else if ( tp->t_state & TS_XCLUDE && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 )
+    else if ( tp->t_state & TS_XCLUDE &&
+	     kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0 )
     {
         /*
         ** Don't allow the open if the tty has been set up 

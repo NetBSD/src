@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.38.6.1 2006/04/22 11:37:59 simonb Exp $ */
+/*	$NetBSD: psl.h,v 1.38.6.2 2006/06/01 22:35:25 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -299,7 +299,7 @@ _SPLSET(spllowerschedclock, IPL_SCHED)
 
 /* Raise IPL and return previous value */
 static __inline int
-splraise(int newipl)
+splraiseipl(int newipl)
 {
 	int psr, oldipl;
 
@@ -318,48 +318,15 @@ splraise(int newipl)
 	return (oldipl);
 }
 
-#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	splraise(IPL_SOFTNET)
+#include <sys/spl.h>
 
-#define	splausoft()	splraise(IPL_SOFTAUDIO)
-#define	splfdsoft()	splraise(IPL_SOFTFDC)
+#define	splausoft()	splraiseipl(IPL_SOFTAUDIO)
+#define	splfdsoft()	splraiseipl(IPL_SOFTFDC)
 
-#define	splbio()	splraise(IPL_BIO)
-#define	spltty()	splraise(IPL_TTY)
-#define	splnet()	splraise(IPL_NET)
-#define	splvm()		splraise(IPL_VM)
-#define	splclock()	splraise(IPL_CLOCK)
-#define	splsched()	splraise(IPL_SCHED)
+#define	splfd()		splraiseipl(IPL_FD)
+#define	splts102()	splraiseipl(IPL_TS102)
 
-/* fd hardware, ts102, and tadpole microcontoller interrupts are at level 11 */
-#define	splfd()		splraise(11)
-#define	splts102()	splraise(11)
-
-/*
- * zs hardware interrupts are at level 12
- * su (com) hardware interrupts are at level 13
- * IPL_SERIAL must protect them all.
- */
-#define	splzs()		splraise(12)
-#define	splserial()	splraise(IPL_SERIAL)
-
-#define	splaudio()	splraise(IPL_AUDIO)
-
-#define	splstatclock()	splraise(IPL_STATCLOCK)
-
-static __inline int
-splhigh(void)
-{
-	int psr, oldipl;
-
-	__asm volatile("rd %%psr,%0" : "=r" (psr));
-	__asm volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
-	__asm volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
-	    "r" (psr), "n" (PSR_PIL));
-	return (oldipl);
-}
-
-#define	spllock()	splhigh()
+#define	splzs()		splraiseipl(IPL_ZS)
 
 /* splx does not have a return value */
 static __inline void

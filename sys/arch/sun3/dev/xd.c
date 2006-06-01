@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.51.6.1 2006/04/22 11:38:05 simonb Exp $	*/
+/*	$NetBSD: xd.c,v 1.51.6.2 2006/06/01 22:35:29 kardel Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.6.1 2006/04/22 11:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.6.2 2006/06/01 22:35:29 kardel Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.6.1 2006/04/22 11:38:05 simonb Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -873,7 +874,9 @@ xdioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_proc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xdc_ioctlcmd(xd, dev, xio));
 

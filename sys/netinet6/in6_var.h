@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.41.4.1 2006/04/22 11:40:12 simonb Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.41.4.2 2006/06/01 22:39:02 kardel Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -638,6 +638,8 @@ int	in6_if2idlen   __P((struct ifnet *));
 void	*in6_domifattach __P((struct ifnet *));
 void	in6_domifdetach __P((struct ifnet *, void *));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
+void	in6_ifremloop(struct ifaddr *);
+void	in6_ifaddloop(struct ifaddr *);
 void	in6_createmkludge __P((struct ifnet *));
 void	in6_purgemkludge __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));

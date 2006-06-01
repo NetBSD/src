@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.4 2005/12/11 12:24:00 christos Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.4.6.1 2006/06/01 22:37:41 kardel Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -162,8 +162,6 @@ struct atu_softc {
 	enum atu_radio_type	atu_radio;
 	u_int16_t		atu_quirk;
 
-	u_int8_t		atu_ssid[MAX_SSID_LEN];
-	u_int8_t		atu_ssidlen;
 	u_int8_t		atu_channel;
 	u_int16_t		atu_desired_channel;
 	u_int8_t		atu_mode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.28 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: bootp.c,v 1.28.6.1 2006/06/01 22:38:28 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -133,7 +133,7 @@ bootp(sock)
 	bp->bp_hlen = 6;
 	bp->bp_xid = htonl(d->xid);
 	MACPY(d->myea, bp->bp_chaddr);
-	strncpy(bp->bp_file, bootfile, sizeof(bp->bp_file));
+	strncpy((char *)bp->bp_file, bootfile, sizeof(bp->bp_file));
 	bcopy(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048));
 #ifdef SUPPORT_DHCP
 	bp->bp_vend[4] = TAG_DHCP_MSGTYPE;

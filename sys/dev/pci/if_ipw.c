@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.16.6.1 2006/04/22 11:39:14 simonb Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.16.6.2 2006/06/01 22:36:44 kardel Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16.6.1 2006/04/22 11:39:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16.6.2 2006/06/01 22:36:44 kardel Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -263,7 +263,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ipw_start;
 	ifp->if_watchdog = ipw_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -271,8 +271,12 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_SHPREAMBLE | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_PMGT | IEEE80211_C_IBSS | IEEE80211_C_MONITOR;
+	ic->ic_caps =
+	      IEEE80211_C_SHPREAMBLE	/* short preamble supported */
+	    | IEEE80211_C_TXPMGT	/* tx power management */
+	    | IEEE80211_C_IBSS		/* ibss mode */
+	    | IEEE80211_C_MONITOR	/* monitor mode */
+	    ;
 
 	/* read MAC address from EEPROM */
 	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 0);
@@ -303,6 +307,9 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	/* check support for radio transmitter switch in EEPROM */
 	if (!(ipw_read_prom_word(sc, IPW_EEPROM_RADIO) & 8))
 		sc->flags |= IPW_FLAG_HAS_RADIO_SWITCH;
+
+	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(ic->ic_myaddr));
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
@@ -1229,7 +1236,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 			break;
 
 		default:
-			aprint_debug("%s: unknown status code %u\n",
+			aprint_error("%s: unknown status code %u\n",
 			    sc->sc_dev.dv_xname, le16toh(status->code));
 		}
 
@@ -1265,7 +1272,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 
 	case IPW_SBD_TYPE_HEADER:
 		shdr = sbd->priv;
- 		bus_dmamap_sync(sc->sc_dmat, sc->hdr_map, 
+ 		bus_dmamap_sync(sc->sc_dmat, sc->hdr_map,
  		    shdr->offset, sizeof(struct ipw_hdr), BUS_DMASYNC_POSTWRITE);
 		TAILQ_INSERT_TAIL(&sc->sc_free_shdr, shdr, next);
 		break;
@@ -1274,7 +1281,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		ic = &sc->sc_ic;
 		sbuf = sbd->priv;
 
-		bus_dmamap_sync(sc->sc_dmat, sbuf->map, 
+		bus_dmamap_sync(sc->sc_dmat, sbuf->map,
 		    0, MCLBYTES, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sbuf->map);
 		m_freem(sbuf->m);
@@ -1752,7 +1759,7 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    sizeof(sc->sc_fwname));
 
 		ipw_free_firmware(sc);
-		/* FALLTRHOUGH */		
+		/* FALLTRHOUGH */
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 		if (error != ENETRESET)
@@ -2193,8 +2200,8 @@ ipw_config(struct ipw_softc *sc)
 
 			wepkey.idx = i;
 			wepkey.len = k->wk_keylen;
-			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->wk_key, wepkey.key, k->wk_keylen);
+			memset(wepkey.key, 0, sizeof(wepkey.key));
+			memcpy(wepkey.key, k->wk_key, k->wk_keylen);
 			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,
@@ -2220,7 +2227,7 @@ ipw_config(struct ipw_softc *sc)
 #if 0
 	struct ipw_wpa_ie ie;
 
-	bzero(&ie, sizeof ie);
+	memset(&ie, 0 sizeof(ie));
 	ie.len = htole32(sizeof (struct ieee80211_ie_wpa));
 	DPRINTF(("Setting wpa ie\n"));
 	error = ipw_cmd(sc, IPW_CMD_SET_WPA_IE, &ie, sizeof ie);

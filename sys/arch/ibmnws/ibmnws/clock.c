@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.6.1 2006/06/01 22:35:00 kardel Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -37,13 +37,15 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/clock_subr.h>
 
 #include <ibmnws/ibmnws/clockvar.h>
 
 #define	MINYEAR	1990
 
-void decr_intr __P((struct clockframe *));
+void decr_intr(struct clockframe *);
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
@@ -51,15 +53,14 @@ void decr_intr __P((struct clockframe *));
 u_long ticks_per_sec;
 u_long ns_per_tick;
 static long ticks_per_intr;
-static volatile u_long lasttb;
 
 struct device *clockdev;
 const struct clockfns *clockfns;
 int clockinitted;
 
-static void ns1000_clock_init __P((struct device *));
-static void ns1000_clock_get __P((struct device *, time_t, struct clocktime *));
-static void ns1000_clock_set __P((struct device *, struct clocktime *));
+static void ns1000_clock_init(struct device *);
+static void ns1000_clock_get(struct device *, time_t, struct clocktime *);
+static void ns1000_clock_set(struct device *, struct clocktime *);
 
 const struct clockfns ns1000_clockfns = {
 	ns1000_clock_init,
@@ -68,16 +69,12 @@ const struct clockfns ns1000_clockfns = {
 };
 
 void
-ns1000_clock_init (dev)
-        struct device *dev;
+ns1000_clock_init(struct device *dev)
 {
 }
 
 void
-ns1000_clock_get(dev, base, ct)
-        struct device *dev;
-        time_t base;
-        struct clocktime *ct;
+ns1000_clock_get(struct device *dev, time_t base, struct clocktime *ct)
 {
         ct->sec		= 0;
         ct->min		= 0;
@@ -89,16 +86,12 @@ ns1000_clock_get(dev, base, ct)
 }
 
 void
-ns1000_clock_set(dev, ct)
-        struct device *dev;
-        struct clocktime *ct;
+ns1000_clock_set(struct device *dev, struct clocktime *ct)
 {
 }
 
 void
-clockattach(dev, fns)
-        struct device *dev;
-        const struct clockfns *fns;
+clockattach(struct device *dev, const struct clockfns *fns)
 {
 
 	printf("\n");
@@ -115,11 +108,12 @@ clockattach(dev, fns)
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
+	struct cpu_info * const ci = curcpu();
 
 	ticks_per_intr = ticks_per_sec / hz;
-	__asm volatile ("mftb %0" : "=r"(lasttb));
+	__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
 	/*
@@ -135,8 +129,7 @@ cpu_initclocks()
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	struct clocktime ct;
 	int year;
@@ -215,7 +208,7 @@ bad:
  * to wrap the TODR around.
  */
 void
-resettodr()
+resettodr(void)
 {
 	struct clock_ymdhms dt;
 	struct clocktime ct;
@@ -247,23 +240,21 @@ resettodr()
  * but that would be a drag.
  */
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 
 	/* Nothing we can do */
 }
 
 void
-decr_intr(frame)
-	struct clockframe *frame;
+decr_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 	int msr;
 	int pri;
 	u_long tb;
-	long count;
+	long ticks;
 	int nticks;
-	extern long intrcnt[];
 
 	/*
 	 * Check whether we are initialized.
@@ -275,26 +266,27 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	__asm ("mfdec %0" : "=r"(count));
-	for (nticks = 0; count < 0; nticks++)
-		count += ticks_per_intr;
-	__asm volatile ("mtdec %0" :: "r"(count));
+	__asm ("mfdec %0" : "=r"(ticks));
+	for (nticks = 0; ticks < 0; nticks++)
+		ticks += ticks_per_intr;
+	__asm volatile ("mtdec %0" :: "r"(ticks));
 
-	intrcnt[CNT_CLOCK]++;
+	uvmexp.intrs++;
+	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
 	if (pri & SPL_CLOCK)
-		tickspending += nticks;
+		ci->ci_tickspending += nticks;
 	else {
-		nticks += tickspending;
-		tickspending = 0;
+		nticks += ci->ci_tickspending;
+		ci->ci_tickspending = 0;
 
 		/*
 		 * lasttb is used during microtime. Set it to the virtual
 		 * start of this tick interval.
 		 */
 		__asm ("mftb %0" : "=r"(tb));
-		lasttb = tb + count - ticks_per_intr;
+		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -319,8 +311,7 @@ decr_intr(frame)
  * Fill in *tvp with current time with microsecond resolution.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	u_long tb;
 	u_long ticks;
@@ -329,9 +320,9 @@ microtime(tvp)
 	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	__asm ("mftb %0" : "=r"(tb));
-	ticks = (tb - lasttb) * ns_per_tick;
+	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
 	*tvp = time;
-	__asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
@@ -344,8 +335,7 @@ microtime(tvp)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	unsigned int n;
+delay(unsigned int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;

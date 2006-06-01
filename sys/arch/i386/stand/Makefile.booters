@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.62 2005/12/11 12:17:47 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.62.6.1 2006/06/01 22:34:53 kardel Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,11 @@ LIBC=		# nothing
 CPUFLAGS= -m32
 CPPFLAGS+= -DBOOT_ELF64
 .else
-CPUFLAGS= -mcpu=i386
+.if ${HAVE_GCC} == 3
+CPUFLAGS=  -mcpu=i386
+.else
+CPUFLAGS=  -march=i386 -mtune=i386 -Wno-attributes
+.endif
 .endif
 COPTS=	-Os -ffreestanding
 
@@ -100,26 +104,30 @@ vers.c: ${VERSIONFILE} ${SOURCES}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 
-CLEANFILES+= ${BASE}.rom
+CLEANFILES+= ${BASE}.rom ${BASE}.rom.tmp
 ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} >${BASE}.list
-	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
-	${GENPROM} ${ROM_SIZE} < ${BASE}.bin > ${BASE}.rom || \
+	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
+	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
 	    rm -f ${BASE}.rom
-	rm -f ${BASE}.bin
+	rm -f ${BASE}.rom.tmp
 
 CLEANFILES+= ${BASE}.com
 ${BASE}.com: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.com
 
 CLEANFILES+= ${BASE}.bin
 ${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} > ${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin

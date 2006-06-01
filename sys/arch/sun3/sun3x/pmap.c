@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89.6.1 2006/06/01 22:35:30 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89.6.1 2006/06/01 22:35:30 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2179,7 +2179,8 @@ pmap_protect(pmap_t pmap, vaddr_t startva, vaddr_t endva, vm_prot_t prot)
 	a_idx = MMU_TIA(startva);
 	b_idx = MMU_TIB(startva);
 	c_idx = MMU_TIC(startva);
-	b_tbl = (b_tmgr_t *) c_tbl = NULL;
+	b_tbl = NULL;
+	c_tbl = NULL;
 
 	iscurpmap = (pmap == current_pmap());
 	while (startva < endva) {

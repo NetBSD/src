@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.6.6.1 2006/04/22 11:38:51 simonb Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.6.6.2 2006/06/01 22:36:19 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.6.6.1 2006/04/22 11:38:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.6.6.2 2006/06/01 22:36:19 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.6.6.1 2006/04/22 11:38:51 sim
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

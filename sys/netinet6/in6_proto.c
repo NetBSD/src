@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.61.6.1 2006/04/22 11:40:12 simonb Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.61.6.2 2006/06/01 22:39:02 kardel Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.6.1 2006/04/22 11:40:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.6.2 2006/06/01 22:39:02 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -114,6 +114,11 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.6.1 2006/04/22 11:40:12 simonb Ex
 #endif
 #include <netinet6/ipcomp.h>
 #endif /* IPSEC */
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #include <netinet6/ip6protosw.h>
 
@@ -211,6 +216,13 @@ const struct ip6protosw inet6sw[] = {
   rip6_usrreq,
   encap_init,	0,		0,		0,
 },
+#if NCARP > 0
+{ SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
+  carp6_proto_input,	rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,		0,		0,		0,		NULL /* carp_sysctl */
+},
+#endif /* NCARP */
 #ifdef ISO
 { SOCK_RAW,	&inet6domain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input,	rip6_output,	encap6_ctlinput, rip6_ctloutput,

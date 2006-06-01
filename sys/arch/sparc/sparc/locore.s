@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.224.6.1 2006/05/27 22:49:52 kardel Exp $	*/
+/*	$NetBSD: locore.s,v 1.224.6.2 2006/06/01 22:35:25 kardel Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5099,8 +5099,8 @@ ENTRY(cpu_switchto)
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l1 = oldpsr (excluding ipl bits)
 	 *	%l2 = %hi(whichqs)
-	 *	%l3(%g3) = p
-	 *	%l4(%g4) = lastproc
+	 *	%l3(%g3) = newlwp
+	 *	%l4(%g4) = lastlwp
 	 *	%l5 = tmp 0
 	 *	%l6 = %hi(cpcb)
 	 *	%l7 = %hi(curlwp)
@@ -5112,7 +5112,7 @@ ENTRY(cpu_switchto)
 	 *	%o5 = tmp 6, then at Lsw_scan, q
 	 */
 	save	%sp, -CCFSZ, %sp
-	mov	%i0, %l4			! save p
+	mov	%i0, %l4			! save lwp
 	sethi	%hi(cpcb), %l6
 	ld	[%l6 + %lo(cpcb)], %o0
 	std	%i6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <fp,pc>;
@@ -5130,12 +5130,12 @@ wb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE;	/* 6 of each: */
 	restore; restore; restore; restore; restore; restore
 
 #if defined(MULTIPROCESSOR)
-	/* flush this process's context from TLB (on SUN4M/4D) */
-	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
+	/* flush this LWP's context from TLB (on SUN4M/4D) */
+	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastlwp);
 	 mov	%i0, %o0
 #endif
 
-	/* If we've been given a process to switch to, skip the rq stuff */
+	/* If we've been given a LWP to switch to, skip the rq stuff */
 	tst	%i1
 	bnz,a	Lsw_load
 	 mov	%i1, %l3	! but move into the expected register first

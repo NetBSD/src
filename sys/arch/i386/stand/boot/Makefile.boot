@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.25 2005/12/11 12:17:47 christos Exp $
+# $NetBSD: Makefile.boot,v 1.25.6.1 2006/06/01 22:34:53 kardel Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -46,7 +46,11 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
+.if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
+.else
+CPUFLAGS=  -march=i386 -mtune=i386
+.endif
 .endif
 
 COPTS+=    -ffreestanding
@@ -77,6 +81,9 @@ SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
+.if ${HAVE_GCC} == 4
+CPPFLAGS+=	-Wno-pointer-sign
+.endif
 
 # CPPFLAGS+= -DBOOTXX_RAID1_SUPPORT
 
@@ -133,6 +140,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # We link the program, find the callers (all in libi386), then
 # explicitely pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
+	${_MKTARGET_LINK}
 	bb="$$( ${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0 -cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \

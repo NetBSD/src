@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.241.6.1 2006/04/22 11:39:13 simonb Exp $
+#	$NetBSD: files.pci,v 1.241.6.2 2006/06/01 22:36:43 kardel Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -58,6 +58,13 @@ file	dev/pci/twe.c			twe
 
 attach	ld at twe with ld_twe
 file	dev/pci/ld_twe.c		ld_twe
+
+device	twa {unit = -1}
+attach	twa at pci
+file	dev/pci/twa.c			twa
+
+attach	ld at twa with ld_twa
+file	dev/pci/ld_twa.c		ld_twa
 
 # AMI RAID controllers
 device	amr {unit = -1}
@@ -577,9 +584,9 @@ attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
 
 # Level One LXT-1001 Gigabit Ethernet
-device	glxt: ether, ifnet, arp, mii
-attach	glxt at pci
-file	dev/pci/if_glxt.c		glxt
+#device	glxt: ether, ifnet, arp, mii
+#attach	glxt at pci
+#file	dev/pci/if_glxt.c		glxt
 
 # Sundance Tech./Tamarack TC9021 Gigabit Ethernet
 device	stge: ether, ifnet, arp, mii, mii_bitbang
@@ -649,6 +656,11 @@ file	dev/pci/viapm.c	viapm
 device	viaenv: sysmon_envsys
 attach	viaenv at viapm
 file	dev/pci/viaenv.c		viaenv			needs-flag
+
+# Intel PIIX4 power management controller
+device	piixpm: i2cbus
+attach	piixpm at pci
+file	dev/pci/piixpm.c		piixpm
 
 # AMD 768MPX power management controller
 defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
@@ -731,7 +743,7 @@ attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
-device	machfb: wsemuldisplaydev, rasops8, vcons, videomode
+device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 
@@ -802,6 +814,6 @@ attach	ath at pci with ath_pci
 file	dev/pci/if_ath_pci.c		ath_pci
 
 # NVIDIA nForce Ethernet
-device  nfe: ether, ifnet, mii, mii_phy
+device  nfe: ether, ifnet, arp, mii, mii_phy
 attach  nfe at pci
 file    dev/pci/if_nfe.c                nfe

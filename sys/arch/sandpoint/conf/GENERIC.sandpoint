@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.27.6.1 2006/04/22 11:37:54 simonb Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.27.6.2 2006/06/01 22:35:23 kardel Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.27.6.1 $"
+#ident 		"GENERIC-$Revision: 1.27.6.2 $"
 
 maxusers	32
 
@@ -41,7 +41,7 @@ options 	DDB
 options 	KTRACE
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=300000
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

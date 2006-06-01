@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.16 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.16.6.1 2006/06/01 22:36:00 kardel Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.16 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.16.6.1 2006/06/01 22:36:00 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -446,6 +446,7 @@ si_ogetudata(fp, fd, ioc, l)
 	int error;
 	struct svr4_si_oudata ud;
 	struct svr4_si_sockparms pa;
+	(void)memset(&pa, 0, sizeof(pa));	/* XXX: GCC */
 
 	if (ioc->len != sizeof(ud) && ioc->len != sizeof(ud) - sizeof(int)) {
 		DPRINTF(("SI_OGETUDATA: Wrong size %ld != %d\n",
@@ -955,7 +956,7 @@ svr4_32_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 			struct sys_getsockname_args ap;
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
-			SCARG(&ap, alen) = lenp;
+			SCARG(&ap, alen) = (socklen_t *)lenp;
 			if ((error = sys_getsockname(l, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getsockname error\n"));
 				return error;
@@ -969,7 +970,7 @@ svr4_32_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 			struct sys_getpeername_args ap;
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
-			SCARG(&ap, alen) = lenp;
+			SCARG(&ap, alen) = (socklen_t *)lenp;
 			if ((error = sys_getpeername(l, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getpeername error\n"));
 				return error;
@@ -1769,7 +1770,7 @@ svr4_32_sys_getmsg(l, v, retval)
 
 		SCARG(&ga, fdes) = SCARG(uap, fd);
 		SCARG(&ga, asa) = (void *) sup;
-		SCARG(&ga, alen) = flen;
+		SCARG(&ga, alen) = (socklen_t *)flen;
 
 		if ((error = sys_getpeername(l, &ga, retval)) != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
@@ -1828,7 +1829,7 @@ svr4_32_sys_getmsg(l, v, retval)
 		 */
 		SCARG(&aa, s) = SCARG(uap, fd);
 		SCARG(&aa, name) = (void *) sup;
-		SCARG(&aa, anamelen) = flen;
+		SCARG(&aa, anamelen) = (socklen_t *)flen;
 
 		if ((error = sys_accept(l, &aa, retval)) != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));

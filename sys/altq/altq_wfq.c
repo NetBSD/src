@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.9 2005/12/24 20:10:16 perry Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.9.6.1 2006/06/01 22:34:09 kardel Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.9 2005/12/24 20:10:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.9.6.1 2006/06/01 22:34:09 kardel Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.9 2005/12/24 20:10:16 perry Exp $");
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -136,18 +137,14 @@ wfq_ifattach(ifacep)
 	}
 
 	/* allocate and initialize wfq_state_t */
-	MALLOC(new_wfqp, wfq_state_t *, sizeof(wfq_state_t),
-	       M_DEVBUF, M_WAITOK);
+	new_wfqp = malloc(sizeof(wfq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (new_wfqp == NULL)
 		return (ENOMEM);
-	(void)memset(new_wfqp, 0, sizeof(wfq_state_t));
-	MALLOC(queue, wfq *, sizeof(wfq) * DEFAULT_QSIZE,
-	       M_DEVBUF, M_WAITOK);
+	queue = malloc(sizeof(wfq) * DEFAULT_QSIZE, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (queue == NULL) {
-		FREE(new_wfqp, M_DEVBUF);
+		free(new_wfqp, M_DEVBUF);
 		return (ENOMEM);
 	}
-	(void)memset(queue, 0, sizeof(wfq) * DEFAULT_QSIZE);
 
 	/* keep the ifq */
 	new_wfqp->ifq = &ifp->if_snd;
@@ -172,8 +169,8 @@ wfq_ifattach(ifacep)
 	if ((error = altq_attach(&ifp->if_snd, ALTQT_WFQ, new_wfqp,
 				 wfq_ifenqueue, wfq_ifdequeue, wfq_request,
 				 new_wfqp, wfq_classify)) != 0) {
-		FREE(queue, M_DEVBUF);
-		FREE(new_wfqp, M_DEVBUF);
+		free(queue, M_DEVBUF);
+		free(new_wfqp, M_DEVBUF);
 		return (error);
 	}
 
@@ -215,8 +212,8 @@ wfq_ifdetach(ifacep)
 	}
 
 	/* deallocate wfq_state_t */
-	FREE(wfqp->queue, M_DEVBUF);
-	FREE(wfqp, M_DEVBUF);
+	free(wfqp->queue, M_DEVBUF);
+	free(wfqp, M_DEVBUF);
 	return (error);
 }
 
@@ -580,13 +577,12 @@ wfq_config(cf)
 	if (cf->nqueues != wfqp->nums) {
 		/* free queued mbuf */
 		wfq_flush(wfqp->ifq);
-		FREE(wfqp->queue, M_DEVBUF);
+		free(wfqp->queue, M_DEVBUF);
 
-		MALLOC(queue, wfq *, sizeof(wfq) * cf->nqueues,
-		       M_DEVBUF, M_WAITOK);
+		queue = malloc(sizeof(wfq) * cf->nqueues, M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (queue == NULL)
 			return (ENOMEM);
-		(void)memset(queue, 0, sizeof(wfq) * cf->nqueues);
 
 		wfqp->nums = cf->nqueues;
 		wfqp->bytes = 0;
@@ -694,7 +690,9 @@ wfqioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 #endif
 			return (error);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.14.6.1 2006/04/22 11:38:55 simonb Exp $	*/
+/*	$NetBSD: athvar.h,v 1.14.6.2 2006/06/01 22:36:23 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -264,7 +264,7 @@ struct ath_softc {
 	u_int			sc_txqsetup;	/* h/w queues setup */
 	u_int			sc_txintrperiod;/* tx interrupt batching */
 	struct ath_txq		sc_txq[HAL_NUM_TX_QUEUES];
-	struct ath_txq		*sc_ac2q[5];	/* WME AC -> h/w q map */ 
+	struct ath_txq		*sc_ac2q[5];	/* WME AC -> h/w q map */
 	ath_task_t		sc_txtask;	/* tx int processing */
 
 	struct ath_descdma	sc_bdma;	/* beacon descriptors */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.135.6.1 2006/04/22 11:38:17 simonb Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.135.6.2 2006/06/01 22:36:00 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.135.6.1 2006/04/22 11:38:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.135.6.2 2006/06/01 22:36:00 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.135.6.1 2006/04/22 11:38:17 simonb 
 #include <sys/socketvar.h>
 #include <sys/exec.h>
 #include <sys/swap.h>
+#include <sys/kauth.h>
 
 #include <compat/sys/signal.h>
 
@@ -1259,7 +1260,8 @@ sunos_sys_reboot(l, v, retval)
 	int error, bsd_howto, sun_howto;
 	char *bootstr;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)) != 0)
 		return (error);
 
 	/*

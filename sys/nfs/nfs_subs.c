@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.157.4.2 2006/04/22 11:40:15 simonb Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.157.4.3 2006/06/01 22:39:13 kardel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157.4.2 2006/04/22 11:40:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157.4.3 2006/06/01 22:39:13 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157.4.2 2006/04/22 11:40:15 simonb Ex
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/once.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -642,7 +643,7 @@ nfsm_reqh(np, procid, hsiz, bposp)
 struct mbuf *
 nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	verf_str, mrest, mrest_len, mbp, xidp)
-	struct ucred *cr;
+	kauth_cred_t cr;
 	int nmflag;
 	int procid;
 	int auth_type;
@@ -709,12 +710,12 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 		nfsm_build(tl, u_int32_t *, auth_len);
 		*tl++ = 0;		/* stamp ?? */
 		*tl++ = 0;		/* NULL hostname */
-		*tl++ = txdr_unsigned(cr->cr_uid);
-		*tl++ = txdr_unsigned(cr->cr_gid);
+		*tl++ = txdr_unsigned(kauth_cred_geteuid(cr));
+		*tl++ = txdr_unsigned(kauth_cred_getegid(cr));
 		grpsiz = (auth_len >> 2) - 5;
 		*tl++ = txdr_unsigned(grpsiz);
 		for (i = 0; i < grpsiz; i++)
-			*tl++ = txdr_unsigned(cr->cr_groups[i]);
+			*tl++ = txdr_unsigned(kauth_cred_group(cr, i)); /* XXX elad review */
 		break;
 	case RPCAUTH_KERB4:
 		siz = auth_len;
@@ -1395,7 +1396,7 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 	struct nfsdircache *ndp = NULL;
 	struct nfsdircache *newndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int hashent, gen, overwrite;
+	int hashent = 0, gen, overwrite;	/* XXX: GCC */
 
 	/*
 	 * XXX refuse entries for offset 0. amd(8) erroneously sets
@@ -1561,9 +1562,11 @@ nfs_init0(void)
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
-	pool_init(&nfs_srvdesc_pool, sizeof(struct nfsrv_descript),
-	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr);
 #endif /* NFSSERVER */
+
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
+	nfsdreq_init();
+#endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
 
 #if defined(NFSSERVER) || !defined(NFS_V2_ONLY)
 	/*
@@ -2018,7 +2021,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	struct vnode *vp;
 	int *flagp;
 	struct lwp *l;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -2524,15 +2527,14 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	fhandle_t *fhp;
 	int lockflag;
 	struct vnode **vpp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	int *rdonlyp;
 	int kerbflag;
 {
 	struct mount *mp;
-	int i;
-	struct ucred *credanon;
+	kauth_cred_t credanon;
 	int error, exflags;
 	struct sockaddr_in *saddr;
 
@@ -2579,12 +2581,9 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	} else if (kerbflag) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
-		cred->cr_uid = credanon->cr_uid;
-		cred->cr_gid = credanon->cr_gid;
-		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
-			cred->cr_groups[i] = credanon->cr_groups[i];
-		cred->cr_ngroups = i;
+	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
+		kauth_cred_clone(credanon, cred);
 	}
 	if (exflags & MNT_EXRDONLY)
 		*rdonlyp = 1;
@@ -2924,48 +2923,6 @@ nfsrv_errmap(nd, err)
 	if (err <= ELAST)
 		return ((int)nfsrv_v2errmap[err - 1]);
 	return (NFSERR_IO);
-}
-
-/*
- * Sort the group list in increasing numerical order.
- * (Insertion sort by Chris Torek, who was grossed out by the bubble sort
- *  that used to be here.)
- */
-void
-nfsrvw_sort(list, num)
-        gid_t *list;
-        int num;
-{
-	int i, j;
-	gid_t v;
-
-	/* Insertion sort. */
-	for (i = 1; i < num; i++) {
-		v = list[i];
-		/* find correct slot for value v, moving others up */
-		for (j = i; --j >= 0 && v < list[j];)
-			list[j + 1] = list[j];
-		list[j + 1] = v;
-	}
-}
-
-/*
- * copy credentials making sure that the result can be compared with memcmp().
- */
-void
-nfsrv_setcred(incred, outcred)
-	struct ucred *incred, *outcred;
-{
-	int i;
-
-	memset((caddr_t)outcred, 0, sizeof (struct ucred));
-	outcred->cr_ref = 1;
-	outcred->cr_uid = incred->cr_uid;
-	outcred->cr_gid = incred->cr_gid;
-	outcred->cr_ngroups = incred->cr_ngroups;
-	for (i = 0; i < incred->cr_ngroups; i++)
-		outcred->cr_groups[i] = incred->cr_groups[i];
-	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
 }
 
 u_int32_t

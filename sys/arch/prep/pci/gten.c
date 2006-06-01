@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.12.6.1 2006/04/22 11:37:54 simonb Exp $	*/
+/*	$NetBSD: gten.c,v 1.12.6.2 2006/06/01 22:35:17 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.12.6.1 2006/04/22 11:37:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.12.6.2 2006/06/01 22:35:17 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -61,9 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.12.6.1 2006/04/22 11:37:54 simonb Exp $")
 #include <machine/bus.h>
 #include <machine/gtenvar.h>
 
-static	int	gten_match (struct device *, struct cfdata *, void *);
-static	void	gten_attach (struct device *, struct device *, void *);
-static	int	gten_print (void *, const char *);
+static	int	gten_match(struct device *, struct cfdata *, void *);
+static	void	gten_attach(struct device *, struct device *, void *);
+static	int	gten_print(void *, const char *);
 
 CFATTACH_DECL(gten, sizeof(struct gten_softc),
     gten_match, gten_attach, NULL, NULL);
@@ -88,13 +88,13 @@ static struct wsscreen_list gten_screenlist = {
 	sizeof(_gten_scrlist) / sizeof(struct wsscreen_descr *), _gten_scrlist
 };
 
-static int gten_ioctl (void *, void *, u_long, caddr_t, int, struct proc *);
-static paddr_t gten_mmap (void *, void *, off_t, int);
-static int gten_alloc_screen (void *, const struct wsscreen_descr *,
-			      void **, int *, int *, long *);
-static void gten_free_screen (void *, void *);
-static int gten_show_screen (void *, void *, int,
-			     void (*) (void *, int, int), void *);
+static int gten_ioctl(void *, void *, u_long, caddr_t, int, struct proc *);
+static paddr_t gten_mmap(void *, void *, off_t, int);
+static int gten_alloc_screen(void *, const struct wsscreen_descr *,
+			     void **, int *, int *, long *);
+static void gten_free_screen(void *, void *);
+static int gten_show_screen(void *, void *, int,
+			    void (*) (void *, int, int), void *);
 
 static struct wsdisplay_accessops gten_accessops = {
 	gten_ioctl,
@@ -105,9 +105,9 @@ static struct wsdisplay_accessops gten_accessops = {
 	0 /* load_font */
 };
 
-static void gten_common_init (struct rasops_info *);
-static int gten_getcmap (struct gten_softc *, struct wsdisplay_cmap *);
-static int gten_putcmap (struct gten_softc *, struct wsdisplay_cmap *);
+static void gten_common_init(struct rasops_info *);
+static int gten_getcmap(struct gten_softc *, struct wsdisplay_cmap *);
+static int gten_putcmap(struct gten_softc *, struct wsdisplay_cmap *);
 
 #define	GTEN_VRAM_OFFSET	0xf00000
 
@@ -248,13 +248,8 @@ gten_common_init(struct rasops_info *ri)
 }
 
 static int
-gten_ioctl(v, vs, cmd, data, flag, p)
-	void *v;
-	void *vs;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+gten_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct gten_softc *gt = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -283,11 +278,7 @@ gten_ioctl(v, vs, cmd, data, flag, p)
 }
 
 static paddr_t
-gten_mmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+gten_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct gten_softc *gt = v;
 
@@ -300,12 +291,8 @@ gten_mmap(v, vs, offset, prot)
 }
 
 static int
-gten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+gten_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct gten_softc *gt = v;
 	struct rasops_info *ri = gt->gt_ri;
@@ -324,9 +311,7 @@ gten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-gten_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+gten_free_screen(void *v, void *cookie)
 {
 	struct gten_softc *gt = v;
 
@@ -337,12 +322,8 @@ gten_free_screen(v, cookie)
 }
 
 static int
-gten_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) (void *, int, int);
-	void *cbarg;
+gten_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
 }
@@ -394,9 +375,7 @@ gten_cnattach(pci_chipset_tag_t pc, bus_space_tag_t memt)
 }
 
 static int
-gten_getcmap(gt, cm)
-	struct gten_softc *gt;
-	struct wsdisplay_cmap *cm;
+gten_getcmap(struct gten_softc *gt, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -419,9 +398,7 @@ gten_getcmap(gt, cm)
 }
 
 static int
-gten_putcmap(gt, cm)
-	struct gten_softc *gt;
-	struct wsdisplay_cmap *cm;
+gten_putcmap(struct gten_softc *gt, struct wsdisplay_cmap *cm)
 {
 	int index = cm->index;
 	int count = cm->count;

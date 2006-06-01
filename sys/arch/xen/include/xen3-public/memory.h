@@ -1,4 +1,4 @@
-/* $NetBSD: memory.h,v 1.1.1.1.6.1 2006/04/22 11:38:11 simonb Exp $ */
+/* $NetBSD: memory.h,v 1.1.1.1.6.2 2006/06/01 22:35:37 kardel Exp $ */
 /******************************************************************************
  * memory.h
  * 
@@ -17,24 +17,30 @@
  */
 #define XENMEM_increase_reservation 0
 #define XENMEM_decrease_reservation 1
+#define XENMEM_populate_physmap     6
 typedef struct xen_memory_reservation {
 
     /*
-     * MFN bases of extents to free (XENMEM_decrease_reservation).
-     * MFN bases of extents that were allocated (XENMEM_increase_reservation).
+     * XENMEM_increase_reservation:
+     *   OUT: MFN (*not* GMFN) bases of extents that were allocated
+     * XENMEM_decrease_reservation:
+     *   IN:  GMFN bases of extents to free
+     * XENMEM_populate_physmap:
+     *   IN:  GPFN bases of extents to populate with memory
+     *   OUT: GMFN bases of extents that were allocated
+     *   (NB. This command also updates the mach_to_phys translation table)
      */
-    unsigned long *extent_start;
+    GUEST_HANDLE(ulong) extent_start;
 
     /* Number of extents, and size/alignment of each (2^extent_order pages). */
     unsigned long  nr_extents;
     unsigned int   extent_order;
 
     /*
-     * XENMEM_increase_reservation: maximum # bits addressable by the user
-     * of the allocated region (e.g., I/O devices often have a 32-bit
-     * limitation even in 64-bit systems). If zero then the user has no
-     * addressing restriction.
-     * XENMEM_decrease_reservation: unused.
+     * Maximum # bits addressable by the user of the allocated region (e.g., 
+     * I/O devices often have a 32-bit limitation even in 64-bit systems). If 
+     * zero then the user has no addressing restriction.
+     * This field is not used by XENMEM_decrease_reservation.
      */
     unsigned int   address_bits;
 
@@ -45,6 +51,7 @@ typedef struct xen_memory_reservation {
     domid_t        domid;
 
 } xen_memory_reservation_t;
+DEFINE_GUEST_HANDLE(xen_memory_reservation_t);
 
 /*
  * Returns the maximum machine frame number of mapped RAM in this system.
@@ -74,13 +81,13 @@ typedef struct xen_machphys_mfn_list {
      * machphys table is smaller than max_extents * 2MB.
      */
     unsigned int max_extents;
-    
+
     /*
      * Pointer to buffer to fill with list of extent starts. If there are
      * any large discontiguities in the machine address space, 2MB gaps in
      * the machphys table will be represented by an MFN base of zero.
      */
-    unsigned long *extent_start;
+    GUEST_HANDLE(ulong) extent_start;
 
     /*
      * Number of extents written to the above array. This will be smaller
@@ -88,6 +95,53 @@ typedef struct xen_machphys_mfn_list {
      */
     unsigned int nr_extents;
 } xen_machphys_mfn_list_t;
+DEFINE_GUEST_HANDLE(xen_machphys_mfn_list_t);
+
+/*
+ * Sets the GPFN at which a particular page appears in the specified guest's
+ * pseudophysical address space.
+ * arg == addr of xen_add_to_physmap_t.
+ */
+#define XENMEM_add_to_physmap      7
+typedef struct xen_add_to_physmap {
+    /* Which domain to change the mapping for. */
+    domid_t domid;
+
+    /* Source mapping space. */
+#define XENMAPSPACE_shared_info 0 /* shared info page */
+#define XENMAPSPACE_grant_table 1 /* grant table page */
+    unsigned int space;
+
+    /* Index into source mapping space. */
+    unsigned long idx;
+
+    /* GPFN where the source mapping page should appear. */
+    unsigned long gpfn;
+} xen_add_to_physmap_t;
+DEFINE_GUEST_HANDLE(xen_add_to_physmap_t);
+
+/*
+ * Translates a list of domain-specific GPFNs into MFNs. Returns a -ve error
+ * code on failure. This call only works for auto-translated guests.
+ */
+#define XENMEM_translate_gpfn_list  8
+typedef struct xen_translate_gpfn_list {
+    /* Which domain to translate for? */
+    domid_t domid;
+
+    /* Length of list. */
+    unsigned long nr_gpfns;
+
+    /* List of GPFNs to translate. */
+    GUEST_HANDLE(ulong) gpfn_list;
+
+    /*
+     * Output list to contain MFN translations. May be the same as the input
+     * list (in which case each input GPFN is overwritten with the output MFN).
+     */
+    GUEST_HANDLE(ulong) mfn_list;
+} xen_translate_gpfn_list_t;
+DEFINE_GUEST_HANDLE(xen_translate_gpfn_list_t);
 
 #endif /* __XEN_PUBLIC_MEMORY_H__ */
 

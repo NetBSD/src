@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2.2.2 2006/04/22 11:37:38 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/common/misc.c,v 1.8.4.1 2004/09/03 19:25:40 iedowse Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <bootstrap.h>

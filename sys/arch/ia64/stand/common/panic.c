@@ -1,5 +1,5 @@
 /*
- * $NetBSD: panic.c,v 1.2.2.2 2006/04/22 11:37:38 simonb Exp $
+ * $NetBSD: panic.c,v 1.2.2.3 2006/06/01 22:34:54 kardel Exp $
  */
 /*-
  * Copyright (c) 1996
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/common/panic.c,v 1.7 2003/08/25 23:30:41 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <machine/stdarg.h>

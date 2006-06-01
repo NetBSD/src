@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.10.6.1 2006/04/22 11:37:56 simonb Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10.6.2 2006/06/01 22:35:24 kardel Exp $	*/
 
 /*
  * Mach Operating System
@@ -45,6 +45,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_spc)
+#define PC_ADVANCE(regs) ((regs)->tf_spc += BKPT_SIZE)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0xc3c3		/* breakpoint instruction */

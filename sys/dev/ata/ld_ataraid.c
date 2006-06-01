@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.14.6.1 2006/04/22 11:38:51 simonb Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.14.6.2 2006/06/01 22:36:19 kardel Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.6.1 2006/04/22 11:38:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.6.2 2006/06/01 22:36:19 kardel Exp $");
 
 #include "rnd.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.6.1 2006/04/22 11:38:51 simonb E
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif

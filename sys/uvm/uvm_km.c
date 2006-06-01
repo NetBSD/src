@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.84.6.1 2006/04/22 11:40:29 simonb Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.84.6.2 2006/06/01 22:39:45 kardel Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.6.1 2006/04/22 11:40:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.6.2 2006/06/01 22:39:45 kardel Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -188,7 +188,8 @@ km_vacache_alloc(struct pool *pp, int flags)
 	if (uvm_map(map, &va, size, NULL, UVM_UNKNOWN_OFFSET, size,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_QUANTUM |
-	    ((flags & PR_WAITOK) ? 0 : UVM_FLAG_TRYLOCK | UVM_FLAG_NOWAIT))))
+	    ((flags & PR_WAITOK) ? UVM_FLAG_WAITVA :
+	    UVM_FLAG_TRYLOCK | UVM_FLAG_NOWAIT))))
 		return NULL;
 
 	return (void *)va;
@@ -226,10 +227,9 @@ km_vacache_init(struct vm_map *map, const char *name, size_t size)
 	pa->pa_alloc = km_vacache_alloc;
 	pa->pa_free = km_vacache_free;
 	pa->pa_pagesz = (unsigned int)size;
+	pa->pa_backingmap = map;
+	pa->pa_backingmapptr = NULL;
 	pool_init(pp, PAGE_SIZE, 0, 0, PR_NOTOUCH | PR_RECURSIVE, name, pa);
-
-	/* XXX for now.. */
-	pool_sethiwat(pp, 0);
 }
 
 void
@@ -252,6 +252,22 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
 }
 
 #endif /* !defined(PMAP_MAP_POOLPAGE) */
+
+void
+uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
+{
+	struct vm_map_kernel *vmk = vm_map_to_kernel(map);
+	const boolean_t intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
+	int s = 0xdeadbeaf; /* XXX: gcc */
+
+	if (intrsafe) {
+		s = splvm();
+	}
+	callback_run_roundrobin(&vmk->vmk_reclaim_callback, NULL);
+	if (intrsafe) {
+		splx(s);
+	}
+}
 
 /*
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
@@ -333,6 +349,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);	/* round up to pagesize */
+	size += uvm_mapent_overhead(size, flags);
 
 	/*
 	 * first allocate a blank spot in the parent map

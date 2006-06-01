@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.4.6.1 2006/04/22 11:38:16 simonb Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.4.6.2 2006/06/01 22:35:52 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4.6.1 2006/04/22 11:38:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4.6.2 2006/06/01 22:35:52 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4.6.1 2006/04/22 11:38:16 s
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -70,7 +71,11 @@ netbsd32_getdents(l, v, retval)
 	struct file *fp;
 	int error, done;
 	char  *buf;
+	netbsd32_size_t count;
 	struct proc *p = l->l_proc;
+
+	/* Limit the size on any kernel buffers used by VOP_READDIR */
+	count = min(MAXBSIZE, SCARG(uap, count));
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -79,9 +84,8 @@ netbsd32_getdents(l, v, retval)
 		error = EBADF;
 		goto out;
 	}
-	buf = malloc(SCARG(uap, count), M_TEMP, M_WAITOK);
-	error = vn_readdir(fp, buf,
-	    UIO_SYSSPACE, SCARG(uap, count), &done, l, 0, 0);
+	buf = malloc(count, M_TEMP, M_WAITOK);
+	error = vn_readdir(fp, buf, UIO_SYSSPACE, count, &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
 		error = copyout(buf, NETBSD32PTR64(SCARG(uap, buf)), *retval);
@@ -192,5 +196,49 @@ netbsd32___lstat13(l, v, retval)
 	netbsd32_from___stat13(&sb, &sb32);
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
+	return (error);
+}
+
+int
+compat_30_netbsd32_fhstat(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_fhstat_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_stat13p_t) sb);
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct stat sb;
+	struct netbsd32_stat13 sb32;
+	int error;
+	fhandle_t fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)))
+		return (error);
+
+	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
+	    sizeof(fhandle_t))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		return (error);
+	netbsd32_from___stat13(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.95.6.1 2006/04/22 11:40:25 simonb Exp $	*/
+/*	$NetBSD: lfs.h,v 1.95.6.2 2006/06/01 22:39:43 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@
 #define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
 
 /* Adjustable filesystem parameters */
-#define MIN_FREE_SEGS	2
+#define MIN_FREE_SEGS	20
+#define MIN_RESV_SEGS	15
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
@@ -114,6 +115,11 @@
 #define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
 #define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
+#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
+#define LFS_MAX_FSDIROP(fs)						\
+	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
+	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+          (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
 #define LFS_WAIT_PAGES \
@@ -121,7 +127,7 @@
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
 
 /* How starved can we be before we start holding back page writes */
-#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_minfreeseg / 2 + 1)
+#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
 
 /*
  * Reserved blocks for lfs_malloc
@@ -341,9 +347,9 @@ struct lfid {
 			  !((vp)->v_flag & VONWORKLST) &&		\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
-/* XXX Shouldn't we use v_numoutput instead? */
-#define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
-		!(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
+#define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
+	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
+	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 /*
@@ -680,7 +686,7 @@ struct dlfs {
 #define LFS_PF_CLEAN 0x1
 	u_int16_t dlfs_pflags;	  /* 322: file system persistent flags */
 	int32_t	  dlfs_dmeta;	  /* 324: total number of dirty summaries */
-	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
+	u_int32_t dlfs_minfreeseg; /* 328: segments not counted in bfree */
 	u_int32_t dlfs_sumsize;	  /* 332: size of summary blocks */
 	u_int64_t dlfs_serial;	  /* 336: serial number */
 	u_int32_t dlfs_ibsize;	  /* 344: size of inode blocks */
@@ -692,13 +698,24 @@ struct dlfs {
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;	  /* 368: per-fs identifier */
 	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb abd dbtodsb shift constant */
-	int8_t	  dlfs_pad[132];  /* 376: round to 512 bytes */
+	u_int32_t dlfs_resvseg;   /* 376: segments reserved for the cleaner */
+	int8_t	  dlfs_pad[128];  /* 380: round to 512 bytes */
 /* Checksum -- last valid disk field. */
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
 
 /* Type used for the inode bitmap */
 typedef u_int32_t lfs_bm_t;
+
+/*
+ * Linked list of segments whose byte count needs updating following a
+ * file truncation.
+ */
+struct segdelta {
+	long segnum;
+	size_t num;
+	LIST_ENTRY(segdelta) list;
+};
 
 /*
  * In-memory super block.
@@ -765,6 +782,7 @@ struct lfs {
 #define lfs_inodefmt lfs_dlfs.dlfs_inodefmt
 #define lfs_interleave lfs_dlfs.dlfs_interleave
 #define lfs_ident lfs_dlfs.dlfs_ident
+#define lfs_resvseg lfs_dlfs.dlfs_resvseg
 
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
@@ -775,6 +793,7 @@ struct lfs {
 	u_int32_t lfs_iocount;		/* number of ios pending */
 	u_int32_t lfs_writer;		/* don't allow any dirops to start */
 	u_int32_t lfs_dirops;		/* count of active directory ops */
+	u_int32_t lfs_dirvcount;	/* count of VDIROP nodes in this fs */
 	u_int32_t lfs_doifile;		/* Write ifile blocks on next write */
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
@@ -818,6 +837,7 @@ struct lfs {
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
+	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
@@ -967,11 +987,13 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
+#define LFSI_DELETED      0x02
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
 	int	  lfs_nbtree;		/* Size of tree */
+	LIST_HEAD(, segdelta) lfs_segdhd;
 #endif
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
@@ -983,6 +1005,7 @@ struct lfs_inode_ext {
 #define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
+#define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -1007,9 +1030,9 @@ struct lfs_inode_ext {
 
 /* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
-	((((C) == NOCRED || (C)->cr_uid == 0) &&			\
+	((((C) == NOCRED || kauth_cred_geteuid(C) == 0) &&		\
 	  LFS_EST_BFREE(F) >= (BB)) ||					\
-	 ((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
+	 (kauth_cred_geteuid(C) != 0 && IS_FREESPACE(F, BB)))
 
 /* Can an ordinary user write BB blocks */
 #define IS_FREESPACE(F, BB)						\
