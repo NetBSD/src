@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/06/05 14:30:12 dsl Exp $
+#	$NetBSD: Makefile,v 1.1 2006/06/02 22:11:07 hubertf Exp $
 
 BOOTMODEL=	tiny
 IMAGE=		ramdisk-rescue${BOOTMODEL}.fs

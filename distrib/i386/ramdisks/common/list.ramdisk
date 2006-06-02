@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.11 2003/11/30 14:58:05 dsl Exp $
+#	$NetBSD: list.ramdisk,v 1.1 2006/06/02 22:11:07 hubertf Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 

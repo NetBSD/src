@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/06/05 14:30:13 dsl Exp $
+#	$NetBSD: Makefile,v 1.1 2006/06/02 22:11:07 hubertf Exp $
 
 BOOTMODEL=	small
 IMAGE=		ramdisk-${BOOTMODEL}.fs

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.18 2003/12/18 00:44:22 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.19 2006/06/02 22:11:06 hubertf Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -10,7 +10,7 @@
 #	FLOPPYKERNEL	Kernel to copy
 #
 # Optional variables:
-#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
+#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../../${FLOPPYKERNDIR}
 #	FLOPPY_BOOT	Bootstrap to use.  [${DESTDIR}/usr/mdec/boot]
 #	FLOPPYBOOTOPTIONS Options for installboot, eg -o console=com0
 #
@@ -29,7 +29,7 @@ FLOPPYKERNDIR?=		instkernel
 FLOPPYSUFFIX?=		.fs
 MDEC=			${DESTDIR}/usr/mdec
 FLOPPYINSTBOOT=		"${TOOL_INSTALLBOOT} ${FLOPPYBOOTOPTIONS} -m${MACHINE} @IMAGE@ ${MDEC}/bootxx_ustarfs"
-FLOPPYKERNOBJ!=		cd ${.CURDIR}/../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
+FLOPPYKERNOBJ!=		cd ${.CURDIR}/../../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
 FLOPPY_BOOT?=		${MDEC}/boot
 FLOPPY_NETBSD=		${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
