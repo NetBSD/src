@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/05/08 14:42:22 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20 2006/06/02 20:00:38 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -66,7 +66,7 @@ genrtl.c: gengenrtl
 genrtl.h: gengenrtl
 	${_MKTARGET_CREATE}
 	./gengenrtl -h >${.TARGET}
-gengenrtl.lo: ${G_HCONFIG_H}
+gengenrtl.lo: ${G_HCONFIG_H} auto-build.h
 gengenrtl: gengenrtl.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
