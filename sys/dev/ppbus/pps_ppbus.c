@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.4.6.3 2006/06/01 22:37:32 kardel Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.4.6.4 2006/06/02 13:11:00 drochner Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.6.3 2006/06/01 22:37:32 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.6.4 2006/06/02 13:11:00 drochner Exp $");
 
 #include "opt_ntp.h"
 
@@ -135,7 +135,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef __HAVE_TIMECOUNTER
 	memset((void *)&sc->pps_state, 0, sizeof(sc->pps_state));
-	sc->pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
+	sc->pps_state.ppscap = PPS_CAPTUREASSERT;
 	pps_init(&sc->pps_state);
 #endif /* __HAVE_TIMECOUNTER */
 
@@ -149,11 +149,11 @@ ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
 	struct device *ppbus = sc->ppbus;
 
+	sc->busy = 0;
 #ifdef __HAVE_TIMECOUNTER
 	sc->pps_state.ppsparam.mode = 0;
 #else /* !__HAVE_TIMECOUNTER */
 	sc->ppsparam.mode = 0;
-	sc->busy = 0;
 #ifdef PPS_SYNC
 	sc->hardpps = 0;
 #endif
