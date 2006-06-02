@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2006/05/13 01:40:34 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2006/06/02 22:16:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,18 +28,6 @@ OBJS+=		crt0.o gcrt0.o crti.o crtn.o
 COPTS+=		-fPIC
 .endif
 
-# We supply crtbegin / crtend *ONLY* if using the old in-tree GCC 2.95.3!
-# In all other cases (including use of an external toolchain), these will
-# be provided by that toolchain's run-time support.
-.if ${USE_TOOLS_TOOLCHAIN} == "yes" && !defined(EXTERNAL_TOOLCHAIN)
-SRCS+=		crtbegin.c crtend.c
-OBJS+=		crtbegin.o crtend.o
-.if ${MKPIC} != "no"
-SRCS+=		crtbeginS.c crtendS.c
-OBJS+=		crtbeginS.o crtendS.o
-.endif
-.endif
-
 realall: ${OBJS}
 
 crt0.o: crt0.c
@@ -66,32 +54,6 @@ crtn.o: crtn.c
 	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
-
-.if ${USE_TOOLS_TOOLCHAIN} == "yes" && !defined(EXTERNAL_TOOLCHAIN)
-crtbegin.o: crtbegin.c
-	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
-
-crtbeginS.o: crtbeginS.c
-	@echo "${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
-
-crtend.o: crtend.c
-	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
-
-crtendS.o: crtendS.c
-	@echo "${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
-.endif	# USE_TOOLS_TOOLCHAIN == "yes" && ! EXTERNAL_TOOLCHAIN
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
