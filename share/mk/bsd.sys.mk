@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.131 2006/05/22 00:43:04 uwe Exp $
+#	$NetBSD: bsd.sys.mk,v 1.132 2006/06/02 22:16:18 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -16,19 +16,14 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
-.if !defined(HAVE_GCC) || (${HAVE_GCC} == 2)
-CFLAGS+=	-Wno-uninitialized
-.endif
 .endif
 .if ${WARNS} > 1
 CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
 CFLAGS+=	-Wcast-qual -Wwrite-strings
-.if defined(HAVE_GCC) && (${HAVE_GCC} > 2)
 CXXFLAGS+=	-Wabi
 CXXFLAGS+=	-Wold-style-cast
-.endif
 CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Wno-deprecated -Wno-non-template-friend \
 		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.81 2006/05/21 05:49:54 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.82 2006/06/02 22:16:18 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -54,7 +54,6 @@ S!=	cd ../../../..; pwd
 ##
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
-_ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
 INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
 		-I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
@@ -68,9 +67,6 @@ CWARNFLAGS+=	-Werror
 .endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
-.if !${_ISGCC295}
-CWARNFLAGS+=	-Wreturn-type
-.endif
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
@@ -81,16 +77,9 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 . endif
 .endif
 
-CFLAGS+=	-ffreestanding
+CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
-
-# Disable unitialized warnings with 2.95 - it gets it wrong way too often
-.if ${_ISGCC295}
-CWARNFLAGS+=	-Wno-uninitialized
-.else
-CFLAGS+=	-fno-zero-initialized-in-bss
-.endif
 
 # XXX
 .if ${HAVE_GCC} > 3
