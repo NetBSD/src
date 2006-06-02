@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc.prog,v 1.6 2005/07/05 21:52:13 he Exp $
+#	$NetBSD: Makefile.inc.prog,v 1.7 2006/06/02 22:16:22 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,14 +23,3 @@ MAN=${PROG}.1
 
 .PATH:	${TOOLTOP}
 CPPFLAGS+=	-I${TOOLTOP}
-
-.if ${MACHINE_ARCH} == "vax"
-beforedepend depend dependall realdepend realall: stdbool.h
-
-stdbool.h:
-	sed -e 's:@HAVE__BOOL@:0:g' \
-		${DIST}/gettext/gettext-tools/lib/stdbool_.h > stdbool.h
-
-CLEANFILES+=stdbool.h
-CPPFLAGS+=-I.
-.endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.244 2006/04/07 19:38:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.245 2006/06/02 22:16:18 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -171,14 +171,10 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 #
 # Targets (in order!) called by "make build".
 #
-.if ${USE_TOOLS_TOOLCHAIN} == "no"
-. if ${HAVE_GCC} == "3"
+.if ${HAVE_GCC} == "3"
 LIBGCC_EXT=3
-. else
-LIBGCC_EXT=4
-. endif
 .else
-LIBGCC_EXT=
+LIBGCC_EXT=4
 .endif
 
 BUILDTARGETS+=	check-tools
