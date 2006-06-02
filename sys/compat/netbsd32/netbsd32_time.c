@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.18.6.3 2006/06/01 22:35:54 kardel Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.18.6.4 2006/06/02 17:00:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.3 2006/06/01 22:35:54 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.4 2006/06/02 17:00:07 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -128,7 +128,6 @@ compat_30_netbsd32_ntp_gettime(l, v, retval)
 	}
 	if (!error) {
 		*retval = ntp_timestatus();
->>>>>>> 1.21
 	}
 
 	return (error);
