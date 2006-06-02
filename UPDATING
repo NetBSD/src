@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.146 2006/06/02 19:01:00 pavel Exp $
+$NetBSD: UPDATING,v 1.147 2006/06/02 19:08:00 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -17,15 +17,20 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20060526:
-	the kernel links script for i386 and xen was changed to set the
+	The kernel linker scripts for i386 and xen 
+	(sys/arch/i386/conf/kern.ldscript*) were changed to set the
 	load address correctly, for the benefit of MULTIBOOT boot loaders
 	(like Grub). If you use a linker (ld) older than from 2006/04/17, it
-	will be unable to link the kernel because of a bug, and you will
-	have to update at least src/gnu/dist/binutils/ld and recompile the
-	linker. If using the build.sh script, the easiest way is with a
-	"build.sh tools" command, with any other options that you use
-	normally. When using build.sh, the linker binary is installed as
-	${TOOLDIR}/bin/i386--netbsdelf-ld.
+	will be unable to link the kernel because of a bug and ld will fail
+	with an error like:
+	    ../../../../arch/i386/conf/kern.ldscript:45 \
+		non constant expression for load base
+	You need to update at least src/gnu/dist/binutils/ld and recompile
+	and install the linker. If using the build.sh script, the easiest
+	way is with a "build.sh tools" command, with any other options
+	that you use normally. When using build.sh, the linker binary is
+	installed as ${TOOLDIR}/bin/i386--netbsdelf-ld.
+
 20060131:
 	the protocol between the sparc64 bootloader (ofwboot) and
 	the kernel was changed. Before installing a new kernel,
