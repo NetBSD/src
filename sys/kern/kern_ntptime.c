@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.29.6.7 2006/06/02 13:05:29 drochner Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.29.6.8 2006/06/02 17:04:01 drochner Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.7 2006/06/02 13:05:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.8 2006/06/02 17:04:01 drochner Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -903,7 +903,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.7 2006/06/02 13:05:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.8 2006/06/02 17:04:01 drochner Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -1102,7 +1102,7 @@ ntp_adjtime1(ntv)
 #endif /* !__HAVE_TIMECOUNTER */
 
 #ifdef NTP
-register_t
+int
 ntp_timestatus()
 {
 	/*
@@ -1138,7 +1138,7 @@ ntp_timestatus()
 	     time_status & (STA_PPSWANDER | STA_PPSERROR)))
 		return (TIME_ERROR);
 	else
-		return ((register_t)time_state);
+		return (time_state);
 }
 
 /*ARGSUSED*/
