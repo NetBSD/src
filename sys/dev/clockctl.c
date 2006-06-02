@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.15.6.2 2006/04/30 18:01:12 kardel Exp $ */
+/*      $NetBSD: clockctl.c,v 1.15.6.3 2006/06/02 00:19:38 kardel Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.15.6.2 2006/04/30 18:01:12 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.15.6.3 2006/06/02 00:19:38 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -119,7 +119,7 @@ clockctlioctl(dev, cmd, data, flags, l)
 			if (error)
 				return (error);
 
-			ntp_adjtime1(&ntv, &retval);
+			ntp_adjtime1(&ntv);
 
 			error = copyout(&ntv, args->tp, sizeof(ntv));
 			if (error == 0)
