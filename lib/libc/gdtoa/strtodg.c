@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.4 2006/03/19 03:04:04 christos Exp $ */
+/* $NetBSD: strtodg.c,v 1.5 2006/06/02 19:46:56 mrg Exp $ */
 
 /****************************************************************
 
@@ -335,6 +335,8 @@ strtodg
 	Long L;
 	ULong y, z;
 	Bigint *ab, *bb, *bb1, *bd, *bd0, *bs, *delta, *rvb, *rvb0;
+
+	e2 = 0;	/* XXX gcc */
 
 	irv = STRTOG_Zero;
 	denorm = sign = nz0 = nz = 0;

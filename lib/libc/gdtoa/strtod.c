@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.3 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtod.c,v 1.4 2006/06/02 19:46:56 mrg Exp $ */
 
 /****************************************************************
 
@@ -82,7 +82,7 @@ strtod
 	double aadj, aadj1, adj, rv, rv0;
 	Long L;
 	ULong y, z;
-	Bigint *bb, *bb1, *bd0;
+	Bigint *bb = NULL, *bb1, *bd0;
 	Bigint *bd = NULL, *bs = NULL, *delta = NULL; /* pacify gcc */
 #ifdef SET_INEXACT
 	int inexact, oldinexact;
