@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51.4.1 2006/04/22 11:38:02 simonb Exp $ */
+/*	$NetBSD: cpu.h,v 1.51.4.2 2006/06/02 00:20:37 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,6 @@
 #include <sparc64/sparc64/intreg.h>
 
 #include <sys/cpu_data.h>
-#include <sys/cc_microtime.h>
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
  * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
@@ -125,11 +124,6 @@ struct cpu_info {
 	int			ci_number;
 	int			ci_upaid;
 	int			ci_cpuid;
-
-	/*
-	 * Variables used by cc_microtime().
-	 */
-	struct cc_microtime_state ci_cc;
 
 	/* CPU PROM information. */
 	u_int			ci_node;
@@ -204,11 +198,6 @@ extern  u_long  mp_tramp_ci;
 void	cpu_hatch(void);
 void	cpu_boot_secondary_processors(void);
 #endif
-
-/*
- * definitions for MI microtime().
- */
-#define microtime(tv)	cc_microtime(tv)
 
 extern uint64_t cpu_clockrate[];
 
