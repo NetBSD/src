@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2005/09/10 14:50:08 dsl Exp $
+#	$NetBSD: list,v 1.1 2006/06/02 22:11:07 hubertf Exp $
 
 PROG	bin/cat
 PROG	bin/chmod

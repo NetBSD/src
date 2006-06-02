@@ -1,18 +1,6 @@
-#	$NetBSD: Makefile,v 1.33 2005/06/26 17:47:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.34 2006/06/02 22:11:06 hubertf Exp $
 
 SUBDIR=
-
-SUBDIR+=	ramdisk-big
-SUBDIR+=	ramdisk-small
-SUBDIR+=	ramdisk-tiny
-SUBDIR+=	ramdisk-rescuetiny
-
-SUBDIR+=	.WAIT
-
-SUBDIR+=	instkernel
-
-SUBDIR+=	.WAIT
-
 SUBDIR+=	bootfloppy
 SUBDIR+=	bootfloppy-big
 SUBDIR+=	bootfloppy-com
