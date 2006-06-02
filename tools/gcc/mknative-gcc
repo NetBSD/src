@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.18 2006/05/23 10:55:55 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.19 2006/06/02 19:44:20 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -127,24 +127,26 @@ get_libstdcxx_v3 () {
 	_subdir="$1"
 	mkdir -p $_TOP/gnu/lib/$_subdir/arch/$MACHINE_ARCH
 
-	# build files
-	for h in gthr.h gthr-single.h gthr-posix.h gthr-tpf.h gthr-default.h c++config.h c++allocator.h cxxabi_tweaks.h; do
-		write_c gnu/lib/$_subdir/arch/$MACHINE_ARCH/$h \
-			<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/$_PLATFORM/bits/$h
-	done
-
 	case ${_subdir} in
 	*4)
 		_src_CC_files="atomicity_file CCODECVT_CC CCOLLATE_CC CCTYPE_CC CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC CLOCALE_CC BASIC_FILE_CC"
 		_headers1="host_headers debug_headers tr1_headers c_compatibility_headers_extra"
 		_headers2="thread_host_headers host_headers_extra"
+		_build_headers="c++allocator.h c++config.h cxxabi_tweaks.h gthr-default.h gthr-posix.h gthr-single.h gthr-tpf.h gthr.h"
 		;;
 	*)
 		_src_CC_files=""
 		_headers1="target_headers"
 		_headers2="thread_target_headers target_headers_extra"
+		_build_headers="c++config.h gthr-default.h gthr-posix.h gthr-single.h gthr.h"
 		;;
 	esac
+
+	# build files
+	for h in $_build_headers; do
+		write_c gnu/lib/$_subdir/arch/$MACHINE_ARCH/$h \
+			<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/$_PLATFORM/bits/$h
+	done
 
 	write_c gnu/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
@@ -182,12 +184,22 @@ get_libstdcxx_v3 () {
 get_gcc () {
 	_subdir="$1"
 	mkdir -p $_TOP/gnu/usr.bin/$_subdir/arch/$MACHINE_ARCH
-	mkdir -p $_TOP/gnu/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
+	case ${_subdir} in
+	gcc4)
+		mkdir -p $_TOP/gnu/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
+		_buildname="BUILD_"
+		_libcppsubdir=""
+		;;
+	*)
+		_buildname="HOST_"
+		_libcppsubdir="gcc/"
+		;;
+	esac
 
 	{
 		getvars gcc/Makefile \
-			BUILD_EARLY_SUPPORT BUILD_ERRORS BUILD_PRINT \
-			BUILD_RTL BUILD_SUPPORT BUILD_VARRAY | \
+			${_buildname}EARLY_SUPPORT ${_buildname}ERRORS ${_buildname}PRINT \
+			${_buildname}RTL ${_buildname}SUPPORT ${_buildname}VARRAY | \
 		    sed -e 's#build/errors.o#build-errors.o#g' \
 			-e 's#build/print-rtl.o#build-print-rtl.o#g' \
 			-e 's#build/rtl.o#build-rtl.o#g' \
@@ -209,8 +221,16 @@ get_gcc () {
 			CXX_OBJS CXX_C_OBJS | sed 's/cp\///g'
 		getvars gcc/Makefile \
 			F77_OBJS | sed 's/f\///g'
-		getvars libcpp/Makefile \
-			libcpp_a_OBJS
+		case ${_subdir} in
+		gcc4)
+			getvars libcpp/Makefile \
+				libcpp_a_OBJS
+			;;
+		gcc3)
+			getvars gcc/Makefile \
+				LIBCPP_OBJS LIBCPP_H
+			;;
+		esac
 		getvars gcc/Makefile \
 			ENABLE_SHARED
 # XXXX?  what is going on here?

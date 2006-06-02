@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2006/05/17 03:26:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2006/06/02 19:44:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -85,17 +85,20 @@ native-gcc: .native/.configure_done
 			--build=`${.CURDIR}/../../gnu/dist/${MODULE}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
-		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-build-libiberty) && \
-		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-gcc configure-libcpp)
+		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-build-libiberty)
 .if ${HAVE_GCC} == 4
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-gcc configure-libcpp) && \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-libiberty)
 	# edit Makefile so that maybe-all-gcc does not depend on all-gcc any more.
 		(cd .native && mv Makefile Makefile.config && \
 			sed -e 's/\(maybe-all-gcc:\) all-gcc/\1/' < Makefile.config > Makefile)
+.else
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-libiberty)
 .endif
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h) && \
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} tree-check.h config.h) && \
 	true
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so && \
