@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.100 2006/05/21 16:00:17 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.101 2006/06/02 17:40:34 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.100 2006/05/21 16:00:17 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.101 2006/06/02 17:40:34 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1333,8 +1333,10 @@ intuit_translated_geometry(void)
 			break;
 	}
 
-	if (xheads == -1)
-		errx(1, "Cannot determine the number of heads");
+	if (xheads == -1) {
+		warnx("Cannot determine the number of heads");
+		return;
+	}
 
 	/* Estimate the number of cylinders. */
 	xcylinders = disklabel.d_secperunit / xheads / xsectors;
