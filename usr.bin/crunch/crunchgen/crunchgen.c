@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.68 2006/01/13 16:36:25 tsutsui Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.69 2006/06/02 10:11:56 simonb Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.68 2006/01/13 16:36:25 tsutsui Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.69 2006/06/02 10:11:56 simonb Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1033,7 +1033,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
 	fprintf(outmk, " / %s$$/ { next };", lst->str);
     fprintf(outmk, " / main$$/ { print \"main _crunched_%s_stub\"; next };",
-	    p->name);
+	    p->ident);
     /* gdb thinks these are C++ and ignores everthing after the first $$. */
     fprintf(outmk, " { print $$3 \" \" $$3 \"$$$$from$$$$%s\" }' "
 	    "> %s.cro.syms\n", p->name, p->name);
