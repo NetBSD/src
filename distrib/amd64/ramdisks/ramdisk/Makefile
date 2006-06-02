@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/11/27 17:39:01 dsl Exp $
+#	$NetBSD: Makefile,v 1.1 2006/06/02 22:11:52 hubertf Exp $
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	5000k
