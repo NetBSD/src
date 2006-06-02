@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.3.6.2 2006/04/24 08:41:24 kardel Exp $	*/
+/*	$NetBSD: timevar.h,v 1.3.6.3 2006/06/02 17:24:59 drochner Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -202,16 +202,5 @@ extern volatile struct timeval time;
 #define	time_second	time.tv_sec
 #define	time_uptime	mono_time.tv_sec
 #endif /* !__HAVE_TIMECOUNTER */
-extern struct timeval boottime;	/* system boot time */
-extern int rtc_offset;		/* offset of rtc from UTC in minutes */
-extern int tick;		/* usec per tick (1000000 / hz) */
-extern int hardclock_ticks;	/* # of hardclock ticks */
-extern int tickfix;		/* periodic tick adj. tick not integral */
-extern int tickfixinterval;	/* interval at which to apply adjustment */
-extern int tickadj;		/* "standard" clock skew, us./tick */
-extern int hz;			/* system clock's frequency */
-extern int stathz;		/* statistics clock's frequency */
-extern int profhz;		/* profiling clock's frequency */
-extern int lbolt;		/* once a second sleep address */
 
 #endif /* !_SYS_TIMEVAR_H_ */
