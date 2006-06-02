@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.451 2006/05/30 00:52:11 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.452 2006/06/02 22:21:34 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -44,36 +44,30 @@ TOOLCHAIN_MISSING?=	no
 # Transitional for toolchain upgrade to GCC4.1
 #
 # not working:
-#	all
+#	mips, sh5, vax, hppa?
 #
-.if ${MACHINE_ARCH} == "vax"
-HAVE_GCC?=	2
-.endif
-
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "sparc64"
+.if \
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "armeb" || \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "sh3el" || \
+    ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 #HAVE_GCC?=	4
 .endif
 
 # default to GCC3
 HAVE_GCC?=	3
 
-# Do we want to use tools/toolchain or not?
-.if ${HAVE_GCC} != "2"
-USE_TOOLS_TOOLCHAIN=no
-.endif
-USE_TOOLS_TOOLCHAIN?=yes
-
 CPPFLAG_ISYSTEM=	-isystem
-# GCC2 did not have -isystem-cxx
-.if ${HAVE_GCC} == 2
-CPPFLAG_ISYSTEMXX=	-isystem
-.else
-. if ${HAVE_GCC} == 3
+.if ${HAVE_GCC} == 3
 CPPFLAG_ISYSTEMXX=	-isystem-cxx
-. else	# GCC 4
+.else	# GCC 4
 CPPFLAG_ISYSTEMXX=	-cxx-isystem
-. endif
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
@@ -407,13 +401,6 @@ MKGCC:= no
 #
 .if defined(EXTERNAL_TOOLCHAIN)
 MKGCC:= no
-.endif
-
-#
-# GCC can produce PIC code for sh3 only starting with gcc3.
-#
-.if ${MACHINE_CPU} == "sh3" && ${HAVE_GCC} == "2"
-NOPIC=		# defined
 .endif
 
 #
