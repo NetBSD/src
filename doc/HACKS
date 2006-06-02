@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.76 2006/05/25 09:05:40 mrg Exp $
+# $NetBSD: HACKS,v 1.77 2006/06/02 19:45:25 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -524,15 +524,6 @@ port	pc532
 
 
 port	sh3
-
-	hack	gcc-sh3-sed
-	mdate	23 Apr 2002
-	who	thorpej
-	file	usr.bin/sed/Makefile	: 1.9 : 9 : 13
-	descr
-		The in-tree GCC 2.95.3-based compiler ICEs when building
-		with optimization for SuperH.  Hack is to build with -O0.
-	kcah
 
 	hack	gcc4-sh3-bz2
 	mdate	20 May 2006
