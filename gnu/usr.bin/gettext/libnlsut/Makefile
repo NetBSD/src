@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/05/12 00:44:12 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2006/06/02 22:16:23 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -61,16 +61,5 @@ xstrdup.c
 .PATH:	${DIST}/gettext/gettext-tools/lib
 
 CPPFLAGS+=-DEXEEXT=\"\"
-
-.if ${MACHINE_ARCH} == "vax"
-depend dependall realdepend realall: stdbool.h
-
-stdbool.h:
-	sed -e 's:@HAVE__BOOL@:0:g' \
-		${DIST}/gettext/gettext-tools/lib/stdbool_.h > stdbool.h
-
-CLEANFILES+=stdbool.h
-CPPFLAGS+=-I.
-.endif
 
 .include <bsd.lib.mk>

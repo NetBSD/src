@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15 2006/04/07 19:38:58 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.16 2006/06/02 22:16:23 mrg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -90,10 +90,8 @@ CFLAGS+=	-DHAVE_CONFIG_H
 CFLAGS+=	-I${GROFF_DIST}/src/include -I${NETBSDSRCDIR}/gnu/usr.bin/groff/src/include
 CXXFLAGS+=	-fno-rtti -fno-exceptions
 
-# If we're using GCC>2, we only need -lsupc++
-.if ${HAVE_GCC} != "2"
+# We only need -lsupc++
 USE_LIBSTDCXX=	no
-.endif
 
 
 .ifdef GROFFYSRCS
