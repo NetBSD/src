@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.109 2006/05/27 03:41:48 jnemeth Exp $ */
+/* $NetBSD: user.c,v 1.110 2006/06/02 21:44:37 jnemeth Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.109 2006/05/27 03:41:48 jnemeth Exp $");
+__RCSID("$NetBSD: user.c,v 1.110 2006/06/02 21:44:37 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -219,7 +219,7 @@ check_numeric(const char *val, const char *name)
 }
 
 /* if *cpp is non-null, free it, then assign `n' chars of `s' to it */
-/* coverity[-free] */
+/* coverity[-free : arg-0] */
 static void
 memsave(char **cpp, const char *s, size_t n)
 {
