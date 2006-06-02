@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.9 2006/06/01 23:19:21 kardel Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.10 2006/06/02 00:14:52 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.9 2006/06/01 23:19:21 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.10 2006/06/02 00:14:52 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -26,6 +26,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.9 2006/06/01 23:19:21 kardel E
 #include <sys/timetc.h>
 #include <sys/timex.h>
 #include <sys/evcnt.h>
+#include <sys/kauth.h>
 
 /*
  * maximum name length for TC names in sysctl interface
@@ -144,7 +145,8 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
 		return error;
 
-	if (l && (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+	if (l && (error = kauth_authorize_generic(l->l_proc->p_cred, 
+                    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
 	/* XXX locking */
