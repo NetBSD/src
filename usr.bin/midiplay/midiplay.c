@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.22.12.3 2006/06/01 22:10:48 chap Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.22.12.4 2006/06/02 02:36:13 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.22.12.3 2006/06/01 22:10:48 chap Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.22.12.4 2006/06/02 02:36:13 chap Exp $");
 #endif
 
 
@@ -56,8 +56,9 @@ __RCSID("$NetBSD: midiplay.c,v 1.22.12.3 2006/06/01 22:10:48 chap Exp $");
 #define DEVMUSIC "/dev/music"
 
 struct track {
+	struct track *indirect; /* for fast swaps in heap code */
 	u_char *start, *end;
-	u_long curtime;
+	u_long delta;
 	u_char status;
 };
 
@@ -97,6 +98,10 @@ u_long getlen(struct track *);
 void playfile(FILE *, char *);
 void playdata(u_char *, u_int, char *);
 int main(int argc, char **argv);
+
+void Heapify(struct track *, int, int);
+void BuildHeap(struct track *, int);
+int ShrinkHeap(struct track *, int);
 
 /*
  * This sample plays at an apparent tempo of 120 bpm when the BASETEMPO is 150
@@ -389,11 +394,10 @@ playfile(FILE *f, char *name)
 void
 playdata(u_char *buf, u_int tot, char *name)
 {
-	int format, ntrks, divfmt, ticks, t, besttrk = 0;
+	int format, ntrks, divfmt, ticks, t;
 	u_int len, mlen, status, chan;
 	u_char *p, *end, byte, meta, *msg;
 	struct track *tracks;
-	u_long bestcur, now;
 	struct track *tp;
 
 	end = buf + tot;
@@ -521,7 +525,8 @@ playdata(u_char *buf, u_int tot, char *name)
 		if (memcmp(p, MARK_TRACK, MARK_LEN) == 0) {
 			tracks[t].start = p + MARK_LEN + SIZE_LEN;
 			tracks[t].end = tracks[t].start + len;
-			tracks[t].curtime = getvar(&tracks[t]);
+			tracks[t].delta = getvar(&tracks[t]);
+			tracks[t].indirect = &tracks[t]; /* -> self for now */
 			t++;
 		}
 		p += MARK_LEN + SIZE_LEN + len;
@@ -538,31 +543,22 @@ playdata(u_char *buf, u_int tot, char *name)
 	}
 	/* 
 	 * Play MIDI events by selecting the track with the lowest
-	 * curtime.  Execute the event, update the curtime and repeat.
+	 * delta.  Execute the event, update the delta and repeat.
 	 *
 	 * The ticks variable is the number of ticks that make up a beat
 	 * (beat: 24 MIDI clocks always, a quarter note by usual convention)
 	 * and is used as a reference value for the delays between
 	 * the MIDI events.
 	 */
-	now = 0;
+	BuildHeap(tracks, ntrks); /* tracks[0].indirect is always next */
 	for (;;) {
-		/* Locate lowest curtime */
-		bestcur = ~0;
-		for (t = 0; t < ntrks; t++) {
-			if (tracks[t].curtime < bestcur) {
-				bestcur = tracks[t].curtime;
-				besttrk = t;
-			}
-		}
-		if (bestcur == ~0)
-			break;
-		if (verbose > 3) {
+		tp = tracks[0].indirect;
+		if ((verbose > 2 && tp->delta > 0)  ||  verbose > 3) {
 			printf("DELAY %4ld TRACK %2d%s",
-			       bestcur-now, besttrk, verbose>4?" ":"\n");
+			       tp->delta, tp - tracks, verbose>3?" ":"\n");
 			fflush(stdout);
 		}
-		if (now < bestcur) {
+		if (tp->delta > 0) {
 			if (!tempo_set) {
 				if (verbose || showmeta)
 					printf("No initial tempo;"
@@ -573,16 +569,14 @@ playdata(u_char *buf, u_int tot, char *name)
 				    BASETEMPO & 0xff},
 				    3);
 			}
-			u_int32_t delta = bestcur - now;
-			send_event(&SEQ_MK_TIMING(WAIT_REL,.divisions=delta));
+			send_event(&SEQ_MK_TIMING(WAIT_REL,
+			    .divisions=tp->delta));
 		}
-		now = bestcur;
-		tp = &tracks[besttrk];
 		byte = *tp->start++;
 		if (byte == MIDI_META) {
 			meta = *tp->start++;
 			mlen = getlen(tp);
-			if (verbose > 2)
+			if (verbose > 3)
 				printf("META %02x (%d)\n", meta, mlen);
 			dometa(meta, tp->start, mlen);
 			tp->start += mlen;
@@ -593,7 +587,7 @@ playdata(u_char *buf, u_int tot, char *name)
 				tp->start--;
 			mlen = MIDI_LENGTH(tp->status);
 			msg = tp->start;
-			if (verbose > 4) {
+			if (verbose > 3) {
 			    if (mlen == 1)
 				printf("MIDI %02x (%d) %02x\n",
 				       tp->status, mlen, msg[0]);
@@ -671,10 +665,13 @@ playdata(u_char *buf, u_int tot, char *name)
 			}
 			tp->start += mlen;
 		}
-		if (tp->start >= tp->end)
-			tp->curtime = ~0;
-		else
-			tp->curtime += getvar(tp);
+		if (tp->start >= tp->end) {
+			ntrks = ShrinkHeap(tracks, ntrks); /* track gone */
+			if (0 == ntrks)
+				break;
+		} else
+			tp->delta = getvar(tp);
+		Heapify(tracks, ntrks, 0);
 	}
 	if (ioctl(fd, SEQUENCER_SYNC, 0) < 0)
 		err(1, "SEQUENCER_SYNC");
@@ -773,4 +770,85 @@ main(int argc, char **argv)
 		}
 
 	exit(0);
+}
+
+/*
+ * relative-time priority queue (min-heap). Properties:
+ * 1. The delta time at a node is relative to the node's parent's time.
+ * 2. When an event is dequeued from a track, the delta time of the new head
+ *    event is relative to the time of the event just dequeued.
+ * Therefore:
+ * 3. After dequeueing the head event from the track at heap root, the next
+ *    event's time is directly comparable to the root's children.
+ * These properties allow the heap to be maintained with delta times throughout.
+ * Insert is also implementable, but not needed: all the tracks are present
+ * at first; they just go away as they end.
+ */
+
+#define PARENT(i) ((i-1)>>1)
+#define LEFT(i)   ((i<<1)+1)
+#define RIGHT(i)  ((i+1)<<1)
+#define DTIME(i)  (t[i].indirect->delta)
+#define SWAP(i,j) do { \
+    struct track *_t = t[i].indirect; \
+    t[i].indirect = t[j].indirect; \
+    t[j].indirect = _t; \
+    } while ( /*CONSTCOND*/ 0 )
+
+void
+Heapify(struct track *t, int ntrks, int node)
+{
+	int lc, rc, mn;
+	
+	lc = LEFT(node);
+	rc = RIGHT(node);
+	
+	if (rc >= ntrks) {			/* no right child */
+		if (lc >= ntrks)		/* node is a leaf */
+			return;
+		if (DTIME(node) > DTIME(lc))
+			SWAP(node,lc);
+		DTIME(lc) -= DTIME(node);
+		return;				/* no rc ==> lc is a leaf */
+	}
+
+	mn = lc;
+	if (DTIME(lc) > DTIME(rc))
+		mn = rc;
+	if (DTIME(node) <= DTIME(mn)) {
+		DTIME(rc) -= DTIME(node);
+		DTIME(lc) -= DTIME(node);
+		return;
+	}
+	
+	SWAP(node,mn);
+	DTIME(rc) -= DTIME(node);
+	DTIME(lc) -= DTIME(node);
+	Heapify(t, ntrks, mn); /* gcc groks tail recursion */
+}
+
+void
+BuildHeap(struct track *t, int ntrks)
+{
+	int node;
+	
+	for ( node = PARENT(ntrks-1); node --> 0; )
+		Heapify(t, ntrks, node);
+}
+
+/*
+ * Make the heap 1 item smaller by discarding the track at the root.
+ * Move the rightmost leaf to the root and decrement ntrks. It remains to
+ * run Heapify, which the caller is expected to do. Returns the new ntrks.
+ */
+int
+ShrinkHeap(struct track *t, int ntrks)
+{
+	int ancest;
+	
+	-- ntrks;
+	for ( ancest = PARENT(ntrks); ancest > 0; ancest = PARENT(ancest) )
+		DTIME(ntrks) += DTIME(ancest);
+	t[0].indirect = t[ntrks].indirect;
+	return ntrks;
 }
