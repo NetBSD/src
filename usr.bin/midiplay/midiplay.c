@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.22.12.4 2006/06/02 02:36:13 chap Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.22.12.5 2006/06/02 04:26:47 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.22.12.4 2006/06/02 02:36:13 chap Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.22.12.5 2006/06/02 04:26:47 chap Exp $");
 #endif
 
 
@@ -837,8 +837,8 @@ BuildHeap(struct track *t, int ntrks)
 }
 
 /*
- * Make the heap 1 item smaller by discarding the track at the root.
- * Move the rightmost leaf to the root and decrement ntrks. It remains to
+ * Make the heap 1 item smaller by discarding the track at the root. Move the
+ * rightmost bottom-level leaf to the root and decrement ntrks. It remains to
  * run Heapify, which the caller is expected to do. Returns the new ntrks.
  */
 int
