@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.214.2.3 2006/06/01 22:38:08 kardel Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.214.2.4 2006/06/02 00:14:24 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214.2.3 2006/06/01 22:38:08 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214.2.4 2006/06/02 00:14:24 kardel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2372,7 +2372,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	struct timespec ts, tsstart;
 	ksiginfo_t *ksi;
 
-	memset(&tvstart, 0, sizeof tvstart);	 /* XXX gcc */
+	memset(&tsstart, 0, sizeof tsstart);	 /* XXX gcc */
 
 	MALLOC(waitset, sigset_t *, sizeof(sigset_t), M_TEMP, M_WAITOK);
 
