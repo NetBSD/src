@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.100 2006/05/31 21:54:53 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.101 2006/06/02 20:15:38 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -118,15 +118,15 @@ sys/arch/i386/i386/est.c			1.13
 	PR kern/32418: Support for the Pentium M 770.
 	[xtraeme, ticket #1075]
 
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c 1.8
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c 1.7
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_hw.c 1.2
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h 1.2
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c 1.7
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h 1.6
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_video.c 1.2
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/riva_driver.c 1.2
-xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/riva_include.h 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c 1.8
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c 1.7
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_hw.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c 1.7
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h 1.6
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_video.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/riva_driver.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/riva_include.h 1.2
 
 	Sync the Nvidia drivers with XFree86's sources as of December 24th,
 	2005.  These changes fix lots of problems (i.e. freezes) with the
@@ -159,16 +159,16 @@ sys/arch/i386/i386/identcpu.c			1.19
 	Pentium M 770, 760, 750, 740 and 730.
 	[tron, ticket #1079]
 
-xfree/xc/programs/Xserver/hw/netbsd/alpha/alphaFbs.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/amiga/amigaFbs.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/dec/decFbs.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/dreamcast/dreamcastScreen.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/hpc/hpcScreen.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/macppc/macppcFbs.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/newsmips/newsmipsScreen.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/pmax/pmax_io.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/vax/mono_io.c 1.2
-xfree/xc/programs/Xserver/hw/netbsd/x68k/x68kFb.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/alpha/alphaFbs.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/amiga/amigaFbs.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/dec/decFbs.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/dreamcast/dreamcastScreen.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/hpc/hpcScreen.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/macppc/macppcFbs.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/newsmips/newsmipsScreen.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/pmax/pmax_io.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/vax/mono_io.c 1.2
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/x68k/x68kFb.c 1.2
 
 	XFree86 4.x now passes SCREEN_SAVER_CYCLE to the display driver.  The
 	netbsd non-xfree86 servers treated this as an unblank event.  If the
@@ -853,7 +853,7 @@ usr.sbin/etcupdate/etcupdate			1.26-1.27
 	Pass BUILD=1 in make environment.
 	[apb, ticket #1185]
 
-xfree/xc/programs/Xserver/hw/xfree86/drivers/i810/i830_driver.c 1.5
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/i810/i830_driver.c 1.5
 
 	Apply patch by David Dawes, member of the XFree86 project, which allows
 	to use screen resolution larger than 640x480 with i830 chipsets.
