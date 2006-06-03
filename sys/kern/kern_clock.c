@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.96.6.4 2006/04/24 08:37:35 kardel Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.96.6.5 2006/06/03 10:42:31 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.4 2006/04/24 08:37:35 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.5 2006/06/03 10:42:31 kardel Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -332,7 +332,7 @@ int	profhz;
 int	profsrc;
 int	schedhz;
 int	profprocs;
-int	hardclock_ticks;
+u_int	hardclock_ticks;
 static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
@@ -358,6 +358,25 @@ volatile struct	timeval mono_time;
 void	*softclock_si;
 #endif
 
+#ifdef __HAVE_TIMECOUNTER
+static u_int get_intr_timecount(struct timecounter *);
+
+static struct timecounter intr_timecounter = {
+	get_intr_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	0,		        /* frequency */
+	"clockinterrupt",	/* name */
+	0			/* quality - minimum implementation level for a clock */
+};
+
+static u_int
+get_intr_timecount(struct timecounter *tc)
+{
+	return hardclock_ticks;
+}
+#endif
+
 /*
  * Initialize clock frequencies and start both clocks running.
  */
@@ -379,6 +398,12 @@ initclocks(void)
 	psdiv = 1;
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
+	/*
+	 * provide minimum default time counter
+	 * will only run at interrupt resolution
+	 */
+	intr_timecounter.tc_frequency = hz;
+	tc_init(&intr_timecounter);
 #endif
 	cpu_initclocks();
 
