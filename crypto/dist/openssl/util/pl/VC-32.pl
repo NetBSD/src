@@ -7,8 +7,11 @@ $ssl=	"ssleay32";
 $crypto="libeay32";
 
 $o='\\';
-$cp='copy nul+';	# Timestamps get stuffed otherwise
+$cp='$(PERL) util/copy.pl';
+$mkdir='$(PERL) util/mkdir-p.pl';
 $rm='del';
+
+$zlib_lib="zlib1.lib";
 
 # C compiler stuff
 $cc='cl';
@@ -26,7 +29,8 @@ if ($FLAVOR =~ /WIN64/)
     # considered safe to ignore.
     # 
     $base_cflags=' /W3 /Gs0 /GF /Gy /nologo -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DOPENSSL_SYSNAME_WIN32 -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE';
-    $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE'; # shut up VC8
+    $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
+    $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
     $opt_cflags=' /MD /Ox';
     $dbg_cflags=' /MDd /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
@@ -89,9 +93,10 @@ else	# Win32
     {
     $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
     $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
+    $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
     $opt_cflags=' /MD /Ox /O2 /Ob2';
     $dbg_cflags=' /MDd /Od -DDEBUG -D_DEBUG';
-    $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
+    $lflags="/nologo /subsystem:console /opt:ref";
     }
 $mlflags='';
 
@@ -140,7 +145,6 @@ if ($FLAVOR =~ /NT/)
 	$cflags.=" -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE";
 	$ex_libs="unicows.lib $ex_libs";
 	}
-
 # static library stuff
 $mklib='lib';
 $ranlib='';
@@ -235,10 +239,14 @@ $cflags.=" /Fd$out_def";
 sub do_lib_rule
 	{
 	local($objs,$target,$name,$shlib)=@_;
-	local($ret,$Name);
+	local($ret);
 
 	$taget =~ s/\//$o/g if $o ne '/';
-	($Name=$name) =~ tr/a-z/A-Z/;
+	if ($name ne "")
+		{
+		$name =~ tr/a-z/A-Z/;
+		$name = "/def:ms/${name}.def";
+		}
 
 #	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
@@ -250,8 +258,12 @@ sub do_lib_rule
 		}
 	else
 		{
-		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
-		if ($FLAVOR =~ /CE/)
+		local($ex)=($target =~ /O_CRYPTO/)?'':' $(L_CRYPTO)';
+		if ($name eq "")
+			{
+			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+			}
+		elsif ($FLAVOR =~ /CE/)
 			{
 			$ex.=' winsock.lib $(WCECOMPAT)/lib/wcecompatex.lib';
 			}
@@ -261,7 +273,9 @@ sub do_lib_rule
 			$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
+		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+        $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
 	$ret.="\n";
 	return($ret);
@@ -275,8 +289,9 @@ sub do_link_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
-	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n\n";
+	$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
+	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
+    $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
 	}
 
