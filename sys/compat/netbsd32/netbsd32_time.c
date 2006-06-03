@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.18.6.4 2006/06/02 17:00:07 drochner Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.18.6.5 2006/06/03 10:41:47 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.4 2006/06/02 17:00:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.5 2006/06/03 10:41:47 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -54,21 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.4 2006/06/02 17:00:07 droch
 #include <compat/netbsd32/netbsd32_conv.h>
 
 #ifdef NTP
-
-#ifdef PPS_SYNC
-/*
- * The following variables are used only if the PPS signal discipline
- * is configured in the kernel.
- */
-extern int pps_shift;		/* interval duration (s) (shift) */
-extern long pps_freq;		/* pps frequency offset (scaled ppm) */
-extern long pps_jitter;		/* pps jitter (us) */
-extern long pps_stabil;		/* pps stability (scaled ppm) */
-extern long pps_jitcnt;		/* jitter limit exceeded */
-extern long pps_calcnt;		/* calibration intervals */
-extern long pps_errcnt;		/* calibration errors */
-extern long pps_stbcnt;		/* stability limit exceeded */
-#endif /* PPS_SYNC */
 
 int
 netbsd32_ntp_gettime(l, v, retval)
@@ -148,7 +133,6 @@ netbsd32_ntp_adjtime(l, v, retval)
 	int error = 0;
 	int modes;
 	struct proc *p = l->l_proc;
-	register_t retval1 = TIME_ERROR;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tp)),
 	    (caddr_t)&ntv32, sizeof(ntv32))))
@@ -165,13 +149,13 @@ netbsd32_ntp_adjtime(l, v, retval)
 	if (modes != 0 && (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
-	ntp_adjtime1(&ntv, &retval1);
+	ntp_adjtime1(&ntv);
 
 	netbsd32_from_timex(&ntv, &ntv32);
 	error = copyout((caddr_t)&ntv32, (caddr_t)NETBSD32PTR64(SCARG(uap, tp)),
 	    sizeof(ntv32));
 	if (!error) {
-		*retval = retval1;
+		*retval = ntp_timestatus();
 	}
 	return error;
 }
@@ -399,7 +383,8 @@ netbsd32_adjtime(l, v, retval)
 	{
 		int32_t ndelta, ntickdelta, odelta;
 		extern long bigadj, timedelta;
-		extern int tickdelta, s;
+		extern int tickdelta;
+		int s;
 		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, delta)), &atv,
 			       sizeof(struct timeval));
 		if (error)
@@ -544,7 +529,7 @@ netbsd32_nanosleep(l, v, retval)
 	struct netbsd32_timespec ts32;
 	struct timespec rqt;
 	struct timespec rmt;
-	struct timeval atv, utv, time;
+	struct timeval atv, utv, ctime;
 	int error, timo;
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rqtp)), (caddr_t)&ts32,
@@ -557,8 +542,8 @@ netbsd32_nanosleep(l, v, retval)
 	if (itimerfix(&atv))
 		return (EINVAL);
 
-	getmicrotime(&time);
-	timeradd(&atv,&time,&atv);
+	getmicrotime(&ctime);
+	timeradd(&atv,&ctime,&atv);
 	timo = hzto(&atv);
 	/*
 	 * Avoid inadvertantly sleeping forever
