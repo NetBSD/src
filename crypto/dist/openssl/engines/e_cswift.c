@@ -744,6 +744,12 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx
 	int to_return = 0;
 	const RSA_METHOD * def_rsa_method;
 
+	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
+		{
+		CSWIFTerr(CSWIFT_F_CSWIFT_RSA_MOD_EXP,CSWIFT_R_MISSING_KEY_COMPONENTS);
+		goto err;
+		}
+
 	/* Try the limits of RSA (2048 bits) */
 	if(BN_num_bytes(rsa->p) > 128 ||
 		BN_num_bytes(rsa->q) > 128 ||
@@ -764,11 +770,6 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx
 			return def_rsa_method->rsa_mod_exp(r0, I, rsa, ctx);
 	}
 
-	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
-		{
-		CSWIFTerr(CSWIFT_F_CSWIFT_RSA_MOD_EXP,CSWIFT_R_MISSING_KEY_COMPONENTS);
-		goto err;
-		}
 	to_return = cswift_mod_exp_crt(r0, I, rsa->p, rsa->q, rsa->dmp1,
 		rsa->dmq1, rsa->iqmp, ctx);
 err:
@@ -1089,7 +1090,7 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 		if (swrc != SW_OK)
 		{
 			char tmpbuf[20];
-			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL, CSWIFT_R_REQUEST_FAILED);
+			CSWIFTerr(CSWIFT_F_CSWIFT_RAND_BYTES, CSWIFT_R_REQUEST_FAILED);
 			sprintf(tmpbuf, "%ld", swrc);
 			ERR_add_error_data(2, "CryptoSwift error number is ", tmpbuf);
 			goto err;
