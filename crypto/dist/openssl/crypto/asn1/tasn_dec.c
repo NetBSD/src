@@ -98,7 +98,7 @@ static unsigned long tag2bit[32] = {
 B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
 B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags  8-11 */
 B_ASN1_UTF8STRING,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,/* tags 12-15 */
-0,	0,	B_ASN1_NUMERICSTRING,B_ASN1_PRINTABLESTRING,   /* tags 16-19 */
+B_ASN1_SEQUENCE,0,B_ASN1_NUMERICSTRING,B_ASN1_PRINTABLESTRING, /* tags 16-19 */
 B_ASN1_T61STRING,B_ASN1_VIDEOTEXSTRING,B_ASN1_IA5STRING,       /* tags 20-22 */
 B_ASN1_UTCTIME, B_ASN1_GENERALIZEDTIME,			       /* tags 23-24 */	
 B_ASN1_GRAPHICSTRING,B_ASN1_ISO64STRING,B_ASN1_GENERALSTRING,  /* tags 25-27 */
@@ -158,7 +158,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_aux_cb *asn1_cb;
-	const unsigned char *p, *q;
+	const unsigned char *p = NULL, *q;
 	unsigned char *wp=NULL;	/* BIG FAT WARNING!  BREAKS CONST WHERE USED */
 	unsigned char imphack = 0, oclass;
 	char seq_eoc, seq_nolen, cst, isopt;
@@ -283,6 +283,12 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 			{
 			wp = *(unsigned char **)in;
 			imphack = *wp;
+			if (p == NULL)
+				{
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
+				goto err;
+				}
 			*wp = (unsigned char)((*p & V_ASN1_CONSTRUCTED)
 								| it->utype);
 			}
@@ -924,6 +930,8 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 		if (!*pval)
 			{
 			typ = ASN1_TYPE_new();
+			if (typ == NULL)
+				goto err;
 			*pval = (ASN1_VALUE *)typ;
 			}
 		else
@@ -1167,7 +1175,7 @@ static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
 			return 0;
 #endif
 			}
-		else if (!collect_data(buf, &p, plen))
+		else if (plen && !collect_data(buf, &p, plen))
 			return 0;
 		len -= p - q;
 		}
