@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.106 2006/06/03 01:43:47 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.107 2006/06/03 06:56:43 dogcow Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.106 2006/06/03 01:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.107 2006/06/03 06:56:43 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.106 2006/06/03 01:43:47 christos Exp $");
 #include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
+
+#include <netccitt/x25.h>
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
