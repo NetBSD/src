@@ -2234,6 +2234,7 @@ static DH *get_dh1024dsa()
 	dh->length = 160;
 	return(dh);
 	}
+#endif
 
 static int do_test_cipherlist(void)
 	{
@@ -2241,6 +2242,7 @@ static int do_test_cipherlist(void)
 	const SSL_METHOD *meth;
 	SSL_CIPHER *ci, *tci = NULL;
 
+#ifndef OPENSSL_NO_SSL2
 	fprintf(stderr, "testing SSLv2 cipher list order: ");
 	meth = SSLv2_method();
 	while ((ci = meth->get_cipher(i++)) != NULL)
@@ -2254,7 +2256,8 @@ static int do_test_cipherlist(void)
 		tci = ci;
 		}
 	fprintf(stderr, "ok\n");
-
+#endif
+#ifndef OPENSSL_NO_SSL3
 	fprintf(stderr, "testing SSLv3 cipher list order: ");
 	meth = SSLv3_method();
 	tci = NULL;
@@ -2269,7 +2272,8 @@ static int do_test_cipherlist(void)
 		tci = ci;
 		}
 	fprintf(stderr, "ok\n");
-
+#endif
+#ifndef OPENSSL_NO_TLS1
 	fprintf(stderr, "testing TLSv1 cipher list order: ");
 	meth = TLSv1_method();
 	tci = NULL;
@@ -2284,7 +2288,7 @@ static int do_test_cipherlist(void)
 		tci = ci;
 		}
 	fprintf(stderr, "ok\n");
+#endif
 
 	return 1;
 	}
-#endif

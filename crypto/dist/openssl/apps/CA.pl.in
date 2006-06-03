@@ -94,6 +94,9 @@ foreach (@ARGV) {
 		mkdir "${CATOP}/private", $DIRMODE;
 		open OUT, ">${CATOP}/index.txt";
 		close OUT;
+		open OUT, ">${CATOP}/crlnumber";
+		print OUT "01\n";
+		close OUT;
 	    }
 	    if ( ! -f "${CATOP}/private/$CAKEY" ) {
 		print "CA certificate filename (or enter to create)\n";
@@ -113,6 +116,7 @@ foreach (@ARGV) {
 		    system ("$CA -create_serial " .
 			"-out ${CATOP}/$CACERT $CADAYS -batch " . 
 			"-keyfile ${CATOP}/private/$CAKEY -selfsign " .
+			"-extensions v3_ca " .
 			"-infiles ${CATOP}/$CAREQ ");
 		    $RET=$?;
 		}
