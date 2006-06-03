@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.80 2006/06/01 18:04:08 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.81 2006/06/03 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,15 +58,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.80 2006/06/01 18:04:08 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.81 2006/06/03 18:19:55 christos Exp $");
 #endif
 
 #include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/file.h>
@@ -205,10 +205,6 @@ double tsum = 0.0;			/* sum of all times */
 double tsumsq = 0.0;
 double maxwait = 0.0;
 
-#ifdef SIGINFO
-int reset_kerninfo;
-#endif
-
 int bufspace = IP_MAXPACKET;
 
 struct timeval now, clear_cache, last_tx, next_tx, first_tx;
@@ -241,9 +237,6 @@ static void jiggle(int), jiggle_flush(int);
 static void gethost(const char *, const char *,
 		    struct sockaddr_in *, char *, int);
 static void usage(void);
-#if defined(SIGINFO) && defined(NOKERNINFO)
-static int fgtty(int, struct termios *);
-#endif
 
 int
 main(int argc, char *argv[])
@@ -253,16 +246,15 @@ main(int argc, char *argv[])
 	u_char ttl = 0;
 	u_long tos = 0;
 	char *p;
-#ifdef SIGINFO
-	struct termios ts;
-#endif
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
 	char *policy_in = NULL;
 	char *policy_out = NULL;
 #endif
 #endif
-  
+#ifdef SIGINFO
+	struct sigaction sa;
+#endif
 
 	setprogname(argv[0]);
 
@@ -639,16 +631,11 @@ main(int argc, char *argv[])
 
 	(void)signal(SIGINT, prefinish);
 
-#if defined(SIGINFO) && defined(NOKERNINFO)
-	if (fgtty(STDIN_FILENO, &ts) != -1) {
-		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
-		ts.c_lflag |= NOKERNINFO;
-		(void)tcsetattr(STDIN_FILENO, TCSANOW, &ts);
-	}
-#endif
-
 #ifdef SIGINFO
-	(void)signal(SIGINFO, prtsig);
+	sa.sa_handler = prtsig;
+	sa.sa_flags = SA_NOKERNINFO;
+	sigemptyset(&sa.sa_mask);
+	(void)sigaction(SIGINFO, &sa, NULL);
 #else
 	(void)signal(SIGQUIT, prtsig);
 #endif
@@ -1317,10 +1304,9 @@ summary(int header)
 static void
 prtsig(int dummy)
 {
+abort();
 	summary(0);
-#ifdef SIGINFO
-	(void)signal(SIGINFO, prtsig);
-#else
+#ifndef SIGINFO
 	(void)signal(SIGQUIT, prtsig);
 #endif
 }
@@ -1342,23 +1328,6 @@ prefinish(int dummy)
 		npackets = ntransmitted;
 }
 
-#if defined(SIGINFO) && defined(NOKERNINFO)
-static int
-fgtty(int fd, struct termios *ts)
-{
-	pid_t ttypgrp, pgrp;
-
-	if (tcgetattr(fd, ts) == -1)
-		return -1;
-	if ((ttypgrp = tcgetpgrp(fd)) == -1)
-		return -1;
-	if ((pgrp = getpgid(0)) == -1)
-		return -1;
-
-	return ttypgrp == pgrp ? 0 : -1;
-}
-#endif
-
 /*
  * Print statistics and give up.
  */
@@ -1366,21 +1335,8 @@ fgtty(int fd, struct termios *ts)
 static void
 finish(int dummy)
 {
-#if defined(SIGINFO) && defined(NOKERNINFO)
-	struct termios ts;
-
-	/*
-	 * Note that the following will suspend the ping program
-	 * if it is in the background. We could have used fgtty()
-	 * to avoid this, but then we would fail to restore the
-	 * tty setting. So we prefer to suspend here. XXX: NOKERNINFO
-	 * should prolly be a signal struct attribute
-	 */
-	if (reset_kerninfo && tcgetattr(STDIN_FILENO, &ts) != -1) {
-		ts.c_lflag &= ~NOKERNINFO;
-		(void)tcsetattr(STDIN_FILENO, TCSANOW, &ts);
-	}
-	(void)signal(SIGINFO, SIG_IGN);
+#ifdef SIGINFO
+	(void)signal(SIGINFO, SIG_DFL);
 #else
 	(void)signal(SIGQUIT, SIG_DFL);
 #endif
