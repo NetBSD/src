@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.182 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: tty.c,v 1.183 2006/06/03 18:18:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.182 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.183 2006/06/03 18:18:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,7 @@ ttyinput_wlock(int c, struct tty *tp)
 			 */
 			if (CCEQ(cc[VSTATUS], c)) {
 				if (!ISSET(lflag, NOKERNINFO))
-					ttyinfo(tp);
+					ttyinfo(tp, 1);
 				if (ISSET(lflag, ISIG))
 					pgsignal(tp->t_pgrp, SIGINFO, 1);
 				goto endcase;
@@ -1192,7 +1192,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSTAT:			/* get load avg stats */
 		s = spltty();
 		TTY_LOCK(tp);
-		ttyinfo(tp);
+		ttyinfo(tp, 0);
 		TTY_UNLOCK(tp);
 		splx(s);
 		break;
@@ -2314,74 +2314,86 @@ ttsetwater(struct tty *tp)
  * Call with tty slock held.
  */
 void
-ttyinfo(struct tty *tp)
+ttyinfo(struct tty *tp, int fromsig)
 {
 	struct lwp	*l;
 	struct proc	*p, *pick;
 	struct timeval	utime, stime;
 	int		tmp;
+	const char	*msg;
 
 	if (ttycheckoutq_wlock(tp, 0) == 0)
 		return;
 
-	/* Print load average. */
-	tmp = (averunnable.ldavg[0] * 100 + FSCALE / 2) >> FSHIFT;
-	ttyprintf_nolock(tp, "load: %d.%02d ", tmp / 100, tmp % 100);
-
 	if (tp->t_session == NULL)
-		ttyprintf_nolock(tp, "not a controlling terminal\n");
+		msg = "not a controlling terminal\n";
 	else if (tp->t_pgrp == NULL)
-		ttyprintf_nolock(tp, "no foreground process group\n");
-	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == 0)
-		ttyprintf_nolock(tp, "empty foreground process group\n");
+		msg = "no foreground process group\n";
+	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == NULL)
+		msg = "empty foreground process group\n";
 	else {
 		/* Pick interesting process. */
 		for (pick = NULL; p != NULL; p = LIST_NEXT(p, p_pglist))
 			if (proc_compare(pick, p))
 				pick = p;
+		if (fromsig &&
+		    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
+		    SA_NOKERNINFO))
+			return;
+		msg = NULL;
+	}
 
-		ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
-		LIST_FOREACH(l, &pick->p_lwps, l_sibling)
-		    ttyprintf_nolock(tp, "%s%s",
-		    l->l_stat == LSONPROC ? "running" :
-		    l->l_stat == LSRUN ? "runnable" :
-		    l->l_wmesg ? l->l_wmesg : "iowait",
-			(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
+	/* Print load average. */
+	tmp = (averunnable.ldavg[0] * 100 + FSCALE / 2) >> FSHIFT;
+	ttyprintf_nolock(tp, "load: %d.%02d ", tmp / 100, tmp % 100);
 
-		calcru(pick, &utime, &stime, NULL);
+	if (msg) {
+		ttyprintf_nolock(tp, msg);
+		tp->t_rocount = 0; /* so pending input will be retyped if BS */
+		return;
+	}
 
-		/* Round up and print user time. */
-		utime.tv_usec += 5000;
-		if (utime.tv_usec >= 1000000) {
-			utime.tv_sec += 1;
-			utime.tv_usec -= 1000000;
-		}
-		ttyprintf_nolock(tp, "%ld.%02ldu ", (long int)utime.tv_sec,
-		    (long int)utime.tv_usec / 10000);
+	ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
+	LIST_FOREACH(l, &pick->p_lwps, l_sibling)
+	    ttyprintf_nolock(tp, "%s%s",
+	    l->l_stat == LSONPROC ? "running" :
+	    l->l_stat == LSRUN ? "runnable" :
+	    l->l_wmesg ? l->l_wmesg : "iowait",
+		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
 
-		/* Round up and print system time. */
-		stime.tv_usec += 5000;
-		if (stime.tv_usec >= 1000000) {
-			stime.tv_sec += 1;
-			stime.tv_usec -= 1000000;
-		}
-		ttyprintf_nolock(tp, "%ld.%02lds ", (long int)stime.tv_sec,
-		    (long int)stime.tv_usec / 10000);
+	calcru(pick, &utime, &stime, NULL);
+
+	/* Round up and print user time. */
+	utime.tv_usec += 5000;
+	if (utime.tv_usec >= 1000000) {
+		utime.tv_sec += 1;
+		utime.tv_usec -= 1000000;
+	}
+	ttyprintf_nolock(tp, "%ld.%02ldu ", (long int)utime.tv_sec,
+	    (long int)utime.tv_usec / 10000);
+
+	/* Round up and print system time. */
+	stime.tv_usec += 5000;
+	if (stime.tv_usec >= 1000000) {
+		stime.tv_sec += 1;
+		stime.tv_usec -= 1000000;
+	}
+	ttyprintf_nolock(tp, "%ld.%02lds ", (long int)stime.tv_sec,
+	    (long int)stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
-		/* Print percentage CPU. */
-		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		ttyprintf_nolock(tp, "%d%% ", tmp / 100);
+	/* Print percentage CPU. */
+	tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
+	ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
-		/* Print resident set size. */
-		if (pick->p_stat == SIDL || P_ZOMBIE(pick))
-			tmp = 0;
-		else {
-			struct vmspace *vm = pick->p_vmspace;
-			tmp = pgtok(vm_resident_count(vm));
-		}
-		ttyprintf_nolock(tp, "%dk\n", tmp);
+	/* Print resident set size. */
+	if (pick->p_stat == SIDL || P_ZOMBIE(pick))
+		tmp = 0;
+	else {
+		struct vmspace *vm = pick->p_vmspace;
+		tmp = pgtok(vm_resident_count(vm));
 	}
+	ttyprintf_nolock(tp, "%dk\n", tmp);
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }
 
