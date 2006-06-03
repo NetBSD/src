@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.62 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.62.6.1 2006/06/03 19:44:04 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -156,8 +156,11 @@ struct	sigaction {
     defined(_NETBSD_SOURCE)
 #define SA_SIGINFO	0x0040	/* take sa_sigaction handler */
 #endif /* (_POSIX_C_SOURCE - 0) >= 199309L || ... */
+#if defined(_NETBSD_SOURCE)
+#define	SA_NOKERNINFO	0x0080	/* siginfo does not print kernel info on tty */
+#endif /*_NETBSD_SOURCE */
 #ifdef _KERNEL
-#define	SA_ALLBITS	0x007f
+#define	SA_ALLBITS	0x00ff
 #endif
 
 /*
