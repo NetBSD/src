@@ -4235,6 +4235,8 @@ reshape_init_array_1 (tree elt_type, tree max_index, reshape_iter *d)
 	}
 
       elt_init = reshape_init_r (elt_type, d, /*first_initializer_p=*/false);
+      if (elt_init == error_mark_node)
+	return error_mark_node;
       CONSTRUCTOR_APPEND_ELT (CONSTRUCTOR_ELTS (new_init), NULL_TREE, elt_init);
     }
 
@@ -4513,6 +4515,8 @@ reshape_init (tree type, tree init)
   d.end = d.cur + VEC_length (constructor_elt, v);
 
   new_init = reshape_init_r (type, &d, true);
+  if (new_init == error_mark_node)
+    return error_mark_node;
 
   /* Make sure all the element of the constructor were used. Otherwise,
      issue an error about exceeding initializers.  */
@@ -7598,9 +7602,11 @@ grokdeclarator (const cp_declarator *declarator,
 	       are always static functions.  */
 	    ;
 	  else
-	    type = build_method_type_directly (ctype,
-					       TREE_TYPE (type),
-					       TYPE_ARG_TYPES (type));
+	    type = (build_method_type_directly 
+		    (cp_build_qualified_type (ctype, 
+					      quals & ~TYPE_QUAL_RESTRICT),
+		     TREE_TYPE (type),
+		     TYPE_ARG_TYPES (type)));
 	}
       else if (declspecs->specs[(int)ds_typedef]
 	       || COMPLETE_TYPE_P (complete_type (ctype)))
@@ -8669,7 +8675,9 @@ copy_fn_p (tree d)
   tree arg_type;
   int result = 1;
 
-  gcc_assert (DECL_FUNCTION_MEMBER_P (d));
+  if (!DECL_FUNCTION_MEMBER_P (d))
+    /* Non-members are invalid.  We complained, but kept the declaration.  */
+    return 0;
 
   if (DECL_TEMPLATE_INFO (d)
       && DECL_MEMBER_TEMPLATE_P (DECL_TI_TEMPLATE (d)))
@@ -8684,6 +8692,8 @@ copy_fn_p (tree d)
     return 0;
 
   arg_type = TREE_VALUE (args);
+  if (arg_type == error_mark_node)
+    return 0;
 
   if (TYPE_MAIN_VARIANT (arg_type) == DECL_CONTEXT (d))
     {
@@ -8939,6 +8949,9 @@ grok_op_properties (tree decl, bool complain)
 	      for (p = argtypes; p && p != void_list_node; p = TREE_CHAIN (p))
 		{
 		  tree arg = non_reference (TREE_VALUE (p));
+		  if (arg == error_mark_node)
+		    return;
+
 		  /* IS_AGGR_TYPE, rather than CLASS_TYPE_P, is used
 		     because these checks are performed even on
 		     template functions.  */

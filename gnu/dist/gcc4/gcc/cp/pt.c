@@ -150,7 +150,6 @@ static tree get_template_base (tree, tree, tree, tree);
 static tree try_class_unification (tree, tree, tree, tree);
 static int coerce_template_template_parms (tree, tree, tsubst_flags_t,
 					   tree, tree);
-static tree determine_specialization (tree, tree, tree *, int, int);
 static int template_args_equal (tree, tree);
 static void tsubst_default_arguments (tree);
 static tree for_each_template_parm_r (tree *, int *, void *);
@@ -1342,6 +1341,11 @@ print_candidates (tree fns)
    template classes that appeared in the name of the function. See
    check_explicit_specialization for a more accurate description.
 
+   TSK indicates what kind of template declaration (if any) is being
+   declared.  TSK_TEMPLATE indicates that the declaration given by
+   DECL, though a FUNCTION_DECL, has template parameters, and is
+   therefore a template function.
+
    The template args (those explicitly specified and those deduced)
    are output in a newly created vector *TARGS_OUT.
 
@@ -1353,7 +1357,8 @@ determine_specialization (tree template_id,
 			  tree decl,
 			  tree* targs_out,
 			  int need_member_template,
-			  int template_count)
+			  int template_count,
+			  tmpl_spec_kind tsk)
 {
   tree fns;
   tree targs;
@@ -1465,6 +1470,18 @@ determine_specialization (tree template_id,
 		  != TREE_VEC_LENGTH (INNERMOST_TEMPLATE_PARMS 
 				      (current_template_parms))))
 	    continue;
+
+	  /* Function templates cannot be specializations; there are
+	     no partial specializations of functions.  Therefore, if
+	     the type of DECL does not match FN, there is no
+	     match.  */
+	  if (tsk == tsk_template)
+	    {
+	      if (compparms (TYPE_ARG_TYPES (TREE_TYPE (fn)),
+			     decl_arg_types))
+		candidates = tree_cons (NULL_TREE, fn, candidates);
+	      continue;
+	    }
 
 	  /* See whether this function might be a specialization of this
 	     template.  */
@@ -1592,10 +1609,14 @@ determine_specialization (tree template_id,
   /* We have one, and exactly one, match.  */
   if (candidates)
     {
+      tree fn = TREE_VALUE (candidates);
+      /* DECL is a re-declaration of a template function.  */
+      if (TREE_CODE (fn) == TEMPLATE_DECL)
+	return fn;
       /* It was a specialization of an ordinary member function in a
 	 template class.  */
-      *targs_out = copy_node (DECL_TI_ARGS (TREE_VALUE (candidates)));
-      return DECL_TI_TEMPLATE (TREE_VALUE (candidates));
+      *targs_out = copy_node (DECL_TI_ARGS (fn));
+      return DECL_TI_TEMPLATE (fn);
     }
 
   /* It was a specialization of a template.  */
@@ -2049,7 +2070,8 @@ check_explicit_specialization (tree declarator,
       tmpl = determine_specialization (declarator, decl,
 				       &targs,
 				       member_specialization,
-				       template_count);
+				       template_count,
+				       tsk);
 
       if (!tmpl || tmpl == error_mark_node)
 	/* We couldn't figure out what this declaration was
@@ -2095,8 +2117,8 @@ check_explicit_specialization (tree declarator,
 	    revert_static_member_fn (decl);
 
 	  /* If this is a specialization of a member template of a
-	     template class.  In we want to return the TEMPLATE_DECL,
-	     not the specialization of it.  */
+	     template class, we want to return the TEMPLATE_DECL, not
+	     the specialization of it.  */
 	  if (tsk == tsk_template)
 	    {
 	      SET_DECL_TEMPLATE_SPECIALIZATION (tmpl);
@@ -3013,7 +3035,7 @@ push_template_decl_real (tree decl, bool is_friend)
 		 template. ... Template allocation functions shall
 		 have two or more parameters.  */
 	      error ("invalid template declaration of %qD", decl);
-	      return decl;
+	      return error_mark_node;
 	    }
 	}
       else if (DECL_IMPLICIT_TYPEDEF_P (decl)
@@ -3461,6 +3483,8 @@ convert_nontype_argument (tree type, tree expr)
      instantiated -- but here we need the resolved form so that we can
      convert the argument.  */
   expr = fold_non_dependent_expr (expr);
+  if (error_operand_p (expr))
+    return error_mark_node;
   expr_type = TREE_TYPE (expr);
 
   /* HACK: Due to double coercion, we can get a
@@ -5163,7 +5187,8 @@ tsubst_friend_function (tree decl, tree args)
       tmpl = determine_specialization (template_id, new_friend,
 				       &new_args,
 				       /*need_member_template=*/0,
-				       TREE_VEC_LENGTH (args));
+				       TREE_VEC_LENGTH (args),
+				       tsk_none);
       return instantiate_template (tmpl, new_args, tf_error);
     }
 
@@ -6152,8 +6177,15 @@ tsubst_default_argument (tree fn, tree type, tree arg)
     }
 
   push_deferring_access_checks(dk_no_deferred);
+  /* The default argument expression may cause implicitly defined
+     member functions to be synthesized, which will result in garbage
+     collection.  We must treat this situation as if we were within
+     the body of function so as to avoid collecting live data on the
+      stack.  */
+  ++function_depth;
   arg = tsubst_expr (arg, DECL_TI_ARGS (fn),
 		     tf_error | tf_warning, NULL_TREE);
+  --function_depth;
   pop_deferring_access_checks();
 
   /* Restore the "this" pointer.  */
@@ -8386,8 +8418,10 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	}
       else
 	{
+	  tree compound_stmt = NULL_TREE;
+
 	  if (FN_TRY_BLOCK_P (t))
-	    stmt = begin_function_try_block ();
+	    stmt = begin_function_try_block (&compound_stmt);
 	  else
 	    stmt = begin_try_block ();
 
@@ -8400,7 +8434,7 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 
 	  tsubst_expr (TRY_HANDLERS (t), args, complain, in_decl);
 	  if (FN_TRY_BLOCK_P (t))
-	    finish_function_handler_sequence (stmt);
+	    finish_function_handler_sequence (stmt, compound_stmt);
 	  else
 	    finish_handler_sequence (stmt);
 	}
@@ -11111,7 +11145,7 @@ do_decl_instantiation (tree decl, tree storage)
   tree result = NULL_TREE;
   int extern_p = 0;
 
-  if (!decl)
+  if (!decl || decl == error_mark_node)
     /* An error occurred, for which grokdeclarator has already issued
        an appropriate message.  */
     return;
@@ -12651,6 +12685,8 @@ any_dependent_template_arguments_p (tree args)
 
   if (!args)
     return false;
+  if (args == error_mark_node)
+    return true;
 
   for (i = 0; i < TMPL_ARGS_DEPTH (args); ++i)
     {
