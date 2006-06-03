@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.23.6.2 2006/06/02 17:24:59 drochner Exp $	*/
+/*	$NetBSD: kernel.h,v 1.23.6.3 2006/06/03 10:44:36 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,10 +54,12 @@ extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 
 extern int cold;		/* still working on startup */
 extern int tick;		/* usec per tick (1000000 / hz) */
-extern int hardclock_ticks;	/* # of hardclock ticks */
+extern int tickadj;		/* "standard" clock skew, us./tick */
+extern u_int hardclock_ticks;	/* # of hardclock ticks */
+#ifndef __HAVE_TIMECOUNTER
 extern int tickfix;		/* periodic tick adj. tick not integral */
 extern int tickfixinterval;	/* interval at which to apply adjustment */
-extern int tickadj;		/* "standard" clock skew, us./tick */
+#endif
 extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
