@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.48 2006/04/15 12:17:23 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2006/06/03 04:36:45 tnozaki Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -9,7 +9,7 @@ SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	setlocale32.c __mb_cur_max.c wcscoll.c wcsftime.c \
 	wcstol.c wcstoll.c wcstoimax.c wcstoul.c wcstoull.c wcstoumax.c \
 	wcsxfrm.c aliasname.c
-MAN+=	nl_langinfo.3 setlocale.3
+MAN+=	nl_langinfo.3 setlocale.3 wcstol.3
 
 SRCS+=	wcstod.c wcstof.c wcstold.c
 MAN+=	wcstod.3
@@ -34,7 +34,7 @@ SRCS+=	___runetype_mb.c _wctrans.c iswctype.c multibyte_c90.c \
 	multibyte_amd1.c rune.c runeglue.c runetable.c setrunelocale.c
 .endif
 MAN+=	btowc.3 iswalnum.3 iswctype.3 towlower.3 towctrans.3 mblen.3 mbrlen.3 \
-	mbrtowc.3 mbsinit.3 mbsrtowcs.3 mbstowcs.3 mbtowc.3 wcrtomb.3 \
+	mbrtowc.3 mbsinit.3 mbsrtowcs.3 mbstowcs.3 mbtowc.3 wcrtomb.3 wcwidth.3 \
 	wcsftime.3 wcsrtombs.3 wcstombs.3 wctob.3 wctomb.3 wctrans.3 wctype.3
 
 
@@ -46,3 +46,5 @@ MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
 	iswalnum.3 iswxdigit.3
 MLINKS+=towlower.3 towupper.3
 MLINKS+=wcstod.3 wcstof.3 wcstod.3 wcstold.3
+MLINKS+=wcstol.3 wcstoll.3 wcstol.3 wcstoimax.3 \
+	wcstol.3 wcstoul.3 wcstol.3 wcstoull.3 wcstol.3 wcstoumax.3
