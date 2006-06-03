@@ -1,4 +1,4 @@
-/*	$NetBSD: special.c,v 1.10 2006/04/09 19:47:43 christos Exp $	*/
+/*	$NetBSD: special.c,v 1.11 2006/06/03 18:55:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: special.c,v 1.10 2006/04/09 19:47:43 christos Exp $");
+__RCSID("$NetBSD: special.c,v 1.11 2006/06/03 18:55:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,13 +61,20 @@ c_special(int fd1, char *file1, off_t skip1, int fd2, char *file2, off_t skip2)
 	if ((fp2 = fdopen(fd2, "r")) == NULL)
 		err(ERR_EXIT, "%s", file2);
 
-	while (skip1--)
-		if (getc(fp1) == EOF)
+	for (byte = line = 1; skip1--; byte++) {
+		ch1 = getc(fp1);
+		if (ch1 == EOF)
 			goto eof;
-	while (skip2--)
-		if (getc(fp2) == EOF)
+		if (ch1 == '\n')
+			line++;
+	}
+	for (byte = line = 1; skip2--; byte++) {
+		ch2 = getc(fp2);
+		if (ch2 == EOF)
 			goto eof;
-
+		if (ch2 == '\n')
+			line++;
+	}
 	dfound = 0;
 	for (byte = line = 1;; ++byte) {
 		ch1 = getc(fp1);
@@ -93,10 +100,10 @@ eof:	if (ferror(fp1))
 		err(ERR_EXIT, "%s", file2);
 	if (feof(fp1)) {
 		if (!feof(fp2))
-			eofmsg(file1);
+			eofmsg(file1, byte, line);
 	} else
 		if (feof(fp2))
-			eofmsg(file2);
+			eofmsg(file2, byte, line);
 	(void)fclose(fp1);
 	(void)fclose(fp2);
 	if (dfound)
