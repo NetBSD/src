@@ -275,14 +275,28 @@ get_pointer_alignment (tree exp, unsigned int max_align)
 	case ADDR_EXPR:
 	  /* See what we are pointing at and look at its alignment.  */
 	  exp = TREE_OPERAND (exp, 0);
+	  inner = max_align;
+	  while (handled_component_p (exp))
+	    {
+	      /* Fields in a structure can be packed, honour DECL_ALIGN
+		 of the FIELD_DECL.  For all other references the conservative 
+		 alignment is the element type alignment.  */
+	      if (TREE_CODE (exp) == COMPONENT_REF)
+		inner = MIN (inner, DECL_ALIGN (TREE_OPERAND (exp, 1)));
+	      else
+		inner = MIN (inner, TYPE_ALIGN (TREE_TYPE (exp)));
+	      exp = TREE_OPERAND (exp, 0);
+	    }
 	  if (TREE_CODE (exp) == FUNCTION_DECL)
 	    align = FUNCTION_BOUNDARY;
 	  else if (DECL_P (exp))
-	    align = DECL_ALIGN (exp);
+	    align = MIN (inner, DECL_ALIGN (exp));
 #ifdef CONSTANT_ALIGNMENT
 	  else if (CONSTANT_CLASS_P (exp))
-	    align = CONSTANT_ALIGNMENT (exp, align);
+	    align = MIN (inner, (unsigned)CONSTANT_ALIGNMENT (exp, align));
 #endif
+	  else
+	    align = MIN (align, inner);
 	  return MIN (align, max_align);
 
 	default:
@@ -3444,11 +3458,11 @@ expand_builtin_memset (tree arglist, rtx target, enum machine_mode mode,
 
       if (TREE_CODE (val) != INTEGER_CST)
 	{
-	  tree cval;
 	  rtx val_rtx;
 
-	  cval = fold_build1 (CONVERT_EXPR, unsigned_char_type_node, val);
-	  val_rtx = expand_expr (cval, NULL_RTX, VOIDmode, 0);
+	  val_rtx = expand_expr (val, NULL_RTX, VOIDmode, 0);
+	  val_rtx = convert_to_mode (TYPE_MODE (unsigned_char_type_node),
+				     val_rtx, 0);
 
 	  /* Assume that we can memset by pieces if we can store the
 	   * the coefficients by pieces (in the required modes).
