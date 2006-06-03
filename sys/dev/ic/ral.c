@@ -1,4 +1,4 @@
-/*	$NetBSD: ral.c,v 1.6 2005/11/18 16:53:56 skrll Exp $ */
+/*	$NetBSD: ral.c,v 1.7 2006/06/03 12:02:51 rpaulo Exp $ */
 /*	$OpenBSD: ral.c,v 1.56 2005/07/02 23:14:42 brad Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/ral/if_ral.c,v 1.10 2005/07/10 22:25:44 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.6 2005/11/18 16:53:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.7 2006/06/03 12:02:51 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -993,7 +993,7 @@ ral_eeprom_read(struct ral_softc *sc, uint8_t addr)
 	RAL_EEPROM_CTL(sc, 0);
 	RAL_EEPROM_CTL(sc, RAL_EEPROM_C);
 
-	return le16toh(val);
+	return val;
 }
 
 /*
