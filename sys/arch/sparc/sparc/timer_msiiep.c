@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.17.6.4 2006/05/28 09:32:36 kardel Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.17.6.5 2006/06/03 10:17:57 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.4 2006/05/28 09:32:36 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.5 2006/06/03 10:17:57 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,7 +123,7 @@ static struct timecounter counter_timecounter = {
 	~0u,			/* counter_mask */
 	25000000,               /* frequency */
 	"timer-counter",	/* name */
-	0,			/* quality */
+	100,			/* quality */
 	&cntr			/* private reference */
 };
 
