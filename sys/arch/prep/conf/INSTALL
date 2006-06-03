@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36.6.2 2006/06/01 22:35:16 kardel Exp $
+#	$NetBSD: INSTALL,v 1.36.6.3 2006/06/03 19:44:03 kardel Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -12,7 +12,7 @@ makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=3500	# save space
+options 	MEMORY_DISK_ROOT_SIZE=3800	# save space
 options		MEMORY_DISK_SERVER=0	# don't need for install
 
 maxusers	8
