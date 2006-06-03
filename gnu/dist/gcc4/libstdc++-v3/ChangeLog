@@ -1,3 +1,84 @@
+2006-05-26  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/tr1/hashtable: Minor cosmetic changes.
+
+2006-05-26  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/tr1/hashtable (hashtable<>::m_find): Remove; update callers.
+
+	* include/tr1/hashtable (map_base<>::operator[]): Move out of line.
+
+	* include/tr1/hashtable (hashtable<>::m_insert(const value_type&,
+	std::tr1::false_type)): Avoid memory leak risk for new_node.
+
+2006-05-26  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/tr1/hashtable (hashtable<>::m_find, m_insert_bucket): Add.
+	(hashtable<>::find, m_insert(const value_type&, std::tr1::true_type),
+	map_base<>::operator[]): Use the above.
+	* testsuite/performance/23_containers/insert/unordered_map_array.cc:
+	New.	
+
+	* include/tr1/hashtable (hashtable<>::find_node,
+	insert(const value_type&, ...), erase_node): Rename to m_*, adjust
+	callers.
+	* include/tr1/hashtable: Minor cosmetic changes.
+
+2006-05-24  Release Manager
+
+	* GCC 4.1.1 released.
+
+2006-05-14  Peter Doerfler  <gcc@pdoerfler.com>
+
+	* include/tr1/hashtable (identity<>::operator(),
+	extract1st<>::operator()): Return by const ref.
+
+2006-05-11  Paolo Carlini  <pcarlini@suse.de>
+	    Peter Doerfler  <gcc@pdoerfler.com>
+
+	* include/tr1/hashtable (hashtable_iterator<>::hashtable_iterator(),
+	hashtable_const_iterator<>::hashtable_const_iterator(),
+	node_iterator<>::node_iterator(),
+	node_const_iterator<>::node_const_iterator()): Add.
+	(node_iterator<>::node_iterator(hash_node<>*),
+	node_const_iterator<>::node_const_iterator(hash_node<>*)): Tweak,
+	remove default.
+	* testsuite/tr1/6_containers/unordered/hashtable/
+	iterators_default_constructor.c: New.
+
+2006-05-09  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/tr1/type_traits (integral_constant<>::value): Define.
+	* testsuite/tr1/4_metaprogramming/helper_classes/static_definition.cc:
+	New.
+
+2006-05-03  Paolo Carlini  <pcarlini@suse.de>
+
+	* acinclude.m4 (GLIBCXX_ENABLE_WCHAR_T): Always check the
+	presence of wctype.h, for use in GLIBCXX_ENABLE_C99.
+	* configure: Regenerate.
+
+2006-05-03  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/6702 (again)
+	* acinclude.m4 (GLIBCXX_ENABLE_C99): Don't check non-C99
+	wchar_t functions...
+	(GLIBCXX_ENABLE_WCHAR_T): ... do that here.
+	* configure.ac: Adjust order of checks.
+	* configure: Regenerate.
+
+2006-04-26  Shantonu Sen  <ssen@opendarwin.org>
+
+	PR libstdc++/26513
+	* scripts/make_exports.pl: Use $ENV{NM_FOR_TARGET}, if present.
+
+2006-04-21  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/26424
+	* include/tr1/hashtable (X<>::primes): Extend for 64-bit machines.
+	(X<>::n_primes): Adjust.
+	(prime_rehash_policy::next_bkt, bkt_for_elements, need_rehash): Adjust.
+
 2006-04-18  Paolo Carlini  <pcarlini@suse.de>
 
 	* docs/html/faq/index.html ([5.5]): Adjust to mention function
