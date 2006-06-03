@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.104 2006/06/03 01:04:29 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.105 2006/06/03 01:32:52 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.104 2006/06/03 01:04:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.105 2006/06/03 01:32:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -341,9 +341,11 @@ in6_control(so, cmd, data, ifp, p)
 
 	switch (cmd) {
 	/*
-	 * XXX: Fix me, once we fix SIOCSIFADDR
+	 * XXX: Fix me, once we fix SIOCSIFADDR, SIOCIFDSTADDR, etc.
 	 */
 	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFCONG_X25:
 		return EOPNOTSUPP;
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
@@ -757,9 +759,7 @@ in6_control(so, cmd, data, ifp, p)
 	default:
 		if (ifp == NULL || ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
-		printf("net %s %p\n", ifp->if_xname, ifp->if_ioctl);
 		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		printf("error = %d\n", error);
 		return error;
 	}
 
