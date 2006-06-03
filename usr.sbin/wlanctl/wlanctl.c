@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.6 2006/06/03 17:29:56 christos Exp $ */
+/* $NetBSD: wlanctl.c,v 1.7 2006/06/03 21:55:28 christos Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -217,7 +217,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 
 	totallen = namelen + IEEE80211_SYSCTL_NODENAMELEN;
 	if (totallen >= NELTS(name)) {
-		warnx("Internal error finding sysctl mib %d %d", totallen, NELTS(name));
+		warnx("Internal error finding sysctl mib");
 		return -1;
 	}
 	vname = &name[namelen];
