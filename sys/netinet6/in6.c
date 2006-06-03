@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.95.4.5 2006/06/01 22:39:02 kardel Exp $	*/
+/*	$NetBSD: in6.c,v 1.95.4.6 2006/06/03 19:44:04 kardel Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.5 2006/06/01 22:39:02 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.6 2006/06/03 19:44:04 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.5 2006/06/01 22:39:02 kardel Exp $");
 #include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
+
+#include <netccitt/x25.h>
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
@@ -340,6 +342,13 @@ in6_control(so, cmd, data, ifp, p)
 		privileged++;
 
 	switch (cmd) {
+	/*
+	 * XXX: Fix me, once we fix SIOCSIFADDR, SIOCIFDSTADDR, etc.
+	 */
+	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFCONF_X25:
+		return EOPNOTSUPP;
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
 		return (mrt6_ioctl(cmd, data));
@@ -752,7 +761,8 @@ in6_control(so, cmd, data, ifp, p)
 	default:
 		if (ifp == NULL || ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		error = ((*ifp->if_ioctl)(ifp, cmd, data));
+		return error;
 	}
 
 	return (0);
