@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.6 2006/04/15 12:21:44 tnozaki Exp $
+# $NetBSD: TODO.i18n,v 1.7 2006/06/03 04:36:45 tnozaki Exp $
 
 NetBSD I18N support status / TODO
 
@@ -77,14 +77,16 @@ wcsstr         sm
 wcstod         sm
 wcstof         sm       SUSv3
 wcstok         sm
-wcstol         s
+wcstol         sm
 wcstold        sm       SUSv3
-wcstoll        s        SUSv3
-wcstoul        s
-wcstoull       s        SUSv3
+wcstoll        sm       SUSv3
+wcstoul        sm
+wcstoull       sm       SUSv3
 wcswcs         s        SUSv3
+wcswidth       sm       SUSv3
 wcsxfrm        i                        LC_COLLATE not supported.
 wctob          sm
+wcwidth        sm       SUSv3
 wmemchr        sm
 wmemcmp        sm
 wmemcpy        sm
@@ -118,8 +120,8 @@ wctype         im                       basic support
 
 inttypes.h
              status     spec            remarks
-wcstoimax      s
-wcstoumax      s
+wcstoimax      sm
+wcstoumax      sm
 
 
 user tools
