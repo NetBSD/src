@@ -1,3 +1,454 @@
+2006-06-01  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/25098
+	* gfortran.dg/dummy_procedure_1.f90: New test.
+
+	PR fortran/25147
+	* gfortran.dg/dummy_procedure_2.f90: New test.
+
+	* gfortran.dg/associated_2.f90: Correct to make consistent with
+	standard.
+
+2006-05-31  Thomas Koenig  <Thomas.Koenig@online.de>
+
+	PR fortran/23151
+	Backport from mainline.
+	* gfortran.dg/inquire_9.f90:  Fix illegal print syntax.
+	* gfortran.dg/print_parentheses_1.f:  New test.
+	* gfortran.dg/print_parentheses_2.f90:  New test.
+
+2006-05-31  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27801
+	* g++.dg/template/cond6.C: New test.
+
+	PR c++/26496
+	* g++.dg/template/crash51.C: New test.
+	* g++.old-deja/g++.mike/net36.C: Tweak error markers.
+
+	PR c++/27385
+	* g++.dg/init/array20.C: New test.
+
+2006-05-30  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/26433
+	* g++.dg/template/fntry1.C: New test.
+
+2006-05-30  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/26068
+	* g++.dg/opt/pr17697-3.C: Remove invalid extern specifier.
+	* g++.dg/parse/linkage1.C: New test.
+
+2006-05-30  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/20173
+	* g++.dg/template/error21.C: New test.
+
+2006-05-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR fortran/27662
+	Backport from mainline
+	2006-05-18  H.J. Lu  <hongjiu.lu@intel.com>
+	* gfortran.dg/temporary_1.f90: New file.
+
+2006-05-30  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c/27718
+	* gcc.dg/sizeof-1.c: New test.
+
+2006-05-29  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/27757
+	* gfortran.dg/direct_io_5.f90: New test.
+
+2006-05-29  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27713
+	* g++.dg/template/new6.C: New test.
+
+	PR c++/27447
+	* g++.dg/other/ptrmem7.C: New test.
+
+	PR c++/27716
+	* g++.dg/other/assign1.C: New test.
+
+	PR c++/27451
+	* g++.dg/ext/asm9.C: New test.
+
+	PR c/26818
+	* gcc.dg/struct-incompl-1.c: New test.
+
+2006-05-28  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/24459
+	* gfortran.dg/namelist_24.f90: New test.
+
+2005-05-28  Thomas Koenig  <Thomas.Koenig@online.de>
+
+	PR fortran/27470
+	Backport from trunk.
+	* gfortran.dg/multiple_allocation_2.f90:  New test case.
+
+2006-05-28  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/25082
+	* gfortran.dg/scalar_return_1.f90: New test.
+
+	PR fortran/27411
+	* gfortran.dg/derived_comp_array_ref_1.f90: New test.
+
+	PR fortran/25746
+	* gfortran.dg/elemental_subroutine_3.f90: New test.
+
+	PR fortran/27584
+	* gfortran.dg/associated_target_1.f90: New test.
+
+	PR fortran/19015
+	* gfortran.dg/maxloc_shape_1.f90: New test.
+
+	PR fortran/27613
+	* gfortran.dg/recursive_reference_1.f90: New test.
+
+	PR fortran/27709
+	* gfortran.dg/spec_expr_4.f90: New test.
+
+	PR fortran/27155
+	* gfortran.dg/transfer_array_intrinsic_4.f90: New test.
+
+	* gfortran.dg/associated_2.f90: New test.
+
+2006-05-28  Kazu Hirata  <kazu@codesourcery.com>
+
+	PR tree-optimization/26622.
+	* gcc.c-torture/compile/pr26622.c: New.
+
+2006-05-27  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/26551
+	* gfortran.dg/recursive_check_1.f: New test.
+	* gfortran.dg/recursive_check_2.f90: New test.
+
+2006-05-26  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/27758
+	* gcc.dg/pr27758.c: New test.
+
+2006-05-26  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/27743
+	* gcc.dg/torture/pr27743.c: New testcase.
+
+2006-05-24  Release Manager
+
+	* GCC 4.1.1 released.
+
+2005-05-17  Bernd Schmidt  <bernd.schmidt@analog.com>
+
+	* g++.dg/opt/temp2.C: New test.
+
+2006-05-17  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/27553
+	* gfortran.dg/label_5.f90: New test.
+
+2006-05-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/27491
+	* g++.dg/init/brace5.C: New test.
+
+2006-05-17  Zdenek Dvorak  <dvorakz@suse.cz>
+
+	PR tree-optimization/27548
+	* g++.dg/tree-ssa/pr27548.C: New test.
+
+2006-05-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/27549
+	* g++.dg/tree-ssa/pr27549.C: New test.
+
+	Backported from mainline
+	2006-05-01  Zdenek Dvorak  <dvorakz@suse.cz>
+	PR tree-optimization/27283
+	* g++.dg/tree-ssa/pr27283.C: New test.
+
+2006-05-16  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/26600
+	* gcc.target/i386/pr26600.c: New test case.
+
+2006-05-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27339
+	* g++.dg/parser/access8.C: Adjust error marker.
+	* g++.dg/template/access17.C: New test.
+	* g++.dg/template/access18.C: Likewise.
+
+2006-05-16  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27603
+	* gcc.dg/torture/pr27603.c: New testcase.
+
+2006-05-15  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	* gcc.dg/20060515-1.c: New testcase.
+
+2006-05-15  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	PR rtl-optimization/14261
+	* gcc.c-torture/compile/20060515-1.c: New testcase.
+
+2006-05-15  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27582
+	* g++.dg/template/dependent-args1.C: New test.
+
+	PR c++/27581
+	* g++.dg/lookup/this1.C: New test.
+
+	PR c++/27315
+	* g++.dg/template/operator6.C: New test.
+	* g++.dg/template/incomplete3.C: New test.
+
+2006-05-13  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/26729
+	* gcc.dg/pr26729-1.c: New test case.
+
+2005-05-13  Zdenek Dvorak  <dvorakz@suse.cz>
+
+	PR rtl-optimization/27335
+	* gcc.dg/pr27335.c: New test.
+
+2006-05-11  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/24549
+	* gfortran.dg/error_recovery_1.f90: New test.
+
+2006-05-11  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR target/27421
+	* gcc.dg/array-9.c: New test.
+
+	PR middle-end/27384
+	* g++.dg/other/fold1.C: New test.
+
+	PR middle-end/27488
+	* gcc.dg/fold-nonneg-1.c: New test.
+
+	PR c++/27547
+	* g++.dg/other/operator1.C: New test.
+
+2006-05-11  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/27158
+	* gcc.target/powerpc/pr27158.c: New test case.
+
+2006-05-09  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27136
+	* gcc.dg/torture/pr27136.c: New testcase.
+
+2006-05-09  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27409
+	* gcc.dg/torture/pr27409.c: New testcase.
+
+2006-05-08  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR libfortran/18271
+	* gfortran.dg/spec_expr_3.f90: New test.
+
+2006-05-08  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/24813
+	* gfortran.dg/char_cons_len.f90: New test.
+
+	PR fortran/27269
+	PR fortran/27324
+	* gfortran.dg/module_equivalence_2.f90: New test.
+
+	PR fortran/25099
+	* gfortran.dg/elemental_subroutine_4.f90: New test.
+	* gfortran.dg/assumed_size_refs_1.f90: Add error to non-conforming
+	call sub (m, x).
+
+2006-05-07  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR libfortran/26985
+	* gfortran.dg/matmul_2.f90: New test.
+	
+2006-05-06  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27427
+	* g++.dg/template/incomplete2.C: New test.
+
+2006-05-06   Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27151
+	* gcc.dg/vect/pr27151.c: New testcase.
+
+2006-05-06  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27422
+	* g++.dg/conversion/void1.C: New test.
+
+2006-05-05  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR objc/27240
+	* objc.dg/member-1.m: New test.
+
+2006-05-05  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/25681
+	* gfortran.df/char_type_len.f90: New test.
+
+2006-05-04  Kazu Hirata  <kazu@codesourcery.com>
+
+	PR target/26765
+	* gcc.target/mips/pr26765.c: New.
+
+2006-05-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/27285
+	* gcc.c-torture/execute/pr27285.c: New test.
+
+2006-05-02  Jeff Law  <law@redhat.com>
+
+	PR tree-optimization/27364
+	* gcc.c-torture/execute/pr27364.c: New test.
+
+2006-05-02  Roger Sayle  <roger@eyesopen.com>
+
+	PR c/25309
+	* gcc.dg/large-size-array-2.c: New test case.
+
+2006-05-02  Kazu Hirata  <kazu@codesourcery.com>
+
+	PR target/27387
+	* gcc.target/arm/arm.exp: New.
+	* gcc.target/arm/pr27387.C: Likewise.
+
+2006-05-01  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/26912
+	* g++.dg/template/friend41.C: New test.
+	
+2006-04-30  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/26534
+	* g++.dg/opt/bitfield1.C: New test.
+
+	PR c++/27094
+	* g++.dg/template/defarg8.C: New test.
+
+2006-04-30  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/27304
+	* gfortran.dg/fmt_exhaust.f90: New test.
+
+2006-04-30  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27278
+	* g++.dg/parse/operator7.C: New test.
+
+2006-04-29  Thomas Koenig  <Thomas.Koenig@online.de>
+
+	PR fortran/26017
+	* gfortran.dg/allocate_zerosize.f90:  New test.
+
+2006-04-29  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27279
+	* g++.dg/parse/ctor4.C: New test.
+
+2006-04-28  Richard Guenther  <rguenther@suse.de>
+
+	PR target/26826
+	* gcc.target/i386/pr26826.c: New testcase.
+
+2006-04-28  Andrew Pinski  <pinskia@gcc.gnu.org>
+	Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27236
+	* gcc.dg/tree-ssa/pr27236.c: New testcase.
+
+2006-04-28  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/26869
+	* gcc.dg/torture/pr26869.c: New testcase.
+
+2006-04-28  Andrew Pinski  <pinskia@gcc.gnu.org>
+	Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27218
+	* g++.dg/tree-ssa/pr27218.C: New testcase.
+
+2006-04-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/26865
+	* gcc.dg/pr26865.c: New test.
+
+2006-04-24  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/26961
+	* gcc.dg/fold-cond-1.c: New test case.
+	* gcc.dg/pr26961-1.c: Likewise.
+
+2006-04-23  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gcc.dg/sibcall-7.c: New test.
+	* gcc.dg/tree-ssa/tailrecursion-1.c: Pass -foptimize-sibling-calls.
+	* gcc.dg/tree-ssa/tailrecursion-2.c: Likewise.
+	* gcc.dg/tree-ssa/tailrecursion-3.c: Likewise.
+	* gcc.dg/tree-ssa/tailrecursion-4.c: Likewise.
+	* gcc.dg/tree-ssa/tailrecursion-5.c: Likewise.
+
+2006-04-23  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/27122
+	* gfortran.dg/defined_operators_1.f90: New test.
+	* gfortran.dg/assumed_charlen_function_1.f90: Add new error and
+	remove old ones associated, incorrectly, with Note 5.46.
+
+	PR fortran/26787
+	* gfortran.dg/proc_assign_1.f90: New test.
+	* gfortran.dg/procedure_lvalue.f90: Change message.
+	* gfortran.dg/namelist_4.f90: Add new error.
+
+	PR fortran/27089
+	* gfortran.dg/specification_type_resolution_1.f90
+
+	PR fortran/18803
+	PR fortran/25669
+	PR fortran/26834
+	* gfortran.dg/bounds_temporaries_1.f90: New test.
+
+	PR fortran/27124
+	* gfortran.dg/array_return_value_1.f90: New test.
+
+2006-04-21  Carlos O'Donell  <carlos@codesourcery.com>
+
+	Backport from mainline:
+	2006-04-19  Carlos O'Donell  <carlos@codesourcery.com>
+	PR c/26774
+	* gcc.dg/struct-parse-1.c: New test case.
+
+2006-04-21  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c/25875
+	* gcc.dg/init-bad-4.c: New test.
+
+2006-04-21  Paul Brook  <paul@codesourcery.com>
+
+	Backport from mainline.
+	* gcc.dg/arm-vfp1.c: Skip on iWMMXt cpus.
+
+2006-04-20  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/27138
+	* gfortran.dg/read_bad_advance.f90: New test.
+	
 2006-04-19  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
 
 	PR c++/26558
