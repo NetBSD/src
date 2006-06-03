@@ -276,10 +276,15 @@ $ LIB_PQUEUE = "pqueue"
 $!
 $! Setup exceptional compilations
 $!
+$ ! Add definitions for no threads on OpenVMS 7.1 and higher
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
+$ ! Disable the DOLLARID warning
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,o_dir"
+$ ! Disable disjoint optimization
 $ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
                     "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
+$ ! Disable the MIXLINKAGE warning
+$ COMPILEWITH_CC6 = ",enc_read,set_key,"
 $!
 $! Figure Out What Other Modules We Are To Build.
 $!
@@ -508,7 +513,12 @@ $       IF COMPILEWITH_CC5 - FILE_NAME0 .NES. COMPILEWITH_CC5
 $       THEN
 $         CC5/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
 $       ELSE
-$         CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$         IF COMPILEWITH_CC6 - FILE_NAME0 .NES. COMPILEWITH_CC6
+$         THEN
+$           CC6/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$         ELSE
+$           CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$         ENDIF
 $       ENDIF
 $     ENDIF
 $   ENDIF
@@ -1088,14 +1098,18 @@ $   THEN
 $     IF CCDISABLEWARNINGS .EQS. ""
 $     THEN
 $       CC4DISABLEWARNINGS = "DOLLARID"
+$       CC6DISABLEWARNINGS = "MIXLINKAGE"
 $     ELSE
 $       CC4DISABLEWARNINGS = CCDISABLEWARNINGS + ",DOLLARID"
+$       CC6DISABLEWARNINGS = CCDISABLEWARNINGS + ",MIXLINKAGE"
 $       CCDISABLEWARNINGS = "/WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
 $     ENDIF
 $     CC4DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC4DISABLEWARNINGS + "))"
+$     CC6DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC6DISABLEWARNINGS + "))"
 $   ELSE
 $     CCDISABLEWARNINGS = ""
 $     CC4DISABLEWARNINGS = ""
+$     CC6DISABLEWARNINGS = ""
 $   ENDIF
 $   CC3 = CC + "/DEFINE=(" + CCDEFS + ISSEVEN + ")" + CCDISABLEWARNINGS
 $   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
@@ -1106,6 +1120,7 @@ $   ELSE
 $     CC5 = CC + "/NOOPTIMIZE"
 $   ENDIF
 $   CC4 = CC - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
+$   CC6 = CC - CCDISABLEWARNINGS + CC6DISABLEWARNINGS
 $!
 $!  Show user the result
 $!
