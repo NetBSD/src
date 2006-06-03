@@ -159,7 +159,7 @@ IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
 int ssl3_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL),l;
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -541,7 +541,7 @@ int ssl3_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			goto err;
@@ -1211,12 +1211,12 @@ int ssl3_get_key_exchange(SSL *s)
 		 */
 
 		/* XXX: For now we only support named (not generic) curves
-		 * and the ECParameters in this case is just two bytes.
+		 * and the ECParameters in this case is just three bytes.
 		 */
-		param_len=2;
+		param_len=3;
 		if ((param_len > n) ||
 		    (*p != NAMED_CURVE_TYPE) || 
-		    ((curve_nid = curve_id2nid(*(p + 1))) == 0)) 
+		    ((curve_nid = curve_id2nid(*(p + 2))) == 0)) 
 			{
 			al=SSL_AD_INTERNAL_ERROR;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
@@ -1246,7 +1246,7 @@ int ssl3_get_key_exchange(SSL *s)
 			goto f_err;
 			}
 
-		p+=2;
+		p+=3;
 
 		/* Next, get the encoded ECPoint */
 		if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
@@ -1613,22 +1613,6 @@ int ssl3_get_server_done(SSL *s)
 	return(ret);
 	}
 
-
-#ifndef OPENSSL_NO_ECDH
-static const int KDF1_SHA1_len = 20;
-static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
-	{
-#ifndef OPENSSL_NO_SHA
-	if (*outlen < SHA_DIGEST_LENGTH)
-		return NULL;
-	else
-		*outlen = SHA_DIGEST_LENGTH;
-	return SHA1(in, inlen, out);
-#else
-	return NULL;
-#endif	/* OPENSSL_NO_SHA */
-	}
-#endif	/* OPENSSL_NO_ECDH */
 
 int ssl3_send_client_key_exchange(SSL *s)
 	{
@@ -2027,14 +2011,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 				       ERR_R_ECDH_LIB);
 				goto err;
 				}
-			/* If field size is not more than 24 octets, then use SHA-1 hash of result;
-			 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt;
-			 * this is new with this version of the Internet Draft).
-			 */
-			if (field_size <= 24 * 8)
-				n=ECDH_compute_key(p, KDF1_SHA1_len, srvr_ecpoint, clnt_ecdh, KDF1_SHA1);
-			else
-				n=ECDH_compute_key(p, (field_size+7)/8, srvr_ecpoint, clnt_ecdh, NULL);
+			n=ECDH_compute_key(p, (field_size+7)/8, srvr_ecpoint, clnt_ecdh, NULL);
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
