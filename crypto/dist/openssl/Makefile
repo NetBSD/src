@@ -4,7 +4,7 @@
 ## Makefile for OpenSSL
 ##
 
-VERSION=0.9.8a
+VERSION=0.9.8b
 MAJOR=0
 MINOR=9.8
 SHLIB_VERSION_NUMBER=0.9.8
@@ -68,7 +68,7 @@ EXE_EXT=
 ARFLAGS= 
 AR=ar $(ARFLAGS) r
 RANLIB= /usr/bin/ranlib
-PERL= /usr/local/bin/perl
+PERL= /usr/bin/perl
 TAR= tar
 TARFLAGS= --no-recursion
 MAKEDEPPROG=makedepend
@@ -101,6 +101,10 @@ RMD160_ASM_OBJ=
 # KRB5 stuff
 KRB5_INCLUDES=
 LIBKRB5=
+
+# Zlib stuff
+ZLIB_INCLUDE=
+LIBZLIB=
 
 DIRS=   crypto ssl engines apps test tools
 SHLIBDIRS= crypto ssl
@@ -193,12 +197,29 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
 
+# BUILD_CMD is a generic macro to build a given target in a given
+# subdirectory.  The target must be given through the shell variable
+# `target' and the subdirectory to build in must be given through `dir'.
+# This macro shouldn't be used directly, use RECURSIVE_BUILD_CMD or
+# BUILD_ONE_CMD instead.
+#
+# BUILD_ONE_CMD is a macro to build a given target in a given
+# subdirectory if that subdirectory is part of $(DIRS).  It requires
+# exactly the same shell variables as BUILD_CMD.
+#
+# RECURSIVE_BUILD_CMD is a macro to build a given target in all
+# subdirectories defined in $(DIRS).  It requires that the target
+# is given through the shell variable `target'.
 BUILD_CMD=  if [ -d "$$dir" ]; then \
 	    (	cd $$dir && echo "making $$target in $$dir..." && \
 		$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. DIR=$$dir $$target \
 	    ) || exit 1; \
 	    fi
 RECURSIVE_BUILD_CMD=for dir in $(DIRS); do $(BUILD_CMD); done
+BUILD_ONE_CMD=\
+	if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
+		$(BUILD_CMD); \
+	fi
 
 reflect:
 	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
@@ -209,21 +230,21 @@ build_all: build_libs build_apps build_tests build_tools
 build_libs: build_crypto build_ssl build_engines
 
 build_crypto:
-	@dir=crypto; target=all; $(BUILD_CMD)
+	@dir=crypto; target=all; $(BUILD_ONE_CMD)
 build_ssl:
-	@dir=ssl; target=all; $(BUILD_CMD)
+	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
-	@dir=engines; target=all; $(BUILD_CMD)
+	@dir=engines; target=all; $(BUILD_ONE_CMD)
 build_apps:
-	@dir=apps; target=all; $(BUILD_CMD)
+	@dir=apps; target=all; $(BUILD_ONE_CMD)
 build_tests:
-	@dir=test; target=all; $(BUILD_CMD)
+	@dir=test; target=all; $(BUILD_ONE_CMD)
 build_tools:
-	@dir=tools; target=all; $(BUILD_CMD)
+	@dir=tools; target=all; $(BUILD_ONE_CMD)
 
 all_testapps: build_libs build_testapps
 build_testapps:
-	@dir=crypto; target=testapps; $(BUILD_CMD)
+	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
 libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
@@ -257,7 +278,7 @@ clean-shared:
 
 link-shared:
 	@ set -e; for i in ${SHLIBDIRS}; do \
-		$(MAKE) -f $(HERE)/Makefile.shared \
+		$(MAKE) -f $(HERE)/Makefile.shared -e $(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
 			symlink.$(SHLIB_TARGET); \
