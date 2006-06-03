@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.885 2006/05/30 00:42:28 christos Exp $
+#	$NetBSD: mi,v 1.886 2006/06/03 04:36:43 tnozaki Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4860,13 +4860,21 @@
 ./usr/share/man/cat3/wcsstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcstod.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcstof.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcstoimax.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wcstok.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcstol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcstold.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcstoll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcstombs.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcstoul.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcstoull.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcstoumax.0		comp-c-catman		.cat
+./usr/share/man/cat3/wcswidth.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctob.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctomb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctrans.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctype.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcwidth.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wdelch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wdeleteln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wechochar.0		comp-c-catman		.cat
@@ -8919,13 +8927,21 @@
 ./usr/share/man/man3/wcsstr.3			comp-c-man		.man
 ./usr/share/man/man3/wcstod.3			comp-c-man		.man
 ./usr/share/man/man3/wcstof.3			comp-c-man		.man
+./usr/share/man/man3/wcstoimax.3		comp-c-man		.man
 ./usr/share/man/man3/wcstok.3			comp-c-man		.man
+./usr/share/man/man3/wcstol.3			comp-c-man		.man
 ./usr/share/man/man3/wcstold.3			comp-c-man		.man
+./usr/share/man/man3/wcstoll.3			comp-c-man		.man
 ./usr/share/man/man3/wcstombs.3			comp-c-man		.man
+./usr/share/man/man3/wcstoul.3			comp-c-man		.man
+./usr/share/man/man3/wcstoull.3			comp-c-man		.man
+./usr/share/man/man3/wcstoumax.3		comp-c-man		.man
+./usr/share/man/man3/wcswidth.3			comp-c-man		.man
 ./usr/share/man/man3/wctob.3			comp-c-man		.man
 ./usr/share/man/man3/wctomb.3			comp-c-man		.man
 ./usr/share/man/man3/wctrans.3			comp-c-man		.man
 ./usr/share/man/man3/wctype.3			comp-c-man		.man
+./usr/share/man/man3/wcwidth.3			comp-c-man		.man
 ./usr/share/man/man3/wdelch.3			comp-c-man		.man
 ./usr/share/man/man3/wdeleteln.3		comp-c-man		.man
 ./usr/share/man/man3/wechochar.3		comp-c-man		.man
