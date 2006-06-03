@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.76.6.2 2006/06/02 00:20:23 kardel Exp $ */
+/*	$NetBSD: clock.c,v 1.76.6.3 2006/06/03 10:18:24 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76.6.2 2006/06/02 00:20:23 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76.6.3 2006/06/03 10:18:24 kardel Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -428,7 +428,7 @@ static struct timecounter counter_timecounter = {
 	~0u,			/* counter_mask */
 	0,                      /* frequency - set at initialisation */
 	"tick-counter",		/* name */
-	0,			/* quality */
+	100,			/* quality */
 	0			/* private reference - UNUSED */
 };
 

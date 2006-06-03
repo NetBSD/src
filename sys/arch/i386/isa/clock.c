@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.89.6.5 2006/04/30 17:46:04 kardel Exp $	*/
+/*	$NetBSD: clock.c,v 1.89.6.6 2006/06/03 10:16:57 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.5 2006/04/30 17:46:04 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.6 2006/06/03 10:16:57 kardel Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -212,7 +212,7 @@ static struct timecounter i8254_timecounter = {
 	~0u,			/* counter_mask */
 	TIMER_FREQ,		/* frequency */
 	"i8254",		/* name */
-	0			/* quality */
+	100			/* quality */
 };
 
 /* XXX use sc? */
