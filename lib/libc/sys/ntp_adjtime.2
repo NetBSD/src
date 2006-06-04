@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntp_adjtime.2,v 1.6 2003/04/16 13:34:55 wiz Exp $
+.\"	$NetBSD: ntp_adjtime.2,v 1.7 2006/06/04 15:46:08 chap Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.In sys/time.h
 .In sys/timex.h
 .Ft int
 .Fn ntp_adjtime "struct timex *"
@@ -245,9 +246,12 @@ has as argument a
 with the following members:
 .Bd -literal
 struct ntptimeval {
-	struct timeval time;	/* current time (ro) */
+	struct timespec time;	/* current time (ro) */
 	long maxerror;		/* maximum error (us) (ro) */
 	long esterror;		/* estimated error (us) (ro) */
+	/* the following are placeholders for now */
+	long tai;		/* TAI offset */
+	int time_state;		/* time status */
 };
 .Ed
 .Pp
