@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.28.2.1 2006/05/13 16:39:58 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.28.2.2 2006/06/04 10:34:41 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -430,6 +430,230 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 3.0 release and 3.0.1 update
+.Pp    
+The 
+.Nx
+3.0.1
+update    
+is the first security/critical update of the
+.Nx
+3.0
+release branch. This represents a selected subset of fixes deemed 
+critical in nature for stability or security reasons.
+.Pp
+These fixes will also appear in future releases (NetBSD 3.1 etc),
+together with other less-critical fixes and feature enhancements.
+.Pp
+Specific updates are as follows:
+.
+.Ss2 Kernel
+.
+.(bullet
+Hold kernel_lock while calling systrace_exit().
+.It
+In systrace_make_msg(), sleep uninterruptibly while waiting for the response
+from the systrace daemon, so that the message protocol between the kernel and
+the daemon doesn't get out of sync.
+.It
+RAIDframe: mark used spares as failed if they encounter IO errors.
+.It
+.Xr wdc 4 :
+after a reset don't wait for drives to come ready if there are no drives (fixes
+a 30s hang after resume).
+.It
+Fix support in 
+.Xr wd 4 
+for 1 and 2TB disks.
+.It
+Fix a bug in the fragment cache which could cause kernel panics (SA2006-004).
+.It
+Fix a crash caused by
+.Xr azalia 4 
+when a connection list has invalid NIDs.
+.It
+.Xr aic 4 :
+work around an rbus resource allocation problem so cards work again.
+.It
+RAIDframe was erroneously re-initializing the Parity Stripe Status pool each
+time a new array was configured. This causes grief with things like 'vmstat -m'
+by causing it to loop. Make RAIDframe only initialize PSS bits once.
+.It
+.Xr twe 4 :
+fix a memory leak in the TWEIO_GET_PARAM ioctl.
+.It
+Prevent system crashes caused by malformed ELF interpreters (SA2006-008).
+.It
+.Xr usb 4 :
+Allow a NULL pointer as argument to usb_get_next_event(), and don't allocate a
+"struct usb_event" on stack in usb_add_event().
+.It
+Check the "oldlen" argument to
+.Xr sysctl 2
+before passing it to
+.Xr vslock 9 .
+This prevents a local DOS (SA2006-013).
+.It
+Use a
+.Xr pmatch 9
+expression which should catch all present and future seagate drives larger than
+200GB for the WD_QUIRK_FORCE_LBA48 quirks.
+.It
+Fix the 'audioctl of death' problem (SA2006-014).
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+Make sure all
+.Xr bridge 4 
+structs are initialized to 0.
+.It
+Fix a memory disclosure in
+.Xr bridge 4
+(SA2006-005).
+.It
+Use
+.Xr sigaction 2
+to setup automatic disposal of child processes after daemonizing
+.Xr rpc.statd 8 .
+This is more portable and avoids zombie
+.Xr rpc.statd 8
+processes after an NFS client running e.g. Mac OS X shuts down.
+.It
+Prevent system crash when attempting to gather information about a non-existing
+alias of a network interface via the SIOCGIFALIAS ioctl (SA2006-012).
+.bullet)
+.
+.Ss2 File system
+.
+.(bullet
+Change union_unmount() to not play with the fs root vnode explicitly. Let it
+get recycled along with all of the others. This is important as if the root
+vnode has already been reclaimed, then we get a panic when we try to vget it.
+.bullet)
+.
+.Ss2 Libraries
+.
+.(bullet
+xdr_rec.c missing a bugfix for an improper security check. The correct way to
+check for a zero record length is to check for it without the LAST_FRAG marker
+in it, since it's legal to send a LAST_FRAG marker with 0 bytes of data.
+.It
+.Xr pam_nologin 8 :
+use the class of the user, not then default class, when checking for nologin
+and ignorelogin login.conf(5) capabilities.
+.It
+.Xr pam_unix 8 :
+fix an uninitialized variable, and remove some unreachable code.
+.It
+Make PAM work on NetBSD ports without shared library support.
+.bullet)
+.
+.Ss2 Security
+.
+.(bullet
+Improve
+.Xr rnd 4
+code probing for the Intel hardware RNG to avoid false detections (SA2006-009).
+.It
+.Xr mail 1
+creates record file with insecure umask (SA2006-007).
+.It
+Fix a remote code execution vulnerability in sendmail (SA2006-010).
+.It
+A vulnerability was found in the
+.Xr fast_ipsec 4
+stack that renders the IPSec anti-replay service ineffective under certain
+circumstances (SA2006-011).
+.bullet)
+.
+.Ss2 Miscellaneous
+.
+.(bullet
+Sync the Nvidia drivers with XFree86's sources as of December 24th, 2005.
+These changes fix lots of problems (i.e. freezes) with the latest cards
+(such as a GeForce 6600GT).
+.It
+Give systrace its own version of realpath() that does what it wants, call it
+intercept_realpath().  Unbreaks systrace.
+.It
+.Xr login 1 ,
+.Xr pam_securetty 8 :
+don't issue a different message for root login on an insecure terminal.
+.bullet)
+.
+.Ss2 acorn26 specific
+.
+.(bullet
+Avoid panics under NetBSD/acorn26 whenever a process exits.
+.It
+Stop NetBSD/acorn26 from allocating eight times as much pool memory as it
+needs, leading to a rapid exhaustion of physical memory. NetBSD/acorn26 now
+boots multi-user again.
+.bullet)
+.
+.Ss2 amiga specific
+.
+.(bullet
+Installer: don't ask for the root device before the user had a chance to
+identify how it's called under NetBSD.
+.bullet)
+.
+.Ss2 hp300 specific
+.
+.(bullet
+Fix the bootloader so it doesn't print garbage to the bitmap console.
+.It
+Fix a huge number of pkgsrc build problems in by avoiding namespace pollution.
+.bullet)
+.
+.Ss2 i386 specific
+.
+.(bullet
+Update pciide at pnpbios to work with the last changes to
+.Xr wdc 4 ,
+especially the deferral of drive probe.
+.bullet)
+.
+.Ss2 m68k specific
+.
+.(bullet
+Fix a huge number of pkgsrc build problems in by avoiding namespace pollution.
+.bullet)
+.
+.Ss2 mips specific
+.
+.(bullet
+Avoid kernel panics caused by binaries compiled with "-mips2" or better.
+.It
+Update FPE trapsignal functions for new siginfo.
+.bullet)
+.
+.Ss2 powerpc specific
+.
+.(bullet
+Avoid pthreads program crashes.
+.bullet)
+.
+.Ss2 xen specific
+.
+.(bullet
+Avoid dom0 kernel crash when destroying a domain with active I/O going.
+.It
+Fix the FPU problems detected by paranoia on a NetBSD/Xen guest.
+.It
+Check the destination ethernet address when not in promiscous mode. Fix a
+problem where packets would be duplicated, possibly looping, when a domU is
+doing IP routing.
+.It
+Avoid panics under high system load.
+.bullet)
+.
+
+
+
+
 .Ss Changes Between The NetBSD 2.0 and 3.0 Releases
 .Pp
 The
