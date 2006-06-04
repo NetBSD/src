@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.23 2005/07/07 20:57:27 snj Exp $
+.\"     $NetBSD: config.9,v 1.24 2006/06/04 21:58:21 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,8 +49,9 @@ In
 .Nx ,
 the
 .Xr config 1
-program reads and verifies a machine description file specifying the
-devices to include in the kernel.
+program reads and verifies a machine description file (documented in
+.Xr config 5 )
+that specifies the devices to include in the kernel.
 A table is produced by
 .Xr config 1
 which is used by the kernel during autoconfiguration (see
@@ -344,6 +345,7 @@ in
 .Pa usr.bin/config/gram.y .
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr config 5 ,
 .Xr autoconf 9 ,
 .Xr driver 9
 .Rs
