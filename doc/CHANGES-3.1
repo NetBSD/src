@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.102 2006/06/04 10:15:16 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.103 2006/06/04 22:18:16 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1787,4 +1787,18 @@ dist/pf/share/man/man5/pf.conf.5		patch
 
 	Bump manual page date of after recent updates.
 	[pavel, ticket #1356]
+
+xsrc/xfree/xc/extras/freetype2/include/freetype/fterrdef.h	1.2
+xsrc/xfree/xc/extras/freetype2/src/base/ftmac.c			1.2
+xsrc/xfree/xc/extras/freetype2/src/base/ftutil.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/bdf/bdflib.c			1.2
+xsrc/xfree/xc/extras/freetype2/src/cff/cffgload.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/cff/cfftypes.h		1.2
+xsrc/xfree/xc/extras/freetype2/src/pshinter/pshglob.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/sfnt/ttcmap0.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/type1/t1load.c		1.2
+
+	Fixes for several integer overflows and null-pointer dereferences in
+	freetype2.
+	[tron, ticket #1354]
 
