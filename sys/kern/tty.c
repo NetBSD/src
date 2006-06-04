@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.183 2006/06/03 18:18:26 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.184 2006/06/04 16:44:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.183 2006/06/03 18:18:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.184 2006/06/04 16:44:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2317,7 +2317,7 @@ void
 ttyinfo(struct tty *tp, int fromsig)
 {
 	struct lwp	*l;
-	struct proc	*p, *pick;
+	struct proc	*p, *pick = NULL;
 	struct timeval	utime, stime;
 	int		tmp;
 	const char	*msg;
@@ -2333,7 +2333,7 @@ ttyinfo(struct tty *tp, int fromsig)
 		msg = "empty foreground process group\n";
 	else {
 		/* Pick interesting process. */
-		for (pick = NULL; p != NULL; p = LIST_NEXT(p, p_pglist))
+		for (; p != NULL; p = LIST_NEXT(p, p_pglist))
 			if (proc_compare(pick, p))
 				pick = p;
 		if (fromsig &&
@@ -2347,7 +2347,7 @@ ttyinfo(struct tty *tp, int fromsig)
 	tmp = (averunnable.ldavg[0] * 100 + FSCALE / 2) >> FSHIFT;
 	ttyprintf_nolock(tp, "load: %d.%02d ", tmp / 100, tmp % 100);
 
-	if (msg) {
+	if (pick == NULL) {
 		ttyprintf_nolock(tp, msg);
 		tp->t_rocount = 0; /* so pending input will be retyped if BS */
 		return;
