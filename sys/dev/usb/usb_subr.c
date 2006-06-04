@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.132 2006/06/04 19:34:16 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.133 2006/06/04 19:38:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.132 2006/06/04 19:34:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.133 2006/06/04 19:38:32 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -260,10 +260,16 @@ Static void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char vendor[USB_MAX_ENCODED_STRING_LEN];
-	char product[USB_MAX_ENCODED_STRING_LEN];
+	char *vendor, *product;
 	int bcdDevice, bcdUSB;
 	char *ep;
+
+	vendor = malloc(USB_MAX_ENCODED_STRING_LEN * 2, M_USB, M_NOWAIT);
+	if (vendor == NULL) {
+		*cp = '\0';
+		return;
+	}
+	product = &vendor[USB_MAX_ENCODED_STRING_LEN];
 
 	ep = cp + l;
 
@@ -280,6 +286,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	cp += usbd_printBCD(cp, ep - cp, bcdDevice);
 	cp += snprintf(cp, ep - cp, ", addr %d", dev->address);
 	*cp = 0;
+	free(vendor, M_USB);
 }
 
 char *
