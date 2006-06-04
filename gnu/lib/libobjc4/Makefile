@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/06/03 22:40:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2006/06/04 02:30:56 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -76,7 +76,6 @@ CLEANFILES+=	${FAKEHEADERS}
 
 ${SRCS}: tconfig.h unwind.h options.h
 
-# XXX really should put this, and others, in a common Makefile.foo.inc 
 tconfig.h:
 	${_MKTARGET_CREATE}
 	TARGET_CPU_DEFAULT="" \
