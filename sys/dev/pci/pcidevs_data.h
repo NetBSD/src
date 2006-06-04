@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.16 2006/04/11 01:12:50 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.17 2006/06/04 14:04:29 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.16 2006/04/11 01:12:30 riz Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.17 2006/06/04 14:03:45 tron Exp 
  */
 
 /*
@@ -3488,6 +3488,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "D-Link Systems",
 	    "DGE-528T Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T,
+	    0,
+	    "D-Link Systems",
+	    "DGE-560T Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
+	    0,
+	    "D-Link Systems",
+	    "DGE-560T_2 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,

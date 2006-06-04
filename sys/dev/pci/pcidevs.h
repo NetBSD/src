@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615.2.17.2.16 2006/04/11 01:12:50 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.615.2.17.2.17 2006/06/04 14:04:29 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.16 2006/04/11 01:12:30 riz Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.17 2006/06/04 14:03:45 tron Exp 
  */
 
 /*
@@ -1340,6 +1340,8 @@
 #define	PCI_PRODUCT_DLINK_DFE530TXPLUS	0x1300		/* DFE-530TXPLUS 10/100 Ethernet */
 #define	PCI_PRODUCT_DLINK_DL4000	0x4000		/* DL-4000 Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T Gigabit Ethernet */
+#define	PCI_PRODUCT_DLINK_DGE560T	0x4b00		/* DGE-560T Gigabit Ethernet */
+#define	PCI_PRODUCT_DLINK_DGE560T_2	0x4b01		/* DGE-560T_2 Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T Gigabit Ethernet */
 
 /* Distributed Processing Technology products */
