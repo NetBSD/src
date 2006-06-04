@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.6 2006/05/25 22:28:38 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.7 2006/06/04 13:07:24 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -282,10 +282,12 @@ one_def:
 					{ defoption($2, $3, $4); } |
 	DEFFLAG optfile_opt defopts defoptdeps
 					{ defflag($2, $3, $4, 0); } |
-	OBSOLETE DEFFLAG defopts	{ defflag(NULL, $3, NULL, 1); } |
+	OBSOLETE DEFFLAG optfile_opt defopts
+					{ defflag($3, $4, NULL, 1); } |
 	DEFPARAM optfile_opt defopts defoptdeps
 					{ defparam($2, $3, $4, 0); } |
-	OBSOLETE DEFPARAM defopts	{ defparam(NULL, $3, NULL, 1); } |
+	OBSOLETE DEFPARAM optfile_opt defopts
+					{ defparam($3, $4, NULL, 1); } |
 	DEVICE devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
