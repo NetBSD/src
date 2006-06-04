@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/31 05:13:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2006/06/04 04:37:47 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -74,10 +74,10 @@ gengenrtl: gengenrtl.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-tm-preds.h: genpreds
+tm-preds.h: genpreds ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genpreds -h ${G_md_file} >${.TARGET}
-insn-preds.c: genpreds
+insn-preds.c: genpreds ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genpreds ${G_md_file} >${.TARGET}
 genpreds.lo: ${HH}
