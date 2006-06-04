@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.58 2006/06/04 14:07:45 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.59 2006/06/04 22:27:55 ghen Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -750,4 +750,18 @@ sys/dev/pci/if_skreg.h				1.7
 
 	Add support for the DLink DGE-530T revision B1 and the DGE-560T.
 	[riz, ticket #10636]
+
+xsrc/xfree/xc/extras/freetype2/include/freetype/fterrdef.h	1.2
+xsrc/xfree/xc/extras/freetype2/src/base/ftmac.c			1.2
+xsrc/xfree/xc/extras/freetype2/src/base/ftutil.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/bdf/bdflib.c			1.2
+xsrc/xfree/xc/extras/freetype2/src/cff/cffgload.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/cff/cfftypes.h		1.2
+xsrc/xfree/xc/extras/freetype2/src/pshinter/pshglob.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/sfnt/ttcmap0.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/type1/t1load.c		1.2
+
+	Fixes for several integer overflows and null-pointer dereferences in
+	freetype2.
+	[tron, ticket #10639]
 
