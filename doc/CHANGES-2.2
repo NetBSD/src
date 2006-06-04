@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.57 2006/05/31 21:29:15 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.58 2006/06/04 14:07:45 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -728,4 +728,26 @@ sys/kern/vfs_vnops.c				1.112
 	Limit the size of any kernel buffers allocated by the VOP_READDIR
 	routines to MAXBSIZE.
 	[simonb, ticket #10633]
+
+sys/arch/hp300/dev/grf_dv.c			1.31 via patch
+sys/arch/hp300/dev/grf_gb.c			1.30 via patch
+sys/arch/hp300/dev/grf_hy.c			1.28 via patch
+sys/arch/hp300/dev/grf_rb.c			1.31 via patch
+sys/arch/hp300/dev/grf_tc.c			1.33 via patch
+
+	Fix boot failure problem on HP400t with fb console.
+	[tsutsui, ticket #10634]
+
+sys/dev/pci/pcidevs				1.788
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add a couple DLINK product IDs.
+	[riz, ticket #10635]
+
+sys/dev/pci/if_sk.c				1.26
+sys/dev/pci/if_skreg.h				1.7
+
+	Add support for the DLink DGE-530T revision B1 and the DGE-560T.
+	[riz, ticket #10636]
 
