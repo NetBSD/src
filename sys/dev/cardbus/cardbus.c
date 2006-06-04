@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.71 2006/03/29 06:22:38 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.72 2006/06/04 19:27:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.71 2006/03/29 06:22:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.72 2006/06/04 19:27:59 christos Exp $");
 
 #include "opt_cardbus.h"
 
@@ -415,7 +415,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	cardbustag_t tag;
 	cardbusreg_t id, class, cis_ptr;
 	cardbusreg_t bhlc;
-	u_int8_t tuple[2048];
 	int cdstatus;
 	int function, nfunction;
 	struct device *csc;
@@ -568,18 +567,21 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ca.ca_intrline = sc->sc_intrline;
 
 		if (cis_ptr != 0) {
+#define TUPLESIZE 2048
+			u_int8_t *tuple = malloc(TUPLESIZE, M_DEVBUF, M_WAITOK);
 			if (cardbus_read_tuples(&ca, cis_ptr,
-			    tuple, sizeof(tuple))) {
+			    tuple, TUPLESIZE)) {
 				printf("cardbus_attach_card: "
 				    "failed to read CIS\n");
 			} else {
 #ifdef CARDBUS_DEBUG
-				decode_tuples(tuple, sizeof(tuple),
+				decode_tuples(tuple, TUPLESIZE,
 				    print_tuple, NULL);
 #endif
-				decode_tuples(tuple, sizeof(tuple),
+				decode_tuples(tuple, TUPLESIZE,
 				    parse_tuple, &ca.ca_cis);
 			}
+			free(tuple, M_DEVBUF);
 		}
 
 		locs[CARDBUSCF_FUNCTION] = function;
