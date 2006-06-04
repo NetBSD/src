@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.52 2006/06/04 09:00:18 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.53 2006/06/04 22:20:05 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -479,4 +479,18 @@ sys/arch/hp300/dev/grf_tc.c			1.33
 
 	Fix boot failure problem on HP400t with fb console.
 	[tsutsui, ticket #1348]
+
+xsrc/xfree/xc/extras/freetype2/include/freetype/fterrdef.h	1.2
+xsrc/xfree/xc/extras/freetype2/src/base/ftmac.c			1.2
+xsrc/xfree/xc/extras/freetype2/src/base/ftutil.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/bdf/bdflib.c			1.2
+xsrc/xfree/xc/extras/freetype2/src/cff/cffgload.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/cff/cfftypes.h		1.2
+xsrc/xfree/xc/extras/freetype2/src/pshinter/pshglob.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/sfnt/ttcmap0.c		1.2
+xsrc/xfree/xc/extras/freetype2/src/type1/t1load.c		1.2
+
+	Fixes for several integer overflows and null-pointer dereferences in
+	freetype2.  
+	[tron, ticket #1354]
 
