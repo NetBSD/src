@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.51 2006/06/02 20:14:18 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.52 2006/06/04 09:00:18 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -470,4 +470,13 @@ sys/kern/vfs_vnops.c				1.112
 	Limit the size of any kernel buffers allocated by the VOP_READDIR
 	routines to MAXBSIZE.
 	[simonb, ticket #1347]
+
+sys/arch/hp300/dev/grf_dv.c			1.31
+sys/arch/hp300/dev/grf_gb.c			1.30
+sys/arch/hp300/dev/grf_hy.c			1.28
+sys/arch/hp300/dev/grf_rb.c			1.31
+sys/arch/hp300/dev/grf_tc.c			1.33
+
+	Fix boot failure problem on HP400t with fb console.
+	[tsutsui, ticket #1348]
 
