@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.887 2006/06/04 14:45:34 chap Exp $
+#	$NetBSD: mi,v 1.888 2006/06/04 19:42:18 cube Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4977,6 +4977,8 @@
 ./usr/share/man/cat3/yperr_string.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/ypprot_err.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/zlib.0			comp-c-catman		.cat
+./usr/share/man/cat5/config.0			comp-util-catman	.cat
+./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
 ./usr/share/man/cat5/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat5/mk.conf.0			comp-util-catman	.cat
 ./usr/share/man/cat5/ranlib.0			comp-util-catman	.cat
@@ -9046,6 +9048,8 @@
 ./usr/share/man/man3/yperr_string.3		comp-c-man		yp,.man
 ./usr/share/man/man3/ypprot_err.3		comp-c-man		yp,.man
 ./usr/share/man/man3/zlib.3			comp-c-man		.man
+./usr/share/man/man5/config.5			comp-util-man		.man
+./usr/share/man/man5/config.samples.5		comp-util-man		.man
 ./usr/share/man/man5/cvs.5			comp-cvs-man		cvs,.man
 ./usr/share/man/man5/mk.conf.5			comp-util-man		.man
 ./usr/share/man/man5/ranlib.5			comp-util-man		.man
