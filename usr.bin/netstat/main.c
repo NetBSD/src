@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2006/06/04 20:01:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.53 2006/05/28 16:51:40 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2006/06/04 20:01:14 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -547,7 +547,7 @@ main(argc, argv)
 	}
 #endif
 
-	if (!use_sysctl && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
+	if (!use_sysctl || (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
 		if (nlistf)
 			errx(1, "%s: no namelist", nlistf);
 		else
