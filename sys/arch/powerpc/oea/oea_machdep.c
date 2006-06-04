@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.24 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.25 2006/06/04 07:32:20 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.24 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.25 2006/06/04 07:32:20 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -162,7 +162,11 @@ oea_init(void (*handler)(void))
 
 	/*
 	 * Cause a PGM trap if we branch to 0.
+	 *
+	 * XXX GCC4.1 complains about memset on address zero, so
+	 * don't use the builtin.
 	 */
+#undef memset
 	memset(0, 0, 0x100);
 
 	/*
