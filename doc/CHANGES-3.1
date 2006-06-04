@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.101 2006/06/02 20:15:38 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.102 2006/06/04 10:15:16 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1736,4 +1736,55 @@ sys/dev/ic/rtl8169.c				1.23
 	Disable hardware VLAN tagging in re(4) to prevent untagged packets
 	from sometimes getting tagged incorrectly. This fixes PR kern/32643.
 	[pavel, ticket #1340]
+
+share/man/man4/raid.4				1.32
+
+	Mention that we can boot from RAID 1 sets on amd64 now too.
+	This fixes PR misc/31511.
+	[ghen, ticket #1344]
+
+sys/arch/hp300/dev/grf_dv.c			1.31
+sys/arch/hp300/dev/grf_gb.c			1.30
+sys/arch/hp300/dev/grf_hy.c			1.28
+sys/arch/hp300/dev/grf_rb.c			1.31
+sys/arch/hp300/dev/grf_tc.c			1.33
+
+	Fix boot failure problem on HP400t with fb console.
+	[tsutsui, ticket #1348]
+
+sys/dev/pci/pcidevs				1.788
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add a couple DLINK product IDs.
+	[riz, ticket #1349]
+
+sys/dev/pci/if_sk.c				1.26
+sys/dev/pci/if_skreg.h				1.7
+
+	Add support for the DLink DGE-530T revision B1 and the DGE-560T.
+	[riz, ticket #1350]
+
+sys/dev/pci/if_bge.c				patch
+sys/dev/pci/if_bgereg.h				patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support to bge(4) for bcm5714, bcm5715, bcm5780/HT-2000 and
+	bcm5752 chip variants.
+	[jonathan, ticket #1351]
+
+usr.bin/crunch/crunchgen/crunchgen.c		1.69
+
+	Fix problems with program names with a "-" in them, where crunchgen was
+	outputting the original program name for the stub name instead of the
+	mangled name.
+	[simonb, ticket #1355]
+
+dist/pf/share/man/man4/pf.4			patch
+dist/pf/share/man/man5/pf.conf.5		patch
+
+	Bump manual page date of after recent updates.
+	[pavel, ticket #1356]
 
