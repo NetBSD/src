@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.886 2006/06/03 04:36:43 tnozaki Exp $
+#	$NetBSD: mi,v 1.887 2006/06/04 14:45:34 chap Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5409,6 +5409,8 @@
 ./usr/share/man/cat9/hash32_buf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hash32_str.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hash32_strn.0		comp-sys-catman		.cat
+./usr/share/man/cat9/hashdone.0			comp-sys-catman		.cat
+./usr/share/man/cat9/hashinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/holdrele.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hz.0			comp-sys-catman		.cat
@@ -9475,6 +9477,8 @@
 ./usr/share/man/man9/hash32_buf.9		comp-sys-man		.man
 ./usr/share/man/man9/hash32_str.9		comp-sys-man		.man
 ./usr/share/man/man9/hash32_strn.9		comp-sys-man		.man
+./usr/share/man/man9/hashdone.9			comp-sys-man		.man
+./usr/share/man/man9/hashinit.9			comp-sys-man		.man
 ./usr/share/man/man9/holdrele.9			comp-sys-man		.man
 ./usr/share/man/man9/humanize_number.9		comp-sys-man		.man
 ./usr/share/man/man9/hz.9			comp-sys-man		.man
