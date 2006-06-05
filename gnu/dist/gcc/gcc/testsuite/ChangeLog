@@ -1,3 +1,257 @@
+2005-05-03  Release Manager
+
+	* GCC 3.3.6 Released.
+
+2005-05-01  Roger Sayle  <roger@eyesopen.com>
+
+	PR rtl-optimization/19579
+	Backport from mainline
+	* gcc.c-torture/execute/20050124-1.c: New test.
+
+2005-04-04  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	PR c++/18644
+	* g++.old-deja/g++.jason/warning9.C (struct A, main): Adjust.
+
+2005-01-22  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/18402
+	Backport from mainline
+	2003-02-05  Jakub Jelinek  <jakub@redhat.com>
+ 
+ 	PR optimization/8555
+	* gcc.dg/20030204-1.c: New test.
+
+2005-01-21  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/17115
+	* g++.dg/warn/Winline-4.C: New test.
+
+2005-01-18  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/short-compare-1.c: New test.
+	* gcc.dg/short-compare-2.c: Likewise.
+
+2005-01-03  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	Backport:
+	2003-10-13  Geoffrey Keating  <geoffk@apple.com>
+
+	* gcc.dg/asm-names.c: Use scan-assembler-not rather
+	than linker trickery.
+
+2005-01-02  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* gcc.c-torture/execute/20020720-1.x: XFAIL for x86 when using
+	-fpic or -fPIC.
+
+2004-12-21  Joseph S. Myers  <jsm@polyomino.org.uk>
+
+	PR c/14765
+	* gcc.dg/pr14765-1.c: New test.
+
+2004-12-20  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR other/19093
+	* g++.dg/opt/max1.C: Fix for 64bit targets.
+
+2004-12-19  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/19068
+	* g++.dg/opt/max1.C: New test case.
+
+2004-12-16  Wolfgang Bangerth  <bangerth@dealii.com>
+
+	* g++.dg/other/complex1.C: New test.
+
+2004-12-10  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR rtl-optimization/16536
+	* gcc.c-torture/execute/restrict-1.c: New test.
+
+2004-12-09  Nathan Sidwell  <nathan@codesourcery.com>
+
+	PR c++/16681
+	* g++.dg/init/array15.C: New.
+	* g++.dg/init/array16.C: New.
+
+2004-11-29  Roger Sayle  <roger@eyesopen.com>
+
+	PR rtl-optimization/9771
+	* gcc.dg/pr9771-1.c: New test case.
+
+2004-11-27  Falk Hueffner  <falk@debian.org>
+
+	* gcc.dg/loop-6.c: New test.
+
+2004-10-13  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/inherit/thunk1.C: Run on the SPARC.
+
+2004-09-30  Release Manager
+
+	* GCC 3.3.5 Released.
+
+2004-08-08  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/16790
+	* gcc.c-torture/execute/pr16790-1.c: New test case.
+
+2004-08-04  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	Backport from mainline:
+	2003-07-11  Jakub Jelinek  <jakub@redhat.com>
+	* gcc.dg/20030711-1.c: New test.
+
+2004-07-24  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/16175
+	* g++.dg/template/ttp10.C: New test.
+
+2004-06-28  Josef Zlomek  <zlomekj@suse.cz>
+
+	PR c/15549
+	Backport from mainline
+	2003-08-19  Mark Mitchell  <mark@codesourcery.com>
+
+		PR c++/11946.C
+		* gcc.dg/c99-bool-1.c: Remove bogus warning.
+
+2004-05-31  Release Manager
+
+	* GCC 3.3.4 Released.
+
+2004-05-31  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	Backport from mainline:
+
+	2004-03-26  James A. Morrison  <ja2morri@uwaterloo.ca>
+
+	* gcc.dg/20001013-1.c: Run on 32-bit and 64-bit SPARC.
+	* gcc.dg/20001101-1.c: Likewise.
+	* gcc.dg/20001102-1.c: Likewise.
+
+	2004-03-22  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/ultrasp2.c: Do not pass -m64.  Remove redundant lines.
+	* gcc.dg/ultrasp4.c: Likewise.
+	* gcc.dg/ultrasp8.c: Do not pass -m64.  Add sparcv9-*-*.
+
+	2004-01-26  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/sparc-ret.c: Run only in 32-bit mode.  Don't scan
+	the assembly output if -m64 is passed.
+
+2004-05-31  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/sparc-trap-1.c: New test.
+
+2004-05-26  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR optimization/15296
+	* gcc.c-torture/execute/pr15296.c: New test.
+
+2004-05-17  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	* gcc.dg/loop-4.c: New test.
+
+2004-04-29  Matthias Klose  <doko@debian.org>
+
+	Backport:
+
+	2004-03-04  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/compile/20040304-1.c: New test.
+
+2004-04-20  Paul Brook  <paul@codesourcery.com>
+
+	PR 2123
+	* g++.dg/expr/anew1.C: XFAIL and make reproducible.  Call abort on
+	failure and exit(0) on success.
+	* g++.dg/expr/anew2.C: Ditto.
+	* g++.dg/expr/anew3.C: Ditto.
+	* g++.dg/expr/anew4.C: Ditto. 
+
+2004-04-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/14755
+	* gcc.c-torture/execute/20040331-1.c: New test.
+
+2004-04-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/14069
+	* gcc.dg/20040322-1.c: New test.
+
+	Backport from mainline:
+	2003-04-07  J"orn Rennecke  <joern.rennecke@superh.com>
+
+	* gcc.dg/noncompile/init-4.c: New test.
+
+2004-03-25  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/20040127-1.c: New test.
+	* gcc.dg/20040127-2.c: New test.
+
+2004-03-21  Roger Sayle  <roger@eyesopen.com>
+	    Kazu Hirata  <kazu@cs.umass.edu>
+
+	* gcc.c-torture/execute/20040307-1.c: New test case.
+
+2004-03-21  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/13889
+	* gcc.c-torture/compile/pr13889.c: New test case.
+
+2004-03-13  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	PR middle-end/14470
+	* gcc.c-torture/execute/20040313-1.c: New test.
+
+2004-03-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/14533
+	* gcc.dg/20040311-2.c: New test.
+
+2004-03-10  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/14289
+	* gcc.dg/pr14289-1.c: New test case.
+	* gcc.dg/pr14289-2.c: Likewise.
+	* gcc.dg/pr14289-3.c: Likewise.
+
+2004-03-09  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/14409
+	* g++.dg/template/spec12.C: New test.
+
+2004-03-06  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* gcc.dg/20040306-1.c: New test.
+
+2004-02-25  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* g++.dg/opt/inline4.C (dg-final): Robustify regexp.
+	* g++.dg/opt/inline6.C (dg-final): Robustify regexp.
+
+2004-02-23  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/13635
+	* g++.dg/template/spec11.C: New test.
+
+2004-02-23  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/14250
+	* g++.dg/other/switch1.C: New test.
+
+2004-02-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/parse/init1.C: New test.
+
+2004-02-22  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR target/14209
+	* gcc.c-torture/execute/20040218-1.c: New test.
+
 2004-02-14  Release Manager
 
 	* GCC 3.3.3 Released.

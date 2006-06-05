@@ -29,7 +29,7 @@
   <li><a href="#cxx">C++</a>
     <ul>
     <li><a href="#missing">Missing features</a></li>
-    <li><a href="#fixed34">Bugs fixed in the upcoming 3.4 series</a></li>
+    <li><a href="#fixed34">Bugs fixed in the 3.4 series</a></li>
     </ul>
   </li>
   <li><a href="#fortran">Fortran</a></li>
@@ -315,7 +315,7 @@ definitions may be included from the header.</p></dd>
 
 </dl>
 
-<h3><a name="fixed34">Bugs fixed in the upcoming 3.4 series</a></h3>
+<h3><a name="fixed34">Bugs fixed in the 3.4 series</a></h3>
 
 <p>The following bugs are present up to (and including) GCC 3.3.x.
 They have been fixed in 3.4.0.</p>
@@ -390,7 +390,7 @@ The work-around was to omit the parentheses:</p>
 return A();
 </pre></blockquote>
 
-<p>This problem occured in a number of variants; in <code>throw</code>
+<p>This problem occurred in a number of variants; in <code>throw</code>
 statements, people also frequently put the object in parentheses.</p></dd>
 
 </dl>
@@ -442,7 +442,7 @@ int main()
 <p>might print 50 on some systems and optimization levels, and 49 on
 others.</p>
 
-<p>The is the result of <em>rounding</em>: The computer cannot
+<p>This is the result of <em>rounding</em>: The computer cannot
 represent all real numbers exactly, so it has to use
 approximations. When computing with approximation, the computer needs
 to round to the nearest representable number.</p>
@@ -458,6 +458,38 @@ for more information.</p></dd>
 <h2><a name="nonbugs_c">C</a></h2>
 
 <dl>
+<dt>Increment/decrement operator (<code>++</code>/<code>--</code>) not
+working as expected - a <a href="http://gcc.gnu.org/PR11751">problem with
+many variations</a>.</dt>
+
+<dd><p>The following expressions have unpredictable results:</p>
+<blockquote><pre>
+x[i]=++i
+foo(i,++i)
+i*(++i)                 /* special case with foo=="operator*" */
+std::cout &lt;&lt; i &lt;&lt; ++i   /* foo(foo(std::cout,i),++i)          */
+</pre></blockquote>
+<p>since the <code>i</code> without increment can be evaluated before or
+after <code>++i</code>.</p>
+
+<p>The C and C++ standards have the notion of "sequence points". Everything
+that happens between two sequence points happens in an unspecified order,
+but it has to happen after the first and before the second sequence point.
+The end of a statement and a function call are examples for sequence points,
+whereas assignments and the comma between function arguments are not.</p>
+
+<p>Modifying a value twice between two sequence points as shown in the
+following examples is even worse:</p>
+<blockquote><pre>
+i=++i
+foo(++i,++i)
+(++i)*(++i)               /* special case with foo=="operator*" */
+std::cout &lt;&lt; ++i &lt;&lt; ++i   /* foo(foo(std::cout,++i),++i)        */
+</pre></blockquote>
+<p>This leads to undefined behavior (i.e. the compiler can do
+anything).</p></dd>
+
+
 <dt>Casting does not work as expected when optimization is turned on.</dt>
 
 <dd><p>This is often caused by a violation of aliasing rules, which are part
@@ -685,20 +717,77 @@ a parse error before the character <code>:</code> (the colon before
 <p>The simplest way to avoid this is to write <code>std::vector&lt;
 ::X&gt;</code>, i.e. place a space between the opening angle bracket
 and the scope operator.</p></dd>
+
+
+<dt><a name="cxx_rvalbind">Copy constructor access check while 
+initializing a reference.</a></dt>
+
+<dd><p>Consider this code:</p>
+
+<blockquote><pre>
+class A 
+{
+public:
+  A();
+
+private:
+  A(const A&amp;);   // private copy ctor
+};
+
+A makeA(void);
+void foo(const A&amp;);
+
+void bar(void)
+{
+  foo(A());       // error, copy ctor is not accessible
+  foo(makeA());   // error, copy ctor is not accessible
+
+  A a1;
+  foo(a1);        // OK, a1 is a lvalue
+}</pre></blockquote>
+
+<p>Starting with GCC 3.4.0, binding an rvalue to a const reference requires
+an accessible copy constructor. This might be surprising at first sight, 
+especially since most popular compilers do not correctly implement this 
+rule.</p>
+
+<p>The C++ Standard says that a temporary object should be created in 
+this context and its contents filled with a copy of the object we are 
+trying to bind to the reference; it also says that the temporary copy 
+can be elided, but the semantic constraints (eg. accessibility) of the 
+copy constructor still have to be checked.</p>
+
+<p>For further information, you can consult the following paragraphs of
+the C++ standard: [dcl.init.ref]/5, bullet 2, sub-bullet 1, and
+[class.temporary]/2.</p></dd>
 </dl>
 
 <h3><a name="upgrading">Common problems when upgrading the compiler</a></h3>
 
 <h4>ABI changes</h4>
 
-<p>The application binary interface (ABI) defines how the elements of
-classes are laid out, how functions are called, how function names are
-mangled etc.  It usually changes with each major release (i.e. when the
-first or second part of the version number changes).  You <em>must</em>
-recompile all C++ libraries, or you risk linker errors or malfunctioning
-programs.  However, the ABI is not changed with bug-fix releases (i.e.
-when the third part of the version number changes).  The code should be
-binary compatible among these versions.</p>
+<p>The C++ application binary interface (ABI) consists of two
+components: the first defines how the elements of classes are laid
+out, how functions are called, how function names are mangled, etc;
+the second part deals with the internals of the objects in libstdc++.
+Although we strive for a non-changing ABI, so far we have had to
+modify it with each major release.  If you change your compiler to a
+different major release <em>you must recompile all libraries that
+contain C++ code</em>.  If you fail to do so you risk getting linker
+errors or malfunctioning programs.  Some of our Java support libraries
+also contain C++ code, so you might want to recompile all libraries to
+be safe.  It should not be necessary to recompile if you have changed
+to a bug-fix release of the same version of the compiler; bug-fix
+releases are careful to avoid ABI changes. See also the
+<a href="http://gcc.gnu.org/onlinedocs/gcc/Compatibility.html">compatibility
+section</a> of the GCC manual.</p>
+
+<p>Remark: A major release is designated by a change to the first or second
+component of the two- or three-part version number.  A minor (bug-fix)
+release is designated by a change to the third component only.  Thus GCC
+3.2 and 3.3 are major releases, while 3.3.1 and 3.3.2 are bug-fix releases
+for GCC 3.3.  With the 3.4 series we are introducing a new naming scheme;
+the first release of this series is 3.4.0 instead of just 3.4.</p>
 
 <h4>Standard conformance</h4>
 
@@ -707,9 +796,9 @@ binary compatible among these versions.</p>
 <a href="http://www.ncits.org/cplusplus.htm">http://www.ncits.org/cplusplus.htm</a>).
 We have also implemented some of the core and library defect reports
 (available at
-<a href="http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html">http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html</a>
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html">http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html</a>
 &amp;
-<a href="http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html">http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html</a>
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html">http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html</a>
 respectively).</p>
 
 <p>Non-conforming legacy code that worked with older versions of GCC may be
@@ -720,8 +809,8 @@ However, some non-conforming constructs are allowed when the command-line
 option <code>-fpermissive</code> is used.</p>
 
 <p>Two milestones in standard conformance are GCC 3.0 (including a major
-overhaul of the standard library) and the upcoming 3.4.0 version (with its
-new C++ parser).</p>
+overhaul of the standard library) and the 3.4.0 version (with its new C++
+parser).</p>
 
 <h4>New in GCC 3.0</h4>
 
@@ -843,8 +932,8 @@ template &lt;typename T&gt; struct B : A&lt;T&gt;
 </ul>
 
 <p>In addition to the problems listed above, the manual contains a section on
-<a href="http://gcc.gnu.org/onlinedocs/gcc/C---Misunderstandings.html">Common
-Misunderstandings with GNU C++</a>.</p>
+<a href="http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Misunderstandings.html">
+Common Misunderstandings with GNU C++</a>.</p>
 
 </body>
 </html>

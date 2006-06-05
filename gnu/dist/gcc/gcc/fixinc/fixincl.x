@@ -5,7 +5,7 @@
  * files which are fixed to work correctly with ANSI C and placed in a
  * directory that GNU C will search.
  *
- * This file contains 163 fixup descriptions.
+ * This file contains 166 fixup descriptions.
  *
  * See README for more information.
  *
@@ -2674,6 +2674,88 @@ static const char* apzIrix___RestrictPatch[] = {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
  *
+ *  Description of Irix___Generic1 fix
+ */
+tSCC zIrix___Generic1Name[] =
+     "irix___generic1";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zIrix___Generic1List[] =
+  "|internal/math_core.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzIrix___Generic1Machs[] = {
+        "mips-sgi-irix6.5",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zIrix___Generic1Select0[] =
+       "#define ([a-z]+)\\(x\\) *__generic.*";
+
+#define    IRIX___GENERIC1_TEST_CT  1
+static tTestDesc aIrix___Generic1Tests[] = {
+  { TT_EGREP,    zIrix___Generic1Select0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Irix___Generic1
+ */
+static const char* apzIrix___Generic1Patch[] = {
+    "format",
+    "extern int %1(double);\n\
+extern int %1f(float);\n\
+extern int %1l(long double);\n\
+#define %1(x) (sizeof(x) == sizeof(double) ? _%1(x) \\\n\
+               : sizeof(x) == sizeof(float) ? _%1f(x) \\\n\
+               : _%1l(x))\n",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Irix___Generic2 fix
+ */
+tSCC zIrix___Generic2Name[] =
+     "irix___generic2";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zIrix___Generic2List[] =
+  "|internal/math_core.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzIrix___Generic2Machs[] = {
+        "mips-sgi-irix6.5",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zIrix___Generic2Select0[] =
+       "#define ([a-z]+)\\(x,y\\) *__generic.*";
+
+#define    IRIX___GENERIC2_TEST_CT  1
+static tTestDesc aIrix___Generic2Tests[] = {
+  { TT_EGREP,    zIrix___Generic2Select0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Irix___Generic2
+ */
+static const char* apzIrix___Generic2Patch[] = {
+    "format",
+    "#define %1(x,y) \\\n\
+  ((sizeof(x)<=4 && sizeof(y)<=4) ? _%1f(x,y) \\\n\
+   : (sizeof(x)<=8 && sizeof(y)<=8) ? _%1(x,y) \\\n\
+   : _%1l(x,y))\n",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
  *  Description of Irix_Asm_Apostrophe fix
  */
 tSCC zIrix_Asm_ApostropheName[] =
@@ -3804,6 +3886,41 @@ static tTestDesc aNodeent_SyntaxTests[] = {
 static const char* apzNodeent_SyntaxPatch[] = {
     "format",
     "%0;",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Obstack_Lvalue_Cast fix
+ */
+tSCC zObstack_Lvalue_CastName[] =
+     "obstack_lvalue_cast";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zObstack_Lvalue_CastList[] =
+  "|obstack.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzObstack_Lvalue_CastMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zObstack_Lvalue_CastSelect0[] =
+       "\\*\\(\\(([^()]*)\\*\\)(.*)\\)\\+\\+ = \\(([^()]*)\\)";
+
+#define    OBSTACK_LVALUE_CAST_TEST_CT  1
+static tTestDesc aObstack_Lvalue_CastTests[] = {
+  { TT_EGREP,    zObstack_Lvalue_CastSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Obstack_Lvalue_Cast
+ */
+static const char* apzObstack_Lvalue_CastPatch[] = {
+    "format",
+    "((*((%1*)%2) = (%3)), (%2 += sizeof (%1)))",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -6418,9 +6535,9 @@ static const char* apzX11_SprintfPatch[] = {
  *
  *  List of all fixes
  */
-#define REGEX_COUNT          177
+#define REGEX_COUNT          180
 #define MACH_LIST_SIZE_LIMIT 334
-#define FIX_COUNT            163
+#define FIX_COUNT            166
 
 /*
  *  Enumerate the fixes
@@ -6491,6 +6608,8 @@ typedef enum {
     IO_QUOTES_USE_FIXIDX,
     IP_MISSING_SEMI_FIXIDX,
     IRIX___RESTRICT_FIXIDX,
+    IRIX___GENERIC1_FIXIDX,
+    IRIX___GENERIC2_FIXIDX,
     IRIX_ASM_APOSTROPHE_FIXIDX,
     IRIX_LIMITS_CONST_FIXIDX,
     IRIX_SOCKLEN_T_FIXIDX,
@@ -6521,6 +6640,7 @@ typedef enum {
     NEXT_VOLITILE_FIXIDX,
     NEXT_WAIT_UNION_FIXIDX,
     NODEENT_SYNTAX_FIXIDX,
+    OBSTACK_LVALUE_CAST_FIXIDX,
     OSF_NAMESPACE_A_FIXIDX,
     OSF_NAMESPACE_C_FIXIDX,
     PTHREAD_PAGE_SIZE_FIXIDX,
@@ -6917,6 +7037,16 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      IRIX___RESTRICT_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aIrix___RestrictTests,   apzIrix___RestrictPatch, 0 },
 
+  {  zIrix___Generic1Name,    zIrix___Generic1List,
+     apzIrix___Generic1Machs,
+     IRIX___GENERIC1_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aIrix___Generic1Tests,   apzIrix___Generic1Patch, 0 },
+
+  {  zIrix___Generic2Name,    zIrix___Generic2List,
+     apzIrix___Generic2Machs,
+     IRIX___GENERIC2_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aIrix___Generic2Tests,   apzIrix___Generic2Patch, 0 },
+
   {  zIrix_Asm_ApostropheName,    zIrix_Asm_ApostropheList,
      apzIrix_Asm_ApostropheMachs,
      IRIX_ASM_APOSTROPHE_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
@@ -7066,6 +7196,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzNodeent_SyntaxMachs,
      NODEENT_SYNTAX_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aNodeent_SyntaxTests,   apzNodeent_SyntaxPatch, 0 },
+
+  {  zObstack_Lvalue_CastName,    zObstack_Lvalue_CastList,
+     apzObstack_Lvalue_CastMachs,
+     OBSTACK_LVALUE_CAST_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aObstack_Lvalue_CastTests,   apzObstack_Lvalue_CastPatch, 0 },
 
   {  zOsf_Namespace_AName,    zOsf_Namespace_AList,
      apzOsf_Namespace_AMachs,

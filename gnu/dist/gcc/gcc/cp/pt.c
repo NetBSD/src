@@ -960,7 +960,7 @@ register_specialization (spec, tmpl, args)
        the default argument expression is not substituted for in an
        instantiation unless and until it is actually needed.  */
     return spec;
-    
+
   /* There should be as many levels of arguments as there are
      levels of parameters.  */
   my_friendly_assert (TMPL_ARGS_DEPTH (args) 
@@ -1155,6 +1155,7 @@ determine_specialization (template_id, decl, targs_out,
       if (TREE_CODE (fn) == TEMPLATE_DECL)
 	{
 	  tree decl_arg_types;
+	  tree fn_arg_types;
 
 	  /* DECL might be a specialization of FN.  */
 
@@ -1171,8 +1172,16 @@ determine_specialization (template_id, decl, targs_out,
 	     The specialization f<int> is invalid but is not caught
 	     by get_bindings below.  */
 
-	  if (list_length (TYPE_ARG_TYPES (TREE_TYPE (fn)))
-	      != list_length (decl_arg_types))
+	  fn_arg_types = TYPE_ARG_TYPES (TREE_TYPE (fn));
+	  if (list_length (fn_arg_types) != list_length (decl_arg_types))
+	    continue;
+
+	  /* For a non-static member function, we need to make sure that
+	     the const qualification is the same. This can be done by
+	     checking the 'this' in the argument list.  */
+	  if (DECL_NONSTATIC_MEMBER_FUNCTION_P (fn)
+	      && !same_type_p (TREE_VALUE (fn_arg_types), 
+			       TREE_VALUE (decl_arg_types)))
 	    continue;
 
 	  /* See whether this function might be a specialization of this
@@ -2917,6 +2926,13 @@ push_template_decl_real (decl, is_friend)
 	    DECL_TEMPLATE_CONV_FN_P (tmpl) = 1;
 	}
     }
+
+  /* The DECL_TI_ARGS of DECL contains full set of arguments refering
+     back to its most general template.  If TMPL is a specialization,
+     ARGS may only have the innermost set of arguments.  Add the missing
+     argument levels if necessary.  */
+  if (DECL_TEMPLATE_INFO (tmpl))
+    args = add_outermost_template_args (DECL_TI_ARGS (tmpl), args);
 
   info = tree_cons (tmpl, args, NULL_TREE);
 
@@ -5889,6 +5905,10 @@ tsubst_default_argument (fn, type, arg)
 
   /* FN is already the desired FUNCTION_DECL.  */
   push_access_scope (fn);
+  /* The default argument expression should not be considered to be
+     within the scope of FN.  Since push_access_scope sets
+     current_function_decl, we must explicitly clear it here.  */
+  current_function_decl = NULL_TREE;
 
   arg = tsubst_expr (arg, DECL_TI_ARGS (fn),
 		     tf_error | tf_warning, NULL_TREE);

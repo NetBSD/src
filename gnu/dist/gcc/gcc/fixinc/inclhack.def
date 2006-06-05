@@ -1550,6 +1550,52 @@ fix = {
 };
 
 /*
+ * IRIX 6.5.22 <internal/math_core.h> uses the SGI c99 __generic() intrinsic
+ * to define the fpclasify, isfinite, isinf, isnan, isnormal and signbit 
+ * functions.
+ *
+ * This was probably introduced around IRIX 6.5.18
+ */
+fix = {
+    hackname  = irix___generic1;
+    files     = internal/math_core.h;
+    mach      = "mips-sgi-irix6.5";
+    select    = "#define ([a-z]+)\\(x\\) *__generic.*";
+
+    c_fix     = format;
+    c_fix_arg = "extern int %1(double);\n"
+		"extern int %1f(float);\n"
+		"extern int %1l(long double);\n"
+		"#define %1(x) (sizeof(x) == sizeof(double) ? _%1(x) \\\n"
+		"               : sizeof(x) == sizeof(float) ? _%1f(x) \\\n"
+		"               : _%1l(x))\n";
+
+    test_text = 
+      "#define isnan(x) __generic(x,,, _isnan, _isnanf, _isnanl,,,)(x)\n";
+};
+
+
+/* Likewise <internal/math_core.h> on IRIX 6.5.19 and later uses the SGI
+   compiler's __generic intrinsic to define isgreater, isgreaterequal,
+   isless, islessequal, islessgreater and isunordered functions.  */
+fix = {
+    hackname  = irix___generic2;
+    files     = internal/math_core.h;
+    mach      = "mips-sgi-irix6.5";
+    select    = "#define ([a-z]+)\\(x,y\\) *__generic.*";
+
+    c_fix     = format;
+    c_fix_arg = "#define %1(x,y) \\\n"
+		"  ((sizeof(x)<=4 && sizeof(y)<=4) ? _%1f(x,y) \\\n"
+		"   : (sizeof(x)<=8 && sizeof(y)<=8) ? _%1(x,y) \\\n"
+		"   : _%1l(x,y))\n";
+
+    test_text = 
+      "#define isless(x,y)         __generic(x,y,, _isless, _islessf, _islessl,,,)(x,y)";
+};
+
+
+/*
  *  IRIX 5.2's <sys/asm.h> contains an asm comment with a contraction
  *  that causes the assembly preprocessor to complain about an
  *  unterminated character constant.
@@ -2132,6 +2178,31 @@ fix = {
 
 
 /*
+ *  obstack.h used casts as lvalues.
+ *
+ *  We need to change postincrements of casted pointers (which are
+ *  then dereferenced and assigned into) of the form
+ *
+ *    *((TYPE*)PTRVAR)++ = (VALUE)
+ *
+ *  into expressions like
+ *
+ *    ((*((TYPE*)PTRVAR) = (VALUE)), (PTRVAR += sizeof (TYPE)))
+ *
+ *  which is correct for the cases used in obstack.h since PTRVAR is
+ *  of type char * and the value of the expression is not used.
+ */
+fix = {
+    hackname  = obstack_lvalue_cast;
+    files     = obstack.h;
+    select    = '\*\(\(([^()]*)\*\)(.*)\)\+\+ = \(([^()]*)\)';
+    c_fix     = format;
+    c_fix_arg = "((*((%1*)%2) = (%3)), (%2 += sizeof (%1)))";
+    test_text = "*((void **) (h)->next_free)++ = (aptr)";
+};
+
+
+/*
  *  sys/lc_core.h on some versions of OSF1/4.x pollutes the namespace by
  *  defining regex.h related types.  This causes libg++ build and usage
  *  failures.  Fixing this correctly requires checking and modifying 3 files.
@@ -2202,6 +2273,31 @@ fix = {
     c_fix_arg = "(extern int\t.*), fread\\(\\), fwrite\\(\\)(.*)";
 
     test_text = "extern int\tfclose(), fflush(), fread(), fwrite(), foo();";
+};
+
+
+/*
+ *  Fix casts as lvalues in glibc's <rpc/xdr.h>.
+ */
+fix = {
+    hackname  = rpc_xdr_lvalue_cast_a;
+    files     = rpc/xdr.h;
+    select    = "#define[ \t]*IXDR_GET_LONG.*\\\\\n.*__extension__.*";
+    c_fix     = format;
+    c_fix_arg = "#define IXDR_GET_LONG(buf) ((long)IXDR_GET_U_INT32(buf))";
+    test_text = "#define IXDR_GET_LONG(buf) \\\\\n"
+                "\t((long)ntohl((u_long)*__extension__((u_int32_t*)(buf))++))";
+};
+
+
+fix = {
+    hackname  = rpc_xdr_lvalue_cast_b;
+    files     = rpc/xdr.h;
+    select    = "#define[ \t]*IXDR_PUT_LONG.*\\\\\n.*__extension__.*";
+    c_fix     = format;
+    c_fix_arg = "#define IXDR_PUT_LONG(buf, v) ((long)IXDR_PUT_INT32(buf, (long)(v)))";
+    test_text = "#define IXDR_PUT_LONG(buf, v) \\\\\n"
+                "\t(*__extension__((u_int32_t*)(buf))++ = (long)htonl((u_long)(v)))";
 };
 
 

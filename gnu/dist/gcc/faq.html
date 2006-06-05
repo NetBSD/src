@@ -491,7 +491,7 @@ final version of the Standard, it is.</p>
 <p>The new C++ ABI in the GCC 3.0 series uses address comparisons,
 rather than string compares, to determine type equality.  This leads
 to better performance.  Like other objects that have to be present in the
-final executable, these <code>std::typeinfo_t</code> objects have what
+final executable, these <code>std::type_info</code> objects have what
 is called vague linkage because they are not tightly bound to any one
 particular translation unit (object file).  The compiler has to emit
 them in any translation unit that requires their presence, and then
@@ -504,7 +504,7 @@ executable and other shared libraries.</p>
 
 <ul>
 <li>For a program which is linked against a shared library, no additional
-precautions need taking.</li>
+precautions are needed.</li>
 
 <li>You cannot create a shared library with the "<code>-Bsymbolic</code>"
 option, as that prevents the resolution described above.</li>
@@ -539,7 +539,7 @@ linkage the same name is a violation of the One Definition Rule (ODR)
 <p>For more details about the way that GCC implements these and other
 C++ features, please read the <a
 href="http://www.codesourcery.com/cxx-abi/">ABI specification</a>.
-Note the <code>std::typeinfo_t</code> objects which <i>must</i> be
+Note the <code>std::type_info</code> objects which <i>must</i> be
 resolved all begin with "_ZTS". Refer to <code>ld</code>'s
 documentation for a description of the "<code>-E</code>" &amp;
 "<code>-Bsymbolic</code>" flags.</p>

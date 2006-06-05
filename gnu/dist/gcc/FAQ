@@ -415,7 +415,7 @@ dynamic_cast, throw, typeid don't work with shared libraries
    The new C++ ABI in the GCC 3.0 series uses address comparisons, rather
    than string compares, to determine type equality. This leads to better
    performance. Like other objects that have to be present in the final
-   executable, these std::typeinfo_t objects have what is called vague
+   executable, these std::type_info objects have what is called vague
    linkage because they are not tightly bound to any one particular
    translation unit (object file). The compiler has to emit them in any
    translation unit that requires their presence, and then rely on the
@@ -426,7 +426,7 @@ dynamic_cast, throw, typeid don't work with shared libraries
    a shared library are resolved against objects in the executable and
    other shared libraries.
      * For a program which is linked against a shared library, no
-       additional precautions need taking.
+       additional precautions are needed.
      * You cannot create a shared library with the "-Bsymbolic" option,
        as that prevents the resolution described above.
      * If you use dlopen to explicitly load code from a shared library,
@@ -455,7 +455,7 @@ dynamic_cast, throw, typeid don't work with shared libraries
 
    For more details about the way that GCC implements these and other C++
    features, please read the [40]ABI specification. Note the
-   std::typeinfo_t objects which must be resolved all begin with "_ZTS".
+   std::type_info objects which must be resolved all begin with "_ZTS".
    Refer to ld's documentation for a description of the "-E" &
    "-Bsymbolic" flags.
      _________________________________________________________________

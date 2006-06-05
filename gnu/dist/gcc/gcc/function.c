@@ -226,9 +226,8 @@ static rtx assign_stack_local_1 PARAMS ((enum machine_mode, HOST_WIDE_INT,
 					 int, struct function *));
 static struct temp_slot *find_temp_slot_from_address  PARAMS ((rtx));
 static void put_reg_into_stack	PARAMS ((struct function *, rtx, tree,
-					 enum machine_mode, enum machine_mode,
-					 int, unsigned int, int,
-					 htab_t));
+					 enum machine_mode, unsigned int,
+					 int, int, int, htab_t));
 static void schedule_fixup_var_refs PARAMS ((struct function *, rtx, tree,
 					     enum machine_mode,
 					     htab_t));
@@ -508,6 +507,7 @@ get_frame_size ()
    ALIGN controls the amount of alignment for the address of the slot:
    0 means according to MODE,
    -1 means use BIGGEST_ALIGNMENT and round size to multiple of that,
+   -2 means use BITS_PER_UNIT,
    positive specifies alignment boundary in bits.
 
    We do not round to stack_boundary here.
@@ -548,6 +548,8 @@ assign_stack_local_1 (mode, size, align, function)
       alignment = BIGGEST_ALIGNMENT / BITS_PER_UNIT;
       size = CEIL_ROUND (size, alignment);
     }
+  else if (align == -2)
+    alignment = 1; /* BITS_PER_UNIT / BITS_PER_UNIT */
   else
     alignment = align / BITS_PER_UNIT;
 
@@ -777,7 +779,7 @@ assign_stack_temp_for_type (mode, size, keep, type)
   if (keep == 2)
     {
       p->level = target_temp_slot_level;
-      p->keep = 0;
+      p->keep = 1;
     }
   else if (keep == 3)
     {
@@ -1342,9 +1344,9 @@ put_var_into_stack (decl, rescan)
   enum machine_mode promoted_mode, decl_mode;
   struct function *function = 0;
   tree context;
-  int can_use_addressof;
-  int volatilep = TREE_CODE (decl) != SAVE_EXPR && TREE_THIS_VOLATILE (decl);
-  int usedp = (TREE_USED (decl)
+  int can_use_addressof_p;
+  int volatile_p = TREE_CODE (decl) != SAVE_EXPR && TREE_THIS_VOLATILE (decl);
+  int used_p = (TREE_USED (decl)
 	       || (TREE_CODE (decl) != SAVE_EXPR && DECL_INITIAL (decl) != 0));
 
   context = decl_function_context (decl);
@@ -1391,7 +1393,7 @@ put_var_into_stack (decl, rescan)
   /* If this variable lives in the current function and we don't need to put it
      in the stack for the sake of setjmp or the non-locality, try to keep it in
      a register until we know we actually need the address.  */
-  can_use_addressof
+  can_use_addressof_p
     = (function == 0
        && ! (TREE_CODE (decl) != SAVE_EXPR && DECL_NONLOCAL (decl))
        && optimize > 0
@@ -1404,7 +1406,8 @@ put_var_into_stack (decl, rescan)
 
   /* If we can't use ADDRESSOF, make sure we see through one we already
      generated.  */
-  if (! can_use_addressof && GET_CODE (reg) == MEM
+  if (! can_use_addressof_p
+      && GET_CODE (reg) == MEM
       && GET_CODE (XEXP (reg, 0)) == ADDRESSOF)
     reg = XEXP (XEXP (reg, 0), 0);
 
@@ -1412,11 +1415,11 @@ put_var_into_stack (decl, rescan)
 
   if (GET_CODE (reg) == REG)
     {
-      if (can_use_addressof)
+      if (can_use_addressof_p)
 	gen_mem_addressof (reg, decl, rescan);
       else
-	put_reg_into_stack (function, reg, TREE_TYPE (decl), promoted_mode,
-			    decl_mode, volatilep, 0, usedp, 0);
+	put_reg_into_stack (function, reg, TREE_TYPE (decl), decl_mode,
+			    0, volatile_p, used_p, 0, 0);
     }
   else if (GET_CODE (reg) == CONCAT)
     {
@@ -1432,14 +1435,14 @@ put_var_into_stack (decl, rescan)
 #ifdef FRAME_GROWS_DOWNWARD
       /* Since part 0 should have a lower address, do it second.  */
       put_reg_into_stack (function, hipart, part_type, part_mode,
-			  part_mode, volatilep, 0, 0, 0);
+			  0, volatile_p, 0, 0, 0);
       put_reg_into_stack (function, lopart, part_type, part_mode,
-			  part_mode, volatilep, 0, 0, 0);
+			  0, volatile_p, 0, 1, 0);
 #else
       put_reg_into_stack (function, lopart, part_type, part_mode,
-			  part_mode, volatilep, 0, 0, 0);
+			  0, volatile_p, 0, 0, 0);
       put_reg_into_stack (function, hipart, part_type, part_mode,
-			  part_mode, volatilep, 0, 0, 0);
+			  0, volatile_p, 0, 1, 0);
 #endif
 
       /* Change the CONCAT into a combined MEM for both parts.  */
@@ -1460,7 +1463,7 @@ put_var_into_stack (decl, rescan)
       /* Prevent sharing of rtl that might lose.  */
       if (GET_CODE (XEXP (reg, 0)) == PLUS)
 	XEXP (reg, 0) = copy_rtx (XEXP (reg, 0));
-      if (usedp && rescan)
+      if (used_p && rescan)
 	{
 	  schedule_fixup_var_refs (function, reg, TREE_TYPE (decl),
 				   promoted_mode, 0);
@@ -1474,35 +1477,43 @@ put_var_into_stack (decl, rescan)
 
 /* Subroutine of put_var_into_stack.  This puts a single pseudo reg REG
    into the stack frame of FUNCTION (0 means the current function).
+   TYPE is the user-level data type of the value hold in the register.
    DECL_MODE is the machine mode of the user-level data type.
-   PROMOTED_MODE is the machine mode of the register.
-   VOLATILE_P is nonzero if this is for a "volatile" decl.
-   USED_P is nonzero if this reg might have already been used in an insn.  */
+   ORIGINAL_REGNO must be set if the real regno is not visible in REG.
+   VOLATILE_P is true if this is for a "volatile" decl.
+   USED_P is true if this reg might have already been used in an insn.
+   CONSECUTIVE_P is true if the stack slot assigned to reg must be
+   consecutive with the previous stack slot.  */
 
 static void
-put_reg_into_stack (function, reg, type, promoted_mode, decl_mode, volatile_p,
-		    original_regno, used_p, ht)
+put_reg_into_stack (function, reg, type, decl_mode, original_regno,
+		    volatile_p, used_p, consecutive_p, ht)
      struct function *function;
      rtx reg;
      tree type;
-     enum machine_mode promoted_mode, decl_mode;
-     int volatile_p;
+     enum machine_mode decl_mode;
      unsigned int original_regno;
-     int used_p;
+     int volatile_p, used_p, consecutive_p;
      htab_t ht;
 {
   struct function *func = function ? function : cfun;
-  rtx new = 0;
+  enum machine_mode mode = GET_MODE (reg);
   unsigned int regno = original_regno;
+  rtx new = 0;
 
   if (regno == 0)
     regno = REGNO (reg);
 
   if (regno < func->x_max_parm_reg)
-    new = func->x_parm_reg_stack_loc[regno];
+    {
+      if (!func->x_parm_reg_stack_loc)
+	abort ();
+      new = func->x_parm_reg_stack_loc[regno];
+    }
 
   if (new == 0)
-    new = assign_stack_local_1 (decl_mode, GET_MODE_SIZE (decl_mode), 0, func);
+    new = assign_stack_local_1 (decl_mode, GET_MODE_SIZE (decl_mode),
+				consecutive_p ? -2 : 0, func);
 
   PUT_CODE (reg, MEM);
   PUT_MODE (reg, decl_mode);
@@ -1524,7 +1535,7 @@ put_reg_into_stack (function, reg, type, promoted_mode, decl_mode, volatile_p,
     }
 
   if (used_p)
-    schedule_fixup_var_refs (function, reg, type, promoted_mode, ht);
+    schedule_fixup_var_refs (function, reg, type, mode, ht);
 }
 
 /* Make sure that all refs to the variable, previously made
@@ -1712,7 +1723,7 @@ fixup_var_refs_insns_with_hash (ht, var, promoted_mode, unsignedp, may_share)
   tmp.key = var;
   ime = (struct insns_for_mem_entry *) htab_find (ht, &tmp);
   for (insn_list = ime->insns; insn_list != 0; insn_list = XEXP (insn_list, 1))
-    if (INSN_P (XEXP (insn_list, 0)))
+    if (INSN_P (XEXP (insn_list, 0)) && !INSN_DELETED_P (XEXP (insn_list, 0)))
       fixup_var_refs_insn (XEXP (insn_list, 0), var, promoted_mode,
 			   unsignedp, 1, may_share);
 }
@@ -3021,8 +3032,8 @@ put_addressof_into_stack (r, ht)
       used_p = 1;
     }
 
-  put_reg_into_stack (0, reg, type, GET_MODE (reg), GET_MODE (reg),
-		      volatile_p, ADDRESSOF_REGNO (r), used_p, ht);
+  put_reg_into_stack (0, reg, type, GET_MODE (reg), ADDRESSOF_REGNO (r),
+		      volatile_p, used_p, 0, ht);
 }
 
 /* List of replacements made below in purge_addressof_1 when creating
@@ -6960,6 +6971,14 @@ expand_function_end (filename, line, end_bindings)
 
   clear_pending_stack_adjust ();
   do_pending_stack_adjust ();
+
+  /* ???  This is a kludge.  We want to ensure that instructions that
+     may trap are not moved into the epilogue by scheduling, because
+     we don't always emit unwind information for the epilogue.
+     However, not all machine descriptions define a blockage insn, so
+     emit an ASM_INPUT to act as one.  */
+  if (flag_non_call_exceptions)
+    emit_insn (gen_rtx_ASM_INPUT (VOIDmode, ""));
 
   /* Mark the end of the function body.
      If control reaches this insn, the function can drop through

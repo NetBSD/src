@@ -147,6 +147,7 @@ static int cp_missing_noreturn_ok_p PARAMS ((tree));
 static void initialize_local_var (tree, tree);
 static void expand_static_init (tree, tree);
 static tree next_initializable_field (tree);
+static bool reshape_init_array (tree, tree, tree *, tree);
 static tree reshape_init (tree, tree *);
 
 /* Erroneous argument lists can use this *IFF* they do not modify it.  */
@@ -673,9 +674,9 @@ struct cp_binding_level GTY(())
 /* The binding level currently in effect.  */
 
 #define current_binding_level			\
-  (cfun && cp_function_chain->bindings		\
-   ? cp_function_chain->bindings		\
-   : scope_chain->bindings)
+  (*(cfun && cp_function_chain->bindings	\
+   ? &cp_function_chain->bindings		\
+   : &scope_chain->bindings))
 
 /* The binding level of the current class, if any.  */
 
@@ -1075,7 +1076,8 @@ void
 maybe_push_cleanup_level (type)
      tree type;
 {
-  if (TYPE_HAS_NONTRIVIAL_DESTRUCTOR (type)
+  if (type != error_mark_node
+      && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (type)
       && current_binding_level->more_cleanups_ok == 0)
     {
       keep_next_level (2);
@@ -1286,9 +1288,13 @@ add_decl_to_level (decl, b)
       b->names = decl;
       b->names_size++;
 
-      /* If appropriate, add decl to separate list of statics */
+      /* If appropriate, add decl to separate list of statics.  We
+	 include extern variables because they might turn out to be 
+	 static later.  It's OK for this list to contain a few false
+	 positives. */
       if (b->namespace_p)
-	if ((TREE_CODE (decl) == VAR_DECL && TREE_STATIC (decl))
+	if ((TREE_CODE (decl) == VAR_DECL
+	     && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    || (TREE_CODE (decl) == FUNCTION_DECL
 		&& (!TREE_PUBLIC (decl) || DECL_DECLARED_INLINE_P (decl))))
 	  VARRAY_PUSH_TREE (b->static_decls, decl);
@@ -7868,8 +7874,6 @@ start_decl_1 (decl)
   if (type == error_mark_node)
     return;
 
-  maybe_push_cleanup_level (type);
-
   if (initialized)
     /* Is it valid for this decl to have an initializer at all?
        If not, set INITIALIZED to zero, which will indirectly
@@ -7925,6 +7929,14 @@ start_decl_1 (decl)
 
   if (! initialized)
     DECL_INITIAL (decl) = NULL_TREE;
+
+  /* Create a new scope to hold this declaration if necessary.
+     Whether or not a new scope is necessary cannot be determined
+     until after the type has been completed; if the type is a
+     specialization of a class template it is not until after
+     instantiation has occurred that TYPE_HAS_NONTRIVIAL_DESTRUCTOR
+     will be set correctly.  */
+  maybe_push_cleanup_level (type);
 }
 
 /* Handle initialization of references.  DECL, TYPE, and INIT have the
@@ -8200,6 +8212,60 @@ next_initializable_field (tree field)
   return field;
 }
 
+/* Subroutine of reshape_init. Reshape the constructor for an array. INITP
+   is the pointer to the old constructor list (to the CONSTRUCTOR_ELTS of
+   the CONSTRUCTOR we are processing), while NEW_INIT is the CONSTRUCTOR we
+   are building.
+   ELT_TYPE is the element type of the array. MAX_INDEX is an INTEGER_CST
+   representing the size of the array minus one (the maximum index), or
+   NULL_TREE if the array was declared without specifying the size.  */
+
+static bool
+reshape_init_array (tree elt_type, tree max_index,
+		    tree *initp, tree new_init)
+{
+  bool sized_array_p = (max_index != NULL_TREE);
+  HOST_WIDE_INT max_index_cst = 0;
+  HOST_WIDE_INT index;
+
+  if (sized_array_p)
+    /* HWI is either 32bit or 64bit, so it must be enough to represent the
+	array size.  */
+    max_index_cst = tree_low_cst (max_index, 1);
+
+  /* Loop until there are no more initializers.  */
+  for (index = 0;
+       *initp && (!sized_array_p || index <= max_index_cst);
+       ++index)
+    {
+      tree element_init;
+      tree designated_index;
+
+      element_init = reshape_init (elt_type, initp);
+      if (element_init == error_mark_node)
+	return false;
+      TREE_CHAIN (element_init) = CONSTRUCTOR_ELTS (new_init);
+      CONSTRUCTOR_ELTS (new_init) = element_init;
+      designated_index = TREE_PURPOSE (element_init);
+      if (designated_index)
+	{
+	  if (TREE_CODE (designated_index) != INTEGER_CST)
+	    abort ();
+	  if (sized_array_p
+	      && tree_int_cst_lt (max_index, designated_index))
+	    {
+	      error ("Designated initializer `%E' larger than array "
+		      "size", designated_index);
+	      TREE_PURPOSE (element_init) = NULL_TREE;
+	    }
+	  else
+	    index = tree_low_cst (designated_index, 1);
+	}
+    }
+
+  return true;
+}
+
 /* Undo the brace-elision allowed by [dcl.init.aggr] in a
    brace-enclosed aggregate initializer.
 
@@ -8375,28 +8441,15 @@ reshape_init (tree type, tree *initp)
 	}
       else if ((TREE_CODE (type) == ARRAY_TYPE)|| (TREE_CODE (type) == VECTOR_TYPE))
 	{
-	  tree index;
 	  tree max_index;
 
 	  /* If the bound of the array is known, take no more initializers
 	     than are allowed.  */
 	  max_index = ((TYPE_DOMAIN (type) && (TREE_CODE (type) == ARRAY_TYPE))
 		       ? array_type_nelts (type) : NULL_TREE);
-	  /* Loop through the array elements, gathering initializers.  */
-	  for (index = size_zero_node;
-	       *initp && (!max_index || !tree_int_cst_lt (max_index, index));
-	       index = size_binop (PLUS_EXPR, index, size_one_node))
-	    {
-	      tree element_init;
-
-	      element_init = reshape_init (TREE_TYPE (type), initp);
-              if (element_init == error_mark_node)
-                return error_mark_node;
-	      TREE_CHAIN (element_init) = CONSTRUCTOR_ELTS (new_init);
-	      CONSTRUCTOR_ELTS (new_init) = element_init;
-	      if (TREE_PURPOSE (element_init))
-		index = TREE_PURPOSE (element_init);
-	    }
+	  if (!reshape_init_array (TREE_TYPE (type), max_index,
+				   initp, new_init))
+	    return error_mark_node;
 	}
       else
 	abort ();
@@ -8428,6 +8481,7 @@ static tree
 check_initializer (tree decl, tree init, int flags, tree *cleanup)
 {
   tree type = TREE_TYPE (decl);
+  tree init_code = NULL;
 
   /* If `start_decl' didn't like having an initialization, ignore it now.  */
   if (init != NULL_TREE && DECL_INITIAL (decl) == NULL_TREE)
@@ -8538,7 +8592,10 @@ check_initializer (tree decl, tree init, int flags, tree *cleanup)
 	{
 	dont_use_constructor:
 	  if (TREE_CODE (init) != TREE_VEC)
-	    init = store_init_value (decl, init);
+	    {
+	      init_code = store_init_value (decl, init);
+	      init = NULL;
+	    }
 	}
     }
   else if (DECL_EXTERNAL (decl))
@@ -8561,9 +8618,9 @@ check_initializer (tree decl, tree init, int flags, tree *cleanup)
     check_for_uninitialized_const_var (decl);
 
   if (init && init != error_mark_node)
-    init = build (INIT_EXPR, type, decl, init);
+    init_code = build (INIT_EXPR, type, decl, init);
 
-  return init;
+  return init_code;
 }
 
 /* If DECL is not a local variable, give it RTL.  */
@@ -8879,16 +8936,17 @@ cp_finish_decl (decl, init, asmspec_tree, flags)
   if (TREE_CODE (decl) != FUNCTION_DECL)
     ttype = target_type (type);
 
-  if (! DECL_EXTERNAL (decl) && TREE_READONLY (decl)
-      && (TYPE_NEEDS_CONSTRUCTING (type) 
-	  || TREE_CODE (type) == REFERENCE_TYPE))
+  
+  /* Currently, GNU C++ puts constants in text space, making them
+     impossible to initialize.  In the future, one would hope for
+     an operating system which understood the difference between
+     initialization and the running of a program.  */
+  if (! DECL_EXTERNAL (decl) && TREE_READONLY (decl))
     {
-      /* Currently, GNU C++ puts constants in text space, making them
-	 impossible to initialize.  In the future, one would hope for
-	 an operating system which understood the difference between
-	 initialization and the running of a program.  */
       was_readonly = 1;
-      TREE_READONLY (decl) = 0;
+      if (TYPE_NEEDS_CONSTRUCTING (type) 
+	  || TREE_CODE (type) == REFERENCE_TYPE)
+	TREE_READONLY (decl) = 0;
     }
 
   if (TREE_CODE (decl) == FIELD_DECL && asmspec)
@@ -12697,8 +12755,6 @@ require_complete_types_for_parms (parms)
 	  layout_decl (parms, 0);
 	  DECL_ARG_TYPE (parms) = type_passed_as (TREE_TYPE (parms));
 	}
-      else
-        TREE_TYPE (parms) = error_mark_node;
     }
 }
 
@@ -13686,25 +13742,7 @@ xref_tag (enum tag_types tag_code, tree name, tree attributes,
       if (code == ENUMERAL_TYPE)
 	{
 	  error ("use of enum `%#D' without previous declaration", name);
-
-	  ref = make_node (ENUMERAL_TYPE);
-
-	  /* Give the type a default layout like unsigned int
-	     to avoid crashing if it does not get defined.  */
-	  TYPE_MODE (ref) = TYPE_MODE (unsigned_type_node);
-	  TYPE_ALIGN (ref) = TYPE_ALIGN (unsigned_type_node);
-	  TYPE_USER_ALIGN (ref) = 0;
-	  TREE_UNSIGNED (ref) = 1;
-	  TYPE_PRECISION (ref) = TYPE_PRECISION (unsigned_type_node);
-	  TYPE_MIN_VALUE (ref) = TYPE_MIN_VALUE (unsigned_type_node);
-	  TYPE_MAX_VALUE (ref) = TYPE_MAX_VALUE (unsigned_type_node);
-
-	  /* Enable us to recognize when a type is created in class context.
-	     To do nested classes correctly, this should probably be cleared
-	     out when we leave this classes scope.  Currently this in only
-	     done in `start_enum'.  */
-
-	  pushtag (name, ref, globalize);
+          POP_TIMEVAR_AND_RETURN (TV_NAME_LOOKUP, error_mark_node);
 	}
       else
 	{

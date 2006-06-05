@@ -1,3 +1,45 @@
+2005-05-03  Release Manager
+
+	* GCC 3.3.6 Released.
+
+2004-09-30  Release Manager
+
+	* GCC 3.3.5 Released.
+
+2004-05-31  Release Manager
+
+	* GCC 3.3.4 Released.
+
+Sat May  8 17:50:43 2004  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	Backport:
+	
+	2004-02-24  Michael Matz  <matz@suse.de>
+	
+	* sta.c (ffesta_save_): Don't break aliasing rules.
+
+2004-04-18  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* g77.texi (Floating-point Errors): Avoid referencing 
+	http://www.linuxsupportline.com/~billm/ which as has been hijacked.
+
+2004-03-21  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* g77.texi (Aligned Data): Remove obsolete paragraph including a
+	broken link.
+	(Floating-point Errors): Remove links to http://www.validgh.com/
+	which was "hijacked".
+	(Language): Fix link to Fortran books.
+	(Projects): Remove obsolete paragraph including a broken link to
+	ftp://alpha.gnu.org/gnu/g77/projects/.
+	(Trouble): Remove obsolete paragraph including a broken link to
+	ftp://alpha.gnu.org/g77.plan.
+	
+	* invoke.texi (Overall Options): Remove broken reference to
+	rat7.uue (which was of dubious copyright status anyways).
+
+	* root.texi (www-burley): Fix URL.
+	
 2004-02-14  Release Manager
 
 	* GCC 3.3.3 Released.
