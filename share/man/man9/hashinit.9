@@ -1,4 +1,4 @@
-.\"     $NetBSD: hashinit.9,v 1.1 2006/06/04 14:45:35 chap Exp $
+.\"     $NetBSD: hashinit.9,v 1.2 2006/06/05 16:48:35 chap Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,11 +55,11 @@ The
 .Fn hashinit
 function allocates and initializes space for a simple chaining hash table.
 The number of slots will be the least power of two not smaller than
-.Fa chains ,
-where
+.Fa chains .
+The customary choice for
 .Fa chains
-should be the product of the intended load factor and the expected number
-of elements to be stored.
+is the maximum number of elements you intend to store divided by
+your intended load factor.
 The
 .Dv LIST...
 or
@@ -73,16 +73,18 @@ or
 as
 .Fa htype
 to indicate which. Each slot will be initialized as the head of an empty
-chain of the proper type. The total size of the allocated table
-will therefore depend on the head size of the chosen chain type.
+chain of the proper type. Because different data structures from
+.Xr queue 3
+can define head structures of different sizes, the total size of the
+allocated table can vary with the choice of
+.Fa htype .
 .Pp
 The
 .Fa mtype
 and
 .Fa mflags
-arguments are passed to
-.Xr malloc 9
-to control the allocation.
+arguments have the meanings of the corresponding arguments to
+.Xr malloc 9 .
 .Pp
 A value will be stored into
 .Fa *hashmask
@@ -95,14 +97,13 @@ function deallocates the storage allocated by
 .Fn hashinit
 and pointed to by
 .Fa hashtbl ,
-passing it and
+given the same
 .Fa mtype
-to
-.Xr free 9 .
-It
-.Em does not
-walk the table and deallocate anything in it, or check that the caller has
-done so.
+that was passed to
+.Fn hashinit .
+If the table contains any nonempty chain when
+.Fn hashdone
+is called, the result is undefined.
 .Sh RETURN VALUES
 The value returned by
 .Fn hashinit
@@ -120,6 +121,9 @@ allow it.
 .Xr queue 3 ,
 .Xr hash 9 ,
 .Xr malloc 9
+.Sh CODE REFERENCES
+These functions are implemented in
+.Pa sys/kern/kern_subr.c .
 .Sh HISTORY
 A
 .Fn hashinit
@@ -137,7 +141,7 @@ It sized the table to the
 power of two
 .Em not greater than
 .Fa chains ;
-that is, it built in a load factor between 0.5 and 1.
+that is, it built in a load factor between 1 and 2.
 .Pp
 .Nx 1.0
 was the first
