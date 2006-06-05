@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -312,7 +312,10 @@ cris_commutative_orth_op (x, mode)
 	   || code == IOR || code == AND || code == UMIN));
 }
 
-/* Check if MODE is same as mode for X, and X is PLUS or MINUS or UMIN.  */
+/* Check if MODE is same as mode for X, and X is PLUS or MINUS or UMIN.
+   By the name, you might think we should include MULT.  We don't because
+   it doesn't accept the same addressing modes as the others (ony
+   registers) and there's also the problem of handling TARGET_MUL_BUG.  */
 
 int
 cris_operand_extend_operator (x, mode)
@@ -496,7 +499,11 @@ cris_op_str (x)
       break;
 
     case MULT:
-      return "mul";
+      /* This function is for retrieving a part of an instruction name for
+	 an operator, for immediate output.  If that ever happens for
+	 MULT, we need to apply TARGET_MUL_BUG in the caller.  Make sure
+	 we notice.  */
+      abort ();
       break;
 
     case DIV:
@@ -1399,6 +1406,23 @@ cris_print_operand (file, x, code)
 	 This method stolen from the sparc files.  */
       if (dbr_sequence_length () == 0)
 	fputs ("\n\tnop", file);
+      return;
+
+    case '!':
+      /* Output directive for alignment padded with "nop" insns.
+	 Optimizing for size, it's plain 4-byte alignment, otherwise we
+	 align the section to a cache-line (32 bytes) and skip at max 2
+	 bytes, i.e. we skip if it's the last insn on a cache-line.  The
+	 latter is faster by a small amount (for two test-programs 99.6%
+	 and 99.9%) and larger by a small amount (ditto 100.1% and
+	 100.2%).  This is supposed to be the simplest yet performance-
+	 wise least intrusive way to make sure the immediately following
+	 (supposed) muls/mulu insn isn't located at the end of a
+	 cache-line.  */
+      if (TARGET_MUL_BUG)
+	fputs (optimize_size
+	       ? ".p2alignw 2,0x050f\n\t"
+	       : ".p2alignw 5,0x050f,2\n\t", file);
       return;
 
     case 'H':
@@ -2635,10 +2659,24 @@ cris_asm_output_mi_thunk (stream, thunkdecl, delta, vcall_offset, funcdecl)
     {
       const char *name = XSTR (XEXP (DECL_RTL (funcdecl), 0), 0);
 
+      /* We have no other relative (to either PC or GOT) reloc than one
+	 that requests a PLT entry.  Since we don't set up the GOT
+	 register, the jump absolutely must not be redirected through a
+	 PLT entry.  We manage anyway by going through a local symbol.
+	 This depends on the assembler to not short-circuit equalities
+	 set by the ".set" directive (at least not for PIC relocs) and
+	 on the linker to direct R_CRIS_32_PLT_PCREL relocs *directly*
+	 to the symbol for local symbols, instead of through a PLT
+	 entry.  */
       name = (* targetm.strip_name_encoding) (name);
-      fprintf (stream, "add.d ");
+      fprintf (stream, "\tadd.d ");
       assemble_name (stream, name);
-      fprintf (stream, "%s,$pc\n", CRIS_PLT_PCOFFSET_SUFFIX);
+      fprintf (stream, "..xth%s,$pc\n", CRIS_PLT_PCOFFSET_SUFFIX);
+      fprintf (stream, "\t.set ");
+      assemble_name (stream, name);
+      fprintf (stream, "..xth,");
+      assemble_name (stream, name);
+      fprintf (stream, "\n");
     }
   else
     {

@@ -1,7 +1,7 @@
-Ceci est le fichier Info doc/gccinstall.info, produit par Makeinfo
-version 4.6 à partir doc/install.texi.
+This is doc/gccinstall.info, produced by makeinfo version 4.7 from
+doc/install.texi.
 
-Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
@@ -20,7 +20,8 @@ is included in the section entitled "GNU Free Documentation License".
    You have freedom to copy and modify this GNU Manual, like GNU
 software.  Copies published by the Free Software Foundation raise
 funds for GNU development.
-Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+
+   Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
@@ -39,6 +40,7 @@ is included in the section entitled "GNU Free Documentation License".
    You have freedom to copy and modify this GNU Manual, like GNU
 software.  Copies published by the Free Software Foundation raise
 funds for GNU development.
+
 
 File: gccinstall.info,  Node: Top,  Up: (dir)
 
@@ -59,8 +61,8 @@ File: gccinstall.info,  Node: Top,  Up: (dir)
 
 File: gccinstall.info,  Node: Installing GCC,  Next: Binaries,  Up: Top
 
-Installing GCC
-**************
+1 Installing GCC
+****************
 
    The latest version of this document is always available at
 http://gcc.gnu.org/install/.
@@ -100,8 +102,8 @@ as well, no more binaries exist that use them.
 
 File: gccinstall.info,  Node: Downloading the source,  Next: Configuration,  Up: Installing GCC
 
-Downloading GCC
-***************
+2 Downloading GCC
+*****************
 
    GCC is distributed via CVS and FTP tarballs compressed with `gzip' or
 `bzip2'.  It is possible to download a full distribution or specific
@@ -137,8 +139,8 @@ containing the GCC sources.
 
 File: gccinstall.info,  Node: Configuration,  Next: Building,  Prev: Downloading the source,  Up: Installing GCC
 
-Installing GCC: Configuration
-*****************************
+3 Installing GCC: Configuration
+*******************************
 
    Like most GNU software, GCC must be configured before it can be
 built.  This document describes the recommended configuration procedure
@@ -798,8 +800,8 @@ option.
 
 File: gccinstall.info,  Node: Building,  Next: Testing,  Prev: Configuration,  Up: Installing GCC
 
-Building
-********
+4 Building
+**********
 
    Now that GCC is configured, you are ready to build the compiler and
 runtime libraries.
@@ -850,8 +852,8 @@ documentation, you need version 4.2 or later of Texinfo installed if you
 want Info documentation to be regenerated.  Releases contain Info
 documentation pre-built for the unmodified documentation in the release.
 
-Building a native compiler
-==========================
+4.1 Building a native compiler
+==============================
 
 For a native build issue the command `make bootstrap'.  This will build
 the entire GCC system, which includes the following steps:
@@ -911,8 +913,8 @@ a few systems, meaningful comparison of object files is impossible; they
 always appear "different".  If you encounter this problem, you will
 need to disable comparison in the `Makefile'.)
 
-Building a cross compiler
-=========================
+4.2 Building a cross compiler
+=============================
 
 We recommend reading the crossgcc FAQ for information about building
 cross compilers.
@@ -944,8 +946,8 @@ performs the following steps:
 
    Note that if an error occurs in any step the make process will exit.
 
-Building in parallel
-====================
+4.3 Building in parallel
+========================
 
 You can use `make bootstrap MAKE="make -j 2" -j 2', or just `make -j 2
 bootstrap' for GNU Make 3.79 and above, instead of `make bootstrap' to
@@ -955,8 +957,8 @@ machine will result in fewer and shorter I/O latency hits, thus
 improving overall throughput; this is especially true for slow drives
 and network filesystems.
 
-Building the Ada compiler
-=========================
+4.4 Building the Ada compiler
+=============================
 
 In order to build GNAT, the Ada compiler, you need a working GNAT
 compiler (GNAT version 3.13 or later, or GCC version 3.1 or later),
@@ -1008,8 +1010,8 @@ parallel build feature described in the previous section.
 
 File: gccinstall.info,  Node: Testing,  Next: Final install,  Prev: Building,  Up: Installing GCC
 
-Installing GCC: Testing
-***********************
+5 Installing GCC: Testing
+*************************
 
    Before you install GCC, we encourage you to run the testsuites and to
 compare your results with results from a similar configuration that have
@@ -1050,8 +1052,8 @@ emit some harmless messages resembling `WARNING: Couldn't find the
 global config file.' or `WARNING: Couldn't find tool init file' that
 can be ignored.
 
-How can I run the test suite on selected tests?
-===============================================
+5.1 How can I run the test suite on selected tests?
+===================================================
 
 In order to run sets of tests selectively, there are targets `make
 check-gcc' and `make check-g++' in the `gcc' subdirectory of the object
@@ -1077,8 +1079,8 @@ files, pipe the output of `make check' into a file and look at the
    The Java runtime tests can be executed via `make check' in the
 `TARGET/libjava/testsuite' directory in the build tree.
 
-Additional testing for Java Class Libraries
-===========================================
+5.2 Additional testing for Java Class Libraries
+===============================================
 
 The Mauve Project provides a suite of tests for the Java Class
 Libraries.  This suite can be run as part of libgcj testing by placing
@@ -1091,8 +1093,8 @@ This suite can be run as part of libgcj testing by placing the Jacks
 tree within the libjava testsuite at
 `libjava/testsuite/libjava.jacks/jacks'.
 
-How to interpret test results
-=============================
+5.3 How to interpret test results
+=================================
 
 The result of running the testsuite are various `*.sum' and `*.log'
 files in the testsuite subdirectories.  The `*.log' files contain a
@@ -1119,8 +1121,8 @@ current time our testing harness does not allow fine grained control
 over whether or not a test is expected to fail.  We expect to fix this
 problem in future releases.
 
-Submitting test results
-=======================
+5.4 Submitting test results
+===========================
 
 If you want to report the results to the GCC project, use the
 `contrib/test_summary' shell script.  Start it in the OBJDIR with
@@ -1138,8 +1140,8 @@ automatically processed.
 
 File: gccinstall.info,  Node: Final install,  Prev: Testing,  Up: Installing GCC
 
-Installing GCC: Final installation
-**********************************
+6 Installing GCC: Final installation
+************************************
 
    Now that GCC has been built (and optionally tested), you can install
 it with
@@ -1223,7 +1225,7 @@ following information:
      message.
 
    We'd also like to know if the *Note host/target specific
-installation notes: Specific didn't include your host/target
+installation notes: Specific.  didn't include your host/target
 information or if that information is incomplete or out of date.  Send
 a note to <gcc@gcc.gnu.org> telling us how the information should be
 changed.
@@ -1241,8 +1243,8 @@ such manuals may not be for the most recent version of GCC.
 
 File: gccinstall.info,  Node: Binaries,  Next: Specific,  Prev: Installing GCC,  Up: Top
 
-Installing GCC: Binaries
-************************
+7 Installing GCC: Binaries
+**************************
 
    We are often asked about pre-compiled versions of GCC.  While we
 cannot provide these for all platforms, below you'll find links to
@@ -1298,8 +1300,8 @@ updated version of that disk is in the works.
 
 File: gccinstall.info,  Node: Specific,  Next: Old,  Prev: Binaries,  Up: Top
 
-Host/target specific installation notes for GCC
-***********************************************
+8 Host/target specific installation notes for GCC
+*************************************************
 
    Please read this document carefully _before_ installing the GNU
 Compiler Collection on your machine.
@@ -2447,8 +2449,19 @@ if you have `/usr/xpg4/bin' in your `PATH', we recommend that you place
 `/usr/bin' before `/usr/xpg4/bin' for the duration of the build.
 
    All releases of GNU binutils prior to 2.11.2 have known bugs on this
-platform.  We recommend the use of GNU binutils 2.11.2 or the vendor
-tools (Sun `as', Sun `ld').
+platform.  We recommend the use of GNU binutils 2.11.2 or later, or the
+vendor tools (Sun `as', Sun `ld').  Note that your mileage may vary if
+you use a combination of the GNU tools and the Sun tools: while the
+combination GNU `as' + Sun `ld' should reasonably work, the reverse
+combination Sun `as' + GNU `ld' is known to cause memory corruption at
+runtime in some cases for C++ programs.
+
+   The stock GNU binutils 2.15 release is broken on this platform
+because of a single bug.  It has been fixed on the 2.15 branch in the
+CVS repository.  You can obtain a working version by checking out the
+binutils-2_15-branch from the CVS repository or applying the patch
+`http://sources.redhat.com/ml/binutils-cvs/2004-09/msg00036.html' to the
+release.
 
    Sun bug 4296832 turns up when compiling X11 headers with GCC 2.95 or
 newer: `g++' will complain that types are missing.  These headers assume
@@ -2463,6 +2476,17 @@ defined by C89).
 106248-42 or newer for Intel), Solaris 7 (108376-21 or newer for SPARC,
 108377-20 for Intel), and Solaris 8 (108652-24 or newer for SPARC,
 108653-22 for Intel) that fix this bug.
+
+   Sun bug 4927647 sometimes causes random spurious testsuite failures
+related to missing diagnostic output.  This bug doesn't affect GCC
+itself, rather it is a kernel bug triggered by the `expect' program
+which is used only by the GCC testsuite driver.  When the bug causes
+the `expect' program to miss anticipated output, extra testsuite
+failures appear.
+
+   There are patches for Solaris 8 (117350-12 or newer for SPARC,
+117351-12 or newer for Intel) and Solaris 9 (117171-11 or newer for
+SPARC, 117172-11 or newer for Intel) that address this problem.
 
 sparc-sun-solaris2*
 ===================
@@ -2493,6 +2517,13 @@ full 64-bit code, can still run on non-UltraSPARC machines.
 kernel that supports only 32-bit binaries, one must configure with
 `--disable-multilib', since we will not be able to build the 64-bit
 target libraries.
+
+   GCC 3.3 triggers code generation bugs in earlier versions of the GNU
+compiler (especially GCC 3.0.x versions), which lead to the
+miscompilation of the stage1 compiler and the subsequent failure of the
+bootstrap process.  A workaround is to use GCC 3.2.3 as an intermediary
+stage, i.e. to bootstrap that compiler with the base compiler and then
+use it to bootstrap the final compiler.
 
 sparc-sun-solaris2.7
 ====================
@@ -2723,8 +2754,8 @@ instantiations will be discarded automatically.
 
 File: gccinstall.info,  Node: Old,  Next: GNU Free Documentation License,  Prev: Specific,  Up: Top
 
-Old installation documentation
-******************************
+9 Old installation documentation
+********************************
 
    Note most of this information is out of date and superseded by the
 previous chapters of this manual.  It is provided for historical
@@ -2801,8 +2832,8 @@ See *Note VMS Install::, for VMS systems.
 
 File: gccinstall.info,  Node: Configurations,  Next: Cross-Compiler,  Up: Old
 
-Configurations Supported by GNU CC
-==================================
+9.1 Configurations Supported by GNU CC
+======================================
 
    Here are the possible CPU types:
 
@@ -2891,8 +2922,8 @@ special things you must know:
 
 File: gccinstall.info,  Node: Cross-Compiler,  Next: VMS Install,  Prev: Configurations,  Up: Old
 
-Building and Installing a Cross-Compiler
-========================================
+9.2 Building and Installing a Cross-Compiler
+============================================
 
    GNU CC can function as a cross-compiler for many machines, but not
 all.
@@ -2930,8 +2961,8 @@ for the target machine that you can install on the host machine.
 
 File: gccinstall.info,  Node: Steps of Cross,  Next: Configure Cross,  Up: Cross-Compiler
 
-Steps of Cross-Compilation
---------------------------
+9.2.1 Steps of Cross-Compilation
+--------------------------------
 
    To compile and run a program using a cross-compiler involves several
 steps:
@@ -2958,8 +2989,8 @@ some targets, the GNU assembler and linker are available.
 
 File: gccinstall.info,  Node: Configure Cross,  Next: Tools and Libraries,  Prev: Steps of Cross,  Up: Cross-Compiler
 
-Configuring a Cross-Compiler
-----------------------------
+9.2.2 Configuring a Cross-Compiler
+----------------------------------
 
    To build GNU CC as a cross-compiler, you start out by running
 `configure'.  Use the `--target=TARGET' to specify the target type.  If
@@ -2973,8 +3004,8 @@ system running BSD on a system that `configure' can correctly identify:
 
 File: gccinstall.info,  Node: Tools and Libraries,  Next: Cross Headers,  Prev: Configure Cross,  Up: Cross-Compiler
 
-Tools and Libraries for a Cross-Compiler
-----------------------------------------
+9.2.3 Tools and Libraries for a Cross-Compiler
+----------------------------------------------
 
    If you have a cross-assembler and cross-linker available, you should
 install them now.  Put them in the directory `/usr/local/TARGET/bin'.
@@ -3044,8 +3075,8 @@ machine:
 
 File: gccinstall.info,  Node: Cross Headers,  Next: Build Cross,  Prev: Tools and Libraries,  Up: Cross-Compiler
 
-Cross-Compilers and Header Files
---------------------------------
+9.2.4 Cross-Compilers and Header Files
+--------------------------------------
 
    If you are cross-compiling a standalone program or a program for an
 embedded system, then you may not need any header files except the few
@@ -3096,8 +3127,8 @@ machine.  On the target machine, do this:
 
 File: gccinstall.info,  Node: Build Cross,  Prev: Cross Headers,  Up: Cross-Compiler
 
-Actually Building the Cross-Compiler
-------------------------------------
+9.2.5 Actually Building the Cross-Compiler
+------------------------------------------
 
    Now you can proceed just as for compiling a single-machine compiler
 through the step of building stage 1.
@@ -3117,8 +3148,8 @@ must specify a 68030 as the host when you configure it.
 
 File: gccinstall.info,  Node: VMS Install,  Prev: Cross-Compiler,  Up: Old
 
-Installing GNU CC on VMS
-========================
+9.3 Installing GNU CC on VMS
+============================
 
    The VMS version of GNU CC is distributed in a backup saveset
 containing both source code and precompiled binaries.
@@ -3322,9 +3353,10 @@ GNU Free Documentation License
 ******************************
 
                       Version 1.2, November 2002
+
      Copyright (C) 2000,2001,2002 Free Software Foundation, Inc.
      59 Temple Place, Suite 330, Boston, MA  02111-1307, USA
-     
+
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
 
@@ -3752,129 +3784,133 @@ File: gccinstall.info,  Node: Concept Index,  Prev: GNU Free Documentation Licen
 Concept Index
 *************
 
+ [index ]
 * Menu:
 
-* alloca, for Unos:                      Specific.
-* Binaries:                              Binaries.
-* Configuration:                         Configuration.
-* configurations supported by GNU CC:    Configurations.
-* cross-compiler, installation:          Cross-Compiler.
+* alloca, for Unos:                      Specific.            (line 785)
+* Binaries:                              Binaries.            (line   6)
+* Configuration:                         Configuration.       (line   6)
+* configurations supported by GNU CC:    Configurations.      (line   6)
+* cross-compiler, installation:          Cross-Compiler.      (line   6)
 * Downloading GCC:                       Downloading the source.
+                                                              (line   6)
 * Downloading the Source:                Downloading the source.
+                                                              (line   6)
 * FDL, GNU Free Documentation License:   GNU Free Documentation License.
-* Host specific installation:            Specific.
-* Installing GCC: Binaries:              Binaries.
-* Installing GCC: Building:              Building.
-* Installing GCC: Configuration:         Configuration.
-* Installing GCC: Testing:               Testing.
-* installing GNU CC on VMS:              VMS Install.
-* Specific:                              Specific.
-* Specific installation notes:           Specific.
-* start files:                           Tools and Libraries.
-* Target specific installation:          Specific.
-* Target specific installation notes:    Specific.
-* Testing:                               Testing.
-* Testsuite:                             Testing.
-* VMS installation:                      VMS Install.
+                                                              (line   6)
+* Host specific installation:            Specific.            (line   6)
+* Installing GCC: Binaries:              Binaries.            (line   6)
+* Installing GCC: Building:              Building.            (line   6)
+* Installing GCC: Configuration:         Configuration.       (line   6)
+* Installing GCC: Testing:               Testing.             (line   6)
+* installing GNU CC on VMS:              VMS Install.         (line   6)
+* Specific:                              Specific.            (line   6)
+* Specific installation notes:           Specific.            (line   6)
+* start files:                           Tools and Libraries. (line  54)
+* Target specific installation:          Specific.            (line   6)
+* Target specific installation notes:    Specific.            (line   6)
+* Testing:                               Testing.             (line   6)
+* Testsuite:                             Testing.             (line   6)
+* VMS installation:                      VMS Install.         (line   6)
 
 
 
 Tag Table:
-Node: Top1717
-Node: Installing GCC2275
-Node: Downloading the source3768
-Node: Configuration5368
-Ref: with-gnu-as18138
-Ref: with-as19410
-Ref: with-gnu-ld20371
-Node: Building34928
-Node: Testing44160
-Node: Final install49539
-Node: Binaries54225
-Node: Specific55973
-Ref: alpha*-*-*56256
-Ref: alpha*-dec-osf*56745
-Ref: alphaev5-cray-unicosmk*60427
-Ref: arc-*-elf61374
-Ref: arm-*-aout61474
-Ref: arm-*-elf61888
-Ref: arm*-*-linux-gnu61963
-Ref: avr62038
-Ref: c4x62718
-Ref: cris63316
-Ref: dos64298
-Ref: dsp16xx64621
-Ref: *-*-freebsd*64688
-Ref: h8300-hms66855
-Ref: hppa*-hp-hpux*67207
-Ref: hppa*-hp-hpux968553
-Ref: hppa*-hp-hpux1069130
-Ref: hppa*-hp-hpux1169838
-Ref: i370-*-*74486
-Ref: *-*-linux-gnu74623
-Ref: ix86-*-linux*aout75612
-Ref: ix86-*-linux*75822
-Ref: ix86-*-sco76135
-Ref: ix86-*-sco3.2v5*76299
-Ref: ix86-*-udk78544
-Ref: ia64-*-linux79908
-Ref: ia64-*-hpux*80896
-Ref: *-lynx-lynxos81325
-Ref: *-ibm-aix*81802
-Ref: ip2k-*-elf86827
-Ref: m32r-*-elf87058
-Ref: m68000-hp-bsd87160
-Ref: m6811-elf87416
-Ref: m6812-elf87566
-Ref: m68k-att-sysv87716
-Ref: m68k-crds-unos88076
-Ref: m68k-hp-hpux89537
-Ref: m68k-ncr-*91550
-Ref: m68k-sun91945
-Ref: m68k-sun-sunos4.1.192206
-Ref: mips-*-*92370
-Ref: mips-sgi-irix593231
-Ref: mips-sgi-irix695212
-Ref: powerpc*-*-*98998
-Ref: powerpc-*-darwin*99143
-Ref: powerpc-*-elf100088
-Ref: powerpc-*-linux-gnu*100207
-Ref: powerpc-*-netbsd*100315
-Ref: powerpc-*-eabiaix100511
-Ref: powerpc-*-eabisim100635
-Ref: powerpc-*-eabi100761
-Ref: powerpcle-*-elf100837
-Ref: powerpcle-*-eabisim100967
-Ref: powerpcle-*-eabi101100
-Ref: s390-*-linux*101183
-Ref: s390x-*-linux*101251
-Ref: *-*-solaris2*101334
-Ref: sparc-sun-solaris2*103789
-Ref: sparc-sun-solaris2.7105122
-Ref: sparc-sun-sunos4*107192
-Ref: sparc-unknown-linux-gnulibc1107856
-Ref: sparc-*-linux*108054
-Ref: sparc64-*-solaris2*108279
-Ref: sparcv9-*-solaris2*108655
-Ref: #*-*-sysv*108740
-Ref: vax-dec-ultrix109701
-Ref: x86_64-*-*109853
-Ref: xtensa-*-elf110181
-Ref: xtensa-*-linux*110860
-Ref: windows111198
-Ref: os2111522
-Ref: older111845
-Ref: elf_targets113970
-Node: Old114228
-Node: Configurations117603
-Node: Cross-Compiler121803
-Node: Steps of Cross123560
-Node: Configure Cross124685
-Node: Tools and Libraries125329
-Node: Cross Headers127775
-Node: Build Cross129790
-Node: VMS Install130757
-Node: GNU Free Documentation License140297
-Node: Concept Index162707
+Node: Top1704
+Node: Installing GCC2262
+Node: Downloading the source3759
+Node: Configuration5363
+Ref: with-gnu-as18137
+Ref: with-as19409
+Ref: with-gnu-ld20370
+Node: Building34927
+Node: Testing44195
+Node: Final install49610
+Node: Binaries54302
+Node: Specific56054
+Ref: alpha*-*-*56341
+Ref: alpha*-dec-osf*56830
+Ref: alphaev5-cray-unicosmk*60512
+Ref: arc-*-elf61459
+Ref: arm-*-aout61559
+Ref: arm-*-elf61973
+Ref: arm*-*-linux-gnu62048
+Ref: avr62123
+Ref: c4x62803
+Ref: cris63401
+Ref: dos64383
+Ref: dsp16xx64706
+Ref: *-*-freebsd*64773
+Ref: h8300-hms66940
+Ref: hppa*-hp-hpux*67292
+Ref: hppa*-hp-hpux968638
+Ref: hppa*-hp-hpux1069215
+Ref: hppa*-hp-hpux1169923
+Ref: i370-*-*74571
+Ref: *-*-linux-gnu74708
+Ref: ix86-*-linux*aout75697
+Ref: ix86-*-linux*75907
+Ref: ix86-*-sco76220
+Ref: ix86-*-sco3.2v5*76384
+Ref: ix86-*-udk78629
+Ref: ia64-*-linux79993
+Ref: ia64-*-hpux*80981
+Ref: *-lynx-lynxos81410
+Ref: *-ibm-aix*81887
+Ref: ip2k-*-elf86912
+Ref: m32r-*-elf87143
+Ref: m68000-hp-bsd87245
+Ref: m6811-elf87501
+Ref: m6812-elf87651
+Ref: m68k-att-sysv87801
+Ref: m68k-crds-unos88161
+Ref: m68k-hp-hpux89622
+Ref: m68k-ncr-*91635
+Ref: m68k-sun92030
+Ref: m68k-sun-sunos4.1.192291
+Ref: mips-*-*92455
+Ref: mips-sgi-irix593316
+Ref: mips-sgi-irix695297
+Ref: powerpc*-*-*99083
+Ref: powerpc-*-darwin*99228
+Ref: powerpc-*-elf100173
+Ref: powerpc-*-linux-gnu*100292
+Ref: powerpc-*-netbsd*100400
+Ref: powerpc-*-eabiaix100596
+Ref: powerpc-*-eabisim100720
+Ref: powerpc-*-eabi100846
+Ref: powerpcle-*-elf100922
+Ref: powerpcle-*-eabisim101052
+Ref: powerpcle-*-eabi101185
+Ref: s390-*-linux*101268
+Ref: s390x-*-linux*101336
+Ref: *-*-solaris2*101419
+Ref: sparc-sun-solaris2*105080
+Ref: sparc-sun-solaris2.7106801
+Ref: sparc-sun-sunos4*108871
+Ref: sparc-unknown-linux-gnulibc1109535
+Ref: sparc-*-linux*109733
+Ref: sparc64-*-solaris2*109958
+Ref: sparcv9-*-solaris2*110334
+Ref: #*-*-sysv*110419
+Ref: vax-dec-ultrix111380
+Ref: x86_64-*-*111532
+Ref: xtensa-*-elf111860
+Ref: xtensa-*-linux*112539
+Ref: windows112877
+Ref: os2113201
+Ref: older113524
+Ref: elf_targets115649
+Node: Old115907
+Node: Configurations119286
+Node: Cross-Compiler123494
+Node: Steps of Cross125259
+Node: Configure Cross126396
+Node: Tools and Libraries127052
+Node: Cross Headers129510
+Node: Build Cross131537
+Node: VMS Install132516
+Node: GNU Free Documentation License142064
+Node: Concept Index164470
 
 End Tag Table

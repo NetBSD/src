@@ -2268,11 +2268,10 @@ legitimize_pic_address (orig, reg)
              that was pulled out of the literal pool.  Force it back in.  */
 
 	  else if (GET_CODE (op0) == UNSPEC
-	           && GET_CODE (op1) == CONST_INT)
+	           && GET_CODE (op1) == CONST_INT
+	           && XINT (op0, 1) == 100)
             {
 	      if (XVECLEN (op0, 0) != 1)
-                abort ();
-              if (XINT (op0, 1) != 100)
                 abort ();
 
               new = force_const_mem (Pmode, orig);
@@ -2660,6 +2659,9 @@ s390_expand_movstr (dst, src, len)
       rtx reg0 = gen_reg_rtx (double_mode);
       rtx reg1 = gen_reg_rtx (double_mode);
 
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, reg0));
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, reg1));
+
       emit_move_insn (gen_highpart (single_mode, reg0), 
 		      force_operand (XEXP (dst, 0), NULL_RTX));
       emit_move_insn (gen_highpart (single_mode, reg1), 
@@ -2756,6 +2758,9 @@ s390_expand_clrstr (dst, len)
       rtx reg0 = gen_reg_rtx (double_mode);
       rtx reg1 = gen_reg_rtx (double_mode);
 
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, reg0));
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, reg1));
+
       emit_move_insn (gen_highpart (single_mode, reg0), 
 		      force_operand (XEXP (dst, 0), NULL_RTX));
       convert_move (gen_lowpart (single_mode, reg0), len, 1);
@@ -2825,16 +2830,16 @@ s390_expand_clrstr (dst, len)
    and return the result in TARGET.  */
 
 void
-s390_expand_cmpstr (target, op0, op1, len)
+s390_expand_cmpmem (target, op0, op1, len)
      rtx target;
      rtx op0;
      rtx op1;
      rtx len;
 {
   rtx (*gen_short) PARAMS ((rtx, rtx, rtx)) = 
-    TARGET_64BIT ? gen_cmpstr_short_64 : gen_cmpstr_short_31;
+    TARGET_64BIT ? gen_cmpmem_short_64 : gen_cmpmem_short_31;
   rtx (*gen_long) PARAMS ((rtx, rtx, rtx, rtx)) = 
-    TARGET_64BIT ? gen_cmpstr_long_64 : gen_cmpstr_long_31;
+    TARGET_64BIT ? gen_cmpmem_long_64 : gen_cmpmem_long_31;
   rtx (*gen_result) PARAMS ((rtx)) =
     GET_MODE (target) == DImode ? gen_cmpint_di : gen_cmpint_si;
 
@@ -2859,6 +2864,9 @@ s390_expand_cmpstr (target, op0, op1, len)
       enum machine_mode single_mode = TARGET_64BIT ? DImode : SImode;
       rtx reg0 = gen_reg_rtx (double_mode);
       rtx reg1 = gen_reg_rtx (double_mode);
+
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, reg0));
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, reg1));
 
       emit_move_insn (gen_highpart (single_mode, reg0), 
 		      force_operand (XEXP (op0, 0), NULL_RTX));
