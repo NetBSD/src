@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.17 2006/05/26 12:41:43 blymn Exp $	*/
+/*	$NetBSD: athvar.h,v 1.18 2006/06/05 05:15:31 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -181,8 +181,8 @@ struct ath_softc {
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
 	void 			(*sc_node_free)(struct ieee80211_node *);
-	bus_space_tag_t		sc_st;		/* bus space tag */
-	bus_space_handle_t	sc_sh;		/* bus space handle */
+	HAL_BUS_TAG		sc_st;		/* bus space tag */
+	HAL_BUS_HANDLE		sc_sh;		/* bus space handle */
 	bus_dma_tag_t		sc_dmat;	/* bus DMA tag */
 	ath_lock_t		sc_mtx;		/* master lock (recursive) */
 	struct ath_hal		*sc_ah;		/* Atheros HAL */

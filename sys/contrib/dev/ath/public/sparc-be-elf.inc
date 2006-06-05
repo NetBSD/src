@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2002-2006 Sam Leffler, Errno Consulting
+# Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,18 +33,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: powerpc-be-elf.inc,v 1.2 2006/06/05 05:14:40 gdamore Exp $
+# $Id: sparc-be-elf.inc,v 1.1 2006/06/05 05:14:40 gdamore Exp $
 #
 
 #
-# Compilation configuration for building big-endian PowerPC/powerpc-elf.
+# Compilation configuration for building big-endian Sparc for 32-bit.
 #
 # Built with GNU cross-devel tools:
 #
 # PREFIX=/pub/gnu
 # BINUTILS=binutils-2.14
 # GCC=gcc-3.3.2
-# target=powerpc-elf
+# target=sparc-elf
 #
 # ${BINUTILS}/configure --target=$target --prefix=${PREFIX}
 # ${GCC}/configure --target=$target   --prefix=${PREFIX} \
@@ -52,7 +52,7 @@
 #	--with-newlib   --with-gxx-include-dir=${PREFIX}/$target/include
 #
 ifndef TOOLPREFIX
-TOOLPREFIX=	/pub/gnu/bin/powerpc-elf-
+TOOLPREFIX=	/pub/gnu/bin/sparc-elf-
 endif
 #
 CC=	${TOOLPREFIX}gcc
@@ -68,5 +68,5 @@ AH_REGOPS_FUNC=1
 
 LDOPTS=	-EB
 COPTS+=	-DAH_BYTE_ORDER=AH_BIG_ENDIAN
-COPTS+= -mbig-endian
-COPTS+= -msoft-float -ffixed-r2
+COPTS+= -m32
+COPTS+= -mno-fpu

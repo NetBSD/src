@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: xscale-le-elf.inc,v 1.1 2006/04/02 05:52:18 gdamore Exp $
+# $Id: xscale-le-elf.inc,v 1.2 2006/06/05 05:14:40 gdamore Exp $
 #
 
 #
@@ -71,7 +71,12 @@ STRIP=	${TOOLPREFIX}strip
 OBJCOPY=${TOOLPREFIX}objcopy
 NM=	${TOOLPREFIX}nm
 
+#
+# Force register read/write operations to go through a function.
+#
+AH_REGOPS_FUNC=1
+
 LDOPTS=	-EL
-COPTS+=	-DAH_BYTE_ORDER=AH_LITTLE_ENDIAN -DAH_REGOPS_FUNC
+COPTS+=	-DAH_BYTE_ORDER=AH_LITTLE_ENDIAN
 COPTS+= -march=armv4 -mlittle-endian -fno-strict-aliasing -fno-common \
 	-mapcs-32 -mtune=xscale  -mshort-load-bytes -msoft-float -mfp=2

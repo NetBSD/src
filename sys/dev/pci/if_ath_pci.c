@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.12 2006/04/02 05:52:50 gdamore Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.13 2006/06/05 05:15:31 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.12 2006/04/02 05:52:50 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.13 2006/06/05 05:15:31 gdamore Exp $");
 #endif
 
 /*
@@ -92,6 +92,8 @@ struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
 	void			*sc_ih;		/* interrupt handler */
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 };
 
 #define	BS_BAR	0x10
@@ -162,8 +164,6 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ath_softc *sc = &psc->sc_sc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
 	void *hook;
 	const char *intrstr = NULL;
@@ -176,13 +176,14 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, 
-	    NULL, NULL)) {
+	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &psc->sc_iot,
+		&psc->sc_ioh, NULL, NULL)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
 	}
-	sc->sc_st = iot;
-	sc->sc_sh = ioh;
+
+	sc->sc_st = HALTAG(psc->sc_iot);
+	sc->sc_sh = HALHANDLE(psc->sc_ioh);
 
 	sc->sc_invalid = 1;
 

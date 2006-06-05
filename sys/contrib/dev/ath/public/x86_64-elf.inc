@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: x86_64-elf.inc,v 1.1 2006/04/02 05:52:18 gdamore Exp $
+# $Id: x86_64-elf.inc,v 1.2 2006/06/05 05:14:40 gdamore Exp $
 #
 
 #
