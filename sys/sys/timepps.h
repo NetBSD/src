@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.13.6.4 2006/05/10 17:02:41 drochner Exp $	*/
+/*	$NetBSD: timepps.h,v 1.13.6.5 2006/06/05 15:04:12 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -58,6 +58,7 @@ typedef union pps_timeu {
 	unsigned long   longpair[2];
 } pps_timeu_t;
 
+
 /*
  * timestamp information
  */
@@ -72,6 +73,7 @@ typedef struct {
 #define assert_timestamp	assert_tu.tspec
 #define clear_timestamp		clear_tu.tspec
 
+
 /*
  * Parameter structure
  */
@@ -83,6 +85,7 @@ typedef struct {
 } pps_params_t;
 #define assert_offset		assert_off_tu.tspec
 #define clear_offset		clear_off_tu.tspec
+
 
 /*
  * Device/implementation parameters (mode, edge bits)
@@ -101,6 +104,7 @@ typedef struct {
 #define PPS_ECHOASSERT		0x40
 #define PPS_ECHOCLEAR		0x80
 
+
 /*
  * timestamp formats (tsformat, mode)
  */
@@ -114,18 +118,6 @@ typedef struct {
 #define PPS_KC_HARDPPS_PLL	1
 #define PPS_KC_HARDPPS_FLL	2
 
-struct pps_fetch_args {
-	int tsformat;
-	pps_info_t	pps_info_buf;
-	struct timespec	timeout;
-};
-
-struct pps_kcbind_args {
-	int kernel_consumer;
-	int edge;
-	int tsformat;
-};
-
 /*
  * IOCTL definitions
  */
@@ -134,10 +126,8 @@ struct pps_kcbind_args {
 #define PPS_IOC_SETPARAMS	_IOW('1', 3, pps_params_t)
 #define PPS_IOC_GETPARAMS	_IOR('1', 4, pps_params_t)
 #define PPS_IOC_GETCAP		_IOR('1', 5, int)
-#define PPS_IOC_OFETCH		_IOWR('1', 6, pps_info_t)
-#define PPS_IOC_OKCBIND		_IOW('1', 7, int)
-#define PPS_IOC_FETCH		_IOWR('1', 8, struct pps_fetch_args)
-#define PPS_IOC_KCBIND		_IOW('1', 9, struct pps_kcbind_args)
+#define PPS_IOC_FETCH		_IOWR('1', 6, pps_info_t)
+#define PPS_IOC_KCBIND		_IOW('1', 7, int)
 
 #ifdef _KERNEL
 
@@ -167,6 +157,7 @@ int pps_ioctl(unsigned long, caddr_t, struct pps_state *);
 
 #include <sys/cdefs.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
 static __inline int time_pps_create(int, pps_handle_t *);
 static __inline int time_pps_destroy(pps_handle_t);
@@ -184,74 +175,75 @@ static __inline int time_pps_kcbind(pps_handle_t, const int, const int,
 	const int);
 
 static __inline int
-time_pps_create(int filedes, pps_handle_t *handle)
+time_pps_create(filedes, handle)
+	int filedes;
+	pps_handle_t *handle;
 {
-	int error;
 
-	*handle = -1;
-	error = ioctl(filedes, PPS_IOC_CREATE, 0);
-	if (error < 0) 
-		return (-1);
 	*handle = filedes;
 	return (0);
 }
 
 static __inline int
-time_pps_destroy(pps_handle_t handle)
+time_pps_destroy(handle)
+	pps_handle_t handle;
 {
 
-	return (ioctl(handle, PPS_IOC_DESTROY, 0));
+	return (0);
 }
 
 static __inline int
-time_pps_setparams(pps_handle_t handle, const pps_params_t *ppsparams)
+time_pps_setparams(handle, ppsparams)
+	pps_handle_t handle;
+	const pps_params_t *ppsparams;
 {
 
 	return (ioctl(handle, PPS_IOC_SETPARAMS, __UNCONST(ppsparams)));
 }
 
 static __inline int
-time_pps_getparams(pps_handle_t handle, pps_params_t *ppsparams)
+time_pps_getparams(handle, ppsparams)
+	pps_handle_t handle;
+	pps_params_t *ppsparams;
 {
 
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
 static __inline int
-time_pps_getcap(pps_handle_t handle, int *mode)
+time_pps_getcap(handle, mode)
+	pps_handle_t handle;
+	int *mode;
 {
 
 	return (ioctl(handle, PPS_IOC_GETCAP, mode));
 }
 
 static __inline int
-time_pps_fetch(pps_handle_t handle, const int tsformat, pps_info_t *ppsinfobuf,
-    const struct timespec *timeout)
+time_pps_fetch(handle, tsformat, ppsinfobuf, timeout)
+	pps_handle_t handle;
+	const int tsformat;
+	pps_info_t *ppsinfobuf;
+	const struct timespec *timeout;
 {
-	int error;
-	struct pps_fetch_args arg;
 
-	arg.tsformat = tsformat;
-	if (timeout == NULL) {
-		arg.timeout.tv_sec = -1;
-		arg.timeout.tv_nsec = -1;
-	} else
-		arg.timeout = *timeout;
-	error = ioctl(handle, PPS_IOC_FETCH, &arg);
-	*ppsinfobuf = arg.pps_info_buf;
-	return (error);
+	return (ioctl(handle, PPS_IOC_FETCH, ppsinfobuf));
 }
 
 static __inline int
-time_pps_kcbind(pps_handle_t handle, const int kernel_consumer, const int edge,
-    const int tsformat)
+time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
+	pps_handle_t handle;
+	const int kernel_consumer;
+	const int edge;
+	const int tsformat;
 {
-	struct pps_kcbind_args arg;
 
-	arg.kernel_consumer = kernel_consumer;
-	arg.edge = edge;
-	arg.tsformat = tsformat;
-	return (ioctl(handle, PPS_IOC_KCBIND, &arg));
+	if (tsformat != PPS_TSFMT_TSPEC) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return (ioctl(handle, PPS_IOC_KCBIND, __UNCONST(&edge)));
 }
 #endif /* !_KERNEL*/
 #endif /* SYS_TIMEPPS_H_ */
