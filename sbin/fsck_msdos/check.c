@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.13 2005/01/19 20:00:45 xtraeme Exp $	*/
+/*	$NetBSD: check.c,v 1.14 2006/06/05 16:51:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.13 2005/01/19 20:00:45 xtraeme Exp $");
+__RCSID("$NetBSD: check.c,v 1.14 2006/06/05 16:51:18 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,7 +74,7 @@ checkfilesys(const char *filename)
 		printf("\n");
 
 	if (dosfs < 0) {
-		perror("Can't open");
+		perr("Can't open `%s'", filename);
 		return 8;
 	}
 

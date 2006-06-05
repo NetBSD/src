@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.17 2006/03/20 01:42:47 christos Exp $	*/
+/*	$NetBSD: fat.c,v 1.18 2006/06/05 16:51:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.17 2006/03/20 01:42:47 christos Exp $");
+__RCSID("$NetBSD: fat.c,v 1.18 2006/06/05 16:51:18 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -90,10 +90,11 @@ static int
 _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 {
 	off_t off;
+	size_t len;
 
-	*buffer = malloc(boot->FATsecs * boot->BytesPerSec);
+	*buffer = malloc(len = boot->FATsecs * boot->BytesPerSec);
 	if (*buffer == NULL) {
-		perror("No space for FAT");
+		perr("No space for FAT sectors (%zu)", len);
 		return 0;
 	}
 
@@ -101,13 +102,13 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 	off *= boot->BytesPerSec;
 
 	if (lseek(fs, off, SEEK_SET) != off) {
-		perror("Unable to read FAT");
+		perr("Unable to read FAT");
 		goto err;
 	}
 
 	if (read(fs, *buffer, boot->FATsecs * boot->BytesPerSec)
 	    != boot->FATsecs * boot->BytesPerSec) {
-		perror("Unable to read FAT");
+		perr("Unable to read FAT");
 		goto err;
 	}
 
@@ -128,18 +129,20 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	u_char *buffer, *p;
 	cl_t cl;
 	int ret = FSOK;
+	size_t len;
 
 	boot->NumFree = boot->NumBad = 0;
 
 	if (!_readfat(fs, boot, no, &buffer))
 		return FSFATAL;
 		
-	fat = calloc(boot->NumClusters, sizeof(struct fatEntry));
+	fat = malloc(len = boot->NumClusters * sizeof(struct fatEntry));
 	if (fat == NULL) {
-		perror("No space for FAT");
+		perr("No space for FAT clusters (%zu)", len);
 		free(buffer);
 		return FSFATAL;
 	}
+	(void)memset(fat, 0, len);
 
 	if (buffer[0] != boot->Media
 	    || buffer[1] != 0xff || buffer[2] != 0xff
@@ -474,7 +477,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 
 	buffer = malloc(fatsz = boot->FATsecs * boot->BytesPerSec);
 	if (buffer == NULL) {
-		perror("No space for FAT");
+		perr("No space for FAT sectors (%zu)", fatsz);
 		return FSFATAL;
 	}
 	memset(buffer, 0, fatsz);
@@ -559,7 +562,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 		off *= boot->BytesPerSec;
 		if (lseek(fs, off, SEEK_SET) != off
 		    || write(fs, buffer, fatsz) != fatsz) {
-			perror("Unable to write FAT");
+			perr("Unable to write FAT");
 			ret = FSFATAL; /* Return immediately?		XXX */
 		}
 	}
