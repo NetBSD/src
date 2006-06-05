@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.1 2006/05/13 09:02:19 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.2 2006/06/05 15:59:47 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.1 2006/05/13 09:02:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.2 2006/06/05 15:59:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ it_check(bus_space_tag_t iot, int base)
 	bus_space_write_1(iot, ioh, IT_ADDR, IT_RES52);
 	cr1 = bus_space_read_1(iot, ioh, IT_DATA);
 
-	if (cr0 == IT_RES48_DEFAULT || cr1 == IT_RES52_DEFAULT)
+	if (cr0 == IT_RES48_DEFAULT && cr1 == IT_RES52_DEFAULT)
 		rv = 1;
 
 	bus_space_unmap(iot, ioh, 8);
