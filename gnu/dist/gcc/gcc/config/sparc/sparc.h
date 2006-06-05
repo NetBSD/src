@@ -1233,6 +1233,20 @@ enum reg_class { NO_REGS, FPCC_REGS, I64_REGS, GENERAL_REGS, FP_REGS,
    {-1, -1, -1, 0x20},	/* GENERAL_OR_EXTRA_FP_REGS */	\
    {-1, -1, -1, 0x3f}}	/* ALL_REGS */
 
+/* Defines invalid mode changes.  Borrowed from pa64-regs.h.
+
+   SImode loads to floating-point registers are not zero-extended.
+   The definition for LOAD_EXTEND_OP specifies that integer loads
+   narrower than BITS_PER_WORD will be zero-extended.  As a result,
+   we inhibit changes from SImode unless they are to a mode that is
+   identical in size.  */
+
+#define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS)		\
+  (TARGET_ARCH64						\
+   && (FROM) == SImode						\
+   && GET_MODE_SIZE (FROM) != GET_MODE_SIZE (TO)		\
+   ? reg_classes_intersect_p (CLASS, FP_REGS) : 0)
+
 /* The same information, inverted:
    Return the class number of the smallest class containing
    reg number REGNO.  This could be a conditional expression
@@ -2572,10 +2586,18 @@ do {                                                                    \
 #define LTTF2_LIBCALL "_Q_flt"
 #define LETF2_LIBCALL "_Q_fle"
 
+/* These functions were added in SCD 2.3, so not necessarily all targets
+   support them.  */
+#define FLOATDITF2_LIBCALL "_Q_lltoq"
+#define FIX_TRUNCTFDI2_LIBCALL "_Q_qtoll"
+#define FIXUNS_TRUNCTFDI2_LIBCALL "_Q_qtoull"
+
+#define DITF_CONVERSION_LIBFUNCS	0
+
 /* Assume by default that the _Qp_* 64-bit libcalls are implemented such
    that the inputs are fully consumed before the output memory is clobbered.  */
 
-#define TARGET_BUGGY_QP_LIB	0
+#define TARGET_BUGGY_QP_LIB		0
 
 /* We can define the TFmode sqrt optab only if TARGET_FPU.  This is because
    with soft-float, the SFmode and DFmode sqrt instructions will be absent,
@@ -2609,6 +2631,13 @@ do {                                                                    \
 	fixtfsi_libfunc = init_one_libfunc (FIX_TRUNCTFSI2_LIBCALL);	\
 	fixunstfsi_libfunc						\
 	  = init_one_libfunc (FIXUNS_TRUNCTFSI2_LIBCALL);		\
+	if (DITF_CONVERSION_LIBFUNCS)					\
+	  {								\
+	    floatditf_libfunc = init_one_libfunc (FLOATDITF2_LIBCALL);	\
+	    fixtfdi_libfunc = init_one_libfunc (FIX_TRUNCTFDI2_LIBCALL);\
+	    fixunstfdi_libfunc						\
+	      = init_one_libfunc (FIXUNS_TRUNCTFDI2_LIBCALL);		\
+	  }								\
 	if (TARGET_FPU)							\
 	  sqrt_optab->handlers[(int) TFmode].libfunc			\
 	    = init_one_libfunc ("_Q_sqrt");				\
@@ -3030,6 +3059,7 @@ do {									\
 {"uns_arith_operand", {SUBREG, REG, CONST_INT}},			\
 {"clobbered_register", {REG}},						\
 {"input_operand", {SUBREG, REG, CONST_INT, MEM, CONST}},		\
+{"compare_operand", {SUBREG, REG, ZERO_EXTRACT}},			\
 {"const64_operand", {CONST_INT, CONST_DOUBLE}},				\
 {"const64_high_operand", {CONST_INT, CONST_DOUBLE}},
 

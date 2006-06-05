@@ -328,7 +328,7 @@ static void display_help 	PARAMS ((void));
 static void add_preprocessor_option	PARAMS ((const char *, int));
 static void add_assembler_option	PARAMS ((const char *, int));
 static void add_linker_option		PARAMS ((const char *, int));
-static void process_command		PARAMS ((int, const char *const *));
+static void process_command		PARAMS ((int, const char **));
 static int execute			PARAMS ((void));
 static void alloc_args			PARAMS ((void));
 static void clear_args			PARAMS ((void));
@@ -732,7 +732,7 @@ static const char *cpp_debug_options = "%{d*}";
 static const char *cc1_options =
 "%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
  %1 %{!Q:-quiet} -dumpbase %B %{d*} %{m*} %{a*}\
- -auxbase%{c|S:%{o*:-strip %*}%{!o*: %b}}%{!c:%{!S: %b}}\
+ %{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}%{!c:%{!S:-auxbase %b}}\
  %{g*} %{O*} %{W*&pedantic*} %{w} %{std*} %{ansi}\
  %{v:-version} %{pg:-p} %{p} %{f*} %{undef}\
  %{Qn:-fno-ident} %{--help:--help}\
@@ -1468,6 +1468,12 @@ init_gcc_specs (obstack, shared_name, static_name, eh_name)
 
   buf = concat ("%{static|static-libgcc:", static_name, " ", eh_name,
 		"}%{!static:%{!static-libgcc:",
+#ifdef HAVE_LD_AS_NEEDED
+		"%{!shared-libgcc:", static_name,
+		" --as-needed ", shared_name, " --no-as-needed}"
+		"%{shared-libgcc:", shared_name, "%{!shared: ", static_name,
+		"}",
+#else
 		"%{!shared:%{!shared-libgcc:", static_name, " ",
 		eh_name, "}%{shared-libgcc:", shared_name, " ",
 		static_name, "}}%{shared:",
@@ -1476,6 +1482,7 @@ init_gcc_specs (obstack, shared_name, static_name, eh_name)
 		"}%{!shared-libgcc:", static_name, "}",
 #else
 		shared_name,
+#endif
 #endif
 		"}}}", NULL);
 
@@ -3050,7 +3057,7 @@ add_linker_option (option, len)
 static void
 process_command (argc, argv)
      int argc;
-     const char *const *argv;
+     const char **argv;
 {
   int i;
   const char *temp;
@@ -3279,10 +3286,10 @@ process_command (argc, argv)
     }
 
   /* Convert new-style -- options to old-style.  */
-  translate_options (&argc, &argv);
+  translate_options (&argc, (const char *const **) &argv);
 
   /* Do language-specific adjustment/addition of flags.  */
-  lang_specific_driver (&argc, &argv, &added_libraries);
+  lang_specific_driver (&argc, (const char *const **) &argv, &added_libraries);
 
   /* Scan argv twice.  Here, the first time, just count how many switches
      there will be in their vector, and how many input files in theirs.
@@ -5917,12 +5924,12 @@ fatal_error (signum)
   kill (getpid (), signum);
 }
 
-extern int main PARAMS ((int, const char *const *));
+extern int main PARAMS ((int, const char **));
 
 int
 main (argc, argv)
      int argc;
-     const char *const *argv;
+     const char **argv;
 {
   size_t i;
   int value;

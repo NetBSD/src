@@ -698,7 +698,7 @@ arm*-*-netbsd*)
 	use_collect2=yes
 	;;
 arm*-*-linux*)			# ARM GNU/Linux with ELF
-	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/linux-gas.h arm/linux-elf.h"
+	tm_file="dbxelf.h elfos.h arm/elf.h arm/linux-gas.h arm/linux-elf.h arm/aout.h arm/arm.h"
 	tmake_file="t-slibgcc-elf-ver t-linux arm/t-linux"
 	extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	gnu_ld=yes
@@ -2111,7 +2111,7 @@ powerpc-*-eabi*)
 powerpc-*-rtems*)
 	xm_defines=POSIX
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h rs6000/eabi.h rs6000/rtems.h rtems.h"
-	tmake_file="rs6000/t-rtems t-rtems rs6000/t-ppccomm"
+	tmake_file="rs6000/t-fprules rs6000/t-rtems t-rtems rs6000/t-ppccomm"
 	if test x$enable_threads = xyes; then
 	  thread_file='rtems'
 	fi
@@ -2827,7 +2827,25 @@ x86_64-*-*)
 	# We should have hammer chip here, but it does not exist yet and
 	# thus it is not supported.  Athlon_SSE is probably equivalent feature
 	# wise to hammer from our point of view except for 64bit mode.
-	target_cpu_default2=TARGET_CPU_DEFAULT_athlon_sse
+	case "x$with_cpu" in
+		x)
+			target_cpu_default2=TARGET_CPU_DEFAULT_athlon_sse
+			;;
+		xnocona)
+			target_cpu_default2=TARGET_CPU_DEFAULT_pentium4
+			;;
+		xyes|xno)
+			echo "--with-cpu must be passed a value" 1>&2
+			exit 1
+			;;
+		*)
+			if test x$pass2done = xyes
+			then
+				echo "Unknown cpu used with --with-cpu=$with_cpu" 1>&2
+				exit 1
+			fi
+			;;
+	esac
 	;;
 alpha*-*-*)
 	case $machine in

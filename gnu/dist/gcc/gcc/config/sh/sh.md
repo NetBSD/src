@@ -2174,7 +2174,7 @@
 	parts[0] = gen_reg_rtx (SImode);
 	parts[1] = gen_reg_rtx (SImode);
 	emit_insn (gen_rotlsi3_16 (parts[2-choice], operands[1]));
-	parts[choice-1] = operands[1];
+	emit_move_insn (parts[choice-1], operands[1]);
 	emit_insn (gen_ashlsi3 (parts[0], parts[0], GEN_INT (8)));
 	emit_insn (gen_lshrsi3 (parts[1], parts[1], GEN_INT (8)));
 	emit_insn (gen_iorsi3 (operands[0], parts[0], parts[1]));
@@ -6414,7 +6414,7 @@
   ""
   "
 {
-  sh_expand_epilogue ();
+  sh_expand_epilogue (1);
   if (TARGET_SHCOMPACT)
     {
       rtx insn, set;
@@ -7158,7 +7158,7 @@
   ""
   "
 {
-  sh_expand_epilogue ();
+  sh_expand_epilogue (0);
   emit_jump_insn (gen_return ());
   DONE;
 }")
