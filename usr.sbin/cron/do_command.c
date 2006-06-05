@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.21 2006/06/03 16:02:30 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.22 2006/06/05 16:41:34 reed Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.21 2006/06/03 16:02:30 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.22 2006/06/05 16:41:34 reed Exp $");
 #endif
 #endif
 
@@ -238,11 +238,21 @@ child_process(entry *e, user *u)
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
 		 */
-		setgid(e->gid);
+		if (setgid(e->gid) != 0) {
+		   syslog(LOG_ERR, "setgid failed");
+		   _exit(ERROR_EXIT);
+		}
 # if defined(BSD)
-		initgroups(usernm, e->gid);
+		if (initgroups(usernm, e->gid) != 0) {
+		   syslog(LOG_ERR, "initgroups failed");
+		   _exit(ERROR_EXIT);
+		}
 # endif
-		setuid(e->uid);		/* we aren't root after this... */
+		if (setuid(e->uid) != 0) {
+		   syslog(LOG_ERR, "setuid failed");
+		   _exit(ERROR_EXIT);
+		}
+		/* we aren't root after this... */
 		chdir(env_get("HOME", e->envp));
 
 #ifdef USE_SIGCHLD
