@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.1 2006/06/04 20:38:06 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.2 2006/06/05 16:59:41 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.1 2006/06/04 20:38:06 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.2 2006/06/05 16:59:41 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -2689,6 +2689,7 @@ rt2661_init(struct ifnet *ifp)
 		}
 
 		firmware_free(ucode, 0);
+		firmware_close(fh);
 		sc->sc_flags |= RT2661_FWLOADED;
 	}
 
