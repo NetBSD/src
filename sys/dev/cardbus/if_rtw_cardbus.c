@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.11 2006/04/28 13:47:29 rpaulo Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.12 2006/06/05 21:09:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.11 2006/04/28 13:47:29 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.12 2006/06/05 21:09:29 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -181,6 +181,9 @@ const struct rtw_cardbus_product {
 
 	{ PCI_VENDOR_BELKIN,		PCI_PRODUCT_BELKIN_F5D6020V3,
 	  "Belkin F5D6020v3 802.11b (RTL8180 MAC/BBP)" },
+
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DWL610,
+	  "DWL-610 D-Link Air 802.11b (RTL8180 MAC/BBP)" },
 
 	{ 0,				0,	NULL },
 };
