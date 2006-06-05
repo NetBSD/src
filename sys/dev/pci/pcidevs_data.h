@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.789 2006/06/05 15:58:55 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.790 2006/06/05 21:08:51 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.789 2006/06/05 15:58:15 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.790 2006/06/05 21:08:18 martin Exp
  */
 
 /*
@@ -5394,6 +5394,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD,
 	    "DFE-690TXD 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610,
+	    "DWL-610 802.11b WLAN",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL4000,
@@ -11496,4 +11500,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2283;
+const int pci_nproducts = 2284;
