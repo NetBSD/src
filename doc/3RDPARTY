@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.437 2006/05/31 03:30:26 simonb Exp $
+#	$NetBSD: 3RDPARTY,v 1.438 2006/06/05 18:10:57 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -271,7 +271,7 @@ Newer flex will be found in:
 	http://sourceforge.net/projects/lex/
 
 Package:	gcc
-Version:	2.95.3/3.3.3
+Version:	3.3.6/4.1-20060602
 Current Vers:	3.3.6/3.4.4/4.0.3/4.1.0
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
@@ -285,8 +285,8 @@ before importing:
 	- delete gcc/java gcc/ada libffi zlib boehm-gc libjava fastjar
 
 Package:	gdb
-Version:	5.3
-Current Vers:	6.3
+Version:	5.3/6.4
+Current Vers:	6.4
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
