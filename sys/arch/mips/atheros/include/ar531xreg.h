@@ -1,4 +1,4 @@
-/* $Id: ar531xreg.h,v 1.2 2006/04/07 04:58:31 gdamore Exp $ */
+/* $Id: ar531xreg.h,v 1.3 2006/06/05 05:14:38 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -182,51 +182,32 @@
 #define	PUTSDRAMREG(x,v)	(REGVAL((x) + AR531X_SDRAMCTL_BASE)) = (v)
 
 /*
- * Board data.  This is located in flash somewhere, and some effort
- * may be required to locate it precisely.
+ * Board data.  This is located in flash somewhere, ar531x_board_info
+ * locates it.
  */
-struct ar531x_board_info {
-	uint32_t	ab_magic;
-	uint16_t	ab_cksum;	/* rev 2 and later */
-	uint16_t	ab_revision;
-	char		ab_name[64];
-	uint16_t	ab_major;
-	uint16_t	ab_minor;
-	uint32_t	ab_config;
-	uint16_t	ab_gpio_reset;
-	uint16_t	ab_gpio_sysled;
-	uint32_t	ab_cpu_freq;
-	uint32_t	ab_sys_freq;
-	uint32_t	ab_cnt_freq;
-	uint8_t		ab_wlan0_mac[6];
-	uint8_t		ab_enet0_mac[6];
-	uint8_t		ab_enet1_mac[6];
-	uint16_t	ab_pci_id;	/* not used for now */
-	uint16_t	ab_mem_cap;
-	uint8_t		ab_wlan1_mac[6];
-};
+#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
 
-#define	AR531X_BOARD_MAGIC		0x35333131	/* "5311" for 531x */
+/* XXX write-around for now */
+#define	AR531X_BOARD_MAGIC		AR531X_BD_MAGIC
 
 /* config bits */
-#define	AR531X_BOARD_CONFIG_ENET0	__BIT(0)
-#define	AR531X_BOARD_CONFIG_ENET1	__BIT(1)
-#define	AR531X_BOARD_CONFIG_UART1	__BIT(2)
-#define	AR531X_BOARD_CONFIG_UART0	__BIT(3)
-#define	AR531X_BOARD_CONFIG_RSTFACTORY	__BIT(4)	/* reset present */
-#define	AR531X_BOARD_CONFIG_SYSLED	__BIT(5)	/* sysled present */
-#define	AR531X_BOARD_CONFIG_EXTUARTCLK	__BIT(6)
-#define	AR531X_BOARD_CONFIG_CPUFREQ	__BIT(7)	/* cpufreq valid */
-#define	AR531X_BOARD_CONFIG_SYSFREQ	__BIT(8)	/* sysfreq valid */
-#define	AR531X_BOARD_CONFIG_WLAN0	__BIT(9)	/* wlan0 present */
-#define	AR531X_BOARD_CONFIG_MEMCAP	__BIT(10)
-#define	AR531X_BOARD_CONFIG_DISWDOG	__BIT(11)	/* disable watchdog */
-#define	AR531X_BOARD_CONFIG_WLAN1	__BIT(12)	/* wlan1 present */
-#define	AR531X_BOARD_CONFIG_AR2312	__BIT(13)	/* is AR2312 */
-#define	AR531X_BOARD_CONFIG_WLAN0_2G	__BIT(14)
-#define	AR531X_BOARD_CONFIG_WLAN0_5G	__BIT(15)
-#define	AR531X_BOARD_CONFIG_WLAN1_2G	__BIT(17)
-#define	AR531X_BOARD_CONFIG_WLAN1_5G	__BIT(18)
-
+#define	AR531X_BOARD_CONFIG_ENET0	BD_ENET0
+#define	AR531X_BOARD_CONFIG_ENET1	BD_ENET1
+#define	AR531X_BOARD_CONFIG_UART1	BD_UART1
+#define	AR531X_BOARD_CONFIG_UART0	BD_UART0
+#define	AR531X_BOARD_CONFIG_RSTFACTORY	BD_RSTFACTORY
+#define	AR531X_BOARD_CONFIG_SYSLED	BD_SYSLED
+#define	AR531X_BOARD_CONFIG_EXTUARTCLK	BD_EXTUARTCLK
+#define	AR531X_BOARD_CONFIG_CPUFREQ	BD_CPUFREQ
+#define	AR531X_BOARD_CONFIG_SYSFREQ	BD_SYSFREQ
+#define	AR531X_BOARD_CONFIG_WLAN0	BD_WLAN0
+#define	AR531X_BOARD_CONFIG_MEMCAP	BD_MEMCAP
+#define	AR531X_BOARD_CONFIG_DISWDOG	BD_DISWATCHDOG
+#define	AR531X_BOARD_CONFIG_WLAN1	BD_WLAN1
+#define	AR531X_BOARD_CONFIG_AR2312	BD_ISCASPER
+#define	AR531X_BOARD_CONFIG_WLAN0_2G	BD_WLAN0_2G_EN
+#define	AR531X_BOARD_CONFIG_WLAN0_5G	BD_WLAN0_5G_EN
+#define	AR531X_BOARD_CONFIG_WLAN1_2G	BD_WLAN1_2G_EN
+#define	AR531X_BOARD_CONFIG_WLAN1_5G	BD_WLAN1_5G_EN
 
 #endif	/* _MIPS_ATHEROS_AR531XREG_H_ */
