@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.626 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.627 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -292,3 +292,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		better [christos 20060529]
 	GCC: Import GCC 4.1 branch from 20060602 (4.1.2 prerelease.)
 		[mrg 20060602]
+	gcc(1): Import gcc 3.3.6 release. [skrll 20060605]
