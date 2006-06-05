@@ -1,3 +1,34 @@
+2005-05-03  Release Manager
+
+	* GCC 3.3.6 Released.
+
+2004-10-06  Josef Zlomek  <josef.zlomek@email.cz>
+
+	* MAINTAINERS: Update my e-mail address.
+
+2004-09-30  Release Manager
+
+	* GCC 3.3.5 Released.
+
+2004-07-30  Matthias Klose  <doko@debian.org>
+
+	* configure: Add missing 'action' argument to trap.
+
+2004-05-31  Release Manager
+
+	* GCC 3.3.4 Released.
+
+2004-05-12  Kaz Kojima  <kkojima@gcc.gnu.org>
+
+	PR bootstrap/15120
+        * libtool.m4 (lt_cv_deplibs_check_method): Use pass_all on sh*.
+        * */configure: Rebuilt.
+
+2004-03-05  David Edelsohn  <edelsohn@gnu.org>
+
+	* ltconfig: Disable building static libraries if building shared
+	libraries on AIX 5L.
+
 2004-02-14  Release Manager
 
 	* GCC 3.3.3 Released.
