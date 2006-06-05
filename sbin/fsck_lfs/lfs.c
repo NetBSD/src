@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.21 2006/04/17 19:05:16 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.22 2006/06/05 16:53:14 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -128,7 +128,7 @@ lfs_vop_strategy(struct ubuf * bp)
 		count = pwrite(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
 		    dbtob(bp->b_blkno));
 		if (count == 0) {
-			perror("pwrite");
+			perr("pwrite");
 			return -1;
 		}
 		bp->b_flags &= ~B_DELWRI;
