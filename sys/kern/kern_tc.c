@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.10 2006/06/02 00:14:52 kardel Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.11 2006/06/05 15:02:47 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.10 2006/06/02 00:14:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.11 2006/06/05 15:02:47 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -732,9 +732,9 @@ int
 pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
 {
 	pps_params_t *app;
-	struct pps_fetch_args *fapi;
+	pps_info_t *pipi;
 #ifdef PPS_SYNC
-	struct pps_kcbind_args *kapi;
+	int *epi;
 #endif
 
 	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_ioctl") */
@@ -758,25 +758,17 @@ pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
 		*(int*)data = pps->ppscap;
 		return (0);
 	case PPS_IOC_FETCH:
-		fapi = (struct pps_fetch_args *)data;
-		if (fapi->tsformat && fapi->tsformat != PPS_TSFMT_TSPEC)
-			return (EINVAL);
-		if (fapi->timeout.tv_sec || fapi->timeout.tv_nsec)
-			return (EOPNOTSUPP);
+		pipi = (pps_info_t *)data;
 		pps->ppsinfo.current_mode = pps->ppsparam.mode;
-		fapi->pps_info_buf = pps->ppsinfo;
+		*pipi = pps->ppsinfo;
 		return (0);
 	case PPS_IOC_KCBIND:
 #ifdef PPS_SYNC
-		kapi = (struct pps_kcbind_args *)data;
+		epi = (int *)data;
 		/* XXX Only root should be able to do this */
-		if (kapi->tsformat && kapi->tsformat != PPS_TSFMT_TSPEC)
+		if (*epi & ~pps->ppscap)
 			return (EINVAL);
-		if (kapi->kernel_consumer != PPS_KC_HARDPPS)
-			return (EINVAL);
-		if (kapi->edge & ~pps->ppscap)
-			return (EINVAL);
-		pps->kcmode = kapi->edge;
+		pps->kcmode = *epi;
 		return (0);
 #else
 		return (EOPNOTSUPP);
