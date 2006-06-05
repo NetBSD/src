@@ -188,7 +188,7 @@ in the following sections.
 -Weffc++  -Wno-deprecated @gol
 -Wno-non-template-friend  -Wold-style-cast @gol
 -Woverloaded-virtual  -Wno-pmf-conversions @gol
--Wsign-promo  -Wsynth}
+-Wsign-promo}
 
 @item Objective-C Language Options
 @xref{Objective-C Dialect Options,,Options Controlling Objective-C Dialect}.
@@ -348,7 +348,8 @@ in the following sections.
 -mno-faster-structs  -mno-flat  -mno-fpu @gol
 -mno-impure-text  -mno-stack-bias  -mno-unaligned-doubles @gol
 -msoft-float  -msoft-quad-float  -msparclite  -mstack-bias @gol
--msupersparc  -munaligned-doubles  -mv8}
+-msupersparc  -munaligned-doubles  -mv8
+-threads -pthreads}
 
 @emph{ARM Options}
 @gccoptlist{-mapcs-frame  -mno-apcs-frame @gol
@@ -604,7 +605,8 @@ in the following sections.
 -metrax4  -metrax100  -mpdebug  -mcc-init  -mno-side-effects @gol
 -mstack-align  -mdata-align  -mconst-align @gol
 -m32-bit  -m16-bit  -m8-bit  -mno-prologue-epilogue  -mno-gotplt @gol
--melf  -maout  -melinux  -mlinux  -sim  -sim2}
+-melf  -maout  -melinux  -mlinux  -sim  -sim2 @gol
+-mmul-bug-workaround  -mno-mul-bug-workaround}
 
 @emph{PDP-11 Options}
 @gccoptlist{-mfpu  -msoft-float  -mac0  -mno-ac0  -m40  -m45  -m10 @gol
@@ -1715,29 +1717,6 @@ Warn when overload resolution chooses a promotion from unsigned or
 enumeral type to a signed type, over a conversion to an unsigned type of
 the same size.  Previous versions of G++ would try to preserve
 unsignedness, but the standard mandates the current behavior.
-
-@item -Wsynth @r{(C++ only)}
-@opindex Wsynth
-@cindex warning for synthesized methods
-@cindex synthesized methods, warning
-Warn when G++'s synthesis behavior does not match that of cfront.  For
-instance:
-
-@smallexample
-struct A @{
-  operator int ();
-  A& operator = (int);
-@};
-
-main ()
-@{
-  A a,b;
-  a = b;
-@}
-@end smallexample
-
-In this example, G++ will synthesize a default @samp{A& operator =
-(const A&);}, while cfront will use the user-defined @samp{operator =}.
 @end table
 
 @node Objective-C Dialect Options
@@ -3900,8 +3879,7 @@ other, a few use both.
 @option{-fpeephole} is enabled by default.
 @option{-fpeephole2} enabled at levels @option{-O2}, @option{-O3}, @option{-Os}.
 
-@item -fbranch-probabilities
-@itemx -fno-guess-branch-probability
+@item -fno-guess-branch-probability
 @opindex fno-guess-branch-probability
 Do not guess branch probabilities using a randomized model.
 
@@ -4215,8 +4193,8 @@ exactly determine which path is taken more often.
 @item -fnew-ra
 @opindex fnew-ra
 Use a graph coloring register allocator.  Currently this option is meant
-for testing, so we are interested to hear about miscompilations with
-@option{-fnew-ra}.
+only for testing.  Users should not specify this option, since it is not
+yet ready for production use.
 
 @item -ftracer
 @opindex ftracer
@@ -5698,7 +5676,7 @@ These @samp{-m} switches are supported on the SPARC:
 @opindex mapp-regs
 Specify @option{-mapp-regs} to generate output using the global registers
 2 through 4, which the SPARC SVR4 ABI reserves for applications.  This
-is the default.
+is the default, except on Solaris.
 
 To be fully SVR4 ABI compliant at the cost of some performance loss,
 specify @option{-mno-app-regs}.  You should compile libraries and system
@@ -5959,6 +5937,24 @@ With @option{-mstack-bias}, GCC assumes that the stack pointer, and
 frame pointer if present, are offset by @minus{}2047 which must be added back
 when making stack frame references.
 Otherwise, assume no such offset is present.
+@end table
+
+These switches are supported in addition to the above on Solaris:
+
+@table @gcctabopt
+@item -threads
+@opindex threads
+Add support for multithreading using the Solaris threads library.  This
+option sets flags for both the preprocessor and linker.  This option does
+not affect the thread safety of object code produced by the compiler or
+that of libraries supplied with it.
+
+@item -pthreads
+@opindex pthreads
+Add support for multithreading using the POSIX threads library.  This
+option sets flags for both the preprocessor and linker.  This option does
+not affect the thread safety of object code produced  by the compiler or
+that of libraries supplied with it.
 @end table
 
 @node ARM Options
@@ -7849,7 +7845,8 @@ Tune to @var{cpu-type} everything applicable about the generated code, except
 for the ABI and the set of available instructions.  The choices for
 @var{cpu-type} are @samp{i386}, @samp{i486}, @samp{i586}, @samp{i686},
 @samp{pentium}, @samp{pentium-mmx}, @samp{pentiumpro}, @samp{pentium2},
-@samp{pentium3}, @samp{pentium4}, @samp{k6}, @samp{k6-2}, @samp{k6-3},
+@samp{pentium3}, @samp{pentium4}, @samp{prescott}, @samp{nocona},
+@samp{k6}, @samp{k6-2}, @samp{k6-3},
 @samp{athlon}, @samp{athlon-tbird}, @samp{athlon-4}, @samp{athlon-xp},
 @samp{athlon-mp}, @samp{winchip-c6}, @samp{winchip2} and @samp{c3}.
 
@@ -9826,6 +9823,13 @@ program should be set to @var{n} bytes.
 @opindex metrax100
 The options @option{-metrax4} and @option{-metrax100} are synonyms for
 @option{-march=v3} and @option{-march=v8} respectively.
+
+@item -mmul-bug-workaround
+@itemx -mno-mul-bug-workaround
+@opindex mmul-bug-workaround
+@opindex mno-mul-bug-workaround
+Work around a bug in the @code{muls} and @code{mulu} instructions for CPU
+models where it applies.  This option is active by default.
 
 @item -mpdebug
 @opindex mpdebug

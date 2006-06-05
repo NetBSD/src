@@ -278,7 +278,10 @@ int arm_ld_sched = 0;
 int arm_is_strong = 0;
 
 /* Nonzero if this chip is an XScale.  */
-int arm_is_xscale = 0;
+int arm_arch_xscale = 0;
+
+/* Nonzero if tuning for XScale  */
+int arm_tune_xscale = 0;
 
 /* Nonzero if this chip is an ARM6 or an ARM7.  */
 int arm_is_6_or_7 = 0;
@@ -688,13 +691,14 @@ arm_override_options ()
   arm_arch4t	    = arm_arch4 & ((insn_flags & FL_THUMB) != 0);
   arm_arch5         = (insn_flags & FL_ARCH5) != 0;
   arm_arch5e        = (insn_flags & FL_ARCH5E) != 0;
-  arm_is_xscale     = (insn_flags & FL_XSCALE) != 0;
+  arm_arch_xscale   = (insn_flags & FL_XSCALE) != 0;
 
   arm_ld_sched      = (tune_flags & FL_LDSCHED) != 0;
   arm_is_strong     = (tune_flags & FL_STRONG) != 0;
   thumb_code	    = (TARGET_ARM == 0);
   arm_is_6_or_7     = (((tune_flags & (FL_MODE26 | FL_MODE32))
 		       && !(tune_flags & FL_ARCH4))) != 0;
+  arm_tune_xscale   = (tune_flags & FL_XSCALE) != 0;
 
   /* V5 code we generate is completely interworking capable, so we turn off
      TARGET_INTERWORK here to avoid many tests later on.  */
@@ -771,7 +775,7 @@ arm_override_options ()
   if (optimize_size || (tune_flags & FL_LDSCHED))
     arm_constant_limit = 1;
   
-  if (arm_is_xscale)
+  if (arm_arch_xscale)
     arm_constant_limit = 2;
 
   /* If optimizing for size, bump the number of instructions that we
@@ -2956,7 +2960,7 @@ arm_adjust_cost (insn, link, dep, cost)
 
   /* Some true dependencies can have a higher cost depending
      on precisely how certain input operands are used.  */
-  if (arm_is_xscale
+  if (arm_tune_xscale
       && REG_NOTE_KIND (link) == 0
       && recog_memoized (insn) < 0
       && recog_memoized (dep) < 0)
@@ -3787,6 +3791,12 @@ adjacent_mem_locations (a, b)
       else
 	reg1 = REGNO (XEXP (b, 0));
 
+      /* Don't accept any offset that will require multiple instructions to handle,
+	 since this would cause the arith_adjacentmem pattern to output an overlong
+	 sequence.  */
+      if (!const_ok_for_op (PLUS, val0) || !const_ok_for_op (PLUS, val1))
+	return 0;
+      
       return (reg0 == reg1) && ((val1 - val0) == 4 || (val0 - val1) == 4);
     }
   return 0;
@@ -4397,7 +4407,7 @@ arm_gen_load_multiple (base_regno, count, from, up, write_back, unchanging_p,
 
      As a compromise, we use ldr for counts of 1 or 2 regs, and ldm
      for counts of 3 or 4 regs.  */
-  if (arm_is_xscale && count <= 2 && ! optimize_size)
+  if (arm_tune_xscale && count <= 2 && ! optimize_size)
     {
       rtx seq;
       
@@ -4464,7 +4474,7 @@ arm_gen_store_multiple (base_regno, count, to, up, write_back, unchanging_p,
 
   /* See arm_gen_load_multiple for discussion of
      the pros/cons of ldm/stm usage for XScale.  */
-  if (arm_is_xscale && count <= 2 && ! optimize_size)
+  if (arm_tune_xscale && count <= 2 && ! optimize_size)
     {
       rtx seq;
       

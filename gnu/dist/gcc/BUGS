@@ -18,7 +18,7 @@ Table of Contents
      * [9]Frequently Reported Bugs in GCC
           + [10]C++
                o [11]Missing features
-               o [12]Bugs fixed in the upcoming 3.4 series
+               o [12]Bugs fixed in the 3.4 series
           + [13]Fortran
      * [14]Non-bugs
           + [15]General
@@ -255,7 +255,7 @@ C++
           Alternatively, the compilation unit containing template
           definitions may be included from the header.
 
-  Bugs fixed in the upcoming 3.4 series
+  Bugs fixed in the 3.4 series
 
    The following bugs are present up to (and including) GCC 3.3.x. They
    have been fixed in 3.4.0.
@@ -318,7 +318,7 @@ B b((0,A()),A(1));
 
 return A();
 
-          This problem occured in a number of variants; in throw
+          This problem occurred in a number of variants; in throw
           statements, people also frequently put the object in
           parentheses.
      _________________________________________________________________
@@ -364,7 +364,7 @@ int main()
           might print 50 on some systems and optimization levels, and 49
           on others.
 
-          The is the result of rounding: The computer cannot represent
+          This is the result of rounding: The computer cannot represent
           all real numbers exactly, so it has to use approximations. When
           computing with approximation, the computer needs to round to
           the nearest representable number.
@@ -375,6 +375,36 @@ int main()
      _________________________________________________________________
 
 C
+
+   Increment/decrement operator (++/--) not working as expected - a
+          [32]problem with many variations.
+          The following expressions have unpredictable results:
+
+x[i]=++i
+foo(i,++i)
+i*(++i)                 /* special case with foo=="operator*" */
+std::cout << i << ++i   /* foo(foo(std::cout,i),++i)          */
+
+          since the i without increment can be evaluated before or after
+          ++i.
+
+          The C and C++ standards have the notion of "sequence points".
+          Everything that happens between two sequence points happens in
+          an unspecified order, but it has to happen after the first and
+          before the second sequence point. The end of a statement and a
+          function call are examples for sequence points, whereas
+          assignments and the comma between function arguments are not.
+
+          Modifying a value twice between two sequence points as shown in
+          the following examples is even worse:
+
+i=++i
+foo(++i,++i)
+(++i)*(++i)               /* special case with foo=="operator*" */
+std::cout << ++i << ++i   /* foo(foo(std::cout,++i),++i)        */
+
+          This leads to undefined behavior (i.e. the compiler can do
+          anything).
 
    Casting does not work as expected when optimization is turned on.
           This is often caused by a violation of aliasing rules, which
@@ -452,7 +482,7 @@ int main()
           Now the result will always be "2222 2222".
 
           For some more insight into the subject, please have a look at
-          [32]this article.
+          [33]this article.
 
    Cannot use preprocessor directive in macro arguments.
           Let me guess... you used an older version of GCC to compile
@@ -527,7 +557,7 @@ FILE *yyin = stdin;
 
           There is a common misconception that the GCC developers are
           responsible for GNU libc. These are in fact two entirely
-          separate projects; please check the [33]GNU libc web pages for
+          separate projects; please check the [34]GNU libc web pages for
           details.
      _________________________________________________________________
 
@@ -587,27 +617,80 @@ C++
           i.e. place a space between the opening angle bracket and the
           scope operator.
 
+   Copy constructor access check while initializing a reference.
+          Consider this code:
+
+class A
+{
+public:
+  A();
+
+private:
+  A(const A&);   // private copy ctor
+};
+
+A makeA(void);
+void foo(const A&);
+
+void bar(void)
+{
+  foo(A());       // error, copy ctor is not accessible
+  foo(makeA());   // error, copy ctor is not accessible
+
+  A a1;
+  foo(a1);        // OK, a1 is a lvalue
+}
+
+          Starting with GCC 3.4.0, binding an rvalue to a const reference
+          requires an accessible copy constructor. This might be
+          surprising at first sight, especially since most popular
+          compilers do not correctly implement this rule.
+
+          The C++ Standard says that a temporary object should be created
+          in this context and its contents filled with a copy of the
+          object we are trying to bind to the reference; it also says
+          that the temporary copy can be elided, but the semantic
+          constraints (eg. accessibility) of the copy constructor still
+          have to be checked.
+
+          For further information, you can consult the following
+          paragraphs of the C++ standard: [dcl.init.ref]/5, bullet 2,
+          sub-bullet 1, and [class.temporary]/2.
+
   Common problems when upgrading the compiler
 
     ABI changes
 
-   The application binary interface (ABI) defines how the elements of
-   classes are laid out, how functions are called, how function names are
-   mangled etc. It usually changes with each major release (i.e. when the
-   first or second part of the version number changes). You must
-   recompile all C++ libraries, or you risk linker errors or
-   malfunctioning programs. However, the ABI is not changed with bug-fix
-   releases (i.e. when the third part of the version number changes). The
-   code should be binary compatible among these versions.
+   The C++ application binary interface (ABI) consists of two components:
+   the first defines how the elements of classes are laid out, how
+   functions are called, how function names are mangled, etc; the second
+   part deals with the internals of the objects in libstdc++. Although we
+   strive for a non-changing ABI, so far we have had to modify it with
+   each major release. If you change your compiler to a different major
+   release you must recompile all libraries that contain C++ code. If you
+   fail to do so you risk getting linker errors or malfunctioning
+   programs. Some of our Java support libraries also contain C++ code, so
+   you might want to recompile all libraries to be safe. It should not be
+   necessary to recompile if you have changed to a bug-fix release of the
+   same version of the compiler; bug-fix releases are careful to avoid
+   ABI changes. See also the [35]compatibility section of the GCC manual.
+
+   Remark: A major release is designated by a change to the first or
+   second component of the two- or three-part version number. A minor
+   (bug-fix) release is designated by a change to the third component
+   only. Thus GCC 3.2 and 3.3 are major releases, while 3.3.1 and 3.3.2
+   are bug-fix releases for GCC 3.3. With the 3.4 series we are
+   introducing a new naming scheme; the first release of this series is
+   3.4.0 instead of just 3.4.
 
     Standard conformance
 
    With each release, we try to make G++ conform closer to the ISO C++
-   standard (available at [34]http://www.ncits.org/cplusplus.htm). We
+   standard (available at [36]http://www.ncits.org/cplusplus.htm). We
    have also implemented some of the core and library defect reports
    (available at
-   [35]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html &
-   [36]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
+   [37]http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html &
+   [38]http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html
    respectively).
 
    Non-conforming legacy code that worked with older versions of GCC may
@@ -619,8 +702,8 @@ C++
    used.
 
    Two milestones in standard conformance are GCC 3.0 (including a major
-   overhaul of the standard library) and the upcoming 3.4.0 version (with
-   its new C++ parser).
+   overhaul of the standard library) and the 3.4.0 version (with its new
+   C++ parser).
 
     New in GCC 3.0
 
@@ -712,7 +795,7 @@ template <typename T> struct B : A<T>
 };
 
    In addition to the problems listed above, the manual contains a
-   section on [37]Common Misunderstandings with GNU C++.
+   section on [39]Common Misunderstandings with GNU C++.
 
 References
 
@@ -747,9 +830,11 @@ References
   29. http://gcc.gnu.org/onlinedocs/g77/Trouble.html
   30. http://gcc.gnu.org/PR323
   31. http://www.validlab.com/goldberg/paper.ps
-  32. http://mail-index.NetBSD.org/tech-kern/2003/08/11/0001.html
-  33. http://www.gnu.org/software/libc/
-  34. http://www.ncits.org/cplusplus.htm
-  35. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html
-  36. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
-  37. http://gcc.gnu.org/onlinedocs/gcc/C---Misunderstandings.html
+  32. http://gcc.gnu.org/PR11751
+  33. http://mail-index.NetBSD.org/tech-kern/2003/08/11/0001.html
+  34. http://www.gnu.org/software/libc/
+  35. http://gcc.gnu.org/onlinedocs/gcc/Compatibility.html
+  36. http://www.ncits.org/cplusplus.htm
+  37. http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html
+  38. http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html
+  39. http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Misunderstandings.html

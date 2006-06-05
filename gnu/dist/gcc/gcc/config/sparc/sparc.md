@@ -120,6 +120,8 @@
   (symbol_ref "TARGET_FLAT != 0"))
 
 ;; Length (in # of insns).
+;; Beware that setting a length greater or equal to 3 for conditional branches
+;; has a side-effect (see output_cbranch and output_v9branch).
 (define_attr "length" ""
   (cond [(eq_attr "type" "uncond_branch,call,sibcall")
 	   (if_then_else (eq_attr "empty_delay_slot" "true")
@@ -290,10 +292,13 @@
 
 (define_expand "cmpsi"
   [(set (reg:CC 100)
-	(compare:CC (match_operand:SI 0 "register_operand" "")
+	(compare:CC (match_operand:SI 0 "compare_operand" "")
 		    (match_operand:SI 1 "arith_operand" "")))]
   ""
 {
+  if (GET_CODE (operands[0]) == ZERO_EXTRACT && operands[1] != const0_rtx)
+    operands[0] = force_reg (SImode, operands[0]);
+
   sparc_compare_op0 = operands[0];
   sparc_compare_op1 = operands[1];
   DONE;
@@ -301,10 +306,13 @@
 
 (define_expand "cmpdi"
   [(set (reg:CCX 100)
-	(compare:CCX (match_operand:DI 0 "register_operand" "")
+	(compare:CCX (match_operand:DI 0 "compare_operand" "")
 		     (match_operand:DI 1 "arith_double_operand" "")))]
   "TARGET_ARCH64"
 {
+  if (GET_CODE (operands[0]) == ZERO_EXTRACT && operands[1] != const0_rtx)
+    operands[0] = force_reg (DImode, operands[0]);
+
   sparc_compare_op0 = operands[0];
   sparc_compare_op1 = operands[1];
   DONE;
@@ -2040,7 +2048,6 @@
   if (! CONSTANT_P (operands[1]) || input_operand (operands[1], DImode))
     ;
   else if (TARGET_ARCH64
-	   && CONSTANT_P (operands[1])
            && GET_CODE (operands[1]) != HIGH
            && GET_CODE (operands[1]) != LO_SUM)
     {
@@ -7224,27 +7231,10 @@
   [(set_attr "type" "shift")])
 
 ;; Unconditional and other jump instructions
-;; On the SPARC, by setting the annul bit on an unconditional branch, the
-;; following insn is never executed.  This saves us a nop.  Dbx does not
-;; handle such branches though, so we only use them when optimizing.
 (define_insn "jump"
   [(set (pc) (label_ref (match_operand 0 "" "")))]
   ""
-{
-  /* TurboSPARC is reported to have problems with
-     with
-	foo: b,a foo
-     i.e. an empty loop with the annul bit set.  The workaround is to use 
-        foo: b foo; nop
-     instead.  */
-
-  if (! TARGET_V9 && flag_delayed_branch
-      && (INSN_ADDRESSES (INSN_UID (operands[0]))
-	  == INSN_ADDRESSES (INSN_UID (insn))))
-    return "b\t%l0%#";
-  else
-    return TARGET_V9 ? "ba%*,pt\t%%xcc, %l0%(" : "b%*\t%l0%(";
-}
+  "* return output_ubranch (operands[0], 0, insn);"
   [(set_attr "type" "uncond_branch")])
 
 (define_expand "tablejump"
