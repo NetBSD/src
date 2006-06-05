@@ -2063,6 +2063,7 @@ compstmt_primary_start:
 		  push_label_level ();
 		  compstmt_count++;
 		  $$ = add_stmt (build_stmt (COMPOUND_STMT, last_tree));
+		  last_expr_type = NULL_TREE;
 		}
         ;
 
