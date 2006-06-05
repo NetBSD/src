@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.7 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: preen.c,v 1.8 2006/06/05 16:56:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-__RCSID("$NetBSD: preen.c,v 1.7 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: preen.c,v 1.8 2006/06/05 16:56:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ startdisk(struct disk *dk, int (*checkit)())
 
 	dk->pid = fork();
 	if (dk->pid < 0) {
-		perror("fork");
+		perr("fork");
 		return (8);
 	}
 	if (dk->pid == 0)
@@ -312,15 +312,13 @@ blockcheck(char *origname)
 
 	hotroot = 0;
 	if (stat("/", &stslash) < 0) {
-		perror("/");
-		printf("Can't stat root\n");
+		perr("Can't stat `/'");
 		return (origname);
 	}
 	newname = origname;
 retry:
 	if (stat(newname, &stblock) < 0) {
-		perror(newname);
-		printf("Can't stat %s\n", newname);
+		perr("Can't stat `%s'", newname);
 		return (origname);
 	}
 	if (S_ISBLK(stblock.st_mode)) {
@@ -328,8 +326,7 @@ retry:
 			hotroot++;
 		raw = rawname(newname);
 		if (stat(raw, &stchar) < 0) {
-			perror(raw);
-			printf("Can't stat %s\n", raw);
+			perr("Can't stat `%s'", raw);
 			return (origname);
 		}
 		if (S_ISCHR(stchar.st_mode)) {
