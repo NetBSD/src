@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.10 2005/01/13 22:56:09 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.11 2006/06/05 16:52:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -36,6 +36,8 @@ void errexit(const char *, ...)
 void pfatal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));  
 void pwarn(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));  
+void perr(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));  
 void panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  

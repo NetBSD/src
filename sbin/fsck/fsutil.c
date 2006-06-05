@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.14 2003/10/20 12:04:38 dsl Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.15 2006/06/05 16:52:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.14 2003/10/20 12:04:38 dsl Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.15 2006/06/05 16:52:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ static const char *dev = NULL;
 static int hot = 0;
 static int preen = 0;
 int quiet;
+#define F_ERROR	0x80000000
 
 void
 setcdevname(const char *cd, int pr)
@@ -91,6 +92,9 @@ errexit(const char *fmt, ...)
 void
 vmsg(int fatal, const char *fmt, va_list ap)
 {
+	int serr = fatal & F_ERROR;
+	int serrno = errno;
+	fatal &= ~F_ERROR;
 
 	if (!fatal && preen)
 		(void)printf("%s: ", dev);
@@ -100,6 +104,8 @@ vmsg(int fatal, const char *fmt, va_list ap)
 	}
 
 	(void) vprintf(fmt, ap);
+	if (serr) 
+		printf(" (%s)", strerror(serrno));
 
 	if (fatal && preen)
 		(void) printf("\n");
@@ -135,10 +141,13 @@ pwarn(const char *fmt, ...)
 }
 
 void
-perror(const char *s)
+perr(const char *fmt, ...)
 {
+	va_list ap;
 
-	pfatal("%s (%s)", s, strerror(errno));
+	va_start(ap, fmt);
+	vmsg(1 | F_ERROR, fmt, ap);
+	va_end(ap);
 }
 
 void
@@ -195,15 +204,13 @@ blockcheck(const char *origname)
 
 	hot = 0;
 	if (stat("/", &stslash) < 0) {
-		perror("/");
-		printf("Can't stat root\n");
+		perr("Can't stat `/'");
 		return (origname);
 	}
 	newname = origname;
 retry:
 	if (stat(newname, &stblock) < 0) {
-		perror(newname);
-		printf("Can't stat %s\n", newname);
+		perr("Can't stat `%s'", newname);
 		return (origname);
 	}
 	if (S_ISBLK(stblock.st_mode)) {
@@ -211,8 +218,7 @@ retry:
 			hot++;
 		raw = rawname(newname);
 		if (stat(raw, &stchar) < 0) {
-			perror(raw);
-			printf("Can't stat %s\n", raw);
+			perr("Can't stat `%s'", raw);
 			return (origname);
 		}
 		if (S_ISCHR(stchar.st_mode)) {
