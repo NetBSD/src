@@ -1,4 +1,4 @@
-/*	$NetBSD: itvar.h,v 1.1 2006/05/13 09:02:19 xtraeme Exp $	*/
+/*	$NetBSD: itvar.h,v 1.2 2006/06/05 15:59:47 xtraeme Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 #define IT_RES48		0x48
 #define IT_RES48_DEFAULT	0x2d
 #define IT_RES52		0x52
-#define IT_RES52_DEFAULT	0x7d
+#define IT_RES52_DEFAULT	0x7f
 
 #define IT_VREF	(4096) /* Vref = 4.096 V */
 
