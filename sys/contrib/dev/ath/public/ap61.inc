@@ -33,26 +33,28 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: powerpc-be-elf.inc,v 1.2 2006/06/05 05:14:40 gdamore Exp $
+# $Id: ap61.inc,v 1.1 2006/06/05 05:14:39 gdamore Exp $
 #
 
 #
-# Compilation configuration for building big-endian PowerPC/powerpc-elf.
+# Configuration for building big-endian MIPS2 for the AP61 SoC
+# using the 5.01 linux-mips.org toolchain (manually moved to
+# /pub/gnu from /pub/gnu/local where rpm --prefix=/pub/gnu
+# bogusly installs them).
 #
-# Built with GNU cross-devel tools:
+
 #
-# PREFIX=/pub/gnu
-# BINUTILS=binutils-2.14
-# GCC=gcc-3.3.2
-# target=powerpc-elf
+# http://www.linux-mips.org/toolchain.html
 #
-# ${BINUTILS}/configure --target=$target --prefix=${PREFIX}
-# ${GCC}/configure --target=$target   --prefix=${PREFIX} \
-#	--enable-languages=c   --with-gnu-as --with-gnu-ld \
-#	--with-newlib   --with-gxx-include-dir=${PREFIX}/$target/include
+# /pub/gnu/bin/mips-linux-gcc -v
+# Reading specs from /pub/gnu/bin/../lib/gcc-lib/mips-linux/2.96-mips3264-000710/specs
+# gcc version 2.96-mips3264-000710
+# /pub/gnu/bin/mips-linux-as -v
+# GNU assembler version 2.12.90.0.7 (mips-linux) using BFD version 2.12.90.0.7 20020423
+
 #
 ifndef TOOLPREFIX
-TOOLPREFIX=	/pub/gnu/bin/powerpc-elf-
+TOOLPREFIX=	/pub/gnu/bin/mips-linux-
 endif
 #
 CC=	${TOOLPREFIX}gcc
@@ -61,12 +63,7 @@ STRIP=	${TOOLPREFIX}strip
 OBJCOPY=${TOOLPREFIX}objcopy
 NM=	${TOOLPREFIX}nm
 
-#
-# Force register read/write operations to go through a function.
-#
-AH_REGOPS_FUNC=1
-
 LDOPTS=	-EB
 COPTS+=	-DAH_BYTE_ORDER=AH_BIG_ENDIAN
-COPTS+= -mbig-endian
-COPTS+= -msoft-float -ffixed-r2
+COPTS+=	-G 0 -EB -mno-abicalls -fno-pic -mips32 -Wa,--trap \
+	-fno-strict-aliasing -fno-common -fomit-frame-pointer -mlong-calls
