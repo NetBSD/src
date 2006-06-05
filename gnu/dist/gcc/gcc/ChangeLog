@@ -25,6 +25,19 @@
 	(fold): Call fold_single_bit_test appropriately.
 	* tree.h (fold_single_bit_test): Prototype.
 
+2004-04-18  Alan Modra  <amodra@bigpond.net.au>
+
+	PR bootstrap/14992
+	* configure.ac: Define HAVE_LD_AS_NEEDED only for linux.
+	* configure: Regenerate.
+	* gcc.c (init_gcc_specs): Revert earlier change.
+	
+2004-04-18  Mark Mitchell  <mark@codesourcery.com>
+
+	PR bootstrap/14992
+	* gcc.c (init_gcc_specs): Only honor HAVE_LD_AS_NEEDED on
+	GNU/Linux.
+
 2005-05-03  Release Manager
 
 	* GCC 3.3.6 Released.
