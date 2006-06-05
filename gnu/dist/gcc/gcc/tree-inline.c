@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "hashtab.h"
 #include "splay-tree.h"
 #include "langhooks.h"
+#include "diagnostic.h"
 
 /* This should be eventually be generalized to other languages, but
    this would require a shared function-as-trees infrastructure.  */
@@ -1172,7 +1173,8 @@ expand_call_inline (tp, walk_subtrees, data)
   if (!inlinable_function_p (fn, id))
     {
       if (warn_inline && DECL_INLINE (fn) && !DID_INLINE_FUNC (fn)
-	  && !DECL_IN_SYSTEM_HEADER (fn))
+	  && !DECL_IN_SYSTEM_HEADER (fn)
+	  && !lookup_attribute ("noinline", DECL_ATTRIBUTES (fn)))
 	{
 	  warning_with_decl (fn, "inlining failed in call to `%s'");
 	  warning ("called from here");
@@ -1442,6 +1444,13 @@ optimize_inline_calls (fn)
   inline_data id;
   tree prev_fn;
 
+
+  /* There is no point in performing inlining if errors have already
+     occurred -- and we might crash if we try to inline invalid
+     code.  */
+  if (errorcount || sorrycount)
+    return;
+        
   /* Clear out ID.  */
   memset (&id, 0, sizeof (id));
 

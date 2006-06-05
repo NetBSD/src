@@ -1,5 +1,5 @@
-Ceci est le fichier Info doc/cppinternals.info, produit par Makeinfo
-version 4.6 à partir doc/cppinternals.texi.
+This is doc/cppinternals.info, produced by makeinfo version 4.7 from
+doc/cppinternals.texi.
 
 INFO-DIR-SECTION Programming
 START-INFO-DIR-ENTRY
@@ -26,10 +26,11 @@ versions.
 
 File: cppinternals.info,  Node: Top,  Next: Conventions,  Up: (dir)
 
+The GNU C Preprocessor Internals
+********************************
 
-
-Cpplib--the GNU C Preprocessor
-******************************
+1 Cpplib--the GNU C Preprocessor
+********************************
 
 The GNU C preprocessor in GCC 3.x has been completely rewritten.  It is
 now implemented as a library, "cpplib", so it can be easily shared
@@ -990,44 +991,45 @@ File: cppinternals.info,  Node: Index,  Prev: Files,  Up: Top
 Index
 *****
 
+ [index ]
 * Menu:
 
-* assertions:                            Hash Nodes.
-* controlling macros:                    Guard Macros.
-* escaped newlines:                      Lexer.
-* files:                                 Files.
-* guard macros:                          Guard Macros.
-* hash table:                            Hash Nodes.
-* header files:                          Conventions.
-* identifiers:                           Hash Nodes.
-* interface:                             Conventions.
-* lexer:                                 Lexer.
-* line numbers:                          Line Numbering.
-* macro expansion:                       Macro Expansion.
-* macro representation (internal):       Macro Expansion.
-* macros:                                Hash Nodes.
-* multiple-include optimization:         Guard Macros.
-* named operators:                       Hash Nodes.
-* newlines:                              Lexer.
-* paste avoidance:                       Token Spacing.
-* spacing:                               Token Spacing.
-* token run:                             Lexer.
-* token spacing:                         Token Spacing.
+* assertions:                            Hash Nodes.          (line   6)
+* controlling macros:                    Guard Macros.        (line   6)
+* escaped newlines:                      Lexer.               (line   6)
+* files:                                 Files.               (line   6)
+* guard macros:                          Guard Macros.        (line   6)
+* hash table:                            Hash Nodes.          (line   6)
+* header files:                          Conventions.         (line   6)
+* identifiers:                           Hash Nodes.          (line   6)
+* interface:                             Conventions.         (line   6)
+* lexer:                                 Lexer.               (line   6)
+* line numbers:                          Line Numbering.      (line   6)
+* macro expansion:                       Macro Expansion.     (line   6)
+* macro representation (internal):       Macro Expansion.     (line  19)
+* macros:                                Hash Nodes.          (line   6)
+* multiple-include optimization:         Guard Macros.        (line   6)
+* named operators:                       Hash Nodes.          (line   6)
+* newlines:                              Lexer.               (line   6)
+* paste avoidance:                       Token Spacing.       (line   6)
+* spacing:                               Token Spacing.       (line   6)
+* token run:                             Lexer.               (line 192)
+* token spacing:                         Token Spacing.       (line   6)
 
 
 
 Tag Table:
-Node: Top931
-Node: Conventions2597
-Node: Lexer3538
-Ref: Invalid identifiers11455
-Ref: Lexing a line13404
-Node: Hash Nodes18174
-Node: Macro Expansion21053
-Node: Token Spacing30000
-Node: Line Numbering35879
-Node: Guard Macros39964
-Node: Files44759
-Node: Index48220
+Node: Top910
+Node: Conventions2645
+Node: Lexer3586
+Ref: Invalid identifiers11503
+Ref: Lexing a line13452
+Node: Hash Nodes18222
+Node: Macro Expansion21101
+Node: Token Spacing30048
+Node: Line Numbering35927
+Node: Guard Macros40012
+Node: Files44807
+Node: Index48268
 
 End Tag Table

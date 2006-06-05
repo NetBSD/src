@@ -2,16 +2,16 @@ GCC_3.0 {
   # libgcc1 integer symbols
   __absvsi2
   __addvsi3
-  #__ashlsi3
-  #__ashrsi3
+  # __ashlsi3
+  # __ashrsi3
   __divsi3
-  #__lshrsi3
+  # __lshrsi3
   __modsi3
   __mulsi3
   __mulvsi3
   __negvsi2
   __subvsi3
-  #__udivsi3
+  # __udivsi3
   __umodsi3
 
   # libgcc1 floating point symbols

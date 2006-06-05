@@ -1,4 +1,4 @@
-@c Copyright (C) 1988,1989,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003
+@c Copyright (C) 1988,1989,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
@@ -4160,7 +4160,7 @@ You need not define this macro if you did not define
 @end table
 
 @findex TARGET_ASM_OUTPUT_MI_THUNK
-@deftypefn {Target Hook} void TARGET_ASM_OUTPUT_MI_THUNK (FILE *@var{file}, tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, tree @var{function})
+@deftypefn {Target Hook} void TARGET_ASM_OUTPUT_MI_THUNK (FILE *@var{file}, tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
 A function that outputs the assembler code for a thunk
 function, used to implement C++ virtual function calls with multiple
 inheritance.  The thunk acts as a wrapper around a virtual function,
@@ -4174,7 +4174,15 @@ in C++.  This is the incoming argument @emph{before} the function prologue,
 e.g.@: @samp{%o0} on a sparc.  The addition must preserve the values of
 all other incoming arguments.
 
-After the addition, emit code to jump to @var{function}, which is a
+Then, if @var{vcall_offset} is nonzero, an additional adjustment should be
+made after adding @code{delta}.  In particular, if @var{p} is the
+adjusted pointer, the following adjustment should be made:
+
+@smallexample
+p += (*((ptrdiff_t **)p))[vcall_offset/sizeof(ptrdiff_t)]
+@end smallexample
+
+After the additions, emit code to jump to @var{function}, which is a
 @code{FUNCTION_DECL}.  This is a direct pure jump, not a call, and does
 not touch the return address.  Hence returning from @var{FUNCTION} will
 return to whoever called the current @samp{thunk}.
@@ -4194,21 +4202,13 @@ front end will generate a less efficient heavyweight thunk that calls
 not support varargs.
 @end deftypefn
 
-@findex TARGET_ASM_OUTPUT_MI_VCALL_THUNK
-@deftypefn {Target Hook} void TARGET_ASM_OUTPUT_MI_VCALL_THUNK (FILE *@var{file}, tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, int @var{vcall_offset}, tree @var{function})
-A function like @code{TARGET_ASM_OUTPUT_MI_THUNK}, except that if
-@var{vcall_offset} is nonzero, an additional adjustment should be made
-after adding @code{delta}.  In particular, if @var{p} is the
-adjusted pointer, the following adjustment should be made:
-
-@example
-p += (*((ptrdiff_t **)p))[vcall_offset/sizeof(ptrdiff_t)]
-@end example
-
-@noindent
-If this function is defined, it will always be used in place of
-@code{TARGET_ASM_OUTPUT_MI_THUNK}.
-
+@findex TARGET_ASM_CAN_OUTPUT_MI_THUNK
+@deftypefn {Target Hook} bool TARGET_ASM_CAN_OUTPUT_MI_THUNK (tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
+A function that returns true if TARGET_ASM_OUTPUT_MI_THUNK would be able
+to output the assembler code for the thunk function specified by the
+arguments it is passed, and false otherwise.  In the latter case, the
+generic approach will be used by the C++ front end, with the limitations
+previously exposed.
 @end deftypefn
 
 @node Profiling
@@ -5202,6 +5202,34 @@ follows:
 @end smallexample
 
 @end table
+
+@deftypefn {Target Hook} bool TARGET_FIXED_CONDITION_CODE_REGS (unsigned int *, unsigned int *)
+On targets which do not use @code{(cc0)}, and which use a hard
+register rather than a pseudo-register to hold condition codes, the
+regular CSE passes are often not able to identify cases in which the
+hard register is set to a common value.  Use this hook to enable a
+small pass which optimizes such cases.  This hook should return true
+to enable this pass, and it should set the integers to which its
+arguments point to the hard register numbers used for condition codes.
+When there is only one such register, as is true on most systems, the
+integer pointed to by the second argument should be set to
+@code{INVALID_REGNUM}.
+
+The default version of this hook returns false.
+@end deftypefn
+
+@deftypefn {Target Hook} enum machine_mode TARGET_CC_MODES_COMPATIBLE (enum machine_mode, enum machine_mode)
+On targets which use multiple condition code modes in class
+@code{MODE_CC}, it is sometimes the case that a comparison can be
+validly done in more than one mode.  On such a system, define this
+target hook to take two mode arguments and to return a mode in which
+both comparisons may be validly done.  If there is no such mode,
+return @code{VOIDmode}.
+
+The default version of this hook checks whether the modes are the
+same.  If they are, it returns that mode.  If they are different, it
+returns @code{VOIDmode}.
+@end deftypefn
 
 @node Costs
 @section Describing Relative Costs of Operations
