@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.6 2006/05/25 06:37:47 gdamore Exp $ */
+/* $Id: arbus.c,v 1.7 2006/06/05 05:14:38 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.6 2006/05/25 06:37:47 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.7 2006/06/05 05:14:38 gdamore Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -193,7 +193,7 @@ void
 arbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arbus_attach_args aa;
-	struct ar531x_board_info *info;
+	const struct ar531x_boarddata *info;
 	int i;
 
 	printf("\n");
@@ -204,7 +204,7 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; arbus_devices[i].name; i++) {
 		if (arbus_devices[i].mask &&
-		    ((arbus_devices[i].mask & info->ab_config) == 0)) {
+		    ((arbus_devices[i].mask & info->config) == 0)) {
 			continue;
 		}
 		aa.aa_name = arbus_devices[i].name;

@@ -1,4 +1,4 @@
-/* $Id: ar531xvar.h,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: ar531xvar.h,v 1.2 2006/06/05 05:14:38 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -55,6 +55,10 @@ void ar531x_cpuintr(uint32_t, uint32_t, uint32_t, uint32_t);
 
 void ar531x_cal_timer(void);
 
-struct ar531x_board_info *ar531x_board_info(void);
+struct ar531x_boarddata;
+const struct ar531x_boarddata *ar531x_board_info(void);
+const void *ar531x_radio_info(void);
+struct ar531x_config;
+int ar531x_board_config(struct ar531x_config *);
 
 #endif /* _MIPS_ATHEROS_AR531XVAR_H_ */

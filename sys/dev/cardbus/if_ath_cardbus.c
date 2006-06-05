@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.12 2006/05/14 21:42:26 elad Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.13 2006/06/05 05:15:31 gdamore Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.12 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.13 2006/06/05 05:15:31 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -110,6 +110,8 @@ struct ath_cardbus_softc {
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
 	int	sc_intrline;		/* interrupt line */
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 };
 
 int	ath_cardbus_match(struct device *, struct cfdata *, void *);
@@ -168,7 +170,7 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	 * Map the device.
 	 */
 	if (Cardbus_mapreg_map(ct, ATH_PCI_MMBA, CARDBUS_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, &adr, &csc->sc_mapsize) == 0) {
+	    &csc->sc_iot, &csc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -181,6 +183,9 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	sc->sc_st = HALTAG(csc->sc_iot);
+	sc->sc_sh = HALHANDLE(csc->sc_ioh);
 
 	/*
 	 * Set up the PCI configuration registers.
@@ -230,8 +235,8 @@ ath_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Release bus space and close window.
 	 */
-	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA,
-		    sc->sc_st, sc->sc_sh, csc->sc_mapsize);
+	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA, (bus_space_tag_t) sc->sc_st,
+	    (bus_space_handle_t)sc->sc_sh, csc->sc_mapsize);
 
 	return (0);
 }
