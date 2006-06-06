@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.428 2006/05/14 21:47:00 elad Exp $
+$NetBSD: usbdevs,v 1.429 2006/06/06 06:17:59 grant Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1792,6 +1792,7 @@ product SUNTAC AS144L4		0x0011	U-Cable type A4
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB keyboard
+product	SUN KEYBOARD		0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
 
