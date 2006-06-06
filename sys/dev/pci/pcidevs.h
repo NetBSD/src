@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.791 2006/06/05 21:08:51 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.792 2006/06/06 21:01:04 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.790 2006/06/05 21:08:18 martin Exp
+ *	NetBSD: pcidevs,v 1.791 2006/06/06 21:00:41 rpaulo Exp
  */
 
 /*
@@ -2720,8 +2720,11 @@
 #define	PCI_PRODUCT_RAINBOW_CS200	0x0200		/* CryptoSwift 200 PKI Accelerator */
 
 /* Ralink Technologies products */
-#define	PCI_PRODUCT_RALINK_RT2460	0x0101		/* RT2460 802.11b */
+#define	PCI_PRODUCT_RALINK_RT2460A	0x0101		/* RT2460A 802.11b */
 #define	PCI_PRODUCT_RALINK_RT2560	0x0201		/* RT2560 802.11b/g */
+#define	PCI_PRODUCT_RALINK_RT2561S	0x0301		/* RT2561S 802.11b/g */
+#define	PCI_PRODUCT_RALINK_RT2561	0x0302		/* RT2561 802.11b/g */
+#define	PCI_PRODUCT_RALINK_RT2661	0x0401		/* RT2661 802.11b/g/n */
 
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
