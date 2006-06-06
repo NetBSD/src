@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.h,v 1.1.2.1 2006/06/06 21:33:16 chap Exp $ */
+/* $NetBSD: midictl.h,v 1.1.2.2 2006/06/06 21:54:56 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_MIDICTL_H_
+#define _SYS_DEV_MIDICTL_H_
 
 /*
  * General support for MIDI controllers, registered parameters, and
@@ -196,3 +199,5 @@ extern uint_fast16_t
 midictl_rpn_read(midictl *mc, uint_fast8_t, uint_fast16_t, uint_fast16_t);
 extern uint_fast16_t
 midictl_nrpn_read(midictl *mc, uint_fast8_t, uint_fast16_t, uint_fast16_t);
+
+#endif /* _SYS_DEV_MIDICTL_H_ */
