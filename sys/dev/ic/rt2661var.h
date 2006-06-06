@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.1 2006/06/04 20:38:06 rpaulo Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.2 2006/06/06 20:48:27 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@ struct rt2661_softc {
 	bus_space_handle_t		sc_sh;
 
 	struct ethercom			sc_ec;
-	struct ifnet			sc_if;
 
 	struct callout			scan_ch;
 	struct callout			rssadapt_ch;
@@ -171,6 +170,8 @@ struct rt2661_softc {
 	int			sc_txtap_len;
 #endif
 };
+
+#define	sc_if		sc_ec.ec_if
 
 int	rt2661_attach(void *, int);
 int	rt2661_detach(void *);

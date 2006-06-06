@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.1 2006/06/04 20:38:06 rpaulo Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.2 2006/06/06 20:48:27 rpaulo Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -115,7 +115,6 @@ struct rt2560_softc {
 	struct sysctllog	*sc_sysctllog;
 
 	struct ethercom		sc_ec;
-	struct ifnet		sc_if;
 
 	struct callout		scan_ch;
 	struct callout		rssadapt_ch;
@@ -170,6 +169,8 @@ struct rt2560_softc {
 	int			sc_txtap_len;
 #endif
 };
+
+#define	sc_if		sc_ec.ec_if
 
 int	rt2560_attach(void *, int);
 int	rt2560_detach(void *);
