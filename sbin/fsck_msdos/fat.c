@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.18 2006/06/05 16:51:18 christos Exp $	*/
+/*	$NetBSD: fat.c,v 1.19 2006/06/06 16:19:11 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.18 2006/06/05 16:51:18 christos Exp $");
+__RCSID("$NetBSD: fat.c,v 1.19 2006/06/06 16:19:11 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -471,7 +471,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 	u_char *buffer, *p;
 	cl_t cl;
 	int i;
-	u_int32_t fatsz;
+	size_t fatsz;
 	off_t off;
 	int ret = FSOK;
 
