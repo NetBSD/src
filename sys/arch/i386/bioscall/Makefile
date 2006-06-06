@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2005/12/11 12:17:40 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2006/06/06 15:41:50 christos Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
@@ -11,12 +11,13 @@ SRCS=	biostramp.S
 OBJS=	biostramp.o
 DEPS=	${APMDEPS}
 STRIP?=	strip
+TRAMP=	${.CURDIR}/biostramp.inc
 
-all: biostramp.inc
+all: ${TRAMP}
 
-biostramp.inc: biostramp.bin Makefile
-	@([ -f biostramp.inc ] && mv -f biostramp.inc biostramp.inc.bak; exit 0)
-	${HOST_SH} ${.CURDIR}/bin2asm.sh biostramp.bin > biostramp.inc
+${TRAMP}: biostramp.bin Makefile
+	@([ -f ${TRAMP} ] && mv -f ${TRAMP} ${TRAMP}.bak; exit 0)
+	${HOST_SH} ${.CURDIR}/bin2asm.sh biostramp.bin > ${.TARGET}
 
 machine:
 	@rm -f machine && ln -s ${I386}/include machine
@@ -55,8 +56,8 @@ biostramp.o: biostramp.S
 	${CC} ${CPPFLAGS} -DASM -D_LOCORE -c ${.IMPSRC}
 
 clean:
-	rm -f *.o biostramp.obj biostramp.bin biostramp.sym biostramp.inc \
-	    assym.h biostramp.inc.bak machine
+	rm -f *.o biostramp.obj biostramp.bin biostramp.sym ${TRAMP} \
+	    assym.h ${TRAMP}.bak machine
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
