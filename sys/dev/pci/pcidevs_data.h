@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.790 2006/06/05 21:08:51 martin Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.791 2006/06/06 21:01:04 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.790 2006/06/05 21:08:18 martin Exp
+ *	NetBSD: pcidevs,v 1.791 2006/06/06 21:00:41 rpaulo Exp
  */
 
 /*
@@ -9228,12 +9228,24 @@ static const struct pci_product pci_products[] = {
 	    "CryptoSwift 200 PKI Accelerator",
 	},
 	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460,
-	    "RT2460 802.11b",
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460A,
+	    "RT2460A 802.11b",
 	},
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560,
 	    "RT2560 802.11b/g",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S,
+	    "RT2561S 802.11b/g",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561,
+	    "RT2561 802.11b/g",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661,
+	    "RT2661 802.11b/g/n",
 	},
 	{
 	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
@@ -11500,4 +11512,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2284;
+const int pci_nproducts = 2287;
