@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.790 2006/06/05 21:08:18 martin Exp $
+$NetBSD: pcidevs,v 1.791 2006/06/06 21:00:41 rpaulo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2713,8 +2713,11 @@ product QUICKLOGIC PCWATCHDOG	0x5030	PC Watchdog
 product RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
 
 /* Ralink Technologies products */
-product RALINK	RT2460		0x0101	RT2460 802.11b
-product RALINK	RT2560		0x0201	RT2560 802.11b/g
+product	RALINK	RT2460A		0x0101	RT2460A 802.11b
+product	RALINK	RT2560		0x0201	RT2560 802.11b/g
+product	RALINK	RT2561S		0x0301	RT2561S 802.11b/g
+product	RALINK	RT2561		0x0302	RT2561 802.11b/g
+product	RALINK	RT2661		0x0401	RT2661 802.11b/g/n
 
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
