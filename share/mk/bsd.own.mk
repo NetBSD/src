@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.452 2006/06/02 22:21:34 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.453 2006/06/07 18:49:36 rpaulo Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -368,6 +368,11 @@ LOCALEDIR?=	/usr/share/locale
 LOCALEGRP?=	wheel
 LOCALEOWN?=	root
 LOCALEMODE?=	${NONBINMODE}
+
+FIRMWAREDIR?=	/libdata/firmware
+FIRMWAREGRP?=	wheel
+FIRMWAREOWN?=	root
+FIRMWAREMODE?=	${NONBINMODE}
 
 #
 # Data-driven table using make variables to control how
