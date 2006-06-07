@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.1.2.1 2006/06/06 21:33:16 chap Exp $ */
+/* $NetBSD: midictl.c,v 1.1.2.2 2006/06/07 00:09:39 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.1.2.1 2006/06/06 21:33:16 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.1.2.2 2006/06/07 00:09:39 chap Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -242,6 +242,7 @@ midictl_change(midictl *mc, uint_fast8_t chan, uint8_t *ctlval)
 		return;
 	case MIDI_CTRL_RPN_INCREMENT: /* XXX for later - these are a PITA to */
 	case MIDI_CTRL_RPN_DECREMENT: /* get right - 'right' varies by param */
+			/* see http://www.midi.org/about-midi/rp18.shtml */
 		return;
 	}
 	

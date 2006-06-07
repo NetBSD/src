@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.11 2006/05/31 03:17:06 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.12 2006/06/07 00:09:39 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.11 2006/05/31 03:17:06 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.12 2006/06/07 00:09:39 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -73,6 +73,8 @@ int	midisyn_allocvoice(midisyn *, u_int32_t, u_int32_t);
 u_int32_t midisyn_note_to_freq(int);
 u_int32_t midisyn_finetune(u_int32_t, int, int, int);
 
+static midictl_notify midisyn_notify;
+
 int	midisyn_open(void *, int,
 		     void (*iintr)(void *, int),
 		     void (*ointr)(void *), void *arg);
@@ -106,6 +108,9 @@ midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
 	midisyn *ms = addr;
 
 	DPRINTF(("midisyn_open: ms=%p ms->mets=%p\n", ms, ms->mets));
+	
+	midictl_open(&ms->ctl);
+	
 	if (ms->mets->open)
 		return (ms->mets->open(ms, flags));
 	else
@@ -128,6 +133,8 @@ midisyn_close(void *addr)
 		}
 	if (fs->close)
 		fs->close(ms);
+
+	midictl_close(&ms->ctl);
 }
 
 void
@@ -188,6 +195,13 @@ midisyn_attach(struct midi_softc *sc, midisyn *ms)
 		if (ms->mets->allocv == 0)
 			ms->mets->allocv = &midisyn_allocvoice;
 	}
+	
+	ms->ctl = (midictl) {
+		.base_channel = 16,
+		.cookie = ms,
+		.notify = midisyn_notify
+	};
+	
 	sc->hw_if = &midisyn_hw_if;
 	sc->hw_hdl = ms;
 	DPRINTF(("midisyn_attach: ms=%p\n", sc->hw_hdl));
@@ -277,8 +291,7 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		}
 		break;
 	case MIDI_CTL_CHANGE:
-		if (fs->ctlchg)
-			fs->ctlchg(ms, chan, buf[1], vel);
+		midictl_change(&ms->ctl, chan, buf+1);
 		break;
 	case MIDI_PGM_CHANGE:
 		if (fs->pgmchg)
@@ -414,3 +427,8 @@ midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
 		return (base_freq * amount / 10000);	/* Bend up */
 }
 
+static void
+midisyn_notify(void *cookie, midictl_evt evt,
+               uint_fast8_t chan, uint_fast16_t key)
+{
+}
