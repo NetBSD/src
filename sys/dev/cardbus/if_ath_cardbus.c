@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.8.6.2 2006/06/07 15:51:08 kardel Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.8.6.3 2006/06/07 16:05:41 kardel Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8.6.2 2006/06/07 15:51:08 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8.6.3 2006/06/07 16:05:41 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -235,8 +235,8 @@ ath_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Release bus space and close window.
 	 */
-	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA, (bus_space_tag_t) sc->sc_st,
-	    (bus_space_handle_t)sc->sc_sh, csc->sc_mapsize);
+	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA, csc->sc_iot, csc->sc_ioh,
+	    csc->sc_mapsize);
 
 	return (0);
 }
