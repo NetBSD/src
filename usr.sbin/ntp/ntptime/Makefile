@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/05/11 10:32:37 tron Exp $
+#	$NetBSD: Makefile,v 1.7 2006/06/07 20:59:28 kardel Exp $
 
 PROG=	ntptime
 MAN=	ntptime.8
