@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.66 2006/03/17 01:45:51 hubertf Exp $	*/
+/*	$NetBSD: savecore.c,v 1.67 2006/06/07 20:56:19 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.66 2006/03/17 01:45:51 hubertf Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.67 2006/06/07 20:56:19 kardel Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,12 @@ struct nlist current_nl[] = {	/* Namelist for currently running system. */
 	{ "_dumpdev" },
 #define	X_DUMPLO	1
 	{ "_dumplo" },
-#define	X_TIME		2
-	{ "_time" },
+#define	X_TIME_SECOND	2
+#ifdef __HAVE_TIMECOUNTER
+	{ "_time_second" },
+#else
+	{ "_time" },	/* XXX uses same array slot as "X_TIME_SECOND" */
+#endif
 #define	X_DUMPSIZE	3
 	{ "_dumpsize" },
 #define	X_VERSION	4
@@ -94,12 +98,17 @@ struct nlist current_nl[] = {	/* Namelist for currently running system. */
 	{ NULL },
 };
 int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, -1 };
-int dumpsyms[] = { X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG, -1 };
+int dumpsyms[] = { X_TIME_SECOND, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG,
+    -1 };
 
 struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ "_dumpdev" },		/* Entries MUST be the same as */
 	{ "_dumplo" },		/*	those in current_nl[].  */
-	{ "_time" },
+#ifdef __HAVE_TIMECOUNTER
+	{ "_time_second" },
+#else
+	{ "_time" },	/* XXX uses same array slot as "X_TIME_SECOND" */
+#endif
 	{ "_dumpsize" },
 	{ "_version" },
 	{ "_dumpmag" },
@@ -680,15 +689,25 @@ rawname(char *s)
 int
 get_crashtime(void)
 {
-	struct timeval dtime;
 	time_t dumptime;			/* Time the dump was taken. */
+#ifndef __HAVE_TIMECOUNTER
+	struct timeval dtime;
+#endif
 
-	if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dtime) != 0) {
+#ifdef __HAVE_TIMECOUNTER
+	if (KREAD(kd_dump, dump_nl[X_TIME_SECOND].n_value, &dumptime) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		return (0);
+	}
+#else
+	if (KREAD(kd_dump, dump_nl[X_TIME_SECOND].n_value, &dtime) != 0) {
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return (0);
 	}
 	dumptime = dtime.tv_sec;
+#endif
 	if (dumptime == 0) {
 		if (verbose)
 			syslog(LOG_ERR, "dump time is zero");
