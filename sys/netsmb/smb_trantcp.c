@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.22 2006/05/10 21:53:19 mrg Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.23 2006/06/07 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.22 2006/05/10 21:53:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.23 2006/06/07 22:34:17 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		atv = *tv;
 		if (itimerfix(&atv))
 			return (EINVAL);
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		splx(s);
-		timo = hzto(&atv);
+		timo = tvtohz(&atv);
 		if (timo <= 0)
 			return (EWOULDBLOCK);
 	} else

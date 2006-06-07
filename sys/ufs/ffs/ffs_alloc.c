@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.91 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.92 2006/06/07 22:34:19 kardel Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.91 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.92 2006/06/07 22:34:19 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -721,7 +721,7 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ip->i_gen++;
 	DIP_ASSIGN(ip, gen, ip->i_gen);
 	if (fs->fs_magic == FS_UFS2_MAGIC) {
-		nanotime(&ts);
+		getnanotime(&ts);
 		ip->i_ffs2_birthtime = ts.tv_sec;
 		ip->i_ffs2_birthnsec = ts.tv_nsec;
 	}
@@ -1044,10 +1044,10 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = ufs_rw32(time.tv_sec, UFS_FSNEEDSWAP(fs));
+	cgp->cg_old_time = ufs_rw32(time_second, UFS_FSNEEDSWAP(fs));
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
-		cgp->cg_time = ufs_rw64(time.tv_sec, UFS_FSNEEDSWAP(fs));
+		cgp->cg_time = ufs_rw64(time_second, UFS_FSNEEDSWAP(fs));
 	bno = dtogd(fs, bprev);
 	blksfree = cg_blksfree(cgp, UFS_FSNEEDSWAP(fs));
 	for (i = numfrags(fs, osize); i < frags; i++)
@@ -1115,10 +1115,10 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time_second, needswap);
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
-		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+		cgp->cg_time = ufs_rw64(time_second, needswap);
 	if (size == fs->fs_bsize) {
 		blkno = ffs_alloccgblk(ip, bp, bpref);
 		ACTIVECG_CLR(fs, cg);
@@ -1407,10 +1407,10 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time_second, needswap);
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
-		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+		cgp->cg_time = ufs_rw64(time_second, needswap);
 	inosused = cg_inosused(cgp, needswap);
 	if (ipref) {
 		ipref %= fs->fs_ipg;
@@ -1546,10 +1546,10 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		brelse(bp);
 		return;
 	}
-	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time_second, needswap);
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
-		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+		cgp->cg_time = ufs_rw64(time_second, needswap);
 	cgbno = dtogd(fs, bno);
 	blksfree = cg_blksfree(cgp, needswap);
 	if (size == fs->fs_bsize) {
@@ -1742,10 +1742,10 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time_second, needswap);
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
-		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+		cgp->cg_time = ufs_rw64(time_second, needswap);
 	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {

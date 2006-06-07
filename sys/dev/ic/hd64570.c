@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.31 2006/03/28 17:38:30 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.32 2006/06/07 22:33:35 kardel Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.31 2006/03/28 17:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.32 2006/06/07 22:33:35 kardel Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -413,6 +413,7 @@ sca_init(struct sca_softc *sc)
 void
 sca_port_attach(struct sca_softc *sc, u_int port)
 {
+	struct timeval now;
 	sca_port_t *scp = &sc->sc_ports[port];
 	struct ifnet *ifp;
 	static u_int ntwo_unit = 0;
@@ -475,7 +476,8 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	/*
 	 * reset the last seen times on the cisco keepalive protocol
 	 */
-	scp->cka_lasttx = time.tv_usec;
+	getmicrotime(&now);
+	scp->cka_lasttx = now.tv_usec;
 	scp->cka_lastrx = 0;
 }
 
@@ -1568,7 +1570,7 @@ sca_frame_process(sca_port_t *scp)
 	u_int16_t len;
 	u_int32_t t;
 
-	t = (time.tv_sec - boottime.tv_sec) * 1000;
+	t = time_uptime * 1000;
 	desc = &scp->sp_rxdesc[scp->sp_rxstart];
 	bufp = scp->sp_rxbuf + SCA_BSIZE * scp->sp_rxstart;
 	len = sca_desc_read_buflen(scp->sca, desc);
@@ -1821,6 +1823,7 @@ static void
 sca_port_up(sca_port_t *scp)
 {
 	struct sca_softc *sc = scp->sca;
+	struct timeval now;
 #if 0
 	u_int8_t ier0, ier1;
 #endif
@@ -1885,7 +1888,8 @@ sca_port_up(sca_port_t *scp)
 	 */
 	scp->sp_txinuse = 0;
 	scp->sp_txcur = 0;
-	scp->cka_lasttx = time.tv_usec;
+	getmicrotime(&now);
+	scp->cka_lasttx = now.tv_usec;
 	scp->cka_lastrx = 0;
 }
 

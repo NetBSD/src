@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.32 2005/12/24 23:43:17 perry Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.33 2006/06/07 22:34:01 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.32 2005/12/24 23:43:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.33 2006/06/07 22:34:01 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
-	ipf->ipf_start = time.tv_sec;
+	ipf->ipf_start = time_uptime;
 	/*
 	 * Insert into the approriate bucket of the flow table.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.154 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.155 2006/06/07 22:33:33 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.154 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.155 2006/06/07 22:33:33 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -776,7 +776,7 @@ linux_sys_times(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct timeval t;
-	int error, s;
+	int error;
 
 	if (SCARG(uap, tms)) {
 		struct linux_tms ltms;
@@ -793,9 +793,7 @@ linux_sys_times(l, v, retval)
 			return error;
 	}
 
-	s = splclock();
-	timersub(&time, &boottime, &t);
-	splx(s);
+	getmicrouptime(&t);
 
 	retval[0] = ((linux_clock_t)(CONVTCK(t)));
 	return 0;
@@ -1625,7 +1623,7 @@ linux_sys_sysinfo(l, v, retval)
 	struct linux_sysinfo si;
 	struct loadavg *la;
 
-	si.uptime = time.tv_sec - boottime.tv_sec;
+	si.uptime = time_uptime;
 	la = &averunnable;
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.109 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.110 2006/06/07 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.109 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.110 2006/06/07 22:34:17 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,6 +1026,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	struct lwp *lwp;
 	struct mbuf **mrq;
 {
+	struct timeval now;
 	struct iovec *ivp;
 	struct mbuf *mp;
 	struct nfsrv_descript *wp, *nfsd, *owp, *swp;
@@ -1059,7 +1060,8 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	    LIST_INIT(&nfsd->nd_coalesce);
 	    nfsd->nd_mreq = NULL;
 	    nfsd->nd_stable = NFSV3WRITE_FILESYNC;
-	    cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
+	    getmicrotime(&now);
+	    cur_usec = (u_quad_t)now.tv_sec * 1000000 + (u_quad_t)now.tv_usec;
 	    nfsd->nd_time = cur_usec + nfsrvw_procrastinate;
 
 	    /*
@@ -1171,7 +1173,8 @@ nfsmout:
 	 * and generate the associated reply mbuf list(s).
 	 */
 loop1:
-	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
+	getmicrotime(&now);
+	cur_usec = (u_quad_t)now.tv_sec * 1000000 + (u_quad_t)now.tv_usec;
 	s = splsoftclock();
 	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd; nfsd = owp) {
 		owp = LIST_NEXT(nfsd, nd_tq);
