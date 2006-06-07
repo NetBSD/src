@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.15 2006/01/04 00:15:50 rpaulo Exp $ */
+/* $NetBSD: lapic.c,v 1.16 2006/06/07 22:41:09 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,11 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15 2006/01/04 00:15:50 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.16 2006/06/07 22:41:09 kardel Exp $");
 
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
+#include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 
 #include <sys/param.h>
@@ -51,12 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15 2006/01/04 00:15:50 rpaulo Exp $");
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/ic/i8253reg.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_counter.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -65,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15 2006/01/04 00:15:50 rpaulo Exp $");
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
+#ifdef _HAVE_TIMECOUNTER
+#include <x86/x86/tsc.h>
+#endif
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -236,20 +241,87 @@ void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
+#ifndef __HAVE_TIMECOUNTER
 	static int microset_iter; /* call cc_microset once/sec */
+#endif /* __HAVE_TIMECOUNTER */
+#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
+	static u_int last_count[X86_MAXPROCS],
+		     last_delta[X86_MAXPROCS],
+		     last_tsc[X86_MAXPROCS],
+		     last_tscdelta[X86_MAXPROCS],
+	             last_factor[X86_MAXPROCS];
+#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
+#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
+	{
+		int cid = ci->ci_cpuid;
+		extern u_int i8254_get_timecount(struct timecounter *);
+		u_int c_count = i8254_get_timecount(NULL);
+		u_int c_tsc = cpu_counter32();
+		u_int delta, ddelta, tsc_delta, factor = 0;
+		int idelta;
+
+		if (c_count > last_count[cid])
+			delta = c_count - last_count[cid];
+		else
+			delta = 0x100000000ULL - last_count[cid] + c_count;
+
+		if (delta > last_delta[cid])
+			ddelta = delta - last_delta[cid];
+		else
+			ddelta = last_delta[cid] - delta;
+
+		if (c_tsc > last_tsc[cid])
+			tsc_delta = c_tsc - last_tsc[cid];
+		else
+			tsc_delta = 0x100000000ULL - last_tsc[cid] + c_tsc;
+
+		idelta = tsc_delta - last_tscdelta[cid];
+		if (idelta < 0)
+			idelta = -idelta;
+
+		if (delta) {
+			int fdelta = tsc_delta / delta - last_factor[cid];
+			if (fdelta < 0)
+				fdelta = -fdelta;
+
+			if (fdelta > last_factor[cid] / 10) {
+				printf("cpu%d: freq skew exceeds 10%%: delta %u, factor %u, last %u\n", cid, fdelta, tsc_delta / delta, last_factor[cid]);
+			}
+			factor = tsc_delta / delta;
+		}
+
+		if (ddelta > last_delta[cid] / 10) {
+			printf("cpu%d: tick delta exceeds 10%%: delta %u, last %u, tick %u, last %u, factor %u, last %u\n",
+			       cid, ddelta, last_delta[cid], c_count, last_count[cid], factor, last_factor[cid]);
+		}
+
+		if (last_count[cid] > c_count) {
+			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, last %u\n", cid, last_count[cid] - c_count, c_count, last_count[cid]);
+		}
+
+		if (idelta > last_tscdelta[cid] / 10) {
+			printf("cpu%d: TSC delta exceeds 10%%: delta %u, last %u, tsc %u, factor %u, last %u\n", cid, idelta, last_tscdelta[cid], last_tsc[cid],
+				factor, last_factor[cid]);
+		}
+ 
+		last_factor[cid]   = factor;
+		last_delta[cid]    = delta;
+		last_count[cid]    = c_count;
+		last_tsc[cid]      = c_tsc;
+		last_tscdelta[cid] = tsc_delta;
+	}
+#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
+
+#ifndef __HAVE_TIMECOUNTER
 	/*
 	 * If we have a cycle counter, do the microset thing.
 	 */
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-		    (microset_iter--) == 0) {
+		if (CPU_IS_PRIMARY(ci) && (microset_iter--) == 0) {
 			microset_iter = hz - 1;
 			cc_microset_time = time;
 #if defined(MULTIPROCESSOR)
@@ -258,26 +330,27 @@ lapic_clockintr(void *arg, struct intrframe frame)
 			cc_microset(ci);
 		}
 	}
-#endif
+#endif /* !__HAVE_TIMECOUNTER */
+#endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)&frame);
 }
 
-#ifdef NTP
+#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
 extern int fixtick;
-#endif /* NTP */
+#endif /* !__HAVE_TIMECOUNTER && NTP */
 
 void
 lapic_initclocks()
 {
 
-#ifdef NTP
+#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
 	/*
 	 * we'll actually get (lapic_per_second/lapic_tval) interrupts/sec.
 	 */
 	fixtick = 1000000 -
 	    ((int64_t)tick * lapic_per_second + lapic_tval / 2) / lapic_tval;
-#endif /* NTP */
+#endif /* !__HAVE_TIMECOUNTER && NTP */
 
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
@@ -400,6 +473,11 @@ lapic_calibrate_timer(ci)
 		 */
 		delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
+#ifdef __HAVE_TIMECOUNTER
+		initrtclock(0);
+#else
+		initrtclock();
+#endif
 	}
 }
 
