@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: opl.c,v 1.24.2.1 2006/06/07 01:23:09 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.1 2006/06/07 01:23:09 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,18 +132,13 @@ u_int32_t opl_get_block_fnum(int freq);
 int opl_calc_vol(int regbyte, int volume, int main_vol);
 
 struct midisyn_methods opl3_midi = {
-	oplsyn_open,
-	oplsyn_close,
-	0,
-	0,
-	oplsyn_noteon,
-	oplsyn_noteoff,
-	oplsyn_keypressure,
-	oplsyn_ctlchange,
-	oplsyn_programchange,
-	0,
-	oplsyn_pitchbend,
-	0
+	.open    = oplsyn_open,
+	.close   = oplsyn_close,
+	.noteon  = oplsyn_noteon,
+	.noteoff = oplsyn_noteoff,
+	.keypres = oplsyn_keypressure, /* stubbed only */
+	.pgmchg  = oplsyn_programchange,
+	.pitchb  = oplsyn_pitchbend,   /* stubbed only */
 };
 
 void

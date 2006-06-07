@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.11 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: cms.c,v 1.11.14.1 2006/06/07 01:23:09 chap Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.11 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.11.14.1 2006/06/07 01:23:09 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,18 +87,10 @@ void	cms_on(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 void	cms_off(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 
 struct midisyn_methods midi_cms_hw = {
-	cms_open,		/* open */
-	cms_close,		/* close */
-	0,			/* ioctl */
-	0,			/* allocv */
-	cms_on,			/* noteon */
-	cms_off,		/* noteoff */
-	0,			/* keypres */
-	0,			/* ctlchg */
-	0,			/* pgmchg */
-	0,			/* chnpres */
-	0,			/* pitchb */
-	0,			/* sysex */
+	.open    = cms_open,
+	.close   = cms_close,
+	.noteon  = cms_on,
+	.noteoff = cms_off,
 };
 
 static void cms_reset(struct cms_softc *);
