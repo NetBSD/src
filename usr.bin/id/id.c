@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.26 2006/03/11 17:16:01 christos Exp $");
+__RCSID("$NetBSD: id.c,v 1.27 2006/06/07 13:09:56 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,35 +207,37 @@ current(void)
 {
 	struct group *gr;
 	struct passwd *pw;
-	int cnt, id, eid, lastid, ngroups;
+	gid_t gid, egid, lastid;
+	uid_t uid, euid;
+	int cnt, ngroups;
 	const char *fmt;
 
-	id = getuid();
-	(void)printf("uid=%u", id);
-	if ((pw = getpwuid(id)) != NULL)
+	uid = getuid();
+	(void)printf("uid=%ju", (uintmax_t)uid);
+	if ((pw = getpwuid(uid)) != NULL)
 		(void)printf("(%s)", pw->pw_name);
-	if ((eid = geteuid()) != id) {
-		(void)printf(" euid=%u", eid);
-		if ((pw = getpwuid(eid)) != NULL)
+	gid = getgid();
+	(void)printf(" gid=%ju", (uintmax_t)gid);
+	if ((gr = getgrgid(gid)) != NULL)
+		(void)printf("(%s)", gr->gr_name);
+	if ((euid = geteuid()) != uid) {
+		(void)printf(" euid=%ju", (uintmax_t)euid);
+		if ((pw = getpwuid(euid)) != NULL)
 			(void)printf("(%s)", pw->pw_name);
 	}
-	id = getgid();
-	(void)printf(" gid=%u", id);
-	if ((gr = getgrgid(id)) != NULL)
-		(void)printf("(%s)", gr->gr_name);
-	if ((eid = getegid()) != id) {
-		(void)printf(" egid=%u", eid);
-		if ((gr = getgrgid(eid)) != NULL)
+	if ((egid = getegid()) != gid) {
+		(void)printf(" egid=%ju", (uintmax_t)egid);
+		if ((gr = getgrgid(egid)) != NULL)
 			(void)printf("(%s)", gr->gr_name);
 	}
 	if ((ngroups = getgroups(maxgroups, groups)) != 0) {
-		for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
-		    fmt = ",%u", lastid = id, cnt++) {
-			id = groups[cnt];
-			if (lastid == id)
+		for (fmt = " groups=%ju", lastid = -1, cnt = 0; cnt < ngroups;
+		    fmt = ",%ju", lastid = gid, cnt++) {
+			gid = groups[cnt];
+			if (lastid == gid)
 				continue;
-			(void)printf(fmt, id);
-			if ((gr = getgrgid(id)) != NULL)
+			(void)printf(fmt, (uintmax_t)gid);
+			if ((gr = getgrgid(gid)) != NULL)
 				(void)printf("(%s)", gr->gr_name);
 		}
 	}
