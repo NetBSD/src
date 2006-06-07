@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.11 2006/06/07 00:09:39 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.12 2006/06/07 01:23:09 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ struct midisyn_methods {
 	void (*noteon)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
 	void (*noteoff) (midisyn *, u_int32_t, u_int32_t, u_int32_t);
 	void (*keypres) (midisyn *, u_int32_t, u_int32_t, u_int32_t);
-	void (*ctlchg)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
 	void (*pgmchg)  (midisyn *, u_int32_t, u_int32_t);
 	void (*chnpres) (midisyn *, u_int32_t, u_int32_t);
 	void (*pitchb)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
@@ -90,7 +89,7 @@ struct midisyn {
 	/* Used by midisyn driver */
 	struct voice *voices;
 	u_int seqno;
-/*	u_int16_t pgms[MIDI_MAX_CHANS]; XXX not referenced in midisyn?? */
+	u_int16_t pgms[MIDI_MAX_CHANS]; /* ref'd if driver uses MS_GETPGM */
 };
 
 #define MS_GETPGM(ms, vno) ((ms)->pgms[MS_GETCHAN(&(ms)->voices[vno])])
