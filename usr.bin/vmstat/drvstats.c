@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.2 2006/04/20 12:13:53 blymn Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.3 2006/06/07 20:58:23 kardel Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
