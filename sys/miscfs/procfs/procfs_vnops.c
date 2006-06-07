@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.130 2006/05/14 21:31:53 elad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.131 2006/06/07 22:33:41 kardel Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.130 2006/05/14 21:31:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.131 2006/06/07 22:33:41 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,9 +586,7 @@ procfs_getattr(v)
 	vap->va_blocksize = PAGE_SIZE;
 
 	/*
-	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
-	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic.
+	 * Make all times be current TOD.
 	 *
 	 * It would be possible to get the process start
 	 * time from the p_stats structure, but there's
@@ -596,13 +594,13 @@ procfs_getattr(v)
 	 * p_stats structure is not addressable if u. gets
 	 * swapped out for that process.
 	 */
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	getnanotime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	if (procp)
 		TIMEVAL_TO_TIMESPEC(&procp->p_stats->p_start,
 		    &vap->va_birthtime);
 	else
-		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_birthtime);
+		getnanotime(&vap->va_birthtime);
 
 	switch (pfs->pfs_type) {
 	case PFSmem:

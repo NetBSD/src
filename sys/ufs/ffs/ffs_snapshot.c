@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.29 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.30 2006/06/07 22:34:19 kardel Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.29 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.30 2006/06/07 22:34:19 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -290,7 +290,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 		goto out;
 	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	microtime(&starttime);
+	getmicrotime(&starttime);
 	/*
 	 * First, copy all the cylinder group maps that have changed.
 	 */
@@ -521,7 +521,7 @@ out1:
 
 #ifdef DEBUG
 	if (starttime.tv_sec > 0) {
-		microtime(&endtime);
+		getmicrotime(&endtime);
 		timersub(&endtime, &starttime, &endtime);
 		printf("%s: suspended %ld.%03ld sec, redo %ld of %d\n",
 		    vp->v_mount->mnt_stat.f_mntonname, (long)endtime.tv_sec,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.14 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.15 2006/06/07 22:34:03 kardel Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -82,11 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.14 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.15 2006/06/07 22:34:03 kardel Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <lib/libkern/libkern.h>
 
 #include <net/if.h>
@@ -211,7 +209,7 @@ initid(struct randomtab *p)
 	p->ru_g = pmod(p->ru_gen, j, p->ru_n);
 	p->ru_counter = 0;
 
-	p->ru_reseed = time.tv_sec + p->ru_out;
+	p->ru_reseed = time_second + p->ru_out;
 	p->ru_msb = p->ru_msb ? 0 : (1U << (p->ru_bits - 1));
 }
 
@@ -220,7 +218,7 @@ randomid(struct randomtab *p)
 {
 	int i, n;
 
-	if (p->ru_counter >= p->ru_max || time.tv_sec > p->ru_reseed)
+	if (p->ru_counter >= p->ru_max || time_second > p->ru_reseed)
 		initid(p);
 
 	/* Skip a random number of ids */

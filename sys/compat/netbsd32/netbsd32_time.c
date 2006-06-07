@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.21 2006/05/31 09:52:27 drochner Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.22 2006/06/07 22:33:33 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.21 2006/05/31 09:52:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.22 2006/06/07 22:33:33 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.21 2006/05/31 09:52:27 drochner 
 #include <sys/time.h>
 #include <sys/timex.h>
 #include <sys/timevar.h>
+#include <sys/timetc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
@@ -53,21 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.21 2006/05/31 09:52:27 drochner 
 #include <compat/netbsd32/netbsd32_conv.h>
 
 #ifdef NTP
-
-#ifdef PPS_SYNC
-/*
- * The following variables are used only if the PPS signal discipline
- * is configured in the kernel.
- */
-extern int pps_shift;		/* interval duration (s) (shift) */
-extern long pps_freq;		/* pps frequency offset (scaled ppm) */
-extern long pps_jitter;		/* pps jitter (us) */
-extern long pps_stabil;		/* pps stability (scaled ppm) */
-extern long pps_jitcnt;		/* jitter limit exceeded */
-extern long pps_calcnt;		/* calibration intervals */
-extern long pps_errcnt;		/* calibration errors */
-extern long pps_stbcnt;		/* stability limit exceeded */
-#endif /* PPS_SYNC */
 
 int
 netbsd32_ntp_gettime(l, v, retval)
@@ -146,21 +132,12 @@ netbsd32_ntp_adjtime(l, v, retval)
 	struct timex ntv;
 	int error = 0;
 	int modes;
-	int s;
 	struct proc *p = l->l_proc;
-	extern long time_freq;		/* frequency offset (scaled ppm) */
-	extern long time_maxerror;
-	extern long time_esterror;
-	extern int time_state;	/* clock state */
-	extern int time_status;	/* clock status bits */
-	extern long time_constant;		/* pll time constant */
-	extern long time_offset;		/* time offset (us) */
-	extern long time_tolerance;	/* frequency tolerance (scaled ppm) */
-	extern long time_precision;	/* clock precision (us) */
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tp)),
 	    (caddr_t)&ntv32, sizeof(ntv32))))
 		return (error);
+
 	netbsd32_to_timex(&ntv32, &ntv);
 
 	/*
@@ -172,75 +149,13 @@ netbsd32_ntp_adjtime(l, v, retval)
 	if (modes != 0 && (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
-	s = splclock();
-	if (modes & MOD_FREQUENCY)
-#ifdef PPS_SYNC
-		time_freq = ntv.freq - pps_freq;
-#else /* PPS_SYNC */
-		time_freq = ntv.freq;
-#endif /* PPS_SYNC */
-	if (modes & MOD_MAXERROR)
-		time_maxerror = ntv.maxerror;
-	if (modes & MOD_ESTERROR)
-		time_esterror = ntv.esterror;
-	if (modes & MOD_STATUS) {
-		time_status &= STA_RONLY;
-		time_status |= ntv.status & ~STA_RONLY;
-	}
-	if (modes & MOD_TIMECONST)
-		time_constant = ntv.constant;
-	if (modes & MOD_OFFSET)
-		hardupdate(ntv.offset);
-
-	/*
-	 * Retrieve all clock variables
-	 */
-	if (time_offset < 0)
-		ntv.offset = -(-time_offset >> SHIFT_UPDATE);
-	else
-		ntv.offset = time_offset >> SHIFT_UPDATE;
-#ifdef PPS_SYNC
-	ntv.freq = time_freq + pps_freq;
-#else /* PPS_SYNC */
-	ntv.freq = time_freq;
-#endif /* PPS_SYNC */
-	ntv.maxerror = time_maxerror;
-	ntv.esterror = time_esterror;
-	ntv.status = time_status;
-	ntv.constant = time_constant;
-	ntv.precision = time_precision;
-	ntv.tolerance = time_tolerance;
-#ifdef PPS_SYNC
-	ntv.shift = pps_shift;
-	ntv.ppsfreq = pps_freq;
-	ntv.jitter = pps_jitter >> PPS_AVG;
-	ntv.stabil = pps_stabil;
-	ntv.calcnt = pps_calcnt;
-	ntv.errcnt = pps_errcnt;
-	ntv.jitcnt = pps_jitcnt;
-	ntv.stbcnt = pps_stbcnt;
-#endif /* PPS_SYNC */
-	(void)splx(s);
+	ntp_adjtime1(&ntv);
 
 	netbsd32_from_timex(&ntv, &ntv32);
 	error = copyout((caddr_t)&ntv32, (caddr_t)NETBSD32PTR64(SCARG(uap, tp)),
 	    sizeof(ntv32));
 	if (!error) {
-
-		/*
-		 * Status word error decode. See comments in
-		 * ntp_gettime() routine.
-		 */
-		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-		    !(time_status & STA_PPSSIGNAL)) ||
-		    (time_status & STA_PPSTIME &&
-		    time_status & STA_PPSJITTER) ||
-		    (time_status & STA_PPSFREQ &&
-		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
-			*retval = TIME_ERROR;
-		else
-			*retval = time_state;
+		*retval = ntp_timestatus();
 	}
 	return error;
 }
@@ -427,53 +342,89 @@ netbsd32_adjtime(l, v, retval)
 		syscallarg(netbsd32_timevalp_t) olddelta;
 	} */ *uap = v;
 	struct netbsd32_timeval atv;
-	int32_t ndelta, ntickdelta, odelta;
-	int s, error;
+	int error;
 	struct proc *p = l->l_proc;
-	extern long bigadj, timedelta;
-	extern int tickdelta;
 
 	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
+#ifdef __HAVE_TIMECOUNTER
+	{
+		extern int time_adjusted;     /* in kern_ntptime.c */
+		extern int64_t time_adjtime;  /* in kern_ntptime.c */
+		if (SCARG(uap, olddelta)) {
+			atv.tv_sec = time_adjtime / 1000000;
+			atv.tv_usec = time_adjtime % 1000000;
+			if (atv.tv_usec < 0) {
+				atv.tv_usec += 1000000;
+				atv.tv_sec--;
+			}
+			(void) copyout(&atv,
+				       (caddr_t)NETBSD32PTR64(SCARG(uap, olddelta)), 
+				       sizeof(atv));
+			if (error)
+				return (error);
+		}
+	
+		if (SCARG(uap, delta)) {
+			error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, delta)), &atv,
+				       sizeof(struct timeval));
+			if (error)
+				return (error);
 
-	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, delta)), &atv,
-	    sizeof(struct timeval));
-	if (error)
-		return (error);
-	/*
-	 * Compute the total correction and the rate at which to apply it.
-	 * Round the adjustment down to a whole multiple of the per-tick
-	 * delta, so that after some number of incremental changes in
-	 * hardclock(), tickdelta will become zero, lest the correction
-	 * overshoot and start taking us away from the desired final time.
-	 */
-	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
-	if (ndelta > bigadj)
-		ntickdelta = 10 * tickadj;
-	else
-		ntickdelta = tickadj;
-	if (ndelta % ntickdelta)
-		ndelta = ndelta / ntickdelta * ntickdelta;
+			time_adjtime = (int64_t)atv.tv_sec * 1000000 +
+				atv.tv_usec;
 
-	/*
-	 * To make hardclock()'s job easier, make the per-tick delta negative
-	 * if we want time to run slower; then hardclock can simply compute
-	 * tick + tickdelta, and subtract tickdelta from timedelta.
-	 */
-	if (ndelta < 0)
-		ntickdelta = -ntickdelta;
-	s = splclock();
-	odelta = timedelta;
-	timedelta = ndelta;
-	tickdelta = ntickdelta;
-	splx(s);
-
-	if (SCARG(uap, olddelta)) {
-		atv.tv_sec = odelta / 1000000;
-		atv.tv_usec = odelta % 1000000;
-		(void) copyout(&atv,
-		    (caddr_t)NETBSD32PTR64(SCARG(uap, olddelta)), sizeof(atv));
+			if (time_adjtime)
+				/* We need to save the system time during shutdown */
+				time_adjusted |= 1;
+		}
 	}
+#else /* !__HAVE_TIMECOUNTER */
+	{
+		int32_t ndelta, ntickdelta, odelta;
+		extern long bigadj, timedelta;
+		extern int tickdelta;
+		int s;
+		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, delta)), &atv,
+			       sizeof(struct timeval));
+		if (error)
+			return (error);
+		/*
+		 * Compute the total correction and the rate at which to apply it.
+		 * Round the adjustment down to a whole multiple of the per-tick
+		 * delta, so that after some number of incremental changes in
+		 * hardclock(), tickdelta will become zero, lest the correction
+		 * overshoot and start taking us away from the desired final time.
+		 */
+		ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
+		if (ndelta > bigadj)
+			ntickdelta = 10 * tickadj;
+		else
+			ntickdelta = tickadj;
+		if (ndelta % ntickdelta)
+			ndelta = ndelta / ntickdelta * ntickdelta;
+
+		/*
+		 * To make hardclock()'s job easier, make the per-tick delta negative
+		 * if we want time to run slower; then hardclock can simply compute
+		 * tick + tickdelta, and subtract tickdelta from timedelta.
+		 */
+		if (ndelta < 0)
+			ntickdelta = -ntickdelta;
+		s = splclock();
+		odelta = timedelta;
+		timedelta = ndelta;
+		tickdelta = ntickdelta;
+		splx(s);
+
+		if (SCARG(uap, olddelta)) {
+			atv.tv_sec = odelta / 1000000;
+			atv.tv_usec = odelta % 1000000;
+			(void) copyout(&atv,
+				       (caddr_t)NETBSD32PTR64(SCARG(uap, olddelta)), sizeof(atv));
+		}
+	}
+#endif /* !__HAVE_TIMECOUNTER */
 	return (0);
 }
 
@@ -578,8 +529,8 @@ netbsd32_nanosleep(l, v, retval)
 	struct netbsd32_timespec ts32;
 	struct timespec rqt;
 	struct timespec rmt;
-	struct timeval atv, utv;
-	int error, s, timo;
+	struct timeval atv, utv, ctime;
+	int error, timo;
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rqtp)), (caddr_t)&ts32,
 	    sizeof(ts32));
@@ -591,15 +542,14 @@ netbsd32_nanosleep(l, v, retval)
 	if (itimerfix(&atv))
 		return (EINVAL);
 
-	s = splclock();
-	timeradd(&atv,&time,&atv);
+	getmicrotime(&ctime);
+	timeradd(&atv,&ctime,&atv);
 	timo = hzto(&atv);
 	/*
 	 * Avoid inadvertantly sleeping forever
 	 */
 	if (timo == 0)
 		timo = 1;
-	splx(s);
 
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
 	if (error == ERESTART)
@@ -610,9 +560,7 @@ netbsd32_nanosleep(l, v, retval)
 	if (SCARG(uap, rmtp)) {
 		int error1;
 
-		s = splclock();
-		utv = time;
-		splx(s);
+		getmicrotime(&utv);
 
 		timersub(&atv, &utv, &utv);
 		if (utv.tv_sec < 0)

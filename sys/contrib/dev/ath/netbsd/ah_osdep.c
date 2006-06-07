@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.4 2006/06/05 05:14:38 gdamore Exp $
+ * $Id: ah_osdep.c,v 1.5 2006/06/07 22:33:34 kardel Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -417,16 +417,10 @@ ath_hal_delay(int n)
 u_int32_t
 ath_hal_getuptime(struct ath_hal *ah)
 {
-	struct timeval boot, cur, diff;
-	int s;
-	s = splclock();
-	boot = boottime;
-	cur = time;
-	splx(s);
-
-	timersub(&cur, &boot, &diff);
-
-	return diff.tv_sec * 1000 + diff.tv_usec / 1000;
+	struct bintime bt;
+	getbinuptime(&bt);
+	return (bt.sec * 1000) +
+		(((uint64_t)1000 * (uint32_t)(bt.frac >> 32)) >> 32);
 }
 
 void

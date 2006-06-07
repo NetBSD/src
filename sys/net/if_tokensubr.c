@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.37 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.38 2006/06/07 22:33:43 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.37 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.38 2006/06/07 22:33:43 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -270,7 +270,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 

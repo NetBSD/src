@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.47 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.48 2006/06/07 22:34:03 kardel Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.47 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.48 2006/06/07 22:34:03 kardel Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -134,8 +134,8 @@ ip6_forward(m, srcrt)
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
-		if (ip6_log_time + ip6_log_interval < time.tv_sec) {
-			ip6_log_time = time.tv_sec;
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on %s\n",
@@ -418,8 +418,8 @@ ip6_forward(m, srcrt)
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
 
-		if (ip6_log_time + ip6_log_interval < time.tv_sec) {
-			ip6_log_time = time.tv_sec;
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",

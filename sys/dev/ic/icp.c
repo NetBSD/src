@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.19 2006/03/28 17:38:30 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.20 2006/06/07 22:33:35 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.19 2006/03/28 17:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.20 2006/06/07 22:33:35 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1323,7 +1323,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 	     (evt->size == 0 && e->event_data.size == 0 &&
 	      strcmp((char *) e->event_data.event_string,
 	      	     (char *) evt->event_string) == 0))) {
-		e->last_stamp = time.tv_sec;
+		e->last_stamp = time_second;
 		e->same_count++;
 	} else {
 		if (icp_event_buffer[icp_event_lastidx].event_source != 0) {
@@ -1339,7 +1339,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 		e = &icp_event_buffer[icp_event_lastidx];
 		e->event_source = source;
 		e->event_idx = idx;
-		e->first_stamp = e->last_stamp = time.tv_sec;
+		e->first_stamp = e->last_stamp = time_second;
 		e->same_count = 1;
 		e->event_data = *evt;
 		e->application = 0;

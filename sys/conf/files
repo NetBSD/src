@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.780 2006/06/07 15:24:12 rpaulo Exp $
+#	$NetBSD: files,v 1.781 2006/06/07 22:33:34 kardel Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -14,15 +14,15 @@ devclass tty
 # (note, these are case-sensitive)
 #
 defflag				INSECURE
-defflag				MBUFTRACE
-defflag				KMEMSTATS
 defflag				KCONT
+defflag				KMEMSTATS
 defflag				KTRACE
+defflag				MBUFTRACE
 defflag				SYSTRACE
+defparam			DEFCORENAME
+defparam			HZ
 defparam			MAXUPRC
 defparam			RTC_OFFSET
-defparam			HZ
-defparam			DEFCORENAME
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag				BUFQ_DISKSORT
@@ -1250,6 +1250,7 @@ file	kern/kern_systrace.c		systrace
 file	kern/kern_subr.c
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
+file	kern/kern_tc.c
 file	kern/kern_time.c
 file	kern/kern_timeout.c
 file	kern/kern_uuid.c
