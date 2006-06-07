@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.14 2005/11/16 03:00:23 uwe Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.15 2006/06/07 22:38:50 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.14 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.15 2006/06/07 22:38:50 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,7 +106,7 @@ clockintr_4m(void *cap)
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
-
+	tickle_tc();
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -219,5 +219,5 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 	/* Put processor counter in "timer" mode */
 	timerreg4m->t_cfg = 0;
 
-	timerattach(&counterreg4m->t_counter, &counterreg4m->t_limit);
+	timerattach(&timerreg4m->t_counter, &timerreg4m->t_limit);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.7 2005/12/24 20:07:37 perry Exp $	*/
+/*	$NetBSD: timervar.h,v 1.8 2006/06/07 22:38:50 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@ void	timerattach_obio_4m(struct device *, struct device *, void *);
 extern int statvar, statmin, statint;
 extern int timerblurb;
 extern void (*timer_init)(void);
+extern void tickle_tc(void);
 
 /* Common timer attach routine in timer.c: */
 void	timerattach(volatile int *, volatile int *);
