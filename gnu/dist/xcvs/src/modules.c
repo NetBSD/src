@@ -136,7 +136,6 @@ my_module (db, mname, m_type, msg, callback_proc, where, shorten,
     char *mwhere = NULL;
     char *mfile = NULL;
     char *spec_opt = NULL;
-    char *xvalue = NULL;
     int alias = 0;
     datum key, val;
     char *cp;
@@ -772,8 +771,6 @@ module `%s' is a request for a file in a module which is not a directory",
     if (value != NULL)
 	free (value);
 
-    if (xvalue != NULL)
-	free (xvalue);
     return (err);
 }
 
