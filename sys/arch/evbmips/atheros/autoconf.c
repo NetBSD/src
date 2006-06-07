@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1.8.3 2006/06/01 22:34:30 kardel Exp $ */
+/* $NetBSD: autoconf.c,v 1.1.8.4 2006/06/07 15:49:37 kardel Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.8.3 2006/06/01 22:34:30 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.8.4 2006/06/07 15:49:37 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct arbus_attach_args *aa = aux;
-	struct ar531x_board_info *info;
+	const struct ar531x_boarddata *info;
 
 	info = ar531x_board_info();
 	if (info == NULL) {
@@ -96,12 +96,12 @@ device_register(struct device *dev, void *aux)
 	/* Fetch the MAC addresses from YAMON. */
 	if (device_is_a(dev, "ae")) {
 		prop_data_t pd;
-		uint8_t	*enet;
+		const uint8_t *enet;
 
 		if (aa->aa_addr == AR531X_ENET0_BASE)
-			enet = info->ab_enet0_mac;
+			enet = info->enet0Mac;
 		else if (aa->aa_addr == AR531X_ENET1_BASE)
-			enet = info->ab_enet1_mac;
+			enet = info->enet1Mac;
 		else
 			return;
 
@@ -117,12 +117,12 @@ device_register(struct device *dev, void *aux)
 
 	if (device_is_a(dev, "ath")) {
 		prop_data_t pd;
-		uint8_t	*enet;
+		const uint8_t *enet;
 
 		if (aa->aa_addr == AR531X_WLAN0_BASE)
-			enet = info->ab_wlan0_mac;
+			enet = info->wlan0Mac;
 		else if (aa->aa_addr == AR531X_WLAN1_BASE)
-			enet = info->ab_wlan1_mac;
+			enet = info->wlan1Mac;
 		else
 			return;
 

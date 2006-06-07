@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.131 2005/11/23 08:54:48 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.131.6.1 2006/06/07 15:51:25 kardel Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.131 2005/11/23 08:54:48 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.131.6.1 2006/06/07 15:51:25 kardel Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -260,10 +260,16 @@ Static void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char vendor[USB_MAX_ENCODED_STRING_LEN];
-	char product[USB_MAX_ENCODED_STRING_LEN];
+	char *vendor, *product;
 	int bcdDevice, bcdUSB;
 	char *ep;
+
+	vendor = malloc(USB_MAX_ENCODED_STRING_LEN * 2, M_USB, M_NOWAIT);
+	if (vendor == NULL) {
+		*cp = '\0';
+		return;
+	}
+	product = &vendor[USB_MAX_ENCODED_STRING_LEN];
 
 	ep = cp + l;
 
@@ -280,6 +286,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	cp += usbd_printBCD(cp, ep - cp, bcdDevice);
 	cp += snprintf(cp, ep - cp, ", addr %d", dev->address);
 	*cp = 0;
+	free(vendor, M_USB);
 }
 
 char *
@@ -791,7 +798,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	int found, i, confi, nifaces;
 	usbd_status err;
 	device_ptr_t dv;
-	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
+	usbd_interface_handle *ifaces;
 
 #if defined(__FreeBSD__)
 	/*
@@ -857,12 +864,17 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = dev->cdesc->bConfigurationValue;
+		ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT);
+		if (ifaces == NULL)
+			goto nomem;
 		for (i = 0; i < nifaces; i++)
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
 		dev->subdevs = malloc((nifaces+1) * sizeof dv, M_USB,M_NOWAIT);
 		if (dev->subdevs == NULL) {
+			free(ifaces, M_USB);
+nomem:
 #if defined(__FreeBSD__)
 			device_delete_child(parent, bdev);
 #endif
@@ -888,6 +900,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 				if (!bdev) {
 					printf("%s: Device creation failed\n",
 					USBDEVNAME(dev->bus->bdev));
+					free(ifaces, M_USB);
+					free(dev->subdevs, M_USB);
 					return (USBD_NORMAL_COMPLETION);
 				}
 				device_quiet(bdev);
@@ -899,8 +913,11 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			/* remove the last created child again; it is unused */
 			device_delete_child(parent, bdev);
 #endif
+			free(ifaces, M_USB);
+			free(dev->subdevs, M_USB);
 			return (USBD_NORMAL_COMPLETION);
 		}
+		free(ifaces, M_USB);
 		free(dev->subdevs, M_USB);
 		dev->subdevs = 0;
 	}

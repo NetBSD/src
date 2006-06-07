@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.2.6.4 2006/06/01 22:36:01 kardel Exp $
+ * $Id: ah_osdep.c,v 1.2.6.5 2006/06/07 15:49:38 kardel Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -55,6 +55,7 @@
 #include <net/if_ether.h>
 
 #include <contrib/dev/ath/ah.h>
+
 
 #define	__printflike(__a, __b)	__attribute__((__format__(__printf__,__a,__b)))
 
@@ -293,7 +294,7 @@ ath_hal_alq_get(struct ath_hal *ah)
 void
 ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
-	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
+	bus_space_tag_t t = BUSTAG(ah);
 
 	if (ath_hal_alq) {
 		struct ale *ale = ath_hal_alq_get(ah);
@@ -307,24 +308,25 @@ ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 	}
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_4(ah->ah_st, h, reg, val);
+		bus_space_write_4(t, h, reg, val);
 	else
 #endif
-		bus_space_write_stream_4(ah->ah_st, h, reg, val);
+		bus_space_write_stream_4(t, h, reg, val);
 }
 
 u_int32_t
 ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
 	u_int32_t val;
-	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
+	bus_space_handle_t h = BUSHANDLE(ah);
+	bus_space_tag_t t = BUSTAG(ah);
 
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		val = bus_space_read_4(ah->ah_st, h, reg);
+		val = bus_space_read_4(t, h, reg);
 	else
 #endif
-		val = bus_space_read_stream_4(ah->ah_st, h, reg);
+		val = bus_space_read_stream_4(t, h, reg);
 
 	if (ath_hal_alq) {
 		struct ale *ale = ath_hal_alq_get(ah);
@@ -368,25 +370,28 @@ OS_MARK(struct ath_hal *ah, u_int id, u_int32_t v)
 void
 ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
-	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
+	bus_space_handle_t h = BUSHANDLE(ah);
+	bus_space_tag_t t = BUSTAG(ah);
+
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_4(ah->ah_st, h, reg, val);
+		bus_space_write_4(t, h, reg, val);
 	else
 #endif
-		bus_space_write_stream_4(ah->ah_st, h, reg, val);
+		bus_space_write_stream_4(t, h, reg, val);
 }
 
 u_int32_t
 ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
-	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
+	bus_space_handle_t h = BUSHANDLE(ah);
+	bus_space_tag_t t = BUSTAG(ah);
 
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		return bus_space_read_4(ah->ah_st, h, reg);
+		return bus_space_read_4(t, h, reg);
 #endif
-	return bus_space_read_stream_4(ah->ah_st, h, reg);
+	return bus_space_read_stream_4(t, h, reg);
 }
 #endif /* ATHHAL_DEBUG || AH_REGOPS_FUNC */
 
