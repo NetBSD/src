@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.15 2006/03/19 01:19:32 christos Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.16 2006/06/07 16:28:34 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.15 2006/03/19 01:19:32 christos Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.16 2006/06/07 16:28:34 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -86,6 +86,9 @@ typedef struct {
 	u_char	interm;
 	u_char	vers;
 } _ISO2022Charset;
+
+static const _ISO2022Charset ascii    = { CS94, 'B', '\0', '\0' };
+static const _ISO2022Charset iso88591 = { CS96, 'A', '\0', '\0' };
 
 typedef struct {
 	_ISO2022Charset	g[4];
@@ -1032,21 +1035,15 @@ _ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t wc,
 	/* state appears to be unused */
 
 	if (iscntl(wc & 0xff)) {
-		/* go back to ASCII on control chars */
-		cs.type = CS94;
-		cs.final = 'B';
-		cs.interm = '\0';
+		/* go back to INIT0 or ASCII on control chars */
+		cs = ei->initg[0].final ? ei->initg[0] : ascii;
 	} else if (!(wc & ~0xff)) {
 		if (wc & 0x80) {
 			/* special treatment for ISO-8859-1 */
-			cs.type = CS96;
-			cs.final = 'A';
-			cs.interm = '\0';
+			cs = iso88591;
 		} else {
 			/* special treatment for ASCII */
-			cs.type = CS94;
-			cs.final = 'B';
-			cs.interm = '\0';
+			cs = ascii;
 		}
 	} else {
 		cs.final = (wc >> 24) & 0x7f;
@@ -1159,7 +1156,8 @@ sideok:
 		break;
 	case CS94MULTI:
 	case CS96MULTI:
-		i = isthree(cs.final) ? 3 : 2;
+		i = !iscntl(wc & 0xff) ?
+		    (isthree(cs.final) ? 3 : 2) : 1;
 		break;
 	}
 	while (i-- > 0)
