@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.6 2006/03/08 08:26:50 dyoung Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.7 2006/06/07 22:37:59 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -119,5 +119,22 @@
 				 UINT16_MAX / SC1100_WDCLK_HZ)
 /* watchdog clock rate in Hertz */
 #define	SC1100_WDCLK_HZ	32000
+
+/*
+ * high resolution timer
+ */
+#define SC1100_GCB_TMVALUE_L		0x08    /* timer value */
+
+#define SC1100_GCB_TMSTS_B		0x0c    /* status */
+#define SC1100_TMSTS_OVFL		__BIT(0)  /* set: overflow */
+
+#define SC1100_GCB_TMCNFG_B		0x0d    /* configuration */
+#define SC1100_TMCNFG_TM27MPD		__BIT(2)  /* set: power down on SUSPA# */
+#define SC1100_TMCNFG_TMCLKSEL		__BIT(1)  /* set: 27MHz clock, clear: 1MHz */
+#define SC1100_TMCNFG_TMEN		__BIT(0)  /* set: timer interrupt enabled */
+
+#define SC1100_GCB_IID_B		0x3c    /* chip identification register */
+
+#define SC1100_GCB_REV_B		0x3d    /* revision register */
 
 #endif /* _I386_PCI_GEODEREG_H_ */

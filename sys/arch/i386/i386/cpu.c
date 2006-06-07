@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.27 2006/02/19 14:59:22 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.28 2006/06/07 22:37:58 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2006/06/07 22:37:58 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -417,19 +417,7 @@ cpu_init(ci)
 	if (ci->ci_cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
-#if defined(I586_CPU) || defined(I686_CPU)
-#ifndef NO_TSC_TIME
-	/*
-	 * On systems with a cycle counter, use that for
-	 * interval timing inbetween hz ticks in microtime(9)
-	 * N.B. this is not a good idea on processors whose
-	 * frequency varies a lot over time (e.g. modern laptops)
-	 */
-	if (cpu_feature & CPUID_TSC) {
-		microtime_func = cc_microtime;
-	}
-#endif
-#endif
+
 #if defined(I686_CPU)
 	/*
 	 * On a P6 or above, enable global TLB caching if the
@@ -634,10 +622,7 @@ cpu_hatch(void *v)
 
 	aprint_normal("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
 	    ci->ci_cpuid);
-#if defined(I586_CPU) || defined(I686_CPU)
-	if (ci->ci_feature_flags & CPUID_TSC)
-		cc_microset(ci);
-#endif
+
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.90 2006/02/19 19:54:23 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.91 2006/06/07 22:37:57 kardel Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.90 2006/02/19 19:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.91 2006/06/07 22:37:57 kardel Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.90 2006/02/19 19:54:23 thorpej Exp $");
 #include <machine/gdt.h>
 #include <machine/psl.h>
 
+#include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <i386/isa/nvram.h>
@@ -349,13 +350,13 @@ apmcall_debug(func, regs, line)
 			inf = aci[func].inflag;
 			outf = aci[func].outflag;
 		}
-		inittodr(time.tv_sec);	/* update timestamp */
+		inittodr(time_second);	/* update timestamp */
 		if (name)
 			printf("apmcall@%03ld: %s/%#x (line=%d) ", 
-				time.tv_sec % 1000, name, func, line);
+				time_second % 1000, name, func, line);
 		else
 			printf("apmcall@%03ld: %#x (line=%d) ", 
-				time.tv_sec % 1000, func, line);
+				time_second % 1000, func, line);
 		acallpr(inf, "in:", regs);
 	}
     	rv = apmcall(func, regs);
@@ -586,9 +587,9 @@ apm_resume(sc, regs)
 	/*
 	 * Some system requires its clock to be initialized after hybernation.
 	 */
-	initrtclock();
+	initrtclock(TIMER_FREQ);
 
-	inittodr(time.tv_sec);
+	inittodr(time_second);
 	dopowerhooks(PWR_RESUME);
 
 	splx(apm_spl);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.573 2006/05/22 13:44:53 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.574 2006/06/07 22:37:58 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.573 2006/05/22 13:44:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.574 2006/06/07 22:37:58 kardel Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.573 2006/05/22 13:44:53 yamt Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
-#include <machine/kcore.h>
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -137,12 +136,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.573 2006/05/22 13:44:53 yamt Exp $");
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
+#include <machine/kcore.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
+#include <x86/x86/tsc.h>
+
 #include <machine/multiboot.h>
 
 #include <dev/isa/isareg.h>
@@ -254,7 +256,6 @@ struct vm_map *phys_map = NULL;
 extern	paddr_t avail_start, avail_end;
 
 void (*delay_func)(int) = i8254_delay;
-void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 
 /*
@@ -2382,6 +2383,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 void
 cpu_initclocks()
 {
+
 	(*initclock_func)();
 }
 

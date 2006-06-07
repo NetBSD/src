@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.21 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: timer.c,v 1.22 2006/06/07 22:38:50 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,12 +60,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.21 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.22 2006/06/07 22:38:50 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -76,6 +77,74 @@ __KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.21 2005/11/16 03:00:23 uwe Exp $");
 static struct intrhand level10;
 static struct intrhand level14;
 
+static u_int timer_get_timecount(struct timecounter *);
+
+/*
+ * timecounter local state
+ */
+static struct counter {
+	volatile u_int *cntreg;	/* counter register */
+	u_int limit;		/* limit we count up to */
+	u_int offset;		/* accumulated offet due to wraps */
+	u_int shift;		/* scaling for valid bits */
+	u_int mask;		/* valid bit mask */
+} cntr;
+
+/*
+ * define timecounter
+ */
+
+static struct timecounter counter_timecounter = {
+	timer_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	0,                      /* frequency - set at initialisation */
+	"timer-counter",	/* name */
+	100,			/* quality */
+	&cntr			/* private reference */
+};
+
+/*
+ * timer_get_timecount provide current counter value
+ */
+static u_int
+timer_get_timecount(struct timecounter *tc)
+{
+	struct counter *ctr = (struct counter *)tc->tc_priv;
+
+	u_int c, res, r;
+	int s;
+
+
+	s = splhigh();
+
+	res = c = *ctr->cntreg;
+
+	res  &= ~TMR_LIMIT;
+
+	if (c != res) {
+		r = ctr->limit;
+	} else {
+		r = 0;
+	}
+	
+	res >>= ctr->shift;
+	res  &= ctr->mask;
+
+	res += r + ctr->offset;
+
+	splx(s);
+
+	return res;
+}
+
+void
+tickle_tc()
+{
+	if (timecounter->tc_get_timecount == timer_get_timecount) {
+		cntr.offset += cntr.limit;
+	}
+}
 
 /*
  * sun4/sun4c/sun4m common timer attach code
@@ -83,6 +152,7 @@ static struct intrhand level14;
 void
 timerattach(volatile int *cntreg, volatile int *limreg)
 {
+	u_int prec = 0, t0;
 
 	/*
 	 * Calibrate delay() by tweaking the magic constant
@@ -91,7 +161,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	 */
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile int discard;
-		int t0, t1;
+		u_int t1;
 
 		/* Reset counter register by writing some large limit value */
 		discard = *limreg;
@@ -100,6 +170,8 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 		t0 = *cntreg;
 		delay(100);
 		t1 = *cntreg;
+		
+		prec |= (t0 ^ t1) | (*cntreg ^ *cntreg);
 
 		if (t1 & TMR_LIMIT)
 			panic("delay calibration");
@@ -111,13 +183,23 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 			break;
 	}
 
-	printf(": delay constant %d\n", timerblurb);
+	/* find lowest active bit */
+	for (t0 = 0; t0 < TMR_SHIFT; t0++)
+		if ((1 << t0) & prec)
+			break;
+
+	cntr.shift = t0;
+	cntr.mask = (1 << (31-t0))-1;
+	counter_timecounter.tc_frequency = 1000000 * (TMR_SHIFT - t0 + 1);
+	
+	printf(": delay constant %d, frequency = %" PRIu64 " Hz\n", timerblurb, counter_timecounter.tc_frequency);
 
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		timer_init = timer_init_4;
 		level10.ih_fun = clockintr_4;
 		level14.ih_fun = statintr_4;
+		cntr.limit = tmr_ustolim(tick);
 	}
 #endif
 #if defined(SUN4M)
@@ -125,6 +207,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 		timer_init = timer_init_4m;
 		level10.ih_fun = clockintr_4m;
 		level14.ih_fun = statintr_4m;
+		cntr.limit = tmr_ustolim4m(tick);
 	}
 #endif
 	/* link interrupt handlers */
@@ -135,6 +218,11 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
+
+	cntr.cntreg = cntreg;
+	cntr.limit >>= cntr.shift;
+
+	tc_init(&counter_timecounter);
 }
 
 /*
