@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.777 2006/05/28 08:57:53 martin Exp $
+#	$NetBSD: files,v 1.778 2006/06/07 08:06:56 dogcow Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -538,8 +538,8 @@ file	dev/ic/rtwphyio.c		rtw
 
 # Ralink RT2500 802.11
 device	ral: arp, ether, ifnet, wlan
-define	ralcommon
-file	dev/ic/ral.c			ralcommon
+file	dev/ic/rt2560.c			ral
+file	dev/ic/rt2661.c			ral
 
 # 3Com Etherlink-III Ethernet controller
 #
