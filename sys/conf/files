@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.778 2006/06/07 08:06:56 dogcow Exp $
+#	$NetBSD: files,v 1.779 2006/06/07 12:51:40 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -537,7 +537,7 @@ file	dev/ic/rtwphy.c			rtw
 file	dev/ic/rtwphyio.c		rtw
 
 # Ralink RT2500 802.11
-device	ral: arp, ether, ifnet, wlan
+device	ral: arp, ether, ifnet, wlan, firmload
 file	dev/ic/rt2560.c			ral
 file	dev/ic/rt2661.c			ral
 
