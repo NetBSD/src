@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.h,v 1.2 2006/06/05 05:14:38 gdamore Exp $
+ * $Id: ah_osdep.h,v 1.3 2006/06/07 17:07:33 gdamore Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
@@ -86,7 +86,7 @@ extern	u_int32_t ath_hal_getuptime(struct ath_hal *);
 #else
 #define	BUSTAG(ah)	((bus_space_tag_t) (ah)->ah_st)
 #define	BUSHANDLE(ah)	((bus_space_handle_t) ((ah)->ah_sh))
-#define	HALTAG(t)	(HAL_BUS_TAG) (t)
+#define	HALTAG(t)	(NULL)
 #define	HALHANDLE(h)	(HAL_BUS_HANDLE) (h)
 #endif
 
