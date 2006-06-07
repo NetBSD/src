@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2006/03/18 23:38:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2006/06/07 09:35:03 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2006/03/18 23:38:12 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2006/06/07 09:35:03 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 
 	start_time = seed = time(NULL);
 
-	while ((ch = getopt(argc, argv, "ulstpg:f:r:")) != -1) {
+	while ((ch = getopt(argc, argv, ":u?lstpg:f:r:")) != -1) {
 		switch (ch) {
 		case '?':
 		case 'u':
@@ -120,8 +120,7 @@ main(int argc, char *argv[])
 	if (f_printpath) {
 		char	buf[100];
 
-		(void)strcpy(buf, _PATH_GAMES);
-		buf[strlen(buf) - 1] = '\0';
+		(void)strlcpy(buf, _PATH_GAMES, 100);
 		(void)puts(buf);
 	}
 		
@@ -145,7 +144,6 @@ main(int argc, char *argv[])
 	(void)signal(SIGQUIT, quit);
 #ifdef BSD
 	(void)signal(SIGTSTP, SIG_IGN);
-	(void)signal(SIGSTOP, SIG_IGN);
 #endif
 	(void)signal(SIGHUP, log_score_quit);
 	(void)signal(SIGTERM, log_score_quit);
@@ -232,8 +230,8 @@ default_game(void)
 	static char	file[256];
 	char		line[256], games[256];
 
-	(void)strcpy(games, _PATH_GAMES);
-	(void)strcat(games, GAMES);
+	(void)strlcpy(games, _PATH_GAMES, 256);
+	(void)strlcat(games, GAMES, 256);
 
 	if ((fp = fopen(games, "r")) == NULL) {
 		warn("fopen %s", games);
@@ -246,8 +244,8 @@ default_game(void)
 	}
 	(void)fclose(fp);
 	line[strlen(line) - 1] = '\0';
-	(void)strcpy(file, _PATH_GAMES);
-	(void)strcat(file, line);
+	(void)strlcpy(file, _PATH_GAMES, 256);
+	(void)strlcat(file, line, 256);
 	return (file);
 }
 
@@ -259,8 +257,8 @@ okay_game(const char *s)
 	const char	*ret = NULL;
 	char		line[256], games[256];
 
-	(void)strcpy(games, _PATH_GAMES);
-	(void)strcat(games, GAMES);
+	(void)strlcpy(games, _PATH_GAMES, 256);
+	(void)strlcat(games, GAMES, 256);
 
 	if ((fp = fopen(games, "r")) == NULL) {
 		warn("fopen %s", games);
@@ -269,8 +267,8 @@ okay_game(const char *s)
 	while (fgets(line, sizeof(line), fp) != NULL) {
 		line[strlen(line) - 1] = '\0';
 		if (strcmp(s, line) == 0) {
-			(void)strcpy(file, _PATH_GAMES);
-			(void)strcat(file, line);
+			(void)strlcpy(file, _PATH_GAMES, 256);
+			(void)strlcat(file, line, 256);
 			ret = file;
 			break;
 		}
@@ -293,8 +291,8 @@ list_games(void)
 	char		line[256], games[256];
 	int		num_games = 0;
 
-	(void)strcpy(games, _PATH_GAMES);
-	(void)strcat(games, GAMES);
+	(void)strlcpy(games, _PATH_GAMES, 256);
+	(void)strlcat(games, GAMES, 256);
 
 	if ((fp = fopen(games, "r")) == NULL) {
 		warn("fopen %s", games);
