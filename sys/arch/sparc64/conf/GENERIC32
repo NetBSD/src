@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.129.2.1 2006/04/22 11:37:59 simonb Exp $
+# 	$NetBSD: GENERIC32,v 1.129.2.2 2006/06/07 15:49:38 kardel Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129.2.1 $"
+#ident 		"GENERIC-$Revision: 1.129.2.2 $"
 
 maxusers	64
 
@@ -463,7 +463,7 @@ qe*		at qec?
 # PCI network interfaces
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
-#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x

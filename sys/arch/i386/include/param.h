@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.58.8.1 2006/06/01 22:34:52 kardel Exp $	*/
+/*	$NetBSD: param.h,v 1.58.8.2 2006/06/07 15:49:38 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,11 +104,13 @@
 #ifdef _KERNEL_OPT
 #include "opt_noredzone.h"
 #endif
+#ifndef UPAGES
 #ifdef NOREDZONE
 #define	UPAGES		2		/* pages of u-area */
 #else
 #define UPAGES		3
-#endif
+#endif /*NOREDZONE */
+#endif /* !defined(UPAGES) */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
