@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.124 2006/06/07 22:37:58 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -296,11 +296,9 @@ struct clockframe {
  */
 extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 /*
  * pull in #defines for kinds of processors
@@ -376,7 +374,7 @@ void	savectx(struct pcb *);
 void	proc_trampoline(void);
 
 /* clock.c */
-void	initrtclock(void);
+void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(int);
 void	i8254_microtime(struct timeval *);

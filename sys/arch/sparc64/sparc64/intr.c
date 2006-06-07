@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.50 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: intr.c,v 1.51 2006/06/07 22:39:39 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.50 2006/02/20 19:00:27 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.51 2006/06/07 22:39:39 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -105,12 +105,12 @@ strayintr(const struct trapframe64 *fp, int vectored)
 	    bitmask_snprintf((fp->tf_tstate>>TSTATE_PSTATE_SHIFT),
 	      PSTATE_BITS, buf, sizeof(buf)), vectored);
 
-	timesince = time.tv_sec - straytime;
+	timesince = time_second - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
 			panic("crazy interrupts");
 	} else {
-		straytime = time.tv_sec;
+		straytime = time_second;
 		nstray = 1;
 	}
 #ifdef DDB
