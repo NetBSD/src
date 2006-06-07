@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.31 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.32 2006/06/07 22:34:00 kardel Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.31 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.32 2006/06/07 22:34:00 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,7 +504,7 @@ pk_assoc(pkp, lcp, sa)
 		sa->x25_opts.op_wsize = lcp->lcd_windowsize;
 	sa->x25_net = pkp->pk_xcp->xc_addr.x25_net;
 	lcp->lcd_flags |= sa->x25_opts.op_flags;
-	lcp->lcd_stime = time.tv_sec;
+	lcp->lcd_stime = time_second;
 }
 
 int

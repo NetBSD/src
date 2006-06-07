@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.39 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.40 2006/06/07 22:34:44 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.39 2006/05/14 21:33:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.40 2006/06/07 22:34:44 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -179,14 +179,14 @@ chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 	 */
 	if (ncurblocks >= dq->dq_bsoftlimit && dq->dq_bsoftlimit) {
 		if (dq->dq_curblocks < dq->dq_bsoftlimit) {
-			dq->dq_btime = time.tv_sec + ip->i_ump->um_btime[type];
+			dq->dq_btime = time_second + ip->i_ump->um_btime[type];
 			if (ip->i_uid == kauth_cred_geteuid(cred))
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "disk quota exceeded");
 			return (0);
 		}
-		if (time.tv_sec > dq->dq_btime) {
+		if (time_second > dq->dq_btime) {
 			if ((dq->dq_flags & DQ_BLKS) == 0 &&
 			    ip->i_uid == kauth_cred_geteuid(cred)) {
 				uprintf("\n%s: write failed, %s %s\n",
@@ -285,14 +285,14 @@ chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 	 */
 	if (ncurinodes >= dq->dq_isoftlimit && dq->dq_isoftlimit) {
 		if (dq->dq_curinodes < dq->dq_isoftlimit) {
-			dq->dq_itime = time.tv_sec + ip->i_ump->um_itime[type];
+			dq->dq_itime = time_second + ip->i_ump->um_itime[type];
 			if (ip->i_uid == kauth_cred_geteuid(cred))
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "inode quota exceeded");
 			return (0);
 		}
-		if (time.tv_sec > dq->dq_itime) {
+		if (time_second > dq->dq_itime) {
 			if ((dq->dq_flags & DQ_INODS) == 0 &&
 			    ip->i_uid == kauth_cred_geteuid(cred)) {
 				uprintf("\n%s: write failed, %s %s\n",
@@ -508,11 +508,11 @@ setquota(struct mount *mp, u_long id, int type, caddr_t addr)
 	if (newlim.dqb_bsoftlimit &&
 	    dq->dq_curblocks >= newlim.dqb_bsoftlimit &&
 	    (dq->dq_bsoftlimit == 0 || dq->dq_curblocks < dq->dq_bsoftlimit))
-		newlim.dqb_btime = time.tv_sec + ump->um_btime[type];
+		newlim.dqb_btime = time_second + ump->um_btime[type];
 	if (newlim.dqb_isoftlimit &&
 	    dq->dq_curinodes >= newlim.dqb_isoftlimit &&
 	    (dq->dq_isoftlimit == 0 || dq->dq_curinodes < dq->dq_isoftlimit))
-		newlim.dqb_itime = time.tv_sec + ump->um_itime[type];
+		newlim.dqb_itime = time_second + ump->um_itime[type];
 	dq->dq_dqb = newlim;
 	if (dq->dq_curblocks < dq->dq_bsoftlimit)
 		dq->dq_flags &= ~DQ_BLKS;
@@ -556,10 +556,10 @@ setuse(struct mount *mp, u_long id, int type, caddr_t addr)
 	 */
 	if (dq->dq_bsoftlimit && dq->dq_curblocks < dq->dq_bsoftlimit &&
 	    usage.dqb_curblocks >= dq->dq_bsoftlimit)
-		dq->dq_btime = time.tv_sec + ump->um_btime[type];
+		dq->dq_btime = time_second + ump->um_btime[type];
 	if (dq->dq_isoftlimit && dq->dq_curinodes < dq->dq_isoftlimit &&
 	    usage.dqb_curinodes >= dq->dq_isoftlimit)
-		dq->dq_itime = time.tv_sec + ump->um_itime[type];
+		dq->dq_itime = time_second + ump->um_itime[type];
 	dq->dq_curblocks = usage.dqb_curblocks;
 	dq->dq_curinodes = usage.dqb_curinodes;
 	if (dq->dq_curblocks < dq->dq_bsoftlimit)
@@ -794,9 +794,9 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 		dq->dq_flags |= DQ_FAKE;
 	if (dq->dq_id != 0) {
 		if (dq->dq_btime == 0)
-			dq->dq_btime = time.tv_sec + ump->um_btime[type];
+			dq->dq_btime = time_second + ump->um_btime[type];
 		if (dq->dq_itime == 0)
-			dq->dq_itime = time.tv_sec + ump->um_itime[type];
+			dq->dq_itime = time_second + ump->um_itime[type];
 	}
 	*dqp = dq;
 	return (0);

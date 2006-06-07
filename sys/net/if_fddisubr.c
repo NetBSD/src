@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.61 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.62 2006/06/07 22:33:42 kardel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.61 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.62 2006/06/07 22:33:42 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -274,7 +274,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 #endif

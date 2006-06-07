@@ -1,3 +1,5 @@
+/* $NetBSD: timetc.h,v 1.2 2006/06/07 22:34:18 kardel Exp $ */
+
 /*-
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -49,7 +51,7 @@ struct timecounter {
 		/* This mask should mask off any unimplemented bits. */
 	u_int64_t		tc_frequency;
 		/* Frequency of the counter in Hz. */
-	char			*tc_name;
+	const char		*tc_name;
 		/* Name of the timecounter. */
 	int			tc_quality;
 		/*

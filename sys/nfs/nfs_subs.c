@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.164 2006/05/19 13:53:11 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.165 2006/06/07 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.164 2006/05/19 13:53:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.165 2006/06/07 22:34:17 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1842,7 +1842,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			}
 		}
 	}
-	np->n_attrstamp = mono_time.tv_sec;
+	np->n_attrstamp = time_second;
 	if (vaper != NULL) {
 		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1870,7 +1870,7 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
+	    (time_second - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -1937,7 +1937,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 	if (docheck) {
 		struct vnode *vp = NFSTOV(np);
 		struct nfsmount *nmp;
-		long now = mono_time.tv_sec;
+		long now = time_second;
 #if defined(DEBUG)
 		const char *reason = NULL; /* XXX: gcc */
 #endif

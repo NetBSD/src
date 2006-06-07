@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.156 2006/05/20 07:42:02 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.157 2006/06/07 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.156 2006/05/20 07:42:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.157 2006/06/07 22:34:17 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.156 2006/05/20 07:42:02 yamt Exp $"
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 #include <sys/kauth.h>
 
 #include <net/if.h>
@@ -305,6 +306,9 @@ nfs_fsinfo(nmp, vp, cred, l)
 int
 nfs_mountroot()
 {
+#ifdef __HAVE_TIMECOUNTER
+	struct timespec ts;
+#endif
 	struct nfs_diskless *nd;
 	struct vattr attr;
 	struct mount *mp;
@@ -321,11 +325,18 @@ nfs_mountroot()
 	/*
 	 * XXX time must be non-zero when we init the interface or else
 	 * the arp code will wedge.  [Fixed now in if_ether.c]
-	 * However, the NFS attribute cache gives false "hits" when
-	 * time.tv_sec < NFS_ATTRTIMEO(nmp, np) so keep this in for now.
+	 * However, the NFS attribute cache gives false "hits" when the
+	 * current time < NFS_ATTRTIMEO(nmp, np) so keep this in for now.
 	 */
-	if (time.tv_sec < NFS_MAXATTRTIMO)
+	if (time_second < NFS_MAXATTRTIMO) {
+#ifdef __HAVE_TIMECOUNTER
+		ts.tv_sec = NFS_MAXATTRTIMO;
+		ts.tv_nsec = 0;
+		tc_setclock(&ts);
+#else /* !__HAVE_TIMECOUNTER */
 		time.tv_sec = NFS_MAXATTRTIMO;
+#endif /* !__HAVE_TIMECOUNTER */
+	}
 
 	/*
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.

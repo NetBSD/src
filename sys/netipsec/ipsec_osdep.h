@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.17 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.18 2006/06/07 22:34:04 kardel Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -166,9 +166,10 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 /*
  * 7. Elapsed Time: time_second as time in seconds.
  * Original FreeBSD fast-ipsec code references a FreeBSD kernel global,
- * time_second().  NetBSD: kludge #define to use time_mono_time.tv_sec.
+ * time_second().
+ * (Non-timecounter) NetBSD: kludge #define to use time_mono_time.tv_sec.
  */
-#ifdef __NetBSD__
+#if defined(__NetBSD__) && !defined(__HAVE_TIMECOUNTER)
 #include <sys/kernel.h>
 #define time_second mono_time.tv_sec
 #endif	/* __NetBSD__ */

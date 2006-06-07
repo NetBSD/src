@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.13 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.14 2006/06/07 22:33:37 kardel Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.13 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.14 2006/06/07 22:33:37 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,17 +202,16 @@ static void
 viaenv_refresh_sensor_data(struct viaenv_softc *sc)
 {
 	static const struct timeval onepointfive =  { 1, 500000 };
-	struct timeval t;
+	struct timeval t, utv;
 	u_int8_t v, v2;
-	int i, s;
+	int i;
 
 	/* Read new values at most once every 1.5 seconds. */
 	timeradd(&sc->sc_lastread, &onepointfive, &t);
-	s = splclock();
-	i = timercmp(&mono_time, &t, >);
+	getmicrouptime(&utv);
+	i = timercmp(&utv, &t, >);
 	if (i)
-		sc->sc_lastread = mono_time;
-	splx(s);
+		sc->sc_lastread = utv;
 
 	if (i == 0)
 		return;

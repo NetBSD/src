@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.69 2006/04/15 02:19:00 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.70 2006/06/07 22:33:43 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.69 2006/04/15 02:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.70 2006/06/07 22:33:43 kardel Exp $");
 
 #include "opt_ns.h"
 
@@ -936,12 +936,6 @@ rt_timer_add(struct rtentry *rt,
 	struct rttimer_queue *queue)
 {
 	struct rttimer *r;
-	long current_time;
-	int s;
-
-	s = splclock();
-	current_time = mono_time.tv_sec;
-	splx(s);
 
 	/*
 	 * If there's already a timer with this action, destroy it before
@@ -967,7 +961,7 @@ rt_timer_add(struct rtentry *rt,
 	Bzero(r, sizeof(*r));
 
 	r->rtt_rt = rt;
-	r->rtt_time = current_time;
+	r->rtt_time = time_uptime;
 	r->rtt_func = func;
 	r->rtt_queue = queue;
 	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
@@ -983,18 +977,13 @@ rt_timer_timer(void *arg)
 {
 	struct rttimer_queue *rtq;
 	struct rttimer *r;
-	long current_time;
 	int s;
-
-	s = splclock();
-	current_time = mono_time.tv_sec;
-	splx(s);
 
 	s = splsoftnet();
 	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
 	     rtq = LIST_NEXT(rtq, rtq_link)) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
-		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
+		    (r->rtt_time + rtq->rtq_timeout) < time_uptime) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 			RTTIMER_CALLOUT(r);

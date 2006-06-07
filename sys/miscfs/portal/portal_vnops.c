@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.65 2006/06/05 13:25:28 rpaulo Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.66 2006/06/07 22:33:41 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.65 2006/06/05 13:25:28 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.66 2006/06/07 22:33:41 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,12 +541,8 @@ portal_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
-	/*
-	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
-	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic.
-	 */
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	/* Make all times be current TOD. */
+	getnanotime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;

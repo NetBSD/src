@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.81 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.82 2006/06/07 22:34:19 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.81 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.82 2006/06/07 22:34:19 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -644,22 +644,23 @@ void
 ffs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	struct timespec *ts = NULL, tsb;
+	struct timespec now;
 
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY))) {
 		return;
 	}
 
+	getnanotime(&now);
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
-			acc = ts = nanotime(&tsb);
+			acc = &now;
 		DIP_ASSIGN(ip, atime, acc->tv_sec);
 		DIP_ASSIGN(ip, atimensec, acc->tv_nsec);
 	}
 	if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
 		if ((ip->i_flags & SF_SNAPSHOT) == 0) {
 			if (mod == NULL)
-				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				mod = &now;
 			DIP_ASSIGN(ip, mtime, mod->tv_sec);
 			DIP_ASSIGN(ip, mtimensec, mod->tv_nsec);
 		}
@@ -667,7 +668,7 @@ ffs_itimes(struct inode *ip, const struct timespec *acc,
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
 		if (cre == NULL)
-			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			cre = &now;
 		DIP_ASSIGN(ip, ctime, cre->tv_sec);
 		DIP_ASSIGN(ip, ctimensec, cre->tv_nsec);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.107 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.108 2006/06/07 22:34:03 kardel Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.107 2006/02/25 02:28:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108 2006/06/07 22:34:03 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -183,6 +183,7 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	int dir;
 {
 	struct secpolicyindex spidx;
+	struct bintime bt;
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
@@ -233,7 +234,8 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		 */
 	}
 
-	pcbsp->sp_cache[dir].cachesp->lastused = mono_time.tv_sec;
+	getbinuptime(&bt);
+	pcbsp->sp_cache[dir].cachesp->lastused = bt.sec;
 	pcbsp->sp_cache[dir].cachesp->refcnt++;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",

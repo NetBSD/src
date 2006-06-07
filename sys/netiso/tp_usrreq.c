@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.27 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.28 2006/06/07 22:34:04 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.27 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.28 2006/06/07 22:34:04 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,12 +529,15 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #ifdef TP_PERF_MEAS
 		if (DOPERF(tpcb)) {
 			u_int           lsufx, fsufx;
+			struct timeval	now;
+
 			lsufx = *(u_short *) (tpcb->tp_lsuffix);
 			fsufx = *(u_short *) (tpcb->tp_fsuffix);
 
+			getmicrotime(&now);
 			tpmeas(tpcb->tp_lref,
 			       TPtime_open | (tpcb->tp_xtd_format << 4),
-			       &time, lsufx, fsufx, tpcb->tp_fref);
+			       &now, lsufx, fsufx, tpcb->tp_fref);
 		}
 #endif
 		break;
@@ -559,9 +562,12 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #ifdef TP_PERF_MEAS
 		if (DOPERF(tpcb)) {
 			u_int           lsufx, fsufx;
+			struct timeval	now;
+
 			lsufx = *(u_short *) (tpcb->tp_lsuffix);
 			fsufx = *(u_short *) (tpcb->tp_fsuffix);
 
+			getmicrotime(&now);
 			tpmeas(tpcb->tp_lref, TPtime_open,
 			       &time, lsufx, fsufx, tpcb->tp_fref);
 		}

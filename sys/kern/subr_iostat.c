@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.9 2006/04/21 13:58:10 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.10 2006/06/07 22:33:40 kardel Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.9 2006/04/21 13:58:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.10 2006/06/07 22:33:40 kardel Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -132,7 +132,6 @@ iostat_find(const char *name)
 struct io_stats *
 iostat_alloc(int32_t type)
 {
-	int s;
 	struct io_stats *stats;
 
 	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -144,9 +143,7 @@ iostat_alloc(int32_t type)
 	/*
 	 * Set the attached timestamp.
 	 */
-	s = splclock();
-	stats->io_attachtime = mono_time;
-	splx(s);
+	getmicrouptime(&stats->io_attachtime);
 
 	/*
 	 * Link into the drivelist.
@@ -185,17 +182,9 @@ iostat_free(struct io_stats *stats)
 void
 iostat_busy(struct io_stats *stats)
 {
-	int s;
 
-	/*
-	 * XXX We'd like to use something as accurate as microtime(),
-	 * but that doesn't depend on the system TOD clock.
-	 */
-	if (stats->io_busy++ == 0) {
-		s = splclock();
-		stats->io_timestamp = mono_time;
-		splx(s);
-	}
+	if (stats->io_busy++ == 0)
+		getmicrouptime(&stats->io_timestamp);
 }
 
 /*
@@ -205,7 +194,6 @@ iostat_busy(struct io_stats *stats)
 void
 iostat_unbusy(struct io_stats *stats, long bcount, int read)
 {
-	int s;
 	struct timeval dv_time, diff_time;
 
 	if (stats->io_busy-- == 0) {
@@ -213,9 +201,7 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 		panic("iostat_unbusy");
 	}
 
-	s = splclock();
-	dv_time = mono_time;
-	splx(s);
+	getmicrouptime(&dv_time);
 
 	timersub(&dv_time, &stats->io_timestamp, &diff_time);
 	timeradd(&stats->io_time, &diff_time, &stats->io_time);

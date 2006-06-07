@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.102 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.103 2006/06/07 22:34:04 kardel Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.102 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.103 2006/06/07 22:34:04 kardel Exp $");
 
 #include "opt_ipsec.h"
 
@@ -399,7 +399,7 @@ nd6_llinfo_settimer(ln, xtick)
 		ln->ln_ntick = 0;
 		callout_stop(&ln->ln_timer_ch);
 	} else {
-		ln->ln_expire = time.tv_sec + xtick / hz;
+		ln->ln_expire = time_second + xtick / hz;
 		if (xtick > INT_MAX) {
 			ln->ln_ntick = xtick - INT_MAX;
 			callout_reset(&ln->ln_timer_ch, INT_MAX,
@@ -540,7 +540,7 @@ nd6_timer(ignored_arg)
 	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
-		if (dr->expire && dr->expire < time.tv_sec) {
+		if (dr->expire && dr->expire < time_second) {
 			struct nd_defrouter *t;
 			t = TAILQ_NEXT(dr, dr_entry);
 			defrtrlist_del(dr);
@@ -631,7 +631,7 @@ nd6_timer(ignored_arg)
 		 * prefix is not necessary.
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
-		    time.tv_sec - pr->ndpr_lastupdate > pr->ndpr_vltime) {
+		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
 			struct nd_prefix *t;
 			t = pr->ndpr_next;
 
@@ -1020,9 +1020,9 @@ nd6_free(rt, gc)
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			if (dr->expire > time.tv_sec)
+			if (dr->expire > time_second)
 				nd6_llinfo_settimer(ln,
-				    (dr->expire - time.tv_sec) * hz);
+				    (dr->expire - time_second) * hz);
 			else
 				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);

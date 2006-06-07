@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.97 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.98 2006/06/07 22:33:43 kardel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.97 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.98 2006/06/07 22:33:43 kardel Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -492,11 +492,12 @@ sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
-		struct timeval tv;
+		struct bintime bt;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_lastpacket, &tv);
-		if (tv.tv_sec > 0) {
+		getbinuptime(&bt);
+		bintime_sub(&bt, &sc->sc_lastpacket);
+		if (bt.sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);
 		}
@@ -513,7 +514,7 @@ sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		splx(s);
 		return error;
 	}
-	sc->sc_lastpacket = time;
+	getbinuptime(&sc->sc_lastpacket);
 	splx(s);
 
 	s = spltty();
@@ -625,15 +626,15 @@ slinput(int c, struct tty *tp)
 			 * this one is within the time limit.
 			 */
 			if (sc->sc_abortcount &&
-			    time.tv_sec >= sc->sc_starttime + ABT_WINDOW)
+			    time_second >= sc->sc_starttime + ABT_WINDOW)
 				sc->sc_abortcount = 0;
 			/*
 			 * If we see an abort after "idle" time, count it;
 			 * record when the first abort escape arrived.
 			 */
-			if (time.tv_sec >= sc->sc_lasttime + ABT_IDLE) {
+			if (time_second >= sc->sc_lasttime + ABT_IDLE) {
 				if (++sc->sc_abortcount == 1)
-					sc->sc_starttime = time.tv_sec;
+					sc->sc_starttime = time_second;
 				if (sc->sc_abortcount >= ABT_COUNT) {
 					slclose(tp, 0);
 					return (0);
@@ -641,7 +642,7 @@ slinput(int c, struct tty *tp)
 			}
 		} else
 			sc->sc_abortcount = 0;
-		sc->sc_lasttime = time.tv_sec;
+		sc->sc_lasttime = time_second;
 	}
 
 	switch (c) {
@@ -810,7 +811,7 @@ slintr(void *arg)
 			bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *),
 			    bpf_m);
 #endif
-		sc->sc_lastpacket = time;
+		getbinuptime(&sc->sc_lastpacket);
 
 		s = spltty();
 
@@ -995,7 +996,7 @@ slintr(void *arg)
 		}
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_lastpacket = time;
+		getbinuptime(&sc->sc_lastpacket);
 
 #ifdef INET
 		s = splnet();

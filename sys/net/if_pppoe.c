@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.68 2006/05/14 21:19:33 elad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.69 2006/06/07 22:33:42 kardel Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.68 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.69 2006/06/07 22:33:42 kardel Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -1347,6 +1347,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
 static int
 pppoe_send_pads(struct pppoe_softc *sc)
 {
+	struct bintime bt;
 	struct mbuf *m0;
 	u_int8_t *p;
 	size_t len, l1 = 0;	/* XXX: gcc */
@@ -1354,7 +1355,8 @@ pppoe_send_pads(struct pppoe_softc *sc)
 	if (sc->sc_state != PPPOE_STATE_PADO_SENT)
 		return EIO;
 
-	sc->sc_session = mono_time.tv_sec % 0xff + 1;
+	getbinuptime(&bt);
+	sc->sc_session = bt.sec % 0xff + 1;
 	/* calc length */
 	len = 0;
 	/* include hunique */

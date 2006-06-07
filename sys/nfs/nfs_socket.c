@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.134 2006/05/28 13:23:08 blymn Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.135 2006/06/07 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.134 2006/05/28 13:23:08 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.135 2006/06/07 22:34:17 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -887,7 +887,7 @@ nfsmout:
 					rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
 					rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
 					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsidx;
-					rt->tstamp = time;
+					getmicrotime(&rt->tstamp);
 					if (rep->r_flags & R_TIMING)
 						rt->rtt = rep->r_rtt;
 					else
@@ -1133,7 +1133,7 @@ tryagain:
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
 
 	/* Get send time for nqnfs */
-	reqtime = time.tv_sec;
+	reqtime = time_second;
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
@@ -1374,8 +1374,8 @@ tryagain:
 					break;
 				m_freem(mrep);
 				error = 0;
-				waituntil = time.tv_sec + trylater_delay;
-				while (time.tv_sec < waituntil)
+				waituntil = time_second + trylater_delay;
+				while (time_second < waituntil)
 					(void) tsleep((caddr_t)&lbolt,
 						PSOCK, "nqnfstry", 0);
 				trylater_delay *= NFS_TRYLATERDELMUL;
@@ -1430,7 +1430,7 @@ tryagain:
 				nfsm_dissect(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 				cachable = fxdr_unsigned(int, *tl++);
 				reqtime += fxdr_unsigned(int, *tl++);
-				if (reqtime > time.tv_sec) {
+				if (reqtime > time_second) {
 				    frev = fxdr_hyper(tl);
 				    nqnfs_clientlease(nmp, np, nqlflag,
 					cachable, reqtime, frev);
@@ -1635,6 +1635,7 @@ nfs_timer(arg)
 	int timeo;
 	int s, error;
 #ifdef NFSSERVER
+	struct timeval tv;
 	struct nfssvc_sock *slp;
 	static long lasttime = 0;
 	u_quad_t cur_usec;
@@ -1738,8 +1739,8 @@ nfs_timer(arg)
 	/*
 	 * Call the nqnfs server timer once a second to handle leases.
 	 */
-	if (lasttime != time.tv_sec) {
-		lasttime = time.tv_sec;
+	if (lasttime != time_second) {
+		lasttime = time_second;
 		nqnfs_serverd();
 	}
 
@@ -1747,7 +1748,8 @@ nfs_timer(arg)
 	 * Scan the write gathering queues for writes that need to be
 	 * completed now.
 	 */
-	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
+	getmicrotime(&tv);
+	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 	    if (LIST_FIRST(&slp->ns_tq) &&
 		LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
@@ -2152,7 +2154,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
 			tvout.tv_usec = fxdr_unsigned(long, tvout.tv_usec);
-			if (nuidp->nu_expire < time.tv_sec ||
+			if (nuidp->nu_expire < time_second ||
 			    nuidp->nu_timestamp.tv_sec > tvout.tv_sec ||
 			    (nuidp->nu_timestamp.tv_sec == tvout.tv_sec &&
 			     nuidp->nu_timestamp.tv_usec > tvout.tv_usec)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.64 2006/05/20 07:40:56 yamt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.65 2006/06/07 22:34:17 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.64 2006/05/20 07:40:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.65 2006/06/07 22:34:17 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -379,7 +379,7 @@ nqsrv_instimeq(lp, duration)
 	struct nqlease *tlp;
 	time_t newexpiry;
 
-	newexpiry = time.tv_sec + duration + nqsrv_clockskew;
+	newexpiry = time_second + duration + nqsrv_clockskew;
 	if (lp->lc_expiry == newexpiry)
 		return;
 	if (CIRCLEQ_NEXT(lp, lc_timer) != 0)
@@ -592,7 +592,7 @@ nqsrv_waitfor_expiry(lp)
 	int len, ok;
 
 tryagain:
-	if (time.tv_sec > lp->lc_expiry)
+	if (time_second > lp->lc_expiry)
 		return;
 	lph = &lp->lc_host;
 	lphnext = lp->lc_morehosts;
@@ -638,7 +638,7 @@ nqnfs_serverd()
 
 	for (lp = CIRCLEQ_FIRST(&nqtimerhead); lp != (void *)&nqtimerhead;
 	    lp = nextlp) {
-		if (lp->lc_expiry >= time.tv_sec)
+		if (lp->lc_expiry >= time_second)
 			break;
 		nextlp = CIRCLEQ_NEXT(lp, lc_timer);
 		if (lp->lc_flag & LC_EXPIREDWANTED) {
@@ -876,12 +876,12 @@ nqnfs_getlease(vp, rwflag, cred, l)
 	nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(rwflag);
 	*tl = txdr_unsigned(nmp->nm_leaseterm);
-	reqtime = time.tv_sec;
+	reqtime = time_second;
 	nfsm_request(np, NQNFSPROC_GETLEASE, l, cred);
 	nfsm_dissect(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
-	if (reqtime > time.tv_sec) {
+	if (reqtime > time_second) {
 		frev = fxdr_hyper(tl);
 		nqnfs_clientlease(nmp, np, rwflag, cachable, reqtime, frev);
 		nfsm_loadattr(vp, (struct vattr *)0, 0);
@@ -1109,7 +1109,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		while (np != (void *)&nmp->nm_timerhead &&
 		       (nmp->nm_iflag & NFSMNT_DISMINPROG) == 0) {
 			vp = NFSTOV(np);
-			if (np->n_expiry < time.tv_sec) {
+			if (np->n_expiry < time_second) {
 			   if (vget(vp, LK_EXCLUSIVE) == 0) {
 				nmp->nm_inprog = vp;
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
@@ -1133,7 +1133,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 				vput(vp);
 				nmp->nm_inprog = NULLVP;
 			    }
-			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
+			} else if ((np->n_expiry - NQ_RENEWAL) < time_second) {
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
 				 == NQNFSWRITE &&
 				 !LIST_EMPTY(&vp->v_dirtyblkhd) &&
