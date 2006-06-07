@@ -1,3 +1,8 @@
+2006-06-07  Mark D. Baushke  <mdb@gnu.org>
+
+	* modules.c (my_module): Remove unused variable xvalue.
+	[Fixes NetBSD coverity cid-705.]
+
 2006-05-31  Mark D. Baushke  <mdb@gnu.org>
 
 	* add.c (add): Fix memory leak.
