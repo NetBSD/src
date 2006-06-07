@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.17 2005/08/10 19:21:21 rpaulo Exp $	*/
+/*	$NetBSD: log.c,v 1.18 2006/06/07 09:30:35 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.17 2005/08/10 19:21:21 rpaulo Exp $");
+__RCSID("$NetBSD: log.c,v 1.18 2006/06/07 09:30:35 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,11 @@ open_score_file(void)
 	int flags;
 
 	old_mask = umask(0);
+#if defined(O_NOFOLLOW)
+	score_fd = open(_PATH_SCORE, O_CREAT|O_RDWR|O_NOFOLLOW, 0664);
+#else
 	score_fd = open(_PATH_SCORE, O_CREAT|O_RDWR, 0664);
+#endif
 	(void)umask(old_mask);
 	if (score_fd < 0) {
 		warn("open %s", _PATH_SCORE);
@@ -151,7 +155,7 @@ log_score(int list_em)
 	if (flock(fileno(score_fp), LOCK_EX) < 0)
 #endif
 #ifdef SYSV
-	while (lockf(fileno(score_fp), F_LOCK, 1) < 0)
+	if (lockf(fileno(score_fp), F_LOCK, 1) < 0)
 #endif
 	{
 		warn("flock %s", _PATH_SCORE);
@@ -175,7 +179,7 @@ log_score(int list_em)
 				(int)getuid());
 			return (-1);
 		}
-		(void)strcpy(thisscore.name, pw->pw_name);
+		(void)strlcpy(thisscore.name, pw->pw_name, SCORE_NAME_LEN);
 		(void)uname(&lname);
 		(void)strlcpy(thisscore.host, lname.nodename, 
 		    sizeof(thisscore.host));
@@ -187,7 +191,7 @@ log_score(int list_em)
 			return (-1);
 		}
 		cp++;
-		(void)strcpy(thisscore.game, cp);
+		(void)strlcpy(thisscore.game, cp, SCORE_GAME_LEN);
 
 		thisscore.time = clck;
 		thisscore.planes = safe_planes;
