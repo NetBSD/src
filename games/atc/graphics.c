@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.12 2005/08/10 17:53:28 rpaulo Exp $	*/
+/*	$NetBSD: graphics.c,v 1.13 2006/06/07 09:22:52 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.12 2005/08/10 17:53:28 rpaulo Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.13 2006/06/07 09:22:52 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,9 +388,10 @@ loser(const PLANE *p, const char *s)
 	if (p == NULL)
 		(void)wprintw(input, "%s\n\nHit space for top players list...",
 		    s);
-	else
+	else {
 		(void)wprintw(input, "Plane '%c' %s\n\n", name(p), s);
 		(void)wprintw(input, "Hit space for top players list...");
+	}
 	(void)wrefresh(input);
 	(void)fflush(stdout);
 	while ((c = getchar()) != EOF && c != ' ')
