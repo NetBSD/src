@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24.2.1 2006/06/07 01:23:09 chap Exp $	*/
+/*	$NetBSD: opl.c,v 1.24.2.2 2006/06/07 05:31:43 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.1 2006/06/07 01:23:09 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.2 2006/06/07 05:31:43 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,8 @@ void oplsyn_close(midisyn *);
 void oplsyn_reset(void *);
 void oplsyn_noteon(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 void oplsyn_noteoff(midisyn *, u_int32_t, u_int32_t, u_int32_t);
-void oplsyn_keypressure(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 void oplsyn_ctlchange(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 void oplsyn_programchange(midisyn *, u_int32_t, u_int32_t);
-void oplsyn_pitchbend(midisyn *, u_int32_t, u_int32_t, u_int32_t);
 void oplsyn_loadpatch(midisyn *, struct sysex_info *, struct uio *);
 
 
@@ -136,9 +134,7 @@ struct midisyn_methods opl3_midi = {
 	.close   = oplsyn_close,
 	.noteon  = oplsyn_noteon,
 	.noteoff = oplsyn_noteoff,
-	.keypres = oplsyn_keypressure, /* stubbed only */
 	.pgmchg  = oplsyn_programchange,
-	.pitchb  = oplsyn_pitchbend,   /* stubbed only */
 };
 
 void
@@ -574,17 +570,6 @@ oplsyn_noteoff(ms, voice, note, vel)
 }
 
 void
-oplsyn_keypressure(ms, voice, note, vel)
-	midisyn *ms;
-	u_int32_t voice, note, vel;
-{
-#ifdef AUDIO_DEBUG
-	struct opl_softc *sc = ms->data;
-	DPRINTFN(1, ("oplsyn_keypressure: %p %d\n", sc, note));
-#endif
-}
-
-void
 oplsyn_ctlchange(ms, chan, parm, w14)
 	midisyn *ms;
 	u_int32_t chan, parm, w14;
@@ -613,17 +598,6 @@ oplsyn_programchange(ms, chan, prog)
 		return;
 
 	ms->pgms[chan] = prog;
-}
-
-void
-oplsyn_pitchbend(ms, voice, parm, x)
-	midisyn *ms;
-	u_int32_t voice, parm, x;
-{
-#ifdef AUDIO_DEBUG
-	struct opl_softc *sc = ms->data;
-	DPRINTFN(1, ("oplsyn_pitchbend: %p %d\n", sc, voice));
-#endif
 }
 
 void

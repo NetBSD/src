@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.12 2006/06/07 01:23:09 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.13 2006/06/07 05:31:43 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,18 @@
 
 typedef struct midisyn midisyn;
 
+/*
+ * Important: any synth driver that uses midisyn must set up its methods
+ * structure in a way that refers to members /by name/ and zeroes the rest
+ * (as is the effect of C99 initializers with designators). This discipline
+ * will allow the structure to evolve methods for newly implemented
+ * functionality or to exploit capabilities of new drivers with a minimal
+ * versioning burden.  Because midisyn is at present a very rudimentary and
+ * partial implementation, change should be expected in this set of methods.
+ * Do not hesitate to add one in the course of implementing new stuff, as
+ * long as it will be generally useful and there is some reasonable fallback
+ * for drivers without it.
+ */
 struct midisyn_methods {
 	int  (*open)	(midisyn *, int);
 	void (*close)   (midisyn *);
@@ -50,11 +62,7 @@ struct midisyn_methods {
 	int  (*allocv)  (midisyn *, u_int32_t, u_int32_t);
 	void (*noteon)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
 	void (*noteoff) (midisyn *, u_int32_t, u_int32_t, u_int32_t);
-	void (*keypres) (midisyn *, u_int32_t, u_int32_t, u_int32_t);
 	void (*pgmchg)  (midisyn *, u_int32_t, u_int32_t);
-	void (*chnpres) (midisyn *, u_int32_t, u_int32_t);
-	void (*pitchb)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
-	void (*sysex)   (midisyn *, u_int32_t);
 };
 
 struct voice {
