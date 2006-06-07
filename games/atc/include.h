@@ -1,4 +1,4 @@
-/*	$NetBSD: include.h,v 1.8 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: include.h,v 1.9 2006/06/07 09:24:26 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,6 +50,7 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <curses.h>
 #include <err.h>
