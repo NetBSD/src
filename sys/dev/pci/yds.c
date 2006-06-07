@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.30 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.31 2006/06/07 15:34:47 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.31 2006/06/07 15:34:47 nakayama Exp $");
 
 #include "mpu.h"
 
@@ -926,7 +926,7 @@ yds_read_codec(void *sc_, uint8_t reg, uint16_t *data)
 	    sc->sc->sc_revision < 2) {
 		int i;
 		for (i=0; i<600; i++)
-			YREAD2(sc->sc, sc->status_data);
+			(void)YREAD2(sc->sc, sc->status_data);
 	}
 
 	*data = YREAD2(sc->sc, sc->status_data);
