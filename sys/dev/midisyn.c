@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.12 2006/06/07 00:09:39 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.13 2006/06/07 05:31:43 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.12 2006/06/07 00:09:39 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.13 2006/06/07 05:31:43 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -273,6 +273,12 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 
 	switch (status) {
 	case MIDI_NOTEOFF:
+		/*
+		 * for a device that leaves voice allocation to us--and that's
+		 * all of 'em at the moment--the voice and release velocity
+		 * should be the only necessary arguments to noteoff. what use
+		 * are they making of note? checking... None. Cool.
+		 */
 		voice = midisyn_findvoice(ms, chan, buf[1]);
 		if (voice >= 0) {
 			fs->noteoff(ms, voice, note, vel);
@@ -280,15 +286,30 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		}
 		break;
 	case MIDI_NOTEON:
+		/*
+		 * opl combines vel with a 'mainvol' that has no setter
+		 * anywhere. pcppi punts volume entirely. cms uses vel alone.
+		 * what's called for here, given current drivers, is an i/f
+		 * where midisyn computes a volume from vel*volume*expression*
+		 * mastervolume and passes that result as a single arg. It can
+		 * evolve later to support drivers that expose some of those
+		 * bits separately (e.g. a driver could expose a mixer register
+		 * on its sound card and use that for mastervolume).
+		 */
 		voice = fs->allocv(ms, chan, buf[1]);
 		fs->noteon(ms, voice, note, vel);
 		break;
 	case MIDI_KEY_PRESSURE:
-		if (fs->keypres) {
-			voice = midisyn_findvoice(ms, voice, buf[1]);
-			if (voice >= 0)
-				fs->keypres(ms, voice, note, vel);
-		}
+		/*
+		 * unimplemented by the existing drivers. if we are doing
+		 * voice allocation, find the voice that corresponds to this
+		 * chan/note and define a method that passes the voice and
+		 * pressure to the driver ... not the note, /it/ doesn't matter.
+		 * For a driver that does its own allocation, a different
+		 * method may be needed passing pressure, chan, note so it can
+		 * find the right voice on its own. Be sure that whatever is
+		 * done here is undone when midisyn_notify sees MIDICTL_RESET.
+		 */
 		break;
 	case MIDI_CTL_CHANGE:
 		midictl_change(&ms->ctl, chan, buf+1);
@@ -298,18 +319,27 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 			fs->pgmchg(ms, chan, buf[1]);
 		break;
 	case MIDI_CHN_PRESSURE:
-		if (fs->chnpres) {
-			voice = midisyn_findvoice(ms, chan, buf[1]);
-			if (voice >= 0) /* XXX should do all voices on chan */
-				fs->chnpres(ms, voice, note);
-		}
+		/*
+		 * unimplemented by the existing drivers. if driver exposes no
+		 * distinct method, can use KEY_PRESSURE method for each voice
+		 * on channel. Be sure that whatever is
+		 * done here is undone when midisyn_notify sees MIDICTL_RESET.
+		 */
 		break;
 	case MIDI_PITCH_BEND:
-		if (fs->pitchb) {
-			voice = midisyn_findvoice(ms, chan, buf[1]);
-			if (voice >= 0) /* XXX buf1-2 are a 14-bit bend value */
-				fs->pitchb(ms, chan, note, vel);
-		}
+		/*
+		 * unimplemented by existing drivers. it is good that most
+		 * existing drivers take a /frequency/ rather than a /note no/
+		 * for control; midisyn should use this event to update some
+		 * internal state and use it (along with tuning) to derive the
+		 * frequency passed to the driver for any note on. A driver that
+		 * can change freq of a sounding voice should expose a method
+		 * for that, i.e. m(voice,newfreq) and we should call that too,
+		 * for each voice on the affected channel, when a pitch bend
+		 * change is received. Note RPN 0 must be used in scaling the
+		 * pitch bend. Be sure that whatever is
+		 * done here is undone when midisyn_notify sees MIDICTL_RESET.
+		 */
 		break;
 	}
 	return 0;
@@ -322,11 +352,13 @@ int midisyn_commonmsg(void *addr, int status, u_char *buf, int len)
 
 int midisyn_sysex(void *addr, u_char *buf, int len)
 {
-	midisyn *ms = addr;
-	if (ms->mets->sysex) {
-		while ( len --> 0 )
-			ms->mets->sysex(ms, *buf++);
-	}
+	/*
+	 * unimplemented by existing drivers. it is surely more sensible
+	 * to do some parsing of well-defined sysex messages here, either
+	 * handling them internally or calling specific methods on the
+	 * driver after parsing out the details, than to ask every driver
+	 * to deal with sysex messages poked at it a byte at a time.
+	 */
 	return 0;
 }
 
