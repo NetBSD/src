@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.10 2006/05/20 04:31:59 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.11 2006/06/07 00:09:39 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _SYS_DEV_MIDISYNVAR_H_
 #define _SYS_DEV_MIDISYNVAR_H_
 
+#include "midictl.h"
+
 typedef struct midisyn midisyn;
 
 struct midisyn_methods {
@@ -76,10 +78,19 @@ struct midisyn {
 #define MS_FREQXLATE	2
 	void *data;
 
+	/* Set up by midisyn but available to synth driver for reading ctls */
+	/*
+	 * Note - there is currently no locking on this structure; if the synth
+	 * driver interacts with midictl it should do so synchronously, when
+	 * processing a call from midisyn, and not at other times such as upon
+	 * an interrupt. (may revisit locking if problems crop up.)
+	 */
+	midictl ctl;
+	
 	/* Used by midisyn driver */
 	struct voice *voices;
 	u_int seqno;
-	u_int16_t pgms[MIDI_MAX_CHANS];
+/*	u_int16_t pgms[MIDI_MAX_CHANS]; XXX not referenced in midisyn?? */
 };
 
 #define MS_GETPGM(ms, vno) ((ms)->pgms[MS_GETCHAN(&(ms)->voices[vno])])
