@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.110.6.2 2006/06/01 22:36:46 kardel Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.110.6.3 2006/06/07 15:51:09 kardel Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110.6.2 2006/06/01 22:36:46 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.110.6.3 2006/06/07 15:51:09 kardel Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -213,6 +213,9 @@ typedef enum {
 	WM_T_82541_2,			/* i82541 2.0+ */
 	WM_T_82547,			/* i82547 */
 	WM_T_82547_2,			/* i82547 2.0+ */
+	WM_T_82571,
+	WM_T_82572,
+	WM_T_82573,
 } wm_chip_type;
 
 /*
@@ -362,6 +365,7 @@ do {									\
 #define	WM_F_BUS64		0x20	/* bus is 64-bit */
 #define	WM_F_PCIX		0x40	/* bus is PCI-X */
 #define	WM_F_CSA		0x80	/* bus is CSA */
+#define	WM_F_PCIE		0x100	/* bus is PCI-Express */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -607,8 +611,16 @@ static const struct wm_product {
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
 	  WM_T_82546_3,		WMP_F_SERDES },
 #endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_PCIE,
+	  "Intel PRO/1000MT (82546GB)",
+	  WM_T_82546_3,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI,
 	  "Intel i82541EI 1000BASE-T Ethernet",
+	  WM_T_82541,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541ER_LOM,
+	  "Intel i82541ER (LOM) 1000BASE-T Ethernet",
 	  WM_T_82541,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI_MOBILE,
@@ -635,9 +647,57 @@ static const struct wm_product {
 	  "Intel i82547EI 1000BASE-T Ethernet",
 	  WM_T_82547,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547EI_MOBILE,
+	  "Intel i82547EI Moblie 1000BASE-T Ethernet",
+	  WM_T_82547,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547GI,
 	  "Intel i82547GI 1000BASE-T Ethernet",
 	  WM_T_82547_2,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_COPPER,
+	  "Intel PRO/1000 PT (82571EB)",
+	  WM_T_82571,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_FIBER,
+	  "Intel PRO/1000 PF (82571EB)",
+	  WM_T_82571,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_SERDES,
+	  "Intel PRO/1000 PB (82571EB)",
+	  WM_T_82571,		WMP_F_SERDES },
+#endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
+	  "Intel i82572EI 1000baseX Ethernet",
+	  WM_T_82572,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_SERDES,
+	  "Intel i82572EI Gigabit Ethernet (SERDES)",
+	  WM_T_82572,		WMP_F_SERDES },
+#endif
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_1000T },
+
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E,
+	  "Intel i82573E",
+	  WM_T_82573,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E_IAMT,
+	  "Intel i82573E",
+	  WM_T_82573,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573L,
+	  "Intel i82573L Gigabit Ethernet",
+	  WM_T_82573,		WMP_F_1000T },
+#endif
+
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -884,6 +944,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			aprint_verbose("%s: using 82547 Tx FIFO stall "
 				       "work-around\n", sc->sc_dev.dv_xname);
 		}
+	} else if (sc->sc_type >= WM_T_82571) {
+		sc->sc_flags |= WM_F_PCIE;
+		aprint_verbose("%s: PCI-Express bus\n", sc->sc_dev.dv_xname);
 	} else {
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.66.6.2 2006/06/01 22:36:23 kardel Exp $	*/
+/*	$NetBSD: ath.c,v 1.66.6.3 2006/06/07 15:51:08 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.2 2006/06/01 22:36:23 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.3 2006/06/07 15:51:08 kardel Exp $");
 #endif
 
 /*
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.66.6.2 2006/06/01 22:36:23 kardel Exp $");
 #include <dev/ic/athvar.h>
 #include <contrib/dev/ath/ah_desc.h>
 #include <contrib/dev/ath/ah_devid.h>	/* XXX for softled */
+#include "athhal_options.h"
 
 #ifdef ATH_TX99_DIAG
 #include <dev/ath/ath_tx99/ath_tx99.h>
@@ -120,6 +121,12 @@ enum {
 	ATH_LED_RX,
 	ATH_LED_POLL,
 };
+
+#ifdef	AH_NEED_DESC_SWAP
+#define	HTOAH32(x)	htole32(x)
+#else
+#define	HTOAH32(x)	(x)
+#endif
 
 static int	ath_ifinit(struct ifnet *);
 static int	ath_init(struct ath_softc *);
@@ -319,8 +326,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ah = ath_hal_attach(devid, sc, sc->sc_st, ATH_BUSHANDLE2HAL(sc->sc_sh),
-	    &status);
+	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
 		if_printf(ifp, "unable to attach hardware; HAL status %u\n",
 			status);
@@ -804,8 +810,10 @@ ath_intr(void *arg)
 		DPRINTF(sc, ATH_DEBUG_ANY, "%s: invalid; ignored\n", __func__);
 		return 0;
 	}
+
 	if (!ath_hal_intrpend(ah))		/* shared irq, not for us */
 		return 0;
+
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP)) {
 		DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 			__func__, ifp->if_flags);
@@ -884,6 +892,23 @@ ath_intr(void *arg)
 		}
 	}
 	return 1;
+}
+
+/* Swap transmit descriptor.
+ * if AH_NEED_DESC_SWAP flag is not defined this becomes a "null"
+ * function.
+ */
+static inline void
+ath_desc_swap(struct ath_desc *ds)
+{
+#ifdef AH_NEED_DESC_SWAP
+	ds->ds_link = htole32(ds->ds_link);
+	ds->ds_data = htole32(ds->ds_data);
+	ds->ds_ctl0 = htole32(ds->ds_ctl0);
+	ds->ds_ctl1 = htole32(ds->ds_ctl1);
+	ds->ds_hw[0] = htole32(ds->ds_hw[0]);
+	ds->ds_hw[1] = htole32(ds->ds_hw[1]);
+#endif
 }
 
 static void
@@ -2058,7 +2083,7 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 
 	flags = HAL_TXDESC_NOACK;
 	if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_hasveol) {
-		ds->ds_link = bf->bf_daddr;	/* self-linked */
+		ds->ds_link = HTOAH32(bf->bf_daddr);	/* self-linked */
 		flags |= HAL_TXDESC_VEOL;
 		/*
 		 * Let hardware handle antenna switching unless
@@ -2112,6 +2137,12 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 		, AH_TRUE			/* last segment */
 		, ds				/* first descriptor */
 	);
+
+	/* NB: The desc swap function becomes void, 
+	 * if descriptor swapping is not enabled
+	 */
+	ath_desc_swap(ds);
+
 #undef USE_SHPREAMBLE
 }
 
@@ -2751,7 +2782,7 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 	 * someplace to write a new frame.
 	 */
 	ds = bf->bf_desc;
-	ds->ds_link = bf->bf_daddr;	/* link to self */
+	ds->ds_link = HTOAH32(bf->bf_daddr);	/* link to self */
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 	ds->ds_vdata = mtod(m, void *);	/* for radar */
 	ath_hal_setuprxdesc(ah, ds
@@ -3812,6 +3843,12 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			, i == bf->bf_nseg - 1	/* last segment */
 			, ds0			/* first descriptor */
 		);
+
+		/* NB: The desc swap function becomes void, 
+		 * if descriptor swapping is not enabled
+		 */
+		ath_desc_swap(ds);
+
 		DPRINTF(sc, ATH_DEBUG_XMIT,
 			"%s: %d: %08x %08x %08x %08x %08x %08x\n",
 			__func__, i, ds->ds_link, ds->ds_data,
@@ -3830,7 +3867,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			txq->axq_qnum, (caddr_t)bf->bf_daddr, bf->bf_desc,
 			txq->axq_depth);
 	} else {
-		*txq->axq_link = bf->bf_daddr;
+		*txq->axq_link = HTOAH32(bf->bf_daddr);
 		DPRINTF(sc, ATH_DEBUG_XMIT,
 			"%s: link[%u](%p)=%p (%p) depth %d\n", __func__,
 			txq->axq_qnum, txq->axq_link,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.759.2.2 2006/06/01 22:36:47 kardel Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.759.2.3 2006/06/07 15:51:09 kardel Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.788 2006/05/31 21:42:35 riz Exp
+ *	NetBSD: pcidevs,v 1.791 2006/06/06 21:00:41 rpaulo Exp
  */
 
 /*
@@ -5396,6 +5396,10 @@ static const struct pci_product pci_products[] = {
 	    "DFE-690TXD 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610,
+	    "DWL-610 802.11b WLAN",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL4000,
 	    "DL-4000 Gigabit Ethernet",
 	},
@@ -6228,6 +6232,10 @@ static const struct pci_product pci_products[] = {
 	    "i82541EI Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER_LOM,
+	    "i82541ER (LOM) Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM,
 	    "i82540EM (LOM) Gigabit Ethernet",
 	},
@@ -6246,6 +6254,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI,
 	    "i82547EI Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI_MOBILE,
+	    "i82547EI Mobile GigE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD,
@@ -6412,6 +6424,10 @@ static const struct pci_product pci_products[] = {
 	    "i82572EI Gigabit Ethernet (SERDES)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_PCIE,
+	    "PRO/1000MT (82546GB)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E,
 	    "i82573E Gigabit Ethernet",
 	},
@@ -6422,6 +6438,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
 	    "i82573L Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
+	    "PRO/1000MT QP (82546GB)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI,
+	    "PRO/1000PT (82572EI)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -9204,12 +9228,24 @@ static const struct pci_product pci_products[] = {
 	    "CryptoSwift 200 PKI Accelerator",
 	},
 	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460,
-	    "RT2460 802.11b",
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460A,
+	    "RT2460A 802.11b",
 	},
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560,
 	    "RT2560 802.11b/g",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S,
+	    "RT2561S 802.11b/g",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561,
+	    "RT2561 802.11b/g",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661,
+	    "RT2661 802.11b/g/n",
 	},
 	{
 	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
@@ -11476,4 +11512,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2278;
+const int pci_nproducts = 2287;

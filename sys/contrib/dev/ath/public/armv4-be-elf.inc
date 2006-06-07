@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: armv4-be-elf.inc,v 1.1.6.2 2006/04/22 11:38:24 simonb Exp $
+# $Id: armv4-be-elf.inc,v 1.1.6.3 2006/06/07 15:49:39 kardel Exp $
 #
 
 #
@@ -63,6 +63,12 @@ STRIP=	${TOOLPREFIX}strip
 OBJCOPY=${TOOLPREFIX}objcopy
 NM=	${TOOLPREFIX}nm
 
+#
+# Force register read/write operations to go through a function.
+#
+AH_REGOPS_FUNC=1
+
 LDOPTS=	-EB
 COPTS+=	-DAH_BYTE_ORDER=AH_BIG_ENDIAN
-COPTS+= -march=armv4 -mbig-endian -fno-strict-aliasing -fno-common
+COPTS+= -march=armv4 -mbig-endian -msoft-float \
+	-fno-strict-aliasing -fno-common

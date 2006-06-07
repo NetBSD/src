@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.62.6.3 2006/06/01 22:38:30 kardel Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.62.6.4 2006/06/07 15:51:25 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.62.6.3 2006/06/01 22:38:30 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.62.6.4 2006/06/07 15:51:25 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,8 +397,7 @@ portal_open(v)
 	pcred.pcr_uid = kauth_cred_geteuid(ap->a_cred);
 	pcred.pcr_gid = kauth_cred_getegid(ap->a_cred);
 	pcred.pcr_ngroups = kauth_cred_ngroups(ap->a_cred);
-	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups,
-	    sizeof(pcred.pcr_groups) / sizeof(pcred.pcr_groups[0]));
+	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups, pcred.pcr_ngroups);
 	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;

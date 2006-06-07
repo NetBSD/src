@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.723.2.3 2006/06/01 22:34:33 kardel Exp $
+# $NetBSD: GENERIC,v 1.723.2.4 2006/06/07 15:49:38 kardel Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.723.2.3 $"
+#ident 		"GENERIC-$Revision: 1.723.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -588,7 +588,7 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
 
 # Intel PIIX4 power management controllers
-piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
+piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
 # iTE IT87xxF and compatible hardware monitors

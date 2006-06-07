@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3.6.1 2006/06/07 15:49:38 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,17 +49,14 @@
 
 #include <dev/pci/pcidevs.h>
 
-int	pchbmatch __P((struct device *, struct cfdata *, void *));
-void	pchbattach __P((struct device *, struct device *, void *));
+int	pchbmatch(struct device *, struct cfdata *, void *);
+void	pchbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pchb, sizeof(struct device),
     pchbmatch, pchbattach, NULL, NULL);
 
 int
-pchbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -75,9 +72,7 @@ pchbmatch(parent, cf, aux)
 }
 
 void
-pchbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pchbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pcireg_t reg1, reg2;
