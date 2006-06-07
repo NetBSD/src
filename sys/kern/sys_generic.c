@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.85 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.86 2006/06/07 22:33:40 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.85 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.86 2006/06/07 22:33:40 kardel Exp $");
 
 #include "opt_ktrace.h"
 
@@ -746,10 +746,10 @@ int
 selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
 {
-	struct proc	* const p = l->l_proc;
-	caddr_t		bits;
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
+	struct proc	* const p = l->l_proc;
+	caddr_t		bits;
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
@@ -780,14 +780,9 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 #undef	getbits
 
 	timo = 0;
-	if (tv) {
-		if (itimerfix(tv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(tv, &time, tv);
-		splx(s);
+	if (tv && itimerfix(tv)) {
+		error = EINVAL;
+		goto done;
 	}
 	if (mask)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
@@ -803,7 +798,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
-		timo = hzto(tv);
+		timo = tvtohz(tv);
 		if (timo <= 0)
 			goto done;
 	}
@@ -946,9 +941,9 @@ pollcommon(struct lwp *l, register_t *retval,
 	struct pollfd *u_fds, u_int nfds,
 	struct timeval *tv, sigset_t *mask)
 {
+	char		smallbits[32 * sizeof(struct pollfd)];
 	struct proc	* const p = l->l_proc;
 	caddr_t		bits;
-	char		smallbits[32 * sizeof(struct pollfd)];
 	sigset_t	oldmask;
 	int		s, ncoll, error, timo;
 	size_t		ni;
@@ -968,14 +963,9 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto done;
 
 	timo = 0;
-	if (tv) {
-		if (itimerfix(tv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(tv, &time, tv);
-		splx(s);
+	if (tv && itimerfix(tv)) {
+		error = EINVAL;
+		goto done;
 	}
 	if (mask != NULL)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
@@ -990,7 +980,7 @@ pollcommon(struct lwp *l, register_t *retval,
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
-		timo = hzto(tv);
+		timo = tvtohz(tv);
 		if (timo <= 0)
 			goto done;
 	}

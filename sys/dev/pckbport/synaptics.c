@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.9 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.10 2006/06/07 22:33:37 kardel Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -650,16 +650,13 @@ pms_synaptics_input(void *vsc, int data)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	struct timeval diff;
 	struct synaptics_packet sp;
-	int s;
 
 	if (!psc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
 		return;
 	}
 
-	s = splclock();
-	psc->current = mono_time;
-	splx(s);
+	getmicrouptime(&psc->current);
 
 	if (psc->inputstate > 0) {
 		timersub(&psc->current, &psc->last, &diff);

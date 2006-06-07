@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.18 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.19 2006/06/07 22:34:18 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,20 +159,20 @@ struct nqm {
  * Client side macros that check for a valid lease.
  */
 #define	NQNFS_CKINVALID(v, n, f) \
- ((time.tv_sec > (n)->n_expiry && \
+ ((time_second > (n)->n_expiry && \
  VFSTONFS((v)->v_mount)->nm_timeouts < VFSTONFS((v)->v_mount)->nm_deadthresh) \
   || ((f) == ND_WRITE && ((n)->n_flag & NQNFSWRITE) == 0))
 
 #define	NQNFS_CKCACHABLE(v, f) \
- ((time.tv_sec <= VTONFS(v)->n_expiry || \
+ ((time_second <= VTONFS(v)->n_expiry || \
   VFSTONFS((v)->v_mount)->nm_timeouts >= VFSTONFS((v)->v_mount)->nm_deadthresh) \
    && (VTONFS(v)->n_flag & NQNFSNONCACHE) == 0 && \
    ((f) == ND_READ || (VTONFS(v)->n_flag & NQNFSWRITE)))
 
 #define	NQNFS_NEEDLEASE(n, p) \
-		(time.tv_sec > (n)->n_expiry ? \
+		(time_second > (n)->n_expiry ? \
 		 (((n)->n_flag & NQNFSEVICTED) ? 0 : nqnfs_piggy[p]) : \
-		 (((time.tv_sec + NQ_RENEWAL) > (n)->n_expiry && \
+		 (((time_second + NQ_RENEWAL) > (n)->n_expiry && \
 		   nqnfs_piggy[p]) ? \
 		   (((n)->n_flag & NQNFSWRITE) ? \
 		    ND_WRITE : nqnfs_piggy[p]) : 0))

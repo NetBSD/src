@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.242 2006/05/27 13:35:20 bouyer Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.243 2006/06/07 22:34:01 kardel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.242 2006/05/27 13:35:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.243 2006/06/07 22:34:01 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -970,7 +970,6 @@ tcp_input(struct mbuf *m, ...)
 #ifdef TCP_DEBUG
 	short ostate = 0;
 #endif
-	int iss = 0;
 	u_long tiwin;
 	struct tcp_opt_info opti;
 	int off, iphlen;
@@ -2026,7 +2025,6 @@ after_listen:
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
-				iss = tcp_new_iss(tp, tp->snd_nxt);
 				tp = tcp_close(tp);
 				TCP_FIELDS_TO_NET(th);
 				goto findpcb;

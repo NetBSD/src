@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.184 2006/06/04 16:44:08 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.185 2006/06/07 22:33:41 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.184 2006/06/04 16:44:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.185 2006/06/07 22:33:41 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1649,7 +1649,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	struct proc	*p;
 	int		c, s, first, error, has_stime, last_cc;
 	long		lflag, slp;
-	struct timeval	stime;
+	struct timeval	now, stime;
 
 	stime.tv_usec = 0;	/* XXX gcc */
 	stime.tv_sec = 0;	/* XXX gcc */
@@ -1723,25 +1723,28 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			if (!has_stime) {
 				/* first character, start timer */
 				has_stime = 1;
-				stime = time;
+				getmicrotime(&stime);
 				slp = t;
 			} else if (qp->c_cc > last_cc) {
 				/* got a character, restart timer */
-				stime = time;
+				getmicrotime(&stime);
 				slp = t;
 			} else {
 				/* nothing, check expiration */
-				slp = t - diff(time, stime);
+				getmicrotime(&now);
+				slp = t - diff(now, stime);
 			}
 		} else {	/* m == 0 */
 			if (qp->c_cc > 0)
 				goto read;
 			if (!has_stime) {
 				has_stime = 1;
-				stime = time;
+				getmicrotime(&stime);
 				slp = t;
-			} else
-				slp = t - diff(time, stime);
+			} else {
+				getmicrotime(&now);
+				slp = t - diff(now, stime);
+			}
 		}
 		last_cc = qp->c_cc;
 #undef diff

@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.14 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: timepps.h,v 1.15 2006/06/07 22:34:18 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -129,10 +129,35 @@ typedef struct {
 #define PPS_IOC_FETCH		_IOWR('1', 6, pps_info_t)
 #define PPS_IOC_KCBIND		_IOW('1', 7, int)
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+
+#ifdef __HAVE_TIMECOUNTER
+struct pps_state {
+	/* Capture information. */
+	struct timehands *capth;
+	unsigned	capgen;
+	unsigned	capcount;
+
+	/* State information. */
+	pps_params_t	ppsparam;
+	pps_info_t	ppsinfo;
+	int		kcmode;
+	int		ppscap;
+	struct timecounter *ppstc;
+	unsigned	ppscount[3];
+};
+
+void pps_capture(struct pps_state *);
+void pps_event(struct pps_state *, int);
+void pps_init(struct pps_state *);
+int pps_ioctl(unsigned long, caddr_t, struct pps_state *);
+#endif /* __HAVE_TIMECOUNTER */
+
+#else /* !_KERNEL */
 
 #include <sys/cdefs.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
 static __inline int time_pps_create(int, pps_handle_t *);
 static __inline int time_pps_destroy(pps_handle_t);
@@ -212,6 +237,11 @@ time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
 	const int edge;
 	const int tsformat;
 {
+
+	if (tsformat != PPS_TSFMT_TSPEC) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	return (ioctl(handle, PPS_IOC_KCBIND, __UNCONST(&edge)));
 }
