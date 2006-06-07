@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.81 2006/05/24 11:03:28 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.82 2006/06/07 22:43:43 kardel Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -353,12 +353,14 @@ Branch:		simonb-timecounters
 Description:	Port FreeBSD timecounters to NetBSD
 Status:		Active
 Start Date:	Sat Feb 04 2006
-End Date:
+End Date:	Wed Jun 07 2006
 Base Tag:	simonb-timecounters-base
 Maintainer:	Simon Burge <simonb@NetBSD.org>,
 		Frank Kardel <kardel@NetBSD.org>
 Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
-Notes:
+Notes:		early (partial conversion) commit to -current
+		ok'ed by core@ on 20060605 for testing and further
+		simplified conversion
 
 Branch:		thorpej-devvp
 Description:	replace dev_t with struct vnode * in devsw entry points

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.629 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.630 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -297,4 +297,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		(AR531x devices), and 32-bit SPARC. [gdamore 20060605]
 	ral(4): new driver layout supporting the RT2661 chipset. From
 		OpenBSD. [rpaulo 20060606]
-
+	timecounter: ported from FreeBSD.
+		completely new time-keeping infrastructure along with
+		NTP API 4 nanokernel implementation. was expected after
+		4.0 but core@ voted for early import to facilitate early
+		testing and port conversion. [simonb, kardel 20060607]
