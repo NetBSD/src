@@ -1,4 +1,4 @@
-/*	$NetBSD: struct.h,v 1.5 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: struct.h,v 1.6 2006/06/07 09:36:39 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,7 +95,7 @@ typedef struct {
 } LIST;
 
 typedef struct {
-	char	name[10];
+	char	name[33];
 	char	host[256];
 	char	game[256];
 	int	planes;
@@ -104,6 +104,8 @@ typedef struct {
 } SCORE;
 
 #define SCORE_SCANF_FMT	"%9s %255s %255s %d %d %d"
+#define SCORE_NAME_LEN 33
+#define SCORE_GAME_LEN 256
 
 typedef struct displacement {
 	int	dx;
