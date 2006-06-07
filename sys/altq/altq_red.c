@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.17 2006/05/15 00:05:39 christos Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.18 2006/06/07 23:58:03 christos Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.17 2006/05/15 00:05:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.18 2006/06/07 23:58:03 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1089,7 +1089,7 @@ pow_w(w, n)
 #define	FV_TTHRESH		3  /* time threshold to delete fve */
 #define	FV_ALPHA		5  /* extra packet count */
 
-#if (__FreeBSD_version > 300000)
+#if (__FreeBSD_version > 300000) || defined(__HAVE_TIMECOUNTER)
 #define	FV_TIMESTAMP(tp)	getmicrotime(tp)
 #else
 #define	FV_TIMESTAMP(tp)	{ (*(tp)) = time; }
