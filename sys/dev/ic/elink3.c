@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.114.6.1 2006/04/22 11:38:55 simonb Exp $	*/
+/*	$NetBSD: elink3.c,v 1.114.6.2 2006/06/07 16:05:41 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.114.6.1 2006/04/22 11:38:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.114.6.2 2006/06/07 16:05:41 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -799,7 +799,8 @@ epinit(ifp)
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
-		bus_space_read_2(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS));
+		(void)bus_space_read_2(iot, ioh,
+				       ep_w1_reg(sc, ELINK_W1_TX_STATUS));
 
 	/* Set threshold for Tx-space available interrupt. */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
