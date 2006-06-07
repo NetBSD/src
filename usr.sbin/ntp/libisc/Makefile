@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2006/02/25 12:04:23 simonb Exp $
+# $NetBSD: Makefile,v 1.3 2006/06/07 20:59:28 kardel Exp $
 
 MKPRIVATELIB=	yes
 
