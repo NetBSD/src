@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2006/03/18 11:38:59 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2006/06/07 15:27:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.9 2006/03/18 11:38:59 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2006/06/07 15:27:13 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -921,7 +921,7 @@ write_bootarea(int f, u_int sector)
 	if (sector == 0) {
 		struct alpha_boot_block *bb;
 
-		bb = (struct alpha_boot_block *)bootarea;
+		bb = (struct alpha_boot_block *)(void *)bootarea;
 		bb->bb_cksum = 0;
 		ALPHA_BOOT_BLOCK_CKSUM(bb, &bb->bb_cksum);
 	}
