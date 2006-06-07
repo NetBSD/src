@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 2005/12/11 12:16:21 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.10 2006/06/07 22:37:14 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2006/06/07 22:37:14 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -565,10 +565,6 @@ cpu_hatch(void *v)
 	enable_intr();
 
 	printf("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
-#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
-	if (ci->ci_feature_flags & CPUID_TSC)
-		cc_microset(ci);
-#endif
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }

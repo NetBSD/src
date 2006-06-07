@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.96 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: clock.c,v 1.97 2006/06/07 22:38:49 kardel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.97 2006/06/07 22:38:49 kardel Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96 2005/11/14 19:11:24 uwe Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -224,6 +225,11 @@ void
 inittodr(time_t base)
 {
 	int badbase = 0, waszero = base == 0;
+	struct timeval time;
+	struct timespec ts;
+
+	time.tv_sec = 0;
+	time.tv_usec = 0;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -239,13 +245,15 @@ inittodr(time_t base)
 
 	if (todr_gettime(todr_handle, &time) != 0 ||
 	    time.tv_sec == 0) {
-
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
 		 */
-		time.tv_sec = base;
+		ts.tv_sec = base;
+		ts.tv_nsec = 0;
+		tc_setclock(&ts);
+
 		if (!badbase)
 			resettodr();
 	} else {
@@ -253,10 +261,16 @@ inittodr(time_t base)
 
 		sparc_clock_time_is_ok = 1;
 
+		ts.tv_sec = time.tv_sec;
+		ts.tv_nsec = time.tv_usec * 1000;
+		tc_setclock(&ts);
+
 		if (deltat < 0)
 			deltat = -deltat;
+
 		if (waszero || deltat < 2 * SECDAY)
 			return;
+
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
@@ -272,6 +286,9 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval time;
+	
+	getmicrotime(&time);
 
 	if (time.tv_sec == 0)
 		return;
@@ -280,40 +297,6 @@ resettodr(void)
 	if (todr_settime(todr_handle, &time) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
-
-#if defined(SUN4)
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for
- * fun, we guarantee that the time will be greater than the value
- * obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	static struct timeval lasttime;
-	static struct timeval oneusec = {0, 1};
-
-	if (!oldclk) {
-		lo_microtime(tvp);
-		return;
-	}
-
-	s = splhigh();
-	*tvp = time;
-	splx(s);
-
-	if (timercmp(tvp, &lasttime, <=))
-		timeradd(&lasttime, &oneusec, tvp);
-
-	lasttime = *tvp;
-}
-#endif /* SUN4 */
 
 /*
  * XXX: these may actually belong somewhere else, but since the

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.12 2005/12/24 20:07:10 perry Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.13 2006/06/07 22:37:58 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2006/06/07 22:37:58 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -87,7 +87,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
 #if defined(I586_CPU) || defined(I686_CPU)
-	cc_microset,
+	tsc_calibrate_cpu,	/* keep cycle counters synchronized */
 #else
 	0,
 #endif
