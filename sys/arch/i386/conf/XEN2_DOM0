@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.38 2006/06/01 19:39:59 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.1 2006/06/08 22:17:07 hubertf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
