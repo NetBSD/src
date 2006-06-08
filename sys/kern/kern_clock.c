@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.99 2006/06/07 22:33:39 kardel Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.100 2006/06/08 17:23:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.99 2006/06/07 22:33:39 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.100 2006/06/08 17:23:11 drochner Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -332,7 +332,7 @@ int	profhz;
 int	profsrc;
 int	schedhz;
 int	profprocs;
-u_int	hardclock_ticks;
+int	hardclock_ticks;
 static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
@@ -373,7 +373,7 @@ static struct timecounter intr_timecounter = {
 static u_int
 get_intr_timecount(struct timecounter *tc)
 {
-	return hardclock_ticks;
+	return (u_int)hardclock_ticks;
 }
 #endif
 
