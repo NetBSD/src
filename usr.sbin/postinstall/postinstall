@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.15 2006/05/30 19:31:13 tron Exp $
+# $NetBSD: postinstall,v 1.16 2006/06/08 20:58:38 simonb Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -759,11 +759,12 @@ do_rc()
 
 		# check for obsolete rc.conf(5) variables
 	set --	amd amd_master \
-		mountcritlocal critical_filesystems_beforenet \
-		mountcritremote critical_filesystems \
-		network ip6forwarding \
-		sysctl defcorename \
-		sysctl nfsiod_flags
+		critical_filesystems critical_filesystems_beforenet \
+		defcorename \
+		ip6forwarding \
+		mountcritlocal mountcritremote \
+		network nfsiod_flags \
+		sysctl
 	while [ $# -gt 1 ]; do
 		if rcconf_is_set ${op} $1 $2 1; then
 			failed=1
