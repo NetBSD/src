@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.14 2006/06/08 04:55:22 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.15 2006/06/08 13:21:48 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.14 2006/06/08 04:55:22 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.15 2006/06/08 13:21:48 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -69,9 +69,13 @@ int	midisyndebug = 0;
 
 int	midisyn_findvoice(midisyn *, int, int);
 void	midisyn_freevoice(midisyn *, int);
-int	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
+uint_fast16_t	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
+static void	midisyn_attackv_vel(midisyn *, uint_fast16_t, uint32_t,
+                                    int16_t, uint_fast8_t);
 u_int32_t midisyn_note_to_freq(int);
 u_int32_t midisyn_finetune(u_int32_t, int, int, int);
+static int16_t midisyn_adj_level(midisyn *, uint_fast8_t);
+static uint32_t midisyn_adj_pitch(midisyn *, uint_fast8_t);
 
 static midictl_notify midisyn_notify;
 
@@ -106,15 +110,25 @@ midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
 	     void (*ointr)(void *), void *arg)
 {
 	midisyn *ms = addr;
+	int rslt;
+	uint_fast8_t chan;
 
 	DPRINTF(("midisyn_open: ms=%p ms->mets=%p\n", ms, ms->mets));
 	
 	midictl_open(&ms->ctl);
 	
+	rslt = 0;
 	if (ms->mets->open)
-		return (ms->mets->open(ms, flags));
-	else
-		return (0);
+		rslt = (ms->mets->open(ms, flags));
+	
+	/*
+	 * Make the right initial things happen by faking receipt of RESET on
+	 * all channels. The hw driver's ctlnotice() will be called in turn.
+	 */
+	for ( chan = 0 ; chan < MIDI_MAX_CHANS ; ++ chan )
+		midisyn_notify(ms, MIDICTL_RESET, chan, 0);
+	
+	return rslt;
 }
 
 void
@@ -126,9 +140,14 @@ midisyn_close(void *addr)
 
 	DPRINTF(("midisyn_close: ms=%p ms->mets=%p\n", ms, ms->mets));
 	fs = ms->mets;
+	/* TODO
+	 * This loop is much like what midisyn_notify should do for NOTES_OFF
+	 * or SOUND_OFF. It should be moved there, and here we should call
+	 * notify faking one of those events.
+	 */
 	for (v = 0; v < ms->nvoice; v++)
 		if (ms->voices[v].inuse) {
-			fs->noteoff(ms, v, 0, 0);
+			fs->releasev(ms, v, 127);
 			midisyn_freevoice(ms, v);
 		}
 	if (fs->close)
@@ -188,13 +207,15 @@ midisyn_findvoice(midisyn *ms, int chan, int note)
 void
 midisyn_attach(struct midi_softc *sc, midisyn *ms)
 {
-	if (ms->flags & MS_DOALLOC) {
+	if (ms->mets->allocv == 0) {
 		ms->voices = malloc(ms->nvoice * sizeof (struct voice),
 				    M_DEVBUF, M_WAITOK|M_ZERO);
 		ms->seqno = 1;
-		if (ms->mets->allocv == 0)
-			ms->mets->allocv = &midisyn_allocvoice;
+		ms->mets->allocv = midisyn_allocvoice;
 	}
+	
+	if (ms->mets->attackv_vel == 0 && ms->mets->attackv != 0)
+		ms->mets->attackv_vel = midisyn_attackv_vel;
 	
 	ms->ctl = (midictl) {
 		.base_channel = 16,
@@ -210,12 +231,12 @@ midisyn_attach(struct midi_softc *sc, midisyn *ms)
 void
 midisyn_freevoice(midisyn *ms, int voice)
 {
-	if (!(ms->flags & MS_DOALLOC))
+	if (ms->mets->allocv != midisyn_allocvoice)
 		return;
 	ms->voices[voice].inuse = 0;
 }
 
-int
+uint_fast16_t
 midisyn_allocvoice(midisyn *ms, uint_fast8_t chan, uint_fast8_t note)
 {
 	int bestv, v;
@@ -248,6 +269,15 @@ midisyn_allocvoice(midisyn *ms, uint_fast8_t chan, uint_fast8_t note)
 	return (bestv);
 }
 
+/* dummy attackv_vel that just adds vel into level for simple drivers */
+static void
+midisyn_attackv_vel(midisyn *ms, uint_fast16_t voice, uint32_t miditune,
+                    int16_t level_cB, uint_fast8_t vel)
+{
+	ms->mets->attackv(ms, voice, miditune,
+	                  level_cB + midisyn_vol2cB((uint_fast16_t)vel << 7));
+}
+
 int
 midisyn_sysrt(void *addr, int b)
 {
@@ -259,15 +289,10 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 	midisyn *ms = addr;
 	int voice = 0;		/* initialize to keep gcc quiet */
 	struct midisyn_methods *fs;
-	u_int32_t note, vel;
 
 	DPRINTF(("midisyn_channelmsg: ms=%p status=%#02x chan=%d\n",
 	       ms, status, chan));
 	fs = ms->mets;
-	note = buf[1];
-	if (ms->flags & MS_FREQXLATE)
-		note = midisyn_note_to_freq(note);
-	vel = buf[2];
 
 	switch (status) {
 	case MIDI_NOTEOFF:
@@ -279,7 +304,7 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		 */
 		voice = midisyn_findvoice(ms, chan, buf[1]);
 		if (voice >= 0) {
-			fs->noteoff(ms, voice, note, vel);
+			fs->releasev(ms, voice, buf[2]);
 			midisyn_freevoice(ms, voice);
 		}
 		break;
@@ -295,7 +320,10 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		 * on its sound card and use that for mastervolume).
 		 */
 		voice = fs->allocv(ms, chan, buf[1]);
-		fs->noteon(ms, voice, note, vel);
+		fs->attackv_vel(ms, voice,
+		                MIDISYN_KEY_TO_MT(buf[1])
+				+ midisyn_adj_pitch(ms, chan),
+				midisyn_adj_level(ms,chan), buf[2]);
 		break;
 	case MIDI_KEY_PRESSURE:
 		/*
@@ -360,107 +388,48 @@ int midisyn_sysex(void *addr, u_char *buf, int len)
 	return 0;
 }
 
-/*
- * Convert a MIDI note to the corresponding frequency.
- * The frequency is scaled by 2^16.
- */
-u_int32_t
-midisyn_note_to_freq(int note)
-{
-	int o, n, f;
-#define BASE_OCTAVE 5
-	static const u_int32_t notes[] = {
-		17145893, 18165441, 19245614, 20390018, 21602472, 22887021,
-		24247954, 25689813, 27217409, 28835840, 30550508, 32367136
-	};
-
-
-	o = note / 12;
-	n = note % 12;
-
-	f = notes[n];
-
-	if (o < BASE_OCTAVE)
-		f >>= (BASE_OCTAVE - o);
-	else if (o > BASE_OCTAVE)
-		f <<= (o - BASE_OCTAVE);
-	return (f);
-}
-
-u_int32_t
-midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
-{
-	static const u_int16_t semitone_tuning[24] =
-	{
-/*   0 */ 10000, 10595, 11225, 11892, 12599, 13348, 14142, 14983,
-/*   8 */ 15874, 16818, 17818, 18877, 20000, 21189, 22449, 23784,
-/*  16 */ 25198, 26697, 28284, 29966, 31748, 33636, 35636, 37755
-	};
-	static const u_int16_t cent_tuning[100] =
-	{
-/*   0 */ 10000, 10006, 10012, 10017, 10023, 10029, 10035, 10041,
-/*   8 */ 10046, 10052, 10058, 10064, 10070, 10075, 10081, 10087,
-/*  16 */ 10093, 10099, 10105, 10110, 10116, 10122, 10128, 10134,
-/*  24 */ 10140, 10145, 10151, 10157, 10163, 10169, 10175, 10181,
-/*  32 */ 10187, 10192, 10198, 10204, 10210, 10216, 10222, 10228,
-/*  40 */ 10234, 10240, 10246, 10251, 10257, 10263, 10269, 10275,
-/*  48 */ 10281, 10287, 10293, 10299, 10305, 10311, 10317, 10323,
-/*  56 */ 10329, 10335, 10341, 10347, 10353, 10359, 10365, 10371,
-/*  64 */ 10377, 10383, 10389, 10395, 10401, 10407, 10413, 10419,
-/*  72 */ 10425, 10431, 10437, 10443, 10449, 10455, 10461, 10467,
-/*  80 */ 10473, 10479, 10485, 10491, 10497, 10503, 10509, 10515,
-/*  88 */ 10521, 10528, 10534, 10540, 10546, 10552, 10558, 10564,
-/*  96 */ 10570, 10576, 10582, 10589
-	};
-	u_int32_t amount;
-	int negative, semitones, cents, multiplier;
-
-	if (range == 0)
-		return base_freq;
-
-	if (base_freq == 0)
-		return base_freq;
-
-	if (range >= 8192)
-		range = 8192;
-
-	bend = bend * range / 8192;
-	bend += vibrato_cents;
-
-	if (bend == 0)
-		return base_freq;
-
-	if (bend < 0) {
-		bend = -bend;
-		negative = 1;
-	} else
-		negative = 0;
-
-	if (bend > range)
-		bend = range;
-
-	multiplier = 1;
-	while (bend > 2399) {
-		multiplier *= 4;
-		bend -= 2400;
-	}
-
-	semitones = bend / 100;
-	cents = bend % 100;
-
-	amount = semitone_tuning[semitones] * multiplier * cent_tuning[cents]
-		/ 10000;
-
-	if (negative)
-		return (base_freq * 10000 / amount);	/* Bend down */
-	else
-		return (base_freq * amount / 10000);	/* Bend up */
-}
-
 static void
 midisyn_notify(void *cookie, midictl_evt evt,
                uint_fast8_t chan, uint_fast16_t key)
 {
+	struct midisyn *ms;
+	int drvhandled;
+	
+	ms = (struct midisyn *)cookie;
+	drvhandled = 0;
+	if ( ms->mets->ctlnotice )
+		drvhandled = ms->mets->ctlnotice(ms, evt, chan, key);
+
+	switch ( evt ) {
+	case MIDICTL_RESET:
+		/* re-read all ctls we use, revert pitchbend state */
+		break;
+	case MIDICTL_NOTES_OFF:
+		if ( drvhandled )
+			break;
+		/* releasev all voices sounding on chan; use normal vel 64 */
+		break;
+	case MIDICTL_SOUND_OFF:
+		if ( drvhandled )
+			break;
+		/* releasev all voices sounding on chan; use max vel 127 */
+		/* it is really better for driver to handle this, instantly */
+		break;
+	default:
+		break;
+	}
+}
+
+static int16_t
+midisyn_adj_level(midisyn *ms, uint_fast8_t chan)
+{
+	return 0; /* XXX for now. Use Volume and Expression ctlrs. */
+}
+
+static uint32_t
+midisyn_adj_pitch(midisyn *ms, uint_fast8_t chan)
+{
+	return 0; /* XXX for now. Use Pitchbend, PBrange, fine/coarse tuning. */
 }
 
 int16_t
