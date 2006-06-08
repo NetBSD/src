@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.4 2006/06/06 01:18:25 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.5 2006/06/08 13:00:35 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.4 2006/06/06 01:18:25 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.5 2006/06/08 13:00:35 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -2629,7 +2629,7 @@ rt2661_init(struct ifnet *ifp)
 	const char *name = NULL;	/* make lint happy */
 	uint8_t *ucode;
 	size_t size;
-	uint32_t tmp, sta[3];
+	uint32_t tmp, star[3];
 	int i, ntries;
 	firmware_handle_t fh;
 
@@ -2783,7 +2783,7 @@ rt2661_init(struct ifnet *ifp)
 	RAL_WRITE(sc, RT2661_TXRX_CSR0, tmp);
 
 	/* clear STA registers */
-	RAL_READ_REGION_4(sc, RT2661_STA_CSR0, sta, N(sta));
+	RAL_READ_REGION_4(sc, RT2661_STA_CSR0, star, N(star));
 
 	/* initialize ASIC */
 	RAL_WRITE(sc, RT2661_MAC_CSR1, 4);
