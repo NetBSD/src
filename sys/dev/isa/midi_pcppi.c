@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.12.14.1 2006/06/07 01:23:10 chap Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.12.14.2 2006/06/08 13:21:48 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12.14.1 2006/06/07 01:23:10 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12.14.2 2006/06/08 13:21:48 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,17 +70,17 @@ struct midi_pcppi_softc {
 int	midi_pcppi_match(struct device *, struct cfdata *, void *);
 void	midi_pcppi_attach(struct device *, struct device *, void *);
 
-void	midi_pcppi_on   (midisyn *, u_int32_t, u_int32_t, u_int32_t);
-void	midi_pcppi_off  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	midi_pcppi_on   (midisyn *, uint_fast16_t, uint32_t, int16_t);
+void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
 void	midi_pcppi_close(midisyn *);
 
 CFATTACH_DECL(midi_pcppi, sizeof(struct midi_pcppi_softc),
     midi_pcppi_match, midi_pcppi_attach, NULL, NULL);
 
 struct midisyn_methods midi_pcppi_hw = {
-	.close   = midi_pcppi_close,
-	.noteon  = midi_pcppi_on,
-	.noteoff = midi_pcppi_off,
+	.close    = midi_pcppi_close,
+	.attackv  = midi_pcppi_on,
+	.releasev = midi_pcppi_off,
 };
 
 int midi_pcppi_attached = 0;	/* Not very nice */
@@ -108,7 +108,6 @@ midi_pcppi_attach(parent, self, aux)
 	ms->mets = &midi_pcppi_hw;
 	strcpy(ms->name, "PC speaker");
 	ms->nvoice = 1;
-	ms->flags = MS_DOALLOC | MS_FREQXLATE;
 	ms->data = pa->pa_cookie;
 
 	midi_pcppi_attached++;
@@ -118,20 +117,18 @@ midi_pcppi_attach(parent, self, aux)
 }
 
 void
-midi_pcppi_on(ms, chan, note, vel)
-	midisyn *ms;
-	u_int32_t chan, note, vel;
+midi_pcppi_on(midisyn *ms,
+	      uint_fast16_t voice, uint32_t miditune, int16_t level)
 {
 	pcppi_tag_t t = ms->data;
 
-	/*printf("ON  %p %d\n", t, MIDISYN_FREQ_TO_HZ(note));*/
-	pcppi_bell(t, MIDISYN_FREQ_TO_HZ(note), MAX_DURATION * hz, 0);
+	pcppi_bell(t,
+	           MIDISYN_HZ18_TO_HZ(midisyn_mt2hz18(miditune)),
+	           MAX_DURATION * hz, 0);
 }
 
 void
-midi_pcppi_off(ms, chan, note, vel)
-	midisyn *ms;
-	u_int32_t chan, note, vel;
+midi_pcppi_off(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 {
 	pcppi_tag_t t = ms->data;
 

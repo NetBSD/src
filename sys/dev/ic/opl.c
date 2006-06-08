@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24.2.2 2006/06/07 05:31:43 chap Exp $	*/
+/*	$NetBSD: opl.c,v 1.24.2.3 2006/06/08 13:21:48 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.2 2006/06/07 05:31:43 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.3 2006/06/08 13:21:48 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,25 +116,26 @@ void opl_freq_to_fnum (int freq, int *block, int *fnum);
 int oplsyn_open(midisyn *ms, int);
 void oplsyn_close(midisyn *);
 void oplsyn_reset(void *);
-void oplsyn_noteon(midisyn *, u_int32_t, u_int32_t, u_int32_t);
-void oplsyn_noteoff(midisyn *, u_int32_t, u_int32_t, u_int32_t);
-void oplsyn_ctlchange(midisyn *, u_int32_t, u_int32_t, u_int32_t);
-void oplsyn_programchange(midisyn *, u_int32_t, u_int32_t);
+void oplsyn_attackv(midisyn *, uint_fast16_t, uint32_t, int16_t);
+void oplsyn_releasev(midisyn *, uint_fast16_t, uint_fast8_t);
+int oplsyn_ctlnotice(midisyn *, midictl_evt, uint_fast8_t, uint_fast16_t);
+void oplsyn_programchange(midisyn *, uint_fast8_t, uint_fast8_t);
 void oplsyn_loadpatch(midisyn *, struct sysex_info *, struct uio *);
-
+static void oplsyn_panhandler(midisyn *, uint_fast8_t);
 
 void opl_set_op_reg(struct opl_softc *, int, int, int, u_char);
 void opl_set_ch_reg(struct opl_softc *, int, int, u_char);
 void opl_load_patch(struct opl_softc *, int);
-u_int32_t opl_get_block_fnum(int freq);
-int opl_calc_vol(int regbyte, int volume, int main_vol);
+u_int32_t opl_get_block_fnum(uint32_t miditune);
+int opl_calc_vol(int regbyte, int16_t level_cB);
 
 struct midisyn_methods opl3_midi = {
-	.open    = oplsyn_open,
-	.close   = oplsyn_close,
-	.noteon  = oplsyn_noteon,
-	.noteoff = oplsyn_noteoff,
-	.pgmchg  = oplsyn_programchange,
+	.open	   = oplsyn_open,
+	.close	   = oplsyn_close,
+	.attackv   = oplsyn_attackv,
+	.releasev  = oplsyn_releasev,
+	.pgmchg    = oplsyn_programchange,
+	.ctlnotice = oplsyn_ctlnotice,
 };
 
 void
@@ -153,7 +154,6 @@ opl_attach(sc)
 	    sc->syn.name, sc->model);
 	sc->syn.data = sc;
 	sc->syn.nvoice = sc->model == OPL_2 ? OPL2_NVOICE : OPL3_NVOICE;
-	sc->syn.flags =  MS_DOALLOC | MS_FREQXLATE;
 	midisyn_attach(&sc->mididev, &sc->syn);
 
 	/* Set up voice table */
@@ -267,6 +267,13 @@ opl_find(sc)
 	return (1);
 }
 
+/*
+ * idea: opl_command does a lot of busywaiting, and the driver typically sets
+ *       a lot of registers each time a voice-attack happens. some kind of
+ *       caching to remember what was last written to each register could save
+ *       a lot of cpu. It would have to be smart enough not to interfere with
+ *       any necessary sequences of register access expected by the hardware...
+ */
 void
 opl_set_op_reg(sc, base, voice, op, value)
 	struct opl_softc *sc;
@@ -312,22 +319,41 @@ opl_load_patch(sc, v)
 }
 
 #define OPL_FNUM_FAIL 0xffff
-u_int32_t
-opl_get_block_fnum(freq)
-	int freq;
+uint32_t
+opl_get_block_fnum(uint32_t miditune)
 {
-	u_int32_t f_num = freq / 3125;
-	u_int32_t  block = 0;
-
-	while (f_num > 0x3ff && block < 8) {
-		block++;
-		f_num >>= 1;
-	}
-
-	if (block > 7)
-		return (OPL_FNUM_FAIL);
-	else
-		return ((block << 10) | f_num);
+	uint32_t block;
+	uint32_t hz18;
+	uint32_t f_num;
+	
+	block = miditune / MIDITUNE_OCTAVE;
+	/*
+	 * The lowest MIDI octave reaches a bit more than two octaves below
+	 * the upper limit of block 0. So, stay in block 0 for the next octave
+	 * also, it allows us to use more bits in f_num for better resolution.
+	 */
+	if ( block > 0 )
+		-- block;
+	/*
+	 * Could subtract block*MIDITUNE_OCTAVE here, or >>block later. Later.
+	 */
+	
+	hz18 = midisyn_mt2hz18(miditune);
+	hz18 >>= block;
+	
+	/*
+	 * The formula in the manual is f_num = ((hz<<19)/fs)>>(block-1) (though
+	 * block==0 implies >>-1 which is a C unspecified result). As we already
+	 * have hz<<18 and I omitted the -1 when shifting above, what's left to
+	 * do now is multiply by 4 and divide by fs, the sampling frequency of
+	 * the chip. fs is the master clock frequency fM / 288, fM is 14.32 MHz
+	 * so fs is a goofy number around 49.7kHz. The 5th convergent of the
+	 * continued fraction matches 4/fs to 9+ significant figures. Doing the
+	 * shift first (above) ensures there's room in hz18 to multiply by 9.
+	 */
+	
+	f_num = (9 * hz18) / 111875; 
+	return ((block << 10) | f_num);
 }
 
 
@@ -346,8 +372,6 @@ opl_reset(sc)
 		opl_command(sc, OPL_R, OPL_MODE, OPL3_ENABLE);
 		opl_command(sc, OPL_R,OPL_CONNECTION_SELECT,OPL_NOCONNECTION);
 	}
-
-	sc->volume = 64;
 
 	for (i = 0; i < MIDI_MAX_CHANS; i++)
 		sc->pan[i] = OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
@@ -414,52 +438,31 @@ oplsyn_reset(addr)
 	opl_reset(sc);
 }
 
-const int8_t opl_volume_table[128] =
-    {-64, -48, -40, -35, -32, -29, -27, -26,
-     -24, -23, -21, -20, -19, -18, -18, -17,
-     -16, -15, -15, -14, -13, -13, -12, -12,
-     -11, -11, -10, -10, -10, -9, -9, -8,
-     -8, -8, -7, -7, -7, -6, -6, -6,
-     -5, -5, -5, -5, -4, -4, -4, -4,
-     -3, -3, -3, -3, -2, -2, -2, -2,
-     -2, -1, -1, -1, -1, 0, 0, 0,
-     0, 0, 0, 1, 1, 1, 1, 1,
-     1, 2, 2, 2, 2, 2, 2, 2,
-     3, 3, 3, 3, 3, 3, 3, 4,
-     4, 4, 4, 4, 4, 4, 4, 5,
-     5, 5, 5, 5, 5, 5, 5, 5,
-     6, 6, 6, 6, 6, 6, 6, 6,
-     6, 7, 7, 7, 7, 7, 7, 7,
-     7, 7, 7, 8, 8, 8, 8, 8};
-
 int
-opl_calc_vol(regbyte, volume, mainvol)
-	int regbyte;
-	int volume;
-	int mainvol;
+opl_calc_vol(int regbyte, int16_t level_cB)
 {
-	int level = ~regbyte & OPL_TOTAL_LEVEL_MASK;
+	int level = regbyte & OPL_TOTAL_LEVEL_MASK;
+	
+	/*
+	 * level is a six-bit attenuation, from 0 (full output)
+	 * to -48dB (but without the minus sign) in steps of .75 dB.
+	 * We'll just add level_cB, after scaling it because it's
+	 * in centibels instead and has the customary minus sign.
+	 */
 
-	if (mainvol > 127)
-		mainvol = 127;
-
-	volume = (volume * mainvol) / 127;
-
-	if (level)
-		level += opl_volume_table[volume];
+	level += ( -4 * level_cB ) / 30;
 
 	if (level > OPL_TOTAL_LEVEL_MASK)
 		level = OPL_TOTAL_LEVEL_MASK;
 	if (level < 0)
 		level = 0;
 
-	return (~level & OPL_TOTAL_LEVEL_MASK);
+	return level & OPL_TOTAL_LEVEL_MASK;
 }
 
 void
-oplsyn_noteon(ms, voice, freq, vel)
-	midisyn *ms;
-	u_int32_t voice, freq, vel;
+oplsyn_attackv(midisyn *ms,
+               uint_fast16_t voice, uint32_t miditune, int16_t level_cB)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
@@ -472,12 +475,12 @@ oplsyn_noteon(ms, voice, freq, vel)
 	u_int8_t r20m, r20c, r40m, r40c, rA0, rB0;
 	u_int8_t vol0, vol1;
 
-	DPRINTFN(3, ("oplsyn_noteon: %p %d %d\n", sc, voice,
-		     MIDISYN_FREQ_TO_HZ(freq)));
+	DPRINTFN(3, ("%s: %p %d %u %d\n", __func__, sc, voice,
+		     miditune, level_cB));
 
 #ifdef DIAGNOSTIC
 	if (voice < 0 || voice >= sc->syn.nvoice) {
-		printf("oplsyn_noteon: bad voice %d\n", voice);
+		printf("%s: bad voice %d\n", __func__, voice);
 		return;
 	}
 #endif
@@ -494,22 +497,20 @@ oplsyn_noteon(ms, voice, freq, vel)
 	opl_load_patch(sc, voice);
 
 	mult = 1;
-	for (;;) {
-		block_fnum = opl_get_block_fnum(freq / mult);
-		if (block_fnum != OPL_FNUM_FAIL)
-			break;
-		mult *= 2;
-		if (mult == 16)
-			mult = 15;
+	if ( miditune > MIDISYN_KEY_TO_MT(113) ) { /* out of range for mult 1 */
+		mult = 4;	/* this will cover the rest of the MIDI range */
+		miditune -= 2*MIDITUNE_OCTAVE;
 	}
+	
+	block_fnum = opl_get_block_fnum(miditune);
 
 	chars0 = p->ops[OO_CHARS+0];
 	chars1 = p->ops[OO_CHARS+1];
 	m_mult = (chars0 & OPL_MULTIPLE_MASK) * mult;
 	c_mult = (chars1 & OPL_MULTIPLE_MASK) * mult;
-	if ((block_fnum == OPL_FNUM_FAIL) || (m_mult > 15) || (c_mult > 15)) {
-		printf("oplsyn_noteon: frequency out of range %d\n",
-		       MIDISYN_FREQ_TO_HZ(freq));
+	if ((m_mult > 15) || (c_mult > 15)) {
+		printf("%s: frequency out of range %u (mult %d)\n", __func__,
+		       miditune, mult);
 		return;
 	}
 	r20m = (chars0 &~ OPL_MULTIPLE_MASK) | m_mult;
@@ -519,11 +520,11 @@ oplsyn_noteon(ms, voice, freq, vel)
 	ksl0 = p->ops[OO_KSL_LEV+0];
 	ksl1 = p->ops[OO_KSL_LEV+1];
 	if (p->ops[OO_FB_CONN] & 0x01) {
-		vol0 = opl_calc_vol(ksl0, vel, sc->volume);
-		vol1 = opl_calc_vol(ksl1, vel, sc->volume);
+		vol0 = opl_calc_vol(ksl0, level_cB);
+		vol1 = opl_calc_vol(ksl1, level_cB);
 	} else {
 		vol0 = ksl0;
-		vol1 = opl_calc_vol(ksl1, vel, sc->volume);
+		vol1 = opl_calc_vol(ksl1, level_cB);
 	}
 	r40m = (ksl0 & OPL_KSL_MASK) | vol0;
 	r40c = (ksl1 & OPL_KSL_MASK) | vol1;
@@ -549,14 +550,12 @@ oplsyn_noteon(ms, voice, freq, vel)
 }
 
 void
-oplsyn_noteoff(ms, voice, note, vel)
-	midisyn *ms;
-	u_int32_t voice, note, vel;
+oplsyn_releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
 
-	DPRINTFN(3, ("oplsyn_noteoff: %p %d %d\n", sc, voice,
+	DPRINTFN(3, ("%s: %p %d %d\n", __func__, sc, voice,
 		     MIDISYN_FREQ_TO_HZ(note)));
 
 #ifdef DIAGNOSTIC
@@ -569,32 +568,36 @@ oplsyn_noteoff(ms, voice, note, vel)
 	opl_set_ch_reg(sc, 0xB0, voice, v->rB0 & ~OPL_KEYON_BIT);
 }
 
-void
-oplsyn_ctlchange(ms, chan, parm, w14)
-	midisyn *ms;
-	u_int32_t chan, parm, w14;
+int
+oplsyn_ctlnotice(midisyn *ms,
+		 midictl_evt evt, uint_fast8_t chan, uint_fast16_t key)
 {
-	struct opl_softc *sc = ms->data;
 
-	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, chan));
-	switch (parm) {
-	case MIDI_CTRL_PAN_MSB:
-		sc->pan[chan] =
-		    (w14 <= OPL_MIDI_CENTER_MAX ? sc->panl : 0) |
-		    (w14 >= OPL_MIDI_CENTER_MIN ? sc->panr : 0);
-		break;
+	DPRINTFN(1, ("%s: %p %d\n", __func__, sc, chan));
+	
+	switch (evt) {
+	case MIDICTL_RESET:
+		oplsyn_panhandler(ms, chan);
+		return 1;
+	
+	case MIDICTL_CTLR:
+		switch (key) {
+		case MIDI_CTRL_PAN_MSB:
+			oplsyn_panhandler(ms, chan);
+			return 1;
+		}
+		return 0;
+	default:
+		return 0;
 	}
 }
 
 /* PROGRAM CHANGE midi event: */
 void
-oplsyn_programchange(ms, chan, prog)
-	midisyn *ms;
-	u_int32_t chan;
-	u_int32_t prog;
+oplsyn_programchange(midisyn *ms, uint_fast8_t chan, uint_fast8_t prog)
 {
 	/* sanity checks */
-	if (chan >= MIDI_MAX_CHANS || prog >= OPL_NINSTR)
+	if (chan >= MIDI_MAX_CHANS)
 		return;
 
 	ms->pgms[chan] = prog;
@@ -618,4 +621,17 @@ oplsyn_loadpatch(ms, sysex, uio)
 	uiomove((char *)&ins + sizeof *sysex, sizeof ins - sizeof *sysex, uio);
 	/* XXX */
 #endif
+}
+
+static void
+oplsyn_panhandler(midisyn *ms, uint_fast8_t chan)
+{
+	struct opl_softc *sc = ms->data;
+	uint_fast16_t setting;
+	
+	setting = midictl_read(&ms->ctl, chan, MIDI_CTRL_PAN_MSB, 8192);
+	setting >>= 7; /* we used to treat it as MSB only */
+	sc->pan[chan] =
+	    (setting <= OPL_MIDI_CENTER_MAX ? sc->panl : 0) |
+	    (setting >= OPL_MIDI_CENTER_MIN ? sc->panr : 0);
 }

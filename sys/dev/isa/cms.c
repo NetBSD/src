@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.11.14.1 2006/06/07 01:23:09 chap Exp $ */
+/* $NetBSD: cms.c,v 1.11.14.2 2006/06/08 13:21:48 chap Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.11.14.1 2006/06/07 01:23:09 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.11.14.2 2006/06/08 13:21:48 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,14 +83,14 @@ CFATTACH_DECL(cms, sizeof(struct cms_softc),
 
 int	cms_open(midisyn *, int);
 void	cms_close(midisyn *);
-void	cms_on(midisyn *, u_int32_t, u_int32_t, u_int32_t);
-void	cms_off(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	cms_on(midisyn *, uint_fast16_t, uint32_t, int16_t);
+void	cms_off(midisyn *, uint_fast16_t, uint_fast8_t);
 
 struct midisyn_methods midi_cms_hw = {
-	.open    = cms_open,
-	.close   = cms_close,
-	.noteon  = cms_on,
-	.noteoff = cms_off,
+	.open     = cms_open,
+	.close    = cms_close,
+	.attackv  = cms_on,
+	.releasev = cms_off,
 };
 
 static void cms_reset(struct cms_softc *);
@@ -198,7 +198,6 @@ cms_attach(parent, self, aux)
 	ms->mets = &midi_cms_hw;
 	strcpy(ms->name, "Creative Music System");
 	ms->nvoice = CMS_NVOICES;
-	ms->flags = MS_DOALLOC;
 	ms->data = sc;
 
 	/* use the synthesiser */
@@ -234,19 +233,29 @@ cms_close(ms)
 }
 
 void
-cms_on(ms, chan, note, vel)
-	midisyn *ms;
-	u_int32_t chan;
-	u_int32_t note;
-	u_int32_t vel;
+cms_on(midisyn *ms, uint_fast16_t vidx, uint32_t miditune, int16_t level_cB)
 {
 	struct cms_softc *sc = (struct cms_softc *)ms->data;
-	int chip = CHAN_TO_CHIP(chan);
-	int voice = CHAN_TO_VOICE(chan);
+	int chip = CHAN_TO_CHIP(vidx);
+	int voice = CHAN_TO_VOICE(vidx);
+	uint32_t note;
 	u_int8_t octave;
 	u_int8_t count;
 	u_int8_t reg;
 	u_int8_t vol;
+	
+	/*
+	 * The next line is a regrettable hack, because it drops all pitch
+	 * adjustment midisyn has supplied in miditune, so this synth will
+	 * not respond to tuning, pitchbend, etc. It seems it ought to be
+	 * possible to DTRT if the formula that generated the cms_note_table
+	 * can be found, but I've had no luck, and a plot of the numbers in
+	 * the table clearly curves the wrong way to be derived any obvious
+	 * way from the equal tempered scale. (Or maybe the table's wrong?
+	 * Has this device been playing flat up the scale? I don't have
+	 * access to one to try.)
+	 */
+	note = MIDISYN_MT_TO_KEY(miditune);
 
 	if (note < CMS_FIRST_NOTE)
 		return;
@@ -268,7 +277,8 @@ cms_on(ms, chan, note, vel)
 	CMS_WRITE(sc, chip, CMS_IREG_OCTAVE_1_0 + OCTAVE_OFFSET(voice), reg);
 
 	/* set the volume */
-	vol = (vel>>3)&0x0f;
+	/* this may be the wrong curve but will do something. no docs! */
+	vol = 15 + (level_cB > -75) ? level_cB/5 : -15;
 	CMS_WRITE(sc, chip, CMS_IREG_VOL0 + voice, ((vol<<4)|vol));
 
 	/* enable the voice */
@@ -278,19 +288,12 @@ cms_on(ms, chan, note, vel)
 }
 
 void
-cms_off(ms, chan, note, vel)
-	midisyn *ms;
-	u_int32_t chan;
-	u_int32_t note;
-	u_int32_t vel;
+cms_off(midisyn *ms, uint_fast16_t vidx, uint_fast8_t vel)
 {
 	struct cms_softc *sc = (struct cms_softc *)ms->data;
-	int chip = CHAN_TO_CHIP(chan);
-	int voice = CHAN_TO_VOICE(chan);
+	int chip = CHAN_TO_CHIP(vidx);
+	int voice = CHAN_TO_VOICE(vidx);
 	u_int8_t reg;
-
-	if (note < CMS_FIRST_NOTE)
-		return;
 
 	/* disable the channel */
 	reg = CMS_READ(sc, chip, CMS_IREG_FREQ_CTL);
