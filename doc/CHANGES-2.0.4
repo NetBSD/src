@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.35 2006/06/04 22:29:24 ghen Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.36 2006/06/08 22:28:36 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -307,4 +307,11 @@ xsrc/xfree/xc/extras/freetype2/src/type1/t1load.c		1.2
 	Fixes for several integer overflows and null-pointer dereferences in
 	freetype2.
 	[tron, ticket #10639]
+
+games/tetris/scores.c				1.14
+
+	Check data read from "tetris.scores". This address CVE-2006-1539.
+	A standard NetBSD installation is not as much risk because "tetris"
+	is set-group-ID "games", and users shouldn't be in that group.
+	[dan, ticket #10641]
 
