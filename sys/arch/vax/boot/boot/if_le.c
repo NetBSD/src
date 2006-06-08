@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: if_le.c,v 1.9 2006/06/08 07:03:11 he Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -169,18 +169,21 @@ igen:
 		eaddr[i] = ea[i] & 0377;
 
 	if (initblock == NULL) {
-		(void *)initblock =
-		    (char *)QW_ALLOC(sizeof(struct initblock)) + addoff;
+		initblock =
+		    (struct initblock *)QW_ALLOC(sizeof(struct initblock)) +
+			 addoff;
 		initblock->ib_mode = LE_MODE_NORMAL;
 		bcopy(eaddr, initblock->ib_padr, 6);
 		initblock->ib_ladrf1 = 0;
 		initblock->ib_ladrf2 = 0;
 
-		(int)rdesc = QW_ALLOC(sizeof(struct buffdesc) * NRBUF) + addoff;
+		rdesc = (struct buffdesc *)QW_ALLOC(sizeof(struct buffdesc) * 
+			NRBUF) + addoff;
 		initblock->ib_rdr = (RLEN << 29) | (int)rdesc;
 		if (kopiera)
 			initblock->ib_rdr -= (int)initblock;
-		(int)tdesc = QW_ALLOC(sizeof(struct buffdesc) * NTBUF) + addoff;
+		tdesc = (struct buffdesc *)QW_ALLOC(sizeof(struct buffdesc) *
+			NTBUF) + addoff;
 		initblock->ib_tdr = (TLEN << 29) | (int)tdesc;
 		if (kopiera)
 			initblock->ib_tdr -= (int)initblock;
