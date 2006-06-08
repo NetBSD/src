@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.313 2006/05/30 02:10:01 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.314 2006/06/08 00:13:25 rpaulo Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -50,6 +50,7 @@
 ./lib
 ./libdata
 ./libdata/firmware
+./libdata/firmware/ral
 ./libexec
 ./mnt
 ./rescue
