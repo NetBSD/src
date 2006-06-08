@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.13 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: scores.c,v 1.13.10.1 2006/06/08 22:20:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -334,7 +334,8 @@ checkscores(hs, num)
 				continue;
 			}
 		}
-		levelfound[sp->hs_level] = 1;
+        if (sp->hs_level < NLEVELS && sp->hs_level >= 0)
+    		levelfound[sp->hs_level] = 1;
 		i++, sp++;
 	}
 	return (num > MAXHISCORES ? MAXHISCORES : num);
@@ -373,12 +374,14 @@ showscores(level)
 	for (i = MINLEVEL; i < NLEVELS; i++)
 		levelfound[i] = 0;
 	for (i = 0, sp = scores; i < nscores; i++, sp++) {
-		if (levelfound[sp->hs_level])
-			sp->hs_time = 0;
-		else {
-			sp->hs_time = 1;
-			levelfound[sp->hs_level] = 1;
-		}
+        if (sp->hs_level < NLEVELS && sp->hs_level >= 0) {
+    		if (levelfound[sp->hs_level])
+	    		sp->hs_time = 0;
+		    else {
+			    sp->hs_time = 1;
+		    	levelfound[sp->hs_level] = 1;
+		    }
+        }
 	}
 
 	/*
@@ -432,7 +435,7 @@ printem(level, offset, hs, n, me)
 				continue;
 			}
 			sp = &hs[item];
-			(void)sprintf(buf,
+			(void)snprintf(buf, sizeof(buf),
 			    "%3d%c %6d  %-11s (%6d on %d)",
 			    item + offset, sp->hs_time ? '*' : ' ',
 			    sp->hs_score * sp->hs_level,
