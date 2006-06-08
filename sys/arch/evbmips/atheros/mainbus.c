@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2006/04/07 04:56:00 gdamore Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2006/06/08 06:15:59 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2006/04/07 04:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2006/06/08 06:15:59 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ struct mainbusdev {
 
 struct mainbusdev mainbusdevs[] = {
 	{ "cpu",	},
+	{ "wdog",	},
 	{ "arbus",	},
 	{ NULL,		}
 };
@@ -92,7 +93,7 @@ mainbus_attach(parent, self, aux)
 	printf("\n");
 
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
-		config_found_ia(self, "mainbus", NULL, mainbus_print);
+		config_found_ia(self, "mainbus", md, mainbus_print);
 	}
 }
 
@@ -100,5 +101,5 @@ static int
 mainbus_print(void *aux, const char *pnp)
 {
 
-	return (UNCONF);
+	return (QUIET);
 }
