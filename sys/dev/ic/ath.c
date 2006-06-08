@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.74 2006/06/05 05:15:31 gdamore Exp $	*/
+/*	$NetBSD: ath.c,v 1.75 2006/06/08 22:42:24 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.74 2006/06/05 05:15:31 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.75 2006/06/08 22:42:24 gdamore Exp $");
 #endif
 
 /*
@@ -2267,8 +2267,8 @@ ath_beacon_proc(void *arg, int pending)
 	ath_hal_puttxbuf(ah, sc->sc_bhalq, bf->bf_daddr);
 	ath_hal_txstart(ah, sc->sc_bhalq);
 	DPRINTF(sc, ATH_DEBUG_BEACON_PROC,
-		"%s: TXDP[%u] = %p (%p)\n", __func__,
-		sc->sc_bhalq, (caddr_t)bf->bf_daddr, bf->bf_desc);
+	    "%s: TXDP[%u] = %" PRIx64 " (%p)\n", __func__,
+	    sc->sc_bhalq, (uint64_t)bf->bf_daddr, bf->bf_desc);
 
 	sc->sc_stats.ast_be_xmit++;
 }
@@ -2553,9 +2553,10 @@ ath_descdma_setup(struct ath_softc *sc,
 
 	ds = dd->dd_desc;
 	dd->dd_desc_paddr = dd->dd_dmamap->dm_segs[0].ds_addr;
-	DPRINTF(sc, ATH_DEBUG_RESET, "%s: %s DMA map: %p (%lu) -> %p (%lu)\n",
+	DPRINTF(sc, ATH_DEBUG_RESET,
+	    "%s: %s DMA map: %p (%lu) -> %" PRIx64 " (%lu)\n",
 	    __func__, dd->dd_name, ds, (u_long) dd->dd_desc_len,
-	    (caddr_t) dd->dd_desc_paddr, /*XXX*/ (u_long) dd->dd_desc_len);
+	    (uint64_t) dd->dd_desc_paddr, /*XXX*/ (u_long) dd->dd_desc_len);
 
 	/* allocate rx buffers */
 	bsize = sizeof(struct ath_buf) * nbuf;
@@ -3863,15 +3864,15 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	if (txq->axq_link == NULL) {
 		ath_hal_puttxbuf(ah, txq->axq_qnum, bf->bf_daddr);
 		DPRINTF(sc, ATH_DEBUG_XMIT,
-			"%s: TXDP[%u] = %p (%p) depth %d\n", __func__,
-			txq->axq_qnum, (caddr_t)bf->bf_daddr, bf->bf_desc,
-			txq->axq_depth);
+		    "%s: TXDP[%u] = %" PRIx64 " (%p) depth %d\n", __func__,
+		    txq->axq_qnum, (uint64_t)bf->bf_daddr, bf->bf_desc,
+		    txq->axq_depth);
 	} else {
 		*txq->axq_link = HTOAH32(bf->bf_daddr);
 		DPRINTF(sc, ATH_DEBUG_XMIT,
-			"%s: link[%u](%p)=%p (%p) depth %d\n", __func__,
-			txq->axq_qnum, txq->axq_link,
-			(caddr_t)bf->bf_daddr, bf->bf_desc, txq->axq_depth);
+		    "%s: link[%u](%p)=%" PRIx64 " (%p) depth %d\n",
+		    __func__, txq->axq_qnum, txq->axq_link,
+		    (uint64_t)bf->bf_daddr, bf->bf_desc, txq->axq_depth);
 	}
 	txq->axq_link = &bf->bf_desc[bf->bf_nseg - 1].ds_link;
 	/*
@@ -4993,8 +4994,9 @@ ath_printrxbuf(struct ath_buf *bf, int done)
 	int i;
 
 	for (i = 0, ds = bf->bf_desc; i < bf->bf_nseg; i++, ds++) {
-		printf("R%d (%p %p) %08x %08x %08x %08x %08x %08x %c\n",
-		    i, ds, (struct ath_desc *)bf->bf_daddr + i,
+		printf("R%d (%p %" PRIx64
+		    ") %08x %08x %08x %08x %08x %08x %c\n", i, ds,
+		    (uint64_t)bf->bf_daddr + sizeof (struct ath_desc) * i,
 		    ds->ds_link, ds->ds_data,
 		    ds->ds_ctl0, ds->ds_ctl1,
 		    ds->ds_hw[0], ds->ds_hw[1],
@@ -5009,8 +5011,10 @@ ath_printtxbuf(struct ath_buf *bf, int done)
 	int i;
 
 	for (i = 0, ds = bf->bf_desc; i < bf->bf_nseg; i++, ds++) {
-		printf("T%d (%p %p) %08x %08x %08x %08x %08x %08x %08x %08x %c\n",
-		    i, ds, (struct ath_desc *)bf->bf_daddr + i,
+		printf("T%d (%p %" PRIx64
+		    ") %08x %08x %08x %08x %08x %08x %08x %08x %c\n",
+		    i, ds,
+		    (uint64_t)bf->bf_daddr + sizeof (struct ath_desc) * i,
 		    ds->ds_link, ds->ds_data,
 		    ds->ds_ctl0, ds->ds_ctl1,
 		    ds->ds_hw[0], ds->ds_hw[1], ds->ds_hw[2], ds->ds_hw[3],
