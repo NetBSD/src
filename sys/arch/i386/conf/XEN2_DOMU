@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_U,v 1.4 2006/06/01 19:39:59 bouyer Exp $
+# $NetBSD: XEN2_DOMU,v 1.1 2006/06/08 22:17:07 hubertf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -12,9 +12,6 @@ maxusers	32		# estimated number of users
 
 #
 options 	XEN
-options 	XEN3
-options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
-
 #options 	DOM0OPS
 
 options 	I686_CPU
@@ -178,11 +175,9 @@ hypervisor*	at mainbus?		# Xen hypervisor
 npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
+xennet* 	at hypervisor?		# Xen virtual network interface
 
-xenbus*		at hypervisor?		# Xen virtual bus
-
-xennet* 	at xenbus?		# Xen virtual network interface
-xbd*		at xenbus?		# Xen virtual block device
+xbd*		at hypervisor?		# Xen virtual block device
 
 include	"arch/i386/conf/GENERIC.local"
 
