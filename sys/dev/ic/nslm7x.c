@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.26 2006/06/07 22:33:36 kardel Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.27 2006/06/08 10:56:49 hannken Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.26 2006/06/07 22:33:36 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.27 2006/06/08 10:56:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,6 +445,7 @@ lm_gtredata(sme, tred)
 	if (timercmp(&utv, &t, >)) {
 		sc->lastread = utv;
 		sc->refresh_sensor_data(sc);
+	}
 
 	*tred = sc->sensors[tred->sensor];
 
