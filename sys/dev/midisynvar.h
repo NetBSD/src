@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.13 2006/06/07 05:31:43 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.14 2006/06/08 04:55:23 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,13 +56,24 @@ typedef struct midisyn midisyn;
  * for drivers without it.
  */
 struct midisyn_methods {
-	int  (*open)	(midisyn *, int);
+	int  (*open)	(midisyn *, int /* flags */);
 	void (*close)   (midisyn *);
 	int  (*ioctl)   (midisyn *, u_long, caddr_t, int, struct lwp *);
-	int  (*allocv)  (midisyn *, u_int32_t, u_int32_t);
-	void (*noteon)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
-	void (*noteoff) (midisyn *, u_int32_t, u_int32_t, u_int32_t);
-	void (*pgmchg)  (midisyn *, u_int32_t, u_int32_t);
+	/*
+	 * allocv(midisyn *ms, uint_fast8_t chan, uint_fast8_t key);
+	 * Allocate one of the devices actual voices (stealing one if
+	 * necessary) to play note number 'key' (the MIDI note number, not
+	 * a frequency) associated with MIDI channel chan. An implementation
+	 * might want to choose a voice already last used on chan, to save
+	 * shuffling of patches.
+	 * One day a variant of this method will probably be needed, with an
+	 * extra argument indicating whether a melodic or percussive voice is
+	 * wanted.
+	 */
+	int  (*allocv)  (midisyn *, uint_fast8_t, uint_fast8_t);
+	void (*noteon)  (midisyn *, uint32_t, uint32_t, uint32_t);
+	void (*noteoff) (midisyn *, uint32_t, uint32_t, uint32_t);
+	void (*pgmchg)  (midisyn *, uint32_t, uint32_t);
 };
 
 struct voice {
@@ -81,7 +92,7 @@ struct midisyn {
 	char name[32];
 	int nvoice;
 	int flags;
-#define MS_DOALLOC	1
+#define MS_DOALLOC	1 /* obsolescent: implied if driver has no allocv */
 #define MS_FREQXLATE	2
 	void *data;
 
@@ -108,6 +119,37 @@ extern const struct midi_hw_if midisyn_hw_if;
 
 void	midisyn_attach (struct midi_softc *, midisyn *);
 
-#define MIDISYN_FREQ_TO_HZ(f) ((f) >> 16)
+/*
+ * Convert a 14-bit volume or expression controller value to centibels using
+ * the General MIDI formula. The maximum controller value translates to 0 cB
+ * (no attenuation), a half-range controller to -119 cB (level cut by 11.9 dB)
+ * and a zero controller to INT16_MIN. If you are converting a 7-bit value
+ * just shift it 7 bits left first.
+ */
+extern int16_t midisyn_vol2cB(uint_fast16_t);
+
+/*
+ * MIDI RP-012 constitutes a MIDI Tuning Specification. The units are
+ * fractional-MIDIkeys, that is, the key number 00 - 7f left shifted
+ * 14 bits to provide a 14-bit fraction that divides each semitone. The
+ * whole thing is just a 21-bit number that is bent and tuned simply by
+ * adding and subtracting--the same offset is the same pitch change anywhere
+ * on the scale. One downside is that a cent is 163.84 of these units, so
+ * you can't expect a lengthy integer sum of cents to come out in tune; if you
+ * do anything in cents it is best to use them only for local adjustment of
+ * a pitch.
+ * 
+ * This function converts a pitch in MIDItune units to Hz left-shifted 18 bits.
+ * That should leave you enough to shift down to whatever precision the hardware
+ * supports. You can generate a float representation in Hz (where float is
+ * supported) with scalbn(midisyn_mt2hz18(mt),-18).
+ */
+extern uint32_t midisyn_mt2hz18(uint32_t);
+
+#define MIDISYN_HZ18_TO_HZ(f) ((f) >> 18)
+#define MIDISYN_KEY_TO_MT(k) ((k)<<14)
+#define MIDISYN_MT_TO_KEY(m) (((m)+(1<<13))>>14)
+
+#define MIDISYN_FREQ_TO_HZ(f) ((f) >> 16) /* deprecated; going away RSN */
 
 #endif /* _SYS_DEV_MIDISYNVAR_H_ */

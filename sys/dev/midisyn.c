@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.13 2006/06/07 05:31:43 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.14 2006/06/08 04:55:22 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.13 2006/06/07 05:31:43 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.14 2006/06/08 04:55:22 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -69,7 +69,7 @@ int	midisyndebug = 0;
 
 int	midisyn_findvoice(midisyn *, int, int);
 void	midisyn_freevoice(midisyn *, int);
-int	midisyn_allocvoice(midisyn *, u_int32_t, u_int32_t);
+int	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
 u_int32_t midisyn_note_to_freq(int);
 u_int32_t midisyn_finetune(u_int32_t, int, int, int);
 
@@ -216,13 +216,11 @@ midisyn_freevoice(midisyn *ms, int voice)
 }
 
 int
-midisyn_allocvoice(midisyn *ms, u_int32_t chan, u_int32_t note)
+midisyn_allocvoice(midisyn *ms, uint_fast8_t chan, uint_fast8_t note)
 {
 	int bestv, v;
 	u_int bestseq, s;
 
-	if (!(ms->flags & MS_DOALLOC))
-		return (chan);
 	/* Find a free voice, or if no free voice is found the oldest. */
 	bestv = 0;
 	bestseq = ms->voices[0].seqno + (ms->voices[0].inuse ? 0x40000000 : 0);
@@ -463,4 +461,76 @@ static void
 midisyn_notify(void *cookie, midictl_evt evt,
                uint_fast8_t chan, uint_fast16_t key)
 {
+}
+
+int16_t
+midisyn_vol2cB(uint_fast16_t vol)
+{
+	int16_t cB = 0;
+	int32_t v;
+	
+	if ( 0 == vol )
+		return INT16_MIN;
+	/*
+	 * Adjust vol to fall in the range 8192..16383. Each doubling is
+	 * worth 12 dB.
+	 */
+	while ( vol < 8192 ) {
+		vol <<= 1;
+		cB -= 120;
+	}
+	v = vol; /* ensure evaluation in signed 32 bit below */
+	/*
+	 * The GM vol-to-dB formula is dB = 40 log ( v / 127 ) for 7-bit v.
+	 * The vol and expression controllers are in 14-bit space so the
+	 * equivalent is 40 log ( v / 16256 ) - that is, MSB 127 LSB 0 because
+	 * the LSB is commonly unused. MSB 127 LSB 127 would then be a tiny
+	 * bit over.
+	 * 1 dB resolution is a little coarser than we'd like, so let's shoot
+	 * for centibels, i.e. 400 log ( v / 16256 ), and shift everything left
+	 * as far as will fit in 32 bits, which turns out to be a shift of 22.
+	 * This minimax polynomial approximation is good to about a centibel
+	 * on the range 8192..16256, a shade worse (1.4 or so) above that.
+	 * 26385/10166 is the 6th convergent of the coefficient for v^2.
+	 */
+	cB += ( v * ( 124828 - ( v * 26385 ) / 10166 ) - 1347349038 ) >> 22;
+	return cB;
+}
+
+uint32_t
+midisyn_mt2hz18(uint32_t mt)
+{
+	int64_t t64a, t64b;
+	uint_fast8_t shift;
+	
+	/*
+	 * Scale from the logarithmic MIDI-Tuning units to Hz<<18. Uses the
+	 * continued-fraction form of a 2/2 rational function derived to
+	 * cover the highest octave (mt 1900544..2097151 or 74.00.00..7f.7f.7f
+	 * in RP-012-speak, the dotted bits are 7 wide) to produce Hz shifted
+	 * left just as far as the maximum Hz will fit in a uint32, which
+	 * turns out to be 18. Just shift off the result for lower octaves.
+	 * Fit is within 1/4 MIDI tuning unit throughout (disclaimer: the
+	 * comparison relied on the double-precision log in libm).
+	 * 
+	 */
+
+	if ( 0 == mt )
+		return 2143236;
+	
+	for ( shift = 0; mt < 1900544; ++ shift )
+		mt += 196608; /* 12 << 14 */
+
+	if ( 1998848 == mt )
+		return UINT32_C(2463438621) >> shift;
+	
+	t64a  = 0x5a1a0ee4; /* INT64_C(967879298788) gcc333: spurious warning */
+	t64a |= (int64_t)0xe1 << 32;
+	t64a /= (int32_t)mt - 1998848;
+	t64a += (int32_t)mt - 3704981;
+	t64b  = 0x6763759d; /* INT64_C(8405905567872413) and here too */
+	t64b |= (int64_t)0x1ddd20 << 32;
+	t64b /= t64a;
+	t64b += UINT32_C(2463438619);
+	return (uint32_t)t64b >> shift;
 }
