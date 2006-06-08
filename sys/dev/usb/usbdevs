@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.430 2006/06/06 08:53:58 tron Exp $
+$NetBSD: usbdevs,v 1.431 2006/06/08 17:56:20 rjs Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
 vendor MELCO		0x0411	Melco
 vendor CREATIVE		0x041e	Creative Labs
+vendor NOKIA		0x0421	Nokia
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
@@ -1427,6 +1428,9 @@ product NIKON E885		0x0105	Digital Camera E885
 
 /* NHJ product */
 product NHJ CAM2		0x9120	Camera
+
+/* Nokia products */
+product NOKIA CA42		0x0802	Mobile Phone adapter
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
