@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.14 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: ra.c,v 1.15 2006/06/08 07:03:11 he Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -111,7 +111,7 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 			mapregs = (int *)nexaddr + 512;
 			mapregs[494] = PG_V | (((u_int)&uda) >> 9);
 			mapregs[495] = mapregs[494] + 1;
-			(char *)ubauda = (char *)0x3dc00 +
+			ubauda = (struct uda *)0x3dc00 +
 			    (((u_int)(&uda))&0x1ff);
 		} else
 			ubauda = &uda;
