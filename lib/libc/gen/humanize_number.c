@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.10 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.11 2006/06/08 21:08:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,11 +39,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: humanize_number.c,v 1.10 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.11 2006/06/08 21:08:56 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -141,9 +142,8 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		    sign * s1, localeconv()->decimal_point, s2,
 		    sep, SCALE2PREFIX(i), suffix);
 	} else
-		r = snprintf(buf, len, "%lld%s%s%s",
-		    /* LONGLONG */
-		    (long long)(sign * ((bytes + 50) / 100)),
+		r = snprintf(buf, len, "%" PRId64 "%s%s%s",
+		    sign * ((bytes + 50) / 100),
 		    sep, SCALE2PREFIX(i), suffix);
 
 	return (r);
