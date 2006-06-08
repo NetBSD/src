@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.2 2006/06/05 15:59:47 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.3 2006/06/08 05:00:25 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.2 2006/06/05 15:59:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.3 2006/06/08 05:00:25 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,20 +356,13 @@ it_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct it_softc *sc = sme->sme_cookie;
 	static const struct timeval onepointfive = { 1, 500000 };
-	struct timeval tv;
-	int i, s;       
-                        
-	/* read new values at most once every 1.5 seconds */
-	timeradd(&sc->lastread, &onepointfive, &tv);
-	s = splclock();  
-	i = timercmp(&mono_time, &tv, >);
-	if (i) {
-		sc->lastread.tv_sec  = mono_time.tv_sec;
-		sc->lastread.tv_usec = mono_time.tv_usec;
-	}                
-	splx(s);         
+	struct timeval tv, utv;
 
-	if (i) {        
+	/* read new values at most once every 1.5 seconds */
+	getmicrouptime(&utv);
+	timeradd(&sc->lastread, &onepointfive, &tv);
+	if (timercmp(&utv, &tv, >)) {
+		sc->lastread  = utv;
 		/* Refresh our stored data for every sensor */
 		it_refresh_temp(sc, &sc->sc_data[12]); 
 		it_refresh_volts(sc, &sc->sc_data[3], &sc->sc_info[3]);
