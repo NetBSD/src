@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2006/06/08 06:15:59 gdamore Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 2006/06/08 22:47:26 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2006/06/08 06:15:59 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2006/06/08 22:47:26 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,7 @@ struct mainbusdev mainbusdevs[] = {
 };
 
 static int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if (mainbus_found)
@@ -82,10 +79,7 @@ mainbus_match(parent, match, aux)
 }
 
 static void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbusdev *md;
 
