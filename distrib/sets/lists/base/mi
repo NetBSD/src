@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.626 2006/05/31 02:58:14 tron Exp $
+# $NetBSD: mi,v 1.627 2006/06/08 00:15:09 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -101,6 +101,11 @@
 ./lib/libdes.so.6.0				base-obsolete		obsolete
 ./libdata					base-sys-root
 ./libdata/firmware				base-sys-root
+./libdata/firmware/ral				base-sys-root
+./libdata/firmware/ral/ral-license		base-sys-root
+./libdata/firmware/ral/ral-rt2561		base-sys-root
+./libdata/firmware/ral/ral-rt2561s		base-sys-root
+./libdata/firmware/ral/ral-rt2661		base-sys-root
 ./libexec					base-sys-root
 ./mnt						base-sys-root
 ./rescue					base-sys-root
