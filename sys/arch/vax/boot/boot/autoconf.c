@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2005/12/24 22:45:40 perry Exp $ */
+/*	$NetBSD: autoconf.c,v 1.24 2006/06/08 07:03:11 he Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -154,7 +154,7 @@ mcheck(void *arg)
 void
 scbinit()
 {
-	int i;
+	int i, addr;
 
 	/*
 	 * Allocate space. We need one page for the SCB, and 128*20 == 2.5k
@@ -169,7 +169,9 @@ scbinit()
 
 	for (i = 0; i < 128; i++) {
 		scb[i] = &scb_vec[i];
-		(int)scb[i] |= SCB_ISTACK;	/* Only interrupt stack */
+		addr = (int)scb[i];
+		addr |= SCB_ISTACK;		/* Only interrupt stack */
+		scb[i] = (struct ivec_dsp*)addr;
 		scb_vec[i] = idsptch;
 		scb_vec[i].hoppaddr = scb_stray;
 		scb_vec[i].pushlarg = (void *) (i * 4);
