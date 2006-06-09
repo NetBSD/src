@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24.2.4 2006/06/09 04:20:02 chap Exp $	*/
+/*	$NetBSD: opl.c,v 1.24.2.5 2006/06/09 17:05:28 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.4 2006/06/09 04:20:02 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.5 2006/06/09 17:05:28 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ void opl_freq_to_fnum (int freq, int *block, int *fnum);
 int oplsyn_open(midisyn *ms, int);
 void oplsyn_close(midisyn *);
 void oplsyn_reset(void *);
-void oplsyn_attackv(midisyn *, uint_fast16_t, uint32_t, int16_t);
+void oplsyn_attackv(midisyn *, uint_fast16_t, midipitch_t, int16_t);
 void oplsyn_releasev(midisyn *, uint_fast16_t, uint_fast8_t);
 int oplsyn_ctlnotice(midisyn *, midictl_evt, uint_fast8_t, uint_fast16_t);
 void oplsyn_programchange(midisyn *, uint_fast8_t, uint_fast8_t);
@@ -126,7 +126,7 @@ static void oplsyn_panhandler(midisyn *, uint_fast8_t);
 void opl_set_op_reg(struct opl_softc *, int, int, int, u_char);
 void opl_set_ch_reg(struct opl_softc *, int, int, u_char);
 void opl_load_patch(struct opl_softc *, int);
-u_int32_t opl_get_block_fnum(uint32_t miditune);
+u_int32_t opl_get_block_fnum(midipitch_t mp);
 int opl_calc_vol(int regbyte, int16_t level_cB);
 
 struct midisyn_methods opl3_midi = {
@@ -319,10 +319,10 @@ opl_load_patch(sc, v)
 }
 
 uint32_t
-opl_get_block_fnum(uint32_t miditune)
+opl_get_block_fnum(midipitch_t mp)
 {
+	midihz18_t hz18;
 	uint32_t block;
-	uint32_t hz18;
 	uint32_t f_num;
 	
 	/*
@@ -331,14 +331,14 @@ opl_get_block_fnum(uint32_t miditune)
 	 * upper end of its range, making the most bits available for
 	 * resolution.
 	 */
-	block = ( miditune - MIDISYN_KEY_TO_MT(19) ) / MIDITUNE_OCTAVE;
+	block = ( mp - MIDIPITCH_FROM_KEY(19) ) / MIDIPITCH_OCTAVE;
 	if ( block > 7 )	/* subtract wrapped */
 		block = 0;
 	/*
-	 * Could subtract block*MIDITUNE_OCTAVE here, or >>block later. Later.
+	 * Could subtract block*MIDIPITCH_OCTAVE here, or >>block later. Later.
 	 */
 	
-	hz18 = midisyn_mt2hz18(miditune);
+	hz18 = MIDIPITCH_TO_HZ18(mp);
 	hz18 >>= block;
 	
 	/*
@@ -462,7 +462,7 @@ opl_calc_vol(int regbyte, int16_t level_cB)
 
 void
 oplsyn_attackv(midisyn *ms,
-               uint_fast16_t voice, uint32_t miditune, int16_t level_cB)
+               uint_fast16_t voice, midipitch_t mp, int16_t level_cB)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
@@ -476,7 +476,7 @@ oplsyn_attackv(midisyn *ms,
 	u_int8_t vol0, vol1;
 
 	DPRINTFN(3, ("%s: %p %d %u %d\n", __func__, sc, voice,
-		     miditune, level_cB));
+		     mp, level_cB));
 
 #ifdef DIAGNOSTIC
 	if (voice < 0 || voice >= sc->syn.nvoice) {
@@ -497,12 +497,12 @@ oplsyn_attackv(midisyn *ms,
 	opl_load_patch(sc, voice);
 
 	mult = 1;
-	if ( miditune > MIDISYN_KEY_TO_MT(114) ) { /* out of range for mult 1 */
+	if ( mp > MIDIPITCH_FROM_KEY(114) ) { /* out of range for mult 1 */
 		mult = 4;	/* this will cover the rest of the MIDI range */
-		miditune -= 2*MIDITUNE_OCTAVE;
+		mp -= 2*MIDIPITCH_OCTAVE;
 	}
 	
-	block_fnum = opl_get_block_fnum(miditune);
+	block_fnum = opl_get_block_fnum(mp);
 
 	chars0 = p->ops[OO_CHARS+0];
 	chars1 = p->ops[OO_CHARS+1];
@@ -518,7 +518,7 @@ oplsyn_attackv(midisyn *ms,
 
 	if ((m_mult > 15) || (c_mult > 15)) {
 		printf("%s: frequency out of range %u (mult %d)\n", __func__,
-		       miditune, mult);
+		       mp, mult);
 		return;
 	}
 	r20m = (chars0 &~ OPL_MULTIPLE_MASK) | m_mult;

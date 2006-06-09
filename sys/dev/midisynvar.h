@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.15 2006/06/08 13:21:48 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.16 2006/06/09 17:05:28 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,21 +73,21 @@ struct midisyn_methods {
 	uint_fast16_t  (*allocv)  (midisyn *, uint_fast8_t, uint_fast8_t);
 	/*
 	 * attackv(midisyn *ms,
-	 *         uint_fast16_t voice, uint32_t miditune, int16_t level_cB);
-	 * Attack the voice 'voice' at pitch 'miditune' with level 'level_cB'.
+	 *         uint_fast16_t voice, midipitch_t mp, int16_t level_cB);
+	 * Attack the voice 'voice' at pitch 'midipitch' with level 'level_cB'.
 	 * The pitch is in MIDI Tuning units and accounts for all of the pitch
 	 * adjustment controls that midisyn supports and that the driver has
 	 * not reported handling internally. The level is in centibels of
-	 * attenuation (0 == no attenuation, full output, lower levels are
+	 * attenuation (0 == no attenuation, full output; reduced levels are
 	 * negative) and again accounts for all level adjustments midisyn
 	 * supports, except any the driver reports handling itself.
 	 * The program used for the voice should be the current program of the
 	 * voice's associated MIDI channel, and can be queried with MS_GETPGM.
 	 */
-	void (*attackv)  (midisyn *, uint_fast16_t, uint32_t, int16_t);
+	void (*attackv)  (midisyn *, uint_fast16_t, midipitch_t, int16_t);
 	/*
 	 * attackv_vel(midisyn *ms, uint_fast16_t voice,
-	 *             uint32_t miditune, int16_t level_cB, uint_fast8_t vel);
+	 *             midipitch_t mp, int16_t level_cB, uint_fast8_t vel);
 	 * If the driver can do something useful with the voice's attack
 	 * velocity, such as vary the attack envelope or timbre, it should
 	 * provide this method. Velocity 64 represents the normal attack for
@@ -96,7 +96,7 @@ struct midisyn_methods {
 	 * instead, and include the velocity in the calculation of level_cB.
 	 */
 	void (*attackv_vel) (midisyn *,
-	                     uint_fast16_t, uint32_t, int16_t, uint_fast8_t);
+	                     uint_fast16_t, midipitch_t, int16_t, uint_fast8_t);
 	/*
 	 * releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel);
 	 * Release the voice 'voice' with release velocity 'vel' where lower
@@ -105,12 +105,12 @@ struct midisyn_methods {
 	 */
 	void (*releasev) (midisyn *, uint_fast16_t, uint_fast8_t);
 	/*
-	 * repitchv(midisyn *ms, uint_fast16_t voice, uint32_t miditune);
+	 * repitchv(midisyn *ms, uint_fast16_t voice, midipitch_t mp);
 	 * A driver should provide this method if it is able to change the
 	 * pitch of a sounding voice without rearticulating or glitching it.
 	 * [not yet implemented in midisyn]
 	 */
-	void (*repitchv) (midisyn *, uint_fast16_t, uint32_t);
+	void (*repitchv) (midisyn *, uint_fast16_t, midipitch_t);
 	/*
 	 * relevelv(midisyn *ms, uint_fast16_t voice, int16_t level_cB);
 	 * A driver should provide this method if it is able to change the
@@ -167,8 +167,6 @@ struct midisyn {
 	char name[32];
 	int nvoice;
 	int flags;
-#define MS_DOALLOC	1 /* obsolescent: implied if driver has no allocv */
-#define MS_FREQXLATE	2 /* obsolescent: everybody gets miditunes */
 	void *data;
 
 	/* Set up by midisyn but available to synth driver for reading ctls */
@@ -202,31 +200,5 @@ void	midisyn_attach (struct midi_softc *, midisyn *);
  * just shift it 7 bits left first.
  */
 extern int16_t midisyn_vol2cB(uint_fast16_t);
-
-/*
- * MIDI RP-012 constitutes a MIDI Tuning Specification. The units are
- * fractional-MIDIkeys, that is, the key number 00 - 7f left shifted
- * 14 bits to provide a 14-bit fraction that divides each semitone. The
- * whole thing is just a 21-bit number that is bent and tuned simply by
- * adding and subtracting--the same offset is the same pitch change anywhere
- * on the scale. One downside is that a cent is 163.84 of these units, so
- * you can't expect a lengthy integer sum of cents to come out in tune; if you
- * do anything in cents it is best to use them only for local adjustment of
- * a pitch.
- * 
- * This function converts a pitch in MIDItune units to Hz left-shifted 18 bits.
- * That should leave you enough to shift down to whatever precision the hardware
- * supports. You can generate a float representation in Hz (where float is
- * supported) with scalbn(midisyn_mt2hz18(mt),-18).
- */
-extern uint32_t midisyn_mt2hz18(uint32_t);
-
-#define MIDISYN_HZ18_TO_HZ(f) ((f) >> 18)
-#define MIDISYN_KEY_TO_MT(k) ((k)<<14)
-#define MIDISYN_MT_TO_KEY(m) (((m)+(1<<13))>>14)
-
-#define MIDITUNE_OCTAVE  196608
-#define MIDITUNE_SEMITONE 16384
-#define MIDITUNE_CENT       164 /* this, regrettably, is not exact. */
 
 #endif /* _SYS_DEV_MIDISYNVAR_H_ */

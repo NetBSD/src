@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.11.14.2 2006/06/08 13:21:48 chap Exp $ */
+/* $NetBSD: cms.c,v 1.11.14.3 2006/06/09 17:05:28 chap Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.11.14.2 2006/06/08 13:21:48 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.11.14.3 2006/06/09 17:05:28 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ CFATTACH_DECL(cms, sizeof(struct cms_softc),
 
 int	cms_open(midisyn *, int);
 void	cms_close(midisyn *);
-void	cms_on(midisyn *, uint_fast16_t, uint32_t, int16_t);
+void	cms_on(midisyn *, uint_fast16_t, midipitch_t, int16_t);
 void	cms_off(midisyn *, uint_fast16_t, uint_fast8_t);
 
 struct midisyn_methods midi_cms_hw = {
@@ -233,7 +233,7 @@ cms_close(ms)
 }
 
 void
-cms_on(midisyn *ms, uint_fast16_t vidx, uint32_t miditune, int16_t level_cB)
+cms_on(midisyn *ms, uint_fast16_t vidx, midipitch_t mp, int16_t level_cB)
 {
 	struct cms_softc *sc = (struct cms_softc *)ms->data;
 	int chip = CHAN_TO_CHIP(vidx);
@@ -255,7 +255,7 @@ cms_on(midisyn *ms, uint_fast16_t vidx, uint32_t miditune, int16_t level_cB)
 	 * Has this device been playing flat up the scale? I don't have
 	 * access to one to try.)
 	 */
-	note = MIDISYN_MT_TO_KEY(miditune);
+	note = MIDIPITCH_TO_KEY(mp);
 
 	if (note < CMS_FIRST_NOTE)
 		return;

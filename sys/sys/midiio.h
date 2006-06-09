@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.13.14.6 2006/06/01 22:06:58 chap Exp $	*/
+/*	$NetBSD: midiio.h,v 1.13.14.7 2006/06/09 17:08:30 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -328,6 +328,68 @@ struct sbi_instrument {
 #define SEQOLD_CONTROLLER	10
 #define SEQOLD_PRIVATE		0xfe
 #define SEQOLD_EXTENDED		0xff
+
+/*
+ * The 'midipitch' data type, used in the kernel between the midisyn layer and
+ * onboard synth drivers, and in userland as parameters to the MIDI Tuning Spec
+ * (RP-012) universal-system-exclusive messages. It is a MIDI key number shifted
+ * left to accommodate 14 bit sub-semitone resolution. In this representation,
+ * tuning and bending adjustments are simple addition and subtraction.
+ */
+typedef int32_t midipitch_t;
+
+/*
+ * Nominal conversions between midipitches and key numbers. (Beware that these
+ * are the nominal, standard correspondences, but whole point of the MIDI Tuning
+ * Spec is that you can set things up so the hardware might render key N at
+ * actual pitch MIDIPITCH_FROM_KEY(N)+c for some correction c.)
+ */
+#define MIDIPITCH_FROM_KEY(k) ((k)<<14)
+#define MIDIPITCH_TO_KEY(mp) (((mp)+(1<<13))>>14)
+
+#define MIDIPITCH_OCTAVE  196608
+#define MIDIPITCH_SEMITONE 16384
+#define MIDIPITCH_CENT       164 /* this, regrettably, is inexact. */
+
+/*
+ * For rendering, convert a midipitch (after all tuning adjustments) to Hz.
+ * The conversion is DEFINED as MIDI key 69.00000 (A) === 440 Hz equal tempered
+ * always. Alternate tunings are obtained by adjusting midipitches.
+ *
+ * The midihz18_t (Hz shifted left for 18-bit sub-Hz resolution) covers the
+ * full midipitch range without losing 21-bit precision, as the lowest midipitch
+ * is ~8 Hz (~3 bits left of radix point, 18 right) and for the highest the
+ * result still fits in a uint32.
+ */
+typedef uint32_t midihz18_t;
+
+#define MIDIHZ18_TO_HZ(h18) ((h18)>>18) /* truncates! ok for dbg msgs maybe */
+
+#ifndef _KERNEL
+/*
+ * With floating point in userland, can also manipulate midipitches as
+ * floating-point fractional MIDI key numbers (tuning adjustments are still
+ * additive), and hz18 as fractional Hz (adjustments don't add in this form).
+ */
+#include <math.h>
+#define MIDIPITCH_TO_FRKEY(mp) (scalbn((mp),-14))
+#define MIDIPITCH_FROM_FRKEY(frk) ((midipitch_t)round(scalbn((frk),14)))
+#define MIDIHZ18_TO_FRHZ(h18) (scalbn((h18),-18))
+#define MIDIHZ18_FROM_FRHZ(frh) ((midihz18_t)round(scalbn((frh),18)))
+
+#define MIDIPITCH_TO_FRHZ(mp) (440*pow(2,(MIDIPITCH_TO_FRKEY((mp))-69)/12))
+#define MIDIPITCH_FROM_FRHZ(fhz) \
+                               MIDIPITCH_FROM_FRKEY(69+12*log((fhz)/440)/log(2))
+#define MIDIPITCH_TO_HZ18(mp) MIDIHZ18_FROM_FRHZ(MIDIPITCH_TO_FRHZ((mp)))
+#define MIDIPITCH_FROM_HZ18(h18) MIDIPITCH_FROM_FRHZ(MIDIHZ18_TO_FRHZ((h18)))
+
+#else /* no fp in kernel; only an accurate to-hz18 conversion is implemented */
+
+extern midihz18_t midisyn_mp2hz18(midipitch_t);
+#define MIDIPITCH_TO_HZ18(mp) (midisyn_mp2hz18((mp)))
+
+#endif /* _KERNEL */
+
 
 /*
  * A native API for the /dev/music sequencer device follows. The event
