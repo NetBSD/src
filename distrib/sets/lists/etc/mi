@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.167 2006/05/31 02:58:14 tron Exp $
+# $NetBSD: mi,v 1.168 2006/06/09 12:18:30 tron Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -63,10 +63,6 @@
 ./etc/locate.conf				etc-sys-etc
 ./etc/mail.rc					etc-mail-etc
 ./etc/mail/aliases				etc-postfix-etc		postfix
-./etc/mail/helpfile				etc-obsolete		obsolete
-./etc/mail/local-host-names			etc-obsolete		obsolete
-./etc/mail/sendmail.cf				etc-obsolete		obsolete
-./etc/mail/submit.cf				etc-obsolete		obsolete
 ./etc/mailer.conf				etc-mailwrapper-etc
 ./etc/man.conf					etc-man-etc
 ./etc/master.passwd				etc-sys-etc
@@ -223,8 +219,6 @@
 ./etc/rc.d/savecore				etc-sys-rc
 ./etc/rc.d/screenblank				etc-sys-rc
 ./etc/rc.d/securelevel				etc-sys-rc
-./etc/rc.d/sendmail				etc-obsolete		obsolete
-./etc/rc.d/smmsp				etc-obsolete		obsolete
 ./etc/rc.d/sshd					etc-secsh-rc
 ./etc/rc.d/staticroute				etc-sys-rc
 ./etc/rc.d/swap1				etc-sys-rc
