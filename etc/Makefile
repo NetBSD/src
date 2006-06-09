@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.327 2006/06/08 11:05:31 tron Exp $
+#	$NetBSD: Makefile,v 1.328 2006/06/09 12:09:46 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -273,7 +273,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	    MAKEDEV ${DESTDIR}/dev
 .for owner group mode file in \
 		${BINOWN} operator	664	/etc/dumpdates  \
-		${BINOWN} ${BINGRP}	644	/etc/mail/local-host-names \
 		${BINOWN} operator	600	/etc/skeykeys \
 		root wheel		600	/var/at/at.deny \
 		nobody ${BINGRP}	664	/var/db/locate.database \
