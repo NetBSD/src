@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.9 2006/06/07 15:23:59 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.10 2006/06/09 16:56:30 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.9 2006/06/07 15:23:59 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.10 2006/06/09 16:56:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -126,6 +126,9 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847683:
 		this->name = "Sigmatel STAC9221D";
 		this->init_dacgroup = stac9221_init_dacgroup;
+		break;
+	case 0x83847690:
+		this->name = "Sigmatel STAC9220";
 		break;
 	}
 	return 0;
@@ -1165,8 +1168,8 @@ generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 			return EBUSY;
 		if (mc->un.ord >= this->ndacgroups)
 			return EINVAL;
-		this->cur_dac = mc->un.ord;
-		return azalia_codec_construct_format(this);
+		return azalia_codec_construct_format(this,
+		    mc->un.ord, this->cur_adc);
 	}
 
 	/* ADC selection */
@@ -1176,8 +1179,8 @@ generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 		if (mc->un.ord >= this->nadcs)
 			return EINVAL;
 		this->cur_adc = mc->un.ord;
-		/* use this->adcs[this->cur_adc] */
-		return azalia_codec_construct_format(this);
+		return azalia_codec_construct_format(this,
+		    this->cur_dac, mc->un.ord);
 	}
 
 	/* Volume knob */
