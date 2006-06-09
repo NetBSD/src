@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.34 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.35 2006/06/09 21:58:57 christos Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.34 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.35 2006/06/09 21:58:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,6 +118,7 @@ struct irframet_softc {
 	u_int sc_framei;
 	u_int sc_frameo;
 	struct irt_frame sc_frames[MAXFRAMES];
+	u_int8_t sc_buffer[MAX_IRDA_FRAME];
 	struct selinfo sc_rsel;
 	/* XXXJRT Nothing selnotify's sc_wsel */
 	struct selinfo sc_wsel;
@@ -612,21 +613,21 @@ irframet_write(void *h, struct uio *uio, int flag)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
-	u_int8_t tbuf[MAX_IRDA_FRAME];
 	int n;
 
 	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
 		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
-	n = irda_sir_frame(tbuf, MAX_IRDA_FRAME, uio, sc->sc_params.ebofs);
+	n = irda_sir_frame(sc->sc_buffer, sizeof(sc->sc_buffer), uio,
+	    sc->sc_params.ebofs);
 	if (n < 0) {
 #ifdef IRFRAMET_DEBUG
 		printf("%s: irda_sir_frame() error=%d\n", __FUNCTION__, -n);
 #endif
 		return (-n);
 	}
-	return (irt_write_frame(tp, tbuf, n));
+	return (irt_write_frame(tp, sc->sc_buffer, n));
 }
 
 int
