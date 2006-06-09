@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: opl.c,v 1.25 2006/06/09 21:55:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.25 2006/06/09 21:55:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24 2006/03/29 04:16:49 thorpej Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/select.h>
+#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -221,6 +222,21 @@ opl_command(sc, offs, addr, data)
 		delay(30);
 	else
 		delay(6);
+}
+
+int
+opl_match(bus_space_tag_t iot, bus_space_handle_t ioh, int offs)
+{
+	struct opl_softc *sc;
+	int rv;
+
+	sc = malloc(sizeof(*sc), M_TEMP, M_WAITOK|M_ZERO);
+	sc->iot = iot;
+	sc->ioh = ioh;
+	sc->offs = offs;
+	rv = opl_find(sc);
+	free(sc, M_TEMP);
+	return rv;
 }
 
 int
