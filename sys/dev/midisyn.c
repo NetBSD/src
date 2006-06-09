@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.15 2006/06/08 13:21:48 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.16 2006/06/09 04:20:02 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.15 2006/06/08 13:21:48 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.16 2006/06/09 04:20:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -195,8 +195,6 @@ midisyn_findvoice(midisyn *ms, int chan, int note)
 	u_int cn;
 	int v;
 
-	if (!(ms->flags & MS_DOALLOC))
-		return (chan);
 	cn = MS_CHANNOTE(chan, note);
 	for (v = 0; v < ms->nvoice; v++)
 		if (ms->voices[v].chan_note == cn && ms->voices[v].inuse)
@@ -301,6 +299,8 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		 * all of 'em at the moment--the voice and release velocity
 		 * should be the only necessary arguments to noteoff. what use
 		 * are they making of note? checking... None. Cool.
+		 * IF there is ever a device added that does its own allocation,
+		 * extend the interface; this findvoice won't be what to do...
 		 */
 		voice = midisyn_findvoice(ms, chan, buf[1]);
 		if (voice >= 0) {
