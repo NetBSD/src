@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.133 2006/06/04 19:38:32 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.134 2006/06/09 21:33:01 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.133 2006/06/04 19:38:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.134 2006/06/09 21:33:01 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -1165,14 +1165,17 @@ int
 usbd_print(void *aux, const char *pnp)
 {
 	struct usb_attach_arg *uaa = aux;
-	char devinfo[1024];
 
 	DPRINTFN(15, ("usbd_print dev=%p\n", uaa->device));
 	if (pnp) {
+#define USB_DEVINFO 1024
+		char *devinfo;
 		if (!uaa->usegeneric)
 			return (QUIET);
-		usbd_devinfo(uaa->device, 1, devinfo, sizeof(devinfo));
+		devinfo = malloc(USB_DEVINFO, M_TEMP, M_WAITOK);
+		usbd_devinfo(uaa->device, 1, devinfo, USB_DEVINFO);
 		aprint_normal("%s, %s", devinfo, pnp);
+		free(devinfo, M_TEMP);
 	}
 	if (uaa->port != 0)
 		aprint_normal(" port %d", uaa->port);
