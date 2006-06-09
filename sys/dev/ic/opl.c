@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24.2.3 2006/06/08 13:21:48 chap Exp $	*/
+/*	$NetBSD: opl.c,v 1.24.2.4 2006/06/09 04:20:02 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.3 2006/06/08 13:21:48 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.4 2006/06/09 04:20:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,6 @@ opl_load_patch(sc, v)
 	opl_set_ch_reg(sc, OPL_FEEDBACK_CONNECTION, v, p->ops[OO_FB_CONN]);
 }
 
-#define OPL_FNUM_FAIL 0xffff
 uint32_t
 opl_get_block_fnum(uint32_t miditune)
 {
@@ -326,14 +325,15 @@ opl_get_block_fnum(uint32_t miditune)
 	uint32_t hz18;
 	uint32_t f_num;
 	
-	block = miditune / MIDITUNE_OCTAVE;
 	/*
-	 * The lowest MIDI octave reaches a bit more than two octaves below
-	 * the upper limit of block 0. So, stay in block 0 for the next octave
-	 * also, it allows us to use more bits in f_num for better resolution.
+	 * We can get to about note 30 before needing to switch from block 0.
+	 * Thereafter, switch block every octave; that will keep f_num in the
+	 * upper end of its range, making the most bits available for
+	 * resolution.
 	 */
-	if ( block > 0 )
-		-- block;
+	block = ( miditune - MIDISYN_KEY_TO_MT(19) ) / MIDITUNE_OCTAVE;
+	if ( block > 7 )	/* subtract wrapped */
+		block = 0;
 	/*
 	 * Could subtract block*MIDITUNE_OCTAVE here, or >>block later. Later.
 	 */
@@ -497,7 +497,7 @@ oplsyn_attackv(midisyn *ms,
 	opl_load_patch(sc, voice);
 
 	mult = 1;
-	if ( miditune > MIDISYN_KEY_TO_MT(113) ) { /* out of range for mult 1 */
+	if ( miditune > MIDISYN_KEY_TO_MT(114) ) { /* out of range for mult 1 */
 		mult = 4;	/* this will cover the rest of the MIDI range */
 		miditune -= 2*MIDITUNE_OCTAVE;
 	}
@@ -508,6 +508,14 @@ oplsyn_attackv(midisyn *ms,
 	chars1 = p->ops[OO_CHARS+1];
 	m_mult = (chars0 & OPL_MULTIPLE_MASK) * mult;
 	c_mult = (chars1 & OPL_MULTIPLE_MASK) * mult;
+
+	if ( 4 == mult ) {
+		if ( 0 == m_mult )  /* The OPL uses 0 to represent .5 but of */
+			m_mult = 2; /* course *mult had no effect above...   */
+		if ( 0 == c_mult )
+			c_mult = 2;
+	}
+
 	if ((m_mult > 15) || (c_mult > 15)) {
 		printf("%s: frequency out of range %u (mult %d)\n", __func__,
 		       miditune, mult);
