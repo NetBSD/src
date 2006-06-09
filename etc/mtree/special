@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.95 2006/06/09 14:39:53 tron Exp $
+#	$NetBSD: special,v 1.96 2006/06/09 21:08:51 tron Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -368,7 +368,6 @@
 ./var/spool/ftp/etc/passwd		type=file mode=0644 optional
 ./var/spool/ftp/hidden		type=dir  mode=0111 ignore optional
 ./var/spool/ftp/pub		type=dir  mode=0775 ignore optional
-./var/spool/mqueue		type=dir  mode=0755 ignore
 ./var/spool/output		type=dir  mode=0755 ignore
 ./var/spool/uucp		type=dir  mode=0755 uname=uucp gname=daemon ignore optional
 ./var/spool/uucppublic		type=dir  mode=1777 uname=uucp gname=daemon ignore optional
