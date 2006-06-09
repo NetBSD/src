@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_machdep.c,v 1.12 2006/03/09 20:17:28 garbled Exp $	*/
+/*	$NetBSD: ibm_machdep.c,v 1.13 2006/06/09 01:19:11 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,48 +37,55 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/intr.h>
 #include <machine/platform.h>
 
-void pci_intr_fixup_ibm_6015(int, int, int, int, int *);
-void pci_intr_fixup_ibm_6050(int, int, int, int, int *);
+extern struct prep_pci_chipset *prep_pct;
+
+void pci_intr_fixup_ibm_6015(void);
 
 void
-pci_intr_fixup_ibm_6015(int bus, int dev, int pin, int swiz, int *line)
+pci_intr_fixup_ibm_6015(void)
 {
-	if (bus != 0)
-		return;
+	struct prep_pci_chipset_businfo *pbi;
+	prop_dictionary_t dict, sub;
+	prop_number_t intr_num;
+	int i, j;
+	char key[20];
 
-	switch (dev) {
-	case 12:		/* NCR 53c810 */
-		*line = 13;
-		break;
-	case 13:		/* PCI slots */
-	case 14:
-	case 15:
-	case 16:
-	case 17:
-	case 18:
-	case 19:
-		*line = 15;
-		break;
+	/* this works because the 6015 has only 1 PCI bus native */
+	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+
+	dict = prop_dictionary_create_with_capacity(16);
+	KASSERT(dict != NULL);
+	(void)prop_dictionary_set(pbi->pbi_properties, "prep-pci-intrmap",
+	    dict);
+	sub = prop_dictionary_create_with_capacity(4);
+	KASSERT(sub != NULL);
+
+	intr_num = prop_number_create_integer(13);
+	for (j = 0; j < 4; j++) {
+		sprintf(key, "pin-%c", 'A' + j);
+		prop_dictionary_set(sub, key, intr_num);
 	}
-}
+	prop_object_release(intr_num);
+	prop_dictionary_set(dict, "devfunc-12", sub);
+	prop_object_release(sub);
 
-void
-pci_intr_fixup_ibm_6050(int bus, int dev, int pin, int swiz, int *line)
-{
-	if (bus != 0)
-		return;
-
-	switch (dev) {
-	case 12:
-	case 13:
-	case 16:
-	case 18:
-	case 22:
-		*line = 15;
-		break;
+	/* devices 13-19 all share IRQ 15 */
+	for (i = 13; i < 20; i++) {
+		sub = prop_dictionary_create_with_capacity(4);
+		intr_num = prop_number_create_integer(15);
+		sprintf(key, "devfunc-%d", i);
+		for (j = 0; j < 4; j++) {
+			sprintf(key, "pin-%c", 'A' + j);
+			prop_dictionary_set(sub, key, intr_num);
+		}
+		prop_dictionary_set(dict, key, sub);
+		prop_object_release(intr_num);
+		prop_object_release(sub);
 	}
+	prop_object_release(dict);
 }
