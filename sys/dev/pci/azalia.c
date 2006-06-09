@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.21 2006/06/07 15:23:59 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.22 2006/06/09 16:26:58 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.21 2006/06/07 15:23:59 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.22 2006/06/09 16:26:58 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ static int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
 
 static int	azalia_widget_init(widget_t *, const codec_t *, int);
 static int	azalia_widget_init_audio(widget_t *, const codec_t *);
-static int	azalia_widget_print_audio(const widget_t *, const char *);
+static int	azalia_widget_print_audio(const widget_t *, const char *, int);
 static int	azalia_widget_init_pin(widget_t *, const codec_t *);
 static int	azalia_widget_print_pin(const widget_t *);
 static int	azalia_widget_init_connection(widget_t *, const codec_t *);
@@ -986,7 +986,7 @@ azalia_codec_init(codec_t *this)
 	    COP_OUTPUT_AMPCAP, &result);
 	this->w[this->audiofunc].outamp_cap = result;
 #ifdef AZALIA_DEBUG
-	azalia_widget_print_audio(&this->w[this->audiofunc], "\t");
+	azalia_widget_print_audio(&this->w[this->audiofunc], "\t", -1);
 	result = this->w[this->audiofunc].inamp_cap;
 	DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
 	    (result & COP_AMPCAP_MUTE) != 0, COP_AMPCAP_STEPSIZE(result),
@@ -1113,14 +1113,7 @@ azalia_codec_construct_format(codec_t *this)
 	}
 	/* print playback capability */
 	snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ", XNAME(this->az));
-	azalia_widget_print_audio(&this->w[nid], flagbuf);
-	if (this->w[group->conv[0]].widgetcap & COP_AWCAP_DIGITAL) {
-		aprint_normal("%s: playback: max channels=%d, DIGITAL\n",
-		    XNAME(this->az), chan);
-	} else {
-		aprint_normal("%s: playback: max channels=%d\n",
-		    XNAME(this->az), chan);
-	}
+	azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
 
 	/* register formats for recording */
 	nid = this->adcs[this->cur_adc];
@@ -1129,14 +1122,7 @@ azalia_codec_construct_format(codec_t *this)
 	azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	/* print recording capability */
 	snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
-	azalia_widget_print_audio(&this->w[nid], flagbuf);
-	if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
-		aprint_normal("%s: recording: max channels=%d, DIGITAL\n",
-		    XNAME(this->az), chan);
-	} else {
-		aprint_normal("%s: recording: max channels=%d\n",
-		    XNAME(this->az), chan);
-	}
+	azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
 
 	err = auconv_create_encodings(this->formats, this->nformats,
 	    &this->encodings);
@@ -1423,19 +1409,27 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 		    codec->w[codec->audiofunc].d.audio.bits_rates;
 	}
 #ifdef AZALIA_DEBUG
-	azalia_widget_print_audio(this, "\t");
+	azalia_widget_print_audio(this, "\t", -1);
 #endif
 	return 0;
 }
 
 static int
-azalia_widget_print_audio(const widget_t *this, const char *lead)
+azalia_widget_print_audio(const widget_t *this, const char *lead, int channels)
 {
 	char flagbuf[FLAGBUFLEN];
 
 	bitmask_snprintf(this->d.audio.encodings, "\20\3AC3\2FLOAT32\1PCM",
 	    flagbuf, FLAGBUFLEN);
-	aprint_normal("%sencodings=%s\n", lead, flagbuf);
+	if (channels < 0) {
+		aprint_normal("%sencodings=%s\n", lead, flagbuf);
+	} else if (this->widgetcap & COP_AWCAP_DIGITAL) {
+		aprint_normal("%smax channels=%d, DIGITAL, encodings=%s\n",
+		    lead, channels, flagbuf);
+	} else {
+		aprint_normal("%smax channels=%d, encodings=%s\n",
+		    lead, channels, flagbuf);
+	}
 	bitmask_snprintf(this->d.audio.bits_rates, "\20\x15""32bit\x14""24bit\x13""20bit"
 	    "\x12""16bit\x11""8bit""\x0c""384kHz\x0b""192kHz\x0a""176.4kHz"
 	    "\x09""96kHz\x08""88.2kHz\x07""48kHz\x06""44.1kHz\x05""32kHz\x04"
