@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.100 2006/06/08 17:23:11 drochner Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.101 2006/06/09 22:47:56 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.100 2006/06/08 17:23:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.101 2006/06/09 22:47:56 kardel Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -397,7 +397,6 @@ initclocks(void)
 	 */
 	psdiv = 1;
 #ifdef __HAVE_TIMECOUNTER
-	inittimecounter();
 	/*
 	 * provide minimum default time counter
 	 * will only run at interrupt resolution

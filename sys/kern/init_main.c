@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.267 2006/06/07 22:33:39 kardel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.267 2006/06/07 22:33:39 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -292,6 +292,7 @@ main(void)
 
 
 #ifdef __HAVE_TIMECOUNTER
+	inittimecounter();
 #ifdef NTP
 	ntp_init();
 #endif
