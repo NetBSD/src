@@ -1,4 +1,4 @@
-#	$NetBSD: files.altq,v 1.4.12.1 2006/03/18 12:09:06 peter Exp $
+#	$NetBSD: files.altq,v 1.4.12.2 2006/06/09 19:54:26 peter Exp $
 
 defflag	opt_altq_enabled.h	ALTQ
 defflag opt_altq.h		ALTQ_AFMAP ALTQ_BLUE ALTQ_CBQ ALTQ_CDNR
@@ -7,8 +7,8 @@ defflag opt_altq.h		ALTQ_AFMAP ALTQ_BLUE ALTQ_CBQ ALTQ_CDNR
 				ALTQ_PRIQ ALTQ_JOBS
 				ALTQ_WFQ ADJUST_CUTOFF BLUE_STATS
 				BORROW_OFFTIME CBQ_TRACE
-				FIFOQ_STATS FV_STATS HFSC_PKTLOG
-				RED_RANDOM_LOOP RED_STATS RIO_STATS WFQ_DEBUG
+				FIFOQ_STATS FV_STATS
+				RED_STATS RIO_STATS WFQ_DEBUG
 
 file	altq/altq_conf.c	altq
 file	altq/altq_afmap.c	altq
