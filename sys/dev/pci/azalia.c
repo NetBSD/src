@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.22 2006/06/09 16:26:58 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.23 2006/06/09 16:56:30 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.22 2006/06/09 16:26:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.23 2006/06/09 16:56:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1019,10 +1019,11 @@ azalia_codec_init(codec_t *this)
 		DPRINTF(("\n"));
 	}
 #endif
-	this->cur_dac = 0;
-	this->cur_adc = 0;
 
-	err = azalia_codec_construct_format(this);
+	/* set invalid values for azalia_codec_construct_format() to work */
+	this->cur_dac = -1;
+	this->cur_adc = -1;
+	err = azalia_codec_construct_format(this, 0, 0);
 	if (err)
 		return err;
 
@@ -1043,15 +1044,18 @@ azalia_codec_delete(codec_t *this)
 }
 
 int
-azalia_codec_construct_format(codec_t *this)
+azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 {
 	char flagbuf[FLAGBUFLEN];
 	const convgroup_t *group;
 	uint32_t bits_rates;
+	int prev_dac, prev_adc;
 	int pvariation, rvariation;
 	int nbits, dac, chan, i, err;
 	nid_t nid;
 
+	prev_dac = this->cur_dac;
+	this->cur_dac = newdac;
 	group = &this->dacgroups[this->cur_dac];
 	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
 	nbits = 0;
@@ -1072,6 +1076,8 @@ azalia_codec_construct_format(codec_t *this)
 	}
 	pvariation = group->nconv * nbits;
 
+	prev_adc = this->cur_adc;
+	this->cur_adc = newadc;
 	bits_rates = this->w[this->adcs[this->cur_adc]].d.audio.bits_rates;
 	nbits = 0;
 	if (bits_rates & COP_PCM_B8)
@@ -1112,8 +1118,10 @@ azalia_codec_construct_format(codec_t *this)
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_PLAY);
 	}
 	/* print playback capability */
-	snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ", XNAME(this->az));
-	azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
+	if (prev_dac != this->cur_dac) {
+		snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ", XNAME(this->az));
+		azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
+	}
 
 	/* register formats for recording */
 	nid = this->adcs[this->cur_adc];
@@ -1121,8 +1129,10 @@ azalia_codec_construct_format(codec_t *this)
 	bits_rates = this->w[nid].d.audio.bits_rates;
 	azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	/* print recording capability */
-	snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
-	azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
+	if (prev_adc != this->cur_adc) {
+		snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
+		azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
+	}
 
 	err = auconv_create_encodings(this->formats, this->nformats,
 	    &this->encodings);
