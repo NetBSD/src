@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.26 2006/05/25 02:11:13 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27 2006/06/09 01:19:11 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2006/05/25 02:11:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2006/06/09 01:19:11 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2006/05/25 02:11:13 garbled Exp
 #include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -85,6 +86,10 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
+/* 0 == direct 1 == indirect */
+int prep_pci_config_mode = 1;
+extern struct prep_pci_chipset *prep_pct;
+
 void
 prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
 {
@@ -92,42 +97,104 @@ prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
 
 	i = pci_chipset_tag_type();
 
-	if (i == PCIBridgeIndirect || i == PCIBridgeRS6K)
+	if (i == PCIBridgeIndirect || i == PCIBridgeRS6K) {
+		prep_pci_config_mode = 1;
 		prep_pci_get_chipset_tag_indirect(pc);
-	else if (i == PCIBridgeDirect)
+	} else if (i == PCIBridgeDirect) {
 		prep_pci_get_chipset_tag_direct(pc);
-	else
+		prep_pci_config_mode = 0;
+	} else
 		panic("Unknown PCI chipset tag configuration method");
 }
 
 int
-prep_pci_bus_maxdevs(void *v, int busno)
+prep_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
+	struct prep_pci_chipset_businfo *pbi;
+	prop_object_t busmax;
 
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return (32);
+	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	while (busno--)
+		pbi = SIMPLEQ_NEXT(pbi, next);
+	if (pbi == NULL)
+		return 32;
+
+	busmax = prop_dictionary_get(pbi->pbi_properties,
+	    "prep-pcibus-maxdevices");
+	if (busmax == NULL)
+		return 32;
+	else
+		return prop_number_integer_value(busmax);
+
+	return 32;
 }
-
 
 int
 prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	int pin = pa->pa_intrpin;
-	int line = pa->pa_intrline;
+	struct prep_pci_chipset_businfo *pbi;
+	prop_dictionary_t dict, devsub;
+	prop_object_t pinsub;
+	prop_number_t pbus;
+	int busno, bus, pin, line, swiz, dev;
+	char key[20];
 
-	if (pin == 0) {
-		/* No IRQ used. */
-		goto bad;
+	pin = pa->pa_intrpin;
+	line = pa->pa_intrline;
+	bus = busno = pa->pa_bus;
+	swiz = pa->pa_intrswiz;
+	dev = pa->pa_device;
+
+	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	while (busno--)
+		pbi = SIMPLEQ_NEXT(pbi, next);
+	KASSERT(pbi != NULL);
+
+	dict = prop_dictionary_get(pbi->pbi_properties, "prep-pci-intrmap");
+	if (dict == NULL) {
+		/* We have a non-PReP bus.  now it gets hard */
+		pbus = prop_dictionary_get(pbi->pbi_properties,
+		    "prep-pcibus-parent");
+		if (pbus == NULL)
+			goto bad;
+		busno = prop_number_integer_value(pbus);
+		pbus = prop_dictionary_get(pbi->pbi_properties,
+		    "prep-pcibus-rawdevnum");
+		dev = prop_number_integer_value(pbus);
+
+		/* now that we know the parent bus, we need to find it's pbi */
+		pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+		while (busno--)
+			pbi = SIMPLEQ_NEXT(pbi, next);
+		KASSERT(pbi != NULL);
+
+		/* set the pin to the rawpin */
+		pin = pa->pa_rawintrpin;
+		/* now we have the pbi, ask for dict again */
+		dict = prop_dictionary_get(pbi->pbi_properties,
+		    "prep-pci-intrmap");
+		if (dict == NULL)
+			goto bad;
 	}
 
+	/* No IRQ used. */
+	if (pin == 0)
+		goto bad;
 	if (pin > 4) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
+	sprintf(key, "devfunc-%d", dev);
+	devsub = prop_dictionary_get(dict, key);
+	if (devsub == NULL)
+		goto bad;
+	sprintf(key, "pin-%c", 'A' + (pin-1));
+	pinsub = prop_dictionary_get(devsub, key);
+	if (pinsub == NULL)
+		goto bad;
+	line = prop_number_integer_value(pinsub);
+	
 	/*
 	* Section 6.2.4, `Miscellaneous Functions', says that 255 means
 	* `unknown' or `no connection' on a PC.  We assume that a device with
@@ -207,13 +274,22 @@ void
 prep_pci_conf_interrupt(void *v, int bus, int dev, int pin,
     int swiz, int *iline)
 {
-
-	pci_intr_fixup_pnp(bus, dev, pin, swiz, iline);
+	/* do nothing */
 }
 
+extern pcitag_t prep_pci_direct_make_tag(void *, int, int, int);
+extern pcitag_t prep_pci_indirect_make_tag(void *, int, int, int);
+extern pcireg_t prep_pci_direct_conf_read(void *, pcitag_t, int);
+extern pcireg_t prep_pci_indirect_conf_read(void *, pcitag_t, int);
+
 int
-prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
+prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
+	pcireg_t id)
 {
+	struct prep_pci_chipset_businfo *pbi;
+	prop_number_t bmax, pbus;
+	pcitag_t tag;
+	pcireg_t class;
 
 	/*
 	 * The P9100 board found in some IBM machines cannot be
@@ -228,6 +304,62 @@ prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	if (PCI_VENDOR(id) == PCI_VENDOR_IBM &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2)
 		return 0;
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_PCEB)
+		return 0;
+
+	/* NOTE, all device specific stuff must be above this line */
+	/* don't do this on the primary host bridge */
+	if (bus == 0 && dev == 0 && func == 0)
+		return PCI_CONF_DEFAULT;
+
+	if (prep_pci_config_mode) {
+		tag = prep_pci_indirect_make_tag(pct, bus, dev, func);
+		class = prep_pci_indirect_conf_read(pct, tag,
+		    PCI_CLASS_REG);
+	} else {
+		tag = prep_pci_direct_make_tag(pct, bus, dev, func);
+		class = prep_pci_direct_conf_read(pct, tag,
+		    PCI_CLASS_REG);
+	}
+
+	/*
+	 * PCI bridges have special needs.  We need to discover where they
+	 * came from, and wire them appropriately.
+	 */
+	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI) {
+		pbi = malloc(sizeof(struct prep_pci_chipset_businfo), M_DEVBUF,
+		    M_NOWAIT);
+		KASSERT(pbi != NULL);
+		pbi->pbi_properties = prop_dictionary_create();
+		KASSERT(pbi->pbi_properties != NULL);
+		setup_pciintr_map(pbi, bus, dev, func);
+
+		/* record the parent bus, and the parent device number */
+		pbus = prop_number_create_integer(bus);
+		prop_dictionary_set(pbi->pbi_properties, "prep-pcibus-parent",
+		    pbus);
+		prop_object_release(pbus);
+		pbus = prop_number_create_integer(dev);
+		prop_dictionary_set(pbi->pbi_properties,
+		    "prep-pcibus-rawdevnum", pbus);
+		prop_object_release(pbus);
+
+		/* now look for bus quirks */
+
+		if (PCI_VENDOR(id) == PCI_VENDOR_DEC &&
+		    PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21154) {
+			bmax = prop_number_create_integer(8);
+			KASSERT(bmax != NULL);
+			prop_dictionary_set(pbi->pbi_properties,
+			    "prep-pcibus-maxdevices", bmax);
+			prop_object_release(bmax);
+		}
+
+		SIMPLEQ_INSERT_TAIL(&prep_pct->pc_pbi, pbi, next);
+	}
 
 	return (PCI_CONF_DEFAULT);
 }
