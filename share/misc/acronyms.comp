@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.68 2006/05/30 03:54:20 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.69 2006/06/09 07:07:28 elad Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -159,6 +159,7 @@ ISO	international standards organization
 ISOC	internet society
 ISP	internet service provider
 JPEG	joint photographic experts group
+KPI	kernel programming interface
 KVA	kernel virtual address
 LAN	local area network
 LBA	logical block addressing
