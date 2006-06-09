@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.10.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.10.12.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10.12.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10.12.1 2006/03/18 12:08:18 peter Ex
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -270,10 +271,9 @@ cdnr_cballoc(top, type, input_func)
 		return (NULL);
 	}
 
-	MALLOC(cb, struct cdnr_block *, size, M_DEVBUF, M_WAITOK);
+	cb = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cb == NULL)
 		return (NULL);
-	(void)memset(cb, 0, size);
 
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -315,7 +315,7 @@ cdnr_cbdestroy(cblock)
 	if (cb->cb_top != cblock)
 		LIST_REMOVE(cb, cb_next);
 
-	FREE(cb, M_DEVBUF);
+	free(cb, M_DEVBUF);
 }
 
 /*
@@ -1250,7 +1250,8 @@ cdnrioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 #endif
 			return (error);
 		break;

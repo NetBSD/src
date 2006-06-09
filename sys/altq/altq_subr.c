@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.13.12.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13.12.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -341,15 +341,13 @@ tbr_set(ifq, profile)
 		if ((tbr = ifq->altq_tbr) == NULL)
 			return (ENOENT);
 		ifq->altq_tbr = NULL;
-		FREE(tbr, M_DEVBUF);
+		free(tbr, M_DEVBUF);
 		return (0);
 	}
 
-	MALLOC(tbr, struct tb_regulator *, sizeof(struct tb_regulator),
-	       M_DEVBUF, M_WAITOK);
+	tbr = malloc(sizeof(struct tb_regulator), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (tbr == NULL)
 		return (ENOMEM);
-	(void)memset(tbr, 0, sizeof(struct tb_regulator));
 
 	tbr->tbr_rate = TBR_SCALE(profile->rate / 8) / machclk_freq;
 	tbr->tbr_depth = TBR_SCALE(profile->depth);
@@ -365,7 +363,7 @@ tbr_set(ifq, profile)
 	ifq->altq_tbr = tbr;	/* set the new tbr */
 
 	if (otbr != NULL)
-		FREE(otbr, M_DEVBUF);
+		free(otbr, M_DEVBUF);
 	else {
 		if (tbr_timer == 0) {
 			CALLOUT_RESET(&tbr_callout, 1, tbr_timeout, (void *)0);
@@ -1284,11 +1282,9 @@ acc_add_filter(classifier, filter, class, phandle)
 		return (EINVAL);
 #endif
 
-	MALLOC(afp, struct acc_filter *, sizeof(struct acc_filter),
-	       M_DEVBUF, M_WAITOK);
+	afp = malloc(sizeof(struct acc_filter), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (afp == NULL)
 		return (ENOMEM);
-	(void)memset(afp, 0, sizeof(struct acc_filter));
 
 	afp->f_filter = *filter;
 	afp->f_class = class;
@@ -1403,7 +1399,7 @@ acc_delete_filter(classifier, handle)
 	LIST_REMOVE(afp, f_chain);
 	splx(s);
 
-	FREE(afp, M_DEVBUF);
+	free(afp, M_DEVBUF);
 
 	/* todo: update filt_bmask */
 
@@ -1429,7 +1425,7 @@ acc_discard_filters(classifier, class, all)
 			LIST_FOREACH(afp, &classifier->acc_filters[i], f_chain)
 				if (all || afp->f_class == class) {
 					LIST_REMOVE(afp, f_chain);
-					FREE(afp, M_DEVBUF);
+					free(afp, M_DEVBUF);
 					/* start again from the head */
 					break;
 				}
@@ -1851,8 +1847,7 @@ ip4f_init(void)
 
 	TAILQ_INIT(&ip4f_list);
 	for (i=0; i<IP4F_TABSIZE; i++) {
-		MALLOC(fp, struct ip4_frag *, sizeof(struct ip4_frag),
-		       M_DEVBUF, M_NOWAIT);
+		fp = malloc(sizeof(struct ip4_frag), M_DEVBUF, M_NOWAIT);
 		if (fp == NULL) {
 			printf("ip4f_init: can't alloc %dth entry!\n", i);
 			if (i == 0)
