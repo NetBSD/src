@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.16 2006/06/09 04:20:02 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.17 2006/06/09 17:05:28 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.16 2006/06/09 04:20:02 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.17 2006/06/09 17:05:28 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -70,12 +70,10 @@ int	midisyndebug = 0;
 int	midisyn_findvoice(midisyn *, int, int);
 void	midisyn_freevoice(midisyn *, int);
 uint_fast16_t	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
-static void	midisyn_attackv_vel(midisyn *, uint_fast16_t, uint32_t,
+static void	midisyn_attackv_vel(midisyn *, uint_fast16_t, midipitch_t,
                                     int16_t, uint_fast8_t);
-u_int32_t midisyn_note_to_freq(int);
-u_int32_t midisyn_finetune(u_int32_t, int, int, int);
 static int16_t midisyn_adj_level(midisyn *, uint_fast8_t);
-static uint32_t midisyn_adj_pitch(midisyn *, uint_fast8_t);
+static midipitch_t midisyn_adj_pitch(midisyn *, uint_fast8_t);
 
 static midictl_notify midisyn_notify;
 
@@ -269,10 +267,10 @@ midisyn_allocvoice(midisyn *ms, uint_fast8_t chan, uint_fast8_t note)
 
 /* dummy attackv_vel that just adds vel into level for simple drivers */
 static void
-midisyn_attackv_vel(midisyn *ms, uint_fast16_t voice, uint32_t miditune,
+midisyn_attackv_vel(midisyn *ms, uint_fast16_t voice, midipitch_t mp,
                     int16_t level_cB, uint_fast8_t vel)
 {
-	ms->mets->attackv(ms, voice, miditune,
+	ms->mets->attackv(ms, voice, mp,
 	                  level_cB + midisyn_vol2cB((uint_fast16_t)vel << 7));
 }
 
@@ -321,7 +319,7 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		 */
 		voice = fs->allocv(ms, chan, buf[1]);
 		fs->attackv_vel(ms, voice,
-		                MIDISYN_KEY_TO_MT(buf[1])
+		                MIDIPITCH_FROM_KEY(buf[1])
 				+ midisyn_adj_pitch(ms, chan),
 				midisyn_adj_level(ms,chan), buf[2]);
 		break;
@@ -426,7 +424,7 @@ midisyn_adj_level(midisyn *ms, uint_fast8_t chan)
 	return 0; /* XXX for now. Use Volume and Expression ctlrs. */
 }
 
-static uint32_t
+static midipitch_t
 midisyn_adj_pitch(midisyn *ms, uint_fast8_t chan)
 {
 	return 0; /* XXX for now. Use Pitchbend, PBrange, fine/coarse tuning. */
@@ -466,8 +464,25 @@ midisyn_vol2cB(uint_fast16_t vol)
 	return cB;
 }
 
-uint32_t
-midisyn_mt2hz18(uint32_t mt)
+/*
+ * MIDI RP-012 constitutes a MIDI Tuning Specification. The units are
+ * fractional-MIDIkeys, that is, the key number 00 - 7f left shifted
+ * 14 bits to provide a 14-bit fraction that divides each semitone. The
+ * whole thing is just a 21-bit number that is bent and tuned simply by
+ * adding and subtracting--the same offset is the same pitch change anywhere
+ * on the scale. One downside is that a cent is 163.84 of these units, so
+ * you can't expect a lengthy integer sum of cents to come out in tune; if you
+ * do anything in cents it is best to use them only for local adjustment of
+ * a pitch.
+ * 
+ * This function converts a pitch in MIDItune units to Hz left-shifted 18 bits.
+ * That should leave you enough to shift down to whatever precision the hardware
+ * supports.
+ *
+ * Its prototype is exposed in <sys/midiio.h>.
+ */
+midihz18_t
+midisyn_mp2hz18(midipitch_t mp)
 {
 	int64_t t64a, t64b;
 	uint_fast8_t shift;
@@ -481,22 +496,21 @@ midisyn_mt2hz18(uint32_t mt)
 	 * turns out to be 18. Just shift off the result for lower octaves.
 	 * Fit is within 1/4 MIDI tuning unit throughout (disclaimer: the
 	 * comparison relied on the double-precision log in libm).
-	 * 
 	 */
 
-	if ( 0 == mt )
+	if ( 0 == mp )
 		return 2143236;
 	
-	for ( shift = 0; mt < 1900544; ++ shift )
-		mt += 196608; /* 12 << 14 */
+	for ( shift = 0; mp < 1900544; ++ shift )
+		mp += MIDIPITCH_OCTAVE;
 
-	if ( 1998848 == mt )
+	if ( 1998848 == mp )
 		return UINT32_C(2463438621) >> shift;
 	
 	t64a  = 0x5a1a0ee4; /* INT64_C(967879298788) gcc333: spurious warning */
 	t64a |= (int64_t)0xe1 << 32;
-	t64a /= (int32_t)mt - 1998848;
-	t64a += (int32_t)mt - 3704981;
+	t64a /= mp - 1998848; /* here's why 1998848 is special-cased above ;) */
+	t64a += mp - 3704981;
 	t64b  = 0x6763759d; /* INT64_C(8405905567872413) and here too */
 	t64b |= (int64_t)0x1ddd20 << 32;
 	t64b /= t64a;

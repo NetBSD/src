@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.12.14.2 2006/06/08 13:21:48 chap Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.12.14.3 2006/06/09 17:05:28 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12.14.2 2006/06/08 13:21:48 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12.14.3 2006/06/09 17:05:28 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct midi_pcppi_softc {
 int	midi_pcppi_match(struct device *, struct cfdata *, void *);
 void	midi_pcppi_attach(struct device *, struct device *, void *);
 
-void	midi_pcppi_on   (midisyn *, uint_fast16_t, uint32_t, int16_t);
+void	midi_pcppi_on   (midisyn *, uint_fast16_t, midipitch_t, int16_t);
 void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
 void	midi_pcppi_close(midisyn *);
 
@@ -118,12 +118,12 @@ midi_pcppi_attach(parent, self, aux)
 
 void
 midi_pcppi_on(midisyn *ms,
-	      uint_fast16_t voice, uint32_t miditune, int16_t level)
+	      uint_fast16_t voice, midipitch_t mp, int16_t level)
 {
 	pcppi_tag_t t = ms->data;
 
 	pcppi_bell(t,
-	           MIDISYN_HZ18_TO_HZ(midisyn_mt2hz18(miditune)),
+	           MIDIHZ18_TO_HZ(MIDIPITCH_TO_HZ18(mp)),
 	           MAX_DURATION * hz, 0);
 }
 
