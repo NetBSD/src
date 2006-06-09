@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.212 2006/05/11 23:47:34 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.213 2006/06/09 19:16:36 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -118,14 +118,14 @@ LIB${_lib:tu}=	${DESTDIR}/usr/X11R6/lib/lib${_lib}.a
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
 .c.o:
-	${CC} -E ${CFLAGS} ${.IMPSRC} | xstr -c -
-	@${CC} ${CFLAGS} -c x.c -o ${.TARGET}
+	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
+	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
 	@rm -f x.c
 
 .cc.o .cpp.o .cxx.o .C.o:
-	${CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
+	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
 	@mv -f x.c x.cc
-	@${CXX} ${CXXFLAGS} -c x.cc -o ${.TARGET}
+	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
 	@rm -f x.cc
 .endif
 
