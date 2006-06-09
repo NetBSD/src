@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.16 2006/06/08 20:58:38 simonb Exp $
+# $NetBSD: postinstall,v 1.17 2006/06/09 12:18:30 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -751,7 +751,7 @@ do_rc()
 
 		# check for obsolete rc.d files
 	for f in NETWORK fsck.sh kerberos nfsiod servers systemfs \
-	    daemon gated login portmap sendmail smmsp sunndd xntpd; do
+	    daemon gated login portmap sunndd xntpd; do
 		fd=/etc/rc.d/${f}
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths ${op}
@@ -771,6 +771,33 @@ do_rc()
 		fi
 		shift 2
 	done
+
+	return ${failed}
+}
+
+#
+#	sendmail
+#
+additem sendmail "remove obsolete sendmail configuration files and scripts"
+do_sendmail()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_sendmail  fix|check"
+	op=$1
+	failed=0
+
+	# Don't complain if the "sendmail" package is installed because the
+	# files might still be in use.
+	if /usr/sbin/pkg_info -qe sendmail >/dev/null 2>&1
+	then
+		return 0
+	fi
+
+	for f in mail/helpfile mail/local-host-names mail/sendmail.cf \
+	    mail/submit.cf rc.d/sendmail rc.d/smmsp; do
+		fd=/etc/${f}
+		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
+	done | obsolete_paths ${op}
+	failed=$(( ${failed} + $? ))
 
 	return ${failed}
 }
