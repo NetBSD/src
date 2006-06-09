@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: show.c,v 1.2 2006/06/09 16:39:11 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -518,6 +518,7 @@ netname4(in_addr_t in, in_addr_t mask)
 	return (line);
 }
 
+#ifdef INET6
 char *
 netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 {
@@ -609,6 +610,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	snprintf(line, sizeof(line), "%s/%d", hbuf, masklen);
 	return (line);
 }
+#endif
 
 /*
  * Return the name of the network whose address is given.
@@ -622,9 +624,11 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
 		    ((struct sockaddr_in *)mask)->sin_addr.s_addr);
+#ifdef INET6
 	case AF_INET6:
 		return netname6((struct sockaddr_in6 *)sa,
 		    (struct sockaddr_in6 *)mask);
+#endif
 	case AF_LINK:
 		return (link_print(sa));
 	default:
