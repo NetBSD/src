@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.19 2006/06/02 19:44:20 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.20 2006/06/09 15:30:52 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -101,10 +101,12 @@ get_libobjc () {
 	*4)
 		_subdir="$1/arch/$MACHINE_ARCH"
 		_options="ALL_OPT_FILES"
+		_unwind="UNWIND_H"
 		;;
 	*)
 		_subdir="$1"
 		_options=""
+		_unwind=""
 		;;
 	esac
 
@@ -117,7 +119,9 @@ get_libobjc () {
 		getvars $_PLATFORM/libobjc/Makefile \
 			ALL_CFLAGS INCLUDES OBJS OBJC_H \
 			| sed "s,$_GNU_DIST,\${GNUHOSTDIST},g"
-		getvars gcc/Makefile UNWIND_H
+		if [ -n "$_unwind" ]; then
+			getvars gcc/Makefile $_unwind
+		fi
 	} | write_mk gnu/lib/$_subdir/defs.mk
 }
 
@@ -133,12 +137,14 @@ get_libstdcxx_v3 () {
 		_headers1="host_headers debug_headers tr1_headers c_compatibility_headers_extra"
 		_headers2="thread_host_headers host_headers_extra"
 		_build_headers="c++allocator.h c++config.h cxxabi_tweaks.h gthr-default.h gthr-posix.h gthr-single.h gthr-tpf.h gthr.h"
+		_unwind="UNWIND_H"
 		;;
 	*)
 		_src_CC_files=""
 		_headers1="target_headers"
 		_headers2="thread_target_headers target_headers_extra"
 		_build_headers="c++config.h gthr-default.h gthr-posix.h gthr-single.h gthr.h"
+		_unwind=""
 		;;
 	esac
 
@@ -175,7 +181,9 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			$_headers2 | sed -e 's#\./[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
 
-		getvars gcc/Makefile UNWIND_H
+		if [ -n "$_unwind" ]; then
+			getvars gcc/Makefile $_unwind
+		fi
 	} | write_mk gnu/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
 }
 
@@ -189,10 +197,19 @@ get_gcc () {
 		mkdir -p $_TOP/gnu/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
 		_buildname="BUILD_"
 		_libcppsubdir=""
+		_extravars="TM_H ALL_OPT_FILES"
+		_hconfig_h=""
+		_extravars2="tm_file_list build_xm_include_list"
+		_extravars3="tm_p_include_list"
+		
 		;;
 	*)
 		_buildname="HOST_"
 		_libcppsubdir="gcc/"
+		_extravars=""
+		_hconfig_h="HCONFIG_H"
+		_extravars2=""
+		_extravars3=""
 		;;
 	esac
 
@@ -207,14 +224,14 @@ get_gcc () {
 			-e 's#build/##g'
 		getvars gcc/Makefile \
 			ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
-			GCOV_OBJS PROTO_OBJS TM_H ALL_OPT_FILES \
+			GCOV_OBJS PROTO_OBJS ${_extravars1} \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
-			BUILD_PREFIX RTL_H TREE_H BASIC_BLOCK_H GCC_H \
+			BUILD_PREFIX RTL_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
 			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
 			GTFILES GTFILES_LANG_DIR_NAMES \
 			tm_defines host_xm_file host_xm_defines tm_p_file \
-			target_cpu_default tm_file_list build_xm_include_list \
-			lang_specs_files tm_p_include_list
+			target_cpu_default ${_extravars2} \
+			lang_specs_files ${_extravars3}
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
 		getvars gcc/Makefile \
@@ -233,11 +250,16 @@ get_gcc () {
 		esac
 		getvars gcc/Makefile \
 			ENABLE_SHARED
-# XXXX?  what is going on here?
-#		getvars gcc/Makefile \
-#			SHLIB_LINK SHLIB_MULTILIB
-		echo G_SHLIB_LINK="$CC -shared"
-		echo G_SHLIB_MULTILIB=.
+		case ${_subdir} in
+		gcc4)
+			echo G_SHLIB_LINK="$CC -shared"
+			echo G_SHLIB_MULTILIB=.
+			;;
+		gcc3)
+			getvars gcc/Makefile \
+				SHLIB_LINK SHLIB_MULTILIB
+			;;
+		esac
 	} | write_mk gnu/usr.bin/$_subdir/arch/$MACHINE_ARCH/defs.mk
 
 	case "$_subdir" in
@@ -284,9 +306,9 @@ gcc4)
 gcc3)
 	get_gcc gcc3
 	get_libg2c
-	get_libgcc gcc4
+	get_libgcc gcc3
 	get_crtstuff crtstuff3
-	get_gcc_libiberty gcc4
+	get_gcc_libiberty gcc3
 	get_libobjc libobjc3
 	get_libstdcxx_v3 libstdc++-v3
 	exit 0
