@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.314 2006/06/08 00:13:25 rpaulo Exp $
+#	$NetBSD: NetBSD.dist,v 1.315 2006/06/09 21:08:51 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1085,7 +1085,6 @@
 ./var/spool/ftp/etc
 ./var/spool/ftp/hidden		mode=0111
 ./var/spool/lock		uname=uucp gname=daemon
-./var/spool/mqueue
 ./var/spool/output
 ./var/spool/output/lpd
 ./var/spool/postfix
