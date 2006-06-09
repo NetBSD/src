@@ -1,4 +1,4 @@
-/* $Id: ar531xreg.h,v 1.3 2006/06/05 05:14:38 gdamore Exp $ */
+/* $Id: ar531xreg.h,v 1.4 2006/06/09 18:35:42 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -93,6 +93,7 @@
 #define	AR531X_SYSREG_TIMER		0x0000
 #define	AR531X_SYSREG_TIMER_RELOAD	0x0004
 #define	AR531X_SYSREG_WDOG_CTL		0x0008
+#define	AR531X_SYSREG_WDOG_TIMER	0x000c
 #define	AR531X_SYSREG_MISC_INTSTAT	0x0010
 #define	AR531X_SYSREG_MISC_INTMASK	0x0014
 #define	AR531X_SYSREG_INTSTAT		0x0018
