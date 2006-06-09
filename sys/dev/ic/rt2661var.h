@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.4 2006/06/09 19:13:17 rpaulo Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.5 2006/06/09 19:17:46 drochner Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -22,7 +22,6 @@ struct rt2661_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint64_t	wr_tsf;
 	uint8_t		wr_flags;
-	uint8_t		_pad;
 	uint8_t		wr_rate;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;

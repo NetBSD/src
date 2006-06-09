@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.2 2006/06/06 20:48:27 rpaulo Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.3 2006/06/09 19:17:46 drochner Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -22,7 +22,6 @@ struct rt2560_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint64_t	wr_tsf;
 	uint8_t		wr_flags;
-	uint8_t         _pad;
 	uint8_t		wr_rate;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
