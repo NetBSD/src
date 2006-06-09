@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.6 2006/05/25 02:11:13 garbled Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.7 2006/06/09 01:19:11 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.6 2006/05/25 02:11:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.7 2006/06/09 01:19:11 garbled Exp $");
 
 #include "opt_openpic.h"
 
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.6 2006/05/25 02:11:13 ga
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include <prop/proplib.h>
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 

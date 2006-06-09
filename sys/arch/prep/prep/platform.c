@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.17 2006/05/25 02:11:13 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.18 2006/06/09 01:19:11 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.17 2006/05/25 02:11:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.18 2006/06/09 01:19:11 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/inttypes.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -50,23 +51,19 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.17 2006/05/25 02:11:13 garbled Exp $"
 #include <machine/residual.h>
 #include <powerpc/pio.h>
 
-static int nrofpcidevices = 0;
+#include <machine/pcipnp.h>
+
 volatile unsigned char *prep_pci_baseaddr = (unsigned char *)0x80000cf8;
 volatile unsigned char *prep_pci_basedata = (unsigned char *)0x80000cfc;
+
 struct pciroutinginfo *pciroutinginfo;
+extern struct prep_pci_chipset *prep_pct;
 
-extern void pci_intr_fixup_ibm_6015(int, int, int, int, int *);
-extern void pci_intr_fixup_ibm_6050(int, int, int, int, int *);
+extern void pci_intr_fixup_ibm_6015(void);
 
-/*
- * XXX I don't know if the 6050 needs this or not, but w/o access to one
- * I'd rather be safe than sorry.
- */
 struct platform_quirkdata platform_quirks[] = {
 	{ "IBM PPS Model 6015",  PLAT_QUIRK_INTRFIXUP,
 	   pci_intr_fixup_ibm_6015, NULL },
-	{ "IBM PPS Model 6050/6070 (E)", PLAT_QUIRK_INTRFIXUP,
-	   pci_intr_fixup_ibm_6050, NULL },
 	{ NULL, 0, NULL, NULL }
 };
 
@@ -81,39 +78,6 @@ find_platform_quirk(const char *model)
 		if (strcmp(model, platform_quirks[i].model) == 0)
 			return i;
 	return -1;
-}
-
-/* ARGUSED */
-void
-pci_intr_nofixup(int busno, int device, int pin, int swiz, int *intr)
-{
-}
-
-void
-pci_intr_fixup_pnp(int busno, int device, int pin, int swiz, int *intr)
-{
-	int i, tbus, tint, tdev;
-
-	i = find_platform_quirk(res->VitalProductData.PrintableModel);
-	if (i != -1)
-		if (platform_quirks[i].quirk & PLAT_QUIRK_INTRFIXUP &&
-		    platform_quirks[i].pci_intr_fixup != NULL) {
-			(*platform_quirks[i].pci_intr_fixup)(busno, device,
-			    pin, swiz, intr);
-			return;
-		}
-
-
-	for (i = 0;  i < nrofpcidevices; i++) {
-		tbus = pciroutinginfo[i].addr >> 8;
-		tint = pciroutinginfo[i].pins >> ((pin - 1)*8) & 0xff;
-		tdev = pciroutinginfo[i].addr & 0xff;
-
-		if (tdev == device && tbus == busno) {
-			*intr = tint;
-			return;
-		}
-	}
 }
 
 /* XXX This should be conditional on finding L2 in residual */
@@ -194,66 +158,6 @@ count_pnp_pci_devices(void *v, int *device)
 	return size;
 }
 
-/*
- * Given a bus, decode the residual data, and store it in the
- * pciroutinginfo structure for later use by platform setup code.
- */
-
-static int
-decode_pnp_pci_bridge(void *v, int *device)
-{
-	int item, size, i, j, bus;
-	int tag = *(unsigned char *)v;
-	unsigned char *q = v;
-	struct _L4_Pack *pack = v;
-	struct _L4_PPCPack *p =  &pack->L4_Data.L4_PPCPack;
-
-	item = tag_large_item_name(tag);
-	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
-
-	if (item != LargeVendorItem)
-		return size;
-	if (p->Type != LV_PCIBridge) /* PCI Bridge type */
-		return size;
-
-	bus = p->PPCData[16];
-
-	/* offset 20 begins irqmap, of 12 bytes each */
-	for (i = 20; i < size - 4; i += 12) {
-		int lines[4] = { 0, 0, 0, 0 };
-		int offset = 0;
-		int dev;
-
-		dev = p->PPCData[i + 1] / 0x8;
-
-		for (j = 0; j < 4; j++) {
-			int line = le16dec(&p->PPCData[i+4+(j*2)]);
-
-			if (line != 0xffff) /*unusable*/
-				lines[j] = 1;
-		}
-		if (p->PPCData[i + 2] == 2) /* MPIC */
-			offset += I8259_INTR_NUM;
-		for (j = 0; j < 4; j++) {
-			int line = le16dec(&p->PPCData[i+4+(j*2)]);
-			int intr;
-
-			pciroutinginfo[*device].addr = (bus << 8) | dev;
-			if (line == 0xffff || lines[j] == 0)
-				pciroutinginfo[*device].pins |=
-				    (0 << ((j*8) & 0xff));
-			else {
-				intr = (line & 0x7fff) + offset;
-				pciroutinginfo[*device].pins |=
-				    (intr << ((j*8) & 0xff));
-			}
-		}
-		(*device)++;
-	}
-
-	return size;
-}
-
 /* Nop for small pnp packets */
 
 static int
@@ -305,53 +209,147 @@ pci_chipset_tag_type(void)
 	return dev->DeviceId.Interface;
 }
 
-/* Populate pciroutinginfo structure */
-
-void
-setup_pciroutinginfo(void)
+static int
+create_intr_map(void *v, prop_dictionary_t dict)
 {
-	int nbus, i, size, device = 0;
+	prop_dictionary_t sub;
+	int item, size, i, j, bus, numslots;
+	int tag = *(unsigned char *)v;
+	unsigned char *q = v;
+	PCIInfoPack *pi = v;
+	struct _L4_Pack *pack = v;
+	struct _L4_PPCPack *p = &pack->L4_Data.L4_PPCPack;
+
+	item = tag_large_item_name(tag);
+	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
+
+	if (item != LargeVendorItem)
+		return size;
+	if (p->Type != LV_PCIBridge) /* PCI Bridge type */
+		return size;
+
+	numslots = (le16dec(&pi->count0)-21)/sizeof(IntrMap);
+	bus = pi->busnum;
+
+	for (i = 0; i < numslots; i++) {
+		int lines[MAX_PCI_INTRS] = { 0, 0, 0, 0 };
+		int offset = 0;
+		int dev;
+		char key[20];
+
+		sub = prop_dictionary_create_with_capacity(MAX_PCI_INTRS);
+		dev = pi->map[i].devfunc / 0x8;
+
+		for (j = 0; j < MAX_PCI_INTRS; j++) {
+			int line = bswap16(pi->map[i].intr[j]);
+
+			if (line != 0xffff) /*unusable*/
+				lines[j] = 1;
+		}
+		if (pi->map[i].intrctrltype == 2) /* MPIC */
+			offset += I8259_INTR_NUM;
+		for (j = 0; j < MAX_PCI_INTRS; j++) {
+			int line = bswap16(pi->map[i].intr[j]);
+			prop_number_t intr_num;
+
+			if (line == 0xffff || lines[j] == 0)
+				intr_num = prop_number_create_integer(0);
+			else
+				intr_num = prop_number_create_integer(
+				    (line & 0x7fff) + offset);
+			sprintf(key, "pin-%c", 'A' + j);
+			prop_dictionary_set(sub, key, intr_num);
+			prop_object_release(intr_num);
+		}
+		sprintf(key, "devfunc-%d", dev);
+		prop_dictionary_set(dict, key, sub);
+		prop_object_release(sub);
+	}
+	return size;
+}
+
+/*
+ * Decode the interrupt mappings from PnP, and write them into a device
+ * property attached to the PCI bus.
+ * The bus, device and func arguments are the PCI locators where the bridge
+ * device was FOUND.
+ */
+void
+setup_pciintr_map(struct prep_pci_chipset_businfo *pbi, int bus, int device,
+	int func)
+{
+	int devfunc, nbus, size, i, found = 0, nrofpcidevs = 0;
 	uint32_t l;
 	PPC_DEVICE *dev;
+	BUS_ACCESS *busacc;
 	unsigned char *p;
+	prop_dictionary_t dict;
 
 	/* revision 0 residual does not have valid pci bridge data */
 	if (res->Revision == 0)
 		return;
 
+	devfunc = device * 8 + func;
+
 	nbus = count_pnp_devices("PNP0A03");
-
 	for (i = 0; i < nbus; i++) {
 		dev = find_nth_pnp_device("PNP0A03", 0, i);
+		busacc = &dev->BusAccess;
 		l = be32toh(dev->AllocatedOffset);
 		p = res->DevicePnPHeap + l;
 		if (p == NULL)
 			return;
-		for (; p[0] != END_TAG; p += size) {
-			if (tag_type(p[0]) == PNP_SMALL)
-				size = pnp_small_pkt(p);
-			else
-				size = count_pnp_pci_devices(p,
-				    &nrofpcidevices);
+		if (busacc->PCIAccess.BusNumber == bus &&
+		    busacc->PCIAccess.DevFuncNumber == devfunc) {
+			found++;
+			break;
 		}
 	}
-
-	pciroutinginfo = malloc(sizeof(struct pciroutinginfo) *
-	    (nrofpcidevices + 1), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (pciroutinginfo == NULL)
-		panic("Cannot malloc enough memory for pci intr routing\n");
-
-	for (i = 0; i < nbus; i++) {
-		dev = find_nth_pnp_device("PNP0A03", 0, i);
-		l = be32toh(dev->AllocatedOffset);
-		p = res->DevicePnPHeap + l;
-		if (p == NULL)
-			return;
-		for (; p[0] != END_TAG; p += size) {
-			if (tag_type(p[0]) == PNP_SMALL)
-				size = pnp_small_pkt(p);
-			else
-				size = decode_pnp_pci_bridge(p, &device);
-		}
+	if (!found) {
+		printf("Couldn't find PNP data for bus %d\n", bus);
+		return;
 	}
+	/* p, l and dev should be valid now */
+
+	/* count the number of PCI device slots on the bus */
+	for (; p[0] != END_TAG; p += size) {
+		if (tag_type(p[0]) == PNP_SMALL)
+			size = pnp_small_pkt(p);
+		else
+			size = count_pnp_pci_devices(p, &nrofpcidevs);
+	}
+	dict = prop_dictionary_create_with_capacity(nrofpcidevs*2);
+	KASSERT(dict != NULL);
+
+	prop_dictionary_set(pbi->pbi_properties, "prep-pci-intrmap", dict);
+
+	/* reset p */
+	p = res->DevicePnPHeap + l;
+	/* now we've created the dictionary, loop again and add the sub-dicts */
+	for (; p[0] != END_TAG; p += size) {
+		if (tag_type(p[0]) == PNP_SMALL)
+			size = pnp_small_pkt(p);
+		else
+			size = create_intr_map(p, dict);
+	}
+	prop_object_release(dict);
+}
+
+
+/*
+ * Some platforms have invalid or insufficient PCI routing information
+ * in the residual.  Check the quirk table and if we find one, call it.
+ */
+
+void
+setup_pciroutinginfo(void)
+{
+	int i;
+
+	i = find_platform_quirk(res->VitalProductData.PrintableModel);
+	if (i == -1)
+		return;
+	if (platform_quirks[i].quirk & PLAT_QUIRK_INTRFIXUP &&
+	    platform_quirks[i].pci_intr_fixup != NULL)
+		(*platform_quirks[i].pci_intr_fixup)();
 }
