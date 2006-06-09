@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.12.6.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.12.6.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.12.6.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.12.6.2 2006/06/09 19:52:35 peter Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -219,19 +219,16 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	}
 #endif
 
-	MALLOC(cl, struct rm_class *, sizeof(struct rm_class),
-	       M_DEVBUF, M_WAITOK);
+	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
 		return (NULL);
-	(void)memset(cl, 0, sizeof(struct rm_class));
 	CALLOUT_INIT(&cl->callout_);
-	MALLOC(cl->q_, class_queue_t *, sizeof(class_queue_t),
-	       M_DEVBUF, M_WAITOK);
+
+	cl->q_ = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->q_ == NULL) {
-		FREE(cl, M_DEVBUF);
+		free(cl, M_DEVBUF);
 		return (NULL);
 	}
-	(void)memset(cl->q_, 0, sizeof(class_queue_t));
 
 	/*
 	 * Class initialization.
@@ -639,8 +636,8 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 			red_destroy(cl->red_);
 #endif
 	}
-	FREE(cl->q_, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->q_, M_DEVBUF);
+	free(cl, M_DEVBUF);
 }
 
 

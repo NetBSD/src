@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.12.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.12.12.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.12.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.12.1 2006/03/18 12:08:18 peter Ex
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -174,7 +175,8 @@ blueioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
@@ -208,15 +210,28 @@ blueioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* allocate and initialize blue_state_t */
-		MALLOC(rqp, blue_queue_t *, sizeof(blue_queue_t), M_DEVBUF, M_WAITOK);
-		(void)memset(rqp, 0, sizeof(blue_queue_t));
+		rqp = malloc(sizeof(blue_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
+		if (rqp == NULL) {
+			error = ENOMEM;
+			break;
+		}
 
-		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
-		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
+		rqp->rq_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		if (rqp->rq_q == NULL) {
+			free(rqp, M_DEVBUF);
+			error = ENOMEM;
+			break;
+		}
 
-		MALLOC(rqp->rq_blue, blue_t *, sizeof(blue_t), M_DEVBUF, M_WAITOK);
-		(void)memset(rqp->rq_blue, 0, sizeof(blue_t));
+		rqp->rq_blue = malloc(sizeof(blue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		if (rqp->rq_blue == NULL) {
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
+			error = ENOMEM;
+			break;
+		}
 
 		rqp->rq_ifq = &ifp->if_snd;
 		qtail(rqp->rq_q) = NULL;
@@ -233,9 +248,9 @@ blueioctl(dev, cmd, addr, flag, l)
 				    blue_enqueue, blue_dequeue, blue_request,
 				    NULL, NULL);
 		if (error) {
-			FREE(rqp->rq_blue, M_DEVBUF);
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_blue, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			break;
 		}
 
@@ -341,9 +356,9 @@ static int blue_detach(rqp)
 			printf("blue_detach: no state found in blue_list!\n");
 	}
 
-	FREE(rqp->rq_q, M_DEVBUF);
-	FREE(rqp->rq_blue, M_DEVBUF);
-	FREE(rqp, M_DEVBUF);
+	free(rqp->rq_q, M_DEVBUF);
+	free(rqp->rq_blue, M_DEVBUF);
+	free(rqp, M_DEVBUF);
 	return (error);
 }
 

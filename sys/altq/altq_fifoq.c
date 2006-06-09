@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.7.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.7.12.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.12 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.12.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.12.1 2006/03/18 12:08:18 peter Ex
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -144,7 +145,8 @@ fifoqioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
@@ -179,13 +181,11 @@ fifoqioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* allocate and initialize fifoq_state_t */
-		MALLOC(q, fifoq_state_t *, sizeof(fifoq_state_t),
-		       M_DEVBUF, M_WAITOK);
+		q = malloc(sizeof(fifoq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (q == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(q, 0, sizeof(fifoq_state_t));
 
 		q->q_ifq = &ifp->if_snd;
 		q->q_head = q->q_tail = NULL;
@@ -199,7 +199,7 @@ fifoqioctl(dev, cmd, addr, flag, l)
 				    fifoq_enqueue, fifoq_dequeue, fifoq_request,
 				    NULL, NULL);
 		if (error) {
-			FREE(q, M_DEVBUF);
+			free(q, M_DEVBUF);
 			break;
 		}
 
@@ -387,7 +387,7 @@ static int fifoq_detach(q)
 			printf("fifoq_detach: no state in fifoq_list!\n");
 	}
 
-	FREE(q, M_DEVBUF);
+	free(q, M_DEVBUF);
 	return (error);
 }
 

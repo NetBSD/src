@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.8.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.8.12.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.8.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.8.12.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.8.12.1 2006/03/18 12:08:18 peter Exp 
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #if 1 /* ALTQ3_COMPAT */
 #include <sys/proc.h>
 #include <sys/sockio.h>
@@ -205,10 +206,9 @@ rio_alloc(int weight, struct redparams *params, int flags, int pkttime)
 	int	 w, i;
 	int	 npkts_per_sec;
 
-	MALLOC(rp, rio_t *, sizeof(rio_t), M_DEVBUF, M_WAITOK);
+	rp = malloc(sizeof(rio_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (rp == NULL)
 		return (NULL);
-	(void)memset(rp, 0, sizeof(rio_t));
 
 	rp->rio_flags = flags;
 	if (pkttime == 0)
@@ -292,7 +292,7 @@ void
 rio_destroy(rio_t *rp)
 {
 	wtab_destroy(rp->rio_wtab);
-	FREE(rp, M_DEVBUF);
+	free(rp, M_DEVBUF);
 }
 
 void
@@ -523,7 +523,8 @@ rioioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
@@ -557,26 +558,24 @@ rioioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* allocate and initialize rio_queue_t */
-		MALLOC(rqp, rio_queue_t *, sizeof(rio_queue_t), M_DEVBUF, M_WAITOK);
+		rqp = malloc(sizeof(rio_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (rqp == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(rqp, 0, sizeof(rio_queue_t));
 
-		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		rqp->rq_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (rqp->rq_q == NULL) {
-			FREE(rqp, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		rqp->rq_rio = rio_alloc(0, NULL, 0, 0);
 		if (rqp->rq_rio == NULL) {
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			error = ENOMEM;
 			break;
 		}
@@ -595,8 +594,8 @@ rioioctl(dev, cmd, addr, flag, l)
 				    NULL, NULL);
 		if (error) {
 			rio_destroy(rqp->rq_rio);
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			break;
 		}
 
@@ -740,8 +739,8 @@ rio_detach(rqp)
 	}
 
 	rio_destroy(rqp->rq_rio);
-	FREE(rqp->rq_q, M_DEVBUF);
-	FREE(rqp, M_DEVBUF);
+	free(rqp->rq_q, M_DEVBUF);
+	free(rqp, M_DEVBUF);
 	return (error);
 }
 

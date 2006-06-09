@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.12.12.2 2006/03/18 18:18:10 peter Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.12.12.3 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.12.2 2006/03/18 18:18:10 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.12.3 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.12.2 2006/03/18 18:18:10 peter Exp
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #endif
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -266,7 +267,7 @@ cbq_add_altq(struct pf_altq *a)
 		return (ENODEV);
 
 	/* allocate and initialize cbq_state_t */
-	MALLOC(cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
+	cbqp = malloc(sizeof(cbq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cbqp == NULL)
 		return (ENOMEM);
 	(void)memset(cbqp, 0, sizeof(cbq_state_t));
@@ -297,7 +298,7 @@ cbq_remove_altq(struct pf_altq *a)
 		cbq_class_destroy(cbqp, cbqp->ifnp.root_);
 
 	/* deallocate cbq_state_t */
-	FREE(cbqp, M_DEVBUF);
+	free(cbqp, M_DEVBUF);
 
 	return (0);
 }
@@ -905,10 +906,9 @@ cbq_ifattach(ifacep)
 		return (ENXIO);
 
 	/* allocate and initialize cbq_state_t */
-	MALLOC(new_cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
+	new_cbqp = malloc(sizeof(cbq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (new_cbqp == NULL)
 		return (ENOMEM);
-	(void)memset(new_cbqp, 0, sizeof(cbq_state_t));
  	CALLOUT_INIT(&new_cbqp->cbq_callout);
 
 	new_cbqp->cbq_qlen = 0;
@@ -921,7 +921,7 @@ cbq_ifattach(ifacep)
 			    cbq_enqueue, cbq_dequeue, cbq_request,
 			    &new_cbqp->cbq_classifier, acc_classify);
 	if (error) {
-		FREE(new_cbqp, M_DEVBUF);
+		free(new_cbqp, M_DEVBUF);
 		return (error);
 	}
 
@@ -965,7 +965,7 @@ cbq_ifdetach(ifacep)
 	}
 
 	/* deallocate cbq_state_t */
-	FREE(cbqp, M_DEVBUF);
+	free(cbqp, M_DEVBUF);
 
 	return (0);
 }
@@ -1026,7 +1026,8 @@ cbqioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 #endif
 		if (error)
 			return (error);

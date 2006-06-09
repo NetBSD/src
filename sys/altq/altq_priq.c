@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.9.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.9.12.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.12.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.12.1 2006/03/18 12:08:18 peter Exp
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -126,11 +127,9 @@ priq_add_altq(struct pf_altq *a)
 	if (!ALTQ_IS_READY(&ifp->if_snd))
 		return (ENODEV);
 
-	MALLOC(pif, struct priq_if *, sizeof(struct priq_if),
-	    M_DEVBUF, M_WAITOK);
+	pif = malloc(sizeof(struct priq_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pif == NULL)
 		return (ENOMEM);
-	(void)memset(pif, 0, sizeof(struct priq_if));
 	pif->pif_bandwidth = a->ifbandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = &ifp->if_snd;
@@ -152,7 +151,7 @@ priq_remove_altq(struct pf_altq *a)
 
 	(void)priq_clear_interface(pif);
 
-	FREE(pif, M_DEVBUF);
+	free(pif, M_DEVBUF);
 	return (0);
 }
 
@@ -304,17 +303,15 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 			red_destroy(cl->cl_red);
 #endif
 	} else {
-		MALLOC(cl, struct priq_class *, sizeof(struct priq_class),
-		       M_DEVBUF, M_WAITOK);
+		cl = malloc(sizeof(struct priq_class), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl == NULL)
 			return (NULL);
-		(void)memset(cl, 0, sizeof(struct priq_class));
 
-		MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_q == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -381,8 +378,8 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 #endif
 	}
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -425,8 +422,8 @@ priq_class_destroy(struct priq_class *cl)
 			red_destroy(cl->cl_red);
 #endif
 	}
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (0);
 }
 
@@ -634,11 +631,9 @@ priq_attach(ifq, bandwidth)
 {
 	struct priq_if *pif;
 
-	MALLOC(pif, struct priq_if *, sizeof(struct priq_if),
-	       M_DEVBUF, M_WAITOK);
+	pif = malloc(sizeof(struct priq_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pif == NULL)
 		return (NULL);
-	(void)memset(pif, 0, sizeof(struct priq_if));
 	pif->pif_bandwidth = bandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = ifq;
@@ -670,7 +665,7 @@ priq_detach(pif)
 		ASSERT(p != NULL);
 	}
 
-	FREE(pif, M_DEVBUF);
+	free(pif, M_DEVBUF);
 	return (0);
 }
 
@@ -733,7 +728,8 @@ priqioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;

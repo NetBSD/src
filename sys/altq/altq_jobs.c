@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.1.2.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.1.2.2 2006/06/09 19:52:35 peter Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.1.2.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.1.2.2 2006/06/09 19:52:35 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.1.2.1 2006/03/18 12:08:18 peter Exp 
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #ifdef __FreeBSD__
 #include <sys/limits.h>
@@ -154,13 +155,10 @@ jobs_attach(ifq, bandwidth, qlimit, separate)
 {
 	struct jobs_if *jif;
 
-	MALLOC(jif, struct jobs_if *, sizeof(struct jobs_if),
-	       M_DEVBUF, M_WAITOK);
-
+	jif = malloc(sizeof(struct jobs_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (jif == NULL)
 	        return (NULL);
 
-	(void)memset(jif, 0, sizeof(struct jobs_if));
 	jif->jif_bandwidth = bandwidth;
 	jif->jif_qlimit = qlimit;
 	jif->jif_separate = separate;
@@ -209,7 +207,7 @@ jobs_detach(jif)
 			}
 		ASSERT(p != NULL);
 	}
-	FREE(jif, M_DEVBUF);
+	free(jif, M_DEVBUF);
 	return (0);
 }
 
@@ -288,17 +286,15 @@ jobs_class_create(jif, pri, adc, rdc, alc, rlc, arc, flags)
 			jobs_purgeq(cl);
 		splx(s);
 	} else {
-		MALLOC(cl, struct jobs_class *, sizeof(struct jobs_class),
-		       M_DEVBUF, M_WAITOK);
+		cl = malloc(sizeof(struct jobs_class), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl == NULL)
 			return (NULL);
-		(void)memset(cl, 0, sizeof(struct jobs_class));
 
-		MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_q == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 
 		cl->arv_tm = tslist_alloc();
 		if (cl->arv_tm == NULL)
@@ -462,11 +458,11 @@ jobs_class_create(jif, pri, adc, rdc, alc, rlc, arc, flags)
 
  err_ret:
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
 	if (cl->arv_tm != NULL)
-		FREE(cl->arv_tm, M_DEVBUF);
+		free(cl->arv_tm, M_DEVBUF);
 
-	FREE(cl, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -499,8 +495,8 @@ jobs_class_destroy(cl)
 	splx(s);
 
 	tslist_destroy(cl);
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (0);
 }
 
@@ -636,7 +632,7 @@ jobs_enqueue(ifq, m, pktattr)
 			  if ((cl = jif->jif_classes[pri]) != NULL &&
 			      !qempty(cl->cl_q))
 				cl->service_rate += delta_rate[pri];
-			FREE(delta_rate, M_DEVBUF);
+			free(delta_rate, M_DEVBUF);
 		}
 	}
 
@@ -647,7 +643,7 @@ jobs_enqueue(ifq, m, pktattr)
 			if ((cl = jif->jif_classes[pri]) != NULL &&
 			    !qempty(cl->cl_q))
 				cl->service_rate += delta_rate[pri];
-		FREE(delta_rate, M_DEVBUF);
+		free(delta_rate, M_DEVBUF);
 	}
 
 	tstamp2 = read_machclk();
@@ -988,7 +984,7 @@ tslist_alloc()
 {
 	TSLIST *list_init;
 
-	MALLOC(list_init, TSLIST *, sizeof(TSLIST), M_DEVBUF, M_WAITOK);
+	list_init = malloc(sizeof(TSLIST), M_DEVBUF, M_WAITOK);
 	TAILQ_INIT(list_init);
 	return (list_init);
 }
@@ -1000,7 +996,7 @@ tslist_destroy(cl)
 	while (tslist_first(cl->arv_tm) != NULL)
 		tslist_dequeue(cl);
 
-	FREE(cl->arv_tm, M_DEVBUF);
+	free(cl->arv_tm, M_DEVBUF);
 }
 
 static int
@@ -1009,7 +1005,7 @@ tslist_enqueue(cl, arv)
 	u_int64_t arv;
 {
 	TSENTRY *pushed;
-	MALLOC(pushed, TSENTRY*, sizeof(TSENTRY), M_DEVBUF, M_WAITOK);
+	pushed = malloc(sizeof(TSENTRY), M_DEVBUF, M_WAITOK);
 	if (pushed == NULL)
 		return (0);	
 
@@ -1026,7 +1022,7 @@ tslist_dequeue(cl)
 	popped = tslist_first(cl->arv_tm);
 	if (popped != NULL) {
 		  TAILQ_REMOVE(cl->arv_tm, popped, ts_list);
-		  FREE(popped, M_DEVBUF);
+		  free(popped, M_DEVBUF);
 	}
 	return;
 }
@@ -1039,7 +1035,7 @@ tslist_drop(cl)
 	popped = tslist_last(cl->arv_tm);
 	if (popped != NULL) {
 		  TAILQ_REMOVE(cl->arv_tm, popped, ts_list);
-		  FREE(popped, M_DEVBUF);
+		  free(popped, M_DEVBUF);
 	}
 	return;
 }
@@ -1148,7 +1144,7 @@ adjust_rates_rdc(jif)
 		}
 	}
 
-	MALLOC(result, int64_t*, (jif->jif_maxpri+1)*sizeof(int64_t),
+	result = malloc((jif->jif_maxpri+1)*sizeof(int64_t),
 	    M_DEVBUF, M_WAITOK);
 
 	if (result == NULL)
@@ -1212,7 +1208,7 @@ adjust_rates_rdc(jif)
 		}
 	}
 
-	FREE(error, M_DEVBUF); /* we don't need these anymore */
+	free(error, M_DEVBUF); /* we don't need these anymore */
 
 	/* saturation */
 
@@ -1319,23 +1315,23 @@ assign_rate_drops_adc(jif)
 	now = read_machclk();
 	oldest_arv = now;
 
-	MALLOC(result, int64_t*, (jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
+	result = malloc((jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
 	if (result == NULL)
 		return NULL;
-	MALLOC(c, int64_t*, (jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
+	c = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (c == NULL)
 		return NULL;
-	MALLOC(n, int64_t*, (jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
+	n = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (n == NULL)
 		return NULL;
-	MALLOC(k, int64_t*, (jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
+	k = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (k == NULL)
 		return NULL;
-	MALLOC(available, int64_t*, (jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
+	available = malloc((jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
 	if (available == NULL)
 		return NULL;
 
-	for (i = 0;i <= jif->jif_maxpri; i++)
+	for (i = 0; i <= jif->jif_maxpri; i++)
 		result[i] = 0;
 
 	keep_going = 1;
@@ -1556,10 +1552,10 @@ assign_rate_drops_adc(jif)
 		}
 	}
 
-	FREE(c, M_DEVBUF);
-	FREE(n, M_DEVBUF);
-	FREE(k, M_DEVBUF);
-	FREE(available, M_DEVBUF);
+	free(c, M_DEVBUF);
+	free(n, M_DEVBUF);
+	free(k, M_DEVBUF);
+	free(available, M_DEVBUF);
 
 	return (result);
 }
@@ -1582,12 +1578,11 @@ update_error(jif)
 	int class_exists, is_backlogged;
 	struct jobs_class *cl;
 
-	MALLOC(error, int64_t*, sizeof(int64_t)*(jif->jif_maxpri+1), M_DEVBUF, M_WAITOK);
+	error = malloc(sizeof(int64_t)*(jif->jif_maxpri+1), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
 
 	if (error == NULL)
 		return NULL;
-
-	(void)memset(error, 0, sizeof(int64_t)*(jif->jif_maxpri+1));
 
 	mean_weighted_delay = 0;
 	active_classes = 0;
@@ -1727,7 +1722,8 @@ pick_dropped_rlc(jif)
 	struct jobs_class *cl;
 	u_int64_t len;
 
-	MALLOC(loss_error, int64_t *, sizeof(int64_t)*(jif->jif_maxpri+1), M_DEVBUF, M_WAITOK);
+	loss_error = malloc(sizeof(int64_t)*(jif->jif_maxpri+1),
+	    M_DEVBUF, M_WAITOK);
 
 	if (loss_error == NULL)
 		return -1;
@@ -1838,7 +1834,7 @@ pick_dropped_rlc(jif)
 		}
 	}
 
-	FREE(loss_error, M_DEVBUF);
+	free(loss_error, M_DEVBUF);
 	return (class_dropped);
 }
 
@@ -1911,7 +1907,8 @@ jobsioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
