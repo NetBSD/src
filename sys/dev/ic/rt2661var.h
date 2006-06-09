@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.3 2006/06/08 20:56:41 rpaulo Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.4 2006/06/09 19:13:17 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -144,9 +144,6 @@ struct rt2661_softc {
 	int				ext_5ghz_lna;
 	int				rssi_2ghz_corr;
 	int				rssi_5ghz_corr;
-
-	int				ncalls;
-	int				avg_rssi;
 
 	uint8_t				bbp18;
 	uint8_t				bbp21;
