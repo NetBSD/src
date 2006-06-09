@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.627 2006/06/08 00:15:09 rpaulo Exp $
+# $NetBSD: mi,v 1.628 2006/06/09 21:19:40 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3767,13 +3767,11 @@
 ./var/run					base-sys-root
 ./var/rwho					base-netutil-root
 ./var/spool					base-sys-root
-./var/spool/clientmqueue			base-obsolete		obsolete
 ./var/spool/ftp					base-netutil-root
 ./var/spool/ftp/bin				base-netutil-root
 ./var/spool/ftp/etc				base-netutil-root
 ./var/spool/ftp/hidden				base-netutil-root
 ./var/spool/lock				base-sys-root
-./var/spool/mqueue				base-obsolete		obsolete
 ./var/spool/output				base-lpr-root
 ./var/spool/output/lpd				base-lpr-root
 ./var/spool/postfix				base-postfix-root
