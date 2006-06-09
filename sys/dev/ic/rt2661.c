@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.6 2006/06/08 20:56:41 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.7 2006/06/09 19:13:17 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.6 2006/06/08 20:56:41 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.7 2006/06/09 19:13:17 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -99,7 +99,7 @@ static struct ieee80211_node *
 static int	rt2661_media_change(struct ifnet *);
 static void	rt2661_next_scan(void *);
 static void	rt2661_iter_func(void *, struct ieee80211_node *);
-static void	rt2661_updatestats(void *);
+static void	rt2661_rssadapt_updatestats(void *);
 static int	rt2661_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 static uint16_t	rt2661_eeprom_read(struct rt2661_softc *, uint8_t);
@@ -158,8 +158,8 @@ static int     	rt2661_init(struct ifnet *);
 static void	rt2661_stop(struct ifnet *, int);
 static int	rt2661_load_microcode(struct rt2661_softc *, const uint8_t *,
 		    int);
-static void	rt2661_rx_tune(struct rt2661_softc *);
 #ifdef notyet
+static void	rt2661_rx_tune(struct rt2661_softc *);
 static void	rt2661_radar_start(struct rt2661_softc *);
 static int	rt2661_radar_stop(struct rt2661_softc *);
 #endif
@@ -894,26 +894,18 @@ rt2661_iter_func(void *arg, struct ieee80211_node *ni)
 
 /*
  * This function is called periodically (every 100ms) in RUN state to update
- * various settings like rate control statistics or Rx sensitivity.
+ * the rate adaptation statistics.
  */
 static void
-rt2661_updatestats(void *arg)
+rt2661_rssadapt_updatestats(void *arg)
 {
 	struct rt2661_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	if (ic->ic_opmode == IEEE80211_M_STA)
-		rt2661_iter_func(sc, ic->ic_bss);
-	else
-		ieee80211_iterate_nodes(&ic->ic_sta, rt2661_iter_func, arg);
+	ieee80211_iterate_nodes(&ic->ic_sta, rt2661_iter_func, arg);
 
-	/* update rx sensitivity every 1 sec */
-	if (++sc->ncalls == 10) {
-		rt2661_rx_tune(sc);
-		sc->ncalls = 0;
-	}
-
-	callout_reset(&sc->rssadapt_ch, hz / 10, rt2661_updatestats, sc);
+	callout_reset(&sc->rssadapt_ch, hz / 10, rt2661_rssadapt_updatestats,
+	    sc);
 }
 
 static int
@@ -968,10 +960,8 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			sc->ncalls = 0;
-			sc->avg_rssi = -95;	/* reset EMA */
 			callout_reset(&sc->rssadapt_ch, hz / 10,
-			    rt2661_updatestats, sc);
+			    rt2661_rssadapt_updatestats, sc);
 			rt2661_enable_tsf_sync(sc);
 		}
 		break;
@@ -1161,7 +1151,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
-	int error, rssi;
+	int error;
 
 	for (;;) {
 		desc = &sc->rxq.desc[sc->rxq.cur];
@@ -1277,15 +1267,8 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 
 		/* give rssi to the rate adatation algorithm */
 		rn = (struct rt2661_node *)ni;
-		rssi = rt2661_get_rssi(sc, desc->rssi);
-		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, rssi);
-
-		/*-
-		 * Keep track of the average RSSI using an Exponential Moving
-		 * Average (EMA) of 8 Wilder's days:
-		 *     avg = (1 / N) x rssi + ((N - 1) / N) x avg
-		 */
-		sc->avg_rssi = (rssi + 7 * sc->avg_rssi) / 8;
+		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt,
+		    rt2661_get_rssi(sc, desc->rssi));
 
 		/* node is no longer needed */
 		ieee80211_free_node(ni);
@@ -1741,7 +1724,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	 * than the length threshold indicated by [...]" ic_rtsthreshold.
 	 */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
+	    m0->m_pkthdr.len > ic->ic_rtsthreshold) {
 		struct mbuf *m;
 		int rtsrate, ackrate;
 
@@ -1862,7 +1845,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	data->m = m0;
 	data->ni = ni;
 
-	/* remember link conditions for rate control algorithm */
+	/* remember link conditions for rate adaptation algorithm */
 	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE) {
 		data->id.id_len = m0->m_pkthdr.len;
 		data->id.id_rateidx = ni->ni_txrate;
@@ -2303,7 +2286,6 @@ rt2661_select_band(struct rt2661_softc *sc, struct ieee80211_channel *c)
 		bbp17 += 0x10; bbp96 += 0x10; bbp104 += 0x10;
 	}
 
-	sc->bbp17 = bbp17;
 	rt2661_bbp_write(sc,  17, bbp17);
 	rt2661_bbp_write(sc,  96, bbp96);
 	rt2661_bbp_write(sc, 104, bbp104);
@@ -2912,6 +2894,7 @@ rt2661_load_microcode(struct rt2661_softc *sc, const uint8_t *ucode, int size)
 	return 0;
 }
 
+#ifdef notyet
 /*
  * Dynamically tune Rx sensitivity (BBP register 17) based on average RSSI and
  * false CCA count.  This function is called periodically (every seconds) when
@@ -2936,43 +2919,44 @@ rt2661_rx_tune(struct rt2661_softc *sc)
 		lo += 0x10;
 	hi = lo + 0x20;
 
-	dbm = sc->avg_rssi;
 	/* retrieve false CCA count since last call (clear on read) */
 	cca = RAL_READ(sc, RT2661_STA_CSR1) & 0xffff;
 
-	DPRINTFN(2, ("RSSI=%ddBm false CCA=%d\n", dbm, cca));
-	if (dbm < -74) {
-		/* very bad RSSI, tune using false CCA count */
+	if (dbm >= -35) {
+		bbp17 = 0x60;
+	} else if (dbm >= -58) {
+		bbp17 = hi;
+	} else if (dbm >= -66) {
+		bbp17 = lo + 0x10;
+	} else if (dbm >= -74) {
+		bbp17 = lo + 0x08;
+	} else {
+		/* RSSI < -74dBm, tune using false CCA count */
+
 		bbp17 = sc->bbp17; /* current value */
 
 		hi -= 2 * (-74 - dbm);
 		if (hi < lo)
 			hi = lo;
 
-		if (bbp17 > hi)
+		if (bbp17 > hi) {
 			bbp17 = hi;
-		else if (cca > 512)
-			bbp17 = min(bbp17 + 1, hi);
-		else if (cca < 100)
-			bbp17 = max(bbp17 - 1, lo);
-	} else if (dbm < -66) {
-		bbp17 = lo + 0x08;
-	} else if (dbm < -58) {
-		bbp17 = lo + 0x10;
-	} else if (dbm < -35) {
-		bbp17 = hi;
-	} else {	/* very good RSSI >= -35dBm */
-		bbp17 = 0x60;	/* very low sensitivity */
+
+		} else if (cca > 512) {
+			if (++bbp17 > hi)
+				bbp17 = hi;
+		} else if (cca < 100) {
+			if (--bbp17 < lo)
+				bbp17 = lo;
+		}
 	}
 
 	if (bbp17 != sc->bbp17) {
-		DPRINTF(("BBP17 %x->%x\n", sc->bbp17, bbp17));
 		rt2661_bbp_write(sc, 17, bbp17);
 		sc->bbp17 = bbp17;
 	}
 }
 
-#ifdef notyet
 /*
  * Enter/Leave radar detection mode.
  * This is for 802.11h additional regulatory domains.
