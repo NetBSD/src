@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.81 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: eap.c,v 1.82 2006/06/10 12:29:39 rpaulo Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.82 2006/06/10 12:29:39 rpaulo Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -1097,17 +1097,17 @@ eap_set_params(void *addr, int setmode, int usemode,
 	 * This only applies for ADC/DAC2. The FM DAC is handled below.
 	 */
 	if (!sc->sc_1371 && ei->index == EAP_DAC2) {
-	    if (play->sample_rate != rec->sample_rate &&
-		usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-		    rec->sample_rate = play->sample_rate;
-		    setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-		    play->sample_rate = rec->sample_rate;
-		    setmode |= AUMODE_PLAY;
-		} else
-		    return EINVAL;
-	    }
+		if (play->sample_rate != rec->sample_rate &&
+		    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
+			if (setmode == AUMODE_PLAY) {
+				rec->sample_rate = play->sample_rate;
+				setmode |= AUMODE_RECORD;
+			} else if (setmode == AUMODE_RECORD) {
+				play->sample_rate = rec->sample_rate;
+				setmode |= AUMODE_PLAY;
+			} else
+				return EINVAL;
+		}
 	}
 
 	for (mode = AUMODE_RECORD; mode != -1;
