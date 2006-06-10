@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.13 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.14 2006/06/10 12:42:37 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.13 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2006/06/10 12:42:37 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -286,9 +286,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
- 		/*
+		/*
 		 * Initialize the last one to point to Sysptmap.
- 		 */
+		 */
 		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
