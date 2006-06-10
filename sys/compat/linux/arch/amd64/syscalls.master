@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2006/02/09 19:18:56 manu Exp $
+	$NetBSD: syscalls.master,v 1.11 2006/06/10 21:15:33 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -304,7 +304,7 @@
 138	STD		{ int linux_sys_fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
 139	UNIMPL		sysfs
-140	NOARGS		{ int sys_getpriority(int which, int who); }
+140	STD		{ int linux_sys_getpriority(int which, int who); }
 141	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 142	STD		{ int linux_sys_sched_setparam(pid_t pid, \
 			    const struct linux_sched_param *sp); }
