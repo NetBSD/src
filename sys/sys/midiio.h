@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.13.14.7 2006/06/09 17:08:30 chap Exp $	*/
+/*	$NetBSD: midiio.h,v 1.13.14.8 2006/06/10 22:32:27 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -239,6 +239,13 @@ struct synth_info {
 
 #define MIDI_BEND_NEUTRAL	(1<<13)
 
+#define MIDI_RPN_PITCH_BEND_SENSITIVITY	0
+#define MIDI_RPN_CHANNEL_FINE_TUNING	1
+#define MIDI_RPN_CHANNEL_COARSE_TUNING	2
+#define MIDI_RPN_TUNING_PROGRAM_CHANGE	3
+#define MIDI_RPN_TUNING_BANK_SELECT	4
+#define MIDI_RPN_MODULATION_DEPTH_RANGE	5
+
 #define MIDI_NOTEOFF		0x80
 #define MIDI_NOTEON		0x90
 #define MIDI_KEY_PRESSURE	0xA0
@@ -347,6 +354,7 @@ typedef int32_t midipitch_t;
 #define MIDIPITCH_FROM_KEY(k) ((k)<<14)
 #define MIDIPITCH_TO_KEY(mp) (((mp)+(1<<13))>>14)
 
+#define MIDIPITCH_MAX (MIDIPITCH_FROM_KEY(128)-2) /* ...(128)-1 is reserved */
 #define MIDIPITCH_OCTAVE  196608
 #define MIDIPITCH_SEMITONE 16384
 #define MIDIPITCH_CENT       164 /* this, regrettably, is inexact. */
