@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 2005/12/11 12:20:12 christos Exp $
+	$NetBSD: syscalls.master,v 1.53 2006/06/10 21:15:33 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -215,7 +215,7 @@
 99	STD		{ int linux_sys_accept(int s, \
 				struct osockaddr *name, int *anamelen); }
 ;100	ALIAS		osf1_sys_getpriority
-100	NOARGS		{ int sys_getpriority(int which, int who); }
+100	STD		{ int linux_sys_getpriority(int which, int who); }
 101	STD		{ int linux_sys_send(int s, caddr_t buf, int len, \
 				int flags); }
 102	STD		{ int linux_sys_recv(int s, caddr_t buf, int len, \
