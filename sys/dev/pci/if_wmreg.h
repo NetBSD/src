@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.18 2006/06/10 08:11:47 uebayasi Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.19 2006/06/10 14:26:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -486,6 +486,7 @@ struct livengood_tcpip_ctxdesc {
 #define	TCTL_SWXOFF	(1U << 22)	/* software XOFF */
 #define	TCTL_RTLC	(1U << 24)	/* retransmit on late collision */
 #define	TCTL_NRTU	(1U << 25)	/* no retransmit on underrun */
+#define	TCTL_MULR	(1U << 28)	/* multiple request */
 
 #define	TX_COLLISION_THRESHOLD		15
 #define	TX_COLLISION_DISTANCE_HDX	512
@@ -561,10 +562,12 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
 #define	PBA_ADDR_SHIFT	7		/* KB -> quadwords */
+#define	PBA_12K		0x000c
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_22K		0x0016
 #define	PBA_24K		0x0018
 #define	PBA_30K		0x001e
+#define	PBA_32K		0x0020
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 
