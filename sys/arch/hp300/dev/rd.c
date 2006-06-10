@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.75 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: rd.c,v 1.76 2006/06/10 12:42:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.75 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.76 2006/06/10 12:42:37 tsutsui Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -1073,7 +1073,7 @@ rderror(int unit)
 	 * First conjure up the block number at which the error occurred.
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
- 	 */
+	 */
 	bp = BUFQ_PEEK(rs->sc_tab);
 	pbn = rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
