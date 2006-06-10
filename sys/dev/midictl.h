@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.h,v 1.1.2.2 2006/06/06 21:54:56 chap Exp $ */
+/* $NetBSD: midictl.h,v 1.1.2.3 2006/06/10 22:32:27 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -123,17 +123,19 @@
 #include <sys/stdint.h>
 
 /*
- * Events that may be reported via a midictl_notify function:
+ * Events that may be reported via a midictl_notify function.
+ * Enum starts at 1<<16 so that enum|key can be used as a switch expression.
+ * Key is 0 except where shown below.
  */
 typedef enum {
-	MIDICTL_CTLR,		/* key=ctlr */
-	MIDICTL_RPN,		/* key=rpn */
-	MIDICTL_NRPN,		/* key=nrpn */
-	MIDICTL_RESET,		/* Reset All Controllers received */
-	MIDICTL_NOTES_OFF,	/* All Notes Off received */
-	MIDICTL_SOUND_OFF,	/* All Sound Off received */
-	MIDICTL_LOCAL,		/* if (key) localIsOn; else localIsOff */
-	MIDICTL_MODE		/* key=mode(1-4)? TBD unimplemented */
+	MIDICTL_CTLR      = 1<<16,	/* key=ctlr */
+	MIDICTL_RPN       = 2<<16,	/* key=rpn */
+	MIDICTL_NRPN      = 3<<16,	/* key=nrpn */
+	MIDICTL_RESET     = 4<<16,	/* Reset All Controllers received */
+	MIDICTL_NOTES_OFF = 5<<16,	/* All Notes Off received */
+	MIDICTL_SOUND_OFF = 6<<16,	/* All Sound Off received */
+	MIDICTL_LOCAL     = 7<<16,	/* if (key) localIsOn else localIsOff */
+	MIDICTL_MODE      = 8<<16	/* key=mode(1-4)? TBD unimplemented */
 } midictl_evt;
 
 /*

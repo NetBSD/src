@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.16 2006/06/09 17:05:28 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.17 2006/06/10 22:32:27 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,10 +156,13 @@ struct voice {
 #define MS_CHANNOTE(chan, note) ((chan) * 256 + (note))
 #define MS_GETCHAN(v) ((v)->chan_note >> 8)
 	u_int seqno;		/* allocation index (increases with time) */
+	int16_t velcB;		/* cB based on attack vel (relevel may need) */
 	u_char inuse;
 };
 
 #define MIDI_MAX_CHANS 16
+
+struct channelstate;
 
 struct midisyn {
 	/* Filled by synth driver */
@@ -182,6 +185,7 @@ struct midisyn {
 	struct voice *voices;
 	u_int seqno;
 	u_int16_t pgms[MIDI_MAX_CHANS]; /* ref'd if driver uses MS_GETPGM */
+	struct channelstate *chnstate;
 };
 
 #define MS_GETPGM(ms, vno) ((ms)->pgms[MS_GETCHAN(&(ms)->voices[vno])])

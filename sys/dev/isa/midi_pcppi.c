@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.12.14.3 2006/06/09 17:05:28 chap Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.12.14.4 2006/06/10 22:32:27 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12.14.3 2006/06/09 17:05:28 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.12.14.4 2006/06/10 22:32:27 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ void	midi_pcppi_attach(struct device *, struct device *, void *);
 void	midi_pcppi_on   (midisyn *, uint_fast16_t, midipitch_t, int16_t);
 void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
 void	midi_pcppi_close(midisyn *);
+static void midi_pcppi_repitchv(midisyn *, uint_fast16_t, midipitch_t);
 
 CFATTACH_DECL(midi_pcppi, sizeof(struct midi_pcppi_softc),
     midi_pcppi_match, midi_pcppi_attach, NULL, NULL);
@@ -81,6 +82,7 @@ struct midisyn_methods midi_pcppi_hw = {
 	.close    = midi_pcppi_close,
 	.attackv  = midi_pcppi_on,
 	.releasev = midi_pcppi_off,
+	.repitchv = midi_pcppi_repitchv,
 };
 
 int midi_pcppi_attached = 0;	/* Not very nice */
@@ -144,4 +146,10 @@ midi_pcppi_close(ms)
 
 	/* Make sure we are quiet. */
 	pcppi_bell(t, 0, 0, 0);
+}
+
+static void
+midi_pcppi_repitchv(midisyn *ms, uint_fast16_t voice, midipitch_t newpitch)
+{
+	midi_pcppi_on(ms, voice, newpitch, 64);
 }
