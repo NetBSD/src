@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.118 2006/06/10 08:08:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.119 2006/06/10 08:11:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.118 2006/06/10 08:08:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.119 2006/06/10 08:11:47 uebayasi Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2910,10 +2910,10 @@ wm_init(struct ifnet *ifp)
 	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_LPE |
 	    RCTL_DPF | RCTL_MO(sc->sc_mchash_type);
 
-	if(MCLBYTES == 2048) {
+	if (MCLBYTES == 2048) {
 		sc->sc_rctl |= RCTL_2k;
 	} else {
-		if(sc->sc_type >= WM_T_82543) {
+		if (sc->sc_type >= WM_T_82543) {
 			switch(MCLBYTES) {
 			case 4096:
 				sc->sc_rctl |= RCTL_BSEX | RCTL_BSEX_4k;
@@ -3274,7 +3274,7 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 	checksum = 0;
 
 	for (i = 0; i < EEPROM_SIZE; i++) {
-		if(wm_read_eeprom(sc, i, 1, &eeprom_data))
+		if (wm_read_eeprom(sc, i, 1, &eeprom_data))
 			return 1;
 		checksum += eeprom_data;
 	}
@@ -3329,7 +3329,7 @@ wm_read_eeprom_eerd(struct wm_softc *sc, int offset, int wordcnt,
 
 		data[i] = (CSR_READ(sc, WMREG_EERD) >> EERD_DATA_SHIFT);
 	}
-    
+
 	return error;
 }
 
@@ -3340,10 +3340,10 @@ wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
 	uint32_t i, reg = 0;
 	int32_t done = -1;
 
-	for(i = 0; i < attempts; i++) {
+	for (i = 0; i < attempts; i++) {
 		reg = CSR_READ(sc, rw);
 
-		if(reg & EERD_DONE) {
+		if (reg & EERD_DONE) {
 			done = 0;
 			break;
 		}
@@ -4101,14 +4101,14 @@ wm_is_onboard_nvm_eeprom(struct wm_softc *sc)
 {
 	uint32_t eecd = 0;
 
-	if(sc->sc_type == WM_T_82573) {
+	if (sc->sc_type == WM_T_82573) {
 		eecd = CSR_READ(sc, WMREG_EECD);
 
 		/* Isolate bits 15 & 16 */
 		eecd = ((eecd >> 15) & 0x03);
 
 		/* If both bits are set, device is Flash type */
-		if(eecd == 0x03) {
+		if (eecd == 0x03) {
 			return 0;
 		}
 	}
@@ -4121,7 +4121,7 @@ wm_get_eeprom_semaphore(struct wm_softc *sc)
 	int32_t timeout;
 	uint32_t swsm;
 
-	if((sc->sc_flags & WM_F_EEPROM_SEMAPHORE) == 0)
+	if ((sc->sc_flags & WM_F_EEPROM_SEMAPHORE) == 0)
 		return 0;
 
 	/* Get the FW semaphore. */
@@ -4132,7 +4132,7 @@ wm_get_eeprom_semaphore(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_SWSM, swsm);
 		/* if we managed to set the bit we got the semaphore. */
 		swsm = CSR_READ(sc, WMREG_SWSM);
-		if(swsm & SWSM_SWESMBI)
+		if (swsm & SWSM_SWESMBI)
 			break;
 
 		delay(50);
@@ -4153,10 +4153,10 @@ wm_put_eeprom_semaphore(struct wm_softc *sc)
 {
 	uint32_t swsm;
 
-	if((sc->sc_flags & WM_F_EEPROM_SEMAPHORE) == 0)
+	if ((sc->sc_flags & WM_F_EEPROM_SEMAPHORE) == 0)
 		return;
 
 	swsm = CSR_READ(sc, WMREG_SWSM);
-        swsm &= ~(SWSM_SWESMBI);
+	swsm &= ~(SWSM_SWESMBI);
 	CSR_WRITE(sc, WMREG_SWSM, swsm);
 }
