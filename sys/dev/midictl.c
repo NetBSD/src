@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.1.2.2 2006/06/07 00:09:39 chap Exp $ */
+/* $NetBSD: midictl.c,v 1.1.2.3 2006/06/10 22:32:27 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.1.2.2 2006/06/07 00:09:39 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.1.2.3 2006/06/10 22:32:27 chap Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -205,18 +205,22 @@ midictl_change(midictl *mc, uint_fast8_t chan, uint8_t *ctlval)
 	 * Control changes to be handled specially:
 	 */
 	case MIDI_CTRL_RPN_LSB:
+		mc-> rpn &= ~0x7f;
 		mc-> rpn |=  PN_SET | (0x7f & ctlval[1]);
 		mc->nrpn &= ~PN_SET;
 		return;
 	case MIDI_CTRL_RPN_MSB:
+		mc-> rpn &= ~0x7f<<7;
 		mc-> rpn |=  PN_SET | (0x7f & ctlval[1])<<7;
 		mc->nrpn &= ~PN_SET;
 		return;
 	case MIDI_CTRL_NRPN_LSB:
+		mc->nrpn &= ~0x7f;
 		mc->nrpn |=  PN_SET | (0x7f & ctlval[1]);
 		mc-> rpn &= ~PN_SET;
 		return;
 	case MIDI_CTRL_NRPN_MSB:
+		mc->nrpn &= ~0x7f<<7;
 		mc->nrpn |=  PN_SET | (0x7f & ctlval[1])<<7;
 		mc-> rpn &= ~PN_SET;
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.17 2006/06/09 17:05:28 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.18 2006/06/10 22:32:27 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.17 2006/06/09 17:05:28 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.18 2006/06/10 22:32:27 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -72,10 +72,15 @@ void	midisyn_freevoice(midisyn *, int);
 uint_fast16_t	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
 static void	midisyn_attackv_vel(midisyn *, uint_fast16_t, midipitch_t,
                                     int16_t, uint_fast8_t);
-static int16_t midisyn_adj_level(midisyn *, uint_fast8_t);
-static midipitch_t midisyn_adj_pitch(midisyn *, uint_fast8_t);
 
 static midictl_notify midisyn_notify;
+
+static midipitch_t midisyn_clamp_pitch(midipitch_t);
+static int16_t midisyn_adj_level(midisyn *, uint_fast8_t);
+static midipitch_t midisyn_adj_pitch(midisyn *, uint_fast8_t);
+static void midisyn_chan_releasev(midisyn *, uint_fast8_t, uint_fast8_t);
+static void midisyn_upd_level(midisyn *, uint_fast8_t);
+static void midisyn_upd_pitch(midisyn *, uint_fast8_t);
 
 int	midisyn_open(void *, int,
 		     void (*iintr)(void *, int),
@@ -103,6 +108,28 @@ struct midi_hw_if_ext midisyn_hw_if_ext = {
 	.sysex   = midisyn_sysex,
 };
 
+struct channelstate { /* dyamically allocated in open() on account of size */
+	/* volume state components in centibels; just sum for overall level */
+	int16_t volume;
+	int16_t expression;
+	/* pitch state components in midipitch units; sum for overall effect */
+	midipitch_t bend;
+	midipitch_t tuning_fine;
+	midipitch_t tuning_coarse;
+	/* used by bend handlers */
+	int16_t bendraw;
+	int16_t pendingreset;
+/* rearrange as more controls supported - 16 bits should last for a while */
+#define PEND_VOL 1
+#define PEND_EXP 2
+#define PEND_LEVEL (PEND_VOL|PEND_EXP)
+#define PEND_PBS 4
+#define PEND_TNF 8
+#define PEND_TNC 16
+#define PEND_PITCH (PEND_PBS|PEND_TNF|PEND_TNC)
+#define PEND_ALL   (PEND_LEVEL|PEND_PITCH)
+};
+
 int
 midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
 	     void (*ointr)(void *), void *arg)
@@ -114,6 +141,9 @@ midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
 	DPRINTF(("midisyn_open: ms=%p ms->mets=%p\n", ms, ms->mets));
 	
 	midictl_open(&ms->ctl);
+	
+	ms->chnstate = malloc(MIDI_MAX_CHANS*sizeof *(ms->chnstate),
+	                      M_DEVBUF, M_WAITOK); /* init'd by RESET below */
 	
 	rslt = 0;
 	if (ms->mets->open)
@@ -134,22 +164,18 @@ midisyn_close(void *addr)
 {
 	midisyn *ms = addr;
 	struct midisyn_methods *fs;
-	int v;
+	int chan;
 
 	DPRINTF(("midisyn_close: ms=%p ms->mets=%p\n", ms, ms->mets));
 	fs = ms->mets;
-	/* TODO
-	 * This loop is much like what midisyn_notify should do for NOTES_OFF
-	 * or SOUND_OFF. It should be moved there, and here we should call
-	 * notify faking one of those events.
-	 */
-	for (v = 0; v < ms->nvoice; v++)
-		if (ms->voices[v].inuse) {
-			fs->releasev(ms, v, 127);
-			midisyn_freevoice(ms, v);
-		}
+
+	for (chan = 0; chan < MIDI_MAX_CHANS; chan++)
+		midisyn_notify(ms, MIDICTL_SOUND_OFF, chan, 0);
+
 	if (fs->close)
 		fs->close(ms);
+
+	free(ms->chnstate, M_DEVBUF);
 
 	midictl_close(&ms->ctl);
 }
@@ -203,6 +229,11 @@ midisyn_findvoice(midisyn *ms, int chan, int note)
 void
 midisyn_attach(struct midi_softc *sc, midisyn *ms)
 {
+	/*
+	 * XXX there should be a way for this function to indicate failure
+	 * (other than panic) if some preconditions aren't met, for example
+	 * if some nonoptional methods are missing.
+	 */
 	if (ms->mets->allocv == 0) {
 		ms->voices = malloc(ms->nvoice * sizeof (struct voice),
 				    M_DEVBUF, M_WAITOK|M_ZERO);
@@ -270,8 +301,8 @@ static void
 midisyn_attackv_vel(midisyn *ms, uint_fast16_t voice, midipitch_t mp,
                     int16_t level_cB, uint_fast8_t vel)
 {
-	ms->mets->attackv(ms, voice, mp,
-	                  level_cB + midisyn_vol2cB((uint_fast16_t)vel << 7));
+	ms->voices[voice].velcB = midisyn_vol2cB((uint_fast16_t)vel << 7);
+	ms->mets->attackv(ms, voice, mp, level_cB + ms->voices[voice].velcB);
 }
 
 int
@@ -308,8 +339,6 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		break;
 	case MIDI_NOTEON:
 		/*
-		 * opl combines vel with a 'mainvol' that has no setter
-		 * anywhere. pcppi punts volume entirely. cms uses vel alone.
 		 * what's called for here, given current drivers, is an i/f
 		 * where midisyn computes a volume from vel*volume*expression*
 		 * mastervolume and passes that result as a single arg. It can
@@ -318,10 +347,11 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		 * on its sound card and use that for mastervolume).
 		 */
 		voice = fs->allocv(ms, chan, buf[1]);
+		ms->voices[voice].velcB = 0; /* assume driver handles vel */
 		fs->attackv_vel(ms, voice,
-		                MIDIPITCH_FROM_KEY(buf[1])
-				+ midisyn_adj_pitch(ms, chan),
-				midisyn_adj_level(ms,chan), buf[2]);
+		    midisyn_clamp_pitch(MIDIPITCH_FROM_KEY(buf[1]) +
+		                        midisyn_adj_pitch(ms, chan)),
+		    midisyn_adj_level(ms,chan), buf[2]);
 		break;
 	case MIDI_KEY_PRESSURE:
 		/*
@@ -352,18 +382,18 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 		break;
 	case MIDI_PITCH_BEND:
 		/*
-		 * unimplemented by existing drivers. it is good that most
-		 * existing drivers take a /frequency/ rather than a /note no/
-		 * for control; midisyn should use this event to update some
-		 * internal state and use it (along with tuning) to derive the
-		 * frequency passed to the driver for any note on. A driver that
-		 * can change freq of a sounding voice should expose a method
-		 * for that, i.e. m(voice,newfreq) and we should call that too,
-		 * for each voice on the affected channel, when a pitch bend
-		 * change is received. Note RPN 0 must be used in scaling the
-		 * pitch bend. Be sure that whatever is
-		 * done here is undone when midisyn_notify sees MIDICTL_RESET.
+		 * Will work for most drivers that simply render the midipitch
+		 * as we pass it (but not cms, which chops all the bits after
+		 * the note number and then computes its own pitch :( ). If the
+		 * driver has a repitchv method for voices already sounding, so
+		 * much the better.
+		 * The bending logic lives in the handler for bend sensitivity,
+		 * so fake a change to that to kick it off.
 		 */
+		ms->chnstate[chan].bendraw = buf[2]<<7 | buf[1];
+		ms->chnstate[chan].bendraw -= MIDI_BEND_NEUTRAL;
+		midisyn_notify(ms, MIDICTL_RPN, chan,
+		               MIDI_RPN_PITCH_BEND_SENSITIVITY);
 		break;
 	}
 	return 0;
@@ -398,37 +428,214 @@ midisyn_notify(void *cookie, midictl_evt evt,
 	if ( ms->mets->ctlnotice )
 		drvhandled = ms->mets->ctlnotice(ms, evt, chan, key);
 
-	switch ( evt ) {
+	switch ( evt | key ) {
 	case MIDICTL_RESET:
-		/* re-read all ctls we use, revert pitchbend state */
+		/*
+		 * Re-read all ctls we use, revert pitchbend state.
+		 * Can do it by faking change notifications.
+		 */
+		ms->chnstate[chan].pendingreset |= PEND_ALL;
+		midisyn_notify(ms, MIDICTL_CTLR, chan,
+		               MIDI_CTRL_CHANNEL_VOLUME_MSB);
+		midisyn_notify(ms, MIDICTL_CTLR, chan,
+		               MIDI_CTRL_EXPRESSION_MSB);
+		ms->chnstate[chan].bendraw = 0; /* MIDI_BEND_NEUTRAL - itself */
+		midisyn_notify(ms, MIDICTL_RPN, chan,
+		               MIDI_RPN_PITCH_BEND_SENSITIVITY);
+		midisyn_notify(ms, MIDICTL_RPN, chan,
+		               MIDI_RPN_CHANNEL_FINE_TUNING);
+		midisyn_notify(ms, MIDICTL_RPN, chan,
+		               MIDI_RPN_CHANNEL_COARSE_TUNING);
 		break;
 	case MIDICTL_NOTES_OFF:
 		if ( drvhandled )
 			break;
 		/* releasev all voices sounding on chan; use normal vel 64 */
+		midisyn_chan_releasev(ms, chan, 64);
 		break;
 	case MIDICTL_SOUND_OFF:
 		if ( drvhandled )
 			break;
 		/* releasev all voices sounding on chan; use max vel 127 */
 		/* it is really better for driver to handle this, instantly */
+		midisyn_chan_releasev(ms, chan, 127);
 		break;
-	default:
+	case MIDICTL_CTLR | MIDI_CTRL_CHANNEL_VOLUME_MSB:
+		ms->chnstate[chan].pendingreset &= ~PEND_VOL;
+		if ( drvhandled ) {
+			ms->chnstate[chan].volume = 0;
+			break;
+		}
+		ms->chnstate[chan].volume = midisyn_vol2cB(
+	    	    midictl_read(&ms->ctl, chan, key, 100<<7));
+		midisyn_upd_level(ms, chan);
+		break;
+	case MIDICTL_CTLR | MIDI_CTRL_EXPRESSION_MSB:
+		ms->chnstate[chan].pendingreset &= ~PEND_EXP;
+		if ( drvhandled ) {
+			ms->chnstate[chan].expression = 0;
+			break;
+		}
+		ms->chnstate[chan].expression = midisyn_vol2cB(
+	    	    midictl_read(&ms->ctl, chan, key, 16383));
+		midisyn_upd_level(ms, chan);
+		break;
+	/*
+	 * SOFT_PEDAL: supporting this will be trickier; must apply only
+	 * to notes subsequently struck, and must remember which voices
+	 * they are for follow-on adjustments. For another day....
+	 */
+	case MIDICTL_RPN | MIDI_RPN_PITCH_BEND_SENSITIVITY:
+		ms->chnstate[chan].pendingreset &= ~PEND_PBS;
+		if ( drvhandled )
+			ms->chnstate[chan].bend = 0;
+		else {
+			uint16_t w;
+			int8_t semis, cents;
+			w = midictl_rpn_read(&ms->ctl, chan, key, 2<<7);
+			semis = w>>7;
+			cents = w&0x7f;
+			/*
+			 * Mathematically, multiply semis by
+			 * MIDIPITCH_SEMITONE*bendraw/8192. Practically, avoid
+			 * shifting significant bits off by observing that
+			 * MIDIPITCH_SEMITONE == 1<<14 and 8192 == 1<<13, so
+			 * just take semis*bendraw<<1. Do the same with cents
+			 * except <<1 becomes /50 (but rounded).
+			 */
+			ms->chnstate[chan].bend =
+			    ( ms->chnstate[chan].bendraw * semis ) << 1;
+			ms->chnstate[chan].bend +=
+			    ((ms->chnstate[chan].bendraw * cents)/25 + 1) >> 1;
+			midisyn_upd_pitch(ms, chan);
+		}
+		break;
+	case MIDICTL_RPN | MIDI_RPN_CHANNEL_FINE_TUNING:
+		if ( drvhandled )
+			ms->chnstate[chan].tuning_fine = 0;
+		else {
+			midipitch_t mp;
+			mp = midictl_rpn_read(&ms->ctl, chan, key, 8192);
+			/*
+			 * Mathematically, subtract 8192 and scale by
+			 * MIDIPITCH_SEMITONE/8192. Practically, subtract 8192
+			 * and then << 1.
+			 */
+			ms->chnstate[chan].tuning_fine = ( mp - 8192 ) << 1;
+			midisyn_upd_pitch(ms, chan);
+		}
+		break;
+	case MIDICTL_RPN | MIDI_RPN_CHANNEL_COARSE_TUNING:
+		ms->chnstate[chan].pendingreset &= ~PEND_TNC;
+		if ( drvhandled )
+			ms->chnstate[chan].tuning_coarse = 0;
+		else {
+			midipitch_t mp;
+			/*
+			 * By definition only the MSB of this parameter is used.
+			 * Subtract 64 for a signed count of semitones; << 14
+			 * will convert to midipitch scale.
+			 */
+			mp = midictl_rpn_read(&ms->ctl, chan, key, 64<<7) >> 7;
+			ms->chnstate[chan].tuning_coarse = ( mp - 64 ) << 14;
+			midisyn_upd_pitch(ms, chan);
+		}
 		break;
 	}
+}
+
+static midipitch_t
+midisyn_clamp_pitch(midipitch_t mp)
+{
+	if ( mp <= 0 )
+		return 0;
+	if ( mp >= MIDIPITCH_MAX )
+		return MIDIPITCH_MAX;
+	return mp;
 }
 
 static int16_t
 midisyn_adj_level(midisyn *ms, uint_fast8_t chan)
 {
-	return 0; /* XXX for now. Use Volume and Expression ctlrs. */
+	int32_t level;
+	
+	level = ms->chnstate[chan].volume + ms->chnstate[chan].expression;
+	if ( level <= INT16_MIN )
+		return INT16_MIN;
+	return level;
 }
 
 static midipitch_t
 midisyn_adj_pitch(midisyn *ms, uint_fast8_t chan)
 {
-	return 0; /* XXX for now. Use Pitchbend, PBrange, fine/coarse tuning. */
+	struct channelstate *s = ms->chnstate + chan;
+	return s->bend + s->tuning_fine +s->tuning_coarse;
 }
+
+#define VOICECHAN_FOREACH_BEGIN(ms,vp,ch)			\
+	{							\
+		struct voice *vp, *_end_##vp;			\
+		for (vp=(ms)->voices,_end_##vp=vp+(ms)->nvoice;	\
+		    vp < _end_##vp; ++ vp) {			\
+			if ( !vp->inuse )			\
+				continue;			\
+			if ( MS_GETCHAN(vp) == (ch) )		\
+				;				\
+			else					\
+				continue;
+#define VOICECHAN_FOREACH_END }}
+
+static void
+midisyn_chan_releasev(midisyn *ms, uint_fast8_t chan, uint_fast8_t vel)
+{
+	VOICECHAN_FOREACH_BEGIN(ms,vp,chan)
+		ms->mets->releasev(ms, vp - ms->voices, vel);
+		midisyn_freevoice(ms, vp - ms->voices);
+	VOICECHAN_FOREACH_END
+}
+
+static void
+midisyn_upd_level(midisyn *ms, uint_fast8_t chan)
+{
+	int32_t level;
+	int16_t chan_level;
+	if ( NULL == ms->mets->relevelv )
+		return;
+	
+	if ( ms->chnstate[chan].pendingreset & PEND_LEVEL )
+		return;
+
+	chan_level = midisyn_adj_level(ms, chan);
+	
+	VOICECHAN_FOREACH_BEGIN(ms,vp,chan)
+		level = vp->velcB + chan_level;
+		ms->mets->relevelv(ms, vp - ms->voices,
+		    level <= INT16_MIN ? INT16_MIN : level);
+	VOICECHAN_FOREACH_END
+}
+
+static void
+midisyn_upd_pitch(midisyn *ms, uint_fast8_t chan)
+{
+	midipitch_t chan_adj;
+	
+	if ( NULL == ms->mets->repitchv )
+		return;
+	
+	if ( ms->chnstate[chan].pendingreset & PEND_PITCH )
+		return;
+
+	chan_adj = midisyn_adj_pitch(ms, chan);
+	
+	VOICECHAN_FOREACH_BEGIN(ms,vp,chan)
+		ms->mets->repitchv(ms, vp - ms->voices,
+		    midisyn_clamp_pitch(chan_adj +
+		        MIDIPITCH_FROM_KEY(vp->chan_note&0x7f)));
+	VOICECHAN_FOREACH_END
+}
+
+#undef VOICECHAN_FOREACH_END
+#undef VOICECHAN_FOREACH_BEGIN
 
 int16_t
 midisyn_vol2cB(uint_fast16_t vol)
@@ -511,7 +718,7 @@ midisyn_mp2hz18(midipitch_t mp)
 	t64a |= (int64_t)0xe1 << 32;
 	t64a /= mp - 1998848; /* here's why 1998848 is special-cased above ;) */
 	t64a += mp - 3704981;
-	t64b  = 0x6763759d; /* INT64_C(8405905567872413) and here too */
+	t64b  = 0x6763759d; /* INT64_C(8405905567872413) goofy warning again */
 	t64b |= (int64_t)0x1ddd20 << 32;
 	t64b /= t64a;
 	t64b += UINT32_C(2463438619);
