@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2006/04/13 18:46:46 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.15 2006/06/10 07:49:29 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -165,7 +165,8 @@ ret:
 #endif /* DBMONITOR */
 	printf("\nBoot: ");
 	memset(namebuf, 0, sizeof (namebuf));
-	(void)tgets(namebuf);
+	if (tgets(namebuf) == -1)
+		printf("\n");
 
 	ptr = namebuf;
 #ifdef DBMONITOR
