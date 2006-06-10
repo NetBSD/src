@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.117 2006/06/10 08:04:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.118 2006/06/10 08:08:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.117 2006/06/10 08:04:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.118 2006/06/10 08:08:33 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1163,7 +1163,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose("%s: No EEPROM\n", sc->sc_dev.dv_xname);
 	else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
-		aprint_verbose("%s: FLASH\n");
+		aprint_verbose("%s: FLASH\n", sc->sc_dev.dv_xname);
 	} else {
 		if (sc->sc_flags & WM_F_EEPROM_SPI)
 			eetype = "SPI";
