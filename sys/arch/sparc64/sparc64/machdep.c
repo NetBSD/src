@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.186 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: machdep.c,v 1.187 2006/06/10 06:38:07 rjs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 2006/02/20 19:00:27 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2006/06/10 06:38:07 rjs Exp $");
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
