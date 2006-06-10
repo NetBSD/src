@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.48 2006/05/16 00:16:59 dogcow Exp $	*/
+/*	$NetBSD: label.c,v 1.49 2006/06/10 14:48:46 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.48 2006/05/16 00:16:59 dogcow Exp $");
+__RCSID("$NetBSD: label.c,v 1.49 2006/06/10 14:48:46 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -687,7 +687,7 @@ incorelabel(const char *dkname, partinfo *lp)
 		lp->pi_partition = *pp;
 		if (lp->pi_fstype >= FSMAXTYPES)
 			lp->pi_fstype = FS_OTHER;
-		strlcpy(lp->pi_mount, get_last_mounted(fd, pp->p_offset),
+		strlcpy(lp->pi_mount, get_last_mounted(fd, pp->p_offset, lp),
 			sizeof lp->pi_mount);
 	}
 	if (fd != -1)
@@ -700,21 +700,21 @@ incorelabel(const char *dkname, partinfo *lp)
  * Try to get 'last mounted on' (or equiv) from fs superblock.
  */
 const char *
-get_last_mounted(int fd, int partstart)
+get_last_mounted(int fd, int partstart, partinfo *lp)
 {
 	static char sblk[SBLOCKSIZE];		/* is this enough? */
 	#define SB ((struct fs *)sblk)
 	const static int sblocks[] = SBLOCKSEARCH;
 	const int *sbp;
 	char *cp;
-	const char *mnt = "";
-	int l;
+	const char *mnt = NULL;
+	int len;
 
 	if (fd == -1)
-		return mnt;
+		return "";
 
 	/* Check UFS1/2 (and hence LFS) superblock */
-	for (sbp = sblocks; *mnt == 0 && *sbp != -1; sbp++) {
+	for (sbp = sblocks; mnt == NULL && *sbp != -1; sbp++) {
 		if (pread(fd, sblk, sizeof sblk,
 		    partstart * (off_t)512 + *sbp) != sizeof sblk)
 			continue;
@@ -724,15 +724,21 @@ get_last_mounted(int fd, int partstart)
 		case FS_UFS1_MAGIC_SWAPPED:
 			if (!(SB->fs_old_flags & FS_FLAGS_UPDATED)) {
 				if (*sbp == SBLOCK_UFS1)
-					mnt = (const char *) SB->fs_fsmnt;
-				continue;
+					mnt = (const char *)SB->fs_fsmnt;
+			} else {
+				/* Check we have the main superblock */
+				if (SB->fs_sblockloc == *sbp)
+					mnt = (const char *)SB->fs_fsmnt;
 			}
-			/* FALLTHROUGH */
+			continue;
 		case FS_UFS2_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
 			/* Check we have the main superblock */
-			if (SB->fs_sblockloc == *sbp)
-				mnt = (const char *) SB->fs_fsmnt;
+			if (SB->fs_sblockloc == *sbp) {
+				mnt = (const char *)SB->fs_fsmnt;
+				if (lp != NULL)
+					lp->pi_flags |= PIF_FFSv2;
+			}
 			continue;
 		}
 
@@ -756,13 +762,16 @@ get_last_mounted(int fd, int partstart)
 		}
 	}
 
+	if (mnt == NULL)
+		return "";
+
 	/* If sysinst mounted this last then strip prefix */
-	l = strlen(targetroot_mnt);
-	if (memcmp(mnt, targetroot_mnt, l) == 0) {
-		if (mnt[l] == 0)
+	len = strlen(targetroot_mnt);
+	if (memcmp(mnt, targetroot_mnt, len) == 0) {
+		if (mnt[len] == 0)
 			return "/";
-		if (mnt[l] == '/')
-			return mnt + l;
+		if (mnt[len] == '/')
+			return mnt + len;
 	}
 	return mnt;
 	#undef SB
