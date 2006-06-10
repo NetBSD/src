@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.17 2006/06/10 08:01:31 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.18 2006/06/10 08:11:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -587,7 +587,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
 
-#define	WMREG_SWSM	0x5B50	/* SW Semaphore */
+#define	WMREG_SWSM	0x5b50	/* SW Semaphore */
 #define	SWSM_SMBI	0x00000001	/* Driver Semaphore bit */
 #define	SWSM_SWESMBI	0x00000002	/* FW Semaphore bit */
 #define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
