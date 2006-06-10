@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.119 2006/06/10 08:11:47 uebayasi Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.120 2006/06/10 14:26:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.119 2006/06/10 08:11:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.120 2006/06/10 14:26:52 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1335,7 +1335,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	if (sc->sc_type != WM_T_82573)
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
@@ -2618,10 +2619,9 @@ wm_reset(struct wm_softc *sc)
 	 * The Packet Buffer Allocation register must be written
 	 * before the chip is reset.
 	 */
-	if (sc->sc_type < WM_T_82547) {
-		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
-		    PBA_40K : PBA_48K;
-	} else {
+	switch (sc->sc_type) {
+	case WM_T_82547:
+	case WM_T_82547_2:
 		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
 		    PBA_22K : PBA_30K;
 		sc->sc_txfifo_head = 0;
@@ -2629,6 +2629,18 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_txfifo_size =
 		    (PBA_40K - sc->sc_pba) << PBA_BYTE_SHIFT;
 		sc->sc_txfifo_stall = 0;
+		break;
+	case WM_T_82571:
+	case WM_T_82572:		
+		sc->sc_pba = PBA_32K;
+		break;
+	case WM_T_82573:
+		sc->sc_pba = PBA_12K;
+		break;
+	default:
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
+		    PBA_40K : PBA_48K;
+		break;
 	}
 	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
 
@@ -2893,6 +2905,8 @@ wm_init(struct ifnet *ifp)
 	 */
 	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_CT(TX_COLLISION_THRESHOLD) |
 	    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
+	if (sc->sc_type >= WM_T_82571)
+		sc->sc_tctl |= TCTL_MULR;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
 	/* Set the media. */
@@ -2907,8 +2921,12 @@ wm_init(struct ifnet *ifp)
 	 * CRC, so we don't enable that feature.
 	 */
 	sc->sc_mchash_type = 0;
-	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_LPE |
-	    RCTL_DPF | RCTL_MO(sc->sc_mchash_type);
+	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_DPF
+	    | RCTL_MO(sc->sc_mchash_type);
+
+	/* 82573 doesn't support jumbo frame */
+	if (sc->sc_type != WM_T_82573)
+		sc->sc_rctl |= RCTL_LPE;
 
 	if (MCLBYTES == 2048) {
 		sc->sc_rctl |= RCTL_2k;
