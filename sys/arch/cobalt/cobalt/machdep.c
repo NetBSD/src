@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2006/05/31 13:20:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2006/06/10 12:35:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2006/05/31 13:20:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2006/06/10 12:35:01 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -709,7 +709,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #if 0					/* MIPS_SR_INT_IE is enabled above */
 					_splset(MIPS_SR_INT_IE);
 #endif
- 				} else {
+				} else {
 					/*
 					 * If there are any pending interrputs,
 					 * clear MIPS_SR_INT_IE in cf.sr so that
