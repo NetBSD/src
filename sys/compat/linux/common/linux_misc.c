@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.155 2006/06/07 22:33:33 kardel Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.156 2006/06/10 21:18:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.155 2006/06/07 22:33:33 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.156 2006/06/10 21:18:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1743,6 +1743,30 @@ linux_sys_nosys(l, v, retval)
 	register_t *retval;
 {
 	return (ENOSYS);
+}
+
+int
+linux_sys_getpriority(l, v, retval)
+        struct lwp *l;
+        void *v;
+        register_t *retval;
+{
+        struct linux_sys_getpriority_args /* {
+                syscallarg(int) which;
+                syscallarg(int) who;
+        } */ *uap = v;
+        struct sys_getpriority_args bsa;
+        int error;
+
+        SCARG(&bsa, which) = SCARG(uap, which);
+        SCARG(&bsa, who) = SCARG(uap, who);
+
+        if ((error = sys_getpriority(l, &bsa, retval)))
+                return error;
+
+        *retval = 20 - *retval;
+
+        return 0;
 }
 
 #endif /* !COMPAT_LINUX32 */
