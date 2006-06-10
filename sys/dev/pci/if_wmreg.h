@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.16 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.17 2006/06/10 08:01:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -299,6 +299,12 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
 #define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
 
+#define	WMREG_EERD	0x0014	/* EEPROM read */
+#define	EERD_DONE	0x02    /* done bit */
+#define	EERD_START	0x01	/* First bit for telling part to start operation */
+#define	EERD_ADDR_SHIFT	2	/* Shift to the address bits */
+#define	EERD_DATA_SHIFT	16	/* Offset to data in EEPROM read/write registers */
+
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
@@ -482,8 +488,8 @@ struct livengood_tcpip_ctxdesc {
 #define	TCTL_NRTU	(1U << 25)	/* no retransmit on underrun */
 
 #define	TX_COLLISION_THRESHOLD		15
-#define	TX_COLLISION_DISTANCE_HDX	64
-#define	TX_COLLISION_DISTANCE_FDX	512
+#define	TX_COLLISION_DISTANCE_HDX	512
+#define	TX_COLLISION_DISTANCE_FDX	64
 
 #define	WMREG_TQSA_LO	0x0408
 
@@ -499,6 +505,8 @@ struct livengood_tcpip_ctxdesc {
 #define	TIPG_1000T_DFLT	(TIPG_IPGT(0x08) | TIPG_IPGR1(0x08) | TIPG_IPGR2(0x06))
 
 #define	WMREG_TQC	0x0418
+
+#define	WMREG_EEWR	0x102c	/* EEPROM write */
 
 #define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
 
@@ -578,3 +586,9 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_XOFFRXC	0x4050	/* XOFF Rx Count - R/clr */
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
+
+#define	WMREG_SWSM	0x5B50	/* SW Semaphore */
+#define	SWSM_SMBI	0x00000001	/* Driver Semaphore bit */
+#define	SWSM_SWESMBI	0x00000002	/* FW Semaphore bit */
+#define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
+#define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
