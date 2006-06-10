@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.116 2006/06/05 16:06:10 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.117 2006/06/10 08:04:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.116 2006/06/05 16:06:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.117 2006/06/10 08:04:08 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -213,9 +213,9 @@ typedef enum {
 	WM_T_82541_2,			/* i82541 2.0+ */
 	WM_T_82547,			/* i82547 */
 	WM_T_82547_2,			/* i82547 2.0+ */
-	WM_T_82571,
-	WM_T_82572,
-	WM_T_82573,
+	WM_T_82571,			/* i82571 */
+	WM_T_82572,			/* i82572 */
+	WM_T_82573,			/* i82573 */
 } wm_chip_type;
 
 /*
@@ -357,15 +357,18 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /* sc_flags */
-#define	WM_F_HAS_MII		0x01	/* has MII */
-#define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
-#define	WM_F_EEPROM_SPI		0x04	/* EEPROM is SPI */
-#define	WM_F_EEPROM_INVALID	0x08	/* EEPROM not present (bad checksum) */
-#define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
-#define	WM_F_BUS64		0x20	/* bus is 64-bit */
-#define	WM_F_PCIX		0x40	/* bus is PCI-X */
-#define	WM_F_CSA		0x80	/* bus is CSA */
-#define	WM_F_PCIE		0x100	/* bus is PCI-Express */
+#define	WM_F_HAS_MII		0x001	/* has MII */
+#define	WM_F_EEPROM_HANDSHAKE	0x002	/* requires EEPROM handshake */
+#define	WM_F_EEPROM_SEMAPHORE	0x004	/* EEPROM with semaphore */
+#define	WM_F_EEPROM_EERDEEWR	0x008	/* EEPROM access via EERD/EEWR */
+#define	WM_F_EEPROM_SPI		0x010	/* EEPROM is SPI */
+#define	WM_F_EEPROM_FLASH	0x020	/* EEPROM is FLASH */
+#define	WM_F_EEPROM_INVALID	0x040	/* EEPROM not present (bad checksum) */
+#define	WM_F_IOH_VALID		0x080	/* I/O handle is valid */
+#define	WM_F_BUS64		0x100	/* bus is 64-bit */
+#define	WM_F_PCIX		0x200	/* bus is PCI-X */
+#define	WM_F_CSA		0x400	/* bus is CSA */
+#define	WM_F_PCIE		0x800	/* bus is PCI-Express */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -468,6 +471,7 @@ static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
+static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
 static void	wm_tick(void *);
 
@@ -501,6 +505,10 @@ static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static int	wm_match(struct device *, struct cfdata *, void *);
 static void	wm_attach(struct device *, struct device *, void *);
+static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
+static int	wm_get_eeprom_semaphore(struct wm_softc *);
+static void	wm_put_eeprom_semaphore(struct wm_softc *);
+static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
@@ -684,19 +692,17 @@ static const struct wm_product {
 	  "Intel i82572EI 1000baseT Ethernet",
 	  WM_T_82572,		WMP_F_1000T },
 
-#if 0
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E,
 	  "Intel i82573E",
 	  WM_T_82573,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E_IAMT,
-	  "Intel i82573E",
+	  "Intel i82573E IAMT",
 	  WM_T_82573,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573L,
 	  "Intel i82573L Gigabit Ethernet",
 	  WM_T_82573,		WMP_F_1000T },
-#endif
 
 	{ 0,			0,
 	  NULL,
@@ -945,7 +951,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 				       "work-around\n", sc->sc_dev.dv_xname);
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
-		sc->sc_flags |= WM_F_PCIE;
+		sc->sc_flags |= WM_F_PCIE | WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose("%s: PCI-Express bus\n", sc->sc_dev.dv_xname);
 	} else {
 		reg = CSR_READ(sc, WMREG_STATUS);
@@ -1110,8 +1116,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	if (sc->sc_type >= WM_T_82540)
+	if (sc->sc_type == WM_T_82573)
+ 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+	else if (sc->sc_type > WM_T_82544)
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+
 	if (sc->sc_type <= WM_T_82544)
 		sc->sc_ee_addrbits = 6;
 	else if (sc->sc_type <= WM_T_82546_3) {
@@ -1127,6 +1136,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 		} else
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
+	} else if ((sc->sc_type == WM_T_82573) &&
+	    (wm_is_onboard_nvm_eeprom(sc) == 0)) {
+		sc->sc_flags |= WM_F_EEPROM_FLASH;
 	} else {
 		/* Assume everything else is SPI. */
 		reg = CSR_READ(sc, WMREG_EECD);
@@ -1150,7 +1162,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose("%s: No EEPROM\n", sc->sc_dev.dv_xname);
-	else {
+	else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+		aprint_verbose("%s: FLASH\n");
+	} else {
 		if (sc->sc_flags & WM_F_EEPROM_SPI)
 			eetype = "SPI";
 		else
@@ -3022,6 +3036,13 @@ wm_acquire_eeprom(struct wm_softc *sc)
 	uint32_t reg;
 	int x;
 
+	/* always success */
+	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
+		return 0;
+
+	if (wm_get_eeprom_semaphore(sc))
+		return 1;
+
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
 		reg = CSR_READ(sc, WMREG_EECD);
 
@@ -3030,7 +3051,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_EECD, reg);
 
 		/* ..and wait for it to be granted. */
-		for (x = 0; x < 100; x++) {
+		for (x = 0; x < 1000; x++) {
 			reg = CSR_READ(sc, WMREG_EECD);
 			if (reg & EECD_EE_GNT)
 				break;
@@ -3041,6 +3062,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 			    sc->sc_dev.dv_xname);
 			reg &= ~EECD_EE_REQ;
 			CSR_WRITE(sc, WMREG_EECD, reg);
+			wm_put_eeprom_semaphore(sc);
 			return (1);
 		}
 	}
@@ -3058,11 +3080,17 @@ wm_release_eeprom(struct wm_softc *sc)
 {
 	uint32_t reg;
 
+	/* always success */
+	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
+		return;
+
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
 		reg = CSR_READ(sc, WMREG_EECD);
 		reg &= ~EECD_EE_REQ;
 		CSR_WRITE(sc, WMREG_EECD, reg);
 	}
+
+	wm_put_eeprom_semaphore(sc);
 }
 
 /*
@@ -3273,13 +3301,56 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	if (wm_acquire_eeprom(sc))
 		return 1;
 
-	if (sc->sc_flags & WM_F_EEPROM_SPI)
+	if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
+		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
+	else if (sc->sc_flags & WM_F_EEPROM_SPI)
 		rv = wm_read_eeprom_spi(sc, word, wordcnt, data);
 	else
 		rv = wm_read_eeprom_uwire(sc, word, wordcnt, data);
 
 	wm_release_eeprom(sc);
 	return rv;
+}
+
+static int
+wm_read_eeprom_eerd(struct wm_softc *sc, int offset, int wordcnt,
+    uint16_t *data)
+{
+	int i, eerd = 0;
+	int error = 0;
+
+	for (i = 0; i < wordcnt; i++) {
+		eerd = ((offset + i) << EERD_ADDR_SHIFT) | EERD_START;
+
+		CSR_WRITE(sc, WMREG_EERD, eerd);
+		error = wm_poll_eerd_eewr_done(sc, WMREG_EERD);
+		if (error != 0)
+			break;
+
+		data[i] = (CSR_READ(sc, WMREG_EERD) >> EERD_DATA_SHIFT);
+	}
+    
+	return error;
+}
+
+static int
+wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
+{
+	uint32_t attempts = 100000;
+	uint32_t i, reg = 0;
+	int32_t done = -1;
+
+	for(i = 0; i < attempts; i++) {
+		reg = CSR_READ(sc, rw);
+
+		if(reg & EERD_DONE) {
+			done = 0;
+			break;
+		}
+		delay(5);
+	}
+
+	return done;
 }
 
 /*
@@ -4023,4 +4094,69 @@ wm_gmii_statchg(struct device *self)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
+}
+
+static int
+wm_is_onboard_nvm_eeprom(struct wm_softc *sc)
+{
+	uint32_t eecd = 0;
+
+	if(sc->sc_type == WM_T_82573) {
+		eecd = CSR_READ(sc, WMREG_EECD);
+
+		/* Isolate bits 15 & 16 */
+		eecd = ((eecd >> 15) & 0x03);
+
+		/* If both bits are set, device is Flash type */
+		if(eecd == 0x03) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int
+wm_get_eeprom_semaphore(struct wm_softc *sc)
+{
+	int32_t timeout;
+	uint32_t swsm;
+
+	if((sc->sc_flags & WM_F_EEPROM_SEMAPHORE) == 0)
+		return 0;
+
+	/* Get the FW semaphore. */
+	timeout = 1000 + 1; /* XXX */
+	while (timeout) {
+		swsm = CSR_READ(sc, WMREG_SWSM);
+		swsm |= SWSM_SWESMBI;
+		CSR_WRITE(sc, WMREG_SWSM, swsm);
+		/* if we managed to set the bit we got the semaphore. */
+		swsm = CSR_READ(sc, WMREG_SWSM);
+		if(swsm & SWSM_SWESMBI)
+			break;
+
+		delay(50);
+		timeout--;
+	}
+
+	if (timeout == 0) {
+		/* Release semaphores */
+		wm_put_eeprom_semaphore(sc);
+		return 1;
+	}
+
+	return 0;
+}
+
+static void
+wm_put_eeprom_semaphore(struct wm_softc *sc)
+{
+	uint32_t swsm;
+
+	if((sc->sc_flags & WM_F_EEPROM_SEMAPHORE) == 0)
+		return;
+
+	swsm = CSR_READ(sc, WMREG_SWSM);
+        swsm &= ~(SWSM_SWESMBI);
+	CSR_WRITE(sc, WMREG_SWSM, swsm);
 }
