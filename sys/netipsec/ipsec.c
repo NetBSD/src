@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.21 2006/04/11 20:21:28 rpaulo Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.22 2006/06/10 11:12:09 kardel Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.21 2006/04/11 20:21:28 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.22 2006/06/10 11:12:09 kardel Exp $");
 
 /*
  * IPsec controller part.
@@ -311,7 +311,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 */
 	}
 
-	pcbsp->sp_cache[dir].cachesp->lastused = mono_time.tv_sec;
+	pcbsp->sp_cache[dir].cachesp->lastused = time_uptime;
 	pcbsp->sp_cache[dir].cachesp->refcnt++;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
