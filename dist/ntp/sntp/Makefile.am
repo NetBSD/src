@@ -24,7 +24,11 @@ AUTOMAKE_OPTIONS = foreign
 # LDFLAGS = 
 # LIBS = -lm
 
+NULL=
+
+bindir=	${exec_prefix}/${BINSUBDIR}
 bin_PROGRAMS = sntp
+
 sntp_SOURCES = \
 	header.h \
 	internet.c \
@@ -34,5 +38,8 @@ sntp_SOURCES = \
 	socket.c \
 	timing.c \
 	unix.c \
-	$(EMPTY)
+	$(NULL)
 
+dist_man_MANS=	sntp.1
+
+include ../bincheck.mf
