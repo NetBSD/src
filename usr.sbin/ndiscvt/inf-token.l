@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.4 2006/04/19 15:45:21 christos Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.5 2006/06/11 17:02:07 martin Exp $");
 #endif
 
 #include <regex.h>
@@ -49,6 +49,14 @@ __RCSID("$NetBSD: inf-token.l,v 1.4 2006/04/19 15:45:21 christos Exp $");
 
 int lineno = 1;
 #define YY_NO_UNPUT
+
+int input_is_unicode = 0;
+#define IS_UNICODE 	1
+#define ISNT_UNICODE	2
+static size_t opt_unicode_input(char *buf, size_t max_size);
+ 
+#define YY_INPUT(buf, result, max_size)	\
+	result = opt_unicode_input(buf, max_size)
 
 int yylex(void);
 void ndiscvt_error(const char *);
@@ -138,4 +146,54 @@ int
 ndiscvt_wrap(void)
 {
 	return 1;
+}
+
+static size_t
+opt_unicode_input(char *buf, size_t max_size)
+{
+	size_t i, rb;
+	char *t = buf;
+
+	if (feof(yyin)) return YY_NULL;
+	if (input_is_unicode == ISNT_UNICODE)
+		/* standard ASCII .inf file */
+		return fread(buf, 1, max_size, yyin);
+
+	if (input_is_unicode != IS_UNICODE) {
+		/* we don't know yet if this file is unicode */
+		if (max_size < 2) {
+			fprintf(stderr, "internal error: can not determine "
+			    "unicode with max_size %zd\n", max_size);
+			return YY_NULL;
+		}
+		rb = fread(buf, 2, 1, yyin);
+		if (!rb) 
+			return YY_NULL;
+		if ((unsigned char)buf[0] == 0xff
+		    && (unsigned char)buf[1] == 0xfe) {
+			input_is_unicode = IS_UNICODE;
+		} else {
+			input_is_unicode = ISNT_UNICODE;
+			return 2;
+		}
+	}
+
+	if (input_is_unicode != IS_UNICODE)
+		return YY_NULL;
+
+	if (max_size < 2) {
+		fprintf(stderr, "internal error: can not read small unicode "
+		    "buffer\n");
+		return YY_NULL;
+	}
+	/*
+	 * read unicode string and skip every second byte - poor man's
+	 * version of "iconv -f unicode -t ascii" - should be good enough
+	 * for INF files (maybe besides comments, which we don't care
+	 * about)
+	 */
+	rb = fread(buf, 1, max_size&~1, yyin);
+	for (i = 0; i < rb; i += 2)
+		*t++ = buf[i];
+	return t-buf;
 }
