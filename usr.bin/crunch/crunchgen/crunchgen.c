@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.69 2006/06/02 10:11:56 simonb Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.70 2006/06/11 16:11:53 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.69 2006/06/02 10:11:56 simonb Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.70 2006/06/11 16:11:53 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -160,13 +160,13 @@ main(int argc, char **argv)
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
 
-	case 'm':	strcpy(outmkname, optarg); break;
-	case 'c':	strcpy(outcfname, optarg); break;
-	case 'e':	strcpy(execfname, optarg); break;
-	case 'd':       strcpy(dbg, optarg); break;
+	case 'm':	strlcpy(outmkname, optarg, sizeof(outmkname)); break;
+	case 'c':	strlcpy(outcfname, optarg, sizeof(outcfname)); break;
+	case 'e':	strlcpy(execfname, optarg, sizeof(execfname)); break;
+	case 'd':       strlcpy(dbg, optarg, sizeof(dbg)); break;
 
-	case 'D':	strcpy(topdir, optarg); break;
-	case 'L':	strcpy(libdir, optarg); break;
+	case 'D':	strlcpy(topdir, optarg, sizeof(topdir)); break;
+	case 'L':	strlcpy(libdir, optarg, sizeof(libdir)); break;
 	case 'v':	add_string(&vars, optarg); break;
 
 	case '?':
@@ -184,15 +184,15 @@ main(int argc, char **argv)
      * generate filenames
      */
 
-    strcpy(infilename, argv[0]);
+    strlcpy(infilename, argv[0], sizeof(infilename));
     getcwd(curdir, MAXPATHLEN);
 
     /* confname = `basename infilename .conf` */
 
     if ((p = strrchr(infilename, '/')) != NULL)
-	strcpy(confname, p + 1);
+	strlcpy(confname, p + 1, sizeof(confname));
     else
-	strcpy(confname, infilename);
+	strlcpy(confname, infilename, sizeof(confname));
     if ((p = strrchr(confname, '.')) != NULL && !strcmp(p, ".conf"))
 	*p = '\0';
 
@@ -269,7 +269,7 @@ parse_one_file(char *filename)
 
     (void)snprintf(line, sizeof(line), "reading %s", filename);
     status(line);
-    strcpy(curfilename, filename);
+    strlcpy(curfilename, filename, sizeof(curfilename));
 
     if ((cf = fopen(curfilename, "r")) == NULL) {
 	perror(curfilename);
@@ -346,14 +346,14 @@ add_srcdirs(int argc, char **argv)
 
     for (i = 1; i < argc; i++) {
 	if (argv[i][0] == '/')
-		strcpy(tmppath, argv[i]);
+		strlcpy(tmppath, argv[i], sizeof(tmppath));
 	else {
 		if (topdir[0] == '\0')
-		    strcpy(tmppath, curdir);
+		    strlcpy(tmppath, curdir, sizeof(tmppath));
 		else
-		    strcpy(tmppath, topdir);
-		strcat(tmppath, "/");
-		strcat(tmppath, argv[i]);
+		    strlcpy(tmppath, topdir, sizeof(tmppath));
+		strlcat(tmppath, "/", sizeof(tmppath));
+		strlcat(tmppath, argv[i], sizeof(tmppath));
 	}
 	if (is_dir(tmppath))
 	    add_string(&srcdirs, tmppath);
@@ -466,11 +466,11 @@ add_special(int argc, char **argv)
 	} else {
 	    char tmppath[MAXPATHLEN];
 	    if (topdir[0] == '\0')
-	        strcpy(tmppath, curdir);
+	        strlcpy(tmppath, curdir, sizeof(tmppath));
 	    else
-	        strcpy(tmppath, topdir);
-	    strcat(tmppath, "/");
-	    strcat(tmppath, argv[3]);
+	        strlcpy(tmppath, topdir, sizeof(tmppath));
+	    strlcat(tmppath, "/", sizeof(tmppath));
+	    strlcat(tmppath, argv[3], sizeof(tmppath));
 	    if ((p->srcdir = strdup(tmppath)) == NULL)
 		out_of_memory();
 	}
@@ -599,11 +599,11 @@ fillin_program(prog_t *p)
 		} else {
 		    char tmppath[MAXPATHLEN];
 		    if (topdir[0] == '\0')
-			strcpy(tmppath, curdir);
+			strlcpy(tmppath, curdir, sizeof(tmppath));
 		    else
-			strcpy(tmppath, topdir);
-		    strcat(tmppath, "/");
-		    strcat(tmppath, path);
+			strlcpy(tmppath, topdir, sizeof(tmppath));
+		    strlcat(tmppath, "/", sizeof(tmppath));
+		    strlcat(tmppath, path, sizeof(tmppath));
 		    if ((p->srcdir = strdup(tmppath)) == NULL)
 			out_of_memory();
 		}
