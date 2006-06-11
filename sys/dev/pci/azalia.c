@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.23 2006/06/09 16:56:30 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.24 2006/06/11 07:45:18 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.23 2006/06/09 16:56:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.24 2006/06/11 07:45:18 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -940,10 +940,13 @@ azalia_codec_init(codec_t *this)
 		if (COP_FTYPE(result) == COP_FTYPE_AUDIO) {
 			this->audiofunc = n + i;
 			break;	/* XXX multiple audio functions? */
+		} else if (COP_FTYPE(result) == COP_FTYPE_MODEM) {
+			aprint_normal("%s: codec[%d]: No support for modem function groups",
+			    XNAME(this->az), addr);
 		}
 	}
 	if (this->audiofunc < 0) {
-		aprint_error("%s: codec[%d]: No audio functions\n",
+		aprint_error("%s: codec[%d]: No audio function groups\n",
 		    XNAME(this->az), addr);
 		return -1;
 	}
