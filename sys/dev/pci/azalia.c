@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.24 2006/06/11 07:45:18 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.25 2006/06/11 11:48:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.24 2006/06/11 07:45:18 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.25 2006/06/11 11:48:39 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1014,18 +1014,18 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 #ifdef AZALIA_DEBUG
-	for (i = 0; i < this->ndacgroups; i++) {
+	for (i = 0; i < this->dacs.ngroups; i++) {
 		DPRINTF(("%s: dacgroup[%d]:", __func__, i));
-		for (n = 0; n < this->dacgroups[i].nconv; n++) {
-			DPRINTF((" %2.2x", this->dacgroups[i].conv[n]));
+		for (n = 0; n < this->dacs.groups[i].nconv; n++) {
+			DPRINTF((" %2.2x", this->dacs.groups[i].conv[n]));
 		}
 		DPRINTF(("\n"));
 	}
 #endif
 
 	/* set invalid values for azalia_codec_construct_format() to work */
-	this->cur_dac = -1;
-	this->cur_adc = -1;
+	this->dacs.cur = -1;
+	this->adcs.cur = -1;
 	err = azalia_codec_construct_format(this, 0, 0);
 	if (err)
 		return err;
@@ -1057,9 +1057,9 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	int nbits, dac, chan, i, err;
 	nid_t nid;
 
-	prev_dac = this->cur_dac;
-	this->cur_dac = newdac;
-	group = &this->dacgroups[this->cur_dac];
+	prev_dac = this->dacs.cur;
+	this->dacs.cur = newdac;
+	group = &this->dacs.groups[this->dacs.cur];
 	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
 	nbits = 0;
 	if (bits_rates & COP_PCM_B8)
@@ -1079,9 +1079,10 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 	pvariation = group->nconv * nbits;
 
-	prev_adc = this->cur_adc;
-	this->cur_adc = newadc;
-	bits_rates = this->w[this->adcs[this->cur_adc]].d.audio.bits_rates;
+	prev_adc = this->adcs.cur;
+	this->adcs.cur = newadc;
+	group = &this->adcs.groups[this->adcs.cur];
+	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
 	nbits = 0;
 	if (bits_rates & COP_PCM_B8)
 		nbits++;
@@ -1112,6 +1113,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 
 	/* register formats for playback */
+	group = &this->dacs.groups[this->dacs.cur];
 	nid = group->conv[0];
 	chan = 0;
 	bits_rates = this->w[nid].d.audio.bits_rates;
@@ -1121,18 +1123,19 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_PLAY);
 	}
 	/* print playback capability */
-	if (prev_dac != this->cur_dac) {
+	if (prev_dac != this->dacs.cur) {
 		snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ", XNAME(this->az));
 		azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
 	}
 
 	/* register formats for recording */
-	nid = this->adcs[this->cur_adc];
+	group = &this->adcs.groups[this->adcs.cur];
+	nid = group->conv[0];
 	chan = WIDGET_CHANNELS(&this->w[nid]);
 	bits_rates = this->w[nid].d.audio.bits_rates;
 	azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	/* print recording capability */
-	if (prev_adc != this->cur_adc) {
+	if (prev_adc != this->adcs.cur) {
 		snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
 		azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
 	}
@@ -1241,17 +1244,10 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 
 	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
-	if (dir == AUMODE_RECORD) {
-		nid = this->adcs[this->cur_adc];
-		DPRINTF(("%s: record: nid=0x%.2x\n", __func__, nid));
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
-		if (err)
-			goto exit;
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    (number << 4) | 0, NULL);
-		goto exit;
-	}
-	group = &this->dacgroups[this->cur_dac];
+	if (dir == AUMODE_RECORD)
+		group = &this->adcs.groups[this->adcs.cur];
+	else
+		group = &this->dacs.groups[this->dacs.cur];
 	flag222 = group->nconv >= 3 &&
 	    (WIDGET_CHANNELS(&this->w[group->conv[0]]) == 2) &&
 	    (WIDGET_CHANNELS(&this->w[group->conv[1]]) == 2) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.11 2006/06/11 07:52:00 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.12 2006/06/11 11:48:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.11 2006/06/11 07:52:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.12 2006/06/11 11:48:39 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,7 +162,7 @@ generic_codec_init_dacgroup(codec_t *this)
 	 *   [2] the 2nd assoc DACs
 	 *      :
 	 */
-	this->ndacgroups = 0;
+	this->dacs.ngroups = 0;
 	for (assoc = 0; assoc < CORB_CD_ASSOCIATION_MAX; assoc++) {
 		generic_codec_add_dacgroup(this, assoc, 0);
 		generic_codec_add_dacgroup(this, assoc, COP_AWCAP_DIGITAL);
@@ -176,35 +176,37 @@ generic_codec_init_dacgroup(codec_t *this)
 		if (this->w[i].type != COP_AWTYPE_AUDIO_OUTPUT)
 			continue;
 		found = FALSE;
-		for (group = 0; group < this->ndacgroups; group++) {
-			for (j = 0; j < this->dacgroups[group].nconv; j++) {
-				if (i == this->dacgroups[group].conv[j]) {
+		for (group = 0; group < this->dacs.ngroups; group++) {
+			for (j = 0; j < this->dacs.groups[group].nconv; j++) {
+				if (i == this->dacs.groups[group].conv[j]) {
 					found = TRUE;
-					group = this->ndacgroups;
+					group = this->dacs.ngroups;
 					break;
 				}
 			}
 		}
 		if (found)
 			continue;
-		if (this->ndacgroups >= 32)
+		if (this->dacs.ngroups >= 32)
 			break;
-		this->dacgroups[this->ndacgroups].nconv = 1;
-		this->dacgroups[this->ndacgroups].conv[0] = i;
-		this->ndacgroups++;
+		this->dacs.groups[this->dacs.ngroups].nconv = 1;
+		this->dacs.groups[this->dacs.ngroups].conv[0] = i;
+		this->dacs.ngroups++;
 	}
-	this->cur_dac = 0;
+	this->dacs.cur = 0;
 
 	/* enumerate ADCs */
-	this->nadcs = 0;
+	this->adcs.ngroups = 0;
 	FOR_EACH_WIDGET(this, i) {
 		if (this->w[i].type != COP_AWTYPE_AUDIO_INPUT)
 			continue;
-		this->adcs[this->nadcs++] = i;
-		if (this->nadcs >= 32)
+		this->adcs.groups[this->adcs.ngroups].nconv = 1;
+		this->adcs.groups[this->adcs.ngroups].conv[0] = i;
+		this->adcs.ngroups++;
+		if (this->adcs.ngroups >= 32)
 			break;
 	}
-	this->cur_adc = 0;
+	this->adcs.cur = 0;
 	return 0;
 }
 
@@ -223,33 +225,33 @@ generic_codec_add_dacgroup(codec_t *this, int assoc, uint32_t digital)
 			continue;
 		/* duplication check */
 		for (j = 0; j < n; j++) {
-			if (this->dacgroups[this->ndacgroups].conv[j] == dac)
+			if (this->dacs.groups[this->dacs.ngroups].conv[j] == dac)
 				break;
 		}
 		if (j < n)	/* this group already has <dac> */
 			continue;
-		this->dacgroups[this->ndacgroups].conv[n++] = dac;
+		this->dacs.groups[this->dacs.ngroups].conv[n++] = dac;
 		DPRINTF(("%s: assoc=%d seq=%d ==> g=%d n=%d\n",
-			 __func__, assoc, seq, this->ndacgroups, n-1));
+			 __func__, assoc, seq, this->dacs.ngroups, n-1));
 	}
 	if (n <= 0)		/* no such DACs */
 		return 0;
-	this->dacgroups[this->ndacgroups].nconv = n;
+	this->dacs.groups[this->dacs.ngroups].nconv = n;
 
 	/* check if the same combination is already registered */
-	for (i = 0; i < this->ndacgroups; i++) {
-		if (n != this->dacgroups[i].nconv)
+	for (i = 0; i < this->dacs.ngroups; i++) {
+		if (n != this->dacs.groups[i].nconv)
 			continue;
 		for (j = 0; j < n; j++) {
-			if (this->dacgroups[this->ndacgroups].conv[j] !=
-			    this->dacgroups[i].conv[j])
+			if (this->dacs.groups[this->dacs.ngroups].conv[j] !=
+			    this->dacs.groups[i].conv[j])
 				break;
 		}
 		if (j >= n) /* matched */
 			return 0;
 	}
 	/* found no equivalent group */
-	this->ndacgroups++;
+	this->dacs.ngroups++;
 	return 0;
 }
 
@@ -329,10 +331,8 @@ generic_mixer_init(codec_t *this)
 	 * selector	"sel%2.2x"
 	 */
 	mixer_item_t *m;
-	int nadcs;
 	int err, i, j, k;
 
-	nadcs = 0;
 	this->maxmixers = 10;
 	this->nmixers = 0;
 	this->mixers = malloc(sizeof(mixer_item_t) * this->maxmixers,
@@ -389,9 +389,6 @@ generic_mixer_init(codec_t *this)
 		const widget_t *w;
 
 		w = &this->w[i];
-
-		if (w->type == COP_AWTYPE_AUDIO_INPUT)
-			nadcs++;
 
 		/* selector */
 		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
@@ -653,39 +650,44 @@ generic_mixer_init(codec_t *this)
 	}
 
 	/* if the codec has multiple DAC groups, create "inputs.usingdac" */
-	if (this->ndacgroups > 1) {
+	if (this->dacs.ngroups > 1) {
 		MIXER_REG_PROLOG;
 		DPRINTF(("%s: create inputs.usingdac\n", __func__));
 		strlcpy(d->label.name, "usingdac", sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_INPUT;
 		m->target = MI_TARGET_DAC;
-		for (i = 0; i < this->ndacgroups && i < 32; i++) {
+		for (i = 0; i < this->dacs.ngroups && i < 32; i++) {
 			d->un.e.member[i].ord = i;
-			for (j = 0; j < this->dacgroups[i].nconv; j++) {
+			for (j = 0; j < this->dacs.groups[i].nconv; j++) {
 				if (j * 2 >= MAX_AUDIO_DEV_LEN)
 					break;
 				snprintf(d->un.e.member[i].label.name + j*2,
 				    MAX_AUDIO_DEV_LEN - j*2, "%2.2x",
-				    this->dacgroups[i].conv[j]);
+				    this->dacs.groups[i].conv[j]);
 			}
 		}
 		d->un.e.num_mem = i;
 		this->nmixers++;
 	}
 
-	/* if the codec has multiple ADCs, create "record.usingadc" */
-	if (this->nadcs > 1) {
+	/* if the codec has multiple ADC groups, create "record.usingadc" */
+	if (this->adcs.ngroups > 1) {
 		MIXER_REG_PROLOG;
 		DPRINTF(("%s: create inputs.usingadc\n", __func__));
 		strlcpy(d->label.name, "usingadc", sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_RECORD;
 		m->target = MI_TARGET_ADC;
-		for (i = 0; i < this->nadcs && i < 32; i++) {
+		for (i = 0; i < this->adcs.ngroups && i < 32; i++) {
 			d->un.e.member[i].ord = i;
-			strlcpy(d->un.e.member[i].label.name,
-			    this->w[this->adcs[i]].name, MAX_AUDIO_DEV_LEN);
+			for (j = 0; j < this->adcs.groups[i].nconv; j++) {
+				if (j * 2 >= MAX_AUDIO_DEV_LEN)
+					break;
+				snprintf(d->un.e.member[i].label.name + j*2,
+				    MAX_AUDIO_DEV_LEN - j*2, "%2.2x",
+				    this->adcs.groups[i].conv[j]);
+			}
 		}
 		d->un.e.num_mem = i;
 		this->nmixers++;
@@ -932,12 +934,12 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 
 	/* DAC group selection */
 	else if (target == MI_TARGET_DAC) {
-		mc->un.ord = this->cur_dac;
+		mc->un.ord = this->dacs.cur;
 	}
 
 	/* ADC selection */
 	else if (target == MI_TARGET_ADC) {
-		mc->un.ord = this->cur_adc;
+		mc->un.ord = this->adcs.cur;
 	}
 
 	/* Volume knob */
@@ -1175,21 +1177,20 @@ generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 	else if (target == MI_TARGET_DAC) {
 		if (this->running)
 			return EBUSY;
-		if (mc->un.ord >= this->ndacgroups)
+		if (mc->un.ord >= this->dacs.ngroups)
 			return EINVAL;
 		return azalia_codec_construct_format(this,
-		    mc->un.ord, this->cur_adc);
+		    mc->un.ord, this->adcs.cur);
 	}
 
 	/* ADC selection */
 	else if (target == MI_TARGET_ADC) {
 		if (this->running)
 			return EBUSY;
-		if (mc->un.ord >= this->nadcs)
+		if (mc->un.ord >= this->adcs.ngroups)
 			return EINVAL;
-		this->cur_adc = mc->un.ord;
 		return azalia_codec_construct_format(this,
-		    this->cur_dac, mc->un.ord);
+		    this->dacs.cur, mc->un.ord);
 	}
 
 	/* Volume knob */
@@ -1517,18 +1518,18 @@ alc260_mixer_init(codec_t *this)
 static int
 alc260_init_dacgroup(codec_t *this)
 {
-	static const convgroup_t dacs[2] = {
-		{1, {0x02}},	/* analog 2ch */
-		{1, {0x03}}};	/* digital */
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{1, {0x02}},	/* analog 2ch */
+		 {1, {0x03}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 3,
+		{{1, {0x04}},	/* analog 2ch */
+		 {1, {0x05}},	/* analog 2ch */
+		 {1, {0x06}}}};	/* digital */
 
-	this->ndacgroups = 2;
-	this->dacgroups[0] = dacs[0];
-	this->dacgroups[1] = dacs[1];
-
-	this->nadcs = 3;
-	this->adcs[0] = 0x04;
-	this->adcs[1] = 0x05;
-	this->adcs[2] = 0x06;	/* digital */
+	this->dacs = dacs;
+	this->adcs = adcs;
 	return 0;
 }
 
@@ -1587,18 +1588,17 @@ alc260_set_port(codec_t *this, mixer_ctrl_t *mc)
 static int
 alc880_init_dacgroup(codec_t *this)
 {
-	static const convgroup_t dacs[2] = {
-		{4, {0x02, 0x04, 0x03, 0x05}}, /* analog 8ch */
-		{1, {0x06}}};	/* digital */
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09}}, /* analog 4ch */
+		 {1, {0x0a}}}};	/* digital */
 
-	this->ndacgroups = 2;
-	this->dacgroups[0] = dacs[0];
-	this->dacgroups[1] = dacs[1];
-
-	this->nadcs = 3;
-	this->adcs[0] = 0x08;
-	this->adcs[1] = 0x09;
-	this->adcs[2] = 0x0a;	/* digital */
+	this->dacs = dacs;
+	this->adcs = adcs;
 	return 0;
 }
 
@@ -1609,21 +1609,18 @@ alc880_init_dacgroup(codec_t *this)
 static int
 alc882_init_dacgroup(codec_t *this)
 {
-	static const convgroup_t dacs[3] = {
-		{4, {0x02, 0x04, 0x03, 0x05}}, /* analog 8ch */
-		{1, {0x06}},	/* digital */
-		{1, {0x25}}};	/* another analog */
+	static const convgroupset_t dacs = {
+		-1, 3,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}},	/* digital */
+		 {1, {0x25}}}};	/* another analog */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{3, {0x07, 0x08, 0x09}}, /* analog 6ch */
+		 {1, {0x0a}}}};	/* digital */
 
-	this->ndacgroups = 3;
-	this->dacgroups[0] = dacs[0];
-	this->dacgroups[1] = dacs[1];
-	this->dacgroups[2] = dacs[2];
-
-	this->nadcs = 4;
-	this->adcs[0] = 0x07;
-	this->adcs[1] = 0x08;
-	this->adcs[2] = 0x09;
-	this->adcs[3] = 0x0a;	/* digital */
+	this->dacs = dacs;
+	this->adcs = adcs;
 	return 0;
 }
 
@@ -1715,20 +1712,18 @@ ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 static int
 stac9221_init_dacgroup(codec_t *this)
 {
-	static const convgroup_t dacs[3] = {
-		{4, {0x02, 0x03, 0x05, 0x04}}, /* analog 8ch */
-		{1, {0x08}},	/* digital */
-		{1, {0x1a}}};	/* another digital? */
+	static const convgroupset_t dacs = {
+		-1, 3,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x08}},	/* digital */
+		 {1, {0x1a}}}};	/* another digital? */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x06, 0x07}}, /* analog 4ch */
+		 {1, {0x09}}}};	/* digital */
 
-	this->ndacgroups = 3;
-	this->dacgroups[0] = dacs[0];
-	this->dacgroups[1] = dacs[1];
-	this->dacgroups[2] = dacs[2];
-
-	this->nadcs = 3;
-	this->adcs[0] = 0x06;	/* XXX four channel recording */
-	this->adcs[1] = 0x07;
-	this->adcs[2] = 0x09;	/* digital */
+	this->dacs = dacs;
+	this->adcs = adcs;
 	return 0;
 }
 
