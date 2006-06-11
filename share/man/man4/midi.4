@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.24.6.8 2006/05/31 03:53:13 chap Exp $
+.\" $NetBSD: midi.4,v 1.24.6.9 2006/06/11 17:59:39 chap Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,8 +162,12 @@ A
 device supports
 .Xr read 2 ,
 .Xr write 2 ,
-and
 .Xr ioctl 2 ,
+.Xr select 2 Ns / Ns
+.Xr poll 2
+and the corresponding
+.Xr kevent 2
+filters,
 and may be opened
 only when it is not already open. It may be opened in
 .Dv O_RDONLY ,
@@ -186,6 +190,11 @@ may remain buffered if they do not complete a message, until
 completed by a following
 .Xr write 2 .
 .Pp
+A
+.Xr read 2
+will not block or return
+.Er EWOULDBLOCK
+when it could immediately return any nonzero count, and
 .Tn MIDI
 messages received are available to
 .Xr read 2
@@ -196,28 +205,20 @@ complete a message.
 As all
 .Tn MIDI
 messages are three bytes or fewer except for System Exclusive,
-which can have arbitrary length, these rules imply no message is passed
-incomplete, except System Exclusive, of which three-byte chunks are passed
-as soon as available, followed by a completing chunk of three or fewer.
+which can have arbitrary length, these rules imply that System Exclusive
+messages are the only ones of which some bytes can be delivered before
+all are available.
 .Pp
 System Realtime messages are passed with minimum delay in either direction,
 ahead of any possible buffered incomplete message. As a result, they will never
 interrupt any
 .Tn MIDI
-message except a System Exclusive, and that only between
-three-byte chunks.
-.Pp
-In the following paragraph,
-.Sq "complete message"
-can mean one chunk of a
-System Exclusive message, as well as any other
-.Tn MIDI
-message, complete.
+message except possibly System Exclusive.
 .Pp
 A
 .Xr read 2
 with a buffer large enough to accommodate the first complete
-message will be satisfied with as many complete messages as
+message available will be satisfied with as many complete messages as
 will fit. A buffer too small for the first complete
 message will be filled to capacity. Therefore, an application that reads
 from an
@@ -318,7 +319,7 @@ reading an
 .Pa rmidi
 device will see an end-of-file indication if the input timeout elapses.
 The stream remains open, the driver reverts to enforcing no timeout, and the
-process may continue to read for subsequent input. Subsequent receipt of an
+process may continue to read for more input. Subsequent receipt of an
 Active Sense message will re-arm the timeout. As received Active Sense messages
 are handled by
 .Nm ,
@@ -412,7 +413,8 @@ are device indices of
 the three output
 .Tn MIDI
 streams; the left-hand digit in each input event represents a
-.TN MIDI channel on the selected stream, and the right-hand digit represents
+.TN MIDI
+channel on the selected stream, and the right-hand digit represents
 a time for the event's occurrence. As illustrated, the input tracks are
 not firmly associated with output streams; any track may contain
 events for any stream.
@@ -473,6 +475,18 @@ interface, and an
 .Tn OPL
 tone generator on a sound card.
 .Sh NOTES
+Use of
+.Xr select 2 Ns / Ns
+.Xr poll 2
+with the sequencer is supported, however, there is no guarantee that a
+.Xr write 2
+will not block or return
+.Er EWOULDBLOCK
+if it begins with a timer-wait event, even if
+.Xr select 2 Ns / Ns
+.Xr poll 2
+reported the sequencer writable.
+.Pp
 The delivery of a realtime message ahead of buffered bytes of an incomplete
 message may cause the realtime message to seem, in a saved byte stream, to have
 arrived up to 640 us earlier than it really did, at
@@ -517,6 +531,8 @@ errors or buffer overruns, and can be viewed with
 They can be useful in diagnosing flaky cables and other communication
 problems.
 .Pp
+.\" These two paragraphs really belong not here but in a midi(9) man page,
+.\" which should one day exist.
 A raw sound generator uses the
 .Sy midisyn
 layer to present a
@@ -681,11 +697,15 @@ is too rudimentary at present to get satisfactory results from any
 onboard synth.
 It lacks the required special interpretation of the
 General MIDI percussion channel in GM mode.
-Attention is needed in the areas of voice stealing algorithms and
-a common implementation of the standard
-.Tn MIDI
-controllers, and to the interface to the underlying synth drivers, which needs
-to be more fully implemented by them.
+More devices should be supported; some sound cards with synthesis
+capability have
+.Nx
+drivers that implement the
+.Xr audio 4
+but not the
+.Sy midisyn
+interface.
+Voice stealing algorithm does not follow the General MIDI Developer Guidelines.
 .Pp
 .Tn ALSA
 sequencer compatibility is lacking, but becoming important to applications.
