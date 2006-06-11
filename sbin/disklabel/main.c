@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2006/06/07 15:27:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2006/06/11 15:51:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.10 2006/06/07 15:27:13 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2006/06/11 15:51:31 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1459,7 +1459,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				lp->d_ncylinders = v;
 			continue;
 		}
-		if (!strcmp(cp, "total sectors")) {
+		if (!strcmp(cp, "total sectors") ||
+		    !strcmp(cp, "sectors/unit")) {
 			if (GETNUM32(tp, &v) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
