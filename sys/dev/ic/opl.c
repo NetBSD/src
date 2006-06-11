@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.24.2.5 2006/06/09 17:05:28 chap Exp $	*/
+/*	$NetBSD: opl.c,v 1.24.2.6 2006/06/11 04:19:07 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.5 2006/06/09 17:05:28 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.24.2.6 2006/06/11 04:19:07 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,9 @@ int oplsyn_open(midisyn *ms, int);
 void oplsyn_close(midisyn *);
 void oplsyn_reset(void *);
 void oplsyn_attackv(midisyn *, uint_fast16_t, midipitch_t, int16_t);
+static void oplsyn_repitchv(midisyn *, uint_fast16_t, midipitch_t);
+static void oplsyn_relevelv(midisyn *, uint_fast16_t, int16_t);
+static void oplsyn_setv(midisyn *, uint_fast16_t, midipitch_t, int16_t, int);
 void oplsyn_releasev(midisyn *, uint_fast16_t, uint_fast8_t);
 int oplsyn_ctlnotice(midisyn *, midictl_evt, uint_fast8_t, uint_fast16_t);
 void oplsyn_programchange(midisyn *, uint_fast8_t, uint_fast8_t);
@@ -133,6 +136,8 @@ struct midisyn_methods opl3_midi = {
 	.open	   = oplsyn_open,
 	.close	   = oplsyn_close,
 	.attackv   = oplsyn_attackv,
+	.repitchv  = oplsyn_repitchv,
+	.relevelv  = oplsyn_relevelv,
 	.releasev  = oplsyn_releasev,
 	.pgmchg    = oplsyn_programchange,
 	.ctlnotice = oplsyn_ctlnotice,
@@ -460,9 +465,33 @@ opl_calc_vol(int regbyte, int16_t level_cB)
 	return level & OPL_TOTAL_LEVEL_MASK;
 }
 
+#define OPLACT_ARTICULATE 1
+#define OPLACT_PITCH      2
+#define OPLACT_LEVEL      4
+
 void
 oplsyn_attackv(midisyn *ms,
                uint_fast16_t voice, midipitch_t mp, int16_t level_cB)
+{
+	oplsyn_setv(ms, voice, mp, level_cB,
+		    OPLACT_ARTICULATE | OPLACT_PITCH | OPLACT_LEVEL);
+}
+
+static void
+oplsyn_repitchv(midisyn *ms, uint_fast16_t voice, midipitch_t mp)
+{
+	oplsyn_setv(ms, voice, mp, 0, OPLACT_PITCH);
+}
+
+static void
+oplsyn_relevelv(midisyn *ms, uint_fast16_t voice, int16_t level_cB)
+{
+	oplsyn_setv(ms, voice, 0, level_cB, OPLACT_LEVEL);
+}
+
+static void
+oplsyn_setv(midisyn *ms,
+            uint_fast16_t voice, midipitch_t mp, int16_t level_cB, int act)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
@@ -484,77 +513,86 @@ oplsyn_attackv(midisyn *ms,
 		return;
 	}
 #endif
-	/* Turn off old note */
-	opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 0, 0xff);
-	opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 1, 0xff);
-	opl_set_ch_reg(sc, OPL_KEYON_BLOCK, voice,    0);
-
 	v = &sc->voices[voice];
 
-	chan = MS_GETCHAN(&ms->voices[voice]);
-	p = &opl2_instrs[ms->pgms[chan]];
-	v->patch = p;
-	opl_load_patch(sc, voice);
+	if ( act & OPLACT_ARTICULATE ) {
+		/* Turn off old note */
+		opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 0, 0xff);
+		opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 1, 0xff);
+		opl_set_ch_reg(sc, OPL_KEYON_BLOCK, voice,    0);
 
-	mult = 1;
-	if ( mp > MIDIPITCH_FROM_KEY(114) ) { /* out of range for mult 1 */
-		mult = 4;	/* this will cover the rest of the MIDI range */
-		mp -= 2*MIDIPITCH_OCTAVE;
+		chan = MS_GETCHAN(&ms->voices[voice]);
+		p = &opl2_instrs[ms->pgms[chan]];
+		v->patch = p;
+		opl_load_patch(sc, voice);
+
+		fbc = p->ops[OO_FB_CONN];
+		if (sc->model == OPL_3) {
+			fbc &= ~OPL_STEREO_BITS;
+			fbc |= sc->pan[chan];
+		}
+		opl_set_ch_reg(sc, OPL_FEEDBACK_CONNECTION, voice, fbc);
+	} else
+		p = v->patch;
+
+	if ( act & OPLACT_LEVEL ) {
+		/* 2 voice */
+		ksl0 = p->ops[OO_KSL_LEV+0];
+		ksl1 = p->ops[OO_KSL_LEV+1];
+		if (p->ops[OO_FB_CONN] & 0x01) {
+			vol0 = opl_calc_vol(ksl0, level_cB);
+			vol1 = opl_calc_vol(ksl1, level_cB);
+		} else {
+			vol0 = ksl0;
+			vol1 = opl_calc_vol(ksl1, level_cB);
+		}
+		r40m = (ksl0 & OPL_KSL_MASK) | vol0;
+		r40c = (ksl1 & OPL_KSL_MASK) | vol1;
+
+		opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 0, r40m);
+		opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 1, r40c);
 	}
 	
-	block_fnum = opl_get_block_fnum(mp);
+	if ( act & OPLACT_PITCH ) {
+		mult = 1;
+		if ( mp > MIDIPITCH_FROM_KEY(114) ) { /* out of mult 1 range */
+			mult = 4;	/* will cover remaining MIDI range */
+			mp -= 2*MIDIPITCH_OCTAVE;
+		}
 
-	chars0 = p->ops[OO_CHARS+0];
-	chars1 = p->ops[OO_CHARS+1];
-	m_mult = (chars0 & OPL_MULTIPLE_MASK) * mult;
-	c_mult = (chars1 & OPL_MULTIPLE_MASK) * mult;
+		block_fnum = opl_get_block_fnum(mp);
 
-	if ( 4 == mult ) {
-		if ( 0 == m_mult )  /* The OPL uses 0 to represent .5 but of */
-			m_mult = 2; /* course *mult had no effect above...   */
-		if ( 0 == c_mult )
-			c_mult = 2;
+		chars0 = p->ops[OO_CHARS+0];
+		chars1 = p->ops[OO_CHARS+1];
+		m_mult = (chars0 & OPL_MULTIPLE_MASK) * mult;
+		c_mult = (chars1 & OPL_MULTIPLE_MASK) * mult;
+
+		if ( 4 == mult ) {
+			if ( 0 == m_mult )  /* The OPL uses 0 to represent .5 */
+				m_mult = 2; /* but of course 0*mult above did */
+			if ( 0 == c_mult )  /* not DTRT */
+				c_mult = 2;
+		}
+
+		if ((m_mult > 15) || (c_mult > 15)) {
+			printf("%s: frequency out of range %u (mult %d)\n",
+			       __func__, mp, mult);
+			return;
+		}
+		r20m = (chars0 &~ OPL_MULTIPLE_MASK) | m_mult;
+		r20c = (chars1 &~ OPL_MULTIPLE_MASK) | c_mult;
+
+		rA0  = block_fnum & 0xFF;
+		rB0  = (block_fnum >> 8) | OPL_KEYON_BIT;
+
+		v->rB0 = rB0;
+
+		opl_set_op_reg(sc, OPL_AM_VIB,      voice, 0, r20m);
+		opl_set_op_reg(sc, OPL_AM_VIB,      voice, 1, r20c);
+
+		opl_set_ch_reg(sc, OPL_FNUM_LOW,    voice,    rA0);
+		opl_set_ch_reg(sc, OPL_KEYON_BLOCK, voice,    rB0);
 	}
-
-	if ((m_mult > 15) || (c_mult > 15)) {
-		printf("%s: frequency out of range %u (mult %d)\n", __func__,
-		       mp, mult);
-		return;
-	}
-	r20m = (chars0 &~ OPL_MULTIPLE_MASK) | m_mult;
-	r20c = (chars1 &~ OPL_MULTIPLE_MASK) | c_mult;
-
-	/* 2 voice */
-	ksl0 = p->ops[OO_KSL_LEV+0];
-	ksl1 = p->ops[OO_KSL_LEV+1];
-	if (p->ops[OO_FB_CONN] & 0x01) {
-		vol0 = opl_calc_vol(ksl0, level_cB);
-		vol1 = opl_calc_vol(ksl1, level_cB);
-	} else {
-		vol0 = ksl0;
-		vol1 = opl_calc_vol(ksl1, level_cB);
-	}
-	r40m = (ksl0 & OPL_KSL_MASK) | vol0;
-	r40c = (ksl1 & OPL_KSL_MASK) | vol1;
-
-	rA0  = block_fnum & 0xFF;
-	rB0  = (block_fnum >> 8) | OPL_KEYON_BIT;
-
-	v->rB0 = rB0;
-
-	fbc = p->ops[OO_FB_CONN];
-	if (sc->model == OPL_3) {
-		fbc &= ~OPL_STEREO_BITS;
-		fbc |= sc->pan[chan];
-	}
-	opl_set_ch_reg(sc, OPL_FEEDBACK_CONNECTION, voice, fbc);
-
-	opl_set_op_reg(sc, OPL_AM_VIB,      voice, 0, r20m);
-	opl_set_op_reg(sc, OPL_AM_VIB,      voice, 1, r20c);
-	opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 0, r40m);
-	opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 1, r40c);
-	opl_set_ch_reg(sc, OPL_FNUM_LOW,    voice,    rA0);
-	opl_set_ch_reg(sc, OPL_KEYON_BLOCK, voice,    rB0);
 }
 
 void
