@@ -1,18 +1,38 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.4 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
- * /src/NTP/ntp-4/libparse/clk_rawdcf.c,v 4.9 1999/12/06 13:42:23 kardel Exp
+ * /src/NTP/ntp4-dev/libparse/clk_rawdcf.c,v 4.16 2006/01/22 15:51:22 kardel RELEASE_20060122_A
  *  
- * clk_rawdcf.c,v 4.9 1999/12/06 13:42:23 kardel Exp
+ * clk_rawdcf.c,v 4.16 2006/01/22 15:51:22 kardel RELEASE_20060122_A
  *
  * Raw DCF77 pulse clock support
  *
- * Copyright (C) 1992-1998 by Frank Kardel
- * Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
- *                                    
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Copyright (c) 1995-2006 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the author nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
  */
 
@@ -91,6 +111,8 @@ typedef struct last_tcode {
 	time_t tcode;	/* last converted time code */
 } last_tcode_t;
 
+#define BUFFER_MAX	61
+
 clockformat_t clock_rawdcf =
 {
   inp_rawdcf,			/* DCF77 input handling */
@@ -99,18 +121,18 @@ clockformat_t clock_rawdcf =
   0,				/* no private configuration data */
   "RAW DCF77 Timecode",		/* direct decoding / time synthesis */
 
-  61,				/* bit buffer */
+  BUFFER_MAX,			/* bit buffer */
   sizeof(last_tcode_t)
 };
 
 static struct dcfparam
 {
-	unsigned char onebits[60];
-	unsigned char zerobits[60];
+	unsigned char *onebits;
+	unsigned char *zerobits;
 } dcfparameter = 
 {
-	"###############RADMLS1248124P124812P1248121241248112481248P", /* 'ONE' representation */
-	"--------------------s-------p------p----------------------p"  /* 'ZERO' representation */
+	(unsigned char *)"###############RADMLS1248124P124812P1248121241248112481248P??", /* 'ONE' representation */
+	(unsigned char *)"--------------------s-------p------p----------------------p__"  /* 'ZERO' representation */
 };
 
 static struct rawdcfcode 
@@ -160,13 +182,13 @@ static struct partab
 
 static u_long
 ext_bf(
-	register unsigned char *buf,
-	register int   idx,
-	register unsigned char *zero
+	unsigned char *buf,
+	int   idx,
+	unsigned char *zero
 	)
 {
-	register u_long sum = 0;
-	register int i, first;
+	u_long sum = 0;
+	int i, first;
 
 	first = rawdcfcode[idx].offset;
   
@@ -204,10 +226,10 @@ convert_rawdcf(
 	       clocktime_t     *clock_time
 	       )
 {
-	register unsigned char *s = buffer;
-	register unsigned char *b = dcfprm->onebits;
-	register unsigned char *c = dcfprm->zerobits;
-	register int i;
+	unsigned char *s = buffer;
+	unsigned char *b = dcfprm->onebits;
+	unsigned char *c = dcfprm->zerobits;
+	int i;
 
 	parseprintf(DD_RAWDCF,("parse: convert_rawdcf: \"%s\"\n", buffer));
 
@@ -219,7 +241,7 @@ convert_rawdcf(
 		return CVT_NONE;
 	}
   
-	for (i = 0; i < 58; i++)
+	for (i = 0; i < size; i++)
 	{
 		if ((*s != *b) && (*s != *c))
 		{
@@ -227,15 +249,15 @@ convert_rawdcf(
 			 * we only have two types of bytes (ones and zeros)
 			 */
 #ifndef PARSEKERNEL
-			msyslog(LOG_ERR, "parse: convert_rawdcf: BAD DATA - no conversion for \"%s\"\n", buffer);
+			msyslog(LOG_ERR, "parse: convert_rawdcf: BAD DATA - no conversion");
 #endif
 			return CVT_NONE;
 		}
-		b++;
-		c++;
+		if (*b) b++;
+		if (*c) c++;
 		s++;
 	}
-  
+
 	/*
 	 * check Start and Parity bits
 	 */
@@ -319,13 +341,13 @@ cvt_rawdcf(
 	   void            *local
 	   )
 {
-	         last_tcode_t  *t = (last_tcode_t *)local;
-	register unsigned char *s = (unsigned char *)buffer;
-	register unsigned char *e = s + size;
-	register unsigned char *b = dcfparameter.onebits;
-	register unsigned char *c = dcfparameter.zerobits;
-	         u_long   rtc = CVT_NONE;
-	register unsigned int i, lowmax, highmax, cutoff, span;
+	last_tcode_t  *t = (last_tcode_t *)local;
+	unsigned char *s = (unsigned char *)buffer;
+	unsigned char *e = s + size;
+	unsigned char *b = dcfparameter.onebits;
+	unsigned char *c = dcfparameter.zerobits;
+	u_long       rtc = CVT_NONE;
+	unsigned int i, lowmax, highmax, cutoff, span;
 #define BITS 9
 	unsigned char     histbuf[BITS];
 	/*
@@ -347,7 +369,7 @@ cvt_rawdcf(
 
 	while (s < e)
 	{
-		register unsigned int ch = *s ^ 0xFF;
+		unsigned int ch = *s ^ 0xFF;
 		/*
 		 * these lines are left as an excercise to the reader 8-)
 		 */
@@ -447,7 +469,7 @@ cvt_rawdcf(
 	parseprintf(DD_RAWDCF,("parse: cvt_rawdcf: lower maximum %d, higher maximum %d, cutoff %d\n", lowmax, highmax, cutoff));
 
 	s = (unsigned char *)buffer;
-	while ((s < e) && *c && *b)
+	while (s < e)
 	{
 		if (*s == (unsigned char)~0)
 		{
@@ -458,8 +480,8 @@ cvt_rawdcf(
 			*s = (*s >= cutoff) ? *b : *c;
 		}
 		s++;
-		b++;
-		c++;
+		if (*b) b++;
+		if (*c) c++;
 	}
 
         if (rtc == CVT_NONE)
@@ -497,9 +519,9 @@ cvt_rawdcf(
 /*ARGSUSED*/
 static u_long
 pps_rawdcf(
-	register parse_t *parseio,
-	register int status,
-	register timestamp_t *ptime
+	parse_t *parseio,
+	int status,
+	timestamp_t *ptime
 	)
 {
 	if (!status)		/* negative edge for simpler wiring (Rx->DCD) */
@@ -513,8 +535,8 @@ pps_rawdcf(
 
 static u_long
 snt_rawdcf(
-	register parse_t *parseio,
-	register timestamp_t *ptime
+	parse_t *parseio,
+	timestamp_t *ptime
 	)
 {
 	if ((parseio->parse_dtime.parse_status & CVT_MASK) == CVT_OK)
@@ -537,7 +559,7 @@ snt_rawdcf(
 /*
  * inp_rawdcf
  *
- * grep DCF77 data from input stream
+ * grab DCF77 data from input stream
  */
 static u_long
 inp_rawdcf(
@@ -582,6 +604,21 @@ int clk_rawdcf_bs;
  * History:
  *
  * clk_rawdcf.c,v
+ * Revision 4.16  2006/01/22 15:51:22  kardel
+ * generate reasonable timecode output on invalid input
+ *
+ * Revision 4.15  2005/08/06 19:17:06  kardel
+ * clean log output
+ *
+ * Revision 4.14  2005/08/06 17:39:40  kardel
+ * cleanup size handling wrt/ to buffer boundaries
+ *
+ * Revision 4.13  2005/04/16 17:32:10  kardel
+ * update copyright
+ *
+ * Revision 4.12  2004/11/14 15:29:41  kardel
+ * support PPSAPI, upgrade Copyright to Berkeley style
+ *
  * Revision 4.9  1999/12/06 13:42:23  kardel
  * transfer correctly converted time codes always into tcode
  *

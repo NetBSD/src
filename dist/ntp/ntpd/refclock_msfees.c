@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_msfees.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_msfees.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
 
 /* refclock_ees - clock driver for the EES M201 receiver */
 
@@ -1286,7 +1286,13 @@ ees_process(
 	if (ees->dump_vals) dump_buf(coffs, 0, samples, "Raw  data  is:");
 
 	/* Sort the offsets, trim off the extremes, then choose one. */
-	qsort((char *) coffs, (size_t)samples, sizeof(l_fp), offcompare);
+	qsort(
+#ifdef QSORT_USES_VOID_P
+	    (void *)
+#else
+	    (char *)
+#endif
+	    coffs, (size_t)samples, sizeof(l_fp), offcompare);
 
 	noff = samples;
 	i = 0;

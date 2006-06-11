@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptimeset.c,v 1.4 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: ntptimeset.c,v 1.5 2006/06/11 19:34:21 kardel Exp $	*/
 
 /*
  * ntptimeset - get/set the time via ntp
@@ -143,7 +143,6 @@
 #include <signal.h>
 #include <ctype.h>
 #ifndef SYS_WINNT
-# include <netdb.h>
 # ifdef HAVE_SYS_SIGNAL_H
 #  include <sys/signal.h>
 # else
@@ -405,7 +404,7 @@ ntptimesetmain(
 	)
 {
 	int was_alarmed;
-	struct recvbuf *rbuflist;
+	int tot_recvbufs;
 	struct recvbuf *rbuf;
 	l_fp tmp;
 	int errflg;
@@ -648,7 +647,6 @@ ntptimesetmain(
 	 * yet to learn about anything else that is.
 	 */
 	was_alarmed = 0;
-	rbuflist = (struct recvbuf *)0;
 	while (finish_time > current_time) {
 #if !defined(HAVE_SIGNALED_IO) 
 		fd_set rdfdes;
@@ -657,7 +655,7 @@ ntptimesetmain(
 		block_io_and_alarm();
 #endif
 
-		rbuflist = getrecvbufs();	/* get received buffers */
+		tot_recvbufs = full_recvbuffs();	/* get received buffers */
 		if (printmsg) {
 			printmsg = 0;
 			analysis(0);
@@ -667,7 +665,7 @@ ntptimesetmain(
 			alarm_flag = 0;
 		}
 
-		if (!was_alarmed && rbuflist == (struct recvbuf *)0) {
+		if (!was_alarmed && tot_recvbufs > 0) {
 			/*
 			 * Nothing to do.  Wait for something.
 			 */
@@ -707,7 +705,7 @@ ntptimesetmain(
 				was_alarmed = 1;
 				alarm_flag = 0;
 			}
-			rbuflist = getrecvbufs();  /* get received buffers */
+			tot_recvbufs = full_recvbuffs();  /* get received buffers */
 		}
 #ifdef HAVE_SIGNALED_IO
 		unblock_io_and_alarm();
@@ -727,18 +725,13 @@ ntptimesetmain(
 		 * Call the data procedure to handle each received
 		 * packet.
 		 */
-		while (rbuflist != (struct recvbuf *)0)
+		rbuf = get_full_recv_buffer();
+		while (rbuf != NULL)
 		{
-			rbuf = rbuflist;
-			rbuflist = rbuf->next;
 			receive(rbuf);
 			freerecvbuf(rbuf);
+			rbuf = get_full_recv_buffer();
 		}
-#if defined DEBUG && defined SYS_WINNT
-		if (debug > 4)
-		    printf("getrecvbufs: %ld handler interrupts, %ld frames\n",
-			   handler_calls, handler_pkts);
-#endif
 
 		/*
 		 * Do we have enough information to stop now?

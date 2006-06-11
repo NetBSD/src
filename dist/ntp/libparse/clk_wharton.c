@@ -1,9 +1,9 @@
-/*	$NetBSD: clk_wharton.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: clk_wharton.c,v 1.4 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
- * /src/NTP/ntp-4/libparse/clk_wharton.c,v 4.1 1999/02/28 15:27:24 kardel RELEASE_19990228_A
+ * /src/NTP/ntp4-dev/libparse/clk_wharton.c,v 4.2 2004/11/14 15:29:41 kardel RELEASE_20050508_A
  *  
- * clk_wharton.c,v 4.1 1999/02/28 15:27:24 kardel RELEASE_19990228_A
+ * clk_wharton.c,v 4.2 2004/11/14 15:29:41 kardel RELEASE_20050508_A
  *
  * From Philippe De Muyter <phdm@macqel.be>, 1999
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_machine.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntp_machine.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
 
 /*
  * Collect all machine dependent idiosyncrasies in one place.
@@ -83,11 +83,6 @@ MISC
   RETSIGTYPE		- Define signal function type.
   NO_SIGNED_CHAR_DECL - No "signed char" see include/ntp.h
   LOCK_PROCESS		- Have plock.
-  UDP_WILDCARD_DELIVERY
-			- these systems deliver broadcast packets to the wildcard
-			  port instead to a port bound to the interface bound
-			  to the correct broadcast address - are these
-			  implementations broken or did the spec change ?
 */
 
 /*
@@ -100,6 +95,10 @@ MISC
 #define P(x)    ()
 #endif /* not __STDC__ and not HAVE_PROTOTYPES */
 #endif /* P */
+
+#if !defined(HAVE_NTP_ADJTIME) && defined(HAVE___ADJTIMEX)
+# define ntp_adjtime __adjtimex
+#endif
 
 #if 0
 
@@ -246,6 +245,7 @@ typedef unsigned long u_long;
 #ifndef SYS_WINNT
 # define SOCKET	int
 # define INVALID_SOCKET	-1
+# define SOCKET_ERROR	-1
 # define closesocket close
 #endif
 /*
@@ -274,8 +274,6 @@ typedef unsigned long u_long;
 # define unlink _unlink
 # define fileno _fileno
 # define write _write
-# define vsnprintf _vsnprintf
-# define snprintf _snprintf
 #ifndef close
 # define close _close
 #endif
@@ -357,8 +355,6 @@ extern void alarm P((int seconds));
 #define getclock	clock_gettime
 #define fcntl		ioctl
 #define _getch		getchar
-#define random 		rand
-#define srandom		srand
 
 /* define this away for vxWorks */
 #define openlog(x,y)

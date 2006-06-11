@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_datum.c,v 1.3 2006/03/19 07:20:30 kardel Exp $	*/
+/*	$NetBSD: refclock_datum.c,v 1.4 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
@@ -249,10 +249,9 @@ datum_pts_start(
 	/*
 	** Open the Datum PTS device
 	*/
+	fd = open(DATUM_DEV, O_RDWR);
 
-	fd  = open(DATUM_DEV,O_RDWR);
-
-        if (fd < 0) {
+	if (fd < 0) {
 		msyslog(LOG_ERR, "Datum_PTS: open(\"%s\", O_RDWR) failed: %m", DATUM_DEV);
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: hist.c,v 1.3 2006/06/11 19:34:22 kardel Exp $	*/
 
 /*
  * This program can be used to calibrate the clock reading jitter of a
@@ -9,24 +9,20 @@
  * runs backwards.
  */
 
-#if 0
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
 #include "ntp_types.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #define NBUF 100001		/* size of basic histogram */
 #define NSRT 20000		/* size of overflow histogram */
 #define NCNT (600 * 1000000)	/* sample interval (us) */
 
-extern int col(hrtime_t *, hrtime_t *);
-extern hrtime_t gethrtime(void);
+int col P((long *, long *));
 
 int
 main(
@@ -34,8 +30,10 @@ main(
 	char *argv[]
 	)
 {
+	struct timeval ts, tr, tp;
+	struct timezone tzp;
 	int i, j, n;
-	hrtime_t t, u, v, w, gtod[NBUF], ovfl[NSRT];
+	long t, u, v, w, gtod[NBUF], ovfl[NSRT];
 
 	/*
 	 * Force pages into memory
@@ -49,10 +47,12 @@ main(
 	 * Construct histogram
 	 */
 	n = 0;
-	t = gethrtime();
+	gettimeofday(&ts, &tzp);
+	t = ts.tv_sec * 1000000 + ts.tv_usec;
 	v = t;
 	while (1) {
-		u = gethirestime();
+		gettimeofday(&tr, &tzp);
+		u = tr.tv_sec * 1000000 + tr.tv_usec; 
 		if (u - v > NCNT)
 		    break;
 		w = u - t;
@@ -68,6 +68,7 @@ main(
 		} else {
 			gtod[w]++;
 		}
+		ts = tr;
 		t = u;
 	}
 
@@ -80,7 +81,13 @@ main(
 	}
 	if (n == 0)
 	    return;
-	qsort((char *)ovfl, (size_t)n, sizeof(hrtime_t), col);
+	qsort(
+#ifdef QSORT_USES_VOID_P
+	    (void *)
+#else
+	    (char *)
+#endif
+	    ovfl, (size_t)n, sizeof(long), col);
 	w = 0;
 	j = 0;
 	for (i = 0; i < n; i++) {
@@ -100,8 +107,8 @@ main(
 
 int
 col(
-	hrtime_t *x,
-	hrtime_t *y
+	long *x,
+	long *y
 	)
 {
 	return (*x - *y);

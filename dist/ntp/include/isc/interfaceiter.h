@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: interfaceiter.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
 
 /*
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -61,6 +61,8 @@ struct isc_interface {
 	isc_netaddr_t dstaddress; 	/* Destination address
 					   (point-to-point only). */
 	isc_uint32_t flags;		/* Flags; see below. */
+	unsigned int ifindex;		/* Interface Index */
+	unsigned int scopeid;		/* Scope id for Multicasting */
 };
 
 /* Interface flags. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: decodenetnum.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: decodenetnum.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * decodenetnum - return a net number (this is crude, but careful)
@@ -7,7 +7,6 @@
 #include <ctype.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
 
 #include "ntp_stdlib.h"
 

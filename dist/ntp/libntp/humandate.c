@@ -1,4 +1,4 @@
-/*	$NetBSD: humandate.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: humandate.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
@@ -24,10 +24,8 @@ humandate(
 {
 	char *bp;
 	struct tm *tm;
-	time_t sec;
 
-	sec = ntptime - JAN_1970;
-	tm = localtime(&sec);
+	tm = ntp2unix_tm(ntptime, 1);
 
 	if (!tm)
 		return "--- --- -- ---- --:--:--";
@@ -50,8 +48,9 @@ humanlogtime(void)
 {
 	char *bp;
 	time_t cursec = time((time_t *) 0);
-	struct tm *tm = localtime(&cursec);
+	struct tm *tm;
 	
+	tm = localtime(&cursec);
 	if (!tm)
 		return "-- --- --:--:--";
 

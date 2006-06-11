@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * Copyright (C) 1998-2002  Internet Software Consortium.
@@ -173,6 +173,12 @@ isc_boolean_t
 isc_sockaddr_ismulticast(isc_sockaddr_t *sa);
 /*
  * Returns ISC_TRUE if the address is a multicast address.
+ */
+
+isc_boolean_t
+isc_sockaddr_isexperimental(isc_sockaddr_t *sa);
+/*
+ * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
  */
 
 isc_boolean_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
@@ -9,8 +9,9 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "ntp_rfc2553.h"
 #include <netinet/in.h>
+
+#include "ntp_rfc2553.h"
 
 #include "ntp_types.h"
 
@@ -283,7 +284,7 @@ typedef u_int32 u_fp;
 #define L_SUBUF(r, uf)	M_SUBUF((r)->l_ui, (r)->l_uf, (uf))
 #define	L_ADDF(r, f)	M_ADDF((r)->l_ui, (r)->l_uf, (f))
 #define	L_RSHIFT(v)	M_RSHIFT((v)->l_i, (v)->l_uf)
-#define	L_RSHIFTU(v)	M_RSHIFT((v)->l_ui, (v)->l_uf)
+#define	L_RSHIFTU(v)	M_RSHIFTU((v)->l_ui, (v)->l_uf)
 #define	L_LSHIFT(v)	M_LSHIFT((v)->l_ui, (v)->l_uf)
 #define	L_CLR(v)	((v)->l_ui = (v)->l_uf = 0)
 
@@ -359,6 +360,8 @@ extern  void    mfp_mul         P((int32 *, u_int32 *, int32, u_int32, int32, u_
 extern	void	get_systime	P((l_fp *));
 extern	int	step_systime	P((double));
 extern	int	adj_systime	P((double));
+
+extern	struct tm * ntp2unix_tm P((u_long ntp, int local));
 
 #define	lfptoa(_fpv, _ndec)	mfptoa((_fpv)->l_ui, (_fpv)->l_uf, (_ndec))
 #define	lfptoms(_fpv, _ndec)	mfptoms((_fpv)->l_ui, (_fpv)->l_uf, (_ndec))

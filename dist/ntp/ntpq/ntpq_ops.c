@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.3 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.4 2006/06/11 19:34:21 kardel Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -8,7 +8,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <netdb.h>
 
 #include "ntpq.h"
 #include "ntp_stdlib.h"
@@ -84,10 +83,10 @@ struct xcmd opcmds[] = {
 	{ "lpassociations", lpassociations, {  NO, NO, NO, NO },
 	  { "", "", "", "" },
 	  "print last obtained list of associations, including client information" },
-	{ "addvars",    addvars,    { STR, NO, NO, NO },
+	{ "addvars",    addvars,    { NTP_STR, NO, NO, NO },
 	  { "name[=value][,...]", "", "", "" },
 	  "add variables to the variable list or change their values" },
-	{ "rmvars", rmvars,     { STR, NO, NO, NO },
+	{ "rmvars", rmvars,     { NTP_STR, NO, NO, NO },
 	  { "name[,...]", "", "", "" },
 	  "remove variables from the variable list" },
 	{ "clearvars",  clearvars,  { NO, NO, NO, NO },
@@ -96,49 +95,49 @@ struct xcmd opcmds[] = {
 	{ "showvars",   showvars,   { NO, NO, NO, NO },
 	  { "", "", "", "" },
 	  "print variables on the variable list" },
-	{ "readlist",   readlist,   { OPT|UINT, NO, NO, NO },
+	{ "readlist",   readlist,   { OPT|NTP_UINT, NO, NO, NO },
 	  { "assocID", "", "", "" },
 	  "read the system or peer variables included in the variable list" },
-	{ "rl",     readlist,   { OPT|UINT, NO, NO, NO },
+	{ "rl",     readlist,   { OPT|NTP_UINT, NO, NO, NO },
 	  { "assocID", "", "", "" },
 	  "read the system or peer variables included in the variable list" },
-	{ "writelist",  writelist,  { OPT|UINT, NO, NO, NO },
+	{ "writelist",  writelist,  { OPT|NTP_UINT, NO, NO, NO },
 	  { "assocID", "", "", "" },
 	  "write the system or peer variables included in the variable list" },
-	{ "readvar",    readvar,    { OPT|UINT, OPT|STR, NO, NO },
+	{ "readvar",    readvar,    { OPT|NTP_UINT, OPT|NTP_STR, NO, NO },
 	  { "assocID", "name=value[,...]", "", "" },
 	  "read system or peer variables" },
-	{ "rv",     readvar,    { OPT|UINT, OPT|STR, NO, NO },
+	{ "rv",     readvar,    { OPT|NTP_UINT, OPT|NTP_STR, NO, NO },
 	  { "assocID", "name=value[,...]", "", "" },
 	  "read system or peer variables" },
-	{ "writevar",   writevar,   { UINT, STR, NO, NO },
+	{ "writevar",   writevar,   { NTP_UINT, NTP_STR, NO, NO },
 	  { "assocID", "name=value,[...]", "", "" },
 	  "write system or peer variables" },
-	{ "mreadlist",  mreadlist,  { UINT, UINT, NO, NO },
+	{ "mreadlist",  mreadlist,  { NTP_UINT, NTP_UINT, NO, NO },
 	  { "assocID", "assocID", "", "" },
 	  "read the peer variables in the variable list for multiple peers" },
-	{ "mrl",    mreadlist,  { UINT, UINT, NO, NO },
+	{ "mrl",    mreadlist,  { NTP_UINT, NTP_UINT, NO, NO },
 	  { "assocID", "assocID", "", "" },
 	  "read the peer variables in the variable list for multiple peers" },
-	{ "mreadvar",   mreadvar,   { UINT, UINT, OPT|STR, NO },
+	{ "mreadvar",   mreadvar,   { NTP_UINT, NTP_UINT, OPT|NTP_STR, NO },
 	  { "assocID", "assocID", "name=value[,...]", "" },
 	  "read peer variables from multiple peers" },
-	{ "mrv",    mreadvar,   { UINT, UINT, OPT|STR, NO },
+	{ "mrv",    mreadvar,   { NTP_UINT, NTP_UINT, OPT|NTP_STR, NO },
 	  { "assocID", "assocID", "name=value[,...]", "" },
 	  "read peer variables from multiple peers" },
-	{ "clocklist",  clocklist,  { OPT|UINT, NO, NO, NO },
+	{ "clocklist",  clocklist,  { OPT|NTP_UINT, NO, NO, NO },
 	  { "assocID", "", "", "" },
 	  "read the clock variables included in the variable list" },
-	{ "cl",     clocklist,  { OPT|UINT, NO, NO, NO },
+	{ "cl",     clocklist,  { OPT|NTP_UINT, NO, NO, NO },
 	  { "assocID", "", "", "" },
 	  "read the clock variables included in the variable list" },
-	{ "clockvar",   clockvar,   { OPT|UINT, OPT|STR, NO, NO },
+	{ "clockvar",   clockvar,   { OPT|NTP_UINT, OPT|NTP_STR, NO, NO },
 	  { "assocID", "name=value[,...]", "", "" },
 	  "read clock variables" },
-	{ "cv",     clockvar,   { OPT|UINT, OPT|STR, NO, NO },
+	{ "cv",     clockvar,   { OPT|NTP_UINT, OPT|NTP_STR, NO, NO },
 	  { "assocID", "name=value[,...]", "", "" },
 	  "read clock variables" },
-	{ "pstatus",    pstatus,    { UINT, NO, NO, NO },
+	{ "pstatus",    pstatus,    { NTP_UINT, NO, NO, NO },
 	  { "assocID", "", "", "" },
 	  "print status information returned for a peer" },
 	{ "peers",  peers,      { OPT|IP_VERSION, NO, NO, NO },
@@ -524,6 +523,8 @@ dolist(
 	if (res != 0)
 		return 0;
 
+	if (numhosts > 1)
+		(void) fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0) {
 		if (associd == 0)
 			(void) fprintf(fp, "No system%s variables returned\n",
@@ -535,6 +536,7 @@ dolist(
 		return 1;
 	}
 
+	(void) fprintf(fp,"assID=%d ",associd);
 	printvars(dsize, datap, (int)rstatus, type, fp);
 	return 1;
 }
@@ -597,11 +599,15 @@ writelist(
 	if (res != 0)
 		return;
 
+	if (numhosts > 1)
+		(void) fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0)
 		(void) fprintf(fp, "done! (no data returned)\n");
-	else
+	else {
+		(void) fprintf(fp,"assID=%d ",associd);
 		printvars(dsize, datap, (int)rstatus,
 			  (associd != 0) ? TYPE_PEER : TYPE_SYS, fp);
+	}
 	return;
 }
 
@@ -668,11 +674,15 @@ writevar(
 	if (res != 0)
 		return;
 
+	if (numhosts > 1)
+		(void) fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0)
 		(void) fprintf(fp, "done! (no data returned)\n");
-	else
+	else {
+		(void) fprintf(fp,"assID=%d ",associd);
 		printvars(dsize, datap, (int)rstatus,
 			  (associd != 0) ? TYPE_PEER : TYPE_SYS, fp);
+	}
 	return;
 }
 
@@ -867,17 +877,21 @@ dogetassoc(
 	u_short rstatus;
 
 	res = doquery(CTL_OP_READSTAT, 0, 0, 0, (char *)0, &rstatus,
-			  &dsize, (void *)&datap);
+			  &dsize, (char **)&datap);
 
 	if (res != 0)
 		return 0;
 
 	if (dsize == 0) {
+		if (numhosts > 1)
+			(void) fprintf(fp, "server=%s ", currenthost);
 		(void) fprintf(fp, "No association ID's returned\n");
 		return 0;
 	}
 
 	if (dsize & 0x3) {
+		if (numhosts > 1)
+			(void) fprintf(stderr, "server=%s ", currenthost);
 		(void) fprintf(stderr,
 				   "***Server returned %d octets, should be multiple of 4\n",
 				   dsize);
@@ -930,7 +944,7 @@ printassoc(
 	 * Output a header
 	 */
 	(void) fprintf(fp,
-			   "ind assID status  conf reach auth condition  last_event cnt\n");
+			   "\nind assID status  conf reach auth condition  last_event cnt\n");
 	(void) fprintf(fp,
 			   "===========================================================\n");
 	for (i = 0; i < numassoc; i++) {
@@ -1129,6 +1143,8 @@ radiostatus(
 	if (res != 0)
 		return;
 
+	if (numhosts > 1)
+		(void) fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0) {
 		(void) fprintf(fp, "No radio status string returned\n");
 		return;
@@ -1163,6 +1179,8 @@ pstatus(
 	if (res != 0)
 		return;
 
+	if (numhosts > 1)
+		(void) fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0) {
 		(void) fprintf(fp,
 				   "No information returned for association %u\n",
@@ -1170,6 +1188,7 @@ pstatus(
 		return;
 	}
 
+	(void) fprintf(fp,"assID=%d ",associd);
 	printvars(dsize, datap, (int)rstatus, TYPE_PEER, fp);
 }
 
@@ -1376,7 +1395,7 @@ doprintpeers(
 	while (nextvar(&datalen, &data, &name, &value)) {
 		struct sockaddr_storage dum_store;
 
-		i = findvar(name, peer_var);
+		i = findvar(name, peer_var, 1);
 		if (i == 0)
 			continue;	/* don't know this one */
 		switch (i) {
@@ -1560,6 +1579,8 @@ dogetpeers(
 		return 0;
 
 	if (dsize == 0) {
+		if (numhosts > 1)
+			(void) fprintf(stderr, "server=%s ", currenthost);
 		(void) fprintf(stderr,
 				   "***No information returned for association %d\n",
 				   associd);
@@ -1593,7 +1614,7 @@ dopeers(
 				maxhostlen = strlen(fullname);
 	}
 	if (numhosts > 1)
-		(void) fprintf(fp, "%-*.*s ", maxhostlen, maxhostlen, "host");
+		(void) fprintf(fp, "%-*.*s ", maxhostlen, maxhostlen, "server");
 	(void) fprintf(fp,
 			   "     remote           refid      st t when poll reach   delay   offset  jitter\n");
 	if (numhosts > 1)
@@ -1670,12 +1691,24 @@ doopeers(
 	)
 {
 	register int i;
+	char fullname[LENHOSTNAME];
+	struct sockaddr_storage netnum;
 
 	if (!dogetassoc(fp))
 		return;
 
+	for (i = 0; i < numhosts; ++i) {
+		if (getnetnum(chosts[i], &netnum, fullname, af))
+			if ((int)strlen(fullname) > maxhostlen)
+				maxhostlen = strlen(fullname);
+	}
+	if (numhosts > 1)
+		(void) fprintf(fp, "%-*.*s ", maxhostlen, maxhostlen, "server");
 	(void) fprintf(fp,
 			   "     remote           local      st t when poll reach   delay   offset    disp\n");
+	if (numhosts > 1)
+		for (i = 0; i <= maxhostlen; ++i)
+		(void) fprintf(fp, "=");
 	(void) fprintf(fp,
 			   "==============================================================================\n");
 

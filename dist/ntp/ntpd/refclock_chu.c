@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.5 2006/03/29 07:19:34 kardel Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.6 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -215,7 +215,7 @@
 #define LIMIT		1000.	/* soft limiter threshold */
 #define AGAIN		6.	/* baseband gain */
 #define LAG		10	/* discriminator lag */
-#define	DEVICE_AUDIO	"/dev/chu_audio" /* device name */
+#define	DEVICE_AUDIO	"/dev/audio" /* device name */
 #define	DESCRIPTION	"CHU Audio/Modem Receiver" /* WRU */
 #define	AUDIO_BUFSIZ	240	/* audio buffer size (30 ms) */
 #else

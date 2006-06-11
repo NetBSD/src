@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: icom.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * Program to control ICOM radios
@@ -146,6 +146,7 @@ icom_init(
 	fd = open(device, O_RDWR, 0777);
 	if (fd < 0)
 		return (fd);
+
 	tcgetattr(fd, &ttyb);
 	ttyb.c_iflag = 0;	/* input modes */
 	ttyb.c_oflag = 0;	/* output modes */

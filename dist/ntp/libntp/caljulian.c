@@ -1,4 +1,4 @@
-/*	$NetBSD: caljulian.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: caljulian.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * caljulian - determine the Julian date from an NTP time.
@@ -8,7 +8,9 @@
 #include "ntp_types.h"
 #include "ntp_calendar.h"
 #include "ntp_stdlib.h"
+#include "ntp_fp.h"
 
+#if 0
 /*
  * calmonthtab - days-in-the-month table
  */
@@ -115,3 +117,32 @@ caljulian(
 	jt->monthday = (u_char) monthday;
 	}
 }
+#else
+
+/* Updated 2003-12-30 TMa
+
+   Uses common code with the *prettydate functions to convert an ntp
+   seconds count into a calendar date.
+   Will handle ntp epoch wraparound as long as the underlying os/library 
+   does so for the unix epoch, i.e. works after 2038.
+*/
+
+void
+caljulian(
+	u_long		  		ntptime,
+	register struct calendar	*jt
+	)
+{
+	struct tm *tm;
+
+	tm = ntp2unix_tm(ntptime, 0);
+
+	jt->hour = (u_char) tm->tm_hour;
+	jt->minute = (u_char) tm->tm_min;
+	jt->month = (u_char) (tm->tm_mon + 1);
+	jt->monthday = (u_char) tm->tm_mday;
+	jt->second = (u_char) tm->tm_sec;
+	jt->year = (u_short) (tm->tm_year + 1900);
+	jt->yearday = (u_short) (tm->tm_yday + 1);  /* Assumes tm_yday starts with day 0! */
+}
+#endif

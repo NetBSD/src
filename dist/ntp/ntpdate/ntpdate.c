@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.5 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.6 2006/06/11 19:34:20 kardel Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -23,6 +23,12 @@
 #include "ntp_select.h"
 #include "ntp_stdlib.h"
 
+/* Don't include ISC's version of IPv6 variables and structures */
+#define ISC_IPV6_H 1
+#include "isc/net.h"
+#include "isc/result.h"
+#include "isc/sockaddr.h"
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -34,7 +40,6 @@
 # include <poll.h>
 #endif
 #ifndef SYS_WINNT
-# include <netdb.h>
 # ifdef HAVE_SYS_SIGNAL_H
 #  include <sys/signal.h>
 # else
@@ -50,10 +55,6 @@
 
 #include <arpa/inet.h>
 
-#ifdef __QNXNTO__
-# include "adjtime.h"
-#endif
-
 #ifdef SYS_VXWORKS
 # include "ioLib.h"
 # include "sockLib.h"
@@ -61,6 +62,12 @@
 
 /* select wants a zero structure ... */
 struct timeval timeout = {0,0};
+#elif defined(SYS_WINNT)
+/*
+ * Windows does not abort a select select call if SIGALRM goes off
+ * so a 200 ms timeout is needed
+ */
+struct timeval timeout = {0,1000000/TIMER_HZ};
 #else
 struct timeval timeout = {60,0};
 #endif
@@ -78,6 +85,7 @@ struct timeval timeout = {60,0};
 #define TARGET_RESOLUTION 1  /* Try for 1-millisecond accuracy
 				on Windows NT timers. */
 #pragma comment(lib, "winmm")
+isc_boolean_t ntp_port_inuse(int af, u_short port);
 #endif /* SYS_WINNT */
 
 /*
@@ -106,6 +114,11 @@ static timer_t ntpdate_timerid;
 #define PEER_SHIFT	8	/* 8 suitable for crystal time base */
 
 /*
+ * for get_systime()
+ */
+s_char	sys_precision;		/* local clock precision (log2 s) */
+
+/*
  * Debugging flag
  */
 volatile int debug = 0;
@@ -122,7 +135,7 @@ int fd_family[MAX_AF];	/* to remember the socket family */
 struct pollfd fdmask[MAX_AF];
 #else
 fd_set fdmask;
-int maxfd;
+SOCKET maxfd;
 #endif
 int polltest = 0;
 
@@ -321,7 +334,7 @@ ntpdatemain (
 	)
 {
 	int was_alarmed;
-	struct recvbuf *rbuflist;
+	int tot_recvbufs;
 	struct recvbuf *rbuf;
 	l_fp tmp;
 	int errflg;
@@ -351,6 +364,12 @@ ntpdatemain (
 #ifdef NO_MAIN_ALLOWED
 	clear_globals();
 #endif
+
+
+	/* Check to see if we have IPv6. Otherwise force the -4 flag */
+	if (isc_net_probeipv6() != ISC_R_SUCCESS) {
+		ai_fam_templ = AF_INET;
+	}
 
 	errflg = 0;
 	progname = argv[0];
@@ -465,7 +484,12 @@ ntpdatemain (
 	if (debug || simple_query) {
 #ifdef HAVE_SETVBUF
 		static char buf[BUFSIZ];
+#ifdef SYS_WINNT
+		/* Win32 does not implement line bufferibg */
+		setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+#else
 		setvbuf(stdout, buf, _IOLBF, BUFSIZ);
+#endif	/* SYS_WINNT */
 #else
 		setlinebuf(stdout);
 #endif
@@ -571,7 +595,6 @@ ntpdatemain (
 
 	initializing = 0;
 	was_alarmed = 0;
-	rbuflist = (struct recvbuf *)0;
 
 	while (complete_servers < sys_numservers) {
 #ifdef HAVE_POLL_H
@@ -586,9 +609,9 @@ ntpdatemain (
 			was_alarmed = 1;
 			alarm_flag = 0;
 		}
-		rbuflist = getrecvbufs();	/* get received buffers */
+		tot_recvbufs = full_recvbuffs();	/* get received buffers */
 
-		if (!was_alarmed && rbuflist == (struct recvbuf *)0) {
+		if (!was_alarmed && tot_recvbufs == 0) {
 			/*
 			 * Nothing to do.	 Wait for something.
 			 */
@@ -601,15 +624,12 @@ ntpdatemain (
 #endif
 			if (nfound > 0)
 				input_handler();
-			else if (
-#ifndef SYS_WINNT
-				nfound == -1
-#else
-				nfound == SOCKET_ERROR
-#endif /* SYS_WINNT */
-				) {
+			else if (nfound == SOCKET_ERROR)
+			{
 #ifndef SYS_WINNT
 				if (errno != EINTR)
+#else
+				if (WSAGetLastError() != WSAEINTR)
 #endif
 					netsyslog(LOG_ERR,
 #ifdef HAVE_POLL_H
@@ -618,7 +638,7 @@ ntpdatemain (
 						"select() error: %m"
 #endif
 						);
-			} else {
+			} else if (errno != 0) {
 #ifndef SYS_VXWORKS
 				netsyslog(LOG_DEBUG,
 #ifdef HAVE_POLL_H
@@ -633,18 +653,19 @@ ntpdatemain (
 				was_alarmed = 1;
 				alarm_flag = 0;
 			}
-			rbuflist = getrecvbufs();	/* get received buffers */
+			tot_recvbufs = full_recvbuffs();	/* get received buffers */
 		}
 
 		/*
 		 * Out here, signals are unblocked.  Call receive
 		 * procedure for each incoming packet.
 		 */
-		while (rbuflist != (struct recvbuf *)0) {
-			rbuf = rbuflist;
-			rbuflist = rbuf->next;
+		rbuf = get_full_recv_buffer();
+		while (rbuf != NULL)
+		{
 			receive(rbuf);
 			freerecvbuf(rbuf);
+			rbuf = get_full_recv_buffer();
 		}
 
 		/*
@@ -1315,6 +1336,30 @@ clock_adjust(void)
 }
 
 
+/*
+ * is_unreachable - check to see if we have a route to given destination
+ *		    (non-blocking).
+ */
+static int
+is_reachable (struct sockaddr_storage *dst)
+{
+	SOCKET sockfd;
+
+	sockfd = socket(dst->ss_family, SOCK_DGRAM, 0);
+	if (sockfd == -1) {
+		return 0;
+	}
+
+	if(connect(sockfd, (struct sockaddr *)dst, SOCKLEN(dst))) {
+		closesocket(sockfd);
+		return 0;
+	}
+	closesocket(sockfd);
+	return 1;
+}
+
+
+
 /* XXX ELIMINATE: merge BIG slew into adj_systime in lib/systime.c */
 /*
  * addserver - determine a server's address and allocate a new structure
@@ -1327,7 +1372,7 @@ addserver(
 {
 	register struct server *server;
 	/* Address infos structure to store result of getaddrinfo */
-	struct addrinfo *addrResult;
+	struct addrinfo *addrResult, *ptr;
 	/* Address infos structure to store hints for getaddrinfo */
 	struct addrinfo hints;
 	/* Error variable for getaddrinfo */
@@ -1358,22 +1403,28 @@ addserver(
 	}
 #endif
 
-	server = (struct server *)emalloc(sizeof(struct server));
-	memset((char *)server, 0, sizeof(struct server));
+	/* We must get all returned server in case the first one fails */
+	for (ptr = addrResult; ptr != NULL; ptr = ptr->ai_next) {
+		if (is_reachable ((struct sockaddr_storage *)ptr->ai_addr)) {
+			server = (struct server *)emalloc(sizeof(struct server));
+			memset((char *)server, 0, sizeof(struct server));
 
-	/* For now we only get the first returned server of the addrinfo list */
-	memset(&(server->srcadr), 0, sizeof(struct sockaddr_storage));
-	memcpy(&(server->srcadr), addrResult->ai_addr, addrResult->ai_addrlen);
-	server->event_time = ++sys_numservers;
-	if (sys_servers == NULL)
-		sys_servers = server;
-	else {
-		struct server *sp;
+			memset(&(server->srcadr), 0, sizeof(struct sockaddr_storage));
+			memcpy(&(server->srcadr), ptr->ai_addr, ptr->ai_addrlen);
+			server->event_time = ++sys_numservers;
+			if (sys_servers == NULL)
+				sys_servers = server;
+			else {
+				struct server *sp;
 
-		for (sp = sys_servers; sp->next_server != NULL;
-		     sp = sp->next_server) ;
-		sp->next_server = server;
+				for (sp = sys_servers; sp->next_server != NULL;
+				     sp = sp->next_server) ;
+				sp->next_server = server;
+			}
+		}
 	}
+
+	freeaddrinfo(addrResult);
 }
 
 
@@ -1388,6 +1439,16 @@ findserver(
 {
 	struct server *server;
 	struct server *mc_server;
+	isc_sockaddr_t laddr;
+	isc_sockaddr_t saddr;
+
+	if(addr->ss_family == AF_INET) {
+		isc_sockaddr_fromin( &laddr, &((struct sockaddr_in*)addr)->sin_addr, 0);
+	}
+	else {
+		isc_sockaddr_fromin6(&laddr, &((struct sockaddr_in6*)addr)->sin6_addr, 0);
+	}
+
 
 	mc_server = NULL;
 	if (htons(((struct sockaddr_in*)addr)->sin_port) != NTP_PORT)
@@ -1396,20 +1457,18 @@ findserver(
 	for (server = sys_servers; server != NULL; 
 	     server = server->next_server) {
 		
-		if (memcmp(addr, &server->srcadr, SOCKLEN(addr))==0)
-			return server;
-		/* Multicast compatibility to verify here... I'm not sure it's working */
-		if(addr->ss_family == AF_INET) {
-			if (IN_MULTICAST(ntohl(((struct sockaddr_in*)addr)->sin_addr.s_addr)))
-				mc_server = server;
+		if(server->srcadr.ss_family == AF_INET) {
+			isc_sockaddr_fromin(&saddr, &((struct sockaddr_in*)&server->srcadr)->sin_addr, 0);
 		}
 		else {
-#ifdef AF_INET6
-			if (IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6*)(&server->srcadr))->sin6_addr))
-			mc_server = server;
-#else
-			return 0;
-#endif
+			isc_sockaddr_fromin6(&saddr, &((struct sockaddr_in6*)&server->srcadr)->sin6_addr, 0);
+		}
+		if (isc_sockaddr_eqaddr(&laddr, &saddr) == ISC_TRUE)
+			return server;
+
+		if(addr->ss_family == server->srcadr.ss_family) {
+			if (isc_sockaddr_ismulticast(&saddr) == ISC_TRUE)
+				mc_server = server;
 		}
 	}
 
@@ -1669,6 +1728,7 @@ init_io(void)
 	 * Init hints addrinfo structure
 	 */
 	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = ai_fam_templ;
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_socktype = SOCK_DGRAM;
 
@@ -1678,6 +1738,13 @@ init_io(void)
 	       /*NOTREACHED*/
 	}
 
+#ifdef SYS_WINNT
+	if (ntp_port_inuse(AF_INET, NTP_PORT) ){
+		netsyslog(LOG_ERR, "the NTP socket is in use, exiting: %m");
+		exit(1);
+	}
+#endif
+
 	/* Remember the address of the addrinfo structure chain */
 	ressave = res;
 
@@ -1686,9 +1753,16 @@ init_io(void)
 	 */
 	for(nbsock = 0; (nbsock < MAX_AF) && res ; res = res->ai_next) {
 	/* create a datagram (UDP) socket */
-	   if ((fd[nbsock] = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+	   fd[nbsock] = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	   if (fd[nbsock] == SOCKET_ERROR) {
+#ifndef SYS_WINNT
 		if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT ||
 		    errno == EPFNOSUPPORT)
+#else
+		int err = WSAGetLastError();
+		if (err == WSAEPROTONOSUPPORT || err == WSAEAFNOSUPPORT ||
+		    err == WSAEPFNOSUPPORT)
+#endif
 			continue;
 		netsyslog(LOG_ERR, "socket() failed: %m");
 		exit(1);
@@ -1736,7 +1810,7 @@ init_io(void)
 	    fdmask[nbsock].events = POLLIN;
 #else
 	    FD_SET(fd[nbsock], &fdmask);
-	    if ((SOCKET) maxfd < fd[nbsock]+1) {
+	    if (maxfd < fd[nbsock]+1) {
 		maxfd = fd[nbsock]+1;
 	    }
 #endif
@@ -1796,7 +1870,7 @@ sendpkt(
 {
 	int i;
 	int cc;
-	SOCKET sock = 0;
+	SOCKET sock = INVALID_SOCKET;
 
 #ifdef SYS_WINNT
 	DWORD err;
@@ -1810,7 +1884,7 @@ sendpkt(
 		}
 	}
 
-	if ( sock == 0 ) {
+	if ( sock == INVALID_SOCKET ) {
 		netsyslog(LOG_ERR, "cannot find family compatible socket to send ntp packet");
 		exit(1);
 		/*NOTREACHED*/
@@ -1819,11 +1893,10 @@ sendpkt(
 	cc = sendto(sock, (char *)pkt, len, 0, (struct sockaddr *)dest,
 			SOCKLEN(dest));
 
+	if (cc == SOCKET_ERROR) {
 #ifndef SYS_WINNT
-	if (cc == -1) {
 		if (errno != EWOULDBLOCK && errno != ENOBUFS)
 #else
-	if (cc == SOCKET_ERROR) {
 		err = WSAGetLastError();
 		if (err != WSAEWOULDBLOCK && err != WSAENOBUFS)
 #endif /* SYS_WINNT */
@@ -1843,7 +1916,7 @@ input_handler(void)
 	struct timeval tvzero;
 	socklen_t fromlen;
 	l_fp ts;
-	int i;
+	SOCKET i;
 #ifdef HAVE_POLL_H
 	struct pollfd fds[MAX_AF];
 #else
@@ -2223,5 +2296,36 @@ getnetinfoservers(void)
 	}
 
 	return(namelist);
+}
+#endif
+
+#ifdef SYS_WINNT
+isc_boolean_t ntp_port_inuse(int af, u_short port)
+{
+	/*
+	 * Check if NTP socket is already in use on this system
+	 * This is only for Windows Systems, as they tend not to fail on the real bind() below
+	 */
+	
+	SOCKET checksocket;
+	struct sockaddr_in checkservice;
+	checksocket = socket(af, SOCK_DGRAM, 0);
+	if (checksocket == INVALID_SOCKET) {
+		return (ISC_TRUE);
+	}
+
+	checkservice.sin_family = (short) AF_INET;
+	checkservice.sin_addr.s_addr = INADDR_LOOPBACK;
+	checkservice.sin_port = htons(port);
+
+	if (bind(checksocket, (struct sockaddr *)&checkservice,
+		sizeof(checkservice)) == SOCKET_ERROR) {
+		if ( WSAGetLastError() == WSAEADDRINUSE ){
+			closesocket(checksocket);
+			return (ISC_TRUE);
+		}
+	}
+	closesocket(checksocket);
+	return (ISC_FALSE);
 }
 #endif

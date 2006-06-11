@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: machines.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /* machines.c - provide special support for peculiar architectures
  *
@@ -456,6 +456,7 @@ ntp_set_tod(
 		 */
 		adjtv.tv_sec = adjtv.tv_usec = 0;
 		adjtime(&adjtv, NULL);
+		errno = 0;
 		rc = SETTIMEOFDAY(tvp, tzp);
 #ifdef DEBUG
 		if (debug) {
@@ -470,6 +471,7 @@ ntp_set_tod(
 		long tp = tvp->tv_sec;
 
 		set_tod_using = "stime";
+		errno = 0;
 		rc = stime(&tp); /* lie as bad as SysVR4 */
 #ifdef DEBUG
 		if (debug) {

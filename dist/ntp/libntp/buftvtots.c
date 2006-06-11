@@ -1,4 +1,4 @@
-/*	$NetBSD: buftvtots.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: buftvtots.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * buftvtots - pull a Unix-format (struct timeval) time stamp out of
@@ -10,6 +10,7 @@
 #include "config.h"
 #endif
 #include "ntp_fp.h"
+#include "ntp_string.h"
 #include "ntp_unixtime.h"
 
 int
@@ -18,91 +19,19 @@ buftvtots(
 	l_fp *ts
 	)
 {
-	register const u_char *bp;
-	register u_long sec;
-	register u_long usec;
 	struct timeval tv;
 
-#ifdef WORDS_BIGENDIAN
-	bp = (const u_char *)bufp;
+	/*
+	 * copy to adhere to alignment restrictions
+	 */
+	memcpy(&tv, bufp, sizeof(tv));
 
-	sec = (u_long)*bp++ & 0xff;
-	sec <<= 8;
-	sec += (u_long)*bp++ & 0xff;
-	sec <<= 8;
-	sec += (u_long)*bp++ & 0xff;
-	sec <<= 8;
-	sec += (u_long)*bp++ & 0xff;
-
-	if (sizeof(tv.tv_sec) == 8) {
-		sec += (u_long)*bp++ & 0xff;
-		sec <<= 8;
-		sec += (u_long)*bp++ & 0xff;
-		sec <<= 8;
-		sec += (u_long)*bp++ & 0xff;
-		sec <<= 8;
-		sec += (u_long)*bp++ & 0xff;
-	}
-
-	usec = (u_long)*bp++ & 0xff;
-	usec <<= 8;
-	usec += (u_long)*bp++ & 0xff;
-	usec <<= 8;
-	usec += (u_long)*bp++ & 0xff;
-	usec <<= 8;
-	usec += (u_long)*bp++ & 0xff;
-
-	if (sizeof(tv.tv_usec) == 8) {
-		usec += (u_long)*bp++ & 0xff;
-		usec <<= 8;
-		usec += (u_long)*bp++ & 0xff;
-		usec <<= 8;
-		usec += (u_long)*bp++ & 0xff;
-		usec <<= 8;
-		usec += (u_long)*bp & 0xff;
-	}
-#else
-	bp = (const u_char *)bufp + 7;
-
-	usec = (u_long)*bp-- & 0xff;
-	usec <<= 8;
-	usec += (u_long)*bp-- & 0xff;
-	usec <<= 8;
-	usec += (u_long)*bp-- & 0xff;
-	usec <<= 8;
-	usec += (u_long)*bp-- & 0xff;
-
-	if (sizeof(tv.tv_usec) == 8) {
-		usec += (u_long)*bp-- & 0xff;
-		usec <<= 8;
-		usec += (u_long)*bp-- & 0xff;
-		usec <<= 8;
-		usec += (u_long)*bp-- & 0xff;
-		usec <<= 8;
-		usec += (u_long)*bp-- & 0xff;
-	}
-
-	sec = (u_long)*bp-- & 0xff;
-	sec <<= 8;
-	sec += (u_long)*bp-- & 0xff;
-	sec <<= 8;
-	sec += (u_long)*bp-- & 0xff;
-	sec <<= 8;
-	sec += (u_long)*bp-- & 0xff;
-
-	if (sizeof (tv.tv_sec) == 8) {
-		sec += (u_long)*bp-- & 0xff;
-		sec <<= 8;
-		sec += (u_long)*bp-- & 0xff;
-		sec <<= 8;
-		sec += (u_long)*bp-- & 0xff;
-		sec <<= 8;
-		sec += (u_long)*bp & 0xff;
-	}
-#endif
-	ts->l_ui = sec + (u_long)JAN_1970;
-	if (usec > 999999)
+	/*
+	 * and use it
+	 */
+	ts->l_ui = tv.tv_sec + (u_long)JAN_1970;
+	if (tv.tv_usec > 999999)
 	    return 0;
-	TVUTOTSF(usec, ts->l_uf);
+	TVUTOTSF(tv.tv_usec, ts->l_uf);
 	return 1;
 }

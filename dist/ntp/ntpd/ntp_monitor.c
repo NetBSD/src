@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_monitor.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_monitor.c,v 1.3 2006/06/11 19:34:11 kardel Exp $	*/
 
 /*
  * ntp_monitor - monitor ntpd statistics
@@ -11,6 +11,7 @@
 #include "ntp_io.h"
 #include "ntp_if.h"
 #include "ntp_stdlib.h"
+#include <ntp_random.h>
 
 #include <stdio.h>
 #include <signal.h>
@@ -241,7 +242,8 @@ ntp_monitor(
 		 * Preempt from the MRU list if old enough.
 		 */
 		md = mon_mru_list.mru_prev;
-		if (((u_long)RANDOM & 0xffffffff) / FRAC >
+		/* We get 31 bits from ntp_random() */
+		if (((u_long)ntp_random()) / FRAC >
 		    (double)(current_time - md->lasttime) / mon_age)
 			return;
 
@@ -268,7 +270,7 @@ ntp_monitor(
 	md->mode = (u_char) mode;
 	md->version = PKT_VERSION(pkt->li_vn_mode);
 	md->interface = rbufp->dstadr;
-	md->cast_flags = (u_char)(((rbufp->dstadr->flags & INT_MULTICAST) &&
+	md->cast_flags = (u_char)(((rbufp->dstadr->flags & INT_MCASTOPEN) &&
 	    rbufp->fd == md->interface->fd) ? MDF_MCAST: rbufp->fd ==
 		md->interface->bfd ? MDF_BCAST : MDF_UCAST);
 

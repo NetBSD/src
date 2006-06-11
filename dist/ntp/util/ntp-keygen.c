@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.5 2006/03/18 14:25:17 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.6 2006/06/11 19:34:22 kardel Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers
@@ -98,6 +98,7 @@
 # include <sys/types.h>
 #endif
 #include "ntp_types.h"
+#include "ntp_random.h"
 #include "l_stdlib.h"
 
 #ifdef SYS_WINNT
@@ -161,7 +162,9 @@ u_long	asn2ntp		P((ASN1_TIME *));
 extern char *optarg;		/* command line argument */
 int	debug = 0;		/* debug, not de bug */
 int	rval;			/* return status */
+#ifdef OPENSSL
 u_int	modulus = PLEN;		/* prime modulus size (bits) */
+#endif
 int	nkeys = 0;		/* MV keys */
 time_t	epoch;			/* Unix epoch (seconds) since 1970 */
 char	*hostname;		/* host name (subject name) */
@@ -215,6 +218,7 @@ main(
 	char	**argv
 	)
 {
+	int	errflg = 0;
 	struct timeval tv;	/* initialization vector */
 #ifdef OPENSSL
 	X509	*cert = NULL;	/* X509 certificate */
@@ -223,7 +227,9 @@ main(
 	EVP_PKEY *pkey_iff = NULL; /* IFF parameters */
 	EVP_PKEY *pkey_gq = NULL; /* GQ parameters */
 	EVP_PKEY *pkey_mv = NULL; /* MV parameters */
+#endif
 	int	md5key = 0;	/* generate MD5 keys */
+#ifdef OPENSSL
 	int	hostkey = 0;	/* generate RSA keys */
 	int	iffkey = 0;	/* generate IFF parameters */
 	int	gqpar = 0;	/* generate GQ parameters */
@@ -233,7 +239,6 @@ main(
 	char	*sign = NULL;	/* sign key */
 	EVP_PKEY *pkey = NULL;	/* temp key */
 	const EVP_MD *ectx;	/* EVP digest */
-	char	hostbuf[MAXHOSTNAME + 1];
 	char	pathbuf[MAXFILENAME + 1];
 	const char *scheme = NULL; /* digest/signature scheme */
 	char	*exten = NULL;	/* private extension */
@@ -243,6 +248,7 @@ main(
 	int	iffsw = 0;	/* IFF key switch */
 	const char *fnptr;
 #endif /* OPENSSL */
+	char	hostbuf[MAXHOSTNAME + 1];
 	u_int	temp;
 
 #ifdef SYS_WINNT
@@ -253,7 +259,11 @@ main(
 #endif
 
 #ifdef OPENSSL
-	if (SSLeay() != OPENSSL_VERSION_NUMBER) {
+	/*
+	 * OpenSSL version numbers: MNNFFPPS: major minor fix patch status
+	 * We match major, minor, fix and status (not patch)
+	 */
+	if ((SSLeay() ^ OPENSSL_VERSION_NUMBER) & ~0xff0L) {
 		fprintf(stderr,
 		    "OpenSSL version mismatch. Built against %lx, you have %lx\n",
 		    OPENSSL_VERSION_NUMBER, SSLeay());
@@ -270,8 +280,10 @@ main(
 	 */
 	gethostname(hostbuf, MAXHOSTNAME);
 	hostname = hostbuf;
+#ifdef OPENSSL
 	trustname = hostbuf;
 	passwd1 = hostbuf;
+#endif
 #ifndef SYS_WINNT
 	gettimeofday(&tv, 0);
 #else
@@ -280,15 +292,22 @@ main(
 	epoch = tv.tv_sec;
 	rval = 0;
 	while ((temp = getopt(argc, argv,
-	    "c:deGgHIi:Mm:nPp:q:S:s:TV:v:")) != -1) {
+#ifdef OPENSSL
+	    "c:deGgHIi:Mm:nPp:q:S:s:TV:v:"
+#else
+	    "dM"
+#endif
+	    )) != -1) {
 		switch(temp) {
 
+#ifdef OPENSSL
 		/*
 		 * -c select public certificate type
 		 */
 		case 'c':
 			scheme = optarg;
 			continue;
+#endif
 
 		/*
 		 * -d debug
@@ -297,47 +316,59 @@ main(
 			debug++;
 			continue;
 
+#ifdef OPENSSL
 		/*
 		 * -e write identity keys
 		 */
 		case 'e':
 			iffsw++;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -G generate GQ parameters and keys
 		 */
 		case 'G':
 			gqpar++;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -g update GQ keys
 		 */
 		case 'g':
 			gqkey++;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -H generate host key (RSA)
 		 */
 		case 'H':
 			hostkey++;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -I generate IFF parameters
 		 */
 		case 'I':
 			iffkey++;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -i set issuer name
 		 */
 		case 'i':
 			trustname = optarg;
 			continue;
+#endif
 
 		/*
 		 * -M generate MD5 keys
@@ -346,85 +377,141 @@ main(
 			md5key++;
 			continue;
 
-
+#ifdef OPENSSL
 		/*
 		 * -m select modulus (256-2048)
 		 */
 		case 'm':
-			if (sscanf(optarg, "%d", &modulus) != 1)
+			if (sscanf(optarg, "%d", &modulus) != 1) {
 				fprintf(stderr,
 				    "invalid option -m %s\n", optarg);	
+				++errflg;
+			}
 			continue;
-		
+#endif
+
+#ifdef OPENSSL
 		/*
 		 * -P generate PC private certificate
 		 */
 		case 'P':
 			exten = EXT_KEY_PRIVATE;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -p output private key password
 		 */
 		case 'p':
 			passwd2 = optarg;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -q input private key password
 		 */
 		case 'q':
 			passwd1 = optarg;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -S generate sign key (RSA or DSA)
 		 */
 		case 'S':
 			sign = optarg;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -s set subject name
 		 */
 		case 's':
 			hostname = optarg;
 			continue;
-		
+#endif
+
+#ifdef OPENSSL
 		/*
 		 * -T trusted certificate (TC scheme)
 		 */
 		case 'T':
 			exten = EXT_KEY_TRUST;
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -V <keys> generate MV parameters
 		 */
 		case 'V':
 			mvpar++;
-			if (sscanf(optarg, "%d", &nkeys) != 1)
+			if (sscanf(optarg, "%d", &nkeys) != 1) {
 				fprintf(stderr,
 				    "invalid option -V %s\n", optarg);
+				++errflg;
+			}
 			continue;
+#endif
 
+#ifdef OPENSSL
 		/*
 		 * -v <key> update MV keys
 		 */
 		case 'v':
 			mvkey++;
-			if (sscanf(optarg, "%d", &nkeys) != 1)
+			if (sscanf(optarg, "%d", &nkeys) != 1) {
 				fprintf(stderr,
 				    "invalid option -v %s\n", optarg);
+				++errflg;
+			}
 			continue;
+#endif
 
 		/*
 		 * None of the above.
 		 */
 		default:
-			fprintf(stderr, "Option ignored\n");
+			++errflg;
 			continue;
 		}
+	}
+
+	if (errflg) {
+		printf("Usage:  ntp-keygen [options]\n");
+		printf("where options are:\n");
+#ifdef OPENSSL
+		printf("   -c cert_scheme\n");
+#endif
+		printf("   -d			increase debug level\n");
+#ifdef OPENSSL
+		printf("   -e			Write identity keys\n");
+		printf("   -G			Generate GQ parameters and keys\n");
+		printf("   -g			Update GQ keys\n");
+		printf("   -H			Generate RSA Host key\n");
+		printf("   -I			Generate IFF parameters\n");
+		printf("   -i issuer_name\n");
+#endif
+		printf("   -M			Generate MD5 keys\n");
+#ifdef OPENSSL
+		printf("   -m modulus		256 - 2048\n");
+		printf("   -P			generate PC private certificate\n");
+		printf("   -p output_pass	output private password\n");
+		printf("   -q input_pass	input private password\n");
+		printf("   -S sign-key		generate sign key (RSA or DSA)\n");
+		printf("   -s set-subj-name\n");
+		printf("   -T			Trusted certificate (TC scheme)\n");
+		printf("   -V #keys		generate MV parameters\n");
+		printf("   -v #keys		update MV parameters\n");
+		printf("\n");
+		printf("If there is no new host key, look for an existing one.\n");
+		printf("If one is not found, create it.\n");
+#endif
+		exit(2);
 	}
 
 	if (passwd1 != NULL && passwd2 == NULL)
@@ -450,6 +537,7 @@ main(
 	fprintf(stderr,
 	    "Random seed file %s %u bytes\n", fnptr, temp);
 	RAND_add(&epoch, sizeof(epoch), 4.0);
+#endif
 
 	/*
 	 * Generate new parameters and keys as requested. These replace
@@ -457,6 +545,7 @@ main(
 	 */
 	if (md5key)
 		gen_md5("MD5");
+#ifdef OPENSSL
 	if (hostkey)
 		pkey_host = genkey("RSA", "host");
 	if (sign != NULL)
@@ -626,10 +715,14 @@ main(
 	if (pkey_iff != NULL && rval == 0 && iffsw) {
 		DSA	*dsa;
 		char	*sptr;
+		char	*tld;
 
 		sptr = strrchr(filename, '.');
+		tld = malloc(strlen(sptr));	/* we have an extra byte ... */
+		strcpy(tld, 1+sptr);		/* ... see? */
 		sprintf(filename, "ntpkey_IFFkey_%s.%s", trustname,
-		    ++sptr);
+		    tld);
+		free(tld);
 		fprintf(stderr, "Writing new IFF key %s\n", filename);
 		fprintf(stdout, "# %s\n# %s", filename, ctime(&epoch));
 		dsa = pkey_iff->pkey.dsa;
@@ -706,11 +799,11 @@ gen_md5(
 
 	fprintf(stderr, "Generating MD5 keys...\n");
 	str = fheader("MD5key", hostname);
-	srandom(epoch);
+	ntp_srandom(epoch);
 	for (i = 1; i <= MD5KEYS; i++) {
 		for (j = 0; j < 16; j++) {
 			while (1) {
-				temp = random() & 0xff;
+				temp = ntp_random() & 0xff;
 				if (temp == '#')
 					continue;
 				if (temp > 0x20 && temp < 0x7f)
@@ -1702,8 +1795,8 @@ x509	(
 	ASN1_INTEGER_set(serial, epoch + JAN_1970);
 	X509_set_serialNumber(cert, serial);
 	ASN1_INTEGER_free(serial);
-	X509_gmtime_adj(X509_get_notBefore(cert), 0L);
-	X509_gmtime_adj(X509_get_notAfter(cert), YEAR);
+	X509_time_adj(X509_get_notBefore(cert), 0L, &epoch);
+	X509_time_adj(X509_get_notAfter(cert), YEAR, &epoch);
 	subj = X509_get_subject_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
 	    (unsigned char *) hostname, strlen(hostname), -1, 0);
@@ -1888,7 +1981,6 @@ cb	(
 		break;
 	}
 }
-#endif /* OPENSSL */
 
 
 /*
@@ -1912,6 +2004,7 @@ genkey(
 	rval = -1;
 	return (NULL);
 }
+#endif /* OPENSSL */
 
 
 /*

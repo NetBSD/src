@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_ripencc.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_ripencc.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
  * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks
@@ -46,13 +46,9 @@
 #include "ntp_unixtime.h"
 #include "ntp_io.h"
 
-#ifdef HAVE_TIMEPPS_H
-# include <timepps.h>
-#else /* HAVE_TIMEPPS_H */
-# ifdef HAVE_SYS_TIMEPPS_H
-#  include <sys/timepps.h>
-# endif /* HAVE_SYS_TIMEPPS_H */
-#endif /* HAVE_TIMEPPS_H */
+#ifdef HAVE_PPSAPI
+# include "ppsapi_timepps.h"
+#endif
 
 /*
  * Definitions
