@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_tty.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntp_tty.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
 
 /*
  * ntp_tty.h - header file for serial lines handling
@@ -53,18 +53,5 @@
 #if !defined(SYSV_TTYS) && !defined(STREAM) & !defined(BSD_TTYS)
 #define BSD_TTYS
 #endif /* SYSV_TTYS STREAM BSD_TTYS */
-
-/*
- * Line discipline flags. These require line discipline or streams
- * modules to be installed/loaded in the kernel. If specified, but not
- * installed, the code runs as if unspecified.
- */
-#define LDISC_STD	0x0	/* standard */
-#define LDISC_CLK	0x1	/* tty_clk \n intercept */
-#define LDISC_CLKPPS	0x2	/* tty_clk \377 intercept */
-#define LDISC_ACTS	0x4	/* tty_clk #* intercept */
-#define LDISC_CHU	0x8	/* depredated */
-#define LDISC_PPS	0x10	/* ppsclock, ppsapi */
-#define LDISC_RAW	0x20	/* raw binary */
 
 #endif /* NTP_TTY_H */

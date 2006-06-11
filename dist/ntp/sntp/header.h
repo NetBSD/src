@@ -1,4 +1,4 @@
-/*	$NetBSD: header.h,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: header.h,v 1.3 2006/06/11 19:34:21 kardel Exp $	*/
 
 /*  Copyright (C) 1996 N.M. Maclaren
     Copyright (C) 1996 The University of Cambridge
@@ -21,10 +21,10 @@ No changes should be needed for any system that is even remotely like Unix. */
 #define MAX_SOCKETS        10          /* Maximum number of addresses */
 
 #ifndef LOCKNAME
-    #define LOCKNAME "/etc/msntp.pid"  /* Stores the pid */
+#    define LOCKNAME "/etc/sntp.pid"  /* Stores the pid */
 #endif
 #ifndef SAVENAME
-    #define SAVENAME "/etc/msntp.state" /* Stores the recovery state */
+#    define SAVENAME "/etc/sntp.state" /* Stores the recovery state */
 #endif
 
 
@@ -32,9 +32,7 @@ No changes should be needed for any system that is even remotely like Unix. */
 /* Defined in main.c */
 
 #define op_client           1          /* Behave as a challenge client */
-#define op_server           2          /* Behave as a response server */
-#define op_listen           3          /* Behave as a listening client */
-#define op_broadcast        4          /* Behave as a broadcast server */
+#define op_listen           2          /* Behave as a listening client */
 
 extern const char *argv0;
 

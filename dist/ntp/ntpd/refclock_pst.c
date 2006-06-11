@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pst.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_pst.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
  * refclock_pst - clock driver for PSTI/Traconex WWV/WWVH receivers
@@ -271,7 +271,8 @@ pst_receive(
 	 */
 	if (!refclock_process(pp))
 		refclock_report(peer, CEVNT_BADTIME);
-
+	else if (peer->disp > MAXDISTANCE)
+		refclock_receive(peer);
 }
 
 

@@ -1,23 +1,23 @@
-/*	$NetBSD: netaddr.h,v 1.3 2003/12/04 16:52:28 drochner Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.4 2006/06/11 19:34:09 kardel Exp $	*/
 
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.h,v 1.21 2002/04/03 06:38:35 marka Exp */
+/* Id: netaddr.h,v 1.18.12.7 2004/03/08 09:04:52 marka Exp */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -25,9 +25,6 @@
 #include <isc/lang.h>
 #include <isc/net.h>
 #include <isc/types.h>
-#include "ntp_rfc2553.h"
-
-
 
 ISC_LANG_BEGINDECLS
 
@@ -101,6 +98,12 @@ void
 isc_netaddr_fromin6(isc_netaddr_t *netaddr, const struct in6_addr *ina6);
 
 void
+isc_netaddr_setzone(isc_netaddr_t *netaddr, isc_uint32_t zone);
+
+isc_uint32_t
+isc_netaddr_getzone(const isc_netaddr_t *netaddr);
+
+void
 isc_netaddr_any(isc_netaddr_t *netaddr);
 /*
  * Return the IPv4 wildcard address.
@@ -116,6 +119,12 @@ isc_boolean_t
 isc_netaddr_ismulticast(isc_netaddr_t *na);
 /*
  * Returns ISC_TRUE if the address is a multicast address.
+ */
+
+isc_boolean_t
+isc_netaddr_isexperimental(isc_netaddr_t *na);
+/*
+ * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
  */
 
 isc_boolean_t

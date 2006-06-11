@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.4 2006/05/11 00:10:54 mrg Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.5 2006/06/11 19:34:09 kardel Exp $	*/
 
 /*
  * ntpd.h - Prototypes for ntpd.
@@ -13,12 +13,8 @@
 #include "recvbuff.h"
 
 #ifdef SYS_WINNT
-#define exit service_exit
-extern	void	service_exit	(int);
-/*	declare the service threads */
-void	service_main	(DWORD, LPTSTR *);
-void	service_ctrl	(DWORD);
-void	worker_thread	(void *);
+#define exit ntservice_exit
+extern	void	ntservice_exit	(int);
 #define sleep(x) Sleep((DWORD) x * 1000 /* milliseconds */ );
 #endif /* SYS_WINNT */
 
@@ -75,6 +71,9 @@ extern	void	ntp_intres	P((void));
 /* ntp_io.c */
 extern	struct interface *findinterface P((struct sockaddr_storage *));
 extern  struct interface *findbcastinter P((struct sockaddr_storage *));
+extern  void	enable_broadcast P((struct interface *, struct sockaddr_storage *));
+extern  void	enable_multicast_if P((struct interface *, struct sockaddr_storage *));
+extern	void	interface_dump	 P((struct interface *));
 
 extern	void	init_io 	P((void));
 extern	void	input_handler	P((l_fp *));
@@ -106,10 +105,12 @@ extern	int	leap_actual P((int));
 
 /* ntp_loopfilter.c */
 extern	void	init_loopfilter P((void));
-extern	int 	local_clock P((struct peer *, double, double));
+extern	int 	local_clock P((struct peer *, double));
 extern	void	adj_host_clock	P((void));
 extern	void	loop_config P((int, double));
 extern	void	huffpuff	P((void));
+extern	u_long	sys_clocktime;
+extern	u_long	sys_tai;
 
 /* ntp_monitor.c */
 extern	void	init_mon	P((void));
@@ -120,7 +121,7 @@ extern	void	ntp_monitor P((struct recvbuf *));
 /* ntp_peer.c */
 extern	void	init_peer	P((void));
 extern	struct peer *findexistingpeer P((struct sockaddr_storage *, struct peer *, int));
-extern	struct peer *findpeer	P((struct sockaddr_storage *, struct interface *, int, int, int *));
+extern	struct peer *findpeer	P((struct sockaddr_storage *, struct interface *, int, int *));
 extern	struct peer *findpeerbyassoc P((u_int));
 extern	struct peer *newpeer	P((struct sockaddr_storage *, struct interface *, int, int, int, int, u_int, u_char, int, keyid_t));
 extern	void	peer_all_reset	P((void));
@@ -134,14 +135,13 @@ extern	void	clear_all	P((void));
 extern	void	expire_all	P((void));
 #endif /* OPENSSL */
 extern	struct	peer *findmanycastpeer	P((struct recvbuf *));
-extern	void	resetmanycast	P((void));
 
 /* ntp_crypto.c */
 #ifdef OPENSSL
 extern	int	crypto_recv	P((struct peer *, struct recvbuf *));
 extern	int	crypto_xmit	P((struct pkt *, struct sockaddr_storage *, int, struct exten *, keyid_t));
 extern	keyid_t	session_key	P((struct sockaddr_storage *, struct sockaddr_storage *, keyid_t, keyid_t, u_long));
-extern	void	make_keylist	P((struct peer *, struct interface *));
+extern	int	make_keylist	P((struct peer *, struct interface *));
 extern	void	key_expire	P((struct peer *));
 extern	void	crypto_update	P((void));
 extern	void	crypto_config	P((int, char *));
@@ -150,13 +150,20 @@ extern	u_int	crypto_ident	P((struct peer *));
 extern	struct exten *crypto_args P((struct peer *, u_int, char *));
 extern	int	crypto_public	P((struct peer *, u_char *, u_int));
 extern	void	value_free	P((struct value *));
+extern	char	*iffpar_file;
+extern	EVP_PKEY *iffpar_pkey;
+extern	char	*gqpar_file;
+extern	EVP_PKEY *gqpar_pkey;
+extern	char	*mvpar_file;
+extern	EVP_PKEY *mvpar_pkey;
+extern struct value tai_leap;
 #endif /* OPENSSL */
 
 /* ntp_proto.c */
 extern	void	transmit	P((struct peer *));
 extern	void	receive 	P((struct recvbuf *));
 extern	void	peer_clear	P((struct peer *, char *));
-extern	void 	process_packet	P((struct peer *, struct pkt *, l_fp *));
+extern	void 	process_packet	P((struct peer *, struct pkt *));
 extern	void	clock_select	P((void));
 extern	void	kod_proto	P((void));
 
@@ -204,7 +211,7 @@ extern	l_fp	sys_revoketime;
 
 /* ntp_util.c */
 extern	void	init_util	P((void));
-extern	void	hourly_stats	P((void));
+extern	void	write_stats	P((void));
 extern	void	stats_config	P((int, char *));
 extern	void	record_peer_stats P((struct sockaddr_storage *, int, double, double, double, double));
 extern	void	record_loop_stats P((double, double, double, double, int));
@@ -213,6 +220,7 @@ extern	void	record_raw_stats P((struct sockaddr_storage *, struct sockaddr_stora
 extern	void	record_sys_stats P((void));
 extern	void	record_crypto_stats P((struct sockaddr_storage *, const char *));
 extern  int	sock_hash P((struct sockaddr_storage *));
+extern	double	old_drift;
 
 /*
  * Variable declarations for ntpd.
@@ -220,8 +228,7 @@ extern  int	sock_hash P((struct sockaddr_storage *));
 
 /* ntp_config.c */
 extern char const *	progname;
-extern char	sys_phone[][MAXDIAL];	/* ACTS phone numbers */
-extern char	pps_device[];		/* PPS device name */
+extern char	*sys_phone[];		/* ACTS phone numbers */
 #if defined(HAVE_SCHED_SETSCHEDULER)
 extern int	config_priority_override;
 extern int	config_priority;
@@ -315,8 +322,8 @@ extern int	tc_counter;		/* poll-adjust counter */
 extern u_long	last_time;		/* time of last clock update (s) */
 extern double	last_offset;		/* last clock offset (s) */
 extern double	allan_xpt;		/* Allan intercept (s) */
-extern double	sys_error;		/* system RMS error (s) */
-extern double	sys_jitter;		/* system RMS jitter (s) */
+extern double	clock_jitter;		/* clock jitter (s) */
+extern double	sys_jitter;		/* system jitter (s) */
 
 /* ntp_monitor.c */
 extern struct mon_data mon_mru_list;
@@ -339,8 +346,8 @@ extern u_long	assocpeer_calls;	/* number of calls to findpeerbyassoc */
 extern u_long	peer_allocations;	/* number of allocations from the free list */
 extern u_long	peer_demobilizations;	/* number of structs freed to free list */
 extern int	total_peer_structs;	/* number of peer structs in circulation */
-extern int	peer_associations;	/* number of active associations */
-
+extern int	peer_associations;	/* mobilized associations */
+extern int	peer_preempt;		/* preemptable associations */
 /* ntp_proto.c */
 /*
  * System variables are declared here.	See Section 3.2 of the
@@ -354,6 +361,7 @@ extern double	sys_rootdispersion;	/* dispersion of system clock */
 extern u_int32	sys_refid;		/* reference source for local clock */
 extern l_fp	sys_reftime;		/* time we were last updated */
 extern struct peer *sys_peer;		/* our current peer */
+extern struct peer *sys_pps;		/* our current PPS peer */
 extern struct peer *sys_prefer;		/* our cherished peer */
 extern u_long	sys_automax;		/* maximum session key lifetime */
 
@@ -372,6 +380,7 @@ extern int	sys_floor;		/* cluster stratum floor */
 extern int	sys_ceiling;		/* cluster stratum ceiling */
 extern u_char	sys_ttl[];		/* ttl mapping vector */
 extern int	sys_ttlmax;		/* max ttl mapping vector index */
+extern int	leap_next;		/* leap consensus */
 
 /*
  * Statistics counters
@@ -389,7 +398,7 @@ extern u_long	sys_received;		/* packets received */
 
 /* ntp_refclock.c */
 #ifdef REFCLOCK
-#if defined(PPS) || defined(HAVE_PPSAPI)
+#ifdef PPS
 extern int	fdpps;			/* pps file descriptor */
 #endif /* PPS */
 #endif
@@ -415,12 +424,15 @@ extern u_long	timer_xmtcalls;
 
 /* ntp_util.c */
 extern int	stats_control;		/* write stats to fileset? */
+extern int	stats_write_period;	/* # of seconds between writes. */
+extern double	stats_write_tolerance;
 
 /* ntpd.c */
 extern volatile int debug;		/* debugging flag */
 extern int	nofork;			/* no-fork flag */
 extern int 	initializing;		/* initializing flag */
-#ifdef HAVE_CLOCKCTL
+#ifdef HAVE_DROPROOT
+extern int droproot;			/* flag: try to drop root privileges after startup */
 extern char *user;			/* user to switch to */
 extern char *group;			/* group to switch to */
 extern char *chrootdir;			/* directory to chroot to */

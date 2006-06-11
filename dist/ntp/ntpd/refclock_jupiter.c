@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -51,13 +51,7 @@
 #include "jupiter.h"
 
 #ifdef HAVE_PPSAPI
-# ifdef HAVE_TIMEPPS_H
-#  include <timepps.h>
-# else
-#  ifdef HAVE_SYS_TIMEPPS_H
-#   include <sys/timepps.h>
-#  endif
-# endif
+# include "ppsapi_timepps.h"
 #endif
 
 #ifdef XNTP_BIG_ENDIAN
@@ -123,6 +117,7 @@ struct instance {
 	pps_info_t pps_info;		/* last pps data */
 	pps_handle_t pps_handle;	/* pps handle */
 	u_int assert;			/* pps edge to use */
+	u_int hardpps;			/* enable kernel mode */
 	struct timespec ts;		/* last timestamp */
 #endif
 	l_fp limit;
@@ -154,7 +149,7 @@ static	void	jupiter_poll	P((int, struct peer *));
 static	void	jupiter_control	P((int, struct refclockstat *, struct
 				    refclockstat *, struct peer *));
 #ifdef HAVE_PPSAPI
-static	int	jupiter_ppsapi	P((struct instance *, int, int));
+static	int	jupiter_ppsapi	P((struct instance *));
 static	int	jupiter_pps	P((struct instance *));
 #endif /* HAVE_PPSAPI */
 static	int	jupiter_recv	P((struct instance *));
@@ -231,6 +226,8 @@ jupiter_start(
 	memcpy((char *)&pp->refid, REFID, 4);
 
 #ifdef HAVE_PPSAPI
+	instance->assert = 1;
+	instance->hardpps = 0;
 	/*
 	 * Start the PPSAPI interface if it is there. Default to use
 	 * the assert edge and do not enable the kernel hardpps.
@@ -240,7 +237,7 @@ jupiter_start(
 		msyslog(LOG_ERR,
 			"refclock_jupiter: time_pps_create failed: %m");
 	}
-	else if (!jupiter_ppsapi(instance, 0, 0))
+	else if (!jupiter_ppsapi(instance))
 		goto clean_up;
 #endif /* HAVE_PPSAPI */
 
@@ -267,7 +264,7 @@ jupiter_shutdown(int unit, struct peer *peer)
 
 	pp = peer->procptr;
 	instance = (struct instance *)pp->unitptr;
-	if(!instance)
+	if (!instance)
 		return;
 
 #ifdef HAVE_PPSAPI
@@ -338,9 +335,7 @@ jupiter_config(struct instance *instance)
  */
 int
 jupiter_ppsapi(
-	struct instance *instance,	/* unit structure pointer */
-	int enb_clear,		/* clear enable */
-	int enb_hardpps		/* hardpps enable */
+	struct instance *instance	/* unit structure pointer */
 	)
 {
 	int capability;
@@ -351,14 +346,14 @@ jupiter_ppsapi(
 		return (0);
 	}
 	memset(&instance->pps_params, 0, sizeof(pps_params_t));
-	if (enb_clear)
+	if (!instance->assert)
 		instance->pps_params.mode = capability & PPS_CAPTURECLEAR;
 	else
 		instance->pps_params.mode = capability & PPS_CAPTUREASSERT;
 	if (!(instance->pps_params.mode & (PPS_CAPTUREASSERT | PPS_CAPTURECLEAR))) {
 		msyslog(LOG_ERR,
 		    "refclock_jupiter: invalid capture edge %d",
-		    !enb_clear);
+		    instance->assert);
 		return (0);
 	}
 	instance->pps_params.mode |= PPS_TSFMT_TSPEC;
@@ -367,9 +362,9 @@ jupiter_ppsapi(
 		    "refclock_jupiter: time_pps_setparams failed: %m");
 		return (0);
 	}
-	if (enb_hardpps) {
+	if (instance->hardpps) {
 		if (time_pps_kcbind(instance->pps_handle, PPS_KC_HARDPPS,
-				    instance->pps_params.mode & (PPS_CAPTUREASSERT | PPS_CAPTURECLEAR),
+				    instance->pps_params.mode & ~PPS_TSFMT_TSPEC,
 				    PPS_TSFMT_TSPEC) < 0) {
 			msyslog(LOG_ERR,
 			    "refclock_jupiter: time_pps_kcbind failed: %m");
@@ -385,7 +380,7 @@ jupiter_ppsapi(
 		jupiter_debug(instance->peer, "refclock_jupiter",
 			"pps capability 0x%x version %d mode 0x%x kern %d",
 			capability, instance->pps_params.api_version,
-			instance->pps_params.mode, enb_hardpps);
+			instance->pps_params.mode, instance->hardpps);
 	}
 #endif
 
@@ -505,7 +500,7 @@ jupiter_control(
 
 #ifdef HAVE_PPSAPI
 	instance->assert = !(pp->sloppyclockflag & CLK_FLAG3);
-	jupiter_ppsapi(instance, !instance->assert, 0);
+	jupiter_ppsapi(instance);
 #endif /* HAVE_PPSAPI */
 
 	sloppyclockflag = instance->sloppyclockflag;
@@ -690,7 +685,7 @@ jupiter_receive(struct recvbuf *rbufp)
 			    "jupiter_receive", "%s chan ver %s, %s (%s)",
 			    ip->chans, ip->vers, ip->date, ip->opts);
 			msyslog(LOG_DEBUG,
-			    "jupiter_receive: %s chan ver %s, %s (%s)\n",
+			    "jupiter_receive: %s chan ver %s, %s (%s)",
 			    ip->chans, ip->vers, ip->date, ip->opts);
 			if (instance->wantid)
 				instance->wantid = 0;
@@ -955,8 +950,8 @@ static struct {
 } reqmsg = {
 	{ putshort(JUPITER_SYNC), 0,
 	    putshort((sizeof(struct jrequest) / sizeof(u_short)) - 1),
-	    0, (u_char)putshort(JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK |
-	    JUPITER_FLAG_CONN | JUPITER_FLAG_LOG), 0 },
+	    0, JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK |
+	    JUPITER_FLAG_CONN | JUPITER_FLAG_LOG, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -981,7 +976,7 @@ jupiter_reqmsg(struct instance *instance, u_int id,
 /* Cancel periodic message output */
 static struct jheader canmsg = {
 	putshort(JUPITER_SYNC), 0, 0, 0,
-	(u_char)putshort(JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK | JUPITER_FLAG_DISC),
+	JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK | JUPITER_FLAG_DISC,
 	0
 };
 
@@ -1000,7 +995,7 @@ jupiter_canmsg(struct instance *instance, u_int id)
 /* Request a single message output */
 static struct jheader reqonemsg = {
 	putshort(JUPITER_SYNC), 0, 0, 0,
-	(u_char)putshort(JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK | JUPITER_FLAG_QUERY),
+	JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK | JUPITER_FLAG_QUERY,
 	0
 };
 
@@ -1023,7 +1018,7 @@ static struct {
 } platmsg = {
 	{ putshort(JUPITER_SYNC), putshort(JUPITER_I_PLAT),
 	    putshort((sizeof(struct jplat) / sizeof(u_short)) - 1), 0,
-	    (u_char)putshort(JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK), 0 },
+	    JUPITER_FLAG_REQUEST | JUPITER_FLAG_NAK, 0 },
 	{ 0, 0, 0 }
 };
 

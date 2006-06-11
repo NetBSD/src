@@ -1,4 +1,4 @@
-/*	$NetBSD: timing.c,v 1.3 2006/05/10 21:53:14 mrg Exp $	*/
+/*	$NetBSD: timing.c,v 1.4 2006/06/11 19:34:21 kardel Exp $	*/
 
 /*  Copyright (C) 1996 N.M. Maclaren
     Copyright (C) 1996 The University of Cambridge
@@ -96,12 +96,14 @@ negative, unsigned values. */
             (long)adjust.tv_sec,(long)adjust.tv_usec);
     if (immediate) {
         errno = 0;
-      /*  if (settimeofday(&new,NULL))
-            fatal(1,"unable to reset current system time",NULL);*/
+        if (settimeofday(&new,NULL))
+            fatal(1,"unable to reset current system time",NULL);
     } else {
+	previous.tv_sec  = 0;
+	previous.tv_usec = 0;
         errno = 0;
-       /* if (adjtime(&adjust,&previous))
-            fatal(1,"unable to adjust current system time",NULL);*/
+        if (adjtime(&adjust,&previous))
+            fatal(1,"unable to adjust current system time",NULL);
         if (previous.tv_sec != 0 || previous.tv_usec != 0) {
             sprintf(text,"(%ld,%.6ld)",
                 (long)previous.tv_sec,(long)previous.tv_usec);

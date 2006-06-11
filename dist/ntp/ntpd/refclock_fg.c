@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_fg.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_fg.c,v 1.4 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
  * refclock_fg - clock driver for the Forum Graphic GPS datating station
@@ -325,9 +325,6 @@ fg_receive(
                 printf ("fg: time is %04d/%03d %02d:%02d:%02d UTC\n",
                          pp->year, pp->day, pp->hour, pp->minute, pp->second);
 #endif
-
-        if (peer->stratum <= 1)
-                peer->refid = pp->refid;
         pp->disp =  (10e-6);
 	pp->lastrec = rbufp->recv_time; /* Is it better than get_systime()? */
 	/* pp->leap = LEAP_NOWARNING; */
