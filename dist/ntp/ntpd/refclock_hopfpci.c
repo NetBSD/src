@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfpci.c,v 1.1.1.1 2003/12/04 16:05:27 drochner Exp $	*/
+/*	$NetBSD: refclock_hopfpci.c,v 1.1.1.2 2006/06/11 15:00:53 kardel Exp $	*/
 
 /*
  * refclock_hopfpci.c
@@ -183,17 +183,11 @@ hopfpci_shutdown(
 	struct peer *peer
 	)
 {
-	struct refclockproc *pp;
-	register struct hopfpciTime *up;
-
-	pp = peer->procptr;
-	up = (struct hopfpciTime *)pp->unitptr;
 
 #ifndef SYS_WINNT
 	close(fd);
 #else
 	CloseHopfDevice();
-/*	UnmapViewOfFile (up); */
 #endif
 }
 
@@ -208,11 +202,9 @@ hopfpci_poll(
 	)
 {
 	struct refclockproc *pp;
-	register struct hopfpciTime *up;
 	HOPFTIME m_time;
 
 	pp = peer->procptr;
-	up = (struct hopfpciTime *)pp->unitptr;
 
 #ifndef SYS_WINNT
 	ioctl(fd,HOPF_CLOCK_GET_UTC,&m_time);

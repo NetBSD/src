@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_filegen.h,v 1.1.1.2 2006/06/11 14:59:26 kardel Exp $	*/
 
 /*
  * ntp_filegen.h,v 3.9 1996/12/01 16:02:45 kardel Exp
@@ -50,4 +50,4 @@ typedef struct FILEGEN
 extern	void	filegen_setup	P((FILEGEN *, u_long));
 extern	void	filegen_config	P((FILEGEN *, char *, u_int, u_int));
 extern	FILEGEN *filegen_get	P((char *));
-extern	void	filegen_register P((const char *, FILEGEN *));
+extern	void	filegen_register P((char *, const char *, FILEGEN *));

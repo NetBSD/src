@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.1.1.3 2006/06/11 15:00:49 kardel Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -215,7 +215,7 @@
 #define LIMIT		1000.	/* soft limiter threshold */
 #define AGAIN		6.	/* baseband gain */
 #define LAG		10	/* discriminator lag */
-#define	DEVICE_AUDIO	"/dev/chu_audio" /* device name */
+#define	DEVICE_AUDIO	"/dev/audio" /* device name */
 #define	DESCRIPTION	"CHU Audio/Modem Receiver" /* WRU */
 #define	AUDIO_BUFSIZ	240	/* audio buffer size (30 ms) */
 #else
@@ -1114,7 +1114,7 @@ chu_b(
 		up->tstamp[up->ntstamp] = up->cstamp[i];
 		L_SUB(&up->tstamp[up->ntstamp], &offset);
 		L_ADD(&offset, &up->charstamp);
-		if (up->ntstamp < MAXSTAGE) 
+		if (up->ntstamp < MAXSTAGE - 1) 
 			up->ntstamp++;
 	}
 }
@@ -1218,7 +1218,7 @@ chu_a(
 			up->tstamp[up->ntstamp] = up->cstamp[i];
 			L_SUB(&up->tstamp[up->ntstamp], &offset);
 			L_ADD(&offset, &up->charstamp);
-			if (up->ntstamp < MAXSTAGE) 
+			if (up->ntstamp < MAXSTAGE - 1) 
 				up->ntstamp++;
 		}
 		while (temp > up->prevsec) {
@@ -1233,7 +1233,7 @@ chu_a(
 	}
 	i = -(2 * k);
 	for (j = 0; j < nchar; j++) {
-		if (i < 0 || i > 19) {
+		if (i < 0 || i > 18) {
 			i += 2;
 			continue;
 		}

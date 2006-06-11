@@ -1,9 +1,8 @@
-/*	$NetBSD: numtohost.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: numtohost.c,v 1.1.1.2 2006/06/11 14:59:59 kardel Exp $	*/
 
 /*
  * numtohost - convert network number to host name.
  */
-#include <netdb.h>
 
 #include "ntp_fp.h"
 #include "ntp_stdlib.h"

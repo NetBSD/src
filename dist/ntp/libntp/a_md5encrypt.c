@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.3 2003/12/04 16:05:23 drochner Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.1.1.4 2006/06/11 14:59:48 kardel Exp $	*/
 
 /*
  *	MD5 interface for rsaref2.0
@@ -102,5 +102,5 @@ addr2refid(struct sockaddr_storage *addr)
 	    sizeof(struct in6_addr));
 	MD5Final(digest, &md5);
 	memcpy(&addr_refid, digest, 4);
-	return (htonl(addr_refid));
+	return (addr_refid);
 }

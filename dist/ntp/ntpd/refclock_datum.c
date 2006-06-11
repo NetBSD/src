@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_datum.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
+/*	$NetBSD: refclock_datum.c,v 1.1.1.3 2006/06/11 15:00:51 kardel Exp $	*/
 
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
@@ -121,6 +121,7 @@
 #define	REFID "DATM"			/* reference id */
 #define DATUM_DISPERSION 0		/* fixed dispersion = 0 ms */
 #define DATUM_MAX_ERROR 0.100		/* limits on sigma squared */
+#define DATUM_DEV	"/dev/datum"	/* device name */
 
 #define DATUM_MAX_ERROR2 (DATUM_MAX_ERROR*DATUM_MAX_ERROR)
 
@@ -235,6 +236,7 @@ datum_pts_start(
 {
 	struct datum_pts_unit **temp_datum_pts_unit;
 	struct datum_pts_unit *datum_pts;
+	int fd;
 #ifdef HAVE_TERMIOS
 	struct termios arg;
 #endif
@@ -243,6 +245,16 @@ datum_pts_start(
 	if (debug)
 	    printf("Starting Datum PTS unit %d\n", unit);
 #endif
+
+	/*
+	** Open the Datum PTS device
+	*/
+	fd = open(DATUM_DEV, O_RDWR);
+
+	if (fd < 0) {
+		msyslog(LOG_ERR, "Datum_PTS: open(\"%s\", O_RDWR) failed: %m", DATUM_DEV);
+		return 0;
+	}
 
 	/*
 	** Create the memory for the new unit
@@ -262,11 +274,7 @@ datum_pts_start(
 	datum_pts->yearstart = 0;	/* initialize the yearstart to 0 */
 	datum_pts->sigma2 = 0.0;	/* initialize the sigma2 to 0 */
 
-	/*
-	** Open the Datum PTS device
-	*/
-
-	datum_pts->PTS_fd = open("/dev/datum",O_RDWR);
+	datum_pts->PTS_fd = fd;
 
 	fcntl(datum_pts->PTS_fd, F_SETFL, 0); /* clear the descriptor flags */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.h,v 1.1.1.3 2003/12/04 16:05:22 drochner Exp $	*/
+/*	$NetBSD: ntp_request.h,v 1.1.1.4 2006/06/11 14:59:27 kardel Exp $	*/
 
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
@@ -292,6 +292,7 @@ struct resp_pkt {
 #define	INFO_FLAG_AUTHENABLE	0x20
 #define	INFO_FLAG_SEL_CANDIDATE	0x40
 #define	INFO_FLAG_SHORTLIST	0x80
+#define	INFO_FLAG_IBURST	0x100
 
 /*
  * Flags in the system information returns
@@ -519,7 +520,7 @@ struct info_mem_stats {
 	u_int32 findpeer_calls;
 	u_int32 allocations;
 	u_int32 demobilizations;
-	u_char hashcount[HASH_SIZE];
+	u_char hashcount[NTP_HASH_SIZE];
 };
 
 

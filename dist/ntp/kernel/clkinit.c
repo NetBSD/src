@@ -1,9 +1,7 @@
-/*	$NetBSD: clkinit.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: clkinit.c,v 1.1.1.2 2006/06/11 14:59:40 kardel Exp $	*/
 
 /*
 **	dynamically loadable clk driver
-**
-**	/src/NTP/REPOSITORY/v3/kernel/clkinit.c,v 1.1.1.1 1994/07/11 07:56:25 kardel Exp
 **
 **	william robertson <rob@agate.berkeley.edu>  
 */

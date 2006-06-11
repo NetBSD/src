@@ -1,9 +1,9 @@
-/*	$NetBSD: clk_rcc8000.c,v 1.1.1.2 2003/12/04 16:05:25 drochner Exp $	*/
+/*	$NetBSD: clk_rcc8000.c,v 1.1.1.3 2006/06/11 15:00:09 kardel Exp $	*/
 
 /*
- * /src/NTP/ntp-4/libparse/clk_rcc8000.c,v 4.6 1999/11/28 09:13:51 kardel RELEASE_19991128_A
+ * /src/NTP/ntp4-dev/libparse/clk_rcc8000.c,v 4.9 2004/11/14 15:29:41 kardel RELEASE_20050508_A
  *  
- * clk_rcc8000.c,v 4.6 1999/11/28 09:13:51 kardel RELEASE_19991128_A
+ * clk_rcc8000.c,v 4.9 2004/11/14 15:29:41 kardel RELEASE_20050508_A
  *
  * Radiocode Clocks Ltd RCC 8000 Intelligent Off-Air Master Clock support
  *
@@ -171,6 +171,9 @@ int clk_rcc8000_bs;
  * History:
  *
  * clk_rcc8000.c,v
+ * Revision 4.9  2004/11/14 15:29:41  kardel
+ * support PPSAPI, upgrade Copyright to Berkeley style
+ *
  * Revision 4.6  1999/11/28 09:13:51  kardel
  * RECON_4_0_98F
  *

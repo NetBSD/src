@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi2knr.c,v 1.1.1.2 2003/12/04 16:05:34 drochner Exp $	*/
+/*	$NetBSD: ansi2knr.c,v 1.1.1.3 2006/06/11 15:02:24 kardel Exp $	*/
 
 /* Copyright (C) 1989, 2000 Aladdin Enterprises.  All rights reserved. */
 
@@ -66,7 +66,7 @@ program under the GPL.
 
 	lpd 2000-04-12 backs out Eggert's changes because of bugs:
 	- concatlits didn't declare the type of its bufend argument;
-	- concatlits didn't't recognize when it was inside a comment;
+	- concatlits didn't recognize when it was inside a comment;
 	- scanstring could scan backward past the beginning of the string; when
 	- the check for \ + newline in scanstring was unnecessary.
 

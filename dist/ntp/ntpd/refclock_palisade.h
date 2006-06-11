@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.h,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
+/*	$NetBSD: refclock_palisade.h,v 1.1.1.3 2006/06/11 15:01:12 kardel Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -61,9 +61,11 @@
 
 #if defined HAVE_SYS_MODEM_H
 #include <sys/modem.h>
+#ifndef __QNXNTO__
 #define TIOCMSET MCSETA
 #define TIOCMGET MCGETA
 #define TIOCM_RTS MRTS
+#endif
 #endif
 
 #ifdef HAVE_TERMIOS_H

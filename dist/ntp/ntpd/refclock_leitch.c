@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_leitch.c,v 1.1.1.2 2003/12/04 16:05:28 drochner Exp $	*/
+/*	$NetBSD: refclock_leitch.c,v 1.1.1.3 2006/06/11 15:00:59 kardel Exp $	*/
 
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock
@@ -168,7 +168,7 @@ leitch_poll(
 	if (debug)
 	    fprintf(stderr, "leitch_poll()\n");
 #endif
-	if (unit > MAXUNITS) {
+	if (unit >= MAXUNITS) {
 		/* XXXX syslog it */
 		return;
 	}

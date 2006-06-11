@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfser.c,v 1.1.1.1 2003/12/04 16:05:27 drochner Exp $	*/
+/*	$NetBSD: refclock_hopfser.c,v 1.1.1.2 2006/06/11 15:00:53 kardel Exp $	*/
 
 /*
  *
@@ -32,9 +32,11 @@
 
 #if defined HAVE_SYS_MODEM_H
 # include <sys/modem.h>
-# define TIOCMSET MCSETA
-# define TIOCMGET MCGETA
-# define TIOCM_RTS MRTS
+# ifndef __QNXNTO__
+#  define TIOCMSET MCSETA
+#  define TIOCMGET MCGETA
+#  define TIOCM_RTS MRTS
+# endif
 #endif
 
 #ifdef HAVE_TERMIOS_H
