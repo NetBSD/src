@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.73 2006/05/25 14:13:29 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.74 2006/06/11 07:32:18 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@
 #include <sys/cdefs.h>
 
 #include "opt_ktrace.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.73 2006/05/25 14:13:29 yamt Exp $");
+#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.74 2006/06/11 07:32:18 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
