@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.4 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: socket.c,v 1.5 2006/06/11 19:34:21 kardel Exp $	*/
 
 /*  Copyright (C) 1996, 2000 N.M. Maclaren
     Copyright (C) 1996, 2000 The University of Cambridge
@@ -33,7 +33,11 @@ static struct sockaddr_in here[MAX_SOCKETS], there[MAX_SOCKETS];
 #endif
 
 void display_in_hex(const void *, int);
+#ifdef HAVE_IPV6
 void display_sock_in_hex(struct sockaddr_storage *);
+#else
+void display_sock_in_hex (struct sockaddr_in *);
+#endif
 
 /* There needs to be some disgusting grobble for handling timeouts, that is
 identical to the grobble in internet.c. */
@@ -114,7 +118,7 @@ void open_socket (int which, char *hostname, int timespan) {
 socket. */
 
     int port, k, sl;
-    struct sockaddr_storage address, anywhere, everywhere;
+    struct sockaddr_storage address, anywhere;
 
 /* Initialise and find out the server and port number.  Note that the port
 number is in network format. */
@@ -127,14 +131,12 @@ number is in network format. */
         fatal(0,"socket index out of range or already open",NULL);
     if (verbose > 2)
 	fprintf(stderr,"Looking for the socket addresses\n");
-    find_address(&address,&anywhere,&everywhere,&port,hostname,timespan);
+    find_address(&address,&anywhere,&port,hostname,timespan);
     if (verbose > 2) {
         fprintf(stderr,"Internet address: address=");
         display_sock_in_hex(&address);
         fprintf(stderr," anywhere=");
         display_sock_in_hex(&anywhere);
-        fprintf(stderr," everywhere=");
-        display_sock_in_hex(&everywhere);
         fputc('\n',stderr);
     }
 
@@ -143,10 +145,10 @@ be reset before use in server mode. */
 
     memset(&here[which], 0, sizeof(struct sockaddr_storage));
     here[which] = anywhere;
-    if (!(operation == op_listen || operation == op_server))
+    if (operation != op_listen)
         ((struct sockaddr_in6 *)&here[which])->sin6_port = 0;
     memset(&there[which], 0, sizeof(struct sockaddr_storage));
-    there[which] = (operation == op_broadcast ? everywhere : address);
+    there[which] = address;
     if (verbose > 2) {
         fprintf(stderr,"Initial sockets: here=");
         display_sock_in_hex(&here[which]);
@@ -174,12 +176,6 @@ be reset before use in server mode. */
     if ((descriptors[which] = socket(here[which].ss_family,SOCK_DGRAM,0)) < 0
 	|| bind(descriptors[which],(struct sockaddr *)&here[which], sl) < 0)
         fatal(1,"unable to allocate socket for NTP",NULL);
-    if (operation == op_broadcast) {
-        errno = 0;
-        k = setsockopt(descriptors[which],SOL_SOCKET,SO_BROADCAST,
-                (void *)&k,sizeof(k));
-        if (k != 0) fatal(1,"unable to set permission to broadcast",NULL);
-    }
 }
 
 #else
@@ -190,7 +186,7 @@ void open_socket (int which, char *hostname, int timespan) {
 socket. */
 
     int port, k;
-    struct in_addr address, anywhere, everywhere;
+    struct in_addr address, anywhere;
 
 /* Initialise and find out the server and port number.  Note that the port
 number is in network format. */
@@ -200,29 +196,26 @@ number is in network format. */
     if (which < 0 || which >= MAX_SOCKETS || descriptors[which] >= 0)
         fatal(0,"socket index out of range or already open",NULL);
     if (verbose > 2) fprintf(stderr,"Looking for the socket addresses\n");
-    find_address(&address,&anywhere,&everywhere,&port,hostname,timespan);
+    find_address(&address,&anywhere,&port,hostname,timespan);
     if (verbose > 2) {
         fprintf(stderr,"Internet address: address=");
         display_in_hex(&address,sizeof(struct in_addr));
         fprintf(stderr," anywhere=");
         display_in_hex(&anywhere,sizeof(struct in_addr));
-        fprintf(stderr," everywhere=");
-        display_in_hex(&everywhere,sizeof(struct in_addr));
         fputc('\n',stderr);
     }
 
-/* Set up our own and the target addresses.  Note that the target address will
-be reset before use in server mode. */
+/* Set up our own and the target addresses. */
 
     memset(&here[which],0,sizeof(struct sockaddr_in));
     here[which].sin_family = AF_INET;
     here[which].sin_port =
-        (operation == op_listen || operation == op_server ? port : 0);
+        (operation == op_listen ? port : 0);
     here[which].sin_addr = anywhere;
     memset(&there[which],0,sizeof(struct sockaddr_in));
     there[which].sin_family = AF_INET;
     there[which].sin_port = port;
-    there[which].sin_addr = (operation == op_broadcast ? everywhere : address);
+    there[which].sin_addr = address;
     if (verbose > 2) {
         fprintf(stderr,"Initial sockets: here=");
         display_in_hex(&here[which].sin_addr,sizeof(struct in_addr));
@@ -242,12 +235,6 @@ be reset before use in server mode. */
             bind(descriptors[which],(struct sockaddr *)&here[which],
                     sizeof(here[which]))  < 0)
         fatal(1,"unable to allocate socket for NTP",NULL);
-    if (operation == op_broadcast) {
-        errno = 0;
-        k = setsockopt(descriptors[which],SOL_SOCKET,SO_BROADCAST,
-                (void *)&k,sizeof(k));
-        if (k != 0) fatal(1,"unable to set permission to broadcast",NULL);
-    }
 }
 
 #endif
@@ -316,10 +303,7 @@ length and timeout are not fatal. */
 
 /* Get the packet and clear the timeout, if any.  */
 
-    if (operation == op_server)
-        memcpy(ptr = &there[which],&here[which],sizeof(scratch));
-    else
-        memcpy(ptr = &scratch,&there[which],sizeof(scratch));
+    memcpy(ptr = &scratch,&there[which],sizeof(scratch));
     n = sizeof(scratch);
     errno = 0;
     k = recvfrom(descriptors[which],packet,(size_t)length,0,

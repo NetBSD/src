@@ -1,4 +1,4 @@
-/*	$NetBSD: lib_strbuf.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: lib_strbuf.h,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * lib_strbuf.h - definitions for routines which use the common string buffers
@@ -9,7 +9,7 @@
 /*
  * Sizes of things
  */
-#define	LIB_NUMBUFS	20
+#define	LIB_NUMBUFS	200
 #define	LIB_BUFLENGTH	80
 
 /*
@@ -22,6 +22,7 @@
 		buf = &lib_stringbuf[lib_nextbuf][0]; \
 		if (++lib_nextbuf >= LIB_NUMBUFS) \
 			lib_nextbuf = 0; \
+		memset(buf, 0, LIB_BUFLENGTH); \
 	} while (0)
 
 extern char lib_stringbuf[LIB_NUMBUFS][LIB_BUFLENGTH];

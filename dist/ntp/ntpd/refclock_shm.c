@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.4 2006/05/10 21:53:14 mrg Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.5 2006/06/11 19:34:12 kardel Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory 
@@ -273,13 +273,14 @@ shm_poll(
 		}
 		up->valid=0;
 		if (ok) {
-			time_t help; /* XXX NetBSD has incompatible tv_sec */
+			time_t help;	/* XXX NetBSD has incompatible tv_sec */
+
 			TVTOTS(&tvr,&pp->lastrec);
 			pp->lastrec.l_ui += JAN_1970;
 			/* pp->lasttime = current_time; */
 			pp->polls++;
 			help = tvt.tv_sec;
-			t=gmtime (&help);
+			t = gmtime (&help);
 			pp->day=t->tm_yday+1;
 			pp->hour=t->tm_hour;
 			pp->minute=t->tm_min;
