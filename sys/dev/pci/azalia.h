@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.8 2006/06/09 16:56:30 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.9 2006/06/11 11:48:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -513,8 +513,13 @@ typedef struct {
 
 typedef struct {
 	int nconv;
-	nid_t conv[HDA_MAX_CHANNELS];
+	nid_t conv[HDA_MAX_CHANNELS]; /* front, surround, clfe, side, ... */
 } convgroup_t;
+typedef struct {
+	int cur;
+	int ngroups;
+	convgroup_t groups[32];
+} convgroupset_t;
 
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
@@ -538,12 +543,8 @@ typedef struct codec_t {
 				 * w[0] to w[wstart-1] are unused. */
 #define FOR_EACH_WIDGET(this, i)	for (i = (this)->wstart; i < (this)->wend; i++)
 
-	int ndacgroups;
-	convgroup_t dacgroups[32];
-	int cur_dac;		/* currently selected DAC group index */
-	int nadcs;
-	nid_t adcs[32];
-	int cur_adc;		/* currently selected ADC index */
+	convgroupset_t dacs;
+	convgroupset_t adcs;
 	int running;
 
 	int nmixers, maxmixers;
