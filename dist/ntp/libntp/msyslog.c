@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.4 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -27,7 +27,6 @@
 
 #ifdef SYS_WINNT
 # include <stdarg.h>
-# include "..\ports\winnt\libntp\log.h"
 # include "..\ports\winnt\libntp\messages.h"
 #endif
 

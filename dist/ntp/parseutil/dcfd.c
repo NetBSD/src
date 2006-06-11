@@ -1,9 +1,9 @@
-/*	$NetBSD: dcfd.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.3 2006/06/11 19:34:21 kardel Exp $	*/
 
 /*
- * /src/NTP/ntp-4/parseutil/dcfd.c,v 4.9 1999/02/28 13:06:27 kardel RELEASE_19990228_A
+ * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
  *  
- * dcfd.c,v 4.9 1999/02/28 13:06:27 kardel RELEASE_19990228_A
+ * dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
  *
  * DCF77 100/200ms pulse synchronisation daemon program (via 50Baud serial line)
  *
@@ -15,22 +15,40 @@
  * Lacks:
  *  Leap second handling (at that level you should switch to NTP Version 4 - really!)
  *
- * Copyright (C) 1995-1999 by Frank Kardel <kardel@acm.org>
- * Copyright (C) 1993-1994 by Frank Kardel
- * Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
- *                                    
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
  *
- * This program may not be sold or used for profit without prior
- * written consent of the author.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the author nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -113,6 +131,8 @@
 #ifdef DECL_ERRNO
      extern int errno;
 #endif
+
+static char *revision = "4.18";
 
 /*
  * display received data (avoids also detaching from tty)
@@ -1551,13 +1571,16 @@ main(
 		memset(term.c_cc, 0, sizeof(term.c_cc));
 		term.c_cc[VMIN] = 1;
 #ifdef NO_PARENB_IGNPAR
-		term.c_cflag = B50|CS8|CREAD|CLOCAL;
+		term.c_cflag = CS8|CREAD|CLOCAL;
 #else
-		term.c_cflag = B50|CS8|CREAD|CLOCAL|PARENB;
+		term.c_cflag = CS8|CREAD|CLOCAL|PARENB;
 #endif
 		term.c_iflag = IGNPAR;
 		term.c_oflag = 0;
 		term.c_lflag = 0;
+
+		cfsetispeed(&term, B50);
+		cfsetospeed(&term, B50);
 
 		if (TTY_SETATTR(fd, &term) == -1)
 		{
@@ -1583,21 +1606,6 @@ main(
 		/*
 		 * setup periodic operations (state control / frequency control)
 		 */
-#ifdef HAVE_SIGVEC
-		{
-			struct sigvec vec;
-
-			vec.sv_handler   = tick;
-			vec.sv_mask      = 0;
-			vec.sv_flags     = 0;
-
-			if (sigvec(SIGALRM, &vec, (struct sigvec *)0) == -1)
-			{
-				syslog(LOG_ERR, "sigvec(SIGALRM): %m");
-				exit(1);
-			}
-		}
-#else
 #ifdef HAVE_SIGACTION
 		{
 			struct sigaction act;
@@ -1612,6 +1620,21 @@ main(
 			if (sigaction(SIGALRM, &act, (struct sigaction *)0) == -1)
 			{
 				syslog(LOG_ERR, "sigaction(SIGALRM): %m");
+				exit(1);
+			}
+		}
+#else
+#ifdef HAVE_SIGVEC
+		{
+			struct sigvec vec;
+
+			vec.sv_handler   = tick;
+			vec.sv_mask      = 0;
+			vec.sv_flags     = 0;
+
+			if (sigvec(SIGALRM, &vec, (struct sigvec *)0) == -1)
+			{
+				syslog(LOG_ERR, "sigvec(SIGALRM): %m");
 				exit(1);
 			}
 		}
@@ -1639,7 +1662,7 @@ main(
 		(void) alarm(1<<ADJINTERVAL);
 #endif
 
-		PRINTF("  DCF77 monitor - Copyright (C) 1993-1998 by Frank Kardel\n\n");
+		PRINTF("  DCF77 monitor %s - Copyright (C) 1993-2005 by Frank Kardel\n\n", revision);
 
 		pbuf[60] = '\0';
 		for ( i = 0; i < 60; i++)
@@ -1852,3 +1875,31 @@ main(
   
 	return 0;
 }
+
+/*
+ * History:
+ *
+ * dcfd.c,v
+ * Revision 4.18  2005/10/07 22:08:18  kardel
+ * make dcfd.c compile on NetBSD 3.99.9 again (configure/sigvec compatibility fix)
+ *
+ * Revision 4.17.2.1  2005/10/03 19:15:16  kardel
+ * work around configure not detecting a missing sigvec compatibility
+ * interface on NetBSD 3.99.9 and above
+ *
+ * Revision 4.17  2005/08/10 10:09:44  kardel
+ * output revision information
+ *
+ * Revision 4.16  2005/08/10 06:33:25  kardel
+ * cleanup warnings
+ *
+ * Revision 4.15  2005/08/10 06:28:45  kardel
+ * fix setting of baud rate
+ *
+ * Revision 4.14  2005/04/16 17:32:10  kardel
+ * update copyright
+ *
+ * Revision 4.13  2004/11/14 15:29:41  kardel
+ * support PPSAPI, upgrade Copyright to Berkeley style
+ *
+ */

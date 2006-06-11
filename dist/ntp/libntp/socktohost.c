@@ -1,11 +1,10 @@
-/*	$NetBSD: socktohost.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: socktohost.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure
  */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <netinet/in.h>
 
 #include <arpa/inet.h>

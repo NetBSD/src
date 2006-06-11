@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.3 2006/06/11 19:34:11 kardel Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -12,6 +12,7 @@
 
 #include "ntpd.h"
 #include "ntp_stdlib.h"
+#include <ntp_random.h>
 #ifdef OPENSSL
 #include "openssl/rand.h"
 #endif /* OPENSSL */
@@ -23,14 +24,12 @@
  *                             packet->mode
  * peer->mode      | UNSPEC  ACTIVE PASSIVE  CLIENT  SERVER  BCAST
  * ----------      | ---------------------------------------------
- * NO_PEER         |   e       1       e       1       1       1
+ * NO_PEER         |   e       1       0       1       1       1
  * ACTIVE          |   e       1       1       0       0       0
  * PASSIVE         |   e       1       e       0       0       0
  * CLIENT          |   e       0       0       0       1       1
  * SERVER          |   e       0       0       0       0       0
  * BCAST	   |   e       0       0       0       0       0
- * CONTROL	   |   e       0       0       0       0       0
- * PRIVATE	   |   e       0       0       0       0       0
  * BCLIENT         |   e       0       0       0       e       1
  *
  * One point to note here: a packet in BCAST mode can potentially match
@@ -40,11 +39,13 @@
  * circumvent that problem by requiring that the first b(m)roadcast
  * received after the change back to BCLIENT mode sets the clock.
  */
+#define AM_MODES	7	/* number of rows and columns */
+#define NO_PEER		0	/* action when no peer is found */
 
 int AM[AM_MODES][AM_MODES] = {
 /*	{ UNSPEC,   ACTIVE,     PASSIVE,    CLIENT,     SERVER,     BCAST } */
 
-/*NONE*/{ AM_ERR, AM_NEWPASS, AM_ERR,     AM_FXMIT,   AM_MANYCAST, AM_NEWBCL},
+/*NONE*/{ AM_ERR, AM_NEWPASS, AM_NOMATCH, AM_FXMIT,   AM_MANYCAST, AM_NEWBCL},
 
 /*A*/	{ AM_ERR, AM_PROCPKT, AM_PROCPKT, AM_NOMATCH, AM_NOMATCH,  AM_NOMATCH},
 
@@ -56,11 +57,7 @@ int AM[AM_MODES][AM_MODES] = {
 
 /*BCST*/{ AM_ERR, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH,  AM_NOMATCH},
 
-/*CNTL*/{ AM_ERR, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH,  AM_NOMATCH},
-
-/*PRIV*/{ AM_ERR, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH,  AM_NOMATCH},
-
-/*BCL*/ { AM_ERR, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH, AM_ERR,      AM_PROCPKT},
+/*BCL*/ { AM_ERR, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH, AM_NOMATCH,  AM_PROCPKT},
 };
 
 #define MATCH_ASSOC(x,y)	AM[(x)][(y)]
@@ -76,10 +73,10 @@ int AM[AM_MODES][AM_MODES] = {
 /*
  * Peer hash tables
  */
-struct peer *peer_hash[HASH_SIZE];	/* peer hash table */
-int peer_hash_count[HASH_SIZE];		/* peers in each bucket */
-struct peer *assoc_hash[HASH_SIZE];	/* association ID hash table */
-int assoc_hash_count[HASH_SIZE];	/* peers in each bucket */
+struct peer *peer_hash[NTP_HASH_SIZE];	/* peer hash table */
+int peer_hash_count[NTP_HASH_SIZE];	/* peers in each bucket */
+struct peer *assoc_hash[NTP_HASH_SIZE];	/* association ID hash table */
+int assoc_hash_count[NTP_HASH_SIZE];	/* peers in each bucket */
 static struct peer *peer_free;		/* peer structures free list */
 int peer_free_count;			/* count of free structures */
 
@@ -104,7 +101,8 @@ u_long assocpeer_calls;			/* calls to findpeerbyassoc */
 u_long peer_allocations;		/* allocations from free list */
 u_long peer_demobilizations;		/* structs freed to free list */
 int total_peer_structs;			/* peer structs */
-int peer_associations;			/* active associations */
+int peer_associations;			/* mobilized associations */
+int peer_preempt;			/* preemptable associations */
 static struct peer init_peer_alloc[INIT_PEER_ALLOC]; /* init alloc */
 
 static	void	getmorepeermem	P((void));
@@ -123,7 +121,7 @@ init_peer(void)
 	/*
 	 * Clear hash table and counters.
 	 */
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < NTP_HASH_SIZE; i++) {
 		peer_hash[i] = 0;
 		peer_hash_count[i] = 0;
 		assoc_hash[i] = 0;
@@ -150,9 +148,7 @@ init_peer(void)
 	/*
 	 * Initialize our first association ID
 	 */
-	current_association_ID = (associd_t)ranp2(16);
-	if (current_association_ID == 0)
-	    current_association_ID = 1;
+	while ((current_association_ID = ntp_random() & 0xffff) == 0);
 }
 
 
@@ -195,7 +191,7 @@ findexistingpeer(
 	 * same peer through different interfaces in the hash table.
 	 */
 	if (start_peer == 0)
-		peer = peer_hash[HASH_ADDR(addr)];
+		peer = peer_hash[NTP_HASH_ADDR(addr)];
 	else
 		peer = start_peer->next;
 	
@@ -220,19 +216,18 @@ struct peer *
 findpeer(
 	struct sockaddr_storage *srcadr,
 	struct interface *dstadr,
-	int fd,
-	int pkt_mode,
-	int *action
+	int	pkt_mode,
+	int	*action
 	)
 {
 	register struct peer *peer;
 	int hash;
 
 	findpeer_calls++;
-	hash = HASH_ADDR(srcadr);
+	hash = NTP_HASH_ADDR(srcadr);
 	for (peer = peer_hash[hash]; peer != NULL; peer = peer->next) {
-		if (SOCKCMP(srcadr, &peer->srcadr)
-		    && NSRCPORT(srcadr) == NSRCPORT(&peer->srcadr)) {
+		if (SOCKCMP(srcadr, &peer->srcadr) &&
+		    NSRCPORT(srcadr) == NSRCPORT(&peer->srcadr)) {
 
 			/*
 			 * if the association matching rules determine
@@ -240,14 +235,6 @@ findpeer(
 			 * look for the next valid peer association.
 			 */
 			*action = MATCH_ASSOC(peer->hmode, pkt_mode);
-
-			/*
-			 * Sigh!  Check if BCLIENT peer in client
-			 * server mode, else return error.
-			 */
-			if ((*action == AM_POSSBCL) && !(peer->flags &
-			    FLAG_MCAST))
-				*action = AM_ERR;
 
 			/*
 			 * if an error was returned, exit back right
@@ -288,7 +275,7 @@ findpeerbyassoc(
 
 	assocpeer_calls++;
 
-	hash = assoc & HASH_MASK;
+	hash = assoc & NTP_HASH_MASK;
 	for (peer = assoc_hash[hash]; peer != 0; peer =
 	    peer->ass_next) {
 		if (assoc == peer->associd)
@@ -311,15 +298,13 @@ clear_all(void)
 	 * This routine is called when the clock is stepped, and so all
 	 * previously saved time values are untrusted.
 	 */
-	for (n = 0; n < HASH_SIZE; n++) {
+	for (n = 0; n < NTP_HASH_SIZE; n++) {
 		for (peer = peer_hash[n]; peer != 0; peer = next_peer) {
 			next_peer = peer->next;
-			if (peer->flags & FLAG_CONFIG) {
-				if (!(peer->cast_flags & (MDF_ACAST |
-				     MDF_MCAST | MDF_BCAST)))
-					peer_clear(peer, "STEP");
-			} else {
-				unpeer(peer);
+			if (!(peer->cast_flags & (MDF_ACAST | MDF_MCAST |
+			    MDF_BCAST))) {
+				peer->hpoll = peer->minpoll;
+				peer_clear(peer, "STEP");
 			}
 		}
 	}
@@ -355,13 +340,15 @@ unpeer(
 #endif /* OPENSSL */
 #ifdef DEBUG
 	if (debug)
-		printf("demobilize %u %d\n", peer_to_remove->associd,
-		    peer_associations);
+		printf("demobilize %u %d %d\n", peer_to_remove->associd,
+		    peer_associations, peer_preempt);
 #endif
-	peer_clear(peer_to_remove, "NULL");
-	hash = HASH_ADDR(&peer_to_remove->srcadr);
+	hash = NTP_HASH_ADDR(&peer_to_remove->srcadr);
 	peer_hash_count[hash]--;
 	peer_demobilizations++;
+	peer_associations--;
+	if (peer_to_remove->flags & FLAG_PREEMPT)
+		peer_preempt--;
 #ifdef REFCLOCK
 	/*
 	 * If this peer is actually a clock, shut it down first
@@ -391,7 +378,7 @@ unpeer(
 	/*
 	 * Remove him from the association hash as well.
 	 */
-	hash = peer_to_remove->associd & HASH_MASK;
+	hash = peer_to_remove->associd & NTP_HASH_MASK;
 	assoc_hash_count[hash]--;
 	if (assoc_hash[hash] == peer_to_remove)
 		assoc_hash[hash] = peer_to_remove->ass_next;
@@ -414,7 +401,6 @@ unpeer(
 	peer_to_remove->next = peer_free;
 	peer_free = peer_to_remove;
 	peer_free_count++;
-	peer_associations--;
 }
 
 
@@ -442,13 +428,18 @@ peer_config(
 	 * First search from the beginning for an association with given
 	 * remote address and mode. If an interface is given, search
 	 * from there to find the association which matches that
-	 * destination.
+	 * destination.  If the given interface is "any", track down
+	 * the actual interface, because that's what gets put into the
+	 * peer structure.
 	 */
 	peer = findexistingpeer(srcadr, (struct peer *)0, hmode);
 	if (dstadr != 0) {
 		while (peer != 0) {
 			if (peer->dstadr == dstadr)
 				break;
+			if (dstadr == ANY_INTERFACE_CHOOSE(srcadr) &&
+			    peer->dstadr == findinterface(srcadr))
+			     break;
 			peer = findexistingpeer(srcadr, peer, hmode);
 		}
 	}
@@ -561,6 +552,8 @@ newpeer(
 	peer_free = peer->next;
 	peer_free_count--;
 	peer_associations++;
+	if (flags & FLAG_PREEMPT)
+		peer_preempt++;
 	memset((char *)peer, 0, sizeof(struct peer));
 
 	/*
@@ -570,6 +563,11 @@ newpeer(
 	if (++current_association_ID == 0)
 		++current_association_ID;
 
+#ifdef DEBUG
+	if (debug >2)
+		printf("newpeer: cast flags: 0x%x for address: %s\n",
+			cast_flags, stoa(srcadr));
+#endif
 	/*
 	 * Initialize the peer structure and dance the interface jig.
 	 * Reference clocks step the loopback waltz, the others
@@ -582,6 +580,16 @@ newpeer(
 		peer->dstadr = loopback_interface;
 	else if (cast_flags & (MDF_BCLNT | MDF_ACAST | MDF_MCAST | MDF_BCAST)) {
 		peer->dstadr = findbcastinter(srcadr);
+#ifdef DEBUG
+		if (debug > 1) {
+			if (peer->dstadr != NULL)
+				printf("Found broadcast interface address %s, for address %s\n",
+					stoa(&(peer->dstadr)->sin), stoa(srcadr));
+			else
+				printf("No broadcast local address found for address %s\n",
+					stoa(srcadr));
+		}
+#endif
 		/*
 		 * If it was a multicast packet, findbcastinter() may not
 		 * find it, so try a little harder.
@@ -592,6 +600,32 @@ newpeer(
 		peer->dstadr = dstadr;
 	else
 		peer->dstadr = findinterface(srcadr);
+
+	/*
+	 * If we can't find an interface to use we return a NULL
+	 */
+	if (peer->dstadr == NULL)
+	{
+		msyslog(LOG_ERR, "Cannot find suitable interface for address %s", stoa(srcadr));
+		return (NULL);
+	}
+	/*
+	 * Broadcast needs the socket enabled for broadcast
+	 */
+	if (cast_flags & MDF_BCAST) {
+		enable_broadcast(peer->dstadr, srcadr);
+	}
+	/*
+	 * Multicast needs the socket interface enabled for multicast
+	 */
+	if (cast_flags & MDF_MCAST) {
+		enable_multicast_if(peer->dstadr, srcadr);
+	}
+#ifdef DEBUG
+	if (debug>2)
+		printf("newpeer: using fd %d and our addr %s\n",
+		    peer->dstadr->fd, stoa(&peer->dstadr->sin));
+#endif
 	peer->srcadr = *srcadr;
 	peer->hmode = (u_char)hmode;
 	peer->version = (u_char)version;
@@ -606,6 +640,7 @@ newpeer(
 	peer->ttl = (u_char)ttl;
 	peer->keyid = key;
 	peer->precision = sys_precision;
+	peer->hpoll = peer->minpoll;
 	if (cast_flags & MDF_ACAST)
 		peer_clear(peer, "ACST");
 	else if (cast_flags & MDF_MCAST)
@@ -625,6 +660,7 @@ newpeer(
 	peer->timereceived = current_time;
 #ifdef REFCLOCK
 	if (ISREFCLOCKADR(&peer->srcadr)) {
+
 		/*
 		 * We let the reference clock support do clock
 		 * dependent initialization.  This includes setting
@@ -646,11 +682,11 @@ newpeer(
 	/*
 	 * Put the new peer in the hash tables.
 	 */
-	i = HASH_ADDR(&peer->srcadr);
+	i = NTP_HASH_ADDR(&peer->srcadr);
 	peer->next = peer_hash[i];
 	peer_hash[i] = peer;
 	peer_hash_count[i]++;
-	i = peer->associd & HASH_MASK;
+	i = peer->associd & NTP_HASH_MASK;
 	peer->ass_next = assoc_hash[i];
 	assoc_hash[i] = peer;
 	assoc_hash_count[i]++;
@@ -751,8 +787,6 @@ peer_reset(
 	peer->bogusorg = 0;
 	peer->oldpkt = 0;
 	peer->seldisptoolarge = 0;
-	peer->selbroken = 0;
-	peer->rank = 0;
 	peer->timereset = current_time;
 }
 
@@ -766,7 +800,7 @@ peer_all_reset(void)
 	struct peer *peer;
 	int hash;
 
-	for (hash = 0; hash < HASH_SIZE; hash++)
+	for (hash = 0; hash < NTP_HASH_SIZE; hash++)
 	    for (peer = peer_hash[hash]; peer != 0; peer = peer->next)
 		peer_reset(peer);
 }
@@ -792,13 +826,13 @@ expire_all(void)
 	 */
 	if (!crypto_flags)
 		return;
-	for (n = 0; n < HASH_SIZE; n++) {
+
+	for (n = 0; n < NTP_HASH_SIZE; n++) {
 		for (peer = peer_hash[n]; peer != 0; peer = next_peer) {
 			next_peer = peer->next;
 			if (!(peer->flags & FLAG_SKEY)) {
 				continue;
-			} else if (peer->cast_flags & MDF_ACAST) {
-				peer_clear(peer, "ACST");
+
 			} else if (peer->hmode == MODE_ACTIVE ||
 			    peer->hmode == MODE_PASSIVE) {
 				key_expire(peer);
@@ -810,7 +844,6 @@ expire_all(void)
 	}
 	RAND_bytes((u_char *)&sys_private, 4);
 	crypto_update();
-	resetmanycast();
 }
 #endif /* OPENSSL */
 
@@ -829,14 +862,14 @@ findmanycastpeer(
 	int i;
 
  	/*
- 	 * This routine is called upon arrival of a client-mode message
-	 * from a manycast server. Search the peer list for a manycast
+ 	 * This routine is called upon arrival of a server-mode message
+	 * from a manycast client. Search the peer list for a manycast
 	 * client association where the last transmit timestamp matches
 	 * the originate timestamp. This assumes the transmit timestamps
 	 * for possibly more than one manycast association are unique.
 	 */
 	pkt = &rbufp->recv_pkt;
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < NTP_HASH_SIZE; i++) {
 		if (peer_hash_count[i] == 0)
 			continue;
 
@@ -850,33 +883,4 @@ findmanycastpeer(
 		}
 	}
 	return (NULL);
-}
-
-
-/*
- * resetmanycast - reset all manycast clients
- */
-void
-resetmanycast(void)
-{
-	register struct peer *peer;
-	int i;
-
-	/*
-	 * This routine is called when the number of client associations
-	 * falls below the minimum. Search the peer list for manycast
-	 * client associations and reset the ttl and poll interval.
-	 */
-	for (i = 0; i < HASH_SIZE; i++) {
-		if (peer_hash_count[i] == 0)
-			continue;
-
-		for (peer = peer_hash[i]; peer != 0; peer =
-		    peer->next) {
-			if (peer->cast_flags & MDF_ACAST) {
-				peer->ttl = 0;
-				poll_update(peer, 0);
-			}
-		}
-	}
 }

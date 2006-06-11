@@ -1,9 +1,7 @@
-/*	$NetBSD: chuinit.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: chuinit.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
 **	dynamically loadable chu driver
-**
-**	/src/NTP/REPOSITORY/v3/kernel/chuinit.c,v 1.1.1.1 1994/07/11 07:56:25 kardel Exp
 **
 **	william robertson <rob@agate.berkeley.edu>  
 */

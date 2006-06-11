@@ -1,11 +1,38 @@
-/*	$NetBSD: data_mbg.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: data_mbg.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
 
 /*
- * /src/NTP/ntp-4/libparse/data_mbg.c,v 4.3 1999/02/21 12:17:42 kardel RELEASE_19991128_A
+ * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.7 2005/10/07 22:11:10 kardel RELEASE_20051008_A
+ *
+ * data_mbg.c,v 4.7 2005/10/07 22:11:10 kardel RELEASE_20051008_A
  *
  * Created: Sun Jul 20 12:08:14 1997
  *
- * Copyright (C) 1997, 1998 by Frank Kardel
+ * Copyright (c) 1997-2005 by Frank Kardel <kardel <AT> ntp.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the author nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
 
 #ifdef PARSESTREAM
@@ -22,7 +49,7 @@
 #include "ieee754io.h"
 
 static void get_mbg_tzname P((unsigned char **, char *));
-static void mbg_time_status_str P((unsigned char **, unsigned int));
+static void mbg_time_status_str P((unsigned char **, unsigned int, int));
 
 #if 0				/* no actual floats on Meinberg binary interface */
 static offsets_t mbg_float  = { 1, 0, 3, 2, 0, 0, 0, 0 }; /* byte order for meinberg floats */
@@ -184,74 +211,80 @@ get_mbg_antinfo(
 static void
 mbg_time_status_str(
 	unsigned char **buffpp,
-	unsigned int status
+	unsigned int status,
+	int size
 	)
 {
-  static struct state
-    {
-      int         flag;		/* bit flag */
-      const char *string;	/* bit name */
-    } states[] =
-    {
-      { TM_UTC,    "UTC CORR" },
-      { TM_LOCAL,  "LOCAL TIME" },
-      { TM_DL_ANN, "DST WARN" },
-      { TM_DL_ENB, "DST" },
-      { TM_LS_ANN, "LEAP WARN" },
-      { TM_LS_ENB, "LEAP SEC" },
-      { 0, "" }
-    };
-
-  if (status)
-    {
-      unsigned char *p;
-      struct state *s;
-	
-      p = *buffpp;
-
-      for (s = states; s->flag; s++)
+	static struct state
 	{
-	  if (s->flag & status)
-	    {
-	      if (p != *buffpp)
+		int         flag;		/* bit flag */
+		const char *string;	/* bit name */
+	} states[] =
+		  {
+			  { TM_UTC,    "UTC CORR" },
+			  { TM_LOCAL,  "LOCAL TIME" },
+			  { TM_DL_ANN, "DST WARN" },
+			  { TM_DL_ENB, "DST" },
+			  { TM_LS_ANN, "LEAP WARN" },
+			  { TM_LS_ENB, "LEAP SEC" },
+			  { 0, "" }
+		  };
+
+	if (status)
+	{
+		unsigned char *start, *p;
+		struct state *s;
+	
+		start = p = *buffpp;
+
+		for (s = states; s->flag; s++)
 		{
-		  *p++ = ',';
-		  *p++ = ' ';
+			if (s->flag & status)
+			{
+				if (p != *buffpp)
+				{
+					strncpy((char *)p, ", ", size - (p - start));
+					p += 2;
+				}
+				strncpy((char *)p, s->string, size - (p - start));
+				p += strlen((char *)p);
+			}
 		}
-	      strcpy((char *)p, s->string);
-	      p += strlen((char *)p);
-	    }
+		*buffpp = p;
 	}
-      *buffpp = p;
-    }
 }
       
 void
 mbg_tm_str(
 	unsigned char **buffpp,
-	TM *tmp
+	TM *tmp,
+	int size
 	)
 {
-  sprintf((char *)*buffpp, "%04d-%02d-%02d %02d:%02d:%02d.%07ld (%c%02d%02d) ",
-	  tmp->year, tmp->month, tmp->mday,
-	  tmp->hour, tmp->minute, tmp->second, tmp->frac,
-	  (tmp->offs_from_utc < 0) ? '-' : '+',
-	  abs(tmp->offs_from_utc) / 3600,
-	  (abs(tmp->offs_from_utc) / 60) % 60);
-  *buffpp += strlen((char *)*buffpp);
-  mbg_time_status_str(buffpp, tmp->status);
+	unsigned char *s = *buffpp;
+
+	snprintf((char *)*buffpp, size, "%04d-%02d-%02d %02d:%02d:%02d.%07ld (%c%02d%02d) ",
+		 tmp->year, tmp->month, tmp->mday,
+		 tmp->hour, tmp->minute, tmp->second, tmp->frac,
+		 (tmp->offs_from_utc < 0) ? '-' : '+',
+		 abs(tmp->offs_from_utc) / 3600,
+		 (abs(tmp->offs_from_utc) / 60) % 60);
+	*buffpp += strlen((char *)*buffpp);
+
+	mbg_time_status_str(buffpp, tmp->status, size - (*buffpp - s));
 }
 
 void
 mbg_tgps_str(
 	unsigned char **buffpp,
-	T_GPS *tgpsp
+	T_GPS *tgpsp,
+	int size
 	)
 {
-  sprintf((char *)*buffpp, "week %d + %ld days + %ld.%07ld sec",
-	  tgpsp->wn, tgpsp->sec / 86400,
-	  tgpsp->sec % 86400, tgpsp->tick);
-  *buffpp += strlen((char *)*buffpp);
+	snprintf((char *)*buffpp, size, "week %d + %ld days + %ld.%07ld sec",
+		 tgpsp->wn, tgpsp->sec / 86400,
+		 tgpsp->sec % 86400, tgpsp->tick);
+	*buffpp += strlen((char *)*buffpp);
 }
 
 void
@@ -477,6 +510,18 @@ get_mbg_iono(
 
 /*
  * data_mbg.c,v
+ * Revision 4.7  2005/10/07 22:11:10  kardel
+ * bounded buffer implementation
+ *
+ * Revision 4.6.2.1  2005/09/25 10:23:06  kardel
+ * support bounded buffers
+ *
+ * Revision 4.6  2005/04/16 17:32:10  kardel
+ * update copyright
+ *
+ * Revision 4.5  2004/11/14 15:29:41  kardel
+ * support PPSAPI, upgrade Copyright to Berkeley style
+ *
  * Revision 4.3  1999/02/21 12:17:42  kardel
  * 4.91f reconcilation
  *
