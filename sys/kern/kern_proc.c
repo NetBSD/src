@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.89 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.90 2006/06/11 07:32:18 rjs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,10 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.89 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.90 2006/06/11 07:32:18 rjs Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

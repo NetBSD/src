@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.221 2006/06/07 22:33:40 kardel Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.222 2006/06/11 07:32:18 rjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.221 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.222 2006/06/11 07:32:18 rjs Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
