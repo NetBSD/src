@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.17 2006/01/28 19:57:07 dsl Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.18 2006/06/11 23:25:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.17 2006/01/28 19:57:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.18 2006/06/11 23:25:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,10 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 	uint ext_base, this_ext, next_ext;
 	int rval;
 	int i;
+	int j;
 #ifdef COMPAT_386BSD_MBRPART
 	int dp_386bsd = -1;
+	int ap_386bsd = -1;
 #endif
 
 	ext_base = 0;
@@ -175,8 +177,9 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 		/* look for NetBSD partition */
 		next_ext = 0;
 		dp = ptns;
+		j = 0;
 		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
-			if (dp->mbrp_type == 0)
+			if (dp->mbrp_type == MBR_PTYPE_UNUSED)
 				continue;
 			/* Check end of partition is inside disk limits */
 			if ((uint64_t)ext_base + le32toh(dp->mbrp_start) +
@@ -197,14 +200,17 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 				 * If more than one matches, take last,
 				 * as NetBSD install tool does.
 				 */
-				if (this_ext == 0)
+				if (this_ext == 0) {
 					dp_386bsd = i;
+					ap_386bsd = j;
+				}
 				continue;
 			}
 #endif
-			rval = (*actn)(a, dp, i, this_ext);
+			rval = (*actn)(a, dp, j, this_ext);
 			if (rval != SCAN_CONTINUE)
 				return rval;
+			j++;
 		}
 		if (next_ext == 0)
 			break;
@@ -219,7 +225,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 	}
 #ifdef COMPAT_386BSD_MBRPART
 	if (this_ext == 0 && dp_386bsd != -1)
-		return (*actn)(a, &ptns[dp_386bsd], dp_386bsd, 0);
+		return (*actn)(a, &ptns[dp_386bsd], ap_386bsd, 0);
 #endif
 	return SCAN_CONTINUE;
 }
