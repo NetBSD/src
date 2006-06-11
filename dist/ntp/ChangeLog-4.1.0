@@ -3192,7 +3192,7 @@
 1999-12-07  Harlan Stenn  <stenn@whimsy.udel.edu>
 
 	* libparse/clk_rawdcf.c (cvt_rawdcf): Buglet.
-	From: Frank Kardel <kardel@acm.org>
+	From: Frank Kardel <kardel <AT> acm.org>
 
 1999-12-06  Harlan Stenn  <stenn@whimsy.udel.edu>
 
@@ -3324,7 +3324,7 @@
 	* libparse/parsestreams.c:
 	* ntpd/refclock_parse.c:
 	Mods and updates
-	From: Frank Kardel <kardel@acm.org>
+	From: Frank Kardel <kardel <AT> acm.org>
 
 	* acconfig.h: PCF refclock
 	* configure.in:
@@ -4748,7 +4748,7 @@ Sun Apr  4 03:23:53 1999  Harlan Stenn  <stenn@whimsy.udel.edu>
 	* configure.in: 4.0.92e
 	Dave redesigned the clock state machine.
 
-1999-02-28  Frank Kardel  <kardel@acm.org>
+1999-02-28  Frank Kardel  <kardel <AT> acm.org>
 
 	* parseutil/dcfd.c: added DCF77 module powersetup
 
@@ -4805,7 +4805,7 @@ Tue Feb 23 23:37:44 1999  Harlan Stenn  <stenn@whimsy.udel.edu>
 	with bug in sys/systm.h .
 	Suggested by: Chaim Frenkel <chaimf@pobox.com>
 
-Tue Feb 23 20:46:31 1999  Frank Kardel  <kardel@acm.org>
+Tue Feb 23 20:46:31 1999  Frank Kardel  <kardel <AT> acm.org>
 
 	* ntpd/refclock_parse.c: fixed #endifs
 	(stream_receive): fixed formats
@@ -4849,7 +4849,7 @@ Mon Feb 22 00:35:06 1999  Harlan Stenn  <stenn@whimsy.udel.edu>
 	after getconfig().
 	From: Kamal A Mostafa <kamal@whence.com>
 
-1999-02-21  Frank Kardel  <kardel@acm.org>
+1999-02-21  Frank Kardel  <kardel <AT> acm.org>
 
 	* ntpd/ntp_util.c (hourly_stats): removed unused variable
 
@@ -5409,11 +5409,11 @@ Sun Sep 13 19:19:09 1998  Harlan Stenn  <stenn@whimsy.udel.edu>
 	parse clocks by default.
 	Reported by: Marion Hakanson <hakanson@cse.ogi.edu>
 
-Sat Aug 22 23:58:14 1998  Frank Kardel  <kardel@acm.org>
+Sat Aug 22 23:58:14 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* ntpd/refclock_parse.c (local_input): fixed IO handling for non-STREAM IO
 
-Sun Aug 16 20:13:32 1998  Frank Kardel  <kardel@acm.org>
+Sun Aug 16 20:13:32 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* libntp/ieee754io.c: debug information only compile for LIBDEBUG case
 
@@ -5570,7 +5570,7 @@ Wed Jun 10 21:16:01 1998  Harlan Stenn  <stenn@whimsy.udel.edu>
 	* ntpd/ntp_refclock.c (refclock_gtlin): Patch...
 	From: Jonathan Stone <jonathan@DSG.Stanford.EDU>
 
-Sun Jun 28 18:43:30 1998  Frank Kardel  <kardel@acm.org>
+Sun Jun 28 18:43:30 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* libntp/buftvtots.c (buftvtots): using WORD_BIGENDIAN instead of XNTP_BIG_ENDIAN
 
@@ -5587,7 +5587,7 @@ Sun Jun 28 18:43:30 1998  Frank Kardel  <kardel@acm.org>
 
 	* include/binio.h: added binio MSB prototypes
 
-Sat Jun 13 13:48:17 1998  Frank Kardel  <kardel@acm.org>
+Sat Jun 13 13:48:17 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* parseutil/testdcf.c: signed/unsigned
 	SYSV clock name clash fixed
@@ -5683,7 +5683,7 @@ Sat Jun 13 13:48:17 1998  Frank Kardel  <kardel@acm.org>
 
 	* include/parse.h: STREAM macro gone in favor of HAVE_SYS_STREAM_H
 
-Fri Jun 12 11:08:53 1998  Frank Kardel  <kardel@acm.org>
+Fri Jun 12 11:08:53 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* ntpd/ntp_timer.c: prototype fixes (ansi2knr/knr compiler)
 
@@ -5732,7 +5732,7 @@ Fri Jun 12 11:08:53 1998  Frank Kardel  <kardel@acm.org>
 	* clk_computime.c: conditional compile macros fixed
 	printf prototype
 
-Sat Jun  6 07:41:54 1998  Frank Kardel  <kardel@acm.org>
+Sat Jun  6 07:41:54 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* ntpd/refclock_palisade.c: fixed termio.h / termios.h inclusion
 
@@ -5746,7 +5746,7 @@ Sat Jun  6 07:41:54 1998  Frank Kardel  <kardel@acm.org>
 
 	* libparse/clk_rawdcf.c: simplified condidional compile expression
 
-Wed May 27 08:10:43 1998  Frank Kardel  <kardel@acm.org>
+Wed May 27 08:10:43 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* include/Makefile.am (noinst_HEADERS): added new header files
 	mbg_gps166.h binio.h ascii.h ieee754io.h
@@ -5754,7 +5754,7 @@ Wed May 27 08:10:43 1998  Frank Kardel  <kardel@acm.org>
 	* ntpdc/ntpdc.c (sendrequest): fixed info_auth_keyid setting it
 	got accidentally trashed every other round
 
-Mon May 25 22:55:07 1998  Frank Kardel  <kardel@acm.org>
+Mon May 25 22:55:07 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* configure.in: PARSE clocks are enabled by default whenever
 	possible (termio.h or termios.h present)
@@ -5769,7 +5769,7 @@ Mon May 25 22:55:07 1998  Frank Kardel  <kardel@acm.org>
 	* libparse/clk_meinberg.c (cvt_meinberg): support current standard
 	Meinberg data formats
 
-Sun May 24 09:43:19 1998  Frank Kardel  <kardel@acm.org>
+Sun May 24 09:43:19 1998  Frank Kardel  <kardel <AT> acm.org>
 
 	* libparse/clk_rawdcf.c (pps_rawdcf): trigger pps on zero going
 	edge - that is simpler wiring (Rx->DCD).

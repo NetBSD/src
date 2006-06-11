@@ -1,5 +1,15 @@
+(4.2.2)
+* SNTP
+* Many bugfixes
+* Implements the current "goal state" of NTPv4
+* Autokey improvements
+* Much better IPv6 support
+* Rewrite of the multicast code
+* New version numbering scheme
+
 (4.2.0)
 * More stuff than I have time to document
+* IPv6 support
 * Bugfixes
 * call-gap filtering
 * wwv and chu refclock improvements

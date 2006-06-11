@@ -1,15 +1,15 @@
-#AUTOMAKE_OPTIONS = ../util/ansi2knr no-dependencies
-AUTOMAKE_OPTIONS = ../util/ansi2knr
-bin_PROGRAMS = ntpq
-INCLUDES = -I$(top_srcdir)/include
-# LDADD might need RESLIB and ADJLIB
-ntpq_LDADD = version.o ../libntp/libntp.a @READLINE_LIBS@
-DISTCLEANFILES = .version version.c
-noinst_HEADERS = ntpq.h
-#EXTRA_DIST = ntpq.mak
-ETAGS_ARGS = Makefile.am
+AUTOMAKE_OPTIONS=	../util/ansi2knr
 
-ntpq_SOURCES = ntpq.c ntpq_ops.c
+bin_PROGRAMS=	ntpq
+AM_CPPFLAGS=	-I$(top_srcdir)/include
+
+# LDADD might need RESLIB and ADJLIB
+ntpq_LDADD=	version.o ../libntp/libntp.a @READLINE_LIBS@
+DISTCLEANFILES=	.version version.c
+noinst_HEADERS=	ntpq.h
+ETAGS_ARGS=	Makefile.am
+
+ntpq_SOURCES=	ntpq.c ntpq_ops.c
 
 $(PROGRAMS): $(LDADD)
 
