@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.3 2006/06/08 05:00:25 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.4 2006/06/11 18:15:17 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.3 2006/06/08 05:00:25 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.4 2006/06/11 18:15:17 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,19 +239,19 @@ it_setup_volt(struct it_softc *sc, int start, int n)
 	sc->sc_info[start + 2].rfact = 10000;
 	snprintf(sc->sc_info[start + 2].desc, sizeof(sc->sc_info[2].desc),
 	    "+3.3V");
-	sc->sc_info[start + 3].rfact = 16778;
+	sc->sc_info[start + 3].rfact = 16800;
 	snprintf(sc->sc_info[start + 3].desc, sizeof(sc->sc_info[3].desc),
 	    "+5V");
-	sc->sc_info[start + 4].rfact = 38000;
+	sc->sc_info[start + 4].rfact = 40000;
 	snprintf(sc->sc_info[start + 4].desc, sizeof(sc->sc_info[4].desc),
 	    "+12V");
-	sc->sc_info[start + 5].rfact = 51100;
+	sc->sc_info[start + 5].rfact = 40000;
 	snprintf(sc->sc_info[start + 5].desc, sizeof(sc->sc_info[5].desc),
 	    "-12V");
-	sc->sc_info[start + 6].rfact = 16778;
+	sc->sc_info[start + 6].rfact = 16800;
 	snprintf(sc->sc_info[start + 6].desc, sizeof(sc->sc_info[6].desc),
 	    "-5V");
-	sc->sc_info[start + 7].rfact = 16778;
+	sc->sc_info[start + 7].rfact = 16800;
 	snprintf(sc->sc_info[start + 7].desc, sizeof(sc->sc_info[7].desc),
 	    "+5VSB");
 	sc->sc_info[start + 8].rfact = 10000;
@@ -267,10 +267,13 @@ it_setup_temp(struct it_softc *sc, int start, int n)
 	for (i = 0; i < n; ++i) {
 		sc->sc_data[start + i].units = ENVSYS_STEMP;
 		sc->sc_info[start + i].units = ENVSYS_STEMP;
-		snprintf(sc->sc_info[start + i].desc,
-		    sizeof(sc->sc_info[start + i].desc),
-		    "Temp%d", i + 1);
 	}
+	snprintf(sc->sc_info[start + 0].desc,
+	    sizeof(sc->sc_info[start + 0].desc), "CPU Temp");
+	snprintf(sc->sc_info[start + 1].desc,
+	    sizeof(sc->sc_info[start + 1].desc), "Chassis Temp");
+	snprintf(sc->sc_info[start + 2].desc,
+	    sizeof(sc->sc_info[start + 2].desc), "External Temp");
 }
 
 static void
@@ -281,10 +284,13 @@ it_setup_fan(struct it_softc *sc, int start, int n)
 	for (i = 0; i < n; ++i) {
 		sc->sc_data[start + i].units = ENVSYS_SFANRPM;
 		sc->sc_info[start + i].units = ENVSYS_SFANRPM;
-		snprintf(sc->sc_info[start + i].desc,
-		    sizeof(sc->sc_info[start + i].desc),
-		    "Fan%d", i + 1);
 	}
+	snprintf(sc->sc_info[start + 0].desc,
+	    sizeof(sc->sc_info[start + 0].desc), "CPU Fan");
+	snprintf(sc->sc_info[start + 1].desc,
+	    sizeof(sc->sc_info[start + 1].desc), "Chassis Fan");
+	snprintf(sc->sc_info[start + 2].desc,
+	    sizeof(sc->sc_info[start + 2].desc), "External Fan");
 }
 
 static void
@@ -313,10 +319,15 @@ it_refresh_volts(struct it_softc *sc, envsys_tre_data_t *tred,
 		tred[i].cur.data_s = (sdata << 4);
 		/* rfact is (factor * 10^4) */
 		tred[i].cur.data_s *= info[i].rfact;
-		/* these two values are negative and formula is different */
-		if (i == 5 || i == 6)
-			tred[i].cur.data_s -=
-			    (info[i].rfact - 10000) * IT_VREF;
+		/*
+		 * xtraeme: looks like on my motherboard, these two values
+		 * are null, so disable them.
+		 */
+		if (tred[i].cur.data_s != 0) {
+			if (i == 5 || i == 6)
+				tred[i].cur.data_s -=
+			    	    (info[i].rfact - 10000) * IT_VREF;
+		}
 		/* division by 10 gets us back to uVDC */
 		tred[i].cur.data_s /= 10;
 
@@ -339,6 +350,9 @@ it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
 			}
 		} else if (sdata == 0) {
 			tred[i].cur.data_us = 0;
+			sc->sc_data[i].validflags &=
+			    (ENVSYS_FVALID|ENVSYS_FCURVALID);
+			sc->sc_info[i].validflags &= ENVSYS_FVALID;
 		} else {
 			if (i == 2)
 				divisor = divisor & 1 ? 3 : 1;
@@ -355,10 +369,10 @@ static int
 it_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct it_softc *sc = sme->sme_cookie;
-	static const struct timeval onepointfive = { 1, 500000 };
+	static const struct timeval onepointfive = { 0, 500000 };
 	struct timeval tv, utv;
 
-	/* read new values at most once every 1.5 seconds */
+	/* read new values at most once every 0.5 seconds */
 	getmicrouptime(&utv);
 	timeradd(&sc->lastread, &onepointfive, &tv);
 	if (timercmp(&utv, &tv, >)) {
