@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.5 2006/06/11 17:02:07 martin Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.6 2006/06/11 19:25:19 martin Exp $");
 #endif
 
 #include <regex.h>
@@ -105,7 +105,8 @@ update_lineno(const char *cp)
 					switch (yytext[i + 1]) {
 					case '\n':
 						i += 2;
-						while(isspace((int)yytext[i]))
+						while(isspace(
+						    (unsigned char)yytext[i]))
 							i++;
 						break;
 					case '\"':
