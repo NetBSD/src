@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.134 2006/06/09 21:33:01 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.135 2006/06/11 16:00:08 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.134 2006/06/09 21:33:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.135 2006/06/11 16:00:08 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -901,7 +901,6 @@ nomem:
 					printf("%s: Device creation failed\n",
 					USBDEVNAME(dev->bus->bdev));
 					free(ifaces, M_USB);
-					free(dev->subdevs, M_USB);
 					return (USBD_NORMAL_COMPLETION);
 				}
 				device_quiet(bdev);
@@ -914,7 +913,6 @@ nomem:
 			device_delete_child(parent, bdev);
 #endif
 			free(ifaces, M_USB);
-			free(dev->subdevs, M_USB);
 			return (USBD_NORMAL_COMPLETION);
 		}
 		free(ifaces, M_USB);
