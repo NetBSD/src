@@ -58,6 +58,12 @@ case "$CONFIG_ARGS" in
     ;;
 esac
 
+case "$CONFIG_ARGS" in
+ *--disable-all-clocks*)
+    KEYSUF="$KEYSUF-no-refclocks"
+    ;;
+esac
+
 CCSUF=""
 
 case "$CC" in
