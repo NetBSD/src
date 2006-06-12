@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.19 2005/12/11 12:20:19 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.20 2006/06/12 00:42:18 christos Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.19 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.20 2006/06/12 00:42:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.19 2005/12/11 12:20:19 christos Ex
 #include <sys/proc.h>
 #include <sys/cdio.h>
 #include <sys/dvdio.h>
+#include <sys/malloc.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -107,28 +108,55 @@ linux_ioctl_cdrom(l, uap, retval)
 	struct filedesc *fdp;
 	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 
-	struct linux_cdrom_blk l_blk;
-	struct linux_cdrom_msf l_msf;
-	struct linux_cdrom_ti l_ti;
-	struct linux_cdrom_tochdr l_tochdr;
-	struct linux_cdrom_tocentry l_tocentry;
-	struct linux_cdrom_subchnl l_subchnl;
-	struct linux_cdrom_volctrl l_volctrl;
-	struct linux_cdrom_multisession l_session;
+	union { 
+		struct linux_cdrom_blk ll_blk;
+		struct linux_cdrom_msf ll_msf;
+		struct linux_cdrom_ti ll_ti;
+		struct linux_cdrom_tochdr ll_tochdr;
+		struct linux_cdrom_tocentry ll_tocentry;
+		struct linux_cdrom_subchnl ll_subchnl;
+		struct linux_cdrom_volctrl ll_volctrl;
+		struct linux_cdrom_multisession ll_session;
+		dvd_struct ll_ds;
+		dvd_authinfo ll_dai;
+	} *u1;
 
-	struct ioc_play_blocks t_blocks;
-	struct ioc_play_msf t_msf;
-	struct ioc_play_track t_track;
-	struct ioc_toc_header t_header;
-	struct cd_toc_entry *entry, t_entry;
-	struct ioc_read_toc_entry t_toc_entry;
-	struct cd_sub_channel_info *info, t_info;
-	struct ioc_read_subchannel t_subchannel;
-	struct ioc_vol t_vol;
+#define l_blk u1->ll_blk
+#define l_msf u1->ll_msf
+#define l_ti u1->ll_ti
+#define l_tochdr u1->ll_tochdr
+#define l_tocentry u1->ll_tocentry
+#define l_subchnl u1->ll_subchnl
+#define l_volctrl u1->ll_volctrl
+#define l_session u1->ll_session
+#define ds u1->ll_ds
+#define dai u1->ll_dai
+
+	union {
+		struct ioc_play_blocks tt_blocks;
+		struct ioc_play_msf tt_msf;
+		struct ioc_play_track tt_track;
+		struct ioc_toc_header tt_header;
+		struct cd_toc_entry tt_entry;
+		struct ioc_read_toc_entry tt_toc_entry;
+		struct cd_sub_channel_info tt_info;
+		struct ioc_read_subchannel tt_subchannel;
+		struct ioc_vol tt_vol;
+	} *u2;
+
+#define	t_blocks u2->tt_blocks
+#define	t_msf u2->tt_msf
+#define	t_track u2->tt_track
+#define	t_header u2->tt_header
+#define	t_entry u2->tt_entry
+#define	t_toc_entry u2->tt_toc_entry
+#define	t_info u2->tt_info
+#define	t_subchannel u2->tt_subchannel
+#define	t_vol u2->tt_vol
+
+	struct cd_toc_entry *entry;
+	struct cd_sub_channel_info *info;
 	struct proc *p = l->l_proc;
-
-	dvd_struct ds;
-	dvd_authinfo dai;
 
 	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -139,6 +167,9 @@ linux_ioctl_cdrom(l, uap, retval)
 	com = SCARG(uap, com);
 	ioctlf = fp->f_ops->fo_ioctl;
 	retval[0] = error = 0;
+
+	u1 = malloc(sizeof(*u1), M_TEMP, M_WAITOK);
+	u2 = malloc(sizeof(*u2), M_TEMP, M_WAITOK);
 
 	switch(com) {
 	case LINUX_CDROMPLAYMSF:
@@ -445,5 +476,7 @@ linux_ioctl_cdrom(l, uap, retval)
 	}
 
 	FILE_UNUSE(fp, l);
+	free(u1, M_TEMP);
+	free(u2, M_TEMP);
 	return error;
 }
