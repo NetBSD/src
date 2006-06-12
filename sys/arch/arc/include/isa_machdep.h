@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.12 2006/06/12 15:24:31 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.13 2006/06/12 15:39:01 tsutsui Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -136,6 +136,8 @@ struct isa_intrhand {
 	u_long  ih_count;
 	int     ih_level;
 	int     ih_irq;
+	struct evcnt ih_evcnt;
+	char	ih_evname[32];
 };
 
 #endif /* _ISA_MACHDEP_H_ */
