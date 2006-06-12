@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.8 2006/06/11 19:34:21 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.9 2006/06/12 10:45:27 kardel Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -1932,8 +1932,8 @@ decodeint(
 {
 	if (*str == '0') {
 		if (*(str+1) == 'x' || *(str+1) == 'X')
-		    return hextoint(str+2, (u_long *)&val);
-		return octtoint(str, (u_long *)&val);
+		    return hextoint(str+2, (u_long *)val);
+		return octtoint(str, (u_long *)val);
 	}
 	return atoint(str, val);
 }
