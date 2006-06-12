@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.64 2006/06/07 22:33:39 kardel Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.65 2006/06/12 00:22:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.64 2006/06/07 22:33:39 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.65 2006/06/12 00:22:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,24 +183,25 @@ static int
 acct_chkfree(void)
 {
 	int error;
-	struct statvfs sb;
+	struct statvfs *sb;
 	int64_t bavail;
 
-	error = VFS_STATVFS(acct_vp->v_mount, &sb, NULL);
+	sb = malloc(sizeof(*sb), M_TEMP, M_WAITOK);
+	error = VFS_STATVFS(acct_vp->v_mount, sb, NULL);
 	if (error != 0)
 		return (error);
 
-	bavail = sb.f_bfree - sb.f_bresvd;
+	bavail = sb->f_bfree - sb->f_bresvd;
 
 	switch (acct_state) {
 	case ACCT_SUSPENDED:
-		if (bavail > acctresume * sb.f_blocks / 100) {
+		if (bavail > acctresume * sb->f_blocks / 100) {
 			acct_state = ACCT_ACTIVE;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
 		break;
 	case ACCT_ACTIVE:
-		if (bavail <= acctsuspend * sb.f_blocks / 100) {
+		if (bavail <= acctsuspend * sb->f_blocks / 100) {
 			acct_state = ACCT_SUSPENDED;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
@@ -208,6 +209,7 @@ acct_chkfree(void)
 	case ACCT_STOP:
 		break;
 	}
+	free(sb, M_TEMP);
 	return (0);
 }
 
