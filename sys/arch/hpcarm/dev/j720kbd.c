@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbd.c,v 1.1 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: j720kbd.c,v 1.2 2006/06/12 19:42:22 peter Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 keyboard driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.1 2006/03/04 14:09:36 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.2 2006/06/12 19:42:22 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ struct j720kbd_softc {
 	struct device		sc_dev;
 
 	struct j720kbd_chip	*sc_chip;
-	void			*sc_ih;
 };
 
 static struct j720kbd_chip j720kbd_chip;
@@ -96,7 +95,7 @@ static int	j720kbd_poll(void *);
 static void	j720kbd_read(struct j720kbd_chip *, char *);
 static int	j720kbd_button_event(void *, int, long, void *);
 
-CFATTACH_DECL(j720kbd, sizeof(struct device),
+CFATTACH_DECL(j720kbd, sizeof(struct j720kbd_softc),
     j720kbd_match, j720kbd_attach, NULL, NULL);
 
 
@@ -118,6 +117,8 @@ j720kbd_attach(struct device *parent, struct device *self, void *aux)
 	struct j720kbd_softc *sc = (void *)self;
 	struct hpckbd_attach_args haa;
 
+	printf("\n");
+
 	sc->sc_chip = &j720kbd_chip;
 	sc->sc_chip->scc_ssp = (struct j720ssp_softc *)parent;
 	sc->sc_chip->scc_enabled = 0;
@@ -129,12 +130,7 @@ j720kbd_attach(struct device *parent, struct device *self, void *aux)
 	j720kbd_ifsetup(sc->sc_chip);
 
 	/* Install interrupt handler. */
-	if ((sc->sc_ih = sa11x0_intr_establish(0, 0, 1, IPL_TTY,
-	    j720kbd_intr, sc)) == NULL) {
-		printf(": can't establish interrupt\n");
-		return;
-	}
-	printf("\n");
+	sa11x0_intr_establish(0, 0, 1, IPL_TTY, j720kbd_intr, sc);
 
 	/* Add config hook for light button event. */
 	config_hook(CONFIG_HOOK_BUTTONEVENT,
