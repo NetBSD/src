@@ -1,4 +1,4 @@
-/* $NetBSD: udf_osta.c,v 1.1 2006/02/02 15:19:16 reinoud Exp $ */
+/* $NetBSD: udf_osta.c,v 1.2 2006/06/12 00:20:21 christos Exp $ */
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
@@ -262,7 +262,7 @@ int IsIllegal(unicode_t ch);
 /* #include <stdio.h> */
 static int UnicodeIsPrint(unicode_t ch) {
 	return (ch >=' ') && (ch < 127);
-};
+}
 
 
 int UnicodeLength(unicode_t *string) {
@@ -271,12 +271,12 @@ int UnicodeLength(unicode_t *string) {
 	while (*string++) length++;
 
 	return length;
-};
+}
 
 
 static int isprint(unsigned char c) {
 	return (c >= ' ') && (c != 127);
-};
+}
 
 
 /***********************************************************************
