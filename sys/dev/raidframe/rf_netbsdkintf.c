@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.208 2006/05/14 21:45:00 elad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.209 2006/06/12 22:49:35 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.208 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.209 2006/06/12 22:49:35 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -795,10 +795,9 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int raidid;
 	struct rf_recon_req *rrcopy, *rr;
 	RF_ComponentLabel_t *clabel;
-	RF_ComponentLabel_t ci_label;
+	RF_ComponentLabel_t *ci_label;
 	RF_ComponentLabel_t **clabel_ptr;
 	RF_SingleComponent_t *sparePtr,*componentPtr;
-	RF_SingleComponent_t hot_spare;
 	RF_SingleComponent_t component;
 	RF_ProgressInfo_t progressInfo, **progressInfoPtr;
 	int i, j, d;
@@ -1079,22 +1078,28 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		raidPtr->serial_number = clabel->serial_number;
 
-		raid_init_component_label(raidPtr, &ci_label);
-		ci_label.serial_number = clabel->serial_number;
-		ci_label.row = 0; /* we dont' pretend to support more */
+		RF_Malloc(ci_label, sizeof(RF_ComponentLabel_t), 
+			  (RF_ComponentLabel_t *));
+		if (ci_label == NULL)
+			return (ENOMEM);
+
+		raid_init_component_label(raidPtr, ci_label);
+		ci_label->serial_number = clabel->serial_number;
+		ci_label->row = 0; /* we dont' pretend to support more */
 
 		for(column=0;column<raidPtr->numCol;column++) {
 			diskPtr = &raidPtr->Disks[column];
 			if (!RF_DEAD_DISK(diskPtr->status)) {
-				ci_label.partitionSize = diskPtr->partitionSize;
-				ci_label.column = column;
+				ci_label->partitionSize = diskPtr->partitionSize;
+				ci_label->column = column;
 				raidwrite_component_label(
 							  raidPtr->Disks[column].dev,
 							  raidPtr->raid_cinfo[column].ci_vp,
-							  &ci_label );
+							  ci_label );
 			}
 		}
-
+		RF_Free(ci_label, sizeof(RF_ComponentLabel_t));
+		
 		return (retcode);
 	case RAIDFRAME_SET_AUTOCONFIG:
 		d = rf_set_autoconfig(raidPtr, *(int *) data);
@@ -1132,8 +1137,8 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	case RAIDFRAME_ADD_HOT_SPARE:
 		sparePtr = (RF_SingleComponent_t *) data;
-		memcpy( &hot_spare, sparePtr, sizeof(RF_SingleComponent_t));
-		retcode = rf_add_hot_spare(raidPtr, &hot_spare);
+		memcpy( &component, sparePtr, sizeof(RF_SingleComponent_t));
+		retcode = rf_add_hot_spare(raidPtr, &component);
 		return(retcode);
 
 	case RAIDFRAME_REMOVE_HOT_SPARE:
