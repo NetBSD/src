@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.196 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.197 2006/06/12 01:25:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.196 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.197 2006/06/12 01:25:05 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.196 2006/05/14 21:15:11 elad Exp $
 #include <sys/kauth.h>
 #include <machine/stdarg.h>
 
+#define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
 MALLOC_DEFINE(M_SYSCTLDATA, "sysctldata", "misc sysctl data");
 
@@ -1623,7 +1624,7 @@ int
 sysctl_describe(SYSCTLFN_ARGS)
 {
 	struct sysctldesc *d;
-	char bf[1024];
+	void *bf;
 	size_t sz, left, tot;
 	int i, error, v = -1;
 	struct sysctlnode *node;
@@ -1643,7 +1644,9 @@ sysctl_describe(SYSCTLFN_ARGS)
 	 * get ready...
 	 */
 	error = 0;
-	d = (void*)bf;
+	d = bf = malloc(MAXDESCLEN, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (bf == NULL)
+		return ENOMEM;
 	tot = 0;
 	node = rnode->sysctl_child;
 	left = *oldlenp;
@@ -1656,7 +1659,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 	if (newp != NULL) {
 		error = sysctl_cvt_in(l, &v, newp, newlen, &dnode);
 		if (error)
-			return (error);
+			goto out;
 		if (dnode.sysctl_desc != NULL) {
 			/*
 			 * processes cannot set descriptions above
@@ -1666,15 +1669,18 @@ sysctl_describe(SYSCTLFN_ARGS)
 			 */
 			if (l != NULL) {
 #ifndef SYSCTL_DISALLOW_CREATE
-				if (securelevel > 0)
-					return (EPERM);
+				if (securelevel > 0) {
+					error = EPERM;
+					goto out;
+				}
 				error = kauth_authorize_generic(l->l_proc->p_cred,
 					    KAUTH_GENERIC_ISSUSER,
 					      &l->l_proc->p_acflag);
 				if (error)
-					return (error);
+					goto out;
 #else /* SYSCTL_DISALLOW_CREATE */
-				return (EPERM);
+				error = EPERM;
+				goto out;
 #endif /* SYSCTL_DISALLOW_CREATE */
 			}
 
@@ -1684,16 +1690,20 @@ sysctl_describe(SYSCTLFN_ARGS)
 			for (i = 0; i < rnode->sysctl_clen; i++)
 				if (node[i].sysctl_num == dnode.sysctl_num)
 					break;
-			if (i == rnode->sysctl_clen)
-				return (ENOENT);
+			if (i == rnode->sysctl_clen) {
+				error = ENOENT;
+				goto out;
+			}
 			node = &node[i];
 
 			/*
 			 * did the caller specify a node version?
 			 */
 			if (dnode.sysctl_ver != 0 &&
-			    dnode.sysctl_ver != node->sysctl_ver)
-				return (EINVAL);
+			    dnode.sysctl_ver != node->sysctl_ver) {
+				error = EINVAL;
+				goto out;
+			}
 
 			/*
 			 * okay...some rules:
@@ -1713,12 +1723,18 @@ sysctl_describe(SYSCTLFN_ARGS)
 			if ((sysctl_root.sysctl_flags & CTLFLAG_PERMANENT) &&
 			    (!(sysctl_rootof(node)->sysctl_flags &
 			       CTLFLAG_READWRITE) ||
-			     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE)))
-				return (EPERM);
-			if (node->sysctl_flags & CTLFLAG_PERMANENT)
-				return (EPERM);
-			if (l != NULL && node->sysctl_desc != NULL)
-				return (EPERM);
+			     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE))) {
+				error = EPERM;
+				goto out;
+			}
+			if (node->sysctl_flags & CTLFLAG_PERMANENT) {
+				error = EPERM;
+				goto out;
+			}
+			if (l != NULL && node->sysctl_desc != NULL) {
+				error = EPERM;
+				goto out;
+			}
 
 			/*
 			 * right, let's go ahead.  the first step is
@@ -1727,19 +1743,31 @@ sysctl_describe(SYSCTLFN_ARGS)
 			 */
 			if (l != NULL ||
 			    dnode.sysctl_flags & CTLFLAG_OWNDESC) {
-				char *nd, k[1024];
+				char *nd, *k;
 
+				k = malloc(MAXDESCLEN, M_TEMP,
+				    M_WAITOK|M_CANFAIL);
+				if (k == NULL) {
+					error = ENOMEM;
+					goto out;
+				}
 				error = sysctl_copyinstr(l, dnode.sysctl_desc,
-							 &k[0], sizeof(k), &sz);
-				if (error)
-					return (error);
+							 k, MAXDESCLEN, &sz);
+				if (error) {
+					free(k, M_TEMP);
+					goto out;
+				}
 				nd = malloc(sz, M_SYSCTLDATA,
 					    M_WAITOK|M_CANFAIL);
-				if (nd == NULL)
-					return (ENOMEM);
+				if (nd == NULL) {
+					free(k, M_TEMP);
+					error = ENOMEM;
+					goto out;
+				}
 				memcpy(nd, k, sz);
 				dnode.sysctl_flags |= CTLFLAG_OWNDESC;
 				dnode.sysctl_desc = nd;
+				free(k, M_TEMP);
 			}
 
 			/*
@@ -1783,15 +1811,15 @@ sysctl_describe(SYSCTLFN_ARGS)
 		/*
 		 * is this description "valid"?
 		 */
-		memset(bf, 0, sizeof(bf));
+		memset(bf, 0, MAXDESCLEN);
 		if (node[i].sysctl_desc == NULL)
 			sz = 1;
 		else if (copystr(node[i].sysctl_desc, &d->descr_str[0],
-				 sizeof(bf) - sizeof(*d), &sz) != 0) {
+				 MAXDESCLEN - sizeof(*d), &sz) != 0) {
 			/*
 			 * erase possible partial description
 			 */
-			memset(bf, 0, sizeof(bf));
+			memset(bf, 0, MAXDESCLEN);
 			sz = 1;
 		}
 
@@ -1805,7 +1833,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 		if (oldp != NULL && left >= sz) {
 			error = sysctl_copyout(l, d, oldp, sz);
 			if (error)
-				return (error);
+				goto out;
 			left -= sz;
 			oldp = (void *)__sysc_desc_adv(oldp, d->descr_len);
 		}
@@ -1827,6 +1855,8 @@ sysctl_describe(SYSCTLFN_ARGS)
 	else
 		*oldlenp = tot;
 
+out:
+	free(bf, M_TEMP);
 	return (error);
 }
 
