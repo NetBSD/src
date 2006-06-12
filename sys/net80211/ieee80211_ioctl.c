@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.32 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.33 2006/06/12 21:17:59 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.32 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.33 2006/06/12 21:17:59 christos Exp $");
 #endif
 
 /*
@@ -497,7 +497,7 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct wi_ltv_keys *keys;
 	struct wi_req wreq;
-	u_char chanlist[roundup(IEEE80211_CHAN_MAX, NBBY)];
+	u_int8_t chanlist[IEEE80211_CHAN_BYTES];
 
 	error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 	if (error)
@@ -1848,7 +1848,7 @@ static int
 ieee80211_ioctl_setchanlist(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
 	struct ieee80211req_chanlist list;
-	u_char chanlist[IEEE80211_CHAN_BYTES];
+	u_int8_t chanlist[IEEE80211_CHAN_BYTES];
 	int i, j, error;
 
 	if (ireq->i_len != sizeof(list))
