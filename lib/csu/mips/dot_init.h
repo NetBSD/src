@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.4 2002/11/23 17:23:51 thorpej Exp $ */
+/* $NetBSD: dot_init.h,v 1.5 2006/06/12 22:05:49 mrg Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -75,6 +75,7 @@
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
 		".align 2				\n"\
+		".globl "#entry_pt"			\n"\
 		#entry_pt":				\n"\
 		MD_FUNCTION_PROLOGUE			   \
 		"	/* fall thru */			\n"\
