@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.104 2006/06/08 22:25:36 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.105 2006/06/12 10:34:46 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1808,4 +1808,12 @@ games/tetris/scores.c				1.14
 	A standard NetBSD installation is not as much risk because "tetris"
 	is set-group-ID "games", and users shouldn't be in that group.
 	[dan, ticket #1368]
+
+sys/arch/cobalt/dev/gt.c			1.15-1.19
+sys/arch/cobalt/dev/gtreg.h			1.3-1.4
+sys/arch/cobalt/pci/pci_machdep.c		1.20-1.22
+
+	Fix possible problems and improve performance of certain PCI devices
+	under NetBSD-cobalt.
+	[tsutsui, ticket #1359]
 
