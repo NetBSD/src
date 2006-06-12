@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.12.10.1 2005/03/27 17:48:27 tron Exp $	*/
+/*	$NetBSD: gt.c,v 1.12.10.2 2006/06/12 09:41:20 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12.10.1 2005/03/27 17:48:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12.10.2 2006/06/12 09:41:20 tron Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -80,21 +80,16 @@ CFATTACH_DECL(gt, sizeof(struct gt_softc),
     gt_match, gt_attach, NULL, NULL);
 
 static int
-gt_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gt_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 
 #define GT_REG_REGION	0x1000
 
 static void
-gt_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct gt_softc *sc = (void *)self;
@@ -143,10 +138,9 @@ gt_attach(parent, self, aux)
 }
 
 static int
-gt_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+gt_print(void *aux, const char *pnp)
 {
+
 	/* XXX */
 	return 0;
 }
