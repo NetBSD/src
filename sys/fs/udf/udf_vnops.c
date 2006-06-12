@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.5 2006/05/14 21:31:52 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.6 2006/06/12 00:20:21 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.5 2006/05/14 21:31:52 elad Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.6 2006/06/12 00:20:21 christos Exp $");
 #endif /* not lint */
 
 
@@ -170,13 +170,13 @@ udf_read(void *v)
 		assert(udf_node->efe);
 		efe = udf_node->efe;
 		file_size = udf_rw64(efe->inf_len);
-	};
+	}
 
 	if (vp->v_type == VDIR) {
 		/* protect against rogue programs reading raw directories */
 		if ((ioflag & IO_ALTSEMANTICS) == 0)
 			return EISDIR;
-	};
+	}
 	if (vp->v_type == VREG || vp->v_type == VDIR) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
@@ -204,7 +204,7 @@ udf_read(void *v)
 		}
 		/* TODO note access time */
 		return error;
-	};
+	}
 
 	return EINVAL;
 }
@@ -324,7 +324,7 @@ udf_strategy(void *v)
 		/* read buffer from the udf_node, translate vtop on the way*/
 		udf_read_filebuf(udf_node, bp);
 		return bp->b_error;
-	};
+	}
 
 	printf("udf_strategy: can't write yet\n");
 	return ENOTSUP;
@@ -368,7 +368,7 @@ udf_readdir(void *v)
 		assert(udf_node->efe);
 		efe = udf_node->efe;
 		file_size = udf_rw64(efe->inf_len);
-	};
+	}
 
 	/*
 	 * Add `.' pseudo entry if at offset zero since its not in the fid
@@ -386,7 +386,7 @@ udf_readdir(void *v)
 
 		/* mark with magic value that we have done the dummy */
 		uio->uio_offset = UDF_DIRCOOKIE_DOT;
-	};
+	}
 
 	/* we are called just as long as we keep on pushing data in */
 	error = 0;
@@ -433,12 +433,12 @@ udf_readdir(void *v)
 			DPRINTF(READDIR, ("\tread dirent `%s', type %d\n",
 			    dirent.d_name, dirent.d_type));
 			uiomove(&dirent, _DIRENT_SIZE(&dirent), uio);
-		};
+		}
 
 		/* pass on last transfered offset */
 		uio->uio_offset = transoffset;
 		free(fid, M_TEMP);
-	};
+	}
 
 	if (ap->a_eofflag)
 		*ap->a_eofflag = (uio->uio_offset == file_size);
@@ -450,7 +450,7 @@ udf_readdir(void *v)
 			printf("returning EOF ? %d\n", *ap->a_eofflag);
 		if (error)
 			printf("readdir returning error %d\n", error);
-	};
+	}
 #endif
 
 	return error;
@@ -548,14 +548,14 @@ udf_lookup(void *v)
 			if (!error) {
 			DPRINTF(LOOKUP, ("\tnode retrieved/created OK\n"));
 				*vpp = res_node->vnode;
-			};
-		};
+			}
+		}
 
 		/* see if we're requested to lock the parent */
 		if (lock_parent && islastcn) {
 			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
-		};
+		}
 		/* done */
 	} else {
 		DPRINTF(LOOKUP, ("\tlookup file\n"));
@@ -582,8 +582,8 @@ udf_lookup(void *v)
 					/* keep the component name */
 					cnp->cn_flags |= SAVENAME;
 					error = EJUSTRETURN;
-				};
-			};
+				}
+			}
 			/* done */
 		} else {
 			/* try to create/reuse the node */
@@ -601,7 +601,7 @@ udf_lookup(void *v)
 						error = ENOTDIR;
 				}
 
-			};
+			}
 			if (!error) {
 				/*
 				 * If LOCKPARENT or ISLASTCN is not set, dvp
@@ -611,9 +611,9 @@ udf_lookup(void *v)
 				*vpp = res_node->vnode;
 				if (!lock_parent || !islastcn)
 					VOP_UNLOCK(dvp, 0);
-			};
+			}
 			/* done */
-		};
+		}
 		/* done */
 	}	
 
@@ -677,13 +677,13 @@ udf_getattr(void *v)
 		atime    = &efe->atime;
 		mtime    = &efe->mtime;
 		attrtime = &efe->attrtime;
-	};
+	}
 
 	/* do the uid/gid translation game */
 	if ((uid == (uid_t) -1) && (gid == (gid_t) -1)) {
 		uid = ump->mount_args.anon_uid;
 		gid = ump->mount_args.anon_gid;
-	};
+	}
 	
 	/* fill in struct vattr with values from the node */
 	VATTR_NULL(vap);
@@ -761,7 +761,7 @@ udf_setattr(void *v)
 	if ((uid == nobody_uid) && (gid == nobody_gid)) {
 		uid = (uid_t) -1;
 		gid = (gid_t) -1;
-	};
+	}
 	
 	/* TODO implement setattr!! NOT IMPLEMENTED yet */
 	return 0;
@@ -814,7 +814,7 @@ udf_pathconf(void *v)
 			bits = 32 * vp->v_mount->mnt_dev_bshift;
 		*ap->a_retval = bits;
 		return 0;
-	};
+	}
 
 	return EINVAL;
 }
@@ -859,7 +859,7 @@ udf_close(void *v)
 	simple_lock(&vp->v_interlock);
 		if (vp->v_usecount > 1) {
 			/* TODO update times */
-		};
+		}
 	simple_unlock(&vp->v_interlock);
 
 	return 0;
@@ -902,7 +902,7 @@ udf_access(void *v)
 		efe = udf_node->efe;
 		uid = (uid_t)udf_rw32(efe->uid);
 		gid = (gid_t)udf_rw32(efe->gid);
-	};
+	}
 
 	/* check if we are allowed to write */
 	switch (vp->v_type) {
@@ -1210,7 +1210,7 @@ udf_advlock(void *v)
 		assert(udf_node->efe);
 		efe = udf_node->efe;
 		file_size = udf_rw64(efe->inf_len);
-	};
+	}
 
 	return lf_advlock(ap, &udf_node->lockf, file_size);
 }
