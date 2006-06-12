@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16.10.3 2006/06/12 09:44:39 tron Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.10.4 2006/06/12 10:05:33 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.10.3 2006/06/12 09:44:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.10.4 2006/06/12 10:05:33 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,13 +218,25 @@ int
 pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 {
 
+	/* ignore bogus IDs */
+	if (PCI_VENDOR(id) == 0)
+		return 0;
+
+	/* 2700 hardware wedges on accesses to device 6. */
+	if (bus == 0 && dev == 6)
+		return 0;
+
+	/* 2800 hardware wedges on accesses to device 31. */
+	if (bus == 0 && dev == 31)
+		return 0;
+
 	/* Don't configure the bridge and PCI probe. */ 
 	if (PCI_VENDOR(id) == PCI_VENDOR_GALILEO &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_GALILEO_GT64011)
 	        return 0;
 
-	/* Don't configure device 9 */
-	if (dev == 9)
+	/* Don't configure on-board VIA VT82C586 (pcib, viaide, uhci) */
+	if (bus == 0 && dev == 9)
 		return 0;
 
 	return PCI_CONF_ALL & ~(PCI_CONF_MAP_ROM |
