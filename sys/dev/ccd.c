@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.110 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.111 2006/06/12 22:02:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.110 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.111 2006/06/12 22:02:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	int maxsecsize;
 	struct partinfo dpart;
 	struct ccdgeom *ccg = &cs->sc_geom;
-	char tmppath[MAXPATHLEN];
+	char *tmppath;
 	int error, path_alloced;
 
 #ifdef DEBUG
@@ -290,6 +290,8 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	/* Allocate space for the component info. */
 	cs->sc_cinfo = malloc(cs->sc_nccdisks * sizeof(struct ccdcinfo),
 	    M_DEVBUF, M_WAITOK);
+
+	tmppath = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 
 	cs->sc_size = 0;
 
@@ -436,6 +438,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	for (ix = 0; ix < path_alloced; ix++)
 		free(cs->sc_cinfo[ix].ci_path, M_DEVBUF);
 	free(cs->sc_cinfo, M_DEVBUF);
+	free(tmppath, M_TEMP);
 	return (error);
 }
 
