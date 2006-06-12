@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.12.10.5 2006/06/12 10:29:30 tron Exp $	*/
+/*	$NetBSD: gt.c,v 1.12.10.6 2006/06/12 10:29:57 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12.10.5 2006/06/12 10:29:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12.10.6 2006/06/12 10:29:57 tron Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -114,6 +114,10 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_PCI_COMMAND,
 	    (bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_COMMAND) &
 	    ~PCI_SYNCMODE) | PCI_PCLK_HIGH);
+
+	(void)bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY,
+	    0x00 << PCI_RETRYCTR_SHIFT | 0xff << PCI_TIMEOUT1_SHIFT | 0xff);
 
 #if NPCI > 0
 	pc = &sc->sc_pc;
