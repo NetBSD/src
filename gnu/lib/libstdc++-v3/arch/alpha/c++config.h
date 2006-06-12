@@ -38,7 +38,7 @@
 #include <bits/os_defines.h>
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCPP__ 20040214
+#define __GLIBCPP__ 20050503
 
 // This is necessary until GCC supports separate template compilation.
 #define _GLIBCPP_NO_TEMPLATE_EXPORT 1
@@ -896,7 +896,7 @@
 #define _GLIBCPP_PACKAGE "libstdc++"
 
 /* Version number of package */
-#define _GLIBCPP_VERSION "3.3.3"
+#define _GLIBCPP_VERSION "3.3.6"
 
 /* Define if the compiler is configured for setjmp/longjmp exceptions. */
 /* #undef _GLIBCPP_SJLJ_EXCEPTIONS */
