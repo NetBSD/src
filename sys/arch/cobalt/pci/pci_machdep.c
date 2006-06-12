@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16.10.2 2006/06/12 09:42:05 tron Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.10.3 2006/06/12 09:44:39 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.10.2 2006/06/12 09:42:05 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.10.3 2006/06/12 09:44:39 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		return 0;
 
 	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR,
-	    0x80000000 | tag | reg);
+	    PCICFG_ENABLE | tag | reg);
 	data = bus_space_read_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_DATA);
 	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR, 0);
 
@@ -134,7 +134,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
 	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR,
-	    0x80000000 | tag | reg);
+	    PCICFG_ENABLE | tag | reg);
 	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_DATA, data);
 	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR, 0);
 }
