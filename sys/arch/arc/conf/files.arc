@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.53 2005/12/11 12:16:38 christos Exp $
+#	$NetBSD: files.arc,v 1.54 2006/06/12 15:04:40 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -130,7 +130,7 @@ file	arch/arc/jazz/jazzisabr.c	jazzisabr
 
 device	arcsisabr {} : isabus, isabr	# PLATFORM_DESKTECH_ARCSTATION_I
 attach	arcsisabr at mainbus
-file	arch/arc/isa/arcsisabr.c	arcsisabr
+file	arch/arc/dti/arcsisabr.c	arcsisabr
 file	arch/arc/isa/isadma_bounce.c	arcsisabr
 
 device	tyneisabr {} : isabus, isabr	# PLATFORM_DESKTECH_TYNE
