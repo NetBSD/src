@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.105 2006/06/12 10:34:46 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.106 2006/06/12 13:02:47 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1816,4 +1816,20 @@ sys/arch/cobalt/pci/pci_machdep.c		1.20-1.22
 	Fix possible problems and improve performance of certain PCI devices
 	under NetBSD-cobalt.
 	[tsutsui, ticket #1359]
+
+bin/sh/expand.c					1.74
+
+	Correct error when expanding "$@". This fixes PR bin/33472.
+	[dsl, ticket #1336]
+
+lib/libpam/modules/pam_unix/pam_unix.c		1.11
+
+	Make password aging work again. This fixes PR bin/30730 and
+	PR security/33502.
+	[jnemeth, ticket #1370]
+
+sys/dev/ata/wd.c				1.325
+
+	Adjust quirk entry for seagate drives. This fixes PR kern/33637.
+	[bouyer, ticket #1375]
 
