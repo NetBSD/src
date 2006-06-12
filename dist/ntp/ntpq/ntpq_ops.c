@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.4 2006/06/11 19:34:21 kardel Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.5 2006/06/12 10:46:19 kardel Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -871,13 +871,13 @@ dogetassoc(
 	FILE *fp
 	)
 {
-	u_short *datap;
+	char *datap;
 	int res;
 	int dsize;
 	u_short rstatus;
 
 	res = doquery(CTL_OP_READSTAT, 0, 0, 0, (char *)0, &rstatus,
-			  &dsize, (char **)&datap);
+			  &dsize, &datap);
 
 	if (res != 0)
 		return 0;
@@ -900,9 +900,9 @@ dogetassoc(
 
 	numassoc = 0;
 	while (dsize > 0) {
-		assoc_cache[numassoc].assid = ntohs(*datap);
+		assoc_cache[numassoc].assid = ntohs(*((u_short *)datap));
 		datap++;
-		assoc_cache[numassoc].status = ntohs(*datap);
+		assoc_cache[numassoc].status = ntohs(*((u_short *)datap));
 		datap++;
 		if (++numassoc >= MAXASSOC)
 			break;
