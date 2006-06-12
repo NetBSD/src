@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.93 2006/06/12 16:39:38 perry Exp $ */
+/*	$NetBSD: apm.c,v 1.94 2006/06/12 16:42:05 perry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.93 2006/06/12 16:39:38 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.94 2006/06/12 16:42:05 perry Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -966,14 +966,14 @@ ok:
 	    apm_majver, apm_minver);
 	apm_inited = 1;
 	if (apminfo.apm_detail & APM_IDLE_SLOWS) {
-		aprint_verbose(" (slowidle)");
+		aprint_normal(" (slowidle)");
 		/* leave apm_do_idle at its user-configured setting */
 	} else
 		apm_do_idle = 0;
 	if (apminfo.apm_detail & APM_BIOS_PM_DISABLED)
-		aprint_verbose(" (BIOS mgmt disabled)");
+		aprint_normal(" (BIOS mgmt disabled)");
 	if (apminfo.apm_detail & APM_BIOS_PM_DISENGAGED)
-		aprint_verbose(" (BIOS managing devices)");
+		aprint_normal(" (BIOS managing devices)");
 	aprint_normal("\n");
 }
 
