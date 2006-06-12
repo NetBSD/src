@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.50 2006/04/07 09:23:16 drochner Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.51 2006/06/12 00:07:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.50 2006/04/07 09:23:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.51 2006/06/12 00:07:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -692,7 +692,7 @@ mach_vm_copy(args)
 	mach_vm_copy_request_t *req = args->smsg;
 	mach_vm_copy_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	char tmpbuf[PAGE_SIZE];
+	char *tmpbuf;
 	int error;
 	caddr_t src, dst;
 	size_t size;
@@ -710,13 +710,15 @@ mach_vm_copy(args)
 	dst = (caddr_t)req->req_addr;
 	size = (size_t)req->req_size;
 
+	tmpbuf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+
 	/* Is there an easy way of dealing with that efficiently? */
 	do {
 		if ((error = copyin(src, tmpbuf, PAGE_SIZE)) != 0)
-			return mach_msg_error(args, error);
+			goto out;
 
 		if ((error = copyout(tmpbuf, dst, PAGE_SIZE)) != 0)
-			return mach_msg_error(args, error);
+			goto out;
 
 		src += PAGE_SIZE;
 		dst += PAGE_SIZE;
@@ -730,7 +732,12 @@ mach_vm_copy(args)
 
 	mach_set_trailer(rep, *msglen);
 
+	free(tmpbuf, M_TEMP);
 	return 0;
+
+out:
+	free(tmpbuf, M_TEMP);
+	return mach_msg_error(args, error);
 }
 
 int
