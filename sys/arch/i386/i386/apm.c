@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.91 2006/06/07 22:37:57 kardel Exp $ */
+/*	$NetBSD: apm.c,v 1.92 2006/06/12 15:56:04 perry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.91 2006/06/07 22:37:57 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.92 2006/06/12 15:56:04 perry Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -330,10 +330,7 @@ static void acallpr(int flag, const char *tag, struct bioscallregs *b) {
 }
 
 int
-apmcall_debug(func, regs, line)
-	int func;
-	struct bioscallregs *regs;
-	int line;
+apmcall_debug(int func, struct bioscallregs *regs, int line)
 {
 	int rv;
 	int print = (apmdebug & APMDEBUG_APMCALLS) != 0;
@@ -378,8 +375,7 @@ apmcall_debug(func, regs, line)
 
 
 static const char *
-apm_strerror(code)
-	int code;
+apm_strerror(int code)
 {
 	switch (code) {
 	case APM_ERR_PM_DISABLED:
@@ -429,9 +425,7 @@ apm_perror(const char *str, struct bioscallregs *regs, ...) /* XXX cgd */
 
 #ifdef APM_POWER_PRINT
 static void
-apm_power_print(sc, regs)
-	struct apm_softc *sc;
-	struct bioscallregs *regs;
+apm_power_print(struct apm_softc *sc, struct bioscallregs *regs)
 {
 
 	if (APM_BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
@@ -502,8 +496,7 @@ apm_power_print(sc, regs)
 #endif
 
 static void
-apm_get_powstate(dev)
-	u_int dev;
+apm_get_powstate(u_int dev)
 {
 	struct bioscallregs regs;
 	int rval;
@@ -516,8 +509,7 @@ apm_get_powstate(dev)
 }
 
 static void
-apm_suspend(sc)
-	struct apm_softc *sc;
+apm_suspend(struct apm_softc *sc)
 {
 
 	if (sc->sc_power_state == PWR_SUSPEND) {
@@ -543,8 +535,7 @@ apm_suspend(sc)
 }
 
 static void
-apm_standby(sc)
-	struct apm_softc *sc;
+apm_standby(struct apm_softc *sc)
 {
 
 	if (sc->sc_power_state == PWR_STANDBY) {
@@ -570,9 +561,7 @@ apm_standby(sc)
 }
 
 static void
-apm_resume(sc, regs)
-	struct apm_softc *sc;
-	struct bioscallregs *regs;
+apm_resume(struct apm_softc *sc, struct bioscallregs *regs)
 {
 
 	if (sc->sc_power_state == PWR_RESUME) {
@@ -604,9 +593,7 @@ apm_resume(sc, regs)
  * return 1 if the kernel driver should do so.
  */
 static int
-apm_record_event(sc, event_type)
-	struct apm_softc *sc;
-	u_int event_type;
+apm_record_event(struct apm_softc *sc, u_int event_type)
 {
 	struct apm_event_info *evp;
 
@@ -631,9 +618,7 @@ apm_record_event(sc, event_type)
  * event is a duplicate of an event we are already handling.
  */
 static int
-apm_event_handle(sc, regs)
-	struct apm_softc *sc;
-	struct bioscallregs *regs;
+apm_event_handle(struct apm_softc *sc, struct bioscallregs *regs)
 {
 	int error, retval;
 	struct bioscallregs nregs;
@@ -752,16 +737,14 @@ apm_event_handle(sc, regs)
 }
 
 static int
-apm_get_event(regs)
-	struct bioscallregs *regs;
+apm_get_event(struct bioscallregs *regs)
 {
 
 	return (apmcall(APM_GET_PM_EVENT, regs));
 }
 
 static int
-apm_periodic_check(sc)
-	struct apm_softc *sc;
+apm_periodic_check(struct apm_softc *sc)
 {
 	struct bioscallregs regs;
 
@@ -821,8 +804,7 @@ apm_periodic_check(sc)
 }
 
 static void
-apm_powmgt_enable(onoff)
-	int onoff;
+apm_powmgt_enable(int onoff)
 {
 	struct bioscallregs regs;
 
@@ -834,9 +816,7 @@ apm_powmgt_enable(onoff)
 }
 
 static void
-apm_powmgt_engage(onoff, dev)
-	int onoff;
-	u_int dev;
+apm_powmgt_engage(int onoff, u_int dev)
 {
 	struct bioscallregs regs;
 
@@ -850,9 +830,7 @@ apm_powmgt_engage(onoff, dev)
 
 #if 0
 static void
-apm_devpowmgt_enable(onoff, dev)
-	int onoff;
-	u_int dev;
+apm_devpowmgt_enable(int onoff, u_int dev)
 {
 	struct bioscallregs regs;
 
@@ -873,8 +851,7 @@ apm_devpowmgt_enable(onoff, dev)
 #endif
 
 int
-apm_set_powstate(dev, state)
-	u_int dev, state;
+apm_set_powstate(u_int dev, u_int state)
 {
 	struct bioscallregs regs;
 	if (!apm_inited || (apm_minver == 0 && state > APM_SYS_OFF))
@@ -890,7 +867,7 @@ apm_set_powstate(dev, state)
 }
 
 void
-apm_cpu_busy()
+apm_cpu_busy(void)
 {
 	struct bioscallregs regs;
 
@@ -909,7 +886,7 @@ apm_cpu_busy()
 }
 
 void
-apm_cpu_idle()
+apm_cpu_idle(void)
 {
 	struct bioscallregs regs;
 
@@ -928,8 +905,7 @@ apm_cpu_idle()
 
 /* V1.2 */
 static void
-apm_get_capabilities(regs)
-	struct bioscallregs *regs;
+apm_get_capabilities(struct bioscallregs *regs)
 {
 
 	regs->BX = APM_DEV_APM_BIOS;
@@ -962,8 +938,7 @@ apm_get_capabilities(regs)
 }
 
 static void
-apm_set_ver(self)
-	struct apm_softc *self;
+apm_set_ver(struct apm_softc *self)
 {
 	struct bioscallregs regs;
 
@@ -1008,9 +983,7 @@ ok:
 }
 
 static int
-apm_get_powstat(regs, batteryid)
-	struct bioscallregs *regs;
-	u_int batteryid;
+apm_get_powstat(struct bioscallregs *regs, u_int batteryid)
 {
 
 	if (batteryid == 0)
@@ -1022,8 +995,7 @@ apm_get_powstat(regs, batteryid)
 
 #if 0
 static void
-apm_disconnect(xxx)
-	void *xxx;
+apm_disconnect(void *xxx)
 {
 	struct bioscallregs regs;
 
@@ -1044,7 +1016,7 @@ apm_disconnect(xxx)
 #define I386_FLAGBITS "\020\017NT\014OVFL\0130UP\012IEN\011TF\010NF\007ZF\005AF\003PF\001CY"
 
 int
-apm_busprobe()
+apm_busprobe(void)
 {
 	struct bioscallregs regs;
 #ifdef APM_USE_KVM86
@@ -1088,10 +1060,7 @@ apm_busprobe()
 }
 
 static int
-apmmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+apmmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	/* There can be only one! */
 	if (apm_inited)
@@ -1116,9 +1085,7 @@ apmmatch(parent, match, aux)
 	    (bits), sizeof(bits)), (regs).ESI, (regs).EDI))
 
 static void
-apmattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apm_softc *apmsc = (void *)self;
 	struct bioscallregs regs;
@@ -1551,8 +1518,7 @@ bail_disconnected:
 }
 
 void
-apm_create_thread(arg)
-	void *arg;
+apm_create_thread(void *arg)
 {
 	struct apm_softc *apmsc = arg;
 	struct bioscallregs regs;
@@ -1584,8 +1550,7 @@ apm_create_thread(arg)
 #undef DPRINTF_BIOSRETURN
 
 void
-apm_thread(arg)
-	void *arg;
+apm_thread(void *arg)
 {
 	struct apm_softc *apmsc = arg;
 	int error;
@@ -1604,10 +1569,7 @@ apm_thread(arg)
 }
 
 int
-apmopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+apmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APMDEV(dev);
@@ -1656,10 +1618,7 @@ apmopen(dev, flag, mode, l)
 }
 
 int
-apmclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+apmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APMDEV(dev);
@@ -1685,12 +1644,7 @@ apmclose(dev, flag, mode, l)
 }
 
 int
-apmioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -1810,10 +1764,7 @@ apmioctl(dev, cmd, data, flag, l)
 }
 
 int
-apmpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+apmpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int revents = 0;
