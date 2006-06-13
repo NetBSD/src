@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.32 2006/06/13 20:37:24 ginsbach Exp $
+.\"	$NetBSD: socket.2,v 1.33 2006/06/13 21:19:56 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -223,6 +223,9 @@ call fails if:
 .It Bq Er EACCES
 Permission to create a socket of the specified type and/or protocol
 is denied.
+.It Bq Er EAFNOSUPPORT
+The address family (domain) is not supported or
+the specified domain is not supported by this protocol family.
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
@@ -231,8 +234,10 @@ The system file table is full.
 Insufficient buffer space is available.
 The socket cannot be created until sufficient resources are freed.
 .It Bq Er EPROTONOSUPPORT
-The protocol type or the specified protocol is not supported
-within this domain.
+The protocol family is not supported or
+the specified protocol is not supported within this domain.
+.It Bq Er EPROTOTYPE
+The socket type is not supported by the protocol.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
