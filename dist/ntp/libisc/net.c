@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
+/*	$NetBSD: net.c,v 1.4 2006/06/13 22:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -39,8 +39,10 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 #endif
 
 static isc_boolean_t 	once = ISC_FALSE;
+#ifdef WANT_IPV6
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
+#endif
 static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6only_result = ISC_R_NOTFOUND;
@@ -208,7 +210,6 @@ initialize_ipv6only(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6only,
 				  try_ipv6only) == ISC_R_SUCCESS);
 }
-#endif /* IPV6_V6ONLY */
 
 static void
 try_ipv6pktinfo(void) {
@@ -259,6 +260,7 @@ initialize_ipv6pktinfo(void) {
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
 #endif /* WANT_IPV6 */
+#endif /* ISC_PLATFORM_HAVEIPV6 */
 
 isc_result_t
 isc_net_probe_ipv6only(void) {
