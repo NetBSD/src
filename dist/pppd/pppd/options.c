@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.4 2006/06/13 22:12:37 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.95 2004/11/09 22:33:35 paulus Exp"
 #else
-__RCSID("$NetBSD: options.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.4 2006/06/13 22:12:37 christos Exp $");
 #endif
 #endif
 
@@ -324,14 +324,14 @@ option_t general_options[] = {
 #endif
 
 #ifdef PPP_FILTER
-    { "pass-filter-in", 1, setpassfilter_in,
+    { "pass-filter-in", o_special, setpassfilter_in,
       "set filter for packets to pass inwards", OPT_PRIO },
-    { "pass-filter-out", 1, setpassfilter_out,
+    { "pass-filter-out", o_special, setpassfilter_out,
       "set filter for packets to pass outwards", OPT_PRIO },
 
-    { "active-filter-in", 1, setactivefilter_in,
+    { "active-filter-in", o_special, setactivefilter_in,
       "set filter for active pkts inwards", OPT_PRIO },
-    { "active-filter-out", 1, setactivefilter_out,
+    { "active-filter-out", o_special, setactivefilter_out,
       "set filter for active pkts outwards", OPT_PRIO },
 #endif
 
@@ -1480,13 +1480,13 @@ setpassfilter_in(argv)
     char **argv;
 {
     pcap_t *pc;
-    int ret = 0;
+    int ret = 1;
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &pass_filter_in, *argv, 1, netmask) == -1) {
 	option_error("error in pass-filter-in expression: %s\n",
 		     pcap_geterr(pc));
-	ret = 1;
+	ret = 0;
     }
     pcap_close(pc);
 
@@ -1501,13 +1501,13 @@ setpassfilter_out(argv)
     char **argv;
 {
     pcap_t *pc;
-    int ret = 0;
+    int ret = 1;
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &pass_filter_out, *argv, 1, netmask) == -1) {
 	option_error("error in pass-filter-out expression: %s\n",
 		     pcap_geterr(pc));
-	ret = 1;
+	ret = 0;
     }
     pcap_close(pc);
 
@@ -1522,13 +1522,13 @@ setactivefilter_in(argv)
     char **argv;
 {
     pcap_t *pc;
-    int ret = 0;
+    int ret = 1;
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &active_filter_in, *argv, 1, netmask) == -1) {
 	option_error("error in active-filter-in expression: %s\n",
 		     pcap_geterr(pc));
-	ret = 1;
+	ret = 0;
     }
     pcap_close(pc);
 
@@ -1543,13 +1543,13 @@ setactivefilter_out(argv)
     char **argv;
 {
     pcap_t *pc;
-    int ret = 0;
+    int ret = 1;
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &active_filter_out, *argv, 1, netmask) == -1) {
 	option_error("error in active-filter-out expression: %s\n",
 		     pcap_geterr(pc));
-	ret = 1;
+	ret = 0;
     }
     pcap_close(pc);
 
