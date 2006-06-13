@@ -1,10 +1,8 @@
-# $NetBSD: INSTALL_XEN3_U,v 1.1.4.2 2006/04/07 12:51:25 tron Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.2.2 2006/06/13 22:28:22 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
 options 	XEN
-options 	XEN3
-options 	MAXPHYS=32768
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -49,14 +47,14 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -138,12 +136,14 @@ hypervisor*	at mainbus?		# Xen hypervisor
 npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
+xennet* 	at hypervisor?		# Xen virtual network interface
 
-xenbus*		at hypervisor?		# Xenbus virtual bus
+xbd*		at hypervisor?		# Xen virtual block device
+#wd*		at hypervisor?		# Xen vbd (wd identity)
+#sd*		at hypervisor?		# Xen vbd (sd identity)
+#cd*		at hypervisor?		# Xen vbd (cd identity)
 
-xennet* 	at xenbus? id ?		# Xen virtual network interface
-
-xbd*		at xenbus? id ?		# Xen virtual block device
+include	"arch/i386/conf/INSTALL.local"
 
 # Pseudo-Devices
 
@@ -153,17 +153,17 @@ pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
