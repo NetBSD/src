@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.5 2006/06/12 10:46:19 kardel Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.6 2006/06/13 21:03:53 kardel Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -901,9 +901,9 @@ dogetassoc(
 	numassoc = 0;
 	while (dsize > 0) {
 		assoc_cache[numassoc].assid = ntohs(*((u_short *)datap));
-		datap++;
+		datap += sizeof(u_short);
 		assoc_cache[numassoc].status = ntohs(*((u_short *)datap));
-		datap++;
+		datap += sizeof(u_short);
 		if (++numassoc >= MAXASSOC)
 			break;
 		dsize -= sizeof(u_short) + sizeof(u_short);
