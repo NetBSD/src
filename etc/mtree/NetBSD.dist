@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.315 2006/06/09 21:08:51 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.316 2006/06/13 11:26:17 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -313,7 +313,6 @@
 ./usr/libexec/ching
 ./usr/libexec/lpr
 ./usr/libexec/postfix
-./usr/libexec/sm.bin
 ./usr/libexec/uucp
 ./usr/lkm
 ./usr/mdec
