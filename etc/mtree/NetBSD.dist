@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.316 2006/06/13 11:26:17 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.317 2006/06/13 11:51:43 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -258,7 +258,6 @@
 ./usr/include/isofs/cd9660
 ./usr/include/kadm5
 ./usr/include/krb5
-./usr/include/libmilter
 ./usr/include/miscfs
 ./usr/include/miscfs/fdesc
 ./usr/include/miscfs/fifofs
