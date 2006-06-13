@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.132 2006/06/13 13:56:50 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.133 2006/06/13 13:57:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.132 2006/06/13 13:56:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133 2006/06/13 13:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,9 +1094,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 		return 0;
 	}
 
-	if (CURTAIN(kauth_cred_geteuid(curlwp->l_proc->p_cred),
-		    kauth_cred_geteuid(p->p_cred)))
-		return (0);
+	if (kauth_authorize_process(kauth_cred_get(),
+	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
+		return 0;
 
 	memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
@@ -1223,9 +1223,9 @@ procfs_readdir(v)
 		if (p == NULL)
 			return ESRCH;
 
-		if (CURTAIN(kauth_cred_geteuid(curlwp->l_proc->p_cred),
-			    kauth_cred_geteuid(p->p_cred)))
-			return (ESRCH);
+		if (kauth_authorize_process(kauth_cred_get(),
+		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
+			return ESRCH;
 
 		fdp = p->p_fd;
 
