@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.107 2006/06/12 13:04:49 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.108 2006/06/13 10:29:44 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1832,4 +1832,9 @@ sys/dev/ata/wd.c				1.325 via patch
 
 	Adjust quirk entry for seagate drives. This fixes PR kern/33637.
 	[bouyer, ticket #1375]
+
+sys/dev/sysmon/sysmon_power.c			1.12
+
+	Correct a bug in power event queue management.
+	[freza, ticket #1369]
 
