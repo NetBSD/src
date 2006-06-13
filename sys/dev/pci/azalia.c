@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.26 2006/06/11 12:18:00 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.27 2006/06/13 14:20:09 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.26 2006/06/11 12:18:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.27 2006/06/13 14:20:09 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -904,17 +904,17 @@ azalia_codec_init(codec_t *this)
 	this->subid = this->az->subid;
 	azalia_codec_init_vtbl(this);
 
+	aprint_normal("%s: codec[%d]: ", XNAME(this->az), addr);
 	if (this->name == NULL) {
-		aprint_normal("%s: codec: 0x%4.4x/0x%4.4x (rev. %u.%u)\n",
-		    XNAME(this->az), id >> 16, id & 0xffff,
+		aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)\n",
+		    id >> 16, id & 0xffff,
 		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 	} else {
-		aprint_normal("%s: codec: %s (rev. %u.%u)\n",
-		    XNAME(this->az), this->name,
+		aprint_normal("%s (rev. %u.%u)\n", this->name,
 		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 	}
-	aprint_normal("%s: codec: High Definition Audio rev. %u.%u\n",
-	    XNAME(this->az), COP_RID_MAJ(rev), COP_RID_MIN(rev));
+	aprint_normal("%s: codec[%d]: High Definition Audio rev. %u.%u\n",
+	    XNAME(this->az), addr, COP_RID_MAJ(rev), COP_RID_MIN(rev));
 
 	/* identify function nodes */
 	err = this->comresp(this, CORB_NID_ROOT, CORB_GET_PARAMETER,
@@ -941,12 +941,12 @@ azalia_codec_init(codec_t *this)
 			this->audiofunc = n + i;
 			break;	/* XXX multiple audio functions? */
 		} else if (COP_FTYPE(result) == COP_FTYPE_MODEM) {
-			aprint_normal("%s: codec[%d]: No support for modem function groups",
+			aprint_normal("%s: codec[%d]: No support for modem function groups\n",
 			    XNAME(this->az), addr);
 		}
 	}
 	if (this->audiofunc < 0) {
-		aprint_error("%s: codec[%d]: No audio function groups\n",
+		aprint_error("%s: codec[%d] has no audio function groups\n",
 		    XNAME(this->az), addr);
 		return -1;
 	}
