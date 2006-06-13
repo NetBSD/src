@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.222 2006/06/11 07:32:18 rjs Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.223 2006/06/13 13:56:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.222 2006/06/11 07:32:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.223 2006/06/13 13:56:50 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -771,13 +771,15 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 	struct proc	*cp, *p;
 	kauth_cred_t	pc;
 	ksiginfo_t	ksi;
+	int signum = SCARG(uap, signum);
+	int error;
 
 	cp = l->l_proc;
 	pc = cp->p_cred;
-	if ((u_int)SCARG(uap, signum) >= NSIG)
+	if ((u_int)signum >= NSIG)
 		return (EINVAL);
 	KSI_INIT(&ksi);
-	ksi.ksi_signo = SCARG(uap, signum);
+	ksi.ksi_signo = signum;
 	ksi.ksi_code = SI_USER;
 	ksi.ksi_pid = cp->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(cp->p_cred);
@@ -785,11 +787,11 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL, cp,
-		    p->p_cred, p,
-		    (void *)(unsigned long)SCARG(uap, signum)) != 0)
-			return (EPERM);
-		if (SCARG(uap, signum))
+		error = kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL, p,
+		    (void *)(uintptr_t)signum, NULL, NULL);
+		if (error)
+			return error;
+		if (signum)
 			kpsignal2(p, &ksi, 1);
 		return (0);
 	}
@@ -825,11 +827,9 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		 */
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    p == cp ||
-			    kauth_authorize_process(pc,
-			    KAUTH_PROCESS_CANSIGNAL, cp, p->p_cred, p,
-			    (void *)(unsigned long)signum) != 0)
+			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || p == cp ||
+			    kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
+			    p, (void *)(uintptr_t)signum, NULL, NULL) != 0)
 				continue;
 			nfound++;
 			if (signum)
@@ -849,9 +849,8 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    kauth_authorize_process(pc,
-			    KAUTH_PROCESS_CANSIGNAL, cp, p->p_cred, p,
-			    (void *)(unsigned long)signum) != 0)
+			    kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
+			    p, (void *)(uintptr_t)signum, NULL, NULL) != 0)
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
