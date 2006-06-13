@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.108 2006/06/13 10:29:44 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.109 2006/06/13 22:39:17 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1837,4 +1837,31 @@ sys/dev/sysmon/sysmon_power.c			1.12
 
 	Correct a bug in power event queue management.
 	[freza, ticket #1369]
+
+distrib/i386/floppies/instkernel/Makefile	patch
+etc/etc.i386/Makefile.inc			1.44
+sys/arch/i386/conf/INSTALL_XEN2_DOMU		1.1
+sys/arch/i386/conf/INSTALL_XEN3_DOMU		1.1
+sys/arch/i386/conf/INSTALL_XEN3_U		delete
+sys/arch/i386/conf/INSTALL_XENU			delete
+sys/arch/i386/conf/XEN0				delete
+sys/arch/i386/conf/XEN2_DOM0			1.1
+sys/arch/i386/conf/XEN2_DOMU			1.1
+sys/arch/i386/conf/XEN3_DOMU			1.1
+sys/arch/i386/conf/XEN3_U			delete
+sys/arch/i386/conf/XENU				delete
+
+	Rename XEN kernel config files to be more consistent:
+	   INSTALL_XEN3_U  -> INSTALL_XEN3_DOMU
+	   INSTALL_XENU    -> INSTALL_XEN2_DOMU
+	   XEN0            -> XEN2_DOM0
+	   XEN3_U          -> XEN3_DOMU
+	   XENU            -> XEN2_DOMU
+	[hubertf, ticket #1371]
+
+lib/libpthread/pthread_sig.c			1.46
+
+	Fix bug in signal handling which could e.g get the MySQL daemon
+	stuck in a tight loop after receiving a HUP signal.
+	[chuck, ticket #1376]
 
