@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.55 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: extintr.c,v 1.56 2006/06/13 18:24:37 freza Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.56 2006/06/13 18:24:37 freza Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55 2005/12/24 22:45:35 perry Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
@@ -103,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55 2005/12/24 22:45:35 perry Exp $");
 void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
 
-static inline int cntlzw __P((int));
 static inline uint32_t gc_read_irq __P((void));
 static inline int mapirq __P((int));
 static void gc_enable_irq __P((int));
@@ -179,20 +179,6 @@ mapirq(irq)
 	virq[irq] = v;
 
 	return v;
-}
-
-/*
- * Count leading zeros.
- */
-static inline int
-cntlzw(x)
-	int x;
-{
-	int a;
-
-	__asm volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
-
-	return a;
 }
 
 uint32_t
