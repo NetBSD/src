@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.69 2006/06/13 13:23:03 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.70 2006/06/13 13:52:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.69 2006/06/13 13:23:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.70 2006/06/13 13:52:06 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1311,9 +1311,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (kauth_authorize_process(l->l_proc->p_cred,
-		    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
-		    NULL) != 0)
+		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+		    kauth_cred_geteuid(fp->f_cred)))
 			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
@@ -2031,9 +2030,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (kauth_authorize_process(l->l_proc->p_cred,
-			    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
-			    NULL) != 0)
+			if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+			    kauth_cred_geteuid(fp->f_cred)))
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
