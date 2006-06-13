@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.13 2006/06/11 15:16:41 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.14 2006/06/13 14:29:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.13 2006/06/11 15:16:41 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.14 2006/06/13 14:29:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,7 +90,6 @@ static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc880_init_dacgroup(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
 static int	alc882_mixer_init(codec_t *);
-static int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
 static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc882_get_port(codec_t *, mixer_ctrl_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
@@ -125,7 +124,6 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0882:
 		this->name = "Realtek ALC882";
 		this->init_dacgroup = alc882_init_dacgroup;
-		this->init_widget = alc882_init_widget;
 		this->mixer_init = alc882_mixer_init;
 		this->get_port = alc882_get_port;
 		this->set_port = alc882_set_port;
@@ -1725,6 +1723,11 @@ static const mixer_item_t alc882_mixer_items[] = {
 			   {{AudioNline}, ALC882_LINE}, {{AudioNcd}, ALC882_CD},
 			   {{AudioNspeaker}, ALC882_BEEP},
 			   {{AudioNmixerout}, ALC882_MIX}}}}, 0x22, -1},
+
+	{{0, {"usingdac"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT, 0, 0,
+	  .un.e={2, {{{"analog"}, 0}, {{"digital"}, 1}}}}, 0, MI_TARGET_DAC},
+	{{0, {"usingadc"}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD, 0, 0,
+	  .un.e={2, {{{"analog"}, 0}, {{"digital"}, 1}}}}, 0, MI_TARGET_ADC},
 };
 
 static int
@@ -1797,45 +1800,6 @@ alc882_init_dacgroup(codec_t *this)
 
 	this->dacs = dacs;
 	this->adcs = adcs;
-	return 0;
-}
-
-static int
-alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
-{
-	switch (nid) {
-	case 0x14:
-		strlcpy(w->name, "green", sizeof(w->name));
-		break;
-	case 0x15:
-		strlcpy(w->name, "gray", sizeof(w->name));
-		break;
-	case 0x16:
-		strlcpy(w->name, "orange", sizeof(w->name));
-		break;
-	case 0x17:
-		strlcpy(w->name, "black", sizeof(w->name));
-		break;
-	case 0x18:
-		strlcpy(w->name, "mic1", sizeof(w->name));
-		break;
-	case 0x19:
-		strlcpy(w->name, "mic2", sizeof(w->name));
-		break;
-	case 0x1a:
-		strlcpy(w->name, AudioNline, sizeof(w->name));
-		break;
-	case 0x1b:
-		/* AudioNheadphone is too long */
-		strlcpy(w->name, "hp", sizeof(w->name));
-		break;
-	case 0x1c:
-		strlcpy(w->name, AudioNcd, sizeof(w->name));
-		break;
-	case 0x1d:
-		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
-		break;
-	}
 	return 0;
 }
 
