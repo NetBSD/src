@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.56 2006/06/12 13:04:35 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.57 2006/06/13 22:34:48 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -516,4 +516,10 @@ sys/dev/ata/wd.c				1.325 via patch
 
 	Adjust quirk entry for seagate drives. This fixes PR kern/33637.
 	[bouyer, ticket #1375]
+
+lib/libpthread/pthread_sig.c			1.46
+
+	Fix bug in signal handling which could e.g get the MySQL daemon
+	stuck in a tight loop after receiving a HUP signal.
+	[chuck, ticket #1376]
 
