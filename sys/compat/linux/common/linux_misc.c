@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.156 2006/06/10 21:18:11 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.157 2006/06/13 16:54:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.156 2006/06/10 21:18:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.157 2006/06/13 16:54:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1764,7 +1764,7 @@ linux_sys_getpriority(l, v, retval)
         if ((error = sys_getpriority(l, &bsa, retval)))
                 return error;
 
-        *retval = 20 - *retval;
+        *retval = NZERO - *retval;
 
         return 0;
 }
