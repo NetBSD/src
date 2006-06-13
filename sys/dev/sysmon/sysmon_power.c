@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.10 2004/05/22 11:32:50 cube Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.10.10.1 2006/06/13 10:23:44 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.10 2004/05/22 11:32:50 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.10.10.1 2006/06/13 10:23:44 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -77,7 +77,7 @@ static char sysmon_power_type[32];
 
 #define	PEVQ_F_WAITING		0x01	/* daemon waiting for event */
 
-#define	SYSMON_NEXT_EVENT(x)		(((x) + 1) / SYSMON_MAX_POWER_EVENTS)
+#define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
 /*
  * sysmon_queue_power_event:
