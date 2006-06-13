@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2006/05/30 22:44:13 freza Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2006/06/13 18:24:37 freza Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -250,6 +250,15 @@ mfpvr(void)
 
 	__asm volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
+}
+
+static __inline int
+cntlzw(uint32_t val)
+{
+	int 			cnt;
+
+	__asm volatile ("cntlzw %0,%1" : "=r"(cnt) : "r"(val));
+	return (cnt);
 }
 
 #if defined(PPC_IBM4XX) || defined(PPC_IBM403)
