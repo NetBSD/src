@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.131 2006/06/07 22:33:41 kardel Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.132 2006/06/13 13:56:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.131 2006/06/07 22:33:41 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.132 2006/06/13 13:56:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,9 +567,8 @@ procfs_getattr(v)
 	}
 
 	if (procp != NULL) {
-		if (kauth_authorize_process(curlwp->l_proc->p_cred,
-		    KAUTH_PROCESS_CANSEE, curlwp->l_proc, procp->p_cred,
-		    procp, NULL) != 0)
+		if (kauth_authorize_process(kauth_cred_get(),
+		    KAUTH_PROCESS_CANSEE, procp, NULL, NULL, NULL) != 0)
 			return (ENOENT);
 	}
 

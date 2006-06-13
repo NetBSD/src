@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.70 2006/06/13 13:52:06 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.71 2006/06/13 13:56:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.70 2006/06/13 13:52:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.71 2006/06/13 13:56:50 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2058,8 +2058,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				/* skip embryonic processes */
 				continue;
 			if (kauth_authorize_process(l->l_proc->p_cred,
-			    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
-			    NULL, NULL) != 0)
+			    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2192,8 +2191,7 @@ again:
 			continue;
 
 		if (kauth_authorize_process(l->l_proc->p_cred,
-		    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
-		    NULL, NULL) != 0)
+		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 			continue;
 
 		/*
@@ -2364,9 +2362,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	if (kauth_authorize_process(l->l_proc->p_cred,
-	    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred, NULL, NULL) != 0) {
-		error = EPERM;
+	error = kauth_authorize_process(l->l_proc->p_cred,
+	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+	if (error) {
 		goto out_locked;
 	}
 
