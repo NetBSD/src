@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.6 2006/05/28 06:52:17 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.7 2006/06/13 13:56:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -761,24 +761,20 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 			   void *arg3)
 {
 	struct proc *p;
-	kauth_cred_t cred2;
 	int error;
 
 	error = KAUTH_RESULT_DEFER;
 
 	p = arg0;
-	cred2 = arg1;
 
 	switch (action) {
 	case KAUTH_PROCESS_CANSIGNAL: {
-		struct proc *to;
 		int signum;
 
-		to = arg2;
-		signum = (int)(unsigned long)arg3;
+		signum = (int)(unsigned long)arg1;
 
-		if (kauth_cred_uidmatch(cred, cred2)  ||
-		    (signum == SIGCONT && (p->p_session == to->p_session)))
+		if (kauth_cred_uidmatch(cred, p->p_cred) ||
+		    (signum == SIGCONT && (curproc->p_session == p->p_session)))
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DEFER;
@@ -787,7 +783,7 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		}
 
 	case KAUTH_PROCESS_CANPTRACE:
-		if (kauth_cred_uidmatch(cred, cred2))
+		if (kauth_cred_uidmatch(cred, p->p_cred))
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DENY;
@@ -797,7 +793,7 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		if (!security_curtain) {
 			error = KAUTH_RESULT_ALLOW;
 		} else {
-			if (kauth_cred_uidmatch(cred, cred2))
+			if (kauth_cred_uidmatch(cred, p->p_cred))
 				error = KAUTH_RESULT_ALLOW;
 			else
 				error = KAUTH_RESULT_DENY;
