@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.94 2006/05/22 13:43:54 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.95 2006/06/13 13:22:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.94 2006/05/22 13:43:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.95 2006/06/13 13:22:06 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -418,7 +418,7 @@ int	swapdebug = 0;
 #endif
 
 /*
- * uvm_swapin: swap in a process's u-area.
+ * uvm_swapin: swap in an lwp's u-area.
  */
 
 void
