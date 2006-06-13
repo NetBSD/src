@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.4 2006/06/13 17:30:05 dogcow Exp $ */
+/* $NetBSD: tsc.c,v 1.5 2006/06/13 17:37:06 dogcow Exp $ */
 
 
 /*-
@@ -83,10 +83,12 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.4 2006/06/13 17:30:05 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.5 2006/06/13 17:37:06 dogcow Exp $");
 
 #include "opt_multiprocessor.h"
+#ifdef i386
 #include "opt_enhanced_speedstep.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
