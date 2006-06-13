@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.754 2006/06/07 22:37:57 kardel Exp $
+# $NetBSD: GENERIC,v 1.755 2006/06/13 17:17:15 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.754 $"
+#ident 		"GENERIC-$Revision: 1.755 $"
 
 maxusers	32		# estimated number of users
 
@@ -1267,8 +1267,8 @@ joy*	at eso?				# ESS Solo-1 on-board joystick
 
 # Miscellaneous Devices
 geodegcb*  at pci? dev ? function ?	# Geode GCB area
-geodewdog* at geodegcb?			# AMD Geode SC1100 watchdog timer
-geodecntr* at geodegcb?			# AMD Geode SC1100 high resolution counter
+geodewdog* at geodegcb? 		# AMD Geode SC1100 watchdog timer
+geodecntr* at geodegcb? 		# AMD Geode SC1100 high res. counter
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
