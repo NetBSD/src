@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.31 2004/11/03 13:11:41 jmmv Exp $
+.\"	$NetBSD: socket.2,v 1.32 2006/06/13 20:37:24 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 15, 2003
+.Dd June 13, 2006
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -220,19 +220,19 @@ The
 .Fn socket
 call fails if:
 .Bl -tag -width Er
-.It Bq Er EPROTONOSUPPORT
-The protocol type or the specified protocol is not supported
-within this domain.
+.It Bq Er EACCES
+Permission to create a socket of the specified type and/or protocol
+is denied.
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
 The system file table is full.
-.It Bq Er EACCES
-Permission to create a socket of the specified type and/or protocol
-is denied.
 .It Bq Er ENOBUFS
 Insufficient buffer space is available.
 The socket cannot be created until sufficient resources are freed.
+.It Bq Er EPROTONOSUPPORT
+The protocol type or the specified protocol is not supported
+within this domain.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
