@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.33 2006/06/12 15:39:01 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.34 2006/06/13 13:51:31 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.33 2006/06/12 15:39:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.34 2006/06/13 13:51:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -437,6 +437,8 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 	ih = isa_intrhand[isa_vector];
 	if (isa_vector == 0 && ih) {	/* Clock */	/*XXX*/
 		last_cp0_count = mips3_cp0_count_read();
+		/* XXX: spllowerclock() not allowed */
+		cf->sr &= ~MIPS_SR_INT_IE;
 		if ((*ih->ih_fun)(cf))
 			ih->ih_evcnt.ev_count++;
 		ih = ih->ih_next;
