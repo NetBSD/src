@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.2 2006/06/13 16:23:57 skd Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.2 2006/06/13 16:23:57 skd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -208,6 +208,8 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	struct timeval tv0, tv1, utv, otv;
 	struct netbsd32_timeval utv32;
 	int error;
+
+	timerclear(&otv); /* XXX GCC4 */
 
 	/*
 	 * Store current time for computation of the amount of
