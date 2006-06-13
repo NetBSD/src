@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.7 2006/06/13 13:56:50 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.8 2006/06/13 22:56:46 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -247,7 +247,6 @@ void
 kauth_cred_setuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(uid >= 0 && uid <= UID_MAX);
 
 	cred->cr_uid = uid;
 }
@@ -256,7 +255,6 @@ void
 kauth_cred_seteuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(uid >= 0 && uid <= UID_MAX);
 
 	cred->cr_euid = uid;
 }
@@ -265,7 +263,6 @@ void
 kauth_cred_setsvuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(uid >= 0 && uid <= UID_MAX);
 
 	cred->cr_svuid = uid;
 }
@@ -274,7 +271,6 @@ void
 kauth_cred_setgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	cred->cr_gid = gid;
 }
@@ -283,7 +279,6 @@ void
 kauth_cred_setegid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	cred->cr_egid = gid;
 }
@@ -292,7 +287,6 @@ void
 kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	cred->cr_svgid = gid;
 }
@@ -304,7 +298,6 @@ kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 	int i;
 
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 	KASSERT(resultp != NULL);
 
 	*resultp = 0;
