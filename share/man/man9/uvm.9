@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.73 2006/03/04 15:05:02 sketch Exp $
+.\"	$NetBSD: uvm.9,v 1.74 2006/06/13 13:23:59 yamt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -806,7 +806,7 @@ It handles the swapping in of runnable, swapped out processes in priority
 order.
 .Pp
 .Fn uvm_swapin
-swaps in the named process.
+swaps in the named lwp.
 .Sh PAGE LOAN
 .Ft int
 .br
