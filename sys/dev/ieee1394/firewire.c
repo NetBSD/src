@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.7 2006/04/14 21:22:26 christos Exp $	*/
+/*	$NetBSD: firewire.c,v 1.8 2006/06/13 02:39:11 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1607,14 +1607,17 @@ fw_explore(struct firewire_comm *fc)
 {
 	int node, err, s, i, todo, todo2, trys;
 	char nodes[63];
-	struct fw_device dfwdev;
+	struct fw_device *dfwdev;
 
 	todo = 0;
+	dfwdev = malloc(sizeof(*dfwdev), M_TEMP, M_NOWAIT);
+	if (dfwdev == NULL)
+		return;
 	/* setup dummy fwdev */
-	dfwdev.fc = fc;
-	dfwdev.speed = 0;
-	dfwdev.maxrec = 8; /* 512 */
-	dfwdev.status = FWDEVINIT;
+	dfwdev->fc = fc;
+	dfwdev->speed = 0;
+	dfwdev->maxrec = 8; /* 512 */
+	dfwdev->status = FWDEVINIT;
 
 	for (node = 0; node <= fc->max_node; node ++) {
 		/* We don't probe myself and linkdown nodes */
@@ -1632,8 +1635,8 @@ fw_explore(struct firewire_comm *fc)
 	for (trys = 0; todo > 0 && trys < 3; trys ++) {
 		todo2 = 0;
 		for (i = 0; i < todo; i ++) {
-			dfwdev.dst = nodes[i];
-			err = fw_explore_node(&dfwdev);
+			dfwdev->dst = nodes[i];
+			err = fw_explore_node(dfwdev);
 			if (err)
 				nodes[todo2++] = nodes[i];
 			if (firewire_debug)
@@ -1643,6 +1646,7 @@ fw_explore(struct firewire_comm *fc)
 		todo = todo2;
 	}
 	splx(s);
+	free(dfwdev, M_TEMP);
 }
 
 static void
