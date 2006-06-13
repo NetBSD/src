@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.11 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.12 2006/06/13 02:08:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1263,17 +1263,13 @@ static int fr_natputent(data, getlock)
 caddr_t data;
 int getlock;
 {
-	nat_save_t ipn, *ipnn;
+	nat_save_t *ipn, *ipnn;
 	ap_session_t *aps;
 	nat_t *n, *nat;
 	frentry_t *fr;
-	fr_info_t fin;
+	fr_info_t *fin;
 	ipnat_t *in;
 	int error;
-
-	error = fr_inobj(data, &ipn, IPFOBJ_NATSAVE);
-	if (error != 0)
-		return error;
 
 	/*
 	 * Initialise early because of code at junkput label.
@@ -1282,29 +1278,38 @@ int getlock;
 	aps = NULL;
 	nat = NULL;
 	ipnn = NULL;
+	fin = NULL;
+
+	KMALLOC(ipn, nat_save_t *);
+	if (ipn == NULL)
+		return ENOMEM;
+	error = fr_inobj(data, ipn, IPFOBJ_NATSAVE);
+	if (error != 0)
+		goto junkput;
+
 
 	/*
 	 * New entry, copy in the rest of the NAT entry if it's size is more
 	 * than just the nat_t structure.
 	 */
 	fr = NULL;
-	if (ipn.ipn_dsize > sizeof(ipn)) {
-		if (ipn.ipn_dsize > 81920) {
+	if (ipn->ipn_dsize > sizeof(*ipn)) {
+		if (ipn->ipn_dsize > 81920) {
 			error = ENOMEM;
 			goto junkput;
 		}
 
-		KMALLOCS(ipnn, nat_save_t *, ipn.ipn_dsize);
+		KMALLOCS(ipnn, nat_save_t *, ipn->ipn_dsize);
 		if (ipnn == NULL)
 			return ENOMEM;
 
-		error = fr_inobjsz(data, ipnn, IPFOBJ_NATSAVE, ipn.ipn_dsize);
+		error = fr_inobjsz(data, ipnn, IPFOBJ_NATSAVE, ipn->ipn_dsize);
 		if (error != 0) {
 			error = EFAULT;
 			goto junkput;
 		}
 	} else
-		ipnn = &ipn;
+		ipnn = ipn;
 
 	KMALLOC(nat, nat_t *);
 	if (nat == NULL) {
@@ -1354,16 +1359,21 @@ int getlock;
 	 * ports is already known.  Similar logic is applied for NAT_INBOUND.
 	 * 
 	 */
-	bzero((char *)&fin, sizeof(fin));
-	fin.fin_p = nat->nat_p;
-	fin.fin_ifp = nat->nat_ifps[0];
+	KMALLOC(fin, fr_info_t *);
+	if (fin == NULL) {
+		error = ENOMEM;
+		goto junkput;
+	}
+	bzero(fin, sizeof(*fin));
+	fin->fin_p = nat->nat_p;
+	fin->fin_ifp = nat->nat_ifps[0];
 	if (nat->nat_dir == NAT_OUTBOUND) {
-		fin.fin_data[0] = ntohs(nat->nat_oport);
-		fin.fin_data[1] = ntohs(nat->nat_outport);
+		fin->fin_data[0] = ntohs(nat->nat_oport);
+		fin->fin_data[1] = ntohs(nat->nat_outport);
 		if (getlock) {
 			READ_ENTER(&ipf_nat);
 		}
-		n = nat_inlookup(&fin, nat->nat_flags, fin.fin_p,
+		n = nat_inlookup(fin, nat->nat_flags, fin->fin_p,
 				 nat->nat_oip, nat->nat_inip);
 		if (getlock) {
 			RWLOCK_EXIT(&ipf_nat);
@@ -1373,12 +1383,12 @@ int getlock;
 			goto junkput;
 		}
 	} else if (nat->nat_dir == NAT_INBOUND) {
-		fin.fin_data[0] = ntohs(nat->nat_outport);
-		fin.fin_data[1] = ntohs(nat->nat_oport);
+		fin->fin_data[0] = ntohs(nat->nat_outport);
+		fin->fin_data[1] = ntohs(nat->nat_oport);
 		if (getlock) {
 			READ_ENTER(&ipf_nat);
 		}
-		n = nat_outlookup(&fin, nat->nat_flags, fin.fin_p,
+		n = nat_outlookup(fin, nat->nat_flags, fin->fin_p,
 				  nat->nat_outip, nat->nat_oip);
 		if (getlock) {
 			RWLOCK_EXIT(&ipf_nat);
@@ -1476,8 +1486,8 @@ int getlock;
 		}
 	}
 
-	if (ipnn != &ipn) {
-		KFREES(ipnn, ipn.ipn_dsize);
+	if (ipnn != ipn) {
+		KFREES(ipnn, ipn->ipn_dsize);
 		ipnn = NULL;
 	}
 
@@ -1499,12 +1509,16 @@ int getlock;
 	error = ENOMEM;
 
 junkput:
+	if (fin != NULL)
+		KFREE(fin);
 	if (fr != NULL)
 		fr_derefrule(&fr);
 
-	if ((ipnn != NULL) && (ipnn != &ipn)) {
-		KFREES(ipnn, ipn.ipn_dsize);
+	if ((ipnn != NULL) && (ipnn != ipn)) {
+		KFREES(ipnn, ipn->ipn_dsize);
 	}
+	if (ipn != NULL)
+		KFREE(ipn);
 	if (nat != NULL) {
 		if (aps != NULL) {
 			if (aps->aps_data != NULL) {
