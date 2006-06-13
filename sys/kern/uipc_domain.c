@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.57 2006/05/14 21:15:12 elad Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.58 2006/06/13 13:52:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.57 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.58 2006/06/13 13:52:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -285,9 +285,8 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 * to walk the file list looking for them.  :-/
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (kauth_authorize_process(l->l_proc->p_cred,
-		    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
-		    NULL) != 0)
+		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+		    kauth_cred_geteuid(fp->f_cred)))
 			continue;
 		if (fp->f_type != DTYPE_SOCKET)
 			continue;
