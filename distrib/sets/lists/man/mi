@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.896 2006/05/30 19:33:26 tron Exp $
+# $NetBSD: mi,v 1.897 2006/06/13 11:27:29 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1952,7 +1952,7 @@
 ./usr/share/man/cat8/macppc/ofwboot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/macppc/ofwboot.elf.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/macppc/ofwboot.xcf.0	man-sysutil-catman	.cat
-./usr/share/man/cat8/mail.local.0		man-obsolete		obsolete
+./usr/share/man/cat8/mail.local.0		man-mail-catman		.cat
 ./usr/share/man/cat8/mailstats.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman	.cat
 ./usr/share/man/cat8/makedbm.0			man-nis-catman		yp,.cat
@@ -4287,7 +4287,7 @@
 ./usr/share/man/man8/macppc/ofwboot.8		man-sysutil-man		.man
 ./usr/share/man/man8/macppc/ofwboot.elf.8	man-sysutil-man		.man
 ./usr/share/man/man8/macppc/ofwboot.xcf.8	man-sysutil-man		.man
-./usr/share/man/man8/mail.local.8		man-obsolete		obsolete
+./usr/share/man/man8/mail.local.8		man-mail-man		.man
 ./usr/share/man/man8/mailstats.8		man-obsolete		obsolete
 ./usr/share/man/man8/mailwrapper.8		man-mailwrapper-man	.man
 ./usr/share/man/man8/makedbm.8			man-nis-man		yp,.man
