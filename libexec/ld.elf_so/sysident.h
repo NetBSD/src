@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.12 2003/07/26 19:32:08 salo Exp $ */
+/* $NetBSD: sysident.h,v 1.13 2006/06/13 13:55:58 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -72,5 +72,6 @@ __asm(
 	"\t.ascii\t" __S(ELF_NOTE_NETBSD_NAME) "\n"
 	"\t.long\t" __S(__NetBSD_Version__) "\n\n"
 
+	"\t.previous\n"
 	"\t.p2align\t2\n"
 );
