@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.68 2006/05/14 21:15:11 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.69 2006/06/13 13:23:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.68 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.69 2006/06/13 13:23:03 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2050,7 +2050,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 		}
 		break;
-	    case KERN_FILE_BYPID:
+	case KERN_FILE_BYPID:
 		if (arg < -1)
 			/* -1 means all processes */
 			return (EINVAL);
