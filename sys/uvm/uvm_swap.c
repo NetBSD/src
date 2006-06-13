@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.101 2006/06/12 21:05:47 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.102 2006/06/13 01:59:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.101 2006/06/12 21:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.102 2006/06/13 01:59:59 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -454,6 +454,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	 */
 	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 
+	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
 	 *
@@ -468,7 +469,6 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		goto out;
 	}
 
-	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
 	/*
 	 * SWAP_STATS: get stats on current # of configured swap devs
 	 *
