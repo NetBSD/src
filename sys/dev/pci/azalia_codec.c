@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.14 2006/06/13 14:29:21 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.15 2006/06/13 14:38:01 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.14 2006/06/13 14:29:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.15 2006/06/13 14:38:01 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -775,9 +775,9 @@ generic_mixer_default(codec_t *this)
 	}
 
 	/*
-	 * for bidirectional pins,
-	 * green=front, orange=surround, gray=c/lfe, black=side --> output
-	 * blue=line-in, pink=mic-in --> input
+	 * For bidirectional pins,
+	 *   Output: lineout, speaker, headphone, spdifout, digitalout, other
+	 *   Input: others
 	 */
 	DPRINTF(("%s: process bidirectional pins\n", __func__));
 	for (i = 0; i < this->nmixers; i++) {
@@ -788,11 +788,13 @@ generic_mixer_default(codec_t *this)
 			continue;
 		mc.dev = i;
 		mc.type = AUDIO_MIXER_ENUM;
-		switch (this->w[m->nid].d.pin.color) {
-		case CORB_CD_GREEN:
-		case CORB_CD_ORANGE:
-		case CORB_CD_GRAY:
-		case CORB_CD_BLACK:
+		switch (this->w[m->nid].d.pin.device) {
+		case CORB_CD_LINEOUT:
+		case CORB_CD_SPEAKER:
+		case CORB_CD_HEADPHONE:
+		case CORB_CD_SPDIFOUT:
+		case CORB_CD_DIGITALOUT:
+		case CORB_CD_DEVICE_OTHER:
 			mc.un.ord = 1;
 			break;
 		default:
