@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.2 2005/03/20 02:44:50 thorpej Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.3 2006/06/14 11:05:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.2 2005/03/20 02:44:50 thorpej Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.3 2006/06/14 11:05:42 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -230,7 +230,7 @@ in6_alias(struct in6_ifreq *creq)
 	/* Get the non-alias address for this interface. */
 	getsock(AF_INET6);
 	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
+		if (errno == EAFNOSUPPORT)
 			return;
 		err(EXIT_FAILURE, "socket");
 	}
