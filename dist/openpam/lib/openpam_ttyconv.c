@@ -45,6 +45,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <paths.h>
 
 #include <security/pam_appl.h>
 
@@ -60,7 +61,7 @@ timeout(int sig)
 }
 
 static char *
-prompt(const char *msg)
+prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 {
 	char buf[PAM_MAX_RESP_SIZE];
 	struct sigaction action, saved_action;
@@ -80,12 +81,14 @@ prompt(const char *msg)
 	action.sa_flags = 0;
 	sigemptyset(&action.sa_mask);
 	sigaction(SIGALRM, &action, &saved_action);
-	fputs(msg, stdout);
-	fflush(stdout);
+
+
+	fputs(msg, outfp);
+	fflush(outfp);
 #ifdef HAVE_FPURGE
-	fpurge(stdin);
+	fpurge(infp);
 #endif
-	fd = fileno(stdin);
+	fd = fileno(infp);
 	buf[0] = '\0';
 	eof = error = 0;
 	if (openpam_ttyconv_timeout >= 0)
@@ -114,9 +117,9 @@ prompt(const char *msg)
 	if (openpam_ttyconv_timeout >= 0)
 		alarm(saved_alarm);
 	if (error == EINTR)
-		fputs(" timeout!", stderr);
+		fputs(" timeout!", errfp);
 	if (error || eof) {
-		fputs("\n", stderr);
+		fputs("\n", errfp);
 		memset(buf, 0, sizeof(buf));
 		return (NULL);
 	}
@@ -131,14 +134,14 @@ prompt(const char *msg)
 }
 
 static char *
-prompt_echo_off(const char *msg)
+prompt_echo_off(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 {
 	struct termios tattr;
 	tcflag_t lflag;
 	char *ret;
 	int fd;
 
-	fd = fileno(stdin);
+	fd = fileno(infp);
 	if (tcgetattr(fd, &tattr) != 0) {
 		openpam_log(PAM_LOG_ERROR, "tcgetattr(): %m");
 		return (NULL);
@@ -149,11 +152,11 @@ prompt_echo_off(const char *msg)
 		openpam_log(PAM_LOG_ERROR, "tcsetattr(): %m");
 		return (NULL);
 	}
-	ret = prompt(msg);
+	ret = prompt(msg, infp, outfp, errfp);
 	tattr.c_lflag = lflag;
 	(void)tcsetattr(fd, TCSANOW, &tattr);
 	if (ret != NULL)
-		fputs("\n", stdout);
+		fputs("\n", outfp);
 	return (ret);
 }
 
@@ -171,6 +174,7 @@ openpam_ttyconv(int n,
 {
 	struct pam_response *aresp;
 	int i;
+	FILE *infp, *outfp, *errfp;
 
 	ENTER();
 	/*LINTED unused*/
@@ -179,39 +183,55 @@ openpam_ttyconv(int n,
 		RETURNC(PAM_CONV_ERR);
 	if ((aresp = calloc((size_t)n, sizeof *aresp)) == NULL)
 		RETURNC(PAM_BUF_ERR);
+
+        /*
+         * read and write to /dev/tty if possible; else read from
+         * stdin and write to stderr.
+         */ 
+	if ((outfp = infp = errfp = fopen(_PATH_TTY, "w+")) == NULL) {
+		errfp = stderr;
+		outfp = stderr;
+		infp = stdin;
+	} 
+
 	for (i = 0; i < n; ++i) {
 		aresp[i].resp_retcode = 0;
 		aresp[i].resp = NULL;
 		switch (msg[i]->msg_style) {
 		case PAM_PROMPT_ECHO_OFF:
-			aresp[i].resp = prompt_echo_off(msg[i]->msg);
+			aresp[i].resp = prompt_echo_off(msg[i]->msg, infp,
+			    outfp, errfp);
 			if (aresp[i].resp == NULL)
 				goto fail;
 			break;
 		case PAM_PROMPT_ECHO_ON:
-			aresp[i].resp = prompt(msg[i]->msg);
+			aresp[i].resp = prompt(msg[i]->msg, infp, outfp, errfp);
 			if (aresp[i].resp == NULL)
 				goto fail;
 			break;
 		case PAM_ERROR_MSG:
-			fputs(msg[i]->msg, stderr);
+			fputs(msg[i]->msg, errfp);
 			if (strlen(msg[i]->msg) > 0 &&
 			    msg[i]->msg[strlen(msg[i]->msg) - 1] != '\n')
-				fputc('\n', stderr);
+				fputc('\n', errfp);
 			break;
 		case PAM_TEXT_INFO:
-			fputs(msg[i]->msg, stdout);
+			fputs(msg[i]->msg, outfp);
 			if (strlen(msg[i]->msg) > 0 &&
 			    msg[i]->msg[strlen(msg[i]->msg) - 1] != '\n')
-				fputc('\n', stdout);
+				fputc('\n', outfp);
 			break;
 		default:
 			goto fail;
 		}
 	}
+	if (infp != stdin)
+		(void)fclose(infp);
 	*resp = aresp;
 	RETURNC(PAM_SUCCESS);
  fail:
+	if (infp != stdin)
+		(void)fclose(infp);
 	for (i = 0; i < n; ++i) {
 		if (aresp[i].resp != NULL) {
 			memset(aresp[i].resp, 0, strlen(aresp[i].resp));
