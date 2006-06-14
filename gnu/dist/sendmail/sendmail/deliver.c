@@ -1,7 +1,7 @@
-/* $NetBSD: deliver.c,v 1.13.4.1 2006/03/24 17:12:35 riz Exp $ */
+/* $NetBSD: deliver.c,v 1.13.4.2 2006/06/14 17:44:32 tron Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: deliver.c,v 1.13.4.1 2006/03/24 17:12:35 riz Exp $");
+__RCSID("$NetBSD: deliver.c,v 1.13.4.2 2006/06/14 17:44:32 tron Exp $");
 #endif
 
 /*
@@ -4612,7 +4612,7 @@ putbody(mci, e, separator)
 		/* now do the hard work */
 		boundaries[0] = NULL;
 		mci->mci_flags |= MCIF_INHEADER;
-		if (mime8to7(mci, e->e_header, e, boundaries, M87F_OUTER) ==
+		if (mime8to7(mci, e->e_header, e, boundaries, M87F_OUTER, 0) ==
 								SM_IO_EOF)
 			goto writeerr;
 	}
@@ -4643,7 +4643,7 @@ putbody(mci, e, separator)
 			SuprErrs = true;
 
 		if (mime8to7(mci, e->e_header, e, boundaries,
-				M87F_OUTER|M87F_NO8TO7) == SM_IO_EOF)
+				M87F_OUTER|M87F_NO8TO7, 0) == SM_IO_EOF)
 			goto writeerr;
 
 		/* restore SuprErrs */

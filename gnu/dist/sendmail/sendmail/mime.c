@@ -1,7 +1,7 @@
-/* $NetBSD: mime.c,v 1.7.4.1 2006/03/24 17:12:35 riz Exp $ */
+/* $NetBSD: mime.c,v 1.7.4.2 2006/06/14 17:44:33 tron Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mime.c,v 1.7.4.1 2006/03/24 17:12:35 riz Exp $");
+__RCSID("$NetBSD: mime.c,v 1.7.4.2 2006/06/14 17:44:33 tron Exp $");
 #endif
 
 /*
@@ -86,6 +86,7 @@ static bool	MapNLtoCRLF;
 **		boundaries -- the currently pending message boundaries.
 **			NULL if we are processing the outer portion.
 **		flags -- to tweak processing.
+**		level -- recursion level.
 **
 **	Returns:
 **		An indicator of what terminated the message part:
@@ -102,12 +103,13 @@ struct args
 };
 
 int
-mime8to7(mci, header, e, boundaries, flags)
+mime8to7(mci, header, e, boundaries, flags, level)
 	register MCI *mci;
 	HDR *header;
 	register ENVELOPE *e;
 	char **boundaries;
 	int flags;
+	int level;
 {
 	register char *p;
 	int linelen;
@@ -128,6 +130,18 @@ mime8to7(mci, header, e, boundaries, flags)
 	char pvpbuf[MAXLINE];
 	extern unsigned char MimeTokenTab[256];
 
+	if (level > MAXMIMENESTING)
+	{
+		if (!bitset(EF_TOODEEP, e->e_flags))
+		{
+			if (tTd(43, 4))
+				sm_dprintf("mime8to7: too deep, level=%d\n",
+					   level);
+			usrerr("mime8to7: recursion level %d exceeded",
+				level);
+			e->e_flags |= EF_DONT_MIME|EF_TOODEEP;
+		}
+	}
 	if (tTd(43, 1))
 	{
 		sm_dprintf("mime8to7: flags = %x, boundaries =", flags);
@@ -248,7 +262,9 @@ mime8to7(mci, header, e, boundaries, flags)
 	*/
 
 	if (sm_strcasecmp(type, "multipart") == 0 &&
-	    (!bitset(M87F_NO8BIT, flags) || bitset(M87F_NO8TO7, flags)))
+	    (!bitset(M87F_NO8BIT, flags) || bitset(M87F_NO8TO7, flags)) &&
+	    !bitset(EF_TOODEEP, e->e_flags)
+	   )
 	{
 
 		if (sm_strcasecmp(subtype, "digest") == 0)
@@ -292,10 +308,13 @@ mime8to7(mci, header, e, boundaries, flags)
 		}
 		if (i >= MAXMIMENESTING)
 		{
-			usrerr("mime8to7: multipart nesting boundary too deep");
+			if (tTd(43, 4))
+				sm_dprintf("mime8to7: too deep, i=%d\n", i);
+			if (!bitset(EF_TOODEEP, e->e_flags))
+				usrerr("mime8to7: multipart nesting boundary too deep");
 
 			/* avoid bounce loops */
-			e->e_flags |= EF_DONT_MIME;
+			e->e_flags |= EF_DONT_MIME|EF_TOODEEP;
 		}
 		else
 		{
@@ -339,7 +358,8 @@ mime8to7(mci, header, e, boundaries, flags)
 				goto writeerr;
 			if (tTd(43, 101))
 				putline("+++after putheader", mci);
-			bt = mime8to7(mci, hdr, e, boundaries, flags);
+			bt = mime8to7(mci, hdr, e, boundaries, flags,
+				      level + 1);
 			if (bt == SM_IO_EOF)
 				goto writeerr;
 		}
@@ -380,7 +400,8 @@ mime8to7(mci, header, e, boundaries, flags)
 
 	if (sm_strcasecmp(type, "message") == 0)
 	{
-		if (!wordinclass(subtype, 's'))
+		if (!wordinclass(subtype, 's') ||
+		    bitset(EF_TOODEEP, e->e_flags))
 		{
 			flags |= M87F_NO8BIT;
 		}
@@ -403,7 +424,8 @@ mime8to7(mci, header, e, boundaries, flags)
 			    !bitset(M87F_NO8TO7, flags) &&
 			    !putline("MIME-Version: 1.0", mci))
 				goto writeerr;
-			bt = mime8to7(mci, hdr, e, boundaries, flags);
+			bt = mime8to7(mci, hdr, e, boundaries, flags,
+				      level + 1);
 			mci->mci_flags &= ~MCIF_INMIME;
 			return bt;
 		}
