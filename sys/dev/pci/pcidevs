@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.792 2006/06/08 02:34:28 kent Exp $
+$NetBSD: pcidevs,v 1.793 2006/06/14 02:32:38 grant Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2724,6 +2724,7 @@ product QLOGIC ISP1022	0x1022	ISP1022
 product QLOGIC ISP1080	0x1080	ISP1080
 product QLOGIC ISP1240	0x1240	ISP1240
 product QLOGIC ISP2100	0x2100	ISP2100
+product	QLOGIC QLA200	0x0119	QLA200
 
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
