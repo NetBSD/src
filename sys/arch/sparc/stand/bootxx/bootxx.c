@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.15 2006/06/14 19:46:46 uwe Exp $ */
+/*	$NetBSD: bootxx.c,v 1.16 2006/06/14 19:56:49 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/exec.h>
 #include <sys/bootblock.h>
 
