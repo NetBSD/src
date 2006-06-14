@@ -347,7 +347,9 @@
 /* #undef HAVE_HZ_IN_STRUCT_CLOCKINFO */
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
+#if (_MACHINE_ARCH != vax)
 #define HAVE_IEEEFP_H 1
+#endif
 
 /* ISC: Use iflist_sysctl? */
 #define HAVE_IFLIST_SYSCTL 1
