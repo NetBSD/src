@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.34 2006/03/01 15:39:00 is Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.35 2006/06/14 15:36:00 ginsbach Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect.c,v 1.171 2005/12/06 22:38:27 reyk Exp $");
-__RCSID("$NetBSD: sshconnect.c,v 1.34 2006/03/01 15:39:00 is Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.35 2006/06/14 15:36:00 ginsbach Exp $");
 
 #include <openssl/bn.h>
 
@@ -169,7 +169,7 @@ ssh_create_socket(int privileged, struct addrinfo *ai)
 	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 	if (sock < 0) {
 		switch (errno) {
-		case EPROTONOSUPPORT:
+		case EAFNOSUPPORT:
 			debug("socket: %.100s", strerror(errno));
 			break;
 		default:
