@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.21 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.22 2006/06/14 19:42:34 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,9 +34,6 @@
  * Prototypes for OpenFirmware Interface Routines
  */
 
-#include <sys/param.h>				/* XXX */
-#include <sys/device.h>				/* XXX */
-
 /*
  * Machine-independent OpenFirmware-related structures.
  * XXX THESE DO NOT BELONG HERE.
@@ -60,16 +57,6 @@ struct ofbus_attach_args {
 	 * See also ofdisk.c.
 	 */
 	int		oba_unit;
-};
-
-/*
- * The softc structure for devices we might be booted from (i.e. we might
- * want to set root/swap to) needs to start with these fields:		XXX
- */
-struct ofbus_softc {
-	struct device sc_dev;
-	int sc_phandle;
-	int sc_unit;		/* Might be missing for non-disk devices */
 };
 
 
