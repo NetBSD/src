@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.29 2006/02/22 02:57:26 garbled Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.30 2006/06/14 13:30:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.29 2006/02/22 02:57:26 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.30 2006/06/14 13:30:35 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -887,6 +887,8 @@ pcn_shutdown(void *arg)
 	struct pcn_softc *sc = arg;
 
 	pcn_stop(&sc->sc_ethercom.ec_if, 1);
+	/* explicitly reset the chip for some onboard one with lazy firmware */
+	pcn_reset(sc);
 }
 
 /*
