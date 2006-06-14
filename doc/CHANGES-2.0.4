@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.36 2006/06/08 22:28:36 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.37 2006/06/14 20:09:32 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -314,4 +314,14 @@ games/tetris/scores.c				1.14
 	A standard NetBSD installation is not as much risk because "tetris"
 	is set-group-ID "games", and users shouldn't be in that group.
 	[dan, ticket #10641]
+
+gnu/dist/sendmail/sendmail/deliver.c		patch
+gnu/dist/sendmail/sendmail/mime.c		patch
+gnu/dist/sendmail/sendmail/sendmail.h		patch
+gnu/dist/sendmail/sendmail/version.c		patch
+
+	Fix potential denial of service problem caused by excessive recursion
+	which leads to stack exhaustion when attempting delivery of a malformed
+	MIME message.
+	[adrianp, ticket #10645]
 
