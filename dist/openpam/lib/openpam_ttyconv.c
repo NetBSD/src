@@ -259,6 +259,11 @@ openpam_ttyconv(int n,
  * It should be adequate for the needs of most text-based interactive
  * programs.
  *
+ * The =openpam_ttyconv function displays a prompt to, and reads in a
+ * password from /dev/tty. If this file is not accessible, =openpam_ttyconv
+ * displays the prompt on the standard error output and reads from the
+ * standard input.
+ *
  * The =openpam_ttyconv function allows the application to specify a
  * timeout for user input by setting the global integer variable
  * :openpam_ttyconv_timeout to the length of the timeout in seconds.
@@ -266,4 +271,5 @@ openpam_ttyconv(int n,
  * >openpam_nullconv
  * >pam_prompt
  * >pam_vprompt
+ * >getpass
  */
