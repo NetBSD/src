@@ -1,4 +1,4 @@
-/*	$NetBSD: af_ns.c,v 1.2 2005/03/20 01:10:51 thorpej Exp $	*/
+/*	$NetBSD: af_ns.c,v 1.3 2006/06/14 11:05:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_ns.c,v 1.2 2005/03/20 01:10:51 thorpej Exp $");
+__RCSID("$NetBSD: af_ns.c,v 1.3 2006/06/14 11:05:42 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -99,7 +99,7 @@ xns_status(int force)
 
 	getsock(AF_NS);
 	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
+		if (errno == EAFNOSUPPORT)
 			return;
 		err(EXIT_FAILURE, "socket");
 	}

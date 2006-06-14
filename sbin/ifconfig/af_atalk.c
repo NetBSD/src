@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.1 2005/03/19 23:32:55 thorpej Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.2 2006/06/14 11:05:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.1 2005/03/19 23:32:55 thorpej Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.2 2006/06/14 11:05:42 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -126,7 +126,7 @@ at_status(int force)
 
 	getsock(AF_APPLETALK);
 	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
+		if (errno == EAFNOSUPPORT)
 			return;
 		err(EXIT_FAILURE, "socket");
 	}
