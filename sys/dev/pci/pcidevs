@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.793 2006/06/14 02:32:38 grant Exp $
+$NetBSD: pcidevs,v 1.794 2006/06/14 02:33:01 grant Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -166,7 +166,7 @@ vendor YAMAHA		0x1073	Yamaha
 vendor NEXGEN		0x1074	NexGen Microsystems
 vendor AIR		0x1075	Advanced Integration Research
 vendor CHAINTECH	0x1076	Chaintech Computer
-vendor QLOGIC		0x1077	Q Logic
+vendor QLOGIC		0x1077	QLogic
 vendor CYRIX		0x1078	Cyrix
 vendor IBUS		0x1079	I-Bus
 vendor NETWORTH		0x107a	NetWorth
