@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.24 2003/08/07 09:05:09 agc Exp $ */
+/* $NetBSD: netdate.c,v 1.25 2006/06/14 16:35:16 ginsbach Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.24 2003/08/07 09:05:09 agc Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.25 2006/06/14 16:35:16 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ netsettime(time_t tval)
 	dest.sin_addr.s_addr = htonl(INADDR_ANY);
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0) {
-		if (errno != EPROTONOSUPPORT)
+		if (errno != EAFNOSUPPORT)
 			warn("timed");
 		return (retval = 2);
 	}
