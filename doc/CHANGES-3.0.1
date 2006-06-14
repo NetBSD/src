@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.57 2006/06/13 22:34:48 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.58 2006/06/14 17:44:43 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -522,4 +522,14 @@ lib/libpthread/pthread_sig.c			1.46
 	Fix bug in signal handling which could e.g get the MySQL daemon
 	stuck in a tight loop after receiving a HUP signal.
 	[chuck, ticket #1376]
+
+gnu/dist/sendmail/sendmail/deliver.c		patch
+gnu/dist/sendmail/sendmail/mime.c		patch
+gnu/dist/sendmail/sendmail/sendmail.h		patch
+gnu/dist/sendmail/sendmail/version.c		patch
+
+	Fix potential denial of service problem caused by excessive recursion
+	which leads to stack exhaustion when attempting delivery of a malformed
+	MIME message.
+	[adrianp, ticket #1382]
 
