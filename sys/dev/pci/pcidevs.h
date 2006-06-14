@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.792 2006/06/06 21:01:04 rpaulo Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.793 2006/06/14 02:33:28 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.791 2006/06/06 21:00:41 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.794 2006/06/14 02:33:01 grant Exp
  */
 
 /*
@@ -173,7 +173,7 @@
 #define	PCI_VENDOR_NEXGEN	0x1074		/* NexGen Microsystems */
 #define	PCI_VENDOR_AIR	0x1075		/* Advanced Integration Research */
 #define	PCI_VENDOR_CHAINTECH	0x1076		/* Chaintech Computer */
-#define	PCI_VENDOR_QLOGIC	0x1077		/* Q Logic */
+#define	PCI_VENDOR_QLOGIC	0x1077		/* QLogic */
 #define	PCI_VENDOR_CYRIX	0x1078		/* Cyrix */
 #define	PCI_VENDOR_IBUS	0x1079		/* I-Bus */
 #define	PCI_VENDOR_NETWORTH	0x107a		/* NetWorth */
@@ -1868,6 +1868,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_5	0x103e		/* PRO/100 VM (MOB) Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2100	0x1043		/* PRO/Wireless LAN 2100 3B Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_82597EX	0x1048		/* PRO/10GbE LR Server Adapter */
+#define	PCI_PRODUCT_INTEL_82801H_LAN	0x104b		/* i82801H LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1050		/* PRO/100 VM Network Controller with 82562ET/EZ PHY */
 #define	PCI_PRODUCT_INTEL_82801EB_LAN	0x1051		/* 82801EB/ER 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M Network Controller */
@@ -2102,6 +2103,28 @@
 #define	PCI_PRODUCT_INTEL_82801G_IDE	0x27df		/* 82801GB/GR IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801G_EXP_5	0x27e0		/* 82801GB/GR PCI Express Port #5 */
 #define	PCI_PRODUCT_INTEL_82801G_EXP_6	0x27e2		/* 82801GB/GR PCI Express Port #6 */
+#define	PCI_PRODUCT_INTEL_82801H_LPC	0x2810		/* 82801H LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_82801H_SATA_1	0x2820		/* 82801H SATA Controller */
+#define	PCI_PRODUCT_INTEL_82801H_SATA_AHCI6	0x2821		/* 82801H AHCI SATA Controller with 6 ports */
+#define	PCI_PRODUCT_INTEL_82801H_SATA_RAID	0x2822		/* 82801H RAID SATA Controller */
+#define	PCI_PRODUCT_INTEL_82801H_SATA_AHCI4	0x2824		/* 82801H AHCI SATA Controller with 4 ports */
+#define	PCI_PRODUCT_INTEL_82801H_SATA_2	0x2825		/* 82801H SATA Controller */
+#define	PCI_PRODUCT_INTEL_82801H_USB_1	0x2830		/* 82801H USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_USB_2	0x2831		/* 82801H USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_USB_3	0x2832		/* 82801H USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_USB_4	0x2834		/* 82801H USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_USB_5	0x2835		/* 82801H USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_EHCI_1	0x2836		/* 82801H USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_EHCI_2	0x283a		/* 82801H USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801H_SMB	0x283e		/* 82801H SMBus Controller */
+#define	PCI_PRODUCT_INTEL_82801H_EXP_1	0x283f		/* 82801H PCI Express Port #1 */
+#define	PCI_PRODUCT_INTEL_82801H_EXP_2	0x2841		/* 82801H PCI Express Port #2 */
+#define	PCI_PRODUCT_INTEL_82801H_EXP_3	0x2843		/* 82801H PCI Express Port #3 */
+#define	PCI_PRODUCT_INTEL_82801H_EXP_4	0x2845		/* 82801H PCI Express Port #4 */
+#define	PCI_PRODUCT_INTEL_82801H_EXP_5	0x2847		/* 82801H PCI Express Port #5 */
+#define	PCI_PRODUCT_INTEL_82801H_EXP_6	0x2849		/* 82801H PCI Express Port #6 */
+#define	PCI_PRODUCT_INTEL_82801H_HDA	0x284b		/* 82801H High Definition Audio Controller */
+#define	PCI_PRODUCT_INTEL_82801H_THERMAL	0x284f		/* 82801H Thermal Controller */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
@@ -2708,6 +2731,7 @@
 #define	PCI_PRODUCT_QLOGIC_ISP1080	0x1080		/* ISP1080 */
 #define	PCI_PRODUCT_QLOGIC_ISP1240	0x1240		/* ISP1240 */
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100		/* ISP2100 */
+#define	PCI_PRODUCT_QLOGIC_QLA200	0x0119		/* QLA200 */
 
 /* Quantum Designs products */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
