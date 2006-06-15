@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119 2006/05/10 19:25:31 garbled Exp $
+# $NetBSD: GENERIC,v 1.120 2006/06/15 18:15:32 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.119 $"
+#ident		"GENERIC-$Revision: 1.120 $"
 
 maxusers	32
 
@@ -241,8 +241,9 @@ attimer0	at isa?			# AT Timer
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 
-mcclock0 at isa? port 0x70		# mc146818 and compatible
-mkclock0 at isa? port 0x74		# mk48t18 and compatible
+#mcclock0 at isa? port 0x70		# mc146818 and compatible
+mcclock* at pnpbus?			# mc146818 and compatible
+mkclock* at pnpbus?			# mk48t18 and compatible
 
 nvram*	at pnpbus?
 
