@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.5 2002/10/02 04:06:38 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.5.48.1 2006/06/15 22:06:44 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5 2002/10/02 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5.48.1 2006/06/15 22:06:44 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,16 +102,15 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_jensenio_softc *jsc = (void *)self;
 	struct com_softc *sc = &jsc->sc_com;
 	struct jensenio_attach_args *ja = aux;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = ja->ja_iot;
-	sc->sc_iobase = ja->ja_ioaddr;
-
-	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-			  &sc->sc_ioh) != 0) {
+	if (com_is_console(ja->ja_iot, ja->ja_ioaddr, &ioh) == 0 &&
+	    bus_space_map(ja->ja_iot, ja->ja_ioaddr, COM_NPORTS, 0,
+		&ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, ja->ja_iot, ioh, ja->ja_ioaddr);
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -148,5 +147,6 @@ com_jensenio_cleanup(void *arg)
 	struct com_softc *sc = arg;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
+		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
+		    com_fifo, 0);
 }
