@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: com_sableio.c,v 1.4.48.1 2006/06/15 22:06:44 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.4.48.1 2006/06/15 22:06:44 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,16 +99,15 @@ com_sableio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &ssc->sc_com;
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = sa->sa_iot;
-	sc->sc_iobase = sa->sa_ioaddr;
-
-	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-			  &sc->sc_ioh) != 0) {
+	if (com_is_console(sa->sa_iot, sa->sa_ioaddr, &ioh) == 0 &&
+	    bus_space_map(sa->sa_iot, sa->sa_ioaddr, COM_NPORTS, 0,
+		&ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, sa->sa_iot, ioh, sa->sa_ioaddr);
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -141,5 +140,6 @@ com_sableio_cleanup(void *arg)
 	struct com_softc *sc = arg;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
+		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
+		    com_fifo, 0);
 }
