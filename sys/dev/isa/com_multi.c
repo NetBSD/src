@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.21.16.1 2006/06/15 16:31:28 gdamore Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.21.16.2 2006/06/15 20:49:23 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.21.16.1 2006/06/15 16:31:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.21.16.2 2006/06/15 20:49:23 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ com_multi_attach(parent, self, aux)
 	/*
 	 * We're living on a commulti.
 	 */
-	COM_INIT_REGS(sc->sc_rgs, ca->ca_iot, ca->ca_ioh, ca->ca_iobase);
+	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ca->ca_ioh, ca->ca_iobase);
 	sc->sc_frequency = 115200 * 16;
 
 	if (ca->ca_noien)
