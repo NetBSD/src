@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.28.2.2 2006/06/04 10:34:41 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.28.2.3 2006/06/15 05:46:48 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -500,6 +500,9 @@ expression which should catch all present and future seagate drives larger than
 200GB for the WD_QUIRK_FORCE_LBA48 quirks.
 .It
 Fix the 'audioctl of death' problem (SA2006-014).
+.It
+Limit the size of any kernel buffers allocated by the VOP_READDIR routines to
+MAXBSIZE.
 .bullet)
 .
 .Ss2 Networking
@@ -523,6 +526,9 @@ processes after an NFS client running e.g. Mac OS X shuts down.
 .It
 Prevent system crash when attempting to gather information about a non-existing
 alias of a network interface via the SIOCGIFALIAS ioctl (SA2006-012).
+.It
+Fix a panic caused by insufficient validation when parsing IPv6 socket options
+(SA2006-016).
 .bullet)
 .
 .Ss2 File system
@@ -548,6 +554,11 @@ and ignorelogin login.conf(5) capabilities.
 fix an uninitialized variable, and remove some unreachable code.
 .It
 Make PAM work on NetBSD ports without shared library support.
+.It
+Make password aging work again.
+.It
+Fix a bug in signal handling which could e.g get the MySQL daemon stuck in a
+tight loop after receiving a HUP signal.
 .bullet)
 .
 .Ss2 Security
@@ -566,6 +577,16 @@ A vulnerability was found in the
 .Xr fast_ipsec 4
 stack that renders the IPSec anti-replay service ineffective under certain
 circumstances (SA2006-011).
+.It
+Fix a number of small security problems with the games.
+.It
+Fix an FPU Information leak on i386/amd64/Xen platforms with AMD CPUs
+(SA2006-015).
+.It
+Fix several integer overflows and NULL-pointer dereferences in freetype2.
+.It
+Fix a denial of service vulnerability in sendmail when handling malformed
+multipart MIME messages (SA2006-017).
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -581,6 +602,16 @@ intercept_realpath().  Unbreaks systrace.
 .Xr login 1 ,
 .Xr pam_securetty 8 :
 don't issue a different message for root login on an insecure terminal.
+.It
+Fix some unpaired sigblocks which possibly leave a process with all signals
+blocked (esp. apparant under Gnome).
+.It
+Fix a NULL pointer dereference in
+.Xr ftp 1 .
+.It
+Make
+.Xr sh 1
+expand "$@" correctly again.
 .bullet)
 .
 .Ss2 acorn26 specific
@@ -605,7 +636,9 @@ identify how it's called under NetBSD.
 .(bullet
 Fix the bootloader so it doesn't print garbage to the bitmap console.
 .It
-Fix a huge number of pkgsrc build problems in by avoiding namespace pollution.
+Fix a huge number of pkgsrc build problems.
+.It
+Fix boot failure problem on HP400t with fb console.
 .bullet)
 .
 .Ss2 i386 specific
@@ -619,7 +652,7 @@ especially the deferral of drive probe.
 .Ss2 m68k specific
 .
 .(bullet
-Fix a huge number of pkgsrc build problems in by avoiding namespace pollution.
+Fix a huge number of pkgsrc build problems.
 .bullet)
 .
 .Ss2 mips specific
@@ -634,6 +667,13 @@ Update FPE trapsignal functions for new siginfo.
 .
 .(bullet
 Avoid pthreads program crashes.
+.bullet)
+.
+.Ss2 sparc specific
+.
+.(bullet
+For GCC3 and later, use the __builtin_va* constructs.  Avoids a build problem
+with Firefox.
 .bullet)
 .
 .Ss2 xen specific
