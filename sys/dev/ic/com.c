@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.244.2.1 2006/06/15 16:30:26 gdamore Exp $	*/
+/*	$NetBSD: com.c,v 1.244.2.2 2006/06/15 22:24:15 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.244.2.1 2006/06/15 16:30:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.244.2.2 2006/06/15 22:24:15 gdamore Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -246,7 +246,7 @@ volatile int	com_softintr_scheduled;
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-static struct com_regs comconsregs;
+static struct com_regs comkgdbregs;
 static int com_kgdb_attached;
 
 int	com_kgdb_getc(void *);
