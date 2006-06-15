@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.3 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.3.16.1 2006/06/15 19:34:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.3 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.3.16.1 2006/06/15 19:34:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,11 +80,10 @@ com_elb_attach(struct device *parent, struct device *self, void *aux)
 	struct com_elb_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct elb_attach_args *eaa = aux;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = eaa->elb_bt;
-	sc->sc_iobase = eaa->elb_base;
-
-	bus_space_map(sc->sc_iot, eaa->elb_base, COM_NPORTS, 0, &sc->sc_ioh);
+	bus_space_map(eaa->elb_bt, eaa->elb_base, COM_NPORTS, 0, &ioh);
+	COM_INIT_REGS(sc->sc_regs, eaa->elb_bt, ioh, eaa->elb_base);
 
 	sc->sc_frequency = COM_FREQ;
 

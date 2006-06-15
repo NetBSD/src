@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.5 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.5.16.1 2006/06/15 19:34:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.5 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.5.16.1 2006/06/15 19:34:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,18 +136,19 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_obio_softc *osc = (void *)self;
 	struct com_softc *sc = &osc->osc_com;
 	struct obio_attach_args *oa = aux;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = oa->oa_memt;
-	sc->sc_iobase = oa->oa_offset;
 	sc->sc_frequency = COM_FREQ*2;
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, oa->oa_size,
-			 0, &sc->sc_ioh) != 0) {
+	if (!com_is_console(oa->oa_memt, oa->oa_offset, &ioh) &&
+	    bus_space_map(oa->oa_memt, oa->oa_offset, oa->oa_size,
+		0, &ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
 
+	COM_INIT_REGS(sc->sc_regs, oa->oa_memt, ioh, oa->oa_offset);
+	sc->sc_regs.nports = oa->oa_size;
 	com_attach_subr(sc);
 
 	if (oa->oa_irq >= 0) {
