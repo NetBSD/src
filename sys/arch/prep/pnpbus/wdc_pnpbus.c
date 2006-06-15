@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.4 2006/04/26 19:48:01 garbled Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.5 2006/06/15 18:15:32 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.4 2006/04/26 19:48:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.5 2006/06/15 18:15:32 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pnpbus_io_map(&pna->pna_res, 0, &wdr->cmd_iot, &wdr->cmd_baseioh) ||
 	    pnpbus_io_map(&pna->pna_res, 1, &wdr->ctl_iot, &wdr->ctl_ioh)) {
-		printf("%s: couldn't map registers\n",
+		aprint_error("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	}
 
@@ -119,7 +119,7 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_space_subregion(wdr->cmd_iot,
 		      wdr->cmd_baseioh, i, i == 0 ? 4 : 1,
 		      &wdr->cmd_iohs[i]) != 0) {
-			printf(": couldn't subregion registers\n");
+			aprint_error(": couldn't subregion registers\n");
 			return;
 		}
 	}
@@ -146,5 +146,6 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, wdcintr, &sc->sc_channel,
 	    &pna->pna_res);
 
+	aprint_normal("\n");
 	wdcattach(&sc->sc_channel);
 }
