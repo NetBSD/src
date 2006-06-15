@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.5 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.6 2006/06/15 18:07:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -165,7 +165,9 @@ wakeup_32:
 	lgdt	previous_gdt(%esi)
 	lidt	previous_idt(%esi)
         lldt	previous_ldt(%esi)
+#if 0
         ltr     previous_tr(%esi)
+#endif
 
 	mov	previous_cr2(%esi),%eax
 	mov	%eax,%cr2
