@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.3 2006/05/25 06:37:47 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.3.2.1 2006/06/15 16:36:23 gdamore Exp $
 
 file	arch/mips/atheros/ar531x_intr.c
 file	arch/mips/atheros/ar531x_timer.c
@@ -12,6 +12,7 @@ file	arch/mips/atheros/arbus.c		arbus
 # On-chip UART device
 attach	com at arbus with com_arbus
 file	arch/mips/atheros/dev/com_arbus.c	com_arbus
+options	COM_REGMAP
 
 # On-chip ethernet device(s)
 device	ae: ether, ifnet, arp, mii
