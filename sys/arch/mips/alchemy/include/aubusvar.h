@@ -1,4 +1,4 @@
-/* $NetBSD: aubusvar.h,v 1.3 2003/04/01 17:29:11 hpeyerl Exp $ */
+/* $NetBSD: aubusvar.h,v 1.3.44.1 2006/06/15 16:40:43 gdamore Exp $ */
 
 #ifndef _MIPS_ALCHEMY_DEV_AUBUSVAR_H_
 #define	_MIPS_ALCHEMY_DEV_AUBUSVAR_H_
@@ -23,4 +23,7 @@ struct aubus_attach_args {
 #define	AA_MAC_DMA_BASE	2
 
 extern bus_space_tag_t	aubus_st;		/* XXX: for aubus.c */
+
+int com_aubus_cnattach(bus_addr_t, int);
+
 #endif	/* !_MIPS_ALCHEMY_DEV_AUBUSVAR_H_ */
