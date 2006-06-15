@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.110 2006/06/14 17:42:52 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.111 2006/06/15 13:45:14 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1874,4 +1874,28 @@ gnu/dist/sendmail/sendmail/version.c		patch
 	which leads to stack exhaustion when attempting delivery of a malformed
 	MIME message.
 	[adrianp, ticket #1382]
+
+sys/arch/xen/i386/identcpu.c			1.10 via patch
+sys/arch/xen/xen/clock.c			1.17-1.18,1.20-1.23 via patch
+
+	- Implement a xen-specific cc_microtime, which handle properly the
+	  Xen clock implementation and could cause the clock to jump forward
+	  by up to 35mn.
+	- Bave dom0 periodically set the Xen's time of day clock. This makes
+	  sure domUs start with the right time.
+	[bouyer, ticket 1372]
+
+share/man/man4/puc.4				1.19
+sys/dev/pci/pucdata.c				1.43-1.45
+
+	Add support for Moxa SmartIO CP104 and CP104-V2/PCI and
+	EXAR XR17D15x.
+	[bouyer, ticket #1373]
+
+sys/arch/xen/xen/clock.c			1.19
+sys/arch/xen/xen/ctrl_if.c			1.13
+sys/arch/xen/xen/if_xennet.c			1.45
+
+	Add some missing memory barriers.
+	[bouyer, ticket #1374]
 
