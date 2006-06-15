@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.11 2006/05/23 20:28:05 gdamore Exp $
+#	$NetBSD: ALCHEMY,v 1.11.2.1 2006/06/15 16:49:53 gdamore Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.11 $"
+#ident 		"ALCHEMY-$Revision: 1.11.2.1 $"
 
 maxusers	32
 
@@ -142,7 +142,7 @@ aubus0	 	at mainbus?
 aurtc*		at aubus? addr ?
 
 # UARTs
-aucom*		at aubus? addr ?
+com*		at aubus? addr ?
 
 # Ethernet MACs
 aumac*		at aubus? addr ?
