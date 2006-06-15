@@ -1,6 +1,0 @@
-# $NetBSD: KOI.src,v 1.1 2006/04/08 14:15:48 tnozaki Exp $
-
-NAME		"KOIx"
-ENCODING	"NONE"
-DEFCSID		"KOIx-PARALLEL"		0
-INVALID		0x3F # '?'

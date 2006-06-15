@@ -1,8 +1,0 @@
-#	$NetBSD: md.dreamcast,v 1.5 2004/03/28 06:48:43 jmc Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/Xdreamcast
-./usr/X11R6/bin/Xvfb
-./usr/X11R6/man/cat1/Xdreamcast.0
-./usr/X11R6/man/cat1/Xvfb.0
-./usr/X11R6/man/man1/Xdreamcast.1
-./usr/X11R6/man/man1/Xvfb.1
