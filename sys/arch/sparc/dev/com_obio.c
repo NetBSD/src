@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.18 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.18.16.1 2006/06/15 16:34:03 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18.16.1 2006/06/15 16:34:03 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,9 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &osc->osc_com;
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
 
 	if (strcmp("modem", sa->sa_name) == 0) {
 		osc->osc_tadpole = 1;
@@ -181,8 +184,8 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We're living on an obio that looks like an sbus slot.
 	 */
-	sc->sc_iot = sa->sa_bustag;
-	sc->sc_iobase = sa->sa_offset;
+	iot = sa->sa_bustag;
+	iobase = sa->sa_offset;
 	sc->sc_frequency = COM_FREQ;
 
 	/*
@@ -191,27 +194,27 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	 * console if PROM stdin is on serial (so that we can use DDB).
 	 */
 	if (prom_instance_to_package(prom_stdin()) == sa->sa_node)
-		comcnattach(sc->sc_iot, sc->sc_iobase,
-			    B9600, sc->sc_frequency, COM_TYPE_NORMAL,
-			    (CLOCAL | CREAD | CS8));
+		comcnattach(iot, iobase, B9600, sc->sc_frequency,
+		    COM_TYPE_NORMAL, (CLOCAL | CREAD | CS8));
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    sbus_bus_map(sc->sc_iot,
-			 sa->sa_slot, sc->sc_iobase, sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_ioh) != 0) {
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    sbus_bus_map(iot, sa->sa_slot, iobase, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	if (osc->osc_tadpole) {
 		*AUXIO4M_REG |= (AUXIO4M_LED|AUXIO4M_LTE);
 		do {
 			DELAY(100);
-		} while (!comprobe1(sc->sc_iot, sc->sc_ioh));
+		} while (!com_probe_subr(&sc->sc_regs));
 #if 0
 		printf("modem: attach: lcr=0x%02x iir=0x%02x\n",
-			bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3),
-			bus_space_read_1(sc->sc_iot, sc->sc_ioh, 2));
+			bus_space_read_1(sc->sc_regs.iot, sc->sc_regs.ioh, 3),
+			bus_space_read_1(sc->sc_regs.iot, sc->sc_regs.ioh, 2));
 #endif
 	}
 
@@ -239,5 +242,6 @@ com_obio_cleanup(void *arg)
 	struct com_softc *sc = arg;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
+		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
+		    com_fifo, 0);
 }

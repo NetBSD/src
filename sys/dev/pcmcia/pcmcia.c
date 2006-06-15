@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.79 2006/03/29 06:00:46 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.79.4.1 2006/06/15 16:32:10 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.79 2006/03/29 06:00:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.79.4.1 2006/06/15 16:32:10 gdamore Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -175,6 +175,8 @@ pcmcia_card_attach(dev)
 		printf("%s: card appears to have bogus CIS\n",
 		    sc->dev.dv_xname);
 		error = EIO;
+		pcmcia_print_cis(sc);
+
 		goto done;
 	}
 #endif

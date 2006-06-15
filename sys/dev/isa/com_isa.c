@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.24 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.24.16.1 2006/06/15 16:31:28 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24.16.1 2006/06/15 16:31:28 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24 2005/12/11 12:22:02 christos Exp $"
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#ifdef COM_HAYESP
+#include <dev/ic/hayespreg.h>
+#endif
 
 #include <dev/isa/isavar.h>
 
@@ -101,6 +104,10 @@ struct com_isa_softc {
 int com_isa_probe(struct device *, struct cfdata *, void *);
 void com_isa_attach(struct device *, struct device *, void *);
 void com_isa_cleanup(void *);
+#ifdef COM_HAYESP
+int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
+#endif
+
 
 CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
     com_isa_probe, com_isa_attach, NULL, NULL);
@@ -166,21 +173,42 @@ com_isa_attach(parent, self, aux)
 	struct com_softc *sc = &isc->sc_com;
 	int iobase, irq;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
+#ifdef COM_HAYESP
+	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
+	int	*hayespp;
+#endif
 
 	/*
 	 * We're living on an isa.
 	 */
-	iobase = sc->sc_iobase = ia->ia_io[0].ir_addr;
-	iot = sc->sc_iot = ia->ia_iot;
-	if (!com_is_console(iot, iobase, &sc->sc_ioh) &&
-	    bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
+	iobase = ia->ia_io[0].ir_addr;
+	iot = ia->ia_iot;
+
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+
 	sc->sc_frequency = COM_FREQ;
 	irq = ia->ia_irq[0].ir_irq;
+
+#ifdef COM_HAYESP
+	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
+		bus_space_handle_t	hayespioh;
+#define	HAYESP_NPORTS	8
+		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, 0, &hayespioh))
+			continue;
+		if (com_isa_isHAYESP(hayespioh, sc)) {
+			break;
+		}
+		bus_space_unmap(iot, hayespioh, HAYESP_NPORTS);
+	}
+#endif
 
 	com_attach_subr(sc);
 
@@ -202,5 +230,71 @@ com_isa_cleanup(arg)
 	struct com_softc *sc = arg;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
+		bus_space_write_1(sc->sc_regs.iot,
+		    sc->sc_regs.ioh, com_fifo, 0);
 }
+
+#ifdef COM_HAYESP
+int
+com_isa_isHAYESP(bus_space_handle_t hayespioh, struct com_softc *sc)
+{
+	char	val, dips;
+	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+	bus_space_tag_t iot = sc->sc_iot;
+
+	/*
+	 * Hayes ESP cards have two iobases.  One is for compatibility with
+	 * 16550 serial chips, and at the same ISA PC base addresses.  The
+	 * other is for ESP-specific enhanced features, and lies at a
+	 * different addressing range entirely (0x140, 0x180, 0x280, or 0x300).
+	 */
+
+	/* Test for ESP signature */
+	if ((bus_space_read_1(iot, hayespioh, 0) & 0xf3) == 0)
+		return (0);
+
+	/*
+	 * ESP is present at ESP enhanced base address; unknown com port
+	 */
+
+	/* Get the dip-switch configurations */
+	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETDIPS);
+	dips = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1);
+
+	/* Determine which com port this ESP card services: bits 0,1 of  */
+	/*  dips is the port # (0-3); combaselist[val] is the com_iobase */
+	if (sc->sc_regs.iobase != combaselist[dips & 0x03])
+		return (0);
+
+	printf(": ESP");
+
+ 	/* Check ESP Self Test bits. */
+	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
+	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETTEST);
+	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1); /* Clear reg1 */
+	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS2);
+	if ((val & 0x70) < 0x20) {
+		printf("-old (%o)", val & 0x70);
+		/* we do not support the necessary features */
+		return (0);
+	}
+
+	/* Check for ability to emulate 16550: bit 8 == 1 */
+	if ((dips & 0x80) == 0) {
+		printf(" slave");
+		/* XXX Does slave really mean no 16550 support?? */
+		return (0);
+	}
+
+	/*
+	 * If we made it this far, we are a full-featured ESP v2.0 (or
+	 * better), at the correct com port address.
+	 */
+	sc->sc_type = COM_TYPE_HAYESP;
+	sc->sc_hayespioh = hayespioh;
+	sc->sc_fifolen = 1024;
+	sc->sc_prescaler = 0;			/* set prescaler to x1. */
+	printf(", 1024 byte fifo\n");
+	return (1);
+}
+#endif
