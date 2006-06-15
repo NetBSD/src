@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.85 2006/02/26 18:46:04 cube Exp $	*/
+/*	$NetBSD: acpi.c,v 1.86 2006/06/15 18:05:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.85 2006/02/26 18:46:04 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.86 2006/06/15 18:05:08 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -125,6 +125,8 @@ static void	acpi_attach(struct device *, struct device *, void *);
 
 static int	acpi_print(void *aux, const char *);
 
+static int	sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
+
 extern struct cfdriver acpi_cd;
 
 CFATTACH_DECL(acpi, sizeof(struct acpi_softc),
@@ -155,6 +157,7 @@ static int acpi_locked;
 
 static int acpi_node = CTL_EOL;
 static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
+static int acpi_sleepstate = ACPI_STATE_S0;
 
 /*
  * Prototypes.
@@ -367,12 +370,14 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
 
-	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL)
+	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL) {
 		(void)sysctl_createv(NULL, 0, NULL, NULL,
 		    CTLFLAG_IMMEDIATE,
 		    CTLTYPE_QUAD, "root", NULL, NULL,
 		    acpi_root_pointer, NULL, 0,
 		    CTL_HW, acpi_node, CTL_CREATE, CTL_EOL);
+	}
+
 
 	/*
 	 * Register a shutdown hook that disables certain ACPI
@@ -1377,6 +1382,7 @@ out:
 SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 {
 	const struct sysctlnode *node;
+	const struct sysctlnode *ssnode;
 
 	if (sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT,
@@ -1393,4 +1399,43 @@ SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 		return;
 
 	acpi_node = node->sysctl_num;
+
+	/* ACPI sleepstate sysctl */
+	if (sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL) != 0)
+		return;
+	if (sysctl_createv(NULL, 0, &node, &ssnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "sleep_state",
+	    NULL, sysctl_hw_acpi_sleepstate, 0, NULL, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
+		return;
+}
+
+static int
+sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = acpi_sleepstate;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < ACPI_STATE_S0 || t > ACPI_STATE_S5)
+		return EINVAL;
+
+	if (acpi_softc != NULL && acpi_sleepstate != t) {
+		acpi_sleepstate = t;
+		aprint_normal("acpi0: entering state %d\n", t);
+		acpi_enter_sleep_state(acpi_softc, t);
+		aprint_normal("acpi0: resuming\n");
+		t = acpi_sleepstate = ACPI_STATE_S0;
+	}
+
+	return 0;
 }
