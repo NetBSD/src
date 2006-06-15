@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.19 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.20 2006/06/15 13:03:29 ghen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.19 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.20 2006/06/15 13:03:29 ghen Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,7 @@ unpack(struct name *np)
 		extra++;
 	begin = salloc((t + extra) * sizeof *begin);
 	ap = begin;
-	*ap++ = "send-mail";
+	*ap++ = "sendmail";
 	*ap++ = "-i";
 	if (metoo)
 		*ap++ = "-m";
