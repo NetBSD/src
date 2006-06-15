@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.12 2005/11/16 01:46:44 uwe Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.12.16.1 2006/06/15 16:34:03 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.12 2005/11/16 01:46:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.12.16.1 2006/06/15 16:34:03 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,12 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_ebus_softc *ebsc = (void *)self;
 	struct com_softc *sc = &ebsc->ebsc_com;
 	struct ebus_attach_args *ea = aux;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_addr_t iobase;
 
-	sc->sc_iot = ea->ea_bustag;
-	sc->sc_iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
+	iot = ea->ea_bustag;
+	iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	sc->sc_frequency = COM_FREQ;
 	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
 
@@ -105,17 +108,18 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	 * console if PROM stdin is on serial (so that we can use DDB).
 	 */
 	if (prom_instance_to_package(prom_stdin()) == ea->ea_node)
-		comcnattach(sc->sc_iot, sc->sc_iobase,
-			    B9600, sc->sc_frequency, COM_TYPE_NORMAL,
-			    (CLOCAL | CREAD | CS8));
+		comcnattach(iot, iobase, B9600, sc->sc_frequency,
+		    COM_TYPE_NORMAL, (CLOCAL | CREAD | CS8));
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh)
-	    && bus_space_map(sc->sc_iot, sc->sc_iobase, ea->ea_reg[0].size,
-			     0, &sc->sc_ioh) != 0)
+	if (!com_is_console(iot, iobase, &ioh)
+	    && bus_space_map(iot, iobase, ea->ea_reg[0].size,
+			     0, &ioh) != 0)
 	{
 		printf(": unable to map device registers\n");
 		return;
 	}
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 
