@@ -1,4 +1,4 @@
-/* $NetBSD: au1500.c,v 1.5 2006/04/11 11:51:31 simonb Exp $ */
+/* $NetBSD: au1500.c,v 1.5.6.1 2006/06/15 16:48:17 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.5 2006/04/11 11:51:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.5.6.1 2006/06/15 16:48:17 gdamore Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -173,8 +173,8 @@ static const char *au1500_irqnames[] = {
 };
 
 static struct au_dev au1500_devices[] = {
-	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
-	{ "aucom",	{ UART3_BASE },				   {  3, -1 }},
+	{ "com",	{ UART0_BASE },				   {  0, -1 }},
+	{ "com",	{ UART3_BASE },				   {  3, -1 }},
 	{ "aurtc",	{ -1 },					   { -1, -1 }},
 	{ "aumac",	{ AU1500_MAC0_BASE, AU1500_MAC0_ENABLE,
 			  MAC0_DMA_BASE },			   { 28, -1 }},
