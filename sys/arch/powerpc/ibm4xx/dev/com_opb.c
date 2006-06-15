@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.16 2006/05/07 04:45:03 simonb Exp $ */
+/* $NetBSD: com_opb.c,v 1.16.4.1 2006/06/15 19:34:49 gdamore Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16 2006/05/07 04:45:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16.4.1 2006/06/15 19:34:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,13 +111,12 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &msc->sc_com;
 	struct opb_attach_args *oaa = aux;
 	prop_number_t freq;
-
-	sc->sc_iot = oaa->opb_bt;
-	sc->sc_iobase = oaa->opb_addr;
+	bus_space_handle_t ioh;
 
 	/* XXX console check */
 
-	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0, &sc->sc_ioh);
+	bus_space_map(oaa->opb_bt, oaa->opb_addr, COM_NPORTS, 0, &ioh);
+	COM_INIT_REGS(sc->sc_regs, oaa->opb_bt, oaa->opb_addr, ioh);
 
 	freq = prop_dictionary_get(device_properties(&sc->sc_dev), "frequency");
 	if (freq == NULL) {
@@ -141,7 +140,7 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 {
 	static int attached = 0;
 #if (NCOM > 0)
-	bus_space_tag_t tag;
+	struct com_regs	regs;
 #endif
 
 	if (attached)
@@ -150,10 +149,12 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 
 #if (NCOM > 0)
 	/* We *know* the com-console attaches to opb */
-	tag = opb_get_bus_space_tag();
+	regs.iot = opb_get_bus_space_tag();
+	regs.iobase = conaddr;
+	regs.nports = COM_NPORTS;
+	/* regs.ioh is initialized by comcnattach */
 
-	if (comcnattach(tag,
-		conaddr, conspeed, com_freq, COM_TYPE_NORMAL, conmode))
+	if (comcnattach1(&regs, conspeed, com_freq, COM_TYPE_NORMAL, conmode))
 		panic("can't init serial console @%x", conaddr);
 	else
 		return;
