@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: com_arbus.c,v 1.1.12.1 2006/06/15 16:36:23 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.1.12.1 2006/06/15 16:36:23 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,8 @@ struct com_arbus_softc {
 	struct com_softc sc_com;
 };
 
-static bus_space_tag_t com_arbus_get_bus_space_tag(void);
+static void com_arbus_initmap(struct com_regs *);
+//static bus_space_tag_t com_arbus_get_bus_space_tag(void);
 static int com_arbus_match(struct device *, struct cfdata *, void *);
 static void com_arbus_attach(struct device *, struct device *, void *);
 
@@ -151,23 +152,35 @@ int	com_arbus_baud = COM_ARBUS_BAUD;
 
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 
+#ifndef	COM_REGMAP
+#error	COM_REGMAP not defined!
+#endif
+
 int
 com_arbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct arbus_attach_args	*aa = aux;
-	bus_space_handle_t		bsh;
+	struct com_regs			regs;
 	int				rv;
 
-	if (com_is_console(com_arbus_get_bus_space_tag(), aa->aa_addr, NULL)) {
-		return 1;
-	}
-
-	if (bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size,
-		0, &bsh))
+	if (strcmp(aa->aa_name, cf->cf_name) != 0)
 		return 0;
 
-	rv = comprobe1(aa->aa_bst, bsh);
-	bus_space_unmap(aa->aa_bst, bsh, aa->aa_size);
+	if (com_is_console(aa->aa_bst, aa->aa_addr, &regs.ioh))
+		return 1;
+
+	if (bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size,
+		0, &regs.ioh))
+		return 0;
+
+	regs.iot = aa->aa_bst;
+	regs.iobase = aa->aa_addr;
+	regs.nports = aa->aa_size;
+	com_arbus_initmap(&regs);
+
+	rv = com_probe_subr(&regs);
+
+	bus_space_unmap(aa->aa_bst, regs.ioh, aa->aa_size);
 
 	return rv;
 }
@@ -178,17 +191,20 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_arbus_softc *arsc = (void *)self;
 	struct com_softc *sc = &arsc->sc_com;
 	struct arbus_attach_args *aa = aux;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = com_arbus_get_bus_space_tag();
-	sc->sc_iobase = aa->aa_addr;
 	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, aa->aa_size, 0,
-		&sc->sc_ioh) != 0) {
+	if (!com_is_console(aa->aa_bst, aa->aa_addr, &ioh) &&
+	    bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
+		&ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
+
+	COM_INIT_REGS(sc->sc_regs, aa->aa_bst, ioh, aa->aa_addr);
+	sc->sc_regs.nports = aa->aa_size;
+	com_arbus_initmap(&sc->sc_regs);
 
 	com_attach_subr(sc);
 
@@ -197,95 +213,33 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-/*
- * This hideousness is to cope with the fact that the 16550 registers need
- * a stride.  Yech!
- */
-static struct mips_bus_space com_arbus_space;
-
-static void
-com_arbus_write_1(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
+void
+com_arbus_initmap(struct com_regs *regsp)
 {
-	bus_space_write_1((bus_space_tag_t)v, h, (off * 4) + 3, val);
-}
+	int	i;
 
-static uint8_t
-com_arbus_read_1(void *v, bus_space_handle_t h, bus_size_t off)
-{
-	return bus_space_read_1((bus_space_tag_t)v, h, (off * 4) + 3);
-}
-
-static void
-com_arbus_read_multi_1(void *v, bus_space_handle_t h, bus_size_t off,
-    uint8_t *data, bus_size_t cnt)
-{
-	while (cnt-- > 0) {
-		*data++ = com_arbus_read_1(v, h, off);
+	/* rewrite the map to shift for alignment */
+	for (i = 0; i < (sizeof (regsp->map) / sizeof (regsp->map[0])); i++) {
+		regsp->map[i] = (com_std_map[i] * 4) + 3;
 	}
-}
-
-static void
-com_arbus_write_multi_1(void *v, bus_space_handle_t h, bus_size_t off,
-    const uint8_t *data, bus_size_t cnt)
-{
-	while (cnt-- > 0) {
-		com_arbus_write_1(v, h, off, *data++);
-	}
-}
-
-static void
-com_arbus_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l,
-    int f)
-{
-	bus_space_barrier((bus_space_tag_t)v, h, o, l, f);
-}
-
-static int
-com_arbus_map(void *v, bus_addr_t addr, bus_size_t size, int flag,
-    bus_space_handle_t *bshp, int acct)
-{
-	return bus_space_map((bus_space_tag_t)v, addr, size, flag, bshp);
-}
-
-static void
-com_arbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size, int acct)
-{
-	bus_space_unmap((bus_space_tag_t)v, bsh, size);
-}
-
-bus_space_tag_t
-com_arbus_get_bus_space_tag(void)
-{
-	static int done = 0;
-	if (!done) {
-		com_arbus_space.bs_cookie = arbus_get_bus_space_tag();
-		com_arbus_space.bs_w_1 = com_arbus_write_1;
-		com_arbus_space.bs_r_1 = com_arbus_read_1;
-		com_arbus_space.bs_wm_1 = com_arbus_write_multi_1;
-		com_arbus_space.bs_rm_1 = com_arbus_read_multi_1;
-		com_arbus_space.bs_barrier = com_arbus_barrier;
-		com_arbus_space.bs_map = com_arbus_map;
-		com_arbus_space.bs_unmap = com_arbus_unmap;
-		done++;
-	}
-	return &com_arbus_space;
 }
 
 void
 com_arbus_cnattach(bus_addr_t addr)
 {
-	bus_space_tag_t		bst;
-	bus_space_handle_t	bsh;
+	struct com_regs		regs;
 	uint32_t		sysfreq;
-	extern void		mdputs(const char *);
 
-	bst = com_arbus_get_bus_space_tag();
-	if (bus_space_map(bst, addr, 0x1000, 0, &bsh))
+	regs.iot = arbus_get_bus_space_tag();
+	regs.iobase = addr;
+	regs.nports = 0x1000;
+	com_arbus_initmap(&regs);
+
+	if (bus_space_map(regs.iot, regs.iobase, regs.nports, 0, &regs.ioh))
 		return;
 
 	sysfreq = curcpu()->ci_cpu_freq / 4;
 
-	comcnattach(bst, addr, com_arbus_baud, sysfreq,
-	    COM_TYPE_NORMAL, CONMODE);
+	comcnattach1(&regs, com_arbus_baud, sysfreq, COM_TYPE_NORMAL, CONMODE);
 }
 
