@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4.2.3 2006/04/07 12:51:25 tron Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.4.2.4 2006/06/15 13:27:51 tron Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.3 2006/04/07 12:51:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.4 2006/06/15 13:27:51 tron Exp $");
 
 #include "opt_cputype.h"
 
@@ -1174,8 +1174,10 @@ identifycpu(struct cpu_info *ci)
 		 * being probed.. */
 		ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
+#if 0
 #ifndef NO_TSC_TIME
 		microtime_func = cc_microtime;
+#endif
 #endif
 	}
 
