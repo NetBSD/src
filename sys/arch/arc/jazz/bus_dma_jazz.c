@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.13 2006/03/01 12:38:10 yamt Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.14 2006/06/15 17:06:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.13 2006/03/01 12:38:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.14 2006/06/15 17:06:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,6 +225,11 @@ jazz_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		map->dm_segs[0]._ds_vaddr = (vaddr_t)buf;
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
+		map->_dm_vmspace = vm;
+
+		if (buf >= (void *)MIPS_KSEG1_START &&
+		    buf < (void *)MIPS_KSEG2_START)
+			map->_dm_flags |= ARC_DMAMAP_COHERENT;
 
 		return 0;
 	}
