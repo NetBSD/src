@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.317 2006/06/13 11:51:43 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.318 2006/06/15 15:34:20 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -468,6 +468,7 @@
 ./usr/share/i18n/csmapper/CP
 ./usr/share/i18n/csmapper/EBCDIC
 ./usr/share/i18n/csmapper/GB
+./usr/share/i18n/csmapper/GEORGIAN
 ./usr/share/i18n/csmapper/ISO-8859
 ./usr/share/i18n/csmapper/ISO646
 ./usr/share/i18n/csmapper/JIS
@@ -480,6 +481,7 @@
 ./usr/share/i18n/esdb/CP
 ./usr/share/i18n/esdb/EBCDIC
 ./usr/share/i18n/esdb/EUC
+./usr/share/i18n/esdb/GEORGIAN
 ./usr/share/i18n/esdb/ISO-2022
 ./usr/share/i18n/esdb/ISO-8859
 ./usr/share/i18n/esdb/ISO646
