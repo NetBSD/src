@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.12 2006/01/24 20:04:05 is Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.12.14.1 2006/06/15 23:04:03 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,10 @@
 #include <unistd.h>
 
 #include <sys/mman.h>		/* of the machine we're running on */
+
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/endian.h>		/* of the machine we're running on */
+#endif
 
 #include <sys/exec_elf.h>	/* TARGET */
 #ifndef R_68K_32		/* XXX host not m68k XXX */
