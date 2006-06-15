@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.1.2.2 2006/06/13 22:28:22 tron Exp $
+# $NetBSD: XEN3_DOMU,v 1.1.2.3 2006/06/15 14:07:54 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -189,7 +189,6 @@ include	"arch/i386/conf/GENERIC.local"
 # Pseudo-Devices
 
 pseudo-device 	crypto		# /dev/crypto device
-pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
