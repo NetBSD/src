@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.2 2006/04/26 19:48:01 garbled Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.3 2006/06/15 18:15:32 garbled Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.2 2006/04/26 19:48:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.3 2006/06/15 18:15:32 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.2 2006/04/26 19:48:01 garbled Exp
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/isa_machdep.h>
+/* clock stuff for motorolla machines */
+#include <dev/clock_subr.h>
+#include <dev/ic/mk48txxreg.h>
+
 #include <machine/nvram.h>
 
 #include <prep/pnpbus/pnpbusvar.h>
@@ -64,6 +68,8 @@ static char *nvramGEAp;		/* pointer to the GE area */
 static char *nvramCAp;		/* pointer to the Config area */
 static char *nvramOSAp;		/* pointer to the OSArea */
 struct simplelock nvram_slock;	/* lock */
+
+int prep_clock_mk48txx;
 
 extern char bootpath[256];
 
@@ -78,6 +84,8 @@ char		*prep_nvram_get_var(const char *);
 int		prep_nvram_get_var_len(const char *);
 int		prep_nvram_count_vars(void);
 void		prep_nvram_write_val(int, uint8_t);
+uint8_t		mkclock_pnpbus_nvrd(struct mk48txx_softc *, int);
+void		mkclock_pnpbus_nvwr(struct mk48txx_softc *, int, uint8_t);
 
 CFATTACH_DECL(nvram_pnpbus, sizeof(struct nvram_pnpbus_softc),
     nvram_pnpbus_probe, nvram_pnpbus_attach, NULL, NULL);
@@ -124,7 +132,7 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pnpbus_io_map(&pna->pna_res, 0, &sc->sc_as, &sc->sc_ash) ||
 	    pnpbus_io_map(&pna->pna_res, 1, &sc->sc_data, &sc->sc_datah)) {
-		printf("nvram: couldn't map registers\n");
+		aprint_error("nvram: couldn't map registers\n");
 		return;
 	}
 
@@ -165,8 +173,9 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* we should be done here.  umm.. yay? */
 	nvram = (NVRAM_MAP *)&nvramData[0];
-	printf("%s: Read %d bytes from nvram of size %d\n", device_xname(self),
-	    i, nvlen);
+	aprint_normal("\n");
+	aprint_verbose("%s: Read %d bytes from nvram of size %d\n",
+	    device_xname(self), i, nvlen);
 
 #if defined(NVRAM_DUMP)
 	printf("Boot device: %s\n", prep_nvram_get_var("fw-boot-device"));
@@ -178,6 +187,24 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 	strncpy(bootpath, prep_nvram_get_var("fw-boot-device"), 256);
+
+
+	if (prep_clock_mk48txx == 0)
+		return;
+	/* otherwise, we have a motorolla clock chip.  Set it up. */
+	sc->sc_mksc.sc_model = "mk48t18";
+	sc->sc_mksc.sc_year0 = 1900;
+	sc->sc_mksc.sc_nvrd = mkclock_pnpbus_nvrd;
+	sc->sc_mksc.sc_nvwr = mkclock_pnpbus_nvwr;
+	/* copy down the bus space tags */
+	sc->sc_mksc.sc_bst = sc->sc_as;
+	sc->sc_mksc.sc_bsh = sc->sc_ash;
+	sc->sc_mksc.sc_data = sc->sc_data;
+	sc->sc_mksc.sc_datah = sc->sc_datah;
+
+	aprint_normal("%s: attaching clock", device_xname(self));
+	mk48txx_attach((struct mk48txx_softc *)&sc->sc_mksc);
+	todr_attach(&sc->sc_mksc.sc_handle);
 }
 
 /*
@@ -402,4 +429,42 @@ prep_nvramclose(dev_t dev, int flags, int mode, struct lwp *l)
 		return ENODEV;
 	sc->sc_open = 0;
 	return 0;
+}
+
+/* Motorola mk48txx clock routines */
+uint8_t
+mkclock_pnpbus_nvrd(struct mk48txx_softc *osc, int off)
+{
+	struct prep_mk48txx_softc *sc = (struct prep_mk48txx_softc *)osc;
+	uint8_t datum;
+	int s;
+
+#ifdef DEBUG
+	printf("mkclock_pnpbus_nvrd(%d)", off);
+#endif
+	s = splclock();
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, off & 0xff);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, off >> 8);
+	datum = bus_space_read_1(sc->sc_data, sc->sc_datah, 0);
+	splx(s);
+#ifdef DEBUG
+	printf(" -> %02x\n", datum);
+#endif
+	return datum;
+}
+
+void
+mkclock_pnpbus_nvwr(struct mk48txx_softc *osc, int off, uint8_t datum)
+{
+	struct prep_mk48txx_softc *sc = (struct prep_mk48txx_softc *)osc;
+	int s;
+
+#ifdef DEBUG
+	printf("mkclock_isa_nvwr(%d, %02x)\n", off, datum);
+#endif
+	s = splclock();
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, off & 0xff);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, off >> 8);
+	bus_space_write_1(sc->sc_data, sc->sc_datah, 0, datum);
+	splx(s);
 }
