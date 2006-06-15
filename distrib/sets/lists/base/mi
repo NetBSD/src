@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.628 2006/06/09 21:19:40 tron Exp $
+# $NetBSD: mi,v 1.629 2006/06/15 15:34:20 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1619,6 +1619,15 @@
 ./usr/share/i18n/csmapper/GB			base-sysutil-share
 ./usr/share/i18n/csmapper/GB/GB2312%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN					base-sysutil-share
+./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-ACADEMY%UCS.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-ACADEMY@OldCapital%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-PS%UCS.mps			base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-PS@OldCapital%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/UCS%GEORGIAN-ACADEMY.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/UCS%GEORGIAN-ACADEMY@OldCapital.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/UCS%GEORGIAN-PS.mps			base-sysutil-share	nls
+./usr/share/i18n/csmapper/GEORGIAN/UCS%GEORGIAN-PS@OldCapital.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/ISO-8859		base-sysutil-share
 ./usr/share/i18n/csmapper/ISO-8859/ISO-8859-10%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/ISO-8859/ISO-8859-11%UCS.mps	base-sysutil-share	nls
@@ -1836,6 +1845,11 @@
 ./usr/share/i18n/esdb/EUC/EUC-JP.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-KR.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-TW.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/GEORGIAN					base-sysutil-share
+./usr/share/i18n/esdb/GEORGIAN/GEORGIAN-ACADEMY-OldCapital.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/GEORGIAN/GEORGIAN-ACADEMY.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/GEORGIAN/GEORGIAN-PS-OldCapital.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/GEORGIAN/GEORGIAN-PS.esdb			base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share	nls
