@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.112 2006/06/15 14:08:46 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.113 2006/06/15 14:26:50 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1881,7 +1881,7 @@ sys/arch/xen/xen/clock.c			1.17-1.18,1.20-1.23 via patch
 	- Implement a xen-specific cc_microtime, which properly handles the
 	  Xen clock implementation. The MI cc_microtime could cause the clock
 	  to jump forward by up to 35mn.
-	- Bave dom0 periodically set the Xen's time of day clock. This makes
+	- Have dom0 periodically set the Xen's time of day clock. This makes
 	  sure domUs start with the right time.
 	[bouyer, ticket 1372]
 
