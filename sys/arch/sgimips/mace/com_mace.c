@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.5 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.5.16.1 2006/06/15 20:00:36 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.5 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.5.16.1 2006/06/15 20:00:36 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,18 +87,17 @@ com_mace_attach(struct device *parent, struct device *self, void *aux)
 	struct com_mace_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct mace_attach_args *maa = aux;
-
-	sc->sc_iot = maa->maa_st;
+	bus_space_handle_t	ioh;
 
 	/*
 	 * XXX should check com_is_console() and 
 	 * XXX use bus_space_map().
 	 */
-	sc->sc_ioh = maa->maa_sh + maa->maa_offset;
-	sc->sc_iobase = sc->sc_ioh;
+	ioh = maa->maa_sh + maa->maa_offset;
+	/* note that ioh on mac is *also* the iobase address */
+	COM_INIT_REGS(sc->sc_regs, maa->maa_st, ioh, ioh);
 
 	sc->sc_frequency = COM_FREQ;
-
 
 	delay(10000);
 	com_attach_subr(sc);
