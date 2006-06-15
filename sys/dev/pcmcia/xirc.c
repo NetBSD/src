@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.16 2006/03/25 23:23:26 thorpej Exp $	*/
+/*	$NetBSD: xirc.c,v 1.16.4.1 2006/06/15 16:32:10 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.16 2006/03/25 23:23:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.16.4.1 2006/06/15 16:32:10 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -618,12 +618,13 @@ com_xirc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	sc->sc_iot = msc->sc_modem_pcioh.iot;
-	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
+	COM_INIT_REGS(sc->sc_regs, 
+	    msc->sc_modem_pcioh.iot,
+	    msc->sc_modem_pcioh.ioh,
+	    -1);
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_xirc_enable;

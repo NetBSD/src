@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.13 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.13.16.1 2006/06/15 16:31:06 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.13 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.13.16.1 2006/06/15 16:31:06 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,7 @@ com_puc_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": Serial port\n");
 
-	sc->sc_iobase = aa->a;
-	sc->sc_iot = aa->t;
-	sc->sc_ioh = aa->h;
+	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
 
 	/* Enable Cyberserial 8X clock. */

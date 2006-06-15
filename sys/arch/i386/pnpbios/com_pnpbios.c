@@ -1,4 +1,4 @@
-/* $NetBSD: com_pnpbios.c,v 1.10 2005/12/11 12:17:47 christos Exp $ */
+/* $NetBSD: com_pnpbios.c,v 1.10.16.1 2006/06/15 16:33:48 gdamore Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pnpbios.c,v 1.10 2005/12/11 12:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pnpbios.c,v 1.10.16.1 2006/06/15 16:33:48 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ com_pnpbios_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pnpbiosdev_attach_args *aa = aux;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int iobase;
 
 	if (pnpbios_getiobase(aa->pbt, aa->resc, 0, &iot, &iobase)) {
@@ -90,14 +91,13 @@ com_pnpbios_attach(parent, self, aux)
 		return;
 	}
 
-	if (com_is_console(iot, iobase, &sc->sc_ioh))
-		sc->sc_iot = iot;
-	else if (pnpbios_io_map(aa->pbt, aa->resc, 0,
-				&sc->sc_iot, &sc->sc_ioh)) { 	
+	if ((!com_is_console(iot, iobase, &ioh)) &&
+	    pnpbios_io_map(aa->pbt, aa->resc, 0, &iot, &ioh)) { 	
 		printf(": can't map i/o space\n");
 		return;
 	}
-	sc->sc_iobase = iobase;
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	printf("\n");
 	pnpbios_print_devres(self, aa);
@@ -107,7 +107,7 @@ com_pnpbios_attach(parent, self, aux)
 	/*
 	 * if the chip isn't something we recognise skip it.
 	 */
-	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
+	if (com_probe_subr(&sc->sc_regs) == 0) {
 		printf(": com probe failed\n");
 		return;
 	}

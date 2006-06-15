@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.25 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.25.4.1 2006/06/15 16:34:24 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.25 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.25.4.1 2006/06/15 16:34:24 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,9 +106,13 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	int com_is_input;
 	int com_is_output;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
 
-	sc->sc_iot = ea->ea_bustag;
-	sc->sc_iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
+	iot = ea->ea_bustag;
+	iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
+
 	/*
 	 * Addresses that should be supplied by the prom:
 	 *	- normal com registers
@@ -122,13 +126,15 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	if (ea->ea_nvaddr)
-		sparc_promaddr_to_handle(sc->sc_iot, ea->ea_vaddr[0],
-			&sc->sc_ioh);
-	else if (bus_space_map(sc->sc_iot, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-		ea->ea_reg[0].size, 0, &sc->sc_ioh) != 0) {
+		sparc_promaddr_to_handle(iot, ea->ea_vaddr[0],
+			&ioh);
+	else if (bus_space_map(iot, iobase,
+		ea->ea_reg[0].size, 0, &ioh) != 0) {
 		printf(": can't map register space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+
 	sc->sc_hwflags = 0;
 	sc->sc_frequency = BAUD_BASE;
 
@@ -152,7 +158,7 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 
 		/* Attach com as the console. */
 		cn_orig = cn_tab;
-		if (comcnattach(sc->sc_iot, sc->sc_iobase, kma.kmta_baud,
+		if (comcnattach(iot, iobase, kma.kmta_baud,
 			sc->sc_frequency, COM_TYPE_NORMAL, kma.kmta_cflag)) {
 			printf("Error: comcnattach failed\n");
 		}
