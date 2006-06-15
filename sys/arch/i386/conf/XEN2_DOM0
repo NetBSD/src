@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.1.2.2 2006/06/13 22:28:22 tron Exp $
+# $NetBSD: XEN2_DOM0,v 1.1.2.3 2006/06/15 14:07:54 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -282,7 +282,6 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
@@ -321,7 +320,6 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -490,9 +488,6 @@ wsmouse* at uep? mux 0
 ukbd*   at uhidev? reportid ?
 wskbd*  at ukbd? console ? mux 1
 
-# USB serial adpater
-ucycom*	at uhidev? reportid ?
-
 # USB Generic HID devices
 uhid*   at uhidev? reportid ?
 
@@ -533,7 +528,6 @@ url*    at uhub? port ?         # Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
 atu*    at uhub? port ?         # Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*    at uhub? port ?
@@ -587,10 +581,6 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 # CardBus IEEE1394 controllers
 #fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
-ieee1394if* at fwohci?
-fwip*	at ieee1394if?			# IP over IEEE1394
-sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
-
 # PCI audio devices
 auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
@@ -643,7 +633,6 @@ include	"arch/i386/conf/GENERIC.local"
 # Pseudo-Devices
 
 pseudo-device 	crypto		# /dev/crypto device
-pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.2.2 2006/06/13 22:28:22 tron Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.2.3 2006/06/15 14:07:54 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -144,8 +144,6 @@ xenbus*		at hypervisor?		# Xenbus virtual bus
 xennet* 	at xenbus? id ?		# Xen virtual network interface
 
 xbd*		at xenbus? id ?		# Xen virtual block device
-
-include	"arch/i386/conf/INSTALL.local"
 
 # Pseudo-Devices
 
