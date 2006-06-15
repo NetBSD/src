@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.15 2006/06/13 14:38:01 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.16 2006/06/15 16:11:15 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.15 2006/06/13 14:38:01 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.16 2006/06/15 16:11:15 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -847,6 +847,7 @@ static int
 generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 {
 	uint32_t result;
+	nid_t n;
 	int err;
 
 	/* inamp mute */
@@ -868,7 +869,8 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 			return err;
 		mc->un.value.level[0] = generic_mixer_from_device_value(this,
 		    nid, target, CORB_GAGM_GAIN(result));
-		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[nid]);
+		n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[n]);
 		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
