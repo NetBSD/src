@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.4 2006/04/11 11:51:31 simonb Exp $ */
+/* $NetBSD: au1000.c,v 1.4.6.1 2006/06/15 16:48:17 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -173,10 +173,10 @@ static const char *au1000_irqnames[] = {
 };
 
 static struct au_dev au1000_devices[] = {
-	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
-	{ "aucom",	{ UART1_BASE },				   {  1, -1 }},
-	{ "aucom",	{ UART2_BASE },				   {  2, -1 }},
-	{ "aucom",	{ UART3_BASE },				   {  3, -1 }},
+	{ "com",	{ UART0_BASE },				   {  0, -1 }},
+	{ "com",	{ UART1_BASE },				   {  1, -1 }},
+	{ "com",	{ UART2_BASE },				   {  2, -1 }},
+	{ "com",	{ UART3_BASE },				   {  3, -1 }},
 	{ "aurtc",	{ -1 },					   { -1, -1 }},
 	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 28, -1 }},
 	{ "aumac",	{ MAC1_BASE, MAC1_ENABLE, MAC1_DMA_BASE }, { 29, -1 }},
