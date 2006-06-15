@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.27 2006/06/13 14:20:09 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.28 2006/06/15 16:08:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.27 2006/06/13 14:20:09 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.28 2006/06/15 16:08:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1114,34 +1114,39 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 
 	/* register formats for playback */
 	group = &this->dacs.groups[this->dacs.cur];
-	nid = group->conv[0];
 	chan = 0;
-	bits_rates = this->w[nid].d.audio.bits_rates;
 	for (c = 0; c < group->nconv; c++) {
-		for (chan = 0, i = 0; i <= c; i++)
-			chan += WIDGET_CHANNELS(&this->w[group->conv[c]]);
+		chan = 0;
+		bits_rates = ~0;
+		for (i = 0; i <= c; i++) {
+			nid = group->conv[i];
+			chan += WIDGET_CHANNELS(&this->w[nid]);
+			bits_rates &= this->w[nid].d.audio.bits_rates;
+		}
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_PLAY);
 	}
 	/* print playback capability */
 	if (prev_dac != this->dacs.cur) {
 		snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ", XNAME(this->az));
-		azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
+		azalia_widget_print_audio(&this->w[group->conv[0]], flagbuf, chan);
 	}
 
 	/* register formats for recording */
 	group = &this->adcs.groups[this->adcs.cur];
-	nid = group->conv[0];
-	chan = 0;
-	bits_rates = this->w[nid].d.audio.bits_rates;
 	for (c = 0; c < group->nconv; c++) {
-		for (chan = 0, i = 0; i <= c; i++)
-			chan += WIDGET_CHANNELS(&this->w[group->conv[c]]);
+		chan = 0;
+		bits_rates = ~0;
+		for (i = 0; i <= c; i++) {
+			nid = group->conv[i];
+			chan += WIDGET_CHANNELS(&this->w[nid]);
+			bits_rates &= this->w[nid].d.audio.bits_rates;
+		}
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
 	}
 	/* print recording capability */
 	if (prev_adc != this->adcs.cur) {
 		snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
-		azalia_widget_print_audio(&this->w[nid], flagbuf, chan);
+		azalia_widget_print_audio(&this->w[group->conv[0]], flagbuf, chan);
 	}
 
 	err = auconv_create_encodings(this->formats, this->nformats,
