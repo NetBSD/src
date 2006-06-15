@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.11 2006/03/06 17:16:45 shige Exp $
+#	$NetBSD: files.alchemy,v 1.11.8.1 2006/06/15 16:48:59 gdamore Exp $
 
 defflag opt_alchemy.h		ALCHEMY_AU1000
 				ALCHEMY_AU1100
@@ -26,14 +26,11 @@ device	aurtc
 attach	aurtc at aubus
 file	arch/mips/alchemy/dev/aurtc.c		aurtc
 
-# On-chip com-alike device(s)
-device	aucom { } : tty
-file	arch/mips/alchemy/dev/aucom.c		aucom		needs-flag
-defflag	opt_com.h	COM_AU1x00
-options			COM_AU1x00	# Au1x00 support in com driver
-
-attach	aucom at aubus with aucom_aubus
-file	arch/mips/alchemy/dev/aucom_aubus.c	aucom_aubus
+# On-chip UART device
+attach	com at aubus with com_aubus
+file	arch/mips/alchemy/dev/com_aubus.c	com_aubus
+options		COM_AU1x00	# Au1x00 support in com driver
+options		COM_REGMAP
 
 # On-chip ethernet device(s)
 device	aumac: ether, ifnet, arp, mii
