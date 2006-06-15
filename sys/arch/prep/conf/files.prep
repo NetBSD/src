@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.54 2006/05/10 02:49:53 garbled Exp $
+#	$NetBSD: files.prep,v 1.55 2006/06/15 18:15:32 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -109,19 +109,6 @@ file	arch/prep/isa/isadma_machdep.c	isa
 # ISA Plug 'n Play devices
 file	arch/prep/isa/isapnp_machdep.c	isapnp
 
-#
-# clock
-#
-# mc146818 and compat.
-device	mcclock: mc146818
-attach	mcclock at isa with mcclock_isa
-file	arch/prep/isa/mcclock_isa.c	mcclock_isa
-
-# mk48t18 and compat.
-device	mkclock: mk48txx
-attach	mkclock at isa with mkclock_isa
-file	arch/prep/isa/mkclock_isa.c	mkclock_isa
-
 include "dev/pckbport/files.pckbport"
 
 # ISA speaker generates keyboard beep
@@ -171,6 +158,19 @@ define pnpbus { [index = -1] }
 device pnpbus : pnpbus
 attach pnpbus at mainbus
 file arch/prep/pnpbus/pnpbus.c		pnpbus needs-flag
+
+#
+# clock
+#
+# mc146818 and compat.
+device	mcclock: mc146818
+attach	mcclock at pnpbus with mcclock_pnpbus
+file	arch/prep/pnpbus/mcclock_pnpbus.c	mcclock_pnpbus
+
+# mk48t18 stub probe  XXX MUST OCCUR BEFORE NVRAM
+device	mkclock: mk48txx
+attach	mkclock at pnpbus with mkclock_pnpbus
+file	arch/prep/pnpbus/mkclock_pnpbus.c	mkclock_pnpbus
 
 attach wdc at pnpbus with wdc_pnpbus
 file arch/prep/pnpbus/wdc_pnpbus.c	wdc_pnpbus needs-flag

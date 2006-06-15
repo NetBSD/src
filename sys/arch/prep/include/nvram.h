@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.1 2006/03/16 17:43:34 garbled Exp $ */
+/* $NetBSD: nvram.h,v 1.2 2006/06/15 18:15:32 garbled Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 
 #ifndef _MACHINE_NVRAM_H
 #define _MACHINE_NVRAM_H
+
+/* for the motorola machines */
+#include <dev/ic/mk48txxvar.h>
 
 #define MAX_PREP_NVRAM 0x8000	/* maxmum size of the nvram */
 
@@ -196,6 +199,27 @@ struct pnviocdesc {
 	int	pnv_num;	/* number of something */
 };
 
+struct prep_mk48txx_softc {
+	struct device   sc_dev;
+	bus_space_tag_t sc_bst;	 /* bus tag & handle */
+	bus_space_handle_t sc_bsh;      /* */
+
+	struct todr_chip_handle sc_handle; /* TODR handle */
+	const char	*sc_model;	/* chip model name */
+	bus_size_t	sc_nvramsz;	/* Size of NVRAM on the chip */
+	bus_size_t	sc_clkoffset;	/* Offset in NVRAM to clock bits */
+	u_int		sc_year0;	/* What year is represented on
+					   the system by the chip's year
+					   counter at 0 */
+	u_int		sc_flag;
+#define MK48TXX_NO_CENT_ADJUST  0x0001
+
+	mk48txx_nvrd_t	sc_nvrd;	/* NVRAM/RTC read function */
+	mk48txx_nvwr_t	sc_nvwr;	/* NVRAM/RTC write function */
+	bus_space_tag_t sc_data;
+	bus_space_handle_t sc_datah;
+};
+
 struct nvram_pnpbus_softc {
 	struct device sc_dev;		/* base device */ 
 
@@ -206,6 +230,10 @@ struct nvram_pnpbus_softc {
 
 	bus_space_tag_t sc_data;	/* data line */
 	bus_space_handle_t sc_datah;
+
+	/* clock bits for mk48txx */
+	struct prep_mk48txx_softc sc_mksc; /* mk48txx softc */
+
 	u_char  sc_open;		/* single use device */
 };
 
