@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2006/06/13 22:28:22 tron Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2006/06/15 14:30:15 tron Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,14 +15,14 @@ ${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
 ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
-MDSETTARGETS=		INSTALL			${RAMDISK_B}	-	\
-			INSTALL_LAPTOP		${RAMDISK_B}	-	\
-			INSTALL_XEN2_DOMU	${RAMDISK_B}	-	\
-			INSTALL_XEN3_DOMU	${RAMDISK_B}	-	\
-			INSTALL_SMALL		${RAMDISK_S}	-	\
-			INSTALL_TINY		${RAMDISK_T}	-	\
-			INSTALL_PS2		${RAMDISK_S}	-	\
-			INSTALL_TINY		${RESCUE_T}	netbsd-RESCUE_TINY
+MDSETTARGETS=		INSTALL		${RAMDISK_B}	-	\
+			INSTALL_LAPTOP	${RAMDISK_B}	-	\
+			INSTALL_XENU	${RAMDISK_B}	-	\
+			INSTALL_XEN3_U	${RAMDISK_B}	-	\
+			INSTALL_SMALL	${RAMDISK_S}	-	\
+			INSTALL_TINY	${RAMDISK_T}	-	\
+			INSTALL_PS2	${RAMDISK_S}	-	\
+			INSTALL_TINY	${RESCUE_T}	netbsd-RESCUE_TINY
 
 MDSET_RELEASEDIR=	binary/kernel
 
