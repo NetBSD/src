@@ -1,3 +1,0 @@
-This contains library archives to build statically linked versions of
-FORTRAN programs and simbolic links for use in linking software against
-shared libraries.

@@ -1,4 +1,0 @@
-# $NetBSD: md.atari,v 1.1 2003/12/28 15:45:59 lukem Exp $
-./usr/X11R6/lib/libXxf86dga.a
-./usr/X11R6/lib/libXxf86misc.a
-./usr/X11R6/lib/libXxf86vm.a
