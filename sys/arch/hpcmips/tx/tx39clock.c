@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.19 2005/12/24 23:24:00 perry Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.20 2006/06/16 00:08:28 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.19 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.20 2006/06/16 00:08:28 gdamore Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -341,15 +341,15 @@ tx39clock_alarm_refill(tx_chipset_tag_t tc)
 {
 	struct tx39clock_softc *sc = tc->tc_clockt;
 	struct txtime t;	
-	u_int64_t time;
+	u_int64_t mytime;
 	
 	__tx39timer_rtcget(&t);
 
-	time = ((u_int64_t)t.t_hi << 32) | (u_int64_t)t.t_lo;
-	time += (u_int64_t)sc->sc_alarm;
+	mytime = ((u_int64_t)t.t_hi << 32) | (u_int64_t)t.t_lo;
+	mytime += (u_int64_t)sc->sc_alarm;
 
-	t.t_hi = (u_int32_t)((time >> 32) & TX39_TIMERALARMHI_MASK);
-	t.t_lo = (u_int32_t)(time & 0xffffffff);
+	t.t_hi = (u_int32_t)((mytime >> 32) & TX39_TIMERALARMHI_MASK);
+	t.t_lo = (u_int32_t)(mytime & 0xffffffff);
 
 	tx_conf_write(tc, TX39_TIMERALARMHI_REG, t.t_hi);
 	tx_conf_write(tc, TX39_TIMERALARMLO_REG, t.t_lo);
