@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.20 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: com_supio.c,v 1.20.16.1 2006/06/16 00:11:59 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.1 2006/06/16 00:11:59 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,28 +103,14 @@ int com_supio_match(struct device *, struct cfdata *, void *);
 void com_supio_attach(struct device *, struct device *, void *);
 void com_supio_cleanup(void *);
 
-#if 0
-static int      comconsaddr;
-static bus_space_handle_t comconsioh;
-static int      comconsattached;
-static bus_space_tag_t comconstag;
-static int comconsrate;
-static tcflag_t comconscflag;
-#endif
-
 CFATTACH_DECL(com_supio, sizeof(struct comsupio_softc),
     com_supio_match, com_supio_attach, NULL, NULL);
 
 int
 com_supio_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	bus_space_tag_t iot;
-	int iobase;
 	int rv = 1;
 	struct supio_attach_args *supa = aux;
-
-	iot = supa->supio_iot;
-	iobase = supa->supio_iobase;
 
 	if (strcmp(supa->supio_name,"com"))
 		return 0;
@@ -139,6 +125,7 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *csc = &sc->sc_com;
 	int iobase;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct supio_attach_args *supa = aux;
 	u_int16_t needpsl;
 
@@ -149,8 +136,9 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	iot = csc->sc_iot = supa->supio_iot;
 	printf(" port 0x%04x ipl %d", iobase, supa->supio_ipl);
 
-	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &csc->sc_ioh))
+	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	csc->sc_frequency = supa->supio_arg;
 
@@ -183,5 +171,6 @@ com_supio_cleanup(void *arg)
 	struct com_softc *sc = arg;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
+		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
+		    com_fifo, 0);
 }
