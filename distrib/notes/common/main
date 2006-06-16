@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.28.2.3 2006/06/15 05:46:48 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.28.2.4 2006/06/16 18:54:53 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -639,6 +639,8 @@ Fix the bootloader so it doesn't print garbage to the bitmap console.
 Fix a huge number of pkgsrc build problems.
 .It
 Fix boot failure problem on HP400t with fb console.
+.It
+Fix a problem with the probe of SCSI disks in the installer.
 .bullet)
 .
 .Ss2 i386 specific
