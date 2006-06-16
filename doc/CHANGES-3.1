@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.113 2006/06/15 14:26:50 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.114 2006/06/16 04:05:41 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1898,4 +1898,10 @@ sys/arch/xen/xen/if_xennet.c			1.45
 
 	Add some missing memory barriers.
 	[bouyer, ticket #1374]
+
+distrib/hp300/miniroot/install.md		1.9-1.10
+
+	Fix md_get_diskdevs() to match sd probe messages by MI SCSI drivers.
+	Also fix md_get_cddevs() to match cd probe messages by MI SCSI drivers.
+	[tsutsui, ticket #1381]
 
