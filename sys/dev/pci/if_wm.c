@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.120 2006/06/10 14:26:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.121 2006/06/16 15:51:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.120 2006/06/10 14:26:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.121 2006/06/16 15:51:04 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1200,9 +1200,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Toggle the LSB of the MAC address on the second port
-	 * of the i82546.
+	 * of the dual port controller.
 	 */
-	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3) {
+	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3
+	    || sc->sc_type ==  WM_T_82571) {
 		if ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1)
 			enaddr[5] ^= 1;
 	}
