@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.24.16.1 2006/06/15 16:31:28 gdamore Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.24.16.2 2006/06/16 03:52:43 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24.16.1 2006/06/15 16:31:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24.16.2 2006/06/16 03:52:43 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ struct com_isa_softc {
 
 int com_isa_probe(struct device *, struct cfdata *, void *);
 void com_isa_attach(struct device *, struct device *, void *);
-void com_isa_cleanup(void *);
 #ifdef COM_HAYESP
 int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
 #endif
@@ -219,19 +218,8 @@ com_isa_attach(parent, self, aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_isa_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_isa_attach: could not establish shutdown hook");
-}
-
-void
-com_isa_cleanup(arg)
-	void *arg;
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot,
-		    sc->sc_regs.ioh, com_fifo, 0);
 }
 
 #ifdef COM_HAYESP
@@ -263,7 +251,7 @@ com_isa_isHAYESP(bus_space_handle_t hayespioh, struct com_softc *sc)
 
 	/* Determine which com port this ESP card services: bits 0,1 of  */
 	/*  dips is the port # (0-3); combaselist[val] is the com_iobase */
-	if (sc->sc_regs.iobase != combaselist[dips & 0x03])
+	if (sc->sc_regs.cr_iobase != combaselist[dips & 0x03])
 		return (0);
 
 	printf(": ESP");
