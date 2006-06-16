@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.16.4.2 2006/06/16 02:47:49 simonb Exp $ */
+/* $NetBSD: com_opb.c,v 1.16.4.3 2006/06/16 03:50:30 gdamore Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16.4.2 2006/06/16 02:47:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16.4.3 2006/06/16 03:50:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -149,9 +149,9 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 
 #if (NCOM > 0)
 	/* We *know* the com-console attaches to opb */
-	regs.iot = opb_get_bus_space_tag();
-	regs.iobase = conaddr;
-	regs.nports = COM_NPORTS;
+	regs.cr_iot = opb_get_bus_space_tag();
+	regs.cr_iobase = conaddr;
+	regs.cr_nports = COM_NPORTS;
 	/* regs.ioh is initialized by comcnattach */
 
 	if (comcnattach1(&regs, conspeed, com_freq, COM_TYPE_NORMAL, conmode))
