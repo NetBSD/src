@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.13 2006/03/04 02:26:33 uwe Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.13.10.1 2006/06/16 05:02:32 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.13 2006/03/04 02:26:33 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.13.10.1 2006/06/16 05:02:32 gdamore Exp $");
 
 #include "opt_kgdb.h"
 
@@ -159,6 +159,7 @@ hd64465uart_attach(struct device *parent, struct device *self, void *aux)
 	struct hd64465_attach_args *ha = aux;
 	struct hd64465uart_softc *sc = (struct hd64465uart_softc *)self;
 	struct com_softc *csc = &sc->sc_com;
+	bus_space_handle_t ioh;
 
 	sc->sc_chip = &hd64465uart_chip;
 
@@ -167,15 +168,14 @@ hd64465uart_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_chip->console)
 		hd64465uart_init();
 
-	csc->sc_iot = sc->sc_chip->io_tag;
-	bus_space_map(csc->sc_iot, 0, 8, 0, &csc->sc_ioh);
-	csc->sc_iobase = 0;
+	bus_space_map(sc->sc_chip->io_tag, 0, 8, 0, &ioh);
+	COM_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0);
 	csc->sc_frequency = COM_FREQ;
 
 	/* supply clock XXX notyet */
 
 	/* sanity check */
-	if (!comprobe1(csc->sc_iot, csc->sc_ioh)) {
+	if (!com_probe_subr(&csc->sc_regs)) {
 		printf(": device problem. don't attach.\n");
 
 		/* stop clock XXX notyet */
