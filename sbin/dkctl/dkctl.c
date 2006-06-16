@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.14 2006/03/17 19:18:33 dsl Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.15 2006/06/16 23:49:22 elad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.14 2006/03/17 19:18:33 dsl Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.15 2006/06/16 23:49:22 elad Exp $");
 #endif
 
 
@@ -501,15 +501,15 @@ disk_addwedge(int argc, char *argv[])
 		usage();
 
 	/* XXX Unicode. */
-	if (strlen(argv[0]) > sizeof(dkw.dkw_wname) - 1)
+	if (strlcpy(dkw.dkw_wname, argv[0], sizeof(dkw.dkw_wname)) >=
+	    sizeof(dkw.dkw_name))
 		errx(1, "Wedge name too long; max %zd characters",
 		    sizeof(dkw.dkw_wname) - 1);
-	strcpy(dkw.dkw_wname, argv[0]);
 
-	if (strlen(argv[3]) > sizeof(dkw.dkw_ptype) - 1)
+	if (strlcpy(dkw.dkw_ptype, argv[3], sizeof(dkw.dkw_ptype)) >=
+	    sizeof(dkw.dkw_ptype))
 		errx(1, "Wedge partition type too long; max %zd characters",
 		    sizeof(dkw.dkw_ptype) - 1);
-	strcpy(dkw.dkw_ptype, argv[3]);
 
 	errno = 0;
 	start = strtoll(argv[1], &cp, 0);
@@ -543,10 +543,10 @@ disk_delwedge(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	if (strlen(argv[0]) > sizeof(dkw.dkw_devname) - 1)
+	if (strlcpy(dkw.dkw_devname, argv[0], sizeof(dkw.dkw_devname)) >=
+	    sizeof(dkw.dkw_devname))
 		errx(1, "Wedge dk name too long; max %zd characters",
 		    sizeof(dkw.dkw_devname) - 1);
-	strcpy(dkw.dkw_devname, argv[0]);
 
 	if (ioctl(fd, DIOCDWEDGE, &dkw) == -1)
 		err(1, "%s: delwedge", dvname);
