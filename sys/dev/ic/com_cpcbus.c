@@ -1,4 +1,4 @@
-/*	$NetBSD: com_cpcbus.c,v 1.6 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: com_cpcbus.c,v 1.6.16.1 2006/06/16 22:57:51 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.6 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.6.16.1 2006/06/16 22:57:51 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,16 +78,16 @@ com_cpc_attach(struct device *parent, struct device *self, void *aux)
 	struct com_cpc_softc *sc = (struct com_cpc_softc *)self;
 	int iobase = caa->cpca_addr;
 	int irq = caa->cpca_irq;
+	bus_space_handle_t ioh;
 
-	sc->sc_com.sc_iot = caa->cpca_tag;
 	sc->sc_com.sc_iobase = iobase;
 
-	if (!com_is_console(sc->sc_com.sc_iot, iobase, &sc->sc_com.sc_ioh) &&
-	    bus_space_map(sc->sc_com.sc_iot, iobase, COM_NPORTS, 0,
-			  &sc->sc_com.sc_ioh)) {
+	if (!com_is_console(caa->cpca_tag, iobase, &ioh) &&
+	    bus_space_map(caa->cpca_tag, iobase, COM_NPORTS, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, caa->cpca_tag, ioh, iobase);
 
 	sc->sc_com.sc_frequency = CPC_COM_SPEED(caa->cpca_freq);
 
