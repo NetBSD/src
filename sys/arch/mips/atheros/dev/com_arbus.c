@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.1.12.1 2006/06/15 16:36:23 gdamore Exp $ */
+/* $Id: com_arbus.c,v 1.1.12.2 2006/06/16 03:32:03 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.1.12.1 2006/06/15 16:36:23 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.1.12.2 2006/06/16 03:32:03 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,21 +166,21 @@ com_arbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(aa->aa_name, cf->cf_name) != 0)
 		return 0;
 
-	if (com_is_console(aa->aa_bst, aa->aa_addr, &regs.ioh))
+	if (com_is_console(aa->aa_bst, aa->aa_addr, &regs.cr_ioh))
 		return 1;
 
 	if (bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size,
-		0, &regs.ioh))
+		0, &regs.cr_ioh))
 		return 0;
 
-	regs.iot = aa->aa_bst;
-	regs.iobase = aa->aa_addr;
-	regs.nports = aa->aa_size;
+	regs.cr_iot = aa->aa_bst;
+	regs.cr_iobase = aa->aa_addr;
+	regs.cr_nports = aa->aa_size;
 	com_arbus_initmap(&regs);
 
 	rv = com_probe_subr(&regs);
 
-	bus_space_unmap(aa->aa_bst, regs.ioh, aa->aa_size);
+	bus_space_unmap(aa->aa_bst, regs.cr_ioh, aa->aa_size);
 
 	return rv;
 }
@@ -203,7 +203,7 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	COM_INIT_REGS(sc->sc_regs, aa->aa_bst, ioh, aa->aa_addr);
-	sc->sc_regs.nports = aa->aa_size;
+	sc->sc_regs.cr_nports = aa->aa_size;
 	com_arbus_initmap(&sc->sc_regs);
 
 	com_attach_subr(sc);
@@ -219,8 +219,9 @@ com_arbus_initmap(struct com_regs *regsp)
 	int	i;
 
 	/* rewrite the map to shift for alignment */
-	for (i = 0; i < (sizeof (regsp->map) / sizeof (regsp->map[0])); i++) {
-		regsp->map[i] = (com_std_map[i] * 4) + 3;
+	for (i = 0;
+	     i < (sizeof (regsp->cr_map) / sizeof (regsp->cr_map[0])); i++) {
+		regsp->cr_map[i] = (com_std_map[i] * 4) + 3;
 	}
 }
 
@@ -230,12 +231,13 @@ com_arbus_cnattach(bus_addr_t addr)
 	struct com_regs		regs;
 	uint32_t		sysfreq;
 
-	regs.iot = arbus_get_bus_space_tag();
-	regs.iobase = addr;
-	regs.nports = 0x1000;
+	regs.cr_iot = arbus_get_bus_space_tag();
+	regs.cr_iobase = addr;
+	regs.cr_nports = 0x1000;
 	com_arbus_initmap(&regs);
 
-	if (bus_space_map(regs.iot, regs.iobase, regs.nports, 0, &regs.ioh))
+	if (bus_space_map(regs.cr_iot, regs.cr_iobase, regs.cr_nports, 0,
+		&regs.cr_ioh))
 		return;
 
 	sysfreq = curcpu()->ci_cpu_freq / 4;
