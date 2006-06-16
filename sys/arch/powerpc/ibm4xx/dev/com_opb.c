@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.16.4.1 2006/06/15 19:34:49 gdamore Exp $ */
+/* $NetBSD: com_opb.c,v 1.16.4.2 2006/06/16 02:47:49 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16.4.1 2006/06/15 19:34:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16.4.2 2006/06/16 02:47:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,7 +116,7 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX console check */
 
 	bus_space_map(oaa->opb_bt, oaa->opb_addr, COM_NPORTS, 0, &ioh);
-	COM_INIT_REGS(sc->sc_regs, oaa->opb_bt, oaa->opb_addr, ioh);
+	COM_INIT_REGS(sc->sc_regs, oaa->opb_bt, ioh, oaa->opb_addr);
 
 	freq = prop_dictionary_get(device_properties(&sc->sc_dev), "frequency");
 	if (freq == NULL) {
