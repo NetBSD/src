@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.2 2006/06/14 11:05:42 tron Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.3 2006/06/16 23:48:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.2 2006/06/14 11:05:42 tron Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.3 2006/06/16 23:48:35 elad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -88,7 +88,7 @@ in_alias(struct ifreq *creq)
 		err(EXIT_FAILURE, "socket");
 	}
 	(void) memset(&ifr, 0, sizeof(ifr));
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			return;
@@ -100,7 +100,7 @@ in_alias(struct ifreq *creq)
 		   sizeof(creq->ifr_addr)) == 0)
 		alias = 0;
 	(void) memset(&in_addreq, 0, sizeof(in_addreq));
-	(void) strncpy(in_addreq.ifra_name, name, sizeof(in_addreq.ifra_name));
+	estrlcpy(in_addreq.ifra_name, name, sizeof(in_addreq.ifra_name));
 	memcpy(&in_addreq.ifra_addr, &creq->ifr_addr,
 	    sizeof(in_addreq.ifra_addr));
 	if (ioctl(s, SIOCGIFALIAS, &in_addreq) == -1) {
@@ -145,7 +145,7 @@ in_status(int force)
 			continue;
 
 		memset(&isifr, 0, sizeof(isifr));
-		strncpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
+		estrlcpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
 		memcpy(&isifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
 		in_alias(&isifr);
 	}

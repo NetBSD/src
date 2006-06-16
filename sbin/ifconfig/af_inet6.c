@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.3 2006/06/14 11:05:42 tron Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.4 2006/06/16 23:48:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.3 2006/06/14 11:05:42 tron Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.4 2006/06/16 23:48:35 elad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -246,7 +246,7 @@ in6_alias(struct in6_ifreq *creq)
 
 	if (flags & IFF_POINTOPOINT) {
 		(void) memset(&ifr6, 0, sizeof(ifr6));
-		(void) strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
+		estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		ifr6.ifr_addr = creq->ifr_addr;
 		if (ioctl(s, SIOCGIFDSTADDR_IN6, &ifr6) == -1) {
 			if (errno != EADDRNOTAVAIL)
@@ -265,7 +265,7 @@ in6_alias(struct in6_ifreq *creq)
 	}
 
 	(void) memset(&ifr6, 0, sizeof(ifr6));
-	(void) strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
+	estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr = creq->ifr_addr;
 	if (ioctl(s, SIOCGIFNETMASK_IN6, &ifr6) == -1) {
 		if (errno != EADDRNOTAVAIL)
@@ -277,7 +277,7 @@ in6_alias(struct in6_ifreq *creq)
 	}
 
 	(void) memset(&ifr6, 0, sizeof(ifr6));
-	(void) strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
+	estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr = creq->ifr_addr;
 	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == -1) {
 		if (errno != EADDRNOTAVAIL)
@@ -301,7 +301,7 @@ in6_alias(struct in6_ifreq *creq)
 	if (Lflag) {
 		struct in6_addrlifetime *lifetime;
 		(void) memset(&ifr6, 0, sizeof(ifr6));
-		(void) strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
+		estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		ifr6.ifr_addr = creq->ifr_addr;
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
 		if (ioctl(s, SIOCGIFALIFETIME_IN6, &ifr6) == -1) {
@@ -347,7 +347,7 @@ in6_status(int force)
 			continue;
 
 		memset(&isifr, 0, sizeof(isifr));
-		strncpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
+		estrlcpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
 		memcpy(&isifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
 		in6_alias(&isifr);
 	}

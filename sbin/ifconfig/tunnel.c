@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.5 2005/03/20 01:09:16 thorpej Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.6 2006/06/16 23:48:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.5 2005/03/20 01:09:16 thorpej Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.6 2006/06/16 23:48:35 elad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -86,7 +86,7 @@ settunnel(const char *src, const char *dst)
 		errx(EXIT_FAILURE, "invalid sockaddr");
 
 	memset(&req, 0, sizeof(req));
-	strncpy(req.iflr_name, name, sizeof(req.iflr_name));
+	estrlcpy(req.iflr_name, name, sizeof(req.iflr_name));
 	memcpy(&req.addr, srcres->ai_addr, srcres->ai_addrlen);
 	memcpy(&req.dstaddr, dstres->ai_addr, dstres->ai_addrlen);
 
@@ -146,7 +146,7 @@ tunnel_status(void)
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
 	memset(&req, 0, sizeof(req));
-	strncpy(req.iflr_name, name, IFNAMSIZ);
+	estrlcpy(req.iflr_name, name, IFNAMSIZ);
 	if (ioctl(s, SIOCGLIFPHYADDR, &req) == -1)
 		return;
 	lafp = lookup_af_bynum(req.addr.ss_family);
