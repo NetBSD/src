@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.14.4.1 2006/06/15 16:31:59 gdamore Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.14.4.2 2006/06/16 04:07:04 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.14.4.1 2006/06/15 16:31:59 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.14.4.2 2006/06/16 04:07:04 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ struct com_mca_softc {
 
 int com_mca_probe(struct device *, struct cfdata *, void *);
 void com_mca_attach(struct device *, struct device *, void *);
-void com_mca_cleanup(void *);
 
 static int ibm_modem_getcfg(struct mca_attach_args *, int *, int *);
 static int neocom1_getcfg(struct mca_attach_args *, int *, int *);
@@ -203,19 +202,8 @@ com_mca_attach(parent, self, aux)
 	 * without a disabled FIFO.
 	 * XXX is this necessary on MCA ? --- jdolecek
 	 */
-	if (shutdownhook_establish(com_mca_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_mca_attach: could not establish shutdown hook");
-}
-
-void
-com_mca_cleanup(arg)
-	void *arg;
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
-		    com_fifo, 0);
 }
 
 /* map serial_X to iobase and irq */
