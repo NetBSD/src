@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.5 2006/04/29 21:32:29 rpaulo Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.6 2006/06/16 23:48:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.5 2006/04/29 21:32:29 rpaulo Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.6 2006/06/16 23:48:35 elad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -62,7 +62,7 @@ set80211(int type, int val, int len, u_int8_t *data)
 	struct ieee80211req	ireq;   
         
 	(void) memset(&ireq, 0, sizeof(ireq));
-	(void) strncpy(ireq.i_name, name, sizeof(ireq.i_name));
+	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
 	ireq.i_type = type;
 	ireq.i_val = val;
 	ireq.i_len = len;
@@ -89,7 +89,7 @@ get80211opmode(void)
 	struct ifmediareq ifmr;
                 
 	(void) memset(&ifmr, 0, sizeof(ifmr)); 
-	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	estrlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) >= 0) {
 		if (ifmr.ifm_current & IFM_IEEE80211_ADHOC)
 			return IEEE80211_M_IBSS;        /* XXX ahdemo */
@@ -112,7 +112,7 @@ setifnwid(const char *val, int d)
 	if (get_string(val, NULL, nwid.i_nwid, &len) == NULL)
 		return;
 	nwid.i_len = len;
-	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (void *)&nwid;
 	if (ioctl(s, SIOCS80211NWID, &ifr) == -1)
 		warn("SIOCS80211NWID");
@@ -136,7 +136,7 @@ setifbssid(const char *val, int d)
 		memcpy(&bssid.i_bssid, ea->ether_addr_octet,
 		    sizeof(bssid.i_bssid));
 	}
-	(void)strncpy(bssid.i_name, name, sizeof(bssid.i_name));
+	estrlcpy(bssid.i_name, name, sizeof(bssid.i_name));
 	if (ioctl(s, SIOCS80211BSSID, &bssid) == -1)
 		warn("SIOCS80211BSSID");
 }
@@ -157,7 +157,7 @@ setifchan(const char *val, int d)
 		}
 	}
 
-	(void)strncpy(channel.i_name, name, sizeof(channel.i_name));
+	estrlcpy(channel.i_name, name, sizeof(channel.i_name));
 	channel.i_channel = (u_int16_t) chan;
 	if (ioctl(s, SIOCS80211CHANNEL, &channel) == -1)
 		warn("SIOCS80211CHANNEL");
@@ -217,7 +217,7 @@ setifnwkey(const char *val, int d)
 	}
 	for (; i < IEEE80211_WEP_NKID; i++)
 		nwkey.i_key[i].i_keylen = 0;
-	(void)strncpy(nwkey.i_name, name, sizeof(nwkey.i_name));
+	estrlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	if (ioctl(s, SIOCS80211NWKEY, &nwkey) == -1)
 		warn("SIOCS80211NWKEY");
 }
@@ -227,7 +227,7 @@ setifpowersave(const char *val, int d)
 {
 	struct ieee80211_power power;
 
-	(void)strncpy(power.i_name, name, sizeof(power.i_name));
+	estrlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == -1) {
 		warn("SIOCG80211POWER");
 		return;
@@ -243,7 +243,7 @@ setifpowersavesleep(const char *val, int d)
 {
 	struct ieee80211_power power;
 
-	(void)strncpy(power.i_name, name, sizeof(power.i_name));
+	estrlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == -1) {
 		warn("SIOCG80211POWER");
 		return;
@@ -262,7 +262,7 @@ ieee80211_statistics(void)
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_buflen = sizeof(stats);
 	ifr.ifr_buf = (caddr_t)&stats;
-	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, (zflag) ? SIOCG80211ZSTATS : SIOCG80211STATS,
 	    (caddr_t)&ifr) == -1)
 		return;
@@ -371,7 +371,7 @@ ieee80211_status(void)
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_data = (void *)&nwid;
-	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCG80211NWID, &ifr) == -1)
 		return;
 	if (nwid.i_len > IEEE80211_NWID_LEN) {
@@ -382,7 +382,7 @@ ieee80211_status(void)
 	print_string(nwid.i_nwid, nwid.i_len);
 
 	if (opmode == IEEE80211_M_HOSTAP) {
-		(void)strncpy(ireq.i_name, name, sizeof(ireq.i_name));
+		estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
 		ireq.i_type = IEEE80211_IOC_HIDESSID;
 		if (ioctl(s, SIOCG80211, &ireq) != -1) {
                         if (ireq.i_val)
@@ -401,7 +401,7 @@ ieee80211_status(void)
         }
 
 	memset(&nwkey, 0, sizeof(nwkey));
-	(void)strncpy(nwkey.i_name, name, sizeof(nwkey.i_name));
+	estrlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	/* show nwkey only when WEP is enabled */
 	if (ioctl(s, SIOCG80211NWKEY, &nwkey) == -1 ||
 	    nwkey.i_wepon == 0) {
@@ -458,7 +458,7 @@ ieee80211_status(void)
 	printf("\n");
 
  skip_wep:
-	(void)strncpy(power.i_name, name, sizeof(power.i_name));
+	estrlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == -1)
 		goto skip_power;
 	printf("\tpowersave ");
@@ -469,10 +469,10 @@ ieee80211_status(void)
 	printf("\n");
 
  skip_power:
-	(void)strncpy(bssid.i_name, name, sizeof(bssid.i_name));
+	estrlcpy(bssid.i_name, name, sizeof(bssid.i_name));
 	if (ioctl(s, SIOCG80211BSSID, &bssid) == -1)
 		return;
-	(void)strncpy(channel.i_name, name, sizeof(channel.i_name));
+	estrlcpy(channel.i_name, name, sizeof(channel.i_name));
 	if (ioctl(s, SIOCG80211CHANNEL, &channel) == -1)
 		return;
 	if (memcmp(bssid.i_bssid, zero_macaddr, IEEE80211_ADDR_LEN) == 0) {

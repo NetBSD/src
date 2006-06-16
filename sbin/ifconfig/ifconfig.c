@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.171 2006/05/18 09:05:50 liamjfoy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.172 2006/06/16 23:48:35 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.171 2006/05/18 09:05:50 liamjfoy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.172 2006/06/16 23:48:35 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -518,7 +518,7 @@ main(int argc, char *argv[])
 		af = afp->af_af;
 
 	/* Get information about the interface. */
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (getinfo(&ifr) < 0)
 		exit(1);
 
@@ -615,18 +615,18 @@ main(int argc, char *argv[])
 #endif	/* INET_ONLY */
 
 	if (clearaddr) {
-		(void) strncpy(afp->af_ridreq, name, sizeof ifr.ifr_name);
+		estrlcpy(afp->af_ridreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, afp->af_difaddr, afp->af_ridreq) == -1)
 			err(EXIT_FAILURE, "SIOCDIFADDR");
 	}
 	if (newaddr > 0) {
-		(void) strncpy(afp->af_addreq, name, sizeof ifr.ifr_name);
+		estrlcpy(afp->af_addreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) == -1)
 			warn("SIOCAIFADDR");
 	}
 
 	if (g_ifcr_updated) {
-		(void) strncpy(g_ifcr.ifcr_name, name,
+		strlcpy(g_ifcr.ifcr_name, name,
 		    sizeof(g_ifcr.ifcr_name));
 		if (ioctl(s, SIOCSIFCAP, &g_ifcr) == -1)
 			err(EXIT_FAILURE, "SIOCSIFCAP");
@@ -696,7 +696,7 @@ getinfo(struct ifreq *giifr)
 		mtu = giifr->ifr_mtu;
 
 	memset(&g_ifcr, 0, sizeof(g_ifcr));
-	strcpy(g_ifcr.ifcr_name, giifr->ifr_name);
+	estrlcpy(g_ifcr.ifcr_name, giifr->ifr_name, sizeof(g_ifcr.ifcr_name));
 	(void) ioctl(s, SIOCGIFCAP, &g_ifcr);
 
 	return (0);
@@ -717,7 +717,7 @@ printall(const char *ifname)
 	idx = 0;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		memset(&paifr, 0, sizeof(paifr));
-		strncpy(paifr.ifr_name, ifa->ifa_name, sizeof(paifr.ifr_name));
+		estrlcpy(paifr.ifr_name, ifa->ifa_name, sizeof(paifr.ifr_name));
 		if (sizeof(paifr.ifr_addr) >= ifa->ifa_addr->sa_len) {
 			memcpy(&paifr.ifr_addr, ifa->ifa_addr,
 			    ifa->ifa_addr->sa_len);
@@ -812,7 +812,7 @@ clone_create(const char *addr, int param)
 	/* We're called early... */
 	getsock(AF_INET);
 
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCIFCREATE, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCIFCREATE");
 }
@@ -822,7 +822,7 @@ void
 clone_destroy(const char *addr, int param)
 {
 
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCIFDESTROY, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCIFDESTROY");
 }
@@ -843,7 +843,7 @@ setifaddr(const char *addr, int param)
 		newaddr = 1;
 	if (doalias == 0 && afp->af_gifaddr != 0) {
 		siifr = (struct ifreq *)afp->af_ridreq;
-		(void) strncpy(siifr->ifr_name, name, sizeof(siifr->ifr_name));
+		estrlcpy(siifr->ifr_name, name, sizeof(siifr->ifr_name));
 		siifr->ifr_addr.sa_family = afp->af_af;
 		if (ioctl(s, afp->af_gifaddr, afp->af_ridreq) == 0)
 			clearaddr = 1;
@@ -907,7 +907,7 @@ setifflags(const char *vname, int value)
 {
 	struct ifreq ifreq;
 
-	(void) strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+	estrlcpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
  	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS");
  	flags = ifreq.ifr_flags;
@@ -940,7 +940,7 @@ setifmetric(const char *val, int d)
 {
 	char *ep = NULL;
 
-	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	ifr.ifr_metric = strtoul(val, &ep, 10);
 	if (!ep || *ep)
 		errx(EXIT_FAILURE, "%s: invalid metric", val);
@@ -953,7 +953,7 @@ setifmtu(const char *val, int d)
 {
 	char *ep = NULL;
 
-	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = strtoul(val, &ep, 10);
 	if (!ep || *ep)
 		errx(EXIT_FAILURE, "%s: invalid mtu", val);
@@ -1056,7 +1056,7 @@ init_current_media(void)
 	 */
 	if ((actions & (A_MEDIA|A_MEDIAOPT|A_MEDIAMODE)) == 0) {
 		(void) memset(&ifmr, 0, sizeof(ifmr));
-		(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+		estrlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
 		if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
 			/*
@@ -1091,7 +1091,7 @@ process_media_commands(void)
 	media_current |= mediaopt_set;
 	media_current &= ~mediaopt_clear;
 
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_media = media_current;
 
 	if (ioctl(s, SIOCSIFMEDIA, &ifr) == -1)
@@ -1270,7 +1270,7 @@ carrier(void)
 	struct ifmediareq ifmr;
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
-	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	estrlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
 	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
 		/*
@@ -1342,7 +1342,7 @@ status(const struct sockaddr_dl *sdl)
 		printf("\taddress: %s\n", hbuf);
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
-	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	estrlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
 	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
 		/*
@@ -1429,7 +1429,7 @@ status(const struct sockaddr_dl *sdl)
 	if (!vflag && !zflag)
 		goto proto_status;
 
-	(void) strncpy(ifdr.ifdr_name, name, sizeof(ifdr.ifdr_name));
+	estrlcpy(ifdr.ifdr_name, name, sizeof(ifdr.ifdr_name));
 
 	if (ioctl(s, zflag ? SIOCZIFDATA:SIOCGIFDATA, &ifdr) == -1) {
 		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
@@ -1549,4 +1549,13 @@ usage(void)
 		"       %s interface destroy\n",
 		progname, progname, progname, progname, progname, progname);
 	exit(1);
+}
+
+void
+estrlcpy(char *dst, char *src, size_t len)
+{
+	if (strlcpy(dst, src, len) >= len) { 
+		errno = ENAMETOOLONG; 
+		err(1, "Cannot copy `%s'", src);
+	}
 }
