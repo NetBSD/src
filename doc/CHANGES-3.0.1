@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.58 2006/06/14 17:44:43 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.59 2006/06/16 04:06:14 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -532,4 +532,10 @@ gnu/dist/sendmail/sendmail/version.c		patch
 	which leads to stack exhaustion when attempting delivery of a malformed
 	MIME message.
 	[adrianp, ticket #1382]
+
+distrib/hp300/miniroot/install.md		1.9-1.10
+
+	Fix md_get_diskdevs() to match sd probe messages by MI SCSI drivers.
+	Also fix md_get_cddevs() to match cd probe messages by MI SCSI drivers.
+	[tsutsui, ticket #1381]
 
