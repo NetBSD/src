@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.7.48.1 2006/06/15 20:38:52 gdamore Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.7.48.2 2006/06/16 04:23:18 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7.48.1 2006/06/15 20:38:52 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7.48.2 2006/06/16 04:23:18 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,16 +119,6 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_mainbus_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_mainbus_attach: could not establish shutdown hook");
-}
-
-void
-com_mainbus_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
-		    com_fifo, 0);
 }
