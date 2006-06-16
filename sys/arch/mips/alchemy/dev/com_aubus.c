@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.1.2.1 2006/06/15 16:40:43 gdamore Exp $ */
+/* $NetBSD: com_aubus.c,v 1.1.2.2 2006/06/16 03:42:27 gdamore Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.1.2.1 2006/06/15 16:40:43 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.1.2.2 2006/06/16 03:42:27 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,13 +92,13 @@ com_aubus_attach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args *aa = aux;
 	int addr = aa->aa_addr;
 	
-	sc->sc_regs.iot = aa->aa_st;
-	sc->sc_regs.iobase = addr;
+	sc->sc_regs.cr_iot = aa->aa_st;
+	sc->sc_regs.cr_iobase = addr;
 	asc->sc_irq = aa->aa_irq[0];
 
-	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.ioh) == 0 &&
+	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.cr_ioh) == 0 &&
 	    bus_space_map(aa->aa_st, addr, AUCOM_NPORTS, 0,
-		&sc->sc_regs.ioh) != 0) {
+		&sc->sc_regs.cr_ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -141,7 +141,7 @@ com_aubus_enable(struct com_softc *sc)
 		return (0);
 
 	/* Enable the UART module. */
-	bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh, AUCOM_MODCTL,
+	bus_space_write_1(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh, AUCOM_MODCTL,
 	    UMC_ME | UMC_CE);
 
 	/* Establish the interrupt. */
@@ -169,41 +169,38 @@ com_aubus_disable(struct com_softc *sc)
 	au_intr_disestablish(asc->sc_ih);
 
 	/* Disable the UART module. */
-	bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh, AUCOM_MODCTL, 0);
+	bus_space_write_1(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh,
+	    AUCOM_MODCTL, 0);
 }
 
 void
 com_aubus_initmap(struct com_regs *regsp)
 {
-	regsp->nports = AUCOM_NPORTS;
-	regsp->map[COM_REG_RXDATA] = AUCOM_RXDATA;
-	regsp->map[COM_REG_TXDATA] = AUCOM_TXDATA;
-	regsp->map[COM_REG_DLBL] = AUCOM_DLB;
-	regsp->map[COM_REG_DLBH] = AUCOM_DLB;
-	regsp->map[COM_REG_IER] = AUCOM_IER;
-	regsp->map[COM_REG_IIR] = AUCOM_IIR;
-	regsp->map[COM_REG_FIFO] = AUCOM_FIFO;
-	regsp->map[COM_REG_EFR] = 0;
-	regsp->map[COM_REG_LCR] = AUCOM_LCTL;
-	regsp->map[COM_REG_MCR] = AUCOM_MCR;
-	regsp->map[COM_REG_LSR] = AUCOM_LSR;
-	regsp->map[COM_REG_MSR] = AUCOM_MSR;
+	regsp->cr_nports = AUCOM_NPORTS;
+	regsp->cr_map[COM_REG_RXDATA] = AUCOM_RXDATA;
+	regsp->cr_map[COM_REG_TXDATA] = AUCOM_TXDATA;
+	regsp->cr_map[COM_REG_DLBL] = AUCOM_DLB;
+	regsp->cr_map[COM_REG_DLBH] = AUCOM_DLB;
+	regsp->cr_map[COM_REG_IER] = AUCOM_IER;
+	regsp->cr_map[COM_REG_IIR] = AUCOM_IIR;
+	regsp->cr_map[COM_REG_FIFO] = AUCOM_FIFO;
+	regsp->cr_map[COM_REG_EFR] = 0;
+	regsp->cr_map[COM_REG_LCR] = AUCOM_LCTL;
+	regsp->cr_map[COM_REG_MCR] = AUCOM_MCR;
+	regsp->cr_map[COM_REG_LSR] = AUCOM_LSR;
+	regsp->cr_map[COM_REG_MSR] = AUCOM_MSR;
 }
 
 int
 com_aubus_cnattach(bus_addr_t addr, int baud)
 {
-
 	struct com_regs		regs;
 	uint32_t		sysfreq;
 
-	regs.iot = aubus_st;
-	regs.iobase = addr;
-	regs.nports = AUCOM_NPORTS;
+	regs.cr_iot = aubus_st;
+	regs.cr_iobase = addr;
+	regs.cr_nports = AUCOM_NPORTS;
 	com_aubus_initmap(&regs);
-
-	if (bus_space_map(regs.iot, regs.iobase, regs.nports, 0, &regs.ioh))
-		return 1;
 
 	sysfreq = curcpu()->ci_cpu_freq / 4;
 
