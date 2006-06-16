@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.5.48.1 2006/06/15 22:06:44 gdamore Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.5.48.2 2006/06/16 04:11:57 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5.48.1 2006/06/15 22:06:44 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5.48.2 2006/06/16 04:11:57 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_jensenio_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_jensenio_attach: could not establish shutdown hook");
 }
 
@@ -139,14 +139,4 @@ com_jensenio_intr(void *arg, u_long vec)
 
 	jsc->sc_ev_intr.ev_count++;
 	(void) comintr(&jsc->sc_com);
-}
-
-void
-com_jensenio_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
-		    com_fifo, 0);
 }
