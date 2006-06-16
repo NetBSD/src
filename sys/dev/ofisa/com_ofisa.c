@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa.c,v 1.10 2006/03/29 07:09:33 thorpej Exp $	*/
+/*	$NetBSD: com_ofisa.c,v 1.10.4.1 2006/06/16 22:57:52 gdamore Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.10 2006/03/29 07:09:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.10.4.1 2006/06/16 22:57:52 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,6 +97,9 @@ com_ofisa_attach(parent, self, aux)
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg;
 	struct ofisa_intr_desc intr;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
 	int freq;
 	char freqbuf[4];
 	int n;
@@ -138,16 +141,16 @@ com_ofisa_attach(parent, self, aux)
 	else
 		freq = of_decode_int(&freqbuf[0]);
 
-	sc->sc_iot = (reg.type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-	sc->sc_iobase = reg.addr;
+	iot = (reg.type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
+	iobase = reg.addr;
 	sc->sc_frequency = freq;
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, reg.len, 0,
-	      &sc->sc_ioh)) {
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    bus_space_map(iot, iobase, reg.len, 0, &ioh)) {
 		printf(": can't map register space\n");
                 return;
         }
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	osc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_SERIAL, comintr, sc);

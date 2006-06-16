@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.11 2006/03/29 07:12:56 thorpej Exp $ */
+/* $NetBSD: acemidi.c,v 1.11.4.1 2006/06/16 22:57:51 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.11 2006/03/29 07:12:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.11.4.1 2006/06/16 22:57:51 gdamore Exp $");
 
 #include <sys/param.h>
 
@@ -98,11 +98,16 @@ com_acemidi_attach(struct device *parent, struct device *self, void *aux)
 	struct com_acemidi_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
 	struct podulebus_attach_args *pa = aux;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
 
-	csc->sc_iobase = pa->pa_fast_base + ACEMIDI_16550_BASE;
-	csc->sc_iot = pa->pa_fast_t;
-	bus_space_map(csc->sc_iot, csc->sc_iobase, COM_NPORTS, 0,
-	    &csc->sc_ioh);
+	iot = pa->pa_fast_t;
+	iobase = pa->pa_fast_base + ACEMIDI_16550_BASE;
+
+	bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh);
+	COM_INIT_REGS(csc->sc_regs, iot, ioh, iobase);
+
 	csc->sc_frequency = ACEMIDI_16550_FREQ;
 
 	com_attach_subr(csc);
