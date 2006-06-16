@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.9 2006/03/29 04:16:45 thorpej Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.9.4.1 2006/06/16 00:03:29 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.9 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.9.4.1 2006/06/16 00:03:29 gdamore Exp $");
 
 #include "opt_kgdb.h"
 
@@ -60,6 +60,14 @@ int	com_hpcio_debug = 0;
 #else
 #define	DPRINTF(arg...) do {} while (0)
 #endif
+
+/*
+ * XXX: NOTE: With the new com(4) COM_REGMAP support, the custom bus_space
+ * in this file could/should probably be removed and replaced with a custom
+ * map.  Resulting in smaller/cleaner code.  An hpcmips hacker should fix
+ * this, since I don't have h/w to test with -- I'm taking the route of least
+ * risk.	- gdamore
+ */
 
 #define COM_HPCIO_BYTE_ALIGNMENT	0
 #define COM_HPCIO_HALFWORD_ALIGNMENT	1
@@ -318,9 +326,7 @@ com_hpcio_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map bus space\n");
 		return;
 	}
-	sc->sc_iobase = addr;
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, addr);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
