@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.4.48.1 2006/06/15 22:06:44 gdamore Exp $ */
+/* $NetBSD: com_sableio.c,v 1.4.48.2 2006/06/16 04:11:57 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.4.48.1 2006/06/15 22:06:44 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.4.48.2 2006/06/16 04:11:57 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,16 +130,6 @@ com_sableio_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_sableio_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_sableio_attach: could not establish shutdown hook");
-}
-
-void
-com_sableio_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
-		    com_fifo, 0);
 }
