@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.6 2005/12/11 12:18:16 christos Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.6.16.1 2006/06/16 04:34:19 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.6 2005/12/11 12:18:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.6.16.1 2006/06/16 04:34:19 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,13 +93,11 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_mainbus_softc *sc = (void *)self;
 	struct com_softc *csc = &sc->sc_com;
 
-	csc->sc_iot = 0;
-	csc->sc_ioh = ma->ma_addr1;
-	csc->sc_iobase = 0;
 	csc->sc_frequency = COM_FREQ;
+	COM_INIT_REGS(csc->sc_regs, 0, ma->ma_addr1, 0);
 
 	/* sanity check */
-	if (!comprobe1(csc->sc_iot, csc->sc_ioh)) {
+	if (!comprobe1(0, ma->ma_addr1)) {
 		printf(": device problem. don't attach.\n");
 		return;
 	}
