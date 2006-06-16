@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.52.2.2 2006/06/16 03:32:03 gdamore Exp $	*/
+/*	$NetBSD: comvar.h,v 1.52.2.3 2006/06/16 04:03:24 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -96,13 +96,13 @@ struct com_regs {
 
 extern const bus_size_t com_std_map[16];
 
-#define	COM_INIT_REGS(regs, tag, hdl, addr)	\
-	do { \
-		regs.cr_iot = tag; \
-		regs.cr_ioh = hdl; \
-		regs.cr_iobase = addr; \
-		regs.cr_nports = COM_NPORTS; \
-		memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map)); \
+#define	COM_INIT_REGS(regs, tag, hdl, addr)				\
+	do {								\
+		regs.cr_iot = tag;					\
+		regs.cr_ioh = hdl;					\
+		regs.cr_iobase = addr;					\
+		regs.cr_nports = COM_NPORTS;				\
+		memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));	\
 	} while (0)
 
 #else
@@ -126,12 +126,12 @@ struct com_regs {
 	bus_size_t		cr_nports;
 };
 
-#define	COM_INIT_REGS(regs, tag, hdl, addr)	\
-	do { \
-		regs.cr_iot = tag; \
-		regs.cr_ioh = hdl; \
-		regs.cr_iobase = addr; \
-		regs.cr_nports = COM_NPORTS; \
+#define	COM_INIT_REGS(regs, tag, hdl, addr)		\
+	do {						\
+		regs.cr_iot = tag;			\
+		regs.cr_ioh = hdl;			\
+		regs.cr_iobase = addr;			\
+		regs.cr_nports = COM_NPORTS;		\
 	} while (0)
 
 #endif
