@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.52.2.1 2006/06/15 16:30:26 gdamore Exp $	*/
+/*	$NetBSD: comvar.h,v 1.52.2.2 2006/06/16 03:32:03 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -87,22 +87,23 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_MSR		11
 
 struct com_regs {
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
-	bus_addr_t		iobase;
-	bus_size_t		nports;
-	bus_size_t		map[16];
+	bus_space_tag_t		cr_iot;
+	bus_space_handle_t	cr_ioh;
+	bus_addr_t		cr_iobase;
+	bus_size_t		cr_nports;
+	bus_size_t		cr_map[16];
 };
 
 extern const bus_size_t com_std_map[16];
 
 #define	COM_INIT_REGS(regs, tag, hdl, addr)	\
-	regs.iot = tag; \
-	regs.ioh = hdl; \
-	regs.iobase = addr; \
-	regs.nports = COM_NPORTS; \
-	memcpy(regs.map, com_std_map, sizeof (regs.map))
-
+	do { \
+		regs.cr_iot = tag; \
+		regs.cr_ioh = hdl; \
+		regs.cr_iobase = addr; \
+		regs.cr_nports = COM_NPORTS; \
+		memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map)); \
+	} while (0)
 
 #else
 #define	COM_REG_RXDATA		com_data
@@ -119,17 +120,19 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_MSR		com_msr
 
 struct com_regs {
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
-	bus_addr_t		iobase;
-	bus_size_t		nports;
+	bus_space_tag_t		cr_iot;
+	bus_space_handle_t	cr_ioh;
+	bus_addr_t		cr_iobase;
+	bus_size_t		cr_nports;
 };
 
 #define	COM_INIT_REGS(regs, tag, hdl, addr)	\
-	regs.iot = tag; \
-	regs.ioh = hdl; \
-	regs.iobase = addr; \
-	regs.nports = COM_NPORTS
+	do { \
+		regs.cr_iot = tag; \
+		regs.cr_ioh = hdl; \
+		regs.cr_iobase = addr; \
+		regs.cr_nports = COM_NPORTS; \
+	} while (0)
 
 #endif
 
@@ -226,6 +229,7 @@ void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
 int com_activate(struct device *, enum devact);
+void com_cleanup(void *);
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
