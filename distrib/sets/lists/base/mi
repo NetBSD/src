@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.629 2006/06/15 15:34:20 tnozaki Exp $
+# $NetBSD: mi,v 1.630 2006/06/16 20:09:23 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1465,6 +1465,7 @@
 ./usr/share/i18n/csmapper/CP/CP10079%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP10081%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1026%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1131%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1250%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1251%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1252%UCS.mps	base-sysutil-share	nls
@@ -1531,6 +1532,7 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP10079.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP10081.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1026.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1131.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1250.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1251.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1252.mps	base-sysutil-share	nls
@@ -1768,6 +1770,7 @@
 ./usr/share/i18n/esdb/CP/CP10079.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP10081.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1026.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1131.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1250.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1251.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1252.esdb		base-sysutil-share	nls
