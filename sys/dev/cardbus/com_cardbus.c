@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.17.4.1 2006/06/15 16:32:28 gdamore Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.17.4.2 2006/06/16 04:13:40 gdamore Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.17.4.1 2006/06/15 16:32:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.17.4.2 2006/06/16 04:13:40 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,6 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 		csc->cc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->cc_cben = CARDBUS_MEM_ENABLE;
 	}
-	sc->sc_regs.iobase = csc->cc_addr;
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -351,8 +350,8 @@ com_cardbus_detach(struct device *self, int flags)
 	if (csc->cc_ih != NULL)
 		cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
 
-	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_regs.iot,
-	    sc->sc_regs.ioh, csc->cc_size);
+	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_regs.cr_iot,
+	    sc->sc_regs.cr_ioh, csc->cc_size);
 
 	return 0;
 }
