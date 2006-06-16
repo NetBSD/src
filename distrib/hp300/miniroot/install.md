@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.8.10.1 2006/06/16 04:00:26 riz Exp $
+#	$NetBSD: install.md,v 1.8.10.2 2006/06/16 04:02:48 riz Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,7 +82,7 @@ md_get_diskdevs() {
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	dmesg | awk -F : '/^sd[0-9]*:.*CD-ROM/ { print $1; }' | sort -u
+	dmesg | awk -F : '/^cd[0-9]*:.*cdrom/ { print $1; }' | sort -u
 }
 
 md_get_ifdevs() {
