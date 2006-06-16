@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.10 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.10.16.1 2006/06/16 03:08:33 gdamore Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.10 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.10.16.1 2006/06/16 03:08:33 gdamore Exp $");
 
 #include "opt_kgdb.h"
 
@@ -98,11 +98,14 @@ com_gsc_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &gsc->sc_com;
 	struct gsc_attach_args *ga = aux;
 	int pagezero_cookie;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_addr_t iobase;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_iot = ga->ga_iot;
-	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
+	iot = ga->ga_iot;
+	iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
 	sc->sc_frequency = COMGSC_FREQUENCY;
 
 	/* Test if this is the console.  Compare either HPA or device path. */
@@ -115,9 +118,9 @@ com_gsc_attach(struct device *parent, struct device *self, void *aux)
 		 * everything properly.
 		 */
 
-		if (comcnattach(sc->sc_iot, sc->sc_iobase, B9600,
-		    sc->sc_frequency, COM_TYPE_NORMAL,
-		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0) {
+		if (comcnattach(iot, iobase, B9600,
+			sc->sc_frequency, COM_TYPE_NORMAL,
+			(TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0) {
 			printf(": can't comcnattach\n");
 			hp700_pagezero_unmap(pagezero_cookie);
 			return;
@@ -130,12 +133,12 @@ com_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 * this is the console or map the I/O space if this isn't the console.
 	 */
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-	    &sc->sc_ioh) != 0) {
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh) != 0) {
 		printf(": can't map I/O space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 	gsc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_TTY,
