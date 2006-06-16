@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.2 2006/05/06 20:44:29 jdc Exp $ */
+/* $NetBSD: piixpcib.c,v 1.3 2006/06/16 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.2 2006/05/06 20:44:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.3 2006/06/16 22:10:36 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,17 +59,32 @@ __KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.2 2006/05/06 20:44:29 jdc Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#define		PIIX4_PIRQRCA	0x60
+#define		PIIX4_PIRQRCB	0x61
+#define		PIIX4_PIRQRCC	0x62
+#define		PIIX4_PIRQRCD	0x63
+
 struct piixpcib_softc {
 	struct device	sc_dev;
+
+	pci_chipset_tag_t sc_pc;
+	pcitag_t	sc_pcitag;
 
 	int		sc_smi_cmd;
 	int		sc_smi_data;
 	int		sc_command;
 	int		sc_flags;
+
+	void		*sc_powerhook;
+	struct pci_conf_state sc_pciconf;
+
+	pcireg_t	sc_pirqrc[4];
 };
 
 static int piixpcibmatch(struct device *, struct cfdata *, void *);
 static void piixpcibattach(struct device *, struct device *, void *);
+
+static void piixpcib_powerhook(int, void *);
 
 static void speedstep_configure(struct piixpcib_softc *,
 				struct pci_attach_args *);
@@ -121,10 +136,53 @@ piixpcibattach(struct device *parent, struct device *self, void *aux)
 	pa = (struct pci_attach_args *)aux;
 	sc = (struct piixpcib_softc *)self;
 
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
+
 	pcibattach(parent, self, aux);
 
 	/* Set up SpeedStep. */
 	speedstep_configure(sc, pa);
+
+	sc->sc_powerhook = powerhook_establish(piixpcib_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
+
+	return;
+}
+
+static void
+piixpcib_powerhook(int why, void *opaque)
+{
+	struct piixpcib_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+
+	sc = (struct piixpcib_softc *)opaque;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+
+		/* capture PIRQX route control registers */
+		sc->sc_pirqrc[0] = pci_conf_read(pc, tag, PIIX4_PIRQRCA);
+		sc->sc_pirqrc[1] = pci_conf_read(pc, tag, PIIX4_PIRQRCB);
+		sc->sc_pirqrc[2] = pci_conf_read(pc, tag, PIIX4_PIRQRCC);
+		sc->sc_pirqrc[3] = pci_conf_read(pc, tag, PIIX4_PIRQRCD);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+
+		/* restore PIRQX route control registers */
+		pci_conf_write(pc, tag, PIIX4_PIRQRCA, sc->sc_pirqrc[0]);
+		pci_conf_write(pc, tag, PIIX4_PIRQRCB, sc->sc_pirqrc[1]);
+		pci_conf_write(pc, tag, PIIX4_PIRQRCC, sc->sc_pirqrc[2]);
+		pci_conf_write(pc, tag, PIIX4_PIRQRCD, sc->sc_pirqrc[3]);
+		break;
+	}
 
 	return;
 }
