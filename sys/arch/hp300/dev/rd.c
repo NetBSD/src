@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.76 2006/06/10 12:42:37 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.77 2006/06/16 23:56:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.76 2006/06/10 12:42:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.77 2006/06/16 23:56:58 tsutsui Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -1220,8 +1220,9 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 	lp->d_secperunit = rdidentinfo[type].ri_nblocks;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	strncpy(lp->d_typename, rdidentinfo[type].ri_desc, 16);
-	strncpy(lp->d_packname, "fictitious", 16);
+	strlcpy(lp->d_typename, rdidentinfo[type].ri_desc,
+	    sizeof(lp->d_typename));
+	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3000;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
