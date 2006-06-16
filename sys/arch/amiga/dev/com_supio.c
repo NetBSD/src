@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.20.16.1 2006/06/16 00:11:59 gdamore Exp $ */
+/*	$NetBSD: com_supio.c,v 1.20.16.2 2006/06/16 04:12:42 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.1 2006/06/16 00:11:59 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.2 2006/06/16 04:12:42 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,16 +161,6 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_supio_cleanup, csc) == NULL)
+	if (shutdownhook_establish(com_cleanup, csc) == NULL)
 		panic("comsupio: could not establish shutdown hook");
-}
-
-void
-com_supio_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
-		    com_fifo, 0);
 }
