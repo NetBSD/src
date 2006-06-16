@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.18 2005/12/18 22:19:56 uwe Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.18.16.1 2006/06/16 05:02:32 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.18 2005/12/18 22:19:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.18.16.1 2006/06/16 05:02:32 gdamore Exp $");
 
 #include "opt_kgdb.h"
 
@@ -161,6 +161,7 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	struct hd64461uart_softc *sc = (struct hd64461uart_softc *)self;
 	struct com_softc *csc = &sc->sc_com;
 	uint16_t r16;
+	bus_space_handle_t ioh;
 
 	sc->sc_chip = &hd64461uart_chip;
 
@@ -169,10 +170,9 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_chip->console)
 		hd64461uart_init();
 
-	csc->sc_iot = sc->sc_chip->io_tag;
-	bus_space_map(csc->sc_iot, 0, 8, 0, &csc->sc_ioh);
-	csc->sc_iobase = 0;
+	bus_space_map(sc->sc_chip->io_tag, 0, 8, 0, &ioh);
 	csc->sc_frequency = COM_FREQ;
+	COM_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0);
 
 	/* switch port to UART */
 
@@ -182,7 +182,7 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 
 	/* sanity check */
-	if (!comprobe1(csc->sc_iot, csc->sc_ioh)) {
+	if (!com_probe_subr(&csc->sc_regs)) {
 		printf(": device problem. don't attach.\n");
 
 		/* stop clock */
