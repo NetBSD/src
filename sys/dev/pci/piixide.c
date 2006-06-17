@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.26 2006/05/19 01:27:00 markd Exp $	*/
+/*	$NetBSD: piixide.c,v 1.27 2006/06/17 17:05:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.26 2006/05/19 01:27:00 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.27 2006/06/17 17:05:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,9 +231,17 @@ piixide_powerhook(int why, void *hdl)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    PIIX_IDETIM);
+		sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    PIIX_UDMATIM);
 		break;
 	case PWR_RESUME:
 		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
+		    sc->sc_idetim);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
+		    sc->sc_udmatim);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
