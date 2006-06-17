@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.31 2005/11/15 15:07:36 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.32 2006/06/17 14:11:16 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.31 2005/11/15 15:07:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.32 2006/06/17 14:11:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
 {
 
 	if (prio > MIPS_INT_LEVELS)
-		panic("set_intr: to high priority");
+		panic("arc_set_intr: too high priority");
 
 	if (cpu_int_tab[prio].int_mask != 0 &&
 	    (cpu_int_tab[prio].int_mask != mask ||
