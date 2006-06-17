@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2006/06/02 19:47:15 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2006/06/17 18:04:23 uwe Exp $
 
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
@@ -19,9 +19,6 @@ SRCS+=	ldexp_ieee754.c modf_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	nanf.c
-
-KMSRCS+= ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
-	movstrSI.S mulsi3.S sdivsi3.S udivsi3.S
 
 SRCS.sh3.gen=	Lint__setjmp.c Lint___setjmp14.c Lint___sigsetjmp14.c \
 		Lint_swapcontext.c

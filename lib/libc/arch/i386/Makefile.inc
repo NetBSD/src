@@ -1,7 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.19 2005/09/13 01:44:08 christos Exp $
-
-KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S index.S rindex.S \
-	memchr.S memcmp.S memcpy.S memmove.S memset.S \
-	strcat.S strchr.S strcmp.S strcpy.S strlen.S strrchr.S
+#	$NetBSD: Makefile.inc,v 1.20 2006/06/17 18:04:23 uwe Exp $
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S

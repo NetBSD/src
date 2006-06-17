@@ -1,9 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2005/10/15 22:11:22 uwe Exp $
-
-KMINCLUDES= arch/sparc/SYS.h
-KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
-	ntohl.S ntohs.S divrem.m4 \
-	mul.S saveregs.S umul.S
+#	$NetBSD: Makefile.inc,v 1.12 2006/06/17 18:04:23 uwe Exp $
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 

@@ -1,10 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2005/09/16 18:24:49 drochner Exp $
-
-KMINCLUDES=
-KMSRCS=	divrem.m4 \
-	bcopy.S bzero.S ffs.S \
-	memcpy.S memmove.S
-#KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
+#	$NetBSD: Makefile.inc,v 1.19 2006/06/17 18:04:23 uwe Exp $
 
 SRCS+=	__longjmp14.c
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
@@ -48,4 +42,3 @@ __reml.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
 		${.ALLSRC} > ${.TARGET}
 
 CPPFLAGS+= -I.
-
