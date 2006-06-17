@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.23.4.1 2006/06/15 16:31:45 gdamore Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.23.4.2 2006/06/17 02:36:18 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.23.4.1 2006/06/15 16:31:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.23.4.2 2006/06/17 02:36:18 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.23.4.1 2006/06/15 16:31:45 gdamore 
 #include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/ic/comvar.h>
-#include <dev/ic/comreg.h>
 
 struct com_isapnp_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
@@ -102,13 +101,14 @@ com_isapnp_attach(parent, self, aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, ipa->ipa_iot, ipa->ipa_io[0].h,
-	    ipa->ipa_io[0].base);
+	sc->sc_iot = ipa->ipa_iot;
+	sc->sc_iobase = ipa->ipa_io[0].base;
+	sc->sc_ioh = ipa->ipa_io[0].h;
 
 	/*
 	 * if the chip isn't something we recognise skip it.
 	 */
-	if (com_probe_subr(&sc->sc_regs) == 0)
+	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0)
 		return;
 
 	sc->sc_frequency = 115200 * 16; /* is that always right? */
