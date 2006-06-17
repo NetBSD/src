@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.244.2.3 2006/06/16 03:32:02 gdamore Exp $	*/
+/*	$NetBSD: com.c,v 1.244.2.4 2006/06/17 00:30:24 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.244.2.3 2006/06/16 03:32:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.244.2.4 2006/06/17 00:30:24 gdamore Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -392,6 +392,18 @@ com_attach_subr(struct com_softc *sc)
 	u_int8_t lcr;
 #endif
 	const char *fifo_msg = NULL;
+
+	if (!ISSET(sc->sc_hwflags, COM_HW_REGMAP)) {
+		/*
+		 * presumably the attachment driver has set sc_iot, sc_ioh,
+		 * and sc_iobase.  So we just fill in the "missing" bits.
+		 */
+		sc->sc_regs.cr_nports = COM_NPORTS;
+#ifdef	COM_REGMAP
+		memcpy(sc->sc_regs.cr_map, com_std_map,
+		    sizeof (sc->sc_regs.cr_map));
+#endif
+	}
 
 	callout_init(&sc->sc_diag_callout);
 	simple_lock_init(&sc->sc_lock);
