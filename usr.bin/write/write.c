@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.23 2003/08/07 11:17:48 agc Exp $	*/
+/*	$NetBSD: write.c,v 1.24 2006/06/17 08:22:06 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.23 2003/08/07 11:17:48 agc Exp $");
+__RCSID("$NetBSD: write.c,v 1.24 2006/06/17 08:22:06 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ do_write(int ttyfd, const char *mytty, const uid_t myuid)
 
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) < 0)
-		(void)strncpy(host, "???", sizeof(host) - 1);
+		(void)strlcpy(host, "???", sizeof(host));
 	else
 		host[sizeof(host) - 1] = '\0';
 	now = time((time_t *)NULL);
