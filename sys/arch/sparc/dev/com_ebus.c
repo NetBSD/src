@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.12.16.1 2006/06/15 16:34:03 gdamore Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.12.16.2 2006/06/17 08:16:55 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.12.16.1 2006/06/15 16:34:03 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.12.16.2 2006/06/17 08:16:55 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,6 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	if (ea->ea_nintr != 0)
-		(void)bus_intr_establish(sc->sc_iot,
-					 ea->ea_intr[0], IPL_SERIAL,
+		(void)bus_intr_establish(iot, ea->ea_intr[0], IPL_SERIAL,
 					 comintr, sc);
 }
