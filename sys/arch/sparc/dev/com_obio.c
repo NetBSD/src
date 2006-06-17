@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.18.16.2 2006/06/17 08:05:59 gdamore Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.18.16.3 2006/06/17 08:09:05 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18.16.2 2006/06/17 08:05:59 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18.16.3 2006/06/17 08:09:05 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ struct com_obio_softc {
 
 static int com_obio_match(struct device *, struct cfdata *, void *);
 static void com_obio_attach(struct device *, struct device *, void *);
-static void com_obio_cleanup(void *);
 
 CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
     com_obio_match, com_obio_attach, NULL, NULL);
