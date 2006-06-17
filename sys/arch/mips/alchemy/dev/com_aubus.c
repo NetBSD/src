@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.1.2.2 2006/06/16 03:42:27 gdamore Exp $ */
+/* $NetBSD: com_aubus.c,v 1.1.2.3 2006/06/17 00:32:25 gdamore Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.1.2.2 2006/06/16 03:42:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.1.2.3 2006/06/17 00:32:25 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,13 +92,13 @@ com_aubus_attach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args *aa = aux;
 	int addr = aa->aa_addr;
 	
-	sc->sc_regs.cr_iot = aa->aa_st;
-	sc->sc_regs.cr_iobase = addr;
+	sc->sc_iot = aa->aa_st;
+	sc->sc_iobase = addr;
 	asc->sc_irq = aa->aa_irq[0];
 
-	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.cr_ioh) == 0 &&
+	if (com_is_console(aa->aa_st, addr, &sc->sc_ioh) == 0 &&
 	    bus_space_map(aa->aa_st, addr, AUCOM_NPORTS, 0,
-		&sc->sc_regs.cr_ioh) != 0) {
+		&sc->sc_ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -111,7 +111,7 @@ com_aubus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
-	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
+	sc->sc_hwflags = COM_HW_NO_TXPRELOAD | COM_HW_REGMAP;
 	sc->sc_type = COM_TYPE_AU1x00;
 
 	sc->enable = com_aubus_enable;
@@ -141,7 +141,7 @@ com_aubus_enable(struct com_softc *sc)
 		return (0);
 
 	/* Enable the UART module. */
-	bus_space_write_1(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh, AUCOM_MODCTL,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUCOM_MODCTL,
 	    UMC_ME | UMC_CE);
 
 	/* Establish the interrupt. */
@@ -169,8 +169,7 @@ com_aubus_disable(struct com_softc *sc)
 	au_intr_disestablish(asc->sc_ih);
 
 	/* Disable the UART module. */
-	bus_space_write_1(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh,
-	    AUCOM_MODCTL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUCOM_MODCTL, 0);
 }
 
 void
