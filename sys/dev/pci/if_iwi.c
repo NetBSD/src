@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.49 2006/05/28 13:12:42 blymn Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.50 2006/06/17 23:34:27 christos Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.49 2006/05/28 13:12:42 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.50 2006/06/17 23:34:27 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -249,6 +249,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
+
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
+	}
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);

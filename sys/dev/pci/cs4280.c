@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.38 2006/04/15 21:20:47 jmcneill Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.39 2006/06/17 23:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.38 2006/04/15 21:20:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.39 2006/06/17 23:34:26 christos Exp $");
 
 #include "midi.h"
 
@@ -238,7 +238,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	char devinfo[256];
 	uint32_t mem;
-	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
+	int error;
 
 	sc = (struct cs428x_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -275,19 +275,12 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
-	/* Check and set Power State */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pci_pwrmgmt_cap_reg, 0)) {
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    pci_pwrmgmt_csr_reg);
-		DPRINTF(("%s: Power State is %d\n",
-		    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK));
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/* Enable the device (set bus master flag) */

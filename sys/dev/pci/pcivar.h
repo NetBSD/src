@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.71 2006/03/01 18:53:40 gdamore Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.72 2006/06/17 23:34:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -240,6 +240,11 @@ int	pci_find_device(struct pci_attach_args *pa,
 int	pci_dma64_available(struct pci_attach_args *);
 void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
+int	pci_get_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t *);
+int	pci_set_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t);
+int	pci_activate(pci_chipset_tag_t, pcitag_t, void *,
+    int (*)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t));
+int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
 
 #endif /* _KERNEL */
 

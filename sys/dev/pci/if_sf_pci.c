@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.9 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.9 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pcireg_t reg;
-	int pmreg, ioh_valid, memh_valid;
+	int error, ioh_valid, memh_valid;
 
 	spp = sf_pci_lookup(pa);
 	if (spp == NULL) {
@@ -192,27 +192,12 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s, rev. %d\n", spp->spp_name, PCI_REVISION(pa->pa_class));
 
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pmreg, 0)) {
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-
-		case PCI_PMCSR_STATE_D3:
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			return;
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*
