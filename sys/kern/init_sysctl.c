@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.71 2006/06/13 13:56:50 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.72 2006/06/17 06:54:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.71 2006/06/13 13:56:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.72 2006/06/17 06:54:58 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2593,25 +2593,29 @@ static int
 sysctl_security_setidcorename(SYSCTLFN_ARGS)
 {
 	int error;
-	char newsetidcorename[MAXPATHLEN];
+	char *newsetidcorename;
 	struct sysctlnode node;
 
+	newsetidcorename = PNBUF_GET();
 	node = *rnode;
-	node.sysctl_data = &newsetidcorename[0];
+	node.sysctl_data = newsetidcorename;
 	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (securelevel > 0)
-		return (EPERM);
-
-	if (strlen(newsetidcorename) == 0)
-		return (EINVAL);
-
+	if (error || newp == NULL) {
+		goto out;
+	}
+	if (securelevel > 0) {
+		error = EPERM;
+		goto out;
+	}
+	if (strlen(newsetidcorename) == 0) {
+		error = EINVAL;
+		goto out;
+	}
 	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
-
-	return (0);
+out:
+	PNBUF_PUT(newsetidcorename);
+	return error;
 }
 
 /*
