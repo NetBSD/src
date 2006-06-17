@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.24 2006/06/17 17:11:53 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.25 2006/06/17 20:14:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.24 2006/06/17 17:11:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.25 2006/06/17 20:14:26 christos Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -337,14 +337,13 @@ acpi_md_sleep(int state)
 	if ((p = curproc) == NULL)
 		p = &proc0;
 	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	cr3 = rcr3();
-	lcr3(pm->pm_pdirpa);
 	if (!pmap_extract(pm, phys_wakeup, &oldphys))
 		oldphys = 0;
 	pmap_enter(pm, phys_wakeup, phys_wakeup,
 			VM_PROT_READ | VM_PROT_WRITE,
 			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pm);
+	cr3 = rcr3();
 
 	ret_addr = 0;
 	disable_intr();
@@ -442,6 +441,7 @@ acpi_md_sleep(int state)
 	}
 
 out:
+	lcr3(cr3);
 	/* Clean up identity mapping. */
 	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
 	if (oldphys) {
@@ -450,8 +450,6 @@ out:
 				PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 	}
 	pmap_update(pm);
-
-	lcr3(cr3);
 
 	write_eflags(ef);
 
