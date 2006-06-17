@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.8.16.2 2006/06/17 00:49:00 gdamore Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.8.16.3 2006/06/17 05:38:22 gdamore Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.8.16.2 2006/06/17 00:49:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.8.16.3 2006/06/17 05:38:22 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,16 +131,17 @@ com_jazzio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = (void *)self;
 	int iobase;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
-	sc->sc_iobase = iobase = ja->ja_addr;
-	sc->sc_iot = iot = ja->ja_bust;
+	iobase = ja->ja_addr;
+	iot = ja->ja_bust;
 
-	if (!com_is_console(iot, iobase, &sc->sc_ioh) &&
-	    bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 	sc->sc_frequency = com_freq;
 	SET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE); /* XXX - NEC M403 */
 	jazzio_intr_establish(ja->ja_intr, comintr, sc);
