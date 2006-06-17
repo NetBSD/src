@@ -1,4 +1,4 @@
-/*	$NetBSD: pb1000reg.h,v 1.1 2002/07/29 16:22:59 simonb Exp $	*/
+/*	$NetBSD: pb1000reg.h,v 1.2 2006/06/17 14:42:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,9 +61,3 @@
 /* Flash addresses */
 #define	PB1000_FLASH_BASE	0x1f800000
 #define	PB1000_FLASH_SIZE	0x00800000
-
-#define	LCD_BASE		0xe ## 00000000
-#define	LCD_SIZE		0x1 ## 00000000
-
-#define	PCMCIA_BASE		0xf ## 00000000
-#define	PCMCIA_SIZE		0x1 ## 00000000
