@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.83 2006/06/15 16:52:05 gdamore Exp $
+#	$NetBSD: BRANCHES,v 1.84 2006/06/17 08:29:57 kardel Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -359,19 +359,6 @@ Scope:		x11
 Notes:		Requires parts of xsrc/xfree (HEAD)
 		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
 		Requires xorg (XORG-6_8_1)
-
-Branch:		simonb-timecounters
-Description:	Port FreeBSD timecounters to NetBSD
-Status:		Active
-Start Date:	Sat Feb 04 2006
-End Date:	Wed Jun 07 2006
-Base Tag:	simonb-timecounters-base
-Maintainer:	Simon Burge <simonb@NetBSD.org>,
-		Frank Kardel <kardel@NetBSD.org>
-Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
-Notes:		early (partial conversion) commit to -current
-		ok'ed by core@ on 20060605 for testing and further
-		simplified conversion
 
 Branch:		thorpej-devvp
 Description:	replace dev_t with struct vnode * in devsw entry points
@@ -799,6 +786,19 @@ Base Tag:
 Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		simonb-timecounters
+Description:	Port FreeBSD timecounters to NetBSD
+Status:		Active
+Start Date:	Sat Feb 04 2006
+End Date:	Wed Jun 07 2006
+Base Tag:	simonb-timecounters-base
+Maintainer:	Simon Burge <simonb@NetBSD.org>,
+		Frank Kardel <kardel@NetBSD.org>
+Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
+Notes:		early (partial conversion) commit to -current
+		ok'ed by core@ on 20060605 for testing and further
+		simplified conversion
 
 Branch:		wrstuden-devbsize
 Description:	Modify buffer cache to deal with different devices having
