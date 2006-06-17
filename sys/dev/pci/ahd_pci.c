@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.22 2006/03/08 23:46:27 lukem Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.23 2006/06/17 23:34:26 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.22 2006/03/08 23:46:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.23 2006/06/17 23:34:26 christos Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -310,8 +310,6 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	int		   	error;
 	pcireg_t	   	subid;
 	uint16_t	   	subvendor;
-	int                	pci_pwrmgmt_cap_reg;
-	int                	pci_pwrmgmt_csr_reg;
 	pcireg_t           	reg;
 	int		   	ioh_valid, ioh2_valid, memh_valid;
 	pcireg_t           	memtype;
@@ -480,22 +478,13 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-	/*
-         * Set Power State D0.
-         */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-			       &pci_pwrmgmt_cap_reg, 0)) {
-
-	  	pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-                                    pci_pwrmgmt_csr_reg);
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-                        pci_conf_write(pa->pa_pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
-                                       (reg & ~PCI_PMCSR_STATE_MASK) |
-                                       PCI_PMCSR_STATE_D0);
-                }
-        }
-
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, ahd, 
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", ahd->sc_dev.dv_xname,
+		    error);
+		return;
+	}
 	/*
          * Should we bother disabling 39Bit addressing
          * based on installed memory?

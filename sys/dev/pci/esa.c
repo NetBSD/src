@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.31 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: esa.c,v 1.32 2006/06/17 23:34:26 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.31 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.32 2006/06/17 23:34:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -161,7 +161,6 @@ static void		esa_remove_list(struct esa_voice *, struct esa_list *,
 					int);
 
 /* power management */
-static int		esa_power(struct esa_softc *, int);
 static void		esa_powerhook(int, void *);
 static int		esa_suspend(struct esa_softc *);
 static int		esa_resume(struct esa_softc *);
@@ -1009,6 +1008,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int revision, len;
 	int i;
+	int error;
 
 	sc = (struct esa_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1063,8 +1063,13 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/* Power up chip */
-	esa_power(sc, PCI_PMCSR_STATE_D0);
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
+	}
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
@@ -1629,25 +1634,6 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 	return;
 }
 
-static int
-esa_power(struct esa_softc *sc, int state)
-{
-	pcitag_t tag;
-	pci_chipset_tag_t pc;
-	pcireg_t data;
-	int pmcapreg;
-
-	tag = sc->sc_tag;
-	 pc = sc->sc_pct;
-	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &pmcapreg, 0)) {
-		data = pci_conf_read(pc, tag, pmcapreg + PCI_PMCSR);
-		if ((data & PCI_PMCSR_STATE_MASK) != state)
-			pci_conf_write(pc, tag, pmcapreg + PCI_PMCSR, state);
-	}
-
-	return 0;
-}
-
 static void
 esa_powerhook(int why, void *hdl)
 {
@@ -1672,6 +1658,7 @@ esa_suspend(struct esa_softc *sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int i, index;
+	int error;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1692,7 +1679,9 @@ esa_suspend(struct esa_softc *sc)
 		sc->savemem[index++] = esa_read_assp(sc,
 		    ESA_MEMTYPE_INTERNAL_DATA, i);
 
-	esa_power(sc, PCI_PMCSR_STATE_D3);
+	if ((error = pci_set_powerstate(sc->sc_pct, sc->sc_tag,
+	    PCI_PMCSR_STATE_D3)))
+		return error;
 
 	return 0;
 }
@@ -1704,12 +1693,15 @@ esa_resume(struct esa_softc *sc)
 	bus_space_handle_t ioh;
 	int i, index;
 	uint8_t reset_state;
+	int error;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	index = 0;
 
-	esa_power(sc, PCI_PMCSR_STATE_D0);
+	if ((error = pci_set_powerstate(sc->sc_pct, sc->sc_tag,
+	    PCI_PMCSR_STATE_D0)))
+		return error;
 	delay(10000);
 
 	esa_config(sc);
