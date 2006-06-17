@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.20 2004/03/24 12:09:21 wiz Exp $
+.\"     $NetBSD: stf.4,v 1.21 2006/06/17 04:58:14 reed Exp $
 .\"     $KAME: stf.4,v 1.39 2002/11/17 19:34:02 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -117,14 +117,14 @@ See
 for details.
 .Pp
 Please note that the 6to4 specification is written as an
-.Dq accept tunnelled packet from everyone
-tunnelling device.
+.Dq accept tunneled packet from everyone
+tunneling device.
 By enabling the
 .Nm
 device, you are making it much easier for malicious parties to inject
 fabricated IPv6 packets to your node.
 Also, malicious parties can inject IPv6 packets with fabricated source addresses
-to make your node generate improper tunnelled packets.
+to make your node generate improper tunneled packets.
 Administrators must be cautious when enabling the interface.
 To prevent possible attacks, the
 .Nm
