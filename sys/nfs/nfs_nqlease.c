@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.65 2006/06/07 22:34:17 kardel Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.66 2006/06/17 07:06:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.65 2006/06/07 22:34:17 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.66 2006/06/17 07:06:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -208,13 +208,11 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 		/*
 		 * Find the lease by searching the hash list.
 		 */
-		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fh.fh_fid);
+		error = vfs_composefh(vp, &fh);
 		if (error) {
 			splx(s);
 			return (error);
 		}
-		KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 		lpp = NQFHHASH(fh.fh_fid.fid_data);
 		LIST_FOREACH (lp, lpp, lc_hash) {
 			if (fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
@@ -518,11 +516,9 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 				solockp = (int *)0;
 			nfsm_reqhead((struct nfsnode *)0, NQNFSPROC_EVICTED,
 				NFSX_V3FH + NFSX_UNSIGNED);
+			memset(&nfh, 0, sizeof(nfh));
 			fhp = &nfh.fh_generic;
-			memset((caddr_t)fhp, 0, sizeof(nfh));
-			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-			VFS_VPTOFH(vp, &fhp->fh_fid);
-			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
+			vfs_composefh(vp, fhp);
 			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;
