@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.111 2006/06/09 21:41:14 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.112 2006/06/17 07:06:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.111 2006/06/09 21:41:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.112 2006/06/17 07:06:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,13 +446,10 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
 	vrele(ndp->ni_startdir);
 	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	vp = ndp->ni_vp;
-	memset((caddr_t)fhp, 0, sizeof(nfh));
-	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-	error = VFS_VPTOFH(vp, &fhp->fh_fid);
+	error = vfs_composefh(vp, fhp);
 	if (!error)
 		error = VOP_GETATTR(vp, &va, cred, lwp);
 	vput(vp);
-	KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	nfsm_reply(NFSX_SRVFH(v3) + NFSX_POSTOPORFATTR(v3) + NFSX_POSTOPATTR(v3));
 	if (error) {
 		nfsm_srvpostop_attr(dirattr_ret, &dirattr);
@@ -1567,13 +1564,10 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			vput(vp);
 	}
 	if (!error) {
-		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fhp->fh_fid);
+		error = vfs_composefh(vp, fhp);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, lwp);
 		vput(vp);
-		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
 	if (v3) {
 		if (exclusive_flag && !error) {
@@ -1734,13 +1728,10 @@ abort:
 out:
 	vp = nd.ni_vp;
 	if (!error) {
-		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fhp->fh_fid);
+		error = vfs_composefh(vp, fhp);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, lwp);
 		vput(vp);
-		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
@@ -2287,13 +2278,10 @@ abortop:
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va, pathcp);
 	if (!error) {
 	    if (v3) {
-		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
+		error = vfs_composefh(nd.ni_vp, fhp);
 		if (!error)
 		    error = VOP_GETATTR(nd.ni_vp, &va, cred, lwp);
 		vput(nd.ni_vp);
-		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	    } else {
 		vput(nd.ni_vp);
 	    }
@@ -2413,13 +2401,10 @@ nfsrv_mkdir(nfsd, slp, lwp, mrq)
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	if (!error) {
 		vp = nd.ni_vp;
-		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fhp->fh_fid);
+		error = vfs_composefh(vp, fhp);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, lwp);
 		vput(vp);
-		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
 out:
 	if (dirp) {
@@ -3053,10 +3038,7 @@ again:
 			 */
 			if (VFS_VGET(vp->v_mount, dp->d_fileno, &nvp))
 				goto invalid;
-			memset((caddr_t)nfhp, 0, NFSX_V3FH);
-			nfhp->fh_fsid =
-				nvp->v_mount->mnt_stat.f_fsidx;
-			if (VFS_VPTOFH(nvp, &nfhp->fh_fid)) {
+			if (vfs_composefh(nvp, nfhp)) {
 				vput(nvp);
 				goto invalid;
 			}
@@ -3065,7 +3047,6 @@ again:
 				goto invalid;
 			}
 			vput(nvp);
-			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 
 			/*
 			 * If either the dircount or maxcount will be

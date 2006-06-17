@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.242 2006/05/14 21:15:12 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.243 2006/06/17 07:06:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.242 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.243 2006/06/17 07:06:51 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1203,6 +1203,27 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 }
 
 /*
+ * vfs_composefh: compose a filehandle.
+ */
+
+int
+vfs_composefh(struct vnode *vp, fhandle_t *fhp)
+{
+	struct mount *mp;
+	int error;
+
+	mp = vp->v_mount;
+	if (mp->mnt_op->vfs_vptofh == NULL) {
+		return EOPNOTSUPP;
+	}
+	memset(fhp, 0, sizeof(*fhp));
+	fhp->fh_fsid = mp->mnt_stat.f_fsidx;
+	error = VFS_VPTOFH(vp, &fhp->fh_fid);
+	KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
+	return error;
+}
+
+/*
  * Get file handle system call
  */
 int
@@ -1231,15 +1252,10 @@ sys_getfh(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	if (vp->v_mount->mnt_op->vfs_vptofh == NULL)
-		return EOPNOTSUPP;
-	memset(&fh, 0, sizeof(fh));
-	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-	error = VFS_VPTOFH(vp, &fh.fh_fid);
+	error = vfs_composefh(vp, &fh);
 	vput(vp);
 	if (error)
 		return (error);
-	KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	error = copyout(&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
 	return (error);
 }
