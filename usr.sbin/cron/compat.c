@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.4 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: compat.c,v 1.5 2006/06/17 00:16:13 elad Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: compat.c,v 1.6 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: compat.c,v 1.4 2005/03/16 02:53:55 xtraeme Exp $");
+__RCSID("$NetBSD: compat.c,v 1.5 2006/06/17 00:16:13 elad Exp $");
 #endif
 #endif
 
@@ -60,7 +60,7 @@ strdup(char *str)
 	char	*temp;
 
 	temp = malloc(strlen(str) + 1);
-	(void) strcpy(temp, str);
+	(void) strcpy(temp, str); /* safe */
 	return temp;
 }
 #endif
