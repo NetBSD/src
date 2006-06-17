@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.52.2.3 2006/06/16 04:03:24 gdamore Exp $	*/
+/*	$NetBSD: comvar.h,v 1.52.2.4 2006/06/17 00:30:24 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
-		/*	0x04	free for use */
+#define	COM_HW_REGMAP	0x04
 #define	COM_HW_FLOW	0x08
 #define	COM_HW_DEV_OK	0x20
 #define	COM_HW_CONSOLE	0x40
@@ -96,15 +96,6 @@ struct com_regs {
 
 extern const bus_size_t com_std_map[16];
 
-#define	COM_INIT_REGS(regs, tag, hdl, addr)				\
-	do {								\
-		regs.cr_iot = tag;					\
-		regs.cr_ioh = hdl;					\
-		regs.cr_iobase = addr;					\
-		regs.cr_nports = COM_NPORTS;				\
-		memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));	\
-	} while (0)
-
 #else
 #define	COM_REG_RXDATA		com_data
 #define	COM_REG_TXDATA		com_data
@@ -126,14 +117,6 @@ struct com_regs {
 	bus_size_t		cr_nports;
 };
 
-#define	COM_INIT_REGS(regs, tag, hdl, addr)		\
-	do {						\
-		regs.cr_iot = tag;			\
-		regs.cr_ioh = hdl;			\
-		regs.cr_iobase = addr;			\
-		regs.cr_nports = COM_NPORTS;		\
-	} while (0)
-
 #endif
 
 struct com_softc {
@@ -146,6 +129,10 @@ struct com_softc {
 	int sc_frequency;
 
 	struct com_regs sc_regs;
+/* these macros are for backwards compat */
+#define	sc_iot		sc_regs.cr_iot
+#define	sc_ioh		sc_regs.cr_ioh
+#define	sc_iobase	sc_regs.cr_iobase
 	bus_space_handle_t sc_hayespioh;
 
 
