@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.23 2006/06/07 22:37:57 kardel Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.24 2006/06/17 17:11:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.23 2006/06/07 22:37:57 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.24 2006/06/17 17:11:53 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -332,7 +332,6 @@ acpi_md_sleep(int state)
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
 	ef = read_eflags();
-	disable_intr();
 
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
@@ -348,6 +347,7 @@ acpi_md_sleep(int state)
 	pmap_update(pm);
 
 	ret_addr = 0;
+	disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -419,7 +419,9 @@ acpi_md_sleep(int state)
 
 		for (;;) ;
 	} else {
+		printf("acpi0: good morning!\n");
 		/* Execute Wakeup */
+		enable_intr();
 
 		npxinit(&cpu_info_primary);
 		i8259_reinit();
@@ -451,9 +453,7 @@ out:
 
 	lcr3(cr3);
 
-	enable_intr();
 	write_eflags(ef);
-	AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 
 	return (ret);
 #undef WAKECODE_FIXUP

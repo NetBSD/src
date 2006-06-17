@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.6 2006/06/15 18:07:58 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.7 2006/06/17 17:11:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,16 +87,26 @@ wakeup_16:
 	movw	%ax,%ds
 	movw	%ax,%ss
 
+	/* Small call stack */
+	movw	$0x1000,%sp
+
+	/* Clear flags */
+	pushl	$0
+	popfl
+
+	call	beepon
+
 	/* The following needs to be configurable */
-#ifdef notyet
+/*#ifdef notyet*/
 	/* Kick the VBIOS. */
-	movw	$0x1000, %sp /* Small call stack. */
 	lcall	$0xc000,$3
 
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
-#endif
+
+/*#endif*/
+	call beepoff
 
 	/* Get physical address of the code */
 	xorl	%esi,%esi
@@ -161,6 +171,8 @@ wakeup_32:
 1:	jmp	1f
 1:
 
+	nop
+
         /* Restore registers */
 	lgdt	previous_gdt(%esi)
 	lidt	previous_idt(%esi)
@@ -187,6 +199,21 @@ wakeup_32:
         movw	%ax,%ds
         jmp	*%ebx
 
+beepon:
+	movb	$0xc0,%al
+	outb	%al,$0x42
+	movb	$0x04,%al
+	outb	%al,$0x42
+	inb	$0x61,%al
+	orb	$0x3,%al
+	outb	%al,$0x61
+	ret
+
+beepoff:
+	inb	$0x61,%al
+	andb	$0xfc,%al
+	outb	%al,$0x61
+	ret
 
 	.align	8
 tmp_gdt:
