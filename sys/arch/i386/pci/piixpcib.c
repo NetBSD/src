@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.3 2006/06/16 22:10:36 jmcneill Exp $ */
+/* $NetBSD: piixpcib.c,v 1.4 2006/06/17 19:00:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.3 2006/06/16 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.4 2006/06/17 19:00:03 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -295,6 +295,8 @@ piixpcib_get(struct piixpcib_softc *sc)
 {
 	int rv;
 	int state;
+
+	state = 0; 	/* XXX gcc */
 
 	rv = piixpcib_getset_state(sc, &state, PIIXPCIB_GETSTATE);
 	if (rv)
