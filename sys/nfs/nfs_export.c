@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.13 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.14 2006/06/17 07:06:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.13 2006/05/18 12:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.14 2006/06/17 07:06:51 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -743,17 +743,14 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	/*
 	 * Get real filehandle for root of exported FS.
 	 */
-	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
-	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
-
 	if ((error = VFS_ROOT(mp, &rvp)))
 		return error;
 
-	if ((error = VFS_VPTOFH(rvp, &nfs_pub.np_handle.fh_fid)))
+	error = vfs_composefh(rvp, &nfs_pub.np_handle);
+	if (error)
 		return error;
 
 	vput(rvp);
-	KASSERT(nfs_pub.np_handle.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 
 	/*
 	 * If an indexfile was specified, pull it in.
