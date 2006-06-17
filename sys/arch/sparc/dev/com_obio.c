@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.18.16.1 2006/06/15 16:34:03 gdamore Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.18.16.2 2006/06/17 08:05:59 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18.16.1 2006/06/15 16:34:03 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18.16.2 2006/06/17 08:05:59 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,8 +221,8 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	if (sa->sa_nintr != 0) {
-		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri, IPL_SERIAL,
-					 comintr, sc);
+		(void)bus_intr_establish(sc->sc_regs.cr_iot, sa->sa_pri,
+		    IPL_SERIAL, comintr, sc);
 		evcnt_attach_dynamic(&osc->osc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    osc->osc_com.sc_dev.dv_xname, "intr");
 	}
@@ -231,17 +231,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_obio_cleanup, sc) == NULL) {
+	if (shutdownhook_establish(com_cleanup, sc) == NULL) {
 		panic("com_obio_attach: could not establish shutdown hook");
 	}
-}
-
-static void
-com_obio_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_regs.iot, sc->sc_regs.ioh,
-		    com_fifo, 0);
 }
