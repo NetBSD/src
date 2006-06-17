@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.15 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.16 2006/06/17 12:11:55 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -688,6 +688,21 @@ create_sockets(
 			inter_list[idx].ignore_packets = ISC_TRUE;
 		}
 		convert_isc_if(&isc_if, &inter_list[idx], port);
+
+		/*
+		 * skip any interfaces UP and bound to a wildcard
+		 * address - some dhcp clients produce that in the
+		 * wild
+		 */
+		if (family == AF_INET &&
+		    ((struct sockaddr_in*)&inter_list[idx].sin)->sin_addr.s_addr == htonl(INADDR_ANY))
+			continue;
+
+		if (family == AF_INET6 &&
+		    memcmp(&((struct sockaddr_in6*)&inter_list[idx].sin)->sin6_addr, &in6addr_any,
+			   sizeof(in6addr_any) == 0))
+			continue;
+
 		inter_list[idx].fd = INVALID_SOCKET;
 		inter_list[idx].bfd = INVALID_SOCKET;
 		inter_list[idx].num_mcast = 0;
