@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.24.16.3 2006/06/17 00:53:39 gdamore Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.24.16.4 2006/06/17 03:42:09 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24.16.3 2006/06/17 00:53:39 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.24.16.4 2006/06/17 03:42:09 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,14 +182,16 @@ com_isa_attach(parent, self, aux)
 	/*
 	 * We're living on an isa.
 	 */
-	iobase = sc->sc_iobase = ia->ia_io[0].ir_addr;
-	iot = sc->sc_iot = ia->ia_iot;
+	iobase = ia->ia_io[0].ir_addr;
+	iot = ia->ia_iot;
 
-	if (!com_is_console(iot, iobase, &sc->sc_ioh) &&
-	    bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_frequency = COM_FREQ;
 	irq = ia->ia_irq[0].ir_irq;
