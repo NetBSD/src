@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.107 2006/04/18 13:07:03 pavel Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.108 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.107 2006/04/18 13:07:03 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.108 2006/06/17 23:34:27 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -662,9 +662,8 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
 	const struct sip_product *sip;
-	pcireg_t pmode;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	int pmreg;
+	pcireg_t pmreg;
 #ifdef DP83820
 	pcireg_t memtype;
 	u_int32_t reg;
@@ -741,25 +740,12 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    pmreg | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Get it out of power save mode if needed. */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
-		    PCI_PMCSR_STATE_MASK;
-		if (pmode == PCI_PMCSR_STATE_D3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-		if (pmode != PCI_PMCSR_STATE_D0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*

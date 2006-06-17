@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.91 2006/05/20 14:23:07 rpaulo Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.92 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.91 2006/05/20 14:23:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.92 2006/06/17 23:34:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val = 0;
 	pcireg_t reg;
-	int pmreg;
+	int error;
 
 	sc->sc_devno = pa->pa_device;
 	psc->sc_pc = pa->pa_pc;
@@ -511,30 +511,12 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			printf("%s: waking up from power state D%d\n%s",
-			    sc->sc_dev.dv_xname,
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-		case PCI_PMCSR_STATE_D3:
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3, "
-			       "reboot required.\n", sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			return;
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*
