@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.51.16.3 2006/06/17 02:37:30 gdamore Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.51.16.4 2006/06/17 05:12:22 gdamore Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.51.16.3 2006/06/17 02:37:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.51.16.4 2006/06/17 05:12:22 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ int com_pcmcia_match(struct device *, struct cfdata *, void *);
 int com_pcmcia_validate_config(struct pcmcia_config_entry *);
 void com_pcmcia_attach(struct device *, struct device *, void *);
 int com_pcmcia_detach(struct device *, int);
-void com_pcmcia_cleanup(void *);
 
 int com_pcmcia_enable(struct com_softc *);
 void com_pcmcia_disable(struct com_softc *);
@@ -201,8 +200,8 @@ com_pcmcia_attach(parent, self, aux)
 	}
 
 	cfe = pa->pf->cfe;
-	sc->sc_iot = cfe->iospace[0].handle.iot;
-	sc->sc_ioh = cfe->iospace[0].handle.ioh;
+	COM_INIT_REGS(sc->sc_regs, cfe->iospace[0].handle.iot,
+	    cfe->iospace[0].handle.ioh, -1);
 
 	error = com_pcmcia_enable(sc);
 	if (error)
@@ -210,7 +209,6 @@ com_pcmcia_attach(parent, self, aux)
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_pcmcia_enable;
