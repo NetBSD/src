@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.30 2006/06/17 08:03:14 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.31 2006/06/17 08:10:17 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.30 2006/06/17 08:03:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.31 2006/06/17 08:10:17 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,12 +157,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP04_SATA,
 	  0,
-	  "NVIDIA MCP04 SATA Controller",
+	  "NVIDIA MCP04 Serial ATA Controller",
 	  via_sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP04_SATA2,
 	  0,
-	  "NVIDIA MCP04 SATA Controller",
+	  "NVIDIA MCP04 Serial ATA Controller",
 	  via_sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP55_IDE,
@@ -172,12 +172,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP55_SATA,
 	  0,
-	  "NVIDIA MCP55 SATA Controller",
+	  "NVIDIA MCP55 Serial ATA Controller",
 	  via_sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP55_SATA2,
 	  0,
-	  "NVIDIA MCP55 SATA Controller",
+	  "NVIDIA MCP55 Serial ATA Controller",
 	  via_sata_chip_map
 	},
 	{ 0,
