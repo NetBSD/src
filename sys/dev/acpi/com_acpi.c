@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.18.10.1 2006/06/15 16:33:27 gdamore Exp $ */
+/* $NetBSD: com_acpi.c,v 1.18.10.2 2006/06/17 03:04:32 gdamore Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.18.10.1 2006/06/15 16:33:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.18.10.2 2006/06/17 03:04:32 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_resources res;
 	struct acpi_io *io;
 	struct acpi_irq *irq;
-	bus_space_handle_t ioh;
 	ACPI_STATUS rv;
 
 	aprint_naive("\n");
@@ -128,19 +127,20 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 		goto out;
 	}
 
-	if (!com_is_console(aa->aa_iot, io->ar_base, &ioh)) {
+	sc->sc_iot = aa->aa_iot;
+	if (!com_is_console(aa->aa_iot, io->ar_base, &sc->sc_ioh)) {
 		if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
-		    0, &ioh)) {
+		    0, &sc->sc_ioh)) {
 			aprint_error("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
 			goto out;
 		}
 	}
-	COM_INIT_REGS(sc->sc_regs, aa->aa_iot, ioh, io->ar_base);
+	sc->sc_iobase = io->ar_base;
 
 	aprint_normal("%s", sc->sc_dev.dv_xname);
 
-	if (com_probe_subr(&sc->sc_regs) == 0) {
+	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
 		aprint_error(": com probe failed\n");
 		goto out;
 	}
