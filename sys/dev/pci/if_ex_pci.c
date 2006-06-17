@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.40 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.41 2006/06/17 23:34:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.40 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.41 2006/06/17 23:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static int	ex_pci_enable(struct ex_softc *);
 static void	ex_pci_disable(struct ex_softc *);
 
 static void	ex_pci_confreg_restore(struct ex_pci_softc *);
-static void	ex_d3tod0( struct ex_softc *, struct pci_attach_args *);
+static int	ex_d3tod0(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
 
 CFATTACH_DECL(ex_pci, sizeof(struct ex_pci_softc),
     ex_pci_match, ex_pci_attach, NULL, NULL);
@@ -219,8 +219,8 @@ ex_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const struct ex_pci_product *epp;
 	const char *intrstr = NULL;
-	int rev, pmreg;
-	pcireg_t reg;
+	int rev;
+	int error;
 
 	aprint_naive(": Ethernet controller\n");
 
@@ -276,35 +276,19 @@ ex_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_regs[PCI_INTERRUPT_REG>>2] =
 	    pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
 
-	/* Get it out of power save mode if needed (BIOS bugs) */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+	/* power up chip */
+	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc, ex_d3tod0))) {
+	case EOPNOTSUPP:
+		break;
+	case 0: 
 		sc->enable = ex_pci_enable;
 		sc->disable = ex_pci_disable;
-
-		psc->psc_pwrmgmt_csr_reg = pmreg + PCI_PMCSR;
-		reg = pci_conf_read(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg);
-
-		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
-		    PCI_PMCSR_STATE_D0;
-
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D3:
-			aprint_normal("%s: found in power state D3, "
-			    "attempting to recover.\n", sc->sc_dev.dv_xname);
-			ex_d3tod0(sc, pa);
-			aprint_normal("%s: changed power state to D0.\n",
-			    sc->sc_dev.dv_xname);
-			break;
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			aprint_normal("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D0);
-			break;
-		}
+		break;
+	default:
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
-
 	sc->enabled = 1;
 
 	/* Map and establish the interrupt. */
@@ -345,8 +329,8 @@ ex_pci_intr_ack(struct ex_softc *sc)
 	    PCI_INTRACK);
 }
 
-static void
-ex_d3tod0(struct ex_softc *sc, struct pci_attach_args *pa)
+static int
+ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, void *ssc, pcireg_t state)
 {
 
 #define PCI_CACHE_LAT_BIST	0x0c
@@ -359,30 +343,37 @@ ex_d3tod0(struct ex_softc *sc, struct pci_attach_args *pa)
 #define PCI_EXP_ROM_BAR		0x30
 #define PCI_INT_GNT_LAT		0x3c
 
-	pci_chipset_tag_t pc = pa->pa_pc;
-
 	u_int32_t base0;
 	u_int32_t base1;
 	u_int32_t romaddr;
 	u_int32_t pci_command;
 	u_int32_t pci_int_lat;
 	u_int32_t pci_cache_lat;
+	struct ex_softc *sc = ssc;
 
-	pci_command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	base0 = pci_conf_read(pc, pa->pa_tag, PCI_BAR0);
-	base1 = pci_conf_read(pc, pa->pa_tag, PCI_BAR1);
-	romaddr	= pci_conf_read(pc, pa->pa_tag, PCI_EXP_ROM_BAR);
-	pci_cache_lat= pci_conf_read(pc, pa->pa_tag, PCI_CACHE_LAT_BIST);
-	pci_int_lat = pci_conf_read(pc, pa->pa_tag, PCI_INT_GNT_LAT);
+	if (state != PCI_PMCSR_STATE_D3)
+		return 0;
 
-	pci_conf_write(pc, pa->pa_tag, PCI_POWERCTL, 0);
-	pci_conf_write(pc, pa->pa_tag, PCI_BAR0, base0);
-	pci_conf_write(pc, pa->pa_tag, PCI_BAR1, base1);
-	pci_conf_write(pc, pa->pa_tag, PCI_EXP_ROM_BAR, romaddr);
-	pci_conf_write(pc, pa->pa_tag, PCI_INT_GNT_LAT, pci_int_lat);
-	pci_conf_write(pc, pa->pa_tag, PCI_CACHE_LAT_BIST, pci_cache_lat);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	aprint_normal("%s: found in power state D%d, "
+	    "attempting to recover.\n", sc->sc_dev.dv_xname, state);
+	pci_command = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	base0 = pci_conf_read(pc, tag, PCI_BAR0);
+	base1 = pci_conf_read(pc, tag, PCI_BAR1);
+	romaddr	= pci_conf_read(pc, tag, PCI_EXP_ROM_BAR);
+	pci_cache_lat= pci_conf_read(pc, tag, PCI_CACHE_LAT_BIST);
+	pci_int_lat = pci_conf_read(pc, tag, PCI_INT_GNT_LAT);
+
+	pci_conf_write(pc, tag, PCI_POWERCTL, 0);
+	pci_conf_write(pc, tag, PCI_BAR0, base0);
+	pci_conf_write(pc, tag, PCI_BAR1, base1);
+	pci_conf_write(pc, tag, PCI_EXP_ROM_BAR, romaddr);
+	pci_conf_write(pc, tag, PCI_INT_GNT_LAT, pci_int_lat);
+	pci_conf_write(pc, tag, PCI_CACHE_LAT_BIST, pci_cache_lat);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 	    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE));
+	aprint_normal("%s: changed power state to D0.\n",
+	    sc->sc_dev.dv_xname);
+	return 0;
 }
 
 static void

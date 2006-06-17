@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.34 2006/04/14 19:08:30 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.35 2006/06/17 23:34:26 christos Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.34 2006/04/14 19:08:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.35 2006/06/17 23:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,24 +527,6 @@ wc_wrchctl(struct esm_softc *ess, int ch, uint16_t data)
 
 	wc_wrreg(ess, ch << 3, data);
 }
-
-/* Power management */
-
-void
-esm_power(struct esm_softc *ess, int status)
-{
-	pcireg_t data;
-	int pmcapreg;
-
-	if (pci_get_capability(ess->pc, ess->tag, PCI_CAP_PWRMGMT,
-	    &pmcapreg, 0)) {
-		data = pci_conf_read(ess->pc, ess->tag, pmcapreg + PCI_PMCSR);
-		if ((data && PCI_PMCSR_STATE_MASK) != status)
-			pci_conf_write(ess->pc, ess->tag,
-			    pmcapreg + PCI_PMCSR, status);
-	}
-}
-
 
 /* -----------------------------
  * Controller.
@@ -1587,6 +1569,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	int revision;
 	uint16_t codec_data;
 	uint16_t pcmbar;
+	int error;
 
 	ess = (struct esm_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1645,8 +1628,13 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	 * Setup PCI config registers
 	 */
 
-	/* set to power state D0 */
-	esm_power(ess, PCI_PMCSR_STATE_D0);
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, ess,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", ess->sc_dev.dv_xname,
+		    error);
+		return;
+	}
 	delay(100000);
 
 	/* Disable all legacy emulations. */
@@ -1743,6 +1731,7 @@ int
 esm_suspend(struct esm_softc *ess)
 {
 	int x;
+	int error;
 
 	x = splaudio();
 	wp_stoptimer(ess);
@@ -1757,7 +1746,8 @@ esm_suspend(struct esm_softc *ess)
 	delay(20);
 	bus_space_write_4(ess->st, ess->sh, PORT_RINGBUS_CTRL, 0);
 	delay(1);
-	esm_power(ess, PCI_PMCSR_STATE_D3);
+	if ((error = pci_set_powerstate(ess->pc, ess->tag, PCI_PMCSR_STATE_D3)))
+		return error;
 
 	return 0;
 }
@@ -1766,8 +1756,10 @@ int
 esm_resume(struct esm_softc *ess)
 {
 	int x;
+	int error;
 
-	esm_power(ess, PCI_PMCSR_STATE_D0);
+	if ((error = pci_set_powerstate(ess->pc, ess->tag, PCI_PMCSR_STATE_D0)))
+		return error;
 	delay(100000);
 	esm_init(ess);
 
