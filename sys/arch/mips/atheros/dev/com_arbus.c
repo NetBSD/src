@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.1.12.2 2006/06/16 03:32:03 gdamore Exp $ */
+/* $Id: com_arbus.c,v 1.1.12.3 2006/06/17 00:32:25 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.1.12.2 2006/06/16 03:32:03 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.1.12.3 2006/06/17 00:32:25 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,6 @@ com_arbus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	regs.cr_iot = aa->aa_bst;
 	regs.cr_iobase = aa->aa_addr;
-	regs.cr_nports = aa->aa_size;
 	com_arbus_initmap(&regs);
 
 	rv = com_probe_subr(&regs);
@@ -191,20 +190,20 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_arbus_softc *arsc = (void *)self;
 	struct com_softc *sc = &arsc->sc_com;
 	struct arbus_attach_args *aa = aux;
-	bus_space_handle_t ioh;
 
 	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
-	if (!com_is_console(aa->aa_bst, aa->aa_addr, &ioh) &&
-	    bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
-		&ioh) != 0) {
+	sc->sc_iot = aa->aa_bst;
+	sc->sc_iobase = aa->aa_addr;
+	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
+	    bus_space_map(sc->sc_iot, sc->sc_iobase, aa->aa_size, 0,
+		&sc->sc_ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, aa->aa_bst, ioh, aa->aa_addr);
-	sc->sc_regs.cr_nports = aa->aa_size;
 	com_arbus_initmap(&sc->sc_regs);
+	sc->sc_hwflags = COM_HW_REGMAP;
 
 	com_attach_subr(sc);
 
@@ -217,6 +216,8 @@ void
 com_arbus_initmap(struct com_regs *regsp)
 {
 	int	i;
+
+	sc->sc_regs.cr_nports = 0x1000;
 
 	/* rewrite the map to shift for alignment */
 	for (i = 0;
@@ -244,4 +245,3 @@ com_arbus_cnattach(bus_addr_t addr)
 
 	comcnattach1(&regs, com_arbus_baud, sysfreq, COM_TYPE_NORMAL, CONMODE);
 }
-
