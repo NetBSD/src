@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.14.4.2 2006/06/16 04:07:04 gdamore Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.14.4.3 2006/06/17 03:00:38 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.14.4.2 2006/06/16 04:07:04 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.14.4.3 2006/06/17 03:00:38 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,6 @@ com_mca_attach(parent, self, aux)
 	int iobase, irq;
 	struct mca_attach_args *ma = aux;
 	const struct com_mca_product *cpp;
-	bus_space_handle_t ioh;
 
 	cpp = com_mca_lookup(ma->ma_id);
 
@@ -174,13 +173,14 @@ com_mca_attach(parent, self, aux)
 	if ((*cpp->cp_getcfg)(ma, &iobase, &irq))
 		return;
 
-	if (bus_space_map(ma->ma_iot, iobase, COM_NPORTS, 0, &ioh)) {
+	if (bus_space_map(ma->ma_iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, ma->ma_iot, ioh, iobase);
 	sc->sc_frequency = COM_FREQ;
+	sc->sc_iot = ma->ma_iot;
+	sc->sc_iobase = iobase;
 
 	printf(" slot %d i/o %#x-%#x irq %d", ma->ma_slot + 1,
 		iobase, iobase + COM_NPORTS - 1, irq);
