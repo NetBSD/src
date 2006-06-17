@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.20.16.3 2006/06/17 00:47:22 gdamore Exp $ */
+/*	$NetBSD: com_supio.c,v 1.20.16.4 2006/06/17 03:32:17 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.3 2006/06/17 00:47:22 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.4 2006/06/17 03:32:17 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,18 +125,20 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *csc = &sc->sc_com;
 	int iobase;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct supio_attach_args *supa = aux;
 	u_int16_t needpsl;
 
 	/*
 	 * We're living on a superio chip.
 	 */
-	iobase = csc->sc_iobase = supa->supio_iobase;
-	iot = csc->sc_iot = supa->supio_iot;
+	iobase = supa->supio_iobase;
+	iot = supa->supio_iot;
 	printf(" port 0x%04x ipl %d", iobase, supa->supio_ipl);
 
-	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &csc->sc_ioh))
+	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	csc->sc_frequency = supa->supio_arg;
 
