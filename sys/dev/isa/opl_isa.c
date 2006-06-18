@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.13 2006/06/09 21:55:34 christos Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.14 2006/06/18 23:15:33 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.13 2006/06/09 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.14 2006/06/18 23:15:33 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ opl_isa_match(parent, match, aux)
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
-	if (bus_space_map(sc.iot, ia->ia_io[0].ir_addr, OPL_SIZE, 0, ioh))
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, OPL_SIZE, 0, &ioh))
 		return (0);
 	r = opl_match(ia->ia_iot, ioh, 0);
         bus_space_unmap(ia->ia_iot, ioh, OPL_SIZE);
