@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.22 2006/06/18 02:59:21 christos Exp $
+.\"     $NetBSD: pci.9,v 1.23 2006/06/18 09:25:15 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,7 +228,7 @@ If the device is not in the D0 state call
 to restore its state.
 If
 .Fa fun
-is 
+is
 .Dv NULL
 then restoring from state D3 is going to fail.
 .It Fn pci_conf_read "pc" "tag" "reg"
