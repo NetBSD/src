@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.794 2006/06/15 21:45:58 heinz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.795 2006/06/18 10:33:42 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.795 2006/06/15 21:42:15 heinz Exp
+ *	NetBSD: pcidevs,v 1.796 2006/06/18 10:33:12 xtraeme Exp
  */
 
 /*
@@ -756,6 +756,7 @@
 #define	PCI_PRODUCT_ALI_M1451	0x1451		/* M1451 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI Bridge */
+#define	PCI_PRODUCT_ALI_M1533	0x1533		/* M1533 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1563	0x1563		/* M1563 PCI-ISA Bridge */
