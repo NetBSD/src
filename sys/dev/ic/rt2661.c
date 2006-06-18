@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.7 2006/06/09 19:13:17 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.8 2006/06/18 15:37:27 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.7 2006/06/09 19:13:17 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.8 2006/06/18 15:37:27 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -1906,6 +1906,8 @@ rt2661_start(struct ifnet *ifp)
 				break;
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
+			if (m0 == NULL)
+				break;
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;

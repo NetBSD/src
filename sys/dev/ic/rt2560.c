@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.1 2006/06/04 20:38:06 rpaulo Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.2 2006/06/18 15:37:27 rpaulo Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.1 2006/06/04 20:38:06 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.2 2006/06/18 15:37:27 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -2130,6 +2130,8 @@ rt2560_start(struct ifnet *ifp)
 				break;
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
+			if (m0 == NULL)
+				break;
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
