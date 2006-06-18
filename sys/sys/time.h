@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.55 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: time.h,v 1.56 2006/06/18 21:09:24 uwe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -99,7 +99,7 @@ struct timezone {
 		}							\
 	} while (/* CONSTCOND */ 0)
 
-#ifdef _NETBSD_SOURCE
+#ifdef _KERNEL
 struct bintime {
 	time_t	sec;
 	uint64_t frac;
@@ -189,7 +189,7 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
-#endif /* __BSD_VISIBLE */
+#endif /* _KERNEL */
 
 /* Operations on timespecs. */
 #define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
