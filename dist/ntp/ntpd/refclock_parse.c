@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.5 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.6 2006/06/18 21:20:35 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.73 2006/05/26 14:23:46 kardel RELEASE_20060526_A
@@ -4883,7 +4883,8 @@ trimbletsip_setup(
 		return 1;	/* not yet */
 	}
 
-	t->last_reset = current_time;
+	if (t)
+		t->last_reset = current_time;
 			
 	buf.txt = buffer;
   
