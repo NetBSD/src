@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.888 2006/06/04 19:42:18 cube Exp $
+#	$NetBSD: mi,v 1.889 2006/06/18 21:02:16 uwe Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -893,11 +893,11 @@
 ./usr/include/net/if_media.h			comp-c-include
 ./usr/include/net/if_ppp.h			comp-c-include
 ./usr/include/net/if_pppoe.h			comp-c-include
-./usr/include/net/if_pppvar.h			comp-c-include
-./usr/include/net/if_slvar.h			comp-c-include
+./usr/include/net/if_pppvar.h			comp-c-include		obsolete
+./usr/include/net/if_slvar.h			comp-c-include		obsolete
 ./usr/include/net/if_sppp.h			comp-c-include
 ./usr/include/net/if_stf.h			comp-c-include
-./usr/include/net/if_stripvar.h			comp-c-include
+./usr/include/net/if_stripvar.h			comp-c-include		obsolete
 ./usr/include/net/if_tap.h			comp-c-include
 ./usr/include/net/if_token.h			comp-c-include
 ./usr/include/net/if_tun.h			comp-c-include

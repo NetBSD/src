@@ -189,11 +189,8 @@
 #include <net/ppp_defs.h>	/* Moved */
 #include <net/if_ppp.h>
 #include <net/if_pppoe.h>
-#include <net/if_pppvar.h>
-#include <net/if_slvar.h>
 #include <net/if_sppp.h>
 #include <net/if_stf.h>
-#include <net/if_stripvar.h>
 #include <net/if_token.h>
 #include <net/if_tun.h>
 #include <net/if_types.h>
