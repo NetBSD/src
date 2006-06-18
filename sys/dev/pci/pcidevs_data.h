@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.793 2006/06/15 21:45:58 heinz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.794 2006/06/18 10:33:42 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.795 2006/06/15 21:42:15 heinz Exp
+ *	NetBSD: pcidevs,v 1.796 2006/06/18 10:33:12 xtraeme Exp
  */
 
 /*
@@ -2742,6 +2742,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
 	    "M1531 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1533,
+	    "M1533 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
@@ -11668,4 +11672,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2326;
+const int pci_nproducts = 2327;
