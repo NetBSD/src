@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.39 2006/06/18 09:57:37 xtraeme Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.40 2006/06/18 10:34:34 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.39 2006/06/18 09:57:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.40 2006/06/18 10:34:34 xtraeme Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -202,7 +202,7 @@ const struct pciintr_icu_table {
 
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_PMC,
 	  amd756_init },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_766_PMC,
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC766_PMC,
 	  amd756_init },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_PMC,
 	  amd756_init },
