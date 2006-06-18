@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.8 2006/06/18 15:37:27 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.9 2006/06/18 15:44:49 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.8 2006/06/18 15:37:27 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.9 2006/06/18 15:44:49 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -1952,7 +1952,6 @@ rt2661_start(struct ifnet *ifp)
 
 			if (sc->txq[0].queued >= RT2661_TX_RING_COUNT - 1) {
 				/* there is no place left in this ring */
-				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
