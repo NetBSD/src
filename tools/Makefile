@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2006/06/02 22:16:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.98 2006/06/18 05:16:41 gdamore Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump lint lint2 \
-		lorder m4 makewhatis mkdep mtree rpcgen tsort uudecode \
+		lorder m4 makewhatis mkdep mtree rpcgen sed tsort uudecode \
 	texinfo .WAIT \
 	yacc .WAIT \
 	lex .WAIT \
