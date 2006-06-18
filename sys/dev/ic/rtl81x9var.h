@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.20 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.21 2006/06/18 21:29:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -40,7 +40,11 @@
 #include <sys/rnd.h>
 #endif
 
+#if defined(__i386__) || defined(__x86_64__)
+#define	RTK_ETHER_ALIGN	0
+#else
 #define RTK_ETHER_ALIGN	2
+#endif
 #define RTK_RXSTAT_LEN	4
 
 struct rtk_type {
