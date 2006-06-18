@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.7 2005/12/11 12:23:22 christos Exp $ */
+/* $NetBSD: pckbport.c,v 1.8 2006/06/18 20:53:10 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.7 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.8 2006/06/18 20:53:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.7 2005/12/11 12:23:22 christos Exp $"
 #include <sys/queue.h>
 #include <sys/lock.h>
 
+#include <dev/pckbport/pckbdreg.h>
 #include <dev/pckbport/pckbportvar.h>
 
 #include "locators.h"
@@ -372,6 +373,7 @@ pckbport_cleanup(void *self)
 {
 	struct pckbport_tag *t = self;
 	int s;
+	u_char cmd[1], resp[2];
 
 	printf("pckbport: command timeout\n");
 
@@ -389,7 +391,9 @@ pckbport_cleanup(void *self)
 	}
 #endif
 
-	/* reset KBC? */
+	cmd[0] = KBC_RESET;
+	(void)pckbport_poll_cmd(t, PCKBPORT_KBD_SLOT, cmd, 1, 2, resp, 1);
+	pckbport_flush(t, PCKBPORT_KBD_SLOT);
 
 	splx(s);
 }
