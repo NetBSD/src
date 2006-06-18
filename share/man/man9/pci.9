@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.21 2006/03/01 23:49:57 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.22 2006/06/18 02:59:21 christos Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,11 +34,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 1, 2006
+.Dd June 17, 2006
 .Dt PCI 9
 .Os
 .Sh NAME
 .Nm PCI ,
+.Nm pci_activate ,
 .Nm pci_conf_read ,
 .Nm pci_conf_write ,
 .Nm pci_conf_print ,
@@ -71,6 +72,8 @@
 .In dev/pci/pcivar.h
 .In dev/pci/pcireg.h
 .In dev/pci/pcidevs.h
+.Ft int
+.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" "void *sc" "int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag, void *sc, pcireg_t reg)"
 .Ft pcireg_t
 .Fn pci_conf_read "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft void
@@ -117,9 +120,9 @@
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *ih"
 .Ft int
 .Fn pci_set_powerstate "pci_chipset_tag_t pc" "pcitag_t tag" \
-"int newstate"
+"pcireg_t newstate"
 .Ft int
-.Fn pci_get_powerstate "pci_chipset_tag_t pc" "pcitag_t tag"
+.Fn pci_get_powerstate "pci_chipset_tag_t pc" "pcitag_t tag" "pcireg_t *state"
 .Ft int
 .Fn pci_vpd_read "pci_chipset_tag_t pc" "pcitag_t tag" "int offset" \
 "int count" "pcireg_t *data"
@@ -218,6 +221,16 @@ It contains the following member:
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
+.It Fn pci_activate "pc" "tag" "sc" "fun"
+Attempt to bring the device to state D0.
+If the device is not in the D0 state call
+.Fa fun
+to restore its state.
+If
+.Fa fun
+is 
+.Dv NULL
+then restoring from state D3 is going to fail.
 .It Fn pci_conf_read "pc" "tag" "reg"
 Read from register
 .Fa reg
@@ -452,13 +465,13 @@ Valid values for
 .Fa newstate
 are:
 .Pp
-.Bl -tag -width PCI_PWR_D0 -compact
-.It Dv PCI_PWR_D0
-.It Dv PCI_PWR_D1
-.It Dv PCI_PWR_D2
-.It Dv PCI_PWR_D3
+.Bl -tag -width PCI_PMCSR_STATE_D0 -compact
+.It Dv PCI_PMCSR_STATE_D0
+.It Dv PCI_PMCSR_STATE_D1
+.It Dv PCI_PMCSR_STATE_D2
+.It Dv PCI_PMCSR_STATE_D3
 .El
-.It Fn pci_get_powerstate "pc" "tag"
+.It Fn pci_get_powerstate "pc" "tag" "state"`
 Get current power state of the device.
 .It Fn pci_vpd_read "pc" "tag" "offset" "count" "data"
 Read
