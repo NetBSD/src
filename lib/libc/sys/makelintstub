@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.16 2004/01/29 02:00:02 tsarna Exp $
+# $NetBSD: makelintstub,v 1.17 2006/06/18 14:28:12 christos Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -36,9 +36,11 @@
 usage()
 {
 
-	echo "usage: $0 [-n|-p] [-o filename] object ..."
-	echo "       The CPP environment variable must be set"
-	echo "       to the path to the C preprocessor."
+cat << _EOF 1>&2
+Usage: $PROG [-n|-p] [-o filename] object ...
+	The CPP environment variable must be set
+	to the path to the C preprocessor.
+_EOF
 	exit 1
 }
 
@@ -84,7 +86,7 @@ syscall_stub()
 	syscallname="$2"
 	funcname="$3"
 
-    	arglist="`
+    	arglist="$(
     	sed -e 'ta
 		:a
 		s,^/\* syscall: \"'"$syscallname"'\" ,,
@@ -92,7 +94,7 @@ syscall_stub()
 		d
 		:b
 		s, \*/$,,' $syscalldump
-	`"
+	)"
 
 	eval set -f -- "$arglist"
 
@@ -114,10 +116,10 @@ syscall_stub()
 	echo	"#ifdef __STDC__"
 
 	echo "$funcname("
-	first=yes; i=1
+	first=true; i=1
 	for arg; do
-		if [ $first = yes ]; then
-			first=no
+		if $first; then
+			first=false
 		else
 			echo ", "
 		fi
@@ -126,7 +128,7 @@ syscall_stub()
 		*) echo "$arg arg$i"; i=$(($i + 1));;
 		esac
 	done
-	if [ $first = yes ]; then
+	if $first; then
 		echo "void"
 	fi
 	echo	")"
@@ -135,10 +137,10 @@ syscall_stub()
 	echo	"#else"
 
 	echo "$funcname("
-	first=yes; i=1
+	first=true; i=1
 	for arg; do
-		if [ $first = yes ]; then
-			first=no
+		if $first; then
+			first=false
 		else
 			echo ", "
 		fi
@@ -174,48 +176,50 @@ trailer()
 	__EOF__
 }
 
-set -- `getopt no:ps: $*`
 
-pflag=NO
-nflag=NO
+pflag=false
+nflag=false
 oarg=""
 syscallhdr=/usr/include/sys/syscall.h
 syscalldump=/tmp/makelintstub.$$
+PROG="$(basename "$0")"
 
-if test "x${CPP}" = "x"; then
+if [ -z "${CPP}" ]; then
 	usage
 fi
 
-if test $? -ne 0; then
-	usage
-fi
-for i; do
+while getopts no:ps: i
+do
 	case "$i" in
-	-n)	nflag=YES; shift;;
-	-o)	oarg=$2; shift; shift;;
-	-p)	pflag=YES; shift;;
-	-s)	syscallhdr=$2; shift; shift;;
-	--)	shift; break;;
+	n)	nflag=true;;
+	o)	oarg=$OPTARG;;
+	p)	pflag=true;;
+	s)	syscallhdr=$OPTARG;;
+	*)	usage;;
 	esac
 done
 
-if [ $pflag = YES ] && [ $nflag = YES ]; then
-	echo "$0: -n flag and -p flag may not be used together"
-	echo ""
+shift $(expr $OPTIND - 1)
+
+if $pflag && $nflag
+then
+	echo "$PROG: -n flag and -p flag may not be used together" 1>&2
 	usage
 fi
 
-if [ "X$oarg" != "X" ]; then
+if [ -n "$oarg" ]; then
 	exec > $oarg
 fi
 
-trap "rm -f $syscalldump" 0 1 2 15
+trap "rm -f $syscalldump" 0 1 2 3 15
 
 header
-echo "#include \"$syscallhdr\"" | ${CPP} -D_LIBC -C >$syscalldump
+
+echo "#include \"$syscallhdr\"" | ${CPP} -D_LIBC -C > $syscalldump
+
 for syscall; do
 	fnname=${syscall%.S}
-	if [ $pflag = YES ]; then
+	if $pflag; then
 		scname=${fnname#_}
 	else
 		scname=$fnname
@@ -223,6 +227,7 @@ for syscall; do
 	syscall_stub $syscalldump $scname $fnname
 	echo ""
 done
+
 trailer
 
 exit 0
