@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.9 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: postfix,v 1.10 2006/06/18 14:05:34 christos Exp $
 #
 
 # PROVIDE: mail
@@ -36,6 +36,19 @@ postfix_precmd()
 			    cp -p /etc/$f ${spooletcdir}/$f
 		fi
 	done
+
+	# check modifications on /etc/mail/aliases
+	if [ -f "/etc/mail/aliases.db" ]; then
+		if [ ! "/etc/mail/aliases" -ot "/etc/mail/aliases.db" ]; then
+			echo \
+	    "${name}: /etc/mail/aliases newer than /etc/mail/aliases.db, regenerating"
+			/usr/bin/newaliases
+		fi
+	else
+		echo \
+	    "${name}: /etc/mail/aliases.db not present, generating"
+			/usr/bin/newaliases
+	fi
 }
 
 postfix_op()
