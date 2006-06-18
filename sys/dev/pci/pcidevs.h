@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.795 2006/06/18 10:33:42 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.796 2006/06/18 21:32:50 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.796 2006/06/18 10:33:12 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.797 2006/06/18 21:32:24 christos Exp
  */
 
 /*
@@ -2775,6 +2775,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139B	0x8138		/* 8139B 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 
