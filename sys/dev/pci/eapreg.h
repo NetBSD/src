@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.11.14.1 2006/06/18 09:22:24 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -41,34 +41,62 @@
  */
 
 #define EAP_ICSC		0x00    /* interrupt / chip select control */
-#define  EAP_SERR_DISABLE	0x00000001
-#define  EAP_CDC_EN		0x00000002
+
+#define  EAP_SERR_DISABLE	0x00000001 /* do not present SERR on PCI bus */
+#define  E1371_PCICLKDIS	0x00000001 /* PCIclk to essential modules only*/
+
+#define  EAP_CDC_EN		0x00000002 /* enable codec i/f */
+#define  E1371_XTALCKDIS	0x00000002 /* gate xtal clk to all modules */
+
 #define  EAP_JYSTK_EN		0x00000004
 #define  EAP_UART_EN		0x00000008
 #define  EAP_ADC_EN		0x00000010
-#define  EAP_DAC2_EN		0x00000020
-#define  EAP_DAC1_EN		0x00000040
+#define  EAP_DAC2_EN		0x00000020 /* intended as CODEC DAC */
+#define  EAP_DAC1_EN		0x00000040 /* intended as CODEC FM DAC */
 #define  EAP_BREQ		0x00000080
-#define  EAP_XTCL0		0x00000100
-#define  EAP_M_CB		0x00000200
-#define  EAP_CCB_INTRM		0x00000400
+
+#define  EAP_XCTL0		0x00000100 /* a gp out pin on 1370 */
+#define  EAP_M_CB		0x00000200 /* rec src mpeg (!adc) */
+#define  E1371_PDLEV(n)		((n)<<8)   /* pwr dwn lvl D0 - D3 */
+#define  E1371_PDLEVBITS	0x00000300
+
+#define  EAP_CCB_INTRM		0x00000400 /* enable CCB module voice intrs */
+
 #define  EAP_DAC_SYNC		0x00000800
+#define  E1371_M_CB		0x00000800 /* rec src i2s (!adc); cf EAP_M_CB!*/
+
 #define  EAP_WTSRSEL		0x00003000
 #define   EAP_WTSRSEL_5		0x00000000
 #define   EAP_WTSRSEL_11	0x00001000
 #define   EAP_WTSRSEL_22	0x00002000
 #define   EAP_WTSRSEL_44	0x00003000
+#define  E1371_PWR_INTRM	0x00001000 /* ena intr on pwr lvl change */
+#define  E1371_ADC_STOP		0x00002000 /* cf EAP_ADC_STOP! */
+
 #define  EAP_M_SBB		0x00004000
 #define  E1371_SYNC_RES		0x00004000
+
 #define  EAP_MSFMTSEL		0x00008000
-#define  EAP_DAC_EN(i)		(EAP_DAC2_EN << (i))
+
+#define  EAP_DAC_EN(i)		(EAP_DAC2_EN << (i)) /* yes, it's twisted */
+
 #define  EAP_SET_PCLKDIV(n)	(((n)&0x1fff)<<16)
 #define  EAP_GET_PCLKDIV(n)	(((n)>>16)&0x1fff)
 #define  EAP_PCLKBITS		0x1fff0000
+#define  E1371_OUT_GPIO(n)	(((n)&0xf)<<16)
+#define  E1371_IN_GPIO(n)	(((n)>>20)&0xf)
+#define  E1371_OUTGPIOBITS	0x000f0000
+#define  E1371_INGPIOBITS	0x00f00000
 #define  E1371_JOY_ASEL(n)	(((n)&3)<<24)
 #define  E1371_JOY_ASELBITS	0x03000000
-#define  EAP_XTCL1		0x40000000
+#define  E1373_SPDIFEN_B	0x04000000 /* spdif generated (!spdif thru) */
+#define  E1373_RECEN_B		0x08000000 /* !(rec monitor to spdif out) */
+#define  E1373_TEST_BIT		0x10000000 /* 0 except to test block preamble */
+#define  E1373_BYPASS_R		0x20000000 /* rec bypass rate converter */
+#define  EAP_XCTL1		0x40000000 /* a gp out pin on 1370 */
+#define  E1373_BYPASS_P2	0x40000000 /* play2 bypass rate converter */
 #define  EAP_ADC_STOP		0x80000000
+#define  E1373_BYPASS_P1	0x80000000 /* play1 bypass rate converter */
 
 #define EAP_ICSS		0x04	/* interrupt / chip select status */
 					/* on the 5880 control / status */
@@ -78,9 +106,17 @@
 #define  EAP_I_UART		0x00000008
 #define  EAP_I_MCCB		0x00000010
 #define  EAP_VC			0x00000060
+
 #define  EAP_CWRIP		0x00000100
-#define  EAP_CBUSY		0x00000200
-#define  EAP_CSTAT		0x00000400
+#define  E1371_SYNC_ERR		0x00000100
+
+#define  EAP_CBUSY		0x00000200 /* tied 1 on 1371, 1373 */
+#define  EAP_CSTAT		0x00000400 /* tied 1 on 1371, 1373 */
+#define  E1373_GPIO_INT(n)	(((n)>>12)&0xf) /* which gpios interrupted */
+#define  E1373_TEST_MODE	0x00010000
+#define  E1373_TEST_SPDIF	0x00020000
+#define  E1373_ENABLE_SPDIF	0x00040000
+#define  E1373_GPIO_INTEN(n)	(((n)&0xf)<<20)
 #define  EAP_CT5880_AC97_RESET	0x20000000
 #define  EAP_INTR		0x80000000
 
@@ -93,7 +129,10 @@
 #define EAP_UART_CONTROL	0x09
 #define  EAP_UC_CNTRL		0x03
 #define  EAP_UC_TXINTEN		0x20
+#define  EAP_UC_TXINTENBITS	0x60
 #define  EAP_UC_RXINTEN		0x80
+#define EAP_UART_RESERVED	0x0a
+#define  EAP_UR_TEST_MODE	0x01
 #define EAP_MEMPAGE		0x0c
 #define EAP_CODEC		0x10
 #define  EAP_SET_CODEC(a,d)	(((a)<<8) | (d))
