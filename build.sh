@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.146 2006/02/03 12:29:41 apb Exp $
+#	$NetBSD: build.sh,v 1.147 2006/06/19 18:12:30 dogcow Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,10 +84,10 @@ initdefaults()
 	# presence of symlinks.  Unsetting PWD is simpler than changing
 	# every occurrence of pwd to use -P.
 	#
-	# XXX Except that doesn't work on Solaris.
+	# XXX Except that doesn't work on Solaris. Or many Linuces.
 	#
 	unset PWD
-	TOP=$(/bin/pwd -P 2>/dev/null)
+	TOP=$(/bin/pwd -P 2>/dev/null || /bin/pwd 2>/dev/null)
 
 	# Set defaults.
 	#
@@ -868,7 +868,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.146 2006/02/03 12:29:41 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.147 2006/06/19 18:12:30 dogcow Exp $
 # with these arguments: ${_args}
 #
 EOF
