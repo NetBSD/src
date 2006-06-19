@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# $NetBSD: btconfig,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+#
+
+# PROVIDE: bluetooth
+# REQUIRE: DAEMON
+# BEFORE:  LOGIN
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="btconfig"
+rcvar=${name}
+command="/usr/sbin/${name}"
+start_cmd="btconfig_start"
+stop_cmd="btconfig_stop"
+status_cmd="btconfig_status"
+
+btconfig_start()
+{
+	echo -n 'Configuring Bluetooth controllers:'
+
+	#
+	# Configure Bluetooth controllers.
+	#
+	# If ${btconfig_devices} is set, it should be a list of devices to
+	# configure. Otherwise, all available devices will be configured.
+	#
+	# If ${btconfig_<dev>} is set, it will be used as the parameter
+	# list for btconfig. Otherwise ${btconfig_args} will be used or
+	# if that is not set, the default string "enable" will be used.
+	#
+
+	devs="${btconfig_devices:-$(${command} -l)}"
+	for dev in ${devs}; do
+		eval args="\$btconfig_${dev}"
+		if [ -z "${args}" ]; then
+			args="${btconfig_args:-enable}"
+		fi
+
+		echo -n " ${dev}"
+		${command} ${dev} ${args}
+	done
+
+	echo '.'
+}
+
+btconfig_stop()
+{
+	echo -n 'Disabling Bluetooth controllers:'
+
+	devs="${btconfig_devices:-$(${command} -l)}"
+	for dev in ${devs}; do
+		echo -n " ${dev}"
+		${command} ${dev} disable
+	done
+
+	echo '.'
+}
+
+btconfig_status()
+{
+	${command}
+}
+
+load_rc_config ${name}
+run_rc_command "$1"

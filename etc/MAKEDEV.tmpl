@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.52 2006/04/03 08:15:50 scw Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.53 2006/06/19 15:44:35 gdamore Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -228,6 +228,7 @@
 #	bell*	OPM bell device (x68k)
 #	bktr	Brooktree 848/849/878/879 based TV cards
 #	bpf	packet filter
+#	bthubctl Bluetooth HUB control
 #	cfs*	Coda file system device
 #	ch*	SCSI media changer
 #	cir*	Consumer IR
@@ -931,6 +932,10 @@ lpt*|lpa*)
 bpf)
 	mkdev bpf	c %bpf_chr% 0
 	lndev bpf bpf0
+	;;
+
+bthubctl)
+	mkdev bthubctl c %bthub_chr% 0
 	;;
 
 tun*)

@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.29 2006/05/03 21:43:31 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.30 2006/06/19 15:44:36 gdamore Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,3 +71,7 @@
 .ds doc-volume-as-ews4800mips		ews4800mips
 .ds doc-volume-as-ibmnws		ibmnws
 .ds doc-volume-as-iyonix		iyonix
+.
+.\" Bluetooth libraries
+.ds doc-str-Lb-libbluetooth  Bluetooth Host Lookup library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libsdp        Bluetooth Service Discovery Protocol library (libsdp, \-libsdp)

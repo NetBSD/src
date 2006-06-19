@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.49 2005/06/11 23:46:57 wiz Exp $
+.\" $NetBSD: doc2html,v 1.50 2006/06/19 15:44:44 gdamore Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -576,6 +576,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if "\\$1"libarm32" \&ARM32 Architecture Library (libarm32, -larm32)
 .if "\\$1"libi386" \&i386 Architecture Library (libi386, -li386)
 .if "\\$1"libm68k" \&m68k Architecture Library (libm68k, -lm68k)
+.if "\\$1"libbluetooth" \&Bluetooth Hosts Library (libbluetooth, -lbluetooth)
 .if "\\$1"libc" \&Standard C Library (libc, -lc)
 .if "\\$1"libcdk" \&Curses Development Kit Library (libcdk, -lcdk)
 .if "\\$1"libcompat" \&Compatibility Library (libcompat, -lcompat)
@@ -598,6 +599,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if "\\$1"libpthread" \&POSIX Thread Library (libpthread, -lpthread)
 .if "\\$1"libresolv" \&DNS Resolver Library (libresolv, -lresolv)
 .if "\\$1"librt" \&POSIX Real-time Library (librt, -lrt)
+.if "\\$1"libsdp" \&Service Discovery Protocol Library (libsdp, -lsdp)
 .if "\\$1"libtermcap" \&Termcap Access Library (libtermcap, -ltermcap)
 .if "\\$1"libusbhid" \&USB Human Interface Devices Library (libusbhid, -lusbhid)
 .if "\\$1"libutil" \&System Utilities Library (libutil, -lutil)

@@ -1,0 +1,233 @@
+.\" $NetBSD: bluetooth.conf.5,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" Copyright (c) 2001-2002 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd March 30, 2006
+.Dt BLUETOOTH.CONF 5
+.Os
+.Sh NAME
+.Nm bluetooth.conf
+.Nd
+Bluetooth remote devices configuration file.
+.Sh DESCRIPTION
+The
+.Nm
+file is the default configuration file used by the
+.Xr bthcid 8 ,
+and
+.Xr btcontrol 8
+programs.
+.Pp
+The
+.Nm
+file is a free-form
+.Tn ASCII
+text file.
+It is parsed by the recursive-descent parser built into the
+.Xr bluetooth 3 
+library.
+The file may contain extra tabs and newlines for formatting purposes.
+Keywords in the file are case-sensitive.
+Comments may be placed anywhere within the file (except within quotes).
+Comments begin with the
+.Ql #
+character and end at the end of the line.
+.Sh FILE FORMAT
+The
+.Nm
+file consists of a list of
+.Cm device
+entries.
+Each remote Bluetooth device is identified by its unique BD_ADDR.
+Each
+.Cm device
+entry defines options and information for a remote Bluetooth device.
+.Pp
+The
+.Cm device
+entry
+.Pp
+.Cm device
+{
+.Cm option Ar argument ;
+.Oo
+.Cm option Ar argument ;
+.Oc
+}
+.Pp
+The supported options and arguments are as follows:
+.Bl -tag -width indent
+.It Cm bdaddr Ar BD_ADDR
+This required value is the Bluetooth Device Address of the remote device and
+can be obtained by placing the device into Discoverable mode and using the
+.Xr btconfig 8
+program
+.Pa Inquiry
+command.
+.It Cm type Ar type
+This optional entry will indicate to the
+.Xr btcontrol 8
+program how to attach this device to the system.
+.Ar type
+can be one of:
+.Pp
+.Bl -tag -compact
+.It hid
+Human Interface Device
+.It hset
+Audio Headset
+.El
+.It Cm name Ar device_name
+Specify user friendly name for the entry.
+Name is a string in straight double quotes.
+.It Cm key Ar link_key
+Specify a link key for the entry.
+Link key is hexadecimal string up to 32 characters in length starting with
+.Ql 0x .
+.Pp
+It is not generally necessary to store link keys in the
+.Pa /etc/bluetooth/bluetooth.conf
+file as the
+.Xr bthcid 8
+daemon will keep them elsewhere.
+.It Cm pin Ar PIN_code
+Specify PIN code for the entry.
+PIN code is a string up to 16 characters in length in straight double quotes.
+If no PIN is given, and the baseband connection requires authentication, the
+.Xr bthcid 8
+daemon will attempt to contact clients for a PIN before sending a negative
+response.
+.Pp
+It is not generally necessary to store PINs in the
+.Pa /etc/bluetooth/bluetooth.conf
+file as the
+.Xr btpin 1
+utility can be used to register PINs with the
+.Xr bthcid 8
+daemon prior to pairing a device.
+.It Cm control_channel Ar channel
+This RFCOMM channel number used to contact the HSET device.
+.It Cm control_psm Ar psm
+The PSM value that an HID device uses for control messages.
+.It Cm interrupt_psm Ar psm
+The PSM value that an HID device uses for interrupt messages.
+.It Cm reconnect_initiate Ar bool
+This should be 'true' if the HID device normally initiates reconnection after
+link loss, and if not set (or set to 'false') will cause the
+.Xr bthidev 4
+driver to initiate connections.
+.It Cm battery_power Ar bool
+This should be 'true' if the HID device runs from battery power.
+.It Cm normally_connectable Ar bool
+This should be 'true' if the HID device is normally available for incoming
+connections.
+.It Cm hid_descriptor
+This block of hexadecimal bytes is a description of HID device capabilities
+as according to the USB HID specifications, and can be displayed in
+human readable form using the
+.Xr btcontrol 8
+program
+.Pa Parse
+command.
+.El
+.Sh EXAMPLES
+A sample
+.Nm
+file:
+.Bd -literal
+# Ericsson T68 phone
+device {
+        bdaddr                  00:80:37:5e:4d:d4;
+        name                    "Ericsson T68 phone";
+        pin                     "0000"; # PIN code
+}
+
+# example HID
+device {
+	bdaddr                  00:50:f2:e5:68:84;
+	attach			hid;
+        name                    "Example HID";
+	key                     0x00112233445566778899aabbccddeeff;
+	control_psm             0x0011;
+	interrupt_psm           0x0013;
+	reconnect_initiate      false;
+	normally_connectable    false;
+	hid_descriptor          {
+		0x05 0x01 0x09 0x02 0xa1 0x01 0x85 0x02
+		0x09 0x01 0xa1 0x00 0x05 0x09 0x19 0x01
+		0x29 0x05 0x15 0x00 0x25 0x01 0x75 0x01
+		0x95 0x05 0x81 0x02 0x75 0x03 0x95 0x01
+		0x81 0x01 0x05 0x01 0x09 0x30 0x09 0x31
+		0x09 0x38 0x15 0x81 0x25 0x7f 0x75 0x08
+		0x95 0x03 0x81 0x06 0xc0 0xc0 0x05 0x0c
+		0x09 0x01 0xa1 0x01 0x85 0x03 0x05 0x01
+		0x09 0x02 0xa1 0x02 0x06 0x00 0xff 0x15
+		0x00 0x25 0x03 0x95 0x01 0x75 0x02 0x0a
+		0x01 0xfe 0x81 0x02 0x75 0x06 0x81 0x01
+		0xc0 0xc0
+	};
+}
+.Ed
+.Sh FILES
+.Bl -tag -compact
+.It Pa /etc/bluetooth/bluetooth.conf
+.El
+.Sh SEE ALSO
+.Xr btpin 1 ,
+.Xr bluetooth 3 ,
+.Xr bthcid 8 ,
+.Xr btcontrol 8
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.An Iain Hibbert
+for Itronix, Inc.

@@ -1,0 +1,169 @@
+.\" $NetBSD: btcontrol.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $Id: btcontrol.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/bthidcontrol.8,v 1.3 2005/01/18 20:02:30 ru Exp $
+.\"
+.Dd April 25, 2006
+.Dt BTCONTROL 8
+.Os
+.Sh NAME
+.Nm btcontrol
+.Nd Bluetooth remote device control utility
+.Sh SYNOPSIS
+.Nm
+.Fl h
+.Nm
+.Op Fl a Ar address
+.Op Fl c Ar file
+.Op Fl d Ar device
+.Op Fl f Ar path
+.Ar command
+.Op options
+.Sh DESCRIPTION
+The
+.Nm
+utility can be used to query remote Bluetooth devices, print device configurations
+in human readable form and configure Bluetooth devices in the system.
+.Pp
+The
+.Nm
+utility will print results to the standard output and error messages to the
+standard error.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl a Ar address
+Specify remote device address, which can be given as BDADDR or a name.
+If a name was specified, the
+.Nm
+utility attempts to resolve the name via
+.Xr bt_gethostbyname 3 .
+.It Fl c Ar file
+Specify path to the Bluetooth remote device configuration file.
+The default path is
+.Pa /etc/bluetooth/bluetooth.conf .
+.It Fl d Ar device
+Specify a local device that should be used for communications with the remote
+device. If not given, BDADDR_ANY shall be used.
+.It Fl f Ar path
+Specify path to the Bluetooth Hub control device.
+The default path is
+.Pa /dev/bthubctl .
+.It Fl h
+Display usage message and exit.
+.It Ar command
+One of the supported commands (see below).
+Special command
+.Cm help
+can be used to obtain the list of all supported commands.
+To get more information about specific command use
+.Cm help Ar command .
+.El
+.Sh COMMANDS
+The currently supported commands for
+.Nm
+are:
+.Pp
+.Bl -tag -width indent
+.It Cm Attach Oo Fl C Oc Oo Fl m Ar mtu Oc
+Attach device with details from 
+.Xr bluetooth.conf 5
+file to the Bluetooth hub. When the
+.Fl C
+flag is given, initiate a connection to the HID. When the
+.Fl m Ar mtu
+option is given, set the MTU for HSET devices.
+.Pp
+.It Cm Detach
+Detach device from Bluetooth hub.
+.Pp
+.It Cm Parse
+Parse HID descriptor for the specified device from the
+.Xr bluetooth.conf 5
+file and print in human readable form.
+.It Cm Print
+Print configuration entry from the
+.Xr bluetooth.conf 5
+file.
+.Pp
+.El
+.Sh FILES
+.Bl -tag -compact
+.It Pa /dev/bthubctl
+.It Pa /etc/bluetooth/bluetooth.conf
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr bluetooth.conf 5 ,
+.Xr bthidev 4 ,
+.Xr bthset 4 ,
+.Xr bthub 4 ,
+.Xr btkbd 4 ,
+.Xr btms 4
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.Sh HISTORY
+.Nm btcontrol
+was written for
+.Nx 4.0
+by
+.An "Iain Hibbert"
+under the sponsorship of Itronix, Inc.
+Parts of the
+.Nm
+program originated from the
+.Fx
+.Nm bthidcontrol
+program.

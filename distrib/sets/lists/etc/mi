@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.168 2006/06/09 12:18:30 tron Exp $
+# $NetBSD: mi,v 1.169 2006/06/19 15:44:35 gdamore Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -17,6 +17,10 @@
 ./etc/csh.cshrc					etc-util-etc
 ./etc/csh.login					etc-util-etc
 ./etc/csh.logout				etc-util-etc
+./etc/bluetooth					etc-sys-etc
+./etc/bluetooth/bluetooth.conf			etc-sys-etc
+./etc/bluetooth/hosts				etc-sys-etc
+./etc/bluetooth/protocols			etc-sys-etc
 ./etc/daily					etc-sys-etc
 ./etc/daily.conf				etc-sys-etc
 ./etc/default					etc-obsolete		obsolete
@@ -143,6 +147,8 @@
 ./etc/rc.d/apmd					etc-sys-rc
 ./etc/rc.d/bootconf.sh				etc-sys-rc
 ./etc/rc.d/bootparams				etc-bootserver-rc
+./etc/rc.d/btconfig				etc-sys-rc
+./etc/rc.d/bthcid				etc-sys-rc
 ./etc/rc.d/ccd					etc-sys-rc
 ./etc/rc.d/cgd					etc-sys-rc
 ./etc/rc.d/cleartmp				etc-sys-rc
@@ -218,6 +224,7 @@
 ./etc/rc.d/rwho					etc-net-rc
 ./etc/rc.d/savecore				etc-sys-rc
 ./etc/rc.d/screenblank				etc-sys-rc
+./etc/rc.d/sdpd					etc-sys-rc
 ./etc/rc.d/securelevel				etc-sys-rc
 ./etc/rc.d/sshd					etc-secsh-rc
 ./etc/rc.d/staticroute				etc-sys-rc
