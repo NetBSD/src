@@ -1,6 +1,4 @@
-# $NetBSD: charset.pivot.MISC.src,v 1.5 2006/04/08 14:15:48 tnozaki Exp $
+# $NetBSD: charset.pivot.MISC.src,v 1.6 2006/06/19 17:28:25 tnozaki Exp $
 
-Big5			UCS			1
-UCS			Big5			1
 PTCP154			UCS			1
 UCS			PTCP154			1
