@@ -1,0 +1,10 @@
+# $NetBSD: charset.pivot.BIG5.src,v 1.1 2006/06/19 17:28:25 tnozaki Exp $
+
+Big5-2003	UCS		1
+Big5-ETen	UCS		1
+Big5-IBM	UCS		1
+Big5-Plus	UCS		1
+UCS		Big5-2003	1
+UCS		Big5-ETen	1
+UCS		Big5-IBM	1
+UCS		Big5-Plus	1
