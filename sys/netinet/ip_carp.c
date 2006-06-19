@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.1 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.1.2.1 2006/06/19 04:09:48 chap Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -589,6 +589,48 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		carpstats.carps_badvhid++;
 		m_freem(m);
 		return;
+	}
+
+	/*
+	 * Check if our own advertisement was duplicated
+	 * from a non simplex interface.
+	 * XXX If there is no address on our physical interface
+	 * there is no way to distinguish our ads from the ones
+	 * another carp host might have sent us.
+	 */
+	if ((sc->sc_carpdev->if_flags & IFF_SIMPLEX) == 0) {
+		struct sockaddr sa;
+		struct ifaddr *ifa;
+
+		bzero(&sa, sizeof(sa));
+		sa.sa_family = af;
+		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
+
+		if (ifa && af == AF_INET) {
+			struct ip *ip = mtod(m, struct ip *);
+			if (ip->ip_src.s_addr ==
+					ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
+				m_freem(m);
+				return;
+			}
+		}
+#ifdef INET6
+		if (ifa && af == AF_INET6) {
+			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+			struct in6_addr in6_src, in6_found;
+
+			in6_src = ip6->ip6_src;
+			in6_found = ifatoia6(ifa)->ia_addr.sin6_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&in6_src))
+				in6_src.s6_addr16[1] = 0;
+			if (IN6_IS_ADDR_LINKLOCAL(&in6_found))
+				in6_found.s6_addr16[1] = 0;
+			if (IN6_ARE_ADDR_EQUAL(&in6_src, &in6_found)) {
+				m_freem(m);
+				return;
+			}
+		}
+#endif /* INET6 */
 	}
 
 	microtime(&sc->sc_if.if_lastchange);
@@ -1948,7 +1990,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		carpr.carpr_vhid = sc->sc_vhid;
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_advskew = sc->sc_advskew;
-			
+
 		if (p != 0 || !(error = kauth_authorize_generic(p->p_cred,
 		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			bcopy(sc->sc_key, carpr.carpr_key,
@@ -2186,53 +2228,6 @@ carp_ether_purgemulti(struct carp_softc *sc)
 	}
 }
 
-/*
- * Compute number of hz in the specified amount of time. This
- * function is from OpenBSD.
- */
-int
-tvtohz(struct timeval *tv)
-{
-	unsigned long ticks;
-	long sec, usec;
-
-	/*
-	 * If the number of usecs in the whole seconds part of the time
-	 * fits in a long, then the total number of usecs will
-	 * fit in an unsigned long.  Compute the total and convert it to
-	 * ticks, rounding up and adding 1 to allow for the current tick
-	 * to expire.  Rounding also depends on unsigned long arithmetic
-	 * to avoid overflow.
-	 *
-	 * Otherwise, if the number of ticks in the whole seconds part of
-	 * the time fits in a long, then convert the parts to
-	 * ticks separately and add, using similar rounding methods and
-	 * overflow avoidance.  This method would work in the previous
-	 * case but it is slightly slower and assumes that hz is integral.
-	 *
-	 * Otherwise, round the time down to the maximum
-	 * representable value.
-	 *
-	 * If ints have 32 bits, then the maximum value for any timeout in
-	 * 10ms ticks is 248 days.
-	 */
-	sec = tv->tv_sec;
-	usec = tv->tv_usec;
-	if (sec < 0 || (sec == 0 && usec <= 0))
-		ticks = 0;
-	else if (sec <= LONG_MAX / 1000000)
-		ticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
-			/ tick + 1;
-	else if (sec <= LONG_MAX / hz)
-		ticks = sec * hz
-			+ ((unsigned long)usec + (tick - 1)) / tick + 1;
-	else
-		ticks = LONG_MAX;
-	if (ticks > INT_MAX)
-		ticks = INT_MAX;
-	return ((int)ticks);
-}
-
 SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")
 {
 
@@ -2284,7 +2279,7 @@ SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
-		       SYSCTL_DESCR("CARP statistics"), 
+		       SYSCTL_DESCR("CARP statistics"),
 		       NULL, 0, &carpstats, sizeof(carpstats),
 		       CTL_NET, PF_INET, IPPROTO_CARP, CARPCTL_STATS,
 		       CTL_EOL);

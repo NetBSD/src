@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.16 2006/04/02 05:52:50 gdamore Exp $	*/
+/*	$NetBSD: athvar.h,v 1.16.2.1 2006/06/19 03:58:13 chap Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -181,8 +181,8 @@ struct ath_softc {
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
 	void 			(*sc_node_free)(struct ieee80211_node *);
-	bus_space_tag_t		sc_st;		/* bus space tag */
-	bus_space_handle_t	sc_sh;		/* bus space handle */
+	HAL_BUS_TAG		sc_st;		/* bus space tag */
+	HAL_BUS_HANDLE		sc_sh;		/* bus space handle */
 	bus_dma_tag_t		sc_dmat;	/* bus DMA tag */
 	ath_lock_t		sc_mtx;		/* master lock (recursive) */
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
@@ -264,7 +264,7 @@ struct ath_softc {
 	u_int			sc_txqsetup;	/* h/w queues setup */
 	u_int			sc_txintrperiod;/* tx interrupt batching */
 	struct ath_txq		sc_txq[HAL_NUM_TX_QUEUES];
-	struct ath_txq		*sc_ac2q[5];	/* WME AC -> h/w q map */ 
+	struct ath_txq		*sc_ac2q[5];	/* WME AC -> h/w q map */
 	ath_task_t		sc_txtask;	/* tx int processing */
 
 	struct ath_descdma	sc_bdma;	/* beacon descriptors */

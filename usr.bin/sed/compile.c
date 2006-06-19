@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.33 2006/05/11 17:18:19 mrg Exp $	*/
+/*	$NetBSD: compile.c,v 1.33.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,12 +67,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.33 2006/05/11 17:18:19 mrg Exp $");
+__RCSID("$NetBSD: compile.c,v 1.33.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 

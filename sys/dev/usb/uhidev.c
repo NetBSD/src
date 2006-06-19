@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.31 2005/11/23 08:54:48 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.31.14.1 2006/06/19 04:05:49 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.31 2005/11/23 08:54:48 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.31.14.1 2006/06/19 04:05:49 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ USB_ATTACH(uhidev)
 	struct uhidev_attach_arg uha;
 	struct uhidev *dev;
 	int size, nrepid, repid, repsz;
-	int repsizes[256];
+	int *repsizes;
 	int i;
 	void *desc;
 	const void *descptr;
@@ -248,9 +248,14 @@ USB_ATTACH(uhidev)
 	if (nrepid > 0)
 		printf("%s: %d report ids\n", USBDEVNAME(sc->sc_dev), nrepid);
 	nrepid++;
+	repsizes = malloc(nrepid * sizeof(*repsizes), M_TEMP, M_NOWAIT);
+	if (repsizes == NULL)
+		goto nomem;
 	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
 				M_USBDEV, M_NOWAIT | M_ZERO);
 	if (sc->sc_subdevs == NULL) {
+		free(repsizes, M_TEMP);
+nomem:
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -293,6 +298,7 @@ USB_ATTACH(uhidev)
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
+					free(repsizes, M_TEMP);
 					printf("%s: sc_intr == NULL\n",
 					       USBDEVNAME(sc->sc_dev));
 					USB_ATTACH_ERROR_RETURN;
@@ -306,6 +312,7 @@ USB_ATTACH(uhidev)
 			}
 		}
 	}
+	free(repsizes, M_TEMP);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

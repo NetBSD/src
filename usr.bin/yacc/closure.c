@@ -1,4 +1,4 @@
-/*	$NetBSD: closure.c,v 1.7 2003/08/07 11:17:52 agc Exp $	*/
+/*	$NetBSD: closure.c,v 1.7.12.1 2006/06/19 04:17:08 chap Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)closure.c	5.3 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: closure.c,v 1.7 2003/08/07 11:17:52 agc Exp $");
+__RCSID("$NetBSD: closure.c,v 1.7.12.1 2006/06/19 04:17:08 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,10 +50,10 @@ unsigned *ruleset;
 static unsigned *first_derives;
 static unsigned *EFF;
 
-void set_EFF __P((void));
+static void set_EFF(void);
 
-void
-set_EFF()
+static void
+set_EFF(void)
 {
     unsigned *row;
     int symbol;
@@ -90,7 +90,7 @@ set_EFF()
 
 
 void
-set_first_derives()
+set_first_derives(void)
 {
     unsigned *rrow;
     unsigned *vrow;
@@ -148,9 +148,7 @@ set_first_derives()
 
 
 void
-closure(nucleus, n)
-short *nucleus;
-int n;
+closure(short *nucleus, int n)
 {
     int ruleno;
     unsigned word;
@@ -218,7 +216,7 @@ int n;
 
 
 void
-finalize_closure()
+finalize_closure(void)
 {
   FREE(itemset);
   FREE(ruleset);
@@ -228,8 +226,8 @@ finalize_closure()
 
 #ifdef	DEBUG
 
-print_closure(n)
-int n;
+void
+print_closure(int n)
 {
   short *isp;
 
@@ -239,7 +237,8 @@ int n;
 }
 
 
-print_EFF()
+void
+print_EFF(void)
 {
     int i, j;
     unsigned *rowp;
@@ -270,7 +269,8 @@ print_EFF()
 }
 
 
-print_first_derives()
+void
+print_first_derives(void)
 {
     int i;
     int j;

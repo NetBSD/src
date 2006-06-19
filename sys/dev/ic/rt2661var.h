@@ -1,8 +1,8 @@
-/*	$NetBSD: ralvar.h,v 1.4 2006/05/05 09:04:05 drochner Exp $ */
-/*	$OpenBSD: ralvar.h,v 1.7 2005/03/11 19:39:35 damien Exp $  */
+/*	$NetBSD: rt2661var.h,v 1.5.4.2 2006/06/19 03:58:14 chap Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
- * Copyright (c) 2005
+ * Copyright (c) 2006
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,150 +18,160 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct ral_rx_radiotap_header {
+struct rt2661_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint64_t	wr_tsf;
 	uint8_t		wr_flags;
-	uint8_t		_pad;
+	uint8_t		wr_rate;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
-	uint8_t		wr_antenna;
 	uint8_t		wr_antsignal;
 } __packed;
 
-#define RAL_RX_RADIOTAP_PRESENT						\
+#define RT2661_RX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
 	 (1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_ANTENNA) |				\
 	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
 
-struct ral_tx_radiotap_header {
+struct rt2661_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
 	uint8_t		wt_flags;
 	uint8_t		wt_rate;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-	uint8_t		wt_antenna;
 } __packed;
 
-#define RAL_TX_RADIOTAP_PRESENT						\
+#define RT2661_TX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_ANTENNA))
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
-struct ral_tx_data {
+struct rt2661_tx_data {
 	bus_dmamap_t			map;
 	struct mbuf			*m;
 	struct ieee80211_node		*ni;
 	struct ieee80211_rssdesc	id;
 };
 
-struct ral_tx_ring {
+struct rt2661_tx_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		physaddr;
-	struct ral_tx_desc	*desc;
-	struct ral_tx_data	*data;
+	struct rt2661_tx_desc	*desc;
+	struct rt2661_tx_data	*data;
 	int			count;
 	int			queued;
 	int			cur;
 	int			next;
-	int			cur_encrypt;
-	int			next_encrypt;
+	int			stat;
 };
 
-struct ral_rx_data {
+struct rt2661_rx_data {
 	bus_dmamap_t	map;
 	struct mbuf	*m;
-	int		drop;
 };
 
-struct ral_rx_ring {
+struct rt2661_rx_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		physaddr;
-	struct ral_rx_desc	*desc;
-	struct ral_rx_data	*data;
+	struct rt2661_rx_desc	*desc;
+	struct rt2661_rx_data	*data;
 	int			count;
 	int			cur;
 	int			next;
-	int			cur_decrypt;
 };
 
-struct ral_node {
+struct rt2661_node {
 	struct ieee80211_node		ni;
 	struct ieee80211_rssadapt	rssadapt;
 };
 
-struct ral_softc {
+struct rt2661_softc {
 	struct device			sc_dev;
-	struct ethercom			sc_ec;
-#define sc_if	sc_ec.ec_if
+
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	int				(*sc_enable)(struct ral_softc *);
-	void				(*sc_disable)(struct ral_softc *);
-	void				(*sc_power)(struct ral_softc *, int);
+	int				(*sc_enable)(struct rt2661_softc *);
+	void				(*sc_disable)(struct rt2661_softc *);
+	void				(*sc_power)(struct rt2661_softc *, int);
 
 	bus_dma_tag_t			sc_dmat;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 
+	struct ethercom			sc_ec;
+
 	struct callout			scan_ch;
 	struct callout			rssadapt_ch;
 
+	int				sc_id;
+	int				sc_flags;
+#define RT2661_ENABLED	(1 << 0)
+#define RT2661_FWLOADED	(1 << 1)
+
 	int				sc_tx_timer;
 
-	uint32_t			asic_rev;
-	uint32_t			eeprom_rev;
+	struct ieee80211_channel	*sc_curchan;
+
 	uint8_t				rf_rev;
 
-	struct ral_tx_ring		txq;
-	struct ral_tx_ring		prioq;
-	struct ral_tx_ring		atimq;
-	struct ral_tx_ring		bcnq;
-	struct ral_rx_ring		rxq;
+	uint8_t				rfprog;
+	uint8_t				rffreq;
 
-	struct ieee80211_beacon_offsets	sc_bo;
+	struct rt2661_tx_ring		txq[5];
+	struct rt2661_tx_ring		mgtq;
+	struct rt2661_rx_ring		rxq;
 
 	uint32_t			rf_regs[4];
-	uint8_t				txpow[14];
+	int8_t				txpow[38];
 
 	struct {
-		uint8_t		reg;
-		uint8_t		val;
+		uint8_t	reg;
+		uint8_t	val;
 	}				bbp_prom[16];
 
-	int				led_mode;
 	int				hw_radio;
 	int				rx_ant;
 	int				tx_ant;
 	int				nb_ant;
+	int				ext_2ghz_lna;
+	int				ext_5ghz_lna;
+	int				rssi_2ghz_corr;
+	int				rssi_5ghz_corr;
+
+	uint8_t				bbp18;
+	uint8_t				bbp21;
+	uint8_t				bbp22;
+	uint8_t				bbp16;
+	uint8_t				bbp17;
+	uint8_t				bbp64;
 
 #if NBPFILTER > 0
-	caddr_t				sc_drvbpf;
+	caddr_t			sc_drvbpf;
 
 	union {
-		struct ral_rx_radiotap_header th;
+		struct rt2661_rx_radiotap_header th;
 		uint8_t	pad[64];
-	}				sc_rxtapu;
-#define sc_rxtap	sc_rxtapu.th
-	int				sc_rxtap_len;
+	}			sc_rxtapu;
+#define sc_rxtap		sc_rxtapu.th
+	int			sc_rxtap_len;
 
 	union {
-		struct ral_tx_radiotap_header th;
+		struct rt2661_tx_radiotap_header th;
 		uint8_t	pad[64];
-	}				sc_txtapu;
-#define sc_txtap	sc_txtapu.th
-	int				sc_txtap_len;
+	}			sc_txtapu;
+#define sc_txtap		sc_txtapu.th
+	int			sc_txtap_len;
 #endif
 };
 
-int	ral_attach(struct ral_softc *);
-int	ral_detach(struct ral_softc *);
-int	ral_intr(void *);
-int	ral_activate(struct device *, enum devact);
+#define	sc_if		sc_ec.ec_if
+
+int	rt2661_attach(void *, int);
+int	rt2661_detach(void *);
+int	rt2661_intr(void *);

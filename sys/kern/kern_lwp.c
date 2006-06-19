@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.35 2006/04/26 11:44:39 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.35.2.1 2006/06/19 04:07:15 chap Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.35 2006/04/26 11:44:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.35.2.1 2006/06/19 04:07:15 chap Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -507,7 +507,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
-	l2->l_addr = (struct user *)uaddr;
+	l2->l_addr = UAREA_TO_USER(uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.2 2005/06/02 01:43:16 lukem Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.2.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 
 	if (what == EASET) {
 		mkbuf(&buf, &buflen, strlen(argv[0]) + 1);
-		strcpy(buf, argv[0]);
+		strcpy(buf, argv[0]); /* safe */
 		argc--; argv++;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.25 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.25.14.1 2006/06/19 04:01:36 chap Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -165,6 +165,7 @@ struct pccbb_softc {
 
 	int sc_pwrmgt_offs;	/* Offset for power management capability */
 	struct pci_conf_state sc_pciconf;
+	pcireg_t sc_ricoh_misc_ctrl;
 };
 
 /*

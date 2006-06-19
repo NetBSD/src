@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.28 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.28.2.1 2006/06/19 04:07:14 chap Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.28 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.28.2.1 2006/06/19 04:07:14 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1871,22 +1871,27 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 	struct timespec *ts = NULL, tsb;
 
 	KASSERT(dep->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS));
+	/* XXX just call getnanotime early and use result if needed? */
 	dep->de_flag |= DE_MODIFIED;
 	if (dep->de_flag & DE_UPDATE) {
-		if (mod == NULL)
-			mod = ts = nanotime(&tsb);
+		if (mod == NULL) {
+			getnanotime(&tsb);
+			mod = ts = &tsb;
+		}
 		unix2dostime(mod, gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 	}
 	if ((dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0) {
 		if (dep->de_flag & DE_ACCESS)  {
 			if (acc == NULL)
-				acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				acc = ts == NULL ?
+				    (getnanotime(&tsb), ts = &tsb) : ts;
 			unix2dostime(acc, gmtoff, &dep->de_ADate, NULL, NULL);
 		}
 		if (dep->de_flag & DE_CREATE) {
 			if (cre == NULL)
-				cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				cre = ts == NULL ?
+				    (getnanotime(&tsb), ts = &tsb) : ts;
 			unix2dostime(cre, gmtoff, &dep->de_CDate,
 			    &dep->de_CTime, &dep->de_CHun);
 		}

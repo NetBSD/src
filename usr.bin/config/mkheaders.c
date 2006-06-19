@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.4 2006/03/19 22:27:14 cube Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.4.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,8 +170,9 @@ defopts_print(const char *name, void *value, void *arg)
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
 		isfsoption = OPT_FSOPT(nv->nv_name);
 
-		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
-		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) {
+		if ((nv->nv_flags & NV_OBSOLETE) != 0 ||
+		    ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
+		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL)) {
 			if (fprintf(fp, "/* %s `%s' not defined */\n",
 			    isfsoption ? "file system" : "option",
 			    nv->nv_name) < 0)

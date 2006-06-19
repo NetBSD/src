@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.8 2006/05/15 00:05:16 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.8.2.1 2006/06/19 04:07:15 chap Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.8 2006/05/15 00:05:16 christos Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.8.2.1 2006/06/19 04:07:15 chap Exp $");
 #endif /* not lint */
 
 
@@ -97,21 +97,21 @@ __RCSID("$NetBSD: udf_subr.c,v 1.8 2006/05/15 00:05:16 christos Exp $");
 				printf("%02x ", blob[i+j]);
 			} else {
 				printf("   ");
-			};
-		};
+			}
+		}
 		for (j = 0; j < 16; j++) {
 			if (i+j < dlen) {
 				if (blob[i+j]>32 && blob[i+j]! = 127) {
 					printf("%c", blob[i+j]);
 				} else {
 					printf(".");
-				};
-			};
-		};
+				}
+			}
+		}
 		printf("\n");
-	};
+	}
 	printf("\n");
-};
+}
 Debugger();
 #endif
 
@@ -188,7 +188,7 @@ udf_check_tag_payload(void *blob, uint32_t max_length)
 	if (crc != udf_rw16(tag->desc_crc)) {
 		/* bad payload CRC; this is a broken tag */
 		return EINVAL;
-	};
+	}
 
 	return 0;
 }
@@ -208,7 +208,7 @@ udf_validate_tag_sum(void *blob)
 	for(cnt = 0; cnt < 16; cnt++) {
 		if (cnt != 4) sum += *pos;
 		pos++;
-	};
+	}
 	tag->cksum = sum;	/* 8 bit */
 
 	return 0;
@@ -231,7 +231,7 @@ udf_validate_tag_and_crc_sums(void *blob)
 	if (crc_len > 0) {
 		crc = udf_cksum(btag + UDF_DESC_TAG_LENGTH, crc_len);
 		tag->desc_crc = udf_rw16(crc);
-	};
+	}
 
 	/* calculate TAG header checksum */
 	return udf_validate_tag_sum(blob);
@@ -293,7 +293,7 @@ udf_tagsize(union dscrptr *dscr, uint32_t udf_sector_size)
 	default :
 		size = sizeof(union dscrptr);
 		break;
-	};
+	}
 
 	if ((size == 0) || (udf_sector_size == 0)) return 0;
 
@@ -354,22 +354,22 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 			pos = bp->b_data;
 			for (i = 0; i < sector_size; i++, pos++) {
 				if (*pos) break;
-			};
+			}
 			if (i == sector_size) {
 				/* return no error but with no dscrptr */
 				/* dispose first block */
 				brelse(bp);
 				return 0;
-			};
-		};
-	};
+			}
+		}
+	}
 	DPRINTFIF(DESCRIPTOR, error, ("bad tag checksum\n"));
 	if (!error) {
 		src = (union dscrptr *) bp->b_data;
 		dscrlen = udf_tagsize(src, sector_size);
 		dst = malloc(dscrlen, mtype, M_WAITOK);
 		memcpy(dst, src, dscrlen);
-	};
+	}
 	/* dispose first block */
 	bp->b_flags |= B_AGE;
 	brelse(bp);
@@ -387,25 +387,25 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 			if (error) {
 				brelse(bp);
 				break;
-			};
+			}
 			pos = (uint8_t *) dst + blk*sector_size;
 			memcpy(pos, bp->b_data, sector_size);
 
 			/* dispose block */
 			bp->b_flags |= B_AGE;
 			brelse(bp);
-		};
+		}
 		DPRINTFIF(DESCRIPTOR, error, ("read error on multi (%d)\n",
 		    error));
-	};
+	}
 	if (!error) {
 		error = udf_check_tag_payload(dst, dscrlen);
 		DPRINTFIF(DESCRIPTOR, error, ("bad payload check sum\n"));
-	};
+	}
 	if (error && dst) {
 		free(dst, mtype);
 		dst = NULL;
-	};
+	}
 	*dstp = dst;
 
 	return error;
@@ -469,7 +469,7 @@ udf_update_discinfo(struct udf_mount *ump)
 	if (error == 0) {
 		udf_dump_discinfo(ump);
 		return 0;
-	};
+	}
 
 	/* disc partition support */
 	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, NULL);
@@ -521,7 +521,7 @@ udf_update_trackinfo(struct udf_mount *ump, struct mmc_trackinfo *ti)
 		error = VOP_IOCTL(devvp, MMCGETTRACKINFO, ti, FKIOCTL,
 			NOCRED, NULL);
 		return error;
-	};
+	}
 
 	/* disc partition support */
 	if (ti->tracknr != 1)
@@ -564,7 +564,7 @@ udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		/* sanity */
 		if (args->sessionnr < 0)
 			args->sessionnr = 0;
-	};
+	}
 
 	/* sanity */
 	if (args->sessionnr > ump->discinfo.num_sessions)
@@ -576,7 +576,7 @@ udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		if (ump->discinfo.last_session_state == MMC_STATE_EMPTY) {
 			args->sessionnr--;
 		}
-	};
+	}
 
 	/* search the first and last track of the specified session */
 	num_tracks  = ump->discinfo.num_tracks;
@@ -603,8 +603,8 @@ udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		if (error || (trackinfo.sessionnr != args->sessionnr)) {
 			tracknr--;
 			break;
-		};
-	};
+		}
+	}
 	if (tracknr > num_tracks)
 		tracknr--;
 
@@ -632,8 +632,8 @@ udf_read_anchor(struct udf_mount *ump, uint32_t sector, struct anchor_vdp **dst)
 			free(*dst, M_UDFVOLD);
 			*dst = NULL;
 			DPRINTF(VOLUMES, ("Not an anchor\n"));
-		};
-	};
+		}
+	}
 
 	return error;
 }
@@ -656,15 +656,15 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 	if (!error) {
 		first_track.tracknr = first_tracknr;
 		error = udf_update_trackinfo(ump, &first_track);
-	};
+	}
 	if (!error) {
 		last_track.tracknr = last_tracknr;
 		error = udf_update_trackinfo(ump, &last_track);
-	};
+	}
 	if (error) {
 		printf("UDF mount: reading disc geometry failed\n");
 		return 0;
-	};
+	}
 
 	track_start = first_track.track_start;
 
@@ -679,7 +679,7 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 		else if (last_track.flags & MMC_TRACKINFO_NWA_VALID)
 			track_end = last_track.next_writable
 				    - ump->discinfo.link_block_penalty;
-	};
+	}
 	/* VATs are only recorded on sequential media, but initialise */
 	ump->possible_vat_location = track_end;
 
@@ -704,8 +704,8 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 		if (!error) {
 			anchorsp++;
 			ok++;
-		};
-	};
+		}
+	}
 
 	return ok;
 }
@@ -744,7 +744,7 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 		if ((udf_rw16(dscr->pd.flags) & UDF_PART_FLAG_ALLOCATED) == 0) {
 			free(dscr, M_UDFVOLD);
 			break;
-		};
+		}
 
 		/* check partnr boundaries */
 		partnr = udf_rw16(dscr->pd.part_num);
@@ -761,7 +761,7 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 		DPRINTF(VOLUMES, ("Unhandled VDS type %d\n",
 		    udf_rw16(dscr->tag.id)));
 		free(dscr, M_UDFVOLD);
-	};
+	}
 
 	return 0;
 }
@@ -799,12 +799,12 @@ udf_read_vds_extent(struct udf_mount *ump, uint32_t loc, uint32_t len)
 		if (error) {
 			free(dscr, M_UDFVOLD);
 			break;
-		};
+		}
 		assert((dscr_size % sector_size) == 0);
 
 		len -= dscr_size;
 		loc += dscr_size / sector_size;
-	};
+	}
 
 	return error;
 }
@@ -837,7 +837,7 @@ udf_read_vds_space(struct udf_mount *ump)
 		if (memcmp(&anchor->main_vds_ex, &anchor2->main_vds_ex, size))
 			anchor = anchor2;
 		/* reserve is specified to be a literal copy of main */
-	};
+	}
 
 	main_loc    = udf_rw32(anchor->main_vds_ex.loc);
 	main_len    = udf_rw32(anchor->main_vds_ex.len);
@@ -849,7 +849,7 @@ udf_read_vds_space(struct udf_mount *ump)
 	if (error) {
 		printf("UDF mount: reading in reserve VDS extent\n");
 		error = udf_read_vds_extent(ump, reserve_loc, reserve_len);
-	};
+	}
 
 	return error;
 }
@@ -890,17 +890,17 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
 			dscr_type = udf_rw16(dscr->tag.id);
 			if (dscr_type == TAGID_TERM) {
 				break;		/* clean terminator */
-			};
+			}
 			if (dscr_type != TAGID_LOGVOL_INTEGRITY) {
 				/* fatal... corrupt disc */
 				error = ENOENT;
 				break;
-			};
+			}
 			if (lvint)
 				free(lvint, M_UDFVOLD);
 			lvint = &dscr->lvid;
 			dscr = NULL;
-		}; /* else hope for the best... maybe the next is ok */
+		} /* else hope for the best... maybe the next is ok */
 
 		DPRINTFIF(VOLUMES, lvint, ("logvol integrity read, state %s\n",
 		    udf_rw32(lvint->integrity_type) ? "CLOSED" : "OPEN"));
@@ -913,8 +913,8 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
 		if (lvint->next_extent.len) {
 			len    = udf_rw32(lvint->next_extent.len);
 			sector = udf_rw32(lvint->next_extent.loc);
-		};
-	};
+		}
+	}
 
 	/* clean up the mess, esp. when there is an error */
 	if (dscr)
@@ -923,7 +923,7 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
 	if (error && lvint) {
 		free(lvint, M_UDFVOLD);
 		lvint = NULL;
-	};
+	}
 
 	if (!lvint)
 		error = ENOENT;
@@ -971,13 +971,13 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
 	if (udf_rw32(ump->logical_vol->lb_size) != ump->discinfo.sector_size) {
 		printf("UDF mount: format violation, lb_size != sector size\n");
 		return EINVAL;
-	};
+	}
 
 	domain_name = ump->logical_vol->domain_id.id;
 	if (strncmp(domain_name, "*OSTA UDF Compliant", 20)) {
 		printf("mount_udf: disc not OSTA UDF Compliant, aborting\n");
 		return EINVAL;
-	};
+	}
 
 	/* retrieve logical volume integrity sequence */
 	error = udf_retrieve_lvint(ump, &ump->logvol_integrity);
@@ -1011,7 +1011,7 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
 	if (n_pm > UDF_PMAPS) {
 		printf("UDF mount: too many mappings\n");
 		return EINVAL;
-	};
+	}
 
 	n_phys = n_virt = n_spar = n_meta = 0;
 	for (log_part = 0; log_part < n_pm; log_part++) {
@@ -1037,23 +1037,23 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
 				pmap_type = UDF_VTOP_TYPE_VIRT;
 				n_virt++;
 				break;
-			};
+			}
 			check_name = "*UDF Sparable Partition";
 			if (strncmp(map_name, check_name, len) == 0) {
 				pmap_type = UDF_VTOP_TYPE_SPARABLE;
 				n_spar++;
 				break;
-			};
+			}
 			check_name = "*UDF Metadata Partition";
 			if (strncmp(map_name, check_name, len) == 0) {
 				pmap_type = UDF_VTOP_TYPE_META;
 				n_meta++;
 				break;
-			};
+			}
 			break;
 		default:
 			return EINVAL;
-		};
+		}
 
 		DPRINTF(VOLUMES, ("\t%d -> %d type %d\n", log_part, phys_part,
 		    pmap_type));
@@ -1064,7 +1064,7 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
 		ump->vtop_tp[log_part] = pmap_type;
 
 		pmap_pos += pmap_size;
-	};
+	}
 	/* not winning the beauty contest */
 	ump->vtop_tp[UDF_VTOP_RAWPART] = UDF_VTOP_TYPE_RAW;
 
@@ -1075,7 +1075,7 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
 	if (n_virt) {
 		if ((n_phys == 0) || n_spar || n_meta)
 			return EINVAL;
-	};
+	}
 	if (n_spar + n_phys == 0)
 		return EINVAL;
 
@@ -1097,8 +1097,8 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
 			ump->meta_alloc = UDF_ALLOC_METASEQUENTIAL;
 		} else {
 			ump->meta_alloc = UDF_ALLOC_RELAXEDSEQUENTIAL;
-		};
-	};
+		}
+	}
 
 	DPRINTF(VOLUMES, ("\tdata alloc scheme %d, meta alloc scheme %d\n",
 	    ump->data_alloc, ump->meta_alloc));
@@ -1154,7 +1154,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		vat_length = udf_rw64(vat_node->efe->inf_len);
 		icbtag = &vat_node->efe->icbtag;
 		mtime  = &vat_node->efe->mtime;
-	};
+	}
 
 	/* Check icb filetype! it has to be 0 or UDF_ICB_FILETYPE_VAT */
 	filetype = icbtag->file_type;
@@ -1189,7 +1189,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		free(ump->vat_table, M_UDFMNT);
 		ump->vat_table = NULL;
 		return error;
-	};
+	}
 	DPRINTF(VOLUMES, ("VAT read in fine!\n"));
 
 	/*
@@ -1214,7 +1214,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 			free(ump->vat_table, M_UDFMNT);
 			ump->vat_table = NULL;
 			return ENOENT;
-		};
+		}
 		/* TODO update LVID from "*UDF VAT LVExtension" ext. attr. */
 	} else {
 		vat = (struct udf_vat *) raw_vat;
@@ -1229,7 +1229,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		lvinfo->min_udf_readver  = vat->min_udf_readver;
 		lvinfo->min_udf_writever = vat->min_udf_writever;
 		lvinfo->max_udf_writever = vat->max_udf_writever;
-	};
+	}
 
 	ump->vat_offset  = vat_offset;
 	ump->vat_entries = vat_entries;
@@ -1270,7 +1270,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 		if (vat_node) {
 			vput(vat_node->vnode);
 			udf_dispose_node(vat_node);
-		};
+		}
 		vat_loc--;	/* walk backwards */
 	} while (vat_loc >= early_vat_loc);
 
@@ -1278,7 +1278,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	if (vat_node) {
 		vput(vat_node->vnode);
 		udf_dispose_node(vat_node);
-	};
+	}
 
 	return error;
 }
@@ -1315,11 +1315,11 @@ udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 				    ("Sparing table accepted (%d entries)\n",
 				     udf_rw16(ump->sparing_table->rt_l)));
 				break;	/* we're done */
-			};
-		};
+			}
+		}
 		if (dscr)
 			free(dscr, M_UDFVOLD);
-	};
+	}
 
 	if (ump->sparing_table)
 		return 0;
@@ -1365,10 +1365,10 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 			break;
 		default:
 			break;
-		};
+		}
 		pmap_size  = pmap_pos[1];
 		pmap_pos  += pmap_size;
-	};
+	}
 
 	return 0;
 }
@@ -1412,7 +1412,7 @@ udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
 		if (dscr_type != TAGID_FSD) {
 			free(dscr, M_UDFVOLD);
 			return ENOENT;
-		};
+		}
 
 		/*
 		 * TODO check for multiple fileset descriptors; its only
@@ -1423,7 +1423,7 @@ udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
 		/* update */
 		if (ump->fileset_desc) {
 			free(ump->fileset_desc, M_UDFVOLD);
-		};
+		}
 		ump->fileset_desc = &dscr->fsd;
 		dscr = NULL;
 
@@ -1436,8 +1436,8 @@ udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
 			DPRINTF(VOLUMES, ("follow up FSD extent\n"));
 			fsd_loc = ump->fileset_desc->next_ex;
 			fsd_len = udf_rw32(ump->fileset_desc->next_ex.len);
-		};
-	};
+		}
+	}
 	if (dscr)
 		free(dscr, M_UDFVOLD);
 
@@ -1479,18 +1479,18 @@ udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
 			 * TODO process streamdir `baddies' i.e. files we dont
 			 * want if R/W
 			 */
-		};
-	};
+		}
+	}
 
 	DPRINTF(VOLUMES, ("Rootdir(s) read in fine\n"));
 
 	/* release the vnodes again; they'll be auto-recycled later */
 	if (streamdir_node) {
 		vput(streamdir_node->vnode);
-	};
+	}
 	if (rootdir_node) {
 		vput(rootdir_node->vnode);
-	};
+	}
 
 	return 0;
 }
@@ -1562,8 +1562,8 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 				*lb_numres = udf_rw32(sme->map) + lb_rel;
 				*extres    = ump->sparable_packet_len - lb_rel;
 				return 0;
-			};
-		};
+			}
+		}
 
 		/* transform into its disc logical block */
 		part = ump->vtop[vpart];
@@ -1579,7 +1579,7 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 	default:
 		printf("UDF vtop translation scheme %d unimplemented yet\n",
 			ump->vtop_tp[vpart]);
-	};
+	}
 
 	return EINVAL;
 }
@@ -1619,12 +1619,12 @@ loop:
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return unp;
-		};
-	};
+		}
+	}
 	simple_unlock(&ump->ihash_slock);
 
 	return NULL;
-};
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -1681,7 +1681,7 @@ udf_dispose_node(struct udf_node *node)
 	if (!node) {
 		DPRINTF(NODE, ("UDF: Dispose node on node NULL, ignoring\n"));
 		return 0;
-	};
+	}
 
 	vp  = node->vnode;
 
@@ -1717,7 +1717,7 @@ udf_dispose_node(struct udf_node *node)
  * 		putpages interface code
  * 	.gop_markupdate = udf_gop_markupdate,
  * 		set update/modify flags etc.
- * };
+ * }
  */
 
 /*
@@ -1809,7 +1809,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		*noderes = node;
 		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
 		return 0;
-	};
+	}
 
 	/* garbage check: translate node_icb_loc to sectornr */
 	error = udf_translate_vtop(ump, node_icb_loc, &sector, &dummy);
@@ -1817,7 +1817,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		/* no use, this will fail anyway */
 		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
 		return EINVAL;
-	};
+	}
 
 	/* build node (do initialise!) */
 	node = pool_get(&udf_node_pool, PR_WAITOK);
@@ -1830,7 +1830,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		pool_put(&udf_node_pool, node);
 		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
 		return error;
-	};
+	}
 
 	/* allways return locked vnode */
 	if ((error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY))) {
@@ -1838,7 +1838,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		ungetnewvnode(nvp);
 		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
 		return error;
-	};
+	}
 
 	/* initialise crosslinks, note location of fe/efe for hashing */
 	node->ump    =  ump;
@@ -1885,7 +1885,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			icb_loc = tmpdscr->inde.indirect_icb;
 			free(tmpdscr, M_UDFTEMP);
 			continue;
-		};
+		}
 
 		/* only file entries and extended file entries allowed here */
 		if ((dscr_type != TAGID_FENTRY) &&
@@ -1893,7 +1893,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			free(tmpdscr, M_UDFTEMP);
 			error = ENOENT;
 			break;
-		};
+		}
 
 		/* get descriptor space from our pool */
 		KASSERT(udf_tagsize(tmpdscr, lb_size) == lb_size);
@@ -1917,7 +1917,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			strat = udf_rw16(node->efe->icbtag.strat_type);
 			udf_file_type = node->efe->icbtag.file_type;
 			file_size = udf_rw64(node->efe->inf_len);
-		};
+		}
 
 		/* check recording strategy (structure) */
 
@@ -1932,7 +1932,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			needs_indirect = 1;
 
 			icb_loc.loc.lb_num = udf_rw32(icb_loc.loc.lb_num) + 1;
-		};
+		}
 
 		/*
 		 * Strategy 4 is the normal strategy and terminates, but if
@@ -1943,9 +1943,9 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			if (strat4096) {
 				error = EINVAL;
 				break;
-			};
+			}
 			break;		/* done */
-		};
+		}
 	} while (!error);
 
 	if (error) {
@@ -1957,7 +1957,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		ungetnewvnode(nvp);
 
 		return EINVAL;		/* error code ok? */
-	};
+	}
 
 	/* post process and initialise node */
 
@@ -2010,7 +2010,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	default:
 		/* YIKES, either a block/char device, fifo or something else */
 		nvp->v_type = VNON;
-	};
+	}
 
 	/* initialise genfs */
 	genfs_node_init(nvp, &udf_genfsops);
@@ -2083,7 +2083,7 @@ udf_icb_to_unix_filetype(uint32_t icbftype)
 		return S_IFLNK;
 	case UDF_ICB_FILETYPE_SOCKET :
 		return S_IFSOCK;
-	};
+	}
 	/* no idea what this is */
 	return 0;
 }
@@ -2095,11 +2095,13 @@ udf_icb_to_unix_filetype(uint32_t icbftype)
 void
 udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp)
 {
-	uint16_t  raw_name[1024], unix_name[1024];
+	uint16_t *raw_name, *unix_name;
 	uint16_t *inchp, ch;
 	uint8_t	 *outchp;
 	int       ucode_chars, nice_uchars;
 
+	raw_name = malloc(2048, M_UDFTEMP, M_WAITOK);
+	unix_name = raw_name + 1024;
 	assert(sizeof(char) == sizeof(uint8_t));
 	outchp = (uint8_t *) result;
 	if ((chsp->type == 0) && (strcmp((char*) chsp->inf, "OSTA Compressed Unicode") == 0)) {
@@ -2112,13 +2114,14 @@ udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp)
 			/* XXX sloppy unicode -> latin */
 			*outchp++ = ch & 255;
 			if (!ch) break;
-		};
+		}
 		*outchp++ = 0;
 	} else {
 		/* assume 8bit char length byte latin-1 */
 		assert(*id == 8);
 		strncpy((char *) result, (char *) (id+1), strlen((char *) (id+1)));
-	};
+	}
+	free(raw_name, M_UDFTEMP);
 }
 
 /* --------------------------------------------------------------------- */
@@ -2129,11 +2132,12 @@ void
 unix_to_udf_name(char *result, char *name,
 		 uint8_t *result_len, struct charspec *chsp)
 {
-	uint16_t  raw_name[1024];
+	uint16_t *raw_name;
 	int       udf_chars, name_len;
 	char     *inchp;
 	uint16_t *outchp;
 
+	raw_name = malloc(1024, M_UDFTEMP, M_WAITOK);
 	/* convert latin-1 or whatever to unicode-16 */
 	*raw_name = 0;
 	name_len  = 0;
@@ -2142,7 +2146,7 @@ unix_to_udf_name(char *result, char *name,
 	while (*inchp) {
 		*outchp++ = (uint16_t) (*inchp++);
 		name_len++;
-	};
+	}
 
 	if ((chsp->type == 0) && (strcmp((char *) chsp->inf, "OSTA Compressed Unicode") == 0)) {
 		udf_chars = udf_CompressUnicode(name_len, 8, (unicode_t *) raw_name, (byte *) result);
@@ -2151,8 +2155,9 @@ unix_to_udf_name(char *result, char *name,
 		*result++ = 8; udf_chars = 1;
 		strncpy(result, name + 1, strlen(name+1));
 		udf_chars += strlen(name);
-	};
+	}
 	*result_len = udf_chars;
+	free(raw_name, M_UDFTEMP);
 }
 
 /* --------------------------------------------------------------------- */
@@ -2243,7 +2248,7 @@ udf_timestamp_to_timespec(struct udf_mount *ump,
 			secs -= (int16_t) tz * 60;
 	} else {
 		secs -= ump->mount_args.gmtoff;
-	};
+	}
 
 	timespec->tv_sec  = secs;
 	timespec->tv_nsec = nsecs;
@@ -2275,7 +2280,7 @@ udf_getaccessmode(struct udf_node *udf_node)
 		udf_perm = udf_rw32(efe->perm);
 		icbftype = efe->icbtag.file_type;
 		icbflags = udf_rw16(efe->icbtag.flags);
-	};
+	}
 
 	mode  = udf_perm_to_unix_mode(udf_perm);
 	ftype = udf_icb_to_unix_filetype(icbftype);
@@ -2318,7 +2323,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 		assert(dir_node->efe);
 		efe = dir_node->efe;
 		file_size = udf_rw64(efe->inf_len);
-	};
+	}
 
 	/* allocate temporary space for fid */
 	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
@@ -2340,8 +2345,8 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 		    (strncmp(dirent.d_name, name, namelen) == 0)) {
 			found = 1;
 			*icb_loc = fid->icb;
-		};
-	};
+		}
+	}
 	free(fid, M_TEMP);
 
 	return found;
@@ -2384,7 +2389,7 @@ udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
 		assert(dir_node->efe);
 		efe = dir_node->efe;
 		file_size = udf_rw64(efe->inf_len);
-	};
+	}
 	if (*offset >= file_size)
 		return EINVAL;
 
@@ -2424,7 +2429,7 @@ udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
 	if (!enough) {
 		/* short dir ... */
 		return EIO;
-	};
+	}
 
 	/* check if our FID header is OK */
 	error = udf_check_tag(fid);
@@ -2432,34 +2437,34 @@ udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
 	if (!error) {
 		if (udf_rw16(fid->tag.id) != TAGID_FID)
 			error = ENOENT;
-	};
+	}
 	DPRINTFIF(FIDS, !error, ("\ttag checked ok: got TAGID_FID\n"));
 
 	/* check for length */
 	if (!error) {
 		entry_length = udf_fidsize(fid, lb_size);
 		enough = (dir_uio.uio_offset - (*offset) >= entry_length);
-	};
+	}
 	DPRINTFIF(FIDS, !error, ("\tentry_length = %d, enough = %s\n",
 	    entry_length, enough?"yes":"no"));
 
 	if (!enough) {
 		/* short dir ... bomb out */
 		return EIO;
-	};
+	}
 
 	/* check FID contents */
 	if (!error) {
 		error = udf_check_tag_payload((union dscrptr *) fid, lb_size);
 		DPRINTF(FIDS, ("\tpayload checked ok\n"));
-	};
+	}
 	if (error) {
 		/* note that is sometimes a bit quick to report */
 		printf("BROKEN DIRECTORY ENTRY\n");
 		/* RESYNC? */
 		/* TODO: use udf_resync_fid_stream */
 		return EIO;
-	};
+	}
 	DPRINTF(FIDS, ("\tinterpret FID\n"));
 
 	/* we got a whole and valid descriptor! */
@@ -2524,12 +2529,12 @@ udf_read_internal(struct udf_node *node, uint8_t *blob)
 		inflen   = udf_rw64(fe->inf_len);
 		pos      = &fe->data[0] + udf_rw32(fe->l_ea);
 		icbflags = udf_rw16(fe->icbtag.flags);
-	};
+	}
 	if (efe) {
 		inflen   = udf_rw64(efe->inf_len);
 		pos      = &efe->data[0] + udf_rw32(efe->l_ea);
 		icbflags = udf_rw16(efe->icbtag.flags);
-	};
+	}
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
 
 	assert(addr_type == UDF_ICB_INTERN_ALLOC);
@@ -2620,7 +2625,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		buf->b_flags |= B_ERROR;
 		biodone(buf);
 		return;
-	};
+	}
 
 	error = 0;
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
@@ -2630,7 +2635,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		buf->b_flags |= B_ERROR;
 		biodone(buf);
 		return;
-	};
+	}
 	DPRINTF(READ, ("\ttranslate extent went OK\n"));
 
 	/* pre-check if internal or parts are zero */
@@ -2639,10 +2644,10 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		if (error) {
 			buf->b_error  = error;
 			buf->b_flags |= B_ERROR;
-		};
+		}
 		biodone(buf);
 		return;
-	};
+	}
 	DPRINTF(READ, ("\tnot intern\n"));
 
 	/* request read-in of data from disc sheduler */
@@ -2671,7 +2676,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 					break;
 				run_length++;
 				sector++;
-			};
+			}
 
 			/*
 			 * nest an iobuf and mark it for async reading. Since
@@ -2691,8 +2696,8 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			nestbuf->b_cylinder = 0;
 			nestbuf->b_rawblkno = rblk;
 			VOP_STRATEGY(node->ump->devvp, nestbuf);
-		};
-	};
+		}
+	}
 	DPRINTF(READ, ("\tend of read_filebuf\n"));
 }
 #undef FILEBUFSECT
@@ -2738,12 +2743,12 @@ udf_translate_file_extent(struct udf_node *node,
 		alloclen = udf_rw32(fe->l_ad);
 		pos      = &fe->data[0] + udf_rw32(fe->l_ea);
 		icbflags = udf_rw16(fe->icbtag.flags);
-	};
+	}
 	if (efe) {
 		alloclen = udf_rw32(efe->l_ad);
 		pos      = &efe->data[0] + udf_rw32(efe->l_ea);
 		icbflags = udf_rw16(efe->icbtag.flags);
-	};
+	}
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
 
 	DPRINTF(TRANSLATE, ("udf trans: alloc_len = %d, addr_type %d, "
@@ -2778,7 +2783,7 @@ udf_translate_file_extent(struct udf_node *node,
 		default:
 			/* can't be here */
 			return EINVAL;	/* for sure */
-		};
+		}
 
 		/* process extent */
 		flags   = UDF_EXT_FLAGS(len);
@@ -2793,8 +2798,8 @@ udf_translate_file_extent(struct udf_node *node,
 				lb_num  += from;	/* advance in extent */
 				overlap -= from;
 				from = 0;
-			};
-		};
+			}
+		}
 
 		overlap = MIN(overlap, pages);
 		while (overlap) {
@@ -2810,7 +2815,7 @@ udf_translate_file_extent(struct udf_node *node,
 				while (overlap && pages && translen) {
 					*map++ = transsec;
 					overlap--; pages--; translen--;
-				};
+				}
 				break;
 			case UDF_EXT_ALLOCATED :
 				t_ad.loc.lb_num   = udf_rw32(lb_num);
@@ -2824,13 +2829,13 @@ udf_translate_file_extent(struct udf_node *node,
 					*map++ = transsec;
 					transsec++;
 					overlap--; pages--; translen--;
-				};
+				}
 				break;
-			};
-		};
+			}
+		}
 		pos      += icblen;
 		alloclen -= icblen;
-	};
+	}
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.1 2006/05/07 01:32:43 jmcneill Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.1.4.1 2006/06/19 04:01:37 chap Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*
@@ -29,6 +29,8 @@
  */
 
 /* PCI configuration registers */
+#define PIIX_DEVACTA	0x54		/* Device activity A (function 3) */
+#define PIIX_DEVACTB	0x58		/* Device activity B (function 3) */
 #define PIIX_SMB_BASE	0x90		/* SMBus base address */
 #define PIIX_SMB_HOSTC	0xd0		/* SMBus host configuration */
 #define PIIX_SMB_HOSTC_HSTEN	(1 << 16)	/* enable host controller */

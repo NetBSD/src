@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.180 2006/05/18 23:15:09 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.180.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.180 2006/05/18 23:15:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.180.2.1 2006/06/19 04:11:44 chap Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -178,7 +178,7 @@ lfs_imtime(struct lfs *fs)
 	struct inode *ip;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	nanotime(&ts);
+	getnanotime(&ts);
 	ip = VTOI(fs->lfs_ivnode);
 	ip->i_ffs1_mtime = ts.tv_sec;
 	ip->i_ffs1_mtimensec = ts.tv_nsec;
@@ -819,11 +819,9 @@ lfs_segwrite(struct mount *mp, int flags)
 int
 lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 {
-	struct buf *bp;
 	struct finfo *fip;
 	struct inode *ip;
-	IFILE *ifp;
-	int i, frag, vers;
+	int i, frag;
 	int error;
 
 	ASSERT_SEGLOCK(fs);
@@ -831,10 +829,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	ip = VTOI(vp);
 
 	fip = sp->fip;
-	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
-	vers = ifp->if_version;
-	brelse(bp);
-	lfs_acquire_finfo(fs, ip->i_number, vers);
+	lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
 	if (vp->v_flag & VDIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
@@ -1872,10 +1867,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	ssp = (SEGSUM *)sp->segsum;
 
 #ifdef DEBUG
-	/* Check for zero-length FINFO entries. */
+	/* Check for zero-length and zero-version FINFO entries. */
 	fip = (struct finfo *)((caddr_t)ssp + SEGSUM_SIZE(fs));
 	for (findex = 0; findex < ssp->ss_nfinfo; findex++) {
 		KDASSERT(fip->fi_nblocks > 0);
+		KDASSERT(fip->fi_version > 0);
 		fip = (FINFO *)((caddr_t)fip + FINFOSIZE +
 			sizeof(int32_t) * fip->fi_nblocks);
 	}
@@ -1888,9 +1884,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	sup->su_nbytes += ssp->ss_ninos * sizeof (struct ufs1_dinode);
 	/* sup->su_nbytes += fs->lfs_sumsize; */
 	if (fs->lfs_version == 1)
-		sup->su_olastmod = time.tv_sec;
+		sup->su_olastmod = time_second;
 	else
-		sup->su_lastmod = time.tv_sec;
+		sup->su_lastmod = time_second;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
 	fs->lfs_avail -= btofsb(fs, fs->lfs_sumsize);
@@ -2031,9 +2027,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		}
 	}
 	if (fs->lfs_version == 1)
-		ssp->ss_ocreate = time.tv_sec;
+		ssp->ss_ocreate = time_second;
 	else {
-		ssp->ss_create = time.tv_sec;
+		ssp->ss_create = time_second;
 		ssp->ss_serial = ++fs->lfs_serial;
 		ssp->ss_ident  = fs->lfs_ident;
 	}
@@ -2204,8 +2200,8 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 
 	/* Set timestamp of this version of the superblock */
 	if (fs->lfs_version == 1)
-		fs->lfs_otstamp = time.tv_sec;
-	fs->lfs_tstamp = time.tv_sec;
+		fs->lfs_otstamp = time_second;
+	fs->lfs_tstamp = time_second;
 
 	/* Checksum the superblock and copy it into a buffer. */
 	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
@@ -2674,6 +2670,8 @@ void
 lfs_acquire_finfo(struct lfs *fs, ino_t ino, int vers)
 {
 	struct segment *sp = fs->lfs_sp;
+
+	KASSERT(vers > 0);
 
 	if (sp->seg_bytes_left < fs->lfs_bsize ||
 	    sp->sum_bytes_left < sizeof(struct finfo))

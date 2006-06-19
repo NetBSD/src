@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.22 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.22.14.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.22 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.22.14.1 2006/06/19 04:09:12 chap Exp $");
 
 #include "opt_inet.h"
 
@@ -137,7 +137,7 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||   /* XXX:  no ARP */
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 

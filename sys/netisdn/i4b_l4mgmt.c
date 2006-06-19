@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.15 2005/12/11 12:25:06 christos Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.15.14.1 2006/06/19 04:10:36 chap Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.15 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_l4mgmt.c,v 1.15.14.1 2006/06/19 04:10:36 chap Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.15 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.15.14.1 2006/06/19 04:10:36 chap Exp $");
 
 #include "isdn.h"
 
@@ -295,6 +295,7 @@ get_rand_cr(int unit)
 	register int i, j;
 	static u_char val, retval;
 	static int called = 42;
+	struct timeval t;
 
 	val += ++called;
 
@@ -311,11 +312,12 @@ get_rand_cr(int unit)
 #endif /* RANDOMDEV */
 
 #else
+		getmicrotime(&t);
 		val |= unit+i;
 		val <<= i;
-		val ^= (time.tv_sec >> 8) ^ time.tv_usec;
+		val ^= (t.tv_sec >> 8) ^ t.tv_usec;
 		val <<= i;
-		val ^= time.tv_sec ^ (time.tv_usec >> 8);
+		val ^= t.tv_sec ^ (t.tv_usec >> 8);
 #endif
 
 		retval = val & 0x7f;

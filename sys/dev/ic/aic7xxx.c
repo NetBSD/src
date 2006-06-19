@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.120 2006/04/15 14:22:52 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.120.2.1 2006/06/19 03:58:12 chap Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.120 2006/04/15 14:22:52 tsutsui Exp $
+ * $Id: aic7xxx.c,v 1.120.2.1 2006/06/19 03:58:12 chap Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.120 2006/04/15 14:22:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.120.2.1 2006/06/19 03:58:12 chap Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -801,7 +801,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 							  /*init reset*/TRUE);
 				}
 			} else {
-				ahc_inb(ahc, SCSIDATL);
+				(void)ahc_inb(ahc, SCSIDATL);
 			}
 		}
 		break;
@@ -2799,7 +2799,7 @@ reswitch:
 		} else {
 			/* Ack the byte */
 			ahc_outb(ahc, CLRSINT1, CLRREQINIT);
-			ahc_inb(ahc, SCSIDATL);
+			(void)ahc_inb(ahc, SCSIDATL);
 		}
 		break;
 	}
@@ -2835,7 +2835,7 @@ reswitch:
 			ahc_outb(ahc, SCSISIGO, P_MESGOUT | BSYO);
 			ahc->msgin_index = 0;
 			/* Dummy read to REQ for first byte */
-			ahc_inb(ahc, SCSIDATL);
+			(void)ahc_inb(ahc, SCSIDATL);
 			ahc_outb(ahc, SXFRCTL0,
 				 ahc_inb(ahc, SXFRCTL0) | SPIOEN);
 			break;

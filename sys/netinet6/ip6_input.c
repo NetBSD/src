@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.86 2006/05/07 16:02:40 rpaulo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.86.2.1 2006/06/19 04:09:49 chap Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.86 2006/05/07 16:02:40 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.86.2.1 2006/06/19 04:09:49 chap Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -410,6 +410,10 @@ ip6_input(m)
 	 * dst are the loopback address and the receiving interface
 	 * is not loopback. 
 	 */
+	if (__predict_false(
+	    m_makewritable(&m, 0, sizeof(struct ip6_hdr), M_DONTWAIT)))
+		goto bad;
+	ip6 = mtod(m, struct ip6_hdr *);
 	if (in6_clearscope(&ip6->ip6_src) || in6_clearscope(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++; /* XXX */
 		goto bad;
@@ -1048,6 +1052,11 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			mp = &(*mp)->m_next;
 	}
 #endif
+
+	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
+	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
+		return;
+
 	/* RFC 2292 sec. 5 */
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;

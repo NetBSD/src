@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.113 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.113.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.113 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.113.2.1 2006/06/19 04:11:44 chap Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -940,7 +940,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	struct mount *mntp;
 	void *addr;
 	u_long timeout;
-	int error, s;
+	int error;
 
 	if (fsidp == NULL || (mntp = vfs_getvfs(fsidp)) == NULL)
 		addr = &lfs_allclean_wakeup;
@@ -950,10 +950,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	 * XXX THIS COULD SLEEP FOREVER IF TIMEOUT IS {0,0}!
 	 * XXX IS THAT WHAT IS INTENDED?
 	 */
-	s = splclock();
-	timeradd(tv, &time, tv);
-	timeout = hzto(tv);
-	splx(s);
+	timeout = tvtohz(tv);
 	error = tsleep(addr, PCATCH | PVFS, "segment", timeout);
 	return (error == ERESTART ? EINTR : 0);
 }

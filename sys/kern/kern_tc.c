@@ -1,25 +1,37 @@
+/* $NetBSD: kern_tc.c,v 1.1.1.1.12.1 2006/06/19 04:07:15 chap Exp $ */
+
 /*-
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
  * <phk@FreeBSD.ORG> wrote this file.  As long as you retain this notice you
  * can do whatever you want with this stuff. If we meet some day, and you think
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
- * ----------------------------------------------------------------------------
+ * ---------------------------------------------------------------------------
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $");
+/* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.12.1 2006/06/19 04:07:15 chap Exp $");
 
 #include "opt_ntp.h"
 
 #include <sys/param.h>
+#ifdef __HAVE_TIMECOUNTER	/* XXX */
 #include <sys/kernel.h>
+#include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/timepps.h>
 #include <sys/timetc.h>
 #include <sys/timex.h>
+#include <sys/evcnt.h>
+#include <sys/kauth.h>
+
+/*
+ * maximum name length for TC names in sysctl interface
+ */
+#define MAX_TCNAMELEN	64
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -92,31 +104,170 @@ time_t time_uptime = 1;
 
 static struct bintime boottimebin;
 struct timeval boottime;
+#ifdef __FreeBSD__
 static int sysctl_kern_boottime(SYSCTL_HANDLER_ARGS);
 SYSCTL_PROC(_kern, KERN_BOOTTIME, boottime, CTLTYPE_STRUCT|CTLFLAG_RD,
     NULL, 0, sysctl_kern_boottime, "S,timeval", "System boottime");
 
 SYSCTL_NODE(_kern, OID_AUTO, timecounter, CTLFLAG_RW, 0, "");
+#endif /* __FreeBSD__ */
 
 static int timestepwarnings;
+
+#ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
     &timestepwarnings, 0, "");
+#endif /* __FreeBSD__ */
 
-#define TC_STATS(foo) \
-	static u_int foo; \
-	SYSCTL_UINT(_kern_timecounter, OID_AUTO, foo, CTLFLAG_RD, &foo, 0, "");\
-	struct __hack
+/*
+ * sysctl helper routine for kern.timercounter.current
+ */
+static int
+sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	char newname[MAX_TCNAMELEN];
+	struct timecounter *newtc, *tc;
 
-TC_STATS(nbinuptime);    TC_STATS(nnanouptime);    TC_STATS(nmicrouptime);
-TC_STATS(nbintime);      TC_STATS(nnanotime);      TC_STATS(nmicrotime);
-TC_STATS(ngetbinuptime); TC_STATS(ngetnanouptime); TC_STATS(ngetmicrouptime);
-TC_STATS(ngetbintime);   TC_STATS(ngetnanotime);   TC_STATS(ngetmicrotime);
-TC_STATS(nsetclock);
+	tc = timecounter;
+
+	strlcpy(newname, tc->tc_name, sizeof(newname));
+
+	node = *rnode;
+	node.sysctl_data = newname;
+	node.sysctl_size = sizeof(newname);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error ||
+	    newp == NULL ||
+	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
+		return error;
+
+	if (l && (error = kauth_authorize_generic(l->l_proc->p_cred, 
+                    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
+		return (error);
+
+	/* XXX locking */
+
+	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
+		if (strcmp(newname, newtc->tc_name) != 0)
+			continue;
+
+		/* Warm up new timecounter. */
+		(void)newtc->tc_get_timecount(newtc);
+		(void)newtc->tc_get_timecount(newtc);
+
+		timecounter = newtc;
+
+		/* XXX unlock */
+
+		return (0);
+	}
+
+	/* XXX unlock */
+
+	return (EINVAL);
+}
+
+static int
+sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
+{
+	char buf[48];
+	char *where = oldp;
+	const char *spc;
+	struct timecounter *tc;
+	size_t needed, left, slen;
+	int error;
+
+	if (newp != NULL)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
+	spc = "";
+	error = 0;
+	needed = 0;
+	left = *oldlenp;
+
+	/* XXX locking */
+
+	for (tc = timecounters; error == 0 && tc != NULL; tc = tc->tc_next) {
+		if (where == NULL) {
+			needed += sizeof(buf);  /* be conservative */
+		} else {
+			slen = snprintf(buf, sizeof(buf), "%s%s(q=%d, f=%" PRId64
+					" Hz)", spc, tc->tc_name, tc->tc_quality,
+					tc->tc_frequency);
+			if (left < slen + 1)
+				break;
+			/* XXX use sysctl_copyout? (from sysctl_hw_disknames) */
+			error = copyout(buf, where, slen + 1);
+			spc = " ";
+			where += slen;
+			needed += slen;
+			left -= slen;
+		}
+	}
+
+	/* XXX unlock */
+
+	*oldlenp = needed;
+	return (error);
+}
+
+SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
+{
+	const struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "timecounter",
+		       SYSCTL_DESCR("time counter information"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	if (node != NULL) {
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_STRING, "choice",
+			       SYSCTL_DESCR("available counters"),
+			       sysctl_kern_timecounter_choice, 0, NULL, 0,
+			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_STRING, "hardware",
+			       SYSCTL_DESCR("currently active time counter"),
+			       sysctl_kern_timecounter_hardware, 0, NULL, MAX_TCNAMELEN,
+			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "timestepwarnings",
+			       SYSCTL_DESCR("log time steps"),
+			       NULL, 0, &timestepwarnings, 0,
+			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	}
+}
+
+#define	TC_STATS(name)							\
+static struct evcnt n##name =						\
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "timecounter", #name);	\
+EVCNT_ATTACH_STATIC(n##name)
+
+TC_STATS(binuptime);    TC_STATS(nanouptime);    TC_STATS(microuptime);
+TC_STATS(bintime);      TC_STATS(nanotime);      TC_STATS(microtime);
+TC_STATS(getbinuptime); TC_STATS(getnanouptime); TC_STATS(getmicrouptime);
+TC_STATS(getbintime);   TC_STATS(getnanotime);   TC_STATS(getmicrotime);
+TC_STATS(setclock);
 
 #undef TC_STATS
 
 static void tc_windup(void);
 
+#ifdef __FreeBSD__
 static int
 sysctl_kern_boottime(SYSCTL_HANDLER_ARGS)
 {
@@ -131,6 +282,8 @@ sysctl_kern_boottime(SYSCTL_HANDLER_ARGS)
 #endif
 		return SYSCTL_OUT(req, &boottime, sizeof(boottime));
 }
+#endif /* __FreeBSD__ */
+
 /*
  * Return the difference between the timehands' counter value now and what
  * was when we copied it to the timehands' offset_count.
@@ -141,8 +294,8 @@ tc_delta(struct timehands *th)
 	struct timecounter *tc;
 
 	tc = th->th_counter;
-	return ((tc->tc_get_timecount(tc) - th->th_offset_count) &
-	    tc->tc_counter_mask);
+	return ((tc->tc_get_timecount(tc) - 
+		 th->th_offset_count) & tc->tc_counter_mask);
 }
 
 /*
@@ -157,7 +310,7 @@ binuptime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	nbinuptime++;
+	nbinuptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -171,7 +324,7 @@ nanouptime(struct timespec *tsp)
 {
 	struct bintime bt;
 
-	nnanouptime++;
+	nnanouptime.ev_count++;
 	binuptime(&bt);
 	bintime2timespec(&bt, tsp);
 }
@@ -181,7 +334,7 @@ microuptime(struct timeval *tvp)
 {
 	struct bintime bt;
 
-	nmicrouptime++;
+	nmicrouptime.ev_count++;
 	binuptime(&bt);
 	bintime2timeval(&bt, tvp);
 }
@@ -190,7 +343,7 @@ void
 bintime(struct bintime *bt)
 {
 
-	nbintime++;
+	nbintime.ev_count++;
 	binuptime(bt);
 	bintime_add(bt, &boottimebin);
 }
@@ -200,7 +353,7 @@ nanotime(struct timespec *tsp)
 {
 	struct bintime bt;
 
-	nnanotime++;
+	nnanotime.ev_count++;
 	bintime(&bt);
 	bintime2timespec(&bt, tsp);
 }
@@ -210,7 +363,7 @@ microtime(struct timeval *tvp)
 {
 	struct bintime bt;
 
-	nmicrotime++;
+	nmicrotime.ev_count++;
 	bintime(&bt);
 	bintime2timeval(&bt, tvp);
 }
@@ -221,7 +374,7 @@ getbinuptime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	ngetbinuptime++;
+	ngetbinuptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -235,7 +388,7 @@ getnanouptime(struct timespec *tsp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetnanouptime++;
+	ngetnanouptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -249,7 +402,7 @@ getmicrouptime(struct timeval *tvp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetmicrouptime++;
+	ngetmicrouptime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -263,7 +416,7 @@ getbintime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	ngetbintime++;
+	ngetbintime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -278,7 +431,7 @@ getnanotime(struct timespec *tsp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetnanotime++;
+	ngetnanotime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -292,7 +445,7 @@ getmicrotime(struct timeval *tvp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetmicrotime++;
+	ngetmicrotime.ev_count++;
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -315,16 +468,17 @@ tc_init(struct timecounter *tc)
 	if (u > hz && tc->tc_quality >= 0) {
 		tc->tc_quality = -2000;
 		if (bootverbose) {
-			printf("Timecounter \"%s\" frequency %ju Hz",
+			printf("timecounter: Timecounter \"%s\" frequency %ju Hz",
 			    tc->tc_name, (uintmax_t)tc->tc_frequency);
 			printf(" -- Insufficient hz, needs at least %u\n", u);
 		}
 	} else if (tc->tc_quality >= 0 || bootverbose) {
-		printf("Timecounter \"%s\" frequency %ju Hz quality %d\n",
+		printf("timecounter: Timecounter \"%s\" frequency %ju Hz quality %d\n",
 		    tc->tc_name, (uintmax_t)tc->tc_frequency,
 		    tc->tc_quality);
 	}
 
+	/* XXX locking */
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -342,6 +496,7 @@ tc_init(struct timecounter *tc)
 	(void)tc->tc_get_timecount(tc);
 	(void)tc->tc_get_timecount(tc);
 	timecounter = tc;
+	tc_windup();
 }
 
 /* Report the frequency of the current timecounter. */
@@ -363,7 +518,7 @@ tc_setclock(struct timespec *ts)
 	struct timespec ts2;
 	struct bintime bt, bt2;
 
-	nsetclock++;
+	nsetclock.ev_count++;
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
@@ -440,6 +595,8 @@ tc_windup(void)
 	 * has been read, so on really large steps, we call
 	 * ntp_update_second only twice.  We need to call it twice in
 	 * case we missed a leap second.
+	 * If NTP is not compiled in ntp_update_second still calculates
+	 * the adjustment resulting from adjtime() calls.
 	 */
 	bt = th->th_offset;
 	bintime_add(&bt, &boottimebin);
@@ -452,6 +609,7 @@ tc_windup(void)
 		if (bt.sec != t)
 			boottimebin.sec += bt.sec - t;
 	}
+
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
 	bintime2timeval(&bt, &th->th_microtime);
@@ -461,6 +619,10 @@ tc_windup(void)
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
+
+		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
+		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
+		    timecounter->tc_quality);
 	}
 
 	/*-
@@ -505,6 +667,7 @@ tc_windup(void)
 	timehands = th;
 }
 
+#ifdef __FreeBSD__
 /* Report or change the active timecounter hardware. */
 static int
 sysctl_kern_timecounter_hardware(SYSCTL_HANDLER_ARGS)
@@ -520,6 +683,7 @@ sysctl_kern_timecounter_hardware(SYSCTL_HANDLER_ARGS)
 	if (error != 0 || req->newptr == NULL ||
 	    strcmp(newname, tc->tc_name) == 0)
 		return (error);
+
 	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
@@ -559,6 +723,7 @@ sysctl_kern_timecounter_choice(SYSCTL_HANDLER_ARGS)
 
 SYSCTL_PROC(_kern_timecounter, OID_AUTO, choice, CTLTYPE_STRING | CTLFLAG_RD,
     0, 0, sysctl_kern_timecounter_choice, "A", "");
+#endif /* __FreeBSD__ */
 
 /*
  * RFC 2783 PPS-API implementation.
@@ -568,12 +733,12 @@ int
 pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
 {
 	pps_params_t *app;
-	struct pps_fetch_args *fapi;
+	pps_info_t *pipi;
 #ifdef PPS_SYNC
-	struct pps_kcbind_args *kapi;
+	int *epi;
 #endif
 
-	KASSERT(pps != NULL, ("NULL pps pointer in pps_ioctl"));
+	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_ioctl") */
 	switch (cmd) {
 	case PPS_IOC_CREATE:
 		return (0);
@@ -594,31 +759,23 @@ pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
 		*(int*)data = pps->ppscap;
 		return (0);
 	case PPS_IOC_FETCH:
-		fapi = (struct pps_fetch_args *)data;
-		if (fapi->tsformat && fapi->tsformat != PPS_TSFMT_TSPEC)
-			return (EINVAL);
-		if (fapi->timeout.tv_sec || fapi->timeout.tv_nsec)
-			return (EOPNOTSUPP);
+		pipi = (pps_info_t *)data;
 		pps->ppsinfo.current_mode = pps->ppsparam.mode;
-		fapi->pps_info_buf = pps->ppsinfo;
+		*pipi = pps->ppsinfo;
 		return (0);
 	case PPS_IOC_KCBIND:
 #ifdef PPS_SYNC
-		kapi = (struct pps_kcbind_args *)data;
+		epi = (int *)data;
 		/* XXX Only root should be able to do this */
-		if (kapi->tsformat && kapi->tsformat != PPS_TSFMT_TSPEC)
+		if (*epi & ~pps->ppscap)
 			return (EINVAL);
-		if (kapi->kernel_consumer != PPS_KC_HARDPPS)
-			return (EINVAL);
-		if (kapi->edge & ~pps->ppscap)
-			return (EINVAL);
-		pps->kcmode = kapi->edge;
+		pps->kcmode = *epi;
 		return (0);
 #else
 		return (EOPNOTSUPP);
 #endif
 	default:
-		return (ENOIOCTL);
+		return (EPASSTHROUGH);
 	}
 }
 
@@ -637,7 +794,7 @@ pps_capture(struct pps_state *pps)
 {
 	struct timehands *th;
 
-	KASSERT(pps != NULL, ("NULL pps pointer in pps_capture"));
+	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_capture") */
 	th = timehands;
 	pps->capgen = th->th_generation;
 	pps->capth = th;
@@ -655,7 +812,7 @@ pps_event(struct pps_state *pps, int event)
 	int foff, fhard;
 	pps_seq_t *pseq;
 
-	KASSERT(pps != NULL, ("NULL pps pointer in pps_event"));
+	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_event") */
 	/* If the timecounter was wound up underneath us, bail out. */
 	if (pps->capgen == 0 || pps->capgen != pps->capth->th_generation)
 		return;
@@ -705,7 +862,7 @@ pps_event(struct pps_state *pps, int event)
 	*tsp = ts;
 
 	if (foff) {
-		timespecadd(tsp, osp);
+		timespecadd(tsp, osp, tsp);
 		if (tsp->tv_nsec < 0) {
 			tsp->tv_nsec += 1000000000;
 			tsp->tv_sec -= 1;
@@ -743,7 +900,9 @@ pps_event(struct pps_state *pps, int event)
  */
 
 static int tc_tick;
+#ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, tick, CTLFLAG_RD, &tc_tick, 0, "");
+#endif /* __FreeBSD__ */
 
 void
 tc_ticktock(void)
@@ -756,8 +915,8 @@ tc_ticktock(void)
 	tc_windup();
 }
 
-static void
-inittimecounter(void *dummy)
+void
+inittimecounter(void)
 {
 	u_int p;
 
@@ -774,11 +933,14 @@ inittimecounter(void *dummy)
 	else
 		tc_tick = 1;
 	p = (tc_tick * 1000000) / hz;
-	printf("Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
+	printf("timecounter: Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
 
 	/* warm up new timecounter (again) and get rolling. */
 	(void)timecounter->tc_get_timecount(timecounter);
 	(void)timecounter->tc_get_timecount(timecounter);
 }
 
+#ifdef __FreeBSD__
 SYSINIT(timecounter, SI_SUB_CLOCKS, SI_ORDER_SECOND, inittimecounter, NULL)
+#endif /* __FreeBSD__ */
+#endif /* __HAVE_TIMECOUNTER */

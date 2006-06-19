@@ -1,4 +1,4 @@
-/*	$NetBSD: warshall.c,v 1.7 2003/08/07 11:17:55 agc Exp $	*/
+/*	$NetBSD: warshall.c,v 1.7.12.1 2006/06/19 04:17:08 chap Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,18 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)warshall.c	5.4 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: warshall.c,v 1.7 2003/08/07 11:17:55 agc Exp $");
+__RCSID("$NetBSD: warshall.c,v 1.7.12.1 2006/06/19 04:17:08 chap Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 
-void transitive_closure __P((unsigned *, int));
+static void transitive_closure(unsigned *, int);
 
-void
-transitive_closure(R, n)
-unsigned *R;
-int n;
+static void
+transitive_closure(unsigned *R, int n)
 {
     int rowsize;
     unsigned i;
@@ -99,9 +97,7 @@ int n;
 }
 
 void
-reflexive_transitive_closure(R, n)
-unsigned *R;
-int n;
+reflexive_transitive_closure(unsigned *R, int n)
 {
     int rowsize;
     unsigned i;

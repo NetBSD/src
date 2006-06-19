@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.64 2006/05/14 21:31:53 elad Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.64.2.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.64 2006/05/14 21:31:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.64.2.1 2006/06/19 04:09:12 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,8 +397,7 @@ portal_open(v)
 	pcred.pcr_uid = kauth_cred_geteuid(ap->a_cred);
 	pcred.pcr_gid = kauth_cred_getegid(ap->a_cred);
 	pcred.pcr_ngroups = kauth_cred_ngroups(ap->a_cred);
-	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups,
-	    sizeof(pcred.pcr_groups) / sizeof(pcred.pcr_groups[0]));
+	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups, pcred.pcr_ngroups);
 	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
@@ -542,12 +541,8 @@ portal_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
-	/*
-	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
-	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic.
-	 */
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	/* Make all times be current TOD. */
+	getnanotime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;

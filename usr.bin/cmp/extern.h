@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2005/02/06 20:50:34 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.5.6.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,6 +38,6 @@
 void	c_regular(int, char *, off_t, off_t, int, char *, off_t, off_t);
 void	c_special(int, char *, off_t, int, char *, off_t);
 void	diffmsg(char *, char *, off_t, off_t);
-void	eofmsg(char *);
+void	eofmsg(char *, off_t, off_t);
 
 extern int lflag, sflag;

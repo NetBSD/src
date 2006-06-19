@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2004/07/13 12:11:06 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.16.6.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,6 +67,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
@@ -77,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2004/07/13 12:11:06 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.6.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 

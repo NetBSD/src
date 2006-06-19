@@ -246,7 +246,8 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd);
 extern int 
 ndisdrv_modevent(module_t mod, int cmd);
 
-/* These are just for the in-kernel version, to delay calling
+/* 
+ * These are just for the in-kernel version, to delay calling
  * these functions untill enough context is built up.
  */
 void load_ndisapi(void *);
@@ -271,11 +272,13 @@ ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
 	struct ndis_pci_type *t = ndis_devs;
 	driver_object        *drv = NULL;	/* = windrv_lookup(0, "PCI Bus");**/
 		
+#ifdef NDIS_DBG
 	printf("in ndis_probe_pci\n");
 	printf("vendor = %x, product = %x\n", vendor, product);
+#endif
 	
 	while(t->ndis_name != NULL) {
-#ifdef NDIS_LKM
+#ifdef NDIS_DBG
 			printf("t->ndis_vid = %x, t->ndis_did = %x\n",
 			       t->ndis_vid, t->ndis_did);
 #endif
@@ -477,16 +480,21 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 {
 	struct ndis_softc *sc = (struct ndis_softc*)self;
 	struct pci_attach_args *pa = aux;
+#ifdef NDIS_DBG       
 	char devinfo[256];
-    pci_intr_handle_t ih;
-    pcireg_t type;
+#endif
+	pci_intr_handle_t ih;
+	pcireg_t type;
 	bus_addr_t	base;
 	bus_size_t	size;
 	int		flags;
 	ndis_resource_list 		*rl  = NULL;
 	struct cm_partial_resource_desc	*prd = NULL;
+#ifdef NDIS_DBG
 	struct pci_conf_state conf_state;
-	int revision, i, bar;
+	int revision, i;
+#endif
+	int bar;
 	
 	printf("in ndis_attach_pci()\n");
 
@@ -496,7 +504,7 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 	sc->ndis_iftype 	= PCIBus;
 	sc->ndis_res_pc		= pa->pa_pc;
 	sc->ndis_res_pctag	= pa->pa_tag;
-/* TODO: is this correct? All are just pa->pa_dmat? */	
+	/* TODO: is this correct? All are just pa->pa_dmat? */	
 	sc->ndis_mtag		= pa->pa_dmat;
 	sc->ndis_ttag		= pa->pa_dmat;
 	sc->ndis_parent_tag 	= pa->pa_dmat;
@@ -525,16 +533,18 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 	rl->cprl_count = 0;
 	prd = rl->cprl_partial_descs;
 	
+#ifdef NDIS_DBG
         pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
         revision = PCI_REVISION(pa->pa_class);
-        //printf(": %s (rev. 0x%02x)\n", devinfo, revision);
+        printf(": %s (rev. 0x%02x)\n", devinfo, revision);
 	
 	pci_conf_print(sc->ndis_res_pc, sc->ndis_res_pctag, NULL);
 
 	pci_conf_capture(sc->ndis_res_pc, sc->ndis_res_pctag, &conf_state);
 	for(i=0; i<16; i++) {
-		//printf("conf_state.reg[%d] = %x\n", i, conf_state.reg[i]);
+		printf("conf_state.reg[%d] = %x\n", i, conf_state.reg[i]);
 	}
+#endif
 	
 	/* just do the conversion work in attach instead of calling ndis_convert_res() */
 	for(bar = 0x10; bar <= 0x24; bar += 0x04) {
@@ -549,8 +559,6 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 				prd->cprd_flags 			= CM_RESOURCE_PORT_IO;
 				prd->u.cprd_port.cprd_start.np_quad 	= (uint64_t)base;
 				prd->u.cprd_port.cprd_len  	  	= (uint32_t)size;
-				//printf("BAR 0x%x: type = PCI_MAPREG_TYPE_IO, base = %x, size = %x, flags = %x\n", 
-				//	   bar, base, size, flags);
 				if((sc->ndis_res_io = 
 					malloc(sizeof(struct ndis_resource), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
 					//printf("error: out of memory\n");
@@ -560,21 +568,11 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 				sc->ndis_res_io->res_base = base;
 				sc->ndis_res_io->res_size = size;
 				sc->ndis_res_io->res_tag  = X86_BUS_SPACE_IO;
-/* TODO: is this correct to just map the register here? */	
-							
 				bus_space_map(sc->ndis_res_io->res_tag,
 					 sc->ndis_res_io->res_base,
 					 sc->ndis_res_io->res_size,
 					 flags,
 					&sc->ndis_res_io->res_handle);
-				
-				/*if(pci_mapreg_map(pa, bar, type, flags, 
-					&sc->ndis_res_io->res_tag,
-					&sc->ndis_res_io->res_handle,
-					&sc->ndis_res_io->res_base,
-					&sc->ndis_res_io->res_size)) {
-						printf("pci_mapreg_map() failed\n");
-				}*/
 				break;
 			case PCI_MAPREG_TYPE_MEM:
 				prd->cprd_type 				= CmResourceTypeMemory;
@@ -591,7 +589,6 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 				if(sc->ndis_res_mem) {
 					if((sc->ndis_res_altmem = 
 						malloc(sizeof(struct ndis_resource), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
-						//printf("error: out of memory\n");
 						sc->error = ENOMEM;
 						return;
 					}
@@ -607,22 +604,12 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 						&sc->ndis_res_altmem->res_handle)) {
 							printf("bus_space_map failed\n");
 					}
-					/*
-					if(pci_mapreg_map(pa, bar, type, flags|BUS_SPACE_MAP_LINEAR, 
-						&sc->ndis_res_altmem->res_tag,
-						&sc->ndis_res_altmem->res_handle,
-						&sc->ndis_res_altmem->res_base,
-						&sc->ndis_res_altmem->res_size)) {
-							printf("pci_mapreg_map() failed\n");
-					}*/				
 				} else {
 					if((sc->ndis_res_mem = 
 						malloc(sizeof(struct ndis_resource), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
-						//printf("error: out of memory\n");
 						sc->error = ENOMEM;
 						return;
 					}
-/* TODO: is this correct to just map the register here? */
 					sc->ndis_res_mem->res_base = base;
 					sc->ndis_res_mem->res_size = size;
 					sc->ndis_res_mem->res_tag  = X86_BUS_SPACE_MEM;
@@ -634,14 +621,6 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 						&sc->ndis_res_mem->res_handle)) {
 							printf("bus_space_map failed\n");
 					}
-					/*
-					if(pci_mapreg_map(pa, bar, type, flags|BUS_SPACE_MAP_LINEAR, 
-						&sc->ndis_res_mem->res_tag,
-						&sc->ndis_res_mem->res_handle,
-						&sc->ndis_res_mem->res_base,
-						&sc->ndis_res_mem->res_size)) {
-							printf("pci_mapreg_map() failed\n");
-					}*/
 				}
 				break;
 											   
@@ -658,7 +637,7 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 	/* add the interrupt to the list */
 	prd->cprd_type 	= CmResourceTypeInterrupt;
 	prd->cprd_flags = 0;
-/* TODO: is this all we need to save for the interrupt? */
+	/* TODO: is this all we need to save for the interrupt? */
 	prd->u.cprd_intr.cprd_level = pa->pa_intrline;
 	prd->u.cprd_intr.cprd_vector = pa->pa_intrline;
 	prd->u.cprd_intr.cprd_affinity = 0;
@@ -670,26 +649,15 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 	
 	printf("pci interrupt: %s\n", pci_intr_string(pa->pa_pc, ih));
 	
-	/*	
-	realloc(rl, sizeof(ndis_resource_list) +
-			(sizeof(cm_partial_resource_desc) * (rl->cprl_count / *- 1* /)),
-	    	M_DEVBUF, M_NOWAIT|M_ZERO);
-	*/
-		
 	if(rl == NULL) {
 		sc->error = ENOMEM;
-		//printf("error: out of memory\n");
 		return;
 	}
 	
 	/* save resource list in the softc */
-	//sc->ndis_rl = *rl;
 	sc->ndis_rl = rl;
 	sc->ndis_rescnt = rl->cprl_count;
 	
-	/*
-	sc->error = ndis_attach((device_t)sc);
-	*/
 	kthread_create(ndis_attach, (void *)sc);
 }
 #endif /* __NetBSD__ */

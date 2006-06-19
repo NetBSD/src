@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.70 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.70.14.1 2006/06/19 04:11:13 chap Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -235,7 +235,7 @@ void	 ttychars(struct tty *);
 int	 ttycheckoutq(struct tty *, int);
 int	 ttyclose(struct tty *);
 void	 ttyflush(struct tty *, int);
-void	 ttyinfo(struct tty *);
+void	 ttyinfo(struct tty *, int);
 int	 ttyinput(int, struct tty *);
 int	 ttylclose(struct tty *, int);
 int	 ttylopen(dev_t, struct tty *);

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.13 2006/05/14 21:45:00 elad Exp $ */
+/* $NetBSD: auixp.c,v 1.13.2.1 2006/06/19 04:01:35 chap Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.13 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.13.2.1 2006/06/19 04:01:35 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -166,7 +166,6 @@ static paddr_t	auixp_mappage(void *, void *, off_t, int);
 
 
 /* power management (do we support that already?) */
-static int	auixp_power(struct auixp_softc *, int);
 #if 0
 static void	auixp_powerhook(int, void *);
 static int	auixp_suspend(struct auixp_softc *);
@@ -1103,7 +1102,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	uint32_t data;
 	char devinfo[256];
-	int revision, len;
+	int revision, len, error;
 
 	sc = (struct auixp_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1199,7 +1198,12 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* power up chip */
-	auixp_power(sc, PCI_PMCSR_STATE_D0);
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
+	}
 
 	/* init chip */
 	if (auixp_init(sc) == -1) {
@@ -1775,26 +1779,6 @@ auixp_init(struct auixp_softc *sc)
  * TODO power saving and suspend / resume support
  *
  */
-
-static int
-auixp_power(struct auixp_softc *sc, int state)
-{
-	pcitag_t tag;
-	pci_chipset_tag_t pc;
-	pcireg_t data;
-	int pmcapreg;
-
-	tag = sc->sc_tag;
-	pc = sc->sc_pct;
-	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &pmcapreg, 0)) {
-		data = pci_conf_read(pc, tag, pmcapreg + PCI_PMCSR);
-		if ((data & PCI_PMCSR_STATE_MASK) != state)
-			pci_conf_write(pc, tag, pmcapreg + PCI_PMCSR, state);
-	}
-
-	return 0;
-}
-
 
 #if 0
 static void

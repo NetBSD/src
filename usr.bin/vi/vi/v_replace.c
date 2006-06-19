@@ -1,4 +1,4 @@
-/*	$NetBSD: v_replace.c,v 1.9 2002/04/09 01:47:35 thorpej Exp $	*/
+/*	$NetBSD: v_replace.c,v 1.9.14.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_replace.c	10.17 (Berkeley) 6/30/96";
 #else
-__RCSID("$NetBSD: v_replace.c,v 1.9 2002/04/09 01:47:35 thorpej Exp $");
+__RCSID("$NetBSD: v_replace.c,v 1.9.14.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,9 +193,10 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 			vp->m_stop.cno = 0;
 
 		vp->m_stop.cno = tp->ai ? tp->ai - 1 : 0;
-		if (db_append(sp, 1, vp->m_start.lno, tp->lb, tp->len))
+		if (db_append(sp, 1, vp->m_start.lno, tp->lb, tp->len)) {
+			text_free(tp);
 err_ret:		rval = 1;
-		else {
+		} else {
 			text_free(tp);
 			rval = 0;
 		}

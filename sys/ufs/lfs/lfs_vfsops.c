@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.212 2006/05/18 23:15:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.212.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.212 2006/05/18 23:15:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.212.2.1 2006/06/19 04:11:44 chap Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2086,8 +2086,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	if ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
 				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
-		int vers;
-
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
 #if 0
 		      " with nfinfo=%d at offset 0x%x\n",
@@ -2096,11 +2094,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 #endif
 		lfs_updatemeta(sp);
 		lfs_release_finfo(fs);
-		vers = sp->fip->fi_version;
-
 		(void) lfs_writeseg(fs, sp);
 
-		lfs_acquire_finfo(fs, ip->i_number, vers);
+		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
 		/*
 		 * Having given up all of the pager_map we were holding,

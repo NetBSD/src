@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.44 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.44.8.1 2006/06/19 04:01:35 chap Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -578,7 +578,7 @@ struct _tulip_softc_t {
     u_int32_t tulip_intrmask;	/* our copy of csr_intr */
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is TULIP_SYSTEMERROR is also set) */
-    u_int32_t tulip_txtimer : 2;	/* transmission timer */
+    u_int32_t tulip_txtimer;	/* transmission timer */
     u_int32_t tulip_system_errors;	/* number of system errors encountered */
     u_int32_t tulip_statusbits;	/* status bits from CSR5 that may need to be printed */
 

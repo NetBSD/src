@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2006/05/07 20:15:14 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.8.2.1 2006/06/19 04:09:12 chap Exp $
 
 .if !defined(__SYS_LKM_MAKEFILE_INC)
 __SYS_LKM_MAKEFILE_INC=	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.44 2006/01/10 20:31:36 christos Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.44.12.1 2006/06/19 04:01:35 chap Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.44 2006/01/10 20:31:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.44.12.1 2006/06/19 04:01:35 chap Exp $");
 
 #include "rnd.h"
 
@@ -263,7 +263,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags;
- 	int pci_pwrmgmt_cap_reg;
+	int error;
 
 	aprint_naive(": Ethernet controller\n");
 
@@ -447,27 +447,21 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_regs[(PCI_MAPREG_START+0x8)>>2] =
 	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x8);
 
-	/*
-	 * Work around BIOS ACPI bugs where the chip is inadvertantly
-	 * left in ACPI D3 (lowest power state).  First confirm the device
-	 * supports ACPI power management, then move it to the D0 (fully
-	 * functional) state if it is not already there.
-	 */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pci_pwrmgmt_cap_reg, 0)) {
-		pcireg_t reg;
-
+	/* power up chip */
+	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null))) {
+	case EOPNOTSUPP:
+		break;
+	case 0: 
 		sc->sc_enable = fxp_pci_enable;
 		sc->sc_disable = fxp_pci_disable;
-
-		psc->psc_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
-		reg = pci_conf_read(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg);
-		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
-		    PCI_PMCSR_STATE_D0;
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0)
-			pci_conf_write(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg,
-			    psc->psc_pwrmgmt_csr);
+		break;
+	default:
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
+
 	/* Restore PCI configuration registers. */
 	fxp_pci_confreg_restore(psc);
 

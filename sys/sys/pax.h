@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.1 2006/05/16 00:08:25 elad Exp $ */
+/* $NetBSD: pax.h,v 1.1.2.1 2006/06/19 04:11:13 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #ifndef __SYS_PAX_H__
 #define	__SYS_PAX_H__
 
-void pax_mprotect(struct lwp *, struct uvm_object *, vm_prot_t *);
+void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
 void pax_mprotect_adjust(struct lwp *, int);
 
 #endif /* !__SYS_PAX_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.134 2006/04/28 20:07:57 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.134.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.134 2006/04/28 20:07:57 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.134.2.1 2006/06/19 04:17:06 chap Exp $");
 #endif /* not lint */
 
 /*
@@ -492,7 +492,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		memset(pass, 0, strlen(pass));
 	FREEPTR(pass);
 	if (acct != NULL)
-		memset(acct, 0, strlen(pass));
+		memset(acct, 0, strlen(acct));
 	FREEPTR(acct);
 	return (rval);
 }

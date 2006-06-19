@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.28 2006/04/15 21:20:47 jmcneill Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.28.2.1 2006/06/19 04:01:35 chap Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.28 2006/04/15 21:20:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.28.2.1 2006/06/19 04:01:35 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
-	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
+	int error;
 
 	sc = (struct cs428x_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -215,23 +215,12 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
-	/*
-	 * Set Power State D0.
-	 * Without do this, 0xffffffff is read from all registers after
-	 * using Windows.
-	 * On my IBM Thinkpad X20, it is set to D3 after using Windows2000.
-	 */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-			       &pci_pwrmgmt_cap_reg, 0)) {
-
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				    pci_pwrmgmt_csr_reg);
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
-				       (reg & ~PCI_PMCSR_STATE_MASK) |
-				       PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/* Enable the device (set bus master flag) */

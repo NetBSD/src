@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.12 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.12.14.1 2006/06/19 04:01:34 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.12 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.12.14.1 2006/06/19 04:01:34 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ opl_isa_match(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct opl_softc sc;
+	bus_space_handle_t ioh;
 	int r;
 
 	if (ia->ia_nio < 1)
@@ -88,12 +88,10 @@ opl_isa_match(parent, match, aux)
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
-	memset(&sc, 0, sizeof sc);
-	sc.iot = ia->ia_iot;
-	if (bus_space_map(sc.iot, ia->ia_io[0].ir_addr, OPL_SIZE, 0, &sc.ioh))
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, OPL_SIZE, 0, &ioh))
 		return (0);
-	r = opl_find(&sc);
-        bus_space_unmap(sc.iot, sc.ioh, OPL_SIZE);
+	r = opl_match(ia->ia_iot, ioh, 0);
+        bus_space_unmap(ia->ia_iot, ioh, OPL_SIZE);
 	if (r != 0) {
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = OPL_SIZE;
