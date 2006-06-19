@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.318 2006/06/15 15:34:20 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.319 2006/06/19 15:44:35 gdamore Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -24,6 +24,7 @@
 ./etc/X11/xserver
 ./etc/X11/xsm
 ./etc/cgd			mode=0700
+./etc/bluetooth
 ./etc/defaults
 ./etc/fonts
 ./etc/iscsi

@@ -1,0 +1,11 @@
+# $NetBSD: hosts,v 1.1 2006/06/19 15:44:35 gdamore Exp $
+# $Id: hosts,v 1.1 2006/06/19 15:44:35 gdamore Exp $
+# $FreeBSD: /repoman/r/ncvs/src/etc/bluetooth/hosts,v 1.2 2005/11/10 19:09:22 emax Exp $
+#
+# Bluetooth Host Database
+#
+# This file should contain the Bluetooth addresses and aliases for hosts.
+#
+# BD_ADDR               Name [ alias0 alias1 ... ]
+
+# 00:11:22:33:44:55	phone

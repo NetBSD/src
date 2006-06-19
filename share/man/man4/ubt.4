@@ -1,0 +1,95 @@
+.\" $NetBSD: ubt.4,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Written by Iain Hibbert for Itronix Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd Apr 20, 2005
+.Dt UBT 4
+.Os
+.Sh NAME
+.Nm ubt
+.Nd USB Bluetooth driver
+.Sh SYNOPSIS
+.Cd "ubt* at uhub? port ? configuration ? interface ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for USB Bluetooth dongles
+to the Bluetooth protocol stack.
+.Pp
+USB Bluetooth dongles provide two interfaces, both of which the
+.Nm
+driver claims. The second interface is used for Isochronous data and will have
+several alternate configurations regarding bandwidth consumption, which can be
+set using the hw.ubtN.config
+.Xr sysctl 8 
+variable. The number of alternate configurations is indicated by the value
+in the hw.ubtN.alt_config variable, and the isoc frame size for the current
+configuration is shown in the hw.ubtN.sco_rxsize, and hw.ubtN.sco_txsize
+variables.
+.Pp
+By default, configuration 0 is selected, which means that no bandwidth
+is used on the Isochronous interface and no SCO data can be sent. Consult
+the Bluetooth USB specification at https://www.bluetooth.org/ for complete
+instructions on setting bandwidth consumption. The following extract may be
+useful as a general guidance though details may differ between manufacturers.
+.Pp
+.Bl -tag -compact -width XXX
+.It 0
+No active voice channels
+.It 1
+One voice channel with 8-bit encoding
+.It 2
+Two voice channels with 8-bit encoding, or One voice channel with 16-bit encoding.
+.It 3
+Three voice channels with 8-bit encoding
+.It 4
+Two voice channels with 16-bit encoding
+.It 5
+Three voice channels with 16-bit encoding
+.El
+.Sh SEE ALSO
+.Xr bluetooth 4 ,
+.Xr uhub 4 ,
+.Xr ubtbcmfw 4 ,
+.Xr sysctl 8
+.Sh HISTORY
+This
+.Nm
+device driver was originally a character device written by
+.An "David Sainty"
+and
+.An "Lennart Augustsson" .
+It was rewritten to support socket based Bluetooth access for
+.Nx 4.0
+by
+.An "Iain Hibbert" .
+.Sh BUGS
+The Isochronous configuration can only be changed when the device is not
+marked up.
