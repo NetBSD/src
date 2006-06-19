@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.206 2006/05/16 13:46:19 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.207 2006/06/19 10:19:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.206 2006/05/16 13:46:19 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.207 2006/06/19 10:19:08 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -171,6 +171,8 @@ int	audioprobe(struct device *, struct cfdata *, void *);
 void	audioattach(struct device *, struct device *, void *);
 int	audiodetach(struct device *, int);
 int	audioactivate(struct device *, enum devact);
+
+void	audio_powerhook(int, void *);
 
 struct portname {
 	const char *name;
@@ -452,6 +454,11 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		 "output ports=0x%x, output master=%d\n",
 		 sc->sc_inports.allports, sc->sc_inports.master,
 		 sc->sc_outports.allports, sc->sc_outports.master));
+
+	sc->sc_powerhook = powerhook_establish(audio_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->dev.dv_xname);
 }
 
 int
@@ -508,6 +515,11 @@ audiodetach(struct device *self, int flags)
 	vdevgone(maj, mn | AUDIO_DEVICE,    mn | AUDIO_DEVICE, VCHR);
 	vdevgone(maj, mn | AUDIOCTL_DEVICE, mn | AUDIOCTL_DEVICE, VCHR);
 	vdevgone(maj, mn | MIXER_DEVICE,    mn | MIXER_DEVICE, VCHR);
+
+	if (sc->sc_powerhook != NULL) {
+		powerhook_disestablish(sc->sc_powerhook);
+		sc->sc_powerhook = NULL;
+	}
 
 	return 0;
 }
@@ -3725,3 +3737,30 @@ audioprint(void *aux, const char *pnp)
 }
 
 #endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */
+
+void
+audio_powerhook(int why, void *aux)
+{
+	struct audio_softc *sc;
+	const struct audio_hw_if *hwp;
+
+	sc = (struct audio_softc *)aux;
+	hwp = sc->hw_if;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+		if (sc->sc_pbus == TRUE)
+			hwp->halt_output(sc->hw_hdl);
+		if (sc->sc_rbus == TRUE)
+			hwp->halt_input(sc->hw_hdl);
+		break;
+	case PWR_SOFTRESUME:
+		if (sc->sc_pbus == TRUE)
+			audiostartp(sc);
+		if (sc->sc_rbus == TRUE)
+			audiostartr(sc);
+		break;
+	}
+
+	return;
+}
