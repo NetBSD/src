@@ -1,0 +1,26 @@
+# $NetBSD: mapper.dir.BIG5.src,v 1.1 2006/06/19 17:28:25 tnozaki Exp $
+
+Big5:1984/UCS		mapper_std	BIG5/Big5@1984%UCS.mps
+Big5EXT:2003/UCS	mapper_std	BIG5/Big5EXT@2003%UCS.mps
+Big5EXT:E/UCS		mapper_std	BIG5/Big5EXT@E%UCS.mps
+Big5EXT:ETen/UCS	mapper_std	BIG5/Big5EXT@ETen%UCS.mps
+Big5EXT:IBM/UCS		mapper_std	BIG5/Big5EXT@IBM%UCS.mps
+Big5EXT:Plus/UCS	mapper_std	BIG5/Big5EXT@Plus%UCS.mps
+Big5UDA/UCS		mapper_std	BIG5/Big5UDA%UCS.mps
+UCS/Big5:1984		mapper_std	BIG5/UCS%Big5@1984.mps
+UCS/Big5EXT:2003	mapper_std	BIG5/UCS%Big5EXT@2003.mps
+UCS/Big5EXT:E		mapper_std	BIG5/UCS%Big5EXT@E.mps
+UCS/Big5EXT:ETen	mapper_std	BIG5/UCS%Big5EXT@ETen.mps
+UCS/Big5EXT:IBM		mapper_std	BIG5/UCS%Big5EXT@IBM.mps
+UCS/Big5EXT:Plus	mapper_std	BIG5/UCS%Big5EXT@Plus.mps
+UCS/Big5UDA		mapper_std	BIG5/UCS%Big5UDA.mps
+Big5-2003/UCS		mapper_parallel	Big5EXT:ETen/UCS,Big5EXT:2003/UCS,Big5UDA/UCS,Big5:1984/UCS
+Big5-E/UCS		mapper_parallel	Big5EXT:ETen/UCS,Big5EXT:E/UCS,Big5:1984/UCS
+Big5-ETen/UCS		mapper_parallel	Big5EXT:ETen/UCS,Big5UDA/UCS,Big5:1984/UCS
+Big5-IBM/UCS		mapper_parallel	Big5EXT:IBM/UCS,Big5:1984/UCS
+Big5-Plus/UCS		mapper_parallel	Big5EXT:Plus/UCS,Big5:1984/UCS
+UCS/Big5-2003		mapper_parallel	UCS/Big5:1984,UCS/Big5EXT:ETen,UCS/Big5EXT:2003,UCS/Big5UDA
+UCS/Big5-E		mapper_parallel	UCS/Big5:1984,UCS/Big5EXT:ETen,UCS/Big5EXT:E
+UCS/Big5-ETen		mapper_parallel	UCS/Big5:1984,UCS/Big5EXT:ETen,UCS/Big5UDA
+UCS/Big5-IBM		mapper_parallel	UCS/Big5:1984,UCS/Big5EXT:IBM
+UCS/Big5-Plus		mapper_parallel	UCS/Big5:1984,UCS/Big5EXT:Plus
