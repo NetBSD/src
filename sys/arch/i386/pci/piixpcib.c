@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.4 2006/06/17 19:00:03 mrg Exp $ */
+/* $NetBSD: piixpcib.c,v 1.5 2006/06/19 02:30:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.4 2006/06/17 19:00:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.5 2006/06/19 02:30:35 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,8 +77,6 @@ struct piixpcib_softc {
 
 	void		*sc_powerhook;
 	struct pci_conf_state sc_pciconf;
-
-	pcireg_t	sc_pirqrc[4];
 };
 
 static int piixpcibmatch(struct device *, struct cfdata *, void *);
@@ -166,21 +164,9 @@ piixpcib_powerhook(int why, void *opaque)
 	switch (why) {
 	case PWR_SUSPEND:
 		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-
-		/* capture PIRQX route control registers */
-		sc->sc_pirqrc[0] = pci_conf_read(pc, tag, PIIX4_PIRQRCA);
-		sc->sc_pirqrc[1] = pci_conf_read(pc, tag, PIIX4_PIRQRCB);
-		sc->sc_pirqrc[2] = pci_conf_read(pc, tag, PIIX4_PIRQRCC);
-		sc->sc_pirqrc[3] = pci_conf_read(pc, tag, PIIX4_PIRQRCD);
 		break;
 	case PWR_RESUME:
 		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-
-		/* restore PIRQX route control registers */
-		pci_conf_write(pc, tag, PIIX4_PIRQRCA, sc->sc_pirqrc[0]);
-		pci_conf_write(pc, tag, PIIX4_PIRQRCB, sc->sc_pirqrc[1]);
-		pci_conf_write(pc, tag, PIIX4_PIRQRCC, sc->sc_pirqrc[2]);
-		pci_conf_write(pc, tag, PIIX4_PIRQRCD, sc->sc_pirqrc[3]);
 		break;
 	}
 
