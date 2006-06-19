@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.7 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.7.2.1 2006/06/19 03:46:29 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.7 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.7.2.1 2006/06/19 03:46:29 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,11 @@ netbsd32_getdents(l, v, retval)
 	struct file *fp;
 	int error, done;
 	char  *buf;
+	netbsd32_size_t count;
 	struct proc *p = l->l_proc;
+
+	/* Limit the size on any kernel buffers used by VOP_READDIR */
+	count = min(MAXBSIZE, SCARG(uap, count));
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -80,9 +84,8 @@ netbsd32_getdents(l, v, retval)
 		error = EBADF;
 		goto out;
 	}
-	buf = malloc(SCARG(uap, count), M_TEMP, M_WAITOK);
-	error = vn_readdir(fp, buf,
-	    UIO_SYSSPACE, SCARG(uap, count), &done, l, 0, 0);
+	buf = malloc(count, M_TEMP, M_WAITOK);
+	error = vn_readdir(fp, buf, UIO_SYSSPACE, count, &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
 		error = copyout(buf, NETBSD32PTR64(SCARG(uap, buf)), *retval);

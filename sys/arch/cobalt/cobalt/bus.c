@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.30 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: bus.c,v 1.30.2.1 2006/06/19 03:44:01 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.30 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.30.2.1 2006/06/19 03:44:01 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -565,7 +565,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		case BUS_DMASYNC_PREREAD:
 			end = start + minlen;
 			preboundary = start & ~mips_dcache_align_mask;
- 			firstboundary = (start + mips_dcache_align_mask)
+			firstboundary = (start + mips_dcache_align_mask)
 			    & ~mips_dcache_align_mask;
 			lastboundary = end & ~mips_dcache_align_mask;
 			if (preboundary < start && preboundary < lastboundary)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.752 2006/05/14 21:55:11 elad Exp $
+# $NetBSD: GENERIC,v 1.752.2.1 2006/06/19 03:44:03 chap Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.752 $"
+#ident 		"GENERIC-$Revision: 1.752.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -417,7 +417,7 @@ gpio* 	at elansc?
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
-#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
+piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
@@ -438,7 +438,7 @@ eisa0	at pceb?
 
 # ISA bus support
 #isa0	at ichlpcib?
-#isa0	at piixpcib?
+isa0	at piixpcib?
 #isa0	at gscpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
@@ -588,7 +588,7 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
 
 # Intel PIIX4 power management controllers
-piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
+piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
 # iTE IT87xxF and compatible hardware monitors
@@ -1266,8 +1266,9 @@ joy*	at eso?				# ESS Solo-1 on-board joystick
 
 
 # Miscellaneous Devices
-
-geodewdog* at pci? dev ? function ?	# AMD Geode SC1100 watchdog timer
+geodegcb*  at pci? dev ? function ?	# Geode GCB area
+geodewdog* at geodegcb? 		# AMD Geode SC1100 watchdog timer
+geodecntr* at geodegcb? 		# AMD Geode SC1100 high res. counter
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
@@ -1332,6 +1333,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
@@ -1342,7 +1344,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-pseudo-device	ksyms			# /dev/ksyms
 
 # Veriexec
 #options VERIFIED_EXEC

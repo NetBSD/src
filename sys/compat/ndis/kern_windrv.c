@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_windrv.c,v 1.3.2.2 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.2 2006/03/31 00:03:57 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.2.10.1 2006/06/19 03:46:29 chap Exp $");
 #endif
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ windrv_lookup(img, name)
 
 	mtx_lock(&drvdb_mtx); 
 	STAILQ_FOREACH(d, &drvdb_head, link) {
-#ifdef NDIS_LKM		
+#ifdef NDIS_DBG		
 		printf("d->windrv_object->dro_driverstart = %x\n", d->windrv_object->dro_driverstart);
 #endif		
 		if (d->windrv_object->dro_driverstart == (void *)img ||	
@@ -173,7 +173,7 @@ windrv_lookup(img, name)
 			 (char *)us.us_buf, us.us_len) == 0 && us.us_len > 0)) {		
 			mtx_unlock(&drvdb_mtx);		
 			printf("found driver object!\n");
-#ifdef NDIS_LKM
+#ifdef NDIS_DBG
 			printf("returning %x\n", d->windrv_object);
 #endif				
 			return(d->windrv_object);
@@ -261,7 +261,7 @@ windrv_load(mod, img, len)
 	struct driver_object	*drv;
 	int			status;
 
-#ifdef NDIS_LKM
+#ifdef NDIS_DBG
 	printf("in windrv_load\n");
 	printf("img = %x\n", img);
 #endif	
@@ -424,7 +424,7 @@ windrv_find_pdo(drv, bsddev)
 	device_t		bsddev;
 {
 	device_object		*pdo;
-#ifdef NDIS_LKM
+#ifdef NDIS_DBG
 	printf("In windrv_find_pdo: \ndrv = %x", drv);
 	printf("\nbsddev = %x", bsddev);
 	printf("\npdo = %x", drv->dro_devobj);

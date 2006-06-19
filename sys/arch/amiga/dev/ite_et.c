@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.10 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: ite_et.c,v 1.10.14.1 2006/06/19 03:44:01 chap Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.10 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.10.14.1 2006/06/19 03:44:01 chap Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -253,20 +253,25 @@ et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 static void etbcopy(const void *src, void *dst, size_t len)
 {
 	int i;
+	char *cdst;
+	const char *csrc;
 
-	if (src == dst)
+	cdst = (char*)dst;
+	csrc = (const char*)src;
+
+	if (csrc == cdst)
 		return;
 
-	if (src > dst)
+	if (csrc > cdst)
 		for (i=len; i>0; i--) {
-			*((char *)dst)++ = *((const char *)src)++;
+			*cdst++ = *csrc++;
 		}
 	else {
-		((const char *)src) += len;
-		((char *)dst) += len;
+		csrc += len;
+		cdst += len;
 
 		for (i=len; i>0; i--){
-			*--((char *)dst) = *--((const char *)src);
+			*--cdst = *--csrc;
 		}
 	}
 }

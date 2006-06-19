@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.22 2006/04/04 03:13:12 gdamore Exp $
+#	$NetBSD: files.amd64,v 1.22.2.1 2006/06/19 03:44:01 chap Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -55,7 +55,6 @@ file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
 file	dev/cons.c
-file	kern/kern_microtime.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
 file	arch/amd64/amd64/ipifuncs.c       multiprocessor
@@ -130,6 +129,9 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/amd64/isa/clock.c			isa
+
+# TSC timecounter support
+file	arch/x86/x86/tsc.c
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device

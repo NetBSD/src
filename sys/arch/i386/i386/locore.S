@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2006/05/13 08:56:08 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.2.1 2006/06/19 03:44:26 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@
 	.globl	_C_LABEL(cpu)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
 	.globl	_C_LABEL(idt)
@@ -193,7 +193,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.long	0
+_C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 
 	.space 512
@@ -599,9 +599,9 @@ begin:
 
 	/* Set up bootstrap stack. */
 	leal	(PROC0STACK+KERNBASE)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0paddr)
-	leal	(USPACE-FRAMESIZE)(%eax),%esp
-	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	movl	%eax,_C_LABEL(proc0uarea)
+	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
+	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
 #if defined(MULTIBOOT)

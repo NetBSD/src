@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_U,v 1.1 2006/03/20 22:34:02 bouyer Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.6.2 2006/06/19 03:44:03 chap Exp $
 
 include 	"arch/xen/conf/std.xen"
 

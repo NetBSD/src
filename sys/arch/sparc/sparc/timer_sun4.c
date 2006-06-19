@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.13 2005/11/16 03:00:23 uwe Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.13.14.1 2006/06/19 03:45:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.13 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.13.14.1 2006/06/19 03:45:06 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,6 +98,7 @@ clockintr_4(void *cap)
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4->t_c10.t_limit);
+	tickle_tc();
 	hardclock((struct clockframe *)cap);
 	return (1);
 }

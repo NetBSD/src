@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: intr.c,v 1.10.14.1 2006/06/19 03:44:53 chap Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.14.1 2006/06/19 03:44:53 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2005/12/24 22:45:36 perry Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
 
@@ -67,7 +68,6 @@ static void intr_calculatemasks(void);
 static const char *intr_typename(int);
 
 static int fakeintr(void *);
-static inline int cntlzw(int);
 
 
 volatile int cpl, ipending;
@@ -76,15 +76,6 @@ u_long imask[NIPL];
 static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 static struct intrhand *intrhand[ICU_LEN];
 
-
-static inline int
-cntlzw(int x)
-{
-	int a;
-
-	__asm volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
-	return a;
-}
 
 static int
 fakeintr(void *arg)

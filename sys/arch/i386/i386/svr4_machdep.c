@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.77 2005/12/26 19:23:59 perry Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.77.14.1 2006/06/19 03:44:26 chap Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.77 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.77.14.1 2006/06/19 03:44:26 chap Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -530,8 +530,8 @@ svr4_fasttrap(frame)
 	struct proc *p = l->l_proc;
 	struct schedstate_percpu *spc;
 	struct timeval tv;
+	struct timespec ts;
 	uint64_t tm;
-	int s;
 
 	l->l_md.md_regs = &frame;
 
@@ -550,14 +550,11 @@ svr4_fasttrap(frame)
 		 * This is like gethrtime(3), returning the time expressed
 		 * in nanoseconds since an arbitrary time in the past and
 		 * guaranteed to be monotonically increasing, which we
-		 * obtain from mono_time(9).
+		 * obtain from nanouptime(9).
 		 */
-		s = splclock();
-		tv = mono_time;
-		splx(s);
+		nanouptime(&ts);
 
-		tm =  tv.tv_usec * 1000u;
-		tm += tv.tv_sec * (uint64_t)1000000000u;
+		tm = ts.tv_nsec + ts.tv_sec * (uint64_t)1000000000u;
 		/* XXX: dsl - I would have expected the msb in %edx */
 		frame.tf_edx = tm & 0xffffffffu;
 		frame.tf_eax = (tm >> 32);
@@ -591,10 +588,10 @@ svr4_fasttrap(frame)
 		 * proc's wall time. Seconds are returned in %eax, nanoseconds
 		 * in %edx.
 		 */
-		microtime(&tv);
+		nanotime(&ts);
 
-		frame.tf_eax = (uint32_t) tv.tv_sec;
-		frame.tf_edx = (uint32_t) tv.tv_usec * 1000;
+		frame.tf_eax = (uint32_t) ts.tv_sec;
+		frame.tf_edx = (uint32_t) ts.tv_nsec;
 		break;
 
 	default:

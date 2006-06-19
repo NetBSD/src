@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.14.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.14.1 2006/06/19 03:44:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ delay(unsigned int n)
 		if (cur < last)
 			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
 		else
- 			delta += (cur - last);
+			delta += (cur - last);
 
 		last = cur;
 

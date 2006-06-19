@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.17 2006/04/21 19:04:57 tsutsui Exp $	*/
+/*	$NetBSD: gt.c,v 1.17.2.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.17 2006/04/21 19:04:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.17.2.1 2006/06/19 03:44:02 chap Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -115,13 +115,17 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	    (bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_COMMAND) &
 	    ~PCI_SYNCMODE) | PCI_PCLK_HIGH);
 
+	(void)bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY,
+	    0x00 << PCI_RETRYCTR_SHIFT | 0xff << PCI_TIMEOUT1_SHIFT | 0xff);
+
 #if NPCI > 0
 	pc = &sc->sc_pc;
 	pc->pc_bst = sc->sc_bst;
 	pc->pc_bsh = sc->sc_bsh;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	pc->pc_ioext = extent_create("pciio", 0x10100000, 0x11ffffff,
+	pc->pc_ioext = extent_create("pciio", 0x10001000, 0x11ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pc->pc_memext = extent_create("pcimem", 0x12000000, 0x13ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);

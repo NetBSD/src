@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.56 2005/11/14 03:30:49 uwe Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.56.16.1 2006/06/19 03:45:06 chap Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.56 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.56.16.1 2006/06/19 03:45:06 chap Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -529,9 +529,9 @@ svr4_trap(int type, struct lwp *l)
 	int n;
 	struct trapframe *tf = l->l_md.md_tf;
 	struct schedstate_percpu *spc;
+	struct timespec ts;
 	struct timeval tv;
 	uint64_t tm;
-	int s;
 
 	if (l->l_proc->p_emul != &emul_svr4)
 		return 0;
@@ -564,14 +564,12 @@ svr4_trap(int type, struct lwp *l)
 		 * This is like gethrtime(3), returning the time expressed
 		 * in nanoseconds since an arbitrary time in the past and
 		 * guaranteed to be monotonically increasing, which we
-		 * obtain from mono_time(9).
+		 * obtain from nanotime(9).
 		 */
-		s = splclock();
-		tv = mono_time;
-		splx(s);
+		nanouptime(&ts);
 
-		tm = tv.tv_usec * 1000u;
-		tm += tv.tv_sec * (uint64_t)1000000000u;
+		tm = ts.tv_nsec;
+		tm += ts.tv_sec * (uint64_t)1000000000u;
 		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
 		tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		break;
@@ -586,7 +584,7 @@ svr4_trap(int type, struct lwp *l)
 		 */
 		spc = &curcpu()->ci_schedstate;
 
-		microtime(&tv);
+		microtime(&tv); /* XXX should move on to struct bintime */
 
 		tm = (l->l_proc->p_rtime.tv_sec + tv.tv_sec -
 				spc->spc_runtime.tv_sec) * (uint64_t)1000000u;
@@ -601,9 +599,9 @@ svr4_trap(int type, struct lwp *l)
 		/*
 		 * This is used by gettimeofday(3), among other things.
 		 */
-		microtime(&tv);
-		tf->tf_out[0] = tv.tv_sec;
-		tf->tf_out[1] = tv.tv_usec * 1000;
+		nanotime(&ts);
+		tf->tf_out[0] = ts.tv_sec;
+		tf->tf_out[1] = ts.tv_nsec;
 		break;
 
 	default:

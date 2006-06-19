@@ -1,4 +1,4 @@
-/* $Id: ar531x_board.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: ar531x_board.c,v 1.1.10.1 2006/06/19 03:44:52 chap Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,7 +40,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.1.10.1 2006/06/19 03:44:52 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,52 +50,105 @@ __KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.1 2006/03/21 08:15:19 gdamore Exp
 #include <mips/atheros/include/ar531xreg.h>
 #include <mips/atheros/include/ar531xvar.h>
 
-struct ar531x_board_info *
+#include <contrib/dev/ath/ah_soc.h>
+
+/*
+ * Locate the Board Configuration data using heuristics.
+ * Search backward from the (aliased) end of flash looking
+ * for the signature string that marks the start of the data.
+ * We search at most 500KB.
+ */
+const struct ar531x_boarddata *
 ar531x_board_info(void)
 {
-	static struct ar531x_board_info	*infop = NULL;
-	static struct ar531x_board_info	info;
-	uint32_t			ptr, end;
-	uint32_t			fctl;
+	static const struct ar531x_boarddata *board = NULL;
+	const uint8_t *ptr, *end;
+	uint32_t fctl;
 
-	if (infop)
-		return infop;
+	if (board == NULL) {
+		/* configure flash bank 0 */
+		fctl = REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_0) & 
+		    AR531X_FLASHCTL_MW_MASK;
 
-	/* configure flash bank 0 */
-	fctl = REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_0) & 
-	    AR531X_FLASHCTL_MW_MASK;
+		fctl |=
+		    AR531X_FLASHCTL_E |
+		    AR531X_FLASHCTL_RBLE |
+		    AR531X_FLASHCTL_AC_8M |
+		    (1 << AR531X_FLASHCTL_IDCY_SHIFT) |
+		    (7 << AR531X_FLASHCTL_WST1_SHIFT) |
+		    (7 << AR531X_FLASHCTL_WST2_SHIFT);
 
-	fctl |=
-	    AR531X_FLASHCTL_E |
-	    AR531X_FLASHCTL_AC_8M |
-	    (1 << AR531X_FLASHCTL_IDCY_SHIFT) |
-	    (7 << AR531X_FLASHCTL_WST1_SHIFT) |
-	    (7 << AR531X_FLASHCTL_WST2_SHIFT);
+		REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_0) = fctl;
 
-	REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_0) = fctl;
+		REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_1) &=
+		    ~(AR531X_FLASHCTL_E | AR531X_FLASHCTL_AC_MASK);
 
-	REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_1) &=
-	    ~(AR531X_FLASHCTL_E | AR531X_FLASHCTL_AC_MASK);
+		REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_2) &=
+		    ~(AR531X_FLASHCTL_E | AR531X_FLASHCTL_AC_MASK);
 
-	REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_2) &=
-	    ~(AR531X_FLASHCTL_E | AR531X_FLASHCTL_AC_MASK);
-
-	/* start looking at the last 4K of flash */
-	ptr = AR531X_FLASH_END - 0x1000;
-	end = ptr - (500 * 1024);
-
-	while (ptr > end) {
-
-		if (REGVAL(ptr) == AR531X_BOARD_MAGIC) {
-			memcpy(&info, (char *)MIPS_PHYS_TO_KSEG1(ptr),
-			    sizeof (info));
-			infop = &info;
-
-			return (infop);
-		}
-
-		ptr -= 0x1000;
+		/* search backward in the flash looking for the signature */
+		ptr = (const uint8_t *) MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END - 0x1000);
+		end = ptr - (500 * 1024);	/* NB: max 500KB window */
+		/* XXX validate end */
+		for (; ptr > end; ptr -= 0x1000)
+			if (*(const uint32_t *)ptr == AR531X_BOARD_MAGIC) {
+				board = (const struct ar531x_boarddata *) ptr;
+				break;
+			}
 	}
+	return board;
+}
 
-	return NULL;
+/*
+ * Locate the radio configuration data; it is located relative
+ * to the board configuration data.
+ */
+const void *
+ar531x_radio_info(void)
+{
+	static const void *radio = NULL;
+	const struct ar531x_boarddata *board;
+	const uint8_t *baddr, *ptr, *end;
+
+	if (radio == NULL) {
+		board = ar531x_board_info();
+		if (board == NULL)
+			return NULL;
+		baddr = (const uint8_t *) board;
+		ptr = baddr + 0x1000;
+		end = (const uint8_t *)
+		    MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END-0x1000);
+	again:
+		for (; ptr < end; ptr += 0x1000)
+			if (*(const uint32_t *)ptr != 0xffffffff) {
+				radio = ptr;
+				goto done;
+			}
+		/* sort of an Algol-style for loop ... */
+		if (end == (uint8_t *) MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END)) {
+			/* NB: AR2316 has radio data in a different location */
+			ptr = baddr + 0xf8;
+			end = (const uint8_t *)
+			    MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END-0x1000 + 0xf8);
+			goto again;
+		}
+	}
+done:
+	return radio;
+}
+
+/*
+ * Locate board and radio configuration data in flash.
+ */
+int
+ar531x_board_config(struct ar531x_config *config)
+{
+
+	config->board = ar531x_board_info();
+	if (config->board == NULL)
+		return ENOENT;
+	config->radio = ar531x_radio_info();
+	if (config->radio == NULL)
+		return ENOENT;		/* XXX distinct code */
+	return 0;
 }

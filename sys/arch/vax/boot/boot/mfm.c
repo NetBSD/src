@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.6 2005/12/11 12:19:30 christos Exp $	*/
+/*	$NetBSD: mfm.c,v 1.6.14.1 2006/06/19 03:45:15 chap Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -460,6 +460,9 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 	struct mfm_softc *msc = f;
 	struct disklabel *lp;
 	int	block, sect, head, cyl, scount, res;
+	char *cbuf;
+
+	cbuf = (char*)buf;
 
 	lp = &mfmlabel;
 	block = (dblk < 0 ? 0 : dblk + lp->d_partitions[msc->part].p_offset);
@@ -516,7 +519,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 			mfm_rxprepare();
 			/* copy from buf */
-			bcopy(buf, (void *) 0x200D0000, *rsize);
+			bcopy(cbuf, (void *) 0x200D0000, *rsize);
 			res = mfm_command(DKC_CMD_WRITE_RX33);
 		} else {
 			creg.udc_rtcnt = UDC_RC_RX33READ;
@@ -528,12 +531,12 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			bzero((void *) 0x200D0000, *rsize);
 			res = mfm_command(DKC_CMD_READ_RX33);
 			/* copy to buf */
-			bcopy((void *) 0x200D0000, buf, *rsize);
+			bcopy((void *) 0x200D0000, cbuf, *rsize);
 		}
 
 		scount -= *rsize / 512;
 		block += *rsize / 512;
-		(char *)buf += *rsize;
+		cbuf += *rsize;
 	}
 
 	*rsize = size;
@@ -545,6 +548,9 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 	struct mfm_softc *msc = f;
 	struct disklabel *lp;
 	int	block, sect, head, cyl, scount, cmd, res;
+	char *cbuf;
+
+	cbuf = (char *)buf;
 
 	lp = &mfmlabel;
 	block = (dblk < 0 ? 0 : dblk + lp->d_partitions[msc->part].p_offset);
@@ -604,7 +610,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			creg.udc_term = UDC_TC_HDD;
 			cmd = DKC_CMD_WRITE_HDD;
 
-			bcopy(buf, (void *) 0x200D0000, *rsize);
+			bcopy(cbuf, (void *) 0x200D0000, *rsize);
 			res = mfm_command(cmd);
 		} else {
 			creg.udc_rtcnt = UDC_RC_HDD_READ;
@@ -614,12 +620,12 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 			bzero((void *) 0x200D0000, *rsize);
 			res = mfm_command(cmd);
-			bcopy((void *) 0x200D0000, buf, *rsize);
+			bcopy((void *) 0x200D0000, cbuf, *rsize);
 		}
 
 		scount -= *rsize / 512;
 		block += *rsize / 512;
-		(char *)buf += *rsize;
+		cbuf += *rsize;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.31 2006/03/27 20:59:35 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.31.2.1 2006/06/19 03:44:25 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.31 2006/03/27 20:59:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.31.2.1 2006/06/19 03:44:25 chap Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1427,12 +1427,10 @@ identifycpu(struct cpu_info *ci)
 		 * If we have SSE/SSE2, enable XMM exceptions, and
 		 * notify userland.
 		 */
-		if (cpu_feature & (CPUID_SSE|CPUID_SSE2)) {
-			if (cpu_feature & CPUID_SSE)
-				i386_has_sse = 1;
-			if (cpu_feature & CPUID_SSE2)
-				i386_has_sse2 = 1;
-		}
+		if (cpu_feature & CPUID_SSE)
+			i386_has_sse = 1;
+		if (cpu_feature & CPUID_SSE2)
+			i386_has_sse2 = 1;
 	} else
 		i386_use_fxsave = 0;
 #endif /* I686_CPU */

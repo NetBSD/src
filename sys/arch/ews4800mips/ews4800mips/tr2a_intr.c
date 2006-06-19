@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.1.14.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.1.14.1 2006/06/19 03:44:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ tr2a_initclocks(void)
 	fixtick = tickfix;
 #endif
 	if (tickfix) {
- 		int ftp;
+		int ftp;
 
 		ftp = min(ffs(tickfix), ffs(hz));
 		tickfix >>= ftp - 1;

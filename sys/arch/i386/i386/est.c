@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.24 2006/03/15 22:56:38 dogcow Exp $	*/
+/*	$NetBSD: est.c,v 1.24.4.1 2006/06/19 03:44:25 chap Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.24 2006/03/15 22:56:38 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.24.4.1 2006/06/19 03:44:25 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,17 @@ static const struct fq_info pentium_m_1200[] = {
 	{ 1000, 1100 },
 	{  900, 1020 },
 	{  800, 1004 },
+	{  600,  956 },
+};
+
+/* Low Voltage Intel Pentium M processor 1.30 GHz */
+static const struct fq_info pentium_m_1300_lv[] = {
+	{ 1300, 1180 },
+	{ 1200, 1164 },
+	{ 1100, 1100 },
+	{ 1000, 1020 },
+	{  900, 1004 },
+	{  800,  988 },
 	{  600,  956 },
 };
 
@@ -402,6 +413,7 @@ static const struct fqlist pentium_m[] = { /* Banias */
 	ENTRY("1000", 0x0695, pentium_m_1000, 3),
 	ENTRY("1100", 0x0695, pentium_m_1100, 3),
 	ENTRY("1200", 0x0695, pentium_m_1200, 3),
+	ENTRY("1300", 0x0695, pentium_m_1300_lv, 3),
 	ENTRY("1300", 0x0695, pentium_m_1300, 3),
 	ENTRY("1400", 0x0695, pentium_m_1400, 3),
 	ENTRY("1500", 0x0695, pentium_m_1500, 3),
@@ -558,11 +570,11 @@ est_init(struct cpu_info *ci)
 				   CPUID + brand_tag still isn't unique. */
 				for (k = fql->tablec - 1; k >= 0; k--) {
 					if (fql->table[k].mv == mv) {
-				est_fqlist = fql;
-				break;
+						est_fqlist = fql;
+						break;
+					}
+				}
 			}
-		}
-	}
 			if (NULL != est_fqlist) break;
 		}
 	}
@@ -576,7 +588,7 @@ est_init(struct cpu_info *ci)
 	 */
 	fsbmult = est_fqlist->fsbmult;
 	aprint_normal("%d MHz\n", MSR2MHZ(msr));
-	
+
 	freq_len = est_fqlist->tablec * (sizeof("9999 ")-1) + 1;
 	freq_names = malloc(freq_len, M_SYSCTLDATA, M_WAITOK);
 	freq_names[0] = '\0';
@@ -587,7 +599,7 @@ est_init(struct cpu_info *ci)
 		    i < est_fqlist->tablec - 1 ? " " : "");
 	}
 	aprint_normal("%s: %s frequencies available (MHz): %s\n",
-            ci->ci_dev->dv_xname, est_desc, freq_names);
+	    ci->ci_dev->dv_xname, est_desc, freq_names);
 
 	/*
 	 * Setup the sysctl sub-tree machdep.est.*
