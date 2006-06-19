@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.87 2006/06/19 02:32:12 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.88 2006/06/19 10:18:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.87 2006/06/19 02:32:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.88 2006/06/19 10:18:08 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1079,10 +1079,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			dopowerhooks(PWR_SUSPEND);
 			acpi_md_sleep(state);
 			dopowerhooks(PWR_RESUME);
-#ifdef PCI_INTR_FIXUP
-			if (state==ACPI_STATE_S3)
-				acpi_pci_fixup(sc);
-#endif
 			splx(s);
 			dopowerhooks(PWR_SOFTRESUME);
 			if (state==ACPI_STATE_S4)
