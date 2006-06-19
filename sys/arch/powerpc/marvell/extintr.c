@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.15 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: extintr.c,v 1.15.14.1 2006/06/19 03:44:53 chap Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.15 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.15.14.1 2006/06/19 03:44:53 chap Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.15 2005/12/24 20:07:28 perry Exp $");
 
 #include <machine/psl.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/intr.h>
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -256,19 +257,6 @@ imask_print(char *str, volatile imask_t *imp)
 		imp->bits[IMASK_ICU_HI],
 		imp->bits[IMASK_ICU_GPP],
 		imp->bits[IMASK_SOFTINT]));
-}
-
-/*
- * Count leading zeros.
- */
-static inline int
-cntlzw(int x)
-{
-	int a;
-
-	__asm volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
-
-	return a;
 }
 
 /*

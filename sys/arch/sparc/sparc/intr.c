@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.94 2005/11/16 21:42:50 uwe Exp $ */
+/*	$NetBSD: intr.c,v 1.94.14.1 2006/06/19 03:45:06 chap Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94 2005/11/16 21:42:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94.14.1 2006/06/19 03:45:06 chap Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -105,12 +105,12 @@ strayintr(struct clockframe *fp)
 		fp->ipl, fp->pc, fp->npc, bitmask_snprintf(fp->psr,
 		       PSR_BITS, bits, sizeof(bits)));
 
-	timesince = time.tv_sec - straytime;
+	timesince = time_uptime - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 10)
 			panic("crazy interrupts");
 	} else {
-		straytime = time.tv_sec;
+		straytime = time_uptime;
 		nstray = 1;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2006/05/15 12:47:42 dogcow Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25.2.1 2006/06/19 03:44:01 chap Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2006/05/15 12:47:42 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25.2.1 2006/06/19 03:44:01 chap Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2327,6 +2327,9 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 	pt_entry_t opte;
 	int bank, off;
 
+	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
+
+
 	/*
 	 * note that ptpva points to the PTE that maps startva.   this may
 	 * or may not be the first PTE in the PTP.
@@ -2419,6 +2422,8 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	pt_entry_t opte;
 	int bank, off;
 	struct pv_entry *pve;
+
+	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
 
 	if (!pmap_valid_entry(*pte))
 		return(FALSE);		/* VA not mapped */
@@ -3026,6 +3031,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	KASSERT(pmap_initialized);
+
+	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
 
 #ifdef DIAGNOSTIC
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)

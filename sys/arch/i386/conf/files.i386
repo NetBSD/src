@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.287 2006/05/06 15:46:48 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.287.2.1 2006/06/19 03:44:03 chap Exp $
 #
 # new style config file for i386 architecture
 #
@@ -87,7 +87,6 @@ file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
-file	kern/kern_microtime.c		i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
@@ -195,10 +194,20 @@ device	elansc: sysmon_wdog, gpiobus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
 
+# AMD Geode SC1100 GCB area
+device  geodegcb {}
+attach	geodegcb at pci
+file	arch/i386/pci/geode.c		geodegcb
+
 # AMD Geode SC1100 Watchdog Timer
-device	geodewdog: sysmon_wdog
-attach	geodewdog at pci
-file	arch/i386/pci/geode.c		geodewdog
+device	geodewdog: sysmon_wdog, geodegcb
+attach	geodewdog at geodegcb
+file	arch/i386/pci/geodewdg.c	geodewdog
+
+# AMD Geode SC1100 high resolution counter
+device	geodecntr: geodegcb
+attach  geodecntr at geodegcb
+file	arch/i386/pci/geodecntr.c	geodecntr
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -245,6 +254,9 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/i386/isa/clock.c		isa
+
+# TSC support
+file	arch/x86/x86/tsc.c		i586_cpu | i686_cpu
 
 # Numeric Processing Extension; Math Co-processor
 device	npx

@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.24 2006/03/08 09:32:22 sekiya Exp $ */
+/* $NetBSD: bootxx.c,v 1.24.4.1 2006/06/19 03:45:15 chap Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -278,6 +278,9 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 {
 	int	block = dblk;
 	int     nsize = size;
+	char	*cbuf;
+
+	cbuf = (char *)buf;
 
 	if (romlabel.d_magic == DISKMAGIC && romlabel.d_magic2 == DISKMAGIC) {
 		if (romlabel.d_npartitions > 1) {
@@ -289,16 +292,16 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	}
 
 	if (from == FROMMV) {
-		romread_uvax(block, size, buf, rpb);
+		romread_uvax(block, size, cbuf, rpb);
 	} else /* if (from == FROM750) */ {
 		while (size > 0) {
 			if (rpb->devtyp == BDEV_HP)
 				hpread(block);
 			else
 				read750(block, bootregs);
-			bcopy(0, buf, 512);
+			bcopy(0, cbuf, 512);
 			size -= 512;
-			(char *)buf += 512;
+			cbuf += 512;
 			block++;
 		}
 	}

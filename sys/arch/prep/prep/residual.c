@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $     */
+/*      $NetBSD: residual.c,v 1.9.4.1 2006/06/19 03:45:06 chap Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.9.4.1 2006/06/19 03:45:06 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $");
 #include "opt_residual.h"
 
 #ifdef RESIDUAL_DATA_DUMP
+
+#include <machine/chpidpnp.h>
+#include <machine/pcipnp.h>
+
 static void make_pnp_device_tree(void *);
 static void bustype_subr(DEVICE_ID *);
 
@@ -90,9 +94,15 @@ static const char *SpreadIOMethod[] = {
 };
 
 static const char *CacheAttrib[] = {
-	"None",
+	"No cache",
 	"Split cache",
 	"Combined cache",
+};
+
+static const char *TLBAttrib[] = {
+	"No TLB",
+	"Split TLB",
+	"Combined TLB",
 };
 
 static const char *Usage[] = {
@@ -239,6 +249,57 @@ find_nth_pnp_device(const char *devid, int busid, int n)
 	return NULL;
 }
 
+int
+pnp_pci_busno(void *v, int *bus)
+{
+	struct _L4_Pack *pack = v;
+	struct _L4_PPCPack *p = &pack->L4_Data.L4_PPCPack;
+	int item, size, tag = *(unsigned char *)v;
+	unsigned char *q = v;
+
+	item = tag_large_item_name(tag);
+	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
+	*bus = -1;
+
+	if (res->Revision == 0)
+                return size;
+	if (item != LargeVendorItem)
+		return size;
+	if (p->Type != LV_PCIBridge) /* PCI Bridge type */
+		return size;	
+
+	*bus = p->PPCData[16];
+	return size;
+}
+
+/* Get the PCI config base and addr from PNP */
+
+int
+pnp_pci_configbase(void *v, uint32_t *addr, uint32_t *data)
+{
+	struct _L4_Pack *pack = v;
+	struct _L4_PPCPack *p = &pack->L4_Data.L4_PPCPack;
+	int item, size, tag = *(unsigned char *)v;
+	unsigned char *q = v;
+
+	item = tag_large_item_name(tag);
+	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
+	/* init to zero so we don't return garbage values */
+	*addr = 0;
+	*data = 0;
+
+	if (res->Revision == 0)
+		return size;
+	if (item != LargeVendorItem)
+		return size;
+	if (p->Type != LV_PCIBridge) /* PCI Bridge type */
+		return size;
+
+	*addr = (uint32_t)le64dec(&p->PPCData[0]);
+	*data = (uint32_t)le64dec(&p->PPCData[8]);
+	return size;
+}
+
 #ifdef RESIDUAL_DATA_DUMP
 
 void
@@ -319,9 +380,26 @@ print_residual_device_info(void)
 	printf("    CacheSize = %ld\n", be32toh(vpd->CacheSize));
 	l = be32toh(vpd->CacheAttrib);
 	printf("    CacheAttrib = %s\n",
-	    (s >= NELEMS(CacheAttrib)) ? "Unknown" : CacheAttrib[s]);
+	    (l >= NELEMS(CacheAttrib)) ? "Unknown" : CacheAttrib[l]);
 	printf("    CacheAssoc = %ld\n", be32toh(vpd->CacheAssoc));
 	printf("    CacheLineSize = %ld\n", be32toh(vpd->CacheLineSize));
+	printf("    I-CacheSize = %ld\n", be32toh(vpd->I_CacheSize));
+	printf("    I-CacheAssoc = %ld\n", be32toh(vpd->I_CacheAssoc));
+	printf("    I-CacheLineSize = %ld\n", be32toh(vpd->I_CacheLineSize));
+	printf("    D-CacheSize = %ld\n", be32toh(vpd->D_CacheSize));
+	printf("    D-CacheAssoc = %ld\n", be32toh(vpd->D_CacheAssoc));
+	printf("    D-CacheLineSize = %ld\n", be32toh(vpd->D_CacheLineSize));
+	printf("  Translation Lookaside Buffer variables\n");
+	printf("    Number of TLB entries = %ld\n", be32toh(vpd->TLBSize));
+	l = be32toh(vpd->TLBAttrib);
+	printf("    TLBAttrib = %s\n",
+	    (l >= NELEMS(TLBAttrib)) ? "Unknown" : TLBAttrib[l]);
+	printf("    TLBAssoc = %ld\n", be32toh(vpd->TLBAssoc));
+	printf("    I-TLBSize = %ld\n", be32toh(vpd->I_TLBSize));
+	printf("    I-TLBAssoc = %ld\n", be32toh(vpd->I_TLBAssoc));
+	printf("    D-TLBSize = %ld\n", be32toh(vpd->D_TLBSize));
+	printf("    D-TLBAssoc = %ld\n", be32toh(vpd->D_TLBAssoc));
+	printf("  ExtendedVPD = 0x%lx\n", be32toh(vpd->ExtendedVPD));
 
 	/*
 	 * PPC_CPU
@@ -491,6 +569,84 @@ make_pnp_device_tree(void *v)
 	}
 }
 
+static void small_vendor_chipid(void *v)
+{
+	ChipIDPack *p = v;
+	char chipid[8];
+	int16_t id;
+	int i, j;
+	struct _svid {
+		int16_t id;
+		const char *name;
+		int type;
+	} svid[] = {
+		{ Dakota,	"IBM North/South Dakota", Chip_MemCont },
+		{ Idaho,	"IBM Idaho", Chip_MemCont },
+		{ Eagle,	"Motorola Eagle", Chip_MemCont },
+		{ Kauai_Lanai,	"IBM Kauai/Lanai", Chip_MemCont },
+		{ Montana_Nevada,"IBM Montana/Nevada", Chip_MemCont },
+		{ Union,	"IBM Union", Chip_MemCont },
+		{ Cobra_Viper,	"IBM Cobra/Viper", Chip_MemCont },
+		{ Grackle,	"Motorola Grackle", Chip_MemCont },
+		{ SIO_ZB,	"Intel 82378ZB", Chip_ISABridge },
+		{ FireCoral,	"IBM FireCoral", Chip_ISABridge },
+		{ Python,	"IBM Python", Chip_PCIBridge },
+		{ DEC21050,	"PCI-PCI (DEC 21050)", Chip_PCIBridge },
+		{ IBM2782351,	"PCI-PCI (IBM 2782351)", Chip_PCIBridge },
+		{ IBM2782352,	"PCI-PCI (IBM 2782352)", Chip_PCIBridge },
+		{ INTEL_8236SL,	"Intel 8236SL", Chip_PCMCIABridge },
+		{ RICOH_RF5C366C,"RICOH RF5C366C", Chip_PCMCIABridge },
+		{ INTEL_82374,	"Intel 82374/82375", Chip_EISABridge },
+		{ MCACoral,	"MCA Coral", Chip_MCABridge },
+		{ Cheyenne,	"IBM Cheyenne", Chip_L2Cache },
+		{ IDT,		"IDT", Chip_L2Cache },
+		{ Sony1PB,	"Sony1PB", Chip_L2Cache },
+		{ Mamba,	"IBM Mamba", Chip_L2Cache },
+		{ Alaska,	"IBM Alaska", Chip_L2Cache },
+		{ Glance,	"IBM Glance", Chip_L2Cache },
+		{ Ocelot,	"IBM Ocelot", Chip_L2Cache },
+		{ Carrera,	"IBM Carrera", Chip_PM },
+		{ Sig750,	"Signetics 87C750", Chip_PM },
+		{ MPIC_2,	"IBM MPIC-2", Chip_IntrCont },
+		{ DallasRTC,	"Dallas 1385 compatible", Chip_MiscPlanar },
+		{ Dallas1585,	"Dallas 1585 compatible", Chip_MiscPlanar },
+		{ Timer8254,	"8254-compatible timer", Chip_MiscPlanar },
+		{ HarddiskLt,	"Op Panel HD light", Chip_MiscPlanar },
+		{ 0,		NULL, -1 },
+	};
+	const char *chiptype[] = {
+		"Memory Controller",
+		"ISA Bridge",
+		"PCI Bridge",
+		"PCMCIA Bridge",
+		"EISA Bridge",
+		"MCA Bridge",
+		"L2 Cache Controller",
+		"Power Management Controller",
+		"Interrupt Controller",
+		"Misc. Planar Device"
+	};
+
+	id = le16dec(&p->Name[0]);
+	snprintf(chipid, 8, "%c%c%c%0hX",
+	    ((p->VendorID0 >> 2) & 0x1f) + 'A' - 1,
+	    (((p->VendorID0 & 3) << 3) | ((p->VendorID1 >> 5) & 7)) + 'A' - 1,
+	    (p->VendorID1 & 0x1f) + 'A' - 1, id);
+	for (i = 0, j = -1; svid[i].name != NULL; i++) {
+		if (id == svid[i].id) {
+			j = i;
+			break;
+		}
+	}
+	printf("Chip ID: %s\n", chipid);
+	if (j == -1) {
+		printf("      Unknown Chip Type\n");
+		return;
+	}
+	printf("      %s: %s\n", chiptype[svid[j].type], svid[j].name);
+	return;
+}
+
 static int
 pnp_small_pkt(void *v)
 {
@@ -636,29 +792,28 @@ IRQout:
 		printf("    SmallVendorItem: ");
 		switch (p[1]) {
 		case 1:
-			printf("%c%c%c",
-			    ((p[2] >> 2) & 0x1f) + 'A' - 1,
-			    (((p[2] & 3) << 3) | ((p[3] >> 5) & 7)) + 'A' - 1,
-			    (p[3] & 0x1f) + 'A' - 1);
+			small_vendor_chipid(v);
+			break;
+
+		case 3:
+			printf("Processor Number: %d\n", p[2]);
 			break;
 
 		default:
+			printf("\n");
+			for (i = 0; i < size - 1; i++) {
+				if ((i % 16) == 0)
+					printf("      ");
+				printf("%02x ", p[i + 1]);
+				if ((i % 16) == 15)
+					printf("\n");
+			}
+			if ((i % 16) != 0)
+				printf("\n");
 			break;
 		}
-
-		printf("\n");
-		for (i = 0; i < size - 1; i++) {
-			if ((i % 16) == 0)
-				printf("      ");
-			printf("%02x ", p[i + 1]);
-			if ((i % 16) == 15)
-				printf("\n");
-		}
-		if ((i % 16) != 0)
-			printf("\n");
-		}
 		break;
-
+	}
 	default: {
 		unsigned char *p = v;
 
@@ -680,19 +835,20 @@ IRQout:
  * large vendor items
  */
 
-static void large_vendor_default_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_floppy_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_l2cache_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_pcibridge_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_bat_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_bba_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_scsi_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_pms_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_gaddr_subr(struct _L4_PPCPack *p, int size);
-static void large_vendor_isaintr_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_default_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_floppy_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_l2cache_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v,
+    int size);
+static void large_vendor_bat_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_bba_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_scsi_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_pms_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_gaddr_subr(struct _L4_PPCPack *p, void *v, int size);
+static void large_vendor_isaintr_subr(struct _L4_PPCPack *p, void *v, int size);
 
 static void
-large_vendor_default_subr(struct _L4_PPCPack *p, int size)
+large_vendor_default_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	int i;
 
@@ -708,7 +864,7 @@ large_vendor_default_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_floppy_subr(struct _L4_PPCPack *p, int size)
+large_vendor_floppy_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	int i;
 	const char *str;
@@ -743,7 +899,7 @@ large_vendor_floppy_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_l2cache_subr(struct _L4_PPCPack *p, int size)
+large_vendor_l2cache_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	static const unsigned char *L2type[] =
 	    { "None", "WriteThru", "CopyBack" };
@@ -761,37 +917,39 @@ large_vendor_l2cache_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_pcibridge_subr(struct _L4_PPCPack *p, int size)
+large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v, int size)
 {
-	int i;
+	int i, numslots;
 	char tmpstr[30], *t;
-	static const unsigned char *inttype[] =
+	PCIInfoPack *pi = v;
+	static const unsigned char *intrtype[] =
 	    { "8259", "MPIC", "RS6k BUID %d" };
 
 	/* rev 0 residual has no valid pcibridge data */
 	if (res->Revision == 0) {
-		large_vendor_default_subr(p, size);
+		large_vendor_default_subr(p, v, size);
 		return;
 	}
+	numslots = (le16dec(&pi->count0)-21)/sizeof(IntrMap);
 
 	printf("    PCI Bridge parameters\n"
 	    "      ConfigBaseAddress 0x%0" PRIx64" \n"
 	    "      ConfigBaseData 0x%0" PRIx64 "\n"
 	    "      Bus number %d\n",
-	    le64dec(&p->PPCData[0]), le64dec(&p->PPCData[8]), p->PPCData[16]);
+	    le64dec(&pi->configbaseaddr), le64dec(&pi->configbasedata),
+	    pi->busnum);
 
 	printf("    PCI Bridge Slot Data\n");
-	/* offset 20 begins irqmap, of 12 bytes each */
-	for (i = 20; i < size - 4; i += 12) {
+	for (i = 0; i < numslots; i++) {
 		int j, first;
-		if (p->PPCData[i])
-			printf("      PCI Slot %d", p->PPCData[i]);
+
+		if (pi->map[i].slotnum)
+			printf("      PCI Slot %d", pi->map[i].slotnum);
 		else
 			printf("      Integrated PCI device");
-		for (j = 0, first = 1, t = tmpstr; j < 4; j++) {
-			int line = le16dec(&p->PPCData[i+4+(j*2)]);
-
-			if (line != 0xffff) { /*unusable*/
+		printf(" DevFunc 0x%02x\n", pi->map[i].devfunc);
+		for (j = 0, first = 1, t = tmpstr; j < MAX_PCI_INTRS; j++) {
+			if (pi->map[i].intr[j] != 0xFFFF) {
 				if (first)
 					first = 0;
 				else
@@ -800,32 +958,30 @@ large_vendor_pcibridge_subr(struct _L4_PPCPack *p, int size)
 			}
 		}
 		*t = '\0';
-		printf(" DevFunc 0x%02x\n", p->PPCData[i + 1]);
-		if (!first) {
-			printf("        interrupt line(s) %s routed to",
-			    tmpstr);
-			sprintf(tmpstr, inttype[p->PPCData[i + 2] - 1],
-			    p->PPCData[i + 3]);
-			printf(" %s line(s) ", tmpstr);
-			for (j = 0, first = 1, t = tmpstr; j < 4; j++) {
-				int line = le16dec(&p->PPCData[i+4+(j*2)]);
+		if (first)
+			continue; /* there were no valid intrs */
+		printf("        interrupt line(s) %s routed to", tmpstr);
+		sprintf(tmpstr, intrtype[pi->map[i].intrctrltype - 1],
+		    pi->map[i].intrctrlnum);
+		printf(" %s line(s) ", tmpstr);
+		for (j = 0, first = 1, t = tmpstr; j < MAX_PCI_INTRS; j++) {
+			int line = bswap16(pi->map[i].intr[j]);
 
-				if (line != 0xffff) {
-					if (first)
-						first = 0;
-					else
-						*t++ = '/';
-					t += sprintf(t, "%d(%c)", line & 0x7fff,
-					    line & 0x8000 ? 'E' : 'L');
-				}
+			if (pi->map[i].intr[j] != 0xFFFF) {
+				if (first)
+					first = 0;
+				else
+					*t++ = '/';
+				t += sprintf(t, "%d(%c)", line & 0x7fff,
+				    line & 0x8000 ? 'E' : 'L');
 			}
-			printf("%s\n", tmpstr);
 		}
+		printf("%s\n", tmpstr);
 	}
 }
 
 static void
-large_vendor_bat_subr(struct _L4_PPCPack *p, int size)
+large_vendor_bat_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	static const unsigned char *convtype[] =
 	    { "Bus Memory", "Bus I/O", "DMA" };
@@ -844,14 +1000,14 @@ large_vendor_bat_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_bba_subr(struct _L4_PPCPack *p, int size)
+large_vendor_bba_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	printf("      Bus speed %ld Hz, %d slot(s)\n",
 	    (long)le32dec(&p->PPCData), p->PPCData[4]);
 }
 
 static void
-large_vendor_scsi_subr(struct _L4_PPCPack *p, int size)
+large_vendor_scsi_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	int i;
 
@@ -862,7 +1018,7 @@ large_vendor_scsi_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_pms_subr(struct _L4_PPCPack *p, int size)
+large_vendor_pms_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	unsigned int flags;
 	int i;
@@ -893,7 +1049,7 @@ large_vendor_pms_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_gaddr_subr(struct _L4_PPCPack *p, int size)
+large_vendor_gaddr_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	static const unsigned char *addrtype[] = { "I/O", "Memory", "System" };
 
@@ -903,7 +1059,7 @@ large_vendor_gaddr_subr(struct _L4_PPCPack *p, int size)
 }
 
 static void
-large_vendor_isaintr_subr(struct _L4_PPCPack *p, int size)
+large_vendor_isaintr_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	int i;
 	char tmpstr[30];
@@ -933,7 +1089,7 @@ pnp_large_pkt(void *v)
 	int i;
 	static struct large_vendor_type {
 		const char	*str;
-		void	(*func)(struct _L4_PPCPack *p, int sz);
+		void	(*func)(struct _L4_PPCPack *p, void *vv, int sz);
 	} Large_Vendor_Type[] = {
 		{ "None",			NULL },
 		{ "Diskette Drive",		large_vendor_floppy_subr },
@@ -966,7 +1122,7 @@ pnp_large_pkt(void *v)
 		printf("    LargeVendorItem: %s\n",
 		    Large_Vendor_Type[p->Type].str);
 		if (p->Type <= 17 && Large_Vendor_Type[p->Type].func != NULL)
-			(*Large_Vendor_Type[p->Type].func)(p, size);
+			(*Large_Vendor_Type[p->Type].func)(p, v, size);
 		break;
 	}
 	
@@ -1465,11 +1621,17 @@ service_subr(DEVICE_ID *id)
 	const char *p, *q = NULL;
 
 	switch (id->SubType) {
-	case GeneralMemoryController:
-		p = "GeneralMemoryController";
+	case ServiceProcessorClass1:
+		p = "ServiceProcessorClass1";
+		break;
+	case ServiceProcessorClass2:
+		p = "ServiceProcessorClass2";
+		break;
+	case ServiceProcessorClass3:
+		p = "ServiceProcessorClass3";
 		break;
 	default:
-		p = "UnknownMemoryController";
+		p = "UnknownServiceProcessor";
 		break;
 	}
 

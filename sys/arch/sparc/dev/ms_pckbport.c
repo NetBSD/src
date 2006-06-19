@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbport.c,v 1.2 2005/11/16 01:39:27 uwe Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.2.14.1 2006/06/19 03:45:06 chap Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.2 2005/11/16 01:39:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.2.14.1 2006/06/19 03:45:06 chap Exp $");
 
 /*
  * Attach PS/2 mouse at pckbport aux port
@@ -263,7 +263,7 @@ ms_pckbport_input(void *vsc, int data)
 		d = to_one[d - 1];		/* from 1..7 to {1,2,4} */
 		fe->id = to_id[d - 1];		/* from {1,2,4} to ID */
 		fe->value = (mb & d) ? VKEY_DOWN : VKEY_UP;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ub ^= d;	/* reflect the button state change */
 	}
@@ -272,7 +272,7 @@ ms_pckbport_input(void *vsc, int data)
 		NEXT;
 		fe->id = LOC_X_DELTA;
 		fe->value = ms->ms_dx;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dx = 0;
 	}
@@ -281,7 +281,7 @@ ms_pckbport_input(void *vsc, int data)
 		NEXT;
 		fe->id = LOC_Y_DELTA;
 		fe->value = ms->ms_dy;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dy = 0;
 	}

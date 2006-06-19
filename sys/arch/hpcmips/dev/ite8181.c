@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.22 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.22.14.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.22 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.22.14.1 2006/06/19 03:44:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,7 +86,7 @@ int ite8181_lcd_control_disable = 0;
  * IBM WorkPad z50 power unit has too weak power.
  * So we must wait too many times to access some device
  * after LCD panel and BackLight on.
- * Currently delay is not enough ??? FIXME 
+ * Currently delay is not enough ??? FIXME
  */
 #ifndef ITE8181_LCD_ON_SELF_DELAY
 #define ITE8181_LCD_ON_SELF_DELAY 1000
@@ -175,7 +175,7 @@ inline int
 ite8181_gui_read_1(struct ite8181_softc *sc, int byteoffset)
 {
 
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_gba + byteoffset));
 }
 
@@ -191,7 +191,7 @@ inline int
 ite8181_graphics_read_1(struct ite8181_softc *sc, int byteoffset)
 {
 
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_sba + byteoffset));
 }
 
@@ -218,7 +218,7 @@ ite8181_ema_write_1(struct ite8181_softc *sc, int byteoffset, int data)
 	ite8181_graphics_write_1(sc, ITE8181_EMA_EXAX, byteoffset);
 	ite8181_graphics_write_1(sc, ITE8181_EMA_EXADATA, data);
 }
-	
+
 int
 ite8181_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
@@ -254,13 +254,13 @@ ite8181_attach(struct ite8181_softc *sc)
 	regval = ite8181_config_read_4(sc->sc_iot, sc->sc_ioh, ITE8181_CLASS);
 	printf("ITE8181 Rev.%02lx", regval & ITE8181_REV_MASK);
 	if (console) {
-		printf(", console");	
+		printf(", console");
 	}
 	printf("\n");
-	printf("%s: framebuffer address: 0x%08lx\n", 
+	printf("%s: framebuffer address: 0x%08lx\n",
 	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 	if (ite8181_lcd_control_disable)
-		printf("%s: ite8181 lcd control is DISABLED.\n", 
+		printf("%s: ite8181 lcd control is DISABLED.\n",
 		    sc->sc_dev.dv_xname);
 
 	/* set base offsets */
@@ -335,7 +335,7 @@ ite8181_lcd_power(struct ite8181_softc *sc, int on)
 	}
 
 	if (sc->sc_lcd != on) {
-		ite8181_ema_write_1(sc, ITE8181_EMA_ENABLEEMA, 
+		ite8181_ema_write_1(sc, ITE8181_EMA_ENABLEEMA,
 		    ITE8181_EMA_ENABLEPASS);
 		lcd_p = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER);
 		lcd_s = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT);
@@ -355,7 +355,7 @@ ite8181_lcd_power(struct ite8181_softc *sc, int on)
 			 * IBM WorkPad z50 power unit has too weak power.
 			 * So we must wait too many times to access self device
 			 * after LCD panel and BackLight on.
-			 * Currently delay is not enough ??? FIXME 
+			 * Currently delay is not enough ??? FIXME
 			 */
 			delay(ite8181_lcd_on_self_delay*MSEC);
 			while (loop--) {
@@ -368,8 +368,8 @@ ite8181_lcd_power(struct ite8181_softc *sc, int on)
 				DPRINTFN(1,("ite8181_lcd_power(%d)%d| p=%x,"
 				    " s=%x, seq=%x\n", on, loop, lcd_p, lcd_s,
 				    lcd_seq));
-				/* 
-				 *  XXX the states which are not described 
+				/*
+				 *  XXX the states which are not described
 				 *  XXX in manual.
 				 */
 				if (!(lcd_s&ITE8181_LCDPSTANDBY) &&
@@ -395,7 +395,7 @@ ite8181_lcd_power(struct ite8181_softc *sc, int on)
 				DPRINTFN(1,("ite8181_lcd_power(%d)%d| p=%x,"
 				    " s=%x, seq=%x\n", on, loop, lcd_p, lcd_s,
 				    lcd_seq));
-				/* 
+				/*
 				 * XXX the states which are not described
 				 * XXX in manual.
 				 */
@@ -416,7 +416,7 @@ ite8181_lcd_power(struct ite8181_softc *sc, int on)
 		    ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSEQ)));
 		ite8181_ema_write_1(sc, ITE8181_EMA_ENABLEEMA,
 		    ITE8181_EMA_DISABLEPASS);
-	}	
+	}
 	return 0;
 }
 
@@ -433,18 +433,18 @@ ite8181_update_powerstate(struct ite8181_softc *sc, int updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void*)!(sc->sc_powerstate & 
+		    (void*)!(sc->sc_powerstate &
 			(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void*)(!(sc->sc_powerstate & 
+		    (void*)(!(sc->sc_powerstate &
 			(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			(sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
-static void 
+static void
 ite8181_power(int why, void *arg)
 {
         struct ite8181_softc *sc = arg;
@@ -477,19 +477,19 @@ ite8181_hardpower(void *ctx, int type, long id, void *msg)
 		delay(MSEC);
 		break;
 	case PWR_SUSPEND:
-		ite8181_lcd_power(sc, 0);	
+		ite8181_lcd_power(sc, 0);
 		delay(MSEC);
 		break;
 	case PWR_RESUME:
 		delay(MSEC);
-		ite8181_lcd_power(sc, 1);	
+		ite8181_lcd_power(sc, 1);
 		/*
 		 * XXX:
 		 * IBM WorkPad z50 power unit has too weak power.
 		 * So we must wait too many times to access other devices
 		 * after LCD panel and BackLight on.
 		 */
-		delay(ite8181_lcd_on_delay*MSEC);	
+		delay(ite8181_lcd_on_delay*MSEC);
 		break;
 	}
 
@@ -673,7 +673,7 @@ ite8181_ioctl(v, cmd, data, flag, l)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
-	
+
 	case WSDISPLAYIO_SVIDEO:
 		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
 			sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
@@ -683,7 +683,7 @@ ite8181_ioctl(v, cmd, data, flag, l)
 		return 0;
 
 	case WSDISPLAYIO_GVIDEO:
-		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
+		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ?
 		    WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
 		return 0;
 
@@ -700,7 +700,7 @@ ite8181_ioctl(v, cmd, data, flag, l)
 			dispparam->min = 0;
 			dispparam->max = 1;
 			if (sc->sc_max_brightness > 0)
-				dispparam->curval = 
+				dispparam->curval =
 				    sc->sc_brightness > 0 ? 1: 0;
 			else
 				dispparam->curval =
@@ -727,7 +727,7 @@ ite8181_ioctl(v, cmd, data, flag, l)
 				    "GET:CONTRAST EINVAL\n"));
 				return (EINVAL);
 			}
-			break;	
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			VPRINTF(("ite8181_ioctl: GET:BRIGHTNESS\n"));
 			ite8181_init_brightness(sc, 0);
@@ -909,7 +909,7 @@ ite8181_init_backlight(struct ite8181_softc *sc, int inattach)
 	if (sc->sc_lcd_inited&BACKLIGHT_INITED)
 		return;
 
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
 		/* we can get real light state */
 		VPRINTF(("ite8181_init_backlight: real backlight=%d\n", val));
@@ -919,7 +919,7 @@ ite8181_init_backlight(struct ite8181_softc *sc, int inattach)
 			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 		sc->sc_lcd_inited |= BACKLIGHT_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real light state in attach time
 		   because light device not yet attached.
 		   we will retry in !inattach.
@@ -941,14 +941,14 @@ ite8181_init_brightness(struct ite8181_softc *sc, int inattach)
 		return;
 
 	VPRINTF(("ite8181_init_brightness\n"));
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
 		/* we can get real brightness max */
 		VPRINTF(("ite8181_init_brightness: real brightness max=%d\n",
 		    val));
 		sc->sc_max_brightness = val;
 		val = -1;
-		if (config_hook_call(CONFIG_HOOK_GET, 
+		if (config_hook_call(CONFIG_HOOK_GET,
 		    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 			/* we can get real brightness */
 			VPRINTF(("ite8181_init_brightness:"
@@ -960,7 +960,7 @@ ite8181_init_brightness(struct ite8181_softc *sc, int inattach)
 		}
 		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real brightness in attach time
 		   because brightness device not yet attached.
 		   we will retry in !inattach.
@@ -985,13 +985,13 @@ ite8181_init_contrast(struct ite8181_softc *sc, int inattach)
 		return;
 
 	VPRINTF(("ite8181_init_contrast\n"));
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
 		/* we can get real contrast max */
 		VPRINTF(("ite8181_init_contrast: real contrast max=%d\n", val));
 		sc->sc_max_contrast = val;
 		val = -1;
-		if (config_hook_call(CONFIG_HOOK_GET, 
+		if (config_hook_call(CONFIG_HOOK_GET,
 		    CONFIG_HOOK_CONTRAST, &val) != -1) {
 			/* we can get real contrast */
 			VPRINTF(("ite8181_init_contrast: real contrast=%d\n",
@@ -1002,7 +1002,7 @@ ite8181_init_contrast(struct ite8181_softc *sc, int inattach)
 		}
 		sc->sc_lcd_inited |= CONTRAST_INITED;
 	} else if (inattach) {
-		/* 
+		/*
 		   we cannot get real contrast in attach time
 		   because contrast device not yet attached.
 		   we will retry in !inattach.
@@ -1025,7 +1025,7 @@ ite8181_set_brightness(struct ite8181_softc *sc, int val)
 	sc->sc_brightness = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS, &val);
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 		sc->sc_brightness = val;
 	}
@@ -1038,7 +1038,7 @@ ite8181_set_contrast(struct ite8181_softc *sc, int val)
 	sc->sc_contrast = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST, &val);
-	if (config_hook_call(CONFIG_HOOK_GET, 
+	if (config_hook_call(CONFIG_HOOK_GET,
 	    CONFIG_HOOK_CONTRAST, &val) != -1) {
 		sc->sc_contrast = val;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.12 2006/03/09 20:17:27 garbled Exp $	*/
+/*	$NetBSD: platform.h,v 1.12.4.1 2006/06/19 03:44:53 chap Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 struct platform_quirkdata {
 	const char	*model;
 	int		quirk;
-	void		(*pci_intr_fixup)(int, int, int, int, int *);
+	void		(*pci_intr_fixup)(void);
 	void		(*reset)(void);
 };
 
@@ -67,12 +67,12 @@ struct pciroutinginfo {
 extern struct platform *platform;
 extern struct pciroutinginfo *pciroutinginfo;
 
-void pci_intr_nofixup(int, int, int, int, int *);
-void pci_intr_fixup_pnp(int, int, int, int, int *);
 void cpu_setup_unknown(struct device *);
 void reset_prep(void);
 void setup_pciroutinginfo(void);
 int pci_chipset_tag_type(void);
 void cpu_setup_prep_generic(struct device *);
+void setup_pciintr_map(struct prep_pci_chipset_businfo *, int bus, int device,
+	int func);
 
 #endif /* !_PREP_PLATFORM_H_ */

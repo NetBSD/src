@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.195 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195.14.1 2006/06/19 03:44:01 chap Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195.14.1 2006/06/19 03:44:01 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1016,6 +1016,13 @@ struct si_callback {
 	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 };
+
+struct softintr {
+	int pending;
+	void (*function)(void *);
+	void *arg;
+};
+
 static struct si_callback *si_callbacks;
 static struct si_callback *si_free;
 #ifdef DIAGNOSTIC
@@ -1036,7 +1043,10 @@ static void
 _softintr_callit(rock1, rock2)
 	void *rock1, *rock2;
 {
-	(*(void (*)(void *))rock1)(rock2);
+	struct softintr *si = rock1;
+
+	si->pending = 0;
+	si->function(si->arg);
 }
 
 void *
@@ -1045,17 +1055,15 @@ softintr_establish(ipl, func, arg)
 	void func(void *);
 	void *arg;
 {
-	struct si_callback *si;
+	struct softintr *si;
 
-	(void)ipl;
-
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	si = malloc(sizeof *si, M_TEMP, M_NOWAIT);
 	if (si == NULL)
-		return (si);
+		return si;
 
-	si->function = (void *)0;
-	si->rock1 = (void *)func;
-	si->rock2 = arg;
+	si->pending = 0;
+	si->function = func;
+	si->arg = arg;
 
 	alloc_sicallback();
 	return ((void *)si);
@@ -1097,10 +1105,12 @@ void
 softintr_schedule(vsi)
 	void *vsi;
 {
-	struct si_callback *si;
-	si = vsi;
+	struct softintr *si = vsi;
 
-	add_sicallback(_softintr_callit, si->rock1, si->rock2);
+	if (si->pending == 0) {
+		si->pending = 1;
+		add_sicallback(_softintr_callit, si, NULL);
+	}
 }
 
 void

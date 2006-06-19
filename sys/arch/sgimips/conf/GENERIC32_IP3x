@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.50 2006/04/17 14:01:08 tsutsui Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.50.2.1 2006/06/19 03:45:06 chap Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.50 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.50.2.1 $"
 
 maxusers	32
 
@@ -213,7 +213,7 @@ esh*    at pci? dev ? function ?        # Essential HIPPI card
 ex*     at pci? dev ? function ?        # 3Com 90x[BC]
 fpa*    at pci? dev ? function ?        # DEC DEFPA FDDI
 fxp*    at pci? dev ? function ?        # Intel EtherExpress PRO 10+/100B
-#gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
+gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
 #hme*   at pci? dev ? function ?        # Sun Microelectronics STP2002-STQ
 le*     at pci? dev ? function ?        # PCnet-PCI Ethernet
 lmc*    at pci? dev ? function ?        # Lan Media Corp SSI/HSSI/DS3

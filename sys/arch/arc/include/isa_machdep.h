@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.11 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.11.14.1 2006/06/19 03:44:01 chap Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -129,14 +129,15 @@ void sysbeep(int, int);
  *	Interrupt control struct used to control the ICU setup.
  */
 
-struct intrhand {
-	struct	intrhand *ih_next;
+struct isa_intrhand {
+	struct	isa_intrhand *ih_next;
 	int	(*ih_fun)(void *);
 	void    *ih_arg;
 	u_long  ih_count;
 	int     ih_level;
 	int     ih_irq;
-	const char *ih_what;
+	struct evcnt ih_evcnt;
+	char	ih_evname[32];
 };
 
 #endif /* _ISA_MACHDEP_H_ */

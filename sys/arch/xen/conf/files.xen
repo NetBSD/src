@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.40 2006/04/09 19:28:01 bouyer Exp $
+#	$NetBSD: files.xen,v 1.40.2.1 2006/06/19 03:45:15 chap Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -149,6 +149,7 @@ file	arch/xen/xen/xencons.c		xencons needs-flag
 
 # Xen event peudo-device
 defpseudo xenevt
+defpseudo xvif
 
 # Xen Network driver
 device	xennet: arp, ether, ifnet
@@ -291,7 +292,7 @@ include	"dev/pcmcia/files.pcmcia"
 # Domain-0 operations
 defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
-file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
+file 	arch/xen/i386/xen_shm_machdep.c	dom0ops | xen3
 file	arch/xen/xen/xbdback.c		dom0ops & !xen3
 file	arch/xen/xen/xennetback.c	dom0ops & !xen3
 file	arch/xen/xen/pci_machdep.c	hypervisor & pci & !xen3
@@ -299,5 +300,6 @@ file	arch/x86/pci/pci_machdep.c	hypervisor & pci & xen3
 file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
+file	arch/xen/xen/xennetback_xenbus.c xvif & xen3
 
 include "arch/i386/conf/majors.i386"

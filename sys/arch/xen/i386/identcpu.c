@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.11 2006/03/27 20:59:35 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.11.2.1 2006/06/19 03:45:15 chap Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11 2006/03/27 20:59:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11.2.1 2006/06/19 03:45:15 chap Exp $");
 
 #include "opt_cputype.h"
 
@@ -1162,6 +1162,7 @@ identifycpu(struct cpu_info *ci)
 #ifdef XEN3
 		const volatile vcpu_time_info_t *tinfo =
 		    &HYPERVISOR_shared_info->vcpu_info[0].time;
+		delay(1000000);
 		uint64_t freq = 1000000000ULL << 32;
 		freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
 		if ( tinfo->tsc_shift < 0 )

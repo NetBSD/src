@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.14.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1.14.1 2006/06/19 03:44:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,48 +108,48 @@ static void _default_free(void *, bus_space_handle_t, bus_size_t);
 static void *_default_vaddr(void *, bus_space_handle_t);
 
 static const struct ews4800mips_bus_space _default_bus_space = {
-	ebs_map		: _default_map,
-	ebs_unmap	: _default_unmap,
-	ebs_subregion	: _default_subregion,
-	ebs_alloc	: _default_alloc,
-	ebs_free	: _default_free,
-	ebs_vaddr	: _default_vaddr,
-	ebs_r_1		: _default_read_1,
-	ebs_r_2		: _default_read_2,
-	ebs_r_4		: _default_read_4,
-	ebs_r_8		: _default_read_8,
-	ebs_rm_1	: _default_read_multi_1,
-	ebs_rm_2	: _default_read_multi_2,
-	ebs_rm_4	: _default_read_multi_4,
-	ebs_rm_8	: _default_read_multi_8,
-	ebs_rr_1	: _default_read_region_1,
-	ebs_rr_2	: _default_read_region_2,
-	ebs_rr_4	: _default_read_region_4,
-	ebs_rr_8	: _default_read_region_8,
-	ebs_w_1		: _default_write_1,
-	ebs_w_2		: _default_write_2,
-	ebs_w_4		: _default_write_4,
-	ebs_w_8		: _default_write_8,
-	ebs_wm_1	: _default_write_multi_1,
-	ebs_wm_2	: _default_write_multi_2,
-	ebs_wm_4	: _default_write_multi_4,
-	ebs_wm_8	: _default_write_multi_8,
-	ebs_wr_1	: _default_write_region_1,
-	ebs_wr_2	: _default_write_region_2,
-	ebs_wr_4	: _default_write_region_4,
-	ebs_wr_8	: _default_write_region_8,
-	ebs_sm_1	: _default_set_multi_1,
-	ebs_sm_2	: _default_set_multi_2,
-	ebs_sm_4	: _default_set_multi_4,
-	ebs_sm_8	: _default_set_multi_8,
-	ebs_sr_1	: _default_set_region_1,
-	ebs_sr_2	: _default_set_region_2,
-	ebs_sr_4	: _default_set_region_4,
-	ebs_sr_8	: _default_set_region_8,
-	ebs_c_1		: _default_copy_region_1,
-	ebs_c_2		: _default_copy_region_2,
-	ebs_c_4		: _default_copy_region_4,
-	ebs_c_8		: _default_copy_region_8
+	.ebs_map	= _default_map,
+	.ebs_unmap	= _default_unmap,
+	.ebs_subregion	= _default_subregion,
+	.ebs_alloc	= _default_alloc,
+	.ebs_free	= _default_free,
+	.ebs_vaddr	= _default_vaddr,
+	.ebs_r_1	= _default_read_1,
+	.ebs_r_2	= _default_read_2,
+	.ebs_r_4	= _default_read_4,
+	.ebs_r_8	= _default_read_8,
+	.ebs_rm_1	= _default_read_multi_1,
+	.ebs_rm_2	= _default_read_multi_2,
+	.ebs_rm_4	= _default_read_multi_4,
+	.ebs_rm_8	= _default_read_multi_8,
+	.ebs_rr_1	= _default_read_region_1,
+	.ebs_rr_2	= _default_read_region_2,
+	.ebs_rr_4	= _default_read_region_4,
+	.ebs_rr_8	= _default_read_region_8,
+	.ebs_w_1	= _default_write_1,
+	.ebs_w_2	= _default_write_2,
+	.ebs_w_4	= _default_write_4,
+	.ebs_w_8	= _default_write_8,
+	.ebs_wm_1	= _default_write_multi_1,
+	.ebs_wm_2	= _default_write_multi_2,
+	.ebs_wm_4	= _default_write_multi_4,
+	.ebs_wm_8	= _default_write_multi_8,
+	.ebs_wr_1	= _default_write_region_1,
+	.ebs_wr_2	= _default_write_region_2,
+	.ebs_wr_4	= _default_write_region_4,
+	.ebs_wr_8	= _default_write_region_8,
+	.ebs_sm_1	= _default_set_multi_1,
+	.ebs_sm_2	= _default_set_multi_2,
+	.ebs_sm_4	= _default_set_multi_4,
+	.ebs_sm_8	= _default_set_multi_8,
+	.ebs_sr_1	= _default_set_region_1,
+	.ebs_sr_2	= _default_set_region_2,
+	.ebs_sr_4	= _default_set_region_4,
+	.ebs_sr_8	= _default_set_region_8,
+	.ebs_c_1	= _default_copy_region_1,
+	.ebs_c_2	= _default_copy_region_2,
+	.ebs_c_4	= _default_copy_region_4,
+	.ebs_c_8	= _default_copy_region_8
 };
 
 /* create default bus_space_tag */
