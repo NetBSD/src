@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.45 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.46 2006/06/19 13:56:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.45 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.46 2006/06/19 13:56:29 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -90,6 +90,7 @@ struct fxp_pci_softc {
 
 	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
 	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
+	struct pci_conf_state psc_pciconf; /* standard PCI configuration regs */
 };
 
 static int	fxp_pci_match(struct device *, struct cfdata *, void *);
@@ -99,7 +100,7 @@ static int	fxp_pci_enable(struct fxp_softc *);
 static void	fxp_pci_disable(struct fxp_softc *);
 
 static void	fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
-static void	fxp_pci_power(int why, void *arg);
+static void	fxp_pci_powerhook(int why, void *arg);
 
 CFATTACH_DECL(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
@@ -239,12 +240,21 @@ fxp_pci_confreg_restore(struct fxp_pci_softc *psc)
  * on a resume.
  */
 static void
-fxp_pci_power(int why, void *arg)
+fxp_pci_powerhook(int why, void *arg)
 {
 	struct fxp_pci_softc *psc = arg;
 
-	if (why == PWR_RESUME)
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
 		fxp_pci_confreg_restore(psc);
+		break;
+	}
+
+	return;
 }
 
 static void
@@ -493,7 +503,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->psc_powerhook = powerhook_establish(fxp_pci_power, psc);
+	psc->psc_powerhook = powerhook_establish(fxp_pci_powerhook, psc);
 	if (psc->psc_powerhook == NULL)
 		aprint_error(
 		    "%s: WARNING: unable to establish pci power hook\n",
