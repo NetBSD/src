@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.781 2006/06/07 22:33:34 kardel Exp $
+#	$NetBSD: files,v 1.782 2006/06/19 15:44:44 gdamore Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -139,6 +139,7 @@ include "dev/sysmon/files.sysmon"
 #
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
+include "netbt/files.netbt"
 include "netccitt/files.netccitt"
 include "netinet/files.netinet"
 include "netinet/files.ipfilter"
@@ -261,9 +262,6 @@ include "dev/i2c/files.i2c"
 
 # IR device support
 include	"dev/ir/files.ir"
-
-# Bluetooth device support
-include "dev/bluetooth/files.bluetooth"
 
 # Parallel Port Bus support
 include "dev/ppbus/files.ppbus"

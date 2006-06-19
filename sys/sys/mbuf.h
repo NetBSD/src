@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.127 2006/03/16 13:41:56 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.128 2006/06/19 15:44:56 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -772,6 +772,59 @@ do {									\
 #define	M_SETCTX(m, c)		((void)((m)->m_pkthdr.rcvif = (void *)(c)))
 
 #endif /* defined(_KERNEL) */
+
+/*
+ * Simple mbuf queueing system
+ *
+ * this is basically a SIMPLEQ adapted to mbuf use (ie using
+ * m_nextpkt instead of field.sqe_next).
+ *
+ * m_next is ignored, so queueing chains of mbufs is possible
+ */
+#define MBUFQ_HEAD(name)					\
+struct name {							\
+	struct mbuf *mq_first;					\
+	struct mbuf **mq_last;					\
+}
+
+#define MBUFQ_INIT(q)		do {				\
+	(q)->mq_first = NULL;					\
+	(q)->mq_last = &(q)->mq_first;				\
+} while (/*CONSTCOND*/0)
+
+#define MBUFQ_ENQUEUE(q, m)	do {				\
+	(m)->m_nextpkt = NULL;					\
+	*(q)->mq_last = (m);					\
+	(q)->mq_last = &(m)->m_nextpkt;				\
+} while (/*CONSTCOND*/0)
+
+#define MBUFQ_PREPEND(q, m)	do {				\
+	if (((m)->m_nextpkt = (q)->mq_first) == NULL)		\
+		(q)->mq_last = &(m)->m_nextpkt;			\
+	(q)->mq_first = (m);					\
+} while (/*CONSTCOND*/0)
+
+#define MBUFQ_DEQUEUE(q, m)	do {				\
+	if (((m) = (q)->mq_first) != NULL) { 			\
+		if (((q)->mq_first = (m)->m_nextpkt) == NULL)	\
+			(q)->mq_last = &(q)->mq_first;		\
+		else						\
+			(m)->m_nextpkt = NULL;			\
+	}							\
+} while (/*CONSTCOND*/0)
+
+#define MBUFQ_DRAIN(q)		do {				\
+	struct mbuf *__m0;					\
+	while ((__m0 = (q)->mq_first) != NULL) {		\
+		(q)->mq_first = __m0->m_nextpkt;		\
+		m_freem(__m0);					\
+	}							\
+	(q)->mq_last = &(q)->mq_first;				\
+} while (/*CONSTCOND*/0)
+
+#define MBUFQ_FIRST(q)		((q)->mq_first)
+#define MBUFQ_NEXT(m)		((m)->m_nextpkt)
+#define MBUFQ_LAST(q)		(*(q)->mq_last)
 
 /*
  * Mbuf statistics.

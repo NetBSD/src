@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.199 2006/06/04 14:45:34 chap Exp $
+#       $NetBSD: Makefile,v 1.200 2006/06/19 15:44:44 gdamore Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
-	bcdtobin.9 bitmask_snprintf.9 bcmp.9 bcopy.9 bzero.9 \
+	bcdtobin.9 bitmask_snprintf.9 bcmp.9 bcopy.9 bluetooth.9 bzero.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 \
 	callout.9 cardbus.9 chooselwp.9 cnmagic.9 config.9 cons.9 copy.9 \
 	coredump_write.9 \

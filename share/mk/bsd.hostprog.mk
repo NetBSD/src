@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.46 2006/03/20 21:26:15 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.47 2006/06/19 15:44:44 gdamore Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -8,6 +8,7 @@
 clean:		cleanprog
 
 ##### Default values
+LIBBLUETOOTH?=	/usr/lib/libbluetooth.a
 LIBBZ2?=	/usr/lib/libbz2.a
 LIBC?=		/usr/lib/libc.a
 LIBC_PIC?=	/usr/lib/libc_pic.a
@@ -39,6 +40,7 @@ LIBPLOT?=	/usr/lib/libplot.a
 LIBPOSIX?=	/usr/lib/libposix.a
 LIBRESOLV?=	/usr/lib/libresolv.a
 LIBRPCSVC?=	/usr/lib/librpcsvc.a
+LIBSDP?=	/usr/lib/libsdp.a
 LIBSKEY?=	/usr/lib/libskey.a
 LIBSTDCPP?=	/usr/lib/libstdc++.a
 LIBTERMCAP?=	/usr/lib/libtermcap.a

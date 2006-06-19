@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.288 2006/06/07 22:37:57 kardel Exp $
+#	$NetBSD: files.i386,v 1.289 2006/06/19 15:44:44 gdamore Exp $
 #
 # new style config file for i386 architecture
 #
@@ -473,6 +473,8 @@ include	"dev/pcmcia/files.pcmcia"
 
 
 include	"dev/usb/files.usb"
+
+include	"dev/bluetooth/files.bluetooth"
 
 include	"dev/ieee1394/files.ieee1394"
 

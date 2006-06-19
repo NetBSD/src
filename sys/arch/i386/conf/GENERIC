@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.757 2006/06/16 22:13:35 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.758 2006/06/19 15:44:44 gdamore Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.757 $"
+#ident 		"GENERIC-$Revision: 1.758 $"
 
 maxusers	32		# estimated number of users
 
@@ -1230,6 +1230,32 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
 radio* at bktr?
+
+
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+# Bluetooth remote device 'hub'
+pseudo-device bthub
+
+# Bluetooth HID support
+bthidev* at bthub?
+
+# Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+bthset* at bthub?
 
 
 # Mice

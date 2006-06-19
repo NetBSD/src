@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.56 2006/05/30 00:40:22 christos Exp $
+# $NetBSD: Makefile,v 1.57 2006/06/19 15:44:36 gdamore Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@
 CONFIGFILES=\
 		DAEMON LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
-		bootconf.sh bootparams \
+		bootconf.sh bootparams btconfig bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces \
 		fixsb fsck ftpd \
@@ -26,7 +26,7 @@ CONFIGFILES=\
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
 		route6d routed rtadvd rtclocaltime rtsold rwho \
-		savecore screenblank securelevel sshd \
+		savecore screenblank sdpd securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wscons wsmoused \

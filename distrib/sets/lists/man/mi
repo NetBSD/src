@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.897 2006/06/13 11:27:29 tron Exp $
+# $NetBSD: mi,v 1.898 2006/06/19 15:44:35 gdamore Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -58,6 +58,8 @@
 ./usr/share/man/cat1/bg.0			man-util-catman		.cat
 ./usr/share/man/cat1/biff.0			man-mail-catman		.cat
 ./usr/share/man/cat1/bpm.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/bthset.0			man-util-catman		.cat
+./usr/share/man/cat1/btpin.0			man-util-catman		.cat
 ./usr/share/man/cat1/bunzip2.0			man-util-catman		.cat
 ./usr/share/man/cat1/bzcat.0			man-util-catman		.cat
 ./usr/share/man/cat1/bzip2.0			man-util-catman		.cat
@@ -375,6 +377,7 @@
 ./usr/share/man/cat1/repeat.0			man-util-catman		.cat
 ./usr/share/man/cat1/reset.0			man-util-catman		.cat
 ./usr/share/man/cat1/rev.0			man-util-catman		.cat
+./usr/share/man/cat1/rfcomm_sppd.0		man-util-catman		.cat
 ./usr/share/man/cat1/rlog.0			man-rcs-catman		.cat
 ./usr/share/man/cat1/rlogin.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rm.0			man-util-catman		.cat
@@ -394,6 +397,7 @@
 ./usr/share/man/cat1/screenblank.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/script.0			man-util-catman		.cat
 ./usr/share/man/cat1/sdiff.0			man-util-catman		.cat
+./usr/share/man/cat1/sdpquery.0			man-util-catman		.cat
 ./usr/share/man/cat1/sed.0			man-util-catman		.cat
 ./usr/share/man/cat1/send-pr.0			man-gnats-catman	.cat
 ./usr/share/man/cat1/sendmail.0			man-postfix-catman	postfix,.cat
@@ -709,12 +713,19 @@
 ./usr/share/man/cat4/bha.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bicc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bktr.0			man-sys-catman		.cat
+./usr/share/man/cat4/bluetooth.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bmtphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/boca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bpf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/brgphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bridge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bt.0			man-sys-catman		.cat
+./usr/share/man/cat4/bt3c.0			man-sys-catman		.cat
+./usr/share/man/cat4/bthidev.0			man-sys-catman		.cat
+./usr/share/man/cat4/bthub.0			man-sys-catman		.cat
+./usr/share/man/cat4/bthset.0			man-sys-catman		.cat
+./usr/share/man/cat4/btkbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/btms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ca.0			man-obsolete		obsolete
 ./usr/share/man/cat4/cac.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardbus.0			man-sys-catman		.cat
@@ -1339,6 +1350,8 @@
 ./usr/share/man/cat4/uax.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ubsa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsec.0			man-sys-catman		.cat
+./usr/share/man/cat4/ubt.0			man-sys-catman		.cat
+./usr/share/man/cat4/ubtbcmfw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ucom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ucycom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/udav.0			man-sys-catman		.cat
@@ -1483,6 +1496,7 @@
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
+./usr/share/man/cat5/bluetooth.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/bootparams.0		man-bootserver-catman	.cat
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman	.cat
@@ -1733,6 +1747,9 @@
 ./usr/share/man/cat8/bootselect.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman	.cat
+./usr/share/man/cat8/btconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/btcontrol.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/bthcid.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cats/makedev.0		man-obsolete		obsolete
@@ -2210,6 +2227,7 @@
 ./usr/share/man/cat8/scan_ffs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scan_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/sdpd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sendmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman	.cat
@@ -2393,6 +2411,8 @@
 ./usr/share/man/man1/bg.1			man-util-man		.man
 ./usr/share/man/man1/biff.1			man-mail-man		.man
 ./usr/share/man/man1/bpm.1			man-pkgutil-man		.man
+./usr/share/man/man1/bthset.1			man-util-man		.man
+./usr/share/man/man1/btpin.1			man-util-man		.man
 ./usr/share/man/man1/bunzip2.1			man-util-man		.man
 ./usr/share/man/man1/bzcat.1			man-util-man		.man
 ./usr/share/man/man1/bzip2.1			man-util-man		.man
@@ -2710,6 +2730,7 @@
 ./usr/share/man/man1/repeat.1			man-util-man		.man
 ./usr/share/man/man1/reset.1			man-util-man		.man
 ./usr/share/man/man1/rev.1			man-util-man		.man
+./usr/share/man/man1/rfcomm_sppd.1		man-util-man		.man
 ./usr/share/man/man1/rlog.1			man-rcs-man		.man
 ./usr/share/man/man1/rlogin.1			man-netutil-man		.man
 ./usr/share/man/man1/rm.1			man-util-man		.man
@@ -2729,6 +2750,7 @@
 ./usr/share/man/man1/screenblank.1		man-sysutil-man		.man
 ./usr/share/man/man1/script.1			man-util-man		.man
 ./usr/share/man/man1/sdiff.1			man-util-man		.man
+./usr/share/man/man1/sdpquery.1			man-util-man		.man
 ./usr/share/man/man1/sed.1			man-util-man		.man
 ./usr/share/man/man1/send-pr.1			man-gnats-man		.man
 ./usr/share/man/man1/sendmail.1			man-postfix-man		postfix,.man
@@ -3044,12 +3066,19 @@
 ./usr/share/man/man4/bha.4			man-sys-man		.man
 ./usr/share/man/man4/bicc.4			man-sys-man		.man
 ./usr/share/man/man4/bktr.4			man-sys-man		.man
+./usr/share/man/man4/bluetooth.4		man-sys-man		.man
 ./usr/share/man/man4/bmtphy.4			man-sys-man		.man
 ./usr/share/man/man4/boca.4			man-sys-man		.man
 ./usr/share/man/man4/bpf.4			man-sys-man		.man
 ./usr/share/man/man4/brgphy.4			man-sys-man		.man
 ./usr/share/man/man4/bridge.4			man-sys-man		.man
 ./usr/share/man/man4/bt.4			man-sys-man		.man
+./usr/share/man/man4/bt3c.4			man-sys-man		.man
+./usr/share/man/man4/bthidev.4			man-sys-man		.man
+./usr/share/man/man4/bthub.4			man-sys-man		.man
+./usr/share/man/man4/bthset.4			man-sys-man		.man
+./usr/share/man/man4/btkbd.4			man-sys-man		.man
+./usr/share/man/man4/btms.4			man-sys-man		.man
 ./usr/share/man/man4/ca.4			man-obsolete		obsolete
 ./usr/share/man/man4/cac.4			man-sys-man		.man
 ./usr/share/man/man4/cardbus.4			man-sys-man		.man
@@ -3674,6 +3703,8 @@
 ./usr/share/man/man4/uax.4			man-obsolete		obsolete
 ./usr/share/man/man4/ubsa.4			man-sys-man		.man
 ./usr/share/man/man4/ubsec.4			man-sys-man		.man
+./usr/share/man/man4/ubt.4			man-sys-man		.man
+./usr/share/man/man4/ubtbcmfw.4			man-sys-man		.man
 ./usr/share/man/man4/ucom.4			man-sys-man		.man
 ./usr/share/man/man4/ucycom.4			man-sys-man		.man
 ./usr/share/man/man4/udav.4			man-sys-man		.man
@@ -3818,6 +3849,7 @@
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
+./usr/share/man/man5/bluetooth.conf.5		man-sys-man		.man
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/bootparams.5		man-bootserver-man	.man
 ./usr/share/man/man5/bootptab.5			man-bootserver-man	.man
@@ -4067,6 +4099,9 @@
 ./usr/share/man/man8/bootselect.8		man-obsolete		obsolete
 ./usr/share/man/man8/bounce.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/brconfig.8			man-netutil-man		.man
+./usr/share/man/man8/btconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/btcontrol.8		man-sysutil-man		.man
+./usr/share/man/man8/bthcid.8			man-sysutil-man		.man
 ./usr/share/man/man8/catman.8			man-man-man		.man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cats/makedev.8		man-obsolete		obsolete
@@ -4545,6 +4580,7 @@
 ./usr/share/man/man8/scan_ffs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scan_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
+./usr/share/man/man8/sdpd.8			man-sysutil-man		.man
 ./usr/share/man/man8/sendmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man
 ./usr/share/man/man8/setencstat.8		man-sysutil-man		.man

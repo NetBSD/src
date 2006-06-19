@@ -1,0 +1,36 @@
+# $NetBSD: files.netbt,v 1.1 2006/06/19 15:44:45 gdamore Exp $
+
+# Bluetooth Protocols
+
+define	bluetooth { }
+defflag	opt_bluetooth.h		BLUETOOTH
+
+file	netbt/bt_proto.c	bluetooth
+file	netbt/bt_sysctl.c	bluetooth
+
+file	netbt/hci_event.c	bluetooth
+file	netbt/hci_ioctl.c	bluetooth
+file	netbt/hci_link.c	bluetooth
+file	netbt/hci_misc.c	bluetooth
+file	netbt/hci_socket.c	bluetooth
+file	netbt/hci_unit.c	bluetooth
+
+file	netbt/l2cap_lower.c	bluetooth
+file	netbt/l2cap_misc.c	bluetooth
+file	netbt/l2cap_signal.c	bluetooth
+file	netbt/l2cap_socket.c	bluetooth
+file	netbt/l2cap_upper.c	bluetooth
+
+file	netbt/rfcomm_dlc.c	bluetooth
+file	netbt/rfcomm_session.c	bluetooth
+file	netbt/rfcomm_socket.c	bluetooth
+file	netbt/rfcomm_upper.c	bluetooth
+
+#
+# temporary flag to enable SCO sockets, since it is currently
+# possible to lock a USB controller up with SCO packets unless
+# the MTU is just right. See bthset(4) for details.
+#
+defflag		opt_bluetooth.h		BLUETOOTH_SCO
+file	netbt/sco_socket.c	bluetooth_sco
+file	netbt/sco_upper.c	bluetooth

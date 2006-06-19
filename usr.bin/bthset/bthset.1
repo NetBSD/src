@@ -1,0 +1,110 @@
+.\"	$NetBSD: bthset.1,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 15, 2006
+.Dt BTHSET 1
+.Os
+.Sh NAME
+.Nm bthset 
+.Nd Bluetooth Headset utility
+.Sh SYNOPSIS
+.Nm
+.Op Fl v
+.Op Fl c Ar command
+.Op Fl m Ar mixer
+.Op Fl p Ar file
+.Op Fl s Ar channel
+.Nm
+.Op Fl h
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to control a
+.Xr bthset 4
+audio device. It opens the mixer device and creates the control connection
+to the headset, then conducts volume settings each way. When
+.Nm
+receives a
+.Dv SIGUSR1
+signal, it will start sending RING codes to the headset until the headset
+button is pressed or a
+.Dv SIGUSR2
+signal is received. If the headset is ringing and
+.Nm
+receives a button press notification, the specified
+.Ar command
+(if any) is executed.
+.Pp
+When the server channel is specified with the
+.Fl s
+option, instead of opening the control connection, 
+.Nm
+will listen on the
+.Ar channel
+for incoming connections from the Headset and register as Headset Audio
+Gateway with the local SDP server.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl c Ar command
+Specify an optional command to be executed when the headset responds to
+ringing with a button press event. This defaults to the contents of the
+.Dv BTHSET_COMMAND
+environment variable, if set.
+.It Fl h
+print usage message.
+.It Fl m Ar mixer
+Specify the path to the mixer device. This defaults to the contents of the
+.Dv BTHSET_MIXER 
+environment variable, or
+.Pa /dev/mixer
+if not set.
+.It Fl p Ar file
+Write the PID to
+.Ar file
+so that other programs can find us later. This defaults to the contents of
+the
+.Dv BTHSET_PIDFILE
+environment variable, if set.
+.It Fl s Ar channel
+Register with the local SDP server as a Headset Audio Gateway and listen for
+connections on the given RFCOMM server channel.
+.It Fl v
+Be verbose.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh FILES
+.Pa /dev/mixer
+.Sh SEE ALSO
+.Xr btcontrol 8 ,
+.Xr bthset 4
+.Sh AUTHORS
+.An Iain Hibbert
+for Itronix, Inc

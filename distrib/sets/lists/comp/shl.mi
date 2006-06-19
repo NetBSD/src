@@ -1,5 +1,6 @@
-# $NetBSD: shl.mi,v 1.49 2006/04/27 20:41:58 thorpej Exp $
+# $NetBSD: shl.mi,v 1.50 2006/06/19 15:44:35 gdamore Exp $
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
+./usr/lib/libbluetooth_pic.a			comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
 ./usr/lib/libc_pic.a				comp-c-piclib
@@ -44,6 +45,7 @@
 ./usr/lib/libroken_pic.a			comp-c-piclib		kerberos
 ./usr/lib/librpcsvc_pic.a			comp-c-piclib
 ./usr/lib/librt_pic.a				comp-c-piclib
+./usr/lib/libsdp_pic.a				comp-c-piclib
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libss_pic.a				comp-c-piclib		kerberos

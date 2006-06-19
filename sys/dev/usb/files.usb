@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.66 2006/04/03 08:15:48 scw Exp $
+#	$NetBSD: files.usb,v 1.67 2006/06/19 15:44:45 gdamore Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -76,7 +76,7 @@ defparam	UKBD_LAYOUT
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
-file	dev/usb/ukbdmap.c		ukbd
+file	dev/usb/ukbdmap.c		ukbd | btkbd
 
 # Mice
 device	ums: hid, wsmousedev
@@ -119,8 +119,8 @@ attach	ustir at uhub
 file	dev/usb/ustir.c			ustir
 
 
-# Bluetooth bridges
-device	ubt: btbus
+# Bluetooth controllers
+device	ubt: bluetooth
 attach	ubt at uhub
 file	dev/usb/ubt.c			ubt
 

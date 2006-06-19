@@ -1,0 +1,221 @@
+.\"	$NetBSD: sdpquery.1,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $Id: sdpquery.1,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/sdpcontrol.8,v 1.6 2005/07/09 19:04:43 markus Exp $
+.\"
+.Dd May 9, 2006
+.Dt SDPQUERY 1
+.Os
+.Sh NAME
+.Nm sdpquery
+.Nd SDP query utility
+.Sh SYNOPSIS
+.Nm
+.Fl h
+.Nm
+.Op Fl d Ar device
+.Fl a Ar address
+.Ar command
+.Op Ar parameters ...
+.Nm
+.Op Fl c Ar path
+.Fl l
+.Ar command
+.Op Ar parameters ...
+.Sh DESCRIPTION
+The
+.Nm
+utility attempts to query the specified Service Discovery Protocol (SDP) server.
+Remote SDP servers are identified by their address.
+Connection to the local SDP server is made via the control socket.
+The
+.Nm
+utility uses Service Search Attribute Requests and prints results to
+standard output and error messages to standard error.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl a Ar address
+Connect to the remote device with the specified address.
+The address can be specified as BD_ADDR or a name.
+If a name was specified, the
+.Nm
+utility attempts to resolve the name via
+.Xr bt_gethostbyname 3 .
+If no remote address is given, 
+.Nm
+attempts to contact a local SDP server via the control socket.
+.It Fl c Ar path
+Specify path to the control socket.
+The default path is
+.Pa /var/run/sdp .
+.It Fl d Ar device
+Connect from the local device with the specifed address. The device can
+be specified by BD_ADDR or device name. See
+.Xr btconfig 8
+for a list of devices available. If no device is specified, the
+.Nm
+utility will use the best available.
+.It Fl l
+Query the local SDP server via the control socket.
+.It Fl h
+Display usage message and exit.
+.It Ar command
+One of the supported commands (see below).
+.It Ar parameters
+One or more optional space separated command parameters.
+.El
+.Sh COMMANDS
+The currently supported commands in
+.Nm
+are:
+.Pp
+.Bl -tag -width indent -compact
+.It Cm Browse Op Ar group
+Browse for services. The
+.Ar group
+parameter is a 16-bit UUID of the group to browse. If omitted,
+the Public Browse Group. is used.
+.Pp
+.It Cm Search Ar service
+Search for the
+.Ar service .
+The
+.Ar service
+parameter is a 16-bit UUID of the service to search for. For the following
+services it is possible to use service name instead of service UUID:
+.Pp
+.Bl -tag -width OPUSHXX -compact
+.It Dv CIP
+Common ISDN Access
+.It Dv CTP
+Cordless Telephony
+.It Dv DUN
+DialUp Networking
+.It Dv FAX
+Fax
+.It Dv FTRN
+OBEX File Transfer
+.It Dv GN
+GN
+.It Dv HID
+Human Interface Device
+.It Dv HSET
+Headset
+.It Dv LAN
+LAN Access Using PPP
+.It Dv NAP
+Network Access Point
+.It Dv OPUSH
+OBEX Object Push
+.It Dv SP
+Serial Port
+.El
+.Pp
+.It Cm Config Ar type 
+Query the device and print a configuration entry in a format suitable for inclusion
+in the
+.Xr bluetooth.conf 5
+file for a device of the given
+.Ar type .
+The following types are recognised:
+.Pp
+.Bl -tag -width OPUSHXX -compact
+.It Dv HID
+Human Interface Device. See
+.Xr bthidev 4 .
+.It Dv HSET
+Headset. See
+.Xr bthset 4 .
+.El
+.Pp
+.El
+.Sh CAVEATS
+The
+.Nm
+utility only requests the following attributes from the SDP server:
+.Pp
+.Bl -enum -offset indent -compact
+.It
+Service Record Handle
+.It
+Service Class ID List
+.It
+Protocol Descriptor List
+.It
+Bluetooth Profile Descriptor List
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr bluetooth 3 ,
+.Xr bluetooth.conf 5 ,
+.Xr btconfig 8 ,
+.Xr sdp 3 ,
+.Xr sdpd 8
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.An Iain Hibbert for Itronix, Inc.
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Fx 5.3
+as
+.Nm sdpcontrol .
+It was ported to
+.Nx 4.0
+under its present name and extended by
+.An Iain Hibbert
+under the sponsorship of Itronix, Inc.

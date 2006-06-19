@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.889 2006/06/18 21:02:16 uwe Exp $
+#	$NetBSD: mi,v 1.890 2006/06/19 15:44:33 gdamore Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -94,6 +94,7 @@
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
 ./usr/include/bfd/libiberty.h			comp-obsolete		obsolete
 ./usr/include/bitstring.h			comp-c-include
+./usr/include/bluetooth.h			comp-c-include
 ./usr/include/bm.h				comp-c-include
 ./usr/include/bzlib.h				comp-c-include
 ./usr/include/cdk/alphalist.h			comp-obsolete		obsolete
@@ -143,6 +144,9 @@
 ./usr/include/dev/auconv.h			comp-obsolete		obsolete
 ./usr/include/dev/audio_if.h			comp-obsolete		obsolete
 ./usr/include/dev/audiovar.h			comp-obsolete		obsolete
+./usr/include/dev/bluetooth			comp-c-include
+./usr/include/dev/bluetooth/btdev.h		comp-c-include
+./usr/include/dev/bluetooth/bthset.h		comp-c-include
 ./usr/include/dev/ccdvar.h			comp-c-include
 ./usr/include/dev/cgdvar.h			comp-c-include
 ./usr/include/dev/clock_subr.h			comp-obsolete		obsolete
@@ -935,6 +939,12 @@
 ./usr/include/netatalk/ddp.h			comp-c-include
 ./usr/include/netatalk/ddp_var.h		comp-c-include
 ./usr/include/netatalk/phase2.h			comp-c-include
+./usr/include/netbt				comp-c-include
+./usr/include/netbt/bluetooth.h			comp-c-include
+./usr/include/netbt/hci.h			comp-c-include
+./usr/include/netbt/l2cap.h			comp-c-include
+./usr/include/netbt/rfcomm.h			comp-c-include
+./usr/include/netbt/sco.h			comp-c-include
 ./usr/include/netccitt/dll.h			comp-c-include
 ./usr/include/netccitt/hd_var.h			comp-c-include
 ./usr/include/netccitt/hdlc.h			comp-c-include
@@ -1281,6 +1291,7 @@
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
 ./usr/include/sa.h				comp-c-include
 ./usr/include/sched.h				comp-c-include
+./usr/include/sdp.h				comp-c-include
 ./usr/include/search.h				comp-c-include
 ./usr/include/security/openpam.h		comp-c-include		pam
 ./usr/include/security/openpam_version.h	comp-c-include		pam
@@ -1604,6 +1615,8 @@
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
+./usr/lib/libbluetooth.a			comp-c-lib
+./usr/lib/libbluetooth_p.a			comp-c-proflib		profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libbz2.a				comp-c-lib
@@ -1713,6 +1726,8 @@
 ./usr/lib/librpcsvc_p.a				comp-c-proflib		profile
 ./usr/lib/librt.a				comp-c-lib
 ./usr/lib/librt_p.a				comp-c-proflib		profile
+./usr/lib/libsdp.a				comp-c-lib
+./usr/lib/libsdp_p.a				comp-c-proflib		profile
 ./usr/lib/libskey.a				comp-c-lib		skey
 ./usr/lib/libskey_p.a				comp-c-proflib		skey,profile
 ./usr/lib/libsl.a				comp-krb5-lib		kerberos
@@ -1747,6 +1762,7 @@
 ./usr/lib/liby_p.a				comp-c-proflib		profile
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
+./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbz2.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lc.ln			comp-c-lintlib		lint
@@ -1784,6 +1800,7 @@
 ./usr/libdata/lint/llib-lrmt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lsdp.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
@@ -2466,6 +2483,16 @@
 ./usr/share/man/cat3/RSA_sign.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RSA_sign_ASN1_OCTET_STRING.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RSA_size.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SDP_GET128.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_GET16.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_GET32.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_GET64.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_GET8.0			comp-c-catman		.cat
+./usr/share/man/cat3/SDP_PUT128.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_PUT16.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_PUT32.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_PUT64.0		comp-c-catman		.cat
+./usr/share/man/cat3/SDP_PUT8.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1File.0			comp-c-catman		.cat
@@ -2720,6 +2747,7 @@
 ./usr/share/man/cat3/bkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bkgdset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/blowfish.0			comp-obsolete		obsolete
+./usr/share/man/cat3/bluetooth.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bm_comp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bm_exec.0			comp-c-catman		.cat
@@ -2734,6 +2762,26 @@
 ./usr/share/man/cat3/bswap16.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bswap32.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bswap64.0			comp-c-catman		.cat
+./usr/share/man/cat3/bt_aton.0			comp-c-catman		.cat
+./usr/share/man/cat3/bt_closeconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devaddr.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devname.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_eachconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_endhostent.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_endprotoent.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_freeconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_getconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_gethostbyaddr.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_gethostbyname.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_gethostent.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_getprotobyname.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_getprotobynumber.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_getprotoent.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_ntoa.0			comp-c-catman		.cat
+./usr/share/man/cat3/bt_openconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_printconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_sethostent.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_setprotoent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/btowc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/btree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
@@ -4389,6 +4437,17 @@
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scrollok.0			comp-c-catman		.cat
+./usr/share/man/cat3/sdp.0			comp-c-catman		.cat
+./usr/share/man/cat3/sdp_attr2desc.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_change_service.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_error.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_open.0			comp-c-catman		.cat
+./usr/share/man/cat3/sdp_open_local.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_register_service.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_search.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_unregister_service.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_uuid2desc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/secure_path.0		comp-c-catman		.cat
 ./usr/share/man/cat3/securepath.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/seed48.0			comp-c-catman		.cat
@@ -5134,6 +5193,7 @@
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bitmask_snprintf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bluetooth.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/boottime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bounds_check_with_label.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bread.0			comp-sys-catman		.cat
@@ -6543,6 +6603,16 @@
 ./usr/share/man/man3/RSA_sign.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/RSA_sign_ASN1_OCTET_STRING.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/RSA_size.3			comp-c-man		crypto,.man
+./usr/share/man/man3/SDP_GET128.3		comp-c-man		.man
+./usr/share/man/man3/SDP_GET16.3		comp-c-man		.man
+./usr/share/man/man3/SDP_GET32.3		comp-c-man		.man
+./usr/share/man/man3/SDP_GET64.3		comp-c-man		.man
+./usr/share/man/man3/SDP_GET8.3			comp-c-man		.man
+./usr/share/man/man3/SDP_PUT128.3		comp-c-man		.man
+./usr/share/man/man3/SDP_PUT16.3		comp-c-man		.man
+./usr/share/man/man3/SDP_PUT32.3		comp-c-man		.man
+./usr/share/man/man3/SDP_PUT64.3		comp-c-man		.man
+./usr/share/man/man3/SDP_PUT8.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1Data.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1End.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1File.3			comp-c-man		.man
@@ -6797,6 +6867,7 @@
 ./usr/share/man/man3/bkgd.3			comp-c-man		.man
 ./usr/share/man/man3/bkgdset.3			comp-c-man		.man
 ./usr/share/man/man3/blowfish.3			comp-obsolete		obsolete
+./usr/share/man/man3/bluetooth.3		comp-c-man		.man
 ./usr/share/man/man3/bm.3			comp-c-man		.man
 ./usr/share/man/man3/bm_comp.3			comp-c-man		.man
 ./usr/share/man/man3/bm_exec.3			comp-c-man		.man
@@ -6811,6 +6882,26 @@
 ./usr/share/man/man3/bswap16.3			comp-c-man		.man
 ./usr/share/man/man3/bswap32.3			comp-c-man		.man
 ./usr/share/man/man3/bswap64.3			comp-c-man		.man
+./usr/share/man/man3/bt_aton.3			comp-c-man		.man
+./usr/share/man/man3/bt_closeconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_devaddr.3		comp-c-man		.man
+./usr/share/man/man3/bt_devname.3		comp-c-man		.man
+./usr/share/man/man3/bt_eachconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_endhostent.3		comp-c-man		.man
+./usr/share/man/man3/bt_endprotoent.3		comp-c-man		.man
+./usr/share/man/man3/bt_freeconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_getconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_gethostbyaddr.3		comp-c-man		.man
+./usr/share/man/man3/bt_gethostbyname.3		comp-c-man		.man
+./usr/share/man/man3/bt_gethostent.3		comp-c-man		.man
+./usr/share/man/man3/bt_getprotobyname.3	comp-c-man		.man
+./usr/share/man/man3/bt_getprotobynumber.3	comp-c-man		.man
+./usr/share/man/man3/bt_getprotoent.3		comp-c-man		.man
+./usr/share/man/man3/bt_ntoa.3			comp-c-man		.man
+./usr/share/man/man3/bt_openconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_printconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_sethostent.3		comp-c-man		.man
+./usr/share/man/man3/bt_setprotoent.3		comp-c-man		.man
 ./usr/share/man/man3/btowc.3			comp-c-man		.man
 ./usr/share/man/man3/btree.3			comp-c-man		.man
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
@@ -8464,6 +8555,17 @@
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
 ./usr/share/man/man3/scrollok.3			comp-c-man		.man
+./usr/share/man/man3/sdp.3			comp-c-man		.man
+./usr/share/man/man3/sdp_attr2desc.3		comp-c-man		.man
+./usr/share/man/man3/sdp_change_service.3	comp-c-man		.man
+./usr/share/man/man3/sdp_close.3		comp-c-man		.man
+./usr/share/man/man3/sdp_error.3		comp-c-man		.man
+./usr/share/man/man3/sdp_open.3			comp-c-man		.man
+./usr/share/man/man3/sdp_open_local.3		comp-c-man		.man
+./usr/share/man/man3/sdp_register_service.3	comp-c-man		.man
+./usr/share/man/man3/sdp_search.3		comp-c-man		.man
+./usr/share/man/man3/sdp_unregister_service.3	comp-c-man		.man
+./usr/share/man/man3/sdp_uuid2desc.3		comp-c-man		.man
 ./usr/share/man/man3/secure_path.3		comp-c-man		.man
 ./usr/share/man/man3/securepath.3		comp-obsolete		obsolete
 ./usr/share/man/man3/seed48.3			comp-c-man		.man
@@ -9204,6 +9306,7 @@
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
 ./usr/share/man/man9/biowait.9			comp-sys-man		.man
 ./usr/share/man/man9/bitmask_snprintf.9		comp-sys-man		.man
+./usr/share/man/man9/bluetooth.9		comp-sys-man		.man
 ./usr/share/man/man9/boottime.9			comp-sys-man		.man
 ./usr/share/man/man9/bounds_check_with_label.9	comp-sys-man		.man
 ./usr/share/man/man9/bread.9			comp-sys-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.96 2006/06/09 21:08:51 tron Exp $
+#	$NetBSD: special,v 1.97 2006/06/19 15:44:36 gdamore Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -24,6 +24,10 @@
 ./etc/Distfile			type=file mode=0644 optional
 ./etc/amd			type=dir  mode=0755 optional
 ./etc/apm			type=dir  mode=0755 optional
+./etc/bluetooth			type=dir  mode=0755
+./etc/bluetooth/bluetooth.conf	type=file mode=0640
+./etc/bluetooth/hosts		type=file mode=0644
+./etc/bluetooth/protocols	type=file mode=0644
 ./etc/bootparams		type=file mode=0644 optional
 ./etc/bootptab			type=file mode=0644 optional
 ./etc/ccd.conf			type=file mode=0644 optional
@@ -161,6 +165,8 @@
 ./etc/rc.d/apmd			type=file mode=0555
 ./etc/rc.d/bootconf.sh		type=file mode=0555
 ./etc/rc.d/bootparams		type=file mode=0555
+./etc/rc.d/btconfig		type=file mode=0555
+./etc/rc.d/bthcid		type=file mode=0555
 ./etc/rc.d/ccd			type=file mode=0555
 ./etc/rc.d/cleartmp		type=file mode=0555
 ./etc/rc.d/cron			type=file mode=0555
@@ -225,6 +231,7 @@
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
+./etc/rc.d/sdpd			type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
 ./etc/rc.d/swap1		type=file mode=0555

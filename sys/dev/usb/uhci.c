@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.196 2006/05/12 01:25:00 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.197 2006/06/19 15:44:45 gdamore Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.196 2006/05/12 01:25:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.197 2006/06/19 15:44:45 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2676,7 +2676,8 @@ uhci_device_isoc_done(usbd_xfer_handle xfer)
 {
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
 
-	DPRINTFN(4, ("uhci_isoc_done: length=%d\n", xfer->actlen));
+	DPRINTFN(4, ("uhci_isoc_done: length=%d, busy_free=0x%08x\n",
+			xfer->actlen, xfer->busy_free));
 
 	if (ii->xfer != xfer)
 		/* Not on interrupt list, ignore it. */
@@ -2686,12 +2687,6 @@ uhci_device_isoc_done(usbd_xfer_handle xfer)
 		return;
 
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
-		printf("uhci_device_isoc_done: xfer=%p not busy 0x%08x\n",
-		       xfer, xfer->busy_free);
-		return;
-	}
-
         if (ii->stdend == NULL) {
                 printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
 #ifdef UHCI_DEBUG

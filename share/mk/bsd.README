@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.179 2006/05/30 00:52:11 christos Exp $
+#	$NetBSD: bsd.README,v 1.180 2006/06/19 15:44:44 gdamore Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -993,6 +993,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 		LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
+		LIBBLUETOOTH?=	${DESTDIR}/usr/lib/libbluetooth.a
 		LIBBSDMALLOC?=	${DESTDIR}/usr/lib/libbsdmalloc.a
 		LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
 		LIBC?=		${DESTDIR}/usr/lib/libc.a
@@ -1041,6 +1042,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 		LIBRT?=		${DESTDIR}/usr/lib/librt.a
+		LIBSDP?=	${DESTDIR}/usr/lib/libsdp.a
 		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 		LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 		LIBSS?=		${DESTDIR}/usr/lib/libss.a

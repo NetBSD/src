@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.101 2006/04/30 15:37:44 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.102 2006/06/19 15:44:44 gdamore Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -1194,6 +1194,59 @@ are set to
 .Sq YES .
 Passes
 .Sy statd_flags .
+.El
+.Ss Bluetooth configuration and daemons.
+.Bl -tag -width net_interfaces
+.It Sy btconfig
+.Sq YES
+or
+.Sq NO .
+Configure bluetooth devices. If the
+.Sy btconfig_devices
+variable below is not specified, all devices known to the system will be
+configured. For each device, configuration arguments are first looked for
+in the
+.Sy btconfig_{dev}
+variable, otherwise the value of the
+.Sy btconfig_args
+variable will be used, and if that is not specified the default string is
+.Sq enable .
+.It Sy btconfig_devices
+An optional space separated list of bluetooth devices to be configured at
+boot time.
+.It Sy btconfig_args
+An optional string, containing default arguments for bluetooth devices to
+be configured.
+.It Sy bthcid
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr bthcid 8 ,
+the Bluetooth HCI daemon, which manages link keys and PIN codes for
+Bluetooth links. Passes
+.Sy bthcid_flags .
+.It Sy sdpd
+.Sq YES
+or
+.Sq NO .
+Runs the Service Discovery Profile daemon, 
+.Xr sdpd 8 .
+.It Sy sdpd_control
+Optional string specifying the path to the
+.Xr sdpd 8
+control socket. Defaults to
+.Pa /var/run/sdp .
+.It Sy sdpd_username
+Optional string specifying the username that
+.Xr sdpd 8
+will run as after initialisation. Defaults to
+.Sq nobody .
+.It Sy sdpd_groupname
+Optional string specifying the groupname that
+.Xr sdpd 8
+will run as after initialisation. Defaults to
+.Sq nobody .
 .El
 .Ss Other daemons
 .Bl -tag -width net_interfaces

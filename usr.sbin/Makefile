@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.213 2006/04/18 16:49:19 rittera Exp $
+#	$NetBSD: Makefile,v 1.214 2006/06/19 15:44:56 gdamore Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
+SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp \
+	btconfig btcontrol bthcid catman \
 	chown chroot chrtbl cnwctl cron dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
 	envstat eshconfig etcupdate extattrctl fssconfig fwctl gpioctl \
@@ -16,7 +17,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	pstat pwd_mkdb postinstall powerd quot quotacheck quotaon \
 	rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
-	rpc.statd rpcbind rwhod sa screenblank sesd \
+ 	rpc.statd rpcbind rwhod sa screenblank sdpd sesd \
 	sliplogin sntp \
 	spray sti sunlabel sup syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed tpctl traceroute trpt trsp unlink \
