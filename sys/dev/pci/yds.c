@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.31 2006/06/07 15:34:47 nakayama Exp $	*/
+/*	$NetBSD: yds.c,v 1.32 2006/06/19 13:55:40 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.31 2006/06/07 15:34:47 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.32 2006/06/19 13:55:40 jmcneill Exp $");
 
 #include "mpu.h"
 
@@ -679,16 +679,60 @@ static void
 yds_powerhook(int why, void *addr)
 {
 	struct yds_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	pcireg_t reg;
+	int s;
 
-	if (why == PWR_RESUME) {
-		sc = addr;
+	sc = (struct yds_softc *)addr;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	s = splaudio();
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+
+		sc->sc_dsctrl = pci_conf_read(pc, tag, YDS_PCI_DSCTRL);
+		sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
+		sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
+		sc->sc_ba[1] = pci_conf_read(pc, tag, YDS_PCI_MPU_BA);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+
+		/* Disable legacy mode */
+		reg = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
+		pci_conf_write(pc, tag, YDS_PCI_LEGACY,
+		    reg & YDS_PCI_LEGACY_LAD);
+
+		/* Enable the device. */
+		reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+			PCI_COMMAND_MASTER_ENABLE);
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+		reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		if (yds_init(sc)) {
 			printf("%s: reinitialize failed\n",
 				sc->sc_dev.dv_xname);
+			splx(s);
 			return;
 		}
+		pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
 		sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
+		break;
+	case PWR_SOFTRESUME:
+		pci_conf_write(pc, tag, YDS_PCI_LEGACY, sc->sc_legacy);
+		pci_conf_write(pc, tag, YDS_PCI_FM_BA, sc->sc_ba[0]);
+		pci_conf_write(pc, tag, YDS_PCI_MPU_BA, sc->sc_ba[1]);
+#if notyet
+		yds_configure_legacy(addr);
+#endif
+		break;
 	}
+	splx(s);
+
+	return;
 }
 
 static void
