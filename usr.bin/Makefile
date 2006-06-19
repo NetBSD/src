@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.151 2006/05/16 00:08:25 elad Exp $
+#	$NetBSD: Makefile,v 1.152 2006/06/19 15:44:56 gdamore Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos asa at audio awk banner basename biff \
+SUBDIR= apply apropos asa at audio awk banner basename biff bthset btpin \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp col colcrt colrm \
 	column comm compress config crontab crunch ctags cut \
@@ -19,8 +19,8 @@ SUBDIR= apply apropos asa at audio awk banner basename biff \
 	netgroup netstat newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk paxctl pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
-	renice rev rlogin rpcgen rpcinfo rs rsh rup ruptime \
-	rusers rwall rwho script sed seq shar shlock showmount \
+	renice rev rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup ruptime \
+	rusers rwall rwho script sdpquery sed seq shar shlock showmount \
 	shuffle sockstat soelim sort spell split stat su systat tail talk \
 	tcopy tee telnet tftp time tip tn3270 top touch tput \
 	tr true tset tsort tty ul uname unexpand unifdef \

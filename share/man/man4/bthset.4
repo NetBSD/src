@@ -1,0 +1,113 @@
+.\" $NetBSD: bthset.4,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Written by Iain Hibbert for Itronix Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 17, 2006
+.Dt BTHSET 4
+.Os
+.Sh NAME
+.Nm bthset
+.Nd Bluetooth headset support
+.Sh SYNOPSIS
+.Cd "bthset*	at bthub?"
+.Cd "audio*	at audiobus?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for Bluetooth Headsets, and only supports
+playing and recording of 8kHz, 16-bit, 1 channel, signed linear samples.
+.Pp
+The
+.Nm
+driver must be configured at run time with the
+.Xr btcontrol 8
+program and provides system access through the
+.Xr audio 4
+driver. In order to utilise the resulting audio device, the
+user should first open a control channel to the headset with the
+.Xr bthset 1
+utility, which uses the
+.Dv BTHSET_GETINFO
+.Xr ioctl 2 ,
+to return a
+.Ar bthset_info
+structure as follows with information needed to set up the
+control channel:
+.Bd -literal -offset
+#include <dev/bluetooth/bthset.h>
+
+struct bthset_info {
+	bdaddr_t	laddr;		/* controller bdaddr */
+	bdaddr_t	raddr;		/* headset bdaddr */
+	uint8_t		channel;	/* RFCOMM channel */
+	int		vgs;		/* mixer index speaker */
+	int		vgm;		/* mixer index mic */
+};
+.Ed
+.Sh CAVEATS
+Isochronous data is seemingly not well supported over USB in the current system
+and to get a headset working, you will have to do some research and fine tuning.
+.Pp
+Look at
+.Xr ubt 4
+with regards to the
+.Xr sysctl 8
+settings. Then, you will have to calculate the MTU that the
+driver will use. This should be less than the sco_mtu reported by the
+.Xr btconfig 8
+program, and when combined with the SCO header (3 bytes) should fit exactly into
+an integer number of frames, where the frame size is indicated by hw.ubtN.sco_txsize.
+.Pp
+For example. I want one voice channel (which is all that is supported,
+for now) so am using configuration number 2, with a frame length of 17
+bytes. My USB dongle says the maximum SCO payload is 64 bytes, so I am
+using an MTU of 48 bytes (17 * 3 - 3 = 48).
+.Pp
+Specify the MTU when you attach the headset with
+.Xr btcontrol 8 
+and all should be well.
+.Pp
+The failure mode is that the USB Bluetooth dongle locks
+up and requires removal/reinsertion to clear.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr bluetooth 4 ,
+.Xr btcontrol 8 ,
+.Xr bthub 4 ,
+.Xr ioctl 2
+.Sh HISTORY
+The
+.Nm
+driver
+was written for 
+.Nx 4.0
+by
+.An Iain Hibbert
+under the sponsorship of Itronix, Inc.

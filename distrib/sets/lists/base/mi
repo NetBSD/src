@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.630 2006/06/16 20:09:23 tnozaki Exp $
+# $NetBSD: mi,v 1.631 2006/06/19 15:44:33 gdamore Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -395,6 +395,8 @@
 ./usr/bin/bc					base-util-bin
 ./usr/bin/bdes					base-crypto-bin		crypto
 ./usr/bin/biff					base-mail-bin
+./usr/bin/bthset				base-util-bin
+./usr/bin/btpin					base-util-bin
 ./usr/bin/bunzip2				base-util-bin
 ./usr/bin/bzcat					base-util-bin
 ./usr/bin/bzip2					base-util-bin
@@ -585,6 +587,7 @@
 ./usr/bin/renice				base-util-bin
 ./usr/bin/reset					base-util-bin
 ./usr/bin/rev					base-util-bin
+./usr/bin/rfcomm_sppd				base-util-bin
 ./usr/bin/rlog					base-rcs-bin
 ./usr/bin/rlogin				base-netutil-bin
 ./usr/bin/rmd160				base-util-bin
@@ -600,6 +603,7 @@
 ./usr/bin/scp					base-secsh-bin		crypto
 ./usr/bin/script				base-util-bin
 ./usr/bin/sdiff					base-util-bin
+./usr/bin/sdpquery				base-util-bin
 ./usr/bin/sed					base-util-bin
 ./usr/bin/send-pr				base-gnats-bin
 ./usr/bin/setextattr				base-util-bin
@@ -965,6 +969,9 @@
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-pkgutil-bin
+./usr/sbin/btconfig				base-sysutil-bin
+./usr/sbin/btcontrol				base-sysutil-bin
+./usr/sbin/bthcid				base-sysutil-bin
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/chat					base-ppp-bin
 ./usr/sbin/chown				base-sysutil-bin
@@ -1172,6 +1179,7 @@
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin
 ./usr/sbin/scriptdump				base-obsolete		obsolete
+./usr/sbin/sdpd					base-sysutil-bin
 ./usr/sbin/sendmail				base-mailwrapper-bin
 ./usr/sbin/sesd					base-sysutil-bin
 ./usr/sbin/setencstat				base-sysutil-bin

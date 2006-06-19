@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.24 2006/04/14 17:18:59 christos Exp $	*/
+/*	$NetBSD: hid.c,v 1.25 2006/06/19 15:44:45 gdamore Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.24 2006/04/14 17:18:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.25 2006/06/19 15:44:45 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,6 +461,25 @@ hid_get_data(u_char *buf, struct hid_location *loc)
 	return (data);
 }
 
+/*
+ * hid_is_collection(desc, size, id, usage)
+ *
+ * This function is broken in the following way.
+ *
+ * It used to discover if the given 'id' is part of 'usage' collection
+ * in the descriptor in order to match report id against device type.
+ *
+ * The semantics of hid_start_parse() means though, that only a single
+ * kind of report is considered. The current HID code that uses this for
+ * matching is actually only looking for input reports, so this works
+ * for now.
+ * 
+ * This function could try all report kinds (input, output and feature)
+ * consecutively if necessary, but it may be better to integrate the
+ * libusbhid code which can consider multiple report kinds simultaneously
+ *
+ * Needs some thought.
+ */
 int
 hid_is_collection(void *desc, int size, u_int8_t id, u_int32_t usage)
 {
@@ -468,7 +487,7 @@ hid_is_collection(void *desc, int size, u_int8_t id, u_int32_t usage)
 	struct hid_item hi;
 	u_int32_t coll_usage = ~0;
 
-	hd = hid_start_parse(desc, size, hid_none);
+	hd = hid_start_parse(desc, size, hid_input);
 	if (hd == NULL)
 		return (0);
 
@@ -477,10 +496,15 @@ hid_is_collection(void *desc, int size, u_int8_t id, u_int32_t usage)
 		DPRINTFN(2,("hid_is_collection: kind=%d id=%d usage=0x%x"
 			    "(0x%x)\n",
 			    hi.kind, hi.report_ID, hi.usage, coll_usage));
+
 		if (hi.kind == hid_collection &&
 		    hi.collection == HCOLL_APPLICATION)
 			coll_usage = hi.usage;
-		if (hi.kind == hid_endcollection &&
+
+		if (hi.kind == hid_endcollection)
+			coll_usage = ~0;
+
+		if (hi.kind == hid_input &&
 		    coll_usage == usage &&
 		    hi.report_ID == id) {
 			DPRINTFN(2,("hid_is_collection: found\n"));

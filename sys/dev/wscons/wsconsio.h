@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.79 2006/02/18 18:56:05 jmcneill Exp $ */
+/* $NetBSD: wsconsio.h,v 1.80 2006/06/19 15:44:45 gdamore Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -102,6 +102,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_SGI		18	/* SGI keyboard */
 #define	WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 #define	WSKBD_TYPE_EWS4800	20	/* NEC EWS4800 */
+#define	WSKBD_TYPE_BLUETOOTH	21	/* Bluetooth keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -200,6 +201,7 @@ struct wskbd_scroll_data {
 #define	WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
 #define	WSMOUSE_TYPE_MAPLE	12	/* Dreamcast Maple mouse */
 #define	WSMOUSE_TYPE_SGI	13	/* SGI mouse */
+#define	WSMOUSE_TYPE_BLUETOOTH	14	/* Bluetooth mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)

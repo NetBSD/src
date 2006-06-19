@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.387 2006/05/18 09:05:51 liamjfoy Exp $
+#	$NetBSD: Makefile,v 1.388 2006/06/19 15:44:36 gdamore Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -7,8 +7,9 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
 	ath.4 atppc.4 attimer.4 atw.4 \
 	auacer.4 audio.4 audiocs.4 auich.4 \
 	auixp.4 autri.4 auvia.4 awi.4 azalia.4 \
-	bba.4 bce.4 be.4 bge.4 bha.4 bktr.4 bpf.4 bmtphy.4 \
-	brgphy.4 bridge.4 cac.4 cardbus.4 carp.4 ccd.4 cd.4 \
+	bba.4 bce.4 be.4 bge.4 bha.4 bktr.4 bluetooth.4 bmtphy.4 \
+	bpf.4 brgphy.4 bridge.4 bthidev.4 bthub.4 bthset.4 btkbd.4 btms.4 \
+	cac.4 cardbus.4 carp.4 ccd.4 cd.4 \
 	cec.4 cgd.4 cfb.4 ch.4 ciphy.4 ciss.4 clcs.4 clct.4 clnp.4 \
 	clockctl.4 cltp.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
 	com.4 crypto.4 cs80bus.4 cypide.4  geodeide.4 \
@@ -48,7 +49,8 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
 	wsmouse.4 wsmux.4 xbox.4 xge.4 yds.4 ym.4 zero.4 zstty.4 
 
 # USB devices
-MAN+=	uaudio.4 ubsa.4 ucom.4 ucycom.4 udsbr.4 uftdi.4 ugen.4 uhid.4 \
+MAN+=	uaudio.4 ubsa.4 ubt.4 ubtbcmfw.4 ucom.4 ucycom.4 \
+	udsbr.4 uftdi.4 ugen.4 uhid.4 \
 	uhidev.4 uipaq.4 uirda.4 ukbd.4 ukyopon.4 ulpt.4 \
 	umass.4 umct.4 umidi.4 umodem.4 ums.4 uplcom.4 urio.4 usb.4 \
 	uscanner.4 usscanner.4 ustir.4 uvisor.4 uvscom.4 uyap.4 \
@@ -79,7 +81,7 @@ MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 \
 	wds.4 we.4 wss.4 wt.4
 
 # machine-independent PCMCIA devices
-MAN+=	pcic.4 tcic.4 pcmcom.4 xi.4
+MAN+=	bt3c.4 pcic.4 tcic.4 pcmcom.4 xi.4
 
 # machine-independent obio (mac68k and macppc) devices
 MAN+=	adb.4 akbd.4 ams.4 mc.4
