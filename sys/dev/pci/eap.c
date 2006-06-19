@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.81.14.1 2006/06/18 09:22:24 chap Exp $	*/
+/*	$NetBSD: eap.c,v 1.81.14.2 2006/06/19 04:01:35 chap Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81.14.1 2006/06/18 09:22:24 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81.14.2 2006/06/19 04:01:35 chap Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -1117,17 +1117,17 @@ eap_set_params(void *addr, int setmode, int usemode,
 	 * This only applies for ADC/DAC2. The FM DAC is handled below.
 	 */
 	if (!sc->sc_1371 && ei->index == EAP_DAC2) {
-	    if (play->sample_rate != rec->sample_rate &&
-		usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-		    rec->sample_rate = play->sample_rate;
-		    setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-		    play->sample_rate = rec->sample_rate;
-		    setmode |= AUMODE_PLAY;
-		} else
-		    return EINVAL;
-	    }
+		if (play->sample_rate != rec->sample_rate &&
+		    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
+			if (setmode == AUMODE_PLAY) {
+				rec->sample_rate = play->sample_rate;
+				setmode |= AUMODE_RECORD;
+			} else if (setmode == AUMODE_RECORD) {
+				play->sample_rate = rec->sample_rate;
+				setmode |= AUMODE_PLAY;
+			} else
+				return EINVAL;
+		}
 	}
 
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -1668,6 +1668,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_VOICE_VOL:
@@ -1677,6 +1678,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNdac);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_FM_VOL:
@@ -1686,6 +1688,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNfmsynth);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_CD_VOL:
@@ -1695,6 +1698,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNcd);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_LINE_VOL:
@@ -1704,6 +1708,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNline);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_AUX_VOL:
@@ -1713,6 +1718,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNaux);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_MIC_VOL:
@@ -1722,6 +1728,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = EAP_MIC_PREAMP;
 		strcpy(dip->label.name, AudioNmicrophone);
 		dip->un.v.num_channels = 1;
+		dip->un.v.delta = 8;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 	case EAP_RECORD_SOURCE:

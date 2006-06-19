@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.82 2006/04/14 16:41:53 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.82.2.1 2006/06/19 04:05:49 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.82 2006/04/14 16:41:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.82.2.1 2006/06/19 04:05:49 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ struct ugen_softc {
 #define IN  1
 
 	int sc_refcnt;
+	char sc_buffer[UGEN_BBSIZE];
 	u_char sc_dying;
 };
 
@@ -520,12 +521,10 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][IN];
 	u_int32_t n, tn;
-	char tbuf[UGEN_BBSIZE];
 	usbd_xfer_handle xfer;
 	usbd_status err;
 	int s;
 	int error = 0;
-	u_char buffer[UGEN_CHUNK];
 
 	DPRINTFN(5, ("%s: ugenread: %d\n", USBDEVNAME(sc->sc_dev), endpt));
 
@@ -571,15 +570,15 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		/* Transfer as many chunks as possible. */
 		while (sce->q.c_cc > 0 && uio->uio_resid > 0 && !error) {
 			n = min(sce->q.c_cc, uio->uio_resid);
-			if (n > sizeof(buffer))
-				n = sizeof(buffer);
+			if (n > sizeof(sc->sc_buffer))
+				n = sizeof(sc->sc_buffer);
 
 			/* Remove a small chunk from the input queue. */
-			q_to_b(&sce->q, buffer, n);
+			q_to_b(&sce->q, sc->sc_buffer, n);
 			DPRINTFN(5, ("ugenread: got %d chars\n", n));
 
 			/* Copy the data to the user process. */
-			error = uiomove(buffer, n, uio);
+			error = uiomove(sc->sc_buffer, n, uio);
 			if (error)
 				break;
 		}
@@ -595,7 +594,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				  xfer, sce->pipeh,
 				  sce->state & UGEN_SHORT_OK ?
 				      USBD_SHORT_XFER_OK : 0,
-				  sce->timeout, tbuf, &tn, "ugenrb");
+				  sce->timeout, sc->sc_buffer, &tn, "ugenrb");
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
@@ -606,7 +605,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				break;
 			}
 			DPRINTFN(1, ("ugenread: got %d bytes\n", tn));
-			error = uiomove(tbuf, tn, uio);
+			error = uiomove(sc->sc_buffer, tn, uio);
 			if (error || tn < n)
 				break;
 		}
@@ -679,7 +678,6 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	u_int32_t n;
 	int error = 0;
-	char tbuf[UGEN_BBSIZE];
 	usbd_xfer_handle xfer;
 	usbd_status err;
 
@@ -708,12 +706,12 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		if (xfer == 0)
 			return (EIO);
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
-			error = uiomove(tbuf, n, uio);
+			error = uiomove(sc->sc_buffer, n, uio);
 			if (error)
 				break;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
 			err = usbd_bulk_transfer(xfer, sce->pipeh, 0,
-				  sce->timeout, tbuf, &n,"ugenwb");
+				  sce->timeout, sc->sc_buffer, &n,"ugenwb");
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
@@ -732,12 +730,12 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			return (EIO);
 		while ((n = min(UGETW(sce->edesc->wMaxPacketSize),
 		    uio->uio_resid)) != 0) {
-			error = uiomove(tbuf, n, uio);
+			error = uiomove(sc->sc_buffer, n, uio);
 			if (error)
 				break;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
 			err = usbd_intr_transfer(xfer, sce->pipeh, 0,
-			    sce->timeout, tbuf, &n, "ugenwi");
+			    sce->timeout, sc->sc_buffer, &n, "ugenwi");
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;

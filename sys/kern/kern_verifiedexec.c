@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.50 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.50.2.1 2006/06/19 04:07:16 chap Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.50 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.50.2.1 2006/06/19 04:07:16 chap Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.50 2006/05/14 21:15:11 elad 
 #include <crypto/ripemd160/rmd160.h>
 #include <sys/md5.h>
 #include <uvm/uvm_extern.h>
+#include <sys/kauth.h>
 
 int veriexec_verbose;
 int veriexec_strict;
@@ -183,6 +184,7 @@ veriexec_init_fp_ops(void)
 			MD5Init, MD5Update, MD5Final);
 	(void) veriexec_add_fp_ops(ops);
 #endif /* VERIFIED_EXEC_FP_MD5 */
+
 }
 
 struct veriexec_fp_ops *
@@ -191,7 +193,7 @@ veriexec_find_ops(u_char *name)
 	struct veriexec_fp_ops *ops;
 
 	name[VERIEXEC_TYPE_MAXLEN] = '\0';
-	
+
 	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
 		if ((strlen(name) == strlen(ops->type)) &&
 		    (strncasecmp(name, ops->type, sizeof(ops->type) - 1)
@@ -252,7 +254,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
 						    : PAGE_SIZE;
 
-		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
+		error = vn_rdwr(UIO_READ, vp, buf, len, offset,
 				UIO_SYSSPACE,
 #ifdef __FreeBSD__
 				IO_NODELOCKED,
@@ -310,7 +312,7 @@ bad:
 
 	return (error);
 }
-	
+
 /* Compare two fingerprints of the same type. */
 int
 veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)

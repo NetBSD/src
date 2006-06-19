@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.29 2006/04/15 00:01:50 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.29.2.1 2006/06/19 04:10:37 chap Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.29 2006/04/15 00:01:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.29.2.1 2006/06/19 04:10:37 chap Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -376,13 +376,15 @@ tp_soisdisconnecting(struct socket *so)
 	if (DOPERF(sototpcb(so))) {
 		struct tp_pcb *tpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
+		struct timeval	now;
 
 		bcopy((caddr_t) tpcb->tp_fsuffix, (caddr_t) &fsufx,
 		      sizeof(u_int));
 		bcopy((caddr_t) tpcb->tp_lsuffix, (caddr_t) &lsufx,
 		      sizeof(u_int));
 
-		tpmeas(tpcb->tp_lref, TPtime_close, &time, fsufx, lsufx,
+		getmicrotime(&now);
+		tpmeas(tpcb->tp_lref, TPtime_close, &now, fsufx, lsufx,
 		       tpcb->tp_fref);
 		tpcb->tp_perf_on = 0;	/* turn perf off */
 	}
@@ -424,6 +426,7 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 	if (DOPERF(tpcb)) {
 		struct tp_pcb *ttpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
+		struct timeval	now;
 
 		/* CHOKE */
 		bcopy((caddr_t) ttpcb->tp_fsuffix, (caddr_t) &fsufx,
@@ -431,8 +434,9 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 		bcopy((caddr_t) ttpcb->tp_lsuffix, (caddr_t) &lsufx,
 		      sizeof(u_int));
 
+		getmicrotime(&now);
 		tpmeas(ttpcb->tp_lref, TPtime_close,
-		       &time, &lsufx, &fsufx, ttpcb->tp_fref);
+		       &now, &lsufx, &fsufx, ttpcb->tp_fref);
 		tpcb->tp_perf_on = 0;	/* turn perf off */
 	}
 #endif

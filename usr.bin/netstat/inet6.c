@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.36 2005/08/28 21:06:57 rpaulo Exp $	*/
+/*	$NetBSD: inet6.c,v 1.36.2.1 2006/06/19 04:17:07 chap Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.36 2005/08/28 21:06:57 rpaulo Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.36.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ extern char *tcpstates[];
 #include <netdb.h>
 
 #include <err.h>
+#include <errno.h>
 #include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -224,14 +225,6 @@ ip6protopr(off, name)
 	int istcp;
 	static int first = 1;
 
-	if (off == 0)
-		return;
-	istcp = strcmp(name, "tcp6") == 0;
-	kread(off, (char *)&table, sizeof (table));
-	head = prev =
-	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = (struct in6pcb *)table.inpt_queue.cqh_first;
-
 	compact = 0;
 	if (Aflag) {
 		if (!numeric_addr)
@@ -255,14 +248,19 @@ ip6protopr(off, name)
 			err(1, "asprintf");
 
 		/* get dynamic pcblist node */
-		if (sysctlnametomib(mibname, mib, &namelen) == -1)
+		if (sysctlnametomib(mibname, mib, &namelen) == -1) {
+			if (errno == ENOENT)
+				return;
+
 			err(1, "sysctlnametomib");
+		}
 
 		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
 		    NULL, 0) == -1)
 			err(1, "sysctl (query)");
 		
-		pcblist = malloc(size);
+		if ((pcblist = malloc(size)) == NULL)
+			err(1, "malloc");
 		memset(pcblist, 0, size);
 
 		mib[6] = sizeof(*pcblist);
@@ -293,6 +291,14 @@ ip6protopr(off, name)
 		free(pcblist);
 		return;
 	}
+
+	if (off == 0)
+		return;
+	istcp = strcmp(name, "tcp6") == 0;
+	kread(off, (char *)&table, sizeof (table));
+	head = prev =
+	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
+	next = (struct in6pcb *)table.inpt_queue.cqh_first;
 
 	while (next != head) {
 		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);

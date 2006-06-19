@@ -1,4 +1,4 @@
-/*	$NetBSD: value.h,v 1.4 2003/08/07 11:17:33 agc Exp $	*/
+/*	$NetBSD: value.h,v 1.4.12.1 2006/06/19 04:17:08 chap Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,4 +48,5 @@ struct value {
 #define V_STR	2
 #define V_ERR	3
 
-#define val_free(v)	((v).v_type == V_STR ? str_free((v).v_str) : 0)
+#define val_free(v)	(((v).v_type == V_STR && (v).v_str) ? \
+    str_free((v).v_str) : 0)

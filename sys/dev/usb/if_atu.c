@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.16 2006/05/14 05:42:43 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.16.2.1 2006/06/19 04:05:49 chap Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.16 2006/05/14 05:42:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.16.2.1 2006/06/19 04:05:49 chap Exp $");
 
 #include "bpfilter.h"
 
@@ -479,6 +479,8 @@ atu_start_scan(struct atu_softc *sc)
 	else
 		Scan.Channel = sc->atu_channel;
 
+	ic->ic_curchan = &ic->ic_channels[Scan.Channel];
+
 	/* we like scans to be quick :) */
 	/* the time we wait before sending probe's */
 	USETW(Scan.ProbeDelay, 0);
@@ -606,23 +608,25 @@ atu_initial_config(struct atu_softc *sc)
 
 	cmd.ExcludeUnencrypted = 0;
 
-	switch (ic->ic_nw_keys[ic->ic_def_txkey].wk_keylen) {
-	case 5:
-		cmd.EncryptionType = ATU_WEP_40BITS;
-		break;
-	case 13:
-		cmd.EncryptionType = ATU_WEP_104BITS;
-		break;
-	default:
-		cmd.EncryptionType = ATU_WEP_OFF;
-		break;
-	}
+	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
+		switch (ic->ic_nw_keys[ic->ic_def_txkey].wk_keylen) {
+		case 5:
+			cmd.EncryptionType = ATU_WEP_40BITS;
+			break;
+		case 13:
+			cmd.EncryptionType = ATU_WEP_104BITS;
+			break;
+		default:
+			cmd.EncryptionType = ATU_WEP_OFF;
+			break;
+		}
 
 
-	cmd.WEP_DefaultKeyID = ic->ic_def_txkey;
-	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key, 
-		    ic->ic_nw_keys[i].wk_keylen); 
+		cmd.WEP_DefaultKeyID = ic->ic_def_txkey;
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key, 
+			    ic->ic_nw_keys[i].wk_keylen); 
+		}
 	}
 
 	/* Setting the SSID here doesn't seem to do anything */
@@ -1100,8 +1104,7 @@ atu_task(void *arg)
 		    USBDEVNAME(sc->atu_dev)));
 
 		s = splnet();
-		/* ieee80211_next_scan(ifp); */
-		ieee80211_end_scan(ic);
+		ieee80211_next_scan(ic);
 		splx(s);
 
 		DPRINTF(("%s: ----------------------======> END OF SCAN2!\n",

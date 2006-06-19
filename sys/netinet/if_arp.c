@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.110 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.110.2.1 2006/06/19 04:09:48 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.110 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.110.2.1 2006/06/19 04:09:48 chap Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.110 2006/05/18 09:05:51 liamjfoy Exp $"
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -353,8 +354,8 @@ arptimer(void *arg)
 		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire == 0)
 			continue;
-		if ((rt->rt_expire - time.tv_sec) < arpt_refresh &&
-		    rt->rt_pksent > (time.tv_sec - arpt_keep)) {
+		if ((rt->rt_expire - time_second) < arpt_refresh &&
+		    rt->rt_pksent > (time_second - arpt_keep)) {
 			/*
 			 * If the entry has been used during since last
 			 * refresh, try to renew it before deleting.
@@ -363,7 +364,7 @@ arptimer(void *arg)
 			    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &SIN(rt_key(rt))->sin_addr,
 			    LLADDR(rt->rt_ifp->if_sadl));
-		} else if (rt->rt_expire <= time.tv_sec)
+		} else if (rt->rt_expire <= time_second)
 			arptfree(la); /* timer has expired; clear */
 	}
 
@@ -390,11 +391,18 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	if (!arpinit_done) {
 		arpinit_done = 1;
 		/*
-		 * We generate expiration times from time.tv_sec
+		 * We generate expiration times from time_second
 		 * so avoid accidently creating permanent routes.
 		 */
-		if (time.tv_sec == 0) {
+		if (time_second == 0) {
+#ifdef __HAVE_TIMECOUNTER
+			struct timespec ts;
+			ts.tv_sec = 1;
+			ts.tv_nsec = 0;
+			tc_setclock(&ts);
+#else /* !__HAVE_TIMECOUNTER */
 			time.tv_sec++;
+#endif /* !__HAVE_TIMECOUNTER */
 		}
 		callout_init(&arptimer_ch);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
@@ -459,7 +467,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * it's a "permanent" route, so that routes cloned
 			 * from it do not need their expiration time set.
 			 */
-			rt->rt_expire = time.tv_sec;
+			rt->rt_expire = time_second;
 			/*
 			 * linklayers with particular link MTU limitation.
 			 */
@@ -690,11 +698,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
 	 */
-	if ((rt->rt_expire == 0 || rt->rt_expire > time.tv_sec) &&
+	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		bcopy(LLADDR(sdl), desten,
 		    min(sdl->sdl_alen, ifp->if_addrlen));
-		rt->rt_pksent = time.tv_sec; /* Time for last pkt sent */
+		rt->rt_pksent = time_second; /* Time for last pkt sent */
 		return 1;
 	}
 	/*
@@ -722,13 +730,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		/* This should never happen. (Should it? -gwr) */
 		printf("arpresolve: unresolved and rt_expire == 0\n");
 		/* Set expiration time to now (expired). */
-		rt->rt_expire = time.tv_sec;
+		rt->rt_expire = time_second;
 	}
 #endif
 	if (rt->rt_expire) {
 		rt->rt_flags &= ~RTF_REJECT;
-		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
-			rt->rt_expire = time.tv_sec;
+		if (la->la_asked == 0 || rt->rt_expire != time_second) {
+			rt->rt_expire = time_second;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(ifp,
 				    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
@@ -842,6 +850,8 @@ in_arpinput(struct mbuf *m)
 	caddr_t tha;
 	int s;
 
+	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
+		goto out;
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 
@@ -1054,7 +1064,7 @@ in_arpinput(struct mbuf *m)
 		bcopy((caddr_t)ar_sha(ah), LLADDR(sdl),
 		    sdl->sdl_alen = ah->ar_hln);
 		if (rt->rt_expire)
-			rt->rt_expire = time.tv_sec + arpt_keep;
+			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 

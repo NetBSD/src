@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.53 2006/05/03 14:12:01 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.53.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -234,6 +234,9 @@ struct vm_map {
 };
 
 #if defined(_KERNEL)
+
+#include <sys/callback.h>
+
 struct vm_map_kernel {
 	struct vm_map vmk_map;
 	LIST_HEAD(, uvm_kmapent_hdr) vmk_kentry_free;
@@ -241,6 +244,7 @@ struct vm_map_kernel {
 	struct vm_map_entry	*vmk_merged_entries;
 			/* Merged entries, kept for later splitting */
 
+	struct callback_head vmk_reclaim_callback;
 #if !defined(PMAP_MAP_POOLPAGE)
 	struct pool vmk_vacache; /* kva cache */
 	struct pool_allocator vmk_vacache_allocator; /* ... and its allocator */
@@ -508,6 +512,8 @@ do {									\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
 } while (/*CONSTCOND*/ 0)
+
+boolean_t vm_map_starved_p(struct vm_map *);
 
 #endif /* _KERNEL */
 

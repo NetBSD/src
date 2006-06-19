@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.36 2006/04/02 03:40:06 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.36.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -67,12 +67,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.36 2006/04/02 03:40:06 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.36.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,15 +506,19 @@ lputs(char *s)
 {
 	int count;
 	char *escapes, *p;
+#ifndef HAVE_NBTOOL_CONFIG_H
 	struct winsize win;
+#endif
 	static int termwidth = -1;
 
 	if (termwidth == -1) {
 		if ((p = getenv("COLUMNS")) != NULL)
 			termwidth = atoi(p);
+#ifndef HAVE_NBTOOL_CONFIG_H
 		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
 		    win.ws_col > 0)
 			termwidth = win.ws_col;
+#endif
 		else
 			termwidth = 60;
 	}

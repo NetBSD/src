@@ -1,4 +1,4 @@
-/*	$NetBSD: portal.h,v 1.12 2006/05/14 21:31:53 elad Exp $	*/
+/*	$NetBSD: portal.h,v 1.12.2.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@ struct portal_cred {
 	int		pcr_flag;		/* File open mode */
 	uid_t		pcr_uid;		/* From cred */
 	gid_t		pcr_gid;		/* From cred */
-	short		pcr_ngroups;		/* From cred */
+	uint16_t	pcr_ngroups;		/* From cred */
 	gid_t		pcr_groups[NGROUPS];	/* From cred */
 };
 

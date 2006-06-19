@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.25 2006/04/02 03:19:34 christos Exp $	*/
+/*	$NetBSD: iso.c,v 1.25.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.25 2006/04/02 03:19:34 christos Exp $");
+__RCSID("$NetBSD: iso.c,v 1.25.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,6 @@ iso_protopr(off, name)
 	struct isopcb *prev, *next;
 
 	if (off == 0) {
-		printf("%s control block: symbol not in namelist\n", name);
 		return;
 	}
 	if (strcmp(name, "tp") == 0) {
@@ -502,7 +501,6 @@ x25_protopr(off, name)
 	struct x25_pcb xpcb;
 
 	if (off == 0) {
-		printf("%s control block: symbol not in namelist\n", name);
 		return;
 	}
 	kread(off, &xpcb, sizeof (struct x25_pcb));

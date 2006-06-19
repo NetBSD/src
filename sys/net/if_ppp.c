@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.106 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.106.2.1 2006/06/19 04:09:12 chap Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.106 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.106.2.1 2006/06/19 04:09:12 chap Exp $");
 
 #include "ppp.h"
 
@@ -146,7 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.106 2006/05/14 21:19:33 elad Exp $");
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
-#include <sys/time.h>
 #include <net/bpf.h>
 #endif
 
@@ -403,7 +402,7 @@ pppalloc(pid_t pid)
 	sc->sc_npmode[i] = NPMODE_ERROR;
     sc->sc_npqueue = NULL;
     sc->sc_npqtail = &sc->sc_npqueue;
-    sc->sc_last_sent = sc->sc_last_recv = time.tv_sec;
+    sc->sc_last_sent = sc->sc_last_recv = time_second;
 
     return sc;
 }
@@ -670,7 +669,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 
     case PPPIOCGIDLE:
 	s = splsoftnet();
-	t = time.tv_sec;
+	t = time_second;
 	((struct ppp_idle *)data)->xmit_idle = t - sc->sc_last_sent;
 	((struct ppp_idle *)data)->recv_idle = t - sc->sc_last_recv;
 	splx(s);
@@ -993,12 +992,12 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (sc->sc_active_filt_out.bf_insns == 0
 	    || bpf_filter(sc->sc_active_filt_out.bf_insns, (u_char *) m0,
 	    		  len, 0))
-	    sc->sc_last_sent = time.tv_sec;
+	    sc->sc_last_sent = time_second;
 #else
 	/*
 	 * Update the time we sent the most recent packet.
 	 */
-	sc->sc_last_sent = time.tv_sec;
+	sc->sc_last_sent = time_second;
 #endif /* PPP_FILTER */
     }
 
@@ -1647,12 +1646,12 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (sc->sc_active_filt_in.bf_insns == 0
 	    || bpf_filter(sc->sc_active_filt_in.bf_insns, (u_char *) m,
 	    		  ilen, 0))
-	    sc->sc_last_recv = time.tv_sec;
+	    sc->sc_last_recv = time_second;
 #else
 	/*
 	 * Record the time that we received this packet.
 	 */
-	sc->sc_last_recv = time.tv_sec;
+	sc->sc_last_recv = time_second;
 #endif /* PPP_FILTER */
     }
 

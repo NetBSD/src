@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.14 2006/01/07 07:09:01 garbled Exp $	*/
+/*	$NetBSD: jot.c,v 1.14.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.14 2006/01/07 07:09:01 garbled Exp $");
+__RCSID("$NetBSD: jot.c,v 1.14.2.1 2006/06/19 04:17:06 chap Exp $");
 #endif /* not lint */
 
 /*
@@ -133,19 +133,19 @@ getargs(int argc, char *argv[])
 			boring = 1;
 		case 'w':
 			if ((*argv)[2])
-				strcpy(format, *argv + 2);
+				strlcpy(format, *argv + 2, sizeof(format));
 			else if (!--argc)
 				errx(1, "Need context word after -w or -b");
 			else
-				strcpy(format, *++argv);
+				strlcpy(format, *++argv, sizeof(format));
 			break;
 		case 's':
 			if ((*argv)[2])
-				strcpy(sepstring, *argv + 2);
+				strlcpy(sepstring, *argv + 2, sizeof(sepstring));
 			else if (!--argc)
 				errx(1, "Need string after -s");
 			else
-				strcpy(sepstring, *++argv);
+				strlcpy(sepstring, *++argv, sizeof(sepstring));
 			break;
 		case 'p':
 			if ((*argv)[2])

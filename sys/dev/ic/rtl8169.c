@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.23 2006/05/16 22:39:24 pavel Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.23.2.1 2006/06/19 03:58:14 chap Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -747,7 +747,7 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_ioctl = re_ioctl;
 	sc->ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-	/* 
+	/*
 	 * This is a way to disable hw VLAN tagging by default
 	 * (RE_VLAN is undefined), as it is problematic. PR 32643
 	 */
@@ -1428,7 +1428,7 @@ re_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 	re_rxeof(sc);
 	re_txeof(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		(*ifp->if_start)(ifp);
 
 	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
@@ -1513,7 +1513,7 @@ re_intr(void *arg)
 	}
 
 	if (ifp->if_flags & IFF_UP) /* kludge for interrupt during re_init() */
-		if (ifp->if_snd.ifq_head != NULL)
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 			(*ifp->if_start)(ifp);
 
 #ifdef DEVICE_POLLING
@@ -1810,7 +1810,7 @@ re_init(struct ifnet *ifp)
 		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;;
 
 	if (1)  {/* not for 8169S ? */
-		reg |= 
+		reg |=
 #ifdef RE_VLAN
 		    RTK_CPLUSCMD_VLANSTRIP |
 #endif

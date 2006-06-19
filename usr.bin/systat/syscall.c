@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2006/03/18 20:31:45 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.1 2006/03/18 20:31:45 dsl Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.1.2.1 2006/06/19 04:17:07 chap Exp $");
 
 /* System call stats */
 
@@ -45,13 +45,14 @@ __RCSID("$NetBSD: syscall.c,v 1.1 2006/03/18 20:31:45 dsl Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
 
 #include "systat.h"
 #include "extern.h"
-#include "dkstats.h"
+#include "drvstats.h"
 #include "utmpentry.h"
 #include "vmstat.h"
 
@@ -61,22 +62,27 @@ __RCSID("$NetBSD: syscall.c,v 1.1 2006/03/18 20:31:45 dsl Exp $");
 #define nelem(x) (sizeof (x) / sizeof *(x))
 
 static struct Info {
-	struct	uvmexp_sysctl uvmexp;
-	struct	vmtotal Total;
-	int     syscall[SYS_NSYSENT];
+	struct	 uvmexp_sysctl uvmexp;
+	struct	 vmtotal Total;
+	uint64_t counts[SYS_NSYSENT];
+	uint64_t times[SYS_NSYSENT];
 } s, s1, s2, irf;
 
 int syscall_sort[SYS_NSYSENT];
 
 static	enum sort_order { UNSORTED, NAMES, COUNTS } sort_order = NAMES;
 
-static void getinfo(struct Info *);
+#define	SHOW_COUNTS	1
+#define	SHOW_TIMES	2
+static int show = SHOW_COUNTS;
+
+static void getinfo(struct Info *, int);
 
 static	char buf[26];
 static	float hertz;
 
-static size_t syscall_mib_len;
-static int syscall_mib[4];
+static size_t counts_mib_len, times_mib_len;
+static int counts_mib[4], times_mib[4];
 
 WINDOW *
 opensyscall(void)
@@ -109,16 +115,20 @@ initsyscall(void)
 
 	syscall_order(name);
 
-	/* dkinit gets number of cpus! */
-	dkinit(1);
+	/* drvinit gets number of cpus! */
+	drvinit(1);
 
-	syscall_mib_len = nelem(syscall_mib);
-	if (sysctlnametomib("kern.syscalls.counts", syscall_mib, &syscall_mib_len) &&
-	    sysctlnametomib("kern.syscalls", syscall_mib, &syscall_mib_len))
-		syscall_mib_len = 0;
+	counts_mib_len = nelem(counts_mib);
+	if (sysctlnametomib("kern.syscalls.counts", counts_mib, &counts_mib_len))
+		counts_mib_len = 0;
 
-	getinfo(&s2);
+	times_mib_len = nelem(times_mib);
+	if (sysctlnametomib("kern.syscalls.times", times_mib, &times_mib_len))
+		times_mib_len = 0;
+
+	getinfo(&s2, SHOW_COUNTS | SHOW_TIMES);
 	s1 = s2;
+
 	return(1);
 }
 
@@ -130,7 +140,7 @@ fetchsyscall(void)
 	time(&now);
 	strlcpy(buf, ctime(&now), sizeof(buf));
 	buf[19] = '\0';
-	getinfo(&s);
+	getinfo(&s, show);
 }
 
 void
@@ -145,18 +155,34 @@ static int
 compare_counts(const void *a, const void *b)
 {
 	int ia = *(const int *)a, ib = *(const int *)b;
+	int64_t delta;
 
 	if (display_mode == TIME)
-		return irf.syscall[ib] - irf.syscall[ia];
+		delta = irf.counts[ib] - irf.counts[ia];
+	else
+		delta = s.counts[ib] - s1.counts[ib]
+		    - (s.counts[ia] - s1.counts[ia]);
+	return delta ? delta < 0 ? -1 : 1 : 0;
+}
 
-	return s.syscall[ib] - s1.syscall[ib] - s.syscall[ia] + s1.syscall[ia];
+static int
+compare_times(const void *a, const void *b)
+{
+	int ia = *(const int *)a, ib = *(const int *)b;
+	int64_t delta;
+
+	if (display_mode == TIME)
+		delta = irf.times[ib] - irf.times[ia];
+	else
+		delta = s.times[ib] - s1.times[ib] - s.times[ia] + s1.times[ia];
+	return delta ? delta < 0 ? -1 : 1 : 0;
 }
 
 void
 showsyscall(void)
 {
 	int i, ii, l, c;
-	unsigned int val;
+	uint64_t val;
 	static int failcnt = 0;
 	static int relabel = 0;
 	static char pigs[] = "pigs";
@@ -197,23 +223,50 @@ showsyscall(void)
 		 * attempt to stop the data leaping around too much.
 		 * I suspect there are other/better methods in use.
 		 */
-		for (i = 0; i < nelem(s.syscall); i++) {
-			val = s.syscall[i] - s1.syscall[i];
-			irf.syscall[i] = irf.syscall[i] * 7 / 8 + val;
+		if (show & SHOW_COUNTS) {
+			for (i = 0; i < nelem(s.counts); i++) {
+				val = s.counts[i] - s1.counts[i];
+				if (irf.counts[i] > 0xfffffff)
+				    irf.counts[i] = irf.counts[i] / 8 * 7 + val;
+				else
+				    irf.counts[i] = irf.counts[i] * 7 / 8 + val;
+			}
+		}
+		if (show & SHOW_TIMES) {
+			for (i = 0; i < nelem(s.times); i++) {
+				val = s.times[i] - s1.times[i];
+				if (irf.times[i] > 0xfffffff)
+				    irf.times[i] = irf.times[i] / 8 * 7 + val;
+				else
+				    irf.times[i] = irf.times[i] * 7 / 8 + val;
+			}
 		}
 
 		/* mergesort() doesn't swap equal values about... */
 		mergesort(syscall_sort, nelem(syscall_sort),
-			sizeof syscall_sort[0], compare_counts);
+			sizeof syscall_sort[0],
+			show & SHOW_COUNTS ? compare_counts : compare_times);
 	}
 
 	l = SYSCALLROW;
 	c = 0;
 	move(l, c);
-	for (ii = 0; ii < nelem(s.syscall); ii++) {
+	for (ii = 0; ii < nelem(s.counts); ii++) {
 		i = syscall_sort[ii];
-		val = s.syscall[i] - s1.syscall[i];
-		if (val == 0 && irf.syscall[i] == 0)
+		switch (show) {
+		default:
+		case SHOW_COUNTS:
+			val = s.counts[i] - s1.counts[i];
+			break;
+		case SHOW_TIMES:
+			val = s.times[i] - s1.times[i];
+			break;
+		case SHOW_COUNTS | SHOW_TIMES:
+			val = s.counts[i] - s1.counts[i];
+			if (val != 0)
+				val = (s.times[i] - s1.times[i]) / val;
+		}
+		if (val == 0 && irf.counts[i] == 0 && irf.times[i] == 0)
 			continue;
 
 		if (i < nelem(syscallnames)) {
@@ -226,7 +279,7 @@ showsyscall(void)
 		} else
 			mvprintw(l, c, "syscall #%d       ", i);
 			
-		putint((int)((float)val/etime + 0.5), l, c + 17, 9);
+		putint((unsigned int)((double)val/etime + 0.5), l, c + 17, 9);
 		c += 27;
 		if (c + 26 > COLS) {
 			c = 0;
@@ -235,8 +288,10 @@ showsyscall(void)
 				break;
 		}
 	}
-	if (display_mode == TIME)
-		memcpy(s1.syscall, s.syscall, sizeof s1.syscall);
+	if (display_mode == TIME) {
+		memcpy(s1.counts, s.counts, sizeof s1.counts);
+		memcpy(s1.times, s.times, sizeof s1.times);
+	}
 	while (l < LINES - 1) {
 	    clrtoeol();
 	    move(++l, 0);
@@ -296,9 +351,10 @@ syscall_order(char *args)
 	if (args[len + strspn(args + len, " \t\r\n")])
 		goto usage;
 	
-	if (memcmp(args, "count", len) == 0)
+	if (memcmp(args, "count", len) == 0) {
 		sort_order = COUNTS;
-	else if (memcmp(args, "name", len) == 0)
+		memset(&irf, 0, sizeof irf);
+	} else if (memcmp(args, "name", len) == 0)
 		sort_order = NAMES;
 	else if (memcmp(args, "syscall", len) == 0)
 		sort_order = UNSORTED;
@@ -320,20 +376,60 @@ syscall_order(char *args)
 	error("Usage: sort [count|name|syscall]");
 }
 
+void
+syscall_show(char *args)
+{
+	int len;
+
+	if (args == NULL)
+		goto usage;
+
+	len = strcspn(args, " \t\r\n");
+
+	if (args[len + strspn(args + len, " \t\r\n")])
+		goto usage;
+	
+	if (memcmp(args, "counts", len) == 0)
+		show = SHOW_COUNTS;
+	else if (memcmp(args, "times", len) == 0)
+		show = SHOW_TIMES;
+	else if (memcmp(args, "ratio", len) == 0)
+		show = SHOW_COUNTS | SHOW_TIMES;
+	else
+		goto usage;
+
+	return;
+
+    usage:
+	error("Usage: show [counts|times|ratio]");
+}
+
 static void
-getinfo(struct Info *stats)
+getinfo(struct Info *stats, int get_what)
 {
 	int mib[2];
 	size_t size;
 
 	cpureadstats();
 
-	size = sizeof stats->syscall;
-	if (!syscall_mib_len ||
-	    sysctl(syscall_mib, syscall_mib_len, &stats->syscall, &size,
-		    NULL, 0)) {
-		error("can't get syscall counts: %s\n", strerror(errno));
-		memset(&stats->syscall, 0, sizeof stats->syscall);
+	if (get_what & SHOW_COUNTS) {
+		size = sizeof stats->counts;
+		if (!counts_mib_len ||
+		    sysctl(counts_mib, counts_mib_len, &stats->counts, &size,
+			    NULL, 0)) {
+			error("can't get syscall counts: %s\n", strerror(errno));
+			memset(&stats->counts, 0, sizeof stats->counts);
+		}
+	}
+
+	if (get_what & SHOW_TIMES) {
+		size = sizeof stats->times;
+		if (!times_mib_len ||
+		    sysctl(times_mib, times_mib_len, &stats->times, &size,
+			    NULL, 0)) {
+			error("can't get syscall times: %s\n", strerror(errno));
+			memset(&stats->times, 0, sizeof stats->times);
+		}
 	}
 
 	size = sizeof(stats->uvmexp);

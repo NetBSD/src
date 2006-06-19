@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.44 2006/03/09 15:16:13 hamajima Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.44.4.1 2006/06/19 04:01:37 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.44 2006/03/09 15:16:13 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.44.4.1 2006/06/19 04:01:37 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -909,6 +909,18 @@ const struct puc_device_description puc_devices[] = {
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
 	{   "Moxa Technologies, SmartIO CP104/PCI",
 	    {   0x1393, 0x1041, 0,      0    },
+	    {   0xffff, 0xffff, 0,      0    },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
+	{   "Moxa Technologies, SmartIO CP104-V2/PCI",
+	    {   0x1393, 0x1042, 0,      0    },
 	    {   0xffff, 0xffff, 0,      0    },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },

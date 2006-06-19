@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.32 2005/12/11 12:21:15 christos Exp $
+#	$NetBSD: files.cardbus,v 1.32.14.1 2006/06/19 03:58:12 chap Exp $
 #
 # files.cardbus
 #
@@ -47,9 +47,9 @@ attach	rtw at cardbus with rtw_cardbus
 file	dev/cardbus/if_rtw_cardbus.c	rtw_cardbus
 
 #
-# Ralink RT2500
+# Ralink RT2500/RT2600
 #
-attach	ral at cardbus with ral_cardbus: ralcommon
+attach	ral at cardbus with ral_cardbus
 file	dev/cardbus/if_ral_cardbus.c	ral_cardbus
 
 #

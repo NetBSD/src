@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.44 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.44.14.1 2006/06/19 04:10:37 chap Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -327,7 +327,7 @@
 			*tl = nfs_false;					\
 		}								\
 		if ((a)->va_atime.tv_sec != VNOVAL) {				\
-			if ((a)->va_atime.tv_sec != time.tv_sec) {		\
+			if ((a)->va_atime.tv_sec != time_second) {		\
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);	\
 				*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);	\
 				txdr_nfsv3time(&(a)->va_atime, tl);		\
@@ -340,7 +340,7 @@
 			*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);		\
 		}								\
 		if ((a)->va_mtime.tv_sec != VNOVAL) {				\
-			if ((a)->va_mtime.tv_sec != time.tv_sec) {		\
+			if ((a)->va_mtime.tv_sec != time_second) {		\
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);	\
 				*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);	\
 				txdr_nfsv3time(&(a)->va_mtime, tl);		\
@@ -514,8 +514,6 @@
 
 #define nfsm_srvsattr(a) \
 		{ \
-		const struct timespec *ts = NULL; \
-		struct timespec tsb; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
@@ -543,8 +541,7 @@
 			fxdr_nfsv3time(tl, &(a)->va_atime); \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			ts = nanotime(&tsb); \
-			(a)->va_atime = *ts; \
+			getnanotime(&(a)->va_atime); \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; \
@@ -556,8 +553,7 @@
 			(a)->va_vaflags &= ~VA_UTIMES_NULL; \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			ts = ts ? ts : nanotime(&tsb); \
-			(a)->va_mtime = *ts; \
+			getnanotime(&(a)->va_mtime); \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; }

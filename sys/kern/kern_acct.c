@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.63 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.63.2.1 2006/06/19 04:07:15 chap Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.63 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.63.2.1 2006/06/19 04:07:15 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,24 +183,25 @@ static int
 acct_chkfree(void)
 {
 	int error;
-	struct statvfs sb;
+	struct statvfs *sb;
 	int64_t bavail;
 
-	error = VFS_STATVFS(acct_vp->v_mount, &sb, NULL);
+	sb = malloc(sizeof(*sb), M_TEMP, M_WAITOK);
+	error = VFS_STATVFS(acct_vp->v_mount, sb, NULL);
 	if (error != 0)
 		return (error);
 
-	bavail = sb.f_bfree - sb.f_bresvd;
+	bavail = sb->f_bfree - sb->f_bresvd;
 
 	switch (acct_state) {
 	case ACCT_SUSPENDED:
-		if (bavail > acctresume * sb.f_blocks / 100) {
+		if (bavail > acctresume * sb->f_blocks / 100) {
 			acct_state = ACCT_ACTIVE;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
 		break;
 	case ACCT_ACTIVE:
-		if (bavail <= acctsuspend * sb.f_blocks / 100) {
+		if (bavail <= acctsuspend * sb->f_blocks / 100) {
 			acct_state = ACCT_SUSPENDED;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
@@ -208,6 +209,7 @@ acct_chkfree(void)
 	case ACCT_STOP:
 		break;
 	}
+	free(sb, M_TEMP);
 	return (0);
 }
 
@@ -392,9 +394,9 @@ int
 acct_process(struct lwp *l)
 {
 	struct acct acct;
-	struct rusage *r;
 	struct timeval ut, st, tmp;
-	int s, t, error = 0;
+	struct rusage *r;
+	int t, error = 0;
 	struct plimit *oplim = NULL;
 	struct proc *p = l->l_proc;
 
@@ -430,9 +432,8 @@ acct_process(struct lwp *l)
 
 	/* (3) The elapsed time the commmand ran (and its starting time) */
 	acct.ac_btime = p->p_stats->p_start.tv_sec;
-	s = splclock();
-	timersub(&time, &p->p_stats->p_start, &tmp);
-	splx(s);
+	getmicrotime(&tmp);
+	timersub(&tmp, &p->p_stats->p_start, &tmp);
 	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_usec);
 
 	/* (4) The average amount of memory used */

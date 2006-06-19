@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.9 2003/08/07 11:17:54 agc Exp $	*/
+/*	$NetBSD: symtab.c,v 1.9.12.1 2006/06/19 04:17:08 chap Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.9 2003/08/07 11:17:54 agc Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.9.12.1 2006/06/19 04:17:08 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,16 +49,16 @@ __RCSID("$NetBSD: symtab.c,v 1.9 2003/08/07 11:17:54 agc Exp $");
 #define	TABLE_SIZE 1024
 
 
-bucket **symbol_table;
 bucket *first_symbol;
 bucket *last_symbol;
 
-int hash __P((char *));
+static bucket **symbol_table;
+
+static int hash(char *);
 
 
-int
-hash(name)
-char *name;
+static int
+hash(char *name)
 {
     char *s;
     int c, k;
@@ -74,8 +74,7 @@ char *name;
 
 
 bucket *
-make_bucket(name)
-char *name;
+make_bucket(char *name)
 {
     bucket *bp;
 
@@ -98,8 +97,7 @@ char *name;
 
 
 bucket *
-lookup(name)
-char *name;
+lookup(char *name)
 {
     bucket *bp, **bpp;
 
@@ -122,7 +120,7 @@ char *name;
 
 
 void
-create_symbol_table()
+create_symbol_table(void)
 {
     int i;
     bucket *bp;
@@ -143,7 +141,7 @@ create_symbol_table()
 
 
 void
-free_symbol_table()
+free_symbol_table(void)
 {
     FREE(symbol_table);
     symbol_table = 0;
@@ -151,7 +149,7 @@ free_symbol_table()
 
 
 void
-free_symbols()
+free_symbols(void)
 {
     bucket *p, *q;
 

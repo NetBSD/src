@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.29 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.29.14.1 2006/06/19 04:01:35 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.29 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.29.14.1 2006/06/19 04:01:35 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,8 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	const struct epic_pci_subsys_info *esp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
-	pcireg_t reg;
-	int pmreg, ioh_valid, memh_valid;
+	int ioh_valid, memh_valid;
+	int error;
 
 	aprint_naive(": Ethernet controller\n");
 
@@ -183,30 +183,12 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s, rev. %d\n", epp->epp_name,
 	    PCI_REVISION(pa->pa_class));
 
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			aprint_normal("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-		case PCI_PMCSR_STATE_D3:
-			/*
-			 * IO and MEM are disabled. We can't enable
-			 * the card because the BARs might be invalid.
-			 */
-			aprint_error(
-			    "%s: unable to wake up from power state D3, "
-			    "reboot required.\n", sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			return;
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*

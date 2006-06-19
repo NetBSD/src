@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.106 2006/04/27 18:09:54 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.106.2.1 2006/06/19 04:01:35 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.106 2006/04/27 18:09:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.106.2.1 2006/06/19 04:01:35 chap Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -263,7 +263,7 @@ int	bge_tso_debug = 0;
 
 /*
  * XXX: how to handle variants based on 5750 and derivatives:
- * 5750 5751, 5721, possibly 5714, 5752, and 5708?, which 
+ * 5750 5751, 5721, possibly 5714, 5752, and 5708?, which
  * in general behave like a 5705, except with additional quirks.
  * This driver's current handling of the 5721 is wrong;
  * how we map ASIC revision to "quirks" needs more thought.
@@ -1262,11 +1262,11 @@ bge_chipinit(struct bge_softc *sc)
 		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
 
 		/* jonathan: alternative from Linux driver */
-#define DMA_CTRL_WRITE_PCIE_H20MARK_128         0x00180000 
+#define DMA_CTRL_WRITE_PCIE_H20MARK_128         0x00180000
 #define DMA_CTRL_WRITE_PCIE_H20MARK_256         0x00380000
 
 		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
-		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag, 
+		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					   BGE_PCI_CONF_DEV_CTRL);
 		printf("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl);
 
@@ -1484,22 +1484,20 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_HIWAT, 10);
 
 	/* Enable buffer manager */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		CSR_WRITE_4(sc, BGE_BMAN_MODE,
-		    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
+	CSR_WRITE_4(sc, BGE_BMAN_MODE,
+	    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
 
-		/* Poll for buffer manager start indication */
-		for (i = 0; i < BGE_TIMEOUT; i++) {
-			if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
-				break;
-			DELAY(10);
-		}
+	/* Poll for buffer manager start indication */
+	for (i = 0; i < BGE_TIMEOUT; i++) {
+		if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
+			break;
+		DELAY(10);
+	}
 
-		if (i == BGE_TIMEOUT) {
-			printf("%s: buffer manager failed to start\n",
-			    sc->bge_dev.dv_xname);
-			return(ENXIO);
-		}
+	if (i == BGE_TIMEOUT) {
+		printf("%s: buffer manager failed to start\n",
+		    sc->bge_dev.dv_xname);
+		return(ENXIO);
 	}
 
 	/* Enable flow-through queues */
@@ -2406,9 +2404,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Detect PCI-Express devices
 	 * XXX: guessed from Linux/FreeBSD; no documentation
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 &&
-	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
-	    NULL, NULL) != 0)
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	        NULL, NULL) != 0)
 		sc->bge_pcie = 1;
 	else
 		sc->bge_pcie = 0;
@@ -2746,7 +2743,7 @@ bge_reset(struct bge_softc *sc)
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
 
 	/* Enable memory arbiter. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	{
 		uint32_t marbmode = 0;
 		if (BGE_IS_5714_FAMILY(sc)) {
 			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
@@ -2812,7 +2809,8 @@ bge_reset(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_PCIE_CTL0, CSR_READ_4(sc, BGE_PCIE_CTL0) | (1<<25));
 
 	/* Enable memory arbiter. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	/* XXX why do this twice? */
+	{
 		uint32_t marbmode = 0;
 		if (BGE_IS_5714_FAMILY(sc)) {
 			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
@@ -3444,7 +3442,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	int			i = 0;
 	struct m_tag		*mtag;
 	int			use_tso, maxsegsize, error;
- 
+
 	cur = frag = *txidx;
 
 	if (m_head->m_pkthdr.csum_flags) {
@@ -3585,7 +3583,7 @@ doit:
 			csum_flags &= ~(BGE_TXBDFLAG_TCP_UDP_CSUM);
 		} else {
 			/*
-			 * XXX jonathan@NetBSD.org: 5705 untested. 
+			 * XXX jonathan@NetBSD.org: 5705 untested.
 			 * Requires TSO firmware patch for 5701/5703/5704.
 			 */
 			th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
@@ -3593,7 +3591,7 @@ doit:
 		}
 
 		mss = m_head->m_pkthdr.segsz;
-		txbd_tso_flags |= 	
+		txbd_tso_flags |=
 		    BGE_TXBDFLAG_CPU_PRE_DMA |
 		    BGE_TXBDFLAG_CPU_POST_DMA;
 
@@ -3644,7 +3642,7 @@ doit:
 		f = &sc->bge_rdata->bge_tx_ring[frag];
 		if (sc->bge_cdata.bge_tx_chain[frag] != NULL)
 			break;
-	
+
 		bge_set_hostaddr(&f->bge_addr, dmamap->dm_segs[i].ds_addr);
 		f->bge_len = dmamap->dm_segs[i].ds_len;
 
@@ -3831,7 +3829,7 @@ bge_init(struct ifnet *ifp)
 
 	/* Specify MTU. */
 	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN); 
+	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load our MAC address. */
 	m = (u_int16_t *)&(LLADDR(ifp->if_sadl)[0]);

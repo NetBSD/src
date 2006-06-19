@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.11 2006/01/17 12:24:53 peter Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.11.12.1 2006/06/19 04:07:14 chap Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1608,6 +1608,7 @@ int pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
 #define	PRIu32	"u"	/* XXX */
 #endif
 #if !defined(__OpenBSD__)
+#if !defined(__NetBSD__)
 #include <sys/kernel.h> /* mono_time */
 static __inline void getmicrouptime(struct timeval *);
 static __inline void
@@ -1620,9 +1621,10 @@ getmicrouptime(struct timeval *tvp)
 	splx(s);
 }
 #define	time_second	time.tv_sec
+#endif /* !__NetBSD__ */
 #define	m_copym2	m_dup
 #define	pool_allocator_oldnointr	pool_allocator_nointr
-#endif
+#endif /* !__OpenBSD__ */
 #endif /* _KERNEL */
 
 /* The fingerprint functions can be linked into userland programs (tcpdump) */

@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.7 2005/07/30 16:19:09 christos Exp $
+# $NetBSD: Makefile,v 1.7.2.1 2006/06/19 04:17:07 chap Exp $
 
-WARNS=3
 PROG=	mktemp
+WARNS=	4
 
 .include <bsd.prog.mk>

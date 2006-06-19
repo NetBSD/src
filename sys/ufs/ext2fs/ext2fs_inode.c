@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.54 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.54.2.1 2006/06/19 04:11:13 chap Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.54 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.54.2.1 2006/06/19 04:11:13 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,6 @@ ext2fs_inactive(void *v)
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;
 	struct lwp *l = ap->a_l;
-	struct timespec ts;
 	int error = 0;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -162,8 +161,7 @@ ext2fs_inactive(void *v)
 		if (ext2fs_size(ip) != 0) {
 			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED, NULL);
 		}
-		nanotime(&ts);
-		ip->i_e2fs_dtime = ts.tv_sec;
+		ip->i_e2fs_dtime = time_uptime;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
 		vn_finished_write(mp, V_LOWER);

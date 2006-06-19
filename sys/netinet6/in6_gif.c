@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.44 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.44.14.1 2006/06/19 04:09:49 chap Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.44 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.44.14.1 2006/06/19 04:09:49 chap Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -183,7 +183,7 @@ in6_gif_output(ifp, family, m)
 	ip6->ip6_flow &= ~ntohl(0xff00000);
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
-	if (sc->gif_route_expire - time.tv_sec <= 0 ||
+	if (sc->gif_route_expire - time_second <= 0 ||
 	     dst->sin6_family != sin6_dst->sin6_family ||
 	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
 		/* cache route doesn't match */
@@ -210,7 +210,7 @@ in6_gif_output(ifp, family, m)
 			return ENETUNREACH;	/* XXX */
 		}
 
-		sc->gif_route_expire = time.tv_sec + GIF_ROUTE_TTL;
+		sc->gif_route_expire = time_second + GIF_ROUTE_TTL;
 	}
 
 #ifdef IPV6_MINMTU

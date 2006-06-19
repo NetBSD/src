@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.186 2006/03/07 13:18:20 tron Exp $	*/
+/*	$NetBSD: systm.h,v 1.186.6.1 2006/06/19 04:11:13 chap Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -274,19 +274,29 @@ int	fuswintr(const void *);
 long	fuword(const void *);
 long	fuiword(const void *);
 
-int	hzto(struct timeval *);
-
 void	hardclock(struct clockframe *);
 void	softclock(void *);
 void	statclock(struct clockframe *);
+
 #ifdef NTP
+void	ntp_init(void);
+#ifndef __HAVE_TIMECOUNTER
 void	hardupdate(long offset);
+#endif /* !__HAVE_TIMECOUNTER */
 #ifdef PPS_SYNC
+#ifdef __HAVE_TIMECOUNTER
+void	hardpps(struct timespec *, long);
+#else /* !__HAVE_TIMECOUNTER */
 void	hardpps(struct timeval *, long);
-extern	void *pps_kc_hardpps_source;
-extern	int pps_kc_hardpps_mode;
-#endif
-#endif
+extern void *pps_kc_hardpps_source;
+extern int pps_kc_hardpps_mode;
+#endif /* !__HAVE_TIMECOUNTER */
+#endif /* PPS_SYNC */
+#else
+#ifdef __HAVE_TIMECOUNTER
+void	ntp_init(void);	/* also provides adjtime() functionality */
+#endif /* __HAVE_TIMECOUNTER */
+#endif /* NTP */
 
 void	initclocks(void);
 void	inittodr(time_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.9 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.9.14.1 2006/06/19 04:01:36 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.9 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.9.14.1 2006/06/19 04:01:36 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,15 +68,10 @@ opl_cmpci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct cmpci_softc *ssc = (struct cmpci_softc *)parent;
-	struct opl_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
-	memset(&sc, 0, sizeof sc);
-	sc.iot = ssc->sc_iot;
-	sc.ioh = ssc->sc_ioh;
-	sc.offs = CMPCI_REG_FM_BASE;
-	return (opl_find(&sc));
+	return opl_match(ssc->sc_iot, ssc->sc_ioh, CMPCI_REG_FM_BASE);
 }
 
 static void

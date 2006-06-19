@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.10 2006/03/29 07:11:08 thorpej Exp $ */
+/* $NetBSD: pms.c,v 1.10.2.1 2006/06/19 04:05:48 chap Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.10 2006/03/29 07:11:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.10.2.1 2006/06/19 04:05:48 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,16 +493,13 @@ pmsinput(void *vsc, int data)
 	u_int changed;
 	int dx, dy, dz = 0;
 	int newbuttons = 0;
-	int s;
 
 	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
 		return;
 	}
 
-	s = splclock();
-	sc->current = mono_time;
-	splx(s);
+	getmicrouptime(&sc->current);
 
 	if (sc->inputstate > 0) {
 		struct timeval diff;

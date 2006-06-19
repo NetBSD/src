@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.74 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.74.2.1 2006/06/19 04:11:13 chap Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.74 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.74.2.1 2006/06/19 04:11:13 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4877,7 +4877,7 @@ softdep_sync_metadata(v)
 	struct allocindir *aip;
 	struct buf *bp, *nbp;
 	struct worklist *wk;
-	int i, error, waitfor;
+	int i, error, waitfor, must_sync;
 
 	/*
 	 * Check whether this vnode is involved in a filesystem
@@ -4926,6 +4926,7 @@ loop:
 	 * As we hold the buffer locked, none of its dependencies
 	 * will disappear.
 	 */
+	must_sync = 0;
 	for (wk = LIST_FIRST(&bp->b_dep); wk;
 	     wk = LIST_NEXT(wk, wk_list)) {
 		switch (wk->wk_type) {
@@ -5038,23 +5039,25 @@ loop:
 
 		case D_BMSAFEMAP:
 			/*
-			 * This case should never happen if the vnode has
-			 * been properly sync'ed. However, if this function
-			 * is used at a place where the vnode has not yet
-			 * been sync'ed, this dependency can show up. So,
-			 * rather than panic, just flush it.
+			 * If the vnode is a block device associated with a
+			 * file system it may have new I/O requests posted for
+			 * it even if the vnode is locked. For other vnodes
+			 * this case should never happen if the vnode has
+			 * been properly sync'ed. As this dependency can show
+			 * up we have to deal with it.
+			 * For a BMSAFEMAP dependency its sm_buf points to the
+			 * buffer holding it so all we can do is to note this
+			 * condition so bp gets written synchronously if
+			 * waitfor is not MNT_NOWAIT.
 			 */
 			nbp = WK_BMSAFEMAP(wk)->sm_buf;
-			if (getdirtybuf(&nbp, waitfor) == 0)
-				break;
-			FREE_LOCK(&lk);
-			if (waitfor == MNT_NOWAIT) {
-				bawrite(nbp);
-			} else if ((error = VOP_BWRITE(nbp)) != 0) {
-				bawrite(bp);
-				return (error);
-			}
-			ACQUIRE_LOCK(&lk);
+			KASSERT(nbp == bp);
+#ifdef DIAGNOSTIC
+			if (vp->v_type != VBLK)
+				vprint("softdep_sync_metadata: bmsafemap", vp);
+#endif
+			if (waitfor != MNT_NOWAIT)
+				must_sync = 1;
 			break;
 
 		default:
@@ -5066,7 +5069,11 @@ loop:
 	(void) getdirtybuf(&bp->b_vnbufs.le_next, MNT_WAIT);
 	nbp = bp->b_vnbufs.le_next;
 	FREE_LOCK(&lk);
-	bawrite(bp);
+	if (must_sync) {
+		if ((error = VOP_BWRITE(bp)) != 0)
+			return error;
+	} else
+		bawrite(bp);
 	ACQUIRE_LOCK(&lk);
 	if (nbp != NULL) {
 		bp = nbp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.63 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.63.2.1 2006/06/19 04:10:37 chap Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.63 2006/05/18 12:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.63.2.1 2006/06/19 04:10:37 chap Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -191,6 +191,9 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK)
 		return (0);
+
+	nfs_init();
+
 	if (*duration > nqsrv_maxlease)
 		*duration = nqsrv_maxlease;
 	error = VOP_GETATTR(vp, &vattr, cred, lwp);
@@ -205,13 +208,11 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 		/*
 		 * Find the lease by searching the hash list.
 		 */
-		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fh.fh_fid);
+		error = vfs_composefh(vp, &fh);
 		if (error) {
 			splx(s);
 			return (error);
 		}
-		KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 		lpp = NQFHHASH(fh.fh_fid.fid_data);
 		LIST_FOREACH (lp, lpp, lc_hash) {
 			if (fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
@@ -376,7 +377,7 @@ nqsrv_instimeq(lp, duration)
 	struct nqlease *tlp;
 	time_t newexpiry;
 
-	newexpiry = time.tv_sec + duration + nqsrv_clockskew;
+	newexpiry = time_second + duration + nqsrv_clockskew;
 	if (lp->lc_expiry == newexpiry)
 		return;
 	if (CIRCLEQ_NEXT(lp, lc_timer) != 0)
@@ -515,11 +516,9 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 				solockp = (int *)0;
 			nfsm_reqhead((struct nfsnode *)0, NQNFSPROC_EVICTED,
 				NFSX_V3FH + NFSX_UNSIGNED);
+			memset(&nfh, 0, sizeof(nfh));
 			fhp = &nfh.fh_generic;
-			memset((caddr_t)fhp, 0, sizeof(nfh));
-			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-			VFS_VPTOFH(vp, &fhp->fh_fid);
-			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
+			vfs_composefh(vp, fhp);
 			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;
@@ -589,7 +588,7 @@ nqsrv_waitfor_expiry(lp)
 	int len, ok;
 
 tryagain:
-	if (time.tv_sec > lp->lc_expiry)
+	if (time_second > lp->lc_expiry)
 		return;
 	lph = &lp->lc_host;
 	lphnext = lp->lc_morehosts;
@@ -635,7 +634,7 @@ nqnfs_serverd()
 
 	for (lp = CIRCLEQ_FIRST(&nqtimerhead); lp != (void *)&nqtimerhead;
 	    lp = nextlp) {
-		if (lp->lc_expiry >= time.tv_sec)
+		if (lp->lc_expiry >= time_second)
 			break;
 		nextlp = CIRCLEQ_NEXT(lp, lc_timer);
 		if (lp->lc_flag & LC_EXPIREDWANTED) {
@@ -873,12 +872,12 @@ nqnfs_getlease(vp, rwflag, cred, l)
 	nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(rwflag);
 	*tl = txdr_unsigned(nmp->nm_leaseterm);
-	reqtime = time.tv_sec;
+	reqtime = time_second;
 	nfsm_request(np, NQNFSPROC_GETLEASE, l, cred);
 	nfsm_dissect(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
-	if (reqtime > time.tv_sec) {
+	if (reqtime > time_second) {
 		frev = fxdr_hyper(tl);
 		nqnfs_clientlease(nmp, np, rwflag, cachable, reqtime, frev);
 		nfsm_loadattr(vp, (struct vattr *)0, 0);
@@ -1106,7 +1105,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		while (np != (void *)&nmp->nm_timerhead &&
 		       (nmp->nm_iflag & NFSMNT_DISMINPROG) == 0) {
 			vp = NFSTOV(np);
-			if (np->n_expiry < time.tv_sec) {
+			if (np->n_expiry < time_second) {
 			   if (vget(vp, LK_EXCLUSIVE) == 0) {
 				nmp->nm_inprog = vp;
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
@@ -1130,7 +1129,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 				vput(vp);
 				nmp->nm_inprog = NULLVP;
 			    }
-			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
+			} else if ((np->n_expiry - NQ_RENEWAL) < time_second) {
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
 				 == NQNFSWRITE &&
 				 !LIST_EMPTY(&vp->v_dirtyblkhd) &&

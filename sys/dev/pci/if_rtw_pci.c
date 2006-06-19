@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.5 2006/04/28 13:43:15 rpaulo Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.5.2.1 2006/06/19 04:01:36 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.5 2006/04/28 13:43:15 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.5.2.1 2006/06/19 04:01:36 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	int ioh_valid, memh_valid;
 	const struct rtw_pci_product *app;
 	pcireg_t reg;
-	int pmreg;
+	int error;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -206,39 +206,12 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s, revision %d.%d\n", app->app_product_name,
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
-	/*
-	 * Check to see if the device is in power-save mode, and
-	 * being it out if necessary.
-	 *
-	 * XXX This code comes almost verbatim from if_tlp_pci.c. I do
-	 * not understand it. Tulip clears the "sleep mode" bit in the
-	 * CFDA register, first.  There is an equivalent (?) register at the
-	 * same place in the ADM8211, but the docs do not assign its bits
-	 * any meanings. -dcy
-	 */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			aprint_normal(": waking up from power state D%d\n%s",
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-		case PCI_PMCSR_STATE_D3:
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			aprint_normal(": unable to wake up from power state" 
-			    " D3, reboot required.\n");
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			return;
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.25 2006/05/01 20:43:46 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.25.2.1 2006/06/19 04:01:35 chap Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.25 2006/05/01 20:43:46 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.25.2.1 2006/06/19 04:01:35 chap Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1272,7 +1272,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 
 	case IPW_SBD_TYPE_HEADER:
 		shdr = sbd->priv;
- 		bus_dmamap_sync(sc->sc_dmat, sc->hdr_map, 
+ 		bus_dmamap_sync(sc->sc_dmat, sc->hdr_map,
  		    shdr->offset, sizeof(struct ipw_hdr), BUS_DMASYNC_POSTWRITE);
 		TAILQ_INSERT_TAIL(&sc->sc_free_shdr, shdr, next);
 		break;
@@ -1281,7 +1281,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		ic = &sc->sc_ic;
 		sbuf = sbd->priv;
 
-		bus_dmamap_sync(sc->sc_dmat, sbuf->map, 
+		bus_dmamap_sync(sc->sc_dmat, sbuf->map,
 		    0, MCLBYTES, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sbuf->map);
 		m_freem(sbuf->m);
@@ -1759,7 +1759,7 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    sizeof(sc->sc_fwname));
 
 		ipw_free_firmware(sc);
-		/* FALLTRHOUGH */		
+		/* FALLTRHOUGH */
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 		if (error != ENETRESET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.56 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs.h,v 1.56.2.1 2006/06/19 04:10:37 chap Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -160,9 +160,9 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 #define	NFS_ATTRTIMEO(nmp, np) \
     ((nmp->nm_flag & NFSMNT_NOAC) ? 0 : \
 	((((np)->n_flag & NMODIFIED) || \
-	 (time.tv_sec - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
-	 ((time.tv_sec - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10)))
+	 (time_second - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
+	 ((time_second - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
+	  (time_second - (np)->n_mtime.tv_sec) / 10)))
 
 /*
  * Export arguments for local filesystem mount calls.

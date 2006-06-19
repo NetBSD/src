@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.8 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.8.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,13 +48,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.8 2006/05/14 21:33:39 elad Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.8.2.1 2006/06/19 04:11:44 chap Exp $");
 
 #include "opt_ffs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>

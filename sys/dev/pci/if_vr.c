@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.75 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.75.14.1 2006/06/19 04:01:36 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.75 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.75.14.1 2006/06/19 04:01:36 chap Exp $");
 
 #include "rnd.h"
 
@@ -217,6 +217,7 @@ struct vr_softc {
 	bus_space_handle_t	vr_bsh;		/* bus space handle */
 	bus_dma_tag_t		vr_dmat;	/* bus DMA tag */
 	pci_chipset_tag_t	vr_pc;		/* PCI chipset info */
+	pcitag_t		vr_tag;		/* PCI tag */
 	struct ethercom		vr_ec;		/* Ethernet common info */
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
@@ -244,6 +245,10 @@ struct vr_softc {
 	int	vr_txlast;		/* last used TX descriptor */
 
 	int	vr_rxptr;		/* next ready RX descriptor */
+
+	u_int32_t	vr_save_iobase;
+	u_int32_t	vr_save_membase;
+	u_int32_t	vr_save_irq;
 
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
@@ -326,6 +331,7 @@ static void	vr_mii_statchg(struct device *);
 
 static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
+static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
 
 int	vr_copy_small = 0;
 
@@ -1446,14 +1452,16 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
 	struct vr_type *vrt;
-	u_int32_t pmreg, reg;
+	u_int32_t reg;
 	struct ifnet *ifp;
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, rseg, error;
 
-#define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
-#define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
+#define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
+#define	PCI_CONF_READ(r)	pci_conf_read(sc->vr_pc, sc->vr_tag, (r))
 
+	sc->vr_pc = pa->pa_pc;
+	sc->vr_tag = pa->pa_tag;
 	callout_init(&sc->vr_tick_ch);
 
 	vrt = vr_lookup(pa);
@@ -1468,30 +1476,16 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	 * Handle power management nonsense.
 	 */
 
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag,
-	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = PCI_CONF_READ(pmreg + PCI_PMCSR);
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-			u_int32_t iobase, membase, irq;
+	sc->vr_save_iobase = PCI_CONF_READ(VR_PCI_LOIO);
+	sc->vr_save_membase = PCI_CONF_READ(VR_PCI_LOMEM);
+	sc->vr_save_irq = PCI_CONF_READ(PCI_INTERRUPT_REG);
 
-			/* Save important PCI config data. */
-			iobase = PCI_CONF_READ(VR_PCI_LOIO);
-			membase = PCI_CONF_READ(VR_PCI_LOMEM);
-			irq = PCI_CONF_READ(PCI_INTERRUPT_REG);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n",
-			    sc->vr_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
-			reg = (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0;
-			PCI_CONF_WRITE(pmreg + PCI_PMCSR, reg);
-
-			/* Restore PCI config data. */
-			PCI_CONF_WRITE(VR_PCI_LOIO, iobase);
-			PCI_CONF_WRITE(VR_PCI_LOMEM, membase);
-			PCI_CONF_WRITE(PCI_INTERRUPT_REG, irq);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    vr_restore_state)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->vr_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/* Make sure bus mastering is enabled. */
@@ -1738,4 +1732,22 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamem_free(sc->vr_dmat, &seg, rseg);
  fail_0:
 	return;
+}
+
+static int
+vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, void *ssc, pcireg_t state)
+{
+	struct vr_softc *sc = ssc;
+	int error;
+
+	if (state == PCI_PMCSR_STATE_D0)
+		return 0;
+	if ((error = pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D0)))
+		return error;
+
+	/* Restore PCI config data. */
+	PCI_CONF_WRITE(VR_PCI_LOIO, sc->vr_save_iobase);
+	PCI_CONF_WRITE(VR_PCI_LOMEM, sc->vr_save_membase);
+	PCI_CONF_WRITE(PCI_INTERRUPT_REG, sc->vr_save_irq);
+	return 0;
 }

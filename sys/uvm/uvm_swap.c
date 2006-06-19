@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.100 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.100.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.100 2006/05/14 21:38:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.100.2.1 2006/06/19 04:11:44 chap Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -440,7 +440,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	struct swappri *spp;
 	struct swapdev *sdp;
 	struct swapent *sep;
-	char	userpath[PATH_MAX + 1];
+#define SWAP_PATH_MAX (PATH_MAX + 1)
+	char	*userpath;
 	size_t	len;
 	int	error, misc;
 	int	priority;
@@ -453,6 +454,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	 */
 	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 
+	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
 	 *
@@ -526,7 +528,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			goto out;
 		}
 		if (SCARG(uap, cmd) == SWAP_ON &&
-		    copystr("miniroot", userpath, sizeof userpath, &len))
+		    copystr("miniroot", userpath, SWAP_PATH_MAX, &len))
 			panic("swapctl: miniroot copy failed");
 	} else {
 		int	space;
@@ -534,7 +536,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 		if (SCARG(uap, cmd) == SWAP_ON) {
 			if ((error = copyinstr(SCARG(uap, arg), userpath,
-			    sizeof userpath, &len)))
+			    SWAP_PATH_MAX, &len)))
 				goto out;
 			space = UIO_SYSSPACE;
 			where = userpath;
@@ -668,6 +670,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	vput(vp);
 
 out:
+	free(userpath, M_TEMP);
 	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);

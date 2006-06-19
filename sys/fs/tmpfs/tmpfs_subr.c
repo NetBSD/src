@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.20 2006/05/15 00:05:16 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.20.2.1 2006/06/19 04:07:14 chap Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.20 2006/05/15 00:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.20.2.1 2006/06/19 04:07:14 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -131,7 +131,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_status = 0;
 	nnode->tn_flags = 0;
 	nnode->tn_links = 0;
-	(void)nanotime(&nnode->tn_atime);
+	getnanotime(&nnode->tn_atime);
 	nnode->tn_birthtime = nnode->tn_ctime = nnode->tn_mtime =
 	    nnode->tn_atime;
 	nnode->tn_uid = uid;
@@ -1224,9 +1224,8 @@ void
 tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod)
 {
+	struct timespec now;
 	struct tmpfs_node *node;
-	const struct timespec *ts = NULL;
-	struct timespec tsb;
 
 	node = VP_TO_TMPFS_NODE(vp);
 
@@ -1234,21 +1233,20 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
 
+	getnanotime(&now);
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = &now;
 		node->tn_atime = *acc;
 	}
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
 		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			mod = &now;
 		node->tn_mtime = *mod;
 	}
-	if (node->tn_status & TMPFS_NODE_CHANGED) {
-		if (ts == NULL)
-			ts = nanotime(&tsb);
-		node->tn_ctime = *ts;
-	}
+	if (node->tn_status & TMPFS_NODE_CHANGED)
+		node->tn_ctime = now;
+
 	node->tn_status &=
 	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
 }

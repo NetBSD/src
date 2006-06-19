@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.65 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: bha.c,v 1.65.14.1 2006/06/19 03:58:13 chap Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.65 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.65.14.1 2006/06/19 03:58:13 chap Exp $");
 
 #include "opt_ddb.h"
 
@@ -801,7 +801,7 @@ bha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, const char *name, int icnt,
 	if (ocnt) {
 		while ((bus_space_read_1(iot, ioh, BHA_STAT_PORT)) &
 		    BHA_STAT_DF)
-			bus_space_read_1(iot, ioh, BHA_DATA_PORT);
+			(void)bus_space_read_1(iot, ioh, BHA_DATA_PORT);
 	}
 
 	/*

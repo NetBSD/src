@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.3.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,9 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tmpfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $");
+__RCSID("$NetBSD: tmpfs.c,v 1.3.2.1 2006/06/19 04:17:06 chap Exp $");
 
-#define __POOL_EXPOSE
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>

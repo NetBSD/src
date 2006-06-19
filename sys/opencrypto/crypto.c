@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.13 2006/03/06 00:49:42 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.13.6.1 2006/06/19 04:11:12 chap Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.13 2006/03/06 00:49:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.13.6.1 2006/06/19 04:11:12 chap Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -50,16 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.13 2006/03/06 00:49:42 christos Exp $")
   softintr_establish(IPL_SOFTNET, (void (*)(void*))fn, NULL)
   #define unregister_swi(lvl, fn)  softintr_disestablish(softintr_cookie)
   #define setsoftcrypto(x) softintr_schedule(x)
-
-static void nanouptime(struct timespec *);
-static void
-nanouptime(struct timespec *tp)
-{
-	struct timeval tv;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, tp);
-}
-
 #endif
 
 #define	SESID2HID(sid)	(((sid) >> 32) & 0xffffffff)

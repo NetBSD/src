@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_30.8,v 1.1 2006/05/18 17:08:04 chap Exp $
+.\" $NetBSD: compat_30.8,v 1.1.2.1 2006/06/19 04:15:04 chap Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@ A shadow directory under
 .Pa /emul
 is not used; the libraries can be obtained from a
 .Nx 3.0
-distribution and installed in the usual directories,
+distribution and installed in the original directories shown,
 as the major version number in the file name will prevent conflicts.
 If an upgrade installation from
 .Nx 3.0
@@ -114,6 +114,11 @@ argument structures were changed after the 3.0 release to accommodate
 .Xr getdents 2 ,
 .Xr lstat 2 ,
 .Xr stat 2 .
+The
+.Vt struct ntptimeval
+used by
+.Xr ntp_gettime 2
+changed with the implementation of timecounters.
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr fhstat 2 ,

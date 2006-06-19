@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $	*/
+/*	$NetBSD: ath.c,v 1.72.2.1 2006/06/19 03:58:12 chap Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72.2.1 2006/06/19 03:58:12 chap Exp $");
 #endif
 
 /*
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $");
 #endif /* __NetBSD__ */
 
 #include <sys/param.h>
-#include <sys/reboot.h> 
-#include <sys/systm.h> 
+#include <sys/reboot.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $");
 #include <sys/endian.h>
 
 #include <machine/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $");
 #endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #endif
 
 #include <sys/device.h>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $");
 #include <dev/ic/athvar.h>
 #include <contrib/dev/ath/ah_desc.h>
 #include <contrib/dev/ath/ah_devid.h>	/* XXX for softled */
+#include "athhal_options.h"
 
 #ifdef ATH_TX99_DIAG
 #include <dev/ath/ath_tx99/ath_tx99.h>
@@ -120,6 +121,12 @@ enum {
 	ATH_LED_RX,
 	ATH_LED_POLL,
 };
+
+#ifdef	AH_NEED_DESC_SWAP
+#define	HTOAH32(x)	htole32(x)
+#else
+#define	HTOAH32(x)	(x)
+#endif
 
 static int	ath_ifinit(struct ifnet *);
 static int	ath_init(struct ath_softc *);
@@ -319,8 +326,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ah = ath_hal_attach(devid, sc, sc->sc_st, ATH_BUSHANDLE2HAL(sc->sc_sh),
-	    &status);
+	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
 		if_printf(ifp, "unable to attach hardware; HAL status %u\n",
 			status);
@@ -455,7 +461,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	if (!ath_tx_setup(sc, WME_AC_BE, HAL_WME_AC_BE) ||
 	    !ath_tx_setup(sc, WME_AC_VI, HAL_WME_AC_VI) ||
 	    !ath_tx_setup(sc, WME_AC_VO, HAL_WME_AC_VO)) {
-		/* 
+		/*
 		 * Not enough hardware tx queues to properly do WME;
 		 * just punt and assign them all to the same h/w queue.
 		 * We could do a better job of this if, for example,
@@ -471,7 +477,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		sc->sc_ac2q[WME_AC_VO] = sc->sc_ac2q[WME_AC_BK];
 	}
 
-	/* 
+	/*
 	 * Special case certain configurations.  Note the
 	 * CAB queue is handled by these specially so don't
 	 * include them when checking the txq setup mask.
@@ -683,7 +689,7 @@ ath_detach(struct ath_softc *sc)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	/* 
+	/*
 	 * NB: the order of these is important:
 	 * o call the 802.11 layer before detaching the hal to
 	 *   insure callbacks into the driver to delete global
@@ -804,8 +810,10 @@ ath_intr(void *arg)
 		DPRINTF(sc, ATH_DEBUG_ANY, "%s: invalid; ignored\n", __func__);
 		return 0;
 	}
+
 	if (!ath_hal_intrpend(ah))		/* shared irq, not for us */
 		return 0;
+
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP)) {
 		DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 			__func__, ifp->if_flags);
@@ -884,6 +892,23 @@ ath_intr(void *arg)
 		}
 	}
 	return 1;
+}
+
+/* Swap transmit descriptor.
+ * if AH_NEED_DESC_SWAP flag is not defined this becomes a "null"
+ * function.
+ */
+static inline void
+ath_desc_swap(struct ath_desc *ds)
+{
+#ifdef AH_NEED_DESC_SWAP
+	ds->ds_link = htole32(ds->ds_link);
+	ds->ds_data = htole32(ds->ds_data);
+	ds->ds_ctl0 = htole32(ds->ds_ctl0);
+	ds->ds_ctl1 = htole32(ds->ds_ctl1);
+	ds->ds_hw[0] = htole32(ds->ds_hw[0]);
+	ds->ds_hw[1] = htole32(ds->ds_hw[1]);
+#endif
 }
 
 static void
@@ -1275,7 +1300,7 @@ ath_start(struct ifnet *ifp)
 				ATH_TXBUF_UNLOCK(sc);
 				break;
 			}
-			/* 
+			/*
 			 * Find the node for the destination so we can do
 			 * things like power save and fast frames aggregation.
 			 */
@@ -2058,7 +2083,7 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 
 	flags = HAL_TXDESC_NOACK;
 	if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_hasveol) {
-		ds->ds_link = bf->bf_daddr;	/* self-linked */
+		ds->ds_link = HTOAH32(bf->bf_daddr);	/* self-linked */
 		flags |= HAL_TXDESC_VEOL;
 		/*
 		 * Let hardware handle antenna switching unless
@@ -2112,6 +2137,12 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 		, AH_TRUE			/* last segment */
 		, ds				/* first descriptor */
 	);
+
+	/* NB: The desc swap function becomes void, 
+	 * if descriptor swapping is not enabled
+	 */
+	ath_desc_swap(ds);
+
 #undef USE_SHPREAMBLE
 }
 
@@ -2236,8 +2267,8 @@ ath_beacon_proc(void *arg, int pending)
 	ath_hal_puttxbuf(ah, sc->sc_bhalq, bf->bf_daddr);
 	ath_hal_txstart(ah, sc->sc_bhalq);
 	DPRINTF(sc, ATH_DEBUG_BEACON_PROC,
-		"%s: TXDP[%u] = %p (%p)\n", __func__,
-		sc->sc_bhalq, (caddr_t)bf->bf_daddr, bf->bf_desc);
+	    "%s: TXDP[%u] = %" PRIx64 " (%p)\n", __func__,
+	    sc->sc_bhalq, (uint64_t)bf->bf_daddr, bf->bf_desc);
 
 	sc->sc_stats.ast_be_xmit++;
 }
@@ -2393,7 +2424,7 @@ ath_beacon_config(struct ath_softc *sc)
 		if (bs.bs_sleepduration > bs.bs_dtimperiod)
 			bs.bs_sleepduration = roundup(bs.bs_sleepduration, bs.bs_dtimperiod);
 
-		DPRINTF(sc, ATH_DEBUG_BEACON, 
+		DPRINTF(sc, ATH_DEBUG_BEACON,
 			"%s: tsf %ju tsf:tu %u intval %u nexttbtt %u dtim %u nextdtim %u bmiss %u sleep %u cfp:period %u maxdur %u next %u timoffset %u\n"
 			, __func__
 			, tsf, tsftu
@@ -2522,9 +2553,10 @@ ath_descdma_setup(struct ath_softc *sc,
 
 	ds = dd->dd_desc;
 	dd->dd_desc_paddr = dd->dd_dmamap->dm_segs[0].ds_addr;
-	DPRINTF(sc, ATH_DEBUG_RESET, "%s: %s DMA map: %p (%lu) -> %p (%lu)\n",
+	DPRINTF(sc, ATH_DEBUG_RESET,
+	    "%s: %s DMA map: %p (%lu) -> %" PRIx64 " (%lu)\n",
 	    __func__, dd->dd_name, ds, (u_long) dd->dd_desc_len,
-	    (caddr_t) dd->dd_desc_paddr, /*XXX*/ (u_long) dd->dd_desc_len);
+	    (uint64_t) dd->dd_desc_paddr, /*XXX*/ (u_long) dd->dd_desc_len);
 
 	/* allocate rx buffers */
 	bsize = sizeof(struct ath_buf) * nbuf;
@@ -2751,7 +2783,7 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 	 * someplace to write a new frame.
 	 */
 	ds = bf->bf_desc;
-	ds->ds_link = bf->bf_daddr;	/* link to self */
+	ds->ds_link = HTOAH32(bf->bf_daddr);	/* link to self */
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 	ds->ds_vdata = mtod(m, void *);	/* for radar */
 	ath_hal_setuprxdesc(ah, ds
@@ -2909,7 +2941,7 @@ ath_rx_proc(void *arg, int npending)
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link));
 #ifdef AR_DEBUG
 		if (sc->sc_debug & ATH_DEBUG_RECV_DESC)
-			ath_printrxbuf(bf, status == HAL_OK); 
+			ath_printrxbuf(bf, status == HAL_OK);
 #endif
 		if (status == HAL_EINPROGRESS)
 			break;
@@ -3234,7 +3266,7 @@ ath_txq_update(struct ath_softc *sc, int ac)
 	ath_hal_gettxqueueprops(ah, txq->axq_qnum, &qi);
 	qi.tqi_aifs = wmep->wmep_aifsn;
 	qi.tqi_cwmin = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmin);
-	qi.tqi_cwmax = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmax);	
+	qi.tqi_cwmax = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmax);
 	qi.tqi_burstTime = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
 
 	if (!ath_hal_settxqueueprops(ah, txq->axq_qnum, &qi)) {
@@ -3747,7 +3779,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	}
 #endif
 
-	/* 
+	/*
 	 * Determine if a tx interrupt should be generated for
 	 * this descriptor.  We take a tx interrupt to reap
 	 * descriptors when the h/w hits an EOL condition or
@@ -3812,6 +3844,12 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			, i == bf->bf_nseg - 1	/* last segment */
 			, ds0			/* first descriptor */
 		);
+
+		/* NB: The desc swap function becomes void, 
+		 * if descriptor swapping is not enabled
+		 */
+		ath_desc_swap(ds);
+
 		DPRINTF(sc, ATH_DEBUG_XMIT,
 			"%s: %d: %08x %08x %08x %08x %08x %08x\n",
 			__func__, i, ds->ds_link, ds->ds_data,
@@ -3826,15 +3864,15 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	if (txq->axq_link == NULL) {
 		ath_hal_puttxbuf(ah, txq->axq_qnum, bf->bf_daddr);
 		DPRINTF(sc, ATH_DEBUG_XMIT,
-			"%s: TXDP[%u] = %p (%p) depth %d\n", __func__,
-			txq->axq_qnum, (caddr_t)bf->bf_daddr, bf->bf_desc,
-			txq->axq_depth);
+		    "%s: TXDP[%u] = %" PRIx64 " (%p) depth %d\n", __func__,
+		    txq->axq_qnum, (uint64_t)bf->bf_daddr, bf->bf_desc,
+		    txq->axq_depth);
 	} else {
-		*txq->axq_link = bf->bf_daddr;
+		*txq->axq_link = HTOAH32(bf->bf_daddr);
 		DPRINTF(sc, ATH_DEBUG_XMIT,
-			"%s: link[%u](%p)=%p (%p) depth %d\n", __func__,
-			txq->axq_qnum, txq->axq_link,
-			(caddr_t)bf->bf_daddr, bf->bf_desc, txq->axq_depth);
+		    "%s: link[%u](%p)=%" PRIx64 " (%p) depth %d\n",
+		    __func__, txq->axq_qnum, txq->axq_link,
+		    (uint64_t)bf->bf_daddr, bf->bf_desc, txq->axq_depth);
 	}
 	txq->axq_link = &bf->bf_desc[bf->bf_nseg - 1].ds_link;
 	/*
@@ -4199,7 +4237,7 @@ ath_startrecv(struct ath_softc *sc)
 	return 0;
 }
 
-/* 
+/*
  * Update internal state after a channel change.
  */
 static void
@@ -4419,7 +4457,7 @@ ath_calibrate(void *arg)
 	ath_hal_process_noisefloor(ah);
 	/*
 	 * Poll more frequently when the IQ calibration is in
-	 * progress to speedup loading the final settings. 
+	 * progress to speedup loading the final settings.
 	 * We temper this aggressive polling with an exponential
 	 * back off after 4 tries up to ath_calinterval.
 	 */
@@ -4805,7 +4843,7 @@ ath_update_txpow(struct ath_softc *sc)
 		(void)ath_hal_gettxpowlimit(ah, &txpow);
 		ic->ic_txpowlimit = sc->sc_curtxpow = txpow;
 	}
-	/* 
+	/*
 	 * Fetch max tx power level for status requests.
 	 */
 	(void)ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
@@ -4956,8 +4994,9 @@ ath_printrxbuf(struct ath_buf *bf, int done)
 	int i;
 
 	for (i = 0, ds = bf->bf_desc; i < bf->bf_nseg; i++, ds++) {
-		printf("R%d (%p %p) %08x %08x %08x %08x %08x %08x %c\n",
-		    i, ds, (struct ath_desc *)bf->bf_daddr + i,
+		printf("R%d (%p %" PRIx64
+		    ") %08x %08x %08x %08x %08x %08x %c\n", i, ds,
+		    (uint64_t)bf->bf_daddr + sizeof (struct ath_desc) * i,
 		    ds->ds_link, ds->ds_data,
 		    ds->ds_ctl0, ds->ds_ctl1,
 		    ds->ds_hw[0], ds->ds_hw[1],
@@ -4972,8 +5011,10 @@ ath_printtxbuf(struct ath_buf *bf, int done)
 	int i;
 
 	for (i = 0, ds = bf->bf_desc; i < bf->bf_nseg; i++, ds++) {
-		printf("T%d (%p %p) %08x %08x %08x %08x %08x %08x %08x %08x %c\n",
-		    i, ds, (struct ath_desc *)bf->bf_daddr + i,
+		printf("T%d (%p %" PRIx64
+		    ") %08x %08x %08x %08x %08x %08x %08x %08x %c\n",
+		    i, ds,
+		    (uint64_t)bf->bf_daddr + sizeof (struct ath_desc) * i,
 		    ds->ds_link, ds->ds_data,
 		    ds->ds_ctl0, ds->ds_ctl1,
 		    ds->ds_hw[0], ds->ds_hw[1], ds->ds_hw[2], ds->ds_hw[3],
@@ -5130,7 +5171,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 		if (error == ENETRESET) {
-			if (IS_RUNNING(ifp) && 
+			if (IS_RUNNING(ifp) &&
 			    ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 				ath_init(sc);	/* XXX lose error */
 			error = 0;

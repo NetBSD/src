@@ -1,8 +1,8 @@
-/*	$NetBSD: if_ral_pci.c,v 1.3 2005/12/11 12:22:49 christos Exp $ */
-/*	$OpenBSD: if_ral_pci.c,v 1.4 2005/02/22 10:41:30 damien Exp $  */
+/*	$NetBSD: if_ral_pci.c,v 1.3.14.1 2006/06/19 04:01:36 chap Exp $	*/
+/*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
- * Copyright (c) 2005
+ * Copyright (c) 2005, 2006
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,11 +19,10 @@
  */
 
 /*
- * PCI front-end for the Ralink RT2500 driver.
+ * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.3 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.3.14.1 2006/06/19 04:01:36 chap Exp $");
 
 #include "bpfilter.h"
 
@@ -41,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.3 2005/12/11 12:22:49 christos Exp 
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
 
@@ -50,16 +49,38 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.3 2005/12/11 12:22:49 christos Exp 
 #include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#include <dev/ic/ralvar.h>
+#include <dev/ic/rt2560var.h>
+#include <dev/ic/rt2661var.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+static struct ral_opns {
+	int	(*attach)(void *, int);
+	int	(*detach)(void *);
+	int	(*intr)(void *);
+
+}  ral_rt2560_opns = {
+	rt2560_attach,
+	rt2560_detach,
+	rt2560_intr
+
+}, ral_rt2661_opns = {
+	rt2661_attach,
+	rt2661_detach,
+	rt2661_intr
+};
+
 struct ral_pci_softc {
-	struct ral_softc	sc_sc;
+	union {
+		struct rt2560_softc	sc_rt2560;
+		struct rt2661_softc	sc_rt2661;
+	} u;
+#define sc_sc	u.sc_rt2560
 
 	/* PCI specific goo */
+	struct ral_opns		*sc_opns;
 	pci_chipset_tag_t	sc_pc;
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
@@ -76,13 +97,21 @@ CFATTACH_DECL(ral_pci, sizeof (struct ral_pci_softc),
 	ral_pci_match, ral_pci_attach, ral_pci_detach, NULL);
 
 int
-ral_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ral_pci_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RALINK &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RALINK_RT2560)
-		return 1;
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RALINK) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+			case PCI_PRODUCT_RALINK_RT2560:
+			case PCI_PRODUCT_RALINK_RT2561:
+			case PCI_PRODUCT_RALINK_RT2561S:
+			case PCI_PRODUCT_RALINK_RT2661:
+				return 1;
+			default:
+				return 0;
+		}
+	}
 
 	return 0;
 }
@@ -91,14 +120,22 @@ void
 ral_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
-	struct ral_softc *sc = &psc->sc_sc;
+	struct rt2560_softc *sc = &psc->sc_sc;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
+	char devinfo[256];
 	bus_addr_t base;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
-	int error;
-	
+	int error, revision;
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	revision = PCI_REVISION(pa->pa_class);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+
+	psc->sc_opns = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RALINK_RT2560) ?
+	    &ral_rt2560_opns : &ral_rt2661_opns;
+
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
 
@@ -111,38 +148,42 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	error = pci_mapreg_map(pa, RAL_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_st, &sc->sc_sh, &base,
 	    &psc->sc_mapsize);
+
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		aprint_error(": could not map memory space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		aprint_error(": could not map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(psc->sc_pc, ih);
-	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET, ral_intr, sc);
+	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET,
+	    psc->sc_opns->intr, sc);
+
 	if (psc->sc_ih == NULL) {
-		printf(": could not establish interrupt");
+		aprint_error(": could not establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
-		printf("\n");
+		aprint_error("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	ral_attach(sc);
+	(*psc->sc_opns->attach)(sc, PCI_PRODUCT(pa->pa_id));
 }
 
 int
 ral_pci_detach(struct device *self, int flags)
 {
 	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
-	struct ral_softc *sc = &psc->sc_sc;
+	struct rt2560_softc *sc = &psc->sc_sc;
 
-	ral_detach(sc);
+	(*psc->sc_opns->detach)(sc);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return 0;
 }
+

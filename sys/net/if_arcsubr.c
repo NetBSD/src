@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.51 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.51.14.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.51 2005/12/11 23:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.51.14.1 2006/06/19 04:09:12 chap Exp $");
 
 #include "opt_inet.h"
 
@@ -156,7 +156,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -649,7 +649,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 	ifp->if_output = arc_output;
 	ifp->if_input = arc_input;
 	ac = (struct arccom *)ifp;
-	ac->ac_seqid = (time.tv_sec) & 0xFFFF; /* try to make seqid unique */
+	ac->ac_seqid = (time_second) & 0xFFFF; /* try to make seqid unique */
 	if (lla == 0) {
 		/* XXX this message isn't entirely clear, to me -- cgd */
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",

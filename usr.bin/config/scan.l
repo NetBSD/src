@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.3 2005/10/12 01:17:43 cube Exp $	*/
+/*	$NetBSD: scan.l,v 1.3.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,6 +118,7 @@ needs-count	return NEEDS_COUNT;
 needs-flag	return NEEDS_FLAG;
 no		return NO;
 object		return XOBJECT;
+obsolete	return OBSOLETE;
 on		return ON;
 options		return OPTIONS;
 prefix		return PREFIX;

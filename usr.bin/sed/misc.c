@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2003/08/07 11:15:50 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.8.12.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,12 +67,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 2003/08/07 11:15:50 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8.12.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 

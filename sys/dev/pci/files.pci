@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.253 2006/05/07 01:32:43 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.253.2.1 2006/06/19 04:01:35 chap Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -58,6 +58,13 @@ file	dev/pci/twe.c			twe
 
 attach	ld at twe with ld_twe
 file	dev/pci/ld_twe.c		ld_twe
+
+device	twa {unit = -1}
+attach	twa at pci
+file	dev/pci/twa.c			twa
+
+attach	ld at twa with ld_twa
+file	dev/pci/ld_twa.c		ld_twa
 
 # AMI RAID controllers
 device	amr {unit = -1}
@@ -685,8 +692,8 @@ file	dev/pci/if_atw_pci.c		atw_pci
 attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
 
-# Ralink RT2500 PCI/Mini-PCI
-attach	ral at pci with ral_pci: ralcommon
+# Ralink RT2500/RT2600 PCI/Mini-PCI
+attach	ral at pci with ral_pci
 file	dev/pci/if_ral_pci.c		ral_pci
 
 # Intersil Prism2.5 Mini-PCI
@@ -736,7 +743,7 @@ attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
-device	machfb: wsemuldisplaydev, rasops8, vcons, videomode
+device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.111 2006/05/14 21:15:12 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.111.2.1 2006/06/19 04:07:16 chap Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.111 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.111.2.1 2006/06/19 04:07:16 chap Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -404,6 +404,9 @@ vn_readdir(struct file *fp, char *bf, int segflg, u_int count, int *done,
 	struct iovec aiov;
 	struct uio auio;
 	int error, eofflag;
+
+	/* Limit the size on any kernel buffers used by VOP_READDIR */
+	count = min(MAXBSIZE, count);
 
 unionread:
 	if (vp->v_type != VDIR)

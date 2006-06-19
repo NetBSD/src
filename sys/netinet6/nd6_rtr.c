@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.58 2006/03/20 12:13:05 rpaulo Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.58.2.1 2006/06/19 04:09:49 chap Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.58 2006/03/20 12:13:05 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.58.2.1 2006/06/19 04:09:49 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ nd6_ra_input(m, off, icmp6len)
 	drtr.rtaddr = saddr6;
 	drtr.flags  = nd_ra->nd_ra_flags_reserved;
 	drtr.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
-	drtr.expire = time.tv_sec + drtr.rtlifetime;
+	drtr.expire = time_second + drtr.rtlifetime;
 	drtr.ifp = ifp;
 	/* unspecified or not? (RFC 2461 6.3.4) */
 	if (advreachable) {
@@ -913,7 +913,7 @@ nd6_prelist_add(pr, dr, newp)
 		free(new, M_IP6NDP);
 		return(error);
 	}
-	new->ndpr_lastupdate = time.tv_sec;
+	new->ndpr_lastupdate = time_second;
 	if (newp != NULL)
 		*newp = new;
 
@@ -1044,7 +1044,7 @@ prelist_update(new, dr, m, mcast)
 			pr->ndpr_vltime = new->ndpr_vltime;
 			pr->ndpr_pltime = new->ndpr_pltime;
 			(void)in6_init_prefix_ltimes(pr); /* XXX error case? */
-			pr->ndpr_lastupdate = time.tv_sec;
+			pr->ndpr_lastupdate = time_second;
 		}
 
 		if (new->ndpr_raf_onlink &&
@@ -1135,7 +1135,6 @@ prelist_update(new, dr, m, mcast)
 	{
 		struct in6_ifaddr *ifa6;
 		u_int32_t remaininglifetime;
-		long time_second = time.tv_sec;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -1252,7 +1251,7 @@ prelist_update(new, dr, m, mcast)
 		}
 
 		ifa6->ia6_lifetime = lt6_tmp;
-		ifa6->ia6_updatetime = time.tv_sec;
+		ifa6->ia6_updatetime = time_second;
 	}
 	if (ia6_match == NULL && new->ndpr_vltime) {
 		int ifidlen;
@@ -1900,7 +1899,6 @@ in6_tmpifadd(ia0, forcegen, dad_delay)
 	int updateflags;
 	u_int32_t randid[2];
 	u_int32_t vltime0, pltime0;
-	time_t time_second = (time_t)time.tv_sec;
 
 	memset(&ifra, 0, sizeof(ifra));
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
@@ -2031,11 +2029,11 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 	if (ndpr->ndpr_pltime == ND6_INFINITE_LIFETIME)
 		ndpr->ndpr_preferred = 0;
 	else
-		ndpr->ndpr_preferred = time.tv_sec + ndpr->ndpr_pltime;
+		ndpr->ndpr_preferred = time_second + ndpr->ndpr_pltime;
 	if (ndpr->ndpr_vltime == ND6_INFINITE_LIFETIME)
 		ndpr->ndpr_expire = 0;
 	else
-		ndpr->ndpr_expire = time.tv_sec + ndpr->ndpr_vltime;
+		ndpr->ndpr_expire = time_second + ndpr->ndpr_vltime;
 
 	return 0;
 }
@@ -2049,7 +2047,7 @@ in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 	if (lt6->ia6t_vltime == ND6_INFINITE_LIFETIME)
 		lt6->ia6t_expire = 0;
 	else {
-		lt6->ia6t_expire = time.tv_sec;
+		lt6->ia6t_expire = time_second;
 		lt6->ia6t_expire += lt6->ia6t_vltime;
 	}
 
@@ -2057,7 +2055,7 @@ in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 	if (lt6->ia6t_pltime == ND6_INFINITE_LIFETIME)
 		lt6->ia6t_preferred = 0;
 	else {
-		lt6->ia6t_preferred = time.tv_sec;
+		lt6->ia6t_preferred = time_second;
 		lt6->ia6t_preferred += lt6->ia6t_pltime;
 	}
 }
