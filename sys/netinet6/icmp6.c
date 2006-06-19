@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.116 2006/04/15 00:24:12 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.116.2.1 2006/06/19 04:09:49 chap Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.116 2006/04/15 00:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.116.2.1 2006/06/19 04:09:49 chap Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1850,8 +1850,9 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				ltime = ND6_INFINITE_LIFETIME;
 			else {
 				if (ifa6->ia6_lifetime.ia6t_expire >
-				    time.tv_sec)
-					ltime = ifa6->ia6_lifetime.ia6t_expire - time.tv_sec;
+				    time_second)
+					ltime = ifa6->ia6_lifetime.ia6t_expire -
+					    time_second;
 				else
 					ltime = 0;
 			}

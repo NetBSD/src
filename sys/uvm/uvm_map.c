@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.224 2006/05/16 00:08:25 elad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.224.2.1 2006/06/19 04:11:44 chap Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,13 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.224 2006/05/16 00:08:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.224.2.1 2006/06/19 04:11:44 chap Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_uvm.h"
 #include "opt_sysv.h"
-#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,10 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.224 2006/05/16 00:08:25 elad Exp $");
 #ifdef DDB
 #include <uvm/uvm_ddb.h>
 #endif
-
-#ifdef PAX_MPROTECT
-#include <sys/pax.h>
-#endif /* PAX_MPROTECT */
 
 #if defined(UVMMAP_NOCOUNTERS)
 
@@ -860,6 +855,16 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
 	uvm_map_check(map, "clip_end leave");
 }
 
+static void
+vm_map_drain(struct vm_map *map, uvm_flag_t flags)
+{
+
+	if (!VM_MAP_IS_KERNEL(map)) {
+		return;
+	}
+
+	uvm_km_va_drain(map, flags);
+}
 
 /*
  *   M A P   -   m a i n   e n t r y   p o i n t
@@ -993,16 +998,11 @@ retry:
 		}
 		vm_map_lock(map); /* could sleep here */
 	}
-	if ((prev_entry = uvm_map_findspace(map, start, size, &start,
-	    uobj, uoffset, align, flags)) == NULL) {
+	prev_entry = uvm_map_findspace(map, start, size, &start,
+	    uobj, uoffset, align, flags);
+	if (prev_entry == NULL) {
 		unsigned int timestamp;
 
-		if ((flags & UVM_FLAG_WAITVA) == 0) {
-			UVMHIST_LOG(maphist,"<- uvm_map_findspace failed!",
-			    0,0,0,0);
-			vm_map_unlock(map);
-			return ENOMEM;
-		}
 		timestamp = map->timestamp;
 		UVMHIST_LOG(maphist,"waiting va timestamp=0x%x",
 			    timestamp,0,0,0);
@@ -1012,15 +1012,24 @@ retry:
 		vm_map_unlock(map);
 
 		/*
-		 * wait until someone does unmap.
+		 * try to reclaim kva and wait until someone does unmap.
 		 * XXX fragile locking
 		 */
+
+		vm_map_drain(map, flags);
 
 		simple_lock(&map->flags_lock);
 		while ((map->flags & VM_MAP_WANTVA) != 0 &&
 		   map->timestamp == timestamp) {
-			ltsleep(&map->header, PVM, "vmmapva", 0,
-			    &map->flags_lock);
+			if ((flags & UVM_FLAG_WAITVA) == 0) {
+				simple_unlock(&map->flags_lock);
+				UVMHIST_LOG(maphist,
+				    "<- uvm_map_findspace failed!", 0,0,0,0);
+				return ENOMEM;
+			} else {
+				ltsleep(&map->header, PVM, "vmmapva", 0,
+				    &map->flags_lock);
+			}
 		}
 		simple_unlock(&map->flags_lock);
 		goto retry;
@@ -2770,6 +2779,7 @@ uvm_map_setup_kernel(struct vm_map_kernel *map,
 
 	uvm_map_setup(&map->vmk_map, vmin, vmax, flags);
 
+	callback_head_init(&map->vmk_reclaim_callback);
 	LIST_INIT(&map->vmk_kentry_free);
 	map->vmk_merged_entries = NULL;
 }
@@ -2833,10 +2843,6 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 				goto out;
 			}
 		}
-
-#ifdef PAX_MPROTECT
-		pax_mprotect(curlwp, current->object.uvm_obj, &new_prot);
-#endif /* PAX_MPROTECT */
 
 		current = current->next;
 	}
@@ -4926,4 +4932,18 @@ vm_map_to_kernel(struct vm_map *map)
 	KASSERT(VM_MAP_IS_KERNEL(map));
 
 	return (struct vm_map_kernel *)map;
+}
+
+boolean_t
+vm_map_starved_p(struct vm_map *map)
+{
+
+	if ((map->flags & VM_MAP_WANTVA) != 0) {
+		return TRUE;
+	}
+	/* XXX */
+	if ((vm_map_max(map) - vm_map_min(map)) / 16 * 15 < map->size) {
+		return TRUE;
+	}
+	return FALSE;
 }

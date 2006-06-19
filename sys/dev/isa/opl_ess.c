@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.10 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.10.14.1 2006/06/19 04:01:34 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.10 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.10.14.1 2006/06/19 04:01:34 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,14 +77,10 @@ opl_ess_match(parent, match, aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct ess_softc *ssc = (struct ess_softc *)parent;
-	struct opl_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
-	memset(&sc, 0, sizeof sc);
-	sc.ioh = ssc->sc_ioh;
-	sc.iot = ssc->sc_iot;
-	return (opl_find(&sc));
+	return opl_match(ssc->sc_iot, ssc->sc_ioh, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.2 2006/05/14 21:12:38 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.2.2.1 2006/06/19 04:11:12 chap Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -103,7 +103,6 @@ int kauth_authorize_process(kauth_cred_t, kauth_action_t, struct proc *,
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);
 void kauth_cred_free(kauth_cred_t);
-void kauth_cred_destroy(kauth_cred_t);
 void kauth_cred_clone(kauth_cred_t, kauth_cred_t);
 kauth_cred_t kauth_cred_dup(kauth_cred_t);
 kauth_cred_t kauth_cred_copy(kauth_cred_t);

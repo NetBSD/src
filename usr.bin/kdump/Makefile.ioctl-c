@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.16 2004/07/10 12:12:49 tron Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.16.6.1 2006/06/19 04:17:06 chap Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
 DEPFILEGLOB=	${DESTDIR}/usr/include/*/*.h
 
 .if !make(cleandir) && !make(obj) && !make(includes)
-DEPFILES != egrep -l '(_IO\(|_IOR\(|_IOW\(|_IORW\()' ${DEPFILEGLOB}
+DEPFILES != egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' ${DEPFILEGLOB}
 .endif
 
 ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES}

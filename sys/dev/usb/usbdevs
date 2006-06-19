@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.428.2.5 2006/05/20 04:32:00 chap Exp $
+$NetBSD: usbdevs,v 1.428.2.6 2006/06/19 04:05:49 chap Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
 vendor MELCO		0x0411	Melco
 vendor CREATIVE		0x041e	Creative Labs
+vendor NOKIA		0x0421	Nokia
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
@@ -451,6 +452,7 @@ vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
+vendor MOSCHIP		0x9710	MosChip Semiconductor
 vendor HP2		0xf003	Hewlett Packard
 vendor USRP		0xfffe	GNU Radio USRP
 
@@ -1356,6 +1358,9 @@ product MITSUMI FDD		0x6901	FDD
 /* Mobility products */
 product MOBILITY EA		0x0204	Ethernet Adapter
 
+/* MosChip Semiconductor */
+product MOSCHIP MCS7830		0x7830	Ethernet Adapter
+
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA SB4100		0x4100	SB4100 USB Cable Modem
@@ -1428,6 +1433,9 @@ product NIKON E885		0x0105	Digital Camera E885
 
 /* NHJ product */
 product NHJ CAM2		0x9120	Camera
+
+/* Nokia products */
+product NOKIA CA42		0x0802	Mobile Phone adapter
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
@@ -1792,7 +1800,8 @@ product SUNTAC AS64LX		0x000b	SUNTAC U-Cable type A3
 product SUNTAC AS144L4		0x0011	U-Cable type A4
 
 /* Sun Microsystems products */
-product SUN KEYBOARD		0x0005	Type 6 USB keyboard
+product SUN KEYBOARD_TYPE_6	0x0005	Type 6 USB keyboard
+product	SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
 

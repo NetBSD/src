@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.11 2006/03/29 15:40:49 rpaulo Exp $	*/
+/*	$NetBSD: script.c,v 1.11.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.11 2006/03/29 15:40:49 rpaulo Exp $");
+__RCSID("$NetBSD: script.c,v 1.11.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: script.c,v 1.11 2006/03/29 15:40:49 rpaulo Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/param.h>
 #include <sys/uio.h>
 
 #include <err.h>
@@ -62,6 +63,8 @@ __RCSID("$NetBSD: script.c,v 1.11 2006/03/29 15:40:49 rpaulo Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
+
+#define	DEF_BUF	65536
 
 struct stamp {
 	uint64_t scr_len;	/* amount of data */
@@ -314,16 +317,26 @@ playback(FILE *fscript)
 {
 	struct timespec tsi, tso;
 	struct stamp stamp;
-	char buf[BUFSIZ];
+	struct stat playback_stat;
+	char buf[DEF_BUF];
+	off_t nread, save_len;
 	size_t l;
 	time_t clock;
 
-	do {
+	if (fstat(fileno(fscript), &playback_stat) == -1)
+		err(1, "fstat failed");	
+
+	for (nread = 0; nread < playback_stat.st_size; nread += save_len) {
 		if (fread(&stamp, sizeof(stamp), 1, fscript) != 1)
 			err(1, "reading playback header");
-
 		swapstamp(stamp);
-		l = fread(buf, 1, stamp.scr_len, fscript);
+		save_len = sizeof(stamp);
+
+		if (stamp.scr_len >
+		    (uint64_t)(playback_stat.st_size - save_len) - nread)
+			err(1, "invalid stamp");
+
+		save_len += stamp.scr_len;
 		clock = stamp.scr_sec;
 		tso.tv_sec = stamp.scr_sec;
 		tso.tv_nsec = stamp.scr_usec * 1000;
@@ -332,12 +345,15 @@ playback(FILE *fscript)
 		case 's':
 			(void)printf("Script started on %s", ctime(&clock));
 			tsi = tso;
+			fseek(fscript, stamp.scr_len, SEEK_CUR);
 			break;
 		case 'e':
 			(void)printf("\nScript done on %s", ctime(&clock));
+			fseek(fscript, stamp.scr_len, SEEK_CUR);
 			break;
 		case 'i':
 			/* throw input away */
+			fseek(fscript, stamp.scr_len, SEEK_CUR);
 			break;
 		case 'o':
 			tsi.tv_sec = tso.tv_sec - tsi.tv_sec;
@@ -349,11 +365,19 @@ playback(FILE *fscript)
 			if (usesleep)
 				(void)nanosleep(&tsi, NULL);
 			tsi = tso;
-			(void)write(STDOUT_FILENO, buf, l);
-			break;
-		}
-	} while (stamp.scr_direction != 'e');
+			while (stamp.scr_len > 0) {
+				l = MIN(DEF_BUF, stamp.scr_len);
+				if (fread(buf, sizeof(char), l, fscript) != l)
+					err(1, "cannot read buffer");
 
+				(void)write(STDOUT_FILENO, buf, l);
+				stamp.scr_len -= l;
+			}
+			break;
+		default:
+			err(1, "invalid direction");
+		}
+	}
 	(void)fclose(fscript);
 	exit(0);
 }

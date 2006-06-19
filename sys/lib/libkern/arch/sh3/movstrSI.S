@@ -1,4 +1,4 @@
-/*	$NetBSD: movstrSI.S,v 1.5 2006/04/22 22:48:54 uwe Exp $	*/
+/*	$NetBSD: movstrSI.S,v 1.5.4.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo.  All rights reserved.
@@ -28,24 +28,6 @@
 
 #include <machine/asm.h>
 
-#ifdef PIC	/* XXX: uwe */
-	.hidden __movstrSI4
-	.hidden __movstrSI8
-	.hidden __movstrSI12
-	.hidden __movstrSI16
-	.hidden __movstrSI20
-	.hidden __movstrSI24
-	.hidden __movstrSI28
-	.hidden __movstrSI32
-	.hidden __movstrSI36
-	.hidden __movstrSI40
-	.hidden __movstrSI44
-	.hidden __movstrSI48
-	.hidden __movstrSI52
-	.hidden __movstrSI56
-	.hidden __movstrSI60
-	.hidden __movstrSI64
-#endif /* PIC */
 
 NENTRY(__movstrSI64)
 	mov.l	@(60, r5), r0
@@ -96,3 +78,22 @@ ALTENTRY(__movstrSI4)
 	mov.l	@r5, r0
 	rts
 	 mov.l	r0, @r4
+
+
+/* gcc4 uses movmem, older versions use movstr */
+STRONG_ALIAS(__movmemSI4, __movstrSI4)
+STRONG_ALIAS(__movmemSI8, __movstrSI8)
+STRONG_ALIAS(__movmemSI12, __movstrSI12)
+STRONG_ALIAS(__movmemSI16, __movstrSI16)
+STRONG_ALIAS(__movmemSI20, __movstrSI20)
+STRONG_ALIAS(__movmemSI24, __movstrSI24)
+STRONG_ALIAS(__movmemSI28, __movstrSI28)
+STRONG_ALIAS(__movmemSI32, __movstrSI32)
+STRONG_ALIAS(__movmemSI36, __movstrSI36)
+STRONG_ALIAS(__movmemSI40, __movstrSI40)
+STRONG_ALIAS(__movmemSI44, __movstrSI44)
+STRONG_ALIAS(__movmemSI48, __movstrSI48)
+STRONG_ALIAS(__movmemSI52, __movstrSI52)
+STRONG_ALIAS(__movmemSI56, __movstrSI56)
+STRONG_ALIAS(__movmemSI60, __movstrSI60)
+STRONG_ALIAS(__movmemSI64, __movstrSI64)

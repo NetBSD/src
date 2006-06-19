@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.107 2006/04/27 12:21:39 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.107.2.1 2006/06/19 04:01:35 chap Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.107 2006/04/27 12:21:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.107.2.1 2006/06/19 04:01:35 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1561,8 +1561,6 @@ static void
 auich_powerhook(int why, void *addr)
 {
 	struct auich_softc *sc;
-	const int d0 = PCI_PWR_D0;
-	const int d3 = PCI_PWR_D3;
 	int rv;
 
 	sc = (struct auich_softc *)addr;
@@ -1584,7 +1582,11 @@ auich_powerhook(int why, void *addr)
 		if (sc->sc_ih != NULL)
 			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 
-		rv = pci_powerstate(sc->sc_pc, sc->sc_pt, &d3, &sc->sc_powerstate);
+		rv = pci_get_powerstate(sc->sc_pc, sc->sc_pt, &sc->sc_powerstate);
+		if (rv)
+			aprint_error("%s: unable to get power state (err=%d)\n",
+			    sc->sc_dev.dv_xname, rv);
+		rv = pci_set_powerstate(sc->sc_pc, sc->sc_pt, PCI_PMCSR_STATE_D3);
 		if (rv)
 			aprint_error("%s: unable to set power state (err=%d)\n",
 			    sc->sc_dev.dv_xname, rv);
@@ -1601,7 +1603,7 @@ auich_powerhook(int why, void *addr)
 			return;
 		}
 
-		rv = pci_powerstate(sc->sc_pc, sc->sc_pt, &d0, &sc->sc_powerstate);
+		rv = pci_set_powerstate(sc->sc_pc, sc->sc_pt, sc->sc_powerstate);
 		if (rv)
 			aprint_error("%s: unable to set power state (err=%d)\n",
 			    sc->sc_dev.dv_xname, rv);

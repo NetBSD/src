@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.144 2006/05/02 22:19:12 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.144.2.1 2006/06/19 04:17:07 chap Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.144 2006/05/02 22:19:12 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.144.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,8 +157,12 @@ struct nlist namelist[] =
 	{ "_pool_head" },
 #define	X_UVMEXP	8
 	{ "_uvmexp" },
-#define	X_TIME		9
-	{ "_time" },
+#define	X_TIME_SECOND	9
+#ifdef __HAVE_TIMECOUNTER
+	{ "_time_second" },
+#else
+	{ "_time" },	/* XXX uses same array slot as "X_TIME_SECOND" */
+#endif
 #define	X_NL_SIZE	10
 	{ NULL },
 };
@@ -530,14 +534,18 @@ long
 getuptime(void)
 {
 	static struct timeval boottime;
-	struct timeval now, diff;
+	struct timeval now;
 	time_t uptime;
 
 	if (boottime.tv_sec == 0)
 		kread(namelist, X_BOOTTIME, &boottime, sizeof(boottime));
-	kread(namelist, X_TIME, &now, sizeof(now));
-	timersub(&now, &boottime, &diff);
-	uptime = diff.tv_sec;
+#ifdef __HAVE_TIMECOUNTER
+	kread(namelist, X_TIME_SECOND, &now.tv_sec, sizeof(now));
+	now.tv_usec = 0;
+#else
+	kread(namelist, X_TIME_SECOND, &now, sizeof(now));
+#endif
+	uptime = now.tv_sec - boottime.tv_sec;
 	if (uptime <= 0 || uptime > 60*60*24*365*10)
 		errx(1, "time makes no sense; namelist must be wrong.");
 	return (uptime);

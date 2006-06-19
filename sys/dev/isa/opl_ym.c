@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.9 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.9.14.1 2006/06/19 04:01:34 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.9 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.9.14.1 2006/06/19 04:01:34 chap Exp $");
 
 #include "mpu_ym.h"
 
@@ -81,14 +81,10 @@ opl_ym_match(parent, match, aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct ym_softc *ssc = (struct ym_softc *)parent;
-	struct opl_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_OPL || ssc->sc_opl_ioh == 0)
 		return (0);
-	sc.ioh = ssc->sc_opl_ioh;
-	sc.iot = ssc->sc_iot;
-	sc.offs = 0;
-	return (opl_find(&sc));
+	return opl_match(ssc->sc_iot, ssc->sc_ioh, 0);
 }
 
 void

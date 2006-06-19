@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.22 2006/05/01 23:05:24 christos Exp $	*/
+/*	$NetBSD: quit.c,v 1.22.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.22 2006/05/01 23:05:24 christos Exp $");
+__RCSID("$NetBSD: quit.c,v 1.22.2.1 2006/06/19 04:17:06 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ nolock:
 			return;
 		}
 		(void)Fclose(obuf);
-		if ((fd = creat(mbox, 0600)) != -1);
+		if ((fd = creat(mbox, 0600)) != -1)
 			(void)close(fd);
 		if ((obuf = Fopen(mbox, "r+")) == NULL) {
 			warn("%s", mbox);

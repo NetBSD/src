@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.2 2006/05/14 21:12:38 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.2.2.1 2006/06/19 04:07:15 chap Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -83,16 +83,16 @@ struct kauth_scope {
 	SIMPLEQ_ENTRY(kauth_scope)	next_scope;	/* scope list */
 };
 
-POOL_INIT(kauth_scope_pool, sizeof(struct kauth_scope), 0, 0, 0,
+static POOL_INIT(kauth_scope_pool, sizeof(struct kauth_scope), 0, 0, 0,
 	  "kauth_scopepl", &pool_allocator_nointr);
-POOL_INIT(kauth_listener_pool, sizeof(struct kauth_listener), 0, 0, 0,
+static POOL_INIT(kauth_listener_pool, sizeof(struct kauth_listener), 0, 0, 0,
 	  "kauth_listenerpl", &pool_allocator_nointr);
-POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
+static POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
 	  "kauth_credpl", &pool_allocator_nointr);
 
 /* List of scopes and its lock. */
-SIMPLEQ_HEAD(, kauth_scope) scope_list;
-struct simplelock scopes_lock;
+static SIMPLEQ_HEAD(, kauth_scope) scope_list;
+static struct simplelock scopes_lock;
 
 /* Built-in scopes: generic, process. */
 static kauth_scope_t kauth_builtin_scope_generic;
@@ -100,7 +100,8 @@ static kauth_scope_t kauth_builtin_scope_process;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
-kauth_cred_alloc(void) {
+kauth_cred_alloc(void)
+{
 	kauth_cred_t cred;
 
 	cred = pool_get(&kauth_cred_pool, PR_WAITOK);
@@ -122,17 +123,10 @@ kauth_cred_hold(kauth_cred_t cred)
         simple_unlock(&cred->cr_lock);
 }
 
-void
-kauth_cred_destroy(kauth_cred_t cred)
-{
-	KASSERT(cred != NULL);
-
-	pool_put(&kauth_cred_pool, cred);
-}
-
 /* Decrease reference count to cred. If reached zero, free it. */
 void
-kauth_cred_free(kauth_cred_t cred) {
+kauth_cred_free(kauth_cred_t cred)
+{
 	KASSERT(cred != NULL);
 
 	simple_lock(&cred->cr_lock);
@@ -140,7 +134,7 @@ kauth_cred_free(kauth_cred_t cred) {
 	simple_unlock(&cred->cr_lock);
 
 	if (cred->cr_refcnt == 0)
-		kauth_cred_destroy(cred);
+		pool_put(&kauth_cred_pool, cred);
 }
 
 void
@@ -253,7 +247,6 @@ void
 kauth_cred_setuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(uid >= 0 && uid <= UID_MAX);
 
 	cred->cr_uid = uid;
 }
@@ -262,7 +255,6 @@ void
 kauth_cred_seteuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(uid >= 0 && uid <= UID_MAX);
 
 	cred->cr_euid = uid;
 }
@@ -271,7 +263,6 @@ void
 kauth_cred_setsvuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(uid >= 0 && uid <= UID_MAX);
 
 	cred->cr_svuid = uid;
 }
@@ -280,7 +271,6 @@ void
 kauth_cred_setgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	cred->cr_gid = gid;
 }
@@ -289,7 +279,6 @@ void
 kauth_cred_setegid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	cred->cr_egid = gid;
 }
@@ -298,7 +287,6 @@ void
 kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	cred->cr_svgid = gid;
 }
@@ -310,7 +298,6 @@ kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 	int i;
 
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
 	KASSERT(resultp != NULL);
 
 	*resultp = 0;
@@ -455,13 +442,13 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 			ismember = 0;
 			if (kauth_cred_ismember_gid(cred, uuc->cr_groups[i],
 			    &ismember) != 0 || !ismember)
-				return (0);
+				return (1);
 		}
 
-		return (1);
+		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 /*
@@ -514,7 +501,8 @@ kauth_cred_get(void)
  * Requires the scope list lock to be held by the caller.
  */
 static kauth_scope_t
-kauth_ifindscope(const char *id) {
+kauth_ifindscope(const char *id)
+{
 	kauth_scope_t scope;
 
 	/* XXX: assert lock on scope list? */
@@ -668,8 +656,8 @@ void
 kauth_unlisten_scope(kauth_listener_t listener)
 {
 	if (listener != NULL) {
-		SIMPLEQ_REMOVE(&listener->scope->listenq, listener, kauth_listener,
-			       listener_next);
+		SIMPLEQ_REMOVE(&listener->scope->listenq, listener,
+		    kauth_listener, listener_next);
 		listener->scope->nlisteners--;
 	}
 }
@@ -766,24 +754,20 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 			   void *arg3)
 {
 	struct proc *p;
-	kauth_cred_t cred2;
 	int error;
 
 	error = KAUTH_RESULT_DEFER;
 
 	p = arg0;
-	cred2 = arg1;
 
 	switch (action) {
 	case KAUTH_PROCESS_CANSIGNAL: {
-		struct proc *to;
 		int signum;
 
-		to = arg2;
-		signum = (int)(unsigned long)arg3;
+		signum = (int)(unsigned long)arg1;
 
-		if (kauth_cred_uidmatch(cred, cred2)  ||
-		    (signum == SIGCONT && (p->p_session == to->p_session)))
+		if (kauth_cred_uidmatch(cred, p->p_cred) ||
+		    (signum == SIGCONT && (curproc->p_session == p->p_session)))
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DEFER;
@@ -792,7 +776,7 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		}
 
 	case KAUTH_PROCESS_CANPTRACE:
-		if (kauth_cred_uidmatch(cred, cred2))
+		if (kauth_cred_uidmatch(cred, p->p_cred))
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DENY;
@@ -802,7 +786,7 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		if (!security_curtain) {
 			error = KAUTH_RESULT_ALLOW;
 		} else {
-			if (kauth_cred_uidmatch(cred, cred2))
+			if (kauth_cred_uidmatch(cred, p->p_cred))
 				error = KAUTH_RESULT_ALLOW;
 			else
 				error = KAUTH_RESULT_DENY;

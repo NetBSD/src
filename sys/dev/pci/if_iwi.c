@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.48 2006/05/14 21:45:00 elad Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.48.2.1 2006/06/19 04:01:35 chap Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.48 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.48.2.1 2006/06/19 04:01:35 chap Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -250,6 +250,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
 
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
+	}
+
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	data |= PCI_COMMAND_MASTER_ENABLE;
@@ -372,7 +380,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(ic->ic_myaddr));
 
 	/* read the NIC type from EEPROM */
-	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE); 
+	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE);
 	sc->nictype = val & 0xff;
 
 	DPRINTF(("%s: NIC type %d\n", sc->sc_dev.dv_xname, sc->nictype));

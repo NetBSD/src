@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.15.6.1 2006/06/19 04:17:08 chap Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.15.6.1 2006/06/19 04:17:08 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,14 +62,11 @@ char tflag;
 char vflag;
 
 char *symbol_prefix;
-char *file_prefix = "y";
 char *myname = "yacc";
-char *temp_form = "yacc.XXXXXXX";
+
 
 int lineno;
 int outline;
-
-int explicit_file_name;
 
 char *action_file_name;
 char *code_file_name;
@@ -113,18 +110,21 @@ char  *rassoc;
 short **derives;
 char *nullable;
 
-int main __P((int, char *[]));
+static char *file_prefix = "y";
+static char *temp_form = "yacc.XXXXXXX";
+static int explicit_file_name;
 
-void onintr __P((int));
-void set_signals __P((void));
-void usage __P((void));
-void getargs __P((int, char *[]));
-void create_file_names __P((void));
-void open_files __P((void));
 
+static __dead void onintr(int) __attribute__((__noreturn__));
+static void set_signals(void);
+static __dead void usage(void) __attribute__((__noreturn__));
+static void getargs(int, char *[]);
+static void create_file_names(void);
+static void open_files(void);
+
+/* coverity[+kill] */
 __dead void
-done(k)
-int k;
+done(int k)
 {
     if (action_file) { fclose(action_file); unlink(action_file_name); }
     if (text_file) { fclose(text_file); unlink(text_file_name); }
@@ -133,15 +133,14 @@ int k;
 }
 
 
-void
-onintr(signo)
-	int signo;
+static void
+onintr(int signo)
 {
     done(1);
 }
 
 
-void
+static void
 set_signals()
 {
 #ifdef SIGINT
@@ -159,8 +158,8 @@ set_signals()
 }
 
 
-void
-usage()
+static void
+usage(void)
 {
     fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] "
 	"[-p symbol_prefix] filename\n", myname);
@@ -168,10 +167,8 @@ usage()
 }
 
 
-void
-getargs(argc, argv)
-int argc;
-char *argv[];
+static void
+getargs(int argc, char *argv[])
 {
     int i;
     char *s;
@@ -285,8 +282,7 @@ no_more_options:;
 
 
 char *
-allocate(n)
-unsigned n;
+allocate(unsigned n)
 {
     char *p;
 
@@ -300,8 +296,8 @@ unsigned n;
 }
 
 
-void
-create_file_names()
+static void
+create_file_names(void)
 {
     int i, len;
     char *tmpdir;
@@ -406,8 +402,8 @@ create_file_names()
 }
 
 
-void
-open_files()
+static void
+open_files(void)
 {
     int fd;
 
@@ -461,9 +457,7 @@ open_files()
 
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
     set_signals();
     getargs(argc, argv);
@@ -476,5 +470,5 @@ char *argv[];
     output();
     done(0);
     /*NOTREACHED*/
-    exit(0);
+    return 0;
 }

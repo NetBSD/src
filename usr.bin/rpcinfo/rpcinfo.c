@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.25 2006/04/05 12:57:29 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.25.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -700,7 +700,7 @@ rpcbdump(dumptype, netid, argc, argv)
 	int argc;
 	char **argv;
 {
-	rpcblist_ptr head = NULL;
+	rpcblist_ptr head = NULL, p;
 	struct timeval minutetimeout;
 	register CLIENT *client = NULL;
 	struct rpcent *rpc;
@@ -824,22 +824,22 @@ failed:
 	} else if (dumptype == RPCBDUMP) {
 		printf(
 "   program version netid     address                service    owner\n");
-		for (; head != NULL; head = head->rpcb_next) {
+		for (p = head; p != NULL; p = p->rpcb_next) {
 			printf("%10u%5u    ",
-				head->rpcb_map.r_prog, head->rpcb_map.r_vers);
-			printf("%-9s ", head->rpcb_map.r_netid);
-			printf("%-22s", head->rpcb_map.r_addr);
-			rpc = getrpcbynumber(head->rpcb_map.r_prog);
+				p->rpcb_map.r_prog, p->rpcb_map.r_vers);
+			printf("%-9s ", p->rpcb_map.r_netid);
+			printf("%-22s", p->rpcb_map.r_addr);
+			rpc = getrpcbynumber(p->rpcb_map.r_prog);
 			if (rpc)
 				printf(" %-10s", rpc->r_name);
 			else
 				printf(" %-10s", "-");
-			printf(" %s\n", head->rpcb_map.r_owner);
+			printf(" %s\n", p->rpcb_map.r_owner);
 		}
 	} else if (dumptype == RPCBDUMP_SHORT) {
-		for (; head != NULL; head = head->rpcb_next) {
+		for (p = head; p != NULL; p = p->rpcb_next) {
 			for (rs = rs_head; rs; rs = rs->next)
-				if (head->rpcb_map.r_prog == rs->prog)
+				if (p->rpcb_map.r_prog == rs->prog)
 					break;
 			if (rs == NULL) {
 				rs = malloc(sizeof (struct rpcbdump_short));
@@ -858,9 +858,9 @@ failed:
 				rs->nlist = NULL;
 				rs->vlist = NULL;
 			}
-			if (add_version(rs, head->rpcb_map.r_vers) == FALSE)
+			if (add_version(rs, p->rpcb_map.r_vers) == FALSE)
 				goto error;
-			if (add_netid(rs, head->rpcb_map.r_netid) == FALSE)
+			if (add_netid(rs, p->rpcb_map.r_netid) == FALSE)
 				goto error;
 		}
 		printf(

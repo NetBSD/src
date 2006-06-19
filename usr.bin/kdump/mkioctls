@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.21 2005/07/16 22:00:01 christos Exp $
+#	$NetBSD: mkioctls,v 1.21.2.1 2006/06/19 04:17:06 chap Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,6 @@
 #
 echo "/* Automatically generated file, do not edit! */"
 #echo "#define const" 	# XXX: timepps lossage
-echo "struct ap_control { int _xxx; };" # XXX: ip_nat.h lossage
 echo "#define COMPAT_43"
 echo "struct lwp;"
 echo "struct videomemory_t { int _xxx; };" # XXX arm video lossage
@@ -70,6 +69,7 @@ BEGIN {
 	keep["SIOCRMNAT"] = 1;	# Same as SIOCRMAFR
 	keep["SIOCADNAT"] = 1;	# Same as SIOCADAFR
 	keep["SIOCDELST"] = 1;	# Same as SIOCRMNAT
+	keep["SIOCPROXY"] = 1; # Same as SIOCLOOKUPSTAT
 	keep["CHIOGPICKER"] = 1; # Same as CDIOREADTOCHEADER
 	keep["KBDSTPMAT"] = 1;	# Same as LMREADY, pcvt is gone so ok.
 

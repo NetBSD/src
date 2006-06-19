@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.33 2006/04/14 20:51:41 christos Exp $ */
+/*	$NetBSD: iha.c,v 1.33.2.1 2006/06/19 03:58:13 chap Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.33 2006/04/14 20:51:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.33.2.1 2006/06/19 03:58:13 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,7 +834,8 @@ iha_reset_chip(struct iha_softc *sc)
 
 	iha_set_ssig(sc, 0, 0);
 
-	bus_space_read_1(iot, ioh, TUL_SISTAT); /* Clear any active interrupt*/
+	/* Clear any active interrupt*/
+	(void)bus_space_read_1(iot, ioh, TUL_SISTAT);
 }
 
 /*
@@ -1995,7 +1996,7 @@ iha_xpad_in(struct iha_softc *sc)
 			return (-1);
 
 		case PHASE_DATA_IN:
-			bus_space_read_1(iot, ioh, TUL_SFIFO);
+			(void)bus_space_read_1(iot, ioh, TUL_SFIFO);
 			break;
 
 		default:
@@ -2432,8 +2433,8 @@ iha_msgin_ignore_wid_resid(struct iha_softc *sc)
 
 		if (phase != -1) {
 			bus_space_write_1(iot, ioh, TUL_SFIFO, 0);
-			bus_space_read_1(iot, ioh, TUL_SFIFO);
-			bus_space_read_1(iot, ioh, TUL_SFIFO);
+			(void)bus_space_read_1(iot, ioh, TUL_SFIFO);
+			(void)bus_space_read_1(iot, ioh, TUL_SFIFO);
 
 			phase = iha_wait(sc, MSG_ACCEPT);
 		}

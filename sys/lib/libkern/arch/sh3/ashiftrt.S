@@ -1,4 +1,4 @@
-/*	$NetBSD: ashiftrt.S,v 1.5 2006/04/22 22:48:54 uwe Exp $	*/
+/*	$NetBSD: ashiftrt.S,v 1.5.4.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,41 +27,6 @@
  */
 
 #include <machine/asm.h>
-
-#ifdef PIC	/* XXX: uwe */
-	.hidden __ashiftrt_r4_0
-	.hidden __ashiftrt_r4_1
-	.hidden __ashiftrt_r4_2
-	.hidden __ashiftrt_r4_3
-	.hidden __ashiftrt_r4_4
-	.hidden __ashiftrt_r4_5
-	.hidden __ashiftrt_r4_6
-	.hidden __ashiftrt_r4_7
-	.hidden __ashiftrt_r4_8
-	.hidden __ashiftrt_r4_9
-	.hidden __ashiftrt_r4_10
-	.hidden __ashiftrt_r4_11
-	.hidden __ashiftrt_r4_12
-	.hidden __ashiftrt_r4_13
-	.hidden __ashiftrt_r4_14
-	.hidden __ashiftrt_r4_15
-	.hidden __ashiftrt_r4_16
-	.hidden __ashiftrt_r4_17
-	.hidden __ashiftrt_r4_18
-	.hidden __ashiftrt_r4_19
-	.hidden __ashiftrt_r4_20
-	.hidden __ashiftrt_r4_21
-	.hidden __ashiftrt_r4_22
-	.hidden __ashiftrt_r4_23
-	.hidden __ashiftrt_r4_24
-	.hidden __ashiftrt_r4_25
-	.hidden __ashiftrt_r4_26
-	.hidden __ashiftrt_r4_27
-	.hidden __ashiftrt_r4_28
-	.hidden __ashiftrt_r4_29
-	.hidden __ashiftrt_r4_30
-	.hidden __ashiftrt_r4_31
-#endif /* PIC */
 
 
 NENTRY(__ashiftrt_r4_31)

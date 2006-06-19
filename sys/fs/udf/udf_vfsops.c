@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.5 2006/05/15 00:05:17 christos Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.5.2.1 2006/06/19 04:07:15 chap Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.5 2006/05/15 00:05:17 christos Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.5.2.1 2006/06/19 04:07:15 chap Exp $");
 #endif /* not lint */
 
 
@@ -233,7 +233,7 @@ free_udf_mountinfo(struct mount *mp)
 		 */
 
 		free(ump, M_UDFMNT);
-	};
+	}
 }
 #undef MPFREE
 
@@ -258,13 +258,13 @@ udf_mount(struct mount *mp, const char *path,
 		if (ump == NULL)
 			return EINVAL;
 		return copyout(&ump->mount_args, data, sizeof(args));
-	};
+	}
 
 	/* handle request for updating mount parameters */
 	/* TODO can't update my mountpoint yet */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		return EOPNOTSUPP;
-	};
+	}
 
 	/* OK, so we are asked to mount the device/file! */
 	error = copyin(data, &args, sizeof(struct udf_args));
@@ -276,7 +276,7 @@ udf_mount(struct mount *mp, const char *path,
 	if (args.version != 1) {
 		printf("mount_udf: unrecognized argument structure version\n");
 		return EINVAL;
-	};
+	}
 
 	/* lookup name to get its vnode */
 	NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, args.fspec, l);
@@ -328,7 +328,7 @@ udf_mount(struct mount *mp, const char *path,
 	if (error) {
 		vput(devvp);
 		return error;
-	};
+	}
 	if ((vcount(devvp) > 1) && (devvp != rootvp)) {
 		vput(devvp);
 		return EBUSY;
@@ -341,7 +341,7 @@ udf_mount(struct mount *mp, const char *path,
 		openflags = FREAD;
 	} else {
 		openflags = FREAD | FWRITE;
-	};
+	}
 	error = VOP_OPEN(devvp, openflags, FSCRED, l);
 	if (error == 0) {
 		/* opened ok, try mounting */
@@ -350,13 +350,13 @@ udf_mount(struct mount *mp, const char *path,
 			free_udf_mountinfo(mp);
 			/* devvp is still locked */
 			(void) VOP_CLOSE(devvp, openflags, NOCRED, l);
-		};
-	};
+		}
+	}
 	if (error) {
 		/* devvp is still locked */
 		vput(devvp);
 		return error;
-	};
+	}
 
 	/* register our mountpoint being on this device */
 	devvp->v_specmountpoint = mp;
@@ -383,10 +383,10 @@ udf_unmount_sanity_check(struct mount *mp)
 		vprint("", vp);
 		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
 			printf("  is locked\n");
-		};
+		}
 		if (vp->v_usecount > 1)
 			printf("  more than one usecount %d\n", vp->v_usecount);
-	};
+	}
 }
 #endif
 
@@ -444,7 +444,7 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		closeflags = FREAD;
 	} else {
 		closeflags = FREAD | FWRITE;
-	};
+	}
 
 	/* devvp is still locked by us */
 	vn_lock(ump->devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -499,7 +499,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	/* init `ino_t' to udf_node hash table */
 	for (lst = 0; lst < UDF_INODE_HASHSIZE; lst++) {
 		LIST_INIT(&ump->udf_nodes[lst]);
-	};
+	}
 
 	/* set up linkage */
 	mp->mnt_data    = ump;
@@ -513,7 +513,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	if (error) { 
 		printf("UDF mount: error inspecting fs node\n");
 		return error;
-	};
+	}
 
 	/* inspect sector size */
 	sector_size = ump->discinfo.sector_size;
@@ -524,7 +524,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		printf("UDF mount: "
 		       "hit NetBSD implementation fence on sector size\n");
 		return EIO;
-	};
+	}
 
 	/* read all anchors to get volume descriptor sequence */
 	num_anchors = udf_read_anchors(ump, args);
@@ -544,7 +544,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		error = udf_process_vds(ump, args);
 		if (error)
 			printf("UDF mount: disc not properly formatted\n");
-	};
+	}
 
 	/*
 	 * Initialise pool for descriptors associated with nodes. This is done
@@ -559,13 +559,13 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		error = udf_read_vds_tables(ump, args);
 		if (error)
 			printf("UDF mount: error in format or damaged disc\n");
-	};
+	}
 	if (!error) {
 		error = udf_read_rootdirs(ump, args);
 		if (error)
 			printf("UDF mount: "
 			       "disc not properly formatted or damaged disc\n");
-	};
+	}
 	if (error)
 		return error;
 
@@ -668,8 +668,8 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 			if (udf_rw32(*pos1) != (uint32_t) -1) {
 				freeblks += udf_rw32(*pos1);
 				sizeblks += udf_rw32(*pos2);
-			};
-		};
+			}
+		}
 		sbp->f_blocks = sizeblks;
 		sbp->f_bfree  = freeblks;
 		sbp->f_files  = udf_rw32(impl->num_files);
@@ -683,7 +683,7 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 		sbp->f_ffree  = 0;
 		sbp->f_favail = 0;
 		sbp->f_fresvd = 0;
-	};
+	}
 
 	copy_statvfs_info(sbp, mp);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.72 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.72.2.1 2006/06/19 04:07:16 chap Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.72 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.72.2.1 2006/06/19 04:07:16 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,14 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.72 2006/05/14 21:15:11 elad Exp $");
 #include <sys/kauth.h>
 
 #include <sys/pipe.h>
-
-/*
- * Avoid microtime(9), it's slow. We don't guard the read from time(9)
- * with splclock(9) since we don't actually need to be THAT sure the access
- * is atomic.
- */
-#define PIPE_TIMESTAMP(tvp)	(*(tvp) = time)
-
 
 /*
  * Use this define if you want to disable *fancy* VM things.  Expect an
@@ -314,7 +306,7 @@ pipe_create(struct pipe **pipep, int allockva)
 	memset(pipe, 0, sizeof(struct pipe));
 	pipe->pipe_state = PIPE_SIGNALR;
 
-	PIPE_TIMESTAMP(&pipe->pipe_ctime);
+	getmicrotime(&pipe->pipe_ctime);
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
@@ -556,7 +548,7 @@ again:
 	}
 
 	if (error == 0)
-		PIPE_TIMESTAMP(&rpipe->pipe_atime);
+		getmicrotime(&rpipe->pipe_atime);
 
 	PIPE_LOCK(rpipe);
 	pipeunlock(rpipe);
@@ -1043,7 +1035,7 @@ retry:
 		error = 0;
 
 	if (error == 0)
-		PIPE_TIMESTAMP(&wpipe->pipe_mtime);
+		getmicrotime(&wpipe->pipe_mtime);
 
 	/*
 	 * We have something to offer, wake up select/poll.

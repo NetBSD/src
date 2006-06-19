@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr_i4.S,v 1.3 2006/04/22 22:48:54 uwe Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.3.4.1 2006/06/19 04:09:12 chap Exp $	*/
 
 /*-
  * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
@@ -28,9 +28,6 @@
 
 #include <machine/asm.h>
 
-#ifdef PIC	/* XXX: uwe */
-	.hidden __movstr_i4_odd
-#endif
 
 NENTRY(__movstr_i4_odd)
 	add	#-8,r4
@@ -53,10 +50,6 @@ odd_loop:
 	 mov.l	r2,@(16,r4)
 
 
-#ifdef PIC	/* XXX: uwe */
-	.hidden __movstr_i4_even
-#endif
-
 NENTRY(__movstr_i4_even)
 	add	#-8,r4
 	nop
@@ -74,3 +67,8 @@ even_loop:
 	mov.l	r0,@(8,r4)
 	rts
 	 mov.l	r1,@(12,r4)
+
+
+/* gcc4 uses movmem, older versions use movstr */
+STRONG_ALIAS(__movmem_i4_odd, __movstr_i4_odd)
+STRONG_ALIAS(__movmem_i4_even, __movstr_i4_even)

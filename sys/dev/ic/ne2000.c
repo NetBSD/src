@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.48 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.48.12.1 2006/06/19 03:58:13 chap Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.48 2006/01/29 21:42:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.48.12.1 2006/06/19 03:58:13 chap Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -633,8 +633,8 @@ ne2000_write_mbuf(sc, m, buf)
 	 */
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait) {
-		bus_space_read_1(nict, nich, ED_P0_CRDA1);
-		bus_space_read_1(nict, nich, ED_P0_CRDA0);
+		(void)bus_space_read_1(nict, nich, ED_P0_CRDA1);
+		(void)bus_space_read_1(nict, nich, ED_P0_CRDA0);
 		NIC_BARRIER(nict, nich);
 		DELAY(1);
 	}

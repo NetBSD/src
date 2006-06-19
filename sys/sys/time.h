@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.54 2006/03/29 21:57:07 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.54.2.1 2006/06/19 04:11:13 chap Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,19 +36,14 @@
 
 #include <sys/featuretest.h>
 #include <sys/types.h>
-#ifdef _KERNEL
-#include <sys/callout.h>
-#include <sys/signal.h>
-#include <sys/queue.h>
-#endif
 
 /*
  * Structure returned by gettimeofday(2) system call,
  * and used in other calls.
  */
 struct timeval {
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* and microseconds */
+	long    tv_sec;		/* seconds */
+	long    tv_usec;	/* and microseconds */
 };
 
 /*
@@ -103,6 +98,98 @@ struct timezone {
 			(vvp)->tv_usec += 1000000;			\
 		}							\
 	} while (/* CONSTCOND */ 0)
+
+#ifdef _NETBSD_SOURCE
+struct bintime {
+	time_t	sec;
+	uint64_t frac;
+};
+
+static __inline void
+bintime_addx(struct bintime *bt, uint64_t x)
+{
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac += x;
+	if (u > bt->frac)
+		bt->sec++;
+}
+
+static __inline void
+bintime_add(struct bintime *bt, const struct bintime *bt2)
+{
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac += bt2->frac;
+	if (u > bt->frac)
+		bt->sec++;
+	bt->sec += bt2->sec;
+}
+
+static __inline void
+bintime_sub(struct bintime *bt, const struct bintime *bt2)
+{
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac -= bt2->frac;
+	if (u < bt->frac)
+		bt->sec--;
+	bt->sec -= bt2->sec;
+}
+
+/*-
+ * Background information:
+ *
+ * When converting between timestamps on parallel timescales of differing
+ * resolutions it is historical and scientific practice to round down rather
+ * than doing 4/5 rounding.
+ *
+ *   The date changes at midnight, not at noon.
+ *
+ *   Even at 15:59:59.999999999 it's not four'o'clock.
+ *
+ *   time_second ticks after N.999999999 not after N.4999999999
+ */
+
+static __inline void
+bintime2timespec(const struct bintime *bt, struct timespec *ts)
+{
+
+	ts->tv_sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)bt->sec;
+	ts->tv_nsec =
+	    (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
+}
+
+static __inline void
+timespec2bintime(const struct timespec *ts, struct bintime *bt)
+{
+
+	bt->sec = ts->tv_sec;
+	/* 18446744073 = int(2^64 / 1000000000) */
+	bt->frac = ts->tv_nsec * (uint64_t)18446744073LL; 
+}
+
+static __inline void
+bintime2timeval(const struct bintime *bt, struct timeval *tv)
+{
+
+	tv->tv_sec = bt->sec;
+	tv->tv_usec =
+	    (long)(((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32);
+}
+
+static __inline void
+timeval2bintime(const struct timeval *tv, struct bintime *bt)
+{
+
+	bt->sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)tv->tv_sec;
+	/* 18446744073709 = int(2^64 / 1000000) */
+	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
+}
+#endif /* __BSD_VISIBLE */
 
 /* Operations on timespecs. */
 #define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
@@ -162,64 +249,8 @@ struct	itimerspec {
 #define	TIMER_ABSTIME	0x1	/* absolute timer */
 
 #ifdef _KERNEL
-/*
- * Structure used to manage timers in a process.
- */
-struct 	ptimer {
-	union {
-		struct	callout	pt_ch;
-		struct {
-			LIST_ENTRY(ptimer)	pt_list;
-			int	pt_active;
-		} pt_nonreal;
-	} pt_data;
-	struct	sigevent pt_ev;
-	struct	itimerval pt_time;
-	struct	ksiginfo pt_info;
-	int	pt_overruns;	/* Overruns currently accumulating */
-	int	pt_poverruns;	/* Overruns associated w/ a delivery */
-	int	pt_type;
-	int	pt_entry;
-	struct proc *pt_proc;
-};
-
-#define pt_ch	pt_data.pt_ch
-#define pt_list	pt_data.pt_nonreal.pt_list
-#define pt_active	pt_data.pt_nonreal.pt_active
-
-#define	TIMER_MAX	32	/* See ptimers->pts_fired if you enlarge this */
-#define	TIMERS_ALL	0
-#define	TIMERS_POSIX	1
-
-LIST_HEAD(ptlist, ptimer);
-
-struct	ptimers {
-	struct ptlist pts_virtual;
-	struct ptlist pts_prof;
-	struct ptimer *pts_timers[TIMER_MAX];
-	int pts_fired;
-};
-
-int	itimerfix(struct timeval *tv);
-int	itimerdecr(struct ptimer *, int);
-void	itimerfire(struct ptimer *);
-void	microtime(struct timeval *);
-struct timespec	*nanotime(struct timespec *);
-int	settime(struct proc *p, struct timespec *);
-int	ratecheck(struct timeval *, const struct timeval *);
-int	ppsratecheck(struct timeval *, int *, int);
-int	settimeofday1(const struct timeval *, const struct timezone *,
-	    struct proc *);
-int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
-int	clock_settime1(struct proc *, clockid_t, const struct timespec *);
-void	timer_settime(struct ptimer *);
-void	timer_gettime(struct ptimer *, struct itimerval *);
-void	timers_alloc(struct proc *);
-void	timers_free(struct proc *, int);
-void	realtimerexpire(void *);
-
+#include <sys/timevar.h>
 #else /* !_KERNEL */
-
 #ifndef _STANDALONE
 #if (_POSIX_C_SOURCE - 0) >= 200112L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
@@ -250,7 +281,5 @@ int	settimeofday(const struct timeval * __restrict,
 __END_DECLS
 
 #endif	/* !_STANDALONE */
-
 #endif /* !_KERNEL */
-
 #endif /* !_SYS_TIME_H_ */

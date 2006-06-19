@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.12 2006/04/30 23:52:14 christos Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.12.2.1 2006/06/19 04:17:07 chap Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_bsd.c,v 1.12 2006/04/30 23:52:14 christos Exp $");
+__RCSID("$NetBSD: api_bsd.c,v 1.12.2.1 2006/06/19 04:17:07 chap Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,6 +208,7 @@ char	*string;		/* if non-zero, where to connect to */
 	}
     }
     /* YEAH */
+    fclose(keyfile);
     return 0;		/* Happiness! */
     /* NOPE */
 out:

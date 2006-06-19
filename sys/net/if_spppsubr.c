@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.90 2006/05/14 21:19:33 elad Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.90.2.1 2006/06/19 04:09:12 chap Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.90 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.90.2.1 2006/06/19 04:09:12 chap Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -487,7 +487,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		/* Count received bytes, add hardware framing */
 		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
 		/* Note time of last receive */
-		sp->pp_last_receive = mono_time.tv_sec;
+		sp->pp_last_receive = time_uptime;
 	}
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
@@ -624,7 +624,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
 			schednetisr(NETISR_IP);
 			inq = &ipintrq;
-			sp->pp_last_activity = mono_time.tv_sec;
+			sp->pp_last_activity = time_uptime;
 		}
 		break;
 #endif
@@ -639,7 +639,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			schednetisr(NETISR_IPV6);
 			inq = &ip6intrq;
-			sp->pp_last_activity = mono_time.tv_sec;
+			sp->pp_last_activity = time_uptime;
 		}
 		break;
 #endif
@@ -707,7 +707,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	s = splnet();
 
-	sp->pp_last_activity = mono_time.tv_sec;
+	sp->pp_last_activity = time_uptime;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -1256,8 +1256,9 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	struct ppp_header *h;
 	struct cisco_packet *ch;
 	struct mbuf *m;
-	u_int32_t t = (time.tv_sec - boottime.tv_sec) * 1000;
+	u_int32_t t;
 
+	t = time_uptime * 1000;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (! m)
 		return;
@@ -1847,8 +1848,8 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 
 	switch (sp->state[cp->protoidx]) {
 	case STATE_INITIAL:
-		(cp->tls)(sp);
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
+		(cp->tls)(sp);
 		break;
 	case STATE_STARTING:
 		break;
@@ -1887,8 +1888,8 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 	case STATE_CLOSING:
 		break;
 	case STATE_STARTING:
-		(cp->tlf)(sp);
 		sppp_cp_change_state(cp, sp, STATE_INITIAL);
+		(cp->tlf)(sp);
 		break;
 	case STATE_STOPPED:
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
@@ -2036,7 +2037,7 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 
 	/* Initialize activity timestamp: opening a connection is an activity */
-	sp->pp_last_receive = sp->pp_last_activity = mono_time.tv_sec;
+	sp->pp_last_receive = sp->pp_last_activity = time_uptime;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -4649,7 +4650,7 @@ sppp_keepalive(void *dummy)
 	time_t now;
 
 	s = splnet();
-	now = mono_time.tv_sec;
+	now = time_uptime;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
 
@@ -4700,7 +4701,8 @@ sppp_keepalive(void *dummy)
 
 				/* Close connection imediatly, completition of this
 				 * will summon the magic needed to reestablish it. */
-				sp->pp_tlf(sp);
+				if (sp->pp_tlf)
+					sp->pp_tlf(sp);
 				continue;
 			}
 		}

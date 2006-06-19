@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.91 2006/04/06 00:48:14 simonb Exp $	*/
+/*	$NetBSD: login.c,v 1.91.2.1 2006/06/19 04:17:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.91 2006/04/06 00:48:14 simonb Exp $");
+__RCSID("$NetBSD: login.c,v 1.91.2.1 2006/06/19 04:17:06 chap Exp $");
 #endif /* not lint */
 
 /*
@@ -729,7 +729,7 @@ main(int argc, char *argv[])
 				warn("fork");
 				sleepexit(1);
 			case 0:
-				execl(_PATH_BINPASSWD, "passwd", 0);
+				execl(_PATH_BINPASSWD, "passwd", NULL);
 				_exit(1);
 			default:
 				if (wait(&status) == -1 ||
@@ -743,7 +743,7 @@ main(int argc, char *argv[])
 	if (login_krb5_get_tickets)
 		k5_write_creds();
 #endif
-	execlp(pwd->pw_shell, tbuf, 0);
+	execlp(pwd->pw_shell, tbuf, NULL);
 	err(1, "%s", pwd->pw_shell);
 }
 

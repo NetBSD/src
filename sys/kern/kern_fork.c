@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.124 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.124.2.1 2006/06/19 04:07:15 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.124 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.124.2.1 2006/06/19 04:07:15 chap Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -432,7 +432,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * except if the parent requested the child to start in SSTOP state.
 	 */
 	SCHED_LOCK(s);
-	p2->p_stats->p_start = time;
+	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
 	if (p1->p_flag & P_STOPFORK) {
 		p2->p_nrlwps = 0;

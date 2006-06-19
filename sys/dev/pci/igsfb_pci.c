@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.13 2006/04/05 01:13:50 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.13.2.1 2006/06/19 04:01:36 chap Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.13 2006/04/05 01:13:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.13.2.1 2006/06/19 04:01:36 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ static int
 igsfb_pci_is_console(pci_chipset_tag_t pc, pcitag_t tag)
 {
 
-	return igsfb_pci_is_console && (tag == igsfb_pci_constag);
+	return igsfb_pci_console && (tag == igsfb_pci_constag);
 }
 
 

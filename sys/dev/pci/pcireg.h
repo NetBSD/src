@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.49 2006/03/01 18:53:40 gdamore Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.49.8.1 2006/06/19 04:01:37 chap Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -169,6 +169,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_RAID		0x04
 #define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
 #define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
+#define	PCI_SUBCLASS_MASS_STORAGE_SAS		0x07
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -227,6 +228,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SYSTEM_TIMER		0x02
 #define	PCI_SUBCLASS_SYSTEM_RTC			0x03
 #define	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG		0x04
+#define	PCI_SUBCLASS_SYSTEM_SDHC		0x05
 #define	PCI_SUBCLASS_SYSTEM_MISC		0x80
 
 /* 0x09 input subclasses */
@@ -449,6 +451,7 @@ typedef u_int8_t pci_revision_t;
  */
 
 /* Power Management Capability Register */
+#define PCI_PMCR_SHIFT		16
 #define PCI_PMCR		0x02
 #define PCI_PMCR_D1SUPP		0x0200
 #define PCI_PMCR_D2SUPP		0x0400

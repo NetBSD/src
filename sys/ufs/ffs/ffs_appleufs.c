@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.8 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.8.14.1 2006/06/19 04:11:13 chap Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.8 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.8.14.1 2006/06/19 04:11:13 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -132,7 +132,7 @@ ffs_appleufs_set(struct appleufslabel *appleufs, const char *name, time_t t,
 	if (!name) name = "untitled";
 	if (t == ((time_t)-1)) {
 #if defined(_KERNEL)
-		t = time.tv_sec;
+		t = time_second;
 #elif defined(STANDALONE)
 		t = 0;
 #else
