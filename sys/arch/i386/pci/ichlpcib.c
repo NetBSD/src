@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.13 2006/06/16 23:04:25 jmcneill Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.14 2006/06/19 02:30:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.13 2006/06/16 23:04:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14 2006/06/19 02:30:35 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,6 @@ struct lpcib_softc {
 	/* Power management */
 	void			*sc_powerhook;
 	struct pci_conf_state	sc_pciconf;
-	pcireg_t		sc_pirq[8];
 };
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
@@ -178,32 +177,10 @@ lpcib_powerhook(int why, void *opaque)
 	switch (why) {
 	case PWR_SUSPEND:
 		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-
-		/* capture PIRQ routing control registers */
-		sc->sc_pirq[0] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQA_ROUT);
-		sc->sc_pirq[1] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQB_ROUT);
-		sc->sc_pirq[2] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQC_ROUT);
-		sc->sc_pirq[3] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQD_ROUT);
-		sc->sc_pirq[4] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQE_ROUT);
-		sc->sc_pirq[5] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQF_ROUT);
-		sc->sc_pirq[6] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQG_ROUT);
-		sc->sc_pirq[7] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQH_ROUT);
-
 		break;
 
 	case PWR_RESUME:
 		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-
-		/* restore PIRQ routing control registers */
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT, sc->sc_pirq[0]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT, sc->sc_pirq[1]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT, sc->sc_pirq[2]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT, sc->sc_pirq[3]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT, sc->sc_pirq[4]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT, sc->sc_pirq[5]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT, sc->sc_pirq[6]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT, sc->sc_pirq[7]);
-
 		break;
 	}
 
