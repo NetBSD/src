@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_U,v 1.3 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: XEN3_DOMU,v 1.1.6.2 2006/06/19 03:44:03 chap Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -18,7 +18,7 @@ options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 #options 	DOM0OPS
 
 options 	I686_CPU
-makeoptions	COPTS="-O2 -mcpu=i686 -march=i686"
+makeoptions	COPTS="-O2 -march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE

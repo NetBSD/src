@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.2 2006/05/14 21:55:38 elad Exp $
+#	$NetBSD: files.atheros,v 1.2.2.1 2006/06/19 03:44:52 chap Exp $
 
 file	arch/mips/atheros/ar531x_intr.c
 file	arch/mips/atheros/ar531x_timer.c
@@ -19,13 +19,16 @@ attach	ae at arbus
 file	arch/mips/atheros/dev/if_ae.c		ae
 
 # On-chip WLAN device(s)
-#attach	ath at arbus with ath_arbus
-#file	arch/mips/atheros/dev/if_ath_arbus.c	ath_arbus
+attach	ath at arbus with ath_arbus
+file	arch/mips/atheros/dev/if_ath_arbus.c	ath_arbus
 
-# Atheros HAL
-#object	/athhal-mips-be-elf.hal.o		ath
+# On-board flash memory
+device	athflash
+attach	athflash at arbus
+file	arch/mips/atheros/dev/athflash.c	athflash
 
 # On-chip GPIO
 #device	argpio: gpiobus
 #attach	argpio at arbus
 #file	arch/mips/atheros/dev/argpio.c		argpio
+

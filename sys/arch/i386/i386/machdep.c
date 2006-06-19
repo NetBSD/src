@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.572 2006/04/14 09:50:16 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.572.2.1 2006/06/19 03:44:26 chap Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.572 2006/04/14 09:50:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.572.2.1 2006/06/19 03:44:26 chap Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.572 2006/04/14 09:50:16 jmmv Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
-#include <machine/kcore.h>
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -137,12 +136,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.572 2006/04/14 09:50:16 jmmv Exp $");
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
+#include <machine/kcore.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
+#include <x86/x86/tsc.h>
+
 #include <machine/multiboot.h>
 
 #include <dev/isa/isareg.h>
@@ -254,7 +256,6 @@ struct vm_map *phys_map = NULL;
 extern	paddr_t avail_start, avail_end;
 
 void (*delay_func)(int) = i8254_delay;
-void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 
 /*
@@ -476,7 +477,7 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)lwp0.l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(lwp0.l_addr) + KSTACK_SIZE - 16;
 	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -1256,7 +1257,8 @@ struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
-extern  struct user *proc0paddr;
+struct user *proc0paddr;
+extern vaddr_t proc0uarea;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
@@ -1477,6 +1479,7 @@ init386(paddr_t first_avail)
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 
+	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
@@ -2380,6 +2383,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 void
 cpu_initclocks()
 {
+
 	(*initclock_func)();
 }
 

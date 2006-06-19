@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.3 2006/04/07 04:57:05 gdamore Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.3.8.1 2006/06/19 03:44:52 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3 2006/04/07 04:57:05 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.8.1 2006/06/19 03:44:52 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ struct ath_arbus_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
+	struct ar531x_config	sc_config;
 };
 
 static int	ath_arbus_match(struct device *, struct cfdata *, void *);
@@ -100,9 +101,6 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	struct ath_arbus_softc *asc;
 	struct ath_softc *sc;
 	struct arbus_attach_args *aa;
-#if 0
-	struct ar531x_board_info *board;
-#endif
 	const char *name;
 	void *hook;
 	int rv;
@@ -127,9 +125,21 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	/*
+	 * Setup HAL configuration state for use by the driver.
+	 */
+	rv = ar531x_board_config(&asc->sc_config);
+	if (rv) {
+		aprint_error("%s: unable to locate board configuration\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	asc->sc_config.unit = sc->sc_dev.dv_unit;	/* XXX? */
+	asc->sc_config.tag = asc->sc_iot;
 
-	sc->sc_st = asc->sc_iot;
-	sc->sc_sh = asc->sc_ioh;
+	/* NB: the HAL expects the config state passed as the tag */
+	sc->sc_st = (HAL_BUS_TAG) &asc->sc_config;
+	sc->sc_sh = (HAL_BUS_HANDLE) asc->sc_ioh;
 	sc->sc_dmat = aa->aa_dmat;
 
 	sc->sc_invalid = 1;

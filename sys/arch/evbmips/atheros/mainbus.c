@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2006/04/07 04:56:00 gdamore Exp $ */
+/* $NetBSD: mainbus.c,v 1.2.8.1 2006/06/19 03:44:02 chap Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2006/04/07 04:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2.8.1 2006/06/19 03:44:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,15 +63,13 @@ struct mainbusdev {
 
 struct mainbusdev mainbusdevs[] = {
 	{ "cpu",	},
+	{ "wdog",	},
 	{ "arbus",	},
 	{ NULL,		}
 };
 
 static int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if (mainbus_found)
@@ -81,10 +79,7 @@ mainbus_match(parent, match, aux)
 }
 
 static void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbusdev *md;
 
@@ -92,7 +87,7 @@ mainbus_attach(parent, self, aux)
 	printf("\n");
 
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
-		config_found_ia(self, "mainbus", NULL, mainbus_print);
+		config_found_ia(self, "mainbus", md, mainbus_print);
 	}
 }
 
@@ -100,5 +95,5 @@ static int
 mainbus_print(void *aux, const char *pnp)
 {
 
-	return (UNCONF);
+	return (QUIET);
 }

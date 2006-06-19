@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.28 2006/05/14 21:56:33 elad Exp $	*/
+/*	$NetBSD: sab.c,v 1.28.2.1 2006/06/19 03:45:14 chap Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.28 2006/05/14 21:56:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.28.2.1 2006/06/19 03:45:14 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1119,8 +1119,8 @@ sabtty_reset(struct sabtty_softc *sc)
 	sc->sc_imr0 = sc->sc_imr1 = 0xff;
 	SAB_WRITE(sc, SAB_IMR0, sc->sc_imr0);
 	SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
-	SAB_READ(sc, SAB_ISR0);
-	SAB_READ(sc, SAB_ISR1);
+	(void)SAB_READ(sc, SAB_ISR0);
+	(void)SAB_READ(sc, SAB_ISR1);
 }
 
 void

@@ -71,16 +71,6 @@ int device_is_attached(dev)
 	return TRUE;
 }
 
-int tvtohz(struct timeval *tv)
-{
-	struct timeval curr_time;
-	
-	microtime(&curr_time);
-	curr_time.tv_sec  += tv->tv_sec;
-	curr_time.tv_usec += tv->tv_usec;
-	return hzto(&curr_time);
-}
-
 /* I took this from sys/kern/kern_kthread.c (in the NetBSD source tree).
  * The only difference is the kernel stack size
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2006/04/09 01:18:14 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.2.8.1 2006/06/19 03:44:02 chap Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2006/04/09 01:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.8.1 2006/06/19 03:44:02 chap Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -223,7 +223,7 @@ mach_init(void)
 	caddr_t				v;
 	uint32_t			memcfg, bank0, bank1;
 	uint32_t			memsize;
-	struct ar531x_board_info	*infop;
+	const struct ar531x_boarddata	*infop;
 
 	extern char edata[], end[];	/* XXX */
 
@@ -237,7 +237,7 @@ mach_init(void)
 		panic("No board info!");
 
 	/* set CPU model info for sysctl_hw */
-	snprintf(cpu_model, 64, "%s", infop->ab_name);
+	snprintf(cpu_model, 64, "%s", infop->boardName);
 
 	/*
 	 * Set up the exception vectors and CPU-specific function

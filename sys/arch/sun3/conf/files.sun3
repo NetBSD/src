@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.73 2005/12/11 12:19:20 christos Exp $
+#	$NetBSD: files.sun3,v 1.73.14.1 2006/06/19 03:45:15 chap Exp $
 
 #
 # sun3-specific configuration info
@@ -93,7 +93,6 @@ file arch/sun3/dev/if_ie.c		ie
 device si: scsi, ncr5380sbc
 file	arch/sun3/dev/si.c		si
 
-define fb
 file arch/sun3/dev/fb.c			fb needs-flag
 
 #

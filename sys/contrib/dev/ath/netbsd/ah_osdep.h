@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.h,v 1.1 2006/04/02 05:52:17 gdamore Exp $
+ * $Id: ah_osdep.h,v 1.1.8.1 2006/06/19 03:46:56 chap Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
@@ -46,20 +46,7 @@
 
 #include <machine/bus.h>
 
-#ifdef __sparc64__
-/* the HAL wants a pointer type, but bus_space_handle_t is a struct */
-typedef bus_space_handle_t *HAL_BUS_HANDLE;
-#define ATH_BUSHANDLE2HAL(HNDL)	(&(HNDL))
-#define ATH_HAL2BUSHDNLE(HH)	(*(HH))
-#else
-typedef bus_space_handle_t HAL_BUS_HANDLE;
-#define ATH_BUSHANDLE2HAL(HNDL)	(HNDL)
-#define ATH_HAL2BUSHDNLE(HH)	(HH)
-#endif
-
-typedef void* HAL_SOFTC;
-typedef bus_space_tag_t HAL_BUS_TAG;
-typedef bus_addr_t HAL_BUS_ADDR;
+#include "athhal_options.h"
 
 /*
  * Delay n microseconds.
@@ -78,6 +65,30 @@ extern void *ath_hal_memcpy(void *, const void *, size_t);
 struct ath_hal;
 extern	u_int32_t ath_hal_getuptime(struct ath_hal *);
 #define	OS_GETUPTIME(_ah)	ath_hal_getuptime(_ah)
+
+/*
+ * WiSoC boards overload the bus tag with information about the
+ * board layout.  We must extract the bus space tag from that
+ * indirect structure.  For everyone else the tag is passed in
+ * directly.
+ * XXX cache indirect ref privately
+ */
+#ifdef AH_SUPPORT_AR5312
+#define	BUSTAG(ah) \
+	((bus_space_tag_t) ((struct ar531x_config *)((ah)->ah_st))->tag)
+#define	BUSHANDLE(ah)	((bus_space_handle_t)((ah)->ah_sh))
+
+#elif defined(AH_REGOPS_FUNC)
+#define	BUSTAG(ah)	(*(bus_space_tag_t *) (ah)->ah_st)
+#define	BUSHANDLE(ah)	(*(bus_space_handle_t *)((ah)->ah_sh))
+#define	HALTAG(t)	(HAL_BUS_TAG) &(t)
+#define	HALHANDLE(h)	(HAL_BUS_HANDLE) &(h)
+#else
+#define	BUSTAG(ah)	((bus_space_tag_t) (ah)->ah_st)
+#define	BUSHANDLE(ah)	((bus_space_handle_t) ((ah)->ah_sh))
+#define	HALTAG(t)	(NULL)
+#define	HALHANDLE(h)	(HAL_BUS_HANDLE) (h)
+#endif
 
 /*
  * Register read/write; we assume the registers will always

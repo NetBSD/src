@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.22 2006/02/16 09:22:51 kochi Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.22.8.1 2006/06/19 03:44:03 chap Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.22 2006/02/16 09:22:51 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.22.8.1 2006/06/19 03:44:03 chap Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.22 2006/02/16 09:22:51 kochi Exp $
 
 #include "acpi.h"
 
+#include <dev/ic/i8253reg.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
@@ -331,22 +332,21 @@ acpi_md_sleep(int state)
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
 	ef = read_eflags();
-	disable_intr();
 
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
 		p = &proc0;
 	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	cr3 = rcr3();
-	lcr3(pm->pm_pdirpa);
 	if (!pmap_extract(pm, phys_wakeup, &oldphys))
 		oldphys = 0;
 	pmap_enter(pm, phys_wakeup, phys_wakeup,
 			VM_PROT_READ | VM_PROT_WRITE,
 			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pm);
+	cr3 = rcr3();
 
 	ret_addr = 0;
+	disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -418,7 +418,9 @@ acpi_md_sleep(int state)
 
 		for (;;) ;
 	} else {
+		printf("acpi0: good morning!\n");
 		/* Execute Wakeup */
+		enable_intr();
 
 		npxinit(&cpu_info_primary);
 		i8259_reinit();
@@ -429,8 +431,8 @@ acpi_md_sleep(int state)
 		 * XXX must the local APIC be re-inited?
 		 */
 
-		initrtclock();
-		inittodr(time.tv_sec);
+		initrtclock(TIMER_FREQ);
+		inittodr(time_second);
 
 #ifdef ACPI_PRINT_REG
 		acpi_savecpu();
@@ -439,6 +441,7 @@ acpi_md_sleep(int state)
 	}
 
 out:
+	lcr3(cr3);
 	/* Clean up identity mapping. */
 	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
 	if (oldphys) {
@@ -448,11 +451,7 @@ out:
 	}
 	pmap_update(pm);
 
-	lcr3(cr3);
-
-	enable_intr();
 	write_eflags(ef);
-	AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 
 	return (ret);
 #undef WAKECODE_FIXUP

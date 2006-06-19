@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.5 2006/03/17 05:33:33 garbled Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.5.2.1 2006/06/19 03:45:05 chap Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.5 2006/03/17 05:33:33 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.5.2.1 2006/06/19 03:45:05 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,6 @@ isapnp_unmap(struct isapnp_softc *sc)
  */
 int
 isapnp_map_readport(struct isapnp_softc *sc)
-	struct isapnp_softc *sc;
 {
 #ifdef _KERNEL
 	int error;

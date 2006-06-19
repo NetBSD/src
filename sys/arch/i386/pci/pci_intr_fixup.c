@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.37 2006/02/16 08:47:16 kochi Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.37.8.1 2006/06/19 03:44:26 chap Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.37 2006/02/16 08:47:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.37.8.1 2006/06/19 03:44:26 chap Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -183,6 +183,8 @@ const struct pciintr_icu_table {
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8231,
 	  via8231_init },
+	{ PCI_VENDOR_VIATECH,   PCI_PRODUCT_VIATECH_VT8233,
+	  via82c586_init },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8233A,
 	  via8231_init },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8235,
@@ -190,12 +192,23 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237,
 	  via8231_init },
 
+
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
+	  sis85c503_init },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_962,
+	  sis85c503_init },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_963,
 	  sis85c503_init },
 
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_PMC,
 	  amd756_init },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC766_PMC,
+	  amd756_init },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_PMC,
+	  amd756_init },
 
+	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1533,
+	  ali1543_init },
 	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1543,
 	  ali1543_init },
 

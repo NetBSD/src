@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XENU,v 1.11 2006/02/05 05:01:55 cube Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.6.2 2006/06/19 03:44:03 chap Exp $
 
 include 	"arch/xen/conf/std.xen"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.75 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: rd.c,v 1.75.2.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.75 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.75.2.1 2006/06/19 03:44:02 chap Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -1073,7 +1073,7 @@ rderror(int unit)
 	 * First conjure up the block number at which the error occurred.
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
- 	 */
+	 */
 	bp = BUFQ_PEEK(rs->sc_tab);
 	pbn = rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
@@ -1220,8 +1220,9 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 	lp->d_secperunit = rdidentinfo[type].ri_nblocks;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	strncpy(lp->d_typename, rdidentinfo[type].ri_desc, 16);
-	strncpy(lp->d_packname, "fictitious", 16);
+	strlcpy(lp->d_typename, rdidentinfo[type].ri_desc,
+	    sizeof(lp->d_typename));
+	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3000;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;

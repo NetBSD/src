@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.1 2006/03/09 20:17:27 garbled Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.1.10.1 2006/06/19 03:45:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -103,6 +103,10 @@ struct pnpbus_dev_attach_args {
 	char	pna_devid[8];		/* PNP device id string */
 	PPC_DEVICE *pna_ppc_dev;	/* PNP device entry */
 	void	*pna_aux;		/* driver specific */
+	uint8_t	basetype;		/* PNP base type */
+	uint8_t subtype;		/* PNP subtype */
+	uint8_t interface;		/* PNP interface */
+	uint8_t spare;			/* struct packing */
 };
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.20 2006/05/14 21:55:11 elad Exp $
+# $NetBSD: XEN2_DOMU,v 1.1.6.2 2006/06/19 03:44:03 chap Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -15,7 +15,7 @@ options 	XEN
 #options 	DOM0OPS
 
 options 	I686_CPU
-makeoptions	COPTS="-O2 -mcpu=i686 -march=i686"
+makeoptions	COPTS="-O2 -march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE

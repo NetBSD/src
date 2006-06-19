@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.12 2006/04/15 13:26:03 tsutsui Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.12.2.1 2006/06/19 03:44:02 chap Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.12 2006/04/15 13:26:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.12.2.1 2006/06/19 03:44:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,14 @@ int
 com_mainbus_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return console_present != 0;
+	switch (cobalt_id) {
+	case COBALT_ID_RAQ:
+	case COBALT_ID_QUBE2:
+	case COBALT_ID_RAQ2:
+		return 1;
+	}
+
+	return 0;
 }
 
 void

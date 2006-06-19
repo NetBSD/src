@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.39 2005/12/24 23:24:02 perry Exp $ */
+/*	$NetBSD: promlib.c,v 1.39.14.1 2006/06/19 03:45:06 chap Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.39 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.39.14.1 2006/06/19 03:45:06 chap Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -958,14 +958,14 @@ prom_getidprom(void)
 		/* Already got it */
 		return (&idprom);
 
-	dst = (char *)&idprom;
+	dst = (u_char *)&idprom;
 	len = sizeof(struct idprom);
 
 	switch (prom_version()) {
 	case PROM_OLDMON:
 #ifdef AC_IDPROM
 		{
-			u_char *src = (char *)AC_IDPROM;
+			u_char *src = (u_char *)AC_IDPROM;
 			do {
 				*dst++ = lduba(src++, ASI_CONTROL);
 			} while (--len > 0);

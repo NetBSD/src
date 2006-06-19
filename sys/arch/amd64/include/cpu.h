@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2006/03/06 08:30:44 cube Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.1 2006/06/19 03:44:01 chap Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -235,12 +235,9 @@ struct clockframe {
  * We need a machine-independent name for this.
  */
 extern void (*delay_func) __P((int));
-struct timeval;
-extern void (*microtime_func) __P((struct timeval *));
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 
 /*
@@ -279,7 +276,7 @@ void	proc_trampoline __P((void));
 void	child_trampoline __P((void));
 
 /* clock.c */
-void	initrtclock __P((void));
+void	initrtclock __P((u_long));
 void	startrtclock __P((void));
 void	i8254_delay __P((int));
 void	i8254_microtime __P((struct timeval *));

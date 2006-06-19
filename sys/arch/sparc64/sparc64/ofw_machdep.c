@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.29 2006/02/11 17:57:32 cdi Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.29.8.1 2006/06/19 03:45:14 chap Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -31,8 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.29 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.29.8.1 2006/06/19 03:45:14 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

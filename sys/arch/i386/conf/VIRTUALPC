@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.41 2006/04/19 10:31:45 drochner Exp $
+# $NetBSD: VIRTUALPC,v 1.41.2.1 2006/06/19 03:44:03 chap Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.41 $"
+#ident 		"VIRTUALPC-$Revision: 1.41.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -626,6 +626,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
@@ -636,4 +637,3 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-pseudo-device	ksyms			# /dev/ksyms

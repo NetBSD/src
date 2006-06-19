@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2006/05/13 08:56:08 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.1 2006/06/19 03:45:15 chap Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -209,7 +209,7 @@
 #ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
 #endif
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
@@ -244,7 +244,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.long	0
+_C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
@@ -467,10 +467,10 @@ start:
 
 	/* Set up bootstrap stack. */
 	leal	(PROC0STACK)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0paddr)
-	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	movl	%eax,_C_LABEL(proc0uarea)
+	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	subl	$KERNBASE,%esi
-	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
 	movl	_C_LABEL(atdevbase),%eax

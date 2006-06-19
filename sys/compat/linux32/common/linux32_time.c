@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.3 2006/05/14 21:24:50 elad Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.3.2.1 2006/06/19 03:46:29 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,13 +33,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.3 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.3.2.1 2006/06/19 03:46:29 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/fstypes.h>
 #include <sys/signal.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/select.h>

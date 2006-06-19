@@ -49,6 +49,9 @@ typedef uint32_t ndis_error_code;
 typedef register_t ndis_kspin_lock;
 typedef uint8_t ndis_kirql;
 
+/* Print out debugging information */
+/* #define NDIS_DBG */
+
 /*
  * NDIS status codes (there are lots of them). The ones that
  * don't seem to fit the pattern are actually mapped to generic

@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_devid.h,v 1.1 2006/04/02 05:52:17 gdamore Exp $
+ * $Id: ah_devid.h,v 1.1.8.1 2006/06/19 03:46:56 chap Exp $
  */
 
 #ifndef _DEV_ATH_DEVID_H_

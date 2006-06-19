@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.11 2006/05/14 21:57:13 elad Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.11.2.1 2006/06/19 03:45:36 chap Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.11 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.11.2.1 2006/06/19 03:45:36 chap Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -124,7 +124,7 @@ static int  xbd_xenbus_detach(struct device *, int);
 static int  xbd_xenbus_resume(void *);
 static int  xbd_handler(void *);
 static int  xbdstart(struct dk_softc *, struct buf *);
-static void xbd_backend_changed(struct device *, XenbusState);
+static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
 static int  xbd_map_align(struct xbd_req *);
@@ -362,9 +362,9 @@ abort_transaction:
 	return error;
 }
 
-static void xbd_backend_changed(struct device *dev, XenbusState new_state)
+static void xbd_backend_changed(void *arg, XenbusState new_state)
 {
-	struct xbd_xenbus_softc *sc = (void *)dev;
+	struct xbd_xenbus_softc *sc = arg;
 	struct dk_geom *pdg;
 	char buf[9];
 	int s;

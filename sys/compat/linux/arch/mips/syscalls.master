@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 2005/12/11 12:20:16 christos Exp $  
+	$NetBSD: syscalls.master,v 1.20.14.1 2006/06/19 03:45:52 chap Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -187,7 +187,7 @@
 93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
 95 	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
-96	NOARGS		{ int sys_getpriority(int which, int who); }
+96	STD		{ int linux_sys_getpriority(int which, int who); }
 97	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 98	UNIMPL
 99	STD		{ int linux_sys_statfs(const char *path, \

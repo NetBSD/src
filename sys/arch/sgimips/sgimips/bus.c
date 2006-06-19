@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.45 2006/04/16 16:39:37 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.45.2.1 2006/06/19 03:45:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.45 2006/04/16 16:39:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.45.2.1 2006/06/19 03:45:06 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,8 +212,10 @@ bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 	return reg;
 }
 
+
 void
-bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_int32_t v)
+bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+	bus_size_t o, u_int32_t v)
 {
 	int s;
 
@@ -224,6 +226,106 @@ bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			*(volatile u_int32_t *)((bsh) + (o)) = (v);
 			delay(10);
 			splx(s);
+			break;
+		default:
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			wbflush(); /* XXX */
+			break;
+	}
+}
+
+u_int16_t
+bus_space_read_stream_2(bus_space_tag_t t, bus_space_handle_t h,
+	bus_size_t o)
+{
+	u_int16_t v;
+	wbflush(); /* XXX ? */
+
+	switch (t) {
+	case SGIMIPS_BUS_SPACE_NORMAL:
+		return *(volatile u_int16_t *)(h + o);
+	case SGIMIPS_BUS_SPACE_HPC:
+		return *(volatile u_int16_t *)(h + (o << 2) + 1);
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
+		v = *(volatile u_int16_t *)(h + (o | 2) - (o & 3));
+		return htole16(v);
+	default:
+		panic("no bus tag");
+	}
+}
+
+u_int32_t
+bus_space_read_stream_4(bus_space_tag_t t, bus_space_handle_t bsh,
+	bus_size_t o)
+{
+	u_int32_t reg;
+	int s;
+
+	switch (t) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			delay(10);
+			splx(s);
+			break;
+		case SGIMIPS_BUS_SPACE_MEM:
+		case SGIMIPS_BUS_SPACE_IO:
+			wbflush();
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			reg = htole32(reg);
+			break;
+		default:
+			wbflush();
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			break;
+	}
+	return reg;
+}
+
+void
+bus_space_write_stream_2(bus_space_tag_t t, bus_space_handle_t h,
+	bus_size_t o, u_int16_t v)
+{
+	switch (t) {
+	case SGIMIPS_BUS_SPACE_NORMAL:
+		*(volatile u_int16_t *)(h + o) = v;
+		break;
+	case SGIMIPS_BUS_SPACE_HPC:
+		*(volatile u_int16_t *)(h + (o << 2) + 1) = v;
+		break;
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
+		v = le16toh(v);
+		*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = v;
+		break;
+	default:
+		panic("no bus tag");
+	}
+
+	wbflush();	/* XXX */
+}
+
+void
+bus_space_write_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+	bus_size_t o, u_int32_t v)
+{
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			delay(10);
+			splx(s);
+			break;
+		case SGIMIPS_BUS_SPACE_IO:
+		case SGIMIPS_BUS_SPACE_MEM:
+			v = le32toh(v);
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			wbflush(); /* XXX */
 			break;
 		default:
 			*(volatile u_int32_t *)((bsh) + (o)) = (v);

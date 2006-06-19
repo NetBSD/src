@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.4 2006/05/14 21:55:38 elad Exp $ */
+/* $Id: arbus.c,v 1.4.2.1 2006/06/19 03:44:52 chap Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.4 2006/05/14 21:55:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.4.2.1 2006/06/19 03:44:52 chap Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -146,6 +146,14 @@ static struct {
 	    	AR531X_RESET_WARM_WLAN1_BB,
 	    AR531X_ENABLE_WLAN1
     },
+    {
+	    "athflash",
+	    AR531X_FLASH_BASE,
+	    -1,
+	    0,
+	    0,
+	    0,
+    },
 #if 0
     {
 	    "argpio",
@@ -185,7 +193,7 @@ void
 arbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arbus_attach_args aa;
-	struct ar531x_board_info *info;
+	const struct ar531x_boarddata *info;
 	int i;
 
 	printf("\n");
@@ -196,7 +204,7 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; arbus_devices[i].name; i++) {
 		if (arbus_devices[i].mask &&
-		    ((arbus_devices[i].mask & info->ab_config) == 0)) {
+		    ((arbus_devices[i].mask & info->config) == 0)) {
 			continue;
 		}
 		aa.aa_name = arbus_devices[i].name;
@@ -205,9 +213,9 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 		aa.aa_irq = arbus_devices[i].irq;
 		aa.aa_addr = arbus_devices[i].addr;
 
-		if (aa.aa_addr < 0x1C000000)
+		if (aa.aa_addr < AR531X_UART0_BASE)
 			aa.aa_size = 0x00100000;
-		else
+		else if (aa.aa_addr < AR531X_FLASH_BASE)
 			aa.aa_size = 0x1000;
 
 		locs[ARBUSCF_ADDR] = aa.aa_addr;

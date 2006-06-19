@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2006/05/05 19:38:38 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.23.2.1 2006/06/19 03:45:36 chap Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2006/05/05 19:38:38 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23.2.1 2006/06/19 03:45:36 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,6 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
-
 	/*
 	 * We set the timer to when we expect the next timer
 	 * interrupt.  We could set the timer to later if we could

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.225 2006/05/12 06:01:02 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.225.2.1 2006/06/19 03:45:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -72,6 +72,7 @@
 #include <machine/psl.h>
 #include <machine/signal.h>
 #include <machine/trap.h>
+	
 #include <sys/syscall.h>
 
 /*
@@ -6540,145 +6541,10 @@ _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 
 #endif /* SUN4M */
 
-#if !defined(MSIIEP)	/* normal suns */
-/*
- * void lo_microtime(struct timeval *tv)
- *
- * LBL's sparc bsd 'microtime': We don't need to spl (so this routine
- * can be a leaf routine) and we don't keep a 'last' timeval (there
- * can't be two calls to this routine in a microsecond).  This seems to
- * be about 20 times faster than the Sun code on an SS-2. - vj
- *
- * Read time values from slowest-changing to fastest-changing,
- * then re-read out to slowest.  If the values read before
- * the innermost match those read after, the innermost value
- * is consistent with the outer values.  If not, it may not
- * be and we must retry.  Typically this loop runs only once;
- * occasionally it runs twice, and only rarely does it run longer.
- */
-#if defined(SUN4)
-ENTRY(lo_microtime)
-#else
-ENTRY(microtime)
-#endif
-	sethi	%hi(_C_LABEL(time)), %g2
-
-#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
-	sethi	%hi(TIMERREG_VA+4), %g3
-	or	%g3, %lo(TIMERREG_VA+4), %g3
-#elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
-	sethi	%hi(TIMERREG_VA), %g3
-	or	%g3, %lo(TIMERREG_VA), %g3
-#else
-	sethi	%hi(TIMERREG_VA), %g3
-	or	%g3, %lo(TIMERREG_VA), %g3
+#if (defined(SUN4C) || defined(SUN4)) && defined(SUN4M)
 NOP_ON_4_4C_1:
 	 add	%g3, 4, %g3
 #endif
-
-2:
-	ldd	[%g2+%lo(_C_LABEL(time))], %o2	! time.tv_sec & time.tv_usec
-	ld	[%g3], %o4			! usec counter
-	ldd	[%g2+%lo(_C_LABEL(time))], %g4	! see if time values changed
-	cmp	%g4, %o2
-	bne	2b				! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b				! if time.tv_usec changed
-	 tst	%o4
-
-	bpos	3f				! reached limit?
-	 srl	%o4, TMR_SHIFT, %o4		! convert counter to usec
-	sethi	%hi(_C_LABEL(tick)), %g4	! bump usec by 1 tick
-	ld	[%g4+%lo(_C_LABEL(tick))], %o1
-	set	TMR_MASK, %g5
-	add	%o1, %o3, %o3
-	and	%o4, %g5, %o4
-3:
-	add	%o4, %o3, %o3
-	set	1000000, %g5			! normalize usec value
-	cmp	%o3, %g5
-	bl,a	4f
-	 st	%o2, [%o0]
-	add	%o2, 1, %o2			! overflow
-	sub	%o3, %g5, %o3
-	st	%o2, [%o0]
-4:
-	retl
-	 st	%o3, [%o0+4]
-
-#else /* MSIIEP */
-/* XXX: uwe: can be merged with 4c/4m version above */
-/*
- * ms-IIep version of
- * void microtime(struct timeval *tv)
- *
- * This is similar to 4c/4m microtime.   The difference is that
- * counter uses 31 bits and ticks every 4 CPU cycles (CPU is @100MHz)
- * the magic to divide by 25 is stolen from gcc
- */
-ENTRY(microtime)
-	sethi	%hi(_C_LABEL(time)), %g2
-
-	sethi	%hi(MSIIEP_PCIC_VA), %g3
-	or	%g3, PCIC_SCCR_REG, %g3
-
-2:
-	ldd	[%g2+%lo(_C_LABEL(time))], %o2	! time.tv_sec & time.tv_usec
-	ld	[%g3], %o4		! system (timer) counter, little endian
-	ldd	[%g2+%lo(_C_LABEL(time))], %g4	! see if time values changed
-	cmp	%g4, %o2
-	bne	2b				! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b				! if time.tv_usec changed
-	 btst	0x80, %o4			! test overflow flag, LE
-	!! %o2 - time.tv_sec;  %o3 - time.tv_usec;  %o4 - timer counter
-
-!!! BEGIN ms-IIep specific code
-	bz	3f				! if limit not reached yet
-	 clr	%g4				!  then use timer as is
-
-	sethi	%hi(_C_LABEL(tick)), %g4
-	bclr	0x80, %o4			! clear limit reached flag
-	ld	[%g4+%lo(_C_LABEL(tick))], %g4
-
-	!! %g4 - either 0 or tick (if timer has hit the limit)
-3:
-	! now we're sure we need the timer value so let's endian-swap it
-	! %o4 = le32toh(%o4)
-	! since we're going to overwrite %g5 and don't need %g3 we can use them
-	! for intermediate values here
-	mov	%o4, %g3
-	set	0xff00ff, %g5
-	sll	%o4, 16, %o4	! first swap the upper and lower 16 bit
-	srl	%g3, 16, %g3
-	or	%g3, %o4, %o4	! result in %o4
-	and	%o4, %g5, %g3	! now grab byte 0 and 2
-	andn	%o4, %g5, %o4	! %o4 now contains byte 1 and 3
-	srl	%o4, 8, %o4	! shift them so they swap positions
-	sll	%g3, 8, %g3
-	or	%g3, %o4, %o4	! put them back together.
-
-	inc	-1, %o4				! timer is 1-based, adjust
-	!! divide by 25 magic stolen from a gcc output
-	set	1374389535, %g5
-	umul	%o4, %g5, %g0
-	rd	%y, %o4
-	srl	%o4, 3, %o4
-	add	%o4, %g4, %o4			! may be bump usec by tick
-
-!!! END ms-IIep specific code
-
-	add	%o3, %o4, %o3			! add timer to time.tv_usec
-	set	1000000, %g5			! normalize usec value
-	cmp	%o3, %g5
-	bl,a	4f
-	 st	%o2, [%o0]
-	inc	%o2				! overflow into tv_sec
-	sub	%o3, %g5, %o3
-	st	%o2, [%o0]
-4:	retl
-	 st	%o3, [%o0 + 4]
-#endif /* MSIIEP */
 
 /*
  * delay function

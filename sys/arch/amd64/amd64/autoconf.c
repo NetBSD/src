@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2006/02/04 11:24:42 jmmv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.8.1 2006/06/19 03:44:01 chap Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/02/04 11:24:42 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.8.1 2006/06/19 03:44:01 chap Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/02/04 11:24:42 jmmv Exp $");
 #if NBIOS32 > 0
 #include <machine/bios32.h>
 #endif
+
+#include <x86/x86/tsc.h>
 
 /*
  * Determine i/o configuration for a machine.
@@ -103,6 +105,8 @@ cpu_configure()
 #ifdef MULTIPROCESSOR
 	cpu_init_idle_pcbs();
 #endif
+
+	init_TSC_tc();
 
 	spl0();
 	lcr8(0);

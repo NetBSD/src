@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.3 2006/04/26 19:48:01 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.3.2.1 2006/06/19 03:45:06 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.3 2006/04/26 19:48:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.3.2.1 2006/06/19 03:45:06 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,9 @@ pnp_getpna(struct pnpbus_dev_attach_args *pna, struct pnpbus_attach_args *paa,
 	pna->pna_memt = paa->paa_memt;
 	pna->pna_ic = paa->paa_ic;
 	pnp_devid_to_string(id->DevId, pna->pna_devid);
+	pna->basetype = id->BaseType;
+	pna->subtype = id->SubType;
+	pna->interface = id->Interface;
 	pna->pna_ppc_dev = dev;
 	memset(r, 0, sizeof(*r));
 	SIMPLEQ_INIT(&r->mem);
@@ -403,7 +406,6 @@ pnpbus_print_devres(struct pnpbus_dev_attach_args *pna)
 {
 	aprint_normal(": ");
 	pnpbus_printres(&pna->pna_res);
-	aprint_normal("\n");
 }
 
 static int
