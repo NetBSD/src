@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.15 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.16 2006/06/20 03:22:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.15 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.16 2006/06/20 03:22:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,27 +97,31 @@ struct ptm_pty ptm_ptyfspty = {
 static const char *
 ptyfs__getpath(struct lwp *l, const struct mount *mp)
 {
+#define MAXBUF (sizeof(mp->mnt_stat.f_mntonname) + 32)
 	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-	char buf[sizeof(mp->mnt_stat.f_mntonname) + 32];
+	char *buf, *rv;
 	size_t len;
 	char *bp;
 	int error;
 
+	rv = mp->mnt_stat.f_mntonname;
 	if (cwdi->cwdi_rdir == NULL)
-		return mp->mnt_stat.f_mntonname;
+		return rv;
 
-	bp = buf + sizeof(buf);
+	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
+	bp = buf + MAXBUF;
 	*--bp = '\0';
 	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
-	    buf, sizeof(buf) / 2, 0, l);
+	    buf, MAXBUF / 2, 0, l);
 	if (error)	/* XXX */
-		return mp->mnt_stat.f_mntonname;
+		goto out;
 
 	len = strlen(bp);
-	if (len >= sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
-		return mp->mnt_stat.f_mntonname;
-	else
-		return &mp->mnt_stat.f_mntonname[len];
+	if (len < sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
+		rv += len;
+out:
+	free(buf, M_TEMP);
+	return rv;
 }
 
 static int

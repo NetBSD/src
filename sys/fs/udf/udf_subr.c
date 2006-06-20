@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.9 2006/06/12 00:18:06 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.10 2006/06/20 03:22:12 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.9 2006/06/12 00:18:06 christos Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.10 2006/06/20 03:22:12 christos Exp $");
 #endif /* not lint */
 
 
@@ -2600,7 +2600,7 @@ void
 udf_read_filebuf(struct udf_node *node, struct buf *buf)
 {
 	struct buf *nestbuf;
-	uint64_t    mapping[FILEBUFSECT];
+	uint64_t   *mapping;
 	uint64_t    run_start;
 	uint32_t    sector_size;
 	uint32_t    buf_offset, sector, rbuflen, rblk;
@@ -2627,6 +2627,8 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		return;
 	}
 
+	mapping = malloc(sizeof(*mapping) * FILEBUFSECT, M_TEMP, M_WAITOK);
+
 	error = 0;
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
 	error = udf_translate_file_extent(node, from, sectors, mapping);
@@ -2634,7 +2636,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		buf->b_error  = error;
 		buf->b_flags |= B_ERROR;
 		biodone(buf);
-		return;
+		goto out;
 	}
 	DPRINTF(READ, ("\ttranslate extent went OK\n"));
 
@@ -2646,7 +2648,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			buf->b_flags |= B_ERROR;
 		}
 		biodone(buf);
-		return;
+		goto out;
 	}
 	DPRINTF(READ, ("\tnot intern\n"));
 
@@ -2698,7 +2700,10 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			VOP_STRATEGY(node->ump->devvp, nestbuf);
 		}
 	}
+out:
 	DPRINTF(READ, ("\tend of read_filebuf\n"));
+	free(mapping, M_TEMP);
+	return;
 }
 #undef FILEBUFSECT
 
