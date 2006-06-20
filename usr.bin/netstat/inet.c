@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.72 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: inet.c,v 1.73 2006/06/20 19:22:17 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.72 2006/05/28 16:51:40 elad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.73 2006/06/20 19:22:17 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -643,8 +643,10 @@ carp_stats(u_long off, char *name)
 		size_t size = sizeof(carpstat);
 
 		if (sysctlbyname("net.inet.carp.stats", &carpstat, &size,
-				 NULL, 0) == -1)
-			err(1, "net.inet.carp.stats");
+				 NULL, 0) == -1) {
+			/* most likely CARP is not compiled in the kernel */
+			return;
+		}
 	} else {
 		if (off == 0)
 			return;
