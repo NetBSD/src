@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2006/06/01 21:15:30 garbled Exp $
+#	$NetBSD: Makefile,v 1.14 2006/06/20 17:40:36 garbled Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	1800k
+IMAGESIZE=	2048k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
