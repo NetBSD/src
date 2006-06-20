@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.18 2006/02/18 12:39:38 dsl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.19 2006/06/20 05:37:24 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.18 2006/02/18 12:39:38 dsl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.19 2006/06/20 05:37:24 jdc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: ffs.c,v 1.18 2006/02/18 12:39:38 dsl Exp $");
 
 #include "installboot.h"
 
+#include <dev/raidframe/raidframevar.h>
+
 #undef DIRBLKSIZ
 
 #include <ufs/ufs/dinode.h>
@@ -77,6 +79,7 @@ __RCSID("$NetBSD: ffs.c,v 1.18 2006/02/18 12:39:38 dsl Exp $");
 #define	ffs_dinode2_swap(inode_a, inode_b)
 #endif
 
+static int	ffs_match_common(ib_params *, off_t);
 static int	ffs_read_disk_block(ib_params *, uint64_t, int, char *);
 static int	ffs_find_disk_blocks_ufs1(ib_params *, ino_t,
 		    int (*)(ib_params *, void *, uint64_t, uint32_t), void *);
@@ -160,7 +163,8 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 	}
 
 	/* Read the inode. */
-	if (! ffs_read_disk_block(params, fsbtodb(fs, ino_to_fsba(fs, ino)),
+	if (! ffs_read_disk_block(params,
+		fsbtodb(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
 		fs->fs_bsize, inodebuf))
 		return (0);
 	inode = (struct ufs1_dinode *)inodebuf;
@@ -215,7 +219,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 			if (blk == 0)
 				memset(level[level_i].diskbuf, 0, MAXBSIZE);
 			else if (! ffs_read_disk_block(params, 
-				fsbtodb(fs, blk),
+				fsbtodb(fs, blk) + params->fstype->offset,
 				fs->fs_bsize, level[level_i].diskbuf))
 				return (0);
 			/* XXX ondisk32 */
@@ -231,7 +235,8 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    fsbtodb(fs, blk) + params->fstype->offset,
+		    sblksize(fs, inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)
@@ -461,6 +466,25 @@ static off_t sblock_try[] = SBLOCKSEARCH;
 int
 ffs_match(ib_params *params)
 {
+	return ffs_match_common(params, (off_t) 0);
+}
+
+int
+raid_match(ib_params *params)
+{
+	/* XXX Assumes 512 bytes / sector */
+	if (DEV_BSIZE != 512) {
+		warnx("Media is %d bytes/sector."
+			"  RAID is only supported on 512 bytes/sector media.",
+			DEV_BSIZE);
+		return 0;
+	}
+	return ffs_match_common(params, (off_t) RF_PROTECTED_SECTORS);
+}
+
+int
+ffs_match_common(ib_params *params, off_t offset)
+{
 	char		sbbuf[SBLOCKSIZE];
 	struct fs	*fs;
 	int i;
@@ -471,7 +495,7 @@ ffs_match(ib_params *params)
 
 	fs = (struct fs *)sbbuf;
 	for (i = 0; sblock_try[i] != -1; i++) {
-		loc = sblock_try[i] / DEV_BSIZE;
+		loc = sblock_try[i] / DEV_BSIZE + offset;
 		if (!ffs_read_disk_block(params, loc, SBLOCKSIZE, sbbuf))
 			continue;
 		switch (fs->fs_magic) {
@@ -482,6 +506,7 @@ ffs_match(ib_params *params)
 			params->fstype->needswap = 0;
 			params->fstype->blocksize = fs->fs_bsize;
 			params->fstype->sblockloc = loc;
+			params->fstype->offset = offset;
 			break;
 #ifndef FFS_NO_SWAP
 		case FS_UFS2_MAGIC_SWAPPED:
@@ -491,6 +516,7 @@ ffs_match(ib_params *params)
 			params->fstype->needswap = 1;
 			params->fstype->blocksize = bswap32(fs->fs_bsize);
 			params->fstype->sblockloc = loc;
+			params->fstype->offset = offset;
 			break;
 #endif
 		default:

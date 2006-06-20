@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.53 2006/01/13 17:45:36 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.54 2006/06/20 05:37:24 jdc Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 13, 2006
+.Dd May 19, 2006
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -310,11 +310,14 @@ The default operation is to attempt to auto-detect this setting.
 The following file system types are currently supported by
 .Nm :
 .
-.Bl -tag -offset indent -width ffs
+.Bl -tag -offset indent -width raid
 .
 .It Sy ffs
 .Bx
 Fast File System.
+.
+.It Sy raid
+Mirrored RAIDframe File System.
 .
 .It Sy raw
 .Sq Raw
@@ -372,7 +375,7 @@ These are:
 .It macppc Ta ffs, raw
 .It news68k Ta ffs, raw
 .It newsmips Ta ffs, raw
-.It sparc Ta ffs, raw
+.It sparc Ta ffs, raid, raw
 .It sun2 Ta ffs, raw
 .It sun3 Ta ffs, raw
 .El
@@ -687,6 +690,18 @@ UCHIYAMA Yasushi (ews4800mips).
 .Sh BUGS
 There are not currently primary bootstraps to support all file systems
 types which are capable of being the root file system.
+.Pp
+If a disk has been converted from
+.Sy FFS
+to
+.Sy RAID
+without the contents of the disk erased, then the original
+.Sy FFS
+installation may be auto-detected instead of the
+.Sy RAID
+installation.  In this case, the
+.Fl t Ar raid
+option must be provided.
 .
 .Ss Nx Ns Tn /alpha
 The
