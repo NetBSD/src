@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.122 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.123 2006/06/20 01:16:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.122 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.123 2006/06/20 01:16:23 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -230,6 +230,10 @@ struct wm_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
+	void *sc_powerhook;		/* power hook */
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
+	struct pci_conf_state sc_pciconf;
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
@@ -466,6 +470,7 @@ static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 
 static void	wm_shutdown(void *);
+static void	wm_powerhook(int, void *);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -796,6 +801,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		panic("wm_attach: impossible");
 	}
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
 
 	if (pci_dma64_available(pa))
 		sc->sc_dmat = pa->pa_dmat64;
@@ -1425,6 +1433,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_sdhook == NULL)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
+
+	sc->sc_powerhook = powerhook_establish(wm_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -1466,6 +1479,35 @@ wm_shutdown(void *arg)
 	struct wm_softc *sc = arg;
 
 	wm_stop(&sc->sc_ethercom.ec_if, 1);
+}
+
+static void
+wm_powerhook(int why, void *arg)
+{
+	struct wm_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+		wm_shutdown(sc);
+		break;
+	case PWR_SOFTRESUME:
+		ifp->if_flags &= ~IFF_RUNNING;
+		wm_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			wm_start(ifp);
+		break;
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+		break;
+	}
+
+	return;
 }
 
 /*
