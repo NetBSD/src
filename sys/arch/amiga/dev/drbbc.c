@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: drbbc.c,v 1.14 2006/06/20 19:57:32 is Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.14 2006/06/20 19:57:32 is Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -188,7 +188,7 @@ dracougettod(struct timeval *tvp)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<16)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<24);
 
-	/* BSD time is wr. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
+	/* BSD time is wrt. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
 
 	clkbuf += (8*365 + 2) * 86400;
 
