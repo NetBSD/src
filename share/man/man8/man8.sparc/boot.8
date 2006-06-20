@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.29 2006/06/20 05:43:37 jdc Exp $
+.\"	$NetBSD: boot.8,v 1.30 2006/06/20 06:28:32 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -208,7 +208,7 @@ probe-scsi         list devices on the primary SCSI controller
 probe-scsi-all     list devices on all known SCSI controllers
 reset              reset the system
 .Ed
-For disk and tape devices, the boot device is specified as 
+For disk and tape devices, the boot device is specified as
 .Sq /path/device@target,lun:partition .
 .Sh PROM MONITOR ABBREVIATED COMMAND SUMMARY
 This section only applies to old-style machines.
@@ -222,7 +222,7 @@ b?      list boot device types
 k2      reset the system
 .Ed
 .Pp
-For SCSI disk and tape devices, the boot device is specified as 
+For SCSI disk and tape devices, the boot device is specified as
 .Sq device(controller,unit,partition) ,
 where
 .Sq unit
