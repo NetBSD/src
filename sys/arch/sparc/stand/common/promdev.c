@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.18 2006/05/20 07:07:40 mrg Exp $ */
+/*	$NetBSD: promdev.c,v 1.19 2006/06/20 05:41:59 jdc Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -48,6 +48,12 @@
 #include <lib/libkern/libkern.h>
 #include <sparc/stand/common/promdev.h>
 
+#ifndef BOOTXX
+#include <sys/disklabel.h>
+#include <dev/sun/disklabel.h>
+#include <dev/raidframe/raidframevar.h>
+#endif
+
 /* OBP V0-3 PROM vector */
 #define obpvec	((struct promvec *)romp)
 
@@ -94,6 +100,10 @@ struct devsw obp_v2_devsw =
 char	prom_bootdevice[MAX_PROM_PATH];
 static int	saveecho;
 
+#ifndef BOOTXX
+static daddr_t doffset = 0;
+#endif
+
 
 void
 putchar(c)
@@ -119,6 +129,15 @@ devopen(f, fname, file)
 {
 	int	error = 0, fd = 0;
 	struct	promdata *pd;
+#ifndef BOOTXX
+	char *partition;
+	int part = 0;
+	char rawpart[MAX_PROM_PATH];
+	struct promdata *disk_pd;
+	char buf[DEV_BSIZE];
+	struct disklabel *dlp;
+	size_t read;
+#endif
 
 	pd = (struct promdata *)alloc(sizeof *pd);
 	f->f_devdata = (void *)pd;
@@ -188,8 +207,78 @@ devopen(f, fname, file)
 				prom_bootdevice);
 			return (error);
 		}
-	} else
+	} else {
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+
+#ifdef NOTDEF_DEBUG
+	printf("devopen: Checking disklabel for RAID partition\n");
+#endif
+
+		/*
+		 * We need to read from the raw partition (i.e. the
+		 * beginning of the disk in order to check the NetBSD
+		 * disklabel to see if the boot partition is type RAID.
+		 *
+		 * For machines with prom_version() == PROM_OLDMON, we
+		 * only handle boot from RAID for the first disk partition.
+		 */
+		disk_pd = (struct promdata *)alloc(sizeof *disk_pd);
+		memcpy(disk_pd, pd, sizeof(struct promdata));
+		if (prom_version() != PROM_OLDMON) {
+			strcpy(rawpart, prom_bootdevice);
+			if ((partition = strchr(rawpart, ':')) != '\0' &&
+		    	    *++partition >= 'a' &&
+			    *partition <= 'a' +  MAXPARTITIONS) {
+				part = *partition - 'a';
+				*partition = RAW_PART + 'a';
+			} else
+				strcat(rawpart, ":c");
+			if ((disk_pd->fd = prom_open(rawpart)) == 0)
+				return 0;
+		}
+		error = f->f_dev->dv_strategy(disk_pd, F_READ, LABELSECTOR,
+		    DEV_BSIZE, &buf, &read);
+		if (prom_version() != PROM_OLDMON)
+			prom_close(disk_pd->fd);
+		if (error || (read != DEV_BSIZE))
+			return 0;
+#ifdef NOTDEF_DEBUG
+		{
+			int x = 0;
+			char *p = (char *) buf;
+
+			printf("  Sector %d:\n", LABELSECTOR);
+			printf("00000000  ");
+			while (x < DEV_BSIZE) {
+				if (*p >= 0x00 && *p < 0x10)
+					printf("0%x ", *p & 0xff);
+				else
+					printf("%x ", *p & 0xff);
+				x++;
+				if (x && !(x % 8))
+					printf(" ");
+				if (x && !(x % 16)) {
+					if(x < 0x100)
+						printf("\n000000%x  ", x);
+					else
+						printf("\n00000%x  ", x);
+				}
+				p++;
+			}
+			printf("\n");
+		}
+#endif
+		/* Check for NetBSD disk label. */
+		dlp = (struct disklabel *) (buf + LABELOFFSET);
+		if (dlp->d_magic == DISKMAGIC && !dkcksum(dlp) &&
+		    dlp->d_partitions[part].p_fstype == FS_RAID) {
+#ifdef NOTDEF_DEBUG
+			printf("devopen: found RAID partition, "
+			    "adjusting offset to %d\n", RF_PROTECTED_SECTORS);
+#endif
+			doffset = RF_PROTECTED_SECTORS;
+		}
+	}
 #endif /* BOOTXX */
 	return (0);
 }
@@ -208,6 +297,9 @@ obp_v0_strategy(devdata, flag, dblk, size, buf, rsize)
 	struct	promdata *pd = (struct promdata *)devdata;
 	int	fd = pd->fd;
 
+#ifndef BOOTXX
+	dblk += doffset;
+#endif
 #ifdef DEBUG_PROM
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
@@ -249,6 +341,9 @@ obp_v2_strategy(devdata, flag, dblk, size, buf, rsize)
 	struct	promdata *pd = (struct promdata *)devdata;
 	int	fd = pd->fd;
 
+#ifndef BOOTXX
+	dblk += doffset;
+#endif
 #ifdef DEBUG_PROM
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
@@ -290,6 +385,9 @@ oldmon_strategy(devdata, flag, dblk, size, buf, rsize)
 	si = pd->si;
 	ops = si->si_boottab;
 
+#ifndef BOOTXX
+	dblk += doffset;
+#endif
 #ifdef DEBUG_PROM
 	printf("prom_strategy: size=%d dblk=%d\n", size, dblk);
 #endif
