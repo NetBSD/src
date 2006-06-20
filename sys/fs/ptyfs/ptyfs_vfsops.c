@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.16 2006/06/20 03:22:12 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.17 2006/06/20 09:17:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.16 2006/06/20 03:22:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.17 2006/06/20 09:17:14 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,8 @@ ptyfs__getpath(struct lwp *l, const struct mount *mp)
 {
 #define MAXBUF (sizeof(mp->mnt_stat.f_mntonname) + 32)
 	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-	char *buf, *rv;
+	char *buf;
+	const char *rv;
 	size_t len;
 	char *bp;
 	int error;
