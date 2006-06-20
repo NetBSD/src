@@ -1,4 +1,9 @@
-/* $NetBSD: vesabiosreg.h,v 1.4 2006/02/19 15:09:58 jmcneill Exp $ */
+/* $NetBSD: vesabiosreg.h,v 1.5 2006/06/20 20:30:22 drochner Exp $ */
+
+/*
+ * Written by M. Drochner
+ * Public domain.
+ */
 
 #ifndef _ARCH_I386_BIOS_VESABIOSREG_H
 #define _ARCH_I386_BIOS_VESABIOSREG_H
