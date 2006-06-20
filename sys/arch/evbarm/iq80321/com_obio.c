@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.9 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.9.16.1 2006/06/20 18:00:41 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.9 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.9.16.1 2006/06/20 18:00:41 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,18 +79,18 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct obio_attach_args *oba = aux;
 	struct com_obio_softc *osc = (void *) self;
 	struct com_softc *sc = &osc->sc_com;
+	bus_space_handle_t ioh;
 	int error;
 
-	sc->sc_iot = oba->oba_st;
-	sc->sc_iobase = oba->oba_addr;
 	sc->sc_frequency = COM_FREQ;
 	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
-	error = bus_space_map(sc->sc_iot, oba->oba_addr, 8, 0, &sc->sc_ioh);
+	error = bus_space_map(oba->oba_st, oba->oba_addr, 8, 0, &ioh);
 
 	if (error) {
 		aprint_error(": failed to map registers: %d\n", error);
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, oba->oba_st, ioh, oba->oba_addr);
 
 	com_attach_subr(sc);
 
