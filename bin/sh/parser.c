@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.60 2006/05/10 21:53:14 mrg Exp $	*/
+/*	$NetBSD: parser.c,v 1.61 2006/06/20 15:57:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.60 2006/05/10 21:53:14 mrg Exp $");
+__RCSID("$NetBSD: parser.c,v 1.61 2006/06/20 15:57:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,8 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		checkkwd = 2, readtoken();
 		do {
 			*cpp = cp = (union node *)stalloc(sizeof (struct nclist));
+			if (lasttoken == TLP)
+				readtoken();
 			cp->type = NCLIST;
 			app = &cp->nclist.pattern;
 			for (;;) {
