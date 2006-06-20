@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.19 2006/06/20 05:37:24 jdc Exp $	*/
+/*	$NetBSD: ffs.c,v 1.20 2006/06/20 14:04:22 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.19 2006/06/20 05:37:24 jdc Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.20 2006/06/20 14:04:22 jdc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -63,7 +63,8 @@ __RCSID("$NetBSD: ffs.c,v 1.19 2006/06/20 05:37:24 jdc Exp $");
 
 #include "installboot.h"
 
-#include <dev/raidframe/raidframevar.h>
+/* From <dev/raidframe/raidframevar.h> */
+#define RF_PROTECTED_SECTORS 64L
 
 #undef DIRBLKSIZ
 
