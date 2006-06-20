@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.28 2004/04/01 16:23:55 mrg Exp $
+.\"	$NetBSD: boot.8,v 1.29 2006/06/20 05:43:37 jdc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 1, 2004
+.Dd June 17, 2006
 .Dt BOOT 8 sparc
 .Os
 .Sh NAME
@@ -109,7 +109,8 @@ It can be put in
 user-interface compatibility mode (in which case it shows a simple
 .Sq \*[Gt]
 prompt), but this is essentially useless.
-However, by default the ROM runs in old-mode; to enter new-mode type
+However, by default on sun4c models, the ROM runs in old-mode; to
+enter new-mode type
 .Sq n .
 The ROM then shows a Forth-style
 .Dq ok
@@ -137,6 +138,7 @@ A typical list of usable boot devices (extracted from the output of
 the Open Boot PROM command
 .Ic devalias )
 is:
+.Bd -literal -offset indent
 floppy         /obio/SUNW,fdtwo
 net-aui        /iommu/sbus/ledma@f,400010:aui/le@f,c00000
 net-tpe        /iommu/sbus/ledma@f,400010:tpe/le@f,c00000
@@ -150,6 +152,7 @@ disk3          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@3,0
 disk2          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@2,0
 disk1          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@1,0
 disk0          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@0,0
+.Ed
 .Pp
 For new-style machines,
 if a device specification includes a partition letter (for example
@@ -191,6 +194,42 @@ Of course you may select any other boot device,
 if you do not want to boot from the device aliased to
 .Em disk ,
 see the discussion on devices above.
+.Sh OPEN BOOT PROM ABBREVIATED COMMAND SUMMARY
+This section only applies to new-style machines.
+.Pp
+The following Open Boot PROM commands are related to the boot process:
+.Bd -literal -offset indent
+boot               boot the system from the default device
+boot device filename arguments
+                   boot the specified device, filename and arguments
+probe-ide          list devices on the primary IDE controller
+probe-ide-all      list devices on all known IDE controllers
+probe-scsi         list devices on the primary SCSI controller
+probe-scsi-all     list devices on all known SCSI controllers
+reset              reset the system
+.Ed
+For disk and tape devices, the boot device is specified as 
+.Sq /path/device@target,lun:partition .
+.Sh PROM MONITOR ABBREVIATED COMMAND SUMMARY
+This section only applies to old-style machines.
+.Pp
+The following PROM monitor commands are related to the boot process:
+.Bd -literal -offset indent
+b       boot the system from the default device
+b device filename arguments
+        boot the specified device, filename and arguments
+b?      list boot device types
+k2      reset the system
+.Ed
+.Pp
+For SCSI disk and tape devices, the boot device is specified as 
+.Sq device(controller,unit,partition) ,
+where
+.Sq unit
+is the hexidecimal value of the SCSI id of the target multiplied
+by eight plus the lun, and
+.Sq partition
+is the partition number, starting from 0.
 .Sh FILES
 .Bl -tag -width /netbsdxx -compact
 .It Pa /netbsd
@@ -209,3 +248,17 @@ system bootstrap
 .Xr rc 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8
+.Sh BUGS
+On sun4 machines, the
+.Nx
+sparc boot loader can only boot from RAID partitions that start at the
+beginning of the disk.
+.Pp
+On sun4 and early PROM version sun4c machines, the PROM can only boot from
+the first 1Gb of the disk.
+.Pp
+On later PROM version sun4c and early PROM version sun4m machines, the PROM
+can only boot from the first 2Gb of the disk.
+.Pp
+On later PROM version sun4m machines, the PROM can only boot from the first
+4Gb of the disk.
