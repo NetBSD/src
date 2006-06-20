@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.6 2003/01/03 15:34:39 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2006/06/20 17:42:22 garbled Exp $
 #
 #	etc.prep/Makefile.inc -- prep-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC
 
-BUILD_KERNELS=		INSTALL
+BUILD_KERNELS=		INSTALL INSTALL_SMALL
 
 INSTALLATION_DIRS+=	installation/floppy
 
