@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.72 2006/06/17 06:54:58 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.73 2006/06/20 03:21:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.72 2006/06/17 06:54:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.73 2006/06/20 03:21:03 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2140,8 +2140,8 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 static int
 sysctl_doeproc(SYSCTLFN_ARGS)
 {
-	struct eproc eproc;
-	struct kinfo_proc2 kproc2;
+	struct eproc *eproc;
+	struct kinfo_proc2 *kproc2;
 	struct kinfo_proc *dp;
 	struct proc *p;
 	const struct proclist_desc *pd;
@@ -2179,6 +2179,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
+	kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
+	eproc = malloc(sizeof(*eproc), M_TEMP, M_WAITOK);
 	proclist_lock_read();
 
 	pd = proclists;
@@ -2261,13 +2263,13 @@ again:
 		}
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
-				fill_eproc(p, &eproc);
+				fill_eproc(p, eproc);
 				error = copyout(p, &dp->kp_proc,
 				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
-				error = copyout(&eproc, &dp->kp_eproc,
-				    sizeof(eproc));
+				error = copyout(eproc, &dp->kp_eproc,
+				    sizeof(*eproc));
 				if (error)
 					goto cleanup;
 				dp++;
@@ -2276,13 +2278,13 @@ again:
 			needed += sizeof(struct kinfo_proc);
 		} else { /* KERN_PROC2 */
 			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc2(p, &kproc2);
+				fill_kproc2(p, kproc2);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
 				 */
-				error = copyout(&kproc2, dp2,
-				    min(sizeof(kproc2), elem_size));
+				error = copyout(kproc2, dp2,
+				    min(sizeof(*kproc2), elem_size));
 				if (error)
 					goto cleanup;
 				dp2 += elem_size;
@@ -2302,8 +2304,10 @@ again:
 			*oldlenp = (char *)dp - where;
 		else
 			*oldlenp = dp2 - where;
-		if (needed > *oldlenp)
-			return (ENOMEM);
+		if (needed > *oldlenp) {
+			error = ENOMEM;
+			goto out;
+		}
 	} else {
 		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
@@ -2311,6 +2315,9 @@ again:
 	return (0);
  cleanup:
 	proclist_unlock_read();
+ out:
+	free(kproc2, M_TEMP);
+	free(eproc, M_TEMP);
 	return (error);
 }
 
