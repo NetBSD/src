@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.32 2006/05/29 17:35:41 rpaulo Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.33 2006/06/20 03:23:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.32 2006/05/29 17:35:41 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.33 2006/06/20 03:23:09 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.32 2006/05/29 17:35:41 rpaulo Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1125,9 +1126,10 @@ identifycpu(struct cpu_info *ci)
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
-	char buf[1024];
+	char *buf;
 	const char *feature_str[3];
 
+	buf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
@@ -1272,32 +1274,34 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags,
-			    feature_str[0], buf, sizeof(buf));
+			    feature_str[0], buf, MAXPATHLEN);
 			aprint_verbose("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags,
-			    feature_str[1], buf, sizeof(buf));
+			    feature_str[1], buf, MAXPATHLEN);
 			aprint_verbose("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags,
-			    feature_str[2], buf, sizeof(buf));
+			    feature_str[2], buf, MAXPATHLEN);
 			aprint_verbose("%s: features %s\n", cpuname, buf);
 		}
 	}
 
 	if (ci->ci_feature2_flags) {
 		bitmask_snprintf(ci->ci_feature2_flags,
-		    CPUID2_FLAGS, buf, sizeof(buf));
+		    CPUID2_FLAGS, buf, MAXPATHLEN);
 		aprint_verbose("%s: features2 %s\n", cpuname, buf);
 	}
 
 	if (ci->ci_feature3_flags) {
 		bitmask_snprintf(ci->ci_feature3_flags,
-			CPUID_FLAGS4, buf, sizeof(buf));
+			CPUID_FLAGS4, buf, MAXPATHLEN);
 		aprint_verbose("%s: features3 %s\n", cpuname, buf);
 	}
+
+	free(buf, M_TEMP);
 
 	if (*cpu_brand_string != '\0')
 		aprint_normal("%s: \"%s\"\n", cpuname, cpu_brand_string);
