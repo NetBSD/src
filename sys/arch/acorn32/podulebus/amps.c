@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.11 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: amps.c,v 1.11.16.1 2006/06/20 15:29:58 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.11 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.11.16.1 2006/06/20 15:29:58 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,14 +303,16 @@ com_amps_attach(parent, self, aux)
 	struct com_softc *sc = &asc->sc_com;
 	u_int iobase;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct amps_attach_args *aa = aux;
 
-	iot = sc->sc_iot = aa->aa_iot;
-	iobase = sc->sc_iobase = aa->aa_base;
+	iot = aa->aa_iot;
+	iobase = aa->aa_base;
 
-	if (!com_is_console(iot, iobase, &sc->sc_ioh)
-		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
-			panic("comattach: io mapping failed");
+	if (!com_is_console(iot, iobase, &ioh)
+	    && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
+		panic("comattach: io mapping failed");
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_frequency = AMPS_FREQ;
 	com_attach_subr(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.10 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.10.16.1 2006/06/20 15:29:58 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.10 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.10.16.1 2006/06/20 15:29:58 gdamore Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -101,7 +101,6 @@ cons_decl(com);
 
 static int  com_pioc_probe   __P((struct device *, struct cfdata *, void *));
 static void com_pioc_attach  __P((struct device *, struct device *, void *));
-static void com_pioc_cleanup __P((void *));
 
 /* device attach structure */
 
@@ -166,18 +165,20 @@ com_pioc_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	u_int iobase;
 	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct pioc_attach_args *pa = aux;
 	int count;
 
-	iot = sc->sc_iot = pa->pa_iot;
-	iobase = sc->sc_iobase = pa->pa_iobase + pa->pa_offset;
+	iot = pa->pa_iot;
+	iobase = pa->pa_iobase + pa->pa_offset;
 
 /*
 	printf(" (iot = %p, iobase = 0x%08x) ", iot, iobase);
 */
-	if (!com_is_console(iot, iobase, &sc->sc_ioh)
-		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
-			panic("comattach: io mapping failed");
+	if (!com_is_console(iot, iobase, &ioh)
+	    && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
+		panic("comattach: io mapping failed");
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -192,7 +193,7 @@ com_pioc_attach(parent, self, aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_pioc_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("%s: could not establish shutdown hook",
 		    sc->sc_dev.dv_xname);
 
@@ -206,26 +207,10 @@ com_pioc_attach(parent, self, aux)
 	 *   Make sure FIFO is off.
 	 *   Read pending data / int status etc.
 	 */
-	bus_space_write_1(iot, sc->sc_ioh, com_fifo, 0);
+	bus_space_write_1(iot, ioh, com_fifo, 0);
 	for (count = 0; count < 8; ++count)
-		(void)bus_space_read_1(iot, sc->sc_ioh, count);
+		(void)bus_space_read_1(iot, ioh, count);
 
-}
-
-/*
- * void com_pioc_cleanup(void *arg)
- *
- * clean up driver
- */
-
-static void
-com_pioc_cleanup(arg)
-	void *arg;
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
 }
 
 /*
