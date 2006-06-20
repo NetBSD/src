@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.7 2006/06/17 17:11:53 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.8 2006/06/20 22:36:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,16 +96,18 @@ wakeup_16:
 
 	call	beepon
 
-	/* The following needs to be configurable */
-/*#ifdef notyet*/
+	/* Only reset the VBIOS if machdep.acpi_vbios_reset=1 */
+	cmpb	$1,vbios_reset
+	jne	novbiosreset
+
 	/* Kick the VBIOS. */
 	lcall	$0xc000,$3
 
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
+novbiosreset:
 
-/*#endif*/
 	call beepoff
 
 	/* Get physical address of the code */
@@ -251,3 +253,4 @@ previous_fs:		.word 0
 previous_gs:		.word 0
 previous_ss:		.word 0
 where_to_recover:	.long 0
+vbios_reset:		.byte 0
