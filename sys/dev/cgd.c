@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.35 2006/05/14 21:42:26 elad Exp $ */
+/* $NetBSD: cgd.c,v 1.36 2006/06/20 03:20:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.35 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.36 2006/06/20 03:20:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -501,16 +501,18 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	int	 ret;
 	int	 keybytes;			/* key length in bytes */
 	const char *cp;
-	char	 inbuf[MAX_KEYSIZE];
+	char	 *inbuf;
 
 	cp = ci->ci_disk;
 	if ((ret = dk_lookup(cp, l, &vp)) != 0)
 		return ret;
 
+	inbuf = malloc(MAX_KEYSIZE, M_TEMP, M_WAITOK);
+
 	if ((ret = cgdinit(cs, cp, vp, l)) != 0)
 		goto bail;
 
-	memset(inbuf, 0x0, sizeof(inbuf));
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	ret = copyinstr(ci->ci_alg, inbuf, 256, NULL);
 	if (ret)
 		goto bail;
@@ -521,8 +523,8 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	}
 
 	/* right now we only support encblkno, so hard-code it */
-	memset(inbuf, 0x0, sizeof(inbuf));
-	ret = copyinstr(ci->ci_ivmethod, inbuf, sizeof(inbuf), NULL);
+	(void)memset(inbuf, 0, sizeof(inbuf));
+	ret = copyinstr(ci->ci_ivmethod, inbuf, MAX_KEYSIZE, NULL);
 	if (ret)
 		goto bail;
 	if (strcmp("encblkno", inbuf)) {
@@ -535,7 +537,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		ret = EINVAL;
 		goto bail;
 	}
-	memset(inbuf, 0x0, sizeof(inbuf));
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	ret = copyin(ci->ci_key, inbuf, keybytes);
 	if (ret)
 		goto bail;
@@ -544,12 +546,13 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_cdata.cf_mode = CGD_CIPHER_CBC_ENCBLKNO;
 	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
 	    &cs->sc_cdata.cf_blocksize);
-	memset(inbuf, 0x0, sizeof(inbuf));
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	if (!cs->sc_cdata.cf_priv) {
 		printf("cgd: unable to initialize cipher\n");
 		ret = EINVAL;		/* XXX is this the right error? */
 		goto bail;
 	}
+	free(inbuf, M_TEMP);
 
 	bufq_alloc(&cs->sc_dksc.sc_bufq, "fcfs", 0);
 
@@ -570,6 +573,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	return 0;
 
 bail:
+	free(inbuf, M_TEMP);
 	(void)vn_close(vp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	return ret;
 }
@@ -610,12 +614,13 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	size_t	size;
 	int	maxsecsize = 0;
 	int	ret;
-	char	tmppath[MAXPATHLEN];
+	char	*tmppath;
 
 	cs->sc_dksc.sc_size = 0;
 	cs->sc_tvn = vp;
+	cs->sc_tpath = NULL;
 
-	memset(tmppath, 0x0, sizeof(tmppath));
+	tmppath = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	ret = copyinstr(cpath, tmppath, MAXPATHLEN, &cs->sc_tpathlen);
 	if (ret)
 		goto bail;
@@ -656,6 +661,7 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	pdg->pdg_ncylinders = cs->sc_dksc.sc_size / pdg->pdg_nsectors;
 
 bail:
+	free(tmppath, M_TEMP);
 	if (ret && cs->sc_tpath)
 		free(cs->sc_tpath, M_DEVBUF);
 	return ret;
