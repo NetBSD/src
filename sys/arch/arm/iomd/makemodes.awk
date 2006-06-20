@@ -1,4 +1,4 @@
-#	$NetBSD: makemodes.awk,v 1.1 2001/10/05 22:27:41 reinoud Exp $
+#	$NetBSD: makemodes.awk,v 1.1.66.1 2006/06/20 15:33:51 gdamore Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -194,14 +194,14 @@ END {
 		closest = 200;
 
 		# Report the mode specifier being processed
-		printf("%s ==> ", ARGV[res]) > "/dev/stderr";
+		printf("%s ==> ", ARGV[res]) | "cat 1>&2";
 
 		# Pull apart the modespec
 		args = split(ARGV[res], modespec, ",");
 
 		# We need at least 2 arguments
 		if (args < 2) {
-			printf("Invalid mode specifier\n") > "/dev/stderr";
+			printf("Invalid mode specifier\n") | "cat 1>&2";
 			continue;
 		}
 
@@ -218,7 +218,7 @@ END {
 
 		# Report the full mode specifier
 		printf("%d x %d x %d x %d : ", modespec[1], modespec[2],
-		    modespec[3], modespec[4]) > "/dev/stderr";
+		    modespec[3], modespec[4]) | "cat 1>&2";
 
 		# Now loop round all the modes we parsed and find the matches
 		for (loop = 0; loop < mode; loop = loop + 1) {
@@ -245,7 +245,7 @@ END {
 			modes[loop, 7] = int(fr + 0.5);
 
 			# Report the frame rate
-			printf("%d ", modes[loop, 7]) > "/dev/stderr";
+			printf("%d ", modes[loop, 7]) | "cat 1>&2";
 
 			# Is this the closest
 			if (closest > mod(modes[loop, 7] - modespec[4])) {
@@ -264,19 +264,19 @@ END {
 
 		# Did we find any sort of match ?
 		if (found == -1) {
-			printf("Cannot find mode") > "/dev/stderr";
+			printf("Cannot find mode") | "cat 1>&2";
 			continue;
 		}
 
 		# Report the frame rate matched
-		printf("- %d", modes[found, 7]) > "/dev/stderr";
+		printf("- %d", modes[found, 7]) | "cat 1>&2";
 
 		# Output the mode as part of the mode definition array
 		printf("\t{ %6d, %22s, %22s, %d, %d, %d },\n",
 		    modes[found, 3], modes[found, 4], modes[found, 5],
 		    cdepth(modespec[3]), modes[found, 6], modes[found, 7]);
 
-		printf("\n") > "/dev/stderr";
+		printf("\n") | "cat 1>&2";
 	}
 
 	# Add a terminating entry and close the array.
