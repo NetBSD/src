@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2006/05/09 03:13:00 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 2006/06/20 05:49:09 garbled Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/05/09 03:13:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/06/20 05:49:09 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -49,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/05/09 03:13:00 garbled Exp $");
 #define	MINYEAR	1990
 
 void decr_intr(struct clockframe *);
+void init_prep_tc(void);
+static u_int get_prep_timecount(struct timecounter *);
 
 u_long ticks_per_sec;
 u_long ns_per_tick;
@@ -58,6 +61,15 @@ struct device *clockdev;
 const struct clockfns *clockfns;
 
 static todr_chip_handle_t todr_handle;
+
+static struct timecounter prep_timecounter = {
+	get_prep_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0x7fffffff,		/* counter_mask */
+	0,			/* frequency */
+	"prep_mftb",		/* name */
+	0			/* quality */
+};
 
 void
 todr_attach(todr_chip_handle_t handle)
@@ -85,6 +97,7 @@ cpu_initclocks(void)
 	else
 		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	init_prep_tc();
 }
 
 /*
@@ -95,9 +108,13 @@ void
 inittodr(time_t base)
 {
 	int badbase, waszero;
+	struct timeval time;
+	struct timespec ts;
 
 	badbase = 0;
 	waszero = (base == 0);
+	time.tv_sec = 0;
+	time.tv_usec = 0;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
 		if (base != 0)
@@ -114,7 +131,10 @@ inittodr(time_t base)
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
 		 */
-		time.tv_sec = base;
+		ts.tv_sec = base;
+		ts.tv_nsec = 0;
+		tc_setclock(&ts);
+
 		if (!badbase)
 			resettodr();
 	} else {
@@ -123,10 +143,16 @@ inittodr(time_t base)
 		 * if so, assume something is amiss.
 		 */
 		int deltat = time.tv_sec - base;
+
+		ts.tv_sec = time.tv_sec;
+		ts.tv_nsec = time.tv_usec * 1000;
+		tc_setclock(&ts);
+
 		if (deltat < 0)
 			deltat = -deltat;
 		if (waszero || deltat < 2 * SECDAY)
 			return;
+
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
@@ -143,6 +169,9 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval time;
+
+	getmicrotime(&time);
 
 	if (time.tv_sec == 0)
 		return;
@@ -229,33 +258,6 @@ decr_intr(struct clockframe *frame)
 }
 
 /*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(struct timeval *tvp)
-{
-	u_long tb;
-	u_long ticks;
-	int msr, scratch;
-	
-	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
-	else
-		__asm volatile ("mftb %0" : "=r"(tb));
-	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
-	*tvp = time;
-	mtmsr(msr);
-	ticks /= 1000;
-	tvp->tv_usec += ticks;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-}
-
-/*
  * Wait for about n microseconds (at least!).
  */
 void
@@ -292,4 +294,29 @@ delay(unsigned int n)
 			      : "=&r"(scratch) : "r"(tbh), "r"(tbl)
 			      : "cr0");
 	}
+}
+
+static u_int
+get_prep_timecount(struct timecounter *tc)
+{
+	u_long tb;
+	int msr, scratch;
+	
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	if ((mfpvr() >> 16) == MPC601)
+		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+	else
+		__asm volatile ("mftb %0" : "=r"(tb));
+	mtmsr(msr);
+
+	return tb;
+}
+
+void
+init_prep_tc()
+{
+	/* from machdep initialization */
+	prep_timecounter.tc_frequency = ticks_per_sec;
+	tc_init(&prep_timecounter);
 }
