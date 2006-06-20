@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.6 2006/01/26 20:58:52 bouyer Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.7 2006/06/20 02:39:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -48,17 +48,19 @@
 
 #define PDC203xx_BAR_IDEREGS 0x1c /* BAR where the IDE registers are mapped */
 
+#define PDC_CHANNELBASE(ch) 0x200 + ((ch) * 0x80)
+#define PDC_ERRMASK 0x00780700
+
 static void pdcsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void pdc203xx_setup_channel(struct ata_channel *);
-static int  pdc203xx_pci_intr(void *);
 static void pdc203xx_irqack(struct ata_channel *);
 static int  pdc203xx_dma_init(void *, int, int, void *, size_t, int);
 static void pdc203xx_dma_start(void *,int ,int);
 static int  pdc203xx_dma_finish(void *, int, int, int);
+static int  pdcsata_pci_intr(void *);
+static void pdcsata_do_reset(struct ata_channel *, int);
 
 /* PDC205xx, PDC405xx and PDC407xx. but tested only pdc40718 */
-static int  pdc205xx_pci_intr(void *);
-static void pdc205xx_do_reset(struct ata_channel *, int);
 static void pdc205xx_drv_probe(struct ata_channel *);
 
 static int  pdcsata_match(struct device *, struct cfdata *, void *);
@@ -183,30 +185,8 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-
-	switch (sc->sc_pp->ide_product) {
-	case PCI_PRODUCT_PROMISE_PDC20318:
-	case PCI_PRODUCT_PROMISE_PDC20319:
-	case PCI_PRODUCT_PROMISE_PDC20371:
-	case PCI_PRODUCT_PROMISE_PDC20375:
-	case PCI_PRODUCT_PROMISE_PDC20376:
-	case PCI_PRODUCT_PROMISE_PDC20377:
-	case PCI_PRODUCT_PROMISE_PDC20378:
-	case PCI_PRODUCT_PROMISE_PDC20379:
-	default:
-		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-		    intrhandle, IPL_BIO, pdc203xx_pci_intr, sc);
-		break;
-
-	case PCI_PRODUCT_PROMISE_PDC40718:
-	case PCI_PRODUCT_PROMISE_PDC40719:
-	case PCI_PRODUCT_PROMISE_PDC20571:
-	case PCI_PRODUCT_PROMISE_PDC20575:
-	case PCI_PRODUCT_PROMISE_PDC20579:
-		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-		    intrhandle, IPL_BIO, pdc205xx_pci_intr, sc);
-		break;
-	}
+	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+	    intrhandle, IPL_BIO, pdcsata_pci_intr, sc);
 
 	if (sc->sc_pci_ih == NULL) {
 		aprint_error("%s: couldn't establish native-PCI interrupt",
@@ -258,6 +238,8 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = pdc203xx_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 
+	sc->sc_wdcdev.reset = pdcsata_do_reset;
+
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_PROMISE_PDC20318:
 	case PCI_PRODUCT_PROMISE_PDC20319:
@@ -281,7 +263,6 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC40718_NCHANNELS;
 
-		sc->sc_wdcdev.reset = pdc205xx_do_reset;
 		sc->sc_wdcdev.sc_atac.atac_probe = pdc205xx_drv_probe;
 
 		break;
@@ -290,7 +271,6 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC20575_NCHANNELS;
 
-		sc->sc_wdcdev.reset = pdc205xx_do_reset;
 		sc->sc_wdcdev.sc_atac.atac_probe = pdc205xx_drv_probe;
 
 		break;
@@ -404,53 +384,37 @@ pdc203xx_setup_channel(struct ata_channel *chp)
 }
 
 static int
-pdc203xx_pci_intr(void *arg)
+pdcsata_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	int i, rv, crv;
-	u_int32_t scr;
-
-	rv = 0;
-	scr = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x00040);
-
-	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
-		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->ata_channel;
-		if (scr & (1 << (i + 1))) {
-			crv = wdcintr(wdc_cp);
-			if (crv == 0) {
-				printf("%s:%d: bogus intr (reg 0x%x)\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-				    i, scr);
-			} else
-				rv = 1;
-		}
-	}
-	return rv;
-}
-
-static int
-pdc205xx_pci_intr(void *arg)
-{
-	struct pciide_softc *sc = arg;
-	struct pciide_channel *cp;
-	struct ata_channel *wdc_cp;
-	int i, rv, crv;
-	u_int32_t scr, status;
+	u_int32_t scr, status, chanbase;
 
 	rv = 0;
 	scr = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x40);
+	if (scr == 0xffffffff) return(rv);
 	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x40, scr & 0x0000ffff);
-
-	status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60);
-	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, status & 0x000000ff);
+	scr = scr & 0x0000ffff;
+	if (!scr) return(rv);
 
 	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->ata_channel;
 		if (scr & (1 << (i + 1))) {
+			chanbase = PDC_CHANNELBASE(i) + 0x48;
+			status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase);
+			if (status & PDC_ERRMASK) {
+				chanbase = PDC_CHANNELBASE(i) + 0x60;
+				status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase);
+				status |= 0x800;
+				bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase, status);
+				status &= ~0x800;
+				bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase, status);
+				status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase);
+				continue;
+			}
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
 				printf("%s:%d: bogus intr (reg 0x%x)\n",
@@ -542,24 +506,29 @@ pdc203xx_dma_finish(void *v, int channel, int drive, int force)
 
 
 static void
-pdc205xx_do_reset(struct ata_channel *chp, int poll)
+pdcsata_do_reset(struct ata_channel *chp, int poll)
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
-	u_int32_t scontrol;
+	int reset, status, i, chanbase;
+
+	/* reset SATA */
+	reset = (1 << 11);
+	chanbase = PDC_CHANNELBASE(chp->ch_channel) + 0x60;
+	for (i = 0; i < 11;i ++) {
+		status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase);
+		if (status & reset) break;
+		delay(100);
+		status |= reset;
+		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase, status);
+	}
+	status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase);
+	status &= ~reset;
+	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase, status);
+	status = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, chanbase);
 
 	wdc_do_reset(chp, poll);
 
-	/* reset SATA */
-	scontrol = SControl_DET_INIT | SControl_SPD_ANY | SControl_IPM_NONE;
-	SCONTROL_WRITE(sc, chp->ch_channel, scontrol);
-	delay(50*1000);
-
-	scontrol &= ~SControl_DET_INIT;
-	SCONTROL_WRITE(sc, chp->ch_channel, scontrol);
-	delay(50*1000);
 }
-
-
 
 static void
 pdc205xx_drv_probe(struct ata_channel *chp)
