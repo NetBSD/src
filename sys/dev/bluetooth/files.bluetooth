@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.6 2006/06/19 15:44:45 gdamore Exp $
+#	$NetBSD: files.bluetooth,v 1.7 2006/06/21 17:14:13 drochner Exp $
 #
 # Config file for machine independent Bluetooth devices that attach
 # to pseudo-device hub
@@ -11,23 +11,23 @@ file dev/bluetooth/bthub.c		bthub
 define bthidbus {[ reportid = -1 ]}
 
 # HID Device
-device bthidev { }: bluetooth, bthidbus, hid
+device bthidev: bluetooth, bthidbus, hid
 attach bthidev at bthub
 file dev/bluetooth/bthidev.c		bthidev
 
 # HID Keyboards
 defflag		opt_btkbd.h	BTKBD_REPEAT
 defparam	opt_btkbd.h	BTKBD_LAYOUT
-device btkbd { }: hid, wskbddev
+device btkbd: hid, wskbddev
 attach btkbd at bthidbus
 file dev/bluetooth/btkbd.c		btkbd
 
 # HID Mice
-device btms { }: hid, wsmousedev
+device btms: hid, wsmousedev
 attach btms at bthidbus
 file dev/bluetooth/btms.c		btms
 
 # Audio Headsets
-device bthset { }: bluetooth, audiobus, auconv, mulaw, aurateconv
+device bthset: bluetooth, audiobus, auconv, mulaw, aurateconv
 attach bthset at bthub
 file dev/bluetooth/bthset.c		bthset

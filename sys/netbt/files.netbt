@@ -1,8 +1,8 @@
-# $NetBSD: files.netbt,v 1.1 2006/06/19 15:44:45 gdamore Exp $
+# $NetBSD: files.netbt,v 1.2 2006/06/21 17:14:13 drochner Exp $
 
 # Bluetooth Protocols
 
-define	bluetooth { }
+define	bluetooth
 defflag	opt_bluetooth.h		BLUETOOTH
 
 file	netbt/bt_proto.c	bluetooth
