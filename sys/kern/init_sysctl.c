@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.73 2006/06/20 03:21:03 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.74 2006/06/21 13:46:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.73 2006/06/20 03:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.74 2006/06/21 13:46:17 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2179,8 +2179,13 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
-	eproc = malloc(sizeof(*eproc), M_TEMP, M_WAITOK);
+	if (type == KERN_PROC) {
+		eproc = malloc(sizeof(*eproc), M_TEMP, M_WAITOK);
+		kproc2 = NULL;
+	} else {
+		eproc = NULL;
+		kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
+	}
 	proclist_lock_read();
 
 	pd = proclists;
@@ -2312,13 +2317,19 @@ again:
 		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
 	}
-	return (0);
+	if (kproc2)
+		free(kproc2, M_TEMP);
+	if (eproc)
+		free(eproc, M_TEMP);
+	return 0;
  cleanup:
 	proclist_unlock_read();
  out:
-	free(kproc2, M_TEMP);
-	free(eproc, M_TEMP);
-	return (error);
+	if (kproc2)
+		free(kproc2, M_TEMP);
+	if (eproc)
+		free(eproc, M_TEMP);
+	return error;
 }
 
 /*
