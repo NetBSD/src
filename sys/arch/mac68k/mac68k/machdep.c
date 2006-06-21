@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.305 2005/06/16 22:45:46 jmc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.305.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2005/06/16 22:45:46 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -681,13 +681,15 @@ cpu_init_kcore_hdr(void)
  * Compute the size of the machine-dependent crash dump header.
  * Returns size in disk blocks.
  */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 int
 cpu_dumpsize(void)
 {
-	int size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return (btodb(roundup(size, dbtob(1))));
+	return btodb(MDHDRSIZE);
 }
 
 /*
@@ -696,7 +698,7 @@ cpu_dumpsize(void)
 int
 cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
-	int buf[dbtob(1) / sizeof(int)];
+	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
 	kcore_seg_t *kseg;
 	int error;
@@ -707,7 +709,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 
 	/* Create the segment header. */
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
@@ -972,14 +974,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
 	/* Check to see if MID == 0. */
 	if (((struct exec *)epp->ep_hdr)->a_midmag == ZMAGIC)
-		return exec_aout_prep_oldzmagic(p, epp);
+		return exec_aout_prep_oldzmagic(l->l_proc, epp);
 #endif
 
 	return error;
@@ -2338,7 +2340,7 @@ gray_bar(void)
    	3) restore regs
 */
 
-	__asm __volatile (
+	__asm volatile (
 			"	movl %a0,%sp@-;"
 			"	movl %a1,%sp@-;"
 			"	movl %d0,%sp@-;"
@@ -2354,7 +2356,7 @@ gray_bar(void)
 			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
 
-	__asm __volatile (
+	__asm volatile (
 			"	movl %sp@+,%d1;"
 			"	movl %sp@+,%d0;"
 			"	movl %sp@+,%a1;"
@@ -2746,7 +2748,7 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	__asm __volatile (
+	__asm volatile (
 			"	movl %a0,%sp@-;"
 			"	movl %a1,%sp@-;"
 			"	movl %d0,%sp@-;"
@@ -2754,7 +2756,7 @@ printstar(void)
 
 	/* printf("*"); */
 
-	__asm __volatile (
+	__asm volatile (
 			"	movl %sp@+,%d1;"
 			"	movl %sp@+,%d0;"
 			"	movl %sp@+,%a1;"

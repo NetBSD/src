@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.10 2005/06/23 19:44:00 junyoung Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.10.2.1 2006/06/21 14:48:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -41,6 +41,7 @@
 
 struct fs_ops file_system[] = {
 	FS_OPS(ustarfs),	/* this can work from tape, so put it first */
+	FS_OPS(ffsv2),
 	FS_OPS(ufs),
 	FS_OPS(cd9660),
 	FS_OPS(lfsv1),

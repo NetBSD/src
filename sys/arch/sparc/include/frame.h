@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 2003/08/07 16:29:38 agc Exp $ */
+/*	$NetBSD: frame.h,v 1.5.16.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,8 @@ struct frame {
 struct frame32 {
 	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
-	u_int32_t	fr_fp;	/* space to save frame pointer (%i6) */
-	u_int32_t	fr_pc;	/* space to save return pc (%i7) */
+	uint32_t	fr_fp;	/* space to save frame pointer (%i6) */
+	uint32_t	fr_pc;	/* space to save return pc (%i7) */
 	/*
 	 * SunOS reserves another 8 words here; this is pointless
 	 * but we do it for compatibility.
@@ -108,8 +108,8 @@ struct frame32 {
 struct frame64 {
 	int64_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int64_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
-	u_int64_t	fr_fp;		/* space to save frame pointer (%i6) */
-	u_int64_t	fr_pc;		/* space to save return pc (%i7) */
+	uint64_t	fr_fp;		/* space to save frame pointer (%i6) */
+	uint64_t	fr_pc;		/* space to save return pc (%i7) */
 	/*
 	 * SVR4 reserves a bunch of extra stuff.
 	 */

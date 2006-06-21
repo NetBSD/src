@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.46 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: asc.c,v 1.46.10.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.46 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.46.10.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -210,7 +210,7 @@ ascattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ascopen(dev_t dev, int flag, int mode, struct proc *p)
+ascopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct asc_softc *sc;
 	int unit;
@@ -227,7 +227,7 @@ ascopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-ascclose(dev_t dev, int flag, int mode, struct proc *p)
+ascclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct asc_softc *sc;
 
@@ -250,7 +250,7 @@ ascwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-ascioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ascioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct asc_softc *sc;
 	int error;

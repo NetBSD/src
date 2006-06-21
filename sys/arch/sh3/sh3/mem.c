@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 2004/03/24 15:38:42 wiz Exp $	*/
+/*	$NetBSD: mem.c,v 1.18.16.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 2004/03/24 15:38:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18.16.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 2004/03/24 15:38:42 wiz Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;
@@ -192,7 +193,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (!__mm_mem_addr(off) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if (!__mm_mem_addr(off) &&
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (-1);
 	return (sh3_btop((paddr_t)off));
 }

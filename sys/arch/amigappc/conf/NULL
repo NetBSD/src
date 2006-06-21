@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.19 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: NULL,v 1.19.6.1 2006/06/21 14:48:53 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -71,6 +71,7 @@ file-system 	FFS		# Berkeley fast file system
 #file-system 	PROCFS		# /proc filesystem
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 #Filesystem options
 #options 	QUOTA		# User and group quotas in FFS
@@ -78,7 +79,7 @@ file-system 	FFS		# Berkeley fast file system
 #options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 #Compatibility options for various existing systems
 
@@ -304,17 +305,17 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 #uk*	at scsibus? target ? lun ?	# scsi unknown
 
 #pseudo-device	loop			# loopback network interface
-#pseudo-device	sl		1	# SLIP network interfaces
-#pseudo-device	ppp		1	# PPP network interfaces
-#pseudo-device	tun		1	# network tunnel line discipline
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	ppp			# PPP network interfaces
+#pseudo-device	tun			# network tunnel line discipline
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP Filter package
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 
-#pseudo-device	vnd		4	# vnode pseudo-disks
+#pseudo-device	vnd			# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 

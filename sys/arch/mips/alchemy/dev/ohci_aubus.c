@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.5 2003/10/23 04:58:32 simonb Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.5.16.1 2006/06/21 14:53:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.5 2003/10/23 04:58:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.5.16.1 2006/06/21 14:53:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.5 2003/10/23 04:58:32 simonb Exp $"
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
-
-#include <evbmips/alchemy/pb1000reg.h>
-#include <evbmips/alchemy/pb1000_obiovar.h>
+#include <mips/alchemy/dev/ohcireg.h>
 
 #include <dev/usb/usb.h>   
 #include <dev/usb/usbdi.h>
@@ -85,15 +83,18 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	void *ih;
 	usbd_status r;
 	uint32_t x, tmp;
+	bus_addr_t usbh_base, usbh_enable;
 	struct aubus_attach_args *aa = aux;
 
 	r = 0;
 
-	sc->sc_size = USBH_SIZE;
+	usbh_base = aa->aa_addrs[0];
+	usbh_enable = aa->aa_addrs[1];
+	sc->sc_size = aa->aa_addrs[2];
 	sc->iot = aa->aa_st;
 	sc->sc_bus.dmatag = (bus_dma_tag_t)aa->aa_dt;
 
-	if (bus_space_map(sc->iot, USBH_BASE, USBH_SIZE, 0, &sc->ioh)) {
+	if (bus_space_map(sc->iot, usbh_base, sc->sc_size, 0, &sc->ioh)) {
 		printf("%s: Unable to map USBH registers\n",
 			sc->sc_bus.bdev.dv_xname);
 		return;
@@ -107,15 +108,15 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	 *  (3) Clear HCFS in OHCI_CONTROL.
 	 *  (4) Wait for RD bit to be set.
 	 */
-	x = bus_space_read_4(sc->iot, sc->ioh, USBH_ENABLE);
+	x = bus_space_read_4(sc->iot, sc->ioh, usbh_enable);
 	x |= UE_CE;
-	bus_space_write_4(sc->iot, sc->ioh, USBH_ENABLE, x);
+	bus_space_write_4(sc->iot, sc->ioh, usbh_enable, x);
 	delay(10);
 	x |= UE_E;
 #ifdef __MIPSEB__
 	x |= UE_BE;
 #endif
-	bus_space_write_4(sc->iot, sc->ioh, USBH_ENABLE, x);
+	bus_space_write_4(sc->iot, sc->ioh, usbh_enable, x);
 	delay(10);
 	x = bus_space_read_4(sc->iot, sc->ioh, OHCI_CONTROL);
 	x &= ~(OHCI_HCFS_MASK);
@@ -125,13 +126,13 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
          *  au1500 Errata #7.
          */
 	for (x = 100; x; x--) {
-		bus_space_read_4(sc->iot, sc->ioh, USBH_ENABLE);
-		tmp = bus_space_read_4(sc->iot, sc->ioh, USBH_ENABLE);
+		bus_space_read_4(sc->iot, sc->ioh, usbh_enable);
+		tmp = bus_space_read_4(sc->iot, sc->ioh, usbh_enable);
 		if (tmp&UE_RD)
 			break;
 		delay(1000);
 	}
-	printf(": Au1X00 OHCI\n");
+	printf(": Alchemy OHCI\n");
 
 	/* Disable OHCI interrupts */
 	bus_space_write_4(sc->iot, sc->ioh, OHCI_INTERRUPT_DISABLE,
@@ -143,6 +144,8 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: couldn't establish interrupt\n",
 			sc->sc_bus.bdev.dv_xname);
 	}
+
+	sc->sc_endian = OHCI_HOST_ENDIAN;
 
 	if (x)
 		r = ohci_init(sc);

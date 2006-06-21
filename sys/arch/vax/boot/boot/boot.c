@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2005/06/27 11:26:02 junyoung Exp $ */
+/*	$NetBSD: boot.c,v 1.23.2.1 2006/06/21 14:57:17 yamt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -193,7 +193,7 @@ Xmain(void)
 void
 halt(char *hej)
 {
-	asm("halt");
+	__asm("halt");
 }
 
 void
@@ -258,7 +258,7 @@ load:
 
 #define	extzv(one, two, three,four)	\
 ({			\
-	asm __volatile ("extzv %0,%3,%1,%2"	\
+	__asm volatile ("extzv %0,%3,%1,%2"	\
 			:			\
 			: "g"(one),"m"(two),"mo>"(three),"g"(four));	\
 })

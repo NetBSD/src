@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.30 2003/08/07 16:26:43 agc Exp $ */
+/*	$NetBSD: par.c,v 1.30.16.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30 2003/08/07 16:26:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30.16.1 2006/06/21 14:48:26 yamt Exp $");
 
 /*
  * parallel port interface
@@ -147,7 +147,7 @@ parattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 int
-paropen(dev_t dev, int flags, int mode, struct proc *p)
+paropen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc = getparsp(unit);
@@ -184,7 +184,7 @@ paropen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-parclose(dev_t dev, int flags, int mode, struct proc *p)
+parclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
   int unit = UNIT(dev);
   struct par_softc *sc = getparsp(unit);
@@ -207,7 +207,7 @@ parstart(void *arg)
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parstart(%x)\n", sc->sc_dev.dv_unit);
+		printf("parstart(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~PARF_DELAY;
 	wakeup(sc);
@@ -220,7 +220,7 @@ partimo(void *arg)
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("partimo(%x)\n", sc->sc_dev.dv_unit);
+		printf("partimo(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~(PARF_UIO|PARF_TIMO);
 	wakeup(sc);
@@ -432,7 +432,7 @@ again:
 }
 
 int
-parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
   struct par_softc *sc = getparsp(UNIT(dev));
   struct parparam *pp, *upp;

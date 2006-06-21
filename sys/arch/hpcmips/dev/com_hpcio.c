@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.7 2003/07/15 02:29:28 lukem Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.7.16.1 2006/06/21 14:51:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.7 2003/07/15 02:29:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.7.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -294,7 +294,7 @@ com_hpcio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	int addr, port, mode, alignment, *loc;
 
-	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	loc = device_cfdata(&sc->sc_dev)->cf_loc;
 	addr = loc[HPCIOIFCF_ADDR];
 	printf(" addr %x", addr);
 	if ((com_hpcio_cniot == haa->haa_iot ||

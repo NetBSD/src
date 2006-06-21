@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.c,v 1.4 2005/06/09 21:43:13 he Exp $	*/
+/*	$NetBSD: yamon.c,v 1.4.2.1 2006/06/21 14:51:02 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 /* XXX move to arch/mips/yamon/yamon.c or similar? */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.4 2005/06/09 21:43:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.4.2.1 2006/06/21 14:51:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,7 +109,7 @@ yamon_getenv(const char *name)
 }
 
 void
-yamon_print(char *str)
+yamon_print(const char *str)
 {
 
 	YAMON_PRINT(str);

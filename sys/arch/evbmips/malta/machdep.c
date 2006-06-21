@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2005/04/25 15:02:04 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.2.1 2006/06/21 14:51:03 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2005/04/25 15:02:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.2.1 2006/06/21 14:51:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -157,7 +157,7 @@ int	comcnrate = 38400;	/* XXX should be config option */
 #endif /* NCOM > 0 */
 
 
-#define REGVAL(x)       *((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define REGVAL(x)       *((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 struct malta_config malta_configuration;
 

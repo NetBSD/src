@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.24 2005/02/18 21:05:52 dsl Exp $
+# 	$NetBSD: LROUTER,v 1.24.6.1 2006/06/21 14:51:49 yamt Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -73,12 +73,12 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
-options 	VNODE_OP_NOINLINE # don't inline vnode op calls
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -86,6 +86,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
@@ -164,12 +165,12 @@ sd*	at atapibus? drive ? flags 0x0ff0 # ATAPI disk drives
 st*	at atapibus? drive ? flags 0x0ff0 # ATAPI tape drives
 
 pseudo-device	loop		1	# network loopback
-pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
-pseudo-device	vnd		4	# virtual disk ick
+pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
@@ -187,9 +188,9 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

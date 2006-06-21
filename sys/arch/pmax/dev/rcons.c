@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.60 2003/08/07 16:29:10 agc Exp $	*/
+/*	$NetBSD: rcons.c,v 1.60.16.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.60 2003/08/07 16:29:10 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.60.16.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.60 2003/08/07 16:29:10 agc Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -282,7 +283,7 @@ rasterconsoleattach (n)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
-	tp->t_linesw = linesw[0];
+	tp->t_linesw = ttyldisc_default();
 #ifdef DEBUG
 	printf("rconsattach: %d raster consoles\n", n);
 #endif
@@ -314,10 +315,10 @@ rasterconsoleattach (n)
 
 /* ARGSUSED */
 int
-rconsopen(dev, flag, mode, p)
+rconsopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp = &rcons_tty [0];
  	/*static int firstopen = 1;*/
@@ -335,7 +336,8 @@ rconsopen(dev, flag, mode, p)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE &&
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);
@@ -344,10 +346,10 @@ rconsopen(dev, flag, mode, p)
 
 /* ARGSUSED */
 int
-rconsclose(dev, flag, mode, p)
+rconsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp = &rcons_tty [0];
 
@@ -383,15 +385,15 @@ rconswrite(dev, uio, flag)
 }
 
 int
-rconspoll(dev, events, p)
+rconspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 
 	tp = &rcons_tty [0];
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -404,20 +406,20 @@ rconstty(dev)
 }
 
 int
-rconsioctl(dev, cmd, data, flag, p)
+rconsioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int error;
 
 	tp = &rcons_tty [0];
-	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return (error);
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 #ifdef notyet

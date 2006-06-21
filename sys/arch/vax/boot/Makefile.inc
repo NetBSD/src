@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2003/12/11 17:34:09 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.8.16.1 2006/06/21 14:57:17 yamt Exp $
 
 RELOC=0x2f0000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
@@ -12,10 +12,6 @@ CPPFLAGS+=-DRELOC=${RELOC}
 
 WARNS?=	1
 CFLAGS+=-ffreestanding
-.if ${HAVE_GCC3} == "no"
-CFLAGS+=-mno-asm-pic
-AFLAGS+=-mno-asm-pic
-.endif
 
 MKMAN=no
 

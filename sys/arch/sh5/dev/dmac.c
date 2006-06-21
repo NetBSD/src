@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.1 2005/01/29 11:37:18 scw Exp $	*/
+/*	$NetBSD: dmac.c,v 1.1.12.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.1 2005/01/29 11:37:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.1.12.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -189,7 +189,7 @@ error:		aprint_error("%s: Failed to allocate zero page (%d)\n",
 }
 
 #ifdef DMAC_PMAP_CHANNEL
-static __inline void
+static inline void
 dmac_page_copy_zero(const struct dmac_softc *sc, paddr_t src, paddr_t dst)
 {
 	u_int64_t reg;

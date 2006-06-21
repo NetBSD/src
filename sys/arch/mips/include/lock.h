@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.5.16.1 2006/06/21 14:53:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"# -- BEGIN __cpu_simple_lock_init\n"
 		"	.set push		\n"
 		"	.set mips2		\n"
@@ -72,7 +72,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lp)
 	 * some work.
 	 */
 
-	__asm __volatile(
+	__asm volatile(
 		"# -- BEGIN __cpu_simple_lock	\n"
 		"	.set push		\n"
 		"	.set mips2		\n"
@@ -97,7 +97,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lp)
 		"	.set pop		\n"
 		"# -- END __cpu_simple_lock	\n"
 		: "=r" (t0), "+m" (*lp)
-		: "i" (__SIMPLELOCK_LOCKED), "1" (*lp));
+		: "i" (__SIMPLELOCK_LOCKED), "m" (*lp));
 }
 
 static __inline int
@@ -105,7 +105,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 {
 	unsigned long t0, v0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# -- BEGIN __cpu_simple_lock_try\n"
 		"	.set push		\n"
 		"	.set mips2		\n"
@@ -126,7 +126,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 		"	.set pop		\n"
 		"# -- END __cpu_simple_lock_try	\n"
 		: "=r" (t0), "=r" (v0), "+m" (*lp)
-		: "i" (__SIMPLELOCK_LOCKED), "2" (*lp));
+		: "i" (__SIMPLELOCK_LOCKED), "m" (*lp));
 
 	return (v0 != 0);
 }
@@ -135,7 +135,7 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"# -- BEGIN __cpu_simple_unlock \n"
 		"	.set push		\n"
 		"	.set mips2		\n"

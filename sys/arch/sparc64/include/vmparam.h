@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2005/03/26 05:12:34 fvdl Exp $ */
+/*	$NetBSD: vmparam.h,v 1.27.2.1 2006/06/21 14:56:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,14 @@
 #define	PAGE_SHIFT	13
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * The kernel itself is mapped by the boot loader with 4Mb locked VM pages,
+ * so let's keep 4Mb definitions here as well.
+ */
+#define PAGE_SHIFT_4M	22
+#define PAGE_SIZE_4M	(1UL<<PAGE_SHIFT_4M)
+#define PAGE_MASK_4M	(PAGE_SIZE_4M-1)
 
 /*
  * USRSTACK is the top (end) of the user stack.

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.18 2003/07/15 02:43:28 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.18.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.18 2003/07/15 02:43:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.18.16.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,7 +207,7 @@ espattach(parent, self, aux)
 	if (sz != sizeof(int))
 		sc->sc_freq = 25000000;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/* esc->sc_dma->sc_esp = esc;*/

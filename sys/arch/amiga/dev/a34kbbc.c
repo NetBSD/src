@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.14 2005/06/13 21:34:16 jmc Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.14.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.14 2005/06/13 21:34:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.14.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,7 +112,7 @@ a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 	if (!matchname("a34kbbc", auxp))
 		return(0);
 
-	/* Allow only once instance. */
+	/* Allow only one instance. */
 	if (a34kbbc_matched)
 		return(0);
 

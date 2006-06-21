@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.12.10.1 2006/06/21 14:51:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.12.10.1 2006/06/21 14:51:44 yamt Exp $");
 
 #define IPAQ_LCD_DEBUG
 
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $");
 #include <arm/cpufunc.h>
 #include <arm/arm32/katelib.h>
 
-#include <hpcarm/sa11x0/sa11x0_reg.h> 
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_reg.h> 
+#include <arm/sa11x0/sa11x0_gpioreg.h>
 
 #include <hpcarm/dev/ipaq_gpioreg.h>
 #include <hpcarm/dev/ipaq_saipvar.h>

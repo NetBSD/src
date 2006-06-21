@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.10 2004/08/13 15:48:21 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.10.12.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ public:
 	BOOL &on(void) { return _on; }
 
 	static void changeConsole(Console &console) { _instance = &console; }
-	void setBootConsole(u_int16_t cnuse) { _boot_console = cnuse; }
+	void setBootConsole(uint16_t cnuse) { _boot_console = cnuse; }
 	int16_t getBootConsole(void) const { return _boot_console; }
 };
 

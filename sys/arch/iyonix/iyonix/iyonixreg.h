@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonixreg.h,v 1.1 2004/10/13 23:28:36 gavan Exp $	*/
+/*	$NetBSD: iyonixreg.h,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -58,6 +58,9 @@
  */
 #define	IYONIX_OBIO_BASE	0x90000000UL
 #define	IYONIX_OBIO_SIZE	0x00100000UL	/* 1MB */
+
+#define	IYONIX_FLASH_BASE	0xA0000000UL
+#define	IYONIX_FLASH_SIZE	0x00800000UL	/* 8MB */
 
 #define IYONIX_MASTER_PIC	0x20
 #define IYONIX_SLAVE_PIC	0xa0

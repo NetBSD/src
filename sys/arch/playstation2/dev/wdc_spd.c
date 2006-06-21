@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.19 2005/06/26 19:54:42 he Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.19.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.19 2005/06/26 19:54:42 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.19.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.19 2005/06/26 19:54:42 he Exp $");
 #define __read_1(a)							\
 ({									\
 	u_int32_t ra_ = (a);						\
-	u_int8_t r = (*(__volatile__ u_int8_t *)ra_);			\
+	u_int8_t r = (*(volatile u_int8_t *)ra_);			\
 									\
 	if (ra_ == 0xb400004e)	/* (wdc)STAT  LED off */		\
 		SPD_LED_OFF();						\
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.19 2005/06/26 19:54:42 he Exp $");
 #define __write_1(a, v)							\
 {									\
 	u_int32_t wa_ = (a);						\
-	(*(__volatile__ u_int8_t *)wa_) = (v);				\
+	(*(volatile u_int8_t *)wa_) = (v);				\
 									\
 	if (wa_ == 0xb400004e)	/* (wdc)CMD  LED on */			\
 		SPD_LED_ON();						\
@@ -218,6 +218,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	ch->ch_channel = 0;
 	ch->ch_atac = &sc->sc_wdcdev.sc_atac;
 	ch->ch_queue = &sc->sc_chqueue;
+	ch->ch_ndrive = 2;
 
 	__wdc_spd_bus_space(ch);
 

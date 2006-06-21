@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.37 2005/03/12 16:29:59 dsl Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.37.4.1 2006/06/21 14:56:48 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.37 2005/03/12 16:29:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.37.4.1 2006/06/21 14:56:48 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -76,13 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.37 2005/03/12 16:29:59 dsl Exp $"
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, caddr_t);
 
 void
-svr4_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	register struct trapframe64 *tf = l->l_md.md_tf;
 
@@ -97,12 +94,10 @@ svr4_setregs(l, epp, stack)
 #endif
 
 #ifdef DEBUG_SVR4
-static void svr4_printmcontext __P((const char *, struct svr4_mcontext *));
+static void svr4_printmcontext(const char *, struct svr4_mcontext *);
 
 static void
-svr4_printmcontext(fun, mc)
-	const char *fun;
-	struct svr4_mcontext *mc;
+svr4_printmcontext(const char *fun, struct svr4_mcontext *mc)
 {
 	svr4_greg_t *r = mc->greg;
 
@@ -141,10 +136,7 @@ svr4_printmcontext(fun, mc)
 #endif
 
 void *
-svr4_getmcontext(l, mc, flags)
-	struct lwp *l;
-	struct svr4_mcontext *mc;
-	u_long *flags;
+svr4_getmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long *flags)
 {
 	struct trapframe64 *tf = (struct trapframe64 *)l->l_md.md_tf;
 	svr4_greg_t *r = mc->greg;
@@ -242,10 +234,7 @@ svr4_getmcontext(l, mc, flags)
  * This is almost like sigreturn() and it shows.
  */
 int
-svr4_setmcontext(l, mc, flags)
-	struct lwp *l;
-	struct svr4_mcontext *mc;
-	u_long flags;
+svr4_setmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long flags)
 {
 	register struct trapframe64 *tf;
 	svr4_greg_t *r = mc->greg;
@@ -361,11 +350,7 @@ svr4_setmcontext(l, mc, flags)
  * map the trap code into the svr4 siginfo as best we can
  */
 static void
-svr4_getsiginfo(si, sig, code, addr)
-	union svr4_siginfo	*si;
-	int			 sig;
-	u_long			 code;
-	caddr_t			 addr;
+svr4_getsiginfo(union svr4_siginfo *si, int sig, u_long code, caddr_t addr)
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
@@ -620,17 +605,15 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 int
-svr4_trap(type, l)
-	int	type;
-	struct lwp *l;
+svr4_trap(int type, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	int n;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct schedstate_percpu *spc;
+	struct timespec ts;
 	struct timeval tv;
 	uint64_t tm;
-	int s;
 
 	if (p->p_emul != &emul_svr4)
 		return 0;
@@ -657,14 +640,12 @@ svr4_trap(type, l)
 		 * This is like gethrtime(3), returning the time expressed
 		 * in nanoseconds since an arbitrary time in the past and
 		 * guaranteed to be monotonically increasing, which we
-		 * obtain from mono_time(9).
+		 * obtain from nanouptime()
 		 */
-		s = splclock();
-		tv = mono_time;
-		splx(s);
+		nanouptime(&ts);
 
-		tm = tv.tv_usec * 1000u;
-		tm += tv.tv_sec * (uint64_t)1000000000u;
+		tm = ts.tv_nsec;
+		tm += ts.tv_sec * (uint64_t)1000000000u;
 		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
 		tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		break;
@@ -692,9 +673,9 @@ svr4_trap(type, l)
 
 	case T_SVR4_GETHRESTIME:
 		/* I assume this is like gettimeofday(3) */
-		microtime(&tv);
-		tf->tf_out[0] = tv.tv_sec;
-		tf->tf_out[1] = tv.tv_usec * 1000u;
+		nanotime(&ts);
+		tf->tf_out[0] = ts.tv_sec;
+		tf->tf_out[1] = ts.tv_nsec;
 		break;
 
 	default:
@@ -708,10 +689,7 @@ svr4_trap(type, l)
 /*
  */
 int
-svr4_sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sysarch_args *uap = v;
 

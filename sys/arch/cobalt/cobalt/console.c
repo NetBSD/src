@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.8 2004/08/29 16:14:15 tsutsui Exp $	*/
+/*	$NetBSD: console.c,v 1.8.12.1 2006/06/21 14:50:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.8 2004/08/29 16:14:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.8.12.1 2006/06/21 14:50:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ struct	consdev	constab[] = {
 };
 
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 

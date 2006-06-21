@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.9 2003/07/15 02:43:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -268,7 +268,7 @@ mc_dmaintr(arg)
 		statoff = offset + datalen;
 
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
-		__asm __volatile("eieio");
+		__asm volatile("eieio");
 
 		/* flushcache(sc->sc_rxbuf + offset, datalen + 4); */
 
@@ -283,7 +283,7 @@ mc_dmaintr(arg)
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,
 			DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		__asm __volatile("eieio");
+		__asm volatile("eieio");
 		cmd->d_status = 0;
 		cmd->d_resid = 0;
 		sc->sc_tail = i + 1;

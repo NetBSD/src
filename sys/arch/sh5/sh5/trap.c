@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2005/01/29 11:25:13 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.34.6.1 2006/06/21 14:55:47 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2005/01/29 11:25:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.6.1 2006/06/21 14:55:47 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2005/01/29 11:25:13 scw Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -193,9 +194,9 @@ trap(struct lwp *l, struct trapframe *tf)
 			register_t sr;
 
 			/* Make sure the FPU is enabled */
-			__asm __volatile("getcon sr, %0" : "=r"(sr));
+			__asm volatile("getcon sr, %0" : "=r"(sr));
 			sr &= ~SH5_CONREG_SR_FD;
-			__asm __volatile("putcon %0, sr" :: "r"(sr));
+			__asm volatile("putcon %0, sr" :: "r"(sr));
 		}
 		printf("\ntrap: %s in %s mode\n",
 		    trap_type(traptype), USERMODE(tf) ? "user" : "kernel");
@@ -313,7 +314,7 @@ trap(struct lwp *l, struct trapframe *tf)
 			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -352,8 +353,8 @@ trap(struct lwp *l, struct trapframe *tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
-			    (p->p_cred && p->p_ucred) ?
-			    p->p_ucred->cr_uid : -1);
+			    p->p_cred ?
+			    kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else
 		if (rv == EACCES)
@@ -367,7 +368,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		int rv;
 
 		va = trunc_page(vaddr);
-		rv = uvm_fault(kernel_map, va, 0, ftype);
+		rv = uvm_fault(kernel_map, va, ftype);
 		if (rv == 0) {
 			l->l_addr->u_pcb.pcb_onfault = pcb_onfault;
 			return;
@@ -580,9 +581,9 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 		register_t sr;
 
 		/* Make sure the FPU is enabled */
-		__asm __volatile("getcon sr, %0" : "=r"(sr));
+		__asm volatile("getcon sr, %0" : "=r"(sr));
 		sr &= ~SH5_CONREG_SR_FD;
-		__asm __volatile("putcon %0, sr" :: "r"(sr));
+		__asm volatile("putcon %0, sr" :: "r"(sr));
 	}
 
 	/*

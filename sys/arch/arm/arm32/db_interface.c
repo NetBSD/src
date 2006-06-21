@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.37 2005/06/02 19:33:04 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.37.2.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2005/06/02 19:33:04 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37.2.1 2006/06/21 14:49:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,6 +101,7 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 int	db_active = 0;
+db_regs_t ddb_regs;	/* register state */
 
 int
 db_access_und_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
@@ -360,7 +361,7 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 void
 cpu_Debugger(void)
 {
-	asm(".word	0xe7ffffff");
+	__asm(".word	0xe7ffffff");
 }
 
 const struct db_command db_machine_command_table[] = {

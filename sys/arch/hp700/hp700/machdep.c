@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.2.1 2006/06/21 14:51:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.1 2006/06/21 14:51:29 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -140,6 +140,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2005/06/09 07:18:17 skrll Exp $");
 #include <hp700/hp700/pim.h>
 #include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
+
+#ifdef PMAPDEBUG
+#include <hppa/hppa/hpt.h>
+#endif
 
 #include "ksyms.h"
 
@@ -261,7 +265,7 @@ struct vm_map *phys_map = NULL;
 
 
 void delay_init(void);
-static __inline void fall(int, int, int, int, int);
+static inline void fall(int, int, int, int, int);
 void dumpsys(void);
 
 /*
@@ -514,19 +518,19 @@ hppa_init(paddr_t start)
 
 	/* calculate HPT size */
 	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
-hptsize=256;	/* XXX one page for now */
+	hptsize = 256;	/* XXX one page for now */
 	hptsize *= 16;	/* sizeof(hpt_entry) */
 
 	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
-#ifdef DEBUG
-	printf("pdc_hwtlb.min_size 0x%x\n", pdc_hwtlb.min_size);
-	printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
-#endif
 	if (error) {
 		hptsize = PAGE_SIZE;
 		printf("WARNING: PDC_TLB_INFO failed: %d, using HPT size %d\n",
 		       error, hptsize);
 	} else {
+#ifdef DEBUG
+		printf("pdc_hwtlb.min_size 0x%x\n", pdc_hwtlb.min_size);
+		printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
+#endif
 		if (hptsize > pdc_hwtlb.max_size)
 			hptsize = pdc_hwtlb.max_size;
 		else if (hptsize < pdc_hwtlb.min_size)
@@ -773,7 +777,7 @@ do {									\
 #endif
 		} else {
 #ifdef PMAPDEBUG
-			printf("HPT: %d entries @ 0x%x\n",
+			printf("HPT: %zd entries @ 0x%x\n",
 			    hptsize / sizeof(struct hpt_entry), hpt);
 #endif
 		}
@@ -953,7 +957,7 @@ delay(u_int us)
 	}
 }
 
-static __inline void
+static inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	int loop;
@@ -1393,12 +1397,12 @@ cpu_reboot(int howto, char *user_boot_string)
 	if (howto & RB_HALT) {
 		printf("System halted!\n");
 		DELAY(1000000);
-		__asm __volatile("stwas %0, 0(%1)"
+		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_STOP), "r" (LBCAST_ADDR + iomod_command));
 	} else {
 		printf("rebooting...");
 		DELAY(1000000);
-		__asm __volatile("stwas %0, 0(%1)"
+		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
 	}
 

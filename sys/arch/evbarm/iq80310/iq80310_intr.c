@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.20 2003/07/15 00:25:02 lukem Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.20.16.1 2006/06/21 14:50:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.20 2003/07/15 00:25:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.20.16.1 2006/06/21 14:50:47 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -71,10 +71,10 @@ struct intrq intrq[NIRQ];
 int iq80310_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;  
+volatile int current_spl_level;  
 
 /* Interrupts pending. */
-__volatile int iq80310_ipending;
+volatile int iq80310_ipending;
 
 /* Software copy of the IRQs we have enabled. */
 uint32_t intr_enabled;
@@ -95,9 +95,9 @@ static const int si_to_ipl[SI_NQUEUES] = {
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
 
-void	iq80310_intr_dispatch(struct clockframe *frame);
+void	iq80310_intr_dispatch(struct irqframe *frame);
 
-static __inline uint32_t
+static inline uint32_t
 iq80310_intstat_read(void)
 {
 	uint32_t intstat;
@@ -112,7 +112,7 @@ iq80310_intstat_read(void)
 	return (intstat & intr_enabled);
 }
 
-static __inline void
+static inline void
 iq80310_set_intrmask(void)
 {
 	uint32_t disabled;
@@ -125,7 +125,7 @@ iq80310_set_intrmask(void)
 	CPLD_WRITE(IQ80310_XINT_MASK, disabled & 0x1f);
 }
 
-static __inline void
+static inline void
 iq80310_enable_irq(int irq)
 {
 
@@ -133,7 +133,7 @@ iq80310_enable_irq(int irq)
 	iq80310_set_intrmask();
 }
 
-static __inline void
+static inline void
 iq80310_disable_irq(int irq)
 {
 
@@ -296,7 +296,7 @@ _splraise(int ipl)
 	return (iq80310_splraise(ipl));
 }
 
-__inline void
+inline void
 splx(int new)
 {
 
@@ -408,7 +408,7 @@ iq80310_intr_disestablish(void *cookie)
 }
 
 void
-iq80310_intr_dispatch(struct clockframe *frame)
+iq80310_intr_dispatch(struct irqframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;

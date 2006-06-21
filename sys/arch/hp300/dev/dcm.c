@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.66.4.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66.4.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -397,7 +398,7 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 	struct dcm_softc *sc = (struct dcm_softc *)self;
 	struct dio_attach_args *da = aux;
 	struct dcmdevice *dcm;
-	int brd = self->dv_unit;
+	int brd = device_unit(self);
 	int scode = da->da_scode;
 	int i, mbits, code;
 
@@ -438,8 +439,8 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Extract configuration info from flags. */
-	sc->sc_softCAR = self->dv_cfdata->cf_flags & DCM_SOFTCAR;
-	sc->sc_flags |= self->dv_cfdata->cf_flags & DCM_FLAGMASK;
+	sc->sc_softCAR = device_cfdata(self)->cf_flags & DCM_SOFTCAR;
+	sc->sc_flags |= device_cfdata(self)->cf_flags & DCM_FLAGMASK;
 
 	/* Mark our unit as configured. */
 	sc->sc_flags |= DCM_ACTIVE;
@@ -521,7 +522,7 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED */
 static int
-dcmopen(dev_t dev, int flag, int mode, struct proc *p)
+dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct dcm_softc *sc;
 	struct tty *tp;
@@ -551,7 +552,7 @@ dcmopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -613,7 +614,7 @@ dcmopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 static int
-dcmclose(dev_t dev, int flag, int mode, struct proc *p)
+dcmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s, unit, board, port;
 	struct dcm_softc *sc;
@@ -683,7 +684,7 @@ dcmwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 static int
-dcmpoll(dev_t dev, int events, struct proc *p)
+dcmpoll(dev_t dev, int events, struct lwp *l)
 {
 	int unit, board, port;
 	struct dcm_softc *sc;
@@ -696,7 +697,7 @@ dcmpoll(dev_t dev, int events, struct proc *p)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 static struct tty *
@@ -720,7 +721,7 @@ dcmintr(void *arg)
 	struct dcm_softc *sc = arg;
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
-	int brd = sc->sc_dev.dv_unit;
+	int brd = device_unit(&sc->sc_dev);
 	int code, i;
 	int pcnd[4], mcode, mcnd[4];
 
@@ -995,7 +996,7 @@ dcmmint(struct dcm_softc *sc, int port, int mcnd)
 }
 
 static int
-dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct dcm_softc *sc;
 	struct tty *tp;
@@ -1016,11 +1017,11 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		       sc->sc_dev.dv_xname, port, cmd, *data, flag);
 #endif
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1086,7 +1087,7 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			return (EPERM);
 

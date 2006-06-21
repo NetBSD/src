@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.9 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.9.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.9 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.9.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.9 2005/02/26 23:04:16 perry Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -76,9 +77,9 @@ int altq_cdnr_enabled = 0;
 /* cdnr_list keeps all cdnr's allocated. */
 static LIST_HEAD(, top_cdnr) tcb_list;
 
-int cdnropen __P((dev_t, int, int, struct proc *));
-int cdnrclose __P((dev_t, int, int, struct proc *));
-int cdnrioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
+int cdnropen __P((dev_t, int, int, struct lwp *));
+int cdnrclose __P((dev_t, int, int, struct lwp *));
+int cdnrioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
 
 static int altq_cdnr_input __P((struct mbuf *, int));
 static struct top_cdnr *tcb_lookup __P((char *ifname));
@@ -280,10 +281,9 @@ cdnr_cballoc(top, type, input_func)
 		return (NULL);
 	}
 
-	MALLOC(cb, struct cdnr_block *, size, M_DEVBUF, M_WAITOK);
+	cb = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cb == NULL)
 		return (NULL);
-	(void)memset(cb, 0, size);
 
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -325,7 +325,7 @@ cdnr_cbdestroy(cblock)
 	if (cb->cb_top != cblock)
 		LIST_REMOVE(cb, cb_next);
 
-	FREE(cb, M_DEVBUF);
+	free(cb, M_DEVBUF);
 }
 
 /*
@@ -1202,10 +1202,10 @@ cdnrcmd_get_stats(ap)
  * conditioner device interface
  */
 int
-cdnropen(dev, flag, fmt, p)
+cdnropen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1220,10 +1220,10 @@ cdnropen(dev, flag, fmt, p)
 }
 
 int
-cdnrclose(dev, flag, fmt, p)
+cdnrclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct top_cdnr *top;
 	int err, error = 0;
@@ -1240,15 +1240,16 @@ cdnrclose(dev, flag, fmt, p)
 }
 
 int
-cdnrioctl(dev, cmd, addr, flag, p)
+cdnrioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct top_cdnr *top;
 	struct cdnr_interface *ifacep;
+	struct proc *p = l->l_proc;
 	int	s, error = 0;
 
 	/* check super-user privilege */
@@ -1259,7 +1260,9 @@ cdnrioctl(dev, cmd, addr, flag, p)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 #endif
 			return (error);
 		break;

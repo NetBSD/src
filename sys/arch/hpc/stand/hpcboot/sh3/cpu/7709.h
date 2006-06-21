@@ -1,4 +1,4 @@
-/*	$NetBSD: 7709.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: 7709.h,v 1.2.12.1 2006/06/21 14:51:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #define	SH7709_CACHE_FLUSH()						\
 __BEGIN_MACRO								\
-	u_int32_t __e, __w, __wa, __a;					\
+	uint32_t __e, __w, __wa, __a;					\
 									\
 	for (__w = 0; __w < SH7709_CACHE_WAY; __w++) {			\
 		__wa = SH3_CCA | __w << SH7709_CACHE_WAY_SHIFT;		\

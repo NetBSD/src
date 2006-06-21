@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.2 2003/07/15 01:26:30 lukem Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.2.16.1 2006/06/21 14:50:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.2 2003/07/15 01:26:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.2.16.1 2006/06/21 14:50:05 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -73,7 +73,7 @@ kgdb_trap_glue(frame)
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 #ifdef	KGDBUSERHACK
-		asm ("mfsr %0,%1" : "=r"(savesr) : "K"(USER_SR)); /* see above		XXX */
+		__asm ("mfsr %0,%1" : "=r"(savesr) : "K"(USER_SR)); /* see above		XXX */
 #endif
 		kgdbcopy(frame, kgdbregs, sizeof kgdbregs);
 		kgdbregs[MSR] &= ~PSL_BE;
@@ -89,7 +89,7 @@ kgdb_trap_glue(frame)
 		}
 		kgdbcopy(kgdbregs, frame, sizeof kgdbregs);
 #ifdef	KGDBUSERHACK
-		asm ("mtsr %0,%1; isync" :: "K"(USER_SR), "r"(savesr));
+		__asm ("mtsr %0,%1; isync" :: "K"(USER_SR), "r"(savesr));
 #endif
 		return 1;
 	}

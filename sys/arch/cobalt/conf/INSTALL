@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 2005/06/09 14:43:30 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.7.2.1 2006/06/21 14:50:07 yamt Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,9 +10,10 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"INSTALL-$Revision: 1.7.2.1 $"
 
-makeoptions     COPTS="-Os"
+makeoptions     COPTS="-Os -mmemcpy"
+makeoptions	CPUFLAGS="-mips2 -mtune=vr5000"
 
 maxusers	32
 
@@ -57,6 +58,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -79,13 +81,14 @@ file-system	FDESC		# user file descriptor filesystem
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -95,6 +98,7 @@ options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
@@ -139,6 +143,8 @@ config		netbsd	root on ? type nfs
 mainbus0 	at root
 
 cpu0 		at mainbus?
+
+mcclock0	at mainbus? addr 0x10000070
 
 com0		at mainbus? addr 0x1c800000 level 3
 options 	COM_16650
@@ -277,7 +283,8 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Pseudo-devices
 
-#pseudo-device 	crypto				# opencrypto framework
+#pseudo-device 	crypto				# /dev/crypto device
+#pseudo-device	swcrypto			# software crypto implementation
 
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd		4		# concatenated disk devices
@@ -293,29 +300,28 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	md		1		# memory disk device (ramdisk)
-#pseudo-device	vnd		4		# disk-like interface to files
+#pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
-#pseudo-device	bpfilter	8		# Berkeley packet filter
+#pseudo-device	bpfilter			# Berkeley packet filter
 #pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
-#pseudo-device	ppp		2		# Point-to-Point Protocol
+#pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
-#pseudo-device	sl		2		# Serial Line IP
-#pseudo-device	strip		2		# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2		# network tunneling over tty
+#pseudo-device	sl				# Serial Line IP
+#pseudo-device	strip				# Starmode Radio IP (Metricom)
+#pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
-#pseudo-device	gre		2		# generic L3 over IP tunnel
-#pseudo-device	gif		4		# RFC1933 tunnel
-#pseudo-device	faith		1		# IPv[46] tcp relay translation
-#pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre				# generic L3 over IP tunnel
+#pseudo-device	gif				# RFC1933 tunnel
+#pseudo-device	faith				# IPv[46] tcp relay translation
+#pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-#pseudo-device	tb		1		# tablet line discipline
 #pseudo-device	sequencer	1		# MIDI sequencer
 pseudo-device	rnd				# /dev/random & kernel generator
 #options 	RND_COM				# use "com" randomness (BROKEN)

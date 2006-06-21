@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.23 2005/06/25 12:05:18 rpaulo Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.23.2.1 2006/06/21 14:55:23 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.23.2.1 $"
 
 maxusers	32
 
@@ -41,7 +41,7 @@ options 	DDB
 options 	KTRACE
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=300000
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -54,6 +54,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX		# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -73,10 +74,10 @@ file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
-#file-system	PTYFS
+file-system	PTYFS		# /dev/pts/N support
 
 options 	SOFTDEP		# FFS soft updates support.
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -99,7 +100,7 @@ options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 config		netbsd	root on ? type ?
 
 # network psuedo-devices
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -111,7 +112,8 @@ pseudo-device	loop
 
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
-pseudo-device	vnd		4
+pseudo-device	vnd		
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	pty
 pseudo-device	clockctl		# user control of clock subsystem

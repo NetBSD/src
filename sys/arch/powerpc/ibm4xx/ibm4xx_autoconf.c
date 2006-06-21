@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.2 2005/01/17 17:19:36 shige Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.2.10.1 2006/06/21 14:54:49 yamt Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2 2005/01/17 17:19:36 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2.10.1 2006/06/21 14:54:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,34 +45,35 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2 2005/01/17 17:19:36 shige Ex
 
 #include <machine/cpu.h>
 
+#include <powerpc/ibm4xx/dev/opbvar.h>
+
 void
 ibm4xx_device_register(struct device *dev, void *aux)
 {
-	struct device *parent = dev->dv_parent;
+	struct device *parent = device_parent(dev);
 
-	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
-	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+	if (device_is_a(dev, "emac") && device_is_a(parent, "opb")) {
 		/* Set the mac-addr of the on-chip Ethernet. */
+		struct opb_attach_args *oaa = aux;
 
-		if (dev->dv_unit < 10) {
-			uint8_t enaddr[ETHER_ADDR_LEN];
+		if (oaa->opb_instance < 10) {
+			prop_data_t pd;
 			unsigned char prop_name[15];
 
 			snprintf(prop_name, sizeof(prop_name),
-				"emac%d-mac-addr", dev->dv_unit);
+				"emac%d-mac-addr", oaa->opb_instance);
 
-			if (board_info_get(prop_name,
-				enaddr, sizeof(enaddr)) == -1) {
+			pd = prop_dictionary_get(board_properties, prop_name);
+			if (pd == NULL) {
 				printf("WARNING: unable to get mac-addr "
 				    "property from board properties\n");
 				return;
 			}
-
-			if (prop_set(dev_propdb, dev, "mac-addr",
-				     enaddr, sizeof(enaddr),
-				     PROP_ARRAY, 0) != 0)
+			if (prop_dictionary_set(device_properties(dev),
+						"mac-addr", pd) == FALSE) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);
+			}
 		}
 		return;
 	}

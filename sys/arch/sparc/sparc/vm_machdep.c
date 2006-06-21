@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83 2005/06/10 05:10:12 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.83.2.1 2006/06/21 14:56:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.2.1 2006/06/21 14:56:13 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -74,12 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2005/06/10 05:10:12 matt Exp $")
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
 	vaddr_t uva;	/* User VA (map from) */
@@ -128,9 +126,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
@@ -154,6 +150,14 @@ vunmapbuf(bp, len)
 }
 
 
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
+}
+
+
 /*
  * The offset of the topmost frame in the kernel stack.
  */
@@ -162,7 +166,7 @@ vunmapbuf(bp, len)
 /*
  * Finish a fork operation, with process l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
@@ -178,12 +182,9 @@ vunmapbuf(bp, len)
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
+	     void *stack, size_t stacksize,
+	     void (*func)(void *), void *arg)
 {
 	struct pcb *opcb = &l1->l_addr->u_pcb;
 	struct pcb *npcb = &l2->l_addr->u_pcb;
@@ -315,10 +316,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	/*struct trapframe *tf = l->l_md.md_tf;*/

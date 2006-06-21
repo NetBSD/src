@@ -1,7 +1,7 @@
-/*	$NetBSD: elf2bb.c,v 1.10 2004/12/04 16:23:31 chs Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.10.12.1 2006/06/21 14:48:53 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,7 +50,10 @@
 #include <unistd.h>
 
 #include <sys/mman.h>		/* of the machine we're running on */
+
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/endian.h>		/* of the machine we're running on */
+#endif
 
 #include <sys/exec_elf.h>	/* TARGET */
 #ifndef R_68K_32		/* XXX host not m68k XXX */
@@ -206,7 +209,14 @@ main(int argc, char *argv[])
 	dprintf(("%d relocs\n", trsz/12));
 
 	if (sumsize == 0) {
-		bbsize = (tsz + dsz + bsz + 511) & ~511;
+		/*
+		 * XXX overly cautious, but this guarantees that 16bit
+		 * pc offsets and our relocs always work.
+		 */
+		bbsize = 32768;
+		if (bbsize < (tsz + dsz + bsz)) {
+			err(1, "%s: too big.", argv[0]);
+		}
 		sumsize = bbsize / 512;
 	}
 

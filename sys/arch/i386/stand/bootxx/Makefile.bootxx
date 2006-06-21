@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.17 2005/05/05 18:03:04 christos Exp $
+# $NetBSD: Makefile.bootxx,v 1.17.2.1 2006/06/21 14:52:44 yamt Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -31,7 +31,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -N -e start
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start
 CPPFLAGS+= -DBOOTXX
 # CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
@@ -50,14 +50,18 @@ COPTS=  -Os
 CPPFLAGS+= -DNO_LBA_CHECK
 
 .if ${MACHINE} == "amd64"
-LD+=  -m elf_i386
+LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
 CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
+.if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
+.else
+CPUFLAGS=  -march=i386 -mtune=i386
+.endif
 .endif
 
 COPTS+=    -ffreestanding
@@ -86,30 +90,16 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine x86
-.endif
-
-depend dependall realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
-machine::
-	-rm -f $@
-	ln -s $S/arch/i386/include $@
-
-x86::
-	-rm -f $@
-	ln -s $S/arch/x86/include $@
-
-${OBJS}: machine x86 lib
-
-lib:
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	-rm -f machine && ln -s $S/arch/i386/include machine
+	-rm -f x86 && ln -s $S/arch/x86/include x86
 .ifdef LIBOBJ
-	-rm -f $@
-	ln -s ${LIBOBJ}/lib .
-	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
-.else
-	mkdir lib
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
 .endif
 
 ### find out what to use for libi386
@@ -139,8 +129,9 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.sym ${PROG}.map
 
 ${PROG}: ${OBJS} ${LIBLIST}
-	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
-		-Map ${PROG}.map -cref ${OBJS} ${LIBLIST}
+	${_MKTARGET_LINK}
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(ls -ln ${PROG}|tr -s ' '|cut -d' ' -f5); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \

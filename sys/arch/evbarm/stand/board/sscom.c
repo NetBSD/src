@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.3 2003/10/05 06:57:20 bsh Exp $ */
+/*	$NetBSD: sscom.c,v 1.3.18.1 2006/06/21 14:50:54 yamt Exp $ */
 
 
 /*
@@ -88,10 +88,10 @@
 #define	SSCOM_TOLERANCE	30	/* XXX: baud rate tolerance, in 0.1% units */
 #endif
 
-#define	INB(x)		*((__volatile uint8_t *) ((CONADDR) + (x)))
-#define	INW(x)		*((__volatile uint32_t *) ((CONADDR) + (x)))
-#define	OUTB(x, v)	(*((__volatile uint8_t *) ((CONADDR) + (x))) = (v))
-#define	OUTW(x, v)	(*((__volatile uint32_t *) ((CONADDR) + (x))) = (v))
+#define	INB(x)		*((volatile uint8_t *) ((CONADDR) + (x)))
+#define	INW(x)		*((volatile uint32_t *) ((CONADDR) + (x)))
+#define	OUTB(x, v)	(*((volatile uint8_t *) ((CONADDR) + (x))) = (v))
+#define	OUTW(x, v)	(*((volatile uint32_t *) ((CONADDR) + (x))) = (v))
 
 #define	ISSET(t,f)	((t) & (f))
 

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.22 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: RAMDISK,v 1.22.6.1 2006/06/21 14:53:49 yamt Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -34,7 +34,8 @@ file-system 	FFS
 file-system 	NFS
 file-system 	KERNFS
 file-system 	CD9660
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+#file-system	PTYFS		# /dev/pts/N support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET
@@ -58,7 +59,7 @@ options 	NFS_BOOT_BOOTP		# Diskless client w/ bootp
 options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 pseudo-device	sl
-pseudo-device	ppp	1
+pseudo-device	ppp	
 pseudo-device	loop
 pseudo-device	md	1
 

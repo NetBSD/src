@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2005/03/09 19:04:44 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.4.1 2006/06/21 14:53:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ bus_space_read_region_1(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -311,9 +311,9 @@ bus_space_read_region_2(tag, bsh, offset, addr, count)
 	volatile u_int16_t *s = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("lhbrx %0, 0, %1" :
+		__asm volatile("lhbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -327,9 +327,9 @@ bus_space_read_region_4(tag, bsh, offset, addr, count)
 	volatile u_int32_t *s = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("lwbrx %0, 0, %1" :
+		__asm volatile("lwbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
@@ -348,7 +348,7 @@ bus_space_read_region_stream_2(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -363,7 +363,7 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error */
@@ -386,6 +386,10 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 #define bus_space_write_stream_1(t, h, o, v)	out8(__BA(t, h, o), (v))
 #define bus_space_write_stream_2(t, h, o, v)	out16(__BA(t, h, o), (v))
 #define bus_space_write_stream_4(t, h, o, v)	out32(__BA(t, h, o), (v))
+
+#define bus_space_mmap(tag, addr, off, prot, flags) \
+    (paddr_t)((tag & MACPPC_BUS_ADDR_MASK) + addr + off)
+#define bus_space_vaddr(tag, handle)	__BA(tag, handle, 0)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define bus_space_write_8		!!! unimplemented !!!
@@ -453,7 +457,7 @@ bus_space_write_region_1(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -467,9 +471,9 @@ bus_space_write_region_2(tag, bsh, offset, addr, count)
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -483,9 +487,9 @@ bus_space_write_region_4(tag, bsh, offset, addr, count)
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -504,7 +508,7 @@ bus_space_write_region_stream_2(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -519,7 +523,7 @@ bus_space_write_region_stream_4(tag, bsh, offset, addr, count)
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -547,7 +551,7 @@ bus_space_set_multi_1(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -561,9 +565,9 @@ bus_space_set_multi_2(tag, bsh, offset, val, count)
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(val), "r"(d));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -577,9 +581,9 @@ bus_space_set_multi_4(tag, bsh, offset, val, count)
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(val), "r"(d));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -598,7 +602,7 @@ bus_space_set_multi_stream_2(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -613,7 +617,7 @@ bus_space_set_multi_stream_4(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -641,7 +645,7 @@ bus_space_set_region_1(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d++ = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -655,9 +659,9 @@ bus_space_set_region_2(tag, bsh, offset, val, count)
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(val), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -671,9 +675,9 @@ bus_space_set_region_4(tag, bsh, offset, val, count)
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(val), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -692,7 +696,7 @@ bus_space_set_region_stream_2(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d++ = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -707,7 +711,7 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 
 	while (count--)
 		*d++ = val;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0

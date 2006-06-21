@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2003/10/31 16:44:34 cl Exp $	*/
+/*	$NetBSD: userret.h,v 1.3.16.1 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -75,15 +75,14 @@
 
 #include <sys/userret.h>
 
-static __inline void userret __P((register struct lwp *));
+static __inline void userret(struct lwp *);
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(l)
-	register struct lwp *l;
+userret(struct lwp *l)
 {
 
 	/* Invoke MI userret code */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.16 2005/05/15 22:20:23 fvdl Exp $
+#	$NetBSD: files.amd64,v 1.16.2.1 2006/06/21 14:48:25 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -55,7 +55,6 @@ file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
 file	dev/cons.c
-file	kern/kern_microtime.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
 file	arch/amd64/amd64/ipifuncs.c       multiprocessor
@@ -111,6 +110,7 @@ defparam			PCI_CONF_MODE
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
+file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 
 # PCI-ISA bridges
 device	pcib: isabus
@@ -129,6 +129,9 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/amd64/isa/clock.c			isa
+
+# TSC timecounter support
+file	arch/x86/x86/tsc.c
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
@@ -169,8 +172,26 @@ file	arch/amd64/amd64/linux_sigcode.S		compat_linux
 file	arch/amd64/amd64/linux_syscall.c		compat_linux
 file	arch/x86/x86/linux_trap.c			compat_linux
 
+# Linux 32 bit compatibility (COMPAT_LINUX32)
+include "compat/linux32/files.linux32"
+include "compat/linux32/arch/amd64/files.linux32_amd64"
+file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
+file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
+
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+file	arch/amd64/amd64/rbus_machdep.c	cardbus
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"
 
 include	"dev/usb/files.usb"
 

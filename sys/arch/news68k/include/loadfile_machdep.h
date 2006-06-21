@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.4 2001/10/31 17:20:47 thorpej Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.4.34.1 2006/06/21 14:54:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NEWS68K_LOADFILE_MACHDEP_H_
+#define _NEWS68K_LOADFILE_MACHDEP_H_
+
 #define BOOT_AOUT
 #define BOOT_ELF32
 
@@ -55,7 +58,7 @@
 				    strerror(errno)))
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
+#define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == NMAGIC)
 
 #else
@@ -63,7 +66,9 @@
 #define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
 #define ALLOC(a)		malloc(a)
-#define FREE(a, b)		free(a)
+#define DEALLOC(a, b)		free(a)
 #define OKMAGIC(a)		((a) == NMAGIC || (a) == OMAGIC)
 
 #endif
+
+#endif /* !_NEWS68K_LOADFILE_MACHDEP_H_ */

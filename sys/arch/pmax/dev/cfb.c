@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.45 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: cfb.c,v 1.45.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.45 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.45.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ cfbattach(parent, self, aux)
 {
 	struct tc_attach_args *ta = aux;
 	caddr_t base = (caddr_t)(ta->ta_addr);
-	int unit = self->dv_unit;
+	int unit = device_unit(self);
 	struct fbinfo *fi;
 	
 	if (cfb_fi)

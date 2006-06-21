@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:05 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2.18.1 2006/06/21 14:52:09 yamt Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -63,7 +63,7 @@ typedef long kgdb_reg_t;
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x00010000	/* break 0,8 */
 #define	BKPT_SIZE	sizeof(int)
-#define	BKPT_SET(inst)	BKPT_INST
+#define	BKPT_SET(inst, addr)	BKPT_INST
 
 #define	IS_BREAKPOINT_TRAP(type, code) (type != T_RECOVERY)
 #define	IS_WATCHPOINT_TRAP(type, code) 0

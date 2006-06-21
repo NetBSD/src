@@ -1,8 +1,11 @@
-# 	$NetBSD: TADPOLE3GX,v 1.26 2005/02/25 13:46:51 simonb Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.26.4.1 2006/06/21 14:55:54 yamt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+# all supported SPARCbooks have V8 CPUs
+makeoptions		CCPUOPTS="-mcpu=v8 -mtune=v8"
 
 maxusers	32
 
@@ -18,13 +21,27 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-options 	RASTERCONSOLE		# fast rasterop console
+# wsdisplay options
+options 	WSEMUL_SUN
+#options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_CUSTOM_OUTPUT		# wsconsctl(8)
+
+# black on white, kernel output in green
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+
+options 	WSDISPLAY_DEFAULTSCREENS=1
+
+options		SPARCBOOK_CMD		# enable screen switching with lAlt-Fn
 #options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
-options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
@@ -124,6 +141,7 @@ options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -143,12 +161,13 @@ file-system	PROCFS		# /proc
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -183,8 +202,8 @@ iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
 ## SBus to PCMCIA bridge
-#tpcic*	at sbus? slot ? offset ?		# PCMCIA bridge (tadpole 3gx)
-#pcmcia*	at tpcic?
+tslot*	at sbus? slot ? offset ?		# PCMCIA bridge (tadpole 3gx)
+pcmcia*	at tslot?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -193,6 +212,9 @@ auxreg0	at obio0				# sun4m
 
 ## Additional auxiliary system registers on Sparcbook
 auxiotwo0	at obio0				# sun4m
+
+## Clock control on SPARCbook - used to put the CPU to sleep when idle
+clkctrl0 at obio0
 
 ## Mostek clock found on 4/300, sun4c, and sun4m systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
@@ -210,17 +232,21 @@ zstty0	at zs0 channel 0	# ttya
 zstty1	at zs0 channel 1	# ttyb
 
 zs1	at obio0					# sun4m
-kbd0	at zs1 channel 0	# keyboard
-ms0	at zs1 channel 1	# mouse
-zstty*	at zs? channel ?	# mouse
+zstty*	at zs1 channel ?	# mouse/keyboard
+
+kbd0	at zstty?
+ms0	at zstty?
+
+wskbd*		at kbd? console ?
+wsmouse*	at ms?
 
 ## Tadpole 3GX/3XL have a builtin modem that emulates a NS16450.
 com*	at obio0					# sun4m (tadpole)
 
 ## PCMCIA serial interfaces
-#com*	at pcmcia?
-#pcmcom*	at pcmcia?
-#com*	at pcmcom?
+com*	at pcmcia?
+pcmcom*	at pcmcia?
+com*	at pcmcom?
 
 #### Disk controllers and disks
 
@@ -257,13 +283,15 @@ ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 ## PCMCIA IDE controllers
-#wdc*	at pcmcia?
-#wd*	at wdc?
+wdc*	at pcmcia?
+
+atabus* at ata?
+wd*		at atabus? drive ? flags 0x0000
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+pseudo-device	vnd	
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
@@ -282,27 +310,29 @@ ledma0		at sbus0 slot ? offset ?		# sun4m on-board
 le0		at ledma0				# sun4m on-board
 
 # PCMCIA ethernet devices
-#ep*	at pcmcia?
+ep*	at pcmcia?
 #mbe*	at pcmcia?
 #ne*	at pcmcia?
 #sm*	at pcmcia?
+
+wi*	at pcmcia?
 
 ## Loopback network interface; required
 pseudo-device	loop
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		2
+pseudo-device	ppp		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		4
+pseudo-device	tun		
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
@@ -311,13 +341,19 @@ pseudo-device	ipfilter
 
 #### Audio and video devices
 
-## /dev/audio support (`audioamd' plus `audio')
-##
-# The Tadpole 3GX audio is accessed through the ISDN chip which
-# is not currently supported.
+## /dev/audio support
+
+#options	DBRI_DEBUG	# noisy debug output from the dbri driver
+options		DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
+dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
+audio*		at audiobus?
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 pnozz0 at sbus? slot ? offset ?
+#options	PNOZZ_EMUL_CG3		# emulate a CG3 for Xsun instead of 
+					# running natively
+
+wsdisplay* 	at wsemuldisplaydev? console ?
 
 #### Other device configuration
 
@@ -335,3 +371,6 @@ pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss		4	# file system snapshot device
+
+pseudo-device	wsmux			# mouse and keyboard multiplexor
+pseudo-device	wsfont

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_i2c.c,v 1.1 2003/10/06 16:06:05 thorpej Exp $	*/
+/*	$NetBSD: i80312_i2c.c,v 1.1.18.1 2006/06/21 14:49:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.1 2003/10/06 16:06:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.1.18.1 2006/06/21 14:49:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -104,7 +104,7 @@ iic312_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/*
-	 * Enable the I2C unit as a master running at 100.0 KHz (ICCR=0x1f4
+	 * Enable the I2C unit as a master running at 100.0 kHz (ICCR=0x1f4
 	 * per p.12-8 of the i80312 developer's manual).
 	 * No, we do not support slave mode.
 	 */

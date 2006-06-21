@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.17 2005/02/19 15:37:34 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.17.6.1 2006/06/21 14:50:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.17 2005/02/19 15:37:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.17.6.1 2006/06/21 14:50:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ gdrom_intr(void *arg)
 			}
 		}
 		while (cnt > 0) {
-			__volatile int16_t tmp;
+			volatile int16_t tmp;
 			tmp = GDROM_DATA;
 			cnt -= 2;
 		}
@@ -392,16 +392,16 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * reenable disabled drive
 	 */
-	*((__volatile uint32_t *)0xa05f74e4) = 0x1fffff;
+	*((volatile uint32_t *)0xa05f74e4) = 0x1fffff;
 	for (p = 0; p < 0x200000 / 4; p++)
-		x = ((__volatile uint32_t *)0xa0000000)[p];
+		x = ((volatile uint32_t *)0xa0000000)[p];
 
 	printf(": %s\n", sysasic_intr_string(IPL_BIO));
 	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, gdrom_intr, sc);
 }
 
 int
-gdromopen(dev_t dev, int flags, int devtype, struct proc *p)
+gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int s, error, unit, cnt;
@@ -451,7 +451,7 @@ gdromopen(dev_t dev, int flags, int devtype, struct proc *p)
 }
 
 int
-gdromclose(dev_t dev, int flags, int devtype, struct proc *p)
+gdromclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int unit;
@@ -509,7 +509,7 @@ gdromstrategy(struct buf *bp)
 }
 
 int
-gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int unit, error;

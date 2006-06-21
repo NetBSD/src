@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.18 2005/03/07 18:25:22 uwe Exp $
+#	$NetBSD: HPW650PA,v 1.18.4.1 2006/06/21 14:52:01 yamt Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -41,7 +41,7 @@ options 	EXEC_ELF32	# 32-bit ELF executables
 file-system 	FFS		# UFS
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -89,7 +89,7 @@ wd*	at atabus? drive ? flags 0x0000
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	pty			# pseudo-terminals
 
-pseudo-device	bpfilter	1	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

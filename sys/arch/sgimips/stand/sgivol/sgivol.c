@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.10 2005/02/28 06:44:55 sekiya Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.10.4.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <util.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/endian.h>
+#endif
 
 int	fd;
 int	opt_i;			/* Initialize volume header */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.5 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.5.6.1 2006/06/21 14:54:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -34,7 +34,7 @@
 void mips3_wbflush(void);
 void apbus_wbflush(void);
 
-static __inline void
+static inline void
 wbflush(void)
 {
 	mips3_wbflush();

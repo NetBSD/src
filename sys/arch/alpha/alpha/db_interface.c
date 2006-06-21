@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.20 2005/06/09 06:27:18 he Exp $ */
+/* $NetBSD: db_interface.c,v 1.20.2.1 2006/06/21 14:48:00 yamt Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20 2005/06/09 06:27:18 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20.2.1 2006/06/21 14:48:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -260,7 +260,7 @@ void
 cpu_Debugger()
 {
 
-	__asm __volatile("call_pal 0x81");		/* bugchk */
+	__asm volatile("call_pal 0x81");		/* bugchk */
 }
 
 /*

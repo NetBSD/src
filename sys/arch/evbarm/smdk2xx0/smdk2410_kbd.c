@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.1 2004/02/14 07:23:30 bsh Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.1.18.1 2006/06/21 14:50:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.1 2004/02/14 07:23:30 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.1.18.1 2006/06/21 14:50:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ CFATTACH_DECL(sskbd, sizeof(struct sskbd_softc),
 
 static  int	sskbd_enable(void *, int);
 static  void	sskbd_set_leds(void *, int);
-static  int	sskbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static  int	sskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static	int	sskbd_atn_intr(void *);
 static	int	sskbd_spi_intr(void *);
 static	void	sskbd_soft_intr(void *);
@@ -328,7 +328,7 @@ sskbd_attach(struct device *parent, struct device *self, void *aux)
 		    sc->dev.dv_xname);
 
 	/* setup SPI control register, and prescaler */
-	s3c24x0_spi_setup((struct ssspi_softc *)self->dv_parent, 
+	s3c24x0_spi_setup((struct ssspi_softc *)device_parent(self), 
 			  SPCON_SMOD_INT | SPCON_ENSCK | 
 			  SPCON_MSTR | SPCON_IDLELOW_RISING,
 			  100*1000, 0);
@@ -468,7 +468,7 @@ sskbd_set_leds(void *v, int leds)
 }
 
 static int
-sskbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+sskbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	/*struct sskbd_softc *sc = v;*/
 

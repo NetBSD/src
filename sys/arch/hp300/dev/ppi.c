@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.30 2005/02/19 16:31:49 tsutsui Exp $	*/
+/*	$NetBSD: ppi.c,v 1.30.6.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.30 2005/02/19 16:31:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.30.6.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ ppinoop(void *arg)
 }
 
 int
-ppiopen(dev_t dev, int flags, int fmt, struct proc *p)
+ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc;
@@ -225,7 +225,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-ppiclose(dev_t dev, int flags, int fmt, struct proc *p)
+ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
@@ -246,7 +246,7 @@ ppistart(void *arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppistart(%x)\n", sc->sc_dev.dv_unit);
+		printf("ppistart(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -259,7 +259,7 @@ ppitimo(void *arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppitimo(%x)\n", sc->sc_dev.dv_unit);
+		printf("ppitimo(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(sc);
@@ -301,7 +301,7 @@ ppirw(dev_t dev, struct uio *uio)
 	if (uio->uio_resid == 0)
 		return(0);
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
 
 #ifdef DEBUG
@@ -329,7 +329,7 @@ ppirw(dev_t dev, struct uio *uio)
 again:
 		s = splbio();
 		if ((sc->sc_flags & PPIF_UIO) &&
-		    hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq) == 0)
+		    hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq) == 0)
 			(void) tsleep(sc, PRIBIO + 1, "ppirw", 0);
 		/*
 		 * Check if we timed out during sleep or uiomove
@@ -357,7 +357,7 @@ again:
 		else
 			cnt = hpibrecv(ctlr, slave, sc->sc_sec, cp, len);
 		s = splbio();
-		hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
+		hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
 			printf("ppirw: %s(%d, %d, %x, %p, %d) -> %d\n",
@@ -446,7 +446,7 @@ again:
 }
 
 static int
-ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.6 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.6.2.1 2006/06/21 14:48:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6.2.1 2006/06/21 14:48:19 yamt Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 
@@ -69,22 +68,13 @@ void netbsd32_syscall_plain(struct trapframe *);
 void netbsd32_syscall_fancy(struct trapframe *);
 
 void
-netbsd32_syscall_intern(p)
-	struct proc *p;
+netbsd32_syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = netbsd32_syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = netbsd32_syscall_fancy;
-		return;
-	} 
-#endif
-	p->p_md.md_syscall = netbsd32_syscall_plain;
+	else
+		p->p_md.md_syscall = netbsd32_syscall_plain;
 }
 
 void
@@ -137,10 +127,6 @@ netbsd32_syscall_plain(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = 0;
 #if 0
@@ -175,9 +161,6 @@ netbsd32_syscall_plain(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 

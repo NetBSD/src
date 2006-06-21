@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.86 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: scc.c,v 1.86.2.1 2006/06/21 14:54:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.86 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.86.2.1 2006/06/21 14:54:48 yamt Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.86 2005/06/01 18:21:43 drochner Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/dec/lk201.h>
@@ -159,7 +160,7 @@ struct scc_softc {
  *	BRGconstant =	---------------------------  -  2
  *			2 * BaudRate * ClockDivider
  *
- * Speed selections with Pclk=7.3728Mhz, clock x16
+ * Speed selections with Pclk=7.3728 MHz, clock x16
  */
 const struct speedtab sccspeedtab[] = {
 	{ 0,		0,	},
@@ -370,7 +371,7 @@ sccattach(parent, self, aux)
 #endif
 	int unit;
 
-	unit = sc->sc_dv.dv_unit;
+	unit = device_unit(&sc->sc_dv);
 
 	sccaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
 
@@ -399,7 +400,7 @@ sccattach(parent, self, aux)
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
-	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags;
+	sc->scc_softCAR = device_cfdata(&sc->sc_dv)->cf_flags;
 
 	/*
 	 * Reset chip, initialize  register-copies in softc.
@@ -607,10 +608,10 @@ sccreset(sc)
 }
 
 int
-sccopen(dev, flag, mode, p)
+sccopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
@@ -658,7 +659,8 @@ sccopen(dev, flag, mode, p)
 		(void) sccparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	}
-	else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0) {
+	else if ((tp->t_state & TS_XCLUDE) &&
+		 kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0) {
 		error = EBUSY;
 		splx(s);
 		goto bad;
@@ -688,10 +690,10 @@ bad:
 
 /*ARGSUSED*/
 int
-sccclose(dev, flag, mode, p)
+sccclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	struct tty *tp;
@@ -739,17 +741,17 @@ sccwrite(dev, uio, flag)
 }
 
 int
-sccpoll(dev, events, p)
+sccpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -768,12 +770,12 @@ scctty(dev)
 
 /*ARGSUSED*/
 int
-sccioctl(dev, cmd, data, flag, p)
+sccioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
@@ -783,11 +785,11 @@ sccioctl(dev, cmd, data, flag, p)
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = sc->scc_tty[line];
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1136,7 +1138,7 @@ sccintr(xxxsc)
 	void *xxxsc;
 {
 	struct scc_softc *sc = (struct scc_softc *)xxxsc;
-	int unit = (long)sc->sc_dv.dv_unit;
+	int unit = device_unit(&sc->sc_dv);
 	scc_regmap_t *regs;
 	int rr3;
 
@@ -1371,7 +1373,7 @@ scc_modem_intr(dev)
 	}
 
 	/* Break on serial console drops into the debugger */
-	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(device_unit(&sc->sc_dv))) {
 #ifdef DDB
 		splx(s);		/* spl0()? */
 		console_debugger();
@@ -1386,7 +1388,7 @@ scc_modem_intr(dev)
 	 * On pmax, ignore hups on a console tty.
 	 * On alpha, a no-op, for historical reasons.
 	 */
-	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+	if (!CONSOLE_ON_UNIT(device_unit(&sc->sc_dv))) {
 		if (car) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))

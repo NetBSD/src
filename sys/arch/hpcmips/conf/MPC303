@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.33 2005/02/18 21:05:52 dsl Exp $
+# 	$NetBSD: MPC303,v 1.33.6.1 2006/06/21 14:51:49 yamt Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.33.6.1 $"
 
 maxusers	16
 
@@ -70,12 +70,12 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
-options 	VNODE_OP_NOINLINE # don't inline vnode op calls
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -83,6 +83,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
@@ -180,6 +181,9 @@ uhub*	at uhub? port ? configuration ? interface ?
 # USB Keyboards
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
@@ -375,8 +379,8 @@ pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 #
 # Vadem Clio and Sharp Tripad
 #
-vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
-vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
+vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x0
+vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x0
 isa3	at vrisab3
 pcic0	at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 
@@ -467,12 +471,12 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 pseudo-device	loop		1	# network loopback
-pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
-pseudo-device	vnd		4	# virtual disk ick
+pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
@@ -490,9 +494,9 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	fss		4	# file system snapshot device
 
 # for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

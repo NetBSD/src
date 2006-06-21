@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.1 2005/02/26 10:49:53 bsh Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.1.10.1 2006/06/21 14:50:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.1 2005/02/26 10:49:53 bsh Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.1.10.1 2006/06/21 14:50:46 yamt Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ CFATTACH_DECL(kmkbd, sizeof(struct kmkbd_softc),
 
 static  int	kmkbd_enable(void *, int);
 static  void	kmkbd_set_leds(void *, int);
-static  int	kmkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static  int	kmkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 const struct wskbd_accessops kmkbd_accessops = {
 	kmkbd_enable,
@@ -263,7 +263,7 @@ kmkbd_set_leds(void *v, int leds)
 }
 
 static int
-kmkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+kmkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	/*struct kmkbd_softc *sc = v;*/
 
@@ -369,7 +369,7 @@ kmkbd_read_matrix(struct kmkbd_softc *sc)
 {
 	int i;
 	u_int ret, data;
-	struct obio_softc *osc = (struct obio_softc *)(sc->dev.dv_parent);
+	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
 	bus_space_tag_t iot = osc->sc_iot;
 	bus_space_handle_t ioh = osc->sc_obioreg_ioh;
 
@@ -440,7 +440,7 @@ static int
 kmkbd_intr(void *arg)
 {
 	struct kmkbd_softc *sc = arg;
-	struct obio_softc *osc = (struct obio_softc *)(sc->dev.dv_parent);
+	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
 
 	if ( sc->state != ST_ALL_UP ){
 		printf("Spurious interrupt from key matrix\n");
@@ -501,7 +501,7 @@ kmkbd_watch(void *arg)
 static void
 kmkbd_new_state(struct kmkbd_softc *sc, enum kmkbd_state new_state)
 {
-	struct obio_softc *osc = (struct obio_softc *)(sc->dev.dv_parent);
+	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
 
 	switch(new_state){
 	case ST_DISABLED:

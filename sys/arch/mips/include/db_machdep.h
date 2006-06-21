@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.16 2003/11/26 08:36:49 he Exp $ */
+/* $NetBSD: db_machdep.h,v 1.16.16.1 2006/06/21 14:53:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -66,7 +66,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define BKPT_INST	0x0001000D
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */

@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.1.18.1 2006/06/21 14:50:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.1.18.1 2006/06/21 14:50:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ const struct wsscreen_list lcd_screen_list = {
 	lcd_scr_descr
 };
 
-int	lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -215,10 +215,10 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 #if NWSDISPLAY > 0
 
 int
-lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	switch (cmd) {
@@ -234,7 +234,7 @@ lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl( v, cmd, data, flag, p );
+	return pxa2x0_lcd_ioctl( v, vs, cmd, data, flag, l );
 }
 
 int
@@ -242,7 +242,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);
 	
@@ -259,13 +259,13 @@ lcd_show_screen(void *v, void *cookie, int waitok,
 #else  /* NWSDISPLAY==0 */
 
 int
-lcdopen( dev_t dev, int oflags, int devtype, struct proc *p )
+lcdopen( dev_t dev, int oflags, int devtype, struct lwp *l )
 {
 	return 0;
 }
 
 int
-lcdclose( dev_t dev, int fflag, int devtype, struct proc *p )
+lcdclose( dev_t dev, int fflag, int devtype, struct lwp *l )
 {
 	return 0;
 }
@@ -282,7 +282,7 @@ lcdmmap( dev_t dev, off_t offset, int size )
 
 int
 lcdioctl( dev_t dev, u_long cmd, caddr_t data,
-	    int fflag, struct proc *p )
+	    int fflag, struct lwp *l )
 {
 	return EOPNOTSUPP;
 }

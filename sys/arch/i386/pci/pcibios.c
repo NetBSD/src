@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.28 2005/06/22 19:17:35 sekiya Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.28.2.1 2006/06/21 14:52:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.28 2005/06/22 19:17:35 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.28.2.1 2006/06/21 14:52:31 yamt Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -112,12 +112,12 @@ struct bios32_entry pcibios_entry;
 
 void	pcibios_pir_init(void);
 
-int	pcibios_get_status(u_int32_t *, u_int32_t *, u_int32_t *,
-	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *);
+int	pcibios_get_status(uint32_t *, uint32_t *, uint32_t *,
+	    uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 int	pcibios_get_intr_routing(struct pcibios_intr_routing *,
-	    int *, u_int16_t *);
+	    int *, uint16_t *);
 
-int	pcibios_return_code(u_int16_t, const char *);
+int	pcibios_return_code(uint16_t, const char *);
 
 void	pcibios_print_exclirq(void);
 
@@ -149,7 +149,7 @@ void
 pcibios_init(void)
 {
 	struct bios32_entry_info ei;
-	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
+	uint32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
 
 	if (bios32_service(BIOS32_MAKESIG('$', 'P', 'C', 'I'),
 	    &pcibios_entry, &ei) == 0) {
@@ -173,18 +173,15 @@ pcibios_init(void)
 		return;
 	}
 
-	printf("PCI BIOS rev. %d.%d found at 0x%lx\n", rev_maj, rev_min >> 4,
-	    ei.bei_entry);
-#ifdef PCIBIOSVERBOSE
-	printf("pcibios: config mechanism %s%s, special cycles %s%s, "
+	aprint_normal("PCI BIOS rev. %d.%d found at 0x%lx\n",
+	    rev_maj, rev_min >> 4, ei.bei_entry);
+	aprint_verbose("pcibios: config mechanism %s%s, special cycles %s%s, "
 	    "last bus %d\n",
 	    mech1 ? "[1]" : "[x]",
 	    mech2 ? "[2]" : "[x]",
 	    scmech1 ? "[1]" : "[x]",
 	    scmech2 ? "[2]" : "[x]",
 	    pcibios_max_bus);
-
-#endif
 
 	/*
 	 * The PCI BIOS tells us the config mechanism; fill it in now
@@ -202,7 +199,7 @@ pcibios_init(void)
 #ifdef PCI_INTR_FIXUP
 	if (pcibios_pir_table != NULL) {
 		int rv;
-		u_int16_t pciirq;
+		uint16_t pciirq;
 
 		/*
 		 * Fixup interrupt routing.
@@ -211,7 +208,7 @@ pcibios_init(void)
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */
-			printf("Warning: unable to fix up PCI interrupt "
+			aprint_error("Warning: unable to fix up PCI interrupt "
 			    "routing\n");
 			break;
 
@@ -236,8 +233,8 @@ pcibios_pir_init(void)
 	paddr_t pa;
 	caddr_t p;
 	unsigned char cksum;
-	u_int16_t tablesize;
-	u_int8_t rev_maj, rev_min;
+	uint16_t tablesize;
+	uint8_t rev_maj, rev_min;
 	int i;
 
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
@@ -253,28 +250,29 @@ pcibios_pir_init(void)
 		
 		rev_min = *(p + 4);
 		rev_maj = *(p + 5);
-		tablesize = *(u_int16_t *)(p + 6);
+		tablesize = *(uint16_t *)(p + 6);
 
 		cksum = 0;
 		for (i = 0; i < tablesize; i++)
 			cksum += *(unsigned char *)(p + i);
 
-		printf("PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
+		aprint_normal(
+		    "PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
 		    "size %d bytes (%d entries)\n", rev_maj, rev_min, pa,
 		    tablesize, (tablesize - 32) / 16);
 
 		if (cksum != 0) {
-			printf("pcibios_pir_init: bad IRQ table checksum\n");
+			aprint_error("pcibios_pir_init: bad IRQ table checksum\n");
 			continue;
 		}
 
 		if (tablesize < 32 || (tablesize % 16) != 0) {
-			printf("pcibios_pir_init: bad IRQ table size\n");
+			aprint_error("pcibios_pir_init: bad IRQ table size\n");
 			continue;
 		}
 
 		if (rev_maj != 1 || rev_min != 0) {
-			printf("pcibios_pir_init: unsupported IRQ table "
+			aprint_error("pcibios_pir_init: unsupported IRQ table "
 			    "version\n");
 			continue;
 		}
@@ -286,13 +284,13 @@ pcibios_pir_init(void)
 		pcibios_pir_table = malloc(tablesize - 32, M_DEVBUF,
 		    M_NOWAIT);
 		if (pcibios_pir_table == NULL) {
-			printf("pcibios_pir_init: no memory for $PIR\n");
+			aprint_error("pcibios_pir_init: no memory for $PIR\n");
 			return;
 		}
 		memcpy(pcibios_pir_table, p + 32, tablesize - 32);
 		pcibios_pir_table_nentries = (tablesize - 32) / 16;
 
-		printf("PCI Interrupt Router at %03d:%02d:%01d",
+		aprint_verbose("PCI Interrupt Router at %03d:%02d:%01d",
 		    pcibios_pir_header.router_bus,
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
@@ -301,11 +299,11 @@ pcibios_pir_init(void)
 			if (devinfo) {
 				pci_devinfo(pcibios_pir_header.compat_router,
 				    0, 0, devinfo, 256);
-				printf(" (%s compatible)", devinfo);
+				aprint_verbose(" (%s compatible)", devinfo);
 				free(devinfo, M_DEVBUF);
 			}
 		}
-		printf("\n");
+		aprint_verbose("\n");
 		pcibios_print_exclirq();
 
 #ifdef PCIBIOS_LIBRETTO_FIXUP
@@ -332,19 +330,19 @@ pcibios_pir_init(void)
 	pcibios_pir_table = malloc(pcibios_pir_table_nentries *
 	    sizeof(*pcibios_pir_table), M_DEVBUF, M_NOWAIT);
 	if (pcibios_pir_table == NULL) {
-		printf("pcibios_pir_init: no memory for $PIR\n");
+		aprint_error("pcibios_pir_init: no memory for $PIR\n");
 		return;
 	}
 	if (pcibios_get_intr_routing(pcibios_pir_table,
 	    &pcibios_pir_table_nentries,
 	    &pcibios_pir_header.exclusive_irq) != PCIBIOS_SUCCESS) {
-		printf("No PCI IRQ Routing information available.\n");
+		aprint_normal("No PCI IRQ Routing information available.\n");
 		free(pcibios_pir_table, M_DEVBUF);
 		pcibios_pir_table = NULL;
 		pcibios_pir_table_nentries = 0;
 		return;
 	}
-	printf("PCI BIOS has %d Interrupt Routing table entries\n",
+	aprint_verbose("PCI BIOS has %d Interrupt Routing table entries\n",
 	    pcibios_pir_table_nentries);
 	pcibios_print_exclirq();
 
@@ -361,15 +359,15 @@ pcibios_pir_init(void)
 }
 
 int
-pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
-    u_int32_t *mech1, u_int32_t *mech2, u_int32_t *scmech1, u_int32_t *scmech2,
-    u_int32_t *maxbus)
+pcibios_get_status(uint32_t *rev_maj, uint32_t *rev_min,
+    uint32_t *mech1, uint32_t *mech2, uint32_t *scmech1, uint32_t *scmech2,
+    uint32_t *maxbus)
 {
-	u_int16_t ax, bx, cx;
-	u_int32_t edx;
+	uint16_t ax, bx, cx;
+	uint32_t edx;
 	int rv;
 
-	__asm __volatile("lcall *(%%edi)				; \
+	__asm volatile("lcall *(%%edi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:"
@@ -399,14 +397,14 @@ pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
 
 int
 pcibios_get_intr_routing(struct pcibios_intr_routing *table,
-    int *nentries, u_int16_t *exclirq)
+    int *nentries, uint16_t *exclirq)
 {
-	u_int16_t ax, bx;
+	uint16_t ax, bx;
 	int rv;
 	struct {
-		u_int16_t size;
+		uint16_t size;
 		caddr_t offset;
-		u_int16_t segment;
+		uint16_t segment;
 	} __attribute__((__packed__)) args;
 
 	args.size = *nentries * sizeof(*table);
@@ -415,7 +413,7 @@ pcibios_get_intr_routing(struct pcibios_intr_routing *table,
 
 	memset(table, 0, args.size);
 
-	__asm __volatile("lcall *(%%esi)				; \
+	__asm volatile("lcall *(%%esi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:	movw %w2, %%ds					; \
@@ -435,7 +433,7 @@ pcibios_get_intr_routing(struct pcibios_intr_routing *table,
 }
 
 int
-pcibios_return_code(u_int16_t ax, const char *func)
+pcibios_return_code(uint16_t ax, const char *func)
 {
 	const char *errstr;
 	int rv = ax >> 8;
@@ -473,11 +471,11 @@ pcibios_return_code(u_int16_t ax, const char *func)
 		break;
 
 	default:
-		printf("%s: unknown return code 0x%x\n", func, rv);
+		aprint_error("%s: unknown return code 0x%x\n", func, rv);
 		return (rv);
 	}
 
-	printf("%s: %s\n", func, errstr);
+	aprint_error("%s: %s\n", func, errstr);
 	return (rv);
 }
 
@@ -487,12 +485,12 @@ pcibios_print_exclirq(void)
 	int i;
 
 	if (pcibios_pir_header.exclusive_irq) {
-		printf("PCI Exclusive IRQs:");
+		aprint_verbose("PCI Exclusive IRQs:");
 		for (i = 0; i < 16; i++) {
 			if (pcibios_pir_header.exclusive_irq & (1 << i))
-				printf(" %d", i);
+				aprint_verbose(" %d", i);
 		}
-		printf("\n");
+		aprint_verbose("\n");
 	}
 }
 
@@ -591,7 +589,7 @@ static struct bios32_entry pcibios_entry_shadow;
 static void
 pcibios_copy_bios(void)
 {
-	u_int8_t *bad_instr;
+	uint8_t *bad_instr;
 
 	memcpy(pcibios_shadow, ISA_HOLE_VADDR(BIOS32_START), BIOS32_SIZE);
 	pcibios_entry_shadow = pcibios_entry;
@@ -600,7 +598,7 @@ pcibios_copy_bios(void)
 		    (u_long)pcibios_entry.offset -
 		    (u_long)ISA_HOLE_VADDR(BIOS32_START));
 	
-	bad_instr = (u_int8_t *)pcibios_entry_shadow.offset + 0x499;
+	bad_instr = (uint8_t *)pcibios_entry_shadow.offset + 0x499;
 	if (*bad_instr != 0x2e)
 		panic("bad bios");
 	bad_instr[0] = 0xb4; bad_instr[1] = 0xff; /* mov $0xff,%ah */
@@ -620,16 +618,16 @@ pcibios_copy_bios(void)
 static int
 pcibios_biosroute(int bus, int device, int func, int pin, int irq)
 {
-	u_int16_t ax, bx, cx;
+	uint16_t ax, bx, cx;
 	int rv;
 
-	printf("pcibios_biosroute: b,d,f=%d,%d,%d pin=%x irq=%d\n",
+	aprint_debug("pcibios_biosroute: b,d,f=%d,%d,%d pin=%x irq=%d\n",
 	       bus, device, func, pin+0xa, irq);
 
 	bx = (bus << 8) | (device << 3) | func;
 	cx = (irq << 8) | (0xa + pin);
 
-	__asm __volatile("lcall *(%%esi)				; \
+	__asm volatile("lcall *(%%esi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:	movw %w1, %%ds					; \

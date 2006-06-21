@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2005/01/16 21:35:59 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.8.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -171,7 +171,7 @@ boolean_t pmap_check_attr(struct vm_page *, u_int, int);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -193,9 +193,9 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
 
-static __inline paddr_t vtophys(vaddr_t);
+static inline paddr_t vtophys(vaddr_t);
 
-static __inline paddr_t
+static inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;

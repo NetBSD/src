@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.69 2004/10/11 01:00:11 christos Exp $	*/
+/*	$NetBSD: locore.c,v 1.69.12.1 2006/06/21 14:57:34 yamt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.69 2004/10/11 01:00:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.69.12.1 2006/06/21 14:57:34 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -300,7 +300,7 @@ _start(struct rpb *prpb)
 #endif
 	default:
 		/* CPU not supported, just give up */
-		asm("halt");
+		__asm("halt");
 	}
 
 	/*

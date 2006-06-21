@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2005/03/09 19:04:43 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.18.4.1 2006/06/21 14:49:07 yamt Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -670,8 +670,8 @@ bus_space_copy_region(8,64)
  * On the MIPS, we just flush the write buffer.
  */
 #define bus_space_barrier(t, h, o, l, f)				\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)),	\
-	 wbflush())
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f),	\
+	 wbflush()))
 
 #define BUS_SPACE_BARRIER_READ	0x01
 #define BUS_SPACE_BARRIER_WRITE	0x02
@@ -813,7 +813,7 @@ struct arc_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.

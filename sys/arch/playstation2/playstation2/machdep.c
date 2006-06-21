@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -76,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2005/04/25 15:02:06 lukem Exp $");
 #ifdef KLOADER
 #include <machine/kloader.h>
 #endif
-
-/* For sysctl_hw */
-extern char cpu_model[];
 
 struct cpu_info cpu_info_store;
 

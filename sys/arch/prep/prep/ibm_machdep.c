@@ -1,11 +1,11 @@
-/*      $NetBSD: ibm_machdep.c,v 1.9 2004/06/26 21:51:04 kleink Exp $        */
+/*	$NetBSD: ibm_machdep.c,v 1.9.12.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by NONAKA Kimihiro.
+ * by Klaus J. Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,50 +36,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_machdep.c,v 1.9 2004/06/26 21:51:04 kleink Exp $");
-
-#include "opt_platform.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/platform.h>
 
-static struct platform *platform_ibm[] = {
-#if defined(PLATFORM_IBM_6015)
-	&platform_ibm_6015,
-#endif
-#if defined(PLATFORM_IBM_6040)
-	&platform_ibm_6040,
-#endif
-#if defined(PLATFORM_IBM_6050)
-	&platform_ibm_6050,
-#endif
-#if defined(PLATFORM_IBM_7248)
-	&platform_ibm_7248,
-#endif
-#if defined(PLATFORM_IBM_7043_140)
-	&platform_ibm_7043_140,
-#endif
-	NULL
-};
+extern struct prep_pci_chipset *prep_pct;
 
-struct plattab plattab_ibm = {
-	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0]) - 1
-};
+void pci_intr_fixup_ibm_6015(void);
 
 void
-cpu_setup_ibm_generic(struct device *dev)
+pci_intr_fixup_ibm_6015(void)
 {
-	u_char l2ctrl, cpuinf;
+	struct prep_pci_chipset_businfo *pbi;
+	prop_dictionary_t dict, sub;
+	prop_number_t intr_num;
+	int i, j;
+	char key[20];
 
-	/* system control register */
-	l2ctrl = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c);
-	/* device status register */
-	cpuinf = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x80c);
+	/* this works because the 6015 has only 1 PCI bus native */
+	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
 
-	/* Enable L2 cache */
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
+	dict = prop_dictionary_create_with_capacity(16);
+	KASSERT(dict != NULL);
+	(void)prop_dictionary_set(pbi->pbi_properties, "prep-pci-intrmap",
+	    dict);
+	sub = prop_dictionary_create_with_capacity(4);
+	KASSERT(sub != NULL);
+
+	intr_num = prop_number_create_integer(13);
+	for (j = 0; j < 4; j++) {
+		sprintf(key, "pin-%c", 'A' + j);
+		prop_dictionary_set(sub, key, intr_num);
+	}
+	prop_object_release(intr_num);
+	prop_dictionary_set(dict, "devfunc-12", sub);
+	prop_object_release(sub);
+
+	/* devices 13-19 all share IRQ 15 */
+	for (i = 13; i < 20; i++) {
+		sub = prop_dictionary_create_with_capacity(4);
+		intr_num = prop_number_create_integer(15);
+		sprintf(key, "devfunc-%d", i);
+		for (j = 0; j < 4; j++) {
+			sprintf(key, "pin-%c", 'A' + j);
+			prop_dictionary_set(sub, key, intr_num);
+		}
+		prop_dictionary_set(dict, key, sub);
+		prop_object_release(intr_num);
+		prop_object_release(sub);
+	}
+	prop_object_release(dict);
 }

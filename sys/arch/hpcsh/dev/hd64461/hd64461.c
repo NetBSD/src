@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.13 2003/07/15 02:29:36 lukem Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.13.16.1 2006/06/21 14:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.13 2003/07/15 02:29:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.13.16.1 2006/06/21 14:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/boot_flag.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
-#include <hpcsh/dev/hd64461/hd64461reg.h>
-#include <hpcsh/dev/hd64461/hd64461intcreg.h>
 
 /* HD64461 modules. INTC, TIMER, POWER modules are included in hd64461if */
 STATIC struct hd64461_module {
@@ -76,18 +74,17 @@ STATIC void hd64461_info(void);
 CFATTACH_DECL(hd64461if, sizeof(struct device),
     hd64461_match, hd64461_attach, NULL, NULL);
 
-int
+STATIC int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	switch (cpu_product) {
-	default:
-		/* HD64461 only supports SH7709 interface */
-		return (0);
 	case CPU_PRODUCT_7709:
-		break;
 	case CPU_PRODUCT_7709A:
 		break;
+
+	default:
+		return (0);	/* HD64461 only supports SH7709 interface */
 	}
 
 	if (strcmp("hd64461if", cf->cf_name))
@@ -96,7 +93,7 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-void
+STATIC void
 hd64461_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args ha;
@@ -119,7 +116,7 @@ hd64461_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-int
+STATIC int
 hd64461_print(void *aux, const char *pnp)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -131,11 +128,16 @@ hd64461_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+
 #ifdef DEBUG
-void
-hd64461_info()
+
+#include <hpcsh/dev/hd64461/hd64461reg.h>
+#include <hpcsh/dev/hd64461/hd64461intcreg.h>
+
+STATIC void
+hd64461_info(void)
 {
-	u_int16_t r16;
+	uint16_t r16;
 
 	dbg_banner_function();
 

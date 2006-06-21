@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.4 2004/11/25 08:09:15 jmc Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.4.12.1 2006/06/21 14:50:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/endian.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include "bootimage.h"
 
 #if BYTE_ORDER == LITTLE_ENDIAN

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.40 2005/06/29 16:23:45 christos Exp $ */
+/*	$NetBSD: scif.c,v 1.40.2.1 2006/06/21 14:55:31 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.40 2005/06/29 16:23:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.40.2.1 2006/06/21 14:55:31 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.40 2005/06/29 16:23:45 christos Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kgdb.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -221,11 +222,6 @@ void	scifdiag(void *);
 
 #define	SCIFUNIT(x)	(minor(x) & SCIFUNIT_MASK)
 #define	SCIFDIALOUT(x)	(minor(x) & SCIFDIALOUT_MASK)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCIF_HW_NOIEN	0x01
@@ -418,7 +414,7 @@ scif_getc(void)
 {
 	unsigned char c, err_c;
 #ifdef SH4
-	unsigned short err_c2;
+	unsigned short err_c2 = 0; /* XXXGCC: -Wuninitialized */
 #endif
 
 	for (;;) {
@@ -607,7 +603,7 @@ scifparam(struct tty *tp, struct termios *t)
 	int ospeed = t->c_ospeed;
 	int s;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -739,7 +735,7 @@ scif_iflush(struct scif_softc *sc)
 }
 
 int
-scifopen(dev_t dev, int flag, int mode, struct proc *p)
+scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SCIFUNIT(dev);
 	struct scif_softc *sc;
@@ -754,7 +750,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -769,7 +765,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -854,7 +850,7 @@ bad:
 }
 
 int
-scifclose(dev_t dev, int flag, int mode, struct proc *p)
+scifclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -866,7 +862,7 @@ scifclose(dev_t dev, int flag, int mode, struct proc *p)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (0);
 
 	return (0);
@@ -891,12 +887,12 @@ scifwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-scifpoll(dev_t dev, int events, struct proc *p)
+scifpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -909,21 +905,21 @@ sciftty(dev_t dev)
 }
 
 int
-scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -945,7 +941,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1191,7 +1187,7 @@ scifsoft(void *arg)
 	struct scif_softc *sc = arg;
 	struct tty *tp;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	{
@@ -1218,7 +1214,7 @@ scifsoft(void *arg)
 		if (sc == NULL || !ISSET(sc->sc_hwflags, SCIF_HW_DEV_OK))
 			continue;
 
-		if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+		if (!device_is_active(&sc->sc_dev))
 			continue;
 
 		tp = sc->sc_tty;
@@ -1263,7 +1259,7 @@ scifintr(void *arg)
 	u_short ssr2;
 	int count;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (0);
 
 	end = sc->sc_ebuf;

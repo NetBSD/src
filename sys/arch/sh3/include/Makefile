@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.19 2004/05/08 21:51:50 kleink Exp $
+#	$NetBSD: Makefile,v 1.19.12.1 2006/06/21 14:55:31 yamt Exp $
 
 INCSDIR= /usr/include/sh3
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h bus.h \
+	bswap.h bus.h byte_swap.h \
 	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
@@ -19,7 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	setjmp.h sh_opcode.h \
 	signal.h stdarg.h \
 	types.h \
-	va-sh.h varargs.h vmparam.h \
+	varargs.h vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

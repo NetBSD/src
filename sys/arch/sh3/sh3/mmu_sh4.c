@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.8 2004/12/30 09:48:30 tsutsui Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.8.10.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.8 2004/12/30 09:48:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.8.10.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.8 2004/12/30 09:48:30 tsutsui Exp $");
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh4.h>
 
-#define	SH4_MMU_HAZARD	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop;")
+#define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
 
-static __inline__ void __sh4_itlb_invalidate_all(void);
+static inline void __sh4_itlb_invalidate_all(void);
 
-static __inline__ void
+static inline void
 __sh4_itlb_invalidate_all()
 {
 
@@ -84,7 +84,7 @@ sh4_mmu_start()
 void
 sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 {
-	u_int32_t pteh;
+	uint32_t pteh;
 	int s;
 
 	va &= SH4_PTEH_VPN_MASK;
@@ -108,7 +108,7 @@ sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 void
 sh4_tlb_invalidate_asid(int asid)
 {
-	u_int32_t a;
+	uint32_t a;
 	int e, s;
 
 	s = _cpu_exception_suspend();
@@ -128,7 +128,7 @@ sh4_tlb_invalidate_asid(int asid)
 void
 sh4_tlb_invalidate_all()
 {
-	u_int32_t a;
+	uint32_t a;
 	int e, eend, s;
 
 	s = _cpu_exception_suspend();
@@ -153,10 +153,10 @@ sh4_tlb_invalidate_all()
 }
 
 void
-sh4_tlb_update(int asid, vaddr_t va, u_int32_t pte)
+sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
 {
-	u_int32_t oasid;
-	u_int32_t ptel;
+	uint32_t oasid;
+	uint32_t ptel;
 	int s;
 
 	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
@@ -179,7 +179,7 @@ sh4_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 		_reg_write_4(SH4_PTEA, 0);
 	}
 	_reg_write_4(SH4_PTEL, ptel);
-	__asm__ __volatile__("ldtlb; nop");
+	__asm volatile("ldtlb; nop");
 
 	/* Restore old ASID */
 	if (asid != oasid)

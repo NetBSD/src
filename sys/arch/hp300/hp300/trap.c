@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2004/08/28 19:11:19 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.112.12.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/08/28 19:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112.12.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -91,26 +91,24 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/08/28 19:11:19 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
-#include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscall.h>
-#include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <m68k/frame.h>
 #include <m68k/cacheops.h>
 
-#include <machine/db_machdep.h>
-#include <machine/psl.h>
-#include <machine/trap.h>
 #include <machine/cpu.h>
-#include <machine/reg.h>
+#include <machine/db_machdep.h>
 #include <machine/intr.h>
+#include <machine/reg.h>
+#include <machine/trap.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -121,8 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/08/28 19:11:19 thorpej Exp $");
 #endif
 
 #ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
 #endif
 
 int	writeback(struct frame *fp, int docachepush);
@@ -215,7 +213,7 @@ int mmupid = -1;
  * trap and syscall both need the following work done before returning
  * to user mode.
  */
-static __inline void
+static inline void
 userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
     u_int faultaddr, int fromtrap)
 {
@@ -224,7 +222,7 @@ userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
 	int sig;
 	int beenhere = 0;
 
-again:
+ again:
 #endif
 	/* Invoke MI userret code */
 	mi_userret(l);
@@ -413,12 +411,12 @@ trap(int type, u_int code, u_int v, struct frame frame)
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 	/*
-	 * We pass along the 68881 status which locore stashed
+	 * We pass along the 68881 status register which locore stashed
 	 * in code for us.  Note that there is a possibility that the
-	 * bit pattern of this will conflict with one of the
+	 * bit pattern of this register will conflict with one of the
 	 * FPE_* codes defined in signal.h.  Fortunately for us, the
 	 * only such codes we use are all in the range 1-7 and the low
-	 * 3 bits of the status are defined as 0 so there is
+	 * 3 bits of the status register are defined as 0 so there is
 	 * no clash.
 	 */
 		ksi.ksi_signo = SIGFPE;
@@ -426,7 +424,7 @@ trap(int type, u_int code, u_int v, struct frame frame)
 		break;
 
 #ifdef M68040
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
@@ -631,7 +629,7 @@ trap(int type, u_int code, u_int v, struct frame frame)
 		}
 
 		if (WRFAULT(code))
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -652,16 +650,16 @@ trap(int type, u_int code, u_int v, struct frame frame)
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != 0) {
 				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, 0, ftype);
+				rv = uvm_fault(map, bva, ftype);
 				if (rv == 0)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
 		/*
@@ -693,7 +691,7 @@ trap(int type, u_int code, u_int v, struct frame frame)
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -704,8 +702,8 @@ trap(int type, u_int code, u_int v, struct frame frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
@@ -716,7 +714,7 @@ trap(int type, u_int code, u_int v, struct frame frame)
 	trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
 		return;
-out:
+ out:
 	userret(l, &frame, sticks, v, 1);
 }
 
@@ -788,7 +786,7 @@ writeback(struct frame *fp, int docachepush)
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
-			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
+			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
 			memcpy((caddr_t)fa, (caddr_t)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
@@ -797,7 +795,7 @@ writeback(struct frame *fp, int docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
+			       p->p_pid, p->p_comm, kauth_cred_geteuid(p->p_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.
@@ -972,13 +970,14 @@ writeback(struct frame *fp, int docachepush)
 	l->l_addr->u_pcb.pcb_onfault = oonfault;
 	if (err)
 		err = SIGSEGV;
-	return (err);
+	return err;
 }
 
 #ifdef DEBUG
 void
 dumpssw(u_short ssw)
 {
+
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
 		printf("CP,");

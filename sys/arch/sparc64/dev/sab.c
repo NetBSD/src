@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $	*/
+/*	$NetBSD: sab.c,v 1.21.2.1 2006/06/21 14:56:40 yamt Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.21.2.1 2006/06/21 14:56:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -94,8 +95,8 @@ struct sabtty_softc {
 	bus_space_handle_t	sc_bh;
 	struct tty *		sc_tty;
 	u_int			sc_portno;
-	u_int8_t		sc_pvr_dtr, sc_pvr_dsr;
-	u_int8_t		sc_imr0, sc_imr1;
+	uint8_t			sc_pvr_dtr, sc_pvr_dsr;
+	uint8_t			sc_imr0, sc_imr1;
 	int			sc_openflags;
 	u_char *		sc_txp;
 	int			sc_txc;
@@ -108,9 +109,9 @@ struct sabtty_softc {
 #define	SABTTYF_CONS_OUT	0x20
 #define	SABTTYF_TXDRAIN		0x40
 #define	SABTTYF_DONTDDB		0x80
-	u_int8_t		sc_rbuf[SABTTY_RBUF_SIZE];
-	u_int8_t		*sc_rend, *sc_rput, *sc_rget;
-	u_int8_t		sc_polling, sc_pollrfc;
+	uint8_t			sc_rbuf[SABTTY_RBUF_SIZE];
+	uint8_t			*sc_rend, *sc_rput, *sc_rget;
+	uint8_t			sc_polling, sc_pollrfc;
 };
 
 struct sabtty_softc *sabtty_cons_input;
@@ -125,8 +126,6 @@ struct sabtty_softc *sabtty_cons_output;
 
 int sab_match(struct device *, struct cfdata *, void *);
 void sab_attach(struct device *, struct device *, void *);
-int sab_submatch(struct device *, struct cfdata *,
-		 const locdesc_t *, void *);
 int sab_print(void *, const char *);
 int sab_intr(void *);
 
@@ -214,10 +213,7 @@ struct sabtty_rate sabtty_baudtable[] = {
 };
 
 int
-sab_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sab_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	char *compat;
@@ -233,17 +229,13 @@ sab_match(parent, match, aux)
 }
 
 void
-sab_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sab_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sab_softc *sc = (struct sab_softc *)self;
 	struct ebus_attach_args *ea = aux;
-	u_int8_t r;
+	uint8_t r;
 	u_int i;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SABCF_NLOCS];
 
 	sc->sc_bt = ea->ea_bustag;
 	sc->sc_node = ea->ea_node;
@@ -303,33 +295,18 @@ sab_attach(parent, self, aux)
 
 		stax.sbt_portno = i;
 
-		ldesc->len = 1;
-		ldesc->locs[SABCF_CHANNEL] = i;
+		locs[SABCF_CHANNEL] = i;
 
 		sc->sc_child[i] =
 		    (struct sabtty_softc *)config_found_sm_loc(self,
-		     "sab", ldesc, &stax, sab_print, sab_submatch);
+		     "sab", locs, &stax, sab_print, config_stdsubmatch);
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
 }
 
 int
-sab_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-        if (cf->cf_loc[SABCF_CHANNEL] != SABCF_CHANNEL_DEFAULT &&
-            cf->cf_loc[SABCF_CHANNEL] != ldesc->locs[SABCF_CHANNEL])
-                return (0);
-
-        return (config_match(parent, cf, aux));
-}
-
-int
-sab_print(args, name)
-	void *args;
-	const char *name;
+sab_print(void *args, const char *name)
 {
 	struct sabtty_attach_args *sa = args;
 
@@ -340,12 +317,11 @@ sab_print(args, name)
 }
 
 int
-sab_intr(vsc)
-	void *vsc;
+sab_intr(void *vsc)
 {
 	struct sab_softc *sc = vsc;
 	int r = 0, needsoft = 0;
-	u_int8_t gis;
+	uint8_t gis;
 
 	gis = SAB_READ(sc, SAB_GIS);
 
@@ -366,8 +342,7 @@ sab_intr(vsc)
 }
 
 void
-sab_softintr(vsc)
-	void *vsc;
+sab_softintr(void *vsc)
 {
 	struct sab_softc *sc = vsc;
 
@@ -378,20 +353,14 @@ sab_softintr(vsc)
 }
 
 int
-sabtty_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sabtty_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
 void
-sabtty_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sabtty_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sabtty_softc *sc = (struct sabtty_softc *)self;
 	struct sabtty_attach_args *sa = aux;
@@ -467,7 +436,7 @@ sabtty_attach(parent, self, aux)
 			cn_tab->cn_pollc = sab_cnpollc;
 			cn_tab->cn_getc = sab_cngetc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
-			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+			cn_tab->cn_dev = makedev(maj, device_unit(self));
 			shutdownhook_establish(sabtty_shutdown, sc);
 			cn_init_magic(&sabtty_cnm_state);
 			cn_set_magic("\047\001"); /* default magic is BREAK */
@@ -478,7 +447,7 @@ sabtty_attach(parent, self, aux)
 			sabtty_cons_output = sc;
 			cn_tab->cn_putc = sab_cnputc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
-			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+			cn_tab->cn_dev = makedev(maj, device_unit(self));
 		}
 		aprint_normal(": console %s", acc);
 	} else {
@@ -490,11 +459,9 @@ sabtty_attach(parent, self, aux)
 }
 
 int
-sabtty_intr(sc, needsoftp)
-	struct sabtty_softc *sc;
-	int *needsoftp;
+sabtty_intr(struct sabtty_softc *sc, int *needsoftp)
 {
-	u_int8_t isr0, isr1;
+	uint8_t isr0, isr1;
 	int i, len = 0, needsoft = 0, r = 0, clearfifo = 0;
 
 	isr0 = SAB_READ(sc, SAB_ISR0);
@@ -520,7 +487,7 @@ sabtty_intr(sc, needsoftp)
 		clearfifo = 1;
 	}
 	if (len != 0) {
-		u_int8_t *ptr, b;
+		uint8_t *ptr, b;
 
 		ptr = sc->sc_rput;
 		for (i = 0; i < len; i++) {
@@ -606,12 +573,11 @@ sabtty_intr(sc, needsoftp)
 }
 
 void
-sabtty_softintr(sc)
-	struct sabtty_softc *sc;
+sabtty_softintr(struct sabtty_softc *sc)
 {
 	struct tty *tp = sc->sc_tty;
 	int s, flags;
-	u_int8_t r;
+	uint8_t r;
 
 	if (tp == NULL)
 		return;
@@ -621,7 +587,7 @@ sabtty_softintr(sc)
 
 	while (sc->sc_rget != sc->sc_rput) {
 		int data;
-		u_int8_t stat;
+		uint8_t stat;
 
 		data = sc->sc_rget[0];
 		stat = sc->sc_rget[1];
@@ -660,13 +626,11 @@ sabtty_softintr(sc)
 }
 
 int
-sabopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sabtty_softc *sc;
 	struct tty *tp;
+	struct proc *p;
 	int s, s1;
 
 	sc = device_lookup(&sabtty_cd, SABUNIT(dev));
@@ -675,6 +639,7 @@ sabopen(dev, flags, mode, p)
 
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
+	p = l->l_proc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
@@ -720,7 +685,7 @@ sabopen(dev, flags, mode, p)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!suser(p->p_ucred, &p->p_acflag))) {
+	    (!kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -762,10 +727,7 @@ sabopen(dev, flags, mode, p)
 }
 
 int
-sabclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+sabclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct sab_softc *bc = sc->sc_parent;
@@ -805,10 +767,7 @@ sabclose(dev, flags, mode, p)
 }
 
 int
-sabread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sabread(dev_t dev, struct uio *uio, int flags)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -817,10 +776,7 @@ sabread(dev, uio, flags)
 }
 
 int
-sabwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sabwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -829,22 +785,18 @@ sabwrite(dev, uio, flags)
 }
 
 int
-sabioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
+	struct proc *p = l->l_proc;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flags, p);
+	error = ttioctl(tp, cmd, data, flags, l);
 	if (error >= 0)
 		return (error);
 
@@ -881,7 +833,7 @@ sabioctl(dev, cmd, data, flags, p)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &
@@ -896,8 +848,7 @@ sabioctl(dev, cmd, data, flags, p)
 }
 
 struct tty *
-sabtty(dev)
-	dev_t dev;
+sabtty(dev_t dev)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 
@@ -905,9 +856,7 @@ sabtty(dev)
 }
 
 void
-sabstop(tp, flag)
-	struct tty *tp;
-	int flag;
+sabstop(struct tty *tp, int flag)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(tp->t_dev));
 	int s;
@@ -924,23 +873,18 @@ sabstop(tp, flag)
 }
 
 int
-sabpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+sabpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-sabtty_mdmctrl(sc, bits, how)
-	struct sabtty_softc *sc;
-	int bits, how;
+sabtty_mdmctrl(struct sabtty_softc *sc, int bits, int how)
 {
-	u_int8_t r;
+	uint8_t r;
 	int s;
 
 	s = spltty();
@@ -1009,14 +953,11 @@ sabtty_mdmctrl(sc, bits, how)
 }
 
 int
-sabttyparam(sc, tp, t)
-	struct sabtty_softc *sc;
-	struct tty *tp;
-	struct termios *t;
+sabttyparam(struct sabtty_softc *sc, struct tty *tp, struct termios *t)
 {
 	int s, ospeed;
 	tcflag_t cflag;
-	u_int8_t dafo, r;
+	uint8_t dafo, r;
 
 	ospeed = sabtty_speed(t->c_ospeed);
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
@@ -1096,9 +1037,7 @@ sabttyparam(sc, tp, t)
 }
 
 int
-sabtty_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+sabtty_param(struct tty *tp, struct termios *t)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(tp->t_dev));
 
@@ -1106,8 +1045,7 @@ sabtty_param(tp, t)
 }
 
 void
-sabtty_start(tp)
-	struct tty *tp;
+sabtty_start(struct tty *tp)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(tp->t_dev));
 	int s;
@@ -1133,8 +1071,7 @@ sabtty_start(tp)
 }
 
 void
-sabtty_cec_wait(sc)
-	struct sabtty_softc *sc;
+sabtty_cec_wait(struct sabtty_softc *sc)
 {
 	int i = 50000;
 
@@ -1148,8 +1085,7 @@ sabtty_cec_wait(sc)
 }
 
 void
-sabtty_tec_wait(sc)
-	struct sabtty_softc *sc;
+sabtty_tec_wait(struct sabtty_softc *sc)
 {
 	int i = 200000;
 
@@ -1163,8 +1099,7 @@ sabtty_tec_wait(sc)
 }
 
 void
-sabtty_reset(sc)
-	struct sabtty_softc *sc;
+sabtty_reset(struct sabtty_softc *sc)
 {
 	/* power down */
 	SAB_WRITE(sc, SAB_CCR0, 0);
@@ -1175,7 +1110,7 @@ sabtty_reset(sc)
 	SAB_WRITE(sc, SAB_CCR1, SAB_CCR1_ODS | SAB_CCR1_BCR | SAB_CCR1_CM_7);
 	SAB_WRITE(sc, SAB_CCR2, SAB_CCR2_BDF | SAB_CCR2_SSEL | SAB_CCR2_TOE);
 	SAB_WRITE(sc, SAB_CCR3, 0);
-	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG);
+	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG | SAB_CCR4_ICD);
 	SAB_WRITE(sc, SAB_MODE, SAB_MODE_RTS | SAB_MODE_FCTS | SAB_MODE_RAC);
 	SAB_WRITE(sc, SAB_RFC,
 	    SAB_RFC_DPS | SAB_RFC_RFDF | SAB_RFC_RFTH_32CHAR);
@@ -1184,13 +1119,12 @@ sabtty_reset(sc)
 	sc->sc_imr0 = sc->sc_imr1 = 0xff;
 	SAB_WRITE(sc, SAB_IMR0, sc->sc_imr0);
 	SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
-	SAB_READ(sc, SAB_ISR0);
-	SAB_READ(sc, SAB_ISR1);
+	(void)SAB_READ(sc, SAB_ISR0);
+	(void)SAB_READ(sc, SAB_ISR1);
 }
 
 void
-sabtty_flush(sc)
-	struct sabtty_softc *sc;
+sabtty_flush(struct sabtty_softc *sc)
 {
 	/* clear rx fifo */
 	sabtty_cec_wait(sc);
@@ -1202,8 +1136,7 @@ sabtty_flush(sc)
 }
 
 int
-sabtty_speed(rate)
-	int rate;
+sabtty_speed(int rate)
 {
 	int i, len, r;
 
@@ -1221,9 +1154,7 @@ sabtty_speed(rate)
 }
 
 void
-sabtty_cnputc(sc, c)
-	struct sabtty_softc *sc;
-	int c;
+sabtty_cnputc(struct sabtty_softc *sc, int c)
 {
 	sabtty_tec_wait(sc);
 	SAB_WRITE(sc, SAB_TIC, c);
@@ -1231,10 +1162,9 @@ sabtty_cnputc(sc, c)
 }
 
 int
-sabtty_cngetc(sc)
-	struct sabtty_softc *sc;
+sabtty_cngetc(struct sabtty_softc *sc)
 {
-	u_int8_t r, len;
+	uint8_t r, len;
 
 again:
 	do {
@@ -1268,11 +1198,9 @@ again:
 }
 
 void
-sabtty_cnpollc(sc, on)
-	struct sabtty_softc *sc;
-	int on;
+sabtty_cnpollc(struct sabtty_softc *sc, int on)
 {
-	u_int8_t r;
+	uint8_t r;
 
 	if (on) {
 		if (sc->sc_polling)
@@ -1296,9 +1224,7 @@ sabtty_cnpollc(sc, on)
 }
 
 void
-sab_cnputc(dev, c)
-	dev_t dev;
-	int c;
+sab_cnputc(dev_t dev, int c)
 {
 	struct sabtty_softc *sc = sabtty_cons_output;
 
@@ -1308,9 +1234,7 @@ sab_cnputc(dev, c)
 }
 
 void
-sab_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+sab_cnpollc(dev_t dev, int on)
 {
 	struct sabtty_softc *sc = sabtty_cons_input;
 
@@ -1318,8 +1242,7 @@ sab_cnpollc(dev, on)
 }
 
 int
-sab_cngetc(dev)
-	dev_t dev;
+sab_cngetc(dev_t dev)
 {
 	struct sabtty_softc *sc = sabtty_cons_input;
 
@@ -1329,8 +1252,7 @@ sab_cngetc(dev)
 }
 
 void
-sabtty_console_flags(sc)
-	struct sabtty_softc *sc;
+sabtty_console_flags(struct sabtty_softc *sc)
 {
 	int node, channel, cookie;
 	char buf[255];
@@ -1363,8 +1285,7 @@ sabtty_console_flags(sc)
 }
 
 void
-sabtty_shutdown(vsc)
-	void *vsc;
+sabtty_shutdown(void *vsc)
 {
 	struct sabtty_softc *sc = vsc;
 

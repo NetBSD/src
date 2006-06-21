@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2005/06/25 12:05:17 rpaulo Exp $
+#	$NetBSD: GENERIC,v 1.11.2.1 2006/06/21 14:52:58 yamt Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -51,7 +51,9 @@ file-system     FILECORE        # Acorn filecore file system
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -59,7 +61,7 @@ file-system     FILECORE        # Acorn filecore file system
 #options 	NFSSERVER
 #options 	SOFTDEP
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 
@@ -68,6 +70,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
@@ -89,6 +92,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
@@ -138,21 +142,20 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=240000
+options 	SYMTAB_SPACE=280000
 
 ##options 	PMAP_INCLUDE_PTE_SYNC
 ##options 	LOCKDEBUG
 
-##config		netbsd		root on ? type ?
-config		netbsd		root on rtk0 type nfs
+config		netbsd		root on ? type ?
 #config		netbsd-wm0	root on wm0 type nfs
 #config		netbsd-wd0	root on wd0 type ffs
 #config		netbsd-sd0	root on sd0 type ffs
@@ -304,8 +307,8 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -334,6 +337,9 @@ usb*	at uhci?
 # USB Keyboards
 # ukbd*	at uhidev? reportid ?
 # wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+# ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 # uhid*	at uhidev? reportid ?
@@ -430,7 +436,7 @@ usb*	at uhci?
 #fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 #fw*	at fwbus?			# IP over 1394
 
@@ -488,11 +494,12 @@ com0	at obio? addr 0x900002f8 xint 1 # on-board UART
 
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
 
@@ -505,3 +512,20 @@ pseudo-device	ksyms			# /dev/ksyms
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

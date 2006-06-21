@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.2 2003/11/26 12:17:18 bsh Exp $ */
+/* $NetBSD: atomic.h,v 1.2.16.1 2006/06/21 14:49:16 yamt Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -60,7 +60,7 @@ void atomic_clear_bit( u_int *, u_int );
 	do {						\
 		u_int cpsr_save, tmp;			\
 							\
-		__asm __volatile(			\
+		__asm volatile(			\
 			"mrs  %0, cpsr;"		\
 			"orr  %1, %0, %2;"		\
 			"msr  cpsr_all, %1;"		\
@@ -68,7 +68,7 @@ void atomic_clear_bit( u_int *, u_int );
 			: "I" (I32_bit)		\
 		        : "cc" );		\
 		(expr);				\
-		 __asm __volatile(		\
+		 __asm volatile(		\
 			"msr  cpsr_all, %0"	\
 			: /* no output */	\
 			: "r" (cpsr_save)	\

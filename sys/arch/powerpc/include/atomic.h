@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.2 2002/11/25 01:36:35 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.2.22.1 2006/06/21 14:55:03 yamt Exp $ */
 
 /*-
  */
@@ -16,11 +16,11 @@
  *	Atomically set bits in a `unsigned long'.
  */
 static __inline void
-atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_setbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile(
+	__asm volatile(
 "# BEGIN atomic_setbits_ulong	\n"
 "1:	lwarx	%0,0,%2		\n"
 "	or	%0,%1,%0	\n"
@@ -39,11 +39,11 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically clear bits in a `unsigned long'.
  */
 static __inline void
-atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_clearbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile(
+	__asm volatile(
 "# BEGIN atomic_clearbits_ulong	\n"
 "1:	lwarx	%0,0,%2		\n"
 "	and	%0,%1,%0	\n"
@@ -62,11 +62,11 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically add a value to a `unsigned long'.
  */
 static __inline void
-atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_add_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile(
+	__asm volatile(
 "# BEGIN atomic_add_ulong	\n"
 "1:	lwarx	%0,0,%2		\n"
 "	add	%0,%1,%0	\n"
@@ -85,11 +85,11 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically subtract a value from a `unsigned long'.
  */
 static __inline void
-atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_sub_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile(
+	__asm volatile(
 "# BEGIN atomic_sub_ulong	\n"
 "1:	lwarx	%0,0,%2		\n"
 "	sub	%0,%0,%1	\n"
@@ -108,11 +108,11 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically load and latch a `unsigned long' value.
  */
 static __inline unsigned long
-atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_loadlatch_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile(
+	__asm volatile(
 "# BEGIN atomic_loadlatch_ulong	\n"
 "1:	lwarx	%0,0,%2		\n"
 "	stwcx.	%1,0,%2		\n"

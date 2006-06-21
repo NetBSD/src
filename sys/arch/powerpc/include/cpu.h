@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 2005/02/03 14:47:09 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44.6.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -152,7 +152,7 @@ curcpu(void)
 {
 	struct cpu_info *ci;
 
-	__asm __volatile ("mfsprg %0,0" : "=r"(ci));
+	__asm volatile ("mfsprg %0,0" : "=r"(ci));
 	return ci;
 }
 
@@ -165,7 +165,7 @@ mfmsr(void)
 {
 	register_t msr;
 
-	__asm __volatile ("mfmsr %0" : "=r"(msr));
+	__asm volatile ("mfmsr %0" : "=r"(msr));
 	return msr;
 }
 
@@ -173,7 +173,7 @@ static __inline void
 mtmsr(register_t msr)
 {
 
-	__asm __volatile ("mtmsr %0" : : "r"(msr));
+	__asm volatile ("mtmsr %0" : : "r"(msr));
 }
 
 static __inline uint32_t
@@ -181,7 +181,7 @@ mftbl(void)
 {
 	uint32_t tbl;
 
-	__asm __volatile (
+	__asm volatile (
 #ifdef PPC_IBM403
 "	mftblo %0	\n"
 #else
@@ -198,11 +198,11 @@ mftb(void)
 	uint64_t tb;
 
 #ifdef _LP64
-	__asm __volatile ("mftb %0" : "=r"(tb));
+	__asm volatile ("mftb %0" : "=r"(tb));
 #else
 	int tmp;
 
-	__asm __volatile (
+	__asm volatile (
 #ifdef PPC_IBM403
 "1:	mftbhi %0	\n"
 "	mftblo %0+1	\n"
@@ -225,7 +225,7 @@ mfrtcl(void)
 {
 	uint32_t rtcl;
 
-	__asm __volatile ("mfrtcl %0" : "=r"(rtcl));
+	__asm volatile ("mfrtcl %0" : "=r"(rtcl));
 	return rtcl;
 }
 
@@ -234,7 +234,7 @@ mfrtc(uint32_t *rtcp)
 {
 	uint32_t tmp;
 
-	__asm __volatile (
+	__asm volatile (
 "1:	mfrtcu	%0	\n"
 "	mfrtcl	%1	\n"
 "	mfrtcu	%2	\n"
@@ -248,9 +248,36 @@ mfpvr(void)
 {
 	uint32_t pvr;
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	__asm volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
 }
+
+static __inline int
+cntlzw(uint32_t val)
+{
+	int 			cnt;
+
+	__asm volatile ("cntlzw %0,%1" : "=r"(cnt) : "r"(val));
+	return (cnt);
+}
+
+#if defined(PPC_IBM4XX) || defined(PPC_IBM403)
+/*
+ * DCR (Device Control Register) access. These have to be
+ * macros because register address is encoded as immediate
+ * operand.
+ */
+#define mtdcr(reg, val) 					\
+	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
+
+#define mfdcr(reg)						\
+({								\
+	uint32_t __val;						\
+								\
+	__asm volatile("mfdcr %0,%1" : "=r"(__val) : "K"(reg)); \
+	__val;							\
+})
+#endif /* PPC_IBM4XX || PPC_IBM403 */
 
 /*
  * CLKF_BASEPRI is dependent on the underlying interrupt code

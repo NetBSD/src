@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 2004/07/18 23:21:35 chs Exp $	*/
+/*	$NetBSD: asm.h,v 1.4.12.1 2006/06/21 14:52:09 yamt Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -72,6 +72,13 @@
 
 #define WEAK_ALIAS(alias,sym)				\
 	.weak alias !					\
+	alias = sym
+
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)				\
+	.globl alias !					\
 	alias = sym
 
 #define CALL(func,tmp)					!\

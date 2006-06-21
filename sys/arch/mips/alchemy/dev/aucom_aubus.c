@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.10 2003/12/15 09:13:41 simonb Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.10.16.1 2006/06/21 14:53:28 yamt Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.10 2003/12/15 09:13:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.10.16.1 2006/06/21 14:53:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <sys/tty.h>
 
 #include <machine/bus.h>
@@ -90,7 +91,7 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_irq = aa->aa_irq[0];
 
 	if (aucom_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, UART_SIZE, 0,
+	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
 			  &sc->sc_ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
@@ -132,7 +133,7 @@ aucom_aubus_enable(struct com_softc *sc)
 		return (0);
 
 	/* Enable the UART module. */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UART_MODULE_CONTROL,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_modctl,
 	    UMC_ME | UMC_CE);
 
 	/* Establish the interrupt. */
@@ -160,5 +161,5 @@ aucom_aubus_disable(struct com_softc *sc)
 	au_intr_disestablish(asc->sc_ih);
 
 	/* Disable the UART module. */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UART_MODULE_CONTROL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_modctl, 0);
 }

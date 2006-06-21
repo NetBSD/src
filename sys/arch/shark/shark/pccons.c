@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.21 2005/06/03 13:14:09 scw Exp $       */
+/*      $NetBSD: pccons.c,v 1.21.2.1 2006/06/21 14:55:47 yamt Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.21 2005/06/03 13:14:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.21.2.1 2006/06/21 14:55:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.21 2005/06/03 13:14:09 scw Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/kerndebug.h>
 
 #include <uvm/uvm_extern.h>
@@ -603,7 +604,7 @@ kbd_init(bus_space_tag_t     iot,
 **
 **  IMPLICIT INPUTS:
 **
-**     addr_6845    -  Base adddress of the video registers 
+**     addr_6845    -  Base address of the video registers 
 **
 **  IMPLICIT OUTPUTS:
 **
@@ -651,7 +652,7 @@ set_cursor_shape(struct pc_softc *sc)
 **
 **  IMPLICIT INPUTS:
 **
-**     addr_6845    -  Base adddress of the video registers 
+**     addr_6845    -  Base address of the video registers 
 **
 **  IMPLICIT OUTPUTS:
 **
@@ -1151,14 +1152,14 @@ int
 pcopen(dev_t       dev, 
        int         flag, 
        int         mode, 
-       struct proc *p)
+       struct lwp *l)
 {
     struct pc_softc *sc;
     int unit = PCUNIT(dev);
     struct tty *tp;
     
     KERN_DEBUG( pcdebug, KERN_DEBUG_INFO, ("pcopen by process %d\n",
-                                           p->p_pid));
+                                           l->l_proc->p_pid));
     /*
     ** Sanity check the minor device number we have been instructed
     ** to open and set up our softc structure pointer. 
@@ -1207,7 +1208,8 @@ pcopen(dev_t       dev,
         pcparam(tp, &tp->t_termios);
         ttsetwater(tp);
     } 
-    else if ( tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0 )
+    else if ( tp->t_state & TS_XCLUDE &&
+	     kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0 )
     {
         /*
         ** Don't allow the open if the tty has been set up 
@@ -1240,7 +1242,7 @@ pcopen(dev_t       dev,
 **     dev  - Device identifier consisting of major and minor numbers.
 **     flag - Not used.
 **     mode - Not used.
-**     p    - Not used. 
+**     l    - Not used. 
 **
 **  IMPLICIT INPUTS:
 **
@@ -1263,7 +1265,7 @@ int
 pcclose(dev_t       dev, 
         int         flag, 
         int         mode, 
-        struct proc *p)
+        struct lwp *l)
 {
     /* 
     ** Set up our pointers to the softc and tty structures.
@@ -1391,7 +1393,7 @@ pcwrite(dev_t      dev,
 **      
 **      dev    - Device identifier consisting of major and minor numbers.
 **      events - Events to poll for
-**      p      - The process performing the poll
+**      l      - The lwp performing the poll
 **
 **  IMPLICIT INPUTS:
 **
@@ -1415,12 +1417,12 @@ pcwrite(dev_t      dev,
 int
 pcpoll(dev_t       dev, 
        int         events,
-       struct proc *p)
+       struct lwp *l)
 {
     struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
     struct tty      *tp = sc->sc_tty;
     
-    return ((*tp->t_linesw->l_poll)(tp, events, p));
+    return ((*tp->t_linesw->l_poll)(tp, events, l));
 } /* End pcpoll() */
 
 
@@ -1571,7 +1573,7 @@ pcintr(void *arg)
 ** 
 **     data - user data
 **     flag - Not used by us but passed to line discipline and ttioctl
-**     p    - pointer to proc structure of user.
+**     l    - pointer to lwp structure of user.
 **     
 **  IMPLICIT INPUTS:
 **
@@ -1601,7 +1603,7 @@ pcioctl(dev_t       dev,
         u_long      cmd, 
         caddr_t     data, 
         int         flag, 
-        struct proc *p)
+        struct lwp *l)
 {
     struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
     struct tty      *tp = sc->sc_tty;
@@ -1615,13 +1617,13 @@ pcioctl(dev_t       dev,
     ** we don't need to to do anything. Error == EPASSTHROUGH means the line
     ** discipline doesn't handle this sort of operation. 
     */
-    error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+    error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
     if (error == EPASSTHROUGH)
     {
         /* Try the common tty ioctl routine to see if it recognises the
         ** request.  
         */
-        error = ttioctl(tp, cmd, data, flag, p);
+        error = ttioctl(tp, cmd, data, flag, l);
         if (error == EPASSTHROUGH)
         {
             /* Ok must be something specific to our device, 

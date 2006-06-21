@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.18 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: OFWGENCFG,v 1.18.4.1 2006/06/21 14:55:47 yamt Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -51,13 +51,14 @@ file-system	KERNFS		# /kern
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER
 options 	NFS_BOOT_DHCP	# NFS booting via DHCP
 options 	NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 
@@ -77,6 +78,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_12	# NetBSD 1.2 compatibility.
@@ -135,15 +137,14 @@ ofrtc*		at ofbus?
 ofrom*		at ofbus?
 
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-#pseudo-device	sl	2		# CSLIP
-#pseudo-device	ppp	2		# PPP
-#pseudo-device	tun	2		# network tunneling over tty
+pseudo-device	bpfilter		# packet filter
+#pseudo-device	sl			# CSLIP
+#pseudo-device	ppp			# PPP
+#pseudo-device	tun			# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
 
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss	4		# file system snapshot device
 pseudo-device	rnd			# /dev/random and /dev/urandom

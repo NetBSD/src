@@ -1,4 +1,4 @@
-/* $NetBSD: aucomreg.h,v 1.1 2002/07/29 15:42:42 simonb Exp $ */
+/* $NetBSD: aucomreg.h,v 1.1.28.1 2006/06/21 14:53:28 yamt Exp $ */
 
 /* copyright */
 
@@ -35,6 +35,9 @@
 #define	com_msr		0x20	/* modem status register (R) */
 #define	com_dlb		0x28	/* divisor latch (16bit) (R/W) */
 #define	com_modctl	0x100	/* module control register (R/W) */
+
+#define	  UMC_CE	  0x2	/* module clock enable */
+#define	  UMC_ME	  0x1	/* module enable */
 
 /* XXX ISA-specific. */
 #undef COM_NPORTS

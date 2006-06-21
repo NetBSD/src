@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfcons.c,v 1.7 2003/07/15 03:35:58 lukem Exp $	*/
+/*	$NetBSD: dtfcons.c,v 1.7.16.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtfcons.c,v 1.7 2003/07/15 03:35:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtfcons.c,v 1.7.16.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,13 +110,13 @@ dtfconsattach(struct device *parent, struct device *self, void *args)
 }
 
 int
-dtfconsopen(dev_t dev, int flag, int mode, struct proc *p)
+dtfconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return (0);
 }
 
 int
-dtfconsclose(dev_t dev, int flag, int mode, struct proc *p)
+dtfconsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return (0);
 }
@@ -134,7 +134,7 @@ dtfconswrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-dtfconspoll(dev_t dev, int events, struct proc *p)
+dtfconspoll(dev_t dev, int events, struct lwp *l)
 {
 	return (EIO);
 }
@@ -146,7 +146,7 @@ dtfconstty(dev_t dev)
 }
 
 int
-dtfconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dtfconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	return (ENOTTY);
 }

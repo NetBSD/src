@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.3 2005/01/19 01:58:21 chs Exp $        */
+/*      $NetBSD: rtc.c,v 1.3.8.1 2006/06/21 14:54:24 yamt Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -107,10 +107,10 @@ getsecs(void)
 	u_int secs;
 	
 	if (new_clock) {
-		secs = rtc_read(RTC_CNTR3) << 24 |
-		       rtc_read(RTC_CNTR2) << 16 |
-		       rtc_read(RTC_CNTR1) << 8  |
-		       rtc_read(RTC_CNTR0);
+		secs = rtc_read(RTC_CNTR0) << 24 |
+		       rtc_read(RTC_CNTR1) << 16 |
+		       rtc_read(RTC_CNTR2) << 8  |
+		       rtc_read(RTC_CNTR3);
 	} else {
 		u_char d,h,m,s;
 #define BCD_DECODE(x) (((x) >> 4) * 10 + ((x) & 0xf))

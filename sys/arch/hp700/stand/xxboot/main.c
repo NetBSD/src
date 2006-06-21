@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2004/06/15 03:10:30 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.1.14.1 2006/06/21 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -44,7 +44,7 @@ void ipl_main __P((unsigned /*interactive*/,
     unsigned /*sptop*/, unsigned /*psw*/));
 void load_file __P((const char *, unsigned /*loadadr*/,
     unsigned /*interactive*/, int /*part*/));
-void load_file_ino __P((ino_t, const char *, unsigned /*loadadr*/,
+void load_file_ino __P((ino32_t, const char *, unsigned /*loadadr*/,
     unsigned /*interactive*/, int /*part*/));
 
 struct loadinfo {
@@ -55,8 +55,8 @@ struct loadinfo {
 #endif
 	unsigned entry_offset;
 };
-static __inline void xi_elf32 __P((struct loadinfo *, Elf32_Ehdr *));
-static __inline void xi_elf64 __P((struct loadinfo *, Elf64_Ehdr *));
+static inline void xi_elf32 __P((struct loadinfo *, Elf32_Ehdr *));
+static inline void xi_elf64 __P((struct loadinfo *, Elf64_Ehdr *));
 int xi_load __P((struct loadinfo *, void *));
 
 void reboot __P((void)), halt __P((void));
@@ -315,7 +315,7 @@ load_file(path, loadadr, interactive, part)
 
 void
 load_file_ino(ino, fn, loadadr, interactive, part)
-	ino_t ino;
+	ino32_t ino;
 	const char *fn;		/* for message only */
 	unsigned loadadr, interactive;
 	int part;
@@ -355,7 +355,7 @@ load_file_ino(ino, fn, loadadr, interactive, part)
 /*
  * fill in loading information from an ELF executable
  */
-static __inline void
+static inline void
 xi_elf32(inf, hdr)
 	struct loadinfo *inf;
 	Elf32_Ehdr *hdr;
@@ -374,7 +374,7 @@ xi_elf32(inf, hdr)
 	inf->entry_offset = hdr->e_entry - ph->p_vaddr;
 }
 
-static __inline void
+static inline void
 xi_elf64(inf, hdr)
 	struct loadinfo *inf;
 	Elf64_Ehdr *hdr;

@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.11 2003/09/21 19:32:37 matt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.11.16.1 2006/06/21 14:49:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.11 2003/09/21 19:32:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.11.16.1 2006/06/21 14:49:33 yamt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -73,15 +73,15 @@ static u_int32_t imask[NIPL];
 static u_int32_t pci_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;
-__volatile int hardware_spl_level;
+volatile int current_spl_level;
+volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
-__volatile u_int32_t intr_enabled;
-__volatile u_int32_t pci_intr_enabled;
+volatile u_int32_t intr_enabled;
+volatile u_int32_t pci_intr_enabled;
 
 /* Interrupts pending. */
-static __volatile int ipending;
+static volatile int ipending;
 
 /*
  * Map a software interrupt queue index (to the unused bits in the
@@ -115,13 +115,13 @@ void	ixp12x0_intr_dispatch(struct irqframe *frame);
 
 #define IXPREG(reg)	*((volatile u_int32_t*) (reg))
 
-static __inline u_int32_t
+static inline u_int32_t
 ixp12x0_irq_read(void)
 {
 	return IXPREG(IXP12X0_IRQ_VBASE) & IXP12X0_INTR_MASK;
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 ixp12x0_pci_irq_read(void)
 {
 	return IXPREG(IXPPCI_IRQ_STATUS);
@@ -179,7 +179,7 @@ ixp12x0_enable_irq(int irq)
 	}
 }
 
-static __inline void
+static inline void
 ixp12x0_disable_irq(int irq)
 {
 	if (irq < SYS_NIRQ) {
@@ -382,7 +382,7 @@ ixp12x0_do_pending(void)
 	restore_interrupts(oldirqstate);
 }
 
-__inline void
+inline void
 splx(int new)
 {
 	int	old;
@@ -522,7 +522,7 @@ ixp12x0_intr_disestablish(void *cookie)
 }
 
 void
-ixp12x0_intr_dispatch(struct clockframe *frame)
+ixp12x0_intr_dispatch(struct irqframe *frame)
 {
 	struct intrq*		iq;
 	struct intrhand*	ih;

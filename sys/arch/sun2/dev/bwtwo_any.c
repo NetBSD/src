@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.13 2005/06/03 22:06:24 tsutsui Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.13.2.1 2006/06/21 14:57:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_any.c,v 1.13 2005/06/03 22:06:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_any.c,v 1.13.2.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ bwtwoattach_any(struct device *parent, struct device *self, void *aux)
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_paddr = ma->ma_paddr;
 
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 	fb->fb_type.fb_depth = 1;
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 

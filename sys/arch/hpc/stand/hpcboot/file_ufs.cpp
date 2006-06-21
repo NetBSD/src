@@ -1,4 +1,4 @@
-/*	$NetBSD: file_ufs.cpp,v 1.2 2002/02/04 17:32:02 uch Exp $	*/
+/*	$NetBSD: file_ufs.cpp,v 1.2.32.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ UfsFile::setRoot(TCHAR *drive)
 }
 
 BOOL
-UfsFile::open(const TCHAR *name, u_int32_t flags)
+UfsFile::open(const TCHAR *name, uint32_t flags)
 {
 	int error;
 

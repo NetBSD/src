@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.14 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.14.10.1 2006/06/21 14:53:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.14 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.14.10.1 2006/06/21 14:53:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ grf_attach(struct macfb_softc *sc, int unit)
  * Standard device ops
  */
 int
-grfopen(dev_t dev, int flag, int mode, struct proc *p)
+grfopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct grf_softc *sc;
 	int unit = GRFUNIT(dev);
@@ -187,7 +187,7 @@ grfopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-grfclose(dev_t dev, int flag, int mode, struct proc *p)
+grfclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct grf_softc *sc;
 	int unit = GRFUNIT(dev);
@@ -206,7 +206,7 @@ grfclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
@@ -252,11 +252,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 #if defined(GRF_COMPAT) || (NGRF > 0)
 	case GRFIOCMAP:
-		rv = grfmap(dev, sc->mfb_sc, (caddr_t *)data, p);
+		rv = grfmap(dev, sc->mfb_sc, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		rv = grfunmap(dev, sc->mfb_sc, *(caddr_t *)data, p);
+		rv = grfunmap(dev, sc->mfb_sc, *(caddr_t *)data, l->l_proc);
 		break;
 #endif /* GRF_COMPAT || (NGRF > 0) */
 
@@ -289,7 +289,6 @@ grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
-	paddr_t addr;
 	int unit = GRFUNIT(dev);
 
 	if (grf_softc == NULL || unit >= numgrf)
@@ -301,13 +300,10 @@ grfmmap(dev_t dev, off_t off, int prot)
 
 	dc = sc->mfb_sc->sc_dc;
 
-	if (off >= 0 &&
-	    off < m68k_round_page(dc->dc_offset + dc->dc_size))
-		addr = m68k_btop(dc->dc_paddr + off);
-	else
-		addr = (-1);	/* XXX bogus */
+	if ((u_int)off < m68k_round_page(dc->dc_offset + dc->dc_size))
+		return m68k_btop(dc->dc_paddr + off);
 
-	return addr;
+	return (-1);
 }
 
 int

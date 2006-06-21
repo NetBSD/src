@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.6 2003/11/26 03:56:38 simonb Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.6.16.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,10 +47,14 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* software serial interrupt */
 #define	IPL_TTY		3	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	1	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
@@ -77,9 +81,7 @@ struct intrhand {
 };
 
 void setsoftclock(void);
-int  splsoftclock(void);
 void setsoftnet(void);
-int  splsoftnet(void);
 
 void do_pending_int(void);
 void ext_intr(void);
@@ -87,10 +89,10 @@ void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 void intr_init(void);
 
-static __inline int splraise(int);
-static __inline int spllower(int);
-static __inline void splx(int);
-static __inline void set_sint(int);
+static inline int splraise(int);
+static inline int spllower(int);
+static inline void splx(int);
+static inline void set_sint(int);
 
 extern volatile int cpl, ipending, astpending;
 extern u_long imask[];
@@ -101,57 +103,57 @@ extern u_long intrcnt[];
  * achived with the "eieio" instruction which the assembler
  * seems to detect and then doesn't move instructions past....
  */
-static __inline int
+static inline int
 splraise(newcpl)
 	int newcpl;
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+	__asm volatile("sync; eieio\n");	/* don't reorder.... */
 	oldcpl = cpl;
 	cpl = oldcpl | newcpl;
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
 }
 
-static __inline void
+static inline void
 splx(newcpl)
 	int newcpl;
 {
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
 	if (ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 }
 
-static __inline int
+static inline int
 spllower(newcpl)
 	int newcpl;
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
 	if (ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
 }
 
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
-static __inline void
+static inline void
 set_sint(pending)
 	int	pending;
 {
 	int	msrsave;
 
-	__asm__ ("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	__asm ("mfmsr %0" : "=r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
 	ipending |= pending;
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave));
 }
 
 #define	ICU_LEN		32
@@ -178,29 +180,17 @@ set_sint(pending)
 #define	SPL_CLOCK	IRQ_TO_MASK(CNT_CLOCK)
 #define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
 
-#define splbio()	splraise(imask[IPL_BIO])
-#define splnet()	splraise(imask[IPL_NET])
-#define spltty()	splraise(imask[IPL_TTY])
-#define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_VM])
-#define	splserial()	splraise(imask[IPL_SERIAL])
-#define splstatclock()	splclock()
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
-#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
-#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 
-#define spllpt()	spltty()
+#define	splraiseipl(x)	splraise(imask[x])
+
+#include <sys/spl.h>
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
 #define	setsoftserial()	set_sint(SINT_SERIAL);
 
-#define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
-
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
 
 void softnet(void);
 void softserial(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.13 2005/06/03 07:11:20 martin Exp $ */
+/*	$NetBSD: bootxx.c,v 1.13.2.1 2006/06/21 14:56:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/exec.h>
 #include <sys/bootblock.h>
 
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
-#include <string.h>
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>

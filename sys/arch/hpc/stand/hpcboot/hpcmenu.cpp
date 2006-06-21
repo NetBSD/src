@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.15 2005/02/27 18:25:02 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.15.4.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -365,8 +365,8 @@ void
 HpcMenuInterface::boot()
 {
 	struct support_status *tab = _unsupported;
-	u_int32_t cpu = _pref.platid_hi;
-	u_int32_t machine = _pref.platid_lo;
+	uint32_t cpu = _pref.platid_hi;
+	uint32_t machine = _pref.platid_lo;
 
 	if (_pref.safety_message)
 		for (; tab->cpu; tab++) {

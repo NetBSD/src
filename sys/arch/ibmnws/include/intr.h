@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2003/10/19 03:33:50 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.18.1 2006/06/21 14:52:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* software serial interrupt */
 #define	IPL_TTY		3	/* terminal */
-#define	IPL_IMP		3	/* memory allocation */
+#define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
 #define	IPL_HIGH	1	/* everything */
@@ -61,6 +61,9 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <powerpc/softintr.h>
+#endif
 
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
@@ -74,6 +77,21 @@ struct intrhand {
 	int	ih_level;
 	int	ih_irq;
 };
+
+#include <sys/device.h>
+struct intrsource {
+	int is_type;
+	int is_level;
+	int is_hwirq;
+	int is_mask;
+	struct intrhand *is_hand;
+	struct evcnt is_ev;
+	char is_source[16];
+};
+
+int splraise(int);
+int spllower(int);
+void softintr(int);
 
 void do_pending_int(void);
 
@@ -93,61 +111,14 @@ void isa_intr_mask(int);
 void isa_intr_clr(int);
 void isa_setirqstat(int, int, int);
 
-static __inline int splraise(int);
-static __inline void spllower(int);
-static __inline void set_sint(int);
-
-extern volatile int cpl, ipending, astpending, tickspending;
 extern int imen;
 extern int imask[];
-extern long intrcnt[];
-extern unsigned intrcnt2[];
 extern struct intrhand *intrhand[];
-extern int intrtype[];
 extern vaddr_t prep_intr_reg;
 
-/*
- *  Reorder protection in the following inline functions is
- * achieved with the "eieio" instruction which the assembler
- * seems to detect and then doesn't move instructions past....
- */
-static __inline int
-splraise(int newcpl)
-{
-	int oldcpl;
-
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
-	oldcpl = cpl;
-	cpl = oldcpl | newcpl;
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
-
-static __inline void
-spllower(int newcpl)
-{
-
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-static __inline void
-set_sint(int pending)
-{
-	int	msrsave;
-
-	__asm__ ("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ipending |= pending;
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
-}
-
 #define	ICU_LEN			32
+extern struct intrsource intrsources[ICU_LEN];
+
 #define	IRQ_SLAVE		2
 #define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
 #define	I8259_INTR_NUM		16
@@ -170,7 +141,7 @@ set_sint(int pending)
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_IMP])
+#define splvm()		splraise(imask[IPL_VM])
 #define splaudio()	splraise(imask[IPL_AUDIO])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()
@@ -181,9 +152,9 @@ set_sint(int pending)
 
 #define spllpt()	spltty()
 
-#define	setsoftclock()	set_sint(SINT_CLOCK);
-#define	setsoftnet()	set_sint(SINT_NET);
-#define	setsoftserial()	set_sint(SINT_SERIAL);
+#define	setsoftclock()	softintr(SINT_CLOCK);
+#define	setsoftnet()	softintr(SINT_NET);
+#define	setsoftserial()	softintr(SINT_SERIAL);
 
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()

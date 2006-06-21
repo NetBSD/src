@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.5 2005/02/18 21:05:52 dsl Exp $
+# 	$NetBSD: LCARD,v 1.5.6.1 2006/06/21 14:51:49 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -31,7 +31,7 @@ options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
 #makeoptions	DEFWARNINGS=no	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -75,5 +75,5 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # network pseudo-devices
-pseudo-device	bpfilter	2	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback

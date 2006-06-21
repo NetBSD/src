@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.28 2005/06/07 12:14:13 jmmv Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.28.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.28 2005/06/07 12:14:13 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.28.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -862,8 +862,8 @@ pm_adb_poweroff()
 }
 
 void
-pm_read_date_time(time)
-	u_long *time;
+pm_read_date_time(t)
+	u_long *t;
 {
 	PMData p;
 
@@ -873,19 +873,19 @@ pm_read_date_time(time)
 	p.r_buf = p.data;
 	pmgrop(&p);
 
-	memcpy(time, p.data, 4);
+	memcpy(t, p.data, 4);
 }
 
 void
-pm_set_date_time(time)
-	u_long time;
+pm_set_date_time(t)
+	u_long t;
 {
 	PMData p;
 
 	p.command = PMU_SET_RTC;
 	p.num_data = 4;
 	p.s_buf = p.r_buf = p.data;
-	memcpy(p.data, &time, 4);
+	memcpy(p.data, &t, 4);
 	pmgrop(&p);
 }
 

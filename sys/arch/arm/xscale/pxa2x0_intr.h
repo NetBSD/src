@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.5 2005/06/05 15:28:27 he Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.5.2.1 2006/06/21 14:49:41 yamt Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -58,9 +58,9 @@ vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
 #define write_icu(offset,value) \
  (*(volatile uint32_t *)(pxaic_base+(offset))=(value))
 
-extern __volatile int current_spl_level;
-extern __volatile int intr_mask;
-extern __volatile int softint_pending;
+extern volatile int current_spl_level;
+extern volatile int intr_mask;
+extern volatile int softint_pending;
 extern int pxa2x0_imask[];
 void pxa2x0_do_pending(void);
 
@@ -70,7 +70,7 @@ void pxa2x0_do_pending(void);
  */
 #define SI_TO_IRQBIT(si)  (1U<<(si))
 
-static __inline void
+static inline void
 pxa2x0_setipl(int new)
 {
 	current_spl_level = new;
@@ -79,7 +79,7 @@ pxa2x0_setipl(int new)
 }
 
 
-static __inline void
+static inline void
 pxa2x0_splx(int new)
 {
 	int psw;
@@ -94,7 +94,7 @@ pxa2x0_splx(int new)
 }
 
 
-static __inline int
+static inline int
 pxa2x0_splraise(int ipl)
 {
 	int	old, psw;
@@ -109,7 +109,7 @@ pxa2x0_splraise(int ipl)
 	return (old);
 }
 
-static __inline int
+static inline int
 pxa2x0_spllower(int ipl)
 {
 	int old = current_spl_level;
@@ -119,7 +119,7 @@ pxa2x0_spllower(int ipl)
 	return(old);
 }
 
-static __inline void
+static inline void
 pxa2x0_setsoftintr(int si)
 {
 	atomic_set_bit( (u_int *)__UNVOLATILE(&softint_pending),
@@ -135,7 +135,7 @@ pxa2x0_setsoftintr(int si)
  * An useful function for interrupt handlers.
  * XXX: This shouldn't be here.
  */
-static __inline int
+static inline int
 find_first_bit( uint32_t bits )
 {
 	int count;
@@ -143,7 +143,7 @@ find_first_bit( uint32_t bits )
 	/* since CLZ is available only on ARMv5, this isn't portable
 	 * to all ARM CPUs.  This file is for PXA2[15]0 processor. 
 	 */
-	asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
+	__asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
 	return 31-count;
 }
 
@@ -175,7 +175,7 @@ void pxa2x0_irq_handler(void *);
 void *pxa2x0_intr_establish(int irqno, int level,
 			    int (*func)(void *), void *cookie);
 void pxa2x0_update_intr_masks(int irqno, int level);
-extern __volatile int current_spl_level;
+extern volatile int current_spl_level;
 
 #endif /* ! _LOCORE */
 

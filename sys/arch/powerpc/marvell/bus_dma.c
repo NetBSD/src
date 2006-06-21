@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8.2.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.1 2006/06/21 14:55:03 yamt Exp $");
 
 #define DEBUG 1
 
@@ -73,16 +73,16 @@ invaldcache(vaddr_t va, bus_size_t sz)
 	DPRINTF(("invaldcache: %#lx %ld\n", va, (long) sz));
 	KASSERT(sz != 0);
 
-	__asm __volatile("eieio;");
+	__asm volatile("eieio;");
 	off = (u_int)va & (CACHELINESIZE - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > 0) {
-		__asm __volatile("dcbi 0, %0;" :: "r"(va));
+		__asm volatile("dcbi 0, %0;" :: "r"(va));
 		va += CACHELINESIZE;
 		sz -= CACHELINESIZE;
 	}
-	__asm __volatile("sync;");
+	__asm volatile("sync;");
 }
 
 static inline void
@@ -93,12 +93,12 @@ flushdcache(vaddr_t va, bus_size_t sz)
 	DPRINTF(("flushdcache: %#lx %ld\n", va, (long) sz));
 	KASSERT(sz != 0);
 
-	__asm __volatile("eieio;");
+	__asm volatile("eieio;");
 	off = (u_int)va & (CACHELINESIZE - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > CACHELINESIZE) {
-		__asm __volatile("dcbf 0, %0;" :: "r"(va));
+		__asm volatile("dcbf 0, %0;" :: "r"(va));
 		va += CACHELINESIZE;
 		sz -= CACHELINESIZE;
 	}
@@ -108,8 +108,8 @@ flushdcache(vaddr_t va, bus_size_t sz)
 	 * read-after-write ensures last cache line
 	 * (and therefore all cache lines) made it to  memory
 	 */
-	__asm __volatile("eieio; dcbf 0, %0;" :: "r"(va));
-	__asm __volatile("lwz %0,0(%0); sync;" : "+r"(va));
+	__asm volatile("eieio; dcbf 0, %0;" :: "r"(va));
+	__asm volatile("lwz %0,0(%0); sync;" : "+r"(va));
 }
 
 static inline void
@@ -120,20 +120,20 @@ storedcache(vaddr_t va, bus_size_t sz)
 	DPRINTF(("storedcache: %#lx %ld\n", va, (long) sz));
 	KASSERT(sz != 0);
 
-	__asm __volatile("eieio;");
+	__asm volatile("eieio;");
 	off = (u_int)va & (CACHELINESIZE - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > 0) {
-		__asm __volatile("dcbst 0, %0;" :: "r"(va));
+		__asm volatile("dcbst 0, %0;" :: "r"(va));
 		va += CACHELINESIZE;
 		sz -= CACHELINESIZE;
 	}
-	__asm __volatile("sync;");
+	__asm volatile("sync;");
 }
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *, int));
+	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -207,12 +207,12 @@ _bus_dmamap_destroy(t, map)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+_bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
-	struct proc *p;
+	struct vmspace *vm;
 	int flags;
 	paddr_t *lastaddrp;
 	int *segp;
@@ -230,9 +230,8 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		KASSERT(p == NULL);	/* we "never" use the p!=NULL case */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, (paddr_t *)&curaddr);
 		else
 			curaddr = vtophys(vaddr);
@@ -327,6 +326,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	paddr_t lastaddr;
 	int seg, error;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -338,8 +338,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	seg = 0;
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags,
 		&lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
@@ -384,7 +390,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		    vmspace_kernel(), flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -407,7 +413,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
@@ -421,14 +426,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
-#endif
-	}
-
 	first = 1;
 	seg = 0;
 	error = 0;
@@ -441,7 +438,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg, first);
+		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
@@ -743,10 +740,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);

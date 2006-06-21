@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.15 2005/06/05 20:32:30 nathanw Exp $	*/
+/*	$NetBSD: aed.c,v 1.15.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.15 2005/06/05 20:32:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.15.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ aedattach(parent, self, aux)
 	sc->sc_repeating = -1;          /* not repeating */
 
 	/* Pull in the options flags. */ 
-	sc->sc_options = (sc->sc_dev.dv_cfdata->cf_flags | aed_options);
+	sc->sc_options = (device_cfdata(&sc->sc_dev)->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
 	
@@ -421,10 +421,10 @@ aed_enqevent(event)
 }
 
 int 
-aedopen(dev, flag, mode, p)
+aedopen(dev, flag, mode, l)
     dev_t dev;
     int flag, mode;
-    struct proc *p;
+    struct lwp *l;
 {
 	int unit;
 	int error = 0;
@@ -443,7 +443,7 @@ aedopen(dev, flag, mode, p)
 	aed_sc->sc_evq_tail = 0;
 	aed_sc->sc_evq_len = 0;
 	aed_sc->sc_open = 1;
-	aed_sc->sc_ioproc = p;
+	aed_sc->sc_ioproc = l->l_proc;
 	splx(s);
 
 	return (error);
@@ -451,10 +451,10 @@ aedopen(dev, flag, mode, p)
 
 
 int 
-aedclose(dev, flag, mode, p)
+aedclose(dev, flag, mode, l)
     dev_t dev;
     int flag, mode;
-    struct proc *p;
+    struct lwp *l;
 {
 	int s = spladb();
 
@@ -515,12 +515,12 @@ aedread(dev, uio, flag)
 }
 
 int 
-aedioctl(dev, cmd, data, flag, p)
+aedioctl(dev, cmd, data, flag, l)
     dev_t dev;
     u_long cmd;
     caddr_t data;
     int flag;
-    struct proc *p;
+    struct lwp *l;
 {
 	switch (cmd) {
 	case ADBIOCDEVSINFO: {
@@ -584,10 +584,10 @@ aedioctl(dev, cmd, data, flag, p)
 
 
 int 
-aedpoll(dev, events, p)
+aedpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	int s, revents;
 
@@ -600,7 +600,7 @@ aedpoll(dev, events, p)
 	if (aed_sc->sc_evq_len > 0)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(p, &aed_sc->sc_selinfo);
+		selrecord(l, &aed_sc->sc_selinfo);
 	splx(s);
 
 	return (revents);

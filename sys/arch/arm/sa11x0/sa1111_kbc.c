@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.6 2004/04/06 01:32:17 bsh Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.6.12.1 2006/06/21 14:49:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.6 2004/04/06 01:32:17 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.6.12.1 2006/06/21 14:49:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ sackbc_intr_establish(void *cookie, pckbport_slot_t slot)
 
 	if (!(sc->polling) && sc->ih_rx==NULL) {
 		sc->ih_rx = sacc_intr_establish(
-			(sacc_chipset_tag_t *)(sc->dev.dv_parent), 
+			(sacc_chipset_tag_t *) device_parent(&sc->dev), 
 			sc->intr+1, IST_EDGE_RAISE, IPL_TTY, sackbc_rxint, sc);
 		if (sc->ih_rx == NULL) {
 			printf("%s: can't establish interrupt\n",
@@ -208,7 +208,7 @@ sackbc_disable_intrhandler(struct sackbc_softc *sc)
 {
 	if (sc->polling && sc->ih_rx) {
 		sacc_intr_disestablish(
-			(sacc_chipset_tag_t *)(sc->dev.dv_parent),
+			(sacc_chipset_tag_t *) device_parent(&sc->dev),
 			sc->ih_rx);
 		sc->ih_rx = NULL;
 	}

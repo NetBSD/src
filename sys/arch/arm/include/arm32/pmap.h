@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77 2003/10/13 20:50:34 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.77.16.1 2006/06/21 14:49:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -236,6 +236,8 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
+#define	pmap_remove(pmap,sva,eva)	pmap_do_remove((pmap),(sva),(eva),0)
+
 #define	pmap_is_modified(pg)	\
 	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
 #define	pmap_is_referenced(pg)	\
@@ -258,6 +260,7 @@ boolean_t pmap_extract(pmap_t, vaddr_t, paddr_t *);
 /* Functions we use internally. */
 void	pmap_bootstrap(pd_entry_t *, vaddr_t, vaddr_t);
 
+void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 boolean_t pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 boolean_t pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
@@ -295,7 +298,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
  */
 
 /* Virtual address to page table entry */
-static __inline pt_entry_t *
+static inline pt_entry_t *
 vtopte(vaddr_t va)
 {
 	pd_entry_t *pdep;
@@ -309,7 +312,7 @@ vtopte(vaddr_t va)
 /*
  * Virtual address to physical address
  */
-static __inline paddr_t
+static inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2005/02/19 15:42:33 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.6.1 2006/06/21 14:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2005/02/19 15:42:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.6.1 2006/06/21 14:50:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -156,7 +156,7 @@ dreamcast_startup(void)
 #endif /* KGDB && NSCIF > 0 */
 
 	/* Jump to main */
-	__asm__ __volatile__(
+	__asm volatile(
 		"jmp	@%0;"
 		"mov	%1, sp"
 		:: "r"(main),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));

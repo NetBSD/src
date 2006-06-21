@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.38 2004/02/10 01:11:45 bjh21 Exp $ */
+/*	$NetBSD: types.h,v 1.38.16.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,15 +92,17 @@ typedef paddr_t			psize_t;
  * `lock_data' given its address (and the fact that SPARC is big-endian).
  */
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	0xff000000
 #define	__SIMPLELOCK_UNLOCKED	0
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
 #define	__HAVE_NWSCONS
+#define	__HAVE_TIMECOUNTER
 
 #ifdef SUN4U
 #define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 2005/01/31 07:18:51 simonb Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.17.6.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -58,7 +58,7 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
-db_regs_t  	ddb_regs;		/* register state */
+db_regs_t	ddb_regs;		/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs.r_pc)
@@ -66,7 +66,7 @@ db_regs_t  	ddb_regs;		/* register state */
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0xf2		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 #define	db_clear_single_step(regs)	((regs)->tf_regs.r_psr &= ~PSL_T)
 #define	db_set_single_step(regs)	((regs)->tf_regs.r_psr |=  PSL_T)
@@ -101,9 +101,9 @@ typedef long kgdb_reg_t;
 
 #ifdef _KERNEL
 
-int	kdb_trap __P((int, int, db_regs_t *));
+int	kdb_trap(int, int, db_regs_t *);
 struct insn;
-int	db_dasm_ns32k __P((struct insn *insn, db_addr_t loc));
+int	db_dasm_ns32k(struct insn *insn, db_addr_t loc);
 
 #endif /* _KERNEL */
 

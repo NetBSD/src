@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.23 2005/02/18 21:05:51 dsl Exp $
+# $NetBSD: INSTALL,v 1.23.6.1 2006/06/21 14:51:21 yamt Exp $
 #
 # INSTALL machine description file
 #
@@ -21,7 +21,6 @@ options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Support for various CPU types
 options 	HP320
@@ -54,6 +53,7 @@ maxusers	32
 #options 	COMPAT_15	# compatibility with NetBSD 1.5
 #options 	COMPAT_16	# compatibility with NetBSD 1.6
 #options 	COMPAT_20	# compatibility with NetBSD 2.0
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVSHM		# System V-style shared memory
@@ -72,10 +72,11 @@ file-system	FFS		# fast filesystem
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
 file-system	NFS		# Network filesystem client
 #file-system	UNION		# Union filesystem (req. for FDESC)
-file-system	KERNFS		# kernel data-structure filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	QUOTA		# User and group quotas in FFS
@@ -83,13 +84,14 @@ file-system	MFS		# Memory-based filesystem
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network filesystem server
 #options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP forwarding + larger mb_map
 #options 	MROUTING	# Multicast routing
@@ -203,11 +205,11 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
 #uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sl		4	# SLIP network interfaces
-#pseudo-device	ppp		4	# PPP network interfaces
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	ppp			# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	bpfilter	16	# Berkeley packet filter
-#pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	vnd			# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
@@ -222,10 +224,10 @@ pseudo-device	bpfilter	16	# Berkeley packet filter
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: monitor.c,v 1.5.2.1 2006/06/21 14:50:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -320,13 +320,13 @@ out:
 #define	FUNC(x) \
 unsigned int mf ## x() { \
 	unsigned int tmp; \
-	asm volatile (STR(mf ## x %0) : STR(=r)(tmp)); \
+	__asm volatile (STR(mf ## x %0) : STR(=r)(tmp)); \
 	return (tmp); \
 } \
 void mt ## x(data) \
 unsigned int data; \
 { \
-	asm volatile (STR(mt ## x %0) :: STR(r)(data)); \
+	__asm volatile (STR(mt ## x %0) :: STR(r)(data)); \
 } \
 
 #define DEF(x) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.36 2005/06/13 21:33:15 jmc Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.36.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.36 2005/06/13 21:33:15 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.36.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -313,7 +313,7 @@ view_init(register struct ite_softc *ip)
 
 int
 ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
-              struct proc *p)
+              struct lwp *l)
 {
 	struct winsize ws;
 	struct itewinsize *is;
@@ -350,7 +350,7 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 			 * XXX this is messy, but works
 			 */
 			(*ite_cdevsw.d_ioctl)(0, TIOCSWINSZ,
-					      (caddr_t)&ws, 0, p);
+					      (caddr_t)&ws, 0, l);
 		}
 		break;
 	case ITEIOCDSPWIN:
@@ -366,7 +366,7 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 		 * XXX watchout for that -1 its not really the kernel talking
 		 * XXX these two commands don't use the proc pointer though
 		 */
-		error = (*view_cdevsw.d_ioctl)(0, cmd, addr, -1, p);
+		error = (*view_cdevsw.d_ioctl)(0, cmd, addr, -1, l);
 		break;
 	default:
 		error = EPASSTHROUGH;

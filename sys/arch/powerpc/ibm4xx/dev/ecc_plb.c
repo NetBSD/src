@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.8 2003/07/15 02:54:44 lukem Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.8.16.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,14 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.8 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.8.16.1 2006/06/21 14:55:03 yamt Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/properties.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
@@ -92,15 +93,17 @@ ecc_plbattach(struct device *parent, struct device *self, void *aux)
 	struct plb_attach_args *paa = aux;
 	unsigned int processor_freq;
 	unsigned int memsiz;
+	prop_number_t pn;
 
 	ecc_plb_found++;
 
-	if (board_info_get("processor-frequency",
-		&processor_freq, sizeof(processor_freq)) == -1)
-		panic("no processor-frequency");
+	pn = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(pn != NULL);
+	processor_freq = (unsigned int) prop_number_integer_value(pn);
 
-	if (board_info_get("mem-size", &memsiz, sizeof(memsiz)) == -1)
-		panic("no mem-size");
+	pn = prop_dictionary_get(board_properties, "mem-size");
+	KASSERT(pn != NULL);
+	memsiz = (unsigned int) prop_number_integer_value(pn);
 
 	printf(": ECC controller\n");
 
@@ -162,7 +165,7 @@ ecc_plb_intr(void *arg)
 	 * date is set and can't reliably be used to measure intervals.
 	 */
 
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	__asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 		: "=r"(tb), "=r"(tmp));
 	sc->sc_ecc_cnt++;
 
@@ -199,7 +202,7 @@ ecc_plb_intr(void *arg)
 		 * Does kernel always map all of physical RAM VA=PA? If so,
 		 * just loop over lowmem.
 		 */
-		asm volatile(
+		__asm volatile(
 			"mfmsr 	%0;"
 			"li	%1, 0x00;"
 			"ori	%1, %1, 0x8010;"
@@ -237,7 +240,7 @@ ecc_plb_intr(void *arg)
 		printf("ECC: Recycling complete, ESR=%x. "
 			"Checking for persistent errors.\n", esr);
 
-		asm volatile(
+		__asm volatile(
 			"mfmsr 	%0;"
 			"li	%1, 0x00;"
 			"ori	%1, %1, 0x8010;"

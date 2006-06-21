@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2005/03/09 19:04:43 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.14.4.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -919,7 +919,7 @@ struct arm32_bus_dmamap {
 
 	void		*_dm_origbuf;	/* pointer to original buffer */
 	int		_dm_buftype;	/* type of buffer */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.4 2003/12/29 12:59:54 igy Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.4.16.1 2006/06/21 14:51:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.4 2003/12/29 12:59:54 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.4.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -315,7 +315,7 @@ flash_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-flashopen(dev_t dev, int flag, int mode, struct proc *p)
+flashopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
@@ -328,7 +328,7 @@ flashopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-flashclose(dev_t dev, int flag, int mode, struct proc *p)
+flashclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 

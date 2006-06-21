@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm.c,v 1.2 2005/02/19 15:37:35 tsutsui Exp $	*/
+/*	$NetBSD: aica_arm.c,v 1.2.6.1 2006/06/21 14:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -57,8 +57,8 @@ typedef	unsigned long	uint32_t;
 #define	CH_WRITE_4(ch,off,val)	REG_WRITE_4(((ch) << 7) + (off), val)
 
 void aica_init(void);
-__inline int in_first_half(unsigned int);
-__inline int in_second_half(unsigned int);
+inline int in_first_half(unsigned int);
+inline int in_second_half(unsigned int);
 void bzero_4(void *, unsigned int);
 void bzero(void *, unsigned int);
 uint32_t rate2reg(unsigned int);
@@ -104,7 +104,7 @@ aica_init()
 }
 
 
-__inline int
+inline int
 in_first_half(unsigned int loophalf)
 {
 
@@ -112,7 +112,7 @@ in_first_half(unsigned int loophalf)
 	return REG_READ_4(0x2814) < loophalf;
 }
 
-__inline int
+inline int
 in_second_half(unsigned int loophalf)
 {
 

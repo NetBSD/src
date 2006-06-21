@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.52 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: mfb.c,v 1.52.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.52 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.52.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -219,7 +219,7 @@ mfbattach(parent, self, aux)
 {
 	struct tc_attach_args *ta = aux;
 	caddr_t mfbaddr = (caddr_t)ta->ta_addr;
-	int unit = self->dv_unit;
+	int unit = device_unit(self);
 	struct fbinfo *fi;
 	
 	if (mfb_fi)

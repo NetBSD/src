@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.10 2005/05/31 00:54:57 christos Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.10.2.1 2006/06/21 14:56:12 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10 2005/05/31 00:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10.2.1 2006/06/21 14:56:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ OF_read(int handle, void *addr, int len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, (u_long)addr += l) {
+	for (; len > 0; len -= l) {
 		l = MIN(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -514,7 +514,7 @@ OF_write(int handle, const void *addr, int len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, (u_long)addr += l) {
+	for (; len > 0; len -= l) {
 		l = MIN(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -583,13 +583,7 @@ OF_enter(void)
 	args.name = ADR2CELL("enter");
 	args.nargs = 0;
 	args.nreturns = 0;
-#if defined(MSIIEP)
-	msiiep_swap_endian(0);
-#endif
 	openfirmware(&args);
-#if defined(MSIIEP)
-	msiiep_swap_endian(1);
-#endif
 }
 
 void
@@ -604,13 +598,7 @@ OF_exit(void)
 	args.name = ADR2CELL("exit");
 	args.nargs = 0;
 	args.nreturns = 0;
-#if defined(MSIIEP)
-	msiiep_swap_endian(0);
-#endif
 	openfirmware(&args);
-#if defined(MSIIEP)
-	msiiep_swap_endian(1);
-#endif
 	panic("OF_exit failed");
 }
 
@@ -631,8 +619,7 @@ OF_poweroff(void)
 }
 
 void
-(*OF_set_callback(newfunc))(void *)
-	void (*newfunc)(void *);
+(*OF_set_callback(void (*newfunc)(void *)))(void *)
 {
 	struct {
 		cell_t name;
@@ -755,8 +742,8 @@ OF_claim(void *virt, u_int size, u_int align)
 
 int obp_symbol_debug = 0;
 
-void OF_sym2val(cells)
-	void *cells;
+void
+OF_sym2val(void *cells)
 {
 	struct args {
 		cell_t service;
@@ -770,7 +757,7 @@ void OF_sym2val(cells)
 	db_expr_t value;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :);
+	__asm volatile("clr %%g4" : :);
 
 	/* No args?  Nothing to do. */
 	if (args->nargs == 0 || args->nreturns == 0)
@@ -792,8 +779,8 @@ void OF_sym2val(cells)
 	args->value = ADR2CELL(value);
 }
 
-void OF_val2sym(cells)
-	void *cells;
+void
+OF_val2sym(void *cells)
 {
 	struct args {
 		cell_t service;
@@ -808,7 +795,7 @@ void OF_val2sym(cells)
 	db_expr_t offset;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :);
+	__asm volatile("clr %%g4" : :);
 
 	if (obp_symbol_debug)
 		prom_printf("OF_val2sym: nargs %lx nreturns %lx\n",
@@ -839,4 +826,4 @@ void OF_val2sym(cells)
 	args->offset = offset;
 	args->symbol = ADR2CELL(symbol);
 }
-#endif
+#endif /* DDB */

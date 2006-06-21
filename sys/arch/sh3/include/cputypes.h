@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.8 2005/06/29 16:51:20 christos Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.8.2.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,11 +71,11 @@ extern int cpu_product;
 #define	CPU_IS_SH3		(cpu_arch == CPU_ARCH_SH3)
 #define	CPU_IS_SH4		(cpu_arch == CPU_ARCH_SH4)
 #elif defined(SH3)
-#define	CPU_IS_SH3		1
-#define	CPU_IS_SH4		0
+#define	CPU_IS_SH3		(/* CONSTCOND */1)
+#define	CPU_IS_SH4		(/* CONSTCOND */0)
 #elif defined(SH4)
-#define	CPU_IS_SH3		0
-#define	CPU_IS_SH4		1
+#define	CPU_IS_SH3		(/* CONSTCOND */0)
+#define	CPU_IS_SH4		(/* CONSTCOND */1)
 #else
 #error "define SH3 and/or SH4"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2003/09/27 04:44:42 matt Exp $ */
+/*	$NetBSD: mem.c,v 1.20.16.1 2006/06/21 14:55:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20.16.1 2006/06/21 14:55:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 2003/09/27 04:44:42 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -166,7 +167,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (atop(off) >= physmem && suser(p->p_ucred, &p->p_acflag) != 0)
+	if (atop(off) >= physmem &&
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (-1);
 	return (trunc_page((paddr_t)off));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:36 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6.2.1 2006/06/21 14:48:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:36 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6.2.1 2006/06/21 14:48:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,14 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:36 scw Exp 
 #include <machine/segments.h>
 #include <machine/fpu.h>
 
-static __inline struct trapframe *process_frame __P((struct lwp *));
-static __inline struct fxsave64 *process_fpframe __P((struct lwp *));
+static inline struct trapframe *process_frame __P((struct lwp *));
+static inline struct fxsave64 *process_fpframe __P((struct lwp *));
 #if 0
-static __inline int verr_gdt __P((struct pmap *, int sel));
-static __inline int verr_ldt __P((struct pmap *, int sel));
+static inline int verr_gdt __P((struct pmap *, int sel));
+static inline int verr_ldt __P((struct pmap *, int sel));
 #endif
 
-static __inline struct trapframe *
+static inline struct trapframe *
 process_frame(l)
 	struct lwp *l;
 {
@@ -93,7 +93,7 @@ process_frame(l)
 	return (l->l_md.md_regs);
 }
 
-static __inline struct fxsave64 *
+static inline struct fxsave64 *
 process_fpframe(l)
 	struct lwp *l;
 {

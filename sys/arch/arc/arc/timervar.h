@@ -1,4 +1,4 @@
-/* $NetBSD: timervar.h,v 1.2 2005/01/22 07:35:33 tsutsui Exp $ */
+/* $NetBSD: timervar.h,v 1.2.8.1 2006/06/21 14:48:54 yamt Exp $ */
 /* NetBSD: clockvar.h,v 1.4 1997/06/22 08:02:18 jonathan Exp  */
 
 /*
@@ -37,5 +37,7 @@
 struct timerfns {
 	void	(*tf_init)(struct device *);
 };
+
+extern uint32_t last_cp0_count;
 
 void timerattach(struct device *, const struct timerfns *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $
+/*	$NetBSD: mkboot.c,v 1.8.4.1 2006/06/21 14:51:29 yamt Exp $
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,13 +47,15 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.8.4.1 2006/06/21 14:51:29 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/endian.h>
+#endif
 
 #include <time.h>
 

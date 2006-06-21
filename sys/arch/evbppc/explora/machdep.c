@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2005/04/25 15:02:04 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.2.1 2006/06/21 14:51:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2005/04/25 15:02:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.1 2006/06/21 14:51:08 yamt Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -50,10 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2005/04/25 15:02:04 lukem Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
-#include <sys/properties.h>
 #include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <prop/proplib.h>
 
 #include <net/netisr.h>
 
@@ -78,16 +79,16 @@ char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
+static const unsigned int cpuspeed = 66000000;
+
 extern struct user *proc0paddr;
 
-struct propdb *board_info = NULL;
+prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *exec_map = NULL;
 char msgbuf[MSGBUFSIZE];
 paddr_t msgbuf_paddr;
-static unsigned cpuspeed = 66000000;
-static unsigned memsize;
 
 static struct mem_region phys_mem[MEMREGIONS];
 static struct mem_region avail_mem[MEMREGIONS];
@@ -146,11 +147,27 @@ set_tlb(int idx, u_int addr, u_int flags)
 #endif
 	hi = addr | TLB_VALID | TLB_PG_16M;
 
-	asm volatile(
+	__asm volatile(
 	    "	tlbwe %1,%0,1	\n"
 	    "	tlbwe %2,%0,0	\n"
 	    "	sync		\n"
 	    : : "r" (idx), "r" (lo), "r" (hi) );
+}
+
+/*
+ * Install a trap vector. We cannot use memcpy because the
+ * destination may be zero.
+ */
+static void
+trap_copy(void *src, int dest, size_t len)
+{
+	uint32_t *src_p = src;
+	uint32_t *dest_p = (void *)dest;
+
+	while (len > 0) {
+		*dest_p++ = *src_p++;
+		len -= sizeof(uint32_t);
+	}
 }
 
 void
@@ -194,7 +211,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	avail_mem[0].start = startkernel;
 	avail_mem[0].size = size-startkernel;
 
-	asm volatile(
+	__asm volatile(
 	    "	mtpid %0	\n"
 	    "	sync		\n"
 	    : : "r" (1) );
@@ -240,10 +257,10 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 */
 
 	for (i = EXC_RSVD; i <= EXC_LAST; i += 0x100)
-		memcpy((void *)i, &defaulttrap, (size_t)&defaultsize);
+		trap_copy(&defaulttrap, i, (size_t)&defaultsize);
 
 	for (i = 0; i < sizeof(trap_table)/sizeof(trap_table[0]); i++) {
-		memcpy((void *)trap_table[i].vector, trap_table[i].addr,
+		trap_copy(trap_table[i].addr, trap_table[i].vector,
 		    (size_t)trap_table[i].size);
 	}
 
@@ -269,7 +286,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	asm volatile (
+	__asm volatile (
 	    "	mfmsr %0	\n"
 	    "	ori %0,%0,%1	\n"
 	    "	mtmsr %0	\n"
@@ -302,7 +319,7 @@ install_extint(void (*handler)(void))
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile (
+	__asm volatile (
 	    "	mfmsr %0	\n"
 	    "	andi. %1,%0,%2	\n"
 	    "	mtmsr %1	\n"
@@ -311,7 +328,7 @@ install_extint(void (*handler)(void))
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile (
+	__asm volatile (
 	    "	mtmsr %0	\n"
 	    : : "r" (omsr) );
 }
@@ -320,6 +337,7 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
+	prop_number_t pn;
 	char pbuf[9];
 
 	/*
@@ -330,7 +348,6 @@ cpu_startup(void)
 	printf("%s%s", copyright, version);
 	printf("NCD Explora451\n");
 
-	memsize = ctob(physmem);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -360,15 +377,21 @@ cpu_startup(void)
 	/*
 	 * Set up the board properties database.
 	 */
-	if (!(board_info = propdb_create("board info")))
-		panic("Cannot create board info database");
+	board_properties = prop_dictionary_create();
+	KASSERT(board_properties != NULL);
 
-	if (board_info_set("processor-frequency", &cpuspeed, 
-	    sizeof(&cpuspeed), PROP_CONST, 0))
-		panic("setting processor-frequency");
-	if (board_info_set("mem-size", &memsize, 
-	    sizeof(&memsize), PROP_CONST, 0))
+	pn = prop_number_create_integer(ctob(physmem));
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
 		panic("setting mem-size");
+	prop_object_release(pn);
+
+	pn = prop_number_create_integer(cpuspeed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency",
+				pn) == FALSE)
+		panic("setting processor-frequency");
+	prop_object_release(pn);
 }
 
 int

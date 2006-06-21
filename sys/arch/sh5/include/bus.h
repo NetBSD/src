@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2005/03/09 19:04:45 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.4.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,7 +106,7 @@
 #ifndef _SH5_BUS_H_
 #define	_SH5_BUS_H_
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #ifndef __BUS_SPACE_COMPAT_OLDDEFS
 #define	__BUS_SPACE_COMPAT_OLDDEFS
@@ -842,7 +842,7 @@ bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     bus_size_t l, int f)
 {
 
-	__asm __volatile("synco");
+	__asm volatile("synco");
 }
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */

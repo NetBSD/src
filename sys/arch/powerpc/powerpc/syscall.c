@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.2.1 2006/06/21 14:55:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -34,7 +34,6 @@
 
 #include "opt_altivec.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
@@ -48,9 +47,6 @@
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -69,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.1 2006/06/21 14:55:11 yamt Exp $");
 
 void
 child_return(void *arg)
@@ -91,7 +87,7 @@ child_return(void *arg)
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
@@ -210,7 +206,6 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	userret(l, frame);
 }
 
-#if defined(KTRACE) || defined(SYSTRACE)
 static void EMULNAME(syscall_fancy)(struct trapframe *);
 
 void
@@ -320,24 +315,15 @@ out:
 	trace_exit(l, realcode, params, rval, error);
 	userret(l, frame);
 }
-#endif /* KTRACE || SYSTRACE */
 
 void EMULNAME(syscall_intern)(struct proc *);
 
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-		return;
-	} 
-#endif
-	p->p_md.md_syscall = EMULNAME(syscall_plain);
+	else
+		p->p_md.md_syscall = EMULNAME(syscall_plain);
 }

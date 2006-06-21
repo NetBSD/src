@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.32 2004/06/28 03:53:40 mycroft Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.32.12.1 2006/06/21 14:48:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.32 2004/06/28 03:53:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.32.12.1 2006/06/21 14:48:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +123,7 @@ dec_kn8ae_device_register(dev, aux)
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -150,7 +148,7 @@ dec_kn8ae_device_register(dev, aux)
 	}
 
 	if (primarydev == NULL) {
-		if (strcmp(name, "dwlpx"))
+		if (!device_is_a(dev, "dwlpx"))
 			return;
 		else {
 			struct kft_dev_attach_args *ka = aux;
@@ -166,7 +164,7 @@ dec_kn8ae_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(name, "pci"))
+		if (!device_is_a(dev, "pci"))
 			return;
 		/*
 		 * Try to find primarydev anywhere in the ancestry.  This is
@@ -175,7 +173,7 @@ dec_kn8ae_device_register(dev, aux)
 		while (parent) {
 			if (parent == primarydev)
 				break;
-			parent = parent->dv_parent;
+			parent = device_parent(parent);
 		}
 		if (!parent)
 			return;
@@ -224,12 +222,14 @@ dec_kn8ae_device_register(dev, aux)
 	if (!diskboot)
 		return;
 
-	if (!strcmp(name, "sd") || !strcmp(name, "st") || !strcmp(name, "cd")) {
+	if (device_is_a(dev, "sd") ||
+	    device_is_a(dev, "st") ||
+	    device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
 
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		unit = periph->periph_target * 100 + periph->periph_lun;

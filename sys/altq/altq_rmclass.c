@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.9 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.9.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.9 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.9.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -230,19 +230,15 @@ rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
 	}
 #endif
 
-	MALLOC(cl, struct rm_class *, sizeof(struct rm_class),
-	       M_DEVBUF, M_WAITOK);
+	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
 		return (NULL);
-	(void)memset(cl, 0, sizeof(struct rm_class));
 	CALLOUT_INIT(&cl->callout_);
-	MALLOC(cl->q_, class_queue_t *, sizeof(class_queue_t),
-	       M_DEVBUF, M_WAITOK);
+	cl->q_ = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->q_ == NULL) {
-		FREE(cl, M_DEVBUF);
+		free(cl, M_DEVBUF);
 		return (NULL);
 	}
-	(void)memset(cl->q_, 0, sizeof(class_queue_t));
 
 	/*
 	 * Class initialization.
@@ -553,7 +549,7 @@ rmc_depth_recompute(rm_class_t *cl)
 /*
  * void
  * rmc_delete_class(struct rm_ifdat *ifdat, struct rm_class *cl) - This
- *	function deletes a class from the link-sharing stucture and frees
+ *	function deletes a class from the link-sharing structure and frees
  *	all resources associated with the class.
  *
  *	Returns: NONE
@@ -660,8 +656,8 @@ rmc_delete_class(ifd, cl)
 			red_destroy(cl->red_);
 #endif
 	}
-	FREE(cl->q_, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->q_, M_DEVBUF);
+	free(cl, M_DEVBUF);
 }
 
 
@@ -1520,12 +1516,12 @@ void
 rmc_delay_action(cl, borrow)
 	struct rm_class *cl, *borrow;
 {
-	int	delay, t, extradelay;
+	int	nowdelay, t, extradelay;
 
 	cl->stats_.overactions++;
-	TV_DELTA(&cl->undertime_, &cl->overtime_, delay);
+	TV_DELTA(&cl->undertime_, &cl->overtime_, nowdelay);
 #ifndef BORROW_OFFTIME
-	delay += cl->offtime_;
+	nowdelay += cl->offtime_;
 #endif
 
 	if (!cl->sleeping_) {
@@ -1550,7 +1546,7 @@ rmc_delay_action(cl, borrow)
 #endif
 		if (extradelay > 0) {
 			TV_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
-			delay += extradelay;
+			nowdelay += extradelay;
 		}
 
 		cl->sleeping_ = 1;
@@ -1563,7 +1559,7 @@ rmc_delay_action(cl, borrow)
 		 * NOTE:  If there's no other traffic, we need the timer as
 		 * a 'backstop' to restart this class.
 		 */
-		if (delay > tick * 2) {
+		if (nowdelay > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
 			t = hzto(&cl->undertime_);

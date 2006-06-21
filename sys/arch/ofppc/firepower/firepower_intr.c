@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.6 2003/07/15 02:46:31 lukem Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.6.16.1 2006/06/21 14:54:24 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.6 2003/07/15 02:46:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.6.16.1 2006/06/21 14:54:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ int	firepower_splraise(int);
 int	firepower_spllower(int);
 void	firepower_splx(int);
 void	firepower_setsoft(int);
-void	firepower_clock_return(struct clockframe *, int);
+void	firepower_clock_return(struct clockframe *, int, long);
 void	*firepower_intr_establish(int, int, int, int (*)(void *), void *);
 void	firepower_intr_disestablish(void *);
 void	firepower_do_softnet(void);
@@ -85,13 +85,13 @@ void	firepower_extintr(void);
 int imask[NIPL];
 
 /* Current interrupt priority level. */
- __volatile int cpl;
+ volatile int cpl;
 
 /* Number of clock interrupts pending. */
-static __volatile int clockpending;
+static volatile int clockpending;
 
 /* Other interrupts pending. */
- __volatile int ipending;
+ volatile int ipending;
 
 /*
  * The Firepower's system controller provides 32 interrupt sources.
@@ -135,7 +135,7 @@ static const uint32_t softint_to_intrmask[SI_NQUEUES] = {
 	INTR_SOFT(3),		/* SI_SOFTSERIAL */
 };
 
-static __inline void
+static inline void
 firepower_enable_irq(int irq)
 {
 
@@ -143,7 +143,7 @@ firepower_enable_irq(int irq)
 	CSR_WRITE4(FPR_INTR_MASK0, intr_mask);
 }
 
-static __inline void
+static inline void
 firepower_disable_irq(int irq)
 {
 
@@ -295,7 +295,7 @@ do_pending_int(void)
 	struct intrhand *ih;
 	int emsr, dmsr;
 	int new, irq, hwpend;
-	static __volatile int processing;
+	static volatile int processing;
 
 	if (processing)
 		return;
@@ -377,12 +377,12 @@ firepower_splraise(int ipl)
 {
 	int old;
 
-	__asm __volatile("eieio; sync");	/* reorder protect */
+	__asm volatile("eieio; sync");	/* reorder protect */
 
 	old = cpl;
 	cpl |= ipl;
 
-	__asm __volatile("eieio; sync");	/* reorder protect */
+	__asm volatile("eieio; sync");	/* reorder protect */
 	return (old);
 }
 
@@ -391,7 +391,7 @@ firepower_spllower(int ipl)
 {
 	int old = cpl;
 
-	__asm __volatile("eieio; sync");	/* reorder protect */
+	__asm volatile("eieio; sync");	/* reorder protect */
 
 	splx(ipl);
 	return (old);
@@ -401,11 +401,11 @@ void
 firepower_splx(int new)
 {
 
-	__asm __volatile("eieio; sync");	/* reorder protect */
+	__asm volatile("eieio; sync");	/* reorder protect */
 	cpl = new;
 	if (ipending & ~new)
 		do_pending_int();
-	__asm __volatile("eieio; sync");	/* reorder protect */
+	__asm volatile("eieio; sync");	/* reorder protect */
 }
 
 void
@@ -524,7 +524,7 @@ firepower_intr_disestablish(void *cookie)
 }
 
 void
-firepower_clock_return(struct clockframe *frame, int nticks)
+firepower_clock_return(struct clockframe *frame, int nticks, long ticks)
 {
 	int pri, msr;
 
@@ -534,6 +534,12 @@ firepower_clock_return(struct clockframe *frame, int nticks)
 		clockpending += nticks;
 	else {
 		cpl = pri | imask[IPL_CLOCK];
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		lasttb = mftb() + ticks - ticks_per_intr;
 
 		/* Reenable interrupts. */
 		msr = mfmsr();

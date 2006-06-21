@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.6 2005/06/04 22:37:51 he Exp $	*/
+/*	$NetBSD: epclk.c,v 1.6.2.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.6 2005/06/04 22:37:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.6.2.1 2006/06/21 14:49:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,8 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.6 2005/06/04 22:37:51 he Exp $");
 
 #include <arm/ep93xx/epsocvar.h> 
 #include <arm/ep93xx/epclkreg.h> 
+#include <arm/ep93xx/ep93xxreg.h> 
 #include <arm/ep93xx/ep93xxvar.h>
 #include <dev/clock_subr.h>
+
+#include "opt_hz.h"
 
 static int	epclk_match(struct device *, struct cfdata *, void *);
 static void	epclk_attach(struct device *, struct device *, void *);
@@ -79,7 +82,9 @@ struct epclk_softc {
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+#if defined(HZ) && (HZ == 64)
 	bus_space_handle_t	sc_teoi_ioh;
+#endif
 	int			sc_intr;
 };
 
@@ -90,7 +95,7 @@ static u_int32_t tmark;
 /* This is a quick ARM way to multiply by 983040/1000000 */
 #define US_TO_TIMER4VAL(x) { \
 	u_int32_t hi, lo, scalar = 4222124650UL; \
-	asm volatile ( \
+	__asm volatile ( \
 		"umull %0, %1, %2, %3;" \
 		: "=&r"(lo), "=&r"(hi) \
 		: "r"((x)), "r"(scalar) \
@@ -101,7 +106,7 @@ static u_int32_t tmark;
 /* This is a quick ARM way to multiply by 1000000/983040 */
 #define TIMER4VAL_TO_US(x) { \
 	u_int32_t hi, lo, scalar = 2184533333UL; \
-	asm volatile ( \
+	__asm volatile ( \
 		"umull %0, %1, %2, %3;" \
 		"mov %1, %1, lsl #1;" \
 		"mov %0, %0, lsr #31;" \
@@ -146,9 +151,11 @@ epclk_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 
 		0, &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
+#if defined(HZ) && (HZ == 64)
 	if (bus_space_map(sa->sa_iot, EP93XX_APB_HWBASE + EP93XX_APB_SYSCON + 
 		EP93XX_SYSCON_TEOI, 4, 0, &sc->sc_teoi_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
+#endif
 
 	/* clear and start the debug timer (Timer4) */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_TIMERS_Timer4Enable, 0);
@@ -168,7 +175,11 @@ epclk_intr(void *arg)
 	tmark = TIMER4VAL();
 	sc = epclk_sc;
 
+#if defined(HZ) && (HZ == 64)
 	bus_space_write_4(sc->sc_iot, sc->sc_teoi_ioh, 0, 1);
+#else
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_TIMERS_Timer1Clear, 1);
+#endif
 	hardclock((struct clockframe*) arg);
 	return (1);
 }
@@ -202,10 +213,27 @@ cpu_initclocks(void)
 	sc = epclk_sc;
 	stathz = profhz = 0;
 
+#if defined(HZ) && (HZ == 64)
 	if (hz != 64) panic("HZ must be 64!");
 
 	/* clear 64Hz interrupt status */
 	bus_space_write_4(sc->sc_iot, sc->sc_teoi_ioh, 0, 1);
+#else
+#define	CLOCK_SOURCE_RATE	14745600UL
+#define	CLOCK_TICK_DIV		29
+#define	CLOCK_TICK_RATE \
+	(((CLOCK_SOURCE_RATE+(CLOCK_TICK_DIV*hz-1))/(CLOCK_TICK_DIV*hz))*hz)
+#define	LATCH	((CLOCK_TICK_RATE + hz/2) / hz)
+	/* setup and start the 16bit timer (Timer1) */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  EP93XX_TIMERS_Timer1Control,
+			  (TimerControl_MODE)|(TimerControl_CLKSEL));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  EP93XX_TIMERS_Timer1Load, LATCH-1);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  EP93XX_TIMERS_Timer1Control,
+			  (TimerControl_ENABLE)|(TimerControl_MODE)|(TimerControl_CLKSEL));
+#endif
 
 	ep93xx_intr_establish(sc->sc_intr, IPL_CLOCK, epclk_intr, NULL);
 }

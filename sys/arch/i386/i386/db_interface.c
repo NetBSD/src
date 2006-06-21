@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43 2005/06/01 19:06:24 drochner Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.43.2.1 2006/06/21 14:52:18 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2005/06/01 19:06:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43.2.1 2006/06/21 14:52:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -157,12 +157,13 @@ void
 kdbprinttrap(type, code)
 	int type, code;
 {
-	db_printf("kernel: ");
+	db_printf("kernel: %s trap ", (type & T_USER) ? "user" : "supervisor");
+	type &= ~T_USER;
 	if (type >= trap_types || type < 0)
 		db_printf("type %d", type);
 	else
 		db_printf("%s", trap_type[type]);
-	db_printf(" trap, code=%x\n", code);
+	db_printf(", code=%x\n", code);
 }
 
 /*

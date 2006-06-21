@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.2 2003/10/06 05:27:19 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2.16.1 2006/06/21 14:52:09 yamt Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 
@@ -35,13 +35,17 @@
 #ifndef _HPPA_BYTE_SWAP_H_
 #define	_HPPA_BYTE_SWAP_H_
 
-static __inline u_int16_t __byte_swap_word __P((u_int16_t));
-static __inline u_int32_t __byte_swap_long __P((u_int32_t));
+#ifdef __GNUC__
+#include <sys/types.h>
+__BEGIN_DECLS
 
-static __inline u_int32_t
-__byte_swap_long(u_int32_t x)
+
+#define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
+static __inline uint32_t __byte_swap_u32_variable(uint32_t);
+static __inline uint32_t
+__byte_swap_u32_variable(uint32_t x)
 {
-	register in_addr_t __swap32md_x;	\
+	register uint32_t __swap32md_x;	\
 						\
 	__asm  ("extru	%1, 7,8,%%r22\n\t"	\
 		"shd	%1,%1,8,%0\n\t"		\
@@ -54,23 +58,28 @@ __byte_swap_long(u_int32_t x)
 
 #if 0
 /*
- * Use generic C version because w/ asm inline below
+ * Use generic C version because w/ asm __inline below
  * gcc inserts extra "extru r,31,16,r" to convert
  * to 16 bit entity, which produces overhead we don't need.
  * Besides, gcc does swap16 same way by itself.
  */
 #define	__swap16md(x)	__swap16gen(x)
 #else
-static __inline u_int16_t
-__byte_swap_word(u_int16_t x)
+#define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
+static __inline uint16_t __byte_swap_u16_variable(uint16_t);
+static __inline uint16_t
+__byte_swap_u16_variable(uint16_t x)
 {
-	register in_port_t __swap16md_x;				\
+	register uint16_t __swap16md_x;				\
 									\
 	__asm  ("extru	%1,23,8,%0\n\t"					\
 		"dep	%1,23,8,%0"					\
 	       : "=&r" (__swap16md_x) : "r" (x));			\
 	return(__swap16md_x);
 }
+#endif
+
+__END_DECLS
 #endif
 
 #endif /* !_HPPA_BYTE_SWAP_H_ */

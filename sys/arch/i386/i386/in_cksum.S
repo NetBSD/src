@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2.16.1 2005/07/07 12:35:52 yamt Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.2.16.2 2006/06/21 14:52:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -167,9 +167,6 @@
 1:
 	
 #if defined(INET6) && defined(INET6_MD_CKSUM)
-/*
- * XXX does not deal with jumbograms.
- */
 /* LINTSTUB: Func: int in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len) */
 ENTRY(in6_cksum)
 	pushl	%ebp

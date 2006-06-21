@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.1 2001/10/27 16:22:07 rearnsha Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.1.36.1 2006/06/21 14:50:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,9 +42,7 @@
 
 #include <sys/callout.h>
 #include <sys/timepps.h>
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 #include <sys/lock.h>
-#endif
 
 int  plcomcnattach	(bus_space_tag_t, bus_addr_t, int, int, tcflag_t, int);
 void plcomcndetach	(void);
@@ -138,15 +136,8 @@ struct plcom_softc {
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	struct simplelock	sc_lock;
-#endif
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 int  plcomprobe1	(bus_space_tag_t, bus_space_handle_t);
 int  plcomintr		(void *);

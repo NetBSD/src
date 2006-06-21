@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2003/12/14 19:39:24 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.60.16.1 2006/06/21 14:57:33 yamt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -133,11 +133,11 @@ extern	struct  pv_entry *pv_table;
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\
-	(vaddr_t)ptr = virtual_avail;			\
+	ptr = virtual_avail;		\
 	virtual_avail += (count) * VAX_NBPG;
 
 #define MAPPHYS(ptr, count, perm)			\
-	(vaddr_t)ptr = avail_start + KERNBASE;		\
+	ptr = avail_start + KERNBASE;	\
 	avail_start += (count) * VAX_NBPG;
 
 #ifdef	_KERNEL
@@ -199,6 +199,15 @@ boolean_t pmap_clear_reference_long(struct pv_entry *);
 boolean_t pmap_is_modified_long(struct pv_entry *);
 void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
 void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+
+__inline static boolean_t
+pmap_is_referenced(struct vm_page *pg)
+{
+	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	boolean_t rv = (pv->pv_attr & PG_V) != 0;
+
+	return rv;
+}
 
 __inline static boolean_t
 pmap_clear_reference(struct vm_page *pg)
@@ -269,14 +278,14 @@ pmap_remove_all(struct pmap *pmap)
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)			\
-	__asm__("addl3 $0x80000000,%0,%%r0;"		\
+	__asm("addl3 $0x80000000,%0,%%r0;"		\
 		"addl3 $0x80000000,%1,%%r1;"		\
 		"movc3 $4096,(%%r0),(%%r1)"		\
 	    :: "r"(src), "r"(dst)			\
 	    : "r0","r1","r2","r3","r4","r5");
 
 #define pmap_zero_page(phys)				\
-	__asm__("addl3 $0x80000000,%0,%%r0;"		\
+	__asm("addl3 $0x80000000,%0,%%r0;"		\
 		"movc5 $0,(%%r0),$0,$4096,(%%r0)"	\
 	    :: "r"(phys)				\
 	    : "r0","r1","r2","r3","r4","r5");

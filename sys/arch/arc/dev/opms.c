@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.12 2005/03/11 06:58:11 matt Exp $	*/
+/*	$NetBSD: opms.c,v 1.12.4.1 2006/06/21 14:49:07 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12 2005/03/11 06:58:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12.4.1 2006/06/21 14:49:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12 2005/03/11 06:58:11 matt Exp $");
 
 #include <arc/dev/pcconsvar.h>
 #include <arc/dev/opmsvar.h>
+
+#include "ioconf.h"
 
 #define	PMSUNIT(dev)	(minor(dev))
 
@@ -129,8 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12 2005/03/11 06:58:11 matt Exp $");
 
 #define	FLUSHQ(q) { if((q)->c_cc) ndflush(q, (q)->c_cc); }
 
-extern struct cfdriver opms_cd;
-
 dev_type_open(opmsopen);
 dev_type_close(opmsclose);
 dev_type_read(opmsread);
@@ -143,11 +143,11 @@ const struct cdevsw opms_cdevsw = {
 	nostop, notty, opmspoll, nommap, opmskqfilter,
 };
 
-static __inline void pms_dev_cmd(uint8_t);
-static __inline void pms_aux_cmd(uint8_t);
-static __inline void pms_pit_cmd(uint8_t);
+static inline void pms_dev_cmd(uint8_t);
+static inline void pms_aux_cmd(uint8_t);
+static inline void pms_pit_cmd(uint8_t);
 
-static __inline void
+static inline void
 pms_dev_cmd(uint8_t value)
 {
 
@@ -157,7 +157,7 @@ pms_dev_cmd(uint8_t value)
 	kbd_data_write_1(value);
 }
 
-static __inline void
+static inline void
 pms_aux_cmd(uint8_t value)
 {
 
@@ -165,7 +165,7 @@ pms_aux_cmd(uint8_t value)
 	kbd_cmd_write_1(value);
 }
 
-static __inline void
+static inline void
 pms_pit_cmd(uint8_t value)
 {
 
@@ -204,7 +204,7 @@ opms_common_attach(struct opms_softc *sc, bus_space_tag_t opms_iot,
 }
 
 int
-opmsopen(dev_t dev, int flag, int mode, struct proc *p)
+opmsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
@@ -242,7 +242,7 @@ opmsopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-opmsclose(dev_t dev, int flag, int mode, struct proc *p)
+opmsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -305,7 +305,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-opmsioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+opmsioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
@@ -427,7 +427,7 @@ opmsintr(void *arg)
 }
 
 int
-opmspoll(dev_t dev, int events, struct proc *p)
+opmspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int revents = 0;
@@ -437,7 +437,7 @@ opmspoll(dev_t dev, int events, struct proc *p)
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	splx(s);

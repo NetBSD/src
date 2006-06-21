@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.49 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.49.2.1 2006/06/21 14:49:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.49 2005/06/04 14:42:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.49.2.1 2006/06/21 14:49:56 yamt Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -101,7 +101,7 @@ static SC_REQ	*free_head = NULL;	/* Free request structures	*/
  * some cases (especially when using my tapedrive, a Tandberg 3600) the
  * device is busy internally and the first SCSI-phase will be delayed.
  */
-extern __inline__ int wait_req_true(void)
+extern inline int wait_req_true(void)
 {
 	int	timeout = 250000;
 
@@ -114,7 +114,7 @@ extern __inline__ int wait_req_true(void)
  * Wait for request-line to become inactive. When it doesn't return 0.
  * Otherwise return != 0.
  */
-extern __inline__ int wait_req_false(void)
+extern inline int wait_req_false(void)
 {
 	int	timeout = 250000;
 
@@ -123,18 +123,18 @@ extern __inline__ int wait_req_false(void)
 	return (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ));
 }
 
-extern __inline__ void ack_message()
+extern inline void ack_message()
 {
 	SET_5380_REG(NCR5380_ICOM, 0);
 }
 
-extern __inline__ void nack_message(SC_REQ *reqp, u_char msg)
+extern inline void nack_message(SC_REQ *reqp, u_char msg)
 {
 	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
 	reqp->msgout = msg;
 }
 
-extern __inline__ void finish_req(SC_REQ *reqp)
+extern inline void finish_req(SC_REQ *reqp)
 {
 	int			sps;
 	struct scsipi_xfer	*xs = reqp->xs;
@@ -887,7 +887,7 @@ int	code;
 
 	/*
 	 * Here we prepare to send an 'IDENTIFY' message.
-	 * Allow disconnect only when interrups are allowed.
+	 * Allow disconnect only when interrupts are allowed.
 	 */
 	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
 			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);

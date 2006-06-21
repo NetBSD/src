@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.43 2005/06/13 21:34:16 jmc Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.43.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.43 2005/06/13 21:34:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.43.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -122,12 +122,12 @@ extern unsigned char kernel_font_8x11[];
 /* Convert big-endian long into little-endian long. */
 
 #define M2I(val)                                                         \
-	__asm __volatile (" rorw #8,%0   ;                               \
+	__asm volatile (" rorw #8,%0   ;                               \
 			    swap %0      ;                               \
 			    rorw #8,%0   ; " : "=d" (val) : "0" (val));
 
 #define M2INS(val)                                                       \
-	__asm __volatile (" rorw #8,%0   ;                               \
+	__asm volatile (" rorw #8,%0   ;                               \
 			    swap %0      ;                               \
 			    rorw #8,%0   ;                               \
  			    swap %0	     ; " : "=d" (val) : "0" (val));

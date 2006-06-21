@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.19 2005/06/13 21:34:16 jmc Exp $ */
+/*	$NetBSD: cbsc.c,v 1.19.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.19 2005/06/13 21:34:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.19.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,7 +174,7 @@ cbscattach(struct device *parent, struct device *self, void *aux)
 	csc->sc_reg = &((volatile u_char *)zap->va)[0xf400];
 	csc->sc_dmabase = &csc->sc_reg[0x400];
 
-	sc->sc_freq = 40;		/* Clocked at 40Mhz */
+	sc->sc_freq = 40;		/* Clocked at 40 MHz */
 
 	printf(": address %p", csc->sc_reg);
 
@@ -206,7 +206,7 @@ cbscattach(struct device *parent, struct device *self, void *aux)
 	 * NOTE: low 8 bits are to disable disconnect, and the next
 	 *       8 bits are to disable sync.
 	 */
-	sc->sc_dev.dv_cfdata->cf_flags |= (scsi_nosync >> shift_nosync)
+	device_cfdata(&sc->sc_dev)->cf_flags |= (scsi_nosync >> shift_nosync)
 	    & 0xffff;
 	shift_nosync += 16;
 

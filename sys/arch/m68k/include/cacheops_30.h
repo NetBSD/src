@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_30.h,v 1.6 2002/11/03 01:34:42 chs Exp $	*/
+/*	$NetBSD: cacheops_30.h,v 1.6.22.1 2006/06/21 14:53:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ TBIA_30(void)
 {
 	int tmp = DC_CLEAR;
 
-	__asm __volatile (" pflusha;"
+	__asm volatile (" pflusha;"
 			  " movc %0,%%cacr" : : "d" (tmp));
 }
 	
@@ -54,7 +54,7 @@ TBIA_30(void)
 static __inline void __attribute__((__unused__))
 TBIS_30(vaddr_t	va)
 {
-	__asm __volatile (" pflush #0,#0,%0@;"
+	__asm volatile (" pflush #0,#0,%0@;"
 			  " movc   %1,%%cacr" : : "a" (va), "d" (DC_CLEAR));
 }
 
@@ -64,7 +64,7 @@ TBIS_30(vaddr_t	va)
 static __inline void __attribute__((__unused__))
 TBIAS_30(void)
 {
-	__asm __volatile (" pflush #4,#4;"
+	__asm volatile (" pflush #4,#4;"
 			  " movc   %0,%%cacr;" :: "d" (DC_CLEAR));
 }
 
@@ -74,7 +74,7 @@ TBIAS_30(void)
 static __inline void __attribute__((__unused__))
 TBIAU_30(void)
 {
-	__asm __volatile (" pflush #0,#4;"
+	__asm volatile (" pflush #0,#4;"
 			  " movc   %0,%%cacr;" :: "d" (DC_CLEAR));
 }
 
@@ -84,13 +84,13 @@ TBIAU_30(void)
 static __inline void __attribute__((__unused__))
 ICIA_30(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
 static __inline void __attribute__((__unused__))
 ICPA_30(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
 /*
@@ -110,5 +110,5 @@ ICPA_30(void)
 static __inline void __attribute__((__unused__))
 PCIA_30(void)
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
+	__asm volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
 }

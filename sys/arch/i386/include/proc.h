@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.26 2004/02/21 04:31:40 junyoung Exp $	*/
+/*	$NetBSD: proc.h,v 1.26.16.1 2006/06/21 14:52:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -38,6 +38,7 @@
 #include "opt_noredzone.h"
 #endif
 
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*
@@ -56,19 +57,15 @@ struct mdproc {
 	int	md_flags;
 	void	(*md_syscall)(struct trapframe *);
 					/* Syscall handling function */
-	__volatile int md_astpending;	/* AST pending for this process */
+	volatile int md_astpending;	/* AST pending for this process */
 };
 
 /* md_flags */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
 
 /* kernel stack params */
-#ifndef NOREDZONE
-/* override default for redzone */
-#define	KSTACK_LOWEST_ADDR(l)	\
-	((caddr_t)(l)->l_addr + PAGE_SIZE*2)
-#define	KSTACK_SIZE	\
-	(USPACE - PAGE_SIZE*2)
-#endif
+#define	UAREA_USER_OFFSET	(USPACE - ALIGN(sizeof(struct user)))
+#define	KSTACK_LOWEST_ADDR(l)	((ccaddr_t)USER_TO_UAREA((l)->l_addr))
+#define	KSTACK_SIZE		UAREA_USER_OFFSET
 
 #endif /* _I386_PROC_H_ */

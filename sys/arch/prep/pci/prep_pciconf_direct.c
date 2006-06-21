@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.3 2003/07/15 02:54:51 lukem Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.3.16.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.3 2003/07/15 02:54:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.3.16.1 2006/06/21 14:55:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.3 2003/07/15 02:54:51 luke
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include <prop/proplib.h>
 
 #ifdef DEBUG
 #define        DPRINTF(x) printf x

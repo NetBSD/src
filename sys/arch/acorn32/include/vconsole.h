@@ -1,4 +1,4 @@
-/*	$NetBSD: vconsole.h,v 1.3 2005/06/09 09:26:06 he Exp $	*/
+/*	$NetBSD: vconsole.h,v 1.3.2.1 2006/06/21 14:47:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -97,7 +97,7 @@ struct render_engine {
 	int ( *sgr		) __P(( struct vconsole *vc, int type ));
 	int ( *blank		) __P(( struct vconsole *vc, int type ));
         int ( *ioctl		) __P(( struct vconsole *vc, dev_t dev, int cmd,
-				    caddr_t data, int flag, struct proc *p));
+				    caddr_t data, int flag, struct lwp *l));
         int ( *redraw		) __P(( struct vconsole *vc, int x, int y, int a, int b ));
 	int ( *attach		) __P(( struct vconsole *vc, struct device *dev, struct device *dev1, void * arg));
 	int ( *flash		) __P(( struct vconsole *vc, int flash ));

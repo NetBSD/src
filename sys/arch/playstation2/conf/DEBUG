@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.13 2005/04/15 17:27:21 itohy Exp $
+# 	$NetBSD: DEBUG,v 1.13.2.1 2006/06/21 14:54:41 yamt Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -75,7 +75,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
@@ -112,6 +112,6 @@ uyap* at uhub? port ?
 
 audio*	at uaudio?
 
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.8 2005/06/09 21:41:52 he Exp $ */
+/* $NetBSD: autoconf.c,v 1.8.2.1 2006/06/21 14:50:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2005/06/09 21:41:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.1 2006/06/21 14:50:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,6 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
 	struct aubus_attach_args *aa = aux;
 
 	/*
@@ -90,11 +88,12 @@ device_register(struct device *dev, void *aux)
 	 */
 
 	/* Fetch the MAC addresses from YAMON. */
-	if (strcmp(name, "aumac") == 0) {
-		uint8_t ethaddr[ETHER_ADDR_LEN];
+	if (device_is_a(dev, "aumac")) {
+		prop_data_t pd;
 		const char *cp;
 		char *cp0;
 		int i;
+		uint8_t ethaddr[ETHER_ADDR_LEN];
 
 		/* Get the Ethernet address of the first on-board Ethernet. */
 #if defined(ETHADDR)
@@ -117,11 +116,14 @@ device_register(struct device *dev, void *aux)
 				 */
 				ethaddr[4] += 0x10;
 			}
-			if (prop_set(dev_propdb, dev, "mac-addr",
-				     ethaddr, sizeof(ethaddr), 0, 0) != 0) {
+			pd = prop_data_create_data(ethaddr, ETHER_ADDR_LEN);
+			KASSERT(pd != NULL);
+			if (prop_dictionary_set(device_properties(dev),
+						"mac-addr", pd) == FALSE) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);
 			}
+			prop_object_release(pd);
 		}
 	}
 }

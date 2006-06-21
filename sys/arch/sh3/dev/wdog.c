@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.13 2003/07/15 03:35:55 lukem Exp $ */
+/* $NetBSD: wdog.c,v 1.13.16.1 2006/06/21 14:55:31 yamt Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.13 2003/07/15 03:35:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.13.16.1 2006/06/21 14:55:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -118,7 +118,7 @@ wdogattach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-wdogopen(dev_t dev, int flag, int mode, struct proc *p)
+wdogopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
 
@@ -132,7 +132,7 @@ wdogopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-wdogclose(dev_t dev, int flag, int mode, struct proc *p)
+wdogclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
 
@@ -146,7 +146,7 @@ extern unsigned int maxwdog;
 
 /*ARGSUSED*/
 int
-wdogioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+wdogioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error = 0;
 	int request;

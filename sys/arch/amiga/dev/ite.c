@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.70 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: ite.c,v 1.70.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2005/06/13 21:34:17 jmc Exp $");
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
+#include <sys/kauth.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
@@ -441,7 +442,7 @@ iteinit(dev_t dev)
 }
 
 int
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
+iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	struct ite_softc *ip;
 	struct tty *tp;
@@ -464,7 +465,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 	} else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);
@@ -502,7 +503,7 @@ bad:
 }
 
 int
-iteclose(dev_t dev, int flag, int mode, struct proc *p)
+iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 
@@ -538,14 +539,14 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-itepoll(dev_t dev, int events, struct proc *p)
+itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp;
 
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -555,7 +556,7 @@ itetty(dev_t dev)
 }
 
 int
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct iterepeat *irp;
 	struct ite_softc *ip;
@@ -568,10 +569,10 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	KDASSERT(tp);
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
-	error = ttioctl(tp, cmd, addr, flag, p);
+	error = ttioctl(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -618,7 +619,7 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #if NGRFCC > 0
 	/* XXX */
 	if (minor(dev) == 0) {
-		error = ite_grf_ioctl(ip, cmd, addr, flag, p);
+		error = ite_grf_ioctl(ip, cmd, addr, flag, l);
 		if (error >= 0)
 			return (error);
 	}

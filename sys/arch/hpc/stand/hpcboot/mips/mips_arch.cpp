@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.4.12.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ MIPSArchitecture::~MIPSArchitecture(void)
 void
 MIPSArchitecture::systemInfo()
 {
-	u_int32_t r0, r1;
+	uint32_t r0, r1;
 	Architecture::systemInfo();
 	r0 = r1 = 0;
 
@@ -96,7 +96,7 @@ MIPSArchitecture::setupLoader()
 #ifdef DEBUG_KERNADDR_ACCESS // kernel address access test
 #define	TEST_MAGIC		0xac1dcafe
 	paddr_t p;
-	u_int32_t r0;
+	uint32_t r0;
 
 	_kmode = SetKMode(1);
 	_mem->getPage(v, p);

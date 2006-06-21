@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.h,v 1.7 2003/09/29 21:04:53 matt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.7.16.1 2006/06/21 14:57:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,11 @@
 #define COFF_BADMAG(ex) (ex->f_magic != COFF_MAGIC_VAX)
 #define	COFF_LDPGSZ	512
 
+
 #ifdef _KERNEL
+
+#define ibcs2_syscall_intern syscall_intern
+
 struct exec_package;
 struct exec_vmcmd;
 

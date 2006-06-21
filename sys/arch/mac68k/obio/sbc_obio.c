@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.20 2005/03/05 17:40:56 chs Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.20.4.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.20 2005/03/05 17:40:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.20.4.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,8 +121,8 @@ sbc_obio_attach(struct device *parent, struct device *self, void *aux)
 	extern vaddr_t SCSIBase;
 
 	/* Pull in the options flags. */ 
-	sc->sc_options = ((ncr_sc->sc_dev.dv_cfdata->cf_flags | sbc_options)
-	    & SBC_OPTIONS_MASK);
+	sc->sc_options = ((device_cfdata(&ncr_sc->sc_dev)->cf_flags |
+			   sbc_options) & SBC_OPTIONS_MASK);
 
 	/*
 	 * Set up offsets to 5380 registers and GLUE I/O space, and turn

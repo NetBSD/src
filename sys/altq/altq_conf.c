@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.11 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.11.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.11 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.11.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.11 2005/02/26 23:04:16 perry Exp $")
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #if defined(__FreeBSD__) && (__FreeBSD_version < 400000) && defined(DEVFS)
 #include <sys/devfsext.h>
 #endif /*DEVFS*/
@@ -212,17 +213,17 @@ const struct cdevsw altq_cdevsw = {
 static
 #endif
 int
-altqopen(dev, flag, fmt, p)
+altqopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
 	if (unit == 0)
 		return (0);
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_open)(dev, flag, fmt, p);
+		return (*altqsw[unit].d_open)(dev, flag, fmt, l);
 
 	return ENXIO;
 }
@@ -231,17 +232,17 @@ altqopen(dev, flag, fmt, p)
 static
 #endif
 int
-altqclose(dev, flag, fmt, p)
+altqclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
 	if (unit == 0)
 		return (0);
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_close)(dev, flag, fmt, p);
+		return (*altqsw[unit].d_close)(dev, flag, fmt, l);
 
 	return ENXIO;
 }
@@ -250,13 +251,14 @@ altqclose(dev, flag, fmt, p)
 static
 #endif
 int
-altqioctl(dev, cmd, addr, flag, p)
+altqioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int unit = minor(dev);
 
 	if (unit == 0) {
@@ -274,7 +276,9 @@ altqioctl(dev, cmd, addr, flag, p)
 			if ((error = suser(p)) != 0)
 				return (error);
 #else
-			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			if ((error = kauth_authorize_generic(p->p_cred,
+						       KAUTH_GENERIC_ISSUSER,
+						       &p->p_acflag)) != 0)
 				return (error);
 #endif
 			break;
@@ -302,7 +306,7 @@ altqioctl(dev, cmd, addr, flag, p)
 		}
 	}
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_ioctl)(dev, cmd, addr, flag, p);
+		return (*altqsw[unit].d_ioctl)(dev, cmd, addr, flag, l);
 
 	return ENXIO;
 }

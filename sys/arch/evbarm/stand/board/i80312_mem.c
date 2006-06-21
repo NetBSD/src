@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mem.c,v 1.2 2002/04/25 22:11:51 thorpej Exp $	*/
+/*	$NetBSD: i80312_mem.c,v 1.2.28.1 2006/06/21 14:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
 
 #include "board.h"
 
-#define	INL(x)		*((__volatile uint32_t *) \
+#define	INL(x)		*((volatile uint32_t *) \
 			  (I80312_PMMR_BASE + I80312_MEM_BASE + (x)))
 
 void
@@ -73,7 +73,7 @@ mem_init(void)
 
 	size = bank0 + bank1;
 
-	heap = (start + size) - HEAP_SIZE;
+	heap = (start + size) - BOARD_HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n",
 	    start, (start + size) - 1, heap);

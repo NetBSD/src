@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.139 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: Makefile.i386,v 1.139.2.1 2006/06/21 14:52:10 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -46,21 +46,21 @@ KERN_AS=	library
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o spl.o vector.o microtime.o
+MD_OBJS=	locore.o copy.o spl.o vector.o
 MD_CFILES=
-MD_SFILES=	${I386}/i386/locore.S ${I386}/i386/spl.S \
-		${I386}/i386/vector.S ${I386}/i386/microtime.S
+MD_SFILES=	${I386}/i386/locore.S ${I386}/i386/copy.S ${I386}/i386/spl.S \
+		${I386}/i386/vector.S
 
 locore.o: ${I386}/i386/locore.S assym.h
+	${NORMAL_S}
+
+copy.o: ${I386}/i386/copy.S assym.h
 	${NORMAL_S}
 
 spl.o: ${I386}/i386/spl.S assym.h
 	${NORMAL_S}
 
 vector.o: ${I386}/i386/vector.S assym.h
-	${NORMAL_S}
-
-microtime.o: ${I386}/i386/microtime.S assym.h
 	${NORMAL_S}
 
 ##
@@ -104,24 +104,8 @@ clock.o: config_time.h
 
 %RULES
 
-# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
-# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
-#       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-i386-elf.hal.o)
-OBJS:=${OBJS:C/\/athhal-i386-elf.hal.o/athhal-i386-elf.hal.o/}
- 
-.PATH: $S/contrib/arch/i386/dev
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
-	${ATH_UUDEC}
-all depend:	opt_ah.h
-opt_ah.h:	athhal-i386-elf.opt_ah.h
-	ln -s ${.ALLSRC} ${.TARGET}
-.endif
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

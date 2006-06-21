@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_dev.cpp,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_dev.cpp,v 1.2.12.1 2006/06/21 14:51:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,9 +53,9 @@ SHdev::SHdev()
 }
 
 void
-SHdev::dump(u_int8_t bit)
+SHdev::dump(uint8_t bit)
 {
-	u_int32_t reg = 0;
+	uint32_t reg = 0;
 	int kmode;
 
 	DPRINTF((TEXT("DEBUG BIT: ")));
@@ -101,8 +101,8 @@ SHdev::print_stack_pointer(void)
 void
 SHdev::scif_dump(int bps)
 {
-	u_int16_t r16;
-	u_int32_t r;
+	uint16_t r16;
+	uint32_t r;
 	int n;
 
 	print_stack_pointer();

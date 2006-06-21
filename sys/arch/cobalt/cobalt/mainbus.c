@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.2.1 2006/06/21 14:50:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.1 2006/06/21 14:50:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,26 +41,21 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $"
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
 static int	mainbus_search(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
+			       const int *, void *);
 int		mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 
 static void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
 
@@ -74,18 +69,14 @@ mainbus_attach(parent, self, aux)
 }
 
 static int
-mainbus_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
+mainbus_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	do {
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
-		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
 		ma->ma_level = cf->cf_loc[MAINBUSCF_LEVEL];
 		if (config_match(parent, cf, ma) > 0)
 			config_attach(parent, cf, ma, mainbus_print);
@@ -95,9 +86,7 @@ mainbus_search(parent, cf, ldesc, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	struct mainbus_attach_args *ma = aux;
 

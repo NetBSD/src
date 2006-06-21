@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.29 2004/11/28 17:34:45 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.29.12.1 2006/06/21 14:48:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.29 2004/11/28 17:34:45 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.29.12.1 2006/06/21 14:48:15 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -50,7 +50,7 @@ SGMAP_PTE_TYPE		__C(SGMAP_TYPE,_prefetch_spill_page_pte);
 
 int			__C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t,
 			    bus_dmamap_t, void *buf, size_t buflen,
-			    struct proc *, int, int, struct alpha_sgmap *);
+			    struct vmspace *, int, int, struct alpha_sgmap *);
 
 void
 __C(SGMAP_TYPE,_init_spill_page_pte)(void)
@@ -63,7 +63,7 @@ __C(SGMAP_TYPE,_init_spill_page_pte)(void)
 
 int
 __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    size_t buflen, struct proc *p, int flags, int seg,
+    size_t buflen, struct vmspace *vm, int flags, int seg,
     struct alpha_sgmap *sgmap)
 {
 	vaddr_t endva, va = (vaddr_t)buf;
@@ -168,8 +168,8 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	for (; va < endva; va += PAGE_SIZE, pteidx++,
 	     pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 		/* Get the physical address for this segment. */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm->vm_map.pmap, va, &pa);
 		else
 			pa = vtophys(va);
 
@@ -203,6 +203,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, struct alpha_sgmap *sgmap)
 {
 	int seg, error;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -213,13 +214,19 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
 	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
 	seg = 0;
-	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, p,
+	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, vm,
 	    flags, seg, sgmap);
 
 	alpha_mb();
@@ -265,6 +272,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
@@ -272,11 +280,12 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 
 	seg = 0;
 	error = 0;
-	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++) {
+	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
-		    m->m_data, m->m_len, NULL, flags, seg, sgmap);
+		    m->m_data, m->m_len, vmspace_kernel(), flags, seg, sgmap);
+		seg++;
 	}
 
 	alpha_mb();
@@ -310,7 +319,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags, struct alpha_sgmap *sgmap)
 {
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
+	struct vmspace *vm;
 	struct iovec *iov;
 	caddr_t addr;
 	int i, seg, error;
@@ -321,6 +330,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
@@ -329,14 +339,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic(__S(__C(SGMAP_TYPE,_load_uio))
-			    ": USERSPACE but no proc");
-#endif
-	}
+	vm = uio->uio_vmspace;
 
 	seg = 0;
 	error = 0;
@@ -350,7 +353,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
-		    addr, minlen, p, flags, seg, sgmap);
+		    addr, minlen, vm, flags, seg, sgmap);
 
 		resid -= minlen;
 	}
@@ -387,6 +390,7 @@ __C(SGMAP_TYPE,_load_raw)(bus_dma_tag_t t, bus_dmamap_t map,
     struct alpha_sgmap *sgmap)
 {
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
 	    (BUS_DMA_READ|BUS_DMA_WRITE));
 

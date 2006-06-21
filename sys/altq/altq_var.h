@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.5 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.5.16.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_var.h,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ static __inline u_int64_t
 rdtsc(void)
 {
 	u_int64_t rv;
-	__asm __volatile(".byte 0x0f, 0x31" : "=A" (rv));
+	__asm volatile(".byte 0x0f, 0x31" : "=A" (rv));
 	return (rv);
 }
 #endif /* __OpenBSD__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2003/07/05 18:40:31 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.5.16.1 2006/06/21 14:52:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -187,7 +187,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -201,7 +201,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -229,7 +229,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -243,7 +243,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -257,7 +257,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -306,7 +306,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -320,7 +320,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -334,7 +334,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -362,7 +362,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -376,7 +376,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -390,7 +390,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -418,7 +418,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_set_multi_1(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -433,7 +433,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -448,7 +448,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -477,7 +477,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_set_region_1(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -492,7 +492,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -507,7 +507,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\

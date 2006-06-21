@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.13 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: inst.c,v 1.13.4.1 2006/06/21 14:51:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -764,7 +764,7 @@ resetsys(void)
 
 	call_req_reboot();
 	printf("panic: can't reboot, halting\n");
-	asm("stop #0x2700");
+	__asm("stop #0x2700");
 }
 
 /*

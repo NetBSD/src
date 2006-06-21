@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 2005/07/03 22:21:10 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.28.2.1 2006/06/21 14:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,16 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2005/07/03 22:21:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.1 2006/06/21 14:52:02 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2005/07/03 22:21:10 he Exp $");
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -198,7 +193,7 @@ void syscall(struct trapframe *, int *);
 u_int rctr_next_iioq;
 #endif
 
-static __inline void
+static inline void
 userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
@@ -213,7 +208,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (l->l_flag & P_PROFIL) {
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
@@ -825,12 +820,12 @@ do_onfault:
 
 		onfault = l->l_addr->u_pcb.pcb_onfault;
 		l->l_addr->u_pcb.pcb_onfault = 0;
-		ret = uvm_fault(map, va, 0, vftype);
+		ret = uvm_fault(map, va, vftype);
 		l->l_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
-		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
-		    map, (u_int)va, 0, vftype, ret);
+		printf("uvm_fault(%p, %x, %d)=%d\n",
+		    map, (u_int)va, vftype, ret);
 #endif
 
 		if (map != kernel_map)
@@ -868,8 +863,8 @@ do_onfault:
 				if (l->l_addr->u_pcb.pcb_onfault) {
 					goto do_onfault;
 				}
-				panic("trap: uvm_fault(%p, %lx, %d, %d): %d",
-				    map, va, 0, vftype, ret);
+				panic("trap: uvm_fault(%p, %lx, %d): %d",
+				    map, va, vftype, ret);
 			}
 		}
 		break;
@@ -932,7 +927,7 @@ child_return(void *arg)
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 #ifdef DEBUG
 	frame_sanity_check(0xdead04, 0, l->l_md.md_regs, l);

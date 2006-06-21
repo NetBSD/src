@@ -1,7 +1,8 @@
-#	$NetBSD: std.arc,v 1.17 2003/12/13 01:31:24 sekiya Exp $
+#	$NetBSD: std.arc,v 1.17.16.1 2006/06/21 14:48:54 yamt Exp $
 # standard arc info
 
 machine arc mips
+include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 mainbus0 at root
@@ -10,6 +11,9 @@ cpu* at mainbus0
 # set CPU architecture level for kernel target
 #options 	MIPS1			# R2000/R3000 support
 options 	MIPS3			# R4000/R4400 support
+
+# arc port use wired map for device space
+options 	ENABLE_MIPS3_WIRED_MAP
 
 # Standard (non-optional) system "options"
 

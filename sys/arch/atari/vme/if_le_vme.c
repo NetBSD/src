@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.20 2004/05/12 00:38:11 wiz Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.20.12.1 2006/06/21 14:50:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.20 2004/05/12 00:38:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.20.12.1 2006/06/21 14:50:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -167,7 +167,7 @@ CFATTACH_DECL(le_vme, sizeof(struct le_softc),
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

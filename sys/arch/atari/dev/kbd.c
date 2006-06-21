@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28 2004/03/25 10:17:19 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28.16.1 2006/06/21 14:49:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28 2004/03/25 10:17:19 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28.16.1 2006/06/21 14:49:56 yamt Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -138,7 +138,7 @@ const struct cdevsw kbd_cdevsw = {
 /* accessops */
 static int	kbd_enable(void *, int);
 static void	kbd_set_leds(void *, int);
-static int	kbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	kbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 /* console ops */
 static void	kbd_getc(void *, u_int *, int *);
@@ -272,18 +272,18 @@ kbdenable()
 	splx(s);
 }
 
-int kbdopen(dev_t dev, int flags, int mode, struct proc *p)
+int kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	if (kbd_softc.k_events.ev_io)
 		return EBUSY;
 
-	kbd_softc.k_events.ev_io = p;
+	kbd_softc.k_events.ev_io = l->l_proc;
 	ev_init(&kbd_softc.k_events);
 	return (0);
 }
 
 int
-kbdclose(dev_t dev, int flags, int mode, struct proc *p)
+kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	/* Turn off event mode, dump the queue */
 	kbd_softc.k_event_mode = 0;
@@ -299,7 +299,7 @@ kbdread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
+kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct lwp *l)
 {
 	register struct kbd_softc *k = &kbd_softc;
 	struct kbdbell	*kb;
@@ -358,9 +358,9 @@ kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
 }
 
 int
-kbdpoll (dev_t dev, int events, struct proc *p)
+kbdpoll (dev_t dev, int events, struct lwp *l)
 {
-  return ev_poll (&kbd_softc.k_events, events, p);
+  return ev_poll (&kbd_softc.k_events, events, l);
 }
 
 int

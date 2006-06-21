@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.9.16.1 2006/06/21 14:51:03 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9.16.1 2006/06/21 14:51:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <mips/locore.h>
 
@@ -63,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $")
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
-const u_int32_t ipl_sr_bits[_IPL_N] = {
+const uint32_t ipl_sr_bits[_IPL_N] = {
 	0,					/*  0: IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFT */
@@ -103,7 +104,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
@@ -164,7 +165,7 @@ void
 malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 {
 	uint32_t ctrdiff[4], startctr, endctr;
-	u_int8_t regc;
+	uint8_t regc;
 	int i;
 
 	/* Disable interrupts first. */

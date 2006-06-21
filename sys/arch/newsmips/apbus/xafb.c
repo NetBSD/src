@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.10 2005/06/03 13:48:38 tsutsui Exp $	*/
+/*	$NetBSD: xafb.c,v 1.10.2.1 2006/06/21 14:54:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.10 2005/06/03 13:48:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.10.2.1 2006/06/21 14:54:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,8 +82,8 @@ void xafb_attach(struct device *, struct device *, void *);
 int xafb_common_init(struct xafb_devconfig *);
 int xafb_is_console(void);
 
-int xafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t xafb_mmap(void *, off_t, int);
+int xafb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t xafb_mmap(void *, void *, off_t, int);
 int xafb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
     int *, long *);
 void xafb_free_screen(void *, void *);
@@ -93,7 +93,7 @@ int xafb_cnattach(void);
 int xafb_getcmap(struct xafb_softc *, struct wsdisplay_cmap *);
 int xafb_putcmap(struct xafb_softc *, struct wsdisplay_cmap *);
 
-static __inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
+static inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
 
 CFATTACH_DECL(xafb, sizeof(struct xafb_softc),
     xafb_match, xafb_attach, NULL, NULL);
@@ -241,7 +241,7 @@ xafb_is_console(void)
 }
 
 int
-xafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+xafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct xafb_softc *sc = v;
 	struct xafb_devconfig *dc = sc->sc_dc;
@@ -275,7 +275,7 @@ xafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 paddr_t
-xafb_mmap(void *v, off_t offset, int prot)
+xafb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct xafb_softc *sc = v;
 	struct xafb_devconfig *dc = sc->sc_dc;

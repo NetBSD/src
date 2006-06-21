@@ -1,4 +1,4 @@
-/* $NetBSD: sbscnvar.h,v 1.2 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbscnvar.h,v 1.2.18.1 2006/06/21 14:53:48 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -169,8 +169,3 @@ struct sbscn_softc {
 
 	struct sbscn_channel sc_channels[2];
 };
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))

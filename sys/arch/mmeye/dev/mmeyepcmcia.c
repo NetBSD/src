@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.9 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.9.2.1 2006/06/21 14:53:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.9 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.9.2.1 2006/06/21 14:53:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,8 +192,8 @@ void	mmeyepcmcia_chip_io_unmap(pcmcia_chipset_handle_t, int);
 void	mmeyepcmcia_chip_socket_enable(pcmcia_chipset_handle_t);
 void	mmeyepcmcia_chip_socket_disable(pcmcia_chipset_handle_t);
 
-static __inline int mmeyepcmcia_read(struct mmeyepcmcia_handle *, int);
-static __inline int
+static inline int mmeyepcmcia_read(struct mmeyepcmcia_handle *, int);
+static inline int
 mmeyepcmcia_read(struct mmeyepcmcia_handle *h, int idx)
 {
 	static int prev_idx = 0;
@@ -205,8 +205,8 @@ mmeyepcmcia_read(struct mmeyepcmcia_handle *h, int idx)
 	return (bus_space_read_stream_2(h->sc->iot, h->sc->ioh, idx));
 }
 
-static __inline void mmeyepcmcia_write(struct mmeyepcmcia_handle *, int, int);
-static __inline void
+static inline void mmeyepcmcia_write(struct mmeyepcmcia_handle *, int, int);
+static inline void
 mmeyepcmcia_write(struct mmeyepcmcia_handle *h, int idx, int data)
 {
 	static int prev_idx;

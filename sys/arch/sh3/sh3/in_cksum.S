@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.4 2001/10/16 02:07:46 msaitoh Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.4.36.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -43,9 +43,8 @@
 
 
 #define	REDUCE	\
-	mov	reg_sum,reg_tmp0	; \
+	swap.w	reg_sum,reg_tmp0	; \
 	extu.w	reg_sum,reg_sum		; \
-	swap.w	reg_tmp0,reg_tmp0	; \
 	extu.w	reg_tmp0,reg_tmp0	; \
 	add	reg_tmp0,reg_sum
 
@@ -79,17 +78,20 @@
 	addc	reg_tmp0,reg_sum
 
 #define	FORWARD1	\
-	mov	#1,reg_tmp0		; \
-	sub	reg_tmp0,reg_mlen
+	add	#-1,reg_mlen
 
 #define	FORWARD2	\
-	mov	#2,reg_tmp0		; \
-	sub	reg_tmp0,reg_mlen
+	add	#-2,reg_mlen
 
 
-
+/*
+ * LINTSTUB: include <sys/param.h>
+ * LINTSTUB: include <sys/mbuf.h>
+ *
+ * LINTSTUB: Func: int in_cksum(struct mbuf *m, int len);
+ */
 ENTRY(in_cksum)
-	sts.l	pr,@-r15
+	sts.l	pr,@-sp
 
 
 	mov	#0,reg_sum
@@ -142,9 +144,8 @@ mbuf_loop:
 	bf	1f
 
 do_cksum128:
-	mova	cksum128,reg_tmp0
-	jsr	@reg_tmp0
-	nop
+	bsr	cksum128
+	 nop
 
 	mov	#127,reg_tmp0
 	cmp/hi	reg_tmp0,reg_mlen
@@ -152,9 +153,8 @@ do_cksum128:
 1:
 
 
-	mova	cksum128mod,reg_tmp0
-	jsr	@reg_tmp0
-	nop
+	bsr	cksum128mod
+	 nop
 
 	REDUCE
 
@@ -191,31 +191,32 @@ mbuf_loop_done:
 
 in_cksum_return:
 	not	reg_sum,r0
-	lds.l	@r15+,pr
+	lds.l	@sp+,pr
 	rts
-	extu.w	r0,r0
+	 extu.w	r0,r0
 
 
 out_of_mbufs:
-	mova	message_out_of_data,reg_tmp0
-	mov.l	XLprintf,reg_tmp3
+	mova	.L_message_out_of_data,reg_tmp0
+	mov.l	.L_printf,reg_tmp3
 
-	mov.l	reg_sum,@-r15
+	mov.l	reg_sum,@-sp	/* save: call clobbered register */
 
 	jsr	@reg_tmp3
-	mov	reg_tmp0,r4
+	 mov	reg_tmp0,r4
 
 	bra	in_cksum_return
-	mov.l	@r15+,reg_sum
-
+	 mov.l	@sp+,reg_sum	/* restore */
 
 	.align 2
-XLprintf:
+.L_printf:
 	.long	_C_LABEL(printf)
 
-	.align 2
-message_out_of_data:
+	.align 2	/* mova target */
+.L_message_out_of_data:
 	.asciz "cksum: out of data (%d byte short)\n"
+
+	SET_ENTRY_SIZE(in_cksum)
 
 
 	.align	2
@@ -224,20 +225,19 @@ cksum128mod:
 	and	#124,reg_tmp0
 	sub	reg_tmp0,reg_mlen
 
-	mov.l	L_cksum128_tail_p,reg_tmp3
+	mov.l	.L_cksum128_tail_p,reg_tmp3
 	sub	reg_tmp0,reg_tmp3
 	jmp	@reg_tmp3
-	clrt
+	 clrt
 
 	.align	2
-L_cksum128_tail_p:
+.L_cksum128_tail_p:
 	.long	cksum128_tail
+
 
 	.align	2
 cksum128:
-	mov	#64,reg_tmp0
-	add	reg_tmp0,reg_tmp0	/* reg_tmp0 = 128 */
-	sub	reg_tmp0,reg_mlen
+	add	#-128,reg_mlen
 	clrt
 
 cksum128_unroll:
@@ -276,5 +276,4 @@ cksum128_unroll:
 cksum128_tail:
 	mov	#0,reg_tmp0
 	rts
-	addc	reg_tmp0,reg_sum
-
+	 addc	reg_tmp0,reg_sum

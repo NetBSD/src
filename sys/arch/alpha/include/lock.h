@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.19 2003/09/26 22:46:00 nathanw Exp $ */
+/* $NetBSD: lock.h,v 1.19.16.1 2006/06/21 14:48:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_lock_init\n"
 		"	stl	$31, %0		\n"
 		"	mb			\n"
@@ -72,7 +72,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	 * some work.
 	 */
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_lock\n"
 		"1:	ldl_l	%0, %3		\n"
 		"	bne	%0, 2f		\n"
@@ -97,7 +97,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0, v0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_lock_try\n"
 		"1:	ldl_l	%0, %4		\n"
 		"	bne	%0, 2f		\n"
@@ -123,7 +123,7 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN __cpu_simple_unlock\n"
 		"	mb			\n"
 		"	stl	$31, %0		\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.6 2003/08/07 16:26:41 agc Exp $	*/
+/*	$NetBSD: event_var.h,v 1.6.16.1 2006/06/21 14:48:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@ struct evvar {
 void	ev_init(struct evvar *);
 void	ev_fini(struct evvar *);
 int	ev_read(struct evvar *, struct uio *, int);
-int	ev_poll(struct evvar *, int, struct proc *);
+int	ev_poll(struct evvar *, int, struct lwp *);
 int	ev_kqfilter(struct evvar *, struct knote *);
 
 /*

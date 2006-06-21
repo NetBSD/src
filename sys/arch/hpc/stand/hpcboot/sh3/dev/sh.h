@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh.h,v 1.2.12.1 2006/06/21 14:51:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -367,7 +367,7 @@ __END_MACRO
 
 #define	SH3_SCIF_PRINT_HEX(h)						\
 __BEGIN_MACRO								\
-	u_int32_t __h =(u_int32_t)(h);					\
+	uint32_t __h =(uint32_t)(h);					\
 	int __i;							\
 	SH3_SCIF_PUTC('0'); SH3_SCIF_PUTC('x');				\
 	for (__i = 0; __i < 8; __i++, __h <<= 4) {			\

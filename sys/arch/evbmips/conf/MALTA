@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.30 2005/06/15 05:08:39 simonb Exp $
+#	$NetBSD: MALTA,v 1.30.2.1 2006/06/21 14:51:02 yamt Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.30 $"
+#ident 		"MALTA-$Revision: 1.30.2.1 $"
 
 maxusers	32
 
@@ -50,9 +50,10 @@ options 	SYMTAB_SPACE=150000	# size for embedded symbol table
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
@@ -71,13 +72,14 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -87,6 +89,7 @@ options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
@@ -296,32 +299,32 @@ audio*		at clct?
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 #pseudo-device	fss		4		# file system snapshot device
-pseudo-device	md		1		# memory disk device (ramdisk)
-#pseudo-device	vnd		4		# disk-like interface to files
+#pseudo-device	md		1		# memory disk device (ramdisk)
+pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
-pseudo-device	bpfilter	8		# Berkeley packet filter
-#pseudo-device	ipfilter			# IP filter (firewall) and NAT
+pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
-#pseudo-device	ppp		2		# Point-to-Point Protocol
-#pseudo-device	sl		2		# Serial Line IP
-#pseudo-device	strip		2		# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2		# network tunneling over tty
-#pseudo-device	gre		2		# generic L3 over IP tunnel
+#pseudo-device	ppp				# Point-to-Point Protocol
+#pseudo-device	sl				# Serial Line IP
+#pseudo-device	strip				# Starmode Radio IP (Metricom)
+#pseudo-device	tun				# network tunneling over tty
+#pseudo-device	tap				# virtual Ethernet
+#pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
-#pseudo-device	gif		4		# RFC1933 tunnel
-#pseudo-device	faith		1		# IPv[46] tcp relay translation
-#pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	gif				# RFC1933 tunnel
+#pseudo-device	faith				# IPv[46] tcp relay translation
+#pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan				# IEEE 802.1q encapsulation
+pseudo-device	bridge				# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-#pseudo-device	tb		1		# tablet line discipline
 #pseudo-device	sequencer	1		# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd				# /dev/random & kernel generator
-#options 	RND_COM				# use "com" randomness (BROKEN)
-pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	clockctl			# user control of clock subsystem
+pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.

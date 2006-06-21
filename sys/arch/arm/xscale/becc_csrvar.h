@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_csrvar.h,v 1.1 2003/01/25 01:57:18 thorpej Exp $	*/
+/*	$NetBSD: becc_csrvar.h,v 1.1.18.1 2006/06/21 14:49:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -47,8 +47,8 @@ extern vaddr_t becc_vaddr;
 /*
  * Macros to read/write the BECC registers.
  */
-#define	BECC_CSR_READ(x)	*(__volatile uint32_t *)(becc_vaddr + (x))
-#define	BECC_CSR_WRITE(x, v)	*(__volatile uint32_t *)(becc_vaddr + (x)) = (v)
+#define	BECC_CSR_READ(x)	*(volatile uint32_t *)(becc_vaddr + (x))
+#define	BECC_CSR_WRITE(x, v)	*(volatile uint32_t *)(becc_vaddr + (x)) = (v)
 
 extern const char *becc_irqnames[];
 

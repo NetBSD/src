@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.10 2005/06/02 15:24:04 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.10.2.1 2006/06/21 14:54:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.10 2005/06/02 15:24:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.10.2.1 2006/06/21 14:54:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,7 @@ static void timer_hb_attach(struct device *, struct device *, void *);
 static void timer_hb_initclocks(int, int);
 void clock_intr(struct clockframe *);
 
-static __inline void leds_intr(void);
+static inline void leds_intr(void);
 
 extern void _isr_clock(void);	/* locore.s */
 
@@ -176,7 +176,7 @@ clock_intr(struct clockframe *cf)
 #define LED0	0x01
 #define LED1	0x02
 
-static __inline void
+static inline void
 leds_intr(void)
 {
 	static u_char led_countdown, led_stat;

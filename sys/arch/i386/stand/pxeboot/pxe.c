@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.7 2005/06/14 18:25:16 tron Exp $	*/
+/*	$NetBSD: pxe.c,v 1.7.2.1 2006/06/21 14:52:44 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,10 +102,10 @@
 #include "pxe.h"
 #include "pxe_netif.h"
 
-void	(*pxe_call)(u_int16_t);
+void	(*pxe_call)(uint16_t);
 
-void	pxecall_bangpxe(u_int16_t);	/* pxe_call.S */
-void	pxecall_pxenv(u_int16_t);	/* pxe_call.S */
+void	pxecall_bangpxe(uint16_t);	/* pxe_call.S */
+void	pxecall_pxenv(uint16_t);	/* pxe_call.S */
 
 char pxe_command_buf[256];
 
@@ -277,11 +277,11 @@ socktodesc(sock)
  * PXE initialization and support routines
  *****************************************************************************/
 
-u_int16_t pxe_command_buf_seg;
-u_int16_t pxe_command_buf_off;
+uint16_t pxe_command_buf_seg;
+uint16_t pxe_command_buf_off;
 
-extern u_int16_t bangpxe_off, bangpxe_seg;
-extern u_int16_t pxenv_off, pxenv_seg;
+extern uint16_t bangpxe_off, bangpxe_seg;
+extern uint16_t pxenv_off, pxenv_seg;
 
 static struct btinfo_netif bi_netif;
 
@@ -294,7 +294,7 @@ pxe_init(void)
 	pxe_t *pxe;
 	char *cp;
 	int i;
-	u_int8_t cksum, *ucp;
+	uint8_t cksum, *ucp;
 
 	/*
 	 * Checking for the presence of PXE is a machine-dependent
@@ -317,7 +317,7 @@ pxe_init(void)
 			if (MEMSTRCMP(pxenv->Signature, "PXENV+"))
 				pxenv = NULL;
 			else {
-				for (i = 0, ucp = (u_int8_t *)cp, cksum = 0;
+				for (i = 0, ucp = (uint8_t *)cp, cksum = 0;
 				     i < pxenv->Length; i++)
 					cksum += ucp[i];
 				if (cksum != 0) {
@@ -334,7 +334,7 @@ pxe_init(void)
 			if (MEMSTRCMP(pxe->Signature, "!PXE"))
 				pxe = NULL;
 			else {
-				for (i = 0, ucp = (u_int8_t *)cp, cksum = 0;
+				for (i = 0, ucp = (uint8_t *)cp, cksum = 0;
 				     i < pxe->StructLength; i++)
 					cksum += ucp[i];
 				if (cksum != 0) {
@@ -434,7 +434,6 @@ pxe_init(void)
 void
 pxe_fini(void)
 {
-	t_PXENV_UNLOAD_STACK *unload = (void *) pxe_command_buf;
 	t_PXENV_UNDI_SHUTDOWN *shutdown = (void *) pxe_command_buf;
 
 	if (pxe_call == NULL)
@@ -445,10 +444,4 @@ pxe_fini(void)
 	if (shutdown->Status != PXENV_STATUS_SUCCESS)
 		printf("pxe_fini: PXENV_UNDI_SHUTDOWN failed: 0x%x\n",
 		    shutdown->Status);
-
-	pxe_call(PXENV_UNLOAD_STACK);
-
-	if (unload->Status != PXENV_STATUS_SUCCESS)
-		printf("pxe_fini: PXENV_UNLOAD_STACK failed: 0x%x\n",
-		    unload->Status);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.h,v 1.6 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: ieee_handler.h,v 1.6.16.1 2006/06/21 14:54:31 yamt Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -45,8 +45,8 @@
 #endif
 
 typedef struct {
-  struct ns532_saved_state *regs;
-  struct ns532_fp_state *fps;
+	struct ns532_saved_state *regs;
+	struct ns532_fp_state *fps;
 } state;
 
 #define LREGBASE(s) ((vaddr_t) (s)->fps)
@@ -96,16 +96,20 @@ typedef struct lwp state;
 #include <signal.h>
 
 struct fstate {
-  unsigned int fsr;
-  union {
-    struct { double l0, l2, l4, l6, l1, l3, l5, l7;} l;
-    struct { float f0, f1, f2, f3, f4, f5, f6, f7;} f;
-  } regs;
+	unsigned int fsr;
+	union {
+		struct {
+			double l0, l2, l4, l6, l1, l3, l5, l7;
+		} l;
+		struct {
+			float f0, f1, f2, f3, f4, f5, f6, f7;
+		} f;
+	} regs;
 };
 
 struct ns532_combined_state {
-  struct sigcontext *scp;
-  struct fstate fs;
+	struct sigcontext *scp;
+	struct fstate fs;
 };
 
 typedef struct ns532_combined_state state;
@@ -124,7 +128,7 @@ typedef struct ns532_combined_state state;
 #define PC scp->sc_pc
 #define PSR scp->sc_ps
 
-int ieee_sig(int sig, int code, struct sigcontext *scp);
+int ieee_sig(int, int, struct sigcontext *);
 
 #ifdef __NetBSD__
 #define PSR_N	PSL_N
@@ -134,6 +138,6 @@ int ieee_sig(int sig, int code, struct sigcontext *scp);
 
 #endif /* KERNEL */
 
-int ieee_handle_exception(state *state);
+int ieee_handle_exception(state *);
 
 #endif /* _IEEE_HANDLER_H_ */

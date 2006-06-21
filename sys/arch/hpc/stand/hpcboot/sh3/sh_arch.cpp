@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.11 2004/08/13 15:50:09 uch Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.11.12.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void
 SHArchitecture::systemInfo()
 {
 
-	// Windows CE common infomation.
+	// Windows CE common information.
 	super::systemInfo();
 
 	// CPU specific.
@@ -146,10 +146,10 @@ SHArchitecture::jump(paddr_t info, paddr_t pvec)
 }
 
 // disable external interrupt and save its priority.
-u_int32_t
+uint32_t
 suspendIntr()
 {
-	u_int32_t sr;
+	uint32_t sr;
 
 	__asm(
 	    "stc	sr, r0\n"
@@ -161,7 +161,7 @@ suspendIntr()
 
 // resume external interrupt priority.
 void
-resumeIntr(u_int32_t s)
+resumeIntr(uint32_t s)
 {
 
 	__asm(

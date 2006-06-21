@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 2004/08/16 10:10:46 aymeric Exp $
+#	$NetBSD: Makefile,v 1.17.12.1 2006/06/21 14:48:25 yamt Exp $
 
 # Makefile for amiga tags file and boot blocks
-
-# Find where m68k source files are for inclusion in tags
-.include <../m68k/Makefile.inc>
 
 TAMIGA=	${SYSDIR}/arch/amiga/tags
 SAMIGA=	${SYSDIR}/arch/amiga/amiga/*.[ch] ${SYSDIR}/arch/amiga/include/*.h \
@@ -15,8 +12,11 @@ DAMIGA=	amiga dev include
 
 .include "../../kern/Make.tags.inc"
 
+# Find where m68k source files are for inclusion in tags
+.include <../m68k/Makefile.inc>
+
 tags:
-	-ctags -wdtf ${TAMIGA} ${SAMIGA} ${SM68K} ${COMM}
+	-echo ${COMM} | xargs ctags -wdtf ${TAMIGA} ${SAMIGA} ${SM68K}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMIGA} ${AM68K} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TAMIGA}

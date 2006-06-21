@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 2003/08/07 16:30:08 agc Exp $ */
+/*	$NetBSD: asm.h,v 1.16.16.1 2006/06/21 14:57:33 yamt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -102,6 +102,12 @@
 	.weak alias;							\
 	alias = sym
 #endif
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl alias;							\
+	alias = sym
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\

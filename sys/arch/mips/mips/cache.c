@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.28 2005/06/03 20:48:28 he Exp $	*/
+/*	$NetBSD: cache.c,v 1.28.2.1 2006/06/21 14:53:43 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.28 2005/06/03 20:48:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.28.2.1 2006/06/21 14:53:43 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -396,6 +396,9 @@ mips_config_cache_prehistoric(void)
 
 #if defined(MIPS3) || defined(MIPS4)
 	case MIPS_R4100:
+		if ((mips3_cp0_config_read() & MIPS3_CONFIG_CS) != 0)
+			csizebase = MIPS3_CONFIG_C_4100BASE;
+
 		/*
 		 * R4100 (NEC VR series) revision number means:
 		 *
@@ -499,8 +502,8 @@ primary_cache_is_2way:
 
 		mips3_get_cache_config(csizebase);
 
-		if (mips_picache_size > PAGE_SIZE ||
-		    mips_pdcache_size > PAGE_SIZE)
+		if ((mips_picache_size / mips_picache_ways) > PAGE_SIZE ||
+		    (mips_pdcache_size / mips_pdcache_ways) > PAGE_SIZE)
 			mips_cache_virtual_alias = 1;
 
 		switch (mips_picache_line_size) {
@@ -595,8 +598,7 @@ primary_cache_is_2way:
 		mips_pdcache_size = CACHE_R5900_SIZE_D;
 		mips_pdcache_line_size = CACHE_R5900_LSIZE_D;
 		mips_cache_alias_mask =
-		    ((mips_pdcache_size / mips_pdcache_ways) - 1) &
-		    ~(PAGE_SIZE - 1);
+		    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
 		mips_cache_prefer_mask =
 		    max(mips_pdcache_size, mips_picache_size) - 1;
 		mips_cache_virtual_alias = 1;
@@ -681,21 +683,27 @@ primary_cache_is_2way:
 	switch (MIPS_PRID_IMPL(cpu_id)) {
 #if defined(MIPS3) || defined(MIPS4)
 	case MIPS_R4000:
-#if 0
 		/*
-		 * R4000/R4400 always detects virtual alias as if
-		 * primary cache size is 32KB. Actual primary cache size
-		 * is ignored wrt VCED/VCEI.
-		 */
-		/*
-		 * XXX
-		 * It's still better to avoid virtual alias even with VCE,
-		 * isn't it?
+		 * R4000/R4400 detects virtual alias by VCE as if
+		 * its primary cache size were 32KB, because it always
+		 * compares 3 bits of vaddr[14:12] which causes
+		 * primary cache miss and PIdx[2:0] in the secondary
+		 * cache tag regardless of its primary cache size.
+		 * i.e. VCE could happen even if there is no actual
+		 * virtual alias on its 8KB or 16KB primary cache
+		 * which has only 1 or 2 bit valid PIdx in 4KB page.
+		 * Actual primary cache size is ignored wrt VCE
+		 * and virtual aliases are resolved by the VCE hander,
+		 * but it's still worth to avoid unnecessary VCE by
+		 * setting alias mask and prefer mask to 32K, though
+		 * some other possible aliases (maybe caused by KSEG0
+		 * accesses which can't be managed by PMAP_PREFER(9))
+		 * will still be resolved by the VCED/VCEI handler.
 		 */
 		mips_cache_alias_mask =
-			(MIPS3_MAX_PCACHE_SIZE - 1) & ~(PAGE_SIZE - 1);
+		    (MIPS3_MAX_PCACHE_SIZE - 1) & ~PAGE_MASK;	/* va[14:12] */
 		mips_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
-#endif
+
 		mips_cache_virtual_alias = 0;
 		/* FALLTHROUGH */
 	case MIPS_R4600:
@@ -858,9 +866,9 @@ tx39_cache_config_write_through(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm__ __volatile__("mfc0 %0, $3" : "=r"(r));
+	__asm volatile("mfc0 %0, $3" : "=r"(r));
 	r &= 0xffffdfff;
-	__asm__ __volatile__("mtc0 %0, $3" : : "r"(r));
+	__asm volatile("mtc0 %0, $3" : : "r"(r));
 }
 
 #endif /* ENABLE_MIPS_TX3900 */
@@ -897,7 +905,7 @@ mips3_get_cache_config(int csizebase)
 	    MIPS3_CONFIG_DB);
 
 	mips_cache_alias_mask =
-	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~(PAGE_SIZE - 1);
+	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
 	mips_cache_prefer_mask =
 	    max(mips_pdcache_size, mips_picache_size) - 1;
 
@@ -946,7 +954,7 @@ mips4_get_cache_config(int csizebase)
 	mips_pdcache_line_size = 32;	/* 32 Byte */
 
 	mips_cache_alias_mask =
-	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~(PAGE_SIZE - 1);
+	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
 	mips_cache_prefer_mask =
 	    max(mips_pdcache_size, mips_picache_size) - 1;
 }

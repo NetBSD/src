@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.11 2003/08/07 16:29:45 agc Exp $ */
+/*	$NetBSD: intreg.h,v 1.11.16.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,8 +68,8 @@
 #define	IE_ALLIE	0x01	/* enable interrupts */
 
 #ifndef _LOCORE
-void	ienab_bis __P((int bis));	/* set given bits */
-void	ienab_bic __P((int bic));	/* clear given bits */
+void	ienab_bis(int);		/* set given bits */
+void	ienab_bic(int);		/* clear given bits */
 #endif
 
 #ifdef notyet
@@ -93,9 +93,9 @@ void	ienab_bic __P((int bic));	/* clear given bits */
  */
 #ifndef _LOCORE
 struct icr_pi {
-	u_int32_t	pi_pend;	/* Pending interrupts (read-only) */
-	u_int32_t	pi_clr;		/* Clear interrupts (write-only) */
-	u_int32_t	pi_set;		/* Raise interrupts (write-only) */
+	uint32_t	pi_pend;	/* Pending interrupts (read-only) */
+	uint32_t	pi_clr;		/* Clear interrupts (write-only) */
+	uint32_t	pi_set;		/* Raise interrupts (write-only) */
 };
 #endif
 #define ICR_PI_PEND_OFFSET	0
@@ -151,9 +151,9 @@ struct icr_pi {
  * Set & clear bits in the system interrupt register
  */
 #define	icr_si_bis(bis) do {			\
-	*((u_int32_t *)ICR_SI_SET) = (bis);	\
+	*((uint32_t *)ICR_SI_SET) = (bis);	\
 } while (0)
 
 #define	icr_si_bic(bic) do {			\
-	*((u_int32_t *)ICR_SI_CLR) = (bic);	\
+	*((uint32_t *)ICR_SI_CLR) = (bic);	\
 } while (0)

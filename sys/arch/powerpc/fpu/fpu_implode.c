@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.4 2003/10/27 04:32:02 simonb Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.4.16.1 2006/06/21 14:54:49 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.4 2003/10/27 04:32:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.4.16.1 2006/06/21 14:54:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -184,7 +184,8 @@ toinf(struct fpemu *fe, int sign)
 		inf = sign;
 		break;
 	}
-	if (inf) fe->fe_cx |= FPSCR_OX;
+	if (inf)
+		fe->fe_cx |= FPSCR_OX;
 	return (inf);
 }
 

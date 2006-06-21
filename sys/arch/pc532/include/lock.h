@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: lock.h,v 1.5.16.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,13 +43,13 @@
 #ifndef _PC532_LOCK_H_
 #define	_PC532_LOCK_H_
 
-static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
 
 static __inline void
@@ -63,7 +63,7 @@ static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
-	 __asm __volatile(
+	 __asm volatile(
 		"1:	sbitid	%1, %0	\n"
 		"	bfs	1b	\n"
 		: "=m" (*alp)
@@ -75,7 +75,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __rv = 1;
 
-	__asm __volatile(
+	__asm volatile(
 		"	sbitid	%2, %0	\n"
 		"	bfc	1f	\n"
 		"	movqd	0, %1	\n"

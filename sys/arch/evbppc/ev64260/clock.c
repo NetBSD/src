@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2005/06/03 11:17:42 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.2.1 2006/06/21 14:51:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2005/06/03 11:17:42 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.2.1 2006/06/21 14:51:08 yamt Exp $");
 
 #include "opt_ppcparam.h"
 
@@ -65,10 +65,10 @@ static inline int yeartoday(int);
 #endif
 void decr_intr(struct clockframe *frame);
 
-static __inline void
+static inline void
 mttb(u_quad_t tb)
 {
-	__asm __volatile ("mttbl %0; mttbu %1; mttbl %1+1"
+	__asm volatile ("mttbl %0; mttbu %1; mttbl %1+1"
 	    ::	"r" (0), "r" (tb));
 }
 
@@ -249,17 +249,10 @@ decr_intr(struct clockframe *frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	tb = mftb();
-	__asm __volatile ("mfdec %0" : "=r"(decrtick));
+	__asm volatile ("mfdec %0" : "=r"(decrtick));
 	for (nticks = 0; decrtick < 0; nticks++)
 		decrtick += ticks_per_intr;
-	__asm __volatile ("mtdec %0" :: "r"(decrtick));
-
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	ci->ci_lasttb = tb + (decrtick - ticks_per_intr);
+	__asm volatile ("mtdec %0" :: "r"(decrtick));
 
 	uvmexp.intrs++;
 	curcpu()->ci_ev_clock.ev_count++;
@@ -282,6 +275,13 @@ decr_intr(struct clockframe *frame)
 
 		nticks += ci->ci_tickspending;
 		ci->ci_tickspending = 0;
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		tb = mftb();
+		ci->ci_lasttb = tb + (decrtick - ticks_per_intr);
 
 		oipl = ci->ci_cpl;
 		ci->ci_cpl = IPL_CLOCK;
@@ -339,7 +339,7 @@ calc_delayconst()
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	curcpu()->ci_lasttb = mftb();
-	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
 /*
@@ -418,7 +418,7 @@ clock_stop_time(struct stop_time *stp)
 		return;
 
 	stp->st_msr = extintr_disable();
-	__asm __volatile ("mfdec %0" : "=r"(stp->st_decr));
+	__asm volatile ("mfdec %0" : "=r"(stp->st_decr));
 	stp->st_tb = mftb();
 	stp->st_state = STS_STOPPED;
 }
@@ -440,7 +440,7 @@ clock_restart_time(struct stop_time *stp)
 	}
 	stp->st_state = 0;
 	mttb(stp->st_tb);
-	__asm __volatile ("mtdec %0" :: "r"(stp->st_decr));
+	__asm volatile ("mtdec %0" :: "r"(stp->st_decr));
 	extintr_restore(stp->st_msr);
 }
 

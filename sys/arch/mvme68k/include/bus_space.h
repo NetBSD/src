@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.8 2003/10/25 08:47:14 scw Exp $ */
+/*	$NetBSD: bus_space.h,v 1.8.16.1 2006/06/21 14:54:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -242,7 +242,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -256,7 +256,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -284,7 +284,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -298,7 +298,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -312,7 +312,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -360,7 +360,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -374,7 +374,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -388,7 +388,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -416,7 +416,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -430,7 +430,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -444,7 +444,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -472,7 +472,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_set_multi_1(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -486,7 +486,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -500,7 +500,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -528,7 +528,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_set_region_1(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -542,7 +542,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -556,7 +556,7 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\

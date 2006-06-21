@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_mem.c,v 1.1 2003/03/25 23:33:49 thorpej Exp $	*/
+/*	$NetBSD: becc_mem.c,v 1.1.18.1 2006/06/21 14:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -50,11 +50,11 @@
 #include "board.h"
 
 #define	BECC_PCICORE_READ(x)						\
-	*((__volatile uint32_t *)					\
+	*((volatile uint32_t *)					\
 	  (BECC_PCI_CONF_BASE | (1U << BECC_IDSEL_BIT) | (x)))
 
 #define	BECC_PCICORE_WRITE(x, v)					\
-	*((__volatile uint32_t *)					\
+	*((volatile uint32_t *)					\
 	  (BECC_PCI_CONF_BASE | (1U << BECC_IDSEL_BIT) | (x))) = (v)
 
 #define	BECC_SDRAM_BAR	(PCI_MAPREG_START + 0x08)
@@ -90,7 +90,7 @@ mem_init(void)
 	}
 #endif
 
-	heap = (start + size) - HEAP_SIZE;
+	heap = (start + size) - BOARD_HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n",
 	    start, (start + size) - 1, heap);

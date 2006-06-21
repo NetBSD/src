@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.19 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.19.2.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.19 2005/06/02 17:45:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.19.2.1 2006/06/21 14:49:16 yamt Exp $");
 
 /* Include header files */
 
@@ -421,7 +421,6 @@ delay(n)
 
 	if (n == 0) return;
 
-
 	/* 
 	 * not calibrated the timer yet, so try to live with this horrible
 	 * loop!
@@ -440,9 +439,11 @@ delay(n)
 	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 		    TIMER_3_VALUE);
 	 
-	delta = usecs = 0;
+	delta = 0;
 
-	while (n > usecs)
+	usecs = n * delay_count_per_usec;
+
+	while (usecs > delta)
 	{
 	    cur = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 		    TIMER_3_VALUE);
@@ -463,12 +464,6 @@ delay(n)
 			TIMER_3_CLEAR, 0);
 	    }
 	    last = cur;
-	    
-	    if (delta >= delay_count_per_usec)
-	    {
-		usecs += delta / delay_count_per_usec;
-		delta %= delay_count_per_usec;
-	    }
 	}
 }
 

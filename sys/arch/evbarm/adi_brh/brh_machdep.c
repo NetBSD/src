@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.21 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.21.10.1 2006/06/21 14:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.21 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.21.10.1 2006/06/21 14:50:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -391,6 +391,9 @@ initarm(void *arg)
 	paddr_t memstart;
 	psize_t memsize;
 
+	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
+
 	/*
 	 * Clear out the 7-segment display.  Whee, the first visual
 	 * indication that we're running kernel code.
@@ -512,7 +515,6 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
@@ -708,7 +710,7 @@ initarm(void *arg)
 		    PCI_CLASS_REG;
 		uint32_t reg;
 
-		reg = *(__volatile uint32_t *) va;
+		reg = *(volatile uint32_t *) va;
 		becc_rev = PCI_REVISION(reg);
 		if (becc_rev <= BECC_REV_V7 &&
 		    memsize > (64UL * 1024 * 1024)) {

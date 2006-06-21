@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.9 2003/07/15 02:43:41 lukem Exp $ */
+/* $NetBSD: sbtimer.c,v 1.9.16.1 2006/06/21 14:53:48 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.9 2003/07/15 02:43:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.9.16.1 2006/06/21 14:53:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ sbtimer_attach(struct device *parent, struct device *self, void *aux)
 	int ipl;
 	const char *comment = "";
 
-	sc->sc_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 	sc->sc_addr_icnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_base +
 	    sa->sa_locs.sa_offset + R_SCD_TIMER_INIT);
 	sc->sc_addr_cnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_base +

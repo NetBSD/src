@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.6 2004/10/30 18:08:35 thorpej Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.6.12.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6 2004/10/30 18:08:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6.12.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -565,7 +565,7 @@ smap_start(struct ifnet *ifp)
 
 		r = sc->tx_buf;
 		for (i = 0; i < sz; i += sizeof(u_int32_t))
-			*(__volatile__ u_int32_t *)SMAP_TXFIFO_DATA_REG = *r++;
+			*(volatile u_int32_t *)SMAP_TXFIFO_DATA_REG = *r++;
 		_wbflush();
 
 		/* put FIFO to EMAC3 */

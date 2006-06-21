@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8 2003/08/07 16:29:00 agc Exp $	*/
+/*	$NetBSD: profile.h,v 1.8.16.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,28 +35,30 @@
  */
 
 /* profiles ... */
-__inline void _mcount __P((u_long, u_long));
+__inline void _mcount(u_long, u_long);
 void mcount(void);
 
 #define	_MCOUNT_DECL __inline void _mcount
 
 #define	MCOUNT \
-extern void mcount(void) __asm__("mcount");				\
+extern void mcount(void) __asm("mcount")				\
+	__attribute__((__no_instrument_function__));			\
 void									\
 mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
+									\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm__("movd 4(fp),%0" : "=r" (selfpc));			\
+	__asm("movd 4(fp),%0" : "=r" (selfpc));			\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm__("movd 4(0(fp)),%0" : "=r" (frompcindex));		\
+	__asm("movd 4(0(fp)),%0" : "=r" (frompcindex));		\
 	_mcount(frompcindex, selfpc);					\
 }
 

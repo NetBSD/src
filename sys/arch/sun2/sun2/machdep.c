@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2005/06/05 12:36:24 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39.2.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2005/06/05 12:36:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39.2.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -259,7 +259,7 @@ vaddr_t vmmap;
 int	safepri = PSL_LOWIPL;
 
 /* Soft copy of the enable register. */
-__volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
+volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
 
 /*
  * Our no-fault fault handler.
@@ -826,7 +826,7 @@ initcpu(void)
  * understand and, if so, set up the vmcmds for it.
  */
 int 
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
 }

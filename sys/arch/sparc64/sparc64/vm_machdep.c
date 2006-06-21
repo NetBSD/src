@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2005/06/11 08:54:35 snj Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.2.1 2006/06/21 14:56:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2005/06/11 08:54:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.2.1 2006/06/21 14:56:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,13 @@ vunmapbuf(bp, len)
 	bp->b_saveaddr = NULL;
 }
 
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
+}
+
 
 /*
  * The offset of the topmost frame in the kernel stack.
@@ -178,7 +185,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	register struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct pcb *opcb = &l1->l_addr->u_pcb;
@@ -252,7 +259,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize;
+		tf2->tf_out[6] = (uint64_t)(u_long)stack + stacksize;
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
@@ -291,7 +298,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 void
 cpu_setfunc(l, func, arg)
 	struct lwp *l;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct pcb *npcb = &l->l_addr->u_pcb;

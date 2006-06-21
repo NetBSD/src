@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.6 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.6.12.1 2006/06/21 14:52:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.6 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.6.12.1 2006/06/21 14:52:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,9 @@ const int vp3_cfg_intr_shift[] = {
 	VP3_CFG_INTR_SHIFT_PIRQB,
 	VP3_CFG_INTR_SHIFT_PIRQC,
 	VP3_CFG_INTR_SHIFT_PIRQD,
+	VP3_CFG_INTR_SHIFT_PIRQ0,
+	VP3_CFG_INTR_SHIFT_PIRQ1,
+	VP3_CFG_INTR_SHIFT_PIRQ2,
 };
 
 #define	VP3_PIRQ(reg, pirq)	(((reg) >> vp3_cfg_intr_shift[(pirq)]) & \

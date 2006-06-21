@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.29 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.29.8.1 2006/06/21 14:57:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.29 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.29.8.1 2006/06/21 14:57:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,8 @@ void si_obio_dma_stop(struct ncr5380_softc *);
 
 static void si_obio_reset(struct ncr5380_softc *);
 
-static __inline__ void si_obio_udc_write(volatile struct si_regs *, int, int);
-static __inline__ int si_obio_udc_read(volatile struct si_regs *, int);
+static inline void si_obio_udc_write(volatile struct si_regs *, int, int);
+static inline int si_obio_udc_read(volatile struct si_regs *, int);
 
 
 /*
@@ -165,7 +165,7 @@ si_obio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct confargs *ca = args;
 
 	/* Get options from config flags if specified. */
@@ -233,7 +233,7 @@ si_obio_reset(struct ncr5380_softc *ncr_sc)
 	si->fifo_count = 0;
 }
 
-static __inline__ void 
+static inline void 
 si_obio_udc_write(volatile struct si_regs *si, int regnum, int value)
 {
 	si->udc_addr = regnum;
@@ -242,7 +242,7 @@ si_obio_udc_write(volatile struct si_regs *si, int regnum, int value)
 	delay(UDC_WAIT_USEC);
 }
 
-static __inline__ int 
+static inline int 
 si_obio_udc_read(volatile struct si_regs *si, int regnum)
 {
 	int value;

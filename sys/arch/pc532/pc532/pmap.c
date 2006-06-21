@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2005/05/29 15:56:59 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2005/05/29 15:56:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.1 2006/06/21 14:54:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,9 +145,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2005/05/29 15:56:59 chs Exp $");
  * is a void function.
  *
  * [B] new page tables pages (PTP)
- * 	call uvm_pagealloc()
- * 		=> success: zero page, add to pm_pdir
- * 		=> failure: we are out of free vm_pages, let pmap_enter()
+ *	call uvm_pagealloc()
+ *		=> success: zero page, add to pm_pdir
+ *		=> failure: we are out of free vm_pages, let pmap_enter()
  *		   tell UVM about it.
  *
  * note: for kernel PTPs, we start with NKPTP of them.   as we map
@@ -343,40 +343,33 @@ extern paddr_t msgbuf_paddr;
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage __P((struct pv_page *, boolean_t));
-static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, int));
-static struct pv_entry	*pmap_alloc_pv __P((struct pmap *, int)); /* see codes below */
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct vm_page	*pmap_alloc_ptp(struct pmap *, int);
+static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage __P((struct pmap *, int));
-static void		 pmap_enter_pv __P((struct pv_head *,
-					    struct pv_entry *, struct pmap *,
-					    vaddr_t, struct vm_page *));
-static void		 pmap_free_pv __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pvs __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pv_doit __P((struct pv_entry *));
-static void		 pmap_free_pvpage __P((void));
-static struct vm_page	*pmap_get_ptp __P((struct pmap *, int));
-static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
-static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
-					     vaddr_t));
-static void		 pmap_do_remove __P((struct pmap *, vaddr_t,
-						vaddr_t, int));
-static boolean_t	 pmap_remove_pte __P((struct pmap *, struct vm_page *,
-					      pt_entry_t *, vaddr_t, int));
-static void		 pmap_remove_ptes __P((struct pmap *,
-					       struct pmap_remove_record *,
-					       struct vm_page *, vaddr_t,
-					       vaddr_t, vaddr_t, int));
+static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
+static void		 pmap_enter_pv(struct pv_head *, struct pv_entry *,
+			    struct pmap *, vaddr_t, struct vm_page *);
+static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pv_doit(struct pv_entry *);
+static void		 pmap_free_pvpage(void);
+static struct vm_page	*pmap_get_ptp(struct pmap *, int);
+static boolean_t	 pmap_is_curpmap(struct pmap *);
+static pt_entry_t	*pmap_map_ptes(struct pmap *);
+static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
+			    vaddr_t);
+static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
+static boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *,
+			    pt_entry_t *, vaddr_t, int);
+static void		 pmap_remove_ptes(struct pmap *,
+			    struct pmap_remove_record *, struct vm_page *,
+			    vaddr_t, vaddr_t, vaddr_t, int);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
-static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
-static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
-static void		 pmap_tmpunmap_pa __P((void));
-static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
-static void		pmap_unmap_ptes __P((struct pmap *));
+static void		 pmap_unmap_ptes(struct pmap *);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -387,11 +380,11 @@ static void		pmap_unmap_ptes __P((struct pmap *));
  *		of course the kernel is always loaded
  */
 
-__inline static boolean_t
-pmap_is_curpmap(pmap)
-	struct pmap *pmap;
+inline static boolean_t
+pmap_is_curpmap(struct pmap *pmap)
 {
 	paddr_t ptb;
+
 	if (pmap == pmap_kernel())
 		return(1);
 	smr(ptb0, ptb);
@@ -401,93 +394,14 @@ pmap_is_curpmap(pmap)
 }
 
 /*
- * pmap_tmpmap_pa: map a page in for tmp usage
- *
- * => returns with pmap_tmpptp_lock held
- */
-
-__inline static vaddr_t
-pmap_tmpmap_pa(pa)
-	paddr_t pa;
-{
-	simple_lock(&pmap_tmpptp_lock);
-#if defined(DIAGNOSTIC)
-	if (*ptp_pte)
-		panic("pmap_tmpmap_pa: ptp_pte in use?");
-#endif
-	*ptp_pte = PG_V | PG_RW | pa;		/* always a new mapping */
-	return((vaddr_t)ptpp);
-}
-
-/*
- * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
- *
- * => we release pmap_tmpptp_lock
- */
-
-__inline static void
-pmap_tmpunmap_pa()
-{
-#if defined(DIAGNOSTIC)
-	if (!pmap_valid_entry(*ptp_pte))
-		panic("pmap_tmpunmap_pa: our pte invalid?");
-#endif
-	*ptp_pte = 0;		/* zap! */
-	pmap_update_pg((vaddr_t)ptpp);
-	simple_unlock(&pmap_tmpptp_lock);
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- * => we may grab pmap_tmpptp_lock and return with it held
- */
-
-__inline static pt_entry_t *
-pmap_tmpmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- *
- * => we will release pmap_tmpptp_lock if we hold it
- */
-
-__inline static void
-pmap_tmpunmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa();
-}
-
-/*
  * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
  *
  * => we lock enough pmaps to keep things locked in
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-__inline static pt_entry_t *
-pmap_map_ptes(pmap)
-	struct pmap *pmap;
+inline static pt_entry_t *
+pmap_map_ptes(struct pmap *pmap)
 {
 	pd_entry_t opde;
 
@@ -525,10 +439,10 @@ pmap_map_ptes(pmap)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-__inline static void
-pmap_unmap_ptes(pmap)
-	struct pmap *pmap;
+inline static void
+pmap_unmap_ptes(struct pmap *pmap)
 {
+
 	if (pmap == pmap_kernel()) {
 		return;
 	}
@@ -556,10 +470,7 @@ pmap_unmap_ptes(pmap)
  */
 
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte;
 
@@ -585,9 +496,7 @@ pmap_kenter_pa(va, pa, prot)
  */
 
 void
-pmap_kremove(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove(vaddr_t va, vsize_t len)
 {
 	pt_entry_t *pte;
 
@@ -626,8 +535,7 @@ pmap_kremove(va, len)
  */
 
 void
-pmap_bootstrap(kva_start)
-	vaddr_t kva_start;
+pmap_bootstrap(vaddr_t kva_start)
 {
 	struct pmap *kpm;
 	pt_entry_t *pte;
@@ -659,7 +567,7 @@ pmap_bootstrap(kva_start)
 	 * we can jam into a ns532 PTE.
 	 */
 
-	protection_codes[VM_PROT_NONE] = 0;  			/* --- */
+	protection_codes[VM_PROT_NONE] = 0;			/* --- */
 	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
 	protection_codes[VM_PROT_READ] = PG_RO;			/* -r- */
 	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
@@ -687,7 +595,7 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_ptb + KERNBASE);
-	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_ptb;
+	kpm->pm_pdirpa = (uint32_t) lwp0.l_addr->u_pcb.pcb_ptb;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		ns532_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
@@ -788,7 +696,7 @@ pmap_bootstrap(kva_start)
  */
 
 void
-pmap_init()
+pmap_init(void)
 {
 	int npages, lcv, i;
 	vaddr_t addr;
@@ -869,10 +777,8 @@ pmap_init()
  * "try" is for optional functions like pmap_copy().
  */
 
-__inline static struct pv_entry *
-pmap_alloc_pv(pmap, mode)
-	struct pmap *pmap;
-	int mode;
+inline static struct pv_entry *
+pmap_alloc_pv(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
@@ -927,9 +833,7 @@ pmap_alloc_pv(pmap, mode)
  */
 
 static struct pv_entry *
-pmap_alloc_pvpage(pmap, mode)
-	struct pmap *pmap;
-	int mode;
+pmap_alloc_pvpage(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
@@ -984,9 +888,7 @@ pmap_alloc_pvpage(pmap, mode)
  */
 
 static struct pv_entry *
-pmap_add_pvpage(pvp, need_entry)
-	struct pv_page *pvp;
-	boolean_t need_entry;
+pmap_add_pvpage(struct pv_page *pvp, boolean_t need_entry)
 {
 	int tofree, lcv;
 
@@ -1016,9 +918,8 @@ pmap_add_pvpage(pvp, need_entry)
  * => we must be holding pvalloc_lock
  */
 
-__inline static void
-pmap_free_pv_doit(pv)
-	struct pv_entry *pv;
+inline static void
+pmap_free_pv_doit(struct pv_entry *pv)
 {
 	struct pv_page *pvp;
 
@@ -1051,10 +952,8 @@ pmap_free_pv_doit(pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
-pmap_free_pv(pmap, pv)
-	struct pmap *pmap;
-	struct pv_entry *pv;
+inline static void
+pmap_free_pv(struct pmap *pmap, struct pv_entry *pv)
 {
 	simple_lock(&pvalloc_lock);
 	pmap_free_pv_doit(pv);
@@ -1076,10 +975,8 @@ pmap_free_pv(pmap, pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
-pmap_free_pvs(pmap, pvs)
-	struct pmap *pmap;
-	struct pv_entry *pvs;
+inline static void
+pmap_free_pvs(struct pmap *pmap, struct pv_entry *pvs)
 {
 	struct pv_entry *nextpv;
 
@@ -1111,7 +1008,7 @@ pmap_free_pvs(pmap, pvs)
  */
 
 static void
-pmap_free_pvpage()
+pmap_free_pvpage(void)
 {
 	int s;
 	struct pv_page *pvp;
@@ -1143,16 +1040,15 @@ pmap_free_pvpage()
  * => caller should have pmap locked
  * => we will gain the lock on the pv_head and allocate the new pv_entry
  * => caller should adjust ptp's wire_count before calling
+ *
+ * pve = preallocated pve for us to use
+ * ptp = PTP in pmap that maps this VA
  */
-
-__inline static void
-pmap_enter_pv(pvh, pve, pmap, va, ptp)
-	struct pv_head *pvh;
-	struct pv_entry *pve;	/* preallocated pve for us to use */
-	struct pmap *pmap;
-	vaddr_t va;
-	struct vm_page *ptp;	/* PTP in pmap that maps this VA */
+inline static void
+pmap_enter_pv(struct pv_head *pvh, struct pv_entry *pve, struct pmap *pmap,
+    vaddr_t va, struct vm_page *ptp)
 {
+
 	pve->pv_pmap = pmap;
 	pve->pv_va = va;
 	pve->pv_ptp = ptp;			/* NULL for kernel pmap */
@@ -1172,11 +1068,8 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  * => we return the removed pve
  */
 
-__inline static struct pv_entry *
-pmap_remove_pv(pvh, pmap, va)
-	struct pv_head *pvh;
-	struct pmap *pmap;
-	vaddr_t va;
+inline static struct pv_entry *
+pmap_remove_pv(struct pv_head *pvh, struct pmap *pmap, vaddr_t va)
 {
 	struct pv_entry *pve, **prevptr;
 
@@ -1206,10 +1099,8 @@ pmap_remove_pv(pvh, pmap, va)
  *	will ever leak onto the active/inactive queues)
  */
 
-__inline static struct vm_page *
-pmap_alloc_ptp(pmap, pde_index)
-	struct pmap *pmap;
-	int pde_index;
+inline static struct vm_page *
+pmap_alloc_ptp(struct pmap *pmap, int pde_index)
 {
 	struct vm_page *ptp;
 
@@ -1236,9 +1127,7 @@ pmap_alloc_ptp(pmap, pde_index)
  */
 
 static struct vm_page *
-pmap_get_ptp(pmap, pde_index)
-	struct pmap *pmap;
-	int pde_index;
+pmap_get_ptp(struct pmap *pmap, int pde_index)
 {
 	struct vm_page *ptp;
 
@@ -1313,7 +1202,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
  */
 
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pmap;
 
@@ -1362,8 +1251,7 @@ pmap_create()
  */
 
 void
-pmap_destroy(pmap)
-	struct pmap *pmap;
+pmap_destroy(struct pmap *pmap)
 {
 	struct vm_page *pg;
 	int refs;
@@ -1418,9 +1306,9 @@ pmap_destroy(pmap)
  */
 
 void
-pmap_reference(pmap)
-	struct pmap *pmap;
+pmap_reference(struct pmap *pmap)
 {
+
 	simple_lock(&pmap->pm_obj.vmobjlock);
 	pmap->pm_obj.uo_refs++;
 	simple_unlock(&pmap->pm_obj.vmobjlock);
@@ -1434,8 +1322,7 @@ pmap_reference(pmap)
  */
 
 void
-pmap_activate(l)
-	struct lwp *l;
+pmap_activate(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
@@ -1454,9 +1341,9 @@ pmap_activate(l)
  */
 
 void
-pmap_deactivate(l)
-	struct lwp *l;
+pmap_deactivate(struct lwp *l)
 {
+
 }
 
 /*
@@ -1472,10 +1359,7 @@ pmap_deactivate(l)
  */
 
 boolean_t
-pmap_extract(pmap, va, pap)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t *pap;
+pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
 	pd_entry_t pde;
@@ -1501,8 +1385,7 @@ pmap_extract(pmap, va, pap)
  */
 
 paddr_t
-vtophys(va)
-	vaddr_t va;
+vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
@@ -1518,10 +1401,9 @@ vtophys(va)
  */
 
 void
-pmap_virtual_space(startp, endp)
-	vaddr_t *startp;
-	vaddr_t *endp;
+pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
+
 	*startp = virtual_avail;
 	*endp = virtual_end;
 }
@@ -1534,11 +1416,9 @@ pmap_virtual_space(startp, endp)
  */
 
 vaddr_t
-pmap_map(va, spa, epa, prot)
-	vaddr_t va;
-	paddr_t spa, epa;
-	vm_prot_t prot;
+pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
+
 	while (spa < epa) {
 		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += PAGE_SIZE;
@@ -1553,8 +1433,7 @@ pmap_map(va, spa, epa, prot)
  */
 
 void
-pmap_zero_page(pa)
-	paddr_t pa;
+pmap_zero_page(paddr_t pa)
 {
 
 	simple_lock(&pmap_zero_page_lock);
@@ -1571,8 +1450,7 @@ pmap_zero_page(pa)
  */
 
 boolean_t
-pmap_zero_page_uncached(pa)
-	paddr_t pa;
+pmap_zero_page_uncached(paddr_t pa)
 {
 	boolean_t rv = TRUE;
 	int i, *ptr;
@@ -1606,9 +1484,9 @@ pmap_zero_page_uncached(pa)
  */
 
 void
-pmap_copy_page(srcpa, dstpa)
-	paddr_t srcpa, dstpa;
+pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
+
 	simple_lock(&pmap_copy_page_lock);
 #ifdef DIAGNOSTIC
 	if (*csrc_pte || *cdst_pte)
@@ -1639,13 +1517,9 @@ pmap_copy_page(srcpa, dstpa)
  */
 
 static void
-pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva, flags)
-	struct pmap *pmap;
-	struct pmap_remove_record *pmap_rr;
-	struct vm_page *ptp;
-	vaddr_t ptpva;
-	vaddr_t startva, endva;
-	int flags;
+pmap_remove_ptes(struct pmap *pmap, struct pmap_remove_record *pmap_rr,
+    struct vm_page *ptp, vaddr_t ptpva, vaddr_t startva, vaddr_t endva,
+    int flags)
 {
 	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
@@ -1741,12 +1615,8 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva, flags)
  */
 
 static boolean_t
-pmap_remove_pte(pmap, ptp, pte, va, flags)
-	struct pmap *pmap;
-	struct vm_page *ptp;
-	pt_entry_t *pte;
-	vaddr_t va;
-	int flags;
+pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
+    vaddr_t va, int flags)
 {
 	pt_entry_t opte;
 	int bank, off;
@@ -1810,10 +1680,9 @@ pmap_remove_pte(pmap, ptp, pte, va, flags)
  */
 
 void
-pmap_remove(pmap, sva, eva)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
+pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
+
 	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
 }
 
@@ -1824,10 +1693,7 @@ pmap_remove(pmap, sva, eva)
  */
 
 static void
-pmap_do_remove(pmap, sva, eva, flags)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	int flags;
+pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 {
 	pt_entry_t *ptes;
 	boolean_t result;
@@ -2003,8 +1869,7 @@ pmap_do_remove(pmap, sva, eva, flags)
  */
 
 void
-pmap_page_remove(pg)
-	struct vm_page *pg;
+pmap_page_remove(struct vm_page *pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
@@ -2105,9 +1970,7 @@ pmap_page_remove(pg)
  */
 
 boolean_t
-pmap_test_attrs(pg, testbits)
-	struct vm_page *pg;
-	int testbits;
+pmap_test_attrs(struct vm_page *pg, int testbits)
 {
 	int bank, off;
 	short *myattrs;
@@ -2168,11 +2031,9 @@ pmap_test_attrs(pg, testbits)
  */
 
 boolean_t
-pmap_change_attrs(pg, setbits, clearbits)
-	struct vm_page *pg;
-	int setbits, clearbits;
+pmap_change_attrs(struct vm_page *pg, int setbits, int clearbits)
 {
-	u_int32_t result;
+	uint32_t result;
 	int bank, off;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
@@ -2248,15 +2109,12 @@ pmap_change_attrs(pg, setbits, clearbits)
  */
 
 void
-pmap_write_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *ptes, *spte, *epte, npte;
 	struct pmap_remove_record pmap_rr, *prr;
 	vaddr_t blockend, va;
-	u_int32_t md_prot;
+	uint32_t md_prot;
 
 	ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
@@ -2359,9 +2217,7 @@ pmap_write_protect(pmap, sva, eva, prot)
  */
 
 void
-pmap_unwire(pmap, va)
-	struct pmap *pmap;
-	vaddr_t va;
+pmap_unwire(struct pmap *pmap, vaddr_t va)
 {
 	pt_entry_t *ptes;
 
@@ -2399,14 +2255,13 @@ pmap_unwire(pmap, va)
  */
 
 void
-pmap_collect(pmap)
-	struct pmap *pmap;
+pmap_collect(struct pmap *pmap)
 {
+
 	/*
 	 * free all of the pt pages by removing the physical mappings
 	 * for its entire address space.
 	 */
-
 	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
 	    PMAP_REMOVE_SKIPWIRED);
 }
@@ -2430,12 +2285,7 @@ pmap_collect(pmap)
  */
 
 int
-pmap_enter(pmap, va, pa, prot, flags)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
@@ -2655,8 +2505,7 @@ out:
  */
 
 vaddr_t
-pmap_growkernel(maxkvaddr)
-	vaddr_t maxkvaddr;
+pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *kpm = pmap_kernel(), *pm;
 	int needed_kpde;   /* needed number of kernel PTPs */
@@ -2732,7 +2581,7 @@ out:
 }
 
 #ifdef DEBUG
-void pmap_dump __P((struct pmap *, vaddr_t, vaddr_t));
+void pmap_dump(struct pmap *, vaddr_t, vaddr_t);
 
 /*
  * pmap_dump: dump all the mappings from a pmap
@@ -2741,9 +2590,7 @@ void pmap_dump __P((struct pmap *, vaddr_t, vaddr_t));
  */
 
 void
-pmap_dump(pmap, sva, eva)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
+pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	pt_entry_t *ptes, *pte;
 	vaddr_t blkendva;

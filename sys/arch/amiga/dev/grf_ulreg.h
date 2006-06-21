@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ulreg.h,v 1.7 2002/01/26 13:40:55 aymeric Exp $	*/
+/*	$NetBSD: grf_ulreg.h,v 1.7.32.1 2006/06/21 14:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -45,10 +45,10 @@ struct gspregs {
 	 * alas, they didn't invert the A1 bit, so we have to write the
 	 * address pointer in two parts
 	 */
-	__volatile u_short hstadrl;
-	__volatile u_short hstadrh;
-	__volatile u_short data;
-	__volatile u_short ctrl;
+	volatile u_short hstadrl;
+	volatile u_short hstadrh;
+	volatile u_short data;
+	volatile u_short ctrl;
 };
 
 /* Bits in ctrl */

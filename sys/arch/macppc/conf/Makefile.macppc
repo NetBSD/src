@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.22 2005/06/25 22:08:54 dyoung Exp $
+#	$NetBSD: Makefile.macppc,v 1.22.2.1 2006/06/21 14:53:13 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -75,12 +75,6 @@ TEXTADDR?=	0x100000
 LINKFORMAT=	-N
 ENTRYPOINT=	__start
 
-.if defined(NEED_SYMTAB)
-SYSTEM_LD_TAIL_EXTRA=; \
-		echo ${DBSYM} $@; \
-		${DBSYM} $@
-.endif
-
 .if defined(NEED_SREC)
 SYSTEM_LD_TAIL_EXTRA+=; \
 		${OBJCOPY} -v -O srec $@ $@.srec
@@ -119,24 +113,8 @@ setfault.o: assym.h
 
 %RULES
 
-# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
-# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
-#       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-powerpc-be-eabi.hal.o)
-OBJS:=${OBJS:C/\/athhal-powerpc-be-eabi.hal.o/athhal-powerpc-be-eabi.hal.o/}
- 
-.PATH: $S/contrib/arch/powerpc/dev
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-athhal-powerpc-be-eabi.hal.o: athhal-powerpc-be-eabi.hal.o.uue
-	${ATH_UUDEC}
-all depend:	opt_ah.h
-opt_ah.h:	athhal-powerpc-be-eabi.opt_ah.h
-	ln -s ${.ALLSRC} ${.TARGET}
-.endif
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

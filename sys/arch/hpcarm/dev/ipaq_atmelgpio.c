@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.7.2.1 2006/06/21 14:51:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.7.2.1 2006/06/21 14:51:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner 
 #include <hpcarm/dev/ipaq_gpioreg.h>
 #include <hpcarm/dev/ipaq_atmel.h>
 #include <hpcarm/dev/ipaq_atmelvar.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_comreg.h>
-#include <hpcarm/sa11x0/sa11x0_reg.h>
+
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_comreg.h>
+#include <arm/sa11x0/sa11x0_reg.h>
 
 #ifdef ATMEL_DEBUG
 #define DPRINTF(x) printf x
@@ -72,11 +73,11 @@ static	int	atmelgpio_match(struct device *, struct cfdata *, void *);
 static	void	atmelgpio_attach(struct device *, struct device *, void *);
 static	int	atmelgpio_print(void *, const char *);
 static	int	atmelgpio_search(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
+				 const int *, void *);
 static	void	atmelgpio_init(struct atmelgpio_softc *);
 
 static	void	rxtx_data(struct atmelgpio_softc *, int, int,
-			 u_int8_t *, struct atmel_rx *);
+			 uint8_t *, struct atmel_rx *);
 
 CFATTACH_DECL(atmelgpio, sizeof(struct atmelgpio_softc),
     atmelgpio_match, atmelgpio_attach, NULL, NULL);
@@ -99,7 +100,7 @@ atmelgpio_attach(parent, self, aux)
 	struct atmelgpio_softc *sc = (struct atmelgpio_softc *)self;
 	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
 
-	struct atmel_rx *rxbuf;
+	struct atmel_rx rxbuf;
 
 	printf("\n");
 	printf("%s: Atmel microcontroller GPIO\n",  sc->sc_dev.dv_xname);
@@ -117,15 +118,15 @@ atmelgpio_attach(parent, self, aux)
 	atmelgpio_init(sc);
 
 #if 1  /* this is sample */
-	rxtx_data(sc, STATUS_BATTERY, 0, NULL, rxbuf); 
+	rxtx_data(sc, STATUS_BATTERY, 0, NULL, &rxbuf); 
 
-	printf("ac_status          = %x\n", rxbuf->data[0]);
-	printf("Battery kind       = %x\n", rxbuf->data[1]);
+	printf("ac_status          = %x\n", rxbuf.data[0]);
+	printf("Battery kind       = %x\n", rxbuf.data[1]);
 	printf("Voltage            = %d mV\n",
-		1000 * (rxbuf->data[3] << 8 | rxbuf->data[2]) /228);
-	printf("Battery Status     = %x\n", rxbuf->data[4]);
+		1000 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /228);
+	printf("Battery Status     = %x\n", rxbuf.data[4]);
 	printf("Battery percentage = %d\n",
-		425 * (rxbuf->data[3] << 8 | rxbuf->data[2]) /1000 - 298);
+		425 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /1000 - 298);
 #endif
 
 	/*
@@ -139,7 +140,7 @@ static int
 atmelgpio_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	if (config_match(parent, cf, NULL) > 0)
@@ -176,24 +177,24 @@ static void
 rxtx_data(sc, id, size, buf, rxbuf)
 	struct atmelgpio_softc  *sc; 
 	int			id, size;
-	u_int8_t		*buf;
+	uint8_t			*buf;
 	struct atmel_rx		*rxbuf;
 {
 	int 		i, checksum, length, rx_data;
-	u_int8_t	data[MAX_SENDSIZE];
+	uint8_t		data[MAX_SENDSIZE];
 
 	length = size + FRAME_OVERHEAD_SIZE;
 
 	while (! (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_SR0) & SR0_TFS))
 		;
 
-		data[0] = (u_int8_t)FRAME_SOF; 
-		data[1] = (u_int8_t)((id << 4) | size);
+		data[0] = (uint8_t)FRAME_SOF; 
+		data[1] = (uint8_t)((id << 4) | size);
 		checksum = data[1];
 		i = 2;
 		while (size--)	{
 			data[i++] = *buf;
-			checksum += (u_int8_t)(*buf++);
+			checksum += (uint8_t)(*buf++);
 		}
 		data[length-1] = checksum;
 

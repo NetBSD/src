@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5.2.1 2006/06/21 14:57:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,6 +74,5 @@ struct mainbus_attach_args {
 #define	LOCATOR_FORBIDDEN	(2)
 
 int sun68k_bus_search(struct device *, struct cfdata *,
-		      const locdesc_t *, void *);
+		      const int *, void *);
 int sun68k_bus_print(void *, const char *);
-

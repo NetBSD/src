@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.18 2003/09/19 16:34:24 martin Exp $
+# 	$NetBSD: INSTALL,v 1.18.16.1 2006/06/21 14:56:40 yamt Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC32!
@@ -6,7 +6,7 @@
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"INSTALL-$Revision: 1.18 $"
+#ident 		"INSTALL-$Revision: 1.18.16.1 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
@@ -24,7 +24,6 @@ makeoptions	COPTS="-Os"
 #options 	SYSCALL_DEBUG
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 #MEMORY DISK ROOT options:
 

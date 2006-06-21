@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.8 2005/06/03 23:56:55 rjs Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.8.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.8 2005/06/03 23:56:55 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.8.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,16 +172,16 @@ static struct mbuf *netdock_get(struct netdock_softc *, int);
 					(sc)->sc_regh, (o), (val)))
 
 #define NIC_BSET(sc, o, b)						\
-	__asm__ __volatile("bset %0,%1" : : "di" ((u_short)(b)),	\
+	__asm volatile("bset %0,%1" : : "di" ((u_short)(b)),	\
 		"g" (*(u_int8_t *)((sc)->sc_regh.base + (o))))
 #define NIC_BCLR(sc, o, b)						\
-	__asm__ __volatile("bclr %0,%1" : : "di" ((u_short)(b)),	\
+	__asm volatile("bclr %0,%1" : : "di" ((u_short)(b)),	\
 		"g" (*(u_int8_t *)((sc)->sc_regh.base + (o))))
 #define NIC_ANDW(sc, o, b)						\
-	__asm__ __volatile("andw %0,%1" : : "di" ((u_short)(b)),	\
+	__asm volatile("andw %0,%1" : : "di" ((u_short)(b)),	\
 		"g" (*(u_int8_t *)((sc)->sc_regh.base + (o))))
 #define NIC_ORW(sc, o, b)						\
-	__asm__ __volatile("orw %0,%1" : : "di" ((u_short)(b)),	\
+	__asm volatile("orw %0,%1" : : "di" ((u_short)(b)),	\
 		"g" (*(u_int8_t *)((sc)->sc_regh.base + (o))))
 
 

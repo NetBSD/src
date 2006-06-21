@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.22 2004/09/17 14:11:22 skrll Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.22.12.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22 2004/09/17 14:11:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22.12.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22 2004/09/17 14:11:22 skrll Exp $")
 
 #include <sys/exec_coff.h>
 
-static int coff_find_section(struct proc *, struct vnode *,
+static int coff_find_section(struct lwp *, struct vnode *,
     struct coff_filehdr *, struct coff_scnhdr *, int);
 
 /*
  * exec_coff_makecmds(): Check if it's an coff-format executable.
  *
- * Given a proc pointer and an exec package pointer, see if the referent
+ * Given a lwp pointer and an exec package pointer, see if the referent
  * of the epp is in coff format.  Check 'standard' magic numbers for
  * this architecture.  If that fails, return failure.
  *
@@ -65,7 +65,7 @@ static int coff_find_section(struct proc *, struct vnode *,
  */
 
 int
-exec_coff_makecmds(struct proc *p, struct exec_package *epp)
+exec_coff_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	struct coff_filehdr *fp = epp->ep_hdr;
@@ -80,13 +80,13 @@ exec_coff_makecmds(struct proc *p, struct exec_package *epp)
 	ap = (void *)((char *)epp->ep_hdr + sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
 	case COFF_OMAGIC:
-		error = exec_coff_prep_omagic(p, epp, fp, ap);
+		error = exec_coff_prep_omagic(l, epp, fp, ap);
 		break;
 	case COFF_NMAGIC:
-		error = exec_coff_prep_nmagic(p, epp, fp, ap);
+		error = exec_coff_prep_nmagic(l, epp, fp, ap);
 		break;
 	case COFF_ZMAGIC:
-		error = exec_coff_prep_zmagic(p, epp, fp, ap);
+		error = exec_coff_prep_zmagic(l, epp, fp, ap);
 		break;
 	default:
 		return ENOEXEC;
@@ -108,7 +108,7 @@ exec_coff_makecmds(struct proc *p, struct exec_package *epp)
  */
 
 int
-exec_coff_prep_omagic(struct proc *p, struct exec_package *epp,
+exec_coff_prep_omagic(struct lwp *l, struct exec_package *epp,
     struct coff_filehdr *fp, struct coff_aouthdr *ap)
 {
 	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
@@ -139,7 +139,7 @@ exec_coff_prep_omagic(struct proc *p, struct exec_package *epp,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 #endif
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -148,8 +148,8 @@ exec_coff_prep_omagic(struct proc *p, struct exec_package *epp,
  */
 
 int
-exec_coff_prep_nmagic(p, epp, fp, ap)
-	struct proc *p;
+exec_coff_prep_nmagic(l, epp, fp, ap)
+	struct lwp *l;
 	struct exec_package *epp;
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
@@ -178,7 +178,7 @@ exec_coff_prep_nmagic(p, epp, fp, ap)
 		    NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -188,7 +188,7 @@ exec_coff_prep_nmagic(p, epp, fp, ap)
  */
 
 static int
-coff_find_section(struct proc *p, struct vnode *vp, struct coff_filehdr *fp,
+coff_find_section(struct lwp *l, struct vnode *vp, struct coff_filehdr *fp,
     struct coff_scnhdr *sh, int s_type)
 {
 	int i, pos, resid, siz, error;
@@ -197,7 +197,7 @@ coff_find_section(struct proc *p, struct vnode *vp, struct coff_filehdr *fp,
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
 		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
-		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
+		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 		    &resid, NULL);
 		if (error) {
 			DPRINTF(("section hdr %d read error %d\n", i, error));
@@ -228,7 +228,7 @@ coff_find_section(struct proc *p, struct vnode *vp, struct coff_filehdr *fp,
  */
 
 int
-exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
+exec_coff_prep_zmagic(struct lwp *l, struct exec_package *epp,
     struct coff_filehdr *fp, struct coff_aouthdr *ap)
 {
 	int error;
@@ -242,7 +242,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	DPRINTF(("enter exec_coff_prep_zmagic\n"));
 
 	/* set up command for text segment */
-	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_TEXT);
+	error = coff_find_section(l, epp->ep_vp, fp, &sh, COFF_STYP_TEXT);
 	if (error) {
 		DPRINTF(("can't find text section: %d\n", error));
 		return error;
@@ -271,7 +271,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	}
 
 	/* set up command for data segment */
-	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_DATA);
+	error = coff_find_section(l, epp->ep_vp, fp, &sh, COFF_STYP_DATA);
 	if (error) {
 		DPRINTF(("can't find data section: %d\n", error));
 		return error;
@@ -322,7 +322,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 
 #ifdef	TODO
 	/* load any shared libraries */
-	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_SHLIB);
+	error = coff_find_section(l, epp->ep_vp, fp, &sh, COFF_STYP_SHLIB);
 	if (!error) {
 		int resid;
 		struct coff_slhdr *slhdr;
@@ -334,7 +334,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 
 		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
 		    len, sh.s_scnptr,
-		    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
+		    UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 		    &resid, NULL);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
@@ -366,12 +366,12 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	    epp->ep_daddr, epp->ep_dsize,
 	    epp->ep_entry));
 #endif
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 #if 0
 int
-coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
+coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 {
 	int error, siz, resid;
 	int taddr, tsize, daddr, dsize, offset;
@@ -388,7 +388,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 #ifdef TODO
 	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
 #endif
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));
@@ -397,7 +397,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 
 	siz = sizeof(struct coff_filehdr);
 	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
-	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred, &resid, NULL);
 	if (error) {
 		DPRINTF(("filehdr read error %d\n", error));
 		vrele(nd.ni_vp);
@@ -412,7 +412,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 	}
 
 	/* load text */
-	error = coff_find_section(p, nd.ni_vp, fhp, shp, COFF_STYP_TEXT);
+	error = coff_find_section(l, nd.ni_vp, fhp, shp, COFF_STYP_TEXT);
 	if (error) {
 		DPRINTF(("can't find shlib text section\n"));
 		vrele(nd.ni_vp);
@@ -429,7 +429,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* load data */
-	error = coff_find_section(p, nd.ni_vp, fhp, shp, COFF_STYP_DATA);
+	error = coff_find_section(l, nd.ni_vp, fhp, shp, COFF_STYP_DATA);
 	if (error) {
 		DPRINTF(("can't find shlib data section\n"));
 		vrele(nd.ni_vp);
@@ -448,7 +448,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* load bss */
-	error = coff_find_section(p, nd.ni_vp, fhp, shp, COFF_STYP_BSS);
+	error = coff_find_section(l, nd.ni_vp, fhp, shp, COFF_STYP_BSS);
 	if (!error) {
 		int baddr = round_page(daddr + dsize);
 		int bsize = daddr + dsize + shp->s_size - baddr;

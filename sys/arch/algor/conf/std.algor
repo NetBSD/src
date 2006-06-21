@@ -1,6 +1,7 @@
-#	$NetBSD: std.algor,v 1.6 2003/08/30 22:44:38 chs Exp $
+#	$NetBSD: std.algor,v 1.6.16.1 2006/06/21 14:48:00 yamt Exp $
 
 machine algor mips
+include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 # Standard exec-package options

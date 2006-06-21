@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.20 2003/08/07 16:29:15 agc Exp $	*/
+/*	$NetBSD: rz.c,v 1.20.16.1 2006/06/21 14:54:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,7 +174,7 @@ rzopen(struct open_file *f, ...)
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 	bad:
-		free(sc, sizeof(struct rz_softc));
+		dealloc(sc, sizeof(struct rz_softc));
 		return (ENXIO);
 	}
 	return (0);
@@ -188,7 +188,7 @@ rzclose(f)
 	if (callv == &callvec)
 		prom_close(((struct rz_softc *)f->f_devdata)->sc_fd);
 
-	free(f->f_devdata, sizeof(struct rz_softc));
+	dealloc(f->f_devdata, sizeof(struct rz_softc));
 	f->f_devdata = (void *)0;
 	return (0);
 }

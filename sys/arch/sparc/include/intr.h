@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2003/06/16 20:01:05 thorpej Exp $ */
+/*	$NetBSD: intr.h,v 1.7.18.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,22 @@
 #define IPL_SERIAL	13	/* serial */
 #define IPL_STATCLOCK	14	/* statclock */
 #define IPL_HIGH	15	/* everything */
+#define	IPL_LOCK	IPL_HIGH
+
+/*
+ * fd hardware, ts102, and tadpole microcontoller interrupts are at level 11
+ */
+
+#define	IPL_FD		11
+#define	IPL_TS102	11
+
+/*
+ * zs hardware interrupts are at level 12
+ * su (com) hardware interrupts are at level 13
+ * IPL_SERIAL must protect them all.
+ */
+
+#define	IPL_ZS		12
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 void *
@@ -72,7 +88,7 @@ softintr_disestablish(void *cookie);
  * structure, which is otherwise internal to intr.c.
  */
 #if defined(SUN4M) || defined(SUN4D)
-extern void	raise __P((int, int));
+extern void	raise(int, int);
 #if !(defined(SUN4) || defined(SUN4C))
 #define softintr_schedule(cookie)	raise(0, *((int *) (cookie)))
 #else /* both defined */

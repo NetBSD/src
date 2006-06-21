@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.2 2003/08/07 16:29:22 agc Exp $	*/
+/*	$NetBSD: tgets.c,v 1.2.16.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,8 +35,7 @@
 #include "boot.h"
 
 int
-tgets(buf)
-	char *buf;
+tgets(char *buf)
 {
 	register int c;
 	register char *lp;

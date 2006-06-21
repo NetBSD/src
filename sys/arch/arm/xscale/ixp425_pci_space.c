@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.3 2005/04/01 11:59:25 yamt Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.3.2.1 2006/06/21 14:49:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.3 2005/04/01 11:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.3.2.1 2006/06/21 14:49:41 yamt Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.3 2005/04/01 11:59:25 yamt Ex
 /*
  * Macros to read/write registers
 */
-#define CSR_READ_4(x)		*(__volatile uint32_t *) \
+#define CSR_READ_4(x)		*(volatile uint32_t *) \
 	(IXP425_PCI_CSR_BASE + (x))
-#define CSR_WRITE_4(x, v)	*(__volatile uint32_t *) \
+#define CSR_WRITE_4(x, v)	*(volatile uint32_t *) \
 	(IXP425_PCI_CSR_BASE + (x)) = (v)
 
 /* Proto types for all the bus_space structure functions */
@@ -384,11 +384,11 @@ ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	const struct pmap_devmap	*pd;
 
 	paddr_t		startpa;
-        paddr_t		endpa;
-        paddr_t		pa;
-        paddr_t		offset;
-        vaddr_t		va;
-        pt_entry_t	*pte;
+	paddr_t		endpa;
+	paddr_t		pa;
+	paddr_t		offset;
+	vaddr_t		va;
+	pt_entry_t	*pte;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -401,7 +401,8 @@ ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	startpa = trunc_page(bpa);
 
 	/* Get some VM.  */
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return ENOMEM;
 

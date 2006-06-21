@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.67.2.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,17 +73,15 @@
  */
 
 /*
- * 532 Trap and System call handling
+ * 532 Trap handling
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.1 2006/06/21 14:54:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_ns381.h"
 
 #include <sys/param.h>
@@ -96,11 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2005/07/01 18:01:45 christos Exp $");
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 #ifdef KGDB
@@ -115,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2005/07/01 18:01:45 christos Exp $");
 #include <machine/fpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/userret.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
@@ -130,61 +127,9 @@ int ieee_handler_disable = 0;
 #define __CDECL__
 #endif
 
-void syscall __P((struct syscframe)) __CDECL__;
-void trap __P((struct trapframe)) __CDECL__;
-static __inline void userret __P((struct lwp *, int, u_quad_t));
+void trap(struct trapframe) __CDECL__;
 
-/*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
- */
-static __inline void
-userret(l, pc, oticks)
-	struct lwp *l;
-	int pc;
-	u_quad_t oticks;
-{
-	struct proc *p = l->l_proc;
-	int sig;
-
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
-
-	/* take pending signals */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-	l->l_priority = l->l_usrpri;
-	if (want_resched) {	/* XXX Move to AST handler. */
-		/*
-		 * We are being preempted.
-		 */
-		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-	}
-
-	/* Invoke per-process kernel-exit handling, if any. */
-	if (p->p_userret)
-		(*p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
-}
-
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"non-vectored interrupt",		/*  0 T_NVI */
 	"non-maskable interrupt",		/*  1 T_NMI */
 	"abort trap",				/*  2 T_ABT */
@@ -221,8 +166,7 @@ int	trapdebug = 0;
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe frame;
+trap(struct trapframe frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -292,7 +236,7 @@ trap(frame)
 			*(struct trapframe *)sp = *db_frame--;
 			lprd(fp, &((struct trapframe *)sp)->tf_regs.r_fp);
 			lprd(sp, sp);
-			__asm __volatile("jump 0(%0)" : : "g" (ret));
+			__asm volatile("jump 0(%0)" : : "g" (ret));
 		}
 		db_frame--;
 		lprd(sp, sp); /* Frame should be intact */
@@ -466,7 +410,7 @@ trap(frame)
 #endif
 
 		/* Fault the original page in. */
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 		if (rv == 0) {
 			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
@@ -483,15 +427,15 @@ trap(frame)
 				frame.tf_regs.r_pc = (int)curpcb->pcb_onfault;
 				return;
 			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			sig = SIGKILL;
 		} else {
 			sig = SIGSEGV;
@@ -506,9 +450,9 @@ trap(frame)
 		break;
 	}
 
-	case T_TRC | T_USER: 	/* trace trap */
-	case T_BPT | T_USER: 	/* breakpoint instruction */
-	case T_DBG | T_USER: 	/* debug trap */
+	case T_TRC | T_USER:	/* trace trap */
+	case T_BPT | T_USER:	/* breakpoint instruction */
+	case T_DBG | T_USER:	/* debug trap */
 	trace:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
@@ -541,116 +485,8 @@ out:
 	userret(l, frame.tf_regs.r_pc, sticks);
 }
 
-/*
- * syscall(frame):
- *	System call request from POSIX system call gate interface to kernel.
- * Like trap(), argument is call by reference.
- */
-/*ARGSUSED*/
 void
-syscall(frame)
-	struct syscframe frame;
-{
-	caddr_t params;
-	const struct sysent *callp;
-	struct lwp *l;
-	struct proc *p;
-	int error, opc, nsys;
-	size_t argsize;
-	register_t code, args[8], rval[2];
-	u_quad_t sticks;
-
-	uvmexp.syscalls++;
-	if (!USERMODE(frame.sf_regs.r_psr))
-		panic("syscall");
-	l = curlwp;
-	p = l->l_proc;
-	sticks = p->p_sticks;
-	l->l_md.md_regs = &frame.sf_regs;
-	opc = frame.sf_regs.r_pc++;
-	code = frame.sf_regs.r_r0;
-
-	nsys = p->p_emul->e_nsysent;
-	callp = p->p_emul->e_sysent;
-
-	params = (caddr_t)frame.sf_regs.r_sp + sizeof(int);
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = fuword(params);
-		params += sizeof(int);
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		if (callp != sysent)
-			break;
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		break;
-	default:
-		break;
-	}
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;		/* illegal */
-	else
-		callp += code;
-	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
-		if (error)
-			goto bad;
-	}
-
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto out;
-
-	rval[0] = 0;
-	rval[1] = frame.sf_regs.r_r1;
-	error = (*callp->sy_call)(l, args, rval);
-out:
-	switch (error) {
-	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
-		frame.sf_regs.r_r0 = rval[0];
-		frame.sf_regs.r_r1 = rval[1];
-		frame.sf_regs.r_psr &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * Just reset the pc to the SVC instruction.
-		 */
-		frame.sf_regs.r_pc = opc;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		frame.sf_regs.r_r0 = error;
-		frame.sf_regs.r_psr |= PSL_C;	/* carry bit */
-		break;
-	}
-
-	trace_exit(l, code, args, rval, error);
-
-	userret(l, frame.sf_regs.r_pc, sticks);
-}
-
-void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 
@@ -660,7 +496,7 @@ child_return(arg)
 	userret(l, l->l_md.md_regs->r_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 
@@ -668,8 +504,7 @@ child_return(arg)
  * Start a new LWP.
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int error;
 	ucontext_t *uc = arg;
@@ -693,8 +528,7 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(l)
-	struct lwp *l;
+upcallret(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 

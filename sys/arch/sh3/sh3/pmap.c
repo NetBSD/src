@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2003/12/30 12:33:19 pk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.16.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.16.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ STATIC struct pool_allocator pmap_pv_page_allocator = {
 STATIC int __pmap_asid_alloc(void);
 STATIC void __pmap_asid_free(int);
 STATIC struct {
-	u_int32_t map[8];
+	uint32_t map[8];
 	int hint;	/* hint for next allocation */
 } __pmap_asid;
 
@@ -200,6 +200,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	return (__pmap_kve);
  error:
 	panic("pmap_growkernel: out of memory.");
+	/* NOTREACHED */
 }
 
 void
@@ -584,8 +585,16 @@ pmap_kremove(vaddr_t va, vsize_t len)
 boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
-	pt_entry_t *pte = __pmap_pte_lookup(pmap, va);
+	pt_entry_t *pte;
 
+	/* handle P1 and P2 specially: va == pa */
+	if (pmap == pmap_kernel() && (va >> 30) == 2) {
+		if (pap != NULL)
+			*pap = va & SH3_PHYS_MASK;
+		return (TRUE);
+	}
+
+	pte = __pmap_pte_lookup(pmap, va);
 	if (pte == NULL || *pte == 0)
 		return (FALSE);
 
@@ -626,6 +635,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		switch (prot) {
 		default:
 			panic("pmap_protect: invalid protection mode %x", prot);
+			/* NOTREACHED */
 		case VM_PROT_READ:
 			/* FALLTHROUGH */
 		case VM_PROT_READ | VM_PROT_EXECUTE:
@@ -1003,6 +1013,7 @@ __pmap_asid_alloc()
 	}
 
 	panic("No ASID allocated.");
+	/* NOTREACHED */
 }
 
 /*

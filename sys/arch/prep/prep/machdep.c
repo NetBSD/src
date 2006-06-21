@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2005/01/31 18:48:41 jkunz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.6.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2005/01/31 18:48:41 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.6.1 2006/06/21 14:55:19 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -99,6 +99,7 @@ int lcsplx(int);
 void prep_bus_space_init(void);
 
 char bootinfo[BOOTINFO_MAXSIZE];
+char bootpath[256];
 
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
@@ -115,10 +116,7 @@ extern void *endsym, *startsym;
 #endif
 
 void
-initppc(startkernel, endkernel, args, btinfo)
-	u_long startkernel, endkernel;
-	u_int args;
-	void *btinfo;
+initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 
 	/*
@@ -144,6 +142,7 @@ initppc(startkernel, endkernel, args, btinfo)
 		} else
 			panic("No residual data.");
 	}
+	printf("got residual data\n");
 
 	/*
 	 * Set memory region
@@ -174,9 +173,6 @@ initppc(startkernel, endkernel, args, btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	/* Initialize the CPU type */
-	ident_platform();
-
 	/*
 	 * boothowto
 	 */
@@ -184,10 +180,13 @@ initppc(startkernel, endkernel, args, btinfo)
 
 	/*
 	 * Now setup fixed bat registers
+	 * We setup the memory BAT, the IO space BAT, and a special
+	 * BAT for certain machines that have rs6k style PCI bridges
 	 */
 	oea_batinit(
 	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
 	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
+	    0xbf800000, BAT_BL_8M,
 	    0);
 
 	/*
@@ -228,8 +227,7 @@ initppc(startkernel, endkernel, args, btinfo)
 }
 
 void
-mem_regions(mem, avail)
-	struct mem_region **mem, **avail;
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
 
 	*mem = physmemr;
@@ -240,7 +238,7 @@ mem_regions(mem, avail)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	/*
 	 * Mapping PReP interrput vector register.
@@ -252,7 +250,12 @@ cpu_startup()
 	/*
 	 * external interrupt handler install
 	 */
-	(*platform->init_intr)();
+	init_intr();
+
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
 
 	/*
 	 * Do common startup.
@@ -266,14 +269,18 @@ cpu_startup()
 		int msr;
 
 		splraise(-1);
-		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
-
 	/*
 	 * Now safe for bus space allocation to use malloc.
 	 */
 	bus_space_mallocok();
+
+	/*
+	 * Gather the pci interrupt routings.
+         */
+	setup_pciroutinginfo();
 }
 
 /*
@@ -281,8 +288,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
@@ -302,7 +308,7 @@ lookup_bootinfo(type)
  * Soft tty interrupts.
  */
 void
-softserial()
+softserial(void)
 {
 
 #if (NCOM > 0)
@@ -314,8 +320,7 @@ softserial()
  * Stray interrupts.
  */
 void
-strayintr(irq)
-	int irq;
+strayintr(int irq)
 {
 
 	log(LOG_ERR, "stray interrupt %d\n", irq);
@@ -325,9 +330,7 @@ strayintr(irq)
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 
@@ -364,7 +367,7 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-	(*platform->reset)();
+	reset_prep();
 
 	for (;;)
 		continue;
@@ -376,17 +379,17 @@ halt_sys:
  * splx() differing in that it returns the previous priority level.
  */
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
 	int oldcpl;
+	struct cpu_info *ci = curcpu();
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = ipl;
-	if (ipending & ~ipl)
+	__asm volatile("sync; eieio\n");	/* reorder protect */
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = ipl;
+	if (ci->ci_ipending & ~ipl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
 }
@@ -399,6 +402,10 @@ struct powerpc_bus_space prep_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x00010000,
 };
+struct powerpc_bus_space prep_eisa_io_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x80000000, 0x00000000, 0x0000f000,
+};
 struct powerpc_bus_space prep_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x3f000000,
@@ -406,6 +413,10 @@ struct powerpc_bus_space prep_mem_space_tag = {
 struct powerpc_bus_space prep_isa_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x01000000,
+};
+struct powerpc_bus_space prep_eisa_mem_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xC0000000, 0x00000000, 0x3f000000,
 };
 
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]

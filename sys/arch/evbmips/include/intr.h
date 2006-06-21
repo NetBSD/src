@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2003/05/25 14:08:20 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.18.1 2006/06/21 14:51:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _EVBMIPS_INTR_H_
-#define _EVBMIPS_INTR_H_
+#define	_EVBMIPS_INTR_H_
 
 #include <sys/device.h>
 #include <sys/lock.h>
@@ -53,9 +53,14 @@
 #define	IPL_BIO		5	/* disable block I/O interrupts */
 #define	IPL_NET		6	/* disable network interrupts */
 #define	IPL_TTY		7	/* disable terminal interrupts */
+#define	IPL_LPT		IPL_TTY
+#define	IPL_VM		IPL_TTY
 #define	IPL_SERIAL	7	/* disable serial interrupts */
 #define	IPL_CLOCK	8	/* disable clock interrupts */
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	8	/* disable all interrupts */
+#define	IPL_LOCK	IPL_HIGH
 
 #define	_IPL_NSOFT	4	/* max soft IPL + 1 */
 #define	_IPL_N		9	/* max IPL + 1 */
@@ -78,13 +83,13 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-#define IST_LEVEL_HIGH	4	/* level triggered, active high */
-#define IST_LEVEL_LOW	5       /* level triggered, active low */
+#define	IST_LEVEL_HIGH	4	/* level triggered, active high */
+#define	IST_LEVEL_LOW	5       /* level triggered, active low */
 
 #ifdef	_KERNEL
 
-extern const u_int32_t ipl_sr_bits[_IPL_N];
-extern const u_int32_t ipl_si_to_sr[_IPL_NSOFT];
+extern const uint32_t ipl_sr_bits[_IPL_N];
+extern const uint32_t ipl_si_to_sr[_IPL_NSOFT];
 
 extern int		_splraise(int);
 extern int		_spllower(int);
@@ -94,27 +99,16 @@ extern int		_splnone(int);
 extern int		_setsoftintr(int);
 extern int		_clrsoftintr(int);
 
-#define	splhigh()	_splraise(ipl_sr_bits[IPL_HIGH])
 #define	spl0()		(void) _spllower(0)
 #define	splx(s)		(void) _splset(s)
-#define	splbio()	_splraise(ipl_sr_bits[IPL_BIO])
-#define	splnet()	_splraise(ipl_sr_bits[IPL_NET])
-#define	spltty()	_splraise(ipl_sr_bits[IPL_TTY])
-#define	splserial()	_splraise(ipl_sr_bits[IPL_SERIAL])
-#define	splvm()		spltty()
-#define	splclock()	_splraise(ipl_sr_bits[IPL_CLOCK])
-#define	splstatclock()	splclock()
-
-#define	splsched()	splclock()
-#define	spllock()	splhigh()
-#define	spllpt()	spltty()
 
 #define	splsoft()	_splraise(ipl_sr_bits[IPL_SOFT])
-#define	splsoftclock()	_splraise(ipl_sr_bits[IPL_SOFTCLOCK])
-#define	splsoftnet()	_splraise(ipl_sr_bits[IPL_SOFTNET])
-#define	splsoftserial()	_splraise(ipl_sr_bits[IPL_SOFTSERIAL])
 
 #define	spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
+
+#define	splraiseipl(x)	_splraise(ipl_sr_bits[x])
+
+#include <sys/spl.h>
 
 struct evbmips_intrhand {
 	LIST_ENTRY(evbmips_intrhand) ih_q;
@@ -127,7 +121,7 @@ struct evbmips_intrhand {
 
 void	evbmips_intr_init(void);
 void	intr_init(void);
-void	evbmips_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	evbmips_iointr(uint32_t, uint32_t, uint32_t, uint32_t);
 void	*evbmips_intr_establish(int, int (*)(void *), void *);
 void	evbmips_intr_disestablish(void *);
 #endif /* _KERNEL */

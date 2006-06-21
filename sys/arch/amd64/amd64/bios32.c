@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.2 2003/07/14 23:32:29 lukem Exp $	*/
+/*	$NetBSD: bios32.c,v 1.2.16.1 2006/06/21 14:48:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2 2003/07/14 23:32:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2.16.1 2006/06/21 14:48:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ bios32_service(service, e, ei)
 	if (bios32_entry.offset == 0)
 		return (0);	/* BIOS32 not present */
 
-	__asm __volatile("lcall *(%%rdi)"
+	__asm volatile("lcall *(%%rdi)"
 		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
 		: "0" (service), "1" (0), "D" (&bios32_entry));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_mem.c,v 1.2 2002/04/25 22:11:51 thorpej Exp $	*/
+/*	$NetBSD: integrator_mem.c,v 1.2.30.1 2006/06/21 14:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 
 #include "board.h"
 
-#define	INL(x)		*((__volatile uint32_t *) (x))
+#define	INL(x)		*((volatile uint32_t *) (x))
 
 void
 mem_init(void)
@@ -83,7 +83,7 @@ mem_init(void)
 	}
 
 	/* Start is always 0. */
-	heap = size - HEAP_SIZE;
+	heap = size - BOARD_HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n", 0, size - 1, heap);
 	setheap((void *)heap, (void *)(size - 1));

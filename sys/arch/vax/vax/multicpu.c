@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.16 2004/03/19 20:17:51 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.16.16.1 2006/06/21 14:57:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.16 2004/03/19 20:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.16.16.1 2006/06/21 14:57:34 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -152,7 +152,7 @@ slaverun()
 	((volatile struct cpu_info *)ci)->ci_flags |= CI_RUNNING;
 	cpu_send_ipi(IPI_DEST_MASTER, IPI_RUNNING);
 	printf("%s: running\n", ci->ci_dev->dv_xname);
-	while (sta != ci->ci_dev->dv_unit)
+	while (sta != device_unit(ci->ci_dev))
 		;
 	splsched();
 	sched_lock_idle();

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461videoreg.h,v 1.1 2001/06/04 17:08:36 uch Exp $	*/
+/*	$NetBSD: hd64461videoreg.h,v 1.1.42.1 2006/06/21 14:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461VIDEOREG_H_
+#define _HPCSH_DEV_HD64461VIDEOREG_H_
+
 /* 
  * LCD Controller Control Register 
  */
+
 /* Base Address Register */
 #define HD64461_LCDCBAR_REG16			0xb0001000
 #define HD64461_LCDCBAR_MASK			0x3fff
@@ -101,10 +105,10 @@
  *	select CL2 frequency
  *	0x0	15 MHz (color) 15/2 (monochrome)
  *	0x1	2.5 MHz
- *	0x2	3.75 Mhz
- *	0x4	5 Mhz
- *	0x8	7.5 Mhz
- *	0x10	10 Mhz
+ *	0x2	3.75 MHz
+ *	0x4	5 MHz
+ *	0x8	7.5 MHz
+ *	0x10	10 MHz
  */
 #define HD64461_LCDLDR3_CG_COLOR16	0x8
 #define HD64461_LCDLDR3_CG_COLOR8	0x4
@@ -402,3 +406,5 @@
 #define HD64461_LCDC_BITBLT_BLACKNESS		0x0000
 #define HD64461_LCDC_BITBLT_WHITENESS		0x00ff
 #define HD64461_LCDC_BITBLT_MASKEDSRCCOPY	0xccaa
+
+#endif /* !_HPCSH_DEV_HD64461VIDEOREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.28.8.1 2006/06/21 14:49:07 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28.8.1 2006/06/21 14:49:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -140,11 +140,15 @@ __KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $");
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
+#include <mips/locore.h>
+
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <arc/isa/isabrvar.h>
 #include <arc/isa/spkrreg.h>
+
+#include <arc/arc/timervar.h>
 
 static int beeping;
 static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
@@ -227,7 +231,7 @@ isabrprint(void *aux, const char *pnp)
 
 int	imen;
 int	intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-struct intrhand *intrhand[ICU_LEN];
+struct isa_intrhand *isa_intrhand[ICU_LEN];
 
 int fakeintr(void *a)
 {
@@ -245,12 +249,12 @@ void
 intr_calculatemasks(void)
 {
 	int irq, level;
-	struct intrhand *q;
+	struct isa_intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+		for (q = isa_intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
@@ -294,7 +298,7 @@ intr_calculatemasks(void)
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+		for (q = isa_intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs;
 	}
@@ -303,7 +307,7 @@ intr_calculatemasks(void)
 	{
 		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrhand[irq])
+			if (isa_intrhand[irq])
 				irqs |= 1 << irq;
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
 			irqs |= 1 << IRQ_SLAVE;
@@ -336,8 +340,8 @@ void *
 isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg)
 {
-	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand = {NULL, fakeintr};
+	struct isa_intrhand **p, *q, *ih;
+	static struct isa_intrhand fakehand = {NULL, fakeintr};
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -368,7 +372,7 @@ isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+	for (p = &isa_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
 		;
 
 	/*
@@ -390,7 +394,9 @@ isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	ih->ih_what = ""; /* XXX - should be eliminated */
+	snprintf(ih->ih_evname, sizeof(ih->ih_evname), "irq %d", irq);
+	evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR, NULL, "isa",
+	    ih->ih_evname);
 	*p = ih;
 
 	return ih;
@@ -408,7 +414,7 @@ isabr_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 uint32_t
 isabr_iointr(uint32_t mask, struct clockframe *cf)
 {
-	struct intrhand *ih;
+	struct isa_intrhand *ih;
 	int isa_vector;
 	int o_imen;
 
@@ -428,13 +434,18 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU1, 0x60 + isa_vector);
 	}
-	ih = intrhand[isa_vector];
-	if (isa_vector == 0) {	/* Clock */	/*XXX*/
-		(*ih->ih_fun)(cf);
+	ih = isa_intrhand[isa_vector];
+	if (isa_vector == 0 && ih) {	/* Clock */	/*XXX*/
+		last_cp0_count = mips3_cp0_count_read();
+		/* XXX: spllowerclock() not allowed */
+		cf->sr &= ~MIPS_SR_INT_IE;
+		if ((*ih->ih_fun)(cf))
+			ih->ih_evcnt.ev_count++;
 		ih = ih->ih_next;
 	}
 	while (ih) {
-		(*ih->ih_fun)(ih->ih_arg);
+		if ((*ih->ih_fun)(ih->ih_arg))
+			ih->ih_evcnt.ev_count++;
 		ih = ih->ih_next;
 	}
 	imen = o_imen;
@@ -443,7 +454,7 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
 
-	return ~0;  /* Dont reenable */
+	return ~MIPS_INT_MASK_2;
 }
 
 
@@ -545,7 +556,7 @@ isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
 		}
 		/* Level interrupts can be shared */
 		if (type == IST_LEVEL && intrtype[irq] == IST_LEVEL) {
-			struct intrhand *ih = intrhand[irq];
+			struct isa_intrhand *ih = isa_intrhand[irq];
 			int depth;
 			if (maybe_irq == -1) {
  				maybe_irq = irq;

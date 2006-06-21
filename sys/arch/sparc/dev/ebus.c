@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.18 2004/07/10 20:37:07 pk Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.18.12.1 2006/06/21 14:55:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.18 2004/07/10 20:37:07 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.18.12.1 2006/06/21 14:55:54 yamt Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -54,13 +54,12 @@ int ebus_debug = 0;
 #endif
 
 #include <sys/param.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
-#include <sys/systm.h>
-#include <sys/time.h>
+#include <sys/callout.h>
+#include <sys/kernel.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -75,6 +74,15 @@ int ebus_debug = 0;
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
+#include "opt_blink.h"
+
+volatile uint32_t *ebus_LED = NULL;
+
+#ifdef BLINK
+static struct callout ebus_blink_ch = CALLOUT_INITIALIZER;
+
+static void ebus_blink(void *);
+#endif
 
 struct ebus_softc {
 	struct device			sc_dev;
@@ -84,7 +92,7 @@ struct ebus_softc {
 
 	bus_space_tag_t			sc_bustag;	/* mem tag from pci */
 
-	/* 
+	/*
 	 * "reg" contains exactly the info we'd get by processing
 	 * "ranges", so don't bother with "ranges" and use "reg" directly.
 	 */
@@ -92,23 +100,23 @@ struct ebus_softc {
 	int				sc_nreg;
 };
 
-int	ebus_match(struct device *, struct cfdata *, void *);
-void	ebus_attach(struct device *, struct device *, void *);
+static int	ebus_match(struct device *, struct cfdata *, void *);
+static void	ebus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
     ebus_match, ebus_attach, NULL, NULL);
 
-int	ebus_setup_attach_args(struct ebus_softc *, bus_space_tag_t,
-			       bus_dma_tag_t, int, struct ebus_attach_args *);
-void	ebus_destroy_attach_args(struct ebus_attach_args *);
-int	ebus_print(void *, const char *);
+static int	ebus_setup_attach_args(struct ebus_softc *, bus_space_tag_t,
+				bus_dma_tag_t, int, struct ebus_attach_args *);
+static void	ebus_destroy_attach_args(struct ebus_attach_args *);
+static int	ebus_print(void *, const char *);
 
 /*
  * here are our bus space and bus DMA routines.
  */
 static paddr_t	ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t,
-			      bus_size_t, int, vaddr_t, bus_space_handle_t *);
+static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+			      vaddr_t, bus_space_handle_t *);
 static void	*ebus_intr_establish(bus_space_tag_t, int, int,
 				     int (*)(void *), void *, void (*)(void));
 
@@ -137,21 +145,21 @@ struct msiiep_ebus_intr_wiring {
 	int line;		/* ms-IIep interrupt input */
 };
 
-static struct msiiep_ebus_intr_wiring krups_ebus_intr_wiring[] = {
+static const struct msiiep_ebus_intr_wiring krups_ebus_intr_wiring[] = {
 	{ "su", 0 }, { "8042", 0 }, { "sound", 3 }
 };
 
 
 struct msiiep_known_ebus_wiring {
 	const char *model;
-	struct msiiep_ebus_intr_wiring *map;
+	const struct msiiep_ebus_intr_wiring *map;
 	int mapsize;
 };
 
 #define MSIIEP_MODEL_WIRING(name, map) \
 	{ name, map, sizeof(map)/sizeof(map[0]) }
 
-static struct msiiep_known_ebus_wiring known_models[] = {
+static const struct msiiep_known_ebus_wiring known_models[] = {
 	MSIIEP_MODEL_WIRING("SUNW,501-4267", krups_ebus_intr_wiring),
 	{ NULL, NULL, 0}
 };
@@ -164,17 +172,14 @@ static struct msiiep_known_ebus_wiring known_models[] = {
  * program the driver to handle PROM glitches in them, so for the time
  * being just use globals.
  */
-static struct msiiep_ebus_intr_wiring *wiring_map;
+static const struct msiiep_ebus_intr_wiring *wiring_map;
 static int wiring_map_size;
 
 static int ebus_init_wiring_table(struct ebus_softc *);
 
 
-int
-ebus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ebus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char name[10];
@@ -197,10 +202,9 @@ ebus_match(parent, match, aux)
 
 
 static int
-ebus_init_wiring_table(sc)
-	struct ebus_softc *sc;
+ebus_init_wiring_table(struct ebus_softc *sc)
 {
-	struct msiiep_known_ebus_wiring *p;
+	const struct msiiep_known_ebus_wiring *p;
 	char buf[32];
 	char *model;
 
@@ -231,16 +235,16 @@ ebus_init_wiring_table(sc)
  * attach an ebus and all it's children.  this code is modeled
  * after the sbus code which does similar things.
  */
-void
-ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ebus_softc *sc = (struct ebus_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct ebus_attach_args ea;
 	bus_space_tag_t sbt;
 	bus_dma_tag_t dmatag;
+	bus_space_handle_t hLED;
+	pcireg_t base14;
 	int node, error;
 	char devinfo[256];
 
@@ -254,6 +258,18 @@ ebus_attach(parent, self, aux)
 
 	if (ebus_init_wiring_table(sc) == 0)
 		return;
+
+	/* map the LED register */
+	base14 = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x14);
+	printf("base14: %08x\n", (uint32_t)base14);
+	if (bus_space_map(pa->pa_memt, base14 + 0x726000, 4, 0, &hLED) == 0) {
+		ebus_LED = bus_space_vaddr(pa->pa_memt, hLED);
+#ifdef BLINK
+		ebus_blink((caddr_t)0);
+#endif
+	} else {
+		printf("unable to map the LED register\n");
+	}
 
 	sc->sc_node = node;
 	sc->sc_parent = parent;	/* XXX: unused so far */
@@ -272,7 +288,6 @@ ebus_attach(parent, self, aux)
 	 * Setup ranges.  The interesting thing is that we use "reg"
 	 * not "ranges", since "reg" on ebus has exactly the data we'd
 	 * get by processing "ranges".
-	 * 
 	 */
 	error = prom_getprop(node, "reg", sizeof(struct ofw_pci_register),
 			     &sc->sc_nreg, &sc->sc_reg);
@@ -298,13 +313,10 @@ ebus_attach(parent, self, aux)
 	}
 }
 
-int
-ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
-	struct ebus_softc *sc;
-	bus_space_tag_t bustag;
-	bus_dma_tag_t dmatag;
-	int node;
-	struct ebus_attach_args	*ea;
+static int
+ebus_setup_attach_args(struct ebus_softc *sc,
+		       bus_space_tag_t bustag, bus_dma_tag_t dmatag, int node,
+		       struct ebus_attach_args	*ea)
 {
 	int n, err;
 
@@ -336,8 +348,7 @@ ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
 		    + ea->ea_reg[n].hi * sizeof(pcireg_t);
 	    }
 
-
-	err = prom_getprop(node, "address", sizeof(u_int32_t),
+	err = prom_getprop(node, "address", sizeof(uint32_t),
 			   &ea->ea_nvaddr, &ea->ea_vaddr);
 	if (err != ENOENT) {
 		if (err != 0)
@@ -351,9 +362,9 @@ ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
 
 	/* XXX: "interrupts" hack */
 	for (n = 0; n < wiring_map_size; ++n) {
-		struct msiiep_ebus_intr_wiring *w = &wiring_map[n];
+		const struct msiiep_ebus_intr_wiring *w = &wiring_map[n];
 		if (strcmp(w->name, ea->ea_name) == 0) {
-			ea->ea_intr = malloc(sizeof(u_int32_t),
+			ea->ea_intr = malloc(sizeof(uint32_t),
 					     M_DEVBUF, M_NOWAIT);
 			ea->ea_intr[0] = w->line;
 			ea->ea_nintr = 1;
@@ -364,9 +375,8 @@ ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
 	return (0);
 }
 
-void
-ebus_destroy_attach_args(ea)
-	struct ebus_attach_args	*ea;
+static void
+ebus_destroy_attach_args(struct ebus_attach_args *ea)
 {
 
 	if (ea->ea_name)
@@ -379,10 +389,8 @@ ebus_destroy_attach_args(ea)
 		free((void *)ea->ea_vaddr, M_DEVBUF);
 }
 
-int
-ebus_print(aux, p)
-	void *aux;
-	const char *p;
+static int
+ebus_print(void *aux, const char *p)
 {
 	struct ebus_attach_args *ea = aux;
 	int i;
@@ -401,10 +409,8 @@ ebus_print(aux, p)
 /*
  * bus space and bus DMA methods below here
  */
-bus_dma_tag_t
-ebus_alloc_dma_tag(sc, pdt)
-	struct ebus_softc *sc;
-	bus_dma_tag_t pdt;
+static bus_dma_tag_t
+ebus_alloc_dma_tag(struct ebus_softc *sc, bus_dma_tag_t pdt)
 {
 	bus_dma_tag_t dt;
 
@@ -438,13 +444,8 @@ ebus_alloc_dma_tag(sc, pdt)
  * about PCI physical addresses, which also applies to ebus.
  */
 static int
-_ebus_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;	/* encodes bar/offset */
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;
-	bus_space_handle_t *hp;
+_ebus_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+	      vaddr_t va, bus_space_handle_t *hp)
 {
 	struct ebus_softc *sc = t->cookie;
 	u_int bar;
@@ -456,7 +457,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 
 	DPRINTF(EDB_BUSMAP,
 		("\n_ebus_bus_map: bar %d offset %08x sz %x flags %x va %p\n",
-		 (int)bar, (u_int32_t)offset, (u_int32_t)size,
+		 (int)bar, (uint32_t)offset, (uint32_t)size,
 		 flags, (void *)va));
 
 	/* EBus has only two BARs */
@@ -472,7 +473,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 	 */
 	for (i = sc->sc_nreg - 1; i >= 0; --i) {
 		bus_addr_t pciaddr;
-		u_int32_t ss;
+		uint32_t ss;
 
 		/* EBus only does MEM32 */
 		ss  = sc->sc_reg[i].phys_hi & OFW_PCI_PHYS_HI_SPACEMASK;
@@ -491,7 +492,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 
 		DPRINTF(EDB_BUSMAP,
 			("_ebus_bus_map: mapping to PCI addr %x\n",
-			 (u_int32_t)pciaddr));
+			 (uint32_t)pciaddr));
 
 		/* pass it onto the pci controller */
 		return (bus_space_map2(t->parent, pciaddr, size,
@@ -503,29 +504,43 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 }
 
 static paddr_t
-ebus_bus_mmap(t, ba, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	off_t off;
-	int prot;
-	int flags;
+ebus_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off, int prot, int flags)
 {
 
 	/* XXX: not implemented yet */
 	return (-1);
 }
 
-/* 
+/*
  * Install an interrupt handler for a EBus device.
  */
-void *
-ebus_intr_establish(t, pri, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int (*handler)(void *);
-	void *arg;
-	void (*fastvec)(void);	/* ignored */
+static void *
+ebus_intr_establish(bus_space_tag_t t, int pri, int level,
+		    int (*handler)(void *), void *arg,
+		    void (*fastvec)(void))
 {
+
 	return (bus_intr_establish(t->parent, pri, level, handler, arg));
 }
+
+#ifdef BLINK
+
+static void
+ebus_blink(void *zero)
+{
+	register int s;
+
+	s = splhigh();
+	*ebus_LED = ~*ebus_LED;
+	splx(s);
+	/*
+	 * Blink rate is:
+	 *	full cycle every second if completely idle (loadav = 0)
+	 *	full cycle every 2 seconds if loadav = 1
+	 *	full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	callout_reset(&ebus_blink_ch, s, ebus_blink, NULL);
+}
+#endif

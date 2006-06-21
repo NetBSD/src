@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.94 2005/06/25 12:05:18 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.94.2.1 2006/06/21 14:55:11 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,17 +24,11 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.94 $"
+#ident		"GENERIC-$Revision: 1.94.2.1 $"
 
 maxusers	32
 
 # Platform support
-options 	PLATFORM_IBM_6015		# IBM RS/6000 40P
-options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
-options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
-options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
-options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
-options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 
 options 	OPENPIC				# OpenPIC support (7043-140)
 
@@ -81,6 +75,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -104,7 +99,9 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -112,7 +109,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
@@ -122,6 +119,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -156,6 +154,8 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
+#options		NVRAM_DUMP	# verbosely dump contents of nvram.
+				# Warning: output may not be ascii!
 
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -169,7 +169,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -197,15 +197,18 @@ pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
 
-options 	PCI_NETBSD_CONFIGURE
-
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+pceb*	at pci? dev ? function ?	# PCI-EISA bridges
+
+# EISA bus support
+eisa*	at pceb?
 
 # ISA bus support
 isa*	at pcib?			# ISA on PCI-ISA bridge
+isa*	at pceb?
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?
@@ -221,8 +224,7 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 #isapnp0	at isa?
 
 # on-board I/O for IBM Personal Power Series 830 IDE controller
-obio0	at mainbus0
-
+pnpbus0	at mainbus0
 
 # Console Devices
 
@@ -239,9 +241,11 @@ attimer0	at isa?			# AT Timer
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 
-mcclock0 at isa? port 0x70		# mc146818 and compatible
-mkclock0 at isa? port 0x74		# mk48t18 and compatible
+#mcclock0 at isa? port 0x70		# mc146818 and compatible
+mcclock* at pnpbus?			# mc146818 and compatible
+mkclock* at pnpbus?			# mk48t18 and compatible
 
+nvram*	at pnpbus?
 
 # Cryptographic Devices
 
@@ -299,12 +303,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-
 # IDE and related devices
 
-# IBM Personal Power Series 830 IDE controller
-wdc0	at obio? port 0x1f0 irq 13
-wdc1	at obio? port 0x170 irq 13
+# IDE controller found on most Power Personal machines
+wdc*	at pnpbus?
+
+#fdc0 at pnpbus?	# standard ISA floppy controller
+#fd0 at fdc0 drive ?
 
 # ISA Plug-and-Play IDE controllers
 #wdc*	at isapnp?
@@ -412,6 +417,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
 
@@ -438,7 +446,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
 
 # Serial adapters
@@ -499,17 +507,20 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
+# Pull in optional local configuration
+include "arch/prep/conf/GENERIC.local"
 
 # Pseudo-Devices
 
 # Not yet ready -- prep lacks generic soft interrupts
-#pseudo-device 	crypto		# opencrypto framework
+#pseudo-device 	crypto		# /dev/crypto device
+#pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
 # options	RF_INCLUDE_RAID5_RS=1
@@ -520,29 +531,29 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
@@ -557,3 +568,20 @@ pseudo-device	ksyms			# /dev/ksyms
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.21 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: VME177,v 1.21.4.1 2006/06/21 14:53:49 yamt Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -26,12 +26,15 @@ file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 file-system 	CD9660
+file-system	NULLFS
 #file-system	MSDOSFS
 #file-system	UNION
+file-system	TMPFS
+#file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET
@@ -51,6 +54,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_15
 #options 	COMPAT_16
 #options 	COMPAT_20
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -67,9 +71,10 @@ options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 
 pseudo-device	sl
-pseudo-device	ppp 2
+pseudo-device	ppp 
 pseudo-device	loop
 pseudo-device	bpfilter
+pseudo-device	ksyms
 pseudo-device	pty
 pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem

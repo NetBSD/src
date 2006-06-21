@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.37 2005/03/11 07:08:33 matt Exp $ */
+/* $NetBSD: sci.c,v 1.37.4.1 2006/06/21 14:55:31 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.37 2005/03/11 07:08:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.37.4.1 2006/06/21 14:55:31 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.37 2005/03/11 07:08:33 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -214,11 +215,6 @@ void	scidiag(void *);
 
 #define	SCIUNIT(x)	(minor(x) & SCIUNIT_MASK)
 #define	SCIDIALOUT(x)	(minor(x) & SCIDIALOUT_MASK)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCI_HW_NOIEN	0x01
@@ -516,7 +512,7 @@ sciparam(struct tty *tp, struct termios *t)
 	int ospeed = t->c_ospeed;
 	int s;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -641,7 +637,7 @@ sci_iflush(struct sci_softc *sc)
 }
 
 int
-sciopen(dev_t dev, int flag, int mode, struct proc *p)
+sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SCIUNIT(dev);
 	struct sci_softc *sc;
@@ -656,7 +652,7 @@ sciopen(dev_t dev, int flag, int mode, struct proc *p)
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -671,7 +667,7 @@ sciopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -756,7 +752,7 @@ bad:
 }
 
 int
-sciclose(dev_t dev, int flag, int mode, struct proc *p)
+sciclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -768,7 +764,7 @@ sciclose(dev_t dev, int flag, int mode, struct proc *p)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (0);
 
 	return (0);
@@ -793,12 +789,12 @@ sciwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-scipoll(dev_t dev, int events, struct proc *p)
+scipoll(dev_t dev, int events, struct lwp *l)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -811,21 +807,21 @@ scitty(dev_t dev)
 }
 
 int
-sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -847,7 +843,7 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -949,7 +945,7 @@ scidiag(void *arg)
 integrate void
 sci_rxsoft(struct sci_softc *sc, struct tty *tp)
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr;
@@ -1089,7 +1085,7 @@ scisoft(void *arg)
 	struct sci_softc *sc = arg;
 	struct tty *tp;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	{
@@ -1116,7 +1112,7 @@ scisoft(void *arg)
 		if (sc == NULL || !ISSET(sc->sc_hwflags, SCI_HW_DEV_OK))
 			continue;
 
-		if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+		if (!device_is_active(&sc->sc_dev))
 			continue;
 
 		tp = sc->sc_tty;
@@ -1160,7 +1156,7 @@ sciintr(void *arg)
 	u_int cc;
 	u_short ssr;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (0);
 
 	end = sc->sc_ebuf;

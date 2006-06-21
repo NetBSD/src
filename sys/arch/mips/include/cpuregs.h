@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.65 2003/10/29 23:41:10 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.65.16.1 2006/06/21 14:53:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,8 +89,6 @@
 #define	MIPS_PHYS_TO_KSEG0(x)	((unsigned)(x) | MIPS_KSEG0_START)
 #define	MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define	MIPS_PHYS_TO_KSEG1(x)	((unsigned)(x) | MIPS_KSEG1_START)
-#define	MIPS_KSEG2_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG2(x)	((unsigned)(x) | MIPS_KSEG2_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
@@ -212,11 +210,11 @@
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
 #define	MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
 #define	MIPS3_SR_SR		0x00100000
-#define	MIPS3_SR_EIE		0x00100000		/* TX79/R5900 */
 #define	MIPS3_SR_NMI		0x00080000		/* MIPS32/64 */
 #define	MIPS3_SR_DIAG_CH	0x00040000
 #define	MIPS3_SR_DIAG_CE	0x00020000
 #define	MIPS3_SR_DIAG_PE	0x00010000
+#define	MIPS3_SR_EIE		0x00010000		/* TX79/R5900 */
 #define	MIPS3_SR_KX		0x00000080
 #define	MIPS3_SR_SX		0x00000040
 #define	MIPS3_SR_UX		0x00000020
@@ -310,15 +308,12 @@
 #define	MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
 #define	MIPS3_CONFIG_IC_SHIFT	9
 #define	MIPS3_CONFIG_C_DEFBASE	0x1000		/* default base 2^12 */
-#ifdef MIPS3_4100				/* VR4100 core */
-/* XXXCDC: THIS MIPS3_4100 SPECIAL CASE SHOULD GO AWAY */
-#define	MIPS3_CONFIG_CS		0x00001000	/* cache size mode indication*/
-#define	MIPS3_CONFIG_CACHE_SIZE(config, mask, dummy, shift) \
-	((((config)&MIPS3_CONFIG_CS)?0x400:0x1000) << (((config) & (mask)) >> (shift)))
-#else
+
+/* Cache size mode indication: available only on Vr41xx CPUs */
+#define	MIPS3_CONFIG_CS		0x00001000
+#define	MIPS3_CONFIG_C_4100BASE	0x0400		/* base is 2^10 if CS=1 */
 #define	MIPS3_CONFIG_CACHE_SIZE(config, mask, base, shift) \
 	((base) << (((config) & (mask)) >> (shift)))
-#endif
 
 /* External cache enable: Controls L2 for R5000/Rm527x and L3 for Rm7000 */
 #define	MIPS3_CONFIG_SE		0x00001000
@@ -783,6 +778,7 @@
 #define	MIPS_AU1000	0x00
 #define	MIPS_AU1500	0x01
 #define	MIPS_AU1100	0x02
+#define	MIPS_AU1550	0x03
 
 /*
  * CPU processor revision IDs for company ID == 4 (SiByte)

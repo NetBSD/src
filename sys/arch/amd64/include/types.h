@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9.16.1 2005/07/07 12:38:44 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.9.16.2 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@ typedef unsigned long	vsize_t;
 typedef long int		register_t;
 typedef int			register32_t;
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
@@ -70,6 +70,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__HAVE_MINIMAL_EMUL
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_CPU_MAXPROC
+#define __HAVE_TIMECOUNTER
 
 #if defined(_KERNEL)
 #define __HAVE_RAS

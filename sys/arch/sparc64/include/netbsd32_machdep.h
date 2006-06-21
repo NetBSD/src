@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.16 2004/02/20 16:11:44 drochner Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.16.16.1 2006/06/21 14:56:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -32,19 +32,18 @@
 #define _MACHINE_NETBSD32_H_
 
 #include <sys/types.h>
-#include <sys/proc.h>
 
-typedef	u_int32_t netbsd32_pointer_t;
+struct proc;
+
+typedef	uint32_t netbsd32_pointer_t;
 
 /*
  * Convert a pointer in the 32-bit world to a valid 64-bit pointer.
  */
 #define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
 
-#include <compat/netbsd32/netbsd32.h>
-
 /* from <arch/sparc/include/signal.h> */
-typedef u_int32_t netbsd32_sigcontextp_t;
+typedef uint32_t netbsd32_sigcontextp_t;
 
 struct netbsd32_sigcontext {
 	int		sc_onstack;	/* sigstack state to restore */
@@ -75,8 +74,22 @@ struct netbsd32_sigcontext13 {
  * Need to plug into get sparc specific ioctl's.
  */
 #define	NETBSD32_MD_IOCTL	/* enable netbsd32_md_ioctl() */
-int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct proc *);
+int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct lwp *);
 
 #define NETBSD32_MID_MACHINE MID_SPARC
+
+/*
+ * When returning an off_t to userland, we need to modify the syscall
+ * retval array. We return a 64 bit value in %o0 (high) and %o1 (low)
+ * for 32bit userland.
+ */
+#define NETBSD32_OFF_T_RETURN(RV)	\
+	do {				\
+		(RV)[1] = (RV)[0];	\
+		(RV)[0] >>= 32;		\
+	} while (0)
+
+int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
+int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *);
 
 #endif /* _MACHINE_NETBSD32_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2005/06/03 15:21:35 chs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7.2.1 2006/06/21 14:52:02 yamt Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2005/06/03 15:21:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7.2.1 2006/06/21 14:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ struct ute {
  *  program , "s" and "l" must (alas!) be constants.  (Suggestion: if
  *  "s" == 2 and "l" == 8, use _b28 for "n".)  The name "BITFLR" should
  *  be pre-defined if the compiler assigns bitfields from left-to-right.
- *  The resultant macro expansion defines a stucture in which the bit field
+ *  The resultant macro expansion defines a structure in which the bit field
  *  starting at position "s" with length "l" may be referenced by accessing
  *  member "n".  [Note: The leftmost bits in a 36-bit word may be accessed
  *  by specifying -4 <= s < 0 on the DEC-20.]

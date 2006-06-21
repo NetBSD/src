@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.18 2003/09/29 22:54:28 matt Exp $	*/
+/*	$NetBSD: crl.c,v 1.18.16.1 2006/06/21 14:57:33 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.18 2003/09/29 22:54:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.18.16.1 2006/06/21 14:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,10 @@ crlattach()
 
 /*ARGSUSED*/
 int
-crlopen(dev, flag, mode, p)
+crlopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (vax_cputype != VAX_8600)
 		return (ENXIO);
@@ -105,10 +105,10 @@ crlopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-crlclose(dev, flag, mode, p)
+crlclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	brelse(crltab.crl_buf);

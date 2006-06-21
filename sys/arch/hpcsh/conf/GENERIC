@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.50 2005/06/25 12:05:17 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.50.2.1 2006/06/21 14:52:01 yamt Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -21,7 +21,7 @@
 #
 # This kernel supports...
 #	HP Jornada 680/690
-#	HP HP620LX
+#	HP 620LX/660LX
 #	HITACHI HPW50PA
 #
 
@@ -46,7 +46,7 @@ options 	SH3
 # PCLOCK is estimated by kernel.
 #				PCLOCK		CPU CLOCK
 #	HP Jornada 680/690	22.22MHz	133MHz
-#	HP HP620LX		18.75MHz	 75MHz
+#	HP 620LX		18.75MHz	 75MHz
 #	HITACHI HPW50PA		25MHz		100MHz
 #
 #options 	PCLOCK=...
@@ -97,15 +97,16 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVRATE=19200
-#options 	"KGDB_DEVNAME=\"scif\""		# HP Jornada
-#options 	"KGDB_DEVNAME=\"hd64461uart\""	# HITACHI PERSONA (SH3)
-#options 	"KGDB_DEVNAME=\"hd64465uart\""	# HITACHI PERSONA (SH4)
+#options 	KGDB_DEVNAME="\"scif\""		# HP Jornada
+#options 	KGDB_DEVNAME="\"hd64461uart\""	# HITACHI PERSONA (SH3)
+#options 	KGDB_DEVNAME="\"hd64465uart\""	# HITACHI PERSONA (SH4)
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -129,11 +130,13 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -144,6 +147,10 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -172,9 +179,18 @@ options 	NFS_BOOT_DHCP
 options 	WSEMUL_VT100
 # allocate a number of virtual screens at autoconfiguration time
 options 	WSDISPLAY_DEFAULTSCREENS=4
-# different kernel output - see dev/wscons/wsdisplayvar.h
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_BROWN
 options 	WS_KERNEL_BG=WSCOL_BLUE
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -200,6 +216,7 @@ wskbd*		at btnmgr0 mux 1
 
 cpu*		at mainbus?
 shb*		at mainbus?
+adc*		at shb?			# analog->digital converter
 pfckbd*		at mainbus?
 
 #
@@ -212,20 +229,17 @@ hpckbd*		at pfckbd?
 wskbd0		at hpckbd? mux 1
 
 #
-# HP Jornada
+# HP Jornada (620LX/660LX, 680/690)
 #
-# Serial Devices
-# don't need to define SCICONSOLE. you can select from bootloader.
-scif0		at shb?
+scif0		at shb?			# serial port/console
 options 	SCIFCN_SPEED=19200
+# don't need to define SCIFCONSOLE, you can select from the bootloader.
 
-adc*		at shb?			# analog->digital converter
+j6x0pwr*	at adc?			# battery, on/off, etc
 
-j6x0pwr*	at adc?			# '680 battery, on/off, etc
+j6x0lcd*	at shb?			# LCD power, brightness, contrast
 
-j6x0lcd*	at shb?			# '680 LCD power, brightness, contrast
-
-j6x0tp*		at adc?			# '680 touch panel
+j6x0tp*		at adc?			# touch panel
 wsmouse*	at j6x0tp? mux 0	# - as a pointing device
 wskbd1		at j6x0tp? mux 1	# - "hard icons" as keys
 # Do not convert hard icons to key presses while serving mouse input.
@@ -236,18 +250,29 @@ options 	J6X0TP_WSMOUSE_EXCLUSIVE
 #options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
 #options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
 
-hd64461if* at shb?
-hd64461pcmcia*	at hd64461if?
-#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
-hd64461video*	at hd64461if?
-
 #
 # HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
 #
 com0		at hd64461if?
 
+psh3lcd*	at shb?			# LCD power, brightness, contrast
+
 psh3tp*		at adc?			# PERSONA SH3 touch panel
 wsmouse*	at psh3tp? mux 0
+
+#
+# Common HD64461 devices
+#
+hd64461if* at shb?
+
+hd64461pcmcia*	at hd64461if?
+#options 	HD64461PCMCIA_DEBUG
+#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
+
+hd64461video*	at hd64461if?
+#options 	HD64461VIDEO_DEBUG
+#options 	HD64461VIDEO_HWACCEL		# XXX: too slow to bother
+
 
 #
 # machine independent part
@@ -288,13 +313,14 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		1	# serial-line IP ports
-pseudo-device	bpfilter	2	# Berkeley packet filter
+pseudo-device	ppp			# serial-line IP ports
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
@@ -317,3 +343,20 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont			# dynamic font loading support
 #pseudo-device	hpf1275a		# HP F1275A external keyboard
 #wskbd* at hpf1275a? mux 1
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

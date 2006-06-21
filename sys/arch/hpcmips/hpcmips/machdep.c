@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2005/04/25 15:02:05 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87.2.1 2006/06/21 14:51:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2005/04/25 15:02:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.2.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -191,7 +191,6 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-extern	char cpu_model[];	
 char	cpu_name[40];			/* set CPU depend xx_init() */
 
 struct cpu_info cpu_info_store;		/* only one CPU */
@@ -496,7 +495,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	{
 		u_int32_t sp;
-		__asm__ __volatile__("move %0, $29" : "=r"(sp));
+		__asm volatile("move %0, $29" : "=r"(sp));
 		KDASSERT(sp > KERNBASE + 0x400);
 		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.17 2004/08/30 15:05:16 drochner Exp $	*/
+/*	$NetBSD: i80312.c,v 1.17.12.1 2006/06/21 14:49:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.17 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.17.12.1 2006/06/21 14:49:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.17 2004/08/30 15:05:16 drochner Exp $")
 #include <dev/pci/ppbreg.h>
 
 /*
- * Statically-allocated bus_space stucture used to access the
+ * Statically-allocated bus_space structure used to access the
  * i80312's own registers.
  */
 struct bus_space i80312_bs_tag;

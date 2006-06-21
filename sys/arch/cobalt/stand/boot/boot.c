@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2004/04/10 12:30:26 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.4.12.1 2006/06/21 14:50:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 
 #include <machine/cpu.h>
 #include <machine/leds.h>
-#include <machine/vmparam.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>

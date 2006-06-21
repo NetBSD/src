@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.40 2005/01/11 08:05:14 simonb Exp $ */
+/* $NetBSD: dec_3max.c,v 1.40.10.1 2006/06/21 14:54:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.40 2005/01/11 08:05:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.40.10.1 2006/06/21 14:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ dec_3max_intr(status, cause, pc, ipending)
 			printf("WARNING: power supply is OK again\n");
 		}
 
-		__asm __volatile("lbu $0,48(%0)" ::
+		__asm volatile("lbu $0,48(%0)" ::
 			"r"(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;

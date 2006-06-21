@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.11 2003/10/08 01:35:49 simonb Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11.16.1 2006/06/21 14:54:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,11 +40,13 @@
 static int (*openfirmware_entry)(void *);
 static int openfirmware(void *);
 
+static void startup(void *, int, int (*)(void *), char *, int)
+		__attribute__((__used__));
 static void setup(void);
 
-static int stack[8192/4 + 4];
+static int stack[8192/4 + 4] __attribute__((__used__));
 
-asm(
+__asm(
 "	.text					\n"
 "	.globl	_start				\n"
 "_start:					\n"
@@ -70,9 +72,9 @@ openfirmware(void *arg)
 {
 	int r;
 
-	asm volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 	r = openfirmware_entry(arg);
-	asm volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 
 	return r;
 }

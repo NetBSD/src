@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.1 2004/10/13 23:28:36 gavan Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.1 2004/10/13 23:28:36 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Check the configuration of the ATU to see if another BIOS
-	 * has configured us.  If a PC BIOS didn't configured us, then
+	 * has configured us.  If a PC BIOS didn't configure us, then
 	 * BAR0 is 00000000.0000000c and BAR1 is 00000000.8000000c.  If
 	 * a BIOS has configured us, at least one of those should be
 	 * different.
@@ -220,6 +220,7 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * to PCI address 0 for all 64K of the I/O space.
 	 */
 	sc->sc_ioout_xlate = 0;
+	sc->sc_ioout_xlate_offset = 0;
 
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag.

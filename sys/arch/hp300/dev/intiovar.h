@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.8 2005/06/02 15:55:49 tsutsui Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.8.2.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -79,17 +79,17 @@ struct intio_builtins {
 	while (!(bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT) \
 		& INTIO_DEV_DATA_READY))
 
-static __inline int
+static inline int
 intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
-	uint8_t *datap)
+    uint8_t *datap)
 {
-        uint8_t status;
+	uint8_t status;
 
 	if (cmd != 0) {
 		WAIT(bst, bsh);
 		bus_space_write_1(bst, bsh, INTIO_DEV_3xx_CMD, cmd);
 	}
-        do {
+	do {
 		DATAWAIT(bst, bsh);
 		status = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT);
 		*datap = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_DATA);
@@ -98,22 +98,23 @@ intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
 	return (0);
 }
 
-static __inline int
+static inline int
 intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
-	int cmd, uint8_t *datap, int len)
+    int cmd, uint8_t *datap, int len)
 {
-        WAIT(bst,bsh);
+
+	WAIT(bst, bsh);
 	bus_space_write_1(bst, bsh, INTIO_DEV_3xx_CMD, cmd);
-        while (len--) {
-                WAIT(bst,bsh);
+	while (len--) {
+	WAIT(bst, bsh);
 		bus_space_write_1(bst, bsh, INTIO_DEV_3xx_DATA, *datap++);
-        }
+	}
 	return (0);
 }
 
-static __inline int
+static inline int
 intio_device_readstate(bus_space_tag_t bst, bus_space_handle_t bsh,
-	uint8_t *statusp, uint8_t *datap)
+    uint8_t *statusp, uint8_t *datap)
 {
 	*statusp = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT);
 	*datap = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_DATA);

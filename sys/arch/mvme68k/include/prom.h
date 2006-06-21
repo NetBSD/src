@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.14 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: prom.h,v 1.14.16.1 2006/06/21 14:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -150,17 +150,17 @@ struct mvmeprom_args {
 #endif
 
 #define MVMEPROM_CALL(x) \
-	__asm__ __volatile ("trap #15; .short " __STRING(x))
+	__asm volatile ("trap #15; .short " __STRING(x))
 #define MVMEPROM_NOARG() \
-	__asm__ __volatile ("clrl %sp@-")
+	__asm volatile ("clrl %sp@-")
 #define MVMEPROM_ARG1(arg) \
-	__asm__ __volatile ("movel %0, %%sp@-"::"d" (arg))
+	__asm volatile ("movel %0, %%sp@-"::"d" (arg))
 #define MVMEPROM_ARG2(arg) \
-	__asm__ __volatile ("movel %0, %%sp@-"::"d" (arg))
+	__asm volatile ("movel %0, %%sp@-"::"d" (arg))
 #define MVMEPROM_GETRES(ret) \
-	__asm__ __volatile ("movel %%sp@+,%0": "=d" (ret):)
+	__asm volatile ("movel %%sp@+,%0": "=d" (ret):)
 #define MVMEPROM_GETSR(ret) \
-	__asm__ __volatile ("movew %%sr,%0": "=d" (ret):)
+	__asm volatile ("movew %%sr,%0": "=d" (ret):)
 #define MVMEPROM_RETURN(ret) \
 	MVMEPROM_GETRES(ret); \
 	return (ret);			/* return a value (int) */

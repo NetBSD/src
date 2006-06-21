@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.15 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.15.2.1 2006/06/21 14:57:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.15 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.15.2.1 2006/06/21 14:57:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ sunmon_abort(void)
 	 * Already setup "trap #14" in sunmon_init().
 	 */
 
-	asm(" trap #14 ; _sunmon_continued: nop");
+	__asm(" trap #14 ; _sunmon_continued: nop");
 
 	/* We have continued from a PROM abort! */
 #ifdef	_SUN3X_
@@ -138,7 +138,7 @@ sunmon_halt(void)
 	 * SunOS uses the "abort" function when you halt (bug work-around?)
 	 * so we might as well do the same.
 	 */
-	asm(" trap #14"); /* mon_exit_to_mon() provokes PROM monitor bug */
+	__asm(" trap #14"); /* mon_exit_to_mon() provokes PROM monitor bug */
 #endif
 	mon_exit_to_mon();
 	/*NOTREACHED*/

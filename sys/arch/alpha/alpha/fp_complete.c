@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.7 2003/12/04 13:05:15 keihan Exp $ */
+/* $NetBSD: fp_complete.c,v 1.7.16.1 2006/06/21 14:48:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.7 2003/12/04 13:05:15 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.7.16.1 2006/06/21 14:48:01 yamt Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -169,28 +169,28 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 	printf("Please report this to port-alpha-maintainer@NetBSD.org\n");
 }
 
-static __inline void
+static inline void
 sts(unsigned int rn, s_float *v, struct lwp *l)
 {
 	alpha_sts(rn, v);
 	PREFILTER_SUBNORMAL(l, v);
 }
 
-static __inline void
+static inline void
 stt(unsigned int rn, t_float *v, struct lwp *l)
 {
 	alpha_stt(rn, v);
 	PREFILTER_SUBNORMAL(l, v);
 }
 
-static __inline void
+static inline void
 lds(unsigned int rn, s_float *v, struct lwp *l)
 {
 	POSTFILTER_SUBNORMAL(l, v);
 	alpha_lds(rn, v);
 }
 
-static __inline void
+static inline void
 ldt(unsigned int rn, t_float *v, struct lwp *l)
 {
 	POSTFILTER_SUBNORMAL(l, v);
@@ -635,7 +635,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, u_int64_t *ucode)
 	if (!(a0 & 1))
 		return sig;
 /*
- * At this point we are somwhere in the trap shadow of one or more instruc-
+ * At this point we are somewhere in the trap shadow of one or more instruc-
  * tions that have trapped with software completion specified.  We have a mask
  * of the registers written by trapping instructions.
  * 

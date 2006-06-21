@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.13 2005/06/03 22:02:30 tsutsui Exp $	*/
+/*	$NetBSD: promlib.c,v 1.13.2.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.13 2005/06/03 22:02:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.13.2.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ prom_abort(void)
 	 * Already setup "trap #14" in prom_init().
 	 */
 
-	asm(" trap #14 ; _sunmon_continued: nop");
+	__asm(" trap #14 ; _sunmon_continued: nop");
 
 	/* We have continued from a PROM abort! */
 

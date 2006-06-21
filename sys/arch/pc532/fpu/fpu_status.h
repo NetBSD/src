@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_status.h,v 1.4 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: fpu_status.h,v 1.4.16.1 2006/06/21 14:54:31 yamt Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -65,9 +65,9 @@
 
 #define GET_SET_FSR(val) ({						\
 	int _tmp;							\
-	asm volatile("sfsr %0; lfsr %1" : "=&g" (_tmp): "g" (val)); _tmp; \
+	__asm volatile("sfsr %0; lfsr %1" : "=&g" (_tmp): "g" (val)); _tmp; \
 })
-#define GET_FSR() ({int _tmp; asm volatile("sfsr %0" : "=g" (_tmp)); _tmp;})
-#define SET_FSR(val) ({asm volatile("lfsr %0" :: "g" (val));})
+#define GET_FSR() ({int _tmp; __asm volatile("sfsr %0" : "=g" (_tmp)); _tmp;})
+#define SET_FSR(val) ({__asm volatile("lfsr %0" :: "g" (val));})
 
 #endif /* _FPU_STATUS_H_ */

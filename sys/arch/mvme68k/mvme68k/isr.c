@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.27 2003/07/15 02:43:49 lukem Exp $	*/
+/*	$NetBSD: isr.c,v 1.27.16.1 2006/06/21 14:54:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.27 2003/07/15 02:43:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.27.16.1 2006/06/21 14:54:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 

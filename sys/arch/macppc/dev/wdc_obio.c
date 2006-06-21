@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.41 2004/08/23 08:54:39 aymeric Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.41.12.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.41 2004/08/23 08:54:39 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.41.12.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,8 @@ wdc_obio_attach(parent, self, aux)
 	int use_dma = 0;
 	char path[80];
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & WDC_OPTIONS_DMA) {
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	    WDC_OPTIONS_DMA) {
 		if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
 			use_dma = 1;	/* XXX Don't work yet. */
 	}
@@ -220,6 +221,7 @@ wdc_obio_attach(parent, self, aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
+	chp->ch_ndrive = 2;
 
 	wdc_init_shadow_regs(chp);
 

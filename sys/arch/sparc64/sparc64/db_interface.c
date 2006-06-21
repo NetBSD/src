@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $ */
+/*	$NetBSD: db_interface.c,v 1.80.2.1 2006/06/21 14:56:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80.2.1 2006/06/21 14:56:47 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $"
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
+#include <ddb/ddbvar.h>
 
 #include <machine/instr.h>
 #include <machine/cpu.h>
@@ -226,42 +227,41 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
-void kdb_kbd_trap __P((struct trapframe64 *));
-void db_prom_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_lwp_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_proc_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_ctx_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_window __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_stack __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_trap __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_fpstate __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_ts __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_pcb __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_pv __P((db_expr_t, int, db_expr_t, const char *));
-void db_setpcb __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_dtlb __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_itlb __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_dtsb __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_itsb __P((db_expr_t, int, db_expr_t, const char *));
-void db_pmap_kernel __P((db_expr_t, int, db_expr_t, const char *));
-void db_pload_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_pmap_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_lock __P((db_expr_t, int, db_expr_t, const char *));
-void db_traptrace __P((db_expr_t, int, db_expr_t, const char *));
-void db_watch __P((db_expr_t, int, db_expr_t, const char *));
-void db_pm_extract __P((db_expr_t, int, db_expr_t, const char *));
-void db_cpus_cmd __P((db_expr_t, int, db_expr_t, const char *));
+void kdb_kbd_trap(struct trapframe64 *);
+void db_prom_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_lwp_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_proc_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_ctx_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_dump_window(db_expr_t, int, db_expr_t, const char *);
+void db_dump_stack(db_expr_t, int, db_expr_t, const char *);
+void db_dump_trap(db_expr_t, int, db_expr_t, const char *);
+void db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
+void db_dump_ts(db_expr_t, int, db_expr_t, const char *);
+void db_dump_pcb(db_expr_t, int, db_expr_t, const char *);
+void db_dump_pv(db_expr_t, int, db_expr_t, const char *);
+void db_setpcb(db_expr_t, int, db_expr_t, const char *);
+void db_dump_dtlb(db_expr_t, int, db_expr_t, const char *);
+void db_dump_itlb(db_expr_t, int, db_expr_t, const char *);
+void db_dump_dtsb(db_expr_t, int, db_expr_t, const char *);
+void db_dump_itsb(db_expr_t, int, db_expr_t, const char *);
+void db_pmap_kernel(db_expr_t, int, db_expr_t, const char *);
+void db_pload_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_pmap_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_lock(db_expr_t, int, db_expr_t, const char *);
+void db_traptrace(db_expr_t, int, db_expr_t, const char *);
+void db_watch(db_expr_t, int, db_expr_t, const char *);
+void db_pm_extract(db_expr_t, int, db_expr_t, const char *);
+void db_cpus_cmd(db_expr_t, int, db_expr_t, const char *);
 
 #ifdef DDB
-static void db_dump_pmap __P((struct pmap *));
-static void db_print_trace_entry __P((struct traptrace *, int));
+static void db_dump_pmap(struct pmap *);
+static void db_print_trace_entry(struct traptrace *, int);
 
 /*
  * Received keyboard interrupt sequence.
  */
 void
-kdb_kbd_trap(tf)
-	struct trapframe64 *tf;
+kdb_kbd_trap(struct trapframe64 *tf)
 {
 	if (db_active == 0 /* && (boothowto & RB_KDB) */) {
 		printf("\n\nkernel: keyboard interrupt tf=%p\n", tf);
@@ -273,9 +273,7 @@ kdb_kbd_trap(tf)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, tf)
-	int	type;
-	register struct trapframe64 *tf;
+kdb_trap(int type, register struct trapframe64 *tf)
 {
 	int s, tl;
 	struct trapstate *ts = &ddb_regs.ddb_ts[0];
@@ -298,6 +296,9 @@ kdb_trap(type, tf)
 		printf("kdb tf=%p\n", tf);
 		break;
 	default:
+		if (!db_onpanic && db_recover==0)
+			return (0);
+
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
 			prom_abort();
@@ -410,8 +411,7 @@ db_write_bytes(addr, size, data)
 	register const char	*data;
 {
 	register char	*dst;
-	extern vaddr_t ktext;
-	extern paddr_t ktextp;
+	extern paddr_t pmap_kextract(vaddr_t va);
 
 	dst = (char *)addr;
 	while (size-- > 0) {
@@ -420,7 +420,7 @@ db_write_bytes(addr, size, data)
 		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
 			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
 			/* Read Only mapping -- need to do a bypass access */
-			stba((u_long)dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
+			stba(pmap_kextract((vaddr_t)dst), ASI_PHYS_CACHED, *data);
 		else
 			subyte(dst, *data);
 		dst++, data++;
@@ -433,28 +433,20 @@ void
 Debugger()
 {
 	/* We use the breakpoint to trap into DDB */
-	asm("ta 1; nop");
+	__asm("ta 1; nop");
 }
 
 void
-db_prom_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_prom_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	prom_abort();
 }
 
 void
-db_dump_dtlb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_dtlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
-	extern void print_dtlb __P((void));
+	extern void print_dtlb(void);
 
 	if (have_addr) {
 		int i;
@@ -485,13 +477,9 @@ db_dump_dtlb(addr, have_addr, count, modif)
 }
 
 void
-db_dump_itlb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_itlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
-	extern void print_itlb __P((void));
+	extern void print_itlb(void);
 
 	if (have_addr) {
 		int i;
@@ -522,11 +510,7 @@ db_dump_itlb(addr, have_addr, count, modif)
 }
 
 void
-db_pload_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_pload_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	static paddr_t oldaddr = -1;
 	int asi = ASI_PHYS_CACHED;
@@ -559,11 +543,10 @@ db_pload_cmd(addr, have_addr, count, modif)
 	}
 }
 
-int64_t pseg_get __P((struct pmap *, vaddr_t));
+int64_t pseg_get(struct pmap *, vaddr_t);
 
 void
-db_dump_pmap(pm)
-	struct pmap *pm;
+db_dump_pmap(struct pmap *pm)
 {
 	/* print all valid pages in the kernel pmap */
 	unsigned long long i, j, k, n, data0, data1;
@@ -601,15 +584,11 @@ db_dump_pmap(pm)
 }
 
 void
-db_pmap_kernel(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_pmap_kernel(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	extern struct pmap kernel_pmap_;
 	int i, j, full = 0;
-	u_int64_t data;
+	uint64_t data;
 
 	{
 		register char c;
@@ -647,11 +626,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 }
 
 void
-db_pm_extract(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_pm_extract(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	if (have_addr) {
 		paddr_t pa;
@@ -665,11 +640,7 @@ db_pm_extract(addr, have_addr, count, modif)
 }
 
 void
-db_pmap_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_pmap_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct pmap* pm=NULL;
 	int i, j=0, full = 0;
@@ -705,11 +676,7 @@ db_pmap_cmd(addr, have_addr, count, modif)
 
 
 void
-db_lock(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_lock(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 #if 0
 	struct lock *l;
@@ -737,11 +704,7 @@ extern int tsbsize;
 void db_dump_tsb_common(pte_t *);
 
 void
-db_dump_dtsb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_dtsb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	db_printf("DTSB:\n");
@@ -749,11 +712,7 @@ db_dump_dtsb(addr, have_addr, count, modif)
 }
 
 void
-db_dump_itsb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_itsb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	db_printf("ITSB:\n");
@@ -783,13 +742,9 @@ db_dump_tsb_common(pte_t *tsb)
 	}
 }
 
-void db_page_cmd __P((db_expr_t, int, db_expr_t, const char *));
+void db_page_cmd(db_expr_t, int, db_expr_t, const char *);
 void
-db_page_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_page_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	if (!have_addr) {
@@ -802,11 +757,7 @@ db_page_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_lwp_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_lwp_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct lwp *l;
 
@@ -826,11 +777,7 @@ db_lwp_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_proc_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct proc *p = NULL;
 
@@ -856,11 +803,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_ctx_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_ctx_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -885,11 +828,7 @@ db_ctx_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_dump_pcb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_pcb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct pcb *pcb;
 	int i;
@@ -931,11 +870,7 @@ db_dump_pcb(addr, have_addr, count, modif)
 
 
 void
-db_setpcb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_setpcb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct proc *p, *pp;
 
@@ -966,9 +901,7 @@ db_setpcb(addr, have_addr, count, modif)
 }
 
 static void
-db_print_trace_entry(te, i)
-	struct traptrace *te;
-	int i;
+db_print_trace_entry(struct traptrace *te, int i)
 {
 	db_printf("%d:%d p:%d tt:%x:%llx:%llx %llx:%llx ", i, 
 		  (int)te->tl, (int)te->pid, 
@@ -985,11 +918,7 @@ db_print_trace_entry(te, i)
 }
 
 void
-db_traptrace(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_traptrace(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	int i, start = 0, full = 0, reverse = 0;
 	struct traptrace *end;
@@ -1047,11 +976,7 @@ db_traptrace(addr, have_addr, count, modif)
  * control register.  
  */
 void
-db_watch(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_watch(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	int phys = 0;
 	int read = 0;
@@ -1063,9 +988,9 @@ db_watch(addr, have_addr, count, modif)
 #define	WATCH_PR	(1L<<24)
 #define	WATCH_PW	(1L<<23)
 #define	WATCH_PM_SHIFT	33
-#define	WATCH_PM	(((u_int64_t)0xffffL)<<WATCH_PM_SHIFT)
+#define	WATCH_PM	(((uint64_t)0xffffL)<<WATCH_PM_SHIFT)
 #define	WATCH_VM_SHIFT	25
-#define	WATCH_VM	(((u_int64_t)0xffffL)<<WATCH_VM_SHIFT)
+#define	WATCH_VM	(((uint64_t)0xffffL)<<WATCH_VM_SHIFT)
 
 	{
 		register char c;
@@ -1139,11 +1064,7 @@ db_watch(addr, have_addr, count, modif)
 }
 
 void
-db_cpus_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_cpus_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_info *ci;
 
@@ -1156,16 +1077,15 @@ db_cpus_cmd(addr, have_addr, count, modif)
 
 #include <uvm/uvm.h>
 
-void db_uvmhistdump __P((db_expr_t, int, db_expr_t, const char *));
-extern void uvmhist_dump __P((struct uvm_history *));
+void db_uvmhistdump(db_expr_t, int, db_expr_t, const char *);
+/*extern void uvmhist_dump(struct uvm_history *);*/
+#ifdef UVMHIST
+extern void uvmhist_dump(struct uvm_history *);
+#endif
 extern struct uvm_history_head uvm_histories;
 
 void
-db_uvmhistdump(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_uvmhistdump(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	uvmhist_dump(LIST_FIRST(&uvm_histories));
@@ -1222,10 +1142,7 @@ const struct db_command db_machine_command_table[] = {
  * much simpler this way.
  */
 db_addr_t
-db_branch_taken(inst, pc, regs)
-	int inst;
-	db_addr_t pc;
-	db_regs_t *regs;
+db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
     union instr insn;
     db_addr_t npc = ddb_regs.ddb_tf.tf_npc;
@@ -1266,8 +1183,7 @@ db_branch_taken(inst, pc, regs)
 }
 
 boolean_t
-db_inst_branch(inst)
-	int inst;
+db_inst_branch(int inst)
 {
     union instr insn;
 
@@ -1292,8 +1208,7 @@ db_inst_branch(inst)
 
 
 boolean_t
-db_inst_call(inst)
-	int inst;
+db_inst_call(int inst)
 {
     union instr insn;
 
@@ -1313,8 +1228,7 @@ db_inst_call(inst)
 
 
 boolean_t
-db_inst_unconditional_flow_transfer(inst)
-	int inst;
+db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
 
@@ -1342,16 +1256,14 @@ db_inst_unconditional_flow_transfer(inst)
 
 
 boolean_t
-db_inst_return(inst)
-	int inst;
+db_inst_return(int inst)
 {
     return (inst == I_JMPLri(I_G0, I_O7, 8) ||		/* ret */
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
 boolean_t
-db_inst_trap_return(inst)
-	int inst;
+db_inst_trap_return(int inst)
 {
     union instr insn;
 
@@ -1363,8 +1275,7 @@ db_inst_trap_return(inst)
 
 
 int
-db_inst_load(inst)
-	int inst;
+db_inst_load(int inst)
 {
     union instr insn;
 
@@ -1404,8 +1315,7 @@ db_inst_load(inst)
 }
 
 int
-db_inst_store(inst)
-	int inst;
+db_inst_store(int inst)
 {
     union instr insn;
 

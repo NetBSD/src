@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.3 2003/07/15 02:43:37 lukem Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.3.16.1 2006/06/21 14:53:43 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.3 2003/07/15 02:43:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.3.16.1 2006/06/21 14:53:43 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -95,7 +95,7 @@ tx3900_pdcache_wbinv_all_4(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
 	vaddr_t eva = va + mips_pdcache_size;
-	__volatile int *p;
+	volatile int *p;
 
 	/*
 	 * No Index Invalidate for the TX3900 -- have to execute a
@@ -154,7 +154,7 @@ tx3920_icache_sync_all_16wb(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	tx3920_icache_do_inv_16(MIPS_PHYS_TO_KSEG0(0),
 	    MIPS_PHYS_TO_KSEG0(mips_picache_size));
@@ -179,7 +179,7 @@ tx3920_icache_sync_range_16wb(vaddr_t va, vsize_t size)
 
 	mips_dcache_wb_range(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	tx3920_icache_do_inv_16(va, eva);
 }

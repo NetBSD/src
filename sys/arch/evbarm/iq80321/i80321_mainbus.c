@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.14 2004/04/23 02:58:28 simonb Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.14.12.1 2006/06/21 14:50:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.14 2004/04/23 02:58:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.14.12.1 2006/06/21 14:50:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,7 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * to PCI address 0 for all 64K of the I/O space.
 	 */
 	sc->sc_ioout_xlate = 0;
+	sc->sc_ioout_xlate_offset = 0x1000;
 
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag.

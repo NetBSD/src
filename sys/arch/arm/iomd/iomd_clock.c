@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.15 2005/06/04 20:14:24 he Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.15.2.1 2006/06/21 14:49:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.15.2.1 2006/06/21 14:49:33 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

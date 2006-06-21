@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.12 2005/03/16 05:02:12 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.12.4.1 2006/06/21 14:50:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.12 2005/03/16 05:02:12 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.12.4.1 2006/06/21 14:50:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -407,12 +407,12 @@ static const struct pmap_devmap smdk2410_devmap[] = {
 #undef	_A
 #undef	_S
 
-static __inline	pd_entry_t *
+static inline	pd_entry_t *
 read_ttb(void)
 {
 	long ttb;
 
-	__asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
+	__asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
 
 
 	return (pd_entry_t *)(ttb & ~((1 << 14) - 1));
@@ -444,8 +444,8 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern int etext asm("_etext");
-	extern int end asm("_end");
+	extern int etext __asm("_etext");
+	extern int end __asm("_end");
 	pv_addr_t kernel_l1pt;
 	int progress_counter = 0;
 
@@ -633,6 +633,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
@@ -1022,7 +1023,7 @@ kgdb_port_init(void)
 }
 #endif
 
-static __inline void
+static inline void
 writeback_dcache_line(vaddr_t va)
 {
 	/* writeback Dcache line */
@@ -1030,15 +1031,15 @@ writeback_dcache_line(vaddr_t va)
 	 * assume write-through cache, and always flush Dcache instead of
 	 * cleaning it. Since Boot loader maps page table with write-back
 	 * cached, we really need to clean Dcache. */
-	asm("mcr	p15, 0, %0, c7, c10, 1"
+	__asm("mcr	p15, 0, %0, c7, c10, 1"
 	    : :	"r"(va));
 }
 
-static __inline void
+static inline void
 clean_dcache_line(vaddr_t va)
 {
 	/* writeback and invalidate Dcache line */
-	asm("mcr	p15, 0, %0, c7, c14, 1"
+	__asm("mcr	p15, 0, %0, c7, c14, 1"
 	    : : "r"(va));
 }
 

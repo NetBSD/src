@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.5 2002/11/03 01:34:42 chs Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.5.22.1 2006/06/21 14:53:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 static __inline void __attribute__((__unused__))
 TBIA_60(void)
 {
-	__asm __volatile (" .word 0xf518" ); /*  pflusha */
+	__asm volatile (" .word 0xf518" ); /*  pflusha */
 }
 
 /*
@@ -54,7 +54,7 @@ TBIS_60(vaddr_t va)
 	register vaddr_t	r_va __asm("%a0") = va;
 	int	tmp;
 
-	__asm __volatile (" movc   %1, %%dfc;"	/* select supervisor	*/
+	__asm volatile (" movc   %1, %%dfc;"	/* select supervisor	*/
 			  " .word 0xf508;"	/* pflush %a0@		*/
 			  " moveq  %3, %1;"	/* select user		*/
 			  " movc   %1, %%dfc;"
@@ -77,7 +77,7 @@ TBIAS_60(void)
 	/*
 	 * Cannot specify supervisor/user on pflusha, so we flush all
 	 */
-	__asm __volatile (" .word 0xf518;"
+	__asm volatile (" .word 0xf518;"
 			  " movc  %%cacr,%0;"
 			  " orl   %1,%0;"
 			  " movc  %0,%%cacr" /* clear all branch cache
@@ -96,7 +96,7 @@ TBIAU_60(void)
 	/*
 	 * Cannot specify supervisor/user on pflusha, so we flush all
 	 */
-	__asm __volatile (" .word 0xf518;"
+	__asm volatile (" .word 0xf518;"
 			  " movc  %%cacr,%0;"
 			  " orl   %1,%0;"
 			  " movc  %0,%%cacr" /* clear all branch cache
@@ -111,14 +111,14 @@ static __inline void __attribute__((__unused__))
 ICIA_60(void)
 {
 	/* inva ic (also clears branch cache) */
-	__asm __volatile (" .word 0xf498;");
+	__asm volatile (" .word 0xf498;");
 }
 
 static __inline void __attribute__((__unused__))
 ICPA_60(void)
 {
 	/* inva ic (also clears branch cache) */
-	__asm __volatile (" .word 0xf498;");
+	__asm volatile (" .word 0xf498;");
 }
 
 /*
@@ -127,19 +127,19 @@ ICPA_60(void)
 static __inline void __attribute__((__unused__))
 DCIA_60(void)
 {
-	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
+	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 static __inline void __attribute__((__unused__))
 DCIS_60(void)
 {
-	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
+	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 static __inline void __attribute__((__unused__))
 DCIU_60(void)
 {
-	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
+	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 static __inline void __attribute__((__unused__))
@@ -147,19 +147,19 @@ DCIAS_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
+	__asm volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
 
 static __inline void __attribute__((__unused__))
 PCIA_60(void)
 {
-	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
+	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 static __inline void __attribute__((__unused__))
 DCFA_60(void)
 {
-	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
+	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 /* invalidate instruction physical cache line */
@@ -168,7 +168,7 @@ ICPL_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,%a0@ */
+	__asm volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,%a0@ */
 }
 
 /* invalidate instruction physical cache page */
@@ -177,7 +177,7 @@ ICPP_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,%a0@ */
+	__asm volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,%a0@ */
 }
 
 /* invalidate data physical cache line */
@@ -186,7 +186,7 @@ DCPL_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,%a0@ */
+	__asm volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,%a0@ */
 }
 
 /* invalidate data physical cache page */
@@ -195,14 +195,14 @@ DCPP_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,%a0@ */
+	__asm volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,%a0@ */
 }
 
 /* invalidate data physical all */
 static __inline void __attribute__((__unused__))
 DCPA_60(void)
 {
-	__asm __volatile (" .word 0xf458;"); /* cinva dc */
+	__asm volatile (" .word 0xf458;"); /* cinva dc */
 }
 
 /* data cache flush line */
@@ -211,7 +211,7 @@ DCFL_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
+	__asm volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
 
 /* data cache flush page */
@@ -220,5 +220,5 @@ DCFP_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,%a0@ */
+	__asm volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,%a0@ */
 }
