@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.12 2006/06/17 15:05:15 xtraeme Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.13 2006/06/21 20:16:35 explorer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.12 2006/06/17 15:05:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.13 2006/06/21 20:16:35 explorer Exp $");
 
 #include "opt_amdpm.h"
 
@@ -157,6 +157,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		    (reg & AMDPM_TMR32) ? 32 : 24,
 		    amdpm_timecounter.tc_frequency);
 
+		amdpm_timecounter.tc_priv = sc;
 		if (reg & AMDPM_TMR32)
 			amdpm_timecounter.tc_counter_mask = 0xffffffffu;
 		tc_init(&amdpm_timecounter);
