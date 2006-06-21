@@ -1,4 +1,4 @@
-/*	$NetBSD: ts7200.c,v 1.1 2004/12/24 10:33:54 joff Exp $	*/
+/*	$NetBSD: ts7200.c,v 1.1.12.1 2006/06/21 14:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -46,7 +46,7 @@ void
 board_init(void)
 {
 	/* There is guaranteed to be at least a 8MB chunk of SDRAM at 0x0*/
-	void *heap = (void *)(0x800000 - HEAP_SIZE);
+	void *heap = (void *)(0x800000 - BOARD_HEAP_SIZE);
 	setheap(heap, (void *)(0x800000 - 1));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.c,v 1.2 2003/08/21 23:17:41 he Exp $	*/
+/*	$NetBSD: riscosfile.c,v 1.2.16.1 2006/06/21 14:47:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -65,7 +65,7 @@ riscos_open(const char *path, struct open_file *f)
 	error = xosfind_open(flags | osfind_ERROR_IF_DIR |
 	    osfind_ERROR_IF_ABSENT, path, NULL, &rf->file);
 	if (error) {
-		free(rf, sizeof(*rf));
+		dealloc(rf, sizeof(*rf));
 		return riscos_errno(error);
 	}
 	f->f_fsdata = rf;
@@ -85,7 +85,7 @@ riscos_close(struct open_file *f)
 	error = xosfind_close(rf->file);
 	if (error)
 		err = riscos_errno(error);
-	free(rf, sizeof(*rf));
+	dealloc(rf, sizeof(*rf));
 	return err;
 }
 #endif

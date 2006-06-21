@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.4 2005/06/04 13:39:20 rearnsha Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.4.2.1 2006/06/21 14:50:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -46,7 +46,9 @@ typedef struct _PhysMem {
 #define BOOT_DRAM_PREFER  2	/* UVM should prefer this memory.  */
 } PhysMem;
 
+#ifndef	DRAM_BLOCKS
 #define	DRAM_BLOCKS	2
+#endif
 
 typedef struct _BootConfig {
 	u_int dramblocks;

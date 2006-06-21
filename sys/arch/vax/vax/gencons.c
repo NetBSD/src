@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.40 2003/07/15 02:15:03 lukem Exp $	*/
+/*	$NetBSD: gencons.c,v 1.40.16.1 2006/06/21 14:57:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.1 2006/06/21 14:57:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40 2003/07/15 02:15:03 lukem Exp $");
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -93,10 +94,11 @@ const struct cdevsw gen_cdevsw = {
 };
 
 int
-gencnopen(dev_t dev, int flag, int mode, struct proc *p)
+gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	struct tty *tp;
+	struct proc *p = l->l_proc;
 
 	unit = minor(dev);
 	if (unit >= maxttys)
@@ -121,7 +123,8 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		gencnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE &&
+		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
@@ -129,7 +132,7 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-gencnclose(dev_t dev, int flag, int mode, struct proc *p)
+gencnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 
@@ -162,23 +165,23 @@ gencnwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-gencnpoll(dev_t dev, int events, struct proc *p)
+gencnpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 void

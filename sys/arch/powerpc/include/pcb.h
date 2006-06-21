@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.19 2005/02/22 02:59:46 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.19.4.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,8 +53,8 @@ struct pcb {
 #define	PCB_ALTIVEC	8	/* Process had AltiVec initialized */
 #define	PCB_FE1		PSL_FE1	/* 0x100 */
 #define	PCB_FE0		PSL_FE0	/* 0x800 */
-	struct cpu_info * __volatile pcb_fpcpu; /* CPU with our FP state */
-	struct cpu_info * __volatile pcb_veccpu;/* CPU with our VECTOR state */
+	struct cpu_info * volatile pcb_fpcpu; /* CPU with our FP state */
+	struct cpu_info * volatile pcb_veccpu;/* CPU with our VECTOR state */
 	struct faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	vaddr_t pcb_kmapsr;	/* where to map user segment in kernel */
 	vaddr_t pcb_umapsr;	/* the user segment mapped in kernel */

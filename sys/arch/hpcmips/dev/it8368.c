@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.19 2005/06/28 18:30:00 drochner Exp $ */
+/*	$NetBSD: it8368.c,v 1.19.2.1 2006/06/21 14:51:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.19 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.19.2.1 2006/06/21 14:51:50 yamt Exp $");
 
 #undef WINCE_DEFAULT_SETTING /* for debug */
 #undef IT8368DEBUG 
@@ -156,9 +156,9 @@ CFATTACH_DECL(it8368e, sizeof(struct it8368e_softc),
 /*
  *	IT8368 configuration register is big-endian.
  */
-static __inline__ u_int16_t it8368_reg_read(bus_space_tag_t,
+static inline u_int16_t it8368_reg_read(bus_space_tag_t,
     bus_space_handle_t, int);
-static __inline__ void it8368_reg_write(bus_space_tag_t, bus_space_handle_t,
+static inline void it8368_reg_write(bus_space_tag_t, bus_space_handle_t,
     int, u_int16_t);
 
 #ifdef IT8368E_DESTRUCTIVE_CHECK
@@ -309,7 +309,7 @@ it8368e_attach(struct device *parent, struct device *self, void *aux)
 	it8368_attach_socket(sc);
 }
 
-__inline__ u_int16_t
+inline u_int16_t
 it8368_reg_read(bus_space_tag_t t, bus_space_handle_t h, int ofs)
 {
 	u_int16_t val;
@@ -318,7 +318,7 @@ it8368_reg_read(bus_space_tag_t t, bus_space_handle_t h, int ofs)
 	return (0xffff & (((val >> 8) & 0xff)|((val << 8) & 0xff00)));
 }
 
-__inline__ void
+inline void
 it8368_reg_write(bus_space_tag_t t, bus_space_handle_t h, int ofs, u_int16_t v)
 {
 	u_int16_t val;

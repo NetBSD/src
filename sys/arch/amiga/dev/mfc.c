@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.36 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: mfc.c,v 1.36.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.36 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.36.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.36 2005/06/13 21:34:17 jmc Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
@@ -370,7 +371,7 @@ mfcattach(struct device *pdp, struct device *dp, void *auxp)
 	printf ("\n");
 
 	scc = (struct mfc_softc *)dp;
-	unit = scc->sc_dev.dv_unit;
+	unit = device_unit(&scc->sc_dev);
 	scc->sc_regs = rp = zap->va;
 	if (zap->prodid == 18)
 		scc->mfc_iii = 3;
@@ -477,7 +478,7 @@ mfcprint(void *auxp, const char *pnp)
 }
 
 int
-mfcsopen(dev_t dev, int flag, int mode, struct proc *p)
+mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	struct mfcs_softc *sc;
@@ -534,7 +535,10 @@ mfcsopen(dev_t dev, int flag, int mode, struct proc *p)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state & TS_XCLUDE &&
+		   kauth_authorize_generic(l->l_proc->p_cred,
+				     KAUTH_GENERIC_ISSUSER,
+				     &l->l_proc->p_acflag) != 0) {
 		splx(s);
 		return(EBUSY);
 	}
@@ -576,7 +580,7 @@ done:
 
 /*ARGSUSED*/
 int
-mfcsclose(dev_t dev, int flag, int mode, struct proc *p)
+mfcsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	int unit;
@@ -638,14 +642,14 @@ mfcswrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-mfcspoll(dev_t dev, int events, struct proc *p)
+mfcspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
 
 	if (tp == NULL)
 		return(ENXIO);
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -657,7 +661,7 @@ mfcstty(dev_t dev)
 }
 
 int
-mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	register struct tty *tp;
 	register int error;
@@ -667,11 +671,11 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (!tp)
 		return ENXIO;
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return(error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return(error);
 
@@ -711,7 +715,9 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag);
 		if (error != 0)
 			return(EPERM);
 
@@ -963,7 +969,7 @@ mfcintr(void *arg)
 	istat = regs->du_isr & scc->imask;
 	if (istat == 0)
 		return (0);
-	unit = scc->sc_dev.dv_unit * 2;
+	unit = device_unit(&scc->sc_dev) * 2;
 	if (istat & 0x02) {		/* channel A receive interrupt */
 		sc = mfcs_cd.cd_devs[unit];
 		while (1) {

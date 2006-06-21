@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.14 2005/06/03 12:29:00 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.14.2.1 2006/06/21 14:48:54 yamt Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.14 2005/06/03 12:29:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.14.2.1 2006/06/21 14:48:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ int arc_cpu_l2cache_size = 0;
  *	ARC Bios trampoline code.
  */
 #define ARC_Call(Name,Offset)	\
-__asm__("\n"			\
+__asm("\n"			\
 "	.text\n"		\
 "	.ent	" #Name "\n"	\
 "	.align	3\n"		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.2.1 2006/06/21 14:55:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.2.1 2006/06/21 14:55:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,30 +55,30 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2005/04/01 11:59:34 yamt Exp $");
 #include <machine/intr.h>
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
 
-static __inline void
+static inline void
 dcbst(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm __volatile("dcbst 0,%0" :: "r"(pa));
+		__asm volatile("dcbst 0,%0" :: "r"(pa));
 }
 
-static __inline void
+static inline void
 dcbi(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm __volatile("dcbi 0,%0" :: "r"(pa));
+		__asm volatile("dcbi 0,%0" :: "r"(pa));
 }
 
-static __inline void
+static inline void
 dcbf(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm __volatile("dcbf 0,%0" :: "r"(pa));
+		__asm volatile("dcbf 0,%0" :: "r"(pa));
 }
 
 /*
@@ -153,12 +153,12 @@ _bus_dmamap_destroy(t, map)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+_bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
-	struct proc *p;
+	struct vmspace *vm;
 	int flags;
 	paddr_t *lastaddrp;
 	int *segp;
@@ -176,8 +176,8 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, (void *)&curaddr);
 		else
 			curaddr = vtophys(vaddr);
@@ -264,6 +264,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	paddr_t lastaddr;
 	int seg, error;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -275,8 +276,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	seg = 0;
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags,
 		&lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
@@ -350,7 +357,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 		}
 #endif
 		error = _bus_dmamap_load_buffer(t, map, m->m_data,
-		    m->m_len, NULL, flags, &lastaddr, &seg, first);
+		    m->m_len, vmspace_kernel(), flags, &lastaddr, &seg, first);
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
@@ -372,7 +379,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
@@ -386,14 +392,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
-#endif
-	}
-
 	first = 1;
 	seg = 0;
 	error = 0;
@@ -406,7 +404,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg, first);
+		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
@@ -485,7 +483,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		offset -= ds->ds_len;
 		ds++;
 	}
-	__asm __volatile("eieio");
+	__asm volatile("eieio");
 	for (; len > 0; ds++, offset = 0) {
 		bus_size_t seglen = ds->ds_len - offset;
 		bus_addr_t addr = ds->ds_addr + offset;
@@ -545,7 +543,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				 */
 				seglen &= ~(dcache_line_size - 1);
 			}
-			__asm __volatile("sync; eieio"); /* is this needed? */
+			__asm volatile("sync; eieio"); /* is this needed? */
 			/* FALLTHROUGH */
 		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
 		case BUS_DMASYNC_POSTREAD:
@@ -572,7 +570,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			break;
 		}
 	}
-	__asm __volatile("sync");
+	__asm volatile("sync");
 }
 
 /*
@@ -650,10 +648,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);

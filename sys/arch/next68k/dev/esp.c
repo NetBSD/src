@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.50 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.50.2.1 2006/06/21 14:54:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.50 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.50.2.1 2006/06/21 14:54:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,7 +307,7 @@ espattach_intio(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_id = 7;
-	sc->sc_freq = 20;							/* Mhz */
+	sc->sc_freq = 20;	/* MHz */
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.

@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.2 2005/06/30 17:03:52 drochner Exp $ */
+/*	$NetBSD: gb225.c,v 1.2.2.1 2006/06/21 14:50:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -63,7 +63,7 @@
 static int	opio_match(struct device *, struct cfdata *, void *);
 static void	opio_attach(struct device *, struct device *, void *);
 static int 	opio_search(struct device *, struct cfdata *,
-			    const locdesc_t *, void *);
+			    const int *, void *);
 static int	opio_print(void *, const char *);
 #ifdef OPIO_INTR
 static int 	opio_intr( void *arg );
@@ -179,7 +179,7 @@ opio_attach(struct device *parent, struct device *self, void *aux)
 
 int
 opio_search(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct opio_softc *sc = (struct opio_softc *)parent;
 	struct obio_attach_args oba;
@@ -219,7 +219,8 @@ static int
 opio_intr( void *arg )
 {
 	struct opio_softc *sc = (struct opio_softc *)arg;
-	struct obio_softc *bsc = (struct obio_softc *)sc->sc_dev.dv_parent;
+	struct obio_softc *bsc =
+	    (struct obio_softc *)device_parent(&sc->sc_dev);
 
 	/* avoid further interrupts while debouncing */
 	obio_intr_mask(bsc, sc->sc_ih);
@@ -271,7 +272,8 @@ static void
 opio_debounce(void *arg)
 {
 	struct opio_softc *sc = arg;
-	struct obio_softc *osc = (struct obio_softc *)sc->sc_dev.dv_parent;
+	struct obio_softc *osc =
+	    (struct obio_softc *)device_parent(&sc->sc_dev);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int flag = 0;

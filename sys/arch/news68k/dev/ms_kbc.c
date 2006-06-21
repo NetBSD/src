@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.6 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.6.12.1 2006/06/21 14:54:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.6 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.6.12.1 2006/06/21 14:54:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,7 @@ int ms_kbc_intr(void *);
 
 static int ms_kbc_enable(void *);
 static void ms_kbc_disable(void *);
-static int ms_kbc_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int ms_kbc_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 CFATTACH_DECL(ms_kbc, sizeof(struct ms_softc),
     ms_kbc_match, ms_kbc_attach, NULL, NULL);
@@ -150,7 +150,7 @@ ms_kbc_disable(void *v)
 }
 
 static int
-ms_kbc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+ms_kbc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	return EPASSTHROUGH;

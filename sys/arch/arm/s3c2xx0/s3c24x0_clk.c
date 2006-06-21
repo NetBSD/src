@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.4 2005/06/04 22:37:51 he Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.4.2.1 2006/06/21 14:49:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.4 2005/06/04 22:37:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.4.2.1 2006/06/21 14:49:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ microtime(struct timeval *tvp)
 
 }
 
-static __inline int
+static inline int
 read_timer(struct s3c24x0_softc *sc)
 {
 	int count;

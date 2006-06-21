@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.64 2005/06/25 22:08:54 dyoung Exp $
+#	$NetBSD: files.macppc,v 1.64.2.1 2006/06/21 14:53:13 yamt Exp $
 #
 # macppc-specific configuration info
 
@@ -72,14 +72,21 @@ device uninorth: pcibus
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
 
-# PCI bus support
-include "dev/pci/files.pci"
+# pseudo for the UniNorth host controller
+define uni_n {}
+device uni_n: uni_n
+attach uni_n at mainbus
+file arch/macppc/dev/uni-n.c			uni_n
 
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+include "dev/usb/files.usb"
 
-device ofb: wsemuldisplaydev, rasops8
+# PCI bus support
+include "dev/pci/files.pci"
+
+device ofb: wsemuldisplaydev, rasops8, vcons
 attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
 
@@ -128,7 +135,7 @@ file arch/macppc/dev/zs_kgdb.c			zsc & kgdb
 
 device zstty: tty
 attach zstty at zsc
-file arch/macppc/dev/z8530tty.c			zstty needs-flag
+file dev/ic/z8530tty.c				zstty needs-flag
 
 device adb {}
 attach adb at obio
@@ -152,6 +159,10 @@ device ams: wsmousedev
 attach ams at adb
 file arch/macppc/dev/ams.c			ams
 
+device pbms: wsmousedev
+attach pbms at uhidbus
+file arch/macppc/dev/pbms.c			pbms
+
 device abtn
 attach abtn at adb
 file arch/macppc/dev/abtn.c			abtn
@@ -170,16 +181,15 @@ device awacs: audiobus, auconv, mulaw, aurateconv
 attach awacs at obio
 file arch/macppc/dev/awacs.c			awacs
 
-device gpio {}
-attach gpio at obio with gpio_obio
-attach gpio at gpio with gpio_gpio
-file arch/macppc/dev/gpio.c			gpio
+device macgpio {}
+attach macgpio at obio with gpio_obio
+#attach gpio at macgpio with gpio_gpio
+file arch/macppc/dev/gpio.c			macgpio
 
 device macofcons: tty
 attach macofcons at pci
 file arch/macppc/dev/ofcons.c			macofcons needs-flag
 
-include "dev/usb/files.usb"
 include "dev/ieee1394/files.ieee1394"
 
 #
@@ -195,8 +205,9 @@ include "dev/pcmcia/files.pcmcia"
 file arch/macppc/macppc/rbus_machdep.c		cardbus
 
 # Keywest I2C
-device ki2c {}
-attach ki2c at obio
+define ki2c {}
+device ki2c: i2cbus, ki2c
+attach ki2c at obio, uni_n
 file arch/macppc/dev/ki2c.c			ki2c
 
 # snapper audio
@@ -204,7 +215,16 @@ device snapper: audiobus, auconv, mulaw, aurateconv
 attach snapper at obio
 file arch/macppc/dev/snapper.c			snapper
 
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-powerpc-be-eabi.hal.o	ath
-
 include "arch/macppc/conf/majors.macppc"
+
+attach adt7467c at ki2c with adt7467_ki2c
+file arch/macppc/dev/adt7467_ki2c.c		adt7467c
+
+attach adm1030c at ki2c with adm1030_ki2c
+file arch/macppc/dev/adm1030_ki2c.c		adm1030c
+
+define deq {}
+device deq
+attach deq at ki2c
+file arch/macppc/dev/deq.c				deq
+

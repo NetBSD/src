@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.h,v 1.5 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: pci_intr_fixup.h,v 1.5.12.1 2006/06/21 14:52:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -48,7 +48,7 @@ typedef const struct pciintr_icu *pciintr_icu_tag_t;
 #define	pciintr_icu_set_trigger(t, h, irq, trigger)			\
 	(*(t)->pi_set_trigger)((h), (irq), (trigger))
 
-int pci_intr_fixup(pci_chipset_tag_t, bus_space_tag_t, u_int16_t *);
+int pci_intr_fixup(pci_chipset_tag_t, bus_space_tag_t, uint16_t *);
 
 /*
  * Init functions for our known PCI ICUs.
@@ -62,6 +62,8 @@ int	opti82c558_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 int	opti82c700_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
 int	via82c586_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	via8231_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
 int	sis85c503_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);

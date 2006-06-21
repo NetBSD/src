@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.2 2003/03/11 10:40:17 hannken Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2.18.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -45,7 +45,7 @@ cpu_counter32(void)
 {
 	uint32_t rv, rtcu, scratch;
 
-	__asm __volatile (
+	__asm volatile (
 	    "mfpvr	%0		\n"
 	    "srwi	%0,%0,16	\n"
 	    "cmpwi	%0,%3		\n"

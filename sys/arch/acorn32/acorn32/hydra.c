@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.18 2005/06/28 18:29:58 drochner Exp $	*/
+/*	$NetBSD: hydra.c,v 1.18.2.1 2006/06/21 14:47:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.18 2005/06/28 18:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.18.2.1 2006/06/21 14:47:47 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static void hydra_attach(struct device *, struct device *, void *);
 static int hydra_probe_slave(struct hydra_softc *, int);
 static int hydra_print(void *, char const *);
 static int hydra_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
+			  const int *, void *);
 static void hydra_shutdown(void *);
 
 static void hydra_reset(struct hydra_softc *);
@@ -135,7 +135,7 @@ hydra_match(struct device *parent, struct cfdata *cf, void *aux)
 
 fail:
 	bus_space_unmap(iot, ioh, HYDRA_PHYS_SIZE);
-	return 0;	
+	return 0;
 }
 
 static void
@@ -174,7 +174,7 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	KASSERT(!TAILQ_EMPTY(&bootpglist));
-	sc->sc_bootpage_pa = TAILQ_FIRST(&bootpglist)->phys_addr;
+	sc->sc_bootpage_pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&bootpglist));
 	sc->sc_bootpage_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY);
 	if (sc->sc_bootpage_va == 0) {
@@ -250,7 +250,7 @@ hydra_print(void *aux, char const *pnp)
 
 static int
 hydra_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct hydra_attach_args *ha = aux;
 
@@ -367,7 +367,7 @@ cpu_hydra_hatch(void)
 
 	cpu_setup(boot_args);
 	cpu_attach(curcpu()->ci_dev);
-	for (;;) { 
+	for (;;) {
 		bus_space_write_1(iot, ioh,
 		    HYDRA_HALT_SET, 1 << (cpunum & 3));
 		printf("%s: I am needed?\n", curcpu()->ci_dev->dv_xname);
@@ -381,7 +381,7 @@ cpu_boot_secondary_processors(void)
 	struct hydra_softc *sc = the_hydra;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	
+
 	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 0xf);
 }
 

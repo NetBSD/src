@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: dc.c,v 1.79.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.79.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 /*
  * devDC7085.c --
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $");
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/dec/lk201.h>
@@ -293,7 +294,8 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-	if (sc->sc_dv.dv_unit == 0 && major(cn_tab->cn_dev) == maj &&
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_dv) == 0 && major(cn_tab->cn_dev) == maj &&
 	    cn_tab->cn_pri == CN_REMOTE) {
 		DELAY(10000);
 	}
@@ -311,12 +313,12 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 		tp = sc->dc_tty[line] = ttymalloc();
 		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
-		tp->t_dev = makedev(maj, 4 * sc->sc_dv.dv_unit + line);
+		tp->t_dev = makedev(maj, 4 * device_unit(&sc->sc_dv) + line);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
 	}
-	sc->dcsoftCAR = sc->sc_dv.dv_cfdata->cf_flags | 0xB;
+	sc->dcsoftCAR = device_cfdata(&sc->sc_dv)->cf_flags | 0xB;
 
 	if (dc_timer == 0) {
 		dc_timer = 1;
@@ -345,7 +347,8 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	/*
 	 * Special handling for consoles.
 	 */
-	if (sc->sc_dv.dv_unit == 0) {
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_dv) == 0) {
 		if (major(cn_tab->cn_dev) == maj) {
 			/* set params for serial console */
 			dc_tty_init(sc, cn_tab->cn_dev);
@@ -466,10 +469,10 @@ dc_mouse_init(sc, dev)
  * open tty
  */
 int
-dcopen(dev, flag, mode, p)
+dcopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	struct dc_softc *sc;
@@ -509,7 +512,8 @@ dcopen(dev, flag, mode, p)
 #endif
 		(void) dcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 #ifdef HW_FLOW_CONTROL
 	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);
@@ -537,10 +541,10 @@ dcopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dcclose(dev, flag, mode, p)
+dcclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
@@ -601,17 +605,17 @@ dcwrite(dev, uio, flag)
 }
 
 int
-dcpoll(dev, events, p)
+dcpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -628,12 +632,12 @@ dctty(dev)
 
 /*ARGSUSED*/
 int
-dcioctl(dev, cmd, data, flag, p)
+dcioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
@@ -647,11 +651,11 @@ dcioctl(dev, cmd, data, flag, p)
 	sc = dc_cd.cd_devs[unit];
 	tp = sc->dc_tty[line];
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

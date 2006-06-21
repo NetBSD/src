@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.17 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: ims332.c,v 1.17.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.17 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.17.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.17 2005/06/01 18:21:43 drochner Exp $")
  */
 static u_int ims332_read_register (struct fbinfo *, int);
 static void ims332_write_register (struct fbinfo *, int, unsigned int);
-static __inline void ims332_cursor_off(struct fbinfo *fi);
-static __inline void ims332_cursor_on(struct fbinfo *fi);
+static inline void ims332_cursor_off(struct fbinfo *fi);
+static inline void ims332_cursor_on(struct fbinfo *fi);
 
 
 int
@@ -77,8 +77,8 @@ ims332init(fi)
 	DELAY(1);	/* specs sez 50ns.. */
 	deassert_ims332_reset_bit(reset);
 
-	/* CLOCKIN appears to receive a 6.25 Mhz clock --> PLL 12 for
-           75Mhz monitor */
+	/* CLOCKIN appears to receive a 6.25 MHz clock --> PLL 12 for
+           75 MHz monitor */
 	ims332_write_register (fi, IMS332_REG_BOOT,
 			       12 | IMS332_BOOT_CLOCK_PLL);
 
@@ -162,7 +162,7 @@ ims332_write_register(fi, regno, val)
 /*
  * Turn off hardware cursor sprite.
  */
-static __inline void
+static inline void
 ims332_cursor_off(fi)
 	struct fbinfo *fi;
 {
@@ -177,7 +177,7 @@ ims332_cursor_off(fi)
 /*
  * Turn on hardware cursor.
  */
-static __inline void
+static inline void
 ims332_cursor_on(fi)
 	struct fbinfo *fi;
 {

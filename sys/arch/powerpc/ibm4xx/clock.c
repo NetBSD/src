@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2005/06/03 11:54:48 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.12.2.1 2006/06/21 14:54:49 yamt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/06/03 11:54:48 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12.2.1 2006/06/21 14:54:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/properties.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 
@@ -50,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/06/03 11:54:48 scw Exp $");
 static u_long ticks_per_sec;
 static u_long ns_per_tick;
 static long ticks_per_intr;
-static volatile u_long lasttb;
+static volatile u_long lasttb, lasttb2;
 static u_long ticksmissed;
 static volatile int tickspending;
 
@@ -58,7 +59,7 @@ void decr_intr(struct clockframe *);	/* called from trap_subr.S */
 void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 
 #ifdef FAST_STAT_CLOCK
-/* Stat clock runs at ~ 1.5KHz */
+/* Stat clock runs at ~ 1.5 kHz */
 #define PERIOD_POWER	17
 #define TCR_PERIOD	TCR_FP_2_17
 #else
@@ -93,14 +94,11 @@ decr_intr(struct clockframe *frame)
 
 	tbtick = mftbl();
 	mtspr(SPR_TSR, TSR_PIS);	/* Clear TSR[PIS] */
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	xticks = tbtick - lasttb;	/* Number of TLB cycles since last exception */
+
+	xticks = tbtick - lasttb2;	/* Number of TLB cycles since last exception */
 	for (nticks = 0; xticks > ticks_per_intr; nticks++)
 		xticks -= ticks_per_intr;
-	lasttb = tbtick - xticks;
+	lasttb2 = tbtick - xticks;
 
 	intrcnt[CNT_CLOCK]++;
 	pri = splclock();
@@ -112,9 +110,15 @@ decr_intr(struct clockframe *frame)
 		tickspending = 0;
 
 		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		lasttb = lasttb2;
+
+		/*
 		 * Reenable interrupts
 		 */
-		asm volatile ("wrteei 1");
+		__asm volatile ("wrteei 1");
 
 		/*
 		 * Do standard timer interrupt stuff.
@@ -136,7 +140,7 @@ cpu_initclocks(void)
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
-	lasttb = mftbl();
+	lasttb2 = lasttb = mftbl();
 	mtspr(SPR_PIT, ticks_per_intr);
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
@@ -145,13 +149,12 @@ cpu_initclocks(void)
 void
 calc_delayconst(void)
 {
-	unsigned int processor_freq;
+	prop_number_t freq;
 
-	if (board_info_get("processor-frequency",
-		&processor_freq, sizeof(processor_freq)) == -1)
-		panic("no processor-frequency");
+	freq = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(freq != NULL);
 
-	ticks_per_sec = processor_freq;
+	ticks_per_sec = (u_long) prop_number_integer_value(freq);
 	ns_per_tick = 1000000000 / ticks_per_sec;
 }
 
@@ -165,7 +168,7 @@ microtime(struct timeval *tvp)
 	u_long ticks;
 	int msr;
 
-	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
+	__asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
 
 	tb = mftbl();
 	ticks = ((tb - lasttb) * 1000000ULL) / ticks_per_sec;
@@ -177,7 +180,7 @@ microtime(struct timeval *tvp)
 		tvp->tv_sec++;
 	}
 
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*
@@ -194,7 +197,7 @@ delay(unsigned int n)
 	tb += (n * 1000ULL + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile (
+	__asm volatile (
 #ifdef PPC_IBM403
 	    "1:	mftbhi %0	\n"
 #else

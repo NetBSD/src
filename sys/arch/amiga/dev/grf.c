@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.48 2003/08/07 16:26:41 agc Exp $ */
+/*	$NetBSD: grf.c,v 1.48.16.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.48 2003/08/07 16:26:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.48.16.1 2006/06/21 14:48:26 yamt Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -206,7 +206,7 @@ grfprint(void *auxp, const char *pnp)
 
 /*ARGSUSED*/
 int
-grfopen(dev_t dev, int flags, int devtype, struct proc *p)
+grfopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct grf_softc *gp;
 
@@ -224,7 +224,7 @@ grfopen(dev_t dev, int flags, int devtype, struct proc *p)
 
 /*ARGSUSED*/
 int
-grfclose(dev_t dev, int flags, int mode, struct proc *p)
+grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct grf_softc *gp;
 
@@ -236,7 +236,7 @@ grfclose(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct grf_softc *gp;
 	int error;
@@ -312,7 +312,7 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (GRFUNIT(dev) == 0) {
 			extern const struct cdevsw view_cdevsw;
 
-			return((*view_cdevsw.d_ioctl)(dev, cmd, data, flag, p));
+			return((*view_cdevsw.d_ioctl)(dev, cmd, data, flag, l));
 		}
 #endif
 		error = EPASSTHROUGH;

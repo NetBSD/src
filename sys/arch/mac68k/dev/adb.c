@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
+/*	$NetBSD: adb.c,v 1.47.2.1 2006/06/21 14:53:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.47.2.1 2006/06/21 14:53:02 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -312,5 +312,5 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 void 
 adb_op_comprout(void)
 {
-	asm("movw	#1,%a2@			| update flag value");
+	__asm("movw	#1,%a2@			| update flag value");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117 2005/02/21 15:10:51 he Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.1 2006/06/21 14:52:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 
-	volatile u_int32_t	ci_tlb_ipi_mask;
+	volatile uint32_t	ci_tlb_ipi_mask;
 
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_want_pmapload;		/* pmap_load() is needed */
@@ -105,27 +105,27 @@ struct cpu_info {
 	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
-	u_int32_t	ci_ipending;
+	uint32_t	ci_ipending;
 	int		ci_ilevel;
 	int		ci_idepth;
-	u_int32_t	ci_imask[NIPL];
-	u_int32_t	ci_iunmask[NIPL];
+	uint32_t	ci_imask[NIPL];
+	uint32_t	ci_iunmask[NIPL];
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
-	u_int32_t ci_flags;		/* flags; see below */
-	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
+	uint32_t ci_flags;		/* flags; see below */
+	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
 
 	int32_t		ci_cpuid_level;
-	u_int32_t	ci_signature;	 /* X86 cpuid type */
-	u_int32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
-	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	u_int32_t	ci_feature3_flags;/* X86 extended feature bits */
-	u_int32_t	ci_cpu_class;	 /* CPU class */
-	u_int32_t	ci_brand_id;	 /* Intel brand id */
-	u_int32_t	ci_vendor[4];	 /* vendor string */
-	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
-	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
+	uint32_t	ci_signature;	 /* X86 cpuid type */
+	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
+	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
+	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
+	uint32_t	ci_cpu_class;	 /* CPU class */
+	uint32_t	ci_brand_id;	 /* Intel brand id */
+	uint32_t	ci_vendor[4];	 /* vendor string */
+	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
+	uint64_t	ci_tsc_freq;	 /* cpu cycles/second */
 
 	struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);
@@ -197,7 +197,7 @@ curcpu()
 {
 	struct cpu_info *ci;
 
-	__asm __volatile("movl %%fs:%1, %0" :
+	__asm volatile("movl %%fs:%1, %0" :
 	    "=r" (ci) :
 	    "m"
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
@@ -249,7 +249,7 @@ do {									\
 
 #endif /* MULTIPROCESSOR */
 
-extern u_int32_t cpus_attached;
+extern uint32_t cpus_attached;
 
 #define	curpcb			curcpu()->ci_curpcb
 #define	curlwp			curcpu()->ci_curlwp
@@ -263,11 +263,13 @@ extern u_int32_t cpus_attached;
  * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
  * we could stall hardclock ticks if another interrupt takes too long.
  */
-#define clockframe intrframe
+struct clockframe {
+	struct intrframe cf_if;
+};
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
 #define	CLKF_BASEPRI(frame)	(0)
-#define	CLKF_PC(frame)		((frame)->if_eip)
+#define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 
 /*
@@ -294,11 +296,9 @@ extern u_int32_t cpus_attached;
  */
 extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 /*
  * pull in #defines for kinds of processors
@@ -374,7 +374,7 @@ void	savectx(struct pcb *);
 void	proc_trampoline(void);
 
 /* clock.c */
-void	initrtclock(void);
+void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(int);
 void	i8254_microtime(struct timeval *);
@@ -422,6 +422,10 @@ void x86_bus_space_mallocok(void);
 
 /* est.c */
 void	est_init(struct cpu_info *);
+
+/* powernow_k7.c */
+void	pnowk7_probe(struct cpu_info *);
+void	pnowk7_init(struct cpu_info *);
 
 #endif /* _KERNEL */
 
@@ -481,7 +485,7 @@ struct disklist {
 		int bi_cyl;			   /* cylinders on disk */
 		int bi_head;			   /* heads per track */
 		int bi_sec;			   /* sectors per track */
-		u_int64_t bi_lbasecs;		   /* total sec. (iff ext13) */
+		uint64_t bi_lbasecs;		   /* total sec. (iff ext13) */
 #define BIFLAG_INVALID		0x01
 #define BIFLAG_EXTINT13		0x02
 		int bi_flags;

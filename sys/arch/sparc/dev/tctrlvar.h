@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrlvar.h,v 1.3 2000/03/09 07:04:10 garbled Exp $ */
+/*	$NetBSD: tctrlvar.h,v 1.3.44.1 2006/06/21 14:55:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 #define	_SPARC_DEV_TCTRLVAR_H
 
 struct tctlrdriver {
-        int     (*tctrld_open) __P((dev_t, int, int, struct proc *));
-        int     (*tctrld_close) __P((dev_t, int, int, struct proc *));
-        int     (*tctrld_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int	(*tctrld_poll) __P((dev_t, int, struct proc *));
+        int     (*tctrld_open)(dev_t, int, int, struct proc *);
+        int     (*tctrld_close)(dev_t, int, int, struct proc *);
+        int     (*tctrld_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int	(*tctrld_poll)(dev_t, int, struct proc *);
 };
 
 struct envsys_sensor {
@@ -51,8 +51,9 @@ struct envsys_sensor {
 };
 
 extern void tadpole_powerdown(void);
-extern void tadpole_set_video(int enabled);
-extern void tadpole_request(struct tctrl_req *req, int spin);
-extern void tctrl_set_lcd(int what, unsigned short which);
+extern void tadpole_set_video(int);
+extern int  tadpole_request(struct tctrl_req *, int);
+extern void tadpole_set_lcd(int, unsigned short);
+extern void tadpole_register_callback(void (*)(void *, int), void *);
 
 #endif /* _SPARC_DEV_TCTRLVAR_H */

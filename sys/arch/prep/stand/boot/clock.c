@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2004/06/29 16:26:05 kleink Exp $	*/
+/*	$NetBSD: clock.c,v 1.5.12.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,28 +40,26 @@
 
 u_long ns_per_tick = NS_PER_TICK;
 
-static inline u_quad_t mftb __P((void));
-static inline void mfrtc __P((u_long *, u_long *));
+static inline u_quad_t mftb(void);
+static inline void mfrtc(u_long *, u_long *);
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;
 
-	__asm__ volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	__asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
 	return (tb);
 }
 
 static inline void
-mfrtc(up, lp)
-	u_long *up;
-	u_long *lp;
+mfrtc(u_long *up, u_long *lp)
 {
 	u_long scratch;
 
-	__asm __volatile ("1: mfspr %0,%3; mfspr %1,%4; mfspr %2,%3;"
+	__asm volatile ("1: mfspr %0,%3; mfspr %1,%4; mfspr %2,%3;"
 	    "cmpw %0,%2; bne 1b"
 	    : "=r"(*up), "=r"(*lp), "=r"(scratch)
 	    : "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
@@ -71,14 +69,13 @@ mfrtc(up, lp)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
 	unsigned int cpuvers;
 
-	__asm __volatile ("mfpvr %0" : "=r"(cpuvers));
+	__asm volatile ("mfpvr %0" : "=r"(cpuvers));
 	cpuvers >>= 16;
 
 	if (cpuvers == MPC601) {
@@ -92,7 +89,7 @@ delay(n)
 			tbh++;
 			tbl -= 1000000000;
 		}
-		__asm __volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		__asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
 		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
 		    : "=&r"(scratch)
 		    : "r"(tbh), "r"(tbl), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
@@ -101,7 +98,7 @@ delay(n)
 		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 		tbh = tb >> 32;
 		tbl = tb;
-		__asm __volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
+		__asm volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
 		                  "mftb %0; cmpw %0,%2; blt 1b; 2:"
 		                  : "=&r"(scratch)
 		                  : "r"(tbh), "r"(tbl));

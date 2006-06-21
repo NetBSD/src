@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.22 2003/07/15 01:19:50 lukem Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.22.16.1 2006/06/21 14:49:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.22 2003/07/15 01:19:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.22.16.1 2006/06/21 14:49:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -93,7 +93,7 @@ extern font_info	font_info_8x16;
 static void view_init __P((struct ite_softc *));
 static void view_deinit __P((struct ite_softc *));
 static int  itecc_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
-							struct proc *));
+							struct lwp *));
 static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
 static void cursor32 __P((struct ite_softc *, int));
 static void putc8 __P((struct ite_softc *, int, int, int, int));
@@ -235,7 +235,7 @@ void		*auxp;
 	}
 
 	gp = (struct grf_softc *)dp;
-	gp->g_unit = gp->g_device.dv_unit;
+	gp->g_unit = device_unit(&gp->g_device);
 	grfsp[gp->g_unit] = gp;
 
 	if((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {
@@ -389,7 +389,7 @@ struct itewinsize	*winsz;
 	vs.depth  = winsz->depth;
 
 	error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, VIOCSSIZE,
-				       (caddr_t)&vs, 0, NOPROC);
+				       (caddr_t)&vs, 0, NOLWP);
 	view  = viewview(ip->grf->g_viewdev);
 
 	/*
@@ -457,12 +457,12 @@ struct itewinsize	*winsz;
 }
 
 int
-itecc_ioctl(ip, cmd, addr, flag, p)
+itecc_ioctl(ip, cmd, addr, flag, l)
 struct ite_softc	*ip;
 u_long			cmd;
 caddr_t			addr;
 int			flag;
-struct proc		*p;
+struct lwp		*l;
 {
 	struct winsize		ws;
 	struct itewinsize	*is;
@@ -489,18 +489,18 @@ struct proc		*p;
 			 * XXX this is messy, but works 
 			 */
 			(*ite_cdevsw.d_ioctl)(ip->grf->g_itedev, TIOCSWINSZ,
-					      (caddr_t)&ws, 0, p);
+					      (caddr_t)&ws, 0, l);
 		}
 		break;
 	case VIOCSCMAP:
 	case VIOCGCMAP:
 		/*
-		 * XXX watchout for that NOPROC. its not really the kernel
+		 * XXX watchout for that NOLWP. its not really the kernel
 		 * XXX talking these two commands don't use the proc pointer
 		 * XXX though.
 		 */
 		error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, cmd, addr,
-					       flag, NOPROC);
+					       flag, NOLWP);
 		break;
 	default:
 		error = EPASSTHROUGH;
@@ -538,7 +538,7 @@ cursor32(struct ite_softc *ip, int flag)
 		cend = ip->font.height-1; 
 		pl   = cci->column_offset[ip->cursorx]
 				+ cci->row_ptr[ip->cursory];
-		__asm__ __volatile__
+		__asm volatile
 			("1: notb  %0@ ; addaw %4,%0\n\t"
 			 "dbra  %1,1b"
 			 : "=a" (pl), "=d" (cend)
@@ -563,7 +563,7 @@ cursor32(struct ite_softc *ip, int flag)
 	pl          = cci->column_offset[ip->cursorx]
 			+ cci->row_ptr[ip->cursory];
 
-	__asm__ __volatile__
+	__asm volatile
 		("1: notb  %0@ ; addaw %4,%0\n\t"
 		 "dbra  %1,1b"
 		 : "=a" (pl), "=d" (cend)
@@ -691,9 +691,9 @@ int				dir, sx, count;
 			int	t;
 			sofs2 -= ip->font.width;
 			dofs2 -= ip->font.width;
-			asm("bfextu %1@{%2:%3},%0" : "=d" (t)
+			__asm("bfextu %1@{%2:%3},%0" : "=d" (t)
 				: "a" (pl), "d" (sofs2), "d" (ip->font.width));
-			asm("bfins %3,%0@{%1:%2}" :
+			__asm("bfins %3,%0@{%1:%2}" :
 				: "a" (pl), "d" (dofs2), "d" (ip->font.width),
 				  "d" (t));
 		    }
@@ -711,9 +711,9 @@ int				dir, sx, count;
 		    for(i = (ip->cols - sx)-1; i >= 0; i--) {
 			int	t;
 
-			asm("bfextu %1@{%2:%3},%0" : "=d" (t)
+			__asm("bfextu %1@{%2:%3},%0" : "=d" (t)
 				: "a" (pl), "d" (sofs2), "d" (ip->font.width));
-			asm("bfins %3,%0@{%1:%2}"
+			__asm("bfins %3,%0@{%1:%2}"
 				: : "a" (pl), "d" (dofs2),"d" (ip->font.width),
 				    "d" (t));
 			sofs2 += ip->font.width;

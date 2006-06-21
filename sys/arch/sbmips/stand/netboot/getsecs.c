@@ -1,4 +1,4 @@
-/* $NetBSD: getsecs.c,v 1.2 2003/02/07 17:52:08 cgd Exp $ */
+/* $NetBSD: getsecs.c,v 1.2.18.1 2006/06/21 14:55:23 yamt Exp $ */
 
 /*
  * Copyright 2001
@@ -45,12 +45,11 @@
 #include "stand/common/cfe_api.h"
 
 time_t
-getsecs()
+getsecs(void)
 {
-    long long time;
+	long long time;
 
-    time = cfe_getticks();
+	time = cfe_getticks();
 
-    return (int) (time / 10);
+	return (int) (time / 10);
 }
-

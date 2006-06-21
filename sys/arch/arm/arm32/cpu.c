@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.59 2005/07/04 00:42:37 bsh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.59.2.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2005/07/04 00:42:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59.2.1 2006/06/21 14:49:16 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -227,6 +227,13 @@ static const char * const i80321_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+static const char * const i80219_steppings[16] = {
+	"step A-0",	"rev 1",	"rev 2",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 /* Steppings for PXA2[15]0 */
 static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
@@ -348,6 +355,11 @@ const struct cpuidtab cpuids[] = {
 	  i80321_steppings },
 	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
 	  i80321_steppings },
+
+	{ CPU_ID_80219_400,	CPU_CLASS_XSCALE,	"i80219 400MHz",
+	  i80219_steppings },
+	{ CPU_ID_80219_600,	CPU_CLASS_XSCALE,	"i80219 600MHz",
+	  i80219_steppings },
 
 	{ CPU_ID_PXA27X,	CPU_CLASS_XSCALE,	"PXA27x",
 	  pxa27x_steppings },
@@ -587,18 +599,14 @@ cpu_alloc_idlepcb(struct cpu_info *ci)
 	vaddr_t uaddr;
 	struct pcb *pcb;
 	struct trapframe *tf;
-	int error;
 
 	/*
 	 * Generate a kernel stack and PCB (in essence, a u-area) for the
 	 * new CPU.
 	 */
-	if (uvm_uarea_alloc(&uaddr)) {
-		error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
-		    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
-		if (error)
-			return error;
-	}
+	uaddr = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED);
+	if (!uaddr)
+		return ENOMEM;
 	ci->ci_idlepcb = pcb = (struct pcb *)uaddr;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: spdvar.h,v 1.1 2001/10/16 15:38:35 uch Exp $	*/
+/*	$NetBSD: spdvar.h,v 1.1.38.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,11 +56,11 @@ void spd_eeprom_read(int, u_int16_t *, int);
 /* HDD LED */
 #define SPD_LED_OFF()							\
 {									\
-		*(__volatile__ u_int8_t *)SPD_IO_DIR_REG8 = SPD_IO_LED;	\
-		*(__volatile__ u_int8_t *)SPD_IO_DATA_REG8 = SPD_IO_LED;\
+		*(volatile u_int8_t *)SPD_IO_DIR_REG8 = SPD_IO_LED;	\
+		*(volatile u_int8_t *)SPD_IO_DATA_REG8 = SPD_IO_LED;\
 }
 #define SPD_LED_ON()							\
 {									\
-		*(__volatile__ u_int8_t *)SPD_IO_DIR_REG8 = SPD_IO_LED;	\
-		*(__volatile__ u_int8_t *)SPD_IO_DATA_REG8 = 0;		\
+		*(volatile u_int8_t *)SPD_IO_DIR_REG8 = SPD_IO_LED;	\
+		*(volatile u_int8_t *)SPD_IO_DATA_REG8 = 0;		\
 }

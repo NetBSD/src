@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.23.12.1 2005/07/07 11:53:25 yamt Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.23.12.2 2006/06/21 14:48:00 yamt Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.1 2005/07/07 11:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.2 2006/06/21 14:48:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1681,7 +1681,7 @@ tulip_null_media_poll(
 #endif
 }
 
-__inline__ static void
+inline static void
 tulip_21140_mediainit(
     tulip_softc_t * const sc,
     tulip_media_info_t * const mip,
@@ -5021,7 +5021,7 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
-    const int unit = sc->tulip_dev.dv_unit;
+    const int unit = device_unit(&sc->tulip_dev);
 #ifdef THIS_IS_THE_ORIGINAL_HRH_DRIVER_USING_THE_NOW_DEFUNCT_PCI_MEM_FIND
     bus_addr_t regbase;
     bus_size_t regsize;

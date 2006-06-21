@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.13 2005/06/09 17:46:19 jmc Exp $ */
+/* $NetBSD: sbscn.c,v 1.13.2.1 2006/06/21 14:53:48 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.13 2005/06/09 17:46:19 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.13.2.1 2006/06/21 14:53:48 yamt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.13 2005/06/09 17:46:19 jmc Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <mips/sibyte/dev/sbobiovar.h>
 #if 0
@@ -363,7 +364,8 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&sbscn_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, (sc->sc_dev.dv_unit << 1) + chan);
+		cn_tab->cn_dev = makedev(maj,
+		    (device_unit(&sc->sc_dev) << 1) + chan);
 
 		printf("%s: channel %d: console\n", sc->sc_dev.dv_xname, chan);
 	}
@@ -539,7 +541,7 @@ sbscn_shutdown(struct sbscn_channel *ch)
 }
 
 int
-sbscnopen(dev_t dev, int flag, int mode, struct proc *p)
+sbscnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SBSCN_UNIT(dev);
 	int chan = SBSCN_CHAN(dev);
@@ -570,7 +572,7 @@ sbscnopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -676,7 +678,7 @@ bad:
 }
 
 int
-sbscnclose(dev_t dev, int flag, int mode, struct proc *p)
+sbscnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct sbscn_softc *sc = sbscn_cd.cd_devs[SBSCN_UNIT(dev)];
 	struct sbscn_channel *ch = &sc->sc_channels[SBSCN_CHAN(dev)];
@@ -722,13 +724,13 @@ sbscnwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-sbscnpoll(dev_t dev, int events, struct proc *p)
+sbscnpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct sbscn_softc *sc = sbscn_cd.cd_devs[SBSCN_UNIT(dev)];
 	struct sbscn_channel *ch = &sc->sc_channels[SBSCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -742,7 +744,7 @@ sbscntty(dev_t dev)
 }
 
 int
-sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sbscn_softc *sc = sbscn_cd.cd_devs[SBSCN_UNIT(dev)];
 	struct sbscn_channel *ch = &sc->sc_channels[SBSCN_CHAN(dev)];
@@ -750,11 +752,11 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error;
 	int s;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -784,7 +786,7 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;

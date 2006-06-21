@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.3 2003/07/15 03:36:04 lukem Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.3.16.1 2006/06/21 14:55:47 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.3 2003/07/15 03:36:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.3.16.1 2006/06/21 14:55:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.3 2003/07/15 03:36:04 lukem Exp $");
 ** MACROS 
 **
 */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
-#define ISCLR(t, f)     ( ((t) & (f)) == 0)
 
 /* define regisers on sequoia used by pins  */
 #define SEQUOIA_1GPIO       PMC_GPCR_REG         /* reg 0x007 gpio 0-3 */      

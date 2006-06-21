@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.21 2005/03/16 05:02:12 bsh Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.21.4.1 2006/06/21 14:50:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.21 2005/03/16 05:02:12 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.21.4.1 2006/06/21 14:50:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -378,8 +378,8 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern int etext asm("_etext");
-	extern int end asm("_end");
+	extern int etext __asm("_etext");
+	extern int end __asm("_end");
 	pv_addr_t kernel_l1pt;
 	int progress_counter = 0;
 
@@ -537,6 +537,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0

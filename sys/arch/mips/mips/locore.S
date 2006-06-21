@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.159 2005/02/26 13:15:47 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.159.4.1 2006/06/21 14:53:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -208,7 +208,7 @@ END(mips_idle)
 
 /*
  * cpu_switch(struct lwp *)
- * Find the highest priority process and resume it.
+ * Find the highest priority LWP and resume it.
  * Arguments:
  *	a0	'struct lwp *' of the current LWP
  *
@@ -241,7 +241,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 
-	move	s0, a0				# s0 = old proc
+	move	s0, a0				# s0 = old lwp
 /*
  * Entered here from idle() and switch_exit().  Interrupts are
  * blocked, and sched_lock is held.
@@ -289,7 +289,7 @@ cpu_switch_queuescan:
 	xor	t3, t3, v1			# clear bit in 'whichqs'
 	sw	t3, _C_LABEL(sched_whichqs)
 3:
-	/* Squirrel away proc pointer into s7 */
+	/* Squirrel away lwp pointer into s7 */
 	move	s7, a0
 #if defined(LOCKDEBUG)
 	/*
@@ -321,7 +321,7 @@ cpu_switch_queuescan:
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
 	 */
-	beq	s0, s7, 4f			# oldproc == newproc ??
+	beq	s0, s7, 4f			# oldlwp == newlwp ??
 	li	s5, 0				# BDslot: didn't switch
 
 /*
@@ -758,37 +758,6 @@ LEAF(_splnone)
 	j	ra
 	nop
 END(_splnone)
-
-#if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
-/*
- * Insert 'p' after 'q'.
- *	_insque(p, q)
- *		caddr_t p, q;
- */
-LEAF(_insque)
-	lw	v0, 0(a1)		# v0 = q->next
-	sw	a1, 4(a0)		# p->prev = q
-	sw	v0, 0(a0)		# p->next = q->next
-	sw	a0, 4(v0)		# q->next->prev = p
-	j	ra
-	sw	a0, 0(a1)		# q->next = p
-END(_insque)
-
-/*
- * Remove item 'p' from queue.
- *	_remque(p)
- *		caddr_t p;
- */
-LEAF(_remque)
-	lw	v0, 0(a0)		# v0 = p->next
-	lw	v1, 4(a0)		# v1 = p->prev
-	nop
-	sw	v0, 0(v1)		# p->prev->next = p->next
-	j	ra
-	sw	v1, 4(v0)		# p->next->prev = p->prev
-END(_remque)
-#endif
-
 
 /*
  * u_int32_t mips_cp0_cause_read(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2003/08/07 16:29:50 agc Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.4.16.1 2006/06/21 14:56:47 yamt Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2003/08/07 16:29:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4.16.1 2006/06/21 14:56:47 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -149,18 +149,16 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2003/08/07 16:29:50 agc Exp $")
 
 #include <sparc/sparc/asm.h>
 
-extern int64_t pseg_get __P((struct pmap *, vaddr_t));
+extern int64_t pseg_get(struct pmap *, vaddr_t);
 
-static __inline void kgdb_copy __P((char *, char *, int));
-static __inline void kgdb_zero __P((char *, int));
+static inline void kgdb_copy(register char *, register char *, register int);
+static inline void kgdb_zero(register char *, register int);
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
  */
-static __inline void
-kgdb_copy(src, dst, len)
-	register char *src, *dst;
-	register int len;
+static inline void
+kgdb_copy(register char *src, register char *dst, register int len)
 {
 
 	while (--len >= 0)
@@ -168,10 +166,8 @@ kgdb_copy(src, dst, len)
 }
 
 /* ditto for bzero */
-static __inline void
-kgdb_zero(ptr, len)
-	register char *ptr;
-	register int len;
+static inline void
+kgdb_zero(register char *ptr, register int len)
 {
 	while (--len >= 0)
 		*ptr++ = (char) 0;

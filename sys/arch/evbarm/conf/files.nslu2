@@ -1,0 +1,40 @@
+#	$NetBSD%
+#
+# Linksys NSLU2 "Slug" configuration info
+#
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+file	arch/evbarm/nslu2/nslu2_machdep.c
+
+# IXP425 Network Processor CPU support
+include "arch/arm/xscale/files.ixp425"
+
+# IXP425 PCI bus support
+attach	ixpio at mainbus with ixpio_mainbus
+file	arch/evbarm/nslu2/nslu2_mainbus.c		ixpio_mainbus
+file	arch/evbarm/nslu2/nslu2_pci.c			ixpio
+
+# IXP425 slow peripheral bus support
+attach	ixpsip at mainbus
+
+# Bitbang I2C bus (using two GPIO pins)
+# (Attached to ixpsip for want of a better place)
+device	slugiic: i2cbus, i2c_bitbang
+attach	slugiic at ixpsip
+file	arch/evbarm/nslu2/nslu2_iic.c			slugiic
+
+# Power/Reset button support
+device	slugbutt: sysmon_power, sysmon_taskq
+attach	slugbutt at ixpsip
+file	arch/evbarm/nslu2/nslu2_buttons.c		slugbutt
+
+# Disk activity and status LED support
+device	slugled
+attach	slugled at ixpsip
+file	arch/evbarm/nslu2/nslu2_leds.c			slugled
+
+# Buzzer support
+#device	slugbuzz
+#attach	slugbuzz at ixpsip
+#file	arch/evbarm/nslu2/nslu2_slugbuzz.c		slugbuzz

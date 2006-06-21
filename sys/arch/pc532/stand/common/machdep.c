@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2003/12/06 14:02:40 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.16.1 2006/06/21 14:54:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip L. Budne.
@@ -109,7 +109,7 @@ _rtt(void)
 	memcpy((void *)0, (void *)0x10000000, 0x1f00);
 
 	/* Jump into ROM copy. */
-	__asm __volatile("jump @0");
+	__asm volatile("jump @0");
 
 	while (1)
 		;

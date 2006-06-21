@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.18 2005/05/31 00:50:28 christos Exp $	*/
+/*	$NetBSD: consinit.c,v 1.18.2.1 2006/06/21 14:56:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18 2005/05/31 00:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18.2.1 2006/06/21 14:56:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
+#include "ukbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,12 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18 2005/05/31 00:50:28 christos Exp $
 
 #include <sparc64/dev/cons.h>
 
-static void prom_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-static void prom_cnpollc __P((dev_t, int));
-static void prom_cnputc __P((dev_t, int));
+#include <dev/usb/ukbdvar.h>
+
+static void prom_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+static void prom_cnpollc(dev_t, int);
 
 /*
  * The console is set to this one initially,
@@ -88,8 +90,7 @@ struct consdev consdev_prom = {
 struct consdev *cn_tab = &consdev_prom;
 
 void
-prom_cnprobe(cd)
-	struct consdev *cd;
+prom_cnprobe(struct consdev *cd)
 {
 #if NPCONS > 0
 	int maj;
@@ -102,8 +103,7 @@ prom_cnprobe(cd)
 }
 
 int
-prom_cngetc(dev)
-	dev_t dev;
+prom_cngetc(dev_t dev)
 {
 	unsigned char ch = '\0';
 	int l;
@@ -124,8 +124,7 @@ prom_cngetc(dev)
 }
 
 static void
-prom_cninit(cn)
-	struct consdev *cn;
+prom_cninit(struct consdev *cn)
 {
 }
 
@@ -133,9 +132,7 @@ prom_cninit(cn)
  * PROM console output putchar.
  */
 static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+prom_cnputc(dev_t dev, int c)
 {
 	int s;
 	char c0 = (c & 0x7f);
@@ -146,9 +143,7 @@ prom_cnputc(dev, c)
 }
 
 void
-prom_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+prom_cnpollc(dev_t dev, int on)
 {
 	if (on) {
                 /* Entering debugger. */
@@ -206,11 +201,19 @@ consinit()
 
 	if (prom_stdin_node != 0 &&
 	    (prom_getproplen(prom_stdin_node, "keyboard") >= 0)) {
-#if NKBD > 0
-		printf("cninit: kdb/display not configured\n");
+#if NUKBD > 0
+		if ((OF_instance_to_path(prom_stdin(), buffer, sizeof(buffer)) >= 0) &&
+		    (strstr(buffer, "/usb@") != NULL)) {
+			/*
+		 	* If we have a USB keyboard, it will show up as (e.g.)
+		 	*   /pci@1f,0/usb@c,3/keyboard@1	(Blade 100)
+		 	*/
+			consname = "usb-keyboard/display";
+			ukbd_cnattach();
+		} else
 #endif
-		consname = "keyboard/display";
-	} else if (prom_stdout_node != 0 &&
+			consname = "sun-keyboard/display";
+	} else if (prom_stdin_node != 0 &&
 		   (OF_instance_to_path(prom_stdin(), buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}

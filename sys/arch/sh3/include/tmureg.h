@@ -1,4 +1,4 @@
-/*	$NetBSD: tmureg.h,v 1.9 2005/07/03 12:38:38 nonaka Exp $	*/
+/*	$NetBSD: tmureg.h,v 1.9.2.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -96,18 +96,18 @@
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_TOCR;
-extern u_int32_t __sh_TSTR;
-extern u_int32_t __sh_TCOR0;
-extern u_int32_t __sh_TCNT0;
-extern u_int32_t __sh_TCR0;
-extern u_int32_t __sh_TCOR1;
-extern u_int32_t __sh_TCNT1;
-extern u_int32_t __sh_TCR1;
-extern u_int32_t __sh_TCOR2;
-extern u_int32_t __sh_TCNT2;
-extern u_int32_t __sh_TCR2;
-extern u_int32_t __sh_TCPR2;
+extern uint32_t __sh_TOCR;
+extern uint32_t __sh_TSTR;
+extern uint32_t __sh_TCOR0;
+extern uint32_t __sh_TCNT0;
+extern uint32_t __sh_TCR0;
+extern uint32_t __sh_TCOR1;
+extern uint32_t __sh_TCNT1;
+extern uint32_t __sh_TCR1;
+extern uint32_t __sh_TCOR2;
+extern uint32_t __sh_TCNT2;
+extern uint32_t __sh_TCR2;
+extern uint32_t __sh_TCPR2;
 #endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
 

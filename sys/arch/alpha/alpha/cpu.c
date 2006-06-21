@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.71 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: cpu.c,v 1.71.16.1 2006/06/21 14:48:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.16.1 2006/06/21 14:48:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -99,9 +99,9 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *cpu_info[ALPHA_MAXPROCS];
 
 /* Bitmask of CPUs booted, currently running, and paused. */
-__volatile u_long cpus_booted;
-__volatile u_long cpus_running;
-__volatile u_long cpus_paused;
+volatile u_long cpus_booted;
+volatile u_long cpus_running;
+volatile u_long cpus_paused;
 
 void	cpu_boot_secondary __P((struct cpu_info *));
 #endif /* MULTIPROCESSOR */

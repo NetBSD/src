@@ -1,10 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.3 2003/08/27 16:03:18 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.3.16.1 2006/06/21 14:53:38 yamt Exp $
 
 # Standard kernel compile flags
 CFLAGS += -G 0 -mno-abicalls
-.if ${HAVE_GCC3} == "no"
-CFLAGS += -mno-half-pic
-.endif
 
 # Needed so modules loaded in KSEG2 can make calls to KSEG0
 CFLAGS += -mlong-calls

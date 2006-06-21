@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0266.h,v 1.2 2004/12/11 03:32:27 tsutsui Exp $	*/
+/*	$NetBSD: dmac_0266.h,v 1.2.10.1 2006/06/21 14:54:02 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -46,7 +46,7 @@ struct dma_regs {
 	uint32_t	mapent;			/* Map entry Register 	*/
 };
 
-#define DMAC_WAIT	__asm __volatile ("nop; nop; nop; nop; nop; nop")
+#define DMAC_WAIT	__asm volatile ("nop; nop; nop; nop; nop; nop")
 
 #define DMAC_SEG_SIZE	0x1000 /* 4kbyte per DMA segment */
 #define DMAC_SEG_OFFSET	0x0fff

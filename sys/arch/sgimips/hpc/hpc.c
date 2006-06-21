@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.32 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: hpc.c,v 1.32.2.1 2006/06/21 14:55:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.32 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.32.2.1 2006/06/21 14:55:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,12 @@ const struct hpc_device {
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH0_DEVREGS, HPC3_PBUS_DMAREGS,
 	  8 + 4, /* XXX IRQ_LOCAL1 + 4 */
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "pi1ppc",
+	  HPC_BASE_ADDRESS_0,
+	  HPC3_PBUS_CH6_DEVREGS + IOC_PLP_REGS, 0,
+	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ NULL,
@@ -333,7 +339,7 @@ int	hpc_print(void *, const char *);
 int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 
 int	hpc_submatch(struct device *, struct cfdata *,
-		     const locdesc_t *, void *);
+		     const int *, void *);
 
 int	hpc_power_intr(void *);
 
@@ -450,7 +456,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 	int hpctype;
 
 	/* Allow forcing of our hpc revision. */ 
-	switch (sc->sc_dev.dv_cfdata->cf_flags & HPC_REVISION_MASK) {
+	switch (device_cfdata(&sc->sc_dev)->cf_flags & HPC_REVISION_MASK) {
 	case HPC_REVISION_1:
 		return (1);
 
@@ -507,7 +513,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 
 int
 hpc_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 

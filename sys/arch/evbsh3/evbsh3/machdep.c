@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2005/06/05 13:49:26 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.1 2006/06/21 14:51:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2005/06/05 13:49:26 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2006/06/21 14:51:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -223,11 +223,11 @@ haltsys:
 void
 initSH3(void *pc)	/* XXX return address */
 {
-	extern char _edata[], _end[];
+	extern char edata[], end[];
 	vaddr_t kernend;
 
 	/* Clear bss */
-	memset(_edata, 0, _end - _edata);
+	memset(edata, 0, end - edata);
 
 	/* Initilize CPU ops. */
 #if defined(SH3) && defined(SH4)
@@ -261,7 +261,7 @@ initSH3(void *pc)	/* XXX return address */
 	consinit();
 
 	/* Load memory to UVM */
-	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(_end)));
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
 	physmem = atop(IOM_RAM_SIZE);
 	uvm_page_physload(
 		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
@@ -282,7 +282,7 @@ initSH3(void *pc)	/* XXX return address */
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
-	__asm __volatile (
+	__asm volatile (
 		"jmp	@%0;"
 		"mov	%1, r15"
 		:: "r"(pc),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));
@@ -441,7 +441,8 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 		panic("sh3_pcmcia_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0){
 		printf("shpcmcia_add_mapping: nomem \n");
 		return (ENOMEM);

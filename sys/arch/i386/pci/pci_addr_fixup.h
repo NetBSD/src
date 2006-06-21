@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.h,v 1.4 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: pci_addr_fixup.h,v 1.4.12.1 2006/06/21 14:52:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -49,4 +49,4 @@ void	pciaddr_resource_manage(pci_chipset_tag_t, pcitag_t,
 
 void	pciaddr_print_devid(pci_chipset_tag_t, pcitag_t);
 
-bus_addr_t pciaddr_ioaddr(u_int32_t);
+bus_addr_t pciaddr_ioaddr(uint32_t);

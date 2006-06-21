@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.17 2004/08/13 15:47:53 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.17.12.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -302,9 +302,9 @@ HpcBootApp::registerClass(WNDPROC proc)
 // Debug support.
 //
 void
-_bitdisp(u_int32_t a, int s, int e, int m, int c)
+_bitdisp(uint32_t a, int s, int e, int m, int c)
 {
-	u_int32_t j, j1;
+	uint32_t j, j1;
 	int i, n;
 
 	DPRINTF_SETUP();
@@ -337,7 +337,7 @@ _bitdisp(u_int32_t a, int s, int e, int m, int c)
 }
 
 void
-_dbg_bit_print(u_int32_t reg, u_int32_t mask, const char *name)
+_dbg_bit_print(uint32_t reg, uint32_t mask, const char *name)
 {
 	static const char onoff[3] = "_x";
 

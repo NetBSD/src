@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.8 2005/06/09 08:05:31 he Exp $ */
+/* $NetBSD: except.c,v 1.8.2.1 2006/06/21 14:47:47 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,10 +31,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.8 2005/06/09 08:05:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.8.2.1 2006/06/21 14:47:47 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -57,10 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.8 2005/06/09 08:05:31 he Exp $");
 #ifdef DDB
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
-#endif
-
-#ifdef KTRACE
-#include <sys/ktrace.h>
 #endif
 
 void syscall(struct trapframe *);
@@ -207,7 +202,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	KASSERT(current_intr_depth == 0);
 
 	for (;;) {
-		error = uvm_fault(map, va, 0, atype);
+		error = uvm_fault(map, va, atype);
 		if (error != ENOMEM)
 			break;
 		log(LOG_WARNING, "pid %d.%d: VM shortage, sleeping\n",

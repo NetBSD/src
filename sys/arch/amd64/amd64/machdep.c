@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2005/05/15 21:37:46 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34.2.1 2006/06/21 14:48:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2005/05/15 21:37:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.1 2006/06/21 14:48:18 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2005/05/15 21:37:46 fvdl Exp $");
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+#include <x86/x86/tsc.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -160,8 +161,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2005/05/15 21:37:46 fvdl Exp $");
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
-
-char bootinfo[BOOTINFO_MAXSIZE];
 
 /* Our exported CPU info; we have only one right now. */  
 struct cpu_info cpu_info_primary;
@@ -210,7 +209,6 @@ struct vm_map *phys_map = NULL;
 extern	paddr_t avail_start, avail_end;
 
 void (*delay_func) __P((int)) = i8254_delay;
-void (*microtime_func) __P((struct timeval *)) = i8254_microtime;
 void (*initclock_func) __P((void)) = i8254_initclocks;
 
 #ifdef MTRR
@@ -1464,10 +1462,10 @@ init_x86_64(first_avail)
 	 */
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
-	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
+	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA32_SEL), 0,
-	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
+	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
 	/*
 	 * 32 bit LDT entries.
@@ -1554,21 +1552,6 @@ init_x86_64(first_avail)
                 maxproc = cpu_maxproc();
 }
 
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while(n--) {
-		if(help->type == type)
-			return(help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return(0);
-}
-
 void
 cpu_reset()
 {
@@ -1594,7 +1577,7 @@ cpu_reset()
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0
 	/*

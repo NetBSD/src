@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.8 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.8.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.8 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.8.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.8 2005/02/26 23:04:16 perry Exp $")
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -80,11 +81,9 @@ afm_alloc(ifp)
 {
 	struct afm_head *head;
 
-	MALLOC(head, struct afm_head *, sizeof(struct afm_head),
-	       M_DEVBUF, M_WAITOK);
+	head = malloc(sizeof(struct afm_head), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (head == NULL)
 		panic("afm_alloc: malloc failed!");
-	(void)memset(head, 0, sizeof(struct afm_head));
 
 	/* initialize per interface afmap list */
 	LIST_INIT(&head->afh_head);
@@ -114,7 +113,7 @@ afm_dealloc(ifp)
 
 	LIST_REMOVE(head, afh_chain);
 
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 	return 0;
 }
 
@@ -159,11 +158,9 @@ int afm_add(ifp, flowmap)
 	} else
 		return (EINVAL);
 
-	MALLOC(afm, struct afm *, sizeof(struct afm),
-	       M_DEVBUF, M_WAITOK);
+	afm = malloc(sizeof(struct afm), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (afm == NULL)
 		return (ENOMEM);
-	(void)memset(afm, 0, sizeof(struct afm));
 
 	afm->afm_vci = flowmap->af_vci;
 	afm->afm_vpi = flowmap->af_vpi;
@@ -179,7 +176,7 @@ afm_remove(afm)
 	struct afm *afm;
 {
 	LIST_REMOVE(afm, afm_list);
-	FREE(afm, M_DEVBUF);
+	free(afm, M_DEVBUF);
 	return (0);
 }
 
@@ -330,19 +327,19 @@ afm_match(ifp, flow)
 altqdev_decl(afm);
 
 int
-afmopen(dev, flag, fmt, p)
+afmopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }
 
 int
-afmclose(dev, flag, fmt, p)
+afmclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int err, error = 0;
 	struct atm_flowmap fmap;
@@ -358,7 +355,7 @@ afmclose(dev, flag, fmt, p)
 		sprintf(fmap.af_ifname, "%s%d",
 			head->afh_ifp->if_name, head->afh_ifp->if_unit);
 #endif
-		err = afmioctl(dev, AFM_CLEANFMAP, (caddr_t)&fmap, flag, p);
+		err = afmioctl(dev, AFM_CLEANFMAP, (caddr_t)&fmap, flag, l);
 		if (err && error == 0)
 			error = err;
 	}
@@ -367,16 +364,17 @@ afmclose(dev, flag, fmt, p)
 }
 
 int
-afmioctl(dev, cmd, addr, flag, p)
+afmioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int	error = 0;
 	struct atm_flowmap *flowmap;
 	struct ifnet *ifp;
+	struct proc *p = l->l_proc;
 
 	/* check cmd for superuser only */
 	switch (cmd) {
@@ -386,7 +384,8 @@ afmioctl(dev, cmd, addr, flag, p)
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 #endif
 		if (error)
 			return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.3 2004/08/26 10:12:33 junyoung Exp $ */
+/*	$NetBSD: bioscall.S,v 1.3.12.1 2006/06/21 14:52:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/param.h>
 #include <machine/bioscall.h>
 
 #include <machine/asm.h>

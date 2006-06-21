@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/05 15:17:54 nonaka Exp $
+#	$NetBSD: Makefile,v 1.6.16.1 2006/06/21 14:55:23 yamt Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -13,6 +13,7 @@ CFLAGS= -Os -mmultiple -ffreestanding
 
 CLEANFILES+= machine powerpc
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .PHONY: machine-links
 beforedepend: machine-links
 
@@ -21,6 +22,7 @@ machine-links:
 	ln -s ${S}/arch/${MACHINE}/include machine
 	-rm -f ${MACHINE_ARCH}
 	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+.endif
 
 .include <bsd.prog.mk>
 
@@ -36,7 +38,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_INCLUDE_NET=no
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 

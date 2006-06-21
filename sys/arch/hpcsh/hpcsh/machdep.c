@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2004/11/14 15:45:02 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.12.1 2006/06/21 14:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2004/11/14 15:45:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.12.1 2006/06/21 14:52:02 yamt Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -147,7 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2004/11/14 15:45:02 uwe Exp $");
 /* Machine */
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
-extern char cpu_model[];
 struct bootinfo *bootinfo;
 
 /* Physical memory */
@@ -303,22 +302,20 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #endif /* KGDB */
 
 	/* Jump to main */
-	__asm__ __volatile__(
+	__asm volatile(
 		"jmp	@%0;"
 		"mov	%1, sp"
 		:: "r"(main),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));
+
 	/* NOTREACHED */
-	while (1)
-		;
+	for (;;)
+		continue;
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
-	int cpuclock, pclock;
 
-	cpuclock = sh_clock_get_cpuclock();
-	pclock = sh_clock_get_pclock();
 	sprintf(cpu_model, "%s\n", platid_name(&platid));
 
 	sh_startup();
@@ -341,7 +338,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 void
-machine_sleep()
+machine_sleep(void)
 {
 
 	if (__sleep_func != NULL)
@@ -349,7 +346,7 @@ machine_sleep()
 }
 
 void
-machine_standby()
+machine_standby(void)
 {
 	// notyet
 }
@@ -420,9 +417,10 @@ cpu_reboot(int howto, char *bootstr)
 #endif
 
 	cpu_reset();
-	/*NOTREACHED*/
-	while(1)
-		;
+
+	/* NOTREACHED */
+	for (;;)
+		continue;
 }
 
 /* return # of physical pages. */
@@ -476,7 +474,7 @@ mem_cluster_init(paddr_t addr)
 }
 
 void
-mem_cluster_load()
+mem_cluster_load(void)
 {
 	paddr_t start, end;
 	psize_t size;
@@ -549,12 +547,12 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 int
 __check_dram(paddr_t start, paddr_t end)
 {
-	u_int8_t *page;
+	uint8_t *page;
 	int i, x;
 
 	_DPRINTF(" checking...");
 	for (; start < end; start += PAGE_SIZE) {
-		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
+		page = (uint8_t *)SH3_PHYS_TO_P2SEG (start);
 		x = random();
 		for (i = 0; i < PAGE_SIZE; i += 4)
 			*(volatile int *)(page + i) = (x ^ i);
@@ -581,7 +579,7 @@ intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
 	int evtcode;
-	u_int16_t r;
+	uint16_t r;
 
 	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
 
@@ -623,4 +621,3 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
 }
-

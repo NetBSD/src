@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.29 2005/06/02 16:25:02 tsutsui Exp $	*/
+/*	$NetBSD: mt.c,v 1.29.2.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.29 2005/06/02 16:25:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.29.2.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ struct	mt_softc {
 	short	sc_type;	/* tape drive model (hardware IDs) */
 	struct	hpibqueue sc_hq; /* HPIB device queue member */
 	tpr_t	sc_ttyp;
-	struct bufq_state sc_tab;/* buf queue */
+	struct bufq_state *sc_tab;/* buf queue */
 	int	sc_active;
 	struct buf sc_bufstore;	/* XXX buffer storage */
 };
@@ -189,11 +189,11 @@ mtattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	unit = self->dv_unit;
-	hpibno = parent->dv_unit;
+	unit = device_unit(self);
+	hpibno = device_unit(parent);
 	slave = ha->ha_slave;
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 	callout_init(&sc->sc_start_ch);
 	callout_init(&sc->sc_intr_ch);
 
@@ -275,7 +275,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 		    sc->sc_lastdsj);
 		return (-1);
 	}
-    getstats:
+ getstats:
 	retval = hpibrecv(sc->sc_hpibno,
 	    (sc->sc_flags & MTF_STATCONT) ? -1 : sc->sc_slave,
 	    MTT_STAT, ((char *)&(sc->sc_stat)) + sc->sc_statindex,
@@ -309,7 +309,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 }
 
 static int
-mtopen(dev_t dev, int flag, int mode, struct proc *p)
+mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct mt_softc *sc;
@@ -326,7 +326,7 @@ mtopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc->sc_flags & MTF_OPEN)
 		return (EBUSY);
 	sc->sc_flags |= MTF_OPEN;
-	sc->sc_ttyp = tprintf_open(p);
+	sc->sc_ttyp = tprintf_open(l->l_proc);
 	if ((sc->sc_flags & MTF_ALIVE) == 0) {
 		error = mtcommand(dev, MTRESET, 0);
 		if (error != 0 || (sc->sc_flags & MTF_ALIVE) == 0)
@@ -412,7 +412,7 @@ errout:
 }
 
 static int
-mtclose(dev_t dev, int flag, int fmt, struct proc *p)
+mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
@@ -507,7 +507,7 @@ mtstrategy(struct buf *bp)
 		}
 	}
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		mtustart(sc);
@@ -520,7 +520,7 @@ mtustart(struct mt_softc *sc)
 {
 
 	dlog(LOG_DEBUG, "%s ustart", sc->sc_dev.dv_xname);
-	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
+	if (hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq))
 		mtstart(sc);
 }
 
@@ -554,7 +554,7 @@ mtstart(void *arg)
 
 	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
 	sc->sc_flags &= ~MTF_WRT;
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -735,10 +735,10 @@ errdone:
 	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if ((bp = BUFQ_PEEK(&sc->sc_tab)) == NULL)
+	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
+	if ((bp = BUFQ_PEEK(sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
@@ -757,7 +757,7 @@ mtgo(void *arg)
 	int rw;
 
 	dlog(LOG_DEBUG, "%s go", sc->sc_dev.dv_xname);
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
 	    bp->b_data, bp->b_bcount, rw, rw != 0);
@@ -771,7 +771,7 @@ mtintr(void *arg)
 	int i;
 	u_char cmdbuf[4];
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if (bp == NULL) {
 		log(LOG_ERR, "%s intr: bp == NULL", sc->sc_dev.dv_xname);
 		return;
@@ -905,7 +905,7 @@ mtintr(void *arg)
 			tprintf(sc->sc_ttyp,
 				"%s: record (%d) larger than wanted (%d)\n",
 				sc->sc_dev.dv_xname, i, bp->b_bcount);
-    error:
+ error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
@@ -918,10 +918,10 @@ mtintr(void *arg)
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if (BUFQ_PEEK(&sc->sc_tab) == NULL)
+	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
+	if (BUFQ_PEEK(sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
@@ -946,7 +946,7 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

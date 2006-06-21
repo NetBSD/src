@@ -1,4 +1,4 @@
-/*	$NetBSD: conreg.h,v 1.3 2002/09/12 12:35:00 scw Exp $	*/
+/*	$NetBSD: conreg.h,v 1.3.22.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@ sh5_getctc(void)
 {
 	u_int64_t rv;
 
-	__asm __volatile("getcon ctc, %0" : "=r"(rv));
+	__asm volatile("getcon ctc, %0" : "=r"(rv));
 
 	return ((u_int)rv);
 }

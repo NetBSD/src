@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2004/10/13 23:28:36 gavan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2004/10/13 23:28:36 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -50,13 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2004/10/13 23:28:36 gavan Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
+#include <iyonix/iyonix/iyonixvar.h>
+
 struct device *booted_device;
 int booted_partition;
-
-void	(*iyonix_device_register)(struct device *, void *);
 
 /*
  * Set up the root device from the boot args
@@ -95,10 +98,52 @@ cpu_configure(void)
 	spl0();
 }
 
+#define BUILTIN_ETHERNET_P(pa)	\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 4 && (pa)->pa_function == 0)
+
+#define SETPROP(x, y)							\
+	do {								\
+		if (prop_dictionary_set(device_properties(dev),		\
+						x, y) == FALSE) {	\
+			printf("WARNING: unable to set " x " "		\
+			   "property for %s\n", dev->dv_xname);		\
+		}							\
+		prop_object_release(y);					\
+	} while (/*CONSTCOND*/0)
+
 void
 device_register(struct device *dev, void *aux)
 {
+	struct device *pdev;
 
-	if (iyonix_device_register != NULL)
-		(*iyonix_device_register)(dev, aux);
+	if ((pdev = device_parent(dev)) != NULL &&
+	    device_is_a(pdev, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (BUILTIN_ETHERNET_P(pa)) {
+			prop_number_t cfg1, cfg2, swdpin;
+			prop_data_t mac;
+
+			/*
+			 * We set these configuration registers to 0,
+			 * because it's the closest we have to "leave them
+			 * alone". That and, it works.
+			 */
+			cfg1 = prop_number_create_integer(0);
+			KASSERT(cfg1 != NULL);
+			cfg2 = prop_number_create_integer(0);
+			KASSERT(cfg2 != NULL);
+			swdpin = prop_number_create_integer(0);
+			KASSERT(swdpin != NULL);
+
+			mac = prop_data_create_data_nocopy(iyonix_macaddr,
+							   ETHER_ADDR_LEN);
+			KASSERT(mac != NULL);
+
+			SETPROP("mac-addr", mac);
+			SETPROP("i82543-cfg1", cfg1);
+			SETPROP("i82543-cfg2", cfg2);
+			SETPROP("i82543-swdpin", swdpin);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.51 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.51.2.1 2006/06/21 14:57:06 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.51 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.51.2.1 2006/06/21 14:57:06 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.51 2005/06/03 15:04:21 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -262,7 +263,7 @@ xygetdisklabel(struct xy_softc *xy, void *b)
 	/* Required parameter for readdisklabel() */
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xy->sc_dev), RAW_PART),
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {
@@ -472,7 +473,7 @@ xymatch(struct device *parent, struct cfdata *cf, void *aux)
 	int xy_unit;
 
 	/* Match only on the "wired-down" controller+disk. */
-	xy_unit = parent->dv_unit * 2 + xa->driveno;
+	xy_unit = device_unit(parent) * 2 + xa->driveno;
 	if (cf->cf_unit != xy_unit)
 		return (0);
 
@@ -504,7 +505,7 @@ xyattach(struct device *parent, struct device *self, void *aux)
 	xy->parent = xyc;
 
 	/* init queue of waiting bufs */
-	bufq_alloc(&xy->xyq, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&xy->xyq, "disksort", BUFQ_SORT_RAWBLOCK);
 	xy->xyrq = &xyc->reqs[xa->driveno];
 
 	xy->xy_drive = xa->driveno;
@@ -692,7 +693,7 @@ done:
  * xyclose: close device
  */
 int 
-xyclose(dev_t dev, int flag, int fmt, struct proc *p)
+xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -751,7 +752,7 @@ xydump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int 
-xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
+xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
@@ -826,7 +827,9 @@ xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_proc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 
@@ -839,7 +842,7 @@ xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
  * xyopen: open drive
  */
 int 
-xyopen(dev_t dev, int flag, int fmt, struct proc *p)
+xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int err, unit, part, s;
 	struct xy_softc *xy;
@@ -1008,7 +1011,7 @@ xystrategy(struct buf *bp)
 
 	s = splbio();		/* protect the queues */
 
-	BUFQ_PUT(&xy->xyq, bp);	 /* XXX disksort_cylinder */
+	BUFQ_PUT(xy->xyq, bp);	 /* XXX disksort_cylinder */
 
 	/* start 'em up */
 
@@ -1578,7 +1581,7 @@ xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
 				/* Sun3: map/unmap regardless of B_PHYS */
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
-			    (void)BUFQ_GET(&iorq->xy->xyq);
+			    (void)BUFQ_GET(iorq->xy->xyq);
 			    disk_unbusy(&iorq->xy->sc_dk,
 				(iorq->buf->b_bcount - iorq->buf->b_resid),
 				(iorq->buf->b_flags & B_READ));
@@ -1621,9 +1624,9 @@ xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (BUFQ_PEEK(&xy->xyq) == NULL) continue;
+			if (BUFQ_PEEK(xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, BUFQ_PEEK(&xy->xyq));
+			xyc_startbuf(xycsc, xy, BUFQ_PEEK(xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1751,7 +1754,7 @@ xyc_remove_iorq(struct xyc_softc *xycsc)
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
-			(void)BUFQ_GET(&iorq->xy->xyq);
+			(void)BUFQ_GET(iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));

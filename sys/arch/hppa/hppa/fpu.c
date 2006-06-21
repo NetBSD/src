@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.10 2005/05/31 16:11:58 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10.2.1 2006/06/21 14:52:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2005/05/31 16:11:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10.2.1 2006/06/21 14:52:02 yamt Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 		 * wrapped in double word stores of fr0, 
 		 * otherwise its operation is undefined.
 		 */
-		__asm __volatile(
+		__asm volatile(
 			"	ldo	%0, %%r22	\n"
 			"	fstds	%%fr0, 0(%%r22)	\n"
 			"	ldo	%1, %%r22	\n"
@@ -263,7 +263,7 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	 * and t is a five-bit field starting at bit 31.
 	 */
 	inst = frame->tf_iir;
-	__asm __volatile(
+	__asm volatile(
 		"	extru %4, 10, 5, %1	\n"
 		"	extru %4, 15, 5, %2	\n"
 		"	extru %4, 17, 2, %3	\n"
@@ -375,7 +375,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 	 * it is a three bit field starting at bit 18.
 	 */
 #if 0
-	__asm __volatile(
+	__asm volatile(
 		"	extru %3, 22, 2, %1	\n"
 		"	extru %3, 5, 6, %0	\n"
 		"	extru %3, 18, 3, %2	\n"

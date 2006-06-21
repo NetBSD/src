@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.4 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.4.4.1 2006/06/21 14:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -155,7 +155,7 @@ hyper_ite_fontinit(struct ite_data *ip)
 }
 
 void
-hyper_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
+hyper_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 
 	hyper_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -191,7 +191,7 @@ hyper_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 }
 
 void
-hyper_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
+hyper_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
@@ -327,12 +327,12 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
 		dstBit = dx & 0x1f;
 
 		while (h--) {
-			getandputrop(psrc, srcBit, dstBit, w, pdst, func)
+			getandputrop(psrc, srcBit, dstBit, w, pdst, func);
 		        pdst += width;
 			psrc += width;
 		}
 	} else {
-		maskbits(dx, w, startmask, endmask, nlMiddle)
+		maskbits(dx, w, startmask, endmask, nlMiddle);
 		if (startmask)
 			nstart = 32 - (dx & 0x1f);
 		else
@@ -354,7 +354,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
 
 			if (startmask) {
 				getandputrop(psrc, (sx & 0x1f),
-				    (dx & 0x1f), nstart, pdst, func)
+				    (dx & 0x1f), nstart, pdst, func);
 				pdst++;
 				if (srcStartOver)
 					psrc++;
@@ -370,7 +370,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
 			} else {
 				nl = nlMiddle + 1;
 				while (--nl) {
-					getunalignedword(psrc, xoffSrc, tmpSrc)
+					getunalignedword(psrc, xoffSrc, tmpSrc);
 					DoRop(*pdst, func, tmpSrc, *pdst);
 					pdst++;
 					psrc++;

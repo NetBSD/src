@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29.2.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29.2.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -50,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2005/06/04 22:38:24 uwe Exp $"
 
 extern char *exp_type[];
 extern int exp_types;
+
+db_regs_t ddb_regs;		/* register state */
+
 
 #ifndef KGDB
 #include <sh3/cache.h>
@@ -149,7 +152,7 @@ void
 cpu_Debugger()
 {
 
-	__asm__ __volatile__("trapa %0" :: "i"(_SH_TRA_BREAK));
+	__asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));
 }
 #endif /* !KGDB */
 
@@ -525,7 +528,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 
 	/* Print trap frame stack */
 	db_printf("[trap frame]\n");
-	__asm__("stc r6_bank, %0" : "=r"(tf));
+	__asm("stc r6_bank, %0" : "=r"(tf));
 	for (; tf != tftop; tf++) {
 		db_printf("-- %p-%p --\n", tf, tf + 1);
 		db_printf("tf_expevt\t0x%08x\n", tf->tf_expevt);

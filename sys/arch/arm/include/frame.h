@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.6.16.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -109,7 +109,11 @@ struct saframe {
 };
 
 #ifdef _KERNEL
+__BEGIN_DECLS
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+void *getframe(struct lwp *, int, int *);
+__END_DECLS
+#define process_frame(l) ((l)->l_addr->u_pcb.pcb_tf)
 #endif
 
 #endif /* _LOCORE */

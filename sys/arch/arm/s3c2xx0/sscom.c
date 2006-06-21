@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.12 2005/06/04 21:22:12 he Exp $ */
+/*	$NetBSD: sscom.c,v 1.12.2.1 2006/06/21 14:49:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.12 2005/06/04 21:22:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.12.2.1 2006/06/21 14:49:34 yamt Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.12 2005/06/04 21:22:12 he Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -241,9 +242,9 @@ void	sscom_kgdb_putc (void *, int);
 
 #if 0
 #define	SSCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+				 device_is_active(&(sc)->sc_dev))
 #else
-#define	SSCOM_ISALIVE(sc) ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE)
+#define	SSCOM_ISALIVE(sc)	device_is_active(&(sc)->sc_dev)
 #endif
 
 #define	BR	BUS_SPACE_BARRIER_READ
@@ -279,7 +280,7 @@ void	sscom_kgdb_putc (void *, int);
 #define UCON_DEBUGPORT	  (UCON_RXINT_ENABLE|UCON_TXINT_ENABLE)
 
 
-static __inline void
+static inline void
 __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 {
 	int n, space;
@@ -492,7 +493,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&sscom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf("%s: console (major=%d)\n", sc->sc_dev.dv_xname, maj);
 	}
@@ -604,7 +605,7 @@ sscom_shutdown(struct sscom_softc *sc)
 }
 
 int
-sscomopen(dev_t dev, int flag, int mode, struct proc *p)
+sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct sscom_softc *sc;
 	struct tty *tp;
@@ -616,7 +617,7 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_rbuf == NULL)
 		return ENXIO;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 #ifdef KGDB
@@ -631,7 +632,7 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -740,7 +741,7 @@ bad:
 }
  
 int
-sscomclose(dev_t dev, int flag, int mode, struct proc *p)
+sscomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -792,7 +793,7 @@ sscomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-sscompoll(dev_t dev, int events, struct proc *p)
+sscompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -800,7 +801,7 @@ sscompoll(dev_t dev, int events, struct proc *p)
 	if (SSCOM_ISALIVE(sc) == 0)
 		return EIO;
  
-	return (*tp->t_linesw->l_poll)(tp, events, p);
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -813,7 +814,7 @@ sscomtty(dev_t dev)
 }
 
 int
-sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -823,11 +824,11 @@ sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (SSCOM_ISALIVE(sc) == 0)
 		return EIO;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -858,7 +859,7 @@ sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

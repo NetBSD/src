@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2005/05/30 17:15:29 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.1 2006/06/21 14:51:29 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -232,7 +232,7 @@ kvtop(const caddr_t va)
 {
 	paddr_t pa;
 
-	__asm __volatile ("lpa %%r0(%1), %0" : "=r" (pa) : "r" (va));
+	__asm volatile ("lpa %%r0(%1), %0" : "=r" (pa) : "r" (va));
 	return pa;
 }
 

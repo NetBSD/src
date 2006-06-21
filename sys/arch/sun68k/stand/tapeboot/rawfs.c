@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.4 2005/01/22 15:36:12 chs Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.4.8.1 2006/06/21 14:57:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -100,7 +100,7 @@ rawfs_close(struct open_file *f)
 #endif
 
 	if (fs != NULL)
-		free(fs, sizeof(*fs));
+		dealloc(fs, sizeof(*fs));
 
 	return (0);
 }

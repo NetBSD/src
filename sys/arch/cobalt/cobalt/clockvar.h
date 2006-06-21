@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.1 2004/08/28 12:32:48 tsutsui Exp $ */
+/* $NetBSD: clockvar.h,v 1.1.14.1 2006/06/21 14:50:07 yamt Exp $ */
 /*
  * Copyright (C) 2004 Izumi Tsutsui.  All rights reserved.
  *
@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+extern struct evcnt hardclock_ev;
 
 extern void (*timer_start)(void *);
 extern long (*timer_read)(void *);

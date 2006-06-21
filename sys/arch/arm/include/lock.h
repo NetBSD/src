@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2003/09/26 22:46:00 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.4.16.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@
 #define	_ARM_LOCK_H_
 
 static __inline int
-__swp(int __val, __volatile int *__ptr)
+__swp(int __val, volatile int *__ptr)
 {
 
-	__asm __volatile("swp %0, %1, [%2]"
+	__asm volatile("swp %0, %1, [%2]"
 	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }

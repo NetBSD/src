@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.h,v 1.1 2001/02/09 18:34:40 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.h,v 1.1.42.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 class FrameBufferInfo {
 public:
 	struct framebuffer_info {
-		u_int32_t cpu, machine;
+		uint32_t cpu, machine;
 		int bpp, width, height, linebytes;
-		u_int32_t addr;
+		uint32_t addr;
 	};
 
 private:
@@ -51,7 +51,7 @@ private:
 public:
 	static struct framebuffer_info _table[];
 
-	FrameBufferInfo(u_int32_t, u_int32_t);
+	FrameBufferInfo(uint32_t, uint32_t);
 	virtual ~FrameBufferInfo(void);
 
 	void *addr(void) { return reinterpret_cast <void *>(_fb->addr); }

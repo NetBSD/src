@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.4 2003/08/13 12:40:31 yamt Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.4.16.1 2006/06/21 14:52:30 yamt Exp $	*/
 
 #include <machine/cpufunc.h>
 
@@ -9,7 +9,7 @@
 
 #define	ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq) \
 do { \
-	__asm __volatile( \
+	__asm volatile( \
 	"1:	movl %1,%%eax		;" \
 	"	movl %%eax,%%edx	;" \
 	"	andl %2,%%edx		;" \
@@ -28,7 +28,7 @@ do { \
 
 #define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq) \
 do { \
-	__asm __volatile( \
+	__asm volatile( \
 	"1:	movl %1,%%eax		;" \
 	"	andl %2,%%edx		;" \
 	"	lock			;" \

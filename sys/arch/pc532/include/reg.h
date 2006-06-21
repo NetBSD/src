@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.13 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: reg.h,v 1.13.16.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,8 +47,10 @@
  * Normal usage is u.u_ar0[XX] in kernel.
  */
 
-/* When referenced during a trap/exception and a syscall,
-   registers are at these offsets from p-p_regs*/
+/*
+ * When referenced during a trap/exception and a syscall,
+ * registers are at these offsets from p-p_regs.
+ */
 
 #define	REG_R0	(7)
 #define	REG_R1	(6)

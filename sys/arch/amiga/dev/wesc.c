@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.33 2004/03/28 18:59:39 mhitch Exp $ */
+/*	$NetBSD: wesc.c,v 1.33.16.1 2006/06/21 14:48:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.33 2004/03/28 18:59:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.33.16.1 2006/06/21 14:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ wescattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * CTEST7 = SC0, TT1
 	 */
-	sc->sc_clock_freq = 50;		/* Clock = 50Mhz */
+	sc->sc_clock_freq = 50;		/* Clock = 50 MHz */
 	sc->sc_ctest7 = SIOP_CTEST7_SC0 | SIOP_CTEST7_TT1;
 	sc->sc_dcntl = 0x00;
 

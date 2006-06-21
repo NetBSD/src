@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.13 2004/03/12 19:13:37 wrstuden Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.13.16.1 2006/06/21 14:53:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,7 +58,7 @@ struct shared_bbinfo bbinfo = {
 void (*entry_point)(int, int, void *) = (void *)DEFAULT_ENTRY_POINT;
 
 
-asm(
+__asm(
 "	.text			\n"
 "	.align 2		\n"
 "	.globl	_start		\n"
@@ -98,7 +98,7 @@ asm(
 );
 
 
-static __inline int
+static inline int
 OF_finddevice(name)
 	char *name;
 {
@@ -120,7 +120,7 @@ OF_finddevice(name)
 	return args.phandle;
 }
 
-static __inline int
+static inline int
 OF_getprop(handle, prop, buf, buflen)
 	int handle;
 	char *prop;
@@ -151,7 +151,7 @@ OF_getprop(handle, prop, buf, buflen)
 	return args.size;
 }
 
-static __inline int
+static inline int
 OF_open(dname)
 	char *dname;
 {
@@ -173,7 +173,7 @@ OF_open(dname)
 	return args.handle;
 }
 
-static __inline int
+static inline int
 OF_read(handle, addr, len)
 	int handle;
 	void *addr;
@@ -201,7 +201,7 @@ OF_read(handle, addr, len)
 	return args.actual;
 }
 
-static __inline int
+static inline int
 OF_seek(handle, pos)
 	int handle;
 	u_quad_t pos;
@@ -228,7 +228,7 @@ OF_seek(handle, pos)
 	return args.status;
 }
 
-static __inline int
+static inline int
 OF_write(handle, addr, len)
 	int handle;
 	const void *addr;
@@ -321,7 +321,7 @@ startup(arg1, arg2, openfirm)
 	/*
 	 * enable D/I cache
 	 */
-	asm(
+	__asm(
 		"mtdbatu	3,%0\n\t"
 		"mtdbatl	3,%1\n\t"
 		"mtibatu	3,%0\n\t"

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.35.2.1 2006/06/21 14:49:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2005/06/04 14:42:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35.2.1 2006/06/21 14:49:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -355,9 +355,9 @@ int	n;
 	{
 	    u_int	temp;
 		
-	    __asm __volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
+	    __asm volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
 					       : "d" (TIMB_FREQ), "d" (n));
-	    __asm __volatile ("divul %1,%2:%0" : "=d" (n)
+	    __asm volatile ("divul %1,%2:%0" : "=d" (n)
 					       : "d"(1000000),"d"(temp),"0"(n));
 	}
 
@@ -501,10 +501,10 @@ gettod()
  *                   RTC-device support				       *
  ***********************************************************************/
 int
-rtcopen(dev, flag, mode, p)
+rtcopen(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag, mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc;
@@ -522,11 +522,11 @@ rtcopen(dev, flag, mode, p)
 }
 
 int
-rtcclose(dev, flag, mode, p)
+rtcclose(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag;
 	int		mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc = clock_cd.cd_devs[unit];

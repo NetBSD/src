@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.10 2004/03/24 16:46:27 drochner Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.10.16.1 2006/06/21 14:52:44 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -89,7 +89,7 @@ dos_open(path, f)
 #ifdef DEBUG
 		printf("DOS error %d\n", doserrno);
 #endif
-		free(df, sizeof(*df));
+		dealloc(df, sizeof(*df));
 		return (dos2errno());
 	}
 	f->f_fsdata = (void *) df;
@@ -118,6 +118,7 @@ dos_read(f, addr, size, resid)
 		while (lsize > 0) {
 			u_int           tsize;
 			size_t          tgot;
+			char		*p = addr;
 
 			tsize = lsize;
 
@@ -133,9 +134,9 @@ dos_read(f, addr, size, resid)
 #endif
 				return (dos2errno());
 			}
-			memcpy(addr, diskbufp, tgot);
+			memcpy(p, diskbufp, tgot);
 
-			(unsigned long)addr += tgot;
+			p += tgot;
 			lsize -= tgot;
 
 			if (tgot != tsize)
@@ -171,7 +172,7 @@ dos_close(f)
 	dosclose(df->doshandle);
 
 	if (df)
-		free(df, sizeof(*df));
+		dealloc(df, sizeof(*df));
 	return (0);
 }
 

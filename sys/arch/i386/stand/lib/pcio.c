@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.19 2005/01/27 18:20:45 mycroft Exp $	 */
+/*	$NetBSD: pcio.c,v 1.19.6.1 2006/06/21 14:52:44 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -38,10 +38,10 @@
 #include "libi386.h"
 #include "bootinfo.h"
 
-extern void conputc __P((int));
-extern int congetc __P((void));
-extern int conisshift __P((void));
-extern int coniskey __P((void));
+extern void conputc(int);
+extern int congetc(void);
+extern int conisshift(void);
+extern int coniskey(void);
 extern struct x86_boot_params boot_params;
 
 struct btinfo_console btinfo_console;
@@ -52,7 +52,8 @@ static int iodev;
 #ifdef DIRECT_SERIAL
 #include "comio_direct.h"
 
-#define cominit_x()	cominit_d(btinfo_console.addr, btinfo_console.speed)
+#define cominit_x()	btinfo_console.speed = \
+			    cominit_d(btinfo_console.addr, btinfo_console.speed)
 #define computc_x(ch)	computc_d(ch, btinfo_console.addr)
 #define comgetc_x()	comgetc_d(btinfo_console.addr)
 #define comstatus_x()	comstatus_d(btinfo_console.addr)
@@ -65,15 +66,14 @@ static int iodev;
 
 #endif /* DIRECT_SERIAL */
 
-static int getcomaddr __P((int));
+static int getcomaddr(int);
 #endif /* SUPPORT_SERIAL */
 
 #define POLL_FREQ 10
 
 #ifdef SUPPORT_SERIAL
 static int
-getcomaddr(idx)
-	int idx;
+getcomaddr(int idx)
 {
 	short addr;
 #ifdef CONSADDR
@@ -82,13 +82,12 @@ getcomaddr(idx)
 #endif
 	/* read in BIOS data area */
 	pvbcopy((void *)(0x400 + 2 * idx), &addr, 2);
-	return(addr);
+	return addr;
 }
 #endif
 
 void
-initio(dev)
-	int             dev;
+initio(int dev)
 {
 #ifdef SUPPORT_SERIAL
 	int i;
@@ -100,7 +99,7 @@ initio(dev)
 #endif
 
 	switch (dev) {
-	    case CONSDEV_AUTO:
+	case CONSDEV_AUTO:
 		for(i = 0; i < 3; i++) {
 			iodev = CONSDEV_COM0 + i;
 			btinfo_console.addr = getcomaddr(i);
@@ -142,20 +141,20 @@ initio(dev)
 		iodev = CONSDEV_PC;
 ok:
 		break;
-	    case CONSDEV_COM0:
-	    case CONSDEV_COM1:
-	    case CONSDEV_COM2:
-	    case CONSDEV_COM3:
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
 		iodev = dev;
 		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
 		if(!btinfo_console.addr)
 			goto nocom;
 		cominit_x();
 		break;
-	    case CONSDEV_COM0KBD:
-	    case CONSDEV_COM1KBD:
-	    case CONSDEV_COM2KBD:
-	    case CONSDEV_COM3KBD:
+	case CONSDEV_COM0KBD:
+	case CONSDEV_COM1KBD:
+	case CONSDEV_COM2KBD:
+	case CONSDEV_COM3KBD:
 		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
 		i = iodev - CONSDEV_COM0;
 		btinfo_console.addr = getcomaddr(i);
@@ -193,7 +192,7 @@ ok:
 			    )
 				break;
 #endif /* DIRECT_SERIAL */
-	    default:
+	default:
 nocom:
 		iodev = CONSDEV_PC;
 		break;
@@ -208,23 +207,22 @@ nocom:
 #endif /* SUPPORT_SERIAL */
 }
 
-static inline void internal_putchar __P((int));
+static inline void internal_putchar(int);
 
 static inline void
-internal_putchar(c)
-	int c;
+internal_putchar(int c)
 {
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
-	    case CONSDEV_PC:
+	case CONSDEV_PC:
 #endif
 		conputc(c);
 #ifdef SUPPORT_SERIAL
 		break;
-	    case CONSDEV_COM0:
-	    case CONSDEV_COM1:
-	    case CONSDEV_COM2:
-	    case CONSDEV_COM3:
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
 		computc_x(c);
 		break;
 	}
@@ -232,8 +230,7 @@ internal_putchar(c)
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	if (c == '\n')
 		internal_putchar('\r');
@@ -241,13 +238,13 @@ putchar(c)
 }
 
 int
-getchar()
+getchar(void)
 {
 	int c;
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
-	    default: /* to make gcc -Wall happy... */
-	    case CONSDEV_PC:
+	default: /* to make gcc -Wall happy... */
+	case CONSDEV_PC:
 #endif
 		c = congetc();
 #ifdef CONSOLE_KEYMAP
@@ -259,10 +256,10 @@ getchar()
 #endif
 		return c;
 #ifdef SUPPORT_SERIAL
-	    case CONSDEV_COM0:
-	    case CONSDEV_COM1:
-	    case CONSDEV_COM2:
-	    case CONSDEV_COM3:
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
 #ifdef DIRECT_SERIAL
 		c = comgetc_x();
 #else
@@ -277,7 +274,7 @@ getchar()
 #endif
 		c &= 0xff;
 #endif /* DIRECT_SERIAL */
-		return (c);
+		return c;
 	}
 #endif /* SUPPORT_SERIAL */
 }
@@ -287,27 +284,26 @@ iskey(int intr)
 {
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
-	    default: /* to make gcc -Wall happy... */
-	    case CONSDEV_PC:
+	default: /* to make gcc -Wall happy... */
+	case CONSDEV_PC:
 #endif
-		return ((intr && conisshift()) || coniskey());
+		return (intr && conisshift()) || coniskey();
 #ifdef SUPPORT_SERIAL
-	    case CONSDEV_COM0:
-	    case CONSDEV_COM1:
-	    case CONSDEV_COM2:
-	    case CONSDEV_COM3:
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
 #ifdef DIRECT_SERIAL
-		return(!!comstatus_x());
+		return !!comstatus_x();
 #else
-		return (!!(comstatus_x() & 0x0100));
+		return !!(comstatus_x() & 0x0100);
 #endif
 	}
 #endif /* SUPPORT_SERIAL */
 }
 
 char
-awaitkey(timeout, tell)
-	int timeout, tell;
+awaitkey(int timeout, int tell)
 {
 	int i;
 	char c = 0;
@@ -344,5 +340,5 @@ out:
 	if (tell)
 		printf("0 \n");
 
-	return(c);
+	return c;
 }

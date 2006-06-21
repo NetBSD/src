@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.8 2005/07/04 00:47:49 bsh Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.8.2.1 2006/06/21 14:50:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.8 2005/07/04 00:47:49 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.8.2.1 2006/06/21 14:50:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -334,13 +334,13 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-static __inline
+static inline
 pd_entry_t *
 read_ttb(void)
 {
   long ttb;
 
-  __asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
+  __asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
 
 
   return (pd_entry_t *)(ttb & ~((1<<14)-1));
@@ -446,7 +446,7 @@ initarm(void *arg)
 
 	LEDSTEP_P();
 
-	/* start 32.768KHz OSC */
+	/* start 32.768 kHz OSC */
 	ioreg_write(LUBBOCK_CLKMAN_VBASE + 0x08, 2);
 	/* Get ready for splfoo() */
 	pxa2x0_intr_bootstrap(LUBBOCK_INTCTL_VBASE);
@@ -674,6 +674,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0

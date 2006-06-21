@@ -1,9 +1,10 @@
 #
 # sgimips GENERIC kernel for IP12
 #
-# The IP12 is very, very similar to the IP2x, with one important difference:
-# it is MIPS1.  This means that we cannot produce a kernel that works on both
-# architectures.
+# The IP12 is very, very similar to the IP2x, with two important differences:
+# it is MIPS1 and has a different memory map. This means that while we can
+# produce a kernel that works on both CPU architectures, our start addresses
+# must differ.
 #
 # To keep things simple, include the IP2x kernel config and "no option" the
 # offending bits.

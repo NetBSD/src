@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.8 2003/07/14 22:57:46 lukem Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.8.16.1 2006/06/21 14:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.8 2003/07/14 22:57:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.8.16.1 2006/06/21 14:48:00 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.8 2003/07/14 22:57:46 lukem E
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#define	REGVAL(x)	*((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define	REGVAL(x)	*((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 struct p4032_irqreg {
 	bus_addr_t	addr;
@@ -205,6 +205,18 @@ struct p4032_intrhead {
 struct p4032_intrhead p4032_intrtab[NIRQMAPS];
 
 #define	NINTRS			2	/* MIPS INT0 - INT1 */
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given software interrupt priority level.
+ * Hardware ipls are port/board specific.
+ */
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
 
 struct p4032_cpuintr {
 	LIST_HEAD(, algor_intrhand) cintr_list;

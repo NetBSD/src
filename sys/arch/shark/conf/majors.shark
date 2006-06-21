@@ -1,10 +1,10 @@
-#	$NetBSD: majors.shark,v 1.16 2005/05/10 00:02:37 jdolecek Exp $
+#	$NetBSD: majors.shark,v 1.16.2.1 2006/06/21 14:55:47 yamt Exp $
 #
 # Device majors for shark
 #
 
 device-major	mem		char 0
-device-major	swap		char 1   block 1
+device-major	swap		char 1   block 1	vmswap
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	pc		char 4			pc

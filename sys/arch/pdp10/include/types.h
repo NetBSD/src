@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.2.18.1 2006/06/21 14:54:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@ typedef int		register_t;
 typedef int		pid_t;
 #define	pid_t		int
 
-typedef __volatile int		__cpu_simple_lock_t;
+typedef volatile int		__cpu_simple_lock_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0

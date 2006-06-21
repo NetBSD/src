@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.70 2004/09/22 11:32:03 yamt Exp $      */
+/*      $NetBSD: cpu.h,v 1.70.12.1 2006/06/21 14:57:33 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -163,6 +163,7 @@ struct cpu_mp_softc {
 };
 #endif /* defined(MULTIPROCESSOR) */
 
+				/* XXX need to cache this in cpu_info */
 #define	ci_cpuid		ci_dev->dv_unit
 #define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
 #define	curlwp			(curcpu()->ci_curlwp)
@@ -183,7 +184,7 @@ struct cpu_mp_softc {
 					ci = SIMPLEQ_NEXT(ci, ci_next)
 
 extern SIMPLEQ_HEAD(cpu_info_qh, cpu_info) cpus;
-extern char tramp;
+extern char vax_mp_tramp;
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.16 2004/05/19 23:15:43 he Exp $	*/
+/*	$NetBSD: lock.h,v 1.16.12.1 2006/06/21 14:57:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -45,12 +45,12 @@ static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %0,%%r1;jsb Sunlock"
+	__asm volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(alp)
 		: "r1","cc","memory");
 #else
-	__asm__ __volatile ("bbcci $0,%0,1f;1:"
+	__asm volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
 		: "m"(*alp)
 		: "cc");
@@ -63,12 +63,12 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	int ret;
 
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
+	__asm volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
 		: "=&r"(ret)
 		: "g"(alp)
 		: "r0","r1","cc","memory");
 #else
-	__asm__ __volatile ("clrl %0;bbssi $0,%1,1f;incl %0;1:"
+	__asm volatile ("clrl %0;bbssi $0,%1,1f;incl %0;1:"
 		: "=&r"(ret)
 		: "m"(*alp)
 		: "cc");
@@ -84,12 +84,12 @@ do {									\
 	struct cpu_info *__ci = curcpu();				\
 									\
 	while (__cpu_simple_lock_try(alp) == 0) {			\
-		int __s;						\
+		int ___s;						\
 									\
 		if (__ci->ci_ipimsgs & VAX_LOCK_CHECKS) {		\
-			__s = splipi();					\
+			___s = splipi();				\
 			cpu_handle_ipi();				\
-			splx(__s);					\
+			splx(___s);					\
 		}							\
 	}								\
 } while (0)
@@ -97,7 +97,7 @@ do {									\
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
-	__asm__ __volatile ("1:bbssi $0,%0,1b"
+	__asm volatile ("1:bbssi $0,%0,1b"
 		: /* No outputs */
 		: "m"(*alp)
 		: "cc");
@@ -121,13 +121,13 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	}
 
 #if 0
-	__asm__ __volatile ("movl %0,%%r1;jsb Slock"
+	__asm volatile ("movl %0,%%r1;jsb Slock"
 		: /* No output */
 		: "g"(alp)
 		: "r0","r1","cc","memory");
 #endif
 #if 0
-	__asm__ __volatile ("1:;bbssi $0, %0, 1b"
+	__asm volatile ("1:;bbssi $0, %0, 1b"
 		: /* No output */
 		: "m"(*alp));
 #endif
@@ -138,12 +138,12 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %0,%%r1;jsb Sunlock"
+	__asm volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(alp)
 		: "r1","cc","memory");
 #else
-	__asm__ __volatile ("bbcci $0,%0,1f;1:"
+	__asm volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
 		: "m"(*alp)
 		: "cc");
@@ -163,14 +163,14 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 #define SPINLOCK_SPIN_HOOK						\
 do {									\
 	struct cpu_info *__ci = curcpu();				\
-	int __s;							\
+	int ___s;							\
 									\
 	if (__ci->ci_ipimsgs != 0) {					\
 		/* printf("CPU %lu has IPIs pending\n",			\
 		    __ci->ci_cpuid); */					\
-		__s = splipi();						\
+		___s = splipi();					\
 		cpu_handle_ipi();					\
-		splx(__s);						\
+		splx(___s);						\
 	}								\
 } while (0)
 #endif /* MULTIPROCESSOR */

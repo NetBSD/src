@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.3 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.3.10.1 2006/06/21 14:53:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -32,7 +32,7 @@
 static volatile u_char	*scsi_enable = NULL;
 static volatile u_char	*scsi_flag   = NULL;
 
-static __inline__ void
+static inline void
 scsi_clear_drq(void)
 {
 	int	s;
@@ -42,7 +42,7 @@ scsi_clear_drq(void)
 	splx(s);
 }
 
-static __inline__ void
+static inline void
 scsi_clear_irq(void)
 {
 	int	s;
@@ -52,7 +52,7 @@ scsi_clear_irq(void)
 	splx(s);
 }
 
-static __inline__ void
+static inline void
 scsi_ienable(void)
 {
 	int	s;
@@ -62,7 +62,7 @@ scsi_ienable(void)
 	splx(s);
 }
 
-static __inline__ void
+static inline void
 scsi_idisable(void)
 {
 	int	s;

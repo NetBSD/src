@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.22 2005/05/31 00:49:42 christos Exp $ */
+/*	$NetBSD: autoconf.h,v 1.22.2.1 2006/06/21 14:56:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,13 +133,13 @@ struct mainbus_attach_args {
  */
 struct device;
 struct cfdata;
-int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
+int	matchbyname(struct device *, struct cfdata *cf, void *aux);
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq __P((long freq));
+char	*clockfreq(long freq);
 
 /* Openprom V2 style boot path */
 struct bootpath {
@@ -147,16 +147,11 @@ struct bootpath {
 	int	val[3];		/* up to three optional values */
 	struct device *dev;	/* device that recognised this component */
 };
-struct bootpath	*bootpath_store __P((int, struct bootpath *));
-int		sd_crazymap __P((int));
+struct bootpath	*bootpath_store(int, struct bootpath *);
+int		sd_crazymap(int);
 
-/* Parse a disk string into a dev_t, return device struct pointer */
-struct	device *parsedisk __P((char *, int, int, dev_t *));
+/* Kernel initialization routine. */
+void	bootstrap(void *, void *, void *, void *, void *);
 
-/* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*) __P((struct device *)),
-				      struct device *));
-
-void	bootstrap __P((int));
-struct device *getdevunit __P((const char *, int));
-int	romgetcursoraddr __P((int **, int **));
+struct device *getdevunit(const char *, int);
+int	romgetcursoraddr(int **, int **);

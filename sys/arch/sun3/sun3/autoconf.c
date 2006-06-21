@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64.2.1 2006/06/21 14:57:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64.2.1 2006/06/21 14:57:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ cpu_configure(void)
  */
 int 
 bus_scan(struct device *parent, struct cfdata *cf,
-	 const locdesc_t *ldesc, void *aux)
+	 const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -230,7 +230,7 @@ cpu_rootconf(void)
 		boot_device = (*find)(promname, bp->ctlrNum, bp->unitNum);
 	if (boot_device) {
 		devname = boot_device->dv_xname;
-		if (boot_device->dv_class == DV_DISK) {
+		if (device_class(boot_device) == DV_DISK) {
 			boot_partition = bp->partNum & 7;
 			partname[0] = 'a' + boot_partition;
 			partname[1] = '\0';

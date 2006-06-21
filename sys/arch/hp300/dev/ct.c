@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.42 2005/06/02 16:25:02 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.42.2.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.42 2005/06/02 16:25:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.42.2.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ struct	ct_softc {
 	struct	ct_ulcmd sc_ul;
 	struct	ct_wfmcmd sc_wfm;
 	struct	ct_clearcmd sc_clear;
-	struct	bufq_state sc_tab;
+	struct	bufq_state *sc_tab;
 	int	sc_active;
 	struct	buf *sc_bp;
 	struct	buf sc_bufstore;	/* XXX */
@@ -231,7 +231,7 @@ ctattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 
 	/* Initialize hpib job queue entry. */
 	sc->sc_hq.hq_softc = sc;
@@ -275,9 +275,10 @@ ctident(struct device *parent, struct ct_softc *sc,
 	cmd[0] = C_SUNIT(0);
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
-	hpibsend(parent->dv_unit, ha->ha_slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(parent->dv_unit, ha->ha_slave, C_EXEC, &desc, 37);
-	hpibrecv(parent->dv_unit, ha->ha_slave, C_QSTAT, &stat, sizeof(stat));
+	hpibsend(device_unit(parent), ha->ha_slave, C_CMD, cmd, sizeof(cmd));
+	hpibrecv(device_unit(parent), ha->ha_slave, C_EXEC, &desc, 37);
+	hpibrecv(device_unit(parent), ha->ha_slave, C_QSTAT, &stat,
+		 sizeof(stat));
 
 	memset(name, 0, sizeof(name));
 	if (stat == 0) {
@@ -322,7 +323,7 @@ ctreset(struct ct_softc *sc)
 	int ctlr, slave;
 	u_char stat;
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
 
 	sc->sc_clear.unit = C_SUNIT(sc->sc_punit);
@@ -360,7 +361,7 @@ ctreset(struct ct_softc *sc)
 
 /*ARGSUSED*/
 static int
-ctopen(dev_t dev, int flag, int type, struct proc *p)
+ctopen(dev_t dev, int flag, int type, struct lwp *l)
 {
 	struct ct_softc *sc;
 	u_char stat;
@@ -374,7 +375,7 @@ ctopen(dev_t dev, int flag, int type, struct proc *p)
 	if (sc->sc_flags & CTF_OPEN)
 		return (EBUSY);
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
 
 	sc->sc_soptc.unit = C_SUNIT(sc->sc_punit);
@@ -399,14 +400,14 @@ ctopen(dev_t dev, int flag, int type, struct proc *p)
 	if (cc != sizeof(stat))
 		return(EBUSY);
 
-	sc->sc_tpr = tprintf_open(p);
+	sc->sc_tpr = tprintf_open(l->l_proc);
 	sc->sc_flags |= CTF_OPEN;
 	return(0);
 }
 
 /*ARGSUSED*/
 static int
-ctclose(dev_t dev, int flag, int fmt, struct proc *p)
+ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ct_softc *sc = ct_cd.cd_devs[UNIT(dev)];
 
@@ -497,7 +498,7 @@ ctstrategy(struct buf *bp)
 	sc = ct_cd.cd_devs[unit];
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		ctustart(sc);
@@ -510,10 +511,10 @@ ctustart(struct ct_softc *sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
-	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
+	if (hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq))
 		ctstart(sc);
 }
 
@@ -524,10 +525,10 @@ ctstart(void *arg)
 	struct buf *bp;
 	int i, ctlr, slave;
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -637,9 +638,9 @@ ctgo(void *arg)
 	struct buf *bp;
 	int rw;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
-	hpibgo(sc->sc_dev.dv_parent->dv_unit, sc->sc_slave, C_EXEC,
+	hpibgo(device_unit(device_parent(&sc->sc_dev)), sc->sc_slave, C_EXEC,
 	    sc->sc_addr, sc->sc_resid, rw, rw != 0);
 }
 
@@ -726,11 +727,11 @@ ctintr(void *arg)
 	u_char stat;
 	int ctlr, slave, unit;
 
-	ctlr = sc->sc_dev.dv_parent->dv_unit;
+	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
-	unit = sc->sc_dev.dv_unit;
+	unit = device_unit(&sc->sc_dev);
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", sc->sc_dev.dv_xname);
 		return;
@@ -865,10 +866,10 @@ static void
 ctdone(struct ct_softc *sc, struct buf *bp)
 {
 
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if (BUFQ_PEEK(&sc->sc_tab) == NULL) {
+	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
+	if (BUFQ_PEEK(sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;
 	}
@@ -890,7 +891,7 @@ ctwrite(dev_t dev, struct uio *uio, int flags)
 
 /*ARGSUSED*/
 static int
-ctioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ctioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

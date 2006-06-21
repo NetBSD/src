@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2003/11/21 22:57:14 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.16.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,7 +82,7 @@ extern struct pmap kernel_pmap_;
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 /* ARGSUSED */
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -109,7 +109,7 @@ int pmap_pte_spill(struct pmap *, vaddr_t, boolean_t);
 #define	PMAP_NC			0x1000
 
 #define PMAP_STEAL_MEMORY
-static __inline paddr_t vtophys (vaddr_t);
+static inline paddr_t vtophys (vaddr_t);
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
@@ -124,7 +124,7 @@ static __inline paddr_t vtophys (vaddr_t);
 #define POOL_VTOPHYS(va)	vtophys((vaddr_t) va)
 #endif
 
-static __inline paddr_t
+static inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;

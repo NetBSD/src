@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.9 2005/06/02 18:06:10 he Exp $	*/
+/*	$NetBSD: aica.c,v 1.9.2.1 2006/06/21 14:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9 2005/06/02 18:06:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9.2.1 2006/06/21 14:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ const struct audio_device aica_device = {
 	"aica"
 };
 
-__inline static void aica_g2fifo_wait(void);
+inline static void aica_g2fifo_wait(void);
 void aica_enable(struct aica_softc *);
 void aica_disable(struct aica_softc *);
 void aica_memwrite(struct aica_softc *, bus_size_t, uint32_t *, int);
@@ -579,7 +579,7 @@ aica_fillbuffer(struct aica_softc *sc)
 		    sc->sc_buffer, sc->sc_blksize);
 	}
 
-	(int8_t *)sc->sc_buffer += sc->sc_blksize;
+	sc->sc_buffer = (int8_t *)sc->sc_buffer + sc->sc_blksize;
 	if (sc->sc_buffer >= sc->sc_buffer_end)
 		sc->sc_buffer = sc->sc_buffer_start;
 

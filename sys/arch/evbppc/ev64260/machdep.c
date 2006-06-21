@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2005/06/03 11:17:42 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.2.1 2006/06/21 14:51:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2005/06/03 11:17:42 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.1 2006/06/21 14:51:08 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -258,7 +258,7 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 	*avail = availmemr;
 }
 
-static __inline void
+static inline void
 gt_record_memory(int j, paddr_t start, paddr_t end, paddr_t endkernel)
 {
 	physmemr[j].start = start;
@@ -331,7 +331,7 @@ cpu_startup(void)
 	 * Now allow hardware interrupts.
 	 */
 	splhigh();
-	__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 	    :	"=r"(msr)
 	    :	"K"(PSL_EE));
 }

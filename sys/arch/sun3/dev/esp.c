@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20 2005/01/30 03:52:41 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.20.6.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20 2005/01/30 03:52:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20.6.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,12 +145,12 @@ espattach(struct device *parent, struct device *self, void *aux)
 
 	/* Other settings */
 	sc->sc_id = 7;
-	sc->sc_freq = 20;	/* The 3/80 esp runs at 20 Mhz */
+	sc->sc_freq = 20;	/* The 3/80 esp runs at 20 MHz */
 
 	/*
 	 * Hook up the DMA driver.
 	 */
-	esc->sc_dma = espdmafind(sc->sc_dev.dv_unit);
+	esc->sc_dma = espdmafind(device_unit(&sc->sc_dev));
 	esc->sc_dma->sc_esp = sc; /* Point back to us */
 
 	/*

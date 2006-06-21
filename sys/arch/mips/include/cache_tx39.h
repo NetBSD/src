@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.h,v 1.4 2003/02/17 11:35:03 simonb Exp $	*/
+/*	$NetBSD: cache_tx39.h,v 1.4.18.1 2006/06/21 14:53:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 #define	cache_op_tx39_line(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		".set push					\n\t"	\
 		".set mips3					\n\t"	\
@@ -88,7 +88,7 @@ do {									\
  */
 #define	cache_tx39_op_32lines_4(va, op)					\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		".set push					\n\t"	\
 		".set mips3					\n\t"	\
@@ -123,7 +123,7 @@ do {									\
  */
 #define	cache_tx39_op_32lines_16(va, op)				\
 do {									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set noreorder					\n\t"	\
 		".set push					\n\t"	\
 		".set mips3					\n\t"	\

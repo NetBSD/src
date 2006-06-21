@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.7.16.1 2006/06/21 14:56:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.7.16.1 2006/06/21 14:56:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.7 2004/03/22 12:19:49 nakayama Ex
 # define DPRINTF while (0) printf
 #endif
 
-static int pccbb_cardbus_isvalid __P((void *));
+static int pccbb_cardbus_isvalid(void *);
 
 int
 md_space_map(t, bpa, size, flags, bshp)
@@ -213,13 +213,12 @@ pccbb_attach_hook(parent, self, pa)
  * when a CardBus card is not present or power-off.
  */
 static int
-pccbb_cardbus_isvalid(arg)
-	void *arg;
+pccbb_cardbus_isvalid(void *arg)
 {
 	struct pccbb_softc *sc = arg;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
-	u_int32_t sockstat, sockctrl;
+	uint32_t sockstat, sockctrl;
 
 	/* check CardBus card is present */
 	sockstat = bus_space_read_4(memt, memh, CB_SOCKET_STAT);

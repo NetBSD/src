@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.2 2003/07/14 23:32:30 lukem Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.2.16.1 2006/06/21 14:48:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2 2003/07/14 23:32:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.1 2006/06/21 14:48:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -96,8 +96,6 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	x86_print_cacheinfo(ci);
-
-	microtime_func = cc_microtime;
 }
 
 void

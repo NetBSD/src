@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.49 2003/06/29 22:28:46 fvdl Exp $	*/
+/*	$NetBSD: px.c,v 1.49.18.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.49 2003/06/29 22:28:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.49.18.1 2006/06/21 14:54:42 yamt Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -319,10 +319,11 @@ px_attach(parent, self, aux)
 
 	/* Init the card only if it hasn't been done before... */
 	if (!px_cons_info || slotbase != (caddr_t)px_cons_info->pxi_slotbase)
-		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 0);
+		px_init((struct fbinfo *)1, slotbase, device_unit(&sc->px_dv),
+		    0);
 
 	/* px_init() fills in px_unit[#] */
-	pxi = px_unit[sc->px_dv.dv_unit];
+	pxi = px_unit[device_unit(&sc->px_dv)];
 	sc->px_info = pxi;
 
 	/* Now grab the interrupt */
@@ -1661,10 +1662,10 @@ px_cursor_hack(fi, x, y)
 }
 
 int
-pxopen(dev, flag, mode, p)
+pxopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
@@ -1702,10 +1703,10 @@ pxopen(dev, flag, mode, p)
 }
 
 int
-pxclose(dev, flag, mode, p)
+pxclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
@@ -1749,12 +1750,12 @@ pxclose(dev, flag, mode, p)
 }
 
 int
-pxioctl(dev, cmd, data, flag, p)
+pxioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pmax_fbtty *fbtty;
 	struct px_info *pxi;
@@ -1777,7 +1778,7 @@ pxioctl(dev, cmd, data, flag, p)
 		/*
 		 * Map card info.
 		 */
-		return (px_mmap_info(p, dev, (vaddr_t *)data));
+		return (px_mmap_info(l->l_proc, dev, (vaddr_t *)data));
 
 	case QIOCPMSTATE:
 		/*
@@ -1864,10 +1865,10 @@ pxioctl(dev, cmd, data, flag, p)
 }
 
 int
-pxpoll(dev, events, p)
+pxpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fbinfo *fi = &px_unit[minor(dev)]->pxi_fbinfo;
 	int revents = 0;
@@ -1877,7 +1878,7 @@ pxpoll(dev, events, p)
 		    fi->fi_fbu->scrInfo.qe.eTail)
 		 	revents |= (events & (POLLIN | POLLRDNORM));
 		else
-	  		selrecord(p, &fi->fi_selp);
+	  		selrecord(l, &fi->fi_selp);
 	}
 
 	return (revents);

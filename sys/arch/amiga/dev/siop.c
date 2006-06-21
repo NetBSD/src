@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.52 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: siop.c,v 1.52.2.1 2006/06/21 14:48:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.52 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.52.2.1 2006/06/21 14:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ int siop_init_wait = SCSI_INIT_WAIT;
 
 #ifdef DEBUG_SYNC
 /*
- * sync period transfer lookup - only valid for 66Mhz clock
+ * sync period transfer lookup - only valid for 66 MHz clock
  */
 static struct {
 	unsigned char p;	/* period from sync request message */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.67.2.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67.2.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include "hil.h"
 
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -260,10 +261,10 @@ iteattach(struct device *parent, struct device *self, void *aux)
 		 * the console probe, so we have to fixup cn_dev here.
 		 */
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&ite_cdevsw),
-					 self->dv_unit);
+					 device_unit(self));
 	} else {
-		MALLOC(ite->sc_data, struct ite_data *,
-		    sizeof(struct ite_data), M_DEVBUF, M_NOWAIT | M_ZERO);
+		ite->sc_data = malloc(sizeof(struct ite_data), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (ite->sc_data == NULL) {
 			printf("\n%s: malloc for ite_data failed\n",
 			    ite->sc_dev.dv_xname);
@@ -379,7 +380,7 @@ iteoff(struct ite_data *ip, int flag)
 
 /* ARGSUSED */
 static int
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
+iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	int unit = ITEUNIT(dev);
 	struct tty *tp;
@@ -399,7 +400,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);
@@ -431,7 +432,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 
 /*ARGSUSED*/
 static int
-iteclose(dev_t dev, int flag, int mode, struct proc *p)
+iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct ite_data *ip = sc->sc_data;
@@ -467,12 +468,12 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-itepoll(dev_t dev, int events, struct proc *p)
+itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct tty *tp = sc->sc_data->tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -484,17 +485,17 @@ itetty(dev_t dev)
 }
 
 int
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
-	return ttioctl(tp, cmd, addr, flag, p);
+	return ttioctl(tp, cmd, addr, flag, l);
 }
 
 static void
@@ -612,7 +613,7 @@ itefilter(char stat, char c)
 	case KBD_CTRLSHIFT:
 		code = ite_km->kbd_ctrlshiftmap[(int)c];
 		break;
-        }
+	}
 
 	if (code == '\0' && (str = ite_km->kbd_stringmap[(int)c]) != NULL) {
 		while (*str)

@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.13 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.13.12.1 2006/06/21 14:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,13 +111,22 @@ ElfLoader::memorySize()
 	int i;
 	Elf_Phdr *ph = _ph;
 	size_t sz = 0;
+	size_t extra = 0;
 
 	DPRINTF((TEXT("file size: ")));
 	for (i = 0; i < _eh.e_phnum; i++, ph++) {
 		if (ph->p_type == PT_LOAD) {
 			size_t filesz = ph->p_filesz;
-			DPRINTF((TEXT("+0x%x"), filesz));
+			DPRINTF((TEXT("%s0x%x"),
+				 sz == 0 ? "" : "+",
+				 filesz));
 			sz += _mem->roundPage(filesz);
+			// compensate for partial last tag
+			extra += _mem->getTaggedPageSize();
+			if (filesz < ph->p_memsz)
+				// compensate for zero clear
+				extra += _mem->getTaggedPageSize();
+
 		}
 	}
 
@@ -126,9 +135,14 @@ ElfLoader::memorySize()
 	if (symblk_sz) {
 		sz += symblk_sz;
 		DPRINTF((TEXT(" = 0x%x]"), symblk_sz));
+		// XXX: compensate for partial tags after ELF header and symtab
+		extra += 2 * _mem->getTaggedPageSize();
 	}
 
-	DPRINTF((TEXT(" = 0x%x byte\n"), sz));
+	sz += extra;
+	DPRINTF((TEXT("+[extra: 0x%x]"), extra));
+
+	DPRINTF((TEXT(" = 0x%x bytes\n"), sz));
 	return sz;
 }
 
@@ -154,7 +168,7 @@ ElfLoader::load()
 			size_t memsz = ph->p_memsz;
 			kv = ph->p_vaddr;
 			off_t fileofs = ph->p_offset;
-			DPRINTF((TEXT("[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
+			DPRINTF((TEXT("seg[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
 			    i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
 			kv += ROUND4(memsz);
@@ -249,8 +263,8 @@ ElfLoader::symbol_block_size()
 	    ROUND4(_sym_blk.shsym->sh_size);
 	_sym_blk.enable = TRUE;
 
-	DPRINTF((TEXT("+[(symbol block: header %d symbol %d string %d byte)"),
-	    _sym_blk.header_size,_sym_blk.shsym->sh_size,
+	DPRINTF((TEXT("+[ksyms: header 0x%x, symtab 0x%x, strtab 0x%x"),
+	    _sym_blk.header_size, _sym_blk.shsym->sh_size,
 	    _sym_blk.shstr->sh_size));
 
 	// return total amount of symbol block
@@ -265,6 +279,8 @@ ElfLoader::load_symbol_block(vaddr_t kv)
 
 	if (!_sym_blk.enable)
 		return;
+
+	DPRINTF((TEXT("ksyms\n")));
 
 	// load header
 	_load_memory(kv, _sym_blk.header_size, _sym_blk.header);

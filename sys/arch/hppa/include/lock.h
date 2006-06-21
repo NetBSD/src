@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.6 2004/08/07 21:41:44 chs Exp $	*/
+/* 	$NetBSD: lock.h,v 1.6.12.1 2006/06/21 14:52:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_lock_init\n"
 		"	stw	%1, %0		\n"
 		"	sync			\n"
@@ -69,7 +69,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	 */
 
 #if 0
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_lock\n"
 		"	ldcw		%1, %0		\n"
 		"	comb,<>,n	%%r0,%0, 2f	\n"
@@ -92,7 +92,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	int32_t t0;
 
 #if 0
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_lock_try\n"
 		"	ldcw		%1, %0		\n"
 		"	sync				\n"
@@ -107,7 +107,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
-	__asm __volatile(
+	__asm volatile(
 		"	; BEGIN __cpu_simple_unlock\n"
 		"	sync			\n"
 		"	stw	%1, %0		\n"

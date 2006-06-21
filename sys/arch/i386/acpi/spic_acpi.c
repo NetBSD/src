@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.12 2004/05/01 12:05:01 kochi Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.12.12.1 2006/06/21 14:52:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.12 2004/05/01 12:05:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.12.12.1 2006/06/21 14:52:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,8 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	ACPI_STATUS rv;
 
-	printf(": Sony Programmable I/O Controller\n");
+	aprint_naive(": Sony Programmable I/O Controller\n");
+	aprint_normal(": Sony Programmable I/O Controller\n");
 
 	sc->sc_node = aa->aa_node;
 
@@ -108,19 +109,19 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_spic.sc_iot = aa->aa_iot;
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		printf("%s: unable to find io resource\n",
+		aprint_error("%s: unable to find io resource\n",
 		    sc->sc_spic.sc_dev.dv_xname);
 		goto out;
 	}
 	if (bus_space_map(sc->sc_spic.sc_iot, io->ar_base, io->ar_length,
 	    0, &sc->sc_spic.sc_ioh) != 0) {
-		printf("%s: unable to map data register\n",
+		aprint_error("%s: unable to map data register\n",
 		    sc->sc_spic.sc_dev.dv_xname);
 		goto out;
 	}
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		printf("%s: unable to find irq resource\n",
+		aprint_error("%s: unable to find irq resource\n",
 		    sc->sc_spic.sc_dev.dv_xname);
 		/* XXX unmap */
 		goto out;

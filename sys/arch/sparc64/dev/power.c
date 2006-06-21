@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.6 2003/07/15 03:36:06 lukem Exp $ */
+/*	$NetBSD: power.c,v 1.6.16.1 2006/06/21 14:56:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6 2003/07/15 03:36:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6.16.1 2006/06/21 14:56:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6 2003/07/15 03:36:06 lukem Exp $");
 
 #include <sparc64/dev/power.h>
 
-static int powermatch __P((struct device *, struct cfdata *, void *));
-static void powerattach __P((struct device *, struct device *, void *));
+static int powermatch(struct device *, struct cfdata *, void *);
+static void powerattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(power, sizeof(struct device),
     powermatch, powerattach, NULL, NULL);

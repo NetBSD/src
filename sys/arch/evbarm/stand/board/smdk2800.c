@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800.c,v 1.3 2003/10/05 06:57:20 bsh Exp $ */
+/*	$NetBSD: smdk2800.c,v 1.3.18.1 2006/06/21 14:50:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -68,11 +68,11 @@ mem_init(void)
 	/* ROM monitor uses top of SDRAM for page table. */
 #define ROMMONITOR_PAGETABLE  (RAM_START+RAM_SIZE-0x8000)
 
-	heap = ROMMONITOR_PAGETABLE - HEAP_SIZE;
+	heap = ROMMONITOR_PAGETABLE - BOARD_HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n",
 	    start, (start + size) - 1, heap);
-	setheap((void *)heap, (void *)(heap + HEAP_SIZE - 1));
+	setheap((void *)heap, (void *)(heap + BOARD_HEAP_SIZE - 1));
 }
 
 #ifdef SELFCOPY_TO_FLASH

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.16 2004/08/30 15:05:16 drochner Exp $	*/
+/*	$NetBSD: i80321.c,v 1.16.12.1 2006/06/21 14:49:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.16 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.16.12.1 2006/06/21 14:49:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.16 2004/08/30 15:05:16 drochner Exp $")
 #include <arm/xscale/i80321var.h>
 
 /*
- * Statically-allocated bus_space stucture used to access the
+ * Statically-allocated bus_space structure used to access the
  * i80321's own registers.
  */
 struct bus_space i80321_bs_tag;

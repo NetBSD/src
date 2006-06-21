@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.11 2004/04/23 02:58:28 simonb Exp $ */
+/* $NetBSD: pmap.c,v 1.11.12.1 2006/06/21 14:47:47 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2004/04/23 02:58:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11.12.1 2006/06/21 14:47:47 yamt Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -783,11 +783,11 @@ pmap_is_modified(page)
 	UVMHIST_FUNC("pmap_is_modified");
 
 	UVMHIST_CALLED(pmaphist);
-	ppn = atop(page->phys_addr);
+	ppn = atop(VM_PAGE_TO_PHYS(page));
 	rv = (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
 #ifdef PMAP_DEBUG_MODIFIED
 	if (!rv) {
-		pmap_md4_page(digest, page->phys_addr);
+		pmap_md4_page(digest, VM_PAGE_TO_PHYS(page));
 		if (memcmp(digest, pv_table[ppn].pv_md4sum, 16) != 0) {
 			int i;
 
@@ -813,7 +813,7 @@ pmap_is_referenced(page)
 	UVMHIST_FUNC("pmap_is_referenced");
 
 	UVMHIST_CALLED(pmaphist);
-	ppn = atop(page->phys_addr);
+	ppn = atop(VM_PAGE_TO_PHYS(page));
 	return (pv_table[ppn].pv_pflags & PV_REFERENCED) != 0;
 }
 
@@ -845,7 +845,7 @@ pmap_clear_modify(struct vm_page *page)
 	UVMHIST_FUNC("pmap_clear_modify");
 
 	UVMHIST_CALLED(pmaphist);
-	ppn = atop(page->phys_addr);
+	ppn = atop(VM_PAGE_TO_PHYS(page));
 	rv = pmap_is_modified(page);
 #ifdef PMAP_DEBUG_MODIFIED
 	pmap_md4_page(pv_table[ppn].pv_md4sum, ptoa(ppn));
@@ -869,7 +869,7 @@ pmap_clear_reference(struct vm_page *page)
 	UVMHIST_FUNC("pmap_clear_reference");
 
 	UVMHIST_CALLED(pmaphist);
-	ppn = atop(page->phys_addr);
+	ppn = atop(VM_PAGE_TO_PHYS(page));
 	rv = pmap_is_referenced(page);
 	if (rv) {
 		pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
@@ -946,7 +946,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 	UVMHIST_FUNC("pmap_page_protect");
 
 	UVMHIST_CALLED(pmaphist);
-	ppn = atop(page->phys_addr);
+	ppn = atop(VM_PAGE_TO_PHYS(page));
 	if (prot == VM_PROT_NONE) {
 		UVMHIST_LOG(pmaphist, "removing ppn %d\n", ppn, 0, 0, 0);
 		npv = pv = &pv_table[ppn];

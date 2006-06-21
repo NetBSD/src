@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.9 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.9.8.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,8 +72,8 @@ struct fbdevice {
 
 struct fbdriver {
 	/* These avoid the need to know our major number. */
-	int 	(*fbd_open)(dev_t, int, int, struct proc *);
-	int 	(*fbd_close)(dev_t, int, int, struct proc *);
+	int 	(*fbd_open)(dev_t, int, int, struct lwp *);
+	int 	(*fbd_close)(dev_t, int, int, struct lwp *);
 	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
 	int	(*fbd_kqfilter)(dev_t, struct knote *);
 	/* These are the internal ioctl functions */

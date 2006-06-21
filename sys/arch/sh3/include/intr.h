@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2003/11/04 03:13:48 uwe Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.16.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,8 @@ struct intc_intrhand {
 	int	ih_idx;		/* evtcode -> intrhand mapping */
 };
 
-#define	EVTCODE_TO_MAP_INDEX(x)		(((x) - 0x200) >> 5)
+/* from 0x200 by 0x20 -> from 0 by 1 */
+#define	EVTCODE_TO_MAP_INDEX(x)		(((x) >> 5) - 0x10)
 #define	EVTCODE_TO_IH_INDEX(x)						\
 	__intc_evtcode_to_ih[EVTCODE_TO_MAP_INDEX(x)]
 #define	EVTCODE_IH(x)	(&__intc_intrhand[EVTCODE_TO_IH_INDEX(x)])
@@ -85,6 +86,8 @@ void intc_intr_disestablish(void *);
 void intc_intr_enable(int);
 void intc_intr_disable(int);
 void intc_intr(int, int, int);
+
+void intpri_intr_priority(int evtcode, int level);
 
 /*
  * software simulated interrupt

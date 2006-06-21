@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2005/06/03 19:02:33 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93.2.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2005/06/03 19:02:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.1 2006/06/21 14:55:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2005/06/03 19:02:33 martin Exp $");
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 struct sgimips_intrhand intrtab[NINTR];
 
@@ -862,6 +859,7 @@ void mips_machdep_cache_config(void)
 #if defined(MIPS3)
 	case MIPS_R5000:
 	case MIPS_RM5200:
+		r5k_enable_sdcache();
 		break;
 #endif
 	}

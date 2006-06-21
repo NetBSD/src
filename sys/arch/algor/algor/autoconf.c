@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2005/06/09 06:48:16 he Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.1 2006/06/21 14:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2005/06/09 06:48:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.1 2006/06/21 14:48:00 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -49,9 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2005/06/09 06:48:16 he Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 
+#include <dev/pci/pcivar.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+
+#ifdef ALGOR_P4032
+#include <algor/algor/algor_p4032var.h>
+#endif
 
 void
 cpu_configure(void)
@@ -72,12 +81,57 @@ cpu_rootconf(void)
 	setroot(booted_device, booted_partition);
 }
 
+#if defined(ALGOR_P4032)
+#define	BUILTIN_ETHERNET_P(pa)						\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 5 && (pa)->pa_function == 0)
+#elif defined(ALGOR_P5064)
+#define	BUILTIN_ETHERNET_P(pa)						\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 0 && (pa)->pa_function == 0)
+#elif defined(ALGOR_P6032)
+#define	BUILTIN_ETHERNET_P(pa)						\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 16 && (pa)->pa_function == 0)
+#else
+#define	BUILTIN_ETHERNET_P(pa)	0
+#endif
+
 void
 device_register(struct device *dev, void *aux)
 {
+	struct device *pdev;
 
 	/*
 	 * We don't ever know the boot device.  But that's because the
 	 * firmware only loads from the network or the parallel port.
 	 */
+
+	/*
+	 * Fetch the MAC address for the built-in Ethernet (we grab it
+	 * from PMON earlier in the boot process).
+	 */
+	if ((pdev = device_parent(dev)) != NULL && device_is_a(pdev, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (BUILTIN_ETHERNET_P(pa)) {
+			prop_data_t pd = prop_data_create_data_nocopy(
+			    algor_ethaddr, ETHER_ADDR_LEN);
+			KASSERT(pd != NULL);
+			if (prop_dictionary_set(device_properties(dev),
+						"mac-addr", pd) == FALSE) {
+				printf("WARNING: unable to set mac-addr "
+				    "property for %s\n", dev->dv_xname);
+			}
+			prop_object_release(pd);
+#if defined(ALGOR_P4032)
+			/*
+			 * XXX This is gross, disgusting, and otherwise vile,
+			 * XXX but V962 rev. < B2 have broken DMA FIFOs.  Give
+			 * XXX the on-board Ethernet a different DMA window
+			 * XXX that has pre-fetching disabled so that Ethernet
+			 * XXX performance doesn't completely suck.
+			 */
+			pa->pa_dmat = &p4032_configuration.ac_pci_pf_dmat;
+			pa->pa_dmat64 = NULL;
+#endif /* ALGOR_P4032 */
+		}
+	}
 }

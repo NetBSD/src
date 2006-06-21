@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.16.2.1 2006/06/21 14:48:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,15 +94,9 @@
  * rights to redistribute these changes.
  */
 
-#if defined(_KERNEL_OPT)
-#include "opt_syscall_debug.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
-#endif
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.1 2006/06/21 14:48:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,12 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16 2005/07/01 18:01:44 christos E
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -137,19 +125,11 @@ void	osf1_syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 void
 osf1_syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = osf1_syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = osf1_syscall_fancy;
-		return;
-	} 
-#endif
-	p->p_md.md_syscall = osf1_syscall_plain;
+	else
+		p->p_md.md_syscall = osf1_syscall_plain;
 }
 
 /*
@@ -223,10 +203,6 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
@@ -250,9 +226,6 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif
 	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }

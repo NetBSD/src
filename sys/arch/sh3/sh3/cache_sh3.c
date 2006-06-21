@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.9 2003/07/15 03:35:56 lukem Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.9.16.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.9 2003/07/15 03:35:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.9.16.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,14 +58,14 @@ int sh_cache_way_size;
 int sh_cache_way_shift;
 int sh_cache_entry_mask;
 
-static __inline__ void cache_sh3_op_line_16_nway(int, vaddr_t, u_int32_t);
-static __inline__ void cache_sh3_op_8lines_16_nway(int, vaddr_t, u_int32_t);
+static inline void cache_sh3_op_line_16_nway(int, vaddr_t, uint32_t);
+static inline void cache_sh3_op_8lines_16_nway(int, vaddr_t, uint32_t);
 
 void
 sh3_cache_config()
 {
 	size_t cache_size;
-	u_int32_t r;
+	uint32_t r;
 
 	/* Determine cache size */
 	switch (cpu_product) {
@@ -141,8 +141,8 @@ sh3_cache_config()
  *	Clear the specified bits on single 16-byte cache line. n-ways.
  *
  */
-static __inline__ void
-cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
+static inline void
+cache_sh3_op_line_16_nway(int n, vaddr_t va, uint32_t bits)
 {
 	vaddr_t cca;
 	int way;
@@ -163,10 +163,10 @@ cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
  *	Clear the specified bits on 8 16-byte cache lines, n-ways.
  *
  */
-static __inline__ void
-cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
+static inline void
+cache_sh3_op_8lines_16_nway(int n, vaddr_t va, uint32_t bits)
 {
-	__volatile__ u_int32_t *cca;
+	volatile uint32_t *cca;
 	int way;
 
 	/* extract entry # */
@@ -174,7 +174,7 @@ cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
 
 	/* operate for each way */
 	for (way = 0; way < n; way++) {
-		cca = (__volatile__ u_int32_t *)
+		cca = (volatile uint32_t *)
 		    (SH3_CCA | way << sh_cache_way_shift | va);
 		cca[ 0] &= ~bits;
 		cca[ 4] &= ~bits;

@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.3.8.1 2006/06/21 14:57:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ _start(void)
 void 
 breakpoint(void)
 {
-	__asm __volatile ("trap #14");
+	__asm volatile ("trap #14");
 }
 
 void 

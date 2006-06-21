@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.10 2005/06/04 13:38:08 rearnsha Exp $	*/
+/*	$NetBSD: plcom.c,v 1.10.2.1 2006/06/21 14:50:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10 2005/06/04 13:38:08 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10.2.1 2006/06/21 14:50:46 yamt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10 2005/06/04 13:38:08 rearnsha Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -265,23 +266,14 @@ void	plcom_kgdb_putc (void *, int);
 #define	PLCOMDIALOUT(x)	(minor(x) & PLCOMDIALOUT_MASK)
 
 #define	PLCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+				 device_is_active(&(sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define PLCOM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, PLCOM_UART_SIZE, (f))
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(PLCOM_MPLOCK)
-
 #define PLCOM_LOCK(sc) simple_lock(&(sc)->sc_lock)
 #define PLCOM_UNLOCK(sc) simple_unlock(&(sc)->sc_lock)
-
-#else
-
-#define PLCOM_LOCK(sc)
-#define PLCOM_UNLOCK(sc)
-
-#endif
 
 int
 plcomspeed(long speed, long frequency)
@@ -373,7 +365,9 @@ plcom_enable_debugport(struct plcom_softc *sc)
 	sc->sc_cr = CR_RIE | CR_RTIE | CR_UARTEN;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit, sc->sc_mcr);
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
+	    sc->sc_mcr);
 	PLCOM_UNLOCK(sc);
 	splx(s);
 }
@@ -387,9 +381,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	struct tty *tp;
 
 	callout_init(&sc->sc_diag_callout);
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(PLCOM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
-#endif
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_cr = 0;
@@ -448,7 +440,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&plcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -511,7 +503,7 @@ plcom_detach(self, flags)
 	maj = cdevsw_lookup_major(&plcom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	mn |= PLCOMDIALOUT_MASK;
@@ -624,7 +616,7 @@ plcom_shutdown(struct plcom_softc *sc)
 }
 
 int
-plcomopen(dev_t dev, int flag, int mode, struct proc *p)
+plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct plcom_softc *sc;
 	struct tty *tp;
@@ -636,7 +628,7 @@ plcomopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_rbuf == NULL)
 		return ENXIO;
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 #ifdef KGDB
@@ -651,7 +643,9 @@ plcomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+		kauth_authorize_generic(l->l_proc->p_cred,
+				  KAUTH_GENERIC_ISSUSER,
+				  &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -775,7 +769,7 @@ bad:
 }
  
 int
-plcomclose(dev_t dev, int flag, int mode, struct proc *p)
+plcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -827,7 +821,7 @@ plcomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-plcompoll(dev_t dev, int events, struct proc *p)
+plcompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -835,7 +829,7 @@ plcompoll(dev_t dev, int events, struct proc *p)
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
  
-	return (*tp->t_linesw->l_poll)(tp, events, p);
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -848,7 +842,7 @@ plcomtty(dev_t dev)
 }
 
 int
-plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -858,11 +852,11 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -893,7 +887,9 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1382,7 +1378,8 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 	bus_space_write_1(iot, ioh, plcom_dlbl, sc->sc_dlbl);
 	bus_space_write_1(iot, ioh, plcom_dlbh, sc->sc_dlbh);
 	bus_space_write_1(iot, ioh, plcom_lcr, sc->sc_lcr);
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit,
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
 	    sc->sc_mcr_active = sc->sc_mcr);
 
 	bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
@@ -1440,7 +1437,8 @@ plcom_hwiflow(struct plcom_softc *sc)
 		SET(sc->sc_mcr, sc->sc_mcr_rts);
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit,
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
 	    sc->sc_mcr_active);
 }
 
@@ -2142,7 +2140,8 @@ plcominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 #if 0
 	/* Ought to do something like this, but we have no sc to
 	   dereference. */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit,
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
 	    MCR_DTR | MCR_RTS);
 #endif
 

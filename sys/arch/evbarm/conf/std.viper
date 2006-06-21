@@ -1,9 +1,10 @@
-#	$NetBSD: std.viper,v 1.1 2005/06/06 20:24:10 pooka Exp $
+#	$NetBSD: std.viper,v 1.1.2.1 2006/06/21 14:50:33 yamt Exp $
 #
 # Arcom Viper standard kernel options
 #
 
 machine evbarm arm
+include		"conf/std"	# MI standard options
 
 include "arch/evbarm/conf/files.viper"
 

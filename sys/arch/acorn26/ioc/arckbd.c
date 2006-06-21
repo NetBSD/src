@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.7 2003/07/14 22:48:22 lukem Exp $ */
+/* $NetBSD: arckbd.c,v 1.7.16.1 2006/06/21 14:47:47 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.7 2003/07/14 22:48:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.7.16.1 2006/06/21 14:47:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,14 +120,14 @@ static int arckbd_led_encode(int);
 static int arckbd_led_decode(int);
 static void arckbd_set_leds(void *cookie, int new_state);
 static int arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
-    struct proc *p);
+    struct lwp *l);
 static void arckbd_getc(void *cookie, u_int *typep, int *valuep);
 static void arckbd_pollc(void *cookie, int poll);
 #endif
 #if NARCWSMOUSE > 0
 static int arcmouse_enable(void *cookie);
 static int arcmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
-    struct proc *p);
+    struct lwp *l);
 static void arcmouse_disable(void *cookie);
 #endif
 
@@ -711,7 +711,7 @@ arckbd_set_leds(void *cookie, int new_state)
 
 /* ARGSUSED */
 static int
-arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
+arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
  	struct arckbd_softc *sc = cookie;
 
@@ -748,7 +748,7 @@ arcmouse_enable(void *cookie)
 /* ARGSUSED */
 static int
 arcmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
-    struct proc *p)
+    struct lwp *l)
 {
 /*	struct arckbd_softc *sc = cookie; */
 

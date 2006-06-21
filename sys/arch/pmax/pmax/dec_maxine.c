@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.45 2005/01/11 08:05:14 simonb Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.45.10.1 2006/06/21 14:54:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.45 2005/01/11 08:05:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.45.10.1 2006/06/21 14:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
-		__asm __volatile("lbu $0,48(%0)" ::
+		__asm volatile("lbu $0,48(%0)" ::
 			"r"(ioasic_base + IOASIC_SLOT_8_START));
 		latched_cycle_cnt =
 		    *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
@@ -363,7 +363,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
-	/* If clock interrups were enabled, re-enable them ASAP. */
+	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (ipending & MIPS_INT_MASK_3) {
@@ -426,7 +426,7 @@ static void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_IMSK */
-	__asm __volatile("lw $0,%0" ::
+	__asm volatile("lw $0,%0" ::
 	    "i"(MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK)));
 }
 

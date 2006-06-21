@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.3 2003/12/29 12:28:14 igy Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.3.16.1 2006/06/21 14:51:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.3 2003/12/29 12:28:14 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.3.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -238,7 +238,7 @@ out_dcu1:
 }
 
 int
-vr4181aiuopen(dev_t dev, int flag, int mode, struct proc *p)
+vr4181aiuopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct vr4181aiu_softc	*sc;
 
@@ -306,7 +306,7 @@ vr4181aiuopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-vr4181aiuclose(dev_t dev, int flag, int mode, struct proc *p)
+vr4181aiuclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	vr4181aiu_disable(device_lookup(&vr4181aiu_cd, minor(dev)));
 	return 0;

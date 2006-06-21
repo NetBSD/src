@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.19 2005/06/28 21:03:01 junyoung Exp $
+ * $NetBSD: main.c,v 1.19.2.1 2006/06/21 14:48:53 yamt Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -486,7 +486,7 @@ printf("Supressing %ld kernel symbols\n", marks[MARK_NSYM]);
 	/*NOTREACHED*/
 
 freeall:
-	free(kp, ksize);
+	dealloc(kp, ksize);
 err:
 	printf("\nError %ld\n", (long)errno);
 	goto again;

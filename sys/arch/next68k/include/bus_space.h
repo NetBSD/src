@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.11 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.11.8.1 2006/06/21 14:54:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -177,7 +177,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -191,7 +191,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -219,7 +219,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -233,7 +233,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -247,7 +247,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -296,7 +296,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -310,7 +310,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -324,7 +324,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -352,7 +352,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -366,7 +366,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -380,7 +380,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
@@ -408,7 +408,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_set_multi_1(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -422,7 +422,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -436,7 +436,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -464,7 +464,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_set_region_1(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -478,7 +478,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
@@ -492,7 +492,7 @@ typedef u_long	bus_space_handle_t;
 
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
 	(void) t;							\
-	__asm __volatile ("						\
+	__asm volatile ("						\
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\

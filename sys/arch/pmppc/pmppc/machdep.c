@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2004/09/25 12:24:53 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.12.1 2006/06/21 14:54:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2004/09/25 12:24:53 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.12.1 2006/06/21 14:54:49 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -311,7 +311,7 @@ cpu_startup()
 	/*
 	 * Now allow hardware interrupts.
 	 */
-	__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 	    : "=r"(msr) : "K"(PSL_EE));
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.5 2003/07/15 01:19:54 lukem Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.5.16.1 2006/06/21 14:50:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.5 2003/07/15 01:19:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.5.16.1 2006/06/21 14:50:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.5 2003/07/15 01:19:54 lukem Exp $");
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 #include <atari/atari/device.h>
 #include <atari/pci/pci_vga.h>

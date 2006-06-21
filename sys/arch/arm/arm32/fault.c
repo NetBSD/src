@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.54 2005/01/07 08:02:16 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.54.10.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54 2005/01/07 08:02:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54.10.1 2006/06/21 14:49:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54 2005/01/07 08:02:16 skrll Exp $");
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -170,7 +171,7 @@ static const struct data_abort data_aborts[] = {
 #define	TRAPSIGNAL(l,k)	trapsignal((l), (k))
 #endif
 
-static __inline void
+static inline void
 call_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 {
 
@@ -179,7 +180,7 @@ call_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	KERNEL_PROC_UNLOCK(l);
 }
 
-static __inline int
+static inline int
 data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 {
 #ifdef CPU_ABORT_FIXUP_REQUIRED
@@ -461,7 +462,7 @@ data_abort_handler(trapframe_t *tf)
 
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
-	error = uvm_fault(map, va, 0, ftype);
+	error = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
 
 	if (map != kernel_map)
@@ -481,7 +482,7 @@ data_abort_handler(trapframe_t *tf)
 			return;
 		}
 
-		printf("\nuvm_fault(%p, %lx, %x, 0) -> %x\n", map, va, ftype,
+		printf("\nuvm_fault(%p, %lx, %x) -> %x\n", map, va, ftype,
 		    error);
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
@@ -491,8 +492,7 @@ data_abort_handler(trapframe_t *tf)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
-		    (l->l_proc->p_cred && l->l_proc->p_ucred) ?
-		     l->l_proc->p_ucred->cr_uid : -1);
+		    l->l_proc->p_cred ? kauth_cred_geteuid(l->l_proc->p_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else
 		ksi.ksi_signo = SIGSEGV;
@@ -710,7 +710,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	return (1);
 }
 
-static __inline int
+static inline int
 prefetch_abort_fixup(trapframe_t *tf)
 {
 #ifdef CPU_ABORT_FIXUP_REQUIRED
@@ -848,7 +848,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		l->l_flag |= L_SA_PAGEFAULT;
 	}
 
-	error = uvm_fault(map, va, 0, VM_PROT_READ);
+	error = uvm_fault(map, va, VM_PROT_READ);
 
 	if (map != kernel_map)
 		l->l_flag &= ~L_SA_PAGEFAULT;
@@ -863,8 +863,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
-		    (l->l_proc->p_cred && l->l_proc->p_ucred) ?
-		     l->l_proc->p_ucred->cr_uid : -1);
+		    l->l_proc->p_cred ? kauth_cred_geteuid(l->l_proc->p_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else
 		ksi.ksi_signo = SIGSEGV;

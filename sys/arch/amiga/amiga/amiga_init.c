@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.89 2005/06/13 20:44:24 jmc Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.89.2.1 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.89 2005/06/13 20:44:24 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.89.2.1 2006/06/21 14:48:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ alloc_z2mem(amount)
 
 int kernel_copyback = 1;
 
+__attribute__ ((no_instrument_function))
 void
 start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	boot_part, loadbase)
@@ -755,7 +756,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	if (RELOC(mmutype, int) == MMU_68040) {
 		if (id & AMIGA_68060) {
 			/* do i need to clear the branch cache? */
-			asm volatile (	".word 0x4e7a,0x0002;"
+			__asm volatile (	".word 0x4e7a,0x0002;"
 					"orl #0x400000,%%d0;"
 					".word 0x4e7b,0x0002" : : : "d0");
 		}
@@ -765,7 +766,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * movec %a0,%srp;
 		 */
 
-		asm volatile ("movel %0,%%a0; .word 0x4e7b,0x8807"
+		__asm volatile ("movel %0,%%a0; .word 0x4e7b,0x8807"
 		    : : "a" (RELOC(Sysseg_pa, u_int)) : "a0");
 
 #ifdef DEBUG_KERNEL_START
@@ -785,7 +786,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * nolimit, share global, 4 byte PTE's
 		 */
 		(RELOC(protorp[0], u_int)) = 0x80000202;
-		asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
+		__asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
 	}
 }
 

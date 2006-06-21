@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.45 2004/08/28 19:46:41 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.45.12.1 2006/06/21 14:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,8 +76,8 @@
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PARAM_H_
-#define	_MACHINE_PARAM_H_
+#ifndef	_HP300_PARAM_H_
+#define	_HP300_PARAM_H_
 
 /*
  * Machine dependent constants for HP9000 series 300.
@@ -85,10 +85,12 @@
 #define	_MACHINE	hp300
 #define	MACHINE		"hp300"
 
+#ifdef _KERNEL
 /*
  * Interrupt glue.
  */
 #include <machine/intr.h>
+#endif /* _KERNEL */
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
@@ -142,4 +144,4 @@ void	_delay(u_int);
 	((unsigned)(v) & ~HPMMMASK)
 #endif
 
-#endif	/* !_MACHINE_PARAM_H_ */
+#endif	/* !_HP300_PARAM_H_ */

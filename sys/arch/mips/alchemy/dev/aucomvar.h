@@ -1,4 +1,4 @@
-/* $NetBSD: aucomvar.h,v 1.2 2004/05/01 19:04:00 thorpej Exp $ */
+/* $NetBSD: aucomvar.h,v 1.2.12.1 2006/06/21 14:53:28 yamt Exp $ */
 
 /* copyright */
 
@@ -23,7 +23,6 @@
 
 #include <dev/ic/comvar.h>
 
-#undef COM_MPLOCK	/* just in case... */
 #undef COM_DEBUG
 #undef COM_HAYESP
 #undef COM_16650

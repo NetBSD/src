@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 2005/06/02 15:26:35 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13.2.1 2006/06/21 14:54:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.13 2005/06/02 15:26:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.13.2.1 2006/06/21 14:54:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -108,7 +108,7 @@ extern uint32_t lance_mem_phys;
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

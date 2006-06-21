@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.20 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: npx.h,v 1.20.16.1 2006/06/21 14:52:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,18 +114,11 @@ struct savexmm {
 	/* 512-bytes --- end of hardware portion of save area */
 	uint32_t sv_ex_sw;		/* saved SW from last exception */
 	uint32_t sv_ex_tw;		/* saved TW from last exception */
-};
+} __aligned(16);
 
 union savefpu {
 	struct save87 sv_87;
 	struct savexmm sv_xmm;
-};
-
-/* Cyrix EMC memory - mapped coprocessor context switch information */
-struct emcsts {
-	long	em_msw;		/* memory mapped status register when swtched */
-	long	em_tar;		/* memory mapped temp A register when swtched */
-	long	em_dl;		/* memory mapped D low register when swtched */
 };
 
 /*
@@ -149,6 +142,21 @@ struct emcsts {
  * Set Reference, pg. 3-369.
  */
 #define	__INITIAL_MXCSR__	0x1f80
+
+
+/*
+ * 80387 control word bits
+ */
+#define EN_SW_INVOP	0x0001  /* Invalid operation */
+#define EN_SW_DENORM	0x0002  /* Denormalized operand */
+#define EN_SW_ZERODIV	0x0004  /* Divide by zero */
+#define EN_SW_OVERFLOW	0x0008  /* Overflow */
+#define EN_SW_UNDERFLOW	0x0010  /* Underflow */
+#define EN_SW_PRECLOSS	0x0020  /* Loss of precision */
+#define EN_SW_DATACHAIN	0x0080	/* Data chain exception */
+#define EN_SW_CTL_PREC	0x0300	/* Precision control */
+#define EN_SW_CTL_ROUND	0x0c00	/* Rounding control */
+#define EN_SW_CTL_INF	0x1000	/* Infinity control */
 
 /*
  * The standard control word from finit is 0x37F, giving:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.29.16.1 2006/06/21 14:57:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29.16.1 2006/06/21 14:57:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $");
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -199,7 +200,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if ((u_int)off > ctob(physmem) &&
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (-1);
 	return (btop((u_int)off));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.59.2.1 2006/06/21 14:52:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59.2.1 2006/06/21 14:52:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59 2005/06/22 00:58:48 sekiya Exp $");
 
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>
 #endif
 
 #if NMCA > 0
@@ -191,7 +190,8 @@ mainbus_attach(parent, self, aux)
 #endif
 	int mpacpi_active = 0;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #ifdef MPBIOS
 	mpbios_present = mpbios_probe(self);
