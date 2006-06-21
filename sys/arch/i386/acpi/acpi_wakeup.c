@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.27 2006/06/20 22:36:58 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.28 2006/06/21 18:12:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.27 2006/06/20 22:36:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.28 2006/06/21 18:12:47 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -97,6 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.27 2006/06/20 22:36:58 jmcneill Ex
 
 #include "acpi_wakecode.h"
 
+#include "opt_pcifixup.h"
+
+#ifdef PCI_INTR_FIXUP
+#include <i386/pci/pci_intr_fixup.h>
+#endif
 
 static paddr_t phys_wakeup = 0;
 static int acpi_md_node = CTL_EOL;
@@ -328,6 +333,10 @@ acpi_md_sleep(int state)
 	struct pmap			*pm;
 	uint32_t			cr3;
 	paddr_t				oldphys;
+#ifdef PCI_INTR_FIXUP
+	int rv;
+	uint16_t pciirq;
+#endif
 
 	if (!phys_wakeup) {
 		printf("acpi: can't sleep since wakecode is not installed.\n");
@@ -432,6 +441,18 @@ acpi_md_sleep(int state)
 		i8259_reinit();
 #if NIOAPIC > 0
 		ioapic_enable();
+#endif
+#ifdef PCI_INTR_FIXUP
+		rv = pci_intr_fixup(NULL, X86_BUS_SPACE_IO, &pciirq);
+		switch (rv) {
+		case -1:
+			aprint_error("Warning: unable to fix up PCI "
+				     "interrupt routing\n");
+			break;
+		case 1:
+			panic("acpi_md_sleep: interrupt fixup failed");
+			break;
+		}
 #endif
 		/*
 		 * XXX must the local APIC be re-inited?
