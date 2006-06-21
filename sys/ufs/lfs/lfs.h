@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.88 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.88.2.1 2006/06/21 15:12:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -93,8 +93,11 @@
 
 #define LFS_MAX_DADDR	0x7fffffff	/* Highest addressable fsb */
 
+#define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
+
 /* Adjustable filesystem parameters */
-#define MIN_FREE_SEGS	2
+#define MIN_FREE_SEGS	20
+#define MIN_RESV_SEGS	15
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
@@ -108,16 +111,23 @@
 #define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
 #define LFS_INVERSE_MAX_BUFS(n) (((n) + 10) << 2)
-extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
 #define LFS_MAX_BYTES	    ((bufmem_lowater >> 2) - 10 * PAGE_SIZE)
 #define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
 #define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
+#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
+#define LFS_MAX_FSDIROP(fs)						\
+	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
+	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+          (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
 #define LFS_WAIT_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
+
+/* How starved can we be before we start holding back page writes */
+#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
 
 /*
  * Reserved blocks for lfs_malloc
@@ -196,6 +206,9 @@ typedef struct lfs_res_blk {
 } while (0)
 
 #ifdef _KERNEL
+
+extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
+
 # define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
      (bp)->b_iodone == lfs_callback)
 
@@ -321,44 +334,9 @@ struct lfid {
 	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
-#define LFS_ITIMES(ip, acc, mod, cre)  do {				\
-	struct lfs *_fs = (ip)->i_lfs;					\
-									\
-	if ((ip)->i_flag & IN_ACCESS) {					\
-		(ip)->i_ffs1_atime = (acc)->tv_sec;			\
-		(ip)->i_ffs1_atimensec = (acc)->tv_nsec;		\
-		if ((ip)->i_lfs->lfs_version > 1) {			\
-			struct buf *_ibp;				\
-			IFILE *_ifp;					\
-									\
-			LFS_IENTRY(_ifp, ip->i_lfs, ip->i_number, _ibp); \
-			_ifp->if_atime_sec = (acc)->tv_sec;		\
-			_ifp->if_atime_nsec = (acc)->tv_nsec;		\
-			LFS_BWRITE_LOG(_ibp);				\
-			simple_lock(&_fs->lfs_interlock);		\
-			_fs->lfs_flags |= LFS_IFDIRTY;			\
-			simple_unlock(&_fs->lfs_interlock);		\
-		} else {						\
-			LFS_SET_UINO(ip, IN_ACCESSED);			\
-		}							\
-	}								\
-	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {	\
-		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
-			(ip)->i_ffs1_mtime = (mod)->tv_sec;		\
-			(ip)->i_ffs1_mtimensec = (mod)->tv_nsec;	\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
-			(ip)->i_ffs1_ctime = (cre)->tv_sec;		\
-			(ip)->i_ffs1_ctimensec = (cre)->tv_nsec;	\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE))		\
-			LFS_SET_UINO(ip, IN_MODIFIED);			\
-		if ((ip)->i_flag & IN_MODIFY)				\
-			LFS_SET_UINO(ip, IN_ACCESSED);			\
-	}								\
-	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);\
-} while (0)
+#define LFS_ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		lfs_itimes(ip, acc, mod, cre)
 
 /*
  * "struct vnode" associated definitions
@@ -369,9 +347,9 @@ struct lfid {
 			  !((vp)->v_flag & VONWORKLST) &&		\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
-/* XXX Shouldn't we use v_numoutput instead? */
-#define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
-		!(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
+#define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
+	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
+	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 /*
@@ -473,7 +451,7 @@ struct ifile {
 	u_int32_t if_version;		/* inode version number */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
 	int32_t	  if_daddr;		/* inode disk address */
-	ino_t	  if_nextfree;		/* next-unallocated inode */
+	u_int32_t if_nextfree;		/* next-unallocated inode */
 	u_int32_t if_atime_sec;		/* Last access time, seconds */
 	u_int32_t if_atime_nsec;	/* and nanoseconds */
 };
@@ -482,7 +460,7 @@ typedef struct ifile_v1 IFILE_V1;
 struct ifile_v1 {
 	u_int32_t if_version;		/* inode version number */
 	int32_t	  if_daddr;		/* inode disk address */
-	ino_t	  if_nextfree;		/* next-unallocated inode */
+	u_int32_t if_nextfree;		/* next-unallocated inode */
 #if LFS_ATIME_IFILE
 	struct timespec if_atime;	/* Last access time */
 #endif
@@ -500,7 +478,7 @@ struct ifile_v1 {
 	if ((_e = bread((F)->lfs_ivnode,				\
 	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
 	(F)->lfs_bsize, NOCRED, &(BP))) != 0)				\
-		panic("lfs: ifile read %d", _e);			\
+		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
 	if ((F)->lfs_version == 1)					\
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
 				 (IN) % (F)->lfs_ifpb);			\
@@ -708,7 +686,7 @@ struct dlfs {
 #define LFS_PF_CLEAN 0x1
 	u_int16_t dlfs_pflags;	  /* 322: file system persistent flags */
 	int32_t	  dlfs_dmeta;	  /* 324: total number of dirty summaries */
-	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
+	u_int32_t dlfs_minfreeseg; /* 328: segments not counted in bfree */
 	u_int32_t dlfs_sumsize;	  /* 332: size of summary blocks */
 	u_int64_t dlfs_serial;	  /* 336: serial number */
 	u_int32_t dlfs_ibsize;	  /* 344: size of inode blocks */
@@ -720,9 +698,23 @@ struct dlfs {
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;	  /* 368: per-fs identifier */
 	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb abd dbtodsb shift constant */
-	int8_t	  dlfs_pad[132];  /* 376: round to 512 bytes */
+	u_int32_t dlfs_resvseg;   /* 376: segments reserved for the cleaner */
+	int8_t	  dlfs_pad[128];  /* 380: round to 512 bytes */
 /* Checksum -- last valid disk field. */
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
+};
+
+/* Type used for the inode bitmap */
+typedef u_int32_t lfs_bm_t;
+
+/*
+ * Linked list of segments whose byte count needs updating following a
+ * file truncation.
+ */
+struct segdelta {
+	long segnum;
+	size_t num;
+	LIST_ENTRY(segdelta) list;
 };
 
 /*
@@ -790,15 +782,18 @@ struct lfs {
 #define lfs_inodefmt lfs_dlfs.dlfs_inodefmt
 #define lfs_interleave lfs_dlfs.dlfs_interleave
 #define lfs_ident lfs_dlfs.dlfs_ident
+#define lfs_resvseg lfs_dlfs.dlfs_resvseg
 
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
 	u_int32_t  lfs_seglock;		/* single-thread the segment writer */
 	pid_t	  lfs_lockpid;		/* pid of lock holder */
+	lwpid_t	  lfs_locklwp;		/* lwp of lock holder */
 	u_int32_t lfs_iocount;		/* number of ios pending */
 	u_int32_t lfs_writer;		/* don't allow any dirops to start */
 	u_int32_t lfs_dirops;		/* count of active directory ops */
+	u_int32_t lfs_dirvcount;	/* count of VDIROP nodes in this fs */
 	u_int32_t lfs_doifile;		/* Write ifile blocks on next write */
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
@@ -811,6 +806,7 @@ struct lfs {
 	u_int16_t lfs_activesb;		/* toggle between superblocks */
 	daddr_t	  lfs_sbactive;		/* disk address of current sb write */
 	struct vnode *lfs_flushvp;	/* vnode being flushed */
+	int lfs_flushvp_fakevref;	/* fake vref count for flushvp */
 	struct vnode *lfs_unlockvp;	/* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	size_t lfs_devbsize;		/* Device block size */
@@ -839,6 +835,9 @@ struct lfs {
 	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
+	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
+	int lfs_nowrap;			/* Suspend log wrap */
+	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
@@ -907,10 +906,10 @@ struct lfs {
  * about inodes and data blocks.
  */
 typedef struct block_info {
-	ino_t	bi_inode;		/* inode # */
-	int32_t bi_lbn;			/* logical block w/in file */
-	int32_t bi_daddr;		/* disk address of block */
-	u_int64_t   bi_segcreate;	/* origin segment create time */
+	u_int32_t bi_inode;		/* inode # */
+	int32_t	bi_lbn;			/* logical block w/in file */
+	int32_t	bi_daddr;		/* disk address of block */
+	u_int64_t bi_segcreate;		/* origin segment create time */
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
 	int	bi_size;		/* size of the block (if fragment) */
@@ -918,10 +917,10 @@ typedef struct block_info {
 
 /* Compatibility for 1.5 binaries */
 typedef struct block_info_15 {
-	ino_t	bi_inode;		/* inode # */
-	int32_t bi_lbn;			/* logical block w/in file */
-	int32_t bi_daddr;		/* disk address of block */
-	u_int32_t   bi_segcreate;	/* origin segment create time */
+	u_int32_t bi_inode;		/* inode # */
+	int32_t	bi_lbn;			/* logical block w/in file */
+	int32_t	bi_daddr;		/* disk address of block */
+	u_int32_t bi_segcreate;		/* origin segment create time */
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
 	int	bi_size;		/* size of the block (if fragment) */
@@ -988,21 +987,25 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
+#define LFSI_DELETED      0x02
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
 	int	  lfs_nbtree;		/* Size of tree */
+	LIST_HEAD(, segdelta) lfs_segdhd;
 #endif
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
 #define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
+#define i_lfs_pchain		inode_ext.lfs->lfs_pchain
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags
 #define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
+#define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -1017,7 +1020,8 @@ struct lfs_inode_ext {
 #define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
 
 /* Estimate number of blocks actually available for writing */
-#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) + (F)->lfs_dmeta ? (F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta : 0)
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) ?		     \
+			  (F)->lfs_bfree - LFS_EST_CMETA(F) : 0)
 
 /* Amount of non-meta space not available to mortal man */
 #define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *			     \
@@ -1026,9 +1030,9 @@ struct lfs_inode_ext {
 
 /* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
-	((((C) == NOCRED || (C)->cr_uid == 0) &&			\
+	((((C) == NOCRED || kauth_cred_geteuid(C) == 0) &&		\
 	  LFS_EST_BFREE(F) >= (BB)) ||					\
-	 ((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
+	 (kauth_cred_geteuid(C) != 0 && IS_FREESPACE(F, BB)))
 
 /* Can an ordinary user write BB blocks */
 #define IS_FREESPACE(F, BB)						\
@@ -1079,6 +1083,8 @@ struct lfs_fcntl_markv {
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
+#define LFCNWRAPSTOP	 _FCNO_FSPRIV('L', 9)
+#define LFCNWRAPGO	 _FCNO_FSPRIV('L', 10)
 /* Compat for NetBSD 2.x bug */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
@@ -1086,7 +1092,9 @@ struct lfs_fcntl_markv {
 #ifdef _KERNEL
 /* XXX MP */
 #define	LFS_SEGLOCK_HELD(fs) \
-	((fs)->lfs_seglock != 0 && (fs)->lfs_lockpid == curproc->p_pid)
+	((fs)->lfs_seglock != 0 &&					\
+	 (fs)->lfs_lockpid == curproc->p_pid &&				\
+	 (fs)->lfs_locklwp == curlwp->l_lid)
 #endif /* _KERNEL */
 
 /* Debug segment lock */
@@ -1111,5 +1119,10 @@ struct lfs_fcntl_markv {
 } while(0)
 # define ASSERT_MAYBE_SEGLOCK(x)
 #endif /* !notyet */
+
+__BEGIN_DECLS
+void lfs_itimes(struct inode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
+__END_DECLS
 
 #endif /* !_UFS_LFS_LFS_H_ */

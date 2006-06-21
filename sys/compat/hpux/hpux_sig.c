@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.27 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.27.4.1 2006/06/21 14:58:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.27 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.27.4.1 2006/06/21 14:58:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.27 2005/02/26 23:10:18 perry Exp $");
 #include <sys/signalvar.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_sig.h>

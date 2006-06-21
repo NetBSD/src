@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.15 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: si.c,v 1.15.4.1 2006/06/21 15:08:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.15 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.15.4.1 2006/06/21 15:08:12 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -277,9 +277,9 @@ si_attach(parent, self, aux)
 	 * Pull in the options flags.  Allow the user to completely
 	 * override the default values.
 	 */
-	if ((ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK) != 0)
+	if ((device_cfdata(&ncr_sc->sc_dev)->cf_flags & SI_OPTIONS_MASK) != 0)
 		sc->sc_options =
-		    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
+		    device_cfdata(&ncr_sc->sc_dev)->cf_flags & SI_OPTIONS_MASK;
 
 	/*
 	 * Initialize fields used by the MI code

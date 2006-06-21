@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.15 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.15.4.1 2006/06/21 15:10:28 yamt Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -156,14 +156,14 @@ struct slcompress {
 /* flag values */
 #define SLF_TOSS 1		/* tossing rcvd frames because of input err */
 
-void	sl_compress_init __P((struct slcompress *));
-void	sl_compress_setup __P((struct slcompress *, int));
+void	sl_compress_init(struct slcompress *);
+void	sl_compress_setup(struct slcompress *, int);
 #ifdef INET
-u_int	sl_compress_tcp __P((struct mbuf *,
-  	    struct ip *, struct slcompress *, int));
+u_int	sl_compress_tcp(struct mbuf *,
+  	    struct ip *, struct slcompress *, int);
 #endif
-int	sl_uncompress_tcp __P((u_char **, int, u_int, struct slcompress *));
-int	sl_uncompress_tcp_core __P((u_char *, int, int, u_int,
-  	    struct slcompress *, u_char **, u_int *));
+int	sl_uncompress_tcp(u_char **, int, u_int, struct slcompress *);
+int	sl_uncompress_tcp_core(u_char *, int, int, u_int,
+  	    struct slcompress *, u_char **, u_int *);
 
-#endif /* _NET_SLCOMPRESS_H_ */
+#endif /* !_NET_SLCOMPRESS_H_ */

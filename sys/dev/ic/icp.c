@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.14 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: icp.c,v 1.14.4.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.14 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.14.4.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.14 2005/02/27 00:27:01 perry Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
@@ -117,8 +117,6 @@ int	icp_async_event(struct icp_softc *, int);
 void	icp_ccb_submit(struct icp_softc *icp, struct icp_ccb *ic);
 void	icp_chain(struct icp_softc *);
 int	icp_print(void *, const char *);
-int	icp_submatch(struct device *, struct cfdata *,
-		     const locdesc_t *, void *);
 void	icp_watchdog(void *);
 void	icp_ucmd_intr(struct icp_ccb *);
 void	icp_recompute_openings(struct icp_softc *);
@@ -141,8 +139,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	struct icp_ccb *ic;
 	u_int16_t cdev_cnt;
 	int i, j, state, feat, nsegs, rv;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[ICPCF_NLOCS];
 
 	state = 0;
 
@@ -385,12 +382,11 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 			icpa.icpa_unit = j + ICPA_UNIT_SCSI;
 
-			ldesc->len = 1;
-			ldesc->locs[ICPCF_UNIT] = j + ICPA_UNIT_SCSI;
+			locs[ICPCF_UNIT] = j + ICPA_UNIT_SCSI;
 
 			icp->icp_children[icpa.icpa_unit] =
-				config_found_sm_loc(&icp->icp_dv, "icp", ldesc,
-					&icpa, icp_print, icp_submatch);
+				config_found_sm_loc(&icp->icp_dv, "icp", locs,
+					&icpa, icp_print, config_stdsubmatch);
 		}
 	}
 
@@ -404,12 +400,11 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 			icpa.icpa_unit = j;
 
-			ldesc->len = 1;
-			ldesc->locs[ICPCF_UNIT] = j;
+			locs[ICPCF_UNIT] = j;
 
 			icp->icp_children[icpa.icpa_unit] =
-			    config_found_sm_loc(&icp->icp_dv, "icp", ldesc,
-				&icpa, icp_print, icp_submatch);
+			    config_found_sm_loc(&icp->icp_dv, "icp", locs,
+				&icpa, icp_print, config_stdsubmatch);
 		}
 	}
 
@@ -457,8 +452,7 @@ icp_rescan(struct icp_softc *icp, int unit)
 {
 	struct icp_attach_args icpa;
 	u_int newsize, newtype;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[ICPCF_NLOCS];
 
 	/*
 	 * NOTE: It is very important that the queue be frozen and not
@@ -531,11 +525,10 @@ icp_rescan(struct icp_softc *icp, int unit)
 
 		icpa.icpa_unit = unit;
 
-		ldesc->len = 1;
-		ldesc->locs[ICPCF_UNIT] = unit;
+		locs[ICPCF_UNIT] = unit;
 
 		icp->icp_children[unit] = config_found_sm_loc(&icp->icp_dv,
-			"icp", ldesc, &icpa, icp_print, icp_submatch);
+			"icp", locs, &icpa, icp_print, config_stdsubmatch);
 	}
 
 	icp_recompute_openings(icp);
@@ -648,18 +641,6 @@ icp_print(void *aux, const char *pnp)
 }
 
 int
-icp_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[ICPCF_UNIT] != ICPCF_UNIT_DEFAULT &&
-	    cf->cf_loc[ICPCF_UNIT] != ldesc->locs[ICPCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-int
 icp_async_event(struct icp_softc *icp, int service)
 {
 
@@ -670,7 +651,8 @@ icp_async_event(struct icp_softc *icp, int service)
 	} else {
 		if ((icp->icp_fw_vers & 0xff) >= 0x1a) {
 			icp->icp_evt.size = 0;
-			icp->icp_evt.eu.async.ionode = icp->icp_dv.dv_unit;
+			icp->icp_evt.eu.async.ionode =
+			    device_unit(&icp->icp_dv);
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			/*
 			 * Severity and event string are filled in by the
@@ -680,7 +662,8 @@ icp_async_event(struct icp_softc *icp, int service)
 			    icp->icp_evt.event_string);
 		} else {
 			icp->icp_evt.size = sizeof(icp->icp_evt.eu.async);
-			icp->icp_evt.eu.async.ionode = icp->icp_dv.dv_unit;
+			icp->icp_evt.eu.async.ionode =
+			    device_unit(&icp->icp_dv);
 			icp->icp_evt.eu.async.service = service;
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			icp->icp_evt.eu.async.info = icp->icp_info;
@@ -725,7 +708,7 @@ icp_intr(void *cookie)
 		printf("%s: uninitialized or unknown service (%d/%d)\n",
 		    icp->icp_dv.dv_xname, ctx.info, ctx.info2);
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.driver);
-		icp->icp_evt.eu.driver.ionode = icp->icp_dv.dv_unit;
+		icp->icp_evt.eu.driver.ionode = device_unit(&icp->icp_dv);
 		icp_store_event(icp, GDT_ES_DRIVER, 4, &icp->icp_evt);
 		return (1);
 	}
@@ -1340,7 +1323,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 	     (evt->size == 0 && e->event_data.size == 0 &&
 	      strcmp((char *) e->event_data.event_string,
 	      	     (char *) evt->event_string) == 0))) {
-		e->last_stamp = time.tv_sec;
+		e->last_stamp = time_second;
 		e->same_count++;
 	} else {
 		if (icp_event_buffer[icp_event_lastidx].event_source != 0) {
@@ -1356,7 +1339,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 		e = &icp_event_buffer[icp_event_lastidx];
 		e->event_source = source;
 		e->event_idx = idx;
-		e->first_stamp = e->last_stamp = time.tv_sec;
+		e->first_stamp = e->last_stamp = time_second;
 		e->same_count = 1;
 		e->event_data = *evt;
 		e->application = 0;

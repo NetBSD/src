@@ -1,11 +1,13 @@
-#	$NetBSD: files.ufs,v 1.9 2005/02/26 22:32:20 perry Exp $
+#	$NetBSD: files.ufs,v 1.9.4.1 2006/06/21 15:12:30 yamt Exp $
 
-deffs					FFS
+deffs	fs_ffs.h			FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX
 
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
+					UFS_DIRHASH
+					UFS_EXTATTR UFS_EXTATTR_AUTOSTART
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -38,6 +40,7 @@ file	ufs/lfs/lfs_bio.c		lfs
 file	ufs/lfs/lfs_cksum.c		lfs
 file	ufs/lfs/lfs_debug.c		lfs
 file	ufs/lfs/lfs_inode.c		lfs
+file	ufs/lfs/lfs_itimes.c		lfs
 file	ufs/lfs/lfs_segment.c		lfs
 file	ufs/lfs/lfs_subr.c		lfs
 file	ufs/lfs/lfs_syscalls.c		lfs
@@ -48,7 +51,8 @@ file	ufs/mfs/mfs_vfsops.c		mfs
 file	ufs/mfs/mfs_vnops.c		mfs
 
 file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_dirhash.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_dirhash.c		(ffs | lfs | mfs | ext2fs) & ufs_dirhash
+file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
 file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs
 file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs

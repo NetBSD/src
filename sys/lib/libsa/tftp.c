@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.18 2005/02/26 22:58:57 perry Exp $	 */
+/*	$NetBSD: tftp.c,v 1.18.4.1 2006/06/21 15:10:23 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -274,7 +274,7 @@ tftp_open(path, f)
 	res = tftp_makereq(tftpfile);
 
 	if (res) {
-		free(tftpfile, sizeof(*tftpfile));
+		dealloc(tftpfile, sizeof(*tftpfile));
 		return (res);
 	}
 	f->f_fsdata = (void *) tftpfile;
@@ -378,7 +378,7 @@ tftp_close(f)
 	tftp_terminate(tftpfile);
 #endif
 
-	free(tftpfile, sizeof(*tftpfile));
+	dealloc(tftpfile, sizeof(*tftpfile));
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.72.2.1 2006/06/21 15:11:09 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.1 2006/06/21 15:11:09 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $"
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -90,9 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $"
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
-#ifdef ENABLE_DEFAULT_SCOPE
 #include <netinet6/scope6_var.h>
-#endif
 #include <netinet6/raw_ip6.h>
 
 #ifdef IPSEC
@@ -165,8 +164,12 @@ rip6_input(mp, offp, proto)
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
-	/* KAME hack: recover scopeid */
-	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
+	rip6src.sin6_addr = ip6->ip6_src;
+	if (sa6_recoverscope(&rip6src) != 0) {
+		/* XXX: should be impossible. */
+		m_freem(m);
+		return IPPROTO_DONE;
+	}
 
 	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
 		in6p = (struct in6pcb *)inph;
@@ -329,7 +332,7 @@ rip6_ctlinput(cmd, sa, d)
 			 * address (= s) is really ours.
 			 */
 			in6p = in6_pcblookup_bind(&raw6cbtable,
-			    &sa6->sin6_addr, 0, 0))
+			    &sa6->sin6_addr, 0, 0);
 		}
 #endif
 
@@ -348,10 +351,10 @@ rip6_ctlinput(cmd, sa, d)
 
 		/*
 		 * regardless of if we called icmp6_mtudisc_update(),
-		 * we need to call in6_pcbnotify(), to notify path
-		 * MTU change to the userland (2292bis-02), because
-		 * some unconnected sockets may share the same
-		 * destination and want to know the path MTU.
+		 * we need to call in6_pcbnotify(), to notify path MTU
+		 * change to the userland (RFC3542), because some
+		 * unconnected sockets may share the same destination
+		 * and want to know the path MTU.
 		 */
 	}
 
@@ -380,12 +383,13 @@ rip6_output(m, va_alist)
 	struct in6pcb *in6p;
 	u_int	plen = m->m_pkthdr.len;
 	int error = 0;
-	struct ip6_pktopts opt, *optp = NULL, *origoptp;
+	struct ip6_pktopts opt, *optp = NULL;
 	struct ifnet *oifp = NULL;
 	int type, code;		/* for ICMPv6 output statistics only */
 	int priv = 0;
+	int scope_ambiguous = 0;
+	struct in6_addr *in6a;
 	va_list ap;
-	int flags;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -396,19 +400,32 @@ rip6_output(m, va_alist)
 	in6p = sotoin6pcb(so);
 
 	priv = 0;
-    {
-	struct proc *p = curproc;	/* XXX */
-
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	if (curproc && !kauth_authorize_generic(curproc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &curproc->p_acflag))
 		priv = 1;
-    }
+
 	dst = &dstsock->sin6_addr;
 	if (control) {
-		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
+		if ((error = ip6_setpktopts(control, &opt,
+		    in6p->in6p_outputopts,
+		    priv, so->so_proto->pr_protocol)) != 0) {
 			goto bad;
+		}
 		optp = &opt;
 	} else
 		optp = in6p->in6p_outputopts;
+
+	/*
+	 * Check and convert scope zone ID into internal form.
+	 * XXX: we may still need to determine the zone later.
+	 */
+	if (!(so->so_state & SS_ISCONNECTED)) {
+		if (dstsock->sin6_scope_id == 0 && !ip6_use_defzone)
+			scope_ambiguous = 1;
+		if ((error = sa6_embedscope(dstsock, ip6_use_defzone)) != 0)
+			goto bad;
+	}
 
 	/*
 	 * For an ICMPv6 packet, we should know its type and code
@@ -441,40 +458,37 @@ rip6_output(m, va_alist)
 	 */
 	ip6->ip6_dst = *dst;
 
-	/* KAME hack: embed scopeid */
-	origoptp = in6p->in6p_outputopts;
-	in6p->in6p_outputopts = optp;
-	if (in6_embedscope(&ip6->ip6_dst, dstsock, in6p, &oifp) != 0) {
-		error = EINVAL;
-		goto bad;
-	}
-	in6p->in6p_outputopts = origoptp;
-
 	/*
 	 * Source address selection.
 	 */
-	{
-		struct in6_addr *in6a;
-
-		if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-		    &in6p->in6p_route, &in6p->in6p_laddr, &error)) == 0) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
-			goto bad;
-		}
-		ip6->ip6_src = *in6a;
-		if (in6p->in6p_route.ro_rt) {
-			/* what if oifp contradicts ? */
-			oifp = ifindex2ifnet[in6p->in6p_route.ro_rt->rt_ifp->if_index];
-		}
+	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
+	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp, &error)) == 0) {
+		if (error == 0)
+			error = EADDRNOTAVAIL;
+		goto bad;
 	}
+	ip6->ip6_src = *in6a;
 
+	if (oifp && scope_ambiguous) {
+		/*
+		 * Application should provide a proper zone ID or the use of
+		 * default zone IDs should be enabled.  Unfortunately, some
+		 * applications do not behave as it should, so we need a
+		 * workaround.  Even if an appropriate ID is not determined
+		 * (when it's required), if we can determine the outgoing
+		 * interface. determine the zone ID based on the interface.
+		 */
+		error = in6_setscope(&dstsock->sin6_addr, oifp, NULL);
+		if (error != 0)
+			goto bad;
+	}
+	ip6->ip6_dst = dstsock->sin6_addr;
+
+	/* fill in the rest of the IPv6 header fields */
 	ip6->ip6_flow = in6p->in6p_flowinfo & IPV6_FLOWINFO_MASK;
 	ip6->ip6_vfc  &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc  |= IPV6_VERSION;
-#if 0				/* ip6_plen will be filled in ip6_output. */
-	ip6->ip6_plen  = htons((u_int16_t)plen);
-#endif
+	/* ip6_plen will be filled in ip6_output, so not fill it here. */
 	ip6->ip6_nxt   = in6p->in6p_ip6.ip6_nxt;
 	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);
 
@@ -510,11 +524,7 @@ rip6_output(m, va_alist)
 		}
 	}
 
-	flags = 0;
-	if (in6p->in6p_flags & IN6P_MINMTU)
-		flags |= IPV6_MINMTU;
-
-	error = ip6_output(m, optp, &in6p->in6p_route, flags,
+	error = ip6_output(m, optp, &in6p->in6p_route, 0,
 	    in6p->in6p_moptions, so, &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		if (oifp)
@@ -530,10 +540,10 @@ rip6_output(m, va_alist)
 		m_freem(m);
 
  freectl:
-	if (optp == &opt && optp->ip6po_rthdr && optp->ip6po_route.ro_rt)
-		RTFREE(optp->ip6po_route.ro_rt);
-	if (control)
+	if (control) {
+		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
+	}
 	return (error);
 }
 
@@ -592,19 +602,21 @@ extern	u_long rip6_sendspace;
 extern	u_long rip6_recvspace;
 
 int
-rip6_usrreq(so, req, m, nam, control, p)
+rip6_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
+	struct proc *p;
 	int s;
 	int error = 0;
 	int priv;
 
 	priv = 0;
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	p = l ? l->l_proc : NULL;
+	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		priv++;
 
 	if (req == PRU_CONTROL)
@@ -689,17 +701,8 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EADDRNOTAVAIL;
 			break;
 		}
-#ifdef ENABLE_DEFAULT_SCOPE
-		if (addr->sin6_scope_id == 0)	/* not change if specified  */
-			addr->sin6_scope_id =
-			    scope6_addr2default(&addr->sin6_addr);
-#endif
-		/* KAME hack: embed scopeid */
-		if (in6_embedscope(&addr->sin6_addr, addr, in6p, NULL) != 0)
-			return EINVAL;
-#ifndef SCOPEDROUTING
-		addr->sin6_scope_id = 0; /* for ifa_ifwithaddr */
-#endif
+		if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
+			break;
 
 		/*
 		 * we don't support mapped address here, it would confuse
@@ -728,9 +731,8 @@ rip6_usrreq(so, req, m, nam, control, p)
 	{
 		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
 		struct in6_addr *in6a = NULL;
-#ifdef ENABLE_DEFAULT_SCOPE
-		struct sockaddr_in6 sin6;
-#endif
+		struct ifnet *ifp = NULL;
+		int scope_ambiguous = 0;
 
 		if (nam->m_len != sizeof(*addr)) {
 			error = EINVAL;
@@ -746,23 +748,31 @@ rip6_usrreq(so, req, m, nam, control, p)
 			break;
 		}
 
-#ifdef ENABLE_DEFAULT_SCOPE
-		if (addr->sin6_scope_id == 0) {
-			/* protect *addr */
-			sin6 = *addr;
-			addr = &sin6;
-			addr->sin6_scope_id =
-			    scope6_addr2default(&addr->sin6_addr);
-		}
-#endif
+		/*
+		 * Application should provide a proper zone ID or the use of
+		 * default zone IDs should be enabled.  Unfortunately, some
+		 * applications do not behave as it should, so we need a
+		 * workaround.  Even if an appropriate ID is not determined,
+		 * we'll see if we can determine the outgoing interface.  If we
+		 * can, determine the zone ID based on the interface below.
+		 */
+		if (addr->sin6_scope_id == 0 && !ip6_use_defzone)
+			scope_ambiguous = 1;
+		if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
+			return(error);
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
 		    in6p->in6p_moptions, &in6p->in6p_route,
-		    &in6p->in6p_laddr, &error);
+		    &in6p->in6p_laddr, &ifp, &error);
 		if (in6a == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
+			break;
+		}
+		/* XXX: see above */
+		if (ifp && scope_ambiguous &&
+		    (error = in6_setscope(&addr->sin6_addr, ifp, NULL)) != 0) {
 			break;
 		}
 		in6p->in6p_laddr = *in6a;
@@ -821,12 +831,6 @@ rip6_usrreq(so, req, m, nam, control, p)
 				break;
 			}
 		}
-#ifdef ENABLE_DEFAULT_SCOPE
-		if (dst->sin6_scope_id == 0) {
-			dst->sin6_scope_id =
-			    scope6_addr2default(&dst->sin6_addr);
-		}
-#endif
 		error = rip6_output(m, so, dst, control);
 		m = NULL;
 		break;
@@ -891,4 +895,11 @@ SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
 		       sysctl_inpcblist, 0, &raw6cbtable, 0,
 		       CTL_NET, PF_INET6, IPPROTO_RAW,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("Raw IPv6 statistics"),
+		       NULL, 0, &rip6stat, sizeof(rip6stat),
+		       CTL_NET, PF_INET6, IPPROTO_RAW, RAW6CTL_STATS,
+		       CTL_EOL);
 }

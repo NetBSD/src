@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.8 2004/08/03 18:35:21 drochner Exp $	*/
+/*	$NetBSD: joy.c,v 1.8.12.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.8 2004/08/03 18:35:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.8.12.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ joydetach(sc, flags)
 	int maj, mn;
 
 	maj = cdevsw_lookup_major(&joy_cdevsw);
-	mn = sc->sc_dev.dv_unit << 1;
+	mn = device_unit(&sc->sc_dev) << 1;
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn + 1, mn + 1, VCHR);
 
@@ -106,10 +106,10 @@ joydetach(sc, flags)
 }
 
 int
-joyopen(dev, flag, mode, p)
+joyopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
@@ -130,10 +130,10 @@ joyopen(dev, flag, mode, p)
 }
 
 int
-joyclose(dev, flag, mode, p)
+joyclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
@@ -189,12 +189,12 @@ joyread(dev, uio, flag)
 }
 
 int
-joyioctl(dev, cmd, data, flag, p)
+joyioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];

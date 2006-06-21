@@ -1,7 +1,7 @@
-/*	$NetBSD: ninjascsi32.c,v 1.3 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.3.2.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.3 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.3.2.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,49 +149,49 @@ static void	njsc32_msgout(struct njsc32_softc *);
 static void	njsc32_cmdtimeout(void *);
 static void	njsc32_reseltimeout(void *);
 
-static __inline unsigned
+static inline unsigned
 njsc32_read_1(struct njsc32_softc *sc, int no)
 {
 
 	return bus_space_read_1(sc->sc_regt, sc->sc_regh, no);
 }
 
-static __inline unsigned
+static inline unsigned
 njsc32_read_2(struct njsc32_softc *sc, int no)
 {
 
 	return bus_space_read_2(sc->sc_regt, sc->sc_regh, no);
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 njsc32_read_4(struct njsc32_softc *sc, int no)
 {
 
 	return bus_space_read_4(sc->sc_regt, sc->sc_regh, no);
 }
 
-static __inline void
+static inline void
 njsc32_write_1(struct njsc32_softc *sc, int no, int val)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, no, val);
 }
 
-static __inline void
+static inline void
 njsc32_write_2(struct njsc32_softc *sc, int no, int val)
 {
 
 	bus_space_write_2(sc->sc_regt, sc->sc_regh, no, val);
 }
 
-static __inline void
+static inline void
 njsc32_write_4(struct njsc32_softc *sc, int no, u_int32_t val)
 {
 
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, no, val);
 }
 
-static __inline unsigned
+static inline unsigned
 njsc32_ireg_read_1(struct njsc32_softc *sc, int no)
 {
 
@@ -199,7 +199,7 @@ njsc32_ireg_read_1(struct njsc32_softc *sc, int no)
 	return bus_space_read_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW);
 }
 
-static __inline unsigned
+static inline unsigned
 njsc32_ireg_read_2(struct njsc32_softc *sc, int no)
 {
 
@@ -207,7 +207,7 @@ njsc32_ireg_read_2(struct njsc32_softc *sc, int no)
 	return bus_space_read_2(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW);
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 njsc32_ireg_read_4(struct njsc32_softc *sc, int no)
 {
 	u_int32_t val;
@@ -219,7 +219,7 @@ njsc32_ireg_read_4(struct njsc32_softc *sc, int no)
 	    NJSC32_REG_DATA_HIGH) << 16);
 }
 
-static __inline void
+static inline void
 njsc32_ireg_write_1(struct njsc32_softc *sc, int no, int val)
 {
 
@@ -227,7 +227,7 @@ njsc32_ireg_write_1(struct njsc32_softc *sc, int no, int val)
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW, val);
 }
 
-static __inline void
+static inline void
 njsc32_ireg_write_2(struct njsc32_softc *sc, int no, int val)
 {
 
@@ -235,7 +235,7 @@ njsc32_ireg_write_2(struct njsc32_softc *sc, int no, int val)
 	bus_space_write_2(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW, val);
 }
 
-static __inline void
+static inline void
 njsc32_ireg_write_4(struct njsc32_softc *sc, int no, u_int32_t val)
 {
 
@@ -526,6 +526,7 @@ njsc32_init_cmds(struct njsc32_softc *sc)
 	if (i > 0)
 		return i;
 
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap_cmdpg);
 fail3:	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_cmdpg);
 fail2:	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_cmdpg,
 	    sizeof(struct njsc32_dma_page));
@@ -751,7 +752,7 @@ njsc32_detach(struct njsc32_softc *sc, int flags)
 	return 0;
 }
 
-static __inline void
+static inline void
 njsc32_cmd_init(struct njsc32_cmd *cmd)
 {
 
@@ -766,7 +767,7 @@ njsc32_cmd_init(struct njsc32_cmd *cmd)
 	cmd->c_dp_cur = cmd->c_dp_saved = cmd->c_dp_max = 0;
 }
 
-static __inline void
+static inline void
 njsc32_init_msgout(struct njsc32_softc *sc)
 {
 
@@ -891,7 +892,7 @@ njsc32_negotiate_xfer(struct njsc32_softc *sc, struct njsc32_target *target)
 }
 
 /* turn LED on */
-static __inline void
+static inline void
 njsc32_led_on(struct njsc32_softc *sc)
 {
 
@@ -899,7 +900,7 @@ njsc32_led_on(struct njsc32_softc *sc)
 }
 
 /* turn LED off */
-static __inline void
+static inline void
 njsc32_led_off(struct njsc32_softc *sc)
 {
 
@@ -925,7 +926,7 @@ njsc32_arbitration_failed(struct njsc32_softc *sc)
 		njsc32_led_off(sc);
 }
 
-static __inline void
+static inline void
 njsc32_cmd_load(struct njsc32_softc *sc, struct njsc32_cmd *cmd)
 {
 	struct njsc32_target *target;
@@ -1417,7 +1418,7 @@ njsc32_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr,
 /*
  * set current data pointer
  */
-static __inline void
+static inline void
 njsc32_set_cur_ptr(struct njsc32_cmd *cmd, u_int32_t pos)
 {
 
@@ -1497,7 +1498,7 @@ njsc32_set_ptr(struct njsc32_softc *sc, struct njsc32_cmd *cmd, u_int32_t pos)
 /*
  * save data pointer
  */
-static __inline void
+static inline void
 njsc32_save_ptr(struct njsc32_cmd *cmd)
 {
 
@@ -2219,7 +2220,7 @@ njsc32_reseltimeout(void *arg)
 	splx(s);
 }
 
-static __inline void
+static inline void
 njsc32_end_auto(struct njsc32_softc *sc, struct njsc32_cmd *cmd, int auto_phase)
 {
 	struct scsipi_xfer *xs;
@@ -2524,6 +2525,8 @@ njsc32_intr(void *arg)
 
 		if (auto_phase &
 		    (NJSC32_XPHASE_DATA_IN | NJSC32_XPHASE_DATA_OUT)) {
+			u_int32_t sackcnt, cntoffset;
+
 #ifdef NJSC32_TRACE
 			if (auto_phase & NJSC32_XPHASE_DATA_IN)
 				PRINTC(cmd, ("njsc32_intr: data in done\n"));
@@ -2593,8 +2596,22 @@ njsc32_intr(void *arg)
 			 * data has been transferred, and current pointer
 			 * is changed
 			 */
-			njsc32_set_cur_ptr(cmd, cmd->c_dp_cur +
-			    njsc32_read_4(sc, NJSC32_REG_SACK_CNT));
+			sackcnt = njsc32_read_4(sc, NJSC32_REG_SACK_CNT);
+
+			/*
+			 * The controller returns extra ACK count
+			 * if the DMA buffer is not 4byte aligned.
+			 */
+			cntoffset = le32toh(cmd->c_sgt[0].sg_addr) & 3;
+#ifdef NJSC32_DEBUG
+			if (cntoffset != 0) {
+				printf("sackcnt %u, cntoffset %u\n",
+				    sackcnt, cntoffset);
+			}
+#endif
+			/* advance SCSI pointer */
+			njsc32_set_cur_ptr(cmd,
+			    cmd->c_dp_cur + sackcnt - cntoffset);
 		}
 
 		if (auto_phase & NJSC32_XPHASE_MSGOUT) {

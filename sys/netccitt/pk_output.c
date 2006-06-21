@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.19 2003/08/07 16:33:04 agc Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.19.16.1 2006/06/21 15:10:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.19 2003/08/07 16:33:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.19.16.1 2006/06/21 15:10:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ pk_output(lcp)
 {
 	struct x25_packet *xp;
 	struct mbuf *m;
-	struct pkcb *pkp = lcp->lcd_pkp;
+	struct pkcb *pkp;
 
-	if (lcp == 0 || pkp == 0) {
+	if (lcp == 0 || (pkp = lcp->lcd_pkp) == 0) {
 		printf("pk_output: zero arg\n");
 		return;
 	}

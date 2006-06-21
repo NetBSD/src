@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.h,v 1.3 2003/03/23 12:17:49 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.h,v 1.3.18.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -172,7 +172,7 @@ struct smb_dev {
 	struct selinfo	sd_pollinfo;
 	struct smbrqh	sd_rqlist;
 	struct smbrqh	sd_rplist;
-	struct ucred 	*sd_owner;*/
+	kauth_cred_t	sd_owner;*/
 	int		sd_flags;
 };
 
@@ -196,4 +196,4 @@ int  smb_dev2share(int fd, int mode, struct smb_cred *scred,
 
 #endif /* _KERNEL */
 
-#endif /* _NETSMB_DEV_H_ */
+#endif /* !_NETSMB_DEV_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.18 2003/06/29 22:29:36 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.18.18.1 2006/06/21 14:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.18 2003/06/29 22:29:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.18.18.1 2006/06/21 14:59:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.18 2003/06/29 22:29:36 fvdl
 #include <sys/swap.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/stat.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -152,7 +154,7 @@ compat_12_netbsd32_stat12(l, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_stat(l, &ua, retval);
 	if (rv)
@@ -213,7 +215,7 @@ compat_12_netbsd32_lstat12(l, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_lstat(l, &ua, retval);
 	if (rv)

@@ -1,4 +1,6 @@
-#	$NetBSD: files.netinet6,v 1.2 2003/09/06 03:36:32 itojun Exp $
+#	$NetBSD: files.netinet6,v 1.2.16.1 2006/06/21 15:11:08 yamt Exp $
+
+defflag	opt_inet6.h	RFC2292	
 
 # NOTE: netinet/files.netinet must be included before this one!
 
@@ -22,6 +24,7 @@ file	netinet6/nd6_nbr.c		inet6
 file	netinet6/nd6_rtr.c		inet6
 file	netinet6/raw_ip6.c		inet6
 file	netinet6/route6.c		inet6
+file	netinet6/scope6.c		inet6
 
 file	netinet6/udp6_output.c		inet6
 file	netinet6/udp6_usrreq.c		inet6

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.72 2005/06/03 23:03:59 tsutsui Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.72.2.1 2006/06/21 14:58:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72 2005/06/03 23:03:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72.2.1 2006/06/21 14:58:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72 2005/06/03 23:03:59 tsutsui Exp
 #include <sys/ipc.h>
 #include <sys/user.h>
 #include <sys/mman.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -545,7 +546,7 @@ hpux_sys_ulimit(l, v, retval)
 	case 2:
 		SCARG(uap, newlimit) *= 512;
 		if (SCARG(uap, newlimit) > limp->rlim_max &&
-		    (error = suser(p->p_ucred, &p->p_acflag)))
+		    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			break;
 		limp->rlim_cur = limp->rlim_max = SCARG(uap, newlimit);
 		/* else fall into... */
@@ -850,14 +851,14 @@ hpux_sys_ioctl(l, v, retval)
 		if ((*ofp & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON)) == 0) {
 			tmp = *ofp & HPUX_UF_FIONBIO_ON;
 			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO,
-						       (caddr_t)&tmp, p);
+						       (caddr_t)&tmp, l);
 		}
 		break;
 	}
 
 	case HPUXTIOCCONS:
 		*(int *)dt = 1;
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCCONS, dt, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCCONS, dt, l);
 		break;
 
 	/* BSD-style job control ioctls */
@@ -878,7 +879,7 @@ hpux_sys_ioctl(l, v, retval)
 	case HPUXTIOCGWINSZ:
 	case HPUXTIOCSWINSZ:
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, hpuxtobsdioctl(com), dt, p);
+			(fp, hpuxtobsdioctl(com), dt, l);
 		if (error == 0 && com == HPUXTIOCLGET) {
 			*(int *)dt &= LTOSTOP;
 			if (*(int *)dt & LTOSTOP)
@@ -899,7 +900,7 @@ hpux_sys_ioctl(l, v, retval)
 		break;
 
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, dt, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, dt, l);
 		break;
 	}
 	/*
@@ -909,7 +910,7 @@ hpux_sys_ioctl(l, v, retval)
 	if (error == 0 && (com&IOC_OUT) && size)
 		error = copyout(dt, SCARG(uap, data), (u_int)size);
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
@@ -936,7 +937,8 @@ hpux_sys_getpgrp2(lp, v, retval)
 	p = pfind(SCARG(uap, pid));
 	if (p == 0)
 		return (ESRCH);
-	if (cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
+	if (kauth_cred_geteuid(cp->p_cred) &&
+	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(cp->p_cred) &&
 	    !inferior(p, cp))
 		return (EPERM);
 	*retval = p->p_pgid;
@@ -1050,19 +1052,20 @@ hpux_sys_getaccess(l, v, retval)
 	struct hpux_sys_getaccess_args *uap = v;
 	int lgroups[NGROUPS];
 	int error = 0;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct vnode *vp;
 	struct nameidata nd;
+	gid_t gid;
 
 	/*
 	 * Build an appropriate credential structure
 	 */
-	cred = crdup(p->p_ucred);
+	cred = kauth_cred_dup(p->p_cred);
 	switch (SCARG(uap, uid)) {
 	case 65502:	/* UID_EUID */
 		break;
 	case 65503:	/* UID_RUID */
-		cred->cr_uid = p->p_cred->p_ruid;
+		kauth_cred_seteuid(cred, kauth_cred_getuid(p->p_cred));
 		break;
 	case 65504:	/* UID_SUID */
 		error = EINVAL;
@@ -1070,47 +1073,43 @@ hpux_sys_getaccess(l, v, retval)
 	default:
 		if (SCARG(uap, uid) > 65504)
 			error = EINVAL;
-		cred->cr_uid = SCARG(uap, uid);
+		kauth_cred_seteuid(cred, SCARG(uap, uid));
 		break;
 	}
 	switch (SCARG(uap, ngroups)) {
 	case -1:	/* NGROUPS_EGID */
-		cred->cr_ngroups = 1;
+		gid = kauth_cred_getegid(cred);
+		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -5:	/* NGROUPS_EGID_SUPP */
 		break;
 	case -2:	/* NGROUPS_RGID */
-		cred->cr_ngroups = 1;
-		cred->cr_gid = p->p_cred->p_rgid;
+		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
+		gid = kauth_cred_geteuid(p->p_cred);
+		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -6:	/* NGROUPS_RGID_SUPP */
-		cred->cr_gid = p->p_cred->p_rgid;
+		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
 		break;
 	case -3:	/* NGROUPS_SGID */
 	case -7:	/* NGROUPS_SGID_SUPP */
 		error = EINVAL;
 		break;
 	case -4:	/* NGROUPS_SUPP */
-		if (cred->cr_ngroups > 1)
-			cred->cr_gid = cred->cr_groups[1];
+		if (kauth_cred_ngroups(cred) > 1)
+			kauth_cred_setegid(cred, kauth_cred_group(cred, 1));
 		else
 			error = EINVAL;
 		break;
 	default:
 		if (SCARG(uap, ngroups) > 0 && SCARG(uap, ngroups) <= NGROUPS)
-			error = copyin((caddr_t)SCARG(uap, gidset),
-				       (caddr_t)&lgroups[0],
-				       SCARG(uap, ngroups) *
-					   sizeof(lgroups[0]));
+			error = copyin(SCARG(uap, gidset), &lgroups[0],
+			    SCARG(uap, ngroups) * sizeof(lgroups[0]));
 		else
 			error = EINVAL;
-		if (error == 0) {
-			int gid;
-
-			for (gid = 0; gid < SCARG(uap, ngroups); gid++)
-				cred->cr_groups[gid] = lgroups[gid];
-			cred->cr_ngroups = SCARG(uap, ngroups);
-		}
+		if (error == 0)
+			kauth_cred_setgroups(cred, lgroups,
+			    SCARG(uap, ngroups), -1);
 		break;
 	}
 	/*
@@ -1118,11 +1117,11 @@ hpux_sys_getaccess(l, v, retval)
 	 */
 	if (error == 0) {
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			SCARG(uap, path), p);
+			SCARG(uap, path), l);
 		error = namei(&nd);
 	}
 	if (error) {
-		crfree(cred);
+		kauth_cred_free(cred);
 		return (error);
 	}
 	/*
@@ -1130,14 +1129,14 @@ hpux_sys_getaccess(l, v, retval)
 	 */
 	vp = nd.ni_vp;
 	*retval = 0;
-	if (VOP_ACCESS(vp, VREAD, cred, p) == 0)
+	if (VOP_ACCESS(vp, VREAD, cred, l) == 0)
 		*retval |= R_OK;
-	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, p) == 0)
+	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, l) == 0)
 		*retval |= W_OK;
-	if (VOP_ACCESS(vp, VEXEC, cred, p) == 0)
+	if (VOP_ACCESS(vp, VEXEC, cred, l) == 0)
 		*retval |= X_OK;
 	vput(vp);
-	crfree(cred);
+	kauth_cred_free(cred);
 	return (error);
 }
 
@@ -1203,7 +1202,7 @@ hpux_sys_stime_6x(l, v, retval)
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
@@ -1399,7 +1398,6 @@ hpux_sys_utime_6x(l, v, retval)
 		syscallarg(char *) fname;
 		syscallarg(time_t *) tptr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct vattr vattr;
 	time_t tv[2];
@@ -1419,14 +1417,14 @@ hpux_sys_utime_6x(l, v, retval)
 	vattr.va_mtime.tv_sec = tv[1];
 	vattr.va_mtime.tv_nsec = 0;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, fname), p);
+	    SCARG(uap, fname), l);
 	if ((error = namei(&nd)))
 		return (error);
 	vp = nd.ni_vp;
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else
-		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, p);
+		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, l);
 	vput(vp);
 	return (error);
 }

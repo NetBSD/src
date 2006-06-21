@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.20 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.20.4.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.20 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.20.4.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.20 2005/02/26 23:10:18 perry Exp 
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
@@ -288,7 +289,7 @@ compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 	hostid = SCARG(uap, hostid);
 	return (0);

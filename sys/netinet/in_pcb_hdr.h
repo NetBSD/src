@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.3 2004/03/02 02:11:14 thorpej Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.3.18.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -106,4 +106,4 @@ struct inpcbtable {
 #define	INP_BOUND		1
 #define	INP_CONNECTED		2
 
-#endif /* _NETINET_IN_PCB_HDR_H_ */
+#endif /* !_NETINET_IN_PCB_HDR_H_ */

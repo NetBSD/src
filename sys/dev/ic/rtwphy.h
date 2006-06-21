@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.h,v 1.3 2005/01/02 04:23:03 dyoung Exp $ */
+/* $NetBSD: rtwphy.h,v 1.3.10.1 2006/06/21 15:02:56 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -32,6 +32,7 @@
 #ifndef _DEV_IC_RTWPHY_H
 #define _DEV_IC_RTWPHY_H
 
+struct rtw_rf *rtw_grf5101_create(struct rtw_regs *, rtw_rf_write_t, int);
 struct rtw_rf *rtw_sa2400_create(struct rtw_regs *, rtw_rf_write_t, int);
 struct rtw_rf *rtw_max2820_create(struct rtw_regs *, rtw_rf_write_t, int);
 

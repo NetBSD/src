@@ -27,7 +27,7 @@
  *	i4b_tel_ioctl.h telephony interface ioctls
  *	------------------------------------------
  *
- *	$Id: i4b_tel_ioctl.h,v 1.3 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_tel_ioctl.h,v 1.3.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_TEL_IOCTL_H_
-#define _I4B_TEL_IOCTL_H_
+#ifndef _NETISDN_I4B_TEL_IOCTL_H_
+#define _NETISDN_I4B_TEL_IOCTL_H_
 
 /*===========================================================================*
  *	/dev/i4btel<n> devices (audio data)
@@ -91,4 +91,4 @@ struct i4b_tel_tones {
 #define RSP_HUP         '2'     /* hangup */
 #define RSP_NOA         '3'     /* no answer */
 
-#endif /* _I4B_TEL_IOCTL_H_ */
+#endif /* !_NETISDN_I4B_TEL_IOCTL_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.15 2004/05/01 12:03:48 kochi Exp $ */
+/* $NetBSD: com_acpi.c,v 1.15.12.1 2006/06/21 15:02:32 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.15 2004/05/01 12:03:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.15.12.1 2006/06/21 15:02:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ static const char * const com_acpi_ids[] = {
 	"PNP0511",	/* Generic IRDA-compatible device */
 	"IBM0071",	/* IBM ThinkPad IRDA device */
 	"SMCF010",	/* SMC SuperIO IRDA device */
+	"NSC6001",	/* NSC IRDA device */
 	NULL
 };
 
@@ -101,7 +102,8 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
@@ -112,7 +114,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		printf("%s: unable to find i/o register resource\n",
+		aprint_error("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -120,7 +122,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		printf("%s: unable to find irq resource\n",
+		aprint_error("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -129,17 +131,17 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (!com_is_console(aa->aa_iot, io->ar_base, &sc->sc_ioh)) {
 		if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &sc->sc_ioh)) {
-			printf("%s: can't map i/o space\n",
+			aprint_error("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
 			goto out;
 		}
 	}
 	sc->sc_iobase = io->ar_base;
 
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", sc->sc_dev.dv_xname);
 
 	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
-		printf(": com probe failed\n");
+		aprint_error(": com probe failed\n");
 		goto out;
 	}
 

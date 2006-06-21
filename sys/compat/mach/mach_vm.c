@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.48 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.48.2.1 2006/06/21 14:59:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.48 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.48.2.1 2006/06/21 14:59:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -404,7 +404,7 @@ mach_sys_map_fd(l, v, retval)
 	evc.ev_vp = vp;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
+	if ((error = (*evc.ev_proc)(l, &evc)) != 0) {
 		VOP_UNLOCK(vp, 0);
 
 #ifdef DEBUG_MACH_VM
@@ -438,12 +438,12 @@ mach_sys_map_fd(l, v, retval)
 		printf("mach_sys_map_fd: trying at %p\n", va);
 #endif
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+		if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 			goto bad1;
 	}
 
 	vput(vp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 #ifdef DEBUG_MACH_VM
 	printf("mach_sys_map_fd: mapping at %p\n", (void *)evc.ev_addr);
 #endif
@@ -459,7 +459,7 @@ bad1:
 	VOP_UNLOCK(vp, 0);
 bad2:
 	vrele(vp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 #ifdef DEBUG_MACH_VM
 	printf("mach_sys_map_fd: mapping at %p failed, error = %d\n",
 	    (void *)evc.ev_addr, error);
@@ -692,7 +692,7 @@ mach_vm_copy(args)
 	mach_vm_copy_request_t *req = args->smsg;
 	mach_vm_copy_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	char tmpbuf[PAGE_SIZE];
+	char *tmpbuf;
 	int error;
 	caddr_t src, dst;
 	size_t size;
@@ -710,13 +710,15 @@ mach_vm_copy(args)
 	dst = (caddr_t)req->req_addr;
 	size = (size_t)req->req_size;
 
+	tmpbuf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+
 	/* Is there an easy way of dealing with that efficiently? */
 	do {
 		if ((error = copyin(src, tmpbuf, PAGE_SIZE)) != 0)
-			return mach_msg_error(args, error);
+			goto out;
 
 		if ((error = copyout(tmpbuf, dst, PAGE_SIZE)) != 0)
-			return mach_msg_error(args, error);
+			goto out;
 
 		src += PAGE_SIZE;
 		dst += PAGE_SIZE;
@@ -730,7 +732,12 @@ mach_vm_copy(args)
 
 	mach_set_trailer(rep, *msglen);
 
+	free(tmpbuf, M_TEMP);
 	return 0;
+
+out:
+	free(tmpbuf, M_TEMP);
+	return mach_msg_error(args, error);
 }
 
 int
@@ -780,7 +787,7 @@ mach_vm_read(args)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l->l_proc, tbuf, size, (void *)va);
+		ktrmool(l, tbuf, size, (void *)va);
 #endif
 
 	free(tbuf, M_WAITOK);
@@ -803,7 +810,9 @@ mach_vm_write(args)
 	mach_vm_write_request_t *req = args->smsg;
 	mach_vm_write_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+#ifdef KTRACE
 	struct lwp *l = args->l;
+#endif
 	struct lwp *tl = args->tl;
 	size_t size;
 	void *addr;
@@ -838,7 +847,7 @@ mach_vm_write(args)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l->l_proc, tbuf, size, (void *)addr);
+		ktrmool(l, tbuf, size, (void *)addr);
 #endif
 
 	free(tbuf, M_WAITOK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_var.h,v 1.2 2004/05/07 00:55:14 jonathan Exp $	*/
+/*	$NetBSD: ipcomp_var.h,v 1.2.14.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipcomp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
@@ -65,4 +65,4 @@ struct ipcompstat {
 extern	int ipcomp_enable;
 extern	struct ipcompstat ipcompstat;
 #endif /* _KERNEL */
-#endif /*_NETIPSEC_IPCOMP_VAR_H_*/
+#endif /* !_NETIPSEC_IPCOMP_VAR_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2005/02/26 22:58:56 perry Exp $
+#	$NetBSD: Makefile,v 1.72.4.1 2006/06/21 15:10:13 yamt Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -25,6 +25,9 @@ M= ${KERNDIR}/arch/${ARCHSUBDIR}
 
 CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 
+.include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
+
 .PATH.c: ${KERNDIR}
 .if exists ($M/Makefile.inc)
 .PATH.c: $M
@@ -41,22 +44,16 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	__cmsg_alignbytes.c inet_addr.c intoa.c md4c.c md5c.c sha1.c pmatch.c
-SRCS+=	_que.c arc4random.c
+SRCS+=	_que.c arc4random.c bcd.c mcount.c
 
 SRCS+=	strstr.c strlcpy.c strlcat.c
+
+SRCS+=	strtoumax.c
 
 SRCS+=	xlat_mbr_fstype.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
-
-#
-# Special rules for certain objects
-#
-
-# mcount cannot be compiled with profiling
-mcount.po: mcount.o
-	cp mcount.o mcount.po
 
 # XXX these stub builds should be cleaned up even further.
 
@@ -79,8 +76,6 @@ SRCS+=	strchr.c
 .if empty(SRCS:Mstrrchr.S)
 SRCS+=	strrchr.c
 .endif
-
-POBJS+=	mcount.po
 
 # only needed during build
 libinstall::

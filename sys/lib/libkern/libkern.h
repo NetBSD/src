@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.50 2003/08/13 11:34:24 ragge Exp $	*/
+/*	$NetBSD: libkern.h,v 1.50.16.1 2006/06/21 15:10:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,8 @@
 #define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
+#include <sys/inttypes.h>
+#include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
 #define LIBKERN_INLINE	static __inline
@@ -170,6 +172,26 @@ tolower(int ch)
 }
 #endif
 
+/*
+ * Return the number of elements in a statically-allocated array,
+ * __x.
+ */
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+
+/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
+#define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))
+
+/* __BITS(m, n): bits m through n, m < n. */
+#define	__BITS(__m, __n)	\
+	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+
+/* find least significant bit that is set */
+#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+
+#define	SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
+#define	SHIFTOUT_MASK(__mask) SHIFTOUT((__mask), (__mask))
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
@@ -182,13 +204,21 @@ tolower(int ch)
 #endif
 #endif
 
+#ifdef __COVERITY__
 #ifndef DIAGNOSTIC
+#define DIAGNOSTIC
+#endif
+#endif
+
+#ifndef DIAGNOSTIC
+#define _DIAGASSERT(a)	(void)0
 #ifdef lint
 #define	KASSERT(e)	/* NOTHING */
 #else /* !lint */
 #define	KASSERT(e)	((void)0)
 #endif /* !lint */
-#else
+#else /* DIAGNOSTIC */
+#define _DIAGASSERT(a)	assert(a)
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("diagnostic ", __FILE__, __LINE__, #e))
@@ -213,6 +243,10 @@ tolower(int ch)
 			    __assert("debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
+/*
+ * XXX: For compatibility we use SMALL_RANDOM by default.
+ */
+#define SMALL_RANDOM
 
 #ifndef offsetof
 #define	offsetof(type, member) \
@@ -238,6 +272,7 @@ void	*memset __P((void *, int, size_t));
 char	*strcpy __P((char *, const char *));
 int	 strcmp __P((const char *, const char *));
 size_t	 strlen __P((const char *));
+char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
@@ -268,8 +303,14 @@ int	 ffs __P((int));
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
+unsigned int
+	bcdtobin __P((unsigned int));
+unsigned int
+	bintobcd __P((unsigned int));
 u_int32_t
-	 inet_addr __P((const char *));
+	inet_addr __P((const char *));
+struct in_addr;
+int	inet_aton __P((const char *, struct in_addr *));
 char	*intoa __P((u_int32_t));
 #define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr __P((const void *, int, size_t));
@@ -277,7 +318,12 @@ void	*memmove __P((void *, const void *, size_t));
 int	 pmatch __P((const char *, const char *, const char **));
 u_int32_t arc4random __P((void));
 void	 arc4randbytes __P((void *, size_t));
-u_long	 random __P((void));
+#ifndef SMALL_RANDOM
+void	 srandom __P((unsigned long));
+char	*initstate __P((unsigned long, char *, size_t));
+char	*setstate __P((char *));
+#endif /* SMALL_RANDOM */
+long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 int	 strcasecmp __P((const char *, const char *));
@@ -285,4 +331,5 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+uintmax_t strtoumax __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

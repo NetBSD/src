@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.8 2003/11/07 22:04:59 briggs Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.8.16.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -150,7 +150,7 @@ struct dmover_request {
 	void	(*dreq_callback)(struct dmover_request *);
 	void	*dreq_cookie;	/* for client */
 
-	__volatile int dreq_flags; /* flags; see below */
+	volatile int dreq_flags; /* flags; see below */
 	int	dreq_error;	   /* valid if DMOVER_REQ_ERROR is set */
 
 	/*

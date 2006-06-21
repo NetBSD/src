@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.26 2004/12/06 02:59:23 christos Exp $   */
+/*	$NetBSD: slcompress.c,v 1.26.12.1 2006/06/21 15:10:28 yamt Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.26 2004/12/06 02:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.26.12.1 2006/06/21 15:10:28 yamt Exp $");
 
 #include "opt_inet.h"
 #ifdef INET
@@ -67,8 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.26 2004/12/06 02:59:23 christos Exp
 
 
 void
-sl_compress_init(comp)
-	struct slcompress *comp;
+sl_compress_init(struct slcompress *comp)
 {
 	u_int i;
 	struct cstate *tstate = comp->tstate;
@@ -92,9 +91,7 @@ sl_compress_init(comp)
  * ID to use on transmission.
  */
 void
-sl_compress_setup(comp, max_state)
- 	struct slcompress *comp;
- 	int max_state;
+sl_compress_setup(struct slcompress *comp, int max_state)
 {
 	u_int i;
 	struct cstate *tstate = comp->tstate;
@@ -173,11 +170,8 @@ sl_compress_setup(comp, max_state)
 }
 
 u_int
-sl_compress_tcp(m, ip, comp, compress_cid)
-	struct mbuf *m;
-	struct ip *ip;
-	struct slcompress *comp;
-	int compress_cid;
+sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
+    int compress_cid)
 {
 	struct cstate *cs = comp->last_cs->cs_next;
 	u_int hlen = ip->ip_hl;
@@ -433,17 +427,13 @@ uncompressed:
 
 
 int
-sl_uncompress_tcp(bufp, len, type, comp)
-	u_char **bufp;
-	int len;
-	u_int type;
-	struct slcompress *comp;
+sl_uncompress_tcp(u_char **bufp, int len, u_int type, struct slcompress *comp)
 {
 	u_char *hdr, *cp;
 	int vjlen;
 	u_int hlen;
 
-	cp = bufp? *bufp: NULL;
+	cp = bufp ? *bufp : NULL;
 	vjlen = sl_uncompress_tcp_core(cp, len, len, type, comp, &hdr, &hlen);
 	if (vjlen < 0)
 		return (0);	/* error */
@@ -482,13 +472,8 @@ sl_uncompress_tcp(bufp, len, type, comp)
  * in *hdrp and its length in *hlenp.
  */
 int
-sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
-	u_char *buf;
-	int buflen, total_len;
-	u_int type;
-	struct slcompress *comp;
-	u_char **hdrp;
-	u_int *hlenp;
+sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
+    struct slcompress *comp, u_char **hdrp, u_int *hlenp)
 {
 	u_char *cp;
 	u_int hlen, changes;
@@ -501,6 +486,8 @@ sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
 	switch (type) {
 
 	case TYPE_UNCOMPRESSED_TCP:
+		if (buf == NULL)
+			goto bad;
 		ip = (struct ip *) buf;
 		if (ip->ip_p >= MAX_STATES)
 			goto bad;
@@ -532,6 +519,8 @@ sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
 	}
 	/* We've got a compressed packet. */
 	INCR(sls_compressedin)
+	if (buf == NULL)
+		goto bad;
 	cp = buf;
 	changes = *cp++;
 	if (changes & NEW_C) {

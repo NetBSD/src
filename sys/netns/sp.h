@@ -1,4 +1,4 @@
-/*	$NetBSD: sp.h,v 1.7 2003/08/07 16:33:46 agc Exp $	*/
+/*	$NetBSD: sp.h,v 1.7.16.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -31,6 +31,9 @@
  *	@(#)sp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETNS_SP_H_
+#define _NETNS_SP_H_
+
 /*
  * Definitions for Xerox NS style sequenced packet protocol
  */
@@ -48,3 +51,5 @@ struct sphdr {
 	u_int16_t sp_ack;	/* acknowledge number */
 	u_int16_t sp_alo;	/* allocation number */
 };
+
+#endif /* !_NETNS_SP_H_ */

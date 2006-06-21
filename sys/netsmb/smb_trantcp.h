@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.h,v 1.4 2003/03/24 18:08:51 jdolecek Exp $	*/
+/*	$NetBSD: smb_trantcp.h,v 1.4.18.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,6 +35,10 @@
  */
 #ifndef _NETSMB_SMB_TRANTCP_H_
 #define	_NETSMB_SMB_TRANTCP_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 #ifdef _KERNEL
 

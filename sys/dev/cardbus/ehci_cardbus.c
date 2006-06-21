@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.11 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.11.4.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.11 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.11.4.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ ehci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 void
 ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ehci_cardbus_softc *sc = (struct ehci_cardbus_softc *)self;
+	struct ehci_cardbus_softc *sc = device_private(self);
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -182,7 +182,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	 */
 	ncomp = 0;
 	TAILQ_FOREACH(up, &ehci_cardbus_alldevs, next) {
-		if (up->bus == ca->ca_bus && up->device == ca->ca_device) {
+		if (up->bus == ca->ca_bus) {
 			DPRINTF(("ehci_cardbus_attach: companion %s\n",
 				 USBDEVNAME(up->usb->bdev)));
 			sc->sc.sc_comps[ncomp++] = up->usb;
@@ -211,7 +211,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 int
 ehci_cardbus_detach(device_ptr_t self, int flags)
 {
-	struct ehci_cardbus_softc *sc = (struct ehci_cardbus_softc *)self;
+	struct ehci_cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 
@@ -235,7 +235,6 @@ usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca, struct u
 {
 	TAILQ_INSERT_TAIL(&ehci_cardbus_alldevs, up, next);
 	up->bus = ca->ca_bus;
-	up->device = ca->ca_device;
 	up->function = ca->ca_function;
 	up->usb = bu;
 }

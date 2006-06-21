@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.21 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: ucred.h,v 1.21.4.1 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,19 +51,16 @@ struct uucred {
 
 struct ucred {
 	struct simplelock cr_lock;		/* mutex for ref count */
-	u_int32_t	cr_ref;			/* reference count */
+	uint32_t	cr_ref;			/* reference count */
 #define cr_startcopy	cr_uid			/* for dup & copy */
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
-	u_int32_t	cr_ngroups;		/* number of groups */
+	uint32_t	cr_ngroups;		/* number of groups */
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 
-#define NOCRED ((struct ucred *)-1)	/* no credential available */
-#define FSCRED ((struct ucred *)-2)	/* filesystem credential */
-
 #ifdef _KERNEL
-static __inline__ void crhold(struct ucred *cr)
+static __inline void crhold(struct ucred *cr)
 {
 	simple_lock(&cr->cr_lock);
 	cr->cr_ref++;
@@ -84,13 +81,13 @@ static __inline__ void crhold(struct ucred *cr)
 int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
 int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
 
-struct ucred	*crcopy(struct ucred *);
-struct ucred	*crdup(const struct ucred *);
-void		crfree(struct ucred *);
-struct ucred	*crget(void);
-int		suser(const struct ucred *, u_short *);
-void		crcvt(struct ucred *, const struct uucred *);
-int		crcmp(const struct ucred *, const struct uucred *);
+/*
+ * Check if we need to curtain information when a user requests information
+ * about an object.
+ */
+#define	CURTAIN(user_id, object_id)	(security_curtain && 		\
+					 (user_id) != 0 &&		\
+					 (user_id) != (object_id))
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.91 2005/05/29 22:10:28 christos Exp $	*/
+/*	$NetBSD: i82557.c,v 1.91.2.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91 2005/05/29 22:10:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91.2.1 2006/06/21 15:02:54 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -237,7 +237,7 @@ static int tx_threshold = 64;
  * Wait for the previous command to be accepted (but not necessarily
  * completed).
  */
-static __inline void
+static inline void
 fxp_scb_wait(struct fxp_softc *sc)
 {
 	int i = 10000;
@@ -252,7 +252,7 @@ fxp_scb_wait(struct fxp_softc *sc)
 /*
  * Submit a command to the i82557.
  */
-static __inline void
+static inline void
 fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
 {
 
@@ -662,12 +662,12 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 		}
 	}
 
-	/* Receiver lock-up workaround detection. */
+	/* Receiver lock-up workaround detection. (FXPF_RECV_WORKAROUND) */
+	/* Due to false positives we make it conditional on setting link1 */
 	fxp_read_eeprom(sc, &data, 3, 1);
 	if ((data & 0x03) != 0x03) {
-		aprint_verbose("%s: Enabling receiver lock-up workaround\n",
+		aprint_verbose("%s: May need receiver lock-up workaround\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_flags |= FXPF_RECV_WORKAROUND;
 	}
 }
 
@@ -1003,6 +1003,7 @@ fxp_start(struct ifnet *ifp)
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
 		if (sc->sc_flags & FXPF_IPCB) {
+			struct m_tag *vtag;
 			struct fxp_ipcb *ipcb;
 			/*
 			 * Deal with TCP/IP checksum offload. Note that
@@ -1037,16 +1038,12 @@ fxp_start(struct ifnet *ifp)
 			/*
 			 * request VLAN tag insertion if needed.
 			 */
-			if (sc->sc_ethercom.ec_nvlans != 0) {
-				struct m_tag *vtag;
-
-				vtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL);
-				if (vtag) {
-					ipcb->ipcb_vlan_id =
-					    htobe16(*(u_int *)(vtag + 1));
-					ipcb->ipcb_ip_activation_high |=
-					    FXP_IPCB_INSERTVLAN_ENABLE;
-				}
+			vtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
+			if (vtag) {
+				ipcb->ipcb_vlan_id =
+				    htobe16(*(u_int *)(vtag + 1));
+				ipcb->ipcb_ip_activation_high |=
+				    FXP_IPCB_INSERTVLAN_ENABLE;
 			}
 		} else {
 			KASSERT((csum_flags &
@@ -1126,7 +1123,7 @@ fxp_intr(void *arg)
 	int claimed = 0;
 	u_int8_t statack;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || sc->sc_enabled == 0)
+	if (!device_is_active(&sc->sc_dev) || sc->sc_enabled == 0)
 		return (0);
 	/*
 	 * If the interface isn't running, don't try to
@@ -1435,7 +1432,7 @@ fxp_tick(void *arg)
 	struct fxp_stats *sp = &sc->sc_control_data->fcd_stats;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -1709,6 +1706,11 @@ fxp_init(struct ifnet *ifp)
 	 * Load microcode for this controller.
 	 */
 	fxp_load_ucode(sc);
+
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_LINK1))
+		sc->sc_flags |= FXPF_RECV_WORKAROUND;
+	else
+		sc->sc_flags &= ~FXPF_RECV_WORKAROUND;
 
 	/*
 	 * This copy is kind of disgusting, but there are a bunch of must be
@@ -2257,7 +2259,7 @@ static const uint32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
 
-#define	UCODE(x)	x, sizeof(x)
+#define	UCODE(x)	x, sizeof(x)/sizeof(uint32_t)
 
 static const struct ucode {
 	int32_t		revision;
@@ -2292,7 +2294,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 {
 	const struct ucode *uc;
 	struct fxp_cb_ucode *cbp = &sc->sc_control_data->fcd_ucode;
-	int count;
+	int count, i;
 
 	if (sc->sc_flags & FXPF_UCODE_LOADED)
 		return;
@@ -2318,7 +2320,8 @@ fxp_load_ucode(struct fxp_softc *sc)
 	cbp->cb_status = 0;
 	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE | FXP_CB_COMMAND_EL);
 	cbp->link_addr = 0xffffffff;		/* (no) next command */
-	memcpy(cbp->ucode, uc->ucode, uc->length);
+	for (i = 0; i < uc->length; i++)
+		cbp->ucode[i] = htole32(uc->ucode[i]);
 
 	if (uc->int_delay_offset)
 		*(volatile uint16_t *) &cbp->ucode[uc->int_delay_offset] =

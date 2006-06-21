@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.11 2005/02/26 23:10:23 perry Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.11.4.1 2006/06/21 15:00:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.11 2005/02/26 23:10:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.11.4.1 2006/06/21 15:00:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.11 2005/02/26 23:10:23 perry Exp $"
 #define COMPAT_43	/* enable 4.3BSD binaries for lkm */
 #endif
 
-int	exec_vax1k_prep_anymagic __P((struct proc *p, struct exec_package *epp,
+int	exec_vax1k_prep_anymagic __P((struct lwp *l, struct exec_package *epp,
 				      int, int));
 
 /*
@@ -75,8 +75,8 @@ int	exec_vax1k_prep_anymagic __P((struct proc *p, struct exec_package *epp,
  */
 
 int
-exec_vax1k_makecmds(p, epp)
-	struct proc *p;
+exec_vax1k_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	u_long midmag, magic;
@@ -95,16 +95,16 @@ exec_vax1k_makecmds(p, epp)
 
 	switch (midmag) {
 	case (MID_VAX1K << 16) | ZMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, 0, 0);
+		error = exec_vax1k_prep_anymagic(l, epp, 0, 0);
 		goto done;
 
 	case (MID_VAX1K << 16) | NMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp,
+		error = exec_vax1k_prep_anymagic(l, epp,
 						 sizeof(struct exec), 1);
 		goto done;
 
 	case (MID_VAX1K << 16) | OMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp,
+		error = exec_vax1k_prep_anymagic(l, epp,
 						 sizeof(struct exec), 0);
 		goto done;
 	}
@@ -116,16 +116,16 @@ exec_vax1k_makecmds(p, epp)
 	 */
 	switch (execp->a_midmag) {
 	case ZMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, VAX1K_LDPGSZ, 0);
+		error = exec_vax1k_prep_anymagic(l, epp, VAX1K_LDPGSZ, 0);
 		goto done;
 
 	case NMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp,
+		error = exec_vax1k_prep_anymagic(l, epp,
 					 	sizeof(struct exec), 1);
 		goto done;
 
 	case OMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp,
+		error = exec_vax1k_prep_anymagic(l, epp,
 					 	sizeof(struct exec), 0);
 		goto done;
 	}
@@ -150,8 +150,8 @@ done:
  *
  */
 int
-exec_vax1k_prep_anymagic(p, epp, text_foffset, textpad)
-	struct proc *p;
+exec_vax1k_prep_anymagic(l, epp, text_foffset, textpad)
+	struct lwp *l;
 	struct exec_package *epp;
 	int text_foffset, textpad;
 {
@@ -190,5 +190,5 @@ exec_vax1k_prep_anymagic(p, epp, text_foffset, textpad)
 	epp->ep_dsize += execp->a_bss;
 
 	/* finally, setup the stack ... */
-        return (*epp->ep_esch->es_setup_stack)(p, epp);
+        return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

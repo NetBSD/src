@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.3.4.1 2006/06/21 15:10:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.3.4.1 2006/06/21 15:10:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -40,32 +40,54 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $"
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 
+CFDRIVER_DECL(vnd, DV_DISK, NULL);
+
+extern struct cfattach vnd_ca;
 extern const struct bdevsw vnd_bdevsw;
 extern const struct cdevsw vnd_cdevsw;
 extern void vndattach (int);
-extern int vnddetach (void);
+extern int vnd_destroy (struct device *);
 
 static int vnd_lkm(struct lkm_table *lkmtp, int cmd);
 int vnd_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
 
 MOD_DEV("vnd", "vnd", &vnd_bdevsw, -1, &vnd_cdevsw, -1);
 
-/*
- * Randomly choose 4; should have vnconfig (un)create each vnd ala "gif"..
- */
-#define NVNDLKM 4
-int num_vnd_lkm = NVNDLKM;
-
 static int
 vnd_lkm(struct lkm_table *lkmtp, int cmd)
 {
-	int error = 0;
+	int error = 0, i;
 
-	if (cmd == LKM_E_LOAD)
-		vndattach(num_vnd_lkm);
-	else if (cmd == LKM_E_UNLOAD)
-		error = vnddetach();
+	if (cmd == LKM_E_LOAD) {
+		error = config_cfdriver_attach(&vnd_cd);
+		if (error) {
+			aprint_error("%s: unable to register cfdriver\n",
+			    vnd_cd.cd_name);
+			return error;
+		}
+		
+		vndattach(0);
+	} else if (cmd == LKM_E_UNLOAD) {
+		for (i = 0; i < vnd_cd.cd_ndevs; i++)
+			if (vnd_cd.cd_devs[i] != NULL &&
+			    (error = vnd_destroy(vnd_cd.cd_devs[i])) != 0)
+				return 0;
+
+		if ((error = config_cfattach_detach(vnd_cd.cd_name,
+		    &vnd_ca)) != 0) {
+			aprint_error("%s: unable to deregister cfattach\n",
+			    vnd_cd.cd_name);
+			return error;
+		}
+
+		if ((error = config_cfdriver_detach(&vnd_cd)) != 0) {
+			aprint_error("%s: unable to deregister cfdriver\n",
+			    vnd_cd.cd_name);
+			return error;
+		}
+	}
 	return (error);
 }
 

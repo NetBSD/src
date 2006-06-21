@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.23 2005/05/20 12:48:27 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.23.2.1 2006/06/21 14:59:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23 2005/05/20 12:48:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.2.1 2006/06/21 14:59:11 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23 2005/05/20 12:48:27 fvdl Exp 
 #include <sys/signalvar.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -188,17 +189,17 @@ setup_linux_sigframe(frame, sig, mask, usp)
 		break;
 #ifdef M68060
 	case FPU_68060:
-		asm("fsave %0" : "=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
+		__asm("fsave %0" : "=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
 			: : "memory");
 		if (((struct fpframe060 *)&kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
 					->fpf6_frmfmt != FPF6_FMT_NULL) {
-			asm("fmovem %%fp0-%%fp1,%0" :
+			__asm("fmovem %%fp0-%%fp1,%0" :
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs[0][0]));
 			/*
 			 * On 060,  "fmovem fpcr/fpsr/fpi,<ea>"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem %%fpcr,%0; fmovem %%fpsr,%1; fmovem %%fpi,%2" :
+			__asm("fmovem %%fpcr,%0; fmovem %%fpsr,%1; fmovem %%fpi,%2" :
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpcr),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpsr),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpiar));
@@ -206,10 +207,10 @@ setup_linux_sigframe(frame, sig, mask, usp)
 		break;
 #endif
 	default:
-		asm("fsave %0" : "=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
+		__asm("fsave %0" : "=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
 			: : "memory");
 		if (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem %%fp0-%%fp1,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
+			__asm("fmovem %%fp0-%%fp1,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs[0][0]),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpcr)
 				: : "memory");
@@ -352,17 +353,17 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 		break;
 #ifdef M68060
 	case FPU_68060:
-		asm("fsave %0" : "=m" (kf.sf_uc.uc_ss.ss_fpstate));
+		__asm("fsave %0" : "=m" (kf.sf_uc.uc_ss.ss_fpstate));
 				/* See note below. */
 		if (((struct fpframe060 *) &kf.sf_uc.uc_ss.ss_fpstate.FPF_u1)
 					->fpf6_frmfmt != FPF6_FMT_NULL) {
-			asm("fmovem %%fp0-%%fp7,%0" :
+			__asm("fmovem %%fp0-%%fp7,%0" :
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_regs[0][0]));
 			/*
 			 * On 060,  "fmovem fpcr/fpsr/fpi,<ea>"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem %%fpcr,%0; fmovem %%fpsr,%1; fmovem %%fpi,%2" :
+			__asm("fmovem %%fpcr,%0; fmovem %%fpsr,%1; fmovem %%fpi,%2" :
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpcr),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpsr),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpiar));
@@ -372,16 +373,16 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 	default:
 		/*
 		 * NOTE:  We give whole of the  "struct linux_rt_fpframe"
-		 * to the asm("fsave") argument; not the FPF_u1 element only.
+		 * to the __asm("fsave") argument; not the FPF_u1 element only.
 		 * Unlike the non-RT version of this structure,
 		 * this contains only the FPU state used by "fsave"
 		 * (and whole of the information is in the structure).
-		 * This gives the correct dependency information to the asm(),
+		 * This gives the correct dependency information to the __asm(),
 		 * and no "memory" is required to the ``clobberd'' list.
 		 */
-		asm("fsave %0" : "=m" (kf.sf_uc.uc_ss.ss_fpstate));
+		__asm("fsave %0" : "=m" (kf.sf_uc.uc_ss.ss_fpstate));
 		if (kf.sf_uc.uc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem %%fp0-%%fp7,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
+			__asm("fmovem %%fp0-%%fp7,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_regs[0][0]),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpcr)
 				: : "memory");
@@ -405,7 +406,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 	kf.sf_info.lsi_signo = sig;
 	kf.sf_info.lsi_code = LINUX_SI_USER;
 	kf.sf_info.lsi_pid = p->p_pid;
-	kf.sf_info.lsi_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
+	kf.sf_info.lsi_uid = kauth_cred_geteuid(p->p_cred);	/* Use real uid here? */
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
@@ -617,23 +618,23 @@ bad:		sigexit(l, SIGSEGV);
 			 * On 060,  "fmovem <ea>,fpcr/fpsr/fpi"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem %0,%%fpcr; fmovem %1,%%fpsr; fmovem %2,%%fpi"::
+			__asm("fmovem %0,%%fpcr; fmovem %1,%%fpsr; fmovem %2,%%fpi"::
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpcr),
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpsr),
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpiar));
-			asm("fmovem %0,%%fp0-%%fp1" : :
+			__asm("fmovem %0,%%fp0-%%fp1" : :
 				"m" (scp->sc_ss.ss_fpstate.fpf_regs[0][0]));
 		}
-		asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
+		__asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
 		break;
 #endif
 	default:
 		if (scp->sc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
+			__asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpcr),
 				"m" (scp->sc_ss.ss_fpstate.fpf_regs[0][0]));
 		}
-		asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
+		__asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
 		break;
 	}
 
@@ -758,23 +759,23 @@ bad:		sigexit(l, SIGSEGV);
 			 * On 060,  "fmovem <ea>,fpcr/fpsr/fpi"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem %0,%%fpcr; fmovem %1,%%fpsr; fmovem %2,%%fpi"::
+			__asm("fmovem %0,%%fpcr; fmovem %1,%%fpsr; fmovem %2,%%fpi"::
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpcr),
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpsr),
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpiar));
-			asm("fmovem %0,%%fp0-%%fp1" : :
+			__asm("fmovem %0,%%fp0-%%fp1" : :
 				"m" (tuc.uc_mc.mc_fpregs.fpr_regs[0][0]));
 		}
-		asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
+		__asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
 		break;
 #endif
 	default:
 		if (tuc.uc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
+			__asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpcr),
 				"m" (tuc.uc_mc.mc_fpregs.fpr_regs[0][0]));
 		}
-		asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
+		__asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
 		break;
 	}
 
@@ -847,7 +848,7 @@ linux_sys_cacheflush(l, v, retval)
 	 * LINUX_FLUSH_SCOPE_ALL (flush whole cache) is limited to super users.
 	 */
 	if (scope == LINUX_FLUSH_SCOPE_ALL) {
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return error;
 #if defined(M68040) || defined(M68060)
 		/* entire cache */
@@ -882,8 +883,8 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call.
  */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -908,7 +909,7 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(curlwp, &bia, retval);
+	return sys_ioctl(l, &bia, retval);
 }
 
 int

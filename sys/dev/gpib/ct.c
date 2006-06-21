@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.4 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: ct.c,v 1.4.4.1 2006/06/21 15:02:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.4 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.4.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ struct	ct_softc {
 	struct	ct_iocmd sc_ioc;
 	struct	ct_rscmd sc_rsc;
 	struct	cs80_stat sc_stat;
-	struct	bufq_state sc_tab;
+	struct	bufq_state *sc_tab;
 	int	sc_active;
 	struct	buf *sc_bp;
 	struct	buf sc_bufstore;	/* XXX */
@@ -291,7 +291,7 @@ ctattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ct_softc *sc = (struct ct_softc *)self;
+	struct ct_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
 	struct cs80_description csd;
 	char name[7];
@@ -365,7 +365,7 @@ ctattach(parent, self, aux)
 	printf(": %s %stape\n", ctinfo[type].desc,
 	    canstream ? "streaming " : "");
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 
 	if (gpibregister(sc->sc_ic, sc->sc_slave, ctcallback, sc,
 	    &sc->sc_hdl)) {
@@ -398,7 +398,7 @@ ctopen(dev, flag, type, p)
 	else
 		opt = C_SPAR;
 
-	if (cs80setoptions(sc->sc_dev.dv_parent, sc->sc_slave,
+	if (cs80setoptions(device_parent(&sc->sc_dev), sc->sc_slave,
 	    sc->sc_punit, opt))
 		return (EBUSY);
 
@@ -513,7 +513,7 @@ ctstrategy(bp)
 	sc = device_lookup(&ct_cd, CTUNIT(bp->b_dev));
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		ctustart(sc);
@@ -527,7 +527,7 @@ ctustart(sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (gpibrequest(sc->sc_ic, sc->sc_hdl))
@@ -546,7 +546,7 @@ ctstart(sc)
 	slave = sc->sc_slave;
 	punit = sc->sc_punit;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -560,8 +560,8 @@ ctstart(sc)
 			sc->sc_blkno = 0;
 			ul.unit = CS80CMD_SUNIT(punit);
 			ul.cmd = CS80CMD_UNLOAD;
-			(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
-			    CS80CMD_SCMD, &ul, sizeof(ul));
+			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			    punit, CS80CMD_SCMD, &ul, sizeof(ul));
 			break;
 
 		case MTWEOF:
@@ -569,8 +569,8 @@ ctstart(sc)
 			sc->sc_flags |= CTF_WRT;
 			wfm.unit = CS80CMD_SUNIT(sc->sc_punit);
 			wfm.cmd = CS80CMD_WFM;
-			(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
-			    CS80CMD_SCMD, &wfm, sizeof(wfm));
+			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			    punit, CS80CMD_SCMD, &wfm, sizeof(wfm));
 			ctaddeof(sc);
 			break;
 
@@ -600,8 +600,9 @@ gotaddr:
 			sc->sc_ioc.len = htobe32(0);
 			sc->sc_ioc.nop3 = CS80CMD_NOP;
 			sc->sc_ioc.cmd = CS80CMD_READ;
-			(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
-			    CS80CMD_SCMD, &sc->sc_ioc, sizeof(sc->sc_ioc));
+			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			    punit, CS80CMD_SCMD, &sc->sc_ioc,
+			    sizeof(sc->sc_ioc));
 			break;
 		}
 	} else {
@@ -635,7 +636,7 @@ mustio:
 			sc->sc_ioc.cmd = CS80CMD_WRITE;
 			sc->sc_flags |= (CTF_WRT | CTF_WRTTN);
 		}
-		(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
+		(void) cs80send(device_parent(&sc->sc_dev), slave, punit,
 		    CS80CMD_SCMD, &sc->sc_ioc, sizeof(sc->sc_ioc));
 	}
 	gpibawait(sc->sc_ic);
@@ -748,7 +749,7 @@ ctintr(sc)
 	slave = sc->sc_slave;
 	punit = sc->sc_punit;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", sc->sc_dev.dv_xname);
 		return;
@@ -878,10 +879,10 @@ ctdone(sc, bp)
 	struct buf *bp;
 {
 
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if (BUFQ_PEEK(&sc->sc_tab) == NULL) {
+	if (BUFQ_PEEK(sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;
 	}

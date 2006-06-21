@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.2 2003/08/07 16:31:38 agc Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.2.16.1 2006/06/21 15:09:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -64,6 +64,10 @@
  *
  *	filecore_node.h		1.1	1998/6/26
  */
+
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #include <miscfs/genfs/genfs_node.h>
 
@@ -138,6 +142,6 @@ void	filecore_ihashrem __P((struct filecore_node *));
 mode_t	filecore_mode	__P((struct filecore_node *));
 struct timespec	filecore_time	__P((struct filecore_node *));
 ino_t	filecore_getparent	__P((struct filecore_node *));
-int	filecore_fn2unix	__P((char *, char *, u_int8_t *));
+int	filecore_fn2unix	__P((char *, char *, u_int16_t *));
 int	filecore_fncmp		__P((const char *, const char *, u_short));
 int	filecore_dbread		__P((struct filecore_node *, struct buf **));

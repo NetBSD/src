@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.13 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.13.12.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13.12.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include "rnd.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13 2004/10/28 07:07:39 yamt Exp $")
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -200,7 +201,7 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		dev_t dev;
 
 		bmajor = devsw_name2blk(adi->adi_dev->dv_xname, NULL, 0);
-		dev = MAKEDISKDEV(bmajor, adi->adi_dev->dv_unit, RAW_PART);
+		dev = MAKEDISKDEV(bmajor, device_unit(adi->adi_dev), RAW_PART);
 		error = bdevvp(dev, &vp);
 		if (error)
 			break;
@@ -227,7 +228,7 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		vp = sc->sc_vnodes[i];
 		sc->sc_vnodes[i] = NULL;
 		if (vp != NULL)
-			(void) vn_close(vp, FREAD|FWRITE, NOCRED, curproc);
+			(void) vn_close(vp, FREAD|FWRITE, NOCRED, curlwp);
 	}
 
  finish:

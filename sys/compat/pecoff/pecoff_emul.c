@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.12 2005/06/14 22:35:20 christos Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.12.2.1 2006/06/21 14:59:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.12 2005/06/14 22:35:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.12.2.1 2006/06/21 14:59:41 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.12 2005/06/14 22:35:20 christos Ex
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -70,16 +72,26 @@ extern struct sysent pecoff_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const pecoff_syscallnames[];
 #endif
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
-#endif
 
 #ifdef COMPAT_16
 extern char sigcode[], esigcode[];
 struct uvm_object *emul_pecoff_object;
 #endif
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
+#endif
+
+const struct sa_emul saemul_pecoff = {
+	sizeof(ucontext_t),
+	sizeof(struct sa_t),
+	sizeof(struct sa_t *),
+	NULL,
+	NULL,
+	cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext,
+	sa_ucsp
+};
 
 const struct emul emul_pecoff = {
 	"pecoff",
@@ -123,4 +135,6 @@ const struct emul emul_pecoff = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
+	&saemul_pecoff,
 };

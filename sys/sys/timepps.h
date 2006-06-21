@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.8 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: timepps.h,v 1.8.4.1 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -47,7 +47,7 @@
  * PPSAPI type definitions
  */
 typedef int32_t pps_handle_t;	/* represents a PPS source */
-typedef u_int32_t pps_seq_t;	/* sequence number, at least 32 bits */
+typedef uint32_t pps_seq_t;	/* sequence number, at least 32 bits */
 
 typedef union pps_timeu {
 	struct timespec	tspec;
@@ -129,10 +129,35 @@ typedef struct {
 #define PPS_IOC_FETCH		_IOWR('1', 6, pps_info_t)
 #define PPS_IOC_KCBIND		_IOW('1', 7, int)
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+
+#ifdef __HAVE_TIMECOUNTER
+struct pps_state {
+	/* Capture information. */
+	struct timehands *capth;
+	unsigned	capgen;
+	unsigned	capcount;
+
+	/* State information. */
+	pps_params_t	ppsparam;
+	pps_info_t	ppsinfo;
+	int		kcmode;
+	int		ppscap;
+	struct timecounter *ppstc;
+	unsigned	ppscount[3];
+};
+
+void pps_capture(struct pps_state *);
+void pps_event(struct pps_state *, int);
+void pps_init(struct pps_state *);
+int pps_ioctl(unsigned long, caddr_t, struct pps_state *);
+#endif /* __HAVE_TIMECOUNTER */
+
+#else /* !_KERNEL */
 
 #include <sys/cdefs.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
 static __inline int time_pps_create(int, pps_handle_t *);
 static __inline int time_pps_destroy(pps_handle_t);
@@ -154,6 +179,7 @@ time_pps_create(filedes, handle)
 	int filedes;
 	pps_handle_t *handle;
 {
+
 	*handle = filedes;
 	return (0);
 }
@@ -162,6 +188,7 @@ static __inline int
 time_pps_destroy(handle)
 	pps_handle_t handle;
 {
+
 	return (0);
 }
 
@@ -170,7 +197,8 @@ time_pps_setparams(handle, ppsparams)
 	pps_handle_t handle;
 	const pps_params_t *ppsparams;
 {
-	return (ioctl(handle, PPS_IOC_SETPARAMS, ppsparams));
+
+	return (ioctl(handle, PPS_IOC_SETPARAMS, __UNCONST(ppsparams)));
 }
 
 static __inline int
@@ -178,6 +206,7 @@ time_pps_getparams(handle, ppsparams)
 	pps_handle_t handle;
 	pps_params_t *ppsparams;
 {
+
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
@@ -186,6 +215,7 @@ time_pps_getcap(handle, mode)
 	pps_handle_t handle;
 	int *mode;
 {
+
 	return (ioctl(handle, PPS_IOC_GETCAP, mode));
 }
 
@@ -196,6 +226,7 @@ time_pps_fetch(handle, tsformat, ppsinfobuf, timeout)
 	pps_info_t *ppsinfobuf;
 	const struct timespec *timeout;
 {
+
 	return (ioctl(handle, PPS_IOC_FETCH, ppsinfobuf));
 }
 
@@ -206,8 +237,13 @@ time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
 	const int edge;
 	const int tsformat;
 {
-	return (ioctl(handle, PPS_IOC_KCBIND, &edge));
+
+	if (tsformat != PPS_TSFMT_TSPEC) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return (ioctl(handle, PPS_IOC_KCBIND, __UNCONST(&edge)));
 }
 #endif /* !_KERNEL*/
-
 #endif /* SYS_TIMEPPS_H_ */

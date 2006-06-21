@@ -27,7 +27,7 @@
  *	i4b_rbch_ioctl.h raw B-channel driver interface ioctls
  *	------------------------------------------------------
  *
- *	$Id: i4b_rbch_ioctl.h,v 1.1.1.1 2001/01/05 12:49:53 martin Exp $
+ *	$Id: i4b_rbch_ioctl.h,v 1.1.1.1.42.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_RBCH_IOCTL_H_
-#define _I4B_RBCH_IOCTL_H_
+#ifndef _NETISDN_I4B_RBCH_IOCTL_H_
+#define _NETISDN_I4B_RBCH_IOCTL_H_
 
 /*---------------------------------------------------------------------------*
  *	instruct the rbch device to dial the given number
@@ -52,4 +52,4 @@ typedef char telno_t[TELNO_MAX];
 
 #define I4B_RBCH_VR_REQ		_IOR('R', 2, msg_vr_req_t)
 
-#endif /* _I4B_RBCH_IOCTL_H_ */
+#endif /* !_NETISDN_I4B_RBCH_IOCTL_H_ */

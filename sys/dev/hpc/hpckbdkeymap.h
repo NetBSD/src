@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.34 2005/01/19 03:23:50 uwe Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.34.8.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -102,16 +102,24 @@ const uint8_t tc5165_telios_jp_keymap[] = {
 /* 3 */	33,  19,  5,   61,  IGN, 46,  123, 60,
 /* 4 */	35,  21,  8,   64,  IGN, 48,  49,  63,
 /* 5 */	17,  16,  3,   IGN, 2,   30,  44,  41,
-/* 6 */	IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/* 6 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN,
 /* 7 */	IGN, IGN, IGN, IGN, IGN, IGN, 56,  IGN,
 /* 8 */	34,  20,  7,   IGN, 6,   47,  57,  62,
 /* 9 */	IGN, IGN, IGN, IGN, IGN, IGN, 29,  IGN,
 /*10 */	27,  125, 13,  203, 208, 40,  115, 68,
-/*11 */	39,  26,  25,  IGN, 12,  52,  53,  67,
-/*12 */	37,  24,  11,  IGN, 10,  38,  51,  66,
+/*11 */	39,  26,  25,  112, 12,  52,  53,  67,
+/*12 */	37,  24,  11,  121, 10,  38,  51,  66,
 /*13 */	23,  22,  9,   IGN, IGN, 36,  50,  65,
-/*14 */	28,  43,  14,  200, 205,  IGN, IGN, 211,
-/*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN
+/*14 */	28,  43,  14,  200, 205, IGN, IGN, 211,
+/*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 184, IGN
+};
+
+static const keysym_t tc5165_telios_jp_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(184), KS_Cmd,		KS_Alt_R,	KS_Multi_key,
+	KC(205), KS_Cmd_BrightnessUp,	KS_Right,
+	KC(203), KS_Cmd_BrightnessDown,	KS_Left,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 const uint8_t tc5165_compaq_c_jp_keymap[] = {
@@ -247,13 +255,39 @@ static uint8_t tripad_keytrans[] = {
 /*10*/	 56,	 57,	 46,	 47,	 32,	 33,	 19,	  4,
 /*18*/	 48,	 49,	 34,	 35,	 20,	 21,	  5,	  6,
 /*20*/	 50,	 51,	 36,	 37,	 22,	 23,	  7,	  8,
-/*28*/	105,	 58,	 38,	 24,	 25,	  9,	 10,	 11,
+/*28*/	184,	 58,	 38,	 24,	 25,	  9,	 10,	 11,
 /*30*/	 26,	 27,	203,	 52,	 53,	 39,	 12,	 13,
 /*38*/	 54,	205,	200,	208,	 40,	 28,	 43,	 14,
 /*40*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*48*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*50*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*58*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
+};
+
+static const keysym_t tripad_cmdmap[] = {
+/*  pos      command		normal		shifted		fn    */
+KC(2),	 KS_Cmd_Screen0,	KS_1,		KS_exclam,	KS_f1,
+KC(3),	 KS_Cmd_Screen1,	KS_2,		KS_at,		KS_f2,
+KC(4),	 KS_Cmd_Screen2,	KS_3,		KS_numbersign,	KS_f3,
+KC(5),	 KS_Cmd_Screen3,	KS_4,		KS_dollar,	KS_f4,
+KC(6),	 KS_Cmd_Screen4,	KS_5,		KS_percent,	KS_f5,
+KC(7),	 KS_Cmd_Screen5,	KS_6,		KS_asciicircum,	KS_f6,
+KC(8),	 KS_Cmd_Screen6,	KS_7,		KS_ampersand,	KS_f7,
+KC(9),	 KS_Cmd_Screen7,	KS_8,		KS_asterisk,	KS_f8,
+KC(10),  KS_Cmd_Screen8,	KS_9,		KS_parenleft,	KS_f9,
+KC(11),  KS_Cmd_Screen9,	KS_0,		KS_parenright,	KS_f10,
+KC(12),  KS_Cmd_BrightnessDown,	KS_minus,	KS_underscore,	KS_f11,
+KC(13),  KS_Cmd_BrightnessUp,	KS_equal,	KS_plus,	KS_f12,
+KC(20),  KS_Cmd_BacklightToggle, KS_t,
+KC(33),  KS_Cmd_BacklightOff,	KS_f,
+KC(49),  KS_Cmd_BacklightOn,	KS_n,
+KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+KC(184), KS_Mode_switch,	KS_Multi_key,
+KC(200), KS_Cmd_ScrollSlowUp,	KS_Up,		KS_Up,		KS_Prior,
+KC(203), KS_Cmd_ScrollFastUp,	KS_Left,	KS_Left,	KS_Home,
+KC(205), KS_Cmd_ScrollFastDown,	KS_Right,	KS_Right,	KS_End,
+KC(208), KS_Cmd_ScrollSlowDown,	KS_Down,	KS_Down,	KS_Next,
 };
 
 /* NEC Mobile Gear MCCS series */
@@ -584,28 +618,6 @@ const uint8_t jornada6x0_us_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-/* US (ABA), UK (ABU) */
-static const keysym_t jornada6x0_us_keydesc[] = {
-/*  pos      normal          shifted        altgr	*/
-    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
-    KC(3),   KS_2,           KS_at,         KS_grave,
-    KC(4),   KS_3,           KS_numbersign, KS_sterling,
-#ifdef KS_euro
-    KC(5),   KS_4,           KS_dollar,     KS_euro,
-#endif
-    KC(25),  KS_p,           KS_P,          KS_braceleft,
-    KC(39),  KS_semicolon,   KS_colon,      KS_bracketleft,
-    KC(40),  KS_apostrophe,  KS_quotedbl,   KS_bracketright,
-    KC(43),  KS_backslash,   KS_bar,        KS_braceright,
-    KC(184), KS_Mode_switch, KS_Multi_key,
-
-    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
-    KC(203), KS_Cmd_ContrastDown,   KS_Left,
-    KC(205), KS_Cmd_ContrastUp,     KS_Right,
-    KC(208), KS_Cmd_BrightnessDown, KS_Down,
-};
-
-
 /* International - AltGr to the right and extra keys in three middle rows */
 const uint8_t jornada6x0_intl_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */
@@ -627,144 +639,11 @@ const uint8_t jornada6x0_intl_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-/*
- * XXX: Add AltGr layer for #ABB here?  OTOH, all the keys necessary
- * for basic actions in DDB or shell are on the primary layer, so it
- * makes sense to support AltGr via wsconsctl(8) instead, as the same
- * primary layer is used e.g. in Russian models.  But it does make
- * sense to define the <AltGr> key itself here, as we base this layout
- * on KB_US that defines it as the right <Alt>.
- */
-/* European English (ABB) */
-static const keysym_t jornada6x0_intl_keydesc[] = {
-/*  pos      normal          shifted        altgr	*/
-    KC(184), KS_Mode_switch, KS_Multi_key,
-
-    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
-    KC(203), KS_Cmd_ContrastDown,   KS_Left,
-    KC(205), KS_Cmd_ContrastUp,     KS_Right,
-    KC(208), KS_Cmd_BrightnessDown, KS_Down,
-};
-
-/* German (ABD) */
-static const keysym_t jornada6x0_de_keydesc[] = {
-/*  pos      normal          shifted        altgr	*/
-    KC(2),   KS_1,           KS_exclam,     KS_brokenbar,
-    KC(5),   KS_4,           KS_dollar,     KS_ccedilla,
-    KC(6),   KS_5,           KS_percent,    KS_sterling,
-    KC(7),   KS_6,           KS_ampersand,  KS_notsign,
-#ifdef KS_euro
-    KC(18),  KS_e,           KS_E,          KS_euro,
-#endif
-    KC(27),  KS_plus,        KS_asterisk,   KS_asciitilde, /* NB: not dead */
-    KC(30),  KS_a,           KS_A,          KS_bar,
-    KC(41),  KS_asciicircum, KS_degree,			   /* NB: not dead */
-    KC(43),  KS_numbersign,  KS_apostrophe, KS_dead_diaeresis,
-    KC(44),  KS_y,           KS_Y,          KS_less,
-    KC(45),  KS_x,           KS_X,          KS_greater,
-    KC(46),  KS_c,           KS_C,          KS_cent,
-
-    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
-    KC(203), KS_Cmd_ContrastDown,   KS_Left,
-    KC(205), KS_Cmd_ContrastUp,     KS_Right,
-    KC(208), KS_Cmd_BrightnessDown, KS_Down,
-};
-
-/* French (ABF) */
-static const keysym_t jornada6x0_fr_keydesc[] = {
-/*  pos      normal          shifted        altgr	*/
-    KC(2),   KS_ampersand,   KS_1,          KS_plusminus,
-#ifdef KS_euro
-    KC(18),  KS_e,           KS_E,          KS_euro,
-#endif
-    KC(19),  KS_r,           KS_R,          KS_onequarter,
-    KC(20),  KS_t,           KS_T,          KS_onehalf,
-    KC(21),  KS_y,           KS_Y,          KS_threequarters,
-    KC(25),  KS_p,           KS_P,          KS_paragraph,
-    KC(30),  KS_q,           KS_Q,          KS_brokenbar,
-    KC(31),  KS_s,           KS_S,          KS_guillemotleft,
-    KC(32),  KS_d,           KS_D,          KS_guillemotright,
-    KC(40),  KS_ugrave,      KS_percent,    KS_dead_acute,
-    KC(41),  KS_twosuperior, KS_voidSymbol, KS_threesuperior,
-    KC(43),  KS_asterisk,    KS_mu,         KS_notsign,
-    KC(44),  KS_w,           KS_W,          KS_less,
-    KC(45),  KS_x,           KS_X,          KS_greater,
-    KC(46),  KS_c,           KS_C,          KS_cent,
-    KC(50),  KS_comma,       KS_question,   KS_mu,
-    KC(53),  KS_exclam,      KS_section,    KS_Eacute,
-    KC(184), KS_Mode_switch, KS_Multi_key,
-
-    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
-    KC(203), KS_Cmd_ContrastDown,   KS_Left,
-    KC(205), KS_Cmd_ContrastUp,     KS_Right,
-    KC(208), KS_Cmd_BrightnessDown, KS_Down,
-};
-
-/* Scandinavian */
-static const keysym_t jornada6x0_scnv_keydesc[] = {
-/*  pos      normal          shifted        altgr	*/
-    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
-    KC(3),   KS_2,           KS_quotedbl,   KS_at,
-    KC(4),   KS_3,           KS_numbersign, KS_sterling,
-    KC(5),   KS_4,           KS_currency,   KS_dollar,
-    KC(7),   KS_6,           KS_ampersand,
-    KC(8),   KS_7,           KS_slash,      KS_braceleft,
-    KC(9),   KS_8,           KS_parenleft,  KS_bracketleft,
-    KC(10),  KS_9,           KS_parenright, KS_bracketright,
-    KC(11),  KS_0,           KS_equal,      KS_braceright,
-    KC(12),  KS_plus,        KS_question,   KS_backslash,
-    KC(13),  KS_apostrophe,  KS_grave,
-    KC(25),  KS_p,           KS_P,          KS_braceleft,
-    KC(26),  KS_aring,
-    /*
-     * XXX: KC(39) and KC(40) has odiaeresis/adiaeresis *and*
-     * oslash/ae on them.  Apparently localized WinCE uses the former
-     * for Swedish and Finnish and the latter for Danish and
-     * Norwegian.  But as the keyboard doesn't seem to have
-     * semicolon/colon and minus/underscore nowhere on the primary and
-     * altgr layers, I put them here (semicolon/colon is inherited).
-     */
-    KC(40),  KS_minus,       KS_underscore, /* XXX */
-    KC(41),  KS_paragraph,   KS_onehalf,    KS_bar,
-    KC(184), KS_Mode_switch, KS_Multi_key,
-
-    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
-    KC(203), KS_Cmd_ContrastDown,   KS_Left,
-    KC(205), KS_Cmd_ContrastUp,     KS_Right,
-    KC(208), KS_Cmd_BrightnessDown, KS_Down,
-};
-
-/* Spanish (ABE) */
-static const keysym_t jornada6x0_es_keydesc[] = {
-/*  pos      normal          shifted        altgr            */
-    KC(2),   KS_1,           KS_exclam,     KS_ordfeminine,
-    KC(3),   KS_2,           KS_quotedbl,   KS_masculine,
-    KC(4),   KS_3,           KS_numbersign,
-    KC(12),  KS_apostrophe,  KS_question,   KS_backslash,
-    KC(13),  KS_questiondown,KS_exclamdown,
-    KC(16),  KS_q,           KS_Q,          KS_at,
-#ifdef KS_euro
-    KC(18),  KS_e,           KS_E,          KS_euro,
-#endif
-    KC(26),  KS_dead_acute,  KS_dead_diaeresis,
-    KC(27),  KS_plus,        KS_asterisk,   KS_dead_tilde,
-    KC(40),  KS_braceleft,   KS_bracketleft,KS_dead_circumflex,
-    KC(41),  KS_bar,         KS_degree,     KS_notsign,
-    KC(43),  KS_braceright,  KS_bracketright,KS_dead_grave,
-    KC(44),  KS_z,           KS_Z,          KS_less,
-    KC(45),  KS_x,           KS_X,          KS_greater,
-    KC(46),  KS_c,           KS_C,          KS_Ccedilla,
-
-    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
-    KC(203), KS_Cmd_ContrastDown,   KS_Left,
-    KC(205), KS_Cmd_ContrastUp,     KS_Right,
-    KC(208), KS_Cmd_BrightnessDown, KS_Down,
-};
-
 const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= -1,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
+
 
 /*
  * HP 620LX
@@ -790,10 +669,32 @@ const uint8_t hp620lx_jp_keytrans[] = {
 /*15 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN  /* LED button */
 };
 
+/* Other models */
+const uint8_t hp620lx_intl_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */
+/* 0 */	2  , 16 , 219, UNK, IGN, UNK, 42 , 30 , /* REC button */
+/* 1 */	3  , 17 , 15 , 44 , UNK, 45 , 41 , 31 ,
+/* 2 */	4  , 18 , UNK, 69 , 59 , 46 , 1  , 32 ,
+/* 3 */	5  , 19 , UNK, UNK, 60 , 56 , UNK, 33 ,
+/* 4 */	6  , 20 , 47 , 57 , 61 , 48 , UNK, 34 ,
+/* 5 */	7  , 21 , UNK, UNK, 62 , 49 , UNK, 35 ,
+/* 6 */	8  , 22 , UNK, 184, 63 , 50 , UNK, 36 ,
+/* 7 */	9  , 23 , 52 , 211, 64 , 51 , UNK, 37 ,
+/* 8 */	10 , 24 , 53 , 203, 65 , 200, 39 , 38 ,
+/* 9 */	11 , 25 , 40 , 208, 66 , 205, 27 , 26 ,
+/*10 */	12 , 13 , 28 , UNK, UNK, UNK, 54 , 43 ,
+/*11 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN, /* ON button */
+/*12 */	29 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*13 */	14 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*14 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN  /* LED button */
+};
+
 const int hp620lx_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= 120
 };
+
 
 /*
  * HITACHI PERSONA HPW50PAD
@@ -809,7 +710,7 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 /* 5 */ 30 , 16 , 21 , 24 , 28 , 54 , UNK, UNK,
 /* 6 */ 17 ,  4 , UNK, 10 , 12 , 205, UNK, UNK,
 /* 7 */ 31 , 18 ,  7 , 25 , 13 , 83 , UNK, UNK,
-/* 8 */ 60 , 62 , 64 , 66 , 68 , IGN, UNK, UNK, /* REC button */
+/* 8 */ 60 , 62 , 64 , 66 , 68 , UNK, UNK, UNK,
 /* 9 */ UNK, 123, 49 , 53 , 203, UNK, UNK, UNK,
 /*10 */ 56 , 46 , 50 , 57 , 208, UNK, UNK, UNK,
 /*11 */ 15 , 33 , 36 , 39 , 43 , UNK, UNK, UNK,
@@ -822,6 +723,19 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 const int persona_hpw50pad_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	=  5,
 	[KEY_SPECIAL_LIGHT]	= -1
+};
+
+static const keysym_t persona_hpw50pad_jp_keydesc[] = {
+/*	pos	command			normal		shifted		*/
+	KC(63),	KS_Cmd_ContrastDown,	KS_f5,
+	KC(64),	KS_Cmd_ContrastUp,	KS_f6,
+	KC(65),	KS_Cmd_BrightnessDown,	KS_f7,
+	KC(66),	KS_Cmd_BrightnessUp,	KS_f8,
+
+	KC(200),KS_Cmd_ScrollFastUp,	KS_Up,
+	KC(208),KS_Cmd_ScrollFastDown,	KS_Down,
+	KC(203),KS_KP_Home,		KS_Left,
+	KC(205),KS_KP_End,		KS_Right,
 };
 
 /*
@@ -855,6 +769,238 @@ const int persona_hpw200ec_special_keymap[] = {
 
 #endif /* hpcsh */
 
+#ifdef hpcarm
+/*
+ * HP Jornada 710/720/728
+ */
+
+/* Japanese */
+const uint8_t jornada7xx_jp_keytrans[] = {
+/* 00 */ UNK,  1 , 59 , 60 , 61 , 62 , 63 , 64 ,
+/* 08 */ 65 , 66 , 67 , 112, 41 , UNK, UNK, UNK,
+/* 10 */ UNK,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,
+/* 18 */  9 , 10 , 11 , 12 , 13 , UNK, UNK, UNK,
+/* 20 */ UNK, 16 , 17 , 18 , 19 , 20 , 21 , 22 ,
+/* 28 */  23, 24 , 25 , 26 , UNK, UNK, UNK, UNK,
+/* 30 */ UNK, 30 , 31 , 32 , 33 , 34 , 35 , 36 ,
+/* 38 */  37, 38 , 39 , 27 , 43 , UNK, UNK, UNK,
+/* 40 */ UNK, 44 , 45 , 46 , 47 , 48 , 49 , 50 ,
+/* 48 */  51, 52 , 53 , 40 , 28 , UNK, UNK, UNK,
+/* 50 */ UNK, 15 , UNK, 42 , UNK, UNK, UNK, UNK,
+/* 58 */ UNK, UNK, 200, 125, 54 , UNK, UNK, UNK,
+/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 123, UNK,
+/* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
+/* 70 */ UNK, 184, 29 , UNK, 57 , UNK, UNK, 121,
+/* 78 */ 53 , 14 , UNK, UNK, UNK, UNK, UNK, SPL,
+};
+
+/* US/UK - Fn to the left of the space bar and missing few keys */
+const uint8_t jornada7xx_us_keytrans[] = {
+/* 00 */ UNK,  1 , 59 , 60 , 61 , 62 , 63 , 64 ,
+/* 08 */ 65 , 66 , 67 , 68 , 87 , UNK, UNK, UNK,
+/* 10 */ UNK,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,
+/* 18 */  9 , 10 , 11 , 12 , 13 , UNK, UNK, UNK,
+/* 20 */ UNK, 16 , 17 , 18 , 19 , 20 , 21 , 22 ,
+/* 28 */  23, 24 , 25 , 43 , 14 , UNK, UNK, UNK,
+/* 30 */ UNK, 30 , 31 , 32 , 33 , 34 , 35 , 36 ,
+/* 38 */  37, 38 , 39 , 40 , UNK, UNK, UNK, UNK,
+/* 40 */ UNK, 44 , 45 , 46 , 47 , 48 , 49 , 50 ,
+/* 48 */  51, 52 , UNK, 40 , 28 , UNK, UNK, UNK,
+/* 50 */ UNK, 15 , UNK, 42 , UNK, UNK, UNK, UNK,
+/* 58 */ UNK, UNK, 200, UNK, 54 , UNK, UNK, UNK,
+/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 184, UNK,
+/* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
+/* 70 */ UNK, 221, 29 , UNK, 57 , UNK, UNK, UNK,
+/* 78 */ 53 , 14 , UNK, UNK, UNK, UNK, UNK, SPL,
+};
+
+/* International - AltGr to the right and extra keys in three middle rows */
+const uint8_t jornada7xx_intl_keytrans[] = {
+/* 00 */ UNK,  1 , 59 , 60 , 61 , 62 , 63 , 64 ,
+/* 08 */ 65 , 66 , 67 , 68 , 87 , UNK, UNK, UNK,
+/* 10 */ UNK,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,
+/* 18 */  9 , 10 , 11 , 12 , 13 , UNK, UNK, UNK,
+/* 20 */ UNK, 16 , 17 , 18 , 19 , 20 , 21 , 22 ,
+/* 28 */  23, 24 , 25 , 26 , 14 , UNK, UNK, UNK,
+/* 30 */ UNK, 30 , 31 , 32 , 33 , 34 , 35 , 36 ,
+/* 38 */  37, 38 , 39 , 27 , 43 , UNK, UNK, UNK,
+/* 40 */ UNK, 44 , 45 , 46 , 47 , 48 , 49 , 50 ,
+/* 48 */  51, 52 , 53 , 40 , 28 , UNK, UNK, UNK,
+/* 50 */ UNK, 15 , UNK, 42 , UNK, UNK, UNK, UNK,
+/* 58 */ UNK, UNK, 200, UNK, 54 , UNK, UNK, UNK,
+/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 41 , UNK,
+/* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
+/* 70 */ UNK, 221, 29 , UNK, 57 , UNK, UNK, UNK,
+/* 78 */ 184, 211, UNK, UNK, UNK, UNK, UNK, SPL,
+};
+
+const int jornada7xx_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= -1,
+	[KEY_SPECIAL_LIGHT]	= 127
+};
+#endif /* hpcarm */
+
+#if defined(hpcarm) || defined(hpcsh)
+/*
+ * Shared keymaps between the Jornada series (6xx, 7xx).
+ */
+
+/* US (ABA), UK (ABU) */
+static const keysym_t jornada_us_keydesc[] = {
+/*  pos      normal          shifted        altgr       */
+    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
+    KC(3),   KS_2,           KS_at,         KS_grave,
+    KC(4),   KS_3,           KS_numbersign, KS_sterling,
+#ifdef KS_euro
+    KC(5),   KS_4,           KS_dollar,     KS_euro,
+#endif
+    KC(25),  KS_p,           KS_P,          KS_braceleft,
+    KC(39),  KS_semicolon,   KS_colon,      KS_bracketleft,
+    KC(40),  KS_apostrophe,  KS_quotedbl,   KS_bracketright,
+    KC(43),  KS_backslash,   KS_bar,        KS_braceright,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+/*
+ * XXX: Add AltGr layer for #ABB here?  OTOH, all the keys necessary
+ * for basic actions in DDB or shell are on the primary layer, so it
+ * makes sense to support AltGr via wsconsctl(8) instead, as the same
+ * primary layer is used e.g. in Russian models.  But it does make
+ * sense to define the <AltGr> key itself here, as we base this layout
+ * on KB_US that defines it as the right <Alt>.
+ */
+/* European English (ABB) */
+static const keysym_t jornada_intl_keydesc[] = {
+/*  pos      normal          shifted        altgr       */
+    KC(42),  KS_Shift_L,     KS_Shift_L,    KS_Caps_Lock,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+/* German (ABD) */
+static const keysym_t jornada_de_keydesc[] = {
+/*  pos      normal          shifted        altgr       */
+    KC(2),   KS_1,           KS_exclam,     KS_brokenbar,
+    KC(5),   KS_4,           KS_dollar,     KS_ccedilla,
+    KC(6),   KS_5,           KS_percent,    KS_sterling,
+    KC(7),   KS_6,           KS_ampersand,  KS_notsign,
+#ifdef KS_euro
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(27),  KS_plus,        KS_asterisk,   KS_asciitilde, /* NB: not dead */
+    KC(30),  KS_a,           KS_A,          KS_bar,
+    KC(41),  KS_asciicircum, KS_degree,                    /* NB: not dead */
+    KC(43),  KS_numbersign,  KS_apostrophe, KS_dead_diaeresis,
+    KC(44),  KS_y,           KS_Y,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_cent,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+/* French (ABF) */
+static const keysym_t jornada_fr_keydesc[] = {
+/*  pos      normal          shifted        altgr       */
+    KC(2),   KS_ampersand,   KS_1,          KS_plusminus,
+#ifdef KS_euro
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(19),  KS_r,           KS_R,          KS_onequarter,
+    KC(20),  KS_t,           KS_T,          KS_onehalf,
+    KC(21),  KS_y,           KS_Y,          KS_threequarters,
+    KC(25),  KS_p,           KS_P,          KS_paragraph,
+    KC(30),  KS_q,           KS_Q,          KS_brokenbar,
+    KC(31),  KS_s,           KS_S,          KS_guillemotleft,
+    KC(32),  KS_d,           KS_D,          KS_guillemotright,
+    KC(40),  KS_ugrave,      KS_percent,    KS_dead_acute,
+    KC(41),  KS_twosuperior, KS_voidSymbol, KS_threesuperior,
+    KC(43),  KS_asterisk,    KS_mu,         KS_notsign,
+    KC(44),  KS_w,           KS_W,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_cent,
+    KC(50),  KS_comma,       KS_question,   KS_mu,
+    KC(53),  KS_exclam,      KS_section,    KS_Eacute,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+/* Scandinavian */
+static const keysym_t jornada_scnv_keydesc[] = {
+/*  pos      normal          shifted        altgr       */
+    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
+    KC(3),   KS_2,           KS_quotedbl,   KS_at,
+    KC(4),   KS_3,           KS_numbersign, KS_sterling,
+    KC(5),   KS_4,           KS_currency,   KS_dollar,
+    KC(7),   KS_6,           KS_ampersand,
+    KC(8),   KS_7,           KS_slash,      KS_braceleft,
+    KC(9),   KS_8,           KS_parenleft,  KS_bracketleft,
+    KC(10),  KS_9,           KS_parenright, KS_bracketright,
+    KC(11),  KS_0,           KS_equal,      KS_braceright,
+    KC(12),  KS_plus,        KS_question,   KS_backslash,
+    KC(13),  KS_apostrophe,  KS_grave,
+    KC(25),  KS_p,           KS_P,          KS_braceleft,
+    KC(26),  KS_aring,
+    /*
+     * XXX: KC(39) and KC(40) has odiaeresis/adiaeresis *and*
+     * oslash/ae on them.  Apparently localized WinCE uses the former
+     * for Swedish and Finnish and the latter for Danish and
+     * Norwegian.  But as the keyboard doesn't seem to have
+     * semicolon/colon and minus/underscore nowhere on the primary and
+     * altgr layers, I put them here (semicolon/colon is inherited).
+     */
+    KC(40),  KS_minus,       KS_underscore, /* XXX */
+    KC(41),  KS_paragraph,   KS_onehalf,    KS_bar,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+/* Spanish (ABE) */
+static const keysym_t jornada_es_keydesc[] = {
+/*  pos      normal          shifted        altgr            */
+    KC(2),   KS_1,           KS_exclam,     KS_ordfeminine,
+    KC(3),   KS_2,           KS_quotedbl,   KS_masculine,
+    KC(4),   KS_3,           KS_numbersign,
+    KC(12),  KS_apostrophe,  KS_question,   KS_backslash,
+    KC(13),  KS_questiondown,KS_exclamdown,
+    KC(16),  KS_q,           KS_Q,          KS_at,
+#ifdef KS_euro
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(26),  KS_dead_acute,  KS_dead_diaeresis,
+    KC(27),  KS_plus,        KS_asterisk,   KS_dead_tilde,
+    KC(40),  KS_braceleft,   KS_bracketleft,KS_dead_circumflex,
+    KC(41),  KS_bar,         KS_degree,     KS_notsign,
+    KC(43),  KS_braceright,  KS_bracketright,KS_dead_grave,
+    KC(44),  KS_z,           KS_Z,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_Ccedilla,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+#endif /* hpcarm || hpcsh */
 
 /*
  * REMINDER:
@@ -886,7 +1032,7 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_SHARP_TELIOS,
 		tc5165_telios_jp_keymap,
 		default_special_keymap,
-		NULLCMDMAP,
+		CMDMAP(tc5165_telios_jp_cmdmap),
 		KB_JP },
 	{	&platid_mask_MACH_SHARP_MOBILON,
 		tc5165_mobilon_keymap,
@@ -946,12 +1092,12 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_SHARP_TRIPAD,
 		tripad_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(tripad_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_VADEM_CLIO_C,
 		tripad_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(tripad_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCCS,
 		mccs_keytrans,
@@ -988,67 +1134,67 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_HP_JORNADA_680,
 		jornada6x0_us_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_us_keydesc),
+		CMDMAP(jornada_us_keydesc),
 		KB_US },
 	{	&platid_mask_MACH_HP_JORNADA_690,
 		jornada6x0_us_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_us_keydesc),
+		CMDMAP(jornada_us_keydesc),
 		KB_US },
 	/* European English (ABB) */
 	{	&platid_mask_MACH_HP_JORNADA_680EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_intl_keydesc),
+		CMDMAP(jornada_intl_keydesc),
 		KB_US },
 	{	&platid_mask_MACH_HP_JORNADA_690EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_intl_keydesc),
+		CMDMAP(jornada_intl_keydesc),
 		KB_US },
 	/* German (ABD) */
 	{	&platid_mask_MACH_HP_JORNADA_680DE,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_de_keydesc),
+		CMDMAP(jornada_de_keydesc),
 		KB_DE },
 	{	&platid_mask_MACH_HP_JORNADA_690DE,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
- 		CMDMAP(jornada6x0_de_keydesc),
+ 		CMDMAP(jornada_de_keydesc),
 		KB_DE },
 	/* French (ABF) */
 	{	&platid_mask_MACH_HP_JORNADA_680FR,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_fr_keydesc),
+		CMDMAP(jornada_fr_keydesc),
 		KB_FR },
 	{	&platid_mask_MACH_HP_JORNADA_690FR,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
- 		CMDMAP(jornada6x0_fr_keydesc),
+ 		CMDMAP(jornada_fr_keydesc),
 		KB_FR },
 	/* Scandinavian */
 	{	&platid_mask_MACH_HP_JORNADA_680SV,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_scnv_keydesc),
+		CMDMAP(jornada_scnv_keydesc),
 		KB_US },
 	{	&platid_mask_MACH_HP_JORNADA_690SV,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
- 		CMDMAP(jornada6x0_scnv_keydesc),
+ 		CMDMAP(jornada_scnv_keydesc),
 		KB_US },
 	/* Spanish (ABE) */
 	{	&platid_mask_MACH_HP_JORNADA_680ES,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		CMDMAP(jornada6x0_es_keydesc),
+		CMDMAP(jornada_es_keydesc),
 		KB_ES },
 	{	&platid_mask_MACH_HP_JORNADA_690ES,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
- 		CMDMAP(jornada6x0_es_keydesc),
+ 		CMDMAP(jornada_es_keydesc),
 		KB_ES },
 	/*
 	 * HP 620LX
@@ -1059,6 +1205,13 @@ const struct hpckbd_keymap_table {
 		hp620lx_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
+	/* Other models */
+	{	&platid_mask_MACH_HP_LX_620,
+		hp620lx_intl_keytrans,
+		hp620lx_special_keymap,
+		NULLCMDMAP,
+		KB_US },
+
 	/*
 	 * PERSONA HPW50PAD
 	 */
@@ -1066,7 +1219,7 @@ const struct hpckbd_keymap_table {
 	{ 	&platid_mask_MACH_HITACHI_PERSONA_HPW50PAD,
 		persona_hpw50pad_jp_keytrans,
 		persona_hpw50pad_special_keymap,
-		NULLCMDMAP,
+ 		CMDMAP(persona_hpw50pad_jp_keydesc),
 		KB_JP },
 
 	/*
@@ -1080,5 +1233,49 @@ const struct hpckbd_keymap_table {
 		KB_US },
 
 #endif /* hpcsh */
+#ifdef hpcarm
+	/* US (ABA), UK (ABU) */
+	{	&platid_mask_MACH_HP_JORNADA_720,
+		jornada7xx_us_keytrans,
+		jornada7xx_special_keymap,
+		CMDMAP(jornada_us_keydesc),
+		KB_US },
+	/* Japanese */
+	{	&platid_mask_MACH_HP_JORNADA_720JP,
+		jornada7xx_jp_keytrans,
+		jornada7xx_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+	/* European English (ABB) */
+	{	&platid_mask_MACH_HP_JORNADA_720EU,
+		jornada7xx_intl_keytrans,
+		jornada7xx_special_keymap,
+		CMDMAP(jornada_intl_keydesc),
+		KB_US },
+	/* German (ABD) */
+	{	&platid_mask_MACH_HP_JORNADA_720DE,
+		jornada7xx_intl_keytrans,
+		jornada7xx_special_keymap,
+		CMDMAP(jornada_de_keydesc),
+		KB_DE },
+	/* French (ABF) */
+	{	&platid_mask_MACH_HP_JORNADA_720FR,
+		jornada7xx_intl_keytrans,
+		jornada7xx_special_keymap,
+		CMDMAP(jornada_fr_keydesc),
+		KB_FR },
+	/* Scandinavian */
+	{	&platid_mask_MACH_HP_JORNADA_720SV,
+		jornada7xx_intl_keytrans,
+		jornada7xx_special_keymap,
+		CMDMAP(jornada_scnv_keydesc),
+		KB_US },
+	/* Spanish (ABE) */
+	{	&platid_mask_MACH_HP_JORNADA_720ES,
+		jornada7xx_intl_keytrans,
+		jornada7xx_special_keymap,
+		CMDMAP(jornada_es_keydesc),
+		KB_ES },
+#endif /* hpcarm */
 	{ NULL } /* end mark */
 };

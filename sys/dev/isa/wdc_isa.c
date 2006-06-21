@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.46 2004/09/14 20:20:49 drochner Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.46.12.1 2006/06/21 15:04:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.46 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.46.12.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct wdc_isa_softc *sc = (void *)self;
 	struct wdc_regs *wdr;
 	struct isa_attach_args *ia = aux;
-	int wdc_cf_flags = self->dv_cfdata->cf_flags;
+	int wdc_cf_flags = device_cfdata(self)->cf_flags;
 	int i;
 
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
@@ -213,6 +213,7 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+	sc->ata_channel.ch_ndrive = 2;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
 	printf("\n");

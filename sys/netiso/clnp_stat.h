@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_stat.h,v 1.8 2003/08/07 16:33:33 agc Exp $	*/
+/*	$NetBSD: clnp_stat.h,v 1.8.16.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -102,4 +102,4 @@ extern struct clnp_stat clnp_stat;
 #define INCSTAT(x) clnp_stat.x++
 #endif /* _KERNEL */
 
-#endif				/* _NETISO_CLNP_STAT_H_ */
+#endif /* !_NETISO_CLNP_STAT_H_ */

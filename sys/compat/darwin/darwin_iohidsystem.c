@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.29 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.29.2.1 2006/06/21 14:58:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.29 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.29.2.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -88,7 +88,7 @@ static void mach_notify_iohidsystem(struct lwp *, struct mach_right *);
 
 struct darwin_iohidsystem_thread_args {
 	vaddr_t dita_shmem;
-	struct proc *dita_p;
+	struct lwp *dita_l;
 	int dita_done;
 	int *dita_hidsystem_finished;
 };
@@ -102,7 +102,7 @@ static char darwin_iomouse_properties[] = "<dict ID=\"0\"><key>dpi</key><integer
 static char darwin_iohidsystem_properties[] = "<dict ID=\"0\"><key>CFBundleIdentifier</key><string ID=\"1\">com.apple.iokit.IOHIDSystem</string><key>IOClass</key><string ID=\"2\">IOHIDSystem</string><key>IOMatchCategory</key><string ID=\"3\">IOHID</string><key>IOProviderClass</key><string ID=\"4\">IOResources</string><key>IOResourceMatch</key><string ID=\"5\">IOKit</string><key>IOProbeScore</key><integer size=\"32\" ID=\"6\">0x0</integer><key>HIDParameters</key><dict ID=\"7\"><key>HIDClickTime</key><data ID=\"8\">AAAAAB3NZQA=</data><key>HIDAutoDimThreshold</key><data ID=\"9\">AAAARdlkuAA=</data><key>HIDAutoDimBrightness</key><data ID=\"10\">AAAAAA==</data><key>HIDClickSpace</key><data ID=\"11\">AAAAAA==</data><key>HIDKeyRepeat</key><data ID=\"12\">AAAAAAHJw4A=</data><key>HIDInitialKeyRepeat</key><data ID=\"13\">AAAAABZaC8A=</data><key>HIDPointerAcceleration</key><data ID=\"14\">AACAAA==</data><key>HIDScrollAcceleration</key><data ID=\"15\">AABQAA==</data><key>HIDPointerButtonMode</key><data ID=\"16\">AAAAAg==</data><key>HIDF12EjectDelay</key><data ID=\"17\">AAAA+g==</data><key>HIDSlowKeysDelay</key><data ID=\"18\">AAAAAA==</data><key>HIDStickyKeysDisabled</key><data ID=\"19\">AAAAAA==</data><key>HIDStickyKeysOn</key><data ID=\"20\">AAAAAA==</data><key>HIDStickyKeysShiftToggles</key><data ID=\"21\">AAAAAA==</data><key>HIDMouseAcceleration</key><data ID=\"22\">AAGzMw==</data><key>Clicking</key><data ID=\"23\">AA==</data><key>DragLock</key><reference IDREF=\"23\"/><key>Dragging</key><reference IDREF=\"23\"/><key>JitterNoMove</key><integer size=\"32\" ID=\"24\">0x1</integer><key>JitterNoClick</key><integer size=\"32\" ID=\"25\">0x1</integer><key>PalmNoAction When Typing</key><integer size=\"32\" ID=\"26\">0x1</integer><key>PalmNoAction Permanent</key><integer size=\"32\" ID=\"27\">0x1</integer><key>TwofingerNoAction</key><integer size=\"32\" ID=\"28\">0x1</integer><key>OutsidezoneNoAction When Typing</key><integer size=\"32\" ID=\"29\">0x1</integer><key>Use Panther Settings for W</key><integer size=\"32\" ID=\"30\">0x0</integer><key>Trackpad Jitter Milliseconds</key><integer size=\"32\" ID=\"31\">0xc0</integer><key>USBMouseStopsTrackpad</key><integer size=\"32\" ID=\"32\">0x0</integer><key>HIDWaitCursorFrameInterval</key><data ID=\"33\">AfygVw==</data></dict><key>HIDAutoDimTime</key><data ID=\"34\">AAAAAAAAAAA=</data><key>HIDIdleTime</key><data ID=\"35\">AAAjRKwYjsI=</data><key>HIDAutoDimState</key><data ID=\"36\">AAAAAQ==</data><key>HIDBrightness</key><data ID=\"37\">AAAAQA==</data></dict>";
 
 struct mach_iokit_devclass darwin_iokbd_devclass = {
-	"(unkown)",
+	"(unknown)",
 	{ &mach_ioroot_devclass, NULL },
 	darwin_iokbd_properties,
 	NULL,
@@ -116,7 +116,7 @@ struct mach_iokit_devclass darwin_iokbd_devclass = {
 };
 
 struct mach_iokit_devclass darwin_iomouse_devclass = {
-	"(unkown)",
+	"(unknown)",
 	{ &mach_ioroot_devclass, NULL },
 	darwin_iomouse_properties,
 	NULL,
@@ -130,7 +130,7 @@ struct mach_iokit_devclass darwin_iomouse_devclass = {
 };
 
 struct mach_iokit_devclass darwin_ioresources_devclass = {
-	"(unkown)",
+	"(unknown)",
 	{ &mach_ioroot_devclass, NULL },
 	darwin_ioresources_properties,
 	NULL,
@@ -193,6 +193,8 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 		/* If it has not been used yet, initialize it */
 		if (darwin_iohidsystem_shmem == NULL) {
+			struct proc *dita_p;
+
 			darwin_iohidsystem_shmem = uao_create(memsize, 0);
 
 			error = uvm_map(kernel_map, &kvaddr, memsize,
@@ -223,7 +225,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			dita->dita_done = 0;
 
 			kthread_create1(darwin_iohidsystem_thread,
-			    (void *)dita, &dita->dita_p, "iohidsystem");
+			    (void *)dita, &dita_p, "iohidsystem");
+
+			dita->dita_l = LIST_FIRST(&dita_p->p_lwps);
 
 			/*
 			 * Make sure the thread got the informations
@@ -306,7 +310,7 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
 	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->l->l_proc;
+	struct lwp *l = args->l;
 	int maxoutcount;
 	int error;
 
@@ -340,13 +344,13 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
 		wsevt.value = pt->x;
 		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p)) != 0)
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l)) != 0)
 			return mach_msg_error(args, error);
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
 		wsevt.value = pt->y;
 		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, p)) != 0)
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, l)) != 0)
 			return mach_msg_error(args, error);
 
 		rep->rep_outcount = 0;
@@ -427,7 +431,6 @@ darwin_iohidsystem_thread(args)
 	struct uio auio;
 	struct iovec aiov;
 	struct wscons_event wsevt;
-	struct proc *p;
 	int error = 0;
 	struct mach_right *mr;
 	struct lwp *l;
@@ -438,8 +441,7 @@ darwin_iohidsystem_thread(args)
 #endif
 	dita = (struct darwin_iohidsystem_thread_args *)args;
 	shmem = (struct darwin_iohidsystem_shmem *)dita->dita_shmem;
-	p = dita->dita_p;
-	l = proc_representative_lwp(p);
+	l = dita->dita_l;
 	dita->dita_hidsystem_finished = &finished;
 
 	/*
@@ -465,7 +467,7 @@ darwin_iohidsystem_thread(args)
 		goto out2;
 	}
 
-	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
+	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, l)) != 0)
 		goto out2;
 
 	while(!finished) {
@@ -475,9 +477,8 @@ darwin_iohidsystem_thread(args)
 		aiov.iov_len = sizeof(wsevt);
 		auio.uio_resid = sizeof(wsevt);
 		auio.uio_offset = 0;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_procp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 
 		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0) {
 #ifdef DEBUG_DARWIN
@@ -530,7 +531,7 @@ darwin_iohidsystem_thread(args)
 	}
 
 out1:
-	(wsmux->d_close)(dev, FREAD|FWRITE, 0, p);
+	(wsmux->d_close)(dev, FREAD|FWRITE, 0, l);
 
 out2:
 	while (!finished)
@@ -579,7 +580,7 @@ darwin_findwsmux(dev, mux)
 		return ENODEV;
 
 	major = cdevsw_lookup_major(&wsmux_cdevsw);
-	minor = wsm_sc->sc_base.me_dv.dv_unit;
+	minor = device_unit(&wsm_sc->sc_base.me_dv);
 	*dev = makedev(major, minor);
 
 	return 0;
@@ -721,7 +722,7 @@ mach_notify_iohidsystem(l, mr)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
+		ktruser(l, "notify_iohidsystem", NULL, 0, 0);
 #endif
 
 	mr->mr_refcount++;
@@ -743,8 +744,8 @@ mach_notify_iohidsystem(l, mr)
 }
 
 void
-darwin_iohidsystem_postfake(p)
-	struct proc *p;
+darwin_iohidsystem_postfake(l)
+	struct lwp *l;
 {
 	const struct cdevsw *wsmux;
 	dev_t dev;
@@ -762,7 +763,7 @@ darwin_iohidsystem_postfake(p)
 
 	wsevt.type = 0;
 	wsevt.value = 0;
-	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p);
+	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l);
 
 	return;
 }

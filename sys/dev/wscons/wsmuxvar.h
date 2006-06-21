@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.10 2005/04/30 03:47:12 augustss Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.10.2.1 2006/06/21 15:08:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ struct wssrcops {
 	int type;		/* device type: WSMUX_{MOUSE,KBD,MUX} */
 	int (*dopen)(struct wsevsrc *, struct wseventvar *);
 	int (*dclose)(struct wsevsrc *);
-	int (*dioctl)(struct device *, u_long, caddr_t, int, struct proc *);
-	int (*ddispioctl)(struct device *, u_long, caddr_t, int, struct proc *);
+	int (*dioctl)(struct device *, u_long, caddr_t, int, struct lwp *);
+	int (*ddispioctl)(struct device *, u_long, caddr_t, int, struct lwp *);
 	int (*dsetdisplay)(struct device *, struct wsevsrc *);
 };
 
@@ -70,10 +70,10 @@ struct wssrcops {
 	((me)->me_ops->dopen((me), evp))
 #define wsevsrc_close(me) \
 	((me)->me_ops->dclose((me)))
-#define wsevsrc_ioctl(me, cmd, data, flag, p) \
-	((me)->me_ops->dioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, p))
-#define wsevsrc_display_ioctl(me, cmd, data, flag, p) \
-	((me)->me_ops->ddispioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, p))
+#define wsevsrc_ioctl(me, cmd, data, flag, l) \
+	((me)->me_ops->dioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, l))
+#define wsevsrc_display_ioctl(me, cmd, data, flag, l) \
+	((me)->me_ops->ddispioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, l))
 #define wsevsrc_set_display(me, arg) \
 	((me)->me_ops->dsetdisplay(&(me)->me_dv, arg))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.10.2.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.1 2006/06/21 15:09:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 POOL_INIT(cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0, "cd9660nopl",
     &pool_allocator_nointr);
 
-static u_int cd9660_chars2ui __P((u_char *, int));
+static u_int cd9660_chars2ui(u_char *, int);
 
 /*
  * Initialize hash links for inodes and dnodes.
@@ -289,10 +289,10 @@ cd9660_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
@@ -306,7 +306,7 @@ cd9660_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, (struct simplelock *)0, l);
 	return error;
 }
 
@@ -319,7 +319,7 @@ cd9660_reclaim(v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -371,8 +371,8 @@ cd9660_defattr(isodir, inop, bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
-			     &bp2);
+		cd9660_blkatoff(ITOV(inop), (off_t)-(off << imp->im_bshift),
+		    NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
@@ -423,8 +423,8 @@ cd9660_deftstamp(isodir,inop,bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
-			     &bp2);
+		cd9660_blkatoff(ITOV(inop), (off_t)-(off << imp->im_bshift),
+		    NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {

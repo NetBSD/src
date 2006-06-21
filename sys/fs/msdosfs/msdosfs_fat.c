@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.4 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.4.4.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.4 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.4.4.1 2006/06/21 15:09:29 yamt Exp $");
 
 /*
  * kernel include files.
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.4 2005/02/26 22:58:55 perry Exp $"
 #include <sys/vnode.h>		/* to define vattr structure */
 #include <sys/errno.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 /*
  * msdosfs include files.
@@ -85,15 +86,15 @@ int fc_lmdistance[LMMAX];	/* counters for how far off the last
 				 * cluster mapped entry was. */
 int fc_largedistance;		/* off by more than LMMAX		 */
 
-static void fatblock __P((struct msdosfsmount *, u_long, u_long *, u_long *,
-			  u_long *));
-void updatefats __P((struct msdosfsmount *, struct buf *, u_long));
-static __inline void usemap_free __P((struct msdosfsmount *, u_long));
-static __inline void usemap_alloc __P((struct msdosfsmount *, u_long));
-static int fatchain __P((struct msdosfsmount *, u_long, u_long, u_long));
-int chainlength __P((struct msdosfsmount *, u_long, u_long));
-int chainalloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *,
-		    u_long *));
+static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,
+			  u_long *);
+void updatefats(struct msdosfsmount *, struct buf *, u_long);
+static inline void usemap_free(struct msdosfsmount *, u_long);
+static inline void usemap_alloc(struct msdosfsmount *, u_long);
+static int fatchain(struct msdosfsmount *, u_long, u_long, u_long);
+int chainlength(struct msdosfsmount *, u_long, u_long);
+int chainalloc(struct msdosfsmount *, u_long, u_long, u_long, u_long *,
+		    u_long *);
 
 static void
 fatblock(pmp, ofs, bnp, sizep, bop)
@@ -239,6 +240,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 				brelse(bp);
 			return (EIO);
 		}
+		KASSERT(bp != NULL);
 		if (FAT32(pmp))
 			cn = getulong(&bp->b_data[bo]);
 		else
@@ -431,7 +433,7 @@ updatefats(pmp, bp, fatbn)
  * Where n is even. m = n + (n >> 2)
  *
  */
-static __inline void
+static inline void
 usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
@@ -441,7 +443,7 @@ usemap_alloc(pmp, cn)
 	pmp->pm_freeclustercount--;
 }
 
-static __inline void
+static inline void
 usemap_free(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
@@ -872,6 +874,7 @@ freeclusterchain(pmp, cluster)
 			lbn = bn;
 		}
 		usemap_free(pmp, cluster);
+		KASSERT(bp != NULL);
 		switch (pmp->pm_fatmask) {
 		case FAT12_MASK:
 			readcn = getushort(&bp->b_data[bo]);

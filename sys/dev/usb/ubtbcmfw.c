@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.10 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.10.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.10 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.10.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	char buf[1024];
 	struct timeval delta;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, curlwp);
 	/* Loop until we are well passed boot */
 	for (;;) {
 		error = vn_open(&nd, FREAD, 0);
@@ -247,7 +247,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	for (offs = 0; ; offs += size) {
 		size = sizeof buf;
 		error = vn_rdwr(UIO_READ, vp, buf, size, offs, UIO_SYSSPACE,
-		    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, NULL);
+		    IO_NODELOCKED | IO_SYNC, p->p_cred, &resid, NULL);
 		size -= resid;
 		if (error || size == 0)
 			break;
@@ -258,7 +258,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	}
 
 out:
-	vn_close(vp, FREAD, p->p_ucred, p);
+	vn_close(vp, FREAD, p->p_cred, p);
 	return error;
 }
 

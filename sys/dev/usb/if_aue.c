@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.91 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.91.2.1 2006/06/21 15:07:43 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.91 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.91.2.1 2006/06/21 15:07:43 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -186,6 +186,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS},	  PNA },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_2},  PII },
+ {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_3},  PII },
  {{ USB_VENDOR_AEI,		USB_PRODUCT_AEI_USBTOLAN},	  PII },
  {{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_USB2LAN},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
@@ -1061,7 +1062,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->aue_intr_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->aue_ep[AUE_ENDPT_RX]);
 		return;
 	}
 
@@ -1106,7 +1107,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->aue_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->aue_ep[AUE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -1207,7 +1208,7 @@ aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->aue_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->aue_ep[AUE_ENDPT_TX]);
 		splx(s);
 		return;
 	}

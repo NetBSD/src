@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.52 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.52.6.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.52 2005/02/01 00:19:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.52.6.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -202,7 +202,6 @@ scsipi_user_done(struct scsipi_xfer *xs)
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	}
-	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
 
 	if (xs->xs_control & XS_CTL_ASYNC) {
 		s = splbio();
@@ -235,11 +234,11 @@ scsistrategy(struct buf *bp)
 	struct scsipi_periph *periph;
 	int error;
 	int flags = 0;
-	int s;
 
 	si = si_find(bp);
 	if (si == NULL) {
-		printf("user_strat: No ioctl\n");
+		printf("scsistrategy: "
+		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
 		goto bad;
 	}
@@ -269,9 +268,9 @@ scsistrategy(struct buf *bp)
 		goto bad;
 	}
 
-	if (screq->flags & SCCMD_READ)
+	if ((screq->flags & SCCMD_READ) && screq->datalen > 0)
 		flags |= XS_CTL_DATA_IN;
-	if (screq->flags & SCCMD_WRITE)
+	if ((screq->flags & SCCMD_WRITE) && screq->datalen > 0)
 		flags |= XS_CTL_DATA_OUT;
 	if (screq->flags & SCCMD_TARGET)
 		flags |= XS_CTL_TARGET;
@@ -281,25 +280,15 @@ scsistrategy(struct buf *bp)
 	error = scsipi_command(periph, (void *)screq->cmd, screq->cmdlen,
 	    (void *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
-	    screq->timeout, bp, flags | XS_CTL_USERCMD | XS_CTL_ASYNC);
-
-	/* because there is a bp, scsi_scsipi_cmd will return immediatly */
-	if (error)
-		goto bad;
-
-	SC_DEBUG(periph, SCSIPI_DB3, ("about to sleep\n"));
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		tsleep(bp, PRIBIO, "scistr", 0);
-	splx(s);
-	SC_DEBUG(periph, SCSIPI_DB3, ("back from sleep\n"));
-
-	return;
+	    screq->timeout, bp, flags | XS_CTL_USERCMD);
 
 bad:
-	bp->b_flags |= B_ERROR;
-	bp->b_error = error;
+	if (error) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = error;
+	}
 	biodone(bp);
+	return;
 }
 
 /*
@@ -310,11 +299,14 @@ bad:
  */
 int
 scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
-    caddr_t addr, int flag, struct proc *p)
+    caddr_t addr, int flag, struct lwp *l)
 {
 	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_do_ioctl(0x%lx)\n", cmd));
+
+	if (addr == NULL)
+		return EINVAL;
 
 	/* Check for the safe-ness of this request. */
 	switch (cmd) {
@@ -348,10 +340,13 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_uio.uio_iovcnt = 1;
 			si->si_uio.uio_resid = len;
 			si->si_uio.uio_offset = 0;
-			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_procp = p;
+			if ((flag & FKIOCTL) == 0) {
+				si->si_uio.uio_vmspace = l->l_proc->p_vmspace;
+			} else {
+				UIO_SETUP_SYSSPACE(&si->si_uio);
+			}
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
@@ -362,7 +357,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_bp.b_data = 0;
 			si->si_bp.b_bcount = 0;
 			si->si_bp.b_dev = dev;
-			si->si_bp.b_proc = p;
+			si->si_bp.b_proc = l->l_proc;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
 		}
@@ -395,14 +390,14 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 		case SCSIPI_BUSTYPE_SCSI:
 			sca->type = TYPE_SCSI;
 			sca->addr.scsi.scbus =
-			    periph->periph_dev->dv_parent->dv_unit;
+			    device_unit(device_parent(periph->periph_dev));
 			sca->addr.scsi.target = periph->periph_target;
 			sca->addr.scsi.lun = periph->periph_lun;
 			return (0);
 		case SCSIPI_BUSTYPE_ATAPI:
 			sca->type = TYPE_ATAPI;
 			sca->addr.atapi.atbus =
-			    periph->periph_dev->dv_parent->dv_unit;
+			    device_unit(device_parent(periph->periph_dev));
 			sca->addr.atapi.drive = periph->periph_target;
 			return (0);
 		}
@@ -415,7 +410,8 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 
 		switch (scsipi_periph_bustype(periph)) {
 		case SCSIPI_BUSTYPE_SCSI:
-			sca->scbus = periph->periph_dev->dv_parent->dv_unit;
+			sca->scbus =
+			    device_unit(device_parent(periph->periph_dev));
 			sca->target = periph->periph_target;
 			sca->lun = periph->periph_lun;
 			return (0);

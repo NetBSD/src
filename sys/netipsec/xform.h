@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.2 2005/06/10 13:22:42 christos Exp $	*/
+/*	$NetBSD: xform.h,v 1.2.2.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -124,4 +124,4 @@ extern size_t esp_hdrsiz(struct secasvar *sav);
 extern struct comp_algo *ipcomp_algorithm_lookup(int alg);
 
 #endif /* _KERNEL */
-#endif /* _NETIPSEC_XFORM_H_ */
+#endif /* !_NETIPSEC_XFORM_H_ */

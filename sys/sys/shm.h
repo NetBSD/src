@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.38 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: shm.h,v 1.38.6.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,20 +120,6 @@ struct shmid_ds {
 	void		*_shm_internal;
 };
 
-#ifdef _KERNEL
-struct shmid_ds14 {
-	struct ipc_perm14 shm_perm;	/* operation permission structure */
-	int		shm_segsz;	/* size of segment in bytes */
-	pid_t		shm_lpid;	/* process ID of last shm op */
-	pid_t		shm_cpid;	/* process ID of creator */
-	short		shm_nattch;	/* number of current attaches */
-	time_t		shm_atime;	/* time of last shmat() */
-	time_t		shm_dtime;	/* time of last shmdt() */
-	time_t		shm_ctime;	/* time of last change by shmctl() */
-	void		*shm_internal;	/* sysv stupidity */
-};
-#endif /* _KERNEL */
-
 #if defined(_NETBSD_SOURCE)
 /*
  * Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl().
@@ -166,13 +152,13 @@ struct shminfo {
 /* Warning: 64-bit structure padding is needed here */
 struct shmid_ds_sysctl {
 	struct		ipc_perm_sysctl shm_perm;
-	u_int64_t	shm_segsz;
+	uint64_t	shm_segsz;
 	pid_t		shm_lpid;
 	pid_t		shm_cpid;
 	time_t		shm_atime;
 	time_t		shm_dtime;
 	time_t		shm_ctime;
-	u_int32_t	shm_nattch;
+	uint32_t	shm_nattch;
 };
 struct shm_sysctl_info {
 	struct	shminfo shminfo;
@@ -184,6 +170,13 @@ struct shm_sysctl_info {
 #ifdef _KERNEL
 extern struct shminfo shminfo;
 extern struct shmid_ds *shmsegs;
+extern int shm_nused;
+
+#define	SHMSEG_FREE     	0x0200
+#define	SHMSEG_REMOVED  	0x0400
+#define	SHMSEG_ALLOCATED	0x0800
+#define	SHMSEG_WANTED		0x1000
+#define	SHMSEG_RMLINGER		0x2000
 
 struct vmspace;
 

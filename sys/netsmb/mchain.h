@@ -31,8 +31,12 @@
  *
  * FreeBSD: src/sys/sys/mchain.h,v 1.1 2001/02/24 15:44:30 bp Exp
  */
-#ifndef _SYS_MCHAIN_H_
-#define _SYS_MCHAIN_H_
+#ifndef _NETSMB_MCHAIN_H_
+#define _NETSMB_MCHAIN_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 #ifdef _KERNEL
 
@@ -108,4 +112,4 @@ int  md_get_uio(struct mdchain *mdp, struct uio *uiop, int size);
 
 #endif	/* ifdef _KERNEL */
 
-#endif	/* !_SYS_MCHAIN_H_ */
+#endif	/* !_NETSMB_MCHAIN_H_ */

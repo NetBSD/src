@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.7 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.7.2.1 2006/06/21 15:10:45 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.7 2004/12/31 22:42:38 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.7 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.7.2.1 2006/06/21 15:10:45 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -81,9 +81,29 @@ static	int _ieee80211_crypto_delkey(struct ieee80211com *,
  * Default "null" key management routines.
  */
 static int
-null_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
+null_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k,
+	ieee80211_keyix *keyix, ieee80211_keyix *rxkeyix)
 {
-	return IEEE80211_KEYIX_NONE;
+	if (!(&ic->ic_nw_keys[0] <= k &&
+	     k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])) {
+		/*
+		 * Not in the global key table, the driver should handle this
+		 * by allocating a slot in the h/w key table/cache.  In
+		 * lieu of that return key slot 0 for any unicast key
+		 * request.  We disallow the request if this is a group key.
+		 * This default policy does the right thing for legacy hardware
+		 * with a 4 key table.  It also handles devices that pass
+		 * packets through untouched when marked with the WEP bit
+		 * and key index 0.
+		 */
+		if (k->wk_flags & IEEE80211_KEY_GROUP)
+			return 0;
+		*keyix = 0;	/* NB: use key index 0 for ucast key */
+	} else {
+		*keyix = k - ic->ic_nw_keys;
+	}
+	*rxkeyix = IEEE80211_KEYIX_NONE;	/* XXX maybe *keyix? */
+	return 1;
 }
 static int
 null_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
@@ -118,9 +138,10 @@ cipher_attach(struct ieee80211com *ic, struct ieee80211_key *key)
  */
 static __inline int
 dev_key_alloc(struct ieee80211com *ic,
-	const struct ieee80211_key *key)
+	const struct ieee80211_key *key,
+	ieee80211_keyix *keyix, ieee80211_keyix *rxkeyix)
 {
-	return ic->ic_crypto.cs_key_alloc(ic, key);
+	return ic->ic_crypto.cs_key_alloc(ic, key, keyix, rxkeyix);
 }
 
 static __inline int
@@ -148,11 +169,8 @@ ieee80211_crypto_attach(struct ieee80211com *ic)
 
 	/* NB: we assume everything is pre-zero'd */
 	cs->cs_def_txkey = IEEE80211_KEYIX_NONE;
-	ciphers[IEEE80211_CIPHER_AES_CCM] = &ieee80211_cipher_ccmp;
-	ciphers[IEEE80211_CIPHER_TKIP] = &ieee80211_cipher_tkip;
-	ciphers[IEEE80211_CIPHER_WEP] = &ieee80211_cipher_wep;
+	cs->cs_max_keyix = IEEE80211_WEP_NKID;
 	ciphers[IEEE80211_CIPHER_NONE] = &ieee80211_cipher_none;
-
 	for (i = 0; i < IEEE80211_WEP_NKID; i++)
 		ieee80211_crypto_resetkey(ic, &cs->cs_nw_keys[i],
 			IEEE80211_KEYIX_NONE);
@@ -250,6 +268,7 @@ ieee80211_crypto_newkey(struct ieee80211com *ic,
 {
 #define	N(a)	(sizeof(a) / sizeof(a[0]))
 	const struct ieee80211_cipher *cip;
+	ieee80211_keyix keyix, rxkeyix;
 	void *keyctx;
 	int oflags;
 
@@ -363,8 +382,7 @@ again:
 	 * crypto we also call the driver to give us a key index.
 	 */
 	if (key->wk_keyix == IEEE80211_KEYIX_NONE) {
-		key->wk_keyix = dev_key_alloc(ic, key);
-		if (key->wk_keyix == IEEE80211_KEYIX_NONE) {
+		if (!dev_key_alloc(ic, key, &keyix, &rxkeyix)) {
 			/*
 			 * Driver has no room; fallback to doing crypto
 			 * in the host.  We change the flags and start the
@@ -391,6 +409,8 @@ again:
 			    __func__, cip->ic_name);
 			return 0;
 		}
+		key->wk_keyix = keyix;
+		key->wk_rxkeyix = rxkeyix;
 	}
 	return 1;
 #undef N
@@ -402,7 +422,7 @@ again:
 static int
 _ieee80211_crypto_delkey(struct ieee80211com *ic, struct ieee80211_key *key)
 {
-	u_int16_t keyix;
+	ieee80211_keyix keyix;
 
 	IASSERT(key->wk_cipher != NULL, ("No cipher!"));
 
@@ -530,7 +550,7 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
 			    ether_sprintf(wh->i_addr1), __func__,
 			    ic->ic_def_txkey);
 			ic->ic_stats.is_tx_nodefkey++;
-			goto bad;
+			return NULL;
 		}
 		keyid = ic->ic_def_txkey;
 		k = &ic->ic_nw_keys[ic->ic_def_txkey];
@@ -539,11 +559,7 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
 		k = &ni->ni_ucastkey;
 	}
 	cip = k->wk_cipher;
-	if (cip->ic_encap(k, m, keyid<<6))
-		return k;
-bad:
-	m_freem(m);
-	return NULL;
+	return (cip->ic_encap(k, m, keyid<<6) ? k : NULL);
 }
 
 /*
@@ -552,18 +568,16 @@ bad:
  */
 struct ieee80211_key *
 ieee80211_crypto_decap(struct ieee80211com *ic,
-	struct ieee80211_node *ni, struct mbuf *m)
+	struct ieee80211_node *ni, struct mbuf *m, int hdrlen)
 {
 #define	IEEE80211_WEP_HDRLEN	(IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN)
 #define	IEEE80211_WEP_MINLEN \
-	(sizeof(struct ieee80211_frame) + ETHER_HDR_LEN + \
+	(sizeof(struct ieee80211_frame) + \
 	IEEE80211_WEP_HDRLEN + IEEE80211_WEP_CRCLEN)
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
 	const struct ieee80211_cipher *cip;
-	const u_int8_t *ivp;
 	u_int8_t keyid;
-	int hdrlen;
 
 	/* NB: this minimum size data frame could be bigger */
 	if (m->m_pkthdr.len < IEEE80211_WEP_MINLEN) {
@@ -581,9 +595,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	 * the key id in the header is meaningless (typically 0).
 	 */
 	wh = mtod(m, struct ieee80211_frame *);
-	hdrlen = ieee80211_hdrsize(wh);
-	ivp = mtod(m, const u_int8_t *) + hdrlen;	/* XXX contig */
-	keyid = ivp[IEEE80211_WEP_IVLEN];
+	m_copydata(m, hdrlen + IEEE80211_WEP_IVLEN, sizeof(keyid), &keyid);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    ni->ni_ucastkey.wk_cipher == &ieee80211_cipher_none)
 		k = &ic->ic_nw_keys[keyid >> 6];
@@ -600,10 +612,10 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);
 		ic->ic_stats.is_rx_wepfail++;	/* XXX */
-		return 0;
+		return NULL;
 	}
 
-	return (cip->ic_decap(k, m) ? k : NULL);
+	return (cip->ic_decap(k, m, hdrlen) ? k : NULL);
 #undef IEEE80211_WEP_MINLEN
 #undef IEEE80211_WEP_HDRLEN
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.5 2005/05/04 14:38:44 martin Exp $ */
+/*	$NetBSD: fbio.h,v 1.5.2.1 2006/06/21 15:07:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -35,6 +35,9 @@
  * 	@(#)fbio.h	7.2 (Berkeley) 4/1/92
  */
 
+#ifndef FBIO_H
+#define FBIO_H
+
 /*
  * Frame buffer ioctls (from Sprite, trimmed to essentials for X11).
  */
@@ -68,8 +71,9 @@
 #define FBTYPE_MDICOLOR         20      /* cgfourteen framebuffer */
 #define	FBTYPE_P9100		21	/* tadpole 3gx p9100 controller */
 #define FBTYPE_CREATOR		22	/* ffb creator or elite */
+#define FBTYPE_GENERIC_PCI	23	/* machfb, ofb and so on */
 
-#define	FBTYPE_LASTPLUSONE	23	/* max number of fbs (change as add) */
+#define	FBTYPE_LASTPLUSONE	24	/* max number of fbs (change as add) */
 
 /*
  * XXX These really shouldn't be here, but this is what the pmax
@@ -197,3 +201,5 @@ struct fbcursor {
 
 /* get max cursor size */
 #define FBIOGCURMAX	_IOR('F', 28, struct fbcurpos)
+
+#endif /* FBIO_H */

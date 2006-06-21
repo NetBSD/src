@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.43 2005/05/11 20:25:01 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.43.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.43 2005/05/11 20:25:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.43.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,15 +84,6 @@ int	uplcomdebug = 0;
 #define	UPLCOM_SET_CRTSCTS_HX	0x61
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
-
-#define	UPLCOM_FLOW_OUT_CTS	0x0001
-#define	UPLCOM_FLOW_OUT_DSR	0x0002
-#define	UPLCOM_FLOW_IN_DSR	0x0004
-#define	UPLCOM_FLOW_IN_DTR	0x0008
-#define	UPLCOM_FLOW_IN_RTS	0x0010
-#define	UPLCOM_FLOW_OUT_RTS	0x0020
-#define	UPLCOM_FLOW_OUT_XON	0x0080
-#define	UPLCOM_FLOW_IN_XON	0x0100
 
 enum  pl2303_type {
 	UPLCOM_TYPE_0,
@@ -176,6 +167,10 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 	/* ELECOM UC-SGT */
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
+	/* ELECOM UC-SGT0 */
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
+	/* Panasonic 50" Touch Panel */
+	{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
 	/* RATOC REX-USB60 */
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
 	/* TDK USB-PHS Adapter UHA6400 */
@@ -490,8 +485,8 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 	if (sc->sc_rts == -1)
 		sc->sc_rts = 0;
 
-	ls = (sc->sc_dtr ? UPLCOM_FLOW_OUT_DSR : 0) |
-		(sc->sc_rts ? UPLCOM_FLOW_OUT_CTS : 0);
+	ls = (sc->sc_dtr ? UCDC_LINE_DTR : 0) |
+		(sc->sc_rts ? UCDC_LINE_RTS : 0);
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;

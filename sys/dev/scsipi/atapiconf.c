@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.67 2005/05/29 22:00:50 christos Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.67.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.67 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.67.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ static int	atapibusactivate(struct device *, enum devact);
 static int	atapibusdetach(struct device *, int flags);
 
 static int	atapibussubmatch(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
+				 const int *, void *);
 
 static int	atapi_probe_bus(struct atapibus_softc *, int);
 
@@ -130,7 +130,7 @@ atapibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 static int
 atapibussubmatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const int *ldesc, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
@@ -144,7 +144,7 @@ atapibussubmatch(struct device *parent, struct cfdata *cf,
 static void
 atapibusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct atapibus_softc *sc = (void *) self;
+	struct atapibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
@@ -167,7 +167,7 @@ atapibusattach(struct device *parent, struct device *self, void *aux)
 static int
 atapibusactivate(struct device *self, enum devact act)
 {
-	struct atapibus_softc *sc = (void *) self;
+	struct atapibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int target, error = 0, s;
@@ -197,7 +197,7 @@ atapibusactivate(struct device *self, enum devact act)
 static int
 atapibusdetach(struct device *self, int flags)
 {
-	struct atapibus_softc *sc = (void *)self;
+	struct atapibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int target, error;

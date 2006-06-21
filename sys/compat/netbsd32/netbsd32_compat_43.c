@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.30 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.30.4.1 2006/06/21 14:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.30 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.30.4.1 2006/06/21 14:59:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.30 2005/02/26 23:10:21 perr
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/socket.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/sa.h>
@@ -52,6 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.30 2005/02/26 23:10:21 perr
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+#include <compat/sys/stat.h>
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#include <compat/sys/socket.h>
 
 int compat_43_netbsd32_sethostid __P((struct lwp *, void *, register_t *));
 int compat_43_netbsd32_killpg __P((struct lwp *, void *, register_t *retval));
@@ -104,7 +110,7 @@ compat_43_netbsd32_ocreat(l, v, retval)
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -152,7 +158,7 @@ compat_43_netbsd32_stat43(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(l, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));
@@ -186,7 +192,7 @@ compat_43_netbsd32_lstat43(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(l, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));

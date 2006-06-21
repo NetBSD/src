@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.9 2004/05/20 06:34:26 atatat Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.9.12.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -68,6 +68,9 @@
 /*
  * Definitions used in the kernel for Acorn Filecore file system support.
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #ifndef	FILECOREMNT_ROOT
 #define	FILECOREMNT_ROOT	0
@@ -92,7 +95,6 @@ struct filecore_mnt {
 	uid_t fc_uid;		/* uid to set as owner of the files */
 	gid_t fc_gid;		/* gid to set as owner of the files */
 	int fc_mntflags;
-	struct netexport fc_export;
 	struct filecore_disc_record drec;
 };
 
@@ -106,17 +108,17 @@ struct filecore_mnt {
 extern struct pool filecore_node_pool;
 
 int filecore_mount __P((struct mount *,
-	    const char *, void *, struct nameidata *, struct proc *));
-int filecore_start __P((struct mount *, int, struct proc *));
-int filecore_unmount __P((struct mount *, int, struct proc *));
+	    const char *, void *, struct nameidata *, struct lwp *));
+int filecore_start __P((struct mount *, int, struct lwp *));
+int filecore_unmount __P((struct mount *, int, struct lwp *));
 int filecore_root __P((struct mount *, struct vnode **));
-int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
-int filecore_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int filecore_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
+int filecore_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
+int filecore_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
 int filecore_vget __P((struct mount *, ino_t, struct vnode **));
 int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
-	    struct ucred **));
+	    kauth_cred_t *));
 int filecore_vptofh __P((struct vnode *, struct fid *));
 void filecore_init __P((void));
 void filecore_reinit __P((void));
@@ -129,6 +131,6 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_filecore_setup);
 extern int (**filecore_vnodeop_p) __P((void *));
 
 int filecore_bbchecksum __P((void *));
-int filecore_bread __P((struct filecore_mnt *, u_int32_t, int, struct ucred *,
-			struct buf **));
+int filecore_bread __P((struct filecore_mnt *, u_int32_t, int,
+    kauth_cred_t, struct buf **));
 int filecore_map __P((struct filecore_mnt *, u_int32_t, daddr_t, daddr_t *));

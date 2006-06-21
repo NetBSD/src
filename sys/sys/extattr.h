@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.1 2005/01/02 16:08:30 thorpej Exp $	*/
+/*	$NetBSD: extattr.h,v 1.1.12.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -31,12 +31,15 @@
  */
 
 /*
- * Developed by the TrustedBSD Project.
- * Support for extended filesystem attributes.
+ * Support for file system extended attributes.  Originally developed by
+ * the TrustedBSD Project.  For a Linux-compatible interface to the same
+ * subsystem, see <sys/xattr.h>.
  */
 
 #ifndef _SYS_EXTATTR_H_
 #define	_SYS_EXTATTR_H_
+
+#include <sys/types.h>
 
 #define	EXTATTR_NAMESPACE_USER		0x00000001
 #define	EXTATTR_NAMESPACE_USER_STRING	"user"
@@ -45,12 +48,13 @@
 
 #ifdef _KERNEL
 
+#include <sys/syslimits.h>
+
 #define	EXTATTR_MAXNAMELEN	NAME_MAX
 struct lwp;
-struct ucred;
 struct vnode;
-int	extattr_check_cred(struct vnode *, int, struct ucred *,
-	    struct proc *, int);
+int	extattr_check_cred(struct vnode *, int, kauth_cred_t,
+	    struct lwp *, int);
 
 #else
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.21 2005/05/29 21:19:12 christos Exp $ */
+/* $NetBSD: sched.h,v 1.21.2.1 2006/06/21 15:12:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -101,13 +101,7 @@ struct sched_param {
 
 /*
  * Sleep queues.
- *
- * We're only looking at 7 bits of the address; everything is
- * aligned to 4, lots of things are aligned to greater powers
- * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
  */
-#define	SLPQUE_TABLESIZE	128
-#define	SLPQUE_LOOKUP(x)	(((u_long)(x) >> 8) & (SLPQUE_TABLESIZE - 1))
 struct slpque {
 	struct lwp *sq_head;
 	struct lwp **sq_tailp;
@@ -145,9 +139,9 @@ struct prochd {
  */
 struct schedstate_percpu {
 	struct timeval spc_runtime;	/* time curproc started running */
-	__volatile int spc_flags;	/* flags; see below */
+	volatile int spc_flags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
-	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
+	uint64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
@@ -178,10 +172,6 @@ struct schedstate_percpu {
 
 #ifdef _KERNEL
 
-#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
-#define NICE_WEIGHT 2			/* priorities per nice level */
-#define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
-
 extern int schedhz;			/* ideally: 16 */
 extern int rrticks;			/* ticks per roundrobin() */
 
@@ -194,47 +184,26 @@ extern int rrticks;			/* ticks per roundrobin() */
  * in kern/kern_synch.c.
  */
 extern struct prochd sched_qs[];
-extern struct slpque sched_slpque[];
-extern __volatile u_int32_t sched_whichqs;
-
-#define	SLPQUE(ident)	(&sched_slpque[SLPQUE_LOOKUP(ident)])
+extern volatile uint32_t sched_whichqs;
 
 struct proc;
 struct cpu_info;
 
 void schedclock(struct lwp *);
-void sched_wakeup(__volatile const void *);
+void sched_wakeup(volatile const void *);
 void roundrobin(struct cpu_info *);
 
-/*
- * scheduler_fork_hook:
- *
- *	Inherit the parent's scheduler history.
- */
-#define	scheduler_fork_hook(parent, child)				\
-do {									\
-	(child)->p_estcpu = (parent)->p_estcpu;				\
-} while (/* CONSTCOND */ 0)
-
-/*
- * scheduler_wait_hook:
- *
- *	Chargeback parents for the sins of their children.
- */
-#define	scheduler_wait_hook(parent, child)				\
-do {									\
-	/* XXX Only if parent != init?? */				\
-	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu +		\
-	    (child)->p_estcpu);						\
-} while (/* CONSTCOND */ 0)
+void scheduler_fork_hook(struct proc *, struct proc *);
+void scheduler_wait_hook(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #include <sys/lock.h>
 
 extern struct simplelock sched_lock;
 
-#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
+#define	SCHED_ASSERT_LOCKED()	simple_lock_assert_locked(&sched_lock, "sched_lock")
+#define	SCHED_ASSERT_UNLOCKED()	simple_lock_assert_unlocked(&sched_lock, "sched_lock")
+
 
 #define	SCHED_LOCK(s)							\
 do {									\

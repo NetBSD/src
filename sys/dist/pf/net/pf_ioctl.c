@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.17 2005/07/01 12:37:35 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.17.2.1 2006/06/21 15:09:23 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -101,8 +101,8 @@ void			 pfattach(int);
 #ifdef _LKM
 void			 pfdetach(void);
 #endif
-int			 pfopen(dev_t, int, int, struct proc *);
-int			 pfclose(dev_t, int, int, struct proc *);
+int			 pfopen(dev_t, int, int, struct lwp *);
+int			 pfclose(dev_t, int, int, struct lwp *);
 struct pf_pool		*pf_get_pool(char *, u_int32_t, u_int8_t, u_int32_t,
 			    u_int8_t, u_int8_t, u_int8_t);
 int			 pf_get_ruleset_number(u_int8_t);
@@ -115,7 +115,7 @@ void			 pf_anchor_remove(struct pf_rule *);
 
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
-int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int			 pfioctl(dev_t, u_long, caddr_t, int, struct lwp *);
 #ifdef ALTQ
 int			 pf_begin_altq(u_int32_t *);
 int			 pf_rollback_altq(u_int32_t);
@@ -323,7 +323,7 @@ pfdetach(void)
 #endif
 
 int
-pfopen(dev_t dev, int flags, int fmt, struct proc *p)
+pfopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -331,7 +331,7 @@ pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int
-pfclose(dev_t dev, int flags, int fmt, struct proc *p)
+pfclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -1129,7 +1129,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 }
 
 int
-pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
+pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 {
 	struct pf_pooladdr	*pa = NULL;
 	struct pf_pool		*pool = NULL;
@@ -2953,6 +2953,7 @@ fail:
 }
 
 #ifdef __NetBSD__
+#ifdef INET
 int
 pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
@@ -2995,12 +2996,13 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	 * we're not compatible with fast-forward.
 	 */
 
-	if (dir == PFIL_IN) {
+	if (dir == PFIL_IN && *mp) {
 		(*mp)->m_flags &= ~M_CANFASTFWD;
 	}
 
 	return (0);
 }
+#endif /* INET */
 
 #ifdef INET6
 int
@@ -3018,6 +3020,19 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		m_freem(*mp);
 		*mp = NULL;
 		return error;
+	}
+
+	/*
+	 * If the packet is out-bound, we can't delay checksums
+	 * here.  For in-bound, the checksum has already been
+	 * validated.
+	 */
+	if (dir == PFIL_OUT) {
+		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+			in6_delayed_cksum(*mp);
+			(*mp)->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv6|M_CSUM_UDPv6);
+		}
 	}
 
 	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp, NULL)

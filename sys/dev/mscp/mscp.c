@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.22 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: mscp.c,v 1.22.4.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.22 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.22.4.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -417,7 +417,7 @@ rwend:
 		bp->b_resid = bp->b_bcount - mp->mscp_seq.seq_bytecount;
 		bus_dmamap_unload(mi->mi_dmat, mxi->mxi_dmam);
 
-		(*mc->mc_ctlrdone)(mi->mi_dev.dv_parent);
+		(*mc->mc_ctlrdone)(device_parent(&mi->mi_dev));
 		(*me->me_iodone)(drive, bp);
 out:
 		mxi->mxi_inuse = 0;

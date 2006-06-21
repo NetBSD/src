@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.h,v 1.10 2003/08/07 16:33:45 agc Exp $	*/
+/*	$NetBSD: ns_error.h,v 1.10.16.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)ns_error.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_NS_ERROR_H_
+#define _NETNS_NS_ERROR_H_
 
 /*
  * Xerox NS error messages
@@ -86,3 +89,5 @@ struct	ns_errstat {
 #ifdef _KERNEL
 extern	struct	ns_errstat ns_errstat;
 #endif
+
+#endif /* !_NETNS_NS_ERROR_H_ */

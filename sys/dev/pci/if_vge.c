@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.5 2005/05/02 15:34:32 yamt Exp $ */
+/* $NetBSD: if_vge.c,v 1.5.2.1 2006/06/21 15:05:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.5 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.5.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.5 2005/05/02 15:34:32 yamt Exp $");
  */
 
 /*
- * The VIA Networking VT6122 is a 32bit, 33/66Mhz PCI device that
+ * The VIA Networking VT6122 is a 32bit, 33/66 MHz PCI device that
  * combines a tri-speed ethernet MAC and PHY, with the following
  * features:
  *
@@ -127,7 +127,7 @@ static int vge_newbuf		(struct vge_softc *, int, struct mbuf *);
 static int vge_rx_list_init	(struct vge_softc *);
 static int vge_tx_list_init	(struct vge_softc *);
 #ifdef VGE_FIXUP_RX
-static __inline void vge_fixup_rx
+static inline void vge_fixup_rx
 				(struct mbuf *);
 #endif
 static void vge_rxeof		(struct vge_softc *);
@@ -549,15 +549,17 @@ vge_setmulti(sc)
 	vge_cam_clear(sc);
 	CSR_WRITE_4(sc, VGE_MAR0, 0);
 	CSR_WRITE_4(sc, VGE_MAR1, 0);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * If the user wants allmulti or promisc mode, enable reception
 	 * of all multicast frames.
 	 */
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
     allmulti:
 		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
 		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
+		ifp->if_flags |= IFF_ALLMULTI;
 		return;
 	}
 
@@ -571,8 +573,7 @@ vge_setmulti(sc)
 				ETHER_ADDR_LEN) != 0)
 			goto allmulti;
 
-		error = vge_cam_set(sc,
-		    LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
+		error = vge_cam_set(sc, enm->enm_addrlo);
 		if (error)
 			break;
 
@@ -585,12 +586,18 @@ vge_setmulti(sc)
 
 		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 		while(enm != NULL) {
-			h = ether_crc32_be(LLADDR((struct sockaddr_dl *)
-			    enm->enm_addrlo), ETHER_ADDR_LEN) >> 26;
-			if (h < 32)
-				hashes[0] |= (1 << h);
-			else
-				hashes[1] |= (1 << (h - 32));
+			/*
+			 * If multicast range, fall back to ALLMULTI.
+			 */
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+					ETHER_ADDR_LEN) != 0)
+				goto allmulti;
+
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+			hashes[h >> 5] |= 1 << (h & 0x1f);
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
 
 		CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
@@ -890,7 +897,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	if (0 != pci_mapreg_map(pa, VGE_PCI_LOMEM,
-	    PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
+	    PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->vge_btag, &sc->vge_bhandle, NULL, NULL)) {
 		aprint_error("%s: couldn't map memory\n",
 			sc->sc_dev.dv_xname);
@@ -1137,7 +1144,7 @@ vge_rx_list_init(sc)
 }
 
 #ifdef VGE_FIXUP_RX
-static __inline void
+static inline void
 vge_fixup_rx(m)
 	struct mbuf		*m;
 {
@@ -2060,7 +2067,9 @@ vge_ioctl(ifp, command, data)
 	struct vge_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct mii_data		*mii;
-	int			error = 0;
+	int			s, error = 0;
+
+	s = splnet();
 
 	switch (command) {
 	case SIOCSIFMTU:
@@ -2092,7 +2101,19 @@ vge_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		vge_setmulti(sc);
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			if (ifp->if_flags & IFF_RUNNING)
+				vge_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
@@ -2104,6 +2125,7 @@ vge_ioctl(ifp, command, data)
 		break;
 	}
 
+	splx(s);
 	return (error);
 }
 

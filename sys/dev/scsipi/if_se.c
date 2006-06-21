@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.58 2005/06/03 13:44:11 jdc Exp $	*/
+/*	$NetBSD: if_se.c,v 1.58.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58 2005/06/03 13:44:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -216,7 +216,7 @@ static void	sedone(struct scsipi_xfer *, int);
 static int	se_ioctl(struct ifnet *, u_long, caddr_t);
 static void	sewatchdog(struct ifnet *);
 
-static __inline u_int16_t ether_cmp(void *, void *);
+static inline u_int16_t ether_cmp(void *, void *);
 static void	se_recv(void *);
 static struct mbuf *se_get(struct se_softc *, char *, int);
 static int	se_read(struct se_softc *, char *, int);
@@ -231,7 +231,7 @@ static int	se_remove_multi(struct se_softc *, u_int8_t *);
 static int	sc_set_all_multi(struct se_softc *, int);
 #endif
 static void	se_stop(struct se_softc *);
-static __inline int se_scsipi_cmd(struct scsipi_periph *periph,
+static inline int se_scsipi_cmd(struct scsipi_periph *periph,
 			struct scsipi_generic *scsipi_cmd,
 			int cmdlen, u_char *data_addr, int datalen,
 			int retries, int timeout, struct buf *bp,
@@ -275,7 +275,7 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
  * unrolled for speed.
  * Note: use this like memcmp()
  */
-static __inline u_int16_t
+static inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
@@ -314,7 +314,7 @@ seattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct se_softc *sc = (void *)self;
+	struct se_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -371,7 +371,7 @@ seattach(parent, self, aux)
 }
 
 
-static __inline int
+static inline int
 se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
 		       retries, timeout, bp, flags)
 	struct scsipi_periph *periph;
@@ -1156,10 +1156,10 @@ se_disable(sc)
  * open the device.
  */
 int
-seopen(dev, flag, fmt, p)
+seopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit, error;
 	struct se_softc *sc;
@@ -1194,10 +1194,10 @@ seopen(dev, flag, fmt, p)
  * occurence of an open device
  */
 int
-seclose(dev, flag, fmt, p)
+seclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 	struct scsipi_periph *periph = sc->sc_periph;
@@ -1218,14 +1218,14 @@ seclose(dev, flag, fmt, p)
  * Only does generic scsi ioctls.
  */
 int
-seioctl(dev, cmd, addr, flag, p)
+seioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 
-	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, p));
+	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, l));
 }

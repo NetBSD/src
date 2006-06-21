@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.56 2005/05/30 04:17:59 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.56.2.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56 2005/05/30 04:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -159,6 +159,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56 2005/05/30 04:17:59 christos Ex
 #include <netns/ns_if.h>
 #endif
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
+
 #ifdef DECNET
 #include <netdnet/dn.h>
 #endif
@@ -204,9 +209,9 @@ extern struct ifqueue pkintrq;
 
 #define	FDDIADDR(ifp)		LLADDR((ifp)->if_sadl)
 
-static	int fddi_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-static	void fddi_input __P((struct ifnet *, struct mbuf *));
+static	int fddi_output(struct ifnet *, struct mbuf *,
+	    struct sockaddr *, struct rtentry *);
+static	void fddi_input(struct ifnet *, struct mbuf *);
 
 /*
  * FDDI output routine.
@@ -214,11 +219,8 @@ static	void fddi_input __P((struct ifnet *, struct mbuf *));
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-fddi_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+fddi_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	u_int16_t etype;
 	int error = 0, hdrcmplt = 0;
@@ -227,9 +229,29 @@ fddi_output(ifp, m0, dst, rt0)
 	struct rtentry *rt;
 	struct fddi_header *fh;
 	struct mbuf *mcopy = (struct mbuf *)0;
+	struct ifnet *ifp = ifp0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	MCLAIM(m, ifp->if_mowner);
+
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP) {
+		struct ifaddr *ifa;
+
+		/* loop back if this is going to the carp interface */
+		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
+		    ifa->ifa_ifp == ifp0)
+			return (looutput(ifp0, m, dst, rt0));
+
+		ifp = ifp->if_carpdev;
+		/* ac = (struct arpcom *)ifp; */
+
+		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			senderr(ENETDOWN);
+	}
+#endif /* NCARP > 0 */
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
@@ -252,7 +274,7 @@ fddi_output(ifp, m0, dst, rt0)
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 #endif
@@ -296,8 +318,12 @@ fddi_output(ifp, m0, dst, rt0)
 		struct arphdr *ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
                 	memcpy(edst, etherbroadcastaddr, sizeof(edst));
-		else
-			memcpy(edst, ar_tha(ah), sizeof(edst));
+		else {
+			caddr_t tha = ar_tha(ah);
+
+			KASSERT(tha);
+			memcpy(edst, tha, sizeof(edst));
+		}
 
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
@@ -417,8 +443,8 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		struct sockaddr_dl *sdl =
-			(struct sockaddr_dl *) rt->rt_gateway;
+		struct sockaddr_dl *sdl = rt ? 
+			(struct sockaddr_dl *) rt->rt_gateway : NULL;
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {
@@ -556,6 +582,13 @@ fddi_output(ifp, m0, dst, rt0)
 	else
 		memcpy(fh->fddi_shost, FDDIADDR(ifp), sizeof(fh->fddi_shost));
 
+#if NCARP > 0
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
+		memcpy(FDDIADDR(ifp0), fh->fddi_shost, sizeof(fh->fddi_shost));
+
+	if (ifp != ifp0)
+		ifp0->if_obytes += m->m_pkthdr.len;
+#endif /* NCARP > 0 */
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
@@ -570,9 +603,7 @@ bad:
  * the fddi header.
  */
 static void
-fddi_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+fddi_input(struct ifnet *ifp, struct mbuf *m)
 {
 #if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	struct ifqueue *inq;
@@ -647,6 +678,13 @@ fddi_input(ifp, m)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
 		m_adj(m, 8);
+#if NCARP > 0
+		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
+		    (carp_input(m, (u_int8_t *)&fh->fddi_shost,
+		    (u_int8_t *)&fh->fddi_dhost, l->llc_snap.ether_type) == 0))
+			return;
+#endif
+
 		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:
@@ -813,9 +851,7 @@ fddi_input(ifp, m)
  * Perform common duties while attaching to interface list
  */
 void
-fddi_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	caddr_t lla;
+fddi_ifattach(struct ifnet *ifp, caddr_t lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.9.4.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.9.4.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,7 +92,7 @@ lpt_ofisa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct lpt_ofisa_softc *osc = (void *)self;
+	struct lpt_ofisa_softc *osc = device_private(self);
         struct lpt_softc *sc = &osc->sc_lpt;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg;

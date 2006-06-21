@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.17 2005/07/05 23:04:14 he Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.17.2.1 2006/06/21 15:10:46 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.14 2005/01/24 19:32:09 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.22 2005/08/10 16:22:29 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
@@ -102,6 +102,7 @@ struct ieee80211_node {
 #define	IEEE80211_NODE_ERP	0x0004		/* ERP enabled */
 /* NB: this must have the same value as IEEE80211_FC1_PWR_MGT */
 #define	IEEE80211_NODE_PWR_MGT	0x0010		/* power save mode enabled */
+#define	IEEE80211_NODE_AREF	0x0020		/* authentication ref held */
 	u_int16_t		ni_associd;	/* assoc response */
 	u_int16_t		ni_txpower;	/* current transmit power */
 	u_int16_t		ni_vlan;	/* vlan tag */
@@ -133,11 +134,13 @@ struct ieee80211_node {
 	u_int8_t		ni_esslen;
 	u_int8_t		ni_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_rateset ni_rates;	/* negotiated rate set */
-	struct ieee80211_channel *ni_chan;
+	struct ieee80211_channel *ni_chan;	/* XXX multiple uses */
 	u_int16_t		ni_fhdwell;	/* FH only */
 	u_int8_t		ni_fhindex;	/* FH only */
 	u_int8_t		ni_erp;		/* ERP from beacon/probe resp */
 	u_int16_t		ni_timoff;	/* byte offset to TIM ie */
+	u_int8_t		ni_dtim_period;	/* DTIM period */
+	u_int8_t		ni_dtim_count;	/* DTIM count for last bcn */
 
 	/* others */
 	int			ni_fails;	/* failure count to associate */
@@ -183,10 +186,8 @@ ieee80211_node_is_authorized(const struct ieee80211_node *ni)
 	return (ni->ni_flags & IEEE80211_NODE_AUTH);
 }
 
-void	ieee80211_node_authorize(struct ieee80211com *,
-		struct ieee80211_node *);
-void	ieee80211_node_unauthorize(struct ieee80211com *,
-		struct ieee80211_node *);
+void	ieee80211_node_authorize(struct ieee80211_node *);
+void	ieee80211_node_unauthorize(struct ieee80211_node *);
 
 void	ieee80211_begin_scan(struct ieee80211com *, int);
 int	ieee80211_next_scan(struct ieee80211com *);
@@ -194,7 +195,7 @@ void	ieee80211_create_ibss(struct ieee80211com*, struct ieee80211_channel *);
 void	ieee80211_reset_bss(struct ieee80211com *);
 void	ieee80211_cancel_scan(struct ieee80211com *);
 void	ieee80211_end_scan(struct ieee80211com *);
-int	ieee80211_ibss_merge(struct ieee80211com *, struct ieee80211_node *);
+int	ieee80211_ibss_merge(struct ieee80211_node *);
 int	ieee80211_sta_join(struct ieee80211com *, struct ieee80211_node *);
 void	ieee80211_sta_leave(struct ieee80211com *, struct ieee80211_node *);
 
@@ -214,6 +215,8 @@ struct ieee80211_node_table {
 	u_int			nt_scangen;	/* gen# for timeout scan */
 	int			nt_inact_timer;	/* inactivity timer */
 	int			nt_inact_init;	/* initial node inact setting */
+	struct ieee80211_node	**nt_keyixmap;	/* key ix -> node map */
+	int			nt_keyixmax;	/* keyixmap size */
 
 	void			(*nt_timeout)(struct ieee80211_node_table *);
 };
@@ -221,6 +224,8 @@ void	ieee80211_node_table_reset(struct ieee80211_node_table *);
 
 struct ieee80211_node *ieee80211_alloc_node(
 		struct ieee80211_node_table *, const u_int8_t *);
+struct ieee80211_node *ieee80211_tmp_node(struct ieee80211com *,
+		const u_int8_t *macaddr);
 struct ieee80211_node *ieee80211_dup_bss(struct ieee80211_node_table *,
 		const u_int8_t *);
 #ifdef IEEE80211_DEBUG_REFCNT
@@ -231,6 +236,10 @@ struct ieee80211_node *ieee80211_find_node_debug(
 		const char *func, int line);
 struct ieee80211_node * ieee80211_find_rxnode_debug(
 		struct ieee80211com *, const struct ieee80211_frame_min *,
+		const char *func, int line);
+struct ieee80211_node * ieee80211_find_rxnode_withkey_debug(
+		struct ieee80211com *,
+		const struct ieee80211_frame_min *, u_int16_t keyix,
 		const char *func, int line);
 struct ieee80211_node *ieee80211_find_txnode_debug(
 		struct ieee80211com *, const u_int8_t *,
@@ -248,6 +257,8 @@ struct ieee80211_node *ieee80211_find_node_with_ssid_debug(
 	ieee80211_find_node_debug(nt, mac, __func__, __LINE__)
 #define	ieee80211_find_rxnode(nt, wh) \
 	ieee80211_find_rxnode_debug(nt, wh, __func__, __LINE__)
+#define	ieee80211_find_rxnode_withkey(nt, wh, keyix) \
+	ieee80211_find_rxnode_withkey_debug(nt, wh, keyix, __func__, __LINE__)
 #define	ieee80211_find_txnode(nt, mac) \
 	ieee80211_find_txnode_debug(nt, mac, __func__, __LINE__)
 #define	ieee80211_find_node_with_channel(nt, mac, c) \
@@ -260,6 +271,8 @@ struct ieee80211_node *ieee80211_find_node(
 		struct ieee80211_node_table *, const u_int8_t *);
 struct ieee80211_node * ieee80211_find_rxnode(
 		struct ieee80211com *, const struct ieee80211_frame_min *);
+struct ieee80211_node * ieee80211_find_rxnode_withkey(struct ieee80211com *,
+		const struct ieee80211_frame_min *, u_int16_t keyix);
 struct ieee80211_node *ieee80211_find_txnode(
 		struct ieee80211com *, const u_int8_t *);
 struct ieee80211_node *ieee80211_find_node_with_channel(
@@ -269,6 +282,7 @@ struct ieee80211_node *ieee80211_find_node_with_ssid(
 		struct ieee80211_node_table *, const u_int8_t *macaddr,
 		u_int ssidlen, const u_int8_t *ssid);
 #endif
+int	ieee80211_node_delucastkey(struct ieee80211_node *);
 
 struct ieee80211_node *ieee80211_refine_node_for_beacon(
 		struct ieee80211com *, struct ieee80211_node *,
@@ -286,4 +300,41 @@ struct ieee80211_node *ieee80211_fakeup_adhoc_node(
 void	ieee80211_node_join(struct ieee80211com *, struct ieee80211_node *,int);
 void	ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *);
 u_int8_t ieee80211_getrssi(struct ieee80211com *ic);
-#endif /* _NET80211_IEEE80211_NODE_H_ */
+
+/*
+ * Parameters supplied when adding/updating an entry in a
+ * scan cache.  Pointer variables should be set to NULL
+ * if no data is available.  Pointer references can be to
+ * local data; any information that is saved will be copied.
+ * All multi-byte values must be in host byte order.
+ */
+struct ieee80211_scanparams {
+	u_int16_t	capinfo;	/* 802.11 capabilities */
+	u_int16_t	fhdwell;	/* FHSS dwell interval */
+	u_int8_t	chan;		/* */
+	u_int8_t	bchan;
+	u_int8_t	fhindex;
+	u_int8_t	erp;
+	u_int16_t	bintval;
+	u_int8_t	timoff;
+	u_int8_t	*tim;
+	u_int8_t	*tstamp;
+	u_int8_t	*country;
+	u_int8_t	*ssid;
+	u_int8_t	*rates;
+	u_int8_t	*xrates;
+	u_int8_t	*wpa;
+	u_int8_t	*wme;
+};
+
+void	ieee80211_add_scan(struct ieee80211com *,
+		const struct ieee80211_scanparams *,
+		const struct ieee80211_frame *,
+		int subtype, int rssi, int rstamp);
+void ieee80211_init_neighbor(struct ieee80211com *, struct ieee80211_node *,
+		const struct ieee80211_frame *,
+		const struct ieee80211_scanparams *, int);
+struct ieee80211_node *ieee80211_add_neighbor(struct ieee80211com *,
+		const struct ieee80211_frame *,
+		const struct ieee80211_scanparams *);
+#endif /* !_NET80211_IEEE80211_NODE_H_ */

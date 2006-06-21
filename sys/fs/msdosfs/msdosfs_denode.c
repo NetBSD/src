@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.8.2.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8.2.1 2006/06/21 15:09:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8 2005/06/28 09:30:37 yamt Exp 
 #include <sys/kernel.h>		/* defines "time" */
 #include <sys/dirent.h>
 #include <sys/namei.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -86,11 +87,12 @@ static const struct genfs_ops msdosfs_genfsops = {
 	.gop_size = genfs_size,
 	.gop_alloc = msdosfs_gop_alloc,
 	.gop_write = genfs_gop_write,
+	.gop_markupdate = msdosfs_gop_markupdate,
 };
 
-static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
-static void msdosfs_hashins __P((struct denode *));
-static void msdosfs_hashrem __P((struct denode *));
+static struct denode *msdosfs_hashget(dev_t, u_long, u_long);
+static void msdosfs_hashins(struct denode *);
+static void msdosfs_hashrem(struct denode *);
 
 #ifdef _LKM
 MALLOC_DECLARE(M_MSDOSFSFAT);
@@ -224,7 +226,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct denode **depp;		/* returns the addr of the gotten denode */
 {
 	int error;
-	extern int (**msdosfs_vnodeop_p) __P((void *));
+	extern int (**msdosfs_vnodeop_p)(void *);
 	struct direntry *direntptr;
 	struct denode *ldep;
 	struct vnode *nvp;
@@ -376,24 +378,25 @@ deupdat(dep, waitfor)
 	int waitfor;
 {
 
-	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor ? UPDATE_WAIT : 0));
+	return (msdosfs_update(DETOV(dep), NULL, NULL,
+	    waitfor ? UPDATE_WAIT : 0));
 }
 
 /*
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(dep, length, flags, cred, p)
+detrunc(dep, length, flags, cred, l)
 	struct denode *dep;
 	u_long length;
 	int flags;
-	struct ucred *cred;
-	struct proc *p;
+	kauth_cred_t cred;
+	struct lwp *l;
 {
 	int error;
 	int allerror;
 	u_long eofentry;
-	u_long chaintofree;
+	u_long chaintofree = 0;
 	daddr_t bn, lastblock;
 	int boff;
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;
@@ -525,7 +528,7 @@ int
 deextend(dep, length, cred)
 	struct denode *dep;
 	u_long length;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count, osize;
@@ -635,9 +638,9 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
@@ -683,13 +686,31 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, (struct simplelock *)0, l);
 	return (error);
 }
 
 int
 msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 	return 0;
+}
+
+void
+msdosfs_gop_markupdate(struct vnode *vp, int flags)
+{
+	u_long mask = 0;
+
+	if ((flags & GOP_UPDATE_ACCESSED) != 0) {
+		mask = DE_ACCESS;
+	}
+	if ((flags & GOP_UPDATE_MODIFIED) != 0) {
+		mask |= DE_UPDATE;
+	}
+	if (mask) {
+		struct denode *dep = VTODE(vp);
+
+		dep->de_flag |= mask;
+	}
 }

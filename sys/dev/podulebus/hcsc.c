@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.14 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.14.4.1 2006/06/21 15:06:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.14 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.14.4.1 2006/06/21 15:06:27 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -153,7 +153,7 @@ hcsc_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 hcsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hcsc_softc *sc = (struct hcsc_softc *)self;
+	struct hcsc_softc *sc = device_private(self);
 	struct podulebus_attach_args *pa = aux;
 #ifndef NCR5380_USE_BUS_SPACE
 	u_char *iobase;
@@ -235,7 +235,7 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 
 #define TIMEOUT 1000000
 
-static __inline int
+static inline int
 hcsc_ready(struct ncr5380_softc *sc)
 {
 	int i;
@@ -257,7 +257,7 @@ hcsc_ready(struct ncr5380_softc *sc)
 
 
 /* Return zero on success. */
-static __inline void hcsc_wait_not_req(struct ncr5380_softc *sc)
+static inline void hcsc_wait_not_req(struct ncr5380_softc *sc)
 {
 	int timo;
 	for (timo = TIMEOUT; timo; timo--) {

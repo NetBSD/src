@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.95 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.95.4.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.4.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95 2005/02/26 21:34:55 perry Exp $
 #include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -109,19 +110,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95 2005/02/26 21:34:55 perry Exp $
 
 #include <machine/reg.h>
 
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
-
 /*
  * Process debugging system call.
  */
 int
-sys_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ptrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ptrace_args /* {
 		syscallarg(int) req;
@@ -136,6 +129,7 @@ sys_ptrace(l, v, retval)
 	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
+	struct vmspace *vm;
 	int s, error, write, tmp, size;
 	char *path;
 
@@ -160,7 +154,6 @@ sys_ptrace(l, v, retval)
 		break;
 
 	case  PT_ATTACH:
-	case  PT_DUMPCORE:
 		/*
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
@@ -184,9 +177,10 @@ sys_ptrace(l, v, retval)
 		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
-		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+		if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 			ISSET(t->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		    (error = kauth_authorize_generic(p->p_cred,
+				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 
 		/*
@@ -202,7 +196,7 @@ sys_ptrace(l, v, retval)
 		 * not at or above the root directory of the tracee
 		 */
 
-		if (!proc_isunder(t, p))
+		if (!proc_isunder(t, l))
 			return EPERM;
 		break;
 
@@ -215,6 +209,8 @@ sys_ptrace(l, v, retval)
 	case  PT_KILL:
 	case  PT_DETACH:
 	case  PT_LWPINFO:
+	case  PT_SYSCALL:
+	case  PT_DUMPCORE:
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -246,20 +242,27 @@ sys_ptrace(l, v, retval)
 		 *	(2) it's being traced by procfs (which has
 		 *	    different signal delivery semantics),
 		 */
-		if (ISSET(t->p_flag, P_FSTRACE))
+		if (ISSET(t->p_flag, P_FSTRACE)) {
+			uprintf("file system traced\n");
 			return (EBUSY);
+		}
 
 		/*
 		 *	(3) it's not being traced by _you_, or
 		 */
-		if (t->p_pptr != p)
+		if (t->p_pptr != p) {
+			uprintf("parent %d != %d\n", t->p_pptr->p_pid, p->p_pid);
 			return (EBUSY);
+		}
 
 		/*
 		 *	(4) it's not currently stopped.
 		 */
-		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED)) {
+			uprintf("stat %d flag %d\n", t->p_stat,
+			    !ISSET(t->p_flag, P_WAITED));
 			return (EBUSY);
+		}
 		break;
 
 	default:			/* It was not a legal request. */
@@ -314,10 +317,9 @@ sys_ptrace(l, v, retval)
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(unsigned long)SCARG(uap, addr);
 		uio.uio_resid = sizeof(tmp);
-		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_procp = NULL;
-		error = process_domem(p, t, &uio);
+		UIO_SETUP_SYSSPACE(&uio);
+		error = process_domem(l, lt, &uio);
 		if (!write)
 			*retval = tmp;
 		return (error);
@@ -332,8 +334,11 @@ sys_ptrace(l, v, retval)
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
-		uio.uio_segflg = UIO_USERSPACE;
-		uio.uio_procp = p;
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error) {
+			return error;
+		}
+		uio.uio_vmspace = vm;
 		switch (piod.piod_op) {
 		case PIOD_READ_D:
 		case PIOD_READ_I:
@@ -346,9 +351,10 @@ sys_ptrace(l, v, retval)
 		default:
 			return (EINVAL);
 		}
-		error = process_domem(p, t, &uio);
+		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
+		uvmspace_free(vm);
 		return (error);
 
 	case  PT_DUMPCORE:
@@ -380,7 +386,24 @@ sys_ptrace(l, v, retval)
 		 */
 #endif
 	case  PT_CONTINUE:
+	case  PT_SYSCALL:
 	case  PT_DETACH:
+		if (SCARG(uap, req) == PT_SYSCALL) {
+			if (!ISSET(t->p_flag, P_SYSCALL)) {
+				SET(t->p_flag, P_SYSCALL);
+#ifdef __HAVE_SYSCALL_INTERN
+				(*t->p_emul->e_syscall_intern)(t);
+#endif
+			}
+		} else {
+			if (ISSET(t->p_flag, P_SYSCALL)) {
+				CLR(t->p_flag, P_SYSCALL);
+#ifdef __HAVE_SYSCALL_INTERN
+				(*t->p_emul->e_syscall_intern)(t);
+#endif
+			}
+		}
+
 		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
@@ -426,7 +449,7 @@ sys_ptrace(l, v, retval)
 			/* not being traced any more */
 			t->p_opptr = NULL;
 			proclist_unlock_write(s);
-			CLR(t->p_flag, P_TRACED|P_WAITED);
+			CLR(t->p_flag, P_TRACED|P_WAITED|P_SYSCALL|P_FSTRACE);
 		}
 
 	sendsig:
@@ -526,19 +549,24 @@ sys_ptrace(l, v, retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validregs(t))
+		if (!process_validregs(proc_representative_lwp(t)))
 			return (EINVAL);
 		else {
+			error = proc_vmspace_getref(l->l_proc, &vm);
+			if (error) {
+				return error;
+			}
 			iov.iov_base = SCARG(uap, addr);
 			iov.iov_len = sizeof(struct reg);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct reg);
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_procp = p;
-			return (process_doregs(p, lt, &uio));
+			uio.uio_vmspace = vm;
+			error = process_doregs(l, lt, &uio);
+			uvmspace_free(vm);
+			return error;
 		}
 #endif
 
@@ -559,25 +587,30 @@ sys_ptrace(l, v, retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validfpregs(t))
+		if (!process_validfpregs(proc_representative_lwp(t)))
 			return (EINVAL);
 		else {
+			error = proc_vmspace_getref(l->l_proc, &vm);
+			if (error) {
+				return error;
+			}
 			iov.iov_base = SCARG(uap, addr);
 			iov.iov_len = sizeof(struct fpreg);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct fpreg);
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_procp = p;
-			return (process_dofpregs(p, lt, &uio));
+			uio.uio_vmspace = vm;
+			error = process_dofpregs(l, lt, &uio);
+			uvmspace_free(vm);
+			return error;
 		}
 #endif
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		return (ptrace_machdep_dorequest(p, lt,
+		return (ptrace_machdep_dorequest(l, lt,
 		    SCARG(uap, req), SCARG(uap, addr),
 		    SCARG(uap, data)));
 #endif
@@ -590,12 +623,12 @@ sys_ptrace(l, v, retval)
 }
 
 int
-process_doregs(curp, l, uio)
-	struct proc *curp;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct uio *uio;
+process_doregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
+	struct proc *p = l->l_proc;
 	int error;
 	struct reg r;
 	char *kv;
@@ -604,7 +637,7 @@ process_doregs(curp, l, uio)
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, p)) != 0)
 		return error;
 
 	kl = sizeof(r);
@@ -637,24 +670,23 @@ process_doregs(curp, l, uio)
 }
 
 int
-process_validregs(p)
-	struct proc *p;
+process_validregs(struct lwp *l)
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
 }
 
 int
-process_dofpregs(curp, l, uio)
-	struct proc *curp;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct uio *uio;
+process_dofpregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	struct proc *p = l->l_proc;
 	int error;
 	struct fpreg r;
 	char *kv;
@@ -663,7 +695,7 @@ process_dofpregs(curp, l, uio)
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, p)) != 0)
 		return (error);
 
 	kl = sizeof(r);
@@ -696,23 +728,22 @@ process_dofpregs(curp, l, uio)
 }
 
 int
-process_validfpregs(p)
-	struct proc *p;
+process_validfpregs(struct lwp *l)
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
 }
 
 int
-process_domem(curp, p, uio)
-	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
-	struct uio *uio;
+process_domem(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
+	struct proc *p = l->l_proc;	/* traced */
 	struct vmspace *vm;
 	int error;
 
@@ -730,7 +761,7 @@ process_domem(curp, p, uio)
 	addr = uio->uio_offset;
 #endif
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curl, p)) != 0)
 		return (error);
 
 	vm = p->p_vmspace;
@@ -760,9 +791,9 @@ process_domem(curp, p, uio)
  *	t	The process who's memory/registers will be read/written.
  */
 int
-process_checkioperm(p, t)
-	struct proc *p, *t;
+process_checkioperm(struct lwp *l, struct proc *t)
 {
+	struct proc *p = l->l_proc;
 	int error;
 
 	/*
@@ -777,9 +808,10 @@ process_checkioperm(p, t)
 	 *	(2) it's not owned by you, or is set-id on exec
 	 *	    (unless you're root), or...
 	 */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 		ISSET(t->p_flag, P_SUGID)) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			&p->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -794,8 +826,34 @@ process_checkioperm(p, t)
 	 *	(4) the tracer is chrooted, and its root directory is
 	 * 	    not at or above the root directory of the tracee
 	 */
-	if (!proc_isunder(t, p))
+	if (!proc_isunder(t, l))
 		return (EPERM);
 
 	return (0);
+}
+
+void
+process_stoptrace(struct lwp *l)
+{
+	int s = 0, dolock = (l->l_flag & L_SINTR) == 0;
+	struct proc *p = l->l_proc, *pp = p->p_pptr;
+
+	if (pp->p_pid == 1) {
+		CLR(p->p_flag, P_SYSCALL);
+		return;
+	}
+
+	p->p_xstat = SIGTRAP;
+	child_psignal(pp, dolock);
+
+	if (dolock)
+		SCHED_LOCK(s);
+
+	proc_stop(p, 1);
+
+	mi_switch(l, NULL);
+	SCHED_ASSERT_UNLOCKED();
+
+	if (dolock)
+		splx(s);
 }

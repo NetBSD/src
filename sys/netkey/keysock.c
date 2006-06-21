@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.40 2005/01/23 18:41:57 matt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.40.8.1 2006/06/21 15:11:50 yamt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.40 2005/01/23 18:41:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.40.8.1 2006/06/21 15:11:50 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -108,11 +108,11 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
  * derived from net/rtsock.c:route_usrreq()
  */
 int
-key_usrreq(so, req, m, nam, control, p)
+key_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
@@ -144,7 +144,7 @@ key_usrreq(so, req, m, nam, control, p)
 		}
 	}
 
-	error = raw_usrreq(so, req, m, nam, control, p);
+	error = raw_usrreq(so, req, m, nam, control, l);
 	m = control = NULL;	/* reclaimed in raw_usrreq */
 	kp = (struct keycb *)sotorawcb(so);
 	if (req == PRU_ATTACH && kp) {

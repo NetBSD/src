@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.5 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.5.2.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.5 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.5.2.1 2006/06/21 15:09:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.5 2005/05/29 21:00:29 christos 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/direntry.h>
@@ -137,7 +138,7 @@ msdosfs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -353,7 +354,7 @@ notfound:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
 		if (error)
 			return (error);
 
@@ -397,11 +398,20 @@ notfound:
 		return (EJUSTRETURN);
 	}
 
+#if 0
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
+	 *
+	 * XXX Negative caching is broken for msdosfs because the name
+	 * cache doesn't understand peculiarities such as case insensitivity
+	 * and 8.3 filenames.  Hence, it may not invalidate all negative
+	 * entries if a file with this name is later created.
+	 * e.g. creating a file 'foo' won't invalidate a negative entry 
+	 * for 'FOO'.
 	 */
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
 		cache_enter(vdp, *vpp, cnp);
+#endif
 
 	return (ENOENT);
 
@@ -465,7 +475,7 @@ foundroot:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
 		if (error)
 			return (error);
 
@@ -503,7 +513,7 @@ foundroot:
 		if (blkoff == MSDOSFSROOT_OFS)
 			return EROFS;				/* really? XXX */
 
-		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
 		if (error)
 			return (error);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.9 2005/05/29 21:22:53 christos Exp $ */
+/* $NetBSD: zlib.h,v 1.9.2.1 2006/06/21 15:10:28 yamt Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -30,8 +30,8 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifndef _ZLIB_H
-#define _ZLIB_H
+#ifndef _NET_ZLIB_H_
+#define _NET_ZLIB_H_
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
@@ -43,10 +43,10 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.9 2005/05/29 21:22:53 christos Exp $ */
+/* @(#) $Id: zlib.h,v 1.9.2.1 2006/06/21 15:10:28 yamt Exp $ */
 
-#ifndef _ZCONF_H
-#define _ZCONF_H
+#ifndef ZCONF_H
+#define ZCONF_H
 
 /*
  * Warning:  This file pollutes the user's namespace with:
@@ -321,9 +321,11 @@ typedef uLong FAR uLongf;
 #   pragma map(inflate_trees_free,"INTRFR")
 #endif
 
-#endif /* _ZCONF_H */
+#endif /* !ZCONF_H */
 /* --- zconf.h */
 
+#ifndef ZLIB_H
+#define ZLIB_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1183,7 +1185,7 @@ ZEXTERN int ZEXPORT inflateInit2_ __P((z_streamp, int, const char *, int));
         inflateInit2_((strm), (windowBits), ZLIB_VERSION, sizeof(z_stream))
 
 
-#if !defined(_Z_UTIL_H) && !defined(NO_DUMMY_DECL)
+#if !defined(Z_UTIL_H) && !defined(NO_DUMMY_DECL)
     struct internal_state {int dummy;}; /* hack for buggy compilers */
 #endif
 
@@ -1194,6 +1196,7 @@ ZEXTERN const uLongf * ZEXPORT get_crc_table    __P((void));
 #ifdef __cplusplus
 }
 #endif
+#endif /* !ZLIB_H */
 
-#endif /* _ZLIB_H */
+#endif /* !_NET_ZLIB_H_ */
 /* -- zlib.h */

@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.4 2005/02/27 05:18:58 perry Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.4.4.1 2006/06/21 15:02:32 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.4 2005/02/27 00:26:58 perry Exp
+ *	# NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -39,6 +39,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0102",
 	    "MCA Timer",
+	},
+	{
+	    "PNP0103",
+	    "HPET Timer",
 	},
 	{
 	    "PNP0200",
@@ -354,7 +358,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0A03",
-	    "PCI Bus",
+	    "PCI/PCI-X Host Bridge",
 	},
 	{
 	    "PNP0A04",
@@ -362,11 +366,15 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0A05",
-	    "Generic ACPI Bus",
+	    "Generic Container Device",
 	},
 	{
 	    "PNP0A06",
-	    "Generic ACPI Extended-IO Bus (EIO bus)",
+	    "Generic Container Device",
+	},
+	{
+	    "PNP0A08",
+	    "PCI Express/PCI-X Mode-2 Host Bridge",
 	},
 	{
 	    "PNP0800",
@@ -455,6 +463,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C13",
 	    "Plug and Play BIOS (used when ACPI mode cannot be used)",
+	},
+	{
+	    "PNP0C80",
+	    "Memory Device",
 	},
 	{
 	    "PNP0E00",
@@ -619,6 +631,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0FFF",
 	    "Reserved by Microsoft Systems",
+	},
+	{
+	    "SYN1003",
+	    "Synaptics PS/2-style Touchpad",
 	},
 	{
 	    "PNP8001",
@@ -1117,6 +1133,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Generic network adapter",
 	},
 	{
+	    "NSC6001",
+	    "NSC IrDA Fast Infrared Port",
+	},
+	{
 	    "PNPA002",
 	    "Future Domain 16-700 compatible controller",
 	},
@@ -1263,5 +1283,33 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNPC001",
 	    "Compaq 2400/9600 Modem (TBD)",
+	},
+	{
+	    "ACPI0001",
+	    "SMBus 1.0 Host Controller",
+	},
+	{
+	    "ACPI0002",
+	    "Smart Battery Subsystem",
+	},
+	{
+	    "ACPI0003",
+	    "AC Device",
+	},
+	{
+	    "ACPI0004",
+	    "Module Device",
+	},
+	{
+	    "ACPI0005",
+	    "SMBus 2.0 Host Controller",
+	},
+	{
+	    "ACPI0006",
+	    "GPE Block Device",
+	},
+	{
+	    "INT0800",
+	    "Intel FWH Random Number Generator",
 	},
 };

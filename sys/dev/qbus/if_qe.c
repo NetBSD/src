@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.59 2005/02/26 12:45:06 simonb Exp $ */
+/*      $NetBSD: if_qe.c,v 1.59.4.1 2006/06/21 15:06:28 yamt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.59 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.59.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -213,7 +213,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-	struct	qe_softc *sc = (struct qe_softc *)self;
+	struct	qe_softc *sc = device_private(self);
 	struct	ifnet *ifp = (struct ifnet *)&sc->sc_if;
 	struct	qe_ring *rp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];

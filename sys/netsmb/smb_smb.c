@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.24 2005/05/29 21:26:27 christos Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.24.2.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.24 2005/05/29 21:26:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.24.2.1 2006/06/21 15:11:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 	u_int16_t dindex, tw, swlen, bc;
 	int error, maxqsz;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	vcp->vc_hflags = 0;
 	vcp->vc_hflags2 = 0;
@@ -267,7 +267,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	const char *pp;
 	int error, plen, uniplen, ulen, upper;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	upper = 0;
 
@@ -405,7 +405,7 @@ smb_smb_ssnclose(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	int error;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	if (vcp->vc_smbuid == SMB_UID_UNKNOWN)
 		return 0;
@@ -582,7 +582,7 @@ smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 	return error;
 }
 
-static __inline int
+static inline int
 smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	      struct uio *uio, struct smb_cred *scred)
 {
@@ -663,7 +663,7 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	return (error);
 }
 
-static __inline int
+static inline int
 smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	struct uio *uio, struct smb_cred *scred)
 {
@@ -720,7 +720,7 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 	return (error);
 }
 
-static __inline int
+static inline int
 smb_smb_read(struct smb_share *ssp, u_int16_t fid,
 	size_t *len, size_t *rresid, struct uio *uio, struct smb_cred *scred)
 {
@@ -787,6 +787,8 @@ smb_read(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	int error = 0;
 	int rx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_READX);
 
+	resid = 0;	/* XXX gcc */
+
 	tsize = uio->uio_resid;
 	while (tsize > 0) {
 		len = tsize;
@@ -803,7 +805,7 @@ smb_read(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	return error;
 }
 
-static __inline int
+static inline int
 smb_smb_write(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	struct uio *uio, struct smb_cred *scred)
 {
@@ -865,6 +867,8 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	int error = 0;
 	size_t len, tsize, resid;
 	int wx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX);
+
+	resid = 0;	/* XXX gcc */
 
 	tsize = uio->uio_resid;
 	while (tsize > 0) {

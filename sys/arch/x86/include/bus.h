@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2005/04/16 07:53:35 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.2.1 2006/06/21 14:57:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	movb (%2),%%al				;	\
 			stosb					;	\
@@ -293,7 +293,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	movw (%2),%%ax				;	\
 			stosw					;	\
@@ -315,7 +315,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	movl (%2),%%eax				;	\
 			stosl					;	\
@@ -353,7 +353,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	inb %w1,%%al				;	\
 			stosb					;	\
@@ -367,7 +367,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
@@ -386,7 +386,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	inw %w1,%%ax				;	\
 			stosw					;	\
@@ -400,7 +400,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
@@ -419,7 +419,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	inl %w1,%%eax				;	\
 			stosl					;	\
@@ -433,7 +433,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
@@ -516,7 +516,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
 			movb %%al,(%2)				;	\
@@ -537,7 +537,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
 			movw %%ax,(%2)				;	\
@@ -558,7 +558,7 @@ do {									\
 		int dummy2;						\
 		void *dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
 			movl %%eax,(%2)				;	\
@@ -595,7 +595,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
 			outb %%al,%w1				;	\
@@ -609,7 +609,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
@@ -628,7 +628,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
 			outw %%ax,%w1				;	\
@@ -642,7 +642,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
@@ -661,7 +661,7 @@ do {									\
 		void *dummy2;						\
 		int dummy3;						\
 		int __x;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
 			outl %%eax,%w1				;	\
@@ -675,7 +675,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		__asm __volatile("					\
+		__asm volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\

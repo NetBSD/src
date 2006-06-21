@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.1 2005/04/15 17:18:18 itohy Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.1.6.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.1 2005/04/15 17:18:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.1.6.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,16 +85,16 @@ struct ukyopon_softc {
 	struct umodem_softc	sc_umodem;
 
 	/* ukyopon addition */
-	enum ukyopon_port	sc_porttype;
 };
 
 #define UKYOPON_MODEM_IFACE_INDEX	0
 #define UKYOPON_DATA_IFACE_INDEX	3
 
+Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
 Static int	ukyopon_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
 
 Static struct ucom_methods ukyopon_methods = {
-	umodem_get_status,
+	ukyopon_get_status,
 	umodem_set,
 	umodem_param,
 	ukyopon_ioctl,
@@ -134,10 +134,8 @@ USB_ATTACH(ukyopon)
 	USB_ATTACH_START(ukyopon, sc, uaa);
 	struct ucom_attach_args uca;
 
-	sc->sc_porttype = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	uca.portno = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;
-
-	uca.portno = UCOM_UNK_PORTNO;
 	uca.methods = &ukyopon_methods;
 	uca.info = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 	    "modem port" : "data transfer port";
@@ -145,6 +143,21 @@ USB_ATTACH(ukyopon)
 	if (umodem_common_attach(self, &sc->sc_umodem, uaa, &uca))
 		USB_ATTACH_ERROR_RETURN;
 	USB_ATTACH_SUCCESS_RETURN;
+}
+
+Static void
+ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
+{
+	struct ukyopon_softc *sc = addr;
+
+	/*
+	 * The device doesn't set DCD (Data Carrier Detect) bit properly.
+	 * Assume DCD is always present.
+	 */
+	if ((sc->sc_umodem.sc_msr & UMSR_DCD) == 0)
+		sc->sc_umodem.sc_msr |= UMSR_DCD;
+
+	return umodem_get_status(addr, portno, lsr, msr);
 }
 
 Static int
@@ -162,7 +175,7 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 		    USBDEVUNIT(*(device_ptr_t)sc->sc_umodem.sc_udev->bus->usbctl);
 		arg_id->ui_address = sc->sc_umodem.sc_udev->address;
 		arg_id->ui_model = UKYOPON_MODEL_UNKNOWN;
-		arg_id->ui_porttype = sc->sc_porttype;
+		arg_id->ui_porttype = portno;
 		break;
 
 	default:

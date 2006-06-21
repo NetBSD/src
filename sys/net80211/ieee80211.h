@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.13 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.13.2.1 2006/06/21 15:10:45 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.8 2004/12/31 22:44:26 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.10 2005/07/22 16:55:27 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_H_
 #define _NET80211_IEEE80211_H_
@@ -421,15 +421,17 @@ struct ieee80211_tim_ie {
 	u_int8_t	tim_bitmap[1];		/* variable-length bitmap */
 } __packed;
 
+struct ieee80211_band {
+	u_int8_t schan;			/* starting channel */
+	u_int8_t nchan;			/* number channels */
+	u_int8_t maxtxpwr;		/* tx power cap */
+} __packed;
+
 struct ieee80211_country_ie {
 	u_int8_t	ie;			/* IEEE80211_ELEMID_COUNTRY */
 	u_int8_t	len;
 	u_int8_t	cc[3];			/* ISO CC+(I)ndoor/(O)utdoor */
-	struct {
-		u_int8_t schan;			/* starting channel */
-		u_int8_t nchan;			/* number channels */
-		u_int8_t maxtxpwr;		/* tx power cap */
-	} band[4] __packed;			/* up to 4 sub bands */
+	struct ieee80211_band band[4];		/* up to 4 sub bands */
 } __packed;
 
 #define IEEE80211_CHALLENGE_LEN		128
@@ -623,20 +625,22 @@ enum {
 #define	IEEE80211_AID_DEF		128
 
 #define	IEEE80211_AID(b)	((b) &~ 0xc000)
-#define	IEEE80211_AID_SET(b, w) \
-	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_CLR(b, w) \
-	((w)[IEEE80211_AID(b) / 32] &= ~(1 << (IEEE80211_AID(b) % 32)))
-#define	IEEE80211_AID_ISSET(b, w) \
-	((w)[IEEE80211_AID(b) / 32] & (1 << (IEEE80211_AID(b) % 32)))
 
 /* 
  * RTS frame length parameters.  The default is specified in
- * the 802.11 spec.  The max may be wrong for jumbo frames.
+ * the 802.11 spec as 512; we treat it as implementation-dependent
+ * so it's defined in ieee80211_var.h.  The max may be wrong
+ * for jumbo frames.
  */
-#define	IEEE80211_RTS_DEFAULT		512
 #define	IEEE80211_RTS_MIN		1
-#define	IEEE80211_RTS_MAX		IEEE80211_MAX_LEN
+#define	IEEE80211_RTS_MAX		2346
+
+/* 
+ * TX fragmentation parameters.  As above for RTS, we treat
+ * default as implementation-dependent so define it elsewhere.
+ */
+#define	IEEE80211_FRAG_MIN		256
+#define	IEEE80211_FRAG_MAX		2346
 
 /*
  * 802.11 frame duration definitions.
@@ -675,4 +679,4 @@ struct ieee80211_duration {
 				 IEEE80211_DUR_DIFS)
 
 
-#endif /* _NET80211_IEEE80211_H_ */
+#endif /* !_NET80211_IEEE80211_H_ */

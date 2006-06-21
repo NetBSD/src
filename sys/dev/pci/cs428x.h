@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.8 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.8.10.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -60,6 +60,15 @@ struct cs428x_dma {
 #define BUFADDR(p)  ((void *)((p)->dum))  /* buffer for audio driver */
 
 /*
+ * Flags (currently used only for CS4280)
+ */
+enum cs428x_flags {
+	CS428X_FLAG_NONE	= 0x0,
+	CS428X_FLAG_INVAC97EAMP	= 0x1,	/* inverted AC97 external amp */
+	/* XXX future use: clkrun hack */
+};
+
+/*
  * Software state
  */
 struct cs428x_softc {
@@ -118,8 +127,9 @@ struct cs428x_softc {
 
 	/*
 	 * XXX
-	 * Actually thease 2 variables are needed only for CS4280.
+	 * Actually these 3 variables are needed only for CS4280.
 	 */
+	enum cs428x_flags sc_flags;
 	uint32_t pctl;
 	uint32_t cctl;
 

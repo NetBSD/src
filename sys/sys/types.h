@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.67 2005/05/22 12:44:24 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.67.2.1 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -162,7 +162,7 @@ typedef	__gid_t		gid_t;		/* group id */
 #endif
 
 typedef	uint32_t	id_t;		/* group id, process id or user id */
-typedef	uint32_t	ino_t;		/* inode number */
+typedef	uint64_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
@@ -193,7 +193,7 @@ typedef	__uid_t		uid_t;		/* user id */
 
 typedef	int32_t		dtime_t;	/* on-disk time_t */
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 typedef int	boolean_t;
 #ifndef TRUE
 #define	TRUE	1
@@ -292,6 +292,9 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #ifdef _NETBSD_SOURCE
 #include <sys/fd_set.h>
 #define	NBBY	__NBBY
+
+typedef struct kauth_cred *kauth_cred_t;
+
 #endif
 
 #if defined(__STDC__) && defined(_KERNEL)
@@ -305,12 +308,17 @@ struct	user;
 struct	__ucontext;
 struct	proc;
 struct	pgrp;
-struct	ucred;
 struct	rusage;
 struct	file;
 struct	buf;
 struct	tty;
 struct	uio;
+#endif
+
+#ifdef _KERNEL
+#define SET(t, f)	((t) |= (f))
+#define	ISSET(t, f)	((t) & (f))
+#define	CLR(t, f)	((t) &= ~(f))
 #endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)

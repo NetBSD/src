@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.14 2005/04/19 19:00:25 christos Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.14.2.1 2006/06/21 14:58:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.14 2005/04/19 19:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.14.2.1 2006/06/21 14:58:51 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -123,10 +123,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
@@ -197,7 +196,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;
@@ -283,10 +282,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
@@ -356,7 +354,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;

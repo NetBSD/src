@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.14 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: oak.c,v 1.14.4.1 2006/06/21 15:06:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.14 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.14.4.1 2006/06/21 15:06:27 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -143,7 +143,7 @@ oak_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 oak_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct oak_softc *sc = (struct oak_softc *)self;
+	struct oak_softc *sc = device_private(self);
 	struct podulebus_attach_args *pa = aux;
 #ifndef NCR5380_USE_BUS_SPACE
 	u_char *iobase;
@@ -227,7 +227,7 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 
 #define TIMEOUT 1000000
 
-static __inline int
+static inline int
 oak_ready(struct ncr5380_softc *sc)
 {
 	int i;
@@ -268,7 +268,7 @@ oak_ready(struct ncr5380_softc *sc)
 
 
 /* Return zero on success. */
-static __inline void oak_wait_not_req(struct ncr5380_softc *sc)
+static inline void oak_wait_not_req(struct ncr5380_softc *sc)
 {
 	int timo;
 	for (timo = TIMEOUT; timo; timo--) {

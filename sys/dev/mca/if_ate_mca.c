@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.12 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.12.4.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.12 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.12.4.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ ate_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ate_softc *isc = (struct ate_softc *)self;
+	struct ate_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct mca_attach_args *ma = aux;
 	bus_space_tag_t iot = ma->ma_iot;

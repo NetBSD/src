@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.26 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: autri.c,v 1.26.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.26 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.26.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include "midi.h"
 
@@ -204,28 +204,28 @@ static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
 /*
  * register set/clear bit
  */
-static __inline void
+static inline void
 autri_reg_set_1(struct autri_softc *sc, int no, uint8_t mask)
 {
 	bus_space_write_1(sc->memt, sc->memh, no,
 	    (bus_space_read_1(sc->memt, sc->memh, no) | mask));
 }
 
-static __inline void
+static inline void
 autri_reg_clear_1(struct autri_softc *sc, int no, uint8_t mask)
 {
 	bus_space_write_1(sc->memt, sc->memh, no,
 	    (bus_space_read_1(sc->memt, sc->memh, no) & ~mask));
 }
 
-static __inline void
+static inline void
 autri_reg_set_4(struct autri_softc *sc, int no, uint32_t mask)
 {
 	bus_space_write_4(sc->memt, sc->memh, no,
 	    (bus_space_read_4(sc->memt, sc->memh, no) | mask));
 }
 
-static __inline void
+static inline void
 autri_reg_clear_4(struct autri_softc *sc, int no, uint32_t mask)
 {
 	bus_space_write_4(sc->memt, sc->memh, no,
@@ -481,6 +481,13 @@ autri_match(struct device *parent, struct cfdata *match, void *aux)
 	case PCI_VENDOR_TRIDENT:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_TRIDENT_4DWAVE_DX:
+			/*
+			 * IBM makes a pcn network card and improperly
+			 * sets the vendor and product ID's.  Avoid matching.
+			 */
+			if (PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
+				return 0;
+		/* FALLTHROUGH */
 		case PCI_PRODUCT_TRIDENT_4DWAVE_NX:
 			return 1;
 		}
@@ -1361,7 +1368,7 @@ autri_trigger_input(void *addr, void *start, void *end, int blksize,
 	}
 
 #if 0
-	/* 4DWAVE only allows capturing at a 48KHz rate */
+	/* 4DWAVE only allows capturing at a 48 kHz rate */
 	if (sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_DX ||
 	    sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_NX)
 		param->sample_rate = 48000;

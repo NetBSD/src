@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.24 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.24.4.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.24 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.24.4.1 2006/06/21 15:11:50 yamt Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.24 2005/02/26 22:39:50 perry Exp $"
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -154,7 +155,6 @@ idp_output(struct mbuf *m0, ...)
 	struct mbuf *m;
 	struct idp *idp;
 	int len = m0->m_pkthdr.len;
-	struct mbuf *mprev = NULL;
 	extern int idpcksum;
 	va_list ap;
 
@@ -167,6 +167,11 @@ idp_output(struct mbuf *m0, ...)
 	 */
 
 	if (len & 1) {
+		struct mbuf *mprev;
+
+		for (mprev = NULL, m = m0; m; m = m->m_next)
+			mprev = m;
+
 		m = mprev;
 		if ((m->m_flags & M_EXT) == 0 &&
 			(m->m_len + m->m_data < &m->m_dat[MLEN])) {
@@ -340,12 +345,14 @@ u_long	idp_recvspace = 2048;
 /*ARGSUSED*/
 int
 idp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	struct nspcb *nsp;
+	struct proc *p;
 	int s;
 	int error = 0;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
@@ -476,10 +483,13 @@ release:
 /*ARGSUSED*/
 int
 idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
+	struct proc *p;
 	struct nspcb *nsp = sotonspcb(so);
+
+	p = l->l_proc;
 
 	switch (req) {
 
@@ -488,7 +498,8 @@ idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}
@@ -501,7 +512,7 @@ idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	default:
-		error = idp_usrreq(so, req, m, nam, control, p);
+		error = idp_usrreq(so, req, m, nam, control, l);
 		break;
 	}
 	return (error);

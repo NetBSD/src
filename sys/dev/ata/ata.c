@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.70 2005/05/29 22:11:28 christos Exp $      */
+/*      $NetBSD: ata.c,v 1.70.2.1 2006/06/21 15:02:45 yamt Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70 2005/05/29 22:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70.2.1 2006/06/21 15:02:45 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -161,7 +161,8 @@ ata_channel_attach(struct ata_channel *chp)
 	chp->ch_queue->queue_flags = 0;
 	chp->ch_queue->active_xfer = NULL;
 
-	chp->atabus = config_found(&chp->ch_atac->atac_dev, chp, atabusprint);
+	chp->atabus = config_found_ia(&chp->ch_atac->atac_dev, "ata", chp,
+		atabusprint);
 }
 
 static void
@@ -235,8 +236,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
-		    &adev, ataprint);
+		chp->ata_drives[i] = config_found_ia(&atabus_sc->sc_dev,
+		    "ata_hl", &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
 		else {
@@ -584,12 +585,12 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	if (drvp->drive_flags & DRIVE_ATA) {
 		ata_c.r_command = WDCC_IDENTIFY;
 		ata_c.r_st_bmask = WDCS_DRDY;
-		ata_c.r_st_pmask = 0;
+		ata_c.r_st_pmask = WDCS_DRQ;
 		ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		ata_c.r_st_bmask = 0;
-		ata_c.r_st_pmask = 0;
+		ata_c.r_st_pmask = WDCS_DRQ;
 		ata_c.timeout = 10000; /* 10s */
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
@@ -1032,7 +1033,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
-	int cf_flags = drv_dev->dv_cfdata->cf_flags;
+	int cf_flags = device_cfdata(drv_dev)->cf_flags;
 
 	/* if drive or controller don't know its mode, we can't do much */
 	if ((drvp->drive_flags & DRIVE_MODE) == 0 ||
@@ -1273,7 +1274,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		else if (drvp->PIO_cap > 2)
 			drvp->ata_vers = 2; /* should be at last ATA-2 */
 	}
-	cf_flags = drv_dev->dv_cfdata->cf_flags;
+	cf_flags = device_cfdata(drv_dev)->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {
 		s = splbio();
 		drvp->PIO_mode =
@@ -1317,7 +1318,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag, int fmt, struct proc *p)
+atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
         struct atabus_softc *sc;
         int error, unit = minor(dev);
@@ -1339,7 +1340,7 @@ atabusopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 
 int
-atabusclose(dev_t dev, int flag, int fmt, struct proc *p)
+atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
@@ -1351,7 +1352,7 @@ atabusclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 	struct ata_channel *chp = sc->sc_chan;

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.18 2004/09/13 12:55:47 drochner Exp $ */
+/* $NetBSD: atppc.c,v 1.18.12.1 2006/06/21 15:02:53 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.18 2004/09/13 12:55:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.18.12.1 2006/06/21 15:02:53 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -114,7 +114,7 @@ static void atppc_ecp_read_dma(struct atppc_softc *, unsigned int *,
 	unsigned char);
 static void atppc_ecp_read_pio(struct atppc_softc *, unsigned int *,
 	unsigned char);
-static void atppc_ecp_read_error(struct atppc_softc *, const unsigned int);
+static void atppc_ecp_read_error(struct atppc_softc *);
 
 
 /* Functions to write bytes to device's output buffer */
@@ -615,10 +615,6 @@ atppcintr(void *arg)
 	struct device *dev = &atppc->sc_dev;
 	int claim = 1;
 	enum { NONE, READER, WRITER } wake_up = NONE;
-	int s;
-
-	s = splatppc();
-	ATPPC_LOCK(atppc);
 
 	/* Record registers' status */
 	atppc->sc_str_intr = atppc_r_str(atppc);
@@ -719,8 +715,6 @@ atppcintr(void *arg)
 		}
 	}
 
-	ATPPC_UNLOCK(atppc);
-
 	/* Call all of the installed handlers */
 	if (claim) {
 		struct atppc_handler_node * callback;
@@ -729,8 +723,6 @@ atppcintr(void *arg)
 				(*callback->func)(callback->arg);
 		}
 	}
-
-	splx(s);
 
 	return claim;
 }
@@ -1866,7 +1858,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 		if (ecr & ATPPC_FIFO_EMPTY) {
 			/* Check for invalid state */
 			if (ecr & ATPPC_FIFO_FULL) {
-				atppc_ecp_read_error(atppc, worklen);
+				atppc_ecp_read_error(atppc);
 				break;
 			}
 
@@ -1913,7 +1905,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 		}
 
 		if (atppc->sc_inerr) {
-			atppc_ecp_read_error(atppc, worklen);
+			atppc_ecp_read_error(atppc);
 			break;
 		}
 
@@ -1978,7 +1970,7 @@ atppc_ecp_read_pio(struct atppc_softc *atppc, unsigned int *length,
 
 /* Handle errors for ECP reads */
 static void
-atppc_ecp_read_error(struct atppc_softc *atppc, const unsigned int worklen)
+atppc_ecp_read_error(struct atppc_softc *atppc)
 {
 	unsigned char ecr = atppc_r_ecr(atppc);
 

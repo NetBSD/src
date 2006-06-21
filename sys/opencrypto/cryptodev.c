@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.12 2004/11/30 04:25:44 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.12.12.1 2006/06/21 15:12:02 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12 2004/11/30 04:25:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.1 2006/06/21 15:12:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,12 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12 2004/11/30 04:25:44 christos Exp 
 #include <sys/sha1.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
 
 #ifdef __NetBSD__
   #define splcrypto splnet
+#endif
+#ifdef CRYPTO_DEBUG
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
 #endif
 
 struct csession {
@@ -87,17 +93,17 @@ struct fcrypt {
 
 
 /* Declaration of master device (fd-cloning/ctxt-allocating) entrypoints */
-static int	cryptoopen(dev_t dev, int flag, int mode, struct proc *p);
+static int	cryptoopen(dev_t dev, int flag, int mode, struct lwp *l);
 static int	cryptoread(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
-static int	cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
-static int	cryptoselect(dev_t dev, int rw, struct proc *p);
+static int	cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l);
+static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
-static int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *, int);
-static int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *, int);
-static int	cryptof_ioctl(struct file *, u_long, void*, struct proc *p);
-static int	cryptof_close(struct file *, struct proc *);
+static int	cryptof_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+static int	cryptof_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+static int	cryptof_ioctl(struct file *, u_long, void*, struct lwp *l);
+static int	cryptof_close(struct file *, struct lwp *);
 
 static const struct fileops cryptofops = {
     cryptof_read,
@@ -118,7 +124,7 @@ static struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t
     struct auth_hash *);
 static int	csefree(struct csession *);
 
-static int	cryptodev_op(struct csession *, struct crypt_op *, struct proc *);
+static int	cryptodev_op(struct csession *, struct crypt_op *, struct lwp *);
 static int	cryptodev_key(struct crypt_kop *);
 int	cryptodev_dokey(struct crypt_kop *kop, struct crparam kvp[]);
 
@@ -133,7 +139,7 @@ static int	cryptodevkey_cb(void *);
 /* ARGSUSED */
 int
 cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
-	     struct ucred *cred, int flags)
+	     kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
@@ -141,14 +147,14 @@ cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
 /* ARGSUSED */
 int
 cryptof_write(struct file *fp, off_t *poff, struct uio *uio,
-	      struct ucred *cred, int flags)
+	      kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
 
 /* ARGSUSED */
 int
-cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
+cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 {
 	struct cryptoini cria, crie;
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
@@ -192,6 +198,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 			txform = &enc_xform_arc4;
 			break;
 		default:
+			DPRINTF(("Invalid cipher %d\n", sop->cipher));
 			return (EINVAL);
 		}
 
@@ -211,8 +218,11 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 				thash = &auth_hash_hmac_sha2_384;
 			else if (sop->mackeylen == auth_hash_hmac_sha2_512.keysize)
 				thash = &auth_hash_hmac_sha2_512;
-			else
+			else {
+				DPRINTF(("Invalid mackeylen %d\n",
+				    sop->mackeylen));
 				return (EINVAL);
+			}
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
 			thash = &auth_hash_hmac_ripemd_160_96;
@@ -227,6 +237,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 			thash = &auth_hash_null;
 			break;
 		default:
+			DPRINTF(("Invalid mac %d\n", sop->mac));
 			return (EINVAL);
 		}
 
@@ -238,12 +249,15 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 			crie.cri_klen = sop->keylen * 8;
 			if (sop->keylen > txform->maxkey ||
 			    sop->keylen < txform->minkey) {
+				DPRINTF(("keylen %d not in [%d,%d]\n",
+				    sop->keylen, txform->minkey,
+				    txform->maxkey));
 				error = EINVAL;
 				goto bail;
 			}
 
-			MALLOC(crie.cri_key, u_int8_t *,
-			    crie.cri_klen / 8, M_XDATA, M_WAITOK);
+			crie.cri_key = malloc(crie.cri_klen / 8, M_XDATA,
+			    M_WAITOK);
 			if ((error = copyin(sop->key, crie.cri_key,
 			    crie.cri_klen / 8)))
 				goto bail;
@@ -255,13 +269,15 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 			cria.cri_alg = thash->type;
 			cria.cri_klen = sop->mackeylen * 8;
 			if (sop->mackeylen != thash->keysize) {
+				DPRINTF(("mackeylen %d != keysize %d\n",
+				    sop->mackeylen, thash->keysize));
 				error = EINVAL;
 				goto bail;
 			}
 
 			if (cria.cri_klen) {
-				MALLOC(cria.cri_key, u_int8_t *,
-				    cria.cri_klen / 8, M_XDATA, M_WAITOK);
+				cria.cri_key = malloc(cria.cri_klen / 8,
+				    M_XDATA, M_WAITOK);
 				if ((error = copyin(sop->mackey, cria.cri_key,
 				    cria.cri_klen / 8)))
 					goto bail;
@@ -271,9 +287,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
 			    crypto_devallowsoft);
 		if (error) {
-#ifdef CRYPTO_DEBUG
-		  	printf("SIOCSESSION violates kernel parameters\n");
-#endif
+		  	DPRINTF(("SIOCSESSION violates kernel parameters %d\n",
+			    error));
 			goto bail;
 		}
 
@@ -282,6 +297,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 		    thash);
 
 		if (cse == NULL) {
+			DPRINTF(("csecreate failed\n"));
 			crypto_freesession(sid);
 			error = EINVAL;
 			goto bail;
@@ -307,9 +323,11 @@ bail:
 	case CIOCCRYPT:
 		cop = (struct crypt_op *)data;
 		cse = csefind(fcr, cop->ses);
-		if (cse == NULL)
+		if (cse == NULL) {
+			DPRINTF(("csefind failed\n"));
 			return (EINVAL);
-		error = cryptodev_op(cse, cop, p);
+		}
+		error = cryptodev_op(cse, cop, l);
 		break;
 	case CIOCKEY:
 		error = cryptodev_key((struct crypt_kop *)data);
@@ -318,13 +336,14 @@ bail:
 		error = crypto_getfeat((int *)data);
 		break;
 	default:
+		DPRINTF(("invalid ioctl cmd %ld\n", cmd));
 		error = EINVAL;
 	}
 	return (error);
 }
 
 static int
-cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
+cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
@@ -333,16 +352,17 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	if (cop->len > 256*1024-4)
 		return (E2BIG);
 
-	if (cse->txform && (cop->len % cse->txform->blocksize) != 0)
-		return (EINVAL);
+	if (cse->txform) {
+		if (cop->len == 0 || (cop->len % cse->txform->blocksize) != 0)
+			return (EINVAL);
+	}
 
 	bzero(&cse->uio, sizeof(cse->uio));
 	cse->uio.uio_iovcnt = 1;
 	cse->uio.uio_resid = 0;
-	cse->uio.uio_segflg = UIO_SYSSPACE;
 	cse->uio.uio_rw = UIO_WRITE;
-	cse->uio.uio_procp = NULL;
 	cse->uio.uio_iov = cse->iovec;
+	UIO_SETUP_SYSSPACE(&cse->uio);
 	bzero(&cse->iovec, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
 	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
@@ -416,12 +436,14 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		bcopy(cse->tmp_iv, crde->crd_iv, cse->txform->blocksize);
 		crde->crd_flags |= CRD_F_IV_EXPLICIT | CRD_F_IV_PRESENT;
 		crde->crd_skip = 0;
-	} else if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
-		crde->crd_skip = 0;
 	} else if (crde) {
-		crde->crd_flags |= CRD_F_IV_PRESENT;
-		crde->crd_skip = cse->txform->blocksize;
-		crde->crd_len -= cse->txform->blocksize;
+		if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
+			crde->crd_skip = 0;
+		} else {
+			crde->crd_flags |= CRD_F_IV_PRESENT;
+			crde->crd_skip = cse->txform->blocksize;
+			crde->crd_len -= cse->txform->blocksize;
+		}
 	}
 
 	if (cop->mac) {
@@ -545,7 +567,7 @@ cryptodev_key(struct crypt_kop *kop)
 		size = (krp->krp_param[i].crp_nbits + 7) / 8;
 		if (size == 0)
 			continue;
-		MALLOC(krp->krp_param[i].crp_p, caddr_t, size, M_XDATA, M_WAITOK);
+		krp->krp_param[i].crp_p = malloc(size, M_XDATA, M_WAITOK);
 		if (i >= krp->krp_iparams)
 			continue;
 		error = copyin(kop->crk_param[i].crp_p, krp->krp_param[i].crp_p, size);
@@ -587,7 +609,7 @@ fail:
 
 /* ARGSUSED */
 static int
-cryptof_close(struct file *fp, struct proc *p)
+cryptof_close(struct file *fp, struct lwp *l)
 {
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
 	struct csession *cse;
@@ -602,8 +624,8 @@ cryptof_close(struct file *fp, struct proc *p)
 
 	fp->f_data = NULL;
 #if 0
-	FILE_UNUSE(fp, p);	/* release file */
-	fdrelease(p, fd); 	/* release fd table slot */
+	FILE_UNUSE(fp, l);	/* release file */
+	fdrelease(l, fd); 	/* release fd table slot */
 #endif
 
 	return 0;
@@ -681,7 +703,7 @@ csefree(struct csession *cse)
 }
 
 static int
-cryptoopen(dev_t dev, int flag, int mode, struct proc *p)
+cryptoopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
@@ -701,7 +723,7 @@ cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct file *f;
 	struct fcrypt *fcr;
@@ -714,7 +736,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		TAILQ_INIT(&fcr->csessions);
 		fcr->sesn = 0;
 
-		error = falloc(p, &f, &fd);
+		error = falloc(l->l_proc, &f, &fd);
 		if (error) {
 			FREE(fcr, M_XDATA);
 			return (error);
@@ -725,7 +747,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		f->f_data = (caddr_t) fcr;
 		*(u_int32_t *)data = fd;
 		FILE_SET_MATURE(f);
-		FILE_UNUSE(f, p);
+		FILE_UNUSE(f, l);
 		break;
 	default:
 		error = EINVAL;
@@ -735,7 +757,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-cryptoselect(dev_t dev, int rw, struct proc *p)
+cryptoselect(dev_t dev, int rw, struct lwp *l)
 {
 	return (0);
 }
@@ -754,3 +776,16 @@ struct cdevsw crypto_cdevsw = {
 	/* kqfilter */	nokqfilter,
 };
 
+#ifdef __NetBSD__
+/*
+ * Pseudo-device initialization routine for /dev/crypto
+ */
+void	cryptoattach(int);
+
+void
+cryptoattach(int num)
+{
+
+	/* nothing to do */
+}
+#endif /* __NetBSD__ */

@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.34 2005/05/30 04:43:46 christos Exp $        */
+/* $NetBSD: adwlib.c,v 1.34.2.1 2006/06/21 15:02:52 yamt Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.34 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.34.2.1 2006/06/21 15:02:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1636,7 +1636,7 @@ AdwWaitEEPCmd(iot, ioh)
 		AdwSleepMilliSecond(1);
 	}
 
-	ADW_READ_WORD_REGISTER(iot, ioh, IOPW_EE_CMD);
+	(void)ADW_READ_WORD_REGISTER(iot, ioh, IOPW_EE_CMD);
 }
 
 

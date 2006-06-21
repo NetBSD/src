@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.56 2005/06/02 14:03:20 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.56.2.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.56 2005/06/02 14:03:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.56.2.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -184,12 +184,12 @@ int ncr5380_wait_phase_timo = 1000 * 10 * 300;	/* 5 min. */
 int ncr5380_wait_req_timo = 1000 * 50;	/* X2 = 100 mS. */
 int ncr5380_wait_nrq_timo = 1000 * 25;	/* X2 =  50 mS. */
 
-static __inline int ncr5380_wait_req(struct ncr5380_softc *);
-static __inline int ncr5380_wait_not_req(struct ncr5380_softc *);
-static __inline void ncr_sched_msgout(struct ncr5380_softc *, int);
+static inline int ncr5380_wait_req(struct ncr5380_softc *);
+static inline int ncr5380_wait_not_req(struct ncr5380_softc *);
+static inline void ncr_sched_msgout(struct ncr5380_softc *, int);
 
 /* Return zero on success. */
-static __inline int ncr5380_wait_req(sc)
+static inline int ncr5380_wait_req(sc)
 	struct ncr5380_softc *sc;
 {
 	int timo = ncr5380_wait_req_timo;
@@ -206,7 +206,7 @@ static __inline int ncr5380_wait_req(sc)
 }
 
 /* Return zero on success. */
-static __inline int ncr5380_wait_not_req(sc)
+static inline int ncr5380_wait_not_req(sc)
 	struct ncr5380_softc *sc;
 {
 	int timo = ncr5380_wait_nrq_timo;
@@ -223,7 +223,7 @@ static __inline int ncr5380_wait_not_req(sc)
 }
 
 /* Ask the target for a MSG_OUT phase. */
-static __inline void
+static inline void
 ncr_sched_msgout(sc, msg_code)
 	struct ncr5380_softc *sc;
 	int msg_code;

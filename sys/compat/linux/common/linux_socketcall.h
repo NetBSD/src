@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.9 2005/05/03 16:26:30 manu Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.9.2.1 2006/06/21 14:59:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -71,8 +71,9 @@
 #define _LINUX_SOCKETCALL_H
 
 /* Alpha does not use the socketcall multiplexer */
-#if !defined(__alpha__) && !defined(__amd64__)
+#if !defined(__alpha__) && !defined(__amd64__) && !defined(COMPAT_LINUX32)
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
+/* Used for COMPAT_LINUX32 on amd64 */
 /* Not used on: alpha */
 
 /*

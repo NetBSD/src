@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.7 2003/02/20 20:57:56 christos Exp $ */
+/* $NetBSD: envsys.h,v 1.7.18.1 2006/06/21 15:12:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,13 +61,13 @@ typedef struct envsys_range envsys_range_t;
 struct envsys_tre_data {
 	u_int sensor;
 	union {				/* all data is given */
-		u_int32_t data_us;	/* in microKelvins, */
+		uint32_t data_us;	/* in microKelvins, */
 		int32_t data_s;		/* rpms, volts, amps, */
 	} cur, min, max, avg;		/* ohms, watts, etc */
 					/* see units below */
 
-	u_int32_t	warnflags;	/* warning flags */
-	u_int32_t	validflags;	/* sensor valid flags */
+	uint32_t	warnflags;	/* warning flags */
+	uint32_t	validflags;	/* sensor valid flags */
 	u_int		units;		/* type of sensor */
 };
 typedef struct envsys_tre_data envsys_temp_data_t;
@@ -99,7 +99,7 @@ enum envsys_units {
 };
 
 #ifdef ENVSYSUNITNAMES
-static const char *envsysunitnames[] = {
+static const char * const envsysunitnames[] = {
     "degC", "RPM", "VAC", "V", "Ohms", "W",
     "A", "Wh", "Ah", "bool", "integer", "Unk"
 };
@@ -113,7 +113,7 @@ static const char *envsysunitnames[] = {
 #define ENVSYS_FAVGVALID	0x00000010  /* avg for this sens is valid */
 #define ENVSYS_FFRACVALID	0x00000020  /* display fraction of max */
 
-#define ENVSYS_GTREDATA _IOWR('E', 2, envsys_temp_data_t)
+#define ENVSYS_GTREDATA _IOWR('E', 2, envsys_tre_data_t)
 
 /* set and check sensor info */
 
@@ -123,14 +123,14 @@ struct envsys_basic_info {
 	char	desc[33];	/* sensor description */
 	u_int	rfact;		/* for volts, (int)(factor x 10^4) */
 	u_int	rpms;		/* for fans, set nominal RPMs */
-	u_int32_t validflags;	/* sensor valid flags */
+	uint32_t validflags;	/* sensor valid flags */
 };
 typedef struct envsys_basic_info envsys_temp_info_t;
 typedef struct envsys_basic_info envsys_rpm_info_t;
 typedef struct envsys_basic_info envsys_electrical_info_t;
 typedef struct envsys_basic_info envsys_basic_info_t;
 
-#define ENVSYS_STREINFO _IOWR('E', 3, envsys_temp_info_t)
-#define ENVSYS_GTREINFO _IOWR('E', 4, envsys_temp_info_t)
+#define ENVSYS_STREINFO _IOWR('E', 3, envsys_basic_info_t)
+#define ENVSYS_GTREINFO _IOWR('E', 4, envsys_basic_info_t)
 
 #endif /* _SYS_ENVSYS_H_ */

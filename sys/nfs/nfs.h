@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.48 2004/10/26 00:58:54 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.48.12.1 2006/06/21 15:11:58 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -157,15 +157,35 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 /*
  * Set the attribute timeout based on how recently the file has been modified.
  */
-#define	NFS_ATTRTIMEO(np) \
+#define	NFS_ATTRTIMEO(nmp, np) \
+    ((nmp->nm_flag & NFSMNT_NOAC) ? 0 : \
 	((((np)->n_flag & NMODIFIED) || \
-	 (time.tv_sec - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
-	 ((time.tv_sec - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10))
+	 (time_second - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
+	 ((time_second - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
+	  (time_second - (np)->n_mtime.tv_sec) / 10)))
 
 /*
- * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
- * should ever try and use it.
+ * Export arguments for local filesystem mount calls.
+ * Keep in mind that changing this structure modifies nfssvc(2)'s ABI (see
+ * 'struct mountd_exports_list' below).
+ * When modifying this structure, take care to also edit the
+ * nfs_update_exports_30 function in nfs_export.c accordingly to convert
+ * export_args to export_args30.
+ */
+struct export_args {
+	int	ex_flags;		/* export related flags */
+	uid_t	ex_root;		/* mapping for root uid */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
+	struct	sockaddr *ex_addr;	/* net address to which exported */
+	int	ex_addrlen;		/* and the net address length */
+	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
+	int	ex_masklen;		/* and the smask length */
+	char	*ex_indexfile;		/* index file for WebNFS URLs */
+};
+
+/*
+ * Structures for the nfssvc(2) syscall. Not that anyone but mountd, nfsd and
+ * mount_nfs should ever try and use it.
  */
 struct nfsd_args {
 	int	sock;		/* Socket to serve */
@@ -196,6 +216,12 @@ struct nfsd_cargs {
 	u_int		ncd_verflen;	/* and the verifier */
 	u_char		*ncd_verfstr;
 	NFSKERBKEY_T	ncd_key;	/* Session key */
+};
+
+struct mountd_exports_list {
+	const char		*mel_path;
+	size_t			mel_nexports;
+	struct export_args	*mel_exports;
 };
 
 /*
@@ -247,6 +273,7 @@ struct nfsstats {
 #define	NFSSVC_GOTAUTH	0x040
 #define	NFSSVC_AUTHINFAIL 0x080
 #define	NFSSVC_MNTD	0x100
+#define	NFSSVC_SETEXPORTSLIST	0x200
 
 /*
  * fs.nfs sysctl(3) identifiers
@@ -298,7 +325,7 @@ struct nfsreq {
 	int		r_timer;	/* tick counter on reply */
 	u_int32_t	r_procnum;	/* NFS procedure number */
 	int		r_rtt;		/* RTT for rpc */
-	struct proc	*r_procp;	/* Proc that did I/O system call */
+	struct lwp	*r_lwp;		/* LWP that did I/O system call */
 };
 
 /*
@@ -378,7 +405,7 @@ struct nfsuid {
 	LIST_ENTRY(nfsuid) nu_hash;	/* Hash list */
 	int		nu_flag;	/* Flags */
 	union nethostaddr nu_haddr;	/* Host addr. for dgram sockets */
-	struct ucred	nu_cr;		/* Cred uid mapped to */
+	kauth_cred_t	nu_cr;		/* Cred uid mapped to */
 	int		nu_expire;	/* Expiry time (sec) */
 	struct timeval	nu_timestamp;	/* Kerb. timestamp */
 	u_int32_t	nu_nickname;	/* Nickname on server */
@@ -399,6 +426,7 @@ struct nfsuid {
 #endif
 
 struct nfssvc_sock {
+	struct simplelock ns_lock;
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
 	TAILQ_ENTRY(nfssvc_sock) ns_pending;	/* List of pending sockets */
 	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
@@ -416,6 +444,7 @@ struct nfssvc_sock {
 	int		ns_reclen;
 	int		ns_numuids;
 	u_int32_t	ns_sref;
+	SIMPLEQ_HEAD(, nfsrv_descript) ns_sendq; /* send reply list */
 	LIST_HEAD(, nfsrv_descript) ns_tq;	/* Write gather lists */
 	LIST_HEAD(, nfsuid) ns_uidhashtbl[NFS_UIDHASHSIZ];
 	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript) ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
@@ -423,12 +452,13 @@ struct nfssvc_sock {
 
 /* Bits for "ns_flag" */
 #define	SLP_VALID	0x01
-#define	SLP_DOREC	0x02
+#define	SLP_DOREC	0x02	/* on nfssvc_sockpending queue */
 #define	SLP_NEEDQ	0x04
 #define	SLP_DISCONN	0x08
-#define	SLP_GETSTREAM	0x10
-#define	SLP_LASTFRAG	0x20
-#define SLP_ALLFLAGS	0xff
+#define	SLP_BUSY	0x10
+#define	SLP_WANT	0x20
+#define	SLP_LASTFRAG	0x40
+#define	SLP_SENDING	0x80
 
 extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
 extern struct nfssvc_sockhead nfssvc_sockpending;
@@ -453,8 +483,6 @@ struct nfsd {
 };
 
 /* Bits for "nfsd_flag" */
-#define	NFSD_WAITING	0x01
-#define	NFSD_REQINPROG	0x02
 #define	NFSD_NEEDAUTH	0x04
 #define	NFSD_AUTHFAIL	0x08
 
@@ -469,6 +497,7 @@ struct nfsrv_descript {
 	LIST_ENTRY(nfsrv_descript) nd_hash;	/* Hash list */
 	LIST_ENTRY(nfsrv_descript) nd_tq;		/* and timer list */
 	LIST_HEAD(,nfsrv_descript) nd_coalesce;	/* coalesced writes */
+	SIMPLEQ_ENTRY(nfsrv_descript) nd_sendq;	/* send reply list */
 	struct mbuf		*nd_mrep;	/* Request mbuf list */
 	struct mbuf		*nd_md;		/* Current dissect mbuf */
 	struct mbuf		*nd_mreq;	/* Reply mbuf list */
@@ -484,7 +513,7 @@ struct nfsrv_descript {
 	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
 	fhandle_t		nd_fh;		/* File handle */
-	struct ucred		nd_cr;		/* Credentials */
+	kauth_cred_t	 	nd_cr;		/* Credentials */
 };
 
 /* Bits for "nd_flag" */
@@ -515,11 +544,6 @@ extern int nfs_numasync;
 		((o)->nd_eoff >= (n)->nd_off && \
 		 !memcmp((caddr_t)&(o)->nd_fh, (caddr_t)&(n)->nd_fh, NFSX_V3FH))
 
-#define NFSW_SAMECRED(o, n) \
-	(((o)->nd_flag & ND_KERBAUTH) == ((n)->nd_flag & ND_KERBAUTH) && \
- 	 !memcmp((caddr_t)&(o)->nd_cr, (caddr_t)&(n)->nd_cr, \
-		sizeof (struct ucred)))
-
 /*
  * Defines for WebNFS
  */
@@ -543,6 +567,17 @@ extern int nfs_numasync;
 	    ((c) >= 'A' ? ((c) - ('A' - 10)) : ((c) - '0')))
 #define HEXSTRTOI(p) \
 	((HEXTOC(p[0]) << 4) + HEXTOC(p[1]))
+
+/*
+ * Structure holding information for a publicly exported filesystem
+ * (WebNFS).  Currently the specs allow just for one such filesystem.
+ */
+struct nfs_public {
+	int		np_valid;	/* Do we hold valid information */
+	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
+	struct mount	*np_mount;	/* Mountpoint of exported fs */
+	char		*np_index;	/* Index file */
+};
 #endif	/* _KERNEL */
 
 #endif /* _NFS_NFS_H */

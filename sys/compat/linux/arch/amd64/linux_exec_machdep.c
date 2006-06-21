@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.2.2.1 2006/06/21 14:59:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2.2.1 2006/06/21 14:59:01 yamt Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl 
 #include <sys/exec.h>
 #include <sys/stat.h>
 #include <sys/exec_elf.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
@@ -67,9 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/05/20 12:48:27 fvdl 
 #include <compat/linux/common/linux_errno.h>
 
 int
-linux_exec_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
 	u_long max_stack_size;
 	u_long access_linear_min, access_size;
@@ -94,7 +93,7 @@ linux_exec_setup_stack(p, epp)
 
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
@@ -121,8 +120,8 @@ linux_exec_setup_stack(p, epp)
 }
 
 int
-ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -130,7 +129,8 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 {
 	struct linux_extra_stack_data64 *esdp, esd;
 	struct elf_args *ap;
-	struct vattr *vap; 
+	struct vattr *vap;
+	struct proc *p = l->l_proc;
 	Elf_Ehdr *eh;
 	Elf_Phdr *ph;
 	u_long phsize;
@@ -138,7 +138,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	int error;
 	int i;
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	/*
@@ -157,7 +157,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	if (ap == NULL) {
 		phsize = eh->e_phnum * sizeof(Elf_Phdr);
 		ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-		error = exec_read_from(p, pack->ep_vp, eh->e_phoff, ph, phsize);
+		error = exec_read_from(l, pack->ep_vp, eh->e_phoff, ph, phsize);
 		if (error != 0) {
 			for (i = 0; i < eh->e_phnum; i++) {
 				if (ph[i].p_type == PT_PHDR) {
@@ -207,17 +207,17 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 
 	esd.ai[i].a_type = LINUX_AT_EGID;
 	esd.ai[i++].a_v =
-	    ((vap->va_mode & S_ISGID) ? vap->va_gid : p->p_ucred->cr_gid);
+	    ((vap->va_mode & S_ISGID) ? vap->va_gid : kauth_cred_getegid(p->p_cred));
 
 	esd.ai[i].a_type = LINUX_AT_GID;
-	esd.ai[i++].a_v = p->p_cred->p_rgid;
+	esd.ai[i++].a_v = kauth_cred_getgid(p->p_cred);
 
 	esd.ai[i].a_type = LINUX_AT_EUID;
 	esd.ai[i++].a_v = 
-	    ((vap->va_mode & S_ISUID) ? vap->va_uid : p->p_ucred->cr_uid);
+	    ((vap->va_mode & S_ISUID) ? vap->va_uid : kauth_cred_geteuid(p->p_cred));
 
 	esd.ai[i].a_type = LINUX_AT_UID;
-	esd.ai[i++].a_v = p->p_cred->p_ruid;
+	esd.ai[i++].a_v = kauth_cred_getuid(p->p_cred);
 
 	esd.ai[i].a_type = LINUX_AT_SECURE;
 	esd.ai[i++].a_v = 0;

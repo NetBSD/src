@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.27 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.27.4.1 2006/06/21 14:58:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.27 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.27.4.1 2006/06/21 14:58:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ hpux_sys_creat(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	SCARG(&oa, path) = SCARG(uap, path);
 	SCARG(&oa, flags) = O_CREAT | O_TRUNC | O_WRONLY;
@@ -245,9 +245,9 @@ hpux_sys_open(l, v, retval)
 	 * Do the alternate pathname check.
 	 */
 	if (SCARG(&oa, flags) & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	else
-		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/*
 	 * Fill in the new arguments and call the NetBSD open(2).
@@ -450,7 +450,7 @@ hpux_sys_fstat(l, v, retval)
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args fsa;
+	struct sys___fstat30_args fsa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -463,7 +463,7 @@ hpux_sys_fstat(l, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(l, &fsa, retval)))
+	if ((error = sys___fstat30(l, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -515,7 +515,7 @@ hpux_stat1(l, v, retval, dolstat)
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args sa;
+	struct sys___stat30_args sa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -523,15 +523,15 @@ hpux_stat1(l, v, retval, dolstat)
 
 	sg = stackgap_init(p, 0);
 	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
 	if (dolstat)
-		error = sys___lstat13(l, &sa, retval);
+		error = sys___lstat30(l, &sa, retval);
 	else
-		error = sys___stat13(l, &sa, retval);
+		error = sys___stat30(l, &sa, retval);
 
 	if (error)
 		return (error);
@@ -558,7 +558,7 @@ hpux_sys_fstat_6x(l, v, retval)
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args fsa;
+	struct sys___fstat30_args fsa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -571,7 +571,7 @@ hpux_sys_fstat_6x(l, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(l, &fsa, retval)))
+	if ((error = sys___fstat30(l, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -596,7 +596,7 @@ hpux_sys_stat_6x(l, v, retval)
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args sa;
+	struct sys___stat30_args sa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -604,13 +604,13 @@ hpux_sys_stat_6x(l, v, retval)
 
 	sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &sa, retval)))
+	if ((error = sys___stat30(l, &sa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -703,7 +703,7 @@ hpux_sys_access(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_access(l, uap, retval));
 }
@@ -723,7 +723,7 @@ hpux_sys_unlink(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_unlink(l, uap, retval));
 }
@@ -743,7 +743,7 @@ hpux_sys_chdir(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_chdir(l, uap, retval));
 }
@@ -766,7 +766,7 @@ hpux_sys_mknod(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_mkfifo_args bma;
 
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	/*
 	 * BSD handles FIFOs separately.
@@ -795,7 +795,7 @@ hpux_sys_chmod(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_chmod(l, uap, retval));
 }
@@ -817,7 +817,7 @@ hpux_sys_chown(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/* XXX What about older HP-UX executables? */
 
@@ -840,8 +840,8 @@ hpux_sys_rename(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, to));
 
 	return (sys___posix_rename(l, uap, retval));
 }
@@ -862,7 +862,7 @@ hpux_sys_mkdir(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	return (sys_mkdir(l, uap, retval));
 }
@@ -882,7 +882,7 @@ hpux_sys_rmdir(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_rmdir(l, uap, retval));
 }
@@ -903,8 +903,8 @@ hpux_sys_symlink(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, link));
 
 	return (sys_symlink(l, uap, retval));
 }
@@ -926,7 +926,7 @@ hpux_sys_readlink(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
 	return (sys_readlink(l, uap, retval));
 }
@@ -947,7 +947,7 @@ hpux_sys_truncate(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_truncate(l, uap, retval));
 }

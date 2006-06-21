@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.19 2004/12/05 04:15:16 christos Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.19.12.1 2006/06/21 15:10:27 yamt Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -95,9 +95,9 @@ struct ppp_softc {
 	int	sc_unit;		/* XXX unit number */
 	u_int	sc_flags;		/* control/status bits; see if_ppp.h */
 	void	*sc_devp;		/* pointer to device-dep structure */
-	void	(*sc_start) __P((struct ppp_softc *));	/* start output proc */
-	void	(*sc_ctlp) __P((struct ppp_softc *)); /* rcvd control pkt */
-	void	(*sc_relinq) __P((struct ppp_softc *)); /* relinquish ifunit */
+	void	(*sc_start)(struct ppp_softc *);	/* start output proc */
+	void	(*sc_ctlp)(struct ppp_softc *); /* rcvd control pkt */
+	void	(*sc_relinq)(struct ppp_softc *); /* relinquish ifunit */
 	struct	callout sc_timo_ch;	/* timeout callout */
 	u_int16_t sc_mru;		/* max receive unit */
 	pid_t	sc_xfer;		/* used in transferring unit */
@@ -141,6 +141,12 @@ struct ppp_softc {
 	u_int16_t sc_ilen;		/* length of input packet so far */
 	u_int16_t sc_fcs;		/* FCS so far (input) */
 	u_int16_t sc_outfcs;		/* FCS so far for output packet */
+	u_int16_t sc_maxfastq;		/* Maximum number of packets that
+					 * can be received back-to-back in
+					 * the high priority queue */
+	u_int8_t sc_nfastq;		/* Number of packets received
+					 * back-to-back in the high priority
+					 * queue */
 	u_char sc_rawin_start;		/* current char start */
 	struct ppp_rawin sc_rawin;	/* chars as received */
 	LIST_ENTRY(ppp_softc) sc_iflist;
@@ -148,14 +154,14 @@ struct ppp_softc {
 
 #ifdef _KERNEL
 
-struct	ppp_softc *pppalloc __P((pid_t));
-void	pppdealloc __P((struct ppp_softc *));
-int	pppioctl __P((struct ppp_softc *, u_long, caddr_t, int, struct proc *));
-void	ppp_restart __P((struct ppp_softc *));
-void	ppppktin __P((struct ppp_softc *, struct mbuf *, int));
-struct	mbuf *ppp_dequeue __P((struct ppp_softc *));
-int	pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *));
+struct	ppp_softc *pppalloc(pid_t);
+void	pppdealloc(struct ppp_softc *);
+int	pppioctl(struct ppp_softc *, u_long, caddr_t, int, struct proc *);
+void	ppp_restart(struct ppp_softc *);
+void	ppppktin(struct ppp_softc *, struct mbuf *, int);
+struct	mbuf *ppp_dequeue(struct ppp_softc *);
+int	pppoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *);
 #endif /* _KERNEL */
 
-#endif /* _NET_IF_PPPVAR_H_ */
+#endif /* !_NET_IF_PPPVAR_H_ */

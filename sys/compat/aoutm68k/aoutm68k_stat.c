@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.10 2003/06/29 22:29:12 fvdl Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.10.18.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10 2003/06/29 22:29:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.18.1 2006/06/21 14:58:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10 2003/06/29 22:29:12 fvdl Exp 
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/stat.h>
 
 #include <compat/aoutm68k/aoutm68k_util.h>
 #include <compat/aoutm68k/aoutm68k_stat.h>
@@ -85,7 +87,7 @@ aoutm68k_compat_43_sys_stat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -140,7 +142,7 @@ aoutm68k_compat_43_sys_lstat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -171,7 +173,7 @@ aoutm68k_compat_12_sys_stat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -226,7 +228,7 @@ aoutm68k_compat_12_sys_lstat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -249,18 +251,18 @@ aoutm68k_sys___stat13(l, v, retval)
 	struct aoutm68k_sys___stat13_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys___stat13_args cup;
+	struct sys___stat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0 ||
+	if ((error = sys___stat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -278,7 +280,7 @@ aoutm68k_sys___fstat13(l, v, retval)
 	struct aoutm68k_sys___fstat13_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys___fstat13_args cup;
+	struct sys___fstat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
@@ -286,7 +288,7 @@ aoutm68k_sys___fstat13(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0 ||
+	if ((error = sys___fstat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -305,18 +307,18 @@ aoutm68k_sys___lstat13(l, v, retval)
 	struct aoutm68k_sys___lstat13_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys___lstat13_args cup;
+	struct sys___lstat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0 ||
+	if ((error = sys___lstat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -334,7 +336,7 @@ aoutm68k_sys_fhstat(l, v, retval)
 	struct aoutm68k_sys_fhstat_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys_fhstat_args cup;
+	struct sys___fhstat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
@@ -342,7 +344,7 @@ aoutm68k_sys_fhstat(l, v, retval)
 	SCARG(&cup, fhp) = SCARG(uap, fhp);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = sys_fhstat(l, &cup, retval)) != 0 ||
+	if ((error = sys___fhstat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 

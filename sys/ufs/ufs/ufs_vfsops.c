@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.22.8.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22.8.1 2006/06/21 15:12:39 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
 #include "opt_quota.h"
 #endif
 
@@ -50,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -62,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $
 #endif
 
 /* how many times ufs_init() was called */
-int ufs_initcount = 0;
+static int ufs_initcount = 0;
 
 POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
     &pool_allocator_nointr);
@@ -73,10 +75,7 @@ POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
  */
 /* ARGSUSED */
 int
-ufs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+ufs_start(struct mount *mp, int flags, struct lwp *l)
 {
 
 	return (0);
@@ -86,9 +85,7 @@ ufs_start(mp, flags, p)
  * Return the root of a filesystem.
  */
 int
-ufs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+ufs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -103,32 +100,30 @@ ufs_root(mp, vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(mp, cmds, uid, arg, p)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct proc *p;
+ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 {
 
 #ifndef QUOTA
 	return (EOPNOTSUPP);
 #else
 	int cmd, type, error;
+	struct proc *p;
 
+	p = l->l_proc;
 	if (uid == -1)
-		uid = p->p_cred->p_ruid;
+		uid = kauth_cred_getuid(p->p_cred);
 	cmd = cmds >> SUBCMDSHIFT;
 
 	switch (cmd) {
 	case Q_SYNC:
 		break;
 	case Q_GETQUOTA:
-		if (uid == p->p_cred->p_ruid)
+		if (uid == kauth_cred_getuid(p->p_cred))
 			break;
 		/* fall through */
 	default:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 	}
 
@@ -141,11 +136,11 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	switch (cmd) {
 
 	case Q_QUOTAON:
-		error = quotaon(p, mp, type, arg);
+		error = quotaon(l, mp, type, arg);
 		break;
 
 	case Q_QUOTAOFF:
-		error = quotaoff(p, mp, type);
+		error = quotaoff(l, mp, type);
 		break;
 
 	case Q_SETQUOTA:
@@ -173,40 +168,11 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 }
 
 /*
- * Verify a remote client has export rights and return these rights via.
- * exflagsp and credanonp.
- */
-int
-ufs_check_export(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct netcred *np;
-	struct ufsmount *ump = VFSTOUFS(mp);
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
-}
-
-/*
  * This is the generic part of fhtovp called after the underlying
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(mp, ufhp, vpp)
-	struct mount *mp;
-	struct ufid *ufhp;
-	struct vnode **vpp;
+ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
@@ -230,7 +196,7 @@ ufs_fhtovp(mp, ufhp, vpp)
  * Initialize UFS filesystems, done only once.
  */
 void
-ufs_init()
+ufs_init(void)
 {
 	if (ufs_initcount++ > 0)
 		return;
@@ -250,7 +216,7 @@ ufs_init()
 }
 
 void
-ufs_reinit()
+ufs_reinit(void)
 {
 	ufs_ihashreinit();
 #ifdef QUOTA
@@ -262,7 +228,7 @@ ufs_reinit()
  * Free UFS filesystem resources, done only once.
  */
 void
-ufs_done()
+ufs_done(void)
 {
 	if (--ufs_initcount > 0)
 		return;

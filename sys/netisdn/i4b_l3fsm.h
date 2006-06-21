@@ -27,7 +27,7 @@
  *      i4b_l3fsm.c - layer 3 FSM
  *      -------------------------
  *
- *	$Id: i4b_l3fsm.h,v 1.2 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_l3fsm.h,v 1.2.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_L3FSM_H_
-#define _I4B_L3FSM_H_
+#ifndef _NETISDN_I4B_L3FSM_H_
+#define _NETISDN_I4B_L3FSM_H_
 
 enum Q931_states {
 	ST_U0,
@@ -104,4 +104,4 @@ enum Q931_events {
 	N_EVENTS
 };
 
-#endif /* _I4B_L3FSM_H_ */
+#endif /* !_NETISDN_I4B_L3FSM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.35.12.1 2006/06/21 15:10:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35.12.1 2006/06/21 15:10:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,20 +48,20 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $");
 /*
  * Prototypes for dead operations on vnodes.
  */
-int	dead_lookup	__P((void *));
+int	dead_lookup(void *);
 #define dead_create	genfs_badop
 #define dead_mknod	genfs_badop
-int	dead_open	__P((void *));
+int	dead_open(void *);
 #define dead_close	genfs_nullop
 #define dead_access	genfs_ebadf
 #define dead_getattr	genfs_ebadf
 #define dead_setattr	genfs_ebadf
-int	dead_read	__P((void *));
-int	dead_write	__P((void *));
+int	dead_read(void *);
+int	dead_write(void *);
 #define dead_lease_check genfs_nullop
 #define dead_fcntl	genfs_nullop
-int	dead_ioctl	__P((void *));
-int	dead_poll	__P((void *));
+int	dead_ioctl(void *);
+int	dead_poll(void *);
 #define dead_mmap	genfs_badop
 #define dead_fsync	genfs_nullop
 #define dead_seek	genfs_nullop
@@ -76,26 +76,21 @@ int	dead_poll	__P((void *));
 #define dead_abortop	genfs_badop
 #define dead_inactive	genfs_nullop
 #define dead_reclaim	genfs_nullop
-int	dead_lock	__P((void *));
+int	dead_lock(void *);
 #define dead_unlock	genfs_nullop
-int	dead_bmap	__P((void *));
-int	dead_strategy	__P((void *));
-int	dead_print	__P((void *));
+int	dead_bmap(void *);
+int	dead_strategy(void *);
+int	dead_print(void *);
 #define dead_islocked	genfs_nullop
 #define dead_pathconf	genfs_ebadf
 #define dead_advlock	genfs_ebadf
-#define dead_blkatoff	genfs_badop
-#define dead_valloc	genfs_badop
-#define dead_vfree	genfs_badop
-#define dead_truncate	genfs_nullop
-#define dead_update	genfs_nullop
 #define dead_bwrite	genfs_nullop
 #define dead_revoke	genfs_nullop
 #define dead_putpages	genfs_null_putpages
 
-int	chkvnlock __P((struct vnode *));
+int	chkvnlock(struct vnode *);
 
-int (**dead_vnodeop_p) __P((void *));
+int (**dead_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -136,11 +131,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_islocked_desc, dead_islocked },		/* islocked */
 	{ &vop_pathconf_desc, dead_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, dead_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, dead_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, dead_valloc },		/* valloc */
-	{ &vop_vfree_desc, dead_vfree },		/* vfree */
-	{ &vop_truncate_desc, dead_truncate },		/* truncate */
-	{ &vop_update_desc, dead_update },		/* update */
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, dead_putpages },		/* putpages */
 	{ NULL, NULL }
@@ -190,7 +180,7 @@ dead_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 
 	if (chkvnlock(ap->a_vp))
@@ -215,7 +205,7 @@ dead_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 
 	if (chkvnlock(ap->a_vp))
@@ -236,8 +226,8 @@ dead_ioctl(v)
 		u_long a_command;
 		void *a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (!chkvnlock(ap->a_vp))
@@ -253,7 +243,7 @@ dead_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*

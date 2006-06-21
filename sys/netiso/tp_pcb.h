@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.17 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.17.4.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -138,7 +138,7 @@ struct nl_protosw {
 	int		(*nlp_pcbbind)		/* bind to pcb for net level */
 				(void *, struct mbuf *, struct proc *);
 	int		(*nlp_pcbconn)		/* connect for net level */
-				(void *, struct mbuf *);
+				(void *, struct mbuf *, struct proc *);
 	void		(*nlp_pcbdisc)		/* disconnect net level */
 				(void *);
 	void		(*nlp_pcbdetach)	/* detach net level pcb */
@@ -372,4 +372,4 @@ extern struct tp_pcb *tp_ftimeolist;
 #define tpcbtoso(tp)	((struct socket *)((tp)->tp_sock))
 #define tpcbtoref(tp)	((struct tp_ref *)((tp)->tp_ref))
 
-#endif /* _NETISO_TP_PCB_H_ */
+#endif /* !_NETISO_TP_PCB_H_ */

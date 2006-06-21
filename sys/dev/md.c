@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.41.2.1 2006/06/21 15:02:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.41 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.41.2.1 2006/06/21 15:02:12 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -86,7 +86,7 @@ struct md_softc {
 	struct device sc_dev;	/* REQUIRED first entry */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
-	struct bufq_state sc_buflist;
+	struct bufq_state *sc_buflist;
 };
 /* shorthand for fields in sc_md: */
 #define sc_addr sc_md.md_addr
@@ -163,7 +163,7 @@ md_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
 
-	bufq_alloc(&sc->sc_buflist, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
 	/* XXX - Could accept aux info here to set the config. */
 #ifdef	MEMORY_DISK_HOOKS
@@ -172,7 +172,7 @@ md_attach(struct device *parent, struct device *self, void *aux)
 	 * All it would need to do is setup the md_conf struct.
 	 * See sys/dev/md_root.c for an example.
 	 */
-	md_attach_hook(sc->sc_dev.dv_unit, &sc->sc_md);
+	md_attach_hook(device_unit(&sc->sc_dev), &sc->sc_md);
 #endif
 
 	/*
@@ -192,10 +192,10 @@ md_attach(struct device *parent, struct device *self, void *aux)
 #if MEMORY_DISK_SERVER
 static int	md_server_loop(struct md_softc *sc);
 static int	md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
-		    struct proc *proc);
+		    struct lwp *l);
 #endif	/* MEMORY_DISK_SERVER */
 static int	md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
-		    struct proc *proc);
+		    struct lwp *l);
 
 static int
 mdsize(dev_t dev)
@@ -217,7 +217,7 @@ mdsize(dev_t dev)
 }
 
 static int
-mdopen(dev_t dev, int flag, int fmt, struct proc *proc)
+mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -251,7 +251,7 @@ mdopen(dev_t dev, int flag, int fmt, struct proc *proc)
 }
 
 static int
-mdclose(dev_t dev, int flag, int fmt, struct proc *proc)
+mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
 
@@ -326,7 +326,7 @@ mdstrategy(struct buf *bp)
 #if MEMORY_DISK_SERVER
 	case MD_UMEM_SERVER:
 		/* Just add this job to the server's queue. */
-		BUFQ_PUT(&sc->sc_buflist, bp);
+		BUFQ_PUT(sc->sc_buflist, bp);
 		wakeup((caddr_t)sc);
 		/* see md_server_loop() */
 		/* no biodone in this case */
@@ -366,7 +366,7 @@ mdstrategy(struct buf *bp)
 }
 
 static int
-mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
+mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -391,10 +391,10 @@ mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 			break;
 		switch (umd->md_type) {
 		case MD_KMEM_ALLOCATED:
-			return md_ioctl_kalloc(sc, umd, proc);
+			return md_ioctl_kalloc(sc, umd, l);
 #if MEMORY_DISK_SERVER
 		case MD_UMEM_SERVER:
-			return md_ioctl_server(sc, umd, proc);
+			return md_ioctl_server(sc, umd, l);
 #endif	/* MEMORY_DISK_SERVER */
 		default:
 			break;
@@ -409,7 +409,7 @@ mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
  * Just allocate some kernel memory and return.
  */
 static int
-md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct proc *proc)
+md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
 {
 	vaddr_t addr;
 	vsize_t size;
@@ -434,7 +434,7 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct proc *proc)
  * Set config, then become the I/O server for this unit.
  */
 static int
-md_ioctl_server(struct md_softc *sc, struct md_conf *umd, struct proc *proc)
+md_ioctl_server(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
 {
 	vaddr_t end;
 	int error;
@@ -475,7 +475,7 @@ md_server_loop(struct md_softc *sc)
 
 	for (;;) {
 		/* Wait for some work to arrive. */
-		while ((bp = BUFQ_GET(&sc->sc_buflist)) == NULL) {
+		while ((bp = BUFQ_GET(sc->sc_buflist)) == NULL) {
 			error = tsleep((caddr_t)sc, md_sleep_pri, "md_idle", 0);
 			if (error)
 				return error;

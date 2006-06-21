@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.26 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.26.6.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26.6.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include "opt_cardslot.h"
 
@@ -74,7 +74,7 @@ static void cardslot_event_thread(void *arg);
 STATIC int cardslot_cb_print(void *aux, const char *pcic);
 static int cardslot_16_print(void *, const char *);
 static int cardslot_16_submatch(struct device *, struct cfdata *,
-				     const locdesc_t *, void *);
+				     const int *, void *);
 
 CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
     cardslotmatch, cardslotattach, NULL, NULL);
@@ -103,7 +103,7 @@ cardslotattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct cardslot_softc *sc = (struct cardslot_softc *)self;
+	struct cardslot_softc *sc = device_private(self);
 	struct cardslot_attach_args *caa = aux;
 
 	struct cbslot_attach_args *cba = caa->caa_cb_attach;
@@ -112,14 +112,14 @@ cardslotattach(parent, self, aux)
 	struct cardbus_softc *csc = NULL;
 	struct pcmcia_softc *psc = NULL;
 
-	sc->sc_slot = sc->sc_dev.dv_unit;
+	sc->sc_slot = device_unit(&sc->sc_dev);
 	sc->sc_cb_softc = NULL;
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
 	sc->sc_th_enable = 0;
 
 	printf(" slot %d flags %x\n", sc->sc_slot,
-	       sc->sc_dev.dv_cfdata->cf_flags);
+	       device_cfdata(&sc->sc_dev)->cf_flags);
 
 	DPRINTF(("%s attaching CardBus bus...\n", sc->sc_dev.dv_xname));
 	if (cba != NULL) {
@@ -188,7 +188,7 @@ static int
 cardslot_16_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.35 2005/05/30 06:41:55 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.35.2.1 2006/06/21 15:06:14 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.35 2005/05/30 06:41:55 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.35.2.1 2006/06/21 15:06:14 yamt Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -1281,7 +1281,7 @@ int
 video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct thread* td)
 #else
 int
-video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct proc* pr)
+video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp* l)
 #endif
 {
 	volatile u_char		c_temp;
@@ -1577,7 +1577,7 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct proc
 #ifdef __FreeBSD__
 		bktr->proc = td->td_proc;
 #else
-		bktr->proc = pr;
+		bktr->proc = l->l_proc;
 #endif
 		break;
 
@@ -1903,7 +1903,7 @@ int
 tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct thread* td)
 #else
 int
-tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct proc* pr)
+tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp* l)
 #endif
 {
 	int		tmp_int;

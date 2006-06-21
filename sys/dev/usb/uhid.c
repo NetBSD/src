@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.64 2005/06/21 14:01:12 ws Exp $	*/
+/*	$NetBSD: uhid.c,v 1.64.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64 2005/06/21 14:01:12 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,20 +120,23 @@ Static void uhid_intr(struct uhidev *, void *, u_int len);
 
 Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, usb_proc_ptr);
+Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, struct lwp *);
 
 USB_DECLARE_DRIVER(uhid);
 
 int
 uhid_match(struct device *parent, struct cfdata *match, void *aux)
 {
+#ifdef UHID_DEBUG
 	struct uhidev_attach_arg *uha = aux;
+#endif
 
 	DPRINTF(("uhid_match: report=%d\n", uha->reportid));
 
-	if (uha->matchlvl)
-		return (uha->matchlvl);
-	return (UMATCH_IFACECLASS_GENERIC);
+	if (match->cf_flags & 1)
+		return (UMATCH_HIGHEST);
+	else
+		return (UMATCH_IFACECLASS_GENERIC);
 }
 
 void
@@ -208,7 +211,7 @@ uhid_detach(struct device *self, int flags)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 #if 0
@@ -251,7 +254,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 }
 
 int
-uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -279,7 +282,7 @@ uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-uhidclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhid_softc *sc;
 
@@ -412,7 +415,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
-	      int flag, usb_proc_ptr p)
+	      int flag, struct lwp *l)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
@@ -435,8 +438,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (*(int *)addr) {
 			if (sc->sc_async != NULL)
 				return (EBUSY);
-			sc->sc_async = p;
-			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", p));
+			sc->sc_async = l->l_proc;
+			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
 			sc->sc_async = NULL;
 		break;
@@ -550,7 +553,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 }
 
 int
-uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -558,14 +561,14 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
-	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
+	error = uhid_do_ioctl(sc, cmd, addr, flag, l);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
 	return (error);
 }
 
 int
-uhidpoll(dev_t dev, int events, usb_proc_ptr p)
+uhidpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct uhid_softc *sc;
 	int revents = 0;
@@ -583,7 +586,7 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	splx(s);

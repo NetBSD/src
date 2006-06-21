@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mtio.c,v 1.1 2005/02/28 22:11:32 soren Exp $ */
+/* $NetBSD: linux_mtio.c,v 1.1.10.1 2006/06/21 14:59:12 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.1 2005/02/28 22:11:32 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.1.10.1 2006/06/21 14:59:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,19 +70,19 @@ static const struct mtop_mapping {
 };
 
 int
-linux_ioctl_mtio(struct proc *p, struct linux_sys_ioctl_args *uap,
+linux_ioctl_mtio(struct lwp *l, struct linux_sys_ioctl_args *uap,
     register_t *retval)
 {
 	struct file *fp;
 	struct filedesc *fdp;
 	u_long com = SCARG(uap, com);
 	int i, error = 0;
-	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	struct linux_mtop lmtop;
 	struct linux_mtget lmtget;
 	struct mtop mt;
 
-        fdp = p->p_fd;
+        fdp = l->l_proc->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
@@ -105,7 +105,7 @@ linux_ioctl_mtio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		
 		mt.mt_op = mtop_map[i].op;
 		mt.mt_count = lmtop.mt_count;
-		error = ioctlf(fp, MTIOCTOP, (caddr_t)&mt, p);
+		error = ioctlf(fp, MTIOCTOP, (caddr_t)&mt, l);
 		break;
 	case LINUX_MTIOCGET:
 		lmtget.mt_type = LINUX_MT_ISUNKNOWN;
@@ -124,7 +124,7 @@ linux_ioctl_mtio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		break;
 	}
 
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.57 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.57.4.1 2006/06/21 14:59:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.57 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.57.4.1 2006/06/21 14:59:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,21 +70,21 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.57 2005/02/26 23:10:19 perry E
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-int linux_aout_copyargs __P((struct proc *, struct exec_package *,
+int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
-static int exec_linux_aout_prep_zmagic __P((struct proc *,
+static int exec_linux_aout_prep_zmagic __P((struct lwp *,
     struct exec_package *));
-static int exec_linux_aout_prep_nmagic __P((struct proc *,
+static int exec_linux_aout_prep_nmagic __P((struct lwp *,
     struct exec_package *));
-static int exec_linux_aout_prep_omagic __P((struct proc *,
+static int exec_linux_aout_prep_omagic __P((struct lwp *,
     struct exec_package *));
-static int exec_linux_aout_prep_qmagic __P((struct proc *,
+static int exec_linux_aout_prep_qmagic __P((struct lwp *,
     struct exec_package *));
 
 int
-linux_aout_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+linux_aout_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -139,8 +139,8 @@ linux_aout_copyargs(p, pack, arginfo, stackp, argp)
 }
 
 int
-exec_linux_aout_makecmds(p, epp)
-	struct proc *p;
+exec_linux_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *linux_ep = epp->ep_hdr;
@@ -156,16 +156,16 @@ exec_linux_aout_makecmds(p, epp)
 
 	switch (magic) {
 	case QMAGIC:
-		error = exec_linux_aout_prep_qmagic(p, epp);
+		error = exec_linux_aout_prep_qmagic(l, epp);
 		break;
 	case ZMAGIC:
-		error = exec_linux_aout_prep_zmagic(p, epp);
+		error = exec_linux_aout_prep_zmagic(l, epp);
 		break;
 	case NMAGIC:
-		error = exec_linux_aout_prep_nmagic(p, epp);
+		error = exec_linux_aout_prep_nmagic(l, epp);
 		break;
 	case OMAGIC:
-		error = exec_linux_aout_prep_omagic(p, epp);
+		error = exec_linux_aout_prep_omagic(l, epp);
 		break;
 	}
 	return error;
@@ -178,8 +178,8 @@ exec_linux_aout_makecmds(p, epp)
  */
 
 static int
-exec_linux_aout_prep_zmagic(p, epp)
-	struct proc *p;
+exec_linux_aout_prep_zmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -206,7 +206,7 @@ exec_linux_aout_prep_zmagic(p, epp)
 		    epp->ep_daddr + execp->a_data, NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -215,8 +215,8 @@ exec_linux_aout_prep_zmagic(p, epp)
  */
 
 static int
-exec_linux_aout_prep_nmagic(p, epp)
-	struct proc *p;
+exec_linux_aout_prep_nmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -245,7 +245,7 @@ exec_linux_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -254,8 +254,8 @@ exec_linux_aout_prep_nmagic(p, epp)
  */
 
 static int
-exec_linux_aout_prep_omagic(p, epp)
-	struct proc *p;
+exec_linux_aout_prep_omagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -290,12 +290,12 @@ exec_linux_aout_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 static int
-exec_linux_aout_prep_qmagic(p, epp)
-	struct proc *p;
+exec_linux_aout_prep_qmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -327,5 +327,5 @@ exec_linux_aout_prep_qmagic(p, epp)
 		    epp->ep_daddr + execp->a_data, NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

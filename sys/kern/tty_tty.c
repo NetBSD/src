@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.24 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.24.4.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.4.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,30 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24 2005/02/26 21:34:55 perry Exp $");
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/conf.h>
-
+#include <sys/kauth.h>
 
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
-dev_type_open(cttyopen);
-dev_type_read(cttyread);
-dev_type_write(cttywrite);
-dev_type_ioctl(cttyioctl);
-dev_type_poll(cttypoll);
-dev_type_kqfilter(cttykqfilter);
-
-const struct cdevsw ctty_cdevsw = {
-	cttyopen, nullclose, cttyread, cttywrite, cttyioctl,
-	nullstop, notty, cttypoll, nommap, cttykqfilter, D_TTY
-};
-
 /*ARGSUSED*/
-int
-cttyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+static int
+cttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct vnode *ttyvp = cttyvp(p);
+	struct vnode *ttyvp = cttyvp(l->l_proc);
 	int error;
 
 	if (ttyvp == NULL)
@@ -85,22 +70,19 @@ cttyopen(dev, flag, mode, p)
 	 * to delete this test. (mckusick 5/93)
 	 */
 	error = VOP_ACCESS(ttyvp,
-	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), p->p_ucred, p);
+	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), p->p_cred, p);
 	if (!error)
 #endif /* PARANOID */
-		error = VOP_OPEN(ttyvp, flag, NOCRED, p);
+		error = VOP_OPEN(ttyvp, flag, NOCRED, l);
 	VOP_UNLOCK(ttyvp, 0);
 	return (error);
 }
 
 /*ARGSUSED*/
-int
-cttyread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+static int
+cttyread(dev_t dev, struct uio *uio, int flag)
 {
-	struct vnode *ttyvp = cttyvp(uio->uio_procp);
+	struct vnode *ttyvp = cttyvp(curproc);
 	int error;
 
 	if (ttyvp == NULL)
@@ -112,13 +94,10 @@ cttyread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-int
-cttywrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+static int
+cttywrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct vnode *ttyvp = cttyvp(uio->uio_procp);
+	struct vnode *ttyvp = cttyvp(curproc);
 	struct mount *mp;
 	int error;
 
@@ -136,48 +115,38 @@ cttywrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-int
-cttyioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+static int
+cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
-	struct vnode *ttyvp = cttyvp(p);
+	struct vnode *ttyvp = cttyvp(l->l_proc);
 
 	if (ttyvp == NULL)
 		return (EIO);
 	if (cmd == TIOCSCTTY)		/* XXX */
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
-		if (!SESS_LEADER(p)) {
-			p->p_flag &= ~P_CONTROLT;
+		if (!SESS_LEADER(l->l_proc)) {
+			l->l_proc->p_flag &= ~P_CONTROLT;
 			return (0);
 		} else
 			return (EINVAL);
 	}
-	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, p));
+	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, l));
 }
 
 /*ARGSUSED*/
-int
-cttypoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+static int
+cttypoll(dev_t dev, int events, struct lwp *l)
 {
-	struct vnode *ttyvp = cttyvp(p);
+	struct vnode *ttyvp = cttyvp(l->l_proc);
 
 	if (ttyvp == NULL)
-		return (seltrue(dev, events, p));
-	return (VOP_POLL(ttyvp, events, p));
+		return (seltrue(dev, events, l));
+	return (VOP_POLL(ttyvp, events, l));
 }
 
-int
-cttykqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+static int
+cttykqfilter(dev_t dev, struct knote *kn)
 {
 	/* This is called from filt_fileattach() by the attaching process. */
 	struct proc *p = curproc;
@@ -187,3 +156,8 @@ cttykqfilter(dev, kn)
 		return (1);
 	return (VOP_KQFILTER(ttyvp, kn));
 }
+
+const struct cdevsw ctty_cdevsw = {
+	cttyopen, nullclose, cttyread, cttywrite, cttyioctl,
+	nullstop, notty, cttypoll, nommap, cttykqfilter, D_TTY
+};

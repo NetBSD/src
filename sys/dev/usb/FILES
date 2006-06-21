@@ -19,13 +19,15 @@ if_cue.c		USB CATC Ethernet driver
 if_cuereg.h		  and definitions for it
 if_kue.c		USB Kawasaki Ethernet driver
 if_kuereg.h		  and definitions for it
-if_upl.c		USB Prolofic host-to-host driver
+if_upl.c		USB Prolific host-to-host driver
 kue_fw.h		Kawasaki Ethernet firmware
 ohci.c			Host controller driver for OHCI
 ohcireg.h		Hardware definitions for OHCI
 ohcivar.h		API for ohci.c
 uaudio.c		USB audio class driver
 uaudioreg.h		  and definitions for it
+ubt.c			USB Bluetooth driver
+ubtbcmfw.c		Firmware loader for Broadcom BCM2033 Bluetooth devices
 ucom.c			TTY emulation for two bulk pipes
 ucomvar.h		TTY emulation interface
 uftdi.c			USB FTDI serial driver
@@ -38,6 +40,7 @@ uhid.c			USB generic HID driver
 uhidev.c		USB HID class driver
 uhidev.h		  and definitions for it
 uhub.c			USB hub driver
+uipaq.c			HP ipaq22xx driver
 ukbd.c			USB keyboard driver
 ukbdmap.c		wscons key mapping for ukbd
 ukbdvar.h		API for ukbd.c

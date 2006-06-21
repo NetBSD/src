@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.15 2005/06/30 18:20:24 elad Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15.2.1 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYSTRACE_H_
-#define _SYSTRACE_H_
+#ifndef _SYS_SYSTRACE_H_
+#define _SYS_SYSTRACE_H_
 
 #include <sys/select.h>
 #include <sys/ioccom.h>
@@ -86,7 +86,7 @@ struct str_msg_child {
 struct str_message {
 	int32_t msg_type;
 	pid_t msg_pid;
-	u_int16_t msg_seqnr;	/* answer has to match seqnr */
+	uint16_t msg_seqnr;	/* answer has to match seqnr */
 	int16_t msg_policy;
 	union {
 		struct str_msg_emul msg_emul;
@@ -108,7 +108,7 @@ struct str_msgcontainer {
 
 struct systrace_answer {
 	pid_t stra_pid;
-	u_int16_t stra_seqnr;
+	uint16_t stra_seqnr;
 	int16_t reserved;
  	uid_t stra_seteuid;	/* elevated privileges for system call */
  	gid_t stra_setegid;
@@ -159,7 +159,7 @@ struct systrace_policy {
 
 struct systrace_replace {
 	pid_t strr_pid;
-	u_int16_t strr_seqnr;
+	uint16_t strr_seqnr;
 	int16_t reserved;
 	int32_t strr_nrepl;
 	caddr_t	strr_base;	/* Base memory */
@@ -192,11 +192,6 @@ struct systrace_replace {
 #ifdef _KERNEL
 #include <sys/namei.h>
 
-/* XXX: these shouldn't be here. */
-#define SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-
 struct fsystrace {
 	struct lock lock;
 	struct selinfo si;
@@ -228,10 +223,12 @@ void systrace_namei(struct nameidata *);
 void systrace_exit(struct proc *, register_t, void *, register_t [], int);
 void systrace_sys_exit(struct proc *);
 void systrace_sys_fork(struct proc *, struct proc *);
+#ifndef __NetBSD__
 void systrace_init(void);
+#endif /* ! __NetBSD__ */
 void systrace_execve0(struct proc *);
 void systrace_execve1(char *, struct proc *);
 int systrace_scriptname(struct proc *, char *);
 
 #endif /* _KERNEL */
-#endif /* !_SYSTRACE_H_ */
+#endif /* !_SYS_SYSTRACE_H_ */

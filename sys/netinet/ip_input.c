@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.218 2005/06/28 19:38:58 seanb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.218.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218 2005/06/28 19:38:58 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -279,10 +279,10 @@ static u_int	ip_reass_ttl_decr(u_int ticks);
 static void	ip_reass_drophalf(void);
 
 
-static __inline int ipq_lock_try(void);
-static __inline void ipq_unlock(void);
+static inline int ipq_lock_try(void);
+static inline void ipq_unlock(void);
 
-static __inline int
+static inline int
 ipq_lock_try(void)
 {
 	int s;
@@ -301,7 +301,7 @@ ipq_lock_try(void)
 	return (1);
 }
 
-static __inline void
+static inline void
 ipq_unlock(void)
 {
 	int s;
@@ -414,7 +414,7 @@ ip_init(void)
 	for (i = 0; i < IPREASS_NHASH; i++)
 	    	LIST_INIT(&ipq[i]);
 
-	ip_id = time.tv_sec & 0xfffff;
+	ip_id = time_second & 0xfffff;
 
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	ip_nmbclusters_changed();
@@ -732,7 +732,7 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
+	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
 		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -974,7 +974,7 @@ found:
 		goto bad;
 	}
 #endif
-#if FAST_IPSEC
+#ifdef FAST_IPSEC
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer
@@ -1823,13 +1823,9 @@ ip_forward(struct mbuf *m, int srcrt)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
-	int error, type = 0, code = 0;
+	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
 	n_long dest;
-	struct ifnet *destifp;
-#if defined(IPSEC) || defined(FAST_IPSEC)
-	struct ifnet dummyifp;
-#endif
 
 	/*
 	 * We are now in the output path.
@@ -1843,10 +1839,10 @@ ip_forward(struct mbuf *m, int srcrt)
 
 	dest = 0;
 #ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("forward: src %2.2x dst %2.2x ttl %x\n",
-		    ntohl(ip->ip_src.s_addr),
-		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
+	if (ipprintfs) {
+		printf("forward: src %s ", inet_ntoa(ip->ip_src));
+		printf("dst %s ttl %x\n", inet_ntoa(ip->ip_dst), ip->ip_ttl);
+	}
 #endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
@@ -1857,7 +1853,6 @@ ip_forward(struct mbuf *m, int srcrt)
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;
 	}
-	ip->ip_ttl -= IPTTLDEC;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
@@ -1886,6 +1881,8 @@ ip_forward(struct mbuf *m, int srcrt)
 	mcopy = m_copym(m, 0, imin(ntohs(ip->ip_len), 68), M_DONTWAIT);
 	if (mcopy)
 		mcopy = m_pullup(mcopy, ip->ip_hl << 2);
+
+	ip->ip_ttl -= IPTTLDEC;
 
 	/*
 	 * If forwarding packet using same interface that it came in on,
@@ -1943,7 +1940,6 @@ ip_forward(struct mbuf *m, int srcrt)
 	}
 	if (mcopy == NULL)
 		return;
-	destifp = NULL;
 
 	switch (error) {
 
@@ -1965,7 +1961,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
 		if (ipforward_rt.ro_rt)
-			destifp = ipforward_rt.ro_rt->rt_ifp;
+			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 #else
 		/*
 		 * If the packet is routed over IPsec tunnel, tell the
@@ -1984,7 +1980,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			    &ipsecerror);
 
 			if (sp == NULL)
-				destifp = ipforward_rt.ro_rt->rt_ifp;
+				destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 			else {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
@@ -1993,24 +1989,18 @@ ip_forward(struct mbuf *m, int srcrt)
 				/*
 				 * find the correct route for outer IPv4
 				 * header, compute tunnel MTU.
-				 *
-				 * XXX BUG ALERT
-				 * The "dummyifp" code relies upon the fact
-				 * that icmp_error() touches only ifp->if_mtu.
 				 */
-				/*XXX*/
-				destifp = NULL;
+
 				if (sp->req != NULL
 				 && sp->req->sav != NULL
 				 && sp->req->sav->sah != NULL) {
 					ro = &sp->req->sav->sah->sa_route;
 					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
-						dummyifp.if_mtu =
+						destmtu =
 						    ro->ro_rt->rt_rmx.rmx_mtu ?
 						    ro->ro_rt->rt_rmx.rmx_mtu :
 						    ro->ro_rt->rt_ifp->if_mtu;
-						dummyifp.if_mtu -= ipsechdr;
-						destifp = &dummyifp;
+						destmtu -= ipsechdr;
 					}
 				}
 
@@ -2042,7 +2032,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		break;
 #endif
 	}
-	icmp_error(mcopy, type, code, dest, destifp);
+	icmp_error(mcopy, type, code, dest, destmtu);
 }
 
 void
@@ -2342,4 +2332,11 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       NULL, 0, &ip_do_loopback_cksum, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_LOOPBACKCKSUM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IP statistics"),
+		       NULL, 0, &ipstat, sizeof(ipstat),
+		       CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS,
+		       CTL_EOL);
 }

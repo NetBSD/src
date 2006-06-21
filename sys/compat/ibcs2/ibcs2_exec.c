@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.63 2005/03/26 05:12:35 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.63.2.1 2006/06/21 14:58:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.63 2005/03/26 05:12:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.63.2.1 2006/06/21 14:58:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -144,7 +144,7 @@ ibcs2_e_proc_exec(p, epp)
  */
 
 int
-ibcs2_exec_setup_stack(struct proc *p, struct exec_package *epp)
+ibcs2_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
 	u_long max_stack_size;
 	u_long access_linear_min, access_size;
@@ -163,7 +163,7 @@ ibcs2_exec_setup_stack(struct proc *p, struct exec_package *epp)
 	}
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.4.1 2006/06/21 14:58:15 yamt Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -355,11 +355,9 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
 void		pmap_load(void);
-int		pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, vm_prot_t,
-		    int);
+int		pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
+		    vm_prot_t, int, int);
 boolean_t	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
-int		pmap_remap_pages(struct pmap *, vaddr_t, paddr_t, int,
-		    int, int);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -505,7 +503,7 @@ kvtopte(vaddr_t va)
  * machine-dependent code only.
  */
 
-static inline paddr_t __attribute__((__unused__))
+static __inline paddr_t __attribute__((__unused__))
 vtomach(vaddr_t va)
 {
 	pt_entry_t pte;

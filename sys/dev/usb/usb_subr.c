@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.128 2005/06/19 04:01:36 enami Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.128.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.128 2005/06/19 04:01:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.128.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -89,7 +89,7 @@ Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
 Static int usbd_print(void *, const char *);
 Static int usbd_submatch(device_ptr_t, struct cfdata *,
-			 const locdesc_t *, void *);
+			 const int *, void *);
 #elif defined(__OpenBSD__)
 Static int usbd_print(void *aux, const char *pnp);
 Static int usbd_submatch(device_ptr_t, void *, void *);
@@ -260,10 +260,16 @@ Static void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char vendor[USB_MAX_ENCODED_STRING_LEN];
-	char product[USB_MAX_ENCODED_STRING_LEN];
+	char *vendor, *product;
 	int bcdDevice, bcdUSB;
 	char *ep;
+
+	vendor = malloc(USB_MAX_ENCODED_STRING_LEN * 2, M_USB, M_NOWAIT);
+	if (vendor == NULL) {
+		*cp = '\0';
+		return;
+	}
+	product = &vendor[USB_MAX_ENCODED_STRING_LEN];
 
 	ep = cp + l;
 
@@ -280,6 +286,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	cp += usbd_printBCD(cp, ep - cp, bcdDevice);
 	cp += snprintf(cp, ep - cp, ", addr %d", dev->address);
 	*cp = 0;
+	free(vendor, M_USB);
 }
 
 char *
@@ -756,15 +763,6 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 		free(p, M_USB);
 		return (err);
 	}
-	/* Clear any stall and make sure DATA0 toggle will be used next. */
-	if (UE_GET_ADDR(ep->edesc->bEndpointAddress) != USB_CONTROL_ENDPOINT) {
-		err = usbd_clear_endpoint_stall(p);
-		/* Some devices reject this command, so ignore a STALL. */
-		if (err && err != USBD_STALLED) {
-			printf("usbd_setup_pipe: failed to start endpoint, %s\n", usbd_errstr(err));
-			return (err);
-		}
-	}
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -800,7 +798,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	int found, i, confi, nifaces;
 	usbd_status err;
 	device_ptr_t dv;
-	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
+	usbd_interface_handle *ifaces;
 
 #if defined(__FreeBSD__)
 	/*
@@ -866,12 +864,17 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = dev->cdesc->bConfigurationValue;
+		ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT);
+		if (ifaces == NULL)
+			goto nomem;
 		for (i = 0; i < nifaces; i++)
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
 		dev->subdevs = malloc((nifaces+1) * sizeof dv, M_USB,M_NOWAIT);
 		if (dev->subdevs == NULL) {
+			free(ifaces, M_USB);
+nomem:
 #if defined(__FreeBSD__)
 			device_delete_child(parent, bdev);
 #endif
@@ -897,6 +900,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 				if (!bdev) {
 					printf("%s: Device creation failed\n",
 					USBDEVNAME(dev->bus->bdev));
+					free(ifaces, M_USB);
 					return (USBD_NORMAL_COMPLETION);
 				}
 				device_quiet(bdev);
@@ -908,8 +912,10 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			/* remove the last created child again; it is unused */
 			device_delete_child(parent, bdev);
 #endif
+			free(ifaces, M_USB);
 			return (USBD_NORMAL_COMPLETION);
 		}
+		free(ifaces, M_USB);
 		free(dev->subdevs, M_USB);
 		dev->subdevs = 0;
 	}
@@ -1157,14 +1163,17 @@ int
 usbd_print(void *aux, const char *pnp)
 {
 	struct usb_attach_arg *uaa = aux;
-	char devinfo[1024];
 
 	DPRINTFN(15, ("usbd_print dev=%p\n", uaa->device));
 	if (pnp) {
+#define USB_DEVINFO 1024
+		char *devinfo;
 		if (!uaa->usegeneric)
 			return (QUIET);
-		usbd_devinfo(uaa->device, 1, devinfo, sizeof(devinfo));
+		devinfo = malloc(USB_DEVINFO, M_TEMP, M_WAITOK);
+		usbd_devinfo(uaa->device, 1, devinfo, USB_DEVINFO);
 		aprint_normal("%s, %s", devinfo, pnp);
+		free(devinfo, M_TEMP);
 	}
 	if (uaa->port != 0)
 		aprint_normal(" port %d", uaa->port);
@@ -1191,7 +1200,7 @@ usbd_print(void *aux, const char *pnp)
 #if defined(__NetBSD__)
 int
 usbd_submatch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 #elif defined(__OpenBSD__)
 int
@@ -1230,18 +1239,6 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 	     )
 	   )
 		return 0;
-	if (cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
-	    cf->uhubcf_vendor == uaa->vendor &&
-	    cf->uhubcf_product != UHUB_UNK_PRODUCT &&
-	    cf->uhubcf_product == uaa->product) {
-		/* We have a vendor&product locator match */
-		if (cf->uhubcf_release != UHUB_UNK_RELEASE &&
-		    cf->uhubcf_release == uaa->release)
-			uaa->matchlvl = UMATCH_VENDOR_PRODUCT_REV;
-		else
-			uaa->matchlvl = UMATCH_VENDOR_PRODUCT;
-	} else
-		uaa->matchlvl = 0;
 	return (config_match(parent, cf, aux));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.21.2.1 2006/06/21 14:58:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21.2.1 2006/06/21 14:58:06 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -119,12 +119,22 @@ extern	paddr_t avail_end;
 typedef void (vector) __P((void));
 extern vector *IDTVEC(intr)[];
 
+#define	BUSDMA_BOUNCESTATS
+
 #ifdef BUSDMA_BOUNCESTATS
-int bus_dma_stats_nbouncebufs;
-int bus_dma_stats_loads;
-int bus_dma_stats_bounces;
-#define STAT_INCR(x)	(x)++
-#define STAT_DECR(x)	(x)++
+#define	BUSDMA_EVCNT_DECL(name)						\
+static struct evcnt bus_dma_ev_##name =					\
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "bus_dma", #name);		\
+EVCNT_ATTACH_STATIC(bus_dma_ev_##name)
+
+#define	STAT_INCR(name)							\
+    bus_dma_ev_##name.ev_count++
+#define	STAT_DECR(name)							\
+    bus_dma_ev_##name.ev_count--
+
+BUSDMA_EVCNT_DECL(nbouncebufs);
+BUSDMA_EVCNT_DECL(loads);
+BUSDMA_EVCNT_DECL(bounces);
 #else
 #define STAT_INCR(x)
 #define STAT_DECR(x)
@@ -135,10 +145,72 @@ static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	    bus_size_t size, int flags);
 static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-	    void *buf, bus_size_t buflen, struct proc *p, int flags);
-static __inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
+	    void *buf, bus_size_t buflen, struct vmspace *vm, int flags);
+static inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
     bus_addr_t, int);
 
+#ifndef _BUS_DMAMEM_ALLOC_RANGE
+#define _BUS_DMAMEM_ALLOC_RANGE _bus_dmamem_alloc_range
+
+/*
+ * Allocate physical memory from the given physical address range.
+ * Called by DMA-safe memory allocation methods.
+ */
+int
+_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags, bus_addr_t low, bus_addr_t high)
+{
+	paddr_t curaddr, lastaddr;
+	struct vm_page *m;
+	struct pglist mlist;
+	int curseg, error;
+
+	/* Always round the size. */
+	size = round_page(size);
+
+	/*
+	 * Allocate pages from the VM system.
+	 */
+	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	if (error)
+		return (error);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	m = mlist.tqh_first;
+	curseg = 0;
+	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	segs[curseg].ds_len = PAGE_SIZE;
+	m = m->pageq.tqe_next;
+
+	for (; m != NULL; m = m->pageq.tqe_next) {
+		curaddr = VM_PAGE_TO_PHYS(m);
+#ifdef DIAGNOSTIC
+		if (curaddr < low || curaddr >= high) {
+			printf("vm_page_alloc_memory returned non-sensical"
+			    " address 0x%lx\n", curaddr);
+			panic("_bus_dmamem_alloc_range");
+		}
+#endif
+		if (curaddr == (lastaddr + PAGE_SIZE))
+			segs[curseg].ds_len += PAGE_SIZE;
+		else {
+			curseg++;
+			segs[curseg].ds_addr = curaddr;
+			segs[curseg].ds_len = PAGE_SIZE;
+		}
+		lastaddr = curaddr;
+	}
+
+	*rsegs = curseg + 1;
+
+	return (0);
+}
+#endif /* _BUS_DMAMEM_ALLOC_RANGE */
 
 /*
  * Create a DMA map.
@@ -186,7 +258,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	*dmamp = map;
 
-	if (t->_bounce_thresh == 0 || avail_end <= t->_bounce_thresh)
+	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh)
 		map->_dm_bounce_thresh = 0;
 	cookieflags = 0;
 
@@ -255,8 +327,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error;
+	struct vmspace *vm;
 
-	STAT_INCR(bus_dma_stats_loads);
+	STAT_INCR(loads);
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -268,7 +341,12 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return EINVAL;
 
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags);
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		return 0;
@@ -284,7 +362,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * First attempt failed; bounce it.
 	 */
 
-	STAT_INCR(bus_dma_stats_bounces);
+	STAT_INCR(bounces);
 
 	/*
 	 * Allocate bounce pages, if necessary.
@@ -313,7 +391,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	return (0);
 }
 
-static __inline int
+static inline int
 _bus_dmamap_load_busaddr(bus_dma_tag_t t, bus_dmamap_t map,
     bus_addr_t addr, int size)
 {
@@ -463,7 +541,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
-			    m->m_len, NULL, flags);
+			    m->m_len, vmspace_kernel(), flags);
 		}
 	}
 	if (error == 0) {
@@ -481,7 +559,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 * First attempt failed; bounce it.
 	 */
 
-	STAT_INCR(bus_dma_stats_bounces);
+	STAT_INCR(bounces);
 
 	/*
 	 * Allocate bounce pages, if necessary.
@@ -519,7 +597,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 {
 	int i, error;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
+	struct vmspace *vm;
 	struct iovec *iov;
 	caddr_t addr;
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
@@ -534,13 +612,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
-#endif
-	}
+	vm = uio->uio_vmspace;
 
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
@@ -552,7 +624,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags);
+		    vm, flags);
 
 		resid -= minlen;
 	}
@@ -567,7 +639,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	    ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0))
 		return error;
 
-	STAT_INCR(bus_dma_stats_bounces);
+	STAT_INCR(bounces);
 
 	/*
 	 * Allocate bounce pages, if necessary.
@@ -791,14 +863,14 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	paddr_t high;
+	bus_addr_t high;
 
-	if (t->_bounce_alloc_hi != 0 && avail_end > t->_bounce_alloc_hi)
+	if (t->_bounce_alloc_hi != 0 && _BUS_AVAIL_END > t->_bounce_alloc_hi)
 		high = trunc_page(t->_bounce_alloc_hi);
 	else
-		high = trunc_page(avail_end);
+		high = trunc_page(_BUS_AVAIL_END);
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
+	return (_BUS_DMAMEM_ALLOC_RANGE(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, t->_bounce_alloc_lo, high));
 }
 
@@ -832,7 +904,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 		cookie->id_nbouncesegs = 0;
 	} else {
 		cookie->id_flags |= X86_DMA_HAS_BOUNCE;
-		STAT_INCR(bus_dma_stats_nbouncebufs);
+		STAT_INCR(nbouncebufs);
 	}
 
 	return (error);
@@ -848,7 +920,7 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 		panic("_bus_dma_alloc_bouncebuf: no cookie");
 #endif
 
-	STAT_DECR(bus_dma_stats_nbouncebufs);
+	STAT_DECR(nbouncebufs);
 
 	_bus_dmamem_unmap(t, cookie->id_bouncebuf, cookie->id_bouncebuflen);
 	_bus_dmamem_free(t, cookie->id_bouncesegs,
@@ -868,13 +940,13 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 {
 	struct iovec *iov;
 	int error;
-	struct proc *p;
+	struct vmspace *vm;
 	char *cp;
 	size_t resid, cnt;
 	int i;
 
 	iov = uio->uio_iov;
-	p = uio->uio_procp;
+	vm = uio->uio_vmspace;
 	cp = buf;
 	resid = n;
 
@@ -884,34 +956,18 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 			continue;
 		cnt = MIN(resid, iov->iov_len);
 
-		if (uio->uio_segflg == UIO_USERSPACE) {
-			if (curlwp != NULL &&
-			    curlwp->l_cpu->ci_schedstate.spc_flags &
-			      SPCF_SHOULDYIELD)
-				preempt(1);
-			if (p == curproc) {
-				if (direction == UIO_READ)
-					error = copyout(cp, iov->iov_base, cnt);
-				else
-					error = copyin(iov->iov_base, cp, cnt);
-			} else {
-				if (direction == UIO_READ)
-					error = copyout_proc(p, cp,
-					    iov->iov_base, cnt);
-				else
-					error = copyin_proc(p, iov->iov_base,
-					    cp, cnt);
-			}
-			if (error)
-				return (error);
-		} else {
-			if (direction == UIO_READ)
-				error = kcopy(cp, iov->iov_base, cnt);
-			else
-				error = kcopy(iov->iov_base, cp, cnt);
-			if (error)
-				return (error);
+		if (!VMSPACE_IS_KERNEL_P(vm) &&
+		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt(1);
 		}
+		if (direction == UIO_READ) {
+			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);
+		} else {
+			error = copyin_vmspace(vm, iov->iov_base, cp, cnt);
+		}
+		if (error)
+			return (error);
 		cp += cnt;
 		resid -= cnt;
 	}
@@ -962,13 +1018,15 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int nocache;
 	int marked;
 	pt_entry_t *pte;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
 	cpumask = 0;
 	nocache = (flags & BUS_DMA_NOCACHE) != 0 && pmap_cpu_has_pg_n();
 	marked = 0;
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -1087,15 +1145,15 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags)
+    bus_size_t buflen, struct vmspace *vm, int flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
+	if (vm != NULL)
+		pmap = vm_map_pmap(&vm->vm_map);
 	else
 		pmap = pmap_kernel();
 
@@ -1133,61 +1191,3 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	return (0);
 }
 
-/*
- * Allocate physical memory from the given physical address range.
- * Called by DMA-safe memory allocation methods.
- */
-int
-_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, paddr_t low, paddr_t high)
-{
-	paddr_t curaddr, lastaddr;
-	struct vm_page *m;
-	struct pglist mlist;
-	int curseg, error;
-
-	/* Always round the size. */
-	size = round_page(size);
-
-	/*
-	 * Allocate pages from the VM system.
-	 */
-	error = uvm_pglistalloc(size, low, high, alignment, boundary,
-	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
-		return (error);
-
-	/*
-	 * Compute the location, size, and number of segments actually
-	 * returned by the VM code.
-	 */
-	m = mlist.tqh_first;
-	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
-	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
-
-	for (; m != NULL; m = m->pageq.tqe_next) {
-		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < low || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
-		}
-#endif
-		if (curaddr == (lastaddr + PAGE_SIZE))
-			segs[curseg].ds_len += PAGE_SIZE;
-		else {
-			curseg++;
-			segs[curseg].ds_addr = curaddr;
-			segs[curseg].ds_len = PAGE_SIZE;
-		}
-		lastaddr = curaddr;
-	}
-
-	*rsegs = curseg + 1;
-
-	return (0);
-}

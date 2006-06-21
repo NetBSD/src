@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.15 2005/04/17 16:28:26 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15 2005/04/17 16:28:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $");
 
 #include "fss.h"
 
@@ -128,18 +128,15 @@ dev_type_size(fss_size);
 static int fss_copy_on_write(void *, struct buf *);
 static inline void fss_error(struct fss_softc *, const char *, ...);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
-    off_t *, struct proc *);
+    off_t *, struct lwp *);
 static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
-    struct proc *);
-static int fss_delete_snapshot(struct fss_softc *, struct proc *);
+    struct lwp *);
+static int fss_delete_snapshot(struct fss_softc *, struct lwp *);
 static int fss_softc_alloc(struct fss_softc *);
 static void fss_softc_free(struct fss_softc *);
 static void fss_cluster_iodone(struct buf *);
 static void fss_read_cluster(struct fss_softc *, u_int32_t);
-static int fss_write_cluster(struct fss_cache *, u_int32_t);
 static void fss_bs_thread(void *);
-static int fss_bmap(struct fss_softc *, off_t, int,
-    struct vnode **, daddr_t *, int *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
     u_int32_t, off_t, int, caddr_t);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
@@ -165,12 +162,13 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		bufq_alloc(&sc->sc_bufq, BUFQ_FCFS|BUFQ_SORT_RAWBLOCK);
+		lockinit(&sc->sc_lock, PRIBIO, "fsslock", 0, 0);
+		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
 
 int
-fss_open(dev_t dev, int flags, int mode, struct proc *p)
+fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int s, mflag;
 	struct fss_softc *sc;
@@ -190,7 +188,7 @@ fss_open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-fss_close(dev_t dev, int flags, int mode, struct proc *p)
+fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int s, mflag, error;
 	struct fss_softc *sc;
@@ -206,7 +204,7 @@ fss_close(dev_t dev, int flags, int mode, struct proc *p)
 		if ((sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0 &&
 		    (sc->sc_flags & FSS_ACTIVE) != 0) {
 			FSS_UNLOCK(sc, s);
-			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, p);
+			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
 			if (error)
 				return error;
 			FSS_LOCK(sc, s);
@@ -244,7 +242,7 @@ fss_strategy(struct buf *bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	wakeup(&sc->sc_bs_proc);
 
 	FSS_UNLOCK(sc, s);
@@ -263,9 +261,9 @@ fss_write(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
-	int s, error;
+	int error;
 	struct fss_softc *sc;
 	struct fss_set *fss = (struct fss_set *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
@@ -273,37 +271,31 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
 		return ENODEV;
 
-	FSS_LOCK(sc, s);
-	while ((sc->sc_flags & FSS_EXCL) == FSS_EXCL) {
-		error = ltsleep(sc, PRIBIO|PCATCH, "fsslock", 0, &sc->sc_slock);
-		if (error) {
-			FSS_UNLOCK(sc, s);
-			return error;
-		}
-	}
-	sc->sc_flags |= FSS_EXCL;
-	FSS_UNLOCK(sc, s);
-
 	switch (cmd) {
 	case FSSIOCSET:
+		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
 		else if ((sc->sc_flags & FSS_ACTIVE) != 0)
 			error = EBUSY;
 		else
-			error = fss_create_snapshot(sc, fss, p);
+			error = fss_create_snapshot(sc, fss, l);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		break;
 
 	case FSSIOCCLR:
+		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
 		else if ((sc->sc_flags & FSS_ACTIVE) == 0)
 			error = ENXIO;
 		else
-			error = fss_delete_snapshot(sc, p);
+			error = fss_delete_snapshot(sc, l);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		break;
 
 	case FSSIOCGET:
+		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
 		case FSS_ACTIVE:
 			memcpy(fsg->fsg_mount, sc->sc_mntname, MNAMELEN);
@@ -325,6 +317,7 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = ENXIO;
 			break;
 		}
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		break;
 
 	case FSSIOFSET:
@@ -341,11 +334,6 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = EINVAL;
 		break;
 	}
-
-	FSS_LOCK(sc, s);
-	sc->sc_flags &= ~FSS_EXCL;
-	FSS_UNLOCK(sc, s);
-	wakeup(sc);
 
 	return error;
 }
@@ -539,7 +527,7 @@ fss_copy_on_write(void *v, struct buf *bp)
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
-    off_t *bsize, struct proc *p)
+    off_t *bsize, struct lwp *l)
 {
 	int error, bits, fsbsize;
 	struct timespec ts;
@@ -551,7 +539,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the mounted file system.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -569,7 +557,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -577,7 +565,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, p);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
 		if ((error = vn_open(&nd, FREAD, 0)) != 0)
 			return error;
 		sc->sc_bs_vp = nd.ni_vp;
@@ -610,7 +598,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 */
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    sc->sc_mount->mnt_stat.f_mntfromname, p);
+	    sc->sc_mount->mnt_stat.f_mntfromname, l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -619,7 +607,8 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, p->p_ucred, p);
+	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD,
+	    l->l_proc->p_cred, l);
 	if (error) {
 		vrele(nd.ni_vp);
 		return error;
@@ -634,7 +623,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return error;
 	VOP_UNLOCK(nd.ni_vp, 0);
@@ -645,7 +634,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, p->p_ucred, p);
+		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_proc->p_cred, l);
 		if (error != 0)
 			return error;
 		sc->sc_bs_size = va.va_size;
@@ -659,11 +648,9 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		if (sc->sc_bs_bshift >= 32)
 			return EINVAL;
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
-		sc->sc_flags |= FSS_BS_ALLOC;
 	} else {
 		sc->sc_bs_bshift = DEV_BSHIFT;
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
-		sc->sc_flags &= ~FSS_BS_ALLOC;
 	}
 
 	/*
@@ -671,7 +658,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * VOP_STRATEGY() clean the buffer cache to prevent
 	 * cache incoherencies.
 	 */
-	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
+	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
 		return error;
 
 	return 0;
@@ -681,16 +668,18 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
  * Create a snapshot.
  */
 static int
-fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct proc *p)
+fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 {
 	int len, error;
 	u_int32_t csize;
 	off_t bsize;
 
+	bsize = 0;	/* XXX gcc */
+
 	/*
 	 * Open needed files.
 	 */
-	if ((error = fss_create_files(sc, fss, &bsize, p)) != 0)
+	if ((error = fss_create_files(sc, fss, &bsize, l)) != 0)
 		goto bad;
 
 	if (sc->sc_flags & FSS_PERSISTENT) {
@@ -780,9 +769,9 @@ bad:
 	fss_softc_free(sc);
 	if (sc->sc_bs_vp != NULL) {
 		if (sc->sc_flags & FSS_PERSISTENT)
-			vn_close(sc->sc_bs_vp, FREAD, p->p_ucred, p);
+			vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_cred, l);
 		else
-			vn_close(sc->sc_bs_vp, FREAD|FWRITE, p->p_ucred, p);
+			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	}
 	sc->sc_bs_vp = NULL;
 
@@ -793,7 +782,7 @@ bad:
  * Delete a snapshot.
  */
 static int
-fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
+fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 	int s;
 
@@ -808,77 +797,15 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
-		vn_close(sc->sc_bs_vp, FREAD, p->p_ucred, p);
+		vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_cred, l);
 	else
-		vn_close(sc->sc_bs_vp, FREAD|FWRITE, p->p_ucred, p);
+		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	sc->sc_bs_vp = NULL;
-	sc->sc_flags &= ~(FSS_PERSISTENT|FSS_BS_ALLOC);
+	sc->sc_flags &= ~FSS_PERSISTENT;
 
 	FSS_STAT_CLEAR(sc);
 
 	return 0;
-}
-
-/*
- * Get the block address and number of contiguous blocks.
- * If the file contains a hole, try to allocate.
- * Backing store is locked by caller.
- */
-static int
-fss_bmap(struct fss_softc *sc, off_t start, int len,
-    struct vnode **vpp, daddr_t *bnp, int *runp)
-{
-	int l, s, error;
-	struct buf *bp, **bpp;
-
-	if ((sc->sc_bs_vp->v_mount->mnt_flag & MNT_SOFTDEP) != 0)
-		bpp = &bp;
-	else
-		bpp = NULL;
-
-	error = VOP_BMAP(sc->sc_bs_vp, FSS_BTOFSB(sc, start), vpp, bnp, runp);
-	if ((error == 0 && *bnp != (daddr_t)-1) ||
-	    (sc->sc_flags & FSS_BS_ALLOC) == 0)
-		goto out;
-
-	if (start+len >= sc->sc_bs_size) {
-		error = ENOSPC;
-		goto out;
-	}
-
-	for (l = 0; l < len; l += FSS_FSBSIZE(sc)) {
-		error = VOP_BALLOC(sc->sc_bs_vp, start+l, FSS_FSBSIZE(sc),
-		    sc->sc_bs_proc->p_ucred, 0, bpp);
-		if (error)
-			goto out;
-
-		if (bpp == NULL)
-			continue;
-
-		s = splbio();
-		simple_lock(&bp->b_interlock);
-
-		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_start)
-			(*bioops.io_start)(bp);
-		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
-			(*bioops.io_complete)(bp);
-
-		bp->b_flags |= B_INVAL;
-		simple_unlock(&bp->b_interlock);
-		splx(s);
-
-		brelse(bp);
-	}
-
-	error = VOP_BMAP(sc->sc_bs_vp, FSS_BTOFSB(sc, start), vpp, bnp, runp);
-
-out:
-
-	if ((sc->sc_flags & FSS_PERSISTENT) == 0 &&
-	    error == 0 && *bnp == (daddr_t)-1)
-		error = ENOSPC;
-
-	return error;
 }
 
 /*
@@ -890,24 +817,19 @@ fss_cluster_iodone(struct buf *bp)
 	int s;
 	struct fss_cache *scp = bp->b_private;
 
+	KASSERT(bp->b_vp == NULL);
+
 	FSS_LOCK(scp->fc_softc, s);
 
-	if (bp->b_flags & B_EINTR)
-		fss_error(scp->fc_softc, "fs read interrupted");
 	if (bp->b_flags & B_ERROR)
 		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
-
-	if (bp->b_vp != NULL)
-		brelvp(bp);
 
 	if (--scp->fc_xfercount == 0)
 		wakeup(&scp->fc_data);
 
 	FSS_UNLOCK(scp->fc_softc, s);
 
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
+	putiobuf(bp);
 }
 
 /*
@@ -974,17 +896,13 @@ restart:
 		if (len > MAXPHYS)
 			len = MAXPHYS;
 
-		s = splbio();
-		bp = pool_get(&bufpool, PR_WAITOK);
-		splx(s);
-
-		BUF_INIT(bp);
+		bp = getiobuf();
 		bp->b_flags = B_READ|B_CALL;
 		bp->b_bcount = len;
 		bp->b_bufsize = bp->b_bcount;
 		bp->b_error = 0;
 		bp->b_data = addr;
-		bp->b_blkno = bp->b_rawblkno = dblk;
+		bp->b_blkno = dblk;
 		bp->b_proc = NULL;
 		bp->b_dev = sc->sc_bdev;
 		bp->b_vp = NULLVP;
@@ -1017,84 +935,6 @@ restart:
 }
 
 /*
- * Write a cluster from the cache to the backing store.
- */
-static int
-fss_write_cluster(struct fss_cache *scp, u_int32_t cl)
-{
-	int s, error, todo, len, nra;
-	daddr_t nbn;
-	caddr_t addr;
-	off_t pos;
-	struct buf *bp;
-	struct vnode *vp;
-	struct fss_softc *sc;
-
-	error = 0;
-	sc = scp->fc_softc;
-
-	pos = FSS_CLTOB(sc, cl);
-	addr = scp->fc_data;
-	todo = FSS_CLSIZE(sc);
-
-	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
-	simple_lock(&sc->sc_bs_vp->v_interlock);
-	error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(pos),
-	    round_page(pos+todo), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
-
-	while (error == 0 && todo > 0) {
-		error = fss_bmap(sc, pos, todo, &vp, &nbn, &nra);
-		if (error)
-			break;
-
-		len = FSS_FSBTOB(sc, nra+1)-FSS_FSBOFF(sc, pos);
-		if (len > todo)
-			len = todo;
-
-		s = splbio();
-		bp = pool_get(&bufpool, PR_WAITOK);
-		splx(s);
-
-		BUF_INIT(bp);
-		bp->b_flags = B_CALL;
-		bp->b_bcount = len;
-		bp->b_bufsize = bp->b_bcount;
-		bp->b_error = 0;
-		bp->b_data = addr;
-		bp->b_blkno = bp->b_rawblkno = nbn+btodb(FSS_FSBOFF(sc, pos));
-		bp->b_proc = NULL;
-		bp->b_vp = NULLVP;
-		bp->b_private = scp;
-		bp->b_iodone = fss_cluster_iodone;
-		bgetvp(vp, bp);
-		bp->b_vp->v_numoutput++;
-
-		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(vp, bp);
-
-		FSS_LOCK(sc, s);
-		scp->fc_xfercount++;
-		FSS_UNLOCK(sc, s);
-
-		pos += len;
-		addr += len;
-		todo -= len;
-	}
-
-	/*
-	 * Wait for all write requests to complete.
-	 */
-	FSS_LOCK(sc, s);
-	while (scp->fc_xfercount > 0)
-		ltsleep(&scp->fc_data, PRIBIO, "bswwait", 0, &sc->sc_slock);
-	FSS_UNLOCK(sc, s);
-
-	VOP_UNLOCK(sc->sc_bs_vp, 0);
-
-	return error;
-}
-
-/*
  * Read/write clusters from/to backing store.
  * For persistent snapshots must be called with cl == 0. off is the
  * offset into the snapshot.
@@ -1103,74 +943,19 @@ static int
 fss_bs_io(struct fss_softc *sc, fss_io_type rw,
     u_int32_t cl, off_t off, int len, caddr_t data)
 {
-	int s, error, todo, count, nra;
-	off_t pos;
-	daddr_t nbn;
-	struct buf *bp;
-	struct vnode *vp;
+	int error;
 
-	todo = len;
-	pos = FSS_CLTOB(sc, cl)+off;
-	error = 0;
+	off += FSS_CLTOB(sc, cl);
 
 	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
-	simple_lock(&sc->sc_bs_vp->v_interlock);
-	error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(pos),
-	    round_page(pos+todo), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 
-	while (error == 0 && todo > 0) {
-		error = fss_bmap(sc, pos, todo, &vp, &nbn, &nra);
-		if (error)
-			break;
-
-		count = FSS_FSBTOB(sc, nra+1)-FSS_FSBOFF(sc, pos);
-		if (count > todo)
-			count = todo;
-
-		if (nbn == (daddr_t)-1) {
-			bzero(data, count);
-			todo -= count;
-			data += count;
-			pos += count;
-			continue;
-		}
-
-		s = splbio();
-		bp = pool_get(&bufpool, PR_WAITOK);
-		splx(s);
-
-		BUF_INIT(bp);
-		bp->b_flags = (rw == FSS_READ ? B_READ : 0);
-		bp->b_bcount = count;
-		bp->b_bufsize = bp->b_bcount;
-		bp->b_error = 0;
-		bp->b_data = data;
-		bp->b_blkno = bp->b_rawblkno = nbn+btodb(FSS_FSBOFF(sc, pos));
-		bp->b_proc = NULL;
-		bp->b_vp = NULLVP;
-		bgetvp(vp, bp);
-		if ((bp->b_flags & B_READ) == 0)
-			bp->b_vp->v_numoutput++;
-
-		if ((bp->b_flags & B_READ) == 0 || cl < sc->sc_indir_size)
-			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(vp, bp);
-
-		error = biowait(bp);
-
-		if (bp->b_vp != NULL)
-			brelvp(bp);
-
-		s = splbio();
-		pool_put(&bufpool, bp);
-		splx(s);
-
-		if (error)
-			break;
-
-		todo -= count;
-		data += count;
-		pos += count;
+	error = vn_rdwr((rw == FSS_READ ? UIO_READ : UIO_WRITE), sc->sc_bs_vp,
+	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
+	    sc->sc_bs_proc->p_cred, NULL, NULL);
+	if (error == 0) {
+		simple_lock(&sc->sc_bs_vp->v_interlock);
+		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
+		    round_page(off+len), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
 
 	VOP_UNLOCK(sc->sc_bs_vp, 0);
@@ -1235,9 +1020,7 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	s = splbio();
-	nbp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
+	nbp = getiobuf();
 
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
@@ -1254,9 +1037,7 @@ fss_bs_thread(void *arg)
 
 			FSS_UNLOCK(sc, s);
 
-			s = splbio();
-			pool_put(&bufpool, nbp);
-			splx(s);
+			putiobuf(nbp);
 #ifdef FSS_STATISTICS
 			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 				printf("fss%d: cow called %" PRId64 " times,"
@@ -1283,7 +1064,7 @@ fss_bs_thread(void *arg)
 		if (sc->sc_flags & FSS_PERSISTENT) {
 			nfreed = nio = 0;
 
-			if ((bp = BUFQ_GET(&sc->sc_bufq)) == NULL)
+			if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 				continue;
 
 			nio++;
@@ -1321,7 +1102,8 @@ fss_bs_thread(void *arg)
 
 			indirp = fss_bs_indir(sc, scp->fc_cluster);
 			if (indirp != NULL) {
-				error = fss_write_cluster(scp, sc->sc_clnext);
+				error = fss_bs_io(sc, FSS_WRITE, sc->sc_clnext,
+				    0, FSS_CLSIZE(sc), scp->fc_data);
 			} else
 				error = EIO;
 
@@ -1346,7 +1128,7 @@ fss_bs_thread(void *arg)
 		 */
 		nio = 0;
 
-		if ((bp = BUFQ_GET(&sc->sc_bufq)) == NULL)
+		if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 			continue;
 
 		nio++;
@@ -1373,7 +1155,7 @@ fss_bs_thread(void *arg)
 		nbp->b_bufsize = bp->b_bcount;
 		nbp->b_error = 0;
 		nbp->b_data = bp->b_data;
-		nbp->b_blkno = nbp->b_rawblkno = bp->b_blkno;
+		nbp->b_blkno = bp->b_blkno;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_dev = sc->sc_bdev;
 		nbp->b_vp = NULLVP;
@@ -1385,6 +1167,7 @@ fss_bs_thread(void *arg)
 			bp->b_error = nbp->b_error;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
+			FSS_LOCK(sc, s);
 			continue;
 		}
 
@@ -1441,6 +1224,7 @@ fss_bs_thread(void *arg)
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
+				FSS_LOCK(sc, s);
 				break;
 			}
 

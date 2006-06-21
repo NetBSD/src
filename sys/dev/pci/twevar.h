@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.22 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: twevar.h,v 1.22.12.1 2006/06/21 15:05:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ int	twe_param_get_4(struct twe_softc *, int, int, uint32_t *);
 void	twe_register_callbacks(struct twe_softc *, int,
 	    const struct twe_callbacks *);
 
-static __inline__ size_t twe_get_maxsegs(void) {
+static __inline size_t twe_get_maxsegs(void) {
 	size_t max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
 #ifdef TWE_SG_SIZE
 	if (TWE_SG_SIZE < max_segs)
@@ -148,7 +148,7 @@ static __inline__ size_t twe_get_maxsegs(void) {
 	return max_segs;
 }
 
-static __inline__ size_t twe_get_maxxfer(size_t maxsegs) {
+static __inline size_t twe_get_maxxfer(size_t maxsegs) {
 	return (maxsegs - 1) * PAGE_SIZE;
 }
 

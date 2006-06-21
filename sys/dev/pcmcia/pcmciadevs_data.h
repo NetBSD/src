@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.214 2005/07/06 07:06:29 dyoung Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.214.2.1 2006/06/21 15:06:14 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.212 2005/07/06 07:05:25 dyoung Exp
+ *	NetBSD: pcmciadevs,v 1.216 2006/06/19 15:44:45 gdamore Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -90,6 +90,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com/Megahertz 3CXEM556-INT Ethernet/Modem",	}
+	,
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWB6096,
+	    PCMCIA_CIS_3COM_3CRWB6096,
+	    0,
+	    "3Com Corporation",
+	    "3Com 3CRWB60-A Bluetooth PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
@@ -258,6 +265,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "BreezeCOM",
 	    "BreezeCOM BreezeNET",	}
+	,
+	{
+	    PCMCIA_VENDOR_BELKIN, PCMCIA_PRODUCT_BELKIN_F5D5020,
+	    PCMCIA_CIS_BELKIN_F5D5020,
+	    0,
+	    "Belkin",
+	    "Belkin F5D5020 PCMCIA Network Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
@@ -2019,6 +2033,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BELKIN,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Belkin",
 	    NULL,
 	},
 	{

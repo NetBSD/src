@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.27 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: ipc.h,v 1.27.6.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -107,7 +107,7 @@ struct ipc_perm {
 #if defined(_NETBSD_SOURCE)
 /* Warning: 64-bit structure padding is needed here */
 struct ipc_perm_sysctl {
-	u_int64_t	_key;
+	uint64_t	_key;
 	uid_t		uid;
 	gid_t		gid;
 	uid_t		cuid;
@@ -117,22 +117,6 @@ struct ipc_perm_sysctl {
 	int16_t		pad;
 };
 #endif /* _NETBSD_SOURCE */
-
-#ifdef _KERNEL
-/*
- * Old IPC permission structure used before NetBSD 1.5.
- */
-struct ipc_perm14 {
-	unsigned short	cuid;	/* creator user id */
-	unsigned short	cgid;	/* creator group id */
-	unsigned short	uid;	/* user id */
-	unsigned short	gid;	/* group id */
-	unsigned short	mode;	/* r/w permission */
-	unsigned short	seq;	/* sequence # (to generate unique
-				   msg/sem/shm id) */
-	key_t	key;		/* user specified msg/sem/shm key */
-};
-#endif /* _KERNEL */
 
 /* Common access type bits, used with ipcperm(). */
 #define	IPC_R		000400	/* read permission */
@@ -163,10 +147,9 @@ struct ipc_perm14 {
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
-int	ipcperm(struct ucred *, struct ipc_perm *, int);
+struct kauth_cred;
+int	ipcperm(struct kauth_cred *, struct ipc_perm *, int);
 
-void	ipc_perm14_to_native(struct ipc_perm14 *, struct ipc_perm *);
-void	native_to_ipc_perm14(struct ipc_perm *, struct ipc_perm14 *);
 #endif /* _KERNEL */
 
 #ifndef _KERNEL

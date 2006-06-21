@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.13 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.13.8.1 2006/06/21 14:57:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.13 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.13.8.1 2006/06/21 14:57:48 yamt Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -158,7 +158,7 @@ bellattach(int num)
 }
 
 int 
-bellopen(dev_t dev, int flags, int mode, struct proc *p)
+bellopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct bell_softc *sc = &bell_softc[unit];
@@ -176,7 +176,7 @@ bellopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-bellclose(dev_t dev, int flags, int mode, struct proc *p)
+bellclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct bell_softc *sc = &bell_softc[unit];
@@ -186,7 +186,7 @@ bellclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-bellioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+bellioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct bell_softc *sc = &bell_softc[unit];

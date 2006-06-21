@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.20.2.1 2006/06/21 15:10:46 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.15 2005/01/24 20:39:29 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.20.2.1 2006/06/21 15:10:46 yamt Exp $");
 #endif
 
 /*
@@ -116,13 +116,11 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 	/* XXX room for crypto  */
 	ifp->if_hdrlen = sizeof(struct ieee80211_qosframe_addr4);
 
-#ifdef notdef
 	ic->ic_rtsthreshold = IEEE80211_RTS_DEFAULT;
-#else
-	ic->ic_rtsthreshold = IEEE80211_RTS_MAX;
-#endif
-	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
-	ic->ic_fixed_rate = -1;			/* no fixed rate */
+	ic->ic_fragthreshold = IEEE80211_FRAG_DEFAULT;
+	ic->ic_fixed_rate = IEEE80211_FIXED_RATE_NONE;
+	ic->ic_bmiss_max = IEEE80211_BMISS_MAX;
+	ic->ic_mcast_rate = IEEE80211_MCAST_RATE_DEFAULT;
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 	ic->ic_roaming = IEEE80211_ROAMING_AUTO;
 
@@ -345,9 +343,10 @@ ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 }
 
 int
-ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags)
+ieee80211_fix_rate(struct ieee80211_node *ni, int flags)
 {
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
+	struct ieee80211com *ic = ni->ni_ic;
 	int i, j, ignore, error;
 	int okrate, badrate, fixedrate;
 	struct ieee80211_rateset *srs, *nrs;
@@ -357,7 +356,8 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 	 * If the fixed rate check was requested but no
 	 * fixed has been defined then just remove it.
 	 */
-	if ((flags & IEEE80211_F_DOFRATE) && ic->ic_fixed_rate < 0)
+	if ((flags & IEEE80211_F_DOFRATE) &&
+	    ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
 		flags &= ~IEEE80211_F_DOFRATE;
 	error = 0;
 	okrate = badrate = fixedrate = 0;
@@ -846,13 +846,72 @@ ieee80211_wme_updateparams(struct ieee80211com *ic)
 	}
 }
 
+#ifndef IEEE80211_NO_HOSTAP
+static void
+sta_disassoc(void *arg, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = arg;
+
+	if (ni->ni_associd != 0) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DISASSOC,
+			IEEE80211_REASON_ASSOC_LEAVE);
+		ieee80211_node_leave(ic, ni);
+	}
+}
+#endif /* !IEEE80211_NO_HOSTAP */
+
+void
+ieee80211_beacon_miss(struct ieee80211com *ic)
+{
+
+	if (ic->ic_flags & IEEE80211_F_SCAN) {
+		/* XXX check ic_curchan != ic_bsschan? */
+		return;
+	}
+	IEEE80211_DPRINTF(ic,
+		IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
+		"%s\n", "beacon miss");
+
+	/*
+	 * Our handling is only meaningful for stations that are
+	 * associated; any other conditions else will be handled
+	 * through different means (e.g. the tx timeout on mgt frames).
+	 */
+	if (ic->ic_opmode != IEEE80211_M_STA || ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+	if (++ic->ic_bmiss_count < ic->ic_bmiss_max) {
+		/*
+		 * Send a directed probe req before falling back to a scan;
+		 * if we receive a response ic_bmiss_count will be reset.
+		 * Some cards mistakenly report beacon miss so this avoids
+		 * the expensive scan if the ap is still there.
+		 */
+		ieee80211_send_probereq(ic->ic_bss, ic->ic_myaddr,
+			ic->ic_bss->ni_bssid, ic->ic_bss->ni_bssid,
+			ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen,
+			ic->ic_opt_ie, ic->ic_opt_ie_len);
+		return;
+	}
+	ic->ic_bmiss_count = 0;
+	ieee80211_new_state(ic, IEEE80211_S_SCAN, 0);
+}
+
+#ifndef IEEE80211_NO_HOSTAP
+static void
+sta_deauth(void *arg, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = arg;
+
+	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		IEEE80211_REASON_ASSOC_LEAVE);
+}
+#endif /* !IEEE80211_NO_HOSTAP */
+
 static int
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = ic->ic_ifp;
-#ifndef IEEE80211_NO_HOSTAP
-	struct ieee80211_node_table *nt;
-#endif /* !IEEE80211_NO_HOSTAP */
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
 
@@ -876,16 +935,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				break;
 			case IEEE80211_M_HOSTAP:
 #ifndef IEEE80211_NO_HOSTAP
-				nt = &ic->ic_sta;
-				IEEE80211_NODE_LOCK(nt);
-				TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
-					if (ni->ni_associd == 0)
-						continue;
-					IEEE80211_SEND_MGMT(ic, ni,
-					    IEEE80211_FC0_SUBTYPE_DISASSOC,
-					    IEEE80211_REASON_ASSOC_LEAVE);
-				}
-				IEEE80211_NODE_UNLOCK(nt);
+				ieee80211_iterate_nodes(&ic->ic_sta,
+					sta_disassoc, ic);
 #endif /* !IEEE80211_NO_HOSTAP */
 				break;
 			default:
@@ -901,14 +952,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				break;
 			case IEEE80211_M_HOSTAP:
 #ifndef IEEE80211_NO_HOSTAP
-				nt = &ic->ic_sta;
-				IEEE80211_NODE_LOCK(nt);
-				TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
-					IEEE80211_SEND_MGMT(ic, ni,
-					    IEEE80211_FC0_SUBTYPE_DEAUTH,
-					    IEEE80211_REASON_AUTH_LEAVE);
-				}
-				IEEE80211_NODE_UNLOCK(nt);
+				ieee80211_iterate_nodes(&ic->ic_sta,
+					sta_deauth, ic);
 #endif /* !IEEE80211_NO_HOSTAP */
 				break;
 			default:
@@ -952,9 +997,12 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			 * beacons on the channel.
 			 */
 			if ((ic->ic_flags & IEEE80211_F_ASCAN) &&
-			    (ni->ni_chan->ic_flags & IEEE80211_CHAN_PASSIVE) == 0) {
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_PROBE_REQ, 0);
+			    (ic->ic_curchan->ic_flags & IEEE80211_CHAN_PASSIVE) == 0) {
+				ieee80211_send_probereq(ni,
+					ic->ic_myaddr, ifp->if_broadcastaddr,
+					ifp->if_broadcastaddr,
+					ic->ic_des_essid, ic->ic_des_esslen,
+					ic->ic_opt_ie, ic->ic_opt_ie_len);
 			}
 			break;
 		case IEEE80211_S_RUN:
@@ -974,7 +1022,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				ni->ni_fails++;
 				ieee80211_unref_node(&ni);
 			}
-			ieee80211_begin_scan(ic, arg);
+			if (ic->ic_roaming == IEEE80211_ROAMING_AUTO)
+				ieee80211_begin_scan(ic, arg);
 			break;
 		}
 		break;
@@ -1006,10 +1055,12 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				ic->ic_state = ostate;	/* stay RUN */
 				break;
 			case IEEE80211_FC0_SUBTYPE_DEAUTH:
-				/* try to reauth */
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_AUTH, 1);
 				ieee80211_sta_leave(ic, ni);
+				if (ic->ic_roaming == IEEE80211_ROAMING_AUTO) {
+					/* try to reauth */
+					IEEE80211_SEND_MGMT(ic, ni,
+					    IEEE80211_FC0_SUBTYPE_AUTH, 1);
+				}
 				break;
 			}
 			break;
@@ -1028,9 +1079,11 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ, 0);
 			break;
 		case IEEE80211_S_RUN:
-			IEEE80211_SEND_MGMT(ic, ni,
-			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ, 1);
 			ieee80211_sta_leave(ic, ni);
+			if (ic->ic_roaming == IEEE80211_ROAMING_AUTO) {
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_ASSOC_REQ, 1);
+			}
 			break;
 		}
 		break;
@@ -1065,7 +1118,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
 				printf(" channel %d start %uMb\n",
-					ieee80211_chan2ieee(ic, ni->ni_chan),
+					ieee80211_chan2ieee(ic, ic->ic_curchan),
 					IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]));
 			}
 #endif
@@ -1093,7 +1146,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 		 * at this point so traffic can flow.
 		 */
 		if (ni->ni_authmode != IEEE80211_AUTH_8021X)
-			ieee80211_node_authorize(ic, ni);
+			ieee80211_node_authorize(ni);
 		/*
 		 * Enable inactivity processing.
 		 * XXX

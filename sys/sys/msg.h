@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.16 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: msg.h,v 1.16.6.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,29 +97,6 @@ struct msqid_ds {
 	msglen_t	_msg_cbytes;	/* # of bytes currently in queue */
 };
 
-#ifdef _KERNEL
-/*
- * Old message queue data structure used before NetBSD 1.5.
- */
-struct msqid_ds14 {
-	struct	ipc_perm14 msg_perm;	/* msg queue permission bits */
-	struct	__msg *msg_first;	/* first message in the queue */
-	struct	__msg *msg_last;	/* last message in the queue */
-	u_long	msg_cbytes;	/* number of bytes in use on the queue */
-	u_long	msg_qnum;	/* number of msgs in the queue */
-	u_long	msg_qbytes;	/* max # of bytes on the queue */
-	pid_t	msg_lspid;	/* pid of last msgsnd() */
-	pid_t	msg_lrpid;	/* pid of last msgrcv() */
-	time_t	msg_stime;	/* time of last msgsnd() */
-	long	msg_pad1;
-	time_t	msg_rtime;	/* time of last msgrcv() */
-	long	msg_pad2;
-	time_t	msg_ctime;	/* time of last msgctl() */
-	long	msg_pad3;
-	long	msg_pad4[4];
-};
-#endif
-
 #if defined(_NETBSD_SOURCE)
 /*
  * Based on the configuration parameters described in an SVR2 (yes, two)
@@ -144,9 +121,9 @@ struct msginfo {
 /* Warning: 64-bit structure padding is needed here */
 struct msgid_ds_sysctl {
 	struct		ipc_perm_sysctl msg_perm;
-	u_int64_t	msg_qnum;
-	u_int64_t	msg_qbytes;
-	u_int64_t	_msg_cbytes;
+	uint64_t	msg_qnum;
+	uint64_t	msg_qbytes;
+	uint64_t	_msg_cbytes;
 	pid_t		msg_lspid;
 	pid_t		msg_lrpid;
 	time_t		msg_stime;
@@ -213,10 +190,16 @@ int	msgsnd(int, const void *, size_t, int);
 ssize_t	msgrcv(int, void *, size_t, long, int);
 __END_DECLS
 #else
+#include <sys/systm.h>
+
 struct proc;
 
 void	msginit(void);
 int	msgctl1(struct proc *, int, int, struct msqid_ds *);
+int	msgsnd1(struct proc *, int, const char *, size_t, int, size_t,
+    copyin_t);
+int	msgrcv1(struct proc *, int, char *, size_t, long, int, size_t,
+    copyout_t, register_t *);
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

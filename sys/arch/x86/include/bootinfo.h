@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.9 2005/07/06 08:27:31 junyoung Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.9.2.1 2006/06/21 14:57:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,6 +34,7 @@ struct btinfo_common {
 };
 
 #define BTINFO_BOOTPATH		0
+#define BTINFO_ROOTDEVICE	1
 #define BTINFO_BOOTDISK		3
 #define BTINFO_NETIF		4
 #define BTINFO_CONSOLE		6
@@ -45,6 +46,11 @@ struct btinfo_common {
 struct btinfo_bootpath {
 	struct btinfo_common common;
 	char bootpath[80];
+};
+
+struct btinfo_rootdevice {
+	struct btinfo_common common;
+	char devname[16];
 };
 
 struct btinfo_bootdisk {
@@ -157,11 +163,28 @@ struct btinfo_biosgeom {
 	struct bi_biosgeom_entry disk[1]; /* var len */
 };
 
-#ifdef _KERNEL
-void *lookup_bootinfo(int);
-#endif
 #endif /* _LOCORE */
 
 #ifdef _KERNEL
+
 #define BOOTINFO_MAXSIZE 4096
-#endif
+
+#ifndef _LOCORE
+/*
+ * Structure that holds the information passed by the boot loader.
+ */
+struct bootinfo {
+	/* Number of bootinfo_* entries in bi_data. */
+	uint32_t	bi_nentries;
+
+	/* Raw data of bootinfo entries.  The first one (if any) is
+	 * found at bi_data[0] and can be casted to (bootinfo_common *).
+	 * Once this is done, the following entry is found at 'len'
+	 * offset as specified by the previous entry. */
+	uint8_t		bi_data[BOOTINFO_MAXSIZE - sizeof(uint32_t)];
+};
+
+void *lookup_bootinfo(int);
+#endif /* _LOCORE */
+
+#endif /* _KERNEL */

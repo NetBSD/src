@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $	*/
+/*	$NetBSD: ucom.c,v 1.56.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 #if defined(__NetBSD__)
 #include "rnd.h"
 #if NRND > 0
@@ -155,7 +156,7 @@ Static int	ucomparam(struct tty *, struct termios *);
 Static void	ucomstart(struct tty *);
 Static void	ucom_shutdown(struct ucom_softc *);
 Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
-			      int, usb_proc_ptr);
+			      int, struct lwp *);
 Static void	ucom_dtr(struct ucom_softc *, int);
 Static void	ucom_rts(struct ucom_softc *, int);
 Static void	ucom_break(struct ucom_softc *, int);
@@ -178,10 +179,8 @@ USB_ATTACH(ucom)
 	struct ucom_attach_args *uca = aux;
 	struct tty *tp;
 
-	if (uca->portno != UCOM_UNK_PORTNO)
-		printf(": portno %d", uca->portno);
 	if (uca->info != NULL)
-		printf(", %s", uca->info);
+		printf(": %s", uca->info);
 	printf("\n");
 
 	sc->sc_udev = uca->device;
@@ -246,7 +245,7 @@ USB_DETACH(ucom)
 	maj = cdevsw_lookup_major(&ucom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	DPRINTF(("ucom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
@@ -302,10 +301,11 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
+	struct proc *p = l->l_proc;
 	struct ucom_softc *sc;
 	struct tty *tp;
 	int s;
@@ -320,7 +320,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 	tp = sc->sc_tty;
@@ -329,7 +329,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -497,7 +497,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -564,7 +564,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ucompoll(dev_t dev, int events, usb_proc_ptr p)
+ucompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -574,7 +574,7 @@ ucompoll(dev_t dev, int events, usb_proc_ptr p)
 		return (POLLHUP);
 
 	sc->sc_refcnt++;
-	revents = ((*tp->t_linesw->l_poll)(tp, events, p));
+	revents = ((*tp->t_linesw->l_poll)(tp, events, l));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (revents);
@@ -590,13 +590,13 @@ ucomtty(dev_t dev)
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
 
 	sc->sc_refcnt++;
-	error = ucom_do_ioctl(sc, cmd, data, flag, p);
+	error = ucom_do_ioctl(sc, cmd, data, flag, l);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
@@ -604,9 +604,10 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 
 Static int
 ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
-	      int flag, usb_proc_ptr p)
+	      int flag, struct lwp *l)
 {
 	struct tty *tp = sc->sc_tty;
+	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
@@ -615,17 +616,17 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 
 	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
 	if (sc->sc_methods->ucom_ioctl != NULL) {
 		error = sc->sc_methods->ucom_ioctl(sc->sc_parent,
-			    sc->sc_portno, cmd, data, flag, p);
+			    sc->sc_portno, cmd, data, flag, l->l_proc);
 		if (error != EPASSTHROUGH)
 			return (error);
 	}
@@ -657,7 +658,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1141,7 +1142,7 @@ ucomprint(void *aux, const char *pnp)
 
 int
 ucomsubmatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 

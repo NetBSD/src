@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.68 2005/06/18 22:56:02 martin Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.68.2.1 2006/06/21 15:00:01 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -54,8 +54,8 @@ S!=	cd ../../../..; pwd
 ##
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
-_ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
-INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
+INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
+		-I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
@@ -67,25 +67,23 @@ CWARNFLAGS+=	-Werror
 .endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
-.if !${_ISGCC295}
-CWARNFLAGS+=	-Wreturn-type
-.endif
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
+. if ${HAVE_GCC} > 3
+CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+. endif
 .endif
 
-CFLAGS+=	${CPUFLAGS} -ffreestanding
+CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
-# Disable unitialized warnings with 2.95 - it gets it wrong way too often
-.if ${_ISGCC295}
-CWARNFLAGS+=	-Wno-uninitialized
-.else
-CFLAGS+=	-fno-zero-initialized-in-bss
+# XXX
+.if ${HAVE_GCC} > 3
+CFLAGS+=	-fno-strict-aliasing
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
@@ -175,7 +173,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
+SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
@@ -207,6 +205,12 @@ EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
 .elifndef PROF
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
+
+SYSTEM_LD_TAIL+=; \
+	if grep -q '^\#define.*SYMTAB_SPACE' opt_ddbparam.h; then \
+		echo "${DBSYM} $@"; \
+		${DBSYM} $@; \
+	fi
 
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
@@ -285,7 +289,7 @@ kernelnames:
 
 .if !target(__CLEANDEPEND)
 __CLEANDEPEND: .USE
-	rm -f .depend
+	echo .depend ${DEPS} | xargs rm -f --
 .endif
 
 # do not !target these, the kern and compat Makefiles augment them
@@ -295,33 +299,37 @@ depend: .depend
 dependall: depend all
 
 .if !target(.depend)
-SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-# We have to assume that we'll eventually run out of command line.
-# We already hit that on non-NetBSD hosts.
-_SFILES=${MD_SFILES} ${SFILES}
-_CFILES=${MD_CFILES} ${MI_CFILES} ${CFILES}
-_XargsMKDEP=${MKDEP:M*=*} xargs -t ${MKDEP:N*=*}
-_SubMake=${.MAKE} -f ${MAKEFILE} -DnoBEGIN
+SSRCS=${MD_SFILES} ${SFILES}
+CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
+SRCS=${SSRCS} ${CSRCS}
+DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
 
-# This dance is necessary to avoid long command lines.
-${SRCS:S,^,list-,}:
-	@echo ${.TARGET:S,^list-,,}
-
-_sfiles: ${_SFILES:S,^,list-,}
-_cfiles: ${_CFILES:S,^,list-,}
-
-.depend: ${SRCS} assym.h config_time.h
+.for _s in ${SSRCS}
+${_s:T:R}.d: ${_s} assym.h config_time.h
 	${_MKTARGET_CREATE}
-	@> $@
-	@${_SubMake} _sfiles | ${_XargsMKDEP} -a -- ${MKDEP_AFLAGS} ${CPPFLAGS} 
-	@${_SubMake} _cfiles | ${_XargsMKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
+.endfor
+.for _s in ${CSRCS}
+${_s:T:R}.d: ${_s} config_time.h
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
+.endfor
+
+assym.d: assym.h config_time.h
+	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
-	@sed -e 's/^.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
-	@rm -f assym.dep
+	sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
+	rm -f assym.dep
+
+.depend: ${DEPS} assym.d
+	${_MKTARGET_CREATE}
+	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif
 
 .if !target(lint)

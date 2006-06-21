@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.114 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.114.2.1 2006/06/21 15:02:52 yamt Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.114 2005/05/30 04:43:46 christos Exp $
+ * $Id: aic7xxx.c,v 1.114.2.1 2006/06/21 15:02:52 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.114 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.114.2.1 2006/06/21 15:02:52 yamt Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -82,7 +82,7 @@ const char *ahc_chip_names[] =
  * Hardware error codes.
  */
 struct ahc_hard_error_entry {
-        uint8_t errno;
+	uint8_t errno;
 	const char *errmesg;
 };
 
@@ -498,6 +498,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			struct ahc_initiator_tinfo *targ_info;
 			struct ahc_tmode_tstate *tstate;
 			struct ahc_transinfo *tinfo;
+			uint32_t len;
 #ifdef AHC_DEBUG
 			if (ahc_debug & AHC_SHOW_SENSE) {
 				ahc_print_path(ahc, scb);
@@ -527,20 +528,16 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				printf("Sending Sense\n");
 			}
 #endif
-			sg->addr = ahc_get_sense_bufaddr(ahc, scb);
-			sg->len = ahc_get_sense_bufsize(ahc, scb);
-			sg->len |= AHC_DMA_LAST_SEG;
-
-			/* Fixup byte order */
-			sg->addr = ahc_htole32(sg->addr);
-			sg->len = ahc_htole32(sg->len);
+			sg->addr = ahc_htole32(ahc_get_sense_bufaddr(ahc, scb));
+			len = ahc_get_sense_bufsize(ahc, scb);
+			sg->len = ahc_htole32(len | AHC_DMA_LAST_SEG);
 
 			memset(sc, 0, sizeof(*sc));
 			sc->opcode = SCSI_REQUEST_SENSE;
 			if (tinfo->protocol_version <= SCSI_REV_2
 			    && SCB_GET_LUN(scb) < 8)
 				sc->byte2 = SCB_GET_LUN(scb) << 5;
-			sc->length = sg->len;
+			sc->length = len;
 
 			/*
 			 * We can't allow the target to disconnect.
@@ -573,8 +570,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			hscb->cdb_len = sizeof(*sc);
 			hscb->dataptr = sg->addr;
 			hscb->datacnt = sg->len;
-			hscb->sgptr = scb->sg_list_phys | SG_FULL_RESID;
-			hscb->sgptr = ahc_htole32(hscb->sgptr);
+			hscb->sgptr =
+			    ahc_htole32(scb->sg_list_phys | SG_FULL_RESID);
 			scb->sg_count = 1;
 			scb->flags |= SCB_SENSE;
 			ahc_qinfifo_requeue_tail(ahc, scb);
@@ -804,7 +801,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 							  /*init reset*/TRUE);
 				}
 			} else {
-				ahc_inb(ahc, SCSIDATL);
+				(void)ahc_inb(ahc, SCSIDATL);
 			}
 		}
 		break;
@@ -832,7 +829,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		printf("data overrun detected %s."
 		       "  Tag == 0x%x.\n",
 		       ahc_phase_table[i].phasemsg,
-  		       scb->hscb->tag);
+		       scb->hscb->tag);
 		ahc_print_path(ahc, scb);
 		printf("%s seen Data Phase.  Length = %ld.  NumSGs = %d.\n",
 		       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
@@ -2802,7 +2799,7 @@ reswitch:
 		} else {
 			/* Ack the byte */
 			ahc_outb(ahc, CLRSINT1, CLRREQINIT);
-			ahc_inb(ahc, SCSIDATL);
+			(void)ahc_inb(ahc, SCSIDATL);
 		}
 		break;
 	}
@@ -2838,7 +2835,7 @@ reswitch:
 			ahc_outb(ahc, SCSISIGO, P_MESGOUT | BSYO);
 			ahc->msgin_index = 0;
 			/* Dummy read to REQ for first byte */
-			ahc_inb(ahc, SCSIDATL);
+			(void)ahc_inb(ahc, SCSIDATL);
 			ahc_outb(ahc, SXFRCTL0,
 				 ahc_inb(ahc, SXFRCTL0) | SPIOEN);
 			break;
@@ -3965,7 +3962,7 @@ ahc_free(struct ahc_softc *ahc)
 #endif
 	if (ahc->seep_config != NULL)
 		free(ahc->seep_config, M_DEVBUF);
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__NetBSD__)
 	free(ahc, M_DEVBUF);
 #endif
 	return;
@@ -4307,7 +4304,7 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 		free(scb_data->scbarray, M_DEVBUF);
 }
 
-void
+int
 ahc_alloc_scbs(struct ahc_softc *ahc)
 {
 	struct scb_data *scb_data;
@@ -4321,14 +4318,14 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 	scb_data = ahc->scb_data;
 	if (scb_data->numscbs >= AHC_SCB_MAX_ALLOC)
 		/* Can't allocate any more */
-		return;
+		return (0);
 
 	next_scb = &scb_data->scbarray[scb_data->numscbs];
 
-	sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_NOWAIT);
+	sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_WAITOK);
 
 	if (sg_map == NULL)
-		return;
+		return (0);
 
 	/* Allocate S/G space for the next batch of SCBS */
 	if (ahc_createdmamem(ahc->parent_dmat, PAGE_SIZE, ahc->sc_dmaflags,
@@ -4337,7 +4334,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 			     &sg_map->sg_dmasegs, &sg_map->sg_nseg, ahc_name(ahc),
 			     "SG space") < 0) {
 		free(sg_map, M_DEVBUF);
-		return;
+		return (0);
 	}
 
 	SLIST_INSERT_HEAD(&scb_data->sg_maps, sg_map, links);
@@ -4352,7 +4349,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		int error;
 
 		pdata = (struct scb_platform_data *)malloc(sizeof(*pdata),
-							   M_DEVBUF, M_NOWAIT);
+							   M_DEVBUF, M_WAITOK);
 		if (pdata == NULL)
 			break;
 		next_scb->platform_data = pdata;
@@ -4368,7 +4365,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 
 		error = bus_dmamap_create(ahc->parent_dmat,
 			  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
-			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
+			  BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
 			  &next_scb->dmamap);
 		if (error != 0)
 			break;
@@ -4382,6 +4379,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		next_scb++;
 		ahc->scb_data->numscbs++;
 	}
+	return (newcount);
 }
 
 void
@@ -4636,10 +4634,17 @@ ahc_init(struct ahc_softc *ahc)
 
 	/* Grab the disconnection disable table and invert it for our needs */
 	if ((ahc->flags & AHC_USEDEFAULTS) != 0) {
-		printf("%s: Host Adapter Bios disabled.  Using default SCSI "
-			"device parameters\n", ahc_name(ahc));
+		printf("%s: Host Adapter BIOS disabled. Using default SCSI "
+			"host and target device parameters\n", ahc_name(ahc));
 		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B|
 			      AHC_TERM_ENB_A|AHC_TERM_ENB_B;
+		discenable = ALL_TARGETS_MASK;
+		if ((ahc->features & AHC_ULTRA) != 0)
+			ultraenb = ALL_TARGETS_MASK;
+	} else if ((ahc->flags & AHC_USETARGETDEFAULTS) != 0) {
+		printf("%s: Host Adapter has no SEEPROM. Using default SCSI"
+		    " target parameters\n", ahc_name(ahc));
+		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B;
 		discenable = ALL_TARGETS_MASK;
 		if ((ahc->features & AHC_ULTRA) != 0)
 			ultraenb = ALL_TARGETS_MASK;
@@ -4673,7 +4678,7 @@ ahc_init(struct ahc_softc *ahc)
 					    target_id, &tstate);
 		/* Default to async narrow across the board */
 		memset(tinfo, 0, sizeof(*tinfo));
-		if (ahc->flags & AHC_USEDEFAULTS) {
+		if (ahc->flags & (AHC_USEDEFAULTS | AHC_USETARGETDEFAULTS)) {
 			if ((ahc->features & AHC_WIDE) != 0)
 				tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
 
@@ -4844,7 +4849,7 @@ ahc_init(struct ahc_softc *ahc)
 
 	/*
 	 * Setup the allowed SCSI Sequences based on operational mode.
-	 * If we are a target, we'll enalbe select in operations once
+	 * If we are a target, we'll enable select in operations once
 	 * we've had a lun enabled.
 	 */
 	scsiseq_template = ENSELO|ENAUTOATNO|ENAUTOATNP;
@@ -7380,7 +7385,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	int error, level = 0;
 
 	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
-				      seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
+				      seg, 1, nseg, BUS_DMA_WAITOK)) != 0) {
 		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -7388,7 +7393,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	level++;
 
 	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+				    BUS_DMA_WAITOK|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: failed to map DMA mem for %s, error = %d\n",
 			myname, what, error);
 		goto out;
@@ -7396,20 +7401,20 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	level++;
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
-				       BUS_DMA_NOWAIT | flags, mapp)) != 0) {
-                printf("%s: failed to create DMA map for %s, error = %d\n",
+				       BUS_DMA_WAITOK | flags, mapp)) != 0) {
+		printf("%s: failed to create DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
-        }
+	}
 	level++;
 
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
-                printf("%s: failed to load DMA map for %s, error = %d\n",
+				     BUS_DMA_WAITOK)) != 0) {
+		printf("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
-        }
+	}
 
 	*baddr = (*mapp)->dm_segs[0].ds_addr;
 

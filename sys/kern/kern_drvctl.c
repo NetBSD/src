@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.1 2004/08/18 12:19:29 drochner Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.1.14.1 2006/06/21 15:09:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.1 2004/08/18 12:19:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.1.14.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ rescanbus(const char *busname, const char *ifattr,
 {
 	int i;
 	struct device *d;
-	const char * const *ap;
+	const struct cfiattrdata * const *ap;
 
 	/* XXX there should be a way to get limits and defaults (per device)
 	   from config generated data */
@@ -106,11 +106,11 @@ rescanbus(const char *busname, const char *ifattr,
 			if (!ifattr) {
 				if (d->dv_cfdriver->cd_attrs[1])
 					return (EINVAL);
-				ifattr = d->dv_cfdriver->cd_attrs[0];
+				ifattr = d->dv_cfdriver->cd_attrs[0]->ci_name;
 			} else {
 				/* check for valid attribute passed */
 				for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++)
-					if (!strcmp(*ap, ifattr))
+					if (!strcmp((*ap)->ci_name, ifattr))
 						break;
 				if (!*ap)
 					return (EINVAL);
@@ -124,7 +124,7 @@ rescanbus(const char *busname, const char *ifattr,
 }
 
 int
-drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 {
 	int res;
 	char *ifattr;

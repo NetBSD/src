@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.18 2005/05/30 22:13:50 christos Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.18.2.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18 2005/05/30 22:13:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18.2.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -169,7 +170,7 @@ sched_sync(v)
 	updateproc = curlwp;
 
 	for (;;) {
-		starttime = time.tv_sec;
+		starttime = time_second;
 
 		/*
 		 * Push files whose dirty time has expired. Be careful
@@ -188,8 +189,8 @@ sched_sync(v)
 			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
 				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)
 				    == 0) {
-					(void) VOP_FSYNC(vp, curproc->p_ucred,
-					    FSYNC_LAZY, 0, 0, curproc);
+					(void) VOP_FSYNC(vp, curproc->p_cred,
+					    FSYNC_LAZY, 0, 0, curlwp);
 					VOP_UNLOCK(vp, 0);
 				}
 				vn_finished_write(mp, 0);
@@ -240,7 +241,7 @@ sched_sync(v)
 		 * matter as we are just trying to generally pace the
 		 * filesystem activity.
 		 */
-		if (time.tv_sec == starttime)
+		if (time_second == starttime)
 			tsleep(&rushjob, PPAUSE, "syncer", hz);
 	}
 }
@@ -261,4 +262,50 @@ speedup_syncer()
 	wakeup(&rushjob);
 	stat_rush_requests += 1;
 	return (1);
+}
+
+SYSCTL_SETUP(sysctl_vfs_syncfs_setup, "sysctl vfs.sync subtree setup")
+{
+	const struct sysctlnode *rnode, *cnode;
+        
+	sysctl_createv(clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "vfs", NULL,
+			NULL, 0, NULL, 0,
+			CTL_VFS, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "sync",
+			SYSCTL_DESCR("syncer options"),
+			NULL, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "delay",
+			SYSCTL_DESCR("max time to delay syncing data"),
+			NULL, 0, &syncdelay, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "filedelay",
+			SYSCTL_DESCR("time to delay syncing files"),
+			NULL, 0, &filedelay, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "dirdelay",
+			SYSCTL_DESCR("time to delay syncing directories"),
+			NULL, 0, &dirdelay, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "metadelay",
+			SYSCTL_DESCR("time to delay syncing metadata"),
+			NULL, 0, &metadelay, 0,
+			CTL_CREATE, CTL_EOL);
 }

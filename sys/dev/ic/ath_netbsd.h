@@ -1,3 +1,5 @@
+/*	$NetBSD: ath_netbsd.h,v 1.2.2.1 2006/06/21 15:02:53 yamt Exp $ */
+
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -54,20 +56,20 @@ struct ath_lock {
 	int ipl;
 };
 
-#define	ATH_LOCK_INIT_IMPL(_type, _member)		\
-	do { (_type)->_member.count = 0; } while (0)
-#define	ATH_LOCK_IMPL(_type, _member)			\
+#define	ATH_LOCK_INIT_IMPL(_obj, _member)		\
+	do { (_obj)->_member.count = 0; } while (0)
+#define	ATH_LOCK_IMPL(_obj, _member)			\
 	do {						\
 		int __s = splnet();			\
-		if ((_type)->_member.count++ == 0)	\
-			(_type)->_member.ipl = __s;	\
+		if ((_obj)->_member.count++ == 0)	\
+			(_obj)->_member.ipl = __s;	\
 	} while (0)
-#define	ATH_UNLOCK_IMPL(_type, _member)					\
+#define	ATH_UNLOCK_IMPL(_obj, _member)					\
 	do {								\
-		if (--(_type)->_member.count == 0)			\
-			splx((_type)->_member.ipl);			\
+		if (--(_obj)->_member.count == 0)			\
+			splx((_obj)->_member.ipl);			\
 		else {							\
-			KASSERT((_type)->_member.count >= 0,		\
+			KASSERT((_obj)->_member.count >= 0,		\
 			    ("%s: no ATH_LOCK holders", __func__));	\
 		}							\
 	} while (0)
@@ -104,10 +106,15 @@ typedef struct ath_lock ath_txbuf_lock_t;
 	    CTLTYPE_INT, #__name, SYSCTL_DESCR(__descr), ath_sysctl_##__name,\
 	    0, sc, 0, CTL_CREATE, CTL_EOL)
 
-#define	SYSCTL_INT(__rw, __name, __descr)				\
+#define	__PFX(__pfx, __name)	__pfx##__name
+
+#define	SYSCTL_PFX_INT(__pfx, __rw, __name, __descr)			\
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_PERMANENT|(__rw),\
 	    CTLTYPE_INT, #__name, SYSCTL_DESCR(__descr), NULL, 0,	\
-	    &sc->sc_##__name, 0, CTL_CREATE, CTL_EOL)
+	    __PFX(&__pfx, __name), 0, CTL_CREATE, CTL_EOL)
+
+#define	SYSCTL_INT(__rw, __name, __descr)				\
+	SYSCTL_PFX_INT(sc->sc_, __rw, __name, __descr)
 
 #define	SYSCTL_GLOBAL_INT(__rw, __name, __descr, __var)			\
 	sysctl_createv(clog, 0, &rnode, &cnode,				\
@@ -119,5 +126,6 @@ extern void device_printf(struct device, const char *fmt, ...);
 struct mbuf *m_defrag(struct mbuf *, int);
 struct mbuf *m_getcl(int, int, int);
 const struct sysctlnode *ath_sysctl_treetop(struct sysctllog **);
+const struct sysctlnode *ath_sysctl_instance(const char *, struct sysctllog **);
 
 #endif /* _ATH_NETBSD_H */

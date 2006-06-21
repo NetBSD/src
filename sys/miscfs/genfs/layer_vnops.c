@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.24 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.24.4.1 2006/06/21 15:10:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.24 2005/02/26 22:59:00 perry Exp $
+ *	$Id: layer_vnops.c,v 1.24.4.1 2006/06/21 15:10:25 yamt Exp $
+ *	$Id: layer_vnops.c,v 1.24.4.1 2006/06/21 15:10:25 yamt Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24.4.1 2006/06/21 15:10:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +244,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24 2005/02/26 22:59:00 perry Exp $
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 #include <miscfs/genfs/genfs.h>
@@ -288,7 +291,7 @@ layer_bypass(v)
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
 	} */ *ap = v;
-	int (**our_vnodeop_p) __P((void *));
+	int (**our_vnodeop_p)(void *);
 	struct vnode **this_vp_p;
 	int error, error1;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
@@ -492,8 +495,8 @@ layer_setattr(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -536,8 +539,8 @@ layer_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error;
@@ -556,8 +559,8 @@ layer_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	mode_t mode = ap->a_mode;
@@ -726,11 +729,11 @@ layer_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (ap->a_flags & FSYNC_RECLAIM) {
@@ -747,7 +750,7 @@ layer_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -858,7 +861,7 @@ layer_reclaim(v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(vp->v_mount);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.51 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.51.4.1 2006/06/21 15:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.51 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.51.4.1 2006/06/21 15:02:56 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1224,12 +1224,16 @@ rtk_txeof(sc)
 			 * Increase step 64 bytes.
 			 */
 			if (txstat & RTK_TXSTAT_TX_UNDERRUN) {
+#ifdef DEBUG
 				printf("%s: transmit underrun;",
 				    sc->sc_dev.dv_xname);
+#endif
 				if (sc->sc_txthresh < TXTH_MAX) {
 					sc->sc_txthresh += 2;
+#ifdef DEBUG
 					printf(" new threshold: %d bytes",
 					    sc->sc_txthresh * 32);
+#endif
 				}
 				printf("\n");
 			}

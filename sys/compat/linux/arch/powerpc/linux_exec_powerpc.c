@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.16 2005/02/26 23:10:19 perry Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.16.4.1 2006/06/21 14:59:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.16 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.16.4.1 2006/06/21 14:59:11 yamt Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.16 2005/02/26 23:10:19 perr
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,8 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.16 2005/02/26 23:10:19 perr
  * Alpha and PowerPC specific linux copyargs function.
  */
 int
-ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -85,8 +86,10 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	struct proc *p;
 	int error;
 
+	p = l->l_proc;
 #ifdef LINUX_SHIFT
 	/*
 	 * Seems that PowerPC Linux binaries expect argc to start on a 16 bytes
@@ -96,7 +99,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~LINUX_SHIFT);
 #endif
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 #ifdef LINUX_SHIFT
@@ -126,19 +129,19 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 		 * Why can't we use them too?
 		 */
 		a->a_type = LINUX_AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(p->p_cred);
 		a++;
 
 		a->a_type = LINUX_AT_GID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(p->p_cred);
 		a++;
 
 		a->a_type = LINUX_AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(p->p_cred);
 		a++;
 
 		a->a_type = LINUX_AT_UID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(p->p_cred);
 		a++;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.59 2005/06/03 22:00:34 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.59.2.1 2006/06/21 15:08:12 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59 2005/06/03 22:00:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59.2.1 2006/06/21 15:08:12 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59 2005/06/03 22:00:34 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -101,13 +102,14 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59 2005/06/03 22:00:34 tsutsui Exp $");
  * XYC_GO: start iopb ADDR (DVMA addr in a u_long) on XYC
  */
 #define XYC_GO(XYC, ADDR) { \
-	(XYC)->xyc_addr_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_addr_hi = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_hi = (ADDR); \
+	u_long addr = (u_long)ADDR; \
+	(XYC)->xyc_addr_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_addr_hi = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_hi = (addr); \
 	(XYC)->xyc_csr = XYC_GBSY; /* go! */ \
 }
 
@@ -265,7 +267,7 @@ xygetdisklabel(xy, b)
 	/* Required parameter for readdisklabel() */
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xy->sc_dev), RAW_PART),
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {
@@ -651,7 +653,7 @@ xyattach(parent, self, aux)
 
 		/* init queue of waiting bufs */
 
-		bufq_alloc(&xy->xyq, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+		bufq_alloc(&xy->xyq, "disksort", BUFQ_SORT_RAWBLOCK);
 
 		xy->xyrq = &xyc->reqs[xa->driveno];
 
@@ -851,10 +853,10 @@ done:
  * xyclose: close device
  */
 int
-xyclose(dev, flag, fmt, p)
+xyclose(dev, flag, fmt, l)
 	dev_t   dev;
 	int     flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 
 {
 	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
@@ -918,12 +920,12 @@ xydump(dev, blkno, va, size)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int
-xyioctl(dev, command, addr, flag, p)
+xyioctl(dev, command, addr, flag, l)
 	dev_t   dev;
 	u_long  command;
 	caddr_t addr;
 	int     flag;
-	struct proc *p;
+	struct lwp *l;
 
 {
 	struct xy_softc *xy;
@@ -1031,7 +1033,8 @@ xyioctl(dev, command, addr, flag, p)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_proc->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 
@@ -1045,10 +1048,10 @@ xyioctl(dev, command, addr, flag, p)
  */
 
 int
-xyopen(dev, flag, fmt, p)
+xyopen(dev, flag, fmt, l)
 	dev_t   dev;
 	int     flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -1224,7 +1227,7 @@ xystrategy(bp)
 	 */
 	s = splbio();		/* protect the queues */
 
-	BUFQ_PUT(&xy->xyq, bp);
+	BUFQ_PUT(xy->xyq, bp);
 
 	/* start 'em up */
 
@@ -1578,7 +1581,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 
-	XYC_GO(xycsc->xyc, (u_long)dmaiopb);
+	XYC_GO(xycsc->xyc, dmaiopb);
 
 	/* command now running, wrap it up */
 	switch (type) {
@@ -1761,7 +1764,7 @@ xyc_xyreset(xycsc, xysc)
 	iopb->com = XYCMD_RST;
 	iopb->unit = xysc->xy_drive;
 
-	XYC_GO(xycsc->xyc, (u_long)xycsc->ciorq->dmaiopb);
+	XYC_GO(xycsc->xyc, xycsc->ciorq->dmaiopb);
 
 	del = XYC_RESETUSEC;
 	while (del > 0) {
@@ -1843,7 +1846,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 
 			    bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			    (void)BUFQ_GET(&iorq->xy->xyq);
+			    (void)BUFQ_GET(iorq->xy->xyq);
 			    disk_unbusy(&xycsc->reqs[lcv].xy->sc_dk,
 				(xycsc->reqs[lcv].buf->b_bcount -
 				xycsc->reqs[lcv].buf->b_resid),
@@ -1890,9 +1893,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (BUFQ_PEEK(&xy->xyq) == NULL) continue;
+			if (BUFQ_PEEK(xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, BUFQ_PEEK(&xy->xyq));
+			xyc_startbuf(xycsc, xy, BUFQ_PEEK(xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -2027,7 +2030,7 @@ xyc_remove_iorq(xycsc)
 
 			bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			(void)BUFQ_GET(&iorq->xy->xyq);
+			(void)BUFQ_GET(iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));

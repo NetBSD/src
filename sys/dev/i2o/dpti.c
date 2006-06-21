@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.19 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: dpti.c,v 1.19.4.1 2006/06/21 15:02:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19.4.1 2006/06/21 15:02:51 yamt Exp $");
 
 #include "opt_i2o.h"
 
@@ -185,8 +185,8 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 	} __attribute__ ((__packed__)) param;
 	int rv;
 
-	sc = (struct dpti_softc *)self;
-	iop = (struct iop_softc *)parent;
+	sc = device_private(self);
+	iop = device_private(parent);
 
 	/*
 	 * Tell the world what we are.  The description in the signature
@@ -206,7 +206,7 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-dptiopen(dev_t dev, int flag, int mode, struct proc *p)
+dptiopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (securelevel > 1)
@@ -218,7 +218,7 @@ dptiopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -226,7 +226,7 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int i, size, rv, linux;
 
 	sc = device_lookup(&dpti_cd, minor(dev));
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	rv = 0;
 
 	if (cmd == PTIOCLINUX) {
@@ -281,9 +281,9 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			tsleep(&sc->sc_nactive, PRIBIO, "dptislp", 0);
 
 		if (linux)
-			rv = dpti_passthrough(sc, data, p);
+			rv = dpti_passthrough(sc, data, l->l_proc);
 		else
-			rv = dpti_passthrough(sc, *(caddr_t *)data, p);
+			rv = dpti_passthrough(sc, *(caddr_t *)data, l->l_proc);
 
 		sc->sc_nactive--;
 		wakeup_one(&sc->sc_nactive);
@@ -316,7 +316,7 @@ dpti_blinkled(struct dpti_softc *sc)
 	struct iop_softc *iop;
 	u_int v;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	v = bus_space_read_1(iop->sc_iot, iop->sc_ioh, sc->sc_blinkled + 0);
 	if (v == 0xbc) {
@@ -335,12 +335,12 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 	struct iop_softc *iop;
 	int rv, i;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	memset(&info, 0, sizeof(info));
 
 	info.length = sizeof(info) - sizeof(u_int16_t);
-	info.drvrHBAnum = sc->sc_dv.dv_unit;
+	info.drvrHBAnum = device_unit(&sc->sc_dv);
 	info.baseAddr = iop->sc_memaddr;
 	if ((i = dpti_blinkled(sc)) == -1)
 		i = 0;
@@ -457,7 +457,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	int rv, msgsize, repsize, sgoff, i, mapped, nbuf, nfrag, j, sz;
 	u_int32_t *p, *pmax;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	im = NULL;
 
 	if ((rv = dpti_blinkled(sc)) != -1) {
@@ -547,6 +547,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	 * we allocate a temporary buffer for it; otherwise, the buffer will
 	 * be mapped directly.
 	 */
+	mapped = 0;
 	if ((sgoff = ((mh.msgflags >> 4) & 15)) != 0) {
 		if ((sgoff + 2) > (msgsize >> 2)) {
 			DPRINTF(("%s: invalid message size fields\n",
@@ -676,7 +677,6 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	 * Allocate a wrapper, and adjust the message header fields to
 	 * indicate that no scatter-gather list is currently present.
 	 */
-	mapped = 0;
 
 	im = iop_msg_alloc(iop, IM_WAIT | IM_NOSTATUS);
 	im->im_rb = (struct i2o_reply *)rbtmp;

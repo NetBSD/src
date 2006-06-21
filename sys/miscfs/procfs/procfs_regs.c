@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.20 2003/08/07 16:32:42 agc Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.20.16.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.20 2003/08/07 16:32:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.20.16.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -82,21 +82,21 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.20 2003/08/07 16:32:42 agc Exp $")
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_doregs(curp, l, pfs, uio)
-	struct proc *curp;		/* tracer */
+procfs_doregs(curl, l, pfs, uio)
+	struct lwp *curl;		/* tracer */
 	struct lwp *l;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
 
-	return (process_doregs(curp, l, uio));
+	return (process_doregs(curl, l, uio));
 }
 
 int
-procfs_validregs(p, mp)
-	struct proc *p;
+procfs_validregs(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
 
-	return (process_validregs(p));
+	return (process_validregs(l));
 }

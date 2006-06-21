@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.8 2003/08/07 16:31:29 agc Exp $ */
+/* $NetBSD: wseventvar.h,v 1.8.16.1 2006/06/21 15:08:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -76,9 +76,6 @@
  * i.e., are expected to run off serial ports or similar devices.
  */
 
-/* WSEVENT_QSIZE should be a power of two so that `%' is fast */
-#define	WSEVENT_QSIZE	256	/* may need tuning; this uses 2k */
-
 struct wseventvar {
 	u_int	get;		/* get (read) index (modified synchronously) */
 	volatile u_int put;	/* put (write) index (modified by interrupt) */
@@ -89,26 +86,10 @@ struct wseventvar {
 	struct wscons_event *q;	/* circular buffer (queue) of events */
 };
 
-#define	splwsevent()	spltty()
-
-#define	WSEVENT_WAKEUP(ev) { \
-	selnotify(&(ev)->sel, 0); \
-	if ((ev)->wanted) { \
-		(ev)->wanted = 0; \
-		wakeup((ev)); \
-	} \
-	if ((ev)->async) \
-		psignal((ev)->io, SIGIO); \
-}
-
-void	wsevent_init(struct wseventvar *);
+void	wsevent_init(struct wseventvar *, struct proc *);
 void	wsevent_fini(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
-int	wsevent_poll(struct wseventvar *, int, struct proc *);
+int	wsevent_poll(struct wseventvar *, int, struct lwp *);
 int	wsevent_kqfilter(struct wseventvar *ev, struct knote *kn);
-
-/*
- * PWSEVENT is set just above PSOCK, which is just above TTIPRI, on the
- * theory that mouse and keyboard `user' input should be quick.
- */
-#define	PWSEVENT	23
+void	wsevent_wakeup(struct wseventvar *);
+int	wsevent_inject(struct wseventvar *, struct wscons_event *, size_t);

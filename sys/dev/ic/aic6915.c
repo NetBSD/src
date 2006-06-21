@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.13 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.13.4.1 2006/06/21 15:02:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.13 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.13.4.1 2006/06/21 15:02:52 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -109,7 +109,7 @@ static void	sf_mediastatus(struct ifnet *, struct ifmediareq *);
 #define	sf_funcreg_write(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh_func, (reg), (val))
 
-static __inline uint32_t
+static inline uint32_t
 sf_reg_read(struct sf_softc *sc, bus_addr_t reg)
 {
 
@@ -123,7 +123,7 @@ sf_reg_read(struct sf_softc *sc, bus_addr_t reg)
 	return (bus_space_read_4(sc->sc_st, sc->sc_sh, reg));
 }
 
-static __inline void
+static inline void
 sf_reg_write(struct sf_softc *sc, bus_addr_t reg, uint32_t val)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.52 2005/06/06 20:20:09 pooka Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.52.2.1 2006/06/21 15:02:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52 2005/06/06 20:20:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52.2.1 2006/06/21 15:02:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -220,8 +220,8 @@ void	smc91cxx_stop(struct smc91cxx_softc *);
 void	smc91cxx_watchdog(struct ifnet *);
 int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
 
-static __inline int ether_cmp(void *, void *);
-static __inline int
+static inline int ether_cmp(void *, void *);
+static inline int
 ether_cmp(va, vb)
 	void *va, *vb;
 {
@@ -895,7 +895,7 @@ smc91cxx_intr(arg)
 	u_int16_t packetno, tx_status, card_stats;
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	SMC_SELECT_BANK(sc, 2);
@@ -1612,7 +1612,7 @@ smc91cxx_tick(arg)
 		panic("smc91cxx_tick");
 #endif
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

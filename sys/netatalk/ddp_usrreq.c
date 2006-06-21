@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.13 2005/02/26 22:45:09 perry Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.13.4.1 2006/06/21 15:10:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.1 2006/06/21 15:10:51 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13 2005/02/26 22:45:09 perry Exp $"
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/kauth.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_ether.h>
@@ -73,17 +74,19 @@ struct mowner atalk_tx_mowner = { "atalk", "tx" };
 
 /* ARGSUSED */
 int
-ddp_usrreq(so, req, m, addr, rights, p)
+ddp_usrreq(so, req, m, addr, rights, l)
 	struct socket  *so;
 	int             req;
 	struct mbuf    *m;
 	struct mbuf    *addr;
 	struct mbuf    *rights;
-	struct proc    *p;
+	struct lwp *l;
 {
+	struct proc    *p;
 	struct ddpcb   *ddp;
 	int             error = 0;
 
+	p = l ? l->l_proc : NULL;
 	ddp = sotoddpcb(so);
 
 	if (req == PRU_CONTROL) {
@@ -271,8 +274,9 @@ at_pcbsetaddr(ddp, addr, p)
 			    sat->sat_port >= ATPORT_LAST)
 				return (EINVAL);
 
-			if (sat->sat_port < ATPORT_RESERVED &&
-			    suser(p->p_ucred, &p->p_acflag))
+			if (sat->sat_port < ATPORT_RESERVED && p &&
+			    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					      &p->p_acflag))
 				return (EACCES);
 		}
 	} else {

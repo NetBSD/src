@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.21 2005/06/20 20:40:21 darcy Exp $	*/
+/*	$NetBSD: aac.c,v 1.21.2.1 2006/06/21 15:02:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.21 2005/06/20 20:40:21 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.21.2.1 2006/06/21 15:02:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,11 +111,9 @@ static int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
 				 u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
 static int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
 			     u_int16_t, void *, u_int16_t *);
-static int	aac_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 #ifdef AAC_DEBUG
-static void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
+static void	aac_print_fib(struct aac_softc *, struct aac_fib *, const char *);
 #endif
 
 /*
@@ -154,13 +152,7 @@ aac_attach(struct aac_softc *sc)
 	struct aac_ccb *ac;
 	struct aac_fib *fib;
 	bus_addr_t fibpa;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX - Not clean
-		The big plan is to let config(8) issue information
-		about the length of the locator array in a useful way.
-		Then the allocation can be centralized. See also
-		http://mail-index.netbsd.org/tech-kern/2005/02/09/0025.html
-	*/
+	int locs[AACCF_NLOCS];
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -259,11 +251,10 @@ aac_attach(struct aac_softc *sc)
 			continue;
 		aaca.aaca_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[AACCF_UNIT] = i;
+		locs[AACCF_UNIT] = i;
 
-		config_found_sm_loc(&sc->sc_dv, "aac", ldesc, &aaca,
-				    aac_print, aac_submatch);
+		config_found_sm_loc(&sc->sc_dv, "aac", locs, &aaca,
+				    aac_print, config_stdsubmatch);
 	}
 
 	/*
@@ -312,24 +303,6 @@ aac_print(void *aux, const char *pnp)
 }
 
 /*
- * Match a sub-device.
- */
-static int
-aac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-	struct aac_attach_args *aaca;
-
-	aaca = aux;
-
-	if (cf->cf_loc[AACCF_UNIT] != AACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AACCF_UNIT] != ldesc->locs[AACCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-/*
  * Look up a text description of a numeric error code and return a pointer to
  * same.
  */
@@ -371,8 +344,8 @@ aac_describe_controller(struct aac_softc *sc)
 	}
 	if (bufsize != sizeof(*info)) {
 		aprint_error("%s: "
-		    "RequestAdapterInfo returned wrong data size (%d != %lu)\n",
-		    sc->sc_dv.dv_xname, bufsize, (long unsigned) sizeof(*info));
+		    "RequestAdapterInfo returned wrong data size (%d != %zu)\n",
+		    sc->sc_dv.dv_xname, bufsize, sizeof(*info));
 		return;
 	}
 	info = (struct aac_adapter_info *)&tbuf[0];
@@ -698,8 +671,8 @@ aac_startup(struct aac_softc *sc)
 		}
 		if (rsize != sizeof(mir)) {
 			aprint_error("%s: container info response wrong size "
-			    "(%d should be %lu)\n",
-			    sc->sc_dv.dv_xname, rsize, (long unsigned) sizeof(mir));
+			    "(%d should be %zu)\n",
+			    sc->sc_dv.dv_xname, rsize, sizeof(mir));
 			continue;
 		}
 
@@ -1078,7 +1051,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
 	 */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 #endif
 
@@ -1170,7 +1143,7 @@ aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_ccb_submit(%p, %p) ", sc, ac));
 
 	/* Fix up the address values. */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 
 	/* Save a pointer to the command for speedy reverse-lookup. */
@@ -1296,7 +1269,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* Fetch the entry. */
 	*fib_size = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_size);
-	*fib_addr = (void *)(intptr_t) le32toh((struct aac_fib *)
+	*fib_addr = (void *)(intptr_t) le32toh(
 	    (sc->sc_qentries[queue] + ci)->aq_fib_addr);
 
 	/* Update consumer index. */
@@ -1319,7 +1292,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
  * Print a FIB
  */
 static void
-aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
+aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
 {
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;
@@ -1396,8 +1369,11 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 		break;
 	}
 	default:
-		printf("   %16D\n", fib->data, " ");
-		printf("   %16D\n", fib->data + 16, " ");
+		// dump first 32 bytes of fib->data
+		printf("  Raw data:");
+		for (i = 0; i < 32; i++)
+			printf(" %02x", fib->data[i]);
+		printf("\n");
 		break;
 	}
 }

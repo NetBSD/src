@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.h,v 1.3 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.h,v 1.4 2003/03/12 00:14:40 wiz Exp $	*/
+/*	$NetBSD: bktr_card.h,v 1.4.18.1 2006/06/21 15:06:14 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp$ */
 
 /*
@@ -79,7 +79,8 @@
 #define CARD_ASKEY_DYNALINK_MAGIC_TVIEW	14
 #define CARD_LEADTEK		15
 #define CARD_TERRATVPLUS	16
-#define Bt848_MAX_CARD		17
+#define CARD_TERRATVALUE	17
+#define Bt848_MAX_CARD		18
 
 
 int	signCard(bktr_ptr_t bktr, int offset, int count, u_char* sig);

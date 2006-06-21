@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.1 2005/05/03 16:26:30 manu Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.1.2.1 2006/06/21 14:59:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -63,6 +63,6 @@ struct linux_extra_stack_data64 {
 /* we have special powerpc ELF copyargs */
 #define LINUX_MACHDEP_ELF_COPYARGS
 
-int linux_exec_setup_stack(struct proc *, struct exec_package *);
+int linux_exec_setup_stack(struct lwp *, struct exec_package *);
 
 #endif /* !_AMD64_LINUX_EXEC_H */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.29 2005/05/29 22:08:16 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.29.2.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.29 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.29.2.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,14 +72,15 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.29 2005/05/29 22:08:16 christos Ex
  * In case of error, the error number is returned and *pbuf = path.
  */
 int
-emul_find(p, sgp, prefix, path, pbuf, sflag)
-	struct proc	 *p;
+emul_find(l, sgp, prefix, path, pbuf, sflag)
+	struct lwp *l;
 	caddr_t		 *sgp;		/* Pointer to stackgap memory */
 	const char	 *prefix;
 	const char	 *path;
 	const char	**pbuf;
 	int		  sflag;
 {
+	struct proc *p;
 	struct nameidata	 nd;
 	struct nameidata	 ndroot;
 	struct vattr		 vat;
@@ -89,6 +90,7 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 	const char		*pr;
 	size_t			 sz, len;
 
+	p = l->l_proc;
 	tbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	*pbuf = path;
 
@@ -139,7 +141,7 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 			;
 		*cp = '\0';
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, tbuf, p);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, tbuf, l);
 
 		if ((error = namei(&nd)) != 0)
 			goto bad;
@@ -150,7 +152,7 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 	case CHECK_ALT_FL_SYMLINK:
 		NDINIT(&nd, LOOKUP,
 			(sflag == CHECK_ALT_FL_SYMLINK) ? NOFOLLOW : FOLLOW,
-			UIO_SYSSPACE, tbuf, p);
+			UIO_SYSSPACE, tbuf, l);
 
 		if ((error = namei(&nd)) != 0)
 			goto bad;
@@ -163,15 +165,15 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 		 * root directory and never finding it, because "/" resolves
 		 * to the emulation root directory. This is expensive :-(
 		 */
-		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, prefix, p);
+		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, prefix, l);
 
 		if ((error = namei(&ndroot)) != 0)
 			goto bad2;
 
-		if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_ucred, p)) != 0)
+		if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_cred, l)) != 0)
 			goto bad3;
 
-		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_ucred, p))
+		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_cred, l))
 		    != 0)
 			goto bad3;
 
@@ -221,12 +223,12 @@ bad:
  * there, check if the interpreter exists in within 'proper' tree.
  */
 int
-emul_find_interp(struct proc *p, const char *prefix, char *itp)
+emul_find_interp(struct lwp *l, const char *prefix, char *itp)
 {
 	const char *bp;
 	int error;
 
-	if (emul_find(p, NULL, prefix, itp, &bp, CHECK_ALT_FL_EXISTS) == 0) {
+	if (emul_find(l, NULL, prefix, itp, &bp, CHECK_ALT_FL_EXISTS) == 0) {
 		size_t len;
 
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
@@ -237,7 +239,7 @@ emul_find_interp(struct proc *p, const char *prefix, char *itp)
 		/* check filename without the emul prefix */
 		struct nameidata nd;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, itp, p);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, itp, l);
 
 		if ((error = namei(&nd)))
 			return error;

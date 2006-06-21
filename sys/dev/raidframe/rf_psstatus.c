@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.29 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.29.4.1 2006/06/21 15:06:28 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.29 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.29.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -74,17 +74,23 @@ rf_ShutdownPSStatus(void *arg)
 }
 
 int
-rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-		     RF_Config_t *cfgPtr)
+rf_ConfigurePSStatus(RF_ShutdownList_t **listp)
 {
 
-	raidPtr->pssTableSize = RF_PSS_DEFAULT_TABLESIZE;
 	rf_pool_init(&rf_pools.pss, sizeof(RF_ReconParityStripeStatus_t),
 		     "raidpsspl", RF_MIN_FREE_PSS, RF_MAX_FREE_PSS);
-	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
+	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, NULL);
 
 	return (0);
 }
+
+void
+rf_InitPSStatus(RF_Raid_t *raidPtr)
+{
+	raidPtr->pssTableSize = RF_PSS_DEFAULT_TABLESIZE;
+}
+
+
 /*****************************************************************************************
  * sets up the pss table
  * We pre-allocate a bunch of entries to avoid as much as possible having to

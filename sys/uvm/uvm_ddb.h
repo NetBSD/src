@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_ddb.h,v 1.8 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_ddb.h,v 1.8.16.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*
  *
@@ -46,6 +46,7 @@ void	uvm_object_printit(struct uvm_object *, boolean_t,
 	    void (*)(const char *, ...));
 void	uvm_page_printit(struct vm_page *, boolean_t,
 	    void (*)(const char *, ...));
+void	uvm_page_printall(void (*)(const char *, ...));
 void	uvmexp_print(void (*)(const char *, ...));
 #endif /* DDB */
 

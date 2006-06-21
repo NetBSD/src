@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128.2.1 2006/06/21 14:57:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2005/06/13 00:34:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128.2.1 2006/06/21 14:57:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -607,13 +607,15 @@ cpu_init_kcore_hdr(void)
  * Compute the size of the machine-dependent crash dump header.
  * Returns size in disk blocks.
  */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 int
 cpu_dumpsize(void)
 {
-	int size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return (btodb(roundup(size, dbtob(1))));
+	return btodb(MDHDRSIZE);
 }
 
 /*
@@ -622,7 +624,7 @@ cpu_dumpsize(void)
 int
 cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
-	int buf[dbtob(1) / sizeof(int)];
+	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
 	kcore_seg_t *kseg;
 	int error;
@@ -633,7 +635,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 
 	/* Create the segment header. */
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
@@ -1001,7 +1003,7 @@ nmihand(struct frame frame)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;
@@ -1018,12 +1020,12 @@ cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
 		break;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
 		break;
 #endif
 	default:
@@ -1090,8 +1092,8 @@ mem_exists(caddr_t mem, u_long basemax)
 	b = (void*)base_v;
 
 	/* This is somewhat paranoid -- avoid overwriting myself */
-	asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
-	asm("lea %%pc@(end_check_mem),%0" : "=a"(end_check));
+	__asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
+	__asm("lea %%pc@(end_check_mem),%0" : "=a"(end_check));
 	if (base >= begin_check && base < end_check) {
 		size_t off = end_check - begin_check;
 
@@ -1127,7 +1129,7 @@ mem_exists(caddr_t mem, u_long basemax)
 		save_b = *b;
 	save_m = *m;
 
-asm("begin_check_mem:");
+__asm("begin_check_mem:");
 	/*
 	 * stack and other data segment variables are unusable
 	 * til end_check_mem, because they may be clobbered.
@@ -1154,7 +1156,7 @@ out:
 	if (baseismem)
 		*b = save_b;
 
-asm("end_check_mem:");
+__asm("end_check_mem:");
 
 	nofault = (int *)0;
 	pmap_remove(pmap_kernel(), mem_v, mem_v+PAGE_SIZE);
@@ -1199,7 +1201,7 @@ setmemrange(void)
 			cacr = CACHE60_OFF;
 			break;
 		}
-		asm volatile ("movc %0,%%cacr"::"d"(cacr));
+		__asm volatile ("movc %0,%%cacr"::"d"(cacr));
 	}
 
 	/* discover extended memory */
@@ -1244,7 +1246,7 @@ setmemrange(void)
 			cacr = CACHE60_ON;
 			break;
 		}
-		asm volatile ("movc %0,%%cacr"::"d"(cacr));
+		__asm volatile ("movc %0,%%cacr"::"d"(cacr));
 	}
 
 	physmem = m68k_btop(mem_size);

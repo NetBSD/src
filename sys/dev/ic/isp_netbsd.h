@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.53 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.53.4.1 2006/06/21 15:02:55 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -346,7 +346,6 @@ default:							\
  * isp_osinfo definitions, extensions and shorthand.
  */
 #define	isp_name	isp_osinfo._dev.dv_xname
-#define	isp_unit	isp_osinfo._dev.dv_unit
 #define	isp_chanA	isp_osinfo._chan
 #define	isp_chanB	isp_osinfo._chan_b
 

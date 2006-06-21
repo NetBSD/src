@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.91.2.1 2006/06/21 15:12:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,9 +51,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91.2.1 2006/06/21 15:12:40 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91 2005/05/11 13:02:25 yamt Exp $");
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
+ 
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 #include <miscfs/specfs/specdev.h>
 
@@ -455,7 +460,7 @@ sys_mmap(l, v, retval)
 			 */
 			if (fp->f_flag & FWRITE) {
 				if ((error =
-				    VOP_GETATTR(vp, &va, p->p_ucred, p)))
+				    VOP_GETATTR(vp, &va, p->p_cred, l)))
 					return (error);
 				if ((va.va_flags &
 				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
@@ -499,6 +504,10 @@ sys_mmap(l, v, retval)
 			return (ENOMEM);
 		}
 	}
+
+#ifdef PAX_MPROTECT
+	pax_mprotect(l, &prot, &maxprot);
+#endif /* PAX_MPROTECT */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
@@ -604,8 +613,6 @@ sys___msync13(l, v, retval)
 		uvmflags |= PGO_FREE;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
-	else
-		uvmflags |= PGO_SYNCIO;	 /* XXXCDC: force sync for now! */
 
 	error = uvm_map_clean(map, addr, addr+size, uvmflags);
 	return error;
@@ -1096,6 +1103,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 */
 
 	if (flags & MAP_ANON) {
+		KASSERT(handle == NULL);
 		foff = UVM_UNKNOWN_OFFSET;
 		uobj = NULL;
 		if ((flags & MAP_SHARED) == 0)
@@ -1106,6 +1114,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			uvmflag |= UVM_FLAG_OVERLAY;
 
 	} else {
+		KASSERT(handle != NULL);
 		vp = (struct vnode *)handle;
 
 		/*
@@ -1117,7 +1126,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			return (EACCES);
 
 		if (vp->v_type != VCHR) {
-			error = VOP_MMAP(vp, 0, curproc->p_ucred, curproc);
+			error = VOP_MMAP(vp, 0, curproc->p_cred, curlwp);
 			if (error) {
 				return error;
 			}
@@ -1152,8 +1161,13 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		}
 		if (uobj == NULL)
 			return((vp->v_type == VREG) ? ENOMEM : EINVAL);
-		if ((flags & MAP_SHARED) == 0)
+		if ((flags & MAP_SHARED) == 0) {
 			uvmflag |= UVM_FLAG_COPYONW;
+		} else if ((maxprot & VM_PROT_WRITE) != 0) {
+			simple_lock(&vp->v_interlock);
+			vp->v_flag |= VWRITEMAP;
+			simple_unlock(&vp->v_interlock);
+		}
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

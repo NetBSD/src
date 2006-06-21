@@ -27,7 +27,7 @@
  *	i4b_tei.c - tei handling procedures
  *	-----------------------------------
  *
- *	$Id: i4b_tei.c,v 1.7 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_tei.c,v 1.7.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.7 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.7.4.1 2006/06/21 15:11:24 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -312,6 +312,7 @@ i4b_make_rand_ri(l2_softc_t *l2sc)
 	register u_short val;
 	register int i;
 	static int called = 42;
+	struct timeval t;
 
 	val = (l2sc->last_rih << 8) | l2sc->last_ril;
 
@@ -319,11 +320,12 @@ i4b_make_rand_ri(l2_softc_t *l2sc)
 
 	for(i=0; i < 50 ; i++, val++)
 	{
+		getmicrotime(&t);
 		val |= l2sc->drv->isdnif+i;
 		val <<= i;
-		val ^= (time.tv_sec >> 16) ^ time.tv_usec;
+		val ^= (t.tv_sec >> 16) ^ t.tv_usec;
 		val <<= i;
-		val ^= time.tv_sec ^ (time.tv_usec >> 16);
+		val ^= t.tv_sec ^ (t.tv_usec >> 16);
 
 		if(val != 0 && val != 0xffff)
 			break;

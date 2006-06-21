@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.20 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.20.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.20 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.20.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -76,16 +76,6 @@ int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 label_t *kgdb_recover = 0;
 
-static void kgdb_copy(void *, void *, int);
-/* static void kgdb_zero(void *, int); */
-static void kgdb_send(u_char *);
-static int kgdb_recv(u_char *, int);
-static int digit2i(u_char);
-static u_char i2digit(int);
-static void mem2hex(void *, void *, int);
-static u_char *hex2mem(void *, u_char *, int);
-static vaddr_t hex2i(u_char **);
-
 static int (*kgdb_getc)(void *);
 static void (*kgdb_putc)(void *, int);
 static void *kgdb_ioarg;
@@ -108,9 +98,7 @@ void (*db_trap_callback)(int);
  * This little routine exists simply so that bcopy() can be debugged.
  */
 static void
-kgdb_copy(vsrc, vdst, len)
-	void *vsrc, *vdst;
-	int len;
+kgdb_copy(void *vsrc, void *vdst, int len)
 {
 	char *src = vsrc;
 	char *dst = vdst;
@@ -122,9 +110,7 @@ kgdb_copy(vsrc, vdst, len)
 #if 0
 /* ditto for bzero */
 static void
-kgdb_zero(vptr, len)
-	void *vptr;
-	int len;
+kgdb_zero(void *vptr, int len)
 {
 	char *ptr = vptr;
 
@@ -139,8 +125,7 @@ kgdb_zero(vptr, len)
  * valid hex digit.
  */
 static int
-digit2i(c)
-	u_char c;
+digit2i(u_char c)
 {
 	if (c >= '0' && c <= '9')
 		return (c - '0');
@@ -158,8 +143,7 @@ digit2i(c)
  * an hex digit.
  */
 static u_char
-i2digit(n)
-	int n;
+i2digit(int n)
 {
 	return (hexdigits[n & 0x0f]);
 }
@@ -168,9 +152,7 @@ i2digit(n)
  * Convert a byte array into an hex string.
  */
 static void
-mem2hex(vdst, vsrc, len)
-	void *vdst, *vsrc;
-	int len;
+mem2hex(void *vdst, void *vsrc, int len)
 {
 	u_char *dst = vdst;
 	u_char *src = vsrc;
@@ -189,10 +171,7 @@ mem2hex(vdst, vsrc, len)
  * the middle of a byte, NULL is returned.
  */
 static u_char *
-hex2mem(vdst, src, maxlen)
-	void *vdst;
-	u_char *src;
-	int maxlen;
+hex2mem(void *vdst, u_char *src, int maxlen)
 {
 	u_char *dst = vdst;
 	int msb, lsb;
@@ -215,8 +194,7 @@ hex2mem(vdst, src, maxlen)
  * the last valid hex digit.
  */
 static vaddr_t
-hex2i(srcp)
-	u_char **srcp;
+hex2i(u_char **srcp)
 {
 	char *src = *srcp;
 	vaddr_t r = 0;
@@ -235,10 +213,9 @@ hex2i(srcp)
  * Send a packet.
  */
 static void
-kgdb_send(bp)
-	u_char *bp;
+kgdb_send(const u_char *bp)
 {
-	u_char *p;
+	const u_char *p;
 	u_char csum, c;
 
 	DPRINTF(("kgdb_send: %s\n", bp));
@@ -259,9 +236,7 @@ kgdb_send(bp)
  * Receive a packet.
  */
 static int
-kgdb_recv(bp, maxlen)
-	u_char *bp;
-	int maxlen;
+kgdb_recv(u_char *bp, int maxlen)
 {
 	u_char *p;
 	int c, csum, tmpcsum;
@@ -324,10 +299,7 @@ kgdb_recv(bp, maxlen)
  * This is called by the appropriate tty driver.
  */
 void
-kgdb_attach(getfn, putfn, ioarg)
-	int (*getfn)(void *);
-	void (*putfn)(void *, int);
-	void *ioarg;
+kgdb_attach(int (*getfn)(void *), void (*putfn)(void *, int), void *ioarg)
 {
 	kgdb_getc = getfn;
 	kgdb_putc = putfn;
@@ -342,9 +314,7 @@ kgdb_attach(getfn, putfn, ioarg)
  * that is what the gdb/remote.c functions want to return.
  */
 int
-kgdb_trap(type, regs)
-	int type;
-	db_regs_t *regs;
+kgdb_trap(int type, db_regs_t *regs)
 {
 	label_t jmpbuf;
 	vaddr_t addr;

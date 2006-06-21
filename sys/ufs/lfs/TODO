@@ -1,4 +1,9 @@
-#   $NetBSD: TODO,v 1.9 2005/04/01 21:59:46 perseant Exp $
+#   $NetBSD: TODO,v 1.9.2.1 2006/06/21 15:12:38 yamt Exp $
+
+- Lock audit.  Need to check locking for multiprocessor case in particular.
+
+- Get rid of lfs_segclean(); the kernel should clean a dirty segment IFF it
+  has passed two checkpoints containing zero live bytes.
 
 - Now that our cache is basically all of physical memory, we need to make
   sure that segwrite is not starving other important things.  Need a way

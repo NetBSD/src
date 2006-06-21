@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: com.c,v 1.35.2.1 2006/06/21 14:57:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35.2.1 2006/06/21 14:57:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #if 0
@@ -208,11 +209,6 @@ extern int kgdb_debug_init;
 
 #define	COMUNIT(x)	(minor(x) & 0x7F)
 #define	COMDIALOUT(x)	(minor(x) & 0x80)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 static int
 comspeed(long speed)
@@ -392,7 +388,7 @@ comattach(struct device *parent, struct device *dev, void *aux)
 }
 
 int
-comopen(dev_t dev, int flag, int mode, struct proc *p)
+comopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc;
@@ -419,7 +415,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -517,7 +513,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-comclose(dev_t dev, int flag, int mode, struct proc *p)
+comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];
@@ -572,12 +568,12 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-compoll(dev_t dev, int events, struct proc *p)
+compoll(dev_t dev, int events, struct lwp *l)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -602,7 +598,7 @@ tiocm_xxx2mcr(int data)
 }
 
 int
-comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];
@@ -610,11 +606,11 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int iobase = sc->sc_iobase;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -687,7 +683,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
 		if (error != 0)
 			return(EPERM); 
 

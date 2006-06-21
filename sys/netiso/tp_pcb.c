@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.26 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.26.12.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.26 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.26.12.1 2006/06/21 15:11:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -332,10 +332,14 @@ tp_init(void)
 	if (init_done++)
 		return;
 
+#ifdef INET
 	/* FOR INET */
 	in_pcbinit(&tp_inpcb, 1, 1);
+#endif
+#ifdef ISO
 	/* FOR ISO */
 	tp_isopcb.isop_next = tp_isopcb.isop_prev = &tp_isopcb;
+#endif
 
 	tp_start_win = 2;
 
@@ -372,13 +376,15 @@ tp_soisdisconnecting(struct socket *so)
 	if (DOPERF(sototpcb(so))) {
 		struct tp_pcb *tpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
+		struct timeval	now;
 
 		bcopy((caddr_t) tpcb->tp_fsuffix, (caddr_t) &fsufx,
 		      sizeof(u_int));
 		bcopy((caddr_t) tpcb->tp_lsuffix, (caddr_t) &lsufx,
 		      sizeof(u_int));
 
-		tpmeas(tpcb->tp_lref, TPtime_close, &time, fsufx, lsufx,
+		getmicrotime(&now);
+		tpmeas(tpcb->tp_lref, TPtime_close, &now, fsufx, lsufx,
 		       tpcb->tp_fref);
 		tpcb->tp_perf_on = 0;	/* turn perf off */
 	}
@@ -420,6 +426,7 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 	if (DOPERF(tpcb)) {
 		struct tp_pcb *ttpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
+		struct timeval	now;
 
 		/* CHOKE */
 		bcopy((caddr_t) ttpcb->tp_fsuffix, (caddr_t) &fsufx,
@@ -427,8 +434,9 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 		bcopy((caddr_t) ttpcb->tp_lsuffix, (caddr_t) &lsufx,
 		      sizeof(u_int));
 
+		getmicrotime(&now);
 		tpmeas(ttpcb->tp_lref, TPtime_close,
-		       &time, &lsufx, &fsufx, ttpcb->tp_fref);
+		       &now, &lsufx, &fsufx, ttpcb->tp_fref);
 		tpcb->tp_perf_on = 0;	/* turn perf off */
 	}
 #endif
@@ -688,8 +696,11 @@ tp_attach(struct socket *so, int protocol)
 	ASSERT(tpcb->tp_nlproto->nlp_afamily == tpcb->tp_domain);
 
 	/* nothing to do for iso case */
-	if (dom == AF_INET)
+	if (dom == AF_INET) {
+		/* tp_set_npcb sets it */
+		KASSERT(so->so_pcb != NULL);
 		sotoinpcb(so)->inp_ppcb = (caddr_t) tpcb;
+	}
 
 	return 0;
 

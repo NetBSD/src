@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.29 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.29.4.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.29 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.29.4.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include "rnd.h"
 
@@ -145,8 +145,8 @@ ed_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ed_softc *ed = (void *) self;
-	struct edc_mca_softc *sc = (void *) parent;
+	struct ed_softc *ed = device_private(self);
+	struct edc_mca_softc *sc = device_private(parent);
 	struct ed_attach_args *eda = (struct ed_attach_args *) aux;
 	char pbuf[8];
 	int drv_flags;
@@ -155,7 +155,7 @@ ed_mca_attach(parent, self, aux)
 	ed->sc_devno  = eda->edc_drive;
 	edc_add_disk(sc, ed);
 
-	bufq_alloc(&ed->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&ed->sc_q, "disksort", BUFQ_SORT_RAWBLOCK);
 	simple_lock_init(&ed->sc_q_lock);
 
 	if (ed_get_params(ed, &drv_flags)) {
@@ -257,7 +257,7 @@ edmcastrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	simple_lock(&ed->sc_q_lock);
-	BUFQ_PUT(&ed->sc_q, bp);
+	BUFQ_PUT(ed->sc_q, bp);
 	simple_unlock(&ed->sc_q_lock);
 
 	/* Ring the worker thread */
@@ -293,10 +293,10 @@ edmcawrite(dev, uio, flags)
 }
 
 int
-edmcaopen(dev, flag, fmt, p)
+edmcaopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ed_softc *wd;
 	int part, error;
@@ -374,10 +374,10 @@ edmcaopen(dev, flag, fmt, p)
 }
 
 int
-edmcaclose(dev, flag, fmt, p)
+edmcaclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ed_softc *wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	int part = DISKPART(dev);
@@ -488,12 +488,12 @@ edgetdisklabel(dev, ed)
 }
 
 int
-edmcaioctl(dev, xfer, addr, flag, p)
+edmcaioctl(dev, xfer, addr, flag, l)
 	dev_t dev;
 	u_long xfer;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(dev));
 	int error;
@@ -586,7 +586,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 		auio.uio_segflg = 0;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
+		auio.uio_lwp = l;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
@@ -624,7 +624,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&ed->sc_dk, dkwl, p));
+		return (dkwedge_list(&ed->sc_dk, dkwl, l));
 	    }
 
 	default:

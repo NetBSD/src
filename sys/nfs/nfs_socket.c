@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.114 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.114.2.1 2006/06/21 15:11:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.114 2005/05/29 20:58:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.114.2.1 2006/06/21 15:11:58 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.114 2005/05/29 20:58:13 christos Ex
 #include <sys/namei.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -123,8 +124,32 @@ extern int nfs_ticks;
  * 4 - write
  */
 static const int proct[NFS_NPROCS] = {
-	0, 1, 0, 2, 1, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
-	0, 0, 0,
+	[NFSPROC_NULL] = 0,
+	[NFSPROC_GETATTR] = 1,
+	[NFSPROC_SETATTR] = 0,
+	[NFSPROC_LOOKUP] = 2,
+	[NFSPROC_ACCESS] = 1,
+	[NFSPROC_READLINK] = 3,
+	[NFSPROC_READ] = 3,
+	[NFSPROC_WRITE] = 4,
+	[NFSPROC_CREATE] = 0,
+	[NFSPROC_MKDIR] = 0,
+	[NFSPROC_SYMLINK] = 0,
+	[NFSPROC_MKNOD] = 0,
+	[NFSPROC_REMOVE] = 0,
+	[NFSPROC_RMDIR] = 0,
+	[NFSPROC_RENAME] = 0,
+	[NFSPROC_LINK] = 0,
+	[NFSPROC_READDIR] = 3,
+	[NFSPROC_READDIRPLUS] = 3,
+	[NFSPROC_FSSTAT] = 0,
+	[NFSPROC_FSINFO] = 0,
+	[NFSPROC_PATHCONF] = 0,
+	[NFSPROC_COMMIT] = 0,
+	[NQNFSPROC_GETLEASE] = 0,
+	[NQNFSPROC_VACATED] = 0,
+	[NQNFSPROC_EVICTED] = 0,
+	[NFSPROC_NOOP] = 0,
 };
 
 /*
@@ -154,10 +179,10 @@ struct callout nfs_timer_ch = CALLOUT_INITIALIZER_SETFUNC(nfs_timer, NULL);
  * We do not free the sockaddr if error.
  */
 int
-nfs_connect(nmp, rep, p)
+nfs_connect(nmp, rep, l)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct socket *so;
 	int s, error, rcvreserve, sndreserve;
@@ -171,7 +196,7 @@ nfs_connect(nmp, rep, p)
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so,
-		nmp->nm_sotype, nmp->nm_soproto, p);
+		nmp->nm_sotype, nmp->nm_soproto, l);
 	if (error)
 		goto bad;
 	so = nmp->nm_so;
@@ -199,7 +224,7 @@ nfs_connect(nmp, rep, p)
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = 0;
-		error = sobind(so, m, &proc0);
+		error = sobind(so, m, &lwp0);
 		m_freem(m);
 		if (error)
 			goto bad;
@@ -219,7 +244,7 @@ nfs_connect(nmp, rep, p)
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_addr = in6addr_any;
 		sin6->sin6_port = 0;
-		error = sobind(so, m, &proc0);
+		error = sobind(so, m, &lwp0);
 		m_freem(m);
 		if (error)
 			goto bad;
@@ -236,7 +261,7 @@ nfs_connect(nmp, rep, p)
 			goto bad;
 		}
 	} else {
-		error = soconnect(so, nmp->nm_nam, p);
+		error = soconnect(so, nmp->nm_nam, l);
 		if (error)
 			goto bad;
 
@@ -251,7 +276,7 @@ nfs_connect(nmp, rep, p)
 				"nfscn1", 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
-			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
+			    (error = nfs_sigintr(nmp, rep, rep->r_lwp)) != 0){
 				so->so_state &= ~SS_ISCONNECTING;
 				splx(s);
 				goto bad;
@@ -337,16 +362,16 @@ bad:
  * nb: Must be called with the nfs_sndlock() set on the mount point.
  */
 int
-nfs_reconnect(rep, p)
+nfs_reconnect(rep, l)
 	struct nfsreq *rep;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct nfsreq *rp;
 	struct nfsmount *nmp = rep->r_nmp;
 	int error;
 
 	nfs_disconnect(nmp);
-	while ((error = nfs_connect(nmp, rep, p)) != 0) {
+	while ((error = nfs_connect(nmp, rep, l)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
 		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscn2", 0);
@@ -430,19 +455,19 @@ nfs_safedisconnect(nmp)
  * - do any cleanup required by recoverable socket errors (? ? ?)
  */
 int
-nfs_send(so, nam, top, rep, p)
+nfs_send(so, nam, top, rep, l)
 	struct socket *so;
 	struct mbuf *nam;
 	struct mbuf *top;
 	struct nfsreq *rep;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mbuf *sendnam;
 	int error, soflags, flags;
 
-	/* XXX nfs_doio()/nfs_request() calls with  rep->r_procp == NULL */
-	if (p == NULL && rep->r_procp == NULL)
-		p = curproc;
+	/* XXX nfs_doio()/nfs_request() calls with  rep->r_lwp == NULL */
+	if (l == NULL && rep->r_lwp == NULL)
+		l = curlwp;
 
 	if (rep) {
 		if (rep->r_flags & R_SOFTTERM) {
@@ -468,7 +493,7 @@ nfs_send(so, nam, top, rep, p)
 		flags = 0;
 
 	error = (*so->so_send)(so, sendnam, (struct uio *)0, top,
-		    (struct mbuf *)0, flags,  p);
+		    (struct mbuf *)0, flags,  l);
 	if (error) {
 		if (rep) {
 			if (error == ENOBUFS && so->so_type == SOCK_DGRAM) {
@@ -528,11 +553,11 @@ nfs_send(so, nam, top, rep, p)
  * we have read any of it, even if the system call has been interrupted.
  */
 int
-nfs_receive(rep, aname, mp, p)
+nfs_receive(rep, aname, mp, l)
 	struct nfsreq *rep;
 	struct mbuf **aname;
 	struct mbuf **mp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct socket *so;
 	struct uio auio;
@@ -578,7 +603,7 @@ tryagain:
 		}
 		so = rep->r_nmp->nm_so;
 		if (!so) {
-			error = nfs_reconnect(rep, p);
+			error = nfs_reconnect(rep, l);
 			if (error) {
 				nfs_sndunlock(&rep->r_nmp->nm_iflag);
 				return (error);
@@ -590,10 +615,10 @@ tryagain:
 			nfsstats.rpcretries++;
 			rep->r_rtt = 0;
 			rep->r_flags &= ~R_TIMING;
-			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep, p);
+			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep, l);
 			if (error) {
 				if (error == EINTR || error == ERESTART ||
-				    (error = nfs_reconnect(rep, p)) != 0) {
+				    (error = nfs_reconnect(rep, l)) != 0) {
 					nfs_sndunlock(&rep->r_nmp->nm_iflag);
 					return (error);
 				}
@@ -606,11 +631,10 @@ tryagain:
 			aio.iov_len = sizeof(u_int32_t);
 			auio.uio_iov = &aio;
 			auio.uio_iovcnt = 1;
-			auio.uio_segflg = UIO_SYSSPACE;
 			auio.uio_rw = UIO_READ;
 			auio.uio_offset = 0;
 			auio.uio_resid = sizeof(u_int32_t);
-			auio.uio_procp = NULL;
+			UIO_SETUP_SYSSPACE(&auio);
 			do {
 			   rcvflg = MSG_WAITALL;
 			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
@@ -684,7 +708,7 @@ tryagain:
 			 * on.
 			 */
 			auio.uio_resid = len = 100000000; /* Anything Big */
-			auio.uio_procp = p;
+			/* not need to setup uio_vmspace */
 			do {
 			    rcvflg = 0;
 			    error =  (*so->so_receive)(so, (struct mbuf **)0,
@@ -714,7 +738,7 @@ errout:
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			error = nfs_sndlock(&rep->r_nmp->nm_iflag, rep);
 			if (!error)
-				error = nfs_reconnect(rep, p);
+				error = nfs_reconnect(rep, l);
 			if (!error)
 				goto tryagain;
 			else
@@ -728,7 +752,7 @@ errout:
 		else
 			getnam = aname;
 		auio.uio_resid = len = 1000000;
-		auio.uio_procp = p;
+		/* not need to setup uio_vmspace */
 		do {
 			rcvflg = 0;
 			error =  (*so->so_receive)(so, getnam, &auio, mp,
@@ -755,9 +779,9 @@ errout:
  */
 /* ARGSUSED */
 int
-nfs_reply(myrep, procp)
+nfs_reply(myrep, lwp)
 	struct nfsreq *myrep;
-	struct proc *procp;
+	struct lwp *lwp;
 {
 	struct nfsreq *rep;
 	struct nfsmount *nmp = myrep->r_nmp;
@@ -786,7 +810,7 @@ nfs_reply(myrep, procp)
 		 * Get the next Rpc reply off the socket
 		 */
 		nmp->nm_waiters++;
-		error = nfs_receive(myrep, &nam, &mrep, procp);
+		error = nfs_receive(myrep, &nam, &mrep, lwp);
 		nfs_rcvunlock(nmp);
 		if (error) {
 
@@ -827,7 +851,8 @@ nfs_reply(myrep, procp)
 		if (*tl != rpc_reply) {
 #ifndef NFS_V2_ONLY
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
-				if (nqnfs_callback(nmp, mrep, md, dpos))
+				if (nqnfs_callback(nmp, mrep, md, dpos,
+				    myrep->r_lwp))
 					nfsstats.rpcinvalid++;
 			} else
 #endif
@@ -862,7 +887,7 @@ nfsmout:
 					rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
 					rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
 					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsidx;
-					rt->tstamp = time;
+					getmicrotime(&rt->tstamp);
 					if (rep->r_flags & R_TIMING)
 						rt->rtt = rep->r_rtt;
 					else
@@ -936,12 +961,12 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp, rexmitp)
+nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	struct nfsnode *np;
 	struct mbuf *mrest;
 	int procnum;
-	struct proc *procp;
-	struct ucred *cred;
+	struct lwp *lwp;
+	kauth_cred_t cred;
 	struct mbuf **mrp;
 	struct mbuf **mdp;
 	caddr_t *dposp;
@@ -962,24 +987,26 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp, rexmitp)
 	u_int32_t xid;
 	char *auth_str, *verf_str;
 	NFSKERBKEY_T key;		/* save session key */
-	struct ucred acred;
+	kauth_cred_t acred;
 #ifndef NFS_V2_ONLY
 	int nqlflag, cachable;
 	u_quad_t frev;
 #endif
 	struct mbuf *mrest_backup = NULL;
-	struct ucred *origcred = NULL; /* XXX: gcc */
+	kauth_cred_t origcred = NULL; /* XXX: gcc */
 	boolean_t retry_cred = TRUE;
 	boolean_t use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
 
 	if (rexmitp != NULL)
 		*rexmitp = 0;
 
+	acred = kauth_cred_alloc();
+
 tryagain_cred:
 	KASSERT(cred != NULL);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
-	rep->r_procp = procp;
+	rep->r_lwp = lwp;
 	rep->r_procnum = procnum;
 	i = 0;
 	m = mrest;
@@ -1006,6 +1033,8 @@ kerbauth:
 			if (error) {
 				free((caddr_t)rep, M_NFSREQ);
 				m_freem(mrest);
+				KASSERT(kauth_cred_getrefcnt(acred) == 1);
+				kauth_cred_free(acred);
 				return (error);
 			}
 		}
@@ -1032,17 +1061,20 @@ kerbauth:
 		case NFSPROC_COMMIT:
 			uid = np->n_vattr->va_uid;
 			gid = np->n_vattr->va_gid;
-			if (cred->cr_uid == uid && cred->cr_gid == gid) {
+			if (kauth_cred_geteuid(cred) == uid &&
+			    kauth_cred_getegid(cred) == gid) {
 				retry_cred = FALSE;
 				break;
 			}
 			if (use_opencred)
 				break;
-			acred.cr_uid = uid;
-			acred.cr_gid = gid;
-			acred.cr_ngroups = 0;
-			acred.cr_ref = 2;	/* Just to be safe.. */
-			cred = &acred;
+			kauth_cred_setuid(acred, uid);
+			kauth_cred_seteuid(acred, uid);
+			kauth_cred_setsvuid(acred, uid);
+			kauth_cred_setgid(acred, gid);
+			kauth_cred_setegid(acred, gid);
+			kauth_cred_setsvgid(acred, gid);
+			cred = acred;
 			break;
 		default:
 			retry_cred = FALSE;
@@ -1057,8 +1089,9 @@ kerbauth:
 		if (retry_cred)
 			mrest_backup = m_copym(mrest, 0, M_COPYALL, M_WAIT);
 		auth_type = RPCAUTH_UNIX;
-		auth_len = (((cred->cr_ngroups > nmp->nm_numgrps) ?
-			nmp->nm_numgrps : cred->cr_ngroups) << 2) +
+		/* XXX elad - ngroups */
+		auth_len = (((kauth_cred_ngroups(cred) > nmp->nm_numgrps) ?
+			nmp->nm_numgrps : kauth_cred_ngroups(cred)) << 2) +
 			5 * NFSX_UNSIGNED;
 	}
 	m = nfsm_rpchead(cred, nmp->nm_flag, procnum, auth_type, auth_len,
@@ -1100,7 +1133,7 @@ tryagain:
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
 
 	/* Get send time for nqnfs */
-	reqtime = time.tv_sec;
+	reqtime = time_second;
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
@@ -1115,7 +1148,7 @@ tryagain:
 			error = nfs_sndlock(&nmp->nm_iflag, rep);
 		if (!error) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
-			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep, procp);
+			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep, lwp);
 			if (nmp->nm_soflags & PR_CONNREQUIRED)
 				nfs_sndunlock(&nmp->nm_iflag);
 		}
@@ -1132,7 +1165,7 @@ tryagain:
 	 * Wait for the reply from our send or the timer's.
 	 */
 	if (!error || error == EPIPE)
-		error = nfs_reply(rep, procp);
+		error = nfs_reply(rep, lwp);
 
 	/*
 	 * RPC done, unlink the request.
@@ -1164,7 +1197,7 @@ tryagain:
 	 * tprintf a response.
 	 */
 	if (!error && (rep->r_flags & R_TPRINTFMSG))
-		nfs_msg(rep->r_procp, nmp->nm_mountp->mnt_stat.f_mntfromname,
+		nfs_msg(rep->r_lwp, nmp->nm_mountp->mnt_stat.f_mntfromname,
 		    "is alive again");
 	mrep = rep->r_mrep;
 	md = rep->r_md;
@@ -1211,26 +1244,138 @@ tryagain:
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		if (*tl != 0) {
 			error = fxdr_unsigned(int, *tl);
-			if (error == NFSERR_ACCES && retry_cred) {
+			switch (error) {
+			case NFSERR_PERM:
+				error = EPERM;
+				break;
+
+			case NFSERR_NOENT:
+				error = ENOENT;
+				break;
+
+			case NFSERR_IO:
+				error = EIO;
+				break;
+
+			case NFSERR_NXIO:
+				error = ENXIO;
+				break;
+
+			case NFSERR_ACCES:
+				error = EACCES;
+				if (!retry_cred)
+					break;
 				m_freem(mrep);
 				m_freem(rep->r_mreq);
 				FREE(rep, M_NFSREQ);
 				use_opencred = !use_opencred;
-				if (mrest_backup == NULL)
-					return ENOMEM; /* m_copym failure */
+				if (mrest_backup == NULL) {
+					/* m_copym failure */
+					KASSERT(
+					    kauth_cred_getrefcnt(acred) == 1);
+					kauth_cred_free(acred);
+					return ENOMEM;
+				}
 				mrest = mrest_backup;
 				mrest_backup = NULL;
 				cred = origcred;
 				error = 0;
 				retry_cred = FALSE;
 				goto tryagain_cred;
-			}
-			if ((nmp->nm_flag & NFSMNT_NFSV3) &&
-				error == NFSERR_TRYLATER) {
+
+			case NFSERR_EXIST:
+				error = EEXIST;
+				break;
+
+			case NFSERR_XDEV:
+				error = EXDEV;
+				break;
+
+			case NFSERR_NODEV:
+				error = ENODEV;
+				break;
+
+			case NFSERR_NOTDIR:
+				error = ENOTDIR;
+				break;
+
+			case NFSERR_ISDIR:
+				error = EISDIR;
+				break;
+
+			case NFSERR_INVAL:
+				error = EINVAL;
+				break;
+
+			case NFSERR_FBIG:
+				error = EFBIG;
+				break;
+
+			case NFSERR_NOSPC:
+				error = ENOSPC;
+				break;
+
+			case NFSERR_ROFS:
+				error = EROFS;
+				break;
+
+			case NFSERR_MLINK:
+				error = EMLINK;
+				break;
+
+			case NFSERR_TIMEDOUT:
+				error = ETIMEDOUT;
+				break;
+
+			case NFSERR_NAMETOL:
+				error = ENAMETOOLONG;
+				break;
+
+			case NFSERR_NOTEMPTY:
+				error = ENOTEMPTY;
+				break;
+
+			case NFSERR_DQUOT:
+				error = EDQUOT;
+				break;
+
+			case NFSERR_STALE:
+				/*
+				 * If the File Handle was stale, invalidate the
+				 * lookup cache, just in case.
+				 */
+				error = ESTALE;
+				cache_purge(NFSTOV(np));
+				break;
+
+			case NFSERR_REMOTE:
+				error = EREMOTE;
+				break;
+
+			case NFSERR_WFLUSH:
+			case NFSERR_BADHANDLE:
+			case NFSERR_NOT_SYNC:
+			case NFSERR_BAD_COOKIE:
+				error = EINVAL;
+				break;
+
+			case NFSERR_NOTSUPP:
+				error = ENOTSUP;
+				break;
+
+			case NFSERR_TOOSMALL:
+			case NFSERR_SERVERFAULT:
+			case NFSERR_BADTYPE:
+				error = EINVAL;
+				break;
+
+			case NFSERR_TRYLATER:
+				if ((nmp->nm_flag & NFSMNT_NFSV3) == 0)
+					break;
 				m_freem(mrep);
 				error = 0;
-				waituntil = time.tv_sec + trylater_delay;
-				while (time.tv_sec < waituntil)
+				waituntil = time_second + trylater_delay;
+				while (time_second < waituntil)
 					(void) tsleep((caddr_t)&lbolt,
 						PSOCK, "nqnfstry", 0);
 				trylater_delay *= NFS_TRYLATERDELMUL;
@@ -1243,14 +1388,19 @@ tryagain:
 				 */
 				nfs_renewxid(rep);
 				goto tryagain;
+
+			case NFSERR_STALEWRITEVERF:
+				error = EINVAL;
+				break;
+
+			default:
+#ifdef DIAGNOSTIC
+				printf("Invalid rpc error code %d\n", error);
+#endif
+				error = EINVAL;
+				break;
 			}
 
-			/*
-			 * If the File Handle was stale, invalidate the
-			 * lookup cache, just in case.
-			 */
-			if (error == ESTALE)
-				cache_purge(NFSTOV(np));
 			if (nmp->nm_flag & NFSMNT_NFSV3) {
 				*mrp = mrep;
 				*mdp = md;
@@ -1280,7 +1430,7 @@ tryagain:
 				nfsm_dissect(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 				cachable = fxdr_unsigned(int, *tl++);
 				reqtime += fxdr_unsigned(int, *tl++);
-				if (reqtime > time.tv_sec) {
+				if (reqtime > time_second) {
 				    frev = fxdr_hyper(tl);
 				    nqnfs_clientlease(nmp, np, nqlflag,
 					cachable, reqtime, frev);
@@ -1298,6 +1448,8 @@ tryagain:
 	m_freem(mrep);
 	error = EPROTONOSUPPORT;
 nfsmout:
+	KASSERT(kauth_cred_getrefcnt(acred) == 1);
+	kauth_cred_free(acred);
 	m_freem(rep->r_mreq);
 	free((caddr_t)rep, M_NFSREQ);
 	m_freem(mrest_backup);
@@ -1366,9 +1518,13 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 			struct nfsuid *nuidp;
 			struct timeval ktvin, ktvout;
 
-			LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
+			memset(&ktvout, 0, sizeof ktvout);	/* XXX gcc */
+
+			LIST_FOREACH(nuidp,
+			    NUIDHASH(slp, kauth_cred_geteuid(nd->nd_cr)),
 			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) ==
+				kauth_cred_geteuid(nd->nd_cr) &&
 				    (!nd->nd_nam2 || netaddr_match(
 				    NU_NETFAM(nuidp), &nuidp->nu_haddr,
 				    nd->nd_nam2)))
@@ -1394,7 +1550,8 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 				*tl = ktvout.tv_sec;
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 				*tl++ = ktvout.tv_usec;
-				*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
+				*tl++ = txdr_unsigned(
+				    kauth_cred_geteuid(nuidp->nu_cr));
 			} else {
 				*tl++ = 0;
 				*tl++ = 0;
@@ -1478,6 +1635,7 @@ nfs_timer(arg)
 	int timeo;
 	int s, error;
 #ifdef NFSSERVER
+	struct timeval tv;
 	struct nfssvc_sock *slp;
 	static long lasttime = 0;
 	u_quad_t cur_usec;
@@ -1488,7 +1646,7 @@ nfs_timer(arg)
 		nmp = rep->r_nmp;
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
-		if (nfs_sigintr(nmp, rep, rep->r_procp)) {
+		if (nfs_sigintr(nmp, rep, rep->r_lwp)) {
 			rep->r_flags |= R_SOFTTERM;
 			continue;
 		}
@@ -1511,7 +1669,7 @@ nfs_timer(arg)
 		 */
 		if ((rep->r_flags & R_TPRINTFMSG) == 0 &&
 		     rep->r_rexmit > nmp->nm_deadthresh) {
-			nfs_msg(rep->r_procp,
+			nfs_msg(rep->r_lwp,
 			    nmp->nm_mountp->mnt_stat.f_mntfromname,
 			    "not responding");
 			rep->r_flags |= R_TPRINTFMSG;
@@ -1542,10 +1700,10 @@ nfs_timer(arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 		        if (so->so_state & SS_ISCONNECTED)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
+			    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, (struct mbuf *)0, (struct proc *)0);
+			    nmp->nm_nam, (struct mbuf *)0, (struct lwp *)0);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 #ifdef DEBUG
@@ -1581,8 +1739,8 @@ nfs_timer(arg)
 	/*
 	 * Call the nqnfs server timer once a second to handle leases.
 	 */
-	if (lasttime != time.tv_sec) {
-		lasttime = time.tv_sec;
+	if (lasttime != time_second) {
+		lasttime = time_second;
 		nqnfs_serverd();
 	}
 
@@ -1590,7 +1748,8 @@ nfs_timer(arg)
 	 * Scan the write gathering queues for writes that need to be
 	 * completed now.
 	 */
-	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
+	getmicrotime(&tv);
+	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 	    if (LIST_FIRST(&slp->ns_tq) &&
 		LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
@@ -1611,7 +1770,7 @@ nfs_exit(p, v)
 	int s = splsoftnet();
 
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_procp == p)
+		if (rp->r_lwp && rp->r_lwp->l_proc == p)
 			TAILQ_REMOVE(&nfs_reqq, rp, r_chain);
 	}
 	splx(s);
@@ -1622,10 +1781,10 @@ nfs_exit(p, v)
  * This is used for NFSMNT_INT mounts.
  */
 int
-nfs_sigintr(nmp, rep, p)
+nfs_sigintr(nmp, rep, l)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
-	struct proc *p;
+	struct lwp *l;
 {
 	sigset_t ss;
 
@@ -1633,10 +1792,10 @@ nfs_sigintr(nmp, rep, p)
 		return (EINTR);
 	if (!(nmp->nm_flag & NFSMNT_INT))
 		return (0);
-	if (p) {
-		sigpending1(p, &ss);
+	if (l) {
+		sigpending1(l->l_proc, &ss);
 #if 0
-		sigminusset(&p->p_sigctx.ps_sigignore, &ss);
+		sigminusset(&l->l_proc->p_sigctx.ps_sigignore, &ss);
 #endif
 		if (sigismember(&ss, SIGINT) || sigismember(&ss, SIGTERM) ||
 		    sigismember(&ss, SIGKILL) || sigismember(&ss, SIGHUP) ||
@@ -1657,17 +1816,17 @@ nfs_sndlock(flagp, rep)
 	int *flagp;
 	struct nfsreq *rep;
 {
-	struct proc *p;
+	struct lwp *l;
 	int slpflag = 0, slptimeo = 0;
 
 	if (rep) {
-		p = rep->r_procp;
+		l = rep->r_lwp;
 		if (rep->r_nmp->nm_flag & NFSMNT_INT)
 			slpflag = PCATCH;
 	} else
-		p = (struct proc *)0;
+		l = (struct lwp *)0;
 	while (*flagp & NFSMNT_SNDLOCK) {
-		if (rep && nfs_sigintr(rep->r_nmp, rep, p))
+		if (rep && nfs_sigintr(rep->r_nmp, rep, l))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTSND;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsndlck",
@@ -1716,7 +1875,7 @@ nfs_rcvlock(rep)
 		slpflag = 0;
 	simple_lock(&nmp->nm_slock);
 	while (*flagp & NFSMNT_RCVLOCK) {
-		if (nfs_sigintr(rep->r_nmp, rep, rep->r_procp)) {
+		if (nfs_sigintr(rep->r_nmp, rep, rep->r_lwp)) {
 			error = EINTR;
 			goto quit;
 		}
@@ -1773,7 +1932,7 @@ nfs_rcvunlock(nmp)
 /*
  * Parse an RPC request
  * - verify it
- * - fill in the cred struct.
+ * - allocate and fill in the cred.
  */
 int
 nfs_getreq(nd, nfsd, has_header)
@@ -1794,6 +1953,9 @@ nfs_getreq(nd, nfsd, has_header)
 	struct nfsuid *nuidp;
 	struct timeval tvin, tvout;
 
+	memset(&tvout, 0, sizeof tvout);	/* XXX gcc */
+
+	KASSERT(nd->nd_cr == NULL);
 	mrep = nd->nd_mrep;
 	md = nd->nd_md;
 	dpos = nd->nd_dpos;
@@ -1858,35 +2020,51 @@ nfs_getreq(nd, nfsd, has_header)
 	 * Handle auth_unix or auth_kerb.
 	 */
 	if (auth_type == rpc_auth_unix) {
+		uid_t uid;
+		gid_t gid, *grbuf;
+
+		nd->nd_cr = kauth_cred_alloc();
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
 			m_freem(mrep);
-			return (EBADRPC);
+			error = EBADRPC;
+			goto errout;
 		}
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-		memset((caddr_t)&nd->nd_cr, 0, sizeof (struct ucred));
-		nd->nd_cr.cr_ref = 1;
-		nd->nd_cr.cr_uid = fxdr_unsigned(uid_t, *tl++);
-		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
+
+		uid = fxdr_unsigned(uid_t, *tl++);
+		gid = fxdr_unsigned(gid_t, *tl++);
+		kauth_cred_setuid(nd->nd_cr, uid);
+		kauth_cred_setgid(nd->nd_cr, gid);
+		kauth_cred_seteuid(nd->nd_cr, uid);
+		kauth_cred_setsvuid(nd->nd_cr, gid);
+		kauth_cred_setegid(nd->nd_cr, uid);
+		kauth_cred_setsvgid(nd->nd_cr, gid);
+
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
 			m_freem(mrep);
-			return (EBADRPC);
+			error = EBADRPC;
+			goto errout;
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
-		for (i = 0; i < len; i++)
-		    if (i < NGROUPS)
-			nd->nd_cr.cr_groups[i] = fxdr_unsigned(gid_t, *tl++);
-		    else
-			tl++;
-		nd->nd_cr.cr_ngroups = (len > NGROUPS) ? NGROUPS : len;
-		if (nd->nd_cr.cr_ngroups > 1)
-		    nfsrvw_sort(nd->nd_cr.cr_groups, nd->nd_cr.cr_ngroups);
+
+		grbuf = malloc(len * sizeof(gid_t), M_TEMP, M_WAITOK);
+		for (i = 0; i < len; i++) {
+			if (i < NGROUPS) /* XXX elad */
+				grbuf[i] = fxdr_unsigned(gid_t, *tl++);
+			else
+				tl++;
+		}
+		kauth_cred_setgroups(nd->nd_cr, grbuf, min(len, NGROUPS), -1);
+		free(grbuf, M_TEMP);
+
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
 			m_freem(mrep);
-			return (EBADRPC);
+			error = EBADRPC;
+			goto errout;
 		}
 		if (len > 0)
 			nfsm_adv(nfsm_rndup(len));
@@ -1899,12 +2077,13 @@ nfs_getreq(nd, nfsd, has_header)
 			nfsd->nfsd_authlen = uio.uio_resid + NFSX_UNSIGNED;
 			if (uio.uio_resid > (len - 2 * NFSX_UNSIGNED)) {
 				m_freem(mrep);
-				return (EBADRPC);
+				error = EBADRPC;
+				goto errout;
 			}
 			uio.uio_offset = 0;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
-			uio.uio_segflg = UIO_SYSSPACE;
+			UIO_SETUP_SYSSPACE(&uio);
 			iov.iov_base = (caddr_t)&nfsd->nfsd_authstr[4];
 			iov.iov_len = RPCAUTH_MAXSIZ - 4;
 			nfsm_mtouio(&uio, uio.uio_resid);
@@ -1952,7 +2131,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 			LIST_FOREACH(nuidp, NUIDHASH(nfsd->nfsd_slp, nickuid),
 			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nickuid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) == nickuid &&
 				    (!nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
 				      &nuidp->nu_haddr, nd->nd_nam2)))
@@ -1975,7 +2154,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
 			tvout.tv_usec = fxdr_unsigned(long, tvout.tv_usec);
-			if (nuidp->nu_expire < time.tv_sec ||
+			if (nuidp->nu_expire < time_second ||
 			    nuidp->nu_timestamp.tv_sec > tvout.tv_sec ||
 			    (nuidp->nu_timestamp.tv_sec == tvout.tv_sec &&
 			     nuidp->nu_timestamp.tv_usec > tvout.tv_usec)) {
@@ -1985,9 +2164,10 @@ nfs_getreq(nd, nfsd, has_header)
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
 			}
-			nfsrv_setcred(&nuidp->nu_cr, &nd->nd_cr);
+			kauth_cred_hold(nuidp->nu_cr);
+			nd->nd_cr = nuidp->nu_cr;
 			nd->nd_flag |= ND_KERBNICK;
-		};
+		}
 	} else {
 		nd->nd_repstat = (NFSERR_AUTHERR | AUTH_REJECTCRED);
 		nd->nd_procnum = NFSPROC_NOOP;
@@ -2009,20 +2189,28 @@ nfs_getreq(nd, nfsd, has_header)
 		nd->nd_duration = NQ_MINLEASE;
 	nd->nd_md = md;
 	nd->nd_dpos = dpos;
+	KASSERT((nd->nd_cr == NULL && (nfsd->nfsd_flag & NFSD_NEEDAUTH) != 0)
+	     || (nd->nd_cr != NULL && (nfsd->nfsd_flag & NFSD_NEEDAUTH) == 0));
 	return (0);
 nfsmout:
+errout:
+	KASSERT(error != 0);
+	if (nd->nd_cr != NULL) {
+		kauth_cred_free(nd->nd_cr);
+		nd->nd_cr = NULL;
+	}
 	return (error);
 }
 
 int
-nfs_msg(p, server, msg)
-	struct proc *p;
+nfs_msg(l, server, msg)
+	struct lwp *l;
 	const char *server, *msg;
 {
 	tpr_t tpr;
 
-	if (p)
-		tpr = tprintf_open(p);
+	if (l)
+		tpr = tprintf_open(l->l_proc);
 	else
 		tpr = NULL;
 	tprintf(tpr, "nfs server %s: %s\n", server, msg);
@@ -2032,7 +2220,7 @@ nfs_msg(p, server, msg)
 
 #ifdef NFSSERVER
 int (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
-				    struct nfssvc_sock *, struct proc *,
+				    struct nfssvc_sock *, struct lwp *,
 				    struct mbuf **)) = {
 	nfsrv_null,
 	nfsrv_getattr,
@@ -2079,41 +2267,55 @@ nfsrv_rcv(so, arg, waitflag)
 	struct mbuf *mp, *nam;
 	struct uio auio;
 	int flags, error;
+	int setflags = 0;
 
-	if ((slp->ns_flag & SLP_VALID) == 0)
-		return;
-#if 1
+	error = nfsdsock_lock(slp, (waitflag != M_DONTWAIT));
+	if (error) {
+		setflags |= SLP_NEEDQ;
+		goto dorecs_unlocked;
+	}
+
+	KASSERT(so == slp->ns_so);
+#define NFS_TEST_HEAVY
+#ifdef NFS_TEST_HEAVY
 	/*
 	 * Define this to test for nfsds handling this under heavy load.
+	 *
+	 * XXX it isn't safe to call so_receive from so_upcall context.
 	 */
 	if (waitflag == M_DONTWAIT) {
-		slp->ns_flag |= SLP_NEEDQ; goto dorecs;
+		setflags |= SLP_NEEDQ;
+		goto dorecs;
 	}
 #endif
-	/* XXX: was NULL, soreceive() requires non-NULL uio->uio_procp */
-	auio.uio_procp = curproc;	/* XXX curproc */
+	simple_lock(&slp->ns_lock);
+	slp->ns_flag &= ~SLP_NEEDQ;
+	simple_unlock(&slp->ns_lock);
 	if (so->so_type == SOCK_STREAM) {
+#ifndef NFS_TEST_HEAVY
 		/*
 		 * If there are already records on the queue, defer soreceive()
 		 * to an nfsd so that there is feedback to the TCP layer that
 		 * the nfs servers are heavily loaded.
 		 */
 		if (slp->ns_rec && waitflag == M_DONTWAIT) {
-			slp->ns_flag |= SLP_NEEDQ;
+			setflags |= SLP_NEEDQ;
 			goto dorecs;
 		}
+#endif
 
 		/*
 		 * Do soreceive().
 		 */
 		auio.uio_resid = 1000000000;
+		/* not need to setup uio_vmspace */
 		flags = MSG_DONTWAIT;
-		error = (*so->so_receive)(so, &nam, &auio, &mp, (struct mbuf **)0, &flags);
-		if (error || mp == (struct mbuf *)0) {
+		error = (*so->so_receive)(so, &nam, &auio, &mp, NULL, &flags);
+		if (error || mp == NULL) {
 			if (error == EWOULDBLOCK)
-				slp->ns_flag |= SLP_NEEDQ;
+				setflags |= SLP_NEEDQ;
 			else
-				slp->ns_flag |= SLP_DISCONN;
+				setflags |= SLP_DISCONN;
 			goto dorecs;
 		}
 		m = mp;
@@ -2134,16 +2336,17 @@ nfsrv_rcv(so, arg, waitflag)
 		error = nfsrv_getstream(slp, waitflag);
 		if (error) {
 			if (error == EPERM)
-				slp->ns_flag |= SLP_DISCONN;
+				setflags |= SLP_DISCONN;
 			else
-				slp->ns_flag |= SLP_NEEDQ;
+				setflags |= SLP_NEEDQ;
 		}
 	} else {
 		do {
 			auio.uio_resid = 1000000000;
+			/* not need to setup uio_vmspace */
 			flags = MSG_DONTWAIT;
-			error = (*so->so_receive)(so, &nam, &auio, &mp,
-						(struct mbuf **)0, &flags);
+			error = (*so->so_receive)(so, &nam, &auio, &mp, NULL,
+			    &flags);
 			if (mp) {
 				if (nam) {
 					m = nam;
@@ -2159,21 +2362,87 @@ nfsrv_rcv(so, arg, waitflag)
 			}
 			if (error) {
 				if ((so->so_proto->pr_flags & PR_CONNREQUIRED)
-					&& error != EWOULDBLOCK) {
-					slp->ns_flag |= SLP_DISCONN;
+				    && error != EWOULDBLOCK) {
+					setflags |= SLP_DISCONN;
 					goto dorecs;
 				}
 			}
 		} while (mp);
 	}
+dorecs:
+	nfsdsock_unlock(slp);
 
+dorecs_unlocked:
 	/*
 	 * Now try and process the request records, non-blocking.
 	 */
-dorecs:
+	if (setflags) {
+		simple_lock(&slp->ns_lock);
+		slp->ns_flag |= setflags;
+		simple_unlock(&slp->ns_lock);
+	}
 	if (waitflag == M_DONTWAIT &&
-		(slp->ns_rec || (slp->ns_flag & (SLP_NEEDQ | SLP_DISCONN))))
+	    (slp->ns_rec || (slp->ns_flag & (SLP_DISCONN | SLP_NEEDQ)) != 0)) {
 		nfsrv_wakenfsd(slp);
+	}
+}
+
+int
+nfsdsock_lock(struct nfssvc_sock *slp, boolean_t waitok)
+{
+
+	simple_lock(&slp->ns_lock);
+	while ((slp->ns_flag & (SLP_BUSY|SLP_VALID)) == SLP_BUSY) {
+		if (!waitok) {
+			simple_unlock(&slp->ns_lock);
+			return EWOULDBLOCK;
+		}
+		slp->ns_flag |= SLP_WANT;
+		ltsleep(&slp->ns_flag, PSOCK, "nslock", 0, &slp->ns_lock);
+	}
+	if ((slp->ns_flag & SLP_VALID) == 0) {
+		simple_unlock(&slp->ns_lock);
+		return EINVAL;
+	}
+	slp->ns_flag |= SLP_BUSY;
+	simple_unlock(&slp->ns_lock);
+
+	return 0;
+}
+
+void
+nfsdsock_unlock(struct nfssvc_sock *slp)
+{
+
+	KASSERT((slp->ns_flag & SLP_BUSY) != 0);
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_WANT) != 0) {
+		wakeup(&slp->ns_flag);
+	}
+	slp->ns_flag &= ~(SLP_BUSY|SLP_WANT);
+	simple_unlock(&slp->ns_lock);
+}
+
+int
+nfsdsock_drain(struct nfssvc_sock *slp)
+{
+	int error = 0;
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_VALID) == 0) {
+		error = EINVAL;
+		goto done;
+	}
+	slp->ns_flag &= ~SLP_VALID;
+	while ((slp->ns_flag & SLP_BUSY) != 0) {
+		slp->ns_flag |= SLP_WANT;
+		ltsleep(&slp->ns_flag, PSOCK, "nsdrain", 0, &slp->ns_lock);
+	}
+done:
+	simple_unlock(&slp->ns_lock);
+
+	return error;
 }
 
 /*
@@ -2189,15 +2458,12 @@ nfsrv_getstream(slp, waitflag)
 	struct mbuf *m, **mpp;
 	struct mbuf *recm;
 	u_int32_t recmark;
+	int error = 0;
 
-	if (slp->ns_flag & SLP_GETSTREAM)
-		panic("nfs getstream");
-	slp->ns_flag |= SLP_GETSTREAM;
 	for (;;) {
 		if (slp->ns_reclen == 0) {
 			if (slp->ns_cc < NFSX_UNSIGNED) {
-				slp->ns_flag &= ~SLP_GETSTREAM;
-				return (0);
+				break;
 			}
 			m = slp->ns_raw;
 			m_copydata(m, 0, NFSX_UNSIGNED, (caddr_t)&recmark);
@@ -2210,8 +2476,8 @@ nfsrv_getstream(slp, waitflag)
 			else
 				slp->ns_flag &= ~SLP_LASTFRAG;
 			if (slp->ns_reclen > NFS_MAXPACKET) {
-				slp->ns_flag &= ~SLP_GETSTREAM;
-				return (EPERM);
+				error = EPERM;
+				break;
 			}
 		}
 
@@ -2229,8 +2495,8 @@ nfsrv_getstream(slp, waitflag)
 			recm = slp->ns_raw;
 			m = m_split(recm, slp->ns_reclen, waitflag);
 			if (m == NULL) {
-				slp->ns_flag &= ~SLP_GETSTREAM;
-				return (EWOULDBLOCK);
+				error = EWOULDBLOCK;
+				break;
 			}
 			m_claimm(recm, &nfs_mowner);
 			slp->ns_raw = m;
@@ -2239,8 +2505,7 @@ nfsrv_getstream(slp, waitflag)
 			slp->ns_cc -= slp->ns_reclen;
 			slp->ns_reclen = 0;
 		} else {
-			slp->ns_flag &= ~SLP_GETSTREAM;
-			return (0);
+			break;
 		}
 
 		/*
@@ -2259,6 +2524,8 @@ nfsrv_getstream(slp, waitflag)
 			slp->ns_frag = (struct mbuf *)0;
 		}
 	}
+
+	return error;
 }
 
 /*
@@ -2275,35 +2542,42 @@ nfsrv_dorec(slp, nfsd, ndp)
 	int error;
 
 	*ndp = NULL;
-	if ((slp->ns_flag & SLP_VALID) == 0 ||
-	    (m = slp->ns_rec) == (struct mbuf *)0)
-		return (ENOBUFS);
+
+	if (nfsdsock_lock(slp, TRUE)) {
+		return ENOBUFS;
+	}
+	m = slp->ns_rec;
+	if (m == NULL) {
+		nfsdsock_unlock(slp);
+		return ENOBUFS;
+	}
 	slp->ns_rec = m->m_nextpkt;
 	if (slp->ns_rec)
-		m->m_nextpkt = (struct mbuf *)0;
+		m->m_nextpkt = NULL;
 	else
-		slp->ns_recend = (struct mbuf *)0;
+		slp->ns_recend = NULL;
+	nfsdsock_unlock(slp);
+
 	if (m->m_type == MT_SONAME) {
 		nam = m;
 		m = m->m_next;
 		nam->m_next = NULL;
 	} else
 		nam = NULL;
-	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
+	nd = nfsdreq_alloc();
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
 	nd->nd_dpos = mtod(m, caddr_t);
 	error = nfs_getreq(nd, nfsd, TRUE);
 	if (error) {
 		m_freem(nam);
-		pool_put(&nfs_srvdesc_pool, nd);
+		nfsdreq_free(nd);
 		return (error);
 	}
 	*ndp = nd;
 	nfsd->nfsd_nd = nd;
 	return (0);
 }
-
 
 /*
  * Search for a sleeping nfsd and wake it up.
@@ -2328,8 +2602,6 @@ nfsrv_wakenfsd(slp)
 		SLIST_REMOVE_HEAD(&nfsd_idle_head, nfsd_idle);
 		simple_unlock(&nfsd_slock);
 
-		KASSERT(nd->nfsd_flag & NFSD_WAITING);
-		nd->nfsd_flag &= ~NFSD_WAITING;
 		if (nd->nfsd_slp)
 			panic("nfsd wakeup");
 		slp->ns_sref++;
@@ -2342,4 +2614,80 @@ nfsrv_wakenfsd(slp)
 	TAILQ_INSERT_TAIL(&nfssvc_sockpending, slp, ns_pending);
 	simple_unlock(&nfsd_slock);
 }
+
+int
+nfsdsock_sendreply(struct nfssvc_sock *slp, struct nfsrv_descript *nd)
+{
+	int error;
+
+	if (nd->nd_mrep != NULL) {
+		m_freem(nd->nd_mrep);
+		nd->nd_mrep = NULL;
+	}
+
+	simple_lock(&slp->ns_lock);
+	if ((slp->ns_flag & SLP_SENDING) != 0) {
+		SIMPLEQ_INSERT_TAIL(&slp->ns_sendq, nd, nd_sendq);
+		simple_unlock(&slp->ns_lock);
+		return 0;
+	}
+	KASSERT(SIMPLEQ_EMPTY(&slp->ns_sendq));
+	slp->ns_flag |= SLP_SENDING;
+	simple_unlock(&slp->ns_lock);
+
+again:
+	error = nfs_send(slp->ns_so, nd->nd_nam2, nd->nd_mreq, NULL, curlwp);
+	if (nd->nd_nam2) {
+		m_free(nd->nd_nam2);
+	}
+	nfsdreq_free(nd);
+
+	simple_lock(&slp->ns_lock);
+	KASSERT((slp->ns_flag & SLP_SENDING) != 0);
+	nd = SIMPLEQ_FIRST(&slp->ns_sendq);
+	if (nd != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&slp->ns_sendq, nd_sendq);
+		simple_unlock(&slp->ns_lock);
+		goto again;
+	}
+	slp->ns_flag &= ~SLP_SENDING;
+	simple_unlock(&slp->ns_lock);
+
+	return error;
+}
 #endif /* NFSSERVER */
+
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
+static struct pool nfs_srvdesc_pool;
+
+void
+nfsdreq_init(void)
+{
+
+	pool_init(&nfs_srvdesc_pool, sizeof(struct nfsrv_descript),
+	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr);
+}
+
+struct nfsrv_descript *
+nfsdreq_alloc(void)
+{
+	struct nfsrv_descript *nd;
+
+	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
+	nd->nd_cr = NULL;
+	return nd;
+}
+
+void
+nfsdreq_free(struct nfsrv_descript *nd)
+{
+	kauth_cred_t cr;
+
+	cr = nd->nd_cr;
+	if (cr != NULL) {
+		KASSERT(kauth_cred_getrefcnt(cr) == 1);
+		kauth_cred_free(cr);
+	}
+	pool_put(&nfs_srvdesc_pool, nd);
+}
+#endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */

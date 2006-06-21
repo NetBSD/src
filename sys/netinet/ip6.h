@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.19 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: ip6.h,v 1.19.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ struct ip6_dest {
 #define IP6OPT_NSAP_ADDR	0xC3	/* 11 0 00011 */
 #define IP6OPT_TUNNEL_LIMIT	0x04	/* 00 0 00100 */
 #define IP6OPT_RTALERT		0x05	/* 00 0 00101 (KAME definition) */
-#define IP6OPT_ROUTER_ALERT	0x05	/* (2292bis def, recommended) */
+#define IP6OPT_ROUTER_ALERT	0x05	/* (RFC3542 def, recommended) */
 
 #define IP6OPT_RTALERT_LEN	4
 #define IP6OPT_RTALERT_MLD	0	/* Datagram contains an MLD message */
@@ -316,4 +316,4 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 #endif /*_KERNEL*/
 
-#endif /* not _NETINET_IP6_H_ */
+#endif /* !_NETINET_IP6_H_ */

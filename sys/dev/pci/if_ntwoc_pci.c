@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.15 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.15.2.1 2006/06/21 15:05:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.15 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.15.2.1 2006/06/21 15:05:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	u_int numports;
 
 	printf(": N2 Serial Interface\n");
-	flags = sc->sc_dev.dv_cfdata->cf_flags;
+	flags = device_cfdata(&sc->sc_dev)->cf_flags;
 
 	/*
 	 * Map in the ASIC configuration space

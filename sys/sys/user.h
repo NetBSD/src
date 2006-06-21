@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.15 2003/08/07 16:34:22 agc Exp $	*/
+/*	$NetBSD: user.h,v 1.15.16.1 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -35,28 +35,16 @@
 #define _SYS_USER_H_
 
 #include <machine/pcb.h>
-#ifndef _KERNEL
-/* stuff that *used* to be included by user.h, or is now needed */
-#include <errno.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/ucred.h>
-#include <sys/uio.h>
-#endif
-#include <sys/resourcevar.h>
-#include <sys/signalvar.h>
-
 
 /*
- * Per process structure containing data that isn't needed in core
- * when the process isn't running (esp. when swapped out).
+ * Per lwp structure containing data that isn't needed in core
+ * when the lwp isn't running (esp. when swapped out).
  * This structure may or may not be at the same kernel address
  * in all processes.
  */
 
-struct	user {
-	struct	pcb u_pcb;
-
+struct user {
+	struct pcb u_pcb;
 };
 
 #endif /* !_SYS_USER_H_ */

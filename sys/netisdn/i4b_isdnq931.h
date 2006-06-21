@@ -27,13 +27,16 @@
  *	i4b_isdnq931.h - DSS1 layer 3 message types
  *	-------------------------------------------
  *
- *	$Id: i4b_isdnq931.h,v 1.1.1.1 2001/01/05 12:49:52 martin Exp $
+ *	$Id: i4b_isdnq931.h,v 1.1.1.1.42.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
  *	last edit-date: [Thu Apr 27 09:46:13 2000]
  *
  *---------------------------------------------------------------------------*/
+
+#ifndef _NETISDN_I4B_ISDBQ931_H_
+#define _NETISDN_I4B_ISDBQ931_H_
 
 /* protocol discriminators */
 
@@ -166,3 +169,5 @@
 #define STATUS			0x7d
 
 /* EOF */
+
+#endif /* !_NETISDN_I4B_ISDBQ931_H_ */

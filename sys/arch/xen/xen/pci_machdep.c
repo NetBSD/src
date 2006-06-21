@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.4 2005/04/16 22:49:38 bouyer Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.4.4.1 2006/06/21 14:58:23 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -38,9 +38,9 @@
 #include <machine/bus_private.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
-#include <machine/evtchn.h>
-
+#include "locators.h"
 #include "opt_ddb.h"
 
 /* mask of already-known busses */
@@ -89,6 +89,7 @@ pci_make_tag(pci_chipset_tag_t pcitag, int bus, int dev, int func)
 	tag.bus = bus;
 	tag.device = dev;
 	tag.function = func;
+	tag._pad = 0;
 
 	return tag;
 }
@@ -146,78 +147,75 @@ pci_conf_write(pci_chipset_tag_t pcitag, pcitag_t dev, int reg, pcireg_t val)
 	}
 }
 
+/*
+ * We can't use the generic pci_enumerate_bus, because the hypervisor
+ * may hide the function 0 from us, while other functions are
+ * available
+ */
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+xen_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
 {
-	physdev_op_t physdev_op;
-	pcireg_t intr;
-	int pin;
-	int line;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	int device, function, nfunctions, ret;
+	const struct pci_quirkdata *qd;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
 
-	/* initialise device, to get the real IRQ */
-	physdev_op.cmd = PHYSDEVOP_PCI_INITIALISE_DEVICE;
-	physdev_op.u.pci_initialise_device.bus = pa->pa_bus;
-	physdev_op.u.pci_initialise_device.dev = pa->pa_device;
-	physdev_op.u.pci_initialise_device.func = pa->pa_function;
-	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
+	for (device = 0; device < sc->sc_maxndevs; device++)
+	{
+		if ((locators[PCICF_DEV] != PCICF_DEV_DEFAULT) &&
+		    (locators[PCICF_DEV] != device))
+			continue;
 
-	intr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
-	pin = pa->pa_intrpin;
-	pa->pa_intrline = line = PCI_INTERRUPT_LINE(intr);
-#if 0 /* XXXX why is it always 0 ? */
-	if (pin == 0) {
-		/* No IRQ used */
-		goto bad;
+		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		qd = NULL;
+
+		if (PCI_VENDOR(id) != PCI_VENDOR_INVALID) {
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(id) == 0)
+				continue;
+			
+			if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+				continue;
+
+			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
+			    PCI_PRODUCT(id));
+
+			if (qd != NULL &&
+			      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0)
+				nfunctions = 8;
+			else if (qd != NULL &&
+			      (qd->quirks & PCI_QUIRK_MONOFUNCTION) != 0)
+				nfunctions = 1;
+			else
+				nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
+		} else {
+			/*
+			 * Vendor ID invalid. This may be because there's no
+			 * device, or because the hypervisor is hidding
+			 * function 0 from us. Try to probe other functions
+			 * anyway.
+			 */
+			nfunctions = 8;
+		}
+
+		for (function = 0; function < nfunctions; function++) {
+			if ((locators[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT)
+			    && (locators[PCICF_FUNCTION] != function))
+				continue;
+
+			if (qd != NULL &&
+			    (qd->quirks & PCI_QUIRK_SKIP_FUNC(function)) != 0)
+				continue;
+			tag = pci_make_tag(pc, sc->sc_bus, device, function);
+			ret = pci_probe_device(sc, tag, match, pap);
+			if (match != NULL && ret != 0)
+				return (ret);
+		}
 	}
-#endif
-	if (pin > PCI_INTERRUPT_PIN_MAX) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
-		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
-		    '@' + pin, line);
-		goto bad;
-	}
-
-	ihp->pirq = line;
-	ihp->evtch = bind_pirq_to_evtch(ihp->pirq);
-	if (ihp->evtch == -1)
-		goto bad;
-
-	return 0;
-
-bad:
-	ihp->pirq = -1;
-	ihp->evtch = -1;
-	return 1;
-}
-const char
-*pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
-{
-	static char buf[64];
-	snprintf(buf, 64, "irq %d, event channel %d",
-	    ih.pirq, ih.evtch);
-	return buf;
-	
-}
-
-const struct evcnt*
-pci_intr_evcnt(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh)
-{
-	return NULL;
-}
-
-void *
-pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
-    int level, int (*func)(void *), void *arg)
-{
-	return (void *)pirq_establish(intrh.pirq, intrh.evtch, func, arg, level);
-}
-
-void
-pci_intr_disestablish(pci_chipset_tag_t pcitag, void *cookie)
-{
+	return (0);
 }

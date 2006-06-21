@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.19.2.1 2006/06/21 15:07:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,9 +63,7 @@ struct ehci_xfer {
 	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
 	ehci_soft_qtd_t *sqtdstart;
 	ehci_soft_qtd_t *sqtdend;
-#ifdef DIAGNOSTIC
-	int isdone;
-#endif
+	int isdone;	/* used only when DIAGNOSTIC is defined */
 };
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
@@ -92,6 +90,8 @@ typedef struct ehci_softc {
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
 	u_int sc_offs;			/* offset to operational regs */
+	int sc_flags;			/* misc flags */
+#define EHCIF_DROPPED_INTR_WORKAROUND	0x01
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
@@ -117,10 +117,11 @@ typedef struct ehci_softc {
 	ehci_soft_qtd_t *sc_freeqtds;
 
 	int sc_noport;
+	u_int8_t sc_hasppc;		/* has Port Power Control */
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 	usbd_xfer_handle sc_intrxfer;
-	char sc_isreset;
+	char sc_isreset[EHCI_MAX_PORTS];
 #ifdef USB_USE_SOFTINTR
 	char sc_softwake;
 #endif /* USB_USE_SOFTINTR */
@@ -133,12 +134,13 @@ typedef struct ehci_softc {
 	struct lock sc_doorbell_lock;
 
 	usb_callout_t sc_tmo_pcd;
+	usb_callout_t sc_tmo_intrlist;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	device_ptr_t sc_child;		/* /dev/usb# device */
 #endif
 	char sc_dying;
-#ifdef __NetBSD__
+#if defined(__NetBSD__)
 	struct usb_dma_reserve sc_dma_reserve;
 #endif
 } ehci_softc_t;

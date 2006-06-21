@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.30 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.30.12.1 2006/06/21 15:10:27 yamt Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -36,11 +36,11 @@
  */
 
 /*
- * Loopback interface driver for protocol testing and timing.
+ * IPv6-to-IPv4 TCP relay capturing interface
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.30 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.30.12.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -88,37 +88,34 @@ struct faith_softc {
 	LIST_ENTRY(faith_softc) sc_list;
 };
 
-static int faithioctl __P((struct ifnet *, u_long, caddr_t));
-int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	struct rtentry *));
-static void faithrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
+static int	faithioctl(struct ifnet *, u_long, caddr_t);
+static int	faithoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+			    struct rtentry *);
+static void	faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
-void faithattach __P((int));
+void	faithattach(int);
 
-LIST_HEAD(, faith_softc) faith_softc_list;
+static LIST_HEAD(, faith_softc) faith_softc_list;
 
-int	faith_clone_create __P((struct if_clone *, int));
-int	faith_clone_destroy __P((struct ifnet *));
+static int	faith_clone_create(struct if_clone *, int);
+static int	faith_clone_destroy(struct ifnet *);
 
-struct if_clone faith_cloner =
+static struct if_clone faith_cloner =
     IF_CLONE_INITIALIZER("faith", faith_clone_create, faith_clone_destroy);
 
 #define	FAITHMTU	1500
 
 /* ARGSUSED */
 void
-faithattach(count)
-	int count;
+faithattach(int count)
 {
 
 	LIST_INIT(&faith_softc_list);
 	if_clone_attach(&faith_cloner);
 }
 
-int
-faith_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+static int
+faith_clone_create(struct if_clone *ifc, int unit)
 {
 	struct faith_softc *sc;
 
@@ -147,8 +144,7 @@ faith_clone_create(ifc, unit)
 }
 
 int
-faith_clone_destroy(ifp)
-	struct ifnet *ifp;
+faith_clone_destroy(struct ifnet *ifp)
 {
 	struct faith_softc *sc = (void *) ifp;
 
@@ -163,11 +159,8 @@ faith_clone_destroy(ifp)
 }
 
 int
-faithoutput(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+faithoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	int s, isr;
 	struct ifqueue *ifq = 0;
@@ -232,10 +225,7 @@ faithoutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 static void
-faithrtrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+faithrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
@@ -246,10 +236,7 @@ faithrtrequest(cmd, rt, info)
  */
 /* ARGSUSED */
 static int
-faithioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+faithioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -303,13 +290,13 @@ faithioctl(ifp, cmd, data)
 	return (error);
 }
 
+#ifdef INET6
 /*
  * XXX could be slow
  * XXX could be layer violation to call sys/net from sys/netinet6
  */
 int
-faithprefix(in6)
-	struct in6_addr *in6;
+faithprefix(struct in6_addr *in6)
 {
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
@@ -332,3 +319,4 @@ faithprefix(in6)
 		RTFREE(rt);
 	return ret;
 }
+#endif

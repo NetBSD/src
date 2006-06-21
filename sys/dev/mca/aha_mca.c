@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.12 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.12.4.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.12 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.12.4.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ aha_mca_attach(parent, self, aux)
 	void *aux;
 {
 	struct mca_attach_args *ma = aux;
-	struct aha_softc *sc = (void *)self;
+	struct aha_softc *sc = device_private(self);
 	bus_space_tag_t iot = ma->ma_iot;
 	bus_space_handle_t ioh;
 	struct aha_probe_data apd;

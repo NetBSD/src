@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2004/11/11 19:25:30 jdolecek Exp $
+# $NetBSD: Makefile,v 1.13.12.1 2006/06/21 15:10:24 yamt Exp $
 
 SUBDIR+=	adosfs
 SUBDIR+=	cd9660
@@ -11,5 +11,6 @@ SUBDIR+=	ntfs
 SUBDIR+=	ptyfs
 SUBDIR+=	smbfs
 SUBDIR+=	ufs
+SUBDIR+=	udf
 
 .include <bsd.subdir.mk>

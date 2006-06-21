@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.23 2005/05/29 22:03:09 christos Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.23.2.1 2006/06/21 15:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ struct RF_Pools_s {
 	struct pool asmap;       /* Access Stripe Map */
 	struct pool asmhle;      /* Access Stripe Map Header List Elements */
 	struct pool callback;    /* Callback descriptors */
-	struct pool cbuf;        /* Component buffers */
 	struct pool dagh;        /* DAG headers */
 	struct pool dagnode;     /* DAG nodes */
 	struct pool daglist;     /* DAG lists */
@@ -90,6 +89,7 @@ struct RF_Pools_s {
 
 extern struct RF_Pools_s rf_pools;
 void rf_pool_init(struct pool *, size_t, const char *, size_t, size_t);
+int rf_buf_queue_check(int);
 
 /* XXX probably belongs in a different .h file. */
 typedef struct RF_AutoConfig_s {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15 2005/05/20 12:48:27 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.1 2006/06/21 14:59:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2005/05/20 12:48:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.1 2006/06/21 14:59:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2005/05/20 12:48:27 fvdl Exp 
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
-
 #include <compat/linux/linux_syscallargs.h>
 
 void
@@ -84,13 +83,6 @@ linux_setregs(l, epp, stack)
 {
 
 	setregs(l, epp, stack);
-}
-
-static __inline struct trapframe *
-process_frame(struct lwp *l)
-{
-
-	return l->l_addr->u_pcb.pcb_tf;
 }
 
 void
@@ -292,8 +284,8 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -315,8 +307,8 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	/* XXX NJWLWP */
-	return sys_ioctl(curlwp, &bia, retval);
+
+	return sys_ioctl(l, &bia, retval);
 }
 
 int

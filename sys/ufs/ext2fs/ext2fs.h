@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.17 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.17.4.1 2006/06/21 15:12:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,7 +67,7 @@
 #ifndef _UFS_EXT2FS_EXT2FS_H_
 #define _UFS_EXT2FS_EXT2FS_H_
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 
 /*
  * Each disk drive contains some number of file systems.
@@ -251,7 +251,7 @@ struct ext2_gd {
  * a power of 3, 5 or 7
  */
 
-static __inline__ int cg_has_sb __P((int)) __attribute__((__unused__));
+static __inline int cg_has_sb(int) __attribute__((__unused__));
 static __inline int
 cg_has_sb(i)
 	int i;
@@ -284,8 +284,8 @@ cg_has_sb(i)
 #	define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE);
 #	define e2fs_cgsave(old, new, size) memcpy((new), (old), (size));
 #else
-void e2fs_sb_bswap __P((struct ext2fs *, struct ext2fs *));
-void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
+void e2fs_sb_bswap(struct ext2fs *, struct ext2fs *);
+void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 #	define h2fs16(x) bswap16(x)
 #	define h2fs32(x) bswap32(x)
 #	define h2fs64(x) bswap64(x)

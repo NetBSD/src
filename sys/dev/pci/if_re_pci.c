@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.10 2005/06/15 11:27:39 cube Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.10.2.1 2006/06/21 15:05:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -41,7 +41,7 @@
  * Senior Networking Software Engineer
  * Wind River Systems
  *
- * NetBSD bus-specific frontends for written by
+ * Netbsd bus-specific frontends for written by
  * Jonathan Stone <jonathan@netbsd.org>
  */
 
@@ -102,10 +102,14 @@ static void	re_pci_attach(struct device *, struct device *, void *);
 static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139, RTK_HWREV_8139CPLUS,
 		"RealTek 8139C+ 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168, RTK_HWREV_8168,
+		"RealTek 8168B/8111B Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169,
 		"RealTek 8169 Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169S,
 		"RealTek 8169S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169SB,
+		"RealTek 8169SB Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT, RTK_HWREV_8169S,
 		"Corega CG-LAPCIGT Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
@@ -114,6 +118,8 @@ static const struct rtk_type re_devs[] = {
 		"D-Link DGE-528T Gigabit Ethernet" },
 	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902, RTK_HWREV_8169S,
 		"US Robotics (3Com) USR997902 Gigabit Ethernet" },
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, RTK_HWREV_8169S,
+		"Linksys EG1032 rev. 3 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
 };
 
@@ -126,13 +132,17 @@ static const struct rtk_hwrev re_hwrevs[] = {
 	{ RTK_HWREV_8139C, RTK_8139, "C" },
 	{ RTK_HWREV_8139D, RTK_8139, "8139D/8100B/8100C" },
 	{ RTK_HWREV_8139CPLUS, RTK_8139CPLUS, "C+"},
+	{ RTK_HWREV_8168, RTK_8169, "8168B/8111B"},
 	{ RTK_HWREV_8169, RTK_8169, "8169"},
 	{ RTK_HWREV_8169S, RTK_8169, "8169S"},
+	{ RTK_HWREV_8169SB, RTK_8169, "8169SB"},
 	{ RTK_HWREV_8110S, RTK_8169, "8110S"},
 	{ RTK_HWREV_8100, RTK_8139, "8100"},
 	{ RTK_HWREV_8101, RTK_8139, "8101"},
 	{ 0, 0, NULL }
 };
+
+#define RE_LINKSYS_EG1032_SUBID	0x00241737
 
 CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
 	      NULL, NULL);
@@ -150,6 +160,15 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_handle_t	rtk_bhandle;
 	bus_size_t		bsize;
 	u_int32_t		hwrev;
+	pcireg_t subid;
+
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	/* special-case Linksys EG1032, since rev 2 uses sk(4) */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
+	    subid == RE_LINKSYS_EG1032_SUBID)
+		return 1;
 
 	t = re_devs;
 

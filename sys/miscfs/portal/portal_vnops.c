@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.59 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.59.4.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.59 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.59.4.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,23 +62,24 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.59 2005/02/26 22:59:00 perry Exp 
 #include <sys/unpcb.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/portal/portal.h>
 
 static int portal_fileid = PORTAL_ROOTFILEID+1;
 
-static void	portal_closefd __P((struct lwp *, int));
-static int	portal_connect __P((struct socket *, struct socket *));
+static void	portal_closefd(struct lwp *, int);
+static int	portal_connect(struct socket *, struct socket *);
 
-int	portal_lookup	__P((void *));
+int	portal_lookup(void *);
 #define	portal_create	genfs_eopnotsupp
 #define	portal_mknod	genfs_eopnotsupp
-int	portal_open	__P((void *));
+int	portal_open(void *);
 #define	portal_close	genfs_nullop
 #define	portal_access	genfs_nullop
-int	portal_getattr	__P((void *));
-int	portal_setattr	__P((void *));
+int	portal_getattr(void *);
+int	portal_setattr(void *);
 #define	portal_read	genfs_eopnotsupp
 #define	portal_write	genfs_eopnotsupp
 #define	portal_fcntl	genfs_fcntl
@@ -88,33 +89,28 @@ int	portal_setattr	__P((void *));
 #define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_seek
 #define	portal_remove	genfs_eopnotsupp
-int	portal_link	__P((void *));
+int	portal_link(void *);
 #define	portal_rename	genfs_eopnotsupp
 #define	portal_mkdir	genfs_eopnotsupp
 #define	portal_rmdir	genfs_eopnotsupp
-int	portal_symlink	__P((void *));
-int	portal_readdir	__P((void *));
+int	portal_symlink(void *);
+int	portal_readdir(void *);
 #define	portal_readlink	genfs_eopnotsupp
 #define	portal_abortop	genfs_abortop
-int	portal_inactive	__P((void *));
-int	portal_reclaim	__P((void *));
+int	portal_inactive(void *);
+int	portal_reclaim(void *);
 #define	portal_lock	genfs_lock
 #define	portal_unlock	genfs_unlock
 #define	portal_bmap	genfs_badop
 #define	portal_strategy	genfs_badop
-int	portal_print	__P((void *));
+int	portal_print(void *);
 #define	portal_islocked	genfs_islocked
-int	portal_pathconf	__P((void *));
+int	portal_pathconf(void *);
 #define	portal_advlock	genfs_badop
-#define	portal_blkatoff	genfs_badop
-#define	portal_valloc	genfs_eopnotsupp
-#define	portal_vfree	genfs_nullop
-#define	portal_truncate	genfs_eopnotsupp
-#define	portal_update	genfs_eopnotsupp
 #define	portal_bwrite	genfs_eopnotsupp
 #define	portal_putpages	genfs_null_putpages
 
-int (**portal_vnodeop_p) __P((void *));
+int (**portal_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, portal_lookup },		/* lookup */
@@ -152,11 +148,6 @@ const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_islocked_desc, portal_islocked },	/* islocked */
 	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, portal_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, portal_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, portal_valloc },		/* valloc */
-	{ &vop_vfree_desc, portal_vfree },		/* vfree */
-	{ &vop_truncate_desc, portal_truncate },	/* truncate */
-	{ &vop_update_desc, portal_update },		/* update */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, portal_putpages },	/* putpages */
 	{ NULL, NULL }
@@ -303,12 +294,12 @@ portal_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	int s;
 	struct uio auio;
@@ -345,7 +336,7 @@ portal_open(v)
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, p);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, l);
 	if (error)
 		goto bad;
 
@@ -403,10 +394,10 @@ portal_open(v)
 
 
 	pcred.pcr_flag = ap->a_mode;
-	pcred.pcr_uid = ap->a_cred->cr_uid;
-	pcred.pcr_gid = ap->a_cred->cr_gid;
-	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
-	memcpy(pcred.pcr_groups, ap->a_cred->cr_groups, NGROUPS * sizeof(gid_t));
+	pcred.pcr_uid = kauth_cred_geteuid(ap->a_cred);
+	pcred.pcr_gid = kauth_cred_getegid(ap->a_cred);
+	pcred.pcr_ngroups = kauth_cred_ngroups(ap->a_cred);
+	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups, pcred.pcr_ngroups);
 	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
@@ -414,13 +405,12 @@ portal_open(v)
 	auio.uio_iov = aiov;
 	auio.uio_iovcnt = 2;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
-			(struct mbuf *) 0, (struct mbuf *) 0, 0, p);
+			(struct mbuf *) 0, (struct mbuf *) 0, 0, l);
 	if (error)
 		goto bad;
 
@@ -492,7 +482,7 @@ portal_open(v)
 		int i;
 		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
-			portal_closefd(curlwp, *ip); /* XXXNJWLWP */
+			portal_closefd(l, *ip); /* XXXNJWLWP */
 			ip++;
 		}
 	}
@@ -501,9 +491,9 @@ portal_open(v)
 	 * Check that the mode the file is being opened for is a subset
 	 * of the mode of the existing descriptor.
 	 */
- 	fp = p->p_fd->fd_ofiles[fd];
+ 	fp = l->l_proc->p_fd->fd_ofiles[fd];
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
-		portal_closefd(curlwp, fd); /* XXXNJWLWP */
+		portal_closefd(l, fd); /* XXXNJWLWP */
 		error = EACCES;
 		goto bad;
 	}
@@ -538,8 +528,8 @@ portal_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -551,12 +541,8 @@ portal_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
-	/*
-	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
-	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic.
-	 */
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	/* Make all times be current TOD. */
+	getnanotime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
@@ -590,8 +576,8 @@ portal_setattr(v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -623,7 +609,7 @@ portal_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);

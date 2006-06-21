@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.55 2005/03/09 05:07:19 atatat Exp $	*/
+/*	$NetBSD: in_var.h,v 1.55.4.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -318,4 +318,4 @@ int	sysctl_inpcblist(SYSCTLFN_PROTO);
 /* INET6 stuff */
 #include <netinet6/in6_var.h>
 
-#endif /* _NETINET_IN_VAR_H_ */
+#endif /* !_NETINET_IN_VAR_H_ */

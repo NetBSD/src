@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.31 2005/07/01 19:50:04 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.31.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31 2005/07/01 19:50:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31.2.1 2006/06/21 15:09:38 yamt Exp $");
+
+#include "opt_verified_exec.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -41,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31 2005/07/01 19:50:04 elad 
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/inttypes.h>
 #define VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
 #if defined(__FreeBSD__)
@@ -50,17 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31 2005/07/01 19:50:04 elad 
 #else
 # include <sys/sha1.h>
 #endif
-#include "crypto/sha2/sha2.h"
-#include "crypto/ripemd160/rmd160.h"
+#include <crypto/sha2/sha2.h>
+#include <crypto/ripemd160/rmd160.h>
 #include <sys/md5.h>
+#include <uvm/uvm_extern.h>
+#include <sys/kauth.h>
 
-int veriexec_verbose = 0;
-int veriexec_strict = 0;
+int veriexec_verbose;
+int veriexec_strict;
 
-char *veriexec_fp_names = NULL;
-unsigned int veriexec_name_max = 0;
+char *veriexec_fp_names;
+size_t veriexec_name_max;
 
-const struct sysctlnode *veriexec_count_node = NULL;
+const struct sysctlnode *veriexec_count_node;
 
 /* Veriexecs table of hash types and their associated information. */
 LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
@@ -127,9 +132,11 @@ int veriexec_add_fp_ops(struct veriexec_fp_ops *ops)
 void
 veriexec_init_fp_ops(void)
 {
-	struct veriexec_fp_ops *ops = NULL;
+	struct veriexec_fp_ops *ops;
 
 	LIST_INIT(&veriexec_ops_list);
+	veriexec_fp_names = NULL;
+	veriexec_name_max = 0;
 
 #ifdef VERIFIED_EXEC_FP_RMD160
 	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
@@ -177,6 +184,7 @@ veriexec_init_fp_ops(void)
 			MD5Init, MD5Update, MD5Final);
 	(void) veriexec_add_fp_ops(ops);
 #endif /* VERIFIED_EXEC_FP_MD5 */
+
 }
 
 struct veriexec_fp_ops *
@@ -185,7 +193,7 @@ veriexec_find_ops(u_char *name)
 	struct veriexec_fp_ops *ops;
 
 	name[VERIEXEC_TYPE_MAXLEN] = '\0';
-	
+
 	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
 		if ((strlen(name) == strlen(ops->type)) &&
 		    (strncasecmp(name, ops->type, sizeof(ops->type) - 1)
@@ -201,61 +209,110 @@ veriexec_find_ops(u_char *name)
  * extracted from veriexec_hash_list according to the hash type.
  */
 int
-veriexec_fp_calc(struct proc *p, struct vnode *vp,
+veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 		 struct veriexec_hash_entry *vhe, uint64_t size, u_char *fp)
 {
-	void *ctx = NULL;
-	u_char *buf = NULL;
+	void *ctx, *page_ctx;
+	u_char *buf, *page_fp;
 	off_t offset, len;
-	size_t resid;
-	int error = 0;
+	size_t resid, npages;
+	int error, do_perpage, pagen;
 
-	/* XXX: This should not happen. Print more details? */
 	if (vhe->ops == NULL) {
 		panic("veriexec: Operations vector is NULL");
 	}
 
-	memset(fp, 0, vhe->ops->hash_len);
+#if 0 /* XXX - for now */
+	if ((vhe->type & VERIEXEC_UNTRUSTED) &&
+	    (vhe->page_fp_status == PAGE_FP_NONE))
+		do_perpage = 1;
+	else
+#endif
+		do_perpage = 0;
 
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	buf = (u_char *) malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
-	(vhe->ops->init)(ctx); /* init the fingerprint context */
+	page_ctx = NULL;
+	page_fp = NULL;
+	npages = 0;
+	if (do_perpage) {
+		npages = (size >> PAGE_SHIFT) + 1;
+		page_fp = (u_char *) malloc(vhe->ops->hash_len * npages,
+						 M_TEMP, M_WAITOK|M_ZERO);
+		vhe->page_fp = page_fp;
+		page_ctx = (void *) malloc(vhe->ops->context_size, M_TEMP,
+					   M_WAITOK);
+	}
 
-	/*
-	 * The vnode is locked. sys_execve() does it for us; We have our
-	 * own locking in vn_open().
-	 */
+	(vhe->ops->init)(ctx);
+
+	len = 0;
+	error = 0;
+	pagen = 0;
 	for (offset = 0; offset < size; offset += PAGE_SIZE) {
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
-			: PAGE_SIZE;
+						    : PAGE_SIZE;
 
-		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
+		error = vn_rdwr(UIO_READ, vp, buf, len, offset,
 				UIO_SYSSPACE,
 #ifdef __FreeBSD__
 				IO_NODELOCKED,
 #else
 				0,
 #endif
-				p->p_ucred, &resid, NULL);
+				l->l_proc->p_cred, &resid, NULL);
 
-		if (error)
+		if (error) {
+			if (do_perpage) {
+				free(vhe->page_fp, M_TEMP);
+				vhe->page_fp = NULL;
+			}
+
 			goto bad;
+		}
 
-		/* calculate fingerprint for each chunk */
 		(vhe->ops->update)(ctx, buf, (unsigned int) len);
+
+		if (do_perpage) {
+			(vhe->ops->init)(page_ctx);
+			(vhe->ops->update)(page_ctx, buf, (unsigned int)len);
+			(vhe->ops->final)(page_fp, page_ctx);
+
+			if (veriexec_verbose >= 2) {
+				int i;
+
+				printf("hash for page %d: ", pagen);
+				for (i = 0; i < vhe->ops->hash_len; i++)
+					printf("%02x", page_fp[i]);
+				printf("\n");
+			}
+
+			page_fp += vhe->ops->hash_len;
+			pagen++;
+		}
+
+		if (len != PAGE_SIZE)
+			break;
 	}
 
-	/* finalise the fingerprint calculation */
 	(vhe->ops->final)(fp, ctx);
 
+	if (do_perpage) {
+		vhe->last_page_size = len;
+		vhe->page_fp_status = PAGE_FP_READY;
+		vhe->npages = npages;
+	}
+
 bad:
+	if (do_perpage)
+		free(page_ctx, M_TEMP);
 	free(ctx, M_TEMP);
 	free(buf, M_TEMP);
 
 	return (error);
 }
-	
+
 /* Compare two fingerprints of the same type. */
 int
 veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
@@ -266,11 +323,11 @@ veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
 		printf("comparing hashes...\n");
 		printf("fp1: ");
 		for (i = 0; i < ops->hash_len; i++) {
-			printf("%x", fp1[i]);
+			printf("%02x", fp1[i]);
 		}
 		printf("\nfp2: ");
 		for (i = 0; i < ops->hash_len; i++) {
-			printf("%x", fp2[i]);
+			printf("%02x", fp2[i]);
 		}
 		printf("\n");
 	}
@@ -348,29 +405,32 @@ veriexec_hashadd(struct veriexec_hashtbl *tbl, struct veriexec_hash_entry *e)
  * vn_open(), 'flag' will be VERIEXEC_FILE.
  */
 int
-veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
+veriexec_verify(struct lwp *l, struct vnode *vp, struct vattr *va,
 		const u_char *name, int flag, struct veriexec_hash_entry **ret)
 {
-	struct veriexec_hash_entry *vhe = NULL;
-        u_char *digest = NULL;
-        int error = 0;
+	struct veriexec_hash_entry *vhe;
+	u_char *digest;
+	int error;
 
 	if (vp->v_type != VREG)
 		return (0);
 
 	/* Lookup veriexec table entry, save pointer if requested. */
-	vhe = veriexec_lookup(va->va_fsid, va->va_fileid);
+	vhe = veriexec_lookup((dev_t)va->va_fsid, (ino_t)va->va_fileid);
 	if (ret != NULL)
 		*ret = vhe;
 	if (vhe == NULL)
 		goto out;
 
 	/* Evaluate fingerprint if needed. */
-	if (vhe->status == FINGERPRINT_NOTEVAL) {
+	error = 0;
+	digest = NULL;
+	if ((vhe->status == FINGERPRINT_NOTEVAL) ||
+	    (vhe->type & VERIEXEC_UNTRUSTED)) {
 		/* Calculate fingerprint for on-disk file. */
 		digest = (u_char *) malloc(vhe->ops->hash_len, M_TEMP,
 					   M_WAITOK);
-		error = veriexec_fp_calc(p, vp, vhe, va->va_size, digest);
+		error = veriexec_fp_calc(l, vp, vhe, va->va_size, digest);
 		if (error) {
 			veriexec_report("Fingerprint calculation error.",
 					name, va, NULL, REPORT_NOVERBOSE,
@@ -389,8 +449,8 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		free(digest, M_TEMP);
 	}
 
-	if (flag != vhe->type) {
-		veriexec_report("Incorrect access type.", name, va, p,
+	if (!(vhe->type & flag)) {
+		veriexec_report("Incorrect access type.", name, va, l,
 				REPORT_NOVERBOSE, REPORT_ALARM,
 				REPORT_NOPANIC);
 
@@ -403,7 +463,7 @@ out:
 	/* No entry in the veriexec tables. */
 	if (vhe == NULL) {
 		veriexec_report("veriexec_verify: No entry.", name, va,
-		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
+		    l, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
 
 		/* Lockdown mode: Deny access to non-monitored files. */
 		if (veriexec_strict >= 3)
@@ -442,7 +502,7 @@ out:
 		 * Should never happen.
 		 * XXX: Print vnode/process?
 		 */
-		veriexec_report("veriexec_verify: Invalid stats "
+		veriexec_report("veriexec_verify: Invalid status "
 		    "post evaluation.", name, va, NULL, REPORT_NOVERBOSE,
 		    REPORT_NOALARM, REPORT_PANIC);
         }
@@ -451,17 +511,87 @@ out:
 }
 
 /*
+ * Evaluate per-page fingerprints.
+ */
+int
+veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
+		     struct vm_page *pg, size_t idx, struct lwp *l)
+{
+	void *ctx;
+	u_char *fp;
+	u_char *page_fp;
+	int error;
+	vaddr_t kva;
+
+	if (vhe->page_fp_status == PAGE_FP_NONE)
+		return (0);
+
+	if (vhe->page_fp_status == PAGE_FP_FAIL)
+		return (EPERM);
+
+	if (idx >= vhe->npages)
+		return (0);
+
+	ctx = malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
+	fp = malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
+	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
+
+	page_fp = (u_char *) vhe->page_fp + (vhe->ops->hash_len * idx);
+	(vhe->ops->init)(ctx);
+	(vhe->ops->update)(ctx, (void *) kva,
+			   ((vhe->npages - 1) == idx) ? vhe->last_page_size
+						      : PAGE_SIZE);
+	(vhe->ops->final)(fp, ctx);
+
+	pmap_kremove(kva, PAGE_SIZE);
+	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
+
+	error = veriexec_fp_cmp(vhe->ops, page_fp, fp);
+	if (error) {
+		const char *msg;
+
+		if (veriexec_strict > 0) {
+			msg = "Pages modified: Killing process.";
+		} else {
+			msg = "Pages modified.";
+			error = 0;
+		}
+
+		veriexec_report(msg, "[page_in]", va, l, REPORT_NOVERBOSE,
+				REPORT_ALARM, REPORT_NOPANIC);
+
+		if (error) {
+			ksiginfo_t ksi;
+
+			KSI_INIT(&ksi);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = SI_NOINFO;
+			ksi.ksi_pid = l->l_proc->p_pid;
+			ksi.ksi_uid = 0;
+
+			kpsignal(l->l_proc, &ksi, NULL);
+		}
+	}
+
+	free(ctx, M_TEMP);
+	free(fp, M_TEMP);
+
+	return (error);
+}
+
+/*
  * Veriexec remove policy code.
  */
 int
-veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
+veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 {
 	struct veriexec_hashtbl *tbl;
-	struct veriexec_hash_entry *vhe = NULL;
+	struct veriexec_hash_entry *vhe;
 	struct vattr va;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
 	if (error)
 		return (error);
 
@@ -474,7 +604,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 		return (0);
 	}
 
-	veriexec_report("Remove request.", pathbuf, &va, p,
+	veriexec_report("Remove request.", pathbuf, &va, l,
 			REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
 
 	/* IPS mode: Deny removal of monitored files. */
@@ -490,11 +620,62 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	}
 
 	LIST_REMOVE(vhe, entries);
-	free(vhe->fp, M_TEMP);
+	if (vhe->fp != NULL)
+		free(vhe->fp, M_TEMP);
+	if (vhe->page_fp != NULL)
+		free(vhe->page_fp, M_TEMP);
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
 
 	return (error);
+}
+
+/*
+ * Veriexe rename policy.
+ */
+int
+veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
+		   struct lwp *l)
+{
+	struct veriexec_hash_entry *vhe;
+	struct vattr va;
+	int error;
+
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
+	if (error)
+		return (error);
+
+	if (veriexec_strict >= 3) {
+		printf("Veriexec: veriexec_renamechk: Preventing rename "
+		       "of \"%s\" [%ld:%llu] to \"%s\", uid=%u, pid=%u: "
+		       "Lockdown mode.\n", from, va.va_fsid,
+		       (unsigned long long)va.va_fileid,
+		       to, kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid);
+		return (EPERM);
+	}
+
+	vhe = veriexec_lookup(va.va_fsid, va.va_fileid);
+	if (vhe != NULL) {
+		if (veriexec_strict >= 2) {
+			printf("Veriexec: veriexec_renamechk: Preventing "
+			       "rename of \"%s\" [%ld:%llu] to \"%s\", "
+			       "uid=%u, pid=%u: IPS mode, file "
+			       "monitored.\n", from, va.va_fsid,
+			       (unsigned long long)va.va_fileid,
+			       to, kauth_cred_geteuid(l->l_proc->p_cred),
+			       l->l_proc->p_pid);
+			return (EPERM);
+		}
+
+		printf("Veriexec: veriexec_rename: Monitored file \"%s\" "
+		       "[%ld:%llu] renamed to \"%s\", uid=%u, pid=%u.\n",
+		       from, va.va_fsid, (unsigned long long)va.va_fileid, to,
+		       kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid);
+	}
+
+	return (0);
 }
 
 /*
@@ -509,7 +690,7 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
  */
 void
 veriexec_report(const u_char *msg, const u_char *filename,
-		struct vattr *va, struct proc *p, int verbose, int alarm,
+		struct vattr *va, struct lwp *l, int verbose, int alarm,
 		int die)
 {
 	void (*f)(const char *, ...);
@@ -523,14 +704,15 @@ veriexec_report(const u_char *msg, const u_char *filename,
 		f = (void (*)(const char *, ...)) printf;
 
 	if (!verbose || (verbose <= veriexec_verbose)) {
-		if (!alarm || p == NULL)
-			f("veriexec: %s [%s, %d:%u%s", msg, filename,
+		if (!alarm || l == NULL)
+			f("veriexec: %s [%s, %ld:%" PRIu64 "%s", msg, filename,
 			    va->va_fsid, va->va_fileid,
 			    die ? "]" : "]\n");
 		else
-			f("veriexec: %s [%s, %d:%u, pid=%u, uid=%u, "
+			f("veriexec: %s [%s, %ld:%" PRIu64 ", pid=%u, uid=%u, "
 			    "gid=%u%s", msg, filename, va->va_fsid,
-			    va->va_fileid, p->p_pid, p->p_cred->p_ruid,
-			    p->p_cred->p_rgid, die ? "]" : "]\n");
+			    va->va_fileid, l->l_proc->p_pid,
+			    kauth_cred_getuid(l->l_proc->p_cred),
+			    kauth_cred_getgid(l->l_proc->p_cred), die ? "]" : "]\n");
 	}
 }

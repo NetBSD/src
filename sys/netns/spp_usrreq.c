@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.40 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.40.4.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.40 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.40.4.1 2006/06/21 15:11:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.40 2005/02/26 22:39:50 perry Exp $"
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 #include <sys/errno.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -314,7 +316,7 @@ spp_reass(cb, si, m0)
 	struct socket *so = cb->s_nspcb->nsp_socket;
 	char packetp = cb->s_flags & SF_HI;
 	int incr;
-	char wakeup = 0;
+	char reaswakeup = 0;
 
 	if (si == SI(0))
 		goto present;
@@ -552,7 +554,7 @@ present:
 			p = q->si_q.le_next;
 			LIST_REMOVE(q, si_q);
 			FREE(q, M_SPIDPQ);
-			wakeup = 1;
+			reaswakeup = 1;
 			sppstat.spps_rcvpack++;
 #ifdef SF_NEWCALL
 			if (cb->s_flags2 & SF_NEWCALL) {
@@ -600,7 +602,7 @@ present:
 		  } else
 			break;
 	}
-	if (wakeup) sorwakeup(so);
+	if (reaswakeup) sorwakeup(so);
 	return (0);
 }
 
@@ -1031,15 +1033,17 @@ send:
 		 * must make a copy of this packet for
 		 * idp_output to monkey with
 		 */
-		m = m_copy(m, 0, (int)M_COPYALL);
-		if (m == NULL) {
-			return (ENOBUFS);
+		if (m) {
+			m = m_copy(m, 0, (int)M_COPYALL);
+			if (m == NULL) {
+				return (ENOBUFS);
+			}
+			si = mtod(m, struct spidp *);
+			if (SSEQ_LT(si->si_seq, cb->s_smax))
+				sppstat.spps_sndrexmitpack++;
+			else
+				sppstat.spps_sndpack++;
 		}
-		si = mtod(m, struct spidp *);
-		if (SSEQ_LT(si->si_seq, cb->s_smax))
-			sppstat.spps_sndrexmitpack++;
-		else
-			sppstat.spps_sndpack++;
 	} else if (cb->s_force || cb->s_flags & SF_ACKNOW) {
 		/*
 		 * Must send an acknowledgement or a probe
@@ -1123,6 +1127,8 @@ send:
 		si->si_alo = htons(alo);
 		si->si_ack = htons(cb->s_ack);
 
+		if (m == NULL)
+			return EINVAL;
 		if (idpcksum) {
 			si->si_sum = 0;
 			len = ntohs(si->si_len);
@@ -1306,14 +1312,16 @@ u_long	spp_recvspace = 3072;
 /*ARGSUSED*/
 int
 spp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	struct nspcb *nsp;
 	struct sppcb *cb = NULL;
+	struct proc *p;
 	int s;
 	int error = 0;
 	int ostate;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
@@ -1530,9 +1538,9 @@ release:
 
 int
 spp_usrreq_sp(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
-	int error = spp_usrreq(so, req, m, nam, control, p);
+	int error = spp_usrreq(so, req, m, nam, control, l);
 
 	if (req == PRU_ATTACH && error == 0) {
 		struct nspcb *nsp = sotonspcb(so);
@@ -1702,7 +1710,7 @@ spp_slowtimo(void)
 				(void) spp_usrreq(cb->s_nspcb->nsp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
 				    (struct mbuf *)i, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (ipnxt->nsp_prev != ip)
 					goto tpgone;
 			}
@@ -1816,6 +1824,45 @@ spp_timers(struct sppcb *cb, long timer)
 	}
 	return (cb);
 }
+
+SYSCTL_SETUP(sysctl_net_ns_spp_setup, "sysctl net.ns.spp subtree setup")
+{
+	extern struct spp_debug spp_debug[SPP_NDEBUG];
+	extern int spp_debx;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ns", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_NS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "spp",
+		       SYSCTL_DESCR("Xerox Sequenced Packet Protocol"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_NS, NSPROTO_SPP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "debug",
+		       SYSCTL_DESCR("Xerox SPP sockets debug informaton"),
+		       NULL, 0, &spp_debug, sizeof(spp_debug),
+		       CTL_NET, PF_NS, NSPROTO_SPP,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "debx",
+		       SYSCTL_DESCR("Number of Xerox SPP sockets debug "
+				    "messages"),
+		       NULL, 0, &spp_debx, sizeof(spp_debx),
+		       CTL_NET, PF_NS, NSPROTO_SPP,
+		       CTL_CREATE, CTL_EOL);
+}
+
 #ifndef lint
 int SppcbSize = sizeof (struct sppcb);
 int NspcbSize = sizeof (struct nspcb);

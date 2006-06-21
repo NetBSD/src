@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.9 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.9.4.1 2006/06/21 15:05:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -92,6 +92,7 @@
 /* Control register */
 #define PIIX_UDMACTL_DRV_EN(channel, drive) (0x01 << ((channel) * 2 + (drive)))
 /* Ultra DMA/33 timing register (PIIX4 only) */
+#define PIIX_UDMATIM 0x4a
 #define PIIX_UDMATIM_SHIFT 16
 #define PIIX_UDMATIM_SET(x, channel, drive) \
 	(((x) << ((channel * 8) + (drive * 4))) << PIIX_UDMATIM_SHIFT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.15 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ void		db_kgdb_cmd(db_expr_t, int, db_expr_t, const char *);
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, int, db_expr_t, const char *);
 void		db_show_all_procs(db_expr_t, int, db_expr_t, const char *);
+void		db_show_all_pools(db_expr_t, int, db_expr_t, const char *);
 void		db_show_sched_qs(db_expr_t, int, db_expr_t, const char *);
 
 /* kern/kern_clock.c */
@@ -68,6 +69,6 @@ void		db_show_arptab(db_expr_t, int, db_expr_t, const char *);
  * This is used in several places to determine which printf format
  * string is appropriate for displaying a variable of type db_expr_t.
  */
-#define	DB_EXPR_T_IS_QUAD	(sizeof(db_expr_t) > sizeof(long))
+#define	DB_EXPR_T_IS_QUAD (/* CONSTCOND */ sizeof(db_expr_t) > sizeof(long))
 
 #endif /* _DDB_DB_INTERFACE_H_ */

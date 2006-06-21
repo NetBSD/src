@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.83.2.1 2005/07/07 11:53:25 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.83.2.2 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83.2.1 2005/07/07 11:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83.2.2 2006/06/21 15:09:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83.2.1 2005/07/07 11:53:25 yamt Ex
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mbuf.h>
+#include <sys/kauth.h>
 
 /*
  * Unix communications domain.
@@ -193,10 +194,11 @@ unp_setpeeraddr(struct unpcb *unp, struct mbuf *nam)
 /*ARGSUSED*/
 int
 uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
+	struct proc *p;
 	u_int newhiwat;
 	int error = 0;
 
@@ -207,6 +209,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("uipc_usrreq: unexpected control mbuf");
 #endif
+	p = l ? l->l_proc : NULL;
 	if (unp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -227,7 +230,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		error = unp_bind(unp, nam, p);
+		KASSERT(l != NULL);
+		error = unp_bind(unp, nam, l);
 		break;
 
 	case PRU_LISTEN:
@@ -236,7 +240,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		error = unp_connect(so, nam, p);
+		KASSERT(l != NULL);
+		error = unp_connect(so, nam, l);
 		break;
 
 	case PRU_CONNECT2:
@@ -304,8 +309,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(&control, p))) {
-			goto die;
+		if (control) {
+			KASSERT(l != NULL);
+			if ((error = unp_internalize(&control, l)) != 0)
+				goto die;
 		}
 		switch (so->so_type) {
 
@@ -315,7 +322,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = EISCONN;
 					goto die;
 				}
-				error = unp_connect(so, nam, p);
+				KASSERT(l != NULL);
+				error = unp_connect(so, nam, l);
 				if (error) {
 				die:
 					m_freem(control);
@@ -328,6 +336,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					goto die;
 				}
 			}
+			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, p);
 			if (nam)
 				unp_disconnect(unp);
@@ -337,8 +346,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
-			if (unp->unp_conn == 0)
-				panic("uipc 3");
+			if (unp->unp_conn == NULL) {
+				error = ENOTCONN;
+				break;
+			}
 			so2 = unp->unp_conn->unp_socket;
 			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
 				/*
@@ -379,6 +390,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		unp_drop(unp, ECONNABORTED);
 
+		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
 		if (so->so_pcb == 0)
 			panic("uipc 5: drop killed pcb");
@@ -524,7 +536,6 @@ int
 unp_attach(struct socket *so)
 {
 	struct unpcb *unp;
-	struct timeval tv;
 	int error;
 
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -550,8 +561,7 @@ unp_attach(struct socket *so)
 	memset((caddr_t)unp, 0, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &unp->unp_ctime);
+	nanotime(&unp->unp_ctime);
 	return (0);
 }
 
@@ -588,19 +598,21 @@ unp_detach(struct unpcb *unp)
 }
 
 int
-unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
+unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct vnode *vp;
 	struct mount *mp;
 	struct vattr vattr;
 	size_t addrlen;
+	struct proc *p;
 	int error;
 	struct nameidata nd;
 
 	if (unp->unp_vnode != 0)
 		return (EINVAL);
 
+	p = l->l_proc;
 	/*
 	 * Allocate the new sockaddr.  We have to allocate one
 	 * extra byte so that we can ensure that the pathname
@@ -613,7 +625,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 
 restart:
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
-	    sun->sun_path, p);
+	    sun->sun_path, l);
 
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
@@ -638,8 +650,8 @@ restart:
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
-	vattr.va_mode = ACCESSPERMS;
-	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
+	VOP_LEASE(nd.ni_dvp, l, p->p_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	vn_finished_write(mp, 0);
 	if (error)
@@ -658,7 +670,7 @@ restart:
 }
 
 int
-unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
+unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct vnode *vp;
@@ -679,7 +691,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, l);
 
 	if ((error = namei(&nd)) != 0)
 		goto bad2;
@@ -688,7 +700,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, l->l_proc->p_cred, l)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {
@@ -836,9 +848,10 @@ unp_drain(void)
 #endif
 
 int
-unp_externalize(struct mbuf *rights, struct proc *p)
+unp_externalize(struct mbuf *rights, struct lwp *l)
 {
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
+	struct proc *p = l->l_proc;
 	int i, *fdp;
 	struct file **rp;
 	struct file *fp;
@@ -864,7 +877,7 @@ unp_externalize(struct mbuf *rights, struct proc *p)
 			if (fp->f_type == DTYPE_VNODE) {
 				struct vnode *vp = (struct vnode *)fp->f_data;
 				if ((vp->v_type == VDIR) &&
-				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, p)) {
+				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
 					error = EPERM;
 					break;
 				}
@@ -946,8 +959,9 @@ unp_externalize(struct mbuf *rights, struct proc *p)
 }
 
 int
-unp_internalize(struct mbuf **controlp, struct proc *p)
+unp_internalize(struct mbuf **control, struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct filedesc *fdescp = p->p_fd;
 	struct cmsghdr *newcm;
 	struct file **rp, **files;
@@ -1039,8 +1053,8 @@ unp_addsockcred(struct proc *p, struct mbuf *control)
 	struct mbuf *m, *n;
 	int len, space, i;
 
-	len = CMSG_LEN(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
-	space = CMSG_SPACE(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
+	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(p->p_cred)));
+	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(p->p_cred)));
 
 	m = m_get(M_WAIT, MT_CONTROL);
 	if (space > MLEN) {
@@ -1061,13 +1075,13 @@ unp_addsockcred(struct proc *p, struct mbuf *control)
 	cmp->cmsg_len = len;
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_CREDS;
-	sc->sc_uid = p->p_cred->p_ruid;
-	sc->sc_euid = p->p_ucred->cr_uid;
-	sc->sc_gid = p->p_cred->p_rgid;
-	sc->sc_egid = p->p_ucred->cr_gid;
-	sc->sc_ngroups = p->p_ucred->cr_ngroups;
+	sc->sc_uid = kauth_cred_getuid(p->p_cred);
+	sc->sc_euid = kauth_cred_geteuid(p->p_cred);
+	sc->sc_gid = kauth_cred_getgid(p->p_cred);
+	sc->sc_egid = kauth_cred_getegid(p->p_cred);
+	sc->sc_ngroups = kauth_cred_ngroups(p->p_cred);
 	for (i = 0; i < sc->sc_ngroups; i++)
-		sc->sc_groups[i] = p->p_ucred->cr_groups[i];
+		sc->sc_groups[i] = kauth_cred_group(p->p_cred, i);
 
 	/*
 	 * If a control message already exists, append us to the end.
@@ -1256,7 +1270,7 @@ unp_gc(void)
 		fp = *fpp;
 		simple_lock(&fp->f_slock);
 		FILE_USE(fp);
-		(void) closef(fp, (struct proc *)0);
+		(void) closef(fp, (struct lwp *)0);
 	}
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
@@ -1344,5 +1358,5 @@ unp_discard(struct file *fp)
 	fp->f_msgcount--;
 	simple_unlock(&fp->f_slock);
 	unp_rights--;
-	(void) closef(fp, (struct proc *)0);
+	(void) closef(fp, (struct lwp *)0);
 }

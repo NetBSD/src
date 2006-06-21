@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.19 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: clnp.h,v 1.19.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -54,8 +54,8 @@ SOFTWARE.
 
 ******************************************************************/
 
-#ifndef _NETISO_CLNP_H
-#define _NETISO_CLNP_H
+#ifndef _NETISO_CLNP_H_
+#define _NETISO_CLNP_H_
 
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
@@ -514,7 +514,7 @@ void rclnp_input (struct mbuf *, ...);
 int rclnp_output (struct mbuf *, ...);
 int rclnp_ctloutput (int, struct socket *, int, int, struct mbuf **);
 int clnp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *);
+		     struct mbuf *, struct lwp *);
 
 /* clnp_subr.c */
 struct mbuf    *clnp_data_ck (struct mbuf *, int);
@@ -545,4 +545,4 @@ struct troll    trollctl;
 
 #endif /* _KERNEL */
 
-#endif /* !_NETISO_CLNP_H */
+#endif /* !_NETISO_CLNP_H_ */

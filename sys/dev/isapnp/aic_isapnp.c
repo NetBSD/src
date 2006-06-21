@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.10 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.10.6.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.10 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.10.6.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ aic_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct aic_isapnp_softc *isc = (void *)self;
+	struct aic_isapnp_softc *isc = device_private(self);
 	struct aic_softc *sc = &isc->sc_aic;
 	struct isapnp_attach_args *ipa = aux;
 

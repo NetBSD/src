@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023AD_LACP_H_)
+#ifndef _NET_AGR_IEEE8023AD_LACP_H_
 #define	_NET_AGR_IEEE8023AD_LACP_H_
 
 /*
@@ -105,4 +105,4 @@ struct lacpdu {
 #define	LACP_CHURN_DETECTION_TIME	(60)
 #define	LACP_AGGREGATE_WAIT_TIME	(2)
 
-#endif /* _NET_AGR_IEEE8023AD_LACP_H_ */
+#endif /* !_NET_AGR_IEEE8023AD_LACP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootstatic.c,v 1.2 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_bootstatic.c,v 1.2.4.1 2006/06/21 15:11:58 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.2 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.2.4.1 2006/06/21 15:11:58 yamt Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.2 2005/02/26 22:39:50 perry Exp
 int (*nfs_bootstatic_callback)(struct nfs_diskless *) = NULL;
 
 int
-nfs_bootstatic(struct nfs_diskless *nd, struct proc *procp)
+nfs_bootstatic(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	struct sockaddr_in *sin;
@@ -131,7 +131,7 @@ nfs_bootstatic(struct nfs_diskless *nd, struct proc *procp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.
 	 */
-	error = nfs_boot_setaddress(ifp, procp,
+	error = nfs_boot_setaddress(ifp, lwp,
 	    flags & NFS_BOOTSTATIC_HAS_MYIP ? nd->nd_myip.s_addr : INADDR_ANY,
 	    flags & NFS_BOOTSTATIC_HAS_MASK ? nd->nd_mask.s_addr : INADDR_ANY,
 	    INADDR_ANY);

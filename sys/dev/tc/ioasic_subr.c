@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic_subr.c,v 1.8 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: ioasic_subr.c,v 1.8.4.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.8 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.8.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,13 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.8 2005/02/27 00:27:49 perry Exp $"
 #include "locators.h"
 
 int     ioasicprint(void *, const char *);
-int ioasicsubmatch(struct device *, struct cfdata *,
-		   const locdesc_t *, void *);
 
 int
-ioasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ioasicprint(void *aux, const char *pnp)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -56,28 +52,13 @@ ioasicprint(aux, pnp)
 	return (UNCONF);
 }
 
-int
-ioasicsubmatch(struct device *parent, struct cfdata *cf,
-		const locdesc_t *ldesc, void *aux)
-{
-
-	if ((cf->cf_loc[IOASICCF_OFFSET] != IOASICCF_OFFSET_DEFAULT) &&
-	    (cf->cf_loc[IOASICCF_OFFSET] != ldesc->locs[IOASICCF_OFFSET]))
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
 void
-ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs)
-	struct ioasic_softc *sc;
-	struct ioasic_dev *ioasic_devs;
-	int ioasic_ndevs;
+ioasic_attach_devs(struct ioasic_softc *sc, struct ioasic_dev *ioasic_devs,
+    int ioasic_ndevs)
 {
 	struct ioasicdev_attach_args idev;
 	int i;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOASICCF_NLOCS];
 
         /*
 	 * Try to configure each device.
@@ -90,9 +71,8 @@ ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs)
 		idev.iada_cookie = ioasic_devs[i].iad_cookie;
 
                 /* Tell the autoconfig machinery we've found the hardware. */
-		ldesc->len = 1;
-		ldesc->locs[IOASICCF_OFFSET] = ioasic_devs[i].iad_offset;
-		config_found_sm_loc(&sc->sc_dv, "ioasic", ldesc, &idev,
-				    ioasicprint, ioasicsubmatch);
+		locs[IOASICCF_OFFSET] = ioasic_devs[i].iad_offset;
+		config_found_sm_loc(&sc->sc_dv, "ioasic", locs, &idev,
+				    ioasicprint, config_stdsubmatch);
         }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.2 2005/04/03 11:37:19 jdolecek Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.2.4.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2 2005/04/03 11:37:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2.4.1 2006/06/21 15:02:55 yamt Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -652,6 +652,8 @@ mb86950_put_fifo(sc, m)
 	int len, len1, wantbyte;
 	u_short totlen;
 
+	memset(savebyte, 0, sizeof(savebyte));	/* XXX gcc */
+
 	totlen = wantbyte = 0;
 
 	for (; m != NULL; m = m->m_next) {
@@ -664,7 +666,7 @@ mb86950_put_fifo(sc, m)
 			if (wantbyte) {
 				savebyte[1] = *((u_char *)data);
 				bus_space_write_2(bst, bsh, BMPR_FIFO, *savebyte);
-				((u_char *)data)++;
+				data = (u_short *)((u_char *)data + 1);
 				len--;
 				wantbyte = 0;
 			}

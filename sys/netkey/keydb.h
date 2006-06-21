@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.24 2005/04/23 14:05:28 manu Exp $	*/
+/*	$NetBSD: keydb.h,v 1.24.2.1 2006/06/21 15:11:50 yamt Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -34,6 +34,10 @@
 #define _NETKEY_KEYDB_H_
 
 #ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_ipsec.h"
+#endif
 
 #include <sys/mallocvar.h>
 #include <netkey/key_var.h>
@@ -177,4 +181,4 @@ extern void keydb_delsecreg __P((struct secreg *));
 
 #endif /* _KERNEL */
 
-#endif /* _NETKEY_KEYDB_H_ */
+#endif /* !_NETKEY_KEYDB_H_ */

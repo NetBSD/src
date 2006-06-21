@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.5 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.5.4.1 2006/06/21 15:09:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.5 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.5.4.1 2006/06/21 15:09:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -142,7 +142,7 @@ filecore_lookup(v)
 	const char *name;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int i, endsearch;
@@ -161,7 +161,7 @@ filecore_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&

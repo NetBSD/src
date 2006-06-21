@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.23 2005/02/04 02:10:35 perry Exp $	*/
+/*	$NetBSD: cons.h,v 1.23.6.1 2006/06/21 15:02:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -133,7 +133,7 @@ void	nullconsattach(int);
 #define	dev_type_cngetc(n)	int n(dev_t)
 #define	dev_type_cnputc(n)	void n(dev_t, int)
 #define	dev_type_cnpollc(n)	void n(dev_t, int)
-#define	dev_type_cnbell(n)	void n(dev_t, u_int, u_int, u_int);
+#define	dev_type_cnbell(n)	void n(dev_t, u_int, u_int, u_int)
 #define	dev_type_cnhalt(n)	void n(dev_t)
 #define	dev_type_cnflush(n)	void n(dev_t)
 

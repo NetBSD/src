@@ -1,4 +1,7 @@
-/*	$NetBSD: if_spppvar.h,v 1.10 2003/09/03 20:48:46 martin Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.10.16.1 2006/06/21 15:10:27 yamt Exp $	*/
+
+#ifndef _NET_IF_SPPPVAR_H_
+#define _NET_IF_SPPPVAR_H_
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -167,3 +170,4 @@ struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
 #endif
+#endif /* !_NET_IF_SPPPVAR_H_ */

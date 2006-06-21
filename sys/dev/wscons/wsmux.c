@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.38 2005/06/21 14:01:13 ws Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.38.2.1 2006/06/21 15:08:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.38 2005/06/21 14:01:13 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.38.2.1 2006/06/21 15:08:12 yamt Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -110,8 +110,8 @@ static int wsmux_evsrc_set_display(struct device *, struct wsevsrc *);
 #endif
 
 static int wsmux_do_displayioctl(struct device *dev, u_long cmd,
-				 caddr_t data, int flag, struct proc *p);
-static int wsmux_do_ioctl(struct device *, u_long, caddr_t,int,struct proc *);
+				 caddr_t data, int flag, struct lwp *l);
+static int wsmux_do_ioctl(struct device *, u_long, caddr_t,int,struct lwp *);
 
 static int wsmux_add_mux(int, struct wsmux_softc *);
 
@@ -191,7 +191,7 @@ wsmux_getmux(int n)
  * open() of the pseudo device from device table.
  */
 int
-wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
+wsmuxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct wsmux_softc *sc;
 	struct wseventvar *evar;
@@ -203,8 +203,8 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	DPRINTF(("wsmuxopen: %s: sc=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc, p));
+	DPRINTF(("wsmuxopen: %s: sc=%p l=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc, l));
 
 	if (WSMUXCTL(minr)) {
 		/* This is the control device which does not allow reads. */
@@ -227,8 +227,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	wsevent_init(evar);
-	evar->io = p;
+	wsevent_init(evar, l->l_proc);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
 #endif
@@ -300,7 +299,7 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
  * close() of the pseudo device from device table.
  */
 int
-wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
+wsmuxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];
@@ -390,11 +389,11 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
  * ioctl of the pseudo device from device table.
  */
 int
-wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int u = WSMUXDEV(minor(dev));
 
-	return wsmux_do_ioctl(&wsmuxdevs[u]->sc_base.me_dv, cmd, data, flag, p);
+	return wsmux_do_ioctl(&wsmuxdevs[u]->sc_base.me_dv, cmd, data, flag, l);
 }
 
 /*
@@ -402,15 +401,14 @@ wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  */
 int
 wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
-	       struct proc *p)
+	       struct lwp *lwp)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsevsrc *me;
 	int error, ok;
-	int s, put, get, n;
+	int s, n;
 	struct wseventvar *evar;
-	struct wscons_event *ev;
-	struct timeval thistime;
+	struct wscons_event event;
 	struct wsmux_device_list *l;
 
 	DPRINTF(("wsmux_do_ioctl: %s: enter sc=%p, cmd=%08lx\n",
@@ -429,23 +427,12 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 
 		s = spltty();
-		get = evar->get;
-		put = evar->put;
-		ev = &evar->q[put];
-		if (++put % WSEVENT_QSIZE == get) {
-			put--;
-			splx(s);
-			return (ENOSPC);
-		}
-		if (put >= WSEVENT_QSIZE)
-			put = 0;
-		*ev = *(struct wscons_event *)data;
-		microtime(&thistime);
-		TIMEVAL_TO_TIMESPEC(&thistime, &ev->time);
-		evar->put = put;
-		WSEVENT_WAKEUP(evar);
+		event.type = ((struct wscons_event *)data)->type;
+		event.value = ((struct wscons_event *)data)->value;
+		error = wsevent_inject(evar, &event, 1);
 		splx(s);
-		return (0);
+
+		return error;
 	case WSMUXIO_ADD_DEVICE:
 #define d ((struct wsmux_device *)data)
 		DPRINTF(("%s: add type=%d, no=%d\n", sc->sc_base.me_dv.dv_xname,
@@ -470,7 +457,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		/* Locate the device */
 		CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
 			if (me->me_ops->type == d->type &&
-			    me->me_dv.dv_unit == d->idx) {
+			    device_unit(&me->me_dv) == d->idx) {
 				DPRINTF(("wsmux_do_ioctl: detach\n"));
 				wsmux_detach_sc(me);
 				return (0);
@@ -487,7 +474,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			if (n >= WSMUX_MAXDEV)
 				break;
 			l->devices[n].type = me->me_ops->type;
-			l->devices[n].idx = me->me_dv.dv_unit;
+			l->devices[n].idx = device_unit(&me->me_dv);
 			n++;
 		}
 		l->ndevices = n;
@@ -549,7 +536,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			continue;
 		}
 #endif
-		error = wsevsrc_ioctl(me, cmd, data, flag, p);
+		error = wsevsrc_ioctl(me, cmd, data, flag, lwp);
 		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s ==> %d\n",
 			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname,
 			 error));
@@ -571,7 +558,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
  * poll() of the pseudo device from device table.
  */
 int
-wsmuxpoll(dev_t dev, int events, struct proc *p)
+wsmuxpoll(dev_t dev, int events, struct lwp *l)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];
@@ -588,7 +575,7 @@ wsmuxpoll(dev_t dev, int events, struct proc *p)
 		return (POLLHUP);
 	}
 
-	return (wsevent_poll(sc->sc_base.me_evp, events, p));
+	return (wsevent_poll(sc->sc_base.me_evp, events, l));
 }
 
 /*
@@ -647,6 +634,8 @@ struct wsmux_softc *
 wsmux_create(const char *name, int unit)
 {
 	struct wsmux_softc *sc;
+
+	/* XXX This is wrong -- should use autoconfiguraiton framework */
 
 	DPRINTF(("wsmux_create: allocating\n"));
 	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT|M_ZERO);
@@ -769,7 +758,7 @@ wsmux_detach_sc(struct wsevsrc *me)
  */
 int
 wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
-		      struct proc *p)
+		      struct lwp *l)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsevsrc *me;
@@ -800,7 +789,7 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 #endif
 		if (me->me_ops->ddispioctl != NULL) {
-			error = wsevsrc_display_ioctl(me, cmd, data, flag, p);
+			error = wsevsrc_display_ioctl(me, cmd, data, flag, l);
 			DPRINTF(("wsmux_displayioctl: me=%p dev=%s ==> %d\n",
 				 me, me->me_dv.dv_xname, error));
 			if (!error)

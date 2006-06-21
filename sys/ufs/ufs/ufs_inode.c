@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.47.8.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.8.1 2006/06/21 15:12:39 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
 #include "opt_quota.h"
 #endif
 
@@ -50,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $"
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -57,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $"
 #include <ufs/ufs/ufs_extern.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
+#endif
+#ifdef UFS_EXTATTR
+#include <ufs/ufs/extattr.h>
 #endif
 
 #include <uvm/uvm.h>
@@ -67,17 +72,16 @@ extern int prtactive;
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ufs_inactive(v)
-	void *v;
+ufs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	mode_t mode;
 	int error = 0;
 
@@ -98,8 +102,11 @@ ufs_inactive(v)
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
+#ifdef UFS_EXTATTR
+		ufs_extattr_vnode_inactive(vp, l);
+#endif
 		if (ip->i_size != 0) {
-			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode
@@ -112,15 +119,18 @@ ufs_inactive(v)
 		ip->i_mode = 0;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		simple_lock(&vp->v_interlock);
+		vp->v_flag |= VFREEING;
+		simple_unlock(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
-		VOP_VFREE(vp, ip->i_number, mode);
+		UFS_VFREE(vp, ip->i_number, mode);
 		vn_finished_write(mp, V_LOWER);
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		VOP_UPDATE(vp, NULL, NULL, 0);
+		UFS_UPDATE(vp, NULL, NULL, 0);
 		vn_finished_write(mp, V_LOWER);
 	}
 out:
@@ -131,7 +141,7 @@ out:
 	 */
 
 	if (ip->i_mode == 0)
-		vrecycle(vp, NULL, p);
+		vrecycle(vp, NULL, l);
 	return (error);
 }
 
@@ -139,9 +149,7 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(vp, p)
-	struct vnode *vp;
-	struct proc *p;
+ufs_reclaim(struct vnode *vp, struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;
@@ -150,7 +158,7 @@ ufs_reclaim(vp, p)
 		vprint("ufs_reclaim: pushing active", vp);
 
 	vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-	VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 	vn_finished_write(mp, V_LOWER);
 
 	/*
@@ -191,13 +199,13 @@ ufs_reclaim(vp, p)
  */
 
 int
-ufs_balloc_range(vp, off, len, cred, flags)
-	struct vnode *vp;
-	off_t off, len;
-	struct ucred *cred;
-	int flags;
+ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
+    int flags)
 {
-	off_t oldeof, neweof, oldeob, oldeop, neweob, pagestart;
+	off_t neweof;	/* file size after the operation */
+	off_t neweob;	/* offset next to the last block after the operation */
+	off_t pagestart; /* starting offset of range covered by pgs */
+	off_t eob;	/* offset next to allocated blocks */
 	struct uvm_object *uobj;
 	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
@@ -209,20 +217,8 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, off, len, vp->v_size);
 
-	oldeof = vp->v_size;
-	GOP_SIZE(vp, oldeof, &oldeop, GOP_SIZE_WRITE);
-	GOP_SIZE(vp, oldeof, &oldeob, GOP_SIZE_READ);
-
-	/*
-	 * If we need to map pages in the former last block,
-	 * do so now.
-	 */
-	if (oldeob != oldeop) {
-		uvm_vnp_zerorange(vp, oldeop, oldeob - oldeop);
-	}
-
 	neweof = MAX(vp->v_size, off + len);
-	GOP_SIZE(vp, neweof, &neweob, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, neweof, &neweob, 0);
 
 	error = 0;
 	uobj = &vp->v_uobj;
@@ -240,7 +236,8 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	memset(pgs, 0, npages * sizeof(struct vm_page *));
 	simple_lock(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
-	    VM_PROT_READ, 0, PGO_SYNCIO|PGO_PASTEOF);
+	    VM_PROT_WRITE, 0,
+	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		return error;
 	}
@@ -276,11 +273,14 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	 * (since they now have backing store) and unbusy them.
 	 */
 
+	GOP_SIZE(vp, off + len, &eob, 0);
 	simple_lock(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
-		pgs[i]->flags &= ~PG_RDONLY;
 		if (error) {
 			pgs[i]->flags |= PG_RELEASED;
+		} else if (off <= pagestart + (i << PAGE_SHIFT) &&
+		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
+			pgs[i]->flags &= ~PG_RDONLY;
 		}
 	}
 	if (error) {

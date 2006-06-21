@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.25 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.25.4.1 2006/06/21 15:06:29 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.25 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.25.4.1 2006/06/21 15:06:29 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -109,7 +109,7 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
          * Not all distributed sparing archs need dynamic mappings
          */
 	if (lp->InstallSpareTable) {
-		retcode = rf_InstallSpareTable(raidPtr, fcol);
+		retcode = rf_InstallSpareTable(raidPtr, 0, fcol);
 		if (retcode) {
 			RF_PANIC();	/* XXX fix this */
 		}

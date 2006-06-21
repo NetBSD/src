@@ -1,5 +1,3 @@
-/*	$NetBSD: kern_ksyms.c,v 1.26 2005/06/25 05:30:04 riz Exp $	*/
-
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -47,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.26 2005/06/25 05:30:04 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.26.2.1 2006/06/21 15:09:37 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -1011,7 +1009,7 @@ ksyms_hdr_init(caddr_t hdraddr)
 };
 
 static int
-ksymsopen(dev_t dev, int oflags, int devtype, struct proc *p)
+ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 
 	if (minor(dev))
@@ -1034,7 +1032,7 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 static int
-ksymsclose(dev_t dev, int oflags, int devtype, struct proc *p)
+ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 
 #ifdef KSYMS_DEBUG
@@ -1111,7 +1109,7 @@ ksymswrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
+ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
 {
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct symtab *st;

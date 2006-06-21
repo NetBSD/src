@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.98 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.98.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.98 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.98.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.98 2005/06/23 23:15:12 thorpej E
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -109,10 +111,10 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
-			SCARG(uap, who) = curp->p_ucred->cr_uid;
+			SCARG(uap, who) = kauth_cred_geteuid(curp->p_cred);
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who) &&
+			if (kauth_cred_geteuid(p->p_cred) == (uid_t) SCARG(uap, who) &&
 			    p->p_nice < low)
 				low = p->p_nice;
 		}
@@ -169,10 +171,10 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
-			SCARG(uap, who) = curp->p_ucred->cr_uid;
+			SCARG(uap, who) = kauth_cred_geteuid(curp->p_cred);
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who)) {
+			if (kauth_cred_geteuid(p->p_cred) == (uid_t) SCARG(uap, who)) {
 				error = donice(curp, p, SCARG(uap, prio));
 				found++;
 			}
@@ -191,19 +193,20 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 int
 donice(struct proc *curp, struct proc *chgp, int n)
 {
-	struct pcred *pcred = curp->p_cred;
+	kauth_cred_t cred = curp->p_cred;
 	int s;
 
-	if (pcred->pc_ucred->cr_uid && pcred->p_ruid &&
-	    pcred->pc_ucred->cr_uid != chgp->p_ucred->cr_uid &&
-	    pcred->p_ruid != chgp->p_ucred->cr_uid)
+	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
+	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
+	    kauth_cred_getuid(cred) != kauth_cred_geteuid(chgp->p_cred))
 		return (EPERM);
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
+	if (n < chgp->p_nice && kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+						  &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
 	SCHED_LOCK(s);
@@ -232,7 +235,7 @@ sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-dosetrlimit(struct proc *p, struct pcred *cred, int which, struct rlimit *limp)
+dosetrlimit(struct proc *p, kauth_cred_t cred, int which, struct rlimit *limp)
 {
 	struct rlimit *alimp;
 	struct plimit *oldplim;
@@ -258,7 +261,8 @@ dosetrlimit(struct proc *p, struct pcred *cred, int which, struct rlimit *limp)
 		return (EINVAL);
 	}
 	if (limp->rlim_max > alimp->rlim_max
-	    && (error = suser(cred->pc_ucred, &p->p_acflag)) != 0)
+	    && (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag)) != 0)
 			return (error);
 
 	if (p->p_limit->p_refcnt > 1 &&
@@ -561,7 +565,7 @@ static int
 sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 {
 	struct proc *ptmp;
-	int i, error = 0;
+	int error = 0;
 
 	if (pid == PROC_CURPROC)
 		ptmp = p;
@@ -571,28 +575,31 @@ sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 		/*
 		 * suid proc of ours or proc not ours
 		 */
-		if (p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
-		    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
-			error = suser(p->p_ucred, &p->p_acflag);
+		if (kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(ptmp->p_cred) ||
+		    kauth_cred_getuid(p->p_cred) != kauth_cred_getsvuid(ptmp->p_cred))
+			error = kauth_authorize_generic(p->p_cred,
+				    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 
 		/*
 		 * sgid proc has sgid back to us temporarily
 		 */
-		else if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
-			error = suser(p->p_ucred, &p->p_acflag);
+		else if (kauth_cred_getgid(ptmp->p_cred) != kauth_cred_getsvgid(ptmp->p_cred))
+			error = kauth_authorize_generic(p->p_cred,
+			    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 
 		/*
 		 * our rgid must be in target's group list (ie,
 		 * sub-processes started by a sgid process)
 		 */
 		else {
-			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
-				if (p->p_ucred->cr_groups[i] ==
-				    ptmp->p_cred->p_rgid)
-					break;
+			int ismember = 0;
+
+			if (kauth_cred_ismember_gid(p->p_cred,
+			    kauth_cred_getgid(ptmp->p_cred), &ismember) != 0 ||
+			    !ismember) {
+				error = kauth_authorize_generic(p->p_cred,
+				    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 			}
-			if (i == p->p_ucred->cr_ngroups)
-				error = suser(p->p_ucred, &p->p_acflag);
 		}
 	}
 
@@ -611,7 +618,8 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	struct proc *ptmp, *p;
 	struct plimit *lim;
 	int error = 0, len;
-	char cname[MAXPATHLEN], *tmp;
+	char *cname;
+	char *tmp;
 	struct sysctlnode node;
 
 	/*
@@ -630,11 +638,12 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
+	cname = PNBUF_GET();
 	/*
 	 * let them modify a temporary copy of the core name
 	 */
 	node = *rnode;
-	strlcpy(cname, ptmp->p_limit->pl_corename, sizeof(cname));
+	strlcpy(cname, ptmp->p_limit->pl_corename, MAXPATHLEN);
 	node.sysctl_data = cname;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -643,8 +652,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * heard it before...
 	 */
 	if (error || newp == NULL ||
-	    strcmp(cname, ptmp->p_limit->pl_corename) == 0)
-		return (error);
+	    strcmp(cname, ptmp->p_limit->pl_corename) == 0) {
+		goto done;
+	}
 
 	/*
 	 * no error yet and cname now has the new core name in it.
@@ -652,19 +662,25 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * or end in ".core" or "/core".
 	 */
 	len = strlen(cname);
-	if (len < 4)
-		return (EINVAL);
-	if (strcmp(cname + len - 4, "core") != 0)
-		return (EINVAL);
-	if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.')
-		return (EINVAL);
+	if (len < 4) {
+		error = EINVAL;
+	} else if (strcmp(cname + len - 4, "core") != 0) {
+		error = EINVAL;
+	} else if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.') {
+		error = EINVAL;
+	}
+	if (error != 0) {
+		goto done;
+	}
 
 	/*
 	 * hmm...looks good.  now...where do we put it?
 	 */
 	tmp = malloc(len + 1, M_TEMP, M_WAITOK|M_CANFAIL);
-	if (tmp == NULL)
-		return (ENOMEM);
+	if (tmp == NULL) {
+		error = ENOMEM;
+		goto done;
+	}
 	strlcpy(tmp, cname, len + 1);
 
 	lim = ptmp->p_limit;
@@ -676,8 +692,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (lim->pl_corename != defcorename)
 		free(lim->pl_corename, M_TEMP);
 	lim->pl_corename = tmp;
-
-	return (error);
+done:
+	PNBUF_PUT(cname);
+	return error;
 }
 
 /*

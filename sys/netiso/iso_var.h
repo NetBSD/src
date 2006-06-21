@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.21 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.21.12.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -148,7 +148,7 @@ u_long iso_hashchar (caddr_t, int);
 int iso_hash (struct sockaddr_iso *, struct afhash *);
 int iso_netof (struct iso_addr *, caddr_t);
 int iso_control (struct socket *, u_long, caddr_t, struct ifnet *,
-		     struct proc *);
+		     struct lwp *);
 void iso_purgeaddr (struct ifaddr *, struct ifnet *);
 void iso_purgeif (struct ifnet *);
 void iso_ifscrub (struct ifnet *, struct iso_ifaddr *);
@@ -175,7 +175,7 @@ int iso_snparesolve (struct ifnet *, struct sockaddr_iso *,
 void snpac_free (struct llinfo_llc *);
 int snpac_add (struct ifnet *, struct iso_addr *, caddr_t, int,
 		   u_short, int);
-int snpac_ioctl (struct socket *, u_long, caddr_t, struct proc *);
+int snpac_ioctl (struct socket *, u_long, caddr_t, struct lwp *);
 void snpac_logdefis (struct rtentry *);
 void snpac_age (void *);
 int snpac_ownmulti (caddr_t, u_int);
@@ -185,4 +185,4 @@ void snpac_rtrequest (int, struct iso_addr *, struct iso_addr *,
 void snpac_addrt (struct ifnet *, struct iso_addr *, struct iso_addr *,
 	             struct iso_addr *);
 #endif /* _KERNEL */
-#endif /* _NETISO_ISO_VAR_H_ */
+#endif /* !_NETISO_ISO_VAR_H_ */

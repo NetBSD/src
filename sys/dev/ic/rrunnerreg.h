@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnerreg.h,v 1.6 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.6.4.1 2006/06/21 15:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 /*
- * Description of RoadRunner registers and hardware constucts.
+ * Description of RoadRunner registers and hardware constructs.
  *
  * We're trying to support version 1 AND version 2 of the RunCode.
  * The fields that changed for version 2 are prefixed with RR2_ instead

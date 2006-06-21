@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.9 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.9.4.1 2006/06/21 15:10:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -87,7 +87,8 @@ getcachelinesize(void)
 	_cache_info.icache_size = _cachelinesize;
 	_cache_info.icache_line_size = _cachelinesize;
 	/* If there is no cache, indicate we have issued the sysctl. */
-	if (!_cachelinesize) _cachelinesize = 1;
+	if (!_cachelinesize)
+		_cachelinesize = 1;
 }
 #endif
 
@@ -109,11 +110,11 @@ __syncicache(void *from, size_t len)
 		l = (len + off + linesz - 1) & ~(linesz - 1);
 		p = (char *)from - off;
 		do {
-			__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
+			__asm volatile ("dcbst 0,%0" :: "r"(p));
 			p += linesz;
 		} while ((l -= linesz) != 0);
 	}
-	__asm__ __volatile ("sync");
+	__asm volatile ("sync");
 
 	if (CACHEINFO.icache_size > 0 ) {
 		linesz = CACHEINFO.icache_line_size;
@@ -121,9 +122,9 @@ __syncicache(void *from, size_t len)
 		l = (len + off + linesz - 1) & ~(linesz - 1);
 		p = (char *)from - off;
 		do {
-			__asm__ __volatile ("icbi 0,%0" :: "r"(p));
+			__asm volatile ("icbi 0,%0" :: "r"(p));
 			p += linesz;
 		} while ((l -= linesz) != 0);
 	}
-	__asm__ __volatile ("sync; isync");
+	__asm volatile ("sync; isync");
 }

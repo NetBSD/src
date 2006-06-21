@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.15 2004/03/24 17:29:14 drochner Exp $	*/
+/*	$NetBSD: cread.c,v 1.15.16.1 2006/06/21 15:10:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -43,7 +43,7 @@
 #include "stand.h"
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
-#include <lib/libz/zlib.h>
+#include <lib/libz/libz.h>
 #else
 #include <string.h>
 #include <zlib.h>
@@ -105,7 +105,7 @@ zcfree (opaque, ptr)
 	void *opaque;
 	void *ptr;
 {
-	free(ptr, 0); /* XXX works only with modified allocator */
+	dealloc(ptr, 0); /* XXX works only with modified allocator */
 }
 
 void
@@ -259,7 +259,7 @@ open(fname, mode)
 
 errout:
 	if (s != 0)
-		free(s, sizeof(struct sd));
+		dealloc(s, sizeof(struct sd));
 	oclose(fd);
 	return (-1);
 }
@@ -286,8 +286,8 @@ close(fd)
 
 	inflateEnd(&(s->stream));
 
-	free(s->inbuf, Z_BUFSIZE);
-	free(s, sizeof(struct sd));
+	dealloc(s->inbuf, Z_BUFSIZE);
+	dealloc(s, sizeof(struct sd));
 
 	return (oclose(fd));
 }

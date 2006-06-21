@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.15 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.15.4.1 2006/06/21 15:06:28 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.15 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.15.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -293,7 +293,7 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 			if (asmap->numParityFailed == 1)
 				*createFunc = (RF_VoidFuncPtr) rf_CreateNonRedundantWriteDAG;
 			else
-				if (asmap->numStripeUnitsAccessed != 1 && failedPDA->numSector != layoutPtr->sectorsPerStripeUnit)
+				if (asmap->numStripeUnitsAccessed != 1 && (failedPDA == NULL || failedPDA->numSector != layoutPtr->sectorsPerStripeUnit))
 					*createFunc = NULL;
 				else
 					*createFunc = (RF_VoidFuncPtr) rf_CreateDegradedWriteDAG;

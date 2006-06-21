@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.55 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.55.2.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55.2.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,20 +89,20 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55 2005/03/29 02:41:05 thorpej Exp
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	nullfs_mount __P((struct mount *, const char *, void *,
-	    struct nameidata *, struct proc *));
-int	nullfs_unmount __P((struct mount *, int, struct proc *));
+int	nullfs_mount(struct mount *, const char *, void *,
+	    struct nameidata *, struct lwp *);
+int	nullfs_unmount(struct mount *, int, struct lwp *);
 
 /*
  * Mount null layer
  */
 int
-nullfs_mount(mp, path, data, ndp, p)
+nullfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct null_args args;
 	struct vnode *lowerrootvp, *vp;
@@ -119,7 +119,6 @@ nullfs_mount(mp, path, data, ndp, p)
 		if (lmp == NULL)
 			return EIO;
 		args.la.target = NULL;
-		vfs_showexport(mp, &args.la.export, &lmp->layerm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	/*
@@ -130,22 +129,16 @@ nullfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	/*
-	 * Update only does export updating.
+	 * Update is not supported
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		lmp = MOUNTTOLAYERMOUNT(mp);
-		if (args.nulla_target == NULL)
-			return (vfs_export(mp, &lmp->layerm_export,
-			    &args.la.export));
-		else
-			return (EOPNOTSUPP);
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return EOPNOTSUPP;
 
 	/*
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args.la.target, p);
+		UIO_USERSPACE, args.la.target, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -208,7 +201,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	nmp->nullm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -220,10 +213,10 @@ nullfs_mount(mp, path, data, ndp, p)
  * Free reference to null layer
  */
 int
-nullfs_unmount(mp, mntflags, p)
+nullfs_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct null_mount *nmp = MOUNTTONULLMOUNT(mp);
 	struct vnode *null_rootvp = nmp->nullm_rootvp;
@@ -317,9 +310,7 @@ struct vfsops nullfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	layerfs_checkexp,
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	nullfs_vnodeopv_descs,

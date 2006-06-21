@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.2.1 2006/06/21 14:58:06 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.1 2006/06/21 14:58:06 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $");
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,18 +162,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $");
 #include <machine/vm86.h>
 #endif
 
-#include "acpi.h"
-#include "apm.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
 #include <machine/bioscall.h>
-#endif
-
-#if NACPI > 0
-#include <dev/acpi/acpivar.h>
-#define ACPI_MACHDEP_PRIVATE
-#include <machine/acpi_machdep.h>
 #endif
 
 #if NAPM > 0
@@ -202,11 +196,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2005/06/15 22:08:08 bouyer Exp $");
 void ddb_trap_hook(int);
 #endif
 
-/* #define	XENDEBUG */
+#undef	XENDEBUG
 /* #define	XENDEBUG_LOW */
 
 #ifdef XENDEBUG
-extern void printk(char *, ...);
 #define	XENPRINTF(x) printf x
 #define	XENPRINTK(x) printk x
 #else
@@ -233,8 +226,6 @@ void xen_dbglow_init(void);
 char machine[] = "i386";		/* CPU "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
-char bootinfo[BOOTINFO_MAXSIZE];
-
 extern struct bi_devmatch *x86_alldisks;
 extern int x86_ndisks;
 
@@ -249,7 +240,7 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid(struct proc *, struct exec_package *);
+static int exec_nomid(struct lwp *, struct exec_package *);
 #endif
 
 int	physmem;
@@ -407,7 +398,7 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)lwp0.l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(lwp0.l_addr) + KSTACK_SIZE - 16;
 	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -453,7 +444,6 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 void
 i386_switch_context(struct pcb *new)
 {
-	dom0_op_t op;
 	struct cpu_info *ci;
 
 	ci = curcpu();
@@ -465,10 +455,18 @@ i386_switch_context(struct pcb *new)
 	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
+#ifdef XEN3
+	        struct physdev_op physop;
+		physop.cmd = PHYSDEVOP_SET_IOPL;
+		physop.u.set_iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL;
+		HYPERVISOR_physdev_op(&physop);
+#else
+		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
 		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
 		HYPERVISOR_dom0_op(&op);
+#endif
 	}
 }
 
@@ -832,13 +830,6 @@ haltsys:
 #endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#if NACPI > 0
-		if (acpi_softc != NULL) {
-			delay(500000);
-			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-			printf("WARNING: ACPI powerdown failed!\n");
-		}
-#endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
 		 * wait a bit first--some disk drives are slow to clean up
@@ -878,7 +869,7 @@ haltsys:
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			for(;;) {
-				__asm __volatile("hlt");
+				__asm volatile("hlt");
 			}
 		}
 		cnpollc(0);
@@ -1219,7 +1210,8 @@ struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
-extern  struct user *proc0paddr;
+struct user *proc0paddr;
+extern vaddr_t proc0uarea;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
@@ -1431,10 +1423,20 @@ initgdt()
 	/* pmap_kremove((vaddr_t)gdt, PAGE_SIZE); */
 	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE,
 	    VM_PROT_READ);
+#ifdef XEN3
+	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
+	    NGDT));
+#else
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    LAST_RESERVED_GDT_ENTRY + 1));
+#endif
+#ifdef XEN3
+	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
+		panic("HYPERVISOR_set_gdt failed!\n");
+#else
 	if (HYPERVISOR_set_gdt(frames, LAST_RESERVED_GDT_ENTRY + 1))
 		panic("HYPERVISOR_set_gdt failed!\n");
+#endif
 	lgdt_finish();
 #endif
 }
@@ -1467,7 +1469,20 @@ init386(paddr_t first_avail)
 	extern u_char biostramp_image[];
 #endif
 
-	XENPRINTK(("HYPERVISOR_shared_info %p\n", HYPERVISOR_shared_info));
+	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
+	    xen_start_info.shared_info));
+#if defined(XEN3) && defined(XENDEBUG)
+	XENPRINTK(("HYPERVISOR_shared_info nsec %u\n",
+	    HYPERVISOR_shared_info->wc_sec));
+	if ((xen_start_info.flags & SIF_INITDOMAIN) == 0) {
+		extern volatile struct xencons_interface *xencons_interface;
+		extern struct xenstore_domain_interface *xenstore_interface;
+		XENPRINTK(("xencons %p (%x)\n",
+		    xencons_interface, xen_start_info.console_mfn));
+		XENPRINTK(("xenstore %p (%x)\n",
+		    xenstore_interface, xen_start_info.store_mfn));
+	}
+#endif
 #ifdef XENDEBUG_LOW
 	xen_dbglow_init();
 #endif
@@ -1478,6 +1493,7 @@ init386(paddr_t first_avail)
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
 
+	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
@@ -1486,9 +1502,9 @@ init386(paddr_t first_avail)
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 		      (void *)atdevbase));
 
-#if defined(XEN) && defined(DOM0OPS)
+#if defined(XEN) && (NISA > 0 || NPCI > 0)
 	x86_bus_space_init();
-#endif /* defined(XEN) && defined(DOM0OPS) */
+#endif
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 	/*
@@ -1524,14 +1540,14 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail - KERNBASE;
-	avail_end = ptoa(xen_start_info.nr_pages) +
-		(KERNTEXTOFF - KERNBASE_LOCORE);
-	pmap_pa_start = (KERNTEXTOFF - KERNBASE_LOCORE);
+	avail_end = ptoa(xen_start_info.nr_pages) + XPMAP_OFFSET;
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
-	physmem += atop(mem_clusters[0].size);
+	physmem += xen_start_info.nr_pages;
+	uvmexp.wired += atop(avail_start);
 #endif
 
 	/*
@@ -1553,11 +1569,6 @@ init386(paddr_t first_avail)
 		realmode_reserved_size = MP_TRAMPOLINE;		 /* XXX */
 	needs_earlier_install_pte0 = 1;				 /* XXX */
 #endif								 /* XXX */
-#if NACPI > 0
-	/* trampoline code for wake handler */
-	realmode_reserved_size += ptoa(acpi_md_get_npages_of_wakecode()+1);
-	needs_earlier_install_pte0 = 1;
-#endif
 	if (needs_earlier_install_pte0) {
 		/* page table for directory entry 0 */
 		realmode_reserved_size += PAGE_SIZE;
@@ -1924,40 +1935,6 @@ init386(paddr_t first_avail)
 	realmode_reserved_start += PAGE_SIZE;
 #endif
 
-#if NACPI > 0
-	/*
-	 * Steal memory for the acpi wake code
-	 */
-	{
-		paddr_t paddr, p;
-		psize_t sz;
-		int npg;
-
-		paddr = realmode_reserved_start;
-		npg = acpi_md_get_npages_of_wakecode();
-		sz = ptoa(npg);
-#ifdef DIAGNOSTIC
-		if (realmode_reserved_size < sz) {
-			panic("cannot steal memory for ACPI wake code.");
-		}
-#endif
-
-		/* identical mapping */
-		p = paddr;
-		for (x=0; x<npg; x++) {
-			printf("kenter: 0x%08X\n", (unsigned)p);
-			pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
-			p += PAGE_SIZE;
-		}
-		pmap_update(pmap_kernel());
-
-		acpi_md_install_wakecode(paddr);
-
-		realmode_reserved_size  -= sz;
-		realmode_reserved_start += sz;
-	}
-#endif
-
  	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
@@ -2057,9 +2034,6 @@ init386(paddr_t first_avail)
 #if !defined(XEN)
 	cpu_init_idt();
 #else
-#ifdef DDB
-	db_trap_callback = ddb_trap_hook;
-#endif
 	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
 	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
@@ -2090,15 +2064,18 @@ init386(paddr_t first_avail)
 	}
 #endif
 #ifdef DDB
+	XENPRINTF(("Debugger\n"));
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 #ifdef IPKDB
+	XENPRINTF(("ipkdb_init\n"));
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
 #ifdef KGDB
+	XENPRINTF(("kgdb_port_init\n"));
 	kgdb_port_init();
 	if (boothowto & RB_KDB) {
 		kgdb_debug_init = 1;
@@ -2107,6 +2084,7 @@ init386(paddr_t first_avail)
 #endif
 
 #if NMCA > 0
+	XENPRINTF(("mca_busprobe\n"));
 	/* check for MCA bus, needed to be done before ISA stuff - if
 	 * MCA is detected, ISA needs to use level triggered interrupts
 	 * by default */
@@ -2114,17 +2092,22 @@ init386(paddr_t first_avail)
 #endif
 
 #if defined(XEN)
+	XENPRINTF(("events_default_setup\n"));
 	events_default_setup();
 #else
 	intr_default_setup();
 #endif
 
 	/* Initialize software interrupts. */
+	XENPRINTF(("softintr_init\n"));
 	softintr_init();
 
+	XENPRINTF(("splraise(IPL_IPI)\n"));
 	splraise(IPL_IPI);
+	XENPRINTF(("enable_intr\n"));
 	enable_intr();
 
+	XENPRINTF(("physmem %lu\n", ptoa(physmem)));
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
 		       "have %lu bytes, want %lu bytes\n"
@@ -2135,15 +2118,17 @@ init386(paddr_t first_avail)
 	}
 
 #ifdef __HAVE_CPU_MAXPROC
+	XENPRINTF(("cpu_maxproc\n"));
 	/* Make sure maxproc is sane */
 	if (maxproc > cpu_maxproc())
 		maxproc = cpu_maxproc();
 #endif
+	XENPRINTF(("init386 end\n"));
 }
 
 #ifdef COMPAT_NOMID
 static int
-exec_nomid(struct proc *p, struct exec_package *epp)
+exec_nomid(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	u_long midmag, magic;
@@ -2168,7 +2153,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		/*
 		 * 386BSD's ZMAGIC format:
 		 */
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | QMAGIC:
@@ -2176,7 +2161,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * BSDI's QMAGIC format:
 		 * same as new ZMAGIC format, but with different magic number
 		 */
-		error = exec_aout_prep_zmagic(p, epp);
+		error = exec_aout_prep_zmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | NMAGIC:
@@ -2185,7 +2170,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * same as NMAGIC format, but with different magic number
 		 * and with text starting at 0.
 		 */
-		error = exec_aout_prep_oldnmagic(p, epp);
+		error = exec_aout_prep_oldnmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | OMAGIC:
@@ -2194,7 +2179,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * same as OMAGIC format, but with different magic number
 		 * and with text starting at 0.
 		 */
-		error = exec_aout_prep_oldomagic(p, epp);
+		error = exec_aout_prep_oldomagic(l, epp);
 		break;
 
 	default:
@@ -2216,30 +2201,16 @@ exec_nomid(struct proc *p, struct exec_package *epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
-	if ((error = exec_nomid(p, epp)) == 0)
+	if ((error = exec_nomid(l, epp)) == 0)
 		return error;
 #endif /* ! COMPAT_NOMID */
 
 	return error;
-}
-
-void *
-lookup_bootinfo(int type)
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while(n--) {
-		if(help->type == type)
-			return(help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return(0);
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
@@ -2530,41 +2501,3 @@ cpu_maxproc(void)
 	return (MAXGDTSIZ - NGDT);
 #endif
 }
-
-#if defined(DDB) || defined(KGDB)
-
-/* 
- * Callback to output a backtrace when entering ddb.
- */
-void
-ddb_trap_hook(int where)
-{
-	static int once = 0;
-	db_addr_t db_dot;
-
-	if (once != 0 || where != 1)
-		return;
-	once = 1;
-
-	if (curlwp != NULL) {
-		db_printf("Stopped");
-		if (curproc == NULL)
-			db_printf("; curlwp = %p,"
-			    " curproc is NULL at\t", curlwp);
-		else
-			db_printf(" in pid %d.%d (%s) at\t", 
-			    curproc->p_pid, curlwp->l_lid,
-			    curproc->p_comm);
-	} else
-		db_printf("Stopped at\t");
-	db_dot = PC_REGS(DDB_REGS);
-	db_print_loc_and_inst(db_dot);
-
-	db_stack_trace_print((db_expr_t) db_dot, FALSE, 65535,
-	    "", db_printf);
-#ifdef DEBUG
-	db_show_regs((db_expr_t) db_dot, FALSE, 65535, "");
-#endif
-}
-
-#endif /* DDB || KGDB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.23 2004/05/22 22:52:16 jonathan Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.23.12.1 2006/06/21 15:11:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -68,24 +68,24 @@ struct nfs_diskless {
 };
 
 #ifdef _KERNEL
-int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
-void nfs_boot_cleanup __P((struct nfs_diskless *nd, struct proc *procp));
-int nfs_boot_ifupdown __P((struct ifnet *, struct proc *, int));
-int nfs_boot_setaddress __P((struct ifnet *, struct proc *,
+int nfs_boot_init __P((struct nfs_diskless *nd, struct lwp *lwp));
+void nfs_boot_cleanup __P((struct nfs_diskless *nd, struct lwp *lwp));
+int nfs_boot_ifupdown __P((struct ifnet *, struct lwp *, int));
+int nfs_boot_setaddress __P((struct ifnet *, struct lwp *,
 			     u_int32_t, u_int32_t, u_int32_t));
-int nfs_boot_deladdress __P((struct ifnet *, struct proc *, u_int32_t));
+int nfs_boot_deladdress __P((struct ifnet *, struct lwp *, u_int32_t));
 void nfs_boot_flushrt __P((struct ifnet *));
 int nfs_boot_setrecvtimo __P((struct socket *));
 int nfs_boot_enbroadcast __P((struct socket *));
-int nfs_boot_sobind_ipport __P((struct socket *, u_int16_t, struct proc *));
+int nfs_boot_sobind_ipport __P((struct socket *, u_int16_t, struct lwp *));
 int nfs_boot_sendrecv __P((struct socket *, struct mbuf *,
 			   int (*)(struct mbuf*, void*, int), struct mbuf*,
 			   int (*)(struct mbuf*, void*), struct mbuf**,
-			   struct mbuf**, void*, struct proc *));
+			   struct mbuf**, void*, struct lwp *));
 
-int nfs_bootdhcp  __P((struct nfs_diskless *, struct proc *));
-int nfs_bootparam __P((struct nfs_diskless *, struct proc *));
-int nfs_bootstatic __P((struct nfs_diskless *, struct proc *));
+int nfs_bootdhcp  __P((struct nfs_diskless *, struct lwp *));
+int nfs_bootparam __P((struct nfs_diskless *, struct lwp *));
+int nfs_bootstatic __P((struct nfs_diskless *, struct lwp *));
 
 extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
 

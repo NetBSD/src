@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.15 2005/06/28 20:23:02 drochner Exp $ */
+/* $NetBSD: dksubr.c,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15 2005/06/28 20:23:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,34 +84,48 @@ dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
 	dksc->sc_osc = osc;
 	strncpy(dksc->sc_xname, xname, DK_XNAME_SIZE);
 	dksc->sc_dkdev.dk_name = dksc->sc_xname;
-	lockinit(&dksc->sc_lock, PRIBIO, "dklk", 0, 0);
 }
 
 /* ARGSUSED */
 int
 dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   int flags, int fmt, struct proc *p)
+	   int flags, int fmt, struct lwp *l)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 	int	ret = 0;
+	struct disk *dk = &dksc->sc_dkdev;
 
 	DPRINTF_FOLLOW(("dk_open(%s, %p, 0x%x, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+	if ((ret = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return ret;
 
 	part = DISKPART(dev);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (dk->dk_nwedges != 0 && part != RAW_PART) {
+		ret = EBUSY;
+		goto done;
+	}
+
 	pmask = 1 << part;
 
 	/*
 	 * If we're init'ed and there are no other open partitions then
 	 * update the in-core disklabel.
 	 */
-	if ((dksc->sc_flags & DKF_INITED) && dksc->sc_dkdev.dk_openmask == 0)
-		dk_getdisklabel(di, dksc, dev);
+	if ((dksc->sc_flags & DKF_INITED)) {
+		if (dk->dk_openmask == 0) {
+			dk_getdisklabel(di, dksc, dev);
+		}
+		/* XXX re-discover wedges? */
+	}
 
 	/* Fail if we can't find the partition. */
 	if ((part != RAW_PART) &&
@@ -125,48 +139,47 @@ dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	/* Mark our unit as open. */
 	switch (fmt) {
 	case S_IFCHR:
-		dksc->sc_dkdev.dk_copenmask |= pmask;
+		dk->dk_copenmask |= pmask;
 		break;
 	case S_IFBLK:
-		dksc->sc_dkdev.dk_bopenmask |= pmask;
+		dk->dk_bopenmask |= pmask;
 		break;
 	}
 
-	dksc->sc_dkdev.dk_openmask =
-	    dksc->sc_dkdev.dk_copenmask | dksc->sc_dkdev.dk_bopenmask;
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
 done:
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
+	lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
 	return ret;
 }
 
 /* ARGSUSED */
 int
 dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    int flags, int fmt, struct proc *p)
+	    int flags, int fmt, struct lwp *l)
 {
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 	int	ret;
+	struct disk *dk = &dksc->sc_dkdev;
 
 	DPRINTF_FOLLOW(("dk_close(%s, %p, 0x%x, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+	if ((ret = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return ret;
 
 	switch (fmt) {
 	case S_IFCHR:
-		dksc->sc_dkdev.dk_copenmask &= ~pmask;
+		dk->dk_copenmask &= ~pmask;
 		break;
 	case S_IFBLK:
-		dksc->sc_dkdev.dk_bopenmask &= ~pmask;
+		dk->dk_bopenmask &= ~pmask;
 		break;
 	}
-	dksc->sc_dkdev.dk_openmask =
-	    dksc->sc_dkdev.dk_copenmask | dksc->sc_dkdev.dk_bopenmask;
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
+	lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -175,6 +188,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 {
 	int	s;
 	int	wlabel;
+	daddr_t	blkno;
 
 	DPRINTF_FOLLOW(("dk_strategy(%s, %p, %p)\n",
 	    di->di_dkname, dksc, bp));
@@ -204,12 +218,22 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 		return;
 	}
 
+	blkno = bp->b_blkno;
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		struct partition *pp;
+
+		pp =
+		    &dksc->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		blkno += pp->p_offset;
+	}
+	bp->b_rawblkno = blkno;
+
 	/*
 	 * Start the unit by calling the start routine
 	 * provided by the individual driver.
 	 */
 	s = splbio();
-	BUFQ_PUT(&dksc->sc_bufq, bp);
+	BUFQ_PUT(dksc->sc_bufq, bp);
 	dk_start(di, dksc);
 	splx(s);
 	return;
@@ -223,9 +247,9 @@ dk_start(struct dk_intf *di, struct dk_softc *dksc)
 	DPRINTF_FOLLOW(("dk_start(%s, %p)\n", di->di_dkname, dksc));
 
 	/* Process the work queue */
-	while ((bp = BUFQ_GET(&dksc->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_GET(dksc->sc_bufq)) != NULL) {
 		if (di->di_diskstart(dksc, bp) != 0) {
-			BUFQ_PUT(&dksc->sc_bufq, bp);
+			BUFQ_PUT(dksc->sc_bufq, bp);
 			break;
 		}
 	}
@@ -255,7 +279,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 	part = DISKPART(dev);
 	is_open = dksc->sc_dkdev.dk_openmask & (1 << part);
 
-	if (!is_open && di->di_open(dev, 0, S_IFBLK, curproc))
+	if (!is_open && di->di_open(dev, 0, S_IFBLK, curlwp))
 		return -1;
 
 	lp = dksc->sc_dkdev.dk_label;
@@ -265,7 +289,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (!is_open && di->di_close(dev, 0, S_IFBLK, curproc))
+	if (!is_open && di->di_close(dev, 0, S_IFBLK, curlwp))
 		return 1;
 
 	return size;
@@ -273,9 +297,10 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 
 int
 dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    u_long cmd, caddr_t data, int flag, struct proc *p)
+	    u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct	disklabel *lp;
+	struct	disk *dk;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct	disklabel newlabel;
 #endif
@@ -350,6 +375,12 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 #endif
 		lp = (struct disklabel *)data;
 
+		dk = &dksc->sc_dkdev;
+		error = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL);
+		if (error) {
+			break;
+		}
+
 		dksc->sc_flags |= DKF_LABELLING;
 
 		error = setdisklabel(dksc->sc_dkdev.dk_label,
@@ -366,6 +397,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		}
 
 		dksc->sc_flags &= ~DKF_LABELLING;
+		error = lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
 		break;
 
 	case DIOCWLABEL:
@@ -387,6 +419,80 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *)data;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
+		return (dkwedge_add(dkw));
+	    }
+
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *)data;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
+		return (dkwedge_del(dkw));
+	    }
+
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *)data;
+
+		return (dkwedge_list(&dksc->sc_dkdev, dkwl, l));
+	    }
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+		int s;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(dksc->sc_bufq),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+		struct bufq_state *new;
+		struct bufq_state *old;
+		int s;
+
+		if ((flag & FWRITE) == 0) {
+			return EBADF;
+		}
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = dksc->sc_bufq;
+		bufq_move(new, old);
+		dksc->sc_bufq = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
+	    }
 
 	default:
 		error = ENOTTY;
@@ -529,17 +635,19 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
  * set *vpp to the file's vnode.
  */
 int
-dk_lookup(path, p, vpp)
+dk_lookup(path, l, vpp)
 	const char *path;
-	struct proc *p;
+	struct lwp *l;
 	struct vnode **vpp;	/* result */
 {
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr va;
+	struct proc *p;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
+	p = l->l_proc;
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: vn_open error = %d\n", error));
@@ -549,22 +657,22 @@ dk_lookup(path, p, vpp)
 
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (EBUSY);
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: getattr error = %d\n", error));
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (error);
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (ENOTBLK);
 	}
 

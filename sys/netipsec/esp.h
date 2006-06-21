@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.2 2005/02/26 22:45:13 perry Exp $	*/
+/*	$NetBSD: esp.h,v 1.2.4.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/esp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: esp.h,v 1.16 2000/10/18 21:28:00 itojun Exp $	*/
 
@@ -67,4 +67,4 @@ struct esptail {
 };
 
 #define ESP_ALEN	12	/* 96-bit authenticator */
-#endif /*_NETIPSEC_ESP_H_*/
+#endif /* !_NETIPSEC_ESP_H_ */

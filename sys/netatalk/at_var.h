@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.3 2002/05/12 21:43:23 matt Exp $	 */
+/*	$NetBSD: at_var.h,v 1.3.26.1 2006/06/21 15:10:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #ifndef _NETATALK_AT_VAR_H_
-#define _NETATALK_AT_VAR_H_ 1
+#define _NETATALK_AT_VAR_H_
 
 #include <sys/callout.h>
 
@@ -71,4 +71,4 @@ extern struct at_ifaddrhead at_ifaddr;
 extern struct ifqueue atintrq1, atintrq2;
 #endif
 
-#endif /* _NETATALK_AT_VAR_H_ */
+#endif /* !_NETATALK_AT_VAR_H_ */

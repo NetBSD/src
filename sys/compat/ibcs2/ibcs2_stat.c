@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.31 2005/05/29 22:08:16 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.31.2.1 2006/06/21 14:58:51 yamt Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.31 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.31.2.1 2006/06/21 14:58:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,14 +154,14 @@ ibcs2_sys_statfs(l, v, retval)
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
@@ -190,12 +190,12 @@ ibcs2_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -216,14 +216,14 @@ ibcs2_sys_statvfs(l, v, retval)
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
@@ -251,13 +251,13 @@ ibcs2_sys_fstatvfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
 			   sizeof(struct ibcs2_statvfs));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -274,14 +274,14 @@ ibcs2_sys_stat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___stat13_args cup;
+	struct sys___stat30_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -303,15 +303,15 @@ ibcs2_sys_lstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___lstat13_args cup;
+	struct sys___lstat30_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -333,13 +333,13 @@ ibcs2_sys_fstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___fstat13_args cup;
+	struct sys___fstat30_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return error;

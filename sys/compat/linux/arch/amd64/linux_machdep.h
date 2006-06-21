@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.2 2005/05/20 12:48:27 fvdl Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.2.2.1 2006/06/21 14:59:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -100,7 +100,6 @@ struct linux_rt_sigframe {
 	struct linux_siginfo info;
 };
 
-
 #ifdef _KERNEL
 __BEGIN_DECLS
 void linux_syscall_intern __P((struct proc *));
@@ -110,5 +109,9 @@ __END_DECLS
 #define LINUX_VSYSCALL_START	0xffffffffff600000
 #define LINUX_VSYSCALL_SIZE	1024
 #define LINUX_VSYSCALL_MAXNR	3
+
+#define LINUX_UNAME_ARCH machine_arch
+#define LINUX_NPTL
+#define LINUX_LARGEFILE64
 
 #endif /* _AMD64_LINUX_MACHDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.63 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.63.2.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.63 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.63.2.1 2006/06/21 15:12:39 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -65,7 +65,7 @@ READ(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct inode *ip;
@@ -112,6 +112,8 @@ READ(void *v)
 	usepc = vp->v_type == VREG;
 #endif /* !LFS_READWRITE */
 	if (usepc) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_size - uio->uio_offset,
 			    uio->uio_resid);
@@ -119,7 +121,7 @@ READ(void *v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_READ);
+			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -175,7 +177,7 @@ READ(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -190,7 +192,7 @@ WRITE(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct uio *uio;
@@ -198,8 +200,8 @@ WRITE(void *v)
 	struct genfs_node *gp;
 	FS *fs;
 	struct buf *bp;
-	struct proc *p;
-	struct ucred *cred;
+	struct lwp *l;
+	kauth_cred_t cred;
 	daddr_t lbn;
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
@@ -260,11 +262,11 @@ WRITE(void *v)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
 	 */
-	p = uio->uio_procp;
-	if (vp->v_type == VREG && p &&
+	l = curlwp;
+	if (vp->v_type == VREG && l &&
 	    uio->uio_offset + uio->uio_resid >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		psignal(p, SIGXFSZ);
+	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		psignal(l->l_proc, SIGXFSZ);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)
@@ -352,7 +354,7 @@ WRITE(void *v)
 		 */
 
 		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-		    ubc_alloc_flags);
+		    UVM_ADV_NORMAL, ubc_alloc_flags);
 		error = uiomove(win, bytelen, uio);
 		if (error && extending) {
 			/*
@@ -423,7 +425,7 @@ WRITE(void *v)
 			break;
 		need_unreserve = TRUE;
 #endif
-		error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
+		error = UFS_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
 
 		if (error)
@@ -480,19 +482,20 @@ WRITE(void *v)
 	 */
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0) {
+	if (resid > uio->uio_resid && ap->a_cred &&
+	    kauth_cred_geteuid(ap->a_cred) != 0) {
 		ip->i_mode &= ~(ISUID | ISGID);
 		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    uio->uio_procp);
+		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		    curlwp);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ip->i_size);
 	return (error);
 }

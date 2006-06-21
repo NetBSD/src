@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.23 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.23.4.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.23 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.23.4.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.23 2005/02/27 00:27:32 perry Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -105,7 +106,7 @@ ofcons_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ofcons_softc *sc = (struct ofcons_softc *) self;
+	struct ofcons_softc *sc = device_private(self);
 
 	printf("\n");
 
@@ -117,10 +118,10 @@ static int ofcons_param(struct tty *, struct termios *);
 static void ofcons_pollin(void *);
 
 int
-ofcons_open(dev, flag, mode, p)
+ofcons_open(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ofcons_softc *sc;
 	int unit = minor(dev);
@@ -145,7 +146,9 @@ ofcons_open(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ofcons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) &&
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
@@ -158,10 +161,10 @@ ofcons_open(dev, flag, mode, p)
 }
 
 int
-ofcons_close(dev, flag, mode, p)
+ofcons_close(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -198,31 +201,31 @@ ofcons_write(dev, uio, flag)
 }
 
 int
-ofcons_poll(dev, events, p)
+ofcons_poll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 int
-ofcons_ioctl(dev, cmd, data, flag, p)
+ofcons_ioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
 
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 struct tty *

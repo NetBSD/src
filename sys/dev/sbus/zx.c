@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.15 2005/06/04 04:36:32 tsutsui Exp $	*/
+/*	$NetBSD: zx.c,v 1.15.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.15 2005/06/04 04:36:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.15.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	fb->fb_driver = &zx_fbdriver;
 	fb->fb_device = &sc->sc_dv;
-	fb->fb_flags = sc->sc_dv.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dv)->cf_flags & FB_USERMASK;
 	fb->fb_pfour = NULL;
 	fb->fb_linebytes = 8192;
 
@@ -277,7 +277,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 }
 
 int
-zxopen(dev_t dev, int flags, int mode, struct proc *p)
+zxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	if (device_lookup(&zx_cd, minor(dev)) == NULL)
@@ -286,7 +286,7 @@ zxopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-zxclose(dev_t dev, int flags, int mode, struct proc *p)
+zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zx_softc *sc;
 
@@ -298,7 +298,7 @@ zxclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct zx_softc *sc;
 	struct fbcmap *cm;

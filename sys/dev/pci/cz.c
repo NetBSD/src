@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.32.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <sys/callout.h>
 
@@ -188,11 +189,6 @@ static int	cztty_to_tiocm(struct cztty_softc *sc);
 static void	cztty_diag(void *arg);
 
 extern struct cfdriver cz_cd;
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
 
 /*
  * Macros to read and write the PLX.
@@ -427,7 +423,7 @@ cz_attach(struct device *parent,
 
 		tp = ttymalloc();
 		tp->t_dev = makedev(cdevsw_lookup_major(&cz_cdevsw),
-		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
+		    (device_unit(&cz->cz_dev) * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;
 		tp->t_param = czttyparam;
 		tty_attach(tp);
@@ -948,7 +944,7 @@ cztty_shutdown(struct cztty_softc *sc)
  *	Open a Cyclades-Z serial port.
  */
 static int
-czttyopen(dev_t dev, int flags, int mode, struct proc *p)
+czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct cz_softc *cz;
@@ -966,7 +962,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1068,7 +1064,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
  *	Close a Cyclades-Z serial port.
  */
 static int
-czttyclose(dev_t dev, int flags, int mode, struct proc *p)
+czttyclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
@@ -1126,12 +1122,12 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
  *	Poll a Cyclades-Z serial port.
  */
 static int
-czttypoll(dev_t dev, int events, struct proc *p)
+czttypoll(dev_t dev, int events, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*
@@ -1140,17 +1136,18 @@ czttypoll(dev_t dev, int events, struct proc *p)
  *	Perform a control operation on a Cyclades-Z serial port.
  */
 static int
-czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
+	struct proc *p = l->l_proc;
 	int s, error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1172,7 +1169,7 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

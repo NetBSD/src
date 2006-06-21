@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.183.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,10 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include "opt_defcorename.h"
-#include "opt_insecure.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -91,8 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183 2005/06/20 02:49:18 atatat Exp
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 #include <machine/stdarg.h>
 
+#define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
 MALLOC_DEFINE(M_SYSCTLDATA, "sysctldata", "misc sysctl data");
 
@@ -162,12 +163,6 @@ char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 
 long hostid;
-
-#ifdef INSECURE
-int securelevel = -1;
-#else
-int securelevel = 0;
-#endif
 
 #ifndef DEFCORENAME
 #define	DEFCORENAME	"%n.core"
@@ -256,11 +251,11 @@ int
 sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sysctl_args /* {
-		syscallarg(int *) name;
+		syscallarg(const int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
 		syscallarg(size_t *) oldlenp;
-		syscallarg(void *) new;
+		syscallarg(const void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
 	int error, nerror, name[CTL_MAXNAME];
@@ -349,6 +344,14 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 		return (error);
 
 	if (l != NULL && oldp != NULL && savelen) {
+		/*
+		 * be lazy - memory is locked for short time only, so
+		 * just do a basic check against system limit
+		 */
+		if (uvmexp.wired + atop(savelen) > uvmexp.wiredmax) {
+			lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			return (ENOMEM);
+		}
 		error = uvm_vslock(l->l_proc, oldp, savelen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
@@ -382,24 +385,22 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 	fn = NULL;
 	error = sysctl_locate(l, name, namelen, &rnode, &ni);
 
-	/*
-	 * the node we ended up at has a function, so call it.  it can
-	 * hand off to query or create if it wants to.
-	 */
-	if (rnode->sysctl_func != NULL)
+	if (rnode->sysctl_func != NULL) {
+		/*
+		 * the node we ended up at has a function, so call it.  it can
+		 * hand off to query or create if it wants to.
+		 */
 		fn = rnode->sysctl_func;
-
-	/*
-	 * we found the node they were looking for, so do a lookup.
-	 */
-	else if (error == 0)
+	} else if (error == 0) {
+		/*
+		 * we found the node they were looking for, so do a lookup.
+		 */
 		fn = (sysctlfn)sysctl_lookup; /* XXX may write to rnode */
-
-	/*
-	 * prospective parent node found, but the terminal node was
-	 * not.  generic operations associate with the parent.
-	 */
-	else if (error == ENOENT && (ni + 1) == namelen && name[ni] < 0) {
+	} else if (error == ENOENT && (ni + 1) == namelen && name[ni] < 0) {
+		/*
+		 * prospective parent node found, but the terminal node was
+		 * not.  generic operations associate with the parent.
+		 */
 		switch (name[ni]) {
 		case CTL_QUERY:
 			fn = sysctl_query;
@@ -432,7 +433,6 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 	if (fn != NULL)
 		error = (*fn)(name + ni, namelen - ni, oldp, oldlenp,
 			      newp, newlen, name, l, rnode);
-
 	else if (error == 0)
 		error = EOPNOTSUPP;
 
@@ -525,7 +525,8 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		 * can anyone traverse this node or only root?
 		 */
 		if (l != NULL && (pnode->sysctl_flags & CTLFLAG_PRIVATE) &&
-		    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+		    (error = kauth_authorize_generic(l->l_proc->p_cred,
+				KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
 		    != 0)
 			return (error);
 		/*
@@ -552,8 +553,7 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 						tn = node[si].sysctl_alias;
 						si = -1;
 					}
-				}
-				else
+				} else
 					goto foundit;
 			}
 		}
@@ -637,8 +637,7 @@ sysctl_query(SYSCTLFN_ARGS)
 			/* ah, found parent in overlay */
 			elim = enode->sysctl_clen;
 			enode = enode->sysctl_child;
-		}
-		else {
+		} else {
 			error = 0;
 			elim = 0;
 			enode = NULL;
@@ -690,7 +689,7 @@ int
 sysctl_create(SYSCTLFN_ARGS)
 {
 	struct sysctlnode nnode, *node, *pnode;
-	int error, ni, at, nm, type, sz, flags, rw, anum, v;
+	int error, ni, at, nm, type, sz, flags, anum, v;
 	void *own;
 
 	error = 0;
@@ -717,7 +716,8 @@ sysctl_create(SYSCTLFN_ARGS)
 #ifndef SYSCTL_DISALLOW_CREATE
 		if (securelevel > 0)
 			return (EPERM);
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
@@ -805,7 +805,6 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	type = SYSCTL_TYPE(nnode.sysctl_flags);
 	flags = SYSCTL_FLAGS(nnode.sysctl_flags);
-	rw = (flags & CTLFLAG_READWRITE) ? B_WRITE : B_READ;
 	sz = nnode.sysctl_size;
 
 	/*
@@ -813,22 +812,25 @@ sysctl_create(SYSCTLFN_ARGS)
 	 * know what they collided with
 	 */
 	node = pnode->sysctl_child;
-	if (((flags & CTLFLAG_ANYNUMBER) && node) ||
-	    (node && node->sysctl_flags & CTLFLAG_ANYNUMBER))
-		return (EINVAL);
-	for (ni = at = 0; ni < pnode->sysctl_clen; ni++) {
-		if (nm == node[ni].sysctl_num ||
-		    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
-			/*
-			 * ignore error here, since we
-			 * are already fixed on EEXIST
-			 */
-			(void)sysctl_cvt_out(l, v, &node[ni], oldp,
-					     *oldlenp, oldlenp);
-			return (EEXIST);
+	at = 0;
+	if (node) {
+		if ((flags | node->sysctl_flags) & CTLFLAG_ANYNUMBER)
+			/* No siblings for a CTLFLAG_ANYNUMBER node */
+			return EINVAL;
+		for (ni = 0; ni < pnode->sysctl_clen; ni++) {
+			if (nm == node[ni].sysctl_num ||
+			    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
+				/*
+				 * ignore error here, since we
+				 * are already fixed on EEXIST
+				 */
+				(void)sysctl_cvt_out(l, v, &node[ni], oldp,
+						     *oldlenp, oldlenp);
+				return (EEXIST);
+			}
+			if (nm > node[ni].sysctl_num)
+				at++;
 		}
-		if (nm > node[ni].sysctl_num)
-			at++;
 	}
 
 	/*
@@ -915,12 +917,10 @@ sysctl_create(SYSCTLFN_ARGS)
 						sz = strlen(nnode.sysctl_data) +
 						    1;
 				}
-			}
-			else if (nnode.sysctl_data == NULL &&
+			} else if (nnode.sysctl_data == NULL &&
 				 flags & CTLFLAG_OWNDATA) {
 				return (EINVAL);
-			}
-			else {
+			} else {
 				char *vp, *e;
 				size_t s;
 
@@ -991,18 +991,19 @@ sysctl_create(SYSCTLFN_ARGS)
 			if (flags & CTLFLAG_OWNDATA) {
 				own = malloc(sz, M_SYSCTLDATA,
 					     M_WAITOK|M_CANFAIL);
+				if (own == NULL)
+					return ENOMEM;
 				if (nnode.sysctl_data == NULL)
 					memset(own, 0, sz);
 				else {
 					error = sysctl_copyin(l,
 					    nnode.sysctl_data, own, sz);
 					if (error != 0) {
-						FREE(own, M_SYSCTLDATA);
+						free(own, M_SYSCTLDATA);
 						return (error);
 					}
 				}
-			}
-			else if ((nnode.sysctl_data != NULL) &&
+			} else if ((nnode.sysctl_data != NULL) &&
 				 !(flags & CTLFLAG_IMMEDIATE)) {
 #if NKSYMS > 0
 				if (name[namelen - 1] == CTL_CREATESYM) {
@@ -1041,8 +1042,7 @@ sysctl_create(SYSCTLFN_ARGS)
 				 * lookups.
 				 */
 			}
-		}
-		else if (nnode.sysctl_func == NULL)
+		} else if (nnode.sysctl_func == NULL)
 			return (EINVAL);
 	}
 
@@ -1078,8 +1078,11 @@ sysctl_create(SYSCTLFN_ARGS)
 			error = sysctl_alloc(pnode, 1);
 		else
 			error = sysctl_alloc(pnode, 0);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 	}
 	node = pnode->sysctl_child;
 
@@ -1092,8 +1095,7 @@ sysctl_create(SYSCTLFN_ARGS)
 			if (nm == node[ni].sysctl_num) {
 				nm++;
 				ni = -1;
-			}
-			else if (nm > node[ni].sysctl_num)
+			} else if (nm > node[ni].sysctl_num)
 				at = ni + 1;
 		}
 	}
@@ -1103,8 +1105,11 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	if (pnode->sysctl_clen == pnode->sysctl_csize) {
 		error = sysctl_realloc(pnode);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 		node = pnode->sysctl_child;
 	}
 
@@ -1143,11 +1148,9 @@ sysctl_create(SYSCTLFN_ARGS)
 	if (own) {
 		node->sysctl_data = own;
 		node->sysctl_flags |= CTLFLAG_OWNDATA;
-	}
-	else if (flags & CTLFLAG_ALIAS) {
+	} else if (flags & CTLFLAG_ALIAS) {
 		node->sysctl_alias = anum;
-	}
-	else if (flags & CTLFLAG_IMMEDIATE) {
+	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_INT:
 			node->sysctl_idata = nnode.sysctl_idata;
@@ -1156,8 +1159,7 @@ sysctl_create(SYSCTLFN_ARGS)
 			node->sysctl_qdata = nnode.sysctl_qdata;
 			break;
 		}
-	}
-	else {
+	} else {
 		node->sysctl_data = nnode.sysctl_data;
 		node->sysctl_flags &= ~CTLFLAG_OWNDATA;
 	}
@@ -1175,6 +1177,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	     pnode = pnode->sysctl_parent)
 		pnode->sysctl_ver = nm;
 
+	/* If this fails, the node is already added - the user won't know! */
 	error = sysctl_cvt_out(l, v, node, oldp, *oldlenp, oldlenp);
 
 	return (error);
@@ -1250,7 +1253,8 @@ sysctl_destroy(SYSCTLFN_ARGS)
 #ifndef SYSCTL_DISALLOW_CREATE
 		if (securelevel > 0)
 			return (EPERM);
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
@@ -1322,13 +1326,13 @@ sysctl_destroy(SYSCTLFN_ARGS)
 	 */
 	if (node->sysctl_flags & CTLFLAG_OWNDATA) {
 		if (node->sysctl_data != NULL)
-			FREE(node->sysctl_data, M_SYSCTLDATA);
+			free(node->sysctl_data, M_SYSCTLDATA);
 		node->sysctl_data = NULL;
 	}
 	if (node->sysctl_flags & CTLFLAG_OWNDESC) {
 		if (node->sysctl_desc != NULL)
 			/*XXXUNCONST*/
-			FREE(__UNCONST(node->sysctl_desc), M_SYSCTLDATA);
+			free(__UNCONST(node->sysctl_desc), M_SYSCTLDATA);
 		node->sysctl_desc = NULL;
 	}
 
@@ -1367,7 +1371,7 @@ sysctl_destroy(SYSCTLFN_ARGS)
 	 * if this parent just lost its last child, nuke the creche
 	 */
 	if (pnode->sysctl_clen == 0) {
-		FREE(pnode->sysctl_child, M_SYSCTLNODE);
+		free(pnode->sysctl_child, M_SYSCTLNODE);
 		pnode->sysctl_csize = 0;
 		pnode->sysctl_child = NULL;
 	}
@@ -1416,7 +1420,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 * some nodes are private, so only root can look into them.
 	 */
 	if (l != NULL && (rnode->sysctl_flags & CTLFLAG_PRIVATE) &&
-	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(l->l_proc->p_cred,
+			KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1427,7 +1432,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 */
 	if (l != NULL && newp != NULL &&
 	    !(rnode->sysctl_flags & CTLFLAG_ANYWRITE) &&
-	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(l->l_proc->p_cred,
+			KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1472,8 +1478,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		default:
 			return (EINVAL);
 		}
-	}
-	else
+	} else
 		d = rnode->sysctl_data;
 	if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_STRING)
 		sz = strlen(d) + 1; /* XXX@@@ possible fault here */
@@ -1530,7 +1535,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 			return (ENOMEM);
 		error = sysctl_copyin(l, newp, newbuf, len);
 		if (error) {
-			FREE(newbuf, M_SYSCTLDATA);
+			free(newbuf, M_SYSCTLDATA);
 			return (error);
 		}
 
@@ -1539,7 +1544,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * left to do it ourselves?
 		 */
 		if (newbuf[len - 1] != '\0' && len == sz) {
-			FREE(newbuf, M_SYSCTLDATA);
+			free(newbuf, M_SYSCTLDATA);
 			return (EINVAL);
 		}
 
@@ -1547,10 +1552,10 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * looks good, so pop it into place and zero the rest.
 		 */
 		if (len > 0)
-			memcpy(rnode->sysctl_data, newbuf, len);
+			memcpy(d, newbuf, len);
 		if (sz != len)
-			memset((char*)rnode->sysctl_data + len, 0, sz - len);
-		FREE(newbuf, M_SYSCTLDATA);
+			memset((char*)d + len, 0, sz - len);
+		free(newbuf, M_SYSCTLDATA);
 		break;
 	}
 	default:
@@ -1619,7 +1624,7 @@ int
 sysctl_describe(SYSCTLFN_ARGS)
 {
 	struct sysctldesc *d;
-	char bf[1024];
+	void *bf;
 	size_t sz, left, tot;
 	int i, error, v = -1;
 	struct sysctlnode *node;
@@ -1639,7 +1644,9 @@ sysctl_describe(SYSCTLFN_ARGS)
 	 * get ready...
 	 */
 	error = 0;
-	d = (void*)bf;
+	d = bf = malloc(MAXDESCLEN, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (bf == NULL)
+		return ENOMEM;
 	tot = 0;
 	node = rnode->sysctl_child;
 	left = *oldlenp;
@@ -1652,7 +1659,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 	if (newp != NULL) {
 		error = sysctl_cvt_in(l, &v, newp, newlen, &dnode);
 		if (error)
-			return (error);
+			goto out;
 		if (dnode.sysctl_desc != NULL) {
 			/*
 			 * processes cannot set descriptions above
@@ -1662,14 +1669,18 @@ sysctl_describe(SYSCTLFN_ARGS)
 			 */
 			if (l != NULL) {
 #ifndef SYSCTL_DISALLOW_CREATE
-				if (securelevel > 0)
-					return (EPERM);
-				error = suser(l->l_proc->p_ucred,
+				if (securelevel > 0) {
+					error = EPERM;
+					goto out;
+				}
+				error = kauth_authorize_generic(l->l_proc->p_cred,
+					    KAUTH_GENERIC_ISSUSER,
 					      &l->l_proc->p_acflag);
 				if (error)
-					return (error);
+					goto out;
 #else /* SYSCTL_DISALLOW_CREATE */
-				return (EPERM);
+				error = EPERM;
+				goto out;
 #endif /* SYSCTL_DISALLOW_CREATE */
 			}
 
@@ -1679,16 +1690,20 @@ sysctl_describe(SYSCTLFN_ARGS)
 			for (i = 0; i < rnode->sysctl_clen; i++)
 				if (node[i].sysctl_num == dnode.sysctl_num)
 					break;
-			if (i == rnode->sysctl_clen)
-				return (ENOENT);
+			if (i == rnode->sysctl_clen) {
+				error = ENOENT;
+				goto out;
+			}
 			node = &node[i];
 
 			/*
 			 * did the caller specify a node version?
 			 */
 			if (dnode.sysctl_ver != 0 &&
-			    dnode.sysctl_ver != node->sysctl_ver)
-				return (EINVAL);
+			    dnode.sysctl_ver != node->sysctl_ver) {
+				error = EINVAL;
+				goto out;
+			}
 
 			/*
 			 * okay...some rules:
@@ -1708,12 +1723,18 @@ sysctl_describe(SYSCTLFN_ARGS)
 			if ((sysctl_root.sysctl_flags & CTLFLAG_PERMANENT) &&
 			    (!(sysctl_rootof(node)->sysctl_flags &
 			       CTLFLAG_READWRITE) ||
-			     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE)))
-				return (EPERM);
-			if (node->sysctl_flags & CTLFLAG_PERMANENT)
-				return (EPERM);
-			if (l != NULL && node->sysctl_desc != NULL)
-				return (EPERM);
+			     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE))) {
+				error = EPERM;
+				goto out;
+			}
+			if (node->sysctl_flags & CTLFLAG_PERMANENT) {
+				error = EPERM;
+				goto out;
+			}
+			if (l != NULL && node->sysctl_desc != NULL) {
+				error = EPERM;
+				goto out;
+			}
 
 			/*
 			 * right, let's go ahead.  the first step is
@@ -1722,19 +1743,31 @@ sysctl_describe(SYSCTLFN_ARGS)
 			 */
 			if (l != NULL ||
 			    dnode.sysctl_flags & CTLFLAG_OWNDESC) {
-				char *nd, k[1024];
+				char *nd, *k;
 
+				k = malloc(MAXDESCLEN, M_TEMP,
+				    M_WAITOK|M_CANFAIL);
+				if (k == NULL) {
+					error = ENOMEM;
+					goto out;
+				}
 				error = sysctl_copyinstr(l, dnode.sysctl_desc,
-							 &k[0], sizeof(k), &sz);
-				if (error)
-					return (error);
+							 k, MAXDESCLEN, &sz);
+				if (error) {
+					free(k, M_TEMP);
+					goto out;
+				}
 				nd = malloc(sz, M_SYSCTLDATA,
 					    M_WAITOK|M_CANFAIL);
-				if (nd == NULL)
-					return (ENOMEM);
+				if (nd == NULL) {
+					free(k, M_TEMP);
+					error = ENOMEM;
+					goto out;
+				}
 				memcpy(nd, k, sz);
 				dnode.sysctl_flags |= CTLFLAG_OWNDESC;
 				dnode.sysctl_desc = nd;
+				free(k, M_TEMP);
 			}
 
 			/*
@@ -1771,21 +1804,22 @@ sysctl_describe(SYSCTLFN_ARGS)
 		 * don't describe "private" nodes to non-suser users
 		 */
 		if ((node[i].sysctl_flags & CTLFLAG_PRIVATE) && (l != NULL) &&
-		    !(suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)))
+		    !(kauth_authorize_generic(l->l_proc->p_cred,
+			KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)))
 			continue;
 
 		/*
 		 * is this description "valid"?
 		 */
-		memset(bf, 0, sizeof(bf));
+		memset(bf, 0, MAXDESCLEN);
 		if (node[i].sysctl_desc == NULL)
 			sz = 1;
 		else if (copystr(node[i].sysctl_desc, &d->descr_str[0],
-				 sizeof(bf) - sizeof(*d), &sz) != 0) {
+				 MAXDESCLEN - sizeof(*d), &sz) != 0) {
 			/*
 			 * erase possible partial description
 			 */
-			memset(bf, 0, sizeof(bf));
+			memset(bf, 0, MAXDESCLEN);
 			sz = 1;
 		}
 
@@ -1799,7 +1833,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 		if (oldp != NULL && left >= sz) {
 			error = sysctl_copyout(l, d, oldp, sz);
 			if (error)
-				return (error);
+				goto out;
 			left -= sz;
 			oldp = (void *)__sysc_desc_adv(oldp, d->descr_len);
 		}
@@ -1821,6 +1855,8 @@ sysctl_describe(SYSCTLFN_ARGS)
 	else
 		*oldlenp = tot;
 
+out:
+	free(bf, M_TEMP);
 	return (error);
 }
 
@@ -1899,7 +1935,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	/*
 	 * what's it called
 	 */
-	if (strlcpy(nnode.sysctl_name, namep, sizeof(nnode.sysctl_name)) >
+	if (strlcpy(nnode.sysctl_name, namep, sizeof(nnode.sysctl_name)) >=
 	    sizeof(nnode.sysctl_name))
 		return (ENAMETOOLONG);
 
@@ -1916,8 +1952,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		nnode.sysctl_child = NULL;
 		if (flags & CTLFLAG_ALIAS)
 			nnode.sysctl_alias = qv;
-	}
-	else if (flags & CTLFLAG_IMMEDIATE) {
+	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_INT:
 			nnode.sysctl_idata = qv;
@@ -1928,8 +1963,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		default:
 			return (EINVAL);
 		}
-	}
-	else {
+	} else {
 		nnode.sysctl_data = newp;
 	}
 	nnode.sysctl_func = func;
@@ -2046,12 +2080,10 @@ sysctl_createv(struct sysctllog **log, int cflags,
 						dnode->sysctl_flags |=
 						    CTLFLAG_OWNDESC;
 					}
-				}
-				else
+				} else
 					dnode->sysctl_desc = descr;
 			}
-		}
-		else {
+		} else {
 			printf("sysctl_create succeeded but node not found?!\n");
 			/*
 			 *  confusing, but the create said it
@@ -2178,8 +2210,7 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 				onode = __UNCONST(node);
 				onode->sysctl_desc = d;
 				onode->sysctl_flags |= CTLFLAG_OWNDESC;
-			}
-			else {
+			} else {
 				/*
 				 * XXX drop the description?  be
 				 * afraid?  don't care?
@@ -2308,8 +2339,7 @@ sysctl_dump(const struct sysctlnode *d)
 			       d->sysctl_clen);
 			printf("%*s\t\tsysctl_child  %p\n",   indent, "",
 			       d->sysctl_child);
-		}
-		else
+		} else
 			printf("%*s\t\tsysctl_data   %p\n",   indent, "",
 			       d->sysctl_data);
 		printf("%*s\t\tsysctl_func   %p\n",   indent, "",
@@ -2346,13 +2376,14 @@ sysctl_free(struct sysctlnode *rnode)
 {
 	struct sysctlnode *node, *pnode;
 
+	if (rnode == NULL)
+		rnode = &sysctl_root;
+
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_free: rnode %p wrong version\n", rnode);
 		return;
 	}
 
-	if (rnode == NULL)
-		rnode = &sysctl_root;
 	pnode = rnode;
 
 	node = pnode->sysctl_child;
@@ -2366,7 +2397,7 @@ sysctl_free(struct sysctlnode *rnode)
 				if (SYSCTL_FLAGS(node->sysctl_flags) &
 				    CTLFLAG_OWNDATA) {
 					if (node->sysctl_data != NULL) {
-						FREE(node->sysctl_data,
+						free(node->sysctl_data,
 						     M_SYSCTLDATA);
 						node->sysctl_data = NULL;
 					}
@@ -2375,7 +2406,7 @@ sysctl_free(struct sysctlnode *rnode)
 				    CTLFLAG_OWNDESC) {
 					if (node->sysctl_desc != NULL) {
 						/*XXXUNCONST*/
-						FREE(__UNCONST(node->sysctl_desc),
+						free(__UNCONST(node->sysctl_desc),
 						     M_SYSCTLDATA);
 						node->sysctl_desc = NULL;
 					}
@@ -2385,12 +2416,11 @@ sysctl_free(struct sysctlnode *rnode)
 			if (node < &pnode->sysctl_child[pnode->sysctl_clen]) {
 				pnode = node;
 				node = node->sysctl_child;
-			}
-			else
+			} else
 				break;
 		}
 		if (pnode->sysctl_child != NULL)
-			FREE(pnode->sysctl_child, M_SYSCTLNODE);
+			free(pnode->sysctl_child, M_SYSCTLNODE);
 		pnode->sysctl_clen = 0;
 		pnode->sysctl_csize = 0;
 		pnode->sysctl_child = NULL;
@@ -2413,13 +2443,13 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 		return (0);
 
 	if (*logp == NULL) {
-		MALLOC(log, struct sysctllog *, sizeof(struct sysctllog),
+		log = malloc(sizeof(struct sysctllog),
 		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
 		if (log == NULL) {
 			/* XXX print error message? */
 			return (-1);
 		}
-		MALLOC(log->log_num, int *, 16 * sizeof(int),
+		log->log_num = malloc(16 * sizeof(int),
 		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
 		if (log->log_num == NULL) {
 			/* XXX print error message? */
@@ -2431,8 +2461,7 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 		log->log_size = 16;
 		log->log_left = 16;
 		*logp = log;
-	}
-	else
+	} else
 		log = *logp;
 
 	/*
@@ -2546,16 +2575,26 @@ old_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	   void *newp, size_t newlen, struct lwp *l)
 {
 	int error;
-	size_t savelen = *oldlenp;
+	size_t oldlen = 0;
+	size_t savelen;
+
+	if (oldlenp) {
+		oldlen = *oldlenp;
+	}
+	savelen = oldlen;
 
 	error = sysctl_lock(l, oldp, savelen);
 	if (error)
 		return (error);
-	error = sysctl_dispatch(name, namelen, oldp, oldlenp,
+	error = sysctl_dispatch(name, namelen, oldp, &oldlen,
 				newp, newlen, name, l, NULL);
 	sysctl_unlock(l);
-	if (error == 0 && oldp != NULL && savelen < *oldlenp)
+	if (error == 0 && oldp != NULL && savelen < oldlen)
 		error = ENOMEM;
+
+	if (oldlenp) {
+		*oldlenp = oldlen;
+	}
 
 	return (error);
 }
@@ -2634,12 +2673,10 @@ sysctl_alloc(struct sysctlnode *p, int x)
 	assert(p->sysctl_child == NULL);
 
 	if (x == 1)
-		MALLOC(n, struct sysctlnode *,
-		       sizeof(struct sysctlnode),
+		n = malloc(sizeof(struct sysctlnode),
 		       M_SYSCTLNODE, M_WAITOK|M_CANFAIL);
 	else
-		MALLOC(n, struct sysctlnode *,
-		       SYSCTL_DEFSIZE * sizeof(struct sysctlnode),
+		n = malloc(SYSCTL_DEFSIZE * sizeof(struct sysctlnode),
 		       M_SYSCTLNODE, M_WAITOK|M_CANFAIL);
 	if (n == NULL)
 		return (ENOMEM);
@@ -2647,8 +2684,7 @@ sysctl_alloc(struct sysctlnode *p, int x)
 	if (x == 1) {
 		memset(n, 0, sizeof(struct sysctlnode));
 		p->sysctl_csize = 1;
-	}
-	else {
+	} else {
 		memset(n, 0, SYSCTL_DEFSIZE * sizeof(struct sysctlnode));
 		p->sysctl_csize = SYSCTL_DEFSIZE;
 	}
@@ -2701,7 +2737,7 @@ sysctl_realloc(struct sysctlnode *p)
 	/*
 	 * get out with the old and in with the new
 	 */
-	FREE(p->sysctl_child, M_SYSCTLNODE);
+	free(p->sysctl_child, M_SYSCTLNODE);
 	p->sysctl_child = n;
 
 	return (0);

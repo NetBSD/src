@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: puc.c,v 1.24.2.1 2006/06/21 15:05:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.24.2.1 2006/06/21 15:05:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,6 @@ struct puc_softc {
 };
 
 static int	puc_print(void *, const char *);
-static int	puc_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static const char *puc_port_type_name(int);
 
@@ -155,8 +153,7 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 #ifdef PUCCN
 	bus_space_handle_t ioh;
 #endif
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PUCCF_NLOCS];
 
 	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
@@ -301,12 +298,11 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		    (long)paa.t, (long)paa.h);
 #endif
 
-		ldesc->len = 1;
-		ldesc->locs[PUCCF_PORT] = i;
+		locs[PUCCF_PORT] = i;
 
 		/* and configure it */
-		sc->sc_ports[i].dev = config_found_sm_loc(self, "puc", ldesc,
-			&paa, puc_print, puc_submatch);
+		sc->sc_ports[i].dev = config_found_sm_loc(self, "puc", locs,
+			&paa, puc_print, config_stdsubmatch);
 	}
 }
 
@@ -322,18 +318,6 @@ puc_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", puc_port_type_name(paa->type), pnp);
 	aprint_normal(" port %d", paa->port);
 	return (UNCONF);
-}
-
-static int
-puc_submatch(struct device *parent, struct cfdata *cf,
-    const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[PUCCF_PORT] != PUCCF_PORT_DEFAULT &&
-	    cf->cf_loc[PUCCF_PORT] != ldesc->locs[PUCCF_PORT])
-		return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 const struct puc_device_description *

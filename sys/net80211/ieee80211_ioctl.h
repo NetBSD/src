@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.9 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.9.2.1 2006/06/21 15:10:46 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.8 2004/12/31 22:42:38 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.14 2005/08/13 17:31:48 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_IOCTL_H_
 #define _NET80211_IEEE80211_IOCTL_H_
@@ -89,6 +89,52 @@ struct ieee80211_nodestats {
 	u_int32_t	ns_tx_disassoc;		/* disassociations */
 	u_int32_t	ns_tx_disassoc_code;	/* last disassociation reason */
 };
+
+#ifdef COMPAT_20
+struct ieee80211_ostats {
+	u_int32_t	is_rx_badversion;	/* rx frame with bad version */
+	u_int32_t	is_rx_tooshort;		/* rx frame too short */
+	u_int32_t	is_rx_wrongbss;		/* rx from wrong bssid */
+	u_int32_t	is_rx_dup;		/* rx discard 'cuz dup */
+	u_int32_t	is_rx_wrongdir;		/* rx w/ wrong direction */
+	u_int32_t	is_rx_mcastecho;	/* rx discard 'cuz mcast echo */
+	u_int32_t	is_rx_notassoc;		/* rx discard 'cuz sta !assoc */
+	u_int32_t	is_rx_nowep;		/* rx w/ wep but wep !config */
+	u_int32_t	is_rx_wepfail;		/* rx wep processing failed */
+	u_int32_t	is_rx_decap;		/* rx decapsulation failed */
+	u_int32_t	is_rx_mgtdiscard;	/* rx discard mgt frames */
+	u_int32_t	is_rx_ctl;		/* rx discard ctrl frames */
+	u_int32_t	is_rx_rstoobig;		/* rx rate set truncated */
+	u_int32_t	is_rx_elem_missing;	/* rx required element missing*/
+	u_int32_t	is_rx_elem_toobig;	/* rx element too big */
+	u_int32_t	is_rx_elem_toosmall;	/* rx element too small */
+	u_int32_t	is_rx_elem_unknown;	/* rx element unknown */
+	u_int32_t	is_rx_badchan;		/* rx frame w/ invalid chan */
+	u_int32_t	is_rx_chanmismatch;	/* rx frame chan mismatch */
+	u_int32_t	is_rx_nodealloc;	/* rx frame dropped */
+	u_int32_t	is_rx_ssidmismatch;	/* rx frame ssid mismatch  */
+	u_int32_t	is_rx_auth_unsupported;	/* rx w/ unsupported auth alg */
+	u_int32_t	is_rx_auth_fail;	/* rx sta auth failure */
+	u_int32_t	is_rx_assoc_bss;	/* rx assoc from wrong bssid */
+	u_int32_t	is_rx_assoc_notauth;	/* rx assoc w/o auth */
+	u_int32_t	is_rx_assoc_capmismatch;/* rx assoc w/ cap mismatch */
+	u_int32_t	is_rx_assoc_norate;	/* rx assoc w/ no rate match */
+	u_int32_t	is_rx_deauth;		/* rx deauthentication */
+	u_int32_t	is_rx_disassoc;		/* rx disassociation */
+	u_int32_t	is_rx_badsubtype;	/* rx frame w/ unknown subtype*/
+	u_int32_t	is_rx_nombuf;		/* rx failed for lack of mbuf */
+	u_int32_t	is_rx_decryptcrc;	/* rx decrypt failed on crc */
+	u_int32_t	is_rx_ahdemo_mgt;	/* rx discard ahdemo mgt frame*/
+	u_int32_t	is_rx_bad_auth;		/* rx bad auth request */
+	u_int32_t	is_tx_nombuf;		/* tx failed for lack of mbuf */
+	u_int32_t	is_tx_nonode;		/* tx failed for no node */
+	u_int32_t	is_tx_unknownmgt;	/* tx of unknown mgt frame */
+	u_int32_t	is_scan_active;		/* active scans started */
+	u_int32_t	is_scan_passive;	/* passive scans started */
+	u_int32_t	is_node_timeout;	/* nodes timed out inactivity */
+	u_int32_t	is_crypto_nomem;	/* no memory for crypto ctx */
+};
+#endif /* COMPAT_20 */
 
 /*
  * Summary statistics.
@@ -150,6 +196,8 @@ struct ieee80211_stats {
 	u_int32_t	is_tx_badcipher;	/* tx failed 'cuz key type */
 	u_int32_t	is_tx_nodefkey;		/* tx failed 'cuz no defkey */
 	u_int32_t	is_tx_noheadroom;	/* tx failed 'cuz no space */
+	u_int32_t	is_tx_fragframes;	/* tx frames fragmented */
+	u_int32_t	is_tx_frags;		/* tx fragments created */
 	u_int32_t	is_scan_active;		/* active scans started */
 	u_int32_t	is_scan_passive;	/* passive scans started */
 	u_int32_t	is_node_timeout;	/* nodes timed out inactivity */
@@ -174,6 +222,13 @@ struct ieee80211_stats {
 	u_int32_t	is_ps_unassoc;		/* ps-poll for unassoc. sta */
 	u_int32_t	is_ps_badaid;		/* ps-poll w/ incorrect aid */
 	u_int32_t	is_ps_qempty;		/* ps-poll w/ nothing to send */
+	u_int32_t	is_ff_badhdr;		/* fast frame rx'd w/ bad hdr */
+	u_int32_t	is_ff_tooshort;		/* fast frame rx decap error */
+	u_int32_t	is_ff_split;		/* fast frame rx split error */
+	u_int32_t	is_ff_decap;		/* fast frames decap'd */
+	u_int32_t	is_ff_encap;		/* fast frames encap'd for tx */
+	u_int32_t	is_rx_badbintval;	/* rx frame w/ bogus bintval */
+	u_int32_t	is_spare[9];
 };
 
 /*
@@ -229,8 +284,10 @@ struct ieee80211req_mlme {
 #define	IEEE80211_MLME_DEAUTH		3	/* deauthenticate station */
 #define	IEEE80211_MLME_AUTHORIZE	4	/* authorize station */
 #define	IEEE80211_MLME_UNAUTHORIZE	5	/* unauthorize station */
+	u_int8_t	im_ssid_len;	/* length of optional ssid */
 	u_int16_t	im_reason;	/* 802.11 reason code */
 	u_int8_t	im_macaddr[IEEE80211_ADDR_LEN];
+	u_int8_t	im_ssid[IEEE80211_NWID_LEN];
 };
 
 /* 
@@ -242,6 +299,12 @@ enum {
 	IEEE80211_MACCMD_POLICY_DENY	= 2,	/* set policy: deny traffic */
 	IEEE80211_MACCMD_FLUSH		= 3,	/* flush ACL database */
 	IEEE80211_MACCMD_DETACH		= 4,	/* detach ACL policy */
+	IEEE80211_MACCMD_POLICY		= 5,	/* get ACL policy */
+	IEEE80211_MACCMD_LIST		= 6,	/* get ACL database */
+};
+
+struct ieee80211req_maclist {
+	u_int8_t	ml_macaddr[IEEE80211_ADDR_LEN];
 };
 
 /*
@@ -360,19 +423,38 @@ struct ieee80211req {
 #define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
 #endif /* __FreeBSD__ */
 
+#ifdef __NetBSD__
+#define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
+#define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
+#define	SIOCG80211STATS		_IOWR('i', 246, struct ifreq)
+#define	SIOCG80211ZSTATS	_IOWR('i', 247, struct ifreq)
+#ifdef COMPAT_20
+#define	OSIOCG80211STATS	_IOWR('i', 242, struct ifreq)
+#define	OSIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
+#endif /* COMPAT_20 */
+#endif /* __NetBSD__ */
+
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_SSID		1
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_NUMSSIDS		2
 #define IEEE80211_IOC_WEP		3
 #define 	IEEE80211_WEP_NOSUP	-1
 #define 	IEEE80211_WEP_OFF	0
 #define 	IEEE80211_WEP_ON	1
 #define 	IEEE80211_WEP_MIXED	2
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_WEPKEY		4
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_NUMWEPKEYS	5
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_WEPTXKEY		6
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_AUTHMODE		7
 #define IEEE80211_IOC_STATIONNAME	8
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_CHANNEL		9
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_POWERSAVE		10
 #define 	IEEE80211_POWERSAVE_NOSUP	-1
 #define 	IEEE80211_POWERSAVE_OFF		0
@@ -387,7 +469,9 @@ struct ieee80211req {
 #define 	IEEE80211_PROTMODE_CTS		1
 #define 	IEEE80211_PROTMODE_RTSCTS	2
 #define	IEEE80211_IOC_TXPOWER		14	/* global tx power limit */
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define	IEEE80211_IOC_BSSID		15
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define	IEEE80211_IOC_ROAMING		16	/* roaming mode */
 #define	IEEE80211_IOC_PRIVACY		17	/* privacy invoked */
 #define	IEEE80211_IOC_DROPUNENCRYPTED	18	/* discard unencrypted frames */
@@ -428,6 +512,9 @@ struct ieee80211req {
 #define	IEEE80211_IOC_BEACON_INTERVAL	53	/* beacon interval (ms) */
 #define	IEEE80211_IOC_ADDMAC		54	/* add sta to MAC ACL table */
 #define	IEEE80211_IOC_DELMAC		55	/* del sta from MAC ACL table */
+#define	IEEE80211_IOC_PUREG		56	/* pure 11g (no 11b stations) */
+#define	IEEE80211_IOC_MCAST_RATE	72	/* tx rate for mcast frames */
+#define	IEEE80211_IOC_FRAGTHRESHOLD	73	/* tx fragmentation threshold */
 
 /*
  * Scan result data returned for IEEE80211_IOC_SCAN_RESULTS.
@@ -519,10 +606,6 @@ struct ieee80211_bssid {
 #define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
-#define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
-#define	SIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
-#define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
-#define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
 #endif
 
-#endif /* _NET80211_IEEE80211_IOCTL_H_ */
+#endif /* !_NET80211_IEEE80211_IOCTL_H_ */

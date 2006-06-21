@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31 2005/05/20 12:48:26 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.31.2.1 2006/06/21 14:59:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31 2005/05/20 12:48:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.2.1 2006/06/21 14:59:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31 2005/05/20 12:48:26 fvdl Exp 
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -185,7 +186,7 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	sigframe.info.lsi_signo = sig;
 	sigframe.info.lsi_code = LINUX_SI_USER;
 	sigframe.info.lsi_pid = p->p_pid;
-	sigframe.info.lsi_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
+	sigframe.info.lsi_uid = kauth_cred_geteuid(p->p_cred);	/* Use real uid here? */
 
 	if (copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize) != 0) {
 #ifdef DEBUG
@@ -496,8 +497,8 @@ linux_sys_sigreturn(l, v, retval)
  */
 /* XXX XAX update this, add maps, etc... */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -519,8 +520,7 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	/* XXX njwlwp */
-	return sys_ioctl(curlwp, &bia, retval);
+	return sys_ioctl(l, &bia, retval);
 }
 
 /* XXX XAX fix this */

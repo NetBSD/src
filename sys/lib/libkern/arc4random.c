@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.14 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.14.4.1 2006/06/21 15:10:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,18 +72,19 @@
 #define	ARC4_RESEED_SECONDS 300
 #define	ARC4_KEYBYTES 32 /* 256 bit key */
 
+#ifdef _STANDALONE
+#define	time_uptime	1	/* XXX ugly! */
+#endif /* _STANDALONE */
+
 static u_int8_t arc4_i, arc4_j;
 static int arc4_initialized = 0;
 static int arc4_numruns = 0;
 static u_int8_t arc4_sbox[256];
-static struct timeval arc4_tv_nextreseed;
-#ifndef _KERNEL
-extern struct timeval mono_time;
-#endif
+static time_t arc4_nextreseed;
 
 static inline u_int8_t arc4_randbyte(void);
 
-static __inline void
+static inline void
 arc4_swap(u_int8_t *a, u_int8_t *b)
 {
 	u_int8_t c;
@@ -123,8 +124,7 @@ arc4_randrekey(void)
 					       RND_EXTRACT_ANY);
 		} else {
 			/* don't replace a good key with a bad one! */
-			arc4_tv_nextreseed = mono_time;
-			arc4_tv_nextreseed.tv_sec += ARC4_RESEED_SECONDS;
+			arc4_nextreseed = time_uptime + ARC4_RESEED_SECONDS;
 			arc4_numruns = 0;
 			/* we should just ask rnd(4) to rekey us when
 			   it can, but for now, we'll just try later. */
@@ -143,8 +143,7 @@ arc4_randrekey(void)
 	}
 
 	/* Reset for next reseed cycle. */
-	arc4_tv_nextreseed = mono_time;
-	arc4_tv_nextreseed.tv_sec += ARC4_RESEED_SECONDS;
+	arc4_nextreseed = time_uptime + ARC4_RESEED_SECONDS;
 	arc4_numruns = 0;
 
 	/*
@@ -175,7 +174,7 @@ arc4_init(void)
 /*
  * Generate a random byte.
  */
-static __inline u_int8_t
+static inline u_int8_t
 arc4_randbyte(void)
 {
 	u_int8_t arc4_t;
@@ -200,7 +199,7 @@ arc4random(void)
 		arc4_init();
 
 	if ((++arc4_numruns > ARC4_MAXRUNS) ||
-	    (mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
+	    (time_uptime > arc4_nextreseed)) {
 		arc4_randrekey();
 	}
 
@@ -221,7 +220,7 @@ arc4randbytes(void *p, size_t len)
 		;
 	arc4_numruns += len / sizeof(u_int32_t);
 	if ((arc4_numruns > ARC4_MAXRUNS) ||
-	    (mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
+	    (time_uptime > arc4_nextreseed)) {
 		arc4_randrekey();
 	}
 }

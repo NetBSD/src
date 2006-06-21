@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.37 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.37.4.1 2006/06/21 15:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -911,6 +911,16 @@ struct apple_blockzeroblock {
 #define	APPLE_BZB_TYPESWAP	3
 #define	APPLE_BZB_ROOTFS	0x8000
 #define	APPLE_BZB_USRFS		0x4000
+
+/* ------------------------------------------
+ * ews4800mips
+ *
+ */
+
+#define	EWS4800MIPS_BBINFO_MAGIC		"NetBSD/ews4800mips     20040611"
+#define	EWS4800MIPS_BOOT_BLOCK_OFFSET		0
+#define	EWS4800MIPS_BOOT_BLOCK_BLOCKSIZE	512
+#define	EWS4800MIPS_BOOT_BLOCK_MAX_SIZE		(512 * 8)
 
 /* ------------------------------------------
  * hp300

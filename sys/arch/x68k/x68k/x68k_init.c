@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.8 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.8.8.1 2006/06/21 14:57:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.8 2005/01/18 07:12:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.8.8.1 2006/06/21 14:57:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,15 +60,15 @@ intr_reset(void)
 
 	/* Internal RS-232C port */
 	zsdev.zs_chan_a.zc_csr = 1;
-	asm("nop");
+	__asm("nop");
 	zsdev.zs_chan_a.zc_csr = 0;
-	asm("nop");
+	__asm("nop");
 
 	/* mouse */
 	zsdev.zs_chan_b.zc_csr = 1;
-	asm("nop");
+	__asm("nop");
 	zsdev.zs_chan_b.zc_csr = 0;
-	asm("nop");
+	__asm("nop");
 
 	mfp_send_usart(0x41);
 

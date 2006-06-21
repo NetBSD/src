@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.10 2005/04/09 13:04:35 dsl Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.10.2.1 2006/06/21 15:10:23 yamt Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -65,10 +65,12 @@
 
 #define NELEM(x) (sizeof (x) / sizeof(*x))
 
+
+typedef uint32_t ino32_t;
 typedef struct entry_t entry_t;
 struct entry_t {
 	entry_t	*e_next;
-	ino_t	e_ino;
+	ino32_t	e_ino;
 	uint8_t	e_type;
 	char	e_name[1];
 };
@@ -147,7 +149,7 @@ ufs_ls(const char *path)
 			memcpy(p, path, size);
 			p[size] = 0;
 			fd = open(p, 0);
-			free(p, size + 1);
+			dealloc(p, size + 1);
 		} else {
 			fd = open("", 0);
 			fname = path;
@@ -219,7 +221,7 @@ ufs_ls(const char *path)
 			printf("%d: %s (%s)\n",
 				n->e_ino, n->e_name, typestr[n->e_type]);
 			names = n->e_next;
-			free(n, 0);
+			dealloc(n, 0);
 		} while (names);
 	} else {
 		printf( "%s not found\n", path );

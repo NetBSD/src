@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.5 2005/04/19 14:04:38 blymn Exp $	*/
+/*	$NetBSD: md4.h,v 1.5.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -39,8 +39,8 @@
 
 /* MD4 context. */
 typedef struct MD4Context {
-	u_int32_t state[4];	/* state (ABCD) */
-	u_int32_t count[2];	/* number of bits, modulo 2^64 (lsb first) */
+	uint32_t state[4];	/* state (ABCD) */
+	uint32_t count[2];	/* number of bits, modulo 2^64 (lsb first) */
 	unsigned char buffer[64]; /* input buffer */
 } MD4_CTX;
 

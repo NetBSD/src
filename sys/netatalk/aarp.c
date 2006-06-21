@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.16 2005/05/29 21:52:30 christos Exp $	*/
+/*	$NetBSD: aarp.c,v 1.16.2.1 2006/06/21 15:10:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16 2005/05/29 21:52:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16.2.1 2006/06/21 15:10:51 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -146,8 +146,8 @@ at_ifawithnet(sat, ifp)
 
 		nr = (struct netrange *) (sat2->sat_zero);
 		if ((nr->nr_phase == 2)
-		    && (nr->nr_firstnet <= sat->sat_addr.s_net)
-		    && (nr->nr_lastnet >= sat->sat_addr.s_net))
+		    && (ntohs(nr->nr_firstnet) <= ntohs(sat->sat_addr.s_net))
+		    && (ntohs(nr->nr_lastnet) >= ntohs(sat->sat_addr.s_net)))
 			break;
 	}
 	return ifa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.68.2.1 2006/06/21 15:12:40 yamt Exp $	*/
 
 /*
  *
@@ -39,9 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68.2.1 2006/06/21 15:12:40 yamt Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68 2005/06/28 05:25:42 thorpej Exp $
 #include <sys/pool.h>
 #include <sys/vnode.h>
 
-#define UVM_PAGER_C
 #include <uvm/uvm.h>
 
 struct pool *uvm_aiobuf_pool;
@@ -134,6 +134,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vaddr_t cva;
 	struct vm_page *pp;
 	vm_prot_t prot;
+	const boolean_t pdaemon = curproc == uvm.pagedaemon_proc;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d)", pps, npages,0,0);
@@ -151,9 +152,9 @@ ReStart:
 	size = npages << PAGE_SHIFT;
 	kva = 0;			/* let system choose VA */
 
-	if (uvm_map(pager_map, &kva, size, NULL,
-	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != 0) {
-		if (curproc == uvm.pagedaemon_proc) {
+	if (uvm_map(pager_map, &kva, size, NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_FLAG_NOMERGE | (pdaemon ? UVM_FLAG_NOWAIT : 0)) != 0) {
+		if (pdaemon) {
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {
 				UVM_UNLOCK_AND_WAIT(&emergva,
@@ -255,7 +256,7 @@ uvm_aio_biodone1(struct buf *bp)
 		mbp->b_error = bp->b_error;
 	}
 	mbp->b_resid -= bp->b_bcount;
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 	if (mbp->b_resid == 0) {
 		biodone(mbp);
 	}
@@ -321,20 +322,28 @@ uvm_aio_aiodone(struct buf *bp)
 		slock = &uobj->vmobjlock;
 		simple_lock(slock);
 		uvm_lock_pageq();
-	} else if (error) {
-		if (pg->uobject != NULL) {
-			swslot = uao_find_swslot(pg->uobject,
-			    pg->offset >> PAGE_SHIFT);
-		} else {
-			swslot = pg->uanon->an_swslot;
+	} else {
+#if defined(VMSWAP)
+		if (error) {
+			if (pg->uobject != NULL) {
+				swslot = uao_find_swslot(pg->uobject,
+				    pg->offset >> PAGE_SHIFT);
+			} else {
+				KASSERT(pg->uanon != NULL);
+				swslot = pg->uanon->an_swslot;
+			}
+			KASSERT(swslot);
 		}
-		KASSERT(swslot);
+#else /* defined(VMSWAP) */
+		panic("%s: swap", __func__);
+#endif /* defined(VMSWAP) */
 	}
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		KASSERT(swap || pg->uobject == uobj);
 		UVMHIST_LOG(ubchist, "pg %p", pg, 0,0,0);
 
+#if defined(VMSWAP)
 		/*
 		 * for swap i/os, lock each page's object (or anon)
 		 * individually since each page may need a different lock.
@@ -349,6 +358,7 @@ uvm_aio_aiodone(struct buf *bp)
 			simple_lock(slock);
 			uvm_lock_pageq();
 		}
+#endif /* defined(VMSWAP) */
 
 		/*
 		 * process errors.  for reads, just mark the page to be freed.
@@ -375,6 +385,7 @@ uvm_aio_aiodone(struct buf *bp)
 			} else
 				slot = SWSLOT_BAD;
 
+#if defined(VMSWAP)
 			if (swap) {
 				if (pg->uobject != NULL) {
 					int oldslot;
@@ -387,6 +398,7 @@ uvm_aio_aiodone(struct buf *bp)
 					pg->uanon->an_swslot = slot;
 				}
 			}
+#endif /* defined(VMSWAP) */
 		}
 
 		/*
@@ -399,6 +411,10 @@ uvm_aio_aiodone(struct buf *bp)
 		if (pg->flags & PG_FAKE) {
 			KASSERT(!write);
 			pg->flags &= ~PG_FAKE;
+#if defined(READAHEAD_STATS)
+			pg->flags |= PG_SPECULATIVE;
+			uvm_ra_total.ev_count++;
+#endif /* defined(READAHEAD_STATS) */
 			uvm_pageactivate(pg);
 			pmap_clear_modify(pg);
 		}
@@ -415,6 +431,7 @@ uvm_aio_aiodone(struct buf *bp)
 			pg->flags |= PG_RELEASED;
 		}
 
+#if defined(VMSWAP)
 		/*
 		 * for swap pages, unlock everything for this page now.
 		 */
@@ -430,12 +447,14 @@ uvm_aio_aiodone(struct buf *bp)
 				simple_unlock(slock);
 			}
 		}
+#endif /* defined(VMSWAP) */
 	}
 	if (!swap) {
 		uvm_page_unbusy(pgs, npages);
 		uvm_unlock_pageq();
 		simple_unlock(slock);
 	} else {
+#if defined(VMSWAP)
 		KASSERT(write);
 
 		/* these pages are now only in swap. */
@@ -451,11 +470,31 @@ uvm_aio_aiodone(struct buf *bp)
 				uvm_swap_free(swslot, npages);
 		}
 		uvmexp.pdpending--;
+#endif /* defined(VMSWAP) */
 	}
 	s = splbio();
 	if (write && (bp->b_flags & B_AGE) != 0) {
 		vwakeup(bp);
 	}
-	pool_put(&bufpool, bp);
+	putiobuf(bp);
 	splx(s);
+}
+
+/*
+ * uvm_pageratop: convert KVAs in the pager map back to their page
+ * structures.
+ */
+
+struct vm_page *
+uvm_pageratop(vaddr_t kva)
+{
+	struct vm_page *pg;
+	paddr_t pa;
+	boolean_t rv;
+
+	rv = pmap_extract(pmap_kernel(), kva, &pa);
+	KASSERT(rv);
+	pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg != NULL);
+	return (pg);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.9 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: xel.c,v 1.9.2.1 2006/06/21 14:57:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.9 2005/06/13 00:34:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.9.2.1 2006/06/21 14:57:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ xel_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xel_softc *sc = (void*)self;
 	struct intio_attach_args *ia = aux;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	paddr_t addr;
 	int r;
 

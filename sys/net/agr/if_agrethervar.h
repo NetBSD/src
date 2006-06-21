@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrethervar.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_agrethervar.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IF_AGRETHERVAR_H_)
+#ifndef _NET_AGR_IF_AGRETHERVAR_H_
 #define	_NET_AGR_IF_AGRETHERVAR_H_
 
 struct agr_softc;
@@ -38,4 +38,4 @@ struct agr_softc;
 extern const struct agr_iftype_ops agrether_ops;
 uint32_t agrether_hashmbuf(struct agr_softc *, struct mbuf *);
 
-#endif /* _NET_AGR_IF_AGRETHERVAR_H_ */
+#endif /* !_NET_AGR_IF_AGRETHERVAR_H_ */

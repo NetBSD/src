@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.55 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.55.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.55 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.55.4.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.55 2005/02/26 22:45:09 perry Exp $");
 #endif
 
 #ifdef ALTQ
-void	lostart(struct ifnet *);
+static void	lostart(struct ifnet *);
 #endif
 
 struct loop_softc {
@@ -148,12 +148,12 @@ struct loop_softc {
 	struct ifnet sc_if;
 };
 
-LIST_HEAD(, loop_softc) loop_softc_list;
+static LIST_HEAD(, loop_softc) loop_softc_list;
 
-int loop_clone_create(struct if_clone *, int);
-int loop_clone_destroy(struct ifnet *);
+static int	loop_clone_create(struct if_clone *, int);
+static int	loop_clone_destroy(struct ifnet *);
 
-struct if_clone loop_cloner =
+static struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
 
 void
@@ -165,7 +165,7 @@ loopattach(int n)
 	if_clone_attach(&loop_cloner);
 }
 
-int
+static int
 loop_clone_create(struct if_clone *ifc, int unit)
 {
 	struct loop_softc *sc;
@@ -207,7 +207,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-int
+static int
 loop_clone_destroy(struct ifnet *ifp)
 {
 	struct loop_softc *sc = ifp->if_softc;
@@ -348,7 +348,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 }
 
 #ifdef ALTQ
-void
+static void
 lostart(struct ifnet *ifp)
 {
 	struct ifqueue *ifq;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.38 2005/05/29 22:18:25 christos Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.38.2.1 2006/06/21 15:08:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.38 2005/05/29 22:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.38.2.1 2006/06/21 15:08:23 yamt Exp $");
 
 #include "opt_wsfont.h"
 
@@ -238,9 +238,9 @@ static struct	font *wsfont_find0(int, int);
 static struct	font *wsfont_add0(struct wsdisplay_font *, int);
 static void	wsfont_revbit(struct wsdisplay_font *);
 static void	wsfont_revbyte(struct wsdisplay_font *);
-static int __inline__ wsfont_make_cookie(int, int, int);
+static int inline wsfont_make_cookie(int, int, int);
 
-static int __inline__
+static int inline
 wsfont_make_cookie(int cident, int bito, int byteo)
 {
 
@@ -714,7 +714,7 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 	if (font->encoding == WSDISPLAY_FONTENC_ISO)
 		return (c);
 
-	if (font->encoding < 0 || font->encoding > MAX_ENCODING)
+	if (font->encoding < 0 || font->encoding >= MAX_ENCODING)
 		return (-1);
 
 	hi = (c >> 8);

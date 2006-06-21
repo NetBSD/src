@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.32.4.1 2006/06/21 14:58:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32.4.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 pe
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
 
@@ -469,6 +471,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 	mach_io_connect_map_memory_request_t *req = args->smsg;
 	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	struct proc *p = args->l->l_proc;
 	int error = 0;
 	size_t memsize;
@@ -524,7 +527,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 
 		/* Find the framebuffer's size */
 		if ((error = (wsdisplay->d_ioctl)(device,
-		    WSDISPLAYIO_GINFO, (caddr_t)&fbi, 0, p)) != 0) {
+		    WSDISPLAYIO_GINFO, (caddr_t)&fbi, 0, l)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("*** Cannot get screen params ***\n");
 #endif
@@ -546,7 +549,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		 */
 		ded = (struct darwin_emuldata *)p->p_emuldata;
 		if ((error = (wsdisplay->d_ioctl)(device,
-		    WSDISPLAYIO_GMODE, (caddr_t)&mode, 0, p)) != 0) {
+		    WSDISPLAYIO_GMODE, (caddr_t)&mode, 0, l)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("*** Cannot get console state ***\n");
 #endif
@@ -558,7 +561,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		/* Switch to graphic mode */
 		mode = WSDISPLAYIO_MODE_MAPPED;
 		if ((error = (wsdisplay->d_ioctl)(device,
-		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p)) != 0) {
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, l)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("*** Cannot switch to graphic mode ***\n");
 #endif
@@ -639,6 +642,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 	mach_io_connect_method_scalari_structi_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structi_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	struct proc *p = args->l->l_proc;
 	int scalar_len;
 	int struct_len;
@@ -775,7 +779,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 				return mach_msg_error(args, error);
 
 			if ((error = (wsdisplay->d_ioctl)(dev,
-			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p)) != 0)
+			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, l)) != 0)
 				return mach_msg_error(args, error);
 
 			index += tablen;
@@ -818,8 +822,8 @@ darwin_findscreen(dev, unit, screen)
 
 	/* Find a wsdisplay */
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if ((dv->dv_cfdriver == &wsdisplay_cd) &&
-		    (dv->dv_unit == unit))
+		if (device_is_a(dv, "wsdisplay") &&
+		    device_unit(dv) == unit)
 			break;
 	if (dv == NULL)
 		return ENODEV;
@@ -828,7 +832,7 @@ darwin_findscreen(dev, unit, screen)
 
 	/* Derive the device number */
 	major = cdevsw_lookup_major(&wsdisplay_cdevsw);
-	minor = WSDISPLAYMINOR(dv->dv_unit, screen);
+	minor = WSDISPLAYMINOR(device_unit(dv), screen);
 	*dev = makedev(major, minor);
 
 #ifdef DEBUG_DARWIN

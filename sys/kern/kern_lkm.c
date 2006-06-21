@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.86 2005/04/12 14:13:16 hannken Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.86.2.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86 2005/04/12 14:13:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86.2.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86 2005/04/12 14:13:16 hannken Exp $"
 #include <sys/conf.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/once.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
@@ -100,7 +101,8 @@ int	lkmdebug = 0;
 static int	lkm_v = 0;
 static int	lkm_state = LKMS_IDLE;
 
-static TAILQ_HEAD(lkms_head, lkm_table) lkmods;	/* table of loaded modules */
+static TAILQ_HEAD(lkms_head, lkm_table) lkmods = /* table of loaded modules */
+		TAILQ_HEAD_INITIALIZER(lkmods);
 static struct lkm_table	*curp;			/* global for in-progress ops */
 
 static struct lkm_table *lkmlookup(int, char *, int, int *);
@@ -128,7 +130,9 @@ const struct cdevsw lkm_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-void
+static ONCE_DECL(lkm_init_once);
+
+static int
 lkm_init(void)
 {
 	/*
@@ -138,14 +142,16 @@ lkm_init(void)
 	if (lkm_map == NULL)
 		lkm_map = kernel_map;
 
-	TAILQ_INIT(&lkmods);
+	return 0;
 }
 
 /*ARGSUSED*/
 int
-lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
+lkmopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	int error;
+
+	RUN_ONCE(&lkm_init_once, lkm_init);
 
 	if (minor(dev) != 0)
 		return (ENXIO);		/* bad minor # */
@@ -296,7 +302,7 @@ lkmunreserve(int delsymtab)
 }
 
 int
-lkmclose(dev_t dev, int flag, int mode, struct proc *p)
+lkmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (!(lkm_v & LKM_ALLOC)) {
@@ -326,7 +332,7 @@ lkmclose(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int i, error = 0;
 	struct lmc_resrv *resrvp;

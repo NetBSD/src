@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.29 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: dl.c,v 1.29.4.1 2006/06/21 15:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29.4.1 2006/06/21 15:06:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29 2005/02/26 12:45:06 simonb Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -237,7 +238,7 @@ dl_match (struct device *parent, struct cfdata *cf, void *aux)
 static void
 dl_attach (struct device *parent, struct device *self, void *aux)
 {
-	struct dl_softc *sc = (void *)self;
+	struct dl_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;
@@ -323,8 +324,9 @@ dlxint(void *arg)
 }
 
 int
-dlopen(dev_t dev, int flag, int mode, struct proc *p)
+dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct tty *tp;
 	struct dl_softc *sc;
 	int unit;
@@ -354,7 +356,9 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 		dlparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
-	} else if ((tp->t_state & TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag) != 0)
 		return EBUSY;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));
@@ -362,7 +366,7 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-dlclose(dev_t dev, int flag, int mode, struct proc *p)
+dlclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -394,27 +398,27 @@ dlwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-dlpoll(dev_t dev, int events, struct proc *p)
+dlpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
+dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

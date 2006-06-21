@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.69.4.1 2006/06/21 15:12:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69.4.1 2006/06/21 15:12:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $")
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -62,10 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $")
 
 #include <uvm/uvm.h>
 
-static int ffs_full_fsync __P((void *));
+static int ffs_full_fsync(void *);
 
 /* Global vfs data structures for ufs. */
-int (**ffs_vnodeop_p) __P((void *));
+int (**ffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
@@ -107,22 +108,21 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, ffs_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, ffs_valloc },		/* valloc */
-	{ &vop_balloc_desc, ffs_balloc },		/* balloc */
-	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
-	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
-	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
-	{ &vop_putpages_desc, ffs_putpages },		/* putpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
 
-int (**ffs_specop_p) __P((void *));
+int (**ffs_specop_p)(void *);
 const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -163,21 +163,21 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
 
-int (**ffs_fifoop_p) __P((void *));
+int (**ffs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
@@ -218,14 +218,14 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
+	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_fifoop_opv_desc =
@@ -234,16 +234,15 @@ const struct vnodeopv_desc ffs_fifoop_opv_desc =
 #include <ufs/ufs/ufs_readwrite.c>
 
 int
-ffs_fsync(v)
-	void *v;
+ffs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct buf *bp;
 	int s, num, error, i;
@@ -317,14 +316,14 @@ ffs_fsync(v)
 	}
 	splx(s);
 
-	error = VOP_UPDATE(vp, NULL, NULL,
+	error = ffs_update(vp, NULL, NULL,
 	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
 	    ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-			ap->a_p->p_ucred, ap->a_p);
+			ap->a_l->l_proc->p_cred, ap->a_l);
 	}
 
 	return error;
@@ -335,16 +334,15 @@ ffs_fsync(v)
  */
 /* ARGSUSED */
 static int
-ffs_full_fsync(v)
-	void *v;
+ffs_full_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
@@ -362,7 +360,7 @@ ffs_full_fsync(v)
 	 * Flush all dirty data associated with a vnode.
 	 */
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
@@ -459,12 +457,12 @@ loop:
 		waitfor = 0;
 	else
 		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = VOP_UPDATE(vp, NULL, NULL, waitfor);
+	error = ffs_update(vp, NULL, NULL, waitfor);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			ap->a_p->p_ucred, ap->a_p);
+			ap->a_l->l_proc->p_cred, ap->a_l);
 	}
 
 	return error;
@@ -474,19 +472,18 @@ loop:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ffs_reclaim(v)
-	void *v;
+ffs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
+	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
 		return (error);
 	if (ip->i_din.ffs1_din != NULL) {
 		if (ump->um_fstype == UFS1)
@@ -538,58 +535,6 @@ ffs_getpages(void *v)
 	return genfs_getpages(v);
 }
 
-int
-ffs_putpages(void *v)
-{
-	struct vop_putpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offlo;
-		voff_t a_offhi;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct uvm_object *uobj = &vp->v_uobj;
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-	struct vm_page *pg;
-	off_t off;
-
-	if (!DOINGSOFTDEP(vp) || (ap->a_flags & PGO_CLEANIT) == 0) {
-		return genfs_putpages(v);
-	}
-
-	/*
-	 * for softdep files, force the pages in a block to be written together.
-	 * if we're the pagedaemon and we would have to wait for other pages,
-	 * just fail the request.  the pagedaemon will pick a different page.
-	 */
-
-	ap->a_offlo &= ~fs->fs_qbmask;
-	ap->a_offhi = blkroundup(fs, ap->a_offhi);
-	if (curproc == uvm.pagedaemon_proc) {
-		for (off = ap->a_offlo; off < ap->a_offhi; off += PAGE_SIZE) {
-			pg = uvm_pagelookup(uobj, off);
-
-			/*
-			 * we only have missing pages here because the
-			 * calculation of offhi above doesn't account for
-			 * fragments.  so once we see one missing page,
-			 * the rest should be missing as well, but we'll
-			 * check for the rest just to be paranoid.
-			 */
-
-			if (pg == NULL) {
-				continue;
-			}
-			if (pg->flags & PG_BUSY) {
-				simple_unlock(&uobj->vmobjlock);
-				return EBUSY;
-			}
-		}
-	}
-	return genfs_putpages(v);
-}
-
 /*
  * Return the last logical file offset that should be written for this file
  * if we're doing a write that ends at "size".
@@ -602,10 +547,6 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct fs *fs = ip->i_fs;
 	daddr_t olbn, nlbn;
 
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
-
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
 	if (nlbn < NDADDR && olbn <= nlbn) {
@@ -613,4 +554,142 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	} else {
 		*eobp = blkroundup(fs, size);
 	}
+}
+
+int
+ffs_openextattr(void *v)
+{
+	struct vop_openextattr_args /* {
+		struct vnode *a_vp;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	/* Not supported for UFS1 file systems. */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_closeextattr(void *v)
+{
+	struct vop_closeextattr_args /* {
+		struct vnode *a_vp;
+		int a_commit;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	/* Not supported for UFS1 file systems. */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_getextattr(void *v)
+{
+	struct vop_getextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		size_t *a_size;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		return (ufs_getextattr(ap));
+#else
+		return (EOPNOTSUPP);
+#endif
+	}
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_setextattr(void *v)
+{
+	struct vop_setextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		return (ufs_setextattr(ap));
+#else
+		return (EOPNOTSUPP);
+#endif
+	}
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_listextattr(void *v)
+{
+	struct vop_listextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		struct uio *a_uio;
+		size_t *a_size;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	/* Not supported for UFS1 file systems. */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_deleteextattr(void *v)
+{
+	struct vop_deleteextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		return (ufs_deleteextattr(ap));
+#else
+		return (EOPNOTSUPP);
+#endif
+	}
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.15 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.15.4.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.15 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.15.4.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ ess_ofisa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ess_softc *sc = (void *)self;
+	struct ess_softc *sc = device_private(self);
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg;
 	struct ofisa_intr_desc intr[2];

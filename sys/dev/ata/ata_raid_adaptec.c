@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.1 2005/06/20 02:11:57 briggs Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.1.4.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.1 2005/06/20 02:11:57 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.1.4.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.1 2005/06/20 02:11:57 briggs 
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -80,7 +81,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 	bmajor = devsw_name2blk(sc->sc_dev.dv_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, sc->sc_dev.dv_unit, RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(&sc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;
@@ -163,7 +164,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 			aai->aai_interleave = aai->aai_capacity;
 	}
 
-	atabus = (struct atabus_softc *) sc->sc_dev.dv_parent;
+	atabus = (struct atabus_softc *) device_parent(&sc->sc_dev);
 	drive = atabus->sc_chan->ch_channel;
 	if (drive >= aai->aai_ndisks) {
 		aprint_error("%s: drive number %d doesn't make sense within "

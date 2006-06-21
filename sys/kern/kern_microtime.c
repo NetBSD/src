@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.14 2005/01/23 08:39:51 yamt Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.14.8.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.14 2005/01/23 08:39:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.14.8.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -126,7 +126,7 @@ cc_microtime(struct timeval *tvp)
 		 */
 		/* XXXSMP: not atomic */
 		simple_lock(&microtime_slock);
-		t = time;
+		getmicrotime(&t);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.22 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: opl.c,v 1.22.6.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.22 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.22.6.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.22 2005/02/04 02:10:37 perry Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/select.h>
+#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -177,7 +178,7 @@ opl_attach(sc)
 	sc->panl = OPL_VOICE_TO_LEFT;
 	sc->panr = OPL_VOICE_TO_RIGHT;
 	if (sc->model == OPL_3 &&
-	    sc->mididev.dev.dv_cfdata->cf_flags & OPL_FLAGS_SWAP_LR) {
+	    device_cfdata(&sc->mididev.dev)->cf_flags & OPL_FLAGS_SWAP_LR) {
 		sc->panl = OPL_VOICE_TO_RIGHT;
 		sc->panr = OPL_VOICE_TO_LEFT;
 		printf(": LR swapped");
@@ -221,6 +222,21 @@ opl_command(sc, offs, addr, data)
 		delay(30);
 	else
 		delay(6);
+}
+
+int
+opl_match(bus_space_tag_t iot, bus_space_handle_t ioh, int offs)
+{
+	struct opl_softc *sc;
+	int rv;
+
+	sc = malloc(sizeof(*sc), M_TEMP, M_WAITOK|M_ZERO);
+	sc->iot = iot;
+	sc->ioh = ioh;
+	sc->offs = offs;
+	rv = opl_find(sc);
+	free(sc, M_TEMP);
+	return rv;
 }
 
 int

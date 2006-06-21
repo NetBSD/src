@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.6 2005/06/23 01:59:31 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.6.2.1 2006/06/21 15:12:03 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ struct statvfs {
 #define	ST_ASYNC	MNT_ASYNC
 #define	ST_NOCOREDUMP	MNT_NOCOREDUMP
 #define	ST_IGNORE	MNT_IGNORE
-#define	ST_MAGICLINKS	MNT_MAGICLINKS
 #define	ST_NOATIME	MNT_NOATIME
 #define	ST_SYMPERM	MNT_SYMPERM
 #define	ST_NODEVMTIME	MNT_NODEVMTIME
@@ -145,20 +144,19 @@ struct statvfs {
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 struct mount;
-struct proc;
+struct lwp;
 
 int	set_statvfs_info(const char *, int, const char *, int,
-    struct mount *, struct proc *);
+    struct mount *, struct lwp *);
 void	copy_statvfs_info(struct statvfs *, const struct mount *);
-int	dostatvfs(struct mount *, struct statvfs *, struct proc *, int, int);
+int	dostatvfs(struct mount *, struct statvfs *, struct lwp *, int, int);
 #else
 __BEGIN_DECLS
 int	statvfs(const char *__restrict, struct statvfs *__restrict);
 int	fstatvfs(int, struct statvfs *);
 int	getvfsstat(struct statvfs *, size_t, int);
 #ifndef __LIBC12_SOURCE__
-int	getmntinfo(struct statvfs **, int)
-    __RENAME(__getmntinfo13);
+int	getmntinfo(struct statvfs **, int) __RENAME(__getmntinfo13);
 #endif /* __LIBC12_SOURCE__ */
 #if defined(_NETBSD_SOURCE)
 int	fhstatvfs(const fhandle_t *, struct statvfs *);
@@ -169,4 +167,10 @@ int	fhstatvfs1(const fhandle_t *, struct statvfs *, int);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 #endif /* _KERNEL || _STANDALONE */
+
+#if defined(_KERNEL)
+#define	STATVFSBUF_GET()	malloc(sizeof(struct statvfs), M_TEMP, M_WAITOK)
+#define	STATVFSBUF_PUT(sb)	free(sb, M_TEMP);
+#endif /* defined(_KERNEL) */
+
 #endif /* !_SYS_STATVFS_H_ */

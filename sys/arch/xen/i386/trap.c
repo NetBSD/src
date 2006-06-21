@@ -1,5 +1,5 @@
-/*	$NetBSD: trap.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $	*/
-/*	NetBSD: trap.c,v 1.202 2004/08/28 17:53:01 jdolecek Exp		*/
+/*	$NetBSD: trap.c,v 1.6.4.1 2006/06/21 14:58:06 yamt Exp $	*/
+/*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6.4.1 2006/06/21 14:58:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $");
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/kauth.h>
 
 #include <sys/ucontext.h>
 #include <sys/sa.h>
@@ -542,7 +543,11 @@ copyfault:
 		if (frame->tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
+#ifdef XEN3
+		cr2 = HYPERVISOR_shared_info->vcpu_info[0].arch.cr2;
+#else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
+#endif
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		goto faultcommon;
 
@@ -553,7 +558,11 @@ copyfault:
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 
+#ifdef XEN3
+		cr2 = HYPERVISOR_shared_info->vcpu_info[0].arch.cr2;
+#else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
+#endif
 		KERNEL_PROC_LOCK(l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
@@ -592,7 +601,7 @@ copyfault:
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
@@ -633,7 +642,7 @@ copyfault:
 				KERNEL_UNLOCK();
 				goto copyfault;
 			}
-			printf("uvm_fault(%p, %#lx, 0, %d) -> %#x\n",
+			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
 		}
@@ -641,8 +650,8 @@ copyfault:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 		}
@@ -757,7 +766,7 @@ trapwrite(addr)
 	p = curproc;
 	vm = p->p_vmspace;
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE) != 0)
+	if (uvm_fault(&vm->vm_map, va, VM_PROT_WRITE) != 0)
 		return 1;
 
 	if ((caddr_t)va >= vm->vm_maxsaddr)

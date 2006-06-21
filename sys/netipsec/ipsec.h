@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.11 2005/06/10 13:22:42 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.11.2.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -219,6 +219,10 @@ struct ipsec_history {
 };
 
 extern int ipsec_debug;
+#ifdef IPSEC_DEBUG
+extern int ipsec_replay;
+extern int ipsec_integrity;
+#endif
 
 extern struct newipsecstat newipsecstat;
 extern struct secpolicy ip4_def_policy;
@@ -358,4 +362,4 @@ INITFN void tcpsignature_attach(void);
 
 INITFN void ipsec_attach(void);
 #endif /* _KERNEL */
-#endif /* _NETIPSEC_IPSEC_H_ */
+#endif /* !_NETIPSEC_IPSEC_H_ */

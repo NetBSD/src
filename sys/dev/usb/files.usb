@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.62 2005/07/01 20:11:20 drochner Exp $
+#	$NetBSD: files.usb,v 1.62.2.1 2006/06/21 15:07:43 yamt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -76,7 +76,7 @@ defparam	UKBD_LAYOUT
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
-file	dev/usb/ukbdmap.c		ukbd
+file	dev/usb/ukbdmap.c		ukbd | btkbd
 
 # Mice
 device	ums: hid, wsmousedev
@@ -87,6 +87,11 @@ file	dev/usb/ums.c			ums
 device	uep: wsmousedev, tpcalib
 attach	uep at uhub
 file	dev/usb/uep.c			uep			needs-flag
+
+# Cypress microcontroller based serial adpaters
+device	ucycom: hid
+attach	ucycom at uhidbus
+file	dev/usb/ucycom.c		ucycom			needs-flag
 
 # Printers
 device	ulpt
@@ -114,8 +119,8 @@ attach	ustir at uhub
 file	dev/usb/ustir.c			ustir
 
 
-# Bluetooth bridges
-device	ubt: btbus
+# Bluetooth controllers
+device	ubt: bluetooth
 attach	ubt at uhub
 file	dev/usb/ubt.c			ubt
 
@@ -227,6 +232,11 @@ device	ubsa: ucombus
 attach	ubsa at uhub
 file	dev/usb/ubsa.c			ubsa
 
+# iPAQ PDAs
+device  uipaq: ucombus
+attach  uipaq at uhub
+file    dev/usb/uipaq.c			uipaq
+
 # Kyocera AIR-EDGE PHONE
 device	ukyopon: ucombus, umodem_common
 attach	ukyopon at uhub
@@ -252,3 +262,8 @@ file	dev/usb/if_atu.c		atu
 # Ralink Technology RT2500USB
 attach	ral at uhub with ural
 file	dev/usb/if_ural.c		ural
+
+# Topfield digital PVRs
+device	utoppy
+attach	utoppy at uhub
+file	dev/usb/utoppy.c		utoppy

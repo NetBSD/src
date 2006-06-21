@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/_ieee80211.h,v 1.2 2004/12/31 22:42:38 sam Exp $
+ * $FreeBSD: src/sys/net80211/_ieee80211.h,v 1.3 2005/08/10 17:42:13 sam Exp $
  */
 #ifndef _NET80211__IEEE80211_H_
 #define _NET80211__IEEE80211_H_
@@ -103,7 +103,7 @@ enum ieee80211_roamingmode {
  * Channels are specified by frequency and attributes.
  */
 struct ieee80211_channel {
-	u_int16_t	ic_freq;	/* setting in Mhz */
+	u_int16_t	ic_freq;	/* setting in MHz */
 	u_int16_t	ic_flags;	/* see below */
 };
 
@@ -111,7 +111,7 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_BYTES	32	/* howmany(IEEE80211_CHAN_MAX, NBBY) */
 #define	IEEE80211_CHAN_ANY	0xffff	/* token for ``any channel'' */
 #define	IEEE80211_CHAN_ANYC \
-	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
+	((struct ieee80211_channel *) 0x1)
 
 /* bits 0-3 are for private use by drivers */
 /* channel attributes */
@@ -142,6 +142,12 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_108G \
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
+#define	IEEE80211_CHAN_ALL \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_GFSK | \
+	 IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_DYN)
+#define	IEEE80211_CHAN_ALLTURBO \
+	(IEEE80211_CHAN_ALL | IEEE80211_CHAN_TURBO)
+
 #define	IEEE80211_IS_CHAN_FHSS(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
 #define	IEEE80211_IS_CHAN_A(_c) \
@@ -152,6 +158,8 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_PUREG) == IEEE80211_CHAN_PUREG)
 #define	IEEE80211_IS_CHAN_G(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_G) == IEEE80211_CHAN_G)
+#define	IEEE80211_IS_CHAN_ANYG(_c) \
+	(IEEE80211_IS_CHAN_PUREG(_c) || IEEE80211_IS_CHAN_G(_c))
 #define	IEEE80211_IS_CHAN_T(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_T) == IEEE80211_CHAN_T)
 #define	IEEE80211_IS_CHAN_108G(_c) \
@@ -185,4 +193,4 @@ struct ieee80211_rateset {
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
 
-#endif /* _NET80211__IEEE80211_H_ */
+#endif /* !_NET80211__IEEE80211_H_ */

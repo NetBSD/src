@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.6 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.6.2.1 2006/06/21 14:58:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6 2005/05/29 22:08:16 christos Exp
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/mount.h>
 
 #include <compat/common/compat_util.h>
 
@@ -116,7 +120,7 @@ darwin_sys_getattrlist(l, v, retval)
 	darwin_attrreference_t *vol_mountpoint_p = NULL;
 	darwin_attrreference_t *vol_name_p = NULL;
 	darwin_attrreference_t *vol_mounteddevice_p = NULL;
-	struct sys___stat13_args cup1;
+	struct sys___stat30_args cup1;
 	struct stat *ust;
 	struct stat st;
 	struct compat_20_sys_statfs_args cup2;
@@ -124,7 +128,7 @@ darwin_sys_getattrlist(l, v, retval)
 	struct statfs12 f;
 	struct nameidata nd;
 	struct vnode *vp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	const char *path;
 	caddr_t sg = stackgap_init(p, 0);
 	int fl;
@@ -154,7 +158,7 @@ darwin_sys_getattrlist(l, v, retval)
 	fl = CHECK_ALT_FL_EXISTS;
 	if (follow == 0)
 		fl |= CHECK_ALT_FL_SYMLINK;
-	(void)emul_find(p, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
+	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
 
 	/*
 	 * Get the informations for path: file related info
@@ -163,10 +167,10 @@ darwin_sys_getattrlist(l, v, retval)
 	SCARG(&cup1, path) = path;
 	SCARG(&cup1, ub) = ust;
 	if (follow) {
-		if ((error = sys___stat13(l, &cup1, retval)) != 0)
+		if ((error = sys___stat30(l, &cup1, retval)) != 0)
 			return error;
 	} else {
-		if ((error = sys___lstat13(l, &cup1, retval)) != 0)
+		if ((error = sys___lstat30(l, &cup1, retval)) != 0)
 			return error;
 	}
 
@@ -195,16 +199,16 @@ darwin_sys_getattrlist(l, v, retval)
 	 * vnode structure
 	 */
 
-	cred = crdup(p->p_ucred);
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
+	cred = kauth_cred_dup(p->p_cred);
+	kauth_cred_seteuid(cred, kauth_cred_getuid(p->p_cred));
+	kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
 
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 
 	vp = nd.ni_vp;
-	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, p)) != 0)
+	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, l)) != 0)
 		goto out3;
 
 	/*
@@ -797,7 +801,7 @@ darwin_sys_getattrlist(l, v, retval)
 out3:
 	vput(vp);
 out2:
-	crfree(cred);
+	kauth_cred_free(cred);
 	free(tbuf, M_TEMP);
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.23 2005/02/26 23:10:22 perry Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.23.4.1 2006/06/21 15:00:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.23 2005/02/26 23:10:22 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.23.4.1 2006/06/21 15:00:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ ultrix_sys_creat(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -103,7 +103,7 @@ ultrix_sys_access(struct lwp *l, void *v, register_t *retval)
 	struct ultrix_sys_access_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_access(l, uap, retval));
 }
@@ -114,7 +114,7 @@ ultrix_sys_stat(struct lwp *l, void *v, register_t *retval)
 	struct ultrix_sys_stat_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_stat(l, uap, retval));
 }
@@ -125,7 +125,7 @@ ultrix_sys_lstat(struct lwp *l, void *v, register_t *retval)
 	struct ultrix_sys_lstat_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_lstat(l, uap, retval));
 }
@@ -142,7 +142,7 @@ ultrix_sys_execv(struct lwp *l, void *v, register_t *retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -164,7 +164,7 @@ ultrix_sys_execve(struct lwp *l, void *v, register_t *retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -194,9 +194,9 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 	r |=	((q & 0x2000) ? O_FSYNC : 0);
 
 	if (r & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	else
-		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(uap, flags) = r;
 	ret = sys_open(l, (struct sys_open_args *)uap, retval);
 
@@ -208,7 +208,7 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, l);
 	}
 	return ret;
 }
@@ -261,16 +261,16 @@ ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
@@ -296,12 +296,12 @@ ultrix_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -312,7 +312,7 @@ ultrix_sys_mknod(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return sys_mkfifo(l, uap, retval);

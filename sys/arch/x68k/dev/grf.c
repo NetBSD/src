@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.30 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: grf.c,v 1.30.8.1 2006/06/21 14:57:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.30 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.30.8.1 2006/06/21 14:57:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ const struct cdevsw grf_cdevsw = {
 
 /*ARGSUSED*/
 int
-grfopen(dev_t dev, int flags, int mode, struct proc *p)
+grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp;
@@ -172,7 +172,7 @@ grfopen(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-grfclose(dev_t dev, int flags, int mode, struct proc *p)
+grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
@@ -187,7 +187,7 @@ grfclose(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = grf_cd.cd_devs[unit];
@@ -212,11 +212,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFSETVMODE:
@@ -244,7 +244,7 @@ grfmmap(dev_t dev, off_t off, int prot)
 int
 grfon(struct grf_softc *gp)
 {
-	int unit = gp->g_device.dv_unit;
+	int unit = device_unit(&gp->g_device);
 
 	/*
 	 * XXX: iteoff call relies on devices being in same order
@@ -259,7 +259,7 @@ grfon(struct grf_softc *gp)
 int
 grfoff(struct grf_softc *gp)
 {
-	int unit = gp->g_device.dv_unit;
+	int unit = device_unit(&gp->g_device);
 	int error;
 
 #if 0				/* always fails in EINVAL... */

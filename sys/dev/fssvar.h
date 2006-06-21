@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.9 2005/04/17 16:28:26 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.9.2.1 2006/06/21 15:02:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -144,12 +144,11 @@ struct fss_cache {
 struct fss_softc {
 	int		sc_unit;	/* Logical unit number */
 	struct simplelock sc_slock;	/* Protect this softc */
+	struct lock	sc_lock;	/* Sleep lock for fss_ioctl */
 	volatile int	sc_flags;	/* Flags */
 #define FSS_ACTIVE	0x01		/* Snapshot is active */
 #define FSS_ERROR	0x02		/* I/O error occurred */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
-#define FSS_EXCL	0x08		/* Exclusive access granted */
-#define FSS_BS_ALLOC	0x10		/* Allocate backing store */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
 #define FSS_CDEV_OPEN	0x40		/* character device open */
 #define FSS_BDEV_OPEN	0x80		/* block device open */
@@ -171,7 +170,7 @@ struct fss_softc {
 	long		sc_clresid;	/* Bytes in last cluster */
 	int		sc_cache_size;	/* Number of entries in sc_cache */
 	struct fss_cache *sc_cache;	/* Cluster cache */
-	struct bufq_state sc_bufq;	/* Transfer queue */
+	struct bufq_state *sc_bufq;	/* Transfer queue */
 	u_int32_t	sc_clnext;	/* Next free cluster on backing store */
 	int		sc_indir_size;	/* # clusters for indirect mapping */
 	u_int8_t	*sc_indir_valid; /* Map of valid indirect clusters */

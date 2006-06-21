@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.7 2005/04/03 10:56:59 jdolecek Exp $	*/
+/*	$NetBSD: we.c,v 1.7.2.1 2006/06/21 15:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.7 2005/04/03 10:56:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.7.2.1 2006/06/21 15:02:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: we.c,v 1.7 2005/04/03 10:56:59 jdolecek Exp $");
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
@@ -104,7 +104,7 @@ static int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
 static void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 static int	we_test_mem(struct dp8390_softc *);
 
-static __inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
+static inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
 
 /*
  * Delay needed when switching 16-bit access to shared memory.
@@ -150,11 +150,11 @@ we_config(self, wsc, typestr)
 	/*
 	 * Allow user to override 16-bit mode.  8-bit takes precedence.
 	 */
-	if (self->dv_cfdata->cf_flags & DP8390_FORCE_16BIT_MODE) {
+	if (device_cfdata(self)->cf_flags & DP8390_FORCE_16BIT_MODE) {
 		wsc->sc_flags |= WE_16BIT_ENABLE;
 		forced_16bit = 1;
 	}
-	if (self->dv_cfdata->cf_flags & DP8390_FORCE_8BIT_MODE)
+	if (device_cfdata(self)->cf_flags & DP8390_FORCE_8BIT_MODE)
 		wsc->sc_flags &= ~WE_16BIT_ENABLE;
 
 	/* Registers are linear. */
@@ -255,7 +255,7 @@ we_config(self, wsc, typestr)
 	sc->mem_start = 0;
 	/* sc->mem_size has to be set by frontend */
 
-	sc->sc_flags = self->dv_cfdata->cf_flags;
+	sc->sc_flags = device_cfdata(self)->cf_flags;
 
 	/* Do generic parts of attach. */
 	if (wsc->sc_type & WE_SOFTCONFIG)
@@ -325,7 +325,7 @@ we_test_mem(sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-static __inline void
+static inline void
 we_readmem(wsc, from, to, len)
 	struct we_softc *wsc;
 	int from;

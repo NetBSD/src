@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.4.2.1 2006/06/21 15:10:46 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,13 +28,13 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.4.2.1 2006/06/21 15:10:46 yamt Exp $");
 #endif
 
 /*
- * IEEE 802.11 support (FreeBSD-specific code)
+ * IEEE 802.11 support (NetBSD-specific code)
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung 
 #include <sys/mbuf.h>   
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/once.h>
 
 #include <machine/stdarg.h>
 
@@ -59,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.4 2005/07/03 20:44:46 dyoung 
 #define	LOGICALLY_EQUAL(x, y)	(!(x) == !(y))
 
 static void ieee80211_sysctl_fill_node(struct ieee80211_node *,
-    struct ieee80211_node_sysctl *, int, struct ieee80211_channel *, int);
+    struct ieee80211_node_sysctl *, int, const struct ieee80211_channel *,
+    uint32_t);
 static struct ieee80211_node *ieee80211_node_walknext(
     struct ieee80211_node_walk *);
 static struct ieee80211_node *ieee80211_node_walkfirst(
@@ -69,6 +71,31 @@ static int ieee80211_sysctl_node(SYSCTLFN_ARGS);
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
 #endif
+
+typedef void (*ieee80211_setup_func)(void);
+
+__link_set_decl(ieee80211_funcs, ieee80211_setup_func);
+
+static int
+ieee80211_init0(void)
+{
+	ieee80211_setup_func * const *ieee80211_setup, f;
+
+        __link_set_foreach(ieee80211_setup, ieee80211_funcs) {
+		f = (void*)*ieee80211_setup;
+		(*f)();
+	}
+
+	return 0;
+}
+
+void
+ieee80211_init(void)
+{
+	static ONCE_DECL(ieee80211_init_once);
+
+	RUN_ONCE(&ieee80211_init_once, ieee80211_init0);
+}
 
 static int
 ieee80211_sysctl_inact(SYSCTLFN_ARGS)
@@ -208,6 +235,11 @@ ieee80211_sysctl_attach(struct ieee80211com *ic)
 	    "driver_caps", SYSCTL_DESCR("driver capabilities"),
 	    NULL, 0, &ic->ic_caps, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "bmiss_max", SYSCTL_DESCR("consecutive beacon misses before scanning"),
+	    NULL, 0, &ic->ic_bmiss_max, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 
 	return;
 err:
@@ -295,11 +327,11 @@ ieee80211_node_walknext(struct ieee80211_node_walk *nw)
 static void
 ieee80211_sysctl_fill_node(struct ieee80211_node *ni,
     struct ieee80211_node_sysctl *ns, int ifindex,
-    struct ieee80211_channel *chan0, int is_bss)
+    const struct ieee80211_channel *chan0, uint32_t flags)
 {
 	ns->ns_ifindex = ifindex;
 	ns->ns_capinfo = ni->ni_capinfo;
-	ns->ns_flags = (is_bss) ? IEEE80211_NODE_SYSCTL_F_BSS : 0;
+	ns->ns_flags = flags;
 	(void)memcpy(ns->ns_macaddr, ni->ni_macaddr, sizeof(ns->ns_macaddr));
 	(void)memcpy(ns->ns_bssid, ni->ni_bssid, sizeof(ns->ns_bssid));
 	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
@@ -341,6 +373,7 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 	struct ieee80211_node_sysctl ns;
 	char *dp;
 	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
+	uint32_t flags;
 	size_t len, needed, eltsize, out_size;
 	int error, s, saw_bss = 0, nelt;
 
@@ -380,6 +413,7 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 		cur_ifindex = ic->ic_ifp->if_index;
 
 		if (cur_ifindex != last_ifindex) {
+			saw_bss = 0;
 			ifcount++;
 			last_ifindex = cur_ifindex;
 		}
@@ -389,11 +423,18 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 
 		if (saw_bss && ni == ic->ic_bss)
 			continue;
-		else if (ni == ic->ic_bss)
+		else if (ni == ic->ic_bss) {
 			saw_bss = 1;
+			flags = IEEE80211_NODE_SYSCTL_F_BSS;
+		} else
+			flags = 0;
+		if (ni->ni_table == &ic->ic_scan)
+			flags |= IEEE80211_NODE_SYSCTL_F_SCAN;
+		else if (ni->ni_table == &ic->ic_sta)
+			flags |= IEEE80211_NODE_SYSCTL_F_STA;
 		if (len >= eltsize) {
 			ieee80211_sysctl_fill_node(ni, &ns, cur_ifindex,
-			    &ic->ic_channels[0], ni == ic->ic_bss);
+			    &ic->ic_channels[0], flags);
 			error = copyout(&ns, dp, out_size);
 			if (error)
 				goto cleanup;
@@ -473,26 +514,23 @@ if_printf(struct ifnet *ifp, const char *fmt, ...)
 	return;
 }
 
-struct mbuf *
-m_getcl(int how, int type, int flags)
+/*
+ * Set the m_data pointer of a newly-allocated mbuf
+ * to place an object of the specified size at the
+ * end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
 {
-	struct mbuf *m;
+       int adjust;
 
-	if ((flags & M_PKTHDR) != 0)
-		MGETHDR(m, how, type);
-	else
-		MGET(m, how, type);
-
-	if (m == NULL)
-		return NULL;
-
-	MCLGET(m, flags);
-
-	if ((m->m_flags & M_EXT) == 0) {
-		m_free(m);
-		return NULL;
-	}
-	return m;
+       if (m->m_flags & M_EXT)
+	       adjust = m->m_ext.ext_size - len;
+       else if (m->m_flags & M_PKTHDR)
+	       adjust = MHLEN - len;
+       else
+	       adjust = MLEN - len;
+       m->m_data += adjust &~ (sizeof(long)-1);
 }
 
 /*
@@ -578,6 +616,7 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 	if (m != NULL) {
 		m->m_data += sizeof(struct ieee80211_frame);
 		*frm = m->m_data;
+		IASSERT((uintptr_t)*frm % 4 == 0, ("bad beacon boundary"));
 	}
 	return m;
 }
@@ -605,8 +644,8 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 	    ifp->if_xname, (ni == ic->ic_bss) ? "bss " : "",
 	    ether_sprintf(ni->ni_macaddr));
 
+	memset(&iev, 0, sizeof(iev));
 	if (ni == ic->ic_bss) {
-		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_bssid);
 		rt_ieee80211msg(ifp, newassoc ?
 			RTM_IEEE80211_ASSOC : RTM_IEEE80211_REASSOC,
@@ -614,7 +653,6 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 		if_link_state_change(ifp, LINK_STATE_UP);
 	} else if (newassoc) {
 		/* fire off wireless event only for new station */
-		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_macaddr);
 		rt_ieee80211msg(ifp, RTM_IEEE80211_JOIN, &iev, sizeof(iev));
 	}
@@ -661,9 +699,10 @@ ieee80211_notify_replay_failure(struct ieee80211com *ic,
 	struct ifnet *ifp = ic->ic_ifp;
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
-		"[%s] %s replay detected <rsc %ju, csc %ju, keyix %u>\n",
-		ether_sprintf(wh->i_addr2), k->wk_cipher->ic_name,
-		(intmax_t) rsc, (intmax_t) k->wk_keyrsc, k->wk_keyix);
+	    "[%s] %s replay detected <rsc %ju, csc %ju, keyix %u rxkeyix %u>\n",
+	    ether_sprintf(wh->i_addr2), k->wk_cipher->ic_name,
+	    (intmax_t) rsc, (intmax_t) k->wk_keyrsc,
+	    k->wk_keyix, k->wk_rxkeyix);
 
 	if (ifp != NULL) {		/* NB: for cipher test modules */
 		struct ieee80211_replay_event iev;
@@ -671,7 +710,10 @@ ieee80211_notify_replay_failure(struct ieee80211com *ic,
 		IEEE80211_ADDR_COPY(iev.iev_dst, wh->i_addr1);
 		IEEE80211_ADDR_COPY(iev.iev_src, wh->i_addr2);
 		iev.iev_cipher = k->wk_cipher->ic_cipher;
-		iev.iev_keyix = k->wk_keyix;
+		if (k->wk_rxkeyix != IEEE80211_KEYIX_NONE)
+			iev.iev_keyix = k->wk_rxkeyix;
+		else
+			iev.iev_keyix = k->wk_keyix;
 		iev.iev_keyrsc = k->wk_keyrsc;
 		iev.iev_rsc = rsc;
 		rt_ieee80211msg(ifp, RTM_IEEE80211_REPLAY, &iev, sizeof(iev));

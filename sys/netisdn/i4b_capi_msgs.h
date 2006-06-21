@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.h,v 1.1 2003/09/25 15:34:38 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.h,v 1.1.18.1 2006/06/21 15:11:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -29,8 +29,8 @@
  * $FreeBSD: src/sys/i4b/capi/capi_msgs.h,v 1.1 2001/05/25 08:39:31 hm Exp $
  */
 
-#ifndef _I4B_CAPI_MSGS_H_
-#define _I4B_CAPI_MSGS_H_
+#ifndef _NETISDN_I4B_CAPI_MSGS_H_
+#define _NETISDN_I4B_CAPI_MSGS_H_
 
 /* CAPI commands */
 
@@ -379,4 +379,4 @@ extern void capi_disconnect_conf(capi_softc_t *sc, struct mbuf *m);
 extern void capi_disconnect_b3_ind(capi_softc_t *sc, struct mbuf *m);
 extern void capi_disconnect_ind(capi_softc_t *sc, struct mbuf *m);
 
-#endif /* _I4B_CAPI_MSGS_H_ */
+#endif /* !_NETISDN_I4B_CAPI_MSGS_H_ */

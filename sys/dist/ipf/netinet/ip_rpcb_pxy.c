@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.6 2005/02/19 21:30:25 martti Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.6.4.1 2006/06/21 15:09:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -285,6 +285,8 @@ ippr_rpcb_out(fin, aps, nat)
 	u_int off, dlen;
 	int rv, diff;
 	mb_t *m;
+
+	rx = NULL;	/* XXX gcc */
 
 	/* Disallow fragmented or illegally short packets. */
 	if ((fin->fin_flx & (FI_FRAG|FI_SHORT)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.76 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.76.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ USB_ATTACH(uhub)
 	 *        proceed with device attachment
 	 */
 
-	if (UHUB_IS_HIGH_SPEED(sc)) {
+	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = malloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 			     sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
 		if (!tts)

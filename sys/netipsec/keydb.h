@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.1 2003/08/13 20:06:51 jonathan Exp $	*/
+/*	$NetBSD: keydb.h,v 1.1.18.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -181,4 +181,4 @@ extern void keydb_delsecreg __P((struct secreg *));
 
 #endif /* _KERNEL */
 
-#endif /* _NETIPSEC_KEYDB_H_ */
+#endif /* !_NETIPSEC_KEYDB_H_ */

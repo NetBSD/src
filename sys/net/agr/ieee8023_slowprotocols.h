@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023_slowprotocols.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023_slowprotocols.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023_SLOWPROTOCOLS_H_)
+#ifndef _NET_AGR_IEEE8023_SLOWPROTOCOLS_H_
 #define	_NET_AGR_IEEE8023_SLOWPROTOCOLS_H_
 
 /*
@@ -45,4 +45,4 @@ struct slowprothdr {
 	uint8_t sph_version;
 } __packed;
 
-#endif /* !defined(_NET_AGR_IEEE8023_SLOWPROTOCOLS_H_) */
+#endif /* !_NET_AGR_IEEE8023_SLOWPROTOCOLS_H_ */

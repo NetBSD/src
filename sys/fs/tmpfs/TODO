@@ -1,0 +1,15 @@
+- File meta-data is stored using memory pools.  These use, at the moment,
+  wired kernel memory, which is not acceptable because it is easy to turn
+  the system unstable by exhausting it.  Therefore, a pool allocator that
+  uses anonymous memory has to be written.
+
+- Verify that file holes work (they should, but must be checked).  Add a
+  regression test for this feature.
+
+- NFS support is broken.  The readdir operation does not work well; it
+  mostly works when wcc is disabled (which happens as soon as doing a `touch
+  foo' over the NFS mount point).  However, files created in the original
+  file system do not appear in the NFS mount point until another file
+  is created over it.
+
+- Fix and complete code marked with `XXX' and `TODO' tags.

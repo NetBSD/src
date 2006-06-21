@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.97 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: auich.c,v 1.97.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,11 +183,13 @@ struct auich_softc {
 	bus_space_handle_t aud_ioh;
 	bus_size_t aud_size;
 	bus_dma_tag_t dmat;
+	pci_intr_handle_t intrh;
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
 	int sc_codecnum;
 	int sc_codectype;
+	enum ac97_host_flags sc_codecflags;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -217,6 +219,7 @@ struct auich_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
+	int sc_powerstate;
 	struct pci_conf_state sc_pciconf;
 
 	/* sysctl */
@@ -276,6 +279,7 @@ static int	auich_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
 static int	auich_trigger_input(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
+static int	auich_powerstate(void *, int);
 
 static int	auich_alloc_cdata(struct auich_softc *);
 
@@ -294,10 +298,11 @@ static int	auich_attach_codec(void *, struct ac97_codec_if *);
 static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
+static enum ac97_host_flags	auich_flags_codec(void *);
 
 static const struct audio_hw_if auich_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
+	NULL,		/* open */
+	NULL,		/* close */
 	NULL,			/* drain */
 	auich_query_encoding,
 	auich_set_params,
@@ -323,6 +328,7 @@ static const struct audio_hw_if auich_hw_if = {
 	auich_trigger_output,
 	auich_trigger_input,
 	NULL,			/* dev_ioctl */
+	auich_powerstate,
 };
 
 #define AUICH_FORMATS_1CH	0
@@ -351,6 +357,8 @@ static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
 #define PCIID_ICH4		PCI_ID_CODE0(INTEL, 82801DB_AC)
 #define PCIID_ICH5		PCI_ID_CODE0(INTEL, 82801EB_AC)
 #define PCIID_ICH6		PCI_ID_CODE0(INTEL, 82801FB_AC)
+#define PCIID_ICH7		PCI_ID_CODE0(INTEL, 82801G_ACA)
+#define PCIID_I6300ESB		PCI_ID_CODE0(INTEL, 6300ESB_ACA)
 #define PCIID_SIS7012		PCI_ID_CODE0(SIS, 7012_AC)
 #define PCIID_NFORCE		PCI_ID_CODE0(NVIDIA, NFORCE_MCP_AC)
 #define PCIID_NFORCE2		PCI_ID_CODE0(NVIDIA, NFORCE2_MCPT_AC)
@@ -379,6 +387,8 @@ static const struct auich_devtype auich_audio_devices[] = {
 	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio", "ICH4" },
 	{ PCIID_ICH5,	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
 	{ PCIID_ICH6,	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
+	{ PCIID_ICH7,	"i82801GB/GR (ICH7) AC-97 Audio",	"ICH7" },
+	{ PCIID_I6300ESB,	"Intel 6300ESB AC-97 Audio",	"I6300ESB" },
 	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",	"SiS7012" },
 	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
 	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
@@ -431,8 +441,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auich_softc *sc;
 	struct pci_attach_args *pa;
-	pci_intr_handle_t ih;
-	pcireg_t v;
+	pcireg_t v, subdev;
 	const char *intrstr;
 	const struct auich_devtype *d;
 	const struct sysctlnode *node, *node_ac97clock;
@@ -461,9 +470,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s\n", d->name);
 
 	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6
+	    || d->id == PCIID_ICH7 || d->id == PCIID_I6300ESB
 	    || d->id == PCIID_ICH4MODEM) {
 		/*
-		 * Use native mode for ICH4/ICH5/ICH6
+		 * Use native mode for Intel 6300ESB and ICH4/ICH5/ICH6/ICH7
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
@@ -513,12 +523,12 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	    v | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &sc->intrh)) {
 		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
+	intrstr = pci_intr_string(pa->pa_pc, sc->intrh);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_AUDIO,
 	    auich_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: can't establish interrupt",
@@ -570,6 +580,23 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.read = auich_read_codec;
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
+	sc->host_if.flags = auich_flags_codec;
+
+	subdev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	switch (subdev) {
+	case 0x202f161f:	/* Gateway 7326GZ */
+	case 0x203a161f:	/* Gateway 4028GZ */
+	case 0x204c161f:	/* Kvazar-Micro Senator 3592XT */
+	case 0x8144104d:	/* Sony VAIO PCG-TR* */
+	case 0x8197104d:	/* Sony S1XP */
+	case 0x81c0104d:	/* Sony VAIO type T */
+	case 0x81c5104d:	/* Sony VAIO VGN-B1XP */
+		sc->sc_codecflags = AC97_HOST_INVERTED_EAMP;
+		break;
+	default:
+		sc->sc_codecflags = 0;
+		break;
+	}
 
 	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype) != 0)
 		return;
@@ -726,6 +753,12 @@ auich_finish_attach(struct device *self)
 		auich_calibrate(sc);
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
+
+#if notyet
+	auich_powerhook(PWR_SUSPEND, sc);
+#endif
+
+	return;
 }
 
 #define ICH_CODECIO_INTERVAL	10
@@ -838,7 +871,7 @@ auich_reset_codec(void *v)
 		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
-#ifdef DEBUG
+#ifdef AUICH_DEBUG
 	if (status & ICH_SCR)
 		printf("%s: The 2nd codec is ready.\n",
 		       sc->sc_dev.dv_xname);
@@ -847,6 +880,13 @@ auich_reset_codec(void *v)
 		       sc->sc_dev.dv_xname);
 #endif
 	return 0;
+}
+
+static enum ac97_host_flags
+auich_flags_codec(void *v)
+{
+	struct auich_softc *sc = v;
+	return sc->sc_codecflags;
 }
 
 static int
@@ -975,7 +1015,7 @@ auich_halt_pipe(struct auich_softc *sc, int pipe)
 	}
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + ICH_CTRL, ICH_RR);
 
-#if 1
+#if AUICH_DEBUG
 	if (i > 0)
 		printf("auich_halt_pipe: halt took %d cycles\n", i);
 #endif
@@ -1379,6 +1419,36 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 }
 
 static int
+auich_powerstate(void *v, int state)
+{
+#if notyet
+	struct auich_softc *sc;
+	int rv;
+
+	sc = (struct auich_softc *)v;
+	rv = 0;
+
+	switch (state) {
+	case AUDIOPOWER_OFF:
+		auich_powerhook(PWR_SUSPEND, sc);
+		break;
+	case AUDIOPOWER_ON:
+		auich_powerhook(PWR_RESUME, sc);
+		break;
+	default:
+		aprint_error("%s: unknown power state %d\n",
+		    sc->sc_dev.dv_xname, state);
+		rv = 1;
+		break;
+	}
+
+	return rv;
+#else
+	return 0;
+#endif
+}
+
+static int
 auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
     struct auich_dma *p)
 {
@@ -1491,6 +1561,7 @@ static void
 auich_powerhook(int why, void *addr)
 {
 	struct auich_softc *sc;
+	int rv;
 
 	sc = (struct auich_softc *)addr;
 	switch (why) {
@@ -1498,8 +1569,28 @@ auich_powerhook(int why, void *addr)
 	case PWR_STANDBY:
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
+
+		/* if we're already asleep, don't try to sleep again */
+		if (sc->sc_suspend == PWR_SUSPEND ||
+		    sc->sc_suspend == PWR_STANDBY)
+			break;
 		sc->sc_suspend = why;
+
+		DELAY(1000);
 		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
+
+		if (sc->sc_ih != NULL)
+			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
+		rv = pci_get_powerstate(sc->sc_pc, sc->sc_pt, &sc->sc_powerstate);
+		if (rv)
+			aprint_error("%s: unable to get power state (err=%d)\n",
+			    sc->sc_dev.dv_xname, rv);
+		rv = pci_set_powerstate(sc->sc_pc, sc->sc_pt, PCI_PMCSR_STATE_D3);
+		if (rv)
+			aprint_error("%s: unable to set power state (err=%d)\n",
+			    sc->sc_dev.dv_xname, rv);
+
 		break;
 
 	case PWR_RESUME:
@@ -1509,6 +1600,20 @@ auich_powerhook(int why, void *addr)
 			printf("%s: resume without suspend.\n",
 			    sc->sc_dev.dv_xname);
 			sc->sc_suspend = why;
+			return;
+		}
+
+		rv = pci_set_powerstate(sc->sc_pc, sc->sc_pt, sc->sc_powerstate);
+		if (rv)
+			aprint_error("%s: unable to set power state (err=%d)\n",
+			    sc->sc_dev.dv_xname, rv);
+
+		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
+		    auich_intr, sc);
+		if (sc->sc_ih == NULL) {
+			aprint_error("%s: can't establish interrupt",
+			    sc->sc_dev.dv_xname);
+			/* XXX jmcneill what should we do here? */
 			return;
 		}
 		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);

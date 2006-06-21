@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.17 2005/06/04 04:41:40 tsutsui Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.17.2.1 2006/06/21 15:06:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.17 2005/06/04 04:41:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.17.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ cgsixattach(parent, self, aux)
 	
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_depth = 8;
 
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);

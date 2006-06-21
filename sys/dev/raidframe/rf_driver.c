@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.108 2005/05/29 22:03:09 christos Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.108.2.1 2006/06/21 15:06:28 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108 2005/05/29 22:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -318,6 +318,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		DO_INIT_CONFIGURE(rf_ConfigureReconstruction);
 		DO_INIT_CONFIGURE(rf_ConfigureCopyback);
 		DO_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
+		DO_INIT_CONFIGURE(rf_ConfigurePSStatus);
 		isconfigged = 1;
 	}
 	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
@@ -371,7 +372,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureLayout);
 
-	DO_RAID_INIT_CONFIGURE(rf_ConfigurePSStatus);
+	/* Initialize per-RAID PSS bits */
+	rf_InitPSStatus(raidPtr);
 
 #if RF_INCLUDE_CHAINDECLUSTER > 0
 	for (col = 0; col < raidPtr->numCol; col++) {

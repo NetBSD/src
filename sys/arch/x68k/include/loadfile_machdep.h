@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2005/01/18 07:12:16 chs Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.3.8.1 2006/06/21 14:57:48 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 				    strerror(errno)))
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
+#define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == NMAGIC)
 
 #define	vpbcopy bcopy
@@ -74,7 +74,7 @@
 #define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
 #define ALLOC(a)		malloc(a)
-#define FREE(a, b)		free(a)
+#define DEALLOC(a, b)		free(a)
 #define OKMAGIC(a)		((a) == NMAGIC)
 
 ssize_t vread(int, u_long, u_long *, size_t);

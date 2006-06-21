@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IF_AGRVAR_INT_H_)
+#ifndef _NET_AGR_IF_AGRVAR_INT_H_
 #define	_NET_AGR_IF_AGRVAR_INT_H_
 
 /*
@@ -139,4 +139,4 @@ void agrtimer_stop(struct agr_softc *);
 
 void agrport_monitor(struct agr_port *);
 
-#endif /* !defined(_NET_AGR_IF_AGRVAR_INT_H_) */
+#endif /* !_NET_AGR_IF_AGRVAR_INT_H_ */

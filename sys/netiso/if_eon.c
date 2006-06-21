@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.47 2005/05/30 22:14:52 christos Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.47.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47 2005/05/30 22:14:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47.2.1 2006/06/21 15:11:37 yamt Exp $");
 
 #include "opt_eon.h"
 
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47 2005/05/30 22:14:52 christos Exp $")
 #include <netiso/eonvar.h>
 
 #include <machine/stdarg.h>
-
-extern struct timeval time;
 
 #define EOK 0
 

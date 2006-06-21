@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_rrip.h,v 1.2 2003/08/07 16:31:36 agc Exp $	*/
+/*	$NetBSD: iso_rrip.h,v 1.2.16.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,6 +36,8 @@
  *	@(#)iso_rrip.h	8.2 (Berkeley) 1/23/94
  */
 
+#ifndef _ISOFS_CD9660_ISO_RRIP_H_
+#define _ISOFS_CD9660_ISO_RRIP_H_
 
 /*
  *	Analyze function flag (similar to RR field bits)
@@ -69,13 +71,15 @@ typedef struct {
 	int		cont;		/* continuation of above */
 } ISO_RRIP_ANALYZE;
 
-int cd9660_rrip_analyze __P((struct iso_directory_record *isodir,
-			    struct iso_node *inop, struct iso_mnt *imp));
-int cd9660_rrip_getname __P((struct iso_directory_record *isodir,
+int cd9660_rrip_analyze(struct iso_directory_record *isodir,
+			    struct iso_node *inop, struct iso_mnt *imp);
+int cd9660_rrip_getname(struct iso_directory_record *isodir,
 			    char *outbuf, u_short *outlen,
-			    ino_t *inump, struct iso_mnt *imp));
-int cd9660_rrip_getsymname __P((struct iso_directory_record *isodir,
+			    ino_t *inump, struct iso_mnt *imp);
+int cd9660_rrip_getsymname(struct iso_directory_record *isodir,
 			       char *outbuf, u_short *outlen,
-			       struct iso_mnt *imp));
-int cd9660_rrip_offset __P((struct iso_directory_record *isodir,
-			   struct iso_mnt *imp));
+			       struct iso_mnt *imp);
+int cd9660_rrip_offset(struct iso_directory_record *isodir,
+			   struct iso_mnt *imp);
+
+#endif /* _ISOFS_CD9660_ISO_RRIP_H_ */

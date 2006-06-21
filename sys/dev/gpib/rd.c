@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.5 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: rd.c,v 1.5.4.1 2006/06/21 15:02:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.5 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.5.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "rnd.h"
 
@@ -182,7 +182,7 @@ struct	rd_softc {
 	u_int8_t *sc_addr;
 	int	sc_resid;
 	struct	rd_iocmd sc_ioc;
-	struct	bufq_state sc_tab;
+	struct	bufq_state *sc_tab;
 	int	sc_active;
 	int	sc_errcnt;
 
@@ -352,7 +352,7 @@ rdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct rd_softc *sc = (struct rd_softc *)self;
+	struct rd_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
 	struct cs80_description csd;
 	char name[7];
@@ -442,7 +442,7 @@ rdattach(parent, self, aux)
 	    rdidentinfo[type].ri_ntpc, rdidentinfo[type].ri_nblocks,
 	    DEV_BSIZE);
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -475,7 +475,7 @@ rdattach(parent, self, aux)
 }
 
 /*
- * Read or constuct a disklabel
+ * Read or construct a disklabel
  */
 int
 rdgetinfo(sc)
@@ -492,7 +492,7 @@ rdgetinfo(sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	msg = readdisklabel(RDMAKEDEV(0, sc->sc_dev.dv_unit, RAW_PART),
+	msg = readdisklabel(RDMAKEDEV(0, device_unit(&sc->sc_dev), RAW_PART),
 	    rdstrategy, lp, NULL);
 	if (msg == NULL)
 		return (0);
@@ -662,7 +662,7 @@ rdstrategy(bp)
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		rdustart(sc);
@@ -698,7 +698,7 @@ rdustart(sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (gpibrequest(sc->sc_ic, sc->sc_hdl))
@@ -712,11 +712,11 @@ rdfinish(sc, bp)
 {
 
 	sc->sc_errcnt = 0;
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if ((bp = BUFQ_PEEK(&sc->sc_tab)) != NULL)
+	if ((bp = BUFQ_PEEK(sc->sc_tab)) != NULL)
 		return (bp);
 	sc->sc_active = 0;
 	if (sc->sc_flags & RDF_WANTED) {
@@ -758,7 +758,7 @@ void
 rdstart(sc)
 	struct rd_softc *sc;
 {
-	struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
+	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
 	int part, slave, punit;
 
 	slave = sc->sc_slave;
@@ -785,7 +785,7 @@ again:
 	    sizeof(sc->sc_ioc)-1) == sizeof(sc->sc_ioc)-1) {
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dk);
-		sc->sc_dk.dk_seek++;
+		iostat_seek(sc->sc_dk.dk_stats);
 		gpibawait(sc->sc_ic);
 		return;
 	}
@@ -802,7 +802,7 @@ again:
 	     sc->sc_errcnt));
 
 	sc->sc_flags &= ~RDF_SEEK;
-	cs80reset(sc->sc_dev.dv_parent, slave, punit);
+	cs80reset(device_parent(&sc->sc_dev), slave, punit);
 	if (sc->sc_errcnt++ < RDRETRY)
 		goto again;
 	printf("%s: rdstart err: cmd 0x%x sect %uld blk %" PRId64 " len %d\n",
@@ -828,7 +828,7 @@ rdintr(sc)
 	int rv, dir, restart, slave;
 
 	slave = sc->sc_slave;
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 
 	DPRINTF(RDB_FOLLOW, ("rdintr(%s): bp %p, %c, flags %x\n",
 	    sc->sc_dev.dv_xname, bp, (bp->b_flags & B_READ) ? 'R' : 'W',
@@ -891,9 +891,10 @@ rderror(sc)
 
 	DPRINTF(RDB_FOLLOW, ("rderror: sc=%p\n", sc));
 
-	if (cs80status(sc->sc_dev.dv_parent, sc->sc_slave,
+	if (cs80status(device_parent(&sc->sc_dev), sc->sc_slave,
 	    sc->sc_punit, &css)) {
-		cs80reset(sc->sc_dev.dv_parent, sc->sc_slave, sc->sc_punit);
+		cs80reset(device_parent(&sc->sc_dev), sc->sc_slave,
+		    sc->sc_punit);
 		return (1);
 	}
 #ifdef DEBUG
@@ -913,7 +914,8 @@ rderror(sc)
 	if (css.c_fef & FEF_REXMT)
 		return (1);
 	if (css.c_fef & FEF_PF) {
-		cs80reset(sc->sc_dev.dv_parent, sc->sc_slave, sc->sc_punit);
+		cs80reset(device_parent(&sc->sc_dev), sc->sc_slave,
+		    sc->sc_punit);
 		return (1);
 	}
 	/*
@@ -944,7 +946,7 @@ rderror(sc)
 	/*
 	 * First conjure up the block number at which the error occurred.
  	 */
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	pbn = sc->sc_dk.dk_label->d_partitions[RDPART(bp->b_dev)].p_offset;
 	if ((css.c_fef & FEF_CU) || (css.c_fef & FEF_DR) ||
 	    (css.c_ief & IEF_RRMASK)) {

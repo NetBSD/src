@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.45 2005/06/05 23:10:25 thorpej Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.45.2.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45 2005/06/05 23:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45.2.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,40 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45 2005/06/05 23:10:25 thorpej Exp $
 #include <sys/pool.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
-POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
+/*
+ * The lockf structure is a kernel structure which contains the information
+ * associated with a byte range lock.  The lockf structures are linked into
+ * the inode structure. Locks are sorted by the starting byte of the lock for
+ * efficiency.
+ *
+ * lf_next is used for two purposes, depending on whether the lock is
+ * being held, or is in conflict with an existing lock.  If this lock
+ * is held, it indicates the next lock on the same vnode.
+ * For pending locks, if lock->lf_next is non-NULL, then lock->lf_block
+ * must be queued on the lf_blkhd TAILQ of lock->lf_next.
+ */
+
+TAILQ_HEAD(locklist, lockf);
+
+struct lockf {
+	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
+	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
+	off_t	lf_start;	 /* The byte # of the start of the lock */
+	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
+	void	*lf_id;		 /* process or file description holding lock */
+	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
+	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
+	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
+	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
+	uid_t	lf_uid;		 /* User ID responsible */
+};
+
+/* Maximum length of sleep chains to traverse to try and detect deadlock. */
+#define MAXDEPTH 50
+
+static POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
     &pool_allocator_nointr);
 
 /*
@@ -60,7 +92,6 @@ int maxlockdepth = MAXDEPTH;
 int	lockf_debug = 0;
 #endif
 
-#define NOLOCKF (struct lockf *)0
 #define SELF	0x1
 #define OTHERS	0x2
 
@@ -202,7 +233,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 	off_t start, end;
 
 	*overlap = lf;
-	if (lf == NOLOCKF)
+	if (lf == NULL)
 		return 0;
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 2)
@@ -210,7 +241,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 #endif /* LOCKF_DEBUG */
 	start = lock->lf_start;
 	end = lock->lf_end;
-	while (lf != NOLOCKF) {
+	while (lf != NULL) {
 		if (((type == SELF) && lf->lf_id != lock->lf_id) ||
 		    ((type == OTHERS) && lf->lf_id == lock->lf_id)) {
 			*prev = &lf->lf_next;
@@ -355,7 +386,7 @@ lf_wakelock(struct lockf *listhead)
 	while ((wakelock = TAILQ_FIRST(&listhead->lf_blkhd))) {
 		KASSERT(wakelock->lf_next == listhead);
 		TAILQ_REMOVE(&listhead->lf_blkhd, wakelock, lf_block);
-		wakelock->lf_next = NOLOCKF;
+		wakelock->lf_next = NULL;
 #ifdef LOCKF_DEBUG
 		if (lockf_debug & 2)
 			lf_print("lf_wakelock: awakening", wakelock);
@@ -378,7 +409,7 @@ lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 	struct lockf *overlap, **prev;
 	int ovcase;
 
-	if (lf == NOLOCKF)
+	if (lf == NULL)
 		return 0;
 #ifdef LOCKF_DEBUG
 	if (unlock->lf_type != F_UNLCK)
@@ -457,7 +488,7 @@ lf_getblock(struct lockf *lock)
 		 */
 		lf = overlap->lf_next;
 	}
-	return NOLOCKF;
+	return NULL;
 }
 
 /*
@@ -509,23 +540,38 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
 			struct lwp *wlwp;
-			__volatile const struct lockf *waitblock;
+			volatile const struct lockf *waitblock;
 			int i = 0;
+			struct proc *p;
 
-			/*
-			 * The block is waiting on something.  if_lwp will be
-			 * 0 once the lock is granted, so we terminate the
-			 * loop if we find this.
-			 */
-			wlwp = block->lf_lwp;
-			while (wlwp && (i++ < maxlockdepth)) {
+			p = (struct proc *)block->lf_id;
+			KASSERT(p != NULL);
+			while (i++ < maxlockdepth) {
+				simple_lock(&p->p_lock);
+				if (p->p_nlwps > 1) {
+					simple_unlock(&p->p_lock);
+					break;
+				}
+				wlwp = LIST_FIRST(&p->p_lwps);
+				if (wlwp->l_wmesg != lockstr) {
+					simple_unlock(&p->p_lock);
+					break;
+				}
+				simple_unlock(&p->p_lock);
 				waitblock = wlwp->l_wchan;
+				if (waitblock == NULL) {
+					/*
+					 * this lwp just got up but
+					 * not returned from ltsleep yet.
+					 */
+					break;
+				}
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)
 					break;
-				wlwp = waitblock->lf_lwp;
-				if (wlwp == lock->lf_lwp) {
+				p = (struct proc *)waitblock->lf_id;
+				if (p == curproc) {
 					lf_free(lock);
 					return EDEADLK;
 				}
@@ -571,11 +617,11 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		 * blocked list) and/or by another process
 		 * releasing a lock (in which case we have already
 		 * been removed from the blocked list and our
-		 * lf_next field set to NOLOCKF).
+		 * lf_next field set to NULL).
 		 */
-		if (lock->lf_next != NOLOCKF) {
+		if (lock->lf_next != NULL) {
 			TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock, lf_block);
-			lock->lf_next = NOLOCKF;
+			lock->lf_next = NULL;
 		}
 		if (error) {
 			lf_free(lock);
@@ -590,7 +636,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 	 * Skip over locks owned by other processes.
 	 * Handle any locks that overlap and are owned by ourselves.
 	 */
-	lock->lf_lwp = 0;
 	prev = head;
 	block = *head;
 	needtolink = 1;
@@ -791,11 +836,11 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		/*
 		 * XXX for F_UNLCK case, we can re-use lock.
 		 */
-		if ((fl->l_type & F_FLOCK) == 0) {
+		if ((ap->a_flags & F_FLOCK) == 0) {
 			/*
 			 * byte-range lock might need one more lock.
 			 */
-			sparelock = lf_alloc(p->p_ucred->cr_uid, 0);
+			sparelock = lf_alloc(kauth_cred_geteuid(p->p_cred), 0);
 			if (sparelock == NULL) {
 				error = ENOMEM;
 				goto quit;
@@ -812,7 +857,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		return EINVAL;
 	}
 
-	lock = lf_alloc(p->p_ucred->cr_uid, ap->a_op != F_UNLCK ? 1 : 2);
+	lock = lf_alloc(kauth_cred_geteuid(p->p_cred), ap->a_op != F_UNLCK ? 1 : 2);
 	if (lock == NULL) {
 		error = ENOMEM;
 		goto quit;
@@ -855,7 +900,6 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		KASSERT(curproc == (struct proc *)ap->a_id);
 	}
 	lock->lf_id = (struct proc *)ap->a_id;
-	lock->lf_lwp = curlwp;
 
 	/*
 	 * Do the requested operation.

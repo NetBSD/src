@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.15 2004/08/27 04:56:16 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.15.12.1 2006/06/21 15:11:50 yamt Exp $	*/
 /*	$KAME: key_var.h,v 1.12 2001/11/06 03:48:29 itojun Exp $	*/
 
 /*
@@ -81,4 +81,4 @@
 #define _KEYBUF(key)	((u_int8_t *)(key) + sizeof(struct sadb_key))
 #endif /*_KERNEL*/
 
-#endif /* _NETKEY_KEY_VAR_H_ */
+#endif /* !_NETKEY_KEY_VAR_H_ */

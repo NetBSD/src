@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2005/05/16 21:17:11 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.23.2.1 2006/06/21 14:59:12 yamt Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,6 +82,8 @@
 #include <compat/linux/common/linux_mmap.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+%%
 
 0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
@@ -195,7 +197,11 @@
 			    struct stat43 *up); } oolstat
 85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
 			    int count); }
+#ifdef EXEC_AOUT
 86	STD		{ int linux_sys_uselib(const char *path); }
+#else
+86	UNIMPL		sys_uselib
+#endif
 87	STD		{ int linux_sys_swapon(char *name); }
 88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
@@ -209,7 +215,7 @@
 93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
 95	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
-96	NOARGS		{ int sys_getpriority(int which, int who); }
+96	STD		{ int linux_sys_getpriority(int which, int who); }
 97	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 98	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.36.6.1 2006/06/21 15:12:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36.6.1 2006/06/21 15:12:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -95,14 +96,13 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp
  */
 /* ARGSUSED */
 int
-ext2fs_read(v)
-	void *v;
+ext2fs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct inode *ip;
@@ -143,6 +143,8 @@ ext2fs_read(v)
 		goto out;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ext2fs_size(ip) - uio->uio_offset,
 			    uio->uio_resid);
@@ -150,7 +152,7 @@ ext2fs_read(v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_READ);
+			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -209,7 +211,7 @@ out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -218,14 +220,13 @@ out:
  * Vnode op for writing.
  */
 int
-ext2fs_write(v)
-	void *v;
+ext2fs_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct uio *uio;
@@ -281,7 +282,7 @@ ext2fs_write(v)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
 	 */
-	p = uio->uio_procp;
+	p = curproc;
 	if (vp->v_type == VREG && p &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
@@ -307,7 +308,7 @@ ext2fs_write(v)
 			if (error)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_WRITE);
+			    &bytelen, UVM_ADV_NORMAL, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -393,17 +394,17 @@ ext2fs_write(v)
 
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
+	if (resid > uio->uio_resid && ap->a_cred && kauth_cred_geteuid(ap->a_cred) != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    uio->uio_procp);
+		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		    p);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ext2fs_size(ip));
 	return (error);
 }

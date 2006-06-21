@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.45 2004/06/11 04:10:10 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.45.12.1 2006/06/21 15:11:08 yamt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -61,12 +61,14 @@
  *	@(#)in.h	8.3 (Berkeley) 1/3/94
  */
 
+#ifndef _NETINET6_IN6_H_
+#define _NETINET6_IN6_H_
+
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
 #error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
 #endif
 
-#ifndef _NETINET6_IN6_H_
-#define _NETINET6_IN6_H_
+#include <sys/socket.h>
 
 /*
  * Identification of the network protocol stack
@@ -278,6 +280,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #ifdef _KERNEL	/* XXX nonstandard */
 #define IPV6_ADDR_SCOPE_NODELOCAL	0x01
+#define IPV6_ADDR_SCOPE_INTFACELOCAL	0x01
 #define IPV6_ADDR_SCOPE_LINKLOCAL	0x02
 #define IPV6_ADDR_SCOPE_SITELOCAL	0x05
 #define IPV6_ADDR_SCOPE_ORGLOCAL	0x08	/* just used in this file */
@@ -317,6 +320,9 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_ADDR_MC_NODELOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_NODELOCAL))
+#define IN6_IS_ADDR_MC_INTFACELOCAL(a)	\
+	(IN6_IS_ADDR_MULTICAST(a) &&	\
+	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_INTFACELOCAL))
 #define IN6_IS_ADDR_MC_LINKLOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (IPV6_ADDR_MC_SCOPE(a) == IPV6_ADDR_SCOPE_LINKLOCAL))
@@ -355,13 +361,16 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 	((IN6_IS_ADDR_LINKLOCAL(a)) ||	\
 	 (IN6_IS_ADDR_MC_LINKLOCAL(a)))
 
+#define	IN6_IS_SCOPE_EMBEDDABLE(__a)	\
+    (IN6_IS_SCOPE_LINKLOCAL(__a) || IN6_IS_ADDR_MC_INTFACELOCAL(__a))
+
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time.tv_sec - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_pltime)
 #define IFA6_IS_INVALID(a) \
 	((a)->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time.tv_sec - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_vltime)
 #endif
 
@@ -396,13 +405,16 @@ struct route_in6 {
 #if defined(_NETBSD_SOURCE)
 #define ICMP6_FILTER		18 /* icmp6_filter; icmp6 filter */
 #endif
-#define IPV6_PKTINFO		19 /* bool; send/rcv if, src/dst addr */
-#define IPV6_HOPLIMIT		20 /* bool; hop limit */
-#define IPV6_NEXTHOP		21 /* bool; next hop addr */
-#define IPV6_HOPOPTS		22 /* bool; hop-by-hop option */
-#define IPV6_DSTOPTS		23 /* bool; destination option */
-#define IPV6_RTHDR		24 /* bool; routing header */
-#define IPV6_PKTOPTIONS		25 /* buf/cmsghdr; set/get IPv6 options */
+/* RFC2292 options */
+#ifdef _KERNEL
+#define IPV6_2292PKTINFO	19 /* bool; send/recv if, src/dst addr */
+#define IPV6_2292HOPLIMIT	20 /* bool; hop limit */
+#define IPV6_2292NEXTHOP	21 /* bool; next hop addr */
+#define IPV6_2292HOPOPTS	22 /* bool; hop-by-hop option */
+#define IPV6_2292DSTOPTS	23 /* bool; destinaion option */
+#define IPV6_2292RTHDR		24 /* bool; routing header */
+#define IPV6_2292PKTOPTIONS	25 /* buf/cmsghdr; set/get IPv6 options */
+#endif
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */
 #define IPV6_V6ONLY		27 /* bool; make AF_INET6 sockets v6 only */
 
@@ -410,7 +422,38 @@ struct route_in6 {
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
+
+/* new socket options introduced in RFC3542 */
+#define IPV6_RTHDRDSTOPTS       35 /* ip6_dest; send dst option before rthdr */
+
+#define IPV6_RECVPKTINFO        36 /* bool; recv if, dst addr */
+#define IPV6_RECVHOPLIMIT       37 /* bool; recv hop limit */
+#define IPV6_RECVRTHDR          38 /* bool; recv routing header */
+#define IPV6_RECVHOPOPTS        39 /* bool; recv hop-by-hop option */
+#define IPV6_RECVDSTOPTS        40 /* bool; recv dst option after rthdr */
+#ifdef _KERNEL
+#define IPV6_RECVRTHDRDSTOPTS   41 /* bool; recv dst option before rthdr */
+#endif
 #define IPV6_USE_MIN_MTU	42 /* bool; send packets at the minimum MTU */
+#define IPV6_RECVPATHMTU	43 /* bool; notify an according MTU */
+#define IPV6_PATHMTU		44 /* mtuinfo; get the current path MTU (sopt),
+				      4 bytes int; MTU notification (cmsg) */
+
+/* more new socket options introduced in RFC3542 */
+#define IPV6_PKTINFO		46 /* in6_pktinfo; send if, src addr */
+#define IPV6_HOPLIMIT		47 /* int; send hop limit */
+#define IPV6_NEXTHOP		48 /* sockaddr; next hop addr */
+#define IPV6_HOPOPTS		49 /* ip6_hbh; send hop-by-hop option */
+#define IPV6_DSTOPTS		50 /* ip6_dest; send dst option befor rthdr */
+#define IPV6_RTHDR		51 /* ip6_rthdr; send routing header */
+
+#define IPV6_RECVTCLASS		57 /* bool; recv traffic class values */
+#ifdef _KERNEL
+#define IPV6_OTCLASS		58 /* u_int8_t; send traffic class value */
+#endif
+
+#define IPV6_TCLASS		61 /* int; send traffic class value */
+#define IPV6_DONTFRAG		62 /* bool; disable IPv6 fragmentation */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
@@ -437,6 +480,14 @@ struct ipv6_mreq {
 struct in6_pktinfo {
 	struct in6_addr	ipi6_addr;	/* src/dst IPv6 address */
 	unsigned int	ipi6_ifindex;	/* send/recv interface index */
+};
+
+/*
+ * Control structure for IPV6_RECVPATHMTU socket option.
+ */
+struct ip6_mtuinfo {
+	struct sockaddr_in6 ip6m_addr;	/* or sockaddr_storage? */
+	uint32_t ip6m_mtu;
 };
 
 /*
@@ -537,7 +588,9 @@ struct in6_pktinfo {
 #define IPV6CTL_ANONPORTMAX	29	/* maximum ephemeral port */
 #define IPV6CTL_LOWPORTMIN	30	/* minimum reserved port */
 #define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
-/* 32 to 40: resrved */
+/* 32 to 38: reserved */
+#define IPV6CTL_USE_DEFAULTZONE	39	/* use default scope zone */
+/* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_IFQ		42	/* ip6intrq node */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
@@ -551,7 +604,7 @@ struct in6_pktinfo {
 	{ "hlim", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
 	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 	{ 0, 0 }, \
 	{ "mrtproto", CTLTYPE_INT }, \
 	{ "maxfragpackets", CTLTYPE_INT }, \
@@ -646,12 +699,18 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 	return (sum);
 }
 
+struct mbuf;
+struct ifnet;
 int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
+void	in6_delayed_cksum __P((struct mbuf *));
 int	in6_localaddr __P((struct in6_addr *));
 int	in6_addrscope __P((struct in6_addr *));
-struct	in6_ifaddr *in6_ifawithscope __P((struct ifnet *, struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithifp __P((struct ifnet *, struct in6_addr *));
 extern void in6_if_up __P((struct ifnet *));
+#ifndef __FreeBSD__
+extern int in6_src_sysctl __P((void *, size_t *, void *, size_t));
+#endif
+extern void addrsel_policy_init __P((void));
 extern	u_char	ip6_protox[];
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
@@ -693,6 +752,24 @@ extern int inet6_rthdr_reverse __P((const struct cmsghdr *, struct cmsghdr *));
 extern int inet6_rthdr_segments __P((const struct cmsghdr *));
 extern struct in6_addr *inet6_rthdr_getaddr __P((struct cmsghdr *, int));
 extern int inet6_rthdr_getflags __P((const struct cmsghdr *, int));
+
+extern int inet6_opt_init __P((void *, socklen_t));
+extern int inet6_opt_append __P((void *, socklen_t, int, uint8_t,
+		socklen_t, uint8_t, void **));
+extern int inet6_opt_finish __P((void *, socklen_t, int));
+extern int inet6_opt_set_val __P((void *, int, void *, socklen_t));
+
+extern int inet6_opt_next __P((void *, socklen_t, int, uint8_t *,
+		socklen_t *, void **));
+extern int inet6_opt_find __P((void *, socklen_t, int, uint8_t,
+		socklen_t *, void **));
+extern int inet6_opt_get_val __P((void *, int, void *, socklen_t));
+extern socklen_t inet6_rth_space __P((int, int));
+extern void *inet6_rth_init __P((void *, socklen_t, int, int));
+extern int inet6_rth_add __P((void *, const struct in6_addr *));
+extern int inet6_rth_reverse __P((const void *, void *));
+extern int inet6_rth_segments __P((const void *));
+extern struct in6_addr *inet6_rth_getaddr __P((const void *, int));
 __END_DECLS
 #endif /* _NETBSD_SOURCE */
 

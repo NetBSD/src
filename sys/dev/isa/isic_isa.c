@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.22 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.22.4.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -381,7 +381,7 @@ static int
 isicattach(int flags, struct isic_softc *sc)
 {
 	int ret = 0;
-	char *drvid;
+	const char *drvid;
 
 #ifdef __FreeBSD__
 
@@ -405,7 +405,7 @@ isicattach(int flags, struct isic_softc *sc)
 
 #endif /* __FreeBSD__ */
 
-  	static char *ISACversion[] = {
+  	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		"2085 Version B1",
 		"2085 Version B2",
@@ -413,7 +413,7 @@ isicattach(int flags, struct isic_softc *sc)
 		"Unknown Version"
 	};
 
-	static char *HSCXversion[] = {
+	static const char *HSCXversion[] = {
 		"82525 Version A1",
 		"Unknown (0x01)",
 		"82525 Version A2",
@@ -811,7 +811,7 @@ isic_isa_attach(parent, self, aux)
 {
 	struct isic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int flags = sc->sc_dev.dv_cfdata->cf_flags;
+	int flags = device_cfdata(&sc->sc_dev)->cf_flags;
 	int ret = 0, iobase, iosize, maddr, msize;
 	struct isic_attach_args args;
 

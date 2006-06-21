@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.48 2005/05/30 04:37:42 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.48.2.1 2006/06/21 15:02:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.48 2005/05/30 04:37:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.48.2.1 2006/06/21 15:02:51 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -228,8 +228,6 @@ static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
-static int	iop_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -486,10 +484,9 @@ iop_config_interrupts(struct device *self)
 	struct iop_softc *sc, *iop;
 	struct i2o_systab_entry *ste;
 	int rv, i, niop;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOPCF_NLOCS];
 
-	sc = (struct iop_softc *)self;
+	sc = device_private(self);
 	LIST_INIT(&sc->sc_iilist);
 
 	printf("%s: configuring...\n", sc->sc_dv.dv_xname);
@@ -534,7 +531,7 @@ iop_config_interrupts(struct device *self)
 				continue;
 
 			ste->orgid = iop->sc_status.orgid;
-			ste->iopid = iop->sc_dv.dv_unit + 2;
+			ste->iopid = device_unit(&iop->sc_dv) + 2;
 			ste->segnumber =
 			    htole32(le32toh(iop->sc_status.segnumber) & ~4095);
 			ste->iopcaps = iop->sc_status.iopcaps;
@@ -591,9 +588,9 @@ iop_config_interrupts(struct device *self)
 	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
-	ldesc->len = 1;
-	ldesc->locs[IOPCF_TID] = I2O_TID_IOP;
-	config_found_sm_loc(self, "iop", ldesc, &ia, iop_print, iop_submatch);
+	locs[IOPCF_TID] = I2O_TID_IOP;
+	config_found_sm_loc(self, "iop", locs, &ia, iop_print,
+		config_stdsubmatch);
 
 	/*
 	 * Start device configuration.
@@ -769,8 +766,10 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			if (ii->ii_tid == sc->sc_tidmap[i].it_tid)
 				break;
 		if (i == sc->sc_nlctent ||
-		    (sc->sc_tidmap[i].it_flags & IT_CONFIGURED) == 0)
+		    (sc->sc_tidmap[i].it_flags & IT_CONFIGURED) == 0) {
 			config_detach(ii->ii_dv, DETACH_FORCE);
+			continue;
+		}
 
 		/*
 		 * Tell initiators that existed before the re-configuration
@@ -803,8 +802,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 	struct device *dv;
 	int i, j, nent;
 	u_int usertid;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOPCF_NLOCS];
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
@@ -841,11 +839,10 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		if (ii != NULL)
 			continue;
 
-		ldesc->len = 1;
-		ldesc->locs[IOPCF_TID] = ia.ia_tid;
+		locs[IOPCF_TID] = ia.ia_tid;
 
-		dv = config_found_sm_loc(&sc->sc_dv, "iop", ldesc, &ia,
-					 iop_print, iop_submatch);
+		dv = config_found_sm_loc(&sc->sc_dv, "iop", locs, &ia,
+					 iop_print, config_stdsubmatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
 			strcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname);
@@ -900,18 +897,6 @@ iop_print(void *aux, const char *pnp)
 	}
 	aprint_normal(" tid %d", ia->ia_tid);
 	return (UNCONF);
-}
-
-static int
-iop_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[IOPCF_TID] != IOPCF_TID_DEFAULT &&
-	    cf->cf_loc[IOPCF_TID] != ldesc->locs[IOPCF_TID])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -1527,7 +1512,7 @@ iop_systab_set(struct iop_softc *sc)
 	mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_SYS_TAB_SET);
 	mf->msgictx = IOP_ICTX;
 	mf->msgtctx = im->im_tctx;
-	mf->iopid = (sc->sc_dv.dv_unit + 2) << 12;
+	mf->iopid = (device_unit(&sc->sc_dv) + 2) << 12;
 	mf->segnumber = 0;
 
 	mema[1] = sc->sc_status.desiredprivmemsize;
@@ -1787,15 +1772,18 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		/* Notify the initiator. */
 		if ((im->im_flags & IM_WAIT) != 0)
 			wakeup(im);
-		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL)
-			(*ii->ii_intr)(ii->ii_dv, im, rb);
+		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL) {
+			if (ii)
+				(*ii->ii_intr)(ii->ii_dv, im, rb);
+		}
 	} else {
 		/*
 		 * This initiator discards message wrappers.
 		 *
 		 * Simply pass the reply frame to the initiator.
 		 */
-		(*ii->ii_intr)(ii->ii_dv, NULL, rb);
+		if (ii)
+			(*ii->ii_intr)(ii->ii_dv, NULL, rb);
 	}
 
 	return (status);
@@ -2498,7 +2486,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag, int mode, struct proc *p)
+iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2514,7 +2502,7 @@ iopopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-iopclose(dev_t dev, int flag, int mode, struct proc *p)
+iopclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2525,7 +2513,7 @@ iopclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;
@@ -2538,7 +2526,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case IOPIOCPT:
-		return (iop_passthrough(sc, (struct ioppt *)data, p));
+		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 
 	case IOPIOCGSTATUS:
 		iov = (struct iovec *)data;

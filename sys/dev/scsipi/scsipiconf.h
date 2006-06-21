@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.100 2005/05/30 04:25:32 christos Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.100.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -500,7 +500,7 @@ struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
 	struct callout xs_callout;	/* callout for adapter use */
 	int	xs_control;		/* control flags */
-	__volatile int xs_status;	/* status flags */
+	volatile int xs_status;	/* status flags */
 	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
 	int	xs_retries;		/* the number of times to retry */
 	int	xs_requeuecnt;		/* number of requeues */
@@ -670,7 +670,7 @@ int	scsipi_thread_call_callback(struct scsipi_channel *,
 void	scsipi_async_event(struct scsipi_channel *,
 	    scsipi_async_event_t, void *);
 int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, caddr_t,
-	    int, struct proc *);
+	    int, struct lwp *);
 
 void	scsipi_print_xfer_mode(struct scsipi_periph *);
 void	scsipi_set_xfer_mode(struct scsipi_channel *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.31 2005/06/09 12:23:23 he Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.31.2.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.31 2005/06/09 12:23:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.31.2.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -119,7 +119,7 @@ ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ofdisk_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofdisk_softc *of = (void *)self;
+	struct ofdisk_softc *of = device_private(self);
 	struct ofbus_attach_args *oba = aux;
 	char child[64];
 	int l;
@@ -149,7 +149,7 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
+ofdisk_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 {
 	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of;
@@ -235,7 +235,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int
-ofdisk_close(dev_t dev, int flags, int fmt, struct proc *p)
+ofdisk_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 	int error;
@@ -340,7 +340,7 @@ ofdisk_write(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 	int error;
@@ -458,7 +458,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (OFDISK_FLOPPY_P(of))
 			return (ENOTTY);
 
-		return (dkwedge_list(&of->sc_dk, dkwl, p));
+		return (dkwedge_list(&of->sc_dk, dkwl, l));
 	    }
 
 	default:
@@ -488,7 +488,7 @@ ofdisk_size(dev_t dev)
 	omask = of->sc_dk.dk_openmask & (1 << part);
 	lp = of->sc_dk.dk_label;
 
-	if (omask == 0 && ofdisk_open(dev, 0, S_IFBLK, curproc) != 0)
+	if (omask == 0 && ofdisk_open(dev, 0, S_IFBLK, curlwp) != 0)
 		return -1;
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -497,7 +497,7 @@ ofdisk_size(dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && ofdisk_close(dev, 0, S_IFBLK, curproc) != 0)
+	if (omask == 0 && ofdisk_close(dev, 0, S_IFBLK, curlwp) != 0)
 		return -1;
 
 	return size;

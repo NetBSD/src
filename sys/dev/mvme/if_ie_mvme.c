@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.7 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.7.6.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.7 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.7.6.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,8 +281,8 @@ ie_pcctwo_attach(parent, self, args)
 	int rseg;
 
 	pa = (struct pcctwo_attach_args *) args;
-	ps = (struct ie_pcctwo_softc *) self;
-	sc = (struct ie_softc *) self;
+	ps = device_private(self);
+	sc = device_private(self);
 
 	/* Map the MPU controller registers in PCCTWO space */
 	ps->ps_bust = pa->pa_bust;

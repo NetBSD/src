@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.146 2005/06/09 02:19:59 atatat Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.146.2.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,11 +77,12 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include "fs_ffs.h"
 #include "opt_bufcache.h"
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146 2005/06/09 02:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146 2005/06/09 02:19:59 atatat Exp $")
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -122,25 +124,20 @@ static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
-static __inline struct buf *bio_doread(struct vnode *, daddr_t, int,
-    struct ucred *, int);
+static inline struct buf *bio_doread(struct vnode *, daddr_t, int,
+    kauth_cred_t, int);
 static int buf_lotsfree(void);
 static int buf_canrelease(void);
-static __inline u_long buf_mempoolidx(u_long);
-static __inline u_long buf_roundsize(u_long);
-static __inline caddr_t buf_malloc(size_t);
+static inline u_long buf_mempoolidx(u_long);
+static inline u_long buf_roundsize(u_long);
+static inline caddr_t buf_malloc(size_t);
 static void buf_mrelease(caddr_t, size_t);
-static __inline void binsheadfree(struct buf *, struct bqueue *);
-static __inline void binstailfree(struct buf *, struct bqueue *);
+static inline void binsheadfree(struct buf *, struct bqueue *);
+static inline void binstailfree(struct buf *, struct bqueue *);
 int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
 static int checkfreelist(struct buf *, struct bqueue *);
 #endif
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /*
  * Definitions for the buffer hash lists.
@@ -183,20 +180,22 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
 /*
  * Buffer pool for I/O buffers.
  */
-struct pool bufpool;
+static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
+    &pool_allocator_nointr);
+
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
-#define NMEMPOOLS 4
-#elif MAXBSIZE == 0x4000
 #define NMEMPOOLS 5
-#elif MAXBSIZE == 0x8000
+#elif MAXBSIZE == 0x4000
 #define NMEMPOOLS 6
-#else
+#elif MAXBSIZE == 0x8000
 #define NMEMPOOLS 7
+#else
+#define NMEMPOOLS 8
 #endif
 
-#define MEMPOOL_INDEX_OFFSET 10		/* smallest pool is 1k */
+#define MEMPOOL_INDEX_OFFSET 9	/* smallest pool is 512 bytes */
 #if (1 << (NMEMPOOLS + MEMPOOL_INDEX_OFFSET - 1)) != MAXBSIZE
 #error update vfs_bio buffer memory parameters
 #endif
@@ -285,7 +284,7 @@ checkfreelist(struct buf *bp, struct bqueue *dp)
  * Insq/Remq for the buffer hash lists.
  * Call with buffer queue locked.
  */
-static __inline void
+static inline void
 binsheadfree(struct buf *bp, struct bqueue *dp)
 {
 
@@ -295,7 +294,7 @@ binsheadfree(struct buf *bp, struct bqueue *dp)
 	bp->b_freelistindex = dp - bufqueues;
 }
 
-static __inline void
+static inline void
 binstailfree(struct buf *bp, struct bqueue *dp)
 {
 
@@ -378,17 +377,11 @@ bufinit(void)
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-					  bufmem_valimit, VM_MAP_PAGEABLE,
-					  FALSE, 0);
+					  bufmem_valimit, 0, FALSE, 0);
 		if (buf_map == NULL)
 			panic("bufinit: cannot allocate submap");
 	} else
 		buf_map = kernel_map;
-
-	/*
-	 * Initialize the buffer pools.
-	 */
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 	/* On "small" machines use small pool page sizes where possible */
 	use_std = (physmem < atop(16*1024*1024));
@@ -401,6 +394,7 @@ bufinit(void)
 	use_std = 1;
 #endif
 
+	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
@@ -504,7 +498,7 @@ buf_canrelease(void)
 /*
  * Buffer memory allocation helper functions
  */
-static __inline u_long
+static inline u_long
 buf_mempoolidx(u_long size)
 {
 	u_int n = 0;
@@ -520,14 +514,14 @@ buf_mempoolidx(u_long size)
 	return n;
 }
 
-static __inline u_long
+static inline u_long
 buf_roundsize(u_long size)
 {
 	/* Round up to nearest power of 2 */
 	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
 }
 
-static __inline caddr_t
+static inline caddr_t
 buf_malloc(size_t size)
 {
 	u_int n = buf_mempoolidx(size);
@@ -565,8 +559,8 @@ buf_mrelease(caddr_t addr, size_t size)
 /*
  * bread()/breadn() helper.
  */
-static __inline struct buf *
-bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+static inline struct buf *
+bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
     int async)
 {
 	struct buf *bp;
@@ -627,7 +621,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
  * This algorithm described in Bach (p.54).
  */
 int
-bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
     struct buf **bpp)
 {
 	struct buf *bp;
@@ -645,7 +639,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, struct ucred *cred, struct buf **bpp)
+    int *rasizes, int nrablks, kauth_cred_t cred, struct buf **bpp)
 {
 	struct buf *bp;
 	int i;
@@ -675,7 +669,7 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
  */
 int
 breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, struct ucred *cred, struct buf **bpp)
+    int rabsize, kauth_cred_t cred, struct buf **bpp)
 {
 
 	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));
@@ -993,13 +987,13 @@ already_queued:
 	/* Allow disk interrupts. */
 	simple_unlock(&bp->b_interlock);
 	simple_unlock(&bqueue_slock);
+	splx(s);
 	if (bp->b_bufsize <= 0) {
 #ifdef DEBUG
 		memset((char *)bp, 0, sizeof(*bp));
 #endif
 		pool_put(&bufpool, bp);
 	}
-	splx(s);
 }
 
 /*
@@ -1169,6 +1163,15 @@ allocbuf(struct buf *bp, int size, int preserve)
 		 * Need to trim overall memory usage.
 		 */
 		while (buf_canrelease()) {
+			if (curcpu()->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD) {
+				simple_unlock(&bqueue_slock);
+				splx(s);
+				preempt(1);
+				s = splbio();
+				simple_lock(&bqueue_slock);
+			}
+
 			if (buf_trim() == 0)
 				break;
 		}
@@ -1350,11 +1353,8 @@ biowait(struct buf *bp)
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		ltsleep(bp, PRIBIO + 1, "biowait", 0, &bp->b_interlock);
 
-	/* check for interruption of I/O (e.g. via NFS), then errors. */
-	if (ISSET(bp->b_flags, B_EINTR)) {
-		CLR(bp->b_flags, B_EINTR);
-		error = EINTR;
-	} else if (ISSET(bp->b_flags, B_ERROR))
+	/* check errors. */
+	if (ISSET(bp->b_flags, B_ERROR))
 		error = bp->b_error ? bp->b_error : EIO;
 	else
 		error = 0;
@@ -1731,3 +1731,144 @@ vfs_bufstats(void)
 	}
 }
 #endif /* DEBUG */
+
+/* ------------------------------ */
+
+static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
+
+static struct buf *
+getiobuf1(int prflags)
+{
+	struct buf *bp;
+	int s;
+
+	s = splbio();
+	bp = pool_get(&bufiopool, prflags);
+	splx(s);
+	if (bp != NULL) {
+		BUF_INIT(bp);
+	}
+	return bp;
+}
+
+struct buf *
+getiobuf(void)
+{
+
+	return getiobuf1(PR_WAITOK);
+}
+
+struct buf *
+getiobuf_nowait(void)
+{
+
+	return getiobuf1(PR_NOWAIT);
+}
+
+void
+putiobuf(struct buf *bp)
+{
+	int s;
+
+	s = splbio();
+	pool_put(&bufiopool, bp);
+	splx(s);
+}
+
+/*
+ * nestiobuf_iodone: b_iodone callback for nested buffers.
+ */
+
+static void
+nestiobuf_iodone(struct buf *bp)
+{
+	struct buf *mbp = bp->b_private;
+	int error;
+	int donebytes;
+
+	KASSERT(bp->b_bcount <= bp->b_bufsize);
+	KASSERT(mbp != bp);
+
+	error = 0;
+	if ((bp->b_flags & B_ERROR) != 0) {
+		error = EIO;
+		/* check if an error code was returned */
+		if (bp->b_error)
+			error = bp->b_error;
+	} else if ((bp->b_bcount < bp->b_bufsize) || (bp->b_resid > 0)) {
+		/*
+		 * Not all got transfered, raise an error. We have no way to
+		 * propagate these conditions to mbp.
+		 */
+		error = EIO;
+	}
+
+	donebytes = bp->b_bufsize;
+
+	putiobuf(bp);
+	nestiobuf_done(mbp, donebytes, error);
+}
+
+/*
+ * nestiobuf_setup: setup a "nested" buffer.
+ *
+ * => 'mbp' is a "master" buffer which is being divided into sub pieces.
+ * => 'bp' should be a buffer allocated by getiobuf or getiobuf_nowait.
+ * => 'offset' is a byte offset in the master buffer.
+ * => 'size' is a size in bytes of this nested buffer.
+ */
+
+void
+nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
+{
+	const int b_read = mbp->b_flags & B_READ;
+	struct vnode *vp = mbp->b_vp;
+
+	KASSERT(mbp->b_bcount >= offset + size);
+	bp->b_vp = vp;
+	bp->b_flags = B_BUSY | B_CALL | B_ASYNC | b_read;
+	bp->b_iodone = nestiobuf_iodone;
+	bp->b_data = mbp->b_data + offset;
+	bp->b_resid = bp->b_bcount = size;
+	bp->b_bufsize = bp->b_bcount;
+	bp->b_private = mbp;
+	BIO_COPYPRIO(bp, mbp);
+	if (!b_read && vp != NULL) {
+		int s;
+
+		s = splbio();
+		V_INCR_NUMOUTPUT(vp);
+		splx(s);
+	}
+}
+
+/*
+ * nestiobuf_done: propagate completion to the master buffer.
+ *
+ * => 'donebytes' specifies how many bytes in the 'mbp' is completed.
+ * => 'error' is an errno(2) that 'donebytes' has been completed with.
+ */
+
+void
+nestiobuf_done(struct buf *mbp, int donebytes, int error)
+{
+	int s;
+
+	if (donebytes == 0) {
+		return;
+	}
+	s = splbio();
+	KASSERT(mbp->b_resid >= donebytes);
+	if (error) {
+		mbp->b_flags |= B_ERROR;
+		mbp->b_error = error;
+	}
+	mbp->b_resid -= donebytes;
+	if (mbp->b_resid == 0) {
+		if ((mbp->b_flags & B_ERROR) != 0) {
+			mbp->b_resid = mbp->b_bcount; /* be conservative */
+		}
+		biodone(mbp);
+	}
+	splx(s);
+}

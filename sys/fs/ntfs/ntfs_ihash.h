@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.h,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.h,v 1.1.20.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,12 +27,15 @@
  *
  *	Id: ntfs_ihash.h,v 1.3 1999/05/12 09:42:59 semenu Exp
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 extern struct lock ntfs_hashlock;
-void ntfs_nthashinit __P((void));
-void ntfs_nthashreinit __P((void));
-void ntfs_nthashdone __P((void));
-struct ntnode   *ntfs_nthashlookup __P((dev_t, ino_t));
-struct ntnode   *ntfs_nthashget __P((dev_t, ino_t));
-void ntfs_nthashins __P((struct ntnode *));
-void ntfs_nthashrem __P((struct ntnode *));
+void ntfs_nthashinit(void);
+void ntfs_nthashreinit(void);
+void ntfs_nthashdone(void);
+struct ntnode   *ntfs_nthashlookup(dev_t, ino_t);
+struct ntnode   *ntfs_nthashget(dev_t, ino_t);
+void ntfs_nthashins(struct ntnode *);
+void ntfs_nthashrem(struct ntnode *);

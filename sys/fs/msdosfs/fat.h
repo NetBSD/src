@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.2 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: fat.h,v 1.2.4.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -47,6 +47,8 @@
  * October 1992
  */
 
+#ifndef _MSDOSFS_FAT_H_
+#define _MSDOSFS_FAT_H_
 /*
  * Some useful cluster numbers.
  */
@@ -104,13 +106,14 @@
  */
 #define	DE_CLEAR	1	/* Zero out the blocks allocated */
 
-int pcbmap __P((struct denode *, u_long, daddr_t *, u_long *, int *));
-int clusterfree __P((struct msdosfsmount *, u_long, u_long *));
-int clusteralloc __P((struct msdosfsmount *, u_long, u_long,u_long *,u_long *));
-int extendfile __P((struct denode *, u_long, struct buf **, u_long *, int));
-int fatentry __P((int, struct msdosfsmount *, u_long, u_long *, u_long));
-void fc_purge __P((struct denode *, u_int));
-void fc_lookup __P((struct denode *, u_long, u_long *, u_long *));
-int fillinusemap __P((struct msdosfsmount *));
-int freeclusterchain __P((struct msdosfsmount *, u_long));
+int pcbmap(struct denode *, u_long, daddr_t *, u_long *, int *);
+int clusterfree(struct msdosfsmount *, u_long, u_long *);
+int clusteralloc(struct msdosfsmount *, u_long, u_long,u_long *,u_long *);
+int extendfile(struct denode *, u_long, struct buf **, u_long *, int);
+int fatentry(int, struct msdosfsmount *, u_long, u_long *, u_long);
+void fc_purge(struct denode *, u_int);
+void fc_lookup(struct denode *, u_long, u_long *, u_long *);
+int fillinusemap(struct msdosfsmount *);
+int freeclusterchain(struct msdosfsmount *, u_long);
 #endif	/* _KERNEL */
+#endif /* _MSDOSFS_FAT_H_ */

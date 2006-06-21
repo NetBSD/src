@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.26 2005/06/06 06:06:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.26.2.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -565,14 +565,6 @@ encap_attach(int af, int proto,
 	default:
 		goto fail;
 	}
-
-#ifdef DIAGNOSTIC
-	/* if l exceeds the value sa_len can possibly express, it's wrong. */
-	if (l > (1 << (8 * sizeof(ep->addrpack->sa_len)))) {
-		error = EINVAL;
-		goto fail;
-	}
-#endif
 
 	/* M_NETADDR ok? */
 	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT|M_ZERO);

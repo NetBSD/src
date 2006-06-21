@@ -1,4 +1,7 @@
-/*	$NetBSD: tp_states.h,v 1.4 1994/06/29 06:40:31 cgd Exp $	*/
+/*	$NetBSD: tp_states.h,v 1.4.84.1 2006/06/21 15:11:37 yamt Exp $	*/
+
+#ifndef _NETISO_TP_STATES_H_
+#define _NETISO_TP_STATES_H_
 
 #define ST_ERROR 0x0
 #define TP_CLOSED 0x1
@@ -11,3 +14,5 @@
 #define TP_CONFIRMING 0x8
 
 #define tp_NSTATES 0x9
+
+#endif /* !_NETISO_TP_STATES_H_ */

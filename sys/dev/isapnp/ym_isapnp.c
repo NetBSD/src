@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.17 2005/01/13 15:14:03 kent Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.17.10.1 2006/06/21 15:04:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.17 2005/01/13 15:14:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.17.10.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include "mpu_ym.h"
 
@@ -106,7 +106,7 @@ ym_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	struct ad1848_softc *ac;
 	struct isapnp_attach_args *ipa;
 
-	sc = (struct ym_softc *)self;
+	sc = device_private(self);
 	ac = &sc->sc_ad1848.sc_ad1848;
 	ipa = aux;
 	printf("\n");

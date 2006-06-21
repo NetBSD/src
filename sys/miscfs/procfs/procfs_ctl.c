@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.28 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.28.4.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28 2005/02/26 22:59:00 perry Exp $"
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
+
 #include <miscfs/procfs/procfs.h>
 
 #define PROCFS_CTL_ATTACH	1
@@ -124,21 +126,17 @@ static const vfs_namemap_t signames[] = {
 	{ 0 },
 };
 
-int procfs_control __P((struct proc *, struct lwp *, int, int));
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
+int procfs_control(struct lwp *, struct lwp *, int, int);
 
 int
-procfs_control(curp, l, op, sig)
-	struct proc *curp;
+procfs_control(curl, l, op, sig)
+	struct lwp *curl;
 	struct lwp *l;
 	int op, sig;
 {
-	int s, error;
+	struct proc *curp = curl->l_proc;
 	struct proc *p = l->l_proc;
+	int s, error;
 
 	/*
 	 * You cannot do anything to the process if it is currently exec'ing
@@ -169,9 +167,10 @@ procfs_control(curp, l, op, sig)
 		 *      (3) it's not owned by you, or is set-id on exec
 		 *          (unless you're root), or...
 		 */
-		if ((p->p_cred->p_ruid != curp->p_cred->p_ruid ||
+		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curp->p_cred) ||
 			ISSET(p->p_flag, P_SUGID)) &&
-		    (error = suser(curp->p_ucred, &curp->p_acflag)) != 0)
+		    (error = kauth_authorize_generic(curp->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curp->p_acflag)) != 0)
 			return (error);
 
 		/*
@@ -324,17 +323,17 @@ procfs_control(curp, l, op, sig)
 }
 
 int
-procfs_doctl(curp, l, pfs, uio)
-	struct proc *curp;
+procfs_doctl(curl, l, pfs, uio)
+	struct lwp *curl;
 	struct lwp *l;
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
-	int xlen;
-	int error;
+	struct proc *p = l->l_proc;
 	char msg[PROCFS_CTLLEN+1];
 	const vfs_namemap_t *nm;
-	struct proc *p = l->l_proc;
+	int error;
+	int xlen;
 
 	if (uio->uio_rw != UIO_WRITE)
 		return (EOPNOTSUPP);
@@ -357,13 +356,13 @@ procfs_doctl(curp, l, pfs, uio)
 
 	nm = vfs_findname(ctlnames, msg, xlen);
 	if (nm) {
-		error = procfs_control(curp, l, nm->nm_val, 0);
+		error = procfs_control(curl, l, nm->nm_val, 0);
 	} else {
 		nm = vfs_findname(signames, msg, xlen);
 		if (nm) {
 			if (ISSET(p->p_flag, P_TRACED) &&
-			    p->p_pptr == curp)
-				error = procfs_control(curp, l, PROCFS_CTL_RUN,
+			    p->p_pptr == p)
+				error = procfs_control(curl, l, PROCFS_CTL_RUN,
 				    nm->nm_val);
 			else {
 				psignal(p, nm->nm_val);

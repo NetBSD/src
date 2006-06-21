@@ -1,4 +1,4 @@
-/*	$NetBSD: pim.h,v 1.1 2004/09/04 23:32:29 manu Exp $	*/
+/*	$NetBSD: pim.h,v 1.1.14.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2000
@@ -118,4 +118,4 @@ struct pim {
 	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		\
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d }}}
 
-#endif /* _NETINET_PIM_H_ */
+#endif /* !_NETINET_PIM_H_ */

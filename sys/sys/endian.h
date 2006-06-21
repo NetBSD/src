@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.15 2005/02/03 19:16:10 perry Exp $	*/
+/*	$NetBSD: endian.h,v 1.15.6.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -104,6 +104,8 @@ __END_DECLS
 
 #ifndef _LOCORE
 
+#include <machine/bswap.h>
+
 /*
  * Macros for network/external number representation conversion.
  */
@@ -120,6 +122,11 @@ __END_DECLS
 
 #else	/* LITTLE_ENDIAN || !defined(__lint__) */
 
+#define	ntohl(x)	bswap32((uint32_t)(x))
+#define	ntohs(x)	bswap16((uint16_t)(x))
+#define	htonl(x)	bswap32((uint32_t)(x))
+#define	htons(x)	bswap16((uint16_t)(x))
+
 #define	NTOHL(x)	(x) = ntohl((uint32_t)(x))
 #define	NTOHS(x)	(x) = ntohs((uint16_t)(x))
 #define	HTONL(x)	(x) = htonl((uint32_t)(x))
@@ -130,36 +137,34 @@ __END_DECLS
  * Macros to convert to a specific endianness.
  */
 
-#include <machine/bswap.h>
-
 #if BYTE_ORDER == BIG_ENDIAN
 
 #define htobe16(x)	(x)
 #define htobe32(x)	(x)
 #define htobe64(x)	(x)
-#define htole16(x)	bswap16((u_int16_t)(x))
-#define htole32(x)	bswap32((u_int32_t)(x))
-#define htole64(x)	bswap64((u_int64_t)(x))
+#define htole16(x)	bswap16((uint16_t)(x))
+#define htole32(x)	bswap32((uint32_t)(x))
+#define htole64(x)	bswap64((uint64_t)(x))
 
 #define HTOBE16(x)	(void) (x)
 #define HTOBE32(x)	(void) (x)
 #define HTOBE64(x)	(void) (x)
-#define HTOLE16(x)	(x) = bswap16((u_int16_t)(x))
-#define HTOLE32(x)	(x) = bswap32((u_int32_t)(x))
-#define HTOLE64(x)	(x) = bswap64((u_int64_t)(x))
+#define HTOLE16(x)	(x) = bswap16((uint16_t)(x))
+#define HTOLE32(x)	(x) = bswap32((uint32_t)(x))
+#define HTOLE64(x)	(x) = bswap64((uint64_t)(x))
 
 #else	/* LITTLE_ENDIAN */
 
-#define htobe16(x)	bswap16((u_int16_t)(x))
-#define htobe32(x)	bswap32((u_int32_t)(x))
-#define htobe64(x)	bswap64((u_int64_t)(x))
+#define htobe16(x)	bswap16((uint16_t)(x))
+#define htobe32(x)	bswap32((uint32_t)(x))
+#define htobe64(x)	bswap64((uint64_t)(x))
 #define htole16(x)	(x)
 #define htole32(x)	(x)
 #define htole64(x)	(x)
 
-#define HTOBE16(x)	(x) = bswap16((u_int16_t)(x))
-#define HTOBE32(x)	(x) = bswap32((u_int32_t)(x))
-#define HTOBE64(x)	(x) = bswap64((u_int64_t)(x))
+#define HTOBE16(x)	(x) = bswap16((uint16_t)(x))
+#define HTOBE32(x)	(x) = bswap32((uint32_t)(x))
+#define HTOBE64(x)	(x) = bswap64((uint64_t)(x))
 #define HTOLE16(x)	(void) (x)
 #define HTOLE32(x)	(void) (x)
 #define HTOLE64(x)	(void) (x)

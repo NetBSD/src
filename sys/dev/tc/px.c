@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.24 2005/06/08 22:33:56 he Exp $	*/
+/* 	$NetBSD: px.c,v 1.24.2.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24 2005/06/08 22:33:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24.2.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,14 +97,15 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24 2005/06/08 22:33:56 he Exp $");
 
 #define	PXF_QUEUE	0x01
 
-void	px_attach(struct device *, struct device *, void *);
-void	px_init(struct stic_info *, int);
-int	px_ioctl(struct stic_info *, u_long, caddr_t, int, struct proc *);
-int	px_match(struct device *, struct cfdata *, void *);
+static void	px_attach(struct device *, struct device *, void *);
+static void	px_init(struct stic_info *, int);
+static int	px_ioctl(struct stic_info *, u_long, caddr_t, int,
+			 struct lwp *);
+static int	px_match(struct device *, struct cfdata *, void *);
 
-int	px_intr(void *);
-u_int32_t	*px_pbuf_get(struct stic_info *);
-int	px_pbuf_post(struct stic_info *, u_int32_t *);
+static int	px_intr(void *);
+static uint32_t	*px_pbuf_get(struct stic_info *);
+static int	px_pbuf_post(struct stic_info *, u_int32_t *);
 
 void	px_cnattach(tc_addr_t);
 
@@ -117,7 +118,7 @@ struct px_softc {
 CFATTACH_DECL(px, sizeof(struct px_softc),
     px_match, px_attach, NULL, NULL);
 
-int
+static int
 px_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta;
@@ -127,7 +128,7 @@ px_match(struct device *parent, struct cfdata *match, void *aux)
 	return (strncmp("PMAG-CA ", ta->ta_modname, TC_ROM_LLEN) == 0);
 }
 
-void
+static void
 px_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct stic_info *si;
@@ -136,7 +137,7 @@ px_attach(struct device *parent, struct device *self, void *aux)
 	int console, i;
 	u_long v;
 
-	px = (struct px_softc *)self;
+	px = device_private(self);
 	ta = (struct tc_attach_args *)aux;
 
 	if (ta->ta_addr == stic_consinfo.si_slotbase) {
@@ -181,7 +182,7 @@ px_cnattach(tc_addr_t addr)
 	stic_cnattach(si);
 }
 
-void
+static void
 px_init(struct stic_info *si, int bootstrap)
 {
 	struct pglist pglist;
@@ -210,7 +211,7 @@ px_init(struct stic_info *si, int bootstrap)
 		if (uvm_pglistalloc(PX_BUF_SIZE, 0, 8192*1024, PX_BUF_ALIGN,
 		    0, &pglist, 1, 0) != 0)
 			panic("px_init: allocation failure");
-		bpa = TAILQ_FIRST(&pglist)->phys_addr;
+		bpa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	}
 
 	si->si_vdac = (u_int32_t *)(kva + PX_VDAC_OFFSET);
@@ -233,7 +234,7 @@ px_init(struct stic_info *si, int bootstrap)
 	stic_init(si);
 }
 
-int
+static int
 px_intr(void *cookie)
 {
 	volatile struct stic_regs *sr;
@@ -311,7 +312,7 @@ px_intr(void *cookie)
 	return (1);
 }
 
-u_int32_t *
+static uint32_t *
 px_pbuf_get(struct stic_info *si)
 {
 	u_long off;
@@ -321,7 +322,7 @@ px_pbuf_get(struct stic_info *si)
 	return ((u_int32_t *)((caddr_t)si->si_buf + off));
 }
 
-int
+static int
 px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 {
 	volatile u_int32_t *poll, junk;
@@ -358,9 +359,9 @@ px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 	return (-1);
 }
 
-int
+static int
 px_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
-	 struct proc *p)
+	 struct lwp *l)
 {
 	volatile struct stic_xcomm *sxc;
 	volatile struct stic_regs *sr;

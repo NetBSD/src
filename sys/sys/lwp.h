@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28 2005/05/29 21:16:44 christos Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.28.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_LWP_H
-#define _SYS_LWP_H
+#ifndef _SYS_LWP_H_
+#define _SYS_LWP_H_
 
 
 #if defined(_KERNEL)
@@ -56,7 +56,7 @@ struct	lwp {
 
 	LIST_ENTRY(lwp) l_sibling;	/* Entry on process's list of LWPs. */
 
-	struct cpu_info * __volatile l_cpu; /* CPU we're running on if
+	struct cpu_info * volatile l_cpu; /* CPU we're running on if
 					       SONPROC */
 	int	l_flag;
 	int	l_stat;
@@ -66,7 +66,7 @@ struct	lwp {
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
 
-	__volatile const void *l_wchan;	/* Sleep address. */
+	volatile const void *l_wchan;	/* Sleep address. */
 	struct callout l_tsleep_ch;	/* callout for tsleep */
 	const char *l_wmesg;	/* Reason for sleep. */
 	int	l_holdcnt;	/* If non-zero, don't swap. */
@@ -92,27 +92,36 @@ struct	lwp {
 	struct	mdlwp l_md;	/* Any machine-dependent fields. */
 };
 
+#if !defined(USER_TO_UAREA)
+#if !defined(UAREA_USER_OFFSET)
+#define	UAREA_USER_OFFSET	0
+#endif /* !defined(UAREA_USER_OFFSET) */
+#define	USER_TO_UAREA(user)	((vaddr_t)(user) - UAREA_USER_OFFSET)
+#define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
+#endif /* !defined(UAREA_TO_USER) */
+
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
+#ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
+#endif
 
-/* These flags are kept in l_flag. */
-#define	L_INMEM		0x00004	/* Loaded into memory. */
-#define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
-#define	L_SINTR		0x00080	/* Sleep is interruptible. */
-#define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_PROCEXIT	0x00800 /* In process exit, l_proc no longer valid */
-#define	L_SA		0x100000 /* Scheduler activations LWP */
-#define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
-#define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
-#define	L_DETACHED	0x800000 /* Won't be waited for. */
-#define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
-#define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+/* These flags are kept in l_flag. [*] is shared with p_flag */
+#define	L_INMEM		0x00000004 /* [*] Loaded into memory. */
+#define	L_SELECT	0x00000040 /* [*] Selecting; wakeup/waiting danger. */
+#define	L_SINTR		0x00000080 /* [*] Sleep is interruptible. */
+#define	L_SA		0x00000400 /* [*] Scheduler activations LWP */
+#define	L_SA_UPCALL	0x00200000 /* SA upcall is pending */
+#define	L_SA_BLOCKING	0x00400000 /* Blocking in tsleep() */
+#define	L_DETACHED	0x00800000 /* Won't be waited for. */
+#define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	L_SA_PAGEFAULT	0x04000000 /* SA LWP in pagefault handler */
+#define	L_TIMEOUT	0x08000000 /* Timing out during sleep. */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
 #define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
@@ -178,7 +187,8 @@ void	upcallret(struct lwp *);
 void	lwp_exit (struct lwp *);
 void	lwp_exit2 (struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *);
-inline int lwp_suspend(struct lwp *, struct lwp *);
+__inline int lwp_suspend(struct lwp *, struct lwp *);
+int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.56 2005/05/03 16:26:29 manu Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.56.2.1 2006/06/21 14:59:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56 2005/05/03 16:26:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56.2.1 2006/06/21 14:59:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -74,21 +74,28 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56 2005/05/03 16:26:29 manu Exp $
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/exec.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <lib/libkern/libkern.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 
+#include <compat/sys/socket.h>
+
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_socket.h>
+#if !defined(__alpha__) && !defined(__amd64__)
 #include <compat/linux/common/linux_socketcall.h>
+#endif
 #include <compat/linux/common/linux_sockio.h>
 
 #include <compat/linux/linux_syscallargs.h>
@@ -114,9 +121,9 @@ int linux_to_bsd_so_sockopt __P((int));
 int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
-int linux_getifhwaddr __P((struct proc *, register_t *, u_int, void *));
-static int linux_sa_get __P((struct proc *, int, caddr_t *, struct sockaddr **,
-		const struct osockaddr *, int *));
+int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
+static int linux_sa_get __P((struct lwp *, int, caddr_t *, struct sockaddr **,
+		const struct osockaddr *, socklen_t *));
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
 static int bsd_to_linux_msg_flags __P((int));
@@ -182,25 +189,28 @@ static const int bsd_to_linux_domain_[AF_MAX] = {
 	-1,		/* pseudo_AF_HDRCMPLT */
 };
 
-static const int bsd_to_linux_msg_flags_[] = {
-	MSG_OOB,		LINUX_MSG_OOB,
-	MSG_PEEK,		LINUX_MSG_PEEK,
-	MSG_DONTROUTE,		LINUX_MSG_DONTROUTE,
-	MSG_EOR,		LINUX_MSG_EOR,
-	MSG_TRUNC,		LINUX_MSG_TRUNC,
-	MSG_CTRUNC,		LINUX_MSG_CTRUNC,
-	MSG_WAITALL,		LINUX_MSG_WAITALL,
-	MSG_DONTWAIT,		LINUX_MSG_DONTWAIT,
-	MSG_BCAST,		0,		/* not supported, clear */
-	MSG_MCAST,		0,		/* not supported, clear */
-	-1, /* not supp */	LINUX_MSG_PROBE,
-	-1, /* not supp */	LINUX_MSG_FIN,
-	-1, /* not supp */	LINUX_MSG_SYN,
-	-1, /* not supp */	LINUX_MSG_CONFIRM,
-	-1, /* not supp */	LINUX_MSG_RST,
-	-1, /* not supp */	LINUX_MSG_ERRQUEUE,
-	-1, /* not supp */	LINUX_MSG_NOSIGNAL,
-	-1, /* not supp */	LINUX_MSG_MORE,
+static const struct {
+	int bfl;
+	int lfl;
+} bsd_to_linux_msg_flags_[] = {
+	{MSG_OOB,		LINUX_MSG_OOB},
+	{MSG_PEEK,		LINUX_MSG_PEEK},
+	{MSG_DONTROUTE,		LINUX_MSG_DONTROUTE},
+	{MSG_EOR,		LINUX_MSG_EOR},
+	{MSG_TRUNC,		LINUX_MSG_TRUNC},
+	{MSG_CTRUNC,		LINUX_MSG_CTRUNC},
+	{MSG_WAITALL,		LINUX_MSG_WAITALL},
+	{MSG_DONTWAIT,		LINUX_MSG_DONTWAIT},
+	{MSG_BCAST,		0},		/* not supported, clear */
+	{MSG_MCAST,		0},		/* not supported, clear */
+	{-1, /* not supp */	LINUX_MSG_PROBE},
+	{-1, /* not supp */	LINUX_MSG_FIN},
+	{-1, /* not supp */	LINUX_MSG_SYN},
+	{-1, /* not supp */	LINUX_MSG_CONFIRM},
+	{-1, /* not supp */	LINUX_MSG_RST},
+	{-1, /* not supp */	LINUX_MSG_ERRQUEUE},
+	{-1, /* not supp */	LINUX_MSG_NOSIGNAL},
+	{-1, /* not supp */	LINUX_MSG_MORE},
 };
 
 /*
@@ -239,10 +249,9 @@ linux_to_bsd_msg_flags(lflag)
 	if (lflag == 0)
 		return (0);
 
-	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/
-	    sizeof(bsd_to_linux_msg_flags_[0])/2; i += 2) {
-		bfl = bsd_to_linux_msg_flags_[i];
-		lfl = bsd_to_linux_msg_flags_[i+1];
+	for(i = 0; i < __arraycount(bsd_to_linux_msg_flags_); i++) {
+		bfl = bsd_to_linux_msg_flags_[i].bfl;
+		lfl = bsd_to_linux_msg_flags_[i].lfl;
 
 		if (lfl == 0)
 			continue;
@@ -268,10 +277,9 @@ bsd_to_linux_msg_flags(bflag)
 	if (bflag == 0)
 		return (0);
 
-	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/
-	    sizeof(bsd_to_linux_msg_flags_[0])/2; i += 2) {
-		bfl = bsd_to_linux_msg_flags_[i];
-		lfl = bsd_to_linux_msg_flags_[i+1];
+	for(i = 0; i < __arraycount(bsd_to_linux_msg_flags_); i++) {
+		bfl = bsd_to_linux_msg_flags_[i].bfl;
+		lfl = bsd_to_linux_msg_flags_[i].lfl;
 
 		if (bfl <= 0)
 			continue;
@@ -329,7 +337,7 @@ linux_sys_socket(l, v, retval)
 			(void) sosetopt((struct socket *)fp->f_data,
 				IPPROTO_IPV6, IPV6_V6ONLY, m);
 
-			FILE_UNUSE(fp, p);
+			FILE_UNUSE(fp, l);
 		}
 	}
 #endif
@@ -377,7 +385,7 @@ linux_sys_sendto(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_sendto_args bsa;
-	int tolen;
+	socklen_t tolen;
 
 	SCARG(&bsa, s) = SCARG(uap, s);
 	SCARG(&bsa, buf) = SCARG(uap, msg);
@@ -389,7 +397,7 @@ linux_sys_sendto(l, v, retval)
 		int error;
 		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, to), &tolen);
 		if (error)
 			return (error);
@@ -445,7 +453,7 @@ linux_sys_sendmsg(l, v, retval)
 		struct sockaddr *sa;
 		sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    (struct osockaddr *) msg.msg_name, &msg.msg_namelen);
 		if (error)
 			goto done;
@@ -612,7 +620,7 @@ linux_sys_sendmsg(l, v, retval)
 		control = NULL;
 	}
 
-	error = sendit(p, SCARG(uap, s), &msg, bflags, retval);
+	error = sendit(l, SCARG(uap, s), &msg, bflags, retval);
 
 done:
 	if (control)
@@ -644,7 +652,7 @@ linux_sys_recvfrom(l, v, retval)
 	SCARG(&bra, len) = SCARG(uap, len);
 	SCARG(&bra, flags) = SCARG(uap, flags);
 	SCARG(&bra, from) = (struct sockaddr *) SCARG(uap, from);
-	SCARG(&bra, fromlenaddr) = SCARG(uap, fromlenaddr);
+	SCARG(&bra, fromlenaddr) = (socklen_t *)SCARG(uap, fromlenaddr);
 
 	if ((error = sys_recvfrom(l, &bra, retval)))
 		return (error);
@@ -1042,7 +1050,7 @@ linux_sys_getsockopt(l, v, retval)
 	SCARG(&bga, s) = SCARG(uap, s);
 	SCARG(&bga, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bga, val) = SCARG(uap, optval);
-	SCARG(&bga, avalsize) = SCARG(uap, optlen);
+	SCARG(&bga, avalsize) = (socklen_t *)SCARG(uap, optlen);
 
 	switch (SCARG(&bga, level)) {
 	case SOL_SOCKET:
@@ -1071,8 +1079,8 @@ linux_sys_getsockopt(l, v, retval)
 #define IF_NAME_LEN 16
 
 int
-linux_getifhwaddr(p, retval, fd, data)
-	struct proc *p;
+linux_getifhwaddr(l, retval, fd, data)
+	struct lwp *l;
 	register_t *retval;
 	u_int fd;
 	void *data;
@@ -1082,6 +1090,7 @@ linux_getifhwaddr(p, retval, fd, data)
 		char if_name[IF_NAME_LEN];
 		struct osockaddr hwaddr;
 	} lreq;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp;
 	struct file *fp;
 	struct ifaddr *ifa;
@@ -1196,14 +1205,14 @@ linux_getifhwaddr(p, retval, fd, data)
 	}
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 #undef IF_NAME_LEN
 
 int
-linux_ioctl_socket(p, uap, retval)
-	struct proc *p;
+linux_ioctl_socket(l, uap, retval)
+	struct lwp *l;
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
@@ -1211,13 +1220,14 @@ linux_ioctl_socket(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	u_long com;
 	int error = 0, isdev = 0, dosys = 1;
 	struct sys_ioctl_args ia;
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
-	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	struct ioctl_pt pt;
 
         fdp = p->p_fd;
@@ -1243,7 +1253,7 @@ linux_ioctl_socket(p, uap, retval)
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
 		/*
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
@@ -1287,7 +1297,7 @@ linux_ioctl_socket(p, uap, retval)
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR:
-	        error = linux_getifhwaddr(p, retval, SCARG(uap, fd),
+	        error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
 					 SCARG(uap, data));
 		dosys = 0;
 		break;
@@ -1296,7 +1306,7 @@ linux_ioctl_socket(p, uap, retval)
 	}
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	if (error ==0 && dosys) {
 		SCARG(&ia, fd) = SCARG(uap, fd);
@@ -1324,17 +1334,17 @@ linux_sys_connect(l, v, retval)
 	struct sockaddr *sa;
 	struct sys_connect_args bca;
 	caddr_t sg = stackgap_init(p, 0);
-	int namlen;
+	socklen_t namlen;
 
 	namlen = SCARG(uap, namelen);
-	error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+	error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 	    SCARG(uap, name), &namlen);
 	if (error)
 		return (error);
 
 	SCARG(&bca, s) = SCARG(uap, s);
 	SCARG(&bca, name) = sa;
-	SCARG(&bca, namelen) = (unsigned int) namlen;
+	SCARG(&bca, namelen) =  namlen;
 
 	error = sys_connect(l, &bca, retval);
 
@@ -1352,7 +1362,7 @@ linux_sys_connect(l, v, retval)
 		state = so->so_state;
 		prflags = so->so_proto->pr_flags;
 		splx(s);
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		/*
 		 * We should only let this call succeed once per
 		 * non-blocking connect; however we don't have
@@ -1378,7 +1388,8 @@ linux_sys_bind(l, v, retval)
 		syscallarg(int) namelen;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int		error, namlen;
+	int		error;
+	socklen_t	namlen;
 	struct sys_bind_args bsa;
 
 	namlen = SCARG(uap, namelen);
@@ -1387,7 +1398,7 @@ linux_sys_bind(l, v, retval)
 		struct sockaddr *sa;
 		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, name), &namlen);
 		if (error)
 			return (error);
@@ -1450,18 +1461,19 @@ linux_sys_getpeername(l, v, retval)
  * the converted structure there, address on stackgap returned in sap.
  */
 static int
-linux_sa_get(p, s, sgp, sap, osa, osalen)
-	struct proc *p;
+linux_sa_get(l, s, sgp, sap, osa, osalen)
+	struct lwp *l;
 	int s;
 	caddr_t *sgp;
 	struct sockaddr **sap;
 	const struct osockaddr *osa;
-	int *osalen;
+	socklen_t *osalen;
 {
 	int error=0, bdom;
 	struct sockaddr *sa, *usa;
 	struct osockaddr *kosa = (struct osockaddr *) &sa;
-	int alloclen;
+	struct proc *p = l->l_proc;
+	socklen_t alloclen;
 #ifdef INET6
 	int oldv6size;
 	struct sockaddr_in6 *sin6;
@@ -1518,8 +1530,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
 			sin6->sin6_scope_id = 0;
 		} else {
-			int uid = p->p_cred && p->p_ucred ?
-					p->p_ucred->cr_uid : -1;
+			int uid = p->p_cred ? kauth_cred_geteuid(p->p_cred) : -1;
 
 			log(LOG_DEBUG,
 			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "
@@ -1548,7 +1559,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 		so = (struct socket *)fp->f_data;
 		bdom = so->so_proto->pr_domain->dom_family;
 
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
@@ -1667,7 +1678,7 @@ linux_sys_send(l, v, retval)
 
 	return (sys_sendto(l, &bsa, retval));
 }
-#endif /* __amd64__ */
+#endif
 
 int
 linux_sys_accept(l, v, retval)

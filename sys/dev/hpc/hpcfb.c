@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.32 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.32.2.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32.2.1 2006/06/21 15:02:46 yamt Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.32 2005/05/22 15:54:46 christos Exp $";
+    "$NetBSD: hpcfb.c,v 1.32.2.1 2006/06/21 15:02:46 yamt Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,8 @@ int	hpcfbmatch(struct device *, struct cfdata *, void *);
 void	hpcfbattach(struct device *, struct device *, void *);
 int	hpcfbprint(void *, const char *);
 
-int	hpcfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t	hpcfb_mmap(void *, off_t, int);
+int	hpcfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t	hpcfb_mmap(void *, void *, off_t, int);
 
 void	hpcfb_refresh_screen(struct hpcfb_softc *);
 void	hpcfb_doswitch(struct hpcfb_softc *);
@@ -292,7 +292,7 @@ hpcfbmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 hpcfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct hpcfb_softc *sc = (struct hpcfb_softc *)self;
+	struct hpcfb_softc *sc = device_private(self);
 	struct hpcfb_attach_args *ha = aux;
 	struct wsemuldisplaydev_attach_args wa;
 
@@ -469,6 +469,15 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 		break;
 	}
 
+	if (fbconf->hf_class == HPCFB_CLASS_RGBCOLOR) {
+		ri->ri_rnum = fbconf->hf_u.hf_rgb.hf_red_width;
+		ri->ri_rpos = fbconf->hf_u.hf_rgb.hf_red_shift;
+		ri->ri_gnum = fbconf->hf_u.hf_rgb.hf_green_width;
+		ri->ri_gpos = fbconf->hf_u.hf_rgb.hf_green_shift;
+		ri->ri_bnum = fbconf->hf_u.hf_rgb.hf_blue_width;
+		ri->ri_bpos = fbconf->hf_u.hf_rgb.hf_blue_shift;
+	}
+
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
@@ -541,7 +550,8 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct hpcfb_softc *sc = v;
 	struct hpcfb_devconfig *dc = sc->sc_dc;
@@ -601,7 +611,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accessctx,
-		    cmd, data, flag, p));
+		    cmd, data, flag, l));
 
 	default:
 		if (IOCGROUP(cmd) != 't')
@@ -615,7 +625,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 paddr_t
-hpcfb_mmap(void *v, off_t offset, int prot)
+hpcfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct hpcfb_softc *sc = v;
 

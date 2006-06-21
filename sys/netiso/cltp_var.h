@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_var.h,v 1.13 2004/04/20 02:13:26 matt Exp $	*/
+/*	$NetBSD: cltp_var.h,v 1.13.12.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,6 +31,9 @@
  *	@(#)cltp_var.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETISO_CLTP_VAR_H_
+#define _NETISO_CLTP_VAR_H_
+
 #define UD_TPDU_type	0x40	/* packet type */
 
 #define CLTPOVAL_SRC	0xc1	/* Source TSAP -- required */
@@ -57,5 +60,7 @@ void cltp_notify (struct isopcb *);
 void cltp_ctlinput (int, struct sockaddr *, void *);
 int cltp_output (struct mbuf *, ...);
 int cltp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *);
+		     struct mbuf *, struct lwp *);
 #endif
+
+#endif /* !_NETISO_CLTP_VAR_H_ */

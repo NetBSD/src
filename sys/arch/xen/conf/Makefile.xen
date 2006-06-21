@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.9 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: Makefile.xen,v 1.9.2.1 2006/06/21 14:58:06 yamt Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -28,6 +28,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 XEN=		$S/arch/xen
+I386=		$S/arch/i386
 GENASSYM_CONF=	${XEN}/${XEN_BUILD}/genassym.cf
 
 ##
@@ -47,8 +48,17 @@ KERN_AS=	obj
 ##
 MD_OBJS=	locore.o spl.o vector.o
 MD_CFILES=
-MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S ${XEN}/${XEN_BUILD}/spl.S \
+MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S \
+		${XEN}/${XEN_BUILD}/spl.S \
 		${XEN}/${XEN_BUILD}/vector.S
+
+.if ${MACHINE_ARCH} == i386
+MD_OBJS+=	copy.o
+MD_SFILES+=	${I386}/i386/copy.S
+
+copy.o: ${I386}/i386/copy.S assym.h
+	${NORMAL_S}
+.endif
 
 locore.o: ${XEN}/${XEN_BUILD}/locore.S assym.h
 	${NORMAL_S}
@@ -78,7 +88,7 @@ vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 TEXTADDR?=	c0100000
 LINKFLAGS_NORMAL=	-X
 .if (${OBJECT_FMT} == "ELF")
-KERN_LDSCRIPT?=	kern.ldscript
+KERN_LDSCRIPT?=	kern.ldscript.Xen
 LINKFORMAT=	-T $S/arch/${XEN_BUILD}/conf/${KERN_LDSCRIPT}
 .else
 LINKFORMAT=	-z
@@ -113,24 +123,8 @@ clock.o: config_time.h
 
 %RULES
 
-# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
-# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
-#       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-i386-elf.hal.o)
-OBJS:=${OBJS:C/\/athhal-i386-elf.hal.o/athhal-i386-elf.hal.o/}
- 
-.PATH: $S/contrib/arch/i386/dev
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
-	${ATH_UUDEC}
-all depend:	opt_ah.h
-opt_ah.h:	athhal-i386-elf.opt_ah.h
-	ln -s ${.ALLSRC} ${.TARGET}
-.endif
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

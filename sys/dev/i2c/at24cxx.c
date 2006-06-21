@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.2 2004/03/11 15:11:53 christos Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.2.18.1 2006/06/21 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -109,7 +109,7 @@ seeprom_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 seeprom_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct seeprom_softc *sc = (struct seeprom_softc *)self;
+	struct seeprom_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
 	sc->sc_tag = ia->ia_tag;
@@ -165,7 +165,7 @@ seeprom_attach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-seeprom_open(dev_t dev, int flag, int fmt, struct proc *p)
+seeprom_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct seeprom_softc *sc;
 
@@ -183,7 +183,7 @@ seeprom_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-seeprom_close(dev_t dev, int flag, int fmt, struct proc *p)
+seeprom_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct seeprom_softc *sc;
 

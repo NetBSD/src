@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.10 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.10.4.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,8 +33,8 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs.h,v 1.3 2001/12/02 08:56:58 bp Exp
  */
-#ifndef _SMBFS_SMBFS_H_
-#define _SMBFS_SMBFS_H_
+#ifndef _FS_SMBFS_SMBFS_H_
+#define _FS_SMBFS_SMBFS_H_
 
 #define SMBFS_VERMAJ	1
 #define SMBFS_VERMIN	1013
@@ -61,7 +61,6 @@ struct smbfs_args {
 	mode_t 		file_mode;
 	mode_t 		dir_mode;
 	int		caseopt;
-	struct	export_args export;	/* network export information */
 };
 
 #ifdef _KERNEL
@@ -76,7 +75,7 @@ struct smbmount {
 	struct smbfs_args	sm_args;
 	struct mount * 		sm_mp;
 	struct smbnode *	sm_root;
-	struct ucred *		sm_owner;
+	kauth_cred_t		sm_owner;
 	int			sm_flags;
 	long			sm_nextino;
 	struct smb_share * 	sm_share;
@@ -93,10 +92,9 @@ struct smbmount {
 #define VTOVFS(vp)		((vp)->v_mount)
 #define	VTOSMBFS(vp)		(VFSTOSMBFS(VTOVFS(vp)))
 
-int smbfs_doio(struct buf *bp, struct ucred *cr, struct proc *p);
-int smbfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred,
-	struct proc *p, int intrflg);
+int smbfs_doio(struct buf *, kauth_cred_t, struct lwp *);
+int smbfs_vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int);
 int smbfs_kqfilter(void *);
 #endif	/* KERNEL */
 
-#endif /* _SMBFS_SMBFS_H_ */
+#endif /* _FS_SMBFS_SMBFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.86.2.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86.2.1 2006/06/21 15:12:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $"
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -86,11 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $"
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
-
-/* Macros to clear/set/test flags. */
-# define	SET(t, f)	(t) |= (f)
-# define	CLR(t, f)	(t) &= ~(f)
-# define	ISSET(t, f)	((t) & (f))
 
 /*
  * LFS block write function.
@@ -256,8 +252,10 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 #endif
-		if (error)
+		if (error) {
 			return error;
+			simple_unlock(&fs->lfs_interlock);
+		}
 	}
 #ifdef DEBUG
 	if (slept) {
@@ -654,6 +652,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 		locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 		lfs_subsys_pages > LFS_MAX_PAGES ||
+		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 		lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
 	{
 		simple_unlock(&lfs_subsys_lock);
@@ -680,6 +679,9 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	if (lfs_dirvcount > LFS_MAX_DIROP)
 		DLOG((DLOG_FLUSH, "lfs_check: ldvc = %d, max %d\n",
 		      lfs_dirvcount, LFS_MAX_DIROP));
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs))
+		DLOG((DLOG_FLUSH, "lfs_check: lfdvc = %d, max %d\n",
+		      fs->lfs_dirvcount, LFS_MAX_FSDIROP(fs)));
 	if (fs->lfs_diropwait > 0)
 		DLOG((DLOG_FLUSH, "lfs_check: ldvw = %d\n",
 		      fs->lfs_diropwait));
@@ -688,6 +690,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
+	    fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
 		simple_unlock(&fs->lfs_interlock);
 		lfs_flush(fs, flags, 0);
@@ -705,6 +708,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
 		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
 		lfs_subsys_pages > LFS_WAIT_PAGES ||
+		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 		lfs_dirvcount > LFS_MAX_DIROP) {
 
 		if (lfs_dostats)
@@ -744,11 +748,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	ASSERT_MAYBE_SEGLOCK(fs);
 	nbytes = roundup(size, fsbtob(fs, 1));
 
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	memset(bp, 0, sizeof(struct buf));
-	BUF_INIT(bp);
+	bp = getiobuf();
 	if (nbytes) {
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
@@ -759,6 +759,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
+	bp->b_vp = NULL;
 	s = splbio();
 	bgetvp(vp, bp);
 	splx(s);
@@ -770,7 +771,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_iodone = lfs_callback;
-	bp->b_flags |= B_BUSY | B_CALL | B_NOCACHE;
+	bp->b_flags = B_BUSY | B_CALL | B_NOCACHE;
 	bp->b_private = fs;
 
 	return (bp);
@@ -788,8 +789,8 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
-	pool_put(&bufpool, bp);
 	splx(s);
+	putiobuf(bp);
 }
 
 /*

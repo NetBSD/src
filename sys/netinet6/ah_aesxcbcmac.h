@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_aesxcbcmac.h,v 1.1 2003/07/25 09:48:18 itojun Exp $	*/
+/*	$NetBSD: ah_aesxcbcmac.h,v 1.1.18.1 2006/06/21 15:11:08 yamt Exp $	*/
 /*	$KAME: ah_aesxcbcmac.h,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _NETINET6_AH_AESXCBCMAC_H_
+#define _NETINET6_AH_AESXCBCMAC_H_
+
 extern int ah_aes_xcbc_mac_init __P((struct ah_algorithm_state *,
 	struct secasvar *));
 extern void ah_aes_xcbc_mac_loop __P((struct ah_algorithm_state *, u_int8_t *,
@@ -37,3 +40,4 @@ extern void ah_aes_xcbc_mac_loop __P((struct ah_algorithm_state *, u_int8_t *,
 extern void ah_aes_xcbc_mac_result __P((struct ah_algorithm_state *,
 	u_int8_t *, size_t));
 
+#endif /* !_NETINET6_AH_AESXCBCMAC_H_ */

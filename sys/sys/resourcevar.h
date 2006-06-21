@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29 2005/05/09 23:43:04 christos Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -117,6 +117,13 @@ int       chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
 struct uidinfo *uid_find(uid_t);
 
 extern char defcorename[];
+
+extern int security_setidcore_dump;
+extern char security_setidcore_path[];
+extern uid_t security_setidcore_owner;
+extern gid_t security_setidcore_group;
+extern mode_t security_setidcore_mode;
+
 void	 addupc_intr(struct proc *, u_long);
 void	 addupc_task(struct proc *, u_long, u_int);
 void	 calcru(struct proc *, struct timeval *, struct timeval *,

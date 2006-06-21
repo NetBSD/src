@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.15 2005/02/26 22:58:54 perry Exp $	*/
+/*	$NetBSD: advnops.c,v 1.15.4.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15 2005/02/26 22:58:54 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15.4.1 2006/06/21 15:09:23 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15 2005/02/26 22:58:54 perry Exp $");
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -83,10 +84,8 @@ int	adosfs_pathconf	__P((void *));
 #define adosfs_fsync 	genfs_nullop
 #define	adosfs_lease_check	genfs_lease_check
 #define adosfs_seek 	genfs_seek
-#define adosfs_vfree 	genfs_nullop
 
 #define adosfs_advlock 	genfs_einval
-#define adosfs_blkatoff	genfs_eopnotsupp
 #define adosfs_bwrite 	genfs_eopnotsupp
 #define adosfs_create 	genfs_eopnotsupp
 #define adosfs_mkdir 	genfs_eopnotsupp
@@ -97,9 +96,6 @@ int	adosfs_pathconf	__P((void *));
 #define adosfs_rename 	genfs_eopnotsupp
 #define adosfs_rmdir 	genfs_eopnotsupp
 #define adosfs_setattr 	genfs_eopnotsupp
-#define adosfs_truncate	genfs_eopnotsupp
-#define adosfs_update 	genfs_nullop
-#define adosfs_valloc 	genfs_eopnotsupp
 
 const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -141,11 +137,6 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, adosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, adosfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, adosfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, adosfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, adosfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, adosfs_truncate },	/* truncate */
-	{ &vop_update_desc, adosfs_update },		/* update */
 	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
@@ -162,8 +153,8 @@ adosfs_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *sp = v;
 	struct vattr *vap;
 	struct adosfsmount *amp;
@@ -230,7 +221,7 @@ adosfs_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
 	struct adosfsmount *amp;
@@ -274,7 +265,9 @@ adosfs_read(v)
 	 */
 
 	if (vp->v_type == VREG && IS_FFS(amp)) {
+		const int advice = IO_ADV_DECODE(sp->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -285,7 +278,7 @@ adosfs_read(v)
 				break;
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -367,7 +360,7 @@ adosfs_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *sp = v;
 	advopprint(sp);
 	printf(" EOPNOTSUPP)");
@@ -618,7 +611,7 @@ adosfs_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -795,8 +788,8 @@ adosfs_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *sp = v;
 	struct anode *ap;
 	struct vnode *vp = sp->a_vp;
@@ -845,7 +838,7 @@ adosfs_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *sp = v;
 	struct anode *ap;
 	int error;
@@ -868,16 +861,16 @@ adosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct proc *p = sp->a_p;
+	struct lwp *l = sp->a_l;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 	VOP_UNLOCK(vp, 0);
 	/* XXX this needs to check if file was deleted */
-	vrecycle(vp, NULL, p);
+	vrecycle(vp, NULL, l);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");

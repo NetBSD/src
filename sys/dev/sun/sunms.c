@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.19 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: sunms.c,v 1.19.4.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,12 +97,21 @@ int	sunmsinput(int, struct tty *);
 CFATTACH_DECL(ms_tty, sizeof(struct ms_softc),
     sunms_match, sunms_attach, NULL, NULL);
 
-struct  linesw sunms_disc =
-	{ "sunms", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunmsinput, ttstart, nullmodem, ttpoll };
+struct linesw sunms_disc = {
+	.l_name = "sunms",
+	.l_open = ttylopen,
+	.l_close = ttylclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = ttynullioctl,
+	.l_rint = sunmsinput,
+	.l_start = ttstart,
+	.l_modem = nullmodem,
+	.l_poll = ttpoll
+};
 
 int	sunms_enable(void *);
-int	sunms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	sunms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void	sunms_disable(void *);
 
 const struct wsmouse_accessops	sunms_accessops = {
@@ -137,7 +146,7 @@ sunms_attach(parent, self, aux)
 	void   *aux;
 
 {
-	struct ms_softc *ms = (void *) self;
+	struct ms_softc *ms = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
@@ -146,8 +155,8 @@ sunms_attach(parent, self, aux)
 	struct wsmousedev_attach_args a;
 #endif
 
-	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = ms->ms_dev.dv_unit;
+	cf = device_cfdata(&ms->ms_dev);
+	ms_unit = device_unit(&ms->ms_dev);
 	tp->t_sc  = ms;
 	tp->t_dev = args->kmta_dev;
 	ms->ms_cs = (struct zs_chanstate *)tp;
@@ -157,9 +166,11 @@ sunms_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	if (ttyldisc_add(&sunms_disc, -1) == -1)
+	if (ttyldisc_attach(&sunms_disc) != 0)
 		panic("sunms_attach: sunms_disc");
-	tp->t_linesw = &sunms_disc;
+	ttyldisc_release(tp->t_linesw);
+	tp->t_linesw = ttyldisc_lookup(sunms_disc.l_name);
+	KASSERT(tp->t_linesw == &sunms_disc);
 	tp->t_oflag &= ~OPOST;
 
 	/* Initialize translator. */
@@ -188,7 +199,7 @@ sunmsiopen(dev, flags)
 {
 	struct ms_softc *ms = (void *) dev;
 	struct tty *tp = (struct tty *)ms->ms_cs;
-	struct proc *p = curproc ? curproc : &proc0;
+	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct termios t;
 	const struct cdevsw *cdev;
 	int error;
@@ -199,7 +210,7 @@ sunmsiopen(dev, flags)
 
 	/* Open the lower device */
 	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
-				     0/* ignored? */, p)) != 0)
+				     0/* ignored? */, l)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */
@@ -228,12 +239,12 @@ sunmsinput(c, tp)
 }
 
 int
-sunms_ioctl(v, cmd, data, flag, p)
+sunms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 /*	struct ms_softc *sc = v; */
 

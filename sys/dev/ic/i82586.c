@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.52 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: i82586.c,v 1.52.2.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52.2.1 2006/06/21 15:02:54 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -196,8 +196,8 @@ static void	i82586_release_rbd_list(struct ie_softc *,
 static int	i82586_drop_frames(struct ie_softc *);
 static int	i82586_chk_rx_ring(struct ie_softc *);
 
-static __inline__ void 	ie_ack(struct ie_softc *, u_int);
-static __inline__ void 	iexmit(struct ie_softc *);
+static inline void 	ie_ack(struct ie_softc *, u_int);
+static inline void 	iexmit(struct ie_softc *);
 static void 		i82586_start_transceiver(struct ie_softc *);
 
 static void	i82586_count_errors(struct ie_softc *);
@@ -406,7 +406,7 @@ i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
 /*
  * Interrupt Acknowledge.
  */
-static __inline__ void
+static inline void
 ie_ack(sc, mask)
 	struct ie_softc *sc;
 	u_int mask;	/* in native byte-order */
@@ -423,7 +423,7 @@ ie_ack(sc, mask)
 /*
  * Transfer accumulated chip error counters to IF.
  */
-static __inline void
+static inline void
 i82586_count_errors(sc)
 	struct ie_softc *sc;
 {
@@ -924,7 +924,7 @@ i82586_chk_rx_ring(sc)
  * chain of partially-full mbufs.  This should help to speed up the
  * operation considerably.  (Provided that it works, of course.)
  */
-static __inline struct mbuf *
+static inline struct mbuf *
 ieget(sc, head, totlen)
 	struct ie_softc *sc;
 	int head;
@@ -1098,7 +1098,7 @@ ie_readframe(sc, num)
  * Setup all necessary artifacts for an XMIT command, and then pass the XMIT
  * command to the chip to be executed.
  */
-static __inline__ void
+static inline void
 iexmit(sc)
 	struct ie_softc *sc;
 {

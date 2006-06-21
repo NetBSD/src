@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 2003/08/23 09:10:51 he Exp $
+#	$NetBSD: Makefile,v 1.16.16.1 2006/06/21 14:57:55 yamt Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
 LIBKERNDIR=	$S/lib/libkern
 LIBZDIR=	$S/lib/libz
+LIBZDIST=	$S/../common/dist/zlib
 
 LIB=		sa
 
@@ -22,8 +23,8 @@ SRCS+=		ashldi3.c ashrdi3.c divdi3.c moddi3.c qdivrem.c
 SRCS+=		strcat.c strchr.c strcmp.c strcpy.c strerror.c strlen.c
 SRCS+=		strncmp.c strrchr.c
 
-SRCS+=		crc32.c infblock.c infcodes.c inffast.c
-SRCS+=		inflate.c inftrees.c infutil.c uncompr.c
+SRCS+=		adler32.c crc32.c inffast.c
+SRCS+=		inflate.c inftrees.c uncompr.c
 
 SRCS+=		consio.c devopen.c parseutils.c sdcd.c fd.c fdsub.S chdsk.c
 SRCS+=		putimage.S
@@ -39,9 +40,10 @@ CPPFLAGS+=	-D_ZLIB_PRIVATE
 CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 #CPPFLAGS+=	-DDEBUG
 
-.PATH:	${LIBSADIR} ${LIBKERNDIR} ${LIBZDIR}
+.PATH:	${LIBSADIR} ${LIBKERNDIR} ${LIBZDIR} ${LIBZDIST}
 
 .include "../Makefile.booters"
+.include "${S}/../common/lib/libc/Makefile.inc"
 
 # only needed during build
 libinstall::

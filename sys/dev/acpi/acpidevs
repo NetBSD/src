@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.4 2005/02/27 00:26:58 perry Exp $
+# $NetBSD: acpidevs,v 1.4.4.1 2006/06/21 15:02:32 yamt Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -17,6 +17,7 @@ PNP0004	Cyrix SLiC MP interrupt controller
 PNP0100	AT Timer
 PNP0101	EISA Timer
 PNP0102	MCA Timer
+PNP0103	HPET Timer
 # --DMA--
 PNP0200	AT DMA Controller
 PNP0201	EISA DMA Controller
@@ -103,10 +104,11 @@ PNP09FF	Plug and Play Monitors (VESA DDC)
 PNP0A00	ISA Bus
 PNP0A01	EISA Bus
 PNP0A02	MCA Bus
-PNP0A03	PCI Bus
+PNP0A03	PCI/PCI-X Host Bridge
 PNP0A04	VESA/VL Bus
-PNP0A05	Generic ACPI Bus
-PNP0A06	Generic ACPI Extended-IO Bus (EIO bus)
+PNP0A05	Generic Container Device
+PNP0A06	Generic Container Device
+PNP0A08	PCI Express/PCI-X Mode-2 Host Bridge
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
@@ -130,6 +132,7 @@ PNP0C10	ACPI system indicator device
 PNP0C11	ACPI thermal zone
 PNP0C12	Device Bay Controller
 PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
+PNP0C80	Memory Device
 #--PCMCIA Controller Chipsets--
 PNP0E00	Intel 82365-Compatible PCMCIA Controller
 PNP0E01	Cirrus Logic CL-PD6720 PCMCIA Controller
@@ -173,6 +176,7 @@ PNP0F21	Reserved by Microsoft Input Device Group
 PNP0F22	Reserved by Microsoft Input Device Group
 PNP0F23	Reserved by Microsoft Input Device Group
 PNP0FFF	Reserved by Microsoft Systems
+SYN1003	Synaptics PS/2-style Touchpad
 # ***** Network Adapters - PNP8xxx ***********************
 PNP8001	Novell/Anthem NE3200
 PNP8004	Compaq NE3200
@@ -296,8 +300,9 @@ PNP8327	IBM Token Ring (All Types)
 PNP8385	Remote Network Access Driver
 PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
-PNP8389		Peer IrLAN infrared driver (Microsoft-supplied)
+PNP8389	Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
+NSC6001	NSC IrDA Fast Infrared Port
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
 PNPA002	Future Domain 16-700 compatible controller
 PNPA003	Panasonic proprietary CD-ROM adapter (SBPro/SB16)
@@ -338,3 +343,12 @@ PNPB02F	Joystick/Game port
 # ***** Modems - PNPCxxx-Dxxx****************************
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
+# ***** ACPI specific devices *****
+ACPI0001	SMBus 1.0 Host Controller
+ACPI0002	Smart Battery Subsystem
+ACPI0003	AC Device
+ACPI0004	Module Device
+ACPI0005	SMBus 2.0 Host Controller
+ACPI0006	GPE Block Device
+# **** Others ****
+INT0800	Intel FWH Random Number Generator

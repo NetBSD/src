@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.11 2005/06/04 04:37:21 tsutsui Exp $ */
+/*	$NetBSD: cgthree.c,v 1.11.2.1 2006/06/21 15:07:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.11 2005/06/04 04:37:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.11.2.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,10 @@ cgthreeattach(sc, name, isconsole)
 
 
 int
-cgthreeopen(dev, flags, mode, p)
+cgthreeopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -175,12 +175,12 @@ cgthreeopen(dev, flags, mode, p)
 }
 
 int
-cgthreeioctl(dev, cmd, data, flags, p)
+cgthreeioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;

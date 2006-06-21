@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.13 2005/06/20 02:11:57 briggs Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.13.2.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.13 2005/06/20 02:11:57 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.13.2.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -75,9 +75,6 @@ void		ataraidattach(int);
 static int	ataraid_match(struct device *, struct cfdata *, void *);
 static void	ataraid_attach(struct device *, struct device *, void *);
 static int	ataraid_print(void *, const char *);
-
-static int	ataraid_submatch(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
 
 static int	ata_raid_finalize(struct device *);
 
@@ -115,9 +112,10 @@ ata_raid_type_name(u_int type)
 {
 	static const char *ata_raid_type_names[] = {
 		"Promise",
+		"Adaptec",
 	};
 
-	if (type <= ATA_RAID_TYPE_MAX)
+	if (type < sizeof(ata_raid_type_names) / sizeof(ata_raid_type_names[0]))
 		return (ata_raid_type_names[type]);
 
 	return (NULL);
@@ -190,8 +188,7 @@ static void
 ataraid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ataraid_array_info *aai;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[ATARAIDCF_NLOCS];
 
 	/*
 	 * We're a pseudo-device, so we get to announce our own
@@ -202,12 +199,11 @@ ataraid_attach(struct device *parent, struct device *self, void *aux)
 	    ataraid_array_info_count == 1 ? "" : "s");
 
 	TAILQ_FOREACH(aai, &ataraid_array_info_list, aai_list) {
-		ldesc->len = 2;
-		ldesc->locs[ATARAIDCF_VENDTYPE] = aai->aai_type;
-		ldesc->locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
+		locs[ATARAIDCF_VENDTYPE] = aai->aai_type;
+		locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
 
-		config_found_sm_loc(self, "ataraid", NULL, aai,
-				    ataraid_print, ataraid_submatch);
+		config_found_sm_loc(self, "ataraid", locs, aai,
+				    ataraid_print, config_stdsubmatch);
 	}
 }
 
@@ -225,27 +221,6 @@ ataraid_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" vendtype %d unit %d", aai->aai_type, aai->aai_arrayno);
 	return (UNCONF);
-}
-
-/*
- * ataraid_submatch:
- *
- *	Submatch routine for ATA RAID logical disks.
- */
-static int
-ataraid_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[ATARAIDCF_VENDTYPE] != ATARAIDCF_VENDTYPE_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_VENDTYPE] != ldesc->locs[ATARAIDCF_VENDTYPE])
-		return (0);
-
-	if (cf->cf_loc[ATARAIDCF_UNIT] != ATARAIDCF_UNIT_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_UNIT] != ldesc->locs[ATARAIDCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -311,13 +286,9 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
     size_t size, int bflags)
 {
 	struct buf *bp;
-	int error, s;
+	int error;
 
-	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
-	splx(s);
-	BUF_INIT(bp);
-
+	bp = getiobuf();
 	bp->b_vp = vp;
 	bp->b_blkno = blkno;
 	bp->b_bcount = bp->b_resid = size;
@@ -328,8 +299,6 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	VOP_STRATEGY(vp, bp);
 	error = biowait(bp);
 
-	s = splbio();
-	pool_put(&bufpool, bp);
-	splx(s);
+	putiobuf(bp);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.22 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.22.4.1 2006/06/21 15:06:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.22 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.22.4.1 2006/06/21 15:06:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,6 @@ const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
 
 int	pcmcom_print(void *, const char *);
-int	pcmcom_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 int	pcmcom_enable(struct pcmcom_softc *);
 void	pcmcom_disable(struct pcmcom_softc *);
@@ -154,8 +152,7 @@ pcmcom_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	int slave;
 	int error;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PCMCOMCF_NLOCS];
 
 	sc->sc_pf = pa->pf;
 
@@ -183,12 +180,11 @@ pcmcom_attach(parent, self, aux)
 		pca.pca_ioh = cfe->iospace[slave].handle.ioh;
 		pca.pca_slave = slave;
 
-		ldesc->len = 1;
-		ldesc->locs[PCMCOMCF_SLAVE] = slave;
+		locs[PCMCOMCF_SLAVE] = slave;
 
 		sc->sc_slaves[slave] = config_found_sm_loc(&sc->sc_dev,
-			"pcmcom", ldesc,
-			&pca, pcmcom_print, pcmcom_submatch);
+			"pcmcom", locs,
+			&pca, pcmcom_print, config_stdsubmatch);
 	}
 
 	pcmcom_disable(sc);
@@ -272,21 +268,6 @@ pcmcom_print(aux, pnp)
 	aprint_normal(" slave %d", pca->pca_slave);
 
 	return (UNCONF);
-}
-
-int
-pcmcom_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCOMCF_SLAVE] != PCMCOMCF_SLAVE_DEFAULT &&
-	    cf->cf_loc[PCMCOMCF_SLAVE] != ldesc->locs[PCMCOMCF_SLAVE]);
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
@@ -401,7 +382,7 @@ com_pcmcom_enable(sc)
 	struct com_softc *sc;
 {
 
-	return (pcmcom_enable((struct pcmcom_softc *)sc->sc_dev.dv_parent));
+	return (pcmcom_enable((struct pcmcom_softc *)device_parent(&sc->sc_dev)));
 }
 
 void
@@ -409,6 +390,6 @@ com_pcmcom_disable(sc)
 	struct com_softc *sc;
 {
 
-	pcmcom_disable((struct pcmcom_softc *)sc->sc_dev.dv_parent);
+	pcmcom_disable((struct pcmcom_softc *)device_parent(&sc->sc_dev));
 }
 #endif /* NCOM_PCMCOM > 0 */

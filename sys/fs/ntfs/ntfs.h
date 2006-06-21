@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.8 2004/12/27 18:14:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.8.10.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,7 +28,9 @@
  *	Id: ntfs.h,v 1.5 1999/05/12 09:42:51 semenu Exp
  */
 
-/*#define NTFS_DEBUG 1*/
+#ifndef _NTFS_NTFS_H_
+#define _NTFS_NTFS_H_
+
 #if defined(__NetBSD__) && defined(_KERNEL_OPT)
 #include "opt_ntfs.h"
 #endif
@@ -242,9 +244,9 @@ struct bootfile {
 
 #pragma pack()
 
-typedef wchar (ntfs_wget_func_t) __P((const char **, size_t *));
-typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
-typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
+typedef wchar (ntfs_wget_func_t)(const char **, size_t *);
+typedef int (ntfs_wput_func_t)(char *, size_t, wchar);
+typedef int (ntfs_wcmp_func_t)(wchar, wchar);
 
 #define	NTFS_SYSNODESNUM	0x0B
 struct ntfsmount {
@@ -261,7 +263,6 @@ struct ntfsmount {
 	cn_t		ntm_cfree;
 	struct ntvattrdef *ntm_ad;
 	int		ntm_adnum;
-	struct netexport ntm_export;	/* export information */
 	ntfs_wget_func_t *ntm_wget;	/* decode string to Unicode string */
 	ntfs_wput_func_t *ntm_wput;	/* encode Unicode string to string */
 	ntfs_wcmp_func_t *ntm_wcmp;	/* compare to wide characters */
@@ -290,6 +291,7 @@ struct ntfsmount {
 
 #define	ntfs_bpbl	(daddr_t)((ntmp)->ntm_bps)
 
+#ifdef _KERNEL
 #if __FreeBSD_version >= 300000 || defined(__NetBSD__)
 MALLOC_DECLARE(M_NTFSMNT);
 MALLOC_DECLARE(M_NTFSNTNODE);
@@ -301,20 +303,21 @@ MALLOC_DECLARE(M_NTFSRDATA);
 MALLOC_DECLARE(M_NTFSDECOMP);
 MALLOC_DECLARE(M_NTFSRUN);
 #endif
+#endif /* _KERNEL */
 
 #ifdef __NetBSD__
-typedef int (vop_t) __P((void *));
+typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
 #if 0
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b))
-#define VGET(a, b, c)		vget((a), (b))
+#define VGET(a, b)		vget((a), (b))
 #define VN_LOCK(a, b, c)	vn_lock((a), (b))
 #endif
 #else /* !NetBSD */
 #define HASHINIT(a, b, c, d)	hashinit((a), (b), (d))
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))
-#define VGET(a, b, c)		vget((a), (b), (c))
+#define VGET(a, b)		vget((a), (b))
 #define VN_LOCK(a, b, c)	vn_lock((a), (b), (c))
 
 /* PDIRUNLOCK is used by NetBSD to mark if vfs_lookup() unlocked parent dir;
@@ -322,7 +325,7 @@ typedef int (vop_t) __P((void *));
 #define PDIRUNLOCK		0
 #endif /* NetBSD */
 
-#if defined(NTFS_DEBUG)
+#ifdef NTFS_DEBUG
 extern int ntfs_debug;
 #define DPRINTF(X, Y) do { if(ntfs_debug >= (X)) printf Y; } while(0)
 #define dprintf(a) DPRINTF(1, a)
@@ -334,3 +337,4 @@ extern int ntfs_debug;
 #endif
 
 extern vop_t  **ntfs_vnodeop_p;
+#endif /* _NTFS_NTFS_H_ */

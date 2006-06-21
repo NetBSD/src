@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.7 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: artsata.c,v 1.7.4.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -301,6 +301,7 @@ artisea_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
@@ -350,7 +351,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_dma_iot = sc->sc_ba5_st;
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)\n");

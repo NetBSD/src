@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.33 2005/02/26 22:45:09 perry Exp $ */
+/* $NetBSD: netisr.h,v 1.33.4.1 2006/06/21 15:10:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -153,4 +153,4 @@ extern	int netisr;			/* scheduling bits for network */
 
 #endif /* defined(_KERNEL) && !defined(_LOCORE) */
 
-#endif /* _NET_NETISR_H_ */
+#endif /* !_NET_NETISR_H_ */

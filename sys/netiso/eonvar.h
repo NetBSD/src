@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.13 2005/05/30 22:14:52 christos Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.13.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_EONVAR_H_
+#define _NETISO_EONVAR_H_
 
 #include <sys/ansi.h>
 
@@ -183,3 +186,5 @@ int eonoutput   (struct ifnet *, struct mbuf *, struct sockaddr *,
 void eoninput    (struct mbuf *, ...);
 void *eonctlinput (int, struct sockaddr *, void *);
 #endif
+
+#endif /* !_NETISO_EONVAR_H_ */

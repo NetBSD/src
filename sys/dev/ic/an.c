@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.35.2.1 2006/06/21 15:02:52 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35.2.1 2006/06/21 15:02:52 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $");
 #include <sys/proc.h>
 #include <sys/md4.h>
 #include <sys/endian.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -106,9 +107,11 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35 2005/06/22 06:15:51 dyoung Exp $");
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #include <dev/ic/anreg.h>
@@ -317,9 +320,27 @@ an_attach(struct an_softc *sc)
 	ic->ic_newstate = an_newstate;
 
 	ieee80211_media_init(ic, an_media_change, an_media_status);
+
+	/*
+	 * radiotap BPF device
+	 */
+#if NBPFILTER > 0
+	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
+#endif
+
+	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.ar_ihdr.it_present = htole32(AN_RX_RADIOTAP_PRESENT);
+
+	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.at_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));
+	sc->sc_txtap.at_ihdr.it_present = htole32(AN_TX_RADIOTAP_PRESENT);
+
 	sc->sc_attached = 1;
 	splx(s);
 
+	ieee80211_announce(ic);
 	return 0;
 }
 
@@ -471,7 +492,7 @@ an_intr(void *arg)
 	u_int16_t status;
 
 	if (!sc->sc_enabled || sc->sc_invalid ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	    !device_is_active(&sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
 
@@ -795,6 +816,18 @@ an_start(struct ifnet *ifp)
 		else
 			frmhdr.an_tx_rate = 0;
 
+		/* XXX radiotap for tx must be completed */
+#if NBPFILTER > 0
+		if (sc->sc_drvbpf) {
+			struct an_tx_radiotap_header *tap = &sc->sc_txtap;
+			tap->at_rate = ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate];
+			tap->at_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->at_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+			/* TBD tap->wt_flags */
+			bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
+		}
+#endif
+
 #ifdef AN_DEBUG
 		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
 		    (IFF_DEBUG|IFF_LINK2)) {
@@ -885,7 +918,7 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct an_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 	s = splnet();
@@ -1266,7 +1299,9 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
 		/* do not show any keys to non-root user */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 		nwkey->i_key[i].i_keylen = sc->sc_wepkeys[i].an_wep_keylen;
 		if (nwkey->i_key[i].i_keylen < 0) {
@@ -1467,6 +1502,22 @@ an_rx_intr(struct an_softc *sc)
 	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf) {
+		struct an_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->ar_rate = frmhdr.an_rx_rate;
+		tap->ar_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		tap->ar_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->ar_antsignal = frmhdr.an_rx_signal_strength;
+		if ((le16toh(frmhdr.an_rx_status) & AN_STAT_BADCRC) ||
+		    (le16toh(frmhdr.an_rx_status) & AN_STAT_ERRSTAT) ||
+		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
+		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
+
+		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
+	}
+#endif
 	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
@@ -1819,6 +1870,12 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ic->ic_flags &= ~IEEE80211_F_IBSSON;
 		return (*sc->sc_newstate)(ic, nstate, arg);
 
+	case IEEE80211_S_SCAN:
+	case IEEE80211_S_AUTH:
+	case IEEE80211_S_ASSOC:
+		ic->ic_state = nstate; /* NB: skip normal ieee80211 handling */
+		return 0;
+
 	case IEEE80211_S_RUN:
 		buflen = sizeof(sc->sc_buf);
 		an_read_rid(sc, AN_RID_STATUS, &sc->sc_buf, &buflen);
@@ -1850,7 +1907,5 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	default:
 		break;
 	}
-	ic->ic_state = nstate;
-	/* skip standard ieee80211 handling */
-	return 0;
+	return (*sc->sc_newstate)(ic, nstate, arg);
 }

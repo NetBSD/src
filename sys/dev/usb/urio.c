@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.20 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.20.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.20 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.20.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ USB_DETACH(urio)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #elif defined(__FreeBSD__)
 	/* XXX not implemented yet */
@@ -312,7 +312,7 @@ urio_activate(device_ptr_t self, enum devact act)
 #endif
 
 int
-urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -345,7 +345,7 @@ urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+urioclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
@@ -487,7 +487,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -548,10 +548,9 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 		uio.uio_iovcnt = 1;
 		uio.uio_resid = len;
 		uio.uio_offset = 0;
-		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = req.bmRequestType & UT_READ ?
 			     UIO_READ : UIO_WRITE;
-		uio.uio_procp = p;
+		uio.uio_vmspace = l->l_proc->p_vmspace;
 		ptr = malloc(len, M_TEMP, M_WAITOK);
 		if (uio.uio_rw == UIO_WRITE) {
 			error = uiomove(ptr, len, &uio);
@@ -583,7 +582,7 @@ ret:
 
 #if defined(__OpenBSD__)
 int
-urioselect(dev_t dev, int events, usb_proc_ptr p)
+urioselect(dev_t dev, int events, struct lwp *l)
 {
 	return (0);
 }

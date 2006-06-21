@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.19 2005/05/30 04:32:38 christos Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.19.2.1 2006/06/21 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.19 2005/05/30 04:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.19.2.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ ef_match(parent, cf, aux)
 		 * Reset and put card in CONFIG state without
 		 * changing address.
 		 */
-		elink_reset(iot, ioh, parent->dv_unit);
+		elink_reset(iot, ioh, device_unit(parent));
 		elink_idseq(iot, ioh, ELINK_507_POLY);
 		elink_idseq(iot, ioh, ELINK_507_POLY);
 		bus_space_write_1(iot, ioh, 0, 0xff);

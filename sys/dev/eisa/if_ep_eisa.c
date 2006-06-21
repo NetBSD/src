@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.30 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.30.4.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -212,7 +212,7 @@ ep_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ep_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ep_softc *sc = (void *)self;
+	struct ep_softc *sc = device_private(self);
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh, ioh_cfg;

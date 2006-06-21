@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.18 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.18.4.1 2006/06/21 15:02:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.18 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.18.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t bh;
 	int i;
 
-	ebsc = (struct cs4231_ebus_softc *)self;
+	ebsc = device_private(self);
 	sc = &ebsc->sc_cs4231;
 	ea = aux;
 	sc->sc_bustag = ebsc->sc_bt = ea->ea_bustag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.53 2005/02/12 23:14:03 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.53.6.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@ MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
 
 struct proc;
+struct lwp;
 struct uio;
 struct iovec;
 struct stat;
@@ -58,7 +59,8 @@ struct knote;
 struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	int		f_flag;		/* see fcntl.h */
-	int		f_iflags;	/* internal flags */
+	int		f_iflags;	/* internal flags; FIF_* */
+	int		f_advice;	/* access pattern hint; UVM_ADV_* */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
@@ -71,20 +73,20 @@ struct file {
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
 	int		f_usecount;	/* number active users */
-	struct ucred	*f_cred;	/* creds associated with descriptor */
+	kauth_cred_t 	f_cred;		/* creds associated with descriptor */
 	const struct fileops {
 		int	(*fo_read)	(struct file *, off_t *, struct uio *,
-					    struct ucred *, int);
+					    kauth_cred_t, int);
 		int	(*fo_write)	(struct file *, off_t *, struct uio *,
-					    struct ucred *, int);
+					    kauth_cred_t, int);
 		int	(*fo_ioctl)	(struct file *, u_long, void *,
-					    struct proc *);
+					    struct lwp *);
 		int	(*fo_fcntl)	(struct file *, u_int, void *,
-					    struct proc *);
-		int	(*fo_poll)	(struct file *, int, struct proc *);
+					    struct lwp *);
+		int	(*fo_poll)	(struct file *, int, struct lwp *);
 		int	(*fo_stat)	(struct file *, struct stat *,
-					    struct proc *);
-		int	(*fo_close)	(struct file *, struct proc *);
+					    struct lwp *);
+		int	(*fo_close)	(struct file *, struct lwp *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
 	} *f_ops;
 	off_t		f_offset;
@@ -125,14 +127,14 @@ do {									\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
 
-#define	FILE_UNUSE_WLOCK(fp, p, havelock)				\
+#define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
 		simple_lock(&(fp)->f_slock);				\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
 		simple_unlock(&(fp)->f_slock);				\
 		/* Will drop usecount */				\
-		(void) closef((fp), (p));				\
+		(void) closef((fp), (l));				\
 		break;							\
 	} else {							\
 		(fp)->f_usecount--;					\
@@ -140,8 +142,8 @@ do {									\
 	}								\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
-#define	FILE_UNUSE(fp, p)		FILE_UNUSE_WLOCK(fp, p, 0)
-#define	FILE_UNUSE_HAVELOCK(fp, p)	FILE_UNUSE_WLOCK(fp, p, 1)
+#define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
+#define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
 
 /*
  * Flags for fo_read and fo_write.
@@ -155,28 +157,28 @@ extern int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 
-int	dofileread(struct proc *, int, struct file *, void *, size_t,
+int	dofileread(struct lwp *, int, struct file *, void *, size_t,
 	    off_t *, int, register_t *);
-int	dofilewrite(struct proc *, int, struct file *, const void *,
+int	dofilewrite(struct lwp *, int, struct file *, const void *,
 	    size_t, off_t *, int, register_t *);
 
-int	dofilereadv(struct proc *, int, struct file *,
+int	dofilereadv(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
-int	dofilewritev(struct proc *, int, struct file *,
+int	dofilewritev(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);
 void	fownsignal(pid_t, int, int, int, void *);
 
-int	fdclone(struct proc *, struct file *, int, int, const struct fileops *,
+int	fdclone(struct lwp *, struct file *, int, int, const struct fileops *,
     void *);
 
 /* Commonly used fileops */
-int	fnullop_fcntl(struct file *, u_int, void *, struct proc *);
-int	fnullop_poll(struct file *, int, struct proc *);
+int	fnullop_fcntl(struct file *, u_int, void *, struct lwp *);
+int	fnullop_poll(struct file *, int, struct lwp *);
 int	fnullop_kqfilter(struct file *, struct knote *);
-int	fbadop_stat(struct file *, struct stat *, struct proc *);
+int	fbadop_stat(struct file *, struct stat *, struct lwp *);
 
 #endif /* _KERNEL */
 

@@ -1,10 +1,12 @@
 Important things to make ACPI useful on more machines:
 
-* Fix problems with ACPI_PCI_FIXUP.  CardBus slots do not work in some
-  machines currently.  (Affects many machines.)
+* Fix problems with PCI_INTR_FIXUP.  The current code always chooses the last
+  possible interrupt, which causes problems when that interrupt is shared with
+  an ISA device.  http://mail-index.netbsd.org/tech-kern/2005/11/11/0011.html
+  has a more detailed analysis.
 
 * Import the ACPI Processor driver from FreeBSD or write our own.
   This is useful for CPUs that supports _Px and _Cx states and helps
   longer battery life.
 
-- kochi, 2004/06/09
+- sekiya, 21 December 2005
