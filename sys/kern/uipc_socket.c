@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.120 2006/06/13 21:19:56 ginsbach Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.121 2006/06/21 12:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.120 2006/06/13 21:19:56 ginsbach Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.121 2006/06/21 12:55:12 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -130,9 +130,9 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 static struct callback_entry sokva_reclaimerentry;
 
 #ifdef SOSEND_NO_LOAN
-int use_sosend_loan = 0;
+int sock_loan_thresh = -1;
 #else
-int use_sosend_loan = 1;
+int sock_loan_thresh = 4096;
 #endif
 
 static struct simplelock so_pendfree_slock = SIMPLELOCK_INITIALIZER;
@@ -145,7 +145,6 @@ int somaxkva = SOMAXKVA;
 static int socurkva;
 static int sokvawaiters;
 
-#define	SOCK_LOAN_THRESH	4096
 #define	SOCK_LOAN_CHUNK		65536
 
 static size_t sodopendfree(void);
@@ -853,9 +852,9 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					mlen = MLEN;
 				}
 				MCLAIM(m, so->so_snd.sb_mowner);
-				if (use_sosend_loan &&
-				    uio->uio_iov->iov_len >= SOCK_LOAN_THRESH &&
-				    space >= SOCK_LOAN_THRESH &&
+				if (sock_loan_thresh >= 0 &&
+				    uio->uio_iov->iov_len >= sock_loan_thresh &&
+				    space >= sock_loan_thresh &&
 				    (len = sosend_loan(so, uio, m,
 						       space)) != 0) {
 					SOSEND_COUNTER_INCR(&sosend_loan_big);
