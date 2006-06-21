@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.40 2006/06/18 10:34:34 xtraeme Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.41 2006/06/21 18:10:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.40 2006/06/18 10:34:34 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.41 2006/06/21 18:10:51 jmcneill Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -779,6 +779,7 @@ pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 int
 pci_intr_fixup(pci_chipset_tag_t pc, bus_space_tag_t iot, uint16_t *pciirq)
 {
+	static int initted = 0;
 	const struct pciintr_icu_table *piit = NULL;
 	pcitag_t icutag;
 	pcireg_t icuid;
@@ -899,9 +900,10 @@ found:;
 	/*
 	 * Initialize the PCI ICU.
 	 */
-	if ((*piit->piit_init)(pc, iot, icutag, &pciintr_icu_tag,
-	    &pciintr_icu_handle) != 0)
+	if (!initted && ((*piit->piit_init)(pc, iot, icutag, &pciintr_icu_tag,
+	    &pciintr_icu_handle) != 0))
 		return (-1);		/* non-fatal */
+	initted = 1;
 
 	/*
 	 * Initialize the PCI interrupt link map.
