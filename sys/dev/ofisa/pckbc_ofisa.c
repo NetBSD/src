@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.9.4.1 2006/06/21 15:05:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9.4.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ pckbc_ofisa_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 pckbc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pckbc_ofisa_softc *osc = (void *)self;
+	struct pckbc_ofisa_softc *osc = device_private(self);
 	struct pckbc_softc *sc = &osc->sc_pckbc;
 	struct ofisa_attach_args *aa = aux;
 	struct pckbc_internal *t;

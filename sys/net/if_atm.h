@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.13 2005/02/26 22:45:09 perry Exp $       */
+/*      $NetBSD: if_atm.h,v 1.13.4.1 2006/06/21 15:10:27 yamt Exp $       */
 
 /*
  *
@@ -137,11 +137,11 @@ struct atmllc {
 }
 
 #ifdef _KERNEL
-void	atm_ifattach __P((struct ifnet *));
-void	atm_input __P((struct ifnet *, struct atm_pseudohdr *,
-		struct mbuf *, void *));
-int	atm_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		struct rtentry *));
+void	atm_ifattach(struct ifnet *);
+void	atm_input(struct ifnet *, struct atm_pseudohdr *,
+		struct mbuf *, void *);
+int	atm_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+		struct rtentry *);
 #endif
 #ifdef ATM_PVCEXT
 #ifdef _KERNEL
@@ -163,7 +163,7 @@ struct pvcsif {
 	int	sif_vci;		/* vci no */
 	LIST_ENTRY(pvcsif) sif_links;
 };
-struct ifnet *pvcsif_alloc __P((void));
+struct ifnet *pvcsif_alloc(void);
 #endif
 #endif /* ATM_PVCEXT */
-#endif /* _NET_IF_ATM_H_ */
+#endif /* !_NET_IF_ATM_H_ */

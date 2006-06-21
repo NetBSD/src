@@ -1,4 +1,4 @@
-/*	$NetBSD: spidp.h,v 1.7 2003/08/07 16:33:47 agc Exp $	*/
+/*	$NetBSD: spidp.h,v 1.7.16.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -31,6 +31,9 @@
  *	@(#)spidp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETNS_SPIDP_H_
+#define _NETNS_SPIDP_H_
+
 /*
  * Definitions for NS(tm) Internet Datagram Protocol
  * containing a Sequenced Packet Protocol packet.
@@ -60,3 +63,5 @@ struct spidp_q {
 #define si_seq	si_s.sp_seq
 #define si_ack	si_s.sp_ack
 #define si_alo	si_s.sp_alo
+
+#endif /* !_NETNS_SPIDP_H_ */

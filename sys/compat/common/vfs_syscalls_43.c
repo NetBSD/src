@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.29 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.1 2006/06/21 14:58:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -61,10 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29 2005/02/26 23:10:18 perry E
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/stat.h>
+#include <compat/sys/mount.h>
 
 static void cvtstat __P((struct stat *, struct stat43 *));
 
@@ -108,17 +112,16 @@ compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -138,7 +141,6 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
 	struct stat43 osb;
@@ -148,7 +150,7 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd))) {
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*
@@ -173,18 +175,18 @@ again:
 			else
 				vput(dvp);
 		}
-		error = vn_stat(vp, &sb, p);
+		error = vn_stat(vp, &sb, l);
 		vput(vp);
 		if (error)
 			return (error);
 	} else {
-		error = vn_stat(dvp, &sb, p);
+		error = vn_stat(dvp, &sb, l);
 		vput(dvp);
 		if (error) {
 			vput(vp);
 			return (error);
 		}
-		error = vn_stat(vp, &sb1, p);
+		error = vn_stat(vp, &sb1, l);
 		vput(vp);
 		if (error)
 			return (error);
@@ -222,8 +224,8 @@ compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
 		cvtstat(&ub, &oub);
@@ -383,9 +385,9 @@ unionread:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_procp = p;
 	auio.uio_resid = count;
+	KASSERT(l == curlwp);
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
@@ -398,10 +400,10 @@ unionread:
 	{
 		kuio = auio;
 		kuio.uio_iov = &kiov;
-		kuio.uio_segflg = UIO_SYSSPACE;
 		kiov.iov_len = count;
 		dirbuf = malloc(count, M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
+		UIO_SETUP_SYSSPACE(&kuio);
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
 			    (off_t **)0, (int *)0);
 		fp->f_offset = kuio.uio_offset;
@@ -460,7 +462,7 @@ unionread:
 			 * If the directory is opaque,
 			 * then don't show lower entries
 			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
+			error = VOP_GETATTR(vp, &va, fp->f_cred, l);
 			if (va.va_flags & OPAQUE) {
 				vput(lvp);
 				lvp = NULL;
@@ -468,7 +470,7 @@ unionread:
 		}
 
 		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
+			error = VOP_OPEN(lvp, FREAD, fp->f_cred, l);
 			VOP_UNLOCK(lvp, 0);
 
 			if (error) {
@@ -477,7 +479,7 @@ unionread:
 			}
 			fp->f_data = (caddr_t) lvp;
 			fp->f_offset = 0;
-			error = vn_close(vp, FREAD, fp->f_cred, p);
+			error = vn_close(vp, FREAD, fp->f_cred, l);
 			if (error)
 				goto out;
 			vp = lvp;
@@ -502,6 +504,66 @@ unionread:
 	    sizeof(long));
 	*retval = count - auio.uio_resid;
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
+
+/*
+ * sysctl helper routine for vfs.generic.conf lookups.
+ */
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
+static int
+sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
+{
+        struct vfsconf vfc;
+        extern const char * const mountcompatnames[];
+        extern int nmountcompatnames;
+	struct sysctlnode node;
+	struct vfsops *vfsp;
+	u_int vfsnum;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+	vfsnum = name[0];
+	if (vfsnum >= nmountcompatnames ||
+	    mountcompatnames[vfsnum] == NULL)
+		return (EOPNOTSUPP);
+	vfsp = vfs_getopsbyname(mountcompatnames[vfsnum]);
+	if (vfsp == NULL)
+		return (EOPNOTSUPP);
+
+	vfc.vfc_vfsops = vfsp;
+	strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
+	vfc.vfc_typenum = vfsnum;
+	vfc.vfc_refcount = vfsp->vfs_refcount;
+	vfc.vfc_flags = 0;
+	vfc.vfc_mountroot = vfsp->vfs_mountroot;
+	vfc.vfc_next = NULL;
+
+	node = *rnode;
+	node.sysctl_data = &vfc;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * Top level filesystem related information gathering.
+ */
+SYSCTL_SETUP(compat_sysctl_vfs_setup, "compat sysctl vfs subtree setup")
+{
+	extern int nmountcompatnames;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "maxtypenum",
+		       SYSCTL_DESCR("Highest valid filesystem type number"),
+		       NULL, nmountcompatnames, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "conf",
+		       SYSCTL_DESCR("Filesystem configuration information"),
+		       sysctl_vfs_generic_conf, 0, NULL,
+		       sizeof(struct vfsconf),
+		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.61 2004/06/27 08:50:44 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.61.12.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.61 2004/06/27 08:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.61.12.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -97,7 +97,7 @@ static struct simplelock namecache_slock = SIMPLELOCK_INITIALIZER;
 
 static void cache_remove(struct namecache *);
 static void cache_free(struct namecache *);
-static __inline struct namecache *cache_lookup_entry(
+static inline struct namecache *cache_lookup_entry(
     const struct vnode *, const struct componentname *);
 
 static void
@@ -136,7 +136,7 @@ cache_free(struct namecache *ncp)
 	numcache--;
 }
 
-static __inline struct namecache *
+static inline struct namecache *
 cache_lookup_entry(const struct vnode *dvp, const struct componentname *cnp)
 {
 	struct nchashhead *ncpp;
@@ -297,12 +297,9 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		 * The `.' case here should be extremely rare (if it can happen
 		 * at all), so we don't bother optimizing out the unlock/relock.
 		 */
-		if (vp == dvp ||
-		    error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
-				return (error);
-			cnp->cn_flags &= ~PDIRUNLOCK;
-		}
+		if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
+			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = NULL;
 		return (-1);
 	}

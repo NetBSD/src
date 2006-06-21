@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.36 2004/03/10 03:45:04 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.36.16.1 2006/06/21 15:11:08 yamt Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.36 2004/03/10 03:45:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.36.16.1 2006/06/21 15:11:08 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.36 2004/03/10 03:45:04 itojun Exp $");
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/scope6_var.h>
 #endif
 
 #include <netinet6/ipsec.h>
@@ -722,7 +723,6 @@ ah_hmac_sha2_256_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		SHA256_Init(ctxt);
 		SHA256_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -743,7 +743,6 @@ ah_hmac_sha2_256_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA256_Init(ctxt);
 	SHA256_Update(ctxt, ipad, 64);
 
@@ -785,7 +784,6 @@ ah_hmac_sha2_256_result(state, addr, l)
 
 	SHA256_Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA256_Init(ctxt);
 	SHA256_Update(ctxt, opad, 64);
 	SHA256_Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -826,7 +824,6 @@ ah_hmac_sha2_384_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		SHA384_Init(ctxt);
 		SHA384_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -847,7 +844,6 @@ ah_hmac_sha2_384_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA384_Init(ctxt);
 	SHA384_Update(ctxt, ipad, 64);
 
@@ -889,7 +885,6 @@ ah_hmac_sha2_384_result(state, addr, l)
 
 	SHA384_Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA384_Init(ctxt);
 	SHA384_Update(ctxt, opad, 64);
 	SHA384_Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -930,7 +925,6 @@ ah_hmac_sha2_512_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		SHA512_Init(ctxt);
 		SHA512_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -951,7 +945,6 @@ ah_hmac_sha2_512_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA512_Init(ctxt);
 	SHA512_Update(ctxt, ipad, 64);
 
@@ -993,7 +986,6 @@ ah_hmac_sha2_512_result(state, addr, l)
 
 	SHA512_Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	SHA512_Init(ctxt);
 	SHA512_Update(ctxt, opad, 64);
 	SHA512_Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -1034,7 +1026,6 @@ ah_hmac_ripemd160_init(state, sav)
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
 		bzero(tk, sizeof(tk));
-		bzero(ctxt, sizeof(*ctxt));
 		RMD160Init(ctxt);
 		RMD160Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -1055,7 +1046,6 @@ ah_hmac_ripemd160_init(state, sav)
 		opad[i] ^= 0x5c;
 	}
 
-	bzero(ctxt, sizeof(*ctxt));
 	RMD160Init(ctxt);
 	RMD160Update(ctxt, ipad, 64);
 
@@ -1097,7 +1087,6 @@ ah_hmac_ripemd160_result(state, addr, l)
 
 	RMD160Final((caddr_t)digest, ctxt);
 
-	bzero(ctxt, sizeof(*ctxt));
 	RMD160Init(ctxt);
 	RMD160Update(ctxt, opad, 64);
 	RMD160Update(ctxt, (caddr_t)digest, sizeof(digest));
@@ -1458,10 +1447,8 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 			ip6copy.ip6_vfc &= ~IPV6_VERSION_MASK;
 			ip6copy.ip6_vfc |= IPV6_VERSION;
 			ip6copy.ip6_hlim = 0;
-			if (IN6_IS_ADDR_LINKLOCAL(&ip6copy.ip6_src))
-				ip6copy.ip6_src.s6_addr16[1] = 0x0000;
-			if (IN6_IS_ADDR_LINKLOCAL(&ip6copy.ip6_dst))
-				ip6copy.ip6_dst.s6_addr16[1] = 0x0000;
+			in6_clearscope(&ip6copy.ip6_src); /* XXX */
+			in6_clearscope(&ip6copy.ip6_dst); /* XXX */
 			(algo->update)(&algos, (u_int8_t *)&ip6copy,
 				       sizeof(struct ip6_hdr));
 		} else {

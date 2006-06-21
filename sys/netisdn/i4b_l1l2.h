@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.10 2005/02/26 22:39:49 perry Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.10.4.1 2006/06/21 15:11:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I4B_L1L2_H_
-#define _I4B_L1L2_H_
+#ifndef _NETISDN_I4B_L1L2_H_
+#define _NETISDN_I4B_L1L2_H_
 
 /*
  * This file defines the D-channel interface between layer 1 (physical
@@ -89,5 +89,4 @@ int isdn_layer2_trace_ind(struct l2_softc *, struct isdn_l3_driver *, struct i4b
 /* Pass status informations to layer 2. */
 int isdn_layer2_status_ind(struct l2_softc *, struct isdn_l3_driver *, int, int);
 
-#endif /* !_I4B_L1L2_H_ */
-
+#endif /* !_NETISDN_I4B_L1L2_H_ */

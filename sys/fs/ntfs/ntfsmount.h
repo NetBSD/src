@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.2 2003/10/03 16:34:31 yamt Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.2.16.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,12 +28,14 @@
  *	Id: ntfsmount.h,v 1.4 1999/05/12 09:43:09 semenu Exp
  */
 
+#ifndef _NTFS_NTFSMOUNT_H_
+#define _NTFS_NTFSMOUNT_H_
 #define	NTFS_MFLAG_CASEINS	0x00000001
 #define	NTFS_MFLAG_ALLNAMES	0x00000002
 
 struct ntfs_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	uid_t	uid;			/* uid that owns ntfs files */
 	gid_t	gid;			/* gid that owns ntfs files */
 	mode_t	mode;			/* mask to be applied for ntfs perms */
@@ -42,3 +44,4 @@ struct ntfs_args {
 
 #define NTFS_MFLAG_BITS	"\177\20" \
     "b\00caseins\0b\01allnames\0"
+#endif /* _NTFS_NTFSMOUNT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.136 2005/06/28 19:16:02 drochner Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.136.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136 2005/06/28 19:16:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136.2.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -233,7 +233,7 @@ extern struct evcnt tcp_output_refbig;
 
 static
 #ifndef GPROF
-__inline
+inline
 #endif
 int
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
@@ -248,7 +248,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	int size;
-	int iphlen;
+	int hdrlen;
 	int optlen;
 
 #ifdef DIAGNOSTIC
@@ -258,12 +258,12 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	switch (tp->t_family) {
 #ifdef INET
 	case AF_INET:
-		iphlen = sizeof(struct ip);
+		hdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		iphlen = sizeof(struct ip6_hdr);
+		hdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif
 	default:
@@ -300,21 +300,19 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * smaller than 1280, use 1280 as packet size and
 			 * attach fragment header.
 			 */
-			size = IPV6_MMTU - iphlen - sizeof(struct ip6_frag) -
-			    sizeof(struct tcphdr);
+			size = IPV6_MMTU - hdrlen - sizeof(struct ip6_frag);
 		} else
-			size = rt->rt_rmx.rmx_mtu - iphlen -
-			    sizeof(struct tcphdr);
+			size = rt->rt_rmx.rmx_mtu - hdrlen;
 #else
-		size = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
+		size = rt->rt_rmx.rmx_mtu - hdrlen;
 #endif
 	} else if (ifp->if_flags & IFF_LOOPBACK)
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 #ifdef INET
 	else if (inp && tp->t_mtudisc)
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 	else if (inp && in_localaddr(inp->inp_faddr))
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 #endif
 #ifdef INET6
 	else if (in6p) {
@@ -324,7 +322,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			struct in_addr d;
 			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
-				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+				size = ifp->if_mtu - hdrlen;
 		} else
 #endif
 		{
@@ -333,7 +331,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * or the node must use packet size <= 1280.
 			 */
 			size = tp->t_mtudisc ? IN6_LINKMTU(ifp) : IPV6_MMTU;
-			size -= (iphlen + sizeof(struct tcphdr));
+			size -= hdrlen;
 		}
 	}
 #endif
@@ -424,7 +422,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 
 static
 #ifndef GPROF
-__inline
+inline
 #endif
 int
 tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
@@ -550,7 +548,7 @@ tcp_output(struct tcpcb *tp)
 #endif
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
-	unsigned optlen, hdrlen;
+	unsigned optlen, hdrlen, packetlen;
 	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
 	int txsegsize_nosack;
@@ -1344,27 +1342,14 @@ send:
 #endif
 #ifdef INET6
 	case AF_INET6:
-		/*
-		 * XXX Actually delaying the checksum is Hard
-		 * XXX (well, maybe not for Itojun, but it is
-		 * XXX for me), but we can still take advantage
-		 * XXX of the cached pseudo-header checksum.
-		 */
-		/* equals to hdrlen + len */
-		m->m_pkthdr.len = sizeof(struct ip6_hdr)
-			+ sizeof(struct tcphdr) + optlen + len;
-#ifdef notyet
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
-#endif
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
 		if (len + optlen) {
 			/* Fixup the pseudo-header checksum. */
 			/* XXXJRT: Not IPv6 Jumbogram safe. */
 			th->th_sum = in_cksum_addword(th->th_sum,
 			    htons((u_int16_t) (len + optlen)));
 		}
-		th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
-		    sizeof(struct tcphdr) + optlen + len);
 		break;
 #endif
 	}
@@ -1441,6 +1426,7 @@ timer:
 #ifdef INET
 	case AF_INET:
 		ip->ip_len = htons(m->m_pkthdr.len);
+		packetlen = m->m_pkthdr.len;
 		if (tp->t_inpcb) {
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
@@ -1455,6 +1441,7 @@ timer:
 #endif
 #ifdef INET6
 	case AF_INET6:
+		packetlen = m->m_pkthdr.len;
 		ip6->ip6_nxt = IPPROTO_TCP;
 		if (tp->t_in6pcb) {
 			/*
@@ -1470,6 +1457,9 @@ timer:
 		/* ip6_plen will be filled in ip6_output(). */
 		break;
 #endif
+	default:	/*pacify gcc*/
+		packetlen = 0;
+		break;
 	}
 
 	switch (af) {
@@ -1537,6 +1527,10 @@ out:
 
 		return (error);
 	}
+
+	if (packetlen > tp->t_pmtud_mtu_sent)
+		tp->t_pmtud_mtu_sent = packetlen;
+	
 	tcpstat.tcps_sndtotal++;
 	if (tp->t_flags & TF_DELACK)
 		tcpstat.tcps_delack++;
@@ -1581,6 +1575,7 @@ tcp_setpersist(struct tcpcb *tp)
 		tp->t_rxtshift++;
 }
 
+#if defined(INET)
 /*
  * tcp4_segment: handle M_CSUM_TSOv4 by software.
  *
@@ -1706,3 +1701,4 @@ quit:
 
 	return error;
 }
+#endif /* defined(INET) */

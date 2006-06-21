@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.2 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.2.4.1 2006/06/21 14:59:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2.4.1 2006/06/21 14:59:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.2 2005/02/26 23:10:19 perry
 #include <compat/linux/common/linux_errno.h>
 
 int
-linux_exec_setup_stack(struct proc *p, struct exec_package *epp)
+linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
 	u_long max_stack_size;
 	u_long access_linear_min, access_size;
@@ -102,7 +102,7 @@ linux_exec_setup_stack(struct proc *p, struct exec_package *epp)
 #endif
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

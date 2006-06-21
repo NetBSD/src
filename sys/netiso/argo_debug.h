@@ -1,4 +1,4 @@
-/*	$NetBSD: argo_debug.h,v 1.14 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: argo_debug.h,v 1.14.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -251,4 +251,4 @@ if( !(phrase) ) printf("ASSERTION NOT VALID at line %d file %s\n",__LINE__,__FIL
 
 #endif				/* ARGO_DEBUG */
 
-#endif				/* _NETISO_ARGO_DEBUG_H_ */
+#endif /* !_NETISO_ARGO_DEBUG_H_ */

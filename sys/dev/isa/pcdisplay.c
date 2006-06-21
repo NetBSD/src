@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.27 2005/02/04 02:10:41 perry Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.27.6.1 2006/06/21 15:04:21 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.27 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.27.6.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ const struct wsscreen_list pcdisplay_screenlist = {
 	_pcdisplay_scrlist
 };
 
-static int pcdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t pcdisplay_mmap(void *, off_t, int);
+static int pcdisplay_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t pcdisplay_mmap(void *, void *, off_t, int);
 static int pcdisplay_alloc_screen(void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *);
 static void pcdisplay_free_screen(void *, void *);
@@ -375,12 +375,13 @@ pcdisplay_is_console(iot)
 }
 
 static int
-pcdisplay_ioctl(v, cmd, data, flag, p)
+pcdisplay_ioctl(v, vs, cmd, data, flag, l)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	/*
 	 * XXX "do something!"
@@ -389,8 +390,9 @@ pcdisplay_ioctl(v, cmd, data, flag, p)
 }
 
 static paddr_t
-pcdisplay_mmap(v, offset, prot)
+pcdisplay_mmap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

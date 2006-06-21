@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.7 2005/06/26 21:18:00 christos Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.7.2.1 2006/06/21 15:10:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NET_IF_PPPOE_H_
+#define _NET_IF_PPPOE_H_
 
 struct pppoediscparms {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
@@ -78,5 +81,6 @@ extern struct callout pppoe_softintr;		/* callout (poor mans softint) */
 extern void pppoe_softintr_handler(void*);	/* handler function */
 #endif
 
-#endif	/* _KERNEL */
+#endif /* _KERNEL */
+#endif /* !_NET_IF_PPPOE_H_ */
 

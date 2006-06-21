@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.55 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.55.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55 2005/06/23 23:15:12 thorpej Exp $"
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 /* ARGSUSED */
 int
@@ -59,7 +60,8 @@ sys_reboot(struct lwp *l, void *v, register_t *retval)
 	int error;
 	char *bootstr, bs[128];
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -109,6 +111,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 	    || sy->sy_call == sys_nosys))
 		return;
 
+	KERNEL_PROC_LOCK(l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -127,6 +130,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 		}
 	}
 	printf("\n");
+	KERNEL_PROC_UNLOCK(l);
 }
 
 void
@@ -148,6 +152,7 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 	    || sy->sy_call == sys_nosys))
 		return;
 
+	KERNEL_PROC_LOCK(l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -159,5 +164,6 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,
 		    error, (long)retval[0], (long)retval[1]);
 	printf("\n");
+	KERNEL_PROC_UNLOCK(l);
 }
 #endif /* SYSCALL_DEBUG */

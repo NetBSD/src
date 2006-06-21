@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.8 2005/06/03 08:42:54 scw Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.8.2.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.8 2005/06/03 08:42:54 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.8.2.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -111,7 +111,7 @@ clock_pcctwo_attach(parent, self, aux)
 	struct clock_pcctwo_softc *sc;
 	struct pcctwo_attach_args *pa;
 
-	sc = clock_pcctwo_sc = (struct clock_pcctwo_softc *) self;
+	sc = clock_pcctwo_sc = device_private(self);
 	pa = aux;
 
 	if (pa->pa_ipl != CLOCK_LEVEL)

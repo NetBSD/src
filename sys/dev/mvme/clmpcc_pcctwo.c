@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.9 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.9.6.1 2006/06/21 15:05:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.9 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.9.6.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	struct pcctwo_attach_args *pa;
 	int level = pa->pa_ipl;
 
-	sc = (struct clmpcc_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	level = pa->pa_ipl;
 	sc->sc_iot = pa->pa_bust;

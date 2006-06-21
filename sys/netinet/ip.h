@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.26 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: ip.h,v 1.26.12.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -194,4 +194,4 @@ struct ippseudo {
 	u_int8_t	ippseudo_p;	/* protocol */
 	u_int16_t	ippseudo_len;	/* protocol length */
 } __packed;
-#endif /* _NETINET_IP_H_ */
+#endif /* !_NETINET_IP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.92 2005/05/30 23:04:53 chs Exp $	*/
+/*	$NetBSD: malloc.h,v 1.92.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -160,12 +160,17 @@ extern struct simplelock malloc_slock;
 #else /* do not collect statistics */
 #define	MALLOC(space, cast, size, type, flags)				\
 do {									\
-	struct kmembuckets *__kbp = &kmembuckets[BUCKETINDX((size))];	\
+	unsigned long __size = (unsigned long)(size);			\
+	struct kmembuckets *__kbp = &kmembuckets[BUCKETINDX(__size)];	\
 	int __s = splvm();						\
+	switch (__size) {						\
+	case size:	/* fail to compile if size is not const */	\
+		break;							\
+	}								\
 	simple_lock(&malloc_slock);					\
 	if (__kbp->kb_next == NULL) {					\
 		simple_unlock(&malloc_slock);				\
-		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
+		(space) = (cast)malloc(__size, (type), (flags));	\
 		splx(__s);						\
 	} else {							\
 		(space) = (cast)__kbp->kb_next;				\
@@ -173,7 +178,7 @@ do {									\
 		simple_unlock(&malloc_slock);				\
 		splx(__s);						\
 		if ((flags) & M_ZERO)					\
-			memset((space), 0, (size));			\
+			memset((space), 0, __size);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 

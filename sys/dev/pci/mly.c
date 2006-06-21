@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.23 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: mly.c,v 1.23.4.1 2006/06/21 15:05:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.1 2006/06/21 15:05:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,8 @@ mly_ioctl(struct mly_softc *mly, struct mly_cmd_ioctl *ioctl, void **data,
  bad:
 	if (mc != NULL) {
 		/* Do we need to free a data buffer we allocated? */
-		if (rv != 0 && mc->mc_data != NULL && *data == NULL)
+		if (rv != 0 && mc->mc_data != NULL &&
+		    (data == NULL || *data == NULL))
 			free(mc->mc_data, M_DEVBUF);
 		mly_ccb_free(mly, mc);
 	}
@@ -2272,7 +2273,7 @@ mly_dmamem_free(struct mly_softc *mly, int size, bus_dmamap_t dmamap,
  * Accept an open operation on the control device.
  */
 int
-mlyopen(dev_t dev, int flag, int mode, struct proc *p)
+mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mly_softc *mly;
 
@@ -2291,7 +2292,7 @@ mlyopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 int
-mlyclose(dev_t dev, int flag, int mode, struct proc *p)
+mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mly_softc *mly;
 
@@ -2304,7 +2305,7 @@ mlyclose(dev_t dev, int flag, int mode, struct proc *p)
  * Handle control operations.
  */
 int
-mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2416,8 +2417,7 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
  		mly_ccb_unmap(mly, mc);
 	if (mc->mc_data != NULL)
 		free(mc->mc_data, M_DEVBUF);
-	if (mc != NULL)
-		mly_ccb_free(mly, mc);
+	mly_ccb_free(mly, mc);
 
 	return (rv);
 }

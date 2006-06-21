@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.12 2004/03/21 10:09:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.12.16.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -37,8 +37,8 @@
 #define _NETSMB_SMB_SUBR_H_
 
 #ifndef _KERNEL
-#error "This file shouldn't be included from userland programs"
-#endif
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 MALLOC_DECLARE(M_SMBTEMP);
 
@@ -72,7 +72,7 @@ void m_dumpm(struct mbuf *m);
 	 SIGISMEMBER(set, SIGHUP) || SIGISMEMBER(set, SIGKILL) ||	\
 	 SIGISMEMBER(set, SIGQUIT))
 
-#define	smb_suser(cred)	suser(cred, 0)
+#define	smb_suser(cred)	kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)
 
 /*
  * Compatibility wrappers for simple locks
@@ -94,8 +94,8 @@ typedef	smb_unichar	*smb_uniptr;
  */
 struct smb_cred {
 	/* struct thread *	scr_td; */
-	struct proc *	scr_p;
-	struct ucred *	scr_cred;
+	struct lwp *	scr_l;
+	kauth_cred_t	scr_cred;
 };
 
 extern const smb_unichar smb_unieol;
@@ -104,8 +104,9 @@ struct mbchain;
 struct smb_vc;
 struct smb_rq;
 
-void smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred);
-int  smb_proc_intr(struct proc *);
+void smb_makescred(struct smb_cred *scred, struct lwp *l,
+    kauth_cred_t cred);
+int  smb_proc_intr(struct lwp *);
 char *smb_strdup(const char *s);
 char *smb_strdupin(char *s, int maxlen);
 void *smb_memdupin(void *umem, int len);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.93 2005/05/30 04:35:22 christos Exp $ */
+/* $NetBSD: isp_pci.c,v 1.93.2.1 2006/06/21 15:05:05 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.93 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.93.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -663,7 +663,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		DEFAULT_PORTWWN(isp) = 0x400000007F000002ULL;
 	}
 
-	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_confopts = device_cfdata(self)->cf_flags;
 	isp->isp_role = ISP_DEFAULT_ROLES;
 	ISP_LOCK(isp);
 	isp->isp_osinfo.no_mbox_ints = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.24 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.24.4.1 2006/06/21 15:05:04 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -192,9 +192,17 @@
 #define BGE_PCI_UNDI_TX_BD_PRODIDX_LO	0xAC
 #define BGE_PCI_ISR_MBX_HI		0xB0
 #define BGE_PCI_ISR_MBX_LO		0xB4
-/* XXX: used in PCI-Express code for 575x chips */
+
 #define BGE_PCI_UNKNOWN0		0xC4
-#define BGE_PCI_UNKNOWN1		0xD8
+/* XXX:
+ * Used in PCI-Express code for 575x chips.
+ * Should be replaced with checking  for a PCI config-space
+ * capability for PCI-Express, and PCI-Express standard 
+ * offsets  into that capability block.
+ */
+#define BGE_PCI_CONF_DEV_CTRL		0xD8
+#define BGE_PCI_CONF_DEV_STUS		0xDA
+
 
 /* PCI Misc. Host control register */
 #define BGE_PCIMISCCTL_CLEAR_INTA	0x00000001
@@ -249,6 +257,9 @@
 #define BGE_CHIPID_BCM5705_A3		0x30030000
 #define BGE_CHIPID_BCM5750_A0		0x40000000
 #define BGE_CHIPID_BCM5750_A1		0x40010000
+#define BGE_CHIPID_BCM5751_A1		0x41010000
+#define BGE_CHIPID_BCM5714_A0		0x50000000
+#define BGE_CHIPID_BCM5715_xx		0x90010000
 
 /* shorthand one */
 #define BGE_ASICREV(x)                  ((x) >> 28)
@@ -258,6 +269,11 @@
 #define BGE_ASICREV_BCM5704             0x02
 #define BGE_ASICREV_BCM5705             0x03
 #define BGE_ASICREV_BCM5750             0x04
+#define BGE_ASICREV_BCM5714             0x05
+#define BGE_ASICREV_BCM5752             0x06
+/* ASIC revision 0x07 is the original bcm5700 */
+#define BGE_ASICREV_BCM5780             0x08
+#define BGE_ASICREV_BCM5715             0x09	/* XXX ??? */
 
 /* chip revisions */
 #define BGE_CHIPREV(x)                  ((x) >> 24)
@@ -282,6 +298,9 @@
 #define BGE_PCIDMARWCTL_DFLT_PCI_WR_CMD	0xF0000000
 # define  BGE_PCIDMA_RWCTL_PCI_WR_CMD_SHIFT	 28
 
+/* PCI DMA Read/Write Control register, alternate usage for PCI-Express */
+#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128	0x00180000 
+#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256	0x00380000
 
 #define BGE_PCI_READ_BNDRY_DISABLE	0x00000000
 #define BGE_PCI_READ_BNDRY_16BYTES	0x00000100
@@ -1288,6 +1307,10 @@
 #define BGE_RDMAMODE_LOCWRITE_TOOBIG	0x00000200
 #define BGE_RDMAMODE_ALL_ATTNS		0x000003FC
 
+/* Alternate encodings for PCI-Express, from Broadcom-supplied Linux driver */
+#define BGE_RDMA_MODE_FIFO_LONG_BURST	((1<<17) || (1 << 16))
+#define BGE_RDMA_MODE_FIFO_SIZE_128     (1 << 17)
+
 /* Read DMA status register */
 #define BGE_RDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
 #define BGE_RDMASTAT_PCI_MSTR_ABRT_ATTN	0x00000008
@@ -1620,6 +1643,22 @@
  */
 #define BGE_PCIE_CTL0			0x7c00
 #define BGE_PCIE_CTL1			0x7e2c
+/*
+ * TLP Control Register
+ * Applicable to BCM5721 and BCM5751 only
+ */
+#define	BGE_TLP_CONTROL_REG		0x7c00
+#define	BGE_TLP_DATA_FIFO_PROTECT	0x02000000
+
+/*
+ * PHY Test Control Register
+ * Applicable to BCM5721 and BCM5751 only
+ */
+#define	BGE_PHY_TEST_CTRL_REG		0x7e2c
+#define	BGE_PHY_PCIE_SCRAM_MODE		0x0020
+#define	BGE_PHY_PCIE_LTASS_MODE		0x0040
+
+
 
 /* Mode control register */
 #define BGE_MODECTL_INT_SNDCOAL_ONLY	0x00000001
@@ -1739,19 +1778,10 @@
  */
 #define BGE_MAGIC_NUMBER                0x4B657654
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 typedef struct {
 	u_int32_t		bge_addr_hi;
 	u_int32_t		bge_addr_lo;
 } bge_hostaddr;
-#else
-typedef struct {
-	u_int32_t		bge_addr_hi;
-	u_int32_t		bge_addr_lo;
-} bge_hostaddr;
-#endif
-
-#define BGE_HOSTADDR(x)	(x).bge_addr_lo
 
 static __inline void
 bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
@@ -1770,11 +1800,7 @@ struct bge_rcb {
 	u_int32_t		bge_nicaddr;
 };
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((flags) << 16 | (maxlen))
-#else
 #define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
-#endif
 
 #define RCB_WRITE_4(sc, rcb, offset, val) \
 	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, \
@@ -1902,6 +1928,7 @@ struct bge_status_block {
 #define BCOM_VENDORID			0x14E4
 #define BCOM_DEVICEID_BCM5700		0x1644
 #define BCOM_DEVICEID_BCM5701		0x1645
+#define BCOM_DEVICEID_BCM5789		0x169d
 
 /*
  * Alteon AceNIC PCI vendor/device ID.
@@ -2253,11 +2280,22 @@ struct bge_ring_data {
  * no attempt is made to allocate physically contiguous memory.
  *
  */
+#if 0	/* pre-TSO values */
+#define BGE_TXDMA_MAX	ETHER_MAX_LEN_JUMBO
 #ifdef _LP64
 #define BGE_NTXSEG      30
 #else
 #define BGE_NTXSEG      31
 #endif
+#else	/* TSO values */
+#define BGE_TXDMA_MAX	(round_page(IP_MAXPACKET))	/* for TSO */
+#ifdef _LP64
+#define BGE_NTXSEG      120	/* XXX just a guess */
+#else
+#define BGE_NTXSEG      124	/* XXX just a guess */
+#endif
+#endif	/* TSO values */
+
 
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
@@ -2327,6 +2365,7 @@ struct bge_softc {
     	u_int8_t		bge_rx_alignment_bug;
 	u_int8_t		bge_pcie;	/* on a PCI Express port */
 	u_int32_t		bge_return_ring_cnt;
+	u_int32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;
 	u_int32_t		bge_quirks;

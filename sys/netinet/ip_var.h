@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.72 2005/05/06 04:28:37 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.72.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -178,8 +178,6 @@ struct ipflow {
 #include "opt_mbuftrace.h"
 #endif
 
-#include <sys/protosw.h>
-
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
@@ -251,7 +249,7 @@ void	 rip_init(void);
 void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 void	ipflow_init(void);
 struct	ipflow *ipflow_reap(int);
 void	ipflow_create(const struct route *, struct mbuf *);
@@ -295,4 +293,4 @@ ip_newid(void)
 
 #endif  /* _KERNEL */
 
-#endif /* _NETINET_IP_VAR_H_ */
+#endif /* !_NETINET_IP_VAR_H_ */

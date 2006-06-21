@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.27 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.27.2.1 2006/06/21 15:05:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.27 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.27.2.1 2006/06/21 15:05:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static int	vga_pci_lookup_quirks(struct pci_attach_args *);
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
 
-static int	vga_pci_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	vga_pci_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	vga_pci_mmap(void *, off_t, int);
 
 static const struct vga_funcs vga_pci_funcs = {
@@ -224,7 +224,7 @@ vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
 }
 
 static int
-vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
 	struct vga_pci_softc *psc = (void *) vc->softc;
@@ -234,7 +234,7 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
 		return (pci_devioctl(psc->sc_pc, psc->sc_pcitag,
-		    cmd, data, flag, p));
+		    cmd, data, flag, l));
 
 	default:
 		return (EPASSTHROUGH);

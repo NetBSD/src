@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.10 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.10.6.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ extern const struct opl_operators opl2_instrs[];
 extern const struct opl_operators opl3_instrs[];
 
 int	opl_find(struct opl_softc *);
+int	opl_match(bus_space_tag_t, bus_space_handle_t, int);
 void	opl_attach(struct opl_softc *);
 int	opl_detach(struct opl_softc *, int);
 #endif

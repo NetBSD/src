@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.40 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.40.4.1 2006/06/21 15:05:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -578,7 +578,7 @@ struct _tulip_softc_t {
     u_int32_t tulip_intrmask;	/* our copy of csr_intr */
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is TULIP_SYSTEMERROR is also set) */
-    u_int32_t tulip_txtimer : 2;	/* transmission timer */
+    u_int32_t tulip_txtimer;	/* transmission timer */
     u_int32_t tulip_system_errors;	/* number of system errors encountered */
     u_int32_t tulip_statusbits;	/* status bits from CSR5 that may need to be printed */
 
@@ -1089,23 +1089,23 @@ extern struct cfdriver de_cd;
 	} while (0)
 #if defined(__i386__)
 typedef u_quad_t tulip_cycle_t;
-static __inline__ tulip_cycle_t
+static __inline tulip_cycle_t
 TULIP_PERFREAD(
     void)
 {
     tulip_cycle_t x;
-    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+    __asm volatile (".byte 0x0f, 0x31" : "=A" (x));
     return x;
 }
 #define	TULIP_PERFDIFF(s, f)	((f) - (s))
 #elif defined(__alpha__)
 typedef unsigned long tulip_cycle_t;
-static __inline__ tulip_cycle_t
+static __inline tulip_cycle_t
 TULIP_PERFREAD(
     void)
 {
     tulip_cycle_t x;
-    __asm__ volatile ("rpcc %0" : "=r" (x));
+    __asm volatile ("rpcc %0" : "=r" (x));
     return x;
 }
 #define	TULIP_PERFDIFF(s, f)	((unsigned int) ((f) - (s)))

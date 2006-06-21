@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.20 2005/05/30 04:30:18 christos Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.20.2.1 2006/06/21 15:06:14 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.20 2005/05/30 04:30:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.20.2.1 2006/06/21 15:06:14 yamt Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -348,6 +348,18 @@ static const struct CARDTYPE cards[] = {
            { 0x20000, 0x00000, 0x30000, 0x40000, 1 }, /* audio MUX values*/
            0x70000 },                           /* GPIO mask */
 
+        {  CARD_TERRATVALUE,                    /* the card id */
+          "Terratec TValue",                    /* the 'name' */
+           NULL,                                /* the tuner */
+           0,
+           0,
+           0,
+           0,
+           0,                                   /* EEProm type */
+           0,                                   /* EEProm size */
+           { 0x500, 0x900, 0x300, 0x900, 1 },   /* audio MUX values*/
+           0xffff00 },                          /* GPIO mask */
+
 };
 
 struct bt848_card_sig bt848_card_signature[1]= {
@@ -539,6 +551,7 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
 #define PCI_VENDOR_AVERMEDIA	0x1461
 #define PCI_VENDOR_STB		0x10B4
 #define PCI_VENDOR_ASKEY	0x144F
+#define PCI_VENDOR_TERRATEC	0x153B
 #endif
 /* Following not confirmed with http://www.pcidatabase.com/,
    so not added to NetBSD's pcidevs */
@@ -548,6 +561,9 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
 #define PCI_VENDOR_FLYVIDEO	0x1851
 #define PCI_VENDOR_FLYVIDEO_2	0x1852
 #define PCI_VENDOR_PINNACLE_ALT	0xBD11
+
+#define MODEL_TERRATVALUE_1118	0x1118
+#define MODEL_TERRATVALUE_1134	0x1134
 
 void
 probeCard(bktr_ptr_t bktr, int verbose, int unit)
@@ -685,6 +701,15 @@ probeCard(bktr_ptr_t bktr, int verbose, int unit)
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
+
+    	    	if (subsystem_vendor_id == PCI_VENDOR_TERRATEC
+		    && (subsystem_id == MODEL_TERRATVALUE_1118 
+		        || subsystem_id == MODEL_TERRATVALUE_1134)) {
+    	    	    bktr->card = cards[(card = CARD_TERRATVALUE)];
+    	    	    bktr->card.eepromAddr = eeprom_i2c_address;
+    	    	    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+    	    	    goto checkTuner;
+    	    	}
 
     	    	if (subsystem_vendor_id == PCI_VENDOR_TERRATEC) {
     	    	    bktr->card = cards[(card = CARD_TERRATVPLUS)];
@@ -1100,6 +1125,11 @@ checkTuner:
 #endif
             goto checkDBX;
 	    break;
+
+	case CARD_TERRATVALUE:
+            select_tuner(bktr, PHILIPS_PAL);
+            goto checkDBX;
+            break;
 
 	} /* end switch(card) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.5 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.5.4.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.5 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.5.4.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -131,7 +131,7 @@ _mftb()
         u_long scratch;
         u_int64_t tb;
 
-        asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
+        __asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
 		: "=r"(tb), "=r"(scratch));
         return tb;
 }
@@ -153,7 +153,7 @@ static inline void
 idma_cache_flush(void * p)
 {
 	KASSERT(((unsigned int)p & (CACHELINESIZE-1)) == 0);
-        __asm __volatile ("eieio; dcbf 0,%0; eieio; lwz %0,0(%0); sync;"
+        __asm volatile ("eieio; dcbf 0,%0; eieio; lwz %0,0(%0); sync;"
                                         : "+r"(p):);
 }
 
@@ -161,7 +161,7 @@ static inline void
 idma_cache_invalidate(void * const p)
 {
 	KASSERT(((unsigned int)p & (CACHELINESIZE-1)) == 0);
-	__asm __volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
+	__asm volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
 }
 
 static inline void
@@ -283,8 +283,8 @@ idma_attach(
 	struct device * const self,
 	void * const aux)
 {
-	struct gt_softc * const gtsc = (struct gt_softc *)parent;
-	idma_softc_t * const sc = (idma_softc_t *)self;
+	struct gt_softc * const gtsc = device_private(parent);
+	idma_softc_t * const sc = device_private(self);
 	struct gt_attach_args * const ga = aux;
 	unsigned int i;
 	void *ih;

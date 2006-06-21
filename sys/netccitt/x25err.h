@@ -1,4 +1,4 @@
-/*	$NetBSD: x25err.h,v 1.8 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: x25err.h,v 1.8.4.1 2006/06/21 15:10:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -73,6 +73,9 @@
  *	@(#)x25err.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETCCITT_X25ERR_H_
+#define _NETCCITT_X25ERR_H_
+
 /*
  *
  *  X.25 Reset and Clear errors and diagnostics.  These values are
@@ -97,3 +100,4 @@
 #define EXCNCG		118	/* Clear: network congestion		*/
 #define EXCNOB		119	/* Clear: not obtainable		*/
 
+#endif /* !_NETCCITT_X25ERR_H_ */

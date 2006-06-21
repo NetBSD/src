@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.41 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.41.4.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -51,13 +51,33 @@
  * ktrace record header
  */
 struct ktr_header {
-	int	ktr_len;		/* length of ktr_buf */
+	int	ktr_len;		/* length of record minus length of old header */
+#if BYTE_ORDER == LITTLE_ENDIAN
 	short	ktr_type;		/* trace record type */
+	short	ktr_version;		/* trace record version */
+#else
+	short	ktr_version;		/* trace record version */
+	short	ktr_type;		/* trace record type */
+#endif
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
-	struct	timeval ktr_time;	/* timestamp */
-	const void *ktr_buf;
+	union {
+		struct timeval _tv;	/* v0 timestamp */
+		struct timespec _ts;	/* v1 timespec */
+	} _ktr_time;
+	union {
+		const void *_buf;	/* v0 unused */
+		lwpid_t _lid;		/* v1 lwp id */
+	} _ktr_id;
 };
+
+#define ktr_lid	_ktr_id._lid
+#define ktr_time _ktr_time._ts
+#define ktr_tv _ktr_time._tv
+#define ktr_ts _ktr_time._ts
+#define ktr_unused _ktr_id._buf
+
+#define	KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
 
 /*
  * Test for kernel trace point
@@ -190,6 +210,22 @@ struct ktr_mool {
 };
 
 /*
+ * KTR_SAUPCALL - scheduler activated upcall.
+ */
+#define	KTR_SAUPCALL	13
+struct ktr_saupcall {
+	int ktr_type;
+	int ktr_nevent;
+	int ktr_nint;
+	void *ktr_sas;
+	void *ktr_ap;
+	/*
+	 * followed by nevent sa_t's from sas[]
+	 */
+};
+
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -205,7 +241,7 @@ struct ktr_mool {
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
-
+#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -213,6 +249,13 @@ struct ktr_mool {
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 #define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
+#define	KTRFAC_VER_MASK	0x0f000000	/* record version mask */
+#define	KTRFAC_VER_SHIFT	24	/* record version shift */
+
+#define	KTRFAC_VERSION(tf)	(((tf) & KTRFAC_VER_MASK) >> KTRFAC_VER_SHIFT)
+
+#define	KTRFACv0	(0 << KTRFAC_VER_SHIFT)
+#define	KTRFACv1	(1 << KTRFAC_VER_SHIFT)
 
 #ifndef	_KERNEL
 
@@ -226,18 +269,19 @@ __END_DECLS
 
 #else
 
-void ktrcsw(struct proc *, int, int);
-void ktremul(struct proc *);
-void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
-void ktrnamei(struct proc *, char *);
-void ktrpsig(struct proc *, int, sig_t, const sigset_t *, const ksiginfo_t *);
-void ktrsyscall(struct proc *, register_t, register_t,
+void ktrcsw(struct lwp *, int, int);
+void ktremul(struct lwp *);
+void ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
+void ktrnamei(struct lwp *, char *);
+void ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
+void ktrsyscall(struct lwp *, register_t, register_t,
     const struct sysent *, register_t []);
-void ktrsysret(struct proc *, register_t, int, register_t *);
-void ktruser(struct proc *, const char *, void *, size_t, int);
-void ktrmmsg(struct proc *, const void *, size_t);
-void ktrkmem(struct proc *, int, const void *, size_t);
-void ktrmool(struct proc *, const void *, size_t, const void *);
+void ktrsysret(struct lwp *, register_t, int, register_t *);
+void ktruser(struct lwp *, const char *, void *, size_t, int);
+void ktrmmsg(struct lwp *, const void *, size_t);
+void ktrkmem(struct lwp *, int, const void *, size_t);
+void ktrmool(struct lwp *, const void *, size_t, const void *);
+void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);

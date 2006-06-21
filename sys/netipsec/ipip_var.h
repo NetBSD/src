@@ -1,4 +1,4 @@
-/*	$NetBSD: ipip_var.h,v 1.2 2004/05/07 00:55:14 jonathan Exp $	*/
+/*	$NetBSD: ipip_var.h,v 1.2.14.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipip_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.h,v 1.5 2002/06/09 16:26:10 itojun Exp $ */
 /*
@@ -63,4 +63,4 @@ struct ipipstat
 extern	int ipip_allow;
 extern	struct ipipstat ipipstat;
 #endif /* _KERNEL */
-#endif /* _NETINET_IPIP_H_ */
+#endif /* !_NETINET_IPIP_H_ */

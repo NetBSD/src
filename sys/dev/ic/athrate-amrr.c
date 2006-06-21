@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-amrr.c,v 1.3.2.1 2006/06/21 15:02:53 yamt Exp $ */
+
 /*-
  * Copyright (c) 2004 INRIA
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.7 2005/04/02 18:54:30 sam Exp $");
+#ifdef __FreeBSD__
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.3.2.1 2006/06/21 15:02:53 yamt Exp $");
+#endif
 
 /*
  * AMRR rate control. See:
@@ -73,7 +80,7 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.7 2005/04/02 18:54:
 
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-amrr.h>
-#include <contrib/dev/ic/athhal_desc.h>
+#include <contrib/dev/ath/ah_desc.h>
 
 #define	AMRR_DEBUG
 #ifdef AMRR_DEBUG
@@ -205,9 +212,6 @@ ath_rate_update(struct ath_softc *sc, struct ieee80211_node *ni, int rate)
 		(ni->ni_rates.rs_rates[rate] & IEEE80211_RATE_VAL) / 2 : 0);
 
 	ni->ni_txrate = rate;
-	/* XXX management/control frames always go at the lowest speed */
-	an->an_tx_mgtrate = rt->info[0].rateCode;
-	an->an_tx_mgtratesp = an->an_tx_mgtrate | rt->info[0].shortPreamble;
 	/*
 	 * Before associating a node has no rate set setup
 	 * so we can't calculate any transmit codes to use.
@@ -248,7 +252,7 @@ ath_rate_update(struct ath_softc *sc, struct ieee80211_node *ni, int rate)
 				/* NB: only do this if we didn't already do it above */
 				amn->amn_tx_rate3 = rt->info[0].rateCode;
 				amn->amn_tx_rate3sp =
-					an->an_tx_mgtrate | rt->info[0].shortPreamble;
+					an->an_tx_rate3 | rt->info[0].shortPreamble;
 			} else {
 				amn->amn_tx_rate3 = amn->amn_tx_rate3sp = 0;
 			}
@@ -279,7 +283,7 @@ ath_rate_ctl_start(struct ath_softc *sc, struct ieee80211_node *ni)
 	int srate;
 
 	KASSERT(ni->ni_rates.rs_nrates > 0, ("no rates"));
-	if (ic->ic_fixed_rate == -1) {
+	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * No fixed rate is requested. For 11b start with
 		 * the highest negotiated rate; otherwise, for 11g
@@ -361,7 +365,8 @@ ath_rate_newstate(struct ath_softc *sc, enum ieee80211_state state)
 		ieee80211_iterate_nodes(&ic->ic_sta, ath_rate_cb, sc);
 		ath_rate_update(sc, ic->ic_bss, 0);
 	}
-	if (ic->ic_fixed_rate == -1 && state == IEEE80211_S_RUN) {
+	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE &&
+	    state == IEEE80211_S_RUN) {
 		int interval;
 		/*
 		 * Start the background rate control thread if we
@@ -458,7 +463,7 @@ ath_ratectl(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int interval;
 
-	if (ifp->if_flags & IFF_RUNNING) {
+	if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
 		sc->sc_stats.ast_rate_calls++;
 
 		if (ic->ic_opmode == IEEE80211_M_STA)

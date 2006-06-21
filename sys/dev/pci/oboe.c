@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.19 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: oboe.c,v 1.19.2.1 2006/06/21 15:05:05 yamt Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,14 +75,14 @@ static void oboe_attach(struct device *parent, struct device *self, void *aux);
 static int oboe_activate(struct device *self, enum devact act);
 static int oboe_detach(struct device *self, int flags);
 
-static int oboe_open(void *h, int flag, int mode, struct proc *p);
-static int oboe_close(void *h, int flag, int mode, struct proc *p);
+static int oboe_open(void *h, int flag, int mode, struct lwp *l);
+static int oboe_close(void *h, int flag, int mode, struct lwp *l);
 static int oboe_read(void *h, struct uio *uio, int flag);
 static int oboe_write(void *h, struct uio *uio, int flag);
 static int oboe_set_params(void *h, struct irda_params *params);
 static int oboe_get_speeds(void *h, int *speeds);
 static int oboe_get_turnarounds(void *h, int *times);
-static int oboe_poll(void *h, int events, struct proc *p);
+static int oboe_poll(void *h, int events, struct lwp *l);
 static int oboe_kqfilter(void *h, struct knote *kn);
 
 #ifdef OBOE_DEBUG
@@ -280,7 +280,7 @@ oboe_detach(struct device *self, int flags)
 }
 
 static int
-oboe_open(void *h, int flag, int mode, struct proc *p)
+oboe_open(void *h, int flag, int mode, struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 
@@ -295,7 +295,7 @@ oboe_open(void *h, int flag, int mode, struct proc *p)
 }
 
 static int
-oboe_close(void *h, int flag, int mode, struct proc *p)
+oboe_close(void *h, int flag, int mode, struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 	int error = 0;
@@ -458,7 +458,7 @@ oboe_get_turnarounds(void *h, int *turnarounds)
 }
 
 static int
-oboe_poll(void *h, int events, struct proc *p)
+oboe_poll(void *h, int events, struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 	int revents = 0;
@@ -475,7 +475,7 @@ oboe_poll(void *h, int events, struct proc *p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			DPRINTF(("%s: recording select\n", __FUNCTION__));
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 		}
 	}
 	splx(s);

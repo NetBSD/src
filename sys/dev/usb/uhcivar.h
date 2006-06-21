@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.38 2005/01/11 07:45:34 imp Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.38.10.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -75,9 +75,7 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
-#ifdef DIAGNOSTIC
-	int isdone;
-#endif
+	int isdone;	/* used only when DIAGNOSTIC is defined */
 } uhci_intr_info_t;
 
 struct uhci_xfer {

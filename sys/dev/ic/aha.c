@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.47 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aha.c,v 1.47.4.1 2006/06/21 15:02:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47.4.1 2006/06/21 15:02:52 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -441,7 +441,7 @@ aha_intr(arg)
 	return (1);
 }
 
-static __inline void
+static inline void
 aha_reset_ccb(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.27 2005/02/12 12:31:08 manu Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.27.6.1 2006/06/21 15:11:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -72,7 +72,8 @@ struct	udpstat {
 #define	UDPCTL_SENDSPACE	2	/* default send buffer */
 #define	UDPCTL_RECVSPACE	3	/* default recv buffer */
 #define	UDPCTL_LOOPBACKCKSUM	4	/* do UDP checksum on loopback */
-#define	UDPCTL_MAXID		5
+#define	UDPCTL_STATS		5	/* UDP statistics */
+#define	UDPCTL_MAXID		6
 
 #define UDPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -80,12 +81,12 @@ struct	udpstat {
 	{ "sendspace", CTLTYPE_INT }, \
 	{ "recvspace", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL
 extern	struct	inpcbtable udbtable;
 extern	struct	udpstat udpstat;
-extern	int	udp_do_loopback_cksum;
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	UDP_HDR_ALIGNED_P(uh)	1
@@ -100,10 +101,10 @@ void	 udp_input(struct mbuf *, ...);
 int	 udp_output(struct mbuf *, ...);
 int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 udp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
 int	 udp_input_checksum(int af, struct mbuf *, const struct udphdr *, int,
 	    int);
 #endif
 
-#endif /* _NETINET_UDP_VAR_H_ */
+#endif /* !_NETINET_UDP_VAR_H_ */

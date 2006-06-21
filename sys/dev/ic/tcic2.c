@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.20 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.20.2.1 2006/06/21 15:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.20 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.20.2.1 2006/06/21 15:02:56 yamt Exp $");
 
 #undef	TCICDEBUG
 
@@ -70,8 +70,6 @@ int	tcic_debug = 1;
 void	tcic_attach_socket(struct tcic_handle *);
 void	tcic_init_socket(struct tcic_handle *);
 
-int	tcic_submatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
 int	tcic_print(void *arg, const char *pnp);
 int	tcic_intr_socket(struct tcic_handle *);
 
@@ -412,8 +410,7 @@ tcic_attach_socket(h)
 	struct tcic_handle *h;
 {
 	struct pcmciabus_attach_args paa;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PCMCIABUSCF_NLOCS];
 
 	/* initialize the rest of the handle */
 
@@ -430,12 +427,11 @@ tcic_attach_socket(h)
 	paa.iobase = h->sc->iobase;
 	paa.iosize = h->sc->iosize;
 
-	ldesc->len = 2;
-	ldesc->locs[PCMCIABUSCF_CONTROLLER] = 0;
-	ldesc->locs[PCMCIABUSCF_SOCKET] = h->sock;
+	locs[PCMCIABUSCF_CONTROLLER] = 0;
+	locs[PCMCIABUSCF_SOCKET] = h->sock;
 
-	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", ldesc, &paa,
-					tcic_print, tcic_submatch);
+	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", locs, &paa,
+					tcic_print, config_stdsubmatch);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 
@@ -535,24 +531,6 @@ tcic_init_socket(h)
 	h->sstat = reg = tcic_read_1(h, TCIC_R_SSTAT) & TCIC_SSTAT_STAT_MASK;
 	if (reg & TCIC_SSTAT_CD)
 		tcic_attach_card(h);
-}
-
-int
-tcic_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
-		return 0;
-	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
-		return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 int
@@ -765,7 +743,7 @@ tcic_chip_mem_alloc(pch, size, pcmhp)
 	bus_space_handle_t memh;
 	bus_addr_t addr;
 	bus_size_t sizepg;
-	int i, mask, mhandle;
+	int i, mask, mhandle, got = 0;
 
 	/* out of sc->memh, allocate as many pages as necessary */
 
@@ -799,11 +777,12 @@ tcic_chip_mem_alloc(pch, size, pcmhp)
 			mhandle = mask << i;
 			addr = h->sc->membase + (i * TCIC_MEM_PAGESIZE);
 			h->sc->subregionmask &= ~(mhandle);
+			got = 1;
 			break;
 		}
 	}
 
-	if (i == (TCIC_MEM_PAGES + 1 - sizepg))
+	if (got == 0)
 		return (1);
 
 	DPRINTF(("tcic_chip_mem_alloc bus addr 0x%lx+0x%lx\n", (u_long) addr,

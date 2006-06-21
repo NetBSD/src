@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.15 2005/06/02 04:40:46 riz Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.15.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,4 +72,4 @@ const char	*tanames[] =
 #define	TCP_NDEBUG 100
 #endif
 
-#endif /* _NETINET_TCP_DEBUG_H_ */
+#endif /* !_NETINET_TCP_DEBUG_H_ */

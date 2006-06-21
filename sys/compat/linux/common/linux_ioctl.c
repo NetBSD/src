@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.42 2005/02/28 22:11:32 soren Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.42.4.1 2006/06/21 14:59:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42 2005/02/28 22:11:32 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42.4.1 2006/06/21 14:59:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -87,31 +87,30 @@ linux_sys_ioctl(l, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
-		error = oss_ioctl_mixer(p, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_mixer(l, LINUX_TO_OSS(v), retval);
 		break;
 	case 'Q':
-		error = oss_ioctl_sequencer(p, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_sequencer(l, LINUX_TO_OSS(v), retval);
 		break;
 	case 'P':
-		error = oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_audio(l, LINUX_TO_OSS(v), retval);
 		break;
 	case 'r': /* VFAT ioctls; not yet supported */
 		error = ENOSYS;
 		break;
 	case 'S':
-		error = linux_ioctl_cdrom(p, uap, retval);
+		error = linux_ioctl_cdrom(l, uap, retval);
 		break;
 	case 't':
 	case 'f':
-		error = linux_ioctl_termios(p, uap, retval);
+		error = linux_ioctl_termios(l, uap, retval);
 		break;
 	case 'm':
-		error = linux_ioctl_mtio(p, uap, retval);
+		error = linux_ioctl_mtio(l, uap, retval);
 		break;
 	case 'T':
 	{
@@ -128,6 +127,7 @@ linux_sys_ioctl(l, v, retval)
 		struct vnode *vp;
 		struct vattr va;
 		extern const struct cdevsw sequencer_cdevsw;
+		struct proc *p = l->l_proc;
 
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -136,37 +136,37 @@ linux_sys_ioctl(l, v, retval)
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
-		    VOP_GETATTR(vp, &va, p->p_ucred, p) == 0 &&
+		    VOP_GETATTR(vp, &va, p->p_cred, l) == 0 &&
 		    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
-			error = oss_ioctl_sequencer(p, (void*)LINUX_TO_OSS(uap),
+			error = oss_ioctl_sequencer(l, (void*)LINUX_TO_OSS(uap),
 						   retval);
 		}
 		else {
-			error = linux_ioctl_termios(p, uap, retval);
+			error = linux_ioctl_termios(l, uap, retval);
 		}
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 #else
-		error = linux_ioctl_termios(p, uap, retval);
+		error = linux_ioctl_termios(l, uap, retval);
 #endif
 	}
 		break;
 	case '"':
-		error = linux_ioctl_sg(p, uap, retval);
+		error = linux_ioctl_sg(l, uap, retval);
 		break;
 	case 0x89:
-		error = linux_ioctl_socket(p, uap, retval);
+		error = linux_ioctl_socket(l, uap, retval);
 		break;
 	case 0x03:
-		error = linux_ioctl_hdio(p, uap, retval);
+		error = linux_ioctl_hdio(l, uap, retval);
 		break;
 	case 0x02:
-		error = linux_ioctl_fdio(p, uap, retval);
+		error = linux_ioctl_fdio(l, uap, retval);
 		break;
 	case 0x12:
-		error = linux_ioctl_blkio(p, uap, retval);
+		error = linux_ioctl_blkio(l, uap, retval);
 		break;
 	default:
-		error = linux_machdepioctl(p, uap, retval);
+		error = linux_machdepioctl(l, uap, retval);
 		break;
 	}
 	if (error == EPASSTHROUGH) {

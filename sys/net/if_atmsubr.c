@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.35 2005/03/31 15:48:13 christos Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.35.2.1 2006/06/21 15:10:27 yamt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.35 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.35.2.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -98,11 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.35 2005/03/31 15:48:13 christos Exp
  */
 
 int
-atm_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+atm_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	u_int16_t etype = 0;			/* if using LLC/SNAP */
 	int error = 0, sz;
@@ -236,11 +233,8 @@ bad:
  * the packet is in the mbuf chain m.
  */
 void
-atm_input(ifp, ah, m, rxhand)
-	struct ifnet *ifp;
-	struct atm_pseudohdr *ah;
-	struct mbuf *m;
-	void *rxhand;
+atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
+    void *rxhand)
 {
 	struct ifqueue *inq;
 	u_int16_t etype = ETHERTYPE_IP; /* default */
@@ -326,8 +320,7 @@ atm_input(ifp, ah, m, rxhand)
  * Perform common duties while attaching to interface list
  */
 void
-atm_ifattach(ifp)
-	struct ifnet *ifp;
+atm_ifattach(struct ifnet *ifp)
 {
 
 	ifp->if_type = IFT_ATM;
@@ -354,7 +347,7 @@ static int pvc_max_number = 16;	/* max number of PVCs */
 static int pvc_number = 0;	/* pvc unit number */
 
 struct ifnet *
-pvcsif_alloc()
+pvcsif_alloc(void)
 {
 	struct pvcsif *pvcsif;
 

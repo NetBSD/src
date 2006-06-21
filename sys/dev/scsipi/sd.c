@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.240.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $");
 
 static void	sdminphys(struct buf *);
 static void	sdgetdefaultlabel(struct sd_softc *, struct disklabel *);
-static void	sdgetdisklabel(struct sd_softc *);
+static int	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
@@ -212,7 +212,7 @@ sdmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 sdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct sd_softc *sd = (void *)self;
+	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 	int error, result;
@@ -229,8 +229,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	    periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
-	bufq_alloc(&sd->buf_queue,
-	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	callout_init(&sd->sc_callout);
 
@@ -346,7 +345,7 @@ sdactivate(struct device *self, enum devact act)
 static int
 sddetach(struct device *self, int flags)
 {
-	struct sd_softc *sd = (struct sd_softc *) self;
+	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
@@ -355,7 +354,7 @@ sddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = SDMINOR(self->dv_unit, i);
+		mn = SDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -369,9 +368,9 @@ sddetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&sd->buf_queue);
+	bufq_drain(sd->buf_queue);
 
-	bufq_free(&sd->buf_queue);
+	bufq_free(sd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
@@ -396,7 +395,7 @@ sddetach(struct device *self, int flags)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 static int
-sdopen(dev_t dev, int flag, int fmt, struct proc *p)
+sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct sd_softc *sd;
 	struct scsipi_periph *periph;
@@ -411,7 +410,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	if (sd == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (ENODEV);
 
 	part = SDPART(dev);
@@ -526,7 +525,10 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 			/* Load the partition info if not already loaded. */
 			if (param_error == 0) {
-				sdgetdisklabel(sd);
+				if (sdgetdisklabel(sd) != 0) {
+					error = EIO;
+					goto bad3;
+				}
 				SC_DEBUG(periph, SCSIPI_DB3,
 				     ("Disklabel loaded "));
 			}
@@ -580,7 +582,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
  * device.  Convenient now but usually a pain.
  */
 static int
-sdclose(dev_t dev, int flag, int fmt, struct proc *p)
+sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -658,7 +660,7 @@ sdstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 ||
-	    (sd->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	    !device_is_active(&sd->sc_dev)) {
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
@@ -725,7 +727,7 @@ sdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(&sd->buf_queue, bp);
+	BUFQ_PUT(sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -798,7 +800,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(&sd->buf_queue)) != NULL) {
+			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
@@ -812,7 +814,7 @@ sdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(&sd->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(sd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -900,10 +902,10 @@ sdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(&sd->buf_queue) != bp)
+		if (BUFQ_GET(sd->buf_queue) != bp)
 			panic("sdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(&sd->buf_queue);
+		BUFQ_GET(sd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -994,7 +996,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
  * Knows about the internals of this device
  */
 static int
-sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -1129,8 +1131,12 @@ bad:
 		return (0);
 
 	case DIOCLOCK:
-		return (scsipi_prevent(periph,
-		    (*(int *)addr) ? SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
+		if (periph->periph_flags & PERIPH_REMOVABLE)
+			return (scsipi_prevent(periph,
+			    (*(int *)addr) ?
+			    SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
+		else
+			return (ENOTTY);
 
 	case DIOCEJECT:
 		if ((periph->periph_flags & PERIPH_REMOVABLE) == 0)
@@ -1227,13 +1233,13 @@ bad:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&sd->sc_dk, dkwl, p));
+		return (dkwedge_list(&sd->sc_dk, dkwl, l));
 	    }
 
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, l));
 	}
 
 #ifdef DIAGNOSTIC
@@ -1289,7 +1295,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 /*
  * Load the label information on the named device
  */
-static void
+static int
 sdgetdisklabel(struct sd_softc *sd)
 {
 	struct disklabel *lp = sd->sc_dk.dk_label;
@@ -1307,12 +1313,13 @@ sdgetdisklabel(struct sd_softc *sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-	    sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKESDDEV(0, device_unit(&sd->sc_dev),
+	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
-		return;
+		return EIO;
 	}
+	return 0;
 }
 
 static void
@@ -1352,6 +1359,23 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 	 */
 	if (periph->periph_flags & PERIPH_RECOVERING)
 		return (retval);
+
+	/*
+	 * Ignore errors from accessing illegal fields (e.g. trying to
+	 * lock the door of a digicam, which doesn't have a door that
+	 * can be locked) for the SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL command.
+	 */
+	if (xs->cmd->opcode == SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL &&
+	    SSD_SENSE_KEY(sense->flags) == SKEY_ILLEGAL_REQUEST &&
+	    sense->asc == 0x24 &&
+	    sense->ascq == 0x00) { /* Illegal field in CDB */
+		scsipi_printaddr(periph);
+		printf("no door lock\n");
+		periph->periph_flags &= ~PERIPH_REMOVABLE;
+		return 0;
+	}
+
+
 
 	/*
 	 * If the device is not open yet, let the generic code handle it.
@@ -1424,7 +1448,7 @@ sdsize(dev_t dev)
 	if (sd == NULL)
 		return (-1);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (-1);
 
 	part = SDPART(dev);
@@ -1482,7 +1506,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (ENODEV);
 
 	periph = sd->sc_periph;

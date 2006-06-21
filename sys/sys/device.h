@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.75 2005/06/28 18:37:34 drochner Exp $ */
+/* $NetBSD: device.h,v 1.75.2.1 2006/06/21 15:12:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,43 +77,51 @@
 #ifndef _SYS_DEVICE_H_
 #define	_SYS_DEVICE_H_
 
-#include <sys/properties.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
+
+#include <prop/proplib.h>
 
 /*
  * Minimal device structures.
  * Note that all ``system'' device types are listed here.
  */
-enum devclass {
+typedef enum devclass {
 	DV_DULL,		/* generic, no special info */
 	DV_CPU,			/* CPU (carries resource utilization) */
 	DV_DISK,		/* disk drive (label, etc) */
 	DV_IFNET,		/* network interface */
 	DV_TAPE,		/* tape device */
 	DV_TTY			/* serial line interface (?) */
-};
+} devclass_t;
 
 /*
  * Actions for ca_activate.
  */
-enum devact {
+typedef enum devact {
 	DVACT_ACTIVATE,		/* activate the device */
 	DVACT_DEACTIVATE	/* deactivate the device */
-};
+} devact_t;
+
+typedef struct cfdata *cfdata_t;
+typedef struct cfdriver *cfdriver_t;
+typedef struct cfattach *cfattach_t;
+typedef struct device *device_t;
 
 struct device {
-	enum	devclass dv_class;	/* this device's classification */
+	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
-	struct	cfdata *dv_cfdata;	/* config data that found us
+	cfdata_t	dv_cfdata;	/* config data that found us
 					   (NULL if pseudo-device) */
-	struct	cfdriver *dv_cfdriver;	/* our cfdriver */
-	struct	cfattach *dv_cfattach;	/* our cfattach */
-	int	dv_unit;		/* device unit number */
-	char	dv_xname[16];		/* external name (name + unit) */
-	struct	device *dv_parent;	/* pointer to parent device
+	cfdriver_t	dv_cfdriver;	/* our cfdriver */
+	cfattach_t	dv_cfattach;	/* our cfattach */
+	int		dv_unit;	/* device unit number */
+	char		dv_xname[16];	/* external name (name + unit) */
+	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pesudo- or root node) */
-	int	dv_flags;		/* misc. flags; see below */
-	int	*dv_locators;		/* our actual locators (optional) */
+	int		dv_flags;	/* misc. flags; see below */
+	int		*dv_locators;	/* our actual locators (optional) */
+	prop_dictionary_t dv_properties;/* properties dictionary */
 };
 
 /* dv_flags */
@@ -122,54 +130,27 @@ struct device {
 TAILQ_HEAD(devicelist, device);
 
 /*
- * `event' counters (use zero or more per device instance, as needed)
+ * Description of a locator, as part of interface attribute definitions.
  */
-
-struct evcnt {
-	u_int64_t	ev_count;	/* how many have occurred */
-	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
-	unsigned char	ev_type;	/* counter type; see below */
-	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */
-	unsigned char	ev_namelen;	/* 'name' len, excluding NUL */
-	char		ev_pad1;	/* reserved (for now); 0 */
-	const struct evcnt *ev_parent;	/* parent, for hierarchical ctrs */
-	const char	*ev_group;	/* name of group */
-	const char	*ev_name;	/* name of specific event */
+struct cflocdesc {
+	const char *cld_name;
+	const char *cld_defaultstr; /* NULL if no default */
+	int cld_default;
 };
-TAILQ_HEAD(evcntlist, evcnt);
-
-/* maximum group/name lengths, including trailing NUL */
-#define	EVCNT_STRING_MAX	256
-
-/* ev_type values */
-#define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
-#define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
-#define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */
 
 /*
- * initializer for an event count structure.  the lengths are initted and
- * it is added to the evcnt list at attach time.
+ * Description of an interface attribute, provided by potential
+ * parent device drivers, referred to by child device configuration data.
  */
-#define	EVCNT_INITIALIZER(type, parent, group, name)			\
-    {									\
-	0,			/* ev_count */				\
-	{ 0 },			/* ev_list */				\
-	type,			/* ev_type */				\
-	0,			/* ev_grouplen */			\
-	0,			/* ev_namelen */			\
-	0,			/* ev_pad1 */				\
-	parent,			/* ev_parent */				\
-	group,			/* ev_group */				\
-	name,			/* ev_name */				\
-    }
-
-/*
- * Attach a static event counter.  This uses a link set to do the work.
- * NOTE: "ev" should not be a pointer to the object, but rather a direct
- * reference to the object itself.
- */
-#define	EVCNT_ATTACH_STATIC(ev)		__link_set_add_data(evcnts, ev)
-#define	EVCNT_ATTACH_STATIC2(ev, n)	__link_set_add_data2(evcnts, ev, n)
+struct cfiattrdata {
+	const char *ci_name;
+	int ci_loclen;
+	const struct cflocdesc ci_locdesc[
+#if defined(__GNUC__) && __GNUC__ <= 2
+		0
+#endif
+	];
+};
 
 /*
  * Description of a configuration parent.  Each device attachment attaches
@@ -195,7 +176,6 @@ struct cfdata {
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
 	const struct cfparent *cf_pspec;/* parent specification */
-	const char * const *cf_locnames;/* locator names (machine dependent) */
 };
 #define FSTATE_NOTFOUND		0	/* has not been found */
 #define	FSTATE_FOUND		1	/* has been found */
@@ -208,22 +188,12 @@ struct cfdata {
  * provides the linkage.
  */
 struct cftable {
-	struct cfdata *ct_cfdata;	/* pointer to cfdata table */
+	cfdata_t	ct_cfdata;	/* pointer to cfdata table */
 	TAILQ_ENTRY(cftable) ct_list;	/* list linkage */
 };
 TAILQ_HEAD(cftablelist, cftable);
 
-/*
- * XXX the "locdesc_t" is unnecessary; the len is known to "config" and
- * should be made available through cfdata->cf_pspec->cfp_iattr.
- * So just an "int *" should do it.
- */
-typedef struct {
-	int len;
-	int locs[1];
-} locdesc_t;
-typedef int (*cfsubmatch_t)(struct device *, struct cfdata *,
-			    const locdesc_t *, void *);
+typedef int (*cfsubmatch_t)(device_t, cfdata_t, const int *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -244,14 +214,14 @@ struct cfattach {
 	const char *ca_name;		/* name of attachment */
 	LIST_ENTRY(cfattach) ca_list;	/* link on cfdriver's list */
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
-	int	(*ca_match)(struct device *, struct cfdata *, void *);
-	void	(*ca_attach)(struct device *, struct device *, void *);
-	int	(*ca_detach)(struct device *, int);
-	int	(*ca_activate)(struct device *, enum devact);
+	int	(*ca_match)(device_t, cfdata_t, void *);
+	void	(*ca_attach)(device_t, device_t, void *);
+	int	(*ca_detach)(device_t, int);
+	int	(*ca_activate)(device_t, devact_t);
 	/* technically, the next 2 belong into "struct cfdriver" */
-	int	(*ca_rescan)(struct device *, const char *,
+	int	(*ca_rescan)(device_t, const char *,
 			     const int *); /* scan for new children */
-	void	(*ca_childdetached)(struct device *, struct device *);
+	void	(*ca_childdetached)(device_t, device_t);
 };
 LIST_HEAD(cfattachlist, cfattach);
 
@@ -278,7 +248,7 @@ struct cfdriver {
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
-	const char * const *cd_attrs;	/* attributes for this device */
+	const struct cfiattrdata * const *cd_attrs; /* attributes provided */
 };
 LIST_HEAD(cfdriverlist, cfdriver);
 
@@ -330,15 +300,12 @@ struct pdevinit {
 
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct devicelist alldevs;	/* list of all devices */
-extern struct evcntlist allevents;	/* list of all event counters */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
-extern struct device *booted_device;	/* the device we booted from */
-extern struct device *booted_wedge;	/* the wedge on that device */
+extern device_t booted_device;		/* the device we booted from */
+extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
-extern __volatile int config_pending; 	/* semaphore for mountroot */
-
-extern propdb_t dev_propdb;		/* device properties database */
+extern volatile int config_pending; 	/* semaphore for mountroot */
 
 void	config_init(void);
 void	configure(void);
@@ -349,62 +316,61 @@ int	config_cfdriver_detach(struct cfdriver *);
 int	config_cfattach_attach(const char *, struct cfattach *);
 int	config_cfattach_detach(const char *, struct cfattach *);
 
-int	config_cfdata_attach(struct cfdata *, int);
-int	config_cfdata_detach(struct cfdata *);
+int	config_cfdata_attach(cfdata_t, int);
+int	config_cfdata_detach(cfdata_t);
 
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
+const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 
-struct cfdata *config_search_loc(cfsubmatch_t, struct device *,
-				 const char *, const locdesc_t *, void *);
-#define config_search_ia(sm, d, ia, a) \
-	config_search_loc((sm), (d), (ia), NULL, (a))
-struct cfdata *config_rootsearch(cfsubmatch_t, const char *, void *);
-struct device *config_found_sm_loc(struct device *,
-				   const char *, const locdesc_t *, void *,
-				   cfprint_t, cfsubmatch_t);
-#define config_found_ia(d, ia, a, p) \
-	config_found_sm_loc((d), (ia), NULL, (a), (p), NULL)
-#define config_found(d, a, p) \
-	config_found_sm_loc((d), NULL, NULL, (a), (p), NULL)
-struct device *config_rootfound(const char *, void *);
-struct device *config_attach_loc(struct device *, struct cfdata *,
-    const locdesc_t *, void *, cfprint_t);
-#define config_attach(p, cf, aux, pr) \
-	config_attach_loc((p), (cf), 0, (aux), (pr))
-int config_match(struct device *, struct cfdata *, void *);
+int	config_stdsubmatch(device_t, cfdata_t, const int *, void *);
+cfdata_t config_search_loc(cfsubmatch_t, device_t,
+				 const char *, const int *, void *);
+cfdata_t config_search_ia(cfsubmatch_t, device_t,
+				 const char *, void *);
+cfdata_t config_rootsearch(cfsubmatch_t, const char *, void *);
+device_t config_found_sm_loc(device_t, const char *, const int *,
+			     void *, cfprint_t, cfsubmatch_t);
+device_t config_found_ia(device_t, const char *, void *, cfprint_t);
+device_t config_found(device_t, void *, cfprint_t);
+device_t config_rootfound(const char *, void *);
+device_t config_attach_loc(device_t, cfdata_t, const int *, void *, cfprint_t);
+device_t config_attach(device_t, cfdata_t, void *, cfprint_t);
+int	config_match(device_t, cfdata_t, void *);
 
-struct device *config_attach_pseudo(struct cfdata *);
+device_t config_attach_pseudo(cfdata_t);
 
-void config_makeroom(int n, struct cfdriver *cd);
-int config_detach(struct device *, int);
-int config_activate(struct device *);
-int config_deactivate(struct device *);
-void config_defer(struct device *, void (*)(struct device *));
-void config_interrupts(struct device *, void (*)(struct device *));
-void config_pending_incr(void);
-void config_pending_decr(void);
+void	config_makeroom(int n, struct cfdriver *cd);
+int	config_detach(device_t, int);
+int	config_activate(device_t);
+int	config_deactivate(device_t);
+void	config_defer(device_t, void (*)(device_t));
+void	config_interrupts(device_t, void (*)(device_t));
+void	config_pending_incr(void);
+void	config_pending_decr(void);
 
-int config_finalize_register(struct device *, int (*)(struct device *));
-void config_finalize(void);
+int	config_finalize_register(device_t, int (*)(device_t));
+void	config_finalize(void);
 
+void		*device_lookup(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
-void device_register(struct device *, void *);
+void		device_register(device_t, void *);
 #endif
 
-void	evcnt_init(void);
-void	evcnt_attach_static(struct evcnt *);
-void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
-	    const char *, const char *);
-void	evcnt_detach(struct evcnt *);
+devclass_t	device_class(device_t);
+cfdata_t	device_cfdata(device_t);
+cfdriver_t	device_cfdriver(device_t);
+cfattach_t	device_cfattach(device_t);
+int		device_unit(device_t);
+const char	*device_xname(device_t);
+device_t	device_parent(device_t);
+boolean_t	device_is_active(device_t);
+int		device_locator(device_t, u_int);
+void		*device_private(device_t);
+prop_dictionary_t device_properties(device_t);
 
-/* convenience definitions */
-#define	device_lookup(cfd, unit)					\
-	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
+boolean_t	device_is_a(device_t, const char *);
 
-#ifdef DDB
-void event_print(int, void (*)(const char *, ...));
-#endif
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */

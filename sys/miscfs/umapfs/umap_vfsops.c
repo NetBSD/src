@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.53.2.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,44 +52,48 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Ex
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umapfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	umapfs_unmount __P((struct mount *, int, struct proc *));
+int	umapfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct lwp *);
+int	umapfs_unmount(struct mount *, int, struct lwp *);
 
 /*
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, ndp, p)
+umapfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
+	struct proc *p = l->l_proc;
 	int error;
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
 #endif
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = MOUNTTOUMAPMOUNT(mp);
 		if (amp == NULL)
 			return EIO;
 		args.la.target = NULL;
-		vfs_showexport(mp, &args.la.export, &amp->umapm_export);
 		args.nentries = amp->info_nentries;
 		args.gnentries = amp->info_gnentries;
 		return copyout(&args, data, sizeof(args));
 	}
 
 	/* only for root */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)) != 0)
 		return error;
 
 #ifdef UMAPFS_DIAGNOSTIC
@@ -104,22 +108,16 @@ umapfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	/*
-	 * Update only does export updating.
+	 * Update is not supported
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		amp = MOUNTTOUMAPMOUNT(mp);
-		if (args.umap_target == 0)
-			return (vfs_export(mp, &amp->umapm_export,
-					&args.umap_export));
-		else
-			return (EOPNOTSUPP);
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return EOPNOTSUPP;
 
 	/*
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args.umap_target, p);
+		UIO_USERSPACE, args.umap_target, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -229,7 +227,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	amp->umapm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.umap_target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -241,10 +239,10 @@ umapfs_mount(mp, path, data, ndp, p)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(mp, mntflags, p)
+umapfs_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *rtvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
@@ -334,9 +332,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	layerfs_checkexp,
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	umapfs_vnodeopv_descs,

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.14 2005/02/27 00:27:49 perry Exp $ */
+/* $NetBSD: tcds.c,v 1.14.4.1 2006/06/21 15:07:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.14 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.14.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,11 +106,9 @@ struct tcds_softc {
 #define	TCDSF_FASTSCSI		0x02	/* supports Fast SCSI */
 
 /* Definition of the driver for autoconfig. */
-int	tcdsmatch(struct device *, struct cfdata *, void *);
-void	tcdsattach(struct device *, struct device *, void *);
-int     tcdsprint(void *, const char *);
-int	tcdssubmatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
+static int	tcdsmatch(struct device *, struct cfdata *, void *);
+static void	tcdsattach(struct device *, struct device *, void *);
+static int     tcdsprint(void *, const char *);
 
 CFATTACH_DECL(tcds, sizeof(struct tcds_softc),
     tcdsmatch, tcdsattach, NULL, NULL);
@@ -118,7 +116,7 @@ CFATTACH_DECL(tcds, sizeof(struct tcds_softc),
 /*static*/ int	tcds_intr(void *);
 /*static*/ int	tcds_intrnull(void *);
 
-struct tcds_device {
+static const struct tcds_device {
 	const char *td_name;
 	int td_flags;
 } tcds_devices[] = {
@@ -131,14 +129,12 @@ struct tcds_device {
 	{ NULL,		0 },
 };
 
-struct tcds_device *tcds_lookup(const char *);
-void	tcds_params(struct tcds_softc *, int, int *, int *);
+static void	tcds_params(struct tcds_softc *, int, int *, int *);
 
-struct tcds_device *
-tcds_lookup(modname)
-	const char *modname;
+static const struct tcds_device *
+tcds_lookup(const char *modname)
 {
-	struct tcds_device *td;
+	const struct tcds_device *td;
 
 	for (td = tcds_devices; td->td_name != NULL; td++)
 		if (strncmp(td->td_name, modname, TC_ROM_LLEN) == 0)
@@ -147,32 +143,26 @@ tcds_lookup(modname)
 	return (NULL);
 }
 
-int
-tcdsmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+static int
+tcdsmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
 	return (tcds_lookup(ta->ta_modname) != NULL);
 }
 
-void
-tcdsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+tcdsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct tcds_softc *sc = (struct tcds_softc *)self;
+	struct tcds_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct tcdsdev_attach_args tcdsdev;
 	struct tcds_slotconfig *slotc;
-	struct tcds_device *td;
+	const struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
 	int i, gpi2;
 	const struct evcnt *pevcnt;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TCDSCF_NLOCS];
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
@@ -308,11 +298,10 @@ tcdsattach(parent, self, aux)
 
 		tcds_scsi_reset(tcdsdev.tcdsda_sc);
 
-		ldesc->len = 1;
-		ldesc->locs[TCDSCF_CHIP] = i;
+		locs[TCDSCF_CHIP] = i;
 
-		config_found_sm_loc(self, "tcds", ldesc, &tcdsdev,
-				    tcdsprint, tcdssubmatch);
+		config_found_sm_loc(self, "tcds", locs, &tcdsdev,
+				    tcdsprint, config_stdsubmatch);
 #ifdef __alpha__
 		/*
 		 * The second SCSI chip isn't present on the baseboard TCDS
@@ -325,25 +314,8 @@ tcdsattach(parent, self, aux)
 	}
 }
 
-int
-tcdssubmatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[TCDSCF_CHIP] != TCDSCF_CHIP_DEFAULT &&
-	    cf->cf_loc[TCDSCF_CHIP] != ldesc->locs[TCDSCF_CHIP])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-int
-tcdsprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+static int
+tcdsprint(void *aux, const char *pnp)
 {
 	struct tcdsdev_attach_args *tcdsdev = aux;
 
@@ -357,13 +329,10 @@ tcdsprint(aux, pnp)
 }
 
 void
-tcds_intr_establish(tcds, slot, func, arg)
-	struct device *tcds;
-	int slot;
-	int (*func)(void *);
-	void *arg;
+tcds_intr_establish(struct device *tcds, int slot, int (*func)(void *),
+    void *arg)
 {
-	struct tcds_softc *sc = (struct tcds_softc *)tcds;
+	struct tcds_softc *sc = device_private(tcds);
 
 	if (sc->sc_slots[slot].sc_intrhand != tcds_intrnull)
 		panic("tcds_intr_establish: chip %d twice", slot);
@@ -374,11 +343,9 @@ tcds_intr_establish(tcds, slot, func, arg)
 }
 
 void
-tcds_intr_disestablish(tcds, slot)
-	struct device *tcds;
-	int slot;
+tcds_intr_disestablish(struct device *tcds, int slot)
 {
-	struct tcds_softc *sc = (struct tcds_softc *)tcds;
+	struct tcds_softc *sc = device_private(tcds);
 
 	if (sc->sc_slots[slot].sc_intrhand == tcds_intrnull)
 		panic("tcds_intr_disestablish: chip %d missing intr",
@@ -392,8 +359,7 @@ tcds_intr_disestablish(tcds, slot)
 }
 
 int
-tcds_intrnull(val)
-	void *val;
+tcds_intrnull(void *val)
 {
 
 	panic("tcds_intrnull: uncaught TCDS intr for chip %lu",
@@ -401,8 +367,7 @@ tcds_intrnull(val)
 }
 
 void
-tcds_scsi_reset(sc)
-	struct tcds_slotconfig *sc;
+tcds_scsi_reset(struct tcds_slotconfig *sc)
 {
 	u_int32_t cir;
 
@@ -424,9 +389,7 @@ tcds_scsi_reset(sc)
 }
 
 void
-tcds_scsi_enable(sc, on)
-	struct tcds_slotconfig *sc;
-	int on;
+tcds_scsi_enable(struct tcds_slotconfig *sc, int on)
 {
 	u_int32_t imer;
 
@@ -441,9 +404,7 @@ tcds_scsi_enable(sc, on)
 }
 
 void
-tcds_dma_enable(sc, on)
-	struct tcds_slotconfig *sc;
-	int on;
+tcds_dma_enable(struct tcds_slotconfig *sc, int on)
 {
 	u_int32_t cir;
 
@@ -459,9 +420,7 @@ tcds_dma_enable(sc, on)
 }
 
 int
-tcds_scsi_isintr(sc, clear)
-	struct tcds_slotconfig *sc;
-	int clear;
+tcds_scsi_isintr(struct tcds_slotconfig *sc, int clear)
 {
 	u_int32_t cir;
 
@@ -479,8 +438,7 @@ tcds_scsi_isintr(sc, clear)
 }
 
 int
-tcds_scsi_iserr(sc)
-	struct tcds_slotconfig *sc;
+tcds_scsi_iserr(struct tcds_slotconfig *sc)
 {
 	u_int32_t cir;
 
@@ -489,8 +447,7 @@ tcds_scsi_iserr(sc)
 }
 
 int
-tcds_intr(arg)
-	void *arg;
+tcds_intr(void *arg)
 {
 	struct tcds_softc *sc = arg;
 	u_int32_t ir, ir0;
@@ -555,10 +512,8 @@ tcds_intr(arg)
 	return (1);
 }
 
-void
-tcds_params(sc, chip, idp, fastp)
-	struct tcds_softc *sc;
-	int chip, *idp, *fastp;
+static void
+tcds_params(struct tcds_softc *sc, int chip, int *idp, int *fastp)
 {
 	int id, fast;
 	u_int32_t ids;

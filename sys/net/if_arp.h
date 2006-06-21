@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.24 2003/08/07 16:32:50 agc Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.24.16.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -130,4 +130,4 @@ struct arpstat {
 	u_quad_t	as_allocfail;	/* Failures to allocate llinfo */
 };
 
-#endif /* _NET_IF_ARP_H_ */
+#endif /* !_NET_IF_ARP_H_ */

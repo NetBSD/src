@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.140 2005/06/19 18:22:37 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.140.2.1 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 #include <uvm/uvm_extern.h>	/* XXX */
 
 struct namecache;
+struct uvm_ractx;
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -69,14 +70,16 @@ enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS,
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
-	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS
+	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
+	VT_TMPFS, VT_UDF, VT_SYSVBFS
 };
 
 #define VNODE_TAGS \
     "VT_NON", "VT_UFS", "VT_NFS", "VT_MFS", "VT_MSDOSFS", "VT_LFS", "VT_LOFS", \
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
-    "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS"
+    "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -113,6 +116,7 @@ struct vnode {
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
+		struct uvm_ractx *vu_ractx;	/* read-ahead context (VREG) */
 	} v_un;
 	struct nqlease	*v_lease;		/* Soft reference to lease */
 	enum vtype	v_type;			/* vnode type */
@@ -126,6 +130,7 @@ struct vnode {
 #define	v_socket	v_un.vu_socket
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
+#define	v_ractx		v_un.vu_ractx
 
 /*
  * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
@@ -150,6 +155,8 @@ struct vnode {
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
+#define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
+#define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
@@ -158,11 +165,12 @@ struct vnode {
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
+#define	VFREEING	0x8000	/* vnode is being freed */
 
 #define VNODE_FLAGBITS \
-    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP" \
-    "\10VLOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
-    "\15DIROP\16LAYER\17ONWORKLIST\20DIRTY"
+    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
+    "\10LOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
+    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -189,7 +197,7 @@ struct vattr {
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
 	long		va_fsid;	/* file system id (dev for now) */
-	long		va_fileid;	/* file id */
+	ino_t		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
 	struct timespec	va_atime;	/* time of last access */
@@ -211,18 +219,25 @@ struct vattr {
 #define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
 #define	VA_EXCLUSIVE	0x02		/* exclusive create request */
 
+#ifdef _KERNEL
+
 /*
  * Flags for ioflag.
  */
-#define	IO_UNIT		0x001		/* do I/O as atomic unit */
-#define	IO_APPEND	0x002		/* append write to end */
+#define	IO_UNIT		0x00010		/* do I/O as atomic unit */
+#define	IO_APPEND	0x00020		/* append write to end */
 #define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
-#define	IO_NODELOCKED	0x008		/* underlying node already locked */
-#define	IO_NDELAY	0x010		/* FNDELAY flag set in file table */
-#define	IO_DSYNC	0x020		/* sync I/O data integrity completion */
-#define	IO_ALTSEMANTICS	0x040		/* use alternate i/o semantics */
-#define	IO_NORMAL	0x080		/* operate on regular data */
-#define	IO_EXT		0x100		/* operate on extended attributes */
+#define	IO_NODELOCKED	0x00080		/* underlying node already locked */
+#define	IO_NDELAY	0x00100		/* FNDELAY flag set in file table */
+#define	IO_DSYNC	0x00200		/* sync I/O data integrity completion */
+#define	IO_ALTSEMANTICS	0x00400		/* use alternate i/o semantics */
+#define	IO_NORMAL	0x00800		/* operate on regular data */
+#define	IO_EXT		0x01000		/* operate on extended attributes */
+#define	IO_ADV_MASK	0x00003		/* access pattern hint */
+
+#define	IO_ADV_SHIFT	0
+#define	IO_ADV_ENCODE(adv)	(((adv) << IO_ADV_SHIFT) & IO_ADV_MASK)
+#define	IO_ADV_DECODE(ioflag)	(((ioflag) & IO_ADV_MASK) >> IO_ADV_SHIFT)
 
 /*
  *  Modes.
@@ -236,7 +251,6 @@ struct vattr {
  */
 #define	VNOVAL	(-1)
 
-#ifdef _KERNEL
 /*
  * Convert between vnode types and inode formats (since POSIX.1
  * defines mode word of stat structure in terms of inode formats).
@@ -285,74 +299,14 @@ extern struct freelst	vnode_hold_list; /* free vnodes referencing buffers */
 extern struct freelst	vnode_free_list; /* vnode free list */
 extern struct simplelock vnode_free_list_slock;
 
-#ifdef DIAGNOSTIC
-#define	ilstatic
-#else
-#define	ilstatic static
-#endif
-
-ilstatic void holdrelel(struct vnode *);
-ilstatic void vholdl(struct vnode *);
-ilstatic void vref(struct vnode *);
+void holdrelel(struct vnode *);
+void vholdl(struct vnode *);
+void vref(struct vnode *);
 
 static __inline void holdrele(struct vnode *) __attribute__((__unused__));
 static __inline void vhold(struct vnode *) __attribute__((__unused__));
 
-#ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
-#else
-#define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
-
-/*
- * decrease buf or page ref
- *
- * called with v_interlock held
- */
-static __inline void
-holdrelel(struct vnode *vp)
-{
-
-	vp->v_holdcnt--;
-	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
-}
-
-/*
- * increase buf or page ref
- *
- * called with v_interlock held
- */
-static __inline void
-vholdl(struct vnode *vp)
-{
-
-	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
-	vp->v_holdcnt++;
-}
-
-/*
- * increase reference
- */
-static __inline void
-vref(struct vnode *vp)
-{
-
-	simple_lock(&vp->v_interlock);
-	vp->v_usecount++;
-	simple_unlock(&vp->v_interlock);
-}
-#endif /* DIAGNOSTIC */
 
 /*
  * decrease buf or page ref
@@ -392,7 +346,6 @@ extern time_t		syncdelay;	/* max time to delay syncing data */
 extern time_t		filedelay;	/* time to delay syncing files */
 extern time_t		dirdelay;	/* time to delay syncing directories */
 extern time_t		metadelay;	/* time to delay syncing metadata */
-extern struct vattr	va_null;	/* predefined null vattr structure */
 
 /*
  * Macro/function to check for client cache inconsistency w.r.t. leasing.
@@ -478,7 +431,7 @@ extern struct simplelock	mntvnode_slock;
 /*
  * Union filesystem hook for vn_readdir().
  */
-extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
+extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.
@@ -546,95 +499,8 @@ struct vop_generic_args {
  */
 #include <sys/mount.h>
 
-/*
- * Preparing to start a filesystem write operation. If the operation is
- * permitted, then we bump the count of operations in progress and
- * proceed. If a suspend request is in progress, we wait until the
- * suspension is over, and then proceed.
- * V_PCATCH    adds PCATCH to the tsleep flags.
- * V_WAIT      waits until suspension is over. Otherwise returns EWOULDBLOCK.
- * V_SLEEPONLY wait, but do not bump the operations count.
- * V_LOWER     this is a lower level operation. No further vnodes should be
- *             locked. Otherwise it is a upper level operation. No vnodes
- *             should be locked.
- */
-static inline int
-vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
-{
-	struct mount *mp;
-	int error, mask, prio;
-
-	/*
-	 * If a vnode is provided, get and return the mount point that
-	 * to which it will write.
-	 */
-	if (vp != NULL) {
-		*mpp = vp->v_mount;
-	}
-	if ((mp = *mpp) == NULL)
-		return (0);
-	mp = mp->mnt_leaf;
-	/*
-	 * Check on status of suspension.
-	 */
-	prio = PUSER - 1;
-	if (flags & V_PCATCH)
-		prio |= PCATCH;
-
-	if ((flags & V_LOWER) == 0)
-		mask = IMNT_SUSPEND;
-	else
-		mask = IMNT_SUSPENDLOW;
-
-	while ((mp->mnt_iflag & mask) != 0) {
-		if ((flags & V_WAIT) == 0)
-			return (EWOULDBLOCK);
-		error = tsleep(&mp->mnt_flag, prio, "suspfs", 0);
-		if (error)
-			return (error);
-	}
-	if (flags & V_SLEEPONLY)
-		return (0);
-	simple_lock(&mp->mnt_slock);
-	if ((flags & V_LOWER) == 0)
-		mp->mnt_writeopcountupper++;
-	else
-		mp->mnt_writeopcountlower++;
-	simple_unlock(&mp->mnt_slock);
-	return (0);
-}
-
-/*
- * Filesystem write operation has completed. If we are suspending and this
- * operation is the last one, notify the suspender that the suspension is
- * now in effect.
- */
-static inline void
-vn_finished_write(struct mount *mp, int flags)
-{
-	if (mp == NULL)
-		return;
-	mp = mp->mnt_leaf;
-	simple_lock(&mp->mnt_slock);
-	if ((flags & V_LOWER) == 0) {
-		mp->mnt_writeopcountupper--;
-		if (mp->mnt_writeopcountupper < 0)
-			printf("vn_finished_write: neg cnt upper=%d\n",
-			       mp->mnt_writeopcountupper);
-		if ((mp->mnt_iflag & IMNT_SUSPEND) != 0 &&
-		    mp->mnt_writeopcountupper <= 0)
-			wakeup(&mp->mnt_writeopcountupper);
-	} else {
-		mp->mnt_writeopcountlower--;
-		if (mp->mnt_writeopcountlower < 0)
-			printf("vn_finished_write: neg cnt lower=%d\n",
-			       mp->mnt_writeopcountlower);
-		if ((mp->mnt_iflag & IMNT_SUSPENDLOW) != 0 &&
-		    mp->mnt_writeopcountupper <= 0)
-			wakeup(&mp->mnt_writeopcountlower);
-	}
-	simple_unlock(&mp->mnt_slock);
-}
+int vn_start_write(struct vnode *, struct mount **, int);
+void vn_finished_write(struct mount *, int);
 
 /*
  * Finally, include the default set of vnode operations.
@@ -649,7 +515,6 @@ struct filedesc;
 struct nameidata;
 struct proc;
 struct stat;
-struct ucred;
 struct uio;
 struct vattr;
 struct vnode;
@@ -662,7 +527,7 @@ struct vnode *
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 	    struct vnode **);
 void	ungetnewvnode(struct vnode *);
-int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
+int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
@@ -671,42 +536,42 @@ int	vflush(struct mount *, struct vnode *, int);
 void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 void 	vgone(struct vnode *);
-void	vgonel(struct vnode *, struct proc *);
-int	vinvalbuf(struct vnode *, int, struct ucred *,
-	    struct proc *, int, int);
+void	vgonel(struct vnode *, struct lwp *);
+int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
-int	vrecycle(struct vnode *, struct simplelock *, struct proc *);
+int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
 void 	vrele(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, int, int);
 void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
-int 	vn_close(struct vnode *, int, struct ucred *, struct proc *);
-int	vn_isunder(struct vnode *, struct vnode *, struct proc *);
+int 	vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
+int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
 int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
-	    int, struct ucred *, size_t *, struct proc *);
-int	vn_readdir(struct file *, char *, int, u_int, int *, struct proc *,
-	    off_t **, int *);
+    int, kauth_cred_t, size_t *, struct lwp *);
+int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
+    off_t **, int *);
 void	vn_restorerecurse(struct vnode *, u_int);
 u_int	vn_setrecurse(struct vnode *);
-int	vn_stat(struct vnode *, struct stat *, struct proc *);
+int	vn_stat(struct vnode *, struct stat *, struct lwp *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
 int	vn_extattr_get(struct vnode *, int, int, const char *, size_t *,
-	    void *, struct proc *);
+	    void *, struct lwp *);
 int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
-	    const void *, struct proc *);
-int	vn_extattr_rm(struct vnode *, int, int, const char *, struct proc *);
+	    const void *, struct lwp *);
+int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
             void *);
 int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
             void *);
+void	vn_ra_allocctx(struct vnode *);
 
 /* initialise global vnode management */
 void	vntblinit(void);
@@ -721,7 +586,7 @@ int	getvnode(struct filedesc *, int, struct file **);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
-int	vfs_drainvnodes(long target, struct proc *);
+int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_write_resume(struct mount *);
 int	vfs_write_suspend(struct mount *, int, int);
 #ifdef DDB

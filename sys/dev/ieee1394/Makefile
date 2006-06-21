@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/12/04 00:28:44 haya Exp $
+#	$NetBSD: Makefile,v 1.3.22.1 2006/06/21 15:04:08 yamt Exp $
 
 INCSDIR= /usr/include/dev/ieee1394
-
-# Only install includes which are used by userland
-INCS=	fwiso_ioctl.h
 
 .include <bsd.kinc.mk>

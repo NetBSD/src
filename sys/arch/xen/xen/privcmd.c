@@ -1,7 +1,6 @@
-/* $NetBSD: privcmd.c,v 1.4 2005/06/01 12:56:02 yamt Exp $ */
+/* $NetBSD: privcmd.c,v 1.4.2.1 2006/06/21 14:58:23 yamt Exp $ */
 
-/*
- *
+/*-
  * Copyright (c) 2004 Christian Limpach.
  * All rights reserved.
  *
@@ -33,7 +32,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.4 2005/06/01 12:56:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.4.2.1 2006/06/21 14:58:23 yamt Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +61,14 @@ privcmd_ioctl(void *v)
 		u_long a_command;
 		void *a_data;
 		int a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0;
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL:
-		__asm__ __volatile__ (
+		__asm volatile (
 			"pushl %%ebx; pushl %%ecx; pushl %%edx;"
 			"pushl %%esi; pushl %%edi; "
 			"movl  4(%%eax),%%ebx ;"
@@ -82,14 +83,15 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
-#if 1 /* COMPAT_xxx */
+#ifndef XEN3
+#if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
 		error = initdom_ctrlif_domcontroller_port;
 		}
 		break;
-#endif
+#endif /* defined(COMPAT_30) */
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
@@ -97,6 +99,7 @@ privcmd_ioctl(void *v)
 		}
 		error = 0;
 		break;
+#endif /* XEN3 */
 	case IOCTL_PRIVCMD_MMAP:
 	{
 		int i, j;
@@ -104,9 +107,11 @@ privcmd_ioctl(void *v)
 		privcmd_mmap_entry_t mentry;
 		vaddr_t va;
 		u_long ma;
+		vm_prot_t prot;
+		struct vm_map *vmm = &ap->a_l->l_proc->p_vmspace->vm_map;
 		//printf("IOCTL_PRIVCMD_MMAP: %d entries\n", mcmd->num);
 
-		pmap_t pmap = vm_map_pmap(&ap->a_p->p_vmspace->vm_map);
+		pmap_t pmap = vm_map_pmap(vmm);
 		for (i = 0; i < mcmd->num; i++) {
 			error = copyin(mcmd->entry, &mentry, sizeof(mentry));
 			if (error)
@@ -121,15 +126,32 @@ privcmd_ioctl(void *v)
 #endif
 			va = mentry.va & ~PAGE_MASK;
 			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
+			vm_map_lock_read(vmm);
+			if (uvm_map_checkprot(vmm, va,
+			    va + (mentry.npages << PGSHIFT) - 1,
+			    VM_PROT_WRITE))
+				prot = VM_PROT_READ | VM_PROT_WRITE;
+			else if (uvm_map_checkprot(vmm, va,
+			    va + (mentry.npages << PGSHIFT) - 1,
+			    VM_PROT_READ))
+				prot = VM_PROT_READ;
+			else {
+				printf("uvm_map_checkprot 0x%lx -> 0x%lx "
+				    "failed\n",
+				    va, va + (mentry.npages << PGSHIFT) - 1);
+				vm_map_unlock_read(vmm);
+				return EINVAL;
+			}
+			vm_map_unlock_read(vmm);
+
 			for (j = 0; j < mentry.npages; j++) {
 				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
-#if 0
-				if (!pmap_extract(pmap, va, NULL))
-					return EINVAL; /* XXX */
-#endif
-				if ((error = pmap_remap_pages(pmap, va, ma, 1,
-				    PMAP_WIRED | PMAP_CANFAIL, mcmd->dom)))
+				error = pmap_enter_ma(pmap, va, ma, 0,
+				    prot, PMAP_WIRED | PMAP_CANFAIL,
+				    mcmd->dom);
+				if (error != 0) {
 					return error;
+				}
 				va += PAGE_SIZE;
 				ma += PAGE_SIZE;
 			}
@@ -137,10 +159,66 @@ privcmd_ioctl(void *v)
 		break;
 	}
 	case IOCTL_PRIVCMD_MMAPBATCH:
-		/* XXX */
-		printf("IOCTL_PRIVCMD_MMAPBATCH\n");
-		error = EOPNOTSUPP;
+	{
+		int i;
+		privcmd_mmapbatch_t* pmb = ap->a_data;
+		vaddr_t va0, va;
+		u_long mfn, ma;
+		struct vm_map *vmm;
+		vm_prot_t prot;
+		pmap_t pmap;
+
+		vmm = &ap->a_l->l_proc->p_vmspace->vm_map;
+		pmap = vm_map_pmap(vmm);
+		va0 = pmb->addr & ~PAGE_MASK;
+
+		if (va0 > VM_MAXUSER_ADDRESS)
+			return EINVAL;
+		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
+			return EINVAL;
+		
+		//printf("mmapbatch: va0=%lx num=%d dom=%d\n", va0, pmb->num, pmb->dom);
+		vm_map_lock_read(vmm);
+		if (uvm_map_checkprot(vmm,
+		    va0, va0 + (pmb->num << PGSHIFT) - 1,
+		    VM_PROT_WRITE))
+			prot = VM_PROT_READ | VM_PROT_WRITE;
+		else if (uvm_map_checkprot(vmm,
+		    va0, va0 + (pmb->num << PGSHIFT) - 1,
+		    VM_PROT_READ))
+			prot = VM_PROT_READ;
+		else {
+			printf("uvm_map_checkprot2 0x%lx -> 0x%lx "
+			    "failed\n",
+			    va0, va0 + (pmb->num << PGSHIFT) - 1);
+			vm_map_unlock_read(vmm);
+			return EINVAL;
+		}
+		vm_map_unlock_read(vmm);
+
+		for(i = 0; i < pmb->num; ++i) {
+			va = va0 + (i * PAGE_SIZE);
+			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
+			if (error != 0)
+				return error;
+			ma = mfn << PGSHIFT;
+			
+			/*
+			 * XXXjld@panix.com: figure out how to stuff
+			 * these into fewer hypercalls.
+			 */
+			//printf("mmapbatch: va=%lx ma=%lx dom=%d\n", va, ma, pmb->dom);
+			error = pmap_enter_ma(pmap, va, ma, 0, prot,
+			    PMAP_WIRED | PMAP_CANFAIL, pmb->dom);
+			if (error != 0) {
+				printf("mmapbatch: remap error %d!\n", error);
+				mfn |= 0xF0000000;
+				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
+			}
+		}
 		break;
+	}
+#ifndef XEN3
 	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
 		{
 		unsigned long *mfn_start = ap->a_data;
@@ -148,6 +226,7 @@ privcmd_ioctl(void *v)
 		error = 0;
 		}
 		break;
+#endif /* !XEN3 */
 	default:
 		error = EINVAL;
 	}

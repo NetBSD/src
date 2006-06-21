@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.31 2003/08/07 16:33:08 agc Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.31.16.1 2006/06/21 15:11:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -84,4 +84,4 @@ struct	ether_arp {
 
 #endif /* _netinet_if_ether_compat_h_ */
 
-#endif /* _NETINET_IF_ETHER_H_ */
+#endif /* !_NETINET_IF_ETHER_H_ */

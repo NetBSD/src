@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.27 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.27.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,6 @@ static int	amr_intr(void *);
 static int	amr_match(struct device *, struct cfdata *, void *);
 static int	amr_print(void *, const char *);
 static void	amr_shutdown(void *);
-static int	amr_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static void	amr_teardown(struct amr_softc *);
 static void	amr_thread(void *);
 static void	amr_thread_create(void *);
@@ -133,10 +131,16 @@ struct amr_pci_type {
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ },
 	{ PCI_VENDOR_SYMBIOS, PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ | AT_SIG },
+	{ PCI_VENDOR_INTEL,  PCI_PRODUCT_SYMBIOS_MEGARAID_320X, AT_QUARTZ },
+	{ PCI_VENDOR_INTEL,  PCI_PRODUCT_SYMBIOS_MEGARAID_320E, AT_QUARTZ },
+	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_MEGARAID_300X, AT_QUARTZ },
 	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4DI, AT_QUARTZ },
 	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4DI_2, AT_QUARTZ },
 	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4ESI, AT_QUARTZ },
 	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_PERC_4SC, AT_QUARTZ },
+	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_MEGARAID_320X, AT_QUARTZ },
+	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_MEGARAID_320E, AT_QUARTZ },
+	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_MEGARAID_300X, AT_QUARTZ },
 };
 
 struct amr_typestr {
@@ -257,8 +261,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
         struct amr_ccb *ac;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[AMRCF_NLOCS];
 
 	aprint_naive(": RAID controller\n");
 
@@ -464,11 +467,10 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		amra.amra_unit = j;
 
-		ldesc->len = 1;
-		ldesc->locs[AMRCF_UNIT] = j;
+		locs[AMRCF_UNIT] = j;
 
 		amr->amr_drive[j].al_dv = config_found_sm_loc(&amr->amr_dv,
-			"amr", ldesc, &amra, amr_print, amr_submatch);
+			"amr", locs, &amra, amr_print, config_stdsubmatch);
 	}
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
@@ -535,24 +537,6 @@ amr_print(void *aux, const char *pnp)
 }
 
 /*
- * Match a sub-device.
- */
-static int
-amr_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-	struct amr_attach_args *amra;
-
-	amra = (struct amr_attach_args *)aux;
-
-	if (cf->cf_loc[AMRCF_UNIT] != AMRCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AMRCF_UNIT] != ldesc->locs[AMRCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-/*
  * Retrieve operational parameters and describe the controller.
  */
 static int
@@ -595,6 +579,13 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			return (-1);
 		}
 
+		if (aex->ae_numldrives > __arraycount(aex->ae_drivestate)) {
+			aprint_error("%s: Inquiry returned more drives (%d)"
+			   " than the array can handle (%zu)\n",
+			   amr->amr_dv.dv_xname, aex->ae_numldrives,
+			   __arraycount(aex->ae_drivestate));
+			aex->ae_numldrives = __arraycount(aex->ae_drivestate);
+		}
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
 			aprint_error(
 			    "%s: adjust AMR_MAX_UNITS to %d (currently %d)"
@@ -697,6 +688,13 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	/*
 	 * Record state of logical drives.
 	 */
+	if (ae->ae_ldrv.al_numdrives > __arraycount(ae->ae_ldrv.al_size)) {
+		aprint_error("%s: Inquiry returned more drives (%d)"
+		   " than the array can handle (%zu)\n",
+		   amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
+		   __arraycount(ae->ae_ldrv.al_size));
+		ae->ae_ldrv.al_numdrives = __arraycount(ae->ae_ldrv.al_size);
+	}
 	if (ae->ae_ldrv.al_numdrives > AMR_MAX_UNITS) {
 		aprint_error("%s: adjust AMR_MAX_UNITS to %d (currently %d)\n",
 		    amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
@@ -705,7 +703,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	} else
 		amr->amr_numdrives = ae->ae_ldrv.al_numdrives;
 
-	for (i = 0; i < AMR_MAX_UNITS; i++) {
+	for (i = 0; i < amr->amr_numdrives; i++) {
 		amr->amr_drive[i].al_size = le32toh(ae->ae_ldrv.al_size[i]);
 		amr->amr_drive[i].al_state = ae->ae_ldrv.al_state[i];
 		amr->amr_drive[i].al_properties = ae->ae_ldrv.al_properties[i];
@@ -835,7 +833,6 @@ amr_thread(void *cookie)
 	struct amr_ccb *ac;
 	struct amr_logdrive *al;
 	struct amr_enquiry *ae;
-	time_t curtime;
 	int rv, i, s;
 
 	amr = cookie;
@@ -852,10 +849,9 @@ amr_thread(void *cookie)
 
 		s = splbio();
 		amr_intr(cookie);
-		curtime = (time_t)mono_time.tv_sec;
 		ac = TAILQ_FIRST(&amr->amr_ccb_active);
 		while (ac != NULL) {
-			if (ac->ac_start_time + AMR_TIMEOUT > curtime)
+			if (ac->ac_start_time + AMR_TIMEOUT > time_uptime)
 				break;
 			if ((ac->ac_flags & AC_MOAN) == 0) {
 				printf("%s: ccb %d timed out; mailbox:\n",
@@ -894,7 +890,7 @@ amr_thread(void *cookie)
 		amr_ccb_free(amr, ac);
 
 		al = amr->amr_drive;
-		for (i = 0; i < AMR_MAX_UNITS; i++, al++) {
+		for (i = 0; i < __arraycount(ae->ae_ldrv.al_state); i++, al++) {
 			if (al->al_dv == NULL)
 				continue;
 			if (al->al_state == ae->ae_ldrv.al_state[i])
@@ -1191,7 +1187,7 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
 
-	ac->ac_start_time = (time_t)mono_time.tv_sec;
+	ac->ac_start_time = time_uptime;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outl(amr, AMR_QREG_IDB,
 	    (amr->amr_mbox_paddr + 16) | AMR_QIDB_SUBMIT);
@@ -1225,7 +1221,7 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
 
-	ac->ac_start_time = (time_t)mono_time.tv_sec;
+	ac->ac_start_time = time_uptime;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outb(amr, AMR_SREG_CMD, AMR_SCMD_POST);
 	return (0);

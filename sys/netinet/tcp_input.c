@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.230.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230.2.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -183,6 +183,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/in_offload.h>
 
 #ifdef INET6
 #ifndef INET
@@ -195,6 +196,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230 2005/06/30 02:58:28 christos Exp
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+#ifdef TCP_SIGNATURE
+#include <netinet6/scope6_var.h>
+#endif
 #endif
 
 #ifndef INET6
@@ -276,6 +280,26 @@ do { \
 		TCP_SET_DELACK(tp); \
 } while (/*CONSTCOND*/ 0)
 
+#define ICMP_CHECK(tp, th, acked) \
+do { \
+	/* \
+	 * If we had a pending ICMP message that \
+	 * refers to data that have just been  \
+	 * acknowledged, disregard the recorded ICMP \
+	 * message. \
+	 */ \
+	if (((tp)->t_flags & TF_PMTUD_PEND) && \
+	    SEQ_GT((th)->th_ack, (tp)->t_pmtud_th_seq)) \
+		(tp)->t_flags &= ~TF_PMTUD_PEND; \
+\
+	/* \
+	 * Keep track of the largest chunk of data \
+	 * acknowledged since last PMTU update \
+	 */ \
+	if ((tp)->t_pmtud_mss_acked < (acked)) \
+		(tp)->t_pmtud_mss_acked = (acked); \
+} while (/*CONSTCOND*/ 0)
+
 /*
  * Convert TCP protocol fields to host order for easier processing.
  */
@@ -301,10 +325,18 @@ do {									\
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
 
+#if defined(INET)
 extern struct evcnt tcp_hwcsum_ok;
 extern struct evcnt tcp_hwcsum_bad;
 extern struct evcnt tcp_hwcsum_data;
 extern struct evcnt tcp_swcsum;
+#endif /* defined(INET) */
+#if defined(INET6)
+extern struct evcnt tcp6_hwcsum_ok;
+extern struct evcnt tcp6_hwcsum_bad;
+extern struct evcnt tcp6_hwcsum_data;
+extern struct evcnt tcp6_swcsum;
+#endif /* defined(INET6) */
 
 #define	TCP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
 
@@ -875,10 +907,34 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th, int toff,
 
 #ifdef INET6
 	case AF_INET6:
-		if (__predict_true((m->m_flags & M_LOOP) == 0 ||
-		    tcp_do_loopback_cksum)) {
-			if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
-				goto badcsum;
+		switch (m->m_pkthdr.csum_flags &
+			((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_TCPv6) |
+			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+		case M_CSUM_TCPv6|M_CSUM_TCP_UDP_BAD:
+			TCP_CSUM_COUNTER_INCR(&tcp6_hwcsum_bad);
+			goto badcsum;
+
+#if 0 /* notyet */
+		case M_CSUM_TCPv6|M_CSUM_DATA:
+#endif
+
+		case M_CSUM_TCPv6:
+			/* Checksum was okay. */
+			TCP_CSUM_COUNTER_INCR(&tcp6_hwcsum_ok);
+			break;
+
+		default:
+			/*
+			 * Must compute it ourselves.  Maybe skip checksum
+			 * on loopback interfaces.
+			 */
+			if (__predict_true((m->m_flags & M_LOOP) == 0 ||
+			    tcp_do_loopback_cksum)) {
+				TCP_CSUM_COUNTER_INCR(&tcp6_swcsum);
+				if (in6_cksum(m, IPPROTO_TCP, toff,
+				    tlen + off) != 0)
+					goto badcsum;
+			}
 		}
 		break;
 #endif /* INET6 */
@@ -892,8 +948,7 @@ badcsum:
 }
 
 /*
- * TCP input routine, follows pages 65-76 of the
- * protocol specification dated September, 1981 very closely.
+ * TCP input routine, follows pages 65-76 of RFC 793 very closely.
  */
 void
 tcp_input(struct mbuf *m, ...)
@@ -915,7 +970,6 @@ tcp_input(struct mbuf *m, ...)
 #ifdef TCP_DEBUG
 	short ostate = 0;
 #endif
-	int iss = 0;
 	u_long tiwin;
 	struct tcp_opt_info opti;
 	int off, iphlen;
@@ -1238,6 +1292,7 @@ findpcb:
 			m_freem(in6p->in6p_options);
 			in6p->in6p_options = 0;
 		}
+		KASSERT(ip6 != NULL);
 		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
 	}
 #endif
@@ -1620,6 +1675,8 @@ after_listen:
 				sbdrop(&so->so_snd, acked);
 				tp->t_lastoff -= acked;
 
+				ICMP_CHECK(tp, th, acked);
+
 				tp->snd_una = th->th_ack;
 				tp->snd_fack = tp->snd_una;
 				if (SEQ_LT(tp->snd_high, tp->snd_una))
@@ -1968,7 +2025,6 @@ after_listen:
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
-				iss = tcp_new_iss(tp, tp->snd_nxt);
 				tp = tcp_close(tp);
 				TCP_FIELDS_TO_NET(th);
 				goto findpcb;
@@ -2293,6 +2349,9 @@ after_listen:
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
+
+		ICMP_CHECK(tp, th, acked);
+
 		tp->snd_una = th->th_ack;
 		if (SEQ_GT(tp->snd_una, tp->snd_fack))
 			tp->snd_fack = tp->snd_una;
@@ -2372,8 +2431,8 @@ step6:
 	 * Don't look at window if no ACK: TAC's send garbage on first SYN.
 	 */
 	if ((tiflags & TH_ACK) && (SEQ_LT(tp->snd_wl1, th->th_seq) ||
-	    (tp->snd_wl1 == th->th_seq && SEQ_LT(tp->snd_wl2, th->th_ack)) ||
-	    (tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd))) {
+	    (tp->snd_wl1 == th->th_seq && (SEQ_LT(tp->snd_wl2, th->th_ack) ||
+	    (tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd))))) {
 		/* keep track of pure window updates */
 		if (tlen == 0 &&
 		    tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd)
@@ -2841,6 +2900,8 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 			if (!(th->th_flags & TH_SYN))
 				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
 			bcopy(cp + 2, &mss, sizeof(mss));
 			oi->maxseg = ntohs(mss);
 			break;
@@ -2849,6 +2910,8 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			if (optlen != TCPOLEN_WINDOW)
 				continue;
 			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
 			tp->t_flags |= TF_RCVD_SCALE;
 			tp->requested_s_scale = cp[2];
@@ -2887,21 +2950,25 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
 			NTOHL(oi->ts_ecr);
 
+			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
 			/*
 			 * A timestamp received in a SYN makes
 			 * it ok to send timestamp requests and replies.
 			 */
-			if (th->th_flags & TH_SYN) {
-				tp->t_flags |= TF_RCVD_TSTMP;
-				tp->ts_recent = oi->ts_val;
-				tp->ts_recent_age = tcp_now;
-			}
+			tp->t_flags |= TF_RCVD_TSTMP;
+			tp->ts_recent = oi->ts_val;
+			tp->ts_recent_age = tcp_now;
                         break;
 
 		case TCPOPT_SACK_PERMITTED:
 			if (optlen != TCPOLEN_SACK_PERMITTED)
 				continue;
 			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
 			if (tcp_do_sack) {
 				tp->t_flags |= TF_SACK_PERMIT;
@@ -3670,7 +3737,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, caddr_t), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am)) {
+		if (in_pcbconnect(inp, am, NULL)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
@@ -3691,7 +3758,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 				&sin6->sin6_addr.s6_addr32[3],
 				sizeof(sin6->sin6_addr.s6_addr32[3]));
 		}
-		if (in6_pcbconnect(in6p, am)) {
+		if (in6_pcbconnect(in6p, am, NULL)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
@@ -3935,6 +4002,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #ifdef TCP_SIGNATURE
 		tb.t_flags |= (tp->t_flags & TF_SIGNATURE);
 #endif
+		tb.t_state = TCPS_LISTEN;
 		if (tcp_dooptions(&tb, optp, optlen, th, m, m->m_pkthdr.len -
 		    sizeof(struct tcphdr) - optlen - hlen, oi) < 0)
 			return (0);

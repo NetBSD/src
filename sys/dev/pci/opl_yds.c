@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_yds.c,v 1.8 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: opl_yds.c,v 1.8.2.1 2006/06/21 15:05:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.8 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.8.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,14 +70,10 @@ opl_yds_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct yds_softc *ssc = (struct yds_softc *)parent;
-	struct opl_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
-	memset(&sc, 0, sizeof sc);
-	sc.iot = ssc->sc_opl_iot;
-	sc.ioh = ssc->sc_opl_ioh;
-	return (opl_find(&sc));
+	return opl_match(ssc->sc_opl_iot, ssc->sc_opl_ioh, 0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_14.c,v 1.2 2001/11/13 02:08:02 lukem Exp $	*/
+/*	$NetBSD: sysv_ipc_14.c,v 1.2.32.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_14.c,v 1.2 2001/11/13 02:08:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_14.c,v 1.2.32.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <compat/sys/ipc.h>
 
 void
 ipc_perm14_to_native(operm, perm)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp.h,v 1.10 2001/10/15 03:55:38 itojun Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.10.34.1 2006/06/21 15:11:09 yamt Exp $	*/
 /*	$KAME: ipcomp.h,v 1.11 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -73,4 +73,4 @@ extern int ipcomp6_output __P((struct mbuf *, u_char *, struct mbuf *,
 #endif
 #endif /* KERNEL */
 
-#endif /* _NETINET6_IPCOMP_H_ */
+#endif /* !_NETINET6_IPCOMP_H_ */

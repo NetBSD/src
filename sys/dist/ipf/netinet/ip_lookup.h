@@ -1,10 +1,10 @@
-/*	$NetBSD: ip_lookup.h,v 1.1 2004/10/05 04:56:41 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.1.16.1 2006/06/21 15:09:11 yamt Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
 #define __IP_LOOKUP_H__
 
-#if defined(__STDC__) || defined(__GNUC__)
+#if defined(__STDC__) || defined(__GNUC__) || defined(_AIX51)
 # define	SIOCLOOKUPADDTABLE	_IOWR('r', 60, struct iplookupop)
 # define	SIOCLOOKUPDELTABLE	_IOWR('r', 61, struct iplookupop)
 # define	SIOCLOOKUPSTAT		_IOWR('r', 64, struct iplookupop)

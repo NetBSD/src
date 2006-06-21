@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.33 2005/05/31 01:37:06 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.33.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33 2005/05/31 01:37:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33.2.1 2006/06/21 15:11:37 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33 2005/05/31 01:37:06 christos Exp 
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -473,7 +474,7 @@ add:
 	}
 	if ((lc = (struct llinfo_llc *) rt->rt_llinfo) == 0)
 		panic("snpac_rtrequest");
-	rt->rt_rmx.rmx_expire = ht + time.tv_sec;
+	rt->rt_rmx.rmx_expire = ht + time_second;
 	lc->lc_flags = SNPA_VALID | type;
 	if ((type & SNPA_IS) && !(iso_systype & SNPA_IS))
 		snpac_logdefis(rt);
@@ -512,10 +513,12 @@ snpac_ioctl(
 	struct socket *so,
 	u_long cmd,		/* ioctl to process */
 	caddr_t data,		/* data for the cmd */
-	struct proc *p)
+	struct lwp *l)
 {
 	struct systype_req *rq = (struct systype_req *) data;
+	struct proc *p;
 
+	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
 		if (cmd == SIOCSSTYPE)
@@ -527,7 +530,7 @@ snpac_ioctl(
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+		if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);
@@ -624,7 +627,8 @@ snpac_age(void *v)
 		nlc = lc->lc_list.le_next;
 		if (lc->lc_flags & SNPA_VALID) {
 			rt = lc->lc_rt;
-			if (rt->rt_rmx.rmx_expire && rt->rt_rmx.rmx_expire < time.tv_sec)
+			if (rt->rt_rmx.rmx_expire &&
+			    rt->rt_rmx.rmx_expire < time_second)
 				snpac_free(lc);
 		}
 	}

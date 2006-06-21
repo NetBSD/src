@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.31 2005/06/01 15:28:56 drochner Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.31.2.1 2006/06/21 15:00:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.31 2005/06/01 15:28:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.31.2.1 2006/06/21 15:00:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.31 2005/06/01 15:28:56 drochner Exp 
 #include <sys/namei.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/vnode_if.h>
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -205,7 +207,6 @@ int
 ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_getmnt_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct ultrix_fs_data *sfsp;
@@ -269,7 +270,7 @@ ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 			 * If requested, refresh the fsstat cache.
 			 */
 			if (mntflags != MNT_WAIT &&
-			    (error = VFS_STATVFS(mp, sp, p)) != 0)
+			    (error = VFS_STATVFS(mp, sp, l)) != 0)
 				continue;
 
 			/*
@@ -399,8 +400,8 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		/* attempt to mount a native, rather than 4.2bsd, ffs */
 		struct ufs_args ua;
 
+		memset(&ua, 0, sizeof(ua));
 		ua.fspec = SCARG(uap, special);
-		memset(&ua.export, 0, sizeof(ua.export));
 		SCARG(&nuap, data) = usp;
 
 		if ((error = copyout(&ua, SCARG(&nuap, data),

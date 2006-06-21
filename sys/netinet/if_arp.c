@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.106.2.1 2006/06/21 15:11:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106.2.1 2006/06/21 15:11:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -105,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
 #include <net/if_dl.h>
 #include <net/if_token.h>
 #include <net/if_types.h>
+#include <net/if_ether.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -122,6 +124,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106 2005/06/20 02:49:18 atatat Exp $");
 #include <net/if_fddi.h>
 #endif
 #include "token.h"
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #define SIN(s) ((struct sockaddr_in *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
@@ -141,8 +147,6 @@ int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
 
-static	void arprequest(struct ifnet *,
-	    struct in_addr *, struct in_addr *, u_int8_t *);
 static	void arptfree(struct llinfo_arp *);
 static	void arptimer(void *);
 static	struct llinfo_arp *arplookup(struct mbuf *, struct in_addr *,
@@ -161,10 +165,10 @@ struct	callout arptimer_ch;
 
 
 /* revarp state */
-static struct	in_addr myip, srv_ip;
-static int	myip_initialized = 0;
-static int	revarp_in_progress = 0;
-static struct	ifnet *myip_ifp = NULL;
+struct	in_addr myip, srv_ip;
+int	myip_initialized = 0;
+int	revarp_in_progress = 0;
+struct	ifnet *myip_ifp = NULL;
 
 #ifdef DDB
 static void db_print_sa(const struct sockaddr *);
@@ -238,10 +242,10 @@ struct domain arpdomain =
  */
 
 static int	arp_locked;
-static __inline int arp_lock_try(int);
-static __inline void arp_unlock(void);
+static inline int arp_lock_try(int);
+static inline void arp_unlock(void);
 
-static __inline int
+static inline int
 arp_lock_try(int recurse)
 {
 	int s;
@@ -260,7 +264,7 @@ arp_lock_try(int recurse)
 	return (1);
 }
 
-static __inline void
+static inline void
 arp_unlock(void)
 {
 	int s;
@@ -350,8 +354,8 @@ arptimer(void *arg)
 		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire == 0)
 			continue;
-		if ((rt->rt_expire - time.tv_sec) < arpt_refresh &&
-		    rt->rt_pksent > (time.tv_sec - arpt_keep)) {
+		if ((rt->rt_expire - time_second) < arpt_refresh &&
+		    rt->rt_pksent > (time_second - arpt_keep)) {
 			/*
 			 * If the entry has been used during since last
 			 * refresh, try to renew it before deleting.
@@ -360,7 +364,7 @@ arptimer(void *arg)
 			    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &SIN(rt_key(rt))->sin_addr,
 			    LLADDR(rt->rt_ifp->if_sadl));
-		} else if (rt->rt_expire <= time.tv_sec)
+		} else if (rt->rt_expire <= time_second)
 			arptfree(la); /* timer has expired; clear */
 	}
 
@@ -387,11 +391,18 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	if (!arpinit_done) {
 		arpinit_done = 1;
 		/*
-		 * We generate expiration times from time.tv_sec
+		 * We generate expiration times from time_second
 		 * so avoid accidently creating permanent routes.
 		 */
-		if (time.tv_sec == 0) {
+		if (time_second == 0) {
+#ifdef __HAVE_TIMECOUNTER
+			struct timespec ts;
+			ts.tv_sec = 1;
+			ts.tv_nsec = 0;
+			tc_setclock(&ts);
+#else /* !__HAVE_TIMECOUNTER */
 			time.tv_sec++;
+#endif /* !__HAVE_TIMECOUNTER */
 		}
 		callout_init(&arptimer_ch);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
@@ -456,7 +467,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * it's a "permanent" route, so that routes cloned
 			 * from it do not need their expiration time set.
 			 */
-			rt->rt_expire = time.tv_sec;
+			rt->rt_expire = time_second;
 			/*
 			 * linklayers with particular link MTU limitation.
 			 */
@@ -600,7 +611,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
  *	- arp header target ip address
  *	- arp header source ethernet address
  */
-static void
+void
 arprequest(struct ifnet *ifp,
     struct in_addr *sip, struct in_addr *tip, u_int8_t *enaddr)
 {
@@ -687,11 +698,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
 	 */
-	if ((rt->rt_expire == 0 || rt->rt_expire > time.tv_sec) &&
+	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		bcopy(LLADDR(sdl), desten,
 		    min(sdl->sdl_alen, ifp->if_addrlen));
-		rt->rt_pksent = time.tv_sec; /* Time for last pkt sent */
+		rt->rt_pksent = time_second; /* Time for last pkt sent */
 		return 1;
 	}
 	/*
@@ -719,17 +730,21 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		/* This should never happen. (Should it? -gwr) */
 		printf("arpresolve: unresolved and rt_expire == 0\n");
 		/* Set expiration time to now (expired). */
-		rt->rt_expire = time.tv_sec;
+		rt->rt_expire = time_second;
 	}
 #endif
 	if (rt->rt_expire) {
 		rt->rt_flags &= ~RTF_REJECT;
-		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
-			rt->rt_expire = time.tv_sec;
+		if (la->la_asked == 0 || rt->rt_expire != time_second) {
+			rt->rt_expire = time_second;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(ifp,
 				    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
 				    &SIN(dst)->sin_addr,
+#if NCARP > 0
+				    (rt->rt_ifp->if_type == IFT_CARP) ?
+				    LLADDR(rt->rt_ifp->if_sadl):
+#endif
 				    LLADDR(ifp->if_sadl));
 			else {
 				rt->rt_flags |= RTF_REJECT;
@@ -824,13 +839,19 @@ in_arpinput(struct mbuf *m)
 #if NBRIDGE > 0
 	struct in_ifaddr *bridge_ia = NULL;
 #endif
+#if NCARP > 0
+	u_int32_t count = 0, index = 0;
+#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
 	int op;
 	struct mbuf *mold;
+	caddr_t tha;
 	int s;
 
+	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
+		goto out;
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 
@@ -884,11 +905,23 @@ in_arpinput(struct mbuf *m)
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function
 	 */
+	
 	INADDR_TO_IA(itaddr, ia);
 	while (ia != NULL) {
-		if (ia->ia_ifp == m->m_pkthdr.rcvif)
-			break;
-
+#if NCARP > 0
+		if (ia->ia_ifp->if_type == IFT_CARP &&
+		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING))) {
+			index++;
+			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
+			    carp_iamatch(ia, ar_sha(ah),
+			    &count, index)) {
+				break;
+				}
+		} else
+#endif
+			    if (ia->ia_ifp == m->m_pkthdr.rcvif)
+				break;
 #if NBRIDGE > 0
 		/*
 		 * If the interface we received the packet on
@@ -1031,7 +1064,7 @@ in_arpinput(struct mbuf *m)
 		bcopy((caddr_t)ar_sha(ah), LLADDR(sdl),
 		    sdl->sdl_alen = ah->ar_hln);
 		if (rt->rt_expire)
-			rt->rt_expire = time.tv_sec + arpt_keep;
+			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 
@@ -1056,18 +1089,21 @@ reply:
 	arpstat.as_rcvrequest++;
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
-		if (ar_tha(ah))
-			bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah),
-			    ah->ar_hln);
+		tha = ar_tha(ah);
+		if (tha)
+			bcopy((caddr_t)ar_sha(ah), tha, ah->ar_hln);
 		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	} else {
 		la = arplookup(m, &itaddr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
-		if (ar_tha(ah))
-			bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah),
-			    ah->ar_hln);
+		if (rt->rt_ifp->if_type == IFT_CARP &&
+		    m->m_pkthdr.rcvif->if_type != IFT_CARP)
+			goto out;
+		tha = ar_tha(ah);
+		if (tha)
+			bcopy((caddr_t)ar_sha(ah), tha, ah->ar_hln);
 		sdl = SDL(rt->rt_gateway);
 		bcopy(LLADDR(sdl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	}
@@ -1244,6 +1280,7 @@ in_revarpinput(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct arphdr *ah;
+	caddr_t tha;
 	int op;
 
 	ah = mtod(m, struct arphdr *);
@@ -1275,7 +1312,9 @@ in_revarpinput(struct mbuf *m)
 		goto out;
 	if (myip_initialized)
 		goto wake;
-	if (bcmp(ar_tha(ah), LLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
+	tha = ar_tha(ah);
+	KASSERT(tha);
+	if (bcmp(tha, LLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&srv_ip, sizeof(srv_ip));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&myip, sizeof(myip));
@@ -1297,6 +1336,7 @@ revarprequest(struct ifnet *ifp)
 	struct sockaddr sa;
 	struct mbuf *m;
 	struct arphdr *ah;
+	caddr_t tha;
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
@@ -1313,7 +1353,9 @@ revarprequest(struct ifnet *ifp)
 	ah->ar_op = htons(ARPOP_REVREQUEST);
 
 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
-	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_tha(ah), ah->ar_hln);
+	tha = ar_tha(ah);
+	KASSERT(tha);
+	bcopy(LLADDR(ifp->if_sadl), tha, ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;

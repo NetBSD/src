@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.62.2.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
+#include "opt_magiclinks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp 
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -63,6 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62 2005/06/23 17:00:30 thorpej Exp 
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
+
+#ifndef MAGICLINKS
+#define MAGICLINKS 0
+#endif
+
+int vfs_magiclinks = MAGICLINKS;
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
@@ -82,72 +90,103 @@ struct pool_cache pnbuf_cache;	/* pathname buffer cache */
  * replacement strings (and replacement string lengths) made
  * that impractical.
  */
+#define	VNL(x)							\
+	(sizeof(x) - 1)
+
+#define	VO	'{'
+#define	VC	'}'
+
 #define	MATCH(str)						\
-		((i + (sizeof(str) - 1) == *len) ||		\
-		    ((i + (sizeof(str) - 1) < *len) &&		\
-		      (cp[i + sizeof(str) - 1] == '/'))) &&	\
-		!strncmp((str), &cp[i], sizeof(str) - 1)
+	((termchar == '/' && i + VNL(str) == *len) ||		\
+	 (i + VNL(str) < *len &&				\
+	  cp[i + VNL(str)] == termchar)) &&			\
+	!strncmp((str), &cp[i], VNL(str))
 
 #define	SUBSTITUTE(m, s, sl)					\
-		if ((newlen + (sl)) > MAXPATHLEN)		\
-			return (1);				\
-		i += sizeof(m) - 1;				\
-		memcpy(&tmp[newlen], (s), (sl));		\
-		newlen += (sl);					\
-		change = 1;
+	if ((newlen + (sl)) > MAXPATHLEN)			\
+		return (1);					\
+	i += VNL(m);						\
+	if (termchar != '/')					\
+		i++;						\
+	memcpy(&tmp[newlen], (s), (sl));			\
+	newlen += (sl);						\
+	change = 1;						\
+	termchar = '/';
 
 static int
-symlink_magic(char *cp, int *len)
+symlink_magic(struct proc *p, char *cp, int *len)
 {
-	char tmp[MAXPATHLEN];
+	char *tmp;
 	int change, i, newlen;
+	int termchar = '/';
 
+	tmp = PNBUF_GET();
 	for (change = i = newlen = 0; i < *len; ) {
-		if (cp[i] != '@')
+		if (cp[i] != '@') {
 			tmp[newlen++] = cp[i++];
-		else {
+			continue;
+		}
+
+		i++;
+
+		/* Check for @{var} syntax. */
+		if (cp[i] == VO) {
+			termchar = VC;
 			i++;
-			/*
-			 * The following checks should be ordered according
-			 * to frequency of use.
-			 */
-			if (MATCH("machine_arch")) {
-				SUBSTITUTE("machine_arch", MACHINE_ARCH,
-				    sizeof(MACHINE_ARCH) - 1);
-			} else if (MATCH("machine")) {
-				SUBSTITUTE("machine", MACHINE,
-				    sizeof(MACHINE) - 1);
-			} else if (MATCH("hostname")) {
-				SUBSTITUTE("hostname", hostname,
-				    hostnamelen);
-			} else if (MATCH("osrelease")) {
-				SUBSTITUTE("osrelease", osrelease,
-				    strlen(osrelease));
-			} else if (MATCH("kernel_ident")) {
-				SUBSTITUTE("kernel_ident", kernel_ident,
-				    strlen(kernel_ident));
-			} else if (MATCH("domainname")) {
-				SUBSTITUTE("domainname", domainname,
-				    domainnamelen);
-			} else if (MATCH("ostype")) {
-				SUBSTITUTE("ostype", ostype,
-				    strlen(ostype));
-			} else
-				tmp[newlen++] = '@';
+		}
+
+		/*
+		 * The following checks should be ordered according
+		 * to frequency of use.
+		 */
+		if (MATCH("machine_arch")) {
+			SUBSTITUTE("machine_arch", MACHINE_ARCH,
+			    sizeof(MACHINE_ARCH) - 1);
+		} else if (MATCH("machine")) {
+			SUBSTITUTE("machine", MACHINE,
+			    sizeof(MACHINE) - 1);
+		} else if (MATCH("hostname")) {
+			SUBSTITUTE("hostname", hostname,
+			    hostnamelen);
+		} else if (MATCH("osrelease")) {
+			SUBSTITUTE("osrelease", osrelease,
+			    strlen(osrelease));
+		} else if (MATCH("emul")) {
+			SUBSTITUTE("emul", p->p_emul->e_name,
+			    strlen(p->p_emul->e_name));
+		} else if (MATCH("kernel_ident")) {
+			SUBSTITUTE("kernel_ident", kernel_ident,
+			    strlen(kernel_ident));
+		} else if (MATCH("domainname")) {
+			SUBSTITUTE("domainname", domainname,
+			    domainnamelen);
+		} else if (MATCH("ostype")) {
+			SUBSTITUTE("ostype", ostype,
+			    strlen(ostype));
+		} else {
+			tmp[newlen++] = '@';
+			if (termchar == VC)
+				tmp[newlen++] = VO;
 		}
 	}
 
-	if (! change)
-		return (0);
-
-	memcpy(cp, tmp, newlen);
-	*len = newlen;
+	if (change) {
+		memcpy(cp, tmp, newlen);
+		*len = newlen;
+	}
+	PNBUF_PUT(tmp);
 
 	return (0);
 }
 
+#undef VNL
+#undef VO
+#undef VC
+#undef MATCH
+#undef SUBSTITUTE
+
 /*
- * Convert a pathname into a pointer to a locked inode.
+ * Convert a pathname into a pointer to a locked vnode.
  *
  * The FOLLOW flag is set when symbolic links are to be followed
  * when they occur at the end of the name translation process.
@@ -178,14 +217,14 @@ namei(struct nameidata *ndp)
 	struct componentname *cnp = &ndp->ni_cnd;
 
 #ifdef DIAGNOSTIC
-	if (!cnp->cn_cred || !cnp->cn_proc)
+	if (!cnp->cn_cred || !cnp->cn_lwp)
 		panic("namei: bad cred/proc");
 	if (cnp->cn_nameiop & (~OPMASK))
 		panic("namei: nameiop contaminated with flags");
 	if (cnp->cn_flags & OPMASK)
 		panic("namei: flags contaminated with nameiops");
 #endif
-	cwdi = cnp->cn_proc->p_cwdi;
+	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
 
 	/*
 	 * Get a buffer for the name to be translated, and copy the
@@ -214,11 +253,11 @@ namei(struct nameidata *ndp)
 	ndp->ni_loopcnt = 0;
 
 #ifdef KTRACE
-	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
+	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI))
+		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
 #endif
 #ifdef SYSTRACE
-	if (ISSET(cnp->cn_proc->p_flag, P_SYSTRACE))
+	if (ISSET(cnp->cn_lwp->l_proc->p_flag, P_SYSTRACE))
 		systrace_namei(ndp);
 #endif
 
@@ -268,7 +307,7 @@ namei(struct nameidata *ndp)
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
 			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_proc);
+			    cnp->cn_lwp);
 			if (error != 0)
 				break;
 		}
@@ -282,9 +321,8 @@ namei(struct nameidata *ndp)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = NULL;
 		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
 		badlink:
@@ -301,8 +339,8 @@ namei(struct nameidata *ndp)
 		 * Do symlink substitution, if appropriate, and
 		 * check length for potential overflow.
 		 */
-		if (((ndp->ni_vp->v_mount->mnt_flag & MNT_MAGICLINKS) &&
-		     symlink_magic(cp, &linklen)) ||
+		if ((vfs_magiclinks &&
+		     symlink_magic(cnp->cn_lwp->l_proc, cp, &linklen)) ||
 		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
 			goto badlink;
@@ -412,6 +450,7 @@ lookup(struct nameidata *ndp)
 	int slashes;
 	int dpunlocked = 0;		/* dp has already been unlocked */
 	struct componentname *cnp = &ndp->ni_cnd;
+	struct lwp *l = cnp->cn_lwp;
 
 	/*
 	 * Setup: break out flag bits into variables.
@@ -453,7 +492,17 @@ lookup(struct nameidata *ndp)
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
 			if (ndp->ni_dvp == NULL && wantparent) {
-				error = EISDIR;
+				switch (cnp->cn_nameiop) {
+				case CREATE:
+					error = EEXIST;
+					break;
+				case DELETE:
+				case RENAME:
+					error = EBUSY;
+					break;
+				default:
+					KASSERT(0);
+				}
 				goto bad;
 			}
 			ndp->ni_vp = dp;
@@ -538,6 +587,8 @@ dirloop:
 	 *    .. in the other file system.
 	 */
 	if (cnp->cn_flags & ISDOTDOT) {
+		struct proc *p = l->l_proc;
+
 		for (;;) {
 			if (dp == ndp->ni_rootdir || dp == rootvnode) {
 				ndp->ni_dvp = dp;
@@ -548,17 +599,15 @@ dirloop:
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
 				VOP_UNLOCK(dp, 0);
-				retval = vn_isunder(dp, ndp->ni_rootdir,
-				    cnp->cn_proc);
+				retval = vn_isunder(dp, ndp->ni_rootdir, l);
 				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 				if (!retval) {
 				    /* Oops! We got out of jail! */
 				    log(LOG_WARNING,
 					"chrooted pid %d uid %d (%s) "
 					"detected outside of its chroot\n",
-					cnp->cn_proc->p_pid,
-					cnp->cn_proc->p_ucred->cr_uid,
-					cnp->cn_proc->p_comm);
+					p->p_pid, kauth_cred_geteuid(p->p_cred),
+					p->p_comm);
 				    /* Put us at the jail root. */
 				    vput(dp);
 				    dp = ndp->ni_rootdir;
@@ -635,7 +684,7 @@ unionlookup:
 		/*
 		 * We return with ni_vp NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
-		 * (possibly locked) directory inode in ndp->ni_dvp.
+		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
@@ -835,7 +884,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		/*
 		 * We return with ni_vp NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
-		 * (possibly locked) directory inode in ndp->ni_dvp.
+		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
 		return (0);
 	}

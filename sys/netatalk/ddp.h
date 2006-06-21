@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp.h,v 1.1 1997/04/02 21:31:08 christos Exp $	 */
+/*	$NetBSD: ddp.h,v 1.1.72.1 2006/06/21 15:10:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #ifndef _NETATALK_DDP_H_
-#define _NETATALK_DDP_H_ 1
+#define _NETATALK_DDP_H_
 
 #ifndef BYTE_ORDER
   #error "Undefined Byte order"
@@ -140,4 +140,4 @@ struct ddpshdr {
 #define dsh_bytes	dsh_u.du_bytes
 };
 
-#endif /* _NETATALK_DDP_H_ */
+#endif /* !_NETATALK_DDP_H_ */

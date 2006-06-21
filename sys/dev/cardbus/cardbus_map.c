@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.16 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.16.4.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.16 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.16.4.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,8 +260,12 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
 	bus_size_t size;
 	int flags;
 	int status = 0;
+	cardbustag_t tag;
 
-	cardbustag_t tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
+	size = 0;	/* XXX gcc */
+	flags = 0;	/* XXX gcc */
+
+	tag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
 	DPRINTF(("cardbus_mapreg_map called: %s %x\n", sc->sc_dev.dv_xname,
 	   type));
@@ -371,7 +375,7 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
 	}
 #endif
 
-	cardbustag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
+	cardbustag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
 	cardbus_conf_write(cc, cf, cardbustag, reg, 0);
 

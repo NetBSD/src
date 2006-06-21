@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp.h,v 1.1 2003/08/13 20:06:50 jonathan Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.1.18.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipcomp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
@@ -53,4 +53,4 @@ struct ipcomp {
 #define IPCOMP_MAX	4
 
 #define IPCOMP_CPI_NEGOTIATE_MIN	256
-#endif /*_NETIPSEC_IPCOMP_H_*/
+#endif /* !_NETIPSEC_IPCOMP_H_ */

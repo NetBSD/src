@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.16 2004/05/03 07:44:36 kochi Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.16.12.1 2006/06/21 15:02:31 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.16 2004/05/03 07:44:36 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.16.12.1 2006/06/21 15:02:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,8 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	printf(": ACPI AC Adapter\n");
+	aprint_naive(": ACPI AC Adapter\n");
+	aprint_normal(": ACPI AC Adapter\n");
 
 	sc->sc_node = aa->aa_node;
 	simple_lock_init(&sc->sc_lock);
@@ -167,7 +168,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -175,7 +176,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpiacad_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -184,7 +185,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpiacad_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register SYSTEM NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -264,7 +265,13 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	 * but at least my IBM T21 sends it on AC adapter status
 	 * change.  --thorpej@wasabisystems.com
 	 */
+	/*
+	 * XXX My Acer TravelMate 291 sends DeviceCheck on AC
+	 * adapter status change.
+	 *  --rpaulo@NetBSD.org
+	 */
 	case ACPI_NOTIFY_BusCheck:
+	case ACPI_NOTIFY_DeviceCheck:
 	case ACPI_NOTIFY_PowerSourceStatusChanged:
 #ifdef ACPI_ACAD_DEBUG
 		printf("%s: received notify message: 0x%x\n",
@@ -318,7 +325,7 @@ acpiacad_init_envsys(struct acpiacad_softc *sc)
 	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 

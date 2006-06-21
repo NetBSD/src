@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.15 2005/06/23 18:44:44 thorpej Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.15.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.15 2005/06/23 18:44:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.15.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include "opt_userconf.h"
 
@@ -206,7 +206,9 @@ userconf_pdev(short devno)
 	struct cfdata *cd;
 	const struct cfparent *cfp;
 	int   *l;
-	const char * const *ln;
+	const struct cfiattrdata *ia;
+	const struct cflocdesc *ld;
+	int nld, i;
 
 	if (devno > userconf_maxdev) {
 		printf("Unknown devno (max is %d)\n", userconf_maxdev);
@@ -239,11 +241,20 @@ userconf_pdev(short devno)
 		printf(" ???");
 		break;
 	}
-	l = cd->cf_loc;
-	ln = cd->cf_locnames;
-	while (ln && *ln) {
-		printf(" %s ", *ln++);
-		userconf_pnum(*l++);
+	if (cfp) {
+		l = cd->cf_loc;
+		ia = cfiattr_lookup(cfp->cfp_iattr, 0);
+		KASSERT(ia);
+		ld = ia->ci_locdesc;
+		nld = ia->ci_loclen;
+		for (i = 0; i < nld; i++) {
+			printf(" %s ", ld[i].cld_name);
+			if (!ld[i].cld_defaultstr
+			    || (l[i] != ld[i].cld_default))
+				userconf_pnum(l[i]);
+			else
+				printf("?");
+		}
 	}
 	printf("\n");
 }
@@ -327,15 +338,18 @@ userconf_device(char *cmd, int *len, short *unit, short *state)
 }
 
 static void
-userconf_modify(const char *item, int *val)
+userconf_modify(const struct cflocdesc *item, int *val)
 {
 	int ok = 0;
 	int a;
 	char *c;
 
 	while (!ok) {
-		printf("%s [", item);
-		userconf_pnum(*val);
+		printf("%s [", item->cld_name);
+		if (item->cld_defaultstr && (*val == item->cld_default))
+			printf("?");
+		else
+			userconf_pnum(*val);
 		printf("] ? ");
 
 		getsn(userconf_argbuf, sizeof(userconf_argbuf));
@@ -344,7 +358,13 @@ userconf_modify(const char *item, int *val)
 		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
 
 		if (*c != '\0') {
-			if (userconf_number(c, &a) == 0) {
+			if (*c == '?') {
+				if (item->cld_defaultstr) {
+					*val = item->cld_default;
+					ok = 1;
+				} else
+					printf("No default\n");
+			} else if (userconf_number(c, &a) == 0) {
 				*val = a;
 				ok = 1;
 			} else {
@@ -363,7 +383,9 @@ userconf_change(int devno)
 	char c = '\0';
 	int   *l;
 	int   ln;
-	const char * const *locnames;
+	const struct cfiattrdata *ia;
+	const struct cflocdesc *ld;
+	int nld;
 
 	if (devno <=  userconf_maxdev) {
 
@@ -383,17 +405,18 @@ userconf_change(int devno)
 
 			cd = &cfdata[devno];
 			l = cd->cf_loc;
-			locnames = cd->cf_locnames;
-			ln = 0;
+			ia = cfiattr_lookup(cd->cf_pspec->cfp_iattr, 0);
+			KASSERT(ia);
+			ld = ia->ci_locdesc;
+			nld = ia->ci_loclen;
 
-			while (locnames[ln])
+			for (ln = 0; ln < nld; ln++)
 			{
-				userconf_modify(locnames[ln], l);
+				userconf_modify(&ld[ln], l);
 
 				/* XXX add *l */
 				userconf_hist_int(*l);
 
-				ln++;
 				l++;
 			}
 

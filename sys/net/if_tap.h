@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.h,v 1.2 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_tap.h,v 1.2.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -36,5 +36,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NET_IF_TAP_H_
+#define _NET_IF_TAP_H_
+
 /* 'e' comes from former name 'ethfoo' */
 #define TAPGIFNAME	_IOR('e', 0, struct ifreq)
+
+#endif /* !_NET_IF_TAP_H_ */
+

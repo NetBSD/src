@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.13.2.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.13.2.1 2006/06/21 15:09:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Ex
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -80,8 +81,8 @@ struct isoreaddir {
 	int ncookies;
 };
 
-int	iso_uiodir __P((struct isoreaddir *, struct dirent *, off_t));
-int	iso_shipdir __P((struct isoreaddir *));
+int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
+int	iso_shipdir(struct isoreaddir *);
 
 #if 0
 /*
@@ -91,7 +92,7 @@ int	iso_shipdir __P((struct isoreaddir *));
 int
 cd9660_mknod(ndp, vap, cred, p)
 	struct nameidata *ndp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct vattr *vap;
 	struct proc *p;
 {
@@ -152,8 +153,8 @@ cd9660_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -185,8 +186,8 @@ cd9660_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -218,9 +219,8 @@ cd9660_getattr(v)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = NULL;
 		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
 		rdlnk.a_uio = &auio;
 		rdlnk.a_vp = ap->a_vp;
 		rdlnk.a_cred = ap->a_cred;
@@ -247,7 +247,7 @@ cd9660_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -269,7 +269,9 @@ cd9660_read(v)
 	imp = ip->i_mnt;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -279,7 +281,7 @@ cd9660_read(v)
 			if (bytelen == 0)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -330,7 +332,7 @@ iso_uiodir(idp, dp, off)
 	int error;
 
 	dp->d_name[dp->d_namlen] = 0;
-	dp->d_reclen = DIRENT_SIZE(dp);
+	dp->d_reclen = _DIRENT_SIZE(dp);
 
 	if (idp->uio->uio_resid < dp->d_reclen) {
 		idp->eofflag = 0;
@@ -396,7 +398,7 @@ iso_shipdir(idp)
 			}
 		}
 	}
-	idp->current.d_reclen = DIRENT_SIZE(&idp->current);
+	idp->current.d_reclen = _DIRENT_SIZE(&idp->current);
 	if (assoc) {
 		idp->assocoff = idp->curroff;
 		memcpy(&idp->assocent, &idp->current, idp->current.d_reclen);
@@ -417,7 +419,7 @@ cd9660_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -466,7 +468,7 @@ cd9660_readdir(v)
 	idp->curroff = uio->uio_offset;
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
-	    (error = VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))) {
+	    (error = cd9660_blkatoff(vdp, (off_t)idp->curroff, NULL, &bp))) {
 		FREE(idp, M_TEMP);
 		return (error);
 	}
@@ -481,7 +483,7 @@ cd9660_readdir(v)
 		if ((idp->curroff & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)idp->curroff,
+			error = cd9660_blkatoff(vdp, (off_t)idp->curroff,
 					     NULL, &bp);
 			if (error)
 				break;
@@ -490,6 +492,7 @@ cd9660_readdir(v)
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 
@@ -621,7 +624,7 @@ cd9660_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	ISONODE	*ip;
 	ISODIR	*dirp;
@@ -631,6 +634,7 @@ cd9660_readlink(v)
 	u_short	symlen;
 	int	error;
 	char	*symname;
+	boolean_t use_pnbuf;
 
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
@@ -670,19 +674,21 @@ cd9660_readlink(v)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	if (uio->uio_segflg == UIO_SYSSPACE &&
-	    uio->uio_iov->iov_len >= MAXPATHLEN)
-		symname = uio->uio_iov->iov_base;
-	else
+	use_pnbuf = !VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+	    uio->uio_iov->iov_len < MAXPATHLEN;
+	if (use_pnbuf) {
 		symname = PNBUF_GET();
+	} else {
+		symname = uio->uio_iov->iov_base;
+	}
 
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
-		if (uio->uio_segflg != UIO_SYSSPACE ||
-		    uio->uio_iov->iov_len < MAXPATHLEN)
+		if (use_pnbuf) {
 			PNBUF_PUT(symname);
+		}
 		brelse(bp);
 		return (EINVAL);
 	}
@@ -694,8 +700,7 @@ cd9660_readlink(v)
 	/*
 	 * return with the symbolic name to caller's.
 	 */
-	if (uio->uio_segflg != UIO_SYSSPACE ||
-	    uio->uio_iov->iov_len < MAXPATHLEN) {
+	if (use_pnbuf) {
 		error = uiomove(symname, symlen, uio);
 		PNBUF_PUT(symname);
 		return (error);
@@ -847,7 +852,7 @@ cd9660_setattr(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
@@ -875,11 +880,10 @@ cd9660_setattr(v)
 	if (vap->va_size != VNOVAL
 	    && vp->v_type != VCHR
 	    && vp->v_type != VBLK
-	    && vp->v_type != VFIFO
-	    )
+	    && vp->v_type != VFIFO)
 		return EOPNOTSUPP;
 
-	return VOP_TRUNCATE(vp, vap->va_size, 0, ap->a_cred, ap->a_p);
+	return 0;
 }
 
 /*
@@ -895,17 +899,13 @@ cd9660_setattr(v)
 #define	cd9660_mkdir	genfs_eopnotsupp
 #define	cd9660_rmdir	genfs_eopnotsupp
 #define	cd9660_advlock	genfs_einval
-#define	cd9660_valloc	genfs_eopnotsupp
-#define	cd9660_vfree	genfs_nullop
-#define	cd9660_truncate	genfs_eopnotsupp
-#define	cd9660_update	genfs_nullop
 #define	cd9660_bwrite	genfs_eopnotsupp
 #define cd9660_revoke	genfs_revoke
 
 /*
  * Global vfs data structures for cd9660
  */
-int (**cd9660_vnodeop_p) __P((void *));
+int (**cd9660_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, cd9660_lookup },		/* lookup */
@@ -945,11 +945,6 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, cd9660_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, cd9660_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, cd9660_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, cd9660_valloc },		/* valloc */
-	{ &vop_vfree_desc, cd9660_vfree },		/* vfree */
-	{ &vop_truncate_desc, cd9660_truncate },	/* truncate */
-	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
@@ -961,7 +956,7 @@ const struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 /*
  * Special device vnode ops
  */
-int (**cd9660_specop_p) __P((void *));
+int (**cd9660_specop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -1002,11 +997,6 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_vfree_desc, spec_vfree },		/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
@@ -1015,7 +1005,7 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 const struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
 
-int (**cd9660_fifoop_p) __P((void *));
+int (**cd9660_fifoop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
@@ -1056,11 +1046,6 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }

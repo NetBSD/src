@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_timer.c,v 1.2 2005/06/01 13:34:48 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_timer.c,v 1.2.2.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_timer.c,v 1.2 2005/06/01 13:34:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_timer.c,v 1.2.2.1 2006/06/21 15:10:45 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/systm.h>
 
 #include <net/if.h>

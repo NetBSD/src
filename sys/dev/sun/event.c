@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.17 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: event.c,v 1.17.4.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -153,16 +153,16 @@ ev_read(ev, uio, flags)
 }
 
 int
-ev_poll(ev, events, p)
+ev_poll(ev, events, l)
 	struct evvar *ev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	int s = splev(), revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (ev->ev_get == ev->ev_put)
-			selrecord(p, &ev->ev_sel);
+			selrecord(l, &ev->ev_sel);
 		else
 			revents |= events & (POLLIN | POLLRDNORM);
 	}

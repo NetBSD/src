@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.42 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: bpf.h,v 1.42.4.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -69,13 +69,13 @@ struct bpf_program {
 };
 
 /*
- * Struct returned by BIOCGSTATS.
+ * Struct returned by BIOCGSTATS and net.bpf.stats sysctl.
  */
 struct bpf_stat {
-	u_int64_t bs_recv;	/* number of packets received */
-	u_int64_t bs_drop;	/* number of packets dropped */
-	u_int64_t bs_capt;	/* number of packets captured */
-	u_int64_t bs_padding[13];
+	uint64_t bs_recv;	/* number of packets received */
+	uint64_t bs_drop;	/* number of packets dropped */
+	uint64_t bs_capt;	/* number of packets captured */
+	uint64_t bs_padding[13];
 };
 
 /*
@@ -140,9 +140,9 @@ struct bpf_version {
  */
 struct bpf_hdr {
 	struct timeval	bh_tstamp;	/* time stamp */
-	u_int32_t	bh_caplen;	/* length of captured portion */
-	u_int32_t	bh_datalen;	/* original length of packet */
-	u_int16_t	bh_hdrlen;	/* length of bpf header (this struct
+	uint32_t	bh_caplen;	/* length of captured portion */
+	uint32_t	bh_datalen;	/* original length of packet */
+	uint16_t	bh_hdrlen;	/* length of bpf header (this struct
 					   plus alignment padding) */
 };
 /*
@@ -167,7 +167,7 @@ struct bpf_hdr {
 #include <net/dlt.h>
 
 /*
- * The instruction encondings.
+ * The instruction encodings.
  */
 /* instruction classes */
 #define BPF_CLASS(code) ((code) & 0x07)
@@ -226,17 +226,17 @@ struct bpf_hdr {
  * The instruction data structure.
  */
 struct bpf_insn {
-	u_int16_t code;
+	uint16_t  code;
 	u_char 	  jt;
 	u_char 	  jf;
-	int32_t	  k;
+	uint32_t  k;
 };
 
 /*
  * Macros for insn array initializers.
  */
-#define BPF_STMT(code, k) { (u_int16_t)(code), 0, 0, k }
-#define BPF_JUMP(code, k, jt, jf) { (u_int16_t)(code), jt, jf, k }
+#define BPF_STMT(code, k) { (uint16_t)(code), 0, 0, k }
+#define BPF_JUMP(code, k, jt, jf) { (uint16_t)(code), jt, jf, k }
 
 /*
  * Structure to retrieve available DLTs for the interface.
@@ -251,8 +251,8 @@ int	 bpf_validate(struct bpf_insn *, int);
 void	 bpf_tap(void *, u_char *, u_int);
 void	 bpf_mtap(void *, struct mbuf *);
 void	 bpf_mtap2(void *, void *, u_int, struct mbuf *);
-void	 bpf_mtap_af(void *, u_int32_t, struct mbuf *);
-void	 bpf_mtap_et(void *, u_int16_t, struct mbuf *);
+void	 bpf_mtap_af(void *, uint32_t, struct mbuf *);
+void	 bpf_mtap_et(void *, uint16_t, struct mbuf *);
 void	 bpf_mtap_sl_in(void *, u_char *, struct mbuf **);
 void	 bpf_mtap_sl_out(void *, u_char *, struct mbuf *);
 void	 bpfattach(struct ifnet *, u_int, u_int);
@@ -269,4 +269,4 @@ u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
  */
 #define BPF_MEMWORDS 16
 
-#endif /* _NET_BPF_H_ */
+#endif /* !_NET_BPF_H_ */

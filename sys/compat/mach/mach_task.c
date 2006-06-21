@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.54 2005/02/26 23:10:20 perry Exp $ */
+/*	$NetBSD: mach_task.c,v 1.54.4.1 2006/06/21 14:59:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -36,11 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.54 2005/02/26 23:10:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.54.4.1 2006/06/21 14:59:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.54 2005/02/26 23:10:20 perry Exp $")
 #include <sys/mount.h>
 #include <sys/ktrace.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -131,7 +131,6 @@ mach_ports_lookup(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
-	struct proc *p = l->l_proc;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	mach_port_name_t mnp[7];
@@ -162,7 +161,7 @@ mach_ports_lookup(args)
 	 * On Darwin, the data seems always null...
 	 */
 	uaddr = NULL;
-	if ((error = mach_ool_copyout(p, &mnp[0],
+	if ((error = mach_ool_copyout(l, &mnp[0],
 	    &uaddr, sizeof(mnp), MACH_OOL_TRACE)) != 0)
 		return mach_msg_error(args, error);
 
@@ -300,7 +299,7 @@ mach_task_threads(args)
 	}
 
 	/* This will free mnp */
-	if ((error = mach_ool_copyout(l->l_proc, mnp, &uaddr,
+	if ((error = mach_ool_copyout(l, mnp, &uaddr,
 	    size, MACH_OOL_TRACE|MACH_OOL_FREE)) != 0)
 		return mach_msg_error(args, error);
 
@@ -683,9 +682,9 @@ mach_sys_task_for_pid(l, v, retval)
 		return ESRCH;
 
 	/* Allowed only if the UID match, if setuid, or if superuser */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 		ISSET(t->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			    return (error);
 
 	/* This will only work on a Mach process */

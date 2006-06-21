@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.24 2005/05/22 12:44:24 kleink Exp $	*/
+/*	$NetBSD: select.h,v 1.24.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ struct timeval;
 
 int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
 	    fd_set *, struct timeval *, sigset_t *);
-void	selrecord(struct proc *selector, struct selinfo *);
+void	selrecord(struct lwp *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 
 static __inline void

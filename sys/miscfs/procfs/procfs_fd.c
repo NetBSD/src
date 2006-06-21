@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.5 2003/06/29 22:31:45 fvdl Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.5.18.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5 2003/06/29 22:31:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.18.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,12 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5 2003/06/29 22:31:45 fvdl Exp $");
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dofd(curp, p, pfs, uio)
-	struct proc *curp;
+procfs_dofd(curl, p, pfs, uio)
+	struct lwp *curl;
 	struct proc *p;
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
+	struct proc *curp = curl->l_proc;
 	int error;
 	struct file *fp;
 	struct proc *pown;
@@ -69,16 +70,16 @@ procfs_dofd(curp, p, pfs, uio)
 
 	switch (uio->uio_rw) {
 	case UIO_READ:
-		error = (*fp->f_ops->fo_read)(fp, &offs, uio, curp->p_ucred, 0);
+		error = (*fp->f_ops->fo_read)(fp, &offs, uio, curp->p_cred, 0);
 		break;
 	case UIO_WRITE:
-		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curp->p_ucred,0);
+		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curp->p_cred,0);
 		break;
 	default:
 		panic("bad uio op");
 	}
 
-	FILE_UNUSE(fp, pown);
+	FILE_UNUSE(fp, proc_representative_lwp(pown));
 
 	return (error);
 }

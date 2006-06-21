@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.27 2005/06/03 18:52:52 martin Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.27.2.1 2006/06/21 14:58:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27 2005/06/03 18:52:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27.2.1 2006/06/21 14:58:51 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27 2005/06/03 18:52:52 martin Exp $
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -172,7 +173,7 @@ irix_sys_prctl(l, v, retval)
 		pid_t pid = (pid_t)SCARG(uap, arg1);
 		struct irix_emuldata *ied;
 		struct proc *target;
-		struct pcred *pc;
+		kauth_cred_t pc;
 
 		if (pid == 0)
 			pid = p->p_pid;
@@ -184,11 +185,11 @@ irix_sys_prctl(l, v, retval)
 			return 0;
 
 		pc = p->p_cred;
-		if (!(pc->pc_ucred->cr_uid == 0 || \
-		    pc->p_ruid == target->p_cred->p_ruid || \
-		    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
-		    pc->p_ruid == target->p_ucred->cr_uid || \
-		    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+		if (!(kauth_cred_geteuid(pc) == 0 || \
+		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
+		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
+		    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
+		    kauth_cred_geteuid(pc) == kauth_cred_geteuid(target->p_cred)))
 			return EPERM;
 
 		ied = (struct irix_emuldata *)(target->p_emuldata);
@@ -357,7 +358,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 		if ((isg = ied->ied_share_group) == NULL)
 			panic("irix_sproc: NULL ied->ied_share_group");
 
-		IRIX_VM_SYNC(p, error = (*vmc.ev_proc)(p, &vmc));
+		IRIX_VM_SYNC(p, error = (*vmc.ev_proc)(l, &vmc));
 		if (error)
 			return error;
 
@@ -422,7 +423,7 @@ irix_sproc_child(isc)
 	struct proc *parent = lparent->l_proc;
 	struct frame *tf = (struct frame *)l2->l_md.md_regs;
 	struct frame *ptf = (struct frame *)lparent->l_md.md_regs;
-	struct pcred *pc;
+	kauth_cred_t pc;
 	struct plimit *pl;
 	struct irix_emuldata *ied;
 	struct irix_emuldata *parent_ied;
@@ -486,12 +487,9 @@ irix_sproc_child(isc)
 	 */
 	if (inh & IRIX_PR_SID) {
 		pc = p2->p_cred;
-		parent->p_cred->p_refcnt++;
+		kauth_cred_hold(parent->p_cred);
 		p2->p_cred = parent->p_cred;
-		if (--pc->p_refcnt == 0) {
-			crfree(pc->pc_ucred);
-			pool_put(&pcred_pool, pc);
-		}
+		kauth_cred_free(pc);
 	}
 
 	/*
@@ -572,7 +570,7 @@ irix_sys_procblk(l, v, retval)
 	struct irix_emuldata *iedp;
 	struct irix_share_group *isg;
 	struct proc *target;
-	struct pcred *pc;
+	kauth_cred_t pc;
 	int oldcount;
 	struct lwp *ied_lwp;
 	int error, last_error;
@@ -584,11 +582,11 @@ irix_sys_procblk(l, v, retval)
 
 	/* May we stop it? */
 	pc = p->p_cred;
-	if (!(pc->pc_ucred->cr_uid == 0 || \
-	    pc->p_ruid == target->p_cred->p_ruid || \
-	    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
-	    pc->p_ruid == target->p_ucred->cr_uid || \
-	    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+	if (!(kauth_cred_geteuid(pc) == 0 || \
+	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
+	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
+	    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
+	    kauth_cred_geteuid(pc) == kauth_cred_geteuid(target->p_cred)))
 		return EPERM;
 
 	/* Is it an IRIX process? */
@@ -671,14 +669,16 @@ irix_prda_init(p)
 	struct exec_vmcmd evc;
 	struct irix_prda *ip;
 	struct irix_prda_sys ips;
+	struct lwp *l;
 
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = (u_long)IRIX_PRDA;
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
+	l = proc_representative_lwp(p);
 
-	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+	if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 		return error;
 
 	ip = (struct irix_prda *)IRIX_PRDA;
@@ -703,10 +703,9 @@ irix_prda_init(p)
 }
 
 int
-irix_vm_fault(p, vaddr, fault_type, access_type)
+irix_vm_fault(p, vaddr, access_type)
 	struct proc *p;
 	vaddr_t vaddr;
-	vm_fault_t fault_type;
 	vm_prot_t access_type;
 {
 	int error;
@@ -717,11 +716,11 @@ irix_vm_fault(p, vaddr, fault_type, access_type)
 	map = &p->p_vmspace->vm_map;
 
 	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0)
-		return uvm_fault(map, vaddr, fault_type, access_type);
+		return uvm_fault(map, vaddr, access_type);
 
 	/* share group version */
 	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
-	error = uvm_fault(map, vaddr, fault_type, access_type);
+	error = uvm_fault(map, vaddr, access_type);
 	irix_vm_sync(p);
 	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
 

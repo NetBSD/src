@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.69 2005/04/29 10:39:09 yamt Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.69.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.69 2005/04/29 10:39:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.69.2.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -147,6 +147,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.69 2005/04/29 10:39:09 yamt Exp $");
 #include <netinet/ip_gre.h>
 #endif
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
+
 #include "bridge.h"
 
 DOMAIN_DEFINE(inetdomain);	/* forward declare and add to link set */
@@ -157,17 +162,17 @@ const struct protosw inetsw[] = {
   0,
   ip_init,	0,		ip_slowtimo,	ip_drain,	NULL
 },
-{ SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
+{ SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   udp_input,	0,		udp_ctlinput,	udp_ctloutput,
   udp_usrreq,
   udp_init,	0,		0,		0,		NULL
 },
-{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
+{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS|PR_PURGEIF,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
   tcp_init,	0,		tcp_slowtimo,	tcp_drain,	NULL
 },
-{ SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   0,		0,		0,		0,
@@ -232,6 +237,13 @@ const struct protosw inetsw[] = {
   encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   encap_init,		0,		0,		0,
+},
+#endif
+#if NCARP > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
+  carp_proto_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,		0,		0,		0,		NULL,
 },
 #endif
 #if NGRE > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.28 2005/04/05 16:06:49 jmcneill Exp $	*/
+/*	$NetBSD: audioio.h,v 1.28.2.1 2006/06/21 15:12:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -36,6 +36,13 @@
 
 #ifndef _SYS_AUDIOIO_H_
 #define _SYS_AUDIOIO_H_
+
+#include <sys/types.h>
+#include <sys/ioccom.h>
+
+#ifndef _KERNEL
+#include <string.h>	/* Required for memset(3) prototype (AUDIO_INITINFO) */
+#endif /* _KERNEL */
 
 /*
  * Audio device

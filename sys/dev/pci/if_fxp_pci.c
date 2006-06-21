@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.41 2005/05/18 20:33:46 riz Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.41.2.1 2006/06/21 15:05:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.41 2005/05/18 20:33:46 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.41.2.1 2006/06/21 15:05:04 yamt Exp $");
 
 #include "rnd.h"
 
@@ -90,6 +90,7 @@ struct fxp_pci_softc {
 
 	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
 	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
+	struct pci_conf_state psc_pciconf; /* standard PCI configuration regs */
 };
 
 static int	fxp_pci_match(struct device *, struct cfdata *, void *);
@@ -99,7 +100,7 @@ static int	fxp_pci_enable(struct fxp_softc *);
 static void	fxp_pci_disable(struct fxp_softc *);
 
 static void	fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
-static void	fxp_pci_power(int why, void *arg);
+static void	fxp_pci_powerhook(int why, void *arg);
 
 CFATTACH_DECL(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
@@ -130,6 +131,8 @@ static const struct fxp_pci_product {
 	  "Intel PRO/100 VE Network Controller with 82562ET/EZ (CNR) PHY" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_4,
 	  "Intel PRO/100 VE (MOB) Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_5,
+	  "Intel PRO/100 VE (LOM) Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
 	  "Intel PRO/100 VM Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_1,
@@ -150,6 +153,8 @@ static const struct fxp_pci_product {
 	  "Intel 82801EB/ER (ICH5) Network Controller" },
 	{ PCI_PRODUCT_INTEL_82801FB_LAN,
 	  "Intel 82562EZ (ICH6)" },
+	{ PCI_PRODUCT_INTEL_82801G_LAN,
+	  "Intel 82801GB/GR (ICH7) Network Controller" },
 	{ 0,
 	  NULL },
 };
@@ -235,12 +240,21 @@ fxp_pci_confreg_restore(struct fxp_pci_softc *psc)
  * on a resume.
  */
 static void
-fxp_pci_power(int why, void *arg)
+fxp_pci_powerhook(int why, void *arg)
 {
 	struct fxp_pci_softc *psc = arg;
 
-	if (why == PWR_RESUME)
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
 		fxp_pci_confreg_restore(psc);
+		break;
+	}
+
+	return;
 }
 
 static void
@@ -259,7 +273,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags;
- 	int pci_pwrmgmt_cap_reg;
+	int error;
 
 	aprint_naive(": Ethernet controller\n");
 
@@ -399,12 +413,14 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_PRO_100_VE_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_3:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_4:
+	case PCI_PRODUCT_INTEL_PRO_100_VE_5:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_3:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_4:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_5:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_6:
 	case PCI_PRODUCT_INTEL_82801EB_LAN:
 	case PCI_PRODUCT_INTEL_82801FB_LAN:
+	case PCI_PRODUCT_INTEL_82801G_LAN:
 	default:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 
@@ -441,27 +457,21 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_regs[(PCI_MAPREG_START+0x8)>>2] =
 	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x8);
 
-	/*
-	 * Work around BIOS ACPI bugs where the chip is inadvertantly
-	 * left in ACPI D3 (lowest power state).  First confirm the device
-	 * supports ACPI power management, then move it to the D0 (fully
-	 * functional) state if it is not already there.
-	 */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pci_pwrmgmt_cap_reg, 0)) {
-		pcireg_t reg;
-
+	/* power up chip */
+	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null))) {
+	case EOPNOTSUPP:
+		break;
+	case 0: 
 		sc->sc_enable = fxp_pci_enable;
 		sc->sc_disable = fxp_pci_disable;
-
-		psc->psc_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
-		reg = pci_conf_read(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg);
-		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
-		    PCI_PMCSR_STATE_D0;
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0)
-			pci_conf_write(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg,
-			    psc->psc_pwrmgmt_csr);
+		break;
+	default:
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
+
 	/* Restore PCI configuration registers. */
 	fxp_pci_confreg_restore(psc);
 
@@ -493,7 +503,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->psc_powerhook = powerhook_establish(fxp_pci_power, psc);
+	psc->psc_powerhook = powerhook_establish(fxp_pci_powerhook, psc);
 	if (psc->psc_powerhook == NULL)
 		aprint_error(
 		    "%s: WARNING: unable to establish pci power hook\n",

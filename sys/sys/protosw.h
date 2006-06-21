@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.35 2004/04/22 01:34:17 matt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.35.12.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -62,6 +62,7 @@ struct sockaddr;
 struct socket;
 struct domain;
 struct proc;
+struct lwp;
 
 struct protosw {
 	int 	pr_type;		/* socket type used for */
@@ -82,7 +83,7 @@ struct protosw {
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
 			(struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct proc *);
+			     struct mbuf *, struct mbuf *, struct lwp *);
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
@@ -114,6 +115,9 @@ struct protosw {
 #define	PR_LASTHDR	0x40		/* enforce ipsec policy; last header */
 #define	PR_ABRTACPTDIS	0x80		/* abort on accept(2) to disconnected
 					   socket */
+#define PR_PURGEIF	0x100		/* might store struct ifnet pointer;
+					   PRU_PURGEIF must be called on ifnet
+					   deletion */
 
 /*
  * The arguments to usrreq are:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.8 2004/03/23 05:31:54 itojun Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.8.18.1 2006/06/21 15:11:01 yamt Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -52,13 +52,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.8 2004/03/23 05:31:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.8.18.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_inet.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <lib/libkern/libkern.h>
 
 #include <net/if.h>
@@ -163,7 +161,7 @@ ip_initid(void)
 	ru_g = pmod(RU_GEN, j, RU_N);
 	ru_counter = 0;
 
-	ru_reseed = time.tv_sec + RU_OUT;
+	ru_reseed = time_second + RU_OUT;
 	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000;
 }
 
@@ -172,7 +170,7 @@ ip_randomid(void)
 {
 	int i, n;
 
-	if (ru_counter >= RU_MAX || time.tv_sec > ru_reseed)
+	if (ru_counter >= RU_MAX || time_second > ru_reseed)
 		ip_initid();
 
 #if 0

@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.7 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: xbdvar.h,v 1.7.4.1 2006/06/21 14:58:15 yamt Exp $ */
 
 /*
  *
@@ -55,5 +55,7 @@ struct xbd_attach_args {
 };
 
 int xbd_scan(struct device *, struct xbd_attach_args *, cfprint_t);
+void xbd_suspend(void);
+void xbd_resume(void);
 
 #endif /* _XEN_XBDVAR_H_ */

@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.66 2005/02/21 00:29:08 thorpej Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.66.4.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -97,6 +97,8 @@ MALLOC_DECLARE(M_USBHC);
 #define UDSBR_DEBUG 1
 #define UBT_DEBUG 1
 #define AXE_DEBUG 1
+#define UIPAQ_DEBUG 1
+#define UCYCOM_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -108,7 +110,7 @@ typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
-#define USBDEVUNIT(bdev) ((bdev).dv_unit)
+#define USBDEVUNIT(bdev) device_unit(&(bdev))
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.25 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.25.4.1 2006/06/21 15:12:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.25 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.25.4.1 2006/06/21 15:12:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.25 2005/02/26 22:32:20 perry Exp
 #include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -93,13 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.25 2005/02/26 22:32:20 perry Exp
  * the inode and the logical block number in a file.
  */
 int
-ext2fs_balloc(ip, bn, size, cred, bpp, flags)
-	struct inode *ip;
-	daddr_t bn;
-	int size;
-	struct ucred *cred;
-	struct buf **bpp;
-	int flags;
+ext2fs_balloc(struct inode *ip, daddr_t bn, int size, kauth_cred_t cred,
+		struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;
 	daddr_t nb;
@@ -361,7 +357,7 @@ fail:
 
 int
 ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 	struct inode *ip = VTOI(vp);
 	struct m_ext2fs *fs = ip->i_e2fs;
@@ -388,7 +384,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		}
 
 		/*
-		 * increase file size now, VOP_BALLOC() requires that
+		 * increase file size now, ext2fs_balloc() requires that
 		 * EOF be up-to-date before each call.
 		 */
 

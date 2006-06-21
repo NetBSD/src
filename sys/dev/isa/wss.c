@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.62 2005/01/14 03:41:45 kent Exp $	*/
+/*	$NetBSD: wss.c,v 1.62.10.1 2006/06/21 15:04:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.62 2005/01/14 03:41:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.62.10.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ madattach(struct wss_softc *sc)
 		return;
 
 	/* Do we want the joystick disabled? */
-	joy = ac->sc_dev.dv_cfdata->cf_flags & 2 ? MC1_JOYDISABLE : 0;
+	joy = device_cfdata(&ac->sc_dev)->cf_flags & 2 ? MC1_JOYDISABLE : 0;
 
 	/* enable WSS emulation at the I/O port */
 	mad_write(sc, MC1_PORT, M_WSS_PORT_SELECT(sc->mad_ioindex) | joy);

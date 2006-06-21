@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.13 2003/10/31 14:04:36 drochner Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.13.16.1 2006/06/21 14:59:52 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.13 2003/10/31 14:04:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.13.16.1 2006/06/21 14:59:52 yamt Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -76,8 +76,8 @@ int sun_hwcap = (AV_SPARC_HWMUL_32x32|AV_SPARC_HWDIV_32x32|AV_SPARC_HWFSMULD);
 
 #if 0
 int
-svr4_32_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+svr4_32_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -89,7 +89,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 	extern char machine_model[];
 	int error;
 
-	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -142,19 +142,19 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(p->p_cred);
 		a++;
 
 		if (sun_hwcap) {
@@ -204,8 +204,8 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 }
 #else
 int
-svr4_32_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+svr4_32_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -216,7 +216,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 	struct elf_args *ap;
 	int error;
 
-	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -275,8 +275,8 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 #endif
 
 int
-svr4_32_elf32_probe(p, epp, eh, itp, pos)
-	struct proc *p;
+svr4_32_elf32_probe(l, epp, eh, itp, pos)
+	struct lwp *l;
 	struct exec_package *epp;
 	void *eh;
 	char *itp;
@@ -285,7 +285,8 @@ svr4_32_elf32_probe(p, epp, eh, itp, pos)
 	int error;
 
 	if (itp) {
-		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(l,
+		    epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 	}
 	epp->ep_flags |= EXEC_32;

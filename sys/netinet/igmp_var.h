@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.21 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.21.12.1 2006/06/21 15:11:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,4 +121,4 @@ void	igmp_slowtimo(void);
 void	igmp_purgeif(struct ifnet *);
 #endif
 
-#endif /* _NETINET_IGMP_VAR_H_ */
+#endif /* !_NETINET_IGMP_VAR_H_ */

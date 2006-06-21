@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_marker.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_marker.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023AD_MARKER_H_)
+#ifndef _NET_AGR_IEEE8023AD_MARKER_H_
 #define	_NET_AGR_IEEE8023AD_MARKER_H_
 
 /*
@@ -54,4 +54,4 @@ struct markerdu {
 #define	MARKER_TYPE_INFO	1
 #define	MARKER_TYPE_RESPONSE	2
 
-#endif /* !defined(_NET_AGR_IEEE8023AD_MARKER_H_) */
+#endif /* !_NET_AGR_IEEE8023AD_MARKER_H_ */

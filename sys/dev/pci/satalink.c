@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.25 2005/06/01 10:00:35 ragge Exp $	*/
+/*	$NetBSD: satalink.c,v 1.25.2.1 2006/06/21 15:05:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -322,7 +322,7 @@ satalink_attach(struct device *parent, struct device *self, void *aux)
 
 }
 
-static __inline uint32_t
+static inline uint32_t
 ba5_read_4_ind(struct pciide_softc *sc, bus_addr_t reg)
 {
 	uint32_t rv;
@@ -336,7 +336,7 @@ ba5_read_4_ind(struct pciide_softc *sc, bus_addr_t reg)
 	return (rv);
 }
 
-static __inline uint32_t
+static inline uint32_t
 ba5_read_4(struct pciide_softc *sc, bus_addr_t reg)
 {
 
@@ -349,7 +349,7 @@ ba5_read_4(struct pciide_softc *sc, bus_addr_t reg)
 #define	BA5_READ_4(sc, chan, reg)					\
 	ba5_read_4((sc), satalink_ba5_regmap[(chan)].reg)
 
-static __inline void
+static inline void
 ba5_write_4_ind(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
 {
 	int s;
@@ -360,7 +360,7 @@ ba5_write_4_ind(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
 	splx(s);
 }
 
-static __inline void
+static inline void
 ba5_write_4(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
 {
 
@@ -529,7 +529,7 @@ sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.dma_start = pciide_dma_start;
 	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)");
@@ -594,6 +594,7 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.69 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.69.6.1 2006/06/21 15:05:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -191,6 +191,9 @@ int	pci_mapreg_map(struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
 
+int pci_find_rom(struct pci_attach_args *, bus_space_tag_t, bus_space_handle_t,
+	    int, bus_space_handle_t *, bus_size_t *);
+
 int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
 
 /*
@@ -209,7 +212,7 @@ const struct pci_quirkdata *
  */
 struct proc;
 int	pci_devioctl(pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
-	    int flag, struct proc *);
+	    int flag, struct lwp *);
 
 /*
  * Power Management (PCI 2.2)
@@ -237,6 +240,11 @@ int	pci_find_device(struct pci_attach_args *pa,
 int	pci_dma64_available(struct pci_attach_args *);
 void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
+int	pci_get_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t *);
+int	pci_set_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t);
+int	pci_activate(pci_chipset_tag_t, pcitag_t, void *,
+    int (*)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t));
+int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
 
 #endif /* _KERNEL */
 

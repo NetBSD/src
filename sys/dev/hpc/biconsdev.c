@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.10 2003/08/07 16:30:57 agc Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.10.16.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.10 2003/08/07 16:30:57 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.10.16.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.10 2003/08/07 16:30:57 agc Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/hpc/bicons.h>
@@ -115,7 +116,7 @@ biconsdevattach(int n)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
-	tp->t_linesw = linesw[0];
+	tp->t_linesw = ttyldisc_default();
 
 
 	tp->t_dev = makedev(maj, 0);
@@ -164,7 +165,7 @@ biconsdev_output(struct tty *tp)
 
 
 int
-biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
+biconsdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int status;
@@ -181,7 +182,9 @@ biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE &&
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+				     &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);
@@ -190,7 +193,7 @@ biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
 
 
 int
-biconsdevclose(dev_t dev, int flag, int mode, struct proc *p)
+biconsdevclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
@@ -220,11 +223,11 @@ biconsdevwrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-biconsdevpoll(dev_t dev, int events, struct proc *p)
+biconsdevpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 
@@ -237,13 +240,13 @@ biconsdevtty(dev_t dev)
 }
 
 int
-biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int error;
 
-	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) !=
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l)) !=
 	    EPASSTHROUGH)
 		return (error);
-	return (ttioctl(tp, cmd, data, flag, p));
+	return (ttioctl(tp, cmd, data, flag, l));
 }

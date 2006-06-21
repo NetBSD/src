@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.18 2004/04/25 06:23:40 matt Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.18.12.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.18 2004/04/25 06:23:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.18.12.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,23 +84,18 @@ static const int compatspcodes[] = {
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
 
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
-
 int ttcompatgetflags __P((struct tty *));
 void ttcompatsetflags __P((struct tty *, struct termios *));
 void ttcompatsetlflags __P((struct tty *, struct termios *));
 
 /*ARGSUSED*/
 int
-ttcompat(tp, com, data, flag, p)
+ttcompat(tp, com, data, flag, l)
 	struct tty *tp;
 	u_long com;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	switch (com) {
@@ -143,7 +138,7 @@ ttcompat(tp, com, data, flag, p)
 		tp->t_flags = (ttcompatgetflags(tp)&0xffff0000) | (sg->sg_flags&0xffff);
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA,
-			(caddr_t)&term, flag, p));
+			(caddr_t)&term, flag, l));
 	}
 
 	case TIOCGETC: {
@@ -216,7 +211,7 @@ ttcompat(tp, com, data, flag, p)
 			break;
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, p));
+		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, l));
 	}
 	case TIOCLGET:
 		*(int *)data = ttcompatgetflags(tp)>>16;
@@ -225,7 +220,8 @@ ttcompat(tp, com, data, flag, p)
 		break;
 
 	case OTIOCGETD:
-		*(int *)data = (tp->t_linesw != NULL) ? tp->t_linesw->l_no : 2;
+		*(int *)data = (tp->t_linesw == NULL) ?
+		    2 /* XXX old NTTYDISC */ : tp->t_linesw->l_no;
 		break;
 
 	case OTIOCSETD: {
@@ -233,12 +229,12 @@ ttcompat(tp, com, data, flag, p)
 
 		return (ttioctl(tp, TIOCSETD,
 			*(int *)data == 2 ? (caddr_t)&ldisczero : data, flag,
-			p));
+			l));
 	    }
 
 	case OTIOCCONS:
 		*(int *)data = 1;
-		return (ttioctl(tp, TIOCCONS, data, flag, p));
+		return (ttioctl(tp, TIOCCONS, data, flag, l));
 
 	case TIOCHPCL:
 		SET(tp->t_cflag, HUPCL);

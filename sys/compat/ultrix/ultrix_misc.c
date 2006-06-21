@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.99 2005/03/26 05:12:36 fvdl Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.99.2.1 2006/06/21 15:00:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99 2005/03/26 05:12:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.1 2006/06/21 15:00:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -142,6 +142,9 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99 2005/03/26 05:12:36 fvdl Exp $"
 
 #include <compat/ultrix/ultrix_flock.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+
 #ifdef __mips
 #include <mips/cachectl.h>
 #include <mips/frame.h>
@@ -153,13 +156,12 @@ static void bsd_to_ultrix_flock(struct flock *, struct ultrix_flock *);
 extern struct sysent ultrix_sysent[];
 extern const char * const ultrix_syscallnames[];
 extern char ultrix_sigcode[], ultrix_esigcode[];
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
-#endif
 
 struct uvm_object *emul_ultrix_object;
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
+#endif
 
 const struct emul emul_ultrix = {
 	"ultrix",
@@ -398,7 +400,7 @@ ultrix_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -496,7 +498,7 @@ ultrix_sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 
 struct ultrix_ustat {
 	daddr_t	f_tfree;	/* total free */
-	ino_t	f_tinode;	/* total inodes free */
+	uint32_t f_tinode;	/* total inodes free */
 	char	f_fname[6];	/* filsys name */
 	char	f_fpack[6];	/* filsys pack name */
 };

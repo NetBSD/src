@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.29 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: magma.c,v 1.29.4.1 2006/06/21 15:06:47 yamt Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29.4.1 2006/06/21 15:06:47 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29 2005/02/27 00:27:48 perry Exp $");
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -250,7 +251,7 @@ cd1400_compute_baud(speed, clock, cor, bpr)
 /*
  * Write a CD1400 channel command, should have a timeout?
  */
-__inline void
+inline void
 cd1400_write_ccr(cd, cmd)
 	struct cd1400 *cd;
 	u_char cmd;
@@ -264,7 +265,7 @@ cd1400_write_ccr(cd, cmd)
 /*
  * read a value from a cd1400 register
  */
-__inline u_char
+inline u_char
 cd1400_read_reg(cd, reg)
 	struct cd1400 *cd;
 	int reg;
@@ -275,7 +276,7 @@ cd1400_read_reg(cd, reg)
 /*
  * write a value to a cd1400 register
  */
-__inline void
+inline void
 cd1400_write_reg(cd, reg, value)
 	struct cd1400 *cd;
 	int reg;
@@ -902,11 +903,11 @@ mtty_attach(parent, dev, args)
  * open routine. returns zero if successful, else error code
  */
 int
-mttyopen(dev, flags, mode, p)
+mttyopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int card = MAGMA_CARD(dev);
 	int port = MAGMA_PORT(dev);
@@ -926,7 +927,7 @@ mttyopen(dev, flags, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1001,11 +1002,11 @@ bad:
  * close routine. returns zero if successful, else error code
  */
 int
-mttyclose(dev, flag, mode, p)
+mttyclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
@@ -1075,16 +1076,16 @@ mttywrite(dev, uio, flags)
  * Poll routine
  */
 int
-mttypoll(dev, events, p)
+mttypoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*
@@ -1104,22 +1105,22 @@ mttytty(dev)
  * ioctl routine
  */
 int
-mttyioctl(dev, cmd, data, flags, p)
+mttyioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
 	if( error != EPASSTHROUGH ) return(error);
 
-	error = ttioctl(tp, cmd, data, flags, p);
+	error = ttioctl(tp, cmd, data, flags, l);
 	if( error != EPASSTHROUGH ) return(error);
 
 	error = 0;
@@ -1164,7 +1165,7 @@ mttyioctl(dev, cmd, data, flags, p)
 		break;
 
 	case TIOCSFLAGS:
-		if( suser(p->p_ucred, &p->p_acflag) )
+		if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) )
 			error = EPERM;
 		else
 			mp->mp_openflags = *((int *)data) &
@@ -1501,11 +1502,11 @@ mbpp_attach(parent, dev, args)
  * open routine. returns zero if successful, else error code
  */
 int
-mbppopen(dev, flags, mode, p)
+mbppopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int card = MAGMA_CARD(dev);
 	int port = MAGMA_PORT(dev);
@@ -1554,11 +1555,11 @@ mbppopen(dev, flags, mode, p)
  * close routine. returns zero if successful, else error code
  */
 int
-mbppclose(dev, flag, mode, p)
+mbppclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
@@ -1571,12 +1572,12 @@ mbppclose(dev, flag, mode, p)
  * ioctl routine
  */
 int
-mbppioctl(dev, cmd, data, flags, p)
+mbppioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];

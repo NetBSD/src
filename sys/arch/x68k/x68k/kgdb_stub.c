@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.11 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.11.8.1 2006/06/21 14:57:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.11 2005/01/18 07:12:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.11.8.1 2006/06/21 14:57:55 yamt Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.11 2005/01/18 07:12:16 chs Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.11.8.1 2006/06/21 14:57:55 yamt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ kgdb_connect(int verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 	/* trap into kgdb */
-	asm("trap #15;");
+	__asm("trap #15;");
 	if (verbose)
 		printf("connected.\n");
 }

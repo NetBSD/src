@@ -27,7 +27,7 @@
  *	i4b_l3.h - layer 3 header file
  *	------------------------------
  *
- *	$Id: i4b_l3.h,v 1.6 2005/06/01 18:07:04 drochner Exp $
+ *	$Id: i4b_l3.h,v 1.6.2.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_L3_H_
-#define _I4B_L3_H_
+#ifndef _NETISDN_I4B_L3_H_
+#define _NETISDN_I4B_L3_H_
 
 extern int utoc_tab[];
 extern unsigned char cause_tab_q931[];
@@ -72,4 +72,4 @@ extern void T310_stop ( call_desc_t *cd );
 extern void T313_start ( call_desc_t *cd );
 extern void T313_stop ( call_desc_t *cd );
 
-#endif /* _I4B_L3_H_ */
+#endif /* !_NETISDN_I4B_L3_H_ */

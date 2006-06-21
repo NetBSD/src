@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.15 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.15.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.15 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.15.4.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,7 @@ u_long	raw_recvspace = RAWRCVQ;
  * of buffer space for the socket.
  */
 int
-raw_attach(so, proto)
-	struct socket *so;
-	int proto;
+raw_attach(struct socket *so, int proto)
 {
 	struct rawcb *rp = sotorawcb(so);
 	int error;
@@ -95,8 +93,7 @@ raw_attach(so, proto)
  * socket resources.
  */
 void
-raw_detach(rp)
-	struct rawcb *rp;
+raw_detach(struct rawcb *rp)
 {
 	struct socket *so = rp->rcb_socket;
 
@@ -115,8 +112,7 @@ raw_detach(rp)
  * Disconnect and possibly release resources.
  */
 void
-raw_disconnect(rp)
-	struct rawcb *rp;
+raw_disconnect(struct rawcb *rp)
 {
 
 #ifdef notdef

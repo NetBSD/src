@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.33 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.33.4.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.33 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.33.4.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,14 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.33 2005/02/26 22:59:00 perry Exp $"
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/kauth.h>
+
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umap_lookup	__P((void *));
-int	umap_getattr	__P((void *));
-int	umap_print	__P((void *));
-int	umap_rename	__P((void *));
+int	umap_lookup(void *);
+int	umap_getattr(void *);
+int	umap_print(void *);
+int	umap_rename(void *);
 
 /*
  * Global vfs data structures
@@ -66,7 +68,7 @@ int	umap_rename	__P((void *));
  * go away with a merged buffer/block cache.
  *
  */
-int (**umap_vnodeop_p) __P((void *));
+int (**umap_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_default_desc,	umap_bypass },
 
@@ -109,10 +111,10 @@ umap_bypass(v)
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
 	} */ *ap = v;
-	int (**our_vnodeop_p) __P((void *));
-	struct ucred **credpp = 0, *credp = 0;
-	struct ucred *savecredp = 0, *savecompcredp = 0;
-	struct ucred *compcredp = 0;
+	int (**our_vnodeop_p)(void *);
+	kauth_cred_t *credpp = NULL, credp = 0;
+	kauth_cred_t savecredp = 0, savecompcredp = 0;
+	kauth_cred_t compcredp = 0;
 	struct vnode **this_vp_p;
 	int error, error1;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
@@ -180,27 +182,29 @@ umap_bypass(v)
 
 	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET) {
 
-		credpp = VOPARG_OFFSETTO(struct ucred**,
+		credpp = VOPARG_OFFSETTO(kauth_cred_t*,
 		    descp->vdesc_cred_offset, ap);
 
 		/* Save old values */
 
 		savecredp = *credpp;
 		if (savecredp != NOCRED)
-			*credpp = crdup(savecredp);
+			*credpp = kauth_cred_dup(savecredp);
 		credp = *credpp;
 
-		if ((flags & LAYERFS_MBYPASSDEBUG) && credp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) &&
+		    kauth_cred_geteuid(credp) != 0)
 			printf("umap_bypass: user was %d, group %d\n",
-			    credp->cr_uid, credp->cr_gid);
+			    kauth_cred_geteuid(credp), kauth_cred_getegid(credp));
 
 		/* Map all ids in the credential structure. */
 
 		umap_mapids(vp0->v_mount, credp);
 
-		if ((flags & LAYERFS_MBYPASSDEBUG) && credp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) &&
+		    kauth_cred_geteuid(credp) != 0)
 			printf("umap_bypass: user now %d, group %d\n",
-			    credp->cr_uid, credp->cr_gid);
+			    kauth_cred_geteuid(credp), kauth_cred_getegid(credp));
 	}
 
 	/* BSD often keeps a credential in the componentname structure
@@ -214,20 +218,22 @@ umap_bypass(v)
 
 		savecompcredp = (*compnamepp)->cn_cred;
 		if (savecompcredp != NOCRED)
-			(*compnamepp)->cn_cred = crdup(savecompcredp);
+			(*compnamepp)->cn_cred = kauth_cred_dup(savecompcredp);
 		compcredp = (*compnamepp)->cn_cred;
 
-		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) &&
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_bypass: component credit user was %d, group %d\n",
-			    compcredp->cr_uid, compcredp->cr_gid);
+			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
 		/* Map all ids in the credential structure. */
 
 		umap_mapids(vp0->v_mount, compcredp);
 
-		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) &&
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_bypass: component credit user now %d, group %d\n",
-			    compcredp->cr_uid, compcredp->cr_gid);
+			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 	}
 
 	/*
@@ -293,33 +299,33 @@ umap_bypass(v)
 	 */
 	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET) {
 		if ((flags & LAYERFS_MBYPASSDEBUG) && credp &&
-					credp->cr_uid != 0)
+		    kauth_cred_geteuid(credp) != 0)
 			printf("umap_bypass: returning-user was %d\n",
-			    credp->cr_uid);
+			    kauth_cred_geteuid(credp));
 
-		if (savecredp != NOCRED) {
-			crfree(credp);
+		if (savecredp != NOCRED && credpp) {
+			kauth_cred_free(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
-					(*credpp)->cr_uid != 0)
+			    kauth_cred_geteuid((*credpp)) != 0)
 			 	printf("umap_bypass: returning-user now %d\n\n",
-				    savecredp->cr_uid);
+				    kauth_cred_geteuid(savecredp));
 		}
 	}
 
 	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET) {
 		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
-					compcredp->cr_uid != 0)
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_bypass: returning-component-user was %d\n",
-			    compcredp->cr_uid);
+			    kauth_cred_geteuid(compcredp));
 
 		if (savecompcredp != NOCRED) {
-			crfree(compcredp);
+			kauth_cred_free(compcredp);
 			(*compnamepp)->cn_cred = savecompcredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
-					savecompcredp->cr_uid != 0)
+			    kauth_cred_geteuid(savecompcredp) != 0)
 			 	printf("umap_bypass: returning-component-user now %d\n",
-				    savecompcredp->cr_uid);
+				    kauth_cred_geteuid(savecompcredp));
 		}
 	}
 
@@ -341,8 +347,8 @@ umap_lookup(v)
 		struct componentname * a_cnp;
 	} */ *ap = v;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *savecompcredp = NULL;
-	struct ucred *compcredp = NULL;
+	kauth_cred_t savecompcredp = NULL;
+	kauth_cred_t compcredp = NULL;
 	struct vnode *dvp, *vp, *ldvp;
 	struct mount *mp;
 	int error;
@@ -369,20 +375,20 @@ umap_lookup(v)
 	 */
 
 	if ((savecompcredp = cnp->cn_cred)) {
-		compcredp = crdup(savecompcredp);
+		compcredp = kauth_cred_dup(savecompcredp);
 		cnp->cn_cred = compcredp;
 
-		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_lookup: component credit user was %d, group %d\n",
-			    compcredp->cr_uid, compcredp->cr_gid);
+			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
 		/* Map all ids in the credential structure. */
 		umap_mapids(mp, compcredp);
 	}
 
-	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp && kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_lookup: component credit user now %d, group %d\n",
-		    compcredp->cr_uid, compcredp->cr_gid);
+		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
 	ap->a_dvp = ldvp;
 	error = VCALL(ldvp, ap->a_desc->vdesc_offset, ap);
@@ -417,17 +423,18 @@ umap_lookup(v)
 	 * Free duplicate cred structure and restore old one.
 	 */
 	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
-					compcredp->cr_uid != 0)
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_lookup: returning-component-user was %d\n",
-			    compcredp->cr_uid);
+			    kauth_cred_geteuid(compcredp));
 
 	if (savecompcredp != NOCRED) {
-		crfree(compcredp);
+		if (compcredp)
+			kauth_cred_free(compcredp);
 		cnp->cn_cred = savecompcredp;
 		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
-				savecompcredp->cr_uid != 0)
+				kauth_cred_geteuid(savecompcredp) != 0)
 		 	printf("umap_lookup: returning-component-user now %d\n",
-			    savecompcredp->cr_uid);
+			    kauth_cred_geteuid(savecompcredp));
 	}
 
 	return (error);
@@ -443,8 +450,8 @@ umap_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	uid_t uid;
 	gid_t gid;
@@ -538,7 +545,7 @@ umap_rename(v)
 	} */ *ap = v;
 	int error, flags;
 	struct componentname *compnamep;
-	struct ucred *compcredp, *savecompcredp;
+	kauth_cred_t compcredp, savecompcredp;
 	struct vnode *vp;
 	struct vnode *tvp;
 
@@ -554,19 +561,21 @@ umap_rename(v)
 	compcredp = compnamep->cn_cred;
 
 	savecompcredp = compcredp;
-	compcredp = compnamep->cn_cred = crdup(savecompcredp);
+	compcredp = compnamep->cn_cred = kauth_cred_dup(savecompcredp);
 
-	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) &&
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_rename: rename component credit user was %d, group %d\n",
-		    compcredp->cr_uid, compcredp->cr_gid);
+		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
 	/* Map all ids in the credential structure. */
 
 	umap_mapids(vp->v_mount, compcredp);
 
-	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) &&
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_rename: rename component credit user now %d, group %d\n",
-		    compcredp->cr_uid, compcredp->cr_gid);
+		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
 	tvp = ap->a_tvp;
 	if (tvp) {
@@ -584,7 +593,7 @@ umap_rename(v)
 
 	/* Restore the additional mapped componentname cred structure. */
 
-	crfree(compcredp);
+	kauth_cred_free(compcredp);
 	compnamep->cn_cred = savecompcredp;
 
 	return error;

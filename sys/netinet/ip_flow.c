@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.29 2005/02/03 22:43:34 perry Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.29.6.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.29 2005/02/03 22:43:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.29.6.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,11 @@ ipflow_lookup(const struct ip *ip)
 
 	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
 
-	ipf = LIST_FIRST(&ipflowtable[hash]);
-	while (ipf != NULL) {
+	LIST_FOREACH(ipf, &ipflowtable[hash], ipf_hash) {
 		if (ip->ip_dst.s_addr == ipf->ipf_dst.s_addr
 		    && ip->ip_src.s_addr == ipf->ipf_src.s_addr
 		    && ip->ip_tos == ipf->ipf_tos)
 			break;
-		ipf = LIST_NEXT(ipf, ipf_hash);
 	}
 	return ipf;
 }
@@ -219,7 +217,7 @@ ipflow_fastforward(struct mbuf *m)
 	 *
 	 * This method of adding the checksum works on either endian CPU.
 	 * If htons() is inlined, all the arithmetic is folded; otherwise
-	 * the htons()s are combined by CSE due to the __const__ attribute.
+	 * the htons()s are combined by CSE due to the const attribute.
 	 *
 	 * Don't bother using HW checksumming here -- the incremental
 	 * update is pretty fast.
@@ -346,8 +344,7 @@ ipflow_slowtimo(void)
 {
 	struct ipflow *ipf, *next_ipf;
 
-	ipf = LIST_FIRST(&ipflowlist);
-	while (ipf != NULL) {
+	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer)) {
 			ipflow_free(ipf);
@@ -358,7 +355,6 @@ ipflow_slowtimo(void)
 			ipstat.ips_fastforward += ipf->ipf_uses;
 			ipf->ipf_uses = 0;
 		}
-		ipf = next_ipf;
 	}
 }
 
@@ -410,7 +406,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
-	ipf->ipf_start = time.tv_sec;
+	ipf->ipf_start = time_uptime;
 	/*
 	 * Insert into the approriate bucket of the flow table.
 	 */
@@ -427,7 +423,6 @@ ipflow_invalidate_all(void)
 	int s;
 
 	s = splnet();
-	ipf = LIST_FIRST(&ipflowlist);
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		ipflow_free(ipf);

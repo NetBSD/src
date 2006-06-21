@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.32 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.32.4.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.32 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.32.4.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.32 2005/02/26 21:34:55 perry Exp $")
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.
  *
- * Given a proc pointer and an exec package pointer, see if the referent
+ * Given a lwp pointer and an exec package pointer, see if the referent
  * of the epp is in a.out format.  First check 'standard' magic numbers for
  * this architecture.  If that fails, try a CPU-dependent hook.
  *
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.32 2005/02/26 21:34:55 perry Exp $")
  */
 
 int
-exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;
@@ -75,16 +75,16 @@ exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 
 	switch (midmag) {
 	case (MID_MACHINE << 16) | ZMAGIC:
-		error = exec_aout_prep_zmagic(p, epp);
+		error = exec_aout_prep_zmagic(l, epp);
 		break;
 	case (MID_MACHINE << 16) | NMAGIC:
-		error = exec_aout_prep_nmagic(p, epp);
+		error = exec_aout_prep_nmagic(l, epp);
 		break;
 	case (MID_MACHINE << 16) | OMAGIC:
-		error = exec_aout_prep_omagic(p, epp);
+		error = exec_aout_prep_omagic(l, epp);
 		break;
 	default:
-		error = cpu_exec_aout_makecmds(p, epp);
+		error = cpu_exec_aout_makecmds(l, epp);
 	}
 
 	if (error)
@@ -104,7 +104,7 @@ exec_aout_makecmds(struct proc *p, struct exec_package *epp)
  */
 
 int
-exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
+exec_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	int error;
@@ -134,7 +134,7 @@ exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 		    epp->ep_daddr + execp->a_data, NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -142,7 +142,7 @@ exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
  */
 
 int
-exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
+exec_aout_prep_nmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -170,7 +170,7 @@ exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -178,7 +178,7 @@ exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
  */
 
 int
-exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
+exec_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
@@ -211,5 +211,5 @@ exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 	 */
 	dsize = epp->ep_dsize + execp->a_text - round_page(execp->a_text);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

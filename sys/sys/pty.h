@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.h,v 1.4 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: pty.h,v 1.4.4.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -43,17 +43,17 @@ int pty_check(int);
 
 #ifndef NO_DEV_PTM
 void ptmattach(int);
-int pty_fill_ptmget(dev_t, int, int, void *);
-int pty_grant_slave(struct proc *, dev_t);
+int pty_fill_ptmget(struct lwp *, dev_t, int, int, void *);
+int pty_grant_slave(struct lwp *, dev_t);
 dev_t pty_makedev(char, int);
-int pty_vn_open(struct vnode *, struct proc *);
+int pty_vn_open(struct vnode *, struct lwp *);
 struct ptm_pty *pty_sethandler(struct ptm_pty *);
 #endif
 
 struct ptm_pty {
-	int (*allocvp)(struct ptm_pty *, struct proc *, struct vnode **, dev_t,
+	int (*allocvp)(struct ptm_pty *, struct lwp *, struct vnode **, dev_t,
 	    char);
-	int (*makename)(struct ptm_pty *, char *, size_t, dev_t, char);
+	int (*makename)(struct ptm_pty *, struct lwp *, char *, size_t, dev_t, char);
 	void (*getvattr)(struct ptm_pty *, struct proc *, struct vattr *);
 	void *arg;
 };

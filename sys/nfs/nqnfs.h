@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.16 2004/04/21 02:22:49 christos Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.16.12.1 2006/06/21 15:11:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,26 +153,26 @@ struct nqm {
 		(void) nqsrv_getlease((v), &nfsd->nd_duration, \
 		 ((nfsd->nd_flag & ND_LEASE) ? (nfsd->nd_flag & ND_LEASE) : \
 		 ((l) | ND_CHECK)), \
-		 slp, procp, nfsd->nd_nam, &cache, &frev, cred)
+		 slp, lwp, nfsd->nd_nam, &cache, &frev, cred)
 
 /*
  * Client side macros that check for a valid lease.
  */
 #define	NQNFS_CKINVALID(v, n, f) \
- ((time.tv_sec > (n)->n_expiry && \
+ ((time_second > (n)->n_expiry && \
  VFSTONFS((v)->v_mount)->nm_timeouts < VFSTONFS((v)->v_mount)->nm_deadthresh) \
   || ((f) == ND_WRITE && ((n)->n_flag & NQNFSWRITE) == 0))
 
 #define	NQNFS_CKCACHABLE(v, f) \
- ((time.tv_sec <= VTONFS(v)->n_expiry || \
+ ((time_second <= VTONFS(v)->n_expiry || \
   VFSTONFS((v)->v_mount)->nm_timeouts >= VFSTONFS((v)->v_mount)->nm_deadthresh) \
    && (VTONFS(v)->n_flag & NQNFSNONCACHE) == 0 && \
    ((f) == ND_READ || (VTONFS(v)->n_flag & NQNFSWRITE)))
 
 #define	NQNFS_NEEDLEASE(n, p) \
-		(time.tv_sec > (n)->n_expiry ? \
+		(time_second > (n)->n_expiry ? \
 		 (((n)->n_flag & NQNFSEVICTED) ? 0 : nqnfs_piggy[p]) : \
-		 (((time.tv_sec + NQ_RENEWAL) > (n)->n_expiry && \
+		 (((time_second + NQ_RENEWAL) > (n)->n_expiry && \
 		   nqnfs_piggy[p]) ? \
 		   (((n)->n_flag & NQNFSWRITE) ? \
 		    ND_WRITE : nqnfs_piggy[p]) : 0))
@@ -200,12 +200,12 @@ extern int nqsrv_writeslack;
 void	nqnfs_lease_updatetime __P((int));
 int	nqsrv_cmpnam __P((struct nfssvc_sock *,struct mbuf *,struct nqhost *));
 int	nqsrv_getlease __P((struct vnode *, u_int32_t *, int,
-		struct nfssvc_sock *, struct proc *, struct mbuf *, int *,
-		u_quad_t *, struct ucred *));
-int	nqnfs_getlease __P((struct vnode *, int, struct ucred *,struct proc *));
+		struct nfssvc_sock *, struct lwp *, struct mbuf *, int *,
+		u_quad_t *, kauth_cred_t));
+int	nqnfs_getlease __P((struct vnode *, int, kauth_cred_t, struct lwp *));
 int	nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
-		caddr_t));
-int	nqnfs_clientd __P((struct nfsmount *, struct ucred *,
+		caddr_t, struct lwp *));
+int	nqnfs_clientd __P((struct nfsmount *, kauth_cred_t,
 		struct nfsd_cargs *, int, caddr_t, struct lwp *));
 #endif /* _KERNEL */
 

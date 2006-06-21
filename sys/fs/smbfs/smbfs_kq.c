@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.8 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.8.4.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8.4.1 2006/06/21 15:09:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,9 @@ smbfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
 	struct vattr attr;
-	int error=0;
+	int error = 0;
 	struct proc *p = smbkqp;
+	struct lwp *l;
 	u_quad_t osize;
 	int needwake;
 
@@ -154,7 +155,8 @@ smbfs_kqpoll(void *arg)
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			error = VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
+			l = proc_representative_lwp(p);
+			error = VOP_GETATTR(ke->vp, &attr, p->p_cred, l);
 			if (error) {
 				/* relock and proceed with next */
 				simple_lock(&smbkq_lock);
@@ -401,7 +403,7 @@ smbfs_kqfilter(void *v)
 	struct kevq *ke, *ken;
 	int error = 0;
 	struct vattr attr;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	int dnot;
 	struct smb_vc *vcp = SSTOVC(VTOSMB(vp)->n_mount->sm_share);
 
@@ -432,13 +434,13 @@ smbfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
-	(void) VOP_GETATTR(vp, &attr, p->p_ucred, p);
+	(void) VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l);
 
 	/* ensure the handler is running */
 	if (!smbkqp) {
 		error = kthread_create1(smbfs_kqpoll, NULL, &smbkqp,
 				"smbkq");
-		smb_makescred(&smbkq_scred, smbkqp, smbkqp->p_ucred);
+		smb_makescred(&smbkq_scred, LIST_FIRST(&smbkqp->p_lwps), smbkqp->p_cred);
 		if (error) {
 			kevs--;
 			return (error);

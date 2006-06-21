@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.2 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.2.4.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,6 +28,8 @@
  *	Id: ntfs_inode.h,v 1.4 1999/05/12 09:43:00 semenu Exp
  */
 
+#ifndef _NTFS_NTFS_INODE_H_
+#define _NTFS_NTFS_INODE_H_
 #include <miscfs/genfs/genfs_node.h>
 
 /* These flags are kept in i_flag. */
@@ -124,3 +126,4 @@ struct ntfid {
 	int32_t   ntfid_gen;	/* Generation number. */
 #endif
 };
+#endif /* _NTFS_NTFS_INODE_H_ */

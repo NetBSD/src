@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.74 2005/04/30 14:38:40 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.74.2.1 2006/06/21 15:07:45 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -198,13 +198,11 @@ struct usbd_xfer {
 	u_int32_t		timeout;
 	usbd_status		status;
 	usbd_callback		callback;
-	__volatile char		done;
-#ifdef DIAGNOSTIC
-	u_int32_t		busy_free;
-#define XFER_FREE 0x46524545
-#define XFER_BUSY 0x42555359
-#define XFER_ONQU 0x4f4e5155
-#endif
+	volatile u_int8_t	done;
+	u_int8_t		busy_free;	/* used for DIAGNOSTIC */
+#define XFER_FREE 0x46
+#define XFER_BUSY 0x55
+#define XFER_ONQU 0x9e
 
 	/* For control pipe */
 	usb_device_request_t	request;

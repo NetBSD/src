@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.8.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.8.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include "opt_amdpm.h"
 
@@ -48,31 +48,39 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $");
 #include <sys/callout.h>
 #include <sys/rnd.h>
 
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#include <machine/bus.h>
+#endif
+
+#include <dev/i2c/i2cvar.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/amdpmreg.h>
-
-struct amdpm_softc {
-	struct device sc_dev;
-
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_tag;
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;		/* PMxx space */
-
-	struct callout sc_rnd_ch;
-	rndsource_element_t sc_rnd_source;
-#ifdef AMDPM_RND_COUNTERS
-	struct evcnt sc_rnd_hits;
-	struct evcnt sc_rnd_miss;
-	struct evcnt sc_rnd_data[256];
-#endif
-};
+#include <dev/pci/amdpmvar.h>
+#include <dev/pci/amdpm_smbusreg.h>
 
 static void	amdpm_rnd_callout(void *);
+
+#ifdef __HAVE_TIMECOUNTER
+uint32_t	amdpm_get_timecount(struct timecounter *);
+
+#ifndef AMDPM_FREQUENCY
+#define AMDPM_FREQUENCY	3579545
+#endif
+
+static struct timecounter amdpm_timecounter = {
+	amdpm_get_timecount,
+	0,
+	0xffffff,
+	AMDPM_FREQUENCY,
+	"amdpm",
+	1000
+};
+#endif
 
 #ifdef AMDPM_RND_COUNTERS
 #define	AMDPM_RNDCNT_INCR(ev)	(ev)->ev_count++
@@ -85,9 +93,15 @@ amdpm_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
+		return (0);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_AMD_PBC768_PMC:
+	case PCI_PRODUCT_AMD_PBC8111_ACPI:
 		return (1);
+	}
+
 	return (0);
 }
 
@@ -96,12 +110,15 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
+	char devinfo[256];
 	pcireg_t reg;
 	u_int32_t pmreg;
 	int i;
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -111,6 +128,13 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 #endif
+
+	/* enable random # generation and pm i/o space for AMD-8111 */
+	if (PCI_PRODUCT(pa->pa_id)  == PCI_PRODUCT_AMD_PBC8111_ACPI) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, reg|
+		    AMDPM_RNGEN|AMDPM_PMIOEN);
+	}
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 	if ((reg & AMDPM_PMIOEN) == 0) {
@@ -126,6 +150,26 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+#ifdef __HAVE_TIMECOUNTER
+	if ((reg & AMDPM_TMRRST) == 0 && (reg & AMDPM_STOPTMR) == 0 &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC) {
+		aprint_normal(": %d-bit timer at %" PRIu64 "Hz",
+		    (reg & AMDPM_TMR32) ? 32 : 24,
+		    amdpm_timecounter.tc_frequency);
+
+		if (reg & AMDPM_TMR32)
+			amdpm_timecounter.tc_counter_mask = 0xffffffffu;
+		tc_init(&amdpm_timecounter);
+	}
+#endif
+
+	/* try to attach devices on the smbus */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI) {
+		amdpm_smbus_attach(sc);
+	}
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, reg | AMDPM_RNGEN);
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 	if (reg & AMDPM_RNGEN) {
 		/* Check to see if we can read data from the RNG. */
@@ -199,3 +243,13 @@ amdpm_rnd_callout(void *v)
 		AMDPM_RNDCNT_INCR(&sc->sc_rnd_miss);
 	callout_reset(&sc->sc_rnd_ch, 1, amdpm_rnd_callout, sc);
 }
+
+#ifdef __HAVE_TIMECOUNTER
+uint32_t
+amdpm_get_timecount(struct timecounter *tc)
+{
+	struct amdpm_softc *sc = tc->tc_priv;
+
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_TMR);
+}
+#endif

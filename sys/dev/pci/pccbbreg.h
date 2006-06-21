@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.8 2003/12/10 02:55:48 briggs Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.8.16.1 2006/06/21 15:05:05 yamt Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -137,6 +137,11 @@
 #define CB_BCRI_RL_3E0_ENA 0x08000000
 #define CB_BCRI_RL_3E2_ENA 0x10000000
 
+
+/* PCI configuration register definition for Ricoh 5C475 */
+#define RICOH_PCI_MISC_CTRL	0x82
+
+
 /*
  * Special resister definition for Toshiba ToPIC95/97
  * These values are borrowed from pcmcia-cs/Linux.
@@ -217,8 +222,8 @@
 #define CB_SOCKET_STAT_YVCARD 0x02000 /* Y.Y V Card */
 #define CB_SOCKET_STAT_5VSOCK 0x10000000 /* 5 V Socket */
 #define CB_SOCKET_STAT_3VSOCK 0x20000000 /* 3.3 V Socket */
-#define CB_SOCKET_STAT_XVSOCK 0x20000000 /* X.X V Socket */
-#define CB_SOCKET_STAT_YVSOCK 0x20000000 /* Y.Y V Socket */
+#define CB_SOCKET_STAT_XVSOCK 0x40000000 /* X.X V Socket */
+#define CB_SOCKET_STAT_YVSOCK 0x80000000 /* Y.Y V Socket */
 
 /* socket force event register (CB_SOCKET_FORCE) elements */
 #define CB_SOCKET_FORCE_BADVCC 0x0200 /* Bad Vcc Request */

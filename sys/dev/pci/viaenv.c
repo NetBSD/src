@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.11 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.11.2.1 2006/06/21 15:05:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.11 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.11.2.1 2006/06/21 15:05:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,17 +202,16 @@ static void
 viaenv_refresh_sensor_data(struct viaenv_softc *sc)
 {
 	static const struct timeval onepointfive =  { 1, 500000 };
-	struct timeval t;
+	struct timeval t, utv;
 	u_int8_t v, v2;
-	int i, s;
+	int i;
 
 	/* Read new values at most once every 1.5 seconds. */
 	timeradd(&sc->sc_lastread, &onepointfive, &t);
-	s = splclock();
-	i = timercmp(&mono_time, &t, >);
+	getmicrouptime(&utv);
+	i = timercmp(&utv, &t, >);
 	if (i)
-		sc->sc_lastread = mono_time;
-	splx(s);
+		sc->sc_lastread = utv;
 
 	if (i == 0)
 		return;
@@ -273,11 +272,16 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	int i;
 
 	iobase = pci_conf_read(va->va_pc, va->va_tag, va->va_offset);
-	control = pci_conf_read(va->va_pc, va->va_tag, va->va_offset + 4);
-	if ((iobase & 0xff80) == 0 || (control & 1) == 0) {
+	if ((iobase & 0xff80) == 0) {
 		printf(": disabled\n");
 		return;
 	}
+	control = pci_conf_read(va->va_pc, va->va_tag, va->va_offset + 4);
+	/* If the device is disabled, turn it on */
+	if ((control & 1) == 0)
+		pci_conf_write(va->va_pc, va->va_tag, va->va_offset + 4,
+		    control | 1);
+
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, iobase & 0xff80, 128, 0, &sc->sc_ioh)) {
 		printf(": failed to map i/o\n");

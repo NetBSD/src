@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.15 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.15.16.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
  * Internal data usd by the scheduler activation implementation
  */
 
-#ifndef _SYS_SAVAR_H
-#define _SYS_SAVAR_H
+#ifndef _SYS_SAVAR_H_
+#define _SYS_SAVAR_H_
 
 #include <sys/lock.h>
 #include <sys/tree.h>
@@ -57,12 +57,26 @@ union sau_state {
 	} ss_deferred;
 };
 
+struct sa_emul {
+	size_t		sae_ucsize;	/* Size of ucontext_t */
+	size_t		sae_sasize;	/* Size of sa_t */
+	size_t		sae_sapsize;	/* Size of (sa_t *) */
+	int		(*sae_sacopyout)(int, const void *, void *);
+	int		(*sae_upcallconv)(struct lwp *, int, size_t *, void **,
+			    void (**)(void *));
+	void		(*sae_upcall)(struct lwp *, int, int, int, void *,
+			    void *, void *, sa_upcall_t);
+	void		(*sae_getucontext)(struct lwp *, void *);
+	void		*(*sae_ucsp)(void *); /* Stack ptr from an ucontext_t */
+};
+
 struct sadata_upcall {
 	SIMPLEQ_ENTRY(sadata_upcall)	sau_next;
 	int	sau_flags;
 	int	sau_type;
 	size_t	sau_argsize;
 	void	*sau_arg;
+	void	(*sau_argfreefunc)(void *);
 	stack_t	sau_stack;
 	union sau_state	sau_event;
 	union sau_state	sau_interrupted;
@@ -131,10 +145,11 @@ struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);
 
 void	sa_release(struct proc *);
-void	sa_switch(struct lwp *, int);
+void	sa_switch(struct lwp *, struct sadata_upcall *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
-int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
+int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
+		  void (*)(void *));
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct sadata_vp *);
@@ -144,4 +159,15 @@ void	sa_unblock_userret(struct lwp *);
 void	sa_upcall_userret(struct lwp *);
 void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
-#endif /* !_SYS_SAVAR_H */
+typedef int (*sa_copyin_stack_t)(stack_t *, int, stack_t *);
+int	sa_stacks1(struct lwp *, register_t *, int, stack_t *,
+    sa_copyin_stack_t);
+int	dosa_register(struct lwp *, sa_upcall_t, sa_upcall_t *, int, ssize_t);
+
+void	*sa_ucsp(void *);
+
+#define SAOUT_UCONTEXT	0
+#define SAOUT_SA_T	1
+#define SAOUT_SAP_T	2
+
+#endif /* !_SYS_SAVAR_H_ */

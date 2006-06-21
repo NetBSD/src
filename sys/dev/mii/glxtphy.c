@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.12 2004/08/23 06:16:06 thorpej Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.12.12.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.12 2004/08/23 06:16:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.12.12.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ glxtphymatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 glxtphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;

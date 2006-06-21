@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.27 2005/06/28 20:55:21 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.27.2.1 2006/06/21 15:07:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27 2005/06/28 20:55:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27.2.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,8 +160,8 @@ struct wsscreen_descr cgsix_defaultscreen = {
 	WSSCREEN_WSCOLORS	/* capabilities */
 };
 
-static int 	cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t	cgsix_mmap(void *, off_t, int);
+static int 	cgsix_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	cgsix_mmap(void *, void *, off_t, int);
 void		cgsix_init_screen(struct cgsix_softc *, struct cg6_screen *, 
 			int, long *);
 
@@ -192,8 +192,6 @@ struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_show_screen,
 	NULL, 	/* load_font */
 	NULL,	/* pollc */
-	NULL,	/* getwschar */
-	NULL,	/* putwschar */
 	NULL	/* scroll */
 };
 
@@ -741,7 +739,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 
 int
-cgsixopen(dev_t dev, int flags, int mode, struct proc *p)
+cgsixopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -751,7 +749,7 @@ cgsixopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-cgsixclose(dev_t dev, int flags, int mode, struct proc *p)
+cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 
@@ -770,7 +768,7 @@ cgsixclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	union cursor_cmap tcm;
@@ -939,7 +937,7 @@ cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "cgsixioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return ENOTTY;
 	}
@@ -1182,7 +1180,8 @@ cg6_setup_palette(struct cgsix_softc *sc)
 }
 
 int
-cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+cgsix_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	/* we'll probably need to add more stuff here */
 	struct cgsix_softc *sc = v;
@@ -1240,7 +1239,7 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 paddr_t
-cgsix_mmap(void *v, off_t offset, int prot)
+cgsix_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct cgsix_softc *sc = v;
 	if(offset<sc->sc_ramsize) {

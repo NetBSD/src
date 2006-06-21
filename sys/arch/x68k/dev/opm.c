@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.13 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: opm.c,v 1.13.8.1 2006/06/21 14:57:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.13 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.13.8.1 2006/06/21 14:57:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,8 @@ opm_attach(struct device *parent, struct device *self, void *aux)
 		panic ("Cannot map IO space for OPM.");
 #endif
 
-	if (sc->sc_dev.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_dev) == 0)
 		opm0 = sc;	/* XXX */
 
 	return;
@@ -119,14 +120,14 @@ void opm_set_volume(int, int);
 void opm_set_key(int, int);
 void opm_set_voice(int, struct opm_voice *);
 void opm_set_voice_sub(int, struct opm_operator *);
-__inline static void writeopm(int, int);
-__inline static int readopm(int);
+inline static void writeopm(int, int);
+inline static int readopm(int);
 void opm_key_on(u_char);
 void opm_key_off(u_char);
 int opmopen(dev_t, int, int);
 int opmclose(dev_t);
 
-__inline static void 
+inline static void 
 writeopm(int reg, int dat)
 {
 	while (bus_space_read_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
@@ -136,7 +137,7 @@ writeopm(int reg, int dat)
 	opm0->sc_regs[reg] = dat;
 }
 
-__inline static int 
+inline static int 
 readopm(int reg)
 {
 	return opm0->sc_regs[reg];

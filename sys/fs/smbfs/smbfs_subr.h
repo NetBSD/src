@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.13 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.13.4.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -57,7 +57,6 @@ MALLOC_DECLARE(M_SMBFSDATA);
 struct smbmount;
 struct proc;
 struct timespec;
-struct ucred;
 struct vattr;
 struct vnode;
 struct statvfs;

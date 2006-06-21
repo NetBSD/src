@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.19.4.1 2006/06/21 14:59:52 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.19.4.1 2006/06/21 14:59:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/socket.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
@@ -99,14 +101,38 @@ svr4_sock_ioctl(fp, l, retval, fd, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct proc *p = l->l_proc;
 	int error;
-	int (*ctl)(struct file *, u_long, void *, struct proc *) =
+	int (*ctl)(struct file *, u_long,  void *, struct lwp *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;
 
 	switch (cmd) {
+	case SVR4_SIOCGLIFNUM:
+		{
+			struct ifnet *ifp;
+			struct ifaddr *ifa;
+			struct svr4_lifnum lifnum;
+
+			error = copyin(data, &lifnum, sizeof(lifnum));
+			if (error)
+				return error;
+
+			lifnum.lifn_count = 0;
+			/* XXX: We don't pay attention to family or flags */
+			for (ifp = ifnet.tqh_first;
+			     ifp != 0; ifp = ifp->if_list.tqe_next)
+				if ((ifa = ifp->if_addrlist.tqh_first) == NULL)
+					lifnum.lifn_count++;
+				else
+					for (;ifa != NULL;
+					    ifa = ifa->ifa_list.tqe_next)
+						lifnum.lifn_count++;
+
+			DPRINTF(("SIOCGLIFNUM %d\n", lifnum));
+			return copyout(&lifnum, data, sizeof(lifnum));
+		}
+
 	case SVR4_SIOCGIFNUM:
 		{
 			struct ifnet *ifp;
@@ -151,7 +177,7 @@ svr4_sock_ioctl(fp, l, retval, fd, cmd, data)
 			    sizeof(br.ifr_name));
 
 			if ((error = (*ctl)(fp, SIOCGIFFLAGS,
-					    (caddr_t) &br, p)) != 0) {
+					    (caddr_t) &br, l)) != 0) {
 				DPRINTF(("SIOCGIFFLAGS %s: error %d\n",
 					 sr.svr4_ifr_name, error));
 				return error;
@@ -176,7 +202,7 @@ svr4_sock_ioctl(fp, l, retval, fd, cmd, data)
 				sc.svr4_ifc_len));
 
 			if ((error = (*ctl)(fp, OSIOCGIFCONF,
-					    (caddr_t) &sc, p)) != 0)
+					    (caddr_t) &sc, l)) != 0)
 				return error;
 
 			DPRINTF(("SIOCGIFCONF\n"));

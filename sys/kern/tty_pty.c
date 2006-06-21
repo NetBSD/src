@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.85 2005/06/21 14:01:13 ws Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.85.2.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85 2005/06/21 14:01:13 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85.2.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -60,14 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85 2005/06/21 14:01:13 ws Exp $");
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
-#define	ISSET(t, f)	((t) & (f))
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
@@ -311,11 +307,12 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, p)
+ptsopen(dev, flag, devtype, l)
 	dev_t dev;
 	int flag, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -336,7 +333,7 @@ ptsopen(dev, flag, devtype, p)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && kauth_cred_geteuid(p->p_cred) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
@@ -364,10 +361,10 @@ ptsopen(dev, flag, devtype, p)
 }
 
 int
-ptsclose(dev, flag, mode, p)
+ptsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -468,10 +465,10 @@ ptswrite(dev, uio, flag)
  * Poll pseudo-tty.
  */
 int
-ptspoll(dev, events, p)
+ptspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -479,7 +476,7 @@ ptspoll(dev, events, p)
 	if (tp->t_oproc == 0)
 		return (POLLHUP);
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*
@@ -558,10 +555,10 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, p)
+ptcopen(dev, flag, devtype, l)
 	dev_t dev;
 	int flag, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -595,10 +592,10 @@ ptcopen(dev, flag, devtype, p)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, p)
+ptcclose(dev, flag, devtype, l)
 	dev_t dev;
 	int flag, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -841,10 +838,10 @@ out:
 }
 
 int
-ptcpoll(dev, events, p)
+ptcpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -872,10 +869,10 @@ ptcpoll(dev, events, p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLHUP | POLLRDNORM))
-			selrecord(p, &pti->pt_selr);
+			selrecord(l, &pti->pt_selr);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &pti->pt_selw);
+			selrecord(l, &pti->pt_selw);
 	}
 
 	splx(s);
@@ -1013,12 +1010,12 @@ ptytty(dev)
 
 /*ARGSUSED*/
 int
-ptyioctl(dev, cmd, data, flag, p)
+ptyioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -1057,7 +1054,7 @@ ptyioctl(dev, cmd, data, flag, p)
 #ifndef NO_DEV_PTM
 	/* Allow getting the name from either the master or the slave */
 	if (cmd == TIOCPTSNAME)
-		return pty_fill_ptmget(dev, -1, -1, data);
+		return pty_fill_ptmget(l, dev, -1, -1, data);
 #endif
 
 	cdev = cdevsw_lookup(dev);
@@ -1065,7 +1062,7 @@ ptyioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 #ifndef NO_DEV_PTM
 		case TIOCGRANTPT:
-			return pty_grant_slave(p, dev);
+			return pty_grant_slave(l, dev);
 #endif
 
 		case TIOCGPGRP:
@@ -1128,15 +1125,15 @@ ptyioctl(dev, cmd, data, flag, p)
 				ttyflush(tp, FREAD|FWRITE);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
-				ttyinfo(tp);
+				ttyinfo(tp, 1);
 			TTY_UNLOCK(tp);
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error == EPASSTHROUGH)
-		 error = ttioctl(tp, cmd, data, flag, p);
+		 error = ttioctl(tp, cmd, data, flag, l);
 	if (error == EPASSTHROUGH) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {

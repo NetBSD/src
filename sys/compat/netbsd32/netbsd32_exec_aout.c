@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.20 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.20.4.1 2006/06/21 14:59:35 yamt Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.20 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.20.4.1 2006/06/21 14:59:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *,
  * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
  * executable.
  *
- * Given a proc pointer and an exec package pointer, see if the referent
+ * Given a lwp pointer and an exec package pointer, see if the referent
  * of the epp is in netbsd32 a.out format.  Check 'standard' magic
  * numbers for this architecture.
  *
@@ -98,8 +98,8 @@ int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *,
  */
 
 int
-exec_netbsd32_makecmds(p, epp)
-	struct proc *p;
+exec_netbsd32_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	netbsd32_u_long midmag, magic;
@@ -121,13 +121,13 @@ exec_netbsd32_makecmds(p, epp)
 
 	switch (midmag) {
 	case (NETBSD32_MID_MACHINE << 16) | ZMAGIC:
-		error = netbsd32_exec_aout_prep_zmagic(p, epp);
+		error = netbsd32_exec_aout_prep_zmagic(l, epp);
 		break;
 	case (NETBSD32_MID_MACHINE << 16) | NMAGIC:
-		error = netbsd32_exec_aout_prep_nmagic(p, epp);
+		error = netbsd32_exec_aout_prep_nmagic(l, epp);
 		break;
 	case (NETBSD32_MID_MACHINE << 16) | OMAGIC:
-		error = netbsd32_exec_aout_prep_omagic(p, epp);
+		error = netbsd32_exec_aout_prep_omagic(l, epp);
 		break;
 	default:
 		/* Invalid magic */
@@ -154,8 +154,8 @@ exec_netbsd32_makecmds(p, epp)
  */
 
 int
-netbsd32_exec_aout_prep_zmagic(p, epp)
-	struct proc *p;
+netbsd32_exec_aout_prep_zmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct netbsd32_exec *execp = epp->ep_hdr;
@@ -188,7 +188,7 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
 		    epp->ep_daddr + execp->a_data, NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -197,8 +197,8 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
  */
 
 int
-netbsd32_exec_aout_prep_nmagic(p, epp)
-	struct proc *p;
+netbsd32_exec_aout_prep_nmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct netbsd32_exec *execp = epp->ep_hdr;
@@ -229,7 +229,7 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -238,8 +238,8 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
  */
 
 int
-netbsd32_exec_aout_prep_omagic(p, epp)
-	struct proc *p;
+netbsd32_exec_aout_prep_omagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct netbsd32_exec *execp = epp->ep_hdr;
@@ -276,5 +276,5 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

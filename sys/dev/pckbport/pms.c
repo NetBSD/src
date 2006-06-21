@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6 2005/02/27 00:27:42 perry Exp $ */
+/* $NetBSD: pms.c,v 1.6.4.1 2006/06/21 15:06:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6 2005/02/27 00:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.4.1 2006/06/21 15:06:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,15 +58,16 @@ int pmsdebug = 1;
 #define DPRINTF(x)
 #endif
 
-enum pms_type tries[] = {
+const enum pms_type tries[] = {
 	PMS_SCROLL5, PMS_SCROLL3, PMS_STANDARD, PMS_UNKNOWN
 };
 
-struct pms_protocol pms_protocols[] = {
+const struct pms_protocol pms_protocols[] = {
 	{ { 0, 0, 0 }, 0, "unknown protocol" },
 	{ { 0, 0, 0 }, 0, "no scroll wheel (3 buttons)" },
 	{ { 200, 100, 80 }, 3, "scroll wheel (3 buttons)" },
-	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" }
+	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" },
+	{ { 0, 0, 0 }, 0, "synaptics" }
 };
 
 
@@ -83,7 +84,7 @@ static void	do_disable(struct pms_softc *);
 static void	pms_reset_thread(void*);
 static void	pms_spawn_reset_thread(void*);
 int	pms_enable(void *);
-int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	pms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void	pms_disable(void *);
 #ifndef PMS_DISABLE_POWERHOOK
 void	pms_power(int, void *);
@@ -100,7 +101,7 @@ pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 {
 	u_char cmd[2], resp[1];
 	int i, j, res;
-	struct pms_protocol *p;
+	const struct pms_protocol *p;
 
 	for (j = 0; j < sizeof(tries) / sizeof(tries[0]); ++j) {
 		p = &pms_protocols[tries[j]];
@@ -169,7 +170,7 @@ pmsprobe(struct device *parent, struct cfdata *match, void *aux)
 void
 pmsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pms_softc *sc = (void *)self;
+	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct wsmousedev_attach_args a;
 	u_char cmd[2], resp[2];
@@ -370,7 +371,7 @@ pms_power(int why, void *v)
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 int
-pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];
@@ -492,16 +493,13 @@ pmsinput(void *vsc, int data)
 	u_int changed;
 	int dx, dy, dz = 0;
 	int newbuttons = 0;
-	int s;
 
 	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
 		return;
 	}
 
-	s = splclock();
-	sc->current = mono_time;
-	splx(s);
+	getmicrouptime(&sc->current);
 
 	if (sc->inputstate > 0) {
 		struct timeval diff;

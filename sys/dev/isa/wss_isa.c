@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.18 2005/01/14 03:41:45 kent Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.18.10.1 2006/06/21 15:04:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.18 2005/01/14 03:41:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.18.10.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ wssfind(struct device *parent, struct wss_softc *sc, int probing,
 
 	ac = &sc->sc_ad1848.sc_ad1848;
 	sc->sc_iot = ia->ia_iot;
-	if (ac->sc_dev.dv_cfdata->cf_flags & 1)
+	if (device_cfdata(&ac->sc_dev)->cf_flags & 1)
 		madprobe(sc, ia->ia_io[0].ir_addr);
 	else
 		sc->mad_chip_type = MAD_NONE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.65 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.65.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,16 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65 2005/04/01 11:59:37 yamt Exp $");
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <sys/pipe.h>
-
-/*
- * Avoid microtime(9), it's slow. We don't guard the read from time(9)
- * with splclock(9) since we don't actually need to be THAT sure the access
- * is atomic.
- */
-#define PIPE_TIMESTAMP(tvp)	(*(tvp) = time)
-
 
 /*
  * Use this define if you want to disable *fancy* VM things.  Expect an
@@ -130,15 +123,15 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65 2005/04/01 11:59:37 yamt Exp $");
  * interfaces to the outside world
  */
 static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
-		struct ucred *cred, int flags);
+		kauth_cred_t cred, int flags);
 static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
-		struct ucred *cred, int flags);
-static int pipe_close(struct file *fp, struct proc *p);
-static int pipe_poll(struct file *fp, int events, struct proc *p);
+		kauth_cred_t cred, int flags);
+static int pipe_close(struct file *fp, struct lwp *l);
+static int pipe_poll(struct file *fp, int events, struct lwp *l);
 static int pipe_kqfilter(struct file *fp, struct knote *kn);
-static int pipe_stat(struct file *fp, struct stat *sb, struct proc *p);
+static int pipe_stat(struct file *fp, struct stat *sb, struct lwp *l);
 static int pipe_ioctl(struct file *fp, u_long cmd, void *data,
-		struct proc *p);
+		struct lwp *l);
 
 static const struct fileops pipeops = {
 	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
@@ -186,9 +179,8 @@ static void pipeclose(struct file *fp, struct pipe *pipe);
 static void pipe_free_kmem(struct pipe *pipe);
 static int pipe_create(struct pipe **pipep, int allockva);
 static int pipelock(struct pipe *pipe, int catch);
-static __inline void pipeunlock(struct pipe *pipe);
-static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, void *data,
-    int code);
+static inline void pipeunlock(struct pipe *pipe);
+static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, int code);
 #ifndef PIPE_NODIRECT
 static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
     struct uio *uio);
@@ -209,10 +201,7 @@ static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
 
 /* ARGSUSED */
 int
-sys_pipe(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_pipe(struct lwp *l, void *v, register_t *retval)
 {
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
@@ -258,11 +247,11 @@ sys_pipe(l, v, retval)
 
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);
-	FILE_UNUSE(rf, p);
-	FILE_UNUSE(wf, p);
+	FILE_UNUSE(rf, l);
+	FILE_UNUSE(wf, l);
 	return (0);
 free3:
-	FILE_UNUSE(rf, p);
+	FILE_UNUSE(rf, l);
 	ffree(rf);
 	fdremove(p->p_fd, retval[0]);
 free2:
@@ -279,9 +268,7 @@ free2:
  * If it fails it will return ENOMEM.
  */
 static int
-pipespace(pipe, size)
-	struct pipe *pipe;
-	int size;
+pipespace(struct pipe *pipe, int size)
 {
 	caddr_t buffer;
 	/*
@@ -308,9 +295,7 @@ pipespace(pipe, size)
  * Initialize and allocate VM and memory for pipe.
  */
 static int
-pipe_create(pipep, allockva)
-	struct pipe **pipep;
-	int allockva;
+pipe_create(struct pipe **pipep, int allockva)
 {
 	struct pipe *pipe;
 	int error;
@@ -321,11 +306,10 @@ pipe_create(pipep, allockva)
 	memset(pipe, 0, sizeof(struct pipe));
 	pipe->pipe_state = PIPE_SIGNALR;
 
-	PIPE_TIMESTAMP(&pipe->pipe_ctime);
+	getmicrotime(&pipe->pipe_ctime);
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
-	lockinit(&pipe->pipe_lock, PSOCK | PCATCH, "pipelk", 0, 0);
 
 	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
 		return (error);
@@ -340,55 +324,42 @@ pipe_create(pipep, allockva)
  * Return with pipe spin lock released on success.
  */
 static int
-pipelock(pipe, catch)
-	struct pipe *pipe;
-	int catch;
+pipelock(struct pipe *pipe, int catch)
 {
-	int error;
 
 	LOCK_ASSERT(simple_lock_held(&pipe->pipe_slock));
 
-	while (1) {
-		error = lockmgr(&pipe->pipe_lock, LK_EXCLUSIVE | LK_INTERLOCK,
-				&pipe->pipe_slock);
-		if (error == 0)
-			break;
+	while (pipe->pipe_state & PIPE_LOCKFL) {
+		int error;
+		const int pcatch = catch ? PCATCH : 0;
 
-		simple_lock(&pipe->pipe_slock);
-		if (catch || (error != EINTR && error != ERESTART))
-			break;
-		/*
-		 * XXX XXX XXX
-		 * The pipe lock is initialised with PCATCH on and we cannot
-		 * override this in a lockmgr() call. Thus a pending signal
-		 * will cause lockmgr() to return with EINTR or ERESTART.
-		 * We cannot simply re-enter lockmgr() at this point since
-		 * the pending signals have not yet been posted and would
-		 * cause an immediate EINTR/ERESTART return again.
-		 * As a workaround we pause for a while here, giving the lock
-		 * a chance to drain, before trying again.
-		 * XXX XXX XXX
-		 *
-		 * NOTE: Consider dropping PCATCH from this lock; in practice
-		 * it is never held for long enough periods for having it
-		 * interruptable at the start of pipe_read/pipe_write to be
-		 * beneficial.
-		 */
-		(void) ltsleep(&lbolt, PSOCK, "rstrtpipelock", hz,
+		pipe->pipe_state |= PIPE_LWANT;
+		error = ltsleep(pipe, PSOCK | pcatch, "pipelk", 0,
 		    &pipe->pipe_slock);
+		if (error != 0)
+			return error;
 	}
-	return (error);
+
+	pipe->pipe_state |= PIPE_LOCKFL;
+	simple_unlock(&pipe->pipe_slock);
+
+	return 0;
 }
 
 /*
  * unlock a pipe I/O lock
  */
-static __inline void
-pipeunlock(pipe)
-	struct pipe *pipe;
+static inline void
+pipeunlock(struct pipe *pipe)
 {
 
-	lockmgr(&pipe->pipe_lock, LK_RELEASE, NULL);
+	KASSERT(pipe->pipe_state & PIPE_LOCKFL);
+
+	pipe->pipe_state &= ~PIPE_LOCKFL;
+	if (pipe->pipe_state & PIPE_LWANT) {
+		pipe->pipe_state &= ~PIPE_LWANT;
+		wakeup(pipe);
+	}
 }
 
 /*
@@ -396,10 +367,7 @@ pipeunlock(pipe)
  * 'sigpipe' side of pipe.
  */
 static void
-pipeselwakeup(selp, sigp, data, code)
-	struct pipe *selp, *sigp;
-	void *data;
-	int code;
+pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 {
 	int band;
 
@@ -436,12 +404,8 @@ pipeselwakeup(selp, sigp, data, code)
 
 /* ARGSUSED */
 static int
-pipe_read(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+pipe_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
 	struct pipebuf *bp = &rpipe->pipe_buffer;
@@ -563,8 +527,7 @@ again:
 			/*
 			 * We want to read more, wake up select/poll.
 			 */
-			pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data,
-			    POLL_IN);
+			pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_IN);
 
 			/*
 			 * If the "write-side" is blocked, wake it up now.
@@ -585,7 +548,7 @@ again:
 	}
 
 	if (error == 0)
-		PIPE_TIMESTAMP(&rpipe->pipe_atime);
+		getmicrotime(&rpipe->pipe_atime);
 
 	PIPE_LOCK(rpipe);
 	pipeunlock(rpipe);
@@ -616,7 +579,7 @@ unlocked_error:
 	 */
 	if ((bp->size - bp->cnt) >= PIPE_BUF
 	    && (ocnt != bp->cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data, POLL_OUT);
+		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_OUT);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
@@ -629,9 +592,7 @@ unlocked_error:
  * Allocate structure for loan transfer.
  */
 static int
-pipe_loan_alloc(wpipe, npages)
-	struct pipe *wpipe;
-	int npages;
+pipe_loan_alloc(struct pipe *wpipe, int npages)
 {
 	vsize_t len;
 
@@ -652,8 +613,7 @@ pipe_loan_alloc(wpipe, npages)
  * Free resources allocated for loan transfer.
  */
 static void
-pipe_loan_free(wpipe)
-	struct pipe *wpipe;
+pipe_loan_free(struct pipe *wpipe)
 {
 	vsize_t len;
 
@@ -676,10 +636,7 @@ pipe_loan_free(wpipe)
  * Called with the long-term pipe lock held.
  */
 static int
-pipe_direct_write(fp, wpipe, uio)
-	struct file *fp;
-	struct pipe *wpipe;
-	struct uio *uio;
+pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 {
 	int error, npages, j;
 	struct vm_page **pgs;
@@ -724,7 +681,7 @@ pipe_direct_write(fp, wpipe, uio)
 
 	/* Loan the write buffer memory from writer process */
 	pgs = wpipe->pipe_map.pgs;
-	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, base, blen,
+	error = uvm_loan(&uio->uio_vmspace->vm_map, base, blen,
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);
@@ -774,7 +731,7 @@ pipe_direct_write(fp, wpipe, uio)
 			wpipe->pipe_state &= ~PIPE_WANTR;
 			wakeup(wpipe);
 		}
-		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_IN);
+		pipeselwakeup(wpipe, wpipe, POLL_IN);
 		error = ltsleep(wpipe, PSOCK | PCATCH, "pipdwt", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
@@ -794,7 +751,7 @@ pipe_direct_write(fp, wpipe, uio)
 		pipe_loan_free(wpipe);
 
 	if (error) {
-		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_ERR);
+		pipeselwakeup(wpipe, wpipe, POLL_ERR);
 
 		/*
 		 * If nothing was read from what we offered, return error
@@ -826,12 +783,8 @@ pipe_direct_write(fp, wpipe, uio)
 #endif /* !PIPE_NODIRECT */
 
 static int
-pipe_write(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 	struct pipe *wpipe, *rpipe;
 	struct pipebuf *bp;
@@ -1038,8 +991,7 @@ retry:
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe, fp->f_data,
-				    POLL_OUT);
+				pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
 			PIPE_LOCK(wpipe);
 			pipeunlock(wpipe);
@@ -1083,7 +1035,7 @@ retry:
 		error = 0;
 
 	if (error == 0)
-		PIPE_TIMESTAMP(&wpipe->pipe_mtime);
+		getmicrotime(&wpipe->pipe_mtime);
 
 	/*
 	 * We have something to offer, wake up select/poll.
@@ -1091,7 +1043,7 @@ retry:
 	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_OUT);
+		pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
@@ -1107,13 +1059,10 @@ retry:
  * we implement a very minimal set of ioctls for compatibility with sockets.
  */
 int
-pipe_ioctl(fp, cmd, data, p)
-	struct file *fp;
-	u_long cmd;
-	void *data;
-	struct proc *p;
+pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
+	struct proc *p = l->l_proc;
 
 	switch (cmd) {
 
@@ -1186,10 +1135,7 @@ pipe_ioctl(fp, cmd, data, p)
 }
 
 int
-pipe_poll(fp, events, td)
-	struct file *fp;
-	int events;
-	struct proc *td;
+pipe_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct pipe *rpipe = (struct pipe *)fp->f_data;
 	struct pipe *wpipe;
@@ -1236,20 +1182,17 @@ retry:
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(td, &rpipe->pipe_sel);
+			selrecord(l, &rpipe->pipe_sel);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(td, &wpipe->pipe_sel);
+			selrecord(l, &wpipe->pipe_sel);
 	}
 
 	return (revents);
 }
 
 static int
-pipe_stat(fp, ub, td)
-	struct file *fp;
-	struct stat *ub;
-	struct proc *td;
+pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1263,8 +1206,8 @@ pipe_stat(fp, ub, td)
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
-	ub->st_uid = fp->f_cred->cr_uid;
-	ub->st_gid = fp->f_cred->cr_gid;
+	ub->st_uid = kauth_cred_geteuid(fp->f_cred);
+	ub->st_gid = kauth_cred_getegid(fp->f_cred);
 	/*
 	 * Left as 0: st_dev, st_ino, st_nlink, st_rdev, st_flags, st_gen.
 	 * XXX (st_dev, st_ino) should be unique.
@@ -1274,9 +1217,7 @@ pipe_stat(fp, ub, td)
 
 /* ARGSUSED */
 static int
-pipe_close(fp, td)
-	struct file *fp;
-	struct proc *td;
+pipe_close(struct file *fp, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1286,8 +1227,7 @@ pipe_close(fp, td)
 }
 
 static void
-pipe_free_kmem(pipe)
-	struct pipe *pipe;
+pipe_free_kmem(struct pipe *pipe)
 {
 
 	if (pipe->pipe_buffer.buffer != NULL) {
@@ -1314,9 +1254,7 @@ pipe_free_kmem(pipe)
  * shutdown the pipe
  */
 static void
-pipeclose(fp, pipe)
-	struct file *fp;
-	struct pipe *pipe;
+pipeclose(struct file *fp, struct pipe *pipe)
 {
 	struct pipe *ppipe;
 
@@ -1326,16 +1264,16 @@ pipeclose(fp, pipe)
 retry:
 	PIPE_LOCK(pipe);
 
-	if (fp)
-		pipeselwakeup(pipe, pipe, fp->f_data, POLL_HUP);
+	pipeselwakeup(pipe, pipe, POLL_HUP);
 
 	/*
 	 * If the other side is blocked, wake it up saying that
 	 * we want to close it down.
 	 */
+	pipe->pipe_state |= PIPE_EOF;
 	while (pipe->pipe_busy) {
 		wakeup(pipe);
-		pipe->pipe_state |= PIPE_WANTCLOSE | PIPE_EOF;
+		pipe->pipe_state |= PIPE_WANTCLOSE;
 		ltsleep(pipe, PSOCK, "pipecl", 0, &pipe->pipe_slock);
 	}
 
@@ -1348,8 +1286,7 @@ retry:
 			PIPE_UNLOCK(pipe);
 			goto retry;
 		}
-		if (fp)
-			pipeselwakeup(ppipe, ppipe, fp->f_data, POLL_HUP);
+		pipeselwakeup(ppipe, ppipe, POLL_HUP);
 
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
@@ -1357,8 +1294,9 @@ retry:
 		PIPE_UNLOCK(ppipe);
 	}
 
-	(void)lockmgr(&pipe->pipe_lock, LK_DRAIN | LK_INTERLOCK,
-			&pipe->pipe_slock);
+	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
+
+	PIPE_UNLOCK(pipe);
 
 	/*
 	 * free resources

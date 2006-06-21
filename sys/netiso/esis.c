@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.34 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.34.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34 2005/05/29 21:27:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34.2.1 2006/06/21 15:11:37 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34 2005/05/29 21:27:45 christos Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -167,14 +168,16 @@ esis_init(void)
 /* ARGSUSED */
 int
 esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
+	struct proc *p;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
+	p = l ? l->l_proc : NULL;
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
@@ -192,7 +195,9 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+							 KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.68 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.68.2.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68 2005/05/29 22:24:15 christos E
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers
@@ -185,7 +186,7 @@ sonewconn1(struct socket *head, int connstatus)
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
-	    (struct proc *)0)) {
+	    (struct lwp *)0)) {
 		(void) soqremque(so, soqueue);
 		pool_put(&socket_pool, so);
 		return (NULL);
@@ -384,7 +385,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)
-		so->so_snd.sb_lowat = MCLBYTES;
+		so->so_snd.sb_lowat = MAX((int)MCLBYTES, sock_loan_thresh);
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
@@ -410,7 +411,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (p && p->p_ucred->cr_uid == so->so_uidinfo->ui_uid)
+		if (p && kauth_cred_geteuid(p->p_cred) == so->so_uidinfo->ui_uid)
 			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
@@ -775,7 +776,7 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
  * Helper for sbappendchainaddr: prepend a struct sockaddr* to
  * an mbuf chain.
  */
-static __inline struct mbuf *
+static inline struct mbuf *
 m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
 		   const struct sockaddr *asa)
 {

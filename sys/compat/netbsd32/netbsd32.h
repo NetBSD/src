@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.34 2005/07/04 00:26:06 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.34.2.1 2006/06/21 14:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/ucontext.h>
+#include <compat/sys/ucontext.h>
 
 /*
  * first, define the basic types we need.
@@ -115,6 +116,8 @@ typedef netbsd32_pointer_t netbsd32_ucontextp;
 
 /* from <sys/types.h> */
 typedef netbsd32_pointer_t netbsd32_fd_setp_t;
+typedef netbsd32_intptr_t netbsd32_semid_t;
+typedef netbsd32_pointer_t netbsd32_semidp_t;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
@@ -126,6 +129,7 @@ struct netbsd32_iovec {
 /* from <sys/time.h> */
 typedef int32_t netbsd32_timer_t;
 typedef	int32_t netbsd32_time_t;
+typedef netbsd32_pointer_t netbsd32_timerp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespecp_t;
 struct netbsd32_timespec {
@@ -149,6 +153,12 @@ typedef netbsd32_pointer_t netbsd32_itimervalp_t;
 struct	netbsd32_itimerval {
 	struct	netbsd32_timeval it_interval;	/* timer interval */
 	struct	netbsd32_timeval it_value;	/* current value */
+};
+
+typedef netbsd32_pointer_t netbsd32_itimerspecp_t;
+struct netbsd32_itimerspec {
+	struct netbsd32_timespec it_interval;
+	struct netbsd32_timespec it_value;
 };
 
 /* from <sys/mount.h> */
@@ -280,6 +290,13 @@ struct netbsd32_msqid_ds14 {
 	netbsd32_long	msg_pad4[4];
 };
 
+/* from  <sys/sa.h> */
+typedef netbsd32_pointer_t netbsd32_sa_upcall_t;
+typedef netbsd32_pointer_t netbsd32_sa_upcallp_t;
+
+void	netbsd32_cpu_upcall(struct lwp *, int, int, int, void *, void *,
+    void *, sa_upcall_t);
+
 /* from <sys/sem.h> */
 typedef netbsd32_pointer_t netbsd32_semp_t;
 
@@ -311,6 +328,7 @@ struct netbsd32_semid_ds14 {
 };
 
 typedef u_int32_t netbsd32_semunu_t;
+typedef netbsd32_pointer_t netbsd32_semunp_t;
 union netbsd32_semun {
 	int	val;		/* value for SETVAL */
 	netbsd32_semid_dsp_t buf; /* buffer for IPC_STAT & IPC_SET */
@@ -386,6 +404,25 @@ struct	netbsd32_sigvec {
 	int	sv_flags;		/* see signal options below */
 };
 
+typedef netbsd32_pointer_t netbsd32_siginfop_t;
+
+union netbsd32_sigval {
+	int	sival_int;
+	netbsd32_voidp	sival_ptr;
+};
+
+typedef netbsd32_pointer_t netbsd32_sigeventp_t;
+struct netbsd32_sigevent {
+	int	sigev_notify;
+	int	sigev_signo;
+	union netbsd32_sigval	sigev_value;
+	netbsd32_voidp	sigev_notify_function;
+	netbsd32_voidp	sigev_notify_attributes;
+};
+
+/* from <sys/sigtypes.h> */
+typedef netbsd32_pointer_t netbsd32_stackp_t;
+
 /* from <sys/socket.h> */
 typedef netbsd32_pointer_t netbsd32_sockaddrp_t;
 typedef netbsd32_pointer_t netbsd32_osockaddrp_t;
@@ -415,7 +452,7 @@ struct netbsd32_omsghdr {
 typedef netbsd32_pointer_t netbsd32_stat12p_t;
 struct netbsd32_stat12 {			/* NetBSD-1.2 stat struct */
 	dev_t	  st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
+	u_int32_t st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
 	u_int16_t st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
@@ -436,7 +473,7 @@ struct netbsd32_stat12 {			/* NetBSD-1.2 stat struct */
 typedef netbsd32_pointer_t netbsd32_stat43p_t;
 struct netbsd32_stat43 {			/* BSD-4.3 stat struct */
 	u_int16_t st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
+	u_int32_t st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
 	u_int16_t st_nlink;		/* number of hard links */
 	u_int16_t st_uid;		/* user ID of the file's owner */
@@ -451,10 +488,10 @@ struct netbsd32_stat43 {			/* BSD-4.3 stat struct */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
-typedef netbsd32_pointer_t netbsd32_statp_t;
-struct netbsd32_stat {
+typedef netbsd32_pointer_t netbsd32_stat13p_t;
+struct netbsd32_stat13 {
 	dev_t	  st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
+	u_int32_t st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */
 	nlink_t	  st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
@@ -468,7 +505,34 @@ struct netbsd32_stat {
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
-	int64_t	  st_qspare[2];
+	u_int32_t st_spare;		/* file generation number */
+	struct	  netbsd32_timespec st_birthtimespec;
+	u_int32_t st_spare2;
+} 
+#ifdef __x86_64__
+__attribute__((packed))
+#endif
+;
+
+typedef netbsd32_pointer_t netbsd32_statp_t;
+struct netbsd32_stat {
+	dev_t	  st_dev;		/* inode's device */
+	mode_t	  st_mode;		/* inode protection mode */
+	ino_t	  st_ino;		/* inode's number */
+	nlink_t	  st_nlink;		/* number of hard links */
+	uid_t	  st_uid;		/* user ID of the file's owner */
+	gid_t	  st_gid;		/* group ID of the file's group */
+	dev_t	  st_rdev;		/* device type */
+	struct	  netbsd32_timespec st_atimespec;/* time of last access */
+	struct	  netbsd32_timespec st_mtimespec;/* time of last data modification */
+	struct	  netbsd32_timespec st_ctimespec;/* time of last file status change */
+	struct	  netbsd32_timespec st_birthtimespec; /* time of creation */
+	off_t	  st_size;		/* file size, in bytes */
+	blkcnt_t  st_blocks;		/* blocks allocated for file */
+	blksize_t st_blksize;		/* optimal blocksize for I/O */
+	u_int32_t st_flags;		/* user defined flags for file */
+	u_int32_t st_gen;		/* file generation number */
+	u_int32_t st_spare[2];
 }
 #ifdef __x86_64__
 __attribute__((packed))
@@ -506,10 +570,17 @@ struct netbsd32_statvfs {
 
 /* from <sys/timex.h> */
 typedef netbsd32_pointer_t netbsd32_ntptimevalp_t;
-struct netbsd32_ntptimeval {
+struct netbsd32_ntptimeval30 {
 	struct netbsd32_timeval time;	/* current time (ro) */
 	netbsd32_long maxerror;	/* maximum error (us) (ro) */
 	netbsd32_long esterror;	/* estimated error (us) (ro) */
+};
+struct netbsd32_ntptimeval {
+	struct netbsd32_timespec time;	/* current time (ro) */
+	netbsd32_long maxerror;	/* maximum error (us) (ro) */
+	netbsd32_long esterror;	/* estimated error (us) (ro) */
+	netbsd32_long tai;	/* TAI offset */
+	int time_state;		/* time status */
 };
 
 typedef netbsd32_pointer_t netbsd32_timexp_t;
@@ -559,8 +630,19 @@ typedef struct firm_event32 {
 /* from <sys/uuid.h> */
 typedef netbsd32_pointer_t netbsd32_uuidp_t;
 
-void netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
-void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
+/* from <sys/event.h> */
+typedef netbsd32_pointer_t netbsd32_keventp_t;
+
+struct netbsd32_kevent {
+	netbsd32_uintptr_t	ident;
+	uint32_t		filter;
+	uint32_t		flags;
+	uint32_t		fflags;
+	int64_t			data;
+	netbsd32_intptr_t	udata;
+} __attribute__((packed));
+
+int	netbsd32_kevent(struct lwp *, void *, register_t *);
 
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
@@ -570,7 +652,7 @@ void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 #define NETBSD32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
 #define NETBSD32TOP(s32uap, uap, name, type) \
-	    SCARG(uap, name) = (type *)NETBSD32PTR64(SCARG(s32uap, name))
+	    SCARG(uap, name) = (type *)(uintptr_t)NETBSD32PTR64(SCARG(s32uap, name))
 #define NETBSD32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
 #define NETBSD32TOX64(s32uap, uap, name, type) \
@@ -588,12 +670,15 @@ int	coredump_netbsd32(struct lwp *, void *);
  * random other stuff
  */
 #include <compat/common/compat_util.h>
+#include <compat/sys/siginfo.h>
 
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
-int netbsd32_execve2(struct lwp *, struct sys_execve_args *, register_t *);
 
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 void netbsd32_adjust_limits(struct proc *);
+
+void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
+void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);

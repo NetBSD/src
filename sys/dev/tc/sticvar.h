@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.14 2003/11/13 03:09:29 chs Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.14.16.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct stic_info {
 	u_int32_t	*(*si_pbuf_get)(struct stic_info *);
 	int	(*si_pbuf_post)(struct stic_info *, u_int32_t *);
 	int	(*si_ioctl)(struct stic_info *, u_long, caddr_t, int,
-			   struct proc *);
+			   struct lwp *);
 	int	si_pbuf_select;
 	int	si_hwflags;
 

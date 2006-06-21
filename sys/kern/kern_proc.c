@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.80.12.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,9 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include "opt_kstack.h"
+#include "opt_maxuprc.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 /*
@@ -137,7 +144,7 @@ struct pid_table {
 	struct pgrp	*pt_pgrp;
 };
 #if 1	/* strongly typed cast - should be a noop */
-static __inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
+static inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
 #else
 #define p2u(p) ((uint)p)
 #endif
@@ -155,6 +162,27 @@ static uint pid_alloc_cnt;	/* number of allocated pids */
 static uint next_free_pt, last_free_pt;
 static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 
+/* Components of the first process -- never freed. */
+struct session session0;
+struct pgrp pgrp0;
+struct proc proc0;
+struct lwp lwp0;
+kauth_cred_t cred0;
+struct filedesc0 filedesc0;
+struct cwdinfo cwdi0;
+struct plimit limit0;
+struct pstats pstat0;
+struct vmspace vmspace0;
+struct sigacts sigacts0;
+
+extern struct user *proc0paddr;
+
+extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
+
+int nofile = NOFILE;
+int maxuprc = MAXUPRC;
+int cmask = CMASK;
+
 POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
     &pool_allocator_nointr);
 POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
@@ -162,8 +190,6 @@ POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr);
 POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-    &pool_allocator_nointr);
-POOL_INIT(pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
     &pool_allocator_nointr);
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
     &pool_allocator_nointr);
@@ -180,8 +206,6 @@ POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, "saupcpl",
 POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
     &pool_allocator_nointr);
 POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
-    &pool_allocator_nointr);
-POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr);
@@ -243,6 +267,127 @@ procinit(void)
 }
 
 /*
+ * Initialize process 0.
+ */
+void
+proc0_init(void)
+{
+	struct proc *p;
+	struct pgrp *pg;
+	struct session *sess;
+	struct lwp *l;
+	int s;
+	u_int i;
+	rlim_t lim;
+
+	p = &proc0;
+	pg = &pgrp0;
+	sess = &session0;
+	l = &lwp0;
+
+	simple_lock_init(&p->p_lock);
+	LIST_INIT(&p->p_lwps);
+	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+	p->p_nlwps = 1;
+	simple_lock_init(&p->p_sigctx.ps_silock);
+	CIRCLEQ_INIT(&p->p_sigctx.ps_siginfo);
+
+	s = proclist_lock_write();
+
+	pid_table[0].pt_proc = p;
+	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(&alllwp, l, l_list);
+
+	p->p_pgrp = pg;
+	pid_table[0].pt_pgrp = pg;
+	LIST_INIT(&pg->pg_members);
+	LIST_INSERT_HEAD(&pg->pg_members, p, p_pglist);
+
+	pg->pg_session = sess;
+	sess->s_count = 1;
+	sess->s_sid = 0;
+	sess->s_leader = p;
+
+	proclist_unlock_write(s);
+
+	/*
+	 * Set P_NOCLDWAIT so that kernel threads are reparented to
+	 * init(8) when they exit.  init(8) can easily wait them out
+	 * for us.
+	 */
+	p->p_flag = P_SYSTEM | P_NOCLDWAIT;
+	p->p_stat = SACTIVE;
+	p->p_nice = NZERO;
+	p->p_emul = &emul_netbsd;
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
+	strncpy(p->p_comm, "swapper", MAXCOMLEN);
+
+	l->l_flag = L_INMEM;
+	l->l_stat = LSONPROC;
+	p->p_nrlwps = 1;
+
+	callout_init(&l->l_tsleep_ch);
+
+	/* Create credentials. */
+	cred0 = kauth_cred_alloc();
+	p->p_cred = cred0;
+
+	/* Create the CWD info. */
+	p->p_cwdi = &cwdi0;
+	cwdi0.cwdi_cmask = cmask;
+	cwdi0.cwdi_refcnt = 1;
+	simple_lock_init(&cwdi0.cwdi_slock);
+
+	/* Create the limits structures. */
+	p->p_limit = &limit0;
+	simple_lock_init(&limit0.p_slock);
+	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
+		limit0.pl_rlimit[i].rlim_cur =
+		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
+
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
+	    maxfiles < nofile ? maxfiles : nofile;
+
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
+	    maxproc < maxuprc ? maxproc : maxuprc;
+
+	lim = ptoa(uvmexp.free);
+	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+	limit0.pl_corename = defcorename;
+	limit0.p_refcnt = 1;
+
+	/* Configure virtual memory system, set vm rlimits. */
+	uvm_init_limits(p);
+
+	/* Initialize file descriptor table for proc0. */
+	p->p_fd = &filedesc0.fd_fd;
+	fdinit1(&filedesc0);
+
+	/*
+	 * Initialize proc0's vmspace, which uses the kernel pmap.
+	 * All kernel processes (which never have user space mappings)
+	 * share proc0's vmspace, and thus, the kernel pmap.
+	 */
+	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
+	    trunc_page(VM_MAX_ADDRESS));
+	p->p_vmspace = &vmspace0;
+
+	l->l_addr = proc0paddr;				/* XXX */
+
+	p->p_stats = &pstat0;
+
+	/* Initialize signal state for proc0. */
+	p->p_sigacts = &sigacts0;
+	siginit(p);
+}
+
+/*
  * Acquire a read lock on the proclist.
  */
 void
@@ -281,7 +426,7 @@ proclist_lock_write(void)
 	if (__predict_false(error != 0))
 		panic("proclist_lock: failed to acquire lock");
 #endif
-	return (s);
+	return s;
 }
 
 /*
@@ -330,8 +475,8 @@ inferior(struct proc *p, struct proc *q)
 
 	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
-			return (0);
-	return (1);
+			return 0;
+	return 1;
 }
 
 /*
@@ -384,41 +529,6 @@ pg_find(pid_t pgid, uint flags)
 	if (flags & PFIND_UNLOCK_OK)
 		proclist_unlock_read();
 	return pg;
-}
-
-/*
- * Set entry for process 0
- */
-void
-proc0_insert(struct proc *p, struct lwp *l, struct pgrp *pgrp,
-	struct session *sess)
-{
-	int s;
-
-	simple_lock_init(&p->p_lock);
-	LIST_INIT(&p->p_lwps);
-	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
-	p->p_nlwps = 1;
-	simple_lock_init(&p->p_sigctx.ps_silock);
-	CIRCLEQ_INIT(&p->p_sigctx.ps_siginfo);
-
-	s = proclist_lock_write();
-
-	pid_table[0].pt_proc = p;
-	LIST_INSERT_HEAD(&allproc, p, p_list);
-	LIST_INSERT_HEAD(&alllwp, l, l_list);
-
-	p->p_pgrp = pgrp;
-	pid_table[0].pt_pgrp = pgrp;
-	LIST_INIT(&pgrp->pg_members);
-	LIST_INSERT_HEAD(&pgrp->pg_members, p, p_pglist);
-
-	pgrp->pg_session = sess;
-	sess->s_count = 1;
-	sess->s_sid = 0;
-	sess->s_leader = p;
-
-	proclist_unlock_write(s);
 }
 
 static void
@@ -1020,8 +1130,8 @@ int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
 void
 kstack_setup_magic(const struct lwp *l)
 {
-	u_int32_t *ip;
-	u_int32_t const *end;
+	uint32_t *ip;
+	uint32_t const *end;
 
 	KASSERT(l != NULL);
 	KASSERT(l != &lwp0);
@@ -1030,8 +1140,8 @@ kstack_setup_magic(const struct lwp *l)
 	 * fill all the stack with magic number
 	 * so that later modification on it can be detected.
 	 */
-	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
+	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
@@ -1040,7 +1150,7 @@ kstack_setup_magic(const struct lwp *l)
 void
 kstack_check_magic(const struct lwp *l)
 {
-	u_int32_t const *ip, *end;
+	uint32_t const *ip, *end;
 	int stackleft;
 
 	KASSERT(l != NULL);
@@ -1051,8 +1161,8 @@ kstack_check_magic(const struct lwp *l)
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
-	end = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
+	ip = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	end = (uint32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
@@ -1060,8 +1170,8 @@ kstack_check_magic(const struct lwp *l)
 	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
-	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
+	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;
@@ -1120,4 +1230,23 @@ proclist_foreach_call(struct proclist *list,
 	PRELE(l);
 
 	return ret;
+}
+
+int
+proc_vmspace_getref(struct proc *p, struct vmspace **vm)
+{
+
+	/* XXXCDC: how should locking work here? */
+
+	/* curproc exception is for coredump. */
+
+	if ((p != curproc && (p->p_flag & P_WEXIT) != 0) ||
+	    (p->p_vmspace->vm_refcnt < 1)) { /* XXX */
+		return EFAULT;
+	}
+
+	uvmspace_addref(p->p_vmspace);
+	*vm = p->p_vmspace;
+
+	return 0;
 }

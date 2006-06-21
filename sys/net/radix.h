@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.15 2005/05/29 21:22:53 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.15.2.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -155,4 +155,4 @@ struct radix_node
 	 *rn_search(const void *, struct radix_node *),
 	 *rn_search_m(const void *, struct radix_node *, const void *);
 
-#endif /* _NET_RADIX_H_ */
+#endif /* !_NET_RADIX_H_ */

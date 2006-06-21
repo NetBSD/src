@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.26 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.26.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.26 2005/05/29 21:27:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.26.2.1 2006/06/21 15:11:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,15 +377,17 @@ tp_sendoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *xdata,
 /* ARGSUSED */
 int
 tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	struct tp_pcb *tpcb;
+	struct proc *p;
 	int             s;
 	int             error = 0;
 	int             flags, *outflags = &flags;
 	u_long          eotsdu = 0;
 	struct tp_event E;
 
+	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
 		printf("usrreq(%p,%d,%p,%p,%p)\n", so, req, m, nam, outflags);
@@ -527,12 +529,15 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #ifdef TP_PERF_MEAS
 		if (DOPERF(tpcb)) {
 			u_int           lsufx, fsufx;
+			struct timeval	now;
+
 			lsufx = *(u_short *) (tpcb->tp_lsuffix);
 			fsufx = *(u_short *) (tpcb->tp_fsuffix);
 
+			getmicrotime(&now);
 			tpmeas(tpcb->tp_lref,
 			       TPtime_open | (tpcb->tp_xtd_format << 4),
-			       &time, lsufx, fsufx, tpcb->tp_fref);
+			       &now, lsufx, fsufx, tpcb->tp_fref);
 		}
 #endif
 		break;
@@ -557,9 +562,12 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #ifdef TP_PERF_MEAS
 		if (DOPERF(tpcb)) {
 			u_int           lsufx, fsufx;
+			struct timeval	now;
+
 			lsufx = *(u_short *) (tpcb->tp_lsuffix);
 			fsufx = *(u_short *) (tpcb->tp_fsuffix);
 
+			getmicrotime(&now);
 			tpmeas(tpcb->tp_lref, TPtime_open,
 			       &time, lsufx, fsufx, tpcb->tp_fref);
 		}
@@ -801,7 +809,7 @@ tp_snd_control(struct mbuf *m, struct socket *so, struct mbuf **data)
 			}
 			error = tp_usrreq(so, PRU_DISCONNECT, (struct mbuf *)0,
 			    (struct mbuf *)0, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 		}
 	}
 	if (m)

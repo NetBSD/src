@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.11 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.11.16.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.11 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.11.16.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.11 2003/10/15 11:29:01 hannken Exp 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-int (**sync_vnodeop_p) __P((void *));
+int (**sync_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_close_desc, sync_close },		/* close */
@@ -128,11 +128,11 @@ sync_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *syncvp = ap->a_vp;
 	struct mount *mp = syncvp->v_mount;
@@ -161,7 +161,7 @@ sync_fsync(v)
 		}
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
-		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
+		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_l);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vn_finished_write(mp, 0);

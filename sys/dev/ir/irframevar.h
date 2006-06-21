@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.13 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.13.16.1 2006/06/21 15:04:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 struct irframe_methods {
-	int (*im_open)(void *, int, int, struct proc *);
-	int (*im_close)(void *, int, int, struct proc *);
+	int (*im_open)(void *, int, int, struct lwp *);
+	int (*im_close)(void *, int, int, struct lwp *);
 	int (*im_read)(void *, struct uio *, int);
 	int (*im_write)(void *, struct uio *, int);
-	int (*im_poll)(void *, int, struct proc *);
+	int (*im_poll)(void *, int, struct lwp *);
 	int (*im_kqfilter)(void *, struct knote *);
 	int (*im_set_params)(void *, struct irda_params *);
 	int (*im_get_speeds)(void *, int *);
@@ -55,9 +55,7 @@ struct irframe_softc {
 	char				sc_open;
 	struct irda_params		sc_params;
 	u_int				sc_speedmask;
-#ifdef DIAGNOSTIC
-	u_int				sc_speed;
-#endif
+	u_int				sc_speed;	/* DIAGNOSTIC only */
 };
 
 #define IRDA_DEFAULT_SPEED	9600

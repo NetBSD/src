@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.47 2005/05/17 13:55:33 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.47.2.1 2006/06/21 15:12:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -102,10 +102,11 @@
 /*
  * extract flags
  */
-#define UVM_EXTRACT_REMOVE	0x1	/* remove mapping from old map */
-#define UVM_EXTRACT_CONTIG	0x2	/* try to keep it contig */
-#define UVM_EXTRACT_QREF	0x4	/* use quick refs */
-#define UVM_EXTRACT_FIXPROT	0x8	/* set prot to maxprot as we go */
+#define UVM_EXTRACT_REMOVE	0x01	/* remove mapping from old map */
+#define UVM_EXTRACT_CONTIG	0x02	/* try to keep it contig */
+#define UVM_EXTRACT_QREF	0x04	/* use quick refs */
+#define UVM_EXTRACT_FIXPROT	0x08	/* set prot to maxprot as we go */
+#define UVM_EXTRACT_RESERVED	0x10	/* caller did uvm_map_reserve() */
 
 #endif /* _KERNEL */
 
@@ -233,6 +234,9 @@ struct vm_map {
 };
 
 #if defined(_KERNEL)
+
+#include <sys/callback.h>
+
 struct vm_map_kernel {
 	struct vm_map vmk_map;
 	LIST_HEAD(, uvm_kmapent_hdr) vmk_kentry_free;
@@ -240,6 +244,7 @@ struct vm_map_kernel {
 	struct vm_map_entry	*vmk_merged_entries;
 			/* Merged entries, kept for later splitting */
 
+	struct callback_head vmk_reclaim_callback;
 #if !defined(PMAP_MAP_POOLPAGE)
 	struct pool vmk_vacache; /* kva cache */
 	struct pool_allocator vmk_vacache_allocator; /* ... and its allocator */
@@ -293,16 +298,6 @@ do {									\
 #endif /* _KERNEL */
 
 /*
- * handle inline options
- */
-
-#ifdef UVM_MAP_INLINE
-#define MAP_INLINE static __inline
-#else
-#define MAP_INLINE /* nothing */
-#endif /* UVM_MAP_INLINE */
-
-/*
  * globals:
  */
 
@@ -316,7 +311,6 @@ extern vaddr_t	uvm_maxkaddr;
  * protos: the following prototypes define the interface to vm_map
  */
 
-MAP_INLINE
 void		uvm_map_deallocate(struct vm_map *);
 
 int		uvm_map_clean(struct vm_map *, vaddr_t, vaddr_t, int);
@@ -324,7 +318,6 @@ void		uvm_map_clip_start(struct vm_map *, struct vm_map_entry *,
 		    vaddr_t, struct uvm_mapent_reservation *);
 void		uvm_map_clip_end(struct vm_map *, struct vm_map_entry *,
 		    vaddr_t, struct uvm_mapent_reservation *);
-MAP_INLINE
 struct vm_map	*uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_extract(struct vm_map *, vaddr_t, vsize_t,
 		    struct vm_map *, vaddr_t *, int);
@@ -337,21 +330,18 @@ int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
 boolean_t	uvm_map_lookup_entry(struct vm_map *, vaddr_t,
 		    struct vm_map_entry **);
-MAP_INLINE
 void		uvm_map_reference(struct vm_map *);
 int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map_entry *, int);
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
-		    vaddr_t *);
+		    vaddr_t *, uvm_flag_t);
 void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_setup_kernel(struct vm_map_kernel *,
 		    vaddr_t, vaddr_t, int);
-MAP_INLINE
 struct vm_map_kernel *
 		vm_map_to_kernel(struct vm_map *);
 int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
-MAP_INLINE
 void		uvm_unmap1(struct vm_map *, vaddr_t, vaddr_t, int);
 #define	uvm_unmap(map, s, e)	uvm_unmap1((map), (s), (e), 0)
 void		uvm_unmap_detach(struct vm_map_entry *,int);
@@ -369,6 +359,8 @@ int		uvm_mapent_reserve(struct vm_map *,
 		    struct uvm_mapent_reservation *, int, int);
 void		uvm_mapent_unreserve(struct vm_map *,
 		    struct uvm_mapent_reservation *);
+
+vsize_t		uvm_mapent_overhead(vsize_t, int);
 
 int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);
@@ -520,6 +512,8 @@ do {									\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
 } while (/*CONSTCOND*/ 0)
+
+boolean_t vm_map_starved_p(struct vm_map *);
 
 #endif /* _KERNEL */
 

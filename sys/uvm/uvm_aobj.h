@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.12 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.12.16.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -57,6 +57,9 @@
 #define UAO_FLAG_NOSWAP		0x8	/* aobj can't swap (kernel obj only!) */
 
 #ifdef _KERNEL
+#if defined(_KERNEL_OPT)
+#include "opt_vmswap.h"
+#endif
 
 /*
  * prototypes
@@ -64,9 +67,16 @@
 
 void uao_init(void);
 int uao_set_swslot(struct uvm_object *, int, int);
+#if defined(VMSWAP)
 int uao_find_swslot(struct uvm_object *, int);
 void uao_dropswap(struct uvm_object *, int);
 int uao_swap_off(int, int);
+void uao_dropswap_range(struct uvm_object *, voff_t, voff_t);
+#else /* defined(VMSWAP) */
+#define	uao_find_swslot(obj, off)	0
+#define	uao_dropswap(obj, off)		/* nothing */
+#define	uao_dropswap_range(obj, lo, hi)	/* nothing */
+#endif /* defined(VMSWAP) */
 
 /*
  * globals

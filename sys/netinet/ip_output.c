@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.153.2.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.1 2006/06/21 15:11:01 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/kauth.h>
 #ifdef FAST_IPSEC
 #include <sys/domain.h>
 #endif
@@ -140,9 +141,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
-#ifdef IPSEC_NAT_T
-#include <netinet/udp.h>
-#endif
 #endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
@@ -151,16 +149,19 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153 2005/05/29 21:41:23 christos Exp
 #include <netipsec/xform.h>
 #endif	/* FAST_IPSEC*/
 
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
+
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
+static int ip_getoptval(struct mbuf *, u_int8_t *, u_int);
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
 #endif
 
-int	udp_do_loopback_cksum = 0;
-int	tcp_do_loopback_cksum = 0;
 int	ip_do_loopback_cksum = 0;
 
 #define	IN_NEED_CHECKSUM(ifp, csum_flags) \
@@ -226,11 +227,11 @@ ip_output(struct mbuf *m0, ...)
 	struct ip_moptions *imo;
 	struct socket *so;
 	va_list ap;
-#ifdef IPSEC
-	struct secpolicy *sp = NULL;
 #ifdef IPSEC_NAT_T
 	int natt_frag = 0;
 #endif
+#ifdef IPSEC
+	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
@@ -471,14 +472,12 @@ ip_output(struct mbuf *m0, ...)
 
 		goto sendit;
 	}
-#ifndef notdef
 	/*
 	 * If source address not specified yet, use address
 	 * of outgoing interface.
 	 */
 	if (in_nullhost(ip->ip_src))
 		ip->ip_src = ia->ia_addr.sin_addr;
-#endif
 
 	/*
 	 * packets with Class-D address as source are not valid per
@@ -710,6 +709,21 @@ skip_ipsec:
 	 *    sp == NULL, error != 0	    discard packet, report error
 	 */
 	if (sp != NULL) {
+#ifdef IPSEC_NAT_T
+		/*
+		 * NAT-T ESP fragmentation: don't do IPSec processing now,
+		 * we'll do it on each fragmented packet.
+		 */
+		if (sp->req->sav &&
+		    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
+		     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
+			if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+				natt_frag = 1;
+				mtu = sp->req->sav->esp_frag;
+				goto spd_done;
+			}
+		}
+#endif /* IPSEC_NAT_T */
 		/* Loop detection, check if ipsec processing already done */
 		IPSEC_ASSERT(sp->req != NULL, ("ip_output: no ipsec request"));
 		for (mtag = m_tag_first(m); mtag != NULL;
@@ -935,6 +949,7 @@ spd_done:
 #ifdef IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
+#endif /* IPSEC */
 
 #ifdef IPSEC_NAT_T
 			/*
@@ -948,7 +963,6 @@ spd_done:
 				    ro, flags, imo, so, mtu_p);
 			} else
 #endif /* IPSEC_NAT_T */
-#endif /* IPSEC */
 			{
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
@@ -1177,9 +1191,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		if (n == 0)
 			return (m);
 		MCLAIM(n, m->m_owner);
-		M_COPY_PKTHDR(n, m);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
+		M_MOVE_PKTHDR(n, m);
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;
@@ -1361,7 +1373,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			int priv = 0;
 
 #ifdef __NetBSD__
-			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+			if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							&p->p_acflag))
 				priv = 0;
 			else
 				priv = 1;
@@ -1630,6 +1643,32 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 	return ifp;
 }
 
+static int
+ip_getoptval(struct mbuf *m, u_int8_t *val, u_int maxval)
+{
+	u_int tval;
+
+	if (m == NULL)
+		return EINVAL;
+
+	switch (m->m_len) {
+	case sizeof(u_char):
+		tval = *(mtod(m, u_char *));
+		break;
+	case sizeof(u_int):
+		tval = *(mtod(m, u_int *));
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (tval > maxval)
+		return EINVAL;
+
+	*val = tval;
+	return 0;
+}
+
 /*
  * Set the IP multicast options in response to user setsockopt().
  */
@@ -1637,7 +1676,6 @@ int
 ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 {
 	int error = 0;
-	u_char loop;
 	int i;
 	struct in_addr addr;
 	struct ip_mreq *mreq;
@@ -1706,11 +1744,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		/*
 		 * Set the IP time-to-live for outgoing multicast packets.
 		 */
-		if (m == NULL || m->m_len != 1) {
-			error = EINVAL;
-			break;
-		}
-		imo->imo_multicast_ttl = *(mtod(m, u_char *));
+		error = ip_getoptval(m, &imo->imo_multicast_ttl, MAXTTL);
 		break;
 
 	case IP_MULTICAST_LOOP:
@@ -1718,12 +1752,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * Set the loopback flag for outgoing multicast packets.
 		 * Must be zero or one.
 		 */
-		if (m == NULL || m->m_len != 1 ||
-		   (loop = *(mtod(m, u_char *))) > 1) {
-			error = EINVAL;
-			break;
-		}
-		imo->imo_multicast_loop = loop;
+		error = ip_getoptval(m, &imo->imo_multicast_loop, 1);
 		break;
 
 	case IP_ADD_MEMBERSHIP:

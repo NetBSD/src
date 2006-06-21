@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_tran.h,v 1.4 2003/06/29 22:32:11 fvdl Exp $	*/
+/*	$NetBSD: smb_tran.h,v 1.4.18.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -37,6 +37,10 @@
 #ifndef _NETSMB_SMB_TRAN_H_
 #define	_NETSMB_SMB_TRAN_H_
 
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
+
 #include <sys/socket.h>
 
 /*
@@ -56,20 +60,20 @@ struct smb_tran_ops;
 
 struct smb_tran_desc {
 	sa_family_t	tr_type;
-	int	(*tr_create)(struct smb_vc *vcp, struct proc *p);
-	int	(*tr_done)(struct smb_vc *vcp, struct proc *p);
-	int	(*tr_bind)(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p);
-	int	(*tr_connect)(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p);
-	int	(*tr_disconnect)(struct smb_vc *vcp, struct proc *p);
-	int	(*tr_send)(struct smb_vc *vcp, struct mbuf *m0, struct proc *p);
-	int	(*tr_recv)(struct smb_vc *vcp, struct mbuf **mpp, struct proc *p);
+	int	(*tr_create)(struct smb_vc *vcp, struct lwp *l);
+	int	(*tr_done)(struct smb_vc *vcp, struct lwp *l);
+	int	(*tr_bind)(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l);
+	int	(*tr_connect)(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l);
+	int	(*tr_disconnect)(struct smb_vc *vcp, struct lwp *l);
+	int	(*tr_send)(struct smb_vc *vcp, struct mbuf *m0, struct lwp *l);
+	int	(*tr_recv)(struct smb_vc *vcp, struct mbuf **mpp, struct lwp *l);
 	void	(*tr_timo)(struct smb_vc *vcp);
 	void	(*tr_intr)(struct smb_vc *vcp);
 	int	(*tr_getparam)(struct smb_vc *vcp, int param, void *data);
 	int	(*tr_setparam)(struct smb_vc *vcp, int param, void *data);
 	int	(*tr_fatal)(struct smb_vc *vcp, int error);
 #ifdef notyet
-	int	(*tr_poll)(struct smb_vc *vcp, struct proc *p);
+	int	(*tr_poll)(struct smb_vc *vcp, struct lwp *l);
 	int	(*tr_cmpaddr)(void *addr1, void *addr2);
 #endif
 	LIST_ENTRY(smb_tran_desc)	tr_link;
@@ -88,4 +92,4 @@ struct smb_tran_desc {
 #define	SMB_TRAN_SETPARAM(vcp,par,data)	(vcp)->vc_tdesc->tr_setparam(vcp, par, data)
 #define	SMB_TRAN_FATAL(vcp, error)	(vcp)->vc_tdesc->tr_fatal(vcp, error)
 
-#endif /* _NETSMB_SMB_TRAN_H_ */
+#endif /* !_NETSMB_SMB_TRAN_H_ */

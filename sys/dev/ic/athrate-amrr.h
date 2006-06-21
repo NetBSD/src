@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-amrr.h,v 1.1.1.1.2.1 2006/06/21 15:02:53 yamt Exp $ */
+
 /*-
  * Copyright (c) 2004 INRIA
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting

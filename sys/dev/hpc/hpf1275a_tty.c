@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.2 2004/10/15 04:38:37 thorpej Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.2.12.1 2006/06/21 15:02:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.2 2004/10/15 04:38:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.2.12.1 2006/06/21 15:02:46 yamt Exp $");
+
+#include "opt_wsdisplay_compat.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,21 +38,22 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.2 2004/10/15 04:38:37 thorpej Exp
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/fcntl.h>
-#include <sys/proc.h>		/* XXX: for curproc */
+#include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 #ifdef GPROF
 #include <sys/gmon.h>
-#endif
-
-#include <dev/pckbport/wskbdmap_mfii.h>
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-#include <dev/hpc/pckbd_encode.h>
 #endif
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#include <dev/pckbport/wskbdmap_mfii.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <dev/hpc/pckbd_encode.h>
+#endif
 
 
 extern struct cfdriver hpf1275a_cd;
@@ -61,7 +64,9 @@ struct hpf1275a_softc {
 	struct tty *sc_tp;		/* back reference to the tty */
 	struct device *sc_wskbd;	/* wskbd child */
 	int sc_enabled;
-
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 
@@ -82,17 +87,28 @@ static int	hpf1275a_detach(struct device *, int);
 static int	hpf1275a_wskbd_enable(void *, int);
 static void	hpf1275a_wskbd_set_leds(void *, int);
 static int	hpf1275a_wskbd_ioctl(void *, u_long, caddr_t, int,
-				     struct proc *);
+				     struct lwp *);
 
 
+/* 
+ * It doesn't need to be exported, as only hpf1275aattach() uses it,
+ * but there's no "official" way to make it static.
+ */
 CFATTACH_DECL(hpf1275a, sizeof(struct hpf1275a_softc),
     hpf1275a_match, hpf1275a_attach, hpf1275a_detach, NULL);
 
 
 static struct linesw hpf1275a_disc = {
-	"hpf1275a", -1, hpf1275a_open, hpf1275a_close,
-	ttyerrio, ttyerrio, ttynullioctl,
-	hpf1275a_input, ttstart, nullmodem, ttpoll,
+	.l_name = "hpf1275a",
+	.l_open = hpf1275a_open,
+	.l_close = hpf1275a_close,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = ttynullioctl,
+	.l_rint = hpf1275a_input,
+	.l_start = ttstart,
+	.l_modem = nullmodem,
+	.l_poll = ttpoll
 };
 
 
@@ -103,13 +119,13 @@ static const struct wskbd_accessops hpf1275a_wskbd_accessops = {
 };
 
 
-static struct wskbd_mapdata hpf1275a_wskbd_keymapdata = {
+static const struct wskbd_mapdata hpf1275a_wskbd_keymapdata = {
 	pckbd_keydesctab, KB_US
 };
 
 
 /* F1275A scancodes -> XT scancodes so that we can use pckbd_keydesctab. */
-static uint8_t hpf1275a_to_xtscan[128] = {
+static const uint8_t hpf1275a_to_xtscan[128] = {
 	[0x04] = 30,		/* a */
 	[0x05] = 48,		/* b */
 	[0x06] = 46,		/* c */
@@ -206,13 +222,12 @@ static uint8_t hpf1275a_to_xtscan[128] = {
 void
 hpf1275aattach(int n)
 {
-	int discno;
 	int error;
 
-	discno = ttyldisc_add(&hpf1275a_disc, -1);
-	if (discno < 0) {
-		printf("%s: unable to register line discipline\n",
-		       hpf1275a_cd.cd_name);
+	error = ttyldisc_attach(&hpf1275a_disc);
+	if (error) {
+		printf("%s: unable to register line discipline, error = %d\n",
+		       hpf1275a_cd.cd_name, error);
 		return;
 	}
 
@@ -221,7 +236,7 @@ hpf1275aattach(int n)
 		printf("%s: unable to register cfattach, error = %d\n",
 		       hpf1275a_cd.cd_name, error);
 		config_cfdriver_detach(&hpf1275a_cd);
-		ttyldisc_remove(hpf1275a_disc.l_name);
+		(void) ttyldisc_detach(&hpf1275a_disc);
 	}
 }
 
@@ -247,7 +262,7 @@ hpf1275a_match(struct device *self, struct cfdata *cfdata, void *arg)
 static void
 hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = device_private(self);
 	struct wskbddev_attach_args wska;
 
 	wska.console = 0;
@@ -256,6 +271,9 @@ hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 	wska.accesscookie = sc;
 
 	sc->sc_enabled = 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	sc->sc_rawkbd = 0;
+#endif
 	sc->sc_wskbd = config_found(self, &wska, wskbddevprint);
 }
 
@@ -266,7 +284,7 @@ hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 static int
 hpf1275a_detach(struct device *self, int flags)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = device_private(self);
 	int error;
 
 	if (sc->sc_wskbd == NULL)
@@ -281,7 +299,7 @@ hpf1275a_detach(struct device *self, int flags)
 /*
  * Line discipline open routine.
  */
-int
+static int
 hpf1275a_open(dev_t dev, struct tty *tp)
 {
 	static struct cfdata hpf1275a_cfdata = {
@@ -294,12 +312,19 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	struct hpf1275a_softc *sc;
 	int error, s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					&p->p_acflag);
+	if (error != 0)
+	    return (error);
 
 	s = spltty();
 
-	sc = (struct hpf1275a_softc *) config_attach_pseudo(&hpf1275a_cfdata);
+	if (tp->t_linesw == &hpf1275a_disc) {
+		splx(s);
+		return 0;
+	}
+
+	sc = (struct hpf1275a_softc *)config_attach_pseudo(&hpf1275a_cfdata);
 	if (sc == NULL) {
 		splx(s);
 		return (EIO);
@@ -316,15 +341,16 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 /*
  * Line discipline close routine.
  */
-int
+static int
 hpf1275a_close(struct tty *tp, int flag)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)tp->t_sc;
+	struct hpf1275a_softc *sc = tp->t_sc;
 	int s;
 
 	s = spltty();
 	ttyflush(tp, FREAD | FWRITE);
-	tp->t_linesw = linesw[0]; /* default line discipline */
+	ttyldisc_release(tp->t_linesw);
+	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
 		tp->t_sc = NULL;
 		if (sc->sc_tp == tp)
@@ -338,10 +364,10 @@ hpf1275a_close(struct tty *tp, int flag)
 /*
  * Feed input from the keyboard to wskbd(4).
  */
-int
+static int
 hpf1275a_input(int c, struct tty *tp)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)tp->t_sc;
+	struct hpf1275a_softc *sc = tp->t_sc;
 	int code;
 	u_int type;
 	int xtscan;
@@ -361,12 +387,22 @@ hpf1275a_input(int c, struct tty *tp)
 
 	xtscan = hpf1275a_to_xtscan[code];
 	if (xtscan == 0) {
-		printf("hpf1275a: unknown code 0x%x\n", code);
+		printf("%s: unknown code 0x%x\n", sc->sc_dev.dv_xname, code);
 		return (0);
 	}
 
 	KASSERT(sc->sc_wskbd != NULL);
-	wskbd_input(sc->sc_wskbd, type, xtscan);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_rawkbd) {
+		u_char data[16];
+		int n;
+
+		n = pckbd_encode(type, xtscan, data);
+		wskbd_rawinput(sc->sc_wskbd, data, n);
+	} else
+#endif
+		wskbd_input(sc->sc_wskbd, type, xtscan);
 
 	return (0);
 }
@@ -375,7 +411,7 @@ hpf1275a_input(int c, struct tty *tp)
 static int
 hpf1275a_wskbd_enable(void *self, int on)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = self;
 
 	sc->sc_enabled = on;
 	return (0);
@@ -394,9 +430,11 @@ hpf1275a_wskbd_set_leds(void *self, int leds)
 
 static int
 hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
-		     struct proc *p)
+		     struct lwp *l)
 {
-	/* struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self; */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct hpf1275a_softc *sc = self;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -406,6 +444,12 @@ hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0; /* this keyboard has no leds */
 		return (0);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
+		return (0);
+#endif
 
 	default:
 		return (EPASSTHROUGH);

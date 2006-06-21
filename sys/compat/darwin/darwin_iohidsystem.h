@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.14 2005/05/29 22:07:02 christos Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.14.2.1 2006/06/21 14:58:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ struct  darwin_iohidsystem_shmem {
 int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
 int darwin_iohidsystem_connect_method_structi_structo(struct mach_trap_args *);
 int darwin_iohidsystem_connect_map_memory(struct mach_trap_args *);
-void darwin_iohidsystem_postfake(struct proc *);
+void darwin_iohidsystem_postfake(struct lwp *);
 
 /* I/O notifications: XXX not checked on Darwin */
 

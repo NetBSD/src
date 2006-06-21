@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.68 2005/05/30 04:35:22 christos Exp $ */
+/* $NetBSD: if_ti.c,v 1.68.2.1 2006/06/21 15:05:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.68 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.68.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2549,7 +2549,7 @@ static void ti_init2(sc)
 	ifp = &sc->ethercom.ec_if;
 
 	/* Specify MTU and interface index. */
-	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dev.dv_unit); /* ??? */
+	CSR_WRITE_4(sc, TI_GCR_IFINDEX, device_unit(&sc->sc_dev)); /* ??? */
 
 	tmp = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
 	if (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU)

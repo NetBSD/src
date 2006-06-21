@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.11 2005/02/26 22:58:57 perry Exp $	*/
+/*	$NetBSD: write.c,v 1.11.4.1 2006/06/21 15:10:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -64,13 +64,14 @@
 #include "stand.h"
 
 ssize_t
-write(fd, dest, bcount)
+write(fd, destp, bcount)
 	int fd;
-	void *dest;
+	const void *destp;
 	size_t bcount;
 {
 	struct open_file *f = &files[fd];
 	size_t resid;
+	void *dest = __UNCONST(destp);
 
 #if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_WRITE)) {

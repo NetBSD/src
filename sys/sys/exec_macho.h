@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.17 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.17.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 /*
  * CPU supported by a given arch, in sys/arch/<arch>/<arch>/macho_machdep.c
  */
-extern u_int32_t exec_macho_supported_cpu[];
+extern uint32_t exec_macho_supported_cpu[];
 
 /*
  * the `fat' binary description
@@ -257,7 +257,7 @@ struct exec_macho_emul_arg {
 struct exec_package;
 struct ps_strings;
 u_long	exec_macho_thread_entry(struct exec_macho_thread_command *);
-int	exec_macho_makecmds(struct proc *, struct exec_package *);
+int	exec_macho_makecmds(struct lwp *, struct exec_package *);
 int	exec_macho_copyargs(struct proc *, struct exec_package *,
 			    struct ps_strings *, char **, void *);
 #endif /* _KERNEL */

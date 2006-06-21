@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.99 2005/05/30 23:04:53 chs Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.99.2.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99 2005/05/30 23:04:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99.2.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -224,8 +224,8 @@ struct freelist {
 #endif /* DIAGNOSTIC */
 
 /*
- * The following are standard, build-in malloc types are are not
- * specific to any one subsystem.
+ * The following are standard, built-in malloc types and are not
+ * specific to any subsystem.
  */
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
 MALLOC_DEFINE(M_DMAMAP, "DMA map", "bus_dma(9) structures");

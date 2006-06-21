@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.25 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.25.4.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.25 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.25.4.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.25 2005/02/26 21:34:55 perry Exp $"
  * package.
  */
 int
-exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
+exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	struct ecoff_exechdr *execp = epp->ep_hdr;
@@ -68,7 +68,7 @@ exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 	if (ECOFF_BADMAG(execp))
 		return ENOEXEC;
 
-	error = (*epp->ep_esch->u.ecoff_probe_func)(p, epp);
+	error = (*epp->ep_esch->u.ecoff_probe_func)(l, epp);
 
 	/*
 	 * if there was an error or there are already vmcmds set up,
@@ -84,15 +84,15 @@ exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 	 */
 	switch (execp->a.magic) {
 	case ECOFF_OMAGIC:
-		error = exec_ecoff_prep_omagic(p, epp, epp->ep_hdr,
+		error = exec_ecoff_prep_omagic(l, epp, epp->ep_hdr,
 		   epp->ep_vp);
 		break;
 	case ECOFF_NMAGIC:
-		error = exec_ecoff_prep_nmagic(p, epp, epp->ep_hdr,
+		error = exec_ecoff_prep_nmagic(l, epp, epp->ep_hdr,
 		   epp->ep_vp);
 		break;
 	case ECOFF_ZMAGIC:
-		error = exec_ecoff_prep_zmagic(p, epp, epp->ep_hdr,
+		error = exec_ecoff_prep_zmagic(l, epp, epp->ep_hdr,
 		   epp->ep_vp);
 		break;
 	default:
@@ -101,7 +101,7 @@ exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 
 	/* set up the stack */
 	if (!error)
-		error = (*epp->ep_esch->es_setup_stack)(p, epp);
+		error = (*epp->ep_esch->es_setup_stack)(l, epp);
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -113,7 +113,7 @@ exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
  * exec_ecoff_prep_omagic(): Prepare a ECOFF OMAGIC binary's exec package
  */
 int
-exec_ecoff_prep_omagic(struct proc *p, struct exec_package *epp,
+exec_ecoff_prep_omagic(struct lwp *l, struct exec_package *epp,
     struct ecoff_exechdr *execp, struct vnode *vp)
 {
 	struct ecoff_aouthdr *eap = &execp->a;
@@ -144,7 +144,7 @@ exec_ecoff_prep_omagic(struct proc *p, struct exec_package *epp,
  *                           package.
  */
 int
-exec_ecoff_prep_nmagic(struct proc *p, struct exec_package *epp,
+exec_ecoff_prep_nmagic(struct lwp *l, struct exec_package *epp,
     struct ecoff_exechdr *execp, struct vnode *vp)
 {
 	struct ecoff_aouthdr *eap = &execp->a;
@@ -184,7 +184,7 @@ exec_ecoff_prep_nmagic(struct proc *p, struct exec_package *epp,
  * text, data, bss, and stack segments.
  */
 int
-exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp,
+exec_ecoff_prep_zmagic(struct lwp *l, struct exec_package *epp,
     struct ecoff_exechdr *execp, struct vnode *vp)
 {
 	struct ecoff_aouthdr *eap = &execp->a;

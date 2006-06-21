@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.57 2005/06/03 22:01:01 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.57.2.1 2006/06/21 15:08:12 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.57 2005/06/03 22:01:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.57.2.1 2006/06/21 15:08:12 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.57 2005/06/03 22:01:01 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -350,7 +351,7 @@ xdgetdisklabel(xd, b)
 	/* Required parameter for readdisklabel() */
 	xd->sc_dk.dk_label->d_secsize = XDFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xd->sc_dev), RAW_PART),
 			    xddummystrat,
 			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 	if (err) {
@@ -634,7 +635,7 @@ xdcattach(parent, self, aux)
 
 	/* init queue of waiting bufs */
 
-	bufq_alloc(&xdc->sc_wq, BUFQ_FCFS);
+	bufq_alloc(&xdc->sc_wq, "fcfs", 0);
 	callout_init(&xdc->sc_tick_ch);
 
 	/*
@@ -940,10 +941,10 @@ done:
  * xdclose: close device
  */
 int
-xdclose(dev, flag, fmt, p)
+xdclose(dev, flag, fmt, l)
 	dev_t   dev;
 	int     flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -1006,12 +1007,12 @@ xddump(dev, blkno, va, size)
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
 int
-xdioctl(dev, command, addr, flag, p)
+xdioctl(dev, command, addr, flag, l)
 	dev_t   dev;
 	u_long  command;
 	caddr_t addr;
 	int     flag;
-	struct proc *p;
+	struct lwp *l;
 
 {
 	struct xd_softc *xd;
@@ -1120,7 +1121,8 @@ xdioctl(dev, command, addr, flag, p)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_proc->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xdc_ioctlcmd(xd, dev, xio));
 
@@ -1133,10 +1135,10 @@ xdioctl(dev, command, addr, flag, p)
  */
 
 int
-xdopen(dev, flag, fmt, p)
+xdopen(dev, flag, fmt, l)
 	dev_t   dev;
 	int     flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -1303,7 +1305,7 @@ xdstrategy(bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && BUFQ_PEEK(&parent->sc_wq) != NULL)
+	while (parent->nfree > 0 && BUFQ_PEEK(parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1312,7 +1314,7 @@ xdstrategy(bp)
 	 */
 
 	if (parent->nfree == 0) {
-		BUFQ_PUT(&parent->sc_wq, bp);
+		BUFQ_PUT(parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1364,7 +1366,7 @@ xdcintr(v)
 
 	/* fill up any remaining iorq's with queue'd buffers */
 
-	while (xdcsc->nfree > 0 && BUFQ_PEEK(&xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && BUFQ_PEEK(xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1604,7 +1606,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = BUFQ_GET(&xdcsc->sc_wq);
+		bp = BUFQ_GET(xdcsc->sc_wq);
 		if (bp == NULL)
 			panic("xdc_startbuf bp");
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
@@ -1634,7 +1636,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		printf("%s: warning: cannot load DMA map\n",
 			xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		BUFQ_PUT(&xdcsc->sc_wq, bp);
+		BUFQ_PUT(xdcsc->sc_wq, bp);
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
@@ -1840,7 +1842,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && BUFQ_PEEK(&xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && BUFQ_PEEK(xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 

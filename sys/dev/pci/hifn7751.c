@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.23 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.23.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,13 +48,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.23 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.23.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include "rnd.h"
-#include "opencrypto.h"
 
-#if NRND == 0 || NOPENCRYPTO == 0
-#error hifn7751 requires rnd and opencrypto pseudo-devices
+#if NRND == 0
+#error hifn7751 requires rnd pseudo-devices
 #endif
 
 
@@ -88,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.23 2005/06/28 00:28:42 thorpej Exp $"
 #undef HIFN_DEBUG
 
 #ifdef __NetBSD__
-#define	HIFN_NO_RNG			/* until statistically tested */
 #define M_DUP_PKTHDR M_COPY_PKTHDR	/* XXX */
 #endif
 
@@ -149,9 +147,7 @@ static int	hifn_dmamap_load_src(struct hifn_softc *,
 static int	hifn_dmamap_load_dst(struct hifn_softc *,
 				     struct hifn_command *);
 static int	hifn_init_pubrng(struct hifn_softc *);
-#ifndef HIFN_NO_RNG
-static static	void hifn_rng(void *);
-#endif
+static void	hifn_rng(void *);
 static void	hifn_tick(void *);
 static void	hifn_abort(struct hifn_softc *);
 static void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *,
@@ -512,20 +508,41 @@ hifn_init_pubrng(struct hifn_softc *sc)
 			    READ_REG_1(sc, HIFN_1_RNG_CONFIG) |
 			    HIFN_RNGCFG_ENA);
 
+		/*
+		 * The Hifn RNG documentation states that at their
+		 * recommended "conservative" RNG config values,
+		 * the RNG must warm up for 0.4s before providing
+		 * data that meet their worst-case estimate of 0.06
+		 * bits of random data per output register bit.
+		 */
+		DELAY(4000);
+
+#ifdef __NetBSD__
+		/*
+		 * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
+		 * XXX here is unobvious: we later feed raw bits
+		 * XXX into the "entropy pool" with rnd_add_data,
+		 * XXX explicitly supplying an entropy estimate.
+		 * XXX In this context, NO_ESTIMATE serves only
+		 * XXX to prevent rnd_add_data from trying to
+		 * XXX use the *time at which we added the data*
+		 * XXX as entropy, which is not a good idea since
+		 * XXX we add data periodically from a callout.
+		 */
+		rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
+				  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+#endif
+
 		sc->sc_rngfirst = 1;
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
 		else
 			sc->sc_rnghz = 1;
-#ifndef	HIFN_NO_RNG
 #ifdef	__OpenBSD__
 		timeout_set(&sc->sc_rngto, hifn_rng, sc);
-		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else	/* !__OpenBSD__ */
 		callout_init(&sc->sc_rngto);
-		callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
 #endif	/* !__OpenBSD__ */
-#endif	/* HIFN_NO_RNG */
 	}
 
 	/* Enable public key engine, if available */
@@ -535,20 +552,26 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
 
+	/* Call directly into the RNG once to prime the pool. */
+	hifn_rng(sc);   /* Sets callout/timeout at end */
+
 	return (0);
 }
 
-#ifndef HIFN_NO_RNG
 static void
 hifn_rng(void *vsc)
 {
-#ifndef	__NetBSD__
 	struct hifn_softc *sc = vsc;
-	u_int32_t num1, sts, num2;
+#ifdef __NetBSD__
+	u_int32_t num[HIFN_RNG_BITSPER * RND_ENTROPY_THRESHOLD];
+#else
+	u_int32_t num[2];
+#endif
+	u_int32_t sts;
 	int i;
 
 	if (sc->sc_flags & HIFN_IS_7811) {
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < 5; i++) {	/* XXX why 5? */
 			sts = READ_REG_1(sc, HIFN_1_7811_RNGSTS);
 			if (sts & HIFN_7811_RNGSTS_UFL) {
 				printf("%s: RNG underflow: disabling\n",
@@ -562,22 +585,85 @@ hifn_rng(void *vsc)
 			 * There are at least two words in the RNG FIFO
 			 * at this point.
 			 */
-			num1 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
-			num2 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			num[0] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			num[1] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+
 			if (sc->sc_rngfirst)
 				sc->sc_rngfirst = 0;
-			else {
-				add_true_randomness(num1);
-				add_true_randomness(num2);
-			}
+#ifdef __NetBSD__
+			rnd_add_data(&sc->sc_rnd_source, num,
+			    2 * sizeof(num[0]),
+			    (2 * sizeof(num[0]) * NBBY) /
+			    HIFN_RNG_BITSPER);
+#else
+			/*
+			 * XXX This is a really bad idea.
+			 * XXX Hifn estimate as little as 0.06
+			 * XXX actual bits of entropy per output
+			 * XXX register bit.  How can we tell the
+			 * XXX kernel RNG subsystem we're handing
+			 * XXX it 64 "true" random bits, for any
+			 * XXX sane value of "true"?
+			 * XXX
+			 * XXX The right thing to do here, if we
+			 * XXX cannot supply an estimate ourselves,
+			 * XXX would be to hash the bits locally.
+			 */
+			add_true_randomness(num[0]);
+			add_true_randomness(num[1]);
+#endif
+				
 		}
 	} else {
-		num1 = READ_REG_1(sc, HIFN_1_RNG_DATA);
+#ifdef __NetBSD__
+		/* First time through, try to help fill the pool. */
+		int nwords = sc->sc_rngfirst ?
+		    sizeof(num) / sizeof(num[0]) : 4;
+#else
+		int nwords = 2;
+#endif
+		/*
+		 * We must be *extremely* careful here.  The Hifn
+		 * 795x differ from the published 6500 RNG design
+		 * in more ways than the obvious lack of the output
+		 * FIFO and LFSR control registers.  In fact, there
+		 * is only one LFSR, instead of the 6500's two, and
+		 * it's 32 bits, not 31.
+		 *
+		 * Further, a block diagram obtained from Hifn shows
+		 * a very curious latching of this register: the LFSR
+		 * rotates at a frequency of RNG_Clk / 8, but the
+		 * RNG_Data register is latched at a frequency of
+		 * RNG_Clk, which means that it is possible for
+		 * consecutive reads of the RNG_Data register to read
+		 * identical state from the LFSR.  The simplest
+		 * workaround seems to be to read eight samples from
+		 * the register for each one that we use.  Since each
+		 * read must require at least one PCI cycle, and
+		 * RNG_Clk is at least PCI_Clk, this is safe.
+		 */
 
-		if (sc->sc_rngfirst)
+
+		if (sc->sc_rngfirst) {
 			sc->sc_rngfirst = 0;
-		else
-			add_true_randomness(num1);
+		}
+		
+
+		for(i = 0 ; i < nwords * 8; i++)
+		{
+			volatile u_int32_t regtmp;
+			regtmp = READ_REG_1(sc, HIFN_1_RNG_DATA);
+			num[i / 8] = regtmp;
+		}
+#ifdef __NetBSD__
+		rnd_add_data(&sc->sc_rnd_source, num,
+		    nwords * sizeof(num[0]),
+		    (nwords * sizeof(num[0]) * NBBY) /
+		    HIFN_RNG_BITSPER);
+#else
+		/* XXX a bad idea; see 7811 block above */
+		add_true_randomness(num[0]);
+#endif
 	}
 
 #ifdef	__OpenBSD__
@@ -585,9 +671,7 @@ hifn_rng(void *vsc)
 #else
 	callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
 #endif
-#endif	/*!__NetBSD__*/
 }
-#endif
 
 static void
 hifn_puc_wait(struct hifn_softc *sc)
@@ -1702,11 +1786,19 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 	 * We don't worry about missing an interrupt (which a "command wait"
 	 * interrupt salvages us from), unless there is more than one command
 	 * in the queue.
+	 *
+	 * XXX We do seem to miss some interrupts.  So we always enable
+	 * XXX command wait.  From OpenBSD revision 1.149.
+	 *
 	 */
+#if 0
 	if (dma->cmdu > 1) {
+#endif
 		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+#if 0
 	}
+#endif
 
 	hifnstats.hst_ipackets++;
 	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
@@ -1902,7 +1994,6 @@ hifn_intr(void *arg)
 
 		if (i != HIFN_D_RES_RSIZE) {
 			struct hifn_command *cmd;
-			u_int8_t *macbuf = NULL;
 
 			HIFN_RES_SYNC(sc, i, BUS_DMASYNC_POSTREAD);
 			cmd = dma->hifn_commands[i];
@@ -1910,12 +2001,7 @@ hifn_intr(void *arg)
 				/*("hifn_intr: null command slot %u", i)*/);
 			dma->hifn_commands[i] = NULL;
 
-			if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
-				macbuf = dma->result_bufs[i];
-				macbuf += 12;
-			}
-
-			hifn_callback(sc, cmd, macbuf);
+			hifn_callback(sc, cmd, dma->result_bufs[i]);
 			hifnstats.hst_opackets++;
 		}
 
@@ -1998,11 +2084,16 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_AES_CBC:
+			/* Note that this is an initialization
+			   vector, not a cipher key; any function
+			   giving sufficient Hamming distance
+			   between outputs is fine.  Use of RC4
+			   to generate IVs has been FIPS140-2
+			   certified by several labs. */
 #ifdef __NetBSD__
-			rnd_extract_data(sc->sc_sessions[i].hs_iv,
+			arc4randbytes(sc->sc_sessions[i].hs_iv,
 			    c->cri_alg == CRYPTO_AES_CBC ?
-				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH,
-			    RND_EXTRACT_ANY);
+				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 #else	/* FreeBSD and OpenBSD have get_random_bytes */
 			/* XXX this may read fewer, does it matter? */
  			get_random_bytes(sc->sc_sessions[i].hs_iv,
@@ -2015,7 +2106,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 				return (EINVAL);
 			cry = 1;
 			break;
-#ifdef HAVE_CRYPTO_LSZ
+#ifdef HAVE_CRYPTO_LZS
 		case CRYPTO_LZS_COMP:
 			if (comp)
 				return (EINVAL);
@@ -2036,7 +2127,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 	if ((comp && mac) || (comp && cry))
 		return (EINVAL);
 
-	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
+	*sidp = HIFN_SID(device_unit(&sc->sc_dv), i);
 	sc->sc_sessions[i].hs_state = HS_STATE_USED;
 
 	return (0);
@@ -2126,7 +2217,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
 			maccrd = NULL;
 			enccrd = crd1;
-#ifdef	HAVE_CRYPTO_LSZ
+#ifdef	HAVE_CRYPTO_LZS
 		} else if (crd1->crd_alg == CRYPTO_LZS_COMP) {
 		  return (hifn_compression(sc, crp, cmd));
 #endif
@@ -2351,15 +2442,8 @@ hifn_abort(struct hifn_softc *sc)
 
 		if ((dma->resr[i].l & htole32(HIFN_D_VALID)) == 0) {
 			/* Salvage what we can. */
-			u_int8_t *macbuf;
-
-			if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
-				macbuf = dma->result_bufs[i];
-				macbuf += 12;
-			} else
-				macbuf = NULL;
 			hifnstats.hst_opackets++;
-			hifn_callback(sc, cmd, macbuf);
+			hifn_callback(sc, cmd, dma->result_bufs[i]);
 		} else {
 			if (cmd->src_map == cmd->dst_map) {
 				bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
@@ -2549,7 +2633,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 	crypto_done(crp);
 }
 
-#ifdef HAVE_CRYPTO_LSZ
+#ifdef HAVE_CRYPTO_LZS
 
 static int
 hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
@@ -2960,7 +3044,7 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 
 	return (m0);
 }
-#endif	/* HAVE_CRYPTO_LSZ */
+#endif	/* HAVE_CRYPTO_LZS */
 
 static void
 hifn_write_4(struct hifn_softc *sc, int reggrp, bus_size_t reg, u_int32_t val)

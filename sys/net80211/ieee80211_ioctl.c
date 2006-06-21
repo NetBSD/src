@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.20.2.1 2006/06/21 15:10:46 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.18 2005/01/24 19:32:09 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20.2.1 2006/06/21 15:10:46 yamt Exp $");
 #endif
 
 /*
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung 
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
  
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -68,8 +69,16 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20 2005/06/26 04:31:51 dyoung 
 
 #include <dev/ic/wi_ieee.h>
 
+#ifdef __FreeBSD__
 #define	IS_UP(_ic) \
-	(((_ic)->ic_ifp->if_flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
+	(((_ic)->ic_ifp->if_flags & IFF_UP) &&			\
+	    ((_ic)->ic_ifp->if_drv_flags & IFF_DRV_RUNNING))
+#endif
+#ifdef __NetBSD__
+#define	IS_UP(_ic) \
+	(((_ic)->ic_ifp->if_flags & IFF_UP) &&			\
+	    ((_ic)->ic_ifp->if_flags & IFF_RUNNING))
+#endif
 #define	IS_UP_AUTO(_ic) \
 	(IS_UP(_ic) && (_ic)->ic_roaming == IEEE80211_ROAMING_AUTO)
 
@@ -191,50 +200,51 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	struct ifnet *ifp = ic->ic_ifp;
 	int i, j, error;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct wi_req wreq;
+	struct wi_req *wreq;
 	struct wi_ltv_keys *keys;
 
-	error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
+	wreq = malloc(sizeof(*wreq), M_TEMP, M_WAITOK);
+	error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
 	if (error)
-		return error;
-	wreq.wi_len = 0;
-	switch (wreq.wi_type) {
+		goto out;
+	wreq->wi_len = 0;
+	switch (wreq->wi_type) {
 	case WI_RID_SERIALNO:
 	case WI_RID_STA_IDENTITY:
 		/* nothing appropriate */
 		break;
 	case WI_RID_NODENAME:
-		strlcpy((char *)&wreq.wi_val[1], hostname,
-		    sizeof(wreq.wi_val) - sizeof(wreq.wi_val[0]));
-		wreq.wi_val[0] = htole16(strlen(hostname));
-		wreq.wi_len = (1 + strlen(hostname) + 1) / 2;
+		strlcpy((char *)&wreq->wi_val[1], hostname,
+		    sizeof(wreq->wi_val) - sizeof(wreq->wi_val[0]));
+		wreq->wi_val[0] = htole16(strlen(hostname));
+		wreq->wi_len = (1 + strlen(hostname) + 1) / 2;
 		break;
 	case WI_RID_CURRENT_SSID:
 		if (ic->ic_state != IEEE80211_S_RUN) {
-			wreq.wi_val[0] = 0;
-			wreq.wi_len = 1;
+			wreq->wi_val[0] = 0;
+			wreq->wi_len = 1;
 			break;
 		}
-		wreq.wi_val[0] = htole16(ic->ic_bss->ni_esslen);
-		memcpy(&wreq.wi_val[1], ic->ic_bss->ni_essid,
+		wreq->wi_val[0] = htole16(ic->ic_bss->ni_esslen);
+		memcpy(&wreq->wi_val[1], ic->ic_bss->ni_essid,
 		    ic->ic_bss->ni_esslen);
-		wreq.wi_len = (1 + ic->ic_bss->ni_esslen + 1) / 2;
+		wreq->wi_len = (1 + ic->ic_bss->ni_esslen + 1) / 2;
 		break;
 	case WI_RID_OWN_SSID:
 	case WI_RID_DESIRED_SSID:
-		wreq.wi_val[0] = htole16(ic->ic_des_esslen);
-		memcpy(&wreq.wi_val[1], ic->ic_des_essid, ic->ic_des_esslen);
-		wreq.wi_len = (1 + ic->ic_des_esslen + 1) / 2;
+		wreq->wi_val[0] = htole16(ic->ic_des_esslen);
+		memcpy(&wreq->wi_val[1], ic->ic_des_essid, ic->ic_des_esslen);
+		wreq->wi_len = (1 + ic->ic_des_esslen + 1) / 2;
 		break;
 	case WI_RID_CURRENT_BSSID:
 		if (ic->ic_state == IEEE80211_S_RUN)
-			IEEE80211_ADDR_COPY(wreq.wi_val, ic->ic_bss->ni_bssid);
+			IEEE80211_ADDR_COPY(wreq->wi_val, ic->ic_bss->ni_bssid);
 		else
-			memset(wreq.wi_val, 0, IEEE80211_ADDR_LEN);
-		wreq.wi_len = IEEE80211_ADDR_LEN / 2;
+			memset(wreq->wi_val, 0, IEEE80211_ADDR_LEN);
+		wreq->wi_len = IEEE80211_ADDR_LEN / 2;
 		break;
 	case WI_RID_CHANNEL_LIST:
-		memset(wreq.wi_val, 0, sizeof(wreq.wi_val));
+		memset(wreq->wi_val, 0, sizeof(wreq->wi_val));
 		/*
 		 * Since channel 0 is not available for DS, channel 1
 		 * is assigned to LSB on WaveLAN.
@@ -245,112 +255,114 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			i = 0;
 		for (j = 0; i <= IEEE80211_CHAN_MAX; i++, j++)
 			if (isset(ic->ic_chan_active, i)) {
-				setbit((u_int8_t *)wreq.wi_val, j);
-				wreq.wi_len = j / 16 + 1;
+				setbit((u_int8_t *)wreq->wi_val, j);
+				wreq->wi_len = j / 16 + 1;
 			}
 		break;
 	case WI_RID_OWN_CHNL:
-		wreq.wi_val[0] = htole16(
+		wreq->wi_val[0] = htole16(
 			ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
-		wreq.wi_len = 1;
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_CURRENT_CHAN:
-		wreq.wi_val[0] = htole16(
-			ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan));
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(
+			ieee80211_chan2ieee(ic, ic->ic_curchan));
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_COMMS_QUALITY:
-		wreq.wi_val[0] = 0;				/* quality */
-		wreq.wi_val[1] = htole16(ic->ic_node_getrssi(ic->ic_bss));
-		wreq.wi_val[2] = 0;				/* noise */
-		wreq.wi_len = 3;
+		wreq->wi_val[0] = 0;				/* quality */
+		wreq->wi_val[1] = htole16(ic->ic_node_getrssi(ic->ic_bss));
+		wreq->wi_val[2] = 0;				/* noise */
+		wreq->wi_len = 3;
 		break;
 	case WI_RID_PROMISC:
-		wreq.wi_val[0] = htole16((ifp->if_flags & IFF_PROMISC) ? 1 : 0);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16((ifp->if_flags & IFF_PROMISC) ? 1 : 0);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_PORTTYPE:
-		wreq.wi_val[0] = htole16(ic->ic_opmode);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_opmode);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_MAC_NODE:
-		IEEE80211_ADDR_COPY(wreq.wi_val, ic->ic_myaddr);
-		wreq.wi_len = IEEE80211_ADDR_LEN / 2;
+		IEEE80211_ADDR_COPY(wreq->wi_val, ic->ic_myaddr);
+		wreq->wi_len = IEEE80211_ADDR_LEN / 2;
 		break;
 	case WI_RID_TX_RATE:
-		if (ic->ic_fixed_rate == -1)
-			wreq.wi_val[0] = 0;	/* auto */
+		if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
+			wreq->wi_val[0] = 0;	/* auto */
 		else
-			wreq.wi_val[0] = htole16(
+			wreq->wi_val[0] = htole16(
 			    (ic->ic_sup_rates[ic->ic_curmode].rs_rates[ic->ic_fixed_rate] &
 			    IEEE80211_RATE_VAL) / 2);
-		wreq.wi_len = 1;
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_CUR_TX_RATE:
-		wreq.wi_val[0] = htole16(
+		wreq->wi_val[0] = htole16(
 		    (ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate] &
 		    IEEE80211_RATE_VAL) / 2);
-		wreq.wi_len = 1;
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_FRAG_THRESH:
-		wreq.wi_val[0] = htole16(ic->ic_fragthreshold);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_fragthreshold);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_RTS_THRESH:
-		wreq.wi_val[0] = htole16(ic->ic_rtsthreshold);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_rtsthreshold);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_CREATE_IBSS:
-		wreq.wi_val[0] =
+		wreq->wi_val[0] =
 		    htole16((ic->ic_flags & IEEE80211_F_IBSSON) ? 1 : 0);
-		wreq.wi_len = 1;
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_MICROWAVE_OVEN:
-		wreq.wi_val[0] = 0;	/* no ... not supported */
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = 0;	/* no ... not supported */
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_ROAMING_MODE:
-		wreq.wi_val[0] = htole16(ic->ic_roaming);	/* XXX map */
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_roaming);	/* XXX map */
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_SYSTEM_SCALE:
-		wreq.wi_val[0] = htole16(1);	/* low density ... not supp */
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(1);	/* low density ... not supp */
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_PM_ENABLED:
-		wreq.wi_val[0] =
+		wreq->wi_val[0] =
 		    htole16((ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0);
-		wreq.wi_len = 1;
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_MAX_SLEEP:
-		wreq.wi_val[0] = htole16(ic->ic_lintval);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_lintval);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_CUR_BEACON_INT:
-		wreq.wi_val[0] = htole16(ic->ic_bss->ni_intval);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_bss->ni_intval);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_WEP_AVAIL:
-		wreq.wi_val[0] = htole16(1);	/* always available */
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(1);	/* always available */
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_CNFAUTHMODE:
-		wreq.wi_val[0] = htole16(1);	/* TODO: open system only */
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(1);	/* TODO: open system only */
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_ENCRYPTION:
-		wreq.wi_val[0] =
+		wreq->wi_val[0] =
 		    htole16((ic->ic_flags & IEEE80211_F_PRIVACY) ? 1 : 0);
-		wreq.wi_len = 1;
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_TX_CRYPT_KEY:
-		wreq.wi_val[0] = htole16(ic->ic_def_txkey);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_def_txkey);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
 		/* do not show keys to non-root user */
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = kauth_authorize_generic(curproc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &curproc->p_acflag);
 		if (error) {
 			memset(keys, 0, sizeof(*keys));
 			error = 0;
@@ -363,11 +375,11 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			    ic->ic_nw_keys[i].wk_key,
 			    ic->ic_nw_keys[i].wk_keylen);
 		}
-		wreq.wi_len = sizeof(*keys) / 2;
+		wreq->wi_len = sizeof(*keys) / 2;
 		break;
 	case WI_RID_MAX_DATALEN:
-		wreq.wi_val[0] = htole16(ic->ic_fragthreshold);
-		wreq.wi_len = 1;
+		wreq->wi_val[0] = htole16(ic->ic_fragthreshold);
+		wreq->wi_len = 1;
 		break;
 	case WI_RID_DBM_ADJUST:
 		/* not supported, we just pass rssi value from driver. */
@@ -383,12 +395,12 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			struct wi_read_ap_args args;
 
 			args.i = 0;
-			args.ap = (void *)((char *)wreq.wi_val + sizeof(i));
+			args.ap = (void *)((char *)wreq->wi_val + sizeof(i));
 			args.max = (void *)(&wreq + 1);
 			ieee80211_iterate_nodes(&ic->ic_scan,
 				wi_read_ap_result, &args);
-			memcpy(wreq.wi_val, &args.i, sizeof(args.i));
-			wreq.wi_len = (sizeof(int) +
+			memcpy(wreq->wi_val, &args.i, sizeof(args.i));
+			wreq->wi_len = (sizeof(int) +
 				sizeof(struct wi_apinfo) * args.i) / 2;
 		} else
 			error = EINPROGRESS;
@@ -400,7 +412,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			struct wi_scan_p2_hdr *p2;
 
 			/* NB: use Prism2 format so we can include rate info */
-			p2 = (struct wi_scan_p2_hdr *)wreq.wi_val;
+			p2 = (struct wi_scan_p2_hdr *)wreq->wi_val;
 			args.i = 0;
 			args.res = (void *)&p2[1];
 			args.max = (void *)(&wreq + 1);
@@ -408,7 +420,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				wi_read_prism2_result, &args);
 			p2->wi_rsvd = 0;
 			p2->wi_reason = args.i;
-			wreq.wi_len = (sizeof(*p2) +
+			wreq->wi_len = (sizeof(*p2) +
 				sizeof(struct wi_scan_res) * args.i) / 2;
 		} else
 			error = EINPROGRESS;
@@ -416,10 +428,10 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	case WI_RID_READ_CACHE: {
 		struct wi_read_sigcache_args args;
 		args.i = 0;
-		args.wsc = (struct wi_sigcache *) wreq.wi_val;
+		args.wsc = (struct wi_sigcache *) wreq->wi_val;
 		args.max = (void *)(&wreq + 1);
 		ieee80211_iterate_nodes(&ic->ic_scan, wi_read_sigcache, &args);
-		wreq.wi_len = sizeof(struct wi_sigcache) * args.i / 2;
+		wreq->wi_len = sizeof(struct wi_sigcache) * args.i / 2;
 		break;
 	}
 #endif
@@ -428,9 +440,11 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	}
 	if (error == 0) {
-		wreq.wi_len++;
+		wreq->wi_len++;
 		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 	}
+out:
+	free(wreq, M_TEMP);
 	return error;
 }
 
@@ -456,7 +470,6 @@ findrate(struct ieee80211com *ic, enum ieee80211_phymode mode, int rate)
 static int
 ieee80211_setupscan(struct ieee80211com *ic, const u_int8_t chanlist[])
 {
-	int i;
 
 	/*
 	 * XXX don't permit a scan to be started unless we
@@ -468,20 +481,6 @@ ieee80211_setupscan(struct ieee80211com *ic, const u_int8_t chanlist[])
 	 */
 	if (!IS_UP(ic))
 		return EINVAL;
-	if (ic->ic_ibss_chan == NULL ||
-	    isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) {
-		for (i = 0; i <= IEEE80211_CHAN_MAX; i++)
-			if (isset(chanlist, i)) {
-				ic->ic_ibss_chan = &ic->ic_channels[i];
-				goto found;
-			}
-		return EINVAL;			/* no active channels */
-found:
-		;
-	}
-	if (ic->ic_bss->ni_chan == IEEE80211_CHAN_ANYC ||
-	    isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan)))
-		ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	memcpy(ic->ic_chan_active, chanlist, sizeof(ic->ic_chan_active));
 	/*
 	 * We force the state to INIT before calling ieee80211_new_state
@@ -500,41 +499,43 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	int i, j, len, error, rate;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct wi_ltv_keys *keys;
-	struct wi_req wreq;
-	u_char chanlist[roundup(IEEE80211_CHAN_MAX, NBBY)];
+	struct wi_req *wreq;
+	u_int8_t chanlist[IEEE80211_CHAN_BYTES];
 
-	error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
+	wreq = malloc(sizeof(*wreq), M_TEMP, M_WAITOK);
+	error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
 	if (error)
-		return error;
-	len = wreq.wi_len ? (wreq.wi_len - 1) * 2 : 0;
-	switch (wreq.wi_type) {
+		goto out;
+	len = wreq->wi_len ? (wreq->wi_len - 1) * 2 : 0;
+	switch (wreq->wi_type) {
 	case WI_RID_SERIALNO:
 	case WI_RID_NODENAME:
-		return EPERM;
 	case WI_RID_CURRENT_SSID:
-		return EPERM;
+		error = EPERM;
+		goto out;
 	case WI_RID_OWN_SSID:
 	case WI_RID_DESIRED_SSID:
-		if (le16toh(wreq.wi_val[0]) * 2 > len ||
-		    le16toh(wreq.wi_val[0]) > IEEE80211_NWID_LEN) {
+		if (le16toh(wreq->wi_val[0]) * 2 > len ||
+		    le16toh(wreq->wi_val[0]) > IEEE80211_NWID_LEN) {
 			error = ENOSPC;
 			break;
 		}
 		memset(ic->ic_des_essid, 0, sizeof(ic->ic_des_essid));
-		ic->ic_des_esslen = le16toh(wreq.wi_val[0]) * 2;
-		memcpy(ic->ic_des_essid, &wreq.wi_val[1], ic->ic_des_esslen);
+		ic->ic_des_esslen = le16toh(wreq->wi_val[0]) * 2;
+		memcpy(ic->ic_des_essid, &wreq->wi_val[1], ic->ic_des_esslen);
 		error = ENETRESET;
 		break;
 	case WI_RID_CURRENT_BSSID:
-		return EPERM;
+		error = EPERM;
+		goto out;
 	case WI_RID_OWN_CHNL:
 		if (len != 2)
-			return EINVAL;
-		i = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		i = le16toh(wreq->wi_val[0]);
 		if (i < 0 ||
 		    i > IEEE80211_CHAN_MAX ||
 		    isclr(ic->ic_chan_active, i))
-			return EINVAL;
+			goto invalid;
 		ic->ic_ibss_chan = &ic->ic_channels[i];
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
@@ -542,19 +543,19 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			error = ENETRESET;
 		break;
 	case WI_RID_CURRENT_CHAN:
-		return EPERM;
 	case WI_RID_COMMS_QUALITY:
-		return EPERM;
+		error = EPERM;
+		goto out;
 	case WI_RID_PROMISC:
 		if (len != 2)
-			return EINVAL;
+			goto invalid;
 		if (ifp->if_flags & IFF_PROMISC) {
-			if (wreq.wi_val[0] == 0) {
+			if (wreq->wi_val[0] == 0) {
 				ifp->if_flags &= ~IFF_PROMISC;
 				error = ENETRESET;
 			}
 		} else {
-			if (wreq.wi_val[0] != 0) {
+			if (wreq->wi_val[0] != 0) {
 				ifp->if_flags |= IFF_PROMISC;
 				error = ENETRESET;
 			}
@@ -562,49 +563,49 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_PORTTYPE:
 		if (len != 2)
-			return EINVAL;
-		switch (le16toh(wreq.wi_val[0])) {
+			goto invalid;
+		switch (le16toh(wreq->wi_val[0])) {
 		case IEEE80211_M_STA:
 			break;
 		case IEEE80211_M_IBSS:
 			if (!(ic->ic_caps & IEEE80211_C_IBSS))
-				return EINVAL;
+				goto invalid;
 			break;
 		case IEEE80211_M_AHDEMO:
 			if (ic->ic_phytype != IEEE80211_T_DS ||
 			    !(ic->ic_caps & IEEE80211_C_AHDEMO))
-				return EINVAL;
+				goto invalid;
 			break;
 		case IEEE80211_M_HOSTAP:
 			if (!(ic->ic_caps & IEEE80211_C_HOSTAP))
-				return EINVAL;
+				goto invalid;
 			break;
 		default:
-			return EINVAL;
+			goto invalid;
 		}
-		if (le16toh(wreq.wi_val[0]) != ic->ic_opmode) {
-			ic->ic_opmode = le16toh(wreq.wi_val[0]);
+		if (le16toh(wreq->wi_val[0]) != ic->ic_opmode) {
+			ic->ic_opmode = le16toh(wreq->wi_val[0]);
 			error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		}
 		break;
 #if 0
 	case WI_RID_MAC_NODE:
 		if (len != IEEE80211_ADDR_LEN)
-			return EINVAL;
-		IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), wreq.wi_val);
+			goto invalid;
+		IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), wreq->wi_val);
 		/* if_init will copy lladdr into ic_myaddr */
 		error = ENETRESET;
 		break;
 #endif
 	case WI_RID_TX_RATE:
 		if (len != 2)
-			return EINVAL;
-		if (wreq.wi_val[0] == 0) {
+			goto invalid;
+		if (wreq->wi_val[0] == 0) {
 			/* auto */
-			ic->ic_fixed_rate = -1;
+			ic->ic_fixed_rate = IEEE80211_FIXED_RATE_NONE;
 			break;
 		}
-		rate = 2 * le16toh(wreq.wi_val[0]);
+		rate = 2 * le16toh(wreq->wi_val[0]);
 		if (ic->ic_curmode == IEEE80211_MODE_AUTO) {
 			/*
 			 * In autoselect mode search for the rate.  We take
@@ -629,31 +630,32 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			if (i != -1)
 				goto setrate;
 		}
-		return EINVAL;
+		goto invalid;
 	setrate:
 		ic->ic_fixed_rate = i;
 		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
 	case WI_RID_CUR_TX_RATE:
-		return EPERM;
+		error = EPERM;
+		goto out;
 	case WI_RID_FRAG_THRESH:
 		if (len != 2)
-			return EINVAL;
-		ic->ic_fragthreshold = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		ic->ic_fragthreshold = le16toh(wreq->wi_val[0]);
 		error = ENETRESET;
 		break;
 	case WI_RID_RTS_THRESH:
 		if (len != 2)
-			return EINVAL;
-		ic->ic_rtsthreshold = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		ic->ic_rtsthreshold = le16toh(wreq->wi_val[0]);
 		error = ENETRESET;
 		break;
 	case WI_RID_CREATE_IBSS:
 		if (len != 2)
-			return EINVAL;
-		if (wreq.wi_val[0] != 0) {
+			goto invalid;
+		if (wreq->wi_val[0] != 0) {
 			if ((ic->ic_caps & IEEE80211_C_IBSS) == 0)
-				return EINVAL;
+				goto invalid;
 			if ((ic->ic_flags & IEEE80211_F_IBSSON) == 0) {
 				ic->ic_flags |= IEEE80211_F_IBSSON;
 				if (ic->ic_opmode == IEEE80211_M_IBSS &&
@@ -672,30 +674,30 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_MICROWAVE_OVEN:
 		if (len != 2)
-			return EINVAL;
-		if (wreq.wi_val[0] != 0)
-			return EINVAL;		/* not supported */
+			goto invalid;
+		if (wreq->wi_val[0] != 0)
+			goto invalid;		/* not supported */
 		break;
 	case WI_RID_ROAMING_MODE:
 		if (len != 2)
-			return EINVAL;
-		i = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		i = le16toh(wreq->wi_val[0]);
 		if (i > IEEE80211_ROAMING_MANUAL)
-			return EINVAL;		/* not supported */
+			goto invalid;		/* not supported */
 		ic->ic_roaming = i;
 		break;
 	case WI_RID_SYSTEM_SCALE:
 		if (len != 2)
-			return EINVAL;
-		if (le16toh(wreq.wi_val[0]) != 1)
-			return EINVAL;		/* not supported */
+			goto invalid;
+		if (le16toh(wreq->wi_val[0]) != 1)
+			goto invalid;		/* not supported */
 		break;
 	case WI_RID_PM_ENABLED:
 		if (len != 2)
-			return EINVAL;
-		if (wreq.wi_val[0] != 0) {
+			goto invalid;
+		if (wreq->wi_val[0] != 0) {
 			if ((ic->ic_caps & IEEE80211_C_PMGT) == 0)
-				return EINVAL;
+				goto invalid;
 			if ((ic->ic_flags & IEEE80211_F_PMGTON) == 0) {
 				ic->ic_flags |= IEEE80211_F_PMGTON;
 				error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
@@ -709,30 +711,30 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_MAX_SLEEP:
 		if (len != 2)
-			return EINVAL;
-		ic->ic_lintval = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		ic->ic_lintval = le16toh(wreq->wi_val[0]);
 		if (ic->ic_flags & IEEE80211_F_PMGTON)
 			error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
 	case WI_RID_CUR_BEACON_INT:
-		return EPERM;
 	case WI_RID_WEP_AVAIL:
-		return EPERM;
+		error = EPERM;
+		goto out;
 	case WI_RID_CNFAUTHMODE:
 		if (len != 2)
-			return EINVAL;
-		i = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		i = le16toh(wreq->wi_val[0]);
 		if (i > IEEE80211_AUTH_WPA)
-			return EINVAL;
+			goto invalid;
 		ic->ic_bss->ni_authmode = i;		/* XXX ENETRESET? */
 		error = ENETRESET;
 		break;
 	case WI_RID_ENCRYPTION:
 		if (len != 2)
-			return EINVAL;
-		if (wreq.wi_val[0] != 0) {
+			goto invalid;
+		if (wreq->wi_val[0] != 0) {
 			if ((ic->ic_caps & IEEE80211_C_WEP) == 0)
-				return EINVAL;
+				goto invalid;
 			if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
 				ic->ic_flags |= IEEE80211_F_PRIVACY;
 				error = ENETRESET;
@@ -746,23 +748,23 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_TX_CRYPT_KEY:
 		if (len != 2)
-			return EINVAL;
-		i = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		i = le16toh(wreq->wi_val[0]);
 		if (i >= IEEE80211_WEP_NKID)
-			return EINVAL;
+			goto invalid;
 		ic->ic_def_txkey = i;
 		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		if (len != sizeof(struct wi_ltv_keys))
-			return EINVAL;
+			goto invalid;
 		keys = (struct wi_ltv_keys *)&wreq;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			len = le16toh(keys->wi_keys[i].wi_keylen);
 			if (len != 0 && len < IEEE80211_WEP_KEYLEN)
-				return EINVAL;
+				goto invalid;
 			if (len > IEEE80211_KEYBUF_SIZE)
-				return EINVAL;
+				goto invalid;
 		}
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			struct ieee80211_key *k = &ic->ic_nw_keys[i];
@@ -780,10 +782,10 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_MAX_DATALEN:
 		if (len != 2)
-			return EINVAL;
-		len = le16toh(wreq.wi_val[0]);
+			goto invalid;
+		len = le16toh(wreq->wi_val[0]);
 		if (len < 350 /* ? */ || len > IEEE80211_MAX_LEN)
-			return EINVAL;
+			goto invalid;
 		ic->ic_fragthreshold = len;
 		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
@@ -815,42 +817,36 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		for (j = 0; i <= IEEE80211_CHAN_MAX; i++, j++) {
 			if ((j / 8) >= len)
 				break;
-			if (isclr((u_int8_t *)wreq.wi_val, j))
+			if (isclr((u_int8_t *)wreq->wi_val, j))
 				continue;
 			if (isclr(ic->ic_chan_active, i)) {
-				if (wreq.wi_type != WI_RID_CHANNEL_LIST)
+				if (wreq->wi_type != WI_RID_CHANNEL_LIST)
 					continue;
-				if (isclr(ic->ic_chan_avail, i))
-					return EPERM;
+				if (isclr(ic->ic_chan_avail, i)) {
+					error = EPERM;
+					goto out;
+				}
 			}
 			setbit(chanlist, i);
 		}
 		error = ieee80211_setupscan(ic, chanlist);
-		if (wreq.wi_type == WI_RID_CHANNEL_LIST) {
+		if (wreq->wi_type == WI_RID_CHANNEL_LIST) {
 			/* NB: ignore error from ieee80211_setupscan */
 			error = ENETRESET;
 		} else if (error == 0)
 			error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
 	default:
-		error = EINVAL;
-		break;
+		goto invalid;
 	}
 	if (error == ENETRESET && !IS_UP_AUTO(ic))
 		error = 0;
+out:
+	free(wreq, M_TEMP);
 	return error;
-}
-
-static struct ieee80211_channel *
-getcurchan(struct ieee80211com *ic)
-{
-	switch (ic->ic_state) {
-	case IEEE80211_S_INIT:
-	case IEEE80211_S_SCAN:
-		return ic->ic_des_chan;
-	default:
-		return ic->ic_ibss_chan;
-	}
+invalid:
+	free(wreq, M_TEMP);
+	return EINVAL;
 }
 
 static int
@@ -900,7 +896,8 @@ ieee80211_ioctl_getkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 	ik.ik_flags = wk->wk_flags & (IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV);
 	if (wk->wk_keyix == ic->ic_def_txkey)
 		ik.ik_flags |= IEEE80211_KEY_DEFAULT;
-	if (suser(curproc->p_ucred, &curproc->p_acflag) == 0) {
+	if (kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &curproc->p_acflag) == 0) {
 		/* NB: only root can read key data */
 		ik.ik_keyrsc = wk->wk_keyrsc;
 		ik.ik_keytsc = wk->wk_keytsc;
@@ -924,17 +921,19 @@ ieee80211_ioctl_getkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 static int
 ieee80211_ioctl_getchanlist(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
+	size_t len = ireq->i_len;
 
-	if (sizeof(ic->ic_chan_active) > ireq->i_len)
-		ireq->i_len = sizeof(ic->ic_chan_active);
-	return copyout(&ic->ic_chan_active, ireq->i_data, ireq->i_len);
+	if (sizeof(ic->ic_chan_active) < len) {
+		len = sizeof(ic->ic_chan_active);
+	}
+	return copyout(&ic->ic_chan_active, ireq->i_data, len);
 }
 
 static int
 ieee80211_ioctl_getchaninfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
-	struct ieee80211req_chaninfo chans;	/* XXX off stack? */
-	int i, space;
+	struct ieee80211req_chaninfo *chans;
+	int i, space, error;
 
 	/*
 	 * Since channel 0 is not available for DS, channel 1
@@ -944,19 +943,23 @@ ieee80211_ioctl_getchaninfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 		i = 1;
 	else
 		i = 0;
-	memset(&chans, 0, sizeof(chans));
+
+	chans = malloc(sizeof(*chans), M_TEMP, M_WAITOK|M_ZERO);
+
 	for (; i <= IEEE80211_CHAN_MAX; i++)
 		if (isset(ic->ic_chan_avail, i)) {
 			struct ieee80211_channel *c = &ic->ic_channels[i];
-			chans.ic_chans[chans.ic_nchans].ic_freq = c->ic_freq;
-			chans.ic_chans[chans.ic_nchans].ic_flags = c->ic_flags;
-			chans.ic_nchans++;
+			chans->ic_chans[chans->ic_nchans].ic_freq = c->ic_freq;
+			chans->ic_chans[chans->ic_nchans].ic_flags = c->ic_flags;
+			chans->ic_nchans++;
 		}
 	space = __offsetof(struct ieee80211req_chaninfo,
-			ic_chans[chans.ic_nchans]);
+	    ic_chans[chans->ic_nchans]);
 	if (space > ireq->i_len)
 		space = ireq->i_len;
-	return copyout(&chans, ireq->i_data, space);
+	error = copyout(chans, ireq->i_data, space);
+	free(chans, M_TEMP);
+	return error;
 }
 
 static int
@@ -1017,13 +1020,25 @@ get_scan_result(struct ieee80211req_scan_result *sr,
 	const struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = ni->ni_ic;
+	u_int ielen = 0;
 
 	memset(sr, 0, sizeof(*sr));
 	sr->isr_ssid_len = ni->ni_esslen;
 	if (ni->ni_wpa_ie != NULL)
-		sr->isr_ie_len += 2+ni->ni_wpa_ie[1];
+		ielen += 2+ni->ni_wpa_ie[1];
 	if (ni->ni_wme_ie != NULL)
-		sr->isr_ie_len += 2+ni->ni_wme_ie[1];
+		ielen += 2+ni->ni_wme_ie[1];
+
+	/*
+	 * The value sr->isr_ie_len is defined as a uint8_t, so we
+	 * need to be careful to avoid an integer overflow.  If the
+	 * value would overflow, we will set isr_ie_len to zero, and
+	 * ieee80211_ioctl_getscanresults (below) will avoid copying
+	 * the (overflowing) data.
+	 */
+	if (ielen > 255)
+		ielen = 0;
+	sr->isr_ie_len = ielen;
 	sr->isr_len = sizeof(*sr) + sr->isr_ssid_len + sr->isr_ie_len;
 	sr->isr_len = roundup(sr->isr_len, sizeof(u_int32_t));
 	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
@@ -1046,7 +1061,7 @@ ieee80211_ioctl_getscanresults(struct ieee80211com *ic, struct ieee80211req *ire
 {
 	union {
 		struct ieee80211req_scan_result res;
-		char data[512];		/* XXX shrink? */
+		char data[sizeof(struct ieee80211req_scan_result) + IEEE80211_NWID_LEN + 256 * 2];
 	} u;
 	struct ieee80211req_scan_result *sr = &u.res;
 	struct ieee80211_node_table *nt;
@@ -1071,11 +1086,11 @@ ieee80211_ioctl_getscanresults(struct ieee80211com *ic, struct ieee80211req *ire
 		cp = (u_int8_t *)(sr+1);
 		memcpy(cp, ni->ni_essid, ni->ni_esslen);
 		cp += ni->ni_esslen;
-		if (ni->ni_wpa_ie != NULL) {
+		if (sr->isr_ie_len > 0 && ni->ni_wpa_ie != NULL) {
 			memcpy(cp, ni->ni_wpa_ie, 2+ni->ni_wpa_ie[1]);
 			cp += 2+ni->ni_wpa_ie[1];
 		}
-		if (ni->ni_wme_ie != NULL) {
+		if (sr->isr_ie_len > 0 && ni->ni_wme_ie != NULL) {
 			memcpy(cp, ni->ni_wme_ie, 2+ni->ni_wme_ie[1]);
 			cp += 2+ni->ni_wme_ie[1];
 		}
@@ -1089,18 +1104,57 @@ ieee80211_ioctl_getscanresults(struct ieee80211com *ic, struct ieee80211req *ire
 	return error;
 }
 
-static void
-get_sta_info(struct ieee80211req_sta_info *si, const struct ieee80211_node *ni)
-{
-	struct ieee80211com *ic = ni->ni_ic;
+struct stainforeq {
+	struct ieee80211com *ic;
+	struct ieee80211req_sta_info *si;
+	size_t	space;
+};
 
-	si->isi_ie_len = 0;
+static size_t
+sta_space(const struct ieee80211_node *ni, size_t *ielen)
+{
+	*ielen = 0;
 	if (ni->ni_wpa_ie != NULL)
-		si->isi_ie_len += 2+ni->ni_wpa_ie[1];
+		*ielen += 2+ni->ni_wpa_ie[1];
 	if (ni->ni_wme_ie != NULL)
-		si->isi_ie_len += 2+ni->ni_wme_ie[1];
-	si->isi_len = sizeof(*si) + si->isi_ie_len, sizeof(u_int32_t);
-	si->isi_len = roundup(si->isi_len, sizeof(u_int32_t));
+		*ielen += 2+ni->ni_wme_ie[1];
+	return roundup(sizeof(struct ieee80211req_sta_info) + *ielen,
+		      sizeof(u_int32_t));
+}
+
+static void
+get_sta_space(void *arg, struct ieee80211_node *ni)
+{
+	struct stainforeq *req = arg;
+	struct ieee80211com *ic = ni->ni_ic;
+	size_t ielen;
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    ni->ni_associd == 0)	/* only associated stations */
+		return;
+	req->space += sta_space(ni, &ielen);
+}
+
+static void
+get_sta_info(void *arg, struct ieee80211_node *ni)
+{
+	struct stainforeq *req = arg;
+	struct ieee80211com *ic = ni->ni_ic;
+	struct ieee80211req_sta_info *si;
+	size_t ielen, len;
+	u_int8_t *cp;
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    ni->ni_associd == 0)	/* only associated stations */
+		return;
+	if (ni->ni_chan == IEEE80211_CHAN_ANYC)	/* XXX bogus entry */
+		return;
+	len = sta_space(ni, &ielen);
+	if (len > req->space)
+		return;
+	si = req->si;
+	si->isi_len = len;
+	si->isi_ie_len = ielen;
 	si->isi_freq = ni->ni_chan->ic_freq;
 	si->isi_flags = ni->ni_chan->ic_flags;
 	si->isi_state = ni->ni_flags;
@@ -1124,55 +1178,60 @@ get_sta_info(struct ieee80211req_sta_info *si, const struct ieee80211_node *ni)
 		si->isi_txseqs[0] = ni->ni_txseqs[0];
 		si->isi_rxseqs[0] = ni->ni_rxseqs[0];
 	}
-	if (ic->ic_opmode == IEEE80211_M_IBSS || ni->ni_associd != 0)
+	/* NB: leave all cases in case we relax ni_associd == 0 check */
+	if (ieee80211_node_is_authorized(ni))
 		si->isi_inact = ic->ic_inact_run;
-	else if (ieee80211_node_is_authorized(ni))
+	else if (ni->ni_associd != 0)
 		si->isi_inact = ic->ic_inact_auth;
 	else
 		si->isi_inact = ic->ic_inact_init;
 	si->isi_inact = (si->isi_inact - ni->ni_inact) * IEEE80211_INACT_WAIT;
+
+	cp = (u_int8_t *)(si+1);
+	if (ni->ni_wpa_ie != NULL) {
+		memcpy(cp, ni->ni_wpa_ie, 2+ni->ni_wpa_ie[1]);
+		cp += 2+ni->ni_wpa_ie[1];
+	}
+	if (ni->ni_wme_ie != NULL) {
+		memcpy(cp, ni->ni_wme_ie, 2+ni->ni_wme_ie[1]);
+		cp += 2+ni->ni_wme_ie[1];
+	}
+
+	req->si = (struct ieee80211req_sta_info *)(((u_int8_t *)si) + len);
+	req->space -= len;
 }
 
 static int
 ieee80211_ioctl_getstainfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
-	union {
-		struct ieee80211req_sta_info info;
-		char data[512];		/* XXX shrink? */
-	} u;
-	struct ieee80211req_sta_info *si = &u.info;
-	struct ieee80211_node_table *nt;
-	struct ieee80211_node *ni;
-	int error, space;
-	u_int8_t *p, *cp;
+	struct stainforeq req;
+	int error;
 
-	nt = &ic->ic_sta;
-	p = ireq->i_data;
-	space = ireq->i_len;
+	if (ireq->i_len < sizeof(struct stainforeq))
+		return EFAULT;
+
 	error = 0;
-	/* XXX locking */
-	TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
-		get_sta_info(si, ni);
-		if (si->isi_len > sizeof(u))
-			continue;		/* XXX */
-		if (space < si->isi_len)
-			break;
-		cp = (u_int8_t *)(si+1);
-		if (ni->ni_wpa_ie != NULL) {
-			memcpy(cp, ni->ni_wpa_ie, 2+ni->ni_wpa_ie[1]);
-			cp += 2+ni->ni_wpa_ie[1];
-		}
-		if (ni->ni_wme_ie != NULL) {
-			memcpy(cp, ni->ni_wme_ie, 2+ni->ni_wme_ie[1]);
-			cp += 2+ni->ni_wme_ie[1];
-		}
-		error = copyout(si, p, si->isi_len);
-		if (error)
-			break;
-		p += si->isi_len;
-		space -= si->isi_len;
-	}
-	ireq->i_len -= space;
+	req.space = 0;
+	ieee80211_iterate_nodes(&ic->ic_sta, get_sta_space, &req);
+	if (req.space > ireq->i_len)
+		req.space = ireq->i_len;
+	if (req.space > 0) {
+		size_t space;
+		void *p;
+
+		space = req.space;
+		/* XXX M_WAITOK after driver lock released */
+		p = malloc(space, M_TEMP, M_NOWAIT);
+		if (p == NULL)
+			return ENOMEM;
+		req.si = p;
+		ieee80211_iterate_nodes(&ic->ic_sta, get_sta_info, &req);
+		ireq->i_len = space - req.space;
+		error = copyout(p, ireq->i_data, ireq->i_len);
+		FREE(p, M_TEMP);
+	} else
+		ireq->i_len = 0;
+
 	return error;
 }
 
@@ -1239,6 +1298,14 @@ ieee80211_ioctl_getwmeparam(struct ieee80211com *ic, struct ieee80211req *ireq)
 	return 0;
 }
 
+static int
+ieee80211_ioctl_getmaccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
+{
+	const struct ieee80211_aclator *acl = ic->ic_acl;
+
+	return (acl == NULL ? EINVAL : acl->iac_getioctl(ic, ireq));
+}
+
 /*
  * When building the kernel with -O2 on the i386 architecture, gcc
  * seems to want to inline this function into ieee80211_ioctl()
@@ -1263,11 +1330,15 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 {
 	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
 	int error = 0;
-	u_int kid, len, m;
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
+	u_int kid, len;
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
+	u_int m;
 
 	switch (ireq->i_type) {
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_SSID:
 		switch (ic->ic_state) {
 		case IEEE80211_S_INIT:
@@ -1300,7 +1371,8 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 			return EINVAL;
 		len = (u_int) ic->ic_nw_keys[kid].wk_keylen;
 		/* NB: only root can read WEP keys */
-		if (suser(curproc->p_ucred, &curproc->p_acflag) == 0) {
+		if (kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+				      &curproc->p_acflag) == 0) {
 			bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
 		} else {
 			bzero(tmpkey, len);
@@ -1314,14 +1386,16 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_WEPTXKEY:
 		ireq->i_val = ic->ic_def_txkey;
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_AUTHMODE:
 		if (ic->ic_flags & IEEE80211_F_WPA)
 			ireq->i_val = IEEE80211_AUTH_WPA;
 		else
 			ireq->i_val = ic->ic_bss->ni_authmode;
 		break;
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_CHANNEL:
-		ireq->i_val = ieee80211_chan2ieee(ic, getcurchan(ic));
+		ireq->i_val = ieee80211_chan2ieee(ic, ic->ic_curchan);
 		break;
 	case IEEE80211_IOC_POWERSAVE:
 		if (ic->ic_flags & IEEE80211_F_PMGTON)
@@ -1332,6 +1406,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_POWERSAVESLEEP:
 		ireq->i_val = ic->ic_lintval;
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_RTSTHRESHOLD:
 		ireq->i_val = ic->ic_rtsthreshold;
 		break;
@@ -1425,6 +1500,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 	case IEEE80211_IOC_CHANINFO:
 		error = ieee80211_ioctl_getchaninfo(ic, ireq);
 		break;
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_BSSID:
 		if (ireq->i_len != IEEE80211_ADDR_LEN)
 			return EINVAL;
@@ -1433,6 +1509,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 					ic->ic_des_bssid,
 				ireq->i_data, ireq->i_len);
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_WPAIE:
 		error = ieee80211_ioctl_getwpaie(ic, ireq);
 		break;
@@ -1466,6 +1543,18 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		/* NB: get from ic_bss for station mode */
 		ireq->i_val = ic->ic_bss->ni_intval;
 		break;
+	case IEEE80211_IOC_PUREG:
+		ireq->i_val = (ic->ic_flags & IEEE80211_F_PUREG) != 0;
+		break;
+	case IEEE80211_IOC_MCAST_RATE:
+		ireq->i_val = ic->ic_mcast_rate;
+		break;
+	case IEEE80211_IOC_FRAGTHRESHOLD:
+		ireq->i_val = ic->ic_fragthreshold;
+		break;
+	case IEEE80211_IOC_MACCMD:
+		error = ieee80211_ioctl_getmaccmd(ic, ireq);
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -1490,7 +1579,7 @@ ieee80211_ioctl_setoptie(struct ieee80211com *ic, struct ieee80211req *ireq)
 	if (ireq->i_len > IEEE80211_MAX_OPT_IE)
 		return EINVAL;
 	/* NB: data.length is validated by the wireless extensions code */
-	MALLOC(ie, void *, (u_long)ireq->i_len, M_DEVBUF, M_WAITOK);
+	ie = malloc(ireq->i_len, M_DEVBUF, M_WAITOK);
 	if (ie == NULL)
 		return ENOMEM;
 	error = copyin(ireq->i_data, ie, ireq->i_len);
@@ -1526,9 +1615,11 @@ ieee80211_ioctl_setkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 		if (ik.ik_flags != (IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV))
 			return EINVAL;
 		if (ic->ic_opmode == IEEE80211_M_STA) {
-			ni = ic->ic_bss;
-			if (!IEEE80211_ADDR_EQ(ik.ik_macaddr, ni->ni_bssid))
+			ni = ieee80211_ref_node(ic->ic_bss);
+			if (!IEEE80211_ADDR_EQ(ik.ik_macaddr, ni->ni_bssid)) {
+				ieee80211_free_node(ni);
 				return EADDRNOTAVAIL;
+			}
 		} else {
 			ni = ieee80211_find_node(&ic->ic_sta, ik.ik_macaddr);
 			if (ni == NULL)
@@ -1540,9 +1631,6 @@ ieee80211_ioctl_setkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 			return EINVAL;
 		wk = &ic->ic_nw_keys[kid];
 		ni = NULL;
-		/* XXX auto-add group key flag until applications are updated */
-		if ((ik.ik_flags & IEEE80211_KEY_XMIT) == 0)	/* XXX */
-			ik.ik_flags |= IEEE80211_KEY_GROUP;	/* XXX */
 	}
 	error = 0;
 	ieee80211_key_update_begin(ic);
@@ -1584,11 +1672,19 @@ ieee80211_ioctl_delkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 	if (dk.idk_keyix == (u_int8_t) IEEE80211_KEYIX_NONE) {
 		struct ieee80211_node *ni;
 
-		ni = ieee80211_find_node(&ic->ic_sta, dk.idk_macaddr);
-		if (ni == NULL)
-			return EINVAL;		/* XXX */
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			ni = ieee80211_ref_node(ic->ic_bss);
+			if (!IEEE80211_ADDR_EQ(dk.idk_macaddr, ni->ni_bssid)) {
+				ieee80211_free_node(ni);
+				return EADDRNOTAVAIL;
+			}
+		} else {
+			ni = ieee80211_find_node(&ic->ic_sta, dk.idk_macaddr);
+			if (ni == NULL)
+				return ENOENT;
+		}
 		/* XXX error return */
-		ieee80211_crypto_delkey(ic, &ni->ni_ucastkey);
+		ieee80211_node_delucastkey(ni);
 		ieee80211_free_node(ni);
 	} else {
 		if (kid >= IEEE80211_WEP_NKID)
@@ -1635,14 +1731,14 @@ ieee80211_ioctl_setmlme(struct ieee80211com *ic, struct ieee80211req *ireq)
 			return EINVAL;
 		/* XXX must be in S_SCAN state? */
 
-		if (ic->ic_des_esslen != 0) {
+		if (mlme.im_ssid_len != 0) {
 			/*
 			 * Desired ssid specified; must match both bssid and
 			 * ssid to distinguish ap advertising multiple ssid's.
 			 */
 			ni = ieee80211_find_node_with_ssid(&ic->ic_scan,
 				mlme.im_macaddr,
-				ic->ic_des_esslen, ic->ic_des_essid);
+				mlme.im_ssid_len, mlme.im_ssid);
 		} else {
 			/*
 			 * Normal case; just match bssid.
@@ -1691,9 +1787,9 @@ ieee80211_ioctl_setmlme(struct ieee80211com *ic, struct ieee80211req *ireq)
 		if (ni == NULL)
 			return EINVAL;
 		if (mlme.im_op == IEEE80211_MLME_AUTHORIZE)
-			ieee80211_node_authorize(ic, ni);
+			ieee80211_node_authorize(ni);
 		else
-			ieee80211_node_unauthorize(ic, ni);
+			ieee80211_node_unauthorize(ni);
 		ieee80211_free_node(ni);
 		break;
 	default:
@@ -1728,7 +1824,7 @@ ieee80211_ioctl_macmac(struct ieee80211com *ic, struct ieee80211req *ireq)
 }
 
 static int
-ieee80211_ioctl_maccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
+ieee80211_ioctl_setmaccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
 	const struct ieee80211_aclator *acl = ic->ic_acl;
 
@@ -1756,7 +1852,10 @@ ieee80211_ioctl_maccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
 		}
 		break;
 	default:
-		return EINVAL;
+		if (acl == NULL)
+			return EINVAL;
+		else
+			return acl->iac_setioctl(ic, ireq);
 	}
 	return 0;
 }
@@ -1765,7 +1864,7 @@ static int
 ieee80211_ioctl_setchanlist(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
 	struct ieee80211req_chanlist list;
-	u_char chanlist[IEEE80211_CHAN_BYTES];
+	u_int8_t chanlist[IEEE80211_CHAN_BYTES];
 	int i, j, error;
 
 	if (ireq->i_len != sizeof(list))
@@ -1802,9 +1901,6 @@ found:
 		;
 	}
 	memcpy(ic->ic_chan_active, chanlist, sizeof(ic->ic_chan_active));
-	if (ic->ic_bss->ni_chan == IEEE80211_CHAN_ANYC ||
-	    isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan)))
-		ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	return IS_UP_AUTO(ic) ? ENETRESET : 0;
 }
 
@@ -1919,19 +2015,22 @@ cipher2cap(int cipher)
 static int
 ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211req *ireq)
 {
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
-	struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
-	int error;
-	const struct ieee80211_authenticator *auth;
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
 	u_int8_t tmpbssid[IEEE80211_ADDR_LEN];
 	struct ieee80211_key *k;
-	int j, caps;
 	u_int kid;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
+	struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
+	int error;
+	const struct ieee80211_authenticator *auth;
+	int j, caps;
 
 	error = 0;
 	switch (ireq->i_type) {
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_SSID:
 		if (ireq->i_val != 0 ||
 		    ireq->i_len > IEEE80211_NWID_LEN)
@@ -1944,6 +2043,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		memcpy(ic->ic_des_essid, tmpssid, ireq->i_len);
 		error = ENETRESET;
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_WEP:
 		switch (ireq->i_val) {
 		case IEEE80211_WEP_OFF:
@@ -1961,6 +2061,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		}
 		error = ENETRESET;
 		break;
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_WEPKEY:
 		kid = (u_int) ireq->i_val;
 		if (kid >= IEEE80211_WEP_NKID)
@@ -1988,6 +2089,8 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		} else
 			error = EINVAL;
 		ieee80211_key_update_end(ic);
+		if (!error)			/* NB: for compatibility */
+			error = ENETRESET;
 		break;
 	case IEEE80211_IOC_WEPTXKEY:
 		kid = (u_int) ireq->i_val;
@@ -1997,6 +2100,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_def_txkey = kid;
 		error = ENETRESET;	/* push to hardware */
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_AUTHMODE:
 		switch (ireq->i_val) {
 		case IEEE80211_AUTH_WPA:
@@ -2037,6 +2141,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_auth = auth;
 		error = ENETRESET;
 		break;
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_CHANNEL:
 		/* XXX 0xffff overflows 16-bit signed */
 		if (ireq->i_val == 0 ||
@@ -2065,8 +2170,18 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 				error = ENETRESET;
 			break;
 		}
-		if (error == ENETRESET && ic->ic_opmode == IEEE80211_M_MONITOR)
-			error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
+		if (error == ENETRESET &&
+			ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if (IS_UP(ic)) {
+				/*
+				 * Monitor mode can switch directly.
+				 */
+				if (ic->ic_des_chan != IEEE80211_CHAN_ANYC)
+					ic->ic_curchan = ic->ic_des_chan;
+				error = ic->ic_reset(ic->ic_ifp);
+			} else
+				error = 0;
+		}
 		break;
 	case IEEE80211_IOC_POWERSAVE:
 		switch (ireq->i_val) {
@@ -2095,9 +2210,10 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		ic->ic_lintval = ireq->i_val;
 		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_RTSTHRESHOLD:
-		if (!(IEEE80211_RTS_MIN < ireq->i_val &&
-		      ireq->i_val < IEEE80211_RTS_MAX))
+		if (!(IEEE80211_RTS_MIN <= ireq->i_val &&
+		      ireq->i_val <= IEEE80211_RTS_MAX))
 			return EINVAL;
 		ic->ic_rtsthreshold = ireq->i_val;
 		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
@@ -2260,6 +2376,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		rsn->rsn_caps = ireq->i_val;
 		error = (ic->ic_flags & IEEE80211_F_WPA) ? ENETRESET : 0;
 		break;
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_BSSID:
 		/* NB: should only be set when in STA mode */
 		if (ic->ic_opmode != IEEE80211_M_STA)
@@ -2276,6 +2393,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 			ic->ic_flags |= IEEE80211_F_DESBSSID;
 		error = ENETRESET;
 		break;
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_CHANLIST:
 		error = ieee80211_ioctl_setchanlist(ic, ireq);
 		break;
@@ -2291,7 +2409,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 		error = ieee80211_ioctl_macmac(ic, ireq);
 		break;
 	case IEEE80211_IOC_MACCMD:
-		error = ieee80211_ioctl_maccmd(ic, ireq);
+		error = ieee80211_ioctl_setmaccmd(ic, ireq);
 		break;
 	case IEEE80211_IOC_STA_TXPOW:
 		error = ieee80211_ioctl_setstatxpow(ic, ireq);
@@ -2321,10 +2439,32 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 			return EINVAL;
 		if (IEEE80211_BINTVAL_MIN <= ireq->i_val &&
 		    ireq->i_val <= IEEE80211_BINTVAL_MAX) {
-			ic->ic_lintval = ireq->i_val;
+			ic->ic_bintval = ireq->i_val;
 			error = ENETRESET;		/* requires restart */
 		} else
 			error = EINVAL;
+		break;
+	case IEEE80211_IOC_PUREG:
+		if (ireq->i_val)
+			ic->ic_flags |= IEEE80211_F_PUREG;
+		else
+			ic->ic_flags &= ~IEEE80211_F_PUREG;
+		/* NB: reset only if we're operating on an 11g channel */
+		if (ic->ic_curmode == IEEE80211_MODE_11G)
+			error = ENETRESET;
+		break;
+	case IEEE80211_IOC_MCAST_RATE:
+		ic->ic_mcast_rate = ireq->i_val & IEEE80211_RATE_VAL;
+		break;
+	case IEEE80211_IOC_FRAGTHRESHOLD:
+		if ((ic->ic_caps & IEEE80211_C_TXFRAG) == 0 &&
+		    ireq->i_val != IEEE80211_FRAG_MAX)
+			return EINVAL;
+		if (!(IEEE80211_FRAG_MIN <= ireq->i_val &&
+		      ireq->i_val <= IEEE80211_FRAG_MAX))
+			return EINVAL;
+		ic->ic_fragthreshold = ireq->i_val;
+		error = IS_UP(ic) ? ic->ic_reset(ic->ic_ifp) : 0;
 		break;
 	default:
 		error = EINVAL;
@@ -2407,14 +2547,14 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		 */
 		case AF_IPX: {
 			struct ipx_addr *ina = &(IA_SIPX(ifa)->sipx_addr);
-			struct arpcom *ac = (struct arpcom *)ifp;
 
 			if (ipx_nullhost(*ina))
-				ina->x_host = *(union ipx_host *) ac->ac_enaddr;
+				ina->x_host = *(union ipx_host *)
+				    IFP2ENADDR(ifp);
 			else
 				bcopy((caddr_t) ina->x_host.c_host,
-				      (caddr_t) ac->ac_enaddr,
-				      sizeof(ac->ac_enaddr));
+				      (caddr_t) IFP2ENADDR(ifp),
+				      ETHER_ADDR_LEN);
 			/* fall thru... */
 		}
 #endif
@@ -2434,6 +2574,28 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 }
 #endif /* __FreeBSD__ */
 
+#ifdef COMPAT_20
+static void
+ieee80211_get_ostats(struct ieee80211_ostats *ostats,
+    struct ieee80211_stats *stats)
+{
+#define	COPYSTATS1(__ostats, __nstats, __dstmemb, __srcmemb, __lastmemb)\
+	(void)memcpy(&(__ostats)->__dstmemb, &(__nstats)->__srcmemb,	\
+	    offsetof(struct ieee80211_stats, __lastmemb) -		\
+	    offsetof(struct ieee80211_stats, __srcmemb))
+#define	COPYSTATS(__ostats, __nstats, __dstmemb, __lastmemb)		\
+	COPYSTATS1(__ostats, __nstats, __dstmemb, __dstmemb, __lastmemb)
+
+	COPYSTATS(ostats, stats, is_rx_badversion, is_rx_unencrypted);
+	COPYSTATS(ostats, stats, is_rx_wepfail, is_rx_beacon);
+	COPYSTATS(ostats, stats, is_rx_rstoobig, is_rx_auth_countermeasures);
+	COPYSTATS(ostats, stats, is_rx_assoc_bss, is_rx_assoc_badwpaie);
+	COPYSTATS(ostats, stats, is_rx_deauth, is_rx_unauth);
+	COPYSTATS1(ostats, stats, is_tx_nombuf, is_tx_nobuf, is_tx_badcipher);
+	COPYSTATS(ostats, stats, is_scan_active, is_crypto_tkip);
+}
+#endif /* COMPAT_20 */
+
 #ifdef __NetBSD__
 int
 ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
@@ -2449,9 +2611,10 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	struct ieee80211chanreq *chanreq;
 	struct ieee80211_channel *chan;
 	uint32_t oflags;
-	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
+#ifdef COMPAT_20
+	struct ieee80211_ostats ostats;
+#endif /* COMPAT_20 */
+	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
 	u_int8_t tmpkey[IEEE80211_WEP_NKID][IEEE80211_KEYBUF_SIZE];
 
 	switch (cmd) {
@@ -2464,7 +2627,9 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				(struct ieee80211req *) data);
 		break;
 	case SIOCS80211:
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 		error = ieee80211_ioctl_set80211(ic, cmd,
 				(struct ieee80211req *) data);
@@ -2601,8 +2766,8 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			if (nwkey->i_key[i].i_keydat == NULL)
 				continue;
 			/* do not show any keys to non-root user */
-			if ((error = suser(curproc->p_ucred,
-			    &curproc->p_acflag)) != 0)
+			if ((error = kauth_authorize_generic(curproc->p_cred,
+			    KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)) != 0)
 				break;
 			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].wk_keylen;
 			if ((error = copyout(ic->ic_nw_keys[i].wk_key,
@@ -2635,26 +2800,12 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;
-		if (IEEE80211_ADDR_EQ(bssid->i_bssid, empty_macaddr))
+		IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
+		if (IEEE80211_ADDR_EQ(ic->ic_des_bssid, zerobssid))
 			ic->ic_flags &= ~IEEE80211_F_DESBSSID;
-		else {
+		else
 			ic->ic_flags |= IEEE80211_F_DESBSSID;
-			IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
-		}
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-			break;
-		switch (ic->ic_state) {
-		case IEEE80211_S_INIT:
-		case IEEE80211_S_SCAN:
-			error = ENETRESET;
-			break;
-		default:
-			if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
-			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid,
-			    ic->ic_bss->ni_bssid))
-				error = ENETRESET;
-			break;
-		}
+		error = ENETRESET;
 		break;
 	case SIOCG80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;
@@ -2724,17 +2875,32 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		error = ieee80211_cfgget(ic, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = kauth_authorize_generic(curproc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &curproc->p_acflag);
 		if (error)
 			break;
 		error = ieee80211_cfgset(ic, cmd, data);
 		break;
+#ifdef COMPAT_20
+	case OSIOCG80211STATS:
+	case OSIOCG80211ZSTATS:
+		ifr = (struct ifreq *)data;
+		s = splnet();
+		ieee80211_get_ostats(&ostats, &ic->ic_stats);
+		error = copyout(&ostats, ifr->ifr_data, sizeof(ostats));
+		if (error == 0 && cmd == OSIOCG80211ZSTATS)
+			(void)memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
+		splx(s);
+		break;
+#endif /* COMPAT_20 */
 	case SIOCG80211ZSTATS:
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
 		s = splnet();
-		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
-		if (cmd == SIOCG80211ZSTATS)
+		error = copyout(&ic->ic_stats, ifr->ifr_buf,
+		    MIN(sizeof(ic->ic_stats), ifr->ifr_buflen));
+		if (error == 0 && cmd == SIOCG80211ZSTATS)
 			(void)memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
 		splx(s);
 		break;

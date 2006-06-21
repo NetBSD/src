@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.119 2005/06/21 14:01:13 ws Exp $	*/
+/*	$NetBSD: conf.h,v 1.119.2.1 2006/06/21 15:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,9 +43,11 @@
  * Definitions of device driver entry switches
  */
 
+#include <sys/queue.h>
+
 struct buf;
 struct knote;
-struct proc;
+struct lwp;
 struct tty;
 struct uio;
 struct vnode;
@@ -61,10 +63,10 @@ struct vnode;
  * Block device switch table
  */
 struct bdevsw {
-	int		(*d_open)(dev_t, int, int, struct proc *);
-	int		(*d_close)(dev_t, int, int, struct proc *);
+	int		(*d_open)(dev_t, int, int, struct lwp *);
+	int		(*d_close)(dev_t, int, int, struct lwp *);
 	void		(*d_strategy)(struct buf *);
-	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
 	int		(*d_dump)(dev_t, daddr_t, caddr_t, size_t);
 	int		(*d_psize)(dev_t);
 	int		d_type;
@@ -74,14 +76,14 @@ struct bdevsw {
  * Character device switch table
  */
 struct cdevsw {
-	int		(*d_open)(dev_t, int, int, struct proc *);
-	int		(*d_close)(dev_t, int, int, struct proc *);
+	int		(*d_open)(dev_t, int, int, struct lwp *);
+	int		(*d_close)(dev_t, int, int, struct lwp *);
 	int		(*d_read)(dev_t, struct uio *, int);
 	int		(*d_write)(dev_t, struct uio *, int);
-	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
 	void		(*d_stop)(struct tty *, int);
 	struct tty *	(*d_tty)(dev_t);
-	int		(*d_poll)(dev_t, int, struct proc *);
+	int		(*d_poll)(dev_t, int, struct lwp *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
 	int		(*d_kqfilter)(dev_t dev, struct knote *kn);
 	int		d_type;
@@ -105,15 +107,15 @@ const struct cdevsw *cdevsw_lookup(dev_t);
 int bdevsw_lookup_major(const struct bdevsw *);
 int cdevsw_lookup_major(const struct cdevsw *);
 
-#define	dev_type_open(n)	int n (dev_t, int, int, struct proc *)
-#define	dev_type_close(n)	int n (dev_t, int, int, struct proc *)
+#define	dev_type_open(n)	int n (dev_t, int, int, struct lwp *)
+#define	dev_type_close(n)	int n (dev_t, int, int, struct lwp *)
 #define	dev_type_read(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_write(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_ioctl(n) \
-		int n (dev_t, u_long, caddr_t, int, struct proc *)
+		int n (dev_t, u_long, caddr_t, int, struct lwp *)
 #define	dev_type_stop(n)	void n (struct tty *, int)
 #define	dev_type_tty(n)		struct tty * n (dev_t)
-#define	dev_type_poll(n)	int n (dev_t, int, struct proc *)
+#define	dev_type_poll(n)	int n (dev_t, int, struct lwp *)
 #define	dev_type_mmap(n)	paddr_t n (dev_t, off_t, int)
 #define	dev_type_strategy(n)	void n (struct buf *)
 #define	dev_type_dump(n)	int n (dev_t, daddr_t, caddr_t, size_t)
@@ -155,27 +157,30 @@ extern	const char devioc[], devcls[];
  */
 struct linesw {
 	const char *l_name;	/* Linesw name */
-	int	l_no;		/* Linesw number (compatibility) */
+
+	LIST_ENTRY(linesw) l_list;
+	u_int	l_refcnt;	/* locked by ttyldisc_list_slock */
+	int	l_no;		/* legacy discipline number (for TIOCGETD) */
 
 	int	(*l_open)	(dev_t, struct tty *);
 	int	(*l_close)	(struct tty *, int);
 	int	(*l_read)	(struct tty *, struct uio *, int);
 	int	(*l_write)	(struct tty *, struct uio *, int);
 	int	(*l_ioctl)	(struct tty *, u_long, caddr_t, int,
-				    struct proc *);
+				    struct lwp *);
 	int	(*l_rint)	(int, struct tty *);
 	int	(*l_start)	(struct tty *);
 	int	(*l_modem)	(struct tty *, int);
-	int	(*l_poll)	(struct tty *, int, struct proc *);
+	int	(*l_poll)	(struct tty *, int, struct lwp *);
 };
 
 #ifdef _KERNEL
-extern struct linesw **linesw;
-extern int nlinesw;
-extern void ttyldisc_init(void);
-int ttyldisc_add(struct linesw *, int);
-struct linesw *ttyldisc_remove(const char *);
+int	       ttyldisc_attach(struct linesw *);
+int	       ttyldisc_detach(struct linesw *);
 struct linesw *ttyldisc_lookup(const char *);
+struct linesw *ttyldisc_lookup_bynum(int);
+struct linesw *ttyldisc_default(void);
+void	       ttyldisc_release(struct linesw *);
 
 /* For those defining their own line disciplines: */
 #define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
@@ -184,8 +189,8 @@ struct linesw *ttyldisc_lookup(const char *);
 #define	ttyerrinput ((int (*)(int, struct tty *))enodev)
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
 
-int	ttyerrpoll (struct tty *, int, struct proc *);
-int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+int	ttyerrpoll (struct tty *, int, struct lwp *);
+int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 #endif
 
 #ifdef _KERNEL

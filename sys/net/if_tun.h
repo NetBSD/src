@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.12 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.12.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -33,6 +33,7 @@ struct tun_softc {
 #define	TUN_ASYNC	0x0080
 #define	TUN_NBIO	0x0100
 #define	TUN_PREPADDR	0x0200
+#define	TUN_IFHEAD	0x0400
 
 #define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
 
@@ -53,5 +54,7 @@ struct tun_softc {
 #define	TUNGDEBUG	_IOR('t', 89, int)
 #define	TUNSIFMODE	_IOW('t', 88, int)
 #define	TUNSLMODE	_IOW('t', 87, int)
+#define	TUNSIFHEAD	_IOW('t', 66, int)
+#define	TUNGIFHEAD	_IOR('t', 65, int)
 
 #endif /* !_NET_IF_TUN_H_ */

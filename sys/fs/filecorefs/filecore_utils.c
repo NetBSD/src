@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.4 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.4.2.1 2006/06/21 15:09:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.4 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.4.2.1 2006/06/21 15:09:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.4 2005/05/17 04:14:58 christos 
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
@@ -310,7 +311,7 @@ int
 filecore_fn2unix(fcfn, ufn, len)
 	char *fcfn;
 	char *ufn;
-	u_int8_t *len;
+	u_int16_t *len;
 {
 	int i = 0;
 

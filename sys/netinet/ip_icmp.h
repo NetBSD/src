@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.20 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.20.12.1 2006/06/21 15:11:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -94,7 +94,7 @@ struct icmp {
 		struct id_ip  {
 			  struct ip idi_ip;
 			  /* options and then 64 bits of data */
-		} id_ip __attribute__((__packed__));
+		} id_ip /* XXX: __attribute__((__packed__)) ??? */;
 		struct icmp_ra_addr id_radv;
 		u_int32_t id_mask;
 		int8_t	  id_data[1];
@@ -175,7 +175,7 @@ struct icmp {
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
 #ifdef _KERNEL
-void	icmp_error(struct mbuf *, int, int, n_long, struct ifnet *);
+void	icmp_error(struct mbuf *, int, int, n_long, int);
 void	icmp_mtudisc(struct icmp *, struct in_addr);
 void	icmp_input(struct mbuf *, ...);
 void	icmp_init(void);
@@ -187,4 +187,4 @@ void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
 #endif
 
 
-#endif /* _NETINET_IP_ICMP_H_ */
+#endif /* !_NETINET_IP_ICMP_H_ */

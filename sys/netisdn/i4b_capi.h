@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi.h,v 1.3 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: i4b_capi.h,v 1.3.4.1 2006/06/21 15:11:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -29,8 +29,8 @@
  * $FreeBSD: src/sys/i4b/capi/capi.h,v 1.1 2001/05/25 08:39:31 hm Exp $
  */
 
-#ifndef _I4B_CAPI_H_
-#define _I4B_CAPI_H_
+#ifndef _NETISDN_I4B_CAPI_H_
+#define _NETISDN_I4B_CAPI_H_
 
 /*
 //  CAPI driver context: B channels and controller softcs.
@@ -133,4 +133,4 @@ extern int capi_ll_receive(capi_softc_t *, struct mbuf *);
 
 extern int capi_start_tx(void *, int bchan);
 
-#endif /* _I4B_CAPI_H_ */
+#endif /* !_NETISDN_I4B_CAPI_H_ */

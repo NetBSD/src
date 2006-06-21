@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.56 2005/06/19 23:10:03 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.56.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -111,9 +111,14 @@ do {									\
 #define	CURSIG(l)	(l->l_proc->p_sigctx.ps_sigcheck ? issignal(l) : 0)
 
 /*
- * Clear a pending signal from a process.
+ * Clear all pending signal from a process.
  */
-#define	CLRSIG(p, sig)	sigdelset(&p->p_sigctx.ps_siglist, sig)
+#define CLRSIG(l) \
+	do { \
+		int _sg; \
+		while ((_sg = CURSIG(l)) != 0) \
+			sigdelset(&(l)->l_proc->p_sigctx.ps_siglist, _sg); \
+	} while (/*CONSTCOND*/0)
 
 /*
  * Signal properties and actions.
@@ -131,10 +136,11 @@ do {									\
 
 #ifdef _KERNEL
 
+#include <sys/systm.h>			/* for copyin_t/copyout_t */
+
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
-struct ucred;
 
 /*
  * Machine-independent functions:
@@ -153,6 +159,7 @@ void	kpsignal1(struct proc *, struct ksiginfo *, void *, int);
 #define	kpsignal(p, ksi, data)		kpsignal1((p), (ksi), (data), 1)
 #define	psignal(p, sig)			psignal1((p), (sig), 1)
 #define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
+void	child_psignal(struct proc *, int);
 void	siginit(struct proc *);
 void	trapsignal(struct lwp *, const struct ksiginfo *);
 void	sigexit(struct lwp *, int);
@@ -177,25 +184,17 @@ void	sigactsunshare(struct proc *);
 void	sigactsfree(struct sigacts *);
 
 void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
+siginfo_t *siginfo_alloc(int);
+void	siginfo_free(void *);
+
+int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
+    copyin_t, copyout_t);
 
 /*
  * Machine-dependent functions:
  */
 void	sendsig(const struct ksiginfo *, const sigset_t *);
 
-/*
- * Compatibility functions.  See compat/common/kern_sig_13.c.
- */
-void	native_sigset13_to_sigset(const sigset13_t *, sigset_t *);
-void	native_sigset_to_sigset13(const sigset_t *, sigset13_t *);
-void	native_sigaction13_to_sigaction(const struct sigaction13 *,
-	    struct sigaction *);
-void	native_sigaction_to_sigaction13(const struct sigaction *,
-	    struct sigaction13 *);
-void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
-	    struct sigaltstack *);
-void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
-	    struct sigaltstack13 *);
 #endif	/* _KERNEL */
 
 #ifdef	_KERNEL

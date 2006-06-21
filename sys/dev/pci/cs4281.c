@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.26 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.26.2.1 2006/06/21 15:05:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.26 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.26.2.1 2006/06/21 15:05:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
-	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
+	int error;
 
 	sc = (struct cs428x_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -215,23 +215,12 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
-	/*
-	 * Set Power State D0.
-	 * Without do this, 0xffffffff is read from all registers after
-	 * using Windows.
-	 * On my IBM Thinkpad X20, it is set to D3 after using Windows2000.
-	 */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-			       &pci_pwrmgmt_cap_reg, 0)) {
-
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				    pci_pwrmgmt_csr_reg);
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
-				       (reg & ~PCI_PMCSR_STATE_MASK) |
-				       PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/* Enable the device (set bus master flag) */
@@ -339,42 +328,45 @@ cs4281_intr(void *p)
 	/* Playback Interrupt */
 	if (intr & HISR_DMA0) {
 		handled = 1;
-		DPRINTF((" PB DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA0),
-			 (int)BA0READ4(sc, CS4281_DCC0)));
 		if (sc->sc_prun) {
+			DPRINTF((" PB DMA 0x%x(%d)",
+				(int)BA0READ4(sc, CS4281_DCA0),
+				(int)BA0READ4(sc, CS4281_DCC0)));
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
+			/* copy buffer */
+			++sc->sc_pi;
+			empty_dma = sc->sc_pdma->addr;
+			if (sc->sc_pi&1)
+				empty_dma += sc->hw_blocksize;
+			memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
+			sc->sc_pn += sc->hw_blocksize;
+			if (sc->sc_pn >= sc->sc_pe)
+				sc->sc_pn = sc->sc_ps;
 		} else {
-			printf("unexpected play intr\n");
+			printf("%s: unexpected play intr\n",
+			       sc->sc_dev.dv_xname);
 		}
-		/* copy buffer */
-		++sc->sc_pi;
-		empty_dma = sc->sc_pdma->addr;
-		if (sc->sc_pi&1)
-			empty_dma += sc->hw_blocksize;
-		memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
-		sc->sc_pn += sc->hw_blocksize;
-		if (sc->sc_pn >= sc->sc_pe)
-			sc->sc_pn = sc->sc_ps;
 	}
 	if (intr & HISR_DMA1) {
 		handled = 1;
-		/* copy from DMA */
-		DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
-			 (int)BA0READ4(sc, CS4281_DCC1)));
-		++sc->sc_ri;
-		empty_dma = sc->sc_rdma->addr;
-		if ((sc->sc_ri & 1) == 0)
-			empty_dma += sc->hw_blocksize;
-		memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-		sc->sc_rn += sc->hw_blocksize;
-		if (sc->sc_rn >= sc->sc_re)
-			sc->sc_rn = sc->sc_rs;
 		if (sc->sc_rrun) {
+			/* copy from DMA */
+			DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
+				(int)BA0READ4(sc, CS4281_DCC1)));
+			++sc->sc_ri;
+			empty_dma = sc->sc_rdma->addr;
+			if ((sc->sc_ri & 1) == 0)
+				empty_dma += sc->hw_blocksize;
+			memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+			sc->sc_rn += sc->hw_blocksize;
+			if (sc->sc_rn >= sc->sc_re)
+				sc->sc_rn = sc->sc_rs;
 			if ((sc->sc_ri % sc->sc_rcount) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
-			printf("unexpected record intr\n");
+			printf("%s: unexpected record intr\n",
+			       sc->sc_dev.dv_xname);
 		}
 	}
 	DPRINTF(("\n"));

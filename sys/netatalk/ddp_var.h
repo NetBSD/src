@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_var.h,v 1.2 2002/05/12 21:43:23 matt Exp $	 */
+/*	$NetBSD: ddp_var.h,v 1.2.26.1 2006/06/21 15:10:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #ifndef _NETATALK_DDP_VAR_H_
-#define _NETATALK_DDP_VAR_H_ 1
+#define _NETATALK_DDP_VAR_H_
 
 struct ddpcb {
 	struct sockaddr_at ddp_fsat, ddp_lsat;
@@ -58,4 +58,4 @@ extern struct ddpcb *ddpcb;
 extern struct ddpstat ddpstat;
 #endif
 
-#endif /* _NETATALK_DDP_VAR_H_ */
+#endif /* !_NETATALK_DDP_VAR_H_ */

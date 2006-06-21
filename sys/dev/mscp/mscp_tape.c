@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.25 2005/06/27 11:05:24 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.25.2.1 2006/06/21 15:05:02 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.25 2005/06/27 11:05:24 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.25.2.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,7 +161,7 @@ mtattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	mt_softc *mt = (void *)self;
+	struct	mt_softc *mt = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;
@@ -181,10 +181,11 @@ mt_putonline(mt)
 	struct mt_softc *mt;
 {
 	struct	mscp *mp;
-	struct	mscp_softc *mi = (struct mscp_softc *)mt->mt_dev.dv_parent;
+	struct	mscp_softc *mi =
+	    (struct mscp_softc *)device_parent(&mt->mt_dev);
 	volatile int i;
 
-	(volatile int)mt->mt_state = MT_OFFLINE;
+	((volatile struct mt_softc *) mt)->mt_state = MT_OFFLINE;
 	mp = mscp_getcp(mi, MSCP_WAIT);
 	mp->mscp_opcode = M_OP_ONLINE;
 	mp->mscp_unit = mt->mt_hwunit;
@@ -206,10 +207,10 @@ mt_putonline(mt)
  */
 /*ARGSUSED*/
 int
-mtopen(dev, flag, fmt, p)
+mtopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct mt_softc *mt;
 	int unit;
@@ -238,10 +239,10 @@ mtopen(dev, flag, fmt, p)
 
 /* ARGSUSED */
 int
-mtclose(dev, flags, fmt, p)
+mtclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
@@ -280,7 +281,7 @@ mtstrategy(bp)
 	}
 
 	mt->mt_waswrite = bp->b_flags & B_READ ? 0 : 1;
-	mscp_strategy(bp, mt->mt_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&mt->mt_dev));
 	return;
 
 bad:
@@ -434,20 +435,17 @@ mtioerror(usc, mp, bp)
  * I/O controls.
  */
 int
-mtioctl(dev, cmd, data, flag, p)
+mtioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
-	struct	mtop *mtop;
-	struct	mtget *mtget;
-	int error = 0, count;
-
-	count = mtop->mt_count;
+	struct mtop *mtop;
+	int error = 0;
 
 	switch (cmd) {
 
@@ -461,8 +459,7 @@ mtioctl(dev, cmd, data, flag, p)
 			error = mtcmd(mt, mtop->mt_op, mtop->mt_count, 0);
 
 	case MTIOCGET:
-		mtget = (void *)data;
-		mtget->mt_type = MT_ISTMSCP;
+		((struct mtget *)data)->mt_type = MT_ISTMSCP;
 		/* XXX we need to fill in more fields here */
 		break;
 
@@ -500,7 +497,7 @@ mtcmd(mt, cmd, count, complete)
 	int cmd, count, complete;
 {
 	struct mscp *mp;
-	struct mscp_softc *mi = (void *)mt->mt_dev.dv_parent;
+	struct mscp_softc *mi = (void *)device_parent(&mt->mt_dev);
 	volatile int i;
 
 	mp = mscp_getcp(mi, MSCP_WAIT);

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.23 2005/05/29 21:55:34 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.23.2.1 2006/06/21 15:10:26 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.23 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.23.2.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.23 2005/05/29 21:55:34 christos E
  * mountflag is used.
  */
 int
-procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char bf[512];
@@ -112,12 +112,12 @@ procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
  * mountflag is used.
  */
 int
-procfs_do_pid_stat(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
+procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char bf[512];
+	struct proc *p = curl->l_proc;
 	int len;
-	struct proc *p = l->l_proc;
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
@@ -214,7 +214,7 @@ procfs_do_pid_stat(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
 }
 
 int
-procfs_docpuinfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	int len = 4096;
@@ -238,7 +238,7 @@ done:
 }
 
 int
-procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char bf[512];
@@ -260,7 +260,7 @@ procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 }
 
 int
-procfs_domounts(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char bf[512], *mtab = NULL;

@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $ */
+/* $NetBSD: ciphy.c,v 1.3.8.1 2006/06/21 15:04:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3.8.1 2006/06/21 15:04:46 yamt Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -82,6 +82,12 @@ static const struct mii_phydesc ciphys[] = {
 	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201B,
 	  MII_STR_CICADA_CS8201B },
 
+	{ MII_OUI_xxCICADA,		MII_MODEL_CICADA_CS8201,
+	  MII_STR_CICADA_CS8201 },
+
+	{ MII_OUI_xxCICADA,		MII_MODEL_CICADA_CS8201A,
+	  MII_STR_CICADA_CS8201A },
+
 	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CS8201B,
 	  MII_STR_xxCICADA_CS8201B },
 
@@ -103,7 +109,7 @@ ciphymatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 ciphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
@@ -365,6 +371,12 @@ ciphy_fixup(struct mii_softc *sc)
 	model = MII_MODEL(PHY_READ(sc, CIPHY_MII_PHYIDR2));
 	status = PHY_READ(sc, CIPHY_MII_AUXCSR);
 	speed = status & CIPHY_AUXCSR_SPEED;
+
+	if (device_is_a(device_parent(&sc->mii_dev), "nfe")) {
+		/* need to set for 2.5V RGMII for NVIDIA adapters */
+		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_INTSEL_RGMII);
+		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_IOVOL_2500MV);
+	}
 
 	switch (model) {
 	case MII_MODEL_CICADA_CS8201:

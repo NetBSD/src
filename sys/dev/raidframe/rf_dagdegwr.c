@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.25 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.25.4.1 2006/06/21 15:06:28 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.25 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.25.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -278,7 +278,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
-	RF_ASSERT(i == nNodes);
 
 	/* this dag can not commit until all rrd and xor Nodes have completed */
 	dag_h->numCommitNodes = 1;
@@ -715,9 +714,9 @@ rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		       RF_DagHeader_t *dag_h, void *bp,
 		       RF_RaidAccessFlags_t flags,
 		       RF_AllocListElem_t *allocList,
-		       char *redundantReadNodeName,
-		       char *redundantWriteNodeName,
-		       char *recoveryNodeName,
+		       const char *redundantReadNodeName,
+		       const char *redundantWriteNodeName,
+		       const char *recoveryNodeName,
 		       int (*recovFunc) (RF_DagNode_t *))
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.29 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: disk.h,v 1.29.6.1 2006/06/21 15:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/iostat.h>
 
 struct buf;
 struct disk;
@@ -209,15 +210,7 @@ struct disk {
 	 * Metrics data; note that some metrics may have no meaning
 	 * on certain types of disks.
 	 */
-	int		dk_busy;	/* busy counter */
-	u_int64_t	dk_rxfer;	/* total number of read transfers */
-	u_int64_t	dk_wxfer;	/* total number of write transfers */
-	u_int64_t	dk_seek;	/* total independent seek operations */
-	u_int64_t	dk_rbytes;	/* total bytes read */
-	u_int64_t	dk_wbytes;	/* total bytes written */
-	struct timeval	dk_attachtime;	/* time disk was attached */
-	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
-	struct timeval	dk_time;	/* total time spent busy */
+	struct io_stats	*dk_stats;
 
 	struct	dkdriver *dk_driver;	/* pointer to driver */
 
@@ -243,29 +236,6 @@ struct disk {
 	struct cpu_disklabel *dk_cpulabel;
 };
 
-#define	DK_DISKNAMELEN	16
-
-/* The following structure is 64-bit alignment safe */
-struct disk_sysctl {
-	char		dk_name[DK_DISKNAMELEN];
-	int32_t		dk_busy;
-	int32_t		pad;
-	u_int64_t	dk_xfer;
-	u_int64_t	dk_seek;
-	u_int64_t	dk_bytes;
-	u_int32_t	dk_attachtime_sec;
-	u_int32_t	dk_attachtime_usec;
-	u_int32_t	dk_timestamp_sec;
-	u_int32_t	dk_timestamp_usec;
-	u_int32_t	dk_time_sec;
-	u_int32_t	dk_time_usec;
-	/* New separate read/write stats */
-	u_int64_t	dk_rxfer;
-	u_int64_t	dk_rbytes;
-	u_int64_t	dk_wxfer;
-	u_int64_t	dk_wbytes;
-};
-
 struct dkdriver {
 	void	(*d_strategy)(struct buf *);
 	void	(*d_minphys)(struct buf *);
@@ -288,11 +258,6 @@ struct dkdriver {
 #define	DK_OPENRAW	5		/* open without label */
 
 /*
- * disklist_head is defined here so that user-land has access to it.
- */
-TAILQ_HEAD(disklist_head, disk);	/* the disklist is a TAILQ */
-
-/*
  * Bad sector lists per fixed disk
  */
 struct disk_badsectors {
@@ -303,11 +268,18 @@ struct disk_badsectors {
 };
 
 struct disk_badsecinfo {
-	u_int32_t	dbsi_bufsize;	/* size of region pointed to */
-	u_int32_t	dbsi_skip;	/* how many to skip past */
-	u_int32_t	dbsi_copied;	/* how many got copied back */
-	u_int32_t	dbsi_left;	/* remaining to copy */
+	uint32_t	dbsi_bufsize;	/* size of region pointed to */
+	uint32_t	dbsi_skip;	/* how many to skip past */
+	uint32_t	dbsi_copied;	/* how many got copied back */
+	uint32_t	dbsi_left;	/* remaining to copy */
 	caddr_t		dbsi_buffer;	/* region to copy disk_badsectors to */
+};
+
+#define	DK_STRATEGYNAMELEN	32
+struct disk_strategy {
+	char dks_name[DK_STRATEGYNAMELEN]; /* name of strategy */
+	char *dks_param;		/* notyet; should be NULL */
+	size_t dks_paramlen;		/* notyet; should be 0 */
 };
 
 #ifdef _KERNEL
@@ -318,15 +290,17 @@ struct proc;
 
 void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
+void	pseudo_disk_init(struct disk *);
+void	pseudo_disk_attach(struct disk *);
+void	pseudo_disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
-void	disk_resetstat(struct disk *);
-struct	disk *disk_find(char *);
+struct disk *disk_find(const char *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);
 void	dkwedge_delall(struct disk *);
-int	dkwedge_list(struct disk *, struct dkwedge_list *, struct proc *);
+int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
 void	dkwedge_set_bootwedge(struct device *, daddr_t, uint64_t);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);

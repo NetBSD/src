@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.3 2005/06/22 22:07:49 martin Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.3.2.1 2006/06/21 15:10:46 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.2 2004/12/31 22:42:38 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.6 2005/08/08 18:46:36 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_NETBSD_H_
 #define _NET80211_IEEE80211_NETBSD_H_
@@ -39,9 +39,6 @@
 void if_printf(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
-/*
- * Beacon locking definitions.
- */
 struct ieee80211_lock {
 	int count;
 	int ipl;
@@ -56,6 +53,8 @@ struct ieee80211_lock {
 		if ((_ic)->_member.count++ == 0)	\
 			(_ic)->_member.ipl = __s;	\
 	} while (0)
+#define IEEE80211_IS_LOCKED_IMPL(_ic, _member)          \
+        ((_ic)->_member.count != 0)
 #define	IEEE80211_UNLOCK_IMPL(_ic, _member)		\
 	do {						\
 		if (--(_ic)->_member.count == 0)	\
@@ -65,6 +64,9 @@ struct ieee80211_lock {
 	IASSERT((_ic)->_member.count > 0,		\
 	    ("%s: IEEE80211_LOCK not held", __func__));
 
+/*
+ * Beacon locking definitions.
+ */
 typedef struct ieee80211_lock ieee80211_beacon_lock_t;
 #define	IEEE80211_BEACON_LOCK_INIT(_ic, _name)		\
 	IEEE80211_LOCK_INIT_IMPL(_ic, _name, ic_beaconlock)
@@ -78,6 +80,7 @@ typedef struct ieee80211_lock ieee80211_beacon_lock_t;
 
 /*
  * Node locking definitions.
+ * NB: MTX_DUPOK is because we don't generate per-interface strings.
  */
 typedef struct ieee80211_lock ieee80211_node_lock_t;
 #define	IEEE80211_NODE_LOCK_INIT(_nt, _name)		\
@@ -85,6 +88,8 @@ typedef struct ieee80211_lock ieee80211_node_lock_t;
 #define	IEEE80211_NODE_LOCK_DESTROY(_nt)
 #define	IEEE80211_NODE_LOCK(_nt)			\
 	IEEE80211_LOCK_IMPL(_nt, nt_nodelock)
+#define IEEE80211_NODE_IS_LOCKED(_nt)                   \
+        IEEE80211_IS_LOCKED_IMPL(_nt, nt_nodelock)
 #define	IEEE80211_NODE_UNLOCK(_nt)			\
 	IEEE80211_UNLOCK_IMPL(_nt, nt_nodelock)
 #define	IEEE80211_NODE_LOCK_ASSERT(_nt)			\
@@ -177,6 +182,10 @@ int ieee80211_node_dectestref(struct ieee80211_node *ni);
 
 struct mbuf *ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen);
 #define	M_PWR_SAV	M_PROTO1		/* bypass PS handling */
+#define	M_MORE_DATA	M_LINK3			/* more data frames to follow */
+#define	M_FRAG		M_LINK4			/* 802.11 fragment */
+#define	M_FIRSTFRAG	M_LINK5			/* first 802.11 fragment */
+#define	M_FF		M_LINK6			/* "fast frames" */
 /*
  * Encode WME access control bits in the PROTO flags.
  * This is safe since it's passed directly in to the
@@ -253,12 +262,18 @@ struct ieee80211_michael_event {
 	     var = nextvar)
 
 void	if_printf(struct ifnet *, const char *, ...);
-struct mbuf *m_getcl(int, int, int);
+void	m_align(struct mbuf *, int);
 int	m_append(struct mbuf *, int, const caddr_t);
 void	get_random_bytes(void *, size_t);
-int	m_append(struct mbuf *m0, int, const caddr_t);
+
 void	ieee80211_sysctl_attach(struct ieee80211com *);
 void	ieee80211_sysctl_detach(struct ieee80211com *);
 void	ieee80211_load_module(const char *);
 
-#endif /* _NET80211_IEEE80211_NETBSD_H_ */
+void	ieee80211_init(void);
+#define	IEEE80211_CRYPTO_SETUP(name)				\
+	static void name(void);					\
+	__link_set_add_text(ieee80211_funcs, name);		\
+	static void name(void)
+
+#endif /* !_NET80211_IEEE80211_NETBSD_H_ */

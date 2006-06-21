@@ -1,4 +1,4 @@
-/*	$NetBSD: dll.h,v 1.6 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: dll.h,v 1.6.4.1 2006/06/21 15:10:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,9 @@
  *	@(#)dll.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETCCITT_DLL_H_
+#define _NETCCITT_DLL_H_
+
 /*
  * We define the additional PRC_* codes in here
  */
@@ -113,3 +116,5 @@ struct dll_ctlinfo {
 #define dlcti_pcb  CTLIun.CTLI_DOWN.dctli_down_pcb
 #define dlcti_rt   CTLIun.CTLI_DOWN.dctli_down_rt
 #define dlcti_conf CTLIun.CTLI_DOWN.dctli_down_llconf
+
+#endif /* !_NETCCITT_DLL_H_ */

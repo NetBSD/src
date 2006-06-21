@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_var.h,v 1.7 2004/04/20 02:13:26 matt Exp $	*/
+/*	$NetBSD: idrp_var.h,v 1.7.12.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NETISO_IDRP_VAR_H_
+#define _NETISO_IDRP_VAR_H_
+
 #ifdef _KERNEL
 struct mbuf;
 
@@ -44,5 +47,7 @@ void idrp_init (void);
 void idrp_input (struct mbuf *, ...);
 int idrp_output (struct mbuf *, ...);
 int idrp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *);
+		     struct mbuf *, struct lwp *);
 #endif
+
+#endif /* !_NETISO_IDRP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.12 2005/05/23 19:05:00 jmc Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.12.2.1 2006/06/21 15:10:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,6 +37,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/stdint.h>		/* XXX: for intptr_t */
 #include <machine/stdarg.h>
 
 #include "stand.h"
@@ -95,6 +96,16 @@ reswitch:	switch (ch = *fmt++) {
 		case 'l':
 			lflag = 1;
 			goto reswitch;
+		case 't':
+#if 0 /* XXX: abuse intptr_t until the situation with ptrdiff_t is clear */
+			lflag = (sizeof(ptrdiff_t) == sizeof(long));
+#else
+			lflag = (sizeof(intptr_t) == sizeof(long));
+#endif
+			goto reswitch;
+		case 'z':
+			lflag = (sizeof(size_t) == sizeof(unsigned long));
+			goto reswitch;
 		case 'c':
 			ch = va_arg(ap, int);
 				put(ch & 0x7f);
@@ -127,7 +138,7 @@ reswitch:	switch (ch = *fmt++) {
 			put('0');
 			put('x');
 			lflag = 1;
-			/* fall through */
+			/* FALLTHROUGH */
 		case 'x':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.29 2005/06/03 23:05:46 tsutsui Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.29.2.1 2006/06/21 14:58:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.29 2005/06/03 23:05:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.29.2.1 2006/06/21 14:58:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -123,7 +123,7 @@ hpux_termio(fd, com, data, l)
 	struct hpux_termios htios;
 	int line, error;
 	int newi = 0;
-	int (*ioctlrout)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlrout)(struct file *, u_long, void *, struct lwp *);
 
         if ((fp = fd_getfile(fdp, fd)) == NULL)
                 return EBADF;
@@ -136,7 +136,7 @@ hpux_termio(fd, com, data, l)
 		/*
 		 * Get BSD terminal state
 		 */
-		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, l)))
 			break;
 		memset((char *)&htios, 0, sizeof htios);
 		/*
@@ -211,7 +211,7 @@ hpux_termio(fd, com, data, l)
 		 */
 		if (!newi) {
 			line = 0;
-			(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, p);
+			(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, l);
 			htios.c_reserved = line;
 		}
 		/*
@@ -264,7 +264,7 @@ hpux_termio(fd, com, data, l)
 		/*
 		 * Get old characteristics and determine if we are a tty.
 		 */
-		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, l)))
 			break;
 		if (newi)
 			memcpy((char *)&htios, data, sizeof htios);
@@ -369,7 +369,7 @@ hpux_termio(fd, com, data, l)
 			com = TIOCSETAW;
 		else
 			com = TIOCSETAF;
-		error = (*ioctlrout)(fp, com, (caddr_t)&tios, p);
+		error = (*ioctlrout)(fp, com, (caddr_t)&tios, l);
 		if (error == 0) {
 			/*
 			 * Set line discipline
@@ -377,7 +377,7 @@ hpux_termio(fd, com, data, l)
 			if (!newi) {
 				line = htios.c_reserved;
 				(void) (*ioctlrout)(fp, TIOCSETD,
-						    (caddr_t)&line, p);
+						    (caddr_t)&line, l);
 			}
 			/*
 			 * Set non-blocking IO if VMIN == VTIME == 0, clear
@@ -581,13 +581,13 @@ getsettty(l, fdes, com, cmarg)
 			sb.sg_flags |= XTABS;
 		if (hsb.sg_flags & V7_HUPCL)
 			(void)(*fp->f_ops->fo_ioctl)
-				(fp, TIOCHPCL, (caddr_t)0, p);
+				(fp, TIOCHPCL, (caddr_t)0, l);
 		com = TIOCSETP;
 	} else {
 		memset((caddr_t)&hsb, 0, sizeof hsb);
 		com = TIOCGETP;
 	}
-	error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&sb, p);
+	error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&sb, l);
 	if (error == 0 && com == TIOCGETP) {
 		hsb.sg_ispeed = sb.sg_ispeed;
 		hsb.sg_ospeed = sb.sg_ospeed;

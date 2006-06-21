@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.68.2.1 2006/06/21 15:05:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68.2.1 2006/06/21 15:05:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
@@ -115,8 +115,6 @@ static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
 static int	twe_reset(struct twe_softc *);
-static int	twe_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
@@ -339,12 +337,6 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Escalade\n");
 
-	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
-	if (ccb == NULL) {
-		aprint_error("%s: unable to allocate memory for ccbs\n",
-		    sc->sc_dv.dv_xname);
-		return;
-	}
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -408,6 +400,13 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to load command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
+		return;
+	}
+
+	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
+	if (ccb == NULL) {
+		aprint_error("%s: unable to allocate memory for ccbs\n",
+		    sc->sc_dv.dv_xname);
 		return;
 	}
 
@@ -551,8 +550,7 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	int rv;
 	uint16_t dsize;
 	uint8_t newtype, newstripe;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TWECF_NLOCS];
 
 	if (unit < 0 || unit >= TWE_MAX_UNITS)
 		return (EINVAL);
@@ -640,11 +638,10 @@ twe_add_unit(struct twe_softc *sc, int unit)
 
 	twea.twea_unit = unit;
 
-	ldesc->len = 1;
-	ldesc->locs[TWECF_UNIT] = unit;
+	locs[TWECF_UNIT] = unit;
 
-	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", NULL, &twea,
-					 twe_print, twe_submatch);
+	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", locs, &twea,
+					 twe_print, config_stdsubmatch);
 
 	rv = 0;
  out:
@@ -773,21 +770,6 @@ twe_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", twea->twea_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-twe_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[TWECF_UNIT] != TWECF_UNIT_DEFAULT &&
-	    cf->cf_loc[TWECF_UNIT] != ldesc->locs[TWECF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -1419,7 +1401,7 @@ twe_status_check(struct twe_softc *sc, u_int status)
 /*
  * Allocate and initialise a CCB.
  */
-static __inline void
+static inline void
 twe_ccb_init(struct twe_softc *sc, struct twe_ccb *ccb, int flags)
 {
 	struct twe_cmd *tc;
@@ -1730,7 +1712,7 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
  * Accept an open operation on the control device.
  */
 static int
-tweopen(dev_t dev, int flag, int mode, struct proc *p)
+tweopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1747,7 +1729,7 @@ tweopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 static int
-tweclose(dev_t dev, int flag, int mode, struct proc *p)
+tweclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1768,7 +1750,7 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
  * Handle control operations.
  */
 static int
-tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct twe_softc *twe;
 	struct twe_ccb *ccb;
@@ -1893,6 +1875,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		error = copyout(param->tp_data, tp->tp_data,
 		    param->tp_param_size);
+		free(param, M_DEVBUF);
 		goto done;
 
 	case TWEIO_SET_PARAM:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.90.4.1 2006/06/21 15:04:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.90.4.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $");
 #include <dev/isa/mcdreg.h>
 
 #ifndef MCDDEBUG
-#define MCD_TRACE(fmt,a,b,c,d)
+#define MCD_TRACE(fmt,...)
 #else
-#define MCD_TRACE(fmt,a,b,c,d)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,a,b,c,d);}}
+#define MCD_TRACE(fmt,...)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,__VA_ARGS__);}}
 #endif
 
 #define	MCDPART(dev)	DISKPART(dev)
@@ -132,7 +132,7 @@ struct mcd_softc {
 
 	int	irq, drq;
 
-	char	*type;
+	const char	*type;
 	int	flags;
 #define	MCDF_WLABEL	0x04	/* label is writable */
 #define	MCDF_LABELLING	0x08	/* writing label */
@@ -149,7 +149,7 @@ struct mcd_softc {
 #define	MCD_MD_UNKNOWN	-1
 	int	lastupc;
 #define	MCD_UPC_UNKNOWN	-1
-	struct bufq_state buf_queue;
+	struct bufq_state *buf_queue;
 	int	active;
 	u_char	readcmd;
 	u_char	debug;
@@ -262,7 +262,7 @@ mcdattach(parent, self, aux)
 		return;
 	}
 
-	bufq_alloc(&sc->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
 	callout_init(&sc->sc_pintr_ch);
 
 	/*
@@ -290,10 +290,10 @@ mcdattach(parent, self, aux)
 }
 
 int
-mcdopen(dev, flag, fmt, p)
+mcdopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error, part;
 	struct mcd_softc *sc;
@@ -348,10 +348,10 @@ mcdopen(dev, flag, fmt, p)
 		}
 	}
 
-	MCD_TRACE("open: partition=%d disksize=%d blksize=%d\n", part,
-	    sc->disksize, sc->blksize, 0);
-
 	part = MCDPART(dev);
+
+	MCD_TRACE("open: partition=%d disksize=%ld blksize=%d\n", part,
+	    sc->disksize, sc->blksize);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -392,16 +392,16 @@ bad3:
 }
 
 int
-mcdclose(dev, flag, fmt, p)
+mcdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
 	int error;
-
-	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
+	
+	MCD_TRACE("close: partition=%d\n", part);
 
 	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
@@ -439,11 +439,11 @@ mcdstrategy(bp)
 	int s;
 
 	/* Test validity. */
-	MCD_TRACE("strategy: buf=0x%lx blkno=%ld bcount=%ld\n", bp,
-	    bp->b_blkno, bp->b_bcount, 0);
+	MCD_TRACE("strategy: buf=0x%p blkno=%d bcount=%d\n", bp,
+	    (int) bp->b_blkno, bp->b_bcount);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = " PRId64 " bcount = %ld\n",
+		printf("%s: strategy: blkno = %" PRId64 " bcount = %d\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -451,7 +451,7 @@ mcdstrategy(bp)
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((sc->flags & MCDF_LOADED) == 0) {
-		MCD_TRACE("strategy: drive not valid\n", 0, 0, 0, 0);
+		MCD_TRACE("strategy: drive not valid%s", "\n");
 		bp->b_error = EIO;
 		goto bad;
 	}
@@ -481,7 +481,7 @@ mcdstrategy(bp)
 
 	/* Queue it. */
 	s = splbio();
-	BUFQ_PUT(&sc->buf_queue, bp);
+	BUFQ_PUT(sc->buf_queue, bp);
 	splx(s);
 	if (!sc->active)
 		mcdstart(sc);
@@ -504,7 +504,7 @@ mcdstart(sc)
 loop:
 	s = splbio();
 
-	if ((bp = BUFQ_GET(&sc->buf_queue)) == NULL) {
+	if ((bp = BUFQ_GET(sc->buf_queue)) == NULL) {
 		/* Nothing to do. */
 		sc->active = 0;
 		splx(s);
@@ -512,12 +512,12 @@ loop:
 	}
 
 	/* Block found to process. */
-	MCD_TRACE("start: found block bp=0x%x\n", bp, 0, 0, 0);
+	MCD_TRACE("start: found block bp=0x%p\n", bp);
 	splx(s);
 
 	/* Changed media? */
 	if ((sc->flags & MCDF_LOADED) == 0) {
-		MCD_TRACE("start: drive not valid\n", 0, 0, 0, 0);
+		MCD_TRACE("start: drive not valid%s", "\n");
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -566,12 +566,12 @@ mcdwrite(dev, uio, flags)
 }
 
 int
-mcdioctl(dev, cmd, addr, flag, p)
+mcdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;
@@ -579,8 +579,8 @@ mcdioctl(dev, cmd, addr, flag, p)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-
-	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
+	
+	MCD_TRACE("ioctl: cmd=0x%lx\n", cmd);
 
 	if ((sc->flags & MCDF_LOADED) == 0)
 		return EIO;
@@ -1223,13 +1223,13 @@ mcdintr(arg)
 		if ((sc->flags & MCDF_LOADED) == 0)
 			goto changed;
 		MCD_TRACE("doread: got WAITMODE delay=%d\n",
-		    RDELAY_WAITMODE - mbx->count, 0, 0, 0);
+		    RDELAY_WAITMODE - mbx->count);
 
 		sc->lastmode = mbx->mode;
 
 	firstblock:
-		MCD_TRACE("doread: read blkno=%d for bp=0x%x\n", mbx->blkno,
-		    bp, 0, 0);
+		MCD_TRACE("doread: read blkno=%d for bp=0x%p\n", 
+		    (int) mbx->blkno, bp);
 
 		/* Build parameter block. */
 		hsg2msf(mbx->blkno, msf);
@@ -1272,7 +1272,7 @@ mcdintr(arg)
 
 	gotblock:
 		MCD_TRACE("doread: got data delay=%d\n",
-		    RDELAY_WAITREAD - mbx->count, 0, 0, 0);
+		    RDELAY_WAITREAD - mbx->count);
 
 		/* Data is ready. */
 		bus_space_write_1(iot, ioh, MCD_CTL2, 0x04);	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.12 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: dzms.c,v 1.12.4.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12.4.1 2006/06/21 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ CFATTACH_DECL(dzms, sizeof(struct dzms_softc),
     dzms_match, dzms_attach, NULL, NULL);
 
 static int  dzms_enable(void *);
-static int  dzms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int  dzms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void dzms_disable(void *);
 
 const struct wsmouse_accessops dzms_accessops = {
@@ -123,8 +123,8 @@ dzms_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct dz_softc *dz = (void *)parent;
-	struct dzms_softc *dzms = (void *)self;
+	struct dz_softc *dz = device_private(parent);
+	struct dzms_softc *dzms = device_private(self);
 	struct dzkm_attach_args *daa = aux;
 	struct dz_linestate *ls;
 	struct wsmousedev_attach_args a;
@@ -177,12 +177,12 @@ dzms_disable(v)
 }
 
 static int
-dzms_ioctl(v, cmd, data, flag, p)
+dzms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (cmd == WSMOUSEIO_GTYPE) {
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;

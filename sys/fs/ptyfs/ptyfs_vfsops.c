@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.8 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.8.2.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.8 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.8.2.1 2006/06/21 15:09:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.8 2005/05/29 21:00:29 christos Ex
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
+#include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -65,26 +67,25 @@ void	ptyfs_init(void);
 void	ptyfs_reinit(void);
 void	ptyfs_done(void);
 int	ptyfs_mount(struct mount *, const char *, void *, struct nameidata *,
-    struct proc *);
-int	ptyfs_start(struct mount *, int, struct proc *);
-int	ptyfs_unmount(struct mount *, int, struct proc *);
-int	ptyfs_statvfs(struct mount *, struct statvfs *, struct proc *);
-int	ptyfs_quotactl(struct mount *, int, uid_t, void *, struct proc *);
-int	ptyfs_sync(struct mount *, int, struct ucred *, struct proc *);
+    struct lwp *);
+int	ptyfs_start(struct mount *, int, struct lwp *);
+int	ptyfs_unmount(struct mount *, int, struct lwp *);
+int	ptyfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int	ptyfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
+int	ptyfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	ptyfs_vget(struct mount *, ino_t, struct vnode **);
-int	ptyfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	ptyfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
-int	ptyfs_vptofh(struct vnode *, struct fid *);
 
-static int ptyfs__allocvp(struct ptm_pty *, struct proc *, struct vnode **,
+static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
-static int ptyfs__makename(struct ptm_pty *, char *, size_t, dev_t, char);
+static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
+    dev_t, char);
 static void ptyfs__getvattr(struct ptm_pty *, struct proc *, struct vattr *);
 
 /*
  * ptm glue: When we mount, we make ptm point to us.
  */
 struct ptm_pty *ptyfs_save_ptm;
+static int ptyfs_count;
 
 struct ptm_pty ptm_ptyfspty = {
 	ptyfs__allocvp,
@@ -93,9 +94,40 @@ struct ptm_pty ptm_ptyfspty = {
 	NULL
 };
 
+static const char *
+ptyfs__getpath(struct lwp *l, const struct mount *mp)
+{
+#define MAXBUF (sizeof(mp->mnt_stat.f_mntonname) + 32)
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	char *buf;
+	const char *rv;
+	size_t len;
+	char *bp;
+	int error;
+
+	rv = mp->mnt_stat.f_mntonname;
+	if (cwdi->cwdi_rdir == NULL)
+		return rv;
+
+	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
+	bp = buf + MAXBUF;
+	*--bp = '\0';
+	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+	    buf, MAXBUF / 2, 0, l);
+	if (error)	/* XXX */
+		goto out;
+
+	len = strlen(bp);
+	if (len < sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
+		rv += len;
+out:
+	free(buf, M_TEMP);
+	return rv;
+}
+
 static int
-ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
-    char ms)
+ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
+    dev_t dev, char ms)
 {
 	struct mount *mp = pt->arg;
 	size_t len;
@@ -106,7 +138,7 @@ ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%d", mp->mnt_stat.f_mntonname,
+		len = snprintf(tbuf, bufsiz, "%s/%d", ptyfs__getpath(l, mp),
 		    minor(dev));
 		break;
 	default:
@@ -119,7 +151,7 @@ ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
 
 static int
 /*ARGSUSED*/
-ptyfs__allocvp(struct ptm_pty *pt, struct proc *p, struct vnode **vpp,
+ptyfs__allocvp(struct ptm_pty *pt, struct lwp *l, struct vnode **vpp,
     dev_t dev, char ms)
 {
 	struct mount *mp = pt->arg;
@@ -136,7 +168,7 @@ ptyfs__allocvp(struct ptm_pty *pt, struct proc *p, struct vnode **vpp,
 		return EINVAL;
 	}
 
-	return ptyfs_allocvp(mp, vpp, type, minor(dev), p);
+	return ptyfs_allocvp(mp, vpp, type, minor(dev), l);
 }
 
 
@@ -147,7 +179,7 @@ ptyfs__getvattr(struct ptm_pty *pt, struct proc *p, struct vattr *vattr)
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_uid = kauth_cred_getuid(p->p_cred);
 	vattr->va_gid = pmnt->pmnt_gid;
 	vattr->va_mode = pmnt->pmnt_mode;
 }
@@ -182,7 +214,7 @@ ptyfs_done(void)
  */
 int
 ptyfs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp, struct proc *p)
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
 	struct ptyfsmount *pmnt;
@@ -202,6 +234,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 		args.gid = pmnt->pmnt_gid;
 		return copyout(&args, data, sizeof(args));
 	}
+
+	/* Don't allow more than one mount */
+	if (ptyfs_count)
+		return EBUSY;
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
@@ -229,29 +265,29 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "ptyfs",
-	    UIO_SYSSPACE, mp, p)) != 0) {
+	    UIO_SYSSPACE, mp, l)) != 0) {
+		free(pmnt, M_UFSMNT);
 		return error;
 	}
 
 	/* Point pty access to us */
-	if (ptyfs_save_ptm != NULL)
-		return EBUSY;
 
 	ptm_ptyfspty.arg = mp;
 	ptyfs_save_ptm = pty_sethandler(&ptm_ptyfspty);
+	ptyfs_count++;
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-ptyfs_start(struct mount *mp, int flags, struct proc *p)
+ptyfs_start(struct mount *mp, int flags, struct lwp *p)
 {
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-ptyfs_unmount(struct mount *mp, int mntflags, struct proc *p)
+ptyfs_unmount(struct mount *mp, int mntflags, struct lwp *p)
 {
 	int error;
 	int flags = 0;
@@ -263,15 +299,16 @@ ptyfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 
 	/* Restore where pty access was pointing */
-	ptm_ptyfspty.arg = NULL;
 	(void)pty_sethandler(ptyfs_save_ptm);
 	ptyfs_save_ptm = NULL;
+	ptm_ptyfspty.arg = NULL;
 
 	/*
 	 * Finally, throw away the ptyfsmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);
 	mp->mnt_data = 0;
+	ptyfs_count--;
 
 	return 0;
 }
@@ -285,14 +322,14 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 
 /*ARGSUSED*/
 int
-ptyfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct proc *p)
+ptyfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct lwp *p)
 {
 	return EOPNOTSUPP;
 }
 
 /*ARGSUSED*/
 int
-ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
+ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
 {
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_frsize = DEV_BSIZE;
@@ -312,7 +349,7 @@ ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 
 /*ARGSUSED*/
 int
-ptyfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct proc *p)
+ptyfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *p)
 {
 	return 0;
 }
@@ -324,20 +361,6 @@ ptyfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct proc *p)
 /*ARGSUSED*/
 int
 ptyfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
-{
-	return EOPNOTSUPP;
-}
-
-/*ARGSUSED*/
-int
-ptyfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
-{
-	return EOPNOTSUPP;
-}
-
-/*ARGSUSED*/
-int
-ptyfs_checkexp(struct mount *mp, struct mbuf *mb, int *wh, struct ucred **anon)
 {
 	return EOPNOTSUPP;
 }
@@ -364,13 +387,6 @@ SYSCTL_SETUP(sysctl_vfs_ptyfs_setup, "sysctl vfs.ptyfs subtree setup")
 }
 
 
-/*ARGSUSED*/
-int
-ptyfs_vptofh(struct vnode *vp, struct fid *fhp)
-{
-	return EOPNOTSUPP;
-}
-
 extern const struct vnodeopv_desc ptyfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const ptyfs_vnodeopv_descs[] = {
@@ -388,17 +404,15 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_statvfs,
 	ptyfs_sync,
 	ptyfs_vget,
-	ptyfs_fhtovp,
-	ptyfs_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofp */
 	ptyfs_init,
 	ptyfs_reinit,
 	ptyfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	ptyfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *))eopnotsupp,
 	(int (*)(struct mount *, int, struct vnode *, int, const char *,
-	    struct proc *))eopnotsupp,
+	    struct lwp *))eopnotsupp,
 	ptyfs_vnodeopv_descs,
 };
 VFS_ATTACH(ptyfs_vfsops);

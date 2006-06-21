@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_ip.h,v 1.9 2003/08/07 16:33:40 agc Exp $	*/
+/*	$NetBSD: tp_ip.h,v 1.9.16.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,4 +79,4 @@ SOFTWARE.
 extern struct inpcbtable tp_inpcb;
 /* queue of active inpcbs for tp ; for tp with dod ip */
 
-#endif				/* _NETISO_TP_IP_H_ */
+#endif /* !_NETISO_TP_IP_H_ */

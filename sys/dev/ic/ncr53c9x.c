@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.115 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.115.2.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ ncr53c9x_attach(sc)
 	}
 
 	/* Reset state & bus */
-	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_cfflags = device_cfdata(&sc->sc_dev)->cf_flags;
 	sc->sc_state = 0;
 	ncr53c9x_init(sc, 1);
 
@@ -543,7 +543,7 @@ ncr53c9x_init(sc, doreset)
  * only make sense when he DMA CSR has an interrupt showing. Call only
  * if an interrupt is pending.
  */
-__inline__ void
+inline void
 ncr53c9x_readregs(sc)
 	struct ncr53c9x_softc *sc;
 {
@@ -694,6 +694,8 @@ ncr53c9x_select(sc, ecb)
 			sc->sc_cmdlen = clen;
 			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
 
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
+			    &dmasize);
 			/* Program the SCSI counter */
 			NCR_SET_COUNT(sc, dmasize);
 
@@ -702,8 +704,6 @@ ncr53c9x_select(sc, ecb)
 
 			/* And get the targets attention */
 			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
-			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
-			    &dmasize);
 			NCRDMA_GO(sc);
 		} else {
 			ncr53c9x_wrfifo(sc, (u_char *)&ecb->cmd.cmd, ecb->clen);
@@ -751,6 +751,7 @@ ncr53c9x_select(sc, ecb)
 		sc->sc_cmdlen = clen;
 		sc->sc_cmdp = cmd;
 
+		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 		/* Program the SCSI counter */
 		NCR_SET_COUNT(sc, dmasize);
 
@@ -765,7 +766,6 @@ ncr53c9x_select(sc, ecb)
 			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
 		} else
 			NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
-		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 		NCRDMA_GO(sc);
 		return;
 	}
@@ -1110,7 +1110,7 @@ ncr53c9x_sched(sc)
 			if (lun < NCR_NLUN)
 				ti->lun[lun] = li;
 		}
-		li->last_used = time.tv_sec;
+		li->last_used = time_second;
 		if (tag == 0) {
 			/* Try to issue this as an un-tagged command */
 			if (li->untagged == NULL)
@@ -2948,7 +2948,7 @@ ncr53c9x_watch(arg)
 	struct ncr53c9x_linfo *li;
 	int t, s;
 	/* Delete any structures that have not been used in 10min. */
-	time_t old = time.tv_sec - (10 * 60);
+	time_t old = time_second - (10 * 60);
 
 	s = splbio();
 	simple_lock(&sc->sc_lock);

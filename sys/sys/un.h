@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.36.12.1 2005/07/07 11:53:25 yamt Exp $	*/
+/*	$NetBSD: un.h,v 1.36.12.2 2006/06/21 15:12:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,7 @@ typedef __sa_family_t	sa_family_t;
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
-	u_int8_t	sun_len;	/* total sockaddr length */
+	uint8_t		sun_len;	/* total sockaddr length */
 	sa_family_t	sun_family;	/* AF_LOCAL */
 	char		sun_path[104];	/* path name (gag) */
 };
@@ -64,12 +64,12 @@ struct unpcb;
 struct socket;
 
 int	uipc_usrreq(struct socket *, int, struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct proc *);
+	    struct mbuf *, struct mbuf *, struct lwp *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 
 int	unp_attach (struct socket *);
-int	unp_bind (struct unpcb *, struct mbuf *, struct proc *);
-int	unp_connect (struct socket *, struct mbuf *, struct proc *);
+int	unp_bind (struct unpcb *, struct mbuf *, struct lwp *);
+int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
 int	unp_connect2 (struct socket *, struct socket *, int);
 void	unp_detach (struct unpcb *);
 void	unp_discard (struct file *);
@@ -79,8 +79,8 @@ void	unp_gc (void);
 void	unp_mark (struct file *);
 void	unp_scan (struct mbuf *, void (*)(struct file *), int);
 void	unp_shutdown (struct unpcb *);
-int 	unp_externalize (struct mbuf *, struct proc *);
-int	unp_internalize (struct mbuf **, struct proc *);
+int 	unp_externalize (struct mbuf *, struct lwp *);
+int	unp_internalize (struct mbuf **, struct lwp *);
 void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
 	    struct proc *);

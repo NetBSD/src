@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.48 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: comvar.h,v 1.48.6.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,9 +42,7 @@
 
 #include <sys/callout.h>
 #include <sys/timepps.h>
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 #include <sys/lock.h>
-#endif
 
 int comcnattach(bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t);
 
@@ -139,25 +137,22 @@ struct com_softc {
 	void (*disable)(struct com_softc *);
 	int enabled;
 
+#ifdef __HAVE_TIMECOUNTER
+	struct pps_state sc_pps_state;	/* pps state */
+#else /* !__HAVE_TIMECOUNTER */
 	/* PPS signal on DCD, with or without inkernel clock disciplining */
 	u_char	sc_ppsmask;			/* pps signal mask */
 	u_char	sc_ppsassert;			/* pps leading edge */
 	u_char	sc_ppsclear;			/* pps trailing edge */
 	pps_info_t ppsinfo;
 	pps_params_t ppsparam;
+#endif /* !__HAVE_TIMECOUNTER */
 
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	struct simplelock	sc_lock;
-#endif
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 int comprobe1(bus_space_tag_t, bus_space_handle_t);
 int comintr(void *);

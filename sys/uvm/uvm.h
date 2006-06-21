@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.40 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.40.2.1 2006/06/21 15:12:39 yamt Exp $	*/
 
 /*
  *
@@ -152,6 +152,10 @@ UVMHIST_DECL(ubchist);
 UVMHIST_DECL(loanhist);
 #endif
 
+extern struct evcnt uvm_ra_total;
+extern struct evcnt uvm_ra_hit;
+extern struct evcnt uvm_ra_miss;
+
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the
  * interlocked tsleep() function.
@@ -187,21 +191,8 @@ do {									\
 #define UVM_PAGE_OWN(PG, TAG) /* nothing */
 #endif /* UVM_PAGE_TRKOWN */
 
+#include <uvm/uvm_fault_i.h>
+
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_H_ */
-
-/*
- * pull in inlines
- */
-
-#ifdef _KERNEL
-
-#include <uvm/uvm_amap_i.h>
-#include <uvm/uvm_fault_i.h>
-#include <uvm/uvm_map_i.h>
-#include <uvm/uvm_page_i.h>
-#include <uvm/uvm_pager_i.h>
-
-#endif /* _KERNEL */
-

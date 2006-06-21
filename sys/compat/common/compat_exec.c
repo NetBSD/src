@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.13 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.13.4.1 2006/06/21 14:58:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.13 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.13.4.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.13 2005/02/26 23:10:18 perry Exp $
  * There were copies of this in the mac68k, hp300, and i386 ports.
  */
 int
-exec_aout_prep_oldzmagic(p, epp)
-	struct proc *p;
+exec_aout_prep_oldzmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -84,7 +84,7 @@ exec_aout_prep_oldzmagic(p, epp)
 		epp->ep_daddr + execp->a_data, NULLVP, 0,
 		VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 
@@ -98,8 +98,8 @@ exec_aout_prep_oldzmagic(p, epp)
  * XXX: There must be a better way to share this code.
  */
 int
-exec_aout_prep_oldnmagic(p, epp)
-	struct proc *p;
+exec_aout_prep_oldnmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -128,7 +128,7 @@ exec_aout_prep_oldnmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 
@@ -142,8 +142,8 @@ exec_aout_prep_oldnmagic(p, epp)
  * XXX: There must be a better way to share this code.
  */
 int
-exec_aout_prep_oldomagic(p, epp)
-	struct proc *p;
+exec_aout_prep_oldomagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -178,5 +178,5 @@ exec_aout_prep_oldomagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

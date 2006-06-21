@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.23 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.23.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.23 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.23.4.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.23 2005/02/26 22:45:09 perry Exp $"
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -54,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.23 2005/02/26 22:45:09 perry Exp $"
  * Initialize raw connection block q.
  */
 void
-raw_init()
+raw_init(void)
 {
 
 	LIST_INIT(&rawcb);
@@ -136,10 +137,7 @@ raw_input(struct mbuf *m0, ...)
 
 /*ARGSUSED*/
 void *
-raw_ctlinput(cmd, arg, d)
-	int cmd;
-	struct sockaddr *arg;
-	void *d;
+raw_ctlinput(int cmd, struct sockaddr *arg, void *d)
 {
 
 	if ((unsigned)cmd >= PRC_NCMDS)
@@ -149,9 +147,7 @@ raw_ctlinput(cmd, arg, d)
 }
 
 void
-raw_setsockaddr(rp, nam)
-	struct rawcb *rp;
-	struct mbuf *nam;
+raw_setsockaddr(struct rawcb *rp, struct mbuf *nam)
 {
 
 	nam->m_len = rp->rcb_laddr->sa_len;
@@ -159,9 +155,7 @@ raw_setsockaddr(rp, nam)
 }
 
 void
-raw_setpeeraddr(rp, nam)
-	struct rawcb *rp;
-	struct mbuf *nam;
+raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
 {
 
 	nam->m_len = rp->rcb_faddr->sa_len;
@@ -170,19 +164,18 @@ raw_setpeeraddr(rp, nam)
 
 /*ARGSUSED*/
 int
-raw_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
+	struct proc *p;
 	int s;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
+	p = l ? l->l_proc : NULL;
 	s = splsoftnet();
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
@@ -202,7 +195,7 @@ raw_usrreq(so, req, m, nam, control, p)
 	 * the appropriate raw interface routine.
 	 */
 	case PRU_ATTACH:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}
@@ -263,7 +256,7 @@ raw_usrreq(so, req, m, nam, control, p)
 				goto die;
 			}
 			error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-			    (struct mbuf *)0, nam, (struct mbuf *)0, p);
+			    (struct mbuf *)0, nam, (struct mbuf *)0, l);
 			if (error) {
 			die:
 				m_freem(m);

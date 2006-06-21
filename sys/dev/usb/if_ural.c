@@ -1,5 +1,6 @@
-/*	$NetBSD: if_ural.c,v 1.2 2005/07/04 17:46:31 drochner Exp $ */
-/*	$OpenBSD: if_ral.c,v 1.36 2005/06/20 18:54:59 damien Exp $  */
+/*	$NetBSD: if_ural.c,v 1.2.2.1 2006/06/21 15:07:43 yamt Exp $ */
+/*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
+/*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
 /*-
  * Copyright (c) 2005
@@ -24,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.2 2005/07/04 17:46:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.2.2.1 2006/06/21 15:07:43 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -88,15 +89,26 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G },
 	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_RALINK_RT2570 },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050 },
-	{ USB_VENDOR_CISCOLINKSYS,		USB_PRODUCT_CISCOLINKSYS_WUSB54G },
-	{ USB_VENDOR_CISCOLINKSYS,		USB_PRODUCT_CISCOLINKSYS_WUSB54GP },
+	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54G },
+	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GP },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU },
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLG122 },
+	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWBKG },
+	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUSB254 },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54 },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54AI },
+	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54YB },
+	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_MS6861 },
+	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_MS6865 },
+	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_MS6869 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_2 },
+	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_3 },
+	{ USB_VENDOR_RALINK_2,		USB_PRODUCT_RALINK_2_RT2570 },
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG },
+	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_EP9001G },
+	{ USB_VENDOR_VTECH,		USB_PRODUCT_VTECH_RT2570 },
+	{ USB_VENDOR_ZINWELL,		USB_PRODUCT_ZINWELL_ZWXG261 },
 };
 
 Static int		ural_alloc_tx_list(struct ural_softc *);
@@ -421,7 +433,7 @@ USB_ATTACH(ural)
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
 	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_SHSLOT |
-	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WPA;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -488,6 +500,8 @@ USB_ATTACH(ural)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
 #endif
+
+	ieee80211_announce(ic);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
@@ -715,20 +729,20 @@ ural_task(void *arg)
 		break;
 
 	case IEEE80211_S_SCAN:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 		callout_reset(&sc->scan_ch, hz / 5, ural_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 		break;
 
 	case IEEE80211_S_ASSOC:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 		break;
 
 	case IEEE80211_S_RUN:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			ural_set_bssid(sc, ic->ic_bss->ni_bssid);
@@ -802,7 +816,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(status));
 
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_tx_pipeh);
+			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
 
 		ifp->if_oerrors++;
 		return;
@@ -845,7 +859,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_rx_pipeh);
+			usbd_clear_endpoint_stall_async(sc->sc_rx_pipeh);
 		goto skip;
 	}
 
@@ -882,7 +896,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->sc_drvbpf != NULL) {
 		struct ural_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = 0;
+		tap->wr_flags = IEEE80211_RADIOTAP_F_FCS;
 		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wr_antenna = sc->rx_ant;
@@ -1045,6 +1059,7 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 		desc->flags |= htole32(RAL_TX_OFDM);
 
 	desc->wme = htole16(RAL_LOGCWMAX(5) | RAL_LOGCWMIN(3) | RAL_AIFSN(2));
+	desc->wme |= htole16(RAL_IVOFFSET(sizeof (struct ieee80211_frame)));
 
 	/*
 	 * Fill PLCP fields.
@@ -1088,6 +1103,7 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 Static int
 ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ural_tx_desc *desc;
 	usbd_xfer_handle xfer;
 	usbd_status error;
@@ -1095,7 +1111,7 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	uint8_t *buf;
 	int xferlen, rate;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 
 	xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (xfer == NULL)
@@ -1152,22 +1168,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &sc->tx_data[0];
 	desc = (struct ural_tx_desc *)data->buf;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
-
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct ural_tx_radiotap_header *tap = &sc->sc_txtap;
-
-		tap->wt_flags = 0;
-		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
-		tap->wt_antenna = sc->tx_ant;
-
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
-	}
-#endif
-
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 	data->m = m0;
 	data->ni = ni;
 
@@ -1185,6 +1186,20 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 			flags |= RAL_TX_TIMESTAMP;
 	}
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct ural_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
+		tap->wt_antenna = sc->tx_ant;
+
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+	}
+#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
 	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
@@ -1241,8 +1256,10 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m0);
-		if (k == NULL)
+		if (k == NULL) {
+			m_freem(m0);
 			return ENOBUFS;
+		}
 
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);
@@ -1254,8 +1271,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
@@ -1354,8 +1371,10 @@ ural_start(struct ifnet *ifp)
 				bpf_mtap(ifp->if_bpf, m0);
 #endif
 			m0 = ieee80211_encap(ic, m0, ni);
-			if (m0 == NULL)
+			if (m0 == NULL) {
+				ieee80211_free_node(ni);
 				continue;
+			}
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0);
@@ -1960,7 +1979,7 @@ ural_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *wk;
 	struct ural_rx_data *data;
-	uint16_t sta[11], tmp;
+	uint16_t sta_tmp[11], tmp;
 	usbd_status error;
 	int i, ntries;
 
@@ -1996,14 +2015,11 @@ ural_init(struct ifnet *ifp)
 		goto fail;
 
 	/* set default BSS channel */
-	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	ural_set_chan(sc, ic->ic_bss->ni_chan);
+	ic->ic_curchan = ic->ic_ibss_chan;
+	ural_set_chan(sc, ic->ic_curchan);
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
-	ural_read_multi(sc, RAL_STA_CSR0, sta, sizeof sta);
-
-	/* set default sensitivity */
-	ural_bbp_write(sc, 17, 0x48);
+	ural_read_multi(sc, RAL_STA_CSR0, sta_tmp, sizeof sta_tmp);
 
 	ural_set_txantenna(sc, 1);
 	ural_set_rxantenna(sc, 1);
@@ -2016,8 +2032,8 @@ ural_init(struct ifnet *ifp)
 	 */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		wk = &ic->ic_nw_keys[i];
-		ural_write_multi(sc, RAL_SEC_CSR0 + i * IEEE80211_KEYBUF_SIZE,
-		    wk->wk_key, IEEE80211_KEYBUF_SIZE);
+		ural_write_multi(sc, wk->wk_keyix * IEEE80211_KEYBUF_SIZE +
+		    RAL_SEC_CSR0, wk->wk_key, IEEE80211_KEYBUF_SIZE);
 	}
 
 	/*
@@ -2101,16 +2117,16 @@ ural_stop(struct ifnet *ifp, int disable)
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	sc->sc_tx_timer = 0;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	/* disable Rx */
 	ural_write(sc, RAL_TXRX_CSR2, RAL_DISABLE_RX);
 
 	/* reset ASIC and BBP (but won't reset MAC registers!) */
 	ural_write(sc, RAL_MAC_CSR1, RAL_RESET_ASIC | RAL_RESET_BBP);
 	ural_write(sc, RAL_MAC_CSR1, 0);
-
-	sc->sc_tx_timer = 0;
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	if (sc->sc_rx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_rx_pipeh);

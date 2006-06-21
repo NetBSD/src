@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.35 2005/05/29 21:53:52 christos Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.35.2.1 2006/06/21 15:10:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.35 2005/05/29 21:53:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.35.2.1 2006/06/21 15:10:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -609,6 +609,8 @@ x25_dg_rtinit(dst, ia, af)
 	struct rtentry *rt;
 	struct in_addr  my_addr;
 	static struct sockaddr_in sin = {sizeof(sin), AF_INET};
+
+	memset(&my_addr, 0, sizeof my_addr);	/* XXX gcc */
 
 	if (ia->ia_ifp->if_type == IFT_X25DDN && af == AF_INET) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.51 2005/05/29 21:55:34 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.51.2.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51.2.1 2006/06/21 15:10:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,24 +64,22 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51 2005/05/29 21:55:34 christos 
 #include <sys/domain.h>
 #include <sys/dirent.h>
 #include <sys/un.h>
+#include <sys/kauth.h>
+
 #include <miscfs/portal/portal.h>
 
-void	portal_init __P((void));
-void	portal_done __P((void));
-int	portal_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	portal_start __P((struct mount *, int, struct proc *));
-int	portal_unmount __P((struct mount *, int, struct proc *));
-int	portal_root __P((struct mount *, struct vnode **));
-int	portal_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct proc *));
-int	portal_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	portal_vget __P((struct mount *, ino_t, struct vnode **));
-int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	portal_vptofh __P((struct vnode *, struct fid *));
+void	portal_init(void);
+void	portal_done(void);
+int	portal_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct lwp *);
+int	portal_start(struct mount *, int, struct lwp *);
+int	portal_unmount(struct mount *, int, struct lwp *);
+int	portal_root(struct mount *, struct vnode **);
+int	portal_quotactl(struct mount *, int, uid_t, void *,
+			     struct lwp *);
+int	portal_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int	portal_sync(struct mount *, int, kauth_cred_t, struct lwp *);
+int	portal_vget(struct mount *, ino_t, struct vnode **);
 
 void
 portal_init()
@@ -97,20 +95,22 @@ portal_done()
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-portal_mount(mp, path, data, ndp, p)
+portal_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct file *fp;
 	struct portal_args args;
 	struct portalmount *fmp;
 	struct socket *so;
 	struct vnode *rvp;
+	struct proc *p;
 	int error;
 
+	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fmp = VFSTOPORTAL(mp);
 		if (fmp == NULL)
@@ -162,24 +162,24 @@ portal_mount(mp, path, data, ndp, p)
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, args.pa_config,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 }
 
 int
-portal_start(mp, flags, p)
+portal_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (0);
 }
 
 int
-portal_unmount(mp, mntflags, p)
+portal_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *rtvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
@@ -222,7 +222,7 @@ portal_unmount(mp, mntflags, p)
 	 * Discard reference to underlying file.  Must call closef because
 	 * this may be the last reference.
 	 */
-	closef(VFSTOPORTAL(mp)->pm_server, (struct proc *) 0);
+	closef(VFSTOPORTAL(mp)->pm_server, (struct lwp *) 0);
 	/*
 	 * Finally, throw away the portalmount structure
 	 */
@@ -249,22 +249,22 @@ portal_root(mp, vpp)
 }
 
 int
-portal_quotactl(mp, cmd, uid, arg, p)
+portal_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-portal_statvfs(mp, sbp, p)
+portal_statvfs(mp, sbp, l)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	sbp->f_bsize = DEV_BSIZE;
@@ -284,11 +284,11 @@ portal_statvfs(mp, sbp, p)
 
 /*ARGSUSED*/
 int
-portal_sync(mp, waitfor, uc, p)
+portal_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
-	struct proc *p;
+	kauth_cred_t uc;
+	struct lwp *l;
 {
 
 	return (0);
@@ -299,36 +299,6 @@ portal_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_checkexp(mp, mb, what, anon)
-	struct mount *mp;
-	struct mbuf *mb;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
 {
 
 	return (EOPNOTSUPP);
@@ -372,14 +342,12 @@ struct vfsops portal_vfsops = {
 	portal_statvfs,
 	portal_sync,
 	portal_vget,
-	portal_fhtovp,
-	portal_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	portal_init,
 	NULL,
 	portal_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	portal_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	portal_vnodeopv_descs,

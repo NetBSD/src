@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.7 2005/06/28 20:09:44 seanb Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.7.2.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
 /*
  * Data structure and control definitions for bridge interfaces.
  */
+
+#ifndef _NET_IF_BRIDGEVAR_H_
+#define _NET_IF_BRIDGEVAR_H_
 
 #include <sys/callout.h>
 #include <sys/queue.h>
@@ -315,3 +318,4 @@ void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
 
 #endif /* _KERNEL */
+#endif /* !_NET_IF_BRIDGEVAR_H_ */
