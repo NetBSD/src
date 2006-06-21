@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2004/04/21 22:01:44 matt Exp $
+#	$NetBSD: Makefile,v 1.35.12.1 2006/06/21 14:57:17 yamt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -31,19 +31,13 @@ KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
 
-.if ${OBJECT_FMT} == "ELF"
-START=start
-.else
-START=nisse
-.endif
-
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
-	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym ${OBJS} \
+	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${STRIP} -o ${PROG} ${PROG}.sym
 

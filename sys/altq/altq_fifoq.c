@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.6 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.6.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.6 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.6.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.6 2005/02/26 23:04:16 perry Exp $")
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -77,10 +78,10 @@ static void 		fifoq_purge __P((fifoq_state_t *));
 altqdev_decl(fifoq);
 
 int
-fifoqopen(dev, flag, fmt, p)
+fifoqopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
@@ -98,10 +99,10 @@ fifoqopen(dev, flag, fmt, p)
  *       is removed (only once with multiple simultaneous references.)
  */
 int
-fifoqclose(dev, flag, fmt, p)
+fifoqclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	fifoq_state_t *q;
 	int err, error = 0;
@@ -117,16 +118,17 @@ fifoqclose(dev, flag, fmt, p)
 }
 
 int
-fifoqioctl(dev, cmd, addr, flag, p)
+fifoqioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	fifoq_state_t *q;
 	struct fifoq_interface *ifacep;
 	struct ifnet *ifp;
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -138,7 +140,9 @@ fifoqioctl(dev, cmd, addr, flag, p)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
@@ -173,13 +177,11 @@ fifoqioctl(dev, cmd, addr, flag, p)
 		}
 
 		/* allocate and initialize fifoq_state_t */
-		MALLOC(q, fifoq_state_t *, sizeof(fifoq_state_t),
-		       M_DEVBUF, M_WAITOK);
+		q = malloc(sizeof(fifoq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (q == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(q, 0, sizeof(fifoq_state_t));
 
 		q->q_ifq = &ifp->if_snd;
 		q->q_head = q->q_tail = NULL;
@@ -193,7 +195,7 @@ fifoqioctl(dev, cmd, addr, flag, p)
 				    fifoq_enqueue, fifoq_dequeue, fifoq_request,
 				    NULL, NULL);
 		if (error) {
-			FREE(q, M_DEVBUF);
+			free(q, M_DEVBUF);
 			break;
 		}
 
@@ -381,7 +383,7 @@ static int fifoq_detach(q)
 			printf("fifoq_detach: no state in fifoq_list!\n");
 	}
 
-	FREE(q, M_DEVBUF);
+	free(q, M_DEVBUF);
 	return (error);
 }
 

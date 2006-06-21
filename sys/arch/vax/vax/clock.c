@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 2005/06/27 11:03:25 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.42.2.1 2006/06/21 14:57:33 yamt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2005/06/27 11:03:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42.2.1 2006/06/21 14:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -165,7 +165,7 @@ void
 delay(i)
 	int i;
 {
-	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
+	__asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
 /*

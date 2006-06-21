@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/09/18 03:32:30 itohy Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2006/06/21 14:50:32 yamt Exp $
 
 S	= ${.CURDIR}/../../../..
 
@@ -16,7 +16,7 @@ all: aica_armcode.h
 aica_armcode.h: aica_armcode.elf
 	${OBJCOPY} -O binary aica_armcode.elf aica_armcode.bin
 	echo '/* $$'NetBSD'$$ */' > ${.TARGET}.tmp
-	echo 'static u_int32_t aica_armcode[] = {' >> ${.TARGET}.tmp
+	echo 'static uint32_t aica_armcode[] = {' >> ${.TARGET}.tmp
 	hexdump -v -e '" /* %04.4_ax */\t" 1/4 "0x%08x, " "\n"' \
 		aica_armcode.bin >> ${.TARGET}.tmp
 	echo '		0 };' >> ${.TARGET}.tmp

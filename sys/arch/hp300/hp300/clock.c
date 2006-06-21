@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2005/06/02 17:15:10 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.33.2.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -78,14 +78,14 @@
 
 /*
  * HPs use the MC6840 PTM with the following arrangement:
- *	Timers 1 and 3 are externally driver from a 25Mhz source.
+ *	Timers 1 and 3 are externally driver from a 25 MHz source.
  *	Output from timer 3 is tied to the input of timer 2.
  * The latter makes it possible to use timers 3 and 2 together to get
  * a 32-bit countdown timer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2005/06/02 17:15:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.2.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ hp300_calibrate_delay(void)
 		 * above.
 		 */
 		intvl = (10000 / CLK_RESOLUTION) - 1;
-		asm volatile(" movpw %0,%1@(5)" : : "d" (intvl), "a" (clk));
+		__asm volatile(" movpw %0,%1@(5)" : : "d" (intvl), "a" (clk));
 
 		/* Enable the timer */
 		clk->clk_cr2 = CLK_CR1;
@@ -190,7 +190,7 @@ hp300_calibrate_delay(void)
 			/*
 			 * Got it.  Clear interrupt and get outta here.
 			 */
-			asm volatile(" movpw %0@(5),%1" : :
+			__asm volatile(" movpw %0@(5),%1" : :
 			    "a" (clk), "d" (intvl));
 			break;
 		}
@@ -203,7 +203,7 @@ hp300_calibrate_delay(void)
 			csr = clk->clk_sr;
 		} while ((csr & CLK_INT1) == 0);
 
-		asm volatile(" movpw %0@(5),%1" : : "a" (clk), "d" (intvl));
+		__asm volatile(" movpw %0@(5),%1" : : "a" (clk), "d" (intvl));
 	}
 
 	/*
@@ -287,9 +287,9 @@ cpu_initclocks(void)
 	/* finally, load hardware */
 	clk->clk_cr2 = CLK_CR1;
 	clk->clk_cr1 = CLK_RESET;
-	asm volatile(" movpw %0,%1@(5)" : : "d" (intvl), "a" (clk));
-	asm volatile(" movpw %0,%1@(9)" : : "d" (0), "a" (clk));
-	asm volatile(" movpw %0,%1@(13)" : : "d" (statint), "a" (clk));
+	__asm volatile(" movpw %0,%1@(5)" : : "d" (intvl), "a" (clk));
+	__asm volatile(" movpw %0,%1@(9)" : : "d" (0), "a" (clk));
+	__asm volatile(" movpw %0,%1@(13)" : : "d" (statint), "a" (clk));
 	clk->clk_cr2 = CLK_CR1;
 	clk->clk_cr1 = CLK_IENAB;
 	clk->clk_cr2 = CLK_CR3;
@@ -337,10 +337,10 @@ statintr(struct clockframe *fp)
 	 * timer ticks depending on CPU type) plus one tick roundoff.
 	 * This should keep us closer to the mean.
 	 */
-	asm volatile(" clrl %0; movpw %1@(13),%0" : "=d" (r) : "a" (clk));
+	__asm volatile(" clrl %0; movpw %1@(13),%0" : "=d" (r) : "a" (clk));
 	newint -= (statprev - r + 1);
 
-	asm volatile(" movpw %0,%1@(13)" : : "d" (newint), "a" (clk));
+	__asm volatile(" movpw %0,%1@(13)" : : "d" (newint), "a" (clk));
 	statprev = newint;
 	statclock(fp);
 }
@@ -369,7 +369,7 @@ microtime(struct timeval *tvp)
 	do {
 		s = time.tv_sec;
 		u = time.tv_usec;
-		asm volatile (" clrl %0; movpw %1@(5),%0"
+		__asm volatile (" clrl %0; movpw %1@(5),%0"
 			      : "=d" (t) : "a" (clk));
 		u2 = time.tv_usec;
 		s2 = time.tv_sec;

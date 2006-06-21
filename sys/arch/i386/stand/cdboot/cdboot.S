@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.1 2005/06/15 06:38:45 junyoung Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.1.2.1 2006/06/21 14:52:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include <machine/asm.h>
+#include <sys/bootblock.h>
 
 #define BOOT_ADDR	0x7c00
 #define BLOCK_SIZE	2048		/* Default for ISO 9660 */
@@ -53,6 +54,19 @@
 #define PVD_ADDR	0x1000		/* Where Primary VD is loaded */
 #define ROOTDIR_ADDR	0x1800		/* Where Root Directory is loaded */
 #define LOADER_ADDR	SECONDARY_LOAD_ADDRESS
+
+#ifdef BOOT_FROM_FAT
+#define MBR_AFTERBPB	90		/* BPB size in FAT32 partition BR */
+#else
+#define MBR_AFTERBPB	62		/* BPB size in floppy master BR */
+#endif
+
+/*
+ * See src/sys/sys/bootblock.h for details.
+ */
+#define MBR_PART_COUNT	4
+#define MBR_PART_OFFSET	446
+#define MBR_PART_SIZE	16		/* sizeof(struct mbr_partition) */
 
 /*
  * Disk error codes
@@ -85,7 +99,31 @@
 	.text
 	.code16
 ENTRY(start)
-	xorw	%ax, %ax
+	jmp	start1
+
+	. = start + MBR_AFTERBPB	/* skip BPB */
+	. = start + MBR_DSN_OFFSET
+	.long	0
+
+/* mbr_bootsel_magic (not used here) */
+	. = start + MBR_BS_MAGIC_OFFSET
+	.word	0
+
+	. = start + MBR_PART_OFFSET
+	. = start + MBR_MAGIC_OFFSET
+pbr_magic:
+	.word	MBR_MAGIC
+	.fill	512			/* reserve space for disklabel */
+start1:
+	jmp	1f
+	.balign	4
+	.long	X86_BOOT_MAGIC_1	/* checked by installboot & pbr code */
+boot_params:				/* space for patchable variables */
+	.long	1f - boot_params	/* length of this data area */
+#include <boot_params.S>
+	. = start1 + 0x80		/* Space for patching unknown params */
+
+1:	xorw	%ax, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %ss
@@ -99,6 +137,49 @@ ENTRY(start)
 
 real_start:
 	movb	%dl, boot_drive		/* Save boot drive number */
+
+#ifndef DISABLE_KEYPRESS
+	/*
+	 * We can skip boot wait when:
+	 *  - there's no hard disk present.
+	 *  - there's no active partition in the MBR of the 1st hard disk.
+	 */
+
+	/*
+	 * Check presence of hard disks.
+	 */
+	movw	$0x475, %si
+	movb	(%si), %al
+	testb	%al, %al
+	jz	boot_cdrom
+
+	/*
+	 * Find the active partition from the MBR.
+	 */
+	movw	$0x0201, %ax		/* %al = number of sectors to read */
+	movw	$BOOT_ADDR, %bx		/* %es:%bx = data buffer */
+	movw	$0x0001, %cx		/* %ch = low 8 bits of cylinder no */
+					/* %cl = high 2 bits of cyl no & */
+					/*       sector number */
+	movw	$0x0080, %dx		/* %dh = head number */
+					/* %dl = disk number */
+	int	$0x13			/* Read MBR into memory */
+	jc	boot_cdrom		/* CF set on error */
+
+	movb	$1, mbr_loaded
+	movb	$MBR_PART_COUNT, %cl
+	movw	$BOOT_ADDR+MBR_PART_OFFSET, %si
+1:
+	movb	(%si), %al
+	testb	$0x80, %al
+	jnz	found_active
+	addw	$MBR_PART_SIZE, %si
+	decb	%cl
+	testb	%cl, %cl
+	jnz	1b			/* If 0, no active partition found */
+	jmp	boot_cdrom
+
+found_active:
 	movw	$str_press_key, %si
 	call	message
 next_second:
@@ -127,6 +208,8 @@ not_avail:
 boot_hard_disk:
 	movw	$str_crlf, %si
 	call	message
+	cmpb	$1, mbr_loaded
+	jz	1f
 	movw	$0x0201, %ax		/* %al = number of sectors to read */
 	movw	$BOOT_ADDR, %bx		/* %es:%bx = data buffer */
 	movw	$0x0001, %cx		/* %ch = low 8 bits of cylinder no */
@@ -136,15 +219,14 @@ boot_hard_disk:
 					/* %dl = disk number */
 	int	$0x13			/* Read MBR into memory */
 	jc	panic			/* CF set on error */
+1:
 	movw	%cs, %ax		/* Restore initial state */
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	$0x0080, %dx		/* %dl = boot drive number */
 	jmp	$0, $BOOT_ADDR		/* Jump to MBR! */
-
-panic:
-	hlt
-	jmp	panic
+	jmp	panic			/* This should be never executed */
+#endif /* !DISABLE_KEYPRESS */
 
 boot_cdrom:
 	movw	$str_banner, %si
@@ -203,11 +285,14 @@ load_loader:
 	movb	%dl, %dh
 	movl	$LOADER_ADDR, %ebx
 	call	read_sectors
-	xorl	%esi, %esi		/* Don't provide boot_params */
+	movl	$boot_params, %esi	/* Provide boot_params */
 	xorl	%edx, %edx
 	movb	boot_drive, %dl
 	xorl	%ebx, %ebx		/* Zero sector number */
 	lcall	$LOADER_ADDR/16, $0
+	/* fall through on load failure */
+panic:
+	hlt
 	jmp	panic
 
 /*
@@ -260,6 +345,7 @@ edd_lba:	.quad	0
 
 wait_count:	.byte	6
 boot_drive:	.byte	0
+mbr_loaded:	.byte	0
 
 str_banner:	.ascii	"\r\nNetBSD/i386 cd9660 Primary Bootstrap"
 str_crlf:	.asciz	"\r\n"

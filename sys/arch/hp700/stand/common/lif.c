@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.5 2004/07/28 09:17:31 skrll Exp $	*/
+/*	$NetBSD: lif.c,v 1.5.12.1 2006/06/21 14:51:37 yamt Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -141,7 +141,7 @@ lif_open(const char *path, struct open_file *f)
 		fp->f_isdir = 1;
 
 	if (err) {
-		free (fp, sizeof(*fp));
+		dealloc (fp, sizeof(*fp));
 		f->f_fsdata = NULL;
 	}
 #ifdef LIFDEBUG
@@ -154,7 +154,7 @@ lif_open(const char *path, struct open_file *f)
 int
 lif_close(struct open_file *f)
 {
-	free(f->f_fsdata, sizeof(struct file));
+	dealloc(f->f_fsdata, sizeof(struct file));
 	f->f_fsdata = NULL;
 	return 0;
 }

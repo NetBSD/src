@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.5.22.1 2006/06/21 14:49:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  * refered to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
 
-#define	NOPROC	((struct proc *)-1)	/* XXX */
+#define	NOLWP	((struct lwp *)-1)	/* XXX */
 
 struct view_softc {
     struct  view_size size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sboot.c,v 1.4 2000/07/24 18:40:06 jdolecek Exp $	*/
+/*	$NetBSD: sboot.c,v 1.4.40.1 2006/06/21 14:54:02 yamt Exp $	*/
 
 /*
  *
@@ -70,7 +70,7 @@ sboot()
 
 void callrom () 
 {
-  asm("trap #15; .word 0x0063");
+  __asm("trap #15; .word 0x0063");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.16.2.1 2006/06/21 14:52:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.1 2006/06/21 14:52:09 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $
 #include <sys/kernel.h>
 #include <machine/bus.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -86,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $
 
 #include "acpi.h"
 
+#include <dev/ic/i8253reg.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
@@ -96,9 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2005/05/02 14:54:46 kochi Exp $
 #include "acpi_wakecode.h"
 
 
-paddr_t	phys_wakeup = 0;
+static paddr_t phys_wakeup = 0;
+static int acpi_md_node = CTL_EOL;
+static int acpi_md_vbios_reset = 1;
 
-u_int32_t
+static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
+
+uint32_t
 acpi_md_get_npages_of_wakecode(void)
 {
 	return (atop(round_page(sizeof(wakecode))));
@@ -149,8 +155,8 @@ enter_s4_with_bios(void)
 	ef = read_eflags();
 	disable_intr();
 
-	AcpiHwDisableAllGpes(ACPI_ISR);
-	AcpiHwEnableAllWakeupGpes(ACPI_ISR);
+	AcpiHwDisableAllGpes();
+	AcpiHwEnableAllWakeupGpes();
 
 	/* flush caches */
 
@@ -169,38 +175,38 @@ enter_s4_with_bios(void)
 			break;
 	} while (!ret);
 
-	AcpiHwDisableAllGpes(ACPI_NOT_ISR);
-	AcpiHwEnableAllRuntimeGpes(ACPI_NOT_ISR);
+	AcpiHwDisableAllGpes();
+	AcpiHwEnableAllRuntimeGpes();
 
 	write_eflags(ef);
 
 	return (AE_OK);
 }
 
-static u_int16_t	r_ldt;
-static u_int16_t	r_cs __used;
-static u_int16_t	r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
-static u_int32_t	r_eax __used;
-static u_int32_t	r_ebx __used;
-static u_int32_t	r_ecx __used;
-static u_int32_t	r_edx __used;
-static u_int32_t	r_ebp __used;
-static u_int32_t	r_esi __used;
-static u_int32_t	r_edi __used;
-static u_int32_t	r_efl __used;
-static u_int32_t	r_cr0 __used;
-static u_int32_t	r_cr2 __used;
-static u_int32_t	r_cr3 __used;
-static u_int32_t	r_cr4 __used;
-static u_int32_t	r_esp __used;
-static u_int32_t	ret_addr;
+static uint16_t	r_ldt;
+static uint16_t	r_cs __used;
+static uint16_t	r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
+static uint32_t	r_eax __used;
+static uint32_t	r_ebx __used;
+static uint32_t	r_ecx __used;
+static uint32_t	r_edx __used;
+static uint32_t	r_ebp __used;
+static uint32_t	r_esi __used;
+static uint32_t	r_edi __used;
+static uint32_t	r_efl __used;
+static uint32_t	r_cr0 __used;
+static uint32_t	r_cr2 __used;
+static uint32_t	r_cr3 __used;
+static uint32_t	r_cr4 __used;
+static uint32_t	r_esp __used;
+static uint32_t	ret_addr;
 static struct region_descriptor	r_idt, r_gdt;
 
 /* XXX shut gcc up */
 extern int		acpi_savecpu(void);
 extern int		acpi_restorecpu(void);
 
-static __inline void
+static inline void
 clear_reg(void)
 {
 	r_ldt = 0;
@@ -211,7 +217,7 @@ clear_reg(void)
 	memset(&r_gdt, 0, sizeof(r_gdt));
 }
 
-__asm__("							\
+__asm("							\
 	.text;							\
 	.p2align 2, 0x90;					\
 	.type acpi_restorecpu, @function;			\
@@ -331,35 +337,36 @@ acpi_md_sleep(int state)
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
 	ef = read_eflags();
-	disable_intr();
 
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
 		p = &proc0;
 	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	cr3 = rcr3();
-	lcr3(pm->pm_pdirpa);
 	if (!pmap_extract(pm, phys_wakeup, &oldphys))
 		oldphys = 0;
 	pmap_enter(pm, phys_wakeup, phys_wakeup,
 			VM_PROT_READ | VM_PROT_WRITE,
 			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pm);
+	cr3 = rcr3();
 
 	ret_addr = 0;
+	disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
 		/* load proc 0 PTD */
-		__asm__( "movl %0,%%cr3;" : : "a" (PDPpaddr) );
+		__asm( "movl %0,%%cr3;" : : "a" (PDPpaddr) );
 
 		p_gdt = (struct region_descriptor *)(phys_wakeup+physical_gdt);
 		p_gdt->rd_limit = r_gdt.rd_limit;
 		p_gdt->rd_base = vtophys(r_gdt.rd_base);
 
-		WAKECODE_FIXUP(previous_cr0, u_int32_t, r_cr0);
-		WAKECODE_FIXUP(previous_cr2, u_int32_t, r_cr2);
-		WAKECODE_FIXUP(previous_cr4, u_int32_t, r_cr4);
+		WAKECODE_FIXUP(vbios_reset, uint8_t, acpi_md_vbios_reset);
+
+		WAKECODE_FIXUP(previous_cr0, uint32_t, r_cr0);
+		WAKECODE_FIXUP(previous_cr2, uint32_t, r_cr2);
+		WAKECODE_FIXUP(previous_cr4, uint32_t, r_cr4);
 
 		/*
 		 * Make sure the wake code to temporarily use the proc 0 PTD.
@@ -368,20 +375,20 @@ acpi_md_sleep(int state)
 		 * entering to protect mode.  The current PTD will be restored
 		 * in acpi_restorecpu().
 		 */
-		WAKECODE_FIXUP(previous_cr3, u_int32_t, PDPpaddr);
+		WAKECODE_FIXUP(previous_cr3, uint32_t, PDPpaddr);
 
-		WAKECODE_FIXUP(previous_tr,  u_int16_t, r_tr);
+		WAKECODE_FIXUP(previous_tr,  uint16_t, r_tr);
 		WAKECODE_BCOPY(previous_gdt, struct region_descriptor, r_gdt);
-		WAKECODE_FIXUP(previous_ldt, u_int16_t, r_ldt);
+		WAKECODE_FIXUP(previous_ldt, uint16_t, r_ldt);
 		WAKECODE_BCOPY(previous_idt, struct region_descriptor, r_idt);
 
 		WAKECODE_FIXUP(where_to_recover, void *, acpi_restorecpu);
 
-		WAKECODE_FIXUP(previous_ds,  u_int16_t, r_ds);
-		WAKECODE_FIXUP(previous_es,  u_int16_t, r_es);
-		WAKECODE_FIXUP(previous_fs,  u_int16_t, r_fs);
-		WAKECODE_FIXUP(previous_gs,  u_int16_t, r_gs);
-		WAKECODE_FIXUP(previous_ss,  u_int16_t, r_ss);
+		WAKECODE_FIXUP(previous_ds,  uint16_t, r_ds);
+		WAKECODE_FIXUP(previous_es,  uint16_t, r_es);
+		WAKECODE_FIXUP(previous_fs,  uint16_t, r_fs);
+		WAKECODE_FIXUP(previous_gs,  uint16_t, r_gs);
+		WAKECODE_FIXUP(previous_ss,  uint16_t, r_ss);
 
 		/*
 		 * XXX: restore curproc's PTD here -
@@ -395,7 +402,7 @@ acpi_md_sleep(int state)
 		 * although the context switching during sleep
 		 * process is also unpreferable.
 		 */
-		__asm__( "movl %0,%%cr3;" : : "a" (r_cr3) );
+		__asm( "movl %0,%%cr3;" : : "a" (r_cr3) );
 
 #ifdef ACPI_PRINT_REG
 		acpi_printcpu();
@@ -418,6 +425,7 @@ acpi_md_sleep(int state)
 
 		for (;;) ;
 	} else {
+		printf("acpi0: good morning!\n");
 		/* Execute Wakeup */
 
 		npxinit(&cpu_info_primary);
@@ -429,8 +437,8 @@ acpi_md_sleep(int state)
 		 * XXX must the local APIC be re-inited?
 		 */
 
-		initrtclock();
-		inittodr(time.tv_sec);
+		initrtclock(TIMER_FREQ);
+		inittodr(time_second);
 
 #ifdef ACPI_PRINT_REG
 		acpi_savecpu();
@@ -439,6 +447,9 @@ acpi_md_sleep(int state)
 	}
 
 out:
+	enable_intr();
+
+	lcr3(cr3);
 	/* Clean up identity mapping. */
 	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
 	if (oldphys) {
@@ -448,13 +459,47 @@ out:
 	}
 	pmap_update(pm);
 
-	lcr3(cr3);
-
-	enable_intr();
 	write_eflags(ef);
-	AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 
 	return (ret);
 #undef WAKECODE_FIXUP
 #undef WAKECODE_BCOPY
+}
+
+SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi i386 sysctl setup")
+{
+	const struct sysctlnode *node;
+	const struct sysctlnode *ssnode;
+
+	if (sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0, CTL_MACHDEP,
+	    CTL_EOL) != 0)
+		return;
+	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "acpi_vbios_reset", NULL, sysctl_md_acpi_vbios_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+		return;
+
+	acpi_md_node = node->sysctl_num;
+}
+
+static int
+sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = acpi_md_vbios_reset;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0 || t > 1)
+		return EINVAL;
+
+	acpi_md_vbios_reset = t;
+
+	return 0;
 }

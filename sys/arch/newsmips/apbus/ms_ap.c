@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.6 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.6.6.1 2006/06/21 14:54:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.6 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.6.6.1 2006/06/21 14:54:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ void ms_ap_attach(struct device *, struct device *, void *);
 int ms_ap_intr(void *);
 
 int ms_ap_enable(void *);
-int ms_ap_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int ms_ap_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void ms_ap_disable(void *);
 
 CFATTACH_DECL(ms_ap, sizeof(struct ms_ap_softc),
@@ -192,7 +192,7 @@ ms_ap_disable(void *v)
 }
 
 int
-ms_ap_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+ms_ap_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	return EPASSTHROUGH;

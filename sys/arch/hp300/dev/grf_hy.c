@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.25 2005/06/03 11:52:50 tsutsui Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.25.2.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.25 2005/06/03 11:52:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.25.2.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.25 2005/06/03 11:52:50 tsutsui Exp $");
 
 #include <dev/cons.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/intiovar.h>
@@ -641,12 +642,12 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 		dstBit = dx & 0x1f;
 
 		while (h--) {
-			getandputrop(psrc, srcBit, dstBit, w, pdst, func)
+			getandputrop(psrc, srcBit, dstBit, w, pdst, func);
 			pdst += width;
 			psrc += width;
 		}
 	} else {
-		maskbits(dx, w, startmask, endmask, nlMiddle)
+		maskbits(dx, w, startmask, endmask, nlMiddle);
 		if (startmask)
 			nstart = 32 - (dx & 0x1f);
 		else
@@ -670,7 +671,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 
 				if (startmask) {
 					getandputrop(psrc, (sx & 0x1f),
-					    (dx & 0x1f), nstart, pdst, func)
+					    (dx & 0x1f), nstart, pdst, func);
 					pdst++;
 					if (srcStartOver)
 						psrc++;
@@ -688,7 +689,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 					nl = nlMiddle + 1;
 					while (--nl) {
 						getunalignedword(psrc,
-						    xoffSrc, tmpSrc)
+						    xoffSrc, tmpSrc);
 						DoRop(*pdst, func, tmpSrc,
 						    *pdst);
 						pdst++;
@@ -728,7 +729,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 				while (--nl) {
 					--psrc;
 					--pdst;
-					getunalignedword(psrc, xoffSrc, tmpSrc)
+					getunalignedword(psrc, xoffSrc, tmpSrc);
 					DoRop(*pdst, func, tmpSrc, *pdst);
 				}
 
@@ -737,7 +738,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 						--psrc;
 					--pdst;
 					getandputrop(psrc, (sx & 0x1f),
-					    (dx & 0x1f), nstart, pdst, func)
+					    (dx & 0x1f), nstart, pdst, func);
 				}
 
 				pdstLine += width;
@@ -757,7 +758,6 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	caddr_t va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
-	uint8_t *dioiidev;
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
@@ -771,10 +771,9 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 		return (1);
 	}
 
-	if (scode > 132) {
-		dioiidev = (uint8_t *)va;
-		size =  ((dioiidev[0x101] + 1) * 0x100000);
-	} else
+	if (DIO_ISDIOII(scode))
+		size = DIOII_SIZE(va);
+	else
 		size = DIOCSIZE;
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);

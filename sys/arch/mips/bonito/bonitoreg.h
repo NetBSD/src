@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitoreg.h,v 1.5 2002/08/18 16:00:33 simonb Exp $	*/
+/*	$NetBSD: bonitoreg.h,v 1.5.22.1 2006/06/21 14:53:38 yamt Exp $	*/
 
 /*
  * Bonito Register Map
@@ -22,7 +22,7 @@
 
 #define BONITO(x)	(BONITO_REG_BASE + (x))
 
-#define	REGVAL(x)	*((__volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(x))
+#define	REGVAL(x)	*((volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(x))
 
 #define BONITO_BOOT_BASE		0x1fc00000
 #define BONITO_BOOT_SIZE		0x00100000

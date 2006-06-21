@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.7 2002/10/01 12:56:48 fvdl Exp $	*/
+/*	$NetBSD: bios32.c,v 1.7.22.1 2006/06/21 14:52:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.7 2002/10/01 12:56:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.7.22.1 2006/06/21 14:52:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,14 +112,14 @@ bios32_init()
 		if (*(p + 9) != 1)
 			continue;
 
-		entry = *(u_int32_t *)(p + 4);
+		entry = *(uint32_t *)(p + 4);
 
-		printf("BIOS32 rev. %d found at 0x%lx\n",
+		aprint_normal("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
-			printf("BIOS32 entry point outside "
+			aprint_error("BIOS32 entry point outside "
 			    "allowable range\n");
 			entry = 0;
 		}
@@ -138,17 +138,17 @@ bios32_init()
  */
 int
 bios32_service(service, e, ei)
-	u_int32_t service;
+	uint32_t service;
 	bios32_entry_t e;
 	bios32_entry_info_t ei;
 {
-	u_int32_t eax, ebx, ecx, edx;
+	uint32_t eax, ebx, ecx, edx;
 	paddr_t entry;
 
 	if (bios32_entry.offset == 0)
 		return (0);	/* BIOS32 not present */
 
-	__asm __volatile("lcall *(%%edi)"
+	__asm volatile("lcall *(%%edi)"
 		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
 		: "0" (service), "1" (0), "D" (&bios32_entry));
 
@@ -158,8 +158,8 @@ bios32_service(service, e, ei)
 	entry = ebx + edx;
 
 	if (entry < BIOS32_START || entry >= BIOS32_END) {
-		printf("bios32: entry point for service %c%c%c%c is outside "
-		    "allowable range\n",
+		aprint_error("BIOS32: entry point for service %c%c%c%c is "
+		    "outside allowable range\n",
 		    service & 0xff,
 		    (service >> 8) & 0xff,
 		    (service >> 16) & 0xff,

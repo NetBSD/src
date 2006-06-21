@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.2 2003/08/07 16:26:29 agc Exp $ */
+/* $NetBSD: ascreg.h,v 1.2.16.1 2006/06/21 14:47:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -206,10 +206,10 @@ struct sdmac {
  * My ID register, and/or CDB Size
  */
   
-#define SBIC_ID_FS_8_10		0x00	/* Input clock is  8-10 Mhz */
-					/* 11 Mhz is invalid */
-#define SBIC_ID_FS_12_15	0x40	/* Input clock is 12-15 Mhz */
-#define SBIC_ID_FS_16_20	0x80	/* Input clock is 16-20 Mhz */
+#define SBIC_ID_FS_8_10		0x00	/* Input clock is  8-10 MHz */
+					/* 11 MHz is invalid */
+#define SBIC_ID_FS_12_15	0x40	/* Input clock is 12-15 MHz */
+#define SBIC_ID_FS_16_20	0x80	/* Input clock is 16-20 MHz */
 #define SBIC_ID_EHP		0x10	/* Enable host parity */
 #define SBIC_ID_EAF		0x08	/* Enable Advanced Features */
 #define SBIC_ID_MASK		0x07
@@ -291,7 +291,7 @@ temphi  = dmac + 0x0218;/*    RO  T15  T14  T13  T12  T11  T10   T9   T8 */
 	ReadSBIC1(sbic_base, a)
 
 
-static __inline int
+static inline int
 ReadSBIC1(sbic_base, a)
 	u_int sbic_base;
 	int a;

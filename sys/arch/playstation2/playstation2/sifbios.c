@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.c,v 1.5 2005/06/26 19:57:30 he Exp $	*/
+/*	$NetBSD: sifbios.c,v 1.5.2.1 2006/06/21 14:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.5 2005/06/26 19:57:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.5.2.1 2006/06/21 14:54:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,17 +78,17 @@ sifbios_init()
 int
 sifbios_rpc_call(int callno, void *arg, int *result)
 {
-	__volatile__ int done = 0;
+	volatile int done = 0;
 	int retry;
 	struct {
 		int result;
 		void *arg;
 		void (*callback)(void *, int);
-		__volatile__ void *callback_arg;
+		volatile void *callback_arg;
 	} __attribute__((__packed__, __aligned__(4))) sifbios_arg = {
 		arg:		arg,
 		callback:	sifbios_rpc_callback,
-		callback_arg:	(__volatile__ void *)&done,
+		callback_arg:	(volatile void *)&done,
 	};
 	
 	/* call SIF BIOS */

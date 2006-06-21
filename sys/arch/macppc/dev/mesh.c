@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.21 2004/12/09 04:37:30 briggs Exp $	*/
+/*	$NetBSD: mesh.c,v 1.21.10.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.21 2004/12/09 04:37:30 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.21.10.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -133,8 +133,8 @@ struct mesh_softc {
 #define SEND_IDENTIFY	2
 #define SEND_SDTR	4
 
-static __inline int mesh_read_reg __P((struct mesh_softc *, int));
-static __inline void mesh_set_reg __P((struct mesh_softc *, int, int));
+static inline int mesh_read_reg __P((struct mesh_softc *, int));
+static inline void mesh_set_reg __P((struct mesh_softc *, int, int));
 
 int mesh_match __P((struct device *, struct cfdata *, void *));
 void mesh_attach __P((struct device *, struct device *, void *));
@@ -219,7 +219,7 @@ mesh_attach(parent, self, aux)
 	sc->sc_irq = ca->ca_intr[0];
 	sc->sc_dmareg = mapiodev(reg[2], reg[3]);
 
-	sc->sc_cfflags = self->dv_cfdata->cf_flags;
+	sc->sc_cfflags = device_cfdata(self)->cf_flags;
 	sc->sc_meshid = mesh_read_reg(sc, MESH_MESH_ID) & 0x1f;
 #if 0
 	if (sc->sc_meshid != (MESH_SIGNATURE & 0x1f) {
@@ -1133,7 +1133,7 @@ mesh_done(sc, scb)
 		printf("Target busy\n");
 	}
 
-	xs->xs_status = scb->status;
+	xs->status = scb->status;
 	xs->resid = scb->resid;
 	if (scb->status == SCSI_CHECK) {
 		xs->error = XS_BUSY;

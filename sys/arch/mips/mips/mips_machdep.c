@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.178 2005/06/01 16:53:07 drochner Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.178.2.1 2006/06/21 14:53:44 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178 2005/06/01 16:53:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178.2.1 2006/06/21 14:53:44 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -208,6 +208,7 @@ int mips_cpu_flags;
 int mips_has_llsc;
 int mips_has_r4k_mmu;
 int mips3_pg_cached;
+u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
 struct	lwp  *fpcurlwp;
@@ -215,10 +216,6 @@ struct	pcb  *curpcb;
 struct	segtab *segbase;
 
 caddr_t	msgbufaddr;
-
-#if defined(MIPS3_4100)			/* VR4100 core */
-int	default_pg_mask = 0x00001800;
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -384,6 +381,8 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4Kc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc"			},
+	{ MIPS_PRID_CID_MTI, MIPS_4KEc_R2, -1, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc (Rev 2)"		},
 	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1, -1,	-1, 0,
@@ -398,6 +397,13 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1000 (Rev 2 core)" 	},
 
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1100, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1100 (Rev 1 core)"	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1100 (Rev 2 core)" 	},
+
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1500 (Rev 1 core)"	},
@@ -405,12 +411,9 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1500 (Rev 2 core)" 	},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1100, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1550, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
-						"Au1100 (Rev 1 core)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
-						"Au1100 (Rev 2 core)" 	},
+						"Au1550 (Rev 2 core)" 	},
 
 	/* The SB-1 CPU uses a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, -1, 0,
@@ -822,8 +825,15 @@ mips_vector_init(void)
 			    MIPSNN_GET(CFG_AT, cfg));
 		}
 
-		if (MIPSNN_GET(CFG_AR, cfg) != MIPSNN_CFG_AR_REV1)
-			printf("WARNING: MIPS32/64 arch revision != revision 1!\n");
+		switch (MIPSNN_GET(CFG_AR, cfg)) {
+		case MIPSNN_CFG_AR_REV1:
+		case MIPSNN_CFG_AR_REV2:
+			break;
+		default:
+			printf("WARNING: MIPS32/64 arch revision %d "
+			    "unknown!\n", MIPSNN_GET(CFG_AR, cfg));
+			break;
+		}
 
 		/* figure out MMU type (and number of TLB entries) */
 		switch (MIPSNN_GET(CFG_MT, cfg)) {
@@ -851,6 +861,12 @@ mips_vector_init(void)
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
 	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
+#if defined(MIPS3_4100)
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
+		mips3_pg_shift = MIPS3_4100_PG_SHIFT;
+	else
+#endif
+		mips3_pg_shift = MIPS3_DEFAULT_PG_SHIFT;
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
@@ -886,12 +902,19 @@ mips_vector_init(void)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
 #if defined(MIPS3_5900)	/* XXX */
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		r5900_vector_init();
 		memcpy(mips_locoresw, mips5900_locoresw, sizeof(mips_locoresw));
 #else /* MIPS3_5900 */
+#if defined(MIPS3_4100)
+		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
+			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
+		else
+#endif
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -902,6 +925,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -911,6 +935,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS64)
 	case CPU_ARCH_MIPS64:
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips64_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -1477,7 +1502,7 @@ savefpregs(l)
 	/*
 	 * turnoff interrupts enabling CP1 to read FPCSR register.
 	 */
-	__asm __volatile (
+	__asm volatile (
 		".set noreorder					\n\t"
 		".set noat					\n\t"
 		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
@@ -1500,7 +1525,7 @@ savefpregs(l)
 	 */
 	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	fp[32] = fpcsr;
-	__asm __volatile (
+	__asm volatile (
 		".set noreorder		;"
 		"swc1	$f0, 0(%0)	;"
 		"swc1	$f1, 4(%0)	;"
@@ -1538,7 +1563,7 @@ savefpregs(l)
 	/*
 	 * stop CP1, enable interrupts.
 	 */
-	__asm __volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
+	__asm volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
 	    :: "r"(status));
 #endif
 }
@@ -1557,7 +1582,7 @@ loadfpregs(l)
 	/*
 	 * turnoff interrupts enabling CP1 to load FP registers.
 	 */
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder					\n\t"
 		".set noat					\n\t"
 		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
@@ -1572,7 +1597,7 @@ loadfpregs(l)
 	/*
 	 * load 32bit FP registers and establish processes' FP context.
 	 */
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder		;"
 		"lwc1	$f0, 0(%0)	;"
 		"lwc1	$f1, 4(%0)	;"
@@ -1610,7 +1635,7 @@ loadfpregs(l)
 	/*
 	 * load FPCSR and stop CP1 again while enabling interrupts.
 	 */
-	__asm __volatile(
+	__asm volatile(
 		".set noreorder					\n\t"
 		".set noat					\n\t"
 		"ctc1	%0, $31					\n\t"

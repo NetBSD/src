@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.41 2004/08/28 19:11:19 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.41.12.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41 2004/08/28 19:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41.12.1 2006/06/21 14:51:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			 * of memory for use with /dev/zero.
 			 */
 			if (devzeropage == NULL) {
-				MALLOC(devzeropage, caddr_t, PAGE_SIZE, M_TEMP,
+				devzeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);

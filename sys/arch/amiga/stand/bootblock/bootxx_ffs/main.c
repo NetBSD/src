@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.4 2005/06/28 21:03:01 junyoung Exp $
+ * $NetBSD: main.c,v 1.4.2.1 2006/06/21 14:48:53 yamt Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -133,7 +133,7 @@ pain(void *aio)
 	errno = -1;
 
 freeall:
-	free(kp, ksize);
+	dealloc(kp, ksize);
 err:
 	printf("Error %ld\n", (long)errno);
 	close(io);

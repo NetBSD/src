@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.15 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.15.2.1 2006/06/21 14:53:01 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,12 +110,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15.2.1 2006/06/21 14:53:01 yamt Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_aout_m68k.h"
 
@@ -130,9 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15 2005/07/01 18:01:45 christos E
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #include <machine/psl.h>
@@ -149,14 +144,11 @@ extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void syscall(register_t, struct frame);
 
-void	syscall_intern(struct proc *);
 #ifdef COMPAT_AOUT_M68K
 void	aoutm68k_syscall_intern(struct proc *);
 #endif
 static void syscall_plain(register_t, struct lwp *, struct frame *);
-#if defined(KTRACE) || defined(SYSTRACE)
 static void syscall_fancy(register_t, struct lwp *, struct frame *);
-#endif
 
 
 /*
@@ -187,16 +179,9 @@ void
 syscall_intern(struct proc *p)
 {
 
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 
@@ -208,16 +193,9 @@ void
 aoutm68k_syscall_intern(struct proc *p)
 {
 
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 #endif
@@ -286,10 +264,6 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
@@ -340,13 +314,8 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		frame->f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-        scdebug_ret(p, code, error, rval)
-#endif
 }
 
-#if defined(KTRACE) || defined(SYSTRACE)
 static void
 syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
@@ -467,7 +436,6 @@ out:
 
 	trace_exit(l, code, args, rval, error);
 }
-#endif /* KTRACE || SYSTRACE */
 
 void
 child_return(void *arg)
@@ -483,7 +451,7 @@ child_return(void *arg)
 	machine_userret(l, f, 0);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 

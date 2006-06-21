@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.8.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,8 +248,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (!strcmp(child->dv_cfdata->cf_name,
-		    		"zstty"))) {
+		    && device_is_a(child, "zstty")) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
 				/* The following are the only fields we need here */

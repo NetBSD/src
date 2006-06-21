@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2pef.c,v 1.10 2004/11/25 08:09:15 jmc Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.10.12.1 2006/06/21 14:50:06 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -48,7 +48,7 @@
 #include <sys/uio.h>
 #include <sys/exec_elf.h>
 #include <sys/endian.h>
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include "pef.h"
 #include "magic.h"
 

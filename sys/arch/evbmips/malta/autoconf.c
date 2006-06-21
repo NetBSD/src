@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2005/06/09 21:41:52 he Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.2.1 2006/06/21 14:51:03 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/06/09 21:41:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.2.1 2006/06/21 14:51:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,8 @@ findroot(void)
 	if ((booted_device == NULL) && netboot == 0)
 		for (dv = alldevs.tqh_first; dv != NULL;
 		     dv = dv->dv_list.tqe_next)
-			if (dv->dv_class == DV_DISK &&
-			    !strcmp(dv->dv_cfdata->cf_name, "wd"))
+			if (device_class(dv) == DV_DISK &&
+			    device_is_a(dv, "wd"))
 				    booted_device = dv;
 
 	/*
@@ -104,6 +104,6 @@ device_register(dev, aux)
 	void *aux;
 {
 	if ((booted_device == NULL) && (netboot == 1))
-		if (dev->dv_class == DV_IFNET)
+		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;
 }

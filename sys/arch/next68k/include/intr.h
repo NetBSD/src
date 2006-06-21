@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.8.1 2006/06/21 14:54:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -31,8 +31,6 @@
 #ifndef _NEXT68K_INTR_H_
 #define _NEXT68K_INTR_H_
 
-#include <sys/device.h>
-#include <sys/queue.h>
 #include <machine/psl.h>
 
 /* Probably want to dealwith IPL's here @@@ */
@@ -76,9 +74,9 @@ extern volatile u_int8_t ssir;
 #define SIR_ADB		0x10
 
 #define	siron(mask)	\
-	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
+	__asm volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
 #define	siroff(mask)	\
-	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
+	__asm volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
 
 #define	setsoftnet()	siron(SIR_NET)
 #define	setsoftclock()	siron(SIR_CLOCK)

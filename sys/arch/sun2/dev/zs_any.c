@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.12 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.12.2.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.12 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.12.2.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -132,7 +132,8 @@ zs_any_attach(struct device *parent, struct device *self, void *aux)
 
         zsc->zsc_bustag = ma->ma_bustag;
         zsc->zsc_dmatag = ma->ma_dmatag;
-        zsc->zsc_promunit = self->dv_unit;
+	/* XXX device_unit() abuse */
+        zsc->zsc_promunit = device_unit(self);
         zsc->zsc_node = 0;
         
 	/* Map in the device. */

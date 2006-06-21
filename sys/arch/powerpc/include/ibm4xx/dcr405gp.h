@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr405gp.h,v 1.2 2003/07/27 23:45:44 simonb Exp $	*/
+/*	$NetBSD: dcr405gp.h,v 1.2.16.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,15 +37,6 @@
 
 #ifndef _DCR405GP_H_
 #define	_DCR405GP_H_
-
-#ifndef _LOCORE
-#define	mtdcr(reg, val)						\
-	asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
-#define	mfdcr(reg)						\
-	( { u_int32_t val;					\
-	  asm volatile("mfdcr %0,%1" : "=r"(val) : "K"(reg));	\
-	  val; } )
-#endif /* _LOCORE */
 
 /* Device Control Register declarations */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.8 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.8.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.8 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.8.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.8 2005/02/26 23:04:16 perry Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -82,9 +83,9 @@ static struct mbuf *priq_getq __P((struct priq_class *));
 static struct mbuf *priq_pollq __P((struct priq_class *));
 static void priq_purgeq __P((struct priq_class *));
 
-int priqopen __P((dev_t, int, int, struct proc *));
-int priqclose __P((dev_t, int, int, struct proc *));
-int priqioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
+int priqopen __P((dev_t, int, int, struct lwp *));
+int priqclose __P((dev_t, int, int, struct lwp *));
+int priqioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
 static int priqcmd_if_attach __P((struct priq_interface *));
 static int priqcmd_if_detach __P((struct priq_interface *));
 static int priqcmd_add_class __P((struct priq_add_class *));
@@ -108,11 +109,9 @@ priq_attach(ifq, bandwidth)
 {
 	struct priq_if *pif;
 
-	MALLOC(pif, struct priq_if *, sizeof(struct priq_if),
-	       M_DEVBUF, M_WAITOK);
+	pif = malloc(sizeof(struct priq_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pif == NULL)
 		return (NULL);
-	(void)memset(pif, 0, sizeof(struct priq_if));
 	pif->pif_bandwidth = bandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = ifq;
@@ -144,7 +143,7 @@ priq_detach(pif)
 		ASSERT(p != NULL);
 	}
 
-	FREE(pif, M_DEVBUF);
+	free(pif, M_DEVBUF);
 	return (0);
 }
 
@@ -232,17 +231,15 @@ priq_class_create(pif, pri, qlimit, flags)
 			red_destroy(cl->cl_red);
 #endif
 	} else {
-		MALLOC(cl, struct priq_class *, sizeof(struct priq_class),
-		       M_DEVBUF, M_WAITOK);
+		cl = malloc(sizeof(struct priq_class), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl == NULL)
 			return (NULL);
-		(void)memset(cl, 0, sizeof(struct priq_class));
 
-		MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_q == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -307,8 +304,8 @@ priq_class_create(pif, pri, qlimit, flags)
 #endif
 	}
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -350,8 +347,8 @@ priq_class_destroy(cl)
 			red_destroy(cl->cl_red);
 #endif
 	}
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (0);
 }
 
@@ -498,20 +495,20 @@ priq_purgeq(cl)
  * priq device interface
  */
 int
-priqopen(dev, flag, fmt, p)
+priqopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-priqclose(dev, flag, fmt, p)
+priqclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct priq_if *pif;
 	int err, error = 0;
@@ -532,15 +529,16 @@ priqclose(dev, flag, fmt, p)
 }
 
 int
-priqioctl(dev, cmd, addr, flag, p)
+priqioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct priq_if *pif;
 	struct priq_interface *ifacep;
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -552,7 +550,9 @@ priqioctl(dev, cmd, addr, flag, p)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;

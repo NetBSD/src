@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88 2005/06/12 04:39:37 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.88.2.1 2006/06/21 14:57:34 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2005/06/12 04:39:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.1 2006/06/21 14:57:34 yamt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -190,7 +190,7 @@ cpu_setfunc(l, func, arg)
 	void *arg;
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf = (struct trapframe *)(l->l_addr + USPACE) - 1;
+	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;
 	struct callsframe *cf;
 	extern int sret;
 
@@ -209,8 +209,8 @@ cpu_setfunc(l, func, arg)
 }
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return ENOEXEC;
@@ -321,7 +321,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
 	while (len--) {

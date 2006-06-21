@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.41 2004/08/28 19:11:19 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.41.12.1 2006/06/21 14:51:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.41 2004/08/28 19:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.41.12.1 2006/06/21 14:51:23 yamt Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ struct bsdfp {
  * m68k-specific setup for HP-UX executables.
  */
 int
-hpux_cpu_makecmds(struct proc *p, struct exec_package *epp)
+hpux_cpu_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	/* struct hpux_exec *hpux_ep = epp->ep_hdr; */
 
@@ -216,7 +216,7 @@ hpux_cpu_makecmds(struct proc *p, struct exec_package *epp)
  * in ev->ev_len.
  */
 int
-hpux_cpu_vmcmd(struct proc *p, struct exec_vmcmd *ev)
+hpux_cpu_vmcmd(struct lwp *l, struct exec_vmcmd *ev)
 {
 	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
 
@@ -230,10 +230,10 @@ hpux_cpu_vmcmd(struct proc *p, struct exec_vmcmd *ev)
 	/* Deal with misc. HP-UX process attributes. */
 	if (execp->ha_trsize & HPUXM_VALID) {
 		if (execp->ha_trsize & HPUXM_DATAWT)
-			p->p_md.mdp_flags &= ~MDP_CCBDATA;
+			l->l_proc->p_md.mdp_flags &= ~MDP_CCBDATA;
 
 		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.mdp_flags &= ~MDP_CCBSTACK;
+			l->l_proc->p_md.mdp_flags &= ~MDP_CCBSTACK;
 	}
 
 	return (0);

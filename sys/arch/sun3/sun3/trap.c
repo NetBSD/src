@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.119.2.1 2006/06/21 14:57:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.2.1 2006/06/21 14:57:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2005/06/03 15:04:21 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -136,7 +137,7 @@ extern struct emul emul_netbsd_aoutm68k;
  */
 #ifdef	_SUN3X_
 # define _pmap_fault(map, va, ftype) \
-	uvm_fault(map, va, 0, ftype)
+	uvm_fault(map, va, ftype)
 #endif	/* SUN3X */
 
 /* Special labels in m68k/copy.s */
@@ -392,7 +393,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 			longjmp(nofault);
 		goto dopanic;
 
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef	FPU_EMULATE
 		if (fpu_emulate(&tf, &l->l_addr->u_pcb.pcb_fpregs, &ksi) == 0)
@@ -558,7 +559,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
-			printf("vm_fault(%p, 0x%lx, 0x%x, 0) -> 0x%x\n",
+			printf("vm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			       map, va, ftype, rv);
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
@@ -596,7 +597,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 #endif
 				goto copyfault;
 			}
-			printf("vm_fault(%p, 0x%lx, 0x%x, 0) -> 0x%x\n",
+			printf("vm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
@@ -605,8 +606,8 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.9 2003/10/25 17:59:16 mycroft Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.9.16.1 2006/06/21 14:51:50 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.9 2003/10/25 17:59:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.9.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t regs[6], t0, t1, t2;
 
 	printf("\n");
-	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	loc = device_cfdata(&sc->sc_dev)->cf_loc;
 
 	/*
 	 * map bus space

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.8 2005/01/15 02:50:22 briggs Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.8.10.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -31,7 +31,7 @@
 #define integrate
 #define hide
 #else
-#define integrate	static /*__inline*/
+#define integrate	static /*inline*/
 #define hide		static
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mecreg.h,v 1.2 2004/07/11 03:13:04 tsutsui Exp $	*/
+/*	$NetBSD: if_mecreg.h,v 1.2.14.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -116,13 +116,11 @@
 #define MEC_TX_VECTOR			0x58
 #define MEC_IRQ_VECTOR			0x58
 
-#define MEC_PHY_DATA_PAD		0x60 /* XXX ? */
-#define MEC_PHY_DATA			0x64
+#define MEC_PHY_DATA			0x60
 #define  MEC_PHY_DATA_BUSY		0x00010000
 #define  MEC_PHY_DATA_VALUE		0x0000ffff
 
-#define MEC_PHY_ADDRESS_PAD		0x68 /* XXX ? */
-#define MEC_PHY_ADDRESS			0x6c
+#define MEC_PHY_ADDRESS			0x68
 #define  MEC_PHY_ADDR_REGISTER		0x0000001f
 #define  MEC_PHY_ADDR_DEVICE		0x000003e0
 #define  MEC_PHY_ADDR_DEVSHIFT		5

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.11 2005/06/04 20:36:15 he Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.11.2.1 2006/06/21 14:49:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.11 2005/06/04 20:36:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.11.2.1 2006/06/21 14:49:41 yamt Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -73,58 +73,58 @@ static uint32_t counts_per_hz;
 
 int	clockhandler(void *);
 
-static __inline uint32_t
+static inline uint32_t
 tmr0_read(void)
 {
 	uint32_t rv;
 
-	__asm __volatile("mrc p6, 0, %0, c0, c1, 0"
+	__asm volatile("mrc p6, 0, %0, c0, c1, 0"
 		: "=r" (rv));
 	return (rv);
 }
 
-static __inline void
+static inline void
 tmr0_write(uint32_t val)
 {
 
-	__asm __volatile("mcr p6, 0, %0, c0, c1, 0"
+	__asm volatile("mcr p6, 0, %0, c0, c1, 0"
 		:
 		: "r" (val));
 }
 
-static __inline uint32_t
+static inline uint32_t
 tcr0_read(void)
 {
 	uint32_t rv;
 
-	__asm __volatile("mrc p6, 0, %0, c2, c1, 0"
+	__asm volatile("mrc p6, 0, %0, c2, c1, 0"
 		: "=r" (rv));
 	return (rv);
 }
 
-static __inline void
+static inline void
 tcr0_write(uint32_t val)
 {
 
-	__asm __volatile("mcr p6, 0, %0, c2, c1, 0"
+	__asm volatile("mcr p6, 0, %0, c2, c1, 0"
 		:
 		: "r" (val));
 }
 
-static __inline void
+static inline void
 trr0_write(uint32_t val)
 {
 
-	__asm __volatile("mcr p6, 0, %0, c4, c1, 0"
+	__asm volatile("mcr p6, 0, %0, c4, c1, 0"
 		:
 		: "r" (val));
 }
 
-static __inline void
+static inline void
 tisr_write(uint32_t val)
 {
 
-	__asm __volatile("mcr p6, 0, %0, c6, c1, 0"
+	__asm volatile("mcr p6, 0, %0, c6, c1, 0"
 		:
 		: "r" (val));
 }

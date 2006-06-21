@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.196.2.1 2006/06/21 14:53:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196.2.1 2006/06/21 14:53:44 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $");
 #endif
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -187,7 +188,7 @@ child_return(void *arg)
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 
@@ -379,12 +380,12 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		}
 
 		if (p->p_emul->e_fault)
-			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
+			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
-			rv = uvm_fault(map, va, 0, ftype);
+			rv = uvm_fault(map, va, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
-	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, %d) -> %d at pc %p\n",
+	    "uvm_fault(%p (pmap %p), %lx (0x%x), %d) -> %d at pc %p\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
 #endif
 		/*
@@ -412,8 +413,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : (uid_t) -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : (uid_t) -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = 0;
 		} else {
@@ -435,7 +436,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		int rv;
 
 		va = trunc_page(vaddr);
-		rv = uvm_fault(kernel_map, va, 0, ftype);
+		rv = uvm_fault(kernel_map, va, ftype);
 		if (rv == 0)
 			return; /* KERN */
 		/*FALLTHROUGH*/
@@ -516,9 +517,9 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 			sa = trunc_page(va);
 			ea = round_page(va + sizeof(int) - 1);
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_DEFAULT, FALSE);
+				sa, ea, VM_PROT_ALL, FALSE);
 			if (rv == 0) {
-				rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+				rv = suiword((void *)va, l->l_md.md_ss_instr);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
@@ -598,10 +599,6 @@ netintr(void)
 
 	n = netisr;
 	netisr = 0;
-
-#ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
-	intrcnt[SOFTNET_INTR]++;
-#endif
 
 #include <net/netisr_dispatch.h>
 
@@ -686,7 +683,7 @@ mips_singlestep(struct lwp *l)
 		sa = trunc_page(va);
 		ea = round_page(va + sizeof(int) - 1);
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
-		    sa, ea, VM_PROT_DEFAULT, FALSE);
+		    sa, ea, VM_PROT_ALL, FALSE);
 		if (rv == 0) {
 			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,

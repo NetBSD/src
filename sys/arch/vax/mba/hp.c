@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.37 2004/10/28 07:07:38 yamt Exp $ */
+/*	$NetBSD: hp.c,v 1.37.12.1 2006/06/21 14:57:33 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.37 2004/10/28 07:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.37.12.1 2006/06/21 14:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Init the common struct for both the adapter and its slaves.
 	 */
-	bufq_alloc(&sc->sc_md.md_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&sc->sc_md.md_q, "disksort", BUFQ_SORT_CYLINDER);
 	sc->sc_md.md_softc = (void *)sc;	/* Pointer to this softc */
 	sc->sc_md.md_mba = (void *)parent;	/* Pointer to parent softc */
 	sc->sc_md.md_start = hpstart;		/* Disk start routine */
@@ -178,7 +178,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Read in label.
 	 */
-	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
+	if ((msg = readdisklabel(makedev(0, device_unit(self) * 8), hpstrategy,
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
@@ -207,8 +207,8 @@ hpstrategy(struct buf *bp)
 
 	s = splbio();
 
-	gp = BUFQ_PEEK(&sc->sc_md.md_q);
-	BUFQ_PUT(&sc->sc_md.md_q, bp);
+	gp = BUFQ_PEEK(sc->sc_md.md_q);
+	BUFQ_PUT(sc->sc_md.md_q, bp);
 	if (gp == 0)
 		mbaqueue(&sc->sc_md);
 
@@ -228,14 +228,14 @@ hpstart(struct	mba_device *md)
 {
 	struct	hp_softc *sc = md->md_softc;
 	struct	disklabel *lp = sc->sc_disk.dk_label;
-	struct	buf *bp = BUFQ_PEEK(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(md->md_q);
 	unsigned bn, cn, sn, tn;
 
 	/*
 	 * Collect statistics.
 	 */
 	disk_busy(&sc->sc_disk);
-	sc->sc_disk.dk_seek++;
+	iostat_seek(sc->sc_disk.dk_stats);
 
 	bn = bp->b_rawblkno;
 	if (bn) {
@@ -255,7 +255,7 @@ hpstart(struct	mba_device *md)
 }
 
 int
-hpopen(dev_t dev, int flag, int fmt, struct proc *p)
+hpopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -288,7 +288,7 @@ hpopen(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpclose(dev_t dev, int flag, int fmt, struct proc *p)
+hpclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -314,7 +314,7 @@ hpclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
@@ -366,7 +366,7 @@ enum xfer_action
 hpfinish(struct mba_device *md, int mbasr, int *attn)
 {
 	struct	hp_softc *sc = md->md_softc;
-	struct	buf *bp = BUFQ_PEEK(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(md->md_q);
 	int er1, er2, bc;
 	unsigned byte;
 
@@ -405,8 +405,8 @@ hper2:
 		printf("massbuss error :%s %x\n",
 		    sc->sc_dev.dv_xname, mbasr);
 
-	BUFQ_PEEK(&md->md_q)->b_resid = 0;
-	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(&md->md_q)->b_bcount,
+	BUFQ_PEEK(md->md_q)->b_resid = 0;
+	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(md->md_q)->b_bcount,
 	    (bp->b_flags & B_READ));
 	return XFER_FINISH;
 }

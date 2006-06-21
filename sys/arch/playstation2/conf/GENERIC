@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6 2004/07/15 03:53:51 atatat Exp $
+# $NetBSD: GENERIC,v 1.6.12.1 2006/06/21 14:54:41 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -40,3 +40,21 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 config		netbsd		root on ? type ?
 
 #makeoptions	DEFGP="-G 48"
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5
+

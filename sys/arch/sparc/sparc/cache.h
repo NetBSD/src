@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.32 2004/04/27 16:37:43 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.32.12.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -157,7 +157,7 @@ extern u_long dvma_cachealign;
  * Routines for dealing with the cache.
  */
 void	sun4_cache_enable(void);
-void	ms1_cache_enable(void);	
+void	ms1_cache_enable(void);
 void	viking_cache_enable(void);
 void	hypersparc_cache_enable(void);
 void	swift_cache_enable(void);
@@ -243,8 +243,9 @@ struct cacheinfo {
 	int	c_enabled;		/* true => cache is enabled */
 	int	c_hwflush;		/* true => have hardware flush */
 	int	c_linesize;		/* line size, in bytes */
+					/* if split, MIN(icache,dcache) */
 	int	c_l2linesize;		/* log2(linesize) */
-	int	c_nlines;		/* number of cache lines */
+	int	c_nlines;		/* precomputed # of lines to flush */
 	int	c_physical;		/* true => cache has physical
 						   address tags */
 	int 	c_associativity;	/* # of "buckets" in cache line */

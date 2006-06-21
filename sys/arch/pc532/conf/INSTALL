@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.35 2005/02/18 21:05:53 dsl Exp $
+#	$NetBSD: INSTALL,v 1.35.6.1 2006/06/21 14:54:24 yamt Exp $
 #
 # INSTALL -- install kernel
 #
@@ -25,11 +25,11 @@ file-system 	MSDOSFS				# MS-DOS file system
 file-system 	CD9660				# ISO 9660 CD-ROM file system
 file-system 	KERNFS				# /kern
 file-system 	NFS				# Network File System client
+#file-system	PTYFS				# /dev/pts/N support
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 options 	KMEMSTATS			# saves about 50k
 options 	INET				# IP + ICMP + TCP + UDP
@@ -56,8 +56,8 @@ se* at scsibus0 target ? lun ?			# Cabletron EA412/EA419
 pseudo-device	md				# Memory disk
 #pseudo-device	fss 4				# file system snapshot device
 pseudo-device	loop 1				# loopback network
-pseudo-device	sl 1				# compressed SLIP
-pseudo-device	ppp 1				# Point-to-Point Protocol
+pseudo-device	sl 				# compressed SLIP
+pseudo-device	ppp 				# Point-to-Point Protocol
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.5 2003/08/07 16:29:46 agc Exp $	*/
+/*	$NetBSD: timervar.h,v 1.5.16.1 2006/06/21 14:56:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,16 +57,17 @@ void	timer_init_4m(void);
 void	timerattach_obio_4m(struct device *, struct device *, void *);
 #endif /* SUN4M */
 
-/* Imported from clock.c: */ 
-extern int statvar, statmin, statint; 
+/* Imported from clock.c: */
+extern int statvar, statmin, statint;
 extern int timerblurb;
 extern void (*timer_init)(void);
+extern void tickle_tc(void);
 
 /* Common timer attach routine in timer.c: */
 void	timerattach(volatile int *, volatile int *);
 void	*sched_cookie;	/* for schedclock() interrupts */
 
-static __inline u_long __attribute__((__unused__))
+static inline u_long __attribute__((__unused__))
 new_interval(void)
 {
 	u_long newint, r, var;

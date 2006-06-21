@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310reg.h,v 1.5 2003/05/14 19:46:40 thorpej Exp $	*/
+/*	$NetBSD: iq80310reg.h,v 1.5.18.1 2006/06/21 14:50:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,8 +76,8 @@
  * We map the CPLD registers VA==PA, so we go ahead and cheat
  * with register access.
  */
-#define	CPLD_READ(x)		*((__volatile uint8_t *)(x))
-#define	CPLD_WRITE(x, v)	*((__volatile uint8_t *)(x)) = (v)
+#define	CPLD_READ(x)		*((volatile uint8_t *)(x))
+#define	CPLD_WRITE(x, v)	*((volatile uint8_t *)(x)) = (v)
 
 /*
  * We allocate a page table for VA 0xfe400000 (4MB) and map the i80312

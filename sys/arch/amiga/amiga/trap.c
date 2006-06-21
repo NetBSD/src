@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2005/06/13 19:31:54 jandberg Exp $	*/
+/*	$NetBSD: trap.c,v 1.103.2.1 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2005/06/13 19:31:54 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103.2.1 2006/06/21 14:48:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2005/06/13 19:31:54 jandberg Exp $");
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -427,10 +428,10 @@ trapmmufault(type, code, v, fp, l, sticks)
 	}
 
 	if (mmudebug)
-		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
+		printf("vm_fault(%p,%lx,%d)\n", map, va, ftype);
 #endif
 
-	rv = uvm_fault(map, va, 0, ftype);
+	rv = uvm_fault(map, va, ftype);
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -523,7 +524,7 @@ nogo:
 			trapcpfault(l, fp);
 			return;
 		}
-		printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+		printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 		    map, va, ftype, rv);
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
@@ -533,7 +534,7 @@ nogo:
 	if (rv == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 		       p->p_pid, p->p_comm,
-		       p->p_cred && p->p_ucred ? p->p_ucred->cr_uid : -1);
+		       p->p_cred ? kauth_cred_geteuid(p->p_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else {
 		ksi.ksi_signo = SIGSEGV;
@@ -829,7 +830,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 #endif
 			wb_rc = uvm_fault(wb_map,
 			    trunc_page((vm_offset_t)wb_addr),
-			    0, VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE);
 
 			if (wb_rc != 0)
 				return (wb_rc);
@@ -862,7 +863,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 
 			wb_rc = uvm_fault(wb_map,
 			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
-			    0, VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE);
 
 			if (wb_rc != 0)
 				return (wb_rc);
@@ -883,19 +884,19 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	switch(wb_sts & WBS_SZMASK) {
 
 	case WBS_SIZE_BYTE :
-		asm volatile ("movec %0,%%dfc ; movesb %1,%2@":: "d" (wb_sts & WBS_TMMASK),
+		__asm volatile ("movec %0,%%dfc ; movesb %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
 	case WBS_SIZE_WORD :
-		asm volatile ("movec %0,%%dfc ; movesw %1,%2@":: "d" (wb_sts & WBS_TMMASK),
+		__asm volatile ("movec %0,%%dfc ; movesw %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
 	case WBS_SIZE_LONG :
-		asm volatile ("movec %0,%%dfc ; movesl %1,%2@":: "d" (wb_sts & WBS_TMMASK),
+		__asm volatile ("movec %0,%%dfc ; movesl %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
@@ -904,7 +905,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	if (curpcb->pcb_onfault == (caddr_t) _wb_fault)
 		curpcb->pcb_onfault = NULL;
 	if ((wb_sts & WBS_TMMASK) != FC_USERD)
-		asm volatile ("movec %0,%%dfc\n" : : "d" (FC_USERD));
+		__asm volatile ("movec %0,%%dfc\n" : : "d" (FC_USERD));
 	return 0;
 }
 

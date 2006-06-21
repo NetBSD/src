@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81.2.1 2006/06/21 14:54:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.1 2006/06/21 14:54:11 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -140,9 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2005/04/25 15:02:06 lukem Exp $");
 #include <dev/cons.h>
 
 #include "ksyms.h"
-
-/* the following is used externally (sysctl_hw) */
-extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;

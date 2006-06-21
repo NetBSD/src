@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.31 2005/02/18 21:05:53 dsl Exp $
+# 	$NetBSD: INSTALL,v 1.31.6.1 2006/06/21 14:54:02 yamt Exp $
 
 #	config for bootable floppy kernel
 #
@@ -46,6 +46,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20		# NetBSD 2.0 binary compatibility
+#options 	COMPAT_30		# NetBSD 3.0 compatibility.
 options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -61,14 +62,14 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #file-system	FDESC		# /dev/fd/*
 #file-system	NULLFS		# loopback file system
 #file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocols
@@ -147,6 +148,6 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	md		1	# memory disk device
 #pseudo-device	fss		4	# file system snapshot device
-pseudo-device	sl		1	# SLIP interfaces
+pseudo-device	sl			# SLIP interfaces
 
 pseudo-device	rnd			# /dev/random and in-kernel generator

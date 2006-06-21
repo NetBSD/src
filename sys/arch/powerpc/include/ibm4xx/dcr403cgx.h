@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr403cgx.h,v 1.1 2003/03/11 10:40:17 hannken Exp $	*/
+/*	$NetBSD: dcr403cgx.h,v 1.1.18.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,15 +38,6 @@
 
 #ifndef _DCR403GCXP_H_
 #define	_DCR403GCXP_H_
-
-#ifndef _LOCORE
-#define	mtdcr(reg, val)						\
-	asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
-#define	mfdcr(reg)						\
-	( { u_int32_t val;					\
-	  asm volatile("mfdcr %0,%1" : "=r"(val) : "K"(reg));	\
-	  val; } )
-#endif /* _LOCORE */
 
 /* Device Control Register declarations */
 

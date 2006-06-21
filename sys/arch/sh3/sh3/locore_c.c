@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.8 2005/05/31 22:06:51 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.8.2.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8 2005/05/31 22:06:51 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -140,8 +140,8 @@ int want_resched;
 #define	SCHED_LOCK_IDLE()	sched_lock_idle()
 #define	SCHED_UNLOCK_IDLE()	sched_unlock_idle()
 #else
-#define	SCHED_LOCK_IDLE()	((void)0)
-#define	SCHED_UNLOCK_IDLE()	((void)0)
+#define	SCHED_LOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
+#define	SCHED_UNLOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
 #endif
 
 
@@ -214,10 +214,12 @@ idle()
 
 	spl0();
 	uvm_pageidlezero();
-	__asm__ __volatile__("sleep");
+	__asm volatile("sleep");
 	splsched();
 }
 
+#ifndef P1_STACK
+#ifdef SH3
 /*
  * void sh3_switch_setup(struct lwp *l):
  *	prepare kernel stack PTE table. TLB miss handler check these.
@@ -227,10 +229,10 @@ sh3_switch_setup(struct lwp *l)
 {
 	pt_entry_t *pte;
 	struct md_upte *md_upte = l->l_md.md_upte;
-	u_int32_t vpn;
+	uint32_t vpn;
 	int i;
 
-	vpn = (u_int32_t)l->l_addr;
+	vpn = (uint32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	for (i = 0; i < UPAGES; i++, vpn += PAGE_SIZE, md_upte++) {
 		pte = __pmap_kpte_lookup(vpn);
@@ -240,7 +242,9 @@ sh3_switch_setup(struct lwp *l)
 		md_upte->data = (*pte & PG_HW_BITS) | PG_D | PG_V;
 	}
 }
+#endif /* SH3 */
 
+#ifdef SH4
 /*
  * void sh4_switch_setup(struct lwp *l):
  *	prepare kernel stack PTE table. sh4_switch_resume wired this PTE.
@@ -250,10 +254,10 @@ sh4_switch_setup(struct lwp *l)
 {
 	pt_entry_t *pte;
 	struct md_upte *md_upte = l->l_md.md_upte;
-	u_int32_t vpn;
+	uint32_t vpn;
 	int i, e;
 
-	vpn = (u_int32_t)l->l_addr;
+	vpn = (uint32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	e = SH4_UTLB_ENTRY - UPAGES;
 	for (i = 0; i < UPAGES; i++, e++, vpn += PAGE_SIZE) {
@@ -270,6 +274,8 @@ sh4_switch_setup(struct lwp *l)
 		md_upte++;
 	}
 }
+#endif /* SH4 */
+#endif /* !P1_STACK */
 
 /*
  * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);

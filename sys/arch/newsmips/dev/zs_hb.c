@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.18 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.18.6.1 2006/06/21 14:54:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.18 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.18.6.1 2006/06/21 14:54:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ zs_hb_attach(struct device *parent, struct device *self, void *aux)
 	int s, zs_unit, channel, intlevel;
 	static int didintr;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 	intlevel = ha->ha_level;
 	zsaddr[zs_unit] = (void *)ha->ha_addr;
 
@@ -235,7 +235,7 @@ zs_hb_attach(struct device *parent, struct device *self, void *aux)
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
-		if ((zsc->zsc_dev.dv_cfdata->cf_flags & ZSCFLAG_EX) == 0)
+		if ((device_cfdata(&zsc->zsc_dev)->cf_flags & ZSCFLAG_EX) == 0)
 			cs->cs_brg_clk = PCLK / 16;
 		else
 			cs->cs_brg_clk = PCLK_EX / 16;

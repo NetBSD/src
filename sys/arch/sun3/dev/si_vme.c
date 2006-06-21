@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.23 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.23.8.1 2006/06/21 14:57:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.23 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.23.8.1 2006/06/21 14:57:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ si_vme_attach(struct device *parent, struct device *self, void *args)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct confargs *ca = args;
 
 	/* Get options from config flags if specified. */

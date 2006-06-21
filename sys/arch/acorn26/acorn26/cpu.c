@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.16 2005/06/30 17:03:51 drochner Exp $ */
+/* $NetBSD: cpu.c,v 1.16.2.1 2006/06/21 14:47:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2005/06/30 17:03:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16.2.1 2006/06/21 14:47:47 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2005/06/30 17:03:51 drochner Exp $");
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
 static int cpu_search(struct device *, struct cfdata *,
-		      const locdesc_t *, void *);
+		      const int *, void *);
 static register_t cpu_identify(void);
 #ifdef CPU_ARM2
 static int arm2_undef_handler(u_int, u_int, struct trapframe *, int);
@@ -113,7 +113,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("ARM3 (rev. %d)", cpu_type & CPU_ID_REVISION_MASK);
 #ifdef CPU_ARM3
 		supported = 1;
-		cpu_arm3_setup(self, self->dv_cfdata->cf_flags);
+		cpu_arm3_setup(self, device_cfdata(self)->cf_flags);
 #endif
 		break;
 	default:
@@ -130,7 +130,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 static int
 cpu_search(struct device *parent, struct cfdata *cf,
-	   const locdesc_t *ldesc, void *aux)
+	   const int *ldesc, void *aux)
 {
 	
 	if (config_match(parent, cf, NULL) > 0)
@@ -161,10 +161,10 @@ cpu_identify()
 	if (setjmp(&undef_jmp) == 0) {
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
-		__asm __volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
+		__asm volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
 		id = CPU_ID_ARM250;
 		/* ARM3 has an internal coprocessor 15 with an ID register. */
-		__asm __volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
+		__asm volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
 	}
 	remove_coproc_handler(cp_core);
 	remove_coproc_handler(cp15);

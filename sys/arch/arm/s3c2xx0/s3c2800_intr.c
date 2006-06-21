@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.7 2003/08/01 00:40:18 bsh Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.7.16.1 2006/06/21 14:49:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.7 2003/08/01 00:40:18 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.7.16.1 2006/06/21 14:49:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.7 2003/08/01 00:40:18 bsh Exp $")
 
 struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 
-__volatile int softint_pending;
+volatile int softint_pending;
 
-__volatile int current_spl_level;
-__volatile int intr_mask;    /* XXX: does this need to be volatile? */
-__volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
+volatile int current_spl_level;
+volatile int intr_mask;    /* XXX: does this need to be volatile? */
+volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
 
 /* interrupt masks for each level */
 int s3c2xx0_imask[NIPL];

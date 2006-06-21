@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.19 2005/02/19 15:37:34 tsutsui Exp $	*/
+/*	$NetBSD: pvr.c,v 1.19.6.1 2006/06/21 14:50:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.19 2005/02/19 15:37:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.19.6.1 2006/06/21 14:50:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,9 @@ __KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.19 2005/02/19 15:37:34 tsutsui Exp $");
 #define	DIWVSTRT_V2(x)		((x) << 16)
 
 #define	PVR_REG_READ(dc, reg)						\
-	((__volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2]
+	((volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2]
 #define	PVR_REG_WRITE(dc, reg, val)					\
-	((__volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2] = (val)
+	((volatile uint32_t *)(dc)->dc_regvaddr)[(reg) >> 2] = (val)
 
 struct fb_devconfig {
 	vaddr_t dc_vaddr;		/* framebuffer virtual address */
@@ -212,8 +212,8 @@ const struct wsscreen_list pvr_screenlist = {
 	sizeof(_pvr_scrlist) / sizeof(struct wsscreen_descr *), _pvr_scrlist
 };
 
-int	pvrioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t	pvrmmap(void *, off_t, int);
+int	pvrioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t	pvrmmap(void *, void *, off_t, int);
 
 int	pvr_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, long *);
@@ -340,7 +340,7 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+pvrioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pvr_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
@@ -403,7 +403,7 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 paddr_t
-pvrmmap(void *v, off_t offset, int prot)
+pvrmmap(void *v, void *vs, off_t offset, int prot)
 {
 
 	/*
@@ -466,15 +466,15 @@ pvr_show_screen(void *v, void *cookie, int waitok,
 static void
 pvr_check_cable(struct fb_devconfig *dc)
 {
-	__volatile uint32_t *porta =
-	    (__volatile uint32_t *)0xff80002c;
+	volatile uint32_t *porta =
+	    (volatile uint32_t *)0xff80002c;
 	uint16_t v;
 
 	/* PORT8 and PORT9 is input */
 	*porta = (*porta & ~0xf0000) | 0xa0000;
 
 	/* Read PORT8 and PORT9 */
-	v = ((*(__volatile uint16_t *)(porta + 1)) >> 8) & 3;
+	v = ((*(volatile uint16_t *)(porta + 1)) >> 8) & 3;
 
 	if ((v & 2) == 0)
 		dc->dc_dispflags |= PVR_VGAMODE|PVR_RGBMODE;
@@ -487,7 +487,7 @@ pvr_check_tvsys(struct fb_devconfig *dc)
 {
 
 	/* XXX should use flashmem device when one exists */
-	dc->dc_tvsystem = (*(__volatile uint8_t *)0xa021a004) & 3;
+	dc->dc_tvsystem = (*(volatile uint8_t *)0xa021a004) & 3;
 }
 
 void
@@ -591,7 +591,7 @@ pvrinit(struct fb_devconfig *dc)
 	PVR_REG_WRITE(dc, PVRREG_DIWCONF, DIWCONF_MAGIC);
 
 	/* RGB / composite */
-	*(__volatile uint32_t *)
+	*(volatile uint32_t *)
 	    SH3_PHYS_TO_P2SEG(0x00702c00) =
 	    ((dc->dc_dispflags & PVR_RGBMODE) ? 0 : 3) << 8;
 

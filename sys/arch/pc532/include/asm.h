@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.17.16.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
  */
 
 /*
- * 	File: asm.h
+ *	File: asm.h
  *	Author: Johannes Helander, Tero Kivinen, Tatu Ylonen
  *	Modified by Phil Nelson for NetBSD.
  *	Modified by Matthias Pfaller for PIC.
@@ -69,7 +69,7 @@
 
 #ifdef PIC
 #define	PIC_PROLOGUE						\
-		sprd	sb,tos				; 	\
+		sprd	sb,tos				;	\
 		addr	_C_LABEL(_GLOBAL_OFFSET_TABLE_)(pc),r1;	\
 		lprd	sb,r1
 
@@ -113,7 +113,7 @@
 # ifndef _SAVELIST
 #  define _SAVELIST
 # endif
-# define _PROF_PROLOGUE 					\
+# define _PROF_PROLOGUE						\
 		enter [_SAVELIST],0			;	\
 		bsr _ASM_LABEL(mcount)			;	\
 		exit [_SAVELIST]
@@ -198,7 +198,7 @@
  */
 #define	PANIC(message)						\
 		addr	9f,tos				;	\
-		bsr	_C_LABEL(panic) 		;	\
+		bsr	_C_LABEL(panic)			;	\
 	9:	.asciz	message
 
 /*
@@ -217,6 +217,12 @@
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak _C_LABEL(alias);						\
+	_C_LABEL(alias) = _C_LABEL(sym)
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)						\
+	.globl _C_LABEL(alias);						\
 	_C_LABEL(alias) = _C_LABEL(sym)
 
 #ifdef __STDC__

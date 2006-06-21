@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.3 2004/08/07 11:08:58 rearnsha Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.3.12.1 2006/06/21 14:50:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -50,10 +50,10 @@
 
 void ifpga_do_pending(void);
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ifpga_set_intrmask(void)
 {
-	extern __volatile uint32_t intr_enabled;
+	extern volatile uint32_t intr_enabled;
 	extern struct ifpga_softc *ifpga_sc;
 	uint32_t mask = intr_enabled;
 
@@ -67,13 +67,12 @@ ifpga_set_intrmask(void)
         (IFPGA_INTR_bit31 | IFPGA_INTR_bit30 |	\
          IFPGA_INTR_bit29 | IFPGA_INTR_bit28)
 
-static __inline void __attribute__((__unused__))
+static inline void __attribute__((__unused__))
 ifpga_splx(int new)
 {
-	extern __volatile uint32_t intr_enabled;
-	extern __volatile int current_spl_level;
-	extern __volatile int ifpga_ipending;
-	extern void ifpga_do_pending(void);
+	extern volatile uint32_t intr_enabled;
+	extern volatile int current_spl_level;
+	extern volatile int ifpga_ipending;
 	int oldirqstate, hwpend;
 
 	__insn_barrier();
@@ -93,10 +92,10 @@ ifpga_splx(int new)
 		ifpga_do_pending();
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 ifpga_splraise(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int ifpga_imask[];
 	int	old;
 
@@ -108,10 +107,10 @@ ifpga_splraise(int ipl)
 	return (old);
 }
 
-static __inline int __attribute__((__unused__))
+static inline int __attribute__((__unused__))
 ifpga_spllower(int ipl)
 {
-	extern __volatile int current_spl_level;
+	extern volatile int current_spl_level;
 	extern int ifpga_imask[];
 	int old = current_spl_level;
 

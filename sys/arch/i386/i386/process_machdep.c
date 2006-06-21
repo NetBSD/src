@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.52 2005/06/01 13:01:35 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.52.2.1 2006/06/21 14:52:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.52 2005/06/01 13:01:35 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.52.2.1 2006/06/21 14:52:19 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -83,14 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.52 2005/06/01 13:01:35 scw Exp
 #include <machine/vm86.h>
 #endif
 
-static __inline struct trapframe *
+static inline struct trapframe *
 process_frame(struct lwp *l)
 {
 
 	return (l->l_md.md_regs);
 }
 
-static __inline union savefpu *
+static inline union savefpu *
 process_fpframe(struct lwp *l)
 {
 
@@ -456,8 +456,8 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 }
 
 int
-ptrace_machdep_dorequest(p, lt, req, addr, data)
-	struct proc *p;
+ptrace_machdep_dorequest(l, lt, req, addr, data)
+	struct lwp *l;
 	struct lwp *lt;
 	int req;
 	caddr_t addr;
@@ -476,16 +476,24 @@ ptrace_machdep_dorequest(p, lt, req, addr, data)
 		if (!process_machdep_validxmmregs(lt->l_proc))
 			return (EINVAL);
 		else {
+			struct vmspace *vm;
+			int error;
+
+			error = proc_vmspace_getref(l->l_proc, &vm);
+			if (error) {
+				return error;
+			}
 			iov.iov_base = addr;
 			iov.iov_len = sizeof(struct xmmregs);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct xmmregs);
-			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_procp = p;
-			return (process_machdep_doxmmregs(p, lt, &uio));
+			uio.uio_vmspace = vm;
+			error = process_machdep_doxmmregs(l, lt, &uio);
+			uvmspace_free(vm);
+			return error;
 		}
 	}
 
@@ -501,8 +509,8 @@ ptrace_machdep_dorequest(p, lt, req, addr, data)
  */
 
 int
-process_machdep_doxmmregs(curp, l, uio)
-	struct proc *curp;		/* tracer */
+process_machdep_doxmmregs(curl, l, uio)
+	struct lwp *curl;		/* tracer */
 	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
@@ -511,7 +519,7 @@ process_machdep_doxmmregs(curp, l, uio)
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);

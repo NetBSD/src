@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.11 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.11.16.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11.16.1 2006/06/21 14:54:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11 2004/01/23 04:12:39 simonb Exp $")
  * Thanks to gcc we don't have to guess
  * which registers contain sum & w.
  */
-#define	Asm	__asm __volatile
+#define	Asm	__asm volatile
 #define ADD(n)  Asm("addd "  #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADC(n)  Asm("addcd " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define MOP     Asm("addcd  0,%0" :         "=r" (sum) : "0" (sum))
@@ -104,13 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11 2004/01/23 04:12:39 simonb Exp $")
 #define	ADDWORD	{sum += *(u_short *)w;}
 
 int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(struct mbuf *m, int len)
 {
-	register u_char *w;
-	register unsigned sum = 0;
-	register int mlen = 0;
+	u_char *w;
+	unsigned sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	for (; m && len; m = m->m_next) {

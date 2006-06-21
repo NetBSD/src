@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.25 2005/04/15 17:27:21 itohy Exp $
+# $NetBSD: VR41XX,v 1.25.2.1 2006/06/21 14:51:49 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.25.2.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -83,12 +83,12 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
-options 	VNODE_OP_NOINLINE # don't inline vnode op calls
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -96,6 +96,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
@@ -241,7 +242,7 @@ pwctl1 at vrgiu? platform NEC_MCCS id PWCTL_LCDLIGHT port 45
 pwctl2 at vrgiu? platform NEC_MCR_3XX id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
-ewctl3 at vrgiu? platform NEC_MCCS id PWCTL_SPEAKER port 12
+pwctl3 at vrgiu? platform NEC_MCCS id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
@@ -305,8 +306,8 @@ pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 #
 # Vadem Clio and Sharp Tripad
 #
-vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
-vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
+vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x0
+vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x0
 isa3	at vrisab3
 pcic0	at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 
@@ -430,6 +431,9 @@ wsmouse*	at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
@@ -462,7 +466,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
@@ -503,12 +507,12 @@ ugen*	at uhub? port ?
 audio*	at uaudio?
 
 pseudo-device	loop		1	# network loopback
-pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
-pseudo-device	vnd		4	# virtual disk ick
+pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
@@ -522,9 +526,9 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	fss		4	# file system snapshot device
 
 # for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.8 2005/05/31 22:43:09 uwe Exp $	*/
+/*	$NetBSD: platid.c,v 1.8.2.1 2006/06/21 14:51:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(_WIN32)	/* XXX: hpcboot.exe */
-__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.8 2005/05/31 22:43:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.8.2.1 2006/06/21 14:51:37 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,8 +65,9 @@ platid_hton(platid_t *pid)
 	pid->dw.dw1 = htonl(pid->dw.dw1);
 }
 
+#ifdef PLATID_TEST
 void
-platid_dump(char *name, void* pxx)
+platid_dump(const char *name, void* pxx)
 {
 	int i;
 	unsigned char* p = (unsigned char*)pxx;
@@ -78,6 +79,7 @@ platid_dump(char *name, void* pxx)
 	}
 	printf("\n");
 }
+#endif
 
 int
 platid_match(platid_t *pid, platid_mask_t *mask)
@@ -155,7 +157,7 @@ platid_search(platid_t *pid, void *base, int nmemb, int size)
 			match_level = res;
 			match = base;
 		}
-		(char *)base += size;
+		base = (char *)base + size;
 	}
 
 	return (match);

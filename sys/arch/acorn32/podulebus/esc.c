@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.16 2005/04/01 11:59:22 yamt Exp $	*/
+/*	$NetBSD: esc.c,v 1.16.2.1 2006/06/21 14:47:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.16 2005/04/01 11:59:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.16.2.1 2006/06/21 14:47:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -891,7 +891,7 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 		 * If the scsi unit is not set to synch transfer and we want
 		 * that, we have to negotiate. This should realy base the
 		 * period on the clock frequence rather than just check if
-		 * >25Mhz
+		 * >25 MHz
 		 */
 
 		nexus->flags |= ESC_NF_DO_SDTR;

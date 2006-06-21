@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.8.16.1 2006/06/21 14:57:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8.16.1 2006/06/21 14:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -98,7 +98,7 @@ int in4_cksum_md_debug(struct mbuf *m, u_int8_t nxt, int off, int len);
 #define ADVANCE(n)	{w += n; mlen -= n;}
 #define SWAP		{sum <<= 8;}		/* depends on recent REDUCE */
 
-#define Asm     __asm __volatile
+#define Asm     __asm volatile
 #define ADDL    Asm("addl2 (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADWC    Asm("adwc  (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))
@@ -125,7 +125,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			panic("in4_cksum: bad mbuf chain");
 #endif
 
-		__asm __volatile(
+		__asm volatile(
 			"movzwl	16(%%ap),%0;"	/* mov len to sum */
 			"addb2	8(%%ap),%0;"	/* add proto to sum */
 			"rotl	$8,%0,%0;"	/* htons, carry is preserved */

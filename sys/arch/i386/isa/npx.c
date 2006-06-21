@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.107 2005/02/03 21:08:58 perry Exp $	*/
+/*	$NetBSD: npx.c,v 1.107.6.1 2006/06/21 14:52:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107 2005/02/03 21:08:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107.6.1 2006/06/21 14:52:30 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -141,7 +141,7 @@ static int	npxdna_s87(struct cpu_info *);
 #ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
 #endif /* I686_CPU */
-static int	x86fpflags_to_ksiginfo(u_int32_t flags);
+static int	x86fpflags_to_ksiginfo(uint32_t flags);
 
 #ifdef I686_CPU
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
@@ -158,7 +158,7 @@ extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;
 
-static __inline void
+static inline void
 fpu_save(union savefpu *addr)
 {
 #ifdef I686_CPU
@@ -298,7 +298,7 @@ void npxinit(struct cpu_info *ci)
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0) {
 		i386_fpu_fdivbug = 1;
-		printf("%s: WARNING: Pentium FDIV bug detected!\n",
+		aprint_normal("%s: WARNING: Pentium FDIV bug detected!\n",
 		    ci->ci_dev->dv_xname);
 	}
 	lcr0(rcr0() | (CR0_TS));
@@ -476,7 +476,7 @@ npxintr(void *arg, struct intrframe iframe)
 /* Software Developer's Manual, Volume 1		*/
 /* XXX punting on the stack fault with FLTINV		*/
 static int
-x86fpflags_to_ksiginfo(u_int32_t flags)
+x86fpflags_to_ksiginfo(uint32_t flags)
 {
 	int i;
 	static int x86fp_ksiginfo_table[] = {
@@ -564,6 +564,26 @@ npxdna_xmm(struct cpu_info *ci)
 		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
 		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
+		/*
+		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
+		 * leaking other process's execution history. Clear them
+		 * manually.
+		 */
+		static const double zero = 0.0;
+		int status;
+		/*
+		 * Clear the ES bit in the x87 status word if it is currently
+		 * set, in order to avoid causing a fault in the upcoming load.
+		 */
+		fnstsw(&status);
+		if (status & 0x80)
+			fnclex();
+		/*
+		 * Load the dummy variable into the x87 stack.  This mangles
+		 * the x87 stack, but we don't care since we're about to call
+		 * fxrstor() anyway.
+		 */
+		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
 

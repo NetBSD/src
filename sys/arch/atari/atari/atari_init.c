@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.62 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.62.2.1 2006/06/21 14:49:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.62 2005/06/04 14:42:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.62.2.1 2006/06/21 14:49:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -532,26 +532,26 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 */
 		if (cputype == CPU_68060) {
 			/* XXX: Need the branch cache be cleared? */
-			asm volatile (".word 0x4e7a,0x0002;" 
+			__asm volatile (".word 0x4e7a,0x0002;" 
 				      "orl #0x400000,%%d0;" 
 				      ".word 0x4e7b,0x0002" : : : "d0");
 		}
-		asm volatile ("movel %0,%%a0;"
+		__asm volatile ("movel %0,%%a0;"
 			      ".word 0x4e7b,0x8807" : : "a" (Sysseg_pa) : "a0");
-		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,%%d0;"
+		__asm volatile (".word 0xf518" : : );
+		__asm volatile ("movel #0xc000,%%d0;"
 			      ".word 0x4e7b,0x0003" : : : "d0" );
 	} else
 #endif
 	{
-		asm volatile ("pmove %0@,%%srp" : : "a" (&protorp[0]));
+		__asm volatile ("pmove %0@,%%srp" : : "a" (&protorp[0]));
 		/*
 		 * setup and load TC register.
 		 * enable_cpr, enable_srp, pagesize=8k,
 		 * A = 8 bits, B = 11 bits
 		 */
 		tc = 0x82d08b00;
-		asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
+		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
  
 	/* Is this to fool the optimizer?? */
@@ -798,13 +798,15 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
  * Used by dumpconf() to get the size of the machine-dependent panic-dump
  * header in disk blocks.
  */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 int
 cpu_dumpsize()
 {
-	int	size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return (btodb(roundup(size, dbtob(1))));
+	return btodb(MDHDRSIZE);
 }
 
 /*
@@ -812,11 +814,9 @@ cpu_dumpsize()
  * XXX: Assumes that it will all fit in one diskblock.
  */
 int
-cpu_dump(dump, p_blkno)
-int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-daddr_t	*p_blkno;
+cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *p_blkno)
 {
-	int		buf[dbtob(1)/sizeof(int)];
+	int		buf[MDHDRSIZE/sizeof(int)];
 	int		error;
 	kcore_seg_t	*kseg_p;
 	cpu_kcore_hdr_t	*chdr_p;
@@ -828,14 +828,14 @@ daddr_t	*p_blkno;
 	 * Generate a segment header
 	 */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
 
 	/*
 	 * Add the md header
 	 */
 	*chdr_p = cpu_kcore_hdr;
-	error = dump(dumpdev, *p_blkno, (caddr_t)buf, dbtob(1));
-	*p_blkno += 1;
+	error = dump(dumpdev, *p_blkno, (caddr_t)buf, sizeof(buf));
+	*p_blkno += btodb(sizeof(buf));
 	return (error);
 }
 
@@ -1044,7 +1044,7 @@ initcpu()
 			extern trapfun illinst;
 #endif
 
-			asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
+			__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
 					"d"(m68060_pcr_init):"d0" );
 
 			/* bus/addrerr vectors */

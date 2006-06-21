@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.15 2003/11/09 16:41:53 martin Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.15.16.1 2006/06/21 14:56:48 yamt Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.15 2003/11/09 16:41:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.15.16.1 2006/06/21 14:56:48 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.15 2003/11/09 16:41:53 martin 
 #include <compat/sunos32/sunos32_syscallargs.h>
 #include <compat/sunos32/sunos32_exec.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+
 #include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/vuid_event.h>
@@ -73,27 +76,27 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.15 2003/11/09 16:41:53 martin 
 #endif
 
 struct sunos32_sigcontext {
-	u_int32_t	sc_onstack;		/* sigstack state to restore */
-	u_int32_t	sc_mask;		/* signal mask to restore (old style) */
+	uint32_t	sc_onstack;		/* sigstack state to restore */
+	uint32_t	sc_mask;		/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
-	u_int32_t	sc_sp;			/* %sp to restore */
-	u_int32_t	sc_pc;			/* pc to restore */
-	u_int32_t	sc_npc;			/* npc to restore */
-	u_int32_t	sc_psr;			/* pstate to restore */
-	u_int32_t	sc_g1;			/* %g1 to restore */
-	u_int32_t	sc_o0;			/* %o0 to restore */
+	uint32_t	sc_sp;			/* %sp to restore */
+	uint32_t	sc_pc;			/* pc to restore */
+	uint32_t	sc_npc;			/* npc to restore */
+	uint32_t	sc_psr;			/* pstate to restore */
+	uint32_t	sc_g1;			/* %g1 to restore */
+	uint32_t	sc_o0;			/* %o0 to restore */
 };
 
 struct sunos32_sigframe {
-	u_int32_t	sf_signo;		/* signal number */
-	u_int32_t	sf_code;		/* code */
-	u_int32_t	sf_scp;			/* SunOS user addr of sigcontext */
-	u_int32_t	sf_addr;		/* SunOS compat, always 0 for now */
+	uint32_t	sf_signo;		/* signal number */
+	uint32_t	sf_code;		/* code */
+	uint32_t	sf_scp;			/* SunOS user addr of sigcontext */
+	uint32_t	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	sunos32_sigcontext sf_sc;	/* actual sigcontext */
 };
 
 #if NFIRM_EVENTS > 0
-static int ev_out32 __P((struct firm_event *, int, struct uio *));
+static int ev_out32(struct firm_event *, int, struct uio *);
 #endif
 
 /*
@@ -114,7 +117,7 @@ sunos32_setregs(l, pack, stack)
 	struct proc *p = l->l_proc;
 
 	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
@@ -169,14 +172,14 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct rwindow32 *oldsp, *newsp;
 	struct sunos32_sigframe sf;
 	struct sunos32_sigcontext *scp;
-	u_int32_t addr, oldsp32;
+	uint32_t addr, oldsp32;
 	int onstack; 
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
-	oldsp32 = (u_int32_t)(u_long)oldsp;
+	oldsp32 = (uint32_t)(u_long)oldsp;
 
 	/*
 	 * Compute new user stack addresses, subtract off
@@ -210,11 +213,11 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = (u_int32_t)ksi->ksi_trap;
+	sf.sf_code = (uint32_t)ksi->ksi_trap;
 	scp = &fp->sf_sc;
 	if ((u_long)scp >= 0x100000000)
 		printf("sunos32_sendsig: sf_scp overflow %p > 0x100000000\n", scp);
-	sf.sf_scp = (u_int32_t)(u_long)scp;
+	sf.sf_scp = (uint32_t)(u_long)scp;
 	sf.sf_addr = 0;			/* XXX */
 
 	/*
@@ -273,10 +276,10 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (u_int32_t)(u_long)catcher;	/* user does his own trampolining */
+	addr = (uint32_t)(u_long)catcher;	/* user does his own trampolining */
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
+	tf->tf_out[6] = (uint64_t)(u_int)(u_long)newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos32_sendsig: about to return to catcher %p thru %p\n", 
@@ -371,10 +374,7 @@ sunos32_sys_sigreturn(l, v, retval)
  * Write out a series of 32-bit firm_events.
  */
 static int
-ev_out32(e, n, uio)
-	struct firm_event *e;  
-	int n;
-	struct uio *uio;
+ev_out32(struct firm_event *e, int n, struct uio *uio)
 {
 	struct firm_event32 e32;
 	int error = 0;

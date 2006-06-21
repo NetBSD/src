@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmem.S,v 1.6 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: biosmem.S,v 1.6.18.1 2006/06/21 14:52:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -31,11 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-	
 
 #include <machine/asm.h>
-
-#define	data32	.byte 0x66
 
 	.text
 

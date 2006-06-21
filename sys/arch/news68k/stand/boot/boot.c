@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2004/12/11 03:32:27 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.10.1 2006/06/21 14:54:11 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -125,11 +125,11 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 	printf("\n");
 
 	ICIA();
-	__asm __volatile ("movl %0,%%d7" : : "m" (d7));
-	__asm __volatile ("movl %0,%%d6" : : "m" (bootdev));
-	__asm __volatile ("movl %0,%%d5" : : "m" (netbsd));
-	__asm __volatile ("movl %0,%%d4" : : "m" (d4));
-	__asm __volatile ("movl %0,%%d2" : : "m" (marks[MARK_END]));
+	__asm volatile ("movl %0,%%d7" : : "m" (d7));
+	__asm volatile ("movl %0,%%d6" : : "m" (bootdev));
+	__asm volatile ("movl %0,%%d5" : : "m" (netbsd));
+	__asm volatile ("movl %0,%%d4" : : "m" (d4));
+	__asm volatile ("movl %0,%%d2" : : "m" (marks[MARK_END]));
 	(*entry)();
 }
 

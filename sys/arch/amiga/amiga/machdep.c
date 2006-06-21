@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2005/06/13 19:31:54 jandberg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.192.2.1 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2005/06/13 19:31:54 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192.2.1 2006/06/21 14:48:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,7 @@ identifycpu()
 	fpu = NULL;
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
-		asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
+		__asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
 		sprintf(cpubuf, "68%s060 rev.%d",
 		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 		cpu_type = cpubuf;
@@ -550,6 +550,9 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 void
 cpu_dumpconf()
 {
@@ -660,7 +663,7 @@ dumpsys()
 	int     error = 0;
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
-	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
+	char	dump_hdr[MDHDRSIZE];
 	const struct bdevsw *bdev;
 
 	if (dumpdev == NODEV)
@@ -696,7 +699,7 @@ dumpsys()
 	 * Generate a segment header
 	 */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
 
 	/*
 	 * Add the md header
@@ -709,7 +712,8 @@ dumpsys()
 	seg = 0;
 	blkno = dumplo;
 	dump = bdev->d_dump;
-	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	error = (*dump) (dumpdev, blkno, (caddr_t)dump_hdr, sizeof(dump_hdr));
+	blkno += btodb(sizeof(dump_hdr));
 	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
@@ -850,7 +854,7 @@ initcpu()
 			/* ... and mark FPU as absent for identifyfpu() */
 			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
 		}
-		asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
+		__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
 			"d"(m68060_pcr_init):"d0" );
 
 		/* bus/addrerr vectors */
@@ -1012,6 +1016,13 @@ struct si_callback {
 	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 };
+
+struct softintr {
+	int pending;
+	void (*function)(void *);
+	void *arg;
+};
+
 static struct si_callback *si_callbacks;
 static struct si_callback *si_free;
 #ifdef DIAGNOSTIC
@@ -1032,7 +1043,10 @@ static void
 _softintr_callit(rock1, rock2)
 	void *rock1, *rock2;
 {
-	(*(void (*)(void *))rock1)(rock2);
+	struct softintr *si = rock1;
+
+	si->pending = 0;
+	si->function(si->arg);
 }
 
 void *
@@ -1041,17 +1055,15 @@ softintr_establish(ipl, func, arg)
 	void func(void *);
 	void *arg;
 {
-	struct si_callback *si;
+	struct softintr *si;
 
-	(void)ipl;
-
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	si = malloc(sizeof *si, M_TEMP, M_NOWAIT);
 	if (si == NULL)
-		return (si);
+		return si;
 
-	si->function = (void *)0;
-	si->rock1 = (void *)func;
-	si->rock2 = arg;
+	si->pending = 0;
+	si->function = func;
+	si->arg = arg;
 
 	alloc_sicallback();
 	return ((void *)si);
@@ -1093,10 +1105,12 @@ void
 softintr_schedule(vsi)
 	void *vsi;
 {
-	struct si_callback *si;
-	si = vsi;
+	struct softintr *si = vsi;
 
-	add_sicallback(_softintr_callit, si->rock1, si->rock2);
+	if (si->pending == 0) {
+		si->pending = 1;
+		add_sicallback(_softintr_callit, si, NULL);
+	}
 }
 
 void
@@ -1560,8 +1574,8 @@ nmihand(frame)
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
@@ -1572,7 +1586,7 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(p, epp));
+		return(exec_aout_prep_zmagic(l, epp));
 #endif
 	return(error);
 }

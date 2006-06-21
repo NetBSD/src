@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.3.16.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	register_t l;
 
 	do {
-		__asm __volatile("movi 1, %0; swap.q %1, r63, %0" :
+		__asm volatile("movi 1, %0; swap.q %1, r63, %0" :
 		    "=r"(l) : "r"(alp));
 	} while (l == __SIMPLELOCK_LOCKED);
 }
@@ -66,7 +66,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	register_t l;
 
-	__asm __volatile("movi 1, %0; swap.q %1, r63, %0" : "=r"(l) : "r"(alp));
+	__asm volatile("movi 1, %0; swap.q %1, r63, %0" : "=r"(l) : "r"(alp));
 
 	return (__SIMPLELOCK_LOCKED - (int)l);
 }

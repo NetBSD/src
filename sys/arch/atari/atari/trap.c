@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.78.2.1 2006/06/21 14:49:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2005/06/04 14:42:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.1 2006/06/21 14:49:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2005/06/04 14:42:36 he Exp $");
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -671,10 +672,10 @@ trap(type, code, v, frame)
 			panictrap(type, code, v, &frame);
 		}
 #endif
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -708,7 +709,7 @@ trap(type, code, v, frame)
 				trapcpfault(l, &frame);
 				return;
 			}
-			printf("\nvm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("\nvm_fault(%p, %lx, %x) -> %x\n",
 			       map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -719,8 +720,8 @@ trap(type, code, v, frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
@@ -819,7 +820,7 @@ writeback(fp, docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
+			       p->p_pid, p->p_comm, kauth_cred_geteuid(p->p_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.

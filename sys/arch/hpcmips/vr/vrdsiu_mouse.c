@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.6 2003/12/04 13:05:16 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.6.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static void vrdsiu_mouse_intr __P((struct vrdsiu_softc *));
 
 /* Enable/disable DSIU handling */
 static int vrdsiu_mouse_enable __P((void *));
-static int vrdsiu_mouse_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int vrdsiu_mouse_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 static void vrdsiu_mouse_disable __P((void *));
 
 /* wsmouse access ops */
@@ -217,12 +217,12 @@ vrdsiu_mouse_disable(v)
 }
 
 int
-vrdsiu_mouse_ioctl(v, cmd, data, flag, p)
+vrdsiu_mouse_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	/*struct vrdsiu_softc *sc = v;*/
 

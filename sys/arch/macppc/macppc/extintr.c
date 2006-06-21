@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.52 2005/06/03 18:19:11 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.52.2.1 2006/06/21 14:53:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.52 2005/06/03 18:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.52.2.1 2006/06/21 14:53:28 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.52 2005/06/03 18:19:11 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
@@ -103,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.52 2005/06/03 18:19:11 matt Exp $");
 void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
 
-static inline int cntlzw __P((int));
 static inline uint32_t gc_read_irq __P((void));
 static inline int mapirq __P((int));
 static void gc_enable_irq __P((int));
@@ -179,20 +179,6 @@ mapirq(irq)
 	virq[irq] = v;
 
 	return v;
-}
-
-/*
- * Count leading zeros.
- */
-static __inline int
-cntlzw(x)
-	int x;
-{
-	int a;
-
-	asm volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
-
-	return a;
 }
 
 uint32_t
@@ -921,10 +907,10 @@ splraise(ncpl)
 	struct cpu_info *ci = curcpu();
 	int ocpl;
 
-	asm volatile("sync; eieio");	/* don't reorder.... */
+	__asm volatile("sync; eieio");	/* don't reorder.... */
 	ocpl = ci->ci_cpl;
 	ci->ci_cpl = ocpl | ncpl;
-	asm volatile("sync; eieio");	/* reorder protect */
+	__asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
 }
 
@@ -934,11 +920,11 @@ splx(ncpl)
 {
 
 	struct cpu_info *ci = curcpu();
-	asm volatile("sync; eieio");	/* reorder protect */
+	__asm volatile("sync; eieio");	/* reorder protect */
 	ci->ci_cpl = ncpl;
 	if (ci->ci_ipending & ~ncpl)
 		do_pending_int();
-	asm volatile("sync; eieio");	/* reorder protect */
+	__asm volatile("sync; eieio");	/* reorder protect */
 }
 
 int
@@ -948,12 +934,12 @@ spllower(ncpl)
 	struct cpu_info *ci = curcpu();
 	int ocpl;
 
-	asm volatile("sync; eieio");	/* reorder protect */
+	__asm volatile("sync; eieio");	/* reorder protect */
 	ocpl = ci->ci_cpl;
 	ci->ci_cpl = ncpl;
 	if (ci->ci_ipending & ~ncpl)
 		do_pending_int();
-	asm volatile("sync; eieio");	/* reorder protect */
+	__asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
 }
 

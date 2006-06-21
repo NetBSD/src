@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2003/09/26 22:45:41 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.3.16.1 2006/06/21 14:47:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -48,10 +48,10 @@
 #include <arm/cpufunc.h>
 
 static __inline int
-__swp(int __val, __volatile int *__ptr)
+__swp(int __val, volatile int *__ptr)
 {
 
-	__asm __volatile("swp %0, %1, [%2]"
+	__asm volatile("swp %0, %1, [%2]"
 	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }

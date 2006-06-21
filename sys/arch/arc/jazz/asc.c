@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.15.8.1 2006/06/21 14:49:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15.8.1 2006/06/21 14:49:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $");
 
 #define ASC_NPORTS	0x10
 #define ASC_ID_53CF94	0xa2	/* XXX should be in MI ncr53c9xreg.h? */
+#define ASC_ID_FAS216	0x12	/* XXX should be in MI ncr53c9xreg.h? */
 
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -79,6 +80,8 @@ void asc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(asc, sizeof(struct asc_softc),
     asc_match, asc_attach, NULL, NULL);
+
+static void asc_minphys(struct buf *);
 
 /*
  *  Functions and the switch for the MI code.
@@ -126,6 +129,7 @@ asc_attach(struct device *parent, struct device *self, void *aux)
 	struct asc_softc *asc = (void *)self;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 	bus_space_tag_t iot;
+	uint8_t asc_id;
 
 #if 0
 	/* Need info from platform dependent config?? */
@@ -176,7 +180,8 @@ asc_attach(struct device *parent, struct device *self, void *aux)
 	DELAY(25);
 	asc_write_reg(sc, NCR_CMD, NCRCMD_DMA | NCRCMD_NOP);
 	DELAY(25);
-	if (asc_read_reg(sc, NCR_TCH) == ASC_ID_53CF94) {
+	asc_id = asc_read_reg(sc, NCR_TCH);
+	if (asc_id == ASC_ID_53CF94 || asc_id == ASC_ID_FAS216) {
 		/* XXX should be have NCR_VARIANT_NCR53CF94? */
 		sc->sc_rev = NCR_VARIANT_NCR53C94;
 		sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_FE;
@@ -212,18 +217,32 @@ asc_attach(struct device *parent, struct device *self, void *aux)
 	jazzio_intr_establish(ja->ja_intr, ncr53c9x_intr, asc);
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_minphys = asc_minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
 
+#if 0
 	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
+#endif
 	return;
 
  out2:
 	bus_space_unmap(iot, asc->sc_dmaioh, R4030_DMA_RANGE);
  out1:
 	bus_space_unmap(iot, asc->sc_ioh, ASC_NPORTS);
+}
+
+
+static void
+asc_minphys(struct buf *bp)
+{
+
+#define ASC_MAX_XFER	(32 * 1024)	/* XXX can't xfer 64kbytes? */
+
+	if (bp->b_bcount > ASC_MAX_XFER)
+		bp->b_bcount = ASC_MAX_XFER;
+	minphys(bp);
 }
 
 /*
@@ -386,18 +405,6 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	    0, asc->sc_dmamap->dm_mapsize,
 	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
-	return 0;
-}
-
-void
-asc_dma_go(struct ncr53c9x_softc *sc)
-{
-	struct asc_softc *asc = (struct asc_softc *)sc;
-
-	/* No DMA transfer in Transfer Pad operation */
-	if (asc->sc_dmasize == 0)
-		return;
-
 	/* load transfer parameters */
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh,
 	    R4030_DMA_ADDR, asc->sc_dmamap->dm_segs[0].ds_addr);
@@ -410,6 +417,18 @@ asc_dma_go(struct ncr53c9x_softc *sc)
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh,
 	    R4030_DMA_ENAB, R4030_DMA_ENAB_RUN |
 	    (asc->sc_datain ? R4030_DMA_ENAB_READ : R4030_DMA_ENAB_WRITE));
+
+	return 0;
+}
+
+void
+asc_dma_go(struct ncr53c9x_softc *sc)
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+
+	/* No DMA transfer in Transfer Pad operation */
+	if (asc->sc_dmasize == 0)
+		return;
 
 	asc->sc_active = 1;
 }

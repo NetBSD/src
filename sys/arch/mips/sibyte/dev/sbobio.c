@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.13 2004/09/13 14:57:31 drochner Exp $ */
+/* $NetBSD: sbobio.c,v 1.13.12.1 2006/06/21 14:53:48 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.13 2004/09/13 14:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.13.12.1 2006/06/21 14:53:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,8 +54,6 @@ CFATTACH_DECL(sbobio, sizeof(struct device),
     sbobio_match, sbobio_attach, NULL, NULL);
 
 static int	sbobio_print(void *, const char *);
-static int	sbobio_submatch(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
 static const char *sbobio_device_type_name(enum sbobio_device_type type);
 
 static const struct sbobio_attach_locs sb1250_rev1_sbobio_devs[] = {
@@ -137,8 +135,7 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 	const struct sbobio_attach_locs *devs;
 	uint64_t sysrev;
 	int i, devcount;
-	int help[4];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SBOBIOCF_NLOCS];
 
 	sysrev = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
 	switch (SYS_SOC_TYPE(sysrev)) {
@@ -161,11 +158,9 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 			devcount = sb1250_rev1_sbobio_dev_count;
 		}
 		break;
-#ifdef DIAGNOSTIC
 	default:
 		panic("un-matched in sbobio_attach");
 		break;
-#endif
 	}
 
 	printf(": %s peripherals\n", dscr);
@@ -175,13 +170,12 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_base = A_PHYS_IO_SYSTEM;
 		sa.sa_locs = devs[i];
 
-		ldesc->len = 3;
-		ldesc->locs[SBOBIOCF_OFFSET] = devs[i].sa_offset;
-		ldesc->locs[SBOBIOCF_INTR + 0] = devs[i].sa_intr[0];
-		ldesc->locs[SBOBIOCF_INTR + 1] = devs[i].sa_intr[1];
+		locs[SBOBIOCF_OFFSET] = devs[i].sa_offset;
+		locs[SBOBIOCF_INTR + 0] = devs[i].sa_intr[0];
+		locs[SBOBIOCF_INTR + 1] = devs[i].sa_intr[1];
 
-		config_found_sm_loc(self, "sbobio", ldesc, &sa,
-				    sbobio_print, sbobio_submatch);
+		config_found_sm_loc(self, "sbobio", locs, &sa,
+				    sbobio_print, config_stdsubmatch);
 	}
 	return;
 }
@@ -202,26 +196,6 @@ sbobio_print(void *aux, const char *pnp)
 			    (long)sap->sa_locs.sa_intr[i]);
 	}
 	return (UNCONF);
-}
-
-static int
-sbobio_submatch(struct device *parent, struct cfdata *cf,
-		const locdesc_t *ldesc, void *aux)
-{
-	int i;
-
-	if (cf->cf_loc[SBOBIOCF_OFFSET] != SBOBIOCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[SBOBIOCF_OFFSET] != ldesc->locs[SBOBIOCF_OFFSET])
-		return (0);
-
-	for (i = 0; i < 2; i++) {
-		if (cf->cf_loc[SBOBIOCF_INTR + i] != SBOBIOCF_INTR_DEFAULT &&
-		    cf->cf_loc[SBOBIOCF_INTR + i]
-		    		!= ldesc->locs[SBOBIOCF_INTR + i])
-			return (0);
-	}
-
-	return (config_match(parent, cf, aux));
 }
 
 static const char *

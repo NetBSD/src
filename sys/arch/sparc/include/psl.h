@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.36 2005/06/19 20:31:26 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.36.2.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -236,7 +236,7 @@ getpsr(void)
 {
 	int psr;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 	return (psr);
 }
 
@@ -245,15 +245,15 @@ getmid(void)
 {
 	int mid;
 
-	__asm __volatile("rd %%tbr,%0" : "=r" (mid));
+	__asm volatile("rd %%tbr,%0" : "=r" (mid));
 	return ((mid >> 20) & 0x3);
 }
 
 static __inline void
 setpsr(int newpsr)
 {
-	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr));
+	__asm volatile("nop; nop; nop");
 }
 
 static __inline void
@@ -266,15 +266,15 @@ spl0(void)
 	 * which gives us the same value as the old psr but with all
 	 * the old PIL bits turned off.
 	 */
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 	oldipl = psr & PSR_PIL;
-	__asm __volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
+	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
 
 	/*
 	 * Three instructions must execute before we can depend
 	 * on the bits to be changed.
 	 */
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop");
 }
 
 /*
@@ -286,12 +286,12 @@ spl0(void)
 static __inline void name(void) \
 { \
 	int psr, oldipl; \
-	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
+	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
 	oldipl = psr & PSR_PIL; \
 	psr &= ~oldipl; \
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm __volatile("nop; nop; nop"); \
+	__asm volatile("nop; nop; nop"); \
 }
 
 _SPLSET(spllowersoftclock, IPL_SOFTCLOCK)
@@ -299,11 +299,11 @@ _SPLSET(spllowerschedclock, IPL_SCHED)
 
 /* Raise IPL and return previous value */
 static __inline int
-splraise(int newipl)
+splraiseipl(int newipl)
 {
 	int psr, oldipl;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 
 	oldipl = psr & PSR_PIL;
 	newipl <<= 8;
@@ -312,54 +312,21 @@ splraise(int newipl)
 
 	psr = (psr & ~oldipl) | newipl;
 
-	__asm __volatile("wr %0,0,%%psr" : : "r" (psr));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("wr %0,0,%%psr" : : "r" (psr));
+	__asm volatile("nop; nop; nop");
 
 	return (oldipl);
 }
 
-#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	splraise(IPL_SOFTNET)
+#include <sys/spl.h>
 
-#define	splausoft()	splraise(IPL_SOFTAUDIO)
-#define	splfdsoft()	splraise(IPL_SOFTFDC)
+#define	splausoft()	splraiseipl(IPL_SOFTAUDIO)
+#define	splfdsoft()	splraiseipl(IPL_SOFTFDC)
 
-#define	splbio()	splraise(IPL_BIO)
-#define	spltty()	splraise(IPL_TTY)
-#define	splnet()	splraise(IPL_NET)
-#define	splvm()		splraise(IPL_VM)
-#define	splclock()	splraise(IPL_CLOCK)
-#define	splsched()	splraise(IPL_SCHED)
+#define	splfd()		splraiseipl(IPL_FD)
+#define	splts102()	splraiseipl(IPL_TS102)
 
-/* fd hardware, ts102, and tadpole microcontoller interrupts are at level 11 */
-#define	splfd()		splraise(11)
-#define	splts102()	splraise(11)
-
-/*
- * zs hardware interrupts are at level 12
- * su (com) hardware interrupts are at level 13
- * IPL_SERIAL must protect them all.
- */
-#define	splzs()		splraise(12)
-#define	splserial()	splraise(IPL_SERIAL)
-
-#define	splaudio()	splraise(IPL_AUDIO)
-
-#define	splstatclock()	splraise(IPL_STATCLOCK)
-
-static __inline int
-splhigh(void)
-{
-	int psr, oldipl;
-
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
-	__asm __volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
-	__asm __volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
-	    "r" (psr), "n" (PSR_PIL));
-	return (oldipl);
-}
-
-#define	spllock()	splhigh()
+#define	splzs()		splraiseipl(IPL_ZS)
 
 /* splx does not have a return value */
 static __inline void
@@ -367,10 +334,10 @@ splx(int newipl)
 {
 	int psr;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop");
 }
 #endif /* KERNEL && !_LOCORE */
 

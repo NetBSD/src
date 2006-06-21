@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.4 2000/03/19 13:25:10 pk Exp $	*/
+/*	$NetBSD: cons.h,v 1.4.44.1 2006/06/21 14:55:54 yamt Exp $	*/
 
 
 /*
@@ -12,6 +12,6 @@ extern char prom_stdout_args[];
 
 #ifdef	KGDB
 struct zs_chanstate;
-void zs_kgdb_init __P((void));
-void zskgdb __P((struct zs_chanstate *));
+void zs_kgdb_init(void);
+void zskgdb(struct zs_chanstate *);
 #endif

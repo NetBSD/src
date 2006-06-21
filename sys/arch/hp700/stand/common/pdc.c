@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
+/*	$NetBSD: pdc.c,v 1.4.16.1 2006/06/21 14:51:37 yamt Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -148,6 +148,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #endif
 
 	blk <<= DEV_BSHIFT;
+	blk += dp->part_off;
 	if ((pzdev->pz_class & PCL_CLASS_MASK) == PCL_SEQU) {
 		/* rewind and re-read to seek */
 		if (blk < dp->last_blk) {
@@ -403,7 +404,7 @@ pdc_findev(int unit, int class)
 	return NULL;
 }
 
-static __inline void
+static inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	int loop;

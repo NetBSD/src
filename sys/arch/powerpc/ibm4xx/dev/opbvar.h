@@ -1,4 +1,4 @@
-/* $NetBSD: opbvar.h,v 1.2 2003/07/25 10:12:44 scw Exp $ */
+/* $NetBSD: opbvar.h,v 1.2.16.1 2006/06/21 14:55:03 yamt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 
 struct opb_attach_args {
 	const char *opb_name;
+	int opb_instance;
 	u_long opb_addr;
 	int opb_irq;
 	bus_space_tag_t opb_bt;		/* Bus space tag */

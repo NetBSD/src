@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_hi.c,v 1.3 2003/12/06 14:02:40 simonb Exp $	*/
+/*	$NetBSD: scsi_hi.c,v 1.3.16.1 2006/06/21 14:54:41 yamt Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI high-level driver
@@ -11,7 +11,7 @@
 
 #include <pc532/stand/common/so.h>
 
-#define	OK 			0
+#define	OK			0
 #define	NOT_OK			OK+1
 #define	PRIVATE
 #define	PUBLIC
@@ -44,7 +44,7 @@ PRIVATE struct drive drive_tbl[] = {
  * of four bytes.
  */
 #define	CMD_LEN		12		/* longest SCSI command */
-#define	SENSE_LEN 	24		/* extended sense length */
+#define	SENSE_LEN	24		/* extended sense length */
 #define	MSG_LEN		4
 #define	STAT_LEN	4
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.32 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: cg4.c,v 1.32.8.1 2006/06/21 14:57:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.32 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.32.8.1 2006/06/21 14:57:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	fb->fb_driver = &cg4_fbdriver;
 	fb->fb_private = sc;
 	fb->fb_name  = sc->sc_dev.dv_xname;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 
 	/*
 	 * The config flag 0x10 if set means we are
@@ -296,7 +296,8 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	 */
 	if (fb->fb_pfour)
 		fb_pfour_setsize(fb);
-	else if (sc->sc_dev.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	else if (device_unit(&sc->sc_dev) == 0)
 		fb_eeprom_setsize(fb);
 	else {
 		/* Guess based on machine ID. */
@@ -325,7 +326,7 @@ cg4attach(struct device *parent, struct device *self, void *args)
 }
 
 int 
-cg4open(dev_t dev, int flags, int mode, struct proc *p)
+cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -335,7 +336,7 @@ cg4open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-cg4ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+cg4ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 

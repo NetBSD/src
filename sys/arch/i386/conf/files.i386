@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.269 2005/07/03 12:16:05 cube Exp $
+#	$NetBSD: files.i386,v 1.269.2.1 2006/06/21 14:52:10 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -7,6 +7,8 @@
 maxpartitions 8
 
 maxusers 2 16 128
+
+defparam opt_kernbase.h	KERNBASE
 
 # APM options
 defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
@@ -62,6 +64,14 @@ defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
 # Enhanced SpeedStep
 defflag			ENHANCED_SPEEDSTEP
 
+# Multiboot support
+defflag opt_multiboot.h		MULTIBOOT
+defparam opt_multiboot.h	MULTIBOOT_SYMTAB_SPACE
+file	arch/i386/i386/multiboot.c	multiboot
+
+# PowerNow K7
+defflag			POWERNOW_K7
+
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
@@ -77,7 +87,6 @@ file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
-file	kern/kern_microtime.c		i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
@@ -161,6 +170,7 @@ file	arch/i386/pci/opti82c558.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/opti82c700.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/sis85c503.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/via82c586.c	pcibios & pci_intr_fixup
+file	arch/i386/pci/via8231.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/amd756.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pci_bus_fixup
@@ -177,12 +187,27 @@ device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
 	      agp_via
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
-file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
-device	elansc: sysmon_wdog
+device	elansc: sysmon_wdog, gpiobus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
+
+# AMD Geode SC1100 GCB area
+device  geodegcb {}
+attach	geodegcb at pci
+file	arch/i386/pci/geode.c		geodegcb
+
+# AMD Geode SC1100 Watchdog Timer
+device	geodewdog: sysmon_wdog, geodegcb
+attach	geodewdog at geodegcb
+file	arch/i386/pci/geodewdg.c	geodewdog
+
+# AMD Geode SC1100 high resolution counter
+device	geodecntr: geodegcb
+attach  geodecntr at geodegcb
+file	arch/i386/pci/geodecntr.c	geodecntr
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -192,12 +217,24 @@ file	arch/i386/pci/pceb.c		pceb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichlpcib
+file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib
 
 # PCI-LPC bridges
 device	ichlpcib: isabus, sysmon_wdog
 attach	ichlpcib at pci
 file	arch/i386/pci/ichlpcib.c	ichlpcib
+
+device	gscpcib: isabus, gpiobus
+attach	gscpcib at pci
+file	arch/i386/pci/gscpcib.c		gscpcib
+
+device	piixpcib: isabus, bioscall
+attach	piixpcib at pci
+file	arch/i386/pci/piixpcib.c	piixpcib
+
+device	viapcib: isabus, i2cbus
+attach	viapcib at pci
+file	arch/i386/pci/viapcib.c		viapcib
 
 # PCI-MCA bridges
 device	pcmb: mcabus
@@ -217,6 +254,9 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/i386/isa/clock.c		isa
+
+# TSC support
+file	arch/x86/x86/tsc.c		i586_cpu | i686_cpu
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
@@ -359,6 +399,9 @@ file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
+# NDIS compatibilty (COMPAT_NDIS)
+include "compat/ndis/files.ndis"
+
 # Win32 binary compatibility (COMPAT_PECOFF)
 include	"compat/pecoff/files.pecoff"
 
@@ -431,6 +474,8 @@ include	"dev/pcmcia/files.pcmcia"
 
 include	"dev/usb/files.usb"
 
+include	"dev/bluetooth/files.bluetooth"
+
 include	"dev/ieee1394/files.ieee1394"
 
 include	"arch/i386/pnpbios/files.pnpbios"
@@ -447,6 +492,11 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 attach	spic at acpi with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
+# Sony Misc (brightness etc.)
+device	sony
+attach	sony at acpi with sony_acpi
+file	arch/i386/acpi/sony_acpi.c		sony_acpi
+
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpi with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
@@ -458,9 +508,11 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device vesarasterviii: rasops8
-attach vesarasterviii at vesabios
-file	arch/i386/bios/vesa_raster8.c	vesarasterviii
+device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash
+attach vesafb at vesabios
+file	arch/i386/bios/vesafb.c		vesafb needs-flag
+defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag opt_vesafb.h	VESAFB_PM
 
 device vesatext
 attach vesatext at vesabios
@@ -470,7 +522,7 @@ file	arch/i386/bios/vesa_text.c	vesatext
 file	arch/i386/i386/est.c		enhanced_speedstep
 defflag	opt_est.h	EST_FREQ_USERWRITE
 
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-i386-elf.hal.o	ath
+# AMD PowerNow K7
+file   arch/i386/i386/powernow_k7.c	powernow_k7
 
 include "arch/i386/conf/majors.i386"

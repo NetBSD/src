@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2005/07/04 12:06:14 blymn Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21.2.1 2006/06/21 14:48:19 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2005/07/04 12:06:14 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21.2.1 2006/06/21 14:48:19 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -434,7 +434,7 @@ static int pv_nfpvents;			/* # of free pv entries */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
 					/* high water mark */
 
-static __inline int
+static inline int
 pv_compare(struct pv_entry *a, struct pv_entry *b)
 {
 	if (a->pv_pmap < b->pv_pmap)
@@ -559,10 +559,6 @@ static void		 pmap_remove_ptes __P((struct pmap *,
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
-static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
-static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
-static void		 pmap_tmpunmap_pa __P((void));
-static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
 static boolean_t	pmap_get_physpage __P((vaddr_t, int, paddr_t *));
 static boolean_t	pmap_pdes_valid __P((vaddr_t, pd_entry_t **,
@@ -579,7 +575,7 @@ static void		pmap_alloc_level __P((pd_entry_t **, vaddr_t, int,
  *		of course the kernel is always loaded
  */
 
-__inline static boolean_t
+inline static boolean_t
 pmap_is_curpmap(pmap)
 	struct pmap *pmap;
 {
@@ -591,7 +587,7 @@ pmap_is_curpmap(pmap)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-__inline static boolean_t
+inline static boolean_t
 pmap_is_active(pmap, cpu_num)
 	struct pmap *pmap;
 	int cpu_num;
@@ -601,91 +597,7 @@ pmap_is_active(pmap, cpu_num)
 	    (pmap->pm_cpus & (1U << cpu_num)) != 0);
 }
 
-/*
- * pmap_tmpmap_pa: map a page in for tmp usage
- */
-
-__inline static vaddr_t
-pmap_tmpmap_pa(pa)
-	paddr_t pa;
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
-	caddr_t ptpva = VASLEW(ptpp, id);
-#if defined(DIAGNOSTIC)
-	if (*ptpte)
-		panic("pmap_tmpmap_pa: ptp_pte in use?");
-#endif
-	*ptpte = PG_V | PG_RW | pa;		/* always a new mapping */
-	return((vaddr_t)ptpva);
-}
-
-/*
- * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
- */
-
-__inline static void
-pmap_tmpunmap_pa()
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
-	caddr_t ptpva = VASLEW(ptpp, id);
-#if defined(DIAGNOSTIC)
-	if (!pmap_valid_entry(*ptp_pte))
-		panic("pmap_tmpunmap_pa: our pte invalid?");
-#endif
-	*ptpte = 0;		/* zap! */
-	pmap_update_pg((vaddr_t)ptpva);
-#ifdef MULTIPROCESSOR
-	/*
-	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
-	 */
-#endif  
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- */
-
-__inline static pt_entry_t *
-pmap_tmpmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned long)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- */
-
-__inline static void
-pmap_tmpunmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa();
-}
-
-__inline static void
+inline static void
 pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
@@ -727,7 +639,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-__inline static void
+inline static void
 pmap_map_ptes(pmap, ptepp, pdeppp)
 	struct pmap *pmap;
 	pt_entry_t **ptepp;
@@ -775,7 +687,7 @@ pmap_map_ptes(pmap, ptepp, pdeppp)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-__inline static void
+inline static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
@@ -1350,7 +1262,7 @@ pmap_init()
  * "try" is for optional functions like pmap_copy().
  */
 
-__inline static struct pv_entry *
+inline static struct pv_entry *
 pmap_alloc_pv(pmap, mode)
 	struct pmap *pmap;
 	int mode;
@@ -1489,7 +1401,7 @@ pmap_add_pvpage(pvp, need_entry)
  * => we must be holding pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pv_doit(pv)
 	struct pv_entry *pv;
 {
@@ -1524,7 +1436,7 @@ pmap_free_pv_doit(pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pv(pmap, pv)
 	struct pmap *pmap;
 	struct pv_entry *pv;
@@ -1549,7 +1461,7 @@ pmap_free_pv(pmap, pv)
  * => we gain the pvalloc_lock
  */
 
-__inline static void
+inline static void
 pmap_free_pvs(pmap, pvs)
 	struct pmap *pmap;
 	struct pv_entry *pvs;
@@ -1617,7 +1529,7 @@ pmap_free_pvpage()
  * => caller should adjust ptp's wire_count before calling
  */
 
-__inline static void
+inline static void
 pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	struct pv_head *pvh;
 	struct pv_entry *pve;	/* preallocated pve for us to use */
@@ -1641,7 +1553,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  * => we return the removed pve
  */
 
-__inline static struct pv_entry *
+inline static struct pv_entry *
 pmap_remove_pv(pvh, pmap, va)
 	struct pv_head *pvh;
 	struct pmap *pmap;
@@ -1662,7 +1574,7 @@ pmap_remove_pv(pvh, pmap, va)
  * p t p   f u n c t i o n s
  */
 
-static __inline struct vm_page *
+static inline struct vm_page *
 pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 {
 	int lidx = level - 1;
@@ -1682,7 +1594,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	return pg;
 }
 
-static __inline void
+static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
 	int lidx;
@@ -2250,9 +2162,10 @@ pmap_virtual_space(startp, endp)
 }
 
 /*
- * pmap_map: map a range of PAs into kvm
+ * pmap_map: map a range of PAs into kvm.
  *
  * => used during crash dump
+ * => does not do TLB shootdowns
  * => XXX: pmap_map() should be phased out?
  */
 
@@ -2262,8 +2175,16 @@ pmap_map(va, spa, epa, prot)
 	paddr_t spa, epa;
 	vm_prot_t prot;
 {
+	pt_entry_t *pte, opte, npte;
+
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pte = kvtopte(va);
+
+		npte = spa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
+		    PG_V | pmap_pg_g;
+		opte = pmap_pte_set(pte, npte);
+		if (pmap_valid_entry(opte))
+			pmap_update_pg(va);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
@@ -2406,6 +2327,9 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 	pt_entry_t opte;
 	int bank, off;
 
+	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
+
+
 	/*
 	 * note that ptpva points to the PTE that maps startva.   this may
 	 * or may not be the first PTE in the PTP.
@@ -2498,6 +2422,8 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	pt_entry_t opte;
 	int bank, off;
 	struct pv_entry *pve;
+
+	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
 
 	if (!pmap_valid_entry(*pte))
 		return(FALSE);		/* VA not mapped */
@@ -3105,6 +3031,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	KASSERT(pmap_initialized);
+
+	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
 
 #ifdef DIAGNOSTIC
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)

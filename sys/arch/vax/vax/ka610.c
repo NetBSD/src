@@ -1,4 +1,4 @@
-/*	$NetBSD: ka610.c,v 1.2 2003/07/15 02:15:04 lukem Exp $	*/
+/*	$NetBSD: ka610.c,v 1.2.16.1 2006/06/21 14:57:34 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.2 2003/07/15 02:15:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.2.16.1 2006/06/21 14:57:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,12 +93,12 @@ ka610_mchk(caddr_t addr)
 static void
 ka610_halt()
 {
-	asm("halt");
+	__asm("halt");
 }
 
 static void
 ka610_reboot(int arg)
 {
-	asm("halt");
+	__asm("halt");
 }
 

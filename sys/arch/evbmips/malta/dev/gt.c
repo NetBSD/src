@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.8 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: gt.c,v 1.8.12.1 2006/06/21 14:51:03 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.12.1 2006/06/21 14:51:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,6 @@ gt_attach(parent, self, aux)
 
 	config_found_ia(self, "pcibus", &pba, gt_print);
 #endif
-	return;
 }
 
 static int

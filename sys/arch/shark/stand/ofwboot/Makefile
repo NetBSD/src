@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.6 2004/06/30 15:43:57 christos Exp $
+#	$NetBSD: Makefile,v 1.6.12.1 2006/06/21 14:55:47 yamt Exp $
 
 S=		${.CURDIR}/../../../..
 
-WARNS=		3
+WARNS=		4
 PROG=		ofwboot
 SRCS=		srt0.S Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
-CFLAGS+=	-Wno-main
+CFLAGS+=	-ffreestanding -Wno-main
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-D_STANDALONE
-DBG=		-Os -ffreestanding
+DBG=		-Os
 
 SRCS+=		byteorder.c
 .PATH:		${S}/lib/libsa
@@ -35,9 +35,12 @@ CLEANFILES+=	vers.c
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR}/../../.. -I${S}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h arm ] || ln -s ${S}/arch/arm/include arm
+.endif
+
 .NOPATH: machine arm
 CLEANFILES+= machine arm
 

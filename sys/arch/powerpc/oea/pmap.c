@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2005/06/02 14:35:08 he Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.1 2006/06/21 14:55:03 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2005/06/02 14:35:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.1 2006/06/21 14:55:03 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -243,7 +243,9 @@ STATIC void pmap_pvo_check(const struct pvo_entry *);
 STATIC int pmap_pte_insert(int, struct pte *);
 STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, register_t, int);
-STATIC void pmap_pvo_remove(struct pvo_entry *, int, boolean_t);
+STATIC void pmap_pvo_remove(struct pvo_entry *, int, struct pvo_head *);
+STATIC void pmap_pvo_free(struct pvo_entry *);
+STATIC void pmap_pvo_free_list(struct pvo_head *);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile struct pte *pmap_pvo_to_pte(const struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_reclaim(struct pmap *);
@@ -321,6 +323,9 @@ struct evcnt pmap_evcnt_exec_synced =
 struct evcnt pmap_evcnt_exec_synced_clear_modify =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
 	    "pmap", "exec pages synced (CM)");
+struct evcnt pmap_evcnt_exec_synced_pvo_remove =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (PR)");
 
 struct evcnt pmap_evcnt_exec_uncached_page_protect =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
@@ -334,6 +339,9 @@ struct evcnt pmap_evcnt_exec_uncached_zero_page =
 struct evcnt pmap_evcnt_exec_uncached_copy_page =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
 	    "pmap", "exec pages uncached (CP)");
+struct evcnt pmap_evcnt_exec_uncached_pvo_remove =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PR)");
 
 struct evcnt pmap_evcnt_updates =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
@@ -424,11 +432,13 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_exec_mappings);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_cached);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_clear_modify);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_pvo_remove);
 
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_page_protect);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_clear_modify);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_zero_page);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_copy_page);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_pvo_remove);
 
 EVCNT_ATTACH_STATIC(pmap_evcnt_zeroed_pages);
 EVCNT_ATTACH_STATIC(pmap_evcnt_copied_pages);
@@ -468,10 +478,10 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #define	PMAPCOUNT2(ev)	((void) 0)
 #endif
 
-#define	TLBIE(va)	__asm __volatile("tlbie %0" :: "r"(va))
-#define	TLBSYNC()	__asm __volatile("tlbsync")
-#define	SYNC()		__asm __volatile("sync")
-#define	EIEIO()		__asm __volatile("eieio")
+#define	TLBIE(va)	__asm volatile("tlbie %0" :: "r"(va))
+#define	TLBSYNC()	__asm volatile("tlbsync")
+#define	SYNC()		__asm volatile("sync")
+#define	EIEIO()		__asm volatile("eieio")
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
@@ -479,16 +489,16 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #define	MFTB()		mfrtcltbl()
 
 #ifndef PPC_OEA64
-static __inline register_t
+static inline register_t
 mfsrin(vaddr_t va)
 {
 	register_t sr;
-	__asm __volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
+	__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
 	return sr;
 }
 #endif	/* PPC_OEA64 */
 
-static __inline register_t
+static inline register_t
 pmap_interrupts_off(void)
 {
 	register_t msr = MFMSR();
@@ -504,7 +514,7 @@ pmap_interrupts_restore(register_t msr)
 		MTMSR(msr);
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 mfrtcltbl(void)
 {
 
@@ -540,7 +550,7 @@ tlbia(void)
 	SYNC();
 }
 
-static __inline register_t
+static inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
 #ifdef PPC_OEA64
@@ -584,7 +594,7 @@ va_to_vsid(const struct pmap *pm, vaddr_t addr)
 #endif
 }
 
-static __inline register_t
+static inline register_t
 va_to_pteg(const struct pmap *pm, vaddr_t addr)
 {
 	register_t hash;
@@ -629,7 +639,7 @@ pmap_pte_to_va(volatile const struct pte *pt)
 }
 #endif
 
-static __inline struct pvo_head *
+static inline struct pvo_head *
 pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 #ifdef __HAVE_VM_PAGE_MD
@@ -654,7 +664,7 @@ pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 #endif
 }
 
-static __inline struct pvo_head *
+static inline struct pvo_head *
 vm_page_to_pvoh(struct vm_page *pg)
 {
 #ifdef __HAVE_VM_PAGE_MD
@@ -667,7 +677,7 @@ vm_page_to_pvoh(struct vm_page *pg)
 
 
 #ifdef __HAVE_PMAP_PHYSSEG
-static __inline char *
+static inline char *
 pa_to_attr(paddr_t pa)
 {
 	int bank, pg;
@@ -679,7 +689,7 @@ pa_to_attr(paddr_t pa)
 }
 #endif
 
-static __inline void
+static inline void
 pmap_attr_clear(struct vm_page *pg, int ptebit)
 {
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -690,7 +700,7 @@ pmap_attr_clear(struct vm_page *pg, int ptebit)
 #endif
 }
 
-static __inline int
+static inline int
 pmap_attr_fetch(struct vm_page *pg)
 {
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -701,7 +711,7 @@ pmap_attr_fetch(struct vm_page *pg)
 #endif
 }
 
-static __inline void
+static inline void
 pmap_attr_save(struct vm_page *pg, int ptebit)
 {
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -712,7 +722,7 @@ pmap_attr_save(struct vm_page *pg, int ptebit)
 #endif
 }
 
-static __inline int
+static inline int
 pmap_pte_compare(const volatile struct pte *pt, const struct pte *pvo_pt)
 {
 	if (pt->pte_hi == pvo_pt->pte_hi
@@ -725,7 +735,7 @@ pmap_pte_compare(const volatile struct pte *pt, const struct pte *pvo_pt)
 	return 0;
 }
 
-static __inline void
+static inline void
 pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pte_lo)
 {
 	/*
@@ -739,13 +749,13 @@ pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pt
 	pt->pte_lo = pte_lo;
 }
 
-static __inline void
+static inline void
 pmap_pte_synch(volatile struct pte *pt, struct pte *pvo_pt)
 {
 	pvo_pt->pte_lo |= pt->pte_lo & (PTE_REF|PTE_CHG);
 }
 
-static __inline void
+static inline void
 pmap_pte_clear(volatile struct pte *pt, vaddr_t va, int ptebit)
 {
 	/*
@@ -759,7 +769,7 @@ pmap_pte_clear(volatile struct pte *pt, vaddr_t va, int ptebit)
 	SYNC();
 }
 
-static __inline void
+static inline void
 pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -779,7 +789,7 @@ pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 	pmap_pte_valid++;
 }
 
-static __inline void
+static inline void
 pmap_pte_unset(volatile struct pte *pt, struct pte *pvo_pt, vaddr_t va)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -811,7 +821,7 @@ pmap_pte_unset(volatile struct pte *pt, struct pte *pvo_pt, vaddr_t va)
 	pmap_pte_valid--;
 }
 
-static __inline void
+static inline void
 pmap_pte_change(volatile struct pte *pt, struct pte *pvo_pt, vaddr_t va)
 {
 	/*
@@ -1294,7 +1304,7 @@ pmap_collect(pmap_t pm)
 	PMAPCOUNT(collects);
 }
 
-static __inline int
+static inline int
 pmap_pvo_pte_index(const struct pvo_entry *pvo, int ptegidx)
 {
 	int pteidx;
@@ -1520,7 +1530,7 @@ pmap_pvo_reclaim(struct pmap *pm)
 		pvoh = &pmap_pvo_table[idx];
 		TAILQ_FOREACH(pvo, pvoh, pvo_olink) {
 			if ((pvo->pvo_vaddr & PVO_WIRED) == 0) {
-				pmap_pvo_remove(pvo, -1, FALSE);
+				pmap_pvo_remove(pvo, -1, NULL);
 				pmap_pvo_reclaim_nextidx = idx;
 				PMAPCOUNT(pvos_reclaimed);
 				return pvo;
@@ -1582,7 +1592,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			}
 #endif
 			PMAPCOUNT(mappings_replaced);
-			pmap_pvo_remove(pvo, -1, TRUE);
+			pmap_pvo_remove(pvo, -1, NULL);
 			break;
 		}
 	}
@@ -1594,6 +1604,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	--pmap_pvo_enter_depth;
 #endif
 	pmap_interrupts_restore(msr);
+	if (pvo) {
+		pmap_pvo_free(pvo);
+	}
 	pvo = pool_get(pl, poolflags);
 
 #ifdef DEBUG
@@ -1690,7 +1703,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 }
 
 void
-pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t do_free)
+pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 {
 	volatile struct pte *pt;
 	int ptegidx;
@@ -1749,6 +1762,29 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t do_free)
 		struct vm_page *pg = PHYS_TO_VM_PAGE(ptelo & PTE_RPGN);
 
 		if (pg != NULL) {
+			/*
+			 * If this page was changed and it is mapped exec,
+			 * invalidate it.
+			 */
+			if ((ptelo & PTE_CHG) &&
+			    (pmap_attr_fetch(pg) & PTE_EXEC)) {
+				struct pvo_head *pvoh = vm_page_to_pvoh(pg);
+				if (LIST_EMPTY(pvoh)) {
+					DPRINTFN(EXEC, ("[pmap_pvo_remove: "
+					    "%#lx: clear-exec]\n",
+					    VM_PAGE_TO_PHYS(pg)));
+					pmap_attr_clear(pg, PTE_EXEC);
+					PMAPCOUNT(exec_uncached_pvo_remove);
+				} else {
+					DPRINTFN(EXEC, ("[pmap_pvo_remove: "
+					    "%#lx: syncicache]\n",
+					    VM_PAGE_TO_PHYS(pg)));
+					pmap_syncicache(VM_PAGE_TO_PHYS(pg),
+					    PAGE_SIZE);
+					PMAPCOUNT(exec_synced_pvo_remove);
+				}
+			}
+
 			pmap_attr_save(pg, ptelo & (PTE_REF|PTE_CHG));
 		}
 		PMAPCOUNT(unmappings);
@@ -1761,13 +1797,32 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t do_free)
 	 */
 	LIST_REMOVE(pvo, pvo_vlink);
 	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
-	if (do_free) {
-		pool_put(pvo->pvo_vaddr & PVO_MANAGED ? &pmap_mpvo_pool :
-			 &pmap_upvo_pool, pvo);
+	if (pvol) {
+		LIST_INSERT_HEAD(pvol, pvo, pvo_vlink);
 	}
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
 #endif
+}
+
+void
+pmap_pvo_free(struct pvo_entry *pvo)
+{
+
+	pool_put(pvo->pvo_vaddr & PVO_MANAGED ? &pmap_mpvo_pool :
+		 &pmap_upvo_pool, pvo);
+}
+
+void
+pmap_pvo_free_list(struct pvo_head *pvol)
+{
+	struct pvo_entry *pvo, *npvo;
+
+	for (pvo = LIST_FIRST(pvol); pvo != NULL; pvo = npvo) {
+		npvo = LIST_NEXT(pvo, pvo_vlink);
+		LIST_REMOVE(pvo, pvo_vlink);
+		pmap_pvo_free(pvo);
+	}
 }
 
 /*
@@ -1918,7 +1973,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				printf(" marked-as-exec");
 			else if (pmapdebug & PMAPDEBUG_EXEC)
 				printf("[pmap_enter: %#lx: marked-as-exec]\n",
-				    pg->phys_addr);
+				    VM_PAGE_TO_PHYS(pg));
 				
 #endif
 		}
@@ -1991,18 +2046,21 @@ pmap_kremove(vaddr_t va, vsize_t len)
 void
 pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 {
+	struct pvo_head pvol;
 	struct pvo_entry *pvo;
 	register_t msr;
 	int pteidx;
 
+	LIST_INIT(&pvol);
 	msr = pmap_interrupts_off();
 	for (; va < endva; va += PAGE_SIZE) {
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo != NULL) {
-			pmap_pvo_remove(pvo, pteidx, TRUE);
+			pmap_pvo_remove(pvo, pteidx, &pvol);
 		}
 	}
 	pmap_interrupts_restore(msr);
+	pmap_pvo_free_list(&pvol);
 }
 
 /*
@@ -2017,7 +2075,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
 	 * and if we get a hit, translate the VA to a PA using the
-	 * BAT entries.  Don't check for VM_MAX_KENREL_ADDRESS is
+	 * BAT entries.  Don't check for VM_MAX_KERNEL_ADDRESS is
 	 * that will wrap back to 0.
 	 */
 	if (pm == pmap_kernel() &&
@@ -2165,12 +2223,13 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	struct pvo_head *pvo_head;
+	struct pvo_head *pvo_head, pvol;
 	struct pvo_entry *pvo, *next_pvo;
 	volatile struct pte *pt;
 	register_t msr;
 
 	KASSERT(prot != VM_PROT_ALL);
+	LIST_INIT(&pvol);
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2180,7 +2239,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 */
 	if ((prot & VM_PROT_READ) == 0) {
 		DPRINTFN(EXEC, ("[pmap_page_protect: %#lx: clear-exec]\n",
-		    pg->phys_addr));
+		    VM_PAGE_TO_PHYS(pg)));
 		if (pmap_attr_fetch(pg) & PTE_EXEC) {
 			PMAPCOUNT(exec_uncached_page_protect);
 			pmap_attr_clear(pg, PTE_EXEC);
@@ -2196,7 +2255,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * Downgrading to no mapping at all, we just remove the entry.
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
-			pmap_pvo_remove(pvo, -1, TRUE);
+			pmap_pvo_remove(pvo, -1, &pvol);
 			continue;
 		} 
 
@@ -2232,6 +2291,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
+	pmap_pvo_free_list(&pvol);
 }
 
 /*
@@ -2389,13 +2449,13 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	if ((ptebit & PTE_CHG) && (rv & PTE_EXEC)) {
 		if (LIST_EMPTY(pvoh)) {
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: clear-exec]\n",
-			    pg->phys_addr));
+			    VM_PAGE_TO_PHYS(pg)));
 			pmap_attr_clear(pg, PTE_EXEC);
 			PMAPCOUNT(exec_uncached_clear_modify);
 		} else {
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: syncicache]\n",
-			    pg->phys_addr));
-			pmap_syncicache(pg->phys_addr, PAGE_SIZE);
+			    VM_PAGE_TO_PHYS(pg)));
+			pmap_syncicache(VM_PAGE_TO_PHYS(pg), PAGE_SIZE);
 			PMAPCOUNT(exec_synced_clear_modify);
 		}
 	}
@@ -2499,7 +2559,7 @@ pmap_print_mmuregs(void)
 	register_t sdr1;
 	
 	cpuvers = MFPVR() >> 16;
-	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
+	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
 #ifndef PPC_OEA64
 	addr = 0;
 	for (i = 0; i < 16; i++) {
@@ -2509,26 +2569,26 @@ pmap_print_mmuregs(void)
 #endif
 
 	/* read iBAT (601: uBAT) registers */
-	__asm __volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
-	__asm __volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
-	__asm __volatile ("mfibatu %0,1" : "=r"(soft_ibat[1].batu));
-	__asm __volatile ("mfibatl %0,1" : "=r"(soft_ibat[1].batl));
-	__asm __volatile ("mfibatu %0,2" : "=r"(soft_ibat[2].batu));
-	__asm __volatile ("mfibatl %0,2" : "=r"(soft_ibat[2].batl));
-	__asm __volatile ("mfibatu %0,3" : "=r"(soft_ibat[3].batu));
-	__asm __volatile ("mfibatl %0,3" : "=r"(soft_ibat[3].batl));
+	__asm volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
+	__asm volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
+	__asm volatile ("mfibatu %0,1" : "=r"(soft_ibat[1].batu));
+	__asm volatile ("mfibatl %0,1" : "=r"(soft_ibat[1].batl));
+	__asm volatile ("mfibatu %0,2" : "=r"(soft_ibat[2].batu));
+	__asm volatile ("mfibatl %0,2" : "=r"(soft_ibat[2].batl));
+	__asm volatile ("mfibatu %0,3" : "=r"(soft_ibat[3].batu));
+	__asm volatile ("mfibatl %0,3" : "=r"(soft_ibat[3].batl));
 
 
 	if (cpuvers != MPC601) {
 		/* read dBAT registers */
-		__asm __volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
-		__asm __volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
-		__asm __volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
-		__asm __volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
-		__asm __volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
-		__asm __volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
-		__asm __volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
-		__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
+		__asm volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
+		__asm volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
+		__asm volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
+		__asm volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
+		__asm volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
+		__asm volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
+		__asm volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
+		__asm volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
 	}
 
 	printf("SDR1:\t0x%lx\n", (long) sdr1);
@@ -3170,28 +3230,28 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #ifndef PPC_OEA64
 	for (i = 0; i < 16; i++) {
 		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
-		__asm __volatile ("mtsrin %0,%1"
+		__asm volatile ("mtsrin %0,%1"
 			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
 	}
 
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm __volatile ("mtsr %0,%1"
+	__asm volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
 	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm __volatile ("mtsr %0,%1"
+	__asm volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
 	for (i = 0; i < 16; i++) {
 		if (iosrtable[i] & SR601_T) {
 			pmap_kernel()->pm_sr[i] = iosrtable[i];
-			__asm __volatile ("mtsrin %0,%1"
+			__asm volatile ("mtsrin %0,%1"
 			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
 #endif /* !PPC_OEA64 */
 
-	__asm __volatile ("sync; mtsdr1 %0; isync"
+	__asm volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();
 

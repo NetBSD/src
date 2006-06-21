@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.16 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: vme.c,v 1.16.2.1 2006/06/21 14:57:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16.2.1 2006/06/21 14:57:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ vme_attach(struct device *parent, struct device *self, void *args)
 {
 	int unit;
 
-	unit = self->dv_unit;
+	unit = device_unit(self);
 	printf(": (%s)\n", vme_info[unit].name);
 
 	/* We know ca_bustype == BUS_VMExx */

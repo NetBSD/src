@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER.MP,v 1.4 2004/06/14 01:28:00 lukem Exp $
+#	$NetBSD: SWINGER.MP,v 1.4.12.1 2006/06/21 14:52:10 yamt Exp $
 #
 #	SWINGER.MP -- Swinger, plus enable Multiprocessor support.
 #
@@ -6,7 +6,6 @@
 include "arch/i386/conf/SWINGER"
 
 options 	MULTIPROCESSOR
-options 	COM_MPLOCK	# com MP locking; REQUIRED on MP i386
 
 #options 	LOCKDEBUG
 options 	MPDEBUG

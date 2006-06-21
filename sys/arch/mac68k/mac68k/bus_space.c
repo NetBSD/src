@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.26 2005/04/01 11:59:32 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.26.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2005/04/01 11:59:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -465,7 +466,7 @@ void
 mac68k_bsrm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -490,7 +491,7 @@ void
 mac68k_bsrm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -506,7 +507,7 @@ void
 mac68k_bsrm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -542,7 +543,7 @@ void
 mac68k_bsrm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -558,7 +559,7 @@ void
 mac68k_bsrm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -596,7 +597,7 @@ void
 mac68k_bsrr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -622,7 +623,7 @@ void
 mac68k_bsrr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -638,7 +639,7 @@ void
 mac68k_bsrr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -676,7 +677,7 @@ void
 mac68k_bsrr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -692,7 +693,7 @@ void
 mac68k_bsrr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -822,7 +823,7 @@ void
 mac68k_bswm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -847,7 +848,7 @@ void
 mac68k_bswm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     const u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -863,7 +864,7 @@ void
 mac68k_bswm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  const u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -899,7 +900,7 @@ void
 mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     const u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -915,7 +916,7 @@ void
 mac68k_bswm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  const u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -953,7 +954,7 @@ void
 mac68k_bswr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -979,7 +980,7 @@ void
 mac68k_bswr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     const u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -995,7 +996,7 @@ void
 mac68k_bswr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  const u_int16_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -1033,7 +1034,7 @@ void
 mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     const u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -1049,7 +1050,7 @@ void
 mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  const u_int32_t *a, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%a1		;"
 	"	movl	%2,%%d0		;"
@@ -1089,7 +1090,7 @@ void
 mac68k_bssm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int8_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	movl	%2,%%d0		;"
@@ -1114,7 +1115,7 @@ void
 mac68k_bssm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int16_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	movl	%2,%%d0		;"
@@ -1130,7 +1131,7 @@ void
 mac68k_bssm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int16_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	rolw	#8,%%d1		;"
@@ -1156,7 +1157,7 @@ void
 mac68k_bssm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int32_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	movl	%2,%%d0		;"
@@ -1172,7 +1173,7 @@ void
 mac68k_bssm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int32_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	rolw	#8,%%d1		;"
@@ -1200,7 +1201,7 @@ void
 mac68k_bssr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int8_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	movl	%2,%%d0		;"
@@ -1226,7 +1227,7 @@ void
 mac68k_bssr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int16_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	movl	%2,%%d0		;"
@@ -1242,7 +1243,7 @@ void
 mac68k_bssr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int16_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	rolw	#8,%%d1		;"
@@ -1269,7 +1270,7 @@ void
 mac68k_bssr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int32_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	movl	%2,%%d0		;"
@@ -1285,7 +1286,7 @@ void
 mac68k_bssr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		  u_int32_t v, size_t c)
 {
-	__asm __volatile (
+	__asm volatile (
 	"	movl	%0,%%a0		;"
 	"	movl	%1,%%d1		;"
 	"	rolw	#8,%%d1		;"

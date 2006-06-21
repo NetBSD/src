@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/06/09 12:25:32 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.2.1 2006/06/21 14:54:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/06/09 12:25:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.1 2006/06/21 14:54:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/06/09 12:25:32 he Exp $");
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
 static u_long ns_per_tick = 320;
-static long ticks_per_intr;
-static volatile u_long lasttb;
+long ticks_per_intr;
+volatile u_long lasttb;
 
 /*
  * For now we let the machine run with boot time, not changing the clock
@@ -76,7 +76,6 @@ void
 decr_intr(frame)
 	struct clockframe *frame;
 {
-	u_long tb;
 	long ticks;
 	int nticks;
 
@@ -90,17 +89,12 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(ticks));
+	__asm ("mfdec %0" : "=r"(ticks));
 	for (nticks = 0; ticks < 0; nticks++)
 		ticks += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(ticks));
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = tb + ticks - ticks_per_intr;
+	__asm volatile ("mtdec %0" :: "r"(ticks));
 
-	clock_return(frame, nticks);
+	clock_return(frame, nticks, ticks);
 }
 
 void
@@ -118,14 +112,14 @@ cpu_initclocks()
 	/*
 	 * Should check for correct CPU here?		XXX
 	 */
-	__asm __volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
 		: "=r"(msr), "=r"(scratch)
 		: "K"((u_short)~PSL_EE));
 	ns_per_tick = 1000000000 / cpu_timebase;
 	ticks_per_intr = cpu_timebase / hz;
-	__asm __volatile ("mftb %0" : "=r"(lasttb));
-	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
-	__asm __volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mftb %0" : "=r"(lasttb));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*
@@ -139,12 +133,12 @@ microtime(tvp)
 	u_long ticks;
 	int msr, scratch;
 	
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
+	__asm ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
@@ -167,7 +161,7 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }

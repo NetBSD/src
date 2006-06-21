@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.210 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.210.2.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210.2.1 2006/06/21 14:56:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,22 +123,22 @@ extern void *bootinfo;
 void bootinfo_relocate(void *);
 #endif
 
-static	const char *str2hex __P((const char *, int *));
-static	int mbprint __P((void *, const char *));
-static	void crazymap __P((const char *, int *));
-int	st_crazymap __P((int));
-int	sd_crazymap __P((int));
-void	sync_crash __P((void));
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-static	void mainbus_attach __P((struct device *, struct device *, void *));
+static	const char *str2hex(const char *, int *);
+static	int mbprint(void *, const char *);
+static	void crazymap(const char *, int *);
+int	st_crazymap(int);
+int	sd_crazymap(int);
+void	sync_crash(void);
+int	mainbus_match(struct device *, struct cfdata *, void *);
+static	void mainbus_attach(struct device *, struct device *, void *);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
-static	void bootpath_build __P((void));
-static	void bootpath_fake __P((struct bootpath *, const char *));
-static	void bootpath_print __P((struct bootpath *));
-static	struct bootpath	*bootpath_store __P((int, struct bootpath *));
-int	find_cpus __P((void));
+static	void bootpath_build(void);
+static	void bootpath_fake(struct bootpath *, const char *);
+static	void bootpath_print(struct bootpath *);
+static	struct bootpath	*bootpath_store(int, struct bootpath *);
+int	find_cpus(void);
 char	machine_model[100];
 
 #ifdef DEBUG
@@ -155,11 +155,9 @@ int autoconf_debug = 0;
  * device names with our internal names.
  */
 int
-matchbyname(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+matchbyname(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
 }
@@ -169,7 +167,7 @@ matchbyname(parent, cf, aux)
  * version. We need this information early in the boot process.
  */
 int
-find_cpus()
+find_cpus(void)
 {
 	int n;
 #if defined(SUN4M) || defined(SUN4D)
@@ -225,9 +223,7 @@ find_cpus()
  * Depends on ASCII order (this *is* machine-dependent code, you know).
  */
 static const char *
-str2hex(str, vp)
-	const char *str;
-	int *vp;
+str2hex(const char *str, int *vp)
 {
 	int v, c;
 
@@ -264,7 +260,7 @@ static void bootstrapIIep(void);
  * We must finish mapping the kernel properly and glean any bootstrap info.
  */
 void
-bootstrap()
+bootstrap(void)
 {
 	extern struct user *proc0paddr;
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -372,13 +368,13 @@ bootstrap()
  * the interrupt registers.
  */
 static void
-bootstrap4m()
+bootstrap4m(void)
 {
 	int node;
 	int nvaddrs, *vaddrs, vstore[10];
 	u_int pte;
 	int i;
-	extern void setpte4m __P((u_int, u_int));
+	extern void setpte4m(u_int, u_int);
 
 	if ((node = prom_opennode("/obio/interrupt")) == 0
 	    && (node = prom_finddevice("/obio/interrupt")) == 0)
@@ -441,14 +437,12 @@ bootstrap4m()
 
 
 #if defined(SUN4M) && defined(MSIIEP)
-#define msiiep ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
-
 /*
  * On ms-IIep all the interrupt registers, counters etc
  * are PCIC registers, so we need to map it early.
  */
 static void
-bootstrapIIep()
+bootstrapIIep(void)
 {
 	extern struct sparc_bus_space_tag mainbus_space_tag;
 
@@ -468,20 +462,12 @@ bootstrapIIep()
 			   MSIIEP_PCIC_VA, &bh) != 0)
 		panic("bootstrap: unable to map ms-IIep pcic registers");
 
-	/* verify that it's PCIC (it's still little-endian at this point) */
-	id = le32toh(msiiep->pcic_id);
+	/* verify that it's PCIC */
+	id = mspcic_read_4(pcic_id);
+
 	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
 	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
 		panic("bootstrap: PCI id %08x", id);
-
-	/* turn on automagic endian-swapping for PCI accesses */
-	msiiep_swap_endian(1);
-
-	/* sanity check (it's big-endian now!) */
-	id = msiiep->pcic_id;
-	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
-	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
-		panic("bootstrap: PCI id %08x (big-endian mode)", id);
 }
 
 #undef msiiep
@@ -506,7 +492,7 @@ bootstrapIIep()
  */
 
 static void
-bootpath_build()
+bootpath_build(void)
 {
 	const char *cp;
 	char *pp;
@@ -582,7 +568,7 @@ bootpath_build()
 				}
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
-							sbus offset/adddress */
+							sbus offset/address */
 			}
 			++bp;
 			++nbootpath;
@@ -632,9 +618,7 @@ bootpath_build()
  */
 
 static void
-bootpath_fake(bp, cp)
-	struct bootpath *bp;
-	const char *cp;
+bootpath_fake(struct bootpath *bp, const char *cp)
 {
 	const char *pp;
 	int v0val[3];
@@ -815,8 +799,7 @@ bootpath_fake(bp, cp)
  */
 
 static void
-bootpath_print(bp)
-	struct bootpath *bp;
+bootpath_print(struct bootpath *bp)
 {
 	printf("bootpath: ");
 	while (bp->name[0]) {
@@ -836,9 +819,7 @@ bootpath_print(bp)
  * save or read a bootpath pointer from the boothpath store.
  */
 struct bootpath *
-bootpath_store(storep, bp)
-	int storep;
-	struct bootpath *bp;
+bootpath_store(int storep, struct bootpath *bp)
 {
 	static struct bootpath *save;
 	struct bootpath *retval;
@@ -856,9 +837,7 @@ bootpath_store(storep, bp)
  * target of the (boot) device (i.e., the value in bp->v0val[0]).
  */
 static void
-crazymap(prop, map)
-	const char *prop;
-	int *map;
+crazymap(const char *prop, int *map)
 {
 	int i;
 	char propval[8+2];
@@ -899,8 +878,7 @@ crazymap(prop, map)
 }
 
 int
-sd_crazymap(n)
-	int	n;
+sd_crazymap(int n)
 {
 	static int prom_sd_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -913,8 +891,7 @@ sd_crazymap(n)
 }
 
 int
-st_crazymap(n)
-	int	n;
+st_crazymap(int n)
 {
 	static int prom_st_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -934,7 +911,7 @@ st_crazymap(n)
  * command.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	extern struct user *proc0paddr;	/* XXX see below */
 
@@ -1002,7 +979,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	struct bootpath *bp;
 	int bootpartition;
@@ -1023,19 +1000,14 @@ cpu_rootconf()
  * no one really wants anything fancy...
  */
 void
-sync_crash()
+sync_crash(void)
 {
 
-#if defined(MSIIEP)
-	/* we are back from prom */
-	msiiep_swap_endian(1);
-#endif
 	panic("PROM sync command");
 }
 
 char *
-clockfreq(freq)
-	int freq;
+clockfreq(int freq)
 {
 	char *p;
 	static char buf[10];
@@ -1054,9 +1026,7 @@ clockfreq(freq)
 
 /* ARGSUSED */
 static int
-mbprint(aux, name)
-	void *aux;
-	const char *name;
+mbprint(void *aux, const char *name)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -1072,10 +1042,7 @@ mbprint(aux, name)
 }
 
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	return (1);
@@ -1087,9 +1054,9 @@ mainbus_match(parent, cf, aux)
  * Drivers that "need to know it all" can call prom_getprop() directly.
  */
 #if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
-static int	prom_getprop_reg1 __P((int, struct openprom_addr *));
-static int	prom_getprop_intr1 __P((int, int *));
-static int	prom_getprop_address1 __P((int, void **));
+static int	prom_getprop_reg1(int, struct openprom_addr *);
+static int	prom_getprop_intr1(int, int *);
+static int	prom_getprop_address1(int, void **);
 #endif
 
 /*
@@ -1100,9 +1067,7 @@ static int	prom_getprop_address1 __P((int, void **));
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *dev, void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
@@ -1404,9 +1369,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 
 #if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 int
-prom_getprop_reg1(node, rrp)
-	int node;
-	struct openprom_addr *rrp;
+prom_getprop_reg1(int node, struct openprom_addr *rrp)
 {
 	int error, n;
 	struct openprom_addr *rrp0 = NULL;
@@ -1430,9 +1393,7 @@ prom_getprop_reg1(node, rrp)
 }
 
 int
-prom_getprop_intr1(node, ip)
-	int node;
-	int *ip;
+prom_getprop_intr1(int node, int *ip)
 {
 	int error, n;
 	struct rom_intr *rip = NULL;
@@ -1453,14 +1414,12 @@ prom_getprop_intr1(node, ip)
 }
 
 int
-prom_getprop_address1(node, vpp)
-	int node;
-	void **vpp;
+prom_getprop_address1(int node, void **vpp)
 {
 	int error, n;
 	void **vp = NULL;
 
-	error = prom_getprop(node, "address", sizeof(u_int32_t), &n, &vp);
+	error = prom_getprop(node, "address", sizeof(uint32_t), &n, &vp);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*vpp = 0;
@@ -1481,8 +1440,7 @@ prom_getprop_address1(node, vpp)
  * variables.  Returns nonzero on error.
  */
 int
-romgetcursoraddr(rowp, colp)
-	int **rowp, **colp;
+romgetcursoraddr(int **rowp, int **colp)
 {
 	char buf[100];
 
@@ -1509,9 +1467,7 @@ romgetcursoraddr(rowp, colp)
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(name, unit)
-	const char *name;
-	int unit;
+getdevunit(const char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -1553,10 +1509,10 @@ getdevunit(name, unit)
 #define BUSCLASS_PCIC		9
 #define BUSCLASS_PCI		10
 
-static int bus_class __P((struct device *));
-static const char *bus_compatible __P((const char *));
-static int instance_match __P((struct device *, void *, struct bootpath *));
-static void nail_bootdev __P((struct device *, struct bootpath *));
+static int bus_class(struct device *);
+static const char *bus_compatible(const char *);
+static int instance_match(struct device *, void *, struct bootpath *);
+static void nail_bootdev(struct device *, struct bootpath *);
 
 static struct {
 	const char	*name;
@@ -1602,8 +1558,7 @@ static struct {
 };
 
 static const char *
-bus_compatible(bpname)
-	const char *bpname;
+bus_compatible(const char *bpname)
 {
 	int i;
 
@@ -1616,19 +1571,16 @@ bus_compatible(bpname)
 }
 
 static int
-bus_class(dev)
-	struct device *dev;
+bus_class(struct device *dev)
 {
-	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
+		if (device_is_a(dev, bus_class_tab[i].name)) {
 			class = bus_class_tab[i].class;
 			break;
 		}
@@ -1642,10 +1594,7 @@ bus_class(dev)
 }
 
 int
-instance_match(dev, aux, bp)
-	struct device *dev;
-	void *aux;
-	struct bootpath *bp;
+instance_match(struct device *dev, void *aux, struct bootpath *bp)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
@@ -1666,7 +1615,7 @@ instance_match(dev, aux, bp)
 	/*
 	 * Rank parent bus so we know which locators to check.
 	 */
-	switch (bus_class(dev->dv_parent)) {
+	switch (bus_class(device_parent(dev))) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
@@ -1683,8 +1632,8 @@ instance_match(dev, aux, bp)
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
 		    "want slot %#x offset %#x have slot %#x offset %#x\n",
 		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
-		if ((u_int32_t)bp->val[0] == sa->sa_slot &&
-		    (u_int32_t)bp->val[1] == sa->sa_offset)
+		if ((uint32_t)bp->val[0] == sa->sa_slot &&
+		    (uint32_t)bp->val[1] == sa->sa_offset)
 			return (1);
 		break;
 	case BUSCLASS_IOMMU:
@@ -1693,8 +1642,8 @@ instance_match(dev, aux, bp)
 		    "want space %#x pa %#x have space %#x pa %#x\n",
 		     bp->val[0], bp->val[1], iom->iom_reg[0].oa_space,
 		     iom->iom_reg[0].oa_base));
-		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
-		    (u_int32_t)bp->val[1] == iom->iom_reg[0].oa_base)
+		if ((uint32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
+		    (uint32_t)bp->val[1] == iom->iom_reg[0].oa_base)
 			return (1);
 		break;
 	case BUSCLASS_XDC:
@@ -1736,16 +1685,14 @@ instance_match(dev, aux, bp)
 		break;
 	}
 
-	if (bp->val[0] == -1 && bp->val[1] == dev->dv_unit)
+	if (bp->val[0] == -1 && bp->val[1] == device_unit(dev))
 		return (1);
 
 	return (0);
 }
 
 void
-nail_bootdev(dev, bp)
-	struct device *dev;
-	struct bootpath *bp;
+nail_bootdev(struct device *dev, struct bootpath *bp)
 {
 
 	if (bp->dev != NULL)
@@ -1767,12 +1714,10 @@ nail_bootdev(dev, bp)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	const char *dvname, *bpname;
+	const char *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
@@ -1785,14 +1730,14 @@ device_register(dev, aux)
 	 * Translate PROM name in case our drivers are named differently
 	 */
 	bpname = bus_compatible(bp->name);
-	dvname = dev->dv_cfdata->cf_name;
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
+	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname,
+	    bpname, bp->name));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0)
+	if (!device_is_a(dev, bpname))
 		return;
 
 	if (bus_class(dev) != BUSCLASS_NONE) {
@@ -1801,7 +1746,7 @@ device_register(dev, aux)
 		 * parameters and advance boot path on match.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
-			if (strcmp(dvname, "fdc") == 0) {
+			if (device_is_a(dev, "fdc")) {
 				/*
 				 * XXX - HACK ALERT
 				 * Sun PROMs don't really seem to support
@@ -1820,8 +1765,9 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0 || strcmp(dvname, "hme") == 0 ||
-	    strcmp(dvname, "be") == 0) {
+	} else if (device_is_a(dev, "le") ||
+		   device_is_a(dev, "hme") ||
+		   device_is_a(dev, "be")) {
 		/*
 		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */
@@ -1831,7 +1777,8 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+	} else if (device_is_a(dev, "sd") ||
+		   device_is_a(dev, "cd")) {
 #if NSCSIBUS > 0
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
@@ -1844,12 +1791,12 @@ device_register(dev, aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsipi_channel *chan = periph->periph_channel;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+			(struct scsibus_softc *)device_parent(dev);
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
 			return;
 
 		/*
@@ -1861,7 +1808,7 @@ device_register(dev, aux)
 			return;
 		}
 
-		if (CPU_ISSUN4 && dvname[0] == 's' &&
+		if (CPU_ISSUN4 && device_is_a(dev, "sd") &&
 		    target == 0 &&
 		    scsipi_lookup_periph(chan, target, lun) == NULL) {
 			/*
@@ -1874,7 +1821,7 @@ device_register(dev, aux)
 			lun = 0;
 		}
 
-		if (CPU_ISSUN4C && dvname[0] == 's')
+		if (CPU_ISSUN4C && device_is_a(dev, "sd"))
 			target = sd_crazymap(target);
 
 		if (periph->periph_target == target &&
@@ -1885,7 +1832,8 @@ device_register(dev, aux)
 			return;
 		}
 #endif /* NSCSIBUS */
-	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
+	} else if (device_is_a(dev, "xd") ||
+		   device_is_a(dev, "xy")) {
 
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
@@ -1895,7 +1843,7 @@ device_register(dev, aux)
 			return;
 		}
 
-	} else if (strcmp("fd", dvname) == 0) {
+	} else if (device_is_a(dev, "fd")) {
 		/*
 		 * Sun PROMs don't really seem to support multiple
 		 * floppy drives. So we aren't going to, either.
@@ -1916,7 +1864,6 @@ device_register(dev, aux)
 			return;
 		}
 	}
-
 }
 
 /*
@@ -1924,8 +1871,7 @@ device_register(dev, aux)
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -1952,8 +1898,7 @@ lookup_bootinfo(type)
  * at the first free location after the relocated bootinfo array.
  */
 void
-bootinfo_relocate(newloc)
-	void *newloc;
+bootinfo_relocate(void *newloc)
 {
 	int bi_size;
 	struct btinfo_common *bt;
@@ -2008,4 +1953,4 @@ bootinfo_relocate(newloc)
 	bootinfo = newloc;
 	kernel_top = (char *)newloc + ALIGN(bi_size);
 }
-#endif
+#endif /* !NKSYMS && !defined(DDB) && !defined(LKM) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.29 2005/07/03 23:06:51 he Exp $	*/
+/*	$NetBSD: maple.c,v 1.29.2.1 2006/06/21 14:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.29 2005/07/03 23:06:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.29.2.1 2006/06/21 14:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ static void	maple_check_unit_change(struct maple_softc *,
 		    struct maple_unit *);
 static void	maple_print_unit(void *, const char *);
 static int	maplesubmatch(struct device *, struct cfdata *,
-		    const locdesc_t *, void *);
+		    const int *, void *);
 static int	mapleprint(void *, const char *);
 static void	maple_attach_unit(struct maple_softc *, struct maple_unit *);
 static void	maple_detach_unit_nofix(struct maple_softc *,
@@ -639,7 +639,7 @@ maple_print_unit(void *aux, const char *pnp)
 
 static int
 maplesubmatch(struct device *parent, struct cfdata *match,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -1613,7 +1613,7 @@ maple_get_function_data(struct maple_devinfo *devinfo, int function_code)
 /* Generic maple device interface */
 
 int
-mapleopen(dev_t dev, int flag, int mode, struct proc *p)
+mapleopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct maple_softc *sc;
 
@@ -1636,7 +1636,7 @@ mapleopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-mapleclose(dev_t dev, int flag, int mode, struct proc *p)
+mapleclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct maple_softc *sc;
 
@@ -1649,7 +1649,7 @@ mapleclose(dev_t dev, int flag, int mode, struct proc *p)
 
 int
 maple_unit_ioctl(struct device *dev, struct maple_unit *u, u_long cmd,
-    caddr_t data, int flag, struct proc *p)
+    caddr_t data, int flag, struct lwp *l)
 {
 	struct maple_softc *sc = (struct maple_softc *)dev;
 
@@ -1668,7 +1668,7 @@ maple_unit_ioctl(struct device *dev, struct maple_unit *u, u_long cmd,
 }
 
 int
-mapleioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mapleioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct maple_softc *sc;
 	struct maple_unit *u;
@@ -1676,5 +1676,5 @@ mapleioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
 	u = &sc->sc_unit[MAPLEPORT(dev)][MAPLESUBUNIT(dev)];
 
-	return maple_unit_ioctl(&sc->sc_dev, u, cmd, data, flag, p);
+	return maple_unit_ioctl(&sc->sc_dev, u, cmd, data, flag, l);
 }

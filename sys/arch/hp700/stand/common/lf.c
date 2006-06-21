@@ -1,4 +1,4 @@
-/*	$NetBSD: lf.c,v 1.3 2003/01/20 05:30:01 simonb Exp $	*/
+/*	$NetBSD: lf.c,v 1.3.18.1 2006/06/21 14:51:37 yamt Exp $	*/
 
 /*	$OpenBSD: lf.c,v 1.3 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -53,7 +53,7 @@ lfopen(struct open_file *f, ...)
 int
 lfclose(struct open_file *f)
 {
-	free(f->f_devdata, sizeof(struct hppa_dev));
+	dealloc(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
 	return 0;
 }

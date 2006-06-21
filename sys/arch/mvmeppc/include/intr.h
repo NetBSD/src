@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2003/09/03 21:33:33 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.16.1 2006/06/21 14:54:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,10 +117,10 @@ splraise(int newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+	__asm volatile("sync; eieio\n");	/* don't reorder.... */
 	oldcpl = cpl;
 	cpl = oldcpl | newcpl;
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
 }
 
@@ -128,11 +128,11 @@ static __inline void
 spllower(int newcpl)
 {
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm volatile("sync; eieio\n");	/* reorder protect */
 }
 
 /* Following code should be implemented with lwarx/stwcx to avoid
@@ -142,10 +142,10 @@ set_sint(int pending)
 {
 	int	msrsave;
 
-	__asm__ ("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	__asm ("mfmsr %0" : "=r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
 	ipending |= pending;
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave));
 }
 
 #define	ICU_LEN		32

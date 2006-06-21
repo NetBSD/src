@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.40 2005/06/16 22:43:36 jmc Exp $	*/
+/*	$NetBSD: esp.c,v 1.40.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.40 2005/06/16 22:43:36 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.40.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,8 +138,8 @@ void	esp_intr(void *);
 void	esp_dualbus_intr(void *);
 static struct esp_softc		*esp0, *esp1;
 
-static __inline__ int esp_dafb_have_dreq(struct esp_softc *);
-static __inline__ int esp_iosb_have_dreq(struct esp_softc *);
+static inline int esp_dafb_have_dreq(struct esp_softc *);
+static inline int esp_iosb_have_dreq(struct esp_softc *);
 int (*esp_have_dreq)(struct esp_softc *);
 
 struct ncr53c9x_glue esp_glue = {
@@ -269,7 +269,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_id = 7;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/*
@@ -582,13 +582,13 @@ esp_quick_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	return 0;
 }
 
-static __inline__ int
+static inline int
 esp_dafb_have_dreq(struct esp_softc *esc)
 {
 	return (*(volatile u_int32_t *)(esc->sc_bsh.base) & 0x200);
 }
 
-static __inline__ int
+static inline int
 esp_iosb_have_dreq(struct esp_softc *esc)
 {
 	return (via2_reg(vIFR) & V2IF_SCSIDRQ);
@@ -744,7 +744,7 @@ restart_dmago:
 	if (esc->sc_datain == 0) {
 		/* while (cnt32--) { 16 instances of *pdma = *addr++; } */
 		/* while (cnt2--) { *pdma = *addr++; } */
-		__asm __volatile (
+		__asm volatile (
 			"	movl %1, %%a2	\n"
 			"	movl %2, %%a3	\n"
 			"	movw %3, %%d2	\n"
@@ -787,7 +787,7 @@ restart_dmago:
 	} else {
 		/* while (cnt32--) { 16 instances of *addr++ = *pdma; } */
 		/* while (cnt2--) { *addr++ = *pdma; } */
-		__asm __volatile (
+		__asm volatile (
 			"	movl %1, %%a2	\n"
 			"	movl %2, %%a3	\n"
 			"	movw %3, %%d2	\n"

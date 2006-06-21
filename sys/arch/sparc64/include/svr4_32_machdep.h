@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.h,v 1.4 2003/01/18 06:55:22 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_machdep.h,v 1.4.18.1 2006/06/21 14:56:47 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ typedef struct {
 	svr4_32_greg_t	rwin_in[8];
 } svr4_32_rwindow_t;
 
-typedef u_int32_t svr4_32_gwindowp_t;
+typedef uint32_t svr4_32_gwindowp_t;
 typedef struct {
 	int		   cnt;
 	netbsd32_intp	   sp[SVR4_SPARC_MAXWIN];
@@ -91,6 +91,8 @@ typedef struct svr4_32_mcontext {
 
 struct svr4_32_ucontext;
 
-int svr4_32_trap __P((int, struct lwp *));
+#define svr4_32_syscall_intern syscall_intern
+
+int svr4_32_trap(int, struct lwp *);
 
 #endif /* !_SPARC_SVR4_32_MACHDEP_H_ */

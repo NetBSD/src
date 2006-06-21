@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.74 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.74.2.1 2006/06/21 14:57:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.74 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.74.2.1 2006/06/21 14:57:06 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -266,7 +266,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	int s, zs_unit, channel;
 	static int didintr;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 
 	printf(": (softpri %d)\n", ZSSOFT_PRI);
 

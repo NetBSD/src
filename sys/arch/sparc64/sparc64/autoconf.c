@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.103.2.1 2006/06/21 14:56:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103.2.1 2006/06/21 14:56:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2005/06/16 04:17:50 briggs Exp $"
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
+#include <machine/bootinfo.h>
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
@@ -119,6 +120,7 @@ struct evcnt intr_evcnts[] = {
 };
 
 int printspl = 0;
+void *bootinfo = 0;
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
@@ -126,19 +128,25 @@ extern	int kgdb_debug_panic;
 
 char	machine_model[100];
 
-static	char *str2hex __P((char *, int *));
-static	int mbprint __P((void *, const char *));
-static	void crazymap __P((const char *, int *));
-int	st_crazymap __P((int));
-void	sync_crash __P((void));
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-static	void mainbus_attach __P((struct device *, struct device *, void *));
+static	char *str2hex(register char *, register int *);
+static	int mbprint(void *, const char *);
+static	void crazymap(const char *, int *);
+int	st_crazymap(int);
+void	sync_crash(void);
+int	mainbus_match(struct device *, struct cfdata *, void *);
+static	void mainbus_attach(struct device *, struct device *, void *);
 static  void get_ncpus(void);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
-static	void bootpath_build __P((void));
-static	void bootpath_print __P((struct bootpath *));
+static	void bootpath_build(void);
+static	void bootpath_print(struct bootpath *);
+
+/*
+ * Kernel 4MB mappings.
+ */
+struct tlb_entry *kernel_tlbs;
+int kernel_tlb_slots;
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -171,10 +179,7 @@ int autoconf_debug = 0x0;
  * device names with our internal names.
  */
 int
-matchbyname(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+matchbyname(struct device *parent, struct cfdata *cf, void *aux)
 {
 	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
@@ -185,9 +190,7 @@ matchbyname(parent, cf, aux)
  * Depends on ASCII order (this *is* machine-dependent code, you know).
  */
 static char *
-str2hex(str, vp)
-	register char *str;
-	register int *vp;
+str2hex(register char *str, register int *vp)
 {
 	register int v, c;
 
@@ -229,40 +232,106 @@ get_ncpus()
 }
 
 /*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(int type)
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
+}
+
+/*
  * locore.s code calls bootstrap() just before calling main().
  *
  * What we try to do is as follows:
+ * - Initialize PROM and the console
+ * - Read in part of information provided by a bootloader and find out
+ *   kernel load and end addresses
+ * - Initialize ksyms
+ * - Find out number of active CPUs
+ * - Finalize the bootstrap by calling pmap_bootstrap() 
  *
- * 1) We will try to re-allocate the old message buffer.
- *
- * 2) We will then get the list of the total and available
- *	physical memory and available virtual memory from the
- *	prom.
- *
- * 3) We will pass the list to pmap_bootstrap to manage them.
- *
- * We will try to run out of the prom until we get to cpu_init().
+ * We will try to run out of the prom until we get out of pmap_bootstrap().
  */
 void
-bootstrap(nctx)
-	int nctx;
+bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 {
-	extern int end;	/* End of kernel */
-#if (NKSYMS || defined(DDB) || defined(LKM))
-	extern void *ssym, *esym;
-#endif
-#if !defined(__arch64__) && defined(DDB)
-	/* Assembly glue for the PROM */
-	extern void OF_sym2val32 __P((void *));
-	extern void OF_val2sym32 __P((void *));
-#endif
+	void *bi;
+	long bmagic;
+
+	struct btinfo_symtab *bi_sym;
+	struct btinfo_count *bi_count;
+	struct btinfo_kernend *bi_kend;
+	struct btinfo_tlb *bi_tlb;
+
+	extern void *romtba;
+	extern void* get_romtba(void);
+	extern void  OF_val2sym32(void *);
+	extern void OF_sym2val32(void *);
+
+	/* Save OpenFrimware entry point */
+	romp   = ofw;
+	romtba = get_romtba();
 
 	prom_init();
 
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
+
+	printf("sparc64_init(%p, %p, %p, %p, %p)\n", o0, bootargs, bootsize,
+			o3, ofw);
+
+	/* Extract bootinfo pointer */
+	if ((long)bootsize >= (4 * sizeof(uint64_t))) {
+		/* Loaded by 64-bit bootloader */
+		bi = (void*)(u_long)(((uint64_t*)bootargs)[3]);
+		bmagic = (long)(((uint64_t*)bootargs)[0]);
+	} else if ((long)bootsize >= (4 * sizeof(uint32_t))) {
+		/* Loaded by 32-bit bootloader */
+		bi = (void*)(u_long)(((uint32_t*)bootargs)[3]);
+		bmagic = (long)(((uint32_t*)bootargs)[0]);
+	} else {
+		printf("Bad bootinfo size.\n"
+				"This kernel requires NetBSD boot loader.\n");
+		panic("sparc64_init.");
+	}
+
+	printf("sparc64_init: bmagic=%lx, bi=%p\n", bmagic, bi);
+
+	/* Read in the information provided by NetBSD boot loader */
+	if (SPARC_MACHINE_OPENFIRMWARE != bmagic) {
+		printf("No bootinfo information.\n"
+				"This kernel requires NetBSD boot loader.\n");
+		panic("sparc64_init.");
+	}
+
+	bootinfo = (void*)(u_long)((uint64_t*)bi)[1];
+	LOOKUP_BOOTINFO(bi_kend, BTINFO_KERNEND);
+
+	if (bi_kend->addr == (vaddr_t)0) {
+		panic("Kernel end address is not found in bootinfo.\n");
+	}
+
 #if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
+	LOOKUP_BOOTINFO(bi_sym, BTINFO_SYMTAB);
+	ksyms_init(bi_sym->nsym, (int *)(u_long)bi_sym->ssym,
+			(int *)(u_long)bi_sym->esym);
 #ifdef DDB
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
@@ -273,8 +342,13 @@ bootstrap(nctx)
 #endif
 #endif
 
+	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
+	kernel_tlb_slots = bi_count->count;
+	LOOKUP_BOOTINFO(bi_tlb, BTINFO_DTLB);
+	kernel_tlbs = &bi_tlb->tlb[0];
+
 	get_ncpus();
-	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
+	pmap_bootstrap(KERNBASE, bi_kend->addr);
 }
 
 /*
@@ -329,7 +403,7 @@ bootpath_build()
 				bp->val[2] = *++cp - 'a', ++cp;
 		} else {
 			bp->val[0] = -1; /* no #'s: assume unit 0, no
-					    sbus offset/adddress */
+					    sbus offset/address */
 		}
 		++bp;
 		++nbootpath;
@@ -390,8 +464,7 @@ bootpath_build()
  */
 
 static void
-bootpath_print(bp)
-	struct bootpath *bp;
+bootpath_print(struct bootpath *bp)
 {
 	printf("bootpath: ");
 	while (bp->name[0]) {
@@ -415,9 +488,7 @@ bootpath_print(bp)
  * dk_establish(), and use this to recover the bootpath.
  */
 struct bootpath *
-bootpath_store(storep, bp)
-	int storep;
-	struct bootpath *bp;
+bootpath_store(int storep, struct bootpath *bp)
 {
 	static struct bootpath *save;
 	struct bootpath *retval;
@@ -435,9 +506,7 @@ bootpath_store(storep, bp)
  * target of the (boot) device (i.e., the value in bp->v0val[0]).
  */
 static void
-crazymap(prop, map)
-	const char *prop;
-	int *map;
+crazymap(const char *prop, int *map)
 {
 	int i;
 
@@ -451,8 +520,7 @@ crazymap(prop, map)
 }
 
 int
-sd_crazymap(n)
-	int	n;
+sd_crazymap(int n)
 {
 	static int prom_sd_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -465,8 +533,7 @@ sd_crazymap(n)
 }
 
 int
-st_crazymap(n)
-	int	n;
+st_crazymap(int n)
 {
 	static int prom_st_crazymap[8]; /* static: compute only once! */
 	static int init = 0;
@@ -541,8 +608,7 @@ sync_crash()
 }
 
 char *
-clockfreq(freq)
-	long freq;
+clockfreq(long freq)
 {
 	char *p;
 	static char sbuf[10];
@@ -561,9 +627,7 @@ clockfreq(freq)
 
 /* ARGSUSED */
 static int
-mbprint(aux, name)
-	void *aux;
-	const char *name;
+mbprint(void *aux, const char *name)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -577,10 +641,7 @@ mbprint(aux, name)
 }
 
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	return (1);
@@ -594,9 +655,7 @@ mainbus_match(parent, cf, aux)
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *dev, void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
@@ -760,8 +819,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
  * variables.  Returns nonzero on error.
  */
 int
-romgetcursoraddr(rowp, colp)
-	int **rowp, **colp;
+romgetcursoraddr(int **rowp, int **colp)
 {
 	cell_t row = 0UL, col = 0UL;
 
@@ -781,7 +839,7 @@ romgetcursoraddr(rowp, colp)
 void callrom()
 {
 
-	__asm __volatile("wrpr	%%g0, 0, %%tl" : );
+	__asm volatile("wrpr	%%g0, 0, %%tl" : );
 	OF_enter();
 }
 #endif
@@ -790,9 +848,7 @@ void callrom()
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(name, unit)
-	const char *name;
-	int unit;
+getdevunit(const char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -835,10 +891,10 @@ getdevunit(name, unit)
 #define BUSCLASS_XYC		8
 #define BUSCLASS_FDC		9
 
-static int bus_class __P((struct device *));
-static int dev_compatible __P((struct device *, void *, char *));
-static int instance_match __P((struct device *, void *, struct bootpath *));
-static void nail_bootdev __P((struct device *, struct bootpath *));
+static int bus_class(struct device *);
+static int dev_compatible(struct device *, void *, char *);
+static int instance_match(struct device *, void *, struct bootpath *);
+static void nail_bootdev(struct device *, struct bootpath *);
 
 static struct {
 	const char *name;
@@ -857,6 +913,7 @@ static struct {
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "simba",	BUSCLASS_PCI },
 	{ "ppb",	BUSCLASS_PCI },
+	{ "isp",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "cmdide",	BUSCLASS_PCI },
 	{ "aceride",	BUSCLASS_PCI },
@@ -874,7 +931,8 @@ static struct {
 	const char *compat[6];
 } dev_compat_tab[] = {
 	{ "dma",	{ "espdma", NULL }},
-	{ "isp",	{ "QLGC,isp", "PTI,isp", "ptiisp", "scsi", NULL }},
+	{ "isp",	{ "QLGC,isp", "PTI,isp", "ptiisp", "scsi",
+			  "SUNW,isptwo", NULL }},
 	{ "fdc",	{ "SUNW,fdtwo",	NULL }},
 	{ "psycho",	{ "pci", NULL }},
 	{ "wd",		{ "disk", "ide-disk", NULL }},
@@ -886,10 +944,7 @@ static struct {
 };
 
 int
-dev_compatible(dev, aux, bpname)
-	struct device *dev;
-	void *aux;
-	char *bpname;
+dev_compatible(struct device *dev, void *aux, char *bpname)
 {
 	int i, j;
 
@@ -898,7 +953,7 @@ dev_compatible(dev, aux, bpname)
 	 *
 	 * If this is a PCI device, find it's device class and try that.
 	 */
-	if ((bus_class(dev->dv_parent)) == BUSCLASS_PCI) {
+	if ((bus_class(device_parent(dev))) == BUSCLASS_PCI) {
 		struct pci_attach_args *pa = aux;
 
 		DPRINTF(ACDB_BOOTDEV,
@@ -961,8 +1016,7 @@ dev_compatible(dev, aux, bpname)
 	 * match.  This is a nasty O(n^2) operation.
 	 */
 	for (i = 0; dev_compat_tab[i].name != NULL; i++) {
-		if (strcmp(dev->dv_cfdata->cf_name, 
-			dev_compat_tab[i].name) == 0) {
+		if (device_is_a(dev, dev_compat_tab[i].name)) {
 			DPRINTF(ACDB_BOOTDEV,
 				("\n%s: dev_compatible: translating %s\n",
 					dev->dv_xname, dev_compat_tab[i].name));
@@ -985,19 +1039,16 @@ dev_compatible(dev, aux, bpname)
 }
 
 static int
-bus_class(dev)
-	struct device *dev;
+bus_class(struct device *dev)
 {
-	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
+		if (device_is_a(dev, bus_class_tab[i].name)) {
 			class = bus_class_tab[i].class;
 			break;
 		}
@@ -1007,10 +1058,7 @@ bus_class(dev)
 }
 
 int
-instance_match(dev, aux, bp)
-	struct device *dev;
-	void *aux;
-	struct bootpath *bp;
+instance_match(struct device *dev, void *aux, struct bootpath *bp)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
@@ -1032,7 +1080,7 @@ instance_match(dev, aux, bp)
 	/*
 	 * Rank parent bus so we know which locators to check.
 	 */
-	switch (bus_class(dev->dv_parent)) {
+	switch (bus_class(device_parent(dev))) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV,
@@ -1062,16 +1110,14 @@ instance_match(dev, aux, bp)
 		break;
 	}
 
-	if (bp->val[0] == -1 && bp->val[1] == dev->dv_unit)
+	if (bp->val[0] == -1 && bp->val[1] == device_unit(dev))
 		return (1);
 
 	return (0);
 }
 
 void
-nail_bootdev(dev, bp)
-	struct device *dev;
-	struct bootpath *bp;
+nail_bootdev(struct device *dev, struct bootpath *bp)
 {
 
 	if (bp->dev != NULL)
@@ -1093,12 +1139,9 @@ nail_bootdev(dev, bp)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	const char *dvname;
 	char *bpname;
 
 	/*
@@ -1113,13 +1156,12 @@ device_register(dev, aux)
 	 * that.
 	 */
 	bpname = bp->name;
-	dvname = dev->dv_cfdata->cf_name;
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname));
+	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname, bpname));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0) {
+	if (!device_is_a(dev, bpname)) {
 		if (dev_compatible(dev, aux, bpname) != 0)
 			return;
 	}
@@ -1136,9 +1178,9 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0 ||
-		   strcmp(dvname, "hme") == 0 ||
-		   strcmp(dvname, "tlp") == 0) {
+	} else if (device_is_a(dev, "le") ||
+		   device_is_a(dev, "hme") ||
+		   device_is_a(dev, "tlp")) {
 
 		/*
 		 * ethernet devices.
@@ -1149,7 +1191,8 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+	} else if (device_is_a(dev, "sd") ||
+		   device_is_a(dev, "cd")) {
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
@@ -1160,12 +1203,12 @@ device_register(dev, aux)
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+			(struct scsibus_softc *)device_parent(dev);
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
 			return;
 
 		/*
@@ -1185,7 +1228,7 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp("wd", dvname) == 0) {
+	} else if (device_is_a(dev, "wd")) {
 		/* IDE disks. */
 		struct ata_device *adev = aux;
 

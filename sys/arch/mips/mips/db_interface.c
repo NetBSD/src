@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.53 2005/06/01 16:26:59 drochner Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.53.2.1 2006/06/21 14:53:44 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53 2005/06/01 16:26:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53.2.1 2006/06/21 14:53:44 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53 2005/06/01 16:26:59 drochner E
 #include <mips/mips_opcode.h>
 #include <dev/cons.h>
 
+#include <machine/int_fmtio.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #ifndef KGDB
@@ -277,13 +278,15 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 void
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
+	int *ip;
+	short *sp;
 
 	while (size >= 4)
-		*((int*)data)++ = kdbpeek(addr), addr += 4, size -= 4;
+		ip = (int*)data, *ip = kdbpeek(addr), data += 4, addr += 4, size -= 4;
 	while (size >= 2)
-		*((short*)data)++ = kdbpeek_2(addr), addr += 2, size -= 2;
+		sp = (short *)data, *sp = kdbpeek_2(addr), data += 2, addr += 2, size -= 2;
 	if (size == 1)
-		*((char*)data)++ = kdbpeek_1(addr);
+		*data = kdbpeek_1(addr);
 }
 
 /*
@@ -367,13 +370,13 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 			db_printf("TLB%c%2d Hi 0x%08x ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
-			db_printf("Lo0=0x%08x %c%c attr %x ",
-				(unsigned)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
+			db_printf("Lo0=0x%09" PRIx64 " %c%c attr %x ",
+				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
 				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo0 >> 3) & 7);
-			db_printf("Lo1=0x%08x %c%c attr %x sz=%x\n",
-				(unsigned)mips_tlbpfn_to_paddr(tlb.tlb_lo1),
+			db_printf("Lo1=0x%09" PRIx64 " %c%c attr %x sz=%x\n",
+				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo1),
 				(tlb.tlb_lo1 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo1 >> 3) & 7,
@@ -395,8 +398,8 @@ db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
 		 */
-		db_printf("0x%lx -> 0x%qx\n", addr,
-		    (unsigned long long) kvtophys(addr));
+		db_printf("0x%lx -> 0x%" PRIx64 "\n", addr,
+		    (uint64_t) kvtophys(addr));
 	} else
 		printf("not a kernel virtual address\n");
 }
@@ -406,7 +409,7 @@ db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 do {									\
 	uint32_t __val;							\
 									\
-	__asm __volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));	\
+	__asm volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));	\
 	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
 	    "", __val);							\
 } while (0)
@@ -416,7 +419,7 @@ do {									\
 do {									\
 	uint64_t __val;							\
 									\
-	__asm __volatile(						\
+	__asm volatile(						\
 		".set push 			\n\t"			\
 		".set mips3			\n\t"			\
 		".set noat			\n\t"			\

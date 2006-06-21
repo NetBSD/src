@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc.c,v 1.4 2003/07/14 22:57:48 lukem Exp $	*/
+/*	$NetBSD: vtpbc.c,v 1.4.16.1 2006/06/21 14:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.4 2003/07/14 22:57:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.4.16.1 2006/06/21 14:48:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ vtpbc_conf_read(void *v, pcitag_t tag, int offset)
 	wbflush();
 
 	/* low 20 bits of address are offset into config space */
-	data = *(__volatile u_int32_t *) (vt->vt_cfgbase + (cfgoff & 0xfffff));
+	data = *(volatile u_int32_t *) (vt->vt_cfgbase + (cfgoff & 0xfffff));
 
 	errbits = V96X_PCI_STAT(vt) &
 	    (V96X_PCI_STAT_M_ABORT|V96X_PCI_STAT_T_ABORT);
@@ -249,7 +249,7 @@ vtpbc_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 	wbflush();
 
 	/* low 20 bits of address are offset into config space */
-	*(__volatile u_int32_t *) (vt->vt_cfgbase + (cfgoff & 0xfffff)) = data;
+	*(volatile u_int32_t *) (vt->vt_cfgbase + (cfgoff & 0xfffff)) = data;
 
 	/* wait for FIFO to drain */
 	while (V96X_FIFO_STAT(vt) & V96X_FIFO_STAT_L2P_WR)

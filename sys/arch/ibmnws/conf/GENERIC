@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 2005/06/25 12:05:17 rpaulo Exp $
+#	$NetBSD: GENERIC,v 1.13.2.1 2006/06/21 14:52:58 yamt Exp $
 #
 #
 
@@ -36,12 +36,13 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 #file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system 	MSDOSFS		# MS-DOS file system
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
@@ -75,7 +76,7 @@ options 	NFS_BOOT_DHCP
 # different kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -267,7 +268,7 @@ audio*	at audiobus?
 pseudo-device	md		1	# memory disk device (ramdisk)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# network tap
+pseudo-device	bpfilter		# network tap
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
@@ -276,3 +277,20 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	ksyms
 pseudo-device	clockctl
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

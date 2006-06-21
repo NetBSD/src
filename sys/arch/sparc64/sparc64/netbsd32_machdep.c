@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.1 2006/06/21 14:56:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.1 2006/06/21 14:56:48 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -70,11 +70,18 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49 2005/07/03 17:18:03 cube E
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#include <compat/sys/siginfo.h>
+#include <compat/sys/ucontext.h>
+
+#ifndef SUN4U
+#define SUN4U	/* see .../sparc/include/frame.h for the reason */
+#endif
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/vuid_event.h>
-
 #include <machine/netbsd32_machdep.h>
 
 /* Provide a the name of the architecture we're emulating */
@@ -82,10 +89,8 @@ const char	machine32[] = "sparc";
 const char	machine_arch32[] = "sparc";	
 
 #if NFIRM_EVENTS > 0
-static int ev_out32 __P((struct firm_event *, int, struct uio *));
+static int ev_out32(struct firm_event *, int, struct uio *);
 #endif
-
-void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
 /*
  * Set up registers on exec.
@@ -102,7 +107,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
@@ -148,6 +153,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_out[7] = 0;
 }
 
+#ifdef COMPAT_16
 /*
  * NB: since this is a 32-bit address world, sf_scp and sf_sc
  *	can't be a pointer since those are 64-bits wide.
@@ -165,15 +171,15 @@ struct sparc32_sigframe {
 extern int sigdebug;
 #endif
 
-void
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+static void
+netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	int sig = ksi->ksi_signo;
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	register struct sparc32_sigframe *fp;
-	register struct trapframe64 *tf;
-	register int addr, onstack; 
+	struct sparc32_sigframe *fp;
+	struct trapframe64 *tf;
+	int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sparc32_sigframe sf;
@@ -275,7 +281,7 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_global[1] = (long)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
+	tf->tf_out[6] = (uint64_t)(u_int)(u_long)newsp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -289,6 +295,112 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 #endif
 }
+#endif
+
+struct sparc32_sigframe_siginfo {
+	siginfo32_t sf_si;
+	ucontext32_t sf_uc;
+};
+
+static void
+netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
+	int onstack;
+	int sig = ksi->ksi_signo;
+	ucontext32_t uc;
+	struct sparc32_sigframe_siginfo *fp;
+	netbsd32_pointer_t catcher;
+	struct trapframe64 *tf = l->l_md.md_tf;
+	struct rwindow32 *oldsp, *newsp;
+	int ucsz;
+
+	/* Need to attempt to zero extend this 32-bit pointer */
+	oldsp = (struct rwindow32*)(u_long)(u_int)tf->tf_out[6];
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		fp = (struct sparc32_sigframe_siginfo *)
+		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					  p->p_sigctx.ps_sigstk.ss_size);
+	else
+		fp = (struct sparc32_sigframe_siginfo *)oldsp;
+	fp = (struct sparc32_sigframe_siginfo*)((u_long)(fp - 1) & ~7);
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	uc.uc_flags = _UC_SIGMASK |
+		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+			? _UC_SETSTACK : _UC_CLRSTACK);
+	uc.uc_sigmask = *mask;
+	uc.uc_link = 0;
+	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	cpu_getmcontext32(l, &uc.uc_mcontext, &uc.uc_flags);
+	ucsz = (int)(intptr_t)&uc.__uc_pad - (int)(intptr_t)&uc;
+
+	/*
+	 * Now copy the stack contents out to user space.
+	 * We need to make sure that when we start the signal handler,
+	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
+	 * joins seamlessly with the frame it was in when the signal occurred,
+	 * so that the debugger and _longjmp code can back up through it.
+	 * Since we're calling the handler directly, allocate a full size
+	 * C stack frame.
+	 */
+	newsp = (struct rwindow32*)((intptr_t)fp - sizeof(struct frame32));
+	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
+	    copyout(&uc, &fp->sf_uc, ucsz) ||
+	    suword(&newsp->rw_in[6], (intptr_t)oldsp)) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	default:
+		/* Unsupported trampoline version; kill the process. */
+		sigexit(l, SIGILL);
+	case 2:
+		/*
+		 * Arrange to continue execution at the user's handler.
+		 * It needs a new stack pointer, a return address and
+		 * three arguments: (signo, siginfo *, ucontext *).
+		 */
+		catcher = (intptr_t)SIGACTION(p, sig).sa_handler;
+		tf->tf_pc = catcher;
+		tf->tf_npc = catcher + 4;
+		tf->tf_out[0] = sig;
+		tf->tf_out[1] = (intptr_t)&fp->sf_si;
+		tf->tf_out[2] = (intptr_t)&fp->sf_uc;
+		tf->tf_out[6] = (intptr_t)newsp;
+		tf->tf_out[7] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp - 8;
+		break;
+	}
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+void
+netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		netbsd32_sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		netbsd32_sendsig_siginfo(ksi, mask);
+}
 
 /*
  * Set the lwp to begin execution in the upcall handler.  The upcall
@@ -300,33 +412,34 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * trampolines.
  */
 void 
-netbsd32_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
        	struct trapframe *tf;
 	vaddr_t addr;
 
 	tf = l->l_md.md_tf;
+	addr = (vaddr_t) upcall;
 
-	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
-
-	/* Jump to the upcall handler */
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-
-#if 0
-/* XXX */
-	/* The upcall itself is in %g1 */
-	tf->tf_global[1] = upcall;
-
+	/* Arguments to the upcall... */
 	tf->tf_out[0] = type;
-	tf->tf_out[1] = sas;
+	tf->tf_out[1] = (vaddr_t) sas;
 	tf->tf_out[2] = nevents;
 	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = ap;
-	tf->tf_out[6] = (vaddr_t)sp;
-#endif
+	tf->tf_out[4] = (vaddr_t) ap;
+
+	/*
+	 * Ensure the stack is double-word aligned, and provide a
+	 * C call frame.
+	 */
+	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
+
+	/* Arrange to begin execution at the upcall handler. */
+
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (vaddr_t) sp;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 #undef DEBUG
@@ -410,7 +523,7 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
-	native_sigset13_to_sigset(&scp->sc_mask, &mask);
+	native_sigset13_to_sigset((sigset13_t *)&scp->sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -510,15 +623,13 @@ compat_16_netbsd32___sigreturn14(l, v, retval)
 	return (EJUSTRETURN);
 }
 
-#if 0
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
-netbsd32_process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+netbsd32_process_read_regs(l, regs)
+	struct lwp *l;
+	struct reg32 *regs;
 {
-	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe64* tf = p->p_md.md_tf;
+	struct trapframe64* tf = l->l_md.md_tf;
 	int i;
 
 	/* 
@@ -527,18 +638,19 @@ netbsd32_process_read_regs(p, regs)
 	 * 32-bit emulation flag!
 	 */
 
-	regp->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
-	regp->r_pc = tf->tf_pc;
-	regp->r_npc = tf->tf_npc;
-	regp->r_y = tf->tf_y;
+	regs->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
+	regs->r_pc = tf->tf_pc;
+	regs->r_npc = tf->tf_npc;
+	regs->r_y = tf->tf_y;
 	for (i = 0; i < 8; i++) {
-		regp->r_global[i] = tf->tf_global[i];
-		regp->r_out[i] = tf->tf_out[i];
+		regs->r_global[i] = tf->tf_global[i];
+		regs->r_out[i] = tf->tf_out[i];
 	}
 	/* We should also write out the ins and locals.  See signal stuff */
 	return (0);
 }
 
+#if 0
 int
 netbsd32_process_write_regs(p, regs)
 	struct proc *p;
@@ -559,30 +671,26 @@ netbsd32_process_write_regs(p, regs)
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
 	return (0);
 }
+#endif
 
 int
-netbsd32_process_read_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+netbsd32_process_read_fpregs(l, regs)
+struct lwp	*l;
+struct fpreg32	*regs;
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
-	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
+	if (l->l_md.md_fpstate)
+		statep = l->l_md.md_fpstate;
 	for (i=0; i<32; i++)
-		regp->fr_regs[i] = statep->fs_regs[i];
-	regp->fr_fsr = statep->fs_fsr;
-	regp->fr_qsize = statep->fs_qsize;
-	for (i=0; i<statep->fs_qsize; i++)
-		regp->fr_queue[i] = statep->fs_queue[i];
+		regs->fr_regs[i] = statep->fs_regs[i];
 
 	return 0;
 }
 
+#if 0
 int
 netbsd32_process_write_fpregs(p, regs)
 struct proc	*p;
@@ -780,24 +888,24 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 		/* take only tstate CCR (and ASI) fields */
 		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
 		    PSRCC_TO_TSTATE(gr[_REG_PSR]);
-		tf->tf_pc        = (u_int64_t)gr[_REG_PC];
-		tf->tf_npc       = (u_int64_t)gr[_REG_nPC];
-		tf->tf_y         = (u_int64_t)gr[_REG_Y];
-		tf->tf_global[1] = (u_int64_t)gr[_REG_G1];
-		tf->tf_global[2] = (u_int64_t)gr[_REG_G2];
-		tf->tf_global[3] = (u_int64_t)gr[_REG_G3];
-		tf->tf_global[4] = (u_int64_t)gr[_REG_G4];
-		tf->tf_global[5] = (u_int64_t)gr[_REG_G5];
-		tf->tf_global[6] = (u_int64_t)gr[_REG_G6];
-		tf->tf_global[7] = (u_int64_t)gr[_REG_G7];
-		tf->tf_out[0]    = (u_int64_t)gr[_REG_O0];
-		tf->tf_out[1]    = (u_int64_t)gr[_REG_O1];
-		tf->tf_out[2]    = (u_int64_t)gr[_REG_O2];
-		tf->tf_out[3]    = (u_int64_t)gr[_REG_O3];
-		tf->tf_out[4]    = (u_int64_t)gr[_REG_O4];
-		tf->tf_out[5]    = (u_int64_t)gr[_REG_O5];
-		tf->tf_out[6]    = (u_int64_t)gr[_REG_O6];
-		tf->tf_out[7]    = (u_int64_t)gr[_REG_O7];
+		tf->tf_pc        = (uint64_t)gr[_REG_PC];
+		tf->tf_npc       = (uint64_t)gr[_REG_nPC];
+		tf->tf_y         = (uint64_t)gr[_REG_Y];
+		tf->tf_global[1] = (uint64_t)gr[_REG_G1];
+		tf->tf_global[2] = (uint64_t)gr[_REG_G2];
+		tf->tf_global[3] = (uint64_t)gr[_REG_G3];
+		tf->tf_global[4] = (uint64_t)gr[_REG_G4];
+		tf->tf_global[5] = (uint64_t)gr[_REG_G5];
+		tf->tf_global[6] = (uint64_t)gr[_REG_G6];
+		tf->tf_global[7] = (uint64_t)gr[_REG_G7];
+		tf->tf_out[0]    = (uint64_t)gr[_REG_O0];
+		tf->tf_out[1]    = (uint64_t)gr[_REG_O1];
+		tf->tf_out[2]    = (uint64_t)gr[_REG_O2];
+		tf->tf_out[3]    = (uint64_t)gr[_REG_O3];
+		tf->tf_out[4]    = (uint64_t)gr[_REG_O4];
+		tf->tf_out[5]    = (uint64_t)gr[_REG_O5];
+		tf->tf_out[6]    = (uint64_t)gr[_REG_O6];
+		tf->tf_out[7]    = (uint64_t)gr[_REG_O7];
 		/* %asi restored above; %fprs not yet supported. */
 
 		/* XXX mcp->__gwins */
@@ -854,10 +962,7 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
  * Write out a series of 32-bit firm_events.
  */
 int
-ev_out32(e, n, uio)
-	struct firm_event *e;
-	int n;
-	struct uio *uio;
+ev_out32(struct firm_event *e, int n, struct uio *uio)
 {
 	struct firm_event32 e32;
 	int error = 0;
@@ -929,23 +1034,23 @@ struct netbsd32_opiocdesc {
 #endif
 
 /* prototypes for the converters */
-static __inline void netbsd32_to_fbcmap(struct netbsd32_fbcmap *,
+static inline void netbsd32_to_fbcmap(struct netbsd32_fbcmap *,
 					struct fbcmap *, u_long);
-static __inline void netbsd32_to_fbcursor(struct netbsd32_fbcursor *,
+static inline void netbsd32_to_fbcursor(struct netbsd32_fbcursor *,
 					  struct fbcursor *, u_long);
-static __inline void netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *,
+static inline void netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *,
 					   struct opiocdesc *, u_long);
 
-static __inline void netbsd32_from_fbcmap(struct fbcmap *,
+static inline void netbsd32_from_fbcmap(struct fbcmap *,
 					  struct netbsd32_fbcmap *, u_long);
-static __inline void netbsd32_from_fbcursor(struct fbcursor *,
+static inline void netbsd32_from_fbcursor(struct fbcursor *,
 					    struct netbsd32_fbcursor *, u_long);
-static __inline void netbsd32_from_opiocdesc(struct opiocdesc *,
+static inline void netbsd32_from_opiocdesc(struct opiocdesc *,
 					     struct netbsd32_opiocdesc *,
 					     u_long);
 
 /* convert to/from different structures */
-static __inline void
+static inline void
 netbsd32_to_fbcmap(s32p, p, cmd)
 	struct netbsd32_fbcmap *s32p;
 	struct fbcmap *p;
@@ -959,7 +1064,7 @@ netbsd32_to_fbcmap(s32p, p, cmd)
 	p->blue = (u_char *)(u_long)s32p->blue;
 }
 
-static __inline void
+static inline void
 netbsd32_to_fbcursor(s32p, p, cmd)
 	struct netbsd32_fbcursor *s32p;
 	struct fbcursor *p;
@@ -976,7 +1081,7 @@ netbsd32_to_fbcursor(s32p, p, cmd)
 	p->mask = (char *)(u_long)s32p->mask;
 }
 
-static __inline void
+static inline void
 netbsd32_to_opiocdesc(s32p, p, cmd)
 	struct netbsd32_opiocdesc *s32p;
 	struct opiocdesc *p;
@@ -990,7 +1095,7 @@ netbsd32_to_opiocdesc(s32p, p, cmd)
 	p->op_buf = (char *)(u_long)s32p->op_buf;
 }
 
-static __inline void
+static inline void
 netbsd32_from_fbcmap(p, s32p, cmd)
 	struct fbcmap *p;
 	struct netbsd32_fbcmap *s32p;
@@ -1007,7 +1112,7 @@ netbsd32_from_fbcmap(p, s32p, cmd)
 #endif
 }
 
-static __inline void
+static inline void
 netbsd32_from_fbcursor(p, s32p, cmd)
 	struct fbcursor *p;
 	struct netbsd32_fbcursor *s32p;
@@ -1027,7 +1132,7 @@ netbsd32_from_fbcursor(p, s32p, cmd)
 #endif
 }
 
-static __inline void
+static inline void
 netbsd32_from_opiocdesc(p, s32p, cmd)
 	struct opiocdesc *p;
 	struct netbsd32_opiocdesc *s32p;
@@ -1042,11 +1147,11 @@ netbsd32_from_opiocdesc(p, s32p, cmd)
 }
 
 int
-netbsd32_md_ioctl(fp, cmd, data32, p)
+netbsd32_md_ioctl(fp, cmd, data32, l)
 	struct file *fp;
 	netbsd32_u_long cmd;
 	void *data32;
-	struct proc *p;
+	struct lwp *l;
 {
 	u_int size;
 	caddr_t data, memp = NULL;
@@ -1072,7 +1177,7 @@ netbsd32_md_ioctl(fp, cmd, data32, p)
 	case OPIOCNEXTPROP32:
 		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data32, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data32, l);
 	}
 	if (memp)
 		free(memp, M_IOCTLOPS);
@@ -1125,24 +1230,24 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		/* take only tstate CCR (and ASI) fields */
 		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
 		    PSRCC_TO_TSTATE(gr[_REG32_PSR]);
-		tf->tf_pc        = (u_int64_t)gr[_REG32_PC];
-		tf->tf_npc       = (u_int64_t)gr[_REG32_nPC];
-		tf->tf_y         = (u_int64_t)gr[_REG32_Y];
-		tf->tf_global[1] = (u_int64_t)gr[_REG32_G1];
-		tf->tf_global[2] = (u_int64_t)gr[_REG32_G2];
-		tf->tf_global[3] = (u_int64_t)gr[_REG32_G3];
-		tf->tf_global[4] = (u_int64_t)gr[_REG32_G4];
-		tf->tf_global[5] = (u_int64_t)gr[_REG32_G5];
-		tf->tf_global[6] = (u_int64_t)gr[_REG32_G6];
-		tf->tf_global[7] = (u_int64_t)gr[_REG32_G7];
-		tf->tf_out[0]    = (u_int64_t)gr[_REG32_O0];
-		tf->tf_out[1]    = (u_int64_t)gr[_REG32_O1];
-		tf->tf_out[2]    = (u_int64_t)gr[_REG32_O2];
-		tf->tf_out[3]    = (u_int64_t)gr[_REG32_O3];
-		tf->tf_out[4]    = (u_int64_t)gr[_REG32_O4];
-		tf->tf_out[5]    = (u_int64_t)gr[_REG32_O5];
-		tf->tf_out[6]    = (u_int64_t)gr[_REG32_O6];
-		tf->tf_out[7]    = (u_int64_t)gr[_REG32_O7];
+		tf->tf_pc        = (uint64_t)gr[_REG32_PC];
+		tf->tf_npc       = (uint64_t)gr[_REG32_nPC];
+		tf->tf_y         = (uint64_t)gr[_REG32_Y];
+		tf->tf_global[1] = (uint64_t)gr[_REG32_G1];
+		tf->tf_global[2] = (uint64_t)gr[_REG32_G2];
+		tf->tf_global[3] = (uint64_t)gr[_REG32_G3];
+		tf->tf_global[4] = (uint64_t)gr[_REG32_G4];
+		tf->tf_global[5] = (uint64_t)gr[_REG32_G5];
+		tf->tf_global[6] = (uint64_t)gr[_REG32_G6];
+		tf->tf_global[7] = (uint64_t)gr[_REG32_G7];
+		tf->tf_out[0]    = (uint64_t)gr[_REG32_O0];
+		tf->tf_out[1]    = (uint64_t)gr[_REG32_O1];
+		tf->tf_out[2]    = (uint64_t)gr[_REG32_O2];
+		tf->tf_out[3]    = (uint64_t)gr[_REG32_O3];
+		tf->tf_out[4]    = (uint64_t)gr[_REG32_O4];
+		tf->tf_out[5]    = (uint64_t)gr[_REG32_O5];
+		tf->tf_out[6]    = (uint64_t)gr[_REG32_O6];
+		tf->tf_out[7]    = (uint64_t)gr[_REG32_O7];
 		/* %asi restored above; %fprs not yet supported. */
 
 		/* XXX mcp->__gwins */
@@ -1225,7 +1330,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_O7]  = tf->tf_out[7];
 	*flags |= _UC_CPU;
 
-	mcp->__gwins = NULL;
+	mcp->__gwins = 0;
 	mcp->__xrs.__xrs_id = 0;	/* Solaris extension? */
 	*flags |= _UC_CPU;
 

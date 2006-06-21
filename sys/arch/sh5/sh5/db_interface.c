@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 2005/06/03 15:18:38 he Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2005/06/03 15:18:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -180,12 +180,12 @@ db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 	if (op == DB_VAR_GET)
 		if (ep == &reg_kcr0) {
 			register_t kcr0;
-			__asm __volatile("getcon kcr0, %0" : "=r"(kcr0));
+			__asm volatile("getcon kcr0, %0" : "=r"(kcr0));
 			*valp = kcr0;
 		} else
 		if (ep == &reg_kcr1) {
 			register_t kcr1;
-			__asm __volatile("getcon kcr1, %0" : "=r"(kcr1));
+			__asm volatile("getcon kcr1, %0" : "=r"(kcr1));
 			*valp = kcr1;
 		} else
 			*valp = *ep;
@@ -196,11 +196,11 @@ db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 
 		if (ep == &reg_kcr0) {
 			register_t kcr0 = *valp;
-			__asm __volatile("putcon %0, kcr0" :: "r"(kcr0));
+			__asm volatile("putcon %0, kcr0" :: "r"(kcr0));
 		} else
 		if (ep == &reg_kcr1) {
 			register_t kcr1 = *valp;
-			__asm __volatile("putcon %0, kcr1" :: "r"(kcr1));
+			__asm volatile("putcon %0, kcr1" :: "r"(kcr1));
 		} else {
 
 			*ep = *valp;
@@ -230,7 +230,7 @@ void
 cpu_Debugger(void)
 {
 
-	asm volatile("brk");
+	__asm volatile("brk");
 }
 
 int
@@ -397,10 +397,10 @@ db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		for (i = 0; i < 64; i++) {
 			tlbreg = ITLB_REG(i);
 
-			asm volatile("getcfg %1, 0, %0" :
+			__asm volatile("getcfg %1, 0, %0" :
 			    "=r"(pteh) : "r"(tlbreg));
 
-			asm volatile("getcfg %1, 1, %0" :
+			__asm volatile("getcfg %1, 1, %0" :
 			    "=r"(ptel) : "r"(tlbreg));
 
 			if (flagv == 0 && (pteh & SH5_PTEH_V) == 0)
@@ -415,10 +415,10 @@ db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		for (i = 0; i < 64; i++) {
 			tlbreg = DTLB_REG(i);
 
-			asm volatile("getcfg %1, 0, %0" :
+			__asm volatile("getcfg %1, 0, %0" :
 			    "=r"(pteh) : "r"(tlbreg));
 
-			asm volatile("getcfg %1, 1, %0" :
+			__asm volatile("getcfg %1, 1, %0" :
 			    "=r"(ptel) : "r"(tlbreg));
 
 			if (flagv == 0 && (pteh & SH5_PTEH_V) == 0)

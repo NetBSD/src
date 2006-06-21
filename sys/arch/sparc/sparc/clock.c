@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95 2005/06/04 20:14:25 he Exp $ */
+/*	$NetBSD: clock.c,v 1.95.2.1 2006/06/21 14:56:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.2.1 2006/06/21 14:56:12 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95 2005/06/04 20:14:25 he Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -149,7 +150,7 @@ todr_chip_handle_t todr_handle;
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int minint;
 
@@ -190,8 +191,7 @@ cpu_initclocks()
  */
 /* ARGSUSED */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing */
 }
@@ -201,7 +201,8 @@ setstatclockrate(newhz)
  * Scheduler pseudo-clock interrupt handler.
  * Runs off a soft interrupt at IPL_SCHED, scheduled by statintr().
  */
-void schedintr(void *v)
+void
+schedintr(void *v)
 {
 	struct lwp *l = curlwp;
 
@@ -221,10 +222,14 @@ int sparc_clock_time_is_ok;
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase = 0, waszero = base == 0;
+	struct timeval time;
+	struct timespec ts;
+
+	time.tv_sec = 0;
+	time.tv_usec = 0;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -240,13 +245,15 @@ inittodr(base)
 
 	if (todr_gettime(todr_handle, &time) != 0 ||
 	    time.tv_sec == 0) {
-
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
 		 */
-		time.tv_sec = base;
+		ts.tv_sec = base;
+		ts.tv_nsec = 0;
+		tc_setclock(&ts);
+
 		if (!badbase)
 			resettodr();
 	} else {
@@ -254,10 +261,16 @@ inittodr(base)
 
 		sparc_clock_time_is_ok = 1;
 
+		ts.tv_sec = time.tv_sec;
+		ts.tv_nsec = time.tv_usec * 1000;
+		tc_setclock(&ts);
+
 		if (deltat < 0)
 			deltat = -deltat;
+
 		if (waszero || deltat < 2 * SECDAY)
 			return;
+
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
@@ -271,8 +284,11 @@ inittodr(base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
+	struct timeval time;
+	
+	getmicrotime(&time);
 
 	if (time.tv_sec == 0)
 		return;
@@ -282,49 +298,13 @@ resettodr()
 		printf("Cannot set time in time-of-day clock\n");
 }
 
-#if defined(SUN4)
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for
- * fun, we guarantee that the time will be greater than the value
- * obtained by a previous call.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s;
-	static struct timeval lasttime;
-	static struct timeval oneusec = {0, 1};
-
-	if (!oldclk) {
-		lo_microtime(tvp);
-		return;
-	}
-
-	s = splhigh();
-	*tvp = time;
-	splx(s);
-
-	if (timercmp(tvp, &lasttime, <=))
-		timeradd(&lasttime, &oneusec, tvp);
-
-	lasttime = *tvp;
-}
-#endif /* SUN4 */
-
 /*
  * XXX: these may actually belong somewhere else, but since the
  * EEPROM is so closely tied to the clock on some models, perhaps
  * it needs to stay here...
  */
 int
-eeprom_uio(uio)
-	struct uio *uio;
+eeprom_uio(struct uio *uio)
 {
 #if defined(SUN4)
 	int error;
@@ -388,9 +368,7 @@ eeprom_uio(uio)
  * Update the EEPROM from the passed buf.
  */
 static int
-eeprom_update(buf, off, cnt)
-	char *buf;
-	int off, cnt;
+eeprom_update(char *buf, int off, int cnt)
 {
 	int error = 0;
 	volatile char *ep;
@@ -439,7 +417,7 @@ eeprom_update(buf, off, cnt)
 
 /* Take a lock on the eeprom. */
 static int
-eeprom_take()
+eeprom_take(void)
 {
 	int error = 0;
 
@@ -457,7 +435,7 @@ eeprom_take()
 
 /* Give a lock on the eeprom away. */
 static void
-eeprom_give()
+eeprom_give(void)
 {
 
 	eeprom_busy = 0;

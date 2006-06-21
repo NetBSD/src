@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.39 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.39.8.1 2006/06/21 14:49:07 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39.8.1 2006/06/21 14:49:07 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39 2005/01/22 07:35:34 tsutsui Exp $");
 #include <sys/kcore.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -107,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <arc/arc/arcbios.h>
 #include <arc/dev/pcconsvar.h>
+
+#include "ioconf.h"
 
 #define	XFREE86_BUG_COMPAT
 
@@ -161,8 +164,8 @@ void pc_xmode_on(void);
 void pc_xmode_off(void);
 static u_char kbc_get8042cmd(void);
 int kbd_cmd(u_char, u_char);
-static __inline int kbd_wait_output(void);
-static __inline int kbd_wait_input(void);
+static inline int kbd_wait_output(void);
+static inline int kbd_wait_input(void);
 void kbd_flush_input(void);
 void set_cursor_shape(void);
 void get_cursor_shape(void);
@@ -172,8 +175,6 @@ void do_async_update(u_char);
 void pccnputc(dev_t, int c);
 int pccngetc(dev_t);
 void pccnpollc(dev_t, int);
-
-extern struct cfdriver pc_cd;
 
 dev_type_open(pcopen);
 dev_type_close(pcclose);
@@ -196,7 +197,7 @@ void sput(u_char *, int);
 
 void	pcstart(struct tty *);
 int	pcparam(struct tty *, struct termios *);
-static __inline void wcopy(void *, void *, u_int);
+static inline void wcopy(void *, void *, u_int);
 void	pc_context_init(bus_space_tag_t, bus_space_tag_t, bus_space_tag_t,
 	    struct pccons_config *);
 
@@ -269,7 +270,7 @@ pc_context_init(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
  * bcopy variant that only moves word-aligned 16-bit entities,
  * for stupid VGA cards.  cnt is required to be an even vale.
  */
-static __inline void
+static inline void
 wcopy(void *src, void *tgt, u_int cnt)
 {
 	uint16_t *from = src;
@@ -287,7 +288,7 @@ wcopy(void *src, void *tgt, u_int cnt)
 	}
 }
 
-static __inline int
+static inline int
 kbd_wait_output(void)
 {
 	u_int i;
@@ -300,7 +301,7 @@ kbd_wait_output(void)
 	return 0;
 }
 
-static __inline int
+static inline int
 kbd_wait_input(void)
 {
 	u_int i;
@@ -588,7 +589,7 @@ void pccons_common_attach(struct pc_softc *sc, bus_space_tag_t crt_iot,
 }
 
 int
-pcopen(dev_t dev, int flag, int mode, struct proc *p)
+pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
@@ -619,7 +620,8 @@ pcopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE &&
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
@@ -627,7 +629,7 @@ pcopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-pcclose(dev_t dev, int flag, int mode, struct proc *p)
+pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -659,12 +661,12 @@ pcwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-pcpoll(dev_t dev, int events, struct proc *p)
+pcpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return (*tp->t_linesw->l_poll)(tp, events, p);
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -705,16 +707,16 @@ pcintr(void *arg)
 }
 
 int
-pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 

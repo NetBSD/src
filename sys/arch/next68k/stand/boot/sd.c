@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.7 2005/02/21 00:29:07 thorpej Exp $        */
+/*      $NetBSD: sd.c,v 1.7.4.1 2006/06/21 14:54:24 yamt Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -232,7 +232,7 @@ sdclose(struct open_file *f)
 {
     register struct sd_softc *ss = f->f_devdata;
 
-    free(ss, sizeof(struct sd_softc));
+    dealloc(ss, sizeof(struct sd_softc));
     return 0;
 }
 

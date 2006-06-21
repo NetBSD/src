@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.13 2005/03/25 15:01:57 tsutsui Exp $	*/
+/*	$NetBSD: gt.c,v 1.13.2.1 2006/06/21 14:50:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13 2005/03/25 15:01:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13.2.1 2006/06/21 14:50:07 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13 2005/03/25 15:01:57 tsutsui Exp $");
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#include <mips/cache.h>
 
 #include <dev/pci/pcivar.h>
 #ifdef PCI_NETBSD_CONFIGURE
@@ -80,21 +82,16 @@ CFATTACH_DECL(gt, sizeof(struct gt_softc),
     gt_match, gt_attach, NULL, NULL);
 
 static int
-gt_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gt_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 
 #define GT_REG_REGION	0x1000
 
 static void
-gt_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct gt_softc *sc = (void *)self;
@@ -118,17 +115,22 @@ gt_attach(parent, self, aux)
 	    (bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_COMMAND) &
 	    ~PCI_SYNCMODE) | PCI_PCLK_HIGH);
 
+	(void)bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY,
+	    0x00 << PCI_RETRYCTR_SHIFT | 0xff << PCI_TIMEOUT1_SHIFT | 0xff);
+
 #if NPCI > 0
 	pc = &sc->sc_pc;
 	pc->pc_bst = sc->sc_bst;
 	pc->pc_bsh = sc->sc_bsh;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	pc->pc_ioext = extent_create("pciio", 0x10100000, 0x11ffffff,
+	pc->pc_ioext = extent_create("pciio", 0x10001000, 0x11ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pc->pc_memext = extent_create("pcimem", 0x12000000, 0x13ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0, 0);
+	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
+	    mips_dcache_align);
 #endif
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
@@ -143,10 +145,9 @@ gt_attach(parent, self, aux)
 }
 
 static int
-gt_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+gt_print(void *aux, const char *pnp)
 {
+
 	/* XXX */
 	return 0;
 }
@@ -158,6 +159,9 @@ gt_timer_init(struct gt_softc *sc)
 	/* stop timer0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) & ~ENTC0);
+	/* mask timer0 interrupt */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK) & ~T0EXP);
 
 	timer_start = gt_timer0_init;
 	timer_read  = gt_timer0_read;
@@ -176,6 +180,9 @@ gt_timer0_init(void *cookie)
 	/* start timer0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) | ENTC0);
+	/* unmask timer0 interrupt */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK) | T0EXP);
 }
 
 static long

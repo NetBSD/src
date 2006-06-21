@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.55 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.55.2.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55.2.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -134,7 +134,7 @@ struct md_upte *curupte;	/* SH3 wired u-area hack */
 #error "IOM_RAM_BEGIN is physical address. not P1 address."
 #endif
 
-#define	VBR	(u_int8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
+#define	VBR	(uint8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
 vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
@@ -148,7 +148,7 @@ extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
 
@@ -194,7 +194,7 @@ sh_cpu_init(int arch, int product)
 	if (!SH_HAS_UNIFIED_CACHE)
 		sh_icache_sync_all();
 
-	__asm__ __volatile__("ldc %0, vbr" :: "r"(VBR));
+	__asm volatile("ldc %0, vbr" :: "r"(VBR));
 
 	/* kernel stack setup */
 	__sh_switch_resume = CPU_IS_SH3 ? sh3_switch_resume : sh4_switch_resume;
@@ -235,8 +235,8 @@ sh_proc0_init()
 	sf = &curpcb->pcb_sf;
 	sf->sf_r6_bank = u + PAGE_SIZE;
 	sf->sf_r7_bank = sf->sf_r15	= u + USPACE;
-	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
-	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
+	__asm volatile("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
+	__asm volatile("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
 
 	lwp0.l_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
 #ifdef KSTACK_DEBUG
@@ -478,12 +478,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack;
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
+	case 0:		/* FALLTHROUGH */ /* handled by sendsig_sigcontext */
+	case 1:		/* FALLTHROUGH */ /* handled by sendsig_sigcontext */
 	default:	/* unknown version */
 		printf("sendsig_siginfo: bad version %d\n",
 		       ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
+		/* NOTREACHED */
 	case 2:
 		break;
 	}
@@ -745,8 +746,8 @@ cpu_reset()
 	_cpu_exception_suspend();
 	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);
 
-	goto *(u_int32_t *)0xa0000000;
+#ifndef __lint__
+	goto *(void *)0xa0000000;
+#endif
 	/* NOTREACHED */
-	while (1)
-		;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxreg.h,v 1.3 2005/01/31 05:51:44 joff Exp $ */
+/*	$NetBSD: ep93xxreg.h,v 1.3.6.1 2006/06/21 14:49:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -72,7 +72,17 @@
  *            External SMC CS#6 ROM/SRAM
  * 6000 0000 ---------------------------
  *            Device 4
- *            Reserved
+ *            PCMCIA/CompactFlash
+ *              5000 0000 - 5fff ffff
+ *                  Reserved
+ *              4c00 0000 - 4fff ffff
+ *                  Slot0 Memory space
+ *              4800 0000 - 4bff ffff
+ *                  Slot0 Attribute space
+ *              4400 0000 - 47ff ffff
+ *                  Reserved
+ *              4000 0000 - 43ff ffff
+ *                  Slot0 I/O space
  * 4000 0000 ---------------------------
  *            Device 3
  *            External SMC CS#3 ROM/SRAM
@@ -106,6 +116,8 @@
  * F010 0000 ---------------------------
  *            AHB bus (1Mbyte)
  * F000 0000 ---------------------------
+ *            PCMCIA slot0 space
+ * E000 0000 ---------------------------
  *            Kernel text and data
  * C000 0000 ---------------------------
  * 0000 0000 ---------------------------
@@ -135,18 +147,22 @@
 #define   EP93XX_VIC_VectAddr0	0x00000100UL
 #define   EP93XX_VIC_VectCntl0	0x00000200UL
 #define   EP93XX_VIC_PeriphID0	0x00000fe0UL
+#define  EP93XX_AHB_SMC		0x00080000UL
 
 #define	EP93XX_APB_VBASE	0xf0100000UL
 #define	EP93XX_APB_HWBASE	0x80800000UL
 #define	EP93XX_APB_SIZE		0x00200000UL	/* 2Mbyte */
 #define  EP93XX_APB_GPIO	0x00040000UL
 #define  EP93XX_APB_GPIO_SIZE	0x000000d0UL
-#define   EP93XX_GPIO_PADR	0x00000000UL
-#define   EP93XX_GPIO_PBDR	0x00000004UL
-#define   EP93XX_GPIO_PADDR	0x00000010UL
-#define   EP93XX_GPIO_PBDDR	0x00000014UL
-#define   EP93XX_GPIO_PHDR	0x00000040UL
-#define   EP93XX_GPIO_PHDDR	0x00000044UL
+#define  EP93XX_APB_SSP		0x000a0000UL
+#define  EP93XX_APB_SSP_SIZE	0x00000018UL
+#define   EP93XX_SSP_SSPCR0	0x00000000UL
+#define   EP93XX_SSP_SSPCR1	0x00000004UL
+#define   EP93XX_SSP_SSPDR	0x00000008UL
+#define   EP93XX_SSP_SSPSR	0x0000000cUL
+#define   EP93XX_SSP_SSPCPSR	0x00000010UL
+#define   EP93XX_SSP_SSPIIR	0x00000014UL
+#define   EP93XX_SSP_SSPICR	0x00000014UL
 #define  EP93XX_APB_SYSCON	0x00130000UL
 #define  EP93XX_APB_SYSCON_SIZE	0x000000c0UL
 #define   EP93XX_SYSCON_PwrSts	0x00000000UL
@@ -155,16 +171,29 @@
 #define   EP93XX_SYSCON_TEOI	0x00000018UL
 #define   EP93XX_SYSCON_ClkSet1	0x00000020UL
 #define   EP93XX_SYSCON_ClkSet2	0x00000024UL
+#define   EP93XX_SYSCON_DeviceCfg	0x00000080UL
 #define   EP93XX_SYSCON_ChipID	0x00000094UL
 #define  EP93XX_APB_TIMERS	0x00010000UL
-#define   EP93XX_TIMERS_Timer4Enable	0x00000064UL
-#define   EP93XX_TIMERS_Timer4ValueHigh	0x00000064UL
-#define   EP93XX_TIMERS_Timer4ValueLow	0x00000060UL
 #define  EP93XX_APB_UART1	0x000c0000UL
 #define  EP93XX_APB_UART2	0x000d0000UL
 #define  EP93XX_APB_UART_SIZE	0x00000220UL
 #define   EP93XX_UART_Flag	0x00000018UL
 #define   EP93XX_UART_Data	0x00000000UL
+#define  EP93XX_APB_RTC		0x00120000UL
+#define  EP93XX_APB_RTC_SIZE	0x00000112UL
+#define  EP93XX_APB_WDOG	0x00140000UL
+#define  EP93XX_APB_WDOG_SIZE	0x00000008UL
+
+/* EP93xx PCMCIA space */
+#define	EP93XX_PCMCIA0_VBASE	0xe0000000UL
+#define	EP93XX_PCMCIA0_HWBASE	0x40000000UL
+#define	EP93XX_PCMCIA_SIZE	0x10000000UL
+#define  EP93XX_PCMCIA_IO	0x00000000UL
+#define  EP93XX_PCMCIA_IO_SIZE	0x04000000UL
+#define  EP93XX_PCMCIA_ATTRIBUTE	0x08000000UL
+#define  EP93XX_PCMCIA_ATTRIBUTE_SIZE	0x04000000UL
+#define  EP93XX_PCMCIA_COMMON	0x0c000000UL
+#define  EP93XX_PCMCIA_COMMON_SIZE	0x04000000UL
 
 #define NIRQ			64
 #define VIC_NIRQ		32

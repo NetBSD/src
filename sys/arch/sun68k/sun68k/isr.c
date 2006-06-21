@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6 2005/01/22 15:36:12 chs Exp $	*/
+/*	$NetBSD: isr.c,v 1.6.8.1 2006/06/21 14:57:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6 2005/01/22 15:36:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.8.1 2006/06/21 14:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +306,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	struct softintr_handler *sh;
 	struct softintr_head *shd;
 
+	ipl &= ~PSL_S;
 	if (ipl < _IPL_SOFT_LEVEL_MIN || ipl > _IPL_SOFT_LEVEL_MAX)
 		panic("softintr_establish: unsupported soft IPL");
 

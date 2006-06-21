@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.13 2003/11/24 23:24:18 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.13.16.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,25 +45,29 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.13 2003/11/24 23:24:18 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.13.16.1 2006/06/21 14:55:39 yamt Exp $")
 
 
 /*
- * Exception vectors. following routines are copied to vector addreses.
+ * Exception vectors. The following routines are copied to vector addreses.
  *	sh_vector_generic:	VBR + 0x100
  *	sh_vector_tlbmiss:	VBR + 0x400
  *	sh_vector_interrupt:	VBR + 0x600
  */
 
+#define VECTOR_END_MARKER(sym)			\
+		.globl	_C_LABEL(sym);		\
+	_C_LABEL(sym):
+
+
 /*
- * void sh_vector_generic(void) __attribute__((__noreturn__)):
- *	copied to VBR+0x100. This code should be relocatable and max 384
- *	instructions.
+ * LINTSTUB: Var: char sh_vector_generic[1];
+ *
+ * void sh_vector_generic(void) __attribute__((__noreturn__))
+ *	Copied to VBR+0x100.  This code should be position independent
+ *	and no more than 786 bytes long (== 0x400 - 0x100).
  */
-	.globl	_C_LABEL(sh_vector_generic), _C_LABEL(sh_vector_generic_end)
-	.text
-	.align	2
-_C_LABEL(sh_vector_generic):
+NENTRY(sh_vector_generic)
 	__EXCEPTION_ENTRY
 	__INTR_MASK(r0, r1)
 	/* Identify exception cause */
@@ -127,55 +131,57 @@ _L.general:	.long	_C_LABEL(general_exception)
 _L.ast:		.long	_C_LABEL(ast)
 _L.TLB_PROT_ST:	.long	0xc0
 _L.VPN_MASK:	.long	0xfffff000
-_C_LABEL(sh_vector_generic_end):	.long	0
+
+/* LINTSTUB: Var: char sh_vector_generic_end[1]; */
+VECTOR_END_MARKER(sh_vector_generic_end)
+	SET_ENTRY_SIZE(sh_vector_generic)
+
 
 #ifdef SH3
 /*
- * void sh3_vector_tlbmiss(void) __attribute__((__noreturn__)):
- *	copied to VBR+0x400. This code should be relocatable and max 256
- *	instructions.
+ * LINTSTUB: Var: char sh3_vector_tlbmiss[1];
+ *
+ * void sh3_vector_tlbmiss(void) __attribute__((__noreturn__))
+ *	Copied to VBR+0x400.  This code should be position independent
+ *	and no more than 512 bytes long (== 0x600 - 0x400).
  */
-	.globl	_C_LABEL(sh3_vector_tlbmiss), _C_LABEL(sh3_vector_tlbmiss_end)
-	.text
-	.align	2
-_C_LABEL(sh3_vector_tlbmiss):
+NENTRY(sh3_vector_tlbmiss)
 	__EXCEPTION_ENTRY
-	mov.l	_L.TEA3, r0
-	mov.l	@r0,	r6
-	mov.l	__L.VPN_MASK, r1
-	and	r1,	r6	/* 3rd arg */
+	mov	#(SH3_TEA & 0xff), r0
+	mov.l	@r0,	r6	/* 3rd arg: va = TEA */
 #if !defined(P1_STACK)
 	/* Load kernel stack */
-	tst	r6,	r6	/* check VPN == 0 */
+	mov.l	__L.VPN_MASK, r0
+	and	r6,	r0
+	tst	r0,	r0	/* check VPN == 0 */
 	bt	6f
 	mov.l	_L.CURUPTE, r1
 	mov.l	@r1,	r1
 	mov	#UPAGES,r3
 	mov	#1,	r2
 4:	mov.l	@r1+,	r7
-	cmp/eq	r7,	r6	/* md_upte.addr: u-area VPN */
+	cmp/eq	r7,	r0	/* md_upte.addr: u-area VPN */
 	bt	5f
 	add	#4,	r1	/* skip md_upte.data */
 	cmp/eq	r2,	r3
 	bf/s	4b
 	 add	#1,	r2
-	bra	6f
-	 nop
+	bra	7f		/* pull insn at 6f into delay slot */
+	 mov	#(SH3_EXPEVT & 0xff), r0
 5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
-	mov.l	_L.PTEL, r1
+	mov	#(SH3_PTEL & 0xff), r1
 	mov.l	r2,	@r1
-	mov.l	_L.PTEH, r1
+	mov	#(SH3_PTEH & 0xff), r1
 	mov.l	@r1,	r2
 	mov.l	__L.VPN_MASK, r0
 	and	r2,	r0
 	mov.l	r0,	@r1	/* ASID 0 */
 	ldtlb
-	mov.l	r2,	@r1	/* restore ASID */
 	bra	3f
-	 nop
+	 mov.l	r2,	@r1	/* restore ASID */
 #endif /* !P1_STACK */
-6:	mov.l	_L.EXPEVT3, r0
-	mov.l	@r0,	r0
+6:	mov	#(SH3_EXPEVT & 0xff), r0
+7:	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
 	mov.l	2f,	r0
 	mov.l	@r0,	r4	/* 1st arg */
@@ -188,26 +194,24 @@ _C_LABEL(sh3_vector_tlbmiss):
 	.align	2
 2:		.long	_C_LABEL(curlwp)
 1:		.long	_C_LABEL(tlb_exception)
-_L.EXPEVT3:	.long	SH3_EXPEVT
-_L.TEA3:	.long	SH3_TEA
-_L.PTEL:	.long	SH3_PTEL
-_L.PTEH:	.long	SH3_PTEH
 __L.VPN_MASK:	.long	0xfffff000
 _L.CURUPTE:	.long	_C_LABEL(curupte)
-	.align	2
-_C_LABEL(sh3_vector_tlbmiss_end):	.long	0
+
+/* LINTSTUB: Var: char sh3_vector_tlbmiss_end[1]; */
+VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
+	SET_ENTRY_SIZE(sh3_vector_tlbmiss)
 #endif /* SH3 */
+
 
 #ifdef SH4
 /*
- * void sh4_vector_tlbmiss(void) __attribute__((__noreturn__)):
- *	copied to VBR+0x400. This code should be relocatable and max 256
- *	instructions.
+ * LINTSTUB: Var: char sh4_vector_tlbmiss[1];
+ *
+ * void sh4_vector_tlbmiss(void) __attribute__((__noreturn__))
+ *	Copied to VBR+0x400.  This code should be position independent
+ *	and no more than 512 bytes long (== 0x600 - 0x400).
  */
-	.globl	_C_LABEL(sh4_vector_tlbmiss), _C_LABEL(sh4_vector_tlbmiss_end)
-	.text
-	.align	2
-_C_LABEL(sh4_vector_tlbmiss):
+NENTRY(sh4_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov.l	_L.TEA4, r0
 	mov.l	@r0,	r6
@@ -230,17 +234,20 @@ _C_LABEL(sh4_vector_tlbmiss):
 _L.EXPEVT4:	.long	SH4_EXPEVT
 _L.TEA4:	.long	SH4_TEA
 ___L.VPN_MASK:	.long	0xfffff000
-_C_LABEL(sh4_vector_tlbmiss_end):	.long	0
+
+/* LINTSTUB: Var: char sh4_vector_tlbmiss_end[1]; */
+VECTOR_END_MARKER(sh4_vector_tlbmiss_end)
+	SET_ENTRY_SIZE(sh4_vector_tlbmiss)
 #endif /* SH4 */
 
+
 /*
+ * LINTSTUB: Var: char sh_vector_interrupt[1];
+ *
  * void sh_vector_interrupt(void) __attribute__((__noreturn__)):
  *	copied to VBR+0x600. This code should be relocatable.
  */
-	.globl	_C_LABEL(sh_vector_interrupt), _C_LABEL(sh_vector_interrupt_end)
-	.align	2
-	.text
-_C_LABEL(sh_vector_interrupt):
+NENTRY(sh_vector_interrupt)
 	__EXCEPTION_ENTRY
 	xor	r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* (for debug) */
@@ -269,4 +276,7 @@ _C_LABEL(sh_vector_interrupt):
 __L.intc_intr:		.long	_C_LABEL(intc_intr)
 __L.ast:		.long	_C_LABEL(ast)
 __L.uvmexp.intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
-_C_LABEL(sh_vector_interrupt_end):	.long	0
+
+/* LINTSTUB: Var: char sh_vector_interrupt_end[1]; */
+VECTOR_END_MARKER(sh_vector_interrupt_end)
+	SET_ENTRY_SIZE(sh_vector_interrupt)

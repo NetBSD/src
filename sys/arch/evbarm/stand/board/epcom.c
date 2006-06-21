@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.1 2004/12/24 10:34:27 joff Exp $	*/
+/*	$NetBSD: epcom.c,v 1.1.12.1 2006/06/21 14:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -46,12 +46,12 @@
 #include "board.h"
 
 #define SCADDR	(EP93XX_APB_HWBASE + EP93XX_APB_SYSCON)
-#define	EPCOM_READ(x)		*((__volatile uint32_t *) (CONADDR + (EPCOM_ ## x)))
-#define	EPCOM_WRITE(x, v)	*((__volatile uint32_t *) \
+#define	EPCOM_READ(x)		*((volatile uint32_t *) (CONADDR + (EPCOM_ ## x)))
+#define	EPCOM_WRITE(x, v)	*((volatile uint32_t *) \
 					(CONADDR + (EPCOM_ ## x))) = (v)
-#define	SYSCON_READ(x)		*((__volatile uint32_t *) \
+#define	SYSCON_READ(x)		*((volatile uint32_t *) \
 					(SCADDR + (EP93XX_SYSCON_ ## x)))
-#define	SYSCON_WRITE(x, v)	*((__volatile uint32_t *) \
+#define	SYSCON_WRITE(x, v)	*((volatile uint32_t *) \
 					(SCADDR + (EP93XX_SYSCON_ ## x))) = (v)
 
 #define	ISSET(t,f)	((t) & (f))
@@ -63,7 +63,7 @@ cons_init(void)
 
 	while(!ISSET(EPCOM_READ(Flag), Flag_TXFE));
 
-	/* Make UART base freq 7Mhz */
+	/* Make UART base freq 7 MHz */
 	pwrcnt = SYSCON_READ(PwrCnt);
 	pwrcnt &= ~(PwrCnt_UARTBAUD);
 	SYSCON_WRITE(PwrCnt, pwrcnt);

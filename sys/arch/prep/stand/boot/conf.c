@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2003/08/07 16:29:21 agc Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.16.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -33,16 +33,11 @@
 
 #include <lib/libsa/stand.h>
 
-int fdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int fdopen __P((struct open_file *, ...));
-int fdclose __P((struct open_file *));
-
-int instrategy __P((void *, int , daddr_t, size_t, void *, size_t *));
-int inopen __P((struct open_file *, ...));
-int inclose __P((struct open_file *));
+int instrategy(void *, int , daddr_t, size_t, void *, size_t *);
+int inopen(struct open_file *, ...);
+int inclose(struct open_file *);
 
 struct devsw devsw[] = {
-	{ "fd",	fdstrategy, fdopen, fdclose, noioctl },
 	{ "in",	instrategy, inopen, inclose, noioctl },
 };
 

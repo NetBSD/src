@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr405xx.h,v 1.2 2004/12/17 16:23:57 shige Exp $	*/
+/*	$NetBSD: dcr405xx.h,v 1.2.12.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -38,16 +38,6 @@
  *   for AMCC(IBM) PowerPC 405 series
  * 	405CR/NPe405L/NPe405H/405EP/405GP/405GPr
  */
-
-#ifndef _LOCORE
-#define	mtdcr(reg, val)						\
-	asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
-#define	mfdcr(reg)						\
-	( { u_int32_t val;					\
-	  asm volatile("mfdcr %0,%1" : "=r"(val) : "K"(reg));	\
-	  val; } )
-#endif /* _LOCORE */
-
 
 /*****************************************************************************/
 /*

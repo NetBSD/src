@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.6.16.1 2006/06/21 14:55:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,13 +43,13 @@
 #ifndef _SH3_LOCK_H_
 #define	_SH3_LOCK_H_
 
-static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *)) 
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
 
 static __inline void
@@ -63,7 +63,7 @@ static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
-	 __asm __volatile(
+	 __asm volatile(
 		"1:	tas.b	%0	\n"
 		"	bf	1b	\n"
 		: "=m" (*alp));
@@ -74,7 +74,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __rv;
 
-	__asm __volatile(
+	__asm volatile(
 		"	tas.b	%0	\n"
 		"	mov	#0, %1	\n"
 		"	rotcl	%1	\n"

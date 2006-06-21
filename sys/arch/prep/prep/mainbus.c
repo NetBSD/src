@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.12.1 2006/06/21 14:55:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.12.1 2006/06/21 14:55:19 yamt Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
 
-#include "obio.h"
+#include "pnpbus.h"
 #include "pci.h"
 
 #include <sys/param.h>
@@ -47,11 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2004/08/30 15:05:18 drochner Exp $"
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-#include <prep/dev/obiovar.h>
+#include <prep/pnpbus/pnpbusvar.h>
 
 #include <machine/platform.h>
 #include <machine/residual.h>
@@ -67,19 +68,21 @@ int	mainbus_print(void *, const char *);
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
+	struct pnpbus_attach_args mba_paa;
 };
 
 /* There can be only one. */
 int mainbus_found = 0;
+struct prep_isa_chipset prep_isa_chipset;
+struct prep_isa_chipset *prep_ict;
+struct prep_pci_chipset *prep_pct;
+
 
 /*
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if (mainbus_found)
@@ -91,15 +94,12 @@ mainbus_match(parent, match, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args mba;
 	struct confargs ca;
 #if NPCI > 0
-	static struct prep_pci_chipset pc;
+	struct prep_pci_chipset_businfo *pbi;
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
@@ -117,10 +117,6 @@ mainbus_attach(parent, self, aux)
 	ca.ca_node = 0;
 	config_found_ia(self, "mainbus", &ca, mainbus_print);
 
-#if NOBIO > 0
-	obio_reserve_resource_map();
-#endif
-
 	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
@@ -128,7 +124,21 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	(*platform->pci_get_chipset_tag)(&pc);
+	prep_pct = malloc(sizeof(struct prep_pci_chipset), M_DEVBUF, M_NOWAIT);
+	KASSERT(prep_pct != NULL);
+	prep_pci_get_chipset_tag(prep_pct);
+
+	pbi = malloc(sizeof(struct prep_pci_chipset_businfo),
+	    M_DEVBUF, M_NOWAIT);
+	KASSERT(pbi != NULL);
+	pbi->pbi_properties = prop_dictionary_create();
+        KASSERT(pbi->pbi_properties != NULL);
+
+	SIMPLEQ_INIT(&prep_pct->pc_pbi);
+	SIMPLEQ_INSERT_TAIL(&prep_pct->pc_pbi, pbi, next);
+
+	/* find the primary host bridge */
+	setup_pciintr_map(pbi, 0, 0, 0);
 
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
@@ -136,7 +146,7 @@ mainbus_attach(parent, self, aux)
 	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(&pc, ioext, memext, NULL, 0, CACHELINESIZE);
+	pci_configure_bus(prep_pct, ioext, memext, NULL, 0, CACHELINESIZE);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
@@ -146,30 +156,24 @@ mainbus_attach(parent, self, aux)
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_dmat64 = NULL;
-	mba.mba_pba.pba_pc = &pc;
+	mba.mba_pba.pba_pc = prep_pct;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
 #endif
 
-#if NOBIO > 0
-	obio_reserve_resource_unmap();
-
-	if (platform->obiodevs != obiodevs_nodev) {
-		bzero(&mba, sizeof(mba));
-		mba.mba_busname = "obio"; /* XXX needs placeholder in pba */
-		mba.mba_pba.pba_iot = &prep_isa_io_space_tag;
-		mba.mba_pba.pba_memt = &prep_isa_mem_space_tag;
-		config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
-	}
+#if NPNPBUS > 0
+	bzero(&mba, sizeof(mba));
+	mba.mba_paa.paa_iot = &prep_isa_io_space_tag;
+	mba.mba_paa.paa_memt = &prep_isa_mem_space_tag;
+	mba.mba_paa.paa_ic = &prep_isa_chipset;
+	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
 #endif
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	union mainbus_attach_args *mba = aux;
 

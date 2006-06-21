@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.6 2004/04/28 23:51:24 rjs Exp $
+#	$NetBSD: files.ibmnws,v 1.6.14.1 2006/06/21 14:52:58 yamt Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -15,6 +15,7 @@ file	arch/ibmnws/ibmnws/machdep.c
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/softintr.c
 
 # General files
 file	dev/cons.c

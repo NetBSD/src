@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.8 2005/05/31 00:45:05 chs Exp $   */
+/*	$NetBSD: intvec.S,v 1.8.2.1 2006/06/21 14:57:33 yamt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -268,10 +268,13 @@ SCBENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
 	pushr	$0xfff
 	mfpr	$PR_USP, -(%sp)
+	mfpr    $PR_SSP, %r0
+	movl	CI_CURLWP(%r0), %r0
+	movl	L_PROC(%r0), %r0
 	pushl	%ap
 	pushl	%fp
 	pushl	%sp		# pointer to syscall frame; defined in trap.h
-	calls	$1, _C_LABEL(syscall)
+	calls	$1, *P_MD_SYSCALL(%r0)
 	movl	(%sp)+, %fp
 	movl	(%sp)+, %ap
 	mtpr	(%sp)+, $PR_USP

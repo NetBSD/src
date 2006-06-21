@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.7 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.7.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.7 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.7.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.7 2005/02/26 23:04:16 perry Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -195,20 +196,20 @@ static int dscp2index __P((u_int8_t));
 altqdev_decl(rio);
 
 int
-rioopen(dev, flag, fmt, p)
+rioopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-rioclose(dev, flag, fmt, p)
+rioclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	rio_queue_t *rqp;
 	int err, error = 0;
@@ -224,16 +225,17 @@ rioclose(dev, flag, fmt, p)
 }
 
 int
-rioioctl(dev, cmd, addr, flag, p)
+rioioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	rio_queue_t *rqp;
 	struct rio_interface *ifacep;
 	struct ifnet *ifp;
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -245,7 +247,9 @@ rioioctl(dev, cmd, addr, flag, p)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
@@ -279,26 +283,24 @@ rioioctl(dev, cmd, addr, flag, p)
 		}
 
 		/* allocate and initialize rio_queue_t */
-		MALLOC(rqp, rio_queue_t *, sizeof(rio_queue_t), M_DEVBUF, M_WAITOK);
+		rqp = malloc(sizeof(rio_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (rqp == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(rqp, 0, sizeof(rio_queue_t));
 
-		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		rqp->rq_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (rqp->rq_q == NULL) {
-			FREE(rqp, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		rqp->rq_rio = rio_alloc(0, NULL, 0, 0);
 		if (rqp->rq_rio == NULL) {
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			error = ENOMEM;
 			break;
 		}
@@ -317,8 +319,8 @@ rioioctl(dev, cmd, addr, flag, p)
 				    NULL, NULL);
 		if (error) {
 			rio_destroy(rqp->rq_rio);
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			break;
 		}
 
@@ -462,8 +464,8 @@ rio_detach(rqp)
 	}
 
 	rio_destroy(rqp->rq_rio);
-	FREE(rqp->rq_q, M_DEVBUF);
-	FREE(rqp, M_DEVBUF);
+	free(rqp->rq_q, M_DEVBUF);
+	free(rqp, M_DEVBUF);
 	return (error);
 }
 
@@ -499,10 +501,9 @@ rio_alloc(weight, params, flags, pkttime)
 	int	w, i;
 	int	npkts_per_sec;
 
-	MALLOC(rp, rio_t *, sizeof(rio_t), M_DEVBUF, M_WAITOK);
+	rp = malloc(sizeof(rio_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (rp == NULL)
 		return (NULL);
-	(void)memset(rp, 0, sizeof(rio_t));
 
 	rp->rio_flags = flags;
 	if (pkttime == 0)
@@ -587,7 +588,7 @@ rio_destroy(rp)
 	rio_t *rp;
 {
 	wtab_destroy(rp->rio_wtab);
-	FREE(rp, M_DEVBUF);
+	free(rp, M_DEVBUF);
 }
 
 void

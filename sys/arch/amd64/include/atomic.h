@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.18.1 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -42,13 +42,13 @@
 
 static __inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val) {
-    __asm__ volatile ("xchgq %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    __asm volatile ("xchgq %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
 static __inline u_int32_t
 x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val) {
-    __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
@@ -56,7 +56,7 @@ x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val) {
 
 static __inline int32_t
 x86_atomic_testset_i32(volatile int32_t *ptr, int32_t val) {
-    __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
@@ -64,24 +64,24 @@ x86_atomic_testset_i32(volatile int32_t *ptr, int32_t val) {
 
 static __inline void
 x86_atomic_setbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
-    __asm __volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+    __asm volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
-    __asm __volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 
 
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
-    __asm __volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
-    __asm __volatile("lock ; andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm volatile("lock ; andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 #define x86_atomic_testset_ul	x86_atomic_testset_u32

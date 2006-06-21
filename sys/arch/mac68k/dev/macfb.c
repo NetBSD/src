@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
+/* $NetBSD: macfb.c,v 1.11.10.1 2006/06/21 14:53:02 yamt Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.11.10.1 2006/06/21 14:53:02 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -90,8 +90,8 @@ const struct wsscreen_list macfb_screenlist = {
 	_macfb_scrlist
 };
 
-static int	macfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t	macfb_mmap(void *, off_t, int);
+static int	macfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	macfb_mmap(void *, void *, off_t, int);
 static int	macfb_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
 static void	macfb_free_screen(void *, void *);
@@ -240,13 +240,14 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 
 #if NGRF > 0
-	grf_attach(sc, self->dv_unit);
+	grf_attach(sc, device_unit(self));
 #endif
 }
 
 
 int
-macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+macfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct macfb_softc *sc = v;
 	struct macfb_devconfig *dc = sc->sc_dc;
@@ -282,7 +283,7 @@ macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 static paddr_t
-macfb_mmap(void *v, off_t offset, int prot)
+macfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct macfb_softc *sc = v;
 	struct macfb_devconfig *dc = sc->sc_dc;

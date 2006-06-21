@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 2003/11/21 22:57:14 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.5.16.1 2006/06/21 14:55:03 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2003 Matt Thomas
@@ -133,7 +133,7 @@ struct steg {
 /* Low Word */
 #define	STE_VSID	(~0xfffL)	/* Virtual Segment ID */
 #define	STE_VSID_SHFT	12
-#defien	STE_VSID_WIDTH	52
+#define	STE_VSID_WIDTH	52
 
 #define	SR_VSID_SHFT	STE_VSID_SHFT	/* compatibility with PPC_OEA */
 #define	SR_VSID_WIDTH	STE_VSID_WIDTH	/* compatibility with PPC_OEA */

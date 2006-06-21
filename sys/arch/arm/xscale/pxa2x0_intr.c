@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.6 2005/07/04 00:42:37 bsh Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.6.2.1 2006/06/21 14:49:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.6 2005/07/04 00:42:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.6.2.1 2006/06/21 14:49:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,9 @@ static struct {
 	/* struct evbnt ev; */
 } handler[ICU_LEN];
 
-__volatile int softint_pending;
-__volatile int current_spl_level;
-__volatile int intr_mask;
+volatile int softint_pending;
+volatile int current_spl_level;
+volatile int intr_mask;
 /* interrupt masks for each level */
 int pxa2x0_imask[NIPL];
 static int extirq_level[ICU_LEN];
@@ -146,7 +146,7 @@ pxa2x0_intr_bootstrap(vaddr_t addr)
 	pxaic_base = addr;
 }
 
-static __inline void
+static inline void
 __raise(int ipl)
 {
 
@@ -352,7 +352,7 @@ pxa2x0_do_pending(void)
 #define	DO_SOFTINT(si,ipl)						\
 	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {	\
 		softint_pending &= ~SI_TO_IRQBIT(si);			\
-                __raise(ipl);                                           \
+		__raise(ipl);						\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\

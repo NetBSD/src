@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.33 2003/07/15 02:29:32 lukem Exp $ */
+/*	$NetBSD: tx39.c,v 1.33.16.1 2006/06/21 14:51:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.33 2003/07/15 02:29:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.33.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -188,8 +188,8 @@ tx_find_dram(paddr_t start, paddr_t end)
 {
 	caddr_t page, startaddr, endaddr;
 	u_int32_t magic0, magic1;
-#define MAGIC0		(*(__volatile u_int32_t *)(page + 0))
-#define MAGIC1		(*(__volatile u_int32_t *)(page + 4))
+#define MAGIC0		(*(volatile u_int32_t *)(page + 0))
+#define MAGIC1		(*(volatile u_int32_t *)(page + 4))
 
 	startaddr = (void *)MIPS_PHYS_TO_KSEG1(start);
 	endaddr = (void *)MIPS_PHYS_TO_KSEG1(end);

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.MP,v 1.3 2003/11/21 09:29:11 abs Exp $
+#	$NetBSD: INSTALL.MP,v 1.3.16.1 2006/06/21 14:52:09 yamt Exp $
 #
 #	INSTALL.MP -- Install, plus enable Multiprocessor support.
 #	Mostly to let people test-boot MP systems.
@@ -6,7 +6,6 @@
 include "arch/i386/conf/INSTALL"
 
 options 	MULTIPROCESSOR
-options 	COM_MPLOCK	# com MP locking; REQUIRED on MP i386
 
 options 	APM_NO_IDLE
 options 	DIAGNOSTIC	# STRONGLY RECOMMENDED

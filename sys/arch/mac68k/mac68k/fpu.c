@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.33 2005/06/09 22:01:06 rjs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.33.2.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2005/06/09 22:01:06 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33.2.1 2006/06/21 14:53:13 yamt Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -129,7 +129,7 @@ fpu_probe(void)
 	 * state, so we can determine which we have by
 	 * examining the size of the FP state frame
 	 */
-	asm("fnop");
+	__asm("fnop");
 
 	nofault = 0;
 
@@ -145,7 +145,7 @@ fpu_probe(void)
 	 * have if this will.  We save the state in order to get the
 	 * size of the frame.
 	 */
-	asm("movl %0,%%a0; fsave %%a0@" : : "a" (fpframe) : "a0");
+	__asm("movl %0,%%a0; fsave %%a0@" : : "a" (fpframe) : "a0");
 
 	b = *((u_char *)fpframe + 1);
 

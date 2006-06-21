@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.72 2005/07/04 00:42:36 bsh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.72.2.1 2006/06/21 14:49:08 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.72 2005/07/04 00:42:36 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.72.2.1 2006/06/21 14:49:08 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -829,7 +829,7 @@ get_cachetype_cp15()
 	u_int ctype, isize, dsize;
 	u_int multiplier;
 
-	__asm __volatile("mrc p15, 0, %0, c0, c0, 1"
+	__asm volatile("mrc p15, 0, %0, c0, c0, 1"
 		: "=r" (ctype));
 
 	/*
@@ -1137,7 +1137,7 @@ set_cpufuncs()
 		 *	- overflow indications cleared
 		 *	- all counters disabled
 		 */
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
@@ -1146,7 +1146,7 @@ set_cpufuncs()
 		/*
 		 * Crank CCLKCFG to maximum legal value.
 		 */
-		__asm __volatile ("mcr p14, 0, %0, c6, c0, 0"
+		__asm volatile ("mcr p14, 0, %0, c6, c0, 0"
 			:
 			: "r" (XSCALE_CCLKCFG));
 #endif
@@ -1156,7 +1156,7 @@ set_cpufuncs()
 		 * don't really support it, yet.  Clear any pending
 		 * error indications.
 		 */
-		__asm __volatile("mcr p13, 0, %0, c0, c1, 0"
+		__asm volatile("mcr p13, 0, %0, c0, c1, 0"
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
@@ -1183,7 +1183,8 @@ set_cpufuncs()
 #endif /* CPU_XSCALE_80200 */
 #ifdef CPU_XSCALE_80321
 	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600 ||
-	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0) {
+	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0 ||
+	    cputype == CPU_ID_80219_400 || cputype == CPU_ID_80219_600) {
 		i80321_icu_init();
 
 		/*
@@ -1193,7 +1194,7 @@ set_cpufuncs()
 		 *	- overflow indications cleared
 		 *	- all counters disabled
 		 */
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
@@ -2003,7 +2004,7 @@ arm10_setup(args)
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
-	asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -2053,7 +2054,7 @@ arm11_setup(args)
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
-	asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -2177,6 +2178,7 @@ sa11x0_setup(args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_SA1100 || CPU_SA1110 */
@@ -2302,14 +2304,14 @@ xscale_setup(args)
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* Make sure write coalescing is turned on */
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
+	__asm volatile("mrc p15, 0, %0, c1, c0, 1"
 		: "=r" (auxctl));
 #ifdef XSCALE_NO_COALESCE_WRITES
 	auxctl |= XSCALE_AUXCTL_K;
 #else
 	auxctl &= ~XSCALE_AUXCTL_K;
 #endif
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
+	__asm volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */

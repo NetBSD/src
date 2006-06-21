@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2005/06/04 14:42:36 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137.2.1 2006/06/21 14:49:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2005/06/04 14:42:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137.2.1 2006/06/21 14:49:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -363,7 +363,7 @@ identifycpu()
 			u_int32_t	pcr;
 			char		cputxt[30];
 
-			asm(".word 0x4e7a,0x0808;"
+			__asm(".word 0x4e7a,0x0808;"
 			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
 			sprintf(cputxt, "68%s060 rev.%d",
 				pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
@@ -446,7 +446,7 @@ cpu_reboot(howto, bootstr)
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {
 		printf("halted\n\n");
-		asm("	stop	#0x2700");
+		__asm("	stop	#0x2700");
 	}
 	else {
 		if(howto & RB_DUMP)
@@ -919,8 +919,8 @@ candbtimer()
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
@@ -931,7 +931,7 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(p, epp));
+		return(exec_aout_prep_zmagic(l->l_proc, epp));
 #endif
 	return(error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2005/06/05 15:43:31 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36.2.1 2006/06/21 14:53:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2005/06/05 15:43:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.2.1 2006/06/21 14:53:49 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -269,7 +269,7 @@ initSH3(void *pc)	/* XXX return address */
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
-	__asm __volatile (
+	__asm volatile (
 		"jmp	@%0;"
 		"mov	%1, r15"
 		:: "r"(pc),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));

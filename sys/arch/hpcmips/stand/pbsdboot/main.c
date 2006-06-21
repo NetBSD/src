@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: main.c,v 1.59.16.1 2006/06/21 14:51:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -69,7 +69,7 @@ TCHAR *version_string =
 	TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 	TEXT("All rights reserved.\r\n")
 	TEXT("\r\n")
-	TEXT("http://www.NetBSD.org/Ports/hpcmips\r\n");
+	TEXT("http://www.NetBSD.org/Ports/hpcmips/\r\n");
 
 /*-----------------------------------------------------------------------------
 
@@ -226,6 +226,9 @@ struct fb_setting fb_settings[] = {
 		640, 240, 640, 0xa1d4c00,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
 	{ TEXT("MobileGearII MC/R530"), BIFB_D16_0000,
+		640, 240, 1280, 0xa180100,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
+	{ TEXT("MobileGearII MC/R550"), BIFB_D16_0000,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
 	{ TEXT("DoCoMo sigmarion"), BIFB_D16_0000,

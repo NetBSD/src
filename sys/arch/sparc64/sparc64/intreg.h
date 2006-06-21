@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.5 2003/08/07 16:29:50 agc Exp $ */
+/*	$NetBSD: intreg.h,v 1.5.16.1 2006/06/21 14:56:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,5 +54,5 @@
 
 #ifndef _LOCORE
 struct intrhand;	/* This is in cpu.h if you need it. */
-void	send_softint __P((int cpu, int level, struct intrhand *ih));
+void	send_softint(int cpu, int level, struct intrhand *ih);
 #endif

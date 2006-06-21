@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.2 2003/11/01 23:37:54 reinoud Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.2.18.1 2006/06/21 14:49:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,8 +76,8 @@ static int	iomdiic_initiate_xfer(void *, i2c_addr_t, int);
 static int	iomdiic_read_byte(void *, uint8_t *, int);
 static int	iomdiic_write_byte(void *, uint8_t, int);
 
-#define	IOMDIIC_READ	 *(__volatile uint8_t *)(IOMD_ADDRESS(IOMD_IOCR))
-#define	IOMDIIC_WRITE(x) *(__volatile uint8_t *)(IOMD_ADDRESS(IOMD_IOCR)) = (x)
+#define	IOMDIIC_READ	 *(volatile uint8_t *)(IOMD_ADDRESS(IOMD_IOCR))
+#define	IOMDIIC_WRITE(x) *(volatile uint8_t *)(IOMD_ADDRESS(IOMD_IOCR)) = (x)
 
 #define	IOMD_IOCR_SDA		0x01
 #define	IOMD_IOCR_SCL		0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.15 2003/06/29 22:28:09 fvdl Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.15.18.1 2006/06/21 14:49:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15 2003/06/29 22:28:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.18.1 2006/06/21 14:49:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15 2003/06/29 22:28:09 fvdl Exp
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
+#include <sys/kauth.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/footbridge/dc21285mem.h>
@@ -98,11 +99,6 @@ struct fcom_softc {
 };
 
 #define RX_BUFFER_SIZE	0x100
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));
@@ -210,7 +206,7 @@ fcom_attach(parent, self, aux)
 		/* locate the major number */
 		major = cdevsw_lookup_major(&fcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(major, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(major, device_unit(&sc->sc_dev));
 		printf(": console");
 	}
 	printf("\n");
@@ -226,11 +222,12 @@ static void fcomstart __P((struct tty *));
 static int fcomparam __P((struct tty *, struct termios *));
 
 int
-fcomopen(dev, flag, mode, p)
+fcomopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct fcom_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
@@ -274,7 +271,8 @@ fcomopen(dev, flag, mode, p)
 
 		fcomparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) &&
+		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
@@ -282,10 +280,10 @@ fcomopen(dev, flag, mode, p)
 }
 
 int
-fcomclose(dev, flag, mode, p)
+fcomclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -332,33 +330,34 @@ fcomwrite(dev, uio, flag)
 }
 
 int
-fcompoll(dev, events, p)
+fcompoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-fcomioctl(dev, cmd, data, flag, p)
+fcomioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) !=
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) !=
 	    EPASSTHROUGH)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = ttioctl(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {
@@ -367,7 +366,7 @@ fcomioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

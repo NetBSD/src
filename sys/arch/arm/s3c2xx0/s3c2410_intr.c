@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.4 2005/06/04 21:45:05 he Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.4.2.1 2006/06/21 14:49:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.4 2005/06/04 21:45:05 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.4.2.1 2006/06/21 14:49:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,12 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.4 2005/06/04 21:45:05 he Exp $");
 
 struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 
-__volatile int softint_pending;
+volatile int softint_pending;
 
-__volatile int current_spl_level;
-__volatile int intr_mask;
-__volatile int soft_intr_mask;
-__volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
+volatile int current_spl_level;
+volatile int intr_mask;
+volatile int soft_intr_mask;
+volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
 
 /* interrupt masks for each level */
 int s3c2xx0_imask[NIPL];

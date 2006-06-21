@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2003/10/14 22:33:29 fvdl Exp $	*/
+/*	$NetBSD: mem.c,v 1.4.16.1 2006/06/21 14:48:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4 2003/10/14 22:33:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4.16.1 2006/06/21 14:48:18 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4 2003/10/14 22:33:29 fvdl Exp $");
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -238,7 +239,7 @@ mmmmap(dev, off, prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if (off > ctob(physmem) && kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (-1);
 	return (x86_btop(off));
 }

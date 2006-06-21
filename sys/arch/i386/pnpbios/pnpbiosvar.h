@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.8 2005/06/01 16:49:14 drochner Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.8.2.1 2006/06/21 14:52:44 yamt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -38,22 +38,22 @@ struct pnp_compatid {
 
 struct pnp_mem {
 	SIMPLEQ_ENTRY(pnp_mem) next;
-	u_int32_t minbase, maxbase, align, len;
+	uint32_t minbase, maxbase, align, len;
 	int flags;
 };
 struct pnp_io {
 	SIMPLEQ_ENTRY(pnp_io) next;
-	u_int16_t minbase, maxbase, align, len;
+	uint16_t minbase, maxbase, align, len;
 	int flags;
 };
 struct pnp_irq {
 	SIMPLEQ_ENTRY(pnp_irq) next;
-	u_int16_t mask;
+	uint16_t mask;
 	int flags;
 };
 struct pnp_dma {
 	SIMPLEQ_ENTRY(pnp_dma) next;
-	u_int8_t mask;
+	uint8_t mask;
 	int flags;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3 2003/08/20 21:48:52 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.3.16.1 2006/06/21 14:48:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -49,7 +49,7 @@ struct mdproc {
 	int	md_flags;
 					/* Syscall handling function */
 	void	(*md_syscall) __P((struct trapframe *));
-	__volatile int md_astpending;
+	volatile int md_astpending;
 };
 
 /* md_flags */

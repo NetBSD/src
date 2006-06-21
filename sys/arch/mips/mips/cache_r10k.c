@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.c,v 1.2 2003/11/01 04:42:56 shin Exp $	*/
+/*	$NetBSD: cache_r10k.c,v 1.2.18.1 2006/06/21 14:53:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Takao Shinohara.
@@ -86,7 +86,7 @@ r10k_icache_sync_all(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while (va < eva) {
 		cache_op_r4k_line(va+0, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
@@ -104,7 +104,7 @@ r10k_icache_sync_range(vaddr_t va, vsize_t size)
 
 	mips_dcache_wb_range(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
@@ -124,7 +124,7 @@ r10k_icache_sync_range_index(vaddr_t va, vsize_t size)
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
-	__asm __volatile("sync");
+	__asm volatile("sync");
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able

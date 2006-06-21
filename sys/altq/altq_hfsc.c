@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.10 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.10.4.1 2006/06/21 14:47:46 yamt Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.10 2005/02/26 23:04:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.10.4.1 2006/06/21 14:47:46 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.10 2005/02/26 23:04:16 perry Exp $")
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -117,11 +118,11 @@ static void actlist_insert __P((struct hfsc_class *));
 static void actlist_remove __P((struct hfsc_class *));
 static void actlist_update __P((struct hfsc_class *));
 
-static __inline u_int64_t seg_x2y __P((u_int64_t, u_int64_t));
-static __inline u_int64_t seg_y2x __P((u_int64_t, u_int64_t));
-static __inline u_int64_t m2sm __P((u_int));
-static __inline u_int64_t m2ism __P((u_int));
-static __inline u_int64_t d2dx __P((u_int));
+static inline u_int64_t seg_x2y __P((u_int64_t, u_int64_t));
+static inline u_int64_t seg_y2x __P((u_int64_t, u_int64_t));
+static inline u_int64_t m2sm __P((u_int));
+static inline u_int64_t m2ism __P((u_int));
+static inline u_int64_t d2dx __P((u_int));
 static u_int sm2m __P((u_int64_t));
 static u_int dx2d __P((u_int64_t));
 
@@ -133,9 +134,9 @@ static u_int64_t rtsc_x2y __P((struct runtime_sc *, u_int64_t));
 static void rtsc_min __P((struct runtime_sc *, struct internal_sc *,
 			  u_int64_t, u_int64_t));
 
-int hfscopen __P((dev_t, int, int, struct proc *));
-int hfscclose __P((dev_t, int, int, struct proc *));
-int hfscioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
+int hfscopen __P((dev_t, int, int, struct lwp *));
+int hfscclose __P((dev_t, int, int, struct lwp *));
+int hfscioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
 static int hfsccmd_if_attach __P((struct hfsc_attach *));
 static int hfsccmd_if_detach __P((struct hfsc_interface *));
 static int hfsccmd_add_class __P((struct hfsc_add_class *));
@@ -165,15 +166,13 @@ hfsc_attach(ifq, bandwidth)
 	struct hfsc_if *hif;
 	struct service_curve root_sc;
 
-	MALLOC(hif, struct hfsc_if *, sizeof(struct hfsc_if),
-	       M_DEVBUF, M_WAITOK);
+	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (hif == NULL)
 		return (NULL);
-	(void)memset(hif, 0, sizeof(struct hfsc_if));
 
 	hif->hif_eligible = ellist_alloc();
 	if (hif->hif_eligible == NULL) {
-		FREE(hif, M_DEVBUF);
+		free(hif, M_DEVBUF);
 		return NULL;
 	}
 
@@ -187,7 +186,7 @@ hfsc_attach(ifq, bandwidth)
 	root_sc.m2 = bandwidth;
 	if ((hif->hif_rootclass =
 	     hfsc_class_create(hif, &root_sc, NULL, 0, 0)) == NULL) {
-		FREE(hif, M_DEVBUF);
+		free(hif, M_DEVBUF);
 		return (NULL);
 	}
 
@@ -221,7 +220,7 @@ hfsc_detach(hif)
 
 	ellist_destroy(hif->hif_eligible);
 
-	FREE(hif, M_DEVBUF);
+	free(hif, M_DEVBUF);
 
 	return (0);
 }
@@ -303,17 +302,13 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 	}
 #endif
 
-	MALLOC(cl, struct hfsc_class *, sizeof(struct hfsc_class),
-	       M_DEVBUF, M_WAITOK);
+	cl = malloc(sizeof(struct hfsc_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
 		return (NULL);
-	(void)memset(cl, 0, sizeof(struct hfsc_class));
 
-	MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-	       M_DEVBUF, M_WAITOK);
+	cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->cl_q == NULL)
 		goto err_ret;
-	(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 
 	cl->cl_actc = actlist_alloc();
 	if (cl->cl_actc == NULL)
@@ -359,20 +354,18 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 #endif /* ALTQ_RED */
 
 	if (sc != NULL && (sc->m1 != 0 || sc->m2 != 0)) {
-		MALLOC(cl->cl_rsc, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		cl->cl_rsc = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_rsc == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_rsc, 0, sizeof(struct internal_sc));
 		sc2isc(sc, cl->cl_rsc);
 		rtsc_init(&cl->cl_deadline, cl->cl_rsc, 0, 0);
 		rtsc_init(&cl->cl_eligible, cl->cl_rsc, 0, 0);
 
-		MALLOC(cl->cl_fsc, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		cl->cl_fsc = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_fsc == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_fsc, 0, sizeof(struct internal_sc));
 		sc2isc(sc, cl->cl_fsc);
 		rtsc_init(&cl->cl_virtual, cl->cl_fsc, 0, 0);
 	}
@@ -416,12 +409,12 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 #endif
 	}
 	if (cl->cl_fsc != NULL)
-		FREE(cl->cl_fsc, M_DEVBUF);
+		free(cl->cl_fsc, M_DEVBUF);
 	if (cl->cl_rsc != NULL)
-		FREE(cl->cl_rsc, M_DEVBUF);
+		free(cl->cl_rsc, M_DEVBUF);
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -473,11 +466,11 @@ hfsc_class_destroy(cl)
 #endif
 	}
 	if (cl->cl_fsc != NULL)
-		FREE(cl->cl_fsc, M_DEVBUF);
+		free(cl->cl_fsc, M_DEVBUF);
 	if (cl->cl_rsc != NULL)
-		FREE(cl->cl_rsc, M_DEVBUF);
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_rsc, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 
 	return (0);
 }
@@ -492,20 +485,18 @@ hfsc_class_modify(cl, rsc, fsc)
 
 	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0) &&
 	    cl->cl_rsc == NULL) {
-		MALLOC(rsc_tmp, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		rsc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (rsc_tmp == NULL)
 			return (ENOMEM);
-		(void)memset(rsc_tmp, 0, sizeof(struct internal_sc));
 	} else
 		rsc_tmp = NULL;
 	if (fsc != NULL && (fsc->m1 != 0 || fsc->m2 != 0) &&
 	    cl->cl_fsc == NULL) {
-		MALLOC(fsc_tmp, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		fsc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (fsc_tmp == NULL)
 			return (ENOMEM);
-		(void)memset(fsc_tmp, 0, sizeof(struct internal_sc));
 	} else
 		fsc_tmp = NULL;
 
@@ -516,7 +507,7 @@ hfsc_class_modify(cl, rsc, fsc)
 	if (rsc != NULL) {
 		if (rsc->m1 == 0 && rsc->m2 == 0) {
 			if (cl->cl_rsc != NULL) {
-				FREE(cl->cl_rsc, M_DEVBUF);
+				free(cl->cl_rsc, M_DEVBUF);
 				cl->cl_rsc = NULL;
 			}
 		} else {
@@ -531,7 +522,7 @@ hfsc_class_modify(cl, rsc, fsc)
 	if (fsc != NULL) {
 		if (fsc->m1 == 0 && fsc->m2 == 0) {
 			if (cl->cl_fsc != NULL) {
-				FREE(cl->cl_fsc, M_DEVBUF);
+				free(cl->cl_fsc, M_DEVBUF);
 				cl->cl_fsc = NULL;
 			}
 		} else {
@@ -944,8 +935,9 @@ ellist_alloc()
 {
 	ellist_t *head;
 
-	MALLOC(head, ellist_t *, sizeof(ellist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
+	head = malloc(sizeof(ellist_t), M_DEVBUF, M_WAITOK);
+	if (head != NULL)
+		TAILQ_INIT(head);
 	return (head);
 }
 
@@ -953,7 +945,7 @@ static void
 ellist_destroy(head)
 	ellist_t *head;
 {
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 }
 
 static void
@@ -1055,8 +1047,9 @@ actlist_alloc()
 {
 	actlist_t *head;
 
-	MALLOC(head, actlist_t *, sizeof(actlist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
+	head = malloc(sizeof(actlist_t), M_DEVBUF, M_WAITOK);
+	if (head != NULL)
+		TAILQ_INIT(head);
 	return (head);
 }
 
@@ -1064,7 +1057,7 @@ static void
 actlist_destroy(head)
 	actlist_t *head;
 {
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 }
 static void
 actlist_insert(cl)
@@ -1165,7 +1158,7 @@ actlist_update(cl)
 #define	SC_LARGEVAL	(1LL << 32)
 #define	SC_INFINITY	0xffffffffffffffffLL
 
-static __inline u_int64_t
+static inline u_int64_t
 seg_x2y(x, sm)
 	u_int64_t x;
 	u_int64_t sm;
@@ -1179,7 +1172,7 @@ seg_x2y(x, sm)
 	return (y);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 seg_y2x(y, ism)
 	u_int64_t y;
 	u_int64_t ism;
@@ -1197,7 +1190,7 @@ seg_y2x(y, ism)
 	return (x);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 m2sm(m)
 	u_int m;
 {
@@ -1207,7 +1200,7 @@ m2sm(m)
 	return (sm);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 m2ism(m)
 	u_int m;
 {
@@ -1220,7 +1213,7 @@ m2ism(m)
 	return (ism);
 }
 
-static __inline u_int64_t
+static inline u_int64_t
 d2dx(d)
 	u_int	d;
 {
@@ -1400,10 +1393,10 @@ rtsc_min(rtsc, isc, x, y)
  * hfsc device interface
  */
 int
-hfscopen(dev, flag, fmt, p)
+hfscopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1418,10 +1411,10 @@ hfscopen(dev, flag, fmt, p)
 }
 
 int
-hfscclose(dev, flag, fmt, p)
+hfscclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct hfsc_if *hif;
 	int err, error = 0;
@@ -1442,15 +1435,16 @@ hfscclose(dev, flag, fmt, p)
 }
 
 int
-hfscioctl(dev, cmd, addr, flag, p)
+hfscioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct hfsc_if *hif;
 	struct hfsc_interface *ifacep;
+	struct proc* p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -1462,7 +1456,9 @@ hfscioctl(dev, cmd, addr, flag, p)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;

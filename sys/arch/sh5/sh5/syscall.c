@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,11 +130,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,16 +147,12 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2005/07/01 18:01:45 christos Exp $"
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/trap.h>
 
 #include <uvm/uvm_extern.h>
 
-void	syscall_intern(struct proc *);
 static void syscall_plain(struct lwp *, struct trapframe *);
 static void syscall_fancy(struct lwp *, struct trapframe *);
 
@@ -166,16 +160,9 @@ void
 syscall_intern(struct proc *p)
 {
 
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 
@@ -247,10 +234,6 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	args += hidden;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = tf->tf_caller.r3;
 	error = (*callp->sy_call)(l, args, rval);
@@ -274,10 +257,6 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 		tf->tf_caller.r0 = 1;	/* Status returned in r0 */
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif
 }
 
 static void
@@ -428,6 +407,6 @@ child_return(void *arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.8 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.8.16.1 2006/06/21 14:52:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -39,6 +39,8 @@
  */
 #ifndef _FREEBSD_MACHDEP_H
 #define _FREEBSD_MACHDEP_H
+
+#include <compat/sys/sigtypes.h>
 
 /*
  * signal support

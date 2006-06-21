@@ -1,4 +1,4 @@
-/*	$NetBSD: 7750.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: 7750.h,v 1.2.12.1 2006/06/21 14:51:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #define	SH7750_CACHE_FLUSH()						\
 __BEGIN_MACRO								\
-	u_int32_t __e, __a;						\
+	uint32_t __e, __a;						\
 									\
 	/* D-cache */							\
 	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\

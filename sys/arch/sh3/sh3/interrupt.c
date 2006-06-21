@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15.2.1 2006/06/21 14:55:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15.2.1 2006/06/21 14:55:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -52,21 +52,27 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2005/07/03 17:59:10 uwe Exp $");
 #include <sh3/tmureg.h>
 #include <machine/intr.h>
 
-void intc_intr_priority(int, int);
-struct intc_intrhand *intc_alloc_ih(void);
-void intc_free_ih(struct intc_intrhand *);
-int intc_unknown_intr(void *);
-void netintr(void);
-void tmu1_oneshot(void);
-int tmu1_intr(void *);
-void tmu2_oneshot(void);
-int tmu2_intr(void *);
+static void intc_intr_priority(int, int);
+static struct intc_intrhand *intc_alloc_ih(void);
+static void intc_free_ih(struct intc_intrhand *);
+static int intc_unknown_intr(void *);
+
+#ifdef SH4
+static void intpri_intr_enable(int);
+static void intpri_intr_disable(int);
+#endif
+
+static void netintr(void);
+static void tmu1_oneshot(void);
+static int tmu1_intr(void *);
+static void tmu2_oneshot(void);
+static int tmu2_intr(void *);
 
 /*
  * EVTCODE to intc_intrhand mapper.
- * max #60 is SH7709_INTEVT2_ADC_ADI (0x980)
+ * max #76 is SH4_INTEVT_TMU4 (0xb80)
  */
-int8_t __intc_evtcode_to_ih[64];
+int8_t __intc_evtcode_to_ih[128];
 
 struct intc_intrhand __intc_intrhand[_INTR_N + 1] = {
 	/* Place holder interrupt handler for unregistered interrupt. */
@@ -80,10 +86,11 @@ struct sh_soft_intrhand *softnet_intrhand;
  * SH INTC support.
  */
 void
-intc_init()
+intc_init(void)
 {
 
 	switch (cpu_product) {
+#ifdef SH3
 	case CPU_PRODUCT_7709:
 	case CPU_PRODUCT_7709A:
 		_reg_write_2(SH7709_IPRC, 0);
@@ -96,10 +103,16 @@ intc_init()
 		_reg_write_2(SH3_IPRA, 0);
 		_reg_write_2(SH3_IPRB, 0);
 		break;
-	case CPU_PRODUCT_7750S:
-	case CPU_PRODUCT_7750R:
+#endif /* SH3 */
+
+#ifdef SH4
 	case CPU_PRODUCT_7751:
 	case CPU_PRODUCT_7751R: 
+		_reg_write_4(SH4_INTPRI00, 0);
+		_reg_write_4(SH4_INTMSK00, INTMSK00_MASK_ALL);
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7750S:
+	case CPU_PRODUCT_7750R:
 		_reg_write_2(SH4_IPRD, 0);
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7750:
@@ -107,6 +120,7 @@ intc_init()
 		_reg_write_2(SH4_IPRB, 0);
 		_reg_write_2(SH4_IPRC, 0);
 		break;
+#endif /* SH4 */
 	}
 }
 
@@ -157,7 +171,24 @@ intc_intr_disable(int evtcode)
 
 	s = _cpu_intr_suspend();
 	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	intc_intr_priority(evtcode, 0);
+	switch (evtcode) {
+	default:
+		intc_intr_priority(evtcode, 0);
+		break;
+
+#ifdef SH4
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		intpri_intr_disable(evtcode);
+		break;
+#endif
+	}
 	_cpu_intr_resume(s);
 }
 
@@ -169,9 +200,26 @@ intc_intr_enable(int evtcode)
 
 	s = _cpu_intr_suspend();
 	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	ih = EVTCODE_IH(evtcode);
-	/* ih_level is in the SR.IMASK format */
-	intc_intr_priority(evtcode, (ih->ih_level >> 4));
+	switch (evtcode) {
+	default:
+		ih = EVTCODE_IH(evtcode);
+		/* ih_level is in the SR.IMASK format */
+		intc_intr_priority(evtcode, (ih->ih_level >> 4));
+		break;
+
+#ifdef SH4
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		intpri_intr_enable(evtcode);
+		break;
+#endif
+	}
 	_cpu_intr_resume(s);
 }
 
@@ -182,7 +230,7 @@ intc_intr_enable(int evtcode)
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
  *	SH7709, SH7709A				  ... evtcode is INTEVT2
  */
-void
+static void
 intc_intr_priority(int evtcode, int level)
 {
 	volatile uint16_t *iprreg;
@@ -231,7 +279,8 @@ intc_intr_priority(int evtcode, int level)
 		break;
 	}
 
-	if (CPU_IS_SH3)
+#ifdef SH3
+	if (CPU_IS_SH3) {
 		switch (evtcode) {
 		case SH7709_INTEVT2_IRQ3:
 			SH7709_IPR(C, 12);
@@ -279,7 +328,11 @@ intc_intr_priority(int evtcode, int level)
 			SH7709_IPR(E, 0);
 			break;
 		}
-	else
+	}
+#endif /* SH3 */
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
 		switch (evtcode) {
 		case SH4_INTEVT_SCIF_ERI:
 		case SH4_INTEVT_SCIF_RXI:
@@ -287,7 +340,24 @@ intc_intr_priority(int evtcode, int level)
 		case SH4_INTEVT_SCIF_TXI:
 			SH4_IPR(C, 4);
 			break;
+
+#if 0
+		case SH4_INTEVT_PCISERR:
+		case SH4_INTEVT_PCIDMA3:
+		case SH4_INTEVT_PCIDMA2:
+		case SH4_INTEVT_PCIDMA1:
+		case SH4_INTEVT_PCIDMA0:
+		case SH4_INTEVT_PCIPWON:
+		case SH4_INTEVT_PCIPWDWN:
+		case SH4_INTEVT_PCIERR:
+#endif
+		case SH4_INTEVT_TMU3:
+		case SH4_INTEVT_TMU4:
+			intpri_intr_priority(evtcode, level);
+			break;
 		}
+	}
+#endif /* SH4 */
 
 	/*
 	 * XXX: This function gets called even for interrupts that
@@ -304,8 +374,8 @@ intc_intr_priority(int evtcode, int level)
 /*
  * Interrupt handler holder allocater.
  */
-struct intc_intrhand *
-intc_alloc_ih()
+static struct intc_intrhand *
+intc_alloc_ih(void)
 {
 	/* #0 is reserved for unregistered interrupt. */
 	struct intc_intrhand *ih = &__intc_intrhand[1];
@@ -321,7 +391,7 @@ intc_alloc_ih()
 	return (NULL);
 }
 
-void
+static void
 intc_free_ih(struct intc_intrhand *ih)
 {
 
@@ -329,7 +399,7 @@ intc_free_ih(struct intc_intrhand *ih)
 }
 
 /* Place-holder for debugging */
-int
+static int
 intc_unknown_intr(void *arg)
 {
 
@@ -343,11 +413,170 @@ intc_unknown_intr(void *arg)
 	return (0);
 }
 
+#ifdef SH4 /* SH7751 support */
+
+/*
+ * INTPRIxx
+ */
+void
+intpri_intr_priority(int evtcode, int level)
+{
+	volatile uint32_t *iprreg;
+	uint32_t r;
+	int pos;
+
+	if (!CPU_IS_SH4)
+		return;
+
+	switch (cpu_product) {
+	default:
+		return;
+
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+	}
+
+	iprreg = (volatile uint32_t *)SH4_INTPRI00;
+	pos = -1;
+
+	switch (evtcode) {
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIERR:
+		pos = 0;
+		break;
+
+	case SH4_INTEVT_PCISERR:
+		pos = 4;
+		break;
+
+	case SH4_INTEVT_TMU3:
+		pos = 8;
+		break;
+
+	case SH4_INTEVT_TMU4:
+		pos = 12;
+		break;
+	}
+
+	if (pos < 0) {
+		return;
+	}
+
+	r = _reg_read_4(iprreg);
+	r = (r & ~(0xf << pos)) | (level << pos);
+	_reg_write_4(iprreg, r);
+}
+
+static void
+intpri_intr_enable(int evtcode)
+{
+	volatile uint32_t *iprreg;
+	uint32_t bit;
+
+	if (!CPU_IS_SH4)
+		return;
+
+	switch (cpu_product) {
+	default:
+		return;
+
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+	}
+
+	iprreg = (volatile uint32_t *)SH4_INTMSKCLR00;
+	bit = 0;
+
+	switch (evtcode) {
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		bit = (1 << ((evtcode - SH4_INTEVT_PCISERR) >> 5));
+		break;
+
+	case SH4_INTEVT_TMU3:
+		bit = INTREQ00_TUNI3;
+		break;
+
+	case SH4_INTEVT_TMU4:
+		bit = INTREQ00_TUNI4;
+		break;
+	}
+
+	if ((bit == 0) || (iprreg == NULL)) {
+		return;
+	}
+
+	_reg_write_4(iprreg, bit);
+}
+
+static void
+intpri_intr_disable(int evtcode)
+{
+	volatile uint32_t *iprreg;
+	uint32_t bit;
+
+	if (!CPU_IS_SH4)
+		return;
+
+	switch (cpu_product) {
+	default:
+		return;
+
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+	}
+
+	iprreg = (volatile uint32_t *)SH4_INTMSK00;
+	bit = 0;
+
+	switch (evtcode) {
+	case SH4_INTEVT_PCISERR:
+	case SH4_INTEVT_PCIDMA3:
+	case SH4_INTEVT_PCIDMA2:
+	case SH4_INTEVT_PCIDMA1:
+	case SH4_INTEVT_PCIDMA0:
+	case SH4_INTEVT_PCIPWON:
+	case SH4_INTEVT_PCIPWDWN:
+	case SH4_INTEVT_PCIERR:
+		bit = (1 << ((evtcode - SH4_INTEVT_PCISERR) >> 5));
+		break;
+
+	case SH4_INTEVT_TMU3:
+		bit = INTREQ00_TUNI3;
+		break;
+
+	case SH4_INTEVT_TMU4:
+		bit = INTREQ00_TUNI4;
+		break;
+	}
+
+	if ((bit == 0) || (iprreg == NULL)) {
+		return;
+	}
+
+	_reg_write_4(iprreg, bit);
+}
+#endif /* SH4 */
+
 /*
  * Software interrupt support
  */
 void
-softintr_init()
+softintr_init(void)
 {
 	static const char *softintr_names[] = IPL_SOFTNAMES;
 	struct sh_soft_intr *asi;
@@ -460,8 +689,8 @@ softintr_disestablish(void *arg)
 /*
  * Software (low priority) network interrupt. i.e. softnet().
  */
-void
-netintr()
+static void
+netintr(void)
 {
 #define	DONETISR(bit, fn)						\
 	do {								\
@@ -483,8 +712,8 @@ netintr()
 /*
  * Software interrupt is simulated with TMU one-shot timer.
  */
-void
-tmu1_oneshot()
+static void
+tmu1_oneshot(void)
 {
 
 	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
@@ -492,7 +721,7 @@ tmu1_oneshot()
 	_reg_bset_1(SH_(TSTR), TSTR_STR1);
 }
 
-int
+static int
 tmu1_intr(void *arg)
 {
 
@@ -505,8 +734,8 @@ tmu1_intr(void *arg)
 	return (0);
 }
 
-void
-tmu2_oneshot()
+static void
+tmu2_oneshot(void)
 {
 
 	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
@@ -514,7 +743,7 @@ tmu2_oneshot()
 	_reg_bset_1(SH_(TSTR), TSTR_STR2);
 }
 
-int
+static int
 tmu2_intr(void *arg)
 {
 

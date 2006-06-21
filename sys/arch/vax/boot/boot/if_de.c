@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.2 2002/05/24 21:41:40 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.2.22.1 2006/06/21 14:57:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -114,7 +114,7 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 
 	/* Map in the control structures and buffers */
 	dc = alloc(sizeof(struct de_cdata));
-	(int)pdc = (int)dc & VAX_PGOFSET;
+	pdc = (struct de_cdata *)((int)dc & VAX_PGOFSET);
 	map = (int *)nexaddr + 512;
 	npgs = (sizeof(struct de_cdata) >> VAX_PGSHIFT) + 1;
 	cdata = (int)dc >> VAX_PGSHIFT;

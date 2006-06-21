@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.16 2003/07/15 02:29:34 lukem Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.16.16.1 2006/06/21 14:51:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.16 2003/07/15 02:29:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.16.16.1 2006/06/21 14:51:50 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -171,7 +171,7 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	vsc->sc_pwctl = sc->sc_dev.dv_cfdata->cf_loc[VRIPIFCF_PWCTL];
+	vsc->sc_pwctl = device_cfdata(&sc->sc_dev)->cf_loc[VRIPIFCF_PWCTL];
 
 	DPRINTF(("==com_vrip_attach"));
 

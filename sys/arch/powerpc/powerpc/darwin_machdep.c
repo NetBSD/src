@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.17 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.17.12.1 2006/06/21 14:55:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.17 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.17.12.1 2006/06/21 14:55:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/signal.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>

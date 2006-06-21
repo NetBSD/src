@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2004/10/13 23:28:35 gavan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,5 @@ struct mainbus_attach_args {
 };
 
 struct device;
-extern void (*iyonix_device_register)(struct device *, void *);
 
 #endif	/* _IYONIX_AUTOCONF_H_ */

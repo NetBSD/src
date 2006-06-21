@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.131 2005/06/30 12:07:51 macallan Exp $
+#	$NetBSD: files.sparc,v 1.131.2.1 2006/06/21 14:55:54 yamt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -105,6 +105,10 @@ attach cpu at mainbus with cpu_mainbus
 attach cpu at cpuunit with cpu_cpuunit
 file	arch/sparc/sparc/cpu.c
 
+device clkctrl
+attach clkctrl at obio
+file	arch/sparc/sparc/clkctrl.c		clkctrl
+
 device memreg
 attach memreg at mainbus with memreg_mainbus
 attach memreg at obio with memreg_obio
@@ -114,7 +118,7 @@ device eccmemctl
 attach eccmemctl at mainbus
 file	arch/sparc/sparc/memecc.c		eccmemctl
 
-device tctrl
+device tctrl: sysmon_envsys, sysmon_power, sysmon_taskq
 attach tctrl at obio
 file	arch/sparc/dev/tctrl.c			tctrl needs-flag
 
@@ -148,14 +152,13 @@ file	arch/sparc/dev/sbus.c			sbus needs-flag
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 
-device tpcic: pcmciabus
-attach tpcic at sbus
-file	arch/sparc/dev/ts102.c			tpcic
+device tslot: pcmciabus
+attach tslot at sbus
+file	arch/sparc/dev/ts102.c			tslot
 
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
-
 
 #
 # Console related stuff
@@ -296,9 +299,7 @@ file	arch/sparc/sparc/openfirm.c
 file	arch/sparc/sparc/openprom.c
 file	arch/sparc/sparc/procfs_machdep.c	procfs
 file	arch/sparc/sparc/pmap.c
-# the following overrides the generic "sys_process.c"
-# commented out by deraadt
-#file	arch/sparc/sparc/sys_process.c
+file	arch/sparc/sparc/syscall.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c

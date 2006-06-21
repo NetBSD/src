@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.26 2005/06/03 08:49:03 scw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.26.2.1 2006/06/21 14:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.26 2005/06/03 08:49:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.26.2.1 2006/06/21 14:54:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -2606,7 +2606,7 @@ sbictoscsiperiod(dev, a)
     /*
      * cycle = DIV / (2 * CLK)
      * DIV = FS + 2
-     * best we can do is 200ns at 20Mhz, 2 cycles
+     * best we can do is 200ns at 20 MHz, 2 cycles
      */
 
     GET_SBIC_myid(dev->sc_sbicp, fs);

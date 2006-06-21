@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2004/02/13 11:36:16 wiz Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.16.1 2006/06/21 14:54:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,12 +75,12 @@
  * Structure of the software interrupt table
  */
 struct iv {
-	void (*iv_vec) __P((void *));
+	void (*iv_vec)(void *);
 	void *iv_arg;
 	long iv_level;
 	long iv_mask;
 	struct evcnt iv_evcnt;
-	char *iv_use;
+	const char *iv_use;
 };
 
 extern struct iv ivt[];
@@ -97,30 +97,30 @@ extern unsigned int imask[], Cur_pl, sirpending, astpending;
 # define INTR_INLINE __inline
 #endif
 
-void	intr_init __P((void));
-void	check_sir __P((void *));
-int	intr_establish __P((int, void (*)(void *), void *, char *,
-				int, int, int));
+void	intr_init(void);
+void	check_sir(void *);
+int	intr_establish(int, void (*)(void *), void *, const char *, int, int,
+	    int);
 
-INTR_STATIC INTR_INLINE int splraise __P((unsigned int));
-INTR_STATIC INTR_INLINE int splx __P((unsigned int));
+INTR_STATIC INTR_INLINE int splraise(unsigned int);
+INTR_STATIC INTR_INLINE int splx(unsigned int);
 
 /*
  * Disable/Enable CPU-Interrupts
  */
 #define	di() /* Removing the nop will give you *BIG* trouble */ \
-	__asm __volatile("bicpsrw 0x800 ; nop" : : : "cc")
-#define	ei() __asm __volatile("bispsrw 0x800" : : : "cc")
+	__asm volatile("bicpsrw 0x800 ; nop" : : : "cc")
+#define	ei() __asm volatile("bispsrw 0x800" : : : "cc")
 
 /*
  * Add a mask to Cur_pl, and return the old value of Cur_pl.
  */
 #if !defined(NO_INLINE_SPLX) || defined(DEFINE_SPLX)
 INTR_STATIC INTR_INLINE int
-splraise(ncpl)
-	register unsigned int ncpl;
+splraise(unsigned int ncpl)
 {
-	register unsigned int ocpl;
+	unsigned int ocpl;
+
 	di();
 	ocpl = Cur_pl;
 	ncpl |= ocpl;
@@ -138,10 +138,10 @@ splraise(ncpl)
  * usually optimized away by the compiler.
  */
 INTR_STATIC INTR_INLINE int
-splx(ncpl)
-	register unsigned int ncpl;
+splx(unsigned int ncpl)
 {
-	register unsigned int ocpl;
+	unsigned int ocpl;
+
 	di();
 	ocpl = Cur_pl;
 	ICUW(IMSK) = ncpl;
