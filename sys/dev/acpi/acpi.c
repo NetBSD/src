@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.89 2006/06/20 12:31:19 cube Exp $	*/
+/*	$NetBSD: acpi.c,v 1.90 2006/06/21 17:47:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.89 2006/06/20 12:31:19 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.90 2006/06/21 17:47:23 drochner Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.89 2006/06/20 12:31:19 cube Exp $");
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
+#include <dev/acpi/acpi_timer.h>
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
 #endif
@@ -351,6 +352,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * Check for fixed-hardware features.
 	 */
 	acpi_enable_fixed_events(sc);
+	acpitimer_init();
 
 	/*
 	 * Fix up PCI devices.
