@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.83 2005/05/31 01:48:22 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.83.2.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.83 2005/05/31 01:48:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.83.2.1 2006/06/21 15:02:54 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -789,9 +789,12 @@ ex_txstat(sc)
 	/*
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
+	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER
+	 * XXX: Big Endian? Can we assume that TXSTATUS will be the
+	 * upper byte?
 	 */
-	while ((i = bus_space_read_1(iot, ioh, ELINK_TXSTATUS)) & TXS_COMPLETE) {
-		bus_space_write_1(iot, ioh, ELINK_TXSTATUS, 0x0);
+	while ((i = bus_space_read_2(iot, ioh, ELINK_TIMER)) & TXS_COMPLETE) {
+		bus_space_write_2(iot, ioh, ELINK_TIMER, 0x0);
 
 		if (i & TXS_JABBER) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
@@ -813,11 +816,12 @@ ex_txstat(sc)
 			ex_init(ifp);
 			/* TODO: be more subtle here */
 		} else if (i & TXS_MAX_COLLISION) {
+			++sc->sc_ethercom.ec_if.if_oerrors;
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		} else
-			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
+		} else if (sc->tx_succ_ok < 100)
+			sc->tx_succ_ok++;
 	}
 }
 
@@ -1180,7 +1184,7 @@ ex_intr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	for (;;) {
@@ -1451,18 +1455,18 @@ ex_getstats(sc)
 	 * Upper byte counters are latched from reading the totals, so
 	 * they don't need to be read if we don't need their values.
 	 */
-	bus_space_read_2(iot, ioh, RX_TOTAL_OK);
-	bus_space_read_2(iot, ioh, TX_TOTAL_OK);
+	(void)bus_space_read_2(iot, ioh, RX_TOTAL_OK);
+	(void)bus_space_read_2(iot, ioh, TX_TOTAL_OK);
 
 	/*
 	 * Clear the following to avoid stats overflow interrupts
 	 */
-	bus_space_read_1(iot, ioh, TX_DEFERRALS);
-	bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
-	bus_space_read_1(iot, ioh, TX_NO_SQE);
-	bus_space_read_1(iot, ioh, TX_CD_LOST);
+	(void)bus_space_read_1(iot, ioh, TX_DEFERRALS);
+	(void)bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
+	(void)bus_space_read_1(iot, ioh, TX_NO_SQE);
+	(void)bus_space_read_1(iot, ioh, TX_CD_LOST);
 	GO_WINDOW(4);
-	bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
+	(void)bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
 	GO_WINDOW(1);
 }
 
@@ -1489,7 +1493,7 @@ ex_tick(arg)
 	struct ex_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

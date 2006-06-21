@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.46.2.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.46.2.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include "isadma.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $")
 #endif
 
 static void isapnp_init(struct isapnp_softc *);
-static __inline u_char isapnp_shift_bit(struct isapnp_softc *);
+static inline u_char isapnp_shift_bit(struct isapnp_softc *);
 static int isapnp_findcard(struct isapnp_softc *);
 static void isapnp_free_region(bus_space_tag_t, struct isapnp_region *);
 static int isapnp_alloc_region(bus_space_tag_t, struct isapnp_region *);
@@ -82,7 +82,7 @@ static void isapnp_print_pin(const char *, struct isapnp_pin *, size_t);
 static int isapnp_print(void *, const char *);
 #ifdef _KERNEL
 static int isapnp_submatch(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
+				const int *, void *);
 #endif
 static int isapnp_find(struct isapnp_softc *, int);
 static int isapnp_match(struct device *, struct cfdata *, void *);
@@ -127,7 +127,7 @@ isapnp_init(sc)
 /* isapnp_shift_bit():
  *	Read a bit at a time from the config card.
  */
-static __inline u_char
+static inline u_char
 isapnp_shift_bit(sc)
 	struct isapnp_softc *sc;
 {
@@ -604,7 +604,7 @@ static int
 isapnp_submatch(parent, match, ldesc, aux)
 	struct device *parent;
 	struct cfdata *match;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 
@@ -942,7 +942,7 @@ isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct isapnp_softc *sc = (struct isapnp_softc *) self;
+	struct isapnp_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
@@ -977,7 +977,7 @@ void
 isapnp_callback(self)
 	struct device *self;
 {
-	struct isapnp_softc *sc = (struct isapnp_softc *)self;
+	struct isapnp_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa, *lpa;
 	int c, d;
 

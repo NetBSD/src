@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.28 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.28.4.1 2006/06/21 15:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.28 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.28.4.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
 #endif
 
 #ifdef QBITS
-void	clrbits(u_char *, int, int);
+static void	clrbits(u_char *, int, int);
 #endif
 
 /*
@@ -70,10 +70,7 @@ void	clrbits(u_char *, int, int);
  * of the specified length, with/without quoting support.
  */
 int
-clalloc(clp, size, quot)
-	struct clist *clp;
-	int size;
-	int quot;
+clalloc(struct clist *clp, int size, int quot)
 {
 
 	clp->c_cs = malloc(size, M_TTYS, M_WAITOK);
@@ -99,8 +96,7 @@ clalloc(clp, size, quot)
 }
 
 void
-clfree(clp)
-	struct clist *clp;
+clfree(struct clist *clp)
 {
 	if(clp->c_cs)
 		free(clp->c_cs, M_TTYS);
@@ -114,8 +110,7 @@ clfree(clp)
  * Get a character from a clist.
  */
 int
-getc(clp)
-	struct clist *clp;
+getc(struct clist *clp)
 {
 	int c = -1;
 	int s;
@@ -148,10 +143,7 @@ out:
  * Return number of bytes moved.
  */
 int
-q_to_b(clp, cp, count)
-	struct clist *clp;
-	u_char *cp;
-	int count;
+q_to_b(struct clist *clp, u_char *cp, int count)
 {
 	int cc;
 	u_char *p = cp;
@@ -184,9 +176,7 @@ q_to_b(clp, cp, count)
  * Stop counting if flag&character is non-null.
  */
 int
-ndqb(clp, flag)
-	struct clist *clp;
-	int flag;
+ndqb(struct clist *clp, int flag)
 {
 	int count = 0;
 	int i;
@@ -228,9 +218,7 @@ out:
  * Flush count bytes from clist.
  */
 void
-ndflush(clp, count)
-	struct clist *clp;
-	int count;
+ndflush(struct clist *clp, int count)
 {
 	int cc;
 	int s;
@@ -264,9 +252,7 @@ out:
  * Put a character into the output queue.
  */
 int
-putc(c, clp)
-	int c;
-	struct clist *clp;
+putc(int c, struct clist *clp)
 {
 	int i;
 	int s;
@@ -317,11 +303,8 @@ out:
  * for (i = 0; i < len; i++)
  *	clrbit(cp, off + len);
  */
-void
-clrbits(cp, off, len)
-	u_char *cp;
-	int off;
-	int len;
+static void
+clrbits(u_char *cp, int off, int len)
 {
 	int sby, sbi, eby, ebi;
 	int i;
@@ -357,10 +340,7 @@ clrbits(cp, off, len)
  * Return number of bytes not transfered.
  */
 int
-b_to_q(cp, count, clp)
-	const u_char *cp;
-	int count;
-	struct clist *clp;
+b_to_q(const u_char *cp, int count, struct clist *clp)
 {
 	int cc;
 	const u_char *p = cp;
@@ -422,10 +402,7 @@ static int cc;
  * masked.
  */
 u_char *
-nextc(clp, cp, c)
-	struct clist *clp;
-	u_char *cp;
-	int *c;
+nextc(struct clist *clp, u_char *cp, int *c)
 {
 
 	if (clp->c_cf == cp) {
@@ -464,9 +441,7 @@ nextc(clp, cp, c)
  * *c is set to the NEXT character
  */
 u_char *
-firstc(clp, c)
-	struct clist *clp;
-	int *c;
+firstc(struct clist *clp, int *c)
 {
 	u_char *cp;
 
@@ -491,8 +466,7 @@ firstc(clp, c)
  * Remove the last character in the clist and return it.
  */
 int
-unputc(clp)
-	struct clist *clp;
+unputc(struct clist *clp)
 {
 	unsigned int c = -1;
 	int s;
@@ -528,8 +502,7 @@ out:
  * Put the chars in the from queue on the end of the to queue.
  */
 void
-catq(from, to)
-	struct clist *from, *to;
+catq(struct clist *from, struct clist *to)
 {
 	int c;
 

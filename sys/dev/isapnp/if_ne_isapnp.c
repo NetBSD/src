@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.19 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.19.6.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.19 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.19.6.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ ne_isapnp_attach(
 	struct device *self,
 	void *aux)
 {
-	struct ne_isapnp_softc * const isc = (struct ne_isapnp_softc *)self;
+	struct ne_isapnp_softc * const isc = device_private(self);
 	struct ne2000_softc * const nsc = &isc->sc_ne2000;
 	struct dp8390_softc * const dsc = &nsc->sc_dp8390;
 	struct isapnp_attach_args * const ipa = aux;

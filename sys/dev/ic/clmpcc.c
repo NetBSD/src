@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.24 2005/02/27 00:27:01 perry Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.24.4.1 2006/06/21 15:02:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.24 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.24.4.1 2006/06/21 15:02:53 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.24 2005/02/27 00:27:01 perry Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -89,11 +90,7 @@ static int 	clmpcc_modem_control(struct clmpcc_chan *, int, int);
 /*
  * These should be in a header file somewhere...
  */
-#define	ISSET(v, f)	(((v) & (f)) != 0)
 #define	ISCLR(v, f)	(((v) & (f)) == 0)
-#define SET(v, f)	(v) |= (f)
-#define CLR(v, f)	(v) &= ~(f)
-
 
 extern struct cfdriver clmpcc_cd;
 
@@ -507,10 +504,10 @@ clmpcc_shutdown(ch)
 }
 
 int
-clmpccopen(dev, flag, mode, p)
+clmpccopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc *sc;
 	struct clmpcc_chan *ch;
@@ -527,7 +524,10 @@ clmpccopen(dev, flag, mode, p)
 	tp = ch->ch_tty;
 
 	if ( ISSET(tp->t_state, TS_ISOPEN) &&
-	     ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0 )
+	     ISSET(tp->t_state, TS_XCLUDE) &&
+	     kauth_authorize_generic(l->l_proc->p_cred,
+			       KAUTH_GENERIC_ISSUSER,
+			       &l->l_proc->p_acflag) != 0 )
 		return EBUSY;
 
 	/*
@@ -587,9 +587,7 @@ clmpccopen(dev, flag, mode, p)
 		clmpcc_modem_control(ch, TIOCM_RTS | TIOCM_DTR, DMBIS);
 
 		clmpcc_select_channel(sc, oldch);
-	} else
-	if ( ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0 )
-		return EBUSY;
+	}
 
 	error = ttyopen(tp, CLMPCCDIALOUT(dev), ISSET(flag, O_NONBLOCK));
 	if (error)
@@ -614,10 +612,10 @@ bad:
 }
 
 int
-clmpccclose(dev, flag, mode, p)
+clmpccclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc	*sc =
 		device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
@@ -673,15 +671,15 @@ clmpccwrite(dev, uio, flag)
 }
 
 int
-clmpccpoll(dev, events, p)
+clmpccpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -694,23 +692,23 @@ clmpcctty(dev)
 }
 
 int
-clmpccioctl(dev, cmd, data, flag, p)
+clmpccioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -756,7 +754,9 @@ clmpccioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag);
 		if ( error )
 			break;
 		ch->ch_openflags = *((int *)data) &

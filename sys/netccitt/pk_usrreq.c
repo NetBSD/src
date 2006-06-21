@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.26 2003/08/07 16:33:05 agc Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.26.16.1 2006/06/21 15:10:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.26 2003/08/07 16:33:05 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.26.16.1 2006/06/21 15:10:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.26 2003/08/07 16:33:05 agc Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -140,16 +141,18 @@ pk_setpeeraddr(lcp, nam)
  *
  */
 int
-pk_usrreq(so, req, m, nam, control, p)
+pk_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p;
 	struct pklcd *lcp;
 	int s;
 	int error = 0;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (pk_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
@@ -412,7 +415,9 @@ pk_control(so, cmd, data, ifp, p)
 		return (0);
 
 	case SIOCSIFCONF_X25:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+							 KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag)))
 			return (EPERM);
 		if (ifp == 0)
 			panic("pk_control");
@@ -491,7 +496,8 @@ pk_ctloutput(cmd, so, level, optname, mp)
 			return (0);
 
 		case PK_ACCTFILE:
-			if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+			if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+						KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 				error = EPERM;
 			else if (m->m_len)
 				error = pk_accton(mtod(m, char *));

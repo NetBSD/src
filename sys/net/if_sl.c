@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.91 2005/03/31 15:48:13 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.91.2.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91.2.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91 2005/03/31 15:48:13 christos Exp $");
 #include <sys/kernel.h>
 #if __NetBSD__
 #include <sys/systm.h>
+#include <sys/kauth.h>
 #endif
 
 #include <machine/cpu.h>
@@ -99,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91 2005/03/31 15:48:13 christos Exp $");
 #include <net/slcompress.h>
 #include <net/if_slvar.h>
 #include <net/slip.h>
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
 
 #if NBPFILTER > 0
 #include <sys/time.h>
@@ -187,14 +190,40 @@ struct if_clone sl_cloner =
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	slnetisr(void);
 #endif
-void	slintr(void *);
+static void	slintr(void *);
 
-static int slinit __P((struct sl_softc *));
-static struct mbuf *sl_btom __P((struct sl_softc *, int));
+static int	slinit(struct sl_softc *);
+static struct mbuf *sl_btom(struct sl_softc *, int);
+
+static int	slclose(struct tty *, int);
+static int	slinput(int, struct tty *);
+static int	slioctl(struct ifnet *, u_long, caddr_t);
+static int	slopen(dev_t, struct tty *);
+static int	sloutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+			 struct rtentry *);
+static int	slstart(struct tty *);
+static int	sltioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+
+static struct linesw slip_disc = {
+	.l_name = "slip",
+	.l_open = slopen,
+	.l_close = slclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = sltioctl,
+	.l_rint = slinput,
+	.l_start = slstart,
+	.l_modem = nullmodem,
+	.l_poll = ttyerrpoll
+};
+
+void	slattach(void);
 
 void
 slattach(void)
 {
+	if (ttyldisc_attach(&slip_disc) != 0)
+		panic("slattach");
 	LIST_INIT(&sl_softc_list);
 	if_clone_attach(&sl_cloner);
 }
@@ -246,8 +275,7 @@ sl_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-slinit(sc)
-	struct sl_softc *sc;
+slinit(struct sl_softc *sc)
 {
 
 	if (sc->sc_mbuf == NULL) {
@@ -271,20 +299,18 @@ slinit(sc)
  * Attach the given tty to the first available sl unit.
  */
 /* ARGSUSED */
-int
-slopen(dev, tp)
-	dev_t dev;
-	struct tty *tp;
+static int
+slopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct sl_softc *sc;
 	int error;
 	int s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw->l_no == SLIPDISC)
+	if (tp->t_linesw == &slip_disc)
 		return (0);
 
 	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
@@ -349,9 +375,8 @@ slopen(dev, tp)
  * Line specific close routine.
  * Detach the tty from the sl unit.
  */
-void
-slclose(tp)
-	struct tty *tp;
+static int
+slclose(struct tty *tp, int flag)
 {
 	struct sl_softc *sc;
 	int s;
@@ -369,7 +394,8 @@ slclose(tp)
 		splx(s);
 
 		s = spltty();
-		tp->t_linesw = linesw[0];	/* default line disc. */
+		ttyldisc_release(tp->t_linesw);
+		tp->t_linesw = ttyldisc_default();
 		tp->t_state = 0;
 
 		sc->sc_ttyp = NULL;
@@ -391,6 +417,8 @@ slclose(tp)
 		}
 		splx(s);
 	}
+
+	return (0);
 }
 
 /*
@@ -398,12 +426,8 @@ slclose(tp)
  * Provide a way to get the sl unit number.
  */
 /* ARGSUSED */
-int
-sltioctl(tp, cmd, data, flag)
-	struct tty *tp;
-	u_long cmd;
-	caddr_t data;
-	int flag;
+static int
+sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
 
@@ -424,12 +448,9 @@ sltioctl(tp, cmd, data, flag)
  * will cause us to not compress "background" packets, because
  * ordering gets trashed.  It can be done for all packets in slintr().
  */
-int
-sloutput(ifp, m, dst, rtp)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rtp;
+static int
+sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rtp)
 {
 	struct sl_softc *sc = ifp->if_softc;
 	struct ip *ip;
@@ -471,11 +492,12 @@ sloutput(ifp, m, dst, rtp)
 
 	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
-		struct timeval tv;
+		struct bintime bt;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_lastpacket, &tv);
-		if (tv.tv_sec > 0) {
+		getbinuptime(&bt);
+		bintime_sub(&bt, &sc->sc_lastpacket);
+		if (bt.sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);
 		}
@@ -492,7 +514,7 @@ sloutput(ifp, m, dst, rtp)
 		splx(s);
 		return error;
 	}
-	sc->sc_lastpacket = time;
+	getbinuptime(&sc->sc_lastpacket);
 	splx(s);
 
 	s = spltty();
@@ -508,9 +530,8 @@ sloutput(ifp, m, dst, rtp)
  * to send from the interface queue and map it to
  * the interface before starting output.
  */
-void
-slstart(tp)
-	struct tty *tp;
+static int
+slstart(struct tty *tp)
 {
 	struct sl_softc *sc = tp->t_sc;
 
@@ -522,14 +543,14 @@ slstart(tp)
 	if (tp->t_outq.c_cc != 0) {
 		(*tp->t_oproc)(tp);
 		if (tp->t_outq.c_cc > SLIP_HIWAT)
-			return;
+			return (0);
 	}
 
 	/*
 	 * This happens briefly when the line shuts down.
 	 */
 	if (sc == NULL)
-		return;
+		return (0);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
@@ -539,15 +560,14 @@ slstart(tp)
 	splx(s);
     }
 #endif
+	return (0);
 }
 
 /*
  * Copy data buffer to mbuf chain; add ifnet pointer.
  */
 static struct mbuf *
-sl_btom(sc, len)
-	struct sl_softc *sc;
-	int len;
+sl_btom(struct sl_softc *sc, int len)
 {
 	struct mbuf *m;
 
@@ -579,10 +599,8 @@ sl_btom(sc, len)
 /*
  * tty interface receiver interrupt.
  */
-void
-slinput(c, tp)
-	int c;
-	struct tty *tp;
+static int
+slinput(int c, struct tty *tp)
 {
 	struct sl_softc *sc;
 	struct mbuf *m;
@@ -591,11 +609,11 @@ slinput(c, tp)
 	tk_nin++;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc == NULL)
-		return;
+		return (0);
 	if ((c & TTY_ERRORMASK) || ((tp->t_state & TS_CARR_ON) == 0 &&
 	    (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
-		return;
+		return (0);
 	}
 	c &= TTY_CHARMASK;
 
@@ -608,23 +626,23 @@ slinput(c, tp)
 			 * this one is within the time limit.
 			 */
 			if (sc->sc_abortcount &&
-			    time.tv_sec >= sc->sc_starttime + ABT_WINDOW)
+			    time_second >= sc->sc_starttime + ABT_WINDOW)
 				sc->sc_abortcount = 0;
 			/*
 			 * If we see an abort after "idle" time, count it;
 			 * record when the first abort escape arrived.
 			 */
-			if (time.tv_sec >= sc->sc_lasttime + ABT_IDLE) {
+			if (time_second >= sc->sc_lasttime + ABT_IDLE) {
 				if (++sc->sc_abortcount == 1)
-					sc->sc_starttime = time.tv_sec;
+					sc->sc_starttime = time_second;
 				if (sc->sc_abortcount >= ABT_COUNT) {
-					slclose(tp);
-					return;
+					slclose(tp, 0);
+					return (0);
 				}
 			}
 		} else
 			sc->sc_abortcount = 0;
-		sc->sc_lasttime = time.tv_sec;
+		sc->sc_lasttime = time_second;
 	}
 
 	switch (c) {
@@ -641,7 +659,7 @@ slinput(c, tp)
 
 	case FRAME_ESCAPE:
 		sc->sc_escape = 1;
-		return;
+		return (0);
 
 	case FRAME_END:
 		if(sc->sc_flags & SC_ERROR) {
@@ -672,7 +690,7 @@ slinput(c, tp)
 	if (sc->sc_mp < sc->sc_ep) {
 		*sc->sc_mp++ = c;
 		sc->sc_escape = 0;
-		return;
+		return (0);
 	}
 
 	/* can't put lower; would miss an extra frame */
@@ -684,6 +702,8 @@ newpack:
 	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
 	sc->sc_escape = 0;
+
+	return (0);
 }
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -700,7 +720,7 @@ slnetisr(void)
 }
 #endif
 
-void
+static void
 slintr(void *arg)
 {
 	struct sl_softc *sc = arg;
@@ -791,7 +811,7 @@ slintr(void *arg)
 			bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *),
 			    bpf_m);
 #endif
-		sc->sc_lastpacket = time;
+		getbinuptime(&sc->sc_lastpacket);
 
 		s = spltty();
 
@@ -964,18 +984,19 @@ slintr(void *arg)
 		 */
 		if (m->m_pkthdr.len < MHLEN) {
 			struct mbuf *n;
+			int pktlen;
 
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			M_COPY_PKTHDR(n, m);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
-			    m->m_pkthdr.len);
+			pktlen = m->m_pkthdr.len;
+			M_MOVE_PKTHDR(n, m);
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
 			m = n;
 		}
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_lastpacket = time;
+		getbinuptime(&sc->sc_lastpacket);
 
 #ifdef INET
 		s = splnet();
@@ -996,16 +1017,15 @@ slintr(void *arg)
 /*
  * Process an ioctl request.
  */
-int
-slioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+static int
+slioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s = splnet(), error = 0;
 	struct sl_softc *sc = ifp->if_softc;
+	struct ppp_stats *psp;
+	struct ppp_comp_stats *pcp;
 
 	switch (cmd) {
 
@@ -1050,6 +1070,32 @@ slioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
+		break;
+
+	case SIOCGPPPSTATS:
+		psp = &((struct ifpppstatsreq *) data)->stats;
+		(void)memset(psp, 0, sizeof(*psp));
+		psp->p.ppp_ibytes = sc->sc_if.if_ibytes;
+		psp->p.ppp_ipackets = sc->sc_if.if_ipackets;
+		psp->p.ppp_ierrors = sc->sc_if.if_ierrors;
+		psp->p.ppp_obytes = sc->sc_if.if_obytes;
+		psp->p.ppp_opackets = sc->sc_if.if_opackets;
+		psp->p.ppp_oerrors = sc->sc_if.if_oerrors;
+#ifdef INET
+		psp->vj.vjs_packets = sc->sc_comp.sls_packets;
+		psp->vj.vjs_compressed = sc->sc_comp.sls_compressed;
+		psp->vj.vjs_searches = sc->sc_comp.sls_searches;
+		psp->vj.vjs_misses = sc->sc_comp.sls_misses;
+		psp->vj.vjs_uncompressedin = sc->sc_comp.sls_uncompressedin;
+		psp->vj.vjs_compressedin = sc->sc_comp.sls_compressedin;
+		psp->vj.vjs_errorin = sc->sc_comp.sls_errorin;
+		psp->vj.vjs_tossed = sc->sc_comp.sls_tossed;
+#endif
+		break;
+
+	case SIOCGPPPCSTATS:
+		pcp = &((struct ifpppcstatsreq *) data)->stats;
+		(void)memset(pcp, 0, sizeof(*pcp));
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.35 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.35.4.1 2006/06/21 15:02:45 yamt Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.35 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.35.4.1 2006/06/21 15:02:45 yamt Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -225,7 +225,7 @@ ex_cardbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct ex_cardbus_softc *csc = (void *)self;
+	struct ex_cardbus_softc *csc = device_private(self);
 	struct ex_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -326,7 +326,7 @@ ex_cardbus_detach(self, arg)
 	struct device *self;
 	int arg;
 {
-	struct ex_cardbus_softc *csc = (void *)self;
+	struct ex_cardbus_softc *csc = device_private(self);
 	struct ex_softc *sc = &csc->sc_softc;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;

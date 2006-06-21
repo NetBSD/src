@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.82 2005/06/10 05:10:13 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.82.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -334,6 +334,9 @@ typedef struct {
 #define	PF_W		0x2	/* Segment is writable */
 #define	PF_X		0x1	/* Segment is executable */
 
+#define	PF_PAXMPROTECT		0x08000000	/* Explicitly enable PaX MPROTECT */
+#define	PF_PAXNOMPROTECT	0x04000000	/* Explicitly disable PaX MPROTECT */
+
 #define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
 
@@ -653,6 +656,13 @@ typedef struct {
 
 /* NetBSD-specific note type: Emulation name.  desc is emul name string. */
 #define	ELF_NOTE_TYPE_NETBSD_TAG	1
+/* NetBSD-specific note type: Checksum.  There should be 1 NOTE per PT_LOAD
+   section.  desc is a tuple of <phnum>(16),<chk-type>(16),<chk-value>. */
+#define	ELF_NOTE_TYPE_CHECKSUM_TAG	2
+#define	ELF_NOTE_CHECKSUM_CRC32		1
+#define	ELF_NOTE_CHECKSUM_MD5		2
+#define	ELF_NOTE_CHECKSUM_SHA1		3
+#define	ELF_NOTE_CHECKSUM_SHA256	4
 
 /* NetBSD-specific note name and description sizes */
 #define	ELF_NOTE_NETBSD_NAMESZ		7
@@ -818,8 +828,8 @@ struct elf_args {
 #endif
 
 #ifdef EXEC_ELF32
-int	exec_elf32_makecmds(struct proc *, struct exec_package *);
-int	elf32_copyargs(struct proc *, struct exec_package *,
+int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
+int	elf32_copyargs(struct lwp *, struct exec_package *,
     	    struct ps_strings *, char **, void *);
 
 int	coredump_elf32(struct lwp *, void *);
@@ -830,9 +840,8 @@ int	elf32_check_header(Elf32_Ehdr *, int);
 #endif
 
 #ifdef EXEC_ELF64
-int	exec_elf64_makecmds(struct proc *, struct exec_package *);
-int	elf64_read_from(struct proc *, struct vnode *, u_long, caddr_t, int);
-int	elf64_copyargs(struct proc *, struct exec_package *,
+int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
+int	elf64_copyargs(struct lwp *, struct exec_package *,
 	    struct ps_strings *, char **, void *);
 
 int	coredump_elf64(struct lwp *, void *);

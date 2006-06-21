@@ -18,11 +18,11 @@
  *
  * From: if_sppp.h,v 1.14 1999/03/30 13:28:26 phk Exp
  *
- * $Id: i4b_isppp.h,v 1.1.1.1 2001/01/05 12:49:53 martin Exp $
+ * $Id: i4b_isppp.h,v 1.1.1.1.42.1 2006/06/21 15:11:24 yamt Exp $
  */
 
-#ifndef _I4B_ISPPP_H_
-#define _I4B_ISPPP_H_
+#ifndef _NETISDN_I4B_ISPPP_H_
+#define _NETISDN_I4B_ISPPP_H_
 
 #define SPPP_VJ			/* use VJ compression */
 
@@ -248,4 +248,4 @@ void isppp_flush (struct ifnet *ifp);
 
 #endif /* KERNEL */
 
-#endif /* _I4B_ISPPP_H_ */
+#endif /* !_NETISDN_I4B_ISPPP_H_ */

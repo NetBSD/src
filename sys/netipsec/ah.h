@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.1 2003/08/13 20:06:49 jonathan Exp $	*/
+/*	$NetBSD: ah.h,v 1.1.18.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
 
@@ -54,4 +54,4 @@ struct newah {
 	u_int32_t	ah_seq;		/* Sequence number field */
 	/* variable size, 32bit bound*/	/* Authentication data */
 };
-#endif /*_NETIPSEC_AH_H_*/
+#endif /* !_NETIPSEC_AH_H_ */

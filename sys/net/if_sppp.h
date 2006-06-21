@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.23 2003/12/26 23:39:23 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.23.16.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NET_IF_SPPP_H_
+#define _NET_IF_SPPP_H_
 
 /* ioctls used by the if_spppsubr.c driver */
 
@@ -149,3 +152,6 @@ struct spppkeepalivesettings {
 #define	SPPPGETKEEPALIVE	_IOWR('i', 133, struct spppkeepalivesettings)
 
 /* 134 already used! */
+
+#endif /* !_NET_IF_SPPP_H_ */
+

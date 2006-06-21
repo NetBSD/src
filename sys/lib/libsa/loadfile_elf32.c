@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.10 2005/02/26 22:58:56 perry Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.10.4.1 2006/06/21 15:10:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -287,17 +287,23 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 	if (lseek(fd, elf->e_phoff, SEEK_SET) == -1)  {
 		WARN(("lseek phdr"));
-		FREE(phdr, sz);
-		return 1;
+		goto freephdr;
 	}
 	if (read(fd, phdr, sz) != sz) {
 		WARN(("read program headers"));
-		FREE(phdr, sz);
-		return 1;
+		goto freephdr;
 	}
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		internalize_phdr(elf->e_ident[EI_DATA], &phdr[i]);
+
+#ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
+#define MD_LOADSEG(a) /*CONSTCOND*/0
+#endif
+		if (MD_LOADSEG(&phdr[i]))
+			goto loadseg;
+
+
 		if (phdr[i].p_type != PT_LOAD ||
 		    (phdr[i].p_flags & (PF_W|PF_X)) == 0)
 			continue;
@@ -311,20 +317,19 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		if ((IS_TEXT(phdr[i]) && (flags & LOAD_TEXT)) ||
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
+		loadseg:
 			/* Read in segment. */
 			PROGRESS(("%s%lu", first ? "" : "+",
 			    (u_long)phdr[i].p_filesz));
 
 			if (lseek(fd, phdr[i].p_offset, SEEK_SET) == -1)  {
 				WARN(("lseek text"));
-				FREE(phdr, sz);
-				return 1;
+				goto freephdr;
 			}
 			if (READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz) !=
 			    (ssize_t)phdr[i].p_filesz) {
 				WARN(("read text"));
-				FREE(phdr, sz);
-				return 1;
+				goto freephdr;
 			}
 			first = 0;
 
@@ -352,7 +357,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 				maxp = pos;
 		}
 	}
-	FREE(phdr, sz);
+	DEALLOC(phdr, sz);
 
 	/*
 	 * Copy the ELF and section headers.
@@ -374,7 +379,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 		if (read(fd, shp, sz) != sz) {
 			WARN(("read section headers"));
-			return 1;
+			goto freeshp;
 		}
 
 		shpp = maxp;
@@ -412,14 +417,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 					if (lseek(fd, shp[i].sh_offset,
 					    SEEK_SET) == -1) {
 						WARN(("lseek symbols"));
-						FREE(shp, sz);
-						return 1;
+						goto freeshp;
 					}
 					if (READ(fd, maxp, shp[i].sh_size) !=
 					    (ssize_t)shp[i].sh_size) {
 						WARN(("read symbols"));
-						FREE(shp, sz);
-						return 1;
+						goto freeshp;
 					}
 				}
 				shp[i].sh_offset = maxp - elfp;
@@ -441,7 +444,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			if (first == 0)
 				PROGRESS(("]"));
 		}
-		FREE(shp, sz);
+		DEALLOC(shp, sz);
 	}
 
 	/*
@@ -472,6 +475,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
+freephdr:
+	DEALLOC(phdr, sz);
+	return 1;
+freeshp:
+	DEALLOC(shp, sz);
+	return 1;
 }
 
 #endif /* (ELFSIZE == 32 && BOOT_ELF32) || (ELFSIZE == 64 && BOOT_ELF64) */

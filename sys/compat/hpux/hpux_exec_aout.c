@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.12 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.12.4.1 2006/06/21 14:58:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.12 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.12.4.1 2006/06/21 14:58:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,13 +99,13 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.12 2005/02/26 23:10:18 perry Ex
 
 #include <machine/hpux_machdep.h>
 
-static	int exec_hpux_prep_nmagic __P((struct proc *, struct exec_package *));
-static	int exec_hpux_prep_zmagic __P((struct proc *, struct exec_package *));
-static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
+static	int exec_hpux_prep_nmagic __P((struct lwp *, struct exec_package *));
+static	int exec_hpux_prep_zmagic __P((struct lwp *, struct exec_package *));
+static	int exec_hpux_prep_omagic __P((struct lwp *, struct exec_package *));
 
 int
-exec_hpux_makecmds(p, epp)
-	struct proc *p;
+exec_hpux_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct hpux_exec *hpux_ep = epp->ep_hdr;
@@ -130,15 +130,15 @@ exec_hpux_makecmds(p, epp)
 
 	switch (magic) {
 	case OMAGIC:
-		error = exec_hpux_prep_omagic(p, epp);
+		error = exec_hpux_prep_omagic(l, epp);
 		break;
 
 	case NMAGIC:
-		error = exec_hpux_prep_nmagic(p, epp);
+		error = exec_hpux_prep_nmagic(l, epp);
 		break;
 
 	case ZMAGIC:
-		error = exec_hpux_prep_zmagic(p, epp);
+		error = exec_hpux_prep_zmagic(l, epp);
 		break;
 	}
 
@@ -149,8 +149,8 @@ exec_hpux_makecmds(p, epp)
 }
 
 static int
-exec_hpux_prep_nmagic(p, epp)
-	struct proc *p;
+exec_hpux_prep_nmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct hpux_exec *execp = epp->ep_hdr;
@@ -179,12 +179,12 @@ exec_hpux_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 static int
-exec_hpux_prep_zmagic(p, epp)
-	struct proc *p;
+exec_hpux_prep_zmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct hpux_exec *execp = epp->ep_hdr;
@@ -230,15 +230,15 @@ exec_hpux_prep_zmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
  * HP-UX's version of OMAGIC.
  */
 static int
-exec_hpux_prep_omagic(p, epp)
-	struct proc *p;
+exec_hpux_prep_omagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct hpux_exec *execp = epp->ep_hdr;
@@ -274,5 +274,5 @@ exec_hpux_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->ha_text - roundup(execp->ha_text,
 							 PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

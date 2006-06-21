@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6.h,v 1.4 2001/02/10 04:14:29 itojun Exp $	*/
+/*	$NetBSD: pim6.h,v 1.4.40.1 2006/06/21 15:11:09 yamt Exp $	*/
 /*	$KAME: pim6.h,v 1.3 2000/03/25 07:23:58 sumikawa Exp $	*/
 
 /*
@@ -29,6 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _NETINET6_PIM6_H_
+#define _NETINET6_PIM6_H_
+
 /*
  * Protocol Independent Multicast (PIM) definitions
  *
@@ -67,3 +71,5 @@ struct pim {
 
 /* second bit in reg_head is the null bit */
 #define PIM_NULL_REGISTER 0x40000000
+
+#endif /* !_NETINET6_PIM6_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2creg.h,v 1.2 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gti2creg.h,v 1.2.6.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -54,8 +54,8 @@
 
 /*
  * F(I2C) = F(Tclk) / ( 10 * (M + 1) * (2^(N+1)))
- * For Tclk = 100MHz, M =  4, N = 4: F = 62.5KHz
- * For Tclk = 100MHz, M = 13, N = 3: F = 96.2KHz
+ * For Tclk = 100 MHz, M =  4, N = 4: F = 62.5 kHz
+ * For Tclk = 100 MHz, M = 13, N = 3: F = 96.2 kHz
  */
 #define	I2C_BaudRate(M, N)	(((M) << 3) | (N))
 #define	I2C_BaudRate_62_5K	I2C_BaudRate(4, 4)

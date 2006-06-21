@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.46 2005/02/26 10:29:20 bsh Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.46.4.1 2006/06/21 15:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46 2005/02/26 10:29:20 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.1 2006/06/21 15:02:55 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46 2005/02/26 10:29:20 bsh Exp $");
 
 #include <net/if_ether.h>
 
-#include <machine/bswap.h>
+#include <sys/bswap.h>
 #include <machine/bus.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
@@ -93,10 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46 2005/02/26 10:29:20 bsh Exp $");
 #include <dev/ic/ne2000var.h>
 
 #include <dev/ic/ax88190reg.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#endif
 
 int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
 int	ne2000_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
@@ -637,8 +633,8 @@ ne2000_write_mbuf(sc, m, buf)
 	 */
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait) {
-		bus_space_read_1(nict, nich, ED_P0_CRDA1);
-		bus_space_read_1(nict, nich, ED_P0_CRDA0);
+		(void)bus_space_read_1(nict, nich, ED_P0_CRDA1);
+		(void)bus_space_read_1(nict, nich, ED_P0_CRDA0);
 		NIC_BARRIER(nict, nich);
 		DELAY(1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.6 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.6.4.1 2006/06/21 15:02:52 yamt Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -367,12 +367,8 @@ ahc_get_scb(struct ahc_softc *ahc)
 {
 	struct scb *scb;
 
-	if ((scb = SLIST_FIRST(&ahc->scb_data->free_scbs)) == NULL) {
-		ahc_alloc_scbs(ahc);
-		scb = SLIST_FIRST(&ahc->scb_data->free_scbs);
-		if (scb == NULL)
-			return (NULL);
-	}
+	if ((scb = SLIST_FIRST(&ahc->scb_data->free_scbs)) == NULL)
+		return (NULL);
 	SLIST_REMOVE_HEAD(&ahc->scb_data->free_scbs, links.sle);
 	return (scb);
 }
@@ -509,7 +505,7 @@ static __inline void	ahc_minphys(struct buf *bp);
 
 static __inline void
 ahc_minphys(bp)
-     struct buf *bp;
+	struct buf *bp;
 {
 /*
  * Even though the card can transfer up to 16megs per command
@@ -518,10 +514,10 @@ ahc_minphys(bp)
  * discontinuous physically, hence the "page per segment" limit
  * enforced here.
  */
-        if (bp->b_bcount > AHC_MAXTRANSFER_SIZE) {
-                bp->b_bcount = AHC_MAXTRANSFER_SIZE;
-        }
-        minphys(bp);
+	if (bp->b_bcount > AHC_MAXTRANSFER_SIZE) {
+		bp->b_bcount = AHC_MAXTRANSFER_SIZE;
+	}
+	minphys(bp);
 }
 
 static __inline void
@@ -603,12 +599,12 @@ ahc_intr(void *arg)
 	 */
 	if ((ahc->flags & (AHC_ALL_INTERRUPTS|AHC_EDGE_INTERRUPT)) == 0
 	    && (ahc_check_cmdcmpltqueues(ahc) != 0))
-                intstat = CMDCMPLT;
-        else {
-                intstat = ahc_inb(ahc, INTSTAT);
-        }
+		intstat = CMDCMPLT;
+	else {
+		intstat = ahc_inb(ahc, INTSTAT);
+	}
 
-        if (intstat & CMDCMPLT) {
+	if (intstat & CMDCMPLT) {
 		ahc_outb(ahc, CLRINT, CLRCMDINT);
 		/*
 		 * Ensure that the chip sees that we've cleared

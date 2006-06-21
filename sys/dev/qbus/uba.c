@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.71 2005/02/26 12:45:06 simonb Exp $	   */
+/*	$NetBSD: uba.c,v 1.71.4.1 2006/06/21 15:06:28 yamt Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.71 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.71.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.71 2005/02/26 12:45:06 simonb Exp $");
 #include "locators.h"
 
 static int ubasearch (struct device *, struct cfdata *,
-		      const locdesc_t *, void *);
+		      const int *, void *);
 static int ubaprint (void *, const char *);
 
 /*
@@ -110,7 +110,7 @@ uba_enqueue(struct uba_unit *uu)
 	struct uba_softc *uh;
 	int s;
 
-	uh = (void *)((struct device *)(uu->uu_softc))->dv_parent;
+	uh = (void *)device_parent((struct device *)(uu->uu_softc));
 
 	s = spluba();
 	SIMPLEQ_INSERT_TAIL(&uh->uh_resq, uu, uu_resq);
@@ -144,7 +144,7 @@ uba_done(struct uba_softc *uh)
 void
 uba_reset_establish(void (*reset)(struct device *), struct device *dev)
 {
-	struct uba_softc *uh = (void *)dev->dv_parent;
+	struct uba_softc *uh = (void *)device_parent(dev);
 	struct uba_reset *ur;
 
 	ur = malloc(sizeof(struct uba_reset), M_DEVBUF, M_NOWAIT);
@@ -288,7 +288,7 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 
 int
 ubasearch(struct device *parent, struct cfdata *cf,
-	  const locdesc_t *ldesc, void *aux)
+	  const int *ldesc, void *aux)
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;

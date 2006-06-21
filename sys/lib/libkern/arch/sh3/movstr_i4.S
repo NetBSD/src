@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr_i4.S,v 1.1 2002/09/05 08:35:16 msaitoh Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.1.26.1 2006/06/21 15:10:23 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
@@ -28,7 +28,8 @@
 
 #include <machine/asm.h>
 
-ENTRY(__movstr_i4_odd)
+
+NENTRY(__movstr_i4_odd)
 	add	#-8,r4
 	nop
 odd_loop:
@@ -38,7 +39,7 @@ odd_loop:
 	dt	r6
 	mov.l	r0,@(0,r4)
 	bf/s	odd_loop
-	mov.l	r1,@(4,r4)
+	 mov.l	r1,@(4,r4)
 
 	mov.l	@r5+,r0
 	mov.l	@r5+,r1
@@ -46,11 +47,10 @@ odd_loop:
 	mov.l	r0,@(8,r4)
 	mov.l	r1,@(12,r4)
 	rts
-	mov.l	r2,@(16,r4)
+	 mov.l	r2,@(16,r4)
 
 
-
-ENTRY(__movstr_i4_even)
+NENTRY(__movstr_i4_even)
 	add	#-8,r4
 	nop
 even_loop:
@@ -60,13 +60,15 @@ even_loop:
 	dt	r6
 	mov.l	r0,@(0,r4)
 	bf/s	even_loop
-	mov.l	r1,@(4,r4)
+	 mov.l	r1,@(4,r4)
 
 	mov.l	@r5+,r0
 	mov.l	@r5+,r1
 	mov.l	r0,@(8,r4)
 	rts
-	mov.l	r1,@(12,r4)
+	 mov.l	r1,@(12,r4)
 
 
-
+/* gcc4 uses movmem, older versions use movstr */
+STRONG_ALIAS(__movmem_i4_odd, __movstr_i4_odd)
+STRONG_ALIAS(__movmem_i4_even, __movstr_i4_even)

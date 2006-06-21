@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.7 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.7.4.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.7 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.7.4.1 2006/06/21 15:09:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.7 2005/02/26 22:58:55 perry Exp 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
@@ -126,7 +127,7 @@ cd9660_lookup(v)
 	const char *name;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 
@@ -143,7 +144,7 @@ cd9660_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -191,7 +192,8 @@ cd9660_lookup(v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = cd9660_blkatoff(vdp, (off_t)dp->i_offset, NULL,
+		    &bp)))
 				return (error);
 		numdirpasses = 2;
 		iso_nchstats.ncs_2passes++;
@@ -208,7 +210,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset,
+			error = cd9660_blkatoff(vdp, (off_t)dp->i_offset,
 					     NULL, &bp);
 			if (error)
 				return (error);
@@ -217,6 +219,7 @@ searchloop:
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 
@@ -312,7 +315,7 @@ foundino:
 			    lblkno(imp, saveoffset)) {
 				if (bp != NULL)
 					brelse(bp);
-				if ((error = VOP_BLKATOFF(vdp,
+				if ((error = cd9660_blkatoff(vdp,
 					    (off_t)saveoffset, NULL, &bp)) != 0)
 					return (error);
 			}
@@ -432,33 +435,26 @@ found:
  * remaining space in the directory.
  */
 int
-cd9660_blkatoff(v)
-	void *v;
+cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 {
-	struct vop_blkatoff_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		char **a_res;
-		struct buf **a_bpp;
-	} */ *ap = v;
 	struct iso_node *ip;
 	struct iso_mnt *imp;
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
 
-	ip = VTOI(ap->a_vp);
+	ip = VTOI(vp);
 	imp = ip->i_mnt;
-	lbn = lblkno(imp, ap->a_offset);
+	lbn = lblkno(imp, offset);
 	bsize = blksize(imp, ip, lbn);
 
-	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
-		*ap->a_bpp = NULL;
+		*bpp = NULL;
 		return (error);
 	}
-	if (ap->a_res)
-		*ap->a_res = (char *)bp->b_data + blkoff(imp, ap->a_offset);
-	*ap->a_bpp = bp;
+	if (res)
+		*res = (char *)bp->b_data + blkoff(imp, offset);
+	*bpp = bp;
 	return (0);
 }

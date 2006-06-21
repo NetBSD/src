@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: iocs.h,v 1.2 1999/11/22 01:14:55 itohy Exp $
+ *	$NetBSD: iocs.h,v 1.2.44.1 2006/06/21 14:57:55 yamt Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -101,8 +101,8 @@ struct iocs_putptr {
 	short		y1;
 	short		x2;
 	short		y2;
-	__const void	*buf_start;
-	__const void	*buf_end;
+	const void	*buf_start;
+	const void	*buf_end;
 };
 
 struct iocs_symbolptr {
@@ -141,7 +141,7 @@ struct iocs_chain {
 struct iocs_chain2 {
 	void			*addr;
 	unsigned short		len;
-	__const struct iocs_chain2 *next;
+	const struct iocs_chain2 *next;
 } __attribute__((__packed__));
 
 struct iocs_clipxy {
@@ -261,7 +261,7 @@ struct iocs_inquiry {
 /* 0f d1=ww a1 */	int IOCS_DEFCHR __P((int, int, const void *));
 /* 10 d1 */	int IOCS_CRTMOD __P((int));
 /* 11 d1 */	int IOCS_CONTRAST __P((int));
-/* 12 d1=hsv */	int __pure IOCS_HSVTORGB __P((int, int, int)) __attribute__((__const__));
+/* 12 d1=hsv */	int __pure IOCS_HSVTORGB __P((int, int, int)) __attribute__((const));
 /* 13 d1 d2 */	int IOCS_TPALET __P((int, int));
 /* 14 d1 d2 */	int IOCS_TPALET2 __P((int, int));
 /* 15 d1 */	void IOCS_TCOLOR __P((int));
@@ -381,13 +381,13 @@ struct iocs_inquiry {
 /* 8b a1 a2 d1 d2 */	void IOCS_DMAMOV_A __P((const struct iocs_chain *, void *, int, int));
 /* 8c a1 a2 d1 */	void IOCS_DMAMOV_L __P((const struct iocs_chain2 *, void *, int));
 /* 8d */	int IOCS_DMAMODE __P((void));
-/* 8e */	int __pure IOCS_BOOTINF __P((void)) __attribute__((__const__));
-/* 8f */	int __pure IOCS_ROMVER __P((void)) __attribute__((__const__));
+/* 8e */	int __pure IOCS_BOOTINF __P((void)) __attribute__((const));
+/* 8f */	int __pure IOCS_ROMVER __P((void)) __attribute__((const));
 /* 90 */	void IOCS_G_CLR_ON __P((void));
 /* 94 d1 d2 */	int IOCS_GPALET __P((int, int));
-/* a0 d1 */	int __pure IOCS_SFTJIS __P((int)) __attribute__((__const__));
-/* a1 d1 */	int __pure IOCS_JISSFT __P((int)) __attribute__((__const__));
-/* a2 d1=ww */	int __pure IOCS_AKCONV __P((int, int)) __attribute__((__const__));
+/* a0 d1 */	int __pure IOCS_SFTJIS __P((int)) __attribute__((const));
+/* a1 d1 */	int __pure IOCS_JISSFT __P((int)) __attribute__((const));
+/* a2 d1=ww */	int __pure IOCS_AKCONV __P((int, int)) __attribute__((const));
 /* a3 d1 a1 a2 */	int IOCS_RMACNV __P((int, char *, char *));
 /* a4 a1 */	int IOCS_DAKJOB __P((char *));
 /* a5 a1 */	int IOCS_HANJOB __P((char *));

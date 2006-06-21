@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.46.2.1 2006/06/21 15:09:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
+#include "opt_verified_exec.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -69,8 +70,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp 
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#ifdef VERIFIED_EXEC
 #define	VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
+#endif /* VERIFIED_EXEC */
+#include <sys/stat.h>
+#include <sys/kauth.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -86,6 +91,14 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46 2005/06/17 23:53:21 atatat Exp 
 #endif
 
 #include <machine/cpu.h>
+
+/* XXX this should not be here */
+int security_curtain = 0;
+int security_setidcore_dump;
+char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
+uid_t security_setidcore_owner = 0;
+gid_t security_setidcore_group = 0;
+mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 
 /*
  * try over estimating by 5 procs/lwps
@@ -113,10 +126,12 @@ sysctl_ncpus(void)
 }
 #endif /* MULTIPROCESSOR */
 
+#ifdef DIAGNOSTIC
+static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
+#endif
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
-static int sysctl_kern_securelevel(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
 static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
@@ -141,6 +156,8 @@ static int sysctl_kern_file2(SYSCTLFN_PROTO);
 #ifdef VERIFIED_EXEC
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
 #endif
+static int sysctl_security_setidcore(SYSCTLFN_PROTO);
+static int sysctl_security_setidcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cpid(SYSCTLFN_PROTO);
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
@@ -244,6 +261,12 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 		       SYSCTL_DESCR("Emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security",
+		       SYSCTL_DESCR("Security"),
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
 }
 
 /*
@@ -312,12 +335,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_ARGMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "securelevel",
-		       SYSCTL_DESCR("System security level"),
-		       sysctl_kern_securelevel, 0, &securelevel, 0,
-		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "hostname",
 		       SYSCTL_DESCR("System hostname"),
 		       sysctl_setlen, 0, &hostname, MAXHOSTNAMELEN,
@@ -335,6 +352,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_kern_clockrate, 0, NULL,
 		       sizeof(struct clockinfo),
 		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "hardclock_ticks",
+		       SYSCTL_DESCR("Number of hardclock ticks"),
+		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
+		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vnode",
@@ -714,6 +737,14 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Perform a crash dump on system panic"),
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
+#ifdef DIAGNOSTIC
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "panic_now",
+		       SYSCTL_DESCR("Trigger a panic"),
+		       sysctl_kern_trigger_panic, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "root_partition",
@@ -878,18 +909,6 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       CTL_HW, HW_PAGESIZE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "disknames",
-		       SYSCTL_DESCR("List of disk devices present"),
-		       sysctl_hw_disknames, 0, NULL, 0,
-		       CTL_HW, HW_DISKNAMES, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "diskstats",
-		       SYSCTL_DESCR("Statistics on disk operation"),
-		       sysctl_hw_diskstats, 0, NULL, 0,
-		       CTL_HW, HW_DISKSTATS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch",
 		       SYSCTL_DESCR("Machine CPU class"),
 		       NULL, 0, machine_arch, 0,
@@ -1001,11 +1020,94 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 }
 #endif /* DEBUG */
 
+SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects"
+				    " to users not owning them."),
+		       NULL, 0, &security_curtain, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "setid_core",
+		       SYSCTL_DESCR("Set-id processes' coredump settings."),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dump",
+		       SYSCTL_DESCR("Allow set-id processes to dump core."),
+		       sysctl_security_setidcore, 0, &security_setidcore_dump,
+		       sizeof(security_setidcore_dump),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "path",
+		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
+		       sysctl_security_setidcorename, 0,
+		       &security_setidcore_path,
+		       sizeof(security_setidcore_path),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "owner",
+		       SYSCTL_DESCR("Owner id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_owner,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "group",
+		       SYSCTL_DESCR("Group id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_group,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mode",
+		       SYSCTL_DESCR("Mode for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_mode,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+}
+
 /*
  * ********************************************************************
  * section 2: private node-specific helper routines.
  * ********************************************************************
  */
+
+#ifdef DIAGNOSTIC
+static int
+sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
+{
+	int newtrig, error;
+	struct sysctlnode node;
+
+	newtrig = 0;
+	node = *rnode;
+	node.sysctl_data = &newtrig;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (newtrig != 0)
+		panic("Panic triggered");
+
+	return (error);
+}
+#endif
 
 /*
  * sysctl helper routine for kern.maxvnodes.  drain vnodes if
@@ -1028,7 +1130,7 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
 	if (new_vnodes < old_vnodes) {
-		error = vfs_drainvnodes(new_vnodes, l->l_proc);
+		error = vfs_drainvnodes(new_vnodes, l);
 		if (error) {
 			desiredvnodes = old_vnodes;
 			return (error);
@@ -1046,8 +1148,8 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 static int
 sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 {
-	struct timeval tv, delta;
-	int s, error, new_rtc_offset;
+	struct timespec ts, delta;
+	int error, new_rtc_offset;
 	struct sysctlnode node;
 
 	new_rtc_offset = rtc_offset;
@@ -1063,20 +1165,18 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 		return (0);
 
 	/* if we change the offset, adjust the time */
-	s = splclock();
-	tv = time;
-	splx(s);
-	delta.tv_sec = 60*(new_rtc_offset - rtc_offset);
-	delta.tv_usec = 0;
-	timeradd(&tv, &delta, &tv);
+	nanotime(&ts);
+	delta.tv_sec = 60 * (new_rtc_offset - rtc_offset);
+	delta.tv_nsec = 0;
+	timespecadd(&ts, &delta, &ts);
 	rtc_offset = new_rtc_offset;
-	settime(&tv);
+	settime(l->l_proc, &ts);
 
 	return (0);
 }
 
 /*
- * sysctl helper routine for kern.maxvnodes.  ensures that the new
+ * sysctl helper routine for kern.maxproc.  ensures that the new
  * values are not too low or too high.
  */
 static int
@@ -1101,30 +1201,6 @@ sysctl_kern_maxproc(SYSCTLFN_ARGS)
 	maxproc = nmaxproc;
 
 	return (0);
-}
-
-/*
- * sysctl helper routine for kern.securelevel.  ensures that the value
- * only rises unless the caller has pid 1 (assumed to be init).
- */
-static int
-sysctl_kern_securelevel(SYSCTLFN_ARGS)
-{
-	int newsecurelevel, error;
-	struct sysctlnode node;
-
-	newsecurelevel = securelevel;
-	node = *rnode;
-	node.sysctl_data = &newsecurelevel;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (newsecurelevel < securelevel && l && l->l_proc->p_pid != 1)
-		return (EPERM);
-	securelevel = newsecurelevel;
-
-	return (error);
 }
 
 /*
@@ -1235,6 +1311,9 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
+		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+		    kauth_cred_geteuid(fp->f_cred)))
+			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
 			return (ENOMEM);
@@ -1362,26 +1441,31 @@ static int
 sysctl_kern_defcorename(SYSCTLFN_ARGS)
 {
 	int error;
-	char newcorename[MAXPATHLEN];
+	char *newcorename;
 	struct sysctlnode node;
 
+	newcorename = PNBUF_GET();
 	node = *rnode;
 	node.sysctl_data = &newcorename[0];
 	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
+	if (error || newp == NULL) {
+		goto done;
+	}
 
 	/*
 	 * when sysctl_lookup() deals with a string, it's guaranteed
 	 * to come back nul terminated.  so there.  :)
 	 */
-	if (strlen(newcorename) == 0)
-		return (EINVAL);
-
-	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
-
-	return (0);
+	if (strlen(newcorename) == 0) {
+		error = EINVAL;
+	} else {
+		memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
+		error = 0;
+	}
+done:
+	PNBUF_PUT(newcorename);
+	return error;
 }
 
 /*
@@ -1410,7 +1494,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 
 #else /* MULTIPROCESSOR */
 
-	u_int64_t *cp_time = NULL;
+	uint64_t *cp_time = NULL;
 	int error, n = sysctl_ncpus(), i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -1425,19 +1509,19 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 	 */
 	switch (namelen) {
 	case 0:
-	    	if (*oldlenp == sizeof(u_int64_t) * CPUSTATES || oldp == NULL) {
-			node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
+	    	if (*oldlenp == sizeof(uint64_t) * CPUSTATES || oldp == NULL) {
+			node.sysctl_size = sizeof(uint64_t) * CPUSTATES;
 			n = -1; /* SUM */
 		}
 		else {
-			node.sysctl_size = n * sizeof(u_int64_t) * CPUSTATES;
+			node.sysctl_size = n * sizeof(uint64_t) * CPUSTATES;
 			n = -2; /* ALL */
 		}
 		break;
 	case 1:
 		if (name[0] < 0 || name[0] >= n)
 			return (ENOENT); /* ENOSUCHPROCESSOR */
-		node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
+		node.sysctl_size = sizeof(uint64_t) * CPUSTATES;
 		n = name[0];
 		/*
 		 * adjust these so that sysctl_lookup() will be happy
@@ -1946,6 +2030,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
+			if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+			    kauth_cred_geteuid(fp->f_cred)))
+				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
 				error = copyout(&kf, dp, out_size);
@@ -1961,7 +2048,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 		}
 		break;
-	    case KERN_FILE_BYPID:
+	case KERN_FILE_BYPID:
 		if (arg < -1)
 			/* -1 means all processes */
 			return (EINVAL);
@@ -1969,6 +2056,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
+				continue;
+			if (kauth_authorize_process(l->l_proc->p_cred,
+			    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2022,8 +2112,8 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 	kp->ki_msgcount =	fp->f_msgcount;
 	kp->ki_usecount =	fp->f_usecount;
 	kp->ki_fucred =		PTRTOUINT64(fp->f_cred);
-	kp->ki_fuid =		fp->f_cred->cr_uid;
-	kp->ki_fgid =		fp->f_cred->cr_gid;
+	kp->ki_fuid =		kauth_cred_geteuid(fp->f_cred);
+	kp->ki_fgid =		kauth_cred_getegid(fp->f_cred);
 	kp->ki_fops =		PTRTOUINT64(fp->f_ops);
 	kp->ki_foffset =	fp->f_offset;
 	kp->ki_fdata =		PTRTOUINT64(fp->f_data);
@@ -2050,8 +2140,8 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 static int
 sysctl_doeproc(SYSCTLFN_ARGS)
 {
-	struct eproc eproc;
-	struct kinfo_proc2 kproc2;
+	struct eproc *eproc;
+	struct kinfo_proc2 *kproc2;
 	struct kinfo_proc *dp;
 	struct proc *p;
 	const struct proclist_desc *pd;
@@ -2089,6 +2179,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
+	kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
+	eproc = malloc(sizeof(*eproc), M_TEMP, M_WAITOK);
 	proclist_lock_read();
 
 	pd = proclists;
@@ -2099,6 +2191,11 @@ again:
 		 */
 		if (p->p_stat == SIDL)
 			continue;
+
+		if (kauth_authorize_process(l->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
+			continue;
+
 		/*
 		 * TODO - make more efficient (see notes below).
 		 * do by session.
@@ -2137,22 +2234,22 @@ again:
 			break;
 
 		case KERN_PROC_UID:
-			if (p->p_ucred->cr_uid != (uid_t)arg)
+			if (kauth_cred_geteuid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_RUID:
-			if (p->p_cred->p_ruid != (uid_t)arg)
+			if (kauth_cred_getuid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_GID:
-			if (p->p_ucred->cr_gid != (uid_t)arg)
+			if (kauth_cred_getegid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_RGID:
-			if (p->p_cred->p_rgid != (uid_t)arg)
+			if (kauth_cred_getgid(p->p_cred) != (uid_t)arg)
 				continue;
 			break;
 
@@ -2166,13 +2263,13 @@ again:
 		}
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
-				fill_eproc(p, &eproc);
+				fill_eproc(p, eproc);
 				error = copyout(p, &dp->kp_proc,
 				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
-				error = copyout(&eproc, &dp->kp_eproc,
-				    sizeof(eproc));
+				error = copyout(eproc, &dp->kp_eproc,
+				    sizeof(*eproc));
 				if (error)
 					goto cleanup;
 				dp++;
@@ -2181,13 +2278,13 @@ again:
 			needed += sizeof(struct kinfo_proc);
 		} else { /* KERN_PROC2 */
 			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc2(p, &kproc2);
+				fill_kproc2(p, kproc2);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
 				 */
-				error = copyout(&kproc2, dp2,
-				    min(sizeof(kproc2), elem_size));
+				error = copyout(kproc2, dp2,
+				    min(sizeof(*kproc2), elem_size));
 				if (error)
 					goto cleanup;
 				dp2 += elem_size;
@@ -2207,8 +2304,10 @@ again:
 			*oldlenp = (char *)dp - where;
 		else
 			*oldlenp = dp2 - where;
-		if (needed > *oldlenp)
-			return (ENOMEM);
+		if (needed > *oldlenp) {
+			error = ENOMEM;
+			goto out;
+		}
 	} else {
 		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
@@ -2216,6 +2315,9 @@ again:
 	return (0);
  cleanup:
 	proclist_unlock_read();
+ out:
+	free(kproc2, M_TEMP);
+	free(eproc, M_TEMP);
 	return (error);
 }
 
@@ -2235,6 +2337,10 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	int nargv, type, error;
 	char *arg;
 	char *tmp;
+	struct vmspace *vmspace;
+	vaddr_t psstr_addr;
+	vaddr_t offsetn;
+	vaddr_t offsetv;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -2255,16 +2361,28 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
+	proclist_lock_read();
+
 	/* check pid */
-	if ((p = pfind(pid)) == NULL)
-		return (EINVAL);
+	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
+		error = EINVAL;
+		goto out_locked;
+	}
+
+	error = kauth_authorize_process(l->l_proc->p_cred,
+	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+	if (error) {
+		goto out_locked;
+	}
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (up->p_ucred->cr_uid != 0) {
-			if (up->p_cred->p_ruid != p->p_cred->p_ruid ||
-			    up->p_cred->p_ruid != p->p_cred->p_svuid)
-				return (EPERM);
+		if (kauth_cred_geteuid(up->p_cred) != 0) {
+			if (kauth_cred_getuid(up->p_cred) != kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(up->p_cred) != kauth_cred_getsvuid(p->p_cred)) {
+				error = EPERM;
+				goto out_locked;
+			}
 		}
 	}
 
@@ -2273,24 +2391,40 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			*oldlenp = sizeof (int);
 		else
 			*oldlenp = ARG_MAX;	/* XXX XXX XXX */
-		return (0);
+		error = 0;
+		goto out_locked;
 	}
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
 	 * System processes also don't have a user stack.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0)
-		return (EINVAL);
+	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+		error = EINVAL;
+		goto out_locked;
+	}
 
 	/*
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
-		return (EFAULT);
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+		error = EFAULT;
+		goto out_locked;
+	}
 
-	p->p_vmspace->vm_refcnt++;	/* XXX */
+	psstr_addr = (vaddr_t)p->p_psstr;
+	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV) {
+		offsetn = p->p_psnargv;
+		offsetv = p->p_psargv;
+	} else {
+		offsetn = p->p_psnenv;
+		offsetv = p->p_psenv;
+	}
+	vmspace = p->p_vmspace;
+	vmspace->vm_refcnt++;	/* XXX */
+
+	proclist_unlock_read();
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
@@ -2304,19 +2438,15 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	aiov.iov_len = sizeof(pss);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)p->p_psstr;
+	auio.uio_offset = psstr_addr;
 	auio.uio_resid = sizeof(pss);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	UIO_SETUP_SYSSPACE(&auio);
+	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
-	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
-		memcpy(&nargv, (char *)&pss + p->p_psnargv, sizeof(nargv));
-	else
-		memcpy(&nargv, (char *)&pss + p->p_psnenv, sizeof(nargv));
+	memcpy(&nargv, (char *)&pss + offsetn, sizeof(nargv));
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
 		error = copyout(&nargv, oldp, sizeof(nargv));
 		*oldlenp = sizeof(nargv);
@@ -2328,10 +2458,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	switch (type) {
 	case KERN_PROC_ARGV:
 		/* XXX compat32 stuff here */
-		memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
-		break;
+		/* FALLTHROUGH */
 	case KERN_PROC_ENV:
-		memcpy(&tmp, (char *)&pss + p->p_psenv, sizeof(tmp));
+		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
 		break;
 	default:
 		return (EINVAL);
@@ -2342,10 +2471,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = sizeof(argv);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	UIO_SETUP_SYSSPACE(&auio);
+	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
@@ -2364,10 +2492,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		auio.uio_offset = argv + len;
 		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
 		auio.uio_resid = xlen;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_procp = NULL;
-		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+		UIO_SETUP_SYSSPACE(&auio);
+		error = uvm_io(&vmspace->vm_map, &auio);
 		if (error)
 			goto done;
 
@@ -2395,10 +2522,14 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	*oldlenp = len;
 
 done:
-	uvmspace_free(p->p_vmspace);
+	uvmspace_free(vmspace);
 
 	free(arg, M_TEMP);
-	return (error);
+	return error;
+
+out_locked:
+	proclist_unlock_read();
+	return error;
 }
 
 /*
@@ -2444,6 +2575,56 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 }
 #endif /* VERIFIED_EXEC */
 
+static int
+sysctl_security_setidcore(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &newsize;
+	newsize = *(int *)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (securelevel > 0)
+		return (EPERM);
+
+	*(int *)rnode->sysctl_data = newsize;
+
+	return 0;
+}
+
+static int
+sysctl_security_setidcorename(SYSCTLFN_ARGS)
+{
+	int error;
+	char *newsetidcorename;
+	struct sysctlnode node;
+
+	newsetidcorename = PNBUF_GET();
+	node = *rnode;
+	node.sysctl_data = newsetidcorename;
+	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL) {
+		goto out;
+	}
+	if (securelevel > 0) {
+		error = EPERM;
+		goto out;
+	}
+	if (strlen(newsetidcorename) == 0) {
+		error = EINVAL;
+		goto out;
+	}
+	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
+out:
+	PNBUF_PUT(newsetidcorename);
+	return error;
+}
+
 /*
  * sysctl helper routine for kern.cp_id node.  maps cpus to their
  * cpuids.
@@ -2454,7 +2635,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 
 #ifndef MULTIPROCESSOR
-	u_int64_t id;
+	uint64_t id;
 
 	if (namelen == 1) {
 		if (name[0] != 0)
@@ -2471,7 +2652,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 
 #else /* MULTIPROCESSOR */
-	u_int64_t *cp_id = NULL;
+	uint64_t *cp_id = NULL;
 	int error, n = sysctl_ncpus();
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -2483,13 +2664,13 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	 */
 	switch (namelen) {
 	case 0:
-		node.sysctl_size = n * sizeof(u_int64_t);
+		node.sysctl_size = n * sizeof(uint64_t);
 		n = -2; /* ALL */
 		break;
 	case 1:
 		if (name[0] < 0 || name[0] >= n)
 			return (ENOENT); /* ENOSUCHPROCESSOR */
-		node.sysctl_size = sizeof(u_int64_t);
+		node.sysctl_size = sizeof(uint64_t);
 		n = name[0];
 		/*
 		 * adjust these so that sysctl_lookup() will be happy
@@ -2690,16 +2871,16 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	ki->p_tpgid = NO_PGID;	/* may be changed if controlling tty below */
 
-	ki->p_uid = p->p_ucred->cr_uid;
-	ki->p_ruid = p->p_cred->p_ruid;
-	ki->p_gid = p->p_ucred->cr_gid;
-	ki->p_rgid = p->p_cred->p_rgid;
-	ki->p_svuid = p->p_cred->p_svuid;
-	ki->p_svgid = p->p_cred->p_svgid;
+	ki->p_uid = kauth_cred_geteuid(p->p_cred);
+	ki->p_ruid = kauth_cred_getuid(p->p_cred);
+	ki->p_gid = kauth_cred_getegid(p->p_cred);
+	ki->p_rgid = kauth_cred_getgid(p->p_cred);
+	ki->p_svuid = kauth_cred_getsvuid(p->p_cred);
+	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 
-	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
-	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
-	ki->p_ngroups = p->p_cred->pc_ucred->cr_ngroups;
+	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
+	kauth_cred_getgroups(p->p_cred, ki->p_groups,
+	    min(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])));
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
@@ -2766,7 +2947,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_back = PTRTOUINT64(l->l_back);
 		ki->p_addr = PTRTOUINT64(l->l_addr);
 		ki->p_stat = l->l_stat;
-		ki->p_flag |= l->l_flag;
+		ki->p_flag |= l->l_flag & P_SHARED;
 		ki->p_swtime = l->l_swtime;
 		ki->p_slptime = l->l_slptime;
 		if (l->l_stat == LSONPROC) {
@@ -2875,11 +3056,15 @@ fill_eproc(struct proc *p, struct eproc *ep)
 {
 	struct tty *tp;
 	struct lwp *l;
+	struct pcred pc;
+	struct ucred uc;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
-	ep->e_pcred = *p->p_cred;
-	ep->e_ucred = *p->p_ucred;
+	kauth_cred_topcred(p->p_cred, &pc);
+	kauth_cred_toucred(p->p_cred, &uc);
+	ep->e_pcred = pc;
+	ep->e_ucred = uc;
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ep->e_vm.vm_rssize = 0;
 		ep->e_vm.vm_tsize = 0;

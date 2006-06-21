@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.13 2005/02/27 00:26:58 perry Exp $ */
+/*      $NetBSD: clockctl.c,v 1.13.4.1 2006/06/21 15:02:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13.4.1 2006/06/21 15:02:11 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -69,58 +69,62 @@ clockctlattach(int num)
 }
 
 int
-clockctlioctl(dev, cmd, data, flags, p)
+clockctlioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 
 	switch (cmd) {
 		case CLOCKCTL_SETTIMEOFDAY: {
-			struct sys_settimeofday_args *args =
-			    (struct sys_settimeofday_args *)data;
+			struct clockctl_settimeofday *args =
+			    (struct clockctl_settimeofday *)data;
 
-			error = settimeofday1(SCARG(args, tv),
-			    SCARG(args, tzp), p);
+			error = settimeofday1(args->tv, args->tzp, l->l_proc);
 			if (error)
 				return (error);
 			break;
 		}
 		case CLOCKCTL_ADJTIME: {
-			struct sys_adjtime_args *args =
-			    (struct sys_adjtime_args *)data;
+			struct clockctl_adjtime *args =
+			    (struct clockctl_adjtime *)data;
 
-			error = adjtime1(SCARG(args, delta),
-			    SCARG(args, olddelta), p);
+			error = adjtime1(args->delta, args->olddelta,
+			    l->l_proc);
 			if (error)
 				return (error);
 			break;
 		}
 		case CLOCKCTL_CLOCK_SETTIME: {
-			struct sys_clock_settime_args *args =
-			    (struct sys_clock_settime_args *)data;
+			struct clockctl_clock_settime *args =
+			    (struct clockctl_clock_settime *)data;
 
-			error = clock_settime1(SCARG(args, clock_id),
-			    SCARG(args, tp));
+			error = clock_settime1(l->l_proc, args->clock_id,
+			    args->tp);
 			if (error)
 				return (error);
 			break;
 		}
 #ifdef NTP
 		case CLOCKCTL_NTP_ADJTIME: {
-			struct clockctl_ntp_adjtime_args *args =
-			    (struct clockctl_ntp_adjtime_args *)data;
+			struct clockctl_ntp_adjtime *args =
+			    (struct clockctl_ntp_adjtime *)data;
 			struct timex ntv;
+			register_t retval;
 
-			error = copyin((caddr_t)SCARG(args,uas.tp),
-			    (caddr_t)&ntv, sizeof(ntv));
+			error = copyin(args->tp, &ntv, sizeof(ntv));
 			if (error)
 				return (error);
 
-			error = ntp_adjtime1(&ntv, args, &args->retval);
+			ntp_adjtime1(&ntv);
+
+			error = copyout(&ntv, args->tp, sizeof(ntv));
+			if (error == 0)
+				(void)copyout(&retval, &args->retval, sizeof(retval));
+
 			return (error);
 		}
 #endif /* NTP */

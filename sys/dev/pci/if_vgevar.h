@@ -32,7 +32,7 @@
  * $FreeBSD: src/sys/dev/vge/if_vgevar.h,v 1.2 2005/01/06 01:43:31 imp Exp $
  */
 
-#if !defined(__i386__)
+#ifndef __NO_STRICT_ALIGNMENT 
 #define VGE_FIXUP_RX
 #endif
 
@@ -143,9 +143,14 @@ struct vge_softc {
 #define VGE_LOCK_ASSERT(x)	/* nothing */
 #endif
 
-/* adjusting size of mbuf is not necessary on NetBSD */
+/*
+ * Mbuf adjust factor to force 32-bit alignment of IP header.
+ * Drivers should do m_adj(m, ETHER_ALIGN) when setting up a
+ * receive so the upper layers get the IP header properly aligned
+ * past the 14-byte Ethernet header.
+ */
 #ifndef ETHER_ALIGN
-#  define	ETHER_ALIGN	0
+#  define	ETHER_ALIGN	2
 #endif
 
 #define	VGE_POWER_MANAGEMENT	0	/* disabled for now */

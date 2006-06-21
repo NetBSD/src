@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2001/12/02 14:25:44 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.8.34.1 2006/06/21 14:57:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -107,8 +107,10 @@ doboot(const char *file, int flags)
 
 	printf("Starting %s, flags 0x%x\n", file, flags);
 	marks[MARK_START] = 0x100000;
-	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
+	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1) {
+		printf("loadfile failed\n");
 		return;
+	}
 	close(fd);
 
 	if (devparse(file, &dev, &unit, &part, &name) != 0) {

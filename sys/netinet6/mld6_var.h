@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_var.h,v 1.6 2003/06/06 08:13:44 itojun Exp $	*/
+/*	$NetBSD: mld6_var.h,v 1.6.18.1 2006/06/21 15:11:09 yamt Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -42,12 +42,13 @@
  */
 #define MLD_OTHERLISTENER			0
 #define MLD_IREPORTEDLAST			1
+#define MLD_REPORTPENDING			2 /* implementation specific */
 
-void	mld6_init __P((void));
-void	mld6_input __P((struct mbuf *, int));
-void	mld6_start_listening __P((struct in6_multi *));
-void	mld6_stop_listening __P((struct in6_multi *));
-void	mld6_fasttimeo __P((void));
+/* denotes that the MLD max response delay field specifies time in milliseconds */
+#define MLD_TIMER_SCALE	1000
+
+void	mld_init __P((void));
+void	mld_input __P((struct mbuf *, int));
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_MLD6_VAR_H_ */
+#endif /* !_NETINET6_MLD6_VAR_H_ */

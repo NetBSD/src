@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.17 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: esis.h,v 1.17.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_ESIS_H_
+#define _NETISO_ESIS_H_
 
 #include <machine/endian.h>
 
@@ -127,7 +130,7 @@ struct sockaddr_dl;
 
 void esis_init (void);
 int esis_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *);
+		     struct mbuf *, struct lwp *);
 void esis_input (struct mbuf *, ...);
 void esis_rdoutput (struct snpa_hdr *, struct mbuf *, struct clnp_optidx *,
 			struct iso_addr *, struct rtentry *);
@@ -143,3 +146,5 @@ void isis_input (struct mbuf *, ...);
 int isis_output (struct mbuf *, ...);
 void *esis_ctlinput (int, struct sockaddr *, void *);
 #endif /* _KERNEL */
+
+#endif /* !_NETISO_ESIS_H_ */

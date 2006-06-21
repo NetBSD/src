@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.30.2.1 2006/06/21 15:10:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30.2.1 2006/06/21 15:10:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej 
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	ov_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	ov_unmount __P((struct mount *, int, struct proc *));
+int	ov_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct lwp *);
+int	ov_unmount(struct mount *, int, struct lwp *);
 
 #define	NOVERLAYNODECACHE	16
 
@@ -98,12 +98,12 @@ int	ov_unmount __P((struct mount *, int, struct proc *));
  * Mount overlay layer
  */
 int
-ov_mount(mp, path, data, ndp, p)
+ov_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	struct overlay_args args;
@@ -120,7 +120,6 @@ ov_mount(mp, path, data, ndp, p)
 		if (lmp == NULL)
 			return EIO;
 		args.la.target = NULL;
-		vfs_showexport(mp, &args.la.export, &lmp->layerm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	/*
@@ -131,16 +130,10 @@ ov_mount(mp, path, data, ndp, p)
 		return (error);
 
 	/*
-	 * Update only does export updating.
+	 * Update is not supported
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		lmp = MOUNTTOLAYERMOUNT(mp);
-		if (args.ova_target == 0)
-			return (vfs_export(mp, &lmp->layerm_export,
-					&args.la.export));
-		else
-			return (EOPNOTSUPP);
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return EOPNOTSUPP;
 
 	/*
 	 * Find lower node
@@ -202,7 +195,7 @@ ov_mount(mp, path, data, ndp, p)
 	nmp->ovm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -214,10 +207,10 @@ ov_mount(mp, path, data, ndp, p)
  * Free reference to overlay layer
  */
 int
-ov_unmount(mp, mntflags, p)
+ov_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *overlay_rootvp = MOUNTTOOVERLAYMOUNT(mp)->ovm_rootvp;
 	int error;
@@ -300,9 +293,7 @@ struct vfsops overlay_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	layerfs_checkexp,
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	ov_vnodeopv_descs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.16 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: hcide.c,v 1.16.4.1 2006/06/21 15:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.16 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.16.4.1 2006/06/21 15:06:27 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -79,7 +79,7 @@ hcide_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 hcide_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hcide_softc *sc = (void *)self;
+	struct hcide_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct podulebus_attach_args *pa = aux;
 	struct ata_channel *ch;
@@ -102,6 +102,7 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 		wdr->cmd_iot = pa->pa_mod_t;
 		wdr->ctl_iot = pa->pa_mod_t;
 		ch->ch_queue = &sc->sc_chq[i];
+		ch->ch_ndrive = 2;
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + hcide_cmdoffsets[i], 0, 8,
 		    &wdr->cmd_baseioh);

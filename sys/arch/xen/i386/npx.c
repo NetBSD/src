@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.4 2005/03/20 13:12:59 bouyer Exp $	*/
+/*	$NetBSD: npx.c,v 1.4.2.1 2006/06/21 14:58:06 yamt Exp $	*/
 /*	NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.4 2005/03/20 13:12:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.4.2.1 2006/06/21 14:58:06 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.4 2005/03/20 13:12:59 bouyer Exp $");
 #define	stts()			lcr0(rcr0() | CR0_TS)
 #else
 #define	clts()
-#define	stts()			HYPERVISOR_fpu_taskswitch()
+#define	stts()
 #endif
 
 int npxdna(struct cpu_info *);
@@ -172,7 +172,7 @@ extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;
 
-static __inline void
+static inline void
 fpu_save(union savefpu *addr)
 {
 #ifdef I686_CPU
@@ -590,6 +590,26 @@ npxdna_xmm(struct cpu_info *ci)
 		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
 		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
+		/*
+		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
+		 * leaking other process's execution history. Clear them
+		 * manually.
+		 */
+		static const double zero = 0.0;
+		int status;
+		/*
+		 * Clear the ES bit in the x87 status word if it is currently
+		 * set, in order to avoid causing a fault in the upcoming load.
+		 */
+		fnstsw(&status);
+		if (status & 0x80)
+			fnclex();
+		/*
+		 * Load the dummy variable into the x87 stack.  This mangles
+		 * the x87 stack, but we don't care since we're about to call
+		 * fxrstor() anyway.
+		 */
+		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
 
@@ -749,7 +769,7 @@ npxsave_lwp(struct lwp *l, int save)
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)
-		return;
+		goto end;
 
 	IPRINTF(("%s: fp %s lwp %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", l));
@@ -792,4 +812,6 @@ npxsave_lwp(struct lwp *l, int save)
 	KASSERT(ci->ci_fpcurlwp == l);
 	npxsave_cpu(ci, save);
 #endif
+end:
+	HYPERVISOR_fpu_taskswitch();
 }

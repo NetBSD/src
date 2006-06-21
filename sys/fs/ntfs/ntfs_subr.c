@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.16 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.16.2.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16.2.1 2006/06/21 15:09:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,13 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16 2005/05/29 21:00:29 christos Exp 
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#include <sys/kauth.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif
 
 #include <miscfs/specfs/specdev.h>
 
-/* #define NTFS_DEBUG 1 */
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfsmount.h>
 #include <fs/ntfs/ntfs_inode.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16 2005/05/29 21:00:29 christos Exp 
 #include <fs/ntfs/ntfs_compr.h>
 #include <fs/ntfs/ntfs_ihash.h>
 
-#if defined(NTFS_DEBUG)
+#ifdef NTFS_DEBUG
 int ntfs_debug = NTFS_DEBUG;
 #endif
 
@@ -74,10 +74,15 @@ struct ntfs_lookup_ctx {
 	struct ntfs_lookup_ctx *prev;
 };
 
-static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
-static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
-static int ntfs_uastricmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
-static int ntfs_uastrcmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
+static int ntfs_ntlookupattr(struct ntfsmount *, const char *, int,
+	int *, char **);
+static int ntfs_findvattr(struct ntfsmount *, struct ntnode *,
+	struct ntvattr **, struct ntvattr **, u_int32_t, const char *,
+	size_t, cn_t);
+static int ntfs_uastricmp(struct ntfsmount *, const wchar *, size_t,
+	const char *, size_t);
+static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t,
+	const char *, size_t);
 
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
@@ -99,8 +104,8 @@ int
 ntfs_ntvattrrele(vap)
 	struct ntvattr * vap;
 {
-	dprintf(("ntfs_ntvattrrele: ino: %d, type: 0x%x\n",
-		 vap->va_ip->i_number, vap->va_type));
+	dprintf(("ntfs_ntvattrrele: ino: %llu, type: 0x%x\n",
+	    (unsigned long long)vap->va_ip->i_number, vap->va_type));
 
 	ntfs_ntrele(vap->va_ip);
 
@@ -124,12 +129,12 @@ ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
 	struct ntvattr *vap;
 
 	if((ip->i_flag & IN_LOADED) == 0) {
-		dprintf(("ntfs_findvattr: node not loaded, ino: %d\n",
-		       ip->i_number));
+		dprintf(("ntfs_findvattr: node not loaded, ino: %llu\n",
+		    (unsigned long long)ip->i_number));
 		error = ntfs_loadntnode(ntmp,ip);
 		if (error) {
-			printf("ntfs_findvattr: FAILED TO LOAD INO: %d\n",
-			       ip->i_number);
+			printf("ntfs_findvattr: FAILED TO LOAD INO: %llu\n",
+			    (unsigned long long)ip->i_number);
 			return (error);
 		}
 	}
@@ -137,9 +142,9 @@ ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
 	*lvapp = NULL;
 	*vapp = NULL;
 	for (vap = ip->i_valist.lh_first; vap; vap = vap->va_list.le_next) {
-		ddprintf(("ntfs_findvattr: type: 0x%x, vcn: %d - %d\n", \
-			  vap->va_type, (u_int32_t) vap->va_vcnstart, \
-			  (u_int32_t) vap->va_vcnend));
+		ddprintf(("ntfs_findvattr: type: 0x%x, vcn: %qu - %qu\n",
+			  vap->va_type, (long long) vap->va_vcnstart,
+			  (long long) vap->va_vcnend));
 		if ((vap->va_type == type) &&
 		    (vap->va_vcnstart <= vcn) && (vap->va_vcnend >= vcn) &&
 		    (vap->va_namelen == namelen) &&
@@ -183,14 +188,15 @@ ntfs_ntvattrget(
 	*vapp = NULL;
 
 	if (name) {
-		dprintf(("ntfs_ntvattrget: " \
-			 "ino: %d, type: 0x%x, name: %s, vcn: %d\n", \
-			 ip->i_number, type, name, (u_int32_t) vcn));
+		dprintf(("ntfs_ntvattrget: "
+		    "ino: %llu, type: 0x%x, name: %s, vcn: %qu\n",
+		    (unsigned long long)ip->i_number, type, name,
+		    (long long)vcn));
 		namelen = strlen(name);
 	} else {
-		dprintf(("ntfs_ntvattrget: " \
-			 "ino: %d, type: 0x%x, vcn: %d\n", \
-			 ip->i_number, type, (u_int32_t) vcn));
+		dprintf(("ntfs_ntvattrget: "
+		    "ino: %llu, type: 0x%x, vcn: %qu\n",
+		    (unsigned long long)ip->i_number, type, (long long)vcn));
 		name = "";
 		namelen = 0;
 	}
@@ -200,9 +206,10 @@ ntfs_ntvattrget(
 		return (error);
 
 	if (!lvap) {
-		dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: " \
-		       "ino: %d, type: 0x%x, name: %s, vcn: %d\n", \
-		       ip->i_number, type, name, (u_int32_t) vcn));
+		dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: "
+		    "ino: %llu, type: 0x%x, name: %s, vcn: %qu\n",
+		    (unsigned long long)ip->i_number, type, name,
+		    (long long)vcn));
 		return (ENOENT);
 	}
 	/* Scan $ATTRIBUTE_LIST for requested attribute */
@@ -217,10 +224,11 @@ ntfs_ntvattrget(
 	nextaalp = NULL;
 
 	for(; len > 0; aalp = nextaalp) {
-		dprintf(("ntfs_ntvattrget: " \
-			 "attrlist: ino: %d, attr: 0x%x, vcn: %d\n", \
-			 aalp->al_inumber, aalp->al_type, \
-			 (u_int32_t) aalp->al_vcnstart));
+		KASSERT(aalp != NULL);
+		dprintf(("ntfs_ntvattrget: "
+		    "attrlist: ino: %d, attr: 0x%x, vcn: %qu\n",
+		    aalp->al_inumber, aalp->al_type,
+			 (long long) aalp->al_vcnstart));
 
 		if (len > aalp->reclen) {
 			nextaalp = NTFS_NEXTREC(aalp, struct attr_attrlist *);
@@ -241,7 +249,7 @@ ntfs_ntvattrget(
 		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-				VG_EXT, curproc, &newvp);
+				VG_EXT, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -259,9 +267,10 @@ ntfs_ntvattrget(
 	}
 	error = ENOENT;
 
-	dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: " \
-	       "ino: %d, type: 0x%x, name: %.*s, vcn: %d\n", \
-	       ip->i_number, type, (int) namelen, name, (u_int32_t) vcn));
+	dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: "
+	    "ino: %llu, type: 0x%x, name: %.*s, vcn: %qu\n",
+	    (unsigned long long)ip->i_number, type, (int)namelen,
+	    name, (long long)vcn));
 out:
 	free(alpool, M_TEMP);
 	return (error);
@@ -283,7 +292,8 @@ ntfs_loadntnode(
 	struct attr    *ap;
 	struct ntvattr *nvap;
 
-	dprintf(("ntfs_loadntnode: loading ino: %d\n",ip->i_number));
+	dprintf(("ntfs_loadntnode: loading ino: %llu\n",
+	    (unsigned long long)ip->i_number));
 
 	mfrp = (struct filerec *) malloc(ntfs_bntob(ntmp->ntm_bpmftrec),
 	       M_TEMP, M_WAITOK);
@@ -328,7 +338,8 @@ ntfs_loadntnode(
 		goto out;
 	}
 
-	dprintf(("ntfs_loadntnode: load attrs for ino: %d\n",ip->i_number));
+	dprintf(("ntfs_loadntnode: load attrs for ino: %llu\n",
+	    (unsigned long long)ip->i_number));
 	off = mfrp->fr_attroff;
 	ap = (struct attr *) ((caddr_t)mfrp + off);
 
@@ -346,8 +357,8 @@ ntfs_loadntnode(
 		ap = (struct attr *) ((caddr_t)mfrp + off);
 	}
 	if (error) {
-		printf("ntfs_loadntnode: failed to load attr ino: %d\n",
-		       ip->i_number);
+		printf("ntfs_loadntnode: failed to load attr ino: %llu\n",
+		    (unsigned long long)ip->i_number);
 		goto out;
 	}
 
@@ -370,8 +381,8 @@ int
 ntfs_ntget(ip)
 	struct ntnode *ip;
 {
-	dprintf(("ntfs_ntget: get ntnode %d: %p, usecount: %d\n",
-		ip->i_number, ip, ip->i_usecount));
+	dprintf(("ntfs_ntget: get ntnode %llu: %p, usecount: %d\n",
+	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
 
 	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
@@ -395,13 +406,15 @@ ntfs_ntlookup(
 {
 	struct ntnode  *ip;
 
-	dprintf(("ntfs_ntlookup: looking for ntnode %d\n", ino));
+	dprintf(("ntfs_ntlookup: looking for ntnode %llu\n",
+	    (unsigned long long)ino));
 
 	do {
 		if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
 			ntfs_ntget(ip);
-			dprintf(("ntfs_ntlookup: ntnode %d: %p, usecount: %d\n",
-				ino, ip, ip->i_usecount));
+			dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
+			    " usecount: %d\n",
+			    (unsigned long long)ino, ip, ip->i_usecount));
 			*ipp = ip;
 			return (0);
 		}
@@ -409,7 +422,8 @@ ntfs_ntlookup(
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
-	ddprintf(("ntfs_ntlookup: allocating ntnode: %d: %p\n", ino, ip));
+	ddprintf(("ntfs_ntlookup: allocating ntnode: %llu: %p\n",
+	    (unsigned long long)ino, ip));
 	bzero(ip, sizeof(struct ntnode));
 
 	/* Generic initialization */
@@ -431,8 +445,8 @@ ntfs_ntlookup(
 
 	*ipp = ip;
 
-	dprintf(("ntfs_ntlookup: ntnode %d: %p, usecount: %d\n",
-		ino, ip, ip->i_usecount));
+	dprintf(("ntfs_ntlookup: ntnode %llu: %p, usecount: %d\n",
+	    (unsigned long long)ino, ip, ip->i_usecount));
 
 	return (0);
 }
@@ -449,24 +463,24 @@ ntfs_ntput(ip)
 {
 	struct ntvattr *vap;
 
-	dprintf(("ntfs_ntput: rele ntnode %d: %p, usecount: %d\n",
-		ip->i_number, ip, ip->i_usecount));
+	dprintf(("ntfs_ntput: rele ntnode %llu: %p, usecount: %d\n",
+	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
 
 	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
 #ifdef DIAGNOSTIC
 	if (ip->i_usecount < 0) {
-		panic("ntfs_ntput: ino: %d usecount: %d ",
-		      ip->i_number,ip->i_usecount);
+		panic("ntfs_ntput: ino: %llu usecount: %d ",
+		    (unsigned long long)ip->i_number, ip->i_usecount);
 	}
 #endif
 
 	lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
 
 	if (ip->i_usecount == 0) {
-		dprintf(("ntfs_ntput: deallocating ntnode: %d\n",
-			ip->i_number));
+		dprintf(("ntfs_ntput: deallocating ntnode: %llu\n",
+		    (unsigned long long)ip->i_number));
 
 		if (ip->i_fnlist.lh_first)
 			panic("ntfs_ntput: ntnode has fnodes");
@@ -493,8 +507,8 @@ ntfs_ntref(ip)
 	ip->i_usecount++;
 	simple_unlock(&ip->i_interlock);
 
-	dprintf(("ntfs_ntref: ino %d, usecount: %d\n",
-		ip->i_number, ip->i_usecount));
+	dprintf(("ntfs_ntref: ino %llu, usecount: %d\n",
+	    (unsigned long long)ip->i_number, ip->i_usecount));
 
 }
 
@@ -505,15 +519,15 @@ void
 ntfs_ntrele(ip)
 	struct ntnode *ip;
 {
-	dprintf(("ntfs_ntrele: rele ntnode %d: %p, usecount: %d\n",
-		ip->i_number, ip, ip->i_usecount));
+	dprintf(("ntfs_ntrele: rele ntnode %llu: %p, usecount: %d\n",
+	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
 
 	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
-		panic("ntfs_ntrele: ino: %d usecount: %d ",
-		      ip->i_number,ip->i_usecount);
+		panic("ntfs_ntrele: ino: %llu usecount: %d ",
+		    (unsigned long long)ip->i_number, ip->i_usecount);
 	simple_unlock(&ip->i_interlock);
 }
 
@@ -582,7 +596,7 @@ ntfs_attrtontvattr(
 		vap->va_compressalg = rap->a_nr.a_compressalg;
 		error = ntfs_runtovrun(&(vap->va_vruncn), &(vap->va_vruncl),
 				       &(vap->va_vruncnt),
-				       (caddr_t) rap + rap->a_nr.a_dataoff);
+				       (u_int8_t *) rap + rap->a_nr.a_dataoff);
 	} else {
 		vap->va_compressalg = 0;
 		ddprintf((", res."));
@@ -595,7 +609,7 @@ ntfs_attrtontvattr(
 		memcpy(vap->va_datap, (caddr_t) rap + rap->a_r.a_dataoff,
 		       rap->a_r.a_datalen);
 	}
-	ddprintf((", len: %d", vap->va_datalen));
+	ddprintf((", len: %qu", (long long)vap->va_datalen));
 
 	if (error)
 		FREE(vap, M_NTFSNTVATTR);
@@ -742,8 +756,8 @@ ntfs_fget(
 {
 	struct fnode *fp;
 
-	dprintf(("ntfs_fget: ino: %d, attrtype: 0x%x, attrname: %s\n",
-		ip->i_number,attrtype, attrname?attrname:""));
+	dprintf(("ntfs_fget: ino: %llu, attrtype: 0x%x, attrname: %s\n",
+	    (unsigned long long)ip->i_number, attrtype, attrname?attrname:""));
 	*fpp = NULL;
 	for (fp = ip->i_fnlist.lh_first; fp != NULL; fp = fp->f_fnlist.le_next){
 		dprintf(("ntfs_fget: fnode: attrtype: %d, attrname: %s\n",
@@ -790,7 +804,8 @@ ntfs_frele(
 {
 	struct ntnode *ip = FTONT(fp);
 
-	dprintf(("ntfs_frele: fnode: %p for %d: %p\n", fp, ip->i_number, ip));
+	dprintf(("ntfs_frele: fnode: %p for %llu: %p\n", fp,
+	    (unsigned long long)ip->i_number, ip));
 
 	dprintf(("ntfs_frele: deallocating fnode\n"));
 	LIST_REMOVE(fp,f_fnlist);
@@ -1004,7 +1019,7 @@ ntfs_ntlookupfile(
 			error = ntfs_vgetex(ntmp->ntm_mountp,
 				   iep->ie_number, attrtype, attrname,
 				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
-				   curproc, &nvp);
+				   &nvp);
 			if (error)
 				goto fail;
 
@@ -1143,9 +1158,9 @@ ntfs_isnamepermitted(
 	case 0: case 1: case 3:
 		return 1;
 	default:
-		printf("ntfs_isnamepermitted: " \
-		       "WARNING! Unknown file name type: %d\n",
-		       iep->ie_fnametype);
+		printf("ntfs_isnamepermitted: "
+		    "WARNING! Unknown file name type: %d\n",
+		    iep->ie_fnametype);
 		break;
 	}
 	return 0;
@@ -1181,7 +1196,8 @@ ntfs_ntreaddir(
 	int             error = ENOENT;
 	u_int32_t       aoff, cnum;
 
-	dprintf(("ntfs_ntreaddir: read ino: %d, num: %d\n", ip->i_number, num));
+	dprintf(("ntfs_ntreaddir: read ino: %llu, num: %d\n",
+	    (unsigned long long)ip->i_number, num));
 	error = ntfs_ntget(ip);
 	if (error)
 		return (error);
@@ -1221,8 +1237,8 @@ ntfs_ntreaddir(
 			goto fail;
 		}
 		cpbl = ntfs_btocn(blsize + ntfs_cntob(1) - 1);
-		dprintf(("ntfs_ntreaddir: indexalloc: %d, cpbl: %d\n",
-			 iavap->va_datalen, cpbl));
+		dprintf(("ntfs_ntreaddir: indexalloc: %qu, cpbl: %d\n",
+			 (long long)iavap->va_datalen, cpbl));
 	} else {
 		dprintf(("ntfs_ntreadidir: w/o BitMap and IndexAllocation\n"));
 		iavap = bmvap = NULL;
@@ -1349,7 +1365,8 @@ ntfs_times(
 	struct ntvattr *vap;
 	int             error;
 
-	dprintf(("ntfs_times: ino: %d...\n", ip->i_number));
+	dprintf(("ntfs_times: ino: %llu...\n",
+	    (unsigned long long)ip->i_number));
 
 	error = ntfs_ntget(ip);
 	if (error)
@@ -1384,7 +1401,8 @@ ntfs_filesize(
 	u_int64_t       sz, bn;
 	int             error;
 
-	dprintf(("ntfs_filesize: ino: %d\n", ip->i_number));
+	dprintf(("ntfs_filesize: ino: %llu\n",
+	    (unsigned long long)ip->i_number));
 
 	error = ntfs_ntvattrget(ntmp, ip,
 		fp->f_attrtype, fp->f_attrname, 0, &vap);
@@ -1435,20 +1453,20 @@ ntfs_writeattr_plain(
 		if (error)
 			return (error);
 		towrite = MIN(left, ntfs_cntob(vap->va_vcnend + 1) - off);
-		ddprintf(("ntfs_writeattr_plain: o: %d, s: %d (%d - %d)\n",
-			 (u_int32_t) off, (u_int32_t) towrite,
-			 (u_int32_t) vap->va_vcnstart,
-			 (u_int32_t) vap->va_vcnend));
+		ddprintf(("ntfs_writeattr_plain: o: %qd, s: %qd (%qu - %qu)\n",
+			 (long long) off, (long long) towrite,
+			 (long long) vap->va_vcnstart,
+			 (long long) vap->va_vcnend));
 		error = ntfs_writentvattr_plain(ntmp, ip, vap,
 					 off - ntfs_cntob(vap->va_vcnstart),
 					 towrite, data, &init, uio);
 		if (error) {
-			dprintf(("ntfs_writeattr_plain: " \
-			       "ntfs_writentvattr_plain failed: o: %d, s: %d\n",
-			       (u_int32_t) off, (u_int32_t) towrite));
-			dprintf(("ntfs_writeattr_plain: attrib: %d - %d\n",
-			       (u_int32_t) vap->va_vcnstart,
-			       (u_int32_t) vap->va_vcnend));
+			dprintf(("ntfs_writeattr_plain: "
+			    "ntfs_writentvattr_plain failed: o: %qd, s: %qd\n",
+			    (long long) off, (long long) towrite));
+			dprintf(("ntfs_writeattr_plain: attrib: %qu - %qu\n",
+			       (long long) vap->va_vcnstart,
+			       (long long) vap->va_vcnend));
 			ntfs_ntvattrrele(vap);
 			break;
 		}
@@ -1479,7 +1497,7 @@ ntfs_writentvattr_plain(
 	struct uio *uio)
 {
 	int             error = 0;
-	int             off;
+	off_t           off;
 	int             cnt;
 	cn_t            ccn, ccl, cn, left, cl;
 	caddr_t         data = rdata;
@@ -1505,10 +1523,10 @@ ntfs_writentvattr_plain(
 		ccn = vap->va_vruncn[cnt];
 		ccl = vap->va_vruncl[cnt];
 
-		ddprintf(("ntfs_writentvattr_plain: " \
-			 "left %d, cn: 0x%x, cl: %d, off: %d\n", \
-			 (u_int32_t) left, (u_int32_t) ccn, \
-			 (u_int32_t) ccl, (u_int32_t) off));
+		ddprintf(("ntfs_writentvattr_plain: "
+		    "left %qu, cn: 0x%qx, cl: %qu, off: %qd\n",
+		    (long long) left, (long long) ccn,
+		    (long long) ccl, (long long) off));
 
 		if (ntfs_cntob(ccl) < off) {
 			off -= ntfs_cntob(ccl);
@@ -1532,11 +1550,11 @@ ntfs_writentvattr_plain(
 			tocopy = MIN(left, ntfs_cntob(1) - off);
 			cl = ntfs_btocl(tocopy + off);
 			KASSERT(cl == 1 && tocopy <= ntfs_cntob(1));
-			ddprintf(("ntfs_writentvattr_plain: write: " \
-				"cn: 0x%x cl: %d, off: %d len: %d, left: %d\n",
-				(u_int32_t) cn, (u_int32_t) cl,
-				(u_int32_t) off, (u_int32_t) tocopy,
-				(u_int32_t) left));
+			ddprintf(("ntfs_writentvattr_plain: write: "
+				"cn: 0x%qx cl: %qu, off: %qd len: %qu, left: %qu\n",
+				(long long) cn, (long long) cl,
+				(long long) off, (long long) tocopy,
+				(long long) left));
 			if ((off == 0) && (tocopy == ntfs_cntob(cl)))
 			{
 				bp = getblk(ntmp->ntm_devvp, ntfs_cntobn(cn),
@@ -1589,7 +1607,7 @@ ntfs_readntvattr_plain(
 	struct uio *uio)
 {
 	int             error = 0;
-	int             off;
+	off_t           off;
 
 	*initp = 0;
 	if (vap->va_flag & NTFS_AF_INRUN) {
@@ -1611,10 +1629,10 @@ ntfs_readntvattr_plain(
 			ccn = vap->va_vruncn[cnt];
 			ccl = vap->va_vruncl[cnt];
 
-			ddprintf(("ntfs_readntvattr_plain: " \
-				 "left %d, cn: 0x%x, cl: %d, off: %d\n", \
-				 (u_int32_t) left, (u_int32_t) ccn, \
-				 (u_int32_t) ccl, (u_int32_t) off));
+			ddprintf(("ntfs_readntvattr_plain: "
+				 "left %qu, cn: 0x%qx, cl: %qu, off: %qd\n",
+				 (long long) left, (long long) ccn,
+				 (long long) ccl, (long long) off));
 
 			if (ntfs_cntob(ccl) < off) {
 				off -= ntfs_cntob(ccl);
@@ -1640,14 +1658,14 @@ ntfs_readntvattr_plain(
 					KASSERT(cl == 1 &&
 					    tocopy <= ntfs_cntob(1));
 
-					ddprintf(("ntfs_readntvattr_plain: " \
-						"read: cn: 0x%x cl: %d, " \
-						"off: %d len: %d, left: %d\n",
-						(u_int32_t) cn,
-						(u_int32_t) cl,
-						(u_int32_t) off,
-						(u_int32_t) tocopy,
-						(u_int32_t) left));
+					ddprintf(("ntfs_readntvattr_plain: "
+						"read: cn: 0x%qx cl: %qu, "
+						"off: %qd len: %qu, left: %qu\n",
+						(long long) cn,
+						(long long) cl,
+						(long long) off,
+						(long long) tocopy,
+						(long long) left));
 					error = bread(ntmp->ntm_devvp,
 						      ntfs_cntobn(cn),
 						      ntfs_cntob(cl),
@@ -1674,11 +1692,11 @@ ntfs_readntvattr_plain(
 			} else {
 				tocopy = MIN(left, ntfs_cntob(ccl) - off);
 				ddprintf(("ntfs_readntvattr_plain: "
-					"hole: ccn: 0x%x ccl: %d, off: %d, " \
-					" len: %d, left: %d\n",
-					(u_int32_t) ccn, (u_int32_t) ccl,
-					(u_int32_t) off, (u_int32_t) tocopy,
-					(u_int32_t) left));
+					"hole: ccn: 0x%qx ccl: %qu, off: %qd, "
+					" len: %qu, left: %qu\n",
+					(long long) ccn, (long long) ccl,
+					(long long) off, (long long) tocopy,
+					(long long) left));
 				left -= tocopy;
 				off = 0;
 				if (uio) {
@@ -1736,20 +1754,20 @@ ntfs_readattr_plain(
 		if (error)
 			return (error);
 		toread = MIN(left, ntfs_cntob(vap->va_vcnend + 1) - off);
-		ddprintf(("ntfs_readattr_plain: o: %d, s: %d (%d - %d)\n",
-			 (u_int32_t) off, (u_int32_t) toread,
-			 (u_int32_t) vap->va_vcnstart,
-			 (u_int32_t) vap->va_vcnend));
+		ddprintf(("ntfs_readattr_plain: o: %qd, s: %qd (%qu - %qu)\n",
+			 (long long) off, (long long) toread,
+			 (long long) vap->va_vcnstart,
+			 (long long) vap->va_vcnend));
 		error = ntfs_readntvattr_plain(ntmp, ip, vap,
 					 off - ntfs_cntob(vap->va_vcnstart),
 					 toread, data, &init, uio);
 		if (error) {
-			printf("ntfs_readattr_plain: " \
-			       "ntfs_readntvattr_plain failed: o: %d, s: %d\n",
-			       (u_int32_t) off, (u_int32_t) toread);
-			printf("ntfs_readattr_plain: attrib: %d - %d\n",
-			       (u_int32_t) vap->va_vcnstart,
-			       (u_int32_t) vap->va_vcnend);
+			printf("ntfs_readattr_plain: "
+			       "ntfs_readntvattr_plain failed: o: %qd, s: %qd\n",
+			       (long long) off, (long long) toread);
+			printf("ntfs_readattr_plain: attrib: %qu - %qu\n",
+			       (long long) vap->va_vcnstart, 
+			       (long long) vap->va_vcnend);
 			ntfs_ntvattrrele(vap);
 			break;
 		}
@@ -1781,8 +1799,9 @@ ntfs_readattr(
 	struct ntvattr *vap;
 	size_t          init;
 
-	ddprintf(("ntfs_readattr: reading %d: 0x%x, from %d size %d bytes\n",
-	       ip->i_number, attrnum, (u_int32_t) roff, (u_int32_t) rsize));
+	ddprintf(("ntfs_readattr: reading %llu: 0x%x, from %qd size %qu"
+	    " bytes\n", (unsigned long long)ip->i_number, attrnum,
+	    (long long)roff, (long long)rsize));
 
 	error = ntfs_ntvattrget(ntmp, ip, attrnum, attrname, 0, &vap);
 	if (error)
@@ -1790,9 +1809,9 @@ ntfs_readattr(
 
 	if ((roff > vap->va_datalen) ||
 	    (roff + rsize > vap->va_datalen)) {
-		printf("ntfs_readattr: offset too big: %ld (%ld) > %ld\n",
-			(long int) roff, (long int) roff + rsize,
-			(long int) vap->va_datalen);
+		printf("ntfs_readattr: offset too big: %qd (%qd) > %qu\n",
+			(long long) roff, (long long) (roff + rsize),
+			(long long) vap->va_datalen);
 		ntfs_ntvattrrele(vap);
 		return (E2BIG);
 	}
@@ -1806,9 +1825,9 @@ ntfs_readattr(
 		ddprintf(("ntfs_ntreadattr: compression: %d\n",
 			 vap->va_compressalg));
 
-		MALLOC(cup, u_int8_t *, ntfs_cntob(NTFS_COMPUNIT_CL),
+		cup = malloc(ntfs_cntob(NTFS_COMPUNIT_CL),
 		       M_NTFSDECOMP, M_WAITOK);
-		MALLOC(uup, u_int8_t *, ntfs_cntob(NTFS_COMPUNIT_CL),
+		uup = malloc(ntfs_cntob(NTFS_COMPUNIT_CL),
 		       M_NTFSDECOMP, M_WAITOK);
 
 		cn = (ntfs_btocn(roff)) & (~(NTFS_COMPUNIT_CL - 1));
@@ -1886,7 +1905,7 @@ ntfs_parserun(
 	}
 	*cl = 0;
 	if ((sz & 0xF) > 8 || (*off) + (sz & 0xF) > len) {
-		printf("ntfs_parserun: " \
+		printf("ntfs_parserun: "
 		       "bad run: length too big: sz: 0x%02x (%ld < %ld + sz)\n",
 		       sz, len, *off);
 		return (EINVAL);
@@ -1896,7 +1915,7 @@ ntfs_parserun(
 
 	sz >>= 4;
 	if ((sz & 0xF) > 8 || (*off) + (sz & 0xF) > len) {
-		printf("ntfs_parserun: " \
+		printf("ntfs_parserun: "
 		       "bad run: length too big: sz: 0x%02x (%ld < %ld + sz)\n",
 		       sz, len, *off);
 		return (EINVAL);
@@ -1930,7 +1949,7 @@ ntfs_procfixups(
 		return (EINVAL);
 	}
 	if ((fhp->fh_fnum - 1) * ntmp->ntm_bps != len) {
-		printf("ntfs_procfixups: " \
+		printf("ntfs_procfixups: "
 		       "bad fixups number: %d for %ld bytes block\n",
 		       fhp->fh_fnum, (long)len);	/* XXX printf kludge */
 		return (EINVAL);
@@ -1967,7 +1986,7 @@ ntfs_runtocn(
 	u_long          off = 0;
 	int             error = 0;
 
-#if NTFS_DEBUG
+#ifdef NTFS_DEBUG
 	int             i;
 	printf("ntfs_runtocn: run: %p, %ld bytes, vcn:%ld\n",
 		run, len, (u_long) vcn);

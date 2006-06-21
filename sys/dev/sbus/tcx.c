@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.17 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: tcx.c,v 1.17.6.1 2006/06/21 15:06:47 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.17 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.17.6.1 2006/06/21 15:06:47 yamt Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -192,7 +192,7 @@ tcxattach(parent, self, args)
 	fb->fb_driver = &tcx_fbdriver;
 	fb->fb_device = &sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 	/*
 	 * The onboard framebuffer on the SS4 supports only 8-bit mode;
 	 * it can be distinguished from the S24 card for the SS5 by the
@@ -348,10 +348,10 @@ static int tcx_opens = 0;
 #endif
 
 int
-tcxopen(dev, flags, mode, p)
+tcxopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 #ifdef TCX_CG8
@@ -386,10 +386,10 @@ tcxopen(dev, flags, mode, p)
 }
 
 int
-tcxclose(dev, flags, mode, p)
+tcxclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 #ifdef TCX_CG8
@@ -424,12 +424,12 @@ tcxclose(dev, flags, mode, p)
 }
 
 int
-tcxioctl(dev, cmd, data, flags, p)
+tcxioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 	int error;

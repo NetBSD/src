@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.34 2005/03/05 17:31:07 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.34.4.1 2006/06/21 14:58:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.34 2005/03/05 17:31:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.34.4.1 2006/06/21 14:58:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ ibcs2_sys_ioctl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl)(struct file *, u_long, void *, struct proc *);
+	int (*ctl)(struct file *, u_long, void *, struct lwp *);
 	struct termios bts;
 	struct ibcs2_termios sts;
 	struct ibcs2_termio st;
@@ -409,7 +409,7 @@ ibcs2_sys_ioctl(l, v, retval)
 	case IBCS2_TCGETA:
 	case IBCS2_XCGETA:
 	case IBCS2_OXCGETA:
-		if ((error = (*ctl)(fp, TIOCGETA, &bts, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA, &bts, l)) != 0)
 			goto out;
 
 		btios2stios(&bts, &sts);
@@ -433,7 +433,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		}
 
 		/* get full BSD termios so we don't lose information */
-		if ((error = (*ctl)(fp, TIOCGETA, &bts, p)) != 0) {
+		if ((error = (*ctl)(fp, TIOCGETA, &bts, l)) != 0) {
 			DPRINTF(("ibcs2_ioctl(%d): TCSET ctl failed fd %d ",
 			    p->p_pid, SCARG(uap, fd)));
 			goto out;
@@ -448,7 +448,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		stios2btios(&sts, &bts);
 
 		t = SCARG(uap, cmd) - IBCS2_TCSETA + TIOCSETA;
-		error = (*ctl)(fp, t, &bts, p);
+		error = (*ctl)(fp, t, &bts, l);
 		break;
 
 	case IBCS2_XCSETA:
@@ -459,7 +459,7 @@ ibcs2_sys_ioctl(l, v, retval)
 
 		stios2btios(&sts, &bts);
 		t = SCARG(uap, cmd) - IBCS2_XCSETA + TIOCSETA;
-		error = (*ctl)(fp, t, &bts, p);
+		error = (*ctl)(fp, t, &bts, l);
 		break;
 
 	case IBCS2_OXCSETA:
@@ -469,21 +469,21 @@ ibcs2_sys_ioctl(l, v, retval)
 			goto out;
 		stios2btios(&sts, &bts);
 		t = SCARG(uap, cmd) - IBCS2_OXCSETA + TIOCSETA;
-		error = (*ctl)(fp, t, &bts, p);
+		error = (*ctl)(fp, t, &bts, l);
 		break;
 
 	case IBCS2_TCSBRK:
 		t = (int) SCARG(uap, data);
 		t = (t ? t : 1) * hz * 4;
 		t /= 10;
-		if ((error = (*ctl)(fp, TIOCSBRK, NULL, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCSBRK, NULL, l)) != 0)
 			goto out;
 		error = tsleep(&t, PZERO | PCATCH, "ibcs2_tcsbrk", t);
 		if (error == EINTR || error == ERESTART) {
-			(void)(*ctl)(fp, TIOCCBRK, NULL, p);
+			(void)(*ctl)(fp, TIOCCBRK, NULL, l);
 			error = EINTR;
 		} else
-			error = (*ctl)(fp, TIOCCBRK, NULL, p);
+			error = (*ctl)(fp, TIOCCBRK, NULL, l);
 		break;
 
 	case IBCS2_TCXONC:
@@ -494,10 +494,10 @@ ibcs2_sys_ioctl(l, v, retval)
 			error = ENOSYS;
 			break;
 		case 2:
-			error = (*ctl)(fp, TIOCSTOP, NULL, p);
+			error = (*ctl)(fp, TIOCSTOP, NULL, l);
 			break;
 		case 3:
-			error = (*ctl)(fp, TIOCSTART, (void *)1, p);
+			error = (*ctl)(fp, TIOCSTART, (void *)1, l);
 			break;
 		default:
 			error = EINVAL;
@@ -520,13 +520,13 @@ ibcs2_sys_ioctl(l, v, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*ctl)(fp, TIOCFLUSH, &t, p);
+		error = (*ctl)(fp, TIOCFLUSH, &t, l);
 		break;
 
 	case IBCS2_FIONBIO:
 		if ((error = copyin(SCARG(uap, data), &t, sizeof(t))) != 0)
 			goto out;
-		error = (*ctl)(fp, FIONBIO, (caddr_t)&t, p);
+		error = (*ctl)(fp, FIONBIO, (caddr_t)&t, l);
 		break;
 
 	default:
@@ -536,7 +536,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		break;
 	}
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -570,11 +570,11 @@ ibcs2_sys_gtty(l, v, retval)
 		goto out;
 	}
 
-	error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETP, (caddr_t)&tb, p);
+	error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETP, (caddr_t)&tb, l);
 	if (error)
 		goto out;
 
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	itb.sg_ispeed = tb.sg_ispeed;
 	itb.sg_ospeed = tb.sg_ospeed;
@@ -583,6 +583,6 @@ ibcs2_sys_gtty(l, v, retval)
 	itb.sg_flags = tb.sg_flags & ~(IBCS2_GHUPCL|IBCS2_GXTABS);
 	return copyout((caddr_t)&itb, SCARG(uap, tb), sizeof(itb));
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.5 2005/06/23 01:59:31 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.5.2.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,9 +70,11 @@ typedef struct fhandle	fhandle_t;
  * one of the __MNT_UNUSED flags.
  */
 
-#define	__MNT_UNUSED4	0x00200000
-#define	__MNT_UNUSED5	0x01000000
-#define	__MNT_UNUSED6	0x02000000
+#define	__MNT_UNUSED1	0x00020000
+#define	__MNT_UNUSED2	0x00200000
+#define	__MNT_UNUSED3	0x00800000
+#define	__MNT_UNUSED4	0x01000000
+#define	__MNT_UNUSED5	0x02000000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -83,7 +85,6 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_IGNORE	0x00100000	/* don't show entry in df */
-#define	MNT_MAGICLINKS	0x00800000	/* interpret symlinks for magic names */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
@@ -102,7 +103,6 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_NOATIME,		0,	"noatime" }, \
 	{ MNT_SYMPERM,		0,	"symperm" }, \
 	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
-	{ MNT_MAGICLINKS,	0,	"magiclinks" }, \
 	{ MNT_SOFTDEP,		0,	"soft dependencies" },
 
 /*
@@ -150,7 +150,6 @@ typedef struct fhandle	fhandle_t;
      MNT_ASYNC | \
      MNT_NOCOREDUMP | \
      MNT_IGNORE | \
-     MNT_MAGICLINKS | \
      MNT_NOATIME | \
      MNT_SYMPERM | \
      MNT_NODEVMTIME | \
@@ -170,14 +169,12 @@ typedef struct fhandle	fhandle_t;
  * External filesystem control flags.
  */
 #define	MNT_UPDATE	0x00010000	/* not a real mount, just an update */
-#define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define	MNT_GETARGS	0x00400000	/* retrieve file system specific args */
 
 #define __MNT_EXTERNAL_FLAGS \
 	{ MNT_UPDATE,		1,	"being updated" }, \
-	{ MNT_DELEXPORT,	1,	"delete export list" }, \
 	{ MNT_RELOAD,		1,	"reload filesystem data" }, \
 	{ MNT_FORCE,		1,	"force unmount or readonly change" }, \
 	{ MNT_GETARGS,		1,	"retrieve mount arguments" },
@@ -212,15 +209,15 @@ typedef struct fhandle	fhandle_t;
 	"\35MNT_EXPUBLIC" \
 	"\34MNT_EXNORESPORT" \
 	"\33MNT_NOATIME" \
-	"\32MNT_UNUSED6" \
-	"\31MNT_UNUSED5" \
-	"\30MNT_MAGICLINKS" \
+	"\32MNT_UNUSED" \
+	"\31MNT_UNUSED" \
+	"\30MNT_UNUSED" \
 	"\27MNT_GETARGS" \
-	"\26MNT_UNUSED4" \
+	"\26MNT_UNUSED" \
 	"\25MNT_IGNORE" \
 	"\24MNT_FORCE" \
 	"\23MNT_RELOAD" \
-	"\22MNT_DELEXPORT" \
+	"\22MNT_UNUSED" \
 	"\21MNT_UPDATE" \
 	"\20MNT_NOCOREDUMP" \
 	"\17MNT_ROOTFS" \

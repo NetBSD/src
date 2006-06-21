@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.124 2005/06/23 14:20:23 wiz Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.124.2.1 2006/06/21 15:05:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.124 2005/06/23 14:20:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.124.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -157,7 +157,7 @@ static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq,
     int level, int (*ih) (void *), void *sc);
 static void pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
-static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int, int);
+static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int);
 static void pccbb_free_tag(cardbus_chipset_tag_t, cardbustag_t);
 static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t, cardbustag_t, int);
 static void pccbb_conf_write(cardbus_chipset_tag_t, cardbustag_t, int,
@@ -1380,7 +1380,7 @@ pccbb_power(ct, command)
 		while (pwrcycle == sc->sc_pwrcycle) {
 			/*
 			 * XXX: Set timeout to 200ms because power cycle event
-			 * will be never happen when attaching a 16-bit card.
+			 * will never happen when attaching a 16-bit card.
 			 */
 			if ((error = tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr",
 			    hz / 5)) == EWOULDBLOCK)
@@ -1389,9 +1389,10 @@ pccbb_power(ct, command)
 		splx(s);
 		microtime(&after);
 		timersub(&after, &before, &diff);
-		printf("%s: wait took%s %ld.%06lds\n", sc->sc_dev.dv_xname,
-		    error == EWOULDBLOCK ? " too long" : "",
-		    diff.tv_sec, diff.tv_usec);
+		aprint_debug("%s: wait took%s %ld.%06lds\n",
+			sc->sc_dev.dv_xname,
+		    	error == EWOULDBLOCK ? " too long" : "",
+		    	diff.tv_sec, diff.tv_usec);
 	}
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
@@ -1984,18 +1985,18 @@ cb_show_regs(pc, tag, memt, memh)
 
 /*
  * static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
- *                                    int busno, int devno, int function)
+ *                                    int busno, int function)
  *   This is the function to make a tag to access config space of
  *  a CardBus Card.  It works same as pci_conf_read.
  */
 static cardbustag_t
-pccbb_make_tag(cc, busno, devno, function)
+pccbb_make_tag(cc, busno, function)
 	cardbus_chipset_tag_t cc;
-	int busno, devno, function;
+	int busno, function;
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
-	return pci_make_tag(sc->sc_pc, busno, devno, function);
+	return pci_make_tag(sc->sc_pc, busno, 0, function);
 }
 
 static void
@@ -3418,8 +3419,12 @@ pccbb_powerhook(why, arg)
 
 		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
 
-		/* ToDo: deactivate or suspend child devices */
+		if (sc->sc_chipset == CB_RX5C47X)
+			sc->sc_ricoh_misc_ctrl = pci_conf_read(sc->sc_pc,
+						     sc->sc_tag,
+						     RICOH_PCI_MISC_CTRL);
 
+		/* ToDo: deactivate or suspend child devices */
 	}
 
 	if (why == PWR_RESUME) {
@@ -3449,8 +3454,13 @@ pccbb_powerhook(why, arg)
 				goto norestore;
 			}
 		}
-		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+
 norestore:
+		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		if (sc->sc_chipset == CB_RX5C47X) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    RICOH_PCI_MISC_CTRL, sc->sc_ricoh_misc_ctrl);
+		}
 
 		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */

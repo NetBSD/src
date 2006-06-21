@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.9 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.9.4.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.9 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.9.4.1 2006/06/21 15:02:54 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -112,7 +112,7 @@ cpc_print(void *aux, const char *pnp)
 
 static int
 cpc_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 

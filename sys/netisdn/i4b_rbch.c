@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.15 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_rbch.c,v 1.15.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.15 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.15.4.1 2006/06/21 15:11:24 yamt Exp $");
 
 #include "isdnbchan.h"
 
@@ -175,16 +175,16 @@ static void* rbch_get_softc(int unit);
 #define PDEVSTATIC	/* - not static - */
 #define IOCTL_CMD_T	u_long
 void isdnbchanattach __P((void));
-int isdnbchanopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int isdnbchanclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdnbchanopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
+int isdnbchanclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdnbchanread __P((dev_t dev, struct uio *uio, int ioflag));
 int isdnbchanwrite __P((dev_t dev, struct uio *uio, int ioflag));
-int isdnbchanioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct proc* pr));
+int isdnbchanioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct lwp* l));
 #ifdef OS_USES_POLL
-int isdnbchanpoll __P((dev_t dev, int events, struct proc *p));
+int isdnbchanpoll __P((dev_t dev, int events, struct lwp *l));
 int isdnbchankqfilter __P((dev_t dev, struct knote *kn));
 #else
-PDEVSTATIC int isdnbchanselect __P((dev_t dev, int rw, struct proc *p));
+PDEVSTATIC int isdnbchanselect __P((dev_t dev, int rw, struct lwp *l));
 #endif
 #endif
 
@@ -365,7 +365,7 @@ isdnbchanattach()
  *	open rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdnbchanopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -390,7 +390,7 @@ isdnbchanopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdnbchanclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -645,7 +645,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
  *	rbch device ioctl handlibg
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
+isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error = 0;
 	int unit = minor(dev);
@@ -687,14 +687,14 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
 
 		case I4B_RBCH_DIALOUT:
                 {
-			size_t l;
+			size_t x;
 
-			for (l = 0; l < TELNO_MAX && ((char *)data)[l]; l++)
+			for (x = 0; x < TELNO_MAX && ((char *)data)[x]; x++)
 				;
-			if (l)
+			if (x)
 			{
 				NDBGL4(L4_RBCHDBG, "%d, attempting dialout to %s", unit, (char *)data);
-				i4b_l4_dialoutnumber(rbch_driver_id, unit, l, (char *)data);
+				i4b_l4_dialoutnumber(rbch_driver_id, unit, x, (char *)data);
 				break;
 			}
 			/* fall through to SDTR */
@@ -744,7 +744,7 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
  *	device driver poll
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanpoll(dev_t dev, int events, struct proc *p)
+isdnbchanpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;	/* Events we found */
 	int s;
@@ -790,7 +790,7 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 	}
 
 	if(revents == 0)
-		selrecord(p, &sc->selp);
+		selrecord(l, &sc->selp);
 
 	splx(s);
 	return(revents);
@@ -886,7 +886,7 @@ isdnbchankqfilter(dev_t dev, struct knote *kn)
  *	device driver select
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanselect(dev_t dev, int rw, struct proc *p)
+isdnbchanselect(dev_t dev, int rw, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -933,7 +933,7 @@ isdnbchanselect(dev_t dev, int rw, struct proc *p)
 				return 0;
 		}
 	}
-	selrecord(p, &sc->selp);
+	selrecord(l, &sc->selp);
 	splx(s);
 	return(0);
 }

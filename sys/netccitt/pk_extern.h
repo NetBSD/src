@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.13 2005/05/29 21:53:52 christos Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.13.2.1 2006/06/21 15:10:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
-
 #ifndef _NETCCITT_PK_EXTERN_H_
 #define _NETCCITT_PK_EXTERN_H_
+
+#ifdef _KERNEL
 
 #include <netccitt/x25isr.h>
 
@@ -124,7 +124,7 @@ void pk_timer __P((void));
 
 /* pk_usrreq.c */
 int pk_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		   struct mbuf *, struct proc *));
+		   struct mbuf *, struct lwp *));
 int pk_start __P((struct pklcd *));
 int pk_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 		    struct proc *));
@@ -132,6 +132,6 @@ int pk_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int pk_checksockaddr __P((struct mbuf *));
 int pk_send __P((struct mbuf *, void *));
 
-#endif
+#endif /* _KERNEL */
 
-#endif /* _NETCCITT_PK_EXTERN_H_ */
+#endif /* !_NETCCITT_PK_EXTERN_H_ */

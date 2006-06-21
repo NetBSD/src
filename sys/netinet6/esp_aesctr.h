@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.h,v 1.1 2003/07/25 09:48:19 itojun Exp $	*/
+/*	$NetBSD: esp_aesctr.h,v 1.1.18.1 2006/06/21 15:11:08 yamt Exp $	*/
 /*	$KAME: esp_aesctr.h,v 1.2 2003/07/20 00:29:38 itojun Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _NETINET6_ESP_AESCTR_H_
+#define _NETINET6_ESP_AESCTR_H_
+
 extern int esp_aesctr_mature __P((struct secasvar *));
 extern size_t esp_aesctr_schedlen __P((const struct esp_algorithm *));
 extern int esp_aesctr_schedule __P((const struct esp_algorithm *,
@@ -39,3 +42,4 @@ extern int esp_aesctr_decrypt __P((struct mbuf *, size_t,
 extern int esp_aesctr_encrypt __P((struct mbuf *, size_t, size_t,
 	struct secasvar *, const struct esp_algorithm *, int));
 
+#endif /* !_NETINET6_ESP_AESCTR_H_ */

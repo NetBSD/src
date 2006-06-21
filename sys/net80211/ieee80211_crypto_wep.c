@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.5 2004/12/31 22:42:38 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.2 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.2.2.1 2006/06/21 15:10:45 yamt Exp $");
 #endif
 
 /*
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.2 2005/06/22 06:16:02 dyo
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
 
 #include <net80211/ieee80211_var.h>
@@ -58,9 +59,9 @@ static	void *wep_attach(struct ieee80211com *, struct ieee80211_key *);
 static	void wep_detach(struct ieee80211_key *);
 static	int wep_setkey(struct ieee80211_key *);
 static	int wep_encap(struct ieee80211_key *, struct mbuf *, u_int8_t keyid);
-static	int wep_decap(struct ieee80211_key *, struct mbuf *);
-static	int wep_enmic(struct ieee80211_key *, struct mbuf *);
-static	int wep_demic(struct ieee80211_key *, struct mbuf *);
+static	int wep_decap(struct ieee80211_key *, struct mbuf *, int hdrlen);
+static	int wep_enmic(struct ieee80211_key *, struct mbuf *, int);
+static	int wep_demic(struct ieee80211_key *, struct mbuf *, int);
 
 const struct ieee80211_cipher ieee80211_cipher_wep = {
 	.ic_name	= "WEP",
@@ -198,7 +199,7 @@ wep_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
  * Add MIC to the frame as needed.
  */
 static int
-wep_enmic(struct ieee80211_key *k, struct mbuf *m)
+wep_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 
 	return 1;
@@ -210,14 +211,12 @@ wep_enmic(struct ieee80211_key *k, struct mbuf *m)
  * the specified key.
  */
 static int
-wep_decap(struct ieee80211_key *k, struct mbuf *m)
+wep_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 {
 	struct wep_ctx *ctx = k->wk_private;
 	struct ieee80211_frame *wh;
-	int hdrlen;
 
 	wh = mtod(m, struct ieee80211_frame *);
-	hdrlen = ieee80211_hdrsize(wh);
 
 	/*
 	 * Check if the device handled the decrypt in hardware.
@@ -247,7 +246,7 @@ wep_decap(struct ieee80211_key *k, struct mbuf *m)
  * Verify and strip MIC from the frame.
  */
 static int
-wep_demic(struct ieee80211_key *k, struct mbuf *skb)
+wep_demic(struct ieee80211_key *k, struct mbuf *skb, int force)
 {
 	return 1;
 }
@@ -475,4 +474,9 @@ wep_decrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 	}
 	return 1;
 #undef S_SWAP
+}
+
+IEEE80211_CRYPTO_SETUP(wep_register)
+{
+	ieee80211_crypto_register(&wep);
 }

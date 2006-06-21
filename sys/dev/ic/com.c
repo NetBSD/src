@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.234 2005/06/21 14:01:11 ws Exp $	*/
+/*	$NetBSD: com.c,v 1.234.2.1 2006/06/21 15:02:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234 2005/06/21 14:01:11 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234.2.1 2006/06/21 15:02:53 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234 2005/06/21 14:01:11 ws Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -218,11 +219,13 @@ static int comconsrate;
 static tcflag_t comconscflag;
 static struct cnm_state com_cnm_state;
 
+#ifndef __HAVE_TIMECOUNTER
 static int ppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
+#endif /* !__HAVE_TIMECOUNTER */
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
@@ -249,23 +252,14 @@ void	com_kgdb_putc(void *, int);
 #define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+			 device_is_active(&(sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
-
 #define COM_LOCK(sc) simple_lock(&(sc)->sc_lock)
 #define COM_UNLOCK(sc) simple_unlock(&(sc)->sc_lock)
-
-#else
-
-#define COM_LOCK(sc)
-#define COM_UNLOCK(sc)
-
-#endif
 
 /*ARGSUSED*/
 int
@@ -297,9 +291,9 @@ comspeed(long speed, long frequency, int type)
 #ifdef COM_DEBUG
 int	com_debug = 0;
 
-void comstatus(struct com_softc *, char *);
+void comstatus(struct com_softc *, const char *);
 void
-comstatus(struct com_softc *sc, char *str)
+comstatus(struct com_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -435,9 +429,7 @@ com_attach_subr(struct com_softc *sc)
 	const char *fifo_msg = NULL;
 
 	callout_init(&sc->sc_diag_callout);
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
-#endif
 
 	/* Disable interrupts before configuring the device. */
 #ifdef COM_PXA2X0
@@ -575,7 +567,8 @@ com_attach_subr(struct com_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&com_cdevsw);
 
-		tp->t_dev = cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		tp->t_dev = cn_tab->cn_dev = makedev(maj,
+						     device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -680,7 +673,7 @@ com_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	mn |= COMDIALOUT_MASK;
@@ -762,9 +755,11 @@ com_shutdown(struct com_softc *sc)
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
 
+#ifndef __HAVE_TIMECOUNTER
 	/* Turn off PPS capture on last close. */
 	sc->sc_ppsmask = 0;
 	sc->ppsparam.mode = 0;
+#endif /* !__HAVE_TIMECOUNTER */
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
@@ -811,7 +806,7 @@ com_shutdown(struct com_softc *sc)
 }
 
 int
-comopen(dev_t dev, int flag, int mode, struct proc *p)
+comopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct com_softc *sc;
 	struct tty *tp;
@@ -823,7 +818,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -838,7 +833,9 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+		kauth_authorize_generic(l->l_proc->p_cred,
+				  KAUTH_GENERIC_ISSUSER,
+				  &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -879,8 +876,14 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
 
 		/* Clear PPS capture state on first open. */
+#ifdef __HAVE_TIMECOUNTER
+		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
+		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
+		pps_init(&sc->sc_pps_state);
+#else /* !__HAVE_TIMECOUNTER */
 		sc->sc_ppsmask = 0;
 		sc->ppsparam.mode = 0;
+#endif /* !__HAVE_TIMECOUNTER */
 
 		COM_UNLOCK(sc);
 		splx(s2);
@@ -889,7 +892,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		 * Initialize the termios status to the defaults.  Add in the
 		 * sticky bits from TIOCSFLAGS.
 		 */
-		t.c_ispeed = 0;
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			t.c_ospeed = comconsrate;
 			t.c_cflag = comconscflag;
@@ -897,6 +899,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
 		}
+		t.c_ispeed = t.c_ospeed;
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
 			SET(t.c_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
@@ -965,7 +968,7 @@ bad:
 }
 
 int
-comclose(dev_t dev, int flag, int mode, struct proc *p)
+comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1017,7 +1020,7 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-compoll(dev_t dev, int events, struct proc *p)
+compoll(dev_t dev, int events, struct lwp *l)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1025,7 +1028,7 @@ compoll(dev_t dev, int events, struct proc *p)
 	if (COM_ISALIVE(sc) == 0)
 		return (POLLHUP);
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -1038,21 +1041,22 @@ comtty(dev_t dev)
 }
 
 int
-comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
+	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1083,7 +1087,9 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1099,6 +1105,19 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = com_to_tiocm(sc);
 		break;
 
+#ifdef __HAVE_TIMECOUNTER
+	case PPS_IOC_CREATE:
+	case PPS_IOC_DESTROY:
+	case PPS_IOC_GETPARAMS:
+	case PPS_IOC_SETPARAMS:
+	case PPS_IOC_GETCAP:
+	case PPS_IOC_FETCH:
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND:
+#endif
+		error = pps_ioctl(cmd, data, &sc->sc_pps_state);
+		break;
+#else /* !__HAVE_TIMECOUNTER */
 	case PPS_IOC_CREATE:
 		break;
 
@@ -1191,8 +1210,18 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 #endif /* PPS_SYNC */
+#endif /* !__HAVE_TIMECOUNTER */
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
+#ifdef __HAVE_TIMECOUNTER
+#ifndef PPS_TRAILING_EDGE
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
+		    &sc->sc_pps_state.ppsinfo.assert_timestamp);
+#else
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
+		    &sc->sc_pps_state.ppsinfo.clear_timestamp);
+#endif
+#else /* !__HAVE_TIMECOUNTER */
 		/*
 		 * Some GPS clocks models use the falling rather than
 		 * rising edge as the on-the-second signal.
@@ -1210,6 +1239,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->ppsinfo.clear_timestamp);
 #endif
+#endif /* !__HAVE_TIMECOUNTER */
 		break;
 
 	default:
@@ -1519,7 +1549,7 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_fifo = 0;
 
 	/* And copy to tty. */
-	tp->t_ispeed = 0;
+	tp->t_ispeed = t->c_ospeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 
@@ -2151,6 +2181,16 @@ again:	do {
 		msr = bus_space_read_1(iot, ioh, com_msr);
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
+#ifdef __HAVE_TIMECOUNTER
+		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
+		    (delta & MSR_DCD)) {
+			pps_capture(&sc->sc_pps_state);
+			pps_event(&sc->sc_pps_state,
+			    (msr & MSR_DCD) ?
+			    PPS_CAPTUREASSERT :
+			    PPS_CAPTURECLEAR);
+		}
+#else /* !__HAVE_TIMECOUNTER */
 		/*
 		 * Pulse-per-second (PSS) signals on edge of DCD?
 		 * Process these even if line discipline is ignoring DCD.
@@ -2198,6 +2238,7 @@ again:	do {
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
 			}
 		}
+#endif /* !__HAVE_TIMECOUNTER */
 
 		/*
 		 * Process normal status changes

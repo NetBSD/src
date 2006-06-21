@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.39 2005/05/30 04:32:38 christos Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.39.2.1 2006/06/21 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.39 2005/05/30 04:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.39.2.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ int le_isa_intredge(void *);
 #define	integrate
 #define hide
 #else
-#define	integrate	static __inline
+#define	integrate	static inline
 #define hide		static
 #endif
 

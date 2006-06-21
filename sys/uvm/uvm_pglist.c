@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.33 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.33.2.1 2006/06/21 15:12:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.33 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.33.2.1 2006/06/21 15:12:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	int pagemask;
 #ifdef DEBUG
 	paddr_t idxpa, lastidxpa;
-	int cidx;
+	int cidx = 0;	/* XXX: GCC */
 #endif
 #ifdef PGALLOC_VERBOSE
 	printf("pgalloc: contig %d pgs from psi %ld\n", num,
@@ -289,7 +289,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	int todo, limit, try;
 	struct vm_page *pg;
 #ifdef DEBUG
-	int cidx;
+	int cidx = 0;	/* XXX: GCC */
 #endif
 #ifdef PGALLOC_VERBOSE
 	printf("pgalloc: simple %d pgs from psi %ld\n", num,

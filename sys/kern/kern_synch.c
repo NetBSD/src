@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.149 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.149.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.149 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.149.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.149 2005/05/29 22:24:15 christos Ex
 #include <sys/sched.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,10 +113,22 @@ int	lbolt;			/* once a second sleep address */
 int	rrticks;		/* number of hardclock ticks per roundrobin() */
 
 /*
+ * Sleep queues.
+ *
+ * We're only looking at 7 bits of the address; everything is
+ * aligned to 4, lots of things are aligned to greater powers
+ * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
+ */
+#define	SLPQUE_TABLESIZE	128
+#define	SLPQUE_LOOKUP(x)	(((u_long)(x) >> 8) & (SLPQUE_TABLESIZE - 1))
+
+#define	SLPQUE(ident)	(&sched_slpque[SLPQUE_LOOKUP(ident)])
+
+/*
  * The global scheduler state.
  */
 struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
-__volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
+volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
 struct slpque sched_slpque[SLPQUE_TABLESIZE]; /* sleep queues */
 
 struct simplelock sched_lock = SIMPLELOCK_INITIALIZER;
@@ -124,11 +137,11 @@ void schedcpu(void *);
 void updatepri(struct lwp *);
 void endtsleep(void *);
 
-__inline void sa_awaken(struct lwp *);
-__inline void awaken(struct lwp *);
+inline void sa_awaken(struct lwp *);
+inline void awaken(struct lwp *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
-
+static unsigned int schedcpu_ticks;
 
 
 /*
@@ -156,6 +169,13 @@ roundrobin(struct cpu_info *ci)
 	}
 	need_resched(curcpu());
 }
+
+#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
+#define	NICE_WEIGHT 2			/* priorities per nice level */
+
+#define	ESTCPU_SHIFT	11
+#define	ESTCPU_MAX	((NICE_WEIGHT * PRIO_MAX - PPQ) << ESTCPU_SHIFT)
+#define	ESTCPULIM(e)	min((e), ESTCPU_MAX)
 
 /*
  * Constants for digital decay and forget:
@@ -223,7 +243,48 @@ roundrobin(struct cpu_info *ci)
 
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
-#define	decay_cpu(loadfac, cpu)	(((loadfac) * (cpu)) / ((loadfac) + FSCALE))
+
+static fixpt_t
+decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
+{
+
+	if (estcpu == 0) {
+		return 0;
+	}
+
+#if !defined(_LP64)
+	/* avoid 64bit arithmetics. */
+#define	FIXPT_MAX ((fixpt_t)((UINTMAX_C(1) << sizeof(fixpt_t) * CHAR_BIT) - 1))
+	if (__predict_true(loadfac <= FIXPT_MAX / ESTCPU_MAX)) {
+		return estcpu * loadfac / (loadfac + FSCALE);
+	}
+#endif /* !defined(_LP64) */
+
+	return (uint64_t)estcpu * loadfac / (loadfac + FSCALE);
+}
+
+/*
+ * For all load averages >= 1 and max p_estcpu of (255 << ESTCPU_SHIFT),
+ * sleeping for at least seven times the loadfactor will decay p_estcpu to
+ * less than (1 << ESTCPU_SHIFT).
+ *
+ * note that our ESTCPU_MAX is actually much smaller than (255 << ESTCPU_SHIFT).
+ */
+static fixpt_t
+decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
+{
+
+	if ((n << FSHIFT) >= 7 * loadfac) {
+		return 0;
+	}
+
+	while (estcpu != 0 && n > 1) {
+		estcpu = decay_cpu(loadfac, estcpu);
+		n--;
+	}
+
+	return estcpu;
+}
 
 /* decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing */
 fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
@@ -253,8 +314,9 @@ schedcpu(void *arg)
 	struct lwp *l;
 	struct proc *p;
 	int s, minslp;
-	unsigned int newcpu;
 	int clkhz;
+
+	schedcpu_ticks++;
 
 	proclist_lock_read();
 	PROCLIST_FOREACH(p, &allproc) {
@@ -295,8 +357,7 @@ schedcpu(void *arg)
 			(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
-		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
-		p->p_estcpu = newcpu;
+		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
 		splx(s);	/* Done with the process CPU ticks update */
 		SCHED_LOCK(s);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -324,29 +385,21 @@ schedcpu(void *arg)
 
 /*
  * Recalculate the priority of a process after it has slept for a while.
- * For all load averages >= 1 and max p_estcpu of 255, sleeping for at
- * least six times the loadfactor will decay p_estcpu to zero.
  */
 void
 updatepri(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
-	unsigned int newcpu;
 	fixpt_t loadfac;
 
 	SCHED_ASSERT_LOCKED();
+	KASSERT(l->l_slptime > 1);
 
-	newcpu = p->p_estcpu;
 	loadfac = loadfactor(averunnable.ldavg[0]);
 
-	if (l->l_slptime > 5 * loadfac)
-		p->p_estcpu = 0; /* XXX NJWLWP */
-	else {
-		l->l_slptime--;	/* the first time was done in schedcpu */
-		while (newcpu && --l->l_slptime)
-			newcpu = (int) decay_cpu(loadfac, newcpu);
-		p->p_estcpu = newcpu;
-	}
+	l->l_slptime--; /* the first time was done in schedcpu */
+	/* XXX NJWLWP */
+	p->p_estcpu = decay_cpu_batch(loadfac, p->p_estcpu, l->l_slptime);
 	resetpriority(l);
 }
 
@@ -378,12 +431,13 @@ int safepri;
  * interlock will always be unlocked upon return.
  */
 int
-ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
-    __volatile struct simplelock *interlock)
+ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
+    volatile struct simplelock *interlock)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
 	struct slpque *qp;
+	struct sadata_upcall *sau;
 	int sig, s;
 	int catch = priority & PCATCH;
 	int relock = (priority & PNORELOCK) == 0;
@@ -417,8 +471,20 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 1, 0);
+		ktrcsw(l, 1, 0);
 #endif
+
+	/*
+	 * XXX We need to allocate the sadata_upcall structure here,
+	 * XXX since we can't sleep while waiting for memory inside
+	 * XXX sa_upcall().  It would be nice if we could safely
+	 * XXX allocate the sadata_upcall structure on the stack, here.
+	 */
+	if (l->l_flag & L_SA) {
+		sau = sadata_upcall_alloc(0);
+	} else {
+		sau = NULL;
+	}
 
 	SCHED_LOCK(s);
 
@@ -490,7 +556,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 	p->p_stats->p_ru.ru_nvcsw++;
 	SCHED_ASSERT_LOCKED();
 	if (l->l_flag & L_SA)
-		sa_switch(l, SA_UPCALL_BLOCKED);
+		sa_switch(l, sau, SA_UPCALL_BLOCKED);
 	else
 		mi_switch(l, NULL);
 
@@ -517,7 +583,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 		if (sig == 0) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p, 0, 0);
+				ktrcsw(l, 0, 0);
 #endif
 			if (relock && interlock != NULL)
 				simple_lock(interlock);
@@ -532,7 +598,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 		if (sig != 0 || (sig = CURSIG(l)) != 0 || cancelled) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p, 0, 0);
+				ktrcsw(l, 0, 0);
 #endif
 			if (relock && interlock != NULL)
 				simple_lock(interlock);
@@ -549,7 +615,7 @@ ltsleep(__volatile const void *ident, int priority, const char *wmesg, int timo,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 0, 0);
+		ktrcsw(l, 0, 0);
 #endif
 	if (relock && interlock != NULL)
 		simple_lock(interlock);
@@ -610,7 +676,7 @@ unsleep(struct lwp *l)
 	}
 }
 
-__inline void
+inline void
 sa_awaken(struct lwp *l)
 {
 
@@ -623,7 +689,7 @@ sa_awaken(struct lwp *l)
 /*
  * Optimized-for-wakeup() version of setrunnable().
  */
-__inline void
+inline void
 awaken(struct lwp *l)
 {
 
@@ -673,7 +739,7 @@ sched_lock_idle(void)
  */
 
 void
-wakeup(__volatile const void *ident)
+wakeup(volatile const void *ident)
 {
 	int s;
 
@@ -685,7 +751,7 @@ wakeup(__volatile const void *ident)
 }
 
 void
-sched_wakeup(__volatile const void *ident)
+sched_wakeup(volatile const void *ident)
 {
 	struct slpque *qp;
 	struct lwp *l, **q;
@@ -719,7 +785,7 @@ sched_wakeup(__volatile const void *ident)
  * identifier runnable.
  */
 void
-wakeup_one(__volatile const void *ident)
+wakeup_one(volatile const void *ident)
 {
 	struct slpque *qp;
 	struct lwp *l, **q;
@@ -803,9 +869,11 @@ yield(void)
 
 /*
  * General preemption call.  Puts the current process back on its run queue
- * and performs an involuntary context switch.  If a process is supplied,
- * we switch to that process.  Otherwise, we use the normal process selection
- * criteria.
+ * and performs an involuntary context switch.
+ * The 'more' ("more work to do") argument is boolean. Returning to userspace
+ * preempt() calls pass 0. "Voluntary" preemptions in e.g. uiomove() pass 1.
+ * This will be used to indicate to the SA subsystem that the LWP is
+ * not yet finished in the kernel.
  */
 
 void
@@ -860,10 +928,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 
 	spc = &l->l_cpu->ci_schedstate;
 
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	spinlock_switchcheck();
-#endif
 #ifdef LOCKDEBUG
+	spinlock_switchcheck();
 	simple_lock_switchcheck();
 #endif
 
@@ -904,8 +970,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 				rlim->rlim_cur += 5;
 		}
 	}
-	if (autonicetime && s > autonicetime && p->p_ucred->cr_uid &&
-	    p->p_nice == NZERO) {
+	if (autonicetime && s > autonicetime &&
+	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
 		p->p_nice = autoniceval + NZERO;
 		resetpriority(l);
 	}
@@ -988,7 +1054,7 @@ rqinit()
 		    (struct lwp *)&sched_qs[i];
 }
 
-static __inline void
+static inline void
 resched_proc(struct lwp *l, u_char pri)
 {
 	struct cpu_info *ci;
@@ -1090,7 +1156,7 @@ resetpriority(struct lwp *l)
 
 	SCHED_ASSERT_LOCKED();
 
-	newpriority = PUSER + p->p_estcpu +
+	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
 			NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	l->l_usrpri = newpriority;
@@ -1130,7 +1196,7 @@ schedclock(struct lwp *l)
 	struct proc *p = l->l_proc;
 	int s;
 
-	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
+	p->p_estcpu = ESTCPULIM(p->p_estcpu + (1 << ESTCPU_SHIFT));
 	SCHED_LOCK(s);
 	resetpriority(l);
 	SCHED_UNLOCK(s);
@@ -1176,6 +1242,40 @@ suspendsched()
 	}
 	SCHED_UNLOCK(s);
 	proclist_unlock_read();
+}
+
+/*
+ * scheduler_fork_hook:
+ *
+ *	Inherit the parent's scheduler history.
+ */
+void
+scheduler_fork_hook(struct proc *parent, struct proc *child)
+{
+
+	child->p_estcpu = child->p_estcpu_inherited = parent->p_estcpu;
+	child->p_forktime = schedcpu_ticks;
+}
+
+/*
+ * scheduler_wait_hook:
+ *
+ *	Chargeback parents for the sins of their children.
+ */
+void
+scheduler_wait_hook(struct proc *parent, struct proc *child)
+{
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	fixpt_t estcpu;
+
+	/* XXX Only if parent != init?? */
+
+	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
+	    schedcpu_ticks - child->p_forktime);
+	if (child->p_estcpu > estcpu) {
+		parent->p_estcpu =
+		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
+	}
 }
 
 /*
@@ -1268,7 +1368,7 @@ setrunqueue(struct lwp *l)
 {
 	struct prochd *rq;
 	struct lwp *prev;
-	const int whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / PPQ;
 
 #ifdef RQDEBUG
 	checkrunqueue(whichq, NULL);
@@ -1293,7 +1393,7 @@ void
 remrunqueue(struct lwp *l)
 {
 	struct lwp *prev, *next;
-	const int whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / PPQ;
 #ifdef RQDEBUG
 	checkrunqueue(whichq, l);
 #endif

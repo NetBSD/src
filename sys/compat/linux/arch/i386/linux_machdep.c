@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.110.2.1 2006/06/21 14:59:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.110.2.1 2006/06/21 14:59:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/kauth.h>
+
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -883,8 +885,8 @@ fd2biosinfo(p, fp)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -909,11 +911,12 @@ linux_machdepioctl(p, v, retval)
 	int fd;
 	struct disklabel label, *labp;
 	struct partinfo partp;
-	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	u_long start, biostotal, realtotal;
 	u_char heads, sectors;
 	u_int cylinders;
 	struct ioctl_pt pt;
+	struct proc *p = l->l_proc;
 
 	fd = SCARG(uap, fd);
 	SCARG(&bia, fd) = fd;
@@ -1049,8 +1052,8 @@ linux_machdepioctl(p, v, retval)
 		 */
 		bip = fd2biosinfo(p, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
+		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
+		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			goto out;
@@ -1097,12 +1100,10 @@ linux_machdepioctl(p, v, retval)
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
 		 */
-		FILE_USE(fp);
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
-		FILE_UNUSE(fp, p);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;
@@ -1117,7 +1118,7 @@ linux_machdepioctl(p, v, retval)
 	/* XXX NJWLWP */
 	error = sys_ioctl(curlwp, &bia, retval);
 out:
-	FILE_UNUSE(fp ,p);
+	FILE_UNUSE(fp ,l);
 	return error;
 }
 
@@ -1140,7 +1141,7 @@ linux_sys_iopl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EPERM;
 	fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
@@ -1165,7 +1166,7 @@ linux_sys_ioperm(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EPERM;
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.33 2005/05/29 21:56:35 christos Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.33.2.1 2006/06/21 15:08:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_WSCONS_WSDISPLAYVAR_H
+#define _DEV_WSCONS_WSDISPLAYVAR_H
 
 struct device;
 
@@ -108,9 +111,9 @@ struct wsdisplay_char;
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsdisplay_accessops {
-	int	(*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
-		    struct proc *p);
-	paddr_t	(*mmap)(void *v, off_t off, int prot);
+	int	(*ioctl)(void *v, void *scr, u_long cmd, caddr_t data, int flag,
+		    struct lwp *l);
+	paddr_t	(*mmap)(void *v, void *scr, off_t off, int prot);
 	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *);
 	void	(*free_screen)(void *, void *);
@@ -118,11 +121,7 @@ struct wsdisplay_accessops {
 				    void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
 	void	(*pollc)(void *, int);
-	int	(*getwschar)(void *, struct wsdisplay_char *);
-	int	(*putwschar)(void *, struct wsdisplay_char *);
 	void	(*scroll)(void *, void *, int);
-	u_int	(*getborder)(void *);
-	int	(*setborder)(void *, u_int);
 };
 
 /*
@@ -194,19 +193,19 @@ int wsdisplay_getactivescreen(struct wsdisplay_softc *);
 int wsscreen_switchwait(struct wsdisplay_softc *, int);
 
 int wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *,
-			     u_long cmd, caddr_t data,int flag, struct proc *p);
+			     u_long cmd, caddr_t data,int flag, struct lwp *l);
 
 int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
-			 u_long, caddr_t, int, struct proc *);
+			 u_long, caddr_t, int, struct lwp *);
 
 int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
-			 u_long, caddr_t, int, struct proc *);
+			 u_long, caddr_t, int, struct lwp *);
 
 int wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-			 int flag, struct proc *p);
+			 int flag, struct lwp *l);
 
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-			int flag, struct proc *p);
+			int flag, struct lwp *l);
 
 #ifdef WSDISPLAY_SCROLLSUPPORT
 void wsdisplay_scroll (void *v, int op);
@@ -230,7 +229,6 @@ const struct wsscreen_descr *
 #if defined(_KERNEL)
 #  if defined(_KERNEL_OPT)
 #    include "opt_wsmsgattrs.h"
-#    include "opt_wsdisplay_border.h"
 #  endif
 #  if !defined(WS_DEFAULT_FG)
 #    define WS_DEFAULT_FG WSCOL_WHITE
@@ -266,3 +264,5 @@ const struct wsscreen_descr *
 #    define WSDISPLAY_BORDER_COLOR WSCOL_BLACK
 #  endif
 #endif /* _KERNEL */
+
+#endif /* !_DEV_WSCONS_WSDISPLAYVAR_H */

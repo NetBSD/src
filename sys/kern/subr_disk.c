@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.69.2.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,32 +74,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/bufq.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <lib/libkern/libkern.h>
-
-/*
- * A global list of all disks attached to the system.  May grow or
- * shrink over time.
- */
-struct	disklist_head disklist = TAILQ_HEAD_INITIALIZER(disklist);
-int	disk_count;		/* number of drives in global disklist */
-struct simplelock disklist_slock = SIMPLELOCK_INITIALIZER;
-
-int bufq_disk_default_strat = _BUFQ_DEFAULT;
-
-BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
 /*
  * Compute checksum for disk label.
@@ -177,36 +162,38 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
 }
 
 /*
- * Searches the disklist for the disk corresponding to the
+ * Searches the iostatlist for the disk corresponding to the
  * name provided.
  */
 struct disk *
-disk_find(char *name)
+disk_find(const char *name)
 {
-	struct disk *diskp;
+	struct io_stats *stat;
 
-	if ((name == NULL) || (disk_count <= 0))
-		return (NULL);
+	stat = iostat_find(name);
 
-	simple_lock(&disklist_slock);
-	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
-	    diskp = TAILQ_NEXT(diskp, dk_link))
-		if (strcmp(diskp->dk_name, name) == 0) {
-			simple_unlock(&disklist_slock);
-			return (diskp);
-		}
-	simple_unlock(&disklist_slock);
+	if ((stat != NULL) && (stat->io_type == IOSTAT_DISK))
+		return stat->io_parent;
 
 	return (NULL);
 }
 
-/*
- * Attach a disk.
- */
-void
-disk_attach(struct disk *diskp)
+static void
+disk_init0(struct disk *diskp)
 {
-	int s;
+
+	/*
+	 * Initialize the wedge-related locks and other fields.
+	 */
+	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
+	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
+	LIST_INIT(&diskp->dk_wedges);
+	diskp->dk_nwedges = 0;
+}
+
+static void
+disk_attach0(struct disk *diskp)
+{
 
 	/*
 	 * Allocate and initialize the disklabel structures.  Note that
@@ -223,27 +210,38 @@ disk_attach(struct disk *diskp)
 	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
-	 * Initialize the wedge-related locks and other fields.
+	 * Set up the stats collection.
 	 */
-	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
-	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
-	LIST_INIT(&diskp->dk_wedges);
-	diskp->dk_nwedges = 0;
+	diskp->dk_stats = iostat_alloc(IOSTAT_DISK);
+	diskp->dk_stats->io_parent = (void *) diskp;
+	diskp->dk_stats->io_name = diskp->dk_name;
+}
+
+static void
+disk_detach0(struct disk *diskp)
+{
 
 	/*
-	 * Set the attached timestamp.
+	 * Remove from the drivelist.
 	 */
-	s = splclock();
-	diskp->dk_attachtime = mono_time;
-	splx(s);
+	iostat_free(diskp->dk_stats);
 
 	/*
-	 * Link into the disklist.
+	 * Free the space used by the disklabel structures.
 	 */
-	simple_lock(&disklist_slock);
-	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
-	disk_count++;
-	simple_unlock(&disklist_slock);
+	free(diskp->dk_label, M_DEVBUF);
+	free(diskp->dk_cpulabel, M_DEVBUF);
+}
+
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(struct disk *diskp)
+{
+
+	disk_init0(diskp);
+	disk_attach0(diskp);
 }
 
 /*
@@ -254,309 +252,57 @@ disk_detach(struct disk *diskp)
 {
 
 	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
-
-	/*
-	 * Remove from the disklist.
-	 */
-	if (disk_count == 0)
-		panic("disk_detach: disk_count == 0");
-	simple_lock(&disklist_slock);
-	TAILQ_REMOVE(&disklist, diskp, dk_link);
-	disk_count--;
-	simple_unlock(&disklist_slock);
-
-	/*
-	 * Free the space used by the disklabel structures.
-	 */
-	free(diskp->dk_label, M_DEVBUF);
-	free(diskp->dk_cpulabel, M_DEVBUF);
+	disk_detach0(diskp);
 }
 
 /*
- * Increment a disk's busy counter.  If the counter is going from
- * 0 to 1, set the timestamp.
+ * Initialize a pseudo disk.
+ */
+void
+pseudo_disk_init(struct disk *diskp)
+{
+
+	disk_init0(diskp);
+}
+
+/*
+ * Attach a pseudo disk.
+ */
+void
+pseudo_disk_attach(struct disk *diskp)
+{
+
+	disk_attach0(diskp);
+}
+
+/*
+ * Detach a pseudo disk.
+ */
+void
+pseudo_disk_detach(struct disk *diskp)
+{
+
+	disk_detach0(diskp);
+}
+
+/*
+ * Mark the disk as busy for metrics collection.
  */
 void
 disk_busy(struct disk *diskp)
 {
-	int s;
 
-	/*
-	 * XXX We'd like to use something as accurate as microtime(),
-	 * but that doesn't depend on the system TOD clock.
-	 */
-	if (diskp->dk_busy++ == 0) {
-		s = splclock();
-		diskp->dk_timestamp = mono_time;
-		splx(s);
-	}
+	iostat_busy(diskp->dk_stats);
 }
 
 /*
- * Decrement a disk's busy counter, increment the byte count, total busy
- * time, and reset the timestamp.
+ * Finished disk operations, gather metrics.
  */
 void
 disk_unbusy(struct disk *diskp, long bcount, int read)
 {
-	int s;
-	struct timeval dv_time, diff_time;
 
-	if (diskp->dk_busy-- == 0) {
-		printf("%s: dk_busy < 0\n", diskp->dk_name);
-		panic("disk_unbusy");
-	}
-
-	s = splclock();
-	dv_time = mono_time;
-	splx(s);
-
-	timersub(&dv_time, &diskp->dk_timestamp, &diff_time);
-	timeradd(&diskp->dk_time, &diff_time, &diskp->dk_time);
-
-	diskp->dk_timestamp = dv_time;
-	if (bcount > 0) {
-		if (read) {
-			diskp->dk_rbytes += bcount;
-			diskp->dk_rxfer++;
-		} else {
-			diskp->dk_wbytes += bcount;
-			diskp->dk_wxfer++;
-		}
-	}
-}
-
-/*
- * Reset the metrics counters on the given disk.  Note that we cannot
- * reset the busy counter, as it may case a panic in disk_unbusy().
- * We also must avoid playing with the timestamp information, as it
- * may skew any pending transfer results.
- */
-void
-disk_resetstat(struct disk *diskp)
-{
-	int s = splbio(), t;
-
-	diskp->dk_rxfer = 0;
-	diskp->dk_rbytes = 0;
-	diskp->dk_wxfer = 0;
-	diskp->dk_wbytes = 0;
-
-	t = splclock();
-	diskp->dk_attachtime = mono_time;
-	splx(t);
-
-	timerclear(&diskp->dk_time);
-
-	splx(s);
-}
-
-int
-sysctl_hw_disknames(SYSCTLFN_ARGS)
-{
-	char bf[DK_DISKNAMELEN + 1];
-	char *where = oldp;
-	struct disk *diskp;
-	size_t needed, left, slen;
-	int error, first;
-
-	if (newp != NULL)
-		return (EPERM);
-	if (namelen != 0)
-		return (EINVAL);
-
-	first = 1;
-	error = 0;
-	needed = 0;
-	left = *oldlenp;
-
-	simple_lock(&disklist_slock);
-	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
-	    diskp = TAILQ_NEXT(diskp, dk_link)) {
-		if (where == NULL)
-			needed += strlen(diskp->dk_name) + 1;
-		else {
-			memset(bf, 0, sizeof(bf));
-			if (first) {
-				strncpy(bf, diskp->dk_name, sizeof(bf));
-				first = 0;
-			} else {
-				bf[0] = ' ';
-				strncpy(bf + 1, diskp->dk_name,
-				    sizeof(bf) - 1);
-			}
-			bf[DK_DISKNAMELEN] = '\0';
-			slen = strlen(bf);
-			if (left < slen + 1)
-				break;
-			/* +1 to copy out the trailing NUL byte */
-			error = copyout(bf, where, slen + 1);
-			if (error)
-				break;
-			where += slen;
-			needed += slen;
-			left -= slen;
-		}
-	}
-	simple_unlock(&disklist_slock);
-	*oldlenp = needed;
-	return (error);
-}
-
-int
-sysctl_hw_diskstats(SYSCTLFN_ARGS)
-{
-	struct disk_sysctl sdisk;
-	struct disk *diskp;
-	char *where = oldp;
-	size_t tocopy, left;
-	int error;
-
-	if (newp != NULL)
-		return (EPERM);
-
-	/*
-	 * The original hw.diskstats call was broken and did not require
-	 * the userland to pass in it's size of struct disk_sysctl.  This
-	 * was fixed after NetBSD 1.6 was released, and any applications
-	 * that do not pass in the size are given an error only, unless
-	 * we care about 1.6 compatibility.
-	 */
-	if (namelen == 0)
-#ifdef COMPAT_16
-		tocopy = offsetof(struct disk_sysctl, dk_rxfer);
-#else
-		return (EINVAL);
-#endif
-	else
-		tocopy = name[0];
-
-	if (where == NULL) {
-		*oldlenp = disk_count * tocopy;
-		return (0);
-	}
-
-	error = 0;
-	left = *oldlenp;
-	memset(&sdisk, 0, sizeof(sdisk));
-	*oldlenp = 0;
-
-	simple_lock(&disklist_slock);
-	TAILQ_FOREACH(diskp, &disklist, dk_link) {
-		if (left < tocopy)
-			break;
-		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));
-		sdisk.dk_xfer = diskp->dk_rxfer + diskp->dk_wxfer;
-		sdisk.dk_rxfer = diskp->dk_rxfer;
-		sdisk.dk_wxfer = diskp->dk_wxfer;
-		sdisk.dk_seek = diskp->dk_seek;
-		sdisk.dk_bytes = diskp->dk_rbytes + diskp->dk_wbytes;
-		sdisk.dk_rbytes = diskp->dk_rbytes;
-		sdisk.dk_wbytes = diskp->dk_wbytes;
-		sdisk.dk_attachtime_sec = diskp->dk_attachtime.tv_sec;
-		sdisk.dk_attachtime_usec = diskp->dk_attachtime.tv_usec;
-		sdisk.dk_timestamp_sec = diskp->dk_timestamp.tv_sec;
-		sdisk.dk_timestamp_usec = diskp->dk_timestamp.tv_usec;
-		sdisk.dk_time_sec = diskp->dk_time.tv_sec;
-		sdisk.dk_time_usec = diskp->dk_time.tv_usec;
-		sdisk.dk_busy = diskp->dk_busy;
-
-		error = copyout(&sdisk, where, min(tocopy, sizeof(sdisk)));
-		if (error)
-			break;
-		where += tocopy;
-		*oldlenp += tocopy;
-		left -= tocopy;
-	}
-	simple_unlock(&disklist_slock);
-	return (error);
-}
-
-/*
- * Create a device buffer queue.
- */
-void
-bufq_alloc(struct bufq_state *bufq, int flags)
-{
-	__link_set_decl(bufq_strats, const struct bufq_strat);
-	int methodid;
-	const struct bufq_strat *bsp;
-	const struct bufq_strat * const *it;
-
-	bufq->bq_flags = flags;
-	methodid = flags & BUFQ_METHOD_MASK;
-
-	switch (flags & BUFQ_SORT_MASK) {
-	case BUFQ_SORT_RAWBLOCK:
-	case BUFQ_SORT_CYLINDER:
-		break;
-	case 0:
-		if (methodid == BUFQ_FCFS)
-			break;
-		/* FALLTHROUGH */
-	default:
-		panic("bufq_alloc: sort out of range");
-	}
-
-	/*
-	 * select strategy.
-	 * if a strategy specified by flags is found, use it.
-	 * otherwise, select one with the largest id number. XXX
-	 */
-	bsp = NULL;
-	__link_set_foreach(it, bufq_strats) {
-		if ((*it) == &bufq_strat_dummy)
-			continue;
-		if (methodid == (*it)->bs_id) {
-			bsp = *it;
-			break;
-		}
-		if (bsp == NULL || (*it)->bs_id > bsp->bs_id)
-			bsp = *it;
-	}
-
-	KASSERT(bsp != NULL);
-#ifdef DEBUG
-	if (bsp->bs_id != methodid && methodid != _BUFQ_DEFAULT)
-		printf("bufq_alloc: method 0x%04x is not available.\n",
-		    methodid);
-#endif
-#ifdef BUFQ_DEBUG
-	/* XXX aprint? */
-	printf("bufq_alloc: using %s\n", bsp->bs_name);
-#endif
-	(*bsp->bs_initfn)(bufq);
-}
-
-/*
- * Drain a device buffer queue.
- */
-void
-bufq_drain(struct bufq_state *bufq)
-{
-	struct buf *bp;
-
-	while ((bp = BUFQ_GET(bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
-}
-
-/*
- * Destroy a device buffer queue.
- */
-void
-bufq_free(struct bufq_state *bufq)
-{
-
-	KASSERT(bufq->bq_private != NULL);
-	KASSERT(BUFQ_PEEK(bufq) == NULL);
-
-	FREE(bufq->bq_private, M_DEVBUF);
-	bufq->bq_get = NULL;
-	bufq->bq_put = NULL;
+	iostat_unbusy(diskp->dk_stats, bcount, read);
 }
 
 /*
@@ -565,7 +311,7 @@ bufq_free(struct bufq_state *bufq)
  * and the media size the size of the device in DEV_BSIZE sectors.
  */
 int
-bounds_check_with_mediasize(struct buf *bp, int secsize, u_int64_t mediasize)
+bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 {
 	int64_t sz;
 

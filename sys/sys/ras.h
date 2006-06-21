@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.5 2004/07/19 03:12:31 chs Exp $	*/
+/*	$NetBSD: ras.h,v 1.5.12.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -79,12 +79,12 @@ extern void __CONCAT(name,_ras_start(void)), __CONCAT(name,_ras_end(void))
  * barriers.  See __insn_barrier() in <sys/cdefs.h>.
  */
 #define	RAS_START(name)							\
-	__asm __volatile(".globl " ___STRING(name) "_ras_start\n"	\
+	__asm volatile(".globl " ___STRING(name) "_ras_start\n"	\
 			 ___STRING(name) "_ras_start:" 			\
 	    ::: "memory")
 
 #define	RAS_END(name)							\
-	__asm __volatile(".globl " ___STRING(name) "_ras_end\n"		\
+	__asm volatile(".globl " ___STRING(name) "_ras_end\n"		\
 			 ___STRING(name) "_ras_end:"			\
 	    ::: "memory")
 

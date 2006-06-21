@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.h,v 1.6 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_dagdegrd.h,v 1.6.4.1 2006/06/21 15:06:28 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t * raidPtr,
 void
 rf_DoubleDegRead(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
     RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList, char *redundantReadNodeName,
-    char *recoveryNodeName, int (*recovFunc) (RF_DagNode_t *));
+    RF_AllocListElem_t * allocList, const char *redundantReadNodeName,
+    const char *recoveryNodeName, int (*recovFunc) (RF_DagNode_t *));
 
 #endif				/* !_RF__RF_DAGDEGRD_H_ */

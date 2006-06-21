@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.4 2003/09/30 20:37:36 christos Exp $	*/
+/*	$NetBSD: ksem.h,v 1.4.16.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -33,6 +33,10 @@
 
 #ifdef _KERNEL
 void ksem_init(void);
+
+int do_ksem_init(struct lwp *, unsigned int, semid_t *, copyout_t);
+int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,
+    semid_t *, copyout_t);
 #endif
 
 #ifdef _LIBC

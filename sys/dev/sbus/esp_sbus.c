@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.32 2005/06/01 21:24:05 jdc Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.32.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.32 2005/06/01 21:24:05 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.32.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ espattach_sbus(parent, self, aux)
 	sc->sc_freq = prom_getpropint(sa->sa_node, "clock-frequency", -1);
 	if (sc->sc_freq < 0)
 		sc->sc_freq = ((struct sbus_softc *)
-		    sc->sc_dev.dv_parent)->sc_clockfreq;
+		    device_parent(&sc->sc_dev))->sc_clockfreq;
 
 #ifdef ESP_SBUS_DEBUG
 	printf("%s: espattach_sbus: sc_id %d, freq %d\n",
@@ -297,7 +297,7 @@ espattach_sbus(parent, self, aux)
 	 * find the matching esp driver.
 	 */
 	esc->sc_dma = (struct lsi64854_softc *)
-				getdevunit("dma", sc->sc_dev.dv_unit);
+				getdevunit("dma", device_unit(&sc->sc_dev));
 
 	/*
 	 * and a back pointer to us, for DMA

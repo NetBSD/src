@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.37 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: cy.c,v 1.37.4.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37.4.1 2006/06/21 15:02:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -32,17 +32,13 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37 2005/02/27 00:27:01 perry Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int	cyparam(struct tty *, struct termios *);
 void	cystart(struct tty *);
@@ -269,7 +265,7 @@ cy_getport(dev_t dev)
  * open routine. returns zero if successful, else error code
  */
 int
-cyopen(dev_t dev, int flag, int mode, struct proc *p)
+cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -369,7 +365,10 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
+		   kauth_authorize_generic(l->l_proc->p_cred,
+				     KAUTH_GENERIC_ISSUSER,
+				     &l->l_proc->p_acflag) != 0) {
 		return EBUSY;
 	} else {
 		s = spltty();
@@ -398,7 +397,7 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
  * close routine. returns zero if successful, else error code
  */
 int
-cyclose(dev_t dev, int flag, int mode, struct proc *p)
+cyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -466,10 +465,7 @@ cywrite(dev_t dev, struct uio *uio, int flag)
  * Poll routine
  */
 int
-cypoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+cypoll(dev_t dev, int events, struct lwp *l)
 {
 	struct cy_port *cy;
 	struct tty *tp;
@@ -477,7 +473,7 @@ cypoll(dev, events, p)
 	cy = CY_PORT(dev);
 	tp = cy->cy_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*
@@ -497,22 +493,24 @@ cytty(dev_t dev)
  * ioctl routine
  */
 int
-cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
+	struct proc *p;
 	struct tty *tp;
 	int error;
 
+	p = l ? l->l_proc : NULL;
 	cy = CY_PORT(dev);
 	sc = CY_BOARD(cy);
 	tp = cy->cy_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -559,7 +557,8 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred,
+					  KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error != 0)
 			return EPERM;
 
@@ -647,7 +646,8 @@ cyparam(struct tty *tp, struct termios *t)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
-	int ibpr, obpr, i_clk_opt, o_clk_opt, s, opt;
+	int ibpr = 0, obpr = 0, i_clk_opt = 0, o_clk_opt = 0;	/* XXX: GCC */
+	int s, opt;
 
 	cy = CY_PORT(tp->t_dev);
 	sc = CY_BOARD(cy);
@@ -1135,8 +1135,8 @@ cy_intr(void *arg)
 				if (cy->cy_tty == NULL ||
 				    !ISSET(cy->cy_tty->t_state, TS_ISOPEN)) {
 					while (n_chars--)
-						cd_read_reg(sc, cy->cy_chip,
-							    CD1400_RDSR);
+						(void)cd_read_reg(sc,
+						    cy->cy_chip, CD1400_RDSR);
 					goto end_rx_serv;
 				}
 

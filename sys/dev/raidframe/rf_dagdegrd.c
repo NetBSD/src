@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.23 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.23.4.1 2006/06/21 15:06:28 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.23 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.23.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1033,7 +1033,7 @@ void
 rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		 RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
 		 RF_AllocListElem_t *allocList,
-		 char *redundantReadNodeName, char *recoveryNodeName,
+		 const char *redundantReadNodeName, const char *recoveryNodeName,
 		 int (*recovFunc) (RF_DagNode_t *))
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);

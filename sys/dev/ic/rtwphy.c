@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.6 2005/06/22 06:15:51 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.6.2.1 2006/06/21 15:02:56 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.6 2005/06/22 06:15:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.6.2.1 2006/06/21 15:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.6 2005/06/22 06:15:51 dyoung Exp $");
 static int rtw_max2820_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
 static int rtw_sa2400_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
 
+#define	GCT_WRITE(__gr, __addr, __val, __label)				\
+	do {								\
+		if (rtw_rfbus_write(&(__gr)->gr_bus, RTW_RFCHIPID_GCT,	\
+		    (__addr), (__val)) == -1)				\
+			goto __label;					\
+	} while(0)
+
 static int
 rtw_bbp_preinit(struct rtw_regs *regs, u_int antatten0, int dflantb,
     u_int freq)
@@ -84,7 +91,7 @@ rtw_bbp_init(struct rtw_regs *regs, struct rtw_bbpset *bb, int antdiv,
 	if (antdiv)
 		sys2 |= RTW_BBP_SYS2_ANTDIV;
 	sys3 = bb->bb_sys3 |
-	    LSHIFT(cs_threshold, RTW_BBP_SYS3_CSTHRESH_MASK);
+	    SHIFTIN(cs_threshold, RTW_BBP_SYS3_CSTHRESH_MASK);
 
 #define	RTW_BBP_WRITE_OR_RETURN(reg, val) \
 	if ((rc = rtw_bbp_write(regs, reg, val)) != 0) \
@@ -187,16 +194,16 @@ rtw_sa2400_tune(struct rtw_rf *rf, u_int freq)
 	 */
 	int n = freq / 4, nf = (freq % 4) * 2;
 
-	syna = LSHIFT(nf, SA2400_SYNA_NF_MASK) | LSHIFT(n, SA2400_SYNA_N_MASK);
+	syna = SHIFTIN(nf, SA2400_SYNA_NF_MASK) | SHIFTIN(n, SA2400_SYNA_N_MASK);
 	verify_syna(freq, syna);
 
 	/* Divide the 44MHz crystal down to 4MHz. Set the fractional
 	 * compensation charge pump value to agree with the fractional
 	 * modulus.
 	 */
-	synb = LSHIFT(11, SA2400_SYNB_R_MASK) | SA2400_SYNB_L_NORMAL |
+	synb = SHIFTIN(11, SA2400_SYNB_R_MASK) | SA2400_SYNB_L_NORMAL |
 	    SA2400_SYNB_ON | SA2400_SYNB_ONE |
-	    LSHIFT(80, SA2400_SYNB_FC_MASK); /* agrees w/ SA2400_SYNA_FM = 0 */
+	    SHIFTIN(80, SA2400_SYNB_FC_MASK); /* agrees w/ SA2400_SYNA_FM = 0 */
 
 	sync = SA2400_SYNC_CP_NORMAL;
 
@@ -248,7 +255,7 @@ rtw_sa2400_manrx_init(struct rtw_sa2400 *sa)
 	 */
 	manrx = SA2400_MANRX_AHSN;
 	manrx |= SA2400_MANRX_TEN;
-	manrx |= LSHIFT(1023, SA2400_MANRX_RXGAIN_MASK);
+	manrx |= SHIFTIN(1023, SA2400_MANRX_RXGAIN_MASK);
 
 	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_MANRX,
 	    manrx);
@@ -337,10 +344,10 @@ rtw_sa2400_agc_init(struct rtw_sa2400 *sa)
 {
 	uint32_t agc;
 
-	agc = LSHIFT(25, SA2400_AGC_MAXGAIN_MASK);
-	agc |= LSHIFT(7, SA2400_AGC_BBPDELAY_MASK);
-	agc |= LSHIFT(15, SA2400_AGC_LNADELAY_MASK);
-	agc |= LSHIFT(27, SA2400_AGC_RXONDELAY_MASK);
+	agc = SHIFTIN(25, SA2400_AGC_MAXGAIN_MASK);
+	agc |= SHIFTIN(7, SA2400_AGC_BBPDELAY_MASK);
+	agc |= SHIFTIN(15, SA2400_AGC_LNADELAY_MASK);
+	agc |= SHIFTIN(27, SA2400_AGC_RXONDELAY_MASK);
 
 	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_AGC,
 	    agc);
@@ -451,6 +458,175 @@ rtw_sa2400_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
 	return &sa->sa_rf;
 }
 
+static int
+rtw_grf5101_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
+{
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+
+	GCT_WRITE(gr, 0x15, 0, err);
+	GCT_WRITE(gr, 0x06, opaque_txpower, err);
+	GCT_WRITE(gr, 0x15, 0x10, err);
+	GCT_WRITE(gr, 0x15, 0x00, err);
+	return 0;
+err:
+	return -1;
+}
+
+static int
+rtw_grf5101_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+{
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+	switch (power) {
+	case RTW_OFF:
+	case RTW_SLEEP:
+		GCT_WRITE(gr, 0x07, 0x0000, err);
+		GCT_WRITE(gr, 0x1f, 0x0045, err);
+		GCT_WRITE(gr, 0x1f, 0x0005, err);
+		GCT_WRITE(gr, 0x00, 0x08e4, err);
+	default:
+		break;
+	case RTW_ON:
+		GCT_WRITE(gr, 0x1f, 0x0001, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x1f, 0x0001, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x1f, 0x0041, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x1f, 0x0061, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x00, 0x0ae4, err);
+		DELAY(10);
+		GCT_WRITE(gr, 0x07, 0x1000, err);
+		DELAY(100);
+		break;
+	}
+
+	return 0;
+err:
+	return -1;
+}
+
+static int
+rtw_grf5101_tune(struct rtw_rf *rf, u_int freq)
+{
+	int channel;
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+
+	if (freq == 2484)
+		channel = 14;
+	else if ((channel = (freq - 2412) / 5 + 1) < 1 || channel > 13) {
+		RTW_DPRINTF(RTW_DEBUG_PHY,
+		    ("%s: invalid channel %d (freq %d)\n", __func__, channel,
+		     freq));
+		return -1;
+	}
+
+	GCT_WRITE(gr, 0x07, 0, err);
+	GCT_WRITE(gr, 0x0b, channel - 1, err);
+	GCT_WRITE(gr, 0x07, 0x1000, err);
+	return 0;
+err:
+	return -1;
+}
+
+static int
+rtw_grf5101_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
+    enum rtw_pwrstate power)
+{
+	int rc;
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+
+	/*
+         * These values have been derived from the rtl8180-sa2400
+         * Linux driver.  It is unknown what they all do, GCT refuse
+         * to release any documentation so these are more than
+         * likely sub optimal settings
+	 */
+
+	GCT_WRITE(gr, 0x01, 0x1a23, err);
+	GCT_WRITE(gr, 0x02, 0x4971, err);
+	GCT_WRITE(gr, 0x03, 0x41de, err);
+	GCT_WRITE(gr, 0x04, 0x2d80, err);
+
+	GCT_WRITE(gr, 0x05, 0x61ff, err);
+
+	GCT_WRITE(gr, 0x06, 0x0, err);
+
+	GCT_WRITE(gr, 0x08, 0x7533, err);
+	GCT_WRITE(gr, 0x09, 0xc401, err);
+	GCT_WRITE(gr, 0x0a, 0x0, err);
+	GCT_WRITE(gr, 0x0c, 0x1c7, err);
+	GCT_WRITE(gr, 0x0d, 0x29d3, err);
+	GCT_WRITE(gr, 0x0e, 0x2e8, err);
+	GCT_WRITE(gr, 0x10, 0x192, err);
+	GCT_WRITE(gr, 0x11, 0x248, err);
+	GCT_WRITE(gr, 0x12, 0x0, err);
+	GCT_WRITE(gr, 0x13, 0x20c4, err);
+	GCT_WRITE(gr, 0x14, 0xf4fc, err);
+	GCT_WRITE(gr, 0x15, 0x0, err);
+	GCT_WRITE(gr, 0x16, 0x1500, err);
+
+	if ((rc = rtw_grf5101_txpower(rf, opaque_txpower)) != 0)
+		return rc;
+
+	if ((rc = rtw_grf5101_tune(rf, freq)) != 0)
+		return rc;
+
+	return 0;
+err:
+	return -1;
+}
+
+static void
+rtw_grf5101_destroy(struct rtw_rf *rf)
+{
+	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
+	memset(gr, 0, sizeof(*gr));
+	free(gr, M_DEVBUF);
+}
+
+struct rtw_rf *
+rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
+{
+	struct rtw_grf5101 *gr;
+	struct rtw_rfbus *bus;
+	struct rtw_rf *rf;
+	struct rtw_bbpset *bb;
+
+	gr = malloc(sizeof(*gr), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (gr == NULL)
+		return NULL;
+
+	rf = &gr->gr_rf;
+	bus = &gr->gr_bus;
+
+	rf->rf_init = rtw_grf5101_init;
+	rf->rf_destroy = rtw_grf5101_destroy;
+	rf->rf_txpower = rtw_grf5101_txpower;
+	rf->rf_tune = rtw_grf5101_tune;
+	rf->rf_pwrstate = rtw_grf5101_pwrstate;
+	bb = &rf->rf_bbpset;
+
+	/* XXX magic */
+	bb->bb_antatten = RTW_BBP_ANTATTEN_GCT_MAGIC;
+	bb->bb_chestlim =       0x00;
+	bb->bb_chsqlim =        0xa0;
+	bb->bb_ifagcdet =       0x64;
+	bb->bb_ifagcini =       0x90;
+	bb->bb_ifagclimit =     0x1e;
+	bb->bb_lnadet =         0xc0;
+	bb->bb_sys1 =           0xa8;
+	bb->bb_sys2 =           0x47;
+	bb->bb_sys3 =           0x9b;
+	bb->bb_trl =            0x88;
+	bb->bb_txagc =          0x08;
+
+	bus->b_regs = regs;
+	bus->b_write = rf_write;
+
+	return &gr->gr_rf;
+}
+
 /* freq is in MHz */
 static int
 rtw_max2820_tune(struct rtw_rf *rf, u_int freq)
@@ -462,7 +638,7 @@ rtw_max2820_tune(struct rtw_rf *rf, u_int freq)
 		return -1;
 
 	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM, MAX2820_CHANNEL,
-	    LSHIFT(freq - 2400, MAX2820_CHANNEL_CF_MASK));
+	    SHIFTIN(freq - 2400, MAX2820_CHANNEL_CF_MASK));
 }
 
 static void
@@ -508,8 +684,8 @@ rtw_max2820_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
 	 */
 	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM, MAX2820_RECEIVE,
 	    MAX2820_RECEIVE_DL_DEFAULT |
-	    LSHIFT(4, MAX2820A_RECEIVE_1C_MASK) |
-	    LSHIFT(1, MAX2820A_RECEIVE_2C_MASK))) != 0)
+	    SHIFTIN(4, MAX2820A_RECEIVE_1C_MASK) |
+	    SHIFTIN(1, MAX2820A_RECEIVE_2C_MASK))) != 0)
 		return rc;
 
 	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM, MAX2820_TRANSMIT,

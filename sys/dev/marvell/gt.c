@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.9 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gt.c,v 1.9.4.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.9 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.9.4.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -117,7 +117,7 @@ gt_cfprint (void *aux, const char *pnp)
 
 static int
 gt_cfsearch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct gt_softc *gt = (struct gt_softc *) parent;
 	struct gt_attach_args ga;
@@ -773,12 +773,12 @@ gt_watchdog_init(struct gt_softc *gt)
 		/*
 		 * configure EMCP in HID0 in case it's not already set
 		 */
-		__asm __volatile("sync");
+		__asm volatile("sync");
 		hid0 = mfspr(SPR_HID0);
 		if ((hid0 & HID0_EMCP) == 0) {
 			hid0 |= HID0_EMCP;
-			__asm __volatile("sync"); mtspr(SPR_HID0, hid0);
-			__asm __volatile("sync"); hid0 = mfspr(SPR_HID0);
+			__asm volatile("sync"); mtspr(SPR_HID0, hid0);
+			__asm volatile("sync"); hid0 = mfspr(SPR_HID0);
 			printf(", EMCP set");
 		}
 	}
@@ -794,7 +794,7 @@ u_int32_t
 hid0_print()
 {
 	u_int32_t hid0;
-	__asm __volatile("sync; mfspr %0,1008;" : "=r"(hid0));
+	__asm volatile("sync; mfspr %0,1008;" : "=r"(hid0));
 	printf("hid0: %#x\n", hid0);
 	return hid0;
 }

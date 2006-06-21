@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.11 2004/09/13 12:55:49 drochner Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.11.12.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,11 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
 
 /* just for ucom_attach_args, not in the config namespace */
 #define UCOM_UNK_PORTNO (-1)
@@ -105,7 +100,7 @@ struct ucom_attach_args {
 	void *arg;
 };
 
-int ucomprint(void *aux, const char *pnp);
-int ucomsubmatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *, void *aux);
+int ucomprint(void *, const char *);
+int ucomsubmatch(struct device *t, struct cfdata *,
+		 const int *, void *);
 void ucom_status_change(struct ucom_softc *);

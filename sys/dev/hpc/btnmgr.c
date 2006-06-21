@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.14 2005/05/31 23:04:10 uwe Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.14.2.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.14 2005/05/31 23:04:10 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.14.2.1 2006/06/21 15:02:46 yamt Exp $");
 
 #define BTNMGRDEBUG
 
@@ -108,7 +108,7 @@ const struct cdevsw btnmgr_cdevsw = {
 /* wskbd accessopts */
 int	btnmgr_wskbd_enable(void *, int);
 void	btnmgr_wskbd_set_leds(void *, int);
-int	btnmgr_wskbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	btnmgr_wskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 const struct wskbd_accessops btnmgr_wskbd_accessops = {
 	btnmgr_wskbd_enable,
@@ -185,7 +185,7 @@ void
 btnmgrattach(struct device *parent, struct device *self, void *aux)
 {
 	int id;
-	struct btnmgr_softc *sc = (struct btnmgr_softc *)self;
+	struct btnmgr_softc *sc = device_private(self);
 	struct wskbddev_attach_args wa;
 
 	printf("\n");
@@ -277,7 +277,7 @@ btnmgr_wskbd_set_leds(void *scx, int leds)
 
 int
 btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
-    struct proc *p)
+    struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct btnmgr_softc *sc = scx;
@@ -306,13 +306,13 @@ btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
 
 #ifdef notyet
 int
-btnmgropen(dev_t dev, int flag, int mode, struct proc *p)
+btnmgropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrclose(dev_t dev, int flag, int mode, struct proc *p)
+btnmgrclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return (EINVAL);
 }
@@ -330,7 +330,7 @@ btnmgrwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-btnmgrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+btnmgrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	return (EINVAL);
 }

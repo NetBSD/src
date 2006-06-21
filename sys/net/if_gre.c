@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.57 2005/05/20 16:23:05 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.57.2.1 2006/06/21 15:10:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57 2005/05/20 16:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57.2.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57 2005/05/20 16:23:05 christos Exp $")
 #include <sys/queue.h>
 #if __NetBSD__
 #include <sys/systm.h>
+#include <sys/kauth.h>
 #endif
 
 #include <machine/cpu.h>
@@ -113,18 +114,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57 2005/05/20 16:23:05 christos Exp $")
 struct gre_softc_head gre_softc_list;
 int ip_gre_ttl = GRE_TTL;
 
-int	gre_clone_create __P((struct if_clone *, int));
-int	gre_clone_destroy __P((struct ifnet *));
+static int	gre_clone_create(struct if_clone *, int);
+static int	gre_clone_destroy(struct ifnet *);
 
-struct if_clone gre_cloner =
+static struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
-int gre_compute_route(struct gre_softc *sc);
+static int	gre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+			   struct rtentry *);
+static int	gre_ioctl(struct ifnet *, u_long, caddr_t);
 
-int
-gre_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+static int	gre_compute_route(struct gre_softc *sc);
+
+static int
+gre_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gre_softc *sc;
 
@@ -154,9 +157,8 @@ gre_clone_create(ifc, unit)
 	return (0);
 }
 
-int
-gre_clone_destroy(ifp)
-	struct ifnet *ifp;
+static int
+gre_clone_destroy(struct ifnet *ifp)
 {
 	struct gre_softc *sc = ifp->if_softc;
 
@@ -174,7 +176,7 @@ gre_clone_destroy(ifp)
  * The output routine. Takes a packet and encapsulates it in the protocol
  * given by sc->g_proto. See also RFC 1701 and RFC 2004
  */
-int
+static int
 gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt)
 {
@@ -340,7 +342,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (error);
 }
 
-int
+static int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;	/* XXX */
@@ -362,7 +364,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		if ((ifr->ifr_flags & IFF_LINK0) != 0)
 			sc->g_proto = IPPROTO_GRE;
@@ -370,7 +372,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->g_proto = IPPROTO_MOBILE;
 		break;
 	case SIOCSIFMTU:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		if (ifr->ifr_mtu < 576) {
 			error = EINVAL;
@@ -402,7 +404,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GRESPROTO:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
@@ -422,7 +424,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case GRESADDRS:
 	case GRESADDRD:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		/*
 		 * set tunnel endpoints, compute a less specific route
@@ -461,7 +463,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_addr = *sa;
 		break;
 	case SIOCSLIFPHYADDR:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		if (lifr->addr.ss_family != AF_INET ||
 		    lifr->dstaddr.ss_family != AF_INET) {
@@ -478,7 +480,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
 		goto recompute;
 	case SIOCDIFPHYADDR:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		sc->g_src.s_addr = INADDR_ANY;
 		sc->g_dst.s_addr = INADDR_ANY;
@@ -517,7 +519,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * a-->b. We know that this one exists as in normal operation we have
  * at least a default route which matches.
  */
-int
+static int
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;
@@ -613,12 +615,11 @@ gre_in_cksum(u_int16_t *p, u_int len)
 }
 #endif
 
-void	greattach __P((int));
+void	greattach(int);
 
 /* ARGSUSED */
 void
-greattach(count)
-	int count;
+greattach(int count)
 {
 #ifdef INET
 	LIST_INIT(&gre_softc_list);

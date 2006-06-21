@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.13 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.13.12.1 2006/06/21 14:59:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.13 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.13.12.1 2006/06/21 14:59:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,9 @@ linux_sys_uselib(l, v, retval)
 	size_t rem;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 
 	if ((error = namei(&ni)))
 		return error;
@@ -118,7 +118,7 @@ linux_sys_uselib(l, v, retval)
 	vp = ni.ni_vp;
 
 	if ((error = vn_rdwr(UIO_READ, vp, (caddr_t) &hdr, LINUX_AOUT_HDR_SIZE,
-			     0, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
+			     0, UIO_SYSSPACE, IO_NODELOCKED, p->p_cred,
 			     &rem, NULL))) {
 		vrele(vp);
 		return error;
@@ -162,7 +162,7 @@ linux_sys_uselib(l, v, retval)
 		struct exec_vmcmd *vcp;
 
 		vcp = &vcset.evs_cmds[i];
-		error = (*vcp->ev_proc)(p, vcp);
+		error = (*vcp->ev_proc)(l, vcp);
 	}
 
 	kill_vmcmds(&vcset);

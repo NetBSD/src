@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.10 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.10.2.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NETISO_TP_VAR_H_
+#define _NETISO_TP_VAR_H_
 
 #ifdef _KERNEL
 struct isopcb;
@@ -178,7 +181,7 @@ int tp_rcvoob   (struct tp_pcb *, struct socket *, struct mbuf *,
 		     int *, int);
 int tp_sendoob  (struct tp_pcb *, struct socket *, struct mbuf *, int *);
 int tp_usrreq   (struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *);
+		     struct mbuf *, struct lwp *);
 void tp_ltrace   (struct socket *, struct uio *);
 int tp_confirm  (struct tp_pcb *);
 int tp_snd_control (struct mbuf *, struct socket *, struct mbuf **);
@@ -196,3 +199,5 @@ int find_error_reason (struct x25_packet *);
 #endif
 
 #endif
+
+#endif /* !_NETISO_TP_VAR_H_ */

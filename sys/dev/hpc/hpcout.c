@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.8 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.8.4.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.8 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.8.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ void
 hpcout_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcioman_attach_args *hma = aux;
-	struct hpcout_softc *sc = (void *)self;
+	struct hpcout_softc *sc = device_private(self);
 
 	sc->sc_hma = *hma;	/* structure assignment */
 

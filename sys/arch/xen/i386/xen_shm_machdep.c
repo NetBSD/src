@@ -1,7 +1,7 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.9 2005/06/12 14:59:48 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.9.2.1 2006/06/21 14:58:06 yamt Exp $      */
 
 /*
- * Copyright (c) 2005 Manuel Bouyer.
+ * Copyright (c) 2006 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,6 @@
 #include <machine/hypervisor.h>
 #include <machine/xen.h>
 #include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
 #include <machine/xen_shm.h>
 
 /*
@@ -65,12 +64,14 @@ u_long xen_shm_base_address_pg;
 vaddr_t xen_shm_end_address;
 
 /* Grab enouth VM space to map an entire vbd ring. */
-#define XENSHM_MAX_PAGES_PER_REQUEST (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1)
+#ifdef XEN3
+#define BLKIF_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
+#endif
+#define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1))
 
-vsize_t xen_shm_size =
-    (BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST * PAGE_SIZE);
+vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
-paddr_t _xen_shm_vaddr2ma[BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST];
+paddr_t _xen_shm_vaddr2ma[XENSHM_NPAGES];
 
 /* vm space management */
 struct extent *xen_shm_ex;
@@ -85,6 +86,9 @@ struct xen_shm_callback_entry {
 };
 /* a pool of struct xen_shm_callback_entry */
 struct pool xen_shm_callback_pool;
+
+/* for ratecheck(9) */
+struct timeval xen_shm_errintvl = { 60, 0 };  /* a minute, each */
 
 void
 xen_shm_init()
@@ -116,13 +120,24 @@ xen_shm_init()
 }
 
 int
+#ifdef XEN3
+xen_shm_map(int nentries, int domid, grant_ref_t gref, vaddr_t *vap,
+    grant_handle_t *handlep, int flags)
+#else
 xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
+#endif
 {
-	int i, s;
+	int s;
 	vaddr_t new_va;
 	u_long new_va_pg;
+#ifdef XEN3
+	int err;
+	gnttab_map_grant_ref_t op;
+#else
+	int i;
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
 	int remap_prot = PG_V | PG_RW | PG_U | PG_M;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
@@ -138,24 +153,44 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 	 */
 	if (__predict_false(SIMPLEQ_FIRST(&xen_shm_callbacks) != NULL) &&
 	    (flags & XSHM_CALLBACK) == 0) {
+#ifdef DEBUG
+		static struct timeval lasttime;
+#endif
 		splx(s);
 #ifdef DEBUG
-		printf("xen_shm_map: ENOMEM1\n");
+		if (ratecheck(&lasttime, &xen_shm_errintvl))
+			printf("xen_shm_map: ENOMEM1\n");
 #endif
 		return ENOMEM;
 	}
 	/* allocate the needed virtual space */
 	if (extent_alloc(xen_shm_ex, nentries, 1, 0, EX_NOWAIT, &new_va_pg)
 	    != 0) {
+#ifdef DEBUG
+		static struct timeval lasttime;
+#endif
 		splx(s);
 #ifdef DEBUG
-		printf("xen_shm_map: ENOMEM\n");
+		if (ratecheck(&lasttime, &xen_shm_errintvl))
+			printf("xen_shm_map: ENOMEM\n");
 #endif
 		return ENOMEM;
 	}
 	splx(s);
 
 	new_va = new_va_pg << PAGE_SHIFT;
+#ifdef XEN3
+	op.host_addr = new_va;
+	op.dom = domid;
+	op.ref = gref;
+	op.flags = GNTMAP_host_map | ((flags & XSHM_RO) ? GNTMAP_readonly : 0);
+	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
+	if (__predict_false(err))
+		panic("xen_shm_map: HYPERVISOR_grant_table_op failed");
+	if (__predict_false(op.status))
+		return op.status;
+	*handlep = op.handle;
+#else /* !XEN3 */
 	for (i = 0; i < nentries; i++, new_va_pg++) {
 		mcl[i].op = __HYPERVISOR_update_va_mapping_otherdomain;
 		mcl[i].args[0] = new_va_pg;
@@ -191,15 +226,26 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 			return EINVAL;
 		}
 	}
+#endif /* !XEN3 */
 	*vap = new_va;
 	return 0;
 }
 
 void
+#ifdef XEN3
+xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t handle)
+#else
 xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
+#endif
 {
+#ifdef XEN3
+	gnttab_unmap_grant_ref_t op;
+	int ret;
+#else
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
-	int i, s;
+	int i;
+#endif
+	int s;
 	struct xen_shm_callback_entry *xshmc;
 
 #ifdef DIAGNOSTIC
@@ -209,6 +255,16 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 	}
 #endif
 
+#ifdef XEN3
+	op.host_addr = va;
+	op.dev_bus_addr = 0;
+	op.handle = handle;
+	ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+	    &op, 1);
+	if (__predict_false(ret))
+		panic("xen_shm_unmap: unmap failed");
+	va = va >> PAGE_SHIFT;
+#else /* !XEN3 */
 	va = va >> PAGE_SHIFT;
 	for (i = 0; i < nentries; i++) {
 		mcl[i].op = __HYPERVISOR_update_va_mapping;
@@ -230,24 +286,25 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 	mcl[nentries - 1].args[2] = UVMF_FLUSH_TLB;
 	if (HYPERVISOR_multicall(mcl, nentries) != 0)
 		panic("xen_shm_unmap");
+#endif /* !XEN3 */
 	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	if (extent_free(xen_shm_ex, va, nentries, EX_NOWAIT) != 0)
 		panic("xen_shm_unmap: extent_free");
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
 	    != NULL)) {
-		/*
-		 * bouyer@: these printf("callback") should go away,
-		 * but I've not been able to trigger this code yet,
-		 * so leave them here until we're sure the code works
-		 */
+		SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
+		splx(s);
 		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
 			/* callback succeeded */
-			SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
+			s = splvm();
 			pool_put(&xen_shm_callback_pool, xshmc);
 		} else {
 			/* callback failed, probably out of ressources */
-			splx(s);
-			return;
+			s = splvm();
+			SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc,
+					    xshmc_entries);
+
+			break;
 		}
 	}
 	splx(s);

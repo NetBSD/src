@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.40 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.40.2.1 2006/06/21 14:59:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40.2.1 2006/06/21 14:59:52 yamt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -106,7 +106,7 @@ enum {
 
 int svr4_netattach __P((int));
 
-int svr4_soo_close __P((struct file *, struct proc *));
+int svr4_soo_close __P((struct file *, struct lwp *));
 int svr4_ptm_alloc __P((struct proc *));
 
 static const struct fileops svr4_netops = {
@@ -127,12 +127,13 @@ svr4_netattach(n)
 
 
 int
-svr4_netopen(dev, flag, mode, p)
+svr4_netopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int type, protocol;
 	int fd;
 	struct file *fp;
@@ -203,7 +204,7 @@ svr4_netopen(dev, flag, mode, p)
 	if ((error = falloc(p, &fp, &fd)) != 0)
 		return error;
 
-	if ((error = socreate(family, &so, type, protocol, p)) != 0) {
+	if ((error = socreate(family, &so, type, protocol, l)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
 		fdremove(p->p_fd, fd);
 		FILE_UNUSE(fp, NULL);
@@ -211,7 +212,7 @@ svr4_netopen(dev, flag, mode, p)
 		return error;
 	}
 
-	error = fdclone(p, fp, fd, flag, &svr4_netops, so);
+	error = fdclone(l, fp, fd, flag, &svr4_netops, so);
 	fp->f_type = DTYPE_SOCKET;
 	(void)svr4_stream_get(fp);
 
@@ -221,15 +222,15 @@ svr4_netopen(dev, flag, mode, p)
 
 
 int
-svr4_soo_close(fp, p)
+svr4_soo_close(fp, l)
 	struct file *fp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct socket *so = (struct socket *) fp->f_data;
 
-	svr4_delete_socket(p, fp);
+	svr4_delete_socket(l->l_proc, fp);
 	free(so->so_internal, M_NETADDR);
-	return soo_close(fp, p);
+	return soo_close(fp, l);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.13 2005/04/03 10:56:59 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.13.2.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13 2005/04/03 10:56:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13.2.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ we_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct we_softc *wsc = (struct we_softc *)self;
+	struct we_softc *wsc = device_private(self);
 	struct dp8390_softc *sc = &wsc->sc_dp8390;
 	struct mca_attach_args *ma = aux;
 	const struct we_mca_product *wep;

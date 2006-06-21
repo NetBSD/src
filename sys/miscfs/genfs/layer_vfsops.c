@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.19.12.1 2006/06/21 15:10:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19.12.1 2006/06/21 15:10:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden E
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -93,14 +95,14 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden E
  * when that filesystem was mounted.
  */
 int
-layerfs_start(mp, flags, p)
+layerfs_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (0);
-	/* return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags, p); */
+	/* return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags, l); */
 }
 
 int
@@ -111,9 +113,10 @@ layerfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_root(mp = %p, vp = %p->%p)\n", mp,
-	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
-	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
+	if (layerfs_debug)
+		printf("layerfs_root(mp = %p, vp = %p->%p)\n", mp,
+		    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
+		    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
 
 	/*
@@ -131,36 +134,37 @@ layerfs_root(mp, vpp)
 }
 
 int
-layerfs_quotactl(mp, cmd, uid, arg, p)
+layerfs_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
-				cmd, uid, arg, p);
+				cmd, uid, arg, l);
 }
 
 int
-layerfs_statvfs(mp, sbp, p)
+layerfs_statvfs(mp, sbp, l)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
-	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
-	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
+	if (layerfs_debug)
+		printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
+		    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
+		    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
 
 	(void)memset(sbuf, 0, sizeof(*sbuf));
 
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, p);
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, l);
  	if (error)
 		goto done;
 
@@ -185,11 +189,11 @@ done:
 }
 
 int
-layerfs_sync(mp, waitfor, cred, p)
+layerfs_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
+	kauth_cred_t cred;
+	struct lwp *l;
 {
 
 	/*
@@ -207,7 +211,8 @@ layerfs_vget(mp, ino, vpp)
 	int error;
 	struct vnode *vp;
 
-	if ((error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, ino, &vp))) {
+	if ((error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
+	    ino, &vp))) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -229,7 +234,8 @@ layerfs_fhtovp(mp, fidp, vpp)
 	int error;
 	struct vnode *vp;
 
-	if ((error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, fidp, &vp)))
+	if ((error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
+	    fidp, &vp)))
 		return (error);
 
 	if ((error = layer_node_create(mp, vp, vpp))) {
@@ -238,27 +244,6 @@ layerfs_fhtovp(mp, fidp, vpp)
 		return (error);
 	}
 
-	return (0);
-}
-
-int
-layerfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred**credanonp;
-{
-	struct	netcred *np;
-	struct	layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
-
-	/*
-	 * get the export permission structure for this <mp, client> tuple.
-	 */
-	if ((np = vfs_export_lookup(mp, &lmp->layerm_export, nam)) == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }
 
@@ -292,18 +277,30 @@ layerfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 
 SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 {
+	const struct sysctlnode *layerfs_node = NULL;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &layerfs_node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "layerfs",
 		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE);
+
+#ifdef LAYERFS_DIAGNOSTIC
+	sysctl_createv(clog, 0, &layerfs_node, NULL,
+	               CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	               CTLTYPE_INT,
+	               "debug",
+	               SYSCTL_DESCR("Verbose debugging messages"),
+	               NULL, 0, &layerfs_debug, 0,
+	               CTL_CREATE, CTL_EOL);
+#endif
+
 	/*
 	 * other subtrees should really be aliases to this, but since
 	 * they can't tell if layerfs has been instantiated yet, they

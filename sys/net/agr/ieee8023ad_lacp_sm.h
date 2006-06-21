@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_sm.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_sm.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023AD_LACP_SM_H_)
+#ifndef _NET_AGR_IEEE8023AD_LACP_SM_H_
 #define	_NET_AGR_IEEE8023AD_LACP_SM_H_
 
 #define	LACP_STATE_EQ(s1, s2, mask)	\
@@ -54,4 +54,4 @@ void lacp_sm_ptx_timer(struct lacp_port *);
 void lacp_sm_tx(struct lacp_port *);
 void lacp_sm_assert_ntt(struct lacp_port *);
 
-#endif /* _NET_AGR_IEEE8023AD_LACP_SM_H_ */
+#endif /* !_NET_AGR_IEEE8023AD_LACP_SM_H_ */

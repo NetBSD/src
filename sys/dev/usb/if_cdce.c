@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.7 2005/05/30 04:21:39 christos Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.7.2.1 2006/06/21 15:07:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.7 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.7.2.1 2006/06/21 15:07:43 yamt Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ USB_ATTACH(cdce)
 		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
 		eaddr[0]= 0x2a;
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
-		eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
+		eaddr[5] = (u_int8_t)(device_unit(&sc->cdce_dev));
 	} else {
 		int j;
 
@@ -694,7 +694,7 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			printf("%s: usb error on rx: %s\n",
 			    USBDEVNAME(sc->cdce_dev), usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->cdce_bulkin_pipe);
+			usbd_clear_endpoint_stall_async(sc->cdce_bulkin_pipe);
 		DELAY(sc->cdce_rxeof_errors * 10000);
 		sc->cdce_rxeof_errors++;
 		goto done;
@@ -771,7 +771,7 @@ cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->cdce_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->cdce_bulkout_pipe);
+			usbd_clear_endpoint_stall_async(sc->cdce_bulkout_pipe);
 		splx(s);
 		return;
 	}

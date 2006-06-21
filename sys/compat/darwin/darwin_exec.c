@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.41.2.1 2006/06/21 14:58:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.41.2.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Ex
 
 #include <dev/wscons/wsconsio.h>
 
-#include <machine/darwin_machdep.h>
+#include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
 
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Ex
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_iohidsystem.h>
+
+#include <machine/darwin_machdep.h>
 
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
@@ -135,8 +137,8 @@ const struct emul emul_darwin = {
  * extra information in case of dynamic binding.
  */
 int
-exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -144,6 +146,7 @@ exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
+	struct proc *p = l->l_proc;
 	char **cpp, *dp, *sp, *progname;
 	size_t len;
 	void *nullp = NULL;
@@ -330,10 +333,11 @@ darwin_e_proc_exit(p)
 	u_char kred[256];
 	u_char kgreen[256];
 	u_char kblue[256];
+	struct lwp *l;
 	caddr_t sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
-
+	l = proc_representative_lwp(p);
 	/*
 	 * mach_init is setting the bootstrap port for other processes.
 	 * If mach_init dies, we want to restore the original bootstrap
@@ -349,7 +353,7 @@ darwin_e_proc_exit(p)
 	 */
 	if (ded->ded_hidsystem_finished != NULL) {
 		*ded->ded_hidsystem_finished = 1;
-		darwin_iohidsystem_postfake(p);
+		darwin_iohidsystem_postfake(l);
 		wakeup(ded->ded_hidsystem_finished);
 	}
 
@@ -359,7 +363,7 @@ darwin_e_proc_exit(p)
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p);
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, l);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Unable to switch back to text mode\n");
@@ -386,7 +390,7 @@ darwin_e_proc_exit(p)
 		    ((error = copyout(kgreen, green, 256)) != 0) ||
 		    ((error = copyout(kblue, blue, 256)) != 0))
 			error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p);
+			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, l);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Cannot revert colormap (error %d)\n", error);
@@ -404,8 +408,8 @@ darwin_e_proc_exit(p)
 }
 
 int
-darwin_exec_setup_stack(p, epp)
-	struct proc *p;
+darwin_exec_setup_stack(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	u_long max_stack_size;
@@ -421,7 +425,7 @@ darwin_exec_setup_stack(p, epp)
 	}
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

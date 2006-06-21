@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.24 2005/05/20 13:16:54 chs Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.24.2.1 2006/06/21 15:10:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,34 +121,36 @@ struct kernfs_mount {
 extern const struct kern_target kern_targets[];
 extern int nkern_targets;
 extern const int static_nkern_targets;
-extern int (**kernfs_vnodeop_p) __P((void *));
+extern int (**kernfs_vnodeop_p)(void *);
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 
 struct secasvar;
 struct secpolicy;
 
-int kernfs_root __P((struct mount *, struct vnode **));
+int kernfs_root(struct mount *, struct vnode **);
 
-void kernfs_hashinit __P((void));
-void kernfs_hashreinit __P((void));
-void kernfs_hashdone __P((void));
-int kernfs_freevp __P((struct vnode *));
-int kernfs_allocvp __P((struct mount *, struct vnode **, kfstype,
-	const struct kern_target *, u_int32_t));
+void kernfs_hashinit(void);
+void kernfs_hashreinit(void);
+void kernfs_hashdone(void);
+int kernfs_freevp(struct vnode *);
+int kernfs_allocvp(struct mount *, struct vnode **, kfstype,
+	const struct kern_target *, u_int32_t);
 
-void kernfs_revoke_sa __P((struct secasvar *));
-void kernfs_revoke_sp __P((struct secpolicy *));
+void kernfs_revoke_sa(struct secasvar *);
+void kernfs_revoke_sp(struct secpolicy *);
 
 /*
  * Data types for the kernfs file operations.
  */
 typedef enum {
+	KERNFS_XREAD,
 	KERNFS_XWRITE,
 	KERNFS_FILEOP_CLOSE,
 	KERNFS_FILEOP_GETATTR,
 	KERNFS_FILEOP_IOCTL,
 	KERNFS_FILEOP_OPEN,
+	KERNFS_FILEOP_READ,
 	KERNFS_FILEOP_WRITE,
 } kfsfileop;
 
@@ -158,6 +160,8 @@ struct kernfs_fileop {
 	union {
 		void			*_kf_genop;
 		int			(*_kf_vop)(void *);
+		int			(*_kf_xread)
+			(const struct kernfs_node *, char *, size_t);
 		int			(*_kf_xwrite)
 			(const struct kernfs_node *, char *, size_t);
 	} _kf_opfn;
@@ -165,6 +169,7 @@ struct kernfs_fileop {
 };
 #define	kf_genop	_kf_opfn
 #define	kf_vop		_kf_opfn._kf_vop
+#define	kf_xread	_kf_opfn._kf_xread
 #define	kf_xwrite	_kf_opfn._kf_xwrite
 
 typedef struct kern_target kernfs_parentdir_t;
@@ -189,7 +194,7 @@ kfstype kernfs_alloctype(int, const struct kernfs_fileop *);
 	(dkt)->dkt_kt.kt_mode = (mode);					\
 } while (/*CONSTCOND*/0)
 #define	KERNFS_ENTOPARENTDIR(dkt) &(dkt)->dkt_kt
-int kernfs_addentry __P((kernfs_parentdir_t *, kernfs_entry_t *));
+int kernfs_addentry(kernfs_parentdir_t *, kernfs_entry_t *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_kernfs_setup);

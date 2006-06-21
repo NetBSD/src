@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.17 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.17.2.1 2006/06/21 14:59:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.17 2005/06/20 02:49:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.17.2.1 2006/06/21 14:59:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.17 2005/06/20 02:49:19 atatat Exp
 #include <compat/linux/common/linux_exec.h>
 
 char linux_sysname[128] = "Linux";
-#if defined(__i386__) || defined(__powerpc__)
+#if defined(__amd64__) || defined(__i386__) || defined(__powerpc__)
 char linux_release[128] = "2.4.18";
 char linux_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
 #else

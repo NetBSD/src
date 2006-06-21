@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.19 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_break.c,v 1.19.2.1 2006/06/21 15:02:11 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.19 2005/06/01 12:25:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.19.2.1 2006/06/21 15:02:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -172,7 +172,8 @@ db_set_breakpoints(void)
 				bkpt->bkpt_inst = db_get_value(bkpt->address,
 				    BKPT_SIZE, FALSE);
 				db_put_value(bkpt->address,
-				    BKPT_SIZE, BKPT_SET(bkpt->bkpt_inst));
+				    BKPT_SIZE,
+				    BKPT_SET(bkpt->bkpt_inst, bkpt->address));
 			}
 		db_breakpoints_inserted = TRUE;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.2 2005/07/04 17:46:31 drochner Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.2.2.1 2006/06/21 15:07:43 yamt Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -24,6 +24,7 @@
 struct ural_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint8_t		wr_flags;
+	uint8_t		_pad;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antenna;

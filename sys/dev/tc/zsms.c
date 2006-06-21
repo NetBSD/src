@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.11 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: zsms.c,v 1.11.6.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.11 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.11.6.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct zsms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-struct zsops zsops_zsms;
+static struct zsops zsops_zsms;
 
 static int  zsms_match(struct device *, struct cfdata *, void *);
 static void zsms_attach(struct device *, struct device *, void *);
@@ -118,20 +118,17 @@ CFATTACH_DECL(zsms, sizeof(struct zsms_softc),
     zsms_match, zsms_attach, NULL, NULL);
 
 static int  zsms_enable(void *);
-static int  zsms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int  zsms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void zsms_disable(void *);
 
-const struct wsmouse_accessops zsms_accessops = {
+static const struct wsmouse_accessops zsms_accessops = {
 	zsms_enable,
 	zsms_ioctl,
 	zsms_disable,
 };
 
 static int
-zsms_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+zsms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -147,12 +144,10 @@ zsms_match(parent, cf, aux)
 }
 
 static void
-zsms_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+zsms_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct zsc_softc *zsc = (void *)parent;
-	struct zsms_softc *zsms = (void *)self;
+	struct zsc_softc *zsc = device_private(parent);
+	struct zsms_softc *zsms = device_private(self);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct wsmousedev_attach_args a;
@@ -190,8 +185,7 @@ zsms_attach(parent, self, aux)
 }
 
 static int
-zsms_enable(v)
-	void *v;
+zsms_enable(void *v)
 {
 	struct zsms_softc *sc = v;
 
@@ -213,8 +207,7 @@ zsms_enable(v)
 }
 
 static void
-zsms_disable(v)
-	void *v;
+zsms_disable(void *v)
 {
 	struct zsms_softc *sc = v;
 
@@ -222,12 +215,7 @@ zsms_disable(v)
 }
 
 static int
-zsms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+zsms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	if (cmd == WSMOUSEIO_GTYPE) {
@@ -238,9 +226,7 @@ zsms_ioctl(v, cmd, data, flag, p)
 }
 
 static void
-zsms_input(vsc, data)
-	void *vsc;
-	int data;
+zsms_input(void *vsc, int data)
 {
 	struct zsms_softc *sc = vsc;
 
@@ -295,8 +281,7 @@ static void zsms_txint(struct zs_chanstate *);
 static void zsms_softint(struct zs_chanstate *);
 
 static void
-zsms_rxint(cs)
-	struct zs_chanstate *cs;
+zsms_rxint(struct zs_chanstate *cs)
 {
 	struct zsms_softc *zsms;
 	int put, put_next;
@@ -336,8 +321,7 @@ zsms_rxint(cs)
 
 
 static void
-zsms_txint(cs)
-	struct zs_chanstate *cs;
+zsms_txint(struct zs_chanstate *cs)
 {
 	struct zsms_softc *zsms;
 
@@ -350,9 +334,7 @@ zsms_txint(cs)
 
 
 static void
-zsms_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+zsms_stint(struct zs_chanstate *cs, int force)
 {
 	struct zsms_softc *zsms;
 	int rr0;
@@ -379,8 +361,7 @@ zsms_stint(cs, force)
 
 
 static void
-zsms_softint(cs)
-	struct zs_chanstate *cs;
+zsms_softint(struct zs_chanstate *cs)
 {
 	struct zsms_softc *zsms;
 	int get, c, s;
@@ -445,7 +426,7 @@ zsms_softint(cs)
 	splx(s);
 }
 
-struct zsops zsops_zsms = {
+static struct zsops zsops_zsms = {
 	zsms_rxint,	/* receive char available */
 	zsms_stint,	/* external/status */
 	zsms_txint,	/* xmit buffer empty */

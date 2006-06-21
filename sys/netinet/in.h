@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.70 2005/01/31 23:49:36 kim Exp $	*/
+/*	$NetBSD: in.h,v 1.70.6.1 2006/06/21 15:11:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -102,7 +102,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
-
+#define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
 
@@ -208,13 +208,12 @@ struct in_addr {
 #define	INADDR_ANY		__IPADDR(0x00000000)
 #define	INADDR_LOOPBACK		__IPADDR(0x7f000001)
 #define	INADDR_BROADCAST	__IPADDR(0xffffffff)	/* must be masked */
-#ifndef _KERNEL
 #define	INADDR_NONE		__IPADDR(0xffffffff)	/* -1 return */
-#endif
 
 #define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
 #define	INADDR_ALLRTRS_GROUP	__IPADDR(0xe0000002)	/* 224.0.0.2 */
+#define	INADDR_CARP_GROUP	__IPADDR(0xe0000012)	/* 224.0.0.18 */
 #define	INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
@@ -439,7 +438,8 @@ struct ip_mreq {
 #define	IPCTL_IFQ	       21	/* ipintrq node */
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
-#define	IPCTL_MAXID	       24
+#define	IPCTL_STATS		24	/* IP statistics */
+#define	IPCTL_MAXID	       25
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -466,6 +466,7 @@ struct ip_mreq {
 	{ "ifq", CTLTYPE_NODE }, \
 	{ "random_id", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 #endif /* _NETBSD_SOURCE */
 

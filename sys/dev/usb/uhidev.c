@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.27 2005/06/19 10:29:47 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.27.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27 2005/06/19 10:29:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,10 @@ int	uhidevdebug = 0;
 
 Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static int uhidev_maxrepid(void *buf, int len);
-Static int uhidevprint(void *aux, const char *pnp);
-Static int uhidevsubmatch(struct device *parent, struct cfdata *cf,
-			  const locdesc_t *, void *aux);
+Static int uhidev_maxrepid(void *, int);
+Static int uhidevprint(void *, const char *);
+Static int uhidevsubmatch(struct device *, struct cfdata *,
+			  const int *, void *);
 
 USB_DECLARE_DRIVER(uhidev);
 
@@ -97,8 +97,6 @@ USB_MATCH(uhidev)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
-	if (uaa->matchlvl)
-		return (uaa->matchlvl);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
@@ -111,14 +109,13 @@ USB_ATTACH(uhidev)
 	struct uhidev_attach_arg uha;
 	struct uhidev *dev;
 	int size, nrepid, repid, repsz;
-	int repsizes[256];
+	int *repsizes;
 	int i;
 	void *desc;
 	const void *descptr;
 	usbd_status err;
 	char *devinfop;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[UHIDBUSCF_NLOCS];
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
@@ -165,9 +162,7 @@ USB_ATTACH(uhidev)
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
-			printf("%s: unexpected endpoint\n", USBDEVNAME(sc->sc_dev));
-			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			printf("%s: endpoint %d: ignored\n", USBDEVNAME(sc->sc_dev), i);
 		}
 	}
 
@@ -253,9 +248,14 @@ USB_ATTACH(uhidev)
 	if (nrepid > 0)
 		printf("%s: %d report ids\n", USBDEVNAME(sc->sc_dev), nrepid);
 	nrepid++;
+	repsizes = malloc(nrepid * sizeof(*repsizes), M_TEMP, M_NOWAIT);
+	if (repsizes == NULL)
+		goto nomem;
 	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
 				M_USBDEV, M_NOWAIT | M_ZERO);
 	if (sc->sc_subdevs == NULL) {
+		free(repsizes, M_TEMP);
+nomem:
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -286,11 +286,10 @@ USB_ATTACH(uhidev)
 			;	/* already NULL in sc->sc_subdevs[repid] */
 		} else {
 			uha.reportid = repid;
-			ldesc->len = 1;
-			ldesc->locs[UHIDBUSCF_REPORTID] = repid;
+			locs[UHIDBUSCF_REPORTID] = repid;
 
 			dev = (struct uhidev *)config_found_sm_loc(self,
-				"uhidbus", ldesc, &uha,
+				"uhidbus", locs, &uha,
 				uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
@@ -299,6 +298,7 @@ USB_ATTACH(uhidev)
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
+					free(repsizes, M_TEMP);
 					printf("%s: sc_intr == NULL\n",
 					       USBDEVNAME(sc->sc_dev));
 					USB_ATTACH_ERROR_RETURN;
@@ -312,6 +312,7 @@ USB_ATTACH(uhidev)
 			}
 		}
 	}
+	free(repsizes, M_TEMP);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -346,18 +347,12 @@ uhidevprint(void *aux, const char *pnp)
 
 int
 uhidevsubmatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *locs, void *aux)
 {
-	struct uhidev_attach_arg *uha = aux;
-
 	if (cf->cf_loc[UHIDBUSCF_REPORTID] != UHIDBUSCF_REPORTID_DEFAULT &&
-	    cf->cf_loc[UHIDBUSCF_REPORTID] != ldesc->locs[UHIDBUSCF_REPORTID])
+	    cf->cf_loc[UHIDBUSCF_REPORTID] != locs[UHIDBUSCF_REPORTID])
 		return (0);
 
-	if (cf->cf_loc[UHIDBUSCF_REPORTID] == ldesc->locs[UHIDBUSCF_REPORTID])
-		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
-	else
-		uha->matchlvl = 0;
 	return (config_match(parent, cf, aux));
 }
 

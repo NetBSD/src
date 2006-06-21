@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.10 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.10.4.1 2006/06/21 14:59:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,9 +29,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.10 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.10.4.1 2006/06/21 14:59:01 yamt Exp $");
 
 #include <sys/systm.h>
+#include <sys/signalvar.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>

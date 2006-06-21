@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.59 2005/06/23 19:19:05 briggs Exp $
+$NetBSD: miidevs,v 1.59.2.1 2006/06/21 15:04:46 yamt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ oui BROADCOM			0x001018	Broadcom Corporation
 oui CICADA			0x0003F1	Cicada Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
+oui ICPLUS			0x0090c3	IC Plus Corp.
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
@@ -99,7 +100,7 @@ oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 
 oui xxREALTEK			0x000732	Realtek
-
+oui yyREALTEK			0x000004	Realtek
 /*
  * List of known models.  Grouped by oui.
  */
@@ -137,7 +138,9 @@ model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
 model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
-
+model BROADCOM BCM5714		0x0034 BCM5714 1000BASE-T media interface
+model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T media interface
+ 
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
@@ -147,6 +150,10 @@ model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
 model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
+model xxDAVICOM DM9102		0x0004 DM9102 10/100 media interface
+
+/* IC Plus Corp. PHYs */
+model ICPLUS IP101		0x0005 IP101 10/100 PHY
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
@@ -187,6 +194,7 @@ model MYSON MTD803		0x0000 MTD803 3-in-1 media interface
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
+model xxNATSEMI DP83847		0x0003 DP83847 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
 
@@ -200,6 +208,7 @@ model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RealTek PHYs */
+model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S 1000BASE-T media interface
 model REALTEK RTL8169S		0x0011 RTL8169S/8110S 1000BASE-T media interface
 

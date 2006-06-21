@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.17 2005/07/01 12:37:34 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.17.2.1 2006/06/21 15:09:23 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -1685,7 +1685,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		icmp_error(m0, type, code, 0, (void *)NULL);
+		icmp_error(m0, type, code, 0, 0);
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -2577,7 +2577,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 		    dport, 0);
 		if (in6p == NULL) {
 			in6p = in6_pcblookup_bind(tb, &daddr->v6, dport, 0);
-			if (inp == NULL)
+			if (in6p == NULL)
 				return (0);
 		}
 #endif
@@ -2785,8 +2785,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
 	int			 lookup = -1;
-	uid_t			 uid;
-	gid_t			 gid;
+	uid_t			 uid = 0;	/* XXX: GCC */
+	gid_t			 gid = 0;	/* XXX: GCC */
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_src_node	*nsn = NULL;
@@ -3161,8 +3161,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
 	int			 lookup = -1;
-	uid_t			 uid;
-	gid_t			 gid;
+	uid_t			 uid = 0;	/* XXX: GCC */
+	gid_t			 gid = 0;	/* XXX: GCC */
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_src_node	*nsn = NULL;
@@ -4691,6 +4691,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		int		ipoff2 = 0;
 		int		off2 = 0;
 
+		memset(&pd2, 0, sizeof pd2);	/* XXX gcc */
+
 		pd2.af = pd->af;
 		switch (pd->af) {
 #ifdef INET
@@ -5371,9 +5373,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
 	int			 error = 0;
-#ifdef __NetBSD__
-	struct tcphdr		 th;
-#endif
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
@@ -5499,10 +5498,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		}
 	}
 #else
-	m_copydata(m0, sizeof(*ip), sizeof(th), &th);
-	th.th_sum = 0;
-	m_copyback(m0, sizeof(*ip), sizeof(th), &th);
-	in4_cksum(m0, IPPROTO_TCP, sizeof(*ip), m0->m_pkthdr.len - sizeof(*ip));
+	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		in_delayed_cksum(m0);
+		m0->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+	}
 #endif
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
@@ -5518,6 +5517,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 #else
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
+
+		m0->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 #endif
 #ifdef __OpenBSD__
 		/* Update relevant hardware checksum stats for TCP/UDP */
@@ -5538,7 +5539,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		ipstat.ips_cantfrag++;
 		if (r->rt != PF_DUPTO) {
 			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
-			    ifp);
+			    ifp->if_mtu);
 			goto done;
 		} else
 			goto bad;

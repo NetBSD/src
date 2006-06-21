@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.90 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.90.2.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.90 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.90.2.1 2006/06/21 15:02:54 yamt Exp $");
 
 #define	PCICDEBUG
 
@@ -89,8 +89,6 @@ int	pcic_debug = 0;
 void	pcic_attach_socket(struct pcic_handle *);
 void	pcic_attach_socket_finish(struct pcic_handle *);
 
-int	pcic_submatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
 int	pcic_print (void *arg, const char *pnp);
 int	pcic_intr_socket(struct pcic_handle *);
 void	pcic_poll_intr(void *);
@@ -243,7 +241,7 @@ pcic_attach(sc)
 	lockinit(&sc->sc_pcic_lock, PWAIT, "pciclk", 0, 0);
 
 	/* find and configure for the available sockets */
-	for (i = 0; i < PCIC_NSLOTS; i++) {
+	for (i = 0; i < __arraycount(sc->handle); i++) {
 		h = &sc->handle[i];
 		chip = i / 2;
 		socket = i % 2;
@@ -261,8 +259,11 @@ pcic_attach(sc)
 		h->flags = 0;
 
 		/* need to read vendor -- for cirrus to report no xtra chip */
-		if (socket == 0)
-			h->vendor = (h+1)->vendor = pcic_vendor(h);
+		if (socket == 0) {
+			h->vendor = pcic_vendor(h);
+			if (i < __arraycount(sc->handle) - 1)
+				(h+1)->vendor = h->vendor;
+		}
 
 		switch (h->vendor) {
 		case PCIC_VENDOR_NONE:
@@ -291,7 +292,7 @@ pcic_attach(sc)
 		}
 	}
 
-	for (i = 0; i < PCIC_NSLOTS; i++) {
+	for (i = 0; i < __arraycount(sc->handle); i++) {
 		h = &sc->handle[i];
 
 		if (h->flags & PCIC_FLAG_SOCKETP) {
@@ -312,7 +313,7 @@ pcic_attach(sc)
 	}
 
 	/* print detected info */
-	for (i = 0; i < PCIC_NSLOTS; i += 2) {
+	for (i = 0; i < __arraycount(sc->handle) - 1; i += 2) {
 		h = &sc->handle[i];
 		chip = i / 2;
 
@@ -343,7 +344,7 @@ pcic_attach_sockets(sc)
 {
 	int i;
 
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_attach_socket(&sc->handle[i]);
 }
@@ -396,8 +397,7 @@ pcic_attach_socket(h)
 {
 	struct pcmciabus_attach_args paa;
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PCMCIABUSCF_NLOCS];
 
 	/* initialize the rest of the handle */
 
@@ -414,12 +414,11 @@ pcic_attach_socket(h)
 	paa.iobase = sc->iobase;
 	paa.iosize = sc->iosize;
 
-	ldesc->len = 2;
-	ldesc->locs[PCMCIABUSCF_CONTROLLER] = h->chip;
-	ldesc->locs[PCMCIABUSCF_SOCKET] = h->socket;
+	locs[PCMCIABUSCF_CONTROLLER] = h->chip;
+	locs[PCMCIABUSCF_SOCKET] = h->socket;
 
-	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", ldesc, &paa,
-					pcic_print, pcic_submatch);
+	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", locs, &paa,
+					pcic_print, config_stdsubmatch);
 	if (h->pcmcia == NULL) {
 		h->flags &= ~PCIC_FLAG_SOCKETP;
 		return;
@@ -446,7 +445,7 @@ pcic_attach_sockets_finish(sc)
 {
 	int i;
 
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_attach_socket_finish(&sc->handle[i]);
 }
@@ -642,24 +641,6 @@ pcic_event_thread(arg)
 }
 
 int
-pcic_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
-			return 0;
-	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
-			return 0;
-
-	return (config_match(parent, cf, aux));
-}
-
-int
 pcic_print(arg, pnp)
 	void *arg;
 	const char *pnp;
@@ -685,7 +666,7 @@ pcic_poll_intr(arg)
 
 	s = spltty();
 	sc = arg;
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			(void)pcic_intr_socket(&sc->handle[i]);
 	callout_reset(&sc->poll_ch, hz / 2, pcic_poll_intr, sc);
@@ -701,7 +682,7 @@ pcic_intr(arg)
 
 	DPRINTF(("%s: intr\n", sc->dev.dv_xname));
 
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			ret += pcic_intr_socket(&sc->handle[i]);
 

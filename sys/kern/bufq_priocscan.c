@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.4 2005/03/03 05:00:22 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.4.4.1 2006/06/21 15:09:37 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.4 2005/03/03 05:00:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.4.4.1 2006/06/21 15:09:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
+#include <sys/bufq_impl.h>
 #include <sys/malloc.h>
 
 /*
@@ -46,12 +47,12 @@ struct cscan_queue {
 	daddr_t cq_lastrawblkno;	/* b_rawblkno of the last request */
 };
 
-static int __inline cscan_empty(const struct cscan_queue *);
+static inline int cscan_empty(const struct cscan_queue *);
 static void cscan_put(struct cscan_queue *, struct buf *, int);
 static struct buf *cscan_get(struct cscan_queue *, int);
 static void cscan_init(struct cscan_queue *);
 
-static __inline int
+static inline int
 cscan_empty(const struct cscan_queue *q)
 {
 
@@ -167,12 +168,12 @@ static void bufq_priocscan_init(struct bufq_state *);
 static void bufq_priocscan_put(struct bufq_state *, struct buf *);
 static struct buf *bufq_priocscan_get(struct bufq_state *, int);
 
-BUFQ_DEFINE(priocscan, BUFQ_PRIOCSCAN, bufq_priocscan_init);
+BUFQ_DEFINE(priocscan, 40, bufq_priocscan_init);
 
-static __inline struct cscan_queue *bufq_priocscan_selectqueue(
+static inline struct cscan_queue *bufq_priocscan_selectqueue(
     struct bufq_priocscan *, const struct buf *);
 
-static __inline struct cscan_queue *
+static inline struct cscan_queue *
 bufq_priocscan_selectqueue(struct bufq_priocscan *q, const struct buf *bp)
 {
 	static const int priocscan_priomap[] = {

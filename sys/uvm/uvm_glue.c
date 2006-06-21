@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.89 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.89.2.1 2006/06/21 15:12:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.1 2006/06/21 15:12:40 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -95,9 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89 2005/06/27 02:19:48 thorpej Exp $"
 static void uvm_swapout(struct lwp *);
 
 #define UVM_NUAREA_MAX 16
-void *uvm_uareas;
-int uvm_nuarea;
-struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
+static vaddr_t uvm_uareas;
+static int uvm_nuarea;
+static struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
+#define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
 static void uvm_uarea_free(vaddr_t);
 
@@ -178,7 +179,7 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	error = uvm_fault_wire(map, start, end, VM_FAULT_WIRE, access_type);
+	error = uvm_fault_wire(map, start, end, access_type, 0);
 	return error;
 }
 
@@ -234,7 +235,6 @@ void
 uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct user *up = l2->l_addr;
 	int error;
 
 	/*
@@ -248,14 +248,15 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 
 	if ((l2->l_flag & L_INMEM) == 0) {
-		error = uvm_fault_wire(kernel_map, (vaddr_t)up,
-		    (vaddr_t)up + USPACE, VM_FAULT_WIRE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
+
+		error = uvm_fault_wire(kernel_map, uarea,
+		    uarea + USPACE, VM_PROT_READ | VM_PROT_WRITE, 0);
 		if (error)
 			panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
 #ifdef PMAP_UAREA
 		/* Tell the pmap this is a u-area mapping */
-		PMAP_UAREA((vaddr_t)up);
+		PMAP_UAREA(uarea);
 #endif
 		l2->l_flag |= L_INMEM;
 	}
@@ -292,8 +293,8 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 
 	simple_lock(&uvm_uareas_slock);
 	if (uvm_nuarea > 0) {
-		uaddr = (vaddr_t)uvm_uareas;
-		uvm_uareas = *(void **)uvm_uareas;
+		uaddr = uvm_uareas;
+		uvm_uareas = UAREA_NEXTFREE(uaddr);
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uaddr;
@@ -310,12 +311,12 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
  * uvm_uarea_free: free a u-area; never blocks
  */
 
-static __inline__ void
+static inline void
 uvm_uarea_free(vaddr_t uaddr)
 {
 	simple_lock(&uvm_uareas_slock);
-	*(void **)uaddr = uvm_uareas;
-	uvm_uareas = (void *)uaddr;
+	UAREA_NEXTFREE(uaddr) = uvm_uareas;
+	uvm_uareas = uaddr;
 	uvm_nuarea++;
 	simple_unlock(&uvm_uareas_slock);
 }
@@ -336,8 +337,8 @@ uvm_uarea_drain(boolean_t empty)
 
 	simple_lock(&uvm_uareas_slock);
 	while(uvm_nuarea > leave) {
-		uaddr = (vaddr_t)uvm_uareas;
-		uvm_uareas = *(void **)uvm_uareas;
+		uaddr = uvm_uareas;
+		uvm_uareas = UAREA_NEXTFREE(uaddr);
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
 		uvm_km_free(kernel_map, uaddr, USPACE, UVM_KMF_PAGEABLE);
@@ -377,7 +378,7 @@ uvm_proc_exit(struct proc *p)
 void
 uvm_lwp_exit(struct lwp *l)
 {
-	vaddr_t va = (vaddr_t)l->l_addr;
+	vaddr_t va = USER_TO_UAREA(l->l_addr);
 
 	l->l_flag &= ~L_INMEM;
 	uvm_uarea_free(va);
@@ -417,7 +418,7 @@ int	swapdebug = 0;
 #endif
 
 /*
- * uvm_swapin: swap in a process's u-area.
+ * uvm_swapin: swap in an lwp's u-area.
  */
 
 void
@@ -426,10 +427,10 @@ uvm_swapin(struct lwp *l)
 	vaddr_t addr;
 	int s, error;
 
-	addr = (vaddr_t)l->l_addr;
+	addr = USER_TO_UAREA(l->l_addr);
 	/* make L_INMEM true */
-	error = uvm_fault_wire(kernel_map, addr, addr + USPACE, VM_FAULT_WIRE,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	if (error) {
 		panic("uvm_swapin: rewiring stack failed: %d", error);
 	}
@@ -582,7 +583,6 @@ uvm_swapout_threads(void)
 			continue;
 		switch (l->l_stat) {
 		case LSONPROC:
-			KDASSERT(l->l_cpu != curcpu());
 			continue;
 
 		case LSRUN:
@@ -672,7 +672,7 @@ uvm_swapout(struct lwp *l)
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
-	addr = (vaddr_t)l->l_addr;
+	addr = USER_TO_UAREA(l->l_addr);
 	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !L_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }

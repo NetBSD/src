@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.11 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.11.10.1 2006/06/21 15:09:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11.10.1 2006/06/21 15:09:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11 2005/01/09 16:42:44 chs Exp 
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -102,8 +103,8 @@ filecore_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
@@ -136,8 +137,8 @@ filecore_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
@@ -176,7 +177,7 @@ filecore_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -198,7 +199,9 @@ filecore_read(v)
 	fcmp = ip->i_mnt;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -209,7 +212,7 @@ filecore_read(v)
 				break;
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -273,7 +276,7 @@ filecore_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -343,13 +346,14 @@ filecore_readdir(v)
 			else
 				de.d_type = DT_REG;
 			if (filecore_fn2unix(dep->name, de.d_name,
+/*###346 [cc] warning: passing arg 3 of `filecore_fn2unix' from incompatible pointer type%%%*/
 			    &de.d_namlen)) {
 				*ap->a_eofflag = 1;
 				goto out;
 			}
 			break;
 		}
-		de.d_reclen = DIRENT_SIZE(&de);
+		de.d_reclen = _DIRENT_SIZE(&de);
 		if (uio->uio_resid < de.d_reclen)
 			goto out;
 		error = uiomove(&de, de.d_reclen, uio);
@@ -396,7 +400,7 @@ filecore_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 #endif
 
@@ -541,13 +545,8 @@ filecore_pathconf(v)
 #define	filecore_mkdir	genfs_eopnotsupp
 #define	filecore_rmdir	genfs_eopnotsupp
 #define	filecore_advlock	genfs_eopnotsupp
-#define	filecore_valloc	genfs_eopnotsupp
-#define	filecore_vfree	genfs_nullop
-#define	filecore_truncate	genfs_eopnotsupp
-#define	filecore_update	genfs_nullop
 #define	filecore_bwrite	genfs_eopnotsupp
 #define filecore_revoke	genfs_revoke
-#define filecore_blkatoff	genfs_eopnotsupp
 
 /*
  * Global vfs data structures for filecore
@@ -593,11 +592,6 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, filecore_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, filecore_advlock },       	/* advlock */
-	{ &vop_blkatoff_desc, filecore_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, filecore_valloc },		/* valloc */
-	{ &vop_vfree_desc, filecore_vfree },		/* vfree */
-	{ &vop_truncate_desc, filecore_truncate },	/* truncate */
-	{ &vop_update_desc, filecore_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */

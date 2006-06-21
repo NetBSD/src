@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.17 2005/02/12 23:14:03 christos Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.17.6.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.17 2005/02/12 23:14:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.17.6.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -70,16 +70,26 @@ __KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.17 2005/02/12 23:14:03 christos Exp 
 #include <sys/filio.h>
 #include <sys/select.h>
 #include <sys/systm.h>
+#include <sys/workqueue.h>
+#include <sys/once.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/dmover/dmovervar.h>
 #include <dev/dmover/dmover_io.h>
 
 struct dmio_usrreq_state {
-	TAILQ_ENTRY(dmio_usrreq_state) dus_q;
+	union {
+		struct work u_work;
+		TAILQ_ENTRY(dmio_usrreq_state) u_q;
+	} dus_u;
+#define	dus_q		dus_u.u_q
+#define	dus_work	dus_u.u_work
 	struct uio dus_uio_out;
 	struct uio *dus_uio_in;
 	struct dmover_request *dus_req;
 	uint32_t dus_id;
+	struct vmspace *dus_vmspace;
 };
 
 struct dmio_state {
@@ -87,10 +97,15 @@ struct dmio_state {
 	TAILQ_HEAD(, dmio_usrreq_state) ds_pending;
 	TAILQ_HEAD(, dmio_usrreq_state) ds_complete;
 	struct selinfo ds_selq;
-	__volatile int ds_flags;
+	volatile int ds_flags;
 	u_int ds_nreqs;
 	struct simplelock ds_slock;
 };
+
+static ONCE_DECL(dmio_cleaner_control);
+static struct workqueue *dmio_cleaner;
+static int dmio_cleaner_init(void);
+static void dmio_usrreq_fini1(struct work *wk, void *);
 
 #define	DMIO_STATE_SEL		0x0001
 #define	DMIO_STATE_DEAD		0x0002
@@ -128,6 +143,19 @@ dmoverioattach(int count)
 }
 
 /*
+ * dmio_cleaner_init:
+ *
+ *	Create cleaner thread.
+ */
+static int
+dmio_cleaner_init(void)
+{
+
+	return workqueue_create(&dmio_cleaner, "dmioclean", dmio_usrreq_fini1,
+	    NULL, PWAIT, 0 /* IPL_SOFTCLOCK */, 0);
+}
+
+/*
  * dmio_usrreq_init:
  *
  *	Build a request structure.
@@ -146,6 +174,16 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 	u_int j;
 
 	/* XXX How should malloc interact w/ FNONBLOCK? */
+
+	error = RUN_ONCE(&dmio_cleaner_control, dmio_cleaner_init);
+	if (error) {
+		return error;
+	}
+
+	error = proc_vmspace_getref(curproc, &dus->dus_vmspace);
+	if (error) {
+		return error;
+	}
 
 	if (req->req_outbuf.dmbuf_iovcnt != 0) {
 		if (req->req_outbuf.dmbuf_iovcnt > IOV_MAX)
@@ -170,8 +208,8 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 		uio_out->uio_iovcnt = req->req_outbuf.dmbuf_iovcnt;
 		uio_out->uio_resid = len;
 		uio_out->uio_rw = UIO_READ;
-		uio_out->uio_segflg = UIO_USERSPACE;
-		uio_out->uio_procp = curproc;
+		uio_out->uio_vmspace = dus->dus_vmspace;
+
 		dreq->dreq_outbuf_type = DMOVER_BUF_UIO;
 		dreq->dreq_outbuf.dmbuf_uio = uio_out;
 	} else {
@@ -236,8 +274,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 		uio_in->uio_iovcnt = inbuf.dmbuf_iovcnt;
 		uio_in->uio_resid = len;
 		uio_in->uio_rw = UIO_WRITE;
-		uio_in->uio_segflg = UIO_USERSPACE;
-		uio_in->uio_procp = curproc;
+		uio_in->uio_vmspace = dus->dus_vmspace;
 
 		dreq->dreq_inbuf[i].dmbuf_uio = uio_in;
 	}
@@ -254,6 +291,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 	free(dus->dus_uio_in, M_TEMP);
 	if (uio_out != NULL)
 		free(uio_out->uio_iov, M_TEMP);
+	uvmspace_free(dus->dus_vmspace);
 	return (error);
 }
 
@@ -273,19 +311,29 @@ dmio_usrreq_fini(struct dmio_state *ds, struct dmio_usrreq_state *dus)
 	if (uio_out->uio_iov != NULL)
 		free(uio_out->uio_iov, M_TEMP);
 
-	if (dses->dses_ninputs == 0) {
-		pool_put(&dmio_usrreq_state_pool, dus);
-		return;
+	if (dses->dses_ninputs) {
+		for (i = 0; i < dses->dses_ninputs; i++) {
+			uio_in = &dus->dus_uio_in[i];
+			free(uio_in->uio_iov, M_TEMP);
+		}
+		free(dus->dus_uio_in, M_TEMP);
 	}
 
-	for (i = 0; i < dses->dses_ninputs; i++) {
-		uio_in = &dus->dus_uio_in[i];
-		free(uio_in->uio_iov, M_TEMP);
-	}
+	workqueue_enqueue(dmio_cleaner, &dus->dus_work);
+}
 
-	free(dus->dus_uio_in, M_TEMP);
+static void
+dmio_usrreq_fini1(struct work *wk, void *dummy)
+{
+	struct dmio_usrreq_state *dus = (void *)wk;
+	int s;
 
+	KASSERT(wk == &dus->dus_work);
+
+	uvmspace_free(dus->dus_vmspace);
+	s = splsoftclock();
 	pool_put(&dmio_usrreq_state_pool, dus);
+	splx(s);
 }
 
 /*
@@ -295,7 +343,7 @@ dmio_usrreq_fini(struct dmio_state *ds, struct dmio_usrreq_state *dus)
  */
 static int
 dmio_read(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;
@@ -423,7 +471,7 @@ dmio_usrreq_done(struct dmover_request *dreq)
  */
 static int
 dmio_write(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;
@@ -525,7 +573,7 @@ dmio_write(struct file *fp, off_t *offp, struct uio *uio,
  *	Ioctl file op.
  */
 static int
-dmio_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
+dmio_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int error, s;
@@ -585,7 +633,7 @@ dmio_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
  *	Poll file op.
  */
 static int
-dmio_poll(struct file *fp, int events, struct proc *p)
+dmio_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int s, revents = 0;
@@ -617,7 +665,7 @@ dmio_poll(struct file *fp, int events, struct proc *p)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
-		selrecord(p, &ds->ds_selq);
+		selrecord(l, &ds->ds_selq);
 		ds->ds_flags |= DMIO_STATE_SEL;
 	}
 
@@ -634,7 +682,7 @@ dmio_poll(struct file *fp, int events, struct proc *p)
  *	Close file op.
  */
 static int
-dmio_close(struct file *fp, struct proc *p)
+dmio_close(struct file *fp, struct lwp *l)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;
@@ -694,11 +742,12 @@ static const struct fileops dmio_fileops = {
  *	Device switch open routine.
  */
 int
-dmoverioopen(dev_t dev, int flag, int mode, struct proc *p)
+dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct dmio_state *ds;
 	struct file *fp;
 	int error, fd, s;
+	struct proc *p = l->l_proc;
 
 	/* falloc() will use the descriptor for us. */
 	if ((error = falloc(p, &fp, &fd)) != 0)
@@ -709,8 +758,9 @@ dmoverioopen(dev_t dev, int flag, int mode, struct proc *p)
 	splx(s);
 
 	memset(ds, 0, sizeof(*ds));
+	simple_lock_init(&ds->ds_slock);
 	TAILQ_INIT(&ds->ds_pending);
 	TAILQ_INIT(&ds->ds_complete);
 
-	return fdclone(p, fp, fd, flag, &dmio_fileops, ds);
+	return fdclone(l, fp, fd, flag, &dmio_fileops, ds);
 }

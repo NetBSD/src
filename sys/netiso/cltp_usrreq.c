@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.25 2004/04/25 21:13:13 matt Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.25.12.1 2006/06/21 15:11:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.25 2004/04/25 21:13:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.25.12.1 2006/06/21 15:11:37 yamt Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.25 2004/04/25 21:13:13 matt Exp $"
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -281,19 +282,21 @@ u_long          cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
 
 /* ARGSUSED */
 int
-cltp_usrreq(so, req, m, nam, control, p)
+cltp_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct isopcb *isop;
+	struct proc *p;
 	int s;
 	int error = 0;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (iso_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
 		iso_purgeif((struct ifnet *)control);
@@ -341,7 +344,7 @@ cltp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_CONNECT:
-		error = iso_pcbconnect(isop, nam);
+		error = iso_pcbconnect(isop, nam, p);
 		if (error)
 			break;
 		soisconnected(so);
@@ -376,7 +379,7 @@ cltp_usrreq(so, req, m, nam, control, p)
 				error = EISCONN;
 				goto die;
 			}
-			error = iso_pcbconnect(isop, nam);
+			error = iso_pcbconnect(isop, nam, p);
 			if (error) {
 			die:
 				m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.38 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: dhu.c,v 1.38.4.1 2006/06/21 15:06:27 yamt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.38 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.38.4.1 2006/06/21 15:06:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.38 2005/02/26 12:45:06 simonb Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/scb.h>
@@ -243,7 +244,7 @@ dhu_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct dhu_softc *sc = (void *)self;
+	struct dhu_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	unsigned c;
 	int n, i;
@@ -416,10 +417,10 @@ dhuxint(arg)
 }
 
 int
-dhuopen(dev, flag, mode, p)
+dhuopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit, line;
@@ -466,7 +467,9 @@ dhuopen(dev, flag, mode, p)
 		}
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)
@@ -489,10 +492,10 @@ dhuopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dhuclose(dev, flag, mode, p)
+dhuclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit, line;
@@ -551,10 +554,10 @@ dhuwrite(dev, uio, flag)
 }
 
 int
-dhupoll(dev, events, p)
+dhupoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
@@ -562,17 +565,17 @@ dhupoll(dev, events, p)
 	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
 
 	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*ARGSUSED*/
 int
-dhuioctl(dev, cmd, data, flag, p)
+dhuioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
@@ -584,11 +587,11 @@ dhuioctl(dev, cmd, data, flag, p)
 	sc = dhu_cd.cd_devs[unit];
 	tp = sc->sc_dhu[line].dhu_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

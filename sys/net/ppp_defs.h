@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.10 2005/02/20 10:23:13 cube Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.10.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -183,4 +183,4 @@ struct ppp_idle {
     time_t recv_idle;		/* time since last NP packet received */
 };
 
-#endif /* _NET_PPP_DEFS_H_ */
+#endif /* !_NET_PPP_DEFS_H_ */

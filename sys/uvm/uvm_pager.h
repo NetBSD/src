@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.28 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.28.16.1 2006/06/21 15:12:40 yamt Exp $	*/
 
 /*
  *
@@ -137,7 +137,7 @@ struct uvm_pagerops {
 
 	/* special non-standard fault processing */
 	int	(*pgo_fault)(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
-			     int, int, vm_fault_t, vm_prot_t, int);
+			     int, int, vm_prot_t, int);
 
 	/* get/read pages */
 	int	(*pgo_get)(struct uvm_object *, voff_t, struct vm_page **,
@@ -160,6 +160,8 @@ struct uvm_pagerops {
 #define PGO_BUSYFAIL	0x080	/* fail if a page is busy [put] */
 #define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */
 #define PGO_PASTEOF	0x400	/* allow allocation of pages past EOF */
+#define PGO_NOBLOCKALLOC 0x800	/* backing block allocation is not needed */
+#define PGO_NOTIMESTAMP 0x1000	/* don't mark object accessed/modified */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */
@@ -167,21 +169,11 @@ struct uvm_pagerops {
 #ifdef _KERNEL
 
 /*
- * handle inline options
- */
-
-#ifdef UVM_PAGER_INLINE
-#define PAGER_INLINE static __inline
-#else
-#define PAGER_INLINE /* nothing */
-#endif /* UVM_PAGER_INLINE */
-
-/*
  * prototypes
  */
 
 void	uvm_pager_init(void);
-PAGER_INLINE struct vm_page *uvm_pageratop(vaddr_t);
+struct vm_page *uvm_pageratop(vaddr_t);
 vaddr_t	uvm_pagermapin(struct vm_page **, int, int);
 void	uvm_pagermapout(vaddr_t, int);
 

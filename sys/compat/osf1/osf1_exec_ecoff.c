@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.11 2005/02/26 23:10:21 perry Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.11.4.1 2006/06/21 14:59:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.11 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.11.4.1 2006/06/21 14:59:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,10 +55,10 @@ struct osf1_exec_emul_arg {
 	char	loader_name[MAXPATHLEN+1];
 };
 
-static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
+static int osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp);
 
 int
-osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
+osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
         struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct osf1_exec_emul_arg *emul_arg;
@@ -95,7 +95,7 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
 		break;
 
 	case ECOFF_OBJECT_TYPE_CALL_SHARED:
-		error = osf1_exec_ecoff_dynamic(p, epp);
+		error = osf1_exec_ecoff_dynamic(l, epp);
 		break;
 
 	default:
@@ -118,8 +118,8 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
 int
-osf1_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+osf1_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -131,7 +131,7 @@ osf1_copyargs(p, pack, arginfo, stackp, argp)
 	size_t len;
 	int error;
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		goto out;
 
 	a = ai;
@@ -164,7 +164,7 @@ osf1_copyargs(p, pack, arginfo, stackp, argp)
                         a->a_un.a_val |= OSF1_LDR_EXEC_SETUID_F;
                 if (pack->ep_vap->va_mode & S_ISGID)
                         a->a_un.a_val |= OSF1_LDR_EXEC_SETGID_F;
-	        if (p->p_flag & P_TRACED)
+	        if (l->l_proc->p_flag & P_TRACED)
                         a->a_un.a_val |= OSF1_LDR_EXEC_PTRACE_F;
 		a++;
 	}
@@ -185,14 +185,17 @@ out:
 }
 
 static int
-osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
+osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 {
 	struct osf1_exec_emul_arg *emul_arg = epp->ep_emul_arg;
 	struct ecoff_exechdr ldr_exechdr;
 	struct nameidata nd;
 	struct vnode *ldr_vp;
+	struct proc *p;
         size_t resid;
 	int error;
+
+	p = l->l_proc;
 
 	strncpy(emul_arg->loader_name, OSF1_LDR_EXEC_DEFAULT_LOADER,
 		MAXPATHLEN + 1);
@@ -201,8 +204,8 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	 * locate the loader
 	 * includes /emul/osf1 if appropriate
 	 */
-	error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
-	    emul_arg->loader_name);
+	error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+	    epp->ep_esch->es_emul->e_path, emul_arg->loader_name);
 	if (error)
 		return error;
 
@@ -218,7 +221,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	 * load it up.
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-	    emul_arg->loader_name, p);
+	    emul_arg->loader_name, l);
 	if ((error = namei(&nd)) != 0)
 		goto bad_no_vp;
 	ldr_vp = nd.ni_vp;
@@ -234,7 +237,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 		goto badunlock;
 	}
 
-	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_ucred, p)) != 0)
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_cred, l)) != 0)
 		goto badunlock;
 
         if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {
@@ -255,7 +258,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	 * read the header, and make sure we got all of it.
 	 */
         if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
-	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_ucred,
+	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_cred,
 	    &resid, NULL)) != 0)
                 goto bad;
         if (resid != 0) {
@@ -282,13 +285,13 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 
 	switch (ldr_exechdr.a.magic) {
 	case ECOFF_OMAGIC:
-		error = exec_ecoff_prep_omagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_omagic(l, epp, &ldr_exechdr, ldr_vp);
 		break;
 	case ECOFF_NMAGIC:
-		error = exec_ecoff_prep_nmagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_nmagic(l, epp, &ldr_exechdr, ldr_vp);
 		break;
 	case ECOFF_ZMAGIC:
-		error = exec_ecoff_prep_zmagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_zmagic(l, epp, &ldr_exechdr, ldr_vp);
 		break;
 	default:
 		error = ENOEXEC;
@@ -297,7 +300,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 		goto bad;
 
 	/* finally, set up the stack. */
-	error = (*epp->ep_esch->es_setup_stack)(p, epp);
+	error = (*epp->ep_esch->es_setup_stack)(l, epp);
 	if (error)
 		goto bad;
 

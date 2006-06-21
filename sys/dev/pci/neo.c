@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.29.2.1 2006/06/21 15:05:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.29.2.1 2006/06/21 15:05:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -611,7 +611,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf("%s: interruping at %s\n", sc->dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", sc->dev.dv_xname, intrstr);
 
 	if (nm_init(sc) != 0)
 		return;

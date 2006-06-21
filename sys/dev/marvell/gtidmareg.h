@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmareg.h,v 1.2 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gtidmareg.h,v 1.2.4.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -55,20 +55,20 @@
 #define IDMA_WORD_SHIFT		2	/* log2(sizeof(u_int32_t) */
 
 
-static volatile inline unsigned int
+static volatile __inline unsigned int
 idma_desc_read(u_int32_t *ip)
 {
 	u_int32_t rv;
 
-	asm volatile ("lwbrx %0,0,%1; eieio;"
+	__asm volatile ("lwbrx %0,0,%1; eieio;"
 		: "=r"(rv) : "r"(ip));
 	return rv;
 }
 
-static volatile inline void
+static volatile __inline void
 idma_desc_write(u_int32_t *ip, u_int32_t val)
 {
-	asm volatile ("stwbrx %0,0,%1; eieio;"
+	__asm volatile ("stwbrx %0,0,%1; eieio;"
 		:: "r"(val), "r"(ip));
 }
 

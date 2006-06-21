@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.17.2.1 2006/06/21 15:11:24 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.17.2.1 2006/06/21 15:11:24 yamt Exp $");
 
 /*
  * IPsec controller part.
@@ -104,6 +104,18 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $");
 
 #ifdef IPSEC_DEBUG
 int ipsec_debug = 1;
+
+/*      
+ * When set to 1, IPsec will send packets with the same sequence number.
+ * This allows to verify if the other side has proper replay attacks detection.
+ */
+int ipsec_replay = 0;
+
+/*  
+ * When set 1, IPsec will send packets with corrupted HMAC.
+ * This allows to verify if the other side properly detects modified packets.
+ */
+int ipsec_integrity = 0;
 #else
 int ipsec_debug = 0;
 #endif
@@ -111,7 +123,7 @@ int ipsec_debug = 0;
 /* NB: name changed so netstat doesn't use it */
 struct newipsecstat newipsecstat;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
-int ip4_ipsec_dfbit = 0;	/* DF bit on encap. 0: clear 1: set 2: copy */
+int ip4_ipsec_dfbit = 2;	/* DF bit on encap. 0: clear 1: set 2: copy */
 int ip4_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_trans_deflev = IPSEC_LEVEL_USE;
@@ -172,6 +184,10 @@ SYSCTL_INT(_net_inet_ipsec, OID_AUTO,
 	crypto_support,	CTLFLAG_RW,	&crypto_support,0, "");
 SYSCTL_STRUCT(_net_inet_ipsec, OID_AUTO,
 	ipsecstats,	CTLFLAG_RD,	&newipsecstat,	newipsecstat, "");
+SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_replay, CTLFLAG_RW, &ipsec_replay, 0,
+    "Emulate replay attack");
+SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_integrity, CTLFLAG_RW,
+    &ipsec_integrity, 0, "Emulate man-in-the-middle attack");
 #endif /* __FreeBSD__ */
 
 #ifdef INET6
@@ -295,7 +311,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 */
 	}
 
-	pcbsp->sp_cache[dir].cachesp->lastused = mono_time.tv_sec;
+	pcbsp->sp_cache[dir].cachesp->lastused = time_second;
 	pcbsp->sp_cache[dir].cachesp->refcnt++;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
@@ -442,7 +458,7 @@ key_allocsp_default(const char* where, int tag)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 struct secpolicy *
 ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
@@ -470,7 +486,7 @@ ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 static struct secpolicy *
 ipsec_getpolicybysock(m, dir, inp, error)

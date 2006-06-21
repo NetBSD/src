@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.c,v 1.6 2003/03/11 23:11:20 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.c,v 1.13 2004/05/12 20:43:17 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.13.12.1 2006/06/21 15:06:14 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp$ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -71,7 +71,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.13 2004/05/12 20:43:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.13.12.1 2006/06/21 15:06:14 yamt Exp $");
 
 #include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
@@ -484,7 +484,8 @@ void msp_autodetect(bktr_ptr_t bktr) {
   int stereo;
 
   /* MSP3430G - countries with mono and DBX stereo */
-  if (strncmp("3430G", bktr->msp_version_string, 5) == 0) {
+  if (strncmp("3430G", bktr->msp_version_string, 5) == 0 ||
+      strncmp("3435G", bktr->msp_version_string, 5) == 0) {
 
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0030,0x2003);/* Enable Auto format detection */
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0020,0x0020);/* Standard Select Reg. = BTSC-Stereo*/
@@ -601,7 +602,7 @@ void msp_autodetect(bktr_ptr_t bktr) {
   }
 
 
-  /* uncomment the following line to enable the MSP34xx 1KHz Tone Generator */
+  /* uncomment the following line to enable the MSP34xx 1 kHz Tone Generator */
   /* turn your speaker volume down low before trying this */
   /* msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0014, 0x7f40); */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.14 2003/06/29 22:32:09 fvdl Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.14.18.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -33,6 +33,9 @@
  *
  * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.8 2002/09/16 10:50:38 bp Exp
  */
+
+#ifndef _NETSMB_SMB_CONN_H_
+#define _NETSMB_SMB_CONN_H_
 
 /*
  * Two levels of connection hierarchy
@@ -442,8 +445,10 @@ struct smbiod {
 	SIMPLEQ_HEAD(, smb_rq)
 				iod_rqlist;	/* list of outstanding requests */
 	int			iod_muxwant;
+#ifdef __NetBSD__
+	struct lwp *		iod_l;
+#else
 	struct proc *		iod_p;
-#ifndef __NetBSD__
 	struct thread *		iod_td;
 #endif
 	struct smb_cred		iod_scred;
@@ -466,3 +471,5 @@ int  smb_iod_waitrq(struct smb_rq *rqp);
 int  smb_iod_removerq(struct smb_rq *rqp);
 
 #endif /* _KERNEL */
+
+#endif /* !_NETSMB_SMB_CONN_H_ */

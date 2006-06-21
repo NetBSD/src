@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.10 2005/05/29 21:37:03 christos Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.10.2.1 2006/06/21 14:58:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10 2005/05/29 21:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.1 2006/06/21 14:58:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -126,7 +126,7 @@ struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
 static int ioapic_vecbase;
 
-static __inline u_long
+static inline u_long
 ioapic_lock(struct ioapic_softc *sc)
 {
 	u_long flags;
@@ -141,7 +141,7 @@ ioapic_lock(struct ioapic_softc *sc)
 	return flags;
 }
 
-static __inline void
+static inline void
 ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 {
 	__cpu_simple_unlock(&sc->sc_pic.pic_lock);
@@ -151,7 +151,7 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 /*
  * Register read/write routines.
  */
-static __inline  u_int32_t
+static inline  u_int32_t
 ioapic_read_ul(struct ioapic_softc *sc,int regid)
 {
 	u_int32_t val;
@@ -163,14 +163,14 @@ ioapic_read_ul(struct ioapic_softc *sc,int regid)
 	
 }
 
-static __inline  void
+static inline  void
 ioapic_write_ul(struct ioapic_softc *sc,int regid, u_int32_t val)
 {
 	*(sc->sc_reg) = regid;
 	*(sc->sc_data) = val;
 }
 
-static __inline u_int32_t
+static inline u_int32_t
 ioapic_read(struct ioapic_softc *sc, int regid)
 {
 	u_int32_t val;
@@ -182,7 +182,7 @@ ioapic_read(struct ioapic_softc *sc, int regid)
 	return val;
 }
 
-static __inline  void
+static inline  void
 ioapic_write(struct ioapic_softc *sc,int regid, int val)
 {
 	u_long flags;
@@ -232,7 +232,7 @@ ioapic_find_bybase(int vec)
 	return NULL;
 }
 
-static __inline void
+static inline void
 ioapic_add(struct ioapic_softc *sc)
 {
 	struct ioapic_softc **scp;

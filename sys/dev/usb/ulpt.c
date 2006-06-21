@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.69 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.69.2.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.69 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.69.2.1 2006/06/21 15:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ USB_DETACH(ulpt)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | ULPT_NOPRIME , mn | ULPT_NOPRIME, VCHR);
 #elif defined(__FreeBSD__)
@@ -500,7 +500,7 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -592,7 +592,7 @@ ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		}
 
 		/* If it's not opened for read then set up a reader. */
-		if (!(flags & FREAD)) {
+		if (!(flag & FREAD)) {
 			DPRINTF(("ulpt_open: start read callout\n"));
 			usb_callout_init(sc->sc_read_callout);
 			usb_callout(sc->sc_read_callout, hz/5, ulpt_tick, sc);
@@ -646,7 +646,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ulptclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ulpt_softc *sc;
 
@@ -832,7 +832,7 @@ ulpt_tick(void *xsc)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error = 0;
 

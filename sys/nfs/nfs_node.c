@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.80 2005/06/28 09:30:38 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.80.2.1 2006/06/21 15:11:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80 2005/06/28 09:30:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.1 2006/06/21 15:11:58 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80 2005/06/28 09:30:38 yamt Exp $");
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/hash.h>
+#include <sys/kauth.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -76,7 +77,7 @@ extern int prtactive;
 #define	nfs_hash(x,y)	hash32_buf((x), (y), HASH32_BUF_INIT)
 
 void nfs_gop_size(struct vnode *, off_t, off_t *, int);
-int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int nfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
 static const struct genfs_ops nfs_genfsops = {
@@ -206,10 +207,10 @@ loop:
 	 * Initalize read/write creds to useful values. VOP_OPEN will
 	 * overwrite these.
 	 */
-	np->n_rcred = curproc->p_ucred;
-	crhold(np->n_rcred);
-	np->n_wcred = curproc->p_ucred;
-	crhold(np->n_wcred);
+	np->n_rcred = curproc->p_cred;
+	kauth_cred_hold(np->n_rcred);
+	np->n_wcred = curproc->p_cred;
+	kauth_cred_hold(np->n_wcred);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	NFS_INVALIDATE_ATTRCACHE(np);
@@ -224,15 +225,14 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct nfsnode *np;
 	struct sillyrename *sp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	boolean_t removed;
-	int err;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -243,7 +243,7 @@ nfs_inactive(v)
 	} else
 		sp = NULL;
 	if (sp != NULL)
-		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
+		nfs_vinvalbuf(vp, 0, sp->s_cred, l, 1);
 	removed = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE | NEOFVALID);
@@ -260,25 +260,26 @@ nfs_inactive(v)
 
 	/* XXXMP only kernel_lock protects vp */
 	if (removed)
-		vrecycle(vp, NULL, p);
+		vrecycle(vp, NULL, l);
 
 	if (sp != NULL) {
+		int error;
 
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 *
 		 * Just in case our thread also has the parent node locked,
-		 * we let vn_lock() fail.
+		 * we use LK_CANRECURSE.
 		 */
 
-		err = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY
-					| LK_RECURSEFAIL);
+		error = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_CANRECURSE);
+		if (error || sp->s_dvp->v_data == NULL) {
+			/* XXX should recover */
+			panic("%s: vp=%p error=%d", __func__, sp->s_dvp, error);
+		}
 		nfs_removeit(sp);
-		crfree(sp->s_cred);
-		if (err != EDEADLK)
-			vput(sp->s_dvp);
-		else
-			vrele(sp->s_dvp);
+		kauth_cred_free(sp->s_cred);
+		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
 
@@ -317,10 +318,10 @@ nfs_reclaim(v)
 
 	pool_put(&nfs_vattr_pool, np->n_vattr);
 	if (np->n_rcred)
-		crfree(np->n_rcred);
+		kauth_cred_free(np->n_rcred);
 
 	if (np->n_wcred)
-		crfree(np->n_wcred);
+		kauth_cred_free(np->n_wcred);
 
 	cache_purge(vp);
 	pool_put(&nfs_node_pool, vp->v_data);
@@ -331,15 +332,13 @@ nfs_reclaim(v)
 void
 nfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
+
 	*eobp = MAX(size, vp->v_size);
 }
 
 int
 nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.3 2003/10/03 16:34:31 yamt Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.3.16.1 2006/06/21 15:09:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 The Regents of the University of California.
@@ -64,13 +64,15 @@
  *
  *	filecore_mount.h	1.1	1998/6/26
  */
+#ifndef _FILECOREFS_FILECOREFS_MOUNT_H_
+#define _FILECOREFS_FILECOREFS_MOUNT_H_
 
 /*
  * Arguments to mount Acorn Filecore filesystems.
  */
 struct filecore_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export info */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	uid_t	uid;			/* uid that owns filecore files */
 	gid_t	gid;			/* gid that owns filecore files */
 	int	flags;			/* mounting flags, see below */
@@ -86,3 +88,5 @@ struct filecore_args {
 #define FILECOREMNT_BITS "\177\20" \
     "b\00root\0b\01ownaccess\0b\02allaccess\0b\03ownread\0" \
     "b\04useuid\0b\05filetype\0"
+
+#endif /* _FILECOREFS_FILECOREFS_MOUNT_H_ */

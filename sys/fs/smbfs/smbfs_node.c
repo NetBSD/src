@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.24 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.24.2.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24.2.1 2006/06/21 15:09:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24 2005/06/28 09:30:37 yamt Exp $")
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <netsmb/smb.h>
 #include <netsmb/smb_conn.h>
@@ -67,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24 2005/06/28 09:30:37 yamt Exp $")
 
 MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
-extern int (**smbfs_vnodeop_p) __P((void *));
+extern int (**smbfs_vnodeop_p)(void *);
 extern int prtactive;
 
 static const struct genfs_ops smbfs_genfsops = {
@@ -272,8 +273,8 @@ smbfs_inactive(v)
 		struct vnode *a_vp;
 		struct thread *a_td;
 	} */ *ap = v;
-	struct proc *p = ap->a_p;
-	struct ucred *cred = p->p_ucred;
+	struct lwp *l = ap->a_l;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
@@ -285,8 +286,8 @@ smbfs_inactive(v)
 	if ((np->n_flag & NOPEN) != 0) {
 		struct smb_share *ssp = np->n_mount->sm_share;
 
-		smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-		smb_makescred(&scred, p, cred);
+		smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
+		smb_makescred(&scred, l, cred);
 
 		if (vp->v_type == VDIR && np->n_dirseq) {
 			smbfs_findclose(np->n_dirseq, &scred);
@@ -311,7 +312,6 @@ void
 smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 {
 	struct smbnode *np = VTOSMB(vp);
-	int s;
 
 	if (vp->v_type == VREG) {
 		if (np->n_size != fap->fa_size) {
@@ -326,9 +326,7 @@ smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 	np->n_mtime = fap->fa_mtime;
 	np->n_dosattr = fap->fa_attr;
 
-	s = splclock();
-	np->n_attrage = mono_time.tv_sec;
-	splx(s);
+	np->n_attrage = time_uptime;
 }
 
 int
@@ -336,12 +334,9 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 {
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
-	int s;
 	time_t diff;
 
-	s = splclock();
-	diff = mono_time.tv_sec - np->n_attrage;
-	splx(s);
+	diff = time_uptime - np->n_attrage;
 	if (diff > SMBFS_ATTRTIMO)	/* XXX should be configurable */
 		return ENOENT;
 

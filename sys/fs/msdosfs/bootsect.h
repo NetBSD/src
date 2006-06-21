@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsect.h,v 1.2 2003/10/06 02:21:47 lukem Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.2.16.1 2006/06/21 15:09:29 yamt Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -15,6 +15,8 @@
  *
  * October 1992
  */
+#ifndef _MSDOSFS_BOOTSECT_H_
+#define _MSDOSFS_BOOTSECT_H_
 
 /*
  * Format of a boot sector.  This is the first sector on a DOS floppy disk
@@ -110,3 +112,5 @@ union bootsector {
 #define	bsHiddenSecs	bsBPB.bpbHiddenSecs
 #define	bsHugeSectors	bsBPB.bpbHugeSectors
 #endif
+
+#endif /* _MSDOSFS_BOOTSECT_H_ */

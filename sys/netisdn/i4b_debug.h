@@ -27,7 +27,7 @@
  *	i4b_debug.h - i4b debug header file
  *	-----------------------------------
  *
- *	$Id: i4b_debug.h,v 1.5 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_debug.h,v 1.5.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef I4B_DEBUG_H
-#define I4B_DEBUG_H
+#ifndef _NETISDN_I4B_DEBUG_H_
+#define _NETISDN_I4B_DEBUG_H_
 
 #if !defined DO_I4B_DEBUG
 # define DO_I4B_DEBUG 1		/* default = include debugging code */
@@ -305,5 +305,5 @@ typedef struct {
 
 #define	I4B_CTL_CLR_LAPDSTAT	_IOW('C', 5, int)
 
-#endif
+#endif /* !_NETISDN_I4B_DEUBG_H_ */
 /* EOF */

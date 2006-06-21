@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.25 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: viaide.c,v 1.25.2.1 2006/06/21 15:05:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.25 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.25.2.1 2006/06/21 15:05:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,51 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  "NVIDIA nForce4 Serial ATA Controller",
 	  via_sata_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE430_ATA133,
+	  0,
+	  "NVIDIA nForce430 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE430_SATA1,
+	  0,
+	  "NVIDIA nForce430 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE430_SATA2,
+	  0,
+	  "NVIDIA nForce430 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_IDE,
+	  0,
+	  "NVIDIA MCP04 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_SATA,
+	  0,
+	  "NVIDIA MCP04 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_SATA2,
+	  0,
+	  "NVIDIA MCP04 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_IDE,
+	  0,
+	  "NVIDIA MCP55 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_SATA,
+	  0,
+	  "NVIDIA MCP55 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_SATA2,
+	  0,
+	  "NVIDIA MCP55 Serial ATA Controller",
+	  via_sata_chip_map
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -161,6 +206,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
 	  "VIA Technologies VT8237 SATA Controller",
+	  via_sata_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
+	  0,
+	  "VIA Technologies VT8237R SATA Controller",
 	  via_sata_chip_map,
 	},
 	{ 0,
@@ -328,6 +378,9 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE4_ATA133:
+		case PCI_PRODUCT_NVIDIA_NFORCE430_ATA133:
+		case PCI_PRODUCT_NVIDIA_MCP04_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP55_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}

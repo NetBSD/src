@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.10 2004/05/22 11:32:50 cube Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.10.12.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.10 2004/05/22 11:32:50 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.10.12.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -77,7 +77,7 @@ static char sysmon_power_type[32];
 
 #define	PEVQ_F_WAITING		0x01	/* daemon waiting for event */
 
-#define	SYSMON_NEXT_EVENT(x)		(((x) + 1) / SYSMON_MAX_POWER_EVENTS)
+#define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
 /*
  * sysmon_queue_power_event:
@@ -146,7 +146,7 @@ sysmon_power_event_queue_flush(void)
  *	Open the system monitor device.
  */
 int
-sysmonopen_power(dev_t dev, int flag, int mode, struct proc *p)
+sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error = 0;
 
@@ -154,7 +154,7 @@ sysmonopen_power(dev_t dev, int flag, int mode, struct proc *p)
 	if (sysmon_power_daemon != NULL)
 		error = EBUSY;
 	else {
-		sysmon_power_daemon = p;
+		sysmon_power_daemon = l->l_proc;
 		sysmon_power_event_queue_flush();
 	}
 	simple_unlock(&sysmon_power_event_queue_slock);
@@ -168,7 +168,7 @@ sysmonopen_power(dev_t dev, int flag, int mode, struct proc *p)
  *	Close the system monitor device.
  */
 int
-sysmonclose_power(dev_t dev, int flag, int mode, struct proc *p)
+sysmonclose_power(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int count;
 
@@ -228,7 +228,7 @@ sysmonread_power(dev_t dev, struct uio *uio, int flags)
  *	Poll the system monitor device.
  */
 int
-sysmonpoll_power(dev_t dev, int events, struct proc *p)
+sysmonpoll_power(dev_t dev, int events, struct lwp *l)
 {
 	int revents;
 
@@ -242,7 +242,7 @@ sysmonpoll_power(dev_t dev, int events, struct proc *p)
 	if (sysmon_power_event_queue_count)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(p, &sysmon_power_event_queue_selinfo);
+		selrecord(l, &sysmon_power_event_queue_selinfo);
 	simple_unlock(&sysmon_power_event_queue_slock);
 
 	return (revents);
@@ -313,7 +313,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
  *	Perform a power managmenet control request.
  */
 int
-sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error = 0;
 

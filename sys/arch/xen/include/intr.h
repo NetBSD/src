@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2005/04/16 22:49:37 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.1 2006/06/21 14:58:15 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -37,7 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef _XEN_INTR_H_
 #define	_XEN_INTR_H_
 
@@ -46,6 +45,8 @@
 #ifndef _LOCORE
 #include <machine/cpu.h>
 #include <machine/pic.h>
+
+#include "opt_xen.h"
 
 /*
  * Struct describing an event channel. 
@@ -72,6 +73,11 @@ struct intrstub {
 	void *ist_recurse; 
 	void *ist_resume;
 };
+
+#ifdef XEN3
+/* for x86 compatibility */
+extern struct intrstub i8259_stubs[];
+#endif
 
 struct iplsource {
 	struct intrhand *ipl_handlers;   /* handler chain */
@@ -150,21 +156,7 @@ spllower(int nlevel)
 	}
 }
 
-/*
- * Hardware interrupt masks
- */
-#define	splbio()	splraise(IPL_BIO)
-#define	splnet()	splraise(IPL_NET)
-#define	spltty()	splraise(IPL_TTY)
-#define	splaudio()	splraise(IPL_AUDIO)
-#define	splclock()	splraise(IPL_CLOCK)
-#define	splstatclock()	splclock()
-#define	splserial()	splraise(IPL_SERIAL)
-
-#define spllpt()	spltty()
-
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-#define	spllpt()	spltty()
 
 /*
  * Software interrupt masks
@@ -174,23 +166,16 @@ spllower(int nlevel)
  */
 #define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
 
-#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	splraise(IPL_SOFTNET)
-#define	splsoftserial()	splraise(IPL_SOFTSERIAL)
 #define splsoftxenevt()	splraise(IPL_SOFTXENEVT)
 
 /*
  * Miscellaneous
  */
-#define	splvm()		splraise(IPL_VM)
-#define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
-#define	splsched()	splraise(IPL_SCHED)
-#define spllock() 	splhigh()
-#ifndef MULTIPROCESSOR
-#define splipi() 	splhigh()
-#endif
+#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
+
+#include <sys/spl.h>
 
 /*
  * Software interrupt registration
@@ -204,7 +189,7 @@ softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();
 
-	__asm __volatile("lock ; orl %1, %0" :
+	__asm volatile("lock ; orl %1, %0" :
 	    "=m"(ci->ci_ipending) : "ir" (1 << sir));
 }
 
@@ -231,6 +216,7 @@ struct pcibus_attach_args;
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
+
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
@@ -238,6 +224,7 @@ void cpu_intr_init(struct cpu_info *);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
+
 
 #endif /* !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.7 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.7.4.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.7 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.7.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -107,8 +107,8 @@ depca_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 depca_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct depca_softc *sc = (void *) self;
-	struct depca_eisa_softc *esc = (void *) self;
+	struct depca_softc *sc = device_private(self);
+	struct depca_eisa_softc *esc = device_private(self);
 	struct eisa_attach_args *ea = aux;
 	struct eisa_cfg_mem ecm;
 	struct eisa_cfg_irq eci;

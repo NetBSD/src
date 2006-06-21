@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.42 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.42.4.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.42 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.42.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -191,7 +191,7 @@ static void
 ahbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
-	struct ahb_softc *sc = (void *)self;
+	struct ahb_softc *sc = device_private(self);
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec = ea->ea_ec;
@@ -419,7 +419,7 @@ ahbintr(void *arg)
 	}
 }
 
-static __inline void
+static inline void
 ahb_reset_ecb(struct ahb_softc *sc, struct ahb_ecb *ecb)
 {
 

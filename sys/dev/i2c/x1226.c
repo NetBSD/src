@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.6 2005/06/04 20:14:25 he Exp $	*/
+/*	$NetBSD: x1226.c,v 1.6.2.1 2006/06/21 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.6 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.6.2.1 2006/06/21 15:02:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ xrtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 xrtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct xrtc_softc *sc = (struct xrtc_softc *)self;
+	struct xrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock/NVRAM\n");
@@ -128,7 +128,7 @@ xrtc_attach(struct device *parent, struct device *self, void *arg)
 
 /*ARGSUSED*/
 int
-xrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
+xrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xrtc_softc *sc;
 
@@ -146,7 +146,7 @@ xrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-xrtc_close(dev_t dev, int flag, int fmt, struct proc *p)
+xrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xrtc_softc *sc;
 

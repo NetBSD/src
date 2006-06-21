@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.11 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.11.4.1 2006/06/21 14:58:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11.4.1 2006/06/21 14:58:51 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -139,16 +139,16 @@ irix_sys_xstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args cup;
+	struct sys___stat30_args cup;
 	struct stat st;
 	caddr_t sg = stackgap_init(p, 0);
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -197,16 +197,16 @@ irix_sys_lxstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___lstat13_args cup;
+	struct sys___lstat30_args cup;
 	struct stat st;
 	caddr_t sg = stackgap_init(p, 0);
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -255,7 +255,7 @@ irix_sys_fxstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args cup;
+	struct sys___fstat30_args cup;
 	struct stat st;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
@@ -263,7 +263,7 @@ irix_sys_fxstat(l, v, retval)
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 	SCARG(&cup, fd) = SCARG(uap, fd);
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)

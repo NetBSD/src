@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.9 2004/02/29 11:47:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.9.16.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,8 +33,8 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs_node.h,v 1.1 2001/04/10 07:59:05 bp Exp
  */
-#ifndef _FS_SMBFS_NODE_H_
-#define _FS_SMBFS_NODE_H_
+#ifndef _FS_SMBFS_SMBFS_NODE_H_
+#define _FS_SMBFS_SMBFS_NODE_H_
 
 #include <sys/hash.h>			/* for hash32_strn() */
 #include <miscfs/genfs/genfs_node.h>	/* for struct genfs_node */
@@ -84,15 +84,15 @@ struct smbfattr;
 
 int  smbfs_inactive(void *);
 int  smbfs_reclaim(void *);
-int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
-	struct smbfattr *fap, struct vnode **vpp);
+int smbfs_nget(struct mount *, struct vnode *, const char *, int,
+    struct smbfattr *, struct vnode **);
 #define	smbfs_hash(x, y)	hash32_strn((x), (y), HASH32_STR_INIT)
 
-int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred);
-int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, struct ucred *cred, int ioflag);
-void smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap);
-int  smbfs_attr_cachelookup(struct vnode *vp ,struct vattr *va);
+int  smbfs_readvnode(struct vnode *, struct uio *, kauth_cred_t);
+int  smbfs_writevnode(struct vnode *, struct uio *, kauth_cred_t, int);
+void smbfs_attr_cacheenter(struct vnode *, struct smbfattr *);
+int  smbfs_attr_cachelookup(struct vnode * ,struct vattr *);
 
 #define smbfs_attr_cacheremove(vp)	VTOSMB(vp)->n_attrage = 0
 
-#endif /* _FS_SMBFS_NODE_H_ */
+#endif /* _FS_SMBFS_SMBFS_NODE_H_ */

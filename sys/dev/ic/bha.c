@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.63 2005/05/22 15:54:46 christos Exp $	*/
+/*	$NetBSD: bha.c,v 1.63.2.1 2006/06/21 15:02:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63 2005/05/22 15:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63.2.1 2006/06/21 15:02:53 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -128,7 +128,7 @@ static void	bha_free_ccb(struct bha_softc *, struct bha_ccb *);
  */
 static int	bha_ccbs_per_group;
 
-static __inline struct bha_mbx_out *
+static inline struct bha_mbx_out *
 bha_nextmbo(struct bha_softc *sc, struct bha_mbx_out *mbo)
 {
 
@@ -137,7 +137,7 @@ bha_nextmbo(struct bha_softc *sc, struct bha_mbx_out *mbo)
 	return (mbo + 1);
 }
 
-static __inline struct bha_mbx_in *
+static inline struct bha_mbx_in *
 bha_nextmbi(struct bha_softc *sc, struct bha_mbx_in *mbi)
 {
 	if (mbi == &sc->sc_mbi[sc->sc_mbox_count - 1])
@@ -801,7 +801,7 @@ bha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, const char *name, int icnt,
 	if (ocnt) {
 		while ((bus_space_read_1(iot, ioh, BHA_STAT_PORT)) &
 		    BHA_STAT_DF)
-			bus_space_read_1(iot, ioh, BHA_DATA_PORT);
+			(void)bus_space_read_1(iot, ioh, BHA_DATA_PORT);
 	}
 
 	/*
@@ -1725,7 +1725,7 @@ bha_collect_mbo(struct bha_softc *sc)
  * CCB management functions
  *****************************************************************************/
 
-static __inline void
+static inline void
 bha_reset_ccb(struct bha_ccb *ccb)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.85 2005/05/29 21:22:53 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.85.2.1 2006/06/21 15:10:27 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85 2005/05/29 21:22:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85 2005/05/29 21:22:53 christos Ex
 #include <sys/callout.h>
 #include <sys/md5.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -78,6 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85 2005/05/29 21:22:53 christos Ex
 #include <netinet/tcp.h>
 #endif
 #include <net/ethertypes.h>
+
+#ifdef INET6
+#include <netinet6/scope6_var.h>
+#endif
 
 #ifdef IPX
 #include <netipx/ipx.h>
@@ -454,6 +459,13 @@ static const struct cp *cps[IDX_COUNT] = {
 };
 
 
+void spppattach(int);
+void
+/*ARGSUSED*/
+spppattach(int count)
+{
+}
+
 /*
  * Exported functions, comprising our interface to the lower layer.
  */
@@ -475,7 +487,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		/* Count received bytes, add hardware framing */
 		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
 		/* Note time of last receive */
-		sp->pp_last_receive = mono_time.tv_sec;
+		sp->pp_last_receive = time_uptime;
 	}
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
@@ -612,7 +624,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
 			schednetisr(NETISR_IP);
 			inq = &ipintrq;
-			sp->pp_last_activity = mono_time.tv_sec;
+			sp->pp_last_activity = time_uptime;
 		}
 		break;
 #endif
@@ -627,7 +639,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			schednetisr(NETISR_IPV6);
 			inq = &ip6intrq;
-			sp->pp_last_activity = mono_time.tv_sec;
+			sp->pp_last_activity = time_uptime;
 		}
 		break;
 #endif
@@ -695,7 +707,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	s = splnet();
 
-	sp->pp_last_activity = mono_time.tv_sec;
+	sp->pp_last_activity = time_uptime;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -1136,7 +1148,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	{
 		struct proc *p = curproc;		/* XXX */
 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 	}
 	/* FALLTHROUGH */
@@ -1170,7 +1182,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct cisco_packet *h;
 #ifdef INET
-	u_int32_t me, mymask;
+	u_int32_t me, mymask = 0;	/* XXX: GCC */
 #endif
 
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
@@ -1244,8 +1256,9 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	struct ppp_header *h;
 	struct cisco_packet *ch;
 	struct mbuf *m;
-	u_int32_t t = (time.tv_sec - boottime.tv_sec) * 1000;
+	u_int32_t t;
 
+	t = time_uptime * 1000;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (! m)
 		return;
@@ -1835,8 +1848,8 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 
 	switch (sp->state[cp->protoidx]) {
 	case STATE_INITIAL:
-		(cp->tls)(sp);
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
+		(cp->tls)(sp);
 		break;
 	case STATE_STARTING:
 		break;
@@ -1875,8 +1888,8 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 	case STATE_CLOSING:
 		break;
 	case STATE_STARTING:
-		(cp->tlf)(sp);
 		sppp_cp_change_state(cp, sp, STATE_INITIAL);
+		(cp->tlf)(sp);
 		break;
 	case STATE_STOPPED:
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
@@ -2024,7 +2037,7 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 
 	/* Initialize activity timestamp: opening a connection is an activity */
-	sp->pp_last_receive = sp->pp_last_activity = mono_time.tv_sec;
+	sp->pp_last_receive = sp->pp_last_activity = time_uptime;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -3370,7 +3383,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			nohisaddr = IN6_IS_ADDR_UNSPECIFIED(&desiredaddr);
 
 			desiredaddr.s6_addr16[0] = htons(0xfe80);
-			desiredaddr.s6_addr16[1] = htons(sp->pp_if.if_index);
+			(void)in6_setscope(&desiredaddr, &sp->pp_if, NULL);
 
 			if (!collision && !nohisaddr) {
 				/* no collision, hisaddr known - Conf-Ack */
@@ -3513,7 +3526,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				break;
 			memset(&suggestaddr, 0, sizeof(suggestaddr));
 			suggestaddr.s6_addr16[0] = htons(0xfe80);
-			suggestaddr.s6_addr16[1] = htons(sp->pp_if.if_index);
+			(void)in6_setscope(&suggestaddr, &sp->pp_if, NULL);
 			bcopy(&p[2], &suggestaddr.s6_addr[8], 8);
 
 			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
@@ -4637,7 +4650,7 @@ sppp_keepalive(void *dummy)
 	time_t now;
 
 	s = splnet();
-	now = mono_time.tv_sec;
+	now = time_uptime;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
 
@@ -4688,7 +4701,8 @@ sppp_keepalive(void *dummy)
 
 				/* Close connection imediatly, completition of this
 				 * will summon the magic needed to reestablish it. */
-				sp->pp_tlf(sp);
+				if (sp->pp_tlf)
+					sp->pp_tlf(sp);
 				continue;
 			}
 		}

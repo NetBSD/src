@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.3 2004/12/16 05:30:18 atatat Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.3.10.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -71,6 +71,9 @@
  *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
 
+#ifndef _FS_PTYFS_PTYFS_H_
+#define _FS_PTYFS_PTYFS_H_
+
 #ifdef _KERNEL
 /*
  * The different types of node in a ptyfs filesystem
@@ -133,6 +136,9 @@ struct ptyfs_args {
 #define PTYFS_MAKEDEV(ptyfs) \
     pty_makedev((ptyfs)->ptyfs_type == PTYFSpts ? 't' : 'p', (ptyfs)->ptyfs_pty)
 
+#define PTYFS_ITIMES(ptyfs, acc, mod, cre) \
+   while ((ptyfs)->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY)) \
+	ptyfs_itimes(ptyfs, acc, mod, cre)
 /*
  * Convert between ptyfsnode vnode
  */
@@ -141,10 +147,12 @@ struct ptyfs_args {
 
 int ptyfs_freevp(struct vnode *);
 int ptyfs_allocvp(struct mount *, struct vnode **, ptyfstype, int,
-    struct proc *);
+    struct lwp *);
 void ptyfs_hashinit(void);
 void ptyfs_hashreinit(void);
 void ptyfs_hashdone(void);
+void ptyfs_itimes(struct ptyfsnode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 
 extern int (**ptyfs_vnodeop_p)(void *);
 extern struct vfsops ptyfs_vfsops;
@@ -155,3 +163,4 @@ int	ptyfs_root(struct mount *, struct vnode **);
 SYSCTL_SETUP_PROTO(sysctl_vfs_ptyfs_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
+#endif /* _FS_PTYFS_PTYFS_H_ */

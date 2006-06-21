@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.12 2003/10/31 14:04:35 drochner Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.12.16.1 2006/06/21 14:58:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.12 2003/10/31 14:04:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.12.16.1 2006/06/21 14:58:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,14 +44,18 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.12 2003/10/31 14:04:35 droc
 #endif /* !ELFSIZE */
 #include <sys/exec_elf.h>
 
-#include <machine/freebsd_machdep.h>
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/common/compat_util.h>
 
+#include <machine/freebsd_machdep.h>
+
+
 int
-ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
-	struct proc *p;
+ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
+	struct lwp *l;
 	struct exec_package *epp;
 	void *veh;
 	char *itp;
@@ -86,7 +90,7 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	if (i != 0) {
 		phsize = i * sizeof(Elf_Phdr);
 		ph = (Elf_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
-		if ((error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph,
+		if ((error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph,
 		    phsize)) != 0)
 			goto bad1;
 
@@ -101,7 +105,7 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 			np = (Elf_Nhdr *) malloc(ephp->p_filesz+1,
 			    M_TEMP, M_WAITOK);
 
-			if (((error = exec_read_from(p, epp->ep_vp,
+			if (((error = exec_read_from(l, epp->ep_vp,
 			    ephp->p_offset, np, ephp->p_filesz)) != 0))
 				goto bad2;
 
@@ -116,7 +120,7 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	}
 
 	if (itp) {
-		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
 		    itp)))
 			return error;
 	}

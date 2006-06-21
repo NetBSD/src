@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.95.2.1 2006/06/21 15:09:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95.2.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -94,6 +94,14 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner 
 #include "opt_userconf.h"
 #ifdef USERCONF
 #include <sys/userconf.h>
+#endif
+
+#ifdef __i386__
+#include "opt_splash.h"
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+#include <dev/splash/splash.h>
+extern struct splash_progress *splash_progress_state;
+#endif
 #endif
 
 /*
@@ -126,29 +134,24 @@ extern const struct cfattachinit cfattachinit[];
 struct cftablelist allcftables;
 static struct cftable initcftable;
 
-/*
- * Database of device properties.
- */
-propdb_t dev_propdb;
-
-#define	ROOT ((struct device *)NULL)
+#define	ROOT ((device_t)NULL)
 
 struct matchinfo {
-	cfsubmatch_t fn_loc;
+	cfsubmatch_t fn;
 	struct	device *parent;
-	const locdesc_t *ldesc;
+	const int *locs;
 	void	*aux;
 	struct	cfdata *match;
 	int	pri;
 };
 
 static char *number(char *, int);
-static void mapply(struct matchinfo *, struct cfdata *);
+static void mapply(struct matchinfo *, cfdata_t);
 
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
-	struct device *dc_dev;
-	void (*dc_func)(struct device *);
+	device_t dc_dev;
+	void (*dc_func)(device_t);
 };
 
 TAILQ_HEAD(deferred_config_head, deferred_config);
@@ -156,14 +159,13 @@ TAILQ_HEAD(deferred_config_head, deferred_config);
 struct deferred_config_head deferred_config_queue;
 struct deferred_config_head interrupt_config_queue;
 
-static void config_process_deferred(struct deferred_config_head *,
-	struct device *);
+static void config_process_deferred(struct deferred_config_head *, device_t);
 
 /* Hooks to finalize configuration once all real devices have been found. */
 struct finalize_hook {
 	TAILQ_ENTRY(finalize_hook) f_list;
-	int (*f_func)(struct device *);
-	struct device *f_dev;
+	int (*f_func)(device_t);
+	device_t f_dev;
 };
 static TAILQ_HEAD(, finalize_hook) config_finalize_list;
 static int config_finalize_done;
@@ -171,7 +173,7 @@ static int config_finalize_done;
 /* list of all devices */
 struct devicelist alldevs;
 
-__volatile int config_pending;		/* semaphore for mountroot */
+volatile int config_pending;		/* semaphore for mountroot */
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
@@ -234,11 +236,6 @@ configure(void)
 
 	/* Initialize data structures. */
 	config_init();
-
-	/* Initialize the device property database. */
-	dev_propdb = propdb_create("device properties");
-	if (dev_propdb == NULL)
-		panic("unable to create device property database");
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -379,7 +376,7 @@ int
 config_cfattach_detach(const char *driver, struct cfattach *ca)
 {
 	struct cfdriver *cd;
-	struct device *dev;
+	device_t dev;
 	int i;
 
 	cd = config_cfdriver_lookup(driver);
@@ -435,22 +432,14 @@ config_cfattach_lookup(const char *name, const char *atname)
  * a few times and we want to keep the code small.
  */
 static void
-mapply(struct matchinfo *m, struct cfdata *cf)
+mapply(struct matchinfo *m, cfdata_t cf)
 {
 	int pri;
 
-	if (m->fn_loc != NULL) {
-		pri = (*m->fn_loc)(m->parent, cf, m->ldesc, m->aux);
+	if (m->fn != NULL) {
+		pri = (*m->fn)(m->parent, cf, m->locs, m->aux);
 	} else {
-		struct cfattach *ca;
-
-		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
-		if (ca == NULL) {
-			/* No attachment for this entry, oh well. */
-			return;
-		}
-	        KASSERT(ca->ca_match != NULL);
-		pri = (*ca->ca_match)(m->parent, cf, m->aux);
+		pri = config_match(m->parent, cf, m->aux);
 	}
 	if (pri > m->pri) {
 		m->match = cf;
@@ -458,22 +447,66 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 	}
 }
 
-/*
- * Helper function: check whether the driver supports the interface attribute.
- */
-static int
-cfdriver_has_iattr(const struct cfdriver *cd, const char *ia)
+int
+config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
-	const char * const *cpp;
+	const struct cfiattrdata *ci;
+	const struct cflocdesc *cl;
+	int nlocs, i;
+
+	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
+	KASSERT(ci);
+	nlocs = ci->ci_loclen;
+	for (i = 0; i < nlocs; i++) {
+		cl = &ci->ci_locdesc[i];
+		/* !cld_defaultstr means no default value */
+		if ((!(cl->cld_defaultstr)
+		     || (cf->cf_loc[i] != cl->cld_default))
+		    && cf->cf_loc[i] != locs[i])
+			return (0);
+	}
+
+	return (config_match(parent, cf, aux));
+}
+
+/*
+ * Helper function: check whether the driver supports the interface attribute
+ * and return its descriptor structure.
+ */
+static const struct cfiattrdata *
+cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
+{
+	const struct cfiattrdata * const *cpp;
 
 	if (cd->cd_attrs == NULL)
 		return (0);
 
 	for (cpp = cd->cd_attrs; *cpp; cpp++) {
-		if (STREQ(*cpp, ia)) {
+		if (STREQ((*cpp)->ci_name, ia)) {
 			/* Match. */
-			return (1);
+			return (*cpp);
 		}
+	}
+	return (0);
+}
+
+/*
+ * Lookup an interface attribute description by name.
+ * If the driver is given, consider only its supported attributes.
+ */
+const struct cfiattrdata *
+cfiattr_lookup(const char *name, const struct cfdriver *cd)
+{
+	const struct cfdriver *d;
+	const struct cfiattrdata *ia;
+
+	if (cd)
+		return (cfdriver_get_iattr(cd, name));
+
+	LIST_FOREACH(d, &allcfdrivers, cd_list) {
+		ia = cfdriver_get_iattr(d, name);
+		if (ia)
+			return (ia);
 	}
 	return (0);
 }
@@ -483,7 +516,7 @@ cfdriver_has_iattr(const struct cfdriver *cd, const char *ia)
  * on `cfp'.
  */
 static int
-cfparent_match(const struct device *parent, const struct cfparent *cfp)
+cfparent_match(const device_t parent, const struct cfparent *cfp)
 {
 	struct cfdriver *pcd;
 
@@ -498,7 +531,7 @@ cfparent_match(const struct device *parent, const struct cfparent *cfp)
 	 * First, ensure this parent has the correct interface
 	 * attribute.
 	 */
-	if (!cfdriver_has_iattr(pcd, cfp->cfp_iattr))
+	if (!cfdriver_get_iattr(pcd, cfp->cfp_iattr))
 		return (0);
 
 	/*
@@ -532,7 +565,7 @@ cfparent_match(const struct device *parent, const struct cfparent *cfp)
 static void
 rescan_with_cfdata(const struct cfdata *cf)
 {
-	struct device *d;
+	device_t d;
 	const struct cfdata *cf1;
 
 	/*
@@ -560,7 +593,7 @@ rescan_with_cfdata(const struct cfdata *cf)
  * parent devices if required.
  */
 int
-config_cfdata_attach(struct cfdata *cf, int scannow)
+config_cfdata_attach(cfdata_t cf, int scannow)
 {
 	struct cftable *ct;
 
@@ -595,9 +628,9 @@ dev_in_cfdata(const struct device *d, const struct cfdata *cf)
  * through that table (and thus keeping references to it) before.
  */
 int
-config_cfdata_detach(struct cfdata *cf)
+config_cfdata_detach(cfdata_t cf)
 {
-	struct device *d;
+	device_t d;
 	int error;
 	struct cftable *ct;
 
@@ -631,7 +664,7 @@ again:
  * an external caller, usually a "submatch" routine.
  */
 int
-config_match(struct device *parent, struct cfdata *cf, void *aux)
+config_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cfattach *ca;
 
@@ -655,20 +688,20 @@ config_match(struct device *parent, struct cfdata *cf, void *aux)
  * an arbitrary function to all potential children (its return value
  * can be ignored).
  */
-struct cfdata *
-config_search_loc(cfsubmatch_t fn, struct device *parent,
-		  const char *ifattr, const locdesc_t *ldesc, void *aux)
+cfdata_t
+config_search_loc(cfsubmatch_t fn, device_t parent,
+		  const char *ifattr, const int *locs, void *aux)
 {
 	struct cftable *ct;
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct matchinfo m;
 
 	KASSERT(config_initialized);
-	KASSERT(!ifattr || cfdriver_has_iattr(parent->dv_cfdriver, ifattr));
+	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
 
-	m.fn_loc = fn;
+	m.fn = fn;
 	m.parent = parent;
-	m.ldesc = ldesc;
+	m.locs = locs;
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
@@ -706,24 +739,33 @@ config_search_loc(cfsubmatch_t fn, struct device *parent,
 	return (m.match);
 }
 
+cfdata_t
+config_search_ia(cfsubmatch_t fn, device_t parent, const char *ifattr,
+    void *aux)
+{
+
+	return (config_search_loc(fn, parent, ifattr, NULL, aux));
+}
+
 /*
  * Find the given root device.
  * This is much like config_search, but there is no parent.
  * Don't bother with multiple cfdata tables; the root node
  * must always be in the initial table.
  */
-struct cfdata *
+cfdata_t
 config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 	const short *p;
 	struct matchinfo m;
 
-	m.fn_loc = fn;
+	m.fn = fn;
 	m.parent = ROOT;
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
+	m.locs = 0;
 	/*
 	 * Look at root entries for matching name.  We do not bother
 	 * with found-state here since only one root should ever be
@@ -747,30 +789,56 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * functions) and attach it, and return true.  If the device was
  * not configured, call the given `print' function and return 0.
  */
-struct device *
-config_found_sm_loc(struct device *parent,
-		const char *ifattr, const locdesc_t *ldesc, void *aux,
+device_t
+config_found_sm_loc(device_t parent,
+		const char *ifattr, const int *locs, void *aux,
 		cfprint_t print, cfsubmatch_t submatch)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
-	if ((cf = config_search_loc(submatch, parent, ifattr, ldesc, aux)))
-		return(config_attach_loc(parent, cf, ldesc, aux, print));
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
+	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
+		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
 		if (config_do_twiddle)
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	}
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	return (NULL);
+}
+
+device_t
+config_found_ia(device_t parent, const char *ifattr, void *aux,
+    cfprint_t print)
+{
+
+	return (config_found_sm_loc(parent, ifattr, NULL, aux, print, NULL));
+}
+
+device_t
+config_found(device_t parent, void *aux, cfprint_t print)
+{
+
+	return (config_found_sm_loc(parent, NULL, NULL, aux, print, NULL));
 }
 
 /*
  * As above, but for root devices.
  */
-struct device *
+device_t
 config_rootfound(const char *rootname, void *aux)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	if ((cf = config_rootsearch((cfsubmatch_t)NULL, rootname, aux)) != NULL)
 		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
@@ -831,11 +899,11 @@ config_makeroom(int n, struct cfdriver *cd)
 /*
  * Attach a found device.  Allocates memory for device variables.
  */
-struct device *
-config_attach_loc(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux, cfprint_t print)
+device_t
+config_attach_loc(device_t parent, cfdata_t cf,
+	const int *locs, void *aux, cfprint_t print)
 {
-	struct device *dev;
+	device_t dev;
 	struct cftable *ct;
 	struct cfdriver *cd;
 	struct cfattach *ca;
@@ -843,6 +911,12 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	const char *xunit;
 	int myunit;
 	char num[10];
+	const struct cfiattrdata *ia;
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
@@ -885,7 +959,7 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
+	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
@@ -900,11 +974,16 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	if (ldesc) {
-		dev->dv_locators = malloc(ldesc->len * sizeof(int),
+	if (locs) {
+		KASSERT(parent); /* no locators at root */
+		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
+				    parent->dv_cfdriver);
+		dev->dv_locators = malloc(ia->ci_loclen * sizeof(int),
 					  M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-		memcpy(dev->dv_locators, ldesc->locs, ldesc->len * sizeof(int));
+		memcpy(dev->dv_locators, locs, ia->ci_loclen * sizeof(int));
 	}
+	dev->dv_properties = prop_dictionary_create();
+	KASSERT(dev->dv_properties != NULL);
 
 	if (config_do_twiddle)
 		twiddle();
@@ -954,9 +1033,24 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	(*ca->ca_attach)(parent, dev, aux);
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
+}
+
+device_t
+config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print)
+{
+
+	return (config_attach_loc(parent, cf, NULL, aux, print));
 }
 
 /*
@@ -968,10 +1062,10 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
  * the attach routine wishes to print should be prefixed with the device
  * name by the attach routine.
  */
-struct device *
-config_attach_pseudo(struct cfdata *cf)
+device_t
+config_attach_pseudo(cfdata_t cf)
 {
-	struct device *dev;
+	device_t dev;
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
@@ -1019,7 +1113,7 @@ config_attach_pseudo(struct cfdata *cf)
 		panic("config_attach_pseudo: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
+	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (!dev)
 		panic("config_attach_pseudo: memory allocation for device "
@@ -1035,6 +1129,8 @@ config_attach_pseudo(struct cfdata *cf)
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = ROOT;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
+	dev->dv_properties = prop_dictionary_create();
+	KASSERT(dev->dv_properties != NULL);
 
 	/* put this device in the devices array */
 	config_makeroom(dev->dv_unit, cd);
@@ -1062,14 +1158,14 @@ config_attach_pseudo(struct cfdata *cf)
  * open to run and unwind their stacks.
  */
 int
-config_detach(struct device *dev, int flags)
+config_detach(device_t dev, int flags)
 {
 	struct cftable *ct;
-	struct cfdata *cf;
+	cfdata_t cf;
 	const struct cfattach *ca;
 	struct cfdriver *cd;
 #ifdef DIAGNOSTIC
-	struct device *d;
+	device_t d;
 #endif
 	int rv = 0, i;
 
@@ -1136,7 +1232,7 @@ config_detach(struct device *dev, int flags)
 
 	/* notify the parent that the child is gone */
 	if (dev->dv_parent) {
-		struct device *p = dev->dv_parent;
+		device_t p = dev->dv_parent;
 		if (p->dv_cfattach->ca_childdetached)
 			(*p->dv_cfattach->ca_childdetached)(p, dev);
 	}
@@ -1178,6 +1274,8 @@ config_detach(struct device *dev, int flags)
 		aprint_normal("%s detached\n", dev->dv_xname);
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
+	KASSERT(dev->dv_properties != NULL);
+	prop_object_release(dev->dv_properties);
 	free(dev, M_DEVBUF);
 
 	/*
@@ -1199,7 +1297,7 @@ config_detach(struct device *dev, int flags)
 }
 
 int
-config_activate(struct device *dev)
+config_activate(device_t dev)
 {
 	const struct cfattach *ca = dev->dv_cfattach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -1217,7 +1315,7 @@ config_activate(struct device *dev)
 }
 
 int
-config_deactivate(struct device *dev)
+config_deactivate(device_t dev)
 {
 	const struct cfattach *ca = dev->dv_cfattach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -1239,7 +1337,7 @@ config_deactivate(struct device *dev)
  * of its parent's devices have been attached.
  */
 void
-config_defer(struct device *dev, void (*func)(struct device *))
+config_defer(device_t dev, void (*func)(device_t))
 {
 	struct deferred_config *dc;
 
@@ -1269,7 +1367,7 @@ config_defer(struct device *dev, void (*func)(struct device *))
  * are enabled.
  */
 void
-config_interrupts(struct device *dev, void (*func)(struct device *))
+config_interrupts(device_t dev, void (*func)(device_t))
 {
 	struct deferred_config *dc;
 
@@ -1304,7 +1402,7 @@ config_interrupts(struct device *dev, void (*func)(struct device *))
  */
 static void
 config_process_deferred(struct deferred_config_head *queue,
-    struct device *parent)
+    device_t parent)
 {
 	struct deferred_config *dc, *ndc;
 
@@ -1349,7 +1447,7 @@ config_pending_decr(void)
  * any work.
  */
 int
-config_finalize_register(struct device *dev, int (*fn)(struct device *))
+config_finalize_register(device_t dev, int (*fn)(device_t))
 {
 	struct finalize_hook *f;
 
@@ -1398,3 +1496,115 @@ config_finalize(void)
 	}
 }
 
+/*
+ * device_lookup:
+ *
+ *	Look up a device instance for a given driver.
+ */
+void *
+device_lookup(cfdriver_t cd, int unit)
+{
+
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		return (NULL);
+	
+	return (cd->cd_devs[unit]);
+}
+
+/*
+ * Accessor functions for the device_t type.
+ */
+devclass_t
+device_class(device_t dev)
+{
+
+	return (dev->dv_class);
+}
+
+cfdata_t
+device_cfdata(device_t dev)
+{
+
+	return (dev->dv_cfdata);
+}
+
+cfdriver_t
+device_cfdriver(device_t dev)
+{
+
+	return (dev->dv_cfdriver);
+}
+
+cfattach_t
+device_cfattach(device_t dev)
+{
+
+	return (dev->dv_cfattach);
+}
+
+int
+device_unit(device_t dev)
+{
+
+	return (dev->dv_unit);
+}
+
+const char *
+device_xname(device_t dev)
+{
+
+	return (dev->dv_xname);
+}
+
+device_t
+device_parent(device_t dev)
+{
+
+	return (dev->dv_parent);
+}
+
+boolean_t
+device_is_active(device_t dev)
+{
+
+	return ((dev->dv_flags & DVF_ACTIVE) != 0);
+}
+
+int
+device_locator(device_t dev, u_int locnum)
+{
+
+	KASSERT(dev->dv_locators != NULL);
+	return (dev->dv_locators[locnum]);
+}
+
+void *
+device_private(device_t dev)
+{
+
+	/*
+	 * For now, at least, "struct device" is the first thing in
+	 * the driver's private data.  So, we just return ourselves.
+	 */
+	return (dev);
+}
+
+prop_dictionary_t
+device_properties(device_t dev)
+{
+
+	return (dev->dv_properties);
+}
+
+/*
+ * device_is_a:
+ *
+ *	Returns true if the device is an instance of the specified
+ *	driver.
+ */
+boolean_t
+device_is_a(device_t dev, const char *dname)
+{
+
+	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
+}

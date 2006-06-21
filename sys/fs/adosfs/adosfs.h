@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.5 2005/02/26 22:58:54 perry Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.5.4.1 2006/06/21 15:09:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,12 +31,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ADOSFS_ADOSFS_H_
+#define  _ADOSFS_ADOSFS_H_
 /*
  * Arguments to mount amigados filesystems.
  */
 struct adosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	uid_t	uid;		/* uid that owns adosfs files */
 	gid_t	gid;		/* gid that owns adosfs files */
 	mode_t	mask;		/* mask to be applied for adosfs perms */
@@ -123,7 +125,6 @@ struct adosfsmount {
 	u_long mask;		/* mode mask */
 	struct vnode *devvp;	/* blk device mounted on */
 	struct vnode *rootvp;	/* out root vnode */
-	struct netexport export;
 	u_long *bitmap;		/* allocation bitmap */
 	u_long numblks;		/* number of usable blocks */
 	u_long freeblks;	/* number of free blocks */
@@ -181,3 +182,4 @@ extern int (**adosfs_vnodeop_p) __P((void *));
 SYSCTL_SETUP_PROTO(sysctl_vfs_adosfs_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
+#endif /* _ADOSFS_ADOSFS_H_ */

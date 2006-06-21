@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.24 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.24.4.1 2006/06/21 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24.4.1 2006/06/21 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	ec_fake_test_mem(struct dp8390_softc *);
 int	ec_test_mem(struct dp8390_softc *);
 
-__inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
+inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
 
 static const int ec_iobase[] = {
 	0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300,
@@ -429,7 +429,8 @@ ec_attach(parent, self, aux)
 	 * we optimize for linear transfers of same-size packets.)
 	 */
 	if (esc->sc_16bitp) {
-		if (sc->sc_dev.dv_cfdata->cf_flags & DP8390_NO_MULTI_BUFFERING)
+		if (device_cfdata(&sc->sc_dev)->cf_flags &
+		    DP8390_NO_MULTI_BUFFERING)
 			sc->txb_cnt = 1;
 		else
 			sc->txb_cnt = 2;
@@ -565,7 +566,7 @@ ec_test_mem(sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-__inline void
+inline void
 ec_readmem(esc, from, to, len)
 	struct ec_softc *esc;
 	int from;

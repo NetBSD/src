@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.28 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.28.4.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.28 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.28.4.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include "rnd.h"
 
@@ -151,32 +151,19 @@ edc_mca_probe(parent, match, aux)
 	}
 }
 
-static int
-edcsubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[EDCCF_DRIVE] != EDCCF_DRIVE_DEFAULT &&
-	    cf->cf_loc[EDCCF_DRIVE] != ldesc->locs[EDCCF_DRIVE])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
 void
 edc_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct edc_mca_softc *sc = (void *) self;
+	struct edc_mca_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
 	struct ed_attach_args eda;
 	int pos2, pos3, pos4;
 	int irq, drq, iobase;
 	const char *typestr;
 	int devno, error;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[EDCCF_NLOCS];
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
@@ -324,11 +311,10 @@ edc_mca_attach(parent, self, aux)
 	/* check for attached disks */
 	for (devno = 0; devno < sc->sc_maxdevs; devno++) {
 		eda.edc_drive = devno;
-		ldesc->len = 1;
-		ldesc->locs[EDCCF_DRIVE] = devno;
+		locs[EDCCF_DRIVE] = devno;
 		sc->sc_ed[devno] =
-			(void *) config_found_sm_loc(self, "edc", ldesc, &eda,
-						     NULL, edcsubmatch);
+			(void *) config_found_sm_loc(self, "edc", locs, &eda,
+						     NULL, config_stdsubmatch);
 
 		/* If initialization did not succeed, NULL the pointer. */
 		if (sc->sc_ed[devno]
@@ -876,7 +862,7 @@ edcworker(arg)
 
 			/* Is there a buf for us ? */
 			simple_lock(&ed->sc_q_lock);
-			if ((bp = BUFQ_GET(&ed->sc_q)) == NULL) {
+			if ((bp = BUFQ_GET(ed->sc_q)) == NULL) {
 				simple_unlock(&ed->sc_q_lock);
 				i++;
 				continue;

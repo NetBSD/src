@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.22 2005/06/20 02:10:18 briggs Exp $	*/
+/*	$NetBSD: piixide.c,v 1.22.2.1 2006/06/21 15:05:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.22 2005/06/20 02:10:18 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.22.2.1 2006/06/21 15:05:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,21 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 82801FBM Serial ATA Controller (ICH6)",
 	  piixsata_chip_map,
 	},
+	{ PCI_PRODUCT_INTEL_82801G_IDE,
+	  0,
+	  "Intel 82801GB/GR IDE Controller (ICH7)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801G_SATA,
+	  0,
+	  "Intel 82801GB/GR Serial ATA/Raid Controller (ICH7)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801GBM_SATA,
+	  0,
+	  "Intel 82801GBM/GHM Serial ATA Controller (ICH7)",
+	  piixsata_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -216,9 +231,17 @@ piixide_powerhook(int why, void *hdl)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    PIIX_IDETIM);
+		sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    PIIX_UDMATIM);
 		break;
 	case PWR_RESUME:
 		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
+		    sc->sc_idetim);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
+		    sc->sc_udmatim);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
@@ -236,6 +259,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	u_int32_t idetim;
 	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -262,6 +286,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82801EB_IDE:
 		case PCI_PRODUCT_INTEL_6300ESB_IDE:
 		case PCI_PRODUCT_INTEL_82801FB_IDE:
+		case PCI_PRODUCT_INTEL_82801G_IDE:
 			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 		}
 	}
@@ -280,6 +305,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801EB_IDE:
 	case PCI_PRODUCT_INTEL_6300ESB_IDE:
 	case PCI_PRODUCT_INTEL_82801FB_IDE:
+	case PCI_PRODUCT_INTEL_82801G_IDE:
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 		break;
 	default:
@@ -314,7 +340,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
 			ATADEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -328,8 +355,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
-		/* PIIX is compat-only */
-		if (pciide_chansetup(sc, channel, 0) == 0)
+		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		idetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 		if ((PIIX_IDETIM_READ(idetim, channel) &
@@ -352,8 +378,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    channel, idetim, interface);
 #endif
 		}
-		/* PIIX are compat-only pciide devices */
-		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface,
+		    &cmdsize, &ctlsize, pciide_pci_intr);
 	}
 
 	ATADEBUG_PRINT(("piix_setup_chip: idetim=0x%x",
@@ -378,7 +404,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
 			ATADEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -540,7 +567,8 @@ piix3_4_setup_channel(struct ata_channel *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ||
@@ -551,7 +579,8 @@ piix3_4_setup_channel(struct ata_channel *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)

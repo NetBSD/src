@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.47 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.47.4.1 2006/06/21 15:05:02 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.47 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.47.4.1 2006/06/21 15:05:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -208,7 +208,7 @@ ra_putonline(ra)
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
 	maj = cdevsw_lookup_major(&ra_cdevsw);
-	if ((msg = readdisklabel(MAKEDISKDEV(maj, ra->ra_dev.dv_unit,
+	if ((msg = readdisklabel(MAKEDISKDEV(maj, device_unit(&ra->ra_dev),
 	    RAW_PART), rastrategy, dl, NULL)) != NULL)
 		printf(": %s", msg);
 	else {
@@ -226,10 +226,10 @@ ra_putonline(ra)
  */
 /*ARGSUSED*/
 int
-raopen(dev, flag, fmt, p)
+raopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct ra_softc *ra;
 	int error, part, unit, mask;
@@ -311,10 +311,10 @@ raopen(dev, flag, fmt, p)
 
 /* ARGSUSED */
 int
-raclose(dev, flags, fmt, p)
+raclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
@@ -342,7 +342,7 @@ raclose(dev, flags, fmt, p)
 #if notyet
 	if (ra->ra_openpart == 0) {
 		s = spluba();
-		while (BUFQ_PEEK(&udautab[unit]) != NULL)
+		while (BUFQ_PEEK(udautab[unit]) != NULL)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
 		splx(s);
@@ -382,7 +382,7 @@ rastrategy(bp)
 	        b = splbio();
 	        disk_busy(&ra->ra_disk);
 		splx(b);
-		mscp_strategy(bp, ra->ra_dev.dv_parent);
+		mscp_strategy(bp, device_parent(&ra->ra_dev));
 		return;
 	}
 
@@ -405,7 +405,7 @@ rastrategy(bp)
 	b = splbio();
 	disk_busy(&ra->ra_disk);
 	splx(b);
-	mscp_strategy(bp, ra->ra_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&ra->ra_dev));
 	return;
 
 done:
@@ -436,12 +436,12 @@ rawrite(dev, uio, flags)
  * I/O controls.
  */
 int
-raioctl(dev, cmd, data, flag, p)
+raioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp, *tp;
@@ -571,7 +571,7 @@ raioctl(dev, cmd, data, flag, p)
 	    {
 	    	struct dkwedge_list *dkwl = (void *) data;
 
-		return (dkwedge_list(&ra->ra_disk, dkwl, p));
+		return (dkwedge_list(&ra->ra_disk, dkwl, l));
 	    }
 
 	default:
@@ -684,7 +684,7 @@ rxattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	rx_softc *rx = (void *)self;
+	struct	rx_softc *rx = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;
@@ -738,7 +738,8 @@ rx_putonline(rx)
 	struct rx_softc *rx;
 {
 	struct	mscp *mp;
-	struct	mscp_softc *mi = (struct mscp_softc *)rx->ra_dev.dv_parent;
+	struct	mscp_softc *mi =
+	    (struct mscp_softc *)device_parent(&rx->ra_dev);
 	volatile int i;
 
 	rx->ra_state = DK_CLOSED;
@@ -750,7 +751,7 @@ rx_putonline(rx)
 
 	/* Poll away */
 	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
-	if (tsleep(&rx->ra_dev.dv_unit, PRIBIO, "rxonline", 100*100))
+	if (tsleep(&rx->ra_state, PRIBIO, "rxonline", 100*100))
 		rx->ra_state = DK_CLOSED;
 
 	if (rx->ra_state == DK_CLOSED)
@@ -766,10 +767,10 @@ rx_putonline(rx)
  */
 /*ARGSUSED*/
 int
-rxopen(dev, flag, fmt, p)
+rxopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct rx_softc *rx;
 	int unit;
@@ -841,7 +842,7 @@ rxstrategy(bp)
 	b = splbio();
 	disk_busy(&rx->ra_disk);
 	splx(b);
-	mscp_strategy(bp, rx->ra_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&rx->ra_dev));
 	return;
 
 done:
@@ -872,12 +873,12 @@ rxwrite(dev, uio, flag)
  * I/O controls.
  */
 int
-rxioctl(dev, cmd, data, flag, p)
+rxioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp;
@@ -1018,7 +1019,7 @@ rronline(usc, mp)
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
 
-	wakeup((caddr_t)&usc->dv_unit);
+	wakeup((caddr_t)&rx->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to bring on line failed: ", usc->dv_xname);
 		mscp_printevent(mp);

@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.14 2005/06/03 12:39:52 blymn Exp $
+# $NetBSD: majors,v 1.14.2.1 2006/06/21 15:00:01 yamt Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -11,7 +11,7 @@
 
 device-major	crypto		char 160		crypto
 device-major	pf		char 161		pf
-device-major	vinum		char 162 block 162	vinum
+#obsolete	vinum		char 162		vinum
 device-major	fss		char 163 block 163	fss
 device-major	pps		char 164		pps
 device-major	ptm		char 165		pty
@@ -20,3 +20,7 @@ device-major	drvctl		char 167		drvctl
 device-major	dk		char 168 block 168
 device-major	tap		char 169		tap
 device-major	veriexec	char 170		veriexec
+device-major	fw		char 171		ieee1394if
+device-major	ucycom		char 172		ucycom
+device-major	gpio		char 173		gpio
+device-major	utoppy		char 174		utoppy

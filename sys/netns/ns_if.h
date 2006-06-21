@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_if.h,v 1.10 2003/08/07 16:33:45 agc Exp $	*/
+/*	$NetBSD: ns_if.h,v 1.10.16.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)ns_if.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_NS_IF_H_
+#define _NETNS_NS_IF_H_
 
 /*
  * Interface address, xerox version.  One of these structures
@@ -75,3 +78,5 @@ TAILQ_HEAD(ns_ifaddrhead, ns_ifaddr);
 extern	struct	ns_ifaddrhead ns_ifaddr;
 extern	struct	ifqueue	nsintrq;	/* XNS input packet queue */
 #endif
+
+#endif /* !_NETNS_NS_IF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.29 2005/06/01 18:41:51 drochner Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.29.2.1 2006/06/21 15:02:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29 2005/06/01 18:41:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.1 2006/06/21 15:02:12 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -171,10 +171,10 @@ sequencerattach(n)
 }
 
 int
-sequenceropen(dev, flags, ifmt, p)
+sequenceropen(dev, flags, ifmt, l)
 	dev_t dev;
 	int flags, ifmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = SEQUENCERUNIT(dev);
 	struct sequencer_softc *sc;
@@ -319,10 +319,10 @@ seq_startoutput(sc)
 }
 
 int
-sequencerclose(dev, flags, ifmt, p)
+sequencerclose(dev, flags, ifmt, l)
 	dev_t dev;
 	int flags, ifmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	int n, s;
@@ -488,12 +488,12 @@ sequencerwrite(dev, uio, ioflag)
 }
 
 int
-sequencerioctl(dev, cmd, addr, flag, p)
+sequencerioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	struct synth_info *si;
@@ -514,8 +514,8 @@ sequencerioctl(dev, cmd, addr, flag, p)
 		if (*(int *)addr) {
 			if (sc->async)
 				return EBUSY;
-			sc->async = p;
-			DPRINTF(("sequencer_ioctl: FIOASYNC %p\n", p));
+			sc->async = l->l_proc;
+			DPRINTF(("sequencer_ioctl: FIOASYNC %p\n", l));
 		} else
 			sc->async = 0;
 		break;
@@ -643,10 +643,10 @@ sequencerioctl(dev, cmd, addr, flag, p)
 }
 
 int
-sequencerpoll(dev, events, p)
+sequencerpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	int revents = 0;
@@ -663,10 +663,10 @@ sequencerpoll(dev, events, p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->rsel);
+			selrecord(l, &sc->rsel);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->wsel);
+			selrecord(l, &sc->wsel);
 	}
 
 	return revents;
@@ -1454,10 +1454,10 @@ midi_unit_count()
 }
 
 int
-midiopen(dev, flags, ifmt, p)
+midiopen(dev, flags, ifmt, l)
 	dev_t dev;
 	int flags, ifmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (ENXIO);
 }
@@ -1472,10 +1472,10 @@ midi_getinfo(dev, mi)
 }
 
 int
-midiclose(dev, flags, ifmt, p)
+midiclose(dev, flags, ifmt, l)
 	dev_t dev;
 	int flags, ifmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (ENXIO);
 }

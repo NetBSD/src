@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.19 2005/05/06 09:40:40 martin Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.19.2.1 2006/06/21 15:09:39 yamt Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.19 2005/05/06 09:40:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.19.2.1 2006/06/21 15:09:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,6 +223,35 @@ ok:
 	return n;
 }
 
+/*
+ * FreeBSD 4.6 introduced m_getcl(), which performs `fast' allocation
+ * mbuf clusters from a cache of recently-freed clusters. (If the cache
+ * is empty, new clusters are allocated en-masse).
+ * On NetBSD, for now, implement the `cache' as a function
+ * using normal NetBSD mbuf/cluster allocation macros. Replace this
+ * with fast-cache code, if and when NetBSD implements one.
+ */
+struct mbuf *
+m_getcl(int how, int type, int flags)
+{
+	struct mbuf *mp;
+
+	if ((flags & M_PKTHDR) != 0)
+		MGETHDR(mp, how, type);
+	else
+		MGET(mp, how, type);
+
+	if (mp == NULL)
+		return NULL;
+
+	MCLGET(mp, how);
+	if ((mp->m_flags & M_EXT) != 0)
+		return mp;
+
+	m_free(mp);
+	return NULL;
+}
+
 /* Get a packet tag structure along with specified data following. */
 struct m_tag *
 m_tag_get(int type, int len, int wait)
@@ -273,7 +302,7 @@ m_tag_delete(struct mbuf *m, struct m_tag *t)
 }
 
 /* Unlink and free a packet tag chain, starting from given tag. */
-__inline void
+void
 m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 {
 	struct m_tag *p, *q;
@@ -300,7 +329,7 @@ void
 m_tag_delete_nonpersistent(struct mbuf *m)
 {
 	/* NetBSD has no persistent tags yet, so just delete all tags. */
-	return m_tag_delete_chain(m, NULL);
+	m_tag_delete_chain(m, NULL);
 }
 
 

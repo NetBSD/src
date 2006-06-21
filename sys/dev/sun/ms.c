@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.29 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: ms.c,v 1.29.4.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.29 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.29.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,10 @@ const struct cdevsw ms_cdevsw = {
  ****************************************************************/
 
 int
-msopen(dev, flags, mode, p)
+msopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ms_softc *ms;
 	int unit;
@@ -126,7 +126,7 @@ msopen(dev, flags, mode, p)
 		if (err)
 			return (err);
 	}
-	ms->ms_events.ev_io = p;
+	ms->ms_events.ev_io = l->l_proc;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
 	ms->ms_ready = 1;		/* start accepting events */
@@ -134,10 +134,10 @@ msopen(dev, flags, mode, p)
 }
 
 int
-msclose(dev, flags, mode, p)
+msclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ms_softc *ms;
 
@@ -168,12 +168,12 @@ msread(dev, uio, flags)
 }
 
 int
-msioctl(dev, cmd, data, flag, p)
+msioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ms_softc *ms;
 
@@ -213,15 +213,15 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-mspoll(dev, events, p)
+mspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ms_softc *ms;
 
 	ms = ms_cd.cd_devs[minor(dev)];
-	return (ev_poll(&ms->ms_events, events, p));
+	return (ev_poll(&ms->ms_events, events, l));
 }
 
 int
@@ -262,7 +262,7 @@ ms_input(ms, c)
 		ms->ms_byteno = -1;
 		return;
 	}
-	if ((c & ~0x0f) == 0x80) {	/* if in 0x80..0x8f */
+	if ((c & 0xb0) == 0x80) {	/* if in 0x80..0x8f of 0xc0..0xcf */
 		if (c & 8) {
 			ms->ms_byteno = 1;	/* short form (3 bytes) */
 		} else {
@@ -372,7 +372,7 @@ ms_input(ms, c)
 		d = to_one[d - 1];		/* from 1..7 to {1,2,4} */
 		fe->id = to_id[d - 1];		/* from {1,2,4} to ID */
 		fe->value = mb & d ? VKEY_DOWN : VKEY_UP;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ub ^= d;
 	}
@@ -380,7 +380,7 @@ ms_input(ms, c)
 		NEXT;
 		fe->id = LOC_X_DELTA;
 		fe->value = ms->ms_dx;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dx = 0;
 	}
@@ -388,7 +388,7 @@ ms_input(ms, c)
 		NEXT;
 		fe->id = LOC_Y_DELTA;
 		fe->value = ms->ms_dy;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dy = 0;
 	}

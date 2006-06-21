@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.39 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.39.2.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -274,12 +274,13 @@ struct ether_multistep {
 	((*(u_int *)(mtag + 1)) & 4095)
 
 /* test if any VLAN is configured for this interface */
-#define VLAN_ATTACHED(ec)	(&(ec)->ec_nvlans > 0)
+#define VLAN_ATTACHED(ec)	((ec)->ec_nvlans > 0)
 
 void	ether_ifattach(struct ifnet *, const u_int8_t *);
 void	ether_ifdetach(struct ifnet *);
 
 char	*ether_sprintf(const u_int8_t *);
+char	*ether_snprintf(char *, size_t, const u_int8_t *);
 
 u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 u_int32_t ether_crc32_be(const u_int8_t *, size_t);
@@ -301,4 +302,4 @@ __END_DECLS
 
 #endif /* _STANDALONE */
 
-#endif /* _NET_IF_ETHER_H_ */
+#endif /* !_NET_IF_ETHER_H_ */

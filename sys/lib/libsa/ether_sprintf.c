@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sprintf.c,v 1.3 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: ether_sprintf.c,v 1.3.2.1 2006/06/21 15:10:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -57,8 +57,7 @@
  * Convert Ethernet address to printable (loggable) representation.
  */
 char *
-ether_sprintf(ap)
-        u_char *ap;
+ether_sprintf(const u_char *ap)
 {
 	int i;
 	static char etherbuf[18];

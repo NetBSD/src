@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.13 2005/02/26 12:45:06 simonb Exp $ */
+/*	$NetBSD: ts.c,v 1.13.4.1 2006/06/21 15:06:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13.4.1 2006/06/21 15:06:28 yamt Exp $");
 
 #undef	TSDEBUG
 
@@ -126,7 +126,7 @@ struct	ts_softc {
 	struct	ts *sc_bts;		/* Unibus address of ts struct */
 	int	sc_type;		/* TS11 or TS05? */
 	short	sc_waddr;		/* Value to write to TSDB */
-	struct	bufq_state sc_bufq;	/* pending I/O requests */
+	struct	bufq_state *sc_bufq;	/* pending I/O requests */
 
 	short	sc_mapped;		/* Unibus map allocated ? */
 	short	sc_state;		/* see below: ST_xxx */
@@ -231,8 +231,8 @@ tsmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 tsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct uba_softc *uh = (void *)parent;
-	struct ts_softc *sc = (void *)self;
+	struct uba_softc *uh = device_private(parent);
+	struct ts_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	int error;
 	char *t;
@@ -250,7 +250,7 @@ tsattach(struct device *parent, struct device *self, void *aux)
 	    0, BUS_DMA_NOWAIT, &sc->sc_dmam)))
 		return printf(": failed create DMA map %d\n", error);
 
-	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 
 	/*
 	 * write the characteristics (again)
@@ -300,7 +300,7 @@ tsinit(struct ts_softc *sc)
 		 * buffer into Unibus address space.
 		 */
 		sc->sc_ui.ui_size = sizeof(struct ts);
-		if ((ubmemalloc((void *)sc->sc_dev.dv_parent,
+		if ((ubmemalloc((void *)device_parent(&sc->sc_dev),
 		    &sc->sc_ui, UBA_CANTWAIT)))
 			return;
 		sc->sc_vts = (void *)sc->sc_ui.ui_vaddr;
@@ -376,10 +376,10 @@ tsstart(struct ts_softc *sc, int isloaded)
 	struct buf *bp;
 	int cmd;
 
-	if (TAILQ_EMPTY(&sc->sc_bufq.bq_head))
+	bp = BUFQ_PEEK(sc->sc_bufq);
+	if (bp == NULL) {
 		return 0;
-
-	bp = BUFQ_PEEK(&sc->sc_bufq);
+	}
 #ifdef TSDEBUG
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
@@ -467,7 +467,7 @@ int
 tsready(struct uba_unit *uu)
 {
 	struct ts_softc *sc = uu->uu_softc;
-	struct buf *bp = BUFQ_PEEK(&sc->sc_bufq);
+	struct buf *bp = BUFQ_PEEK(sc->sc_bufq);
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT))
@@ -785,13 +785,13 @@ tsintr(void *arg)
 			sc->sc_dev.dv_xname, sr & TS_TC);
 		tsreset(sc);
 	}
-	if ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
+	if ((bp = BUFQ_GET(sc->sc_bufq)) != NULL) {
 #ifdef TSDEBUG
-		printf("tsintr2: que %p\n", TAILQ_FIRST(&sc->sc_bufq.bq_head));
+		printf("tsintr2: que %p\n", BUFQ_PEEK(sc->sc_bufq));
 #endif
 		if (bp != &sc->ts_cbuf) {	/* no ioctl */
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmam);
-			uba_done((void *)sc->sc_dev.dv_parent);
+			uba_done((void *)device_parent(&sc->sc_dev));
 		}
 		bp->b_resid = sc->sc_vts->status.rbpcr;
 		if ((bp->b_flags & B_ERROR) == 0)
@@ -909,8 +909,8 @@ tsstrategy(struct buf *bp)
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
 	s = splbio ();
-	empty = (BUFQ_PEEK(&sc->sc_bufq) == NULL);
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	empty = (BUFQ_PEEK(sc->sc_bufq) == NULL);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	if (empty)
 		tsstart(sc, 0);
 	splx(s);

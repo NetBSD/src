@@ -27,7 +27,7 @@
  *	i4b_global.h - i4b global include file
  *	--------------------------------------
  *
- *	$Id: i4b_global.h,v 1.5 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_global.h,v 1.5.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_GLOBAL_H_
-#define _I4B_GLOBAL_H_
+#ifndef _NETISDN_I4B_GLOBAL_H_
+#define _NETISDN_I4B_GLOBAL_H_
 
 /*---------------------------------------------------------------------------*
  *	hiding OS differences in the kernel
@@ -69,13 +69,21 @@
 #endif /* >= 3 */
 #endif /* __FreeBSD__ */
 
-#if defined(__NetBSD__) || defined (__OpenBSD__) || defined(__bsdi__)
+#if defined(__NetBSD__) /* after timecounter merge */
+
+#define TIMEOUT_FUNC_T	void *
+#define SECOND		time_second
+#define MICROTIME(x)	getmicrotime(&(x))
+
+#endif /* __NetBSD__ */
+
+#if defined (__OpenBSD__) || defined(__bsdi__)
 
 #define TIMEOUT_FUNC_T	void *
 #define SECOND		time.tv_sec
 #define MICROTIME(x)	microtime(&(x))
 
-#endif /* __NetBSD__ */
+#endif /* __OpenBSD__ */
 
 /*----------------*/
 /* timer handling */
@@ -146,4 +154,4 @@
 #define	CMRLEDS_B1	8	/* second B channel is in use */
 #define	CMRLEDS_B1_IN	16	/* second B channel handles an incoming call */
 
-#endif /* _I4B_GLOBAL_H_ */
+#endif /* !_NETISDN_I4B_GLOBAL_H_ */

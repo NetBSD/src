@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.3 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.3.4.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.3 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.3.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,6 @@ bsdlabel_fstype_to_str(uint8_t fstype)
 	case FS_RAID:		str = DKW_PTYPE_RAIDFRAME;	break;
 	case FS_CCD:		str = DKW_PTYPE_CCD;		break;
 	case FS_APPLEUFS:	str = DKW_PTYPE_APPLEUFS;	break;
-	case FS_VINUM:		str = "vinum";			break;
 	default:		str = NULL;			break;
 	}
 

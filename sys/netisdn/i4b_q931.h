@@ -27,7 +27,7 @@
  *	i4b_q931.h - Q931 handling header file
  *	--------------------------------------
  *
- *	$Id: i4b_q931.h,v 1.3 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_q931.h,v 1.3.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_Q931_H_
-#define _I4B_Q931_H_
+#ifndef _NETISDN_I4B_Q931_H_
+#define _NETISDN_I4B_Q931_H_
 
 /* extension bit */
 
@@ -115,6 +115,6 @@
 
 #define MSG_ALERT_LEN		4	/* length of a alert message */
 
-#endif /* _I4B_Q931_H_ */
+#endif /* !_NETISDN_I4B_Q931_H_ */
 
 /* EOF */

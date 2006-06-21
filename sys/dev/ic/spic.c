@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.1 2002/04/22 12:42:11 augustss Exp $	*/
+/*	$NetBSD: spic.c,v 1.1.30.1 2006/06/21 15:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1 2002/04/22 12:42:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1.30.1 2006/06/21 15:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1 2002/04/22 12:42:11 augustss Exp $");
 #include <sys/callout.h>
 
 #include <machine/bus.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ic/spicvar.h>
 
@@ -82,9 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1 2002/04/22 12:42:11 augustss Exp $");
 int spicdebug = 0;
 #endif
 
+static int spicerror = 0;
+
 static int	spic_enable(void *);
 static void	spic_disable(void *);
-static int	spic_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	spic_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 static const struct wsmouse_accessops spic_accessops = {
 	spic_enable,
@@ -96,8 +100,10 @@ static const struct wsmouse_accessops spic_accessops = {
 	unsigned int n = 10000; \
 	while (--n && (command)) \
 		delay(1); \
-	if (n == 0 && !(quiet)) \
-		printf("spic: command failed at line %d\n", __LINE__); \
+	if (n == 0 && !(quiet)) { \
+		printf("spic0: command failed at line %d\n", __LINE__); \
+		spicerror++; \
+	} \
 } while (0)
 
 #if 0
@@ -143,6 +149,45 @@ spic_intr(void *v) {
 	v1 = INB(sc, SPIC_PORT1);
 	v2 = INB(sc, SPIC_PORT2);
 
+	/* Handle lid switch */
+	if (v2 == 0x30) {
+		switch (v1) {
+		case 0x50:	/* opened */
+			sysmon_pswitch_event(&sc->sc_smpsw[SPIC_PSWITCH_LID],
+			    PSWITCH_EVENT_RELEASED);
+			goto skip;
+			break;
+		case 0x51:	/* closed */
+			sysmon_pswitch_event(&sc->sc_smpsw[SPIC_PSWITCH_LID],
+			    PSWITCH_EVENT_PRESSED);
+			goto skip;
+			break;
+		default:
+			aprint_debug("%s: unknown lid event 0x%02x\n",
+			    sc->sc_dev.dv_xname, v1);
+			goto skip;
+			break;
+		}
+	}
+
+	/* Handle suspend/hibernate buttons */
+	if (v2 == 0x20) {
+		switch (v1) {
+		case 0x10:	/* suspend */
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[SPIC_PSWITCH_SUSPEND],
+			    PSWITCH_EVENT_PRESSED);
+			goto skip;
+			break;
+		case 0x1c:	/* hibernate */
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[SPIC_PSWITCH_HIBERNATE],
+			    PSWITCH_EVENT_PRESSED);
+			goto skip;
+			break;
+		}
+	}
+
 	buttons = 0;
 	if (v1 & 0x40)
 		buttons |= 1 << 1;
@@ -161,7 +206,7 @@ spic_intr(void *v) {
 		dz -= 0x20;
 		break;
 	default:
-		printf("spic: v1=0x%02x v2=0x%02x\n", v1, v2);
+		printf("spic0: v1=0x%02x v2=0x%02x\n", v1, v2);
 		goto skip;
 	}
 
@@ -192,7 +237,12 @@ static void
 spictimeout(void *v)
 {
 	struct spic_softc *sc = v;
-	int s = spltty();
+	int s;
+
+	if (spicerror >= 3)
+		return;
+
+	s = spltty();
 	spic_intr(v);
 	splx(s);
 	callout_reset(&sc->sc_poll, POLLRATE, spictimeout, sc);
@@ -202,6 +252,7 @@ void
 spic_attach(struct spic_softc *sc)
 {
 	struct wsmousedev_attach_args a;
+	int i, rv;
 
 #ifdef SPIC_DEBUG
 	if (spicdebug)
@@ -217,6 +268,25 @@ spic_attach(struct spic_softc *sc)
 	a.accessops = &spic_accessops;
 	a.accesscookie = sc;
 	sc->sc_wsmousedev = config_found(&sc->sc_dev, &a, wsmousedevprint);
+
+	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_name = "spiclid0";
+	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_type = PSWITCH_TYPE_LID;
+	sc->sc_smpsw[SPIC_PSWITCH_SUSPEND].smpsw_name = "spicsuspend0";
+	sc->sc_smpsw[SPIC_PSWITCH_SUSPEND].smpsw_type = PSWITCH_TYPE_SLEEP;
+	sc->sc_smpsw[SPIC_PSWITCH_HIBERNATE].smpsw_name = "spichibernate0";
+	sc->sc_smpsw[SPIC_PSWITCH_HIBERNATE].smpsw_type = PSWITCH_TYPE_SLEEP;
+
+	for (i = 0; i < SPIC_NPSWITCH; i++) {
+		rv = sysmon_pswitch_register(&sc->sc_smpsw[i]);
+		if (rv != 0)
+			aprint_error("%s: unable to register %s with sysmon\n",
+			    sc->sc_dev.dv_xname,
+			    sc->sc_smpsw[i].smpsw_name);
+	}
+
+	callout_reset(&sc->sc_poll, POLLRATE, spictimeout, sc);
+
+	return;
 }
 
 
@@ -236,8 +306,6 @@ spic_enable(void *v)
 		printf("spic_enable\n");
 #endif
 
-	callout_reset(&sc->sc_poll, POLLRATE, spictimeout, sc);
-
 	return (0);
 }
 
@@ -253,8 +321,6 @@ spic_disable(void *v)
 	}
 #endif
 
-	callout_stop(&sc->sc_poll);
-
 	sc->sc_enabled = 0;
 
 #ifdef SPIC_DEBUG
@@ -264,7 +330,7 @@ spic_disable(void *v)
 }
 
 static int
-spic_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+spic_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:

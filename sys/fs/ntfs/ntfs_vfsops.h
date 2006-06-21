@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.h,v 1.4 2004/05/20 06:34:26 atatat Exp $	*/
+/*	$NetBSD: ntfs_vfsops.h,v 1.4.12.1 2006/06/21 15:09:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -27,6 +27,10 @@
  *
  *	Id: ntfs_vfsops.h,v 1.3 1999/05/12 09:43:06 semenu Exp
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
+
 #define VG_DONTLOADIN	0x0001	/* Tells ntfs_vgetex to do not call */
 				/* ntfs_loadntnode() on ntnode, even if */
 				/* ntnode not loaded */
@@ -35,7 +39,7 @@
 #define	VG_EXT		0x0004	/* This is not main record */
 
 int ntfs_vgetex(struct mount *, ino_t, u_int32_t, char *, u_long, u_long,
-		struct proc *, struct vnode **);
+		struct vnode **);
 int ntfs_calccfree(struct ntfsmount *, cn_t *);
 
 #ifdef SYSCTL_SETUP_PROTO

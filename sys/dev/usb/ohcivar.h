@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.36 2005/03/11 19:25:22 mycroft Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.36.4.1 2006/06/21 15:07:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -71,9 +71,7 @@ typedef struct ohci_soft_itd {
 	LIST_ENTRY(ohci_soft_itd) hnext;
 	usbd_xfer_handle xfer;
 	u_int16_t flags;
-#ifdef DIAGNOSTIC
-	char isdone;
-#endif
+	char isdone;	/* used only when DIAGNOSTIC is defined */
 } ohci_soft_itd_t;
 #define OHCI_SITD_SIZE ((sizeof (struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
 #define OHCI_SITD_CHUNK 64
@@ -105,6 +103,11 @@ typedef struct ohci_softc {
 	int sc_noport;
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
+
+	int sc_endian;
+#define	OHCI_LITTLE_ENDIAN	0	/* typical (uninitialized default) */
+#define	OHCI_BIG_ENDIAN		1	/* big endian OHCI? never seen it */
+#define	OHCI_HOST_ENDIAN	2	/* if OHCI always matches CPU */
 
 #ifdef USB_USE_SOFTINTR
 	char sc_softwake;

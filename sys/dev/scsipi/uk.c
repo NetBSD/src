@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.45 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: uk.c,v 1.45.4.1 2006/06/21 15:06:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.45 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.45.4.1 2006/06/21 15:06:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ ukmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 ukattach(struct device *parent, struct device *self, void *aux)
 {
-	struct uk_softc *uk = (void *)self;
+	struct uk_softc *uk = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -136,14 +136,14 @@ ukactivate(struct device *self, enum devact act)
 static int
 ukdetach(struct device *self, int flags)
 {
-	/*struct uk_softc *uk = (struct uk_softc *) self;*/
+	/*struct uk_softc *uk = device_private(self);*/
 	int cmaj, mn;
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&uk_cdevsw);
 
 	/* Nuke the vnodes for any open instances */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(cmaj, mn, mn, VCHR);
 
 	return (0);
@@ -153,7 +153,7 @@ ukdetach(struct device *self, int flags)
  * open the device.
  */
 static int
-ukopen(dev_t dev, int flag, int fmt, struct proc *p)
+ukopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit, error;
 	struct uk_softc *uk;
@@ -195,7 +195,7 @@ ukopen(dev_t dev, int flag, int fmt, struct proc *p)
  * occurence of an open device
  */
 static int
-ukclose(dev_t dev, int flag, int fmt, struct proc *p)
+ukclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 	struct scsipi_periph *periph = uk->sc_periph;
@@ -216,9 +216,9 @@ ukclose(dev_t dev, int flag, int fmt, struct proc *p)
  * Only does generic scsi ioctls.
  */
 static int
-ukioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+ukioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, p));
+	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, l));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.78.2.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.1 2006/06/21 15:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $");
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -106,7 +107,7 @@ static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
 static int sysctl_dumpentry(struct radix_node *, void *);
 static int sysctl_iflist(int, struct walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
-static __inline void rt_adjustcount(int, int);
+static inline void rt_adjustcount(int, int);
 
 /* Sleazy use of local variables throughout file, warning!!!! */
 #define dst	info.rti_info[RTAX_DST]
@@ -117,7 +118,7 @@ static __inline void rt_adjustcount(int, int);
 #define ifaaddr	info.rti_info[RTAX_IFA]
 #define brdaddr	info.rti_info[RTAX_BRD]
 
-static __inline void
+static inline void
 rt_adjustcount(int af, int cnt)
 {
 	route_cb.any_count += cnt;
@@ -145,7 +146,7 @@ rt_adjustcount(int af, int cnt)
 /*ARGSUSED*/
 int
 route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct rawcb *rp = sotorawcb(so);
@@ -167,12 +168,12 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * and send "safe" commands to the routing socket.
 	 */
 	if (req == PRU_ATTACH) {
-		if (p == 0)
+		if (l == 0)
 			error = EACCES;
 		else
 			error = raw_attach(so, (int)(long)nam);
 	} else
-		error = raw_usrreq(so, req, m, nam, control, p);
+		error = raw_usrreq(so, req, m, nam, control, l);
 
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
@@ -260,7 +261,7 @@ route_output(struct mbuf *m, ...)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (rtm->rtm_type != RTM_GET &&
-	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {
@@ -494,7 +495,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
-		if (i == RTAX_NETMASK + 1 &&
+		if (i == RTAX_NETMASK + 1 && sa &&
 		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was netmask.
@@ -930,6 +931,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = rt->rt_use;
 		rtm->rtm_rmx = rt->rt_rmx;
+		KASSERT(rt->rt_ifp != NULL);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
@@ -954,6 +956,8 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);
+		if (ifa == NULL)
+			continue;
 		ifpaddr = ifa->ifa_addr;
 		switch (type) {
 		case NET_RT_IFLIST:
@@ -1163,13 +1167,15 @@ struct domain routedomain = {
 
 SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 {
+	const struct sysctlnode *rnode = NULL;
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "route",
 		       SYSCTL_DESCR("PF_ROUTE information"),
@@ -1181,4 +1187,10 @@ SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 		       SYSCTL_DESCR("Routing table information"),
 		       sysctl_rtable, 0, NULL, 0,
 		       CTL_NET, PF_ROUTE, 0 /* any protocol */, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("Routing statistics"),
+		       NULL, 0, &rtstat, sizeof(rtstat),
+		       CTL_CREATE, CTL_EOL);
 }

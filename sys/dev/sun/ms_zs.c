@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.12 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.12.4.1 2006/06/21 15:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.12 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.12.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ ms_zs_attach(parent, self, aux)
 	void   *aux;
 
 {
-	struct zsc_softc *zsc = (void *) parent;
-	struct ms_softc *ms = (void *) self;
+	struct zsc_softc *zsc = device_private(parent);
+	struct ms_softc *ms = device_private(self);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct cfdata *cf;
@@ -135,8 +135,8 @@ ms_zs_attach(parent, self, aux)
 	int reset, s;
 	int bps;
 
-	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = ms->ms_dev.dv_unit;
+	cf = device_cfdata(&ms->ms_dev);
+	ms_unit = device_unit(&ms->ms_dev);
 	channel = args->channel;
 	cs = zsc->zsc_cs[channel];
 	cs->cs_private = ms;

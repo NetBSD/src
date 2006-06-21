@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.14 2005/02/26 22:45:09 perry Exp $ */
+/*	$NetBSD: if_gre.h,v 1.14.4.1 2006/06/21 15:10:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NET_IF_GRE_H
-#define _NET_IF_GRE_H
+#ifndef _NET_IF_GRE_H_
+#define _NET_IF_GRE_H_
 
 #include <sys/queue.h>
 
@@ -151,10 +151,7 @@ extern int ip_gre_ttl;
 LIST_HEAD(gre_softc_head, gre_softc);
 extern struct gre_softc_head gre_softc_list;
 
-int	gre_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *));
 u_int16_t gre_in_cksum(u_short *, u_int);
 #endif /* _KERNEL */
 
-#endif
+#endif /* !_NET_IF_GRE_H_ */

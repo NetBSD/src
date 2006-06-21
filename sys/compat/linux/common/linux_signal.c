@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.47.2.1 2006/06/21 14:59:12 yamt Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.1 2006/06/21 14:59:12 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $"
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_exec.h> /* For emul_linux */
+#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
+#include <compat/linux/common/linux_emuldata.h> /* for linux_emuldata */
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_sigevent.h>
 #include <compat/linux/common/linux_util.h>
@@ -625,25 +628,90 @@ linux_sys_sigaltstack(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct linux_sigaltstack ss;
-	struct sigaltstack nss, oss;
+	struct sigaltstack nss;
 	int error;
+
+	if (SCARG(uap, oss)) {
+		native_to_linux_sigaltstack(&ss, &p->p_sigctx.ps_sigstk);
+		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
+			return error;
+	}
 
 	if (SCARG(uap, ss) != NULL) {
 		if ((error = copyin(SCARG(uap, ss), &ss, sizeof(ss))) != 0)
 			return error;
 		linux_to_native_sigaltstack(&nss, &ss);
+
+		if (nss.ss_flags & ~SS_ALLBITS)
+			return EINVAL;
+
+		if (nss.ss_flags & SS_DISABLE) {
+			if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+				return EINVAL;
+		} else {
+			if (nss.ss_size < LINUX_MINSIGSTKSZ)
+				return ENOMEM;
+		}
+		p->p_sigctx.ps_sigstk = nss;
 	}
 
-	error = sigaltstack1(p,
-	    SCARG(uap, ss) ? &nss : NULL, SCARG(uap, oss) ? &oss : NULL);
-	if (error)
-		return error;
-
-	if (SCARG(uap, oss) != NULL) {
-		native_to_linux_sigaltstack(&ss, &oss);
-		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
-			return error;
-	}
 	return 0;
 }
 #endif /* LINUX_SS_ONSTACK */
+
+#ifdef LINUX_NPTL
+int
+linux_sys_tkill(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_tkill_args /* {
+		syscallarg(int) tid;
+		syscallarg(int) sig;
+	} */ *uap = v;
+	struct linux_sys_kill_args cup;
+
+	/* We use the PID as the TID ... */
+	SCARG(&cup, pid) = SCARG(uap, tid);
+	SCARG(&cup, signum) = SCARG(uap, sig);
+
+	return linux_sys_kill(l, &cup, retval);
+}
+
+int
+linux_sys_tgkill(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_tgkill_args /* {
+		syscallarg(int) tgid;
+		syscallarg(int) tid;
+		syscallarg(int) sig;
+	} */ *uap = v;
+	struct linux_sys_kill_args cup;
+	struct linux_emuldata *led;
+	struct proc *p;
+
+	SCARG(&cup, pid) = SCARG(uap, tid);
+	SCARG(&cup, signum) = SCARG(uap, sig);
+
+	if (SCARG(uap, tgid) == -1)
+		return linux_sys_kill(l, &cup, retval);
+
+	/* We use the PID as the TID, but make sure the group ID is right */
+	if ((p = pfind(SCARG(uap, tid))) == NULL)
+		return ESRCH;
+
+	if (p->p_emul != &emul_linux)
+		return ESRCH;
+
+	led = p->p_emuldata;
+
+	if (led->s->group_pid != SCARG(uap, tgid))
+		return ESRCH;
+
+	return linux_sys_kill(l, &cup, retval);
+}
+#endif /* LINUX_NPTL */

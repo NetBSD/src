@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.14 2005/02/27 00:26:58 perry Exp $ */
+/* $NetBSD: radio.c,v 1.14.4.1 2006/06/21 15:02:12 yamt Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.14 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.14.4.1 2006/06/21 15:02:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ radioattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-radioopen(dev_t dev, int flags, int fmt, struct proc *p)
+radioopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int	unit;
 	struct radio_softc *sc;
@@ -98,26 +98,26 @@ radioopen(dev_t dev, int flags, int fmt, struct proc *p)
 		return (ENXIO);
 
 	if (sc->hw_if->open != NULL)
-		return (sc->hw_if->open(sc->hw_hdl, flags, fmt, p));
+		return (sc->hw_if->open(sc->hw_hdl, flags, fmt, l->l_proc));
 	else
 		return (0);
 }
 
 int
-radioclose(dev_t dev, int flags, int fmt, struct proc *p)
+radioclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct radio_softc *sc;
 
 	sc = radio_cd.cd_devs[RADIOUNIT(dev)];
 
 	if (sc->hw_if->close != NULL)
-		return (sc->hw_if->close(sc->hw_hdl, flags, fmt, p));
+		return (sc->hw_if->close(sc->hw_hdl, flags, fmt, l->l_proc));
 	else
 		return (0);
 }
 
 int
-radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct radio_softc *sc;
 	int unit, error;
@@ -183,7 +183,7 @@ radiodetach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&radio_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

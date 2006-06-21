@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.15 2001/11/12 15:25:25 lukem Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.15.32.1 2006/06/21 15:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15 2001/11/12 15:25:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15.32.1 2006/06/21 15:09:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,33 +47,32 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15 2001/11/12 15:25:25 lukem Exp $");
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 /*
  * Check for ipc permission
  */
 
 int
-ipcperm(cred, perm, mode)
-	struct ucred *cred;
-	struct ipc_perm *perm;
-	int mode;
+ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 {
 	mode_t mask;
+	int ismember = 0;
 
-	if (cred->cr_uid == 0)
+	if (kauth_cred_geteuid(cred) == 0)
 		return (0);
 
 	if (mode == IPC_M) {
-		if (cred->cr_uid == perm->uid ||
-		    cred->cr_uid == perm->cuid)
+		if (kauth_cred_geteuid(cred) == perm->uid ||
+		    kauth_cred_geteuid(cred) == perm->cuid)
 			return (0);
 		return (EPERM);
 	}
 
 	mask = 0;
 
-	if (cred->cr_uid == perm->uid ||
-	    cred->cr_uid == perm->cuid) {
+	if (kauth_cred_geteuid(cred) == perm->uid ||
+	    kauth_cred_geteuid(cred) == perm->cuid) {
 		if (mode & IPC_R)
 			mask |= S_IRUSR;
 		if (mode & IPC_W)
@@ -81,8 +80,10 @@ ipcperm(cred, perm, mode)
 		return ((perm->mode & mask) == mask ? 0 : EACCES);
 	}
 
-	if (cred->cr_gid == perm->gid || groupmember(perm->gid, cred) ||
-	    cred->cr_gid == perm->cgid || groupmember(perm->cgid, cred)) {
+	if (kauth_cred_getegid(cred) == perm->gid ||
+	    (kauth_cred_ismember_gid(cred, perm->gid, &ismember) == 0 && ismember) ||
+	    kauth_cred_getegid(cred) == perm->cgid ||
+	    (kauth_cred_ismember_gid(cred, perm->cgid, &ismember) == 0 && ismember)) {
 		if (mode & IPC_R)
 			mask |= S_IRGRP;
 		if (mode & IPC_W)

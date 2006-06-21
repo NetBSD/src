@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.51 2005/05/02 15:34:31 yamt Exp $	*/
+/*	$NetBSD: hme.c,v 1.51.2.1 2006/06/21 15:02:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.51 2005/05/02 15:34:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.51.2.1 2006/06/21 15:02:54 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -654,7 +654,7 @@ hme_init(sc)
  * Compare two Ether/802 addresses for equality, inlined and unrolled for
  * speed.
  */
-static __inline__ int
+static inline int
 ether_cmp(a, b)
 	u_char *a, *b;
 {

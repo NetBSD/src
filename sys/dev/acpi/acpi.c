@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.76 2005/06/30 22:28:03 sekiya Exp $	*/
+/*	$NetBSD: acpi.c,v 1.76.2.1 2006/06/21 15:02:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76 2005/06/30 22:28:03 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76.2.1 2006/06/21 15:02:31 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76 2005/06/30 22:28:03 sekiya Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -116,13 +117,15 @@ MALLOC_DECLARE(M_ACPI);
 #define	ACPI_DBGR_PROBE		0x08
 #define	ACPI_DBGR_RUNNING	0x10
 
-int	acpi_dbgr = 0x00;
+static int acpi_dbgr = 0x00;
 #endif
 
 static int	acpi_match(struct device *, struct cfdata *, void *);
 static void	acpi_attach(struct device *, struct device *, void *);
 
 static int	acpi_print(void *aux, const char *);
+
+static int	sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
 
 extern struct cfdriver acpi_cd;
 
@@ -149,10 +152,17 @@ static struct simplelock acpi_slock;
 static int acpi_locked;
 
 /*
+ * sysctl-related information
+ */
+
+static int acpi_node = CTL_EOL;
+static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
+static int acpi_sleepstate = ACPI_STATE_S0;
+
+/*
  * Prototypes.
  */
 static void		acpi_shutdown(void *);
-static ACPI_STATUS	acpi_disable(struct acpi_softc *sc);
 static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
@@ -220,6 +230,29 @@ acpi_probe(void)
 	return 1;
 }
 
+ACPI_STATUS
+acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
+{
+	ACPI_STATUS rv;
+
+	/*
+	 * IA-32: Use AcpiFindRootPointer() to locate the RSDP.
+	 *
+	 * IA-64: Use the EFI.
+	 *
+	 * We let MD code handle this since there are multiple
+	 * ways to do it.
+	 */
+
+	rv = acpi_md_OsGetRootPointer(Flags, PhysicalAddress);
+
+	if (acpi_root_pointer == 0 && ACPI_SUCCESS(rv))
+		acpi_root_pointer =
+		    (uint64_t)PhysicalAddress->Pointer.Physical;
+
+	return rv;
+}
+
 /*
  * acpi_match:
  *
@@ -252,17 +285,18 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpibus_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	printf("\n");
+	aprint_naive(": Advanced Configuration and Power Interface\n");
+	aprint_normal(": Advanced Configuration and Power Interface\n");
 
 	if (acpi_softc != NULL)
 		panic("acpi_attach: ACPI has already been attached");
 
 	sysmon_power_settype("acpi");
 
-	printf("%s: using Intel ACPI CA subsystem version %08x\n",
+	aprint_verbose("%s: using Intel ACPI CA subsystem version %08x\n",
 	    sc->sc_dev.dv_xname, ACPI_CA_VERSION);
 
-	printf("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
+	aprint_verbose("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 	    sc->sc_dev.dv_xname,
 	    AcpiGbl_XSDT->OemId, AcpiGbl_XSDT->OemTableId,
 	    AcpiGbl_XSDT->OemRevision,
@@ -288,7 +322,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiEnableSubsystem(0);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to enable ACPI: %s\n",
+		aprint_error("%s: unable to enable ACPI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -300,7 +334,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiInitializeObjects(0);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to initialize ACPI objects: %s\n",
+		aprint_error("%s: unable to initialize ACPI objects: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -311,8 +345,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Show SCI interrupt. */
 	if (AcpiGbl_FADT != NULL)
-		printf("%s: SCI interrupting at int %d\n",
-			sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
+		aprint_verbose("%s: SCI interrupting at int %d\n",
+		    sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
 	/*
 	 * Check for fixed-hardware features.
 	 */
@@ -336,6 +370,15 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
 
+	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL) {
+		(void)sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_IMMEDIATE,
+		    CTLTYPE_QUAD, "root", NULL, NULL,
+		    acpi_root_pointer, NULL, 0,
+		    CTL_HW, acpi_node, CTL_CREATE, CTL_EOL);
+	}
+
+
 	/*
 	 * Register a shutdown hook that disables certain ACPI
 	 * events that might happen and confuse us while we're
@@ -343,7 +386,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(acpi_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to register shutdown hook\n",
+		aprint_error("%s: WARNING: unable to register shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 
 #ifdef ACPI_DEBUGGER
@@ -361,15 +404,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 static void
 acpi_shutdown(void *arg)
 {
-	struct acpi_softc *sc = arg;
-	ACPI_STATUS rv;
-
-	rv = acpi_disable(sc);
-	if (ACPI_FAILURE(rv))
-		printf("%s: WARNING: unable to disable ACPI: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+	/* nothing */
 }
 
+#if 0
 /*
  * acpi_disable:
  *
@@ -380,15 +418,14 @@ acpi_disable(struct acpi_softc *sc)
 {
 	ACPI_STATUS rv = AE_OK;
 
-#ifdef ACPI_DISABLE_ON_POWEROFF
 	if (acpi_active) {
 		rv = AcpiDisable();
 		if (ACPI_SUCCESS(rv))
 			acpi_active = 0;
 	}
-#endif
 	return rv;
 }
+#endif
 
 struct acpi_make_devnode_state {
 	struct acpi_softc *softc;
@@ -497,16 +534,16 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	buf.Length = ACPI_ALLOCATE_BUFFER;
 
 #ifdef ACPI_DEBUG
-	printf("acpi_activate_device: %s, old status=%x\n",
+	aprint_normal("acpi_activate_device: %s, old status=%x\n",
 	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
 #endif
 
 	rv = acpi_allocate_resources(handle);
 	if (ACPI_FAILURE(rv)) {
-		printf("acpi: activate failed for %s\n",
+		aprint_error("acpi: activate failed for %s\n",
 		       (*di)->HardwareId.Value);
 	} else {
-		printf("acpi: activated %s\n", (*di)->HardwareId.Value);
+		aprint_normal("acpi: activated %s\n", (*di)->HardwareId.Value);
 	}
 
 	(void)AcpiGetObjectInfo(handle, &buf);
@@ -514,7 +551,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	*di = buf.Pointer;
 
 #ifdef ACPI_DEBUG
-	printf("acpi_activate_device: %s, new status=%x\n",
+	aprint_normal("acpi_activate_device: %s, new status=%x\n",
 	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
 #endif
 }
@@ -547,7 +584,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 		rv = AcpiGetObjectInfo(handle, &buf);
 		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
-			printf("%s: AcpiGetObjectInfo failed: %s\n",
+			aprint_normal("%s: AcpiGetObjectInfo failed: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 #endif
 			goto out; /* XXX why return OK */
@@ -587,18 +624,18 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 				goto out;
 
 #ifdef ACPI_EXTRA_DEBUG
-			printf("%s: HID %s found in scope %s level %d\n",
+			aprint_normal("%s: HID %s found in scope %s level %d\n",
 			    sc->sc_dev.dv_xname,
 			    ad->ad_devinfo->HardwareId.Value,
 			    as->as_name, ad->ad_level);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
-				printf("       UID %s\n",
+				aprint_normal("       UID %s\n",
 				    ad->ad_devinfo->UniqueId.Value);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
-				printf("       ADR 0x%016qx\n",
+				aprint_normal("       ADR 0x%016qx\n",
 				    ad->ad_devinfo->Address);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
-				printf("       STA 0x%08x\n",
+				aprint_normal("       STA 0x%08x\n",
 				    ad->ad_devinfo->CurrentStatus);
 #endif
 		}
@@ -639,7 +676,7 @@ acpi_print(void *aux, const char *pnp)
 				    sizeof(acpi_knowndevs[0]); i++) {
 					if (strcmp(acpi_knowndevs[i].pnp,
 					    pnpstr) == 0) {
-						printf("[%s] ",
+						aprint_normal("[%s] ",
 						    acpi_knowndevs[i].str);
 					}
 				}
@@ -696,20 +733,20 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	 */
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->PwrButton == 0) {
-		printf("%s: fixed-feature power button present\n",
+		aprint_normal("%s: fixed-feature power button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_power.smpsw_name = sc->sc_dev.dv_xname;
 		sc->sc_smpsw_power.smpsw_type = PSWITCH_TYPE_POWER;
 		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
-			printf("%s: unable to register fixed power button "
-			    "with sysmon\n", sc->sc_dev.dv_xname);
+			aprint_error("%s: unable to register fixed power "
+			    "button with sysmon\n", sc->sc_dev.dv_xname);
 		} else {
 			rv = AcpiInstallFixedEventHandler(
 			    ACPI_EVENT_POWER_BUTTON,
 			    acpi_fixed_button_handler, &sc->sc_smpsw_power);
 			if (ACPI_FAILURE(rv)) {
-				printf("%s: unable to install handler for "
-				    "fixed power button: %s\n",
+				aprint_error("%s: unable to install handler "
+				    "for fixed power button: %s\n",
 				    sc->sc_dev.dv_xname,
 				    AcpiFormatException(rv));
 			}
@@ -717,20 +754,20 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	}
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->SleepButton == 0) {
-		printf("%s: fixed-feature sleep button present\n",
+		aprint_normal("%s: fixed-feature sleep button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_sleep.smpsw_name = sc->sc_dev.dv_xname;
 		sc->sc_smpsw_sleep.smpsw_type = PSWITCH_TYPE_SLEEP;
 		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
-			printf("%s: unable to register fixed sleep button "
-			    "with sysmon\n", sc->sc_dev.dv_xname);
+			aprint_error("%s: unable to register fixed sleep "
+			    "button with sysmon\n", sc->sc_dev.dv_xname);
 		} else {
 			rv = AcpiInstallFixedEventHandler(
 			    ACPI_EVENT_SLEEP_BUTTON,
 			    acpi_fixed_button_handler, &sc->sc_smpsw_sleep);
 			if (ACPI_FAILURE(rv)) {
-				printf("%s: unable to install handler for "
-				    "fixed sleep button: %s\n",
+				aprint_error("%s: unable to install handler "
+				    "for fixed sleep button: %s\n",
 				    sc->sc_dev.dv_xname,
 				    AcpiFormatException(rv));
 			}
@@ -1105,11 +1142,11 @@ acpi_get_intr(ACPI_HANDLE handle)
 	rv = acpi_get(handle, &ret, AcpiGetCurrentResources);
 	if (ACPI_FAILURE(rv))
 		return intr;
-	for (res = ret.Pointer; res->Id != ACPI_RSTYPE_END_TAG;
+	for (res = ret.Pointer; res->Type != ACPI_RESOURCE_TYPE_END_TAG;
 	     res = ACPI_NEXT_RESOURCE(res)) {
-		if (res->Id == ACPI_RSTYPE_IRQ) {
+		if (res->Type == ACPI_RESOURCE_TYPE_IRQ) {
 			irq = (ACPI_RESOURCE_IRQ *)&res->Data;
-			if (irq->NumberOfInterrupts == 1)
+			if (irq->InterruptCount == 1)
 				intr = irq->Interrupts[0];
 			break;
 		}
@@ -1278,53 +1315,54 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 	bufn.Pointer = resn = malloc(bufn.Length, M_ACPI, M_WAITOK);
 	resp = bufp.Pointer;
 	resc = bufc.Pointer;
-	while (resc->Id != ACPI_RSTYPE_END_TAG &&
-	       resp->Id != ACPI_RSTYPE_END_TAG) {
-		while (resc->Id != resp->Id && resp->Id != ACPI_RSTYPE_END_TAG)
+	while (resc->Type != ACPI_RESOURCE_TYPE_END_TAG &&
+	       resp->Type != ACPI_RESOURCE_TYPE_END_TAG) {
+		while (resc->Type != resp->Type && resp->Type != ACPI_RESOURCE_TYPE_END_TAG)
 			resp = ACPI_NEXT_RESOURCE(resp);
-		if (resp->Id == ACPI_RSTYPE_END_TAG)
+		if (resp->Type == ACPI_RESOURCE_TYPE_END_TAG)
 			break;
 		/* Found identical Id */
-		resn->Id = resc->Id;
-		switch (resc->Id) {
-		case ACPI_RSTYPE_IRQ:
+		resn->Type = resc->Type;
+		switch (resc->Type) {
+		case ACPI_RESOURCE_TYPE_IRQ:
 			memcpy(&resn->Data, &resp->Data,
 			       sizeof(ACPI_RESOURCE_IRQ));
 			irq = (ACPI_RESOURCE_IRQ *)&resn->Data;
 			irq->Interrupts[0] =
 			    ((ACPI_RESOURCE_IRQ *)&resp->Data)->
-			        Interrupts[irq->NumberOfInterrupts-1];
-			irq->NumberOfInterrupts = 1;
-			resn->Length = ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_IRQ);
+			        Interrupts[irq->InterruptCount-1];
+			irq->InterruptCount = 1;
+			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_IRQ);
 			break;
-		case ACPI_RSTYPE_IO:
+		case ACPI_RESOURCE_TYPE_IO:
 			memcpy(&resn->Data, &resp->Data,
 			       sizeof(ACPI_RESOURCE_IO));
 			resn->Length = resp->Length;
 			break;
 		default:
-			printf("acpi_allocate_resources: res=%d\n", resc->Id);
+			printf("acpi_allocate_resources: res=%d\n", resc->Type);
 			rv = AE_BAD_DATA;
 			goto out2;
 		}
 		resc = ACPI_NEXT_RESOURCE(resc);
 		resn = ACPI_NEXT_RESOURCE(resn);
+		resp = ACPI_NEXT_RESOURCE(resp);
 		delta = (UINT8 *)resn - (UINT8 *)bufn.Pointer;
 		if (delta >=
-		    bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
+		    bufn.Length-ACPI_RS_SIZE(ACPI_RESOURCE_DATA)) {
 			bufn.Length *= 2;
 			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
 					       M_ACPI, M_WAITOK);
 			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
 		}
 	}
-	if (resc->Id != ACPI_RSTYPE_END_TAG) {
+	if (resc->Type != ACPI_RESOURCE_TYPE_END_TAG) {
 		printf("acpi_allocate_resources: resc not exhausted\n");
 		rv = AE_BAD_DATA;
 		goto out3;
 	}
 
-	resn->Id = ACPI_RSTYPE_END_TAG;
+	resn->Type = ACPI_RESOURCE_TYPE_END_TAG;
 	rv = AcpiSetCurrentResources(handle, &bufn);
 	if (ACPI_FAILURE(rv)) {
 		printf("acpi_allocate_resources: AcpiSetCurrentResources %s\n",
@@ -1341,3 +1379,64 @@ out:
 	return rv;
 }
 #endif /* PCI_INTR_FIXUP || ACPI_ACTIVATE_DEV */
+
+SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
+{
+	const struct sysctlnode *node;
+	const struct sysctlnode *ssnode;
+
+	if (sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL) != 0)
+		return;
+
+	if (sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "acpi", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+		return;
+
+	acpi_node = node->sysctl_num;
+
+	/* ACPI sleepstate sysctl */
+	if (sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL) != 0)
+		return;
+	if (sysctl_createv(NULL, 0, &node, &ssnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "sleep_state",
+	    NULL, sysctl_hw_acpi_sleepstate, 0, NULL, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
+		return;
+}
+
+static int
+sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = acpi_sleepstate;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < ACPI_STATE_S0 || t > ACPI_STATE_S5)
+		return EINVAL;
+
+	if (acpi_softc != NULL && acpi_sleepstate != t) {
+		acpi_sleepstate = t;
+		aprint_normal("acpi0: entering state %d\n", t);
+		acpi_enter_sleep_state(acpi_softc, t);
+		aprint_normal("acpi0: resuming\n");
+		t = acpi_sleepstate = ACPI_STATE_S0;
+	}
+
+	return 0;
+}

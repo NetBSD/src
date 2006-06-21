@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.61 2005/05/30 04:25:32 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.61.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.61 2005/05/30 04:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.61.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ ssmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 ssattach(struct device *parent, struct device *self, void *aux)
 {
-	struct ss_softc *ss = (void *)self;
+	struct ss_softc *ss = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -163,7 +163,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	bufq_alloc(&ss->buf_queue, BUFQ_FCFS);
+	bufq_alloc(&ss->buf_queue, "fcfs", 0);
 
 	callout_init(&ss->sc_callout);
 
@@ -187,7 +187,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 static int
 ssdetach(struct device *self, int flags)
 {
-	struct ss_softc *ss = (struct ss_softc *) self;
+	struct ss_softc *ss = device_private(self);
 	int s, cmaj, mn;
 
 	/* locate the major number */
@@ -199,9 +199,9 @@ ssdetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&ss->buf_queue);
+	bufq_drain(ss->buf_queue);
 
-	bufq_free(&ss->buf_queue);
+	bufq_free(ss->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(ss->sc_periph);
@@ -209,7 +209,7 @@ ssdetach(struct device *self, int flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances */
-	mn = SSUNIT(self->dv_unit);
+	mn = SSUNIT(device_unit(self));
 	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
 
 	return (0);
@@ -238,7 +238,7 @@ ssactivate(struct device *self, enum devact act)
  * open the device.
  */
 static int
-ssopen(dev_t dev, int flag, int mode, struct proc *p)
+ssopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	u_int ssmode;
@@ -254,7 +254,7 @@ ssopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (!ss)
 		return (ENXIO);
 
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&ss->sc_dev))
 		return (ENODEV);
 
 	ssmode = SSMODE(dev);
@@ -310,7 +310,7 @@ bad:
  * occurence of an open device
  */
 static int
-ssclose(dev_t dev, int flag, int mode, struct proc *p)
+ssclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -375,7 +375,7 @@ ssread(dev_t dev, struct uio *uio, int flag)
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;
 
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&ss->sc_dev))
 		return (ENODEV);
 
 	/* if the scanner has not yet been started, do it now */
@@ -409,7 +409,7 @@ ssstrategy(struct buf *bp)
 	/*
 	 * If the device has been made invalid, error out
 	 */
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	if (!device_is_active(&ss->sc_dev)) {
 		bp->b_flags |= B_ERROR;
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
@@ -441,7 +441,7 @@ ssstrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(&ss->buf_queue, bp);
+	BUFQ_PUT(ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -496,7 +496,7 @@ ssstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(&ss->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(ss->buf_queue)) == NULL)
 			return;
 
 		if (ss->special && ss->special->read) {
@@ -536,13 +536,13 @@ ssdone(struct scsipi_xfer *xs, int error)
  * knows about the internals of this device
  */
 int
-ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
 	struct scan_io *sio;
 
-	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&ss->sc_dev))
 		return (ENODEV);
 
 	switch (cmd) {
@@ -588,7 +588,7 @@ ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 	default:
 		return (scsipi_do_ioctl(ss->sc_periph, dev, cmd, addr,
-		    flag, p));
+		    flag, l));
 	}
 	return (error);
 }

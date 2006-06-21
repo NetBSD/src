@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.24 2005/01/13 15:14:03 kent Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.24.10.1 2006/06/21 15:04:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24 2005/01/13 15:14:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24.10.1 2006/06/21 15:04:36 yamt Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -145,7 +145,7 @@ gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	struct iw_softc *sc;
 	struct isapnp_attach_args *ipa;
 
-	sc = (struct iw_softc *)self;
+	sc = device_private(self);
 	ipa = aux;
 	printf("\n");
 

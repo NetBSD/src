@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.2 2005/06/04 20:14:25 he Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.2.2.1 2006/06/21 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -95,7 +95,7 @@ dsrtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 dsrtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
+	struct dsrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock/NVRAM\n");
@@ -116,7 +116,7 @@ dsrtc_attach(struct device *parent, struct device *self, void *arg)
 
 /*ARGSUSED*/
 int
-dsrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
+dsrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct dsrtc_softc *sc;
 
@@ -134,7 +134,7 @@ dsrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-dsrtc_close(dev_t dev, int flag, int fmt, struct proc *p)
+dsrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct dsrtc_softc *sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.100 2005/05/29 21:41:23 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.100.2.1 2006/06/21 15:11:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100 2005/05/29 21:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100.2.1 2006/06/21 15:11:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100 2005/05/29 21:41:23 christos Exp $"
 #include <sys/time.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -266,7 +267,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 #ifndef IPNOPRIVPORTS
 		/* GROSS */
 		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (p == 0 || suser(p->p_ucred, &p->p_acflag)))
+		    (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EACCES);
 #endif
 #ifdef INET6
@@ -307,7 +308,8 @@ noname:
 
 		if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+			if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							&p->p_acflag))
 				return (EACCES);
 #endif
 			mymin = lowportmin;
@@ -357,7 +359,7 @@ noname:
  * then pick one.
  */
 int
-in_pcbconnect(void *v, struct mbuf *nam)
+in_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
 {
 	struct inpcb *inp = v;
 	struct in_ifaddr *ia = NULL;
@@ -427,15 +429,14 @@ in_pcbconnect(void *v, struct mbuf *nam)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, (struct mbuf *)0,
-			    (struct proc *)0);
+			error = in_pcbbind(inp, NULL, p);
 			/*
 			 * This used to ignore the return value
 			 * completely, but we need to check for
 			 * ephemeral port shortage.
-			 * XXX Should we check for other errors, too?
+			 * And attempts to request low ports if not root.
 			 */
-			if (error == EAGAIN)
+			if (error != 0)
 				return (error);
 		}
 		inp->inp_laddr = ifaddr->sin_addr;

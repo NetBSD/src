@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.14 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.14.4.1 2006/06/21 14:59:52 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.14 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.14.4.1 2006/06/21 14:59:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -279,7 +279,7 @@ clean_pipe(l, path)
 	struct lwp *l;
 	const char *path;
 {
-	struct sys___lstat13_args la;
+	struct sys___lstat30_args la;
 	struct proc *p = l->l_proc;
 	struct sys_unlink_args ua;
 	register_t retval;
@@ -297,7 +297,7 @@ clean_pipe(l, path)
 
 	SCARG(&la, path) = tpath;
 
-	if ((error = sys___lstat13(l, &la, &retval)) != 0)
+	if ((error = sys___lstat30(l, &la, &retval)) != 0)
 		return 0;
 
 	if ((error = copyin(SCARG(&la, ub), &st, sizeof(st))) != 0)
@@ -446,6 +446,7 @@ si_ogetudata(fp, fd, ioc, l)
 	int error;
 	struct svr4_si_oudata ud;
 	struct svr4_si_sockparms pa;
+	(void)memset(&pa, 0, sizeof(pa));	/* XXX: GCC */
 
 	if (ioc->len != sizeof(ud) && ioc->len != sizeof(ud) - sizeof(int)) {
 		DPRINTF(("SI_OGETUDATA: Wrong size %ld != %d\n",
@@ -955,7 +956,7 @@ svr4_32_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 			struct sys_getsockname_args ap;
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
-			SCARG(&ap, alen) = lenp;
+			SCARG(&ap, alen) = (socklen_t *)lenp;
 			if ((error = sys_getsockname(l, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getsockname error\n"));
 				return error;
@@ -969,7 +970,7 @@ svr4_32_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 			struct sys_getpeername_args ap;
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
-			SCARG(&ap, alen) = lenp;
+			SCARG(&ap, alen) = (socklen_t *)lenp;
 			if ((error = sys_getpeername(l, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getpeername error\n"));
 				return error;
@@ -1051,7 +1052,7 @@ i_nread(fp, l, retval, fd, cmd, dat)
 	 * message waiting for us.
 	 */
 	if ((error = (*fp->f_ops->fo_ioctl)(fp, FIONREAD,
-	    (caddr_t) &nread, l->l_proc)) != 0)
+	    (caddr_t) &nread, l)) != 0)
 		return error;
 
 	if (nread != 0)
@@ -1589,7 +1590,7 @@ svr4_32_sys_putmsg(l, v, retval)
 		else {
 			/* Maybe we've been given a device/inode pair */
 			dev_t *dev = SVR4_ADDROF(&sc);
-			ino_t *ino = (ino_t *) &dev[1];
+			svr4_ino_t *ino = (svr4_ino_t *) &dev[1];
 			skp = svr4_find_socket(p, fp, *dev, *ino);
 			if (skp == NULL) {
 				skp = &saun;
@@ -1636,7 +1637,7 @@ svr4_32_sys_putmsg(l, v, retval)
 			msg.msg_flags = 0;
 			aiov.iov_base = (caddr_t)(u_long)dat.buf;
 			aiov.iov_len = dat.len;
-			error = sendit(p, SCARG(uap, fd), &msg,
+			error = sendit(l, SCARG(uap, fd), &msg,
 				       SCARG(uap, flags), retval);
 
 			*retval = 0;
@@ -1769,7 +1770,7 @@ svr4_32_sys_getmsg(l, v, retval)
 
 		SCARG(&ga, fdes) = SCARG(uap, fd);
 		SCARG(&ga, asa) = (void *) sup;
-		SCARG(&ga, alen) = flen;
+		SCARG(&ga, alen) = (socklen_t *)flen;
 
 		if ((error = sys_getpeername(l, &ga, retval)) != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
@@ -1828,7 +1829,7 @@ svr4_32_sys_getmsg(l, v, retval)
 		 */
 		SCARG(&aa, s) = SCARG(uap, fd);
 		SCARG(&aa, name) = (void *) sup;
-		SCARG(&aa, anamelen) = flen;
+		SCARG(&aa, anamelen) = (socklen_t *)flen;
 
 		if ((error = sys_accept(l, &aa, retval)) != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));
@@ -1903,7 +1904,7 @@ svr4_32_sys_getmsg(l, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen,
+		error = recvit(l, SCARG(uap, fd), &msg, (caddr_t) flen,
 		    retval);
 
 		if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.22 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.22.4.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.22 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.22.4.1 2006/06/21 15:11:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ long	ns_pexseq;
 void
 ns_init(void)
 {
+	struct timeval now;
 
 	ns_broadhost = * (union ns_host *) allones;
 	ns_broadnet = * (union ns_net *) allones;
@@ -95,7 +96,8 @@ ns_init(void)
 	nsrawpcb.nsp_next = nsrawpcb.nsp_prev = &nsrawpcb;
 	nsintrq.ifq_maxlen = nsqmaxlen;
 	TAILQ_INIT(&ns_ifaddr);
-	ns_pexseq = time.tv_usec;
+	getmicrotime(&now);
+	ns_pexseq = now.tv_usec;
 	ns_netmask.sns_len = 6;
 	ns_netmask.sns_addr.x_net = ns_broadnet;
 	ns_hostmask.sns_len = 12;

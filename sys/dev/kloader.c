@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.3 2005/05/31 22:22:36 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.3.2.1 2006/06/21 15:02:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2005/05/31 22:22:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3.2.1 2006/06/21 15:02:12 yamt Exp $");
 
 #include "debug_kloader.h"
 
@@ -93,7 +93,7 @@ struct kloader {
 };
 
 #define	BUCKET_SIZE	(PAGE_SIZE - sizeof(struct kloader_page_tag))
-#define	KLOADER_PROC	(&proc0)
+#define	KLOADER_LWP	(&lwp0)
 STATIC struct kloader kloader;
 
 #define	ROUND4(x)	(((x) + 3) & ~3)
@@ -162,7 +162,7 @@ kloader_reboot()
 	}
 
 	if (kloader.ops->reset != NULL) {
-		PRINTF("Reseting...\n");
+		PRINTF("Resetting...\n");
 		(*kloader.ops->reset)();
 	}
 	while (/*CONSTCOND*/1)
@@ -243,7 +243,7 @@ kloader_load()
 
 
 	/*
-	 * Calcurate memory size
+	 * Calculate memory size
 	 */
 	sz = 0;
 
@@ -288,7 +288,7 @@ kloader_load()
 			+ shstrsz		/* rounded to 4 bytes */
 			+ sh[symndx].sh_size
 			+ sh[strndx].sh_size;
-		DPRINTF("ksyms size = 0x%x\n", ksymsz);
+		DPRINTF("ksyms size = 0x%zx\n", ksymsz);
 	}
 	sz += ROUND4(ksymsz);
 
@@ -517,8 +517,8 @@ kloader_from_file(vaddr_t dst, off_t ofs, size_t sz)
 		if (freesz > sz)
 			freesz = sz;
 
-		DPRINTFN(1, "0x%08lx + 0x%x <- 0x%lx\n", dst, freesz,
-			 (unsigned long)ofs);
+		DPRINTFN(1, "0x%08lx + 0x%zx <- 0x%lx\n", dst, freesz,
+		    (unsigned long)ofs);
 		kloader_read(ofs, freesz, (void *)(tag->src + tag->sz));
 
 		tag->sz += freesz;
@@ -542,7 +542,7 @@ kloader_copy(vaddr_t dst, const void *src, size_t sz)
 		if (freesz > sz)
 			freesz = sz;
 
-		DPRINTFN(1, "0x%08lx + 0x%x <- %p\n", dst, freesz, src);
+		DPRINTFN(1, "0x%08lx + 0x%zx <- %p\n", dst, freesz, src);
 		memcpy((void *)(tag->src + tag->sz), src, freesz);
 
 		tag->sz += freesz;
@@ -566,7 +566,7 @@ kloader_zero(vaddr_t dst, size_t sz)
 		if (freesz > sz)
 			freesz = sz;
 
-		DPRINTFN(1, "0x%08lx + 0x%x\n", dst, freesz);
+		DPRINTFN(1, "0x%08lx + 0x%zx\n", dst, freesz);
 		memset((void *)(tag->src + tag->sz), 0, freesz);
 
 		tag->sz += freesz;
@@ -596,19 +596,22 @@ kloader_load_segment(Elf_Phdr *p)
 struct vnode *
 kloader_open(const char *filename)
 {
-	struct proc *p = KLOADER_PROC;
+	struct lwp *l = KLOADER_LWP;
 	struct nameidata nid;
+	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, l);
 
-	if (namei(&nid) != 0) {
-		PRINTF("namei failed (%s)\n", filename);
-		return (0);
+	error = namei(&nid);
+	if (error != 0) {
+		PRINTF("%s: namei failed, errno=%d\n", filename, error);
+		return (NULL);
 	}
 
-	if (vn_open(&nid, FREAD, 0) != 0) {
-		PRINTF("%s open failed\n", filename);
-		return (0);
+	error = vn_open(&nid, FREAD, 0);
+	if (error != 0) {
+		PRINTF("%s: open failed, errno=%d\n", filename, error);
+		return (NULL);
 	}
 
 	return (nid.ni_vp);
@@ -617,23 +620,23 @@ kloader_open(const char *filename)
 void
 kloader_close()
 {
-	struct proc *p = KLOADER_PROC;
+	struct lwp *l = KLOADER_LWP;
 	struct vnode *vp = kloader.vp;
 
 	VOP_UNLOCK(vp, 0);
-	vn_close(vp, FREAD, p->p_ucred, p);
+	vn_close(vp, FREAD, l->l_proc->p_cred, l);
 }
 
 int
 kloader_read(size_t ofs, size_t size, void *buf)
 {
-	struct proc *p = KLOADER_PROC;
+	struct lwp *l = KLOADER_LWP;
 	struct vnode *vp = kloader.vp;
 	size_t resid;
 	int error;
 
 	error = vn_rdwr(UIO_READ, vp, buf, size, ofs, UIO_SYSSPACE,
-	    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, NULL);
+	    IO_NODELOCKED | IO_SYNC, l->l_proc->p_cred, &resid, NULL);
 
 	if (error)
 		PRINTF("read error.\n");
@@ -696,7 +699,7 @@ kloader_pagetag_dump()
 		print = FALSE;
 		if (i < n)
 			print = TRUE;
-		if ((u_int32_t)p & 3) {
+		if ((uint32_t)p & 3) {
 			printf("tag alignment error\n");
 			break;
 		}

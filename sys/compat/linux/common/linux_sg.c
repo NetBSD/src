@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.5 2005/02/26 23:10:19 perry Exp $ */
+/* $NetBSD: linux_sg.c,v 1.5.6.1 2006/06/21 14:59:12 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.1 2006/06/21 14:59:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5 2005/02/26 23:10:19 perry Exp $");
 #include <sys/filedesc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <sys/scsiio.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -67,18 +68,18 @@ static int bsd_to_linux_host_status(int);
 static int bsd_to_linux_driver_status(int);
 
 int
-linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
+linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
     register_t *retval)
 {
 	struct file *fp;
 	struct filedesc *fdp;
 	u_long com = SCARG(uap, com);
 	int error = 0;
-	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	struct linux_sg_io_hdr lreq;
 	struct scsireq req;
 
-        fdp = p->p_fd;
+        fdp = l->l_proc->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
@@ -141,7 +142,7 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 		req.datalen = lreq.dxfer_len;
 		req.databuf = lreq.dxferp;
 
-		error = ioctlf(fp, SCIOCCOMMAND, (caddr_t)&req, p);
+		error = ioctlf(fp, SCIOCCOMMAND, (caddr_t)&req, l);
 		if (error) {
 			DPRINTF(("SCIOCCOMMAND failed %d\n", error));
 			break;
@@ -210,7 +211,7 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 	}
 
 done:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	DPRINTF(("Return=%d\n", error));
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.11 2004/08/23 06:16:06 thorpej Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.11.12.1 2006/06/21 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.11 2004/08/23 06:16:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.11.12.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ pnaphymatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 pnaphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;

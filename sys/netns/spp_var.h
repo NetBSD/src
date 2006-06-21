@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.14 2004/04/19 00:10:48 matt Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.14.12.1 2006/06/21 15:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)spp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_SPP_VAR_H_
+#define _NETNS_SPP_VAR_H_
 
 /*
  * Sp control block, one per connection
@@ -209,9 +212,9 @@ int spp_output (struct mbuf *, ...);
 void spp_setpersist (struct sppcb *);
 int spp_ctloutput (int, struct socket *, int, int, struct mbuf **);
 int spp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		    struct mbuf *, struct proc *);
+		    struct mbuf *, struct lwp *);
 int spp_usrreq_sp (struct socket *, int, struct mbuf *, struct mbuf *,
-		       struct mbuf *, struct proc *);
+		       struct mbuf *, struct lwp *);
 void spp_template (struct sppcb *);
 struct sppcb *spp_close (struct sppcb *);
 struct sppcb *spp_usrclosed (struct sppcb *);
@@ -241,3 +244,5 @@ short xnsCbug;
 #define	SSEQ_GT(a,b)	(((short)((a)-(b))) > 0)
 #define	SSEQ_GEQ(a,b)	(((short)((a)-(b))) >= 0)
 #endif
+
+#endif /* !_NETNS_SPP_VAR_H_ */

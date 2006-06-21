@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.29 2005/05/30 04:36:52 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.29.2.1 2006/06/21 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.29 2005/05/30 04:36:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.29.2.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -462,7 +462,7 @@ pdq_eisa_attach(
     struct device *self,
     void *aux)
 {
-    pdq_softc_t * const sc = (pdq_softc_t *) self;
+    pdq_softc_t * const sc = device_private(self);
     struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;
     pdq_uint32_t irq, maddr, msiz;
     eisa_intr_handle_t ih;

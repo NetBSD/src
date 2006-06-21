@@ -27,7 +27,7 @@
  *	i4b_cause.h - causes and cause handling for i4b
  *	-----------------------------------------------
  *
- *	$Id: i4b_cause.h,v 1.2 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_cause.h,v 1.2.4.1 2006/06/21 15:11:24 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_CAUSE_H_
-#define _I4B_CAUSE_H_
+#ifndef _NETISDN_I4B_CAUSE_H_
+#define _NETISDN_I4B_CAUSE_H_
 
 /*---------------------------------------------------------------------------*
  *	ISDN4BSD internal causes specification
@@ -146,4 +146,4 @@
 
 #define CAUSE_Q850_MAX		128
 
-#endif /* _I4B_CAUSE_H_ */
+#endif /* !_NETISDN_I4B_CAUSE_H_ */

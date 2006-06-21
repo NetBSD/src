@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.7 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.7.2.1 2006/06/21 15:07:43 yamt Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.7 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.7.2.1 2006/06/21 15:07:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -265,7 +265,7 @@ USB_ATTACH(udav)
 	/* Print Ethernet Address */
 	printf("%s: Ethernet address %s\n", devname, ether_sprintf(eaddr));
 
-	/* initialize interface infomation */
+	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -1087,7 +1087,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		       usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_tx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}
@@ -1134,7 +1134,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_rx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}

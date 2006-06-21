@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.5 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.5.4.1 2006/06/21 14:58:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.5 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.5.4.1 2006/06/21 14:58:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.5 2005/02/26 23:10:18 perry Exp $
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
@@ -85,7 +87,7 @@ darwin_sys_fstatfs(l, v, retval)
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	bs = &mp->mnt_stat;
 
-	if ((error = VFS_STATVFS(mp, bs, p)) != 0)
+	if ((error = VFS_STATVFS(mp, bs, l)) != 0)
 		goto out;
 
 	native_to_darwin_statvfs(bs, &ds);
@@ -93,7 +95,7 @@ darwin_sys_fstatfs(l, v, retval)
 	error = copyout(&ds, SCARG(uap, buf), sizeof(ds));
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -108,7 +110,6 @@ darwin_sys_getfsstat(l, v, retval)
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statvfs *bs;
 	struct darwin_statfs ds;
@@ -127,7 +128,7 @@ darwin_sys_getfsstat(l, v, retval)
 
 			if (((SCARG(uap, flags) & MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & MNT_WAIT)) &&
-			    (error = VFS_STATVFS(mp, bs, p)))
+			    (error = VFS_STATVFS(mp, bs, l)))
 				continue;
 
 			native_to_darwin_statvfs(bs, &ds);
@@ -157,14 +158,13 @@ darwin_sys_statfs(l, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *bs;
 	struct darwin_statfs ds;
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -172,7 +172,7 @@ darwin_sys_statfs(l, v, retval)
 	bs = &mp->mnt_stat;
 	vrele(nd.ni_vp);
 
-	if ((error = VFS_STATVFS(mp, bs, p)) != 0)
+	if ((error = VFS_STATVFS(mp, bs, l)) != 0)
 		return error;
 
 	native_to_darwin_statvfs(bs, &ds);

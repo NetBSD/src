@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.1 2004/06/17 18:29:40 cube Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.1 2006/06/21 14:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1 2004/06/17 18:29:40 cube Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.1 2006/06/21 14:59:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,15 +45,16 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1 2004/06/17 18:29:40 cube 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
-static __inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
+static inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
     struct netbsd32_statfs *);
 
-static __inline void
+static inline void
 compat_20_netbsd32_from_statvfs(sbp, sb32p)
 	struct statvfs *sbp;
 	struct netbsd32_statfs *sb32p;
@@ -103,7 +100,6 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 	struct netbsd32_statfs sb32;
 	caddr_t sfsp;
 	long count, maxcount, error;
-	struct proc *p = l->l_proc;
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
 	sfsp = (caddr_t)NETBSD32PTR64(SCARG(uap, buf));
@@ -125,7 +121,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 			    SCARG(uap, flags) != MNT_LAZY &&
 			    (SCARG(uap, flags) == MNT_WAIT ||
 			     SCARG(uap, flags) == 0) &&
-			    (error = VFS_STATVFS(mp, sp, p)) != 0) {
+			    (error = VFS_STATVFS(mp, sp, l)) != 0) {
 				simple_lock(&mountlist_slock);
 				nmp = mp->mnt_list.cqe_next;
 				vfs_unbusy(mp);
@@ -168,16 +164,15 @@ compat_20_netbsd32_statfs(l, v, retval)
 	struct netbsd32_statfs s32;
 	int error;
 	struct nameidata nd;
-	struct proc *p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
-	    (char *)NETBSD32PTR64(SCARG(uap, path)), p);
+	    (char *)NETBSD32PTR64(SCARG(uap, path)), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
@@ -207,14 +202,14 @@ compat_20_netbsd32_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
 	error = copyout(&s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
 	    sizeof(s32));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 

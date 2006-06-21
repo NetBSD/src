@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.95 2005/07/06 01:46:52 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.95.2.1 2006/06/21 15:06:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95 2005/07/06 01:46:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95.2.1 2006/06/21 15:06:47 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -140,7 +140,8 @@ wdc_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_ntargets = 2;
 	chan->chan_nluns = 1;
 
-	chp->atapibus = config_found(&ata_sc->sc_dev, chan, atapiprint);
+	chp->atapibus = config_found_ia(&ata_sc->sc_dev, "atapi", chan,
+		atapiprint);
 }
 
 static void
@@ -228,7 +229,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	}
 	chp->ch_drive[drive].state = 0;
 
-	bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
+	(void)bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
 
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
@@ -351,7 +352,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		ATADEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
 		    atac->atac_dev.dv_xname, channel, drive), DEBUG_XFERS);
-		if ((atac->atac_dev.dv_flags & DVF_ACTIVE) == 0) {
+		if (!device_is_active(&atac->atac_dev)) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			scsipi_done(sc_xfer);
 			return;

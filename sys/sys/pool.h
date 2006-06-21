@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.45 2005/01/01 21:04:39 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.45.10.1 2006/06/21 15:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/tree.h>
+#if defined(_KERNEL)
+#include <sys/callback.h>
+#endif /* defined(_KERNEL) */
 #endif
 
 #define	PCG_NOBJECTS		16
@@ -62,7 +65,7 @@
 #ifdef __POOL_EXPOSE
 /* The pool cache group. */
 struct pool_cache_group {
-	TAILQ_ENTRY(pool_cache_group)
+	LIST_ENTRY(pool_cache_group)
 		pcg_list;	/* link in the pool cache's group list */
 	u_int	pcg_avail;	/* # available objects */
 				/* pointers to the objects */
@@ -72,15 +75,16 @@ struct pool_cache_group {
 	} pcg_objects[PCG_NOBJECTS];
 };
 
+LIST_HEAD(pool_cache_grouplist,pool_cache_group);
 struct pool_cache {
-	TAILQ_ENTRY(pool_cache)
+	LIST_ENTRY(pool_cache)
 			pc_poollist;	/* entry on pool's group list */
-	TAILQ_HEAD(, pool_cache_group)
-			pc_grouplist;	/* Cache group list */
-	struct pool_cache_group
-			*pc_allocfrom;	/* group to allocate from */
-	struct pool_cache_group
-			*pc_freeto;	/* grop to free to */
+	struct pool_cache_grouplist
+			pc_emptygroups;	/* list of empty cache groups */
+	struct pool_cache_grouplist
+			pc_fullgroups;	/* list of full cache groups */
+	struct pool_cache_grouplist
+			pc_partgroups;	/* list of partial cache groups */
 	struct pool	*pc_pool;	/* parent pool */
 	struct simplelock pc_slock;	/* mutex */
 
@@ -107,15 +111,19 @@ struct pool_allocator {
 	TAILQ_HEAD(, pool) pa_list;	/* list of pools using this allocator */
 	int		pa_flags;
 #define	PA_INITIALIZED	0x01
-#define	PA_WANT		0x02		/* wakeup any sleeping pools on free */
 	int		pa_pagemask;
 	int		pa_pageshift;
+	struct vm_map *pa_backingmap;
+#if defined(_KERNEL)
+	struct vm_map **pa_backingmapptr;
+	SLIST_ENTRY(pool_allocator) pa_q;
+#endif /* defined(_KERNEL) */
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
 
 struct pool {
-	TAILQ_ENTRY(pool)
+	LIST_ENTRY(pool)
 			pr_poollist;
 	struct pool_pagelist
 			pr_emptypages;	/* Empty pages */
@@ -125,7 +133,7 @@ struct pool {
 			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
 	struct pool	*pr_phpool;	/* Pool item header pool */
-	TAILQ_HEAD(,pool_cache)
+	LIST_HEAD(,pool_cache)
 			pr_cachelist;	/* Caches for this pool */
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
@@ -204,6 +212,10 @@ struct pool {
 
 	const char	*pr_entered_file; /* reentrancy check */
 	long		pr_entered_line;
+
+#if defined(_KERNEL)
+	struct callback_entry pr_reclaimerentry;
+#endif
 };
 #endif /* __POOL_EXPOSE */
 
@@ -216,6 +228,11 @@ struct pool {
  */
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
+#ifdef POOL_SUBPAGE
+/* The above are subpage allocators in this case. */
+extern struct pool_allocator pool_allocator_kmem_fullpage;
+extern struct pool_allocator pool_allocator_nointr_fullpage;
+#endif
 
 struct link_pool_init {	/* same as args to pool_init() */
 	struct pool *pp;
@@ -233,7 +250,7 @@ static const struct link_pool_init _link_ ## pp[1] = {			\
 };									\
 __link_set_add_rodata(pools, _link_ ## pp)
 
-void		link_pool_init(void);
+void		pool_subsystem_init(void);
 
 void		pool_init(struct pool *, size_t, u_int, u_int,
 		    int, const char *, struct pool_allocator *);
@@ -270,6 +287,7 @@ void		pool_drain(void *);
 void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
 		    void (*)(const char *, ...));
+void		pool_printall(const char *, void (*)(const char *, ...));
 int		pool_chk(struct pool *, const char *);
 
 /*

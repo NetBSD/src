@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.11 2005/02/20 10:22:26 cube Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.11.4.1 2006/06/21 15:10:27 yamt Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -35,8 +35,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _NET_PPP_COMP_H
-#define _NET_PPP_COMP_H
+#ifndef _NET_PPP_COMP_H_
+#define _NET_PPP_COMP_H_
 
 /*
  * The following symbols control whether we include code for
@@ -66,32 +66,32 @@ struct compressor {
 	int	compress_proto;	/* CCP compression protocol number */
 
 	/* Allocate space for a compressor (transmit side) */
-	void	*(*comp_alloc) __P((u_char *, int));
+	void	*(*comp_alloc)(u_char *, int);
 	/* Free space used by a compressor */
-	void	(*comp_free) __P((void *));
+	void	(*comp_free)(void *);
 	/* Initialize a compressor */
-	int	(*comp_init) __P((void *, u_char *, int, int, int, int));
+	int	(*comp_init)(void *, u_char *, int, int, int, int);
 	/* Reset a compressor */
-	void	(*comp_reset) __P((void *));
+	void	(*comp_reset)(void *);
 	/* Compress a packet */
-	int	(*compress) __P((void *, PACKETPTR *, PACKETPTR, int, int));
+	int	(*compress)(void *, PACKETPTR *, PACKETPTR, int, int);
 	/* Return compression statistics */
-	void	(*comp_stat) __P((void *, struct compstat *));
+	void	(*comp_stat)(void *, struct compstat *);
 
 	/* Allocate space for a decompressor (receive side) */
-	void	*(*decomp_alloc) __P((u_char *, int));
+	void	*(*decomp_alloc)(u_char *, int);
 	/* Free space used by a decompressor */
-	void	(*decomp_free) __P((void *));
+	void	(*decomp_free)(void *);
 	/* Initialize a decompressor */
-	int	(*decomp_init) __P((void *, u_char *, int, int, int, int, int));
+	int	(*decomp_init)(void *, u_char *, int, int, int, int, int);
 	/* Reset a decompressor */
-	void	(*decomp_reset) __P((void *));
+	void	(*decomp_reset)(void *);
 	/* Decompress a packet. */
-	int	(*decompress) __P((void *, PACKETPTR, PACKETPTR *));
+	int	(*decompress)(void *, PACKETPTR, PACKETPTR *);
 	/* Update state for an incompressible packet received */
-	void	(*incomp) __P((void *, PACKETPTR));
+	void	(*incomp)(void *, PACKETPTR);
 	/* Return decompression statistics */
-	void	(*decomp_stat) __P((void *, struct compstat *));
+	void	(*decomp_stat)(void *, struct compstat *);
 };
 #endif /* PACKETPTR */
 
@@ -269,4 +269,4 @@ struct compressor {
 #define CI_PREDICTOR_2		2	/* config option for Predictor-2 */
 #define CILEN_PREDICTOR_2	2	/* length of its config option */
 
-#endif /* _NET_PPP_COMP_H */
+#endif /* !_NET_PPP_COMP_H_ */
