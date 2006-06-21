@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.83.2.2 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.83.2.3 2006/06/21 15:16:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83.2.2 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.83.2.3 2006/06/21 15:16:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -959,7 +959,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 }
 
 int
-unp_internalize(struct mbuf **control, struct lwp *l)
+unp_internalize(struct mbuf **controlp, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct filedesc *fdescp = p->p_fd;
