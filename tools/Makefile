@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2006/06/18 05:16:41 gdamore Exp $
+#	$NetBSD: Makefile,v 1.99 2006/06/22 20:03:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,12 +16,18 @@ TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
 # XXX if EXTERNAL_TOOLCHAIN is set.
 .endif
 
+LINT_BITS=
+.if ${MKLINT} != "no"
+LINT_BITS= lint lint2
+.endif
+
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 .if !defined(NOSUBDIR)					# {
 
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT \
-		cap_mkdb crunchgen ctags genassym gencat hexdump lint lint2 \
+		cap_mkdb crunchgen ctags genassym gencat hexdump \
+		${LINT_BITS} \
 		lorder m4 makewhatis mkdep mtree rpcgen sed tsort uudecode \
 	texinfo .WAIT \
 	yacc .WAIT \
