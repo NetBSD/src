@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.25 2005/12/02 12:19:16 yamt Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.26 2006/06/22 19:35:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.25 2005/12/02 12:19:16 yamt Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.26 2006/06/22 19:35:34 christos Exp $");
 #endif
 #endif
 
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: clnt_generic.c,v 1.25 2005/12/02 12:19:16 yamt Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
@@ -289,7 +288,6 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 	CLIENT *cl;			/* client handle */
 	bool_t madefd = FALSE;		/* whether fd opened here */
 	long servtype;
-	int one = 1;
 	struct __rpc_sockinfo si;
 
 	/* nconf is handled below */
@@ -333,10 +331,7 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 		cl = clnt_vc_create(fd, svcaddr, prog, vers, sendsz, recvsz);
 		if (!nconf || !cl)
 			break;
-		/* XXX fvdl - is this useful? */
-		if (strncmp(nconf->nc_protofmly, "inet", (size_t)4) == 0)
-			setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one,
-			    (socklen_t)sizeof (one));
+		__rpc_setnodelay(fd, &si);
 		break;
 	case NC_TPI_CLTS:
 		cl = clnt_dg_create(fd, svcaddr, prog, vers, sendsz, recvsz);
