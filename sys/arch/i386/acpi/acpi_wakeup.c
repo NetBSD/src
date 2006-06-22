@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.22.8.1 2006/06/19 03:44:03 chap Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.22.8.2 2006/06/22 03:39:47 chap Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.22.8.1 2006/06/19 03:44:03 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.22.8.2 2006/06/22 03:39:47 chap Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -420,7 +420,6 @@ acpi_md_sleep(int state)
 	} else {
 		printf("acpi0: good morning!\n");
 		/* Execute Wakeup */
-		enable_intr();
 
 		npxinit(&cpu_info_primary);
 		i8259_reinit();
@@ -441,6 +440,8 @@ acpi_md_sleep(int state)
 	}
 
 out:
+	enable_intr();
+
 	lcr3(cr3);
 	/* Clean up identity mapping. */
 	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
