@@ -205,8 +205,6 @@ extern	int	pairstack[], paircnt;
 
 #define NCHARS	(256+3)		/* 256 handles 8-bit chars; 128 does 7-bit */
 				/* watch out in match(), etc. */
-#define NSTATES	32
-
 typedef struct rrow {
 	long	ltype;	/* long avoids pointer warnings on 64-bit */
 	union {
@@ -218,16 +216,16 @@ typedef struct rrow {
 } rrow;
 
 typedef struct fa {
-	uschar	gototab[NSTATES][NCHARS];
-	uschar	out[NSTATES];
+	uschar	**gototab;
+	uschar	*out;
 	uschar	*restr;
-	int	*posns[NSTATES];
+	int	**posns;
+	int	state_count;
 	int	anchor;
 	int	use;
 	int	initstat;
 	int	curstat;
 	int	accept;
-	int	reset;
 	struct	rrow re[1];	/* variable: actual size set by calling malloc */
 } fa;
 

@@ -30,6 +30,7 @@ THIS SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "awk.h"
 #include "awkgram.h"
 
@@ -74,6 +75,45 @@ int	patlen;
 #define	NFA	128	/* cache this many dynamic fa's */
 fa	*fatab[NFA];
 int	nfatab	= 0;	/* entries in fatab */
+
+static void
+resize_state(fa *fa, int state)
+{
+	void *p;
+	int i, new_count;
+
+	if (state < fa->state_count)
+		return;
+
+	new_count = state * 5 / 4 + 10; /* needs to be tuned */
+
+	p = realloc(fa->gototab, new_count * sizeof(fa->gototab[0]));
+	if (p == NULL)
+		goto out;
+	fa->gototab = p;
+
+	p = realloc(fa->out, new_count * sizeof(fa->out[0]));
+	if (p == NULL)
+		goto out;
+	fa->out = p;
+
+	p = realloc(fa->posns, new_count * sizeof(fa->posns[0]));
+	if (p == NULL)
+		goto out;
+	fa->posns = p;
+
+	for (i = fa->state_count; i < new_count; ++i) {
+		fa->gototab[i] = calloc(1, NCHARS * sizeof (*fa->gototab));
+		if (fa->gototab[i] == NULL)
+			goto out;
+		fa->out[i]  = 0;
+		fa->posns[i] = NULL;
+	}
+	fa->state_count = new_count;
+	return;
+out:
+	overflo("out of memory in resize_state");
+}
 
 fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 {
@@ -136,6 +176,7 @@ fa *mkdfa(const char *s, int anchor)	/* does the real work of making a dfa */
 	f->accept = poscnt-1;	/* penter has computed number of positions in re */
 	cfoll(f, p1);	/* set up follow sets */
 	freetr(p1);
+	resize_state(f, 1);
 	if ((f->posns[0] = (int *) calloc(1, *(f->re[0].lfollow)*sizeof(int))) == NULL)
 			overflo("out of space in makedfa");
 	if ((f->posns[1] = (int *) calloc(1, sizeof(int))) == NULL)
@@ -151,9 +192,9 @@ int makeinit(fa *f, int anchor)
 {
 	int i, k;
 
+	resize_state(f, 2);
 	f->curstat = 2;
 	f->out[2] = 0;
-	f->reset = 0;
 	k = *(f->re[0].lfollow);
 	xfree(f->posns[2]);			
 	if ((f->posns[2] = (int *) calloc(1, (k+1)*sizeof(int))) == NULL)
@@ -173,8 +214,10 @@ int makeinit(fa *f, int anchor)
 		}
 
 		f->out[0] = f->out[2];
-		if (f->curstat != 2)
+		if (f->curstat != 2) {
+			resize_state(f, f->curstat);
 			--(*f->posns[f->curstat]);
+		}
 	}
 	return f->curstat;
 }
@@ -461,7 +504,9 @@ int match(fa *f, const char *p0)	/* shortest match ? */
 	int s, ns;
 	uschar *p = (uschar *) p0;
 
-	s = f->reset ? makeinit(f,0) : f->initstat;
+	s = f->initstat;
+	assert (s < f->state_count);
+
 	if (f->out[s])
 		return(1);
 	do {
@@ -469,6 +514,9 @@ int match(fa *f, const char *p0)	/* shortest match ? */
 			s = ns;
 		else
 			s = cgoto(f, s, *p);
+
+		assert (s < f->state_count);
+
 		if (f->out[s])
 			return(1);
 	} while (*p++ != 0);
@@ -480,14 +528,9 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 	int s, ns;
 	uschar *p = (uschar *) p0;
 	uschar *q;
-	int i, k;
 
-	/* s = f->reset ? makeinit(f,1) : f->initstat; */
-	if (f->reset) {
-		f->initstat = s = makeinit(f,1);
-	} else {
-		s = f->initstat;
-	}
+	s = f->initstat;
+	assert(s < f->state_count);
 	patbeg = p;
 	patlen = -1;
 	do {
@@ -499,6 +542,9 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 				s = ns;
 			else
 				s = cgoto(f, s, *q);
+
+			assert(s < f->state_count);
+
 			if (s == 1) {	/* no transition */
 				if (patlen >= 0) {
 					patbeg = p;
@@ -516,19 +562,6 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 		}
 	nextin:
 		s = 2;
-		if (f->reset) {
-			for (i = 2; i <= f->curstat; i++)
-				xfree(f->posns[i]);
-			k = *f->posns[0];			
-			if ((f->posns[2] = (int *) calloc(1, (k+1)*sizeof(int))) == NULL)
-				overflo("out of space in pmatch");
-			for (i = 0; i <= k; i++)
-				(f->posns[2])[i] = (f->posns[0])[i];
-			f->initstat = f->curstat = 2;
-			f->out[2] = f->out[0];
-			for (i = 0; i < NCHARS; i++)
-				f->gototab[2][i] = 0;
-		}
 	} while (*p++ != 0);
 	return (0);
 }
@@ -538,14 +571,10 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 	int s, ns;
 	uschar *p = (uschar *) p0;
 	uschar *q;
-	int i, k;
 
-	/* s = f->reset ? makeinit(f,1) : f->initstat; */
-	if (f->reset) {
-		f->initstat = s = makeinit(f,1);
-	} else {
-		s = f->initstat;
-	}
+	s = f->initstat;
+	assert(s < f->state_count);
+
 	patlen = -1;
 	while (*p) {
 		q = p;
@@ -556,6 +585,9 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 				s = ns;
 			else
 				s = cgoto(f, s, *q);
+
+			assert(s < f->state_count);
+
 			if (s == 1) {	/* no transition */
 				if (patlen > 0) {
 					patbeg = p;
@@ -572,19 +604,6 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 		}
 	nnextin:
 		s = 2;
-		if (f->reset) {
-			for (i = 2; i <= f->curstat; i++)
-				xfree(f->posns[i]);
-			k = *f->posns[0];			
-			if ((f->posns[2] = (int *) calloc(1, (k+1)*sizeof(int))) == NULL)
-				overflo("out of state space");
-			for (i = 0; i <= k; i++)
-				(f->posns[2])[i] = (f->posns[0])[i];
-			f->initstat = f->curstat = 2;
-			f->out[2] = f->out[0];
-			for (i = 0; i < NCHARS; i++)
-				f->gototab[2][i] = 0;
-		}
 		p++;
 	}
 	return (0);
@@ -845,6 +864,7 @@ int cgoto(fa *f, int s, int c)
 	for (i = 0; i <= f->accept; i++)
 		setvec[i] = 0;
 	setcnt = 0;
+	resize_state(f, s);
 	/* compute positions of gototab[s,c] into setvec */
 	p = f->posns[s];
 	for (i = 1; i <= *p; i++) {
@@ -878,6 +898,8 @@ int cgoto(fa *f, int s, int c)
 		if (setvec[i]) {
 			tmpset[j++] = i;
 		}
+
+	resize_state(f, f->curstat > s ? f->curstat : s);
 	/* tmpset == previous state? */
 	for (i = 1; i <= f->curstat; i++) {
 		p = f->posns[i];
@@ -894,13 +916,8 @@ int cgoto(fa *f, int s, int c)
 	}
 
 	/* add tmpset to current set of states */
-	if (f->curstat >= NSTATES-1) {
-		f->curstat = 2;
-		f->reset = 1;
-		for (i = 2; i < NSTATES; i++)
-			xfree(f->posns[i]);
-	} else
-		++(f->curstat);
+	++(f->curstat);
+	resize_state(f, f->curstat);
 	for (i = 0; i < NCHARS; i++)
 		f->gototab[f->curstat][i] = 0;
 	xfree(f->posns[f->curstat]);
@@ -925,7 +942,7 @@ void freefa(fa *f)	/* free a finite automaton */
 
 	if (f == NULL)
 		return;
-	for (i = 0; i <= f->curstat; i++)
+	for (i = 0; i <= f->state_count; i++)
 		xfree(f->posns[i]);
 	for (i = 0; i <= f->accept; i++) {
 		xfree(f->re[i].lfollow);
@@ -933,5 +950,8 @@ void freefa(fa *f)	/* free a finite automaton */
 			xfree((f->re[i].lval.np));
 	}
 	xfree(f->restr);
+	xfree(f->out);
+	xfree(f->posns);
+	xfree(f->gototab);
 	xfree(f);
 }
