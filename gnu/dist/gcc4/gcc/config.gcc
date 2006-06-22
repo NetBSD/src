@@ -1677,9 +1677,18 @@ powerpc*-*-freebsd*)
 	tmake_file="rs6000/t-fprules rs6000/t-ppcos ${tmake_file} rs6000/t-ppccomm"
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	;;
-powerpc-*-netbsd*)
+powerpc*-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h freebsd-spec.h rs6000/sysv4.h rs6000/netbsd.h"
-	tmake_file="${tmake_file} rs6000/t-netbsd"
+	case ${target} in
+	  powerpc64*)
+	    tm_file="${tm_file} rs6000/biarch64.h rs6000/default64.h rs6000/netbsd64.h"
+	    tmake_file="${tmake_file} rs6000/t-netbsd64"
+	    ;;
+	  *)
+	    tmake_file="${tmake_file} rs6000/t-netbsd"
+	    ;;
+	esac
+	tm_file="${tm_file} rs6000/netbsd.h"
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	;;
 powerpc-*-chorusos*)
@@ -2350,7 +2359,7 @@ m32c-*-elf*)
 	use_fixproto=yes
  	;;
 *)
-	echo "*** Configuration ${target} not supported" 1>&2
+	echo "*** xConfiguration ${target} not supported" 1>&2
 	exit 1
 	;;
 esac
