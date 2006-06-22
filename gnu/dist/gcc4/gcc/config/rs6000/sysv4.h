@@ -114,7 +114,12 @@ do {									\
   else if (!strcmp (rs6000_abi_name, "gnu"))				\
     rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "netbsd"))				\
-    rs6000_current_abi = ABI_V4;					\
+    {									\
+      if (TARGET_64BIT)							\
+	rs6000_current_abi = ABI_AIX;					\
+      else								\
+	rs6000_current_abi = ABI_V4;					\
+    }									\
   else if (!strcmp (rs6000_abi_name, "openbsd"))			\
     rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "i960-old"))			\
