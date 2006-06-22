@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.35 2006/06/12 21:55:03 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.36 2006/06/22 21:53:37 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.35 2006/06/12 21:55:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.36 2006/06/22 21:53:37 christos Exp $");
 #endif
 
 /*
@@ -441,7 +441,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	}
 	if (error == 0) {
 		wreq->wi_len++;
-		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
+		error = copyout(wreq, ifr->ifr_data, sizeof(*wreq));
 	}
 out:
 	free(wreq, M_TEMP);
