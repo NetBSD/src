@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.28 2006/06/21 18:12:47 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.29 2006/06/22 13:05:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.28 2006/06/21 18:12:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29 2006/06/22 13:05:28 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -97,9 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.28 2006/06/21 18:12:47 jmcneill Ex
 
 #include "acpi_wakecode.h"
 
+#include "opt_pcibios.h"
 #include "opt_pcifixup.h"
 
-#ifdef PCI_INTR_FIXUP
+#if defined(PCIBIOS) && defined(PCI_INTR_FIXUP)
 #include <i386/pci/pci_intr_fixup.h>
 #endif
 
@@ -333,7 +334,7 @@ acpi_md_sleep(int state)
 	struct pmap			*pm;
 	uint32_t			cr3;
 	paddr_t				oldphys;
-#ifdef PCI_INTR_FIXUP
+#if defined(PCIBIOS) && defined(PCI_INTR_FIXUP)
 	int rv;
 	uint16_t pciirq;
 #endif
@@ -442,7 +443,7 @@ acpi_md_sleep(int state)
 #if NIOAPIC > 0
 		ioapic_enable();
 #endif
-#ifdef PCI_INTR_FIXUP
+#if defined(PCIBIOS) && defined(PCI_INTR_FIXUP)
 		rv = pci_intr_fixup(NULL, X86_BUS_SPACE_IO, &pciirq);
 		switch (rv) {
 		case -1:
