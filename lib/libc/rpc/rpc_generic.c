@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.21 2006/03/19 01:43:11 christos Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.22 2006/06/22 19:35:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.21 2006/03/19 01:43:11 christos Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.22 2006/06/22 19:35:34 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: rpc_generic.c,v 1.21 2006/03/19 01:43:11 christos Exp $");
 #include <sys/un.h>
 #include <sys/resource.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <rpc/rpc.h>
 #include <assert.h>
@@ -872,4 +873,23 @@ __rpc_sockisbound(int fd)
 	}
 
 	return 0;
+}
+
+/*
+ * For TCP transport, Host Requirements RFCs mandate
+ * Nagle (RFC-896) processing.  But for RPC, Nagle
+ * processing adds adds unwanted latency to the last,
+ * partial TCP segment of each RPC message. See:
+ *   R. W. Scheifler and J. Gettys, The X Window System,
+ *   ACM Transactions on Graphics 16:8 (Aug. 1983), pp. 57-69. 
+ * So for TCP transport, disable Nagle via TCP_NODELAY.
+ * XXX: moral equivalent for non-TCP protocols?
+ */
+int
+__rpc_setnodelay(int fd, const struct __rpc_sockinfo *si)
+{
+	int one = 1;
+	if (si->si_proto != IPPROTO_TCP)
+		return 0;
+	return setsockopt(fd, si->si_proto, TCP_NODELAY, &one, sizeof(one));
 }

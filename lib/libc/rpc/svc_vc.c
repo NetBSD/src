@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.18 2006/03/22 12:51:32 drochner Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.19 2006/06/22 19:35:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.18 2006/03/22 12:51:32 drochner Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.19 2006/06/22 19:35:34 christos Exp $");
 #endif
 #endif
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: svc_vc.c,v 1.18 2006/03/22 12:51:32 drochner Exp $");
 #include <sys/un.h>
 #include <sys/time.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 
 #include <assert.h>
 #include <err.h>
@@ -356,11 +355,8 @@ again:
 		newxprt->xp_addrlen = sizeof (struct sockaddr_in);
 	}
 #endif
-	if (__rpc_fd2sockinfo(sock, &si) && si.si_proto == IPPROTO_TCP) {
-		len = 1;
-		/* XXX fvdl - is this useful? */
-		setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &len, sizeof (len));
-	}
+	if (__rpc_fd2sockinfo(sock, &si))
+		__rpc_setnodelay(sock, &si);
 
 	cd = (struct cf_conn *)newxprt->xp_p1;
 
