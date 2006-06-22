@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.6 2006/06/19 10:08:16 jmcneill Exp $ */
+/* $NetBSD: piixpcib.c,v 1.7 2006/06/22 16:24:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.6 2006/06/19 10:08:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.7 2006/06/22 16:24:34 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,10 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.6 2006/06/19 10:08:16 jmcneill Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#define		PIIX4_PIRQRCA	0x60
-#define		PIIX4_PIRQRCB	0x61
-#define		PIIX4_PIRQRCC	0x62
-#define		PIIX4_PIRQRCD	0x63
+#include <i386/pci/piixreg.h>
+
+#define		PIIX4_PIRQRC	0x60
 
 struct piixpcib_softc {
 	struct device	sc_dev;
@@ -75,10 +74,14 @@ struct piixpcib_softc {
 	int		sc_command;
 	int		sc_flags;
 
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
+
 	void		*sc_powerhook;
 	struct pci_conf_state sc_pciconf;
 
-	pcireg_t	sc_pirqrc[4];
+	pcireg_t	sc_pirqrc;
+	uint8_t		sc_elcr[2];
 };
 
 static int piixpcibmatch(struct device *, struct cfdata *, void *);
@@ -138,11 +141,20 @@ piixpcibattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_iot = pa->pa_iot;
 
 	pcibattach(parent, self, aux);
 
 	/* Set up SpeedStep. */
 	speedstep_configure(sc, pa);
+
+	/* Map edge/level control registers */
+	if (bus_space_map(sc->sc_iot, PIIX_REG_ELCR, PIIX_REG_ELCR_SIZE, 0,
+	    &sc->sc_ioh)) {
+		aprint_error("%s: can't map edge/level control registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_powerhook = powerhook_establish(piixpcib_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
@@ -168,19 +180,21 @@ piixpcib_powerhook(int why, void *opaque)
 		pci_conf_capture(pc, tag, &sc->sc_pciconf);
 
 		/* capture PIRQX route control registers */
-		sc->sc_pirqrc[0] = pci_conf_read(pc, tag, PIIX4_PIRQRCA);
-		sc->sc_pirqrc[1] = pci_conf_read(pc, tag, PIIX4_PIRQRCB);
-		sc->sc_pirqrc[2] = pci_conf_read(pc, tag, PIIX4_PIRQRCC);
-		sc->sc_pirqrc[3] = pci_conf_read(pc, tag, PIIX4_PIRQRCD);
+		sc->sc_pirqrc = pci_conf_read(pc, tag, PIIX4_PIRQRC);
+
+		/* capture edge/level control registers */
+		sc->sc_elcr[0] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
+		sc->sc_elcr[1] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1);
 		break;
 	case PWR_RESUME:
 		pci_conf_restore(pc, tag, &sc->sc_pciconf);
 
 		/* restore PIRQX route control registers */
-		pci_conf_write(pc, tag, PIIX4_PIRQRCA, sc->sc_pirqrc[0]);
-		pci_conf_write(pc, tag, PIIX4_PIRQRCB, sc->sc_pirqrc[1]);
-		pci_conf_write(pc, tag, PIIX4_PIRQRCC, sc->sc_pirqrc[2]);
-		pci_conf_write(pc, tag, PIIX4_PIRQRCD, sc->sc_pirqrc[3]);
+		pci_conf_write(pc, tag, PIIX4_PIRQRC, sc->sc_pirqrc);
+
+		/* restore edge/level control registers */
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, sc->sc_elcr[0]);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, sc->sc_elcr[1]);
 		break;
 	}
 
