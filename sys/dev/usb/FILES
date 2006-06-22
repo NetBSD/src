@@ -26,6 +26,8 @@ ohcireg.h		Hardware definitions for OHCI
 ohcivar.h		API for ohci.c
 uaudio.c		USB audio class driver
 uaudioreg.h		  and definitions for it
+ubt.c			USB Bluetooth driver
+ubtbcmfw.c		Firmware loader for Broadcom BCM2033 Bluetooth devices
 ucom.c			TTY emulation for two bulk pipes
 ucomvar.h		TTY emulation interface
 uftdi.c			USB FTDI serial driver
