@@ -1685,10 +1685,10 @@ powerpc*-*-netbsd*)
 	    tmake_file="${tmake_file} rs6000/t-netbsd64"
 	    ;;
 	  *)
+	    tm_file="${tm_file} rs6000/netbsd.h"
 	    tmake_file="${tmake_file} rs6000/t-netbsd"
 	    ;;
 	esac
-	tm_file="${tm_file} rs6000/netbsd.h"
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	;;
 powerpc-*-chorusos*)
