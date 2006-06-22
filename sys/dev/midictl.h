@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.h,v 1.1.2.3 2006/06/10 22:32:27 chap Exp $ */
+/* $NetBSD: midictl.h,v 1.1.2.4 2006/06/22 03:53:44 chap Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,6 +64,13 @@
  * parameter that no MIDI message has yet written, you get back the value dflt.
  * If you read one whose MSB or LSB only has been written, you get what you
  * would get if the value had been dflt before the write.
+ *
+ * The functions may be called from any context but reentrant calls operating
+ * on the same midictl are unsupported, with one exception: calls back into
+ * midictl from a notify handler it has called are permitted. If you are
+ * calling midictl_change in a driver function called by midi(4), you are ok
+ * as midi(4) itself serializes its calls into the driver. For other uses,
+ * avoiding reentrant calls is up to you.
  *
  * A strict division of labor limits complexity. This module knows as little
  * about the meanings of different MIDI parameters and controllers as possible
