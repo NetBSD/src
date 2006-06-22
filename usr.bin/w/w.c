@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.71 2005/09/15 00:58:49 rpaulo Exp $	*/
+/*	$NetBSD: w.c,v 1.72 2006/06/22 17:57:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.71 2005/09/15 00:58:49 rpaulo Exp $");
+__RCSID("$NetBSD: w.c,v 1.72 2006/06/22 17:57:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,9 +107,9 @@ int maxname = 8, maxline = 3, maxhost = 16;
  */
 struct	entry {
 	struct	entry *next;
-	char name[65];
-	char line[65];
-	char host[257];
+	char name[UTX_USERSIZE + 1];
+	char line[UTX_LINESIZE + 1];
+	char host[UTX_HOSTSIZE + 1];
 	char type[2];
 	struct timeval tv;
 	dev_t	tdev;			/* dev_t of terminal */
@@ -424,7 +424,7 @@ main(int argc, char **argv)
 			kp = ep->tp;
 		else if (ep->pp != NULL)
 			kp = ep->pp;
-		else {
+		else if (ep->pid != 0) {
 			if (curtain)
 				kp = NULL;
 			else {
