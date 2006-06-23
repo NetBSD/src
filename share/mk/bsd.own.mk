@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.455 2006/06/22 20:13:14 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.456 2006/06/23 21:51:02 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -47,29 +47,36 @@ TOOLCHAIN_MISSING?=	no
 #	sh5, vax, hppa?
 #
 .if \
-    ${MACHINE_ARCH} == "powerpc64"
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "armeb" || \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "powerpc64" || \
+    ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 HAVE_GCC?=	4
 .endif
 
 # These ones work (or mostly work), but aren't switched yet
 .if \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "armeb" || \
-    ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "x86_64"
+    ${MACHINE_ARCH} == "sh3el"
 #HAVE_GCC?=	4
 .endif
 
 # default to GCC3
 HAVE_GCC?=	3
+
+#
+# Transitional for toolchain upgrade to GDB6
+#
+#HAVE_GDB?=	6
+
+HAVE_GDB?=	5
 
 CPPFLAG_ISYSTEM=	-isystem
 .if ${HAVE_GCC} == 3
