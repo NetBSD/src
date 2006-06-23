@@ -1,3 +1,13 @@
+2005-11-14  Mark D. Baushke  <mdb@gnu.org>
+
+	* system.h (FOLD_FN_CHAR): Distinguish OSX_ and VMS_ variations
+	based on USE_VMS_FILENAME macro.
+
+2005-11-09  Mark D. Baushke  <mdb@gnu.org>
+
+	* system.h (FOLD_FN_CHAR): Create a VMS alternative of this macro
+	(patch suggested by Piet Schuermans <pschuermans@mac.com>).
+	
 2005-07-11  Mark D. Baushke  <mdb@cvshome.org>
 
 	* getpass.c (getpass): Add a K&R style function definition.
