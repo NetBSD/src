@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+ * Copyright (C) 1986-2006 The Free Software Foundation, Inc.
  *
- * Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+ * Portions Copyright (C) 1998-2006 Derek Price, Ximbiot <http://ximbiot.com>,
  *                                  and others.
  *
  * Portions Copyright (C) 1992, Brian Berliner and Jeff Polk
@@ -48,6 +48,12 @@ int trace = 0;
 int noexec = 0;
 int nolock = 0;
 int logoff = 0;
+
+/*
+ * Zero if compression isn't supported or requested; non-zero to indicate
+ * a compression level to request from gzip.
+ */
+int gzip_level;
 
 /* Set if we should be writing CVSADM directories at top level.  At
    least for now we'll make the default be off (the CVS 1.9, not CVS
@@ -546,7 +552,7 @@ main (argc, argv)
 		version (0, (char **) NULL);    
 		(void) fputs ("\n", stdout);
 		(void) fputs ("\
-Copyright (C) 2005 Free Software Foundation, Inc.\n\
+Copyright (C) 2006 Free Software Foundation, Inc.\n\
 \n\
 Senior active maintainers include Larry Jones, Derek R. Price,\n\
 and Mark D. Baushke.  Please see the AUTHORS and README files from the CVS\n\
@@ -559,6 +565,12 @@ distribution kit for a complete list of contributors and copyrights.\n",
 
 		(void) fputs ("Specify the --help option for further information about CVS\n", stdout);
 
+#ifdef SYSTEM_CLEANUP
+		/* Hook for OS-specific behavior, for example socket subsystems
+		 * on NT and OS2 or dealing with windows and arguments on Mac.
+		 */
+		SYSTEM_CLEANUP ();
+#endif
 		exit (0);
 		break;
 	    case 'b':
@@ -591,12 +603,10 @@ distribution kit for a complete list of contributors and copyrights.\n",
 		use_cvsrc = 0; /* unnecessary, since we've done it above */
 		break;
 	    case 'z':
-#ifdef CLIENT_SUPPORT
 		gzip_level = strtol (optarg, &end, 10);
 		if (*end != '\0' || gzip_level < 0 || gzip_level > 9)
 		  error (1, 0,
 			 "gzip compression level must be between 0 and 9");
-#endif /* CLIENT_SUPPORT */
 		/* If no CLIENT_SUPPORT, we just silently ignore the gzip
 		 * level, so that users can have it in their .cvsrc and not
 		 * cause any trouble.

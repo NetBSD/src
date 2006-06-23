@@ -717,7 +717,7 @@ int run_exec PROTO((const char *stin, const char *stout, const char *sterr,
 
 /* other similar-minded stuff from run.c.  */
 FILE *run_popen PROTO((const char *, const char *));
-int piped_child PROTO((const char **, int *, int *));
+int piped_child PROTO((const char **, int *, int *, int));
 void close_on_exec PROTO((int));
 
 pid_t waitpid PROTO((pid_t, int *, int));

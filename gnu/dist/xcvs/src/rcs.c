@@ -616,14 +616,9 @@ RCS_reparsercsfile (rdata, pfp, rcsbufp)
 	q->key = vnode->version;
 
 	/* add the nodes to the list */
-	if (addnode (rdata->versions, q) != 0)
-	{
-#if 0
-		purify_printf("WARNING: Adding duplicate version: %s (%s)\n",
-			 q->key, rcsfile);
-		freenode (q);
-#endif
-	}
+	if (addnode (rdata->versions, q))
+	    error (1, 0, "Multiple %s revision deltas found in `%s'",
+		   q->key, rcsfile);
     }
 
     /* Here KEY and VALUE are whatever caused getdelta to return NULL.  */
@@ -777,10 +772,10 @@ RCS_fully_parse (rcs)
 	    break;
 
 	vers = findnode (rcs->versions, key);
-	if (vers == NULL)
+	if (!vers)
 	    error (1, 0,
-		   "mismatch in rcs file %s between deltas and deltatexts (%s)",
-		   rcs->path, key);
+		   "Delta text %s without revision information in `%s'.",
+		   key, rcs->path);
 
 	vnode = vers->data;
 
@@ -4249,6 +4244,11 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	gothead = 0;
 	if (! rcsbuf_getrevnum (&rcsbuf, &key))
 	    error (1, 0, "unexpected EOF reading %s", rcs->path);
+
+	if (!STREQ (rcs->head, key))
+	    error (1, 0, "Expected head revision %s, found %s.",
+		   rcs->head, key);
+
 	while (rcsbuf_getkey (&rcsbuf, &key, &value))
 	{
 	    if (STREQ (key, "log"))
@@ -7372,6 +7372,8 @@ RCS_deltas (rcs, fp, rcsbuf, version, op, text, len, log, loglen)
 	rcsbuf = &rcsbuf_local;
     }
 
+   assert (rcsbuf);
+
    if (log) *log = NULL;
 
     ishead = 1;
@@ -7401,6 +7403,13 @@ RCS_deltas (rcs, fp, rcsbuf, version, op, text, len, log, loglen)
 	if (! rcsbuf_getrevnum (rcsbuf, &key))
 	    error (1, 0, "unexpected EOF reading RCS file %s", rcs->path);
 
+	/* look up the revision */
+	node = findnode (rcs->versions, key);
+	if (!node)
+	    error (1, 0,
+		   "Delta text %s without revision information in `%s'.",
+		   key, rcs->path);
+
 	if (next != NULL && ! STREQ (next, key))
 	{
 	    /* This is not the next version we need.  It is a branch
@@ -7411,13 +7420,6 @@ RCS_deltas (rcs, fp, rcsbuf, version, op, text, len, log, loglen)
 	else
 	{
 	    isnext = 1;
-
-	    /* look up the revision */
-	    node = findnode (rcs->versions, key);
-	    if (node == NULL)
-	        error (1, 0,
-		       "mismatch in rcs file %s between deltas and deltatexts (%s)",
-		       rcs->path, key);
 
 	    /* Stash the previous version.  */
 	    prev_vers = vers;
@@ -7919,9 +7921,10 @@ RCS_getdeltatext (rcs, fp, rcsbuf)
     }
 
     p = findnode (rcs->versions, num);
-    if (p == NULL)
-	error (1, 0, "mismatch in rcs file %s between deltas and deltatexts (%s)",
-	       rcs->path, num);
+    if (!p)
+	error (1, 0,
+	       "Delta text %s without revision information in `%s'.",
+	       num, rcs->path);
 
     d = (Deltatext *) xmalloc (sizeof (Deltatext));
     d->version = xstrdup (num);
@@ -8349,6 +8352,11 @@ RCS_copydeltas (rcs, fin, rcsbufin, fout, newdtext, insertpt)
 	}
 
 	np = findnode (rcs->versions, dtext->version);
+	if (!np)
+	    error (1, 0,
+		   "Delta text %s without revision information in `%s'.",
+		   dtext->version, rcs->path);
+
 	dadmin = np->data;
 
 	/* If this revision has been outdated, just skip it. */
@@ -8715,6 +8723,8 @@ RCS_rewrite (rcs, newdtext, insertpt)
 {
     FILE *fin, *fout;
     struct rcsbuffer rcsbufin;
+
+    assert (rcs);
 
     if (noexec)
 	return;

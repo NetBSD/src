@@ -893,12 +893,6 @@ read_line (resultp)
 #if defined(CLIENT_SUPPORT) || defined(SERVER_SUPPORT)
 
 /*
- * Zero if compression isn't supported or requested; non-zero to indicate
- * a compression level to request from gzip.
- */
-int gzip_level;
-
-/*
  * Level of compression to use when running gzip on a single file.
  */
 int file_gzip_level;
@@ -1203,49 +1197,6 @@ call_in_directory (pathname, func, data)
     if (CVS_CHDIR (toplevel_wd) < 0)
 	error (1, errno, "could not chdir to %s", toplevel_wd);
 
-    /* Create the CVS directory at the top level if needed.  The
-       isdir seems like an unneeded system call, but it *does*
-       need to be called both if the CVS_CHDIR below succeeds
-       (e.g.  "cvs co .") or if it fails (e.g. basicb-1a in
-       testsuite).  We only need to do this for the "." case,
-       since the server takes care of forcing this directory to be
-       created in all other cases.  If we don't create CVSADM
-       here, the call to Entries_Open below will fail.  FIXME:
-       perhaps this means that we should change our algorithm
-       below that calls Create_Admin instead of having this code
-       here? */
-    if (/* I think the reposdirname_absolute case has to do with
-	   things like "cvs update /foo/bar".  In any event, the
-	   code below which tries to put toplevel_repos into
-	   CVS/Repository is almost surely unsuited to
-	   the reposdirname_absolute case.  */
-	!reposdirname_absolute
-	&& (strcmp (dir_name, ".") == 0)
-	&& ! isdir (CVSADM))
-    {
-	char *repo;
-	char *r;
-
-	newdir = 1;
-
-	/* If toplevel_repos doesn't have at least one character, then the
-	 * reference to r[-1] below could be out of bounds.
-	 */
-	assert (*toplevel_repos);
-
-	repo = xmalloc (strlen (toplevel_repos)
-			+ 10);
-	strcpy (repo, toplevel_repos);
-	r = repo + strlen (repo);
-	if (r[-1] != '.' || r[-2] != '/')
-	    strcpy (r, "/.");
-
-	Create_Admin (".", ".", repo, (char *) NULL,
-		      (char *) NULL, 0, 1, 1);
-
-	free (repo);
-    }
-
     if (CVS_CHDIR (dir_name) < 0)
     {
 	char *dir;
@@ -1506,7 +1457,44 @@ handle_copy_file (args, len)
 {
     call_in_directory (args, copy_a_file, (char *)NULL);
 }
-
+
+
+
+/* Attempt to read a file size from a string.  Accepts base 8 (0N), base 16
+ * (0xN), or base 10.  Exits on error.
+ *
+ * RETURNS
+ *   The file size, in a size_t.
+ *
+ * FATAL ERRORS
+ *   1.  As strtoul().
+ *   2.  If the number read exceeds SIZE_MAX.
+ */
+static size_t
+strto_file_size (const char *s)
+{
+    unsigned long tmp;
+    char *endptr;
+
+    /* Read it.  */
+    errno = 0;
+    tmp = strtoul (s, &endptr, 0);
+
+    /* Check for errors.  */
+    if (errno || endptr == s)
+	error (1, errno, "Server sent invalid file size `%s'", s);
+    if (*endptr != '\0')
+	error (1, 0,
+	       "Server sent trailing characters in file size `%s'",
+	       endptr);
+    if (tmp > SIZE_MAX)
+	error (1, 0, "Server sent file size exceeding client max.");
+
+    /* Return it.  */
+    return (size_t)tmp;
+}
+
+
 
 static void read_counted_file PROTO ((const char *, const char *));
 
@@ -1539,9 +1527,7 @@ read_counted_file (filename, fullname)
     if (size_string[0] == 'z')
 	error (1, 0, "\
 protocol error: compressed files not supported for that operation");
-    /* FIXME: should be doing more error checking, probably.  Like using
-       strtoul and making sure we used up the whole line.  */
-    size = atoi (size_string);
+    size = strto_file_size (size_string);
     free (size_string);
 
     /* A more sophisticated implementation would use only a limited amount
@@ -1823,11 +1809,12 @@ update_entries (data_arg, ent_list, short_pathname, filename)
     {
 	char *size_string;
 	char *mode_string;
-	int size;
+	size_t size;
 	char *buf;
 	char *temp_filename;
 	int use_gzip;
 	int patch_failed;
+	char *s;
 
 	read_line (&mode_string);
 	
@@ -1835,13 +1822,14 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	if (size_string[0] == 'z')
 	{
 	    use_gzip = 1;
-	    size = atoi (size_string+1);
+	    s = size_string + 1;
 	}
 	else
 	{
 	    use_gzip = 0;
-	    size = atoi (size_string);
+	    s = size_string;
 	}
+	size = strto_file_size (s);
 	free (size_string);
 
 	/* Note that checking this separately from writing the file is
@@ -2853,7 +2841,10 @@ send_a_repository (dir, repository, update_dir_in)
     const char *repository;
     const char *update_dir_in;
 {
-    char *update_dir = xstrdup (update_dir_in);
+    char *update_dir;
+
+    assert (update_dir_in);
+    update_dir = xstrdup (update_dir_in);
 
     if (toplevel_repos == NULL && repository != NULL)
     {
@@ -3084,9 +3075,6 @@ handle_m (args, len)
     char *args;
     int len;
 {
-    fd_set wfds;
-    int s;
-
     /* In the case where stdout and stderr point to the same place,
        fflushing stderr will make output happen in the correct order.
        Often stderr will be line-buffered and this won't be needed,
@@ -3094,12 +3082,6 @@ handle_m (args, len)
        based on being confused between default buffering between
        stdout and stderr.  But I'm not sure).  */
     fflush (stderr);
-    FD_ZERO (&wfds);
-    FD_SET (STDOUT_FILENO, &wfds);
-    errno = 0;
-    s = select (STDOUT_FILENO+1, NULL, &wfds, NULL, NULL);
-    if (s < 1 && errno != 0)
-        perror ("cannot write to stdout");
     fwrite (args, len, sizeof (*args), stdout);
     putc ('\n', stdout);
 }
@@ -3122,7 +3104,7 @@ handle_mbinary (args, len)
 
     /* Get the size.  */
     read_line (&size_string);
-    size = atoi (size_string);
+    size = strto_file_size (size_string);
     free (size_string);
 
     /* OK, now get all the data.  The algorithm here is that we read
@@ -3147,24 +3129,9 @@ handle_e (args, len)
     char *args;
     int len;
 {
-    fd_set wfds;
-    int s;
-
     /* In the case where stdout and stderr point to the same place,
        fflushing stdout will make output happen in the correct order.  */
     fflush (stdout);
-    FD_ZERO (&wfds);
-    FD_SET (STDERR_FILENO, &wfds);
-    errno = 0;
-    s = select (STDERR_FILENO+1, NULL, &wfds, NULL, NULL);
-    /*
-     * If stderr has problems, then adding a call to
-     *   perror ("cannot write to stderr")
-     * will not work. So, try to write a message on stdout and
-     * terminate cvs.
-     */
-    if (s < 1 && errno != 0)
-        fperrmsg (stdout, 1, errno, "cannot write to stderr");
     fwrite (args, len, sizeof (*args), stderr);
     putc ('\n', stderr);
 }
@@ -4085,7 +4052,7 @@ connect_to_forked_server (to_server, from_server)
 	fprintf (stderr, " -> Forking server: %s %s\n", command[0], command[1]);
     }
 
-    child_pid = piped_child (command, &tofd, &fromfd);
+    child_pid = piped_child (command, &tofd, &fromfd, 0);
     if (child_pid < 0)
 	error (1, 0, "could not fork server process");
 
@@ -4393,6 +4360,7 @@ start_server ()
 #endif /* HAVE_GSSAPI */
 
 	case ext_method:
+	case extssh_method:
 #ifdef NO_EXT_METHOD
 	    error (0, 0, ":ext: method not supported by this port of CVS");
 	    error (1, 0, "try :server: instead");
@@ -4787,7 +4755,7 @@ start_rsh_server (root, to_server, from_server)
     char *rsh_argv[10];
 
     if (!cvs_rsh)
-	cvs_rsh = "ssh";
+	cvs_rsh = RSH_DFLT;
     if (!cvs_server)
 	cvs_server = "cvs";
 
@@ -4892,7 +4860,7 @@ start_rsh_server (root, to_server, from_server)
 	        fprintf (stderr, "%s ", argv[i]);
 	    putc ('\n', stderr);
 	}
-	child_pid = piped_child (argv, &tofd, &fromfd);
+	child_pid = piped_child (argv, &tofd, &fromfd, 1);
 
 	if (child_pid < 0)
 	    error (1, errno, "cannot start server via rsh");
@@ -5207,6 +5175,7 @@ warning: ignoring -k options due to server limitations");
     else if (vers->ts_rcs == NULL
 	     || args->force
 	     || strcmp (vers->ts_conflict
+			&& supported_request ("Empty-conflicts")
 		        ? vers->ts_conflict : vers->ts_rcs, vers->ts_user)
 	     || (vers->ts_conflict && !strcmp (cvs_cmd_name, "diff")))
     {
