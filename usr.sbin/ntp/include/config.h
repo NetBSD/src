@@ -958,7 +958,7 @@
 /* #undef NO_PARENB_IGNPAR */
 
 /* Default location of crypto key info */
-#define NTP_KEYSDIR "/usr/local/etc"
+#define NTP_KEYSDIR "/etc/ntp"
 
 /* Do we have ntp_{adj,get}time in libc? */
 #define NTP_SYSCALLS_LIBC 1
