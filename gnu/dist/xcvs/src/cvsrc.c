@@ -125,9 +125,9 @@ read_cvsrc (argc, argv, cmdname)
     if (found)
     {
 	/* skip over command in the options line */
-	for (optstart = strtok (line + command_len, "\t \n");
+	for (optstart = strtok (line + command_len, "\t \n\r");
 	     optstart;
-	     optstart = strtok (NULL, "\t \n"))
+	     optstart = strtok (NULL, "\t \n\r"))
 	{
 	    new_argv [new_argc++] = xstrdup (optstart);
 	  

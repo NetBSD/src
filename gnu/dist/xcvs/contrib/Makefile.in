@@ -175,6 +175,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+with_default_rsh = @with_default_rsh@
 contribdir = $(pkgdatadir)/contrib
 contrib_SCRIPTS = \
 	check_cvs \

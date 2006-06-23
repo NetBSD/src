@@ -1,3 +1,39 @@
+2006-06-08  Derek Price  <derek@ximbiot.com>
+
+	* cvsclient.texi (Requests): Add Empty-conflicts.
+
+2006-03-20  Mark D. Baushke  <mdb@gnu.org>
+
+	[patch #4965]
+	* cvs.texinfo (Sticky tags, Merging and keywords)
+	(checkout options, update options): The -A switch
+	does not reset sticky -k options on modified files.
+	* cvs.1, stamp-1, stamp-vti, version.texi: Regenerated.
+
+2006-02-28  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (Editing administrative files): Import changes from Wiki.
+
+2005-12-09  Derek Price  <derek@ximbiot.com>
+
+	[patch #4634]
+	* cvsclient.texi (Root request): Clarify.
+
+2005-11-10  Larry Jones  <lawrence.jones@ugs.com>
+
+	* cvs.texinfo (Common options): -n no longer applies to commit.
+	(commit): Remove reference to the defunct -n option.
+	* cvs.1, stamp-vti, version.texi: Regenerated
+
+2005-10-12  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: Remove text that created unintentional cross-references
+	in generated info files.
+
+2005-10-04  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: s/visa versa/vice versa/.  (From Wiki.)
+
 2005-09-26  Derek Price  <derek@ximbiot.com>
 
 	* Makefile.am (cvs-paper.ps, cvs-paper.pdf): Remove implicit sources.
