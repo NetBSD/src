@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.123 2006/06/23 16:26:59 bouyer Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.124 2006/06/23 20:30:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.123 2006/06/23 16:26:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.124 2006/06/23 20:30:11 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -151,7 +151,7 @@ int nkern_dirs = 2;
 #endif
 
 int kernfs_try_fileop(kfstype, kfsfileop, void *, int);
-int kernfs_try_xread(kfstype, const struct kernfs_node *, char *,
+int kernfs_try_xread(kfstype, const struct kernfs_node *, char **,
     size_t, int);
 int kernfs_try_xwrite(kfstype, const struct kernfs_node *, char *,
     size_t, int);
@@ -321,6 +321,20 @@ kernfs_try_fileop(kfstype type, kfsfileop fileop, void *v, int error)
 }
 
 int
+kernfs_try_xread(kfstype type, const struct kernfs_node *kfs, char **bfp,
+    size_t len, int error)
+{
+	struct kernfs_fileop *kf, skf;
+
+	skf.kf_type = type;
+	skf.kf_fileop = KERNFS_XREAD;
+	if ((kf = SPLAY_FIND(kfsfileoptree, &kfsfileoptree, &skf)))
+		if (kf->kf_xread)
+			return kf->kf_xread(kfs, bfp, len);
+	return error;
+}
+
+int
 kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *bf,
     size_t len, int error)
 {
@@ -375,6 +389,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 #ifdef IPSEC
 	struct mbuf *m;
 #endif
+	int err;
 
 	kt = kfs->kfs_kt;
 
@@ -509,8 +524,10 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 #endif
 
 	default:
-		*wrlen = 0;
-		return (0);
+		err = kernfs_try_xread(kfs->kfs_type, kfs, bufp, len,
+		    EOPNOTSUPP);
+		if (err)
+			return err;
 	}
 
 	len = strlen(*bufp);
@@ -952,7 +969,12 @@ kernfs_read(v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
-	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_READ, v, 0);
+	if (kfs->kfs_type < KFSlasttype) {
+		/* use default function */
+		return kernfs_default_xread(v);
+	}
+	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_READ, v,
+	   EOPNOTSUPP);
 }
 
 static int
@@ -997,7 +1019,12 @@ kernfs_write(v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
-	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_WRITE, v, 0);
+	if (kfs->kfs_type < KFSlasttype) {
+		/* use default function */
+		return kernfs_default_xwrite(v);
+	}
+	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_WRITE, v,
+	    EOPNOTSUPP);
 }
 
 int
