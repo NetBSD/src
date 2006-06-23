@@ -2717,6 +2717,25 @@ set_nonblock_fd (fd)
 
 
 
+/*
+ * Set buffer FD to blocking I/O.  Returns 0 for success or errno code.
+ */
+int
+set_block_fd (fd)
+     int fd;
+{
+    int flags;
+
+    flags = fcntl (fd, F_GETFL, 0);
+    if (flags < 0)
+	return errno;
+    if (fcntl (fd, F_SETFL, flags & ~O_NONBLOCK) < 0)
+	return errno;
+    return 0;
+}
+
+
+
 static void
 do_cvs_command (cmd_name, command)
     char *cmd_name;
@@ -2940,14 +2959,22 @@ error  \n");
 	{
 	    char junk;
 	    ssize_t status;
-	    while ((status = read (flowcontrol_pipe[0], &junk, 1)) > 0
-	           || (status == -1 && errno == EAGAIN));
+	    set_block_fd (flowcontrol_pipe[0]);
+	    while ((status = read (flowcontrol_pipe[0], &junk, 1)) > 0);
 	}
 	/* FIXME: No point in printing an error message with error(),
 	 * as STDERR is already closed, but perhaps this could be syslogged?
 	 */
 #endif
 
+	rcs_cleanup ();
+	Lock_Cleanup ();
+	/* Don't call server_cleanup - the parent will handle that.  */
+#ifdef SYSTEM_CLEANUP
+	/* Hook for OS-specific behavior, for example socket subsystems on
+	   NT and OS2 or dealing with windows and arguments on Mac.  */
+	SYSTEM_CLEANUP ();
+#endif
 	exit (exitstatus);
     }
 
@@ -4558,9 +4585,12 @@ struct template_proc_data
 static struct template_proc_data *tpd;
 
 static int
+template_proc PROTO((const char *repository, const char *template));
+
+static int
 template_proc (repository, template)
-    char *repository;
-    char *template;
+    const char *repository;
+    const char *template;
 {
     FILE *fp;
     char buf[1024];
@@ -4840,6 +4870,7 @@ struct request requests[] =
   REQ_LINE("Checkin-time", serve_checkin_time, 0),
   REQ_LINE("Modified", serve_modified, RQ_ESSENTIAL),
   REQ_LINE("Is-modified", serve_is_modified, 0),
+  REQ_LINE("Empty-conflicts", serve_noop, 0),
 
   /* The client must send this request to interoperate with CVS 1.5
      through 1.9 servers.  The server must support it (although it can
@@ -5963,6 +5994,8 @@ pserver_authenticate_connection ()
     {
 	printf ("I LOVE YOU\n");
 	fflush (stdout);
+
+	/* It's okay to skip rcs_cleanup() and Lock_Cleanup() here.  */
 
 #ifdef SYSTEM_CLEANUP
 	/* Hook for OS-specific behavior, for example socket subsystems on

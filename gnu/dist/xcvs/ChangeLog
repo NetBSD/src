@@ -1,133 +1,48 @@
-2006-06-07  Mark D. Baushke  <mdb@gnu.org>
+2006-06-09  Derek Price  <derek@ximbiot.com>
 
-	* modules.c (my_module): Remove unused variable xvalue.
-	[Fixes NetBSD coverity cid-705.]
+	* NEWS: Note client/server conflict fix.
 
-2006-05-31  Mark D. Baushke  <mdb@gnu.org>
+2006-05-25  Derek Price  <derek@ximbiot.com>
 
-	* add.c (add): Fix memory leak.
-	[Fixes NetBSD coverity cid-3751.]
-	(add_directory): Fix memory leak.
-	[Fixes NetBSD coverity cid-3640.]
+	* configure.in: Accept --with-rsh argument to set RSH_DFLT in config.h.
+	Prefer `remsh' to `rsh' when autodetecting and comment rationale.
 
-	* commit.c (remove_file): Fix memory leak.
-	[Fixes NetBSD coverity cid-3752.]
+2006-04-27  Derek Price  <derek@ximbiot.com>
 
-	* checkin.c (Checkin): Avoid possible NULL dereference.
-	[Fixes NetBSD coverity cid-2425.]
+	* acinclude.m4 (ACX_WITH_GSSAPI): Detect libgss for HP-UX.
+	* NEWS: Note that GSSAPI builds under HP-UX.
+	(Report from Larry Jones <lawrence.jones@ugs.com>.)
 
-	* client.c (auth_server): Fix memory leak.
-	[Fixes NetBSD coverity cid-3404.]
+2006-03-07  Derek Price  <derek@ximbiot.com>
 
-	* rcs.c (RCS_checkin): Add assert (tip).
-	[Fixes NetBSD coverity cid-2424.]
+	* NEWS: Note rtag fixes.
 
-2006-05-25  Mark D. Baushke  <mdb@gnu.org>
+2006-02-26  Derek Price  <derek@ximbiot.com>
 
-	* add.c (add): Do not leak memory.
-	[Fixes NetBSD coverity cid-2199.]
+	* NEWS: Note CVSADM fix as an efficiency improvement.
 
-	* edit.c (onoff_fileproc): Do not leak memory.
-	[Fixes NetBSD coverity cid-2201.]
+2006-02-01  Derek Price  <derek@ximbiot.com>
 
-	* edit.c (onoff_filesdoneproc): Do not leak memory.
-	[Fixes NetBSD coverity cid-2202.]
+	* NEWS: Note unconditional val-tags lock removal.
 
-	* lock.c (readers_exist): Add assert (lockdir).
-	[Fixes NetBSD coverity cid-2411.]
+	* NEWS: Note history buffer overflow fix.
 
-	* rcs.c (RCS_findlock_or_tip): Do not leak memory.
-	[Fixes NetBSD coverity cid-2198.]
+2006-01-30  Derek Price  <derek@ximbiot.com>
 
-	* rcs.c (RCS_getdate): Avoid possible NULL dereference.
-	[Fixes NetBSD coverity cid-2412.]
+	* NEWS: Note nonblocking flow control pipe fix.
 
-	* server.c (serve_sticky): Do not leak file descriptors.
-	[Fixes NetBSD coverity cid-2197.]
+2005-12-09  Derek Price  <derek@ximbiot.com>
 
-	* server.c (do_cvs_command): Do not leak memory.
-	[Fixes NetBSD coverity cid-2204.]
-	* server.c (do_cvs_command): Protect close (dev_null_fd) against
-	invalid fd value in error_exit.
-	[Fixes NetBSD coverity cid-1307.]
+	* NEWS: Note misc doc & bug fixes.
 
-	* tag.c (add_to_val_tags): Do not leak memory. Be sure to
-	clear_val_tags_lock before returning.
-	[Fixes NetBSD coverity cid-2071.]
+2005-12-07  Derek Price  <derek@ximbiot.com>
 
-2006-05-12  Mark D. Baushke  <mdb@gnu.org>
+	* NEWS: Note recognition of :extssh:.
 
-	* rcs.c (RCS_isdead): Assert that the first argument is not NULL.
-	[Fixes NetBSD cid-1058.]
+2005-10-18  Derek Price  <derek@ximbiot.com>
 
-	* commit.c (checkaddfile): Do not dereference NULL on call to
-	error().
-	[Fixes NetBSD cid-1061.]
-
-	* log.c (cvslog): Assert p->start && p->end instead of masking the
-	problem.
-	* server.c (server_updated): Assert findnode_fn results instead of
-	masking the problem.
-	
-	* add.c (add_directory): Revert previous change. The xstrdup()
-	function already deals a NULL argument.
-	* client.c (handle_mt): Ditto.
-	* entries.c (Entnode_Create): Ditto.
-	(Entries_Open): Ditto.
-	* logmsg.c (fmt_proc): Ditto.
-	* vers_ts.c (Version_TS): Ditto.
-	
-2006-05-11  Mark D. Baushke  <mdb@gnu.org>
-
-	* add.c (add_directory): Protect tag from NULL dereference.
-	[Fixes NetBSD cid-1054.]
-
-	* client.c (handle_mt): Deal with missing text argument.
-	[Fixes NetBSD cid-924.]
-
-	* entries.c (Entnode_Create): Protect date, tag and ts_conflict
-	from possible NULL dereference.
-	[Fixes NetBSD coverity cid-994, cid-995, cid-1055, cid-1057.]
-
-	* entries.c (Entries_Open): Protect dirtag and dirdate from
-	possible NULL dereference.
-	[Fixes NetBSD coverity cid-996.]
-
-	* log.c (cvslog): Validate start and end args to
-	date_to_internet().
-	[Fixes NetBSD coverity cid-2427 and cid-2428.]
-
-	* logmsg.c (fmt_proc): Protect li->tag from NULL dereference.
-	[Fixes NetBSD coverity cid-997.]
-
-	* vers_ts.c (Version_TS): Protect tag and vers_ts->tag from NULL
-	dereference.
-	[Fixes NetBSD coverity cid-1053.]
-
-2006-05-04  Mark D. Baushke  <mdb@gnu.org>
-
-	* filesubr.c (cvs_temp_file): Avoid keeping pointers to free()'d
-	storage laying around.
-	* commit.c (commit): Handle possible NULL filename values
-	returned from cvs_temp_file().
-	* filesubr.c (cvs_temp_name): Ditto.
-	* import.c (import): Ditto.
-	* login.c (password_entry_operation): Ditto.
-	* logmsg.c (do_verify): Ditto.
-	* patch.c (patch_fileproc): Ditto.
-	[Fixes NetBSD coverity cid-2545.]
-
-	* buffer.c (packetizing_buffer_output): Initialize outdata.
-	[Fixes NetBSD coverity cid-2474.]
-  
-  	* server.c (server_updated): Fix NetBSD coverity cid-1352
-  	NetBSD-sparc64 of 2006-May-02 03:02:46.
-	* server.c (server_updated): Fix NetBSD coverity cid-1352
-	NetBSD-sparc64 of 2006-May-02 03:02:46.
-
-2005-09-26  Conrad T. Pino  <Conrad@Pino.com>
- 
- 	* rcs.c: Use "#ifdef HAVE_FSYNC" just like every where else.
+	* KEYS: New file, suggested by Antoine Lexy-Lambert <antoine@gmx.de>.
+	* README: Mention KEYS file.
 
 2005-09-26  Derek Price  <derek@ximbiot.com>
 

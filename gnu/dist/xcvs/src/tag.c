@@ -360,7 +360,7 @@ rtag_proc (argc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 	}
 	/* End section which is identical to patch_proc.  */
 
-	if (delete_flag || attic_too || (force_tag_match && numtag))
+	if (delete_flag || force_tag_move || attic_too || numtag)
 	    which = W_REPOS | W_ATTIC;
 	else
 	    which = W_REPOS;
