@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: cvs2netbsd,v 1.1 2006/02/04 20:16:28 christos Exp $
+#	$NetBSD: cvs2netbsd,v 1.2 2006/06/23 22:45:40 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,12 +43,13 @@ for f in contrib/rcs2log.sh mkinstalldirs; do
 done
 
 ### Remove unnecessary files
+### Christos: Perhaps not do this, or automate configure cleanup?
 rm -rf emx os2 tools vms windows-NT zlib && \
 rm -f build.com cvsnt.* */.cvsignore && \
 cd doc && rm -f cvs-paper.ps cvs.aux cvs.info* cvs.ps \
 		cvsclient.aux cvsclient.info* cvsclient.ps && \
 echo Removed unnecessary files. You can import now.
 
-echo Path: src/gnu/dist/cvs
-echo Vendor: CVSHOME
-echo Versiontag: CVS1_XX_Y
+echo Path: src/gnu/dist/xcvs
+echo Vendor: NONGNU
+echo Versiontag: CVS1_XX_YY
