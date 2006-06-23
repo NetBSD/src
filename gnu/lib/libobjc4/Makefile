@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/06/04 02:30:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2006/06/23 17:27:08 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -28,6 +28,7 @@ LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc4/libgcc && ${PRINTOBJDIR}
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${NETBSDSRCDIR}/gnu/dist/gcc4
 GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${MACHINE_ARCH}
+LIBOBJCARCH=	${NETBSDSRCDIR}/gnu/lib/libobjc4/arch/${MACHINE_ARCH}
 GCCLIBXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${MACHINE_ARCH}
 
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
@@ -91,7 +92,7 @@ CLEANFILES+= tconfig.h unwind.h
 
 # XXX just while all platforms defs.mk are updated..
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
-optionlist: ${G_ALL_OPT_FILES) Makefile ${DIST}/gcc/opt-gather.awk
+optionlist: ${G_ALL_OPT_FILES} ${LIBOBJCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
 	${AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
 
 options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
