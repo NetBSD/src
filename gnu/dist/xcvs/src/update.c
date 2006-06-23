@@ -1912,7 +1912,7 @@ write_letter (finfo, letter)
 static void
 RegisterMerge PROTO((struct file_info *finfo, Vers_TS *vers,
 		     const char *backup, int has_conflicts));
-void
+static void
 RegisterMerge (finfo, vers, backup, has_conflicts)
     struct file_info *finfo;
     Vers_TS *vers;

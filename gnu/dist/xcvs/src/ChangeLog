@@ -1,21 +1,325 @@
+2006-06-08  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (conflicts4): Test that the client honors Empty-conflicts.
+
+	* server.c (requests): Add "Empty-conflicts" marker.
+	* client.c (send_fileproc): Send contents of all files with conflicts
+	unless the server can handle the conflict marker in the Entry.
+
+	* sanity.sh (conflicts4): New tests.
+	(Original patch from Mark D. Baushke <mdb@gnu.org>.)
+
+2006-06-07  Mark D. Baushke  <mdb@gnu.org>
+
+	* modules.c (my_module): Remove unused variable xvalue.
+	[Fixes NetBSD coverity cid-705.]
+	
+2006-05-31  Mark D. Baushke  <mdb@gnu.org>
+
+	* add.c (add): Fix memory leak.
+	[Fixes NetBSD coverity cid-3751.]
+	(add_directory): Fix memory leak.
+	[Fixes NetBSD coverity cid-3640.]
+
+	* checkin.c (Checkin): Avoid possible NULL dereference.
+	[Fixes NetBSD coverity cid-2425.]
+
+	* client.c (auth_server): Fix memory leak.
+	[Fixes NetBSD coverity cid-3404.]
+
+	* commit.c (remove_file): Fix memory leak.
+	[Fixes NetBSD coverity cid-3752.]
+
+	* rcs.c (RCS_checkin): Add assert (tip).
+	[Fixes NetBSD coverity cid-2424.]
+
+2006-05-26  Mark D. Baushke  <mdb@gnu.org>
+
+	* add.c (add): Do not leak memory.
+	[Fixes NetBSD coverity cid-2199.]
+
+	* edit.c (onoff_fileproc): Do not leak memory.
+	[Fixes NetBSD coverity cid-2201.]
+
+	* edit.c (onoff_filesdoneproc): Do not leak memory.
+	[Fixes NetBSD coverity cid-2202.]
+
+	* lock.c (readers_exist): Add assert (lockdir).
+	[Fixes NetBSD coverity cid-2411.]
+
+	* rcs.c (RCS_findlock_or_tip): Do not leak memory.
+	[Fixes NetBSD coverity cid-2198.]
+
+	* rcs.c (RCS_getdate): Avoid possible NULL dereference.
+	[Fixes NetBSD coverity cid-2412.]
+
+	* server.c (serve_sticky): Do not leak file descriptors.
+	[Fixes NetBSD coverity cid-2197.]
+
+	* server.c (do_cvs_command): Do not leak memory.
+	[Fixes NetBSD coverity cid-2204.]
+
+	* tag.c (add_to_val_tags): Do not leak memory.
+	[Fixes NetBSD coverity cid-2071.]
+
+2006-05-25  Derek Price  <derek@ximbiot.com>
+
+	* client.c (start_rsh_server): Default rsh client to RSH_DFLT.  Remove
+	verbose comment attempting to justify the previous default.
+
+2006-05-24  Larry Jones  <lawrence.jones@ugs.com>
+
+	* sanity.sh: Add -v|--verbose option to echo test names.  Clean
+	up help message.
+	Remove val-tags files for cleanup instead of truncating since the
+	truncation code doesn't work right on Solaris.  Always use -f when
+	removing val-tags.
+
+2006-05-22  Derek Price  <derek@ximbiot.com>
+
+	* rcs.c (RCS_reparsercsfile, RCS_fully_parse, RCS_checkout, RCS_deltas,
+	RCS_getdeltatext, RCS_copydeltas): Verify input revision numbers.
+	(rcs6): Update to compensate.
+
+	* sanity.sh (rcs6): New test.
+
+2006-05-16  Derek Price  <derek@ximbiot.com>
+
+	* main.c: Update copyright for 2006.
+
+2006-05-12  Mark D. Baushke  <mdb@gnu.org>
+
+	* log.c (log_expand_revlist): Add assert (r->first). It should
+	only be possible for both r->first == NULL && r->last == NULL
+	which would have been handled.
+	[Fixes NetBSD coverity cid-1063.]
+
+	* server.c (do_cvs_command): Protect close (dev_null_fd) against
+	invalid fd value in error_exit.
+	[Fixes NetBSD coverity cid-1307.]
+	
+	* rcs.c (RCS_isdead): Assert that the first argument is not NULL.
+	[Fixes NetBSD coverity cid-1058.]
+
+	* commit.c (checkaddfile): Do not dereference NULL on call to
+	error().
+	[Fixes NetBSD coverity cid-1061.]
+
+	* log.c (cvslog): Assert p->start && p->end instead of masking the
+	problem.
+	* server.c (server_updated): Assert findnode_fn results instead of
+	masking the problem.
+	
+	* add.c (add_directory): Revert previous change. The xstrdup()
+	function already deals a NULL argument.
+	* client.c (handle_mt): Ditto.
+	* entries.c (Entnode_Create): Ditto.
+	(Entries_Open): Ditto.
+	* logmsg.c (fmt_proc): Ditto.
+	* vers_ts.c (Version_TS): Ditto.
+	
+2006-05-11  Mark D. Baushke  <mdb@gnu.org>
+
+	* add.c (add_directory): Protect tag from NULL dereference.
+	[Fixes NetBSD cid-1054.]
+
+	* client.c (handle_mt): Deal with missing text argument.
+	[Fixes NetBSD cid-924.]
+
+	* entries.c (Entnode_Create): Protect date, tag and ts_conflict
+	from possible NULL dereference.
+	[Fixes NetBSD coverity cid-994, cid-995, cid-1055, cid-1057.]
+
+	* entries.c (Entries_Open): Protect dirtag and dirdate from
+	possible NULL dereference.
+	[Fixes NetBSD coverity cid-996.]
+
+	* log.c (cvslog): Validate start and end args to
+	date_to_internet().
+	[Fixes NetBSD coverity cid-2427 and cid-2428.]
+
+	* logmsg.c (fmt_proc): Protect li->tag from NULL dereference.
+	[Fixes NetBSD coverity cid-997.]
+
+	* vers_ts.c (Version_TS): Protect tag and vers_ts->tag from NULL
+	dereference.
+	[Fixes NetBSD coverity cid-1053.]
+
 2006-05-04  Mark D. Baushke  <mdb@gnu.org>
 
- 	* filesubr.c (cvs_temp_file): Avoid keeping pointers to free()'d
- 	storage laying around.
- 	* commit.c (commit): Handle possible NULL filename values
- 	returned from cvs_temp_file().
- 	* filesubr.c (cvs_temp_name): Ditto.
- 	* import.c (import): Ditto.
- 	* login.c (password_entry_operation): Ditto.
- 	* logmsg.c (do_verify): Ditto.
- 	* patch.c (patch_fileproc): Ditto.
- 	[Fixes NetBSD coverity cid-2545.]
+	* filesubr.c (cvs_temp_file): Avoid keeping pointers to free()'d
+	storage laying around.
+	* commit.c (commit): Handle possible NULL filename values
+	returned from cvs_temp_file().
+	* filesubr.c (cvs_temp_name): Ditto.
+	* import.c (import): Ditto.
+	* login.c (password_entry_operation): Ditto.
+	* logmsg.c (do_verify): Ditto.
+	* patch.c (patch_fileproc): Ditto.
+	[Fixes NetBSD coverity cid-2545.]
 
- 	* buffer.c (packetizing_buffer_output): Initialize outdata.
- 	[Fixes NetBSD coverity cid-2474.]
+	* buffer.c (packetizing_buffer_output): Initialize outdata.
+	[Fixes NetBSD coverity cid-2474.]
 
-	* server.c (server_updated): Fix NetBSD coverity cid-1352
-	NetBSD-sparc64 of 2006-May-02 03:02:46.
+	* server.c (server_updated): Check for NULL return from
+	findnode_fn(). [Fixes NetBSD coverity cid-1352.]
+
+2006-04-19  Larry Jones  <lawrence.jones@ugs.com>
+
+	* history.c (sort_order): Back out previous change - not needed.
+
+2006-04-15  Larry Jones  <lawrence.jones@ugs.com>
+
+	* history.c (sort_order): Add prototype.
+	* server.c (template_proc): Add prototype and make args const.
+	* update.c (RegisterMerge): Make static to match prototype.
+
+2006-04-07  Derek Price  <derek@ximbiot.com>
+
+	* client.c (strto_file_size): New function which checks for errors when
+	parsing protocol input.
+	(read_counted_file, update_entries, handle_mbinary): Use new function.
+	Remove FIXME.
+	(Thanks to a report from Brendan Harrison
+	<brendan.harrison@klocwork.com>.)
+
+	* client.c (send_a_repository): Add assertion.
+	(Thanks to an incorrect report from Brendan Harrison
+	<brendan.harrison@klocwork.com>.)
+
+2006-04-06  Derek Price  <derek@ximbiot.com>
+
+	* filesubr.c (last_component, expand_wild), rcs.c (RCS_deltas,
+	RCS_rewrite), server.c (server_checked_in): Add assertions.
+	(Thanks to an incorrect report from Brendan Harrison
+	<brendan.harrison@klocwork.com>.)
+
+2006-03-31  Mark D. Baushke  <mdb@gnu.org>
+
+	* cvsrc.c (read_cvsrc): Deal with \r\n (DOS) line endings in
+	.cvsrc files.
+
+2006-03-07  Derek Price  <derek@ximbiot.com>
+
+	* tag.c (rtag_proc): Search the Attic when -F is used.
+	* sanity.sh (tests): Run death-rtag.
+	(death-rtag): Expect success.
+
+	* sanity.sh (death-rtag): Add failing force tag move test.
+
+2006-03-06  Derek Price  <derek@ximbiot.com>
+
+	* tag.c (rtag_proc): Always search in the attic when -r is used.
+
+	* sanity.sh (death-rtag): New test.
+	(Original report from C. Michael Pilato <cmpilato@collab.net>.)
+
+2006-03-01  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: Set MALLOC_CHECK_ in hopes of exposing common memory
+	errors when CVS is linked with glibc 2.x.
+
+2006-02-27  Derek Price  <derek@ximbiot.com>
+
+	* lock.c (internal_lock): Back out previous change, we don't change
+	user visible output on stable unless absolutely necessary.
+
+	* lock.c (internal_lock): Improve error message.
+
+2006-02-26  Derek Price  <derek@ximbiot.com>
+
+	* client.c (call_in_directory): Remove unneeded code.
+	* sanity.sh (toplevel-12): Compensate by failing to expect a redundant
+	error message.
+
+2006-02-24  Mark D. Baushke  <mdb@gnu.org>
+
+	* client.c (gzip_level): Move to...
+	* main.c (gzip_level): ...here.
+	(main): Revert previous change in '-z' argument processing and
+	remove CLIENT_SUPPORT ifdef/endif.
+	* sanity.h (crerepos-6a): Deal with --disable-client output.
+
+	* main.c (main): Validate the gzip compression level for
+	--disable-client configurations.
+
+2006-02-13  Derek Price  <derek@ximbiot.com>
+
+	* server.c (do_cvs_command): Skip server_cleanup in the child process.
+
+	* sanity.sh (sshstdio-6): Rewrite using more portable sed script.
+
+2006-02-02  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (sshstdio): Attempt to ignore spurious SSH output.
+
+	* main.c (main), release.c (release), server.c (do_cvs_command): Always
+	call the cleanup hooks before exit.
+
+2006-02-01  Derek Price  <derek@ximbiot.com>
+
+	* tag.c (add_to_val_tags): When a tag turns out to exist in the db when
+	it isn't expected, release the lock.
+
+	* history.c (save_user, save_file, save_mod, read_hrecs): Avoid
+	overflow.
+
+2006-01-30  Derek Price  <derek@ximbiot.com>
+
+	* server.c (do_cvs_command): Set flow control pipe to blocking mode
+	before waiting for it to close.
+	(set_block_fd): New function.
+	(Original patch from Garrett Rooney <grooney@collab.net>.)
+
+2006-01-13  Larry Jones  <lawrence.jones@ugs.com>
+
+	* mkmodules.c (config_contents): Change SystemAuth to yes to match
+	the default value.  Add missing newline in RereadLogAfterVerify.
+
+2006-01-09  Larry Jones  <lawrence.jones@ugs.com>
+
+	* commit.c (remove_file): Record correct revision in history file.
+	(Reported by Chris Reed <cr@progress.com>.)
+
+2005-12-07  Derek Price  <derek@ximbiot.com>
+
+	* client.c (start_server), root.c (method_names), root.h (CVSmethod):
+	Handle :extssh: as a kindness to Eclipse users.
+	(Suggestion from Joseph P. Skudlarek <Jskud@Jskud.com>.)
+
+2005-12-06  Mark D. Baushke  <mdb@gnu.org>
+
+	* buffer.c (stdio_buffer_shutdown): No longer assert() the
+	fstat(). Use error (0, ...) instead of error (1, ...) to avoid
+	infinite loops. (patch #4678)
+	Patch adapted from "Allan L. Bazinet" <allan.bazinet@gmail.com>
+
+2005-11-10  Larry Jones  <lawrence.jones@ugs.com>
+
+	* commit.c (commit): Complain about obsolete -n option if not in
+	server mode.
+
+2005-11-09  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (pserver-4.2): Accept a "no such sytem user" message when
+	a root attempt is made.
+
+2005-09-30  Larry Jones  <lawrence.jones@ugs.com>
+
+	* expand_path.c (expand_path): Fix memory leaks.
+
+2005-09-29  Paul Eggert  <eggert@CS.UCLA.EDU>
+	    Derek Price  <derek@ximbiot.com>
+
+	* client.c (handle_m, handle_e): Remove incomplete workaround for
+	O_NONBLOCK problem; no longer needed because of the fix below.
+	(start_rsh_server): We need the O_NONBLOCK fix, so pass 'true' to
+	piped_child to enable the workaround.
+	* cvs.h (piped_child): New bool argument saying whether O_NONBLOCK
+	fix is needed.  All uses changed.
+	* run.c (work_around_openssh_glitch): New function.
+	(piped_child): Use it if the fix is requested.  Avoid call call to
+	vfork with undefined behavior.
 
 2005-09-26  Conrad T. Pino  <Conrad@Pino.com>
 

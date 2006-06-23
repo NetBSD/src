@@ -1092,6 +1092,8 @@ log_expand_revlist (rcs, baserev, revlist, default_branch)
 	{
 	    char *branch;
 
+	    assert (r->first != NULL);
+
 	    /* Print just the head of the branch.  */
 	    if (isdigit ((unsigned char) r->first[0]))
 		nr->first = RCS_getbranch (rcs, r->first, 1);

@@ -1422,10 +1422,16 @@ stdio_buffer_shutdown (buf)
 {
     struct stdio_buffer_closure *bc = buf->closure;
     struct stat s;
-    int closefp = 1;
+    int closefp, statted;
 
-    /* Must be a pipe or a socket.  What could go wrong? */
-    assert (fstat (fileno (bc->fp), &s) != -1);
+    /* Must be a pipe or a socket. What could go wrong?
+     * Well, apparently for disconnected clients under AIX, the
+     * fstat() will return -1 on the server if the client has gone
+     * away.
+     */
+    if (fstat(fileno(bc->fp), &s) == -1) statted = 0;
+    else statted = 1;
+    closefp = statted;
 
     /* Flush the buffer if we can */
     if (buf->flush)
@@ -1448,7 +1454,7 @@ stdio_buffer_shutdown (buf)
 # ifndef NO_SOCKET_TO_FD
 	{
 	    /* shutdown() sockets */
-	    if (S_ISSOCK (s.st_mode))
+	    if (statted && S_ISSOCK (s.st_mode))
 		shutdown (fileno (bc->fp), 0);
 	}
 # endif /* NO_SOCKET_TO_FD */
@@ -1456,7 +1462,7 @@ stdio_buffer_shutdown (buf)
 	/* Can't be set with SHUTDOWN_SERVER defined */
 	else if (pclose (bc->fp) == EOF)
 	{
-	    error (1, errno, "closing connection to %s",
+	    error (0, errno, "closing connection to %s",
 		   current_parsed_root->hostname);
 	    closefp = 0;
 	}
@@ -1476,7 +1482,7 @@ stdio_buffer_shutdown (buf)
 # endif
 # ifndef NO_SOCKET_TO_FD
 	/* shutdown() sockets */
-	if (S_ISSOCK (s.st_mode))
+	if (statted && S_ISSOCK (s.st_mode))
 	    shutdown (fileno (bc->fp), 1);
 # else
 	{
@@ -1489,15 +1495,19 @@ stdio_buffer_shutdown (buf)
 	buf->output = NULL;
     }
 
-    if (closefp && fclose (bc->fp) == EOF)
+    if (statted && closefp && fclose (bc->fp) == EOF)
     {
 	if (server_active)
 	{
             /* Syslog this? */
 	}
 # ifdef CLIENT_SUPPORT
+	/* We are already closing the connection.
+	 * On error, print a warning and try to
+	 * continue to avoid infinte loops.
+	 */
 	else
-            error (1, errno,
+            error (0, errno,
                    "closing down connection to %s",
                    current_parsed_root->hostname);
 # endif /* CLIENT_SUPPORT */
@@ -1511,8 +1521,13 @@ stdio_buffer_shutdown (buf)
 	do
 	    w = waitpid (bc->child_pid, (int *) 0, 0);
 	while (w == -1 && errno == EINTR);
+
+	/* We are already closing the connection.
+	 * On error, print a warning and try to
+	 * continue to avoid infinte loops.
+	 */
 	if (w == -1)
-	    error (1, errno, "waiting for process %d", bc->child_pid);
+	    error (0, errno, "waiting for process %d", bc->child_pid);
     }
     return 0;
 }
