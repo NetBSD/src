@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.9 2006/06/11 11:48:39 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.10 2006/06/23 15:49:28 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -338,8 +338,13 @@
 #define		CORB_PWC_VREF_100	0x05
 #define CORB_GET_UNSOLICITED_RESPONSE	0xf08
 #define CORB_SET_UNSOLICITED_RESPONSE	0x708
+#define		CORB_UNSOL_ENABLE	0x80
+#define		CORB_UNSOL_TAG(x)	(x & 0x3f)
 #define CORB_GET_PIN_SENSE		0xf09
+#define		CORB_PS_PRESENSE	0x80000000
+#define		CORB_PS_IMPEDANCE(x)	(x & 0x7fffffff)
 #define CORB_EXECUTE_PIN_SENSE		0x709
+#define		CORB_PS_RIGHT		0x1
 #define CORB_GET_EAPD_BTL_ENABLE	0xf0c
 #define CORB_SET_EAPD_BTL_ENABLE	0x70c
 #define CORB_GET_GPI_DATA		0xf10
