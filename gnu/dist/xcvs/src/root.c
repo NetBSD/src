@@ -23,7 +23,7 @@
 
 const char method_names[][16] = {
     "undefined", "local", "server (rsh)", "pserver",
-    "kserver", "gserver", "ext", "fork"
+    "kserver", "gserver", "ext", "extssh", "fork"
 };
 
 #ifndef DEBUG

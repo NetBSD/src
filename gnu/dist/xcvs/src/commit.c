@@ -412,6 +412,7 @@ commit (argc, argv)
 		/* Silently ignore -n for compatibility with old
 		 * clients.
 		 */
+		if (!server_active) error(0, 0, "the `-n' option is obsolete");
 		break;
 #endif /* SERVER_SUPPORT */
 	    case 'm':
@@ -642,7 +643,8 @@ commit (argc, argv)
 
 	    fp = cvs_temp_file (&fname);
 	    if (fp == NULL)
-		error (1, 0, "cannot create temporary file %s", fname);
+		error (1, 0, "cannot create temporary file %s",
+		       fname ? fname : "(null)");
 	    if (fwrite (saved_message, 1, strlen (saved_message), fp)
 		!= strlen (saved_message))
 		error (1, errno, "cannot write temporary file %s", fname);
@@ -1742,11 +1744,15 @@ remove_file (finfo, tag, message)
 	if (!quiet)
 	    error (0, retcode == -1 ? errno : 0,
 		   "failed to commit dead revision for `%s'", finfo->fullname);
+	if (prev_rev != NULL)
+	    free (prev_rev);
 	return 1;
     }
     /* At this point, the file has been committed as removed.  We should
        probably tell the history file about it  */
-    history_write ('R', NULL, finfo->rcs->head, finfo->file, finfo->repository);
+    corev = rev ? RCS_getbranch (finfo->rcs, rev, 1) : RCS_head (finfo->rcs);
+    history_write ('R', NULL, corev, finfo->file, finfo->repository);
+    free (corev);
 
     if (rev != NULL)
 	free (rev);
@@ -2127,7 +2133,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	    rcs = RCS_parse (file, repository);
 	    if (rcs == NULL)
 	    {
-		error (0, 0, "could not read %s", rcs->path);
+		error (0, 0, "could not read %s in %s", file, repository);
 		goto out;
 	    }
 	    *rcsnode = rcs;

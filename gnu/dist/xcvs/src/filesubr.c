@@ -702,7 +702,8 @@ cvs_temp_name ()
 
     fp = cvs_temp_file (&fn);
     if (fp == NULL)
-	error (1, errno, "Failed to create temporary file");
+	error (1, errno, "Failed to create temporary file %s",
+	       fn ? fn : "(null)");
     if (fclose (fp) == EOF)
 	error (0, errno, "Failed to close temporary file %s", fn);
     return fn;
@@ -739,7 +740,8 @@ cvs_temp_name ()
  * NFS locking thing, but until I hear of more problems, I'm not going to
  * bother.
  */
-FILE *cvs_temp_file (filename)
+FILE *
+cvs_temp_file (filename)
     char **filename;
 {
     char *fn;
@@ -778,7 +780,11 @@ FILE *cvs_temp_file (filename)
 	errno = save_errno;
     }
 
-    if (fp == NULL) free (fn);
+    if (fp == NULL)
+    {
+	free (fn);
+	fn = NULL;
+    }
     /* mkstemp is defined to open mode 0600 using glibc 2.0.7+ */
     /* FIXME - configure can probably tell us which version of glibc we are
      * linking to and not chmod for 2.0.7+
@@ -793,7 +799,11 @@ FILE *cvs_temp_file (filename)
 
     fn = tempnam (Tmpdir, "cvs");
     if (fn == NULL) fp = NULL;
-    else if ((fp = CVS_FOPEN (fn, "w+")) == NULL) free (fn);
+    else if ((fp = CVS_FOPEN (fn, "w+")) == NULL)
+    {
+	free (fn);
+	fn = NULL;
+    }
     else chmod (fn, 0600);
 
     /* tempnam returns a pointer to a newly malloc'd string, so there's
@@ -843,6 +853,11 @@ FILE *cvs_temp_file (filename)
 #endif
 
     *filename = fn;
+    if (fn == NULL && fp != NULL)
+    {
+	fclose (fp);
+	fp = NULL;
+    }
     return fp;
 }
 
@@ -959,7 +974,8 @@ last_component (path)
     const char *path;
 {
     const char *last = strrchr (path, '/');
-    
+
+    assert (path);
     if (last && (last != path))
         return last + 1;
     else
@@ -1040,6 +1056,7 @@ expand_wild (argc, argv, pargc, pargv)
     char ***pargv;
 {
     int i;
+    assert (argv || !argc);
     if (size_overflow_p (xtimes (argc, sizeof (char *)))) {
 	*pargc = 0;
 	*pargv = NULL;

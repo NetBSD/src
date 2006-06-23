@@ -387,7 +387,8 @@ process:
 
 	/* create and open a temp file */
 	if ((tmp_fp = cvs_temp_file (&tmp_name)) == NULL)
-	    error (1, errno, "unable to open temp file %s", tmp_name);
+	    error (1, errno, "unable to open temp file %s",
+		   tmp_name ? tmp_name : "(null)");
 
 	line = 0;
 	while ((line_length = getline (&linebuf, &linebuf_len, fp)) >= 0)
