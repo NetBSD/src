@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_sha1.c,v 1.1 2005/09/24 19:04:52 elad Exp $	*/
+/*	$NetBSD: hmac_sha1.c,v 1.2 2006/06/23 17:15:18 christos Exp $	*/
 
 /*
  * hmac_sha1 - using HMAC from RFC 2104
@@ -6,6 +6,8 @@
 
 #include "namespace.h"
 #include <sha1.h> /* XXX */
+
+__weak_alias(hmac_sha1,_hmac_sha1)
 
 #define HMAC_HASH SHA1
 #define HMAC_FUNC hmac_sha1
