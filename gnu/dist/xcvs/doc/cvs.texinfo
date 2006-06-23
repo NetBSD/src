@@ -278,7 +278,7 @@ unsubscribe
 write to
 @email{info-cvs-request@@nongnu.org}.
 If you prefer a Usenet group, there is a one-way mirror (posts to the email
-list are usually sent to the news group, but not visa versa) of
+list are usually sent to the news group, but not vice versa) of
 @email{info-cvs@@nongnu.org} at @url{news:gnu.cvs.help}.  The right
 Usenet group for posts is @url{news:comp.software.config-mgmt} which is for
 @sc{cvs} discussions (along with other configuration
@@ -298,7 +298,7 @@ You can also subscribe to the @email{bug-cvs@@nongnu.org} mailing list,
 described in more detail in @ref{BUGS}.  To subscribe
 send mail to @email{bug-cvs-request@@nongnu.org}.  There is a two-way
 Usenet mirror (posts to the Usenet group are usually sent to the email list and
-visa versa) of @email{bug-cvs@@nongnu.org} named @url{news:gnu.cvs.bug}.
+vice versa) of @email{bug-cvs@@nongnu.org} named @url{news:gnu.cvs.bug}.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node What is CVS not?
@@ -1809,7 +1809,15 @@ It is possible to commit an erroneous administrative
 file.  You can often fix the error and check in a new
 revision, but sometimes a particularly bad error in the
 administrative file makes it impossible to commit new
-revisions.
+revisions.  If and when this happens, you can correct
+the problem by temporarily copying a corrected administrative file
+directly into the @code{$CVSROOT/CVSROOT} repository directory,
+then committing the same correction via a checkout of the @file{CVSROOT}
+module.  It is important that the correction also be made via the
+checked out copy, or the next checkout and commit to the
+<code>CVSROOT</code> module will overwrite the correction that was
+copied directly into the repository, possibly breaking things in such
+a way as to prevent commits again.
 @c @xref{Bad administrative files} for a hint
 @c about how to solve such situations.
 @c -- administrative file checking--
@@ -3833,7 +3841,8 @@ The sticky tags will remain on your working files until
 you delete them with @samp{cvs update -A}.  The
 @samp{-A} option merges local changes into the version of the
 file from the head of the trunk, removing any sticky tags,
-dates, or options.  See @ref{update} for more on the operation
+dates, or options (other than sticky @samp{-k} options on locally
+modified files).  See @ref{update} for more on the operation
 of @code{cvs update}.
 
 @cindex Sticky date
@@ -4620,6 +4629,13 @@ switches attached to the working files as @samp{-A} does.  The workaround
 for this is to release the working directory after the merge has been
 committed and check it out again.
 @end ignore
+
+As a result of using @samp{-kk} during the merge, each file examined by the
+update will have @samp{-kk} set as sticky options.  Running @code{update -A}
+will clear the sticky options on unmodified files, but it will not clear
+the sticky options on modified files.  To get back to the default keyword
+substitution for modified files, you must commit the results of the merge
+and then run @code{update -A}.
 
 @c ---------------------------------------------------------------------
 @node Recursive behavior
@@ -7932,7 +7948,7 @@ option as in other commands.  (Other command options,
 which are listed with the individual commands, may have
 different behavior from one @sc{cvs} command to the other).
 
-@strong{Note: the @samp{history} command is an exception; it supports
+@strong{The @samp{history} command is an exception; it supports
 many options that conflict even with these standard options.}
 
 @table @code
@@ -8181,10 +8197,10 @@ Do not run any tag program.  (A program can be
 specified to run in the modules
 database (@pxref{modules}); this option bypasses it).
 
-@strong{Note: this is not the same as the @samp{cvs -n}
+@strong{This is not the same as the @samp{cvs -n}
 program option, which you can specify to the left of a cvs command!}
 
-Available with the @code{checkout}, @code{commit}, @code{export},
+Available with the @code{checkout}, @code{export},
 and @code{rtag} commands.
 
 @item -P
@@ -8256,7 +8272,7 @@ Specifying the @samp{-q} global option along with the
 the warning messages when the @sc{rcs} file
 does not contain the specified tag.
 
-@strong{Note: this is not the same as the overall @samp{cvs -r} option,
+@strong{This is not the same as the overall @samp{cvs -r} option,
 which you can specify to the left of a @sc{cvs} command!}
 
 @samp{-r} is available with the @code{annotate}, @code{checkout},
@@ -8861,6 +8877,7 @@ options with @code{checkout}:
 @table @code
 @item -A
 Reset any sticky tags, dates, or @samp{-k} options.
+Does not reset sticky @samp{-k} options on modified files.
 See @ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -c
@@ -8958,7 +8975,7 @@ $ cvs checkout -D yesterday tc
 
 @itemize @bullet
 @item
-Synopsis: commit [-lnRf] [-m 'log_message' |
+Synopsis: commit [-lRf] [-m 'log_message' |
 -F file] [-r revision] [files@dots{}]
 @item
 Requires: working directory, repository.
@@ -9898,7 +9915,7 @@ various formats.
 Logging must be enabled by creating the file
 @file{$CVSROOT/CVSROOT/history}.
 
-@strong{Note: @code{history} uses @samp{-f}, @samp{-l},
+@strong{@code{history} uses @samp{-f}, @samp{-l},
 @samp{-n}, and @samp{-p} in ways that conflict with the
 normal use inside @sc{cvs} (@pxref{Common options}).}
 
@@ -10275,7 +10292,7 @@ Coordinated Universal Time (UTC).  (Other parts of
 @c client then communicates to the server, is the
 @c right solution.
 
-@strong{Note: @code{log} uses @samp{-R} in a way that conflicts
+@strong{@code{log} uses @samp{-R} in a way that conflicts
 with the normal use inside @sc{cvs} (@pxref{Common options}).}
 
 @menu
@@ -10786,6 +10803,7 @@ These special options are also available with
 @table @code
 @item -A
 Reset any sticky tags, dates, or @samp{-k} options.
+Does not reset sticky @samp{-k} options on modified files.
 See @ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -C
@@ -12776,7 +12794,7 @@ RereadLogAfterVerify=always
 @cindex Per-module editor
 @cindex Log messages, editing
 
-@strong{Note: The @file{editinfo} feature has been
+@strong{The @file{editinfo} feature has been
 rendered obsolete.  To set a default editor for log
 messages use the @code{CVSEDITOR}, @code{EDITOR} environment variables
 (@pxref{Environment variables}) or the @samp{-e} global
@@ -13572,7 +13590,7 @@ that the file should be checked with the file system
 @samp{stat()} function to see if it has changed (see warning below)
 before rereading.  The default value is @samp{always}.
 
-@strong{Note: the `stat' mode can cause CVS to pause for up to
+@strong{The `stat' mode can cause CVS to pause for up to
 one extra second per directory committed.  This can be less IO and
 CPU intensive but is not recommended for use with large repositories}
 

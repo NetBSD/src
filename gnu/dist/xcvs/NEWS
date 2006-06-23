@@ -1,5 +1,34 @@
-Changes since 1.11.20:
+Changes since 1.11.21:
 **********************
+
+BUG FIXES
+
+* The CVS client again correctly reports files with conflicts when using
+  servers running CVS 1.11.20/1.12.12, or earlier (and maybe 3rd party
+  servers).
+
+* The GSSAPI server should now build under HP-UX.
+
+* `cvs rtag' now correctly tags files that have been removed from the trunk.
+
+* Code efficiency has been improved slightly.
+
+* A rare race condition that could leave a lock on the val-tags file has been
+  avoided.
+
+* A potential buffer overflow in the history command has been fixed.
+
+* Thanks to a report and patch from Garrett Rooney <grooney@collab.net>, paused
+  trigger processes no longer cause the CVS server to consume 100% CPU.
+
+* Thanks to a suggestion from Joseph P. Skudlarek <Jskud@Jskud.com>, an
+  :extssh: has been added as a synonym of the :ext: access method, as a
+  kindness to users of old version of Eclipse.
+
+* Misc documentation updates and minor bug fixes.
+
+Changes from 1.11.20 to 1.11.21:
+********************************
 
 BUG FIXES
 

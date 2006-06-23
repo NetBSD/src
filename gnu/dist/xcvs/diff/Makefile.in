@@ -159,6 +159,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+with_default_rsh = @with_default_rsh@
 INCLUDES = -I$(top_srcdir)/lib
 noinst_LIBRARIES = libdiff.a
 libdiff_a_SOURCES = diff.c diff3.c analyze.c cmpbuf.c cmpbuf.h io.c \

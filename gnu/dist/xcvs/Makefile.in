@@ -180,6 +180,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+with_default_rsh = @with_default_rsh@
 
 # Unix source subdirs, where we'll want to run lint and etags:
 # This is a legacy variable from b4 Automake

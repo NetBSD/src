@@ -193,6 +193,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+with_default_rsh = @with_default_rsh@
 
 # $(includeopt) is CVS specific and set by configure
 # FIXME - This includes line is dependant on its order.  This means there is

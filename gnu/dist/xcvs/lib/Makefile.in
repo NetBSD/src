@@ -186,6 +186,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+with_default_rsh = @with_default_rsh@
 
 # For now we need to include $(top_srcdir)/src because some systems
 # (at least 'AIX rioscpu2 3 4 000030498200',

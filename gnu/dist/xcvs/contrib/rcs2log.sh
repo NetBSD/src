@@ -41,7 +41,7 @@ Options:
 
 Report bugs to <bug-gnu-emacs@gnu.org>.'
 
-Id='$Id: rcs2log.sh,v 1.1.1.1 2006/02/04 15:53:36 christos Exp $'
+Id='Id: rcs2log,v 1.48 2001/09/05 23:07:46 eggert Exp'
 
 # Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2001, 2003
 #  Free Software Foundation, Inc.

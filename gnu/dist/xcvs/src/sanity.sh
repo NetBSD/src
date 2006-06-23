@@ -22,7 +22,7 @@
 usage ()
 {
     echo "Usage: `basename $0` --help"
-    echo "Usage: `basename $0` [-eklr] [-f FROM-TEST] [-h HOSTNAME] CVS-TO-TEST [TESTS-TO-RUN...]"
+    echo "Usage: `basename $0` [-eklrv] [-f FROM-TEST] [-h HOSTNAME] CVS-TO-TEST [TESTS-TO-RUN...]"
 }
 
 exit_usage ()
@@ -35,26 +35,27 @@ exit_help ()
 {
     usage
     echo
-    echo "-H|--help	display this text"
+    echo "-H|--help     Display this text."
     echo "-e|--skipfail Treat tests that would otherwise be nonfatally skipped"
     echo "              for reasons like missing tools as failures, exiting"
     echo "              with an error message.  Also treat warnings as"
-    echo "		failures."
-    echo "-f FROM-TEST	run TESTS-TO-RUN, skipping all tests in the list before"
-    echo "		FROM-TEST"
+    echo "              failures."
+    echo "-f FROM-TEST  Run TESTS-TO-RUN, skipping all tests in the list before"
+    echo "              FROM-TEST."
     echo "-h HOSTNAME   Use :ext:HOSTNAME to run remote tests rather than"
     echo "              :fork:.  Implies --remote and assumes that \$TESTDIR"
     echo "              resolves to the same directory on both the client and"
     echo "              the server."
-    echo "-k|--keep	try to keep directories created by individual tests"
-    echo "		around, exiting after the first test which supports"
-    echo "		--keep"
+    echo "-k|--keep     Try to keep directories created by individual tests"
+    echo "              around, exiting after the first test which supports"
+    echo "              --keep."
     echo "-l|--link-root"
-    echo "		test CVS using a symlink to a real CVSROOT"
-    echo "-r|--remote	test remote instead of local cvs"
+    echo "              Test CVS using a symlink to a real CVSROOT."
+    echo "-r|--remote   Test remote instead of local cvs."
+    echo "-v|--verbose  List test names as they are executed."
     echo
-    echo "CVS-TO-TEST	the path to the CVS executable to be tested"
-    echo "TESTS-TO-RUN	the names of the tests to run (defaults to all tests)"
+    echo "CVS-TO-TEST   The path to the CVS executable to be tested."
+    echo "TESTS-TO-RUN  The names of the tests to run (defaults to all tests)."
     exit 2
 }
 
@@ -62,6 +63,10 @@ exit_help ()
 
 # required to make this script work properly.
 unset CVSREAD
+
+# This will cause malloc to run slower but should also catch some common errors
+# when CVS is linked with glibc 2.x.
+MALLOC_CHECK_=2; export MALLOC_CHECK_
 
 # We want to invoke a predictable set of i18n behaviors, not whatever
 # the user running this script might have set.
@@ -93,7 +98,8 @@ keep=false
 linkroot=false
 remote=false
 skipfail=false
-while getopts ef:h:Hklr-: option ; do
+verbose=false
+while getopts ef:h:Hklrv-: option ; do
     # convert the long opts to short opts
     if test x$option = x-;  then
 	case "$OPTARG" in
@@ -115,6 +121,10 @@ while getopts ef:h:Hklr-: option ; do
 		;;
 	    s|sk|ski|skip|skipf|skipfa|skipfai|skipfail)
 		option=e
+		OPTARG=
+		;;
+	    v|ve|ver|verb|verbo|verbos|verbose)
+		option=v
 		OPTARG=
 		;;
 	    *)
@@ -152,6 +162,9 @@ while getopts ef:h:Hklr-: option ; do
 	    ;;
 	r)
 	    remote=:
+	    ;;
+	v)
+	    verbose=:
 	    ;;
 	\?)
 	    exit_usage
@@ -203,7 +216,8 @@ echo 'This test should produce no other output than this message, and a final "O
 echo '(Note that the test can take an hour or more to run and periodically stops'
 echo 'for as long as one minute.  Do not assume there is a problem just because'
 echo 'nothing seems to happen for a long time.  If you cannot live without'
-echo "running status, try the command: \`tail -f check.log' from another window.)"
+echo 'running status, use the -v option or try the command:'
+echo "\`tail -f check.log' from another window.)"
 
 # Regexp to match what CVS will call itself in output that it prints.
 # FIXME: we don't properly quote this--if the name contains . we'll
@@ -1092,7 +1106,7 @@ if test x"$*" = x; then
 	tests="${tests} status"
 	# Branching, tagging, removing, adding, multiple directories
 	tests="${tests} rdiff rdiff-short"
-	tests="${tests} rdiff2 diff diffnl death death2"
+	tests="${tests} rdiff2 diff diffnl death death2 death-rtag"
 	tests="${tests} rm-update-message rmadd rmadd2 rmadd3 resurrection"
 	tests="${tests} dirs dirs2 branches branches2 tagc tagf tag-space"
 	tests="${tests} rcslib multibranch import importb importc import-CVS"
@@ -1101,7 +1115,7 @@ if test x"$*" = x; then
 	tests="${tests} join join2 join3 join4 join5 join6 join7"
 	tests="${tests} join-readonly-conflict join-admin join-admin-2"
 	tests="${tests} join-rm"
-	tests="${tests} new newb conflicts conflicts2 conflicts3"
+	tests="${tests} new newb conflicts conflicts2 conflicts3 conflicts4"
 	tests="${tests} clean"
 	# Checking out various places (modules, checkout -d, &c)
 	tests="${tests} modules modules2 modules3 modules4 modules5 modules6"
@@ -1119,7 +1133,7 @@ if test x"$*" = x; then
 	tests="${tests} serverpatch log log2 logopt ann ann-id"
 	# Repository Storage (RCS file format, CVS lock files, creating
 	# a repository without "cvs init", &c).
-	tests="${tests} crerepos rcs rcs2 rcs3 rcs4 rcs5"
+	tests="${tests} crerepos rcs rcs2 rcs3 rcs4 rcs5 rcs6"
 	tests="$tests lockfiles backuprecover"
 	tests="${tests} sshstdio"
 	# More history browsing, &c.
@@ -2074,6 +2088,11 @@ for what in $tests; do
 		continue
 	    fi
 	fi
+
+	if $verbose; then
+	    echo "$what:"
+	fi
+
 	case $what in
 
 	version)
@@ -5743,6 +5762,103 @@ C file4"
 
 	  cd .. ; rm -rf first-dir ${CVSROOT_DIRNAME}/first-dir
 	  ;;
+
+
+
+	death-rtag)
+	  # This documents a bug in CVS that prevents rtag from tagging files
+	  # in the Attic.
+	  mkdir $CVSROOT_DIRNAME/death-rtag
+	  dotest death-rtag-init-1 "$testcvs -Q co death-rtag"
+	  cd death-rtag
+	  echo "This is the file foo" > foo
+	  echo "This is the file bar" > bar
+	  dotest death-rtag-init-2 "$testcvs -Q add foo bar"
+	  dotest death-rtag-init-3 "$testcvs -Q ci -m 'Add foo and bar.'" \
+"RCS file: $CVSROOT_DIRNAME/death-rtag/bar,v
+done
+Checking in bar;
+$CVSROOT_DIRNAME/death-rtag/bar,v  <--  bar
+initial revision: 1\.[0-9]*
+done
+RCS file: $CVSROOT_DIRNAME/death-rtag/foo,v
+done
+Checking in foo;
+$CVSROOT_DIRNAME/death-rtag/foo,v  <--  foo
+initial revision: 1\.[0-9]*
+done"
+	  dotest death-rtag-init-5 "$testcvs -Q tag -b mybranch"
+
+	  dotest death-rtag-1 "$testcvs -q rtag -rmybranch willtag death-rtag"
+	  dotest death-rtag-2 "$testcvs -Q rm -f foo"
+	  dotest death-rtag-3 "$testcvs -Q ci -m 'Remove foo.'" \
+"Removing foo;
+$CVSROOT_DIRNAME/death-rtag/foo,v  <--  foo
+new revision: delete; previous revision: 1\.[0-9]*
+done"
+	  # commit something on the branch so that the moving tag is visible.
+	  dotest death-rtag-3.2 "$testcvs -Q up -rmybranch"
+	  echo some branch content >>foo
+	  echo some branch content >>bar
+	  dotest death-rtag-3.3 "$testcvs -Q ci -m 'Change foo.'" \
+"Checking in bar;
+$CVSROOT_DIRNAME/death-rtag/bar,v  <--  bar
+new revision: 1\.1\.2\.1; previous revision: 1\.1
+done
+Checking in foo;
+$CVSROOT_DIRNAME/death-rtag/Attic/foo,v  <--  foo
+new revision: 1\.1\.2\.1; previous revision: 1\.1
+done"
+	  dotest death-rtag-3.4 \
+"$testcvs -q rtag -rmybranch wontmove death-rtag"
+	  dotest death-rtag-3.5 "$testcvs -q rtag -F wontmove death-rtag"
+
+	  cd ..
+	  # Removing -f below avoids this bug.
+	  dotest death-rtag-4 "$testcvs -q rtag -frmybranch wonttag death-rtag"
+
+	  # When the bug existed, `wonttag' would not have been present in
+	  # foo,v.
+	  #
+	  # A second bug prevented `wontmove' from moving from the branch to
+	  # the dead revision on the trunk (death-rtag-3.4 & death-rtag-3.5).
+	  dotest death-rtag-5 "$testcvs -q rlog death-rtag" \
+"
+RCS file: $CVSROOT_DIRNAME/death-rtag/bar,v
+head: 1.[0-9]*
+branch:
+locks: strict
+access list:
+symbolic names:
+	wonttag: 1\.1\.2\.1
+	wontmove: 1\.1
+	willtag: 1\.1
+	mybranch: 1\.1.0\.2
+keyword substitution: kv
+$DOTSTAR
+RCS file: $CVSROOT_DIRNAME/death-rtag/Attic/foo,v
+head: 1.[0-9]*
+branch:
+locks: strict
+access list:
+symbolic names:
+	wonttag: 1\.1\.2\.1
+	wontmove: 1\.2
+	willtag: 1\.1
+	mybranch: 1\.1.0\.2
+keyword substitution: kv
+$DOTSTAR"
+
+	  if $keep; then
+	    echo Keeping $TESTDIR and exiting due to --keep
+	    exit 0
+	  fi
+
+	  rm -r death-rtag
+	  rm -rf $CVSROOT_DIRNAME/death-rtag
+	  ;;
+
+
 
 	rm-update-message)
 	  # FIXME
@@ -11214,6 +11330,129 @@ done"
 	  rm -rf ${CVSROOT_DIRNAME}/first-dir
 	  ;;
 
+	conflicts4)
+	  mkdir conflicts4; cd conflicts4
+	  mkdir 1; cd 1
+	  dotest conflicts4-1 "$testcvs -q co -l ."
+	  mkdir first-dir
+	  dotest conflicts4-2 "${testcvs} add first-dir" \
+"Directory ${CVSROOT_DIRNAME}/first-dir added to the repository"
+	  cd ..
+	  mkdir 2; cd 2
+	  dotest conflicts4-3 "${testcvs} -q co -l first-dir" ''
+	  cd ../1/first-dir
+	  echo baseline >file1
+	  dotest conflicts4-4 "${testcvs} -q add file1" \
+"$PROG add: use .$PROG commit. to add this file permanently"
+	  dotest conflicts4-5 "${testcvs} -q ci -m add-it" \
+"RCS file: $CVSROOT_DIRNAME/first-dir/file1,v
+done
+Checking in file1;
+$CVSROOT_DIRNAME/first-dir/file1,v  <--  file1
+initial revision: 1\.1
+done"
+	  cd ../../2/first-dir
+	  dotest conflicts4-6 "${testcvs} -q update" "U file1"
+	  # Make a local change
+	  echo wibble2 >> file1
+	  dotest conflicts4-7 "${testcvs} -q ci -m update2" \
+"Checking in file1;
+$CVSROOT_DIRNAME/first-dir/file1,v  <--  file1
+new revision: 1\.2; previous revision: 1\.1
+done"
+	  cd ../../1/first-dir
+	  echo wibble1 >>file1
+	  dotest conflicts4-8 "${testcvs} -Q update" \
+"RCS file: $CVSROOT_DIRNAME/first-dir/file1,v
+retrieving revision 1\.1
+retrieving revision 1\.2
+Merging differences between 1\.1 and 1\.2 into file1
+rcsmerge: warning: conflicts during merge
+cvs update: conflicts found in file1"
+	  dotest_fail conflicts4-9 "${testcvs} -q update" \
+"C file1"
+
+	  if $remote; then
+	    cat >$TESTDIR/conflicts4/serveme <<EOF
+#!$TESTSHELL
+# This is admittedly a bit cheezy, in the sense that we make lots
+# of assumptions about what the client is going to send us.
+# We don't mention Repository, because current clients don't require it.
+# Sending these at our own pace, rather than waiting for the client to
+# make the requests, is bogus, but hopefully we can get away with it.
+echo "Valid-requests Root Valid-responses valid-requests Directory Entry Modified Unchanged Argument Argumentx ci co update Global_option"
+echo "ok"
+echo "MT text C "
+echo "MT fname file1"
+echo "MT newline"
+echo "error  "
+cat >$TESTDIR/conflicts4/client.out
+EOF
+	    # Cygwin.  Pthffffffffft!
+	    if test -n "$remotehost"; then
+	      $CVS_RSH $remotehost "chmod +x $TESTDIR/conflicts4/serveme"
+	    else
+	      chmod +x $TESTDIR/conflicts4/serveme
+	    fi
+	    save_CVS_SERVER=$CVS_SERVER
+	    CVS_SERVER=$TESTDIR/conflicts4/serveme; export CVS_SERVER
+	    dotest_fail conflicts4-10r "$testcvs -q up" "C file1"
+	    dotest conflicts4-11r "cat $TESTDIR/conflicts4/client.out" \
+"$DOTSTAR
+Argument --
+Directory .
+$CVSROOT_DIRNAME/first-dir
+Entry /file1/1.2/+=//
+Modified file1
+u=rw,g=rw,o=r
+59
+baseline
+""<<<<<<< file1
+wibble1
+""=======
+wibble2
+"">>>>>>> 1.2
+update"
+
+	    cat >$TESTDIR/conflicts4/serveme <<EOF
+#!$TESTSHELL
+# This is admittedly a bit cheezy, in the sense that we make lots
+# of assumptions about what the client is going to send us.
+# We don't mention Repository, because current clients don't require it.
+# Sending these at our own pace, rather than waiting for the client to
+# make the requests, is bogus, but hopefully we can get away with it.
+echo "Valid-requests Root Valid-responses valid-requests Directory Entry Modified Unchanged Argument Argumentx ci co update Global_option Empty-conflicts"
+echo "ok"
+echo "MT text C "
+echo "MT fname file1"
+echo "MT newline"
+echo "error  "
+cat >$TESTDIR/conflicts4/client.out
+EOF
+
+	    dotest_fail conflicts4-12r "$testcvs -q up" "C file1"
+	    dotest conflicts4-13r "cat $TESTDIR/conflicts4/client.out" \
+"$DOTSTAR
+Argument --
+Directory .
+$CVSROOT_DIRNAME/first-dir
+Entry /file1/1.2/+=//
+Unchanged file1
+update"
+
+	    CVS_SERVER=$save_CVS_SERVER; export CVS_SERVER
+	  fi
+
+	  if $keep; then
+	    echo Keeping $TESTDIR and exiting due to --keep
+            exit 0
+	  fi
+
+	  cd ../../..
+	  rm -rf conflicts4
+	  rm -rf $CVSROOT_DIRNAME/first-dir
+	  ;;
+
 	clean)
 	  # Test update -C (overwrite local mods w/ repository copies)
 	  mkdir 1; cd 1
@@ -14582,7 +14821,6 @@ U top-dir/file1"
 "${PROG} checkout: warning: cannot make directory CVS in \.: Permission denied
 ${PROG} checkout: Updating top-dir" \
 "${PROG} checkout: warning: cannot make directory CVS in \.: Permission denied
-${PROG} checkout: warning: cannot make directory CVS in \.: Permission denied
 ${PROG} checkout: in directory \.:
 ${PROG} checkout: cannot open CVS/Entries for reading: No such file or directory
 ${PROG} checkout: Updating top-dir"
@@ -15608,7 +15846,7 @@ U first-dir/abc'
 	  # Now do it again, after removing the val-tags file created
 	  # by devcom-t1 to force CVS to search the repository
 	  # containing CVS directories.
-	  rm ${CVSROOT_DIRNAME}/CVSROOT/val-tags
+	  rm -f ${CVSROOT_DIRNAME}/CVSROOT/val-tags
 	  mkdir 3
 	  cd 3
 	  dotest devcom-t3 "${testcvs} -q co -rtag first-dir" \
@@ -19653,8 +19891,10 @@ ${PROG} \[[a-z]* aborted\]: Bad CVSROOT: .:ext:${hostname}:crerepos.\."
 	    # key or somesuch.  Which error message we get depends on whether
 	    # false finishes running before we try to talk to it or not.
 	    dotest_fail crerepos-6a "CVS_RSH=false ${testcvs} -q -d ../crerepos get ." \
-"${PROG} \[checkout aborted\]: end of file from server (consult above messages if any)" \
-"${PROG} \[checkout aborted\]: received broken pipe signal"
+"${PROG} \[checkout aborted\]: .*" \
+"${PROG} checkout: CVSROOT is set for a remote access method but your
+${PROG} checkout: CVS executable doesn't support it\.
+${PROG} \[checkout aborted\]: Bad CVSROOT: .\.\./crerepos.\."
 	    cd ..
 	    rm -r 1
 
@@ -20525,6 +20765,63 @@ line5"
 
 
 
+	rcs6)
+	  # Test that CVS notices a specific type of corruption in the RCS
+	  # archive.  In the past, this type of corruption had turned up after
+	  # a user ineptly attempted to delete a revision from an arcvhive 
+	  # manually.
+	  mkdir rcs6; cd rcs6
+
+	  # Make the project.
+	  dotest rcs6-init-1 "$testcvs -Q co -ld top .; cd top"
+	  mkdir rcs6
+	  dotest rcs6-init-2 "$testcvs -Q add rcs6"
+	  cd rcs6
+
+	  # Populate it.
+	  echo some words >afile
+	  dotest rcs6-init-3 "$testcvs -Q add afile"
+	  dotest rcs6-init-4 "$testcvs -Q ci -mnewfile afile" \
+"RCS file: $CVSROOT_DIRNAME/rcs6/afile,v
+done
+Checking in afile;
+$CVSROOT_DIRNAME/rcs6/afile,v  <--  afile
+initial revision: 1\.1
+done"
+	  echo more words >>afile
+	  dotest rcs6-init-5 "$testcvs -Q ci -mrev2 afile" \
+"Checking in afile;
+$CVSROOT_DIRNAME/rcs6/afile,v  <--  afile
+new revision: 1\.2; previous revision: 1\.1
+done"
+
+	  # Corrupt the archive.
+	  sed -e '8,12d' \
+	      -e 's/^head	1\.2/head	1.1/' \
+	      <$CVSROOT_DIRNAME/rcs6/afile,v \
+	      >$CVSROOT_DIRNAME/rcs6/cfile,v
+
+	  # Update used to work.
+	  dotest_fail rcs6-1 "$testcvs -q up" \
+"$PROG \[update aborted\]: Expected head revision 1\.1, found 1\.2\."
+
+	  # Then a commit hosed the archive further without any warnings.
+	  # Updating to an old revision (e.g. 1.1) would have reported the
+	  # corruption.  A second commit would have deleted data from the
+	  # file.
+
+	  if $keep; then
+	    echo Keeping $TESTDIR and exiting due to --keep
+	    exit 0
+	  fi
+
+	  cd ../../..
+	  rm -r rcs6
+	  rm -rf $CVSROOT_DIRNAME/rcs6
+	  ;;
+
+
+
 	lockfiles)
 	  # Tests of CVS lock files.
 	  # TODO-maybe: Add a test where we arrange for a loginfo
@@ -20667,7 +20964,7 @@ $PROG commit: \[[0-9:]*\] obtained lock in $CVSROOT_DIRNAME/CVSROOT"
 
 	  dotest lockfiles-21 "$testcvs -Q tag newtag first-dir"
 
-	  rm $CVSROOT_DIRNAME/CVSROOT/val-tags
+	  rm -f $CVSROOT_DIRNAME/CVSROOT/val-tags
 	  mkdir "$TESTDIR/locks/CVSROOT/#cvs.val-tags.lock"
 	  (sleep 5; rmdir "$TESTDIR/locks/CVSROOT/#cvs.val-tags.lock")&
 	  dotest lockfiles-22 "$testcvs -q up -r newtag first-dir" \
@@ -21046,7 +21343,22 @@ EOF
           chmod +x wrapper.sh
           ./wrapper.sh \
            $testcvs -z5 -Q diff --side-by-side -W 500 -r 1.1 -r 1.2 \
-             aaa > wrapper.dif
+             aaa \
+	   |sed -e \
+'/^Write failed flushing stdout buffer\.$/d;
+ /^write stdout: Broken pipe$/d;
+ :retry;
+ /Write failed flushing stdout buffer\.$/{
+	N;
+	s/Write failed flushing stdout buffer\.\n//;
+	b retry;
+}
+ /write stdout: Broken pipe$/{
+	N;
+	s/write stdout: Broken pipe\n//;
+	b retry;
+}' \
+          > wrapper.dif
   
           $testcvs -z5 -Q diff --side-by-side -W 500 -r 1.1 -r 1.2 \
              aaa > good.dif
@@ -28065,9 +28377,13 @@ Root ${CVSROOT_DIRNAME}
 noop
 EOF
 
+	    # The "no such system user" error is occurring on at least one of
+	    # our BSD 2.0.2 nightly test platforms.
 	    dotest_fail pserver-4.2 \
 "${testcvs} --allow-root=${CVSROOT_DIRNAME} pserver" \
-"error 0: root not allowed" <<EOF
+"error 0: root not allowed" \
+"E Fatal error, aborting\.
+error 0 root: no such system user" <<EOF
 BEGIN AUTH REQUEST
 ${CVSROOT_DIRNAME}
 dontroot
@@ -29176,9 +29492,8 @@ done"
     fi
 
     # Reset val-tags to a pristine state.
-    if test -s $CVSROOT_DIRNAME/CVSROOT/val-tags; then
-       : > $CVSROOT_DIRNAME/CVSROOT/val-tags
-    fi
+    rm -f $CVSROOT_DIRNAME/CVSROOT/val-tags
+
     verify_tmp_empty "post $what"
 
 done # The big loop

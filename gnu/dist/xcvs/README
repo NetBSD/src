@@ -75,6 +75,20 @@ compatibility problems with CVS 1.5 or later.
 
 -------------------------------------------------------------------------------
 
+Verifying the Integrity of Downloads:
+
+The official CVS source and binary releases are signed by the CVS maintainer
+who generated them.  This does not imply any sort of warranty, but it does mean
+that you can verify that the file you downloaded did, in fact, come from a CVS
+maintainer.
+
+The OpenPGP keys of the CVS maintainers who have submitted them are in the KEYS
+file of the CVS distribution and are also available from many OpenPGP key
+servers.  It is recommended that you verify the key fingerprints against an
+external source, however you obtain the key.
+
+-------------------------------------------------------------------------------
+
 Installation:
 
 Please read the INSTALL file for installation instructions.  Brief summary:
