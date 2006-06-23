@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.13 2006/05/30 23:56:38 garbled Exp $     */
+/*      $NetBSD: residual.c,v 1.14 2006/06/23 03:08:41 garbled Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.13 2006/05/30 23:56:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.14 2006/06/23 03:08:41 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1123,6 +1123,35 @@ pnp_large_pkt(void *v)
 		    Large_Vendor_Type[p->Type].str);
 		if (p->Type <= 17 && Large_Vendor_Type[p->Type].func != NULL)
 			(*Large_Vendor_Type[p->Type].func)(p, v, size);
+		break;
+	}
+	case MemoryRange: {
+		struct _L1_Pack *pack = v;
+
+		printf("    Memory Range:\n");
+		if (pack->Data[0] & L1_Shadow)
+			printf("      Memory is shadowable\n");
+		if (pack->Data[0] & L1_32bit_mem)
+			printf("      32-bit memory only\n");
+		if (pack->Data[0] & L1_8_16bit_mem)
+			printf("      8-bit and 16-bit supported\n");
+		if (pack->Data[0] & L1_Decode_Hi)
+			printf("      decode supports high address\n");
+		if (pack->Data[0] & L1_Cache)
+			printf("      read cacheable, write-through\n");
+		if (pack->Data[0] & L1_Writable)
+			printf("      Memory is writable\n");
+
+		if (pack->Count0 >= 0x9) {
+			printf("      minbase : 0x%x\n",
+			    (pack->Data[2] << 16) | (pack->Data[1] << 8));
+			printf("      maxbase : 0x%x\n",
+			    (pack->Data[4] << 16) | (pack->Data[3] << 8));
+			printf("      align   : 0x%x\n",
+			    (pack->Data[6] << 8) | pack->Data[5]);
+			printf("      length  : 0x%x\n",
+			    (pack->Data[8] << 16) | (pack->Data[7] << 8));
+		}
 		break;
 	}
 	
