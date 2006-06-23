@@ -251,7 +251,7 @@ release (argc, argv)
            through release-23. */
 
 	if (restore_cwd (&cwd, NULL))
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 
 	if (1
 #ifdef CLIENT_SUPPORT
@@ -268,7 +268,7 @@ release (argc, argv)
 	    argv[2] = NULL;
 	    err += unedit (argc, argv);
             if (restore_cwd (&cwd, NULL))
-                exit (EXIT_FAILURE);
+                error_exit ();
 	}
 
 #ifdef CLIENT_SUPPORT
@@ -306,7 +306,7 @@ release (argc, argv)
             err += get_server_responses ();
 
             if (restore_cwd (&cwd, NULL))
-                exit (EXIT_FAILURE);
+                error_exit ();
         }
 #endif /* CLIENT_SUPPORT */
     }
