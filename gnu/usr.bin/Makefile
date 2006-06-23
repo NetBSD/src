@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.123 2006/06/02 22:16:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.124 2006/06/23 21:51:42 christos Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -17,8 +17,11 @@ SUBDIR+=	groff rcs send-pr texinfo
 SUBDIR+=	gettext
 
 .if ${MKGDB} != "no"
-#SUBDIR+=	sim .WAIT
+.if ${HAVE_GDB} == "5"
 SUBDIR+=	gdb53
+.else
+SUBDIR+=	gdb6
+.endif
 .endif
 
 .if ${MKGCCCMDS} != "no"
