@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.116 2006/05/05 00:03:21 rpaulo Exp $	*/
+/*	$NetBSD: namespace.h,v 1.117 2006/06/23 17:15:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -346,6 +346,8 @@
 #define hesiod_init		_hesiod_init
 #define hesiod_resolve		_hesiod_resolve
 #define hesiod_to_bind		_hesiod_to_bind
+#define hmac_md5		_hmac_md5
+#define hmac_sha1		_hmac_sha1
 #define iconv			_iconv
 #define iconv_open		_iconv_open
 #define iconv_close		_iconv_close

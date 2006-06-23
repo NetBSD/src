@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_md5.c,v 1.1 2005/09/24 19:04:52 elad Exp $	*/
+/*	$NetBSD: hmac_md5.c,v 1.2 2006/06/23 17:15:18 christos Exp $	*/
 
 /*
  * hmac_md5 - using HMAC from RFC 2104
@@ -7,6 +7,8 @@
 #include "namespace.h"
 #include <sys/types.h>
 #include <md5.h> /* XXX */
+
+__weak_alias(hmac_md5,_hmac_md5)
 
 #define HMAC_HASH MD5
 #define HMAC_FUNC hmac_md5
