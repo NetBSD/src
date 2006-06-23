@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/06/04 04:37:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2006/06/23 17:27:08 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -160,7 +160,7 @@ tm_p.h: Makefile
 	${HOST_SH} ${GNUHOSTDIST}/gcc/mkconfig.sh ${.TARGET}
 
 CLEANFILES+=	options.h options.c optionlist
-optionlist: ${G_ALL_OPT_FILES) Makefile ${DIST}/gcc/opt-gather.awk
+optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
 	${AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
 
 options.c: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/optc-gen.awk

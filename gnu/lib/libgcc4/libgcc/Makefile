@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/06/23 17:27:08 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -22,6 +22,8 @@ SRCS+=		${LIB2_EH}
 .endif
 
 .include <bsd.lib.mk>
+
+.include "../Makefile.unwind_h"
 
 CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
