@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.30 2006/06/23 20:30:11 bouyer Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.31 2006/06/23 20:54:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,7 +158,6 @@ struct kernfs_fileop {
 	kfstype				kf_type;
 	kfsfileop			kf_fileop;
 	union {
-		void			*_kf_genop;
 		int			(*_kf_vop)(void *);
 		int			(*_kf_xread)
 			(const struct kernfs_node *, char **, size_t);
@@ -167,7 +166,7 @@ struct kernfs_fileop {
 	} _kf_opfn;
 	SPLAY_ENTRY(kernfs_fileop)	kf_node;
 };
-#define	kf_genop	_kf_opfn
+
 #define	kf_vop		_kf_opfn._kf_vop
 #define	kf_xread	_kf_opfn._kf_xread
 #define	kf_xwrite	_kf_opfn._kf_xwrite

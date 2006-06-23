@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.124 2006/06/23 20:30:11 bouyer Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.125 2006/06/23 20:54:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.124 2006/06/23 20:30:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.125 2006/06/23 20:54:21 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -166,11 +166,13 @@ const struct kernfs_fileop kernfs_default_fileops[] = {
   { .kf_fileop = KERNFS_XWRITE },
   { .kf_fileop = KERNFS_FILEOP_OPEN },
   { .kf_fileop = KERNFS_FILEOP_GETATTR,
-    .kf_genop = {kernfs_default_fileop_getattr} },
+    .kf_vop = kernfs_default_fileop_getattr },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
-  { .kf_fileop = KERNFS_FILEOP_READ, .kf_genop = {kernfs_default_xread} },
-  { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
+  { .kf_fileop = KERNFS_FILEOP_READ, 
+    .kf_vop = kernfs_default_xread },
+  { .kf_fileop = KERNFS_FILEOP_WRITE, 
+    .kf_vop = kernfs_default_xwrite },
 };
 
 int	kernfs_lookup(void *);
@@ -301,7 +303,7 @@ kernfs_alloctype(int nkf, const struct kernfs_fileop *kf)
 		skf.kf_type = nextfreetype;
 		skf.kf_fileop = kf[i].kf_fileop;
 		if ((fkf = SPLAY_FIND(kfsfileoptree, &kfsfileoptree, &skf)))
-			fkf->kf_genop = kf[i].kf_genop;
+			fkf->kf_vop = kf[i].kf_vop;
 	}
 
 	return nextfreetype++;
