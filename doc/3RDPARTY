@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.442 2006/06/13 01:50:42 gdamore Exp $
+#	$NetBSD: 3RDPARTY,v 1.443 2006/06/23 22:49:50 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -166,8 +166,8 @@ License:	BSD-like
 Notes:
 
 Package:	cvs
-Version:	1.11.21
-Current Vers:	1.11.21/1.12.12
+Version:	1.11.22
+Current Vers:	1.11.22/1.12.13
 Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
