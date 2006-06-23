@@ -316,6 +316,7 @@ cvslog (argc, argv)
 	{
 	    p = log_data.datelist;
 	    log_data.datelist = p->next;
+	    assert (p->start != NULL && p->end != NULL);
 	    send_to_server ("Argument -d\012", 0);
 	    send_to_server ("Argument ", 0);
 	    date_to_internet (datetmp, p->start);
@@ -327,23 +328,21 @@ cvslog (argc, argv)
 	    date_to_internet (datetmp, p->end);
 	    send_to_server (datetmp, 0);
 	    send_to_server ("\012", 0);
-	    if (p->start)
-		free (p->start);
-	    if (p->end)
-		free (p->end);
+	    free (p->start);
+	    free (p->end);
 	    free (p);
 	}
 	while (log_data.singledatelist != NULL)
 	{
 	    p = log_data.singledatelist;
 	    log_data.singledatelist = p->next;
+	    assert (p->end != NULL);
 	    send_to_server ("Argument -d\012", 0);
 	    send_to_server ("Argument ", 0);
 	    date_to_internet (datetmp, p->end);
 	    send_to_server (datetmp, 0);
 	    send_to_server ("\012", 0);
-	    if (p->end)
-		free (p->end);
+	    free (p->end);
 	    free (p);
 	}
 	    
@@ -1092,6 +1091,8 @@ log_expand_revlist (rcs, baserev, revlist, default_branch)
 	else if (r->branchhead)
 	{
 	    char *branch;
+
+	    assert (r->first != NULL);
 
 	    /* Print just the head of the branch.  */
 	    if (isdigit ((unsigned char) r->first[0]))

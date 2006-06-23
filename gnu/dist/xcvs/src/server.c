@@ -1236,6 +1236,7 @@ serve_sticky (arg)
 	if (alloc_pending (80 + strlen (CVSADM_TAG)))
 	    sprintf (pending_error_text, "E cannot write to %s", CVSADM_TAG);
 	pending_error = save_errno;
+	(void) fclose (f);
 	return;
     }
     if (fclose (f) == EOF)
@@ -2711,6 +2712,25 @@ set_nonblock_fd (fd)
 
 
 
+/*
+ * Set buffer FD to blocking I/O.  Returns 0 for success or errno code.
+ */
+int
+set_block_fd (fd)
+     int fd;
+{
+    int flags;
+
+    flags = fcntl (fd, F_GETFL, 0);
+    if (flags < 0)
+	return errno;
+    if (fcntl (fd, F_SETFL, flags & ~O_NONBLOCK) < 0)
+	return errno;
+    return 0;
+}
+
+
+
 static void
 do_cvs_command (cmd_name, command)
     char *cmd_name;
@@ -2934,22 +2954,31 @@ error  \n");
 	{
 	    char junk;
 	    ssize_t status;
-	    while ((status = read (flowcontrol_pipe[0], &junk, 1)) > 0
-	           || (status == -1 && errno == EAGAIN));
+	    set_block_fd (flowcontrol_pipe[0]);
+	    while ((status = read (flowcontrol_pipe[0], &junk, 1)) > 0);
 	}
 	/* FIXME: No point in printing an error message with error(),
 	 * as STDERR is already closed, but perhaps this could be syslogged?
 	 */
 #endif
 
+	rcs_cleanup ();
+	Lock_Cleanup ();
+	/* Don't call server_cleanup - the parent will handle that.  */
+#ifdef SYSTEM_CLEANUP
+	/* Hook for OS-specific behavior, for example socket subsystems on
+	   NT and OS2 or dealing with windows and arguments on Mac.  */
+	SYSTEM_CLEANUP ();
+#endif
 	exit (exitstatus);
     }
 
     /* OK, sit around getting all the input from the child.  */
     {
-	struct buffer *stdoutbuf;
-	struct buffer *stderrbuf;
-	struct buffer *protocol_inbuf;
+	struct buffer *stdoutbuf = NULL;
+	struct buffer *stderrbuf = NULL;
+	struct buffer *protocol_inbuf = NULL;
+	int err_exit = 0;
 	/* Number of file descriptors to check in select ().  */
 	int num_to_check;
 	int count_needed = 1;
@@ -3002,7 +3031,8 @@ error  \n");
 	{
 	    buf_output0 (buf_to_net, "E close failed\n");
 	    print_error (errno);
-	    goto error_exit;
+	    err_exit = 1;
+	    goto child_finish;
 	}
 	stdout_pipe[1] = -1;
 
@@ -3010,7 +3040,8 @@ error  \n");
 	{
 	    buf_output0 (buf_to_net, "E close failed\n");
 	    print_error (errno);
-	    goto error_exit;
+	    err_exit = 1;
+	    goto child_finish;
 	}
 	stderr_pipe[1] = -1;
 
@@ -3018,7 +3049,8 @@ error  \n");
 	{
 	    buf_output0 (buf_to_net, "E close failed\n");
 	    print_error (errno);
-	    goto error_exit;
+	    err_exit = 1;
+	    goto child_finish;
 	}
 	protocol_pipe[1] = -1;
 
@@ -3027,7 +3059,8 @@ error  \n");
 	{
 	    buf_output0 (buf_to_net, "E close failed\n");
 	    print_error (errno);
-	    goto error_exit;
+	    err_exit = 1;
+	    goto child_finish;
 	}
 	flowcontrol_pipe[0] = -1;
 #endif /* SERVER_FLOWCONTROL */
@@ -3036,7 +3069,9 @@ error  \n");
 	{
 	    buf_output0 (buf_to_net, "E close failed\n");
 	    print_error (errno);
-	    goto error_exit;
+	    dev_null_fd = -1;	/* Do not try to close it again. */
+	    err_exit = 1;
+	    goto child_finish;
 	}
 	dev_null_fd = -1;
 
@@ -3123,7 +3158,8 @@ error  \n");
 		{
 		    buf_output0 (buf_to_net, "E select failed\n");
 		    print_error (errno);
-		    goto error_exit;
+		    err_exit = 1;
+		    goto child_finish;
 		}
 	    } while (numfds < 0);
 
@@ -3156,7 +3192,8 @@ error  \n");
 		{
 		    buf_output0 (buf_to_net, "E buf_input_data failed\n");
 		    print_error (status);
-		    goto error_exit;
+		    err_exit = 1;
+		    goto child_finish;
 		}
 
 		/*
@@ -3230,7 +3267,8 @@ error  \n");
 		{
 		    buf_output0 (buf_to_net, "E buf_input_data failed\n");
 		    print_error (status);
-		    goto error_exit;
+		    err_exit = 1;
+		    goto child_finish;
 		}
 
 		/* What should we do with errors?  syslog() them?  */
@@ -3255,7 +3293,8 @@ error  \n");
 		{
 		    buf_output0 (buf_to_net, "E buf_input_data failed\n");
 		    print_error (status);
-		    goto error_exit;
+		    err_exit = 1;
+		    goto child_finish;
 		}
 
 		/* What should we do with errors?  syslog() them?  */
@@ -3335,21 +3374,33 @@ E CVS locks may need cleaning up.\n");
 		command_pid = -1;
 	}
 
+      child_finish:
 	/*
 	 * OK, we've waited for the child.  By now all CVS locks are free
 	 * and it's OK to block on the network.
 	 */
 	set_block (buf_to_net);
 	buf_flush (buf_to_net, 1);
-	buf_shutdown (protocol_inbuf);
-	buf_free (protocol_inbuf);
-	protocol_inbuf = NULL;
-	buf_shutdown (stderrbuf);
-	buf_free (stderrbuf);
-	stderrbuf = NULL;
-	buf_shutdown (stdoutbuf);
-	buf_free (stdoutbuf);
-	stdoutbuf = NULL;
+	if (protocol_inbuf)
+	{
+	    buf_shutdown (protocol_inbuf);
+	    buf_free (protocol_inbuf);
+	    protocol_inbuf = NULL;
+	}
+	if (stderrbuf)
+	{
+	    buf_shutdown (stderrbuf);
+	    buf_free (stderrbuf);
+	    stderrbuf = NULL;
+	}
+	if (stdoutbuf)
+	{
+	    buf_shutdown (stdoutbuf);
+	    buf_free (stdoutbuf);
+	    stdoutbuf = NULL;
+	}
+	if (err_exit)
+	    goto error_exit;
     }
 
     if (errs)
@@ -3373,7 +3424,8 @@ E CVS locks may need cleaning up.\n");
 	    command_pid = -1;
     }
 
-    close (dev_null_fd);
+    if (dev_null_fd >= 0)
+	close (dev_null_fd);
     close (protocol_pipe[0]);
     close (protocol_pipe[1]);
     close (stderr_pipe[0]);
@@ -3701,6 +3753,10 @@ server_checked_in (file, update_dir, repository)
     const char *update_dir;
     const char *repository;
 {
+    assert (file);
+    assert (update_dir);
+    assert (repository);
+
     if (noexec)
 	return;
     if (scratched_file != NULL && entries_line == NULL)
@@ -4213,7 +4269,6 @@ CVS server internal error: no mode in server_updated");
 	if (updated == SERVER_UPDATED)
 	{
 	    Node *node;
-	    Entnode *entnode;
 
 	    if (!(supported_response ("Created")
 		  && supported_response ("Update-existing")))
@@ -4231,9 +4286,13 @@ CVS server internal error: no mode in server_updated");
 	       in case we end up processing it again (e.g. modules3-6
 	       in the testsuite).  */
 	    node = findnode_fn (finfo->entries, finfo->file);
-	    entnode = node->data;
-	    free (entnode->timestamp);
-	    entnode->timestamp = xstrdup ("=");
+	    assert (node != NULL);
+	    if (node != NULL)
+	    {
+		Entnode *entnode = node->data;
+		free (entnode->timestamp);
+		entnode->timestamp = xstrdup ("=");
+	    }
 	}
 	else if (updated == SERVER_MERGED)
 	    buf_output0 (protocol, "Merged ");
@@ -4521,9 +4580,12 @@ struct template_proc_data
 static struct template_proc_data *tpd;
 
 static int
+template_proc PROTO((const char *repository, const char *template));
+
+static int
 template_proc (repository, template)
-    char *repository;
-    char *template;
+    const char *repository;
+    const char *template;
 {
     FILE *fp;
     char buf[1024];
@@ -4801,6 +4863,7 @@ struct request requests[] =
   REQ_LINE("Checkin-time", serve_checkin_time, 0),
   REQ_LINE("Modified", serve_modified, RQ_ESSENTIAL),
   REQ_LINE("Is-modified", serve_is_modified, 0),
+  REQ_LINE("Empty-conflicts", serve_noop, 0),
 
   /* The client must send this request to interoperate with CVS 1.5
      through 1.9 servers.  The server must support it (although it can
@@ -5916,6 +5979,8 @@ pserver_authenticate_connection ()
     {
 	printf ("I LOVE YOU\n");
 	fflush (stdout);
+
+	/* It's okay to skip rcs_cleanup() and Lock_Cleanup() here.  */
 
 #ifdef SYSTEM_CLEANUP
 	/* Hook for OS-specific behavior, for example socket subsystems on

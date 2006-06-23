@@ -161,11 +161,17 @@ add (argc, argv)
 	int j;
 
 	if (argc == 0)
+	{
 	    /* We snipped out all the arguments in the above sanity
 	       check.  We can just forget the whole thing (and we
 	       better, because if we fired up the server and passed it
 	       nothing, it would spit back a usage message).  */
+	    if (options)
+		free (options);
+	    if (message)
+		free (message);
 	    return err;
+	}
 
 	start_server ();
 	ign_setup ();
@@ -840,7 +846,10 @@ add_directory (finfo)
 	fileattr_write ();
 	fileattr_free ();
 	if (attrs != NULL)
+	{
 	    free (attrs);
+	    attrs = NULL;
+	}
 
 	/*
 	 * Set up an update list with a single title node for Update_Logfile
@@ -878,6 +887,8 @@ add_directory (finfo)
 
     free (rcsdir);
     free (message);
+    if (attrs != NULL)
+	free (attrs);
 
     return 0;
 

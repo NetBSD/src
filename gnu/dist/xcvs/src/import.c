@@ -317,7 +317,8 @@ import (argc, argv)
 
     /* Create the logfile that will be logged upon completion */
     if ((logfp = cvs_temp_file (&tmpfile)) == NULL)
-	error (1, errno, "cannot create temporary file `%s'", tmpfile);
+	error (1, errno, "cannot create temporary file `%s'",
+	       tmpfile ? tmpfile : "(null)");
     /* On systems where we can unlink an open file, do so, so it will go
        away no matter how we exit.  FIXME-maybe: Should be checking for
        errors but I'm not sure which error(s) we get if we are on a system

@@ -22,6 +22,7 @@ typedef enum {
     kserver_method,
     gserver_method,
     ext_method,
+    extssh_method,
     fork_method
 } CVSmethod;
 extern const char method_names[][16];	/* change this in root.c if you change

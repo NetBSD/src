@@ -1,3 +1,49 @@
+2006-06-09  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note client/server conflict fix.
+
+2006-05-25  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Accept --with-rsh argument to set RSH_DFLT in config.h.
+	Prefer `remsh' to `rsh' when autodetecting and comment rationale.
+
+2006-04-27  Derek Price  <derek@ximbiot.com>
+
+	* acinclude.m4 (ACX_WITH_GSSAPI): Detect libgss for HP-UX.
+	* NEWS: Note that GSSAPI builds under HP-UX.
+	(Report from Larry Jones <lawrence.jones@ugs.com>.)
+
+2006-03-07  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note rtag fixes.
+
+2006-02-26  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note CVSADM fix as an efficiency improvement.
+
+2006-02-01  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note unconditional val-tags lock removal.
+
+	* NEWS: Note history buffer overflow fix.
+
+2006-01-30  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note nonblocking flow control pipe fix.
+
+2005-12-09  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note misc doc & bug fixes.
+
+2005-12-07  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note recognition of :extssh:.
+
+2005-10-18  Derek Price  <derek@ximbiot.com>
+
+	* KEYS: New file, suggested by Antoine Lexy-Lambert <antoine@gmx.de>.
+	* README: Mention KEYS file.
+
 2005-09-26  Derek Price  <derek@ximbiot.com>
 
 	[bug #14639]

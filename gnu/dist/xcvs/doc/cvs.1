@@ -428,7 +428,7 @@ option as in other commands.  (Other command options,
 which are listed with the individual commands, may have
 different behavior from one \fBcvs\fR command to the other).
 .SP
-\fBNote: the \fBhistory\fB command is an exception; it supports
+\fBThe \fBhistory\fB command is an exception; it supports
 many options that conflict even with these standard options.\fR
 .SP
 .IX "Dates"
@@ -594,10 +594,10 @@ Do not run any tag program.  (A program can be
 specified to run in the modules
 database (see node `modules\(aq in the CVS manual); this option bypasses it).
 .SP
-\fBNote: this is not the same as the \fBcvs -n\fB
+\fBThis is not the same as the \fBcvs -n\fB
 program option, which you can specify to the left of a cvs command!\fR
 .SP
-Available with the \fBcheckout\fR, \fBcommit\fR, \fBexport\fR,
+Available with the \fBcheckout\fR, \fBexport\fR,
 and \fBrtag\fR commands.
 .SP
 .IP "" 0
@@ -653,7 +653,7 @@ Specifying the \fB-q\fR global option along with the
 the warning messages when the \fBrcs\fR file
 does not contain the specified tag.
 .SP
-\fBNote: this is not the same as the overall \fBcvs -r\fB option,
+\fBThis is not the same as the overall \fBcvs -r\fB option,
 which you can specify to the left of a \fBcvs\fB command!\fR
 .SP
 \fB-r\fR is available with the \fBannotate\fR, \fBcheckout\fR,
@@ -1286,6 +1286,7 @@ options with \fBcheckout\fR:
 \fB-A\fR
 .IP "" 2
 Reset any sticky tags, dates, or \fB-k\fR options.
+Does not reset sticky \fB-k\fR options on modified files.
 See see node `Sticky tags\(aq in the CVS manual, for more information on sticky tags/dates.
 .SP
 .IP "" 0
@@ -1396,7 +1397,7 @@ $ cvs checkout -D yesterday tc
 .IX "commit (subcommand)"
 .SP
 .IP "\(bu" 2
-Synopsis: commit [-lnRf] [-m \(aqlog_message\(aq |
+Synopsis: commit [-lRf] [-m \(aqlog_message\(aq |
 -F file] [-r revision] [files\&...]
 .IP "\(bu" 2
 Requires: working directory, repository.
@@ -2565,7 +2566,7 @@ various formats.
 Logging must be enabled by creating the file
 \fB$CVSROOT/CVSROOT/history\fR.
 .SP
-\fBNote: \fBhistory\fB uses \fB-f\fB, \fB-l\fB,
+\fB\fBhistory\fB uses \fB-f\fB, \fB-l\fB,
 \fB-n\fB, and \fB-p\fB in ways that conflict with the
 normal use inside \fBcvs\fB (see node `Common options\(aq in the CVS manual).\fR
 .SP
@@ -2944,7 +2945,7 @@ message are printed.  All times are displayed in
 Coordinated Universal Time (UTC).  (Other parts of
 \fBcvs\fR print times in the local timezone).
 .SP
-\fBNote: \fBlog\fB uses \fB-R\fB in a way that conflicts
+\fB\fBlog\fB uses \fB-R\fB in a way that conflicts
 with the normal use inside \fBcvs\fB (see node `Common options\(aq in the CVS manual).\fR
 .SP
 .SH "log options"
@@ -3503,6 +3504,7 @@ These special options are also available with
 \fB-A\fR
 .IP "" 2
 Reset any sticky tags, dates, or \fB-k\fR options.
+Does not reset sticky \fB-k\fR options on modified files.
 See see node `Sticky tags\(aq in the CVS manual, for more information on sticky tags/dates.
 .SP
 .IP "" 0

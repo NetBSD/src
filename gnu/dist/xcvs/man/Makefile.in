@@ -160,6 +160,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+with_default_rsh = @with_default_rsh@
 man_MANS = cvs.5 cvsbug.8
 EXTRA_DIST = \
 	.cvsignore \
