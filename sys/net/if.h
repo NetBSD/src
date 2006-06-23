@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.116 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if.h,v 1.117 2006/06/23 19:02:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
-#include "agr.h"
 #endif
 
 struct mbuf;
@@ -295,9 +294,7 @@ struct ifnet {				/* and the entries */
 	void	*if_afdata[AF_MAX];
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 
-#if NAGR > 0
 	void	*if_agrprivate;
-#endif
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
