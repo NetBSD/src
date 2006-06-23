@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pnpbus.c,v 1.1 2006/06/15 18:15:32 garbled Exp $ */
+/* $NetBSD: mcclock_pnpbus.c,v 1.2 2006/06/23 03:08:41 garbled Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.1 2006/06/15 18:15:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.2 2006/06/23 03:08:41 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.1 2006/06/15 18:15:32 garbled E
 #include <machine/intr.h>
 #include <machine/isa_machdep.h>
 #include <machine/residual.h>
+#include <machine/chpidpnp.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
@@ -83,7 +84,10 @@ mcclock_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 	int ret = 0;
 
 	if (strcmp(pna->pna_devid, "PNP0B00") == 0 &&
-	    pna->subtype == RealTimeClock && pna->interface == ISA_RTC)
+	    pna->subtype == RealTimeClock && pna->chipid == DallasRTC)
+		ret = 1;
+	if (strcmp(pna->pna_devid, "PNP0B00") == 0 &&
+	    pna->subtype == RealTimeClock && pna->chipid == Dallas1585)
 		ret = 1;
 
 	if (ret)

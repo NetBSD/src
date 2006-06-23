@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120 2006/06/15 18:15:32 garbled Exp $
+# $NetBSD: GENERIC,v 1.121 2006/06/23 03:08:41 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.120 $"
+#ident		"GENERIC-$Revision: 1.121 $"
 
 maxusers	32
 
@@ -361,12 +361,15 @@ sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
+# pnpbus network interfaces
+we*	at pnpbus?			# WD/SMC Ethernet
+
 # ISA network interfaces
 #ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
 #ne0	at isa? port 0x280 irq 9	# NE2000-compatible Ethernet
 #ne1	at isa? port 0x300 irq 10
 #we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
-we1	at isa? port 0x300 iomem 0xe4000 irq 11
+we1	at isa? port 0x300 iomem 0xe8000 irq 11
 
 # ISA Plug-and-Play network intefaces
 #ep*	at isapnp?			# 3Com 3c509 Ethernet

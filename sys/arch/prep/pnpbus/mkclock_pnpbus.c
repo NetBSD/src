@@ -1,4 +1,4 @@
-/* $NetBSD: mkclock_pnpbus.c,v 1.1 2006/06/15 18:15:32 garbled Exp $ */
+/* $NetBSD: mkclock_pnpbus.c,v 1.2 2006/06/23 03:08:41 garbled Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.1 2006/06/15 18:15:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.2 2006/06/23 03:08:41 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.1 2006/06/15 18:15:32 garbled E
 
 #include <machine/bus.h>
 #include <machine/residual.h>
+#include <machine/chpidpnp.h>
 
 #include <dev/isa/isavar.h>
 #include <prep/pnpbus/pnpbusvar.h>
@@ -74,7 +75,7 @@ mkclock_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 	struct pnpbus_dev_attach_args *pna = aux;
 
 	if (strcmp(pna->pna_devid, "PNP0B00") == 0 &&
-	    pna->subtype == RealTimeClock && pna->interface == 129)
+	    pna->subtype == RealTimeClock && pna->chipid == MOTmk48)
 		prep_clock_mk48txx = 1;
 
 	return 0;

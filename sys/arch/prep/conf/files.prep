@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.55 2006/06/15 18:15:32 garbled Exp $
+#	$NetBSD: files.prep,v 1.56 2006/06/23 03:08:41 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -174,10 +174,15 @@ file	arch/prep/pnpbus/mkclock_pnpbus.c	mkclock_pnpbus
 
 attach wdc at pnpbus with wdc_pnpbus
 file arch/prep/pnpbus/wdc_pnpbus.c	wdc_pnpbus needs-flag
+
 attach fdc at pnpbus with fdc_pnpbus: isadma
 file arch/prep/pnpbus/fdc_pnpbus.c	fdc_pnpbus
+
 device nvram
 attach nvram at pnpbus with nvram_pnpbus
 file arch/prep/pnpbus/nvram_pnpbus.c	nvram_pnpbus
+
+attach we at pnpbus with we_pnpbus
+file arch/prep/pnpbus/if_we_pnpbus.c	we_pnpbus
 
 include "arch/prep/conf/majors.prep"
