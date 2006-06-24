@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.890 2006/06/19 15:44:33 gdamore Exp $
+#	$NetBSD: mi,v 1.891 2006/06/24 05:11:40 mrg Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1666,8 +1666,8 @@
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
-./usr/lib/libiscsi.a				comp-iscsi-lib
-./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile
+./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
+./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
 ./usr/lib/libkadm5clnt.a			comp-krb5-lib		kerberos
 ./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	kerberos,profile
@@ -1779,7 +1779,7 @@
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint,iscsi
 ./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
