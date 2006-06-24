@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.180 2006/06/19 15:44:44 gdamore Exp $
+#	$NetBSD: bsd.README,v 1.181 2006/06/24 05:14:01 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -173,6 +173,10 @@ MKINFO		If "no", don't build or install Info documentation from
 		Default: yes
 
 MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
+		Default: yes
+
+MKISCSI		If "no", don't build or install iscsi library or applications
+		(depends on libpthread.)
 		Default: yes
 
 MKKERBEROS	If "no", disables building of Kerberos v5
