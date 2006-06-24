@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.457 2006/06/24 05:16:32 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.458 2006/06/24 05:24:56 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -50,6 +50,7 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "armeb" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
@@ -438,6 +439,12 @@ MKGDB=no
 #
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
+MKISCSI=	no
+# XXX GCC 4 outputs mcount() calling sequences that try to load values
+# from over 64KB away and this fails to assemble.
+.if ${HAVE_GCC} == 4
+NOPROFILE=	# defined
+.endif
 .endif
 
 #
