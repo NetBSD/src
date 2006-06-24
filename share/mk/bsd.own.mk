@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.456 2006/06/23 21:51:02 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.457 2006/06/24 05:16:32 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -585,7 +585,7 @@ MK${var}:=	yes
 	DOC \
 	GCC GCCCMDS GDB \
 	HESIOD HTML \
-	IEEEFP INET6 INFO IPFILTER \
+	IEEEFP INET6 INFO IPFILTER ISCSI \
 	KERBEROS \
 	LINKLIB LINT \
 	MAN \
