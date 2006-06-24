@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/05/05 19:38:30 perseant Exp $
+#	$NetBSD: Makefile,v 1.5 2006/06/24 05:28:54 perseant Exp $
 #
 # Note: this test must be run with LFSDEV defined, e.g. "LFSDEV=wd0g".
 # It will destroy the existing contents of $LFSDEV to perform the test.
@@ -45,12 +45,11 @@ test_ckckp: ckckp cleanalot_async run_ckckp
 	echo ${.CURDIR} PASSED | tee -a ${REGRESS_LOG}
 .endif
 
-abort: go
+abort:
 	-kill -9 `ps auxww | grep ckckp | grep -v grep | awk '{print $$2}'`
-	./go ${TMPMP}
 	umount ${TMPMP}
 
 clean:
-	rm -f ckckp cleanalot_async go *~ *.core ${GFILE} ${WFILE}
+	rm -f ckckp cleanalot_async *~ *.core ${GFILE} ${WFILE}
 
 .include <bsd.prog.mk>

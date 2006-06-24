@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.46 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: traverse.c,v 1.47 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.46 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.47 2006/06/24 05:28:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ mapfileino(ino_t ino, u_int64_t *tape_size, int *dirskipped)
 	if (TSTINO(ino, usedinomap))
 		return;
 	dp = getino(ino);
-	if ((mode = (DIP(dp, mode) & IFMT)) == 0)
+	if (dp == NULL || (mode = (DIP(dp, mode) & IFMT)) == 0)
 		return;
 	/*
 	 * Put all dirs in dumpdirmap, inodes that are to be dumped in the

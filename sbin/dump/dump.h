@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.42 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: dump.h,v 1.43 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -220,6 +220,12 @@ union	dinode *getino(ino_t);
 void	*xcalloc(size_t, size_t);
 void	*xmalloc(size_t);
 char	*xstrdup(const char *);
+
+/* LFS snapshot hooks */
+#ifdef DUMP_LFS
+int	lfs_wrap_stop(char *);
+void	lfs_wrap_go(void);
+#endif
 
 /* rdump routines */
 #if defined(RDUMP) || defined(RRESTORE)
