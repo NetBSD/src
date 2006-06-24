@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.20 2006/06/09 15:30:52 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.21 2006/06/24 05:26:50 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -230,7 +230,7 @@ get_gcc () {
 			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
 			GTFILES GTFILES_LANG_DIR_NAMES \
 			tm_defines host_xm_file host_xm_defines tm_p_file \
-			target_cpu_default ${_extravars2} \
+			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3}
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
