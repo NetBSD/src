@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.10 2004/07/03 14:11:25 chs Exp $
+# $NetBSD: list,v 1.11 2006/06/24 23:40:58 tsutsui Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -151,7 +151,7 @@ LINK	usr/lib/libtermcap.so			usr/lib/libtermcap.so.0
 COPY	${DESTDIR}/lib/libutil.so		usr/lib/libutil.so
 LINK	usr/lib/libutil.so			usr/lib/libutil.so.7
 COPY	${DESTDIR}/lib/libz.so			usr/lib/libz.so
-LINK	usr/lib/libz.so				usr/lib/libz.so.0
+LINK	usr/lib/libz.so				usr/lib/libz.so.1
 
 # usr.sbin:
 COPY	${DESTDIR}/usr/sbin/chown	usr/sbin/chown		555
