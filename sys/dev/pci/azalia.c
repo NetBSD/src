@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.29 2006/06/16 12:16:58 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.30 2006/06/24 00:15:22 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.29 2006/06/16 12:16:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.30 2006/06/24 00:15:22 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1412,16 +1412,24 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 		if (err)
 			return err;
 		this->d.audio.encodings = result;
-		if ((result & COP_STREAM_FORMAT_PCM) == 0) {
-			aprint_error("%s: %s: No PCM support: %x\n",
-			    XNAME(codec->az), this->name, result);
-			return -1;
+		if (result == 0) { /* quirk for CMI9880.
+				    * This must not occuur usually... */
+			this->d.audio.encodings =
+			    codec->w[codec->audiofunc].d.audio.encodings;
+			this->d.audio.bits_rates =
+			    codec->w[codec->audiofunc].d.audio.bits_rates;
+		} else {
+			if ((result & COP_STREAM_FORMAT_PCM) == 0) {
+				aprint_error("%s: %s: No PCM support: %x\n",
+				    XNAME(codec->az), this->name, result);
+				return -1;
+			}
+			err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
+			    COP_PCM, &result);
+			if (err)
+				return err;
+			this->d.audio.bits_rates = result;
 		}
-		err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
-		    COP_PCM, &result);
-		if (err)
-			return err;
-		this->d.audio.bits_rates = result;
 	} else {
 		this->d.audio.encodings =
 		    codec->w[codec->audiofunc].d.audio.encodings;
