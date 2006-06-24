@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.6 2005/12/11 12:16:37 christos Exp $ */
+/* $NetBSD: timer.c,v 1.7 2006/06/24 04:00:21 tsutsui Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.6 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.7 2006/06/24 04:00:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,6 +93,22 @@ struct device *timerdev;
 const struct timerfns *timerfns;
 int timerinitted;
 uint32_t last_cp0_count;
+
+#ifdef ENABLE_INT5_STATCLOCK
+/*
+ * Statistics clock variance, in usec.  Variance must be a
+ * power of two.  Since this gives us an even number, not an odd number,
+ * we discard one case and compensate.  That is, a variance of 1024 would
+ * give us offsets in [0..1023].  Instead, we take offsets in [1..1023].
+ * This is symmetric about the point 512, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+static const uint32_t statvar = 1024;
+static uint32_t statint;	/* number of clock ticks for stathz */
+static uint32_t statmin;	/* minimum stat clock count in ticks */
+static uint32_t statprev;/* last value of we set statclock to */
+static u_int statcountperusec;	/* number of ticks per usec at current stathz */
+#endif
 
 void
 timerattach(struct device *dev, const struct timerfns *fns)
@@ -119,6 +135,17 @@ timerattach(struct device *dev, const struct timerfns *fns)
 void
 cpu_initclocks(void)
 {
+
+#ifdef ENABLE_INT5_STATCLOCK
+	if (stathz == 0)
+		stathz = hz;
+
+	if (profhz == 0)
+		profhz = hz * 5;
+
+	setstatclockrate(stathz);
+#endif
+
 	if (timerfns == NULL)
 		panic("cpu_initclocks: no timer attached");
 
@@ -136,6 +163,11 @@ cpu_initclocks(void)
 	 * Get the clock started.
 	 */
 	(*timerfns->tf_init)(timerdev);
+
+#ifdef ENABLE_INT5_STATCLOCK
+	/* enable interrupts including CPU INT 5 */
+	_splnone();
+#endif
 }
 
 /*
@@ -146,9 +178,62 @@ cpu_initclocks(void)
 void
 setstatclockrate(int newhz)
 {
+#ifdef ENABLE_INT5_STATCLOCK
+	uint32_t countpersecond, statvarticks;
 
-	/* nothing we can do */
+	statprev = mips3_cp0_count_read();
+
+	statint = ((curcpu()->ci_cpu_freq + newhz / 2) / newhz) / 2;
+
+	/* Get the total ticks a second */
+	countpersecond = statint * newhz;
+
+	/* now work out how many ticks per usec */
+	statcountperusec = countpersecond / 1000000;
+
+	/* calculate a variance range of statvar */
+	statvarticks = statcountperusec * statvar;
+
+	/* minimum is statint - 50% of variant */
+	statmin = statint - (statvarticks / 2);
+
+	mips3_cp0_compare_write(statprev + statint);
+#endif
 }
+
+#ifdef ENABLE_INT5_STATCLOCK
+void
+statclockintr(struct clockframe *cfp)
+{
+	uint32_t curcount, statnext, delta, r;
+	int lost;
+
+	lost = 0;
+
+	do {
+		r = (uint32_t)random() & (statvar - 1);
+	} while (r == 0);
+	statnext = statprev + statmin + (r * statcountperusec);
+
+	mips3_cp0_compare_write(statnext);
+	curcount = mips3_cp0_count_read();
+	delta = statnext - curcount;
+
+	while (__predict_false((int32_t)delta < 0)) {
+		lost++;
+		delta += statint;
+	}
+	if (__predict_false(lost > 0)) {
+		statnext = curcount + delta;
+		mips3_cp0_compare_write(statnext);
+		for (; lost > 0; lost--)
+			statclock(cfp);
+	}
+	statclock(cfp);
+
+	statprev = statnext;
+}
+#endif
 
 /*
  * Wait "n" microseconds.
