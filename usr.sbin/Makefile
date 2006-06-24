@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2006/06/19 15:44:56 gdamore Exp $
+#	$NetBSD: Makefile,v 1.215 2006/06/24 05:14:01 mrg Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
 	envstat eshconfig etcupdate extattrctl fssconfig fwctl gpioctl \
 	grfconfig grfinfo gspa hilinfo ifwatchd inetd installboot \
-	iopctl iostat ipwctl irdaattach iscsi isdn iteconfig iwictl\
+	iopctl iostat ipwctl irdaattach isdn iteconfig iwictl\
 	kgmon lastlogin link lmcconfig lpr mailwrapper makefs \
 	map-mbone mdconfig memswitch mlxctl mopd mountd moused \
 	mrinfo mrouted mscdlabel mtrace \
@@ -23,6 +23,10 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp \
 	tcpdmatch tcpdump timed tpctl traceroute trpt trsp unlink \
 	usbdevs user videomode vipw vnconfig wiconfig wlanctl wpa \
 	wsconscfg wsfontload wsmoused wsmuxctl zdump zic
+
+.if (${MKISCSI} != "no")
+SUBDIR+= iscsi 
+.endif
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+= hprop kadmin kdc kstash ktutil
