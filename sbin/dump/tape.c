@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.45 2005/06/02 00:48:48 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.46 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.45 2005/06/02 00:48:48 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.46 2006/06/24 05:28:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -717,6 +717,9 @@ dumpabort(int signo)
 		/* Signals master to call dumpabort */
 		(void) kill(master, SIGTERM);
 	else {
+#ifdef DUMP_LFS
+		lfs_wrap_go();
+#endif
 		killall();
 		msg("The ENTIRE dump is aborted.\n");
 	}
