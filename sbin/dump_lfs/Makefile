@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2005/04/19 07:26:38 hannken Exp $
+#	$NetBSD: Makefile,v 1.7 2006/06/24 05:21:11 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	lfs_inode.c		LFS filestore-specific routines
@@ -21,5 +21,9 @@ CFLAGS+=-g
 
 .PATH:  ${NETBSDSRCDIR}/sbin/dump ${NETBSDSRCDIR}/sys/ufs/lfs \
 	${NETBSDSRCDIR}/sys/ufs/ffs
+
+.if ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "m68000"
+COPTS.lfs_inode.c+= -O0
+.endif
 
 .include <bsd.prog.mk>

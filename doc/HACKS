@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.78 2006/06/15 10:55:02 skrll Exp $
+# $NetBSD: HACKS,v 1.79 2006/06/24 05:21:11 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -157,6 +157,7 @@ file	libexec/ld.elf_so/arch/x86_64/mdreloc.c	: 1.27
 file	sbin/fsck_ext2fs/dir.c		: 1.19
 file	sbin/routed/rtquery/rtquery.c	: 1.18
 file	sys/arch/amd64/amd64/pmap.c	: 1.26
+file	sys/arch/i386/pci/piixpcib.c	: 1.4
 file	sys/crypto/cast128/cast128.c	: 1.9
 file	sys/ddb/db_command.c		: 1.86
 file	sys/dev/cardbus/cardbus_map.c	: 1.21
@@ -638,6 +639,19 @@ port	sun2
 	descr
 		ffs.c causes cc1 to barf for as-yet unknown reasons.  this
 		hack uses -O0 to avoid the problem.
+	kcah
+
+	hack	gcc 4.1.1/fsck_ffs/pass1.c
+	cdate	Fri Jun 23 10:30:25 PDT 2006
+	who	mrg
+	file	sbin/fsck_ffs/Makefile : 1.30
+	file	sbin/fsdb/Makefile : 1.19
+	file	sbin/dump_lfs/Makefile : 1.9
+	file	usr.sbin/ndbootd/Makefile : 1.2
+	descr
+		pass1.c causes cc1 to barf for as-yet unknown reasons.  this
+		hack uses -O0 to avoid the problem. (these all seem to be the
+		same problem.)
 	kcah
 
 
