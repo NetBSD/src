@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.632 2006/06/19 17:28:24 tnozaki Exp $
+# $NetBSD: mi,v 1.633 2006/06/24 05:11:40 mrg Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1039,7 +1039,7 @@
 ./usr/sbin/ipsend				base-ipf-bin		ipfilter
 ./usr/sbin/iptest				base-ipf-bin		ipfilter
 ./usr/sbin/irdaattach				base-sysutil-bin
-./usr/sbin/iscsi-target				base-iscsi-bin
+./usr/sbin/iscsi-target				base-iscsi-bin		iscsi
 ./usr/sbin/isdnd				base-isdn-bin
 ./usr/sbin/isdnmonitor				base-isdn-bin
 ./usr/sbin/isdntel				base-isdn-bin

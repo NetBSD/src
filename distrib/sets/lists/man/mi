@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.898 2006/06/19 15:44:35 gdamore Exp $
+# $NetBSD: mi,v 1.899 2006/06/24 05:11:40 mrg Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1634,7 +1634,7 @@
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
-./usr/share/man/cat5/targets.0			man-iscsi-catman	.cat
+./usr/share/man/cat5/targets.0			man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat5/termcap.0			man-sys-catman		.cat
 ./usr/share/man/cat5/texinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat5/transport.0		man-postfix-catman	postfix,.cat
@@ -1927,7 +1927,7 @@
 ./usr/share/man/cat8/ipwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irda.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/iscsi-target.0		man-iscsi-catman	.cat
+./usr/share/man/cat8/iscsi-target.0		man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/isdnd.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/isdnmonitor.0		man-isdn-catman		.cat
 ./usr/share/man/cat8/isdntel.0			man-isdn-catman		.cat
@@ -3987,7 +3987,7 @@
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
-./usr/share/man/man5/targets.5			man-iscsi-man		.man
+./usr/share/man/man5/targets.5			man-iscsi-man		iscsi,.man
 ./usr/share/man/man5/termcap.5			man-sys-man		.man
 ./usr/share/man/man5/texinfo.5			man-texinfo-man		.man
 ./usr/share/man/man5/transport.5		man-postfix-man		postfix,.man
@@ -4280,7 +4280,7 @@
 ./usr/share/man/man8/ipwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/irda.8			man-sysutil-man		.man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
-./usr/share/man/man8/iscsi-target.8		man-iscsi-man		.man
+./usr/share/man/man8/iscsi-target.8		man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/isdnd.8			man-isdn-man		.man
 ./usr/share/man/man8/isdnmonitor.8		man-isdn-man		.man
 ./usr/share/man/man8/isdntel.8			man-isdn-man		.man

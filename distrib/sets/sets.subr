@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.50 2006/06/09 03:14:54 dogcow Exp $
+#	$NetBSD: sets.subr,v 1.51 2006/06/24 05:11:40 mrg Exp $
 #
 
 #
@@ -39,6 +39,7 @@ MKVARS="\
 	MKINFO		\
 	MKIPFILTER	\
 	MKINET6		\
+	MKISCSI		\
 	MKKERBEROS	\
 	MKLINT		\
 	MKMAN		\
@@ -214,7 +215,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.50 2006/06/09 03:14:54 dogcow Exp $
+# 	# $NetBSD: sets.subr,v 1.51 2006/06/24 05:11:40 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -248,6 +249,7 @@ fi
 #	info			${MKINFO} != no
 #	ipfilter		${MKIPFILTER} != no
 #	inet6			${MKINET6} != no
+#	iscsi			${MKISCSI} != no
 #	kerberos		${MKKERBEROS} != no
 #	lint			${MKLINT} != no
 #	man			${MKMAN} != no
