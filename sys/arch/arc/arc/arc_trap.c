@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.33 2006/06/24 03:50:38 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.34 2006/06/24 04:00:21 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.33 2006/06/24 03:50:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.34 2006/06/24 04:00:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.33 2006/06/24 03:50:38 tsutsui Exp $"
 #include <machine/intr.h>
 #include <machine/pio.h>
 
+#include <arc/arc/timervar.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 
@@ -102,6 +103,11 @@ struct cpu_inttab {
 static struct cpu_inttab cpu_int_tab[ARC_NINTPRI];
 
 uint32_t cpu_int_mask;	/* External cpu interrupt mask */
+
+#ifdef ENABLE_INT5_STATCLOCK
+struct evcnt statclock_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "statclock");
+#endif
 
 /*
  *	Set up handler for external interrupt events.
@@ -144,11 +150,17 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	/* check MIPS3 internal clock interrupt */
 	if (ipending & MIPS_INT_MASK_5) {
+#ifdef ENABLE_INT5_STATCLOCK
+		/* call statclock(9) handler */
+		statclockintr(&cf);
+		statclock_ev.ev_count++;
+#else
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
 		 */
 		mips3_cp0_compare_write(0);
+#endif
 		cause &= ~MIPS_INT_MASK_5;
 	}
 	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
