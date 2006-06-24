@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.1.1.1 1995/10/08 23:08:47 gwr Exp $	*/
+/*	$NetBSD: tls.c,v 1.2 2006/06/24 05:12:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,6 +35,7 @@
 
 #include <dirent.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 int iflag;
