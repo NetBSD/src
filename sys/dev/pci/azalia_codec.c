@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.16 2006/06/15 16:11:15 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.17 2006/06/24 00:33:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.16 2006/06/15 16:11:15 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.17 2006/06/24 00:33:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,6 +93,7 @@ static int	alc882_mixer_init(codec_t *);
 static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc882_get_port(codec_t *, mixer_ctrl_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
+static int	cmi9880_init_dacgroup(codec_t *);
 static int	stac9221_init_dacgroup(codec_t *);
 static int	stac9220_mixer_init(codec_t *);
 
@@ -136,6 +137,10 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
+		break;
+	case 0x434d4980:
+		this->name = "CMedia CMI9880";
+		this->init_dacgroup = cmi9880_init_dacgroup;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
@@ -1915,6 +1920,27 @@ ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
 		break;
 	}
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * CMedia CMI9880
+ * ---------------------------------------------------------------- */
+
+static int
+cmi9880_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x03, 0x04, 0x05, 0x06}}, /* analog 8ch */
+		 {1, {0x07}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09}}, /* analog 4ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
 	return 0;
 }
 
