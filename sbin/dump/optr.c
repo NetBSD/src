@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.34 2005/06/27 01:37:32 christos Exp $	*/
+/*	$NetBSD: optr.c,v 1.35 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.34 2005/06/27 01:37:32 christos Exp $");
+__RCSID("$NetBSD: optr.c,v 1.35 2006/06/24 05:28:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,9 +427,14 @@ mntinfosearch(const char *key)
 	if ((mntbufc = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
 		quit("Can't get mount list: %s", strerror(errno));
 	for (fs = mntbuf, i = 0; i < mntbufc; i++, fs++) {
+#ifdef DUMP_LFS
+		if (strcmp(fs->f_fstypename, "lfs") != 0)
+			continue;
+#else /* ! DUMP_LFS */
 		if (strcmp(fs->f_fstypename, "ufs") != 0 &&
 		    strcmp(fs->f_fstypename, "ffs") != 0)
 			continue;
+#endif /* ! DUMP_LFS */
 		if (strcmp(fs->f_mntonname, key) == 0 ||
 		    strcmp(fs->f_mntfromname, key) == 0)
 			return (fs);

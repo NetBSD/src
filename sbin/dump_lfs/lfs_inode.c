@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.11 2005/06/18 01:33:16 lukem Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.12 2006/06/24 05:28:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.11 2005/06/18 01:33:16 lukem Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.12 2006/06/24 05:28:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: lfs_inode.c,v 1.11 2005/06/18 01:33:16 lukem Exp $");
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fts.h>
 #include <stdio.h>
 #include <string.h>
@@ -94,8 +95,8 @@ fs_read_sblock(char *superblock)
 #endif
 				quit("bad sblock magic number\n");
 		}
-		if (fsbtob(sblock, sblock->lfs_sboffs[0]) != sboff) {
-			sboff = fsbtob(sblock, sblock->lfs_sboffs[0]);
+		if (fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]) != sboff) {
+			sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]);
 			continue;
 		}
 		break;
@@ -104,24 +105,24 @@ fs_read_sblock(char *superblock)
 	/*
 	 * Read the secondary and take the older of the two
 	 */
-	rawread(fsbtob(sblock, sblock->lfs_sboffs[1]), tbuf, LFS_SBPAD);
+	rawread(fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]), tbuf, LFS_SBPAD);
 #ifdef notyet
 	if (ns)
 		lfs_sb_swap(tbuf, tbuf, 0);
 #endif
 	if (((struct lfs *)tbuf)->lfs_magic != LFS_MAGIC) {
-		msg("Warning: secondary superblock at 0x%x bad magic\n",
-			fsbtodb(sblock, sblock->lfs_sboffs[1]));
+		msg("Warning: secondary superblock at 0x%" PRIx64 " bad magic\n",
+			fsbtodb(sblock, (off_t)sblock->lfs_sboffs[1]));
 	} else {
 		if (sblock->lfs_version > 1) {
 			if (((struct lfs *)tbuf)->lfs_serial < sblock->lfs_serial) {
 				memcpy(sblock, tbuf, LFS_SBPAD);
-				sboff = fsbtob(sblock, sblock->lfs_sboffs[1]);
+				sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		} else {
 			if (((struct lfs *)tbuf)->lfs_otstamp < sblock->lfs_otstamp) {
 				memcpy(sblock, tbuf, LFS_SBPAD);
-				sboff = fsbtob(sblock, sblock->lfs_sboffs[1]);
+				sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		}
 	}
@@ -343,4 +344,50 @@ getino(ino_t inum)
 #endif
 	}
 	return (union dinode *)lfs_ifind(sblock, inum, inoblock);
+}
+
+/*
+ * Tell the filesystem not to overwrite any currently dirty segments
+ * until we are finished.  (It may still write into clean segments, of course,
+ * since we're not using those.)  This is only called when dump_lfs is called
+ * with -X, i.e. we are working on a mounted filesystem.
+ */
+static int root_fd = -1;
+char *wrap_mpname;
+
+int
+lfs_wrap_stop(char *mpname)
+{
+	int waitfor = 0;
+
+	root_fd = open(mpname, O_RDONLY, 0);
+	if (root_fd < 0)
+		return -1;
+	wrap_mpname = mpname;
+	fcntl(root_fd, LFCNREWIND, -1); /* Ignore return value */
+	if (fcntl(root_fd, LFCNWRAPSTOP, &waitfor) < 0) {
+		perror("LFCNWRAPSTOP");
+		return -1;
+	}
+	msg("Disabled log wrap on %s\n", mpname);
+	return 0;
+}
+
+/*
+ * Allow the filesystem to continue normal operation.
+ * This would happen anyway when we exit; we do it explicitly here
+ * to show the message, for the user's benefit.
+ */
+void
+lfs_wrap_go(void)
+{
+	int waitfor = 0;
+
+	if (root_fd < 0)
+		return;
+
+	close(root_fd);
+	root_fd = -1;
+	fcntl(root_fd, LFCNWRAPGO, &waitfor);
+	msg("Re-enabled log wrap on %s\n", wrap_mpname);
 }
