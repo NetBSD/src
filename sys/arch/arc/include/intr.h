@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2006/06/17 14:10:28 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2006/06/24 03:50:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,12 @@ void _clrsoftintr(int);
 struct clockframe;
 void arc_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *), int);
 extern uint32_t cpu_int_mask;
+
+/* priority order to handle each CPU INT line specified via set_intr() */
+#define ARC_INTPRI_TIMER_INT	0	/* independent CPU INT for timer */
+#define ARC_INTPRI_JAZZ		1	/* CPU INT for JAZZ local bus */
+#define ARC_INTPRI_PCIISA	2	/* CPU INT for PCI/EISA/ISA */
+#define ARC_NINTPRI		3	/* number of total used CPU INTs */
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
