@@ -1,4 +1,4 @@
-/*	$NetBSD: arcsisabr.c,v 1.2 2006/06/12 15:06:32 tsutsui Exp $	*/
+/*	$NetBSD: arcsisabr.c,v 1.3 2006/06/24 03:50:38 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.2 2006/06/12 15:06:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.3 2006/06/24 03:50:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ arcsisabrattach(struct device *parent, struct device *self, void *aux)
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 
 	isadma_bounce_tag_init(&sc->sc_dmat);
-	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, 2);
+	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, ARC_INTPRI_PCIISA);
 
 	isabrattach(sc);
 }
