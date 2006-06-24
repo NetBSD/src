@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2006/06/18 05:21:21 gdamore Exp $
+#	$NetBSD: Makefile,v 1.15 2006/06/24 03:28:42 tsutsui Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -77,9 +77,9 @@ SYS		= GCC
 PREFIX		= L_
 
 .sa.s:
-	${HOST_SH} ${FPSPDIR}/asm2gas ${TOOL_SED} ${.IMPSRC} >${.TARGET}
+	SED=${TOOL_SED:Q} ${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .h.defs:
-	${HOST_SH} ${FPSPDIR}/asm2gas ${TOOL_SED} ${.IMPSRC} >${.TARGET}
+	SED=${TOOL_SED:Q} ${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .s.o:
 	${CC} ${AFLAGS} ${CPPFLAGS} -c -o ${.TARGET} ${.IMPSRC}
 
