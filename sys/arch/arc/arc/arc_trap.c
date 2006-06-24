@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.32 2006/06/17 14:11:16 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.33 2006/06/24 03:50:38 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.32 2006/06/17 14:11:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.33 2006/06/24 03:50:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,42 +95,13 @@ __KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.32 2006/06/17 14:11:16 tsutsui Exp $"
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 
-uint32_t arc_hardware_intr(uint32_t, uint32_t, uint32_t, uint32_t);
-
-#define	MIPS_INT_LEVELS	8
-
-struct {
+struct cpu_inttab {
 	uint32_t int_mask;
 	uint32_t (*int_hand)(uint32_t, struct clockframe *);
-} cpu_int_tab[MIPS_INT_LEVELS];
+};
+static struct cpu_inttab cpu_int_tab[ARC_NINTPRI];
 
 uint32_t cpu_int_mask;	/* External cpu interrupt mask */
-
-uint32_t
-arc_hardware_intr(uint32_t status, uint32_t cause, uint32_t pc,
-    uint32_t ipending)
-{
-	int i;
-	struct clockframe cf;
-
-	cf.pc = pc;
-	cf.sr = status;
-
-	/*
-	 *  Check off all enabled interrupts. Called interrupt routine
-	 *  returns mask of interrupts to reenable.
-	 */
-	for (i = 0; i < MIPS_INT_LEVELS; i++) {
-		if (cpu_int_tab[i].int_mask & ipending) {
-			cause &= (*cpu_int_tab[i].int_hand)(ipending, &cf);
-		}
-	}
-
-	/*
-	 *  Reenable all non served hardware levels.
-	 */
-	return cause;
-}
 
 /*
  *	Set up handler for external interrupt events.
@@ -141,7 +112,7 @@ arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
     int prio)
 {
 
-	if (prio > MIPS_INT_LEVELS)
+	if (prio >= ARC_NINTPRI)
 		panic("arc_set_intr: too high priority");
 
 	if (cpu_int_tab[prio].int_mask != 0 &&
@@ -162,23 +133,66 @@ arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
 void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-	uint32_t handled;
+	struct clockframe cf;
+	struct cpu_inttab *inttab;
+	u_int i;
 
+	uvmexp.intrs++;
+
+	cf.pc = pc;
+	cf.sr = status;
+
+	/* check MIPS3 internal clock interrupt */
 	if (ipending & MIPS_INT_MASK_5) {
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
 		 */
-		mips3_cp0_compare_write(mips3_cp0_count_read());
+		mips3_cp0_compare_write(0);
+		cause &= ~MIPS_INT_MASK_5;
 	}
+	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
 
-	uvmexp.intrs++;
-	handled = cause;
-	/* real device interrupt */
-	if (ipending & MIPS3_HARD_INT_MASK) {
-		handled = arc_hardware_intr(status, cause, pc, ipending);
+	/*
+	 *  If there is an independent timer interrupt handler, call it first.
+	 *  Called interrupt routine returns mask of interrupts to be reenabled.
+	 */
+	inttab = &cpu_int_tab[ARC_INTPRI_TIMER_INT];
+	if (inttab->int_mask & ipending) {
+		if ((ipending & MIPS_INT_MASK & ~inttab->int_mask) == 0) {
+			/*
+			 * If all interrupts were enabled and there is no
+			 * pending interrupts, set MIPS_SR_INT_IE so that
+			 * spllowerclock() in hardclock() works properly.
+			 */
+#if 0			/* MIPS_SR_INT_IE is enabled above */
+			_splset(MIPS_SR_INT_IE);
+#endif
+		} else {
+			/*
+			 * If there are any pending interrputs, clear
+			 * MIPS_SR_INT_IE in cf.sr so that spllowerclock()
+			 * in hardclock() will not happen.
+			 */
+			cf.sr &= ~MIPS_SR_INT_IE;
+		}
+		cause &= (*inttab->int_hand)(ipending, &cf);
 	}
-	_splset((status & ~handled & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	inttab++;
+
+	/*
+	 *  Check off all other enabled interrupts.
+	 *  Called handlers return mask of interrupts to be reenabled.
+	 */
+	for (i = ARC_INTPRI_TIMER_INT + 1; i < ARC_NINTPRI; i++) {
+		if (inttab->int_mask & ipending) {
+			cause &= (*inttab->int_hand)(ipending, &cf);
+		}
+		inttab++;
+	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	/* software interrupts */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
