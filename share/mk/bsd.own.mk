@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.458 2006/06/24 05:24:56 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.459 2006/06/24 06:35:54 garbled Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -51,6 +51,7 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "armeb" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68000" || \
+    ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
@@ -63,7 +64,6 @@ HAVE_GCC?=	4
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh3eb" || \
     ${MACHINE_ARCH} == "sh3el"
 #HAVE_GCC?=	4
