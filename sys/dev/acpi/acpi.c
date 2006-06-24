@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.90 2006/06/21 17:47:23 drochner Exp $	*/
+/*	$NetBSD: acpi.c,v 1.91 2006/06/24 23:40:50 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.90 2006/06/21 17:47:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.91 2006/06/24 23:40:50 tsarna Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -446,7 +446,7 @@ acpi_build_tree(struct acpi_softc *sc)
 	static const char *scopes[] = {
 		"\\_PR_",	/* ACPI 1.0 processor namespace */
 		"\\_SB_",	/* system bus namespace */
-		"\\_SI_",	/* system idicator namespace */
+		"\\_SI_",	/* system indicator namespace */
 		"\\_TZ_",	/* ACPI 1.0 thermal zone namespace */
 		NULL,
 	};
