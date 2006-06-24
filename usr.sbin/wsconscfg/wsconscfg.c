@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.12 2005/07/12 08:48:20 wiz Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.13 2006/06/24 19:57:32 christos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -46,19 +46,19 @@
 
 #define DEFDEV "/dev/ttyEcfg"
 
-static void usage(void) __attribute__((__unused__));
+static void usage(void) __attribute__((__noreturn__));
 int main(int, char **);
 
 static void
 usage(void)
 {
-
+	const char *p = getprogname();
 	(void)fprintf(stderr,
 	     "Usage: %s [-e emul] [-f ctldev] [-t type] index\n"
-	     "       %s -d [-F] [-f ctldev] index\n"
-	     "       %s -k | -m [-d] [-f ctldev] [index]\n"
-	     "       %s -s [-f ctldev] index\n", getprogname(),
-	     getprogname(), getprogname(), getprogname());
+	     "\t%s -d [-F] [-f ctldev] index\n"
+	     "\t%s -k | -m [-d] [-f ctldev] [index]\n"
+	     "\t%s -s [-f ctldev] index\n"
+	     "\t%s -g [-f ctldev]\n", p, p, p, p, p);
 	exit(1);
 }
 
@@ -66,7 +66,7 @@ int
 main(int argc, char **argv)
 {
 	const char *wsdev;
-	int c, delete, kbd, idx, wsfd, swtch, mux;
+	int c, delete, kbd, idx, wsfd, swtch, get, mux;
 	struct wsdisplay_addscreendata asd;
 	struct wsdisplay_delscreendata dsd;
 	struct wsmux_device wmd;
@@ -78,17 +78,27 @@ main(int argc, char **argv)
 	mux = 0;
 	swtch = 0;
 	idx = -1;
+	get = 0;
 	asd.screentype = 0;
 	asd.emul = 0;
 	dsd.flags = 0;
 
-	while ((c = getopt(argc, argv, "f:dkmst:e:F")) != -1) {
+	while ((c = getopt(argc, argv, "de:Ff:gkmst:")) != -1) {
 		switch (c) {
+		case 'd':
+			delete++;
+			break;
+		case 'e':
+			asd.emul = optarg;
+			break;
+		case 'F':
+			dsd.flags |= WSDISPLAY_DELSCR_FORCE;
+			break;
 		case 'f':
 			wsdev = optarg;
 			break;
-		case 'd':
-			delete++;
+		case 'g':
+			get++;
 			break;
 		case 'k':
 			kbd++;
@@ -103,12 +113,6 @@ main(int argc, char **argv)
 		case 't':
 			asd.screentype = optarg;
 			break;
-		case 'e':
-			asd.emul = optarg;
-			break;
-		case 'F':
-			dsd.flags |= WSDISPLAY_DELSCR_FORCE;
-			break;
 		case '?':
 		default:
 			usage();
@@ -118,18 +122,24 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((kbd || swtch) ? (argc > 1) : (argc != 1))
-		usage();
+	if (!get || argc != 0) {
+		if ((kbd || swtch) ? (argc > 1) : (argc != 1))
+			usage();
 
-	if (argc > 0 && sscanf(argv[0], "%d", &idx) != 1)
-		errx(1, "invalid index");
-
-	if ((wsfd = open(wsdev, O_RDWR)) == -1)
+		if (argc > 0 && sscanf(argv[0], "%d", &idx) != 1)
+			errx(1, "invalid index");
+	}
+	if ((wsfd = open(wsdev, get ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "Cannot open `%s'", wsdev);
+
 
 	if (swtch) {
 		if (ioctl(wsfd, VT_ACTIVATE, idx) == -1)
 		    err(EXIT_FAILURE, "Cannot switch to %d", idx);
+	} else if (get) {
+		if (ioctl(wsfd, VT_GETACTIVE, &idx) == -1)
+		    err(EXIT_FAILURE, "Cannot get current screen");
+		(void)printf("%d\n", idx);
 	} else if (kbd) {
 		wmd.type = mux ? WSMUX_MUX : WSMUX_KBD;
 		wmd.idx = idx;
