@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsconscfg.8,v 1.18 2006/06/24 19:57:32 christos Exp $
+.\"	$NetBSD: wsconscfg.8,v 1.19 2006/06/24 21:03:57 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -42,6 +42,9 @@
 .Op Fl f Ar ctldev
 .Ar index
 .Nm
+.Fl g
+.Op Fl f Ar ctldev
+.Nm
 .Fl k | m
 .Op Fl d
 .Op Fl f Ar ctldev
@@ -50,9 +53,6 @@
 .Fl s
 .Op Fl f Ar ctldev
 .Ar index
-.Nm
-.Fl g
-.Op Fl f Ar ctldev
 .Sh DESCRIPTION
 The
 .Nm
@@ -105,6 +105,8 @@ program.
 Specify the control device of the wscons display to operate on.
 Default is
 .Pa /dev/ttyEcfg .
+.It Fl g
+Print the index of the current virtual terminal.
 .It Fl k
 Do keyboard related operations instead of virtual screen configuration.
 Without other flags, a keyboard will be attached to the display
@@ -120,8 +122,6 @@ Without other flags, a multiplexor will be attached to the display
 device.
 .It Fl s
 Switch to the specified virtual terminal.
-.It Fl g
-Print the index of the current virtual terminal.
 .It Fl t Ar type
 Specify a screen type to use.
 Screen types refer to display format, colour depth and other
