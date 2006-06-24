@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.183 2006/06/23 14:13:02 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.184 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.183 2006/06/23 14:13:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.184 2006/06/24 05:28:54 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.183 2006/06/23 14:13:02 yamt Exp $
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -1571,7 +1572,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 	}
 	if (sn == fs->lfs_nseg)
 		panic("lfs_rewind: no clean segments");
-	if (sn >= newsn)
+	if (newsn >= 0 && sn >= newsn)
 		return ENOENT;
 	fs->lfs_nextseg = sn;
 	lfs_newseg(fs);
@@ -1727,6 +1728,7 @@ lfs_newseg(struct lfs *fs)
 	/* Honor LFCNWRAPSTOP */
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		log(LOG_NOTICE, "%s: waiting on log wrap\n", fs->lfs_fsmnt);
 		wakeup(&fs->lfs_nowrap);
 		ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
 			&fs->lfs_interlock);

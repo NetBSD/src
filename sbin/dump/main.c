@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2006/04/19 15:42:12 hannken Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.61 2006/04/19 15:42:12 hannken Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 2006/06/24 05:28:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,6 +428,20 @@ main(int argc, char *argv[])
 		snap_backup = NULL;
 		snap_internal = 0;
 	}
+
+#ifdef DUMP_LFS
+	sync();
+	if (snap_backup != NULL || snap_internal) {
+		if (lfs_wrap_stop(mountpoint) < 0) {
+			msg("Cannot stop writing on %s\n", mountpoint);
+			exit(X_STARTUP);
+		}
+	}
+	if ((diskfd = open(disk, O_RDONLY)) < 0) {
+		msg("Cannot open %s\n", disk);
+		exit(X_STARTUP);
+	}
+#else /* ! DUMP_LFS */
 	if (snap_backup != NULL || snap_internal) {
 		diskfd = snap_open(mntinfo->f_mntonname, snap_backup, &tnow);
 		if (diskfd < 0) {
@@ -443,6 +457,7 @@ main(int argc, char *argv[])
 		}
 	}
 	sync();
+#endif /* ! DUMP_LFS */
 
 	needswap = fs_read_sblock(sblock_buf);
 
@@ -621,6 +636,9 @@ main(int argc, char *argv[])
 	putdumptime();
 	trewind(0);
 	broadcast("DUMP IS DONE!\a\a\n");
+#ifdef DUMP_LFS
+	lfs_wrap_go();
+#endif /* DUMP_LFS */
 	msg("DUMP IS DONE\n");
 	Exit(X_FINOK);
 	/* NOTREACHED */

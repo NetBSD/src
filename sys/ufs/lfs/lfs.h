@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.107 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs.h,v 1.108 2006/06/24 05:28:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -988,6 +988,7 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
 #define LFSI_DELETED      0x02
+#define LFSI_WRAPBLOCK    0x04
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
@@ -1083,11 +1084,13 @@ struct lfs_fcntl_markv {
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
-#define LFCNWRAPSTOP	 _FCNO_FSPRIV('L', 9)
-#define LFCNWRAPGO	 _FCNO_FSPRIV('L', 10)
-/* Compat for NetBSD 2.x bug */
+#define LFCNWRAPSTOP	 _FCNR_FSPRIV('L', 9, int)
+#define LFCNWRAPGO	 _FCNR_FSPRIV('L', 10, int)
+/* Compat */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
+#define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
+#define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 
 #ifdef _KERNEL
 /* XXX MP */
