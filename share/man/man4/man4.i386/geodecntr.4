@@ -1,4 +1,4 @@
-.\"	$NetBSD: geodecntr.4,v 1.1 2006/06/24 12:22:52 kardel Exp $
+.\"	$NetBSD: geodecntr.4,v 1.2 2006/06/24 18:43:08 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Frank Kardel.
 .\"
@@ -43,13 +43,12 @@ counter.
 .Pp
 The other timing sources in the SC1100 suffer from
 powermanagement features that prohibit i8254 and TSC
-to be used for time keeping. This
+to be used for time keeping.
+This
 .Nm
 driver
 makes the 27MHz counter available for the
 .Xr timecounter 9
-framework. 
+framework.
 .Sh SEE ALSO
 .Xr timecounter 9
-.Sh BUGS
-yet to be found
