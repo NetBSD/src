@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.891 2006/06/24 05:11:40 mrg Exp $
+#	$NetBSD: mi,v 1.892 2006/06/24 12:37:36 kardel Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5618,6 +5618,7 @@
 ./usr/share/man/cat9/memset.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mi_switch.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/microtime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/microuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtocl.0			comp-sys-catman		.cat
@@ -5884,6 +5885,7 @@
 ./usr/share/man/cat9/tc_syncbus.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_wmb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/time.0			comp-sys-catman		.cat
+./usr/share/man/cat9/timecounter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/timeout.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tmpfs.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/todr.0			comp-sys-catman		.cat
@@ -9731,6 +9733,7 @@
 ./usr/share/man/man9/memset.9			comp-sys-man		.man
 ./usr/share/man/man9/mi_switch.9		comp-sys-man		.man
 ./usr/share/man/man9/microtime.9		comp-sys-man		.man
+./usr/share/man/man9/microuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-sys-man		.man
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
 ./usr/share/man/man9/mtocl.9			comp-sys-man		.man
@@ -9997,6 +10000,7 @@
 ./usr/share/man/man9/tc_syncbus.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_wmb.9			comp-sys-man		.man
 ./usr/share/man/man9/time.9			comp-sys-man		.man
+./usr/share/man/man9/timecounter.9		comp-sys-man		.man
 ./usr/share/man/man9/timeout.9			comp-sys-man		.man
 ./usr/share/man/man9/tmpfs.9			comp-obsolete		obsolete
 ./usr/share/man/man9/todr.9			comp-sys-man		.man
