@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.13 2006/06/24 19:57:32 christos Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.14 2006/06/24 21:04:48 wiz Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -56,9 +56,9 @@ usage(void)
 	(void)fprintf(stderr,
 	     "Usage: %s [-e emul] [-f ctldev] [-t type] index\n"
 	     "\t%s -d [-F] [-f ctldev] index\n"
+	     "\t%s -g [-f ctldev]\n"
 	     "\t%s -k | -m [-d] [-f ctldev] [index]\n"
-	     "\t%s -s [-f ctldev] index\n"
-	     "\t%s -g [-f ctldev]\n", p, p, p, p, p);
+	     "\t%s -s [-f ctldev] index\n", p, p, p, p, p);
 	exit(1);
 }
 
