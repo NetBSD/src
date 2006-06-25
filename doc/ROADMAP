@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.7 2006/05/19 22:47:48 liamjfoy Exp $
+#	$NetBSD: ROADMAP,v 1.8 2006/06/25 17:37:22 agc Exp $
 
 A high-level roadmap for NetBSD
 
@@ -322,8 +322,8 @@ ac. Kernel core dump support for all platforms
 
 ad. NDIS
     Support for binary network drivers on x86 platforms.
-	Responsible: TBD
-	ETA: ?
+	Responsible: rittera
+	ETA: 4.0
 
 4. Platform dependent userland
 ==============================
