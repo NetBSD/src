@@ -108,28 +108,28 @@ Boston, MA 02111-1307, USA.  */
 #undef ASM_OUTPUT_ADDR_VEC_ELT
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE) \
   if (TARGET_BIG_SWITCH)					\
-    fprintf (FILE, "\tstw %%r1,-16(%%r30)\n\tldil LR'.L%d,%%r1\n\tbe RR'.L%d(%%sr4,%%r1)\n\tldw -16(%%r30),%%r1\n", VALUE, VALUE);		\
+    fprintf (FILE, "\t.word .L%d\n", VALUE);			\
   else								\
     fprintf (FILE, "\tb .L%d\n\tnop\n", VALUE)
 
 #undef ASM_OUTPUT_ADDR_DIFF_ELT
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   if (TARGET_BIG_SWITCH)					\
-    fprintf (FILE, "\tstw %%r1,-16(%%r30)\n\tldw T'.L%d(%%r19),%%r1\n\tbv %%r0(%%r1)\n\tldw -16(%%r30),%%r1\n", VALUE);				\
+    fprintf (FILE, "\t.word .L%d-.L%d\n", VALUE, REL);		\
   else								\
     fprintf (FILE, "\tb .L%d\n\tnop\n", VALUE)
 
 /* Use the default.  */
 #undef ASM_OUTPUT_LABEL
 
-/* NOTE: ASM_OUTPUT_INTERNAL_LABEL() is defined for us by elfos.h, and
+/* NOTE: (*targetm.asm_out.internal_label)() is defined for us by elfos.h, and
    does what we want (i.e. uses colons).  It must be compatible with
    ASM_GENERATE_INTERNAL_LABEL(), so do not define it here.  */
 
 /* Use the default.  */
 #undef TARGET_ASM_GLOBALIZE_LABEL
 /* Globalizing directive for a label.  */
-#define GLOBAL_ASM_OP "\t.globl "
+#define GLOBAL_ASM_OP ".globl "
 
 /* FIXME: Hacked from the <elfos.h> one so that we avoid multiple
    labels in a function declaration (since pa.c seems determined to do
