@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.7 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.8 2006/06/25 03:02:19 mrg Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -62,7 +62,9 @@ static	void	ctl_putid	P((const char *, char *));
 static	void	ctl_putarray	P((const char *, double *, int));
 static	void	ctl_putsys	P((int));
 static	void	ctl_putpeer	P((int, struct peer *));
+#ifdef OPENSSL
 static	void	ctl_putfs	P((const char *, tstamp_t));
+#endif /* OPENSSL */
 #ifdef REFCLOCK
 static	void	ctl_putclock	P((int, struct refclockstat *, int));
 #endif	/* REFCLOCK */
@@ -1003,6 +1005,7 @@ ctl_putuint(
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
 
+#ifdef OPENSSL
 /*
  * ctl_putfs - write a decoded filestamp into the response
  */
@@ -1035,6 +1038,7 @@ ctl_putfs(
 		cp++;
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
+#endif /* OPENSSL */
 
 
 /*
