@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.80 2006/06/25 08:12:54 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.81 2006/06/25 08:13:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.80 2006/06/25 08:12:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.81 2006/06/25 08:13:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,7 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 	unsigned int gen;
 
 	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
-	if (copyin((void *)&((struct sa_stackinfo_t *)
+	if (copyin(&((struct sa_stackinfo_t *)
 		       ((char *)sast->sast_stack.ss_sp +
 			   sa->sa_stackinfo_offset))->sasi_stackgen,
 		&gen, sizeof(unsigned int)) != 0) {
@@ -305,7 +305,7 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
 
 	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
-	if (copyin((void *)&((struct sa_stackinfo_t *)
+	if (copyin(&((struct sa_stackinfo_t *)
 		       ((char *)sast->sast_stack.ss_sp +
 			   sa->sa_stackinfo_offset))->sasi_stackgen,
 		&sast->sast_gen, sizeof(unsigned int)) != 0) {
@@ -710,7 +710,7 @@ sa_yield(struct lwp *l)
 		sa->sa_concurrency--;
 		simple_unlock(&sa->sa_lock);
 
-		ret = tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
+		ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
 
 		simple_lock(&sa->sa_lock);
 		sa->sa_concurrency++;
