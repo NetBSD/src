@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.797 2006/06/18 21:32:24 christos Exp $
+$NetBSD: pcidevs,v 1.798 2006/06/25 03:46:56 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -626,6 +626,7 @@ vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
 vendor NETMOS		0x9710	Netmos
+vendor PARALLELS	0xaaaa	Parallels	
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
 vendor MIDDLE_DIGITAL	0xdeaf	Middle Digital
 vendor ARC		0xedd8	ARC Logic
@@ -2440,6 +2441,10 @@ product SYMBIOS MEGARAID_300X	0x0409	LSI Megaraid SATA (300-6X/300-8X)
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
+
+/* Parallels products */
+product PARALLELS TOOLS	0x1112	Tools
+product PARALLELS VIDEO	0x1121	Video
 
 /* NEC products */
 product NEC USB		0x0035	USB Host Controller
