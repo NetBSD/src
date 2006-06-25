@@ -1,4 +1,4 @@
-/*	$NetBSD: isabrvar.h,v 1.4 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: isabrvar.h,v 1.5 2006/06/25 16:46:15 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -79,7 +79,6 @@
 struct isabr_softc {
 	struct	device sc_dev;
 	struct	arc_isa_bus arc_isa_cs;
-	struct	abus sc_bus;
 	struct arc_bus_dma_tag sc_dmat;
 };
 
