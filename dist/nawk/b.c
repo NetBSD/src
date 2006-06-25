@@ -942,8 +942,10 @@ void freefa(fa *f)	/* free a finite automaton */
 
 	if (f == NULL)
 		return;
-	for (i = 0; i <= f->state_count; i++)
+	for (i = 0; i <= f->state_count; i++) {
+		xfree(f->gototab[i])
 		xfree(f->posns[i]);
+	}
 	for (i = 0; i <= f->accept; i++) {
 		xfree(f->re[i].lfollow);
 		if (f->re[i].ltype == CCL || f->re[i].ltype == NCCL)
