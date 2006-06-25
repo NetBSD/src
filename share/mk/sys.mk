@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.86 2006/05/12 02:03:35 mrg Exp $
+#	$NetBSD: sys.mk,v 1.87 2006/06/25 15:04:31 lukem Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -38,6 +38,7 @@ DBG?=	-O2
 DBG?=	-O
 .endif
 CFLAGS?=	${DBG}
+LDFLAGS?=
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
@@ -67,7 +68,6 @@ LINK.r?=	${FC} ${FFLAGS} ${RFLAGS} ${LDFLAGS}
 INSTALL?=	install
 
 LD?=		ld
-LDFLAGS?=
 
 LEX?=		lex
 LFLAGS?=
