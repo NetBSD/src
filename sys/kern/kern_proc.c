@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.90 2006/06/11 07:32:18 rjs Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.91 2006/06/25 08:12:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.90 2006/06/11 07:32:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.91 2006/06/25 08:12:54 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -198,14 +198,6 @@ POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
 POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
     &pool_allocator_nointr);
 POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr);
-POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-    &pool_allocator_nointr);
-POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, "saupcpl",
-    &pool_allocator_nointr);
-POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
-    &pool_allocator_nointr);
-POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
     &pool_allocator_nointr);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr);
