@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.244 2006/06/07 22:33:34 kardel Exp $	*/
+/*	$NetBSD: com.c,v 1.245 2006/06/25 00:39:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.244 2006/06/07 22:33:34 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.245 2006/06/25 00:39:21 perry Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -157,6 +157,7 @@ void	com_modem(struct com_softc *, int);
 void	tiocm_to_com(struct com_softc *, u_long, int);
 int	com_to_tiocm(struct com_softc *);
 void	com_iflush(struct com_softc *);
+void	com_power(int, void *);
 
 int	com_common_getc(dev_t, bus_space_tag_t, bus_space_handle_t);
 void	com_common_putc(dev_t, bus_space_tag_t, bus_space_handle_t, int);
@@ -606,6 +607,11 @@ com_attach_subr(struct com_softc *sc)
 
 	com_config(sc);
 
+	sc->sc_powerhook = powerhook_establish(com_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+			sc->sc_dev.dv_xname);
+
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 }
 
@@ -668,6 +674,9 @@ com_detach(struct device *self, int flags)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
+
+	/* kill the power hook */
+	powerhook_disestablish(sc->sc_powerhook);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
@@ -2579,4 +2588,27 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 	if (ioh)
 		*ioh = help;
 	return (1);
+}
+
+void
+com_power(int why, void *arg)
+{
+	struct com_softc *sc = arg;
+	int s;
+
+	s = splserial();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		/* XXX should we do something to stop the device? */
+		break;
+	case PWR_RESUME:
+		com_loadchannelregs(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.52 2006/06/07 22:33:35 kardel Exp $	*/
+/*	$NetBSD: comvar.h,v 1.53 2006/06/25 00:39:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -151,6 +151,7 @@ struct com_softc {
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
+	void			*sc_powerhook;	/* power management hook */
 	struct simplelock	sc_lock;
 };
 
