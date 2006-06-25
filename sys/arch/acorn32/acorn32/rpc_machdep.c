@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.61 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.62 2006/06/25 21:32:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.61 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.62 2006/06/25 21:32:40 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -444,7 +444,7 @@ initarm(void *cookie)
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	pv_addr_t kernel_l1pt;
+	pv_addr_t kernel_l1pt = { {0} };
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions

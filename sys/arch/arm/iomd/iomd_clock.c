@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.17 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.18 2006/06/25 21:32:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.17 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.18 2006/06/25 21:32:41 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -349,10 +349,12 @@ void
 delay(n)
 	u_int n;
 {
-	u_int i;
+	volatile u_int n2;
+	volatile u_int i;
 
 	if (n == 0) return;
-	while (n-- > 0) {
+	n2 = n;
+	while (n2-- > 0) {
 		if (cputype == CPU_ID_SA110)	/* XXX - Seriously gross hack */
 			for (i = delaycount; --i;);
 		else
