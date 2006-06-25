@@ -5,7 +5,7 @@
 G_BUILD_EARLY_SUPPORT=gensupport.o dummy-conditions.o
 G_BUILD_ERRORS=build-errors.o
 G_BUILD_PRINT=build-print-rtl.o
-G_BUILD_RTL=build-rtl.o read-rtl.o ggc-none.o min-insn-modes.o
+G_BUILD_RTL=build-rtl.o read-rtl.o build-ggc-none.o min-insn-modes.o
 G_BUILD_SUPPORT=gensupport.o insn-conditions.o
 G_BUILD_VARRAY=build-varray.o
 G_ALL_CFLAGS= -g -DIN_GCC -W -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -pedantic -Wno-long-long -Wno-variadic-macros -Wold-style-definition -Wmissing-format-attribute -DHAVE_CONFIG_H
