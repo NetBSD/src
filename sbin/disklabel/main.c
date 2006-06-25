@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2006/06/11 15:51:31 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2006/06/25 21:32:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2006/06/11 15:51:31 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2006/06/25 21:32:39 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -723,7 +723,7 @@ static u_int
 get_filecore_partition(int f)
 {
 	struct filecore_bootblock	*fcbb;
-	static char	bb[DEV_BSIZE];
+	static u_char	bb[DEV_BSIZE];
 	u_int		offset;
 	struct riscix_partition_table	*riscix_part;
 	int		loop;
@@ -761,11 +761,11 @@ get_filecore_partition(int f)
 		riscix_part = (struct riscix_partition_table *)bb;
 
 		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
-			if (strcmp(riscix_part->partitions[loop].rp_name,
+			if (strcmp((char *)riscix_part->partitions[loop].rp_name,
 				    "RiscBSD") == 0 ||
-			    strcmp(riscix_part->partitions[loop].rp_name,
+			    strcmp((char *)riscix_part->partitions[loop].rp_name,
 				    "NetBSD") == 0 ||
-			    strcmp(riscix_part->partitions[loop].rp_name,
+			    strcmp((char *)riscix_part->partitions[loop].rp_name,
 				    "Empty:") == 0) {
 				return riscix_part->partitions[loop].rp_start;
 				break;
