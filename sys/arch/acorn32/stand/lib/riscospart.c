@@ -1,4 +1,4 @@
-/*	$NetBSD: riscospart.c,v 1.1 2006/04/01 19:08:08 bjh21 Exp $	*/
+/*	$NetBSD: riscospart.c,v 1.2 2006/06/25 21:32:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -148,7 +148,7 @@ getdisklabel_acorn(struct open_file *f, struct disklabel *lp)
 {
 	size_t rsize;
 	int err;
-	unsigned char *buf;
+	char *buf;
 	struct filecore_bootblock *bb;
 	daddr_t labelsect;
 	char *msg;
