@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.226 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.227 2006/06/25 08:03:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.226 2006/05/25 14:27:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.227 2006/06/25 08:03:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1367,7 +1367,7 @@ nomerge:
 			vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ?
 				UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
 			struct vm_amap *amap = amap_alloc(size, to_add,
-			    (flags & UVM_FLAG_NOWAIT) ? M_NOWAIT : M_WAITOK);
+			    (flags & UVM_FLAG_NOWAIT));
 			if (__predict_false(amap == NULL)) {
 				error = ENOMEM;
 				goto done;
