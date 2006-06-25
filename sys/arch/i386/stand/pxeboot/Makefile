@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2006/05/12 01:23:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2006/06/25 14:12:14 lukem Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -22,9 +22,9 @@ SRCS+= nfs.c
 .include <bsd.own.mk>
 
 .if ${MACHINE} == "amd64"
-LD+=  -m elf_i386
-AFLAGS+=   -m32
-LIBKERN_ARCH=i386
+LDFLAGS+=	-Wl,-m,elf_i386
+AFLAGS+=	-m32
+LIBKERN_ARCH=	i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .endif
 
