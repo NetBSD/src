@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.639 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.640 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -323,3 +323,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	cvs(1): Upgrade to 1.11.22. [christos 20060623]
 	GCC: Switched m68000 to GCC4. [mrg 20060623]
 	GCC: Switched powerpc to GCC4. [garbled 20060623]
+	azalia(4): add support for S/PDIF [kent 20060625]
