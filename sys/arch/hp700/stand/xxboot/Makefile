@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/12/11 12:17:25 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2006/06/25 05:12:29 mrg Exp $
 
 PROG=	xxboot
 SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
@@ -11,7 +11,13 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 # ANSI C feature prevents from being relocatable
 #CPPFLAGS+=	-traditional	# would be best
 CPPFLAGS+=	-Dconst=
-COPTS+=	-fwritable-strings -funsigned-char
+COPTS+=	-funsigned-char
+
+.include <bsd.own.mk>
+
+.if ${HAVE_GCC} != 4
+COPTS+=	-fwritable-strings
+.endif
 
 LINKS=	${BINDIR}/${PROG} ${BINDIR}/sdboot
 
