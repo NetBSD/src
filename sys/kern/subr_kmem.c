@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.1 2006/06/25 08:00:01 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.2 2006/06/25 08:10:04 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.1 2006/06/25 08:00:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2 2006/06/25 08:10:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -83,6 +83,24 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 
 	return (void *)vmem_alloc(kmem_arena, size,
 	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
+}
+
+/*
+ * kmem_zalloc: allocate wired memory.
+ *
+ * => must not be called from interrupt context.
+ */
+
+void *
+kmem_zalloc(size_t size, km_flag_t kmflags)
+{
+	void *p;
+
+	p = kmem_alloc(size, kmflags);
+	if (p != NULL) {
+		memset(p, 0, size);
+	}
+	return p;
 }
 
 /*
