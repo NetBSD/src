@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.77 2006/06/25 08:08:13 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.78 2006/06/25 08:09:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.77 2006/06/25 08:08:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.78 2006/06/25 08:09:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1350,6 +1350,11 @@ sa_upcall_userret(struct lwp *l)
 	return;
 }
 
+#define	SACOPYOUT(sae, type, kp, up) \
+	(((sae)->sae_sacopyout != NULL) ? \
+	(*(sae)->sae_sacopyout)((type), (kp), (void *)(up)) : \
+	copyout((kp), (void *)(up), sizeof(*(kp))))
+
 static inline void
 sa_makeupcalls(struct lwp *l)
 {
@@ -1444,17 +1449,12 @@ sa_makeupcalls(struct lwp *l)
 	}
 
 	/* Copy out the activation's ucontext */
+	up = (void *)STACK_ALLOC(stack, ucsize);
+	stack = STACK_GROW(stack, ucsize);
 	kup = kmem_alloc(sizeof(*kup), KM_SLEEP);
 	kup->uc_stack = sau->sau_stack;
 	kup->uc_flags = _UC_STACK;
-
-	up = (void *)STACK_ALLOC(stack, ucsize);
-	stack = STACK_GROW(stack, ucsize);
-
-	if (sae->sae_sacopyout != NULL)
-		error = (*sae->sae_sacopyout)(SAOUT_UCONTEXT, kup, up);
-	else
-		error = copyout(kup, up, ucsize);
+	error = SACOPYOUT(sae, SAOUT_UCONTEXT, kup, up);
 	kmem_free(kup, sizeof(*kup));
 	if (error) {
 		sadata_upcall_free(sau);
@@ -1514,12 +1514,8 @@ sa_makeupcalls(struct lwp *l)
 			sasp = &e_ss->ss_captured.ss_sa;
 		}
 		if (error != 0 ||
-		    (sae->sae_sacopyout != NULL &&
-		    ((*sae->sae_sacopyout)(SAOUT_SA_T, sasp, (void *)sap) ||
-		    (*sae->sae_sacopyout)(SAOUT_SAP_T, &sap, (void *)sapp))) ||
-		    (sae->sae_sacopyout == NULL &&
-		     (copyout(sasp, (void *)sap, sizeof(struct sa_t)) ||
-		      copyout(&sap, (void *)sapp, sizeof(struct sa_t *))))) {
+		    SACOPYOUT(sae, SAOUT_SA_T, sasp, sap) ||
+		    SACOPYOUT(sae, SAOUT_SAP_T, &sap, sapp)) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
