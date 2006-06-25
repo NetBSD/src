@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.33 2006/06/25 06:37:20 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.34 2006/06/25 07:36:33 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.33 2006/06/25 06:37:20 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.34 2006/06/25 07:36:33 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -978,7 +978,9 @@ azalia_codec_init(codec_t *this)
 		return err;
 	this->vid = id;
 	this->subid = this->az->subid;
-	azalia_codec_init_vtbl(this);
+	err = azalia_codec_init_vtbl(this);
+	if (err)
+		return err;
 
 	aprint_normal("%s: codec[%d]: ", XNAME(this->az), addr);
 	if (this->name == NULL) {
@@ -1119,6 +1121,10 @@ azalia_codec_delete(codec_t *this)
 	}
 	auconv_delete_encodings(this->encodings);
 	this->encodings = NULL;
+	if (this->extra != NULL) {
+		free(this->extra, M_DEVBUF);
+		this->extra = NULL;
+	}
 	return 0;
 }
 
