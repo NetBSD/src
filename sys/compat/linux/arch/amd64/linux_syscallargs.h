@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.11 2006/06/10 21:16:49 christos Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.12 2006/06/25 16:15:39 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -809,7 +809,7 @@ int	linux_sys_alarm(struct lwp *, void *, register_t *);
 
 int	sys_setitimer(struct lwp *, void *, register_t *);
 
-int	sys_getpid(struct lwp *, void *, register_t *);
+int	linux_sys_getpid(struct lwp *, void *, register_t *);
 
 int	linux_sys_socket(struct lwp *, void *, register_t *);
 
@@ -956,7 +956,7 @@ int	sys_getegid(struct lwp *, void *, register_t *);
 
 int	sys_setpgid(struct lwp *, void *, register_t *);
 
-int	sys_getppid(struct lwp *, void *, register_t *);
+int	linux_sys_getppid(struct lwp *, void *, register_t *);
 
 int	sys_getpgrp(struct lwp *, void *, register_t *);
 
