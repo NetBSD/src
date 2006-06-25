@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.6 2006/06/25 18:34:09 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.7 2006/06/25 19:46:52 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -1038,8 +1038,9 @@ xennetback_ifsoftstart(void *arg)
 			}
 		}
 		if (__predict_false(
-		    xneti->xni_rxring.req_cons - resp_prod ==
-		    NET_RX_RING_SIZE)) {
+		    req_prod == xneti->xni_rxring.req_cons ||
+		    xneti->xni_rxring.req_cons - resp_prod == NET_RX_RING_SIZE
+		    )) {
 			/* ring full */
 			break;
 		}
