@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_zalloc.9,v 1.1 2006/06/25 13:07:49 yamt Exp $
+.\"	$NetBSD: kmem_zalloc.9,v 1.2 2006/06/25 13:24:45 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ------------------------------------------------------------
 .Sh NAME
 .Nm kmem_zalloc
-.Nd Allocate zero-initialized kernel wired memory
+.Nd allocate zero-initialized kernel wired memory
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/kmem.h
@@ -42,9 +42,9 @@
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn kmem_alloc
-is an equivalent of
+is the equivalent of
 .Fn kmem_alloc ,
-except that it initializes the memory with zero.
+except that it initializes the memory to zero.
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr intro 9 ,

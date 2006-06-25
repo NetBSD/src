@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.1 2006/06/25 13:07:49 yamt Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.2 2006/06/25 13:24:45 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ------------------------------------------------------------
 .Sh NAME
 .Nm kmem_alloc
-.Nd Allocate kernel wired memory
+.Nd allocate kernel wired memory
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/kmem.h
@@ -48,7 +48,7 @@ It takes the following arguments.
 .It Fa size
 Specify the size of allocation in bytes.
 .It Fa kmflags
-Either of the followings.
+Either of the following:
 .Bl -tag -width KM_NOSLEEP -compact
 .It KM_SLEEP
 Can sleep until enough memory is available.
@@ -56,11 +56,11 @@ Can sleep until enough memory is available.
 Don't sleep.
 Immediately return
 .Dv NULL
-if enough memory is not avaiable.
+if there is not enough memory available.
 .El
 .El
 .Pp
-The contents of allocated memory is uninitialized.
+The contents of allocated memory are uninitialized.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 .Fn kmem_alloc
@@ -81,4 +81,4 @@ can not be used from interrupt context.
 .Sh SECURITY CONSIDERATION
 As the allocated memory is uninitialized, it can contain security-sensitive
 data left by its previous user.
-It's a caller's responsibility not to expose it to the world.
+It's the caller's responsibility not to expose it to the world.
