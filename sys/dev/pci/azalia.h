@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.10 2006/06/23 15:49:28 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.11 2006/06/25 05:05:51 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define HDA_OUTPAY	0x004	/* 2 */
 #define HDA_INPAY	0x006	/* 2 */
 #define HDA_GCTL	0x008	/* 4 */
-#define		HDA_GCTL_UNSOL	0x00000080
+#define		HDA_GCTL_UNSOL	0x00000100
 #define		HDA_GCTL_FCNTRL	0x00000002
 #define		HDA_GCTL_CRST	0x00000001
 #define HDA_WAKEEN	0x00c	/* 2 */
@@ -451,7 +451,9 @@ typedef uint32_t corb_entry_t;
 typedef struct {
 	uint32_t resp;
 	uint32_t resp_ex;
-#define RIRB_UNSOLICITED_RESPONSE	(1 << 4)
+#define RIRB_UNSOL_TAG(resp)	((resp) >> 26)
+#define RIRB_RESP_UNSOL		(1 << 4)
+#define RIRB_RESP_CODEC(ex)	((ex) & 0xf)
 } __packed rirb_entry_t;
 
 
@@ -534,6 +536,7 @@ typedef struct codec_t {
 	int (*mixer_delete)(struct codec_t *);
 	int (*set_port)(struct codec_t *, mixer_ctrl_t *);
 	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
+	int (*unsol_event)(struct codec_t *, int);
 
 	struct azalia_t *az;
 	uint32_t vid;		/* codec vendor/device ID */
