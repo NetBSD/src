@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.269 2006/06/25 08:00:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.269 2006/06/25 08:00:01 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kcont.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -227,6 +228,8 @@ main(void)
 	KERNEL_LOCK_INIT();
 
 	uvm_init();
+
+	kmem_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
