@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.4 2006/06/25 15:20:39 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.5 2006/06/25 16:46:59 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -243,13 +243,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	int i, err;
 
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "frontend-id", &domid)) != 0) {
+	    "frontend-id", &domid, 10)) != 0) {
 		aprint_error("xvif: can' read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "handle", &handle)) != 0) {
+	    "handle", &handle, 10)) != 0) {
 		aprint_error("xvif: can' read %s/handle: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
@@ -416,21 +416,21 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateConnected:
 		/* read comunication informations */
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "tx-ring-ref", &tx_ring_ref);
+		    "tx-ring-ref", &tx_ring_ref, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/tx-ring-ref",
 			    xbusd->xbusd_otherend);
 			break;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "rx-ring-ref", &rx_ring_ref);
+		    "rx-ring-ref", &rx_ring_ref, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/rx-ring-ref",
 			    xbusd->xbusd_otherend);
 			break;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "event-channel", &revtchn);
+		    "event-channel", &revtchn, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
 			    xbusd->xbusd_otherend);
