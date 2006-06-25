@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.19 2006/06/25 07:46:39 yamt Exp $	*/
+/*	$NetBSD: savar.h,v 1.20 2006/06/25 08:12:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,11 +127,6 @@ struct sadata {
 };
 
 #define SA_FLAG_ALL	SA_FLAG_PREEMPT
-
-extern struct pool sadata_pool;		/* memory pool for sadata structures */
-extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
-extern struct pool sastack_pool;	/* memory pool for sastack structs */
-extern struct pool savp_pool;		/* memory pool for sadata_vp structures */
 
 #define	SA_MAXNUMSTACKS	16		/* Maximum number of upcall stacks per VP. */
 
