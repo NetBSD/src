@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.34 2006/06/13 13:51:31 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.35 2006/06/25 16:46:15 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.34 2006/06/13 13:51:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.35 2006/06/25 16:46:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -189,10 +189,6 @@ isabrattach(struct isabr_softc *sc)
 
 	/* Initialize interrupt controller */
 	isabr_initicu();
-
-/*XXX we may remove the abus part of the softc struct... */
-	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_ISABR;
 
 	sc->arc_isa_cs.ic_attach_hook = isabr_attach_hook;
 	sc->arc_isa_cs.ic_intr_evcnt = isabr_intr_evcnt;

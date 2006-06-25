@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2006/06/25 16:46:15 tsutsui Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2006/06/25 16:46:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,23 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2005/12/11 12:16:37 christos Exp $"
 #include <machine/autoconf.h>
 #include <machine/platform.h>
 
-struct mainbus_softc {
-	struct	device sc_dv;
-	struct	abus sc_bus;
-};
-
 /* Definition of the mainbus driver. */
 static int	mbmatch(struct device *, struct cfdata *, void *);
 static void	mbattach(struct device *, struct device *, void *);
 static int	mbprint(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);
-
-void	mb_intr_establish(struct confargs *, int (*)(void *), void *);
-void	mb_intr_disestablish(struct confargs *);
-caddr_t	mb_cvtaddr(struct confargs *);
-int	mb_matchname(struct confargs *, char *);
 
 static int mainbus_found;
 
@@ -73,20 +63,12 @@ mbmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 mbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
 	int i;
 
 	mainbus_found = 1;
 
 	printf("\n");
-
-	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_MAIN;
-	sc->sc_bus.ab_intr_establish = mb_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = mb_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = mb_cvtaddr;
-	sc->sc_bus.ab_matchname = mb_matchname;
 
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
@@ -96,14 +78,12 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
-	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 
 	for (i = 0; platform->mainbusdevs[i] != NULL; i++) {
 		nca.ca_name = platform->mainbusdevs[i];
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
 	}
 }
@@ -115,32 +95,4 @@ mbprint(void *aux, const char *pnp)
 	if (pnp)
 		return QUIET;
 	return UNCONF;
-}
-
-void
-mb_intr_establish(struct confargs *ca, int (*handler)(void *), void *val)
-{
-
-	panic("can never mb_intr_establish");
-}
-
-void
-mb_intr_disestablish(struct confargs *ca)
-{
-
-	panic("can never mb_intr_disestablish");
-}
-
-caddr_t
-mb_cvtaddr(struct confargs *ca)
-{
-
-	return NULL;
-}
-
-int
-mb_matchname(struct confargs *ca, char *name)
-{
-
-	return strcmp(name, ca->ca_name) == 0;
 }
