@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.75 2006/06/25 07:46:39 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.76 2006/06/25 08:05:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.75 2006/06/25 07:46:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.76 2006/06/25 08:05:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.75 2006/06/25 07:46:39 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -1359,11 +1360,11 @@ sa_makeupcalls(struct lwp *l)
 	struct sadata_vp *vp;
 	uintptr_t sapp, sap;
 	struct sa_t self_sa;
-	struct sa_t *sas[3], *sasp;
+	struct sa_t *sas[3];
 	struct sadata_upcall *sau;
-	union sau_state e_ss;
 	void *stack, *ap;
-	ucontext_t u, *up;
+	union sau_state *e_ss;
+	ucontext_t *kup, *up;
 	size_t sz, ucsize;
 	int i, nint, nevents, s, type, error;
 
@@ -1443,16 +1444,18 @@ sa_makeupcalls(struct lwp *l)
 	}
 
 	/* Copy out the activation's ucontext */
-	u.uc_stack = sau->sau_stack;
-	u.uc_flags = _UC_STACK;
+	kup = kmem_alloc(sizeof(*kup), KM_SLEEP);
+	kup->uc_stack = sau->sau_stack;
+	kup->uc_flags = _UC_STACK;
 
 	up = (void *)STACK_ALLOC(stack, ucsize);
 	stack = STACK_GROW(stack, ucsize);
 
 	if (sae->sae_sacopyout != NULL)
-		error = (*sae->sae_sacopyout)(SAOUT_UCONTEXT, &u, up);
+		error = (*sae->sae_sacopyout)(SAOUT_UCONTEXT, kup, up);
 	else
-		error = copyout(&u, up, ucsize);
+		error = copyout(kup, up, ucsize);
+	kmem_free(kup, sizeof(*kup));
 	if (error) {
 		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
@@ -1478,7 +1481,10 @@ sa_makeupcalls(struct lwp *l)
 	stack = STACK_GROW(stack, sz);
 
 	KDASSERT(nint <= 1);
+	e_ss = NULL;
 	for (i = nevents + nint; i >= 0; i--) {
+		struct sa_t *sasp;
+
 		sap -= sae->sae_sasize;
 		sapp -= sae->sae_sapsize;
 		if (i == 1 + nevents)	/* interrupted sa */
@@ -1493,24 +1499,30 @@ sa_makeupcalls(struct lwp *l)
 			eventq = l2->l_forw;
 			DPRINTFN(8,("sa_makeupcalls(%d.%d) unblocking extra %d\n",
 				     p->p_pid, l->l_lid, l2->l_lid));
-			sa_upcall_getstate(&e_ss, l2);
+			if (e_ss == NULL) {
+				e_ss = kmem_alloc(sizeof(*e_ss), KM_SLEEP);
+			}
+			sa_upcall_getstate(e_ss, l2);
 			SCHED_LOCK(s);
 			l2->l_flag &= ~L_SA_BLOCKING;
 			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 			SCHED_UNLOCK(s);
 
-			if (copyout(&e_ss.ss_captured.ss_ctx,
-				e_ss.ss_captured.ss_sa.sa_context,
-				ucsize) != 0) {
+			if (copyout(&e_ss->ss_captured.ss_ctx,
+			    e_ss->ss_captured.ss_sa.sa_context, ucsize) != 0) {
 #ifdef DIAGNOSTIC
 				printf("sa_makeupcalls(%d.%d): couldn't copyout"
 				    " context of event LWP %d\n",
-				    p->p_pid, l->l_lid, e_ss.ss_captured.ss_sa.sa_id);
+				    p->p_pid, l->l_lid,
+				    e_ss->ss_captured.ss_sa.sa_id);
 #endif
+				if (e_ss != NULL) {
+					kmem_free(e_ss, sizeof(*e_ss));
+				}
 				sigexit(l, SIGILL);
 				/* NOTREACHED */
 			}
-			sasp = &e_ss.ss_captured.ss_sa;
+			sasp = &e_ss->ss_captured.ss_sa;
 		}
 		if ((sae->sae_sacopyout != NULL &&
 		    ((*sae->sae_sacopyout)(SAOUT_SA_T, sasp, (void *)sap) ||
@@ -1524,9 +1536,15 @@ sa_makeupcalls(struct lwp *l)
 			printf("sa_makeupcalls: couldn't copyout sa_t "
 			    "%d for %d.%d\n", i, p->p_pid, l->l_lid);
 #endif
+			if (e_ss != NULL) {
+				kmem_free(e_ss, sizeof(*e_ss));
+			}
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
+	}
+	if (e_ss != NULL) {
+		kmem_free(e_ss, sizeof(*e_ss));
 	}
 	KDASSERT(eventq == NULL);
 
