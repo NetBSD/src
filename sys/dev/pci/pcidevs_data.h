@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.795 2006/06/18 21:32:50 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.796 2006/06/25 03:47:26 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.797 2006/06/18 21:32:24 christos Exp
+ *	NetBSD: pcidevs,v 1.798 2006/06/25 03:46:56 soren Exp
  */
 
 /*
@@ -2344,6 +2344,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Netmos",
 	},
 	{
+	    PCI_VENDOR_PARALLELS,
+	    "Parallels",
+	},
+	{
 	    PCI_VENDOR_CHRYSALIS,
 	    "Chrysalis-ITS",
 	},
@@ -2360,7 +2364,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 580;
+const int pci_nvendors = 581;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -8360,6 +8364,14 @@ static const struct pci_product pci_products[] = {
 	    "Packet Engines G-NIC Ethernet",
 	},
 	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS,
+	    "Tools",
+	},
+	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO,
+	    "Video",
+	},
+	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
 	    "USB Host Controller",
 	},
@@ -11676,4 +11688,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2328;
+const int pci_nproducts = 2330;
