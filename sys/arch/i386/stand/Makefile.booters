@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.67 2006/06/25 14:24:53 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.68 2006/06/25 14:49:32 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -44,11 +44,12 @@ PXESTART= start_pxe.o
 
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
+LDFLAGS+=  -nostdlib
 
 # XXX
 .if ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=-m32
-LD+=-m elf_i386
+LDFLAGS+=-Wl,-m,elf_i386
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .endif
@@ -95,9 +96,9 @@ cleanlibdir:
 	-rm -rf lib
 
 .if ${OBJECT_FMT} == "ELF"
-LDFLAGS=-M -e start 	# -N does not work properly.
+LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
 .else
-LDFLAGS=-N -M -e _start 
+LDFLAGS+=-Wl,-N -Wl,-M -Wl,-e,_start 
 .endif
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
@@ -108,14 +109,14 @@ vers.c: ${VERSIONFILE} ${SOURCES}
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${_MKTARGET_LINK}
-	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} \
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 
 CLEANFILES+= ${BASE}.rom ${BASE}.rom.tmp
 ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${_MKTARGET_LINK}
-	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
-	    ${LIBLIST} >${BASE}.list
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
 	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
 	    rm -f ${BASE}.rom
@@ -124,15 +125,15 @@ ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 CLEANFILES+= ${BASE}.com
 ${BASE}.com: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${_MKTARGET_LINK}
-	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
-	    ${LIBLIST} >${BASE}.list
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.com
 
 CLEANFILES+= ${BASE}.bin
 ${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${_MKTARGET_LINK}
-	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
-	    ${LIBLIST} > ${BASE}.list
+	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} > ${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
 
 .include <bsd.prog.mk>
