@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.5 2006/06/25 16:46:59 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.6 2006/06/25 18:34:09 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -628,6 +628,7 @@ xennetback_evthandler(void *arg)
 		x86_lfence();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq->size));
+		req_cons++;
 		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 		    (IFF_UP | IFF_RUNNING))) {
 			/* interface not up, drop */
@@ -635,7 +636,6 @@ xennetback_evthandler(void *arg)
 			    NETIF_RSP_DROPPED);
 			continue;
 		}
-		req_cons++;
 		/*
 		 * Do some sanity checks, and map the packet's page.
 		 */
