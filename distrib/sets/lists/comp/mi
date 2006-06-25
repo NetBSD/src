@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.893 2006/06/25 13:09:41 yamt Exp $
+#	$NetBSD: mi,v 1.894 2006/06/25 21:49:14 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5551,6 +5551,9 @@
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/killproc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread.0			comp-sys-catman		.cat
