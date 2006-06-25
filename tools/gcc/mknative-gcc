@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.21 2006/06/24 05:26:50 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.22 2006/06/25 03:06:15 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -221,6 +221,7 @@ get_gcc () {
 			-e 's#build/print-rtl.o#build-print-rtl.o#g' \
 			-e 's#build/rtl.o#build-rtl.o#g' \
 			-e 's#build/varray.o#build-varray.o#g' \
+			-e 's#build/ggc-none.o#build-ggc-none.o#g' \
 			-e 's#build/##g'
 		getvars gcc/Makefile \
 			ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
