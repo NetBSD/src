@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.3 2006/05/27 13:54:35 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.4 2006/06/25 15:20:39 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -189,7 +189,7 @@ struct _pages_pool_free {
 static inline void
 xni_pkt_unmap(struct xni_pkt *pkt, vaddr_t pkt_va)
 {
-	xen_shm_unmap(pkt_va, 1, pkt->pkt_handle);
+	xen_shm_unmap(pkt_va, 1, &pkt->pkt_handle);
 	pool_put(&xni_pkt_pool, pkt);
 }
 
@@ -439,13 +439,19 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		/* allocate VA space and map rings */
 		xneti->xni_tx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
-		if (xneti->xni_tx_ring_va == 0)
+		if (xneti->xni_tx_ring_va == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get VA for tx ring", xbusd->xbusd_otherend);
 			break;
+		}
 		tx_ring = (void *)xneti->xni_tx_ring_va;
 		xneti->xni_rx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
-		if (xneti->xni_rx_ring_va == 0)
+		if (xneti->xni_rx_ring_va == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get VA for rx ring", xbusd->xbusd_otherend);
 			goto err1;
+		}
 		rx_ring = (void *)xneti->xni_rx_ring_va;
 		op.host_addr = xneti->xni_tx_ring_va;
 		op.flags = GNTMAP_host_map;
@@ -681,7 +687,7 @@ xennetback_evthandler(void *arg)
 			m_freem(m);
 			continue;
 		}
-		err = xen_shm_map(1, xneti->xni_domid, txreq->gref, &pkt_va,
+		err = xen_shm_map(1, xneti->xni_domid, &txreq->gref, &pkt_va,
 		    &pkt->pkt_handle, XSHM_RO);
 		if (__predict_false(err == ENOMEM)) {
 			xennetback_tx_response(xneti, txreq->id,
