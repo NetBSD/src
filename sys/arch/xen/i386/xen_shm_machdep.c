@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.15 2006/05/25 21:26:20 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.16 2006/06/25 15:18:53 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -71,8 +71,6 @@ vaddr_t xen_shm_end_address;
 
 vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
-paddr_t _xen_shm_vaddr2ma[XENSHM_NPAGES];
-
 /* vm space management */
 struct extent *xen_shm_ex;
 
@@ -116,25 +114,23 @@ xen_shm_init()
 	if (xen_shm_ex == NULL) {
 		panic("xen_shm_init no extent");
 	}
-	memset(_xen_shm_vaddr2ma, -1, sizeof(_xen_shm_vaddr2ma));
 }
 
 int
 #ifdef XEN3
-xen_shm_map(int nentries, int domid, grant_ref_t gref, vaddr_t *vap,
+xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
     grant_handle_t *handlep, int flags)
 #else
 xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 #endif
 {
-	int s;
+	int s, i;
 	vaddr_t new_va;
 	u_long new_va_pg;
 #ifdef XEN3
 	int err;
-	gnttab_map_grant_ref_t op;
+	gnttab_map_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
 #else
-	int i;
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
 	int remap_prot = PG_V | PG_RW | PG_U | PG_M;
 #endif
@@ -180,16 +176,22 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 
 	new_va = new_va_pg << PAGE_SHIFT;
 #ifdef XEN3
-	op.host_addr = new_va;
-	op.dom = domid;
-	op.ref = gref;
-	op.flags = GNTMAP_host_map | ((flags & XSHM_RO) ? GNTMAP_readonly : 0);
-	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-	if (__predict_false(err))
-		panic("xen_shm_map: HYPERVISOR_grant_table_op failed");
-	if (__predict_false(op.status))
-		return op.status;
-	*handlep = op.handle;
+	for (i = 0; i < nentries; i++) {
+		op[i].host_addr = new_va + i * PAGE_SIZE;
+		op[i].dom = domid;
+		op[i].ref = grefp[i];
+		op[i].flags = GNTMAP_host_map |
+		    ((flags & XSHM_RO) ? GNTMAP_readonly : 0);
+		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref,
+		    op, nentries);
+		if (__predict_false(err))
+			panic("xen_shm_map: HYPERVISOR_grant_table_op failed");
+	}
+	for (i = 0; i < nentries; i++) {
+		if (__predict_false(op[i].status))
+			return op[i].status;
+		handlep[i] = op[i].handle;
+	}
 #else /* !XEN3 */
 	for (i = 0; i < nentries; i++, new_va_pg++) {
 		mcl[i].op = __HYPERVISOR_update_va_mapping_otherdomain;
@@ -197,24 +199,6 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 		mcl[i].args[1] = ma[i] | remap_prot;
 		mcl[i].args[2] = 0;
 		mcl[i].args[3] = domid;
-#ifdef DIAGNOSTIC
-		if ((new_va_pg - xen_shm_base_address_pg) >=
-		    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
-		    (new_va_pg - xen_shm_base_address_pg) < 0) {
-			printf("new_va_pg 0x%lx "
-			    "xen_shm_base_address_pg 0x%lx\n",
-			    new_va_pg, xen_shm_base_address_pg);
-			panic("xen_shm_map: out of _xen_shm_vaddr2ma\n");
-		}
-		if (_xen_shm_vaddr2ma[new_va_pg - xen_shm_base_address_pg]
-		    != -1) {
-			printf("new new_va_pg 0x%lx not free\n", new_va_pg);
-			extent_print(xen_shm_ex);
-			panic("xen_shm_map: new_va_pg not free");
-		}
-#endif
-		_xen_shm_vaddr2ma[new_va_pg - xen_shm_base_address_pg] = 
-		    ma[i];
 	}
 	if (HYPERVISOR_multicall(mcl, nentries) != 0)
 	    panic("xen_shm_map: HYPERVISOR_multicall");
@@ -233,18 +217,18 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 
 void
 #ifdef XEN3
-xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t handle)
+xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
 #else
 xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 #endif
 {
 #ifdef XEN3
-	gnttab_unmap_grant_ref_t op;
+	gnttab_unmap_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
 	int ret;
 #else
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
-	int i;
 #endif
+	int i;
 	int s;
 	struct xen_shm_callback_entry *xshmc;
 
@@ -256,13 +240,15 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 #endif
 
 #ifdef XEN3
-	op.host_addr = va;
-	op.dev_bus_addr = 0;
-	op.handle = handle;
-	ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-	    &op, 1);
-	if (__predict_false(ret))
-		panic("xen_shm_unmap: unmap failed");
+	for (i = 0; i < nentries; i++) {
+		op[i].host_addr = va + i * PAGE_SIZE;
+		op[i].dev_bus_addr = 0;
+		op[i].handle = handlep[i];
+		ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+		    op, nentries);
+		if (__predict_false(ret))
+			panic("xen_shm_unmap: unmap failed");
+	}
 	va = va >> PAGE_SHIFT;
 #else /* !XEN3 */
 	va = va >> PAGE_SHIFT;
@@ -271,17 +257,6 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		mcl[i].args[0] = va + i;
 		mcl[i].args[1] = 0;
 		mcl[i].args[2] = 0;
-#ifdef DIAGNOSTIC
-		if ((va + i - xen_shm_base_address_pg) >=
-		    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
-		    (va + i - xen_shm_base_address_pg) < 0) {
-			printf("va 0x%lx i 0x%x "
-			    "xen_shm_base_address_pg 0x%lx\n",
-			    va, i, xen_shm_base_address_pg);
-			panic("xen_shm_unmap: out of _xen_shm_vaddr2ma\n");
-		}
-#endif
-		_xen_shm_vaddr2ma[va + i - xen_shm_base_address_pg] = -1;
 	}
 	mcl[nentries - 1].args[2] = UVMF_FLUSH_TLB;
 	if (HYPERVISOR_multicall(mcl, nentries) != 0)
@@ -326,37 +301,5 @@ xen_shm_callback(int (*callback)(void *), void *arg)
 	xshmc->xshmc_callback = callback;
 	SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc, xshmc_entries);
 	splx(s);
-	return 0;
-}
-
-
-/*
- * Shared memory pages are managed by drivers, and are not known from
- * the pmap. This tests if va is a shared memory page, and if so
- * returns the machine address (there's no physical address for these pages)
- */
-int
-xen_shm_vaddr2ma(vaddr_t va, paddr_t *map)
-{
-	if (va <  xen_shm_base_address || va >=  xen_shm_end_address)
-		return -1;
-
-#ifdef DIAGNOSTIC
-	if (((va >> PAGE_SHIFT) - xen_shm_base_address_pg) >=
-	    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
-	    ((va >> PAGE_SHIFT) - xen_shm_base_address_pg) < 0) {
-		printf("va 0x%lx xen_shm_base_address_pg 0x%lx\n",
-		    (va >> PAGE_SHIFT), xen_shm_base_address_pg);
-		panic("xen_shm_vaddr2ma: out of _xen_shm_vaddr2ma\n");
-	}
-	if (_xen_shm_vaddr2ma[(va >> PAGE_SHIFT) - xen_shm_base_address_pg]
-	    == -1) {
-		printf("xen_shm_vaddr2ma: request for unmapped va 0x%lx\n",
-		    va);
-		panic("xen_shm_vaddr2ma: unmapped va");
-	}
-#endif
-	*map = _xen_shm_vaddr2ma[(va >> PAGE_SHIFT) - xen_shm_base_address_pg];
-	*map |= (va & PAGE_MASK);
 	return 0;
 }
