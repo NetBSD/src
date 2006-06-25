@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.796 2006/06/18 21:32:50 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.797 2006/06/25 03:47:26 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.797 2006/06/18 21:32:24 christos Exp
+ *	NetBSD: pcidevs,v 1.798 2006/06/25 03:46:56 soren Exp
  */
 
 /*
@@ -633,6 +633,7 @@
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* Netmos */
+#define	PCI_VENDOR_PARALLELS	0xaaaa		/* Parallels */
 #define	PCI_VENDOR_CHRYSALIS	0xcafe		/* Chrysalis-ITS */
 #define	PCI_VENDOR_MIDDLE_DIGITAL	0xdeaf		/* Middle Digital */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
@@ -2447,6 +2448,10 @@
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
+
+/* Parallels products */
+#define	PCI_PRODUCT_PARALLELS_TOOLS	0x1112		/* Tools */
+#define	PCI_PRODUCT_PARALLELS_VIDEO	0x1121		/* Video */
 
 /* NEC products */
 #define	PCI_PRODUCT_NEC_USB	0x0035		/* USB Host Controller */
