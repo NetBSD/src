@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.74 2006/06/11 07:32:18 rjs Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.75 2006/06/25 07:46:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.74 2006/06/11 07:32:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.75 2006/06/25 07:46:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.74 2006/06/11 07:32:18 rjs Exp $");
 #include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -77,8 +76,6 @@ static inline int sa_pagefault(struct lwp *, ucontext_t *);
 static void sa_upcall0(struct sadata_upcall *, int, struct lwp *, struct lwp *,
     size_t, void *, void (*)(void *));
 static void sa_upcall_getstate(union sau_state *, struct lwp *);
-
-MALLOC_DEFINE(M_SA, "sa", "Scheduler activations");
 
 #define SA_DEBUG
 
