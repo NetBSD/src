@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.32 2006/06/25 06:34:08 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.33 2006/06/25 06:37:20 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.32 2006/06/25 06:34:08 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.33 2006/06/25 06:37:20 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -865,7 +865,7 @@ azalia_rirb_kick_unsol_events(azalia_t *az)
 		i = RIRB_RESP_CODEC(az->unsolq[az->unsolq_rp].resp_ex);
 		tag = RIRB_UNSOL_TAG(az->unsolq[az->unsolq_rp].resp);
 		codec = &az->codecs[i];
-		printf("%s: codec#=%d tag=%d\n", __func__, i, tag);
+		DPRINTF(("%s: codec#=%d tag=%d\n", __func__, i, tag));
 		az->unsolq_rp++;
 		az->unsolq_rp %= UNSOLQ_SIZE;
 		if (codec->unsol_event != NULL)
