@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.1 2002/05/17 17:52:35 lukem Exp $
+#	$NetBSD: install.md,v 1.2 2006/06/25 00:15:19 tsutsui Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -155,10 +155,12 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	set -- `sysctl -n hw.model`
-	echo -n "Copying $1 kernel..."
-	cp -p /netbsd.$1 /mnt/netbsd
-	echo "done."
+	if [ ! -f /mnt/netbsd ]; then
+		set -- `sysctl -n hw.model`
+		echo -n "No kernel set extracted. Copying $1 miniroot kernel..."
+		cp -p /netbsd.$1 /mnt/netbsd
+		echo "done."
+	fi
 }
 
 md_welcome_banner() {
