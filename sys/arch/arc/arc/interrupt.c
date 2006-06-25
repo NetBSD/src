@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.34 2006/06/24 04:00:21 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1 2006/06/25 16:11:41 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.34 2006/06/24 04:00:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1 2006/06/25 16:11:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
