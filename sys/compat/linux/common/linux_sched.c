@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.30 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.31 2006/06/25 16:15:39 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.30 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.31 2006/06/25 16:15:39 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -407,14 +407,74 @@ linux_sys_exit_group(l, v, retval)
 	struct linux_sys_exit_group_args /* {
 		syscallarg(int) error_code;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct linux_emuldata *led = p->p_emuldata;
+	struct linux_emuldata *e;
+	struct lwp *sl;
+	struct proc *sp;
+	int s;
 
+	SCHED_LOCK(s);
 	/*
-	 * XXX The calling thread is supposed to kill all threads
+	 * The calling thread is supposed to kill all threads
 	 * in the same thread group (i.e. all threads created
-	 * via clone(2) with CLONE_THREAD flag set). This appears
-	 * to not be used yet, so the thread group handling
-	 * is currently not implemented.
+	 * via clone(2) with CLONE_THREAD flag set).
 	 */
+        LIST_FOREACH(e, &led->s->threads, threads) {
+		sp = e->proc;
+
+		if (sp == p)
+			continue;
+#ifdef DEBUG_LINUX
+		printf("linux_sys_exit_group: kill PID %d\n", sp->p_pid);
+#endif
+		/* wakeup any waiter */
+		if (sp->p_sigctx.ps_sigwaited &&
+		    sigismember(sp->p_sigctx.ps_sigwait, SIGKILL) &&
+		    sp->p_stat != SSTOP) {
+			sched_wakeup(&sp->p_sigctx.ps_sigwait);
+		}
+
+		/* post SIGKILL */
+		sigaddset(&sp->p_sigctx.ps_siglist, SIGKILL);
+		sp->p_sigctx.ps_sigcheck = 1;
+
+		/* Unblock the process if sleeping or stopped */
+		switch(sp->p_stat) {
+		case SSTOP:
+			sl = proc_unstop(sp);
+			break;
+		case SACTIVE:
+			sl = proc_representative_lwp(sp);
+			break;
+		default:
+			sl = NULL;
+			break;
+		}
+
+		if (sl == NULL) {
+			printf("linux_sys_exit_group: no lwp for process %d\n", 
+			    sp->p_pid);
+			continue;
+		}
+
+		if (sl->l_priority > PUSER)
+			sl->l_priority = PUSER;
+
+		switch(sl->l_stat) {
+		case LSSUSPENDED:
+			lwp_continue(sl);
+			/* FALLTHROUGH */
+		case LSSTOP:
+		case LSSLEEP:
+		case LSIDL:
+			setrunnable(sl);
+			/* FALLTHROUGH */
+		default:
+			break;
+		}
+	}
+	SCHED_UNLOCK(s);
 
 	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
 	/* NOTREACHED */
@@ -449,9 +509,63 @@ linux_sys_gettid(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	/* The Linux kernel does it exactly that way */
 	*retval = l->l_proc->p_pid;
 	return 0;
 }
+
+#ifdef LINUX_NPTL
+/* ARGUSED1 */
+int
+linux_sys_getpid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_emuldata *led;
+
+	led = l->l_proc->p_emuldata;
+
+	/* The Linux kernel does it exactly that way */
+	*retval = led->s->group_pid;
+
+	return 0;
+}
+
+/* ARGUSED1 */
+int
+linux_sys_getppid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct linux_emuldata *led = p->p_emuldata;
+	struct proc *glp;
+	struct proc *pp;
+
+	/* Find the thread group leader's parent */
+	if ((glp = pfind(led->s->group_pid)) == NULL) {
+		/* Maybe panic... */
+		printf("linux_sys_getppid: missing group leader PID %d\n", 
+		    led->s->group_pid); 
+		return -1;
+	}
+	pp = glp->p_pptr;
+
+	/* If this is a Linux process too, return thread group PID */
+	if (pp->p_emul == p->p_emul) {
+		struct linux_emuldata *pled;
+
+		pled = pp->p_emuldata;
+		*retval = pled->s->group_pid;
+	} else {
+		*retval = pp->p_pid;
+	}
+
+	return 0;
+}
+#endif /* LINUX_NPTL */
 
 int
 linux_sys_sched_getaffinity(l, v, retval)

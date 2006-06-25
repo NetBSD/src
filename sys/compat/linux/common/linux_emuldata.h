@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.10 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.11 2006/06/25 16:15:39 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
+
 #ifndef _COMMON_LINUX_EMULDATA_H
 #define _COMMON_LINUX_EMULDATA_H
 
@@ -49,6 +51,8 @@ struct linux_emuldata_shared {
 	caddr_t	p_break;	/* Processes' idea of break */
 	int refs;
 	pid_t group_pid;	/* PID of Linux process (group of threads) */
+	/* List of Linux threads (NetBSD processes) in the Linux process */
+	LIST_HEAD(, linux_emuldata) threads;
 };
 
 struct linux_emuldata {
@@ -65,6 +69,9 @@ struct linux_emuldata {
 	int *clear_tid;		/* Own TID to clear on exit */
 	unsigned long set_tls;	/* New TLS in child if not 0 */
 #endif
+	/* List of Linux threads (NetBSD processes) in the Linux process */
+	LIST_ENTRY(linux_emuldata) threads;
+	struct proc *proc;	/* backpointer to struct proc */
 };
 
 #endif /* !_COMMON_LINUX_EMULDATA_H */
