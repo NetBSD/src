@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.79 2006/06/24 05:21:11 mrg Exp $
+# $NetBSD: HACKS,v 1.80 2006/06/25 14:24:45 tsutsui Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -122,7 +122,7 @@ descr
 	in the source.
 kcah
 
-hack	gcc4 wrong uninitialised variable
+hack	gcc4 wrong uninitialized variable
 mdate	10 May 2006
 who	mrg
 file	bin/ksh/eval.c			: 1.6
@@ -158,6 +158,7 @@ file	sbin/fsck_ext2fs/dir.c		: 1.19
 file	sbin/routed/rtquery/rtquery.c	: 1.18
 file	sys/arch/amd64/amd64/pmap.c	: 1.26
 file	sys/arch/i386/pci/piixpcib.c	: 1.4
+file	sys/arch/m68k/m68k/pmap_motorola.c	: 1.4
 file	sys/crypto/cast128/cast128.c	: 1.9
 file	sys/ddb/db_command.c		: 1.86
 file	sys/dev/cardbus/cardbus_map.c	: 1.21
