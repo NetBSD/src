@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.245 2006/06/25 00:39:21 perry Exp $	*/
+/*	$NetBSD: com.c,v 1.246 2006/06/25 14:49:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.245 2006/06/25 00:39:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.246 2006/06/25 14:49:49 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -676,7 +676,8 @@ com_detach(struct device *self, int flags)
 	int maj, mn;
 
 	/* kill the power hook */
-	powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
