@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.16 2006/06/25 15:18:53 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.17 2006/06/25 18:03:49 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -182,11 +182,10 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 		op[i].ref = grefp[i];
 		op[i].flags = GNTMAP_host_map |
 		    ((flags & XSHM_RO) ? GNTMAP_readonly : 0);
-		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref,
-		    op, nentries);
-		if (__predict_false(err))
-			panic("xen_shm_map: HYPERVISOR_grant_table_op failed");
 	}
+	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, op, nentries);
+	if (__predict_false(err))
+		panic("xen_shm_map: HYPERVISOR_grant_table_op failed");
 	for (i = 0; i < nentries; i++) {
 		if (__predict_false(op[i].status))
 			return op[i].status;
@@ -244,11 +243,11 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		op[i].host_addr = va + i * PAGE_SIZE;
 		op[i].dev_bus_addr = 0;
 		op[i].handle = handlep[i];
-		ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-		    op, nentries);
-		if (__predict_false(ret))
-			panic("xen_shm_unmap: unmap failed");
 	}
+	ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+	    op, nentries);
+	if (__predict_false(ret))
+		panic("xen_shm_unmap: unmap failed");
 	va = va >> PAGE_SHIFT;
 #else /* !XEN3 */
 	va = va >> PAGE_SHIFT;
