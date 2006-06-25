@@ -1,14 +1,19 @@
-#	$NetBSD: Makefile.inc,v 1.22 2006/05/11 23:16:30 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2006/06/25 03:02:19 mrg Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
 
 WARNS?=	1
 WFORMAT?=2
-NAMED_USE_PTHREADS?=yes
-NAMED_USE_OPENSSL?=yes
 
 .include <bsd.own.mk>
+
+.if ${MKCRYPTO} == "no"
+NAMED_USE_OPENSSL?=no
+.endif
+
+NAMED_USE_PTHREADS?=yes
+NAMED_USE_OPENSSL?=yes
 
 IDIST=		${NETBSDSRCDIR}/dist/bind
 BIND_SRCDIR=	${NETBSDSRCDIR}/usr.sbin/bind

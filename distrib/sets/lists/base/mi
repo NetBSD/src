@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.633 2006/06/24 05:11:40 mrg Exp $
+# $NetBSD: mi,v 1.634 2006/06/25 03:02:19 mrg Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -571,8 +571,8 @@
 ./usr/bin/progress				base-util-bin
 ./usr/bin/purgestat				base-mailwrapper-bin
 ./usr/bin/pwhash				base-util-bin
-./usr/bin/qsafe					base-util-bin
-./usr/bin/qsieve				base-util-bin
+./usr/bin/qsafe					base-util-bin		crypto
+./usr/bin/qsieve				base-util-bin		crypto
 ./usr/bin/qsubst				base-util-bin
 ./usr/bin/quota					base-util-bin
 ./usr/bin/radioctl				base-audio-bin
