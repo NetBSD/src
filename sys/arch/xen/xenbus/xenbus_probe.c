@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.11 2006/05/23 21:07:56 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.12 2006/06/25 16:46:59 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.11 2006/05/23 21:07:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.12 2006/06/25 16:46:59 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -303,7 +303,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 			continue;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_path, "state",
-		    &state);
+		    &state, 10);
 		if (err) {
 			printf("xenbus: can't get state "
 			    "for %s (%d)\n", xbusd->xbusd_path, err);
