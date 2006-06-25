@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.23 2006/06/25 14:35:18 lukem Exp $
+# $NetBSD: Makefile.bootxx,v 1.24 2006/06/25 15:01:00 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -133,7 +133,7 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
-	@ sz=$$(ls -ln ${PROG}|tr -s ' '|cut -d' ' -f5); \
+	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
 		echo "### ${PROG} size $$sz is larger than ${BOOTXX_MAXSIZE}" >&2; \
 		rm ${PROG}; \
