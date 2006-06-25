@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/06/23 17:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2006/06/25 03:08:54 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -30,13 +30,14 @@ CLEANFILES+=	gengenrtl genrtl.c genrtl.h \
 		gtype-c.h gtype-cp.h gtype-f.h gtype-objc.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
-		genpreds tm-preds.h tm_p.h cs-tm_p.h \
+		insn-preds.c genpreds tm-preds.h tm_p.h cs-tm_p.h \
 		genmodes insn-modes.c insn-modes.h min-insn-modes.c \
 		auto-host.h build-print-rtl.c \
 		build-rtl.c build-errors.c build-varray.c \
 		build-bitmap.c build-ggc-none.c \
 		gt-*.h *.o *.lo \
 		cs-config.h \
+		gcov-iov gcov-iov.h \
 
 #
 # These files have special needs
@@ -289,7 +290,8 @@ insn-attrtab.c: genattrtab ${G_md_file}
 #
 genextract.lo: insn-config.h
 insn-conditions.lo: insn-constants.h tm_p.h tm-preds.h
-ggc-none.lo: gtype-desc.h
+build-ggc-none.lo: gtype-desc.h
+ggc-none.o: gtype-desc.h
 
 insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
