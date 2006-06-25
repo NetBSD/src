@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.18 2005/12/11 12:17:59 christos Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.19 2006/06/25 14:19:56 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.18 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.19 2006/06/25 14:19:56 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -288,7 +288,7 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
 
 #define	pa_to_pvh(pa)							\
 ({									\
-	int bank_, pg_;							\
+	int bank_, pg_ = 0;	/* XXX gcc4 -Wuninitialized */		\
 									\
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.pvent[pg_];				\
@@ -296,7 +296,7 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
 
 #define	pa_to_attribute(pa)						\
 ({									\
-	int bank_, pg_;							\
+	int bank_, pg_ = 0;	/* XXX gcc4 -Wuninitialized */		\
 									\
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.attrs[pg_];				\
