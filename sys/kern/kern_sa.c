@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.79 2006/06/25 08:12:10 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.80 2006/06/25 08:12:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.79 2006/06/25 08:12:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.80 2006/06/25 08:12:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.79 2006/06/25 08:12:10 yamt Exp $");
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
+
+static POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+    &pool_allocator_nointr); /* memory pool for sadata structures */
+static POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
+    "saupcpl", &pool_allocator_nointr); /* memory pool for pending upcalls */
+static POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
+    &pool_allocator_nointr); /* memory pool for sastack structs */
+static POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
+    &pool_allocator_nointr); /* memory pool for sadata_vp structures */
 
 static struct sadata_vp *sa_newsavp(struct sadata *);
 static inline int sa_stackused(struct sastack *, struct sadata *);
