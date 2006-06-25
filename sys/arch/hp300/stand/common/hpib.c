@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.6 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: hpib.c,v 1.7 2006/06/25 17:37:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -89,16 +89,16 @@ hpibid(int unit, int slave)
 	int rv;
 
 	if (hpib_softc[unit].sc_type == HPIBC)
-		rv = fhpibrecv(unit, 31, slave, (char *)&id, 2);
+		rv = fhpibrecv(unit, 31, slave, (uint8_t *)&id, 2);
 	else
-		rv = nhpibrecv(unit, 31, slave, (char *)&id, 2);
+		rv = nhpibrecv(unit, 31, slave, (uint8_t *)&id, 2);
 	if (rv != 2)
 		return 0;
 	return id;
 }
 
 int
-hpibsend(int unit, int slave, int sec, char *buf, int cnt)
+hpibsend(int unit, int slave, int sec, uint8_t *buf, int cnt)
 {
 
 	if (hpib_softc[unit].sc_type == HPIBC)
@@ -107,7 +107,7 @@ hpibsend(int unit, int slave, int sec, char *buf, int cnt)
 }
 
 int
-hpibrecv(int unit, int slave, int sec, char *buf, int cnt)
+hpibrecv(int unit, int slave, int sec, uint8_t *buf, int cnt)
 {
 
 	if (hpib_softc[unit].sc_type == HPIBC)
@@ -135,7 +135,7 @@ hpibswait(int unit, int slave)
 }
 
 void
-hpibgo(int unit, int slave, int sec, char *addr, int count, int flag)
+hpibgo(int unit, int slave, int sec, uint8_t *addr, int count, int flag)
 {
 
 	if (hpib_softc[unit].sc_type == HPIBC)
