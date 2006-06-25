@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.11 2006/04/01 18:02:04 oster Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.12 2006/06/25 17:34:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <machine/hp300spu.h>
 #include <m68k/frame.h>
+#include <lib/libsa/stand.h>
 
 #define	NHPIB		4
 #define	NSCSI		2
@@ -58,7 +59,6 @@
 #define MHZ_50		6
 
 /* autoconf.c */
-extern struct hp_hw sc_table[];
 extern int cpuspeed;
 #ifdef PRINTROMINFO
 void printrominvo(void);
@@ -121,12 +121,6 @@ struct punitsw {
 };
 extern	struct punitsw punitsw[];
 extern	int npunit;
-
-extern	struct devsw devsw_net[];
-extern	int ndevs_net;
-
-extern	struct devsw devsw_general[];
-extern	int ndevs_general;
 
 extern	struct fs_ops file_system_rawfs[];
 extern	struct fs_ops file_system_ufs[];
