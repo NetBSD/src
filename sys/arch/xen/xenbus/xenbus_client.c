@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.4 2006/03/16 23:08:08 bouyer Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.5 2006/06/25 16:46:59 bouyer Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.4 2006/03/16 23:08:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.5 2006/06/25 16:46:59 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -119,7 +119,8 @@ xenbus_switch_state(struct xenbus_device *dev,
 
 	u_long current_state;
 
-	int err = xenbus_read_ul(xbt, dev->xbusd_path, "state", &current_state);
+	int err = xenbus_read_ul(xbt, dev->xbusd_path, "state",
+	    &current_state, 10);
 	if (err)
 		return 0;
 
@@ -255,7 +256,7 @@ xenbus_read_driver_state(const char *path)
 {
 	u_long result;
 
-	int err = xenbus_read_ul(NULL, path, "state", &result);
+	int err = xenbus_read_ul(NULL, path, "state", &result, 10);
 	if (err)
 		result = XenbusStateClosed;
 
