@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.81 2006/06/25 08:13:28 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.82 2006/06/26 10:21:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.81 2006/06/25 08:13:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.82 2006/06/26 10:21:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,17 +280,25 @@ sa_release(struct proc *p)
 	}
 }
 
+static int
+sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
+{
+	int error;
+
+	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
+	error = copyin(&((struct sa_stackinfo_t *)
+	    ((char *)sast->sast_stack.ss_sp +
+	    sa->sa_stackinfo_offset))->sasi_stackgen, gen, sizeof(*gen));
+
+	return error;
+}
 
 static inline int
 sa_stackused(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
 
-	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
-	if (copyin(&((struct sa_stackinfo_t *)
-		       ((char *)sast->sast_stack.ss_sp +
-			   sa->sa_stackinfo_offset))->sasi_stackgen,
-		&gen, sizeof(unsigned int)) != 0) {
+	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
 		printf("sa_stackused: couldn't copyin sasi_stackgen");
 #endif
@@ -303,18 +311,16 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 static inline void
 sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
+	unsigned int gen;
 
-	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
-	if (copyin(&((struct sa_stackinfo_t *)
-		       ((char *)sast->sast_stack.ss_sp +
-			   sa->sa_stackinfo_offset))->sasi_stackgen,
-		&sast->sast_gen, sizeof(unsigned int)) != 0) {
+	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
 		printf("sa_setstackfree: couldn't copyin sasi_stackgen");
 #endif
 		sigexit(curlwp, SIGILL);
 		/* NOTREACHED */
 	}
+	sast->sast_gen = gen;
 }
 
 /*
