@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2005/02/05 14:23:24 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2006/06/26 22:42:45 hubertf Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -31,15 +31,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	add_image(int, char **, char *);
+int	add_image(int, char **, const char *);
 void	command_loop(void);
-int	delete_image(int, char **, char *);
-int	display_head(int, char **, char *);
-int	display_image(int, char **, char *);
-int	display_part(int, char **, char *);
-int	initialize(int, char **, char *);
+int	delete_image(int, char **, const char *);
+int	display_head(int, char **, const char *);
+int	display_image(int, char **, const char *);
+int	display_part(int, char **, const char *);
+int	initialize(int, char **, const char *);
 int	one_command(char *);
-void	prompt(char *, int, const char *);
-int	set_default_image(int, char **, char *);
+void	prompt(char *, int, const const char *);
+int	set_default_image(int, char **, const char *);
 int	Str2Int(char *, int *);
-int	write_exit(int, char **, char *);
+int	write_exit(int, char **, const char *);

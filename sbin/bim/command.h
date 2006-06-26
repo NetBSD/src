@@ -1,4 +1,4 @@
-/*	$NetBSD: command.h,v 1.5 2005/02/05 14:23:24 xtraeme Exp $	*/
+/*	$NetBSD: command.h,v 1.6 2006/06/26 22:42:45 hubertf Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -40,16 +40,16 @@
  *   by Bruce Culbertson.   (Thanks Bruce!)
  */
 
-#define CMD_PROC(name) int name (int, char **, char *)
+#define CMD_PROC(name) int name (int, char **, const char *)
 
 /*  The commands are stored in a table that includes their name, a pointer
     to the function that processes the command and a help message.  */
 
 struct command {	/* The commands, their names, help */
-	int	(*fn)(int, char **, char *);
-	char	*name;
-	char	*syntax;
-	char	*help;
+	int	(*fn)(int, char **, const char *);
+	const char	*name;
+	const char	*syntax;
+	const char	*help;
 };
 
 /*  The command loop will do the following:
