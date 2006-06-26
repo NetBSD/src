@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.798 2006/06/26 17:41:27 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.799 2006/06/26 18:16:23 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.799 2006/06/26 17:40:50 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.800 2006/06/26 18:15:44 xtraeme Exp
  */
 
 /*
@@ -2954,6 +2954,8 @@
 #define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 or 5597/5598 ISA bridge */
 #define	PCI_PRODUCT_SIS_600PMC	0x0009		/* 600 Power Mngmt Controller */
 #define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* 180 SATA controller */
+#define	PCI_PRODUCT_SIS_181_SATA	0x0181		/* 181 SATA controller */
+#define	PCI_PRODUCT_SIS_182_SATA	0x0182		/* 182 SATA controller */
 #define	PCI_PRODUCT_SIS_190	0x0190		/* 190 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
 #define	PCI_PRODUCT_SIS_300	0x0300		/* 300/305 AGP VGA */
@@ -2976,6 +2978,7 @@
 #define	PCI_PRODUCT_SIS_652	0x0652		/* 652 Host Bridge */
 #define	PCI_PRODUCT_SIS_655	0x0655		/* 655 Host Bridge */
 #define	PCI_PRODUCT_SIS_658	0x0658		/* 658 Host Bridge */
+#define	PCI_PRODUCT_SIS_661	0x0661		/* 661 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* 730 Host Bridge */
 #define	PCI_PRODUCT_SIS_733	0x0733		/* 733 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* 735 Host Bridge */
@@ -2988,6 +2991,8 @@
 #define	PCI_PRODUCT_SIS_751	0x0751		/* 751 Host Bridge */
 #define	PCI_PRODUCT_SIS_752	0x0752		/* 752 Host Bridge */
 #define	PCI_PRODUCT_SIS_755	0x0755		/* 755 Host Bridge */
+#define	PCI_PRODUCT_SIS_760	0x0760		/* 760 Host Bridge */
+#define	PCI_PRODUCT_SIS_761	0x0761		/* 761 Host Bridge */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_961	0x0961		/* 961 Host Bridge */
 #define	PCI_PRODUCT_SIS_962	0x0962		/* 962 Host Bridge */
