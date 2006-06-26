@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.797 2006/06/26 17:41:27 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.798 2006/06/26 18:16:23 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.799 2006/06/26 17:40:50 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.800 2006/06/26 18:15:44 xtraeme Exp
  */
 
 /*
@@ -10008,6 +10008,14 @@ static const struct pci_product pci_products[] = {
 	    "180 SATA controller",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_181_SATA,
+	    "181 SATA controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_182_SATA,
+	    "182 SATA controller",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190,
 	    "190 Ethernet",
 	},
@@ -10096,6 +10104,10 @@ static const struct pci_product pci_products[] = {
 	    "658 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_661,
+	    "661 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
 	    "730 Host Bridge",
 	},
@@ -10142,6 +10154,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755,
 	    "755 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760,
+	    "760 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_761,
+	    "761 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
@@ -11696,4 +11716,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2332;
+const int pci_nproducts = 2337;
