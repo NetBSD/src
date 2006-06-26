@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.82 2006/06/26 10:21:34 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83 2006/06/26 10:21:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.82 2006/06/26 10:21:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83 2006/06/26 10:21:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,8 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 			count = i;
 			break;
 		}
-		if ((sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &newsast))) {
+		sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &newsast);
+		if (sast != NULL) {
 			DPRINTFN(9, ("sa_stacks(%d.%d) returning stack %p\n",
 				     l->l_proc->p_pid, l->l_lid,
 				     newsast.sast_stack.ss_sp));
@@ -432,10 +433,12 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 				error = EEXIST;
 				break;
 			}
-		} else if (sa->sa_nstacks >= SA_MAXNUMSTACKS * sa->sa_concurrency) {
-			DPRINTFN(9, ("sa_stacks(%d.%d) already using %d stacks\n",
-				     l->l_proc->p_pid, l->l_lid,
-				     SA_MAXNUMSTACKS * sa->sa_concurrency));
+		} else if (sa->sa_nstacks >=
+		    SA_MAXNUMSTACKS * sa->sa_concurrency) {
+			DPRINTFN(9,
+			    ("sa_stacks(%d.%d) already using %d stacks\n",
+			    l->l_proc->p_pid, l->l_lid,
+			    SA_MAXNUMSTACKS * sa->sa_concurrency));
 			count = i;
 			error = ENOMEM;
 			break;
@@ -650,8 +653,10 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	if (p->p_sa == NULL || !(p->p_flag & P_SA)) {
-		DPRINTFN(1,("sys_sa_yield(%d.%d) proc %p not SA (p_sa %p, flag %s)\n",
-		    p->p_pid, l->l_lid, p, p->p_sa, p->p_flag & P_SA ? "T" : "F"));
+		DPRINTFN(1,
+		    ("sys_sa_yield(%d.%d) proc %p not SA (p_sa %p, flag %s)\n",
+		    p->p_pid, l->l_lid, p, p->p_sa,
+		    p->p_flag & P_SA ? "T" : "F"));
 		return (EINVAL);
 	}
 
@@ -857,8 +862,8 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
 		ucsize = roundup(l->l_proc->p_emul->e_sa->sae_ucsize,
 		    (~_UC_UCONTEXT_ALIGN) + 1);
-		ss->ss_captured.ss_sa.sa_context = (ucontext_t *)
-			STACK_ALLOC(sp, ucsize);
+		ss->ss_captured.ss_sa.sa_context =
+		    (ucontext_t *)STACK_ALLOC(sp, ucsize);
 		ss->ss_captured.ss_sa.sa_id = l->l_lid;
 		ss->ss_captured.ss_sa.sa_cpu = l->l_savp->savp_id;
 	} else
@@ -1513,8 +1518,9 @@ sa_makeupcalls(struct lwp *l)
 			l2 = eventq;
 			KDASSERT(l2 != NULL);
 			eventq = l2->l_forw;
-			DPRINTFN(8,("sa_makeupcalls(%d.%d) unblocking extra %d\n",
-				     p->p_pid, l->l_lid, l2->l_lid));
+			DPRINTFN(8,
+			    ("sa_makeupcalls(%d.%d) unblocking extra %d\n",
+			    p->p_pid, l->l_lid, l2->l_lid));
 			if (e_ss == NULL) {
 				e_ss = kmem_alloc(sizeof(*e_ss), KM_SLEEP);
 			}
@@ -1622,9 +1628,10 @@ sa_setwoken(struct lwp *l)
 	if (vp_lwp->l_flag & L_SA_IDLE) {
 		KDASSERT((vp_lwp->l_flag & L_SA_UPCALL) == 0);
 		KDASSERT(vp->savp_wokenq_head == NULL);
-		DPRINTFN(3,("sa_setwoken(%d.%d) repossess: idle vp_lwp %d state %d\n",
-			     l->l_proc->p_pid, l->l_lid,
-			     vp_lwp->l_lid, vp_lwp->l_stat));
+		DPRINTFN(3,
+		    ("sa_setwoken(%d.%d) repossess: idle vp_lwp %d state %d\n",
+		    l->l_proc->p_pid, l->l_lid,
+		    vp_lwp->l_lid, vp_lwp->l_stat));
 		vp_lwp->l_flag &= ~L_SA_IDLE;
 		SCHED_UNLOCK(s);
 		return;
