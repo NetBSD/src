@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.7 2006/06/26 18:21:38 drochner Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.8 2006/06/26 18:37:53 drochner Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -163,7 +163,7 @@ ki2c_attach(parent, self, aux)
 		if (OF_getprop(child, "reg", reg, sizeof(reg))>0) {
 			ka.ka_addr = reg[0];
 			ka.ka_tag = &sc->sc_i2c;	
-			config_found(self, &ka, ki2c_print);
+			config_found_ia(self, "ki2c", &ka, ki2c_print);
 		}
 	}
 }
