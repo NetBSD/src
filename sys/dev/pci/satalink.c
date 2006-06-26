@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.29 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.30 2006/06/26 17:55:49 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.30 2006/06/26 17:55:49 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

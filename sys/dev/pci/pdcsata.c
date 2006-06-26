@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.8 2006/06/26 17:45:39 xtraeme Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.9 2006/06/26 17:54:06 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.9 2006/06/26 17:54:06 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>

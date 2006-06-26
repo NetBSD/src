@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.10 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: artsata.c,v 1.11 2006/06/26 17:55:49 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  */
 
 #include "opt_pciide.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.11 2006/06/26 17:55:49 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
