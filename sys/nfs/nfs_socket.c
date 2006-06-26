@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.2.1 2006/05/24 10:59:15 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.2.2 2006/06/26 12:54:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.2.1 2006/05/24 10:59:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.2.2 2006/06/26 12:54:28 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -887,7 +887,7 @@ nfsmout:
 					rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
 					rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
 					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsidx;
-					rt->tstamp = time;
+					getmicrotime(&rt->tstamp);
 					if (rep->r_flags & R_TIMING)
 						rt->rtt = rep->r_rtt;
 					else
@@ -1001,7 +1001,6 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 		*rexmitp = 0;
 
 	acred = kauth_cred_alloc();
-	kauth_cred_hold(acred);	/* Just to be safe.. */
 
 tryagain_cred:
 	KASSERT(cred != NULL);
@@ -1034,7 +1033,8 @@ kerbauth:
 			if (error) {
 				free((caddr_t)rep, M_NFSREQ);
 				m_freem(mrest);
-				kauth_cred_destroy(acred);
+				KASSERT(kauth_cred_getrefcnt(acred) == 1);
+				kauth_cred_free(acred);
 				return (error);
 			}
 		}
@@ -1133,7 +1133,7 @@ tryagain:
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
 
 	/* Get send time for nqnfs */
-	reqtime = time.tv_sec;
+	reqtime = time_second;
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
@@ -1271,7 +1271,9 @@ tryagain:
 				use_opencred = !use_opencred;
 				if (mrest_backup == NULL) {
 					/* m_copym failure */
-					kauth_cred_destroy(acred);
+					KASSERT(
+					    kauth_cred_getrefcnt(acred) == 1);
+					kauth_cred_free(acred);
 					return ENOMEM;
 				}
 				mrest = mrest_backup;
@@ -1372,8 +1374,8 @@ tryagain:
 					break;
 				m_freem(mrep);
 				error = 0;
-				waituntil = time.tv_sec + trylater_delay;
-				while (time.tv_sec < waituntil)
+				waituntil = time_second + trylater_delay;
+				while (time_second < waituntil)
 					(void) tsleep((caddr_t)&lbolt,
 						PSOCK, "nqnfstry", 0);
 				trylater_delay *= NFS_TRYLATERDELMUL;
@@ -1428,7 +1430,7 @@ tryagain:
 				nfsm_dissect(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 				cachable = fxdr_unsigned(int, *tl++);
 				reqtime += fxdr_unsigned(int, *tl++);
-				if (reqtime > time.tv_sec) {
+				if (reqtime > time_second) {
 				    frev = fxdr_hyper(tl);
 				    nqnfs_clientlease(nmp, np, nqlflag,
 					cachable, reqtime, frev);
@@ -1446,7 +1448,8 @@ tryagain:
 	m_freem(mrep);
 	error = EPROTONOSUPPORT;
 nfsmout:
-	kauth_cred_destroy(acred);
+	KASSERT(kauth_cred_getrefcnt(acred) == 1);
+	kauth_cred_free(acred);
 	m_freem(rep->r_mreq);
 	free((caddr_t)rep, M_NFSREQ);
 	m_freem(mrest_backup);
@@ -1632,6 +1635,7 @@ nfs_timer(arg)
 	int timeo;
 	int s, error;
 #ifdef NFSSERVER
+	struct timeval tv;
 	struct nfssvc_sock *slp;
 	static long lasttime = 0;
 	u_quad_t cur_usec;
@@ -1735,8 +1739,8 @@ nfs_timer(arg)
 	/*
 	 * Call the nqnfs server timer once a second to handle leases.
 	 */
-	if (lasttime != time.tv_sec) {
-		lasttime = time.tv_sec;
+	if (lasttime != time_second) {
+		lasttime = time_second;
 		nqnfs_serverd();
 	}
 
@@ -1744,7 +1748,8 @@ nfs_timer(arg)
 	 * Scan the write gathering queues for writes that need to be
 	 * completed now.
 	 */
-	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
+	getmicrotime(&tv);
+	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 	    if (LIST_FIRST(&slp->ns_tq) &&
 		LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
@@ -2149,7 +2154,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
 			tvout.tv_usec = fxdr_unsigned(long, tvout.tv_usec);
-			if (nuidp->nu_expire < time.tv_sec ||
+			if (nuidp->nu_expire < time_second ||
 			    nuidp->nu_timestamp.tv_sec > tvout.tv_sec ||
 			    (nuidp->nu_timestamp.tv_sec == tvout.tv_sec &&
 			     nuidp->nu_timestamp.tv_usec > tvout.tv_usec)) {
@@ -2638,14 +2643,14 @@ again:
 	nfsdreq_free(nd);
 
 	simple_lock(&slp->ns_lock);
-	KASSERT((slp->ns_flag & SLP_SENDING) != 0); 
+	KASSERT((slp->ns_flag & SLP_SENDING) != 0);
 	nd = SIMPLEQ_FIRST(&slp->ns_sendq);
 	if (nd != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&slp->ns_sendq, nd_sendq);
 		simple_unlock(&slp->ns_lock);
 		goto again;
 	}
-	slp->ns_flag &= ~SLP_SENDING; 
+	slp->ns_flag &= ~SLP_SENDING;
 	simple_unlock(&slp->ns_lock);
 
 	return error;

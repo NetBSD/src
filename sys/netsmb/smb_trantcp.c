@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.21.2.1 2006/05/24 10:59:15 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.21.2.2 2006/06/26 12:54:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.21.2.1 2006/05/24 10:59:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.21.2.2 2006/06/26 12:54:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		atv = *tv;
 		if (itimerfix(&atv))
 			return (EINVAL);
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		splx(s);
-		timo = hzto(&atv);
+		timo = tvtohz(&atv);
 		if (timo <= 0)
 			return (EWOULDBLOCK);
 	} else
@@ -183,7 +180,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
-		timo = hzto(&atv);
+		timo = tvtohz(&atv);
 		if (timo <= 0) {
 			error = EWOULDBLOCK;
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.15 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.15.8.1 2006/06/26 12:55:08 yamt Exp $	*/
 
 /*
  *
@@ -55,6 +55,7 @@ void uvm_km_check_empty(vaddr_t, vaddr_t, boolean_t);
 #else
 #define	uvm_km_check_empty(a, b, c)	/* nothing */
 #endif /* defined(DEBUG) */
+void uvm_km_va_drain(struct vm_map *, uvm_flag_t);
 
 #endif /* _KERNEL */
 
