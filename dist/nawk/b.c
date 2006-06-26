@@ -103,7 +103,7 @@ resize_state(fa *fa, int state)
 	fa->posns = p;
 
 	for (i = fa->state_count; i < new_count; ++i) {
-		fa->gototab[i] = calloc(1, NCHARS * sizeof (*fa->gototab));
+		fa->gototab[i] = calloc(1, NCHARS * sizeof (**fa->gototab));
 		if (fa->gototab[i] == NULL)
 			goto out;
 		fa->out[i]  = 0;
