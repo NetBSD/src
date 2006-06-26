@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.104 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.105 2006/06/26 21:23:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.104 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.105 2006/06/26 21:23:57 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1099,22 +1099,41 @@ netbsd32_setpriority(l, v, retval)
 }
 
 int
-netbsd32_socket(l, v, retval)
+compat_30_netbsd32_socket(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_socket_args /* {
+	struct compat_30_netbsd32_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args ua;
+	struct compat_30_sys_socket_args ua;
 
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (sys_socket(l, &ua, retval));
+	return (compat_30_sys_socket(l, &ua, retval));
+}
+
+int
+netbsd32_sys___socket30(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sys___socket30_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+	} */ *uap = v;
+	struct sys___socket30_args ua;
+
+	NETBSD32TO64_UAP(domain);
+	NETBSD32TO64_UAP(type);
+	NETBSD32TO64_UAP(protocol);
+	return (sys___socket30(l, &ua, retval));	
 }
 
 int

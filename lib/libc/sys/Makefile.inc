@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.166 2006/05/29 10:02:56 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.167 2006/06/26 21:23:57 mrg Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -86,7 +86,7 @@ ASM=	access.S acct.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
 		setuid.S __shmctl13.S shmdt.S shmget.S shutdown.S \
 		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
-		__sigtimedwait.S socket.S socketpair.S __stat30.S statvfs1.S \
+		__sigtimedwait.S __socket30.S socketpair.S __stat30.S statvfs1.S \
 		swapctl.S symlink.S __sysctl.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 		timer_settime.S \

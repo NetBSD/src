@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 2006/05/31 09:52:27 drochner Exp $
+	$NetBSD: syscalls.master,v 1.48 2006/06/26 21:23:57 mrg Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -169,7 +169,7 @@
 94	UNIMPL		setdopt
 95	STD		{ int netbsd32_fsync(int fd); }
 96	STD		{ int netbsd32_setpriority(int which, int who, int prio); }
-97	STD		{ int netbsd32_socket(int domain, int type, int protocol); }
+97	COMPAT_30	{ int netbsd32_socket(int domain, int type, int protocol); }
 98	STD		{ int netbsd32_connect(int s, const netbsd32_sockaddrp_t name, int namelen); }
 99	COMPAT_43	{ int netbsd32_oaccept(int s, netbsd32_caddr_t name, netbsd32_intp anamelen); }
 100	STD		{ int netbsd32_getpriority(int which, int who); }
@@ -675,3 +675,4 @@
 			    const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }
 393	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
+394	STD		{ int netbsd32_sys___socket30(int domain, int type, int protocol); }

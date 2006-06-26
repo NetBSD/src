@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.138 2006/05/15 09:19:31 yamt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.139 2006/06/26 21:23:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.138 2006/05/15 09:19:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.139 2006/06/26 21:23:57 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -762,7 +762,7 @@ sunos_sys_socket(l, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = sys_socket(l, v, retval);
+	error = compat_30_sys_socket(l, v, retval);
 	if (error)
 		return (error);
 	return sunos_sys_socket_common(l, retval, SCARG(uap, type));

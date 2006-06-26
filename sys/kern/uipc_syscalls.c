@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.99 2006/05/16 21:00:02 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.100 2006/06/26 21:23:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.99 2006/05/16 21:00:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.100 2006/06/26 21:23:59 mrg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -69,9 +69,9 @@ static void adjust_rights(struct mbuf *m, int len, struct lwp *l);
 extern const struct fileops socketops;
 
 int
-sys_socket(struct lwp *l, void *v, register_t *retval)
+sys___socket30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_socket_args /* {
+	struct sys___socket30_args /* {
 		syscallarg(int)	domain;
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
