@@ -1132,17 +1132,14 @@ case "${targ}" in
     targ_selvecs="${targ_selvecs} bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec"
 #endif
     ;;
-  sh-*-netbsdelf*)
+  sh*-*-netbsdelf*)
     targ_defvec=bfd_elf32_shnbsd_vec
     targ_selvecs="bfd_elf32_shlnbsd_vec shcoff_vec shlcoff_vec"
 #ifdef BFD64
     targ_selvecs="${targ_selvecs} bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec"
 #endif
     ;;
-  sh*-*-netbsdelf*)
-    targ_defvec=bfd_elf32_shnbsd_vec
-    targ_selvecs="bfd_elf32_shlnbsd_vec shcoff_vec shlcoff_vec"
-    ;;
+
   sh*-*-symbianelf*)
     targ_defvec=bfd_elf32_shl_symbian_vec
     targ_selvecs="shlcoff_vec shlcoff_small_vec"
