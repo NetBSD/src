@@ -1,4 +1,4 @@
-#	$NetBSD: OMSAL400,v 1.5 2006/04/02 17:32:57 kiyohara Exp $
+#	$NetBSD: OMSAL400,v 1.6 2006/06/26 16:20:50 kiyohara Exp $
 #
 # Kernel config for the Open Micro Server AL400.
 
@@ -27,6 +27,7 @@ ausmbus0	at aupsc0
 iic0		at ausmbus0
 r2025rtc*	at iic0 addr 0x32		# R2025S RTC
 seeprom*	at iic0 addr 0x50 size 4096	# Serial EEPROM AT24C04
+lmtemp*		at iic0 addr 0x48 flags 0x0002	# LM77 temperature sensor
 
 # Alchemy On-chip PCI
 aupci*		at aubus? addr ?
