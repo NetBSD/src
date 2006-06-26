@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.796 2006/06/25 03:47:26 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.797 2006/06/26 17:41:27 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.798 2006/06/25 03:46:56 soren Exp
+ *	NetBSD: pcidevs,v 1.799 2006/06/26 17:40:50 xtraeme Exp
  */
 
 /*
@@ -9344,6 +9344,14 @@ static const struct pci_product pci_products[] = {
 	    "PDC40718 SATA/300 IDE controller",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40518,
+	    "PDC40518 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20775,
+	    "PDC20775 SATA/300 IDE controller",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40719,
 	    "PDC40719 SATA/300 IDE controller",
 	},
@@ -11688,4 +11696,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2330;
+const int pci_nproducts = 2332;
