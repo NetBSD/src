@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.39.8.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.39.8.2 2006/06/26 12:55:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.39.8.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.39.8.2 2006/06/26 12:55:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,7 +83,7 @@ static void uvm_total(struct vmtotal *);
 void
 uvm_meter(void)
 {
-	if ((time.tv_sec % 5) == 0)
+	if ((time_second % 5) == 0)
 		uvm_loadav(&averunnable);
 	if (lwp0.l_slptime > (maxslp / 2))
 		wakeup(&proc0);

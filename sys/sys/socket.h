@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.78.6.1 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.78.6.2 2006/06/26 12:54:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -195,8 +195,9 @@ struct	linger {
 #define	pseudo_AF_HDRCMPLT 30		/* Used by BPF to not rewrite hdrs
 					   in interface output routine */
 #endif
+#define AF_BLUETOOTH	31
 
-#define	AF_MAX		31
+#define	AF_MAX		32
 
 /*
  * Structure used by kernel to store most
@@ -282,6 +283,7 @@ struct sockaddr_storage {
 #if defined(_NETBSD_SOURCE)
 #define PF_KEY 		pseudo_AF_KEY	/* like PF_ROUTE, only for key mgmt */
 #endif
+#define PF_BLUETOOTH	AF_BLUETOOTH
 
 #define	PF_MAX		AF_MAX
 
