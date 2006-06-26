@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.98.2.1 2006/04/11 11:53:47 yamt Exp $
+#	$NetBSD: files.sparc64,v 1.98.2.2 2006/06/26 12:45:29 yamt Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -155,7 +155,6 @@ file	arch/sparc64/dev/pld_wdog.c		pldwdog
 
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
-file	kern/kern_microtime.c
 file	dev/sun/disksubr.c 
 
 file	arch/sparc/fpu/fpu.c

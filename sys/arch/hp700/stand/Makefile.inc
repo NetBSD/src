@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.5 2005/12/11 12:17:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.5.8.1 2006/06/26 12:44:38 yamt Exp $
 
-BINDIR=			/usr/mdec
+BINDIR=		/usr/mdec
 
+COPTS+=		-Wno-pointer-sign -fno-strict-aliasing

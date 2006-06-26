@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.37.2.1 2006/05/24 10:56:52 yamt Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.37.2.2 2006/06/26 12:44:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.37.2.1 2006/05/24 10:56:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.37.2.2 2006/06/26 12:44:53 yamt Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -129,21 +129,22 @@ const struct pciintr_icu_table {
 	int (*piit_init)(pci_chipset_tag_t,
 	    bus_space_tag_t, pcitag_t, pciintr_icu_tag_t *,
 	    pciintr_icu_handle_t *);
+	void (*piit_uninit)(pciintr_icu_handle_t);
 } pciintr_icu_table[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371MX,
-	  piix_init },
+	  piix_init, piix_uninit },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371AB_ISA,
-	  piix_init },
+	  piix_init, piix_uninit },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371FB_ISA,
-	  piix_init },
+	  piix_init, piix_uninit },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371SB_ISA,
-	  piix_init },
+	  piix_init, piix_uninit },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82440MX_ISA,
-	  piix_init },
+	  piix_init, piix_uninit },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AA_LPC,
-	  piix_init },			/* ICH */
+	  piix_init, piix_uninit },	/* ICH */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AB_LPC,
-	  piix_init },			/* ICH0 */
+	  piix_init, piix_uninit },	/* ICH0 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_LPC,
 	  ich_init },			/* ICH2 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BAM_LPC,
@@ -195,10 +196,20 @@ const struct pciintr_icu_table {
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
 	  sis85c503_init },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_962,
+	  sis85c503_init },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_963,
+	  sis85c503_init },
 
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_PMC,
 	  amd756_init },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC766_PMC,
+	  amd756_init },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_PMC,
+	  amd756_init },
 
+	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1533,
+	  ali1543_init },
 	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1543,
 	  ali1543_init },
 
@@ -772,6 +783,7 @@ pci_intr_fixup(pci_chipset_tag_t pc, bus_space_tag_t iot, uint16_t *pciirq)
 	const struct pciintr_icu_table *piit = NULL;
 	pcitag_t icutag;
 	pcireg_t icuid;
+	int error = 0;
 
 	/*
 	 * Attempt to initialize our PCI interrupt router.  If
@@ -896,37 +908,50 @@ found:;
 	/*
 	 * Initialize the PCI interrupt link map.
 	 */
-	if (pciintr_link_init())
-		return (-1);		/* non-fatal */
+	if (pciintr_link_init()) {
+		error = -1;		/* non-fatal */
+		goto cleanup;
+	}
 
 	/*
 	 * Fix up the link->IRQ mappings.
 	 */
-	if (pciintr_link_fixup() != 0)
-		return (-1);		/* non-fatal */
+	if (pciintr_link_fixup() != 0) {
+		error = -1;		/* non-fatal */
+		goto cleanup;
+	}
 
 	/*
 	 * Now actually program the PCI ICU with the new
 	 * routing information.
 	 */
-	if (pciintr_link_route(pciirq) != 0)
-		return (1);		/* fatal */
+	if (pciintr_link_route(pciirq) != 0) {
+		error = 1;		/* fatal */
+		goto cleanup;
+	}
 
 	/*
 	 * Now that we've routed all of the PIRQs, rewrite the PCI
 	 * configuration headers to reflect the new mapping.
 	 */
-	if (pciintr_header_fixup(pc) != 0)
-		return (1);		/* fatal */
+	if (pciintr_header_fixup(pc) != 0) {
+		error = 1;		/* fatal */
+		goto cleanup;
+	}
 
 	/*
 	 * Free any unused PCI IRQs for ISA devices.
 	 */
-	if (pciintr_irq_release(pciirq) != 0)
-		return (-1);		/* non-fatal */
+	if (pciintr_irq_release(pciirq) != 0) {
+		error = -1;		/* non-fatal */
+		goto cleanup;
+	}
 
 	/*
 	 * All done!
 	 */
-	return (0);			/* success! */
+cleanup:
+	if (piit->piit_uninit != NULL)
+		(*piit->piit_uninit)(pciintr_icu_handle);
+	return (error);
 }

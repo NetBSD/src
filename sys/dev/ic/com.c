@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.241.2.2 2006/05/24 10:57:41 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.241.2.3 2006/06/26 12:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241.2.2 2006/05/24 10:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241.2.3 2006/06/26 12:51:01 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -157,6 +157,7 @@ void	com_modem(struct com_softc *, int);
 void	tiocm_to_com(struct com_softc *, u_long, int);
 int	com_to_tiocm(struct com_softc *);
 void	com_iflush(struct com_softc *);
+void	com_power(int, void *);
 
 int	com_common_getc(dev_t, bus_space_tag_t, bus_space_handle_t);
 void	com_common_putc(dev_t, bus_space_tag_t, bus_space_handle_t, int);
@@ -219,11 +220,13 @@ static int comconsrate;
 static tcflag_t comconscflag;
 static struct cnm_state com_cnm_state;
 
+#ifndef __HAVE_TIMECOUNTER
 static int ppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
+#endif /* !__HAVE_TIMECOUNTER */
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
@@ -604,6 +607,11 @@ com_attach_subr(struct com_softc *sc)
 
 	com_config(sc);
 
+	sc->sc_powerhook = powerhook_establish(com_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+			sc->sc_dev.dv_xname);
+
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 }
 
@@ -666,6 +674,10 @@ com_detach(struct device *self, int flags)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
+
+	/* kill the power hook */
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
@@ -753,9 +765,11 @@ com_shutdown(struct com_softc *sc)
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
 
+#ifndef __HAVE_TIMECOUNTER
 	/* Turn off PPS capture on last close. */
 	sc->sc_ppsmask = 0;
 	sc->ppsparam.mode = 0;
+#endif /* !__HAVE_TIMECOUNTER */
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
@@ -872,8 +886,14 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
 
 		/* Clear PPS capture state on first open. */
+#ifdef __HAVE_TIMECOUNTER
+		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
+		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
+		pps_init(&sc->sc_pps_state);
+#else /* !__HAVE_TIMECOUNTER */
 		sc->sc_ppsmask = 0;
 		sc->ppsparam.mode = 0;
+#endif /* !__HAVE_TIMECOUNTER */
 
 		COM_UNLOCK(sc);
 		splx(s2);
@@ -1095,6 +1115,19 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = com_to_tiocm(sc);
 		break;
 
+#ifdef __HAVE_TIMECOUNTER
+	case PPS_IOC_CREATE:
+	case PPS_IOC_DESTROY:
+	case PPS_IOC_GETPARAMS:
+	case PPS_IOC_SETPARAMS:
+	case PPS_IOC_GETCAP:
+	case PPS_IOC_FETCH:
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND:
+#endif
+		error = pps_ioctl(cmd, data, &sc->sc_pps_state);
+		break;
+#else /* !__HAVE_TIMECOUNTER */
 	case PPS_IOC_CREATE:
 		break;
 
@@ -1187,8 +1220,18 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 #endif /* PPS_SYNC */
+#endif /* !__HAVE_TIMECOUNTER */
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
+#ifdef __HAVE_TIMECOUNTER
+#ifndef PPS_TRAILING_EDGE
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
+		    &sc->sc_pps_state.ppsinfo.assert_timestamp);
+#else
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
+		    &sc->sc_pps_state.ppsinfo.clear_timestamp);
+#endif
+#else /* !__HAVE_TIMECOUNTER */
 		/*
 		 * Some GPS clocks models use the falling rather than
 		 * rising edge as the on-the-second signal.
@@ -1206,6 +1249,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->ppsinfo.clear_timestamp);
 #endif
+#endif /* !__HAVE_TIMECOUNTER */
 		break;
 
 	default:
@@ -2147,6 +2191,16 @@ again:	do {
 		msr = bus_space_read_1(iot, ioh, com_msr);
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
+#ifdef __HAVE_TIMECOUNTER
+		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
+		    (delta & MSR_DCD)) {
+			pps_capture(&sc->sc_pps_state);
+			pps_event(&sc->sc_pps_state,
+			    (msr & MSR_DCD) ?
+			    PPS_CAPTUREASSERT :
+			    PPS_CAPTURECLEAR);
+		}
+#else /* !__HAVE_TIMECOUNTER */
 		/*
 		 * Pulse-per-second (PSS) signals on edge of DCD?
 		 * Process these even if line discipline is ignoring DCD.
@@ -2194,6 +2248,7 @@ again:	do {
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
 			}
 		}
+#endif /* !__HAVE_TIMECOUNTER */
 
 		/*
 		 * Process normal status changes
@@ -2534,4 +2589,27 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 	if (ioh)
 		*ioh = help;
 	return (1);
+}
+
+void
+com_power(int why, void *arg)
+{
+	struct com_softc *sc = arg;
+	int s;
+
+	s = splserial();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		/* XXX should we do something to stop the device? */
+		break;
+	case PWR_RESUME:
+		com_loadchannelregs(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }

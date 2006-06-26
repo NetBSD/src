@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.13.8.1 2006/05/24 10:57:41 yamt Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.13.8.2 2006/06/26 12:51:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.8.1 2006/05/24 10:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.8.2 2006/06/26 12:51:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -912,8 +912,7 @@ cdttyparam(tp, t)
 	 *    overflows.
 	 *  * Otherwise set it a bit higher.
 	 */
-	p->p_cor3 = (t->c_ospeed <= 1200 ? 1 :
-			 t->c_ospeed <= 38400 ? 8 : 4);
+	p->p_cor3 = (t->c_ospeed <= 1200 ? 1 : t->c_ospeed <= 38400 ? 8 : 4);
 
 #define PORT_RATE(o, s)	\
 	(((((o) + (s)/2) / (s)) + CD18xx_xBRPR_TPC/2) / CD18xx_xBRPR_TPC)

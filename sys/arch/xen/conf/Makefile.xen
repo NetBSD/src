@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.13.2.2 2006/04/11 11:53:47 yamt Exp $
+#	$NetBSD: Makefile.xen,v 1.13.2.3 2006/06/26 12:45:40 yamt Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -88,7 +88,7 @@ vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 TEXTADDR?=	c0100000
 LINKFLAGS_NORMAL=	-X
 .if (${OBJECT_FMT} == "ELF")
-KERN_LDSCRIPT?=	kern.ldscript
+KERN_LDSCRIPT?=	kern.ldscript.Xen
 LINKFORMAT=	-T $S/arch/${XEN_BUILD}/conf/${KERN_LDSCRIPT}
 .else
 LINKFORMAT=	-z

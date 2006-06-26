@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.70.8.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.70.8.2 2006/06/26 12:52:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70.8.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70.8.2 2006/06/26 12:52:57 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -385,7 +385,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)
-		so->so_snd.sb_lowat = MCLBYTES;
+		so->so_snd.sb_lowat = MAX((int)MCLBYTES, sock_loan_thresh);
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);

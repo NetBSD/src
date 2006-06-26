@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63.2.2 2006/05/24 10:58:40 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.2.3 2006/06/26 12:52:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.2.2 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.2.3 2006/06/26 12:52:56 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1311,9 +1311,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (kauth_authorize_process(l->l_proc->p_cred,
-		    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
-		    NULL) != 0)
+		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+		    kauth_cred_geteuid(fp->f_cred)))
 			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
@@ -2031,9 +2030,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (kauth_authorize_process(l->l_proc->p_cred,
-			    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
-			    NULL) != 0)
+			if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
+			    kauth_cred_geteuid(fp->f_cred)))
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
@@ -2050,7 +2048,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 		}
 		break;
-	    case KERN_FILE_BYPID:
+	case KERN_FILE_BYPID:
 		if (arg < -1)
 			/* -1 means all processes */
 			return (EINVAL);
@@ -2060,8 +2058,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				/* skip embryonic processes */
 				continue;
 			if (kauth_authorize_process(l->l_proc->p_cred,
-			    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
-			    NULL, NULL) != 0)
+			    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2143,8 +2140,8 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 static int
 sysctl_doeproc(SYSCTLFN_ARGS)
 {
-	struct eproc eproc;
-	struct kinfo_proc2 kproc2;
+	struct eproc *eproc;
+	struct kinfo_proc2 *kproc2;
 	struct kinfo_proc *dp;
 	struct proc *p;
 	const struct proclist_desc *pd;
@@ -2182,6 +2179,13 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
+	if (type == KERN_PROC) {
+		eproc = malloc(sizeof(*eproc), M_TEMP, M_WAITOK);
+		kproc2 = NULL;
+	} else {
+		eproc = NULL;
+		kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
+	}
 	proclist_lock_read();
 
 	pd = proclists;
@@ -2194,8 +2198,7 @@ again:
 			continue;
 
 		if (kauth_authorize_process(l->l_proc->p_cred,
-		    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
-		    NULL, NULL) != 0)
+		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 			continue;
 
 		/*
@@ -2265,13 +2268,13 @@ again:
 		}
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
-				fill_eproc(p, &eproc);
+				fill_eproc(p, eproc);
 				error = copyout(p, &dp->kp_proc,
 				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
-				error = copyout(&eproc, &dp->kp_eproc,
-				    sizeof(eproc));
+				error = copyout(eproc, &dp->kp_eproc,
+				    sizeof(*eproc));
 				if (error)
 					goto cleanup;
 				dp++;
@@ -2280,13 +2283,13 @@ again:
 			needed += sizeof(struct kinfo_proc);
 		} else { /* KERN_PROC2 */
 			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc2(p, &kproc2);
+				fill_kproc2(p, kproc2);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
 				 */
-				error = copyout(&kproc2, dp2,
-				    min(sizeof(kproc2), elem_size));
+				error = copyout(kproc2, dp2,
+				    min(sizeof(*kproc2), elem_size));
 				if (error)
 					goto cleanup;
 				dp2 += elem_size;
@@ -2306,16 +2309,27 @@ again:
 			*oldlenp = (char *)dp - where;
 		else
 			*oldlenp = dp2 - where;
-		if (needed > *oldlenp)
-			return (ENOMEM);
+		if (needed > *oldlenp) {
+			error = ENOMEM;
+			goto out;
+		}
 	} else {
 		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
 	}
-	return (0);
+	if (kproc2)
+		free(kproc2, M_TEMP);
+	if (eproc)
+		free(eproc, M_TEMP);
+	return 0;
  cleanup:
 	proclist_unlock_read();
-	return (error);
+ out:
+	if (kproc2)
+		free(kproc2, M_TEMP);
+	if (eproc)
+		free(eproc, M_TEMP);
+	return error;
 }
 
 /*
@@ -2366,9 +2380,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	if (kauth_authorize_process(l->l_proc->p_cred,
-	    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred, NULL, NULL) != 0) {
-		error = EPERM;
+	error = kauth_authorize_process(l->l_proc->p_cred,
+	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+	if (error) {
 		goto out_locked;
 	}
 
@@ -2597,25 +2611,29 @@ static int
 sysctl_security_setidcorename(SYSCTLFN_ARGS)
 {
 	int error;
-	char newsetidcorename[MAXPATHLEN];
+	char *newsetidcorename;
 	struct sysctlnode node;
 
+	newsetidcorename = PNBUF_GET();
 	node = *rnode;
-	node.sysctl_data = &newsetidcorename[0];
+	node.sysctl_data = newsetidcorename;
 	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (securelevel > 0)
-		return (EPERM);
-
-	if (strlen(newsetidcorename) == 0)
-		return (EINVAL);
-
+	if (error || newp == NULL) {
+		goto out;
+	}
+	if (securelevel > 0) {
+		error = EPERM;
+		goto out;
+	}
+	if (strlen(newsetidcorename) == 0) {
+		error = EINVAL;
+		goto out;
+	}
 	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
-
-	return (0);
+out:
+	PNBUF_PUT(newsetidcorename);
+	return error;
 }
 
 /*

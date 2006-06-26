@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.10 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: piix.c,v 1.10.8.1 2006/06/26 12:44:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.10 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.10.8.1 2006/06/26 12:44:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,19 @@ piix_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 	*ptagp = &piix_pci_icu;
 	*phandp = ph;
 	return (0);
+}
+
+void
+piix_uninit(pciintr_icu_handle_t v)
+{
+	struct piix_handle *ph = v;
+
+	if (ph == NULL)
+		return;
+
+	bus_space_unmap(ph->ph_iot, ph->ph_elcr_ioh, PIIX_REG_ELCR_SIZE);
+
+	return;
 }
 
 int
