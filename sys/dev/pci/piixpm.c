@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.5 2006/06/26 17:17:20 drochner Exp $ */
+/* $NetBSD: piixpm.c,v 1.6 2006/06/26 18:21:39 drochner Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -225,9 +225,8 @@ nopowermanagement:
 	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
 
 	bzero(&iba, sizeof(iba));
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
-	config_found(self, &iba, iicbus_print);
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 
 	return;
 }
