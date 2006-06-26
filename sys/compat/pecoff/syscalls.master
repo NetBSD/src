@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2006/05/29 09:44:51 drochner Exp $
+	$NetBSD: syscalls.master,v 1.19 2006/06/26 21:23:57 mrg Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -231,7 +231,7 @@
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, id_t who, int prio); }
-97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
+97	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	EXCL		{ int sys_accept(int s, caddr_t name, \

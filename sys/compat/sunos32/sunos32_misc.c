@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.37 2006/05/14 21:25:21 elad Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.38 2006/06/26 21:23:58 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.37 2006/05/14 21:25:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.38 2006/06/26 21:23:58 mrg Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1016,7 +1016,7 @@ sunos32_sys_socket(l, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = netbsd32_socket(l, v, retval);
+	error = netbsd32_sys___socket30(l, v, retval);
 	if (error)
 		return (error);
 	return sunos32_sys_socket_common(l, retval, SCARG(uap, type));
