@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.4 2006/06/22 16:49:01 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.5 2006/06/26 17:17:20 drochner Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -39,8 +39,7 @@
 #include <dev/i2c/i2cvar.h>
 
 #ifdef __HAVE_TIMECOUNTER
-#include <sys/timetc.h>
-#include <machine/bus.h>
+#include <dev/ic/acpipmtimer.h>
 #endif
 
 #ifdef PIIXPM_DEBUG
@@ -93,23 +92,6 @@ int	piixpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 
 int	piixpm_intr(void *);
 
-#ifdef __HAVE_TIMECOUNTER
-uint32_t	piixpm_get_timecount(struct timecounter *);
-
-#ifndef PIIXPM_FREQUENCY
-#define PIIXPM_FREQUENCY 3579545 /* from PIIX4 datasheet */
-#endif
-
-static struct timecounter piixpm_timecounter = {
-	piixpm_get_timecount,
-	0,
-	0xffffff,
-	PIIXPM_FREQUENCY,
-	"piixpm",
-	1000
-};
-#endif
-
 CFATTACH_DECL(piixpm, sizeof(struct piixpm_softc),
     piixpm_match, piixpm_attach, NULL, NULL);
 
@@ -145,6 +127,9 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t base, conf;
+#ifdef __HAVE_TIMECOUNTER
+	pcireg_t pmmisc;
+#endif
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 
@@ -164,9 +149,18 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF((": conf 0x%x", conf));
 
 #ifdef __HAVE_TIMECOUNTER
+	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
+	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
+		goto nopowermanagement;
+
+	/* check whether I/O access to PM regs is enabled */
+	pmmisc = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PMREGMISC);
+	if (!(pmmisc & 1))
+		goto nopowermanagement;
+
 	sc->sc_pm_iot = pa->pa_iot;
 	/* Map I/O space */
-	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE) & 0xffff;
+	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
 	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
 		aprint_error("%s: can't map power management I/O space\n",
@@ -174,13 +168,16 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		goto nopowermanagement;
 	}
 
-	aprint_normal("%s: 24-bit timer at %" PRIu64 "Hz\n",
-	    sc->sc_dev.dv_xname,
-	    piixpm_timecounter.tc_frequency);
-	piixpm_timecounter.tc_priv = sc;
-	tc_init(&piixpm_timecounter);
+	/*
+	 * Revision 0 and 1 are PIIX4, 2 is PIIX4E, 3 is PIIX4M.
+	 * PIIX4 and PIIX4E have a bug in the timer latch, see Errata #20
+	 * in the "Specification update" (document #297738).
+	 */
+	acpipmtimer_attach(&sc->sc_dev, sc->sc_pm_iot, sc->sc_pm_ioh,
+			   PIIX_PM_PMTMR,
+		(PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0 );
 
-	nopowermanagement:
+nopowermanagement:
 #endif
 
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
@@ -444,15 +441,3 @@ done:
 		wakeup(sc);
 	return (1);
 }
-
-#ifdef __HAVE_TIMECOUNTER
-uint32_t
-piixpm_get_timecount(struct timecounter *tc)
-{
-	struct piixpm_softc *sc;
-
-	sc = (struct piixpm_softc *)tc->tc_priv;
-
-	return bus_space_read_4(sc->sc_pm_iot, sc->sc_pm_ioh, PIIX_PM_PMTMR);
-}
-#endif
