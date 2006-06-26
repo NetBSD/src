@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.460 2006/06/25 05:14:36 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.461 2006/06/26 15:30:05 drochner Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -47,6 +47,7 @@ TOOLCHAIN_MISSING?=	no
 #	sh5, vax
 #
 .if \
+    ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "armeb" || \
     ${MACHINE_ARCH} == "i386" || \
