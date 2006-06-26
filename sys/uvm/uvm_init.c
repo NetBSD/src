@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.24.8.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.24.8.2 2006/06/26 12:55:08 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.24.8.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.24.8.2 2006/06/26 12:55:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ uvm_init(void)
 	 * any vm_maps because we use a pool for some map entry structures.
 	 */
 
-	link_pool_init();
+	pool_subsystem_init();
 
 	/*
 	 * init anonymous memory systems

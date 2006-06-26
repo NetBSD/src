@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.137.2.2 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.137.2.3 2006/06/26 12:54:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -272,6 +272,7 @@ MALLOC_DECLARE(M_MOUNT);
  * exported VFS interface (see vfssubr(9))
  */
 struct	mount *vfs_getvfs(fsid_t *);    /* return vfs given fsid */
+int	vfs_composefh(struct vnode *, fhandle_t *);
 int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */

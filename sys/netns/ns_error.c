@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.18.8.1 2006/04/11 11:55:48 yamt Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.18.8.2 2006/06/26 12:54:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.18.8.1 2006/04/11 11:55:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.18.8.2 2006/06/26 12:54:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,11 +300,10 @@ freeit:
 u_int32_t
 nstime(void)
 {
-	int s = splclock();
+	struct timeval now;
 	u_int32_t t;
 
-	t = (time.tv_sec % (24*60*60)) * 1000 + time.tv_usec / 1000;
-	splx(s);
+	t = (now.tv_sec % (24*60*60)) * 1000 + now.tv_usec / 1000;
 	return (htonl(t));
 }
 #endif
