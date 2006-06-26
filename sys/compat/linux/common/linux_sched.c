@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.31 2006/06/25 16:15:39 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.32 2006/06/26 07:42:00 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.31 2006/06/25 16:15:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.32 2006/06/26 07:42:00 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -407,6 +407,7 @@ linux_sys_exit_group(l, v, retval)
 	struct linux_sys_exit_group_args /* {
 		syscallarg(int) error_code;
 	} */ *uap = v;
+#ifdef LINUX_NPTL
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
 	struct linux_emuldata *e;
@@ -475,6 +476,7 @@ linux_sys_exit_group(l, v, retval)
 		}
 	}
 	SCHED_UNLOCK(s);
+#endif /* LINUX_NPTL */
 
 	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
 	/* NOTREACHED */
