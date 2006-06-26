@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.634 2006/06/25 03:02:19 mrg Exp $
+# $NetBSD: mi,v 1.635 2006/06/26 19:50:56 mrg Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -916,7 +916,7 @@
 ./usr/libexec/postfix/smtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/smtpd			base-postfix-bin	postfix
 ./usr/libexec/postfix/spawn			base-postfix-bin	postfix
-./usr/libexec/postfix/tlsmgr			base-postfix-bin	postfix
+./usr/libexec/postfix/tlsmgr			base-postfix-bin	postfix,crypto
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin	postfix
 ./usr/libexec/postfix/verify			base-postfix-bin	postfix
 ./usr/libexec/postfix/virtual			base-postfix-bin	postfix

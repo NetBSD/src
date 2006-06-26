@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/02/19 16:55:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2006/06/26 19:50:57 mrg Exp $
 
 NOOBJ=	# defined
 
@@ -6,7 +6,7 @@ NOOBJ=	# defined
 
 SUBDIR= client server
 
-.if ${MKSHARE} != "no"
+.if ${MKSHARE} != "no" && ${MKCRYPTO} != "no"
 FILES=	README
 FILESDIR=/usr/share/examples/racoon/roadwarrior
 .endif

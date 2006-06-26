@@ -1,6 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2004/05/16 09:53:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2006/06/26 19:50:57 mrg Exp $
+
+.include <bsd.own.mk>
+
+.if ${MKCRYPTO} != "no"
 
 CONFIGFILES=	ssh_known_hosts
 FILESDIR=	/etc/ssh
+
+.endif
 
 .include <bsd.prog.mk>
