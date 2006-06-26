@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.3 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.4 2006/06/26 18:21:38 drochner Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.
@@ -134,9 +134,8 @@ gpiic_attach(struct device *parent, struct device *self, void *args)
 	bus_space_write_1(sc->sc_bust, sc->sc_bush, IIC_DIRECTCNTL,
 	    IIC_DIRECTCNTL_SCC | IIC_DIRECTCNTL_SDAC);
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
+	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 static int

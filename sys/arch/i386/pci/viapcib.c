@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.2 2006/03/17 19:52:35 xtraeme Exp $ */
+/* $NetBSD: viapcib.c,v 1.3 2006/06/26 18:21:38 drochner Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2 2006/03/17 19:52:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.3 2006/06/26 18:21:38 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,7 +220,6 @@ core_pcib:
 		viapcib_smbus_write(sc, SMBSLVCNT, b & ~1);
 
 		memset(&sc->sc_i2c, 0, sizeof(sc->sc_i2c));
-		iba.iba_name = "iic";
 #ifdef I2C_TYPE_SMBUS
 		iba.iba_type = I2C_TYPE_SMBUS;
 #endif
@@ -230,7 +229,7 @@ core_pcib:
 		iba.iba_tag->ic_release_bus = viapcib_release_bus;
 		iba.iba_tag->ic_exec = viapcib_exec;
 
-		config_found(&sc->sc_dev, &iba, iicbus_print);
+		config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 	}
 
 	return;
