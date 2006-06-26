@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: powerpc-be-elf.inc,v 1.1.2.2 2006/04/11 11:53:53 yamt Exp $
+# $Id: powerpc-be-elf.inc,v 1.1.2.3 2006/06/26 12:46:42 yamt Exp $
 #
 
 #
@@ -61,7 +61,12 @@ STRIP=	${TOOLPREFIX}strip
 OBJCOPY=${TOOLPREFIX}objcopy
 NM=	${TOOLPREFIX}nm
 
+#
+# Force register read/write operations to go through a function.
+#
+AH_REGOPS_FUNC=1
+
 LDOPTS=	-EB
-COPTS+=	-DAH_BYTE_ORDER=AH_BIG_ENDIAN -DAH_REGOPS_FUNC
+COPTS+=	-DAH_BYTE_ORDER=AH_BIG_ENDIAN
 COPTS+= -mbig-endian
 COPTS+= -msoft-float -ffixed-r2

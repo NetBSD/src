@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.262.2.4 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.262.2.5 2006/06/26 12:52:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,15 +71,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.4 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.5 2006/06/26 12:52:56 yamt Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_sysv.h"
-#include "opt_multiprocessor.h"
-#include "opt_pipe.h"
-#include "opt_syscall_debug.h"
-#include "opt_posix.h"
 #include "opt_kcont.h"
+#include "opt_multiprocessor.h"
+#include "opt_ntp.h"
+#include "opt_pipe.h"
+#include "opt_posix.h"
+#include "opt_syscall_debug.h"
+#include "opt_sysv.h"
 #include "opt_verified_exec.h"
 
 #include "rnd.h"
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.4 2006/05/24 10:58:40 yamt Exp
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kcont.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -174,7 +176,9 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
-struct	timeval boottime;
+#ifndef __HAVE_TIMECOUNTER
+struct timeval boottime;
+#endif
 time_t	rootfstime;			/* recorded root fs time, if known */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
@@ -192,6 +196,9 @@ void main(void);
 void
 main(void)
 {
+#ifdef __HAVE_TIMECOUNTER
+	struct timeval time;
+#endif
 	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -221,6 +228,8 @@ main(void)
 	KERNEL_LOCK_INIT();
 
 	uvm_init();
+
+	kmem_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
@@ -283,6 +292,14 @@ main(void)
 		desiredvnodes = usevnodes;
 #endif
 	vfsinit();
+
+
+#ifdef __HAVE_TIMECOUNTER
+	inittimecounter();
+#ifdef NTP
+	ntp_init();
+#endif
+#endif /* __HAVE_TIMECOUNTER */
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -444,9 +461,15 @@ main(void)
 	 */
 	proclist_lock_read();
 	s = splsched();
+#ifdef __HAVE_TIMECOUNTER
+	getmicrotime(&time);
+#else
+	mono_time = time;
+#endif
+	boottime = time;
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & P_MARKER) == 0);
-		p->p_stats->p_start = mono_time = boottime = time;
+		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_cpu != NULL)
 				l->l_cpu->ci_schedstate.spc_runtime = time;

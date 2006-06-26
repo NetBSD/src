@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.51.2.2 2006/05/24 10:58:41 yamt Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.51.2.3 2006/06/26 12:52:56 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.2.2 2006/05/24 10:58:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.2.3 2006/06/26 12:52:56 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -931,7 +931,7 @@ systrace_seteuid(struct proc *p,  uid_t euid)
 	/*
 	 * Copy credentials so other references do not see our changes.
 	 */
-	pc = kauth_cred_copy(pc);
+	pc = p->p_cred = kauth_cred_copy(pc);
 	kauth_cred_seteuid(pc, euid);
 	p_sugid(p);
 
@@ -952,7 +952,7 @@ systrace_setegid(struct proc *p,  gid_t egid)
 	/*
 	 * Copy credentials so other references do not see our changes.
 	 */
-	pc = kauth_cred_copy(pc);
+	pc = p->p_cred = kauth_cred_copy(pc);
 	kauth_cred_setegid(pc, egid);
 	p_sugid(p);
 

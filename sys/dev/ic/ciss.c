@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.1.8.3 2006/05/24 10:57:41 yamt Exp $	*/
+/*	$NetBSD: ciss.c,v 1.1.8.4 2006/06/26 12:51:01 yamt Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.1.8.3 2006/05/24 10:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.1.8.4 2006/06/26 12:51:01 yamt Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -579,7 +579,6 @@ ciss_done(struct ciss_ccb *ccb)
 
 	if (xs) {
 		xs->resid = 0;
-		xs->xs_status |= XS_STS_DONE;
 		CISS_DPRINTF(CISS_D_CMD, ("scsipi_done(%p) ", xs));
 		scsipi_done(xs);
 	}

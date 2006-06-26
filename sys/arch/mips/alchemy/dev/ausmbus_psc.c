@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.3.4.3 2006/04/01 12:06:21 yamt Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.3.4.4 2006/06/26 12:44:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.3.4.3 2006/04/01 12:06:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.3.4.4 2006/06/26 12:44:54 yamt Exp $");
 
 #include "locators.h"
 
@@ -87,8 +87,10 @@ static int	ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 /* subroutine functions for i2c_controller */
 static int	ausmbus_receive_1(struct ausmbus_softc *, uint8_t *);
 static int	ausmbus_read_1(struct ausmbus_softc *, uint8_t, uint8_t *);
+static int	ausmbus_read_2(struct ausmbus_softc *, uint8_t, uint16_t *);
 static int	ausmbus_send_1(struct ausmbus_softc *, uint8_t);
 static int	ausmbus_write_1(struct ausmbus_softc *, uint8_t, uint8_t);
+static int	ausmbus_write_2(struct ausmbus_softc *, uint8_t, uint16_t);
 static int	ausmbus_wait_mastertx(struct ausmbus_softc *sc);
 static int	ausmbus_wait_masterrx(struct ausmbus_softc *sc);
 static int	ausmbus_initiate_xfer(void *, i2c_addr_t, int);
@@ -214,35 +216,42 @@ ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 {
 	struct ausmbus_softc *sc  = (struct ausmbus_softc *)cookie;
 	const uint8_t *cmd = vcmd;
-	uint8_t *buf = vbuf;
 
 	sc->sc_smbus_slave_addr  = addr;
 
 	/* Receive byte */
 	if ((I2C_OP_READ_P(op)) && (cmdlen == 0) && (buflen == 1)) {
-		return ausmbus_receive_1(sc, buf);
+		return ausmbus_receive_1(sc, (uint8_t *)vbuf);
 	}
 
 	/* Read byte */
 	if ((I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-		return ausmbus_read_1(sc, *cmd, buf);
+		return ausmbus_read_1(sc, *cmd, (uint8_t *)vbuf);
+	}
+
+	/* Read word */
+	if ((I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 2)) {
+		return ausmbus_read_2(sc, *cmd, (uint16_t *)vbuf);
 	}
 
 	/* Send byte */
 	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1)) {
-		return ausmbus_send_1(sc, *buf);
+		return ausmbus_send_1(sc, *((uint8_t *)vbuf));
 	}
 
 	/* Write byte */
 	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-		return ausmbus_write_1(sc, *cmd, *buf);
+		return ausmbus_write_1(sc, *cmd, *((uint8_t *)vbuf));
+	}
+
+	/* Write word */
+	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 1) && (buflen == 2)) {
+		return ausmbus_write_2(sc, *cmd, *((uint16_t *)vbuf));
 	}
 
 	/*
 	 * XXX: TODO Please Support other protocols defined in SMBus 2.0 
 	 * - Quick Command
-	 * - Write word
-	 * - Read word
 	 * - Process call
 	 * - Block write/read
 	 * - Clock write-block read process cal
@@ -298,6 +307,42 @@ ausmbus_read_1(struct ausmbus_softc *sc, uint8_t cmd, uint8_t *vp)
 }
 
 static int
+ausmbus_read_2(struct ausmbus_softc *sc, uint8_t cmd, uint16_t *vp)
+{
+	int error;
+	uint8_t high, low;
+
+	error = ausmbus_initiate_xfer(sc, sc->sc_smbus_slave_addr, I2C_F_WRITE);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_write_byte(sc, cmd, I2C_F_READ);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_initiate_xfer(sc, sc->sc_smbus_slave_addr, I2C_F_READ);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_read_byte(sc, &low, 0);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_read_byte(sc, &high, I2C_F_STOP);
+	if (error != 0) {
+		return error;
+	}
+
+	*vp = (high << 8) | low;
+
+	return 0;
+}
+
+static int
 ausmbus_send_1(struct ausmbus_softc *sc, uint8_t val)
 {
 	int error;
@@ -331,6 +376,38 @@ ausmbus_write_1(struct ausmbus_softc *sc, uint8_t cmd, uint8_t val)
 	}
 
 	error = ausmbus_write_byte(sc, val, I2C_F_STOP);
+	if (error != 0) {
+		return error;
+	}
+
+	return 0;
+}
+
+static int
+ausmbus_write_2(struct ausmbus_softc *sc, uint8_t cmd, uint16_t val)
+{
+	int error;
+	uint8_t high, low;
+
+	high = (val >> 8) & 0xff;
+	low = val & 0xff;
+
+	error = ausmbus_initiate_xfer(sc, sc->sc_smbus_slave_addr, I2C_F_WRITE);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_write_byte(sc, cmd, 0);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_write_byte(sc, low, 0);
+	if (error != 0) {
+		return error;
+	}
+
+	error = ausmbus_write_byte(sc, high, I2C_F_STOP);
 	if (error != 0) {
 		return error;
 	}

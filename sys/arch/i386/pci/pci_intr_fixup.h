@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.h,v 1.8 2006/01/01 12:12:44 xtraeme Exp $	*/
+/*	$NetBSD: pci_intr_fixup.h,v 1.8.6.1 2006/06/26 12:44:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -71,3 +71,7 @@ int	amd756_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
 int	ali1543_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+/*
+ * Uninit functions for our known PCI ICUs.
+ */
+void	piix_uninit(pciintr_icu_handle_t);

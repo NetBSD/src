@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.57 2005/12/11 12:16:03 christos Exp $
+#	$NetBSD: Makefile,v 1.57.8.1 2006/06/26 12:44:21 yamt Exp $
 
 SUBDIR=	altq arch compat crypto dev fs miscfs \
-	net net80211 netatalk netccitt netipsec netinet netinet6 \
+	net net80211 netatalk netbt netccitt netipsec netinet netinet6 \
         netisdn netiso netkey netnatm netns netsmb \
 	nfs opencrypto sys ufs uvm
 

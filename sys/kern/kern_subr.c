@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.128.2.3 2006/04/01 12:07:39 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.128.2.4 2006/06/26 12:52:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,13 +86,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128.2.3 2006/04/01 12:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128.2.4 2006/06/26 12:52:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

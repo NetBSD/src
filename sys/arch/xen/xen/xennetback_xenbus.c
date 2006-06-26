@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.1.2.2 2006/05/24 10:57:23 yamt Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.1.2.3 2006/06/26 12:45:40 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -119,8 +119,6 @@ struct xnetback_instance {
 	grant_handle_t xni_rx_ring_handle;
 	vaddr_t xni_tx_ring_va; /* to unmap the ring */
 	vaddr_t xni_rx_ring_va;
-	vaddr_t xni_tx_pkt_map; /* XXX hack for receive path */
-
 };
 #define xni_if    xni_ec.ec_if
 #define xni_bpf   xni_if.if_bpf
@@ -191,17 +189,7 @@ struct _pages_pool_free {
 static inline void
 xni_pkt_unmap(struct xni_pkt *pkt, vaddr_t pkt_va)
 {
-	static gnttab_unmap_grant_ref_t op;
-	int ret;
-
-	op.host_addr = pkt_va;
-	op.dev_bus_addr = 0;
-	op.handle = pkt->pkt_handle;
-	ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-	    &op, 1);
-	if (ret)
-		panic("xni_pkt_unmap: unmap failed");
-	// uvm_km_free(kernel_map, pkt_va, PAGE_SIZE, UVM_KMF_VAONLY);
+	xen_shm_unmap(pkt_va, 1, &pkt->pkt_handle);
 	pool_put(&xni_pkt_pool, pkt);
 }
 
@@ -255,13 +243,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	int i, err;
 
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "frontend-id", &domid)) != 0) {
+	    "frontend-id", &domid, 10)) != 0) {
 		aprint_error("xvif: can' read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "handle", &handle)) != 0) {
+	    "handle", &handle, 10)) != 0) {
 		aprint_error("xvif: can' read %s/handle: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
@@ -349,8 +337,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
-	xneti->xni_tx_pkt_map = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
 	return 0;
 fail:
 	free(xneti, M_DEVBUF);
@@ -404,9 +390,6 @@ xennetback_xenbus_destroy(void *arg)
 	    PAGE_SIZE, UVM_KMF_VAONLY);
 	uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
 	    PAGE_SIZE, UVM_KMF_VAONLY);
-	uvm_km_free(kernel_map, xneti->xni_tx_pkt_map,
-	    PAGE_SIZE, UVM_KMF_VAONLY); /* XXX */
-
 	free(xneti, M_DEVBUF);
 	return 0;
 }
@@ -433,21 +416,21 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateConnected:
 		/* read comunication informations */
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "tx-ring-ref", &tx_ring_ref);
+		    "tx-ring-ref", &tx_ring_ref, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/tx-ring-ref",
 			    xbusd->xbusd_otherend);
 			break;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "rx-ring-ref", &rx_ring_ref);
+		    "rx-ring-ref", &rx_ring_ref, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/rx-ring-ref",
 			    xbusd->xbusd_otherend);
 			break;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "event-channel", &revtchn);
+		    "event-channel", &revtchn, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
 			    xbusd->xbusd_otherend);
@@ -456,13 +439,19 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		/* allocate VA space and map rings */
 		xneti->xni_tx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
-		if (xneti->xni_tx_ring_va == 0)
+		if (xneti->xni_tx_ring_va == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get VA for tx ring", xbusd->xbusd_otherend);
 			break;
+		}
 		tx_ring = (void *)xneti->xni_tx_ring_va;
 		xneti->xni_rx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
-		if (xneti->xni_rx_ring_va == 0)
+		if (xneti->xni_rx_ring_va == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get VA for rx ring", xbusd->xbusd_otherend);
 			goto err1;
+		}
 		rx_ring = (void *)xneti->xni_rx_ring_va;
 		op.host_addr = xneti->xni_tx_ring_va;
 		op.flags = GNTMAP_host_map;
@@ -622,7 +611,6 @@ xennetback_evthandler(void *arg)
 	vaddr_t pkt_va;
 	struct mbuf *m;
 	int receive_pending, err;
-	gnttab_map_grant_ref_t op;
 	RING_IDX req_cons;
 
 	XENPRINTF(("xennetback_evthandler "));
@@ -640,6 +628,7 @@ xennetback_evthandler(void *arg)
 		x86_lfence();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq->size));
+		req_cons++;
 		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 		    (IFF_UP | IFF_RUNNING))) {
 			/* interface not up, drop */
@@ -647,7 +636,6 @@ xennetback_evthandler(void *arg)
 			    NETIF_RSP_DROPPED);
 			continue;
 		}
-		req_cons++;
 		/*
 		 * Do some sanity checks, and map the packet's page.
 		 */
@@ -699,12 +687,9 @@ xennetback_evthandler(void *arg)
 			m_freem(m);
 			continue;
 		}
-#if 0
-		pkt_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_NOWAIT | UVM_KMF_VAONLY);
-#endif
-		pkt_va = xneti->xni_tx_pkt_map;
-		if (pkt_va == 0) {
+		err = xen_shm_map(1, xneti->xni_domid, &txreq->gref, &pkt_va,
+		    &pkt->pkt_handle, XSHM_RO);
+		if (__predict_false(err == ENOMEM)) {
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_DROPPED);
 			ifp->if_ierrors++;
@@ -713,17 +698,9 @@ xennetback_evthandler(void *arg)
 			continue;
 		}
 			
-
-		op.host_addr = pkt_va;
-		op.dom = xneti->xni_domid;
-		op.ref = txreq->gref;
-		op.flags = GNTMAP_host_map | GNTMAP_readonly;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-		if (err)
-			panic("HYPERVISOR_grant_table_op failed");
-		if (__predict_false(op.status)) {
+		if (__predict_false(err)) {
 			printf("%s: mapping foreing page failed: %d\n",
-			    xneti->xni_if.if_xname, op.status);
+			    xneti->xni_if.if_xname, err);
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_ERROR);
 			ifp->if_ierrors++;
@@ -732,7 +709,6 @@ xennetback_evthandler(void *arg)
 			continue;
 		}
 
-		pkt->pkt_handle = op.handle;
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh =
 			    (void*)(pkt_va + txreq->offset);
@@ -746,12 +722,13 @@ xennetback_evthandler(void *arg)
 				continue; /* packet is not for us */
 			}
 		}
-#if 0
+#ifdef notyet
+a lot of work is needed in the tcp stack to handle read-only ext storage
+so always copy for now.
 		if (((req_cons + 1) & (NET_TX_RING_SIZE - 1)) ==
 		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1))) {
-#else
-		if (1) { /* until we have a proper VA allocator */
-#endif
+#endif /* notyet */
+		if (1) {
 			/*
 			 * This is the last TX buffer. Copy the data and
 			 * ack it. Delaying it until the mbuf is
@@ -772,12 +749,14 @@ xennetback_evthandler(void *arg)
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_OKAY);
 		} else {
+
 			pkt->pkt_id = txreq->id;
 			pkt->pkt_xneti = xneti;
 
 			MEXTADD(m, pkt_va + txreq->offset,
 			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt);
 			m->m_pkthdr.len = m->m_len = txreq->size;
+			m->m_flags |= M_EXT_ROMAP;
 		}
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
@@ -1059,8 +1038,9 @@ xennetback_ifsoftstart(void *arg)
 			}
 		}
 		if (__predict_false(
-		    xneti->xni_rxring.req_cons - resp_prod ==
-		    NET_RX_RING_SIZE)) {
+		    req_prod == xneti->xni_rxring.req_cons ||
+		    xneti->xni_rxring.req_cons - resp_prod == NET_RX_RING_SIZE
+		    )) {
 			/* ring full */
 			break;
 		}

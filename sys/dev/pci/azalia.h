@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.6.6.1 2006/06/26 12:51:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define HDA_OUTPAY	0x004	/* 2 */
 #define HDA_INPAY	0x006	/* 2 */
 #define HDA_GCTL	0x008	/* 4 */
-#define		HDA_GCTL_UNSOL	0x00000080
+#define		HDA_GCTL_UNSOL	0x00000100
 #define		HDA_GCTL_FCNTRL	0x00000002
 #define		HDA_GCTL_CRST	0x00000001
 #define HDA_WAKEEN	0x00c	/* 2 */
@@ -313,9 +313,18 @@
 #define		CORB_AGM_OUTPUT		0x8000
 #define CORB_GET_CONVERTER_FORMAT	0xa00
 #define CORB_SET_CONVERTER_FORMAT	0x200
-#define CORB_GET_DIGITAL_CONVERTER_CONTROL	0xf0d
-#define CORB_SET_DIGITAL_CONVERTER_CONTROL_L	0x70d
-#define CORB_SET_DIGITAL_CONVERTER_CONTROL_H	0x70e
+#define CORB_GET_DIGITAL_CONTROL	0xf0d
+#define CORB_SET_DIGITAL_CONTROL_L	0x70d
+#define CORB_SET_DIGITAL_CONTROL_H	0x70e
+#define		CORB_DCC_DIGEN		0x01
+#define		CORB_DCC_V		0x02
+#define		CORB_DCC_VCFG		0x04
+#define		CORB_DCC_PRE		0x08
+#define		CORB_DCC_COPY		0x10
+#define		CORB_DCC_NAUDIO		0x20
+#define		CORB_DCC_PRO		0x40
+#define		CORB_DCC_L		0x80
+#define		CORB_DCC_CC(x)		((x >> 8) & 0x7f)
 #define CORB_GET_POWER_STATE		0xf05
 #define CORB_SET_POWER_STATE		0x705
 #define		CORB_PS_D0		0x0
@@ -338,8 +347,13 @@
 #define		CORB_PWC_VREF_100	0x05
 #define CORB_GET_UNSOLICITED_RESPONSE	0xf08
 #define CORB_SET_UNSOLICITED_RESPONSE	0x708
+#define		CORB_UNSOL_ENABLE	0x80
+#define		CORB_UNSOL_TAG(x)	(x & 0x3f)
 #define CORB_GET_PIN_SENSE		0xf09
+#define		CORB_PS_PRESENSE	0x80000000
+#define		CORB_PS_IMPEDANCE(x)	(x & 0x7fffffff)
 #define CORB_EXECUTE_PIN_SENSE		0x709
+#define		CORB_PS_RIGHT		0x1
 #define CORB_GET_EAPD_BTL_ENABLE	0xf0c
 #define CORB_SET_EAPD_BTL_ENABLE	0x70c
 #define CORB_GET_GPI_DATA		0xf10
@@ -446,7 +460,9 @@ typedef uint32_t corb_entry_t;
 typedef struct {
 	uint32_t resp;
 	uint32_t resp_ex;
-#define RIRB_UNSOLICITED_RESPONSE	(1 << 4)
+#define RIRB_UNSOL_TAG(resp)	((resp) >> 26)
+#define RIRB_RESP_UNSOL		(1 << 4)
+#define RIRB_RESP_CODEC(ex)	((ex) & 0xf)
 } __packed rirb_entry_t;
 
 
@@ -505,6 +521,8 @@ typedef struct {
 #define MI_TARGET_DAC		0x104
 #define MI_TARGET_ADC		0x105
 #define MI_TARGET_VOLUME	0x106
+#define MI_TARGET_SPDIF		0x107
+#define MI_TARGET_SPDIF_CC	0x108
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
@@ -513,15 +531,27 @@ typedef struct {
 
 typedef struct {
 	int nconv;
-	nid_t conv[HDA_MAX_CHANNELS];
+	nid_t conv[HDA_MAX_CHANNELS]; /* front, surround, clfe, side, ... */
 } convgroup_t;
+typedef struct {
+	int cur;
+	int ngroups;
+	convgroup_t groups[32];
+} convgroupset_t;
 
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
 	int (*init_widget)(const struct codec_t *, widget_t *, nid_t);
+	int (*mixer_init)(struct codec_t *);
+	int (*mixer_delete)(struct codec_t *);
+	int (*set_port)(struct codec_t *, mixer_ctrl_t *);
+	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
+	int (*unsol_event)(struct codec_t *, int);
 
 	struct azalia_t *az;
+	uint32_t vid;		/* codec vendor/device ID */
+	uint32_t subid;		/* PCI subvendor/device ID */
 	const char *name;
 	int address;
 	int nfunctions;
@@ -532,20 +562,20 @@ typedef struct codec_t {
 				 * w[0] to w[wstart-1] are unused. */
 #define FOR_EACH_WIDGET(this, i)	for (i = (this)->wstart; i < (this)->wend; i++)
 
-	int ndacgroups;
-	convgroup_t dacgroups[32];
-	int cur_dac;		/* currently selected DAC group index */
-	int nadcs;
-	nid_t adcs[32];
-	int cur_adc;		/* currently selected ADC index */
+	convgroupset_t dacs;
+	convgroupset_t adcs;
+	int running;
 
 	int nmixers, maxmixers;
 	mixer_item_t *mixers;
 
-	struct audio_format* formats;
+	struct audio_format *formats;
 	int nformats;
 	struct audio_encoding_set *encodings;
+
+	uint32_t *extra;
 } codec_t;
 
 
-int	azalia_codec_init_vtbl(codec_t *, uint32_t);
+int	azalia_codec_init_vtbl(codec_t *);
+int	azalia_codec_construct_format(codec_t *, int, int);

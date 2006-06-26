@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3.8.1 2006/05/24 10:56:57 yamt Exp $ */
+/*	$NetBSD: extintr.c,v 1.3.8.2 2006/06/26 12:44:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -336,9 +336,9 @@ intr_calculatemasks(void)
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_VM] |= imask[IPL_TTY];
 
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,

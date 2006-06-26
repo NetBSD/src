@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_event.c,v 1.25.8.1 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.8.2 2006/06/26 12:52:56 yamt Exp $	*/
+
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.8.1 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.8.2 2006/06/26 12:52:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,10 +924,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			error = EINVAL;
 			goto done;
 		}
-		s = splclock();
-		timeradd(&atv, &time, &atv);	/* calc. time to wait until */
-		splx(s);
-		timeout = hzto(&atv);
+		timeout = tvtohz(&atv);
 		if (timeout <= 0)
 			timeout = -1;		/* do poll */
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tyneisabr.c,v 1.8.8.1 2006/05/24 10:56:34 yamt Exp $	*/
+/*	$NetBSD: tyneisabr.c,v 1.8.8.2 2006/06/26 12:44:22 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.8.8.1 2006/05/24 10:56:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.8.8.2 2006/06/26 12:44:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ tyneisabrattach(struct device *parent, struct device *self, void *aux)
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 
 	_bus_dma_tag_init(&sc->sc_dmat); /* XXX dedicated bounce mem */
-	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, 2);
+	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, ARC_INTPRI_PCIISA);
 
 	isabrattach(sc);
 }

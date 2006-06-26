@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlgreg.h,v 1.1.8.2 2006/05/24 10:56:46 yamt Exp $	*/
+/*	$NetBSD: hdlgreg.h,v 1.1.8.3 2006/06/26 12:44:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Kimihiro Nonaka
@@ -109,9 +109,13 @@
 #define	HDLG_INTEN		(HDLG_PLD + 0x03)
 #define		INTEN_PWRSW		0x01
 #define		INTEN_BUTTON		0x02
+#define		INTEN_RTC		0x40
 #define	HDLG_PWRMNG		(HDLG_PLD + 0x04)
 #define		PWRMNG_POWOFF		0x01
 #define		PWRMNG_RESET		0x02
+#define	HDLG_FANCTRL		(HDLG_PLD + 0x06)
+#define		FANCTRL_OFF		0x00
+#define		FANCTRL_ON		0x01
 
 #define	hdlg_enable_pldintr(bit) \
 do { \

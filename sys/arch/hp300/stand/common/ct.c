@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ct.c,v 1.5.8.1 2006/06/26 12:44:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@ int
 ctinit(int ctlr, int unit)
 {
 	struct ct_softc *rs = &ct_softc[ctlr][unit];
-	u_char stat;
+	uint8_t stat;
 
 	if (hpibrecv(ctlr, unit, C_QSTAT, &stat, 1) != 1 || stat)
 		return 0;
@@ -98,7 +98,7 @@ ctinit(int ctlr, int unit)
 	ct_ssmc.refm = REF_MASK;
 	ct_ssmc.aefm = AEF_MASK;
 	ct_ssmc.iefm = IEF_MASK;
-	hpibsend(ctlr, unit, C_CMD, (char *)&ct_ssmc, sizeof(ct_ssmc));
+	hpibsend(ctlr, unit, C_CMD, (uint8_t *)&ct_ssmc, sizeof(ct_ssmc));
 	hpibswait(ctlr, unit);
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	rs->sc_alive = 1;
@@ -109,7 +109,7 @@ int
 ctident(int ctlr, int unit)
 {
 	struct ct_describe desc;
-	u_char stat, cmd[3];
+	uint8_t stat, cmd[3];
 	char name[7];
 	int id, i;
 
@@ -133,7 +133,7 @@ ctident(int ctlr, int unit)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, unit, C_EXEC, (char *)&desc, 37);
+	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&desc, 37);
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	memset(name, 0, sizeof(name));
 	if (!stat) {
@@ -220,10 +220,10 @@ ctstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
     size_t *rsize)
 {
 	struct ct_softc *rs = devdata;
-	char *buf = v_buf;
+	uint8_t *buf = v_buf;
 	int ctlr = rs->sc_ctlr;
 	int unit = rs->sc_unit;
-	char stat;
+	uint8_t stat;
 
 	if (size == 0 && (func == F_READ || func == F_WRITE))
 		return 0;
@@ -259,7 +259,7 @@ top:
 		size = 0;
 	}
 retry:
-	hpibsend(ctlr, unit, C_CMD, (char *)&ct_ioc, sizeof(ct_ioc));
+	hpibsend(ctlr, unit, C_CMD, (uint8_t *)&ct_ioc, sizeof(ct_ioc));
 	if (func != MTREW) {
 		hpibswait(ctlr, unit);
 		hpibgo(ctlr, unit, C_EXEC, buf, size,
@@ -292,14 +292,14 @@ int
 cterror(int ctlr, int unit)
 {
 	struct ct_softc *rs = &ct_softc[ctlr][unit];
-	char stat;
+	uint8_t stat;
 
 	memset(&ct_rsc, 0, sizeof(ct_rsc));
 	memset(&ct_stat, 0, sizeof(ct_stat));
 	ct_rsc.unit = C_SUNIT(rs->sc_punit);
 	ct_rsc.cmd = C_STATUS;
-	hpibsend(ctlr, unit, C_CMD, (char *)&ct_rsc, sizeof(ct_rsc));
-	hpibrecv(ctlr, unit, C_EXEC, (char *)&ct_stat, sizeof(ct_stat));
+	hpibsend(ctlr, unit, C_CMD, (uint8_t *)&ct_rsc, sizeof(ct_rsc));
+	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&ct_stat, sizeof(ct_stat));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
 		printf("ct%d: request status fail %d\n", unit, stat);

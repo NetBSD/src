@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.116.2.2 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.116.2.3 2006/06/26 12:52:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116.2.2 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116.2.3 2006/06/26 12:52:57 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -127,20 +127,12 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 
 #endif /* SOSEND_COUNTERS */
 
-void
-soinit(void)
-{
-
-	/* Set the initial adjusted socket buffer size. */
-	if (sb_max_set(sb_max))
-		panic("bad initial sb_max value: %lu", sb_max);
-
-}
+static struct callback_entry sokva_reclaimerentry;
 
 #ifdef SOSEND_NO_LOAN
-int use_sosend_loan = 0;
+int sock_loan_thresh = -1;
 #else
-int use_sosend_loan = 1;
+int sock_loan_thresh = 4096;
 #endif
 
 static struct simplelock so_pendfree_slock = SIMPLELOCK_INITIALIZER;
@@ -153,7 +145,6 @@ int somaxkva = SOMAXKVA;
 static int socurkva;
 static int sokvawaiters;
 
-#define	SOCK_LOAN_THRESH	4096
 #define	SOCK_LOAN_CHUNK		65536
 
 static size_t sodopendfree(void);
@@ -440,6 +431,32 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	return (space);
 }
 
+static int
+sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+{
+
+	KASSERT(ce == &sokva_reclaimerentry);
+	KASSERT(obj == NULL);
+
+	sodopendfree();
+	if (!vm_map_starved_p(kernel_map)) {
+		return CALLBACK_CHAIN_ABORT;
+	}
+	return CALLBACK_CHAIN_CONTINUE;
+}
+
+void
+soinit(void)
+{
+
+	/* Set the initial adjusted socket buffer size. */
+	if (sb_max_set(sb_max))
+		panic("bad initial sb_max value: %lu", sb_max);
+
+	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
+	    &sokva_reclaimerentry, NULL, sokva_reclaim_callback);
+}
+
 /*
  * Socket operation routines.
  * These routines are called by the routines in
@@ -460,7 +477,16 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 		prp = pffindproto(dom, proto, type);
 	else
 		prp = pffindtype(dom, type);
-	if (prp == 0 || prp->pr_usrreq == 0)
+	if (prp == 0) {
+		/* no support for domain */
+		if (pffinddomain(dom) == 0)
+			return (EAFNOSUPPORT);
+		/* no support for socket type */
+		if (proto == 0 && type != 0)
+			return (EPROTOTYPE);
+		return (EPROTONOSUPPORT);
+	}
+	if (prp->pr_usrreq == 0)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
@@ -826,9 +852,9 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					mlen = MLEN;
 				}
 				MCLAIM(m, so->so_snd.sb_mowner);
-				if (use_sosend_loan &&
-				    uio->uio_iov->iov_len >= SOCK_LOAN_THRESH &&
-				    space >= SOCK_LOAN_THRESH &&
+				if (sock_loan_thresh >= 0 &&
+				    uio->uio_iov->iov_len >= sock_loan_thresh &&
+				    space >= sock_loan_thresh &&
 				    (len = sosend_loan(so, uio, m,
 						       space)) != 0) {
 					SOSEND_COUNTER_INCR(&sosend_loan_big);

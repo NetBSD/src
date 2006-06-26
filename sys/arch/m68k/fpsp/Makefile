@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.8.1 2006/04/11 11:53:43 yamt Exp $
+#	$NetBSD: Makefile,v 1.12.8.2 2006/06/26 12:44:54 yamt Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -36,7 +36,8 @@
 #	Makefile for 68040 Floating Point Software Package
 #
 
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.prog.mk>
+#.include <bsd.sys.mk>		# for HOST_SH
 
 TARGET = fpsp
 
@@ -76,9 +77,9 @@ SYS		= GCC
 PREFIX		= L_
 
 .sa.s:
-	${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
+	SED=${TOOL_SED:Q} ${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .h.defs:
-	${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
+	SED=${TOOL_SED:Q} ${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .s.o:
 	${CC} ${AFLAGS} ${CPPFLAGS} -c -o ${.TARGET} ${.IMPSRC}
 

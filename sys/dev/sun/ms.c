@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.30.8.1 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: ms.c,v 1.30.8.2 2006/06/26 12:52:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30.8.1 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30.8.2 2006/06/26 12:52:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ ms_input(ms, c)
 		d = to_one[d - 1];		/* from 1..7 to {1,2,4} */
 		fe->id = to_id[d - 1];		/* from {1,2,4} to ID */
 		fe->value = mb & d ? VKEY_DOWN : VKEY_UP;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ub ^= d;
 	}
@@ -380,7 +380,7 @@ ms_input(ms, c)
 		NEXT;
 		fe->id = LOC_X_DELTA;
 		fe->value = ms->ms_dx;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dx = 0;
 	}
@@ -388,7 +388,7 @@ ms_input(ms, c)
 		NEXT;
 		fe->id = LOC_Y_DELTA;
 		fe->value = ms->ms_dy;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dy = 0;
 	}

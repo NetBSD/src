@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.53 2005/12/11 12:16:38 christos Exp $
+#	$NetBSD: files.arc,v 1.53.8.1 2006/06/26 12:44:22 yamt Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -70,7 +70,7 @@ file	arch/arc/arc/machdep.c
 #file	arch/arc/arc/minidebug.c
 file	arch/arc/arc/timer.c
 file	arch/arc/arc/todclock.c
-file	arch/arc/arc/arc_trap.c
+file	arch/arc/arc/interrupt.c
 file	arch/arc/arc/bus_space.c
 file	arch/arc/arc/bus_space_sparse.c
 file	arch/arc/arc/bus_space_large.c
@@ -124,13 +124,14 @@ file	arch/arc/jazz/bus_dma_jazz.c	# XXX jazzio
 define	isabr
 file	arch/arc/isa/isabus.c		isabr
 
+#device	jazzisabr {} : eisabus, isabus, isabr
 device	jazzisabr {} : isabus, isabr
 attach	jazzisabr at mainbus
 file	arch/arc/jazz/jazzisabr.c	jazzisabr
 
 device	arcsisabr {} : isabus, isabr	# PLATFORM_DESKTECH_ARCSTATION_I
 attach	arcsisabr at mainbus
-file	arch/arc/isa/arcsisabr.c	arcsisabr
+file	arch/arc/dti/arcsisabr.c	arcsisabr
 file	arch/arc/isa/isadma_bounce.c	arcsisabr
 
 device	tyneisabr {} : isabus, isabr	# PLATFORM_DESKTECH_TYNE
@@ -207,7 +208,9 @@ file	arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
 define	pcmcia {}			# XXX dummy decl...
 
 include	"dev/pci/files.pci"
+#include	"dev/eisa/files.eisa"
 include	"dev/isa/files.isa"
+#file	arch/arc/eisa/eisa_machdep.c	eisa
 
 #	Interval timer, must have one..
 device	timer

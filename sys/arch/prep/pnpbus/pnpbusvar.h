@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.1.2.2 2006/03/13 09:06:59 yamt Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.1.2.3 2006/06/26 12:45:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -74,8 +74,9 @@ struct pnpbus_compatid {
 #define PNPBUS_MAXDMA 2
 
 struct pnpresources {
-	int nummem, numio, numirq, numdma;
+	int nummem, numiomem, numio, numirq, numdma;
 	SIMPLEQ_HEAD(, pnpbus_mem) mem;
+	SIMPLEQ_HEAD(, pnpbus_mem) iomem;
 	SIMPLEQ_HEAD(, pnpbus_io) io;
 	SIMPLEQ_HEAD(, pnpbus_irq) irq;
 	SIMPLEQ_HEAD(, pnpbus_dma) dma;
@@ -103,6 +104,12 @@ struct pnpbus_dev_attach_args {
 	char	pna_devid[8];		/* PNP device id string */
 	PPC_DEVICE *pna_ppc_dev;	/* PNP device entry */
 	void	*pna_aux;		/* driver specific */
+	uint8_t	basetype;		/* PNP base type */
+	uint8_t subtype;		/* PNP subtype */
+	uint8_t interface;		/* PNP interface */
+	uint16_t chipid;		/* Chip identifier if any */
+	uint8_t	chipmfg0;		/* Chip vendor0 */
+	uint8_t chipmfg1;		/* chip vendor1 */
 };
 
 /*
@@ -128,6 +135,12 @@ int	pnpbus_getioport(struct pnpresources *r, int idx, int *basep,
 int	pnpbus_io_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
 	    bus_space_handle_t *hdlp);
 void	pnpbus_io_unmap(struct pnpresources *r, int idx, bus_space_tag_t tag,
+	    bus_space_handle_t hdl);
+int	pnpbus_getiomem(struct pnpresources *r, int idx, int *basep,
+	    int *sizep);
+int	pnpbus_iomem_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
+	    bus_space_handle_t *hdlp);
+void	pnpbus_iomem_unmap(struct pnpresources *r, int idx, bus_space_tag_t tag,
 	    bus_space_handle_t hdl);
 
 #endif /* _PREP_PNPBUSVAR_H_ */

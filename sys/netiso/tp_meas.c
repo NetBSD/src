@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.12 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.12.8.1 2006/06/26 12:54:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,15 +63,13 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.12 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.12.8.1 2006/06/26 12:54:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
 
 #include <netiso/argo_debug.h>
 #include <netiso/tp_meas.h>
-
-extern struct timeval time;
 
 #ifdef TP_PERF_MEAS
 int             tp_Measn = 0;
@@ -112,8 +110,7 @@ Tpmeas(u_int ref, u_int kind, struct timeval *timev, u_int seq, u_int win,
 	if (kind == TPtime_from_ll)
 		bcopy((caddr_t) timev, (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
 	else
-		bcopy((caddr_t) & time,
-		      (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
+		getmicrotime(& tpm->tpm_time);
 	tpm->tpm_seq = seq;
 	tpm->tpm_window = win;
 	tpm->tpm_size = size;

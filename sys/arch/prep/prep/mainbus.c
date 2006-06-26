@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19.8.2 2006/05/24 10:57:10 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19.8.3 2006/06/26 12:45:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.8.2 2006/05/24 10:57:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.8.3 2006/06/26 12:45:14 yamt Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -74,6 +74,9 @@ union mainbus_attach_args {
 /* There can be only one. */
 int mainbus_found = 0;
 struct prep_isa_chipset prep_isa_chipset;
+struct prep_isa_chipset *prep_ict;
+struct prep_pci_chipset *prep_pct;
+
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -96,7 +99,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	union mainbus_attach_args mba;
 	struct confargs ca;
 #if NPCI > 0
-	static struct prep_pci_chipset pc;
+	struct prep_pci_chipset_businfo *pbi;
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
@@ -121,7 +124,21 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	prep_pci_get_chipset_tag(&pc);
+	prep_pct = malloc(sizeof(struct prep_pci_chipset), M_DEVBUF, M_NOWAIT);
+	KASSERT(prep_pct != NULL);
+	prep_pci_get_chipset_tag(prep_pct);
+
+	pbi = malloc(sizeof(struct prep_pci_chipset_businfo),
+	    M_DEVBUF, M_NOWAIT);
+	KASSERT(pbi != NULL);
+	pbi->pbi_properties = prop_dictionary_create();
+        KASSERT(pbi->pbi_properties != NULL);
+
+	SIMPLEQ_INIT(&prep_pct->pc_pbi);
+	SIMPLEQ_INSERT_TAIL(&prep_pct->pc_pbi, pbi, next);
+
+	/* find the primary host bridge */
+	setup_pciintr_map(pbi, 0, 0, 0);
 
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
@@ -129,30 +146,38 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(&pc, ioext, memext, NULL, 0, CACHELINESIZE);
+	pci_configure_bus(prep_pct, ioext, memext, NULL, 0, CACHELINESIZE);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
-#endif
+#endif /* PCI_NETBSD_CONFIGURE */
+#endif /* NPCI */
 
-	mba.mba_pba.pba_iot = &prep_io_space_tag;
-	mba.mba_pba.pba_memt = &prep_mem_space_tag;
-	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
-	mba.mba_pba.pba_dmat64 = NULL;
-	mba.mba_pba.pba_pc = &pc;
-	mba.mba_pba.pba_bus = 0;
-	mba.mba_pba.pba_bridgetag = NULL;
-	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
+/* scan pnpbus first */
+#if NISA > 0
+	/* Initialize interrupt controller */
+	init_icu(lvlmask);
 #endif
-
 #if NPNPBUS > 0
-	bzero(&mba, sizeof(mba));
 	mba.mba_paa.paa_iot = &prep_isa_io_space_tag;
 	mba.mba_paa.paa_memt = &prep_isa_mem_space_tag;
 	mba.mba_paa.paa_ic = &prep_isa_chipset;
 	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
-#endif
+#endif /* NPNPBUS */
+
+#if NPCI > 0
+	bzero(&mba, sizeof(mba));
+	mba.mba_pba.pba_iot = &prep_io_space_tag;
+	mba.mba_pba.pba_memt = &prep_mem_space_tag;
+	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+	mba.mba_pba.pba_dmat64 = NULL;
+	mba.mba_pba.pba_pc = prep_pct;
+	mba.mba_pba.pba_bus = 0;
+	mba.mba_pba.pba_bridgetag = NULL;
+	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
+#endif /* NPCI */
+
 }
 
 int

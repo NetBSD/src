@@ -1,4 +1,3 @@
-#	$NetBSD: Makefile.arc.inc,v 1.14 2005/11/24 12:54:29 dbj Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.14.8.1 2006/06/26 12:44:22 yamt Exp $
 
-CFLAGS+=	-mips2
-AFLAGS+=	-mips2
+CPUFLAGS?=	-march=r4000 -mabi=32

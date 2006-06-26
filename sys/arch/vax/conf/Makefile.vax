@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.75.8.1 2006/04/11 11:53:47 yamt Exp $
+#	$NetBSD: Makefile.vax,v 1.75.8.2 2006/06/26 12:45:40 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -34,10 +34,6 @@ GENASSYM_CONF=	${VAX}/vax/genassym.cf
 CPPFLAGS+=	-D_VAX_INLINE_
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 .if ${OBJECT_FMT} == "ELF"
-.if ${HAVE_GCC} == "2"
-CFLAGS+=	-mno-asm-pic
-AFLAGS+=	-mno-asm-pic
-.endif
 .else
 CFLAGS+=	-fno-pic
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.2.1 2006/05/24 10:56:57 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.2.2 2006/06/26 12:44:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* software serial interrupt */
 #define	IPL_TTY		3	/* terminal */
-#define	IPL_IMP		3	/* memory allocation */
+#define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
 #define	IPL_HIGH	1	/* everything */
@@ -141,7 +141,7 @@ extern struct intrsource intrsources[ICU_LEN];
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_IMP])
+#define splvm()		splraise(imask[IPL_VM])
 #define splaudio()	splraise(imask[IPL_AUDIO])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()

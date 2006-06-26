@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.14.8.2 2006/05/24 10:57:53 yamt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.14.8.3 2006/06/26 12:51:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14.8.2 2006/05/24 10:57:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14.8.3 2006/06/26 12:51:20 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -249,14 +249,14 @@ unsigned int gtmpsc_poll_pollc_miss = 0;
 #define GTMPSC_CACHE_FLUSH(p)		gtmpsc_cache_flush(p)
 #define GTMPSC_CACHE_INVALIDATE(p)	gtmpsc_cache_invalidate(p)
 
-static volatile inline void
+static inline void
 gtmpsc_cache_flush(void *p)
 {
 	__asm volatile ("eieio; dcbf 0,%0; lwz %0,0(%0); sync;"
 					: "+r"(p):);
 }
 
-static volatile inline void
+static inline void
 gtmpsc_cache_invalidate(void *p)
 {
 	__asm volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
@@ -297,7 +297,7 @@ gtmpsc_cache_invalidate(void *p)
 	GT_WRITE(sc, SDMA_IMASK, __r); \
 } while (/*CONSTCOND*/ 0)
 
-static volatile inline unsigned int
+static inline unsigned int
 desc_read(unsigned int *ip)
 {
 	unsigned int rv;
@@ -307,7 +307,7 @@ desc_read(unsigned int *ip)
 	return rv;
 }
 
-static volatile inline void
+static inline void
 desc_write(unsigned int *ip, unsigned int val)
 {
 	__asm volatile ("stwx %0,0,%1; eieio;"

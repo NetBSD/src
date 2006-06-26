@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56.2.3 2006/05/24 10:57:10 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.2.4 2006/06/26 12:45:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.2.3 2006/05/24 10:57:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.2.4 2006/06/26 12:45:14 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -180,10 +180,13 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 
 	/*
 	 * Now setup fixed bat registers
+	 * We setup the memory BAT, the IO space BAT, and a special
+	 * BAT for certain machines that have rs6k style PCI bridges
 	 */
 	oea_batinit(
 	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
 	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
+	    0xbf800000, BAT_BL_8M,
 	    0);
 
 	/*

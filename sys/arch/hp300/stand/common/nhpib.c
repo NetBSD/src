@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.5.8.1 2006/06/26 12:44:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -96,7 +96,7 @@ nhpibreset(int unit)
 }
 
 int
-nhpibsend(int unit, int slave, int sec, char *buf, int cnt)
+nhpibsend(int unit, int slave, int sec, uint8_t *buf, int cnt)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct nhpibdevice *hd;
@@ -132,7 +132,7 @@ nhpibsend(int unit, int slave, int sec, char *buf, int cnt)
 }
 
 int
-nhpibrecv(int unit, int slave, int sec, char *buf, int cnt)
+nhpibrecv(int unit, int slave, int sec, uint8_t *buf, int cnt)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct nhpibdevice *hd;

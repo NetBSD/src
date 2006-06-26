@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.186.8.2 2006/05/24 10:58:24 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.186.8.3 2006/06/26 12:52:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186.8.2 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186.8.3 2006/06/26 12:52:27 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -1347,7 +1347,6 @@ stdone(struct scsipi_xfer *xs, int error)
 
 		iostat_unbusy(st->stats, bp->b_bcount,
 			     ((bp->b_flags & B_READ) == B_READ));
-
 
 #if NRND > 0
 		rnd_add_uint32(&st->rnd_source, bp->b_blkno);

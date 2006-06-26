@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.265.2.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.265.2.2 2006/06/26 12:52:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265.2.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265.2.2 2006/06/26 12:52:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2582,6 +2582,13 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 		    sizeof(sfs->f_mntfromname) - size);
 	}
 	return 0;
+}
+
+void
+vfs_timestamp(struct timespec *ts)
+{
+
+	nanotime(ts);
 }
 
 #ifdef DDB

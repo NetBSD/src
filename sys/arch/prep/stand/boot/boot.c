@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11.8.2 2006/05/24 10:57:10 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.8.3 2006/06/26 12:45:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -165,7 +165,8 @@ ret:
 #endif /* DBMONITOR */
 	printf("\nBoot: ");
 	memset(namebuf, 0, sizeof (namebuf));
-	(void)tgets(namebuf);
+	if (tgets(namebuf) == -1)
+		printf("\n");
 
 	ptr = namebuf;
 #ifdef DBMONITOR

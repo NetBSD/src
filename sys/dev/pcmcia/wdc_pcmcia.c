@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.104.6.1 2006/04/01 12:07:21 yamt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.104.6.2 2006/06/26 12:52:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.104.6.1 2006/04/01 12:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.104.6.2 2006/06/26 12:52:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,6 +161,10 @@ static const struct wdc_pcmcia_product {
 	 */
 	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "PnPIDE", NULL, NULL} }, 2 },
+
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  {"PCMCIA", "IDE CARD", NULL, NULL} }, 2 },
+
 };
 static const size_t wdc_pcmcia_nproducts =
     sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);

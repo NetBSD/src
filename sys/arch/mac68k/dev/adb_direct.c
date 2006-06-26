@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.53 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.53.8.1 2006/06/26 12:44:54 yamt Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.53 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.53.8.1 2006/06/26 12:44:54 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -2706,7 +2706,7 @@ mrg_pmintr(void)
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
 int 
-adb_read_date_time(unsigned long *time)
+adb_read_date_time(unsigned long *curtime)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
@@ -2731,7 +2731,7 @@ adb_read_date_time(unsigned long *time)
 		while (0 == flag)	/* wait for result */
 			;
 
-		*time = (long)(*(long *)(output + 1));
+		*curtime = (long)(*(long *)(output + 1));
 		return 0;
 
 	case ADB_HW_PB:
@@ -2749,7 +2749,7 @@ adb_read_date_time(unsigned long *time)
 		while (0 == flag)	/* wait for result */
 			;
 
-		*time = (long)(*(long *)(output + 1));
+		*curtime = (long)(*(long *)(output + 1));
 		return 0;
 
 	case ADB_HW_UNKNOWN:
@@ -2761,7 +2761,7 @@ adb_read_date_time(unsigned long *time)
 /* caller should really use machine-independant version: setPramTime */
 /* this version does pseudo-adb access only */
 int 
-adb_set_date_time(unsigned long time)
+adb_set_date_time(unsigned long curtime)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
@@ -2778,10 +2778,10 @@ adb_set_date_time(unsigned long time)
 		output[0] = 0x06;	/* 6 byte message */
 		output[1] = 0x01;	/* to pram/rtc device */
 		output[2] = 0x09;	/* set date/time */
-		output[3] = (u_char)(time >> 24);
-		output[4] = (u_char)(time >> 16);
-		output[5] = (u_char)(time >> 8);
-		output[6] = (u_char)(time);
+		output[3] = (u_char)(curtime >> 24);
+		output[4] = (u_char)(curtime >> 16);
+		output[5] = (u_char)(curtime >> 8);
+		output[6] = (u_char)(curtime);
 		result = send_adb_IIsi((u_char *)output, (u_char *)0,
 		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
@@ -2799,10 +2799,10 @@ adb_set_date_time(unsigned long time)
 		output[0] = 0x06;	/* 6 byte message */
 		output[1] = 0x01;	/* to pram/rtc device */
 		output[2] = 0x09;	/* set date/time */
-		output[3] = (u_char)(time >> 24);
-		output[4] = (u_char)(time >> 16);
-		output[5] = (u_char)(time >> 8);
-		output[6] = (u_char)(time);
+		output[3] = (u_char)(curtime >> 24);
+		output[4] = (u_char)(curtime >> 16);
+		output[5] = (u_char)(curtime >> 8);
+		output[6] = (u_char)(curtime);
 		result = send_adb_cuda((u_char *)output, (u_char *)0,
 		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */

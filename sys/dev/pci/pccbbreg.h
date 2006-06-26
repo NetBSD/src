@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.9.8.1 2006/05/24 10:58:01 yamt Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.9.8.2 2006/06/26 12:51:22 yamt Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -136,6 +136,11 @@
 /* PCI_BCR_INTR additional bit for Rx5C46[567] */
 #define CB_BCRI_RL_3E0_ENA 0x08000000
 #define CB_BCRI_RL_3E2_ENA 0x10000000
+
+
+/* PCI configuration register definition for Ricoh 5C475 */
+#define RICOH_PCI_MISC_CTRL	0x82
+
 
 /*
  * Special resister definition for Toshiba ToPIC95/97

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.73.8.1 2006/05/24 10:58:41 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.73.8.2 2006/06/26 12:52:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.8.1 2006/05/24 10:58:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.8.2 2006/06/26 12:52:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -194,6 +194,7 @@ disk_init0(struct disk *diskp)
 static void
 disk_attach0(struct disk *diskp)
 {
+
 	/*
 	 * Allocate and initialize the disklabel structures.  Note that
 	 * it's not safe to sleep here, since we're probably going to be

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.5 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.5.8.1 2006/06/26 12:44:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,16 +87,28 @@ wakeup_16:
 	movw	%ax,%ds
 	movw	%ax,%ss
 
-	/* The following needs to be configurable */
-#ifdef notyet
+	/* Small call stack */
+	movw	$0x1000,%sp
+
+	/* Clear flags */
+	pushl	$0
+	popfl
+
+	call	beepon
+
+	/* Only reset the VBIOS if machdep.acpi_vbios_reset=1 */
+	cmpb	$1,vbios_reset
+	jne	novbiosreset
+
 	/* Kick the VBIOS. */
-	movw	$0x1000, %sp /* Small call stack. */
 	lcall	$0xc000,$3
 
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
-#endif
+novbiosreset:
+
+	call beepoff
 
 	/* Get physical address of the code */
 	xorl	%esi,%esi
@@ -161,11 +173,15 @@ wakeup_32:
 1:	jmp	1f
 1:
 
+	nop
+
         /* Restore registers */
 	lgdt	previous_gdt(%esi)
 	lidt	previous_idt(%esi)
         lldt	previous_ldt(%esi)
+#if 0
         ltr     previous_tr(%esi)
+#endif
 
 	mov	previous_cr2(%esi),%eax
 	mov	%eax,%cr2
@@ -185,6 +201,21 @@ wakeup_32:
         movw	%ax,%ds
         jmp	*%ebx
 
+beepon:
+	movb	$0xc0,%al
+	outb	%al,$0x42
+	movb	$0x04,%al
+	outb	%al,$0x42
+	inb	$0x61,%al
+	orb	$0x3,%al
+	outb	%al,$0x61
+	ret
+
+beepoff:
+	inb	$0x61,%al
+	andb	$0xfc,%al
+	outb	%al,$0x61
+	ret
 
 	.align	8
 tmp_gdt:
@@ -222,3 +253,4 @@ previous_fs:		.word 0
 previous_gs:		.word 0
 previous_ss:		.word 0
 where_to_recover:	.long 0
+vbios_reset:		.byte 0

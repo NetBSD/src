@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.86.8.2 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.86.8.3 2006/06/26 12:52:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.8.2 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.8.3 2006/06/26 12:52:57 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -1125,7 +1125,7 @@ ptyioctl(dev, cmd, data, flag, l)
 				ttyflush(tp, FREAD|FWRITE);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
-				ttyinfo(tp);
+				ttyinfo(tp, 1);
 			TTY_UNLOCK(tp);
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);

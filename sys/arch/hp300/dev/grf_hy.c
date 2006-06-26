@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.26.8.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.26.8.2 2006/06/26 12:44:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26.8.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26.8.2 2006/06/26 12:44:23 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26.8.1 2006/04/01 12:06:13 yamt Exp $")
 
 #include <dev/cons.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/intiovar.h>
@@ -757,7 +758,6 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	caddr_t va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
-	uint8_t *dioiidev;
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
@@ -771,10 +771,9 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 		return (1);
 	}
 
-	if (scode > 132) {
-		dioiidev = (uint8_t *)va;
-		size =  ((dioiidev[0x101] + 1) * 0x100000);
-	} else
+	if (DIO_ISDIOII(scode))
+		size = DIOII_SIZE(va);
+	else
 		size = DIOCSIZE;
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);

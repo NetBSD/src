@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.40.2.2 2006/05/24 10:57:41 yamt Exp $	*/
+/*	$NetBSD: an.c,v 1.40.2.3 2006/06/26 12:51:01 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.40.2.2 2006/05/24 10:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.40.2.3 2006/06/26 12:51:01 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -321,8 +321,8 @@ an_attach(struct an_softc *sc)
 
 	ieee80211_media_init(ic, an_media_change, an_media_status);
 
-	/* 
-	 * radiotap BPF device 
+	/*
+	 * radiotap BPF device
 	 */
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -1514,7 +1514,7 @@ an_rx_intr(struct an_softc *sc)
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_ERRSTAT) ||
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
-		
+
 		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
 	}
 #endif
