@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.20 2006/06/25 13:41:58 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.21 2006/06/26 11:06:01 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.20 2006/06/25 13:41:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.21 2006/06/26 11:06:01 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,9 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.20 2006/06/25 13:41:58 kent Exp $
 	AZ_CLASS_PLAYBACK, 0, 0}, 0, 0}
 #define AZ_MIXER_SPDIF(cl, nid)	\
 	{{0, {AzaliaNdigital}, AUDIO_MIXER_SET, cl, 0, 0,		\
-	.un.s={7, {{{"v"}, CORB_DCC_V},					\
-		   {{"vcfg"}, CORB_DCC_VCFG}, {{"pre"}, CORB_DCC_PRE},	\
-		   {{"copy"}, CORB_DCC_COPY}, {{"naudio"}, CORB_DCC_NAUDIO}, \
+	.un.s={6, {{{"v"}, CORB_DCC_V},	{{"vcfg"}, CORB_DCC_VCFG},	\
+		   {{"pre"}, CORB_DCC_PRE}, {{"copy"}, CORB_DCC_COPY},	\
 		   {{"pro"}, CORB_DCC_PRO}, {{"l"}, CORB_DCC_L}}}},	\
 		    nid, MI_TARGET_SPDIF},				\
 	{{0, {AzaliaNdigital".cc"}, AUDIO_MIXER_VALUE, cl, 0, 0,	\
@@ -111,6 +110,7 @@ static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_get_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_unsol_event(codec_t *, int);
 static int	alc880_init_dacgroup(codec_t *);
+static int	alc880_mixer_init(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
 static int	alc882_mixer_init(codec_t *);
 static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
@@ -151,6 +151,7 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
 		this->init_dacgroup = alc880_init_dacgroup;
+		this->mixer_init = alc880_mixer_init;
 		break;
 	case 0x10ec0882:
 		this->name = "Realtek ALC882";
@@ -1024,7 +1025,7 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 		    0, &result);
 		if (err)
 			return err;
-		mc->un.mask = result & 0xff & ~CORB_DCC_DIGEN;
+		mc->un.mask = result & 0xff & ~(CORB_DCC_DIGEN | CORB_DCC_NAUDIO);
 	} else if (target == MI_TARGET_SPDIF_CC) {
 		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
 		    0, &result);
@@ -1293,7 +1294,7 @@ generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 	else if (target == MI_TARGET_SPDIF) {
 		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
 		    0, &result);
-		result &= CORB_DCC_DIGEN;
+		result &= CORB_DCC_DIGEN | CORB_DCC_NAUDIO;
 		result |= mc->un.mask & 0xff & ~CORB_DCC_DIGEN;
 		err = this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
 		    result, NULL);
@@ -1758,6 +1759,162 @@ alc260_unsol_event(codec_t *this, int tag)
  * Realtek ALC880
  * ---------------------------------------------------------------- */
 
+static const mixer_item_t alc880_mixer_items[] = {
+	AZ_MIXER_CLASSES,
+
+	{{0, {AudioNsurround"."AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, .un.e={5, {{{"mic1"}, 0}, {{"mic2"}, 1}, {{"line1"}, 2},
+			   {{"line2"}, 3}, {{AudioNcd}, 4}}}}, 0x08, MI_TARGET_CONNLIST},
+	{{0, {AudioNsurround"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, ENUM_OFFON}, 0x08, MI_TARGET_INAMP(0)},
+	{{0, {AudioNsurround}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(35)}}, 0x08, MI_TARGET_INAMP(0)},
+
+	{{0, {AzaliaNfront"."AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, .un.e={5, {{{"mic1"}, 0}, {{"mic2"}, 1}, {{"line1"}, 2},
+			   {{"line2"}, 3}, {{AudioNcd}, 4},
+			   {{AudioNmixerout}, 5}}}}, 0x09, MI_TARGET_CONNLIST},
+	{{0, {AzaliaNfront"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, ENUM_OFFON}, 0x08, MI_TARGET_INAMP(0)},
+	{{0, {AzaliaNfront}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(35)}}, 0x09, MI_TARGET_INAMP(0)},
+
+	{{0, {"mic1."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_INAMP(0)},
+	{{0, {"mic1"}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x0b, MI_TARGET_INAMP(0)},
+	{{0, {"mic2."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_INAMP(1)},
+	{{0, {"mic2"}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x0b, MI_TARGET_INAMP(1)},
+	{{0, {"line1."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_INAMP(2)},
+	{{0, {"line1"}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x0b, MI_TARGET_INAMP(2)},
+	{{0, {"line2."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_INAMP(3)},
+	{{0, {"line2"}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x0b, MI_TARGET_INAMP(3)},
+	{{0, {AudioNcd"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_INAMP(4)},
+	{{0, {AudioNcd}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x0b, MI_TARGET_INAMP(4)},
+	{{0, {AudioNspeaker"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_INAMP(5)},
+	{{0, {AudioNspeaker}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 1, MIXER_DELTA(65)}}, 0x0b, MI_TARGET_INAMP(5)},
+
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(64)}}, 0x0c, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNfront".dac.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0c, MI_TARGET_INAMP(0)},
+	{{0, {AzaliaNfront".mixer.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0c, MI_TARGET_INAMP(1)},
+	{{0, {AudioNsurround}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(64)}}, 0x0d, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNclfe}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(64)}}, 0x0e, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNside}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(64)}}, 0x0f, MI_TARGET_OUTAMP},
+#if 0	/* The followings are useless. */
+	{{0, {AudioNsurround".dac.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0d, MI_TARGET_INAMP(0)},
+	{{0, {AudioNsurround".mixer.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0d, MI_TARGET_INAMP(1)},
+	{{0, {AzaliaNclfe".dac.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0e, MI_TARGET_INAMP(0)},
+	{{0, {AzaliaNclfe".mixer.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0e, MI_TARGET_INAMP(1)},
+	{{0, {AzaliaNside".dac.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0f, MI_TARGET_INAMP(0)},
+	{{0, {AzaliaNside".mixer.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0f, MI_TARGET_INAMP(1)},
+#endif
+
+	{{0, {AudioNmaster"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
+	{{0, {AudioNmaster".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_PINBOOST},
+	{{0, {AudioNsurround"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x15, MI_TARGET_OUTAMP},
+	{{0, {AudioNsurround".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x15, MI_TARGET_PINBOOST},
+	{{0, {AzaliaNclfe"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x16, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNclfe".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x16, MI_TARGET_PINBOOST},
+	{{0, {AzaliaNside"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x17, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNside".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x17, MI_TARGET_PINBOOST},
+
+	{{0, {"mic2."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x19, MI_TARGET_OUTAMP},
+	{{0, {"mic2.boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x19, MI_TARGET_PINBOOST},
+	{{0, {"mic2.dir"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_IO}, 0x19, MI_TARGET_PINDIR},
+	{{0, {"line1."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x1a, MI_TARGET_OUTAMP},
+	{{0, {"line1.boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x1a, MI_TARGET_PINBOOST},
+	{{0, {"line1.dir"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_IO}, 0x1a, MI_TARGET_PINDIR},
+	{{0, {"line2."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x1b, MI_TARGET_OUTAMP},
+	{{0, {"line2.boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x1b, MI_TARGET_PINBOOST},
+	{{0, {"line2.dir"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_IO}, 0x1b, MI_TARGET_PINDIR},
+
+	{{0, {AudioNmode}, AUDIO_MIXER_ENUM, AZ_CLASS_PLAYBACK, 0, 0,
+	  .un.e={2, {{{"analog"}, 0}, {{AzaliaNdigital}, 1}}}}, 0, MI_TARGET_DAC},
+	{{0, {AudioNmode}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD, 0, 0,
+	  .un.e={2, {{{"analog"}, 0}, {{AzaliaNdigital}, 1}}}}, 0, MI_TARGET_ADC},
+};
+
+static int
+alc880_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	this->nmixers = sizeof(alc880_mixer_items) / sizeof(mixer_item_t);
+	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (this->mixers == NULL) {
+		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		return ENOMEM;
+	}
+	memcpy(this->mixers, alc880_mixer_items,
+	    sizeof(mixer_item_t) * this->nmixers);
+	generic_mixer_fix_indexes(this);
+	generic_mixer_default(this);
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 0;		/* mute: off */
+	generic_mixer_set(this, 0x0c, MI_TARGET_INAMP(0), &mc);	/* dac->front */
+	generic_mixer_set(this, 0x0c, MI_TARGET_INAMP(1), &mc);	/* mixer->front */
+	generic_mixer_set(this, 0x0d, MI_TARGET_INAMP(0), &mc);	/* dac->surround */
+	generic_mixer_set(this, 0x0e, MI_TARGET_INAMP(0), &mc);	/* dac->clfe */
+	generic_mixer_set(this, 0x0f, MI_TARGET_INAMP(0), &mc);	/* dac->side */
+	mc.un.ord = 1;		/* mute: on */
+	generic_mixer_set(this, 0x0d, MI_TARGET_INAMP(1), &mc);	/* mixer->surround */
+	generic_mixer_set(this, 0x0e, MI_TARGET_INAMP(1), &mc);	/* mixer->clfe */
+	generic_mixer_set(this, 0x0f, MI_TARGET_INAMP(1), &mc);	/* mixer->side */
+	mc.un.ord = 1;		/* pindir: output */
+	generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc); /* front */
+	generic_mixer_set(this, 0x15, MI_TARGET_PINDIR, &mc); /* surround */
+	generic_mixer_set(this, 0x16, MI_TARGET_PINDIR, &mc); /* clfe */
+	generic_mixer_set(this, 0x17, MI_TARGET_PINDIR, &mc); /* side */
+	generic_mixer_set(this, 0x19, MI_TARGET_PINDIR, &mc); /* mic2 */
+	generic_mixer_set(this, 0x1b, MI_TARGET_PINDIR, &mc); /* line2 */
+	mc.un.ord = 0;		/* pindir: input */
+	generic_mixer_set(this, 0x18, MI_TARGET_PINDIR, &mc);	/* mic1 */
+	generic_mixer_set(this, 0x1a, MI_TARGET_PINDIR, &mc);	/* line1 */
+	return 0;
+}
+
 static int
 alc880_init_dacgroup(codec_t *this)
 {
@@ -1825,10 +1982,6 @@ static const mixer_item_t alc882_mixer_items[] = {
 	  0, 0, ENUM_OFFON}, 0x15, MI_TARGET_OUTAMP},
 	{{0, {AudioNsurround".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, ENUM_OFFON}, 0x15, MI_TARGET_PINBOOST},
-	{{0, {AudioNsurround".dac.mut"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x0d, MI_TARGET_INAMP(0)},
-	{{0, {AudioNsurround".mixer.m"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x0d, MI_TARGET_INAMP(1)},
 
 	{{0, {AzaliaNclfe}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{""}, 2, MIXER_DELTA(31)}}, 0x0e, MI_TARGET_OUTAMP},
@@ -1836,10 +1989,6 @@ static const mixer_item_t alc882_mixer_items[] = {
 	  0, 0, ENUM_OFFON}, 0x16, MI_TARGET_OUTAMP},
 	{{0, {AzaliaNclfe".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, ENUM_OFFON}, 0x16, MI_TARGET_PINBOOST},
-	{{0, {AzaliaNclfe".dac.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x0e, MI_TARGET_INAMP(0)},
-	{{0, {AzaliaNclfe".mixer.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x0e, MI_TARGET_INAMP(1)},
 
 	{{0, {AzaliaNside}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{""}, 2, MIXER_DELTA(31)}}, 0x0f, MI_TARGET_OUTAMP},
@@ -1847,10 +1996,6 @@ static const mixer_item_t alc882_mixer_items[] = {
 	  0, 0, ENUM_OFFON}, 0x17, MI_TARGET_OUTAMP},
 	{{0, {AzaliaNside".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, ENUM_OFFON}, 0x17, MI_TARGET_PINBOOST},
-	{{0, {AzaliaNside".dac.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x0f, MI_TARGET_INAMP(0)},
-	{{0, {AzaliaNside".mixer.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x0f, MI_TARGET_INAMP(1)},
 
 	/* 0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x14,0x15,0x16,0x17,0xb */
 #define ALC882_MIC1	0x001
@@ -1892,7 +2037,7 @@ static const mixer_item_t alc882_mixer_items[] = {
 	  .un.e={2, {{{"analog"}, 0}, {{AzaliaNdigital}, 1}}}}, 0, MI_TARGET_DAC},
 	{{0, {AudioNmode}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD, 0, 0,
 	  .un.e={2, {{{"analog"}, 0}, {{AzaliaNdigital}, 1}}}}, 0, MI_TARGET_ADC},
-	AZ_MIXER_SPDIF(AZ_CLASS_PLAYBACK, 0x06),
+/*	AZ_MIXER_SPDIF(AZ_CLASS_PLAYBACK, 0x06),*/
 };
 
 static int
@@ -1940,6 +2085,13 @@ alc882_mixer_init(codec_t *this)
 	generic_mixer_set(this, 0x24, MI_TARGET_INAMP(0), &mc);
 	generic_mixer_set(this, 0x23, MI_TARGET_INAMP(1), &mc);
 	generic_mixer_set(this, 0x22, MI_TARGET_INAMP(2), &mc);
+	generic_mixer_set(this, 0x0d, MI_TARGET_INAMP(0), &mc);
+	generic_mixer_set(this, 0x0e, MI_TARGET_INAMP(0), &mc);
+	generic_mixer_set(this, 0x0f, MI_TARGET_INAMP(0), &mc);
+	mc.un.ord = 1;		/* mute */
+	generic_mixer_set(this, 0x0d, MI_TARGET_INAMP(1), &mc);
+	generic_mixer_set(this, 0x0e, MI_TARGET_INAMP(1), &mc);
+	generic_mixer_set(this, 0x0f, MI_TARGET_INAMP(1), &mc);
 	return 0;
 }
 
