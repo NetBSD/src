@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.127.8.1 2006/04/11 11:55:17 yamt Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.127.8.2 2006/06/26 12:51:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.127.8.1 2006/04/11 11:55:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.127.8.2 2006/06/26 12:51:22 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -3419,8 +3419,12 @@ pccbb_powerhook(why, arg)
 
 		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
 
-		/* ToDo: deactivate or suspend child devices */
+		if (sc->sc_chipset == CB_RX5C47X)
+			sc->sc_ricoh_misc_ctrl = pci_conf_read(sc->sc_pc,
+						     sc->sc_tag,
+						     RICOH_PCI_MISC_CTRL);
 
+		/* ToDo: deactivate or suspend child devices */
 	}
 
 	if (why == PWR_RESUME) {
@@ -3450,8 +3454,13 @@ pccbb_powerhook(why, arg)
 				goto norestore;
 			}
 		}
-		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+
 norestore:
+		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		if (sc->sc_chipset == CB_RX5C47X) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    RICOH_PCI_MISC_CTRL, sc->sc_ricoh_misc_ctrl);
+		}
 
 		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */

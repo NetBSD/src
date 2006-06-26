@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28.2.1 2006/04/01 12:06:09 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28.2.2 2006/06/26 12:44:22 yamt Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28.2.1 2006/04/01 12:06:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28.2.2 2006/06/26 12:44:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28.2.1 2006/04/01 12:06:09 yamt Exp $
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <arc/arc/timervar.h>
+
 struct bootdev_data {
 	const char *dev_type;
 	int	bus;
@@ -112,7 +114,7 @@ struct bootdev_data {
 	int	partition;
 };
 
-int getpno(const char **, int *);
+static int getpno(const char **, int *);
 
 /*
  * The following several variables are related to
@@ -131,12 +133,27 @@ cpu_configure(void)
 
 	softintr_init();
 
+#ifdef ENABLE_INT5_STATCLOCK
+	evcnt_attach_static(&statclock_ev);
+#endif
+
 	(void)splhigh();	/* To be really sure.. */
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+#ifdef ENABLE_INT5_STATCLOCK
+	/*
+	 * Enable interrupt sources.
+	 * We can't enable CPU INT5 which is used by statclock(9) here
+	 * until cpu_initclocks(9) is called because there is no way
+	 * to disable it other than setting status register by spl(9).
+	 */
+	_spllower(MIPS_INT_MASK_5);
+#else
+	/* enable all source forcing SOFT_INTs cleared */
+	_splnone();
+#endif
 }
 
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
@@ -217,7 +234,7 @@ makebootdev(const char *cp)
 	bootdev_data = &bd;
 }
 
-int
+static int
 getpno(const char **cp, int *np)
 {
 	int val = 0;

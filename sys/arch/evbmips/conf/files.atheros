@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.2.4.2 2006/04/11 12:20:51 yamt Exp $
+#	$NetBSD: files.atheros,v 1.2.4.3 2006/06/26 12:44:23 yamt Exp $
 
 file	arch/evbmips/atheros/mach_intr.c
 
@@ -16,11 +16,15 @@ file	arch/mips/mips/softintr.c
 # System bus
 device	mainbus { }
 attach	mainbus at root
-file	arch/evbmips/alchemy/mainbus.c		mainbus
+file	arch/evbmips/atheros/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
 file	arch/evbmips/atheros/cpu.c		cpu
+
+device	wdog: sysmon_wdog
+attach	wdog at mainbus
+file	arch/evbmips/atheros/wdog.c		wdog
 
 # Machine-independent WS console drivers
 #include "dev/wsfont/files.wsfont"

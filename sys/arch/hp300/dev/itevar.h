@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.22.8.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: itevar.h,v 1.22.8.2 2006/06/26 12:44:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -226,11 +226,6 @@ struct ite_softc {
 	(((ip)->tty ? (ip)->tty->t_winsize.ws_col : (ip)->cols) - TABSIZE)
 
 #ifdef _KERNEL
-extern	struct ite_data ite_cn;		/* ite_data for console device */
-extern	struct ite_data *kbd_ite;	/* XXX */
-extern	struct ite_softc ite_softc[];
-extern	struct itesw itesw[];
-extern	int nitesw;
 
 struct ite_kbdops {
 	int (*getc)(int *);

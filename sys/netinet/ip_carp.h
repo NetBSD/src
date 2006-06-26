@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.1.4.2 2006/05/24 10:59:03 yamt Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.1.4.3 2006/06/26 12:53:57 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -165,6 +165,5 @@ struct ifnet	*carp_ourether(void *, struct ether_header *, u_char, int);
 int		 carp_input(struct mbuf *, u_int8_t *, u_int8_t *, u_int16_t);
 int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
-int		 tvtohz(struct timeval *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_CARP_H_ */

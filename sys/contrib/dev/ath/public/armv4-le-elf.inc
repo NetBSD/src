@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGES.
 #
-# $Id: armv4-le-elf.inc,v 1.1.2.2 2006/04/11 11:53:52 yamt Exp $
+# $Id: armv4-le-elf.inc,v 1.1.2.3 2006/06/26 12:46:39 yamt Exp $
 #
 
 #
@@ -63,6 +63,12 @@ STRIP=	${TOOLPREFIX}strip
 OBJCOPY=${TOOLPREFIX}objcopy
 NM=	${TOOLPREFIX}nm
 
+#
+# Force register read/write operations to go through a function.
+#
+AH_REGOPS_FUNC=1
+
 LDOPTS=	-EL
 COPTS+=	-DAH_BYTE_ORDER=AH_LITTLE_ENDIAN
-COPTS+= -march=armv4 -mlittle-endian -fno-strict-aliasing -fno-common
+COPTS+= -march=armv4 -mlittle-endian -msoft-float \
+	-fno-strict-aliasing -fno-common

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.6 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: rd.c,v 1.6.8.1 2006/06/26 12:44:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -168,7 +168,7 @@ rdinit(int ctlr, int unit)
 static void
 rdreset(int ctlr, int unit)
 {
-	u_char stat;
+	uint8_t stat;
 
 	rd_ssmc.c_unit = C_SUNIT(0);
 	rd_ssmc.c_cmd = C_SSM;
@@ -176,7 +176,7 @@ rdreset(int ctlr, int unit)
 	rd_ssmc.c_fefm = FEF_MASK;
 	rd_ssmc.c_aefm = AEF_MASK;
 	rd_ssmc.c_iefm = IEF_MASK;
-	hpibsend(ctlr, unit, C_CMD, (char *)&rd_ssmc, sizeof(rd_ssmc));
+	hpibsend(ctlr, unit, C_CMD, (uint8_t *)&rd_ssmc, sizeof(rd_ssmc));
 	hpibswait(ctlr, unit);
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 }
@@ -185,7 +185,7 @@ static int
 rdident(int ctlr, int unit)
 {
 	struct rd_describe desc;
-	u_char stat, cmd[3];
+	uint8_t stat, cmd[3];
 	char name[7];
 	int id, i;
 
@@ -203,7 +203,7 @@ rdident(int ctlr, int unit)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, unit, C_EXEC, (char *)&desc, 37);
+	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&desc, 37);
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	memset(name, 0, sizeof(name));
 	if (!stat) {
@@ -339,12 +339,12 @@ int
 rdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
     size_t *rsize)
 {
-	char *buf = v_buf;
+	uint8_t *buf = v_buf;
 	struct rd_softc *rs = devdata;
 	int ctlr = rs->sc_ctlr;
 	int unit = rs->sc_unit;
 	daddr_t blk;
-	char stat;
+	uint8_t stat;
 
 	if (size == 0)
 		return 0;
@@ -366,7 +366,8 @@ rdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 	rd_ioc.c_len = size;
 	rd_ioc.c_cmd = func == F_READ ? C_READ : C_WRITE;
 retry:
-	hpibsend(ctlr, unit, C_CMD, &rd_ioc.c_unit, sizeof(rd_ioc)-2);
+	hpibsend(ctlr, unit, C_CMD, (uint8_t *)&rd_ioc.c_unit,
+	    sizeof(rd_ioc) - 2);
 	hpibswait(ctlr, unit);
 	hpibgo(ctlr, unit, C_EXEC, buf, size, func);
 	hpibswait(ctlr, unit);
@@ -386,14 +387,14 @@ retry:
 static int
 rderror(int ctlr, int unit, int part)
 {
-	char stat;
+	uint8_t stat;
 
 	rd_rsc.c_unit = C_SUNIT(0);
 	rd_rsc.c_sram = C_SRAM;
 	rd_rsc.c_ram = C_RAM;
 	rd_rsc.c_cmd = C_STATUS;
-	hpibsend(ctlr, unit, C_CMD, (char *)&rd_rsc, sizeof(rd_rsc));
-	hpibrecv(ctlr, unit, C_EXEC, (char *)&rd_stat, sizeof(rd_stat));
+	hpibsend(ctlr, unit, C_CMD, (uint8_t *)&rd_rsc, sizeof(rd_rsc));
+	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&rd_stat, sizeof(rd_stat));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
 		printf("rd(%d,%d,0,%d): request status fail %d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.4.2.3 2006/05/24 10:57:40 yamt Exp $	*/
+/*	$NetBSD: lm75.c,v 1.4.2.4 2006/06/26 12:51:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -326,7 +326,7 @@ lmtemp_decode_lm77(const uint8_t *buf)
 	 *   D11 - D3 :	Bit8(MSB) - Bit0
 	 */
 	temp = (int8_t)buf[0];
-	temp = (temp << 5) | (buf[1] >> 3);
+	temp = (temp << 5) | ((buf[1] >> 3) & 0x1f);
 
 	/* Temp is given in 1/2 deg. C, we convert to uK. */
 	val = temp * 500000 + 273150000;

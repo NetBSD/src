@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.128.8.2 2006/05/24 10:58:56 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.128.8.3 2006/06/26 12:53:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.128.8.2 2006/05/24 10:58:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.128.8.3 2006/06/26 12:53:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -284,7 +284,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    (u_long) time.tv_sec < rt->rt_rmx.rmx_expire)
+			    (u_long) time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 

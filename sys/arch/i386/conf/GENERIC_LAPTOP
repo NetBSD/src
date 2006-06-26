@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.175.2.2 2006/05/24 10:56:51 yamt Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.175.2.3 2006/06/26 12:44:38 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.175.2.2 $"
+#ident 		"GENERIC-$Revision: 1.175.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -344,7 +344,7 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
-#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
+piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -357,7 +357,7 @@ agp* 	at pchb?
 
 # ISA bus support
 #isa0	at ichlpcib?
-#isa0	at piixpcib?
+isa0	at piixpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pcib?
@@ -845,6 +845,32 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
+
+
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+# Bluetooth remote device 'hub'
+pseudo-device bthub
+
+# Bluetooth HID support
+bthidev* at bthub?
+
+# Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+bthset* at bthub?
 
 
 # Mice

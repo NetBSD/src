@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sa.c,v 1.1.4.2 2006/04/11 12:20:52 yamt Exp $	*/
+/*	$NetBSD: netbsd32_sa.c,v 1.1.4.3 2006/06/26 12:46:18 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.1.4.2 2006/04/11 12:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.1.4.3 2006/06/26 12:46:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,7 @@ netbsd32_sacopyout(int type, const void *src, void *dst)
 			const ucontext_t *u = src;
 			ucontext32_t u32;
 
+			memset(&u32, 0, sizeof(u32));
 			u32.uc_flags = u->uc_flags;
 			u32.uc_stack.ss_sp = (uintptr_t)u->uc_stack.ss_sp;
 			u32.uc_stack.ss_size = u->uc_stack.ss_size;
