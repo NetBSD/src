@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.6 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.7 2006/06/26 18:21:38 drochner Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -131,9 +131,8 @@ ki2c_attach(parent, self, aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = ki2c_i2c_exec;
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
+	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
 	/* 
 	 * newer OF puts I2C devices under 'i2c-bus' instead of attaching them 
