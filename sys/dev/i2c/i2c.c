@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.7 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.8 2006/06/26 18:19:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -54,10 +54,9 @@ struct iic_softc {
 int
 iicbus_print(void *aux, const char *pnp)
 {
-	struct i2cbus_attach_args *iba = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s at %s", iba->iba_name, pnp);
+		aprint_normal("iic at %s", pnp);
 
 	return (UNCONF);
 }
@@ -94,10 +93,8 @@ iic_search(struct device *parent, struct cfdata *cf,
 static int
 iic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct i2cbus_attach_args *iba = aux;
 
-	/* Just make sure we're looking for i2c. */
-	return (strcmp(iba->iba_name, cf->cf_name) == 0);
+	return (1);
 }
 
 static void
