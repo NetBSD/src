@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.17 2005/02/05 14:23:24 xtraeme Exp $	*/
+/*	$NetBSD: bim.c,v 1.18 2006/06/26 22:42:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.17 2005/02/05 14:23:24 xtraeme Exp $");
+__RCSID("$NetBSD: bim.c,v 1.18 2006/06/26 22:42:45 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -193,7 +193,7 @@ init_images(char badmagic)
 
 /* Print out the header and other information about the disk. */
 int 
-display_part(int num, char **args, char *syntax)
+display_part(int num, char **args, const char *syntax)
 {
 	int     count;
 
@@ -220,7 +220,7 @@ display_part(int num, char **args, char *syntax)
 }
 
 int 
-display_image(int num, char **args, char *syntax)
+display_image(int num, char **args, const char *syntax)
 {
 	int     count;
 
@@ -246,7 +246,7 @@ display_image(int num, char **args, char *syntax)
 }
 
 int 
-display_head(int num, char **args, char *syntax)
+display_head(int num, char **args, const char *syntax)
 {
 
 	printf("\nDisk: %s   Type: %s\n", dk_label->d_packname,
@@ -309,7 +309,7 @@ copy_bytes(int from_fd, int from_adr, int to_fd, int to_adr, int number)
 
 /* Add a boot image. */
 int
-add_image(int num, char **args, char *syntax)
+add_image(int num, char **args, const char *syntax)
 {
 	struct exec im_exec;	/* Information about a new image. */
 	int     im_file;
@@ -405,11 +405,11 @@ add_image(int num, char **args, char *syntax)
 	im_table->ii_images[which_image].boot_load_adr = im_load_adr;
 	im_table->ii_images[which_image].boot_run_adr = im_run_adr;
 	if (num == 3)
-		strncpy(im_table->ii_images[which_image].boot_name, args[2],
-		    15);
+		strlcpy(im_table->ii_images[which_image].boot_name, args[2],
+		    sizeof(im_table->ii_images[which_image].boot_name));
 	else
-		strncpy(im_table->ii_images[which_image].boot_name, args[1],
-		    15);
+		strlcpy(im_table->ii_images[which_image].boot_name, args[1],
+		    sizeof(im_table->ii_images[which_image].boot_name));
 	if (copy_bytes(im_file, 0, disk_fd, boot_start + im_addr, im_size)) {
 		im_table->ii_boot_used++;
 		/* Make name lowercase and report on image. */
@@ -434,7 +434,7 @@ add_image(int num, char **args, char *syntax)
 
 /* Delete a boot image. */
 int
-delete_image(int num, char **args, char *syntax)
+delete_image(int num, char **args, const char *syntax)
 {
 	int     which_image;	/* Which image is to be operated upon. */
 	int     idx;		/* temporary variable for loops. */
@@ -497,7 +497,7 @@ delete_image(int num, char **args, char *syntax)
 
 /* Set the default boot image. */
 int
-set_default_image(int num, char **args, char *syntax)
+set_default_image(int num, char **args, const char *syntax)
 {
 	int     which_image;
 
@@ -516,7 +516,7 @@ set_default_image(int num, char **args, char *syntax)
 
 /* Initialize the disk or just the image portion. */
 int
-initialize(int num, char **args, char *syntax)
+initialize(int num, char **args, const char *syntax)
 {
 
 	/* Check the args */
@@ -530,7 +530,7 @@ initialize(int num, char **args, char *syntax)
 
 /* Write the disk header and exit. */
 int 
-write_exit(int num, char **args, char *syntax)
+write_exit(int num, char **args, const char *syntax)
 {
 
 	if (images_changed)
