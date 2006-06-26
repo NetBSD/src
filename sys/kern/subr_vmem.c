@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.1 2006/06/25 08:00:01 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.2 2006/06/26 10:23:20 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.1 2006/06/25 08:00:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2 2006/06/26 10:23:20 yamt Exp $");
 
 #define	VMEM_DEBUG
 
@@ -607,28 +607,36 @@ retry_strat:
 retry:
 	bt = NULL;
 	VMEM_LOCK(vm);
-	for (list = first; list < end; list++) {
-		bt = LIST_FIRST(list);
-		if (bt != NULL) {
-			if (strat == VM_INSTANTFIT || bt->bt_size >= size) {
-				break;
+	if (strat == VM_INSTANTFIT) {
+		for (list = first; list < end; list++) {
+			bt = LIST_FIRST(list);
+			if (bt != NULL) {
+				goto gotit;
+			}
+		}
+	} else { /* VM_BESTFIT */
+		for (list = first; list < end; list++) {
+			LIST_FOREACH(bt, list, bt_freelist) {
+				if (bt->bt_size >= size) {
+					goto gotit;
+				}
 			}
 		}
 	}
-	if (__predict_false(bt == NULL)) {
-		VMEM_UNLOCK(vm);
+	VMEM_UNLOCK(vm);
 #if 1
-		if (strat == VM_INSTANTFIT) {
-			strat = VM_BESTFIT;
-			goto retry_strat;
-		}
-#endif
-		if (vmem_import(vm, size, flags) == 0) {
-			goto retry;
-		}
-		/* XXX */
-		return VMEM_ADDR_NULL;
+	if (strat == VM_INSTANTFIT) {
+		strat = VM_BESTFIT;
+		goto retry_strat;
 	}
+#endif
+	if (vmem_import(vm, size, flags) == 0) {
+		goto retry;
+	}
+	/* XXX */
+	return VMEM_ADDR_NULL;
+
+gotit:
 	KASSERT(bt->bt_type == BT_TYPE_FREE);
 	KASSERT(bt->bt_size >= size);
 	bt_remfree(vm, bt);
