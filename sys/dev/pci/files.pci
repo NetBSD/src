@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.258 2006/06/07 08:05:53 dogcow Exp $
+#	$NetBSD: files.pci,v 1.259 2006/06/26 17:17:20 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -658,7 +658,7 @@ attach	viaenv at viapm
 file	dev/pci/viaenv.c		viaenv			needs-flag
 
 # Intel PIIX4 power management controller
-device	piixpm: i2cbus
+device	piixpm: i2cbus, acpipmtimer
 attach	piixpm at pci
 file	dev/pci/piixpm.c		piixpm
 
