@@ -216,7 +216,7 @@ typedef struct rrow {
 } rrow;
 
 typedef struct fa {
-	unsigned short	**gototab;
+	unsigned int	**gototab;
 	uschar	*out;
 	uschar	*restr;
 	int	**posns;
