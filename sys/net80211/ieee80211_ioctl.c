@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.36 2006/06/22 21:53:37 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.37 2006/06/27 14:30:52 drochner Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.36 2006/06/22 21:53:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.37 2006/06/27 14:30:52 drochner Exp $");
 #endif
 
 /*
@@ -358,7 +358,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		wreq->wi_len = 1;
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
-		keys = (struct wi_ltv_keys *)&wreq;
+		keys = (struct wi_ltv_keys *)wreq;
 		/* do not show keys to non-root user */
 		error = kauth_authorize_generic(curproc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
@@ -396,7 +396,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 
 			args.i = 0;
 			args.ap = (void *)((char *)wreq->wi_val + sizeof(i));
-			args.max = (void *)(&wreq + 1);
+			args.max = (void *)(wreq + 1);
 			ieee80211_iterate_nodes(&ic->ic_scan,
 				wi_read_ap_result, &args);
 			memcpy(wreq->wi_val, &args.i, sizeof(args.i));
@@ -415,7 +415,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			p2 = (struct wi_scan_p2_hdr *)wreq->wi_val;
 			args.i = 0;
 			args.res = (void *)&p2[1];
-			args.max = (void *)(&wreq + 1);
+			args.max = (void *)(wreq + 1);
 			ieee80211_iterate_nodes(&ic->ic_scan,
 				wi_read_prism2_result, &args);
 			p2->wi_rsvd = 0;
@@ -429,7 +429,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		struct wi_read_sigcache_args args;
 		args.i = 0;
 		args.wsc = (struct wi_sigcache *) wreq->wi_val;
-		args.max = (void *)(&wreq + 1);
+		args.max = (void *)(wreq + 1);
 		ieee80211_iterate_nodes(&ic->ic_scan, wi_read_sigcache, &args);
 		wreq->wi_len = sizeof(struct wi_sigcache) * args.i / 2;
 		break;
@@ -758,7 +758,7 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		if (len != sizeof(struct wi_ltv_keys))
 			goto invalid;
-		keys = (struct wi_ltv_keys *)&wreq;
+		keys = (struct wi_ltv_keys *)wreq;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			len = le16toh(keys->wi_keys[i].wi_keylen);
 			if (len != 0 && len < IEEE80211_WEP_KEYLEN)
