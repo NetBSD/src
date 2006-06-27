@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.9 2006/03/04 17:24:13 peter Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.10 2006/06/27 13:58:08 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SA1111_VAR_H
 #define _SA1111_VAR_H
-
 
 struct sacc_intrhand {
 	void *ih_soft;
@@ -54,10 +54,10 @@ struct sacc_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	bus_space_tag_t sc_piot;	/* parent(SA1110)'s iot */
+	bus_space_tag_t sc_piot;	/* parent(SA-1110)'s iot */
 	bus_space_handle_t sc_gpioh;
 
-	uint32_t sc_gpiomask;	/* SA1110 GPIO mask */
+	uint32_t sc_gpiomask;	/* SA-1110 GPIO mask */
 
 	struct sacc_intrvec sc_imask;
 	struct sacc_intrhand *sc_intrhand[SACCIC_LEN];
@@ -75,11 +75,10 @@ struct sa1111_attach_args {
 #define IST_EDGE_RAISE	6
 #define IST_EDGE_FALL	7
 
-void *sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
+void	*sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
 			  int (*)(void *), void *);
-void sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
+void	sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
 int	sacc_probe(struct device *, struct cfdata *, void *);
-int	sa1111_search(struct device *, struct cfdata *,
-		      const int *, void *);
+int	sa1111_search(struct device *, struct cfdata *, const int *, void *);
 
 #endif /* _SA1111_VAR_H */

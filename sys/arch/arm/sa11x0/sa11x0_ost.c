@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.17 2006/04/18 17:50:25 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.18 2006/06/27 13:58:08 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.17 2006/04/18 17:50:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.18 2006/06/27 13:58:08 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,8 @@ CFATTACH_DECL(saost, sizeof(struct saost_softc),
 static int
 saost_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	return (1);
+
+	return 1;
 }
 
 void
@@ -108,8 +109,8 @@ saost_attach(struct device *parent, struct device *self, void *aux)
 
 	saost_sc = sc;
 
-	if(bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, 
-			&sc->sc_ioh))
+	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, 
+	    &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* disable all channel and clear interrupt status */
@@ -144,7 +145,7 @@ clockintr(void *arg)
 		/*
 		 * we couldn't set the matching register in time.
 		 * just set it to some value so that next interrupt happens.
-		 * XXX is it possible to compansate lost interrupts?
+		 * XXX is it possible to compensate lost interrupts?
 		 */
 
 		s = splhigh();
@@ -159,7 +160,7 @@ clockintr(void *arg)
 	saost_sc->sc_clock_count = nextmatch;
 	hardclock(frame);
 
-	return(1);
+	return 1;
 }
 
 static int
@@ -187,7 +188,7 @@ statintr(void *arg)
 		/*
 		 * we couldn't set the matching register in time.
 		 * just set it to some value so that next interrupt happens.
-		 * XXX is it possible to compansate lost interrupts?
+		 * XXX is it possible to compensate lost interrupts?
 		 */
 
 		s = splhigh();
@@ -202,7 +203,7 @@ statintr(void *arg)
 	saost_sc->sc_statclock_count = nextmatch;
 	statclock(frame);
 
-	return(1);
+	return 1;
 }
 
 
@@ -266,7 +267,7 @@ microtime(struct timeval *tvp)
 	int s, tm, deltatm;
 	static struct timeval lasttime;
 
-	if(saost_sc == NULL) {
+	if (saost_sc == NULL) {
 		tvp->tv_sec = 0;
 		tvp->tv_usec = 0;
 		return;
@@ -312,19 +313,19 @@ delay(u_int usecs)
 	usecs = (TIMER_FREQUENCY / 100) * csec
 	    + (TIMER_FREQUENCY / 100) * usec / 10000;
 
-	if (! saost_sc) {
+	if (!saost_sc) {
 		/* clock isn't initialized yet */
-		for(; usecs > 0; usecs--)
-			for(j = 100; j > 0; j--)
-				;
+		for (; usecs > 0; usecs--)
+			for (j = 100; j > 0; j--)
+				continue;
 		return;
 	}
 
 	otick = gettick();
 
 	while (1) {
-		for(j = 100; j > 0; j--)
-			;
+		for (j = 100; j > 0; j--)
+			continue;
 		xtick = gettick();
 		delta = xtick - otick;
 		if (delta > usecs)

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.8 2006/02/23 05:37:46 thorpej Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.9 2006/06/27 13:58:08 peter Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.8 2006/02/23 05:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.9 2006/06/27 13:58:08 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ struct sackbc_softc {
 	pckbport_tag_t pt;
 };
 
-static	int	sackbc_match(struct device *, struct cfdata *, void *);
-static	void	sackbc_attach(struct device *, struct device *, void *);
+static int	sackbc_match(struct device *, struct cfdata *, void *);
+static void	sackbc_attach(struct device *, struct device *, void *);
 
 static int	sackbc_xt_translation(void *, pckbport_slot_t, int);
 #define sackbc_send_devcmd	sackbc_send_cmd
@@ -142,7 +142,8 @@ sackbc_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct sa1111_attach_args *aa = (struct sa1111_attach_args *)aux;
 
 	switch (aa->sa_addr) {
-	case SACC_KBD0: case SACC_KBD1:
+	case SACC_KBD0:
+	case SACC_KBD1:
 		return 1;
 	}
 	return 0;
@@ -164,7 +165,7 @@ static int
 sackbc_rxint(void *cookie)
 {
 	struct sackbc_softc *sc = cookie;
-	int stat, code=-1;
+	int stat, code = -1;
 
 	stat = bus_space_read_4(sc->iot, sc->ioh, SACCKBD_STAT);
 	DPRINTF(("sackbc_rxint stat=%x\n", stat));
@@ -178,8 +179,7 @@ sackbc_rxint(void *cookie)
 		if (sc->polling) {
 			sc->poll_data = code;
 			sc->poll_stat = stat;
-		}
-		else
+		} else
 			pckbportintr(sc->pt, sc->slot, code);
 		return 1;
 	}
@@ -192,7 +192,7 @@ sackbc_intr_establish(void *cookie, pckbport_slot_t slot)
 {
 	struct sackbc_softc *sc = cookie;
 
-	if (!(sc->polling) && sc->ih_rx==NULL) {
+	if (!(sc->polling) && sc->ih_rx == NULL) {
 		sc->ih_rx = sacc_intr_establish(
 			(sacc_chipset_tag_t *) device_parent(&sc->dev), 
 			sc->intr+1, IST_EDGE_RAISE, IPL_TTY, sackbc_rxint, sc);
@@ -269,10 +269,10 @@ sackbc_attach(struct device *parent, struct device *self, void *aux)
 	sc->pt = pckbport_attach(sc, &sackbc_ops);
 
 	/*
-	 * Although there is no such thing as SLOT for SA1111 kbd
+	 * Although there is no such thing as SLOT for SA-1111 kbd
 	 * controller, pckbd and pms drivers require it.
 	 */
-	for (slot=PCKBPORT_KBD_SLOT; slot <= PCKBPORT_AUX_SLOT; ++slot) {
+	for (slot = PCKBPORT_KBD_SLOT; slot <= PCKBPORT_AUX_SLOT; ++slot) {
 		child = pckbport_attach_slot(self, sc->pt, slot);
 
 		if (child == NULL)
@@ -333,7 +333,7 @@ sackbc_poll_data1(void *cookie, pckbport_slot_t slot)
 	}
 
 	splx(s);
-	return (c);
+	return c;
 }
 
 static int
@@ -342,9 +342,9 @@ sackbc_send_cmd(void *cookie, pckbport_slot_t slot, u_char val)
 	struct sackbc_softc *sc = cookie;
 
 	if (!sackbc_wait_output(sc))
-		return (0);
+		return 0;
 	bus_space_write_1(sc->iot, sc->ioh, SACCKBD_DATA, val);
-	return (1);
+	return 1;
 }
 
 
@@ -394,8 +394,7 @@ sackbc_set_poll(void *self, pckbport_slot_t slot, int on)
 		if (on) {
 			sc->poll_data = sc->poll_stat = -1;
 			sackbc_disable_intrhandler(sc);
-		}
-		else {
+		} else {
 			/*
 			 * If disabling polling on a device that's
 			 * been configured, make sure there are no
