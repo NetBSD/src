@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.37 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.38 2006/06/27 10:34:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.37 2006/01/16 22:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.38 2006/06/27 10:34:25 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,6 +313,7 @@ agp_alloc_gatt(struct agp_softc *sc)
 	u_int32_t apsize = AGP_GET_APERTURE(sc);
 	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
 	struct agp_gatt *gatt;
+	caddr_t virtual;
 	int dummyseg;
 
 	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_NOWAIT);
@@ -321,9 +322,10 @@ agp_alloc_gatt(struct agp_softc *sc)
 	gatt->ag_entries = entries;
 
 	if (agp_alloc_dmamem(sc->as_dmat, entries * sizeof(u_int32_t),
-	    0, &gatt->ag_dmamap, (caddr_t *)&gatt->ag_virtual,
-	    &gatt->ag_physical, &gatt->ag_dmaseg, 1, &dummyseg) != 0)
+	    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
+	    &gatt->ag_dmaseg, 1, &dummyseg) != 0)
 		return NULL;
+	gatt->ag_virtual = (uint32_t *)virtual;
 
 	gatt->ag_size = entries * sizeof(u_int32_t);
 	memset(gatt->ag_virtual, 0, gatt->ag_size);
