@@ -316,7 +316,7 @@ s390*-*-*)
 	need_64bit_hwint=yes
 	;;
 # Note the 'l'; we need to be able to match e.g. "shle" or "shl".
-sh[123456789lbe]*-*-*)
+sh[123456789lbe]*-*-* | sh-*-*)
 	cpu_type=sh
 	need_64bit_hwint=yes
 	;;
@@ -2012,11 +2012,11 @@ sh-*-symbianelf* | sh[12346l]*-*-symbianelf* | \
 	sh_multilibs=${with_multilib_list}
 	if test x${sh_multilibs} = x ; then
 		case ${target} in
+		sh*-*-netbsd*)	sh_multilibs=m3,m3e,m4 ;;
 		sh[1234]*)	sh_multilibs=${sh_cpu_target} ;;
 		sh64* | sh5*)	sh_multilibs=m5-32media,m5-32media-nofpu,m5-compact,m5-compact-nofpu,m5-64media,m5-64media-nofpu ;;
 		sh-superh-*)	sh_multilibs=m4,m4-single,m4-single-only,m4-nofpu ;;
 		sh*-*-linux*)	sh_multilibs=m1,m3e,m4 ;;
-		sh*-*-netbsd*)	sh_multilibs=m3,m3e,m4 ;;
 		*) sh_multilibs=m1,m2,m2e,m4,m4-single,m4-single-only,m2a,m2a-single ;;
 		esac
 	fi
