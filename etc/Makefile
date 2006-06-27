@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.329 2006/06/19 15:44:35 gdamore Exp $
+#	$NetBSD: Makefile,v 1.330 2006/06/27 12:34:54 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -45,7 +45,7 @@
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	UTC
 CKSUM?=		${TOOL_CKSUM}
-MAKESUMS=	CKSUM=${CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
+MAKESUMS=	MAKE=${MAKE:Q} CKSUM=${CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
 DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
 # Flags for creating ISO CDROM image
