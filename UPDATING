@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.147 2006/06/02 19:08:00 christos Exp $
+$NetBSD: UPDATING,v 1.148 2006/06/27 21:14:11 dogcow Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20060627:
+	socket(2) has changed, and its system call has been versioned.
+	For userlands with the old version of socket(2), make sure that
+	your kernel has 'options COMPAT_30' set, or else 'bad system call'
+	errors will result.
 
 20060526:
 	The kernel linker scripts for i386 and xen 
