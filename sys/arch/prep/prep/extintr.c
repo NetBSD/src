@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $	*/
+/*	$NetBSD: extintr.c,v 1.24 2006/06/27 23:26:13 garbled Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24 2006/06/27 23:26:13 garbled Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $")
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/platform.h>
+#include <machine/residual.h>
 
 #if defined(OPENPIC)
 #include <powerpc/openpic.h>
@@ -152,21 +153,80 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $")
 static void intr_calculatemasks(void);
 static int fakeintr(void *);
 static void ext_intr_ivr(void);
+static void ext_intr_i8259(void);
 #if defined(OPENPIC)
 static void ext_intr_openpic(void);
 #endif /* OPENPIC */
 static void install_extint(void (*)(void));
 
+struct intrsource intrsources[ICU_LEN];
 int imen = 0xffffffff;
 int imask[NIPL];
 
-struct intrsource intrsources[ICU_LEN];
+extern struct platform_quirkdata platform_quirks[];
 
 static int
 fakeintr(void *arg)
 {
 
 	return 0;
+}
+
+
+/*
+ * On some machines, specifically the Powerstack E1, we cannot trust the 
+ * IVR register.  It returns values offset by 120 for PCI devices, and if
+ * an interrupt is unhandled, you cannot EOI it in any way.  With one of those
+ * machines with the keyboard removed, we get a single mouse interrupt at
+ * startup which cannot be handled and the entire machine stops processing
+ * interrupts.
+ * This routine is identical to ext_intr_ivr() other than how we get the irq.
+ */
+
+static void
+ext_intr_i8259(void)
+{
+	u_int8_t irq;
+	int r_imen, pcpl, msr;
+	struct cpu_info *ci = curcpu();
+	struct intrhand *ih;
+	struct intrsource *is;
+
+	pcpl = ci->ci_cpl;
+	msr = mfmsr();
+
+	irq = isa_intr();
+	is = &intrsources[irq];
+	r_imen = 1 << irq;
+
+	if ((pcpl & r_imen) != 0) {
+		ci->ci_ipending |= r_imen; /* Masked! Mark this as pending */
+		imen |= r_imen;
+		isa_intr_mask(imen);
+	} else {
+		splraise(is->is_mask);
+		mtmsr(msr | PSL_EE);
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		ih = is->is_hand;
+		if (ih == NULL)
+			printf("spurious interrupt %d\n", irq);
+		while (ih) {
+			(*ih->ih_fun)(ih->ih_arg);
+			ih = ih->ih_next;
+		}
+		KERNEL_UNLOCK();
+		mtmsr(msr);
+		ci->ci_cpl = pcpl;
+
+		isa_intr_clr(irq);
+
+		uvmexp.intrs++;
+		is->is_ev.ev_count++;
+	}
+
+	mtmsr(msr | PSL_EE);
+	splx(pcpl);	/* Process pendings. */
+	mtmsr(msr);
 }
 
 /*
@@ -664,6 +724,7 @@ init_intr(void)
 #if defined(OPENPIC)
 	unsigned char *baseaddr = (unsigned char *)0xC0006800;	/* XXX */
 #if NPCI > 0
+	int i;
 	struct prep_pci_chipset pc;
 	pcitag_t tag;
 	pcireg_t id, address;
@@ -706,6 +767,13 @@ init_intr(void)
 #endif /* NPCI */
 	openpic_base = 0;
 #endif
+	i = find_platform_quirk(res->VitalProductData.PrintableModel);
+	if (i != -1)
+		if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
+		    platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
+			install_extint(ext_intr_i8259);
+			return;
+		}
 	install_extint(ext_intr_ivr);
 }
 
