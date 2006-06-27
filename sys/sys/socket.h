@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.81 2006/06/26 21:23:59 mrg Exp $	*/
+/*	$NetBSD: socket.h,v 1.82 2006/06/27 03:49:08 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -559,7 +559,7 @@ int	setsockopt(int, int, int, const void *, socklen_t);
 int	shutdown(int, int);
 int	sockatmark(int);
 int	socket(int, int, int)
-#if !defined(__LIBC12_SOURCE__) && !defined(STANDALONE)
+#if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
 __RENAME(__socket30)
 #endif
 			     ;
