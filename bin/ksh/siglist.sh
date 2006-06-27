@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: siglist.sh,v 1.2 1997/01/12 19:12:18 tls Exp $
+#	$NetBSD: siglist.sh,v 1.3 2006/06/27 12:27:27 christos Exp $
 #
 # Script to generate a sorted, complete list of signals, suitable
 # for inclusion in trap.c as array initializer.
@@ -23,7 +23,7 @@ CPP="${1-cc -E}"
 	{ QwErTy SIG\1 , "\1", "\2" },\
 #endif/') > $in
 $CPP $in  > $out
-sed -n 's/{ QwErTy/{/p' < $out | awk '{print NR, $0}' | sort +2n +0n |
+sed -n 's/{ QwErTy/{/p' < $out | awk '{print NR, $0}' | sort -k3n -k1n |
     sed 's/^[0-9]* //' |
     awk 'BEGIN { last=0; nsigs=0; }
 	{
