@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.35 2006/06/25 13:41:58 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.36 2006/06/27 22:02:14 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.35 2006/06/25 13:41:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.36 2006/06/27 22:02:14 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -290,6 +290,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrrupt_str;
 	const char *name;
+	const char *vendor;
 
 	sc = (azalia_t*)self;
 	pa = aux;
@@ -327,10 +328,11 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", XNAME(sc), intrrupt_str);
 
+	vendor = pci_findvendor(pa->pa_id);
 	name = pci_findproduct(pa->pa_id);
-	if (name != NULL) {
-		aprint_normal("%s: host: %s (rev. %d)\n",
-		    XNAME(sc), name, PCI_REVISION(pa->pa_class));
+	if (vendor != NULL && name != NULL) {
+		aprint_normal("%s: host: %s %s (rev. %d)\n",
+		    XNAME(sc), vendor, name, PCI_REVISION(pa->pa_class));
 	} else {
 		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)\n",
 		    XNAME(sc), PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
@@ -372,19 +374,28 @@ azalia_pci_detach(struct device *self, int flags)
 	azalia_t *az;
 	int i;
 
+	DPRINTF(("%s\n", __func__));
 	az = (azalia_t*)self;
 	if (az->audiodev != NULL) {
 		config_detach(az->audiodev, flags);
 		az->audiodev = NULL;
 	}
+
+	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
 	azalia_stream_delete(&az->pstream, az);
+
+	DPRINTF(("%s: delete codecs\n", __func__));
 	for (i = 0; i < az->ncodecs; i++) {
 		azalia_codec_delete(&az->codecs[i]);
 	}
 	az->ncodecs = 0;
+
+	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
 	azalia_delete_corb(az);
 	azalia_delete_rirb(az);
+
+	DPRINTF(("%s: delete PCI resources\n", __func__));
 	if (az->ih != NULL) {
 		pci_intr_disestablish(az->pc, az->ih);
 		az->ih = NULL;
@@ -757,6 +768,7 @@ azalia_delete_rirb(azalia_t *az)
 
 	if (az->unsolq != NULL) {
 		free(az->unsolq, M_DEVBUF);
+		az->unsolq = NULL;
 	}
 	if (az->rirb_dma.addr == NULL)
 		return 0;
@@ -1115,7 +1127,8 @@ azalia_codec_init(codec_t *this)
 static int
 azalia_codec_delete(codec_t *this)
 {
-	this->mixer_delete(this);
+	if (this->mixer_delete != NULL)
+		this->mixer_delete(this);
 	if (this->formats != NULL) {
 		free(this->formats, M_DEVBUF);
 		this->formats = NULL;
