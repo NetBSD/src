@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.8 2005/12/11 12:16:36 christos Exp $
+ * $NetBSD: xd.c,v 1.9 2006/06/27 11:12:57 tsutsui Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -48,7 +48,7 @@ static int xdioctl(struct open_file *, u_long, void *);
 u_int32_t aio_base;
 static struct AmigaIO *aio_save;
 
-static struct devsw devsw[] = {
+struct devsw devsw[] = {
         { "xd", xdstrategy, (void *)xdopenclose, (void *)xdopenclose, xdioctl }
 };
 
