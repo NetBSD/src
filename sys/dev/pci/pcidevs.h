@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.799 2006/06/26 18:16:23 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.800 2006/06/27 21:39:28 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.800 2006/06/26 18:15:44 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.801 2006/06/27 21:38:40 kent Exp
  */
 
 /*
@@ -2658,7 +2658,7 @@
 #define	PCI_PRODUCT_NVIDIA_GF_FX5700_LE	0x0343		/* GeForce FX 5700 LE */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* MCP55 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP55_IDE	0x036e		/* MCP55 IDE */
-#define	PCI_PRODUCT_NVIDIA_MCP55_HDA	0x0371		/* HD Audio */
+#define	PCI_PRODUCT_NVIDIA_MCP55_HDA	0x0371		/* MCP55 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_LAN1	0x0372		/* MCP55 LAN */
 #define	PCI_PRODUCT_NVIDIA_MCP55_LAN2	0x0373		/* MCP55 LAN */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SATA	0x037e		/* MCP55 SATA */

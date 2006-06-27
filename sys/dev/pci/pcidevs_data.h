@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.798 2006/06/26 18:16:23 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.799 2006/06/27 21:39:28 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.800 2006/06/26 18:15:44 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.801 2006/06/27 21:38:40 kent Exp
  */
 
 /*
@@ -9117,7 +9117,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
-	    "HD Audio",
+	    "MCP55 High Definition Audio Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1,
