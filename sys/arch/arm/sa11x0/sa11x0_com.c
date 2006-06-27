@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.32 2006/05/14 21:55:10 elad Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.33 2006/06/27 11:01:41 peter Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.32 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.33 2006/06/27 11:01:41 peter Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -260,17 +260,17 @@ sacom_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 	switch(sc->sc_baseaddr) {
-	case 0x80050000:
-		printf("SA11x0 UART3\n");
+	case SACOM1_BASE:
+		printf("SA-11x0 UART1\n");
 		break;
-	case 0x80010000:
-		printf("SA11x0 UART1\n");
+	case SACOM2_BASE:
+		printf("SA-11x0 UART2 (IRDA)\n");
 		break;
-	case 0x80030000:
-		printf("SA11x0 UART2 (IRDA)\n");
+	case SACOM3_BASE:
+		printf("SA-11x0 UART3\n");
 		break;
 	default:
-		printf("unknown SA11x0 UART\n");
+		printf("unknown SA-11x0 UART\n");
 		break;
 	}
 
