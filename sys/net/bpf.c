@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.117 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.118 2006/06/27 10:45:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.117 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.118 2006/06/27 10:45:09 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1009,7 +1009,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/* skip additional entry */
-		if (bp->bif_driverp != (struct bpf_if **)&ifp->if_bpf)
+		if ((caddr_t *)bp->bif_driverp != &ifp->if_bpf)
 			continue;
 		/*
 		 * We found the requested interface.
@@ -1586,7 +1586,7 @@ bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 	struct bpf_if *bp;
 
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if (bp->bif_driverp == (struct bpf_if **)&ifp->if_bpf)
+		if ((caddr_t *)bp->bif_driverp == &ifp->if_bpf)
 			break;
 	}
 	if (bp == NULL)
