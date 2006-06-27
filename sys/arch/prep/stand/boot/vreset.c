@@ -1,4 +1,4 @@
-/* $NetBSD: vreset.c,v 1.5 2006/04/13 18:46:46 garbled Exp $ */
+/* $NetBSD: vreset.c,v 1.6 2006/06/27 23:26:13 garbled Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -167,7 +167,7 @@ static const u_int8_t vga_atc[] = {
 void
 vga_reset(u_char *ISA_mem)
 {
-	int slot;
+	int slot, cardfound;
 
 	/* check if we are in text mode, if so, punt */
 	outb(VGA_GR_PORT, 0x06);
@@ -177,13 +177,16 @@ vga_reset(u_char *ISA_mem)
 	/* guess not, we lose. */
 	slot = -1;
 	while ((slot = scan_PCI(slot)) > -1) {
-		unlockVideo(slot);
+		cardfound = 0;
 		switch (PCI_vendor(slot)) {
 		case PCI_VENDOR_CIRRUS:
+			unlockVideo(slot);
 			outw(VGA_SR_PORT, 0x0612); /* unlock ext regs */
 			outw(VGA_SR_PORT, 0x0700); /* reset ext sequence mode */
+			cardfound++;
 			break;
 		case PCI_VENDOR_PARADISE:
+			unlockVideo(slot);
 			outw(VGA_GR_PORT, 0x0f05); /* unlock registers */
 			outw(VGA_SR_PORT, 0x0648);
 			outw(VGA_CR_PORT, 0x2985);
@@ -206,24 +209,29 @@ vga_reset(u_char *ISA_mem)
 				outw(VGA_CR_PORT, 0x2a95);
 			}
 			outw(VGA_CR_PORT, 0x34a0);
+			cardfound++;
 			break;
 		case PCI_VENDOR_S3:
+			unlockVideo(slot);
 			unlock_S3();
+			cardfound++;
 			break;
 		default:
 			break;
 		}
-		outw(VGA_SR_PORT, 0x0120); /* disable video */
-		set_text_regs();
-		set_text_clut(0);
-		load_font(ISA_mem);
-		set_text_regs();
-		outw(VGA_SR_PORT, 0x0100); /* re-enable video */
-		clear_video_memory();
+		if (cardfound) {
+			outw(VGA_SR_PORT, 0x0120); /* disable video */
+			set_text_regs();
+			set_text_clut(0);
+			load_font(ISA_mem);
+			set_text_regs();
+			outw(VGA_SR_PORT, 0x0100); /* re-enable video */
+			clear_video_memory();
 
-		if (PCI_vendor(slot) == PCI_VENDOR_S3)
-			outb(0x3c2, 0x63);	/* ??? */
-		delay(1000);
+			if (PCI_vendor(slot) == PCI_VENDOR_S3)
+				outb(0x3c2, 0x63);	/* ??? */
+			delay(1000);
+		}
 	}
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.19 2006/06/15 18:15:32 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.20 2006/06/27 23:26:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.19 2006/06/15 18:15:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.20 2006/06/27 23:26:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,14 @@ extern void pci_intr_fixup_ibm_6015(void);
 
 struct platform_quirkdata platform_quirks[] = {
 	{ "IBM PPS Model 6015",  PLAT_QUIRK_INTRFIXUP,
-	   pci_intr_fixup_ibm_6015, NULL },
-	{ NULL, 0, NULL, NULL }
+	   pci_intr_fixup_ibm_6015, NULL, 0 },
+	{ "(e1)", PLAT_QUIRK_ISA_HANDLER, NULL, NULL, EXT_INTR_I8259 },
+	{ NULL, 0, NULL, NULL, 0 }
 };
 
 /* find the platform quirk entry for this model, -1 if none */
 
-static int
+int
 find_platform_quirk(const char *model)
 {
 	int i;
@@ -121,8 +122,8 @@ reset_prep(void)
 		if (platform_quirks[i].quirk & PLAT_QUIRK_RESET &&
 		    platform_quirks[i].reset != NULL)
 			(*platform_quirks[i].reset)();
-	} else
-		reset_prep_generic();
+	}
+	reset_prep_generic();
 }
 
 /*
