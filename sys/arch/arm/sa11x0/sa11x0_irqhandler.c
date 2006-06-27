@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.9 2006/05/11 12:05:37 yamt Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.10 2006/06/27 13:58:08 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.9 2006/05/11 12:05:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.10 2006/06/27 13:58:08 peter Exp $");
 
 #include "opt_irqstats.h"
 
@@ -104,7 +104,6 @@ u_int imask[NIPL];
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
 #endif
-
 
 extern void set_spl_masks(void);
 static int fakeintr(void *);
@@ -200,7 +199,7 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	 * generally small.
 	 */
 	for (p = &irqhandlers[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
+		continue;
 
 	/*
 	 * Actually install a fake handler momentarily, since we might be doing
@@ -239,7 +238,7 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 #ifdef INTR_DEBUG
 	dumpirqhandlers();
 #endif
-	return (ih);
+	return ih;
 }
 
 #ifdef hpcarm
@@ -265,7 +264,7 @@ sa11x0_intr_disestablish(sa11x0_chipset_tag_t ic, void *arg)
 	 */
 	for (p = &irqhandlers[irq]; (q = *p) != NULL && q != ih;
 	     p = &q->ih_next)
-		;
+		continue;
 	if (q)
 		*p = q->ih_next;
 	else
@@ -313,4 +312,3 @@ dumpirqhandlers(void)
 	return 0;
 }
 #endif
-/* End of irqhandler.c */
