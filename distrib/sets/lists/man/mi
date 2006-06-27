@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.904 2006/06/27 14:57:19 peter Exp $
+# $NetBSD: mi,v 1.905 2006/06/27 21:59:51 peter Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -897,7 +897,7 @@
 ./usr/share/man/cat4/hp700/mongoose.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/phantomas.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/wax.0		man-sys-catman		.cat
-./usr/share/man/cat4/hpcarm/intro.4		man-sys-catman		.cat
+./usr/share/man/cat4/hpcarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcmips/teliosio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0lcd.0		man-sys-catman		.cat
