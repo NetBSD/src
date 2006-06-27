@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.635 2006/06/26 19:50:56 mrg Exp $
+# $NetBSD: mi,v 1.636 2006/06/27 20:39:01 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2354,6 +2354,7 @@
 ./usr/share/man/cat4/evbmips			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/hp700			base-man-share
+./usr/share/man/cat4/hpcarm			base-man-share
 ./usr/share/man/cat4/hpcmips			base-man-share
 ./usr/share/man/cat4/hpcsh			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
@@ -2470,6 +2471,7 @@
 ./usr/share/man/html4/evbmips			base-man-share
 ./usr/share/man/html4/hp300			base-man-share
 ./usr/share/man/html4/hp700			base-man-share
+./usr/share/man/html4/hpcarm			base-man-share
 ./usr/share/man/html4/hpcmips			base-man-share
 ./usr/share/man/html4/hpcsh			base-man-share
 ./usr/share/man/html4/i386			base-man-share
@@ -2587,6 +2589,7 @@
 ./usr/share/man/man4/evbmips			base-man-share
 ./usr/share/man/man4/hp300			base-man-share
 ./usr/share/man/man4/hp700			base-man-share
+./usr/share/man/man4/hpcarm			base-man-share
 ./usr/share/man/man4/hpcmips			base-man-share
 ./usr/share/man/man4/hpcsh			base-man-share
 ./usr/share/man/man4/i386			base-man-share
