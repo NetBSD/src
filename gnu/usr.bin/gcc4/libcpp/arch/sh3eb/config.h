@@ -222,7 +222,7 @@
 
 /* Define to the widest efficient host integer type at least as wide as the
    target's size_t type. */
-#define HOST_WIDE_INT long
+#define HOST_WIDE_INT long long
 
 /* Define as const if the declaration of iconv() needs const. */
 #define ICONV_CONST const
