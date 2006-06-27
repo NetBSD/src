@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.149 2006/04/17 23:29:21 salo Exp $
+#	$NetBSD: Makefile.inc,v 1.150 2006/06/27 18:16:47 drochner Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -39,8 +39,8 @@ SRCS+=	_err.c _errx.c \
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
-#	_setjmp() bswap16() bswap32() bswap64() fabs() frexp() infinity
-#	isinf() ldexp() modf() setjmp() sigsetjmp()
+#	_setjmp() bswap16() bswap32() bswap64() fabs() infinity
+#	isinf() setjmp() sigsetjmp()
 
 .include "${ARCHDIR}/gen/Makefile.inc"
 
