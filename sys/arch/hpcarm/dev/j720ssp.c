@@ -1,4 +1,4 @@
-/*	$NetBSD: j720ssp.c,v 1.29 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: j720ssp.c,v 1.30 2006/06/27 14:36:50 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 SSP port. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.29 2006/03/04 14:09:36 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.30 2006/06/27 14:36:50 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.29 2006/03/04 14:09:36 peter Exp $");
 #else
 #define DPRINTF(arg)	/* nothing */
 #endif
+
+#define BIT_INVERT(x)							\
+	do {								\
+		(x) = ((((x) & 0xf0) >> 4) | (((x) & 0x0f) << 4));	\
+		(x) = ((((x) & 0xcc) >> 2) | (((x) & 0x33) << 2));	\
+		(x) = ((((x) & 0xaa) >> 1) | (((x) & 0x55) << 1));	\
+	} while (0)
 
 static int	j720ssp_match(struct device *, struct cfdata *, void *);
 static void	j720ssp_attach(struct device *, struct device *, void *);
@@ -140,7 +147,8 @@ j720ssp_readwrite(struct j720ssp_softc *sc, int drainfifo, int in,
 		delay(wait);
 	}
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_DR, in);
+	BIT_INVERT(in);
+	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_DR, in << 8);
 
 	delay(wait);
 	timeout = 100000;
@@ -151,6 +159,7 @@ j720ssp_readwrite(struct j720ssp_softc *sc, int drainfifo, int in,
 		}
 
 	*out = bus_space_read_4(sc->sc_iot, sc->sc_ssph, SASSP_DR);
+	BIT_INVERT(*out);
 
 	return 0;
 }
