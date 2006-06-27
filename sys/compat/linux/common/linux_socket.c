@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.63 2006/06/26 21:23:57 mrg Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.64 2006/06/27 09:09:40 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.63 2006/06/26 21:23:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.64 2006/06/27 09:09:40 pavel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -314,7 +314,7 @@ linux_sys_socket(l, v, retval)
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	error = compat_30_sys_socket(l, &bsa, retval);
+	error = sys___socket30(l, &bsa, retval);
 
 #ifdef INET6
 	/*
