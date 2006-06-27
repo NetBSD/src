@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2006/06/27 23:33:21 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2006/06/27 23:33:21 hubertf Exp $");
 #endif
 #endif
 
@@ -72,9 +72,9 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_add [-AfhILMnRSuVv] [-p prefix] [-s verification-type]",
-	    "               [-t template] [-W viewbase] [-w view]",
-	    "               pkg-name [pkg-name ...]");
+	    "usage: pkg_add [-AfhILMnRSuVv] [-K pkg_dbdir] [-p prefix]",
+	    "               [-s verification-type] [-t template] [-W viewbase] [-w view]",
+	    "               [[ftp|http]://[user[:password]@]host[:port]][/path/]pkg-name ...");
 	exit(1);
 }
 

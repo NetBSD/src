@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2006/06/27 23:33:21 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2006/06/27 23:33:21 hubertf Exp $");
 #endif
 #endif
 
@@ -66,13 +66,14 @@ Boolean File2Pkg = FALSE;
 static void
 usage(void)
 {
-	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n",
-	    "usage: pkg_create [-ORUEhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
-	    "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
-	    "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
-	    "                  [-b build-version-file] [-B build-info-file]",
-	    "                  [-I realprefix]",
-	    "                  -c comment -d description -f packlist pkg-name");
+	fprintf(stderr,
+	    "usage: pkg_create [-EhlORUVv] [-B build-info-file] [-b build-version-file]\n"
+            "                  [-C cpkgs] [-D displayfile] [-I realprefix] [-i iscript]\n"
+            "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir] [-m mtreefile]\n"
+            "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
+            "                  [-S size-all-file] [-s size-pkg-file] [-t template]\n"
+            "                  [-X excludefile] -c comment -d description -f packlist\n"
+            "                  pkg-name\n");
 	exit(1);
 }
 
