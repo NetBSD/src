@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2006/03/28 20:58:39 pavel Exp $
+# $NetBSD: GENERIC,v 1.99 2006/06/28 15:19:27 liamjfoy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	32
 
@@ -119,6 +119,7 @@ pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	loop
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
