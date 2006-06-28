@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/01/26 16:52:53 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2006/06/28 16:20:42 lukem Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -51,7 +51,7 @@ SRCS+=	vers.c
 CLEANFILES+= vers.c
 
 TEXTADDR	= 0xa0a00000
-LDFLAGS		= -T ${S}/arch/mips/conf/stand.ldscript -Ttext ${TEXTADDR} \
+LINKFLAGS	= -T ${S}/arch/mips/conf/stand.ldscript -Ttext ${TEXTADDR} \
 		  -e start -N
 COFFLDFLAGS	= -T ${COMMON}/coffboot.ldscript -N
 
@@ -116,7 +116,8 @@ ${BINKERNEL_O}: ${BINKERNEL_C}
 all realall: ${PROG}.coff ${BOOT_KERNEL}.gz
 
 ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -S -o ${PROG}.elf ${OBJS} ${LIBS} ${BINKERNEL_DUMMY_O}
+	${LD} ${LINKFLAGS} -S -o ${PROG}.elf ${OBJS} ${LIBS} \
+	    ${BINKERNEL_DUMMY_O}
 	${OBJDUMP} -h ${PROG}.elf
 #	${OBJDUMP} -m mips:4000 -d ${PROG}.elf > ${PROG}.dis
 	mv ${PROG}.elf ${PROG}
@@ -129,7 +130,7 @@ ${PROG}.coff:	${PROG}
 	mv ${.TARGET}.tmp ${.TARGET}
 	
 ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \
+	${LD} ${LINKFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \
 	    ${BINKERNEL_O}
 	mv ${BOOT_KERNEL}.elf ${BOOT_KERNEL}
 	${OBJDUMP} -h ${BOOT_KERNEL}
