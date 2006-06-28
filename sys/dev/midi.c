@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.19 2006/05/31 03:17:06 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.20 2006/06/28 23:34:53 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.19 2006/05/31 03:17:06 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.20 2006/06/28 23:34:53 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -201,8 +201,10 @@ mididetach(struct device *self, int flags)
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 	
-	evcnt_detach(&sc->xmt.bytesDiscarded);
-	evcnt_detach(&sc->xmt.incompleteMessages);
+	if ( !(sc->props & MIDI_PROP_NO_OUTPUT) ) {
+		evcnt_detach(&sc->xmt.bytesDiscarded);
+		evcnt_detach(&sc->xmt.incompleteMessages);
+	}
 	if ( sc->props & MIDI_PROP_CAN_INPUT ) {
 		evcnt_detach(&sc->rcv.bytesDiscarded);
 		evcnt_detach(&sc->rcv.incompleteMessages);
@@ -238,12 +240,14 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	
 	sc->props = mi.props;
 	
-	evcnt_attach_dynamic(&sc->xmt.bytesDiscarded,
-		EVCNT_TYPE_MISC, NULL,
-		sc->dev.dv_xname, "xmt bytes discarded");
-	evcnt_attach_dynamic(&sc->xmt.incompleteMessages,
-		EVCNT_TYPE_MISC, NULL,
-		sc->dev.dv_xname, "xmt incomplete msgs");
+	if ( !(sc->props & MIDI_PROP_NO_OUTPUT) ) {
+		evcnt_attach_dynamic(&sc->xmt.bytesDiscarded,
+			EVCNT_TYPE_MISC, NULL,
+			sc->dev.dv_xname, "xmt bytes discarded");
+		evcnt_attach_dynamic(&sc->xmt.incompleteMessages,
+			EVCNT_TYPE_MISC, NULL,
+			sc->dev.dv_xname, "xmt incomplete msgs");
+	}
 	if ( sc->props & MIDI_PROP_CAN_INPUT ) {
 		evcnt_attach_dynamic(&sc->rcv.bytesDiscarded,
 			EVCNT_TYPE_MISC, NULL,
@@ -785,6 +789,13 @@ midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	sc->xmt.pos = sc->xmt.msg;
 	sc->xmt.end = sc->xmt.msg;
 	
+	/* copy error counters so an ioctl (TBA) can give since-open stats */
+	sc->rcv.atOpen.bytesDiscarded  = sc->rcv.bytesDiscarded.ev_count;
+	sc->rcv.atQuery.bytesDiscarded = sc->rcv.bytesDiscarded.ev_count;
+	
+	sc->xmt.atOpen.bytesDiscarded  = sc->xmt.bytesDiscarded.ev_count;
+	sc->xmt.atQuery.bytesDiscarded = sc->xmt.bytesDiscarded.ev_count;
+	
 	/* and the buffers */
 	midi_initbuf(&sc->outbuf);
 	midi_initbuf(&sc->inbuf);
@@ -1311,19 +1322,14 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 		return EIO;
 	
 	while ( ibuf < iend ) {
-		do {
-			got = midi_fst(&sc->xmt, *ibuf, form);
-		} while ( got == FST_HUH );
+		got = midi_fst(&sc->xmt, *ibuf, form);
 		++ ibuf;
 		switch ( got ) {
 		case FST_MORE:
 			continue;
 		case FST_ERR:
-#if defined(EPROTO) /* most appropriate SUSv3 errno, but not in errno.h yet */
+		case FST_HUH:
 			return EPROTO;
-#else
-			return EIO;
-#endif
 		case FST_CHN:
 		case FST_CHV: /* only occurs in VCOMP form */
 		case FST_COM:
