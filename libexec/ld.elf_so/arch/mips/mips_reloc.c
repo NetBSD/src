@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.51 2006/04/03 13:23:15 skrll Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.52 2006/06/28 16:48:38 simonb Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.51 2006/04/03 13:23:15 skrll Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.52 2006/06/28 16:48:38 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,18 +58,23 @@ caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 static inline Elf_Addr
 load_ptr(void *where)
 {
-	Elf_Addr res;
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		return *(Elf_Addr *)where;
+	else {
+		Elf_Addr res;
 
-	memcpy(&res, where, sizeof(res));
-
-	return res;
+		(void)memcpy(&res, where, sizeof(res));
+		return res;
+	}
 }
 
 static inline void
 store_ptr(void *where, Elf_Addr val)
 {
-
-	memcpy(where, &val, sizeof(val));
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		*(Elf_Addr *)where = val;
+	else
+		(void)memcpy(where, &val, sizeof(val));
 }
 
 
@@ -86,7 +91,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rel *rel = 0, *rellim;
 	Elf_Addr relsz = 0;
-	Elf_Addr *where;
+	void *where;
 	const Elf_Sym *symtab = NULL, *sym;
 	Elf_Addr *got = NULL;
 	Elf_Word local_gotno = 0, symtabno = 0, gotsym = 0;
@@ -133,7 +138,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 
 	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
 	for (; rel < rellim; rel++) {
-		where = (Elf_Addr *)(relocbase + rel->r_offset);
+		where = (void *)(relocbase + rel->r_offset);
 
 		switch (ELF_R_TYPE(rel->r_info)) {
 		case R_TYPE(NONE):
@@ -143,10 +148,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			assert(ELF_R_SYM(rel->r_info) < gotsym);
 			sym = symtab + ELF_R_SYM(rel->r_info);
 			assert(ELF_ST_BIND(sym->st_info) == STB_LOCAL);
-			if (__predict_true(RELOC_ALIGNED_P(where)))
-				*where += relocbase;
-			else
-				store_ptr(where, load_ptr(where) + relocbase);
+			store_ptr(where, load_ptr(where) + relocbase);
 			break;
 
 		default:
@@ -245,10 +247,11 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 
 	got = obj->pltgot;
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
-		Elf_Addr        *where, tmp;
+		void		*where;
+		Elf_Addr	 tmp;
 		unsigned long	 symnum;
 
-		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+		where = obj->relocbase + rel->r_offset;
 		symnum = ELF_R_SYM(rel->r_info);
 
 		switch (ELF_R_TYPE(rel->r_info)) {
@@ -260,15 +263,9 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			def = obj->symtab + symnum;
 
 			if (symnum >= obj->gotsym) {
-				if (__predict_true(RELOC_ALIGNED_P(where)))
-					tmp = *where;
-				else
-					tmp = load_ptr(where);
+				tmp = load_ptr(where);
 				tmp += got[obj->local_gotno + symnum - obj->gotsym];
-				if (__predict_true(RELOC_ALIGNED_P(where)))
-					*where = tmp;
-				else
-					store_ptr(where, tmp);
+				store_ptr(where, tmp);
 
 				rdbg(("REL32/G %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
@@ -290,10 +287,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				 *
 				 * --rkb, Oct 6, 2001
 				 */
-				if (__predict_true(RELOC_ALIGNED_P(where)))
-					tmp = *where;
-				else
-					tmp = load_ptr(where);
+				tmp = load_ptr(where);
 
 				if (def->st_info ==
 				    ELF_ST_INFO(STB_LOCAL, STT_SECTION)
@@ -304,10 +298,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 					tmp += (Elf_Addr)def->st_value;
 
 				tmp += (Elf_Addr)obj->relocbase;
-				if (__predict_true(RELOC_ALIGNED_P(where)))
-					*where = tmp;
-				else
-					store_ptr(where, tmp);
+				store_ptr(where, tmp);
 
 				rdbg(("REL32/L %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
