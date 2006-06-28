@@ -1,3 +1,137 @@
+2006-06-25  Lee Millward  <lee.millward@gmail.com>
+
+	PR c++/27821
+	* decl.c (grokdeclarator): Return error_mark_node on
+	invalid uses of the scope resolution operator.
+	
+2006-06-23  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/28112
+	* parser.c (cp_parser_attribute_list): Skip attributes with invalid
+	arguments.  Fix comment.
+
+2006-06-22  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/28110
+	* pt.c (unify) <case TEMPLATE_PARM_INDEX>: Check for invalid
+	parameters.
+
+	PR c++/28109
+	* rtti.c (get_tinfo_decl_dynamic): Robustify.
+
+2006-06-16  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27884
+	* decl.c (have_extern_spec): Remove.
+	(start_decl): Do not check have_extern_spec.
+	(start_function): Likewise.
+	* cp-tree.h (have_extern_spec): Remove.
+	* parser.c (cp_parser_linkage_specification): Don't set
+	have_extern_spec.
+	(cp_parser_init_declarator): Likewise.
+	(cp_parser_parameter_declaration): Do not treat parameters as
+	within the scope of an unbraced linkage specification.
+
+2006-06-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27689
+	* cp-tree.h (CLASSTYPE_SPECIALIZATION_OF_PRIMARY_TEMPLATE_P): New
+	macro.
+	* pt.c (unify): Use it.
+
+2006-06-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27666
+	* call.c (build_conditional_expr): Robustify.
+
+2006-06-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27665
+	* parser.c (cp_parser_unqualified_id): Use constructor_name_p to
+	identify destructors.
+	(cp_parser_nested_name_specifier_opt): Remove invalid
+	optimization.
+	(cp_parser_template_id): Refine heuristic for determining whether
+	we are entering a scope.
+
+2006-06-14  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27648
+	* parser.c (cp_parser_declarator): Robustify.
+
+2006-06-14  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/26559
+	* pt.c (value_dependent_expression_p): All CALL_EXPRs are dependent.
+
+2006-06-13  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27227
+	* decl.c (decls_match): Allow an extern "C" variable declarations
+	from different namespaces to match.
+	(duplicate_decls): Disallow redeclaring a variable with a
+	different linkage specification.
+
+2006-06-14  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	* cp-tree.def: Fix typo.
+
+2006-06-13  Roger Sayle  <roger@eyesopen.com>
+
+	PR c++/21210
+	* typeck2.c (build_functional_cast): Use cp_convert to construct
+	non-aggregate initializers instead of the user-level build_c_cast.
+
+2006-06-12  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27601
+	* semantics.c (finish_offsetof): Handle pseudo-destructors.
+
+	PR c++/27933
+	* name-lookup.c (lookup_qualified_name): Always return error_mark_node
+	if lookup fails.
+
+	PR c++/27951
+	* decl2.c (finish_anon_union): Return early if build_anon_union_vars
+	fails.
+
+2006-06-07  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27601
+	* cp-tree.h (finish_offsetof): Add prototype.
+	* semantics.c (finish_offsetof): New function.
+	* parser.c (cp_parser_builtin_offsetof): Call it instead of
+	fold_offsetof.
+	* pt.c (tsubst_copy_and_build): Likewise.
+
+2006-06-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27177
+	* call.c (standard_conversion): Require that the derived type be
+	complete when performing a derived-to-base conversion.
+
+2006-06-04  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27819
+	* decl.c (cp_finish_decl): Process initializers for static data
+	members with non-dependent initializers, even in templates.
+
+	PR c++/27722
+	* decl.c (maybe_deduce_size_from_array_init): If the declaration
+	is erroneous, give it an erroneous type.
+	(layout_var_decl): If the type is erroneous, give up.
+	(check_initializer): Likewise.
+
+	PR c++/27807
+	* cp-tree.h (TYPE_OBJ_P): New macro.
+	(TYPE_PTROB_P): Use it.
+	(TYPE_REF_OBJ_P): Likewise.
+	* semantics.c (finish_compound_literal): Do not permit compound
+	literals of non-object types.
+
+	PR c++/27806
+	* typeck.c (original_type): Robustify.
+
 2006-05-31  Mark Mitchell  <mark@codesourcery.com>
 
 	PR c++/27801
