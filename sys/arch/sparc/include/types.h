@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.42 2006/06/07 22:38:49 kardel Exp $ */
+/*	$NetBSD: types.h,v 1.43 2006/06/28 20:55:46 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,12 +55,6 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
-#if defined(_KERNEL)
-typedef struct label_t {
-	int val[2];
-} label_t;
-#endif
-
 /* The following are unsigned to prevent annoying sign extended pointers. */
 typedef unsigned long int	register_t;
 typedef unsigned int		register32_t;
@@ -69,6 +63,16 @@ typedef unsigned long int	register64_t;
 #else
 /* LONGLONG */
 typedef unsigned long long int	register64_t;
+#endif
+
+#if defined(_KERNEL)
+typedef struct label_t {
+#ifdef SUN4U
+	register64_t val[2];
+#else
+	register_t val[3];
+#endif
+} label_t;
 #endif
 
 #if defined(_NETBSD_SOURCE)
