@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.98 2006/05/14 21:47:00 elad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.99 2006/06/28 16:19:01 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.98 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.99 2006/06/28 16:19:01 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1534,8 +1534,10 @@ wsdisplay_update_rawkbd(struct wsdisplay_softc *sc, struct wsscreen *scr)
 
 	data = raw ? WSKBD_RAW : WSKBD_TRANSLATED;
 	inp = sc->sc_input;
-	if (inp == NULL)
+	if (inp == NULL) {
+		splx(s);
 		return (ENXIO);
+	}
 	error = wsevsrc_display_ioctl(inp, WSKBDIO_SETMODE, &data, 0, 0);
 	if (!error)
 		sc->sc_rawkbd = raw;
