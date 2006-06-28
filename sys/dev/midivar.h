@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.17 2006/05/21 17:28:47 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.18 2006/06/28 23:34:53 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,6 +175,11 @@ __insn_barrier(); \
 struct midi_state {
 	struct  evcnt bytesDiscarded;
 	struct  evcnt incompleteMessages;
+	struct {
+		uint32_t bytesDiscarded;
+		uint32_t incompleteMessages;
+	}	atOpen,
+		atQuery;
 	int     state;
 	u_char *pos;
 	u_char *end;
