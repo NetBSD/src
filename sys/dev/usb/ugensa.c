@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.6 2006/05/14 21:47:00 elad Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.7 2006/06/28 18:20:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ USB_ATTACH(ugensa)
 	uca.ibufsize = UGENSA_BUFSIZE;
 	uca.obufsize = UGENSA_BUFSIZE;
 	uca.ibufsizepad = UGENSA_BUFSIZE;
+	uca.portno = UCOM_UNK_PORTNO;
 	uca.opkthdrlen = 0;
 	uca.device = dev;
 	uca.iface = iface;
