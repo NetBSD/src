@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2005/04/15 22:39:11 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2006/06/28 14:46:33 drochner Exp $
 
 SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S \
 	alloca.S \
@@ -6,14 +6,11 @@ SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S \
 	fabs.S flt_rounds.S \
 
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c \
-	frexp_ieee754.c \
 	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c \
 	isfinitef_ieee754.c isfinited_ieee754.c \
 	isinff_ieee754.c isinfd_ieee754.c \
 	isnanf_ieee754.c isnand_ieee754.c \
-	signbitf_ieee754.c signbitd_ieee754.c \
-	ldexp_ieee754.c \
-	modf_ieee754.c
+	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	nanf.c
 
