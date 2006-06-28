@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.2 2006/06/28 16:27:27 lukem Exp $
+#	$NetBSD: Makefile.bootxx,v 1.3 2006/06/28 16:28:51 lukem Exp $
 
 NOMAN		=
 
@@ -45,6 +45,7 @@ LIBS		= ${LIBKERN}
 .endif
 
 ${PROG}: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
 	${OBJCOPY} -O binary ${PROG}.elf ${BASE}.bin
 	ls -al ${BASE}.bin
