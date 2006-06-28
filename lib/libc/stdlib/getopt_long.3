@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.16 2005/12/02 14:11:01 yamt Exp $
+.\"	$NetBSD: getopt_long.3,v 1.17 2006/06/28 06:25:15 mjl Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -163,7 +163,7 @@ int daggerset;
 /* options descriptor */
 static struct option longopts[] = {
 	{ "buffy",	no_argument,		0, 		'b' },
-	{ "floride",	required_argument,	0, 	       	'f' },
+	{ "fluoride",	required_argument,	0, 	       	'f' },
 	{ "daggerset",	no_argument,		\*[Am]daggerset,	1 },
 	{ NULL,		0,			NULL, 		0 }
 };
@@ -184,7 +184,7 @@ while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
 	case 0:
 		if(daggerset) {
 			fprintf(stderr,"Buffy will use her dagger to "
-				       "apply floride to dracula's teeth\en");
+				       "apply fluoride to dracula's teeth\en");
 		}
 		break;
 	case '?':
