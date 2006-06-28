@@ -1,3 +1,306 @@
+2006-06-27  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR fortran/19310
+	PR fortran/19904
+	* gfortran.dg/real_const_3.f90: New test.
+
+2006-06-25  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/20867
+	* gfortran.dg/stfunc_3.f90: New test.
+
+	PR fortran/25056
+	* gfortran.dg/impure_actual_1.f90: New test.
+
+	PR fortran/20874
+	* gfortran.dg/elemental_result_1.f90: New test.
+
+	PR fortran/25073
+	* gfortran.dg/select_7.f90: New test.
+
+	PR fortran/27554
+	* intrinsic_actual_1.f: New test.
+
+	PR fortran/22038
+	PR fortran/28119
+	* gfortran.dg/forall_4.f90: New test.
+
+	PR fortran/25072
+	* gfortran.dg/forall_5.f90: New test.
+
+2006-06-25  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* gcc.c-torture/compile/20060625-1.c: New test.
+
+2006-06-25  Lee Millward  <lee.millward@gmail.com>
+
+	PR c++/27821
+	* g++.dg/template/error22.C: New test.
+	
+2006-06-24  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/28118
+	* gfortran.dg/actual_array_substr_1.f90: New test.
+
+2006-06-23  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/28112
+	* g++.dg/ext/attrib23.C: New test.
+
+2006-06-23  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/28045
+	* gcc.dg/torture/pr28045.c: New testcase.
+
+2006-06-23  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/16206
+	* gfortran.dg/array_initializer_1.f90: New test.
+
+2006-06-22  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/28110
+	* g++.dg/template/crash53.C: New test.
+
+	PR c++/28109
+	* g++.dg/rtti/incomplete1.C: New test.
+
+2006-06-21  Steven G. Kargl  <kargls@comcast.net>
+
+	* gfortran.dg/rrspacing_1.f90:  New test.
+
+2006-06-21  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27781
+	* gcc.dg/tree-ssa/pr27781.c: New testcase.
+
+2006-06-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc.dg/merge-all-constants-1.c: New test.
+
+2006-06-20  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/27861
+	* gcc.dg/pr27861-1.c: New test case.
+
+2006-06-20  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/27958
+	* gcc/testsuite/gfortran.dg/substr_2.f: New test.
+
+2006-06-20  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/27895
+	* gfortran.dg/bounds_check_3.f90: New test.
+
+2006-06-20  Thomas Koenig  <Thomas.Koenig@online.de>
+
+	PR fortran/27715
+	* gfortran.dg/extended_char_comparison_1.f:  New test.
+
+2006-06-20  Thomas Koenig  <Thomas.Koenig@online.de>
+
+	PR fortran/27784
+	* gfortran.dg/string_null_compare_1.f:  New test case.
+
+2006-06-18  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/27802
+	* gcc.dg/pr27802-1.c: New test case.
+
+2006-06-16  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27884
+	* g++.dg/parse/linkage2.C: New test
+
+2006-06-16  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27830
+	* g++.dg/tree-ssa/pr27830.C: New testcase.
+
+2006-06-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27689
+	* g++.dg/template/ttp18.C: New test.
+	* g++.dg/template/ttp19.C: Likewise.
+
+2006-06-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27666
+	* g++.dg/expr/cond9.C: New test.
+
+2006-06-15  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27665
+	* g++.dg/template/crash52.C: New test.
+
+2006-06-15  Asher Langton  <langton2@llnl.gov>
+	
+	PR fortran/27786
+	* cray_pointers_2.f90: Add -fbounds-check compile flag.
+	
+2006-06-15  Janis Johnson  <janis187@us.ibm.com>
+
+	* gcc.dg/vmx/pr27842.c: Remove dg-do directive; use default.
+	* gcc.dg/vmx/pr27006.c: Ditto.
+
+2006-06-14  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27648
+	* g++.dg/ext/attrib22.C: New test.
+
+2006-06-14  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/26559
+	* g++.dg/template/builtin1.C: New test.
+
+2006-06-14  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27227
+	* g++.dg/lookup/linkage1.C: New test.
+	* g++.dg/lookup/linkage2.C: Likewise.
+
+2006-06-14  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	PR middle-end/27959
+	* gcc.dg/pr27959.c: New testcase.
+
+2006-06-13  Roger Sayle  <roger@eyesopen.com>
+
+	PR c++/21210
+	* g++.dg/init/complex1.C: New test case.
+
+2006-06-12  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27601
+	* g++.dg/ext/offsetof1.C: Add test for pseudo-destructors.
+
+	PR target/27421
+	* gcc.dg/union-3.c: New test.
+
+	PR c++/27933
+	* g++.dg/lookup/using15.C: New test.
+
+	PR c++/27951
+	* g++.dg/other/anon4.C: New test.
+
+2006-06-12  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/24558
+	* gfortran.dg/entry_6.f90: New test.
+
+	PR fortran/20877
+	PR fortran/25047
+	* gfortran.dg/entry_7.f90: New test.
+
+	PR fortran/23091
+	* gfortran.dg/saved_automatic_1.f90: New test.
+
+	PR fortran/24168
+	* gfortran.dg/array_simplify_1.f90: New test.
+
+	PR fortran/25090
+	* gfortran.dg/entry_dummy_ref_1.f90: New test.
+
+	PR fortran/25058
+	* gfortran.dg/entry_dummy_ref_2.f90: New test.
+
+2006-06-07  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27601
+	* g++.dg/ext/offsetof1.C: Test member functions.
+
+2006-06-07  Uros Bizjak  <uros@kss-loka.si>
+
+	PR target/27790
+	* gcc.target/i386/pr27790.c: New test.
+
+2006-06-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27177
+	* g++.dg/expr/cast7.C: New test.
+
+2006-06-06  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	PR target/27842
+	* gcc.dg/vmx/pr27842.c: New test.
+
+2006-06-05  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/26223
+	* gcc.target/i386/amd64-abi-2.c: New test case.
+
+2006-06-05  Steve Ellcey  <sje@cup.hp.com>
+
+	Backport from mainline:
+	2006-04-23  David Edelsohn  <edelsohn@gnu.org>
+	* g++.dg/opt/pr15551.C: Include cstdio.
+	(main): Use remove instead of unlink.
+
+2006-06-05  Steve Ellcey  <sje@cup.hp.com>
+
+	PR testsuite/27705
+	* gcc.dg/sibcall-7.c: Do not run on ia64-*-* platforms.
+
+2006-06-05  Joseph S. Myers  <joseph@codesourcery.com>
+
+	PR c/25161
+	PR c/27020
+	* gcc.dg/array-10.c: New test.
+
+2006-06-05  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/14067
+	* gfortran.dg/data_char_1.f90: Add messages for truncated
+	strings.
+
+	PR fortran/16943
+	* gfortran.dg/func_decl_2.f90: New test.
+
+	PR fortran/20839
+	* gfortran.dg/do_2.f90: New test.
+
+	PR fortran/27655
+	* gfortran.dg/associated_3.f90: New test.
+
+2006-06-04  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/27819
+	* g++.dg/template/static25.C: New test.
+
+	PR c++/27722
+	* g++.dg/init/array21.C: New test.
+
+	PR c++/27807
+	* g++.dg/ext/complit7.C: New test.
+	
+	PR c++/27806
+	* g++.dg/parse/ptrmem5.C: New test.
+
+2006-06-04  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27601
+	* g++.dg/ext/offsetof1.C: New test.
+
+2006-06-03  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	Backport from mainline:
+	2006-05-25  Eric Botcazou  <ebotcazou@libertysurf.fr>
+	* gfortran.dg/large_real_kind_form_io_2.f90: UnXFAIL on SPARC/Solaris.
+
+	2006-05-05  Steve Ellcey  <sje@cup.hp.com>
+	* gfortran.dg/large_real_kind_form_io_2.f90: Use nearest.
+
+2006-06-03  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/19777
+	* gfortran.dg/bounds_check_2.f: New test.
+
+2006-06-03  Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	PR fortran/27524
+	* gfortran.dg/bounds_check_1.f90: New test.
+
 2006-06-01  Paul Thomas  <pault@gcc.gnu.org>
 
 	PR fortran/25098

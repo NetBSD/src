@@ -1,3 +1,150 @@
+2006-06-25  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR middle-end/28151
+	* fold-const.c (const_binop): Be prepared for self returning zero.
+	Simplify code handling complex values.
+
+2006-06-23  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/28045
+	* fold-const.c (operand_equal_p): Check if the argument types
+	have the same precision before stripping NOPs.
+
+2006-06-21  Richard Henderson  <rth@redhat.com>
+
+        PR target/26347
+        PR target/27082
+        * config/alpha/predicates.md (small_symbolic_operand): Deny weak
+        symbols.
+        (global_symbolic_operand): Allow weak symbols, even if local_p.
+
+2006-06-21  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27781
+	* Makefile.in (ipa-pure-const.o): Add $(TARGET_H) dependency.
+	* ipa-pure-const.c (target.h): Include.
+	(analyze_function): Do not analyze functions that do not
+	bind locally.
+
+2006-06-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* varasm.c (mergeable_string_section): Check for embedded NULs and
+	NUL termination in the first int_size_in_bytes (TREE_TYPE (decl))
+	rather than TREE_STRING_LENGTH bytes.
+
+2006-06-20  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/27861
+	* expmed.c (expand_shift): On SHIFT_COUNT_TRUNCATED targets, we may
+	have stripped a SUBREG from the shift count, so we may need to
+	convert_to_mode back to the type's mode before calling make_tree.
+	Use new_amount instead of amount to avoid expanding a tree twice.
+
+2006-06-18  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/27802
+	* reg-stack.c (subst_stack_regs): Handle noreturn function calls
+	that (would) return their results in stack registers.
+
+2006-06-16  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/27830
+	* tree-inline.c (copy_body_r): For copying the operand
+	of an ADDR_EXPR make sure to fold &* afterwards.
+
+2006-06-14  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/27858
+	Revert incorrect fix for PR target/27158
+	2006-05-11  Roger Sayle  <roger@eyesopen.com>
+	* reload.c (find_reloads_toplev): Only return the simplified SUBREG
+	of a reg_equiv_constant if the result is a legitimate constant.
+
+2006-06-14  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/27158
+	* config/rs6000/rs6000.c (const_vector_elt_as_int): New function to
+	extract a CONST_VECTOR element and interpret it as an integer.
+	(vspltis_constant): Use const_vector_elt_as_int instead of the
+	macro CONST_VECTOR_ELT in order to handle FP vector modes.
+	* config/rs6000/predicates.md (easy_vector_const): Consider
+	floating point ALTIVEC_VECTOR_MODEs via easy_altivec_constant.
+
+2006-06-14  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	PR middle-end/27959
+	* reload1.c (reload): Remove registers returned by update_eliminables
+	from used_spill_regs.
+
+2005-06-13  Bernd Schmidt  <bernd.schmidt@analog.com>
+
+	PR bootstrap/22541
+	From Dan Kegel <dank@kegel.com>:
+	* Makefile.in: Strip "dir/../" combinations from SYSTEM_INCLUDE_DIR.
+
+2006-06-13  Paolo Bonzini  <bonzini@gnu.org>
+
+        PR middle-end/27733
+        * expmed.c (struct alg_hash_entry): Fix type of field T
+        to match synth_mult argument.
+        (NUM_ALG_HASH_ENTRIES): Make it bigger for 64-bit HOST_WIDE_INT.
+
+2006-06-12  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR target/27421
+	* config/i386/i386.c (classify_argument): Skip fields with invalid
+	types in unions.
+
+2006-06-09  Ralf Corsepius  <ralf.corsepius@rtems.org>
+
+	* config/mips/t-rtems: Add EL/EB multilib variants.
+
+2006-06-07  Uros Bizjak  <uros@kss-loka.si>
+
+	PR target/27790
+	* config/i386/i386.c (ix86_expand_int_vcond): Force cop0
+	into register for (code == GTU).
+
+2006-06-06  Andrew MacLeod  <amacleod@redhat.com>
+
+	PR middle-end/27793
+	* tree-dfa.c (referenced_vars_dup_list): New.  List of duplicate 
+	referenced_variables with matching DECL_UID's.
+	(find_referenced_vars): Make sure duplicate list is empty to start.
+	(add_referenced_var): Add var to duplicate list if required.
+	* tree-ssa.c (delete_tree_ssa): Clear var_ann's on duplicates.
+	* tree-flow.h (referenced_vars_dup_list): External declaration.
+
+2006-06-06  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	PR target/27842
+	* config/rs6000/altivec.md (UNSPEC_VSLW): Remove.
+	("altivec_vspltisw_v4sf", "altivec_vslw_v4sf"): Remove.
+	("mulv4sf3", "absv4sf3", "negv4sf3"): Adapt users to use
+	V4SImode temporaries and operations instead.
+
+2006-06-05  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/26223
+	* config/i386/i386.c (construct_container): Split static issued_error
+	flag into issued_sse_arg_error, issued_sse_ret_error and
+	issued_x87_ret_error.  Issue a daignostic if the x86-64 ABI
+	requires the use of x87 registers and the user explicitly
+	specified the -mno-80387 command line option.
+
+2006-06-05  Joseph S. Myers  <joseph@codesourcery.com>
+
+	PR c/25161
+	PR c/27020
+	* c-decl.c (grokdeclarator): Disallow variably modified types at
+	file scope.  Avoid marking shared array type of constant size as
+	VLA.
+
+2006-06-04  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR c++/27601
+	* c-common.c (fold_offsetof_1): Handle static members.
+
 2006-06-01  Alan Modra  <amodra@bigpond.net.au>
 
 	* config/rs6000/rs6000.c (rs6000_gimplify_va_arg): Consume all
@@ -71,7 +218,7 @@
 2006-05-22  Gerald Pfeifer  <gerald@pfeifer.com>
 
 	* doc/install.texi (Configuration): Remove reference to CrossGCC
-	FAQ which was hijacked.
+	FAQ which was gone.
 	(Building): Ditto.
 
 2006-05-17  H.J. Lu  <hongjiu.lu@intel.com>

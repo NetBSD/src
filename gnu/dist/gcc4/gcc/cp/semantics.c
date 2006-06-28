@@ -2022,6 +2022,12 @@ finish_compound_literal (tree type, VEC(constructor_elt,gc) *initializer_list)
 {
   tree compound_literal;
 
+  if (!TYPE_OBJ_P (type))
+    {
+      error ("compound literal of non-object type %qT", type);
+      return error_mark_node;
+    }
+
   /* Build a CONSTRUCTOR for the INITIALIZER_LIST.  */
   compound_literal = build_constructor (NULL_TREE, initializer_list);
   if (processing_template_decl)
@@ -2865,6 +2871,29 @@ finish_typeof (tree expr)
     }
 
   return type;
+}
+
+/* Perform C++-specific checks for __builtin_offsetof before calling
+   fold_offsetof.  */
+
+tree
+finish_offsetof (tree expr)
+{
+  if (TREE_CODE (expr) == PSEUDO_DTOR_EXPR)
+    {
+      error ("cannot apply %<offsetof%> to destructor %<~%T%>",
+	      TREE_OPERAND (expr, 2));
+      return error_mark_node;
+    }
+  if (TREE_CODE (TREE_TYPE (expr)) == FUNCTION_TYPE
+      || TREE_CODE (TREE_TYPE (expr)) == METHOD_TYPE
+      || TREE_CODE (TREE_TYPE (expr)) == UNKNOWN_TYPE)
+    {
+      error ("cannot apply %<offsetof%> to member function %qD",
+	     TREE_OPERAND (expr, 1));
+      return error_mark_node;
+    }
+  return fold_offsetof (expr);
 }
 
 /* Called from expand_body via walk_tree.  Replace all AGGR_INIT_EXPRs
