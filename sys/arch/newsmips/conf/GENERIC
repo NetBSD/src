@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: GENERIC,v 1.92 2006/06/28 15:19:28 liamjfoy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	16
 
@@ -210,6 +210,7 @@ pseudo-device	tun			# Network "tunnel" device
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.137 2006/04/15 12:58:26 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.138 2006/06/28 15:19:27 liamjfoy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.137 $"
+#ident		"GENERIC-$Revision: 1.138 $"
 
 maxusers	32		# estimated number of users
 
@@ -427,6 +427,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
