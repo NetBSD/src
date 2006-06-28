@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.31 2006/06/28 10:04:56 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.31 2006/06/28 10:04:56 tron Exp $");
 
 #include "sequencer.h"
 
@@ -1469,6 +1469,8 @@ midi_getinfo(dev, mi)
 	dev_t dev;
 	struct midi_info *mi;
 {
+        mi->name = "Dummy MIDI device";
+	mi->props = 0;
 }
 
 int
