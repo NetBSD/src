@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.37 2005/06/02 09:47:37 lukem Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.38 2006/06/28 15:05:54 drochner Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.37 2005/06/02 09:47:37 lukem Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.38 2006/06/28 15:05:54 drochner Exp $");
 #endif
 
 struct wi_table {
@@ -302,7 +302,7 @@ static void wi_getval(iface, wreq)
 		err(1, "socket");
 
 	if (ioctl(s, SIOCGWAVELAN, &ifr) == -1)
-		err(1, "SIOCGWAVELAN");
+		err(1, "SIOCGWAVELAN(wreq %04x)", wreq->wi_type);
 
 	close(s);
 
