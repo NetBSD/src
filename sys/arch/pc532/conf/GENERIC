@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: GENERIC,v 1.63 2006/06/28 15:19:28 liamjfoy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.62 $"
+#ident 		"GENERIC-$Revision: 1.63 $"
 
 maxusers	8			# estimated number of users
 
@@ -119,6 +119,7 @@ pseudo-device	loop		1	# loopback network
 pseudo-device	vnd			# vnode devices
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# compressed SLIP
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
