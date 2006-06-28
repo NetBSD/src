@@ -9038,7 +9038,7 @@ tsubst_copy_and_build (tree t,
 					  in_decl));
 
     case OFFSETOF_EXPR:
-      return fold_offsetof (RECUR (TREE_OPERAND (t, 0)));
+      return finish_offsetof (RECUR (TREE_OPERAND (t, 0)));
 
     case STMT_EXPR:
       {
@@ -10070,7 +10070,7 @@ unify (tree tparms, tree targs, tree parm, tree arg, int strict)
 	  /* ARG must be constructed from a template class or a template
 	     template parameter.  */
 	  if (TREE_CODE (arg) != BOUND_TEMPLATE_TEMPLATE_PARM
-	      && (TREE_CODE (arg) != RECORD_TYPE || !CLASSTYPE_TEMPLATE_INFO (arg)))
+	      && !CLASSTYPE_SPECIALIZATION_OF_PRIMARY_TEMPLATE_P (arg))
 	    return 1;
 
 	  {
@@ -10161,6 +10161,8 @@ unify (tree tparms, tree targs, tree parm, tree arg, int strict)
 
     case TEMPLATE_PARM_INDEX:
       tparm = TREE_VALUE (TREE_VEC_ELT (tparms, 0));
+      if (tparm == error_mark_node)
+	return 1;
 
       if (TEMPLATE_PARM_LEVEL (parm)
 	  != template_decl_level (tparm))
@@ -12457,32 +12459,10 @@ value_dependent_expression_p (tree expression)
 	      || value_dependent_expression_p (TREE_OPERAND (expression, 1)));
 
     case CALL_EXPR:
-      /* A CALL_EXPR is value-dependent if any argument is
-	 value-dependent.  Why do we have to handle CALL_EXPRs in this
-	 function at all?  First, some function calls, those for which
-	 value_dependent_expression_p is true, man appear in constant
-	 expressions.  Second, there appear to be bugs which result in
-	 other CALL_EXPRs reaching this point. */
-      {
-	tree function = TREE_OPERAND (expression, 0);
-	tree args = TREE_OPERAND (expression, 1);
-
-	if (value_dependent_expression_p (function))
-	  return true;
-
-	if (! args)
-	  return false;
-
-	if (TREE_CODE (args) == TREE_LIST)
-	  {
-	    for (; args; args = TREE_CHAIN (args))
-	      if (value_dependent_expression_p (TREE_VALUE (args)))
-		return true;
-	    return false;
-	  }
-
-	return value_dependent_expression_p (args);
-      }
+      /* A CALL_EXPR may appear in a constant expression if it is a
+	 call to a builtin function, e.g., __builtin_constant_p.  All
+	 such calls are value-dependent.  */
+      return true;
 
     default:
       /* A constant expression is value-dependent if any subexpression is

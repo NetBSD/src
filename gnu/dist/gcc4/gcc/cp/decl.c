@@ -227,10 +227,6 @@ enum deprecated_states {
 
 static enum deprecated_states deprecated_state = DEPRECATED_NORMAL;
 
-/* True if a declaration with an `extern' linkage specifier is being
-   processed.  */
-bool have_extern_spec;
-
 
 /* A TREE_LIST of VAR_DECLs.  The TREE_PURPOSE is a RECORD_TYPE or
    UNION_TYPE; the TREE_VALUE is a VAR_DECL with that type.  At the
@@ -941,7 +937,13 @@ decls_match (tree newdecl, tree olddecl)
       /* Need to check scope for variable declaration (VAR_DECL).
 	 For typedef (TYPE_DECL), scope is ignored.  */
       if (TREE_CODE (newdecl) == VAR_DECL
-	  && CP_DECL_CONTEXT (newdecl) != CP_DECL_CONTEXT (olddecl))
+	  && CP_DECL_CONTEXT (newdecl) != CP_DECL_CONTEXT (olddecl)
+	  /* [dcl.link]
+	     Two declarations for an object with C language linkage
+	     with the same name (ignoring the namespace that qualify
+	     it) that appear in different namespace scopes refer to
+	     the same object.  */
+	  && !(DECL_EXTERN_C_P (olddecl) && DECL_EXTERN_C_P (newdecl)))
 	return 0;
 
       if (TREE_TYPE (newdecl) == error_mark_node)
@@ -1396,14 +1398,42 @@ duplicate_decls (tree newdecl, tree olddecl, bool newdecl_is_friend)
 	  warning (0, "prototype for %q+#D", newdecl);
 	  warning (0, "%Jfollows non-prototype definition here", olddecl);
 	}
-      else if (TREE_CODE (olddecl) == FUNCTION_DECL
+      else if ((TREE_CODE (olddecl) == FUNCTION_DECL
+		|| TREE_CODE (olddecl) == VAR_DECL)
 	       && DECL_LANGUAGE (newdecl) != DECL_LANGUAGE (olddecl))
 	{
-	  /* extern "C" int foo ();
-	     int foo () { bar (); }
-	     is OK.  */
+	  /* [dcl.link]
+	     If two declarations of the same function or object
+	     specify different linkage-specifications ..., the program
+	     is ill-formed.... Except for functions with C++ linkage,
+	     a function declaration without a linkage specification
+	     shall not precede the first linkage specification for
+	     that function.  A function can be declared without a
+	     linkage specification after an explicit linkage
+	     specification has been seen; the linkage explicitly
+	     specified in the earlier declaration is not affected by
+	     such a function declaration.
+
+	     DR 563 raises the question why the restrictions on
+	     functions should not also apply to objects.  Older
+	     versions of G++ silently ignore the linkage-specification
+	     for this example:
+
+	       namespace N { 
+                 extern int i;
+   	         extern "C" int i;
+               }
+
+             which is clearly wrong.  Therefore, we now treat objects
+	     like functions.  */
 	  if (current_lang_depth () == 0)
-	    SET_DECL_LANGUAGE (newdecl, DECL_LANGUAGE (olddecl));
+	    {
+	      /* There is no explicit linkage-specification, so we use
+		 the linkage from the previous declaration.  */
+	      if (!DECL_LANG_SPECIFIC (newdecl))
+		retrofit_lang_decl (newdecl);
+	      SET_DECL_LANGUAGE (newdecl, DECL_LANGUAGE (olddecl));
+	    }
 	  else
 	    {
 	      error ("previous declaration of %q+#D with %qL linkage",
@@ -3654,13 +3684,6 @@ start_decl (const cp_declarator *declarator,
 
   *pushed_scope_p = NULL_TREE;
 
-  /* This should only be done once on the top most decl.  */
-  if (have_extern_spec)
-    {
-      declspecs->storage_class = sc_extern;
-      have_extern_spec = false;
-    }
-
   /* An object declared as __attribute__((deprecated)) suppresses
      warnings of uses of other deprecated items.  */
   if (lookup_attribute ("deprecated", attributes))
@@ -3994,12 +4017,17 @@ maybe_deduce_size_from_array_init (tree decl, tree init)
 					    do_default);
 
       if (failure == 1)
-	error ("initializer fails to determine size of %qD", decl);
-
-      if (failure == 2)
+	{
+	  error ("initializer fails to determine size of %qD", decl);
+	  TREE_TYPE (decl) = error_mark_node;
+	}
+      else if (failure == 2)
 	{
 	  if (do_default)
-	    error ("array size missing in %qD", decl);
+	    {
+	      error ("array size missing in %qD", decl);
+	      TREE_TYPE (decl) = error_mark_node;
+	    }
 	  /* If a `static' var's size isn't known, make it extern as
 	     well as static, so it does not get allocated.  If it's not
 	     `static', then don't mark it extern; finish_incomplete_decl
@@ -4007,9 +4035,11 @@ maybe_deduce_size_from_array_init (tree decl, tree init)
 	  else if (!pedantic && TREE_STATIC (decl) && !TREE_PUBLIC (decl))
 	    DECL_EXTERNAL (decl) = 1;
 	}
-
-      if (failure == 3)
-	error ("zero-size array %qD", decl);
+      else if (failure == 3)
+	{
+	  error ("zero-size array %qD", decl);
+	  TREE_TYPE (decl) = error_mark_node;
+	}
 
       cp_apply_type_quals_to_decl (cp_type_quals (TREE_TYPE (decl)), decl);
 
@@ -4023,7 +4053,17 @@ maybe_deduce_size_from_array_init (tree decl, tree init)
 static void
 layout_var_decl (tree decl)
 {
-  tree type = TREE_TYPE (decl);
+  tree type;
+
+  if (TREE_STATIC (decl)
+      && !DECL_ARTIFICIAL (decl)
+      && current_function_decl
+      && DECL_CONTEXT (decl) == current_function_decl)
+    push_local_name (decl);
+
+  type = TREE_TYPE (decl);
+  if (type == error_mark_node)
+    return;
 
   /* If we haven't already layed out this declaration, do so now.
      Note that we must not call complete type for an external object
@@ -4069,12 +4109,6 @@ layout_var_decl (tree decl)
       else
 	error ("storage size of %qD isn't constant", decl);
     }
-
-  if (TREE_STATIC (decl)
-      && !DECL_ARTIFICIAL (decl)
-      && current_function_decl
-      && DECL_CONTEXT (decl) == current_function_decl)
-    push_local_name (decl);
 }
 
 /* If a local static variable is declared in an inline function, or if
@@ -4607,6 +4641,8 @@ check_initializer (tree decl, tree init, int flags, tree *cleanup)
 	 array size from the initializer.  */
       maybe_deduce_size_from_array_init (decl, init);
       type = TREE_TYPE (decl);
+      if (type == error_mark_node)
+	return NULL_TREE;
 
       if (TYPE_HAS_CONSTRUCTOR (type) || TYPE_NEEDS_CONSTRUCTING (type))
 	{
@@ -4870,6 +4906,7 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
   const char *asmspec = NULL;
   int was_readonly = 0;
   bool var_definition_p = false;
+  int saved_processing_template_decl;
 
   if (decl == error_mark_node)
     return;
@@ -4881,9 +4918,16 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
     }
 
   gcc_assert (TREE_CODE (decl) != RESULT_DECL);
+  /* Parameters are handled by store_parm_decls, not cp_finish_decl.  */
+  gcc_assert (TREE_CODE (decl) != PARM_DECL);
+
+  type = TREE_TYPE (decl);
+  if (type == error_mark_node)
+    return;
 
   /* Assume no cleanup is required.  */
   cleanup = NULL_TREE;
+  saved_processing_template_decl = processing_template_decl;
 
   /* If a name was specified, get the string.  */
   if (global_scope_p (current_binding_level))
@@ -4891,46 +4935,46 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
   if (asmspec_tree)
     asmspec = TREE_STRING_POINTER (asmspec_tree);
 
-  if (init && TREE_CODE (init) == NAMESPACE_DECL)
-    {
-      error ("cannot initialize %qD to namespace %qD", decl, init);
-      init = NULL_TREE;
-    }
-
   if (current_class_type
       && CP_DECL_CONTEXT (decl) == current_class_type
       && TYPE_BEING_DEFINED (current_class_type)
       && (DECL_INITIAL (decl) || init))
     DECL_INITIALIZED_IN_CLASS_P (decl) = 1;
 
-  type = TREE_TYPE (decl);
-
-  if (type == error_mark_node)
-    goto finish_end;
-
   if (processing_template_decl)
     {
+      bool type_dependent_p;
+
       /* Add this declaration to the statement-tree.  */
       if (at_function_scope_p ())
 	add_decl_expr (decl);
 
-      if (init && DECL_INITIAL (decl))
+      type_dependent_p = dependent_type_p (type);
+
+      if (init && init_const_expr_p)
 	{
-	  DECL_INITIAL (decl) = init;
-	  if (init_const_expr_p)
-	    {
-	      DECL_INITIALIZED_BY_CONSTANT_EXPRESSION_P (decl) = 1;
-	      if (DECL_INTEGRAL_CONSTANT_VAR_P (decl))
-		TREE_CONSTANT (decl) = 1;
-	    }
+	  DECL_INITIALIZED_BY_CONSTANT_EXPRESSION_P (decl) = 1;
+	  if (DECL_INTEGRAL_CONSTANT_VAR_P (decl))
+	    TREE_CONSTANT (decl) = 1;
+	}
+      
+      if (!init
+	  || !DECL_CLASS_SCOPE_P (decl)
+	  || !DECL_INTEGRAL_CONSTANT_VAR_P (decl)
+	  || type_dependent_p
+	  || value_dependent_expression_p (init))
+	{
+	  if (init && DECL_INITIAL (decl))
+	    DECL_INITIAL (decl) = init;
+	  if (TREE_CODE (decl) == VAR_DECL
+	      && !DECL_PRETTY_FUNCTION_P (decl)
+	      && !type_dependent_p)
+	    maybe_deduce_size_from_array_init (decl, init);
+	  goto finish_end;
 	}
 
-      if (TREE_CODE (decl) == VAR_DECL
-	  && !DECL_PRETTY_FUNCTION_P (decl)
-	  && !dependent_type_p (TREE_TYPE (decl)))
-	maybe_deduce_size_from_array_init (decl, init);
-
-      goto finish_end;
+      init = fold_non_dependent_expr (init);
+      processing_template_decl = 0;
     }
 
   /* Parameters are handled by store_parm_decls, not cp_finish_decl.  */
@@ -5131,6 +5175,7 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
     push_cleanup (decl, cleanup, false);
 
  finish_end:
+  processing_template_decl = saved_processing_template_decl;
 
   if (was_readonly)
     TREE_READONLY (decl) = 1;
@@ -7991,7 +8036,7 @@ grokdeclarator (const cp_declarator *declarator,
 	  {
 	    /* Something like struct S { int N::j; };  */
 	    error ("invalid use of %<::%>");
-	    decl = NULL_TREE;
+	    return error_mark_node;
 	  }
 	else if (TREE_CODE (type) == FUNCTION_TYPE)
 	  {
@@ -10451,13 +10496,6 @@ start_function (cp_decl_specifier_seq *declspecs,
 		tree attrs)
 {
   tree decl1;
-
-  if (have_extern_spec)
-    {
-      declspecs->storage_class = sc_extern;
-      /* This should only be done once on the outermost decl.  */
-      have_extern_spec = false;
-    }
 
   decl1 = grokdeclarator (declarator, declspecs, FUNCDEF, 1, &attrs);
   /* If the declarator is not suitable for a function definition,
