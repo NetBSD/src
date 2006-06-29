@@ -1,4 +1,4 @@
-.\" $NetBSD: bce.4,v 1.2 2003/10/05 11:58:36 wiz Exp $
+.\" $NetBSD: bce.4,v 1.3 2006/06/29 20:31:11 dogcow Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,3 +66,10 @@ There is no flow control support.
 .Pp
 Multicast is not using the packet filter and is in
 the accept all multicast mode.
+.Pp
+Due to limitations in the Broadcom chip, it cannot DMA transfer to RAM at
+or above 1GB; see
+.Va REALEXTMEM
+in
+.Xr options 4
+for a workaround to limit the available system memory.
