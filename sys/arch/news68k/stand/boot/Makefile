@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2006/06/29 00:28:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2006/06/29 00:30:33 lukem Exp $
 
 NOMAN= # defined
 
@@ -44,6 +44,7 @@ m68k::
 .endif
 
 ${PROG}: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	-${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
