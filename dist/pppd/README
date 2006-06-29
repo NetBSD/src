@@ -55,8 +55,24 @@ use any IP address.  (This only applies where the peer is
 authenticating itself to you, of course.)
 
 
-What's new in ppp-2.4.3.
+What's new in ppp-2.4.4.
 ************************
+
+* Pppd will now run /etc/ppp/ip-pre-up, if it exists, after creating
+  the ppp interface and configuring its IP addresses but before
+  bringing it up.  This can be used, for example, for adding firewall
+  rules for the interface.
+
+* Lots of bugs fixed, particularly in the area of demand-dialled and
+  persistent connections.
+
+* The rp-pppoe plugin now accepts any interface name (that isn't an
+  existing pppd option name) without putting "nic-" on the front of
+  it, not just eth*, nas*, tap* and br*.
+
+
+What was new in ppp-2.4.3.
+**************************
 
 * The configure script now accepts --prefix and --sysconfdir options.
   These default to /usr/local and /etc.  If you want pppd put in
@@ -260,4 +276,4 @@ The primary site for releases of this software is:
 	ftp://ftp.samba.org/pub/ppp/
 
 
-(Id: README,v 1.35 2004/11/13 12:25:54 paulus Exp)
+(Id: README,v 1.37 2006/05/29 23:51:29 paulus Exp)
