@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.167 2006/05/15 12:35:15 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.168 2006/06/29 15:05:07 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2006/05/15 12:35:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168 2006/06/29 15:05:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -1265,3 +1265,37 @@ out_nounlock:
 		KERNEL_UNLOCK();
 }
 #endif /* SUN4M */
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_PROC_UNLOCK(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+
+/*
+ * Start a new LWP
+ */
+void
+startlwp(void *arg)
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_PROC_UNLOCK(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+
