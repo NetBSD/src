@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.1.1.1 2005/02/20 10:28:48 cube Exp $	*/
+/*	$NetBSD: lcp.c,v 1.1.1.2 2006/06/29 21:46:38 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: lcp.c,v 1.74 2004/11/13 02:28:15 paulus Exp"
+#define RCSID	"Id: lcp.c,v 1.76 2006/05/22 00:04:07 paulus Exp"
 #else
-__RCSID("$NetBSD: lcp.c,v 1.1.1.1 2005/02/20 10:28:48 cube Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.1.1.2 2006/06/29 21:46:38 christos Exp $");
 #endif
 #endif
 
@@ -505,7 +505,6 @@ lcp_input(unit, p, len)
     fsm_input(f, p, len);
 }
 
-
 /*
  * lcp_extcode - Handle a LCP-specific code.
  */
@@ -536,6 +535,8 @@ lcp_extcode(f, code, id, inp, len)
 	break;
 
     case DISCREQ:
+    case IDENTIF:
+    case TIMEREM:
 	break;
 
     default:
@@ -559,6 +560,7 @@ lcp_rprotrej(f, inp, len)
     int i;
     struct protent *protp;
     u_short prot;
+    const char *pname;
 
     if (len < 2) {
 	LCPDEBUG(("lcp_rprotrej: Rcvd short Protocol-Reject packet!"));
@@ -576,16 +578,27 @@ lcp_rprotrej(f, inp, len)
 	return;
     }
 
+    pname = protocol_name(prot);
+
     /*
      * Upcall the proper Protocol-Reject routine.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->protocol == prot && protp->enabled_flag) {
+	    if (pname == NULL)
+		dbglog("Protocol-Reject for 0x%x received", prot);
+	    else
+		dbglog("Protocol-Reject for '%s' (0x%x) received", pname,
+		       prot);
 	    (*protp->protrej)(f->unit);
 	    return;
 	}
 
-    warn("Protocol-Reject for unsupported protocol 0x%x", prot);
+    if (pname == NULL)
+	warn("Protocol-Reject for unsupported protocol 0x%x", prot);
+    else
+	warn("Protocol-Reject for unsupported protocol '%s' (0x%x)", pname,
+	     prot);
 }
 
 
@@ -1303,8 +1316,8 @@ lcp_nakci(f, p, len, treat_as_reject)
 	if (looped_back) {
 	    if (++try.numloops >= lcp_loopbackfail) {
 		notice("Serial line is looped back.");
-		lcp_close(f->unit, "Loopback detected");
 		status = EXIT_LOOPBACK;
+		lcp_close(f->unit, "Loopback detected");
 	    }
 	} else
 	    try.numloops = 0;
@@ -1975,7 +1988,8 @@ lcp_finished(f)
 static char *lcp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej", "ProtRej",
-    "EchoReq", "EchoRep", "DiscReq"
+    "EchoReq", "EchoRep", "DiscReq", "Ident",
+    "TimeRem"
 };
 
 static int
@@ -2179,8 +2193,29 @@ lcp_printpkt(p, plen, printer, arg)
 	if (len >= 4) {
 	    GETLONG(cilong, p);
 	    printer(arg, " magic=0x%x", cilong);
-	    p += 4;
 	    len -= 4;
+	}
+	break;
+
+    case IDENTIF:
+    case TIMEREM:
+	if (len >= 4) {
+	    GETLONG(cilong, p);
+	    printer(arg, " magic=0x%x", cilong);
+	    len -= 4;
+	}
+	if (code == TIMEREM) {
+	    if (len < 4)
+		break;
+	    GETLONG(cilong, p);
+	    printer(arg, " seconds=%u", cilong);
+	    len -= 4;
+	}
+	if (len > 0) {
+	    printer(arg, " ");
+	    print_string((char *)p, len, printer, arg);
+	    p += len;
+	    len = 0;
 	}
 	break;
     }
@@ -2209,8 +2244,8 @@ void LcpLinkFailure (f)
     if (f->state == OPENED) {
 	info("No response to %d echo-requests", lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
-        lcp_close(f->unit, "Peer not responding");
 	status = EXIT_PEER_DEAD;
+	lcp_close(f->unit, "Peer not responding");
     }
 }
 

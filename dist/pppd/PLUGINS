@@ -147,8 +147,10 @@ purposes.  This hook is deprecated and will be replaced by a notifier.
 
 int (*chap_check_hook)(void);
 int (*chap_passwd_hook)(char *user, char *passwd);
-int (*chap_auth_hook)(char *user, u_char *remmd,
-	             int remmd_len, chap_state *cstate);
+int (*chap_verify_hook)(char *name, char *ourname, int id,
+			struct chap_digest_type *digest,
+			unsigned char *challenge, unsigned char *response,
+			char *message, int message_space)
 
 These hooks are designed to allow a plugin to replace the normal CHAP
 password processing in pppd with something different (e.g. contacting
@@ -172,13 +174,25 @@ MAXSECRETLEN bytes of space are available at *passwd.  If this hook
 returns 0, pppd will use the value *passwd; if it returns -1, pppd
 will fail to authenticate.
 
-The chap_auth_hook is called to determine whether the response
-to a CHAP challenge provided by the peer is valid.  user points to
-a null-terminated string containing the username supplied
-by the peer.  remmd points to the response provided by the peer, of
-length remmd_len bytes.  cstate is the internal CHAP state structure
-maintained by pppd.  chap_auth_hook is expected to return one of
-CHAP_SUCCESS or CHAP_FAILURE.
+The chap_verify_hook is called to determine whether the peer's
+response to our CHAP challenge is valid -- it should return 1 if valid
+or 0 if not.  The parameters are:
+
+* name points to a null-terminated string containing the username
+  supplied by the peer, or the remote name specified with the
+  "remotename" option.
+* ourname points to a null-terminated string containing the name of
+  the local machine (the hostname, or the name specified with the
+  "name" option).
+* id is the value of the id field from the challenge.
+* digest points to a chap_digest_type struct, which contains an
+  identifier for the type of digest in use plus function pointers for
+  functions for dealing with digests of that type.
+* challenge points to the challenge as a counted string (length byte
+  followed by the actual challenge bytes).
+* response points to the response as a counted string.
+* message points to an area of message_space bytes in which to store
+  any message that should be returned to the peer.
 
 
 int (*null_auth_hook)(struct wordlist **paddrs,
@@ -263,4 +277,4 @@ Here is a list of the currently-implemented notifiers in pppd.
 
 
 
-## Id: PLUGINS,v 1.6 2003/02/25 07:43:09 fcusack Exp ##
+## Id: PLUGINS,v 1.7 2005/07/12 08:56:07 paulus Exp ##

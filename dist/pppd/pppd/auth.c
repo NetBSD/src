@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $	*/
+/*	$NetBSD: auth.c,v 1.1.1.2 2006/06/29 21:46:38 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -73,9 +73,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: auth.c,v 1.101 2004/11/12 10:30:51 paulus Exp"
+#define RCSID	"Id: auth.c,v 1.112 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $");
+__RCSID("$NetBSD: auth.c,v 1.1.1.2 2006/06/29 21:46:38 christos Exp $");
 #endif
 #endif
 
@@ -420,6 +420,7 @@ setupapfile(argv)
 {
     FILE *ufile;
     int l;
+    uid_t euid;
     char u[MAXNAMELEN], p[MAXSECRETLEN];
     char *fname;
 
@@ -429,9 +430,14 @@ setupapfile(argv)
     fname = strdup(*argv);
     if (fname == NULL)
 	novm("+ua file name");
-    seteuid(getuid());
+    euid = geteuid();
+    if (seteuid(getuid()) == -1) {
+	option_error("unable to reset uid before opening %s: %m", fname);
+	return 0;
+    }
     ufile = fopen(fname, "r");
-    seteuid(0);
+    if (seteuid(euid) == -1)
+	fatal("unable to regain privileges: %m");
     if (ufile == NULL) {
 	option_error("unable to open user login data file %s", fname);
 	return 0;
@@ -537,15 +543,25 @@ set_permitted_number(argv)
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
- * Do what's necessary to bring the physical layer up.
  */
 void
 link_required(unit)
     int unit;
 {
+}
+
+/*
+ * Bring the link up to the point of being able to do ppp.
+ */
+void start_link(unit)
+    int unit;
+{
+    char *msg;
+
     new_phase(PHASE_SERIALCONN);
 
     devfd = the_channel->connect();
+    msg = "Connect script failed";
     if (devfd < 0)
 	goto fail;
 
@@ -558,6 +574,7 @@ link_required(unit)
      * gives us.  Thus we don't need the tdb_writelock/tdb_writeunlock.
      */
     fd_ppp = the_channel->establish_ppp(devfd);
+    msg = "ppp establishment failed";
     if (fd_ppp < 0) {
 	status = EXIT_FATAL_ERROR;
 	goto disconnect;
@@ -591,7 +608,6 @@ link_required(unit)
     new_phase(PHASE_DEAD);
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
-
 }
 
 /*
@@ -653,6 +669,8 @@ link_terminated(unit)
 	the_channel->disconnect();
 	devfd = -1;
     }
+    if (the_channel->cleanup)
+	(*the_channel->cleanup)();
 
     if (doing_multilink && multilink_master) {
 	if (!bundle_terminating)
@@ -745,8 +763,8 @@ link_established(unit)
 	    set_allowed_addrs(unit, NULL, NULL);
 	} else if (!wo->neg_upap || uselogin || !null_login(unit)) {
 	    warn("peer refused to authenticate: terminating link");
-	    lcp_close(unit, "peer refused to authenticate");
 	    status = EXIT_PEER_AUTH_FAILED;
+	    lcp_close(unit, "peer refused to authenticate");
 	    return;
 	}
     }
@@ -905,8 +923,8 @@ auth_peer_fail(unit, protocol)
     /*
      * Authentication failure: take the link down
      */
-    lcp_close(unit, "Authentication failed");
     status = EXIT_PEER_AUTH_FAILED;
+    lcp_close(unit, "Authentication failed");
 }
 
 /*
@@ -983,8 +1001,8 @@ auth_withpeer_fail(unit, protocol)
      * is no point in persisting without any way to get updated
      * authentication secrets.
      */
-    lcp_close(unit, "Failed to authenticate ourselves to peer");
     status = EXIT_AUTH_TOPEER_FAILED;
+    lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
 /*
@@ -995,10 +1013,12 @@ auth_withpeer_success(unit, protocol, prot_flavor)
     int unit, protocol, prot_flavor;
 {
     int bit;
+    const char *prot = "";
 
     switch (protocol) {
     case PPP_CHAP:
 	bit = CHAP_WITHPEER;
+	prot = "CHAP";
 	switch (prot_flavor) {
 	case CHAP_MD5:
 	    bit |= CHAP_MD5_WITHPEER;
@@ -1017,14 +1037,18 @@ auth_withpeer_success(unit, protocol, prot_flavor)
 	if (passwd_from_file)
 	    BZERO(passwd, MAXSECRETLEN);
 	bit = PAP_WITHPEER;
+	prot = "PAP";
 	break;
     case PPP_EAP:
 	bit = EAP_WITHPEER;
+	prot = "EAP";
 	break;
     default:
 	warn("auth_withpeer_success: unknown protocol %x", protocol);
 	bit = 0;
     }
+
+    notice("%s authentication succeeded", prot);
 
     /* Save the authentication method for later. */
     auth_done[unit] |= bit;
@@ -1142,9 +1166,9 @@ check_maxoctets(arg)
     diff = maxoctets - used;
     if(diff < 0) {
 	notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
+	status = EXIT_TRAFFIC_LIMIT;
 	lcp_close(0, "Traffic limit");
 	need_holdoff = 0;
-	status = EXIT_TRAFFIC_LIMIT;
     } else {
         TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
     }
@@ -1174,9 +1198,9 @@ check_idle(arg)
     if (tlim <= 0) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
+	status = EXIT_IDLE_TIMEOUT;
 	lcp_close(0, "Link inactive");
 	need_holdoff = 0;
-	status = EXIT_IDLE_TIMEOUT;
     } else {
 	TIMEOUT(check_idle, NULL, tlim);
     }
@@ -1659,6 +1683,7 @@ plogin(user, passwd, msg)
 static void
 plogout()
 {
+    char *tty;
 #ifdef USE_PAM
     int pam_error;
 
@@ -1669,14 +1694,12 @@ plogout()
     }
     /* Apparently the pam stuff does closelog(). */
     reopen_log();
-#else /* ! USE_PAM */   
-    char *tty;
+#endif /* USE_PAM */
 
     tty = devnam;
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
     logwtmp(tty, "", "");		/* Wipe out utmp logout entry */
-#endif /* ! USE_PAM */
     logged_in = 0;
 }
 
@@ -2554,5 +2577,5 @@ auth_script(script)
     argv[5] = strspeed;
     argv[6] = NULL;
 
-    auth_script_pid = run_program(script, argv, 0, auth_script_done, NULL);
+    auth_script_pid = run_program(script, argv, 0, auth_script_done, NULL, 0);
 }

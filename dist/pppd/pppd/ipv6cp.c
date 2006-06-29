@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.1.1.2 2006/06/29 21:46:39 christos Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -137,15 +137,15 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: ipv6cp.c,v 1.20 2004/11/13 02:28:15 paulus Exp 
+ * Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp 
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ipv6cp.c,v 1.20 2004/11/13 02:28:15 paulus Exp"
+#define RCSID	"Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp"
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.1.1.2 2006/06/29 21:46:39 christos Exp $");
 #endif
 #endif
 
@@ -1430,7 +1430,8 @@ ipv6cp_script(script)
     argv[6] = ipparam;
     argv[7] = NULL;
 
-    ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done, NULL);
+    ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done,
+				    NULL, 0);
 }
 
 /*

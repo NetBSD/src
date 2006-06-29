@@ -1,9 +1,9 @@
-/*	$NetBSD: pathnames.h,v 1.1.1.1 2005/02/20 10:28:50 cube Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1.1.2 2006/06/29 21:46:40 christos Exp $	*/
 
 /*
  * define path names
  *
- * Id: pathnames.h,v 1.16 2004/11/13 12:02:22 paulus Exp
+ * Id: pathnames.h,v 1.18 2005/08/25 23:59:34 paulus Exp
  */
 
 #ifdef HAVE_PATHS_H
@@ -26,6 +26,7 @@
 #define _PATH_SYSOPTIONS _ROOT_PATH "/etc/ppp/options"
 #define _PATH_IPUP	 _ROOT_PATH "/etc/ppp/ip-up"
 #define _PATH_IPDOWN	 _ROOT_PATH "/etc/ppp/ip-down"
+#define _PATH_IPPREUP	 _ROOT_PATH "/etc/ppp/ip-pre-up"
 #define _PATH_AUTHUP	 _ROOT_PATH "/etc/ppp/auth-up"
 #define _PATH_AUTHDOWN	 _ROOT_PATH "/etc/ppp/auth-down"
 #define _PATH_TTYOPT	 _ROOT_PATH "/etc/ppp/options."
@@ -57,5 +58,10 @@
 #endif /* __STDC__ */
 
 #ifdef PLUGIN
-#define _PATH_PLUGIN	"/usr/lib/pppd/" VERSION
+#ifdef __STDC__
+#define _PATH_PLUGIN	DESTDIR "/lib/pppd/" VERSION
+#else /* __STDC__ */
+#define _PATH_PLUGIN	"/usr/lib/pppd"
+#endif /* __STDC__ */
+
 #endif /* PLUGIN */

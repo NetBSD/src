@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.1.1.2 2006/06/29 21:46:38 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -38,9 +38,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: cbcp.c,v 1.16 2004/10/28 00:15:36 paulus Exp"
+#define RCSID	"Id: cbcp.c,v 1.17 2006/05/22 00:04:07 paulus Exp"
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.1.1.2 2006/06/29 21:46:38 christos Exp $");
 #endif
 #endif
 
@@ -494,6 +494,6 @@ cbcp_up(us)
     cbcp_state *us;
 {
     persist = 0;
-    lcp_close(0, "Call me back, please");
     status = EXIT_CALLBACK;
+    lcp_close(0, "Call me back, please");
 }
