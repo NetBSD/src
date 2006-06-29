@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/06/29 03:38:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2006/06/29 03:46:43 lukem Exp $
 
 NOMAN=		# defined
 
@@ -32,6 +32,7 @@ SRCS+=	exec_image.S memset.S strcmp.S
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
@@ -58,6 +59,7 @@ CLEANFILES+=	$(PROG).x $(PROG).map
 
 
 $(PROG): $(OBJS)
+	${_MKTARGET_LINK}
 .if ${OBJECT_FMT} == "ELF"
 	:
 	: Note:	"relocation truncated to fit: R_68K_16" messages are expected.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2006/06/29 03:38:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2006/06/29 03:46:43 lukem Exp $
 
 NOMAN=		# defined
 
@@ -30,6 +30,7 @@ COMMONDIR=	$M/stand/common
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
@@ -51,6 +52,7 @@ LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
 
 realall: machine-links ${PROG}
 ${PROG}:	${OBJS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
 	${STRIP} -F ${BFDNAME} -o ${PROG} ${PROG}.sym
 
