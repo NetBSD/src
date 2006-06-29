@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/06/25 14:35:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2006/06/29 06:37:19 lukem Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -34,25 +34,10 @@ LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
 .endif
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86
-.NOPATH: machine x86
-.endif
+BUILDSYMLINKS+=	$S/arch/i386/include	machine \
+		$S/arch/x86/include	x86
 
-dependall: depend all
-
-realdepend realall: machine x86
-CLEANFILES+= machine x86
-
-machine::
-	-rm -f $@
-	ln -s $S/arch/i386/include $@
-
-x86::
-	-rm -f $@
-	ln -s $S/arch/x86/include $@
-
-${OBJS}: machine x86
+DPSRCS+=	machine x86
 
 CLEANFILES+= ${PROG}.tmp
 
