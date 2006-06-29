@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2005/12/27 23:20:50 he Exp $
+#	$NetBSD: Makefile,v 1.19 2006/06/29 03:38:24 lukem Exp $
 
 NOMAN=		# defined
 
@@ -44,10 +44,10 @@ CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2 -D__daddr_t=int32_t
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 .if ${OBJECT_FMT} == "ELF"
-LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
-LDFLAGS+=  -noinhibit-exec	# XXX
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
+LINKFLAGS+=  -noinhibit-exec	# XXX
 .else
-LDFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
+LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
 OBJCOPY?=  objcopy
 .endif
 
@@ -64,7 +64,7 @@ $(PROG): $(OBJS)
 	:	Other errors are fatal.
 	:
 .endif
-	$(LD) $(LDFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
+	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
 	@grep first_kbyte $(PROG).map
 	@if [ `(echo ibase=16;						\
 		sed -n	-e '/[ 	]first_kbyte/{'				\
