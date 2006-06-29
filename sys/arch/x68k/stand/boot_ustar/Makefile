@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2006/06/29 03:38:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2006/06/29 03:46:43 lukem Exp $
 
 NOMAN=		# defined
 
@@ -27,6 +27,7 @@ SRCS=	boot_ustar.S
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
@@ -46,6 +47,7 @@ CLEANFILES+=	${PROG}.x $(PROG).map
 
 
 ${PROG}: $(OBJS)
+	${_MKTARGET_LINK}
 	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
 	@grep first_kbyte $(PROG).map
 .if ${OBJECT_FMT} == "ELF"
