@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.4 2006/02/02 20:18:44 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.5 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -41,7 +41,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: pppd.h,v 1.88 2004/11/13 12:02:22 paulus Exp
+ * Id: pppd.h,v 1.91 2005/08/25 23:59:34 paulus Exp
  */
 
 /*

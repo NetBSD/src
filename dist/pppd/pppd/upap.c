@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: upap.c,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: upap.c,v 1.29 2002/12/04 23:03:33 paulus Exp"
+#define RCSID	"Id: upap.c,v 1.30 2005/07/13 10:41:58 paulus Exp"
 #else
-__RCSID("$NetBSD: upap.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: upap.c,v 1.3 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 

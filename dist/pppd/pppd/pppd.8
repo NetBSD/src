@@ -1,7 +1,7 @@
-.\"	$NetBSD: pppd.8,v 1.2 2005/02/20 10:47:17 cube Exp $
+.\"	$NetBSD: pppd.8,v 1.3 2006/06/29 21:50:17 christos Exp $
 .\"
 .\" manual page [] for pppd 2.4
-.\" Id: pppd.8,v 1.83 2004/11/13 12:22:49 paulus Exp
+.\" Id: pppd.8,v 1.88 2006/06/16 00:01:23 paulus Exp
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -45,7 +45,8 @@ increasingly rare.
 .TP
 .I ttyname
 Use the serial port called \fIttyname\fR to communicate with the
-peer.  The string "/dev/" is prepended to \fIttyname\fR to form the
+peer.  If \fIttyname\fR does not begin with a slash (/),
+the string "/dev/" is prepended to \fIttyname\fR to form the
 name of the device to open.  If no device name is given, or if the
 name of the terminal
 connected to the standard input is given, pppd will use that terminal,
@@ -83,8 +84,8 @@ system has a default route.  If neither this option nor the
 IP addresses to which the system does not already have a route.
 .TP
 .B call \fIname
-Read options from the file /etc/ppp/peers/\fIname\fR.  This file may
-contain privileged options, such as \fInoauth\fR, even if pppd
+Read additional options from the file /etc/ppp/peers/\fIname\fR.  This
+file may contain privileged options, such as \fInoauth\fR, even if pppd
 is not being run by root.  The \fIname\fR string may not begin with /
 or include .. as a pathname component.  The format of the options file
 is described below.
@@ -154,7 +155,8 @@ non-privileged user.
 .TP
 .B lock
 Specifies that pppd should create a UUCP-style lock file for the
-serial device to ensure exclusive access to the device.
+serial device to ensure exclusive access to the device.  By default,
+pppd will not create a lock file.
 .TP
 .B mru \fIn
 Set the MRU [Maximum Receive Unit] value to \fIn\fR. Pppd
@@ -439,7 +441,8 @@ Set the IPCP restart interval (retransmission timeout) to \fIn\fR
 seconds (default 3).
 .TP
 .B ipparam \fIstring
-Provides an extra parameter to the ip\-up and ip\-down scripts.  If this
+Provides an extra parameter to the ip\-up, ip\-pre\-up and ip\-down
+scripts.  If this
 option is given, the \fIstring\fR supplied is given as the 6th
 parameter to those scripts.
 .TP
@@ -603,7 +606,8 @@ system.  This is a privileged option.
 .B local
 Don't use the modem control lines.  With this option, pppd will ignore
 the state of the CD (Carrier Detect) signal from the modem and will
-not change the state of the DTR (Data Terminal Ready) signal.
+not change the state of the DTR (Data Terminal Ready) signal.  This is
+the opposite of the \fBmodem\fR option.
 .TP
 .B logfd \fIn
 Send log messages to file descriptor \fIn\fR.  Pppd will send log
@@ -639,8 +643,9 @@ option, pppd will wait for the CD (Carrier Detect) signal from the
 modem to be asserted when opening the serial device (unless a connect
 script is specified), and it will drop the DTR (Data Terminal Ready)
 signal briefly when the connection is terminated and before executing
-the connect script.  On ULTRIX, this option implies hardware flow
-control, as for the \fIcrtscts\fR option.
+the connect script.  On Ultrix, this option implies hardware flow
+control, as for the \fIcrtscts\fR option.  This is the opposite of the
+\fBlocal\fR option.
 .TP
 .B mp
 Enables the use of PPP multilink; this is an alias for the `multilink'
@@ -766,6 +771,11 @@ for IPXCP negotiation.
 .B noktune
 Opposite of the \fIktune\fR option; disables pppd from changing system
 settings.
+.TP
+.B nolock
+Opposite of the \fIlock\fR option; specifies that pppd should not
+create a UUCP-style lock file for the serial device.  This option is
+privileged.
 .TP
 .B nolog
 Do not send log messages to a file or file descriptor.  This option
@@ -1544,7 +1554,8 @@ We failed to authenticate ourselves to the peer.
 Pppd invokes scripts at various stages in its processing which can be
 used to perform site-specific ancillary processing.  These scripts are
 usually shell scripts, but could be executable code files instead.
-Pppd does not wait for the scripts to finish.  The scripts are
+Pppd does not wait for the scripts to finish (except for the ip-pre-up
+script).  The scripts are
 executed as root (with the real and effective user-id set to 0), so
 that they can do things such as update routing tables or run
 privileged daemons.  Be careful that the contents of these scripts do
@@ -1624,6 +1635,15 @@ A program or script which is executed when the link goes down, if
 /etc/ppp/auth\-up was previously executed.  It is executed in the same
 manner with the same parameters as /etc/ppp/auth\-up.
 .TP
+.B /etc/ppp/ip\-pre\-up
+A program or script which is executed just before the ppp network
+interface is brought up.  It is executed with the same parameters as
+the ip\-up script (below).  At this point the interface exists and has
+IP addresses assigned but is still down.  This can be used to
+add firewall rules before any IP traffic can pass through the
+interface.  Pppd will wait for this script to finish before bringing
+the interface up, so this script should run quickly.
+.TP
 .B /etc/ppp/ip\-up
 A program or script which is executed when the link is available for
 sending and receiving IP packets (that is, IPCP has come up).  It is
@@ -1635,7 +1655,8 @@ remote\-IP\-address ipparam\fR
 .B /etc/ppp/ip\-down
 A program or script which is executed when the link is no longer
 available for sending and receiving IP packets.  This script can be
-used for undoing the effects of the /etc/ppp/ip\-up script.  It is
+used for undoing the effects of the /etc/ppp/ip\-up and
+/etc/ppp/ip\-pre\-up scripts.  It is
 invoked in the same manner and with the same parameters as the ip\-up
 script.
 .TP
@@ -1735,6 +1756,8 @@ system administrator can create options files in this directory to
 permit non-privileged users to dial out without requiring the peer to
 authenticate, but only to certain trusted peers.
 .SH SEE ALSO
+.BR chat (8),
+.BR pppstats (8)
 .TP
 .B RFC1144
 Jacobson, V.
@@ -1791,7 +1814,10 @@ process by sending it a signal from the list below.
 .TP
 .B SIGINT, SIGTERM
 These signals cause pppd to terminate the link (by closing LCP),
-restore the serial device settings, and exit.
+restore the serial device settings, and exit.  If a connector or
+disconnector process is currently running, pppd will send the same
+signal to its process group, so as to terminate the connector or
+disconnector process.
 .TP
 .B SIGHUP
 This signal causes pppd to terminate the link, restore the serial
@@ -1800,6 +1826,8 @@ device settings, and close the serial device.  If the \fIpersist\fR or
 serial device and start another connection (after the holdoff period).
 Otherwise pppd will exit.  If this signal is received during the
 holdoff period, it causes pppd to end the holdoff period immediately.
+If a connector or disconnector process is running, pppd will send the
+same signal to its process group.
 .TP
 .B SIGUSR1
 This signal toggles the state of the \fIdebug\fR option.

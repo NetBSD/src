@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
+/*	$NetBSD: demand.c,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -33,9 +33,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: demand.c,v 1.19 2004/11/04 10:02:26 paulus Exp"
+#define RCSID	"Id: demand.c,v 1.20 2005/08/25 12:14:18 paulus Exp"
 #else
-__RCSID("$NetBSD: demand.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
+__RCSID("$NetBSD: demand.c,v 1.3 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -353,12 +353,15 @@ active_packet(p, len)
 	return 0;
     proto = PPP_PROTOCOL(p);
 #ifdef PPP_FILTER
-    if (pass_filter_out.bf_len != 0
-	&& bpf_filter(pass_filter_out.bf_insns, p, len, len) == 0)
+    p[0] = 1;		/* outbound packet indicator */
+    if ((pass_filter_out.bf_len != 0
+	 && bpf_filter(pass_filter_out.bf_insns, p, len, len) == 0)
+	|| (active_filter_out.bf_len != 0
+	    && bpf_filter(active_filter_out.bf_insns, p, len, len) == 0)) {
+	p[0] = 0xff;
 	return 0;
-    if (active_filter_out.bf_len != 0
-	&& bpf_filter(active_filter_out.bf_insns, p, len, len) == 0)
-	return 0;
+    }
+    p[0] = 0xff;
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 	if (protp->protocol < 0xC000 && (protp->protocol & ~0x8000) == proto) {
