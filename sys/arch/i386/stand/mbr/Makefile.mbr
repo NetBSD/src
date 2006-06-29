@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.mbr,v 1.10 2006/06/29 06:24:50 lukem Exp $
+#	$NetBSD: Makefile.mbr,v 1.11 2006/06/29 06:29:39 lukem Exp $
 
-S=	${.CURDIR}/../../../../../
+S=		${.CURDIR}/../../../../../
 
 NOMAN=		# defined
 
@@ -13,31 +13,32 @@ LIBC=		# nothing
 
 STRIPFLAG=	# override
 
-SRCS?= mbr.S
+SRCS?=		mbr.S
 
-BINDIR=	/usr/mdec
-BINMODE=444
+BINDIR=		/usr/mdec
+BINMODE=	444
 
-.PATH:	${.CURDIR}/..
+.PATH:		${.CURDIR}/..
 
-LDFLAGS+= -nostdlib -Wl,-e,start
-CPPFLAGS+= -I. -I${.CURDIR}/../../lib -I${S}
+LDFLAGS+=	-nostdlib -Wl,-e,start
+CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
 
 .if ${MACHINE} == "amd64"
-LDFLAGS+=  -Wl,-m,elf_i386
-AFLAGS+=   -m32
+LDFLAGS+=	-Wl,-m,elf_i386
+AFLAGS+=	-m32
 .endif
 
-BUILDSYMLINKS+=	$S/arch/i386/include machine \
-		$S/arch/x86/include  x86
+BUILDSYMLINKS+=	$S/arch/i386/include	machine \
+		$S/arch/x86/include	x86
 
 DPSRCS+=	machine x86
 
-CLEANFILES+= ${PROG}.tmp
+CLEANFILES+=	${PROG}.tmp
 
 ${PROG}: ${OBJS}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0x600 ${OBJS}
-	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' | sed 's/^0*//'  ); \
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' \
+		    | sed 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp
