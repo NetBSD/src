@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2006/06/26 21:23:57 mrg Exp $
+	$NetBSD: syscalls.master,v 1.20 2006/06/29 05:54:18 pavel Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -826,3 +826,4 @@
 			    off_t len, int advice); }
 392	NOARGS		{ int sys___fhstat30(const fhandle_t *fhp, \
 			    struct stat *sb); }
+393	NOARGS		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
