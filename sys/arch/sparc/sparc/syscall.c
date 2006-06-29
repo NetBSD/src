@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2006/03/07 07:21:51 thorpej Exp $ */
+/*	$NetBSD: syscall.c,v 1.10 2006/06/29 15:05:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2006/03/07 07:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2006/06/29 15:05:06 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sparc_arch.h"
@@ -206,8 +206,9 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	struct proc *p;
 	struct lwp *l;
 	int error, new;
-	struct args args;
-	register_t rval[2], i;
+	union { uint64_t aligned; struct args args; } args;
+	union { uint64_t aligned; register_t rval[2]; } rval;
+	register_t i;
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;	/* XXXSMP */
@@ -222,26 +223,26 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 #endif
 	new = handle_new(tf, &code);
 
-	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args.args)) != 0)
 		goto bad;
 
-	rval[0] = 0;
-	rval[1] = tf->tf_out[1];
+	rval.rval[0] = 0;
+	rval.rval[1] = tf->tf_out[1];
 
         /* Lock the kernel if the syscall isn't MP-safe. */
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, &args, rval);
+		error = (*callp->sy_call)(l, &args.args, rval.rval);
 	} else {
 		KERNEL_PROC_LOCK(l);
-		error = (*callp->sy_call)(l, &args, rval);
+		error = (*callp->sy_call)(l, &args.args, rval.rval);
 		KERNEL_PROC_UNLOCK(l);
 	}
 
 	switch (error) {
 	case 0:
 		/* Note: fork() does not return here in the child */
-		tf->tf_out[0] = rval[0];
-		tf->tf_out[1] = rval[1];
+		tf->tf_out[0] = rval.rval[0];
+		tf->tf_out[1] = rval.rval[1];
 		if (new) {
 			/* jmp %g2 (or %g7, deprecated) on success */
 			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
@@ -286,8 +287,9 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	struct proc *p;
 	struct lwp *l;
 	int error, new;
-	struct args args;
-	register_t rval[2], i;
+	union aligned_args { uint64_t aligned; struct args args; } args;
+	union { uint64_t aligned; register_t rval[2]; } rval;
+	register_t i;
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;	/* XXXSMP */
@@ -302,24 +304,24 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 #endif
 	new = handle_new(tf, &code);
 
-	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args.args)) != 0)
 		goto bad;
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, args.i)) != 0) {
+	if ((error = trace_enter(l, code, code, NULL, args.args.i)) != 0) {
 		KERNEL_PROC_UNLOCK(l);
 		goto out;
 	}
 
-	rval[0] = 0;
-	rval[1] = tf->tf_out[1];
+	rval.rval[0] = 0;
+	rval.rval[1] = tf->tf_out[1];
 
         /* Lock the kernel if the syscall isn't MP-safe. */
 	if (callp->sy_flags & SYCALL_MPSAFE) {
 		KERNEL_PROC_UNLOCK(l);
-		error = (*callp->sy_call)(l, &args, rval);
+		error = (*callp->sy_call)(l, &args.args, rval.rval);
 	} else {
-		error = (*callp->sy_call)(l, &args, rval);
+		error = (*callp->sy_call)(l, &args.args, rval.rval);
 		KERNEL_PROC_UNLOCK(l);
 	}
 
@@ -327,8 +329,8 @@ out:
 	switch (error) {
 	case 0:
 		/* Note: fork() does not return here in the child */
-		tf->tf_out[0] = rval[0];
-		tf->tf_out[1] = rval[1];
+		tf->tf_out[0] = rval.rval[0];
+		tf->tf_out[1] = rval.rval[1];
 		if (new) {
 			/* jmp %g2 (or %g7, deprecated) on success */
 			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
@@ -362,7 +364,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args.i, rval, error);
+	trace_exit(l, code, args.args.i, rval.rval, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -393,37 +395,4 @@ child_return(void *arg)
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, l->l_md.md_tf->tf_pc, 0);
-}
-
-/*
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	int err;
-	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
-
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
