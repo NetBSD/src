@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2006/06/29 21:50:17 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2006/06/29 21:53:33 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -73,7 +73,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.153 2006/06/04 03:52:50 paulus Exp"
 #else
-__RCSID("$NetBSD: main.c,v 1.6 2006/06/29 21:50:17 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2006/06/29 21:53:33 christos Exp $");
 #endif
 #endif
 
@@ -973,7 +973,7 @@ struct protocol_list {
     { 0x8051,	"KNX Bridging Control Protocol" },
     { 0x8053,	"Encryption Control Protocol" },
     { 0x8055,	"Individual Link Encryption Control Protocol" },
-    { 0x8057,	"IPv6 Control Protovol" },
+    { 0x8057,	"IPv6 Control Protocol" },
     { 0x8059,	"PPP Muxing Control Protocol" },
     { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
     { 0x806f,	"Stampede Bridging Control Protocol" },
