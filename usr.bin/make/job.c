@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.111 2006/03/31 21:05:34 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.112 2006/06/29 22:01:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.111 2006/03/31 21:05:34 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.112 2006/06/29 22:01:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.111 2006/03/31 21:05:34 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.112 2006/06/29 22:01:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -215,7 +215,7 @@ static Shell    shells[] = {
 {
     "csh",
     TRUE, "unset verbose", "set verbose", "unset verbose", 10,
-    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", '#',
+    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", "'\\\n'", '#',
     "v", "e",
 },
     /*
@@ -225,7 +225,7 @@ static Shell    shells[] = {
 {
     "sh",
     FALSE, "", "", "", 0,
-    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", '#',
+    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
 #ifdef __NetBSD__
     "q",
 #else
@@ -239,7 +239,7 @@ static Shell    shells[] = {
 {
     "ksh",
     TRUE, "set +v", "set -v", "set +v", 6,
-    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", '#',
+    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
     "v",
     "",
 },
@@ -249,7 +249,7 @@ static Shell    shells[] = {
 {
     NULL,
     FALSE, NULL, NULL, NULL, 0,
-    FALSE, NULL, NULL, NULL, 0,
+    FALSE, NULL, NULL, NULL, NULL, 0,
     NULL, NULL,
 }
 };
@@ -2187,6 +2187,17 @@ Shell_Init()
 }
 
 /*-
+ * Returns the string literal that is used in the current command shell
+ * to produce a newline character.
+ */
+const char *
+Shell_GetNewline(void)
+{
+
+    return commandShell->newline;
+}
+
+/*-
  *-----------------------------------------------------------------------
  * Job_Init --
  *	Initialize the process module
@@ -2364,6 +2375,7 @@ JobMatchShell(const char *name)
  *	    echoFlag	    Flag to turn echoing on at the start
  *	    errFlag	    Flag to turn error checking on at the start
  *	    hasErrCtl	    True if shell has error checking control
+ *	    newline	    String literal to represent a newline char
  *	    check 	    Command to turn on error checking if hasErrCtl
  *	    	  	    is TRUE or template of command to echo a command
  *	    	  	    for which error checking is off if hasErrCtl is
@@ -2422,6 +2434,8 @@ Job_ParseShell(char *line)
 		    char c = argv[0][10];
 		    newShell.hasErrCtl = !((c != 'Y') && (c != 'y') &&
 					   (c != 'T') && (c != 't'));
+		} else if (strncmp(*argv, "newline=", 8) == 0) {
+		    newShell.newline = &argv[0][8];
 		} else if (strncmp(*argv, "check=", 6) == 0) {
 		    newShell.errCheck = &argv[0][6];
 		} else if (strncmp(*argv, "ignore=", 7) == 0) {

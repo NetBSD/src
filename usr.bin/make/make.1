@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.126 2006/06/17 02:15:22 reed Exp $
+.\"	$NetBSD: make.1,v 1.127 2006/06/29 22:01:17 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd March 18, 2006
+.Dd June 29, 2006
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1574,13 +1574,16 @@ It is typically identical to
 The flag to pass the shell to enable error checking.
 .It Ar echoFlag
 The flag to pass the shell to enable command echoing.
+.It Ar newline
+The string literal to pass the shell that results in a single newline
+character when used outside of any quoting characters.
 .El
 Example:
 .Bd -literal
 \&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \\
 	check="set -e" ignore="set +e" \\
 	echo="set -v" quiet="set +v" filter="set +v" \\
-	echoFlag=v errFlag=e
+	echoFlag=v errFlag=e newline="'\\n'"
 .Ed
 .It Ic .SILENT
 Apply the

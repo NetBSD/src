@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.27 2006/03/31 21:05:34 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.28 2006/06/29 22:01:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -250,6 +250,9 @@ typedef struct Shell {
     const char	 *errCheck;	/* string to turn error checking on */
     const char	 *ignErr;	/* string to turn off error checking */
     const char	 *errOut;	/* string to use for testing exit code */
+    const char	 *newline;	/* string literal that results in a newline
+				 * character when it appears outside of any
+				 * 'quote' or "quote" characters */
     char   commentChar;		/* character used by shell for comment lines */
 
     /*
@@ -268,6 +271,7 @@ extern int	maxJobs;	/* Max jobs we can run */
 extern int	maxJobTokens;	/* Number of token for the job pipe */
 
 void Shell_Init(void);
+const char *Shell_GetNewline(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 void Job_CatchChildren(Boolean);
