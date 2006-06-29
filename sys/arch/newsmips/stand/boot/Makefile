@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/06/29 01:28:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2006/06/29 01:45:03 lukem Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -33,6 +33,7 @@ LIBS+= ${COMMON}/lib/z/libz.a
 LIBS+= ${COMMON}/lib/kern/libkern.a
 
 ${PROG}: ${OBJS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}.elf
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}

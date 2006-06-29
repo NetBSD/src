@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/06/29 01:28:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2006/06/29 01:45:03 lukem Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -27,6 +27,7 @@ LIBS=  ${COMMON}/romcalls.o
 LIBS+= ${COMMON}/lib/sa/libsa.a ${COMMON}/lib/kern/libkern.a
 
 ${PROG}: ${OBJS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	${SIZE} ${.TARGET}.sym
 # XXX objcopy does not work for prog at KSEG
