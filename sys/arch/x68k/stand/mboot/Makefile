@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/06/29 03:38:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2006/06/29 03:46:43 lukem Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -31,6 +31,7 @@ LINKFLAGS=	-N -static -Ttext ${TEXT}
 
 realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}
 #	${STRIP} ${BOOT}.x
 #	dd bs=32 skip=1 count=32 if=${BOOT}.x of=${BOOT}
