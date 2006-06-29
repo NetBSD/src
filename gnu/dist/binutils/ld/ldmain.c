@@ -343,9 +343,6 @@ main (int argc, char **argv)
 	einfo (_("%P%F: -r and -shared may not be used together\n"));
     }
 
-   if (!config.dynamic_link && link_info.shared)
-     einfo (_("%P%F: -static and -shared may not be used together\n"));
-
   if (! link_info.shared)
     {
       if (command_line.filter_shlib)

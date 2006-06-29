@@ -1049,7 +1049,11 @@ platforms for which shared libraries are supported.  The different
 variants of this option are for compatibility with various systems.  You
 may use this option multiple times on the command line: it affects
 library searching for @option{-l} options which follow it.  This
-option also implies @option{--unresolved-symbols=report-all}.
+option also implies @option{--unresolved-symbols=report-all}.  This
+option can be used with @option{-shared}.  Doing so means that a
+shared library is being created but that all of the library's external
+references must be resolved by pulling in entries from static
+libraries. 
 
 @kindex -Bsymbolic
 @item -Bsymbolic

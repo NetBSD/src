@@ -1,3 +1,8 @@
+2005-07-29  Nick Clifton  <nickc@redhat.com>
+
+	* ldmain.c (main): Allow -shared and -static to be used together.
+	* ld.texinfo (-static): Mention that it is allowed with -shared.
+
 2005-06-12  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* ld.texinfo (Command Line Options): Add @item for --hash-size.
