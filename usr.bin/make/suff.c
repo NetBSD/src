@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.53 2006/03/31 21:58:08 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.54 2006/06/29 22:02:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.53 2006/03/31 21:58:08 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.54 2006/06/29 22:02:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.53 2006/03/31 21:58:08 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.54 2006/06/29 22:02:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -908,7 +908,7 @@ SuffScanTargets(ClientData targetp, ClientData gsp)
 	return 1;
     }
 
-    if (target->type == OP_TRANSFORM)
+    if ((unsigned int)target->type == OP_TRANSFORM)
 	return 0;
 
     if ((ptr = strstr(target->name, gs->s->name)) == NULL ||

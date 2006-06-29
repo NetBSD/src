@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.126 2006/05/19 17:21:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.127 2006/06/29 22:02:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.126 2006/05/19 17:21:46 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.127 2006/06/29 22:02:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.126 2006/05/19 17:21:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.127 2006/06/29 22:02:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1220,7 +1220,7 @@ Check_Cwd_av(int ac, char **av, int copy)
 
 	n = strlen(av[i]);
 	cp = &(av[i])[n - 1];
-	if (strspn(av[i], "|&;") == n) {
+	if (strspn(av[i], "|&;") == (size_t)n) {
 	    next_cmd = 1;
 	    continue;
 	} else if (*cp == ';' || *cp == '&' || *cp == '|' || *cp == ')') {
