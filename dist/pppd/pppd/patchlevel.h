@@ -1,4 +1,4 @@
-/*	$NetBSD: patchlevel.h,v 1.1.1.2 2006/06/29 21:46:40 christos Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.2 2006/06/29 21:50:17 christos Exp $	*/
 
 /* Id: patchlevel.h,v 1.66 2006/06/28 00:21:23 paulus Exp */
 

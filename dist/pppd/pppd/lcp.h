@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.h,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: lcp.h,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -41,7 +41,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: lcp.h,v 1.19 2002/12/04 23:03:32 paulus Exp
+ * Id: lcp.h,v 1.20 2004/11/14 22:53:42 carlsonj Exp
  */
 
 /*
