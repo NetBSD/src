@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.59 2006/05/04 04:22:57 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.60 2006/06/29 19:28:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.59 2006/05/04 04:22:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.60 2006/06/29 19:28:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,8 +640,7 @@ lfs_segunlock_relock(struct lfs *fs)
 		lfs_segunlock(fs);
 
 	/* Wait for the cleaner */
-	wakeup(&lfs_allclean_wakeup);
-	wakeup(&fs->lfs_nextseg);
+	lfs_wakeup_cleaner(fs);
 	simple_lock(&fs->lfs_interlock);
 	while (LFS_STARVED_FOR_SEGS(fs))
 		ltsleep(&fs->lfs_avail, PRIBIO, "relock", 0,
@@ -653,4 +652,17 @@ lfs_segunlock_relock(struct lfs *fs)
 		lfs_seglock(fs, seg_flags);
 
 	return;
+}
+
+/*
+ * Wake up the cleaner, provided that nowrap is not set.
+ */
+void
+lfs_wakeup_cleaner(struct lfs *fs)
+{
+	if (fs->lfs_nowrap > 0)
+		return;
+
+	wakeup(&fs->lfs_nextseg);
+	wakeup(&lfs_allclean_wakeup);
 }

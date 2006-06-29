@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.213 2006/05/24 21:08:00 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.214 2006/06/29 19:28:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.213 2006/05/24 21:08:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.214 2006/06/29 19:28:21 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1387,8 +1387,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
-	wakeup(&fs->lfs_nextseg);
-	wakeup(&lfs_allclean_wakeup);
+	lfs_wakeup_cleaner(fs);
 	simple_lock(&fs->lfs_interlock);
 	while (fs->lfs_sleepers)
 		ltsleep(&fs->lfs_sleepers, PRIBIO + 1, "lfs_sleepers", 0,

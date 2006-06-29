@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.179 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.180 2006/06/29 19:28:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.179 2006/06/24 05:28:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.180 2006/06/29 19:28:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,7 +938,6 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 	if ((ip->i_lfs_iflags & LFSI_WRAPBLOCK) == 0)
 		return EBUSY;
 
-	simple_lock(&fs->lfs_interlock);
 	ip->i_lfs_iflags &= ~LFSI_WRAPBLOCK;
 
 	KASSERT(fs->lfs_nowrap > 0);
@@ -950,12 +949,12 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 	if (--fs->lfs_nowrap == 0) {
 		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
 		wakeup(&fs->lfs_nowrap);
+		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
 		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER,
 			"segment", 0, &fs->lfs_interlock);
 	}
-	simple_unlock(&fs->lfs_interlock);
 
 	return 0;
 }
@@ -975,9 +974,12 @@ lfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
 
 	if (ip->i_lfs_iflags & LFSI_WRAPBLOCK) {
-		lfs_wrapgo(ip->i_lfs, ip, 0);
+		simple_lock(&fs->lfs_interlock);
+		lfs_wrapgo(fs, ip, 0);
+		simple_unlock(&fs->lfs_interlock);
 	}
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
@@ -1532,12 +1534,12 @@ lfs_fcntl(void *v)
 		if (fs->lfs_nowrap == 0)
 			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
 		++fs->lfs_nowrap;
-		if (ap->a_data == NULL || *(int *)ap->a_data == 1) {
+		if (*(int *)ap->a_data == 1 ||
+		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
 			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &fs->lfs_interlock);
 			if (error) {
-				if (--fs->lfs_nowrap == 0)
-					wakeup(&fs->lfs_nowrap);
+				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
 			}
 		}
 		simple_unlock(&fs->lfs_interlock);
@@ -1550,8 +1552,12 @@ lfs_fcntl(void *v)
 		 * If the argument is 1, it sleeps until a new segment
 		 * is selected.
 		 */
-		return lfs_wrapgo(fs, VTOI(ap->a_vp), (ap->a_data == NULL ? 1 :
-						       *((int *)ap->a_data)));
+		simple_lock(&fs->lfs_interlock);
+		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
+				   (ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
+				    *((int *)ap->a_data)));
+		simple_unlock(&fs->lfs_interlock);
+		return error;
 
 	    default:
 		return ufs_fcntl(v);
@@ -2089,6 +2095,7 @@ again:
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
 			/*
