@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.h,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: chap_ms.h,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * chap_ms.h - Challenge Handshake Authentication Protocol definitions.
@@ -29,7 +29,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: chap_ms.h,v 1.12 2004/11/09 22:49:05 paulus Exp
+ * Id: chap_ms.h,v 1.13 2004/11/15 22:13:26 paulus Exp
  */
 
 #ifndef __CHAPMS_INCLUDE__

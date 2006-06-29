@@ -1,9 +1,9 @@
-/*	$NetBSD: pathnames.h,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * define path names
  *
- * Id: pathnames.h,v 1.16 2004/11/13 12:02:22 paulus Exp
+ * Id: pathnames.h,v 1.18 2005/08/25 23:59:34 paulus Exp
  */
 
 #ifdef HAVE_PATHS_H
@@ -58,5 +58,14 @@
 #endif /* __STDC__ */
 
 #ifdef PLUGIN
-#define _PATH_PLUGIN	"/usr/lib/pppd/" VERSION
+#ifndef __NetBSD__
+#ifdef __STDC__
+#define _PATH_PLUGIN	DESTDIR "/lib/pppd/" VERSION
+#else /* __STDC__ */
+#define _PATH_PLUGIN	"/usr/lib/pppd"
+#endif /* __STDC__ */
+#else
+#define _PATH_PLUGIN	"/usr/lib/pppd/"
+#endif /* __NetBSD__ **/
+
 #endif /* PLUGIN */

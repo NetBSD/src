@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: ccp.c,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -33,9 +33,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ccp.c,v 1.48 2004/11/13 02:28:15 paulus Exp"
+#define RCSID	"Id: ccp.c,v 1.50 2005/06/26 19:34:41 carlsonj Exp"
 #else
-__RCSID("$NetBSD: ccp.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: ccp.c,v 1.3 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -909,6 +909,7 @@ ccp_nakci(f, p, len, treat_as_reject)
     fsm *f;
     u_char *p;
     int len;
+    int treat_as_reject;
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     ccp_options no;		/* options we've seen already */

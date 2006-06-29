@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.4 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: lcp.c,v 1.74 2004/11/13 02:28:15 paulus Exp"
+#define RCSID	"Id: lcp.c,v 1.76 2006/05/22 00:04:07 paulus Exp"
 #else
-__RCSID("$NetBSD: lcp.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.4 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -516,7 +516,6 @@ lcp_input(unit, p, len)
     }
     fsm_input(f, p, len);
 }
-
 
 /*
  * lcp_extcode - Handle a LCP-specific code.
@@ -1329,8 +1328,8 @@ lcp_nakci(f, p, len, treat_as_reject)
 	if (looped_back) {
 	    if (++try.numloops >= lcp_loopbackfail) {
 		notice("Serial line is looped back.");
-		lcp_close(f->unit, "Loopback detected");
 		status = EXIT_LOOPBACK;
+		lcp_close(f->unit, "Loopback detected");
 	    }
 	} else
 	    try.numloops = 0;
@@ -2261,8 +2260,8 @@ void LcpLinkFailure (f)
     if (f->state == OPENED) {
 	info("No response to %d echo-requests", lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
-        lcp_close(f->unit, "Peer not responding");
 	status = EXIT_PEER_DEAD;
+	lcp_close(f->unit, "Peer not responding");
     }
 }
 

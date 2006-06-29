@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.4 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -79,9 +79,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: chap_ms.c,v 1.33 2004/11/12 09:57:43 paulus Exp"
+#define RCSID	"Id: chap_ms.c,v 1.36 2006/05/21 11:56:40 paulus Exp"
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.4 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -111,7 +111,7 @@ static const char rcsid[] = RCSID;
 
 
 static void	ascii2unicode __P((char[], int, u_char[]));
-static void	NTPasswordHash __P((char *, int, u_char[MD4_SIGNATURE_SIZE]));
+static void	NTPasswordHash __P((u_char *, int, u_char[MD4_SIGNATURE_SIZE]));
 static void	ChallengeResponse __P((u_char *, u_char *, u_char[24]));
 static void	ChapMS_NT __P((u_char *, char *, int, u_char[24]));
 static void	ChapMS2_NT __P((u_char *, u_char[16], char *, char *, int,
@@ -403,7 +403,7 @@ chapms_handle_failure(unsigned char *inp, int len)
 	 * chapms[2]_verify_response.
 	 */
 	if (!strncmp(p, "E=", 2))
-		err = strtol(p, NULL, 10); /* Remember the error code. */
+		err = strtol(p+2, NULL, 10); /* Remember the error code. */
 	else
 		goto print_msg; /* Message is badly formatted. */
 
@@ -520,7 +520,7 @@ ascii2unicode(char ascii[], int ascii_len, u_char unicode[])
 }
 
 static void
-NTPasswordHash(char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
+NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
 {
 #ifdef __NetBSD__
     /* NetBSD uses the libc md4 routines which take bytes instead of bits */
@@ -531,7 +531,13 @@ NTPasswordHash(char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
     MD4_CTX		md4Context;
 
     MD4Init(&md4Context);
-    MD4Update(&md4Context, (unsigned char *)secret, mdlen);
+    /* MD4Update can take at most 64 bytes at a time */
+    while (mdlen > 512) {
+	MD4Update(&md4Context, secret, 512);
+	secret += 64;
+	mdlen -= 512;
+    }
+    MD4Update(&md4Context, secret, mdlen);
     MD4Final(hash, &md4Context);
 
 }
@@ -545,7 +551,7 @@ ChapMS_NT(u_char *rchallenge, char *secret, int secret_len,
 
     /* Hash the Unicode version of the secret (== password). */
     ascii2unicode(secret, secret_len, unicodePassword);
-    NTPasswordHash((char *)unicodePassword, secret_len * 2, PasswordHash);
+    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
 
     ChallengeResponse(rchallenge, PasswordHash, NTResponse);
 }
@@ -562,7 +568,7 @@ ChapMS2_NT(u_char *rchallenge, u_char PeerChallenge[16], char *username,
 
     /* Hash the Unicode version of the secret (== password). */
     ascii2unicode(secret, secret_len, unicodePassword);
-    NTPasswordHash((char *)unicodePassword, secret_len * 2, PasswordHash);
+    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
 
     ChallengeResponse(Challenge, PasswordHash, NTResponse);
 }
@@ -650,8 +656,8 @@ GenerateAuthenticatorResponsePlain
 
     /* Hash (x2) the Unicode version of the secret (== password). */
     ascii2unicode(secret, secret_len, unicodePassword);
-    NTPasswordHash((char *)unicodePassword, secret_len * 2, PasswordHash);
-    NTPasswordHash((char *)PasswordHash, sizeof(PasswordHash),
+    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
+    NTPasswordHash(PasswordHash, sizeof(PasswordHash),
 		   PasswordHashHash);
 
     GenerateAuthenticatorResponse(PasswordHashHash, NTResponse, PeerChallenge,

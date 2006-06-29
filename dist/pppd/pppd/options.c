@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.4 2006/06/13 22:12:37 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.5 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: options.c,v 1.95 2004/11/09 22:33:35 paulus Exp"
+#define RCSID	"Id: options.c,v 1.100 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: options.c,v 1.4 2006/06/13 22:12:37 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.5 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -427,16 +427,20 @@ options_from_file(filename, must_exist, check_prot, priv)
     option_t *opt;
     int oldpriv, n;
     char *oldsource;
+    uid_t euid;
     char *argv[MAXARGS];
     char args[MAXARGS][MAXWORDLEN];
     char cmd[MAXWORDLEN];
 
-    if (check_prot)
-	seteuid(getuid());
+    euid = geteuid();
+    if (check_prot && seteuid(getuid()) == -1) {
+	option_error("unable to drop privileges to open %s: %m", filename);
+	return 0;
+    }
     f = fopen(filename, "r");
     err = errno;
-    if (check_prot)
-	seteuid(0);
+    if (check_prot && seteuid(euid) == -1)
+	fatal("unable to regain privileges");
     if (f == NULL) {
 	errno = err;
 	if (!must_exist) {
@@ -1526,7 +1530,7 @@ setactivefilter_in(argv)
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &active_filter_in, *argv, 1, netmask) == -1) {
-	option_error("error in active-filter-in expression: %s\n",
+	option_error("error in active-filter expression: %s\n",
 		     pcap_geterr(pc));
 	ret = 0;
     }
@@ -1547,7 +1551,7 @@ setactivefilter_out(argv)
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &active_filter_out, *argv, 1, netmask) == -1) {
-	option_error("error in active-filter-out expression: %s\n",
+	option_error("error in active-filter expression: %s\n",
 		     pcap_geterr(pc));
 	ret = 0;
     }
@@ -1579,15 +1583,19 @@ setlogfile(argv)
     char **argv;
 {
     int fd, err;
+    uid_t euid;
 
-    if (!privileged_option)
-	seteuid(getuid());
+    euid = geteuid();
+    if (!privileged_option && seteuid(getuid()) == -1) {
+	option_error("unable to drop permissions to open %s: %m", *argv);
+	return 0;
+    }
     fd = open(*argv, O_WRONLY | O_APPEND | O_CREAT | O_EXCL, 0644);
     if (fd < 0 && errno == EEXIST)
 	fd = open(*argv, O_WRONLY | O_APPEND);
     err = errno;
-    if (!privileged_option)
-	seteuid(0);
+    if (!privileged_option && seteuid(euid) == -1)
+	fatal("unable to regain privileges: %m");
     if (fd < 0) {
 	errno = err;
 	option_error("Can't open log file %s: %m", *argv);
