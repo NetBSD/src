@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.37 2005/01/27 18:38:20 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.38 2006/06/29 20:24:13 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 27, 2005
+.Dd June 29, 2006
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -135,6 +135,14 @@ enter interactive mode.
 When using a short or 0 timeout, it is often useful to interrupt the boot
 by holding down a shift key, as some BIOSes and BIOS extensions will drain the
 keystroke buffer at various points during POST.
+.Ss Diagnostic Output
+If the first stage boot fails to load the boot, it will print a terse
+message indicating the reason for the failure.
+The possible error messages and their cause are listed in
+.Xr mbr 8 .
+.Pp
+If the first stage boot succeeds, the banner will be shown and the
+error messages should be self-explanatory.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
