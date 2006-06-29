@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.93 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.94 2006/06/29 19:28:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.93 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.94 2006/06/29 19:28:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		/* Wake up the cleaner */
 		LFS_CLEANERINFO(cip, fs, bp);
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
-		wakeup(&lfs_allclean_wakeup);
-		wakeup(&fs->lfs_nextseg);
+		lfs_wakeup_cleaner(fs);
 
 		simple_lock(&fs->lfs_interlock);
 		/* Cleaner might have run while we were reading, check again */
@@ -253,8 +252,8 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 #endif
 		if (error) {
-			return error;
 			simple_unlock(&fs->lfs_interlock);
+			return error;
 		}
 	}
 #ifdef DEBUG
@@ -424,8 +423,7 @@ lfs_availwait(struct lfs *fs, int fsb)
 		      "waiting on cleaner\n"));
 #endif
 
-		wakeup(&lfs_allclean_wakeup);
-		wakeup(&fs->lfs_nextseg);
+		lfs_wakeup_cleaner(fs);
 #ifdef DIAGNOSTIC
 		if (LFS_SEGLOCK_HELD(fs))
 			panic("lfs_availwait: deadlock");
