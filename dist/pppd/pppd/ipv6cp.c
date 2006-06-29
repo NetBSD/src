@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.4 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -137,15 +137,15 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: ipv6cp.c,v 1.20 2004/11/13 02:28:15 paulus Exp 
+ * Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp 
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ipv6cp.c,v 1.20 2004/11/13 02:28:15 paulus Exp"
+#define RCSID	"Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp"
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.4 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 

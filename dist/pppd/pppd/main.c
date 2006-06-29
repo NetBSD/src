@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2006/04/23 19:01:08 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -71,9 +71,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: main.c,v 1.148 2004/11/13 12:05:48 paulus Exp"
+#define RCSID	"Id: main.c,v 1.153 2006/06/04 03:52:50 paulus Exp"
 #else
-__RCSID("$NetBSD: main.c,v 1.5 2006/04/23 19:01:08 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -252,6 +252,7 @@ static void toggle_debug __P((int));
 static void open_ccp __P((int));
 static void bad_signal __P((int));
 static void holdoff_end __P((void *));
+static void forget_child __P((int pid, int status));
 static int reap_kids __P((void));
 static void childwait_end __P((void *));
 
@@ -972,7 +973,7 @@ struct protocol_list {
     { 0x8051,	"KNX Bridging Control Protocol" },
     { 0x8053,	"Encryption Control Protocol" },
     { 0x8055,	"Individual Link Encryption Control Protocol" },
-    { 0x8057,	"IPv6 Control Protocol" },
+    { 0x8057,	"IPv6 Control Protovol" },
     { 0x8059,	"PPP Muxing Control Protocol" },
     { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
     { 0x806f,	"Stampede Bridging Control Protocol" },
@@ -1721,7 +1722,7 @@ run_program(prog, args, must_exist, done, arg, wait)
 		    continue;
 		fatal("error waiting for script %s: %m", prog);
 	    }
-	    reap_kids();
+	    forget_child(pid, status);
 	}
 	return pid;
     }
@@ -1799,6 +1800,35 @@ childwait_end(arg)
 }
 
 /*
+ * forget_child - clean up after a dead child
+ */
+static void
+forget_child(pid, status)
+    int pid, status;
+{
+    struct subprocess *chp, **prevp;
+
+    for (prevp = &children; (chp = *prevp) != NULL; prevp = &chp->next) {
+        if (chp->pid == pid) {
+	    --n_children;
+	    *prevp = chp->next;
+	    break;
+	}
+    }
+    if (WIFSIGNALED(status)) {
+        warn("Child process %s (pid %d) terminated with signal %d",
+	     (chp? chp->prog: "??"), pid, WTERMSIG(status));
+    } else if (debug)
+        dbglog("Script %s finished (pid %d), status = 0x%x",
+	       (chp? chp->prog: "??"), pid,
+	       WIFEXITED(status) ? WEXITSTATUS(status) : status);
+    if (chp && chp->done)
+        (*chp->done)(chp->arg);
+    if (chp)
+        free(chp);
+}
+
+/*
  * reap_kids - get status from any dead child processes,
  * and log a message for abnormal terminations.
  */
@@ -1806,29 +1836,11 @@ static int
 reap_kids()
 {
     int pid, status;
-    struct subprocess *chp, **prevp;
 
     if (n_children == 0)
 	return 0;
     while ((pid = waitpid(-1, &status, WNOHANG)) != -1 && pid != 0) {
-	for (prevp = &children; (chp = *prevp) != NULL; prevp = &chp->next) {
-	    if (chp->pid == pid) {
-		--n_children;
-		*prevp = chp->next;
-		break;
-	    }
-	}
-	if (WIFSIGNALED(status)) {
-	    warn("Child process %s (pid %d) terminated with signal %d",
-		 (chp? chp->prog: "??"), pid, WTERMSIG(status));
-	} else if (debug)
-	    dbglog("Script %s finished (pid %d), status = 0x%x",
-		   (chp? chp->prog: "??"), pid,
-		   WIFEXITED(status) ? WEXITSTATUS(status) : status);
-	if (chp && chp->done)
-	    (*chp->done)(chp->arg);
-	if (chp)
-	    free(chp);
+        forget_child(pid, status);
     }
     if (pid == -1) {
 	if (errno == ECHILD)

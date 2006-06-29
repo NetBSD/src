@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.4 2006/04/03 16:16:00 tls Exp $	*/
+/*	$NetBSD: tty.c,v 1.5 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -73,9 +73,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: tty.c,v 1.22 2004/11/13 12:07:29 paulus Exp"
+#define RCSID	"Id: tty.c,v 1.25 2006/06/04 07:04:57 paulus Exp"
 #else
-__RCSID("$NetBSD: tty.c,v 1.4 2006/04/03 16:16:00 tls Exp $");
+__RCSID("$NetBSD: tty.c,v 1.5 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
@@ -571,12 +571,16 @@ int connect_tty()
 			int err, prio;
 
 			prio = privopen? OPRIO_ROOT: tty_options[0].priority;
-			if (prio < OPRIO_ROOT)
-				seteuid(uid);
+			if (prio < OPRIO_ROOT && seteuid(uid) == -1) {
+				error("Unable to drop privileges before opening %s: %m\n",
+				      devnam);
+				status = EXIT_OPEN_FAILED;
+				goto errret;
+			}
 			real_ttyfd = open(devnam, O_NONBLOCK | O_RDWR, 0);
 			err = errno;
-			if (prio < OPRIO_ROOT)
-				seteuid(0);
+			if (prio < OPRIO_ROOT && seteuid(0) == -1)
+				fatal("Unable to regain privileges");
 			if (real_ttyfd >= 0)
 				break;
 			errno = err;

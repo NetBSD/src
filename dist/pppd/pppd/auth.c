@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.4 2006/03/18 03:35:41 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.5 2006/06/29 21:50:16 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -73,9 +73,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: auth.c,v 1.101 2004/11/12 10:30:51 paulus Exp"
+#define RCSID	"Id: auth.c,v 1.112 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.4 2006/03/18 03:35:41 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.5 2006/06/29 21:50:16 christos Exp $");
 #endif
 #endif
 
@@ -426,6 +426,7 @@ setupapfile(argv)
 {
     FILE *ufile;
     int l;
+    uid_t euid;
     char u[MAXNAMELEN], p[MAXSECRETLEN];
 
     lcp_allowoptions[0].neg_upap = 1;
@@ -437,9 +438,16 @@ setupapfile(argv)
 	free(uafname);
     /* open user info file */
     uafname = strdup(*argv);
-    seteuid(getuid());
+    if (uafname == NULL)
+	novm("+ua file name");
+    euid = geteuid();
+    if (seteuid(getuid()) == -1) {
+	option_error("unable to reset uid before opening %s: %m", uafname);
+	return 0;
+    }
     ufile = fopen(uafname, "r");
-    seteuid(0);
+    if (seteuid(euid) == -1)
+	fatal("unable to regain privileges: %m");
     if (ufile == NULL) {
 	option_error("unable to open user login data file %s", uafname);
 	return 0;
@@ -764,8 +772,8 @@ link_established(unit)
 	    set_allowed_addrs(unit, NULL, NULL);
 	} else if (!wo->neg_upap || uselogin || !null_login(unit)) {
 	    warn("peer refused to authenticate: terminating link");
-	    lcp_close(unit, "peer refused to authenticate");
 	    status = EXIT_PEER_AUTH_FAILED;
+	    lcp_close(unit, "peer refused to authenticate");
 	    return;
 	}
     }
@@ -925,8 +933,8 @@ auth_peer_fail(unit, protocol)
     /*
      * Authentication failure: take the link down
      */
-    lcp_close(unit, "Authentication failed");
     status = EXIT_PEER_AUTH_FAILED;
+    lcp_close(unit, "Authentication failed");
 }
 
 /*
@@ -1003,8 +1011,8 @@ auth_withpeer_fail(unit, protocol)
      * is no point in persisting without any way to get updated
      * authentication secrets.
      */
-    lcp_close(unit, "Failed to authenticate ourselves to peer");
     status = EXIT_AUTH_TOPEER_FAILED;
+    lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
 /*
@@ -1168,9 +1176,9 @@ check_maxoctets(arg)
     diff = maxoctets - used;
     if(diff < 0) {
 	notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
+	status = EXIT_TRAFFIC_LIMIT;
 	lcp_close(0, "Traffic limit");
 	need_holdoff = 0;
-	status = EXIT_TRAFFIC_LIMIT;
     } else {
         TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
     }
@@ -1200,9 +1208,9 @@ check_idle(arg)
     if (tlim <= 0) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
+	status = EXIT_IDLE_TIMEOUT;
 	lcp_close(0, "Link inactive");
 	need_holdoff = 0;
-	status = EXIT_IDLE_TIMEOUT;
     } else {
 	TIMEOUT(check_idle, NULL, tlim);
     }
@@ -1690,6 +1698,7 @@ plogin(user, passwd, msg)
 static void
 plogout()
 {
+    char *tty;
 #ifdef USE_PAM
     int pam_error;
 
@@ -1700,14 +1709,12 @@ plogout()
     }
     /* Apparently the pam stuff does closelog(). */
     reopen_log();
-#else /* ! USE_PAM */   
-    char *tty;
+#endif /* USE_PAM */
 
     tty = devnam;
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
     logwtmp(tty, "", "");		/* Wipe out utmp logout entry */
-#endif /* ! USE_PAM */
     logged_in = 0;
 }
 

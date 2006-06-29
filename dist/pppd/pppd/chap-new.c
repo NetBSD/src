@@ -1,4 +1,4 @@
-/*	$NetBSD: chap-new.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: chap-new.c,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
 
 /*
  * chap-new.c - New CHAP implementation.
@@ -33,9 +33,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: chap-new.c,v 1.6 2004/11/04 10:02:26 paulus Exp"
+#define RCSID	"Id: chap-new.c,v 1.8 2005/07/13 10:41:58 paulus Exp"
 #else
-__RCSID("$NetBSD: chap-new.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: chap-new.c,v 1.3 2006/06/29 21:50:17 christos Exp $");
 #endif
 #endif
 
