@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.445 2006/06/27 18:19:58 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.446 2006/06/29 03:46:02 dan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -668,7 +668,7 @@ set-permissions'').
 
 Package:	ppp
 Version:	2.4.3 [with 2.4.4b1 changes]
-Current Vers:	2.4.4b1
+Current Vers:	2.4.4
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
 Home Page:
