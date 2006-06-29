@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.446 2006/06/29 03:46:02 dan Exp $
+#	$NetBSD: 3RDPARTY,v 1.447 2006/06/29 21:55:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -667,14 +667,14 @@ directory layout (the easiest way to check is by running ``postfix
 set-permissions'').
 
 Package:	ppp
-Version:	2.4.3 [with 2.4.4b1 changes]
+Version:	2.4.4
 Current Vers:	2.4.4
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
 Home Page:
 CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
 Mailing List:
-Responsible:	christos
+Responsible:	christos, cube
 License:	BSD (3-clause)
 Notes:
 BSD support was removed from 2.4.0; I added it back and removed
@@ -684,8 +684,8 @@ net/zlib, and <net/ppp-comp.h> and I now maintain sys-bsd.c. This
 is clearly a pain. I have not tested the modules code, neither our
 makefiles make it easy to construct a module, but I left one there
 as an example.
-TDB code as found in 2.4.3 is under GPL.  Therefore, we're using
-the version found in 2.4.1.
+TDB code as found in 2.4.x, x>1 is under the GPL.  Therefore, we're
+using the version found in 2.4.1.
 
 Package:	rcs
 Version:	5.7
