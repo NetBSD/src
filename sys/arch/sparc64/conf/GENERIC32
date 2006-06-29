@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.138 2006/06/05 05:14:38 gdamore Exp $
+# 	$NetBSD: GENERIC32,v 1.139 2006/06/29 14:00:55 liamjfoy Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 maxusers	64
 
@@ -659,6 +659,9 @@ pseudo-device	tap			# virtual Ethernet
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter
+
+# Common Address Redundancy Protocol
+#pseudo-device	carp
 
 ## IEEE 802.1q encapsulation
 pseudo-device	vlan
