@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2005/12/11 12:19:44 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2006/06/29 03:38:24 lukem Exp $
 
 NOMAN=		# defined
 
@@ -35,10 +35,10 @@ CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-mc68000
 .if ${OBJECT_FMT} == "ELF"
-LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
-LDFLAGS+=  -noinhibit-exec	# XXX
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
+LINKFLAGS+=  -noinhibit-exec	# XXX
 .else
-LDFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
+LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
 OBJCOPY?=  objcopy
 .endif
 
@@ -46,7 +46,7 @@ CLEANFILES+=	${PROG}.x $(PROG).map
 
 
 ${PROG}: $(OBJS)
-	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
+	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
 	@grep first_kbyte $(PROG).map
 .if ${OBJECT_FMT} == "ELF"
 	@if [ `(echo ibase=16; 						   \
