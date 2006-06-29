@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.50 2006/04/22 18:38:38 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.51 2006/06/29 22:02:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.50 2006/04/22 18:38:38 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.51 2006/06/29 22:02:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.50 2006/04/22 18:38:38 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.51 2006/06/29 22:02:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -558,7 +558,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	} else {
 	    /* Try truncated name */
 	    char copy[AR_MAX_NAME_LEN+1];
-	    int len = strlen(member);
+	    size_t len = strlen(member);
 
 	    if (len > AR_MAX_NAME_LEN) {
 		len = AR_MAX_NAME_LEN;
@@ -851,7 +851,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
     int		  size;       /* Size of archive member */
     char	  *cp;	      /* Useful character pointer */
     char	  magic[SARMAG];
-    int		  len, tlen;
+    size_t	  len, tlen;
 
     arch = fopen(archive, mode);
     if (arch == NULL) {
