@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2006/06/29 15:05:06 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.11 2006/06/29 16:12:27 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2006/06/29 15:05:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2006/06/29 16:12:27 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sparc_arch.h"
@@ -87,13 +87,19 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2006/06/29 15:05:06 martin Exp $");
 #include <sparc/sparc/cpuvar.h>
 
 #define MAXARGS	8
-struct args {
+union args {
+	uint64_t aligned;
 	register_t i[MAXARGS];
+};
+
+union rval {
+	uint64_t aligned;
+	register_t o[2];
 };
 
 static inline int handle_new(struct trapframe *, register_t *);
 static inline int getargs(struct proc *p, struct trapframe *,
-    register_t *, const struct sysent **, struct args *);
+    register_t *, const struct sysent **, union args *);
 #ifdef FPU_DEBUG
 static inline void save_fpu(struct trapframe *);
 #endif
@@ -121,7 +127,7 @@ handle_new(struct trapframe *tf, register_t *code)
  */
 static inline int
 getargs(struct proc *p, struct trapframe *tf, register_t *code,
-    const struct sysent **callp, struct args *args)
+    const struct sysent **callp, union args *args)
 {
 	int *ap = &tf->tf_out[0];
 	int error, i, nap = 6;
@@ -206,8 +212,8 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	struct proc *p;
 	struct lwp *l;
 	int error, new;
-	union { uint64_t aligned; struct args args; } args;
-	union { uint64_t aligned; register_t rval[2]; } rval;
+	union args args;
+	union rval rval;
 	register_t i;
 	u_quad_t sticks;
 
@@ -223,26 +229,26 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 #endif
 	new = handle_new(tf, &code);
 
-	if ((error = getargs(p, tf, &code, &callp, &args.args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
-	rval.rval[0] = 0;
-	rval.rval[1] = tf->tf_out[1];
+	rval.o[0] = 0;
+	rval.o[1] = tf->tf_out[1];
 
         /* Lock the kernel if the syscall isn't MP-safe. */
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, &args.args, rval.rval);
+		error = (*callp->sy_call)(l, &args, rval.o);
 	} else {
 		KERNEL_PROC_LOCK(l);
-		error = (*callp->sy_call)(l, &args.args, rval.rval);
+		error = (*callp->sy_call)(l, &args, rval.o);
 		KERNEL_PROC_UNLOCK(l);
 	}
 
 	switch (error) {
 	case 0:
 		/* Note: fork() does not return here in the child */
-		tf->tf_out[0] = rval.rval[0];
-		tf->tf_out[1] = rval.rval[1];
+		tf->tf_out[0] = rval.o[0];
+		tf->tf_out[1] = rval.o[1];
 		if (new) {
 			/* jmp %g2 (or %g7, deprecated) on success */
 			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
@@ -287,8 +293,8 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	struct proc *p;
 	struct lwp *l;
 	int error, new;
-	union aligned_args { uint64_t aligned; struct args args; } args;
-	union { uint64_t aligned; register_t rval[2]; } rval;
+	union args args;
+	union rval rval;
 	register_t i;
 	u_quad_t sticks;
 
@@ -304,24 +310,24 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 #endif
 	new = handle_new(tf, &code);
 
-	if ((error = getargs(p, tf, &code, &callp, &args.args)) != 0)
+	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, args.args.i)) != 0) {
+	if ((error = trace_enter(l, code, code, NULL, args.i)) != 0) {
 		KERNEL_PROC_UNLOCK(l);
 		goto out;
 	}
 
-	rval.rval[0] = 0;
-	rval.rval[1] = tf->tf_out[1];
+	rval.o[0] = 0;
+	rval.o[1] = tf->tf_out[1];
 
         /* Lock the kernel if the syscall isn't MP-safe. */
 	if (callp->sy_flags & SYCALL_MPSAFE) {
 		KERNEL_PROC_UNLOCK(l);
-		error = (*callp->sy_call)(l, &args.args, rval.rval);
+		error = (*callp->sy_call)(l, &args, rval.o);
 	} else {
-		error = (*callp->sy_call)(l, &args.args, rval.rval);
+		error = (*callp->sy_call)(l, &args, rval.o);
 		KERNEL_PROC_UNLOCK(l);
 	}
 
@@ -329,8 +335,8 @@ out:
 	switch (error) {
 	case 0:
 		/* Note: fork() does not return here in the child */
-		tf->tf_out[0] = rval.rval[0];
-		tf->tf_out[1] = rval.rval[1];
+		tf->tf_out[0] = rval.o[0];
+		tf->tf_out[1] = rval.o[1];
 		if (new) {
 			/* jmp %g2 (or %g7, deprecated) on success */
 			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
@@ -364,7 +370,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args.args.i, rval.rval, error);
+	trace_exit(l, code, args.i, rval.o, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
