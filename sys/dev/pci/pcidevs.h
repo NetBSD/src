@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.802 2006/06/30 17:01:09 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.803 2006/06/30 17:19:32 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.803 2006/06/30 17:00:18 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.804 2006/06/30 17:17:10 nisimura Exp
  */
 
 /*
@@ -593,6 +593,7 @@
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros Communications */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
+#define	PCI_VENDOR_MICREL	0x16c6		/* Micrel */
 #define	PCI_VENDOR_LINKSYS	0x1737		/* Linksys */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
@@ -2321,6 +2322,10 @@
 
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 Ethernet Notebook Adapter */
+
+/* Micrel products */
+#define	PCI_PRODUCT_MICREL_KSZ8841	0x8841		/* 10/100 Ethernet */
+#define	PCI_PRODUCT_MICREL_KSZ8842	0x8842		/* Switched 2-port 10/100 Ethernet */
 
 /* Middle Digital products */
 #define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA	0x9050		/* Weasel Virtual VGA */

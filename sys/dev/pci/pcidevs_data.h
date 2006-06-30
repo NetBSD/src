@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.801 2006/06/30 17:01:09 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.802 2006/06/30 17:19:32 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.803 2006/06/30 17:00:18 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.804 2006/06/30 17:17:10 nisimura Exp
  */
 
 /*
@@ -2184,6 +2184,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "SafeNet",
 	},
 	{
+	    PCI_VENDOR_MICREL,
+	    "Micrel",
+	},
+	{
 	    PCI_VENDOR_LINKSYS,
 	    "Linksys",
 	},
@@ -2364,7 +2368,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 581;
+const int pci_nvendors = 582;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -7992,6 +7996,14 @@ static const struct pci_product pci_products[] = {
 	    "MN-120 10/100 Ethernet Notebook Adapter",
 	},
 	{
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8841,
+	    "10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8842,
+	    "Switched 2-port 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA,
 	    "Weasel Virtual VGA",
 	},
@@ -11744,4 +11756,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2344;
+const int pci_nproducts = 2346;
