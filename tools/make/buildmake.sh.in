@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.5 2004/05/07 00:04:37 ross Exp $
+#	$NetBSD: buildmake.sh.in,v 1.6 2006/06/30 19:47:46 ross Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -20,4 +20,4 @@ for f in $SRCDIR/*.c $SRCDIR/lst.lib/*.c; do
 	docmd "${HOST_CC} ${HOST_CFLAGS} @DEFS@ -c $f"
 done
 
-docmd "${HOST_CC} ${HOST_CFLAGS} -o nbmake *.o ${HOST_LDFLAGS}"
+docmd "${HOST_CC} ${HOST_CFLAGS} -o ${_TOOL_PREFIX:-nb}make *.o ${HOST_LDFLAGS}"
