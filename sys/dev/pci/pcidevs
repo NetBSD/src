@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.803 2006/06/30 17:00:18 xtraeme Exp $
+$NetBSD: pcidevs,v 1.804 2006/06/30 17:17:10 nisimura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -586,6 +586,7 @@ vendor ACTIONTEC	0x1668	Action Tec Electronics
 vendor ATHEROS		0x168c	Atheros Communications
 vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor SAFENET		0x16ae	SafeNet
+vendor MICREL		0x16c6	Micrel
 vendor LINKSYS		0x1737	Linksys
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
@@ -2314,6 +2315,10 @@ product MEDIAQ MQ200		0x0200	MQ200
 
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120 10/100 Ethernet Notebook Adapter
+
+/* Micrel products */
+product MICREL KSZ8841		0x8841	10/100 Ethernet
+product MICREL KSZ8842		0x8842	Switched 2-port 10/100 Ethernet
 
 /* Middle Digital products */
 product MIDDLE_DIGITAL WEASEL_VGA	0x9050	Weasel Virtual VGA
