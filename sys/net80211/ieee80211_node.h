@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.21 2005/12/10 23:26:35 elad Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.22 2006/06/30 06:17:10 tacha Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -191,6 +191,7 @@ void	ieee80211_node_unauthorize(struct ieee80211_node *);
 
 void	ieee80211_begin_scan(struct ieee80211com *, int);
 int	ieee80211_next_scan(struct ieee80211com *);
+void	ieee80211_probe_curchan(struct ieee80211com *, int);
 void	ieee80211_create_ibss(struct ieee80211com*, struct ieee80211_channel *);
 void	ieee80211_reset_bss(struct ieee80211com *);
 void	ieee80211_cancel_scan(struct ieee80211com *);
