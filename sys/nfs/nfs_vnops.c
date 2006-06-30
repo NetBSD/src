@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.237 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.238 2006/06/30 09:55:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.237 2006/06/07 22:34:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.238 2006/06/30 09:55:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1775,7 +1775,10 @@ again:
 #endif
 	nfsm_reqdone;
 	if (error) {
-		if (v3 && (fmode & O_EXCL) && error == NFSERR_NOTSUPP) {
+		/*
+		 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
+		 */
+		if (v3 && (fmode & O_EXCL) && error == ENOTSUP) {
 			fmode &= ~O_EXCL;
 			goto again;
 		}
