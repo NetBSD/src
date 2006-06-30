@@ -1,0 +1,5 @@
+#include <sys/types.h>
+#include <machine/reg.h>
+#include <ucontext.h>
+
+define	UC_LR	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_LR])
