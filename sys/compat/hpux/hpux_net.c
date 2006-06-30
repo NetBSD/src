@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.31 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.32 2006/06/30 09:06:32 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.31 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.32 2006/06/30 09:06:32 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -143,7 +143,7 @@ struct hpuxtobsdipc {
 	int (*rout) __P((struct lwp *, void *, register_t *));
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
-	{ sys_socket,			3 }, /* 3ee */
+	{ compat_30_sys_socket,		3 }, /* 3ee */
 	{ sys_listen,			2 }, /* 3ef */
 	{ sys_bind,			3 }, /* 3f0 */
 	{ compat_43_sys_accept,		3 }, /* 3f1 */
