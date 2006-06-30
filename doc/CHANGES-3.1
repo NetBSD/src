@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.114 2006/06/16 04:05:41 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.115 2006/06/30 15:54:19 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1904,4 +1904,9 @@ distrib/hp300/miniroot/install.md		1.9-1.10
 	Fix md_get_diskdevs() to match sd probe messages by MI SCSI drivers.
 	Also fix md_get_cddevs() to match cd probe messages by MI SCSI drivers.
 	[tsutsui, ticket #1381]
+
+sys/dev/ata/wd.c				1.326
+
+	Add yet another broken 160GB seagate drive (ST3160021A).
+	[gendalia, ticket #1396]
 
