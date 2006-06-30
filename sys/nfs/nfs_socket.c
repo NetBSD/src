@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.135 2006/06/07 22:34:17 kardel Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.136 2006/06/30 09:55:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.135 2006/06/07 22:34:17 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.136 2006/06/30 09:55:06 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1388,10 +1388,6 @@ tryagain:
 				 */
 				nfs_renewxid(rep);
 				goto tryagain;
-
-			case NFSERR_STALEWRITEVERF:
-				error = EINVAL;
-				break;
 
 			default:
 #ifdef DIAGNOSTIC
