@@ -1,4 +1,4 @@
-.\"	$NetBSD: iteide.4,v 1.3 2005/06/23 12:47:38 peter Exp $
+.\"	$NetBSD: iteide.4,v 1.4 2006/06/30 17:02:53 xtraeme Exp $
 .\"
 .\" Copyright (c) 2004 Grant Beattie.
 .\"
@@ -24,7 +24,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 30, 2004
+.Dd June 30, 2006
 .Dt ITEIDE 4
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the IT8212 IDE controller which is found on some
+driver supports the IT821[12] IDE controller which is found on some
 Gigabyte motherboards (as
 .Dq GigaRAID )
 and some PCI cards.
@@ -43,7 +43,7 @@ This driver provides the interface with the hardware for the
 .Xr ata 4
 driver.
 .Pp
-The optional RAID functionality of the IT8212 is not supported and
+The optional RAID functionality of the IT821[12] is not supported and
 is explicitly disabled by the
 .Nm
 driver.
