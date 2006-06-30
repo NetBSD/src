@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.644 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.645 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -343,3 +343,19 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	pppd(8): updated to version 2.4.4. [christos 20060629]
 	kse(4):	Driver for Micrel KSZ8842/8841 PCI Ethernet controller.
 		[nisimura 20060630]
+	midi: many changes to midi(4): eliminated several cases where certain
+	      message sequences could be mangled in transit; added support for
+	      Active Sensing. Altered handling of output to MIDI ports that
+	      lack transmit ready interrupts; latency reduced but can load
+	      system if used for bulk output; dmesg identifies which devices
+	      to avoid. eap(4): now uses tx-ready interrupt on MIDI port.
+	      Sequencer (/dev/music): improved handling of tempo and
+	      timebase changes; supplied the native sequencer API alluded to in
+	      midi.4. umidi(4): large improvements in transmit and receive
+	      throughput, resolving dropped-input problems; additional device
+	      support; resolved an input hang when receiving on multiple ports;
+	      improved mapping of device nodes to physical ports for nonstandard
+	      devices. opl(4), cms(4), pcppi(4): improved (if still primitive)
+	      MIDI synthesis. midiplay(1): Exact effect of some options
+	      clarified. Untested support added for playing absolute-timed
+	      MIDI files. [chap 20060630]
