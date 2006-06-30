@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.49 2006/04/19 10:31:45 drochner Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.50 2006/06/30 10:51:46 tsutsui Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.49 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.50 $"
 
 maxusers	32
 
@@ -281,6 +281,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
