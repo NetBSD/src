@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.5 2006/06/12 22:05:49 mrg Exp $ */
+/* $NetBSD: dot_init.h,v 1.6 2006/06/30 09:00:46 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,17 +35,6 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-/*
- * These must be extern to avoid warnings ("declared static but never defined")
- * However, only the declaration is extern, the actually __asm() defines them
- * as static.
- */
-#define	INIT_FALLTHRU_DECL void init_fallthru(void)
-#define	FINI_FALLTHRU_DECL void fini_fallthru(void)
-
-#define	INIT_FALLTHRU()	init_fallthru()
-#define	FINI_FALLTHRU()	fini_fallthru()
 
 #define	ra	"$31"
 
@@ -91,8 +80,10 @@
 		"	.set	reorder			\n"\
 		".previous")
 
-#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
-#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
+#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
+#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
+
+#define	MD_DO_NOT_NEED_FALLTHRU
