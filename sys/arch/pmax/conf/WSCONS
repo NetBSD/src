@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.23 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: WSCONS,v 1.24 2006/06/30 10:48:57 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 maxusers	64
 
@@ -111,6 +111,7 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
@@ -292,6 +293,7 @@ pseudo-device	ppp		 	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	gre		 	# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -302,6 +304,7 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 pseudo-device	vnd		 	# virtual disk ick
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		 4	# concatenated disks
 #pseudo-device	cgd		 4	# cryptographic disk devices
 pseudo-device	raid		 8	# RAIDframe disk driver
@@ -323,3 +326,21 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5
+
