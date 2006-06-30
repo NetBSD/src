@@ -1,4 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.3 2006/06/30 23:19:40 xtraeme Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.4 2006/06/30 23:21:19 xtraeme Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.4 2006/06/30 23:21:19 xtraeme Exp $");
 
 #include <sys/types.h>
 
