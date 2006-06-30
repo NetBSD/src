@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.4 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: iteide.c,v 1.5 2006/06/30 17:01:32 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.4 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.5 2006/06/30 17:01:32 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,11 @@ CFATTACH_DECL(iteide, sizeof(struct pciide_softc),
     iteide_match, iteide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_ite_products[] =  {
+	{ PCI_PRODUCT_ITE_IT8211,
+	  0,
+	  "Integrated Technology Express IDE controller",
+	  ite_chip_map,
+	},
 	{ PCI_PRODUCT_ITE_IT8212,
 	  0,
 	  "Integrated Technology Express IDE controller",
