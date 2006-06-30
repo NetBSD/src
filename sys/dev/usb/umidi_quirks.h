@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.4 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.5 2006/06/30 13:56:25 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,11 @@ struct umq_data {
 	int		type;
 #define UMQ_TYPE_FIXED_EP	1
 #define UMQ_TYPE_YAMAHA		2
+#define UMQ_TYPE_MIDIMAN_GARBLE	3
+#define UMQ_TYPE_CN_SEQ_PER_EP  4 /* should be default behavior, but isn't */
+#define UMQ_TYPE_CN_SEQ_GLOBAL	5 /* shouldn't be default behavior, but is */
+#define UMQ_TYPE_CN_FIXED       6 /* should be a joke, but isn't funny */
+#define UMQ_TYPE_MD_FIXED       7 /* in case CN_FIXED gives a weird order */
 	void		*data;
 };
 
@@ -74,7 +79,8 @@ static struct umq_data	umq_##v##_##p##_##i[]
 #define USB_PRODUCT_ANYPRODUCT		ANYPRODUCT
 
 /*
- * quirk - fixed port
+ * quirk - fixed port. By the way, the ep field contains not the
+ * endpoint address, but the index of the endpoint descriptor.
  */
 
 struct umq_fixed_ep_endpoint {
@@ -103,12 +109,47 @@ umq_##v##_##p##_##i##_fixed_ep_endpoints[noep+niep]
 #define UMQ_FIXED_EP_REG(v, p, i)					\
 { UMQ_TYPE_FIXED_EP, (void *)&umq_##v##_##p##_##i##_fixed_ep_desc }
 
+/*
+ * quirk - fixed cable numbers. Supply as many values as there are jacks,
+ * in the same jack order implied by the FIXED_EP_DEF. Each value becomes
+ * the cable number of the corresponding jack.
+ */
+#if __STDC_VERSION__ >= 199901L
+#define UMQ_CN_FIXED_REG(...)						\
+{ .type=UMQ_TYPE_CN_FIXED, .data=(unsigned char[]){__VA_ARGS__} }
+#else /* assume gcc 2.95.3 */
+#define UMQ_CN_FIXED_REG(cns...)					\
+{ .type=UMQ_TYPE_CN_FIXED, .data=(unsigned char[]){cns} }
+#endif
+
+/*
+ * quirk - fixed mididev assignment. Supply pairs of numbers out, in, as
+ * many pairs as mididevs (that is, max(num_out_jack,num_in_jack)). The
+ * pairs, in order, correspond to the mididevs that will be created; in
+ * each pair, out is the index of the out_jack to bind and in is the
+ * index of the in_jack, both in the order implied by the FIXED_EP_DEF.
+ * Either out or in can be -1 to bind no out jack or in jack, respectively,
+ * to the corresponding mididev.
+ */
+#if __STDC_VERSION__ >= 199901L
+#define UMQ_MD_FIXED_REG(...)						\
+{ .type=UMQ_TYPE_MD_FIXED, .data=(unsigned char[]){__VA_ARGS__} }
+#else /* assume gcc 2.95.3 */
+#define UMQ_MD_FIXED_REG(mds...)					\
+{ .type=UMQ_TYPE_MD_FIXED, .data=(unsigned char[]){mds} }
+#endif
+
+/*
+ * generic boolean quirk, no data
+ */
+#define UMQ_TYPE(t)							\
+{ UMQ_TYPE_##t, NULL }
 
 /*
  * quirk - yamaha style midi I/F
  */
 #define UMQ_YAMAHA_REG(v, p, i)						\
-{ UMQ_TYPE_YAMAHA, NULL }
+UMQ_TYPE(YAMAHA)
 
 
 /* extern struct umidi_quirk umidi_quirklist[]; */
