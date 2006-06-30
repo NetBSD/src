@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.801 2006/06/27 21:38:40 kent Exp $
+$NetBSD: pcidevs,v 1.802 2006/06/30 16:22:54 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1003,21 +1003,27 @@ product ATI SB200_PPB		0x4342	SB200 PCI-PCI Bridge
 product ATI SB200_EHCI		0x4345	SB200 USB2 Host Controller
 product ATI SB200_OHCI_1	0x4347	SB200 USB Host Controller
 product ATI SB200_OHCI_2	0x4348	SB200 USB Host Controller
+product ATI IXP_IDE_200 	0x4349	SB200 IXP IDE Controller
 product ATI SB200_ISA		0x434c	SB200 PCI-ISA Bridge
+product ATI SB200_MODEM 	0x434d	SB200 Modem
 product ATI SB200_SMB		0x4353	SB200 SMBus Controller
 product ATI IXP_AUDIO_300	0x4361	IXP AC'97 Audio Controller
+product ATI SB300_SMB 		0x4363	SB300 SMBus Controller
+product ATI IXP_IDE_300 	0x4369	SB300 IXP IDE Controller
 product ATI IXP_AUDIO_400	0x4370	IXP AC'97 Audio Controller
-product ATI IXP_IDE_200		0x4349	IXP IDE Controller
-product ATI IXP_IDE_300		0x4369	IXP IDE Controller
 product ATI SB400_PPB		0x4371	SB400 PCI-PCI Bridge
-product ATI SB400_SMB		0x4372	SB400 SMB Controller
+product ATI SB400_SMB		0x4372	SB400 SMBus Controller
 product ATI SB400_EHCI		0x4373	SB400 USB2 Host Controller
 product ATI SB400_OHCI_1	0x4374	SB400 USB Host Controller
 product ATI SB400_OHCI_2	0x4375	SB400 USB Host Controller
 product ATI IXP_IDE_400		0x4376	SB400 IXP IDE Controller
 product ATI SB400_ISA		0x4377	SB400 PCI-ISA Bridge
+product ATI SB400_MODEM 	0x4378	SB400 Modem
 product ATI SB400_SATA_1	0x4379	SB400 SATA Controller
 product ATI SB400_SATA_2	0x437a	SB400 SATA Controller
+product ATI SB600_SATA_1 	0x4380	SB600 SATA Controller
+product ATI SB600_SATA_2 	0x4381	SB600 SATA Controller
+product ATI IXP_IDE_600 	0x438c	SB600 IXP IDE Controller
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI RADEON_RS250_D7	0x4437	Radeon Mobility 7000 IGP
