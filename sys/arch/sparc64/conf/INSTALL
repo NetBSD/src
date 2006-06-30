@@ -1,27 +1,15 @@
-# 	$NetBSD: INSTALL,v 1.19 2005/12/07 12:40:47 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.20 2006/06/30 10:27:48 tsutsui Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC32!
 #	See the include below...
 
-include "arch/sparc64/conf/GENERIC32"
+include "arch/sparc64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.19 $"
-
-include "arch/sparc64/conf/std.sparc64-64"
-
-options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
-options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
+#ident 		"INSTALL-$Revision: 1.20 $"
 
 makeoptions	COPTS="-Os"
 
-# DEBUG options
-
-#options 	LOCKDEBUG
-#options 	DIAGNOSTIC
-#makeoptions	DEBUG="-g"
-#options 	DEBUG
-#options 	SYSCALL_DEBUG
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
