@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.10 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.11 2006/06/30 13:56:25 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,16 +41,17 @@
 struct midi_softc;
 
 struct syn_timer {
-	struct	timeval start, stop;
-	int	tempo, timebase;
-	u_long	last;
-	u_long	tick;
-	int	running;
+	struct	timeval reftime, stoptime;
+	uint16_t	tempo_beatpermin, timebase_divperbeat;
+	uint32_t	usperdiv;
+	uint32_t	divs_lastevent;
+	uint32_t	divs_lastchange;
+	int		running;
 };
 
 #define SEQ_MAXQ 256
 struct sequencer_queue {
-	seq_event_rec buf[SEQ_MAXQ];
+	seq_event_t buf[SEQ_MAXQ];
 	u_int	in;		/* input index in buf */
 	u_int	out;		/* output index in buf */
 	u_int	count;		/* filled slots in buf */
@@ -72,9 +73,9 @@ struct midi_dev {
 	int	nr_voices;
 	int	instr_bank_size;
 	int	unit;
-	u_char	last_cmd;
 	struct	sequencer_softc *seq;
 	struct	midi_softc *msc;
+	char	doingsysex;	/* doing a SEQ_SYSEX */
 };
 
 struct sequencer_softc {
@@ -92,8 +93,6 @@ struct sequencer_softc {
 	struct	selinfo rsel;	/* read selector */
 	struct	proc *async;	/* process who wants audio SIGIO */
 
-	char	doingsysex;	/* doing a SEQ_SYSEX */
-
 	int	nmidi;		/* number of MIDI devices */
 	struct	midi_dev **devs;
 	struct	syn_timer timer;
@@ -106,7 +105,7 @@ struct sequencer_softc {
 	u_long	input_stamp;
 };
 
-void seq_event_intr(void *, seq_event_rec *);
+void seq_event_intr(void *, seq_event_t *);
 
 #define SEQUENCERUNIT(d) ((d) & 0x7f)
 #define SEQ_IS_OLD(d) ((d) & 0x80)
