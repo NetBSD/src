@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2006/05/05 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 2006/06/30 17:54:51 freza Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/05/05 18:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/06/30 17:54:51 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,10 +72,8 @@ void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 void
 stat_intr(struct clockframe *frame)
 {
-	extern u_long intrcnt[];
-
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
-	intrcnt[CNT_STATCLOCK]++;
+	curcpu()->ci_ev_statclock.ev_count++;
   	statclock(frame);
 }
 
@@ -85,7 +83,7 @@ decr_intr(struct clockframe *frame)
 	int pri;
 	long tbtick, xticks;
 	int nticks;
-	extern u_long intrcnt[];
+
 	/*
 	 * Check whether we are initialized.
 	 */
@@ -100,11 +98,11 @@ decr_intr(struct clockframe *frame)
 		xticks -= ticks_per_intr;
 	lasttb2 = tbtick - xticks;
 
-	intrcnt[CNT_CLOCK]++;
+	curcpu()->ci_ev_clock.ev_count++;
 	pri = splclock();
-	if (pri & SPL_CLOCK) {
+	if (pri & mask_clock) {
 		tickspending += nticks;
-		ticksmissed+= nticks;
+		ticksmissed += nticks;
 	} else {
 		nticks += tickspending;
 		tickspending = 0;
@@ -124,7 +122,7 @@ decr_intr(struct clockframe *frame)
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.
 		 */
-		frame->pri = pri | SINT_CLOCK;
+		frame->pri = pri | mask_clock;
 		while (--nticks > 0)
 			hardclock(frame);
 		frame->pri = pri;
@@ -136,12 +134,19 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+	/* Initialized in powerpc/ibm4xx/cpu.c */
+	evcnt_attach_static(&curcpu()->ci_ev_clock);
+	evcnt_attach_static(&curcpu()->ci_ev_statclock);
 
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
-	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
+
+	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz,
+	    ticks_per_intr);
+
 	lasttb2 = lasttb = mftbl();
 	mtspr(SPR_PIT, ticks_per_intr);
+
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
 }
