@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.9 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.10 2006/06/30 17:54:51 freza Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -463,7 +463,6 @@ struct intrhand;
 extern struct intrhand *softnet_handlers[];
 #define	schednetisr(an_isr)	softintr_schedule(softnet_handlers[(an_isr)])
 
-#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* should be in <machine/types.h> */
 void *softintr_establish(int level, void (*fun)(void *), void *arg);
 void softintr_disestablish(void *cookie);
 void softintr_schedule(void *cookie);
