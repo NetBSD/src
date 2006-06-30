@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.7 2006/06/03 21:55:28 christos Exp $ */
+/* $NetBSD: wlanctl.c,v 1.8 2006/06/30 21:30:19 martin Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -199,6 +200,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 	int *vname;
 	char ifname[IFNAMSIZ];
 	struct ieee80211_node_sysctl *pns, *ns;
+	u_int64_t ts;
 
 	namelen = NELTS(name);
 
@@ -267,9 +269,10 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 
 		print_capinfo(pns->ns_capinfo);
 
+		assert(sizeof(ts) == sizeof(pns->ns_tstamp));
+		memcpy(&ts, &pns->ns_tstamp[0], sizeof(ts));
 		printf("\tbeacon-interval %d TU tsft %" PRIu64 " us\n",
-		    pns->ns_intval,
-		    (u_int64_t)le64toh(*(u_int64_t *)&pns->ns_tstamp[0]));
+		    pns->ns_intval, (u_int64_t)le64toh(ts));
 
 		print_rateset(&pns->ns_rates, pns->ns_txrate);
 
