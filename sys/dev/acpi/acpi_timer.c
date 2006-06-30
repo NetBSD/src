@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.2 2006/06/26 12:29:36 drochner Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.3 2006/06/30 23:19:40 xtraeme Exp $ */
 
 #include <sys/types.h>
 
@@ -41,7 +41,7 @@ acpitimer_init()
 	j = 0;
 	for (i = 0; i < 10; i++)
 		j += acpitimer_test();
-	aprint_verbose("acpitimer_test(): %d\n", j);
+
 	if (j >= 10) {
 		acpi_timecounter.tc_name = "ACPI-Fast";
 		acpi_timecounter.tc_get_timecount = acpitimer_read_fast;
