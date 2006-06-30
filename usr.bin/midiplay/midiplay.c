@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.23 2006/06/30 22:19:32 chap Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.23 2006/06/30 22:19:32 chap Exp $");
 #endif
 
 
@@ -56,8 +56,9 @@ __RCSID("$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $");
 #define DEVMUSIC "/dev/music"
 
 struct track {
+	struct track *indirect; /* for fast swaps in heap code */
 	u_char *start, *end;
-	u_long curtime;
+	u_long delta;
 	u_char status;
 };
 
@@ -88,15 +89,24 @@ static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
 void usage(void);
-void send_event(seq_event_rec *);
+void send_event(seq_event_t *);
 void dometa(u_int, u_char *, u_int);
 void midireset(void);
 void send_sysex(u_char *, u_int);
 u_long getvar(struct track *);
+u_long getlen(struct track *);
 void playfile(FILE *, char *);
 void playdata(u_char *, u_int, char *);
 int main(int argc, char **argv);
 
+void Heapify(struct track *, int, int);
+void BuildHeap(struct track *, int);
+int ShrinkHeap(struct track *, int);
+
+/*
+ * This sample plays at an apparent tempo of 120 bpm when the BASETEMPO is 150
+ * bpm, because the quavers are 5 divisions (4 on 1 off) rather than 4 total.
+ */
 #define P(c) 1,0x90,c,0x7f,4,0x80,c,0
 #define PL(c) 1,0x90,c,0x7f,8,0x80,c,0
 #define C 0x3c
@@ -139,23 +149,26 @@ void
 usage(void)
 {
 	printf("usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
-	       "[-t tempo] [-v] [-x] [file ...]\n",
+	       "[-t %%tempo] [-v] [-x] [file ...]\n",
 		getprogname());
 	exit(1);
 }
 
 int showmeta = 0;
 int verbose = 0;
-#define BASETEMPO 400000
-u_int tempo = BASETEMPO;		/* microsec / quarter note */
+#define BASETEMPO 400000		/* us/beat(=24 clks or qn) (150 bpm) */
+u_int tempo_set = 0;
+u_int tempo_abs = 0;
 u_int ttempo = 100;
 int unit = 0;
 int play = 1;
 int fd = -1;
 int sameprogram = 0;
+int insysex = 0;
+int svsysex = 0; /* number of sysex bytes saved internally */
 
 void
-send_event(seq_event_rec *ev)
+send_event(seq_event_t *ev)
 {
 	/*
 	printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
@@ -176,12 +189,31 @@ getvar(struct track *tp)
 		c = *tp->start++;
 		r = (r << 7) | (c & 0x7f);
 	} while ((c & 0x80) && tp->start < tp->end);
-	return (r);
+	return r;
+}
+
+u_long
+getlen(struct track *tp)
+{
+	u_long len;
+	len = getvar(tp);
+	if (tp->start + len > tp->end)
+		errx(1, "bogus item length exceeds remaining track size");
+	return len;
 }
 
 void
 dometa(u_int meta, u_char *p, u_int len)
 {
+	static char const * const keys[] = {
+	        "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F",
+		"C",
+		"G", "D", "A", "E", "B", "F#", "C#",
+		"G#", "D#", "A#" /* for minors */
+	};
+	seq_event_t ev;
+	uint32_t usperbeat;
+	
 	switch (meta) {
 	case META_TEXT:
 	case META_COPYRIGHT:
@@ -197,23 +229,45 @@ dometa(u_int meta, u_char *p, u_int len)
 		}
 		break;
 	case META_SET_TEMPO:
-		tempo = GET24(p);
+		usperbeat = GET24(p);
+		ev = SEQ_MK_TIMING(TEMPO,
+		    .bpm=(60000000. / usperbeat) * (ttempo / 100.) + 0.5);
 		if (showmeta)
-			printf("Tempo: %d us / quarter note\n", tempo);
+			printf("Tempo: %u us/'beat'(24 midiclks)"
+			       " at %u%%; adjusted bpm = %u\n",
+			       usperbeat, ttempo, ev.t_TEMPO.bpm);
+		if (tempo_abs)
+			warnx("tempo event ignored"
+			      " in absolute-timed MIDI file");
+		else {
+			send_event(&ev);
+			if (!tempo_set) {
+				tempo_set = 1;
+				send_event(&SEQ_MK_TIMING(START));
+			}
+		}
 		break;
 	case META_TIMESIGN:
+		ev = SEQ_MK_TIMING(TIMESIG,
+		    .numerator=p[0],      .lg2denom=p[1],
+		    .clks_per_click=p[2], .dsq_per_24clks=p[3]);
 		if (showmeta) {
-			int n = p[1];
-			int d = 1;
-			while (n-- > 0)
-				d *= 2;
-			printf("Time signature: %d/%d %d,%d\n",
-			       p[0], d, p[2], p[3]);
+			printf("Time signature: %d/%d."
+			       " Click every %d midiclk%s"
+			       " (24 midiclks = %d 32nd note%s)\n",
+			       ev.t_TIMESIG.numerator,
+			       1 << ev.t_TIMESIG.lg2denom,
+			       ev.t_TIMESIG.clks_per_click,
+			       1 == ev.t_TIMESIG.clks_per_click ? "" : "s",
+			       ev.t_TIMESIG.dsq_per_24clks,
+			       1 == ev.t_TIMESIG.dsq_per_24clks ? "" : "s");
 		}
+		/* send_event(&ev); not implemented in sequencer */
 		break;
 	case META_KEY:
 		if (showmeta)
-			printf("Key: %d %s\n", (char)p[0],
+			printf("Key: %s %s\n",
+			       keys[((char)p[0]) + p[1] ? 10 : 7],
 			       p[1] ? "minor" : "major");
 		break;
 	default:
@@ -225,31 +279,81 @@ void
 midireset(void)
 {
 	/* General MIDI reset sequence */
-	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
-
-	send_sysex(gm_reset, sizeof gm_reset);
+	send_event(&SEQ_MK_SYSEX(unit,[0]=0x7e, 0x7f, 0x09, 0x01, 0xf7));
 }
 
 #define SYSEX_CHUNK 6
 void
 send_sysex(u_char *p, u_int l)
 {
-	seq_event_rec event;
-	u_int n;
-
-	event.arr[0] = SEQ_SYSEX;
-	event.arr[1] = unit;
-	do {
-		n = SYSEX_CHUNK;
-		if (l < n) {
-			memset(&event.arr[2], 0xff, SYSEX_CHUNK);
-			n = l;
+	seq_event_t event;
+	static u_char bf[6];
+	
+	if ( 0 == l ) {
+		warnx("zero-length system-exclusive event");
+		return;
+	}
+	
+	/*
+	 * This block is needed only to handle the possibility that a sysex
+	 * message is broken into multiple events in a MIDI file that do not
+	 * have length six; the /dev/music sequencer assumes a sysex message is
+	 * finished with the first SYSEX event carrying fewer than six bytes,
+	 * even if the last is not MIDI_SYSEX_END. So, we need to be careful
+	 * not to send a short sysex event until we have seen the end byte.
+	 * Instead, save some straggling bytes in bf, and send when we have a
+	 * full six (or an end byte). Note bf/saved/insysex should be per-
+	 * device, if we supported output to more than one device at a time.
+	 */
+	if ( svsysex > 0 ) {
+		if ( l > sizeof bf - svsysex ) {
+			memcpy(bf + svsysex, p, sizeof bf - svsysex);
+			l -= sizeof bf - svsysex;
+			p += sizeof bf - svsysex;
+			send_event(&SEQ_MK_SYSEX(unit,[0]=
+			    bf[0],bf[1],bf[2],bf[3],bf[4],bf[5]));
+			svsysex = 0;
+		} else {
+			memcpy(bf + svsysex, p, l);
+			svsysex += l;
+			p += l;
+			if ( MIDI_SYSEX_END == bf[svsysex-1] ) {
+				event = SEQ_MK_SYSEX(unit);
+				memcpy(event.sysex.buffer, bf, svsysex);
+				send_event(&event);
+				svsysex = insysex = 0;
+			} else
+				insysex = 1;
+			return;
 		}
-		memcpy(&event.arr[2], p, n);
-		send_event(&event);
-		l -= n;
-		p += n;
-	} while (l > 0);
+	}
+	
+	/*
+	 * l > 0. May as well test now whether we will be left 'insysex'
+	 * after processing this event.
+	 */	
+	insysex = ( MIDI_SYSEX_END != p[l-1] );
+	
+	/*
+	 * If not for multi-event sysexes and chunk-size weirdness, this
+	 * function could pretty much start here. :)
+	 */
+	while ( l >= SYSEX_CHUNK ) {
+		send_event(&SEQ_MK_SYSEX(unit,[0]=
+		    p[0],p[1],p[2],p[3],p[4],p[5]));
+		p += SYSEX_CHUNK;
+		l -= SYSEX_CHUNK;
+	}
+	if ( l > 0 ) {
+		if ( insysex ) {
+			memcpy(bf, p, l);
+			svsysex = l;
+		} else { /* a <6 byte chunk is ok if it's REALLY the end */
+			event = SEQ_MK_SYSEX(unit);
+			memcpy(event.sysex.buffer, p, l);
+			send_event(&event);
+		}
+	}
 }
 
 void
@@ -290,13 +394,11 @@ playfile(FILE *f, char *name)
 void
 playdata(u_char *buf, u_int tot, char *name)
 {
-	int format, ntrks, divfmt, ticks, t, besttrk = 0;
+	int format, ntrks, divfmt, ticks, t;
 	u_int len, mlen, status, chan;
 	u_char *p, *end, byte, meta, *msg;
 	struct track *tracks;
-	u_long bestcur, now;
 	struct track *tp;
-	seq_event_rec event;
 
 	end = buf + tot;
 	if (verbose)
@@ -361,13 +463,46 @@ playdata(u_char *buf, u_int tot, char *name)
 	divfmt = GET8(buf + MARK_LEN + SIZE_LEN + 4);
 	ticks = GET8(buf + MARK_LEN + SIZE_LEN + 5);
 	p = buf + MARK_LEN + SIZE_LEN + HEADER_LEN;
-	if ((divfmt & 0x80) == 0)
+	/*
+	 * Set the timebase (or timebase and tempo, for absolute-timed files).
+	 * PORTABILITY: some sequencers actually check the timebase against
+	 * available timing sources and may adjust it accordingly (storing a
+	 * new value in the ioctl arg) which would require us to compensate
+	 * somehow. That possibility is ignored for now, as NetBSD's sequencer
+	 * currently synthesizes all timebases, for better or worse, from the
+	 * system clock.
+	 *
+	 * For a non-absolute file, if timebase is set to the file's divisions
+	 * value, and tempo set in the obvious way, then the timing deltas in
+	 * the MTrks require no scaling. A downside to this approach is that
+	 * the sequencer API wants tempo in (integer) beats per minute, which
+	 * limits how finely tempo can be specified. That might be got around
+	 * in some cases by frobbing tempo and timebase more obscurely, but this
+	 * player is meant to be simple and clear.
+	 */
+	if ((divfmt & 0x80) == 0) {
 		ticks |= divfmt << 8;
-	else
-		errx(1, "Absolute time codes not implemented yet");
+		if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &(int){ticks}) < 0)
+			err(1, "SEQUENCER_TMR_TIMEBASE");
+	} else {
+		tempo_abs = tempo_set = 1;
+		divfmt = -(int8_t)divfmt;
+		/*
+		 * divfmt is frames per second; multiplying by 60 to set tempo
+		 * in frames per minute could exceed sequencer's (arbitrary)
+		 * tempo limits, so factor 60 as 12*5, set tempo in frames per
+		 * 12 seconds, and account for the 5 in timebase.
+		 */
+		send_event(&SEQ_MK_TIMING(TEMPO,
+		    .bpm=(12*divfmt) * (ttempo/100.) + 0.5));
+		if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &(int){5*ticks}) < 0)
+			err(1, "SEQUENCER_TMR_TIMEBASE");
+	}
 	if (verbose > 1)
-		printf("format=%d ntrks=%d divfmt=%x ticks=%d\n",
-		       format, ntrks, divfmt, ticks);
+		printf(tempo_abs ?
+		       "format=%d ntrks=%d abs fps=%u subdivs=%u\n" :
+		       "format=%d ntrks=%d divisions=%u\n",
+		       format, ntrks, tempo_abs ? divfmt : ticks, ticks);
 	if (format != 0 && format != 1) {
 		warnx("Cannot play MIDI file of type %d", format);
 		return;
@@ -390,69 +525,58 @@ playdata(u_char *buf, u_int tot, char *name)
 		if (memcmp(p, MARK_TRACK, MARK_LEN) == 0) {
 			tracks[t].start = p + MARK_LEN + SIZE_LEN;
 			tracks[t].end = tracks[t].start + len;
-			tracks[t].curtime = getvar(&tracks[t]);
+			tracks[t].delta = getvar(&tracks[t]);
+			tracks[t].indirect = &tracks[t]; /* -> self for now */
 			t++;
 		}
 		p += MARK_LEN + SIZE_LEN + len;
 	}
 
-	/* 
-	 * Play MIDI events by selecting the track with the lowest
-	 * curtime.  Execute the event, update the curtime and repeat.
+	/*
+	 * Force every channel to the same patch if requested by the user.
 	 */
 	if (sameprogram) {
 		for(t = 0; t < 16; t++) {
-			SEQ_MK_CHN_COMMON(&event, unit, MIDI_PGM_CHANGE, t,
-			    sameprogram-1, 0, 0);
-			send_event(&event);
+			send_event(&SEQ_MK_CHN(PGM_CHANGE, .device=unit,
+			    .channel=t, .program=sameprogram-1));
 		}
 	}
-	/*
-	 * The ticks variable is the number of ticks that make up a quarter
-	 * note and is used as a reference value for the delays between
+	/* 
+	 * Play MIDI events by selecting the track with the lowest
+	 * delta.  Execute the event, update the delta and repeat.
+	 *
+	 * The ticks variable is the number of ticks that make up a beat
+	 * (beat: 24 MIDI clocks always, a quarter note by usual convention)
+	 * and is used as a reference value for the delays between
 	 * the MIDI events.
 	 */
-	now = 0;
+	BuildHeap(tracks, ntrks); /* tracks[0].indirect is always next */
 	for (;;) {
-		/* Locate lowest curtime */
-		bestcur = ~0;
-		for (t = 0; t < ntrks; t++) {
-			if (tracks[t].curtime < bestcur) {
-				bestcur = tracks[t].curtime;
-				besttrk = t;
-			}
-		}
-		if (bestcur == ~0)
-			break;
-		if (verbose > 1) {
-			printf("DELAY %4ld TRACK %2d ", bestcur-now, besttrk);
+		tp = tracks[0].indirect;
+		if ((verbose > 2 && tp->delta > 0)  ||  verbose > 3) {
+			printf("DELAY %4ld TRACK %2d%s",
+			       tp->delta, tp - tracks, verbose>3?" ":"\n");
 			fflush(stdout);
 		}
-		if (now < bestcur) {
-			union {
-				u_int32_t i;
-				u_int8_t b[4];
-			} u;
-			u_int32_t delta = bestcur - now;
-			delta = (int)((double)delta * tempo / (1000.0*ticks));
-			u.i = delta;
-			if (delta != 0) {
-				event.arr[0] = SEQ_TIMING;
-				event.arr[1] = TMR_WAIT_REL;
-				event.arr[4] = u.b[0];
-				event.arr[5] = u.b[1];
-				event.arr[6] = u.b[2];
-				event.arr[7] = u.b[3];
-				send_event(&event);
+		if (tp->delta > 0) {
+			if (!tempo_set) {
+				if (verbose || showmeta)
+					printf("No initial tempo;"
+					       " defaulting:\n");
+				dometa(META_SET_TEMPO, (u_char[]){
+				    BASETEMPO >> 16,
+				    (BASETEMPO >> 8) & 0xff,
+				    BASETEMPO & 0xff},
+				    3);
 			}
+			send_event(&SEQ_MK_TIMING(WAIT_REL,
+			    .divisions=tp->delta));
 		}
-		now = bestcur;
-		tp = &tracks[besttrk];
 		byte = *tp->start++;
 		if (byte == MIDI_META) {
 			meta = *tp->start++;
-			mlen = getvar(tp);
-			if (verbose > 1)
+			mlen = getlen(tp);
+			if (verbose > 3)
 				printf("META %02x (%d)\n", meta, mlen);
 			dometa(meta, tp->start, mlen);
 			tp->start += mlen;
@@ -463,7 +587,7 @@ playdata(u_char *buf, u_int tot, char *name)
 				tp->start--;
 			mlen = MIDI_LENGTH(tp->status);
 			msg = tp->start;
-			if (verbose > 1) {
+			if (verbose > 3) {
 			    if (mlen == 1)
 				printf("MIDI %02x (%d) %02x\n",
 				       tp->status, mlen, msg[0]);
@@ -471,43 +595,69 @@ playdata(u_char *buf, u_int tot, char *name)
 				printf("MIDI %02x (%d) %02x %02x\n",
 				       tp->status, mlen, msg[0], msg[1]);
 			}
+			if (insysex && tp->status != MIDI_SYSEX_END) {
+				warnx("incomplete system exclusive message"
+				      " aborted");
+				svsysex = insysex = 0;
+			}
 			status = MIDI_GET_STATUS(tp->status);
 			chan = MIDI_GET_CHAN(tp->status);
 			switch (status) {
 			case MIDI_NOTEOFF:
+				send_event(&SEQ_MK_CHN(NOTEOFF, .device=unit,
+				.channel=chan, .key=msg[0], .velocity=msg[1]));
+				break;
 			case MIDI_NOTEON:
+				send_event(&SEQ_MK_CHN(NOTEON, .device=unit,
+				.channel=chan, .key=msg[0], .velocity=msg[1]));
+				break;
 			case MIDI_KEY_PRESSURE:
-				SEQ_MK_CHN_VOICE(&event, unit, status, chan,
-						 msg[0], msg[1]);
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(KEY_PRESSURE,
+				.device=unit, .channel=chan,
+				.key=msg[0], .pressure=msg[1]));
 				break;
 			case MIDI_CTL_CHANGE:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[0], 0, msg[1]);
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(CTL_CHANGE,
+				.device=unit, .channel=chan,
+				.controller=msg[0], .value=msg[1]));
 				break;
 			case MIDI_PGM_CHANGE:
-				if (sameprogram)
-					break;
+				if (!sameprogram)
+					send_event(&SEQ_MK_CHN(PGM_CHANGE,
+					.device=unit, .channel=chan,
+					.program=msg[0]));
+				break;
 			case MIDI_CHN_PRESSURE:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[0], 0, 0);
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(CHN_PRESSURE,
+				.device=unit, .channel=chan, .pressure=msg[0]));
 				break;
 			case MIDI_PITCH_BEND:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  0, 0, 
-						  (msg[0] & 0x7f) | 
-						  ((msg[1] & 0x7f) << 7));
-				send_event(&event);
+				send_event(&SEQ_MK_CHN(PITCH_BEND,
+				.device=unit, .channel=chan,
+				.value=(msg[0] & 0x7f) | ((msg[1] & 0x7f)<<7)));
 				break;
 			case MIDI_SYSTEM_PREFIX:
-				mlen = getvar(tp);
-				if (tp->status == MIDI_SYSEX_START)
+				mlen = getlen(tp);
+				if (tp->status == MIDI_SYSEX_START) {
 					send_sysex(tp->start, mlen);
-				else
-					/* Sorry, can't do this yet */;
-				break;
+					break;
+				} else if (tp->status == MIDI_SYSEX_END) {
+				/* SMF uses SYSEX_END as CONTINUATION/ESCAPE */
+					if (insysex) { /* CONTINUATION */
+						send_sysex(tp->start, mlen);
+					} else { /* ESCAPE */
+						for ( ; mlen > 0 ; -- mlen ) {
+							send_event(
+							    &SEQ_MK_EVENT(putc,
+							    SEQOLD_MIDIPUTC,
+							    .device=unit,
+							    .byte=*(tp->start++)
+							    ));
+						}
+					}
+					break;
+				}
+				/* Sorry, can't do this yet; FALLTHROUGH */
 			default:
 				if (verbose)
 					printf("MIDI event 0x%02x ignored\n",
@@ -515,10 +665,13 @@ playdata(u_char *buf, u_int tot, char *name)
 			}
 			tp->start += mlen;
 		}
-		if (tp->start >= tp->end)
-			tp->curtime = ~0;
-		else
-			tp->curtime += getvar(tp);
+		if (tp->start >= tp->end) {
+			ntrks = ShrinkHeap(tracks, ntrks); /* track gone */
+			if (0 == ntrks)
+				break;
+		} else
+			tp->delta = getvar(tp);
+		Heapify(tracks, ntrks, 0);
 	}
 	if (ioctl(fd, SEQUENCER_SYNC, 0) < 0)
 		err(1, "SEQUENCER_SYNC");
@@ -534,7 +687,6 @@ main(int argc, char **argv)
 	int listdevs = 0;
 	int example = 0;
 	int nmidi;
-	int t;
 	const char *file = DEVMUSIC;
 	const char *sunit;
 	struct synth_info info;
@@ -599,24 +751,6 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	/*
-	 * The sequencer has two "knobs": the TIMEBASE and the TEMPO.
-	 * The delay specified in TMR_WAIT_REL is specified in
-	 * sequencer time units.  The length of a unit is
-	 * 60*1000000 / (TIMEBASE * TEMPO).
-	 * Set it to 1ms/unit (adjusted by user tempo changes).
-	 */
-	t = 500 * ttempo / 100;
-	if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &t) < 0)
-		err(1, "SEQUENCER_TMR_TIMEBASE");
-	t = 120;
-	if (ioctl(fd, SEQUENCER_TMR_TEMPO, &t) < 0)
-		err(1, "SEQUENCER_TMR_TEMPO");
-	if (ioctl(fd, SEQUENCER_TMR_START, 0) < 0)
-		err(1, "SEQUENCER_TMR_START");
-
-	midireset();
-
  output:
 	if (example)
 		while (example--)
@@ -636,4 +770,85 @@ main(int argc, char **argv)
 		}
 
 	exit(0);
+}
+
+/*
+ * relative-time priority queue (min-heap). Properties:
+ * 1. The delta time at a node is relative to the node's parent's time.
+ * 2. When an event is dequeued from a track, the delta time of the new head
+ *    event is relative to the time of the event just dequeued.
+ * Therefore:
+ * 3. After dequeueing the head event from the track at heap root, the next
+ *    event's time is directly comparable to the root's children.
+ * These properties allow the heap to be maintained with delta times throughout.
+ * Insert is also implementable, but not needed: all the tracks are present
+ * at first; they just go away as they end.
+ */
+
+#define PARENT(i) ((i-1)>>1)
+#define LEFT(i)   ((i<<1)+1)
+#define RIGHT(i)  ((i+1)<<1)
+#define DTIME(i)  (t[i].indirect->delta)
+#define SWAP(i,j) do { \
+    struct track *_t = t[i].indirect; \
+    t[i].indirect = t[j].indirect; \
+    t[j].indirect = _t; \
+    } while ( /*CONSTCOND*/ 0 )
+
+void
+Heapify(struct track *t, int ntrks, int node)
+{
+	int lc, rc, mn;
+	
+	lc = LEFT(node);
+	rc = RIGHT(node);
+	
+	if (rc >= ntrks) {			/* no right child */
+		if (lc >= ntrks)		/* node is a leaf */
+			return;
+		if (DTIME(node) > DTIME(lc))
+			SWAP(node,lc);
+		DTIME(lc) -= DTIME(node);
+		return;				/* no rc ==> lc is a leaf */
+	}
+
+	mn = lc;
+	if (DTIME(lc) > DTIME(rc))
+		mn = rc;
+	if (DTIME(node) <= DTIME(mn)) {
+		DTIME(rc) -= DTIME(node);
+		DTIME(lc) -= DTIME(node);
+		return;
+	}
+	
+	SWAP(node,mn);
+	DTIME(rc) -= DTIME(node);
+	DTIME(lc) -= DTIME(node);
+	Heapify(t, ntrks, mn); /* gcc groks tail recursion */
+}
+
+void
+BuildHeap(struct track *t, int ntrks)
+{
+	int node;
+	
+	for ( node = PARENT(ntrks-1); node --> 0; )
+		Heapify(t, ntrks, node);
+}
+
+/*
+ * Make the heap 1 item smaller by discarding the track at the root. Move the
+ * rightmost bottom-level leaf to the root and decrement ntrks. It remains to
+ * run Heapify, which the caller is expected to do. Returns the new ntrks.
+ */
+int
+ShrinkHeap(struct track *t, int ntrks)
+{
+	int ancest;
+	
+	-- ntrks;
+	for ( ancest = PARENT(ntrks); ancest > 0; ancest = PARENT(ancest) )
+		DTIME(ntrks) += DTIME(ancest);
+	t[0].indirect = t[ntrks].indirect;
+	return ntrks;
 }
