@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.9 2006/06/12 00:46:50 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.10 2006/06/30 15:50:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.9 2006/06/12 00:46:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.10 2006/06/30 15:50:46 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -225,11 +225,11 @@ compat_20_sys_getfsstat(l, v, retval)
 	size_t count, maxcount;
 	int error = 0;
 
+	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	maxcount = (size_t)SCARG(uap, bufsize) / sizeof(struct statfs12);
 	sfsp = SCARG(uap, buf);
 	simple_lock(&mountlist_slock);
 	count = 0;
-	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
@@ -262,8 +262,8 @@ compat_20_sys_getfsstat(l, v, retval)
 		/*
 		 * fake a root entry
 		 */
-		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount, sbuf, l,
-		    SCARG(uap, flags), 1)) != 0)
+		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount,
+				       sbuf, l, SCARG(uap, flags), 1)) != 0)
 			goto out;
 		if (sfsp)
 			error = vfs2fs(sfsp, sbuf);
@@ -298,7 +298,8 @@ compat_20_sys_fhstatfs(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					     &p->p_acflag)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
