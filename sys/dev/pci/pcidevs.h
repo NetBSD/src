@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.801 2006/06/30 16:23:27 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.802 2006/06/30 17:01:09 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.802 2006/06/30 16:22:54 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.803 2006/06/30 17:00:18 xtraeme Exp
  */
 
 /*
@@ -2212,7 +2212,8 @@
 
 /* ITE products */
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
-#define	PCI_PRODUCT_ITE_IT8212	0x8212		/* IT8212 IDE controller */
+#define	PCI_PRODUCT_ITE_IT8211	0x8211		/* IT8211 IDE Controller */
+#define	PCI_PRODUCT_ITE_IT8212	0x8212		/* IT8212 IDE Controller */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
