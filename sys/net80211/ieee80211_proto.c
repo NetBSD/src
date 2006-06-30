@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.24 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.25 2006/06/30 06:17:10 tacha Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.24 2006/03/02 03:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.25 2006/06/30 06:17:10 tacha Exp $");
 #endif
 
 /*
@@ -991,19 +991,11 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			break;
 		case IEEE80211_S_SCAN:
 			/*
-			 * Scan next. If doing an active scan and the
-			 * channel is not marked passive-only then send
-			 * a probe request.  Otherwise just listen for
-			 * beacons on the channel.
+			 * Scan next. If doing an active scan probe
+			 * for the requested ap (if any).
 			 */
-			if ((ic->ic_flags & IEEE80211_F_ASCAN) &&
-			    (ic->ic_curchan->ic_flags & IEEE80211_CHAN_PASSIVE) == 0) {
-				ieee80211_send_probereq(ni,
-					ic->ic_myaddr, ifp->if_broadcastaddr,
-					ifp->if_broadcastaddr,
-					ic->ic_des_essid, ic->ic_des_esslen,
-					ic->ic_opt_ie, ic->ic_opt_ie_len);
-			}
+			if (ic->ic_flags & IEEE80211_F_ASCAN)
+				ieee80211_probe_curchan(ic, 0);
 			break;
 		case IEEE80211_S_RUN:
 			/* beacon miss */

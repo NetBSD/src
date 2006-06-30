@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.59 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.60 2006/06/30 06:17:10 tacha Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.59 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.60 2006/06/30 06:17:10 tacha Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -2092,6 +2092,18 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 * If scanning, just pass information to the scan module.
 		 */
 		if (ic->ic_flags & IEEE80211_F_SCAN) {
+			if (ic->ic_flags_ext & IEEE80211_FEXT_PROBECHAN) {
+				/*
+				 * Actively scanning a channel marked passive;
+				 * send a probe request now that we know there
+				 * is 802.11 traffic present.
+				 *
+				 * XXX check if the beacon we recv'd gives
+				 * us what we need and suppress the probe req
+				 */
+				ieee80211_probe_curchan(ic, 1);
+				ic->ic_flags_ext &= ~IEEE80211_FEXT_PROBECHAN;
+			}
 			ieee80211_add_scan(ic, &scan, wh,
 				subtype, rssi, rstamp);
 			return;
