@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.143 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.144 2006/06/30 09:55:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.143 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.144 2006/06/30 09:55:34 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -286,10 +286,12 @@ diragain:
 			 */
 			nfs_putdircache(np, ndp);
 			brelse(bp);
-			if (error == NFSERR_BAD_COOKIE) {
+			/*
+			 * nfs_request maps NFSERR_BAD_COOKIE to EINVAL.
+			 */
+			if (error == EINVAL) { /* NFSERR_BAD_COOKIE */
 			    nfs_invaldircache(vp, 0);
 			    nfs_vinvalbuf(vp, 0, cred, l, 1);
-			    error = EINVAL;
 			}
 			return (error);
 		    }
@@ -984,7 +986,10 @@ nfs_doio_read(bp, uiop)
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, uiop,
 			    curlwp->l_proc->p_cred);
-			if (error == NFSERR_NOTSUPP)
+			/*
+			 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
+			 */
+			if (error == ENOTSUP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
 #else
