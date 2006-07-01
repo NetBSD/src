@@ -1,10 +1,10 @@
-# $NetBSD: md.hp300,v 1.52 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.hp300,v 1.53 2006/07/01 17:34:57 tsutsui Exp $
 ./usr/include/hp300				comp-c-include
 ./usr/include/hp300/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hp300/ansi.h			comp-c-include
 ./usr/include/hp300/aout_machdep.h		comp-c-include
 ./usr/include/hp300/asm.h			comp-c-include
-./usr/include/hp300/autoconf.h			comp-c-include
+./usr/include/hp300/autoconf.h			comp-obsolete		obsolete
 ./usr/include/hp300/bswap.h			comp-c-include
 ./usr/include/hp300/bus.h			comp-c-include
 ./usr/include/hp300/cdefs.h			comp-c-include
