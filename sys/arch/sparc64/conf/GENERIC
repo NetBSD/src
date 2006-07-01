@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.53 2006/06/30 10:27:48 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.54 2006/07/01 15:19:32 nakayama Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 maxusers	64
 
@@ -784,7 +784,7 @@ autri*		at pci? dev ? function ?	# Blade 100 'sound'
 
 audio*		at audiobus?
 
-#midi*		at midibus?
+midi*		at midibus?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
