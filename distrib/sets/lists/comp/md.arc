@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.18 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.arc,v 1.19 2006/07/01 17:22:20 tsutsui Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
@@ -10,7 +10,7 @@
 ./usr/include/arc/cdefs.h			comp-c-include
 ./usr/include/arc/cpu.h				comp-c-include
 ./usr/include/arc/disklabel.h			comp-c-include
-./usr/include/arc/display.h			comp-c-include
+./usr/include/arc/display.h			comp-obsolete		obsolete
 ./usr/include/arc/ecoff_machdep.h		comp-c-include
 ./usr/include/arc/elf_machdep.h			comp-c-include
 ./usr/include/arc/endian.h			comp-c-include
