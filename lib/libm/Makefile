@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.75 2006/05/11 00:37:53 mrg Exp $
+#  $NetBSD: Makefile,v 1.76 2006/07/01 08:57:14 mrg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -111,6 +111,8 @@ WARNS?=		1
 
 .if (${MACHINE_ARCH} != "vax")
 CPPFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
+# XXX noieee libm is gross
+COPTS+=	-fno-strict-aliasing
 .endif
 CPPFLAGS+=-DLIBM_SCCS
 
