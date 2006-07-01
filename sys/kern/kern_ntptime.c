@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.33 2006/06/07 22:33:40 kardel Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.34 2006/07/01 05:44:26 kardel Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.33 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.34 2006/07/01 05:44:26 kardel Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -502,8 +502,9 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 	else
 		time_status &= ~STA_PPSSIGNAL;
 #endif /* PPS_SYNC */
-
-#endif /* NTP */
+#else  /* !NTP */
+	L_CLR(time_adj);
+#endif /* !NTP */
 
 	/*
 	 * Apply any correction from adjtime(2).  If more than one second
@@ -903,7 +904,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.33 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.34 2006/07/01 05:44:26 kardel Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
