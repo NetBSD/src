@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.4 2006/07/01 08:42:39 martin Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.5 2006/07/01 10:12:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.4 2006/07/01 08:42:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.5 2006/07/01 10:12:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -237,19 +237,17 @@ sysvbfs_close(void *arg)
 	struct vnode *v = a->a_vp;
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_fileattr attr;
-	struct timespec ts;
 
 	DPRINTF("%s:\n", __FUNCTION__);
 	uvm_vnp_setsize(v, bnode->size);
 
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
-	getnanotime(&ts);
 	if (bnode->update_atime)
-		attr.atime = ts.tv_sec;
+		attr.atime = time_second;
 	if (bnode->update_ctime)
-		attr.ctime = ts.tv_sec;
+		attr.ctime = time_second;
 	if (bnode->update_mtime)
-		attr.mtime = ts.tv_sec;
+		attr.mtime = time_second;
 	bfs_inode_set_attr(bnode->bmp->bfs, bnode->inode, &attr);
 
 	VOP_FSYNC(a->a_vp, a->a_cred, FSYNC_WAIT, 0, 0, a->a_l);
@@ -801,21 +799,19 @@ sysvbfs_update(struct vnode *vp, const struct timespec *acc,
 {
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs_fileattr attr;
-	struct timespec ts;
 
 	DPRINTF("%s:\n", __FUNCTION__);
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
-	getnanotime(&ts);
 	if (bnode->update_atime) {
-		attr.atime = acc ? acc->tv_sec : ts.tv_sec;
+		attr.atime = acc ? acc->tv_sec : time_second;
 		bnode->update_atime = FALSE;
 	}
 	if (bnode->update_ctime) {
-		attr.ctime = ts.tv_sec;
+		attr.ctime = time_second;
 		bnode->update_ctime = FALSE;
 	}
 	if (bnode->update_mtime) {
-		attr.mtime = mod ? mod->tv_sec : ts.tv_sec;
+		attr.mtime = mod ? mod->tv_sec : time_second;
 		bnode->update_mtime = FALSE;
 	}
 	bfs_inode_set_attr(bnode->bmp->bfs, bnode->inode, &attr);
