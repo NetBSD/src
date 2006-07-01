@@ -80620,7 +80620,8 @@ echo "${ECHO_T}$enable_iconv" >&6
 
 for ac_header in nan.h ieeefp.h endian.h sys/isa_defs.h \
       machine/endian.h machine/param.h sys/machine.h sys/types.h \
-      fp.h locale.h float.h inttypes.h
+      fp.h locale.h float.h inttypes.h sys/resource.h sys/stat.h \
+      sys/time.h unistd.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -81929,6 +81930,22 @@ echo $ECHO_N "checking for enabled iconv specializations... $ECHO_C" >&6
 echo "${ECHO_T}$enable_iconv" >&6
 
     cat >>confdefs.h <<\_ACEOF
+#define HAVE_LC_MESSAGES 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_GETPAGESIZE 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_SETENV 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGSETJMP 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
 #define HAVE_COPYSIGN 1
 _ACEOF
 
@@ -81949,6 +81966,10 @@ _ACEOF
 _ACEOF
 
     cat >>confdefs.h <<\_ACEOF
+#define HAVE_HYPOT 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
 #define HAVE_HYPOTF 1
 _ACEOF
 
@@ -81966,6 +81987,107 @@ _ACEOF
 
     cat >>confdefs.h <<\_ACEOF
 #define HAVE_ISNANF 1
+_ACEOF
+
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_MMAP 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_ACOSF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_ASINF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_ATAN2F 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_ATANF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_CEILF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_COPYSIGN 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_COPYSIGNF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_COSF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_COSHF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXPF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_FABSF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_FLOORF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_FMODF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_FREXPF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_LDEXPF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_LOG10F 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_LOGF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_MODFF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_POWF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_SINF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_SINHF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_SQRTF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_TANF 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_TANHF 1
 _ACEOF
 
     if test x"long_double_math_on_this_cpu" = x"yes"; then
