@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2006/06/24 05:29:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2006/07/01 05:59:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,10 +16,16 @@ MKNATIVE_CONFIG_TARGET_LIBS=
 BINENV=		/usr/bin/env -i
 .endif
 
+VAX_CONFIGURE_ARGS=
+.if ${MACHINE_ARCH} == "vax"
+VAX_CONFIGURE_ARGS+=--disable-shared
+.endif
+
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-long-long \
 		--disable-multilib \
 		--enable-threads \
+		${VAX_CONFIGURE_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		--enable-languages="${GCC_LANGUAGES}"
 
@@ -81,6 +87,7 @@ native-gcc: .native/.configure_done
 			--disable-multilib \
 			--enable-threads \
 			--disable-symvers \
+			${VAX_CONFIGURE_ARGS} \
 			--build=`${.CURDIR}/../../gnu/dist/${MODULE}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
