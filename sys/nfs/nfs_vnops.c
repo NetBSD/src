@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.239 2006/07/01 11:29:42 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.240 2006/07/01 11:30:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.239 2006/07/01 11:29:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.240 2006/07/01 11:30:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1999,6 +1999,10 @@ nfs_rename(v)
 	/*
 	 * If the tvp exists and is in use, sillyrename it before doing the
 	 * rename of the new file over it.
+	 *
+	 * Have sillyrename use link instead of rename if possible,
+	 * so that we don't lose the file if the rename fails, and so
+	 * that there's no window when the "to" file doesn't exist.
 	 */
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
 	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp, TRUE)) {
@@ -2105,6 +2109,11 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, l)
 		error = 0;
 	return (error);
 }
+
+/*
+ * NFS link RPC, called from nfs_link.
+ * Assumes dvp and vp locked, and leaves them that way.
+ */
 
 static int
 nfs_linkrpc(struct vnode *dvp, struct vnode *vp, const char *name,
