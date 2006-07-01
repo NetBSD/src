@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.269 2006/06/25 08:00:01 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.270 2006/07/01 05:41:10 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.269 2006/06/25 08:00:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.270 2006/07/01 05:41:10 kardel Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -296,9 +296,7 @@ main(void)
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
-#ifdef NTP
 	ntp_init();
-#endif
 #endif /* __HAVE_TIMECOUNTER */
 
 	/* Configure the system hardware.  This will enable interrupts. */
