@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:48:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/07/01 19:06:51 mrg Exp $
 
 PROG=		cc1plus
-SRCS=		${G_CXX_OBJS:Nlibcpp.a:.o=.c} main.c dummy-checksum.c
+SRCS=		${G_CXX_OBJS:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
 
 CPPFLAGS+=	-I${DIST}/gcc/cp
 CPPFLAGS.prefix.c+=     -DPREFIX=\"/usr\"
