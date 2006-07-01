@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.44 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.45 2006/07/01 15:22:06 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.44 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.45 2006/07/01 15:22:06 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1746,6 +1746,11 @@ midi_getinfo(dev_t dev, struct midi_info *mi)
 		return;
 
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
+}
+
+#elif NMIDIBUS > 0 /* but NMIDI == 0 */
+
+void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw) { /* stub */
 }
 
 #endif /* NMIDI > 0 */

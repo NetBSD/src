@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.84 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: eap.c,v 1.85 2006/07/01 15:22:06 chap Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.84 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.85 2006/07/01 15:22:06 chap Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -177,8 +177,6 @@ struct eap_softc {
 	pci_chipset_tag_t sc_pc;	/* For detach */
 };
 
-static void	eap_uart_txrdy(struct eap_softc *);
-
 static int	eap_allocmem(struct eap_softc *, size_t, size_t,
 			     struct eap_dma *);
 static int	eap_freemem(struct eap_softc *, struct eap_dma *);
@@ -237,6 +235,7 @@ static void	eap_midi_getinfo(void *, struct midi_info *);
 static int	eap_midi_open(void *, int, void (*)(void *, int),
 			      void (*)(void *), void *);
 static int	eap_midi_output(void *, int);
+static void	eap_uart_txrdy(struct eap_softc *);
 #endif
 
 static const struct audio_hw_if eap1370_hw_if = {
@@ -966,17 +965,6 @@ eap_intr(void *p)
 	}
 #endif
 	return 1;
-}
-
-static void
-eap_uart_txrdy(struct eap_softc *sc)
-{
-	uint8_t uctrl;
-	uctrl = 0;
-	if (sc->sc_iintr)
-		uctrl = EAP_UC_RXINTEN;
-	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
-	sc->sc_ointr(sc->sc_arg);
 }
 
 static int
@@ -1949,6 +1937,17 @@ eap_midi_getinfo(void *addr, struct midi_info *mi)
 {
 	mi->name = "AudioPCI MIDI UART";
 	mi->props = MIDI_PROP_CAN_INPUT | MIDI_PROP_OUT_INTR;
+}
+
+static void
+eap_uart_txrdy(struct eap_softc *sc)
+{
+	uint8_t uctrl;
+	uctrl = 0;
+	if (sc->sc_iintr)
+		uctrl = EAP_UC_RXINTEN;
+	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
+	sc->sc_ointr(sc->sc_arg);
 }
 
 #endif
