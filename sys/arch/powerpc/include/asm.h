@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 2006/01/20 22:02:40 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.20 2006/07/01 20:34:49 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,19 +59,54 @@
 #define	_GLOBAL(x) \
 	.data; .align 2; .globl x; x:
 
-#define _ENTRY(x) \
-	.text; .align 2; .globl x; .type x,@function; x:
-
 #ifdef GPROF
 # define _PROF_PROLOGUE	mflr 0; stw 0,4(1); bl _mcount
 #else
 # define _PROF_PROLOGUE
 #endif
 
+#ifdef _LP64
+
+#define	SF_HEADER_SZ	48
+#define	SF_PARAM_SZ	64
+#define	SF_SZ		(F_HEADER_SZ + F_PARAM_SZ)
+
+#define	SF_SP		 0
+#define	SF_CR		 8
+#define	SF_LR		16
+#define	SF_PARAM	SF_HEADER_SZ
+
+#define	ENTRY(y)			\
+	.globl	y;			\
+	.section ".opd","aw";		\
+	.align	3;			\
+y:	.quad	.y,.TOC.@tocbase,0;	\
+	.previous;			\
+	.size	y,24;			\
+	.type	.y,@function;		\
+	.globl	.y;			\
+.y:
+#define	CALL(y)				\
+	bl	y;			\
+	nop
+
+#define	ENTRY_NOPROFILE(y)	ENTRY(y)
+#define	ASENTRY(y)		ENTRY(y)
+#else
+
+#define _ENTRY(x) \
+	.text; .align 2; .globl x; .type x,@function; x:
+
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+
 #define	ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
 
+#define	CALL(y)				\
+	bl	y
+
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#endif
+
 #define	GLOBAL(y)	_GLOBAL(_C_LABEL(y))
 
 #define	ASMSTR		.asciz
@@ -236,7 +271,9 @@
 #define ldintu	lwzu		/* not needed but for completeness */
 #define stint	stw		/* not needed but for completeness */
 #define stintu	stwu		/* not needed but for completeness */
+
 #ifndef _LP64
+
 #define ldlong	lwz		/* load "C" long */
 #define ldlongu	lwzu		/* load "C" long with udpate */
 #define stlong	stw		/* load "C" long */
@@ -250,7 +287,9 @@
 #define	streg	stw		/* load PPC general register */
 #define	stregu	stwu		/* load PPC general register with udpate */
 #define	SZREG	4		/* 4 byte registers */
+
 #else
+
 #define ldlong	ld		/* load "C" long */
 #define ldlongu	ldu		/* load "C" long with update */
 #define stlong	std		/* store "C" long */
@@ -267,6 +306,7 @@
 #define	lmw	lmd		/* load multiple PPC general registers */
 #define	stmw	stmd		/* store multiple PPC general registers */
 #define	SZREG	8		/* 8 byte registers */
+
 #endif
 
 #endif /* !_PPC_ASM_H_ */
