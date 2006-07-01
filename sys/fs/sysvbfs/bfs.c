@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.2 2006/01/26 16:27:43 tsutsui Exp $	*/
+/*	$NetBSD: bfs.c,v 1.3 2006/07/01 08:42:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.2 2006/01/26 16:27:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.3 2006/07/01 08:42:39 martin Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -283,6 +283,9 @@ bfs_file_write(struct bfs *bfs, const char *fname, void *buf,
 	struct bfs_dirent *dirent;
 	int8_t name[BFS_FILENAME_MAXLEN];
 	int err;
+#ifdef _KERNEL
+	struct timespec ts;
+#endif
 
 	strncpy(name, fname, BFS_FILENAME_MAXLEN);
 
@@ -301,9 +304,10 @@ bfs_file_write(struct bfs *bfs, const char *fname, void *buf,
 	} else {
 		memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
 #ifdef _KERNEL
-		attr.atime = time.tv_sec;
-		attr.ctime = time.tv_sec;
-		attr.mtime = time.tv_sec;
+		getnanotime(&ts);
+		attr.atime = ts.tv_sec;
+		attr.ctime = ts.tv_sec;
+		attr.mtime = ts.tv_sec;
 #endif
 		if ((err = bfs_file_create(bfs, name, buf, bufsz, &attr)) != 0)
 			return err;
