@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.24 2006/07/01 10:58:29 he Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.25 2006/07/01 11:05:42 he Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.24 2006/07/01 10:58:29 he Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.25 2006/07/01 11:05:42 he Exp $");
 #endif
 
 
@@ -554,9 +554,8 @@ playdata(u_char *buf, u_int tot, char *name)
 	for (;;) {
 		tp = tracks[0].indirect;
 		if ((verbose > 2 && tp->delta > 0)  ||  verbose > 3) {
-			printf("DELAY %4ld TRACK %2ld%s",
-			       tp->delta, (long)(tp - tracks),
-			       verbose>3?" ":"\n");
+			printf("DELAY %4ld TRACK %2td%s",
+			       tp->delta, tp - tracks, verbose>3?" ":"\n");
 			fflush(stdout);
 		}
 		if (tp->delta > 0) {
