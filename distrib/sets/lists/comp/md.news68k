@@ -1,11 +1,11 @@
-# $NetBSD: md.news68k,v 1.21 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.news68k,v 1.22 2006/07/01 17:34:57 tsutsui Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/news68k				comp-c-include
 ./usr/include/news68k/_G_config.h		comp-obsolete		obsolete
 ./usr/include/news68k/ansi.h			comp-c-include
 ./usr/include/news68k/aout_machdep.h		comp-c-include
 ./usr/include/news68k/asm.h			comp-c-include
-./usr/include/news68k/autoconf.h		comp-c-include
+./usr/include/news68k/autoconf.h		comp-obsolete		obsolete
 ./usr/include/news68k/bbinfo.h			comp-obsolete		obsolete
 ./usr/include/news68k/bswap.h			comp-c-include
 ./usr/include/news68k/bus.h			comp-c-include
