@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.91 2006/06/24 23:40:50 tsarna Exp $	*/
+/*	$NetBSD: acpi.c,v 1.92 2006/07/01 21:44:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.91 2006/06/24 23:40:50 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.92 2006/07/01 21:44:13 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1049,6 +1049,11 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	int s;
 	ACPI_STATUS ret = AE_OK;
 
+	if (state == acpi_sleepstate)
+		return AE_OK;
+
+	aprint_normal("%s: entering state %d\n", sc->sc_dev.dv_xname, state);
+
 	switch (state) {
 	case ACPI_STATE_S0:
 		break;
@@ -1057,17 +1062,18 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	case ACPI_STATE_S3:
 	case ACPI_STATE_S4:
 		if (!is_available_state(sc, state)) {
-			printf("acpi: cannot enter the sleep state (%d).\n",
-			       state);
+			aprint_error("%s: cannot enter the sleep state (%d).\n",
+			    sc->sc_dev.dv_xname, state);
 			break;
 		}
 		ret = AcpiEnterSleepStatePrep(state);
 		if (ACPI_FAILURE(ret)) {
-			printf("acpi: failed preparing to sleep (%s)\n",
-			       AcpiFormatException(ret));
+			aprint_error("%s: failed preparing to sleep (%s)\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(ret));
 			break;
 		}
-		if (state==ACPI_STATE_S1) {
+		acpi_sleepstate = state;
+		if (state == ACPI_STATE_S1) {
 			/* just enter the state */
 			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
@@ -1091,16 +1097,20 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	case ACPI_STATE_S5:
 		ret = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
 		if (ACPI_FAILURE(ret)) {
-			printf("acpi: failed preparing to sleep (%s)\n",
-			       AcpiFormatException(ret));
+			aprint_error("%s: failed preparing to sleep (%s)\n",
+			       sc->sc_dev.dv_xname, AcpiFormatException(ret));
 			break;
 		}
+		acpi_sleepstate = state;
 		acpi_md_OsDisableInterrupt();
 		AcpiEnterSleepState(ACPI_STATE_S5);
-		printf("WARNING: powerdown failed!\n");
+		aprint_error("%s: WARNING powerdown failed!\n",
+		    sc->sc_dev.dv_xname);
 		break;
 	}
 
+	aprint_normal("%s: resuming\n", sc->sc_dev.dv_xname);
+	acpi_sleepstate = ACPI_STATE_S0;
 	return ret;
 }
 
@@ -1429,16 +1439,10 @@ sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (t < ACPI_STATE_S0 || t > ACPI_STATE_S5)
-		return EINVAL;
+	if (acpi_softc == NULL)
+		return ENOSYS;
 
-	if (acpi_softc != NULL && acpi_sleepstate != t) {
-		acpi_sleepstate = t;
-		aprint_normal("acpi0: entering state %d\n", t);
-		acpi_enter_sleep_state(acpi_softc, t);
-		aprint_normal("acpi0: resuming\n");
-		t = acpi_sleepstate = ACPI_STATE_S0;
-	}
+	acpi_enter_sleep_state(acpi_softc, t);
 
 	return 0;
 }
