@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.461 2006/06/26 15:30:05 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.462 2006/07/01 06:02:01 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -62,6 +62,7 @@ HAVE_GCC?=	4
 
 # These ones work (or mostly work), but aren't switched yet
 .if \
+    ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || \
@@ -485,7 +486,7 @@ MKGDB=		no
 # so don't build the _pic version.  Unless we are using GCC3 which
 # doesn't support PIC yet.
 #
-.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC} == "3"
+.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC} >= 3
 NOPIC=		# defined
 .endif
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
