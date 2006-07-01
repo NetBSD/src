@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2006/06/28 15:19:27 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.96 2006/07/01 19:55:32 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	32		# estimated number of users
 
@@ -367,6 +367,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+
+# iTE IT87xxF and compatible hardware monitors
+#it0 	at isa? port 0x290 		# other ports: 0xc00, 0xd00.
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
