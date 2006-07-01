@@ -81,7 +81,8 @@ bsd_kvm_open (char *filename, int from_tty)
     }
 
   execfile = get_exec_file (0);
-  temp_kd = kvm_openfiles (execfile, filename, NULL, O_RDONLY, errbuf);
+  temp_kd = kvm_openfiles (execfile, filename, NULL,
+    write_files ? O_RDWR: O_RDONLY, errbuf);
   if (temp_kd == NULL)
     error (("%s"), errbuf);
 
