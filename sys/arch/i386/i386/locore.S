@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 2006/05/22 13:44:53 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.41 2006/07/01 09:21:28 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ _C_LABEL(Multiboot_Header):
 	/*
 	 * At this point, we know that a NetBSD-specific boot loader
 	 * booted this kernel.  The stack carries the following parameters:
-	 * (boothowto, [bootdev], bootinfo, esym, biosbasemem, biosextmem),
+	 * (boothowto, [bootdev], bootinfo, esym, biosextmem, biosbasemem),
 	 * 4 bytes each.
 	 */
 	addl	$4,%esp		# Discard return address to boot loader
