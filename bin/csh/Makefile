@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2006/07/01 05:54:35 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -46,6 +46,10 @@ const.h: const.c
 
 .if make(install)
 SUBDIR+=USD.doc
+.endif
+
+.if ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "vax"
+COPTS.parse.c+=	-O0
 .endif
 
 .include <bsd.prog.mk>
