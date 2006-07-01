@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.61 2006/05/19 13:53:11 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.62 2006/07/01 11:29:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,8 @@ int nfs_renamerpc(struct vnode *, const char *, int, struct vnode *,
 	const char *, int, kauth_cred_t, struct lwp *);
 int nfs_readdirrpc(struct vnode *, struct uio *, kauth_cred_t);
 int nfs_readdirplusrpc(struct vnode *, struct uio *, kauth_cred_t);
-int nfs_sillyrename(struct vnode *, struct vnode *, struct componentname *);
+int nfs_sillyrename(struct vnode *, struct vnode *, struct componentname *,
+	boolean_t);
 int nfs_lookitup(struct vnode *, const char *, int, kauth_cred_t,
 	struct lwp *, struct nfsnode **);
 int nfs_commit(struct vnode *, off_t, uint32_t, struct lwp *);
