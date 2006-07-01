@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.3 2000/05/20 13:30:03 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.4 2006/07/01 05:55:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -234,7 +234,7 @@ qe_put(struct iodesc *desc, void *pkt, size_t len) {
 		;
 
 	if ((QE_RCSR(QE_CSR_CSR) & QE_XMIT_INT) == 0) {
-		char eaddr[6];
+		u_char eaddr[6];
 
 		qe_init(eaddr);
 		return -1;
@@ -242,7 +242,7 @@ qe_put(struct iodesc *desc, void *pkt, size_t len) {
 	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RCV_INT);
 
 	if (sc->tring[0].qe_status1 & 0xc000) {
-		char eaddr[6];
+		u_char eaddr[6];
 
 		qe_init(eaddr);
 		return -1;
