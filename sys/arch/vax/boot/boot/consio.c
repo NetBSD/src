@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.14 2006/07/01 05:55:34 mrg Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -251,7 +251,7 @@ void ka630_consinit(void)
 	i |= (*NVR++ & 0xFF) << 16;
 	i |= (*NVR++ & 0xFF) << 24;
 
-	ka630_conspage = (char *) i;
+	ka630_conspage = (unsigned char *) i;
 
 	/* Go to last row to minimize confusion */
 	ka630_conspage[KA630_ROW] = ka630_conspage[KA630_MAXROW];
@@ -269,7 +269,7 @@ void ka630_consinit(void)
  */
 void ka53_consinit(void)
 {
-	ka53_conspage = (char *) 0x2014044b;
+	ka53_conspage = (unsigned char *) 0x2014044b;
 
 	put_fp = ka53_rom_putchar;
 	get_fp = ka53_rom_getchar;
