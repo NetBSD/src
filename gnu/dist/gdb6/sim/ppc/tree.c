@@ -45,6 +45,7 @@
 
 #include <ctype.h>
 
+#include "libiberty.h"
 
 /* manipulate/lookup device names */
 
@@ -625,6 +626,50 @@ parse_integer_property(device *current,
   }
 }
 
+/* PROPERTY_VALUE is a raw property value.  Quote it as required by
+   parse_string_property.  It is the caller's responsibility to free
+   the memory returned.  */
+
+EXTERN_TREE\
+(char *)
+tree_quote_property(const char *property_value)
+{
+  char *p;
+  char *ret;
+  const char *chp;
+  int quotees;
+
+  /* Count characters needing quotes in PROPERTY_VALUE.  */
+  quotees = 0;
+  for (chp = property_value; *chp; ++chp)
+    if (*chp == '\\' || *chp == '"')
+      ++quotees;
+  
+  ret = (char *) xmalloc (strlen (property_value) 
+			  + 2 /* quotes */
+			  + quotees
+			  + 1 /* terminator */);
+
+  p = ret;
+  /* Add the opening quote.  */
+  *p++ = '"';
+  /* Copy the value.  */
+  for (chp = property_value; *chp; ++chp)
+    if (*chp == '\\' || *chp == '"')
+      {
+	/* Quote this character.  */ 
+	*p++ = '\\';
+	*p++ = *chp;
+      }
+    else
+      *p++ = *chp;
+  /* Add the closing quote.  */
+  *p++ = '"';
+  /* Terminate the string.  */
+  *p++ = '\0';
+
+  return ret;
+}
 
 /* <string> ... */
 

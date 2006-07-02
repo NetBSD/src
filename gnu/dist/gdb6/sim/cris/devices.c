@@ -1,5 +1,5 @@
 /* CRIS device support
-   Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -27,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "dv-sockser.h"
 #endif
 
+#include "hw-device.h"
+
 /* Placeholder definition.  */
 struct _device { char dummy; } cris_devices;
 
@@ -48,7 +50,11 @@ device_io_read_buffer (device *me ATTRIBUTE_UNUSED,
 		       SIM_CPU *cpu ATTRIBUTE_UNUSED,
 		       sim_cia cia ATTRIBUTE_UNUSED)
 {
+#if WITH_HW
+  return hw_io_read_buffer ((struct hw *) me, source, space, addr, nr_bytes);
+#else
   abort ();
+#endif
 }
 
 int
@@ -61,13 +67,22 @@ device_io_write_buffer (device *me ATTRIBUTE_UNUSED,
   static const unsigned char ok[] = { 4, 0, 0, 0x90};
   static const unsigned char bad[] = { 8, 0, 0, 0x90};
 
-  if (addr == 0x90000004 && memcmp (source, ok, sizeof ok) == 0)
-    cris_break_13_handler (cpu, 1, 0, 0, 0, 0, 0, 0, cia);
-  else if (addr == 0x90000008
-	   && memcmp (source, bad, sizeof bad) == 0)
-    cris_break_13_handler (cpu, 1, 34, 0, 0, 0, 0, 0, cia);
+  if (cris_have_900000xxif)
+    {
+      if (addr == 0x90000004 && memcmp (source, ok, sizeof ok) == 0)
+	return cris_break_13_handler (cpu, 1, 0, 0, 0, 0, 0, 0, cia);
+      else if (addr == 0x90000008
+	       && memcmp (source, bad, sizeof bad) == 0)
+	return cris_break_13_handler (cpu, 1, 34, 0, 0, 0, 0, 0, cia);
+    }
+#if WITH_HW
+  else
+    return hw_io_write_buffer ((struct hw *) me, source, space, addr, nr_bytes);
+#endif
 
   /* If it wasn't one of those, send an invalid-memory signal.  */
   sim_core_signal (sd, cpu, cia, 0, nr_bytes, addr,
 		   write_transfer, sim_core_unmapped_signal);
+
+  return 0;
 }

@@ -27,15 +27,12 @@
 
 #include <time.h>
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include "targ-vals.h"
 
 #ifndef TARGET_O_BINARY
 #define TARGET_O_BINARY 0
-#endif
-
-#ifdef __STDC__
-#define unlink(s) remove(s)
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -89,6 +86,9 @@ extern ARMword  ARMul_Debug        (ARMul_State *, ARMword, ARMword);
 #define FOPEN_MAX 64
 #endif
 #define UNIQUETEMPS 256
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 /* OS private Information.  */
 
@@ -299,22 +299,35 @@ WriteCommandLineTo (ARMul_State * state, ARMword addr)
   while (temp != 0);
 }
 
+static int
+ReadFileName (ARMul_State * state, char *buf, ARMword src, size_t n)
+{
+  struct OSblock *OSptr = (struct OSblock *) state->OSptr;
+  char *p = buf;
+
+  while (n--)
+    if ((*p++ = ARMul_SafeReadByte (state, src++)) == '\0')
+      return 0;
+  OSptr->ErrorNo = cb_host_to_target_errno (sim_callback, ENAMETOOLONG);
+  state->Reg[0] = -1;
+  return -1;
+}
+
 static void
 SWIopen (ARMul_State * state, ARMword name, ARMword SWIflags)
 {
   struct OSblock *OSptr = (struct OSblock *) state->OSptr;
-  char dummy[2000];
+  char buf[PATH_MAX];
   int flags;
-  int i;
 
-  for (i = 0; (dummy[i] = ARMul_SafeReadByte (state, name + i)); i++)
-    ;
+  if (ReadFileName (state, buf, name, sizeof buf) == -1)
+    return;
 
   /* Now we need to decode the Demon open mode.  */
   flags = translate_open_mode[SWIflags];
 
   /* Filename ":tt" is special: it denotes stdin/out.  */
-  if (strcmp (dummy, ":tt") == 0)
+  if (strcmp (buf, ":tt") == 0)
     {
       if (flags == TARGET_O_RDONLY) /* opening tty "r" */
 	state->Reg[0] = 0;	/* stdin */
@@ -323,7 +336,7 @@ SWIopen (ARMul_State * state, ARMword name, ARMword SWIflags)
     }
   else
     {
-      state->Reg[0] = sim_callback->open (sim_callback, dummy, flags);
+      state->Reg[0] = sim_callback->open (sim_callback, buf, flags);
       OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
     }
 }
@@ -401,6 +414,33 @@ SWIflen (ARMul_State * state, ARMword fh)
   (void) sim_callback->lseek (sim_callback, fh, addr, SEEK_SET);
 
   OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
+}
+
+static void
+SWIremove (ARMul_State * state, ARMword path)
+{
+  char buf[PATH_MAX];
+
+  if (ReadFileName (state, buf, path, sizeof buf) != -1)
+    {
+      struct OSblock *OSptr = (struct OSblock *) state->OSptr;
+      state->Reg[0] = sim_callback->unlink (sim_callback, buf);
+      OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
+    }
+}
+
+static void
+SWIrename (ARMul_State * state, ARMword old, ARMword new)
+{
+  char oldbuf[PATH_MAX], newbuf[PATH_MAX];
+
+  if (ReadFileName (state, oldbuf, old, sizeof oldbuf) != -1
+      && ReadFileName (state, newbuf, new, sizeof newbuf) != -1)
+    {
+      struct OSblock *OSptr = (struct OSblock *) state->OSptr;
+      state->Reg[0] = sim_callback->rename (sim_callback, oldbuf, newbuf);
+      OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
+    }
 }
 
 /* The emulator calls this routine when a SWI instruction is encuntered.
@@ -544,6 +584,30 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
       state->Emulate = FALSE;
       break;
 
+    case SWI_Remove:
+      if (swi_mask & SWI_MASK_DEMON)
+	SWIremove (state, state->Reg[0]);
+      else
+	unhandled = TRUE;
+      break;
+
+    case SWI_Rename:
+      if (swi_mask & SWI_MASK_DEMON)
+	SWIrename (state, state->Reg[0], state->Reg[1]);
+      else
+	unhandled = TRUE;
+      break;
+
+    case SWI_IsTTY:
+      if (swi_mask & SWI_MASK_DEMON)
+	{
+	  state->Reg[0] = sim_callback->isatty (sim_callback, state->Reg[0]);
+	  OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
+	}
+      else
+	unhandled = TRUE;
+      break;
+
       /* Handle Angel SWIs as well as Demon ones.  */
     case AngelSWI_ARM:
     case AngelSWI_Thumb:
@@ -566,10 +630,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	  
 	      /* Unimplemented reason codes.  */
 	    case AngelSWI_Reason_ReadC:
-	    case AngelSWI_Reason_IsTTY:
 	    case AngelSWI_Reason_TmpNam:
-	    case AngelSWI_Reason_Remove:
-	    case AngelSWI_Reason_Rename:
 	    case AngelSWI_Reason_System:
 	    case AngelSWI_Reason_EnterSVC:
 	    default:
@@ -684,6 +745,21 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 			ARMul_ReadWord (state, addr + 4),
 			ARMul_ReadWord (state, addr + 8));
 	      break;
+
+	    case AngelSWI_Reason_IsTTY:
+	      state->Reg[0] = sim_callback->isatty (sim_callback,
+						    ARMul_ReadWord (state, addr));
+	      OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
+	      break;
+
+	    case AngelSWI_Reason_Remove:
+	      SWIremove (state,
+			 ARMul_ReadWord (state, addr));
+
+	    case AngelSWI_Reason_Rename:
+	      SWIrename (state,
+			 ARMul_ReadWord (state, addr),
+			 ARMul_ReadWord (state, addr + 4));
 	    }
 	}
       else
@@ -783,9 +859,26 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	    case 18: /* Time.  */
 	      sim_callback->printf_filtered
 		(sim_callback,
-		 "sim: unhandled RedBoot syscall '%d' encountered - ignoring\n",
+		 "sim: unhandled RedBoot syscall `%d' encountered - "
+		 "returning ENOSYS\n",
 		 state->Reg[0]);
-	      return FALSE;
+	      state->Reg[0] = -1;
+	      OSptr->ErrorNo = cb_host_to_target_errno
+		(sim_callback, ENOSYS);
+	      break;
+	    case 1001: /* Meminfo. */
+	      {
+		ARMword totmem = state->Reg[1],
+			topmem = state->Reg[2];
+		ARMword stack = state->MemSize > 0
+		  ? state->MemSize : ADDRUSERSTACK;
+		if (totmem != 0)
+		  ARMul_WriteWord (state, totmem, stack);
+		if (topmem != 0)
+		  ARMul_WriteWord (state, topmem, stack);
+		state->Reg[0] = 0;
+		break;
+	      }
 
 	    default:
 	      sim_callback->printf_filtered

@@ -47,6 +47,7 @@ SIM_OBJS = \
 	cp1.o \
 	interp.o \
 	mdmx.o \
+	dsp.o \
 	sim-main.o \
 	sim-hload.o \
 	sim-engine.o \
@@ -78,6 +79,8 @@ cp1.o: $(srcdir)/cp1.c config.h sim-main.h
 
 mdmx.o: $(srcdir)/mdmx.c $(srcdir)/sim-main.h
 
+dsp.o: $(srcdir)/dsp.c $(srcdir)/sim-main.h
+
 multi-run.o: multi-include.h tmp-mach-multi
 
 ../igen/igen:
@@ -94,6 +97,7 @@ IGEN_INCLUDE=\
 	$(srcdir)/sb1.igen \
 	$(srcdir)/tx.igen \
 	$(srcdir)/vr.igen \
+	$(srcdir)/dsp.igen \
 
 # NB:	Since these can be built by a number of generators, care
 #	must be taken to ensure that they are only dependant on

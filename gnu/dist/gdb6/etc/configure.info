@@ -238,7 +238,9 @@ by `configure' options, as described below.
 
    In the Cygnus tree at present, the info files are built and
 installed as a separate step.  To build them, run `make info'.  To
-install them, run `make install-info'.
+install them, run `make install-info'. The equivalent html files are
+also built and installed in a separate step. To build the html files,
+run `make html'. To install the html files run `make install-html'.
 
    All `configure' scripts support a wide variety of options.  The most
 interesting ones are `--with' and `--enable' options which are
@@ -2714,58 +2716,58 @@ Node: Goals2588
 Node: Tools3312
 Node: History4306
 Node: Building7304
-Node: Getting Started10399
-Node: Write configure.in10912
-Node: Write Makefile.am18163
-Node: Write acconfig.h21340
-Node: Generate files22877
-Node: Getting Started Example24843
-Node: Getting Started Example 125598
-Node: Getting Started Example 227519
-Node: Getting Started Example 330514
-Node: Generate Files in Example32878
-Node: Files33968
-Node: Developer Files34579
-Node: Developer Files Picture34959
-Node: Written Developer Files36247
-Node: Generated Developer Files38799
-Node: Build Files41943
-Node: Build Files Picture42604
-Node: Build Files Description43368
-Node: Support Files45374
-Node: Configuration Names48256
-Node: Configuration Name Definition48756
-Node: Using Configuration Names51079
-Node: Cross Compilation Tools53049
-Node: Cross Compilation Concepts53740
-Node: Host and Target54708
-Node: Using the Host Type56209
-Node: Specifying the Target57558
-Node: Using the Target Type58347
-Node: Cross Tools in the Cygnus Tree61778
-Node: Host and Target Libraries62835
-Node: Target Library Configure Scripts66584
-Node: Make Targets in Cygnus Tree69676
-Node: Target libiberty71024
-Node: Canadian Cross72411
-Node: Canadian Cross Example73252
-Node: Canadian Cross Concepts74371
-Node: Build Cross Host Tools75883
-Node: Build and Host Options76835
-Node: CCross not in Cygnus Tree78621
-Node: CCross in Cygnus Tree79599
-Node: Standard Cygnus CCross80020
-Node: Cross Cygnus CCross81384
-Node: Supporting Canadian Cross84184
-Node: CCross in Configure84799
-Node: CCross in Make87967
-Node: Cygnus Configure89570
-Node: Cygnus Configure Basics90405
-Node: Cygnus Configure in C++ Libraries95083
-Node: Multilibs96090
-Node: Multilibs in gcc97135
-Node: Multilibs in Target Libraries98213
-Node: FAQ102404
-Node: Index106504
+Node: Getting Started10567
+Node: Write configure.in11080
+Node: Write Makefile.am18331
+Node: Write acconfig.h21508
+Node: Generate files23045
+Node: Getting Started Example25011
+Node: Getting Started Example 125766
+Node: Getting Started Example 227687
+Node: Getting Started Example 330682
+Node: Generate Files in Example33046
+Node: Files34136
+Node: Developer Files34747
+Node: Developer Files Picture35127
+Node: Written Developer Files36415
+Node: Generated Developer Files38967
+Node: Build Files42111
+Node: Build Files Picture42772
+Node: Build Files Description43536
+Node: Support Files45542
+Node: Configuration Names48424
+Node: Configuration Name Definition48924
+Node: Using Configuration Names51247
+Node: Cross Compilation Tools53217
+Node: Cross Compilation Concepts53908
+Node: Host and Target54876
+Node: Using the Host Type56377
+Node: Specifying the Target57726
+Node: Using the Target Type58515
+Node: Cross Tools in the Cygnus Tree61946
+Node: Host and Target Libraries63003
+Node: Target Library Configure Scripts66752
+Node: Make Targets in Cygnus Tree69844
+Node: Target libiberty71192
+Node: Canadian Cross72579
+Node: Canadian Cross Example73420
+Node: Canadian Cross Concepts74539
+Node: Build Cross Host Tools76051
+Node: Build and Host Options77003
+Node: CCross not in Cygnus Tree78789
+Node: CCross in Cygnus Tree79767
+Node: Standard Cygnus CCross80188
+Node: Cross Cygnus CCross81552
+Node: Supporting Canadian Cross84352
+Node: CCross in Configure84967
+Node: CCross in Make88135
+Node: Cygnus Configure89738
+Node: Cygnus Configure Basics90573
+Node: Cygnus Configure in C++ Libraries95251
+Node: Multilibs96258
+Node: Multilibs in gcc97303
+Node: Multilibs in Target Libraries98381
+Node: FAQ102572
+Node: Index106672
 
 End Tag Table

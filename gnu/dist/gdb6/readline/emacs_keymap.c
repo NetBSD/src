@@ -278,7 +278,13 @@ KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
   { ISFUNC, rl_insert },	/* Latin capital letter Y with acute */
   { ISFUNC, rl_insert },	/* Latin capital letter thorn (Icelandic) */
   { ISFUNC, rl_insert },	/* Latin small letter sharp s (German) */
+#ifndef __MINGW32__
   { ISFUNC, rl_insert },	/* Latin small letter a with grave */
+#else
+  /* Temporary - this is a bug in readline 5.1 that should be fixed in
+     readline 5.2.  */
+  { ISFUNC, 0 },		/* Must leave this unbound for the arrow keys to work.  */
+#endif
   { ISFUNC, rl_insert },	/* Latin small letter a with acute */
   { ISFUNC, rl_insert },	/* Latin small letter a with circumflex */
   { ISFUNC, rl_insert },	/* Latin small letter a with tilde */

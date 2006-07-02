@@ -1,3 +1,17 @@
+2006-03-29  Hans-Peter Nilsson  <hp@axis.com>
+
+	* aclocal.m4 (SIM_AC_OPTION_HARDWARE): Correct duplicate-
+	option-contents test.
+
+2005-11-28  Mark Mitchell  <mark@codesourcery.com>
+
+	* sim-signal.c (sim_signal_to_target): Fix typos.
+
+	* sim-reason.c (sim_stop_reason): Use
+	sim_signal_to_target, not sim_signal_to_host.
+	* sim-signal.c (sim_signal_to_host): Fix typo.
+	(sim_signal_to_target): New function.
+
 2005-07-10  Hans-Peter Nilsson  <hp@bitrange.com>
 
 	* sim-load.c (xprintf, eprintf): Remove fallout from ANSI_PROTOTYPES

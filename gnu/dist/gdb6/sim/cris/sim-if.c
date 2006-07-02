@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the CRIS.
-   Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -78,7 +78,7 @@ static CGEN_DISASSEMBLER cris_disassemble_insn;
 static char cris_bare_iron = 0;
 
 /* Whether 0x9000000xx have simulator-specific meanings.  */
-static char cris_have_900000xxif = 0;
+char cris_have_900000xxif = 0;
 
 /* Records simulator descriptor so utilities like cris_dump_regs can be
    called from gdb.  */
@@ -506,7 +506,15 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
 	memset (cpu->sighandler, 0, sizeof (cpu->sighandler));
 	cpu->make_thread_cpu_data = NULL;
 	cpu->thread_cpu_data_size = 0;
+#if WITH_HW
+	cpu->deliver_interrupt = NULL;
+#endif
       }
+#if WITH_HW
+    /* Always be cycle-accurate and call before/after functions if
+       with-hardware.  */
+    sim_profile_set_option (sd, "-model", PROFILE_MODEL_IDX, "on");
+#endif
   }
 
   /* Initialize various cgen things not done by common framework.

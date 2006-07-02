@@ -675,6 +675,7 @@ deliver_tx3904tmr_tick (struct hw *me,
 
 	case 3: /* disabled */
 	default:
+	  break;
 	}
 
       /* update counter and report */

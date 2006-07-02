@@ -45,10 +45,26 @@
 #if defined (HAVE_WCTYPE_H) && defined (HAVE_WCHAR_H)
 #  include <wchar.h>
 #  include <wctype.h>
-#  if defined (HAVE_MBSTATE_T) && defined (HAVE_MBSRTOWCS)
+#  if defined (HAVE_MBSTATE_T) && defined (HAVE_MBSRTOWCS) && defined (HAVE_MBRTOWC) && defined (HAVE_MBRLEN) && defined (HAVE_WCWIDTH)
      /* system is supposed to support XPG5 */
 #    define HANDLE_MULTIBYTE      1
 #  endif
+#endif
+
+/* If we don't want multibyte chars even on a system that supports them, let
+   the configuring user turn multibyte support off. */
+#if defined (NO_MULTIBYTE_SUPPORT)
+#  undef HANDLE_MULTIBYTE
+#endif
+
+/* Some systems, like BeOS, have multibyte encodings but lack mbstate_t.  */
+#if HANDLE_MULTIBYTE && !defined (HAVE_MBSTATE_T)
+#  define wcsrtombs(dest, src, len, ps) (wcsrtombs) (dest, src, len, 0)
+#  define mbsrtowcs(dest, src, len, ps) (mbsrtowcs) (dest, src, len, 0)
+#  define wcrtomb(s, wc, ps) (wcrtomb) (s, wc, 0)
+#  define mbrtowc(pwc, s, n, ps) (mbrtowc) (pwc, s, n, 0)
+#  define mbrlen(s, n, ps) (mbrlen) (s, n, 0)
+#  define mbstate_t int
 #endif
 
 /* Make sure MB_LEN_MAX is at least 16 on systems that claim to be able to
@@ -91,6 +107,24 @@ extern int _rl_read_mbstring PARAMS((int, char *, int));
 
 extern int _rl_is_mbchar_matched PARAMS((char *, int, int, char *, int));
 
+extern wchar_t _rl_char_value PARAMS((char *, int));
+extern int _rl_walphabetic PARAMS((wchar_t));
+
+#define _rl_to_wupper(wc)	(iswlower (wc) ? towupper (wc) : (wc))
+#define _rl_to_wlower(wc)	(iswupper (wc) ? towlower (wc) : (wc))
+
+#define MB_NEXTCHAR(b,s,c,f) \
+	((MB_CUR_MAX > 1 && rl_byte_oriented == 0) \
+		? _rl_find_next_mbchar ((b), (s), (c), (f)) \
+		: ((s) + (c)))
+#define MB_PREVCHAR(b,s,f) \
+	((MB_CUR_MAX > 1 && rl_byte_oriented == 0) \
+		? _rl_find_prev_mbchar ((b), (s), (f)) \
+		: ((s) - 1))
+
+#define MB_INVALIDCH(x)		((x) == (size_t)-1 || (x) == (size_t)-2)
+#define MB_NULLWCH(x)		((x) == 0)
+
 #else /* !HANDLE_MULTIBYTE */
 
 #undef MB_LEN_MAX
@@ -101,6 +135,19 @@ extern int _rl_is_mbchar_matched PARAMS((char *, int, int, char *, int));
 
 #define _rl_find_prev_mbchar(b, i, f)		(((i) == 0) ? (i) : ((i) - 1))
 #define _rl_find_next_mbchar(b, i1, i2, f)	((i1) + (i2))
+
+#define _rl_char_value(buf,ind)	((buf)[(ind)])
+
+#define _rl_walphabetic(c)	(rl_alphabetic (c))
+
+#define _rl_to_wupper(c)	(_rl_to_upper (c))
+#define _rl_to_wlower(c)	(_rl_to_lower (c))
+
+#define MB_NEXTCHAR(b,s,c,f)	((s) + (c))
+#define MB_PREVCHAR(b,s,f)	((s) - 1)
+
+#define MB_INVALIDCH(x)		(0)
+#define MB_NULLWCH(x)		(0)
 
 #endif /* !HANDLE_MULTIBYTE */
 

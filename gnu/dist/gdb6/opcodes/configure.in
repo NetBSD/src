@@ -60,7 +60,7 @@ AC_EXEEXT
 
 AC_PROG_CC
 
-ALL_LINGUAS="fr sv tr es da de id pt_BR ro nl fi vi ga"
+ALL_LINGUAS="fr sv tr es da de id pt_BR ro nl fi vi ga zh_CN"
 CY_GNU_GETTEXT
 
 . ${srcdir}/../bfd/configure.host
@@ -139,7 +139,7 @@ done
 
 # Utility var, documents generic cgen support files.
 
-cgen_files="cgen-opc.lo cgen-asm.lo cgen-dis.lo"
+cgen_files="cgen-opc.lo cgen-asm.lo cgen-dis.lo cgen-bitset.lo"
 
 # We don't do any links based on the target system, just makefile config.
 
@@ -158,7 +158,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_arm_arch)		ta="$ta arm-dis.lo" ;;
 	bfd_avr_arch)		ta="$ta avr-dis.lo" ;;
 	bfd_bfin_arch)		ta="$ta bfin-dis.lo" ;;
-	bfd_cris_arch)		ta="$ta cris-dis.lo cris-opc.lo" ;;
+	bfd_cris_arch)		ta="$ta cris-dis.lo cris-opc.lo cgen-bitset.lo" ;;
 	bfd_crx_arch)    	ta="$ta crx-dis.lo crx-opc.lo" ;;
 	bfd_d10v_arch)		ta="$ta d10v-dis.lo d10v-opc.lo" ;;
 	bfd_d30v_arch)		ta="$ta d30v-dis.lo d30v-opc.lo" ;;
@@ -187,7 +187,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_mmix_arch)		ta="$ta mmix-dis.lo mmix-opc.lo" ;;
 	bfd_mn10200_arch)	ta="$ta m10200-dis.lo m10200-opc.lo" ;;
 	bfd_mn10300_arch)	ta="$ta m10300-dis.lo m10300-opc.lo" ;;
-	bfd_ms1_arch)		ta="$ta ms1-asm.lo ms1-desc.lo ms1-dis.lo ms1-ibld.lo ms1-opc.lo" using_cgen=yes ;;
+	bfd_mt_arch)		ta="$ta mt-asm.lo mt-desc.lo mt-dis.lo mt-ibld.lo mt-opc.lo" using_cgen=yes ;;
 	bfd_msp430_arch)	ta="$ta msp430-dis.lo" ;;
 	bfd_ns32k_arch)		ta="$ta ns32k-dis.lo" ;;
 	bfd_openrisc_arch)	ta="$ta openrisc-asm.lo openrisc-desc.lo openrisc-dis.lo openrisc-ibld.lo openrisc-opc.lo" using_cgen=yes ;;
@@ -227,6 +227,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_vax_arch)		ta="$ta vax-dis.lo" ;;
 	bfd_w65_arch)		ta="$ta w65-dis.lo" ;;
 	bfd_we32k_arch)		;;
+	bfd_xc16x_arch)		ta="$ta xc16x-asm.lo xc16x-desc.lo xc16x-dis.lo xc16x-ibld.lo xc16x-opc.lo" using_cgen=yes ;;
 	bfd_xstormy16_arch)	ta="$ta xstormy16-asm.lo xstormy16-desc.lo xstormy16-dis.lo xstormy16-ibld.lo xstormy16-opc.lo" using_cgen=yes ;;
 	bfd_xtensa_arch)	ta="$ta xtensa-dis.lo" ;;
 	bfd_z80_arch)		ta="$ta z80-dis.lo" ;;

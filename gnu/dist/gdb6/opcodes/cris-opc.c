@@ -752,7 +752,9 @@ cris_opcodes[] =
    cris_ver_v0_10,
    cris_none_reg_mode_add_sub_cmp_and_or_move_op},
 
-  {"move",    0x0A30, 0x01c0,		  "s,P",     0, SIZE_SPEC_REG, 0,
+  {"move",
+   MOVE_M_TO_PREG_OPCODE, MOVE_M_TO_PREG_ZBITS,
+   "s,P",   0, SIZE_SPEC_REG, 0,
    cris_move_to_preg_op},
 
   {"move",    0x0A30, 0x01c0,		  "S,P",     0, SIZE_NONE,

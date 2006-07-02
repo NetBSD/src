@@ -33,6 +33,7 @@
 #include "sim-config.h"
 
 #include "gdb/remote-sim.h"
+#include "gdb/signals.h"
 
 #define PSR_CWP 0x7
 
@@ -386,16 +387,13 @@ sim_stop_reason(sd, reason, sigrc)
     switch (simstat) {
 	case CTRL_C:
 	*reason = sim_stopped;
-	*sigrc = SIGINT;
+	*sigrc = TARGET_SIGNAL_INT;
 	break;
     case OK:
     case TIME_OUT:
     case BPT_HIT:
 	*reason = sim_stopped;
-#ifdef _WIN32
-#define SIGTRAP 5
-#endif
-	*sigrc = SIGTRAP;
+	*sigrc = TARGET_SIGNAL_TRAP;
 	break;
     case ERROR:
 	*sigrc = 0;

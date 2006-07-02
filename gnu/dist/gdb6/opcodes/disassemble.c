@@ -54,7 +54,7 @@
 #define ARCH_mmix
 #define ARCH_mn10200
 #define ARCH_mn10300
-#define ARCH_ms1
+#define ARCH_mt
 #define ARCH_msp430
 #define ARCH_ns32k
 #define ARCH_openrisc
@@ -74,6 +74,7 @@
 #define ARCH_vax
 #define ARCH_w65
 #define ARCH_xstormy16
+#define ARCH_xc16x
 #define ARCH_xtensa
 #define ARCH_z80
 #define ARCH_z8k
@@ -238,9 +239,9 @@ disassembler (abfd)
       disassemble = print_insn_maxq_little;
       break;
 #endif
-#ifdef ARCH_ms1
-    case bfd_arch_ms1:
-      disassemble = print_insn_ms1;
+#ifdef ARCH_mt
+    case bfd_arch_mt:
+      disassemble = print_insn_mt;
       break;
 #endif
 #ifdef ARCH_msp430
@@ -370,6 +371,11 @@ disassembler (abfd)
       disassemble = print_insn_xstormy16;
       break;
 #endif
+#ifdef ARCH_xc16x
+    case bfd_arch_xc16x:
+      disassemble = print_insn_xc16x;
+      break;
+#endif
 #ifdef ARCH_xtensa
     case bfd_arch_xtensa:
       disassemble = print_insn_xtensa;
@@ -442,6 +448,7 @@ disassemble_init_for_target (struct disassemble_info * info)
 #ifdef ARCH_arm
     case bfd_arch_arm:
       info->symbol_is_valid = arm_symbol_is_valid;
+      info->disassembler_needs_relocs = TRUE;
       break;
 #endif
 #ifdef ARCH_ia64

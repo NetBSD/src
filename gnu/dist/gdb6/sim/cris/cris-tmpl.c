@@ -1,5 +1,5 @@
 /* CRIS base simulator support code
-   Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -119,15 +119,19 @@ MY (f_model_insn_before) (SIM_CPU *current_cpu, int first_p ATTRIBUTE_UNUSED)
   {
     int i;
     char flags[7];
+    unsigned64 cycle_count;
+
     SIM_DESC sd = CPU_STATE (current_cpu);
 
-    cris_trace_printf (sd, current_cpu, "%lx ", (unsigned long) (CPU (h_pc)));
+    cris_trace_printf (sd, current_cpu, "%lx ",
+		       0xffffffffUL & (unsigned long) (CPU (h_pc)));
 
     for (i = 0; i < 15; i++)
       cris_trace_printf (sd, current_cpu, "%lx ",
-			 (unsigned long) (XCONCAT3(crisv,BASENUM,
-						   f_h_gr_get) (current_cpu,
-								i)));
+			 0xffffffffUL
+			 & (unsigned long) (XCONCAT3(crisv,BASENUM,
+						     f_h_gr_get) (current_cpu,
+								  i)));
     flags[0] = GET_H_IBIT () != 0 ? 'I' : 'i';
     flags[1] = GET_H_XBIT () != 0 ? 'X' : 'x';
     flags[2] = GET_H_NBIT () != 0 ? 'N' : 'n';
@@ -136,32 +140,24 @@ MY (f_model_insn_before) (SIM_CPU *current_cpu, int first_p ATTRIBUTE_UNUSED)
     flags[5] = GET_H_CBIT () != 0 ? 'C' : 'c';
     flags[6] = 0;
 
+    /* For anything else than basic tracing we'd add stall cycles for
+       e.g. unaligned accesses.  FIXME: add --cris-trace=x options to
+       match --cris-cycles=x.  */
+    cycle_count
+      = (CPU_CRIS_MISC_PROFILE (current_cpu)->basic_cycle_count
+	 - CPU_CRIS_PREV_MISC_PROFILE (current_cpu)->basic_cycle_count);
+
     /* Emit ACR after flags and cycle count for this insn.  */
     if (BASENUM == 32)
       cris_trace_printf (sd, current_cpu, "%s %d %lx\n", flags,
-			 (int)
-			 ((CPU_CRIS_MISC_PROFILE (current_cpu)
-			   ->basic_cycle_count
-			   - CPU_CRIS_PREV_MISC_PROFILE (current_cpu)
-			   ->basic_cycle_count)
-			  + (CPU_CRIS_MISC_PROFILE (current_cpu)
-			     ->unaligned_mem_dword_count
-			     - CPU_CRIS_PREV_MISC_PROFILE (current_cpu)
-			     ->unaligned_mem_dword_count)),
-			 (unsigned long) (XCONCAT3(crisv,BASENUM,
-						   f_h_gr_get) (current_cpu,
-								15)));
+			 (int) cycle_count,
+			 0xffffffffUL
+			 & (unsigned long) (XCONCAT3(crisv,BASENUM,
+						     f_h_gr_get) (current_cpu,
+								  15)));
     else
       cris_trace_printf (sd, current_cpu, "%s %d\n", flags,
-			 (int)
-			 ((CPU_CRIS_MISC_PROFILE (current_cpu)
-			   ->basic_cycle_count
-			   - CPU_CRIS_PREV_MISC_PROFILE (current_cpu)
-			   ->basic_cycle_count)
-			  + (CPU_CRIS_MISC_PROFILE (current_cpu)
-			     ->unaligned_mem_dword_count
-			     - CPU_CRIS_PREV_MISC_PROFILE (current_cpu)
-			     ->unaligned_mem_dword_count)));
+			 (int) cycle_count);
 
     CPU_CRIS_PREV_MISC_PROFILE (current_cpu)[0]
       = CPU_CRIS_MISC_PROFILE (current_cpu)[0];
@@ -182,6 +178,18 @@ MY (f_model_insn_after) (SIM_CPU *current_cpu, int last_p ATTRIBUTE_UNUSED,
   PROFILE_MODEL_TOTAL_CYCLES (p) += cycles;
   CPU_CRIS_MISC_PROFILE (current_cpu)->basic_cycle_count += cycles;
   PROFILE_MODEL_CUR_INSN_CYCLES (p) = cycles;
+
+#if WITH_HW
+  /* For some reason, we don't get to the sim_events_tick call in
+     cgen-run.c:engine_run_1.  Besides, more than one cycle has
+     passed, so we want sim_events_tickn anyway.  The "events we want
+     to process" is usually to initiate an interrupt, but might also
+     be other events.  We can't do the former until the main loop is
+     at point where it accepts changing the PC without internal
+     inconsistency, so just set a flag and wait.  */
+  if (sim_events_tickn (CPU_STATE (current_cpu), cycles))
+    STATE_EVENTS (CPU_STATE (current_cpu))->work_pending = 1;
+#endif
 }
 
 /* Initialize cycle counting for an insn.
@@ -249,6 +257,9 @@ MY (f_specific_init) (SIM_CPU *current_cpu)
 {
   current_cpu->make_thread_cpu_data = MY (make_thread_cpu_data);
   current_cpu->thread_cpu_data_size = sizeof (current_cpu->cpu_data);
+#if WITH_HW
+  current_cpu->deliver_interrupt = MY (deliver_interrupt);
+#endif
 }
 
 /* Model function for arbitrary single stall cycles.  */

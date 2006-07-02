@@ -20,10 +20,9 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-CRISV10F_OBJS = crisv10f.o cpuv10.o decodev10.o semcrisv10f-switch.o modelv10.o mloopv10f.o
-CRISV32F_OBJS = crisv32f.o cpuv32.o decodev32.o semcrisv32f-switch.o modelv32.o mloopv32f.o
+CRISV10F_OBJS = crisv10f.o cpuv10.o decodev10.o modelv10.o mloopv10f.o
+CRISV32F_OBJS = crisv32f.o cpuv32.o decodev32.o modelv32.o mloopv32f.o
 
-CONFIG_DEVICES = dv-sockser.o
 CONFIG_DEVICES =
 
 SIM_OBJS = \
@@ -62,10 +61,28 @@ arch = cris
 
 sim-if.o: sim-if.c $(SIM_MAIN_DEPS) $(sim-core_h) $(sim-options_h)
 
+# Needs CPU-specific knowledge.
+dv-cris.o: dv-cris.c $(SIM_MAIN_DEPS) $(sim-core_h)
+
+# This is the same rule as dv-core.o etc.
+dv-rv.o: dv-rv.c $(hw_main_headers) $(sim_main_headers)
+
 arch.o: arch.c $(SIM_MAIN_DEPS)
 
 traps.o: traps.c targ-vals.h $(SIM_MAIN_DEPS) $(sim-options_h)
 devices.o: devices.c $(SIM_MAIN_DEPS)
+
+# rvdummy is just used for testing.  It does nothing if
+# --enable-sim-hardware isn't active.
+
+all: rvdummy$(EXEEXT)
+
+check: rvdummy$(EXEEXT)
+
+rvdummy$(EXEEXT): rvdummy.o $(EXTRA_LIBDEPS)
+	$(CC) $(ALL_CFLAGS) -o rvdummy$(EXEEXT) rvdummy.o $(EXTRA_LIBS)
+
+rvdummy.o: rvdummy.c config.h tconfig.h $(remote_sim_h) $(callback_h)
 
 # CRISV10 objs
 
@@ -89,7 +106,6 @@ mloopv10f.o: mloopv10f.c semcrisv10f-switch.c $(CRISV10F_INCLUDE_DEPS)
 
 cpuv10.o: cpuv10.c $(CRISV10F_INCLUDE_DEPS)
 decodev10.o: decodev10.c $(CRISV10F_INCLUDE_DEPS)
-semcrisv10f-switch.o: semcrisv10f-switch.c $(CRISV10F_INCLUDE_DEPS)
 modelv10.o: modelv10.c $(CRISV10F_INCLUDE_DEPS)
 
 # CRISV32 objs
@@ -116,7 +132,6 @@ mloopv32f.o: mloopv32f.c semcrisv32f-switch.c $(CRISV32F_INCLUDE_DEPS)
 
 cpuv32.o: cpuv32.c $(CRISV32F_INCLUDE_DEPS)
 decodev32.o: decodev32.c $(CRISV32F_INCLUDE_DEPS)
-semcrisv32f-switch.o: semcrisv32f-switch.c $(CRISV32F_INCLUDE_DEPS)
 modelv32.o: modelv32.c $(CRISV32F_INCLUDE_DEPS)
 
 cris-clean:

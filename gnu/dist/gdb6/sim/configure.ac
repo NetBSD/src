@@ -23,6 +23,8 @@ else
   CC_FOR_BUILD=gcc
 fi
 AC_SUBST(CC_FOR_BUILD)
+CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}
+AC_SUBST(CFLAGS_FOR_BUILD)
 
 # If a cpu ever has more than one simulator to choose from, use
 # --enable-sim=... to choose.
@@ -73,6 +75,10 @@ if test "${enable_sim}" != no; then
 	   testsuite=yes
 	   common=yes
 	   ;;
+       m32c-*-*)
+           AC_CONFIG_SUBDIRS(m32c)
+           common=yes
+           ;;
        m32r-*-*)
            AC_CONFIG_SUBDIRS(m32r)
 	   testsuite=yes

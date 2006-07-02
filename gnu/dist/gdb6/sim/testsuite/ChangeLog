@@ -1,3 +1,41 @@
+2006-04-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris/hw/rv-n-cris/irq6.ms: New test.
+
+2006-04-03  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris/hw: New directory for subdirectories with tests.
+	* sim/cris/hw/rv-n-cris: New directory with tests.
+
+2006-04-02  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris/asm/testutils.inc (test_h_mem): Use register prefix.
+	(testr_h_dr, test_h_dr, ldmem_h_gr, mvr_h_mem): Ditto.  Correct
+	syntax.
+
+	* sim/cris/asm/x0-v10.ms, sim/cris/asm/x0-v32.ms: Widen regexp for
+	stack pointer values.
+
+2006-02-23  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris/c/time2.c: New test.
+
+2006-01-10  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris/asm/x1-v10.ms, sim/cris/asm/x3-v10.ms,
+	sim/cris/asm/x7-v10.ms: Update expected cycle output.
+
+2005-12-06  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris/asm/movmp8.ms, sim/cris/asm/pcplus.ms: New tests.
+	* sim/cris/asm/movmp.ms: Do not write to P0, P4 or P8.
+	* sim/cris/asm/raw13.ms: Write to MOF instead of WZ (P4).
+
+2005-11-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* sim/cris: New directory with C and assembly tests for the CRIS
+	simulator.
+
 2005-01-11  Andrew Cagney  <cagney@localhost.localdomain>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.

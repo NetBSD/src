@@ -71,6 +71,7 @@
 :model:::mips16e:mips16e:		// m16e.igen
 :model:::mips3d:mips3d:			// mips3d.igen
 :model:::mdmx:mdmx:			// mdmx.igen
+:model:::dsp:dsp:			// dsp.igen
 
 //  Vendor Extensions
 //
@@ -2477,10 +2478,6 @@
 *mipsIII:
 *mipsIV:
 *mipsV:
-*mips32:
-*mips32r2:
-*mips64:
-*mips64r2:
 *vr4100:
 *vr5000:
 *r3900:
@@ -2505,10 +2502,6 @@
 *mipsIII:
 *mipsIV:
 *mipsV:
-*mips32:
-*mips32r2:
-*mips64:
-*mips64r2:
 *vr4100:
 *vr5000:
 *r3900:
@@ -2607,10 +2600,6 @@
 *mipsIII:
 *mipsIV:
 *mipsV:
-*mips32:
-*mips32r2:
-*mips64:
-*mips64r2:
 *vr4100:
 *vr5000:
 *r3900:
@@ -2628,10 +2617,6 @@
 *mipsIII:
 *mipsIV:
 *mipsV:
-*mips32:
-*mips32r2:
-*mips64:
-*mips64r2:
 *vr4100:
 *vr5000:
 *r3900:
@@ -5697,4 +5682,5 @@
 :include:::sb1.igen
 :include:::tx.igen
 :include:::vr.igen
+:include:::dsp.igen
 

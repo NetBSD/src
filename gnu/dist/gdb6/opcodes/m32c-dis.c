@@ -321,6 +321,9 @@ m32c_cgen_print_operand (CGEN_CPU_DESC cd,
     case M32C_OPERAND_BIT16RN :
       print_keyword (cd, info, & m32c_cgen_opval_h_gr_HI, fields->f_dst16_rn, 0);
       break;
+    case M32C_OPERAND_BIT3_S :
+      print_normal (cd, info, fields->f_imm3_S, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
+      break;
     case M32C_OPERAND_BIT32ANPREFIXED :
       print_keyword (cd, info, & m32c_cgen_opval_h_ar, fields->f_dst32_an_prefixed, 0);
       break;
@@ -694,7 +697,7 @@ m32c_cgen_print_operand (CGEN_CPU_DESC cd,
       print_address (cd, info, fields->f_lab_8_16, 0|(1<<CGEN_OPERAND_RELAX)|(1<<CGEN_OPERAND_SIGN_OPT)|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);
       break;
     case M32C_OPERAND_LAB_8_24 :
-      print_address (cd, info, fields->f_lab_8_24, 0|(1<<CGEN_OPERAND_ABS_ADDR), pc, length);
+      print_address (cd, info, fields->f_lab_8_24, 0|(1<<CGEN_OPERAND_RELAX)|(1<<CGEN_OPERAND_ABS_ADDR), pc, length);
       break;
     case M32C_OPERAND_LAB_8_8 :
       print_address (cd, info, fields->f_lab_8_8, 0|(1<<CGEN_OPERAND_RELAX)|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);

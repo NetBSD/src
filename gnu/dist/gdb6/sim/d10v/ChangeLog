@@ -1,3 +1,12 @@
+2006-04-18  Nick Clifton  <nickc@redhat.com>
+
+	* interp.c (sim_stop_reason): Fix typo.
+
+2005-11-28  Mark Mitchell  <mark@codesourcery.com>
+
+	* interp.c (gdb/signals.h): Include it.
+	(sim_stop_reason): Use TARGET_SIGNAL_*.
+
 2005-03-23  Mark Kettenis  <kettenis@gnu.org>
 
 	* configure: Regenerate.

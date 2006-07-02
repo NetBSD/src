@@ -18,7 +18,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -83,15 +83,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     { CRISV32F_INSN_MOVE_R_SPRV32, && case_sem_INSN_MOVE_R_SPRV32 },
     { CRISV32F_INSN_MOVE_SPR_RV32, && case_sem_INSN_MOVE_SPR_RV32 },
     { CRISV32F_INSN_MOVE_M_SPRV32, && case_sem_INSN_MOVE_M_SPRV32 },
-    { CRISV32F_INSN_MOVE_C_SPRV32_P0, && case_sem_INSN_MOVE_C_SPRV32_P0 },
-    { CRISV32F_INSN_MOVE_C_SPRV32_P1, && case_sem_INSN_MOVE_C_SPRV32_P1 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P2, && case_sem_INSN_MOVE_C_SPRV32_P2 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P3, && case_sem_INSN_MOVE_C_SPRV32_P3 },
-    { CRISV32F_INSN_MOVE_C_SPRV32_P4, && case_sem_INSN_MOVE_C_SPRV32_P4 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P5, && case_sem_INSN_MOVE_C_SPRV32_P5 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P6, && case_sem_INSN_MOVE_C_SPRV32_P6 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P7, && case_sem_INSN_MOVE_C_SPRV32_P7 },
-    { CRISV32F_INSN_MOVE_C_SPRV32_P8, && case_sem_INSN_MOVE_C_SPRV32_P8 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P9, && case_sem_INSN_MOVE_C_SPRV32_P9 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P10, && case_sem_INSN_MOVE_C_SPRV32_P10 },
     { CRISV32F_INSN_MOVE_C_SPRV32_P11, && case_sem_INSN_MOVE_C_SPRV32_P11 },
@@ -3113,31 +3109,7 @@ cgen_rtx_error (current_cpu, "move-r-spr: trying to set a read-only special regi
   SI tmp_newval;
   tmp_prno = FLD (f_operand2);
   tmp_newval = GET_H_SR (FLD (f_operand2));
-if (EQSI (tmp_prno, 0)) {
-{
-  SI tmp_oldregval;
-  tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
-  {
-    SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
- else if (EQSI (tmp_prno, 1)) {
-{
-  SI tmp_oldregval;
-  tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
-  {
-    SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
- else if (EQSI (tmp_prno, 2)) {
+if (EQSI (tmp_prno, 2)) {
 {
   SI tmp_oldregval;
   tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
@@ -3161,18 +3133,6 @@ if (EQSI (tmp_prno, 0)) {
   }
 }
 }
- else if (EQSI (tmp_prno, 4)) {
-{
-  SI tmp_oldregval;
-  tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
-  {
-    SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
  else if (EQSI (tmp_prno, 5)) {
   {
     SI opval = tmp_newval;
@@ -3190,14 +3150,6 @@ if (EQSI (tmp_prno, 0)) {
   }
 }
  else if (EQSI (tmp_prno, 7)) {
-  {
-    SI opval = tmp_newval;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
- else if (EQSI (tmp_prno, 8)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
@@ -3261,6 +3213,50 @@ if (EQSI (tmp_prno, 0)) {
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
+ else if (EQSI (tmp_prno, 0)) {
+{
+  SI tmp_oldregval;
+  tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
+  {
+    SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 4);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+ else if (EQSI (tmp_prno, 1)) {
+{
+  SI tmp_oldregval;
+  tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
+  {
+    SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 4);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+ else if (EQSI (tmp_prno, 4)) {
+{
+  SI tmp_oldregval;
+  tmp_oldregval = GET_H_RAW_GR_ACR (FLD (f_operand1));
+  {
+    SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 4);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+ else if (EQSI (tmp_prno, 8)) {
+  {
+    SI opval = tmp_newval;
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 4);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
  else {
 cgen_rtx_error (current_cpu, "move-spr-r from unimplemented register");
 }
@@ -3296,7 +3292,7 @@ cgen_rtx_error (current_cpu, "move-spr-r from unimplemented register");
   SI tmp_rno;
   SI tmp_newval;
   tmp_rno = FLD (f_operand2);
-if (EQSI (tmp_rno, 0)) {
+if (EQSI (tmp_rno, 2)) {
   tmp_newval = EXTQISI (({   SI tmp_addr;
   QI tmp_tmp_mem;
   BI tmp_postinc;
@@ -3311,51 +3307,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-; tmp_tmp_mem; }));
-}
- else if (EQSI (tmp_rno, 1)) {
-  tmp_newval = EXTQISI (({   SI tmp_addr;
-  QI tmp_tmp_mem;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-;   tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-;   tmp_tmp_mem = GETMEMQI (current_cpu, pc, tmp_addr);
-; if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 1);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-; tmp_tmp_mem; }));
-}
- else if (EQSI (tmp_rno, 2)) {
-  tmp_newval = EXTQISI (({   SI tmp_addr;
-  QI tmp_tmp_mem;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-;   tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-;   tmp_tmp_mem = GETMEMQI (current_cpu, pc, tmp_addr);
-; if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 1);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3377,29 +3329,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-; tmp_tmp_mem; }));
-}
- else if (EQSI (tmp_rno, 4)) {
-  tmp_newval = EXTHISI (({   SI tmp_addr;
-  HI tmp_tmp_mem;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-;   tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-;   tmp_tmp_mem = GETMEMHI (current_cpu, pc, tmp_addr);
-; if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 2);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3421,7 +3351,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3443,7 +3373,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3465,29 +3395,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-; tmp_tmp_mem; });
-}
- else if (EQSI (tmp_rno, 8)) {
-  tmp_newval = ({   SI tmp_addr;
-  SI tmp_tmp_mem;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-;   tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-;   tmp_tmp_mem = GETMEMSI (current_cpu, pc, tmp_addr);
-; if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 4);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3509,7 +3417,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3531,7 +3439,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3553,7 +3461,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3575,7 +3483,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3597,7 +3505,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3619,7 +3527,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3641,7 +3549,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
+    written |= (1 << 8);
     TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
@@ -3675,77 +3583,11 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 }
   NEXT (vpc);
 
-  CASE (sem, INSN_MOVE_C_SPRV32_P0) : /* move ${const32},${Pd} */
-{
-  SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
-  ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  int UNUSED written = 0;
-  IADDR UNUSED pc = abuf->addr;
-  vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
-
-{
-  {
-    SI opval = FLD (f_indir_pc__dword);
-    SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
-  }
-{
-  {
-    BI opval = 0;
-    CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
-  }
-  {
-    BI opval = 0;
-    SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
-  }
-}
-}
-
-#undef FLD
-}
-  NEXT (vpc);
-
-  CASE (sem, INSN_MOVE_C_SPRV32_P1) : /* move ${const32},${Pd} */
-{
-  SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
-  ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  int UNUSED written = 0;
-  IADDR UNUSED pc = abuf->addr;
-  vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
-
-{
-  {
-    SI opval = FLD (f_indir_pc__dword);
-    SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
-  }
-{
-  {
-    BI opval = 0;
-    CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
-  }
-  {
-    BI opval = 0;
-    SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
-  }
-}
-}
-
-#undef FLD
-}
-  NEXT (vpc);
-
   CASE (sem, INSN_MOVE_C_SPRV32_P2) : /* move ${const32},${Pd} */
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -3778,40 +3620,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  int UNUSED written = 0;
-  IADDR UNUSED pc = abuf->addr;
-  vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
-
-{
-  {
-    SI opval = FLD (f_indir_pc__dword);
-    SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
-  }
-{
-  {
-    BI opval = 0;
-    CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
-  }
-  {
-    BI opval = 0;
-    SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
-  }
-}
-}
-
-#undef FLD
-}
-  NEXT (vpc);
-
-  CASE (sem, INSN_MOVE_C_SPRV32_P4) : /* move ${const32},${Pd} */
-{
-  SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
-  ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -3844,7 +3653,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -3877,7 +3686,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -3910,40 +3719,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  int UNUSED written = 0;
-  IADDR UNUSED pc = abuf->addr;
-  vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
-
-{
-  {
-    SI opval = FLD (f_indir_pc__dword);
-    SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
-  }
-{
-  {
-    BI opval = 0;
-    CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
-  }
-  {
-    BI opval = 0;
-    SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
-  }
-}
-}
-
-#undef FLD
-}
-  NEXT (vpc);
-
-  CASE (sem, INSN_MOVE_C_SPRV32_P8) : /* move ${const32},${Pd} */
-{
-  SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
-  ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -3976,7 +3752,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4009,7 +3785,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4042,7 +3818,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4075,7 +3851,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4108,7 +3884,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4141,7 +3917,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4174,7 +3950,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 6);
@@ -4215,113 +3991,7 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
 {
   SI tmp_rno;
   tmp_rno = FLD (f_operand2);
-if (EQSI (tmp_rno, 0)) {
-{
-  SI tmp_addr;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
-if (EQBI (CPU (h_pbit), 0)) {
-{
-  {
-    QI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMQI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-  {
-    BI opval = CPU (h_pbit);
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    BI opval = 1;
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    QI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMQI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-}
-if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 1);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-}
-}
- else if (EQSI (tmp_rno, 1)) {
-{
-  SI tmp_addr;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
-if (EQBI (CPU (h_pbit), 0)) {
-{
-  {
-    QI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMQI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-  {
-    BI opval = CPU (h_pbit);
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    BI opval = 1;
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    QI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMQI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-}
-if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 1);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-}
-}
- else if (EQSI (tmp_rno, 2)) {
+if (EQSI (tmp_rno, 2)) {
 {
   SI tmp_addr;
   BI tmp_postinc;
@@ -4416,59 +4086,6 @@ if (NEBI (tmp_postinc, 0)) {
 {
 if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   tmp_addr = ADDSI (tmp_addr, 1);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-}
-}
- else if (EQSI (tmp_rno, 4)) {
-{
-  SI tmp_addr;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
-if (EQBI (CPU (h_pbit), 0)) {
-{
-  {
-    HI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMHI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-  {
-    BI opval = CPU (h_pbit);
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    BI opval = 1;
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    HI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMHI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-}
-if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 2);
 }
   {
     SI opval = tmp_addr;
@@ -4587,59 +4204,6 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
 }
 }
  else if (EQSI (tmp_rno, 7)) {
-{
-  SI tmp_addr;
-  BI tmp_postinc;
-  tmp_postinc = FLD (f_memmode);
-  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
-if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
-if (EQBI (CPU (h_pbit), 0)) {
-{
-  {
-    SI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMSI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-  {
-    BI opval = CPU (h_pbit);
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    BI opval = 1;
-    CPU (h_cbit) = opval;
-    written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
-  }
-}
-} else {
-  {
-    SI opval = GET_H_SR (FLD (f_operand2));
-    SETMEMSI (current_cpu, pc, tmp_addr, opval);
-    written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
-  }
-}
-if (NEBI (tmp_postinc, 0)) {
-{
-if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
-  tmp_addr = ADDSI (tmp_addr, 4);
-}
-  {
-    SI opval = tmp_addr;
-    SET_H_GR (FLD (f_operand1), opval);
-    written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
-  }
-}
-}
-}
-}
- else if (EQSI (tmp_rno, 8)) {
 {
   SI tmp_addr;
   BI tmp_postinc;
@@ -5011,6 +4575,218 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
 }
 }
  else if (EQSI (tmp_rno, 15)) {
+{
+  SI tmp_addr;
+  BI tmp_postinc;
+  tmp_postinc = FLD (f_memmode);
+  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
+if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
+if (EQBI (CPU (h_pbit), 0)) {
+{
+  {
+    SI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMSI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 13);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+  {
+    BI opval = CPU (h_pbit);
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    BI opval = 1;
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    SI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMSI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 13);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+}
+if (NEBI (tmp_postinc, 0)) {
+{
+if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
+  tmp_addr = ADDSI (tmp_addr, 4);
+}
+  {
+    SI opval = tmp_addr;
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 9);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+}
+}
+ else if (EQSI (tmp_rno, 0)) {
+{
+  SI tmp_addr;
+  BI tmp_postinc;
+  tmp_postinc = FLD (f_memmode);
+  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
+if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
+if (EQBI (CPU (h_pbit), 0)) {
+{
+  {
+    QI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMQI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 12);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+  {
+    BI opval = CPU (h_pbit);
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    BI opval = 1;
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    QI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMQI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 12);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+}
+if (NEBI (tmp_postinc, 0)) {
+{
+if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
+  tmp_addr = ADDSI (tmp_addr, 1);
+}
+  {
+    SI opval = tmp_addr;
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 9);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+}
+}
+ else if (EQSI (tmp_rno, 1)) {
+{
+  SI tmp_addr;
+  BI tmp_postinc;
+  tmp_postinc = FLD (f_memmode);
+  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
+if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
+if (EQBI (CPU (h_pbit), 0)) {
+{
+  {
+    QI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMQI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 12);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+  {
+    BI opval = CPU (h_pbit);
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    BI opval = 1;
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    QI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMQI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 12);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+}
+if (NEBI (tmp_postinc, 0)) {
+{
+if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
+  tmp_addr = ADDSI (tmp_addr, 1);
+}
+  {
+    SI opval = tmp_addr;
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 9);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+}
+}
+ else if (EQSI (tmp_rno, 4)) {
+{
+  SI tmp_addr;
+  BI tmp_postinc;
+  tmp_postinc = FLD (f_memmode);
+  tmp_addr = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (GET_H_GR (FLD (f_operand1))) : (GET_H_PREFIXREG_V32 ()));
+if (ANDIF (GET_H_V32_V32 (), NEBI (CPU (h_xbit), 0))) {
+if (EQBI (CPU (h_pbit), 0)) {
+{
+  {
+    HI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMHI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 11);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+  {
+    BI opval = CPU (h_pbit);
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    BI opval = 1;
+    CPU (h_cbit) = opval;
+    written |= (1 << 10);
+    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+  }
+}
+} else {
+  {
+    HI opval = GET_H_SR (FLD (f_operand2));
+    SETMEMHI (current_cpu, pc, tmp_addr, opval);
+    written |= (1 << 11);
+    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+  }
+}
+if (NEBI (tmp_postinc, 0)) {
+{
+if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
+  tmp_addr = ADDSI (tmp_addr, 2);
+}
+  {
+    SI opval = tmp_addr;
+    SET_H_GR (FLD (f_operand1), opval);
+    written |= (1 << 9);
+    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+  }
+}
+}
+}
+}
+ else if (EQSI (tmp_rno, 8)) {
 {
   SI tmp_addr;
   BI tmp_postinc;
@@ -12986,7 +12762,7 @@ cris_flush_simulator_decode_cache (current_cpu, pc);
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   SEM_BRANCH_INIT
@@ -13155,7 +12931,7 @@ cris_flush_simulator_decode_cache (current_cpu, pc);
 {
   SEM_ARG sem_arg = SEM_SEM_ARG (vpc, sc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   int UNUSED written = 0;
   IADDR UNUSED pc = abuf->addr;
   SEM_BRANCH_INIT

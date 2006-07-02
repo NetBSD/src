@@ -853,7 +853,7 @@ do { \
 
 #endif
 
-#if defined(__GO32__) || defined(_WIN32)
+#if defined(__GO32__)
 int sim_memory_size = 19;
 #else
 int sim_memory_size = 24;

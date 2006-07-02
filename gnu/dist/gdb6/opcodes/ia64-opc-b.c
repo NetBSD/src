@@ -1,5 +1,6 @@
 /* ia64-opc-b.c -- IA-64 `B' opcode table.
-   Copyright 1998, 1999, 2000, 2002 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2002, 2005, 2006
+   Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -197,6 +198,8 @@ struct ia64_opcode ia64_opcodes_b[] =
     {"bsw.0",		B0, OpX6 (0, 0x0c), {0, }, NO_PRED | LAST | PRIV, 0, NULL},
     {"bsw.1",		B0, OpX6 (0, 0x0d), {0, }, NO_PRED | LAST | PRIV, 0, NULL},
     {"epc",		B0, OpX6 (0, 0x10), {0, }, NO_PRED, 0, NULL},
+    {"vmsw.0",		B0, OpX6 (0, 0x18), {0, }, NO_PRED | PRIV, 0, NULL},
+    {"vmsw.1",		B0, OpX6 (0, 0x19), {0, }, NO_PRED | PRIV, 0, NULL},
 
     {"break.b",		B0, OpX6 (0, 0x00), {IMMU21}, EMPTY},
 

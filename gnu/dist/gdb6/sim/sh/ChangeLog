@@ -1,3 +1,8 @@
+2005-11-10  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* interp.c (sim_memory_size): Use same amount of memory on Windows as
+	elsewhere.
+
 2005-09-19  J"orn Rennecke <joern.rennecke@st.com>
 
 	* interp.c (<sys/mman.h>): Include.

@@ -6,6 +6,7 @@
 
 #include "d10v_sim.h"
 #include "gdb/sim-d10v.h"
+#include "gdb/signals.h"
 
 enum _leftright { LEFT_FIRST, RIGHT_FIRST };
 
@@ -1277,17 +1278,13 @@ sim_stop_reason (sd, reason, sigrc)
 
     case SIG_D10V_BUS:
       *reason = sim_stopped;
-#ifdef SIGBUS
-      *sigrc = SIGBUS;
-#else
-      *sigrc = SIGSEGV;
-#endif
+      *sigrc = TARGET_SIGNAL_BUS;
       break;
 
     default:				/* some signal */
       *reason = sim_stopped;
       if (stop_simulator && !State.exception)
-	*sigrc = SIGINT;
+	*sigrc = TARGET_SIGNAL_INT;
       else
 	*sigrc = State.exception;
       break;

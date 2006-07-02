@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2005
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils and GDB, the GNU debugger.
@@ -497,7 +497,7 @@ default_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
 typedef struct cpu_desc_list
 {
   struct cpu_desc_list *next;
-  int isa;
+  CGEN_BITSET *isa;
   int mach;
   int endian;
   CGEN_CPU_DESC cd;
@@ -509,11 +509,12 @@ print_insn_iq2000 (bfd_vma pc, disassemble_info *info)
   static cpu_desc_list *cd_list = 0;
   cpu_desc_list *cl = 0;
   static CGEN_CPU_DESC cd = 0;
-  static int prev_isa;
+  static CGEN_BITSET *prev_isa;
   static int prev_mach;
   static int prev_endian;
   int length;
-  int isa,mach;
+  CGEN_BITSET *isa;
+  int mach;
   int endian = (info->endian == BFD_ENDIAN_BIG
 		? CGEN_ENDIAN_BIG
 		: CGEN_ENDIAN_LITTLE);
@@ -536,25 +537,34 @@ print_insn_iq2000 (bfd_vma pc, disassemble_info *info)
 #endif
 
 #ifdef CGEN_COMPUTE_ISA
-  isa = CGEN_COMPUTE_ISA (info);
+  {
+    static CGEN_BITSET *permanent_isa;
+
+    if (!permanent_isa)
+      permanent_isa = cgen_bitset_create (MAX_ISAS);
+    isa = permanent_isa;
+    cgen_bitset_clear (isa);
+    cgen_bitset_add (isa, CGEN_COMPUTE_ISA (info));
+  }
 #else
   isa = info->insn_sets;
 #endif
 
   /* If we've switched cpu's, try to find a handle we've used before */
   if (cd
-      && (isa != prev_isa
+      && (cgen_bitset_compare (isa, prev_isa) != 0
 	  || mach != prev_mach
 	  || endian != prev_endian))
     {
       cd = 0;
       for (cl = cd_list; cl; cl = cl->next)
 	{
-	  if (cl->isa == isa &&
+	  if (cgen_bitset_compare (cl->isa, isa) == 0 &&
 	      cl->mach == mach &&
 	      cl->endian == endian)
 	    {
 	      cd = cl->cd;
+ 	      prev_isa = cd->isas;
 	      break;
 	    }
 	}
@@ -570,7 +580,7 @@ print_insn_iq2000 (bfd_vma pc, disassemble_info *info)
 	abort ();
       mach_name = arch_type->printable_name;
 
-      prev_isa = isa;
+      prev_isa = cgen_bitset_copy (isa);
       prev_mach = mach;
       prev_endian = endian;
       cd = iq2000_cgen_cpu_open (CGEN_CPU_OPEN_ISAS, prev_isa,
@@ -583,7 +593,7 @@ print_insn_iq2000 (bfd_vma pc, disassemble_info *info)
       /* Save this away for future reference.  */
       cl = xmalloc (sizeof (struct cpu_desc_list));
       cl->cd = cd;
-      cl->isa = isa;
+      cl->isa = prev_isa;
       cl->mach = mach;
       cl->endian = endian;
       cl->next = cd_list;
