@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2006/07/02 17:28:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -42,7 +42,7 @@
 static char	*getbootfile(int try);
 static int	loadakernel(int try, int argc, char* argv[]);
 
-/* List of kernel names to try (may be overwritten by boot.config) XXX should move from here? */
+/* List of kernel names to try */
 static const char *default_bootfiles = "netbsd";
 
 static int autoboot_tried;
@@ -66,7 +66,6 @@ command_boot(int argc, char *argv[])
 	    sprintf(command_errbuf, "can't boot '%s', kernel module already loaded", argv[1]);
 	    return(CMD_ERROR);
 	}
-
 
 	/* find/load the kernel module */
 	if (file_loadkernel(argv[1], argc - 2, argv + 2) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: readdir.c,v 1.2 2006/07/02 17:28:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@freebsd.org>
@@ -39,7 +39,7 @@
 struct dirent *
 readdirfd(int fd)
 {
-	static struct dirent dir;		/* XXX not thread safe */
+	static struct dirent dir;		/* XXX not thread safe. eh ??? */
 	struct open_file *f = &files[fd];
 
 	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & O_RDONLY)) {
