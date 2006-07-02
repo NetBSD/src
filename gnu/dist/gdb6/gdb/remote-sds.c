@@ -1,6 +1,6 @@
 /* Remote target communications for serial-line targets using SDS' protocol.
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2004 Free Software
+   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2004, 2006 Free Software
    Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This interface was written by studying the behavior of the SDS
    monitor on an ADS 821/860 board, and by consulting the
@@ -98,10 +98,6 @@ static void sds_interrupt_twice (int);
 static void interrupt_query (void);
 
 static int read_frame (char *);
-
-static int sds_insert_breakpoint (CORE_ADDR, char *);
-
-static int sds_remove_breakpoint (CORE_ADDR, char *);
 
 static void init_sds_ops (void);
 
@@ -988,8 +984,7 @@ sds_create_inferior (char *exec_file, char *args, char **env, int from_tty)
   /* Clean up from the last time we were running.  */
   clear_proceed_status ();
 
-  /* Let the remote process run.  */
-  proceed (bfd_get_start_address (exec_bfd), TARGET_SIGNAL_0, 0);
+  write_pc (bfd_get_start_address (exec_bfd));
 }
 
 static void
@@ -1005,8 +1000,9 @@ sds_load (char *filename, int from_tty)
    replaced instruction back to the debugger.  */
 
 static int
-sds_insert_breakpoint (CORE_ADDR addr, char *contents_cache)
+sds_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i, retlen;
   unsigned char *p, buf[PBUFSIZ];
 
@@ -1021,14 +1017,15 @@ sds_insert_breakpoint (CORE_ADDR addr, char *contents_cache)
   retlen = sds_send (buf, p - buf);
 
   for (i = 0; i < 4; ++i)
-    contents_cache[i] = buf[i + 2];
+    bp_tgt->shadow_contents[i] = buf[i + 2];
 
   return 0;
 }
 
 static int
-sds_remove_breakpoint (CORE_ADDR addr, char *contents_cache)
+sds_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i, retlen;
   unsigned char *p, buf[PBUFSIZ];
 
@@ -1040,7 +1037,7 @@ sds_remove_breakpoint (CORE_ADDR addr, char *contents_cache)
   *p++ = (int) (addr >> 8) & 0xff;
   *p++ = (int) (addr) & 0xff;
   for (i = 0; i < 4; ++i)
-    *p++ = contents_cache[i];
+    *p++ = bp_tgt->shadow_contents[i];
 
   retlen = sds_send (buf, p - buf);
 

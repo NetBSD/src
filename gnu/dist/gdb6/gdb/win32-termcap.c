@@ -1,6 +1,6 @@
 /* Win32 termcap emulation.
 
-   Copyright 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005, 2006 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery, LLC.
 
@@ -56,6 +56,8 @@ tputs (char *string, int nlines, int (*outfun) ())
 {
   while (*string)
     outfun (*string++);
+
+  return 0;
 }
 
 char *

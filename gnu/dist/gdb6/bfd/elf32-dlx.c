@@ -512,21 +512,15 @@ dlx_rtype_to_howto (unsigned int r_type)
     {
     case R_DLX_RELOC_16_PCREL:
       return & elf_dlx_gnu_rel16_s2;
-      break;
     case R_DLX_RELOC_26_PCREL:
       return & elf_dlx_gnu_rel26_s2;
-      break;
     case R_DLX_RELOC_16_HI:
       return & elf_dlx_reloc_16_hi;
-      break;
     case R_DLX_RELOC_16_LO:
       return & elf_dlx_reloc_16_lo;
-      break;
-
     default:
       BFD_ASSERT (r_type < (unsigned int) R_DLX_max);
       return & dlx_elf_howto_table[r_type];
-      break;
     }
 }
 

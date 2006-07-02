@@ -1,6 +1,6 @@
 /* MI Command Set.
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005 Free Software
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Free Software
    Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Work in progress */
 
@@ -761,7 +761,7 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
   long word_size;
   char word_asize;
   char aschar;
-  char *mbuf;
+  gdb_byte *mbuf;
   int nr_bytes;
   long offset = 0;
   int optind = 0;
@@ -1107,23 +1107,37 @@ captured_mi_execute_command (struct ui_out *uiout, void *data)
 	/* Call the "console" interpreter.  */
 	argv[0] = "console";
 	argv[1] = context->command;
-	mi_cmd_interpreter_exec ("-interpreter-exec", argv, 2);
+	args->rc = mi_cmd_interpreter_exec ("-interpreter-exec", argv, 2);
 
-	/* If we changed interpreters, DON'T print out anything. */
+	/* If we changed interpreters, DON'T print out anything.  */
 	if (current_interp_named_p (INTERP_MI)
 	    || current_interp_named_p (INTERP_MI1)
 	    || current_interp_named_p (INTERP_MI2)
 	    || current_interp_named_p (INTERP_MI3))
 	  {
-	    /* print the result */
-	    /* FIXME: Check for errors here. */
-	    fputs_unfiltered (context->token, raw_stdout);
-	    fputs_unfiltered ("^done", raw_stdout);
-	    mi_out_put (uiout, raw_stdout);
-	    mi_out_rewind (uiout);
-	    fputs_unfiltered ("\n", raw_stdout);
-	    args->action = EXECUTE_COMMAND_DISPLAY_PROMPT;
-	    args->rc = MI_CMD_DONE;
+	    if (args->rc == MI_CMD_DONE)
+	      {
+		fputs_unfiltered (context->token, raw_stdout);
+		fputs_unfiltered ("^done", raw_stdout);
+		mi_out_put (uiout, raw_stdout);
+		mi_out_rewind (uiout);
+		fputs_unfiltered ("\n", raw_stdout);
+		args->action = EXECUTE_COMMAND_DISPLAY_PROMPT;
+	      }
+	    else if (args->rc == MI_CMD_ERROR)
+	      {
+		if (mi_error_message)
+		  {
+		    fputs_unfiltered (context->token, raw_stdout);
+		    fputs_unfiltered ("^error,msg=\"", raw_stdout);
+		    fputstr_unfiltered (mi_error_message, '"', raw_stdout);
+		    xfree (mi_error_message);
+		    fputs_unfiltered ("\"\n", raw_stdout);
+		  }
+		mi_out_rewind (uiout);
+	      }
+	    else
+	      mi_out_rewind (uiout);
 	  }
 	break;
       }

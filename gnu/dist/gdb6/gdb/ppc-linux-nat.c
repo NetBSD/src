@@ -1,7 +1,7 @@
 /* PPC GNU/Linux native support.
 
-   Copyright 1988, 1989, 1991, 1992, 1994, 1996, 2000, 2001, 2002,
-   2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1991, 1992, 1994, 1996, 2000, 2001, 2002,
+   2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -30,6 +30,7 @@
 #include "target.h"
 #include "linux-nat.h"
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <signal.h>
@@ -43,18 +44,6 @@
 /* Prototypes for supply_gregset etc. */
 #include "gregset.h"
 #include "ppc-tdep.h"
-
-#ifndef PT_READ_U
-#define PT_READ_U PTRACE_PEEKUSR
-#endif
-#ifndef PT_WRITE_U
-#define PT_WRITE_U PTRACE_POKEUSR
-#endif
-
-/* Default the type of the ptrace transfer to int.  */
-#ifndef PTRACE_XFER_TYPE
-#define PTRACE_XFER_TYPE int
-#endif
 
 /* Glibc's headers don't define PTRACE_GETVRREGS so we cannot use a
    configure time check.  Some older glibc's (for instance 2.2.1)
@@ -81,6 +70,16 @@
 #define PTRACE_SETEVRREGS 21
 #endif
 
+/* Similarly for the hardware watchpoint support.  */
+#ifndef PTRACE_GET_DEBUGREG
+#define PTRACE_GET_DEBUGREG    25
+#endif
+#ifndef PTRACE_SET_DEBUGREG
+#define PTRACE_SET_DEBUGREG    26
+#endif
+#ifndef PTRACE_GETSIGINFO
+#define PTRACE_GETSIGINFO    0x4202
+#endif
 
 /* This oddity is because the Linux kernel defines elf_vrregset_t as
    an array of 33 16 bytes long elements.  I.e. it leaves out vrsave.
@@ -116,13 +115,12 @@ typedef char gdb_vrregset_t[SIZEOF_VRREGS];
 
 /* On PPC processors that support the the Signal Processing Extension
    (SPE) APU, the general-purpose registers are 64 bits long.
-   However, the ordinary Linux kernel PTRACE_PEEKUSR / PTRACE_POKEUSR
-   / PT_READ_U / PT_WRITE_U ptrace calls only access the lower half of
-   each register, to allow them to behave the same way they do on
-   non-SPE systems.  There's a separate pair of calls,
-   PTRACE_GETEVRREGS / PTRACE_SETEVRREGS, that read and write the top
-   halves of all the general-purpose registers at once, along with
-   some SPE-specific registers.
+   However, the ordinary Linux kernel PTRACE_PEEKUSER / PTRACE_POKEUSER
+   ptrace calls only access the lower half of each register, to allow
+   them to behave the same way they do on non-SPE systems.  There's a
+   separate pair of calls, PTRACE_GETEVRREGS / PTRACE_SETEVRREGS, that
+   read and write the top halves of all the general-purpose registers
+   at once, along with some SPE-specific registers.
 
    GDB itself continues to claim the general-purpose registers are 32
    bits long.  It has unnamed raw registers that hold the upper halves
@@ -146,13 +144,13 @@ struct gdb_evrregset_t
    error.  */
 int have_ptrace_getvrregs = 1;
 
+static CORE_ADDR last_stopped_data_address = 0;
 
 /* Non-zero if our kernel may support the PTRACE_GETEVRREGS and
    PTRACE_SETEVRREGS requests, for reading and writing the SPE
    registers.  Zero if we've tried one of them and gotten an
    error.  */
 int have_ptrace_getsetevrregs = 1;
-
 
 int
 kernel_u_size (void)
@@ -180,7 +178,7 @@ ppc_register_u_addr (int regno)
   struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
   /* NOTE: cagney/2003-11-25: This is the word size used by the ptrace
      interface, and not the wordsize of the program's ABI.  */
-  int wordsize = sizeof (PTRACE_XFER_TYPE);
+  int wordsize = sizeof (long);
 
   /* General purpose registers occupy 1 slot each in the buffer */
   if (regno >= tdep->ppc_gp0_regnum 
@@ -374,17 +372,17 @@ fetch_register (int tid, int regno)
       return;
     }
 
-  /* Read the raw register using PTRACE_XFER_TYPE sized chunks.  On a
+  /* Read the raw register using sizeof(long) sized chunks.  On a
      32-bit platform, 64-bit floating-point registers will require two
      transfers.  */
   for (bytes_transferred = 0;
        bytes_transferred < register_size (current_gdbarch, regno);
-       bytes_transferred += sizeof (PTRACE_XFER_TYPE))
+       bytes_transferred += sizeof (long))
     {
       errno = 0;
-      *(PTRACE_XFER_TYPE *) & buf[bytes_transferred]
-        = ptrace (PT_READ_U, tid, (PTRACE_ARG3_TYPE) regaddr, 0);
-      regaddr += sizeof (PTRACE_XFER_TYPE);
+      *(long *) &buf[bytes_transferred]
+        = ptrace (PTRACE_PEEKUSER, tid, (PTRACE_TYPE_ARG3) regaddr, 0);
+      regaddr += sizeof (long);
       if (errno != 0)
 	{
           char message[128];
@@ -396,7 +394,7 @@ fetch_register (int tid, int regno)
 
   /* Now supply the register.  Keep in mind that the regcache's idea
      of the register's size may not be a multiple of sizeof
-     (PTRACE_XFER_TYPE).  */
+     (long).  */
   if (gdbarch_byte_order (current_gdbarch) == BFD_ENDIAN_LITTLE)
     {
       /* Little-endian values are always found at the left end of the
@@ -658,10 +656,10 @@ store_register (int tid, int regno)
 
   /* First collect the register.  Keep in mind that the regcache's
      idea of the register's size may not be a multiple of sizeof
-     (PTRACE_XFER_TYPE).  */
+     (long).  */
   memset (buf, 0, sizeof buf);
   bytes_to_transfer = align_up (register_size (current_gdbarch, regno),
-                                sizeof (PTRACE_XFER_TYPE));
+                                sizeof (long));
   if (TARGET_BYTE_ORDER == BFD_ENDIAN_LITTLE)
     {
       /* Little-endian values always sit at the left end of the buffer.  */
@@ -675,12 +673,12 @@ store_register (int tid, int regno)
       regcache_raw_collect (current_regcache, regno, buf + padding);
     }
 
-  for (i = 0; i < bytes_to_transfer; i += sizeof (PTRACE_XFER_TYPE))
+  for (i = 0; i < bytes_to_transfer; i += sizeof (long))
     {
       errno = 0;
-      ptrace (PT_WRITE_U, tid, (PTRACE_ARG3_TYPE) regaddr,
-	      *(PTRACE_XFER_TYPE *) & buf[i]);
-      regaddr += sizeof (PTRACE_XFER_TYPE);
+      ptrace (PTRACE_POKEUSER, tid, (PTRACE_TYPE_ARG3) regaddr,
+	      *(long *) &buf[i]);
+      regaddr += sizeof (long);
 
       if (errno == EIO 
           && regno == tdep->ppc_fpscr_regnum)
@@ -777,6 +775,124 @@ store_ppc_registers (int tid)
     store_spe_register (tid, -1);
 }
 
+static int
+ppc_linux_check_watch_resources (int type, int cnt, int ot)
+{
+  int tid;
+  ptid_t ptid = inferior_ptid;
+
+  /* DABR (data address breakpoint register) is optional for PPC variants.
+     Some variants have one DABR, others have none.  So CNT can't be larger
+     than 1.  */
+  if (cnt > 1)
+    return 0;
+
+  /* We need to know whether ptrace supports PTRACE_SET_DEBUGREG and whether
+     the target has DABR.  If either answer is no, the ptrace call will
+     return -1.  Fail in that case.  */
+  tid = TIDGET (ptid);
+  if (tid == 0)
+    tid = PIDGET (ptid);
+
+  if (ptrace (PTRACE_SET_DEBUGREG, tid, 0, 0) == -1)
+    return 0;
+  return 1;
+}
+
+static int
+ppc_linux_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+{
+  /* Handle sub-8-byte quantities.  */
+  if (len <= 0)
+    return 0;
+
+  /* addr+len must fall in the 8 byte watchable region.  */
+  if ((addr + len) > (addr & ~7) + 8)
+    return 0;
+
+  return 1;
+}
+
+/* Set a watchpoint of type TYPE at address ADDR.  */
+static int
+ppc_linux_insert_watchpoint (CORE_ADDR addr, int len, int rw)
+{
+  int tid;
+  long dabr_value;
+  ptid_t ptid = inferior_ptid;
+
+  dabr_value = addr & ~7;
+  switch (rw)
+    {
+    case hw_read:
+      /* Set read and translate bits.  */
+      dabr_value |= 5;
+      break;
+    case hw_write:
+      /* Set write and translate bits.  */
+      dabr_value |= 6;
+      break;
+    case hw_access:
+      /* Set read, write and translate bits.  */
+      dabr_value |= 7;
+      break;
+    }
+
+  tid = TIDGET (ptid);
+  if (tid == 0)
+    tid = PIDGET (ptid);
+
+  return ptrace (PTRACE_SET_DEBUGREG, tid, 0, dabr_value);
+}
+
+static int
+ppc_linux_remove_watchpoint (CORE_ADDR addr, int len, int rw)
+{
+  int tid;
+  ptid_t ptid = inferior_ptid;
+
+  tid = TIDGET (ptid);
+  if (tid == 0)
+    tid = PIDGET (ptid);
+
+  return ptrace (PTRACE_SET_DEBUGREG, tid, 0, 0);
+}
+
+static int
+ppc_linux_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
+{
+  if (last_stopped_data_address)
+    {
+      *addr_p = last_stopped_data_address;
+      last_stopped_data_address = 0;
+      return 1;
+    }
+  return 0;
+}
+
+static int
+ppc_linux_stopped_by_watchpoint (void)
+{
+  int tid;
+  struct siginfo siginfo;
+  ptid_t ptid = inferior_ptid;
+  CORE_ADDR *addr_p;
+
+  tid = TIDGET(ptid);
+  if (tid == 0)
+    tid = PIDGET (ptid);
+
+  errno = 0;
+  ptrace (PTRACE_GETSIGINFO, tid, (PTRACE_TYPE_ARG3) 0, &siginfo);
+
+  if (errno != 0 || siginfo.si_signo != SIGTRAP ||
+      (siginfo.si_code & 0xffff) != 0x0004)
+    return 0;
+
+  last_stopped_data_address = (uintptr_t) siginfo.si_addr;
+  return 1;
+}
+
 static void
 ppc_linux_store_inferior_registers (int regno)
 {
@@ -798,7 +914,7 @@ supply_gregset (gdb_gregset_t *gregsetp)
 {
   /* NOTE: cagney/2003-11-25: This is the word size used by the ptrace
      interface, and not the wordsize of the program's ABI.  */
-  int wordsize = sizeof (PTRACE_XFER_TYPE);
+  int wordsize = sizeof (long);
   ppc_linux_supply_gregset (current_regcache, -1, gregsetp,
 			    sizeof (gdb_gregset_t), wordsize);
 }
@@ -808,7 +924,7 @@ right_fill_reg (int regnum, void *reg)
 {
   /* NOTE: cagney/2003-11-25: This is the word size used by the ptrace
      interface, and not the wordsize of the program's ABI.  */
-  int wordsize = sizeof (PTRACE_XFER_TYPE);
+  int wordsize = sizeof (long);
   /* Right fill the register.  */
   regcache_raw_collect (current_regcache, regnum,
 			((bfd_byte *) reg
@@ -900,6 +1016,14 @@ _initialize_ppc_linux_nat (void)
   t->to_fetch_registers = ppc_linux_fetch_inferior_registers;
   t->to_store_registers = ppc_linux_store_inferior_registers;
 
+  /* Add our watchpoint methods.  */
+  t->to_can_use_hw_breakpoint = ppc_linux_check_watch_resources;
+  t->to_region_ok_for_hw_watchpoint = ppc_linux_region_ok_for_hw_watchpoint;
+  t->to_insert_watchpoint = ppc_linux_insert_watchpoint;
+  t->to_remove_watchpoint = ppc_linux_remove_watchpoint;
+  t->to_stopped_by_watchpoint = ppc_linux_stopped_by_watchpoint;
+  t->to_stopped_data_address = ppc_linux_stopped_data_address;
+
   /* Register the target.  */
-  add_target (t);
+  linux_nat_add_target (t);
 }

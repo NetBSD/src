@@ -1,5 +1,5 @@
 /* .eh_frame section optimization.
-   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -390,8 +390,7 @@ _bfd_elf_discard_section_eh_frame
       return FALSE;
     }
 
-  if ((sec->output_section != NULL
-       && bfd_is_abs_section (sec->output_section)))
+  if (bfd_is_abs_section (sec->output_section))
     {
       /* At least one of the sections is being discarded from the
 	 link, so we should just ignore them.  */
@@ -612,6 +611,8 @@ _bfd_elf_discard_section_eh_frame
 		    REQUIRE (read_byte (&buf, end, &cie.fde_encoding));
 		    ENSURE_NO_RELOCS (buf);
 		    REQUIRE (get_DW_EH_PE_width (cie.fde_encoding, ptr_size));
+		    break;
+		  case 'S':
 		    break;
 		  case 'P':
 		    {
@@ -1177,6 +1178,8 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 			action &= ~1;
 		      }
 		    buf++;
+		    break;
+		  case 'S':
 		    break;
 		  default:
 		    BFD_FAIL ();

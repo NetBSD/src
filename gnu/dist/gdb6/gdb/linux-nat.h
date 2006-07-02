@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "target.h"
 
@@ -65,6 +65,8 @@ struct lwp_info
   struct lwp_info *next;
 };
 
+/* Attempt to initialize libthread_db.  */
+void check_for_thread_db (void);
 
 /* Find process PID's pending signal set from /proc/pid/status.  */
 void linux_proc_pending_signals (int pid, sigset_t *pending, sigset_t *blocked, sigset_t *ignored);
@@ -83,3 +85,11 @@ struct lwp_info *iterate_over_lwps (int (*callback) (struct lwp_info *,
 /* Create a prototype generic Linux target.  The client can override
    it with local methods.  */
 struct target_ops * linux_target (void);
+
+/* Register the customized Linux target.  This should be used
+   instead of calling add_target directly.  */
+void linux_nat_add_target (struct target_ops *);
+
+/* Update linux-nat internal state when changing from one fork
+   to another.  */
+void linux_nat_switch_fork (ptid_t new_ptid);

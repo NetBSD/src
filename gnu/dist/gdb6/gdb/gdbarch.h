@@ -2,7 +2,7 @@
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
    Software Foundation, Inc.
 
    This file is part of GDB.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file was created with the aid of ``gdbarch.sh''.
 
@@ -49,6 +49,7 @@ struct regset;
 struct disassemble_info;
 struct target_ops;
 struct obstack;
+struct bp_target_info;
 
 extern struct gdbarch *current_gdbarch;
 
@@ -899,24 +900,24 @@ typedef CORE_ADDR (gdbarch_adjust_breakpoint_address_ftype) (struct gdbarch *gdb
 extern CORE_ADDR gdbarch_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr);
 extern void set_gdbarch_adjust_breakpoint_address (struct gdbarch *gdbarch, gdbarch_adjust_breakpoint_address_ftype *adjust_breakpoint_address);
 
-typedef int (gdbarch_memory_insert_breakpoint_ftype) (CORE_ADDR addr, gdb_byte *contents_cache);
-extern int gdbarch_memory_insert_breakpoint (struct gdbarch *gdbarch, CORE_ADDR addr, gdb_byte *contents_cache);
+typedef int (gdbarch_memory_insert_breakpoint_ftype) (struct bp_target_info *bp_tgt);
+extern int gdbarch_memory_insert_breakpoint (struct gdbarch *gdbarch, struct bp_target_info *bp_tgt);
 extern void set_gdbarch_memory_insert_breakpoint (struct gdbarch *gdbarch, gdbarch_memory_insert_breakpoint_ftype *memory_insert_breakpoint);
 #if !defined (GDB_TM_FILE) && defined (MEMORY_INSERT_BREAKPOINT)
 #error "Non multi-arch definition of MEMORY_INSERT_BREAKPOINT"
 #endif
 #if !defined (MEMORY_INSERT_BREAKPOINT)
-#define MEMORY_INSERT_BREAKPOINT(addr, contents_cache) (gdbarch_memory_insert_breakpoint (current_gdbarch, addr, contents_cache))
+#define MEMORY_INSERT_BREAKPOINT(bp_tgt) (gdbarch_memory_insert_breakpoint (current_gdbarch, bp_tgt))
 #endif
 
-typedef int (gdbarch_memory_remove_breakpoint_ftype) (CORE_ADDR addr, gdb_byte *contents_cache);
-extern int gdbarch_memory_remove_breakpoint (struct gdbarch *gdbarch, CORE_ADDR addr, gdb_byte *contents_cache);
+typedef int (gdbarch_memory_remove_breakpoint_ftype) (struct bp_target_info *bp_tgt);
+extern int gdbarch_memory_remove_breakpoint (struct gdbarch *gdbarch, struct bp_target_info *bp_tgt);
 extern void set_gdbarch_memory_remove_breakpoint (struct gdbarch *gdbarch, gdbarch_memory_remove_breakpoint_ftype *memory_remove_breakpoint);
 #if !defined (GDB_TM_FILE) && defined (MEMORY_REMOVE_BREAKPOINT)
 #error "Non multi-arch definition of MEMORY_REMOVE_BREAKPOINT"
 #endif
 #if !defined (MEMORY_REMOVE_BREAKPOINT)
-#define MEMORY_REMOVE_BREAKPOINT(addr, contents_cache) (gdbarch_memory_remove_breakpoint (current_gdbarch, addr, contents_cache))
+#define MEMORY_REMOVE_BREAKPOINT(bp_tgt) (gdbarch_memory_remove_breakpoint (current_gdbarch, bp_tgt))
 #endif
 
 extern CORE_ADDR gdbarch_decr_pc_after_break (struct gdbarch *gdbarch);

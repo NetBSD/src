@@ -1,5 +1,6 @@
 /* Provide legacy r_debug and link_map support for SVR4-like native targets.
-   Copyright 2000, 2001
+
+   Copyright (C) 2000, 2001, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -16,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -55,10 +56,10 @@ legacy_svr4_fetch_link_map_offsets (void)
       lmp = &lmo;
 
 #ifdef HAVE_STRUCT_LINK_MAP_WITH_L_MEMBERS
-      lmo.r_debug_size = sizeof (struct r_debug);
-
+      lmo.r_version_offset = offsetof (struct r_debug, r_version);
+      lmo.r_version_size = fieldsize (struct r_debug, r_version);
       lmo.r_map_offset = offsetof (struct r_debug, r_map);
-      lmo.r_map_size = fieldsize (struct r_debug, r_map);
+      lmo.r_ldsomap_offset = -1;
 
       lmo.link_map_size = sizeof (struct link_map);
 
@@ -67,6 +68,9 @@ legacy_svr4_fetch_link_map_offsets (void)
 
       lmo.l_next_offset = offsetof (struct link_map, l_next);
       lmo.l_next_size = fieldsize (struct link_map, l_next);
+
+      lmo.l_ld_offset = offsetof (struct link_map, l_ld);
+      lmo.l_ld_size = fieldsize (struct link_map, l_ld);
 
       lmo.l_prev_offset = offsetof (struct link_map, l_prev);
       lmo.l_prev_size = fieldsize (struct link_map, l_prev);
@@ -83,6 +87,10 @@ legacy_svr4_fetch_link_map_offsets (void)
       lmo.l_next_offset = offsetof (struct link_map, lm_next);
       lmo.l_next_size = fieldsize (struct link_map, lm_next);
 
+      /* FIXME: Is this the right field name, or is it available at all?  */
+      lmo.l_ld_offset = offsetof (struct link_map, lm_ld);
+      lmo.l_ld_size = fieldsize (struct link_map, lm_ld);
+
       lmo.l_name_offset = offsetof (struct link_map, lm_name);
       lmo.l_name_size = fieldsize (struct link_map, lm_name);
 #else /* !defined(HAVE_STRUCT_LINK_MAP_WITH_LM_MEMBERS) */
@@ -97,6 +105,10 @@ legacy_svr4_fetch_link_map_offsets (void)
 
       lmo.l_name_offset = offsetof (struct so_map, som_path);
       lmo.l_name_size = fieldsize (struct so_map, som_path);
+
+      /* FIXME: Is the address of the dynamic table available?  */
+      lmo.l_ld_offset = 0;
+      lmo.l_ld_size = 0;
 #endif /* HAVE_STRUCT_SO_MAP_WITH_SOM_MEMBERS */
 #endif /* HAVE_STRUCT_LINK_MAP_WITH_LM_MEMBERS */
 #endif /* HAVE_STRUCT_LINK_MAP_WITH_L_MEMBERS */
@@ -107,10 +119,10 @@ legacy_svr4_fetch_link_map_offsets (void)
     {
       lmp32 = &lmo32;
 
-      lmo32.r_debug_size = sizeof (struct r_debug32);
-
+      lmo32.r_version_offset = offsetof (struct r_debug32, r_version);
+      lmo32.r_version_size = fieldsize (struct r_debug32, r_version);
       lmo32.r_map_offset = offsetof (struct r_debug32, r_map);
-      lmo32.r_map_size = fieldsize (struct r_debug32, r_map);
+      lmo32.r_ldsomap_offset = -1;
 
       lmo32.link_map_size = sizeof (struct link_map32);
 

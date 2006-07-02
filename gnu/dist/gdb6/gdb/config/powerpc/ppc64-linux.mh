@@ -5,7 +5,7 @@ XM_CLIBS=
 NAT_FILE= nm-ppc64-linux.h
 NATDEPFILES= inf-ptrace.o fork-child.o \
 	ppc-linux-nat.o proc-service.o linux-thread-db.o \
-	gcore.o linux-nat.o
+	gcore.o linux-nat.o linux-fork.o
 
 # The PowerPC has severe limitations on TOC size, and uses them even
 # for non-PIC code.  GDB overflows those tables when compiling with

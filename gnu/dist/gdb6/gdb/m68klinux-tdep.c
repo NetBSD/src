@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright 1996, 1998, 2000, 2001, 2002, 2003, 2004
+   Copyright (C) 1996, 1998, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -248,7 +248,7 @@ m68k_linux_sigtramp_frame_prev_register (struct frame_info *next_frame,
 					 int regnum, int *optimizedp,
 					 enum lval_type *lvalp,
 					 CORE_ADDR *addrp,
-					 int *realnump, void *valuep)
+					 int *realnump, gdb_byte *valuep)
 {
   /* Make sure we've initialized the cache.  */
   struct trad_frame_cache *cache =

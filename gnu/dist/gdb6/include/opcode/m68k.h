@@ -1,6 +1,6 @@
 /* Opcode table header for m680[01234]0/m6888[12]/m68851.
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2001,
-   2003, 2004 Free Software Foundation, Inc.
+   2003, 2004, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB, GAS, and the GNU binutils.
 
@@ -23,19 +23,15 @@
    structure.  */
 #define	_m68k_undef  0
 #define	m68000   0x001
-#define	m68008   m68000 /* Synonym for -m68000.  otherwise unused.  */
 #define	m68010   0x002
 #define	m68020   0x004
 #define	m68030   0x008
-#define m68ec030 m68030 /* Similar enough to -m68030 to ignore differences;
-			   gas will deal with the few differences.  */
 #define	m68040   0x010
-/* There is no 68050.  */
 #define m68060   0x020
 #define	m68881   0x040
-#define	m68882   m68881 /* Synonym for -m68881.  otherwise unused.  */
 #define	m68851   0x080
 #define cpu32	 0x100		/* e.g., 68332 */
+#define m68k_mask  0x1ff
 
 #define mcfmac   0x200		/* ColdFire MAC. */
 #define mcfemac  0x400		/* ColdFire EMAC. */
@@ -47,24 +43,14 @@
 #define mcfisa_b 0x8000		/* ColdFire ISA_B.  */
 #define mcfusp   0x10000	/* ColdFire USP instructions.  */
 
-#define mcf5200  0x20000
-#define mcf5206e 0x40000
-#define mcf521x  0x80000
-#define mcf5249  0x100000
-#define mcf528x  0x200000
-#define mcf5307  0x400000
-#define mcf5407  0x800000
-#define mcf5470  0x1000000
-#define mcf5480  0x2000000
-
- /* Handy aliases.  */
+/* Handy aliases.  */
 #define	m68040up   (m68040 | m68060)
 #define	m68030up   (m68030 | m68040up)
 #define	m68020up   (m68020 | m68030up)
 #define	m68010up   (m68010 | cpu32 | m68020up)
 #define	m68000up   (m68000 | m68010up)
 
-#define	mfloat  (m68881 | m68882 | m68040 | m68060)
+#define	mfloat  (m68881 | m68040 | m68060)
 #define	mmmu    (m68851 | m68030 | m68040 | m68060)
 
 /* The structure used to hold information for an opcode.  */

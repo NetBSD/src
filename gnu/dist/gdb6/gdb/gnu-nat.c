@@ -1,5 +1,5 @@
 /* Interface GDB to the GNU Hurd.
-   Copyright 1992, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright (C) 1992, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.
  */
 
 #include <ctype.h>
@@ -1050,7 +1050,10 @@ inf_validate_procs (struct inf *inf)
 	    proc_debug (thread, "died!");
 	    thread->port = MACH_PORT_NULL;
 	    thread = _proc_free (thread);	/* THREAD is dead.  */
-	    (last ? last->next : inf->threads) = thread;
+	    if (last)
+	      last->next = thread;
+	    else
+	      inf->threads = thread;
 	  }
       }
 
@@ -1063,7 +1066,10 @@ inf_validate_procs (struct inf *inf)
 	  /* THREADS[I] is a thread we don't know about yet!  */
 	  {
 	    thread = make_proc (inf, threads[i], next_thread_id++);
-	    (last ? last->next : inf->threads) = thread;
+	    if (last)
+	      last->next = thread;
+	    else
+	      inf->threads = thread;
 	    last = thread;
 	    proc_debug (thread, "new thread: %d", threads[i]);
 	    add_thread (pid_to_ptid (thread->tid));	/* Tell GDB's generic thread code.  */
@@ -2089,9 +2095,6 @@ gnu_create_inferior (char *exec_file, char *allargs, char **env,
     inf_steal_exc_ports (inf);
   else
     inf_restore_exc_ports (inf);
-
-  /* Here we go!  */
-  proceed ((CORE_ADDR) -1, 0, 0);
 }
 
 /* Mark our target-struct as eligible for stray "run" and "attach"

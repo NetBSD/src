@@ -7,6 +7,7 @@
 #  gdb_host_float_format	host's float floatformat, or 0
 #  gdb_host_double_format	host's double floatformat, or 0
 #  gdb_host_long_double_format	host's long double floatformat, or 0
+#  gdb_host_obs			host-specific .o files to include
 
 # Map host cpu into the config cpu subdirectory name.
 # The default is $host_cpu.
@@ -64,6 +65,9 @@ i[34567]86-*-netbsdelf* | i[34567]86-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
 i[34567]86-*-netbsd*)	gdb_host=nbsdaout ;;
 i[34567]86-*-go32*)	gdb_host=go32 ;;
+i[34567]86-*-mingw32*)	gdb_host=mingw
+			gdb_host_obs=mingw-hdep.o
+			;;
 i[34567]86-*-msdosdjgpp*) gdb_host=go32 ;;
 i[34567]86-*-linux*)	gdb_host=linux ;;
 i[34567]86-*-lynxos*)	gdb_host=i386lynx ;;

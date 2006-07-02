@@ -1,6 +1,6 @@
 /* Parser for linespec for the GNU debugger, GDB.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -1080,8 +1080,8 @@ decode_objc (char **argptr, int funfirstline, struct symtab *file_symtab,
   struct symbol *sym = NULL;
   char *copy = NULL;
   struct block *block = NULL;
-  int i1 = 0;
-  int i2 = 0;
+  unsigned i1 = 0;
+  unsigned i2 = 0;
 
   values.sals = NULL;
   values.nelts = 0;
@@ -1427,6 +1427,7 @@ find_method (int funfirstline, char ***canonical, char *saved_arg,
 	}
       else
 	{
+	  values.sals = NULL;
 	  values.nelts = 0;
 	}
       return values;

@@ -98,7 +98,7 @@ This file documents the binary file descriptor library libbfd.
 * BFD front end::		BFD front end
 * BFD back ends::		BFD back ends
 * GNU Free Documentation License::  GNU Free Documentation License
-* Index::			Index
+* BFD Index::		BFD Index
 @end menu
 
 @node Overview, BFD front end, Top, Top
@@ -324,11 +324,11 @@ All of BFD lives in one directory.
 @node mmo,  , elf, BFD back ends
 @include  mmo.texi
 
-@node GNU Free Documentation License, Index, BFD back ends, Top
+@node GNU Free Documentation License, BFD Index, BFD back ends, Top
 @include fdl.texi
 
-@node Index,  , GNU Free Documentation License, Top
-@unnumbered Index
+@node BFD Index,  , GNU Free Documentation License, Top
+@unnumbered BFD Index
 @printindex cp
 
 @tex

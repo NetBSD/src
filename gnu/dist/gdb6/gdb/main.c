@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "top.h"
@@ -358,11 +358,16 @@ captured_main (void *data)
 	  case OPT_TUI:
 	    /* --tui is equivalent to -i=tui.  */
 	    xfree (interpreter_p);
-	    interpreter_p = xstrdup ("tui");
+	    interpreter_p = xstrdup (INTERP_TUI);
 	    break;
 	  case OPT_WINDOWS:
 	    /* FIXME: cagney/2003-03-01: Not sure if this option is
                actually useful, and if it is, what it should do.  */
+#ifdef GDBTK
+	    /* --windows is equivalent to -i=insight.  */
+	    xfree (interpreter_p);
+	    interpreter_p = xstrdup (INTERP_INSIGHT);
+#endif
 	    use_windows = 1;
 	    break;
 	  case OPT_NOWINDOWS:
@@ -662,7 +667,7 @@ extern int gdbtk_test (char *);
     }
 
   for (i = 0; i < ndir; i++)
-    catch_command_errors (directory_command, dirarg[i], 0, RETURN_MASK_ALL);
+    catch_command_errors (directory_switch, dirarg[i], 0, RETURN_MASK_ALL);
   xfree (dirarg);
 
   if (execarg != NULL

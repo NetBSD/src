@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -309,7 +309,7 @@ frv_register_type (struct gdbarch *gdbarch, int reg)
 
 static void
 frv_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
-                          int reg, void *buffer)
+                          int reg, gdb_byte *buffer)
 {
   if (reg == iacc0_regnum)
     {
@@ -335,7 +335,7 @@ frv_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
 
 static void
 frv_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-                          int reg, const void *buffer)
+                          int reg, const gdb_byte *buffer)
 {
   if (reg == iacc0_regnum)
     {
@@ -1031,7 +1031,7 @@ frv_frame_unwind_cache (struct frame_info *next_frame,
 
 static void
 frv_extract_return_value (struct type *type, struct regcache *regcache,
-                          void *valbuf)
+                          gdb_byte *valbuf)
 {
   int len = TYPE_LENGTH (type);
 
@@ -1247,7 +1247,7 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 static void
 frv_store_return_value (struct type *type, struct regcache *regcache,
-                        const void *valbuf)
+                        const gdb_byte *valbuf)
 {
   int len = TYPE_LENGTH (type);
 
@@ -1377,7 +1377,7 @@ frv_frame_prev_register (struct frame_info *next_frame,
 			  void **this_prologue_cache,
 			  int regnum, int *optimizedp,
 			  enum lval_type *lvalp, CORE_ADDR *addrp,
-			  int *realnump, void *bufferp)
+			  int *realnump, gdb_byte *bufferp)
 {
   struct frv_unwind_cache *info
     = frv_frame_unwind_cache (next_frame, this_prologue_cache);

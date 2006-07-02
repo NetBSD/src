@@ -1,5 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Despite what the above comment says about this file being part of
    GDB, we would like to keep these functions free of GDB
@@ -388,15 +388,15 @@ ax_reqs (struct agent_expr *ax, struct agent_reqs *reqs)
   int reg_mask_len = 1;
   unsigned char *reg_mask = xmalloc (reg_mask_len * sizeof (reg_mask[0]));
 
-  /* Jump target table.  targets[i] is non-zero iff there is a jump to
-     offset i.  */
+  /* Jump target table.  targets[i] is non-zero iff we have found a
+     jump to offset i.  */
   char *targets = (char *) alloca (ax->len * sizeof (targets[0]));
 
-  /* Instruction boundary table.  boundary[i] is non-zero iff an
-     instruction starts at offset i.  */
+  /* Instruction boundary table.  boundary[i] is non-zero iff our scan
+     has reached an instruction starting at offset i.  */
   char *boundary = (char *) alloca (ax->len * sizeof (boundary[0]));
 
-  /* Stack height record.  iff either targets[i] or boundary[i] is
+  /* Stack height record.  If either targets[i] or boundary[i] is
      non-zero, heights[i] is the height the stack should have before
      executing the bytecode at that point.  */
   int *heights = (int *) alloca (ax->len * sizeof (heights[0]));
@@ -437,8 +437,9 @@ ax_reqs (struct agent_expr *ax, struct agent_reqs *reqs)
 	  return;
 	}
 
-      /* If this instruction is a jump target, does the current stack
-         height match the stack height at the jump source?  */
+      /* If this instruction is a forward jump target, does the
+         current stack height match the stack height at the jump
+         source?  */
       if (targets[i] && (heights[i] != height))
 	{
 	  reqs->flaw = agent_flaw_height_mismatch;
@@ -472,21 +473,22 @@ ax_reqs (struct agent_expr *ax, struct agent_reqs *reqs)
 	      xfree (reg_mask);
 	      return;
 	    }
-	  /* Have we already found other jumps to the same location?  */
-	  else if (targets[target])
+
+	  /* Do we have any information about what the stack height
+             should be at the target?  */
+	  if (targets[target] || boundary[target])
 	    {
-	      if (heights[i] != height)
+	      if (heights[target] != height)
 		{
 		  reqs->flaw = agent_flaw_height_mismatch;
 		  xfree (reg_mask);
 		  return;
 		}
 	    }
-	  else
-	    {
-	      targets[target] = 1;
-	      heights[target] = height;
-	    }
+
+          /* Record the target, along with the stack height we expect.  */
+          targets[target] = 1;
+          heights[target] = height;
 	}
 
       /* For unconditional jumps with a successor, check that the

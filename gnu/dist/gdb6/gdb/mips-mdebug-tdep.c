@@ -1,9 +1,9 @@
 /* Target-dependent code for the MDEBUG MIPS architecture, for GDB,
    the GNU Debugger.
 
-   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-   Foundation, Inc.
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -63,8 +63,8 @@ static bfd *the_bfd;
 static int
 compare_pdr_entries (const void *a, const void *b)
 {
-  CORE_ADDR lhs = bfd_get_32 (the_bfd, (bfd_byte *) a);
-  CORE_ADDR rhs = bfd_get_32 (the_bfd, (bfd_byte *) b);
+  CORE_ADDR lhs = bfd_get_signed_32 (the_bfd, (bfd_byte *) a);
+  CORE_ADDR rhs = bfd_get_signed_32 (the_bfd, (bfd_byte *) b);
 
   if (lhs < rhs)
     return -1;
@@ -215,17 +215,17 @@ non_heuristic_proc_desc (CORE_ADDR pc, CORE_ADDR *addrptr)
 	      PROC_LOW_ADDR (proc_desc) = pdr_pc;
 
 	      PROC_FRAME_OFFSET (proc_desc)
-		= bfd_get_32 (sec->objfile->obfd, ptr + 20);
+		= bfd_get_signed_32 (sec->objfile->obfd, ptr + 20);
 	      PROC_FRAME_REG (proc_desc) = bfd_get_32 (sec->objfile->obfd,
 						       ptr + 24);
 	      PROC_REG_MASK (proc_desc) = bfd_get_32 (sec->objfile->obfd,
 						      ptr + 4);
 	      PROC_FREG_MASK (proc_desc) = bfd_get_32 (sec->objfile->obfd,
 						       ptr + 12);
-	      PROC_REG_OFFSET (proc_desc) = bfd_get_32 (sec->objfile->obfd,
-							ptr + 8);
+	      PROC_REG_OFFSET (proc_desc)
+		= bfd_get_signed_32 (sec->objfile->obfd, ptr + 8);
 	      PROC_FREG_OFFSET (proc_desc)
-		= bfd_get_32 (sec->objfile->obfd, ptr + 16);
+		= bfd_get_signed_32 (sec->objfile->obfd, ptr + 16);
 	      PROC_PC_REG (proc_desc) = bfd_get_32 (sec->objfile->obfd,
 						    ptr + 28);
 	      proc_desc->pdr.isym = (long) sym;
@@ -394,7 +394,7 @@ mips_mdebug_frame_prev_register (struct frame_info *next_frame,
 				 void **this_cache,
 				 int regnum, int *optimizedp,
 				 enum lval_type *lvalp, CORE_ADDR *addrp,
-				 int *realnump, void *valuep)
+				 int *realnump, gdb_byte *valuep)
 {
   struct mips_frame_cache *info = mips_mdebug_frame_cache (next_frame,
 							   this_cache);

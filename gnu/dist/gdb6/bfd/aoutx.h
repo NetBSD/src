@@ -1,6 +1,6 @@
 /* BFD semi-generic back-end for a.out binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -1193,26 +1193,21 @@ NAME (aout, new_section_hook) (bfd *abfd, asection *newsect)
 	{
 	  obj_textsec (abfd)= newsect;
 	  newsect->target_index = N_TEXT;
-	  return TRUE;
 	}
-
-      if (obj_datasec (abfd) == NULL && !strcmp (newsect->name, ".data"))
+      else if (obj_datasec (abfd) == NULL && !strcmp (newsect->name, ".data"))
 	{
 	  obj_datasec (abfd) = newsect;
 	  newsect->target_index = N_DATA;
-	  return TRUE;
 	}
-
-      if (obj_bsssec (abfd) == NULL && !strcmp (newsect->name, ".bss"))
+      else if (obj_bsssec (abfd) == NULL && !strcmp (newsect->name, ".bss"))
 	{
 	  obj_bsssec (abfd) = newsect;
 	  newsect->target_index = N_BSS;
-	  return TRUE;
 	}
     }
 
   /* We allow more than three sections internally.  */
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, newsect);
 }
 
 bfd_boolean
@@ -2859,9 +2854,10 @@ NAME (aout, link_hash_table_init) (struct aout_link_hash_table *table,
 				   bfd *abfd,
 				   struct bfd_hash_entry *(*newfunc)
 				   (struct bfd_hash_entry *, struct bfd_hash_table *,
-				    const char *))
+				    const char *),
+				   unsigned int entsize)
 {
-  return _bfd_link_hash_table_init (&table->root, abfd, newfunc);
+  return _bfd_link_hash_table_init (&table->root, abfd, newfunc, entsize);
 }
 
 /* Create an a.out link hash table.  */
@@ -2876,8 +2872,9 @@ NAME (aout, link_hash_table_create) (bfd *abfd)
   if (ret == NULL)
     return NULL;
 
-  if (! NAME (aout, link_hash_table_init) (ret, abfd,
-					   NAME (aout, link_hash_newfunc)))
+  if (!NAME (aout, link_hash_table_init) (ret, abfd,
+					  NAME (aout, link_hash_newfunc),
+					  sizeof (struct aout_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -5252,9 +5249,10 @@ NAME (aout, final_link) (bfd *abfd,
   aout_info.symbol_map = NULL;
   aout_info.output_syms = NULL;
 
-  if (! bfd_hash_table_init_n (&aout_info.includes.root,
-			       aout_link_includes_newfunc,
-			       251))
+  if (!bfd_hash_table_init_n (&aout_info.includes.root,
+			      aout_link_includes_newfunc,
+			      sizeof (struct aout_link_includes_entry),
+			      251))
     goto error_return;
   includes_hash_initialized = TRUE;
 

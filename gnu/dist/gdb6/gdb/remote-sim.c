@@ -1,7 +1,7 @@
 /* Generic remote debugging interface for simulators.
 
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   2002, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
    Steve Chamberlain (sac@cygnus.com).
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -43,6 +43,7 @@
 #include "gdb_assert.h"
 #include "sim-regno.h"
 #include "arch-utils.h"
+#include "readline/readline.h"
 
 /* Prototypes */
 
@@ -391,8 +392,21 @@ gdbsim_kill (void)
    GDB's symbol tables to match.  */
 
 static void
-gdbsim_load (char *prog, int fromtty)
+gdbsim_load (char *args, int fromtty)
 {
+  char **argv = buildargv (args);
+  char *prog;
+
+  if (argv == NULL)
+    nomem (0);
+
+  make_cleanup_freeargv (argv);
+
+  prog = tilde_expand (argv[0]);
+
+  if (argv[1] != NULL)
+    error (_("GDB sim does not yet support a load offset."));
+
   if (sr_get_debug ())
     printf_filtered ("gdbsim_load: prog \"%s\"\n", prog);
 
@@ -458,9 +472,6 @@ gdbsim_create_inferior (char *exec_file, char *args, char **env, int from_tty)
   insert_breakpoints ();	/* Needed to get correct instruction in cache */
 
   clear_proceed_status ();
-
-  /* NB: Entry point already set by sim_create_inferior. */
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 0);
 }
 
 /* The open routine takes the rest of the parameters from the command,
@@ -674,8 +685,7 @@ gdbsim_wait (ptid_t ptid, struct target_waitstatus *status)
 #else
   prev_sigint = signal (SIGINT, gdbsim_cntrl_c);
 #endif
-  sim_resume (gdbsim_desc, resume_step,
-	      target_signal_to_host (resume_siggnal));
+  sim_resume (gdbsim_desc, resume_step, resume_siggnal);
   signal (SIGINT, prev_sigint);
   resume_step = 0;
 
@@ -690,24 +700,20 @@ gdbsim_wait (ptid_t ptid, struct target_waitstatus *status)
     case sim_stopped:
       switch (sigrc)
 	{
-	case SIGABRT:
+	case TARGET_SIGNAL_ABRT:
 	  quit ();
 	  break;
-	case SIGINT:
-	case SIGTRAP:
+	case TARGET_SIGNAL_INT:
+	case TARGET_SIGNAL_TRAP:
 	default:
 	  status->kind = TARGET_WAITKIND_STOPPED;
-	  /* The signal in sigrc is a host signal.  That probably
-	     should be fixed.  */
-	  status->value.sig = target_signal_from_host (sigrc);
+	  status->value.sig = sigrc;
 	  break;
 	}
       break;
     case sim_signalled:
       status->kind = TARGET_WAITKIND_SIGNALLED;
-      /* The signal in sigrc is a host signal.  That probably
-         should be fixed.  */
-      status->value.sig = target_signal_from_host (sigrc);
+      status->value.sig = sigrc;
       break;
     case sim_running:
     case sim_polling:
@@ -799,18 +805,6 @@ gdbsim_mourn_inferior (void)
   generic_mourn_inferior ();
 }
 
-static int
-gdbsim_insert_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
-{
-  return memory_insert_breakpoint (addr, contents_cache);
-}
-
-static int
-gdbsim_remove_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
-{
-  return memory_remove_breakpoint (addr, contents_cache);
-}
-
 /* Pass the command argument through to the simulator verbatim.  The
    simulator must do any command interpretation work.  */
 
@@ -860,8 +854,8 @@ init_gdbsim_ops (void)
   gdbsim_ops.to_prepare_to_store = gdbsim_prepare_to_store;
   gdbsim_ops.deprecated_xfer_memory = gdbsim_xfer_inferior_memory;
   gdbsim_ops.to_files_info = gdbsim_files_info;
-  gdbsim_ops.to_insert_breakpoint = gdbsim_insert_breakpoint;
-  gdbsim_ops.to_remove_breakpoint = gdbsim_remove_breakpoint;
+  gdbsim_ops.to_insert_breakpoint = memory_insert_breakpoint;
+  gdbsim_ops.to_remove_breakpoint = memory_remove_breakpoint;
   gdbsim_ops.to_kill = gdbsim_kill;
   gdbsim_ops.to_load = gdbsim_load;
   gdbsim_ops.to_create_inferior = gdbsim_create_inferior;

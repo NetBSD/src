@@ -1,6 +1,6 @@
 /* BFD backend for SunOS binaries.
    Copyright 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -679,8 +679,9 @@ sunos_link_hash_table_create (bfd *abfd)
   ret = bfd_malloc (amt);
   if (ret ==  NULL)
     return NULL;
-  if (! NAME (aout, link_hash_table_init) (&ret->root, abfd,
-					   sunos_link_hash_newfunc))
+  if (!NAME (aout, link_hash_table_init) (&ret->root, abfd,
+					  sunos_link_hash_newfunc,
+					  sizeof (struct sunos_link_hash_entry)))
     {
       free (ret);
       return NULL;

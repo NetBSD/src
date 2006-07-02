@@ -58,3 +58,7 @@ set compiler_info [join {hpacc __HP_aCC} -]
    numbers seperated by '.'s: currently "7.0.0.0" */
 set need_a_set [regsub -all {\.} [join {xlc __xlc__} -] - compiler_info]
 #endif
+
+#if defined (__ARMCC_VERSION)
+set compiler_info [join {armcc __ARMCC_VERSION} -]
+#endif

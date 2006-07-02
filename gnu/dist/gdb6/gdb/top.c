@@ -1,7 +1,7 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcmd.h"
@@ -112,6 +112,10 @@ Whether to confirm potentially dangerous operations is %s.\n"),
 
 FILE *instream;
 
+/* Flag to indicate whether a user defined command is currently running.  */
+
+int in_user_command;
+
 /* Current working directory.  */
 
 char *current_directory;
@@ -183,9 +187,6 @@ int remote_debug = 0;
    breakpoint, for instance. This is a real indicator whether the
    target is off and running, which gdb is doing something else. */
 int target_executing = 0;
-
-/* Level of control structure.  */
-static int control_level;
 
 /* Sbrk location on entry to main.  Used for statistics only.  */
 #ifdef HAVE_SBRK
@@ -912,11 +913,11 @@ command_line_input (char *prompt_arg, int repeat, char *annotation_suffix)
 	}
 
       /* Don't use fancy stuff if not talking to stdin.  */
-      if (deprecated_readline_hook && instream == NULL)
+      if (deprecated_readline_hook && input_from_terminal_p ())
 	{
 	  rl = (*deprecated_readline_hook) (local_prompt);
 	}
-      else if (command_editing_p && instream == stdin && ISATTY (instream))
+      else if (command_editing_p && input_from_terminal_p ())
 	{
 	  rl = gdb_readline_wrapper (local_prompt);
 	}
@@ -1064,7 +1065,7 @@ print_gdb_version (struct ui_file *stream)
 
   /* Second line is a copyright notice. */
 
-  fprintf_filtered (stream, "Copyright 2005 Free Software Foundation, Inc.\n");
+  fprintf_filtered (stream, "Copyright (C) 2006 Free Software Foundation, Inc.\n");
 
   /* Following the copyright is a brief statement that the program is
      free software, that users are free to copy and change it on
@@ -1200,13 +1201,22 @@ quit_force (char *args, int from_tty)
   exit (exit_code);
 }
 
-/* Returns whether GDB is running on a terminal and whether the user
-   desires that questions be asked of them on that terminal.  */
+/* Returns whether GDB is running on a terminal and input is
+   currently coming from that terminal.  */
 
 int
 input_from_terminal_p (void)
 {
-  return gdb_has_a_terminal () && (instream == stdin) & caution;
+  if (gdb_has_a_terminal () && instream == stdin)
+    return 1;
+
+  /* If INSTREAM is unset, and we are not in a user command, we
+     must be in Insight.  That's like having a terminal, for our
+     purposes.  */
+  if (instream == NULL && !in_user_command)
+    return 1;
+
+  return 0;
 }
 
 static void
@@ -1552,6 +1562,8 @@ gdb_init (char *argv0)
   initialize_current_architecture ();
   init_cli_cmds();
   init_main ();			/* But that omits this file!  Do it now */
+
+  initialize_stdin_serial ();
 
   async_init_signals ();
 

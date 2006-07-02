@@ -1,5 +1,6 @@
 /* SEC_MERGE support.
-   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -242,7 +243,7 @@ sec_merge_init (unsigned int entsize, bfd_boolean strings)
     return NULL;
 
   if (! bfd_hash_table_init_n (&table->table, sec_merge_hash_newfunc,
-			       16699))
+			       sizeof (struct sec_merge_hash_entry), 16699))
     {
       free (table);
       return NULL;

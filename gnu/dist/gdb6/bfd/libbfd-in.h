@@ -2,7 +2,7 @@
    (This include file is not for users of the library.)
 
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005
+   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Written by Cygnus Support.
@@ -51,6 +51,12 @@ struct bfd_in_memory
   bfd_size_type size;
   /* Buffer holding contents of BFD.  */
   bfd_byte *buffer;
+};
+
+struct section_hash_entry
+{
+  struct bfd_hash_entry root;
+  asection section;
 };
 
 /* tdata for an archive.  For an input archive, cache
@@ -149,6 +155,8 @@ bfd * _bfd_new_bfd
   (void);
 void _bfd_delete_bfd
   (bfd *);
+bfd_boolean _bfd_free_cached_info
+  (bfd *);
 
 bfd_boolean bfd_false
   (bfd *ignore);
@@ -209,8 +217,8 @@ int bfd_generic_stat_arch_elt
 
 #define _bfd_generic_close_and_cleanup bfd_true
 #define _bfd_generic_bfd_free_cached_info bfd_true
-#define _bfd_generic_new_section_hook \
-  ((bfd_boolean (*) (bfd *, asection *)) bfd_true)
+extern bfd_boolean _bfd_generic_new_section_hook
+  (bfd *, asection *);
 extern bfd_boolean _bfd_generic_get_section_contents
   (bfd *, asection *, void *, file_ptr, bfd_size_type);
 extern bfd_boolean _bfd_generic_get_section_contents_in_window
@@ -402,8 +410,6 @@ extern bfd_boolean _bfd_generic_set_section_contents
   ((bfd_boolean (*) (bfd *, struct bfd_section *)) bfd_false)
 #define _bfd_nolink_section_already_linked \
   ((void (*) (bfd *, struct bfd_section *)) bfd_void)
-extern bfd_boolean _bfd_generic_match_sections_by_type
-  (bfd *, const asection *, bfd *, const asection *);
 
 /* Routines to use for BFD_JUMP_TABLE_DYNAMIC for targets which do not
    have dynamic symbols or relocs.  Use BFD_JUMP_TABLE_DYNAMIC
@@ -470,7 +476,8 @@ extern bfd_boolean _bfd_link_hash_table_init
   (struct bfd_link_hash_table *, bfd *,
    struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
 			       struct bfd_hash_table *,
-			       const char *));
+			       const char *),
+   unsigned int);
 
 /* Generic link hash table creation routine.  */
 extern struct bfd_link_hash_table *_bfd_generic_link_hash_table_create

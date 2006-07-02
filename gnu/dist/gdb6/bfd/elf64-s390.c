@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 64-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Contributed Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -724,7 +724,8 @@ elf_s390_link_hash_table_create (abfd)
   if (ret == NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
+				      sizeof (struct elf_s390_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1881,9 +1882,21 @@ allocate_dynrelocs (h, inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
+      if (eh->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
-	eh->dyn_relocs = NULL;
+	{
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	    eh->dyn_relocs = NULL;
+
+	  /* Make sure undefined weak symbols are output as a dynamic
+	     symbol in PIEs.  */
+	  else if (h->dynindx == -1
+		   && !h->forced_local)
+	    {
+	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
+		return FALSE;
+	    }
+	}
     }
   else if (ELIMINATE_COPY_RELOCS)
     {
@@ -2227,6 +2240,7 @@ invalid_tls_insn (input_bfd, input_section, rel)
      input_section,
      (long) rel->r_offset,
      howto->name);
+  bfd_set_error (bfd_error_bad_value);
 }
 
 /* Relocate a 390 ELF section.  */
@@ -3240,8 +3254,8 @@ elf_s390_finish_dynamic_symbol (output_bfd, info, h, sym)
 
   /* Mark some specially defined symbols as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0
-      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+      || h == htab->elf.hgot
+      || h == htab->elf.hplt)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;

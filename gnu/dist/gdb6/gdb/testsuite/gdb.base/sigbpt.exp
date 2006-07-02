@@ -166,6 +166,10 @@ proc stepi_out { name args } {
     # trampoline, and back to the instruction that faulted.
     set test "${name}; stepi out of handler"
     gdb_test_multiple "stepi" "$test" {
+	-re "Could not insert single-step breakpoint.*$gdb_prompt $" {
+	    setup_kfail "sparc*-*-openbsd*" gdb/1736
+	    fail "$test (could not insert single-step breakpoint)"
+	}
 	-re "keeper.*$gdb_prompt $" {
 	    send_gdb "stepi\n"
 	    exp_continue

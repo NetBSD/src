@@ -1,5 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -46,9 +46,6 @@
 #include "ui-out.h"
 #include "readline/readline.h"
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 #define OPEN_MODE (O_RDONLY | O_BINARY)
 #define FDOPEN_MODE FOPEN_RB
@@ -378,6 +375,15 @@ directory_command (char *dirname, int from_tty)
   forget_cached_source_info ();
 }
 
+/* Add a path given with the -d command line switch.
+   This will not be quoted so we must not treat spaces as separators.  */
+
+void
+directory_switch (char *dirname, int from_tty)
+{
+  add_path (dirname, &source_path, 0);
+}
+
 /* Add zero or more directories to the front of an arbitrary path.  */
 
 void
@@ -397,56 +403,72 @@ add_path (char *dirname, char **which_path, int parse_separators)
 {
   char *old = *which_path;
   int prefix = 0;
+  char **argv = NULL;
+  char *arg;
+  int argv_index = 0;
 
   if (dirname == 0)
     return;
 
-  dirname = xstrdup (dirname);
-  make_cleanup (xfree, dirname);
+  if (parse_separators)
+    {
+      /* This will properly parse the space and tab separators
+	 and any quotes that may exist. DIRNAME_SEPARATOR will
+	 be dealt with later.  */
+      argv = buildargv (dirname);
+      make_cleanup_freeargv (argv);
+
+      if (argv == NULL)
+	nomem (0);
+
+      arg = argv[0];
+    }
+  else
+    {
+      arg = xstrdup (dirname);
+      make_cleanup (xfree, arg);
+    }
 
   do
     {
-      char *name = dirname;
+      char *name = arg;
       char *p;
       struct stat st;
 
       {
 	char *separator = NULL;
-	char *space = NULL;
-	char *tab = NULL;
 
+	/* Spaces and tabs will have been removed by buildargv().
+	   The directories will there be split into a list but
+	   each entry may still contain DIRNAME_SEPARATOR.  */
 	if (parse_separators)
-	  {
-	    separator = strchr (name, DIRNAME_SEPARATOR);
-	    space = strchr (name, ' ');
-	    tab = strchr (name, '\t');
-	  }
+	  separator = strchr (name, DIRNAME_SEPARATOR);
 
-	if (separator == 0 && space == 0 && tab == 0)
-	  p = dirname = name + strlen (name);
+	if (separator == 0)
+	  p = arg = name + strlen (name);
 	else
 	  {
-	    p = 0;
-	    if (separator != 0 && (p == 0 || separator < p))
-	      p = separator;
-	    if (space != 0 && (p == 0 || space < p))
-	      p = space;
-	    if (tab != 0 && (p == 0 || tab < p))
-	      p = tab;
-	    dirname = p + 1;
-	    while (*dirname == DIRNAME_SEPARATOR
-		   || *dirname == ' '
-		   || *dirname == '\t')
-	      ++dirname;
+	    p = separator;
+	    arg = p + 1;
+	    while (*arg == DIRNAME_SEPARATOR)
+	      ++arg;
 	  }
+
+	/* If there are no more directories in this argument then start
+	   on the next argument next time round the loop (if any).  */
+	if (*arg == '\0')
+	  arg = parse_separators ? argv[++argv_index] : NULL;
       }
 
-      if (!(IS_DIR_SEPARATOR (*name) && p <= name + 1)	 /* "/" */
+      /* name is the start of the directory.
+	 p is the separator (or null) following the end.  */
+
+      while (!(IS_DIR_SEPARATOR (*name) && p <= name + 1)	/* "/" */
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
       /* On MS-DOS and MS-Windows, h:\ is different from h: */
-	  && !(p == name + 3 && name[1] == ':') 	 /* "d:/" */
+	     && !(p == name + 3 && name[1] == ':')		/* "d:/" */
 #endif
-	  && IS_DIR_SEPARATOR (p[-1]))
+	     && IS_DIR_SEPARATOR (p[-1]))
 	/* Sigh. "foo/" => "foo" */
 	--p;
       *p = '\0';
@@ -577,7 +599,7 @@ add_path (char *dirname, char **which_path, int parse_separators)
       }
     skip_dup:;
     }
-  while (*dirname != '\0');
+  while (arg != NULL);
 }
 
 
@@ -1638,7 +1660,7 @@ The matching line number is also stored as the value of \"$_\"."));
       add_com_alias ("?", "reverse-search", class_files, 0);
     }
 
-  add_setshow_uinteger_cmd ("listsize", class_support, &lines_to_list, _("\
+  add_setshow_integer_cmd ("listsize", class_support, &lines_to_list, _("\
 Set number of source lines gdb will list by default."), _("\
 Show number of source lines gdb will list by default."), NULL,
 			    NULL,

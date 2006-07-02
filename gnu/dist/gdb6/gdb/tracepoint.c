@@ -1,6 +1,6 @@
 /* Tracing functionality for remote targets in custom GDB protocol
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
+   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
    Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -194,13 +194,15 @@ trace_error (char *buf)
 
 /* Utility: wait for reply from stub, while accepting "O" packets.  */
 static char *
-remote_get_noisy_reply (char *buf,
-			long sizeof_buf)
+remote_get_noisy_reply (char **buf_p,
+			long *sizeof_buf)
 {
   do				/* Loop on reply from remote stub.  */
     {
+      char *buf;
       QUIT;			/* allow user to bail out with ^C */
-      getpkt (buf, sizeof_buf, 0);
+      getpkt (buf_p, sizeof_buf, 0);
+      buf = *buf_p;
       if (buf[0] == 0)
 	error (_("Target does not support this command."));
       else if (buf[0] == 'E')
@@ -1069,9 +1071,14 @@ make_cleanup_free_actions (struct tracepoint *t)
   return make_cleanup (do_free_actions_cleanup, t);
 }
 
+enum {
+  memrange_absolute = -1
+};
+
 struct memrange
 {
-  int type;		/* 0 for absolute memory range, else basereg number */
+  int type;		/* memrange_absolute for absolute memory range,
+                           else basereg number */
   bfd_signed_vma start;
   bfd_signed_vma end;
 };
@@ -1103,7 +1110,7 @@ memrange_cmp (const void *va, const void *vb)
     return -1;
   if (a->type > b->type)
     return 1;
-  if (a->type == 0)
+  if (a->type == memrange_absolute)
     {
       if ((bfd_vma) a->start < (bfd_vma) b->start)
 	return -1;
@@ -1175,7 +1182,7 @@ add_memrange (struct collection_list *memranges,
       printf_filtered (",%ld)\n", len);
     }
 
-  /* type: -1 == memory, n == basereg */
+  /* type: memrange_absolute == memory, other n == basereg */
   memranges->list[memranges->next_memrange].type = type;
   /* base: addr if memory, offset if reg relative.  */
   memranges->list[memranges->next_memrange].start = base;
@@ -1189,7 +1196,7 @@ add_memrange (struct collection_list *memranges,
 				  memranges->listsize);
     }
 
-  if (type != -1)		/* Better collect the base register!  */
+  if (type != memrange_absolute)		/* Better collect the base register!  */
     add_register (memranges, type);
 }
 
@@ -1226,7 +1233,7 @@ collect_symbol (struct collection_list *collect,
 			   DEPRECATED_SYMBOL_NAME (sym), len, 
 			   tmp /* address */);
 	}
-      add_memrange (collect, -1, offset, len);	/* 0 == memory */
+      add_memrange (collect, memrange_absolute, offset, len);
       break;
     case LOC_REGISTER:
     case LOC_REGPARM:
@@ -1437,10 +1444,18 @@ stringify_collection_list (struct collection_list *list, char *string)
 	  end = temp_buf;
 	}
 
-      sprintf (end, "M%X,%s,%lX", 
-	       list->list[i].type,
-	       tmp2,
-	       (long) (list->list[i].end - list->list[i].start));
+      {
+        bfd_signed_vma length = list->list[i].end - list->list[i].start;
+
+        /* The "%X" conversion specifier expects an unsigned argument,
+           so passing -1 (memrange_absolute) to it directly gives you
+           "FFFFFFFF" (or more, depending on sizeof (unsigned)).
+           Special-case it.  */
+        if (list->list[i].type == memrange_absolute)
+          sprintf (end, "M-1,%s,%lX", tmp2, (long) length);
+        else
+          sprintf (end, "M%X,%s,%lX", list->list[i].type, tmp2, (long) length);
+      }
 
       count += strlen (end);
       end = temp_buf + count;
@@ -1598,7 +1613,7 @@ encode_actions (struct tracepoint *t, char ***tdp_actions,
 		      tempval = evaluate_expression (exp);
 		      addr = VALUE_ADDRESS (tempval) + value_offset (tempval);
 		      len = TYPE_LENGTH (check_typedef (exp->elts[1].type));
-		      add_memrange (collect, -1, addr, len);
+		      add_memrange (collect, memrange_absolute, addr, len);
 		      break;
 
 		    case OP_VAR_VALUE:
@@ -1687,7 +1702,8 @@ add_aexpr (struct collection_list *collect, struct agent_expr *aexpr)
   collect->next_aexpr_elt++;
 }
 
-static char target_buf[2048];
+static char *target_buf;
+static long target_buf_size;
 
 /* Set "transparent" memory ranges
 
@@ -1729,7 +1745,7 @@ remote_set_transparent_ranges (void)
   if (anysecs)
     {
       putpkt (target_buf);
-      getpkt (target_buf, sizeof (target_buf), 0);
+      getpkt (&target_buf, &target_buf_size, 0);
     }
 }
 
@@ -1755,7 +1771,7 @@ trace_start_command (char *args, int from_tty)
   if (target_is_remote ())
     {
       putpkt ("QTinit");
-      remote_get_noisy_reply (target_buf, sizeof (target_buf));
+      remote_get_noisy_reply (&target_buf, &target_buf_size);
       if (strcmp (target_buf, "OK"))
 	error (_("Target does not support this command."));
 
@@ -1772,7 +1788,7 @@ trace_start_command (char *args, int from_tty)
 	if (t->actions)
 	  strcat (buf, "-");
 	putpkt (buf);
-	remote_get_noisy_reply (target_buf, sizeof (target_buf));
+	remote_get_noisy_reply (&target_buf, &target_buf_size);
 	if (strcmp (target_buf, "OK"))
 	  error (_("Target does not support tracepoints."));
 
@@ -1796,8 +1812,8 @@ trace_start_command (char *args, int from_tty)
 			     ((tdp_actions[ndx + 1] || stepping_actions)
 			      ? '-' : 0));
 		    putpkt (buf);
-		    remote_get_noisy_reply (target_buf, 
-					    sizeof (target_buf));
+		    remote_get_noisy_reply (&target_buf,
+					    &target_buf_size);
 		    if (strcmp (target_buf, "OK"))
 		      error (_("Error on target while setting tracepoints."));
 		  }
@@ -1813,8 +1829,8 @@ trace_start_command (char *args, int from_tty)
 			     stepping_actions[ndx],
 			     (stepping_actions[ndx + 1] ? "-" : ""));
 		    putpkt (buf);
-		    remote_get_noisy_reply (target_buf, 
-					    sizeof (target_buf));
+		    remote_get_noisy_reply (&target_buf,
+					    &target_buf_size);
 		    if (strcmp (target_buf, "OK"))
 		      error (_("Error on target while setting tracepoints."));
 		  }
@@ -1827,7 +1843,7 @@ trace_start_command (char *args, int from_tty)
       remote_set_transparent_ranges ();
       /* Now insert traps and begin collecting data.  */
       putpkt ("QTStart");
-      remote_get_noisy_reply (target_buf, sizeof (target_buf));
+      remote_get_noisy_reply (&target_buf, &target_buf_size);
       if (strcmp (target_buf, "OK"))
 	error (_("Bogus reply from target: %s"), target_buf);
       set_traceframe_num (-1);	/* All old traceframes invalidated.  */
@@ -1849,7 +1865,7 @@ trace_stop_command (char *args, int from_tty)
   if (target_is_remote ())
     {
       putpkt ("QTStop");
-      remote_get_noisy_reply (target_buf, sizeof (target_buf));
+      remote_get_noisy_reply (&target_buf, &target_buf_size);
       if (strcmp (target_buf, "OK"))
 	error (_("Bogus reply from target: %s"), target_buf);
       trace_running_p = 0;
@@ -1869,7 +1885,7 @@ trace_status_command (char *args, int from_tty)
   if (target_is_remote ())
     {
       putpkt ("qTStatus");
-      remote_get_noisy_reply (target_buf, sizeof (target_buf));
+      remote_get_noisy_reply (&target_buf, &target_buf_size);
 
       if (target_buf[0] != 'T' ||
 	  (target_buf[1] != '0' && target_buf[1] != '1'))
@@ -1884,8 +1900,8 @@ trace_status_command (char *args, int from_tty)
 
 /* Worker function for the various flavors of the tfind command.  */
 static void
-finish_tfind_command (char *msg,
-		      long sizeof_msg,
+finish_tfind_command (char **msg,
+		      long *sizeof_msg,
 		      int from_tty)
 {
   int target_frameno = -1, target_tracept = -1;
@@ -1896,7 +1912,7 @@ finish_tfind_command (char *msg,
   old_frame_addr = get_frame_base (get_current_frame ());
   old_func = find_pc_function (read_pc ());
 
-  putpkt (msg);
+  putpkt (*msg);
   reply = remote_get_noisy_reply (msg, sizeof_msg);
 
   while (reply && *reply)
@@ -2041,7 +2057,7 @@ trace_find_command (char *args, int from_tty)
 	error (_("invalid input (%d is less than zero)"), frameno);
 
       sprintf (target_buf, "QTFrame:%x", frameno);
-      finish_tfind_command (target_buf, sizeof (target_buf), from_tty);
+      finish_tfind_command (&target_buf, &target_buf_size, from_tty);
     }
   else
     error (_("Trace can only be run on remote targets."));
@@ -2084,7 +2100,7 @@ trace_find_pc_command (char *args, int from_tty)
 
       sprintf_vma (tmp, pc);
       sprintf (target_buf, "QTFrame:pc:%s", tmp);
-      finish_tfind_command (target_buf, sizeof (target_buf), from_tty);
+      finish_tfind_command (&target_buf, &target_buf_size, from_tty);
     }
   else
     error (_("Trace can only be run on remote targets."));
@@ -2109,7 +2125,7 @@ trace_find_tracepoint_command (char *args, int from_tty)
 	tdp = parse_and_eval_long (args);
 
       sprintf (target_buf, "QTFrame:tdp:%x", tdp);
-      finish_tfind_command (target_buf, sizeof (target_buf), from_tty);
+      finish_tfind_command (&target_buf, &target_buf_size, from_tty);
     }
   else
     error (_("Trace can only be run on remote targets."));
@@ -2207,7 +2223,7 @@ trace_find_line_command (char *args, int from_tty)
       else
 	sprintf (target_buf, "QTFrame:outside:%s:%s", 
 		 startpc_str, endpc_str);
-      finish_tfind_command (target_buf, sizeof (target_buf), 
+      finish_tfind_command (&target_buf, &target_buf_size,
 			    from_tty);
       do_cleanups (old_chain);
     }
@@ -2248,7 +2264,7 @@ trace_find_range_command (char *args, int from_tty)
       sprintf_vma (start_str, start);
       sprintf_vma (stop_str, stop);
       sprintf (target_buf, "QTFrame:range:%s:%s", start_str, stop_str);
-      finish_tfind_command (target_buf, sizeof (target_buf), from_tty);
+      finish_tfind_command (&target_buf, &target_buf_size, from_tty);
     }
   else
     error (_("Trace can only be run on remote targets."));
@@ -2287,7 +2303,7 @@ trace_find_outside_command (char *args, int from_tty)
       sprintf_vma (start_str, start);
       sprintf_vma (stop_str, stop);
       sprintf (target_buf, "QTFrame:outside:%s:%s", start_str, stop_str);
-      finish_tfind_command (target_buf, sizeof (target_buf), from_tty);
+      finish_tfind_command (&target_buf, &target_buf_size, from_tty);
     }
   else
     error (_("Trace can only be run on remote targets."));
@@ -2305,7 +2321,7 @@ tracepoint_save_command (char *args, int from_tty)
   char tmp[40];
 
   if (args == 0 || *args == 0)
-    error (_("Argument required (file name in which to save tracepoints"));
+    error (_("Argument required (file name in which to save tracepoints)"));
 
   if (tracepoint_chain == 0)
     {
@@ -2681,11 +2697,6 @@ _initialize_tracepoint (void)
   traceframe_number = -1;
   tracepoint_number = -1;
 
-  set_internalvar (lookup_internalvar ("tpnum"),
-		   value_from_longest (builtin_type_int, (LONGEST) 0));
-  set_internalvar (lookup_internalvar ("trace_frame"),
-		   value_from_longest (builtin_type_int, (LONGEST) - 1));
-
   if (tracepoint_list.list == NULL)
     {
       tracepoint_list.listsize = 128;
@@ -2859,4 +2870,7 @@ Do \"help tracepoints\" for info on other tracepoint commands."));
   add_com_alias ("tr", "trace", class_alias, 1);
   add_com_alias ("tra", "trace", class_alias, 1);
   add_com_alias ("trac", "trace", class_alias, 1);
+
+  target_buf_size = 2048;
+  target_buf = xmalloc (target_buf_size);
 }

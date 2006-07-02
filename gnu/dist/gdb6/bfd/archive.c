@@ -666,10 +666,7 @@ bfd_generic_archive_p (bfd *abfd)
       first = bfd_openr_next_archived_file (abfd, NULL);
       if (first != NULL)
 	{
-	  bfd_boolean fail;
-
 	  first->target_defaulted = FALSE;
-	  fail = FALSE;
 	  if (bfd_check_format (first, bfd_object)
 	      && first->xvec != abfd->xvec)
 	    {

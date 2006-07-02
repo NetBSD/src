@@ -1,5 +1,6 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
+dnl Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+dnl 2005, 2006
 dnl Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
@@ -16,7 +17,8 @@ dnl GNU General Public License for more details.
 dnl 
 dnl You should have received a copy of the GNU General Public License
 dnl along with this program; if not, write to the Free Software
-dnl Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+dnl Foundation, Inc., 51 Franklin Street, Fifth Floor,
+dnl Boston, MA 02110-1301, USA.
 
 dnl Process this file with autoconf to produce a configure script.
 
@@ -110,6 +112,10 @@ AC_DEFINE_DIR(DEBUGDIR, debugdir,
 #AC_DEFINE_UNQUOTED(DEBUGDIR, "$debugdir"),
 
 AC_CONFIG_SUBDIRS(doc testsuite)
+
+# Provide defaults for some variables set by the per-host and per-target
+# configuration.
+gdb_host_obs=posix-hdep.o
 
 . $srcdir/configure.host
 
@@ -1108,13 +1114,26 @@ AC_ARG_WITH(sysroot,
 AC_SUBST(TARGET_SYSTEM_ROOT)
 AC_SUBST(TARGET_SYSTEM_ROOT_DEFINE)
 
+AC_ARG_ENABLE(werror,
+  [  --enable-werror    treat compile warnings as errors],
+  [case "${enableval}" in
+     yes | y) ERROR_ON_WARNING="yes" ;;
+     no | n)  ERROR_ON_WARNING="no" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-werror) ;;
+   esac])
+
+WERROR_CFLAGS=""
+if test "${ERROR_ON_WARNING}" = yes ; then
+    WERROR_CFLAGS="-Werror"
+fi
+
 # NOTE: Don't add -Wall or -Wunused, they both include
 # -Wunused-parameter which reports bogus warnings.
 # NOTE: If you add to this list, remember to update
 # gdb/doc/gdbint.texinfo.
 build_warnings="-Wimplicit -Wreturn-type -Wcomment -Wtrigraphs \
 -Wformat -Wparentheses -Wpointer-arith -Wformat-nonliteral \
--Wunused-label -Wunused-function"
+-Wunused-label -Wunused-function -Wno-pointer-sign"
 
 # GCC supports -Wuninitialized only with -O or -On, n != 0.
 if test x${CFLAGS+set} = xset; then
@@ -1163,7 +1182,6 @@ if test x"$silent" != x"yes" && test x"$build_warnings" != x""; then
   echo "Setting GDB specific compiler warning flags = $build_warnings" 6>&1
 fi])dnl
 WARN_CFLAGS=""
-WERROR_CFLAGS=""
 if test "x${build_warnings}" != x -a "x$GCC" = xyes
 then
     AC_MSG_CHECKING(compiler warning flags)
@@ -1197,7 +1215,7 @@ SER_HARDWIRE="ser-base.o ser-unix.o ser-pipe.o ser-tcp.o"
 case ${host} in
   *go32* ) SER_HARDWIRE=ser-go32.o ;;
   *djgpp* ) SER_HARDWIRE=ser-go32.o ;;
-  *mingw32*) SER_HARDWIRE="ser-base.o ser-tcp.o" ;;
+  *mingw32*) SER_HARDWIRE="ser-base.o ser-tcp.o ser-mingw.o" ;;
 esac
 AC_SUBST(SER_HARDWIRE)
 
@@ -1223,6 +1241,9 @@ case ${host} in
     ;;
 esac	    
 AC_SUBST(WIN32LIBS)
+
+# Add any host-specific objects to GDB.
+CONFIG_OBS="${CONFIG_OBS} ${gdb_host_obs}"
 
 LIBGUI="../libgui/src/libgui.a"
 GUI_CFLAGS_X="-I${srcdir}/../libgui/src"
@@ -1485,17 +1506,6 @@ if test "x$target" = "x$host"; then
   else
     AC_MSG_RESULT(no)
   fi
-fi
-
-# We build rdi-share on ARM-based targets, as instructed by configure.tgt.
-if test "x$build_rdi_share" = xyes; then
-   AC_CONFIG_SUBDIRS(rdi-share)
-fi
-
-# We configure the nlm subdirectory on netware targets, as instructed
-# by configure.tgt.
-if test "x$build_nlm" = xyes; then
-   AC_CONFIG_SUBDIRS(nlm)
 fi
 
 # If hostfile (XM_FILE) and/or targetfile (DEPRECATED_TM_FILE) and/or

@@ -81,6 +81,9 @@ proc test_until {} {
 	-re "111\\^running\r\n${mi_gdb_prompt}111\\*stopped,reason=\"end-stepping-range\",thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"foo\",args=\\\[\\\],file=\".*until.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"12\"\}\r\n$mi_gdb_prompt$" {
 	    pass "until after while loop"
 	}
+	-re "111\\^running\r\n${mi_gdb_prompt}111\\*stopped,reason=\"end-stepping-range\",thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"foo\",args=\\\[\\\],file=\".*until.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"9\"\}\r\n$mi_gdb_prompt$" {
+	    kfail gdb/2104 "until after while loop (went backwards)"
+	}
 	timeout {
 	    fail "until after while loop (timeout)"
 	}
