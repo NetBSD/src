@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.8 2006/07/02 16:32:49 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.9 2006/07/02 18:54:25 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -834,7 +834,7 @@ xennetback_ifsoftstart(void *arg)
 	vaddr_t xmit_va;
 	paddr_t xmit_pa;
 	paddr_t xmit_ma;
-	paddr_t newp_ma;
+	paddr_t newp_ma = 0; /* XXX gcc */
 	int i, j, nppitems;
 	mmu_update_t *mmup;
 	multicall_entry_t *mclp;
