@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.13 2006/07/02 10:14:15 jdc Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2006/07/02 10:14:15 jdc Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -114,6 +114,16 @@ static struct mspcic_pci_intr_wiring krups_pci_intr_wiring[] = {
 	{ 0, 1, 0,    2 },	/* vga */
 };
 
+static struct mspcic_pci_intr_wiring espresso_pci_intr_wiring[] = {
+	{ 0,  0, 1,    1 },	/* ethernet */
+	{ 0,  1, 0,    2 },	/* vga */
+	{ 0,  2, 0,    6 },	/* pci slot1 */
+	{ 0,  3, 0,    7 },	/* pci slot2 */
+	{ 0,  7, 0,    4 },	/* isa */
+	{ 0, 16, 0,    5 },	/* eide */
+/*	{ 0, 17, 0,    ? },	   power management */
+	{ 0, 20, 0,    4 },	/* usb */
+};
 
 struct mspcic_known_model {
 	const char *model;
@@ -126,6 +136,7 @@ struct mspcic_known_model {
 
 static struct mspcic_known_model mspcic_known_models[] = {
 	MSPCIC_MODEL_WIRING("SUNW,501-4267", krups_pci_intr_wiring),
+	MSPCIC_MODEL_WIRING("SUNW,375-0059", espresso_pci_intr_wiring),
 	{ NULL, NULL, 0}
 };
 
