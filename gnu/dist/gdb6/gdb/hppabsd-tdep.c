@@ -1,6 +1,6 @@
 /* Target-dependent code for HP PA-RISC BSD's.
 
-   Copyright 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
@@ -169,15 +169,21 @@ hppabsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
+  /* OpenBSD and NetBSD have a 64-bit 'long double'.  */
+  set_gdbarch_long_double_bit (gdbarch, 64);
+  set_gdbarch_long_double_format (gdbarch, &floatformat_ieee_double_big);
+
   /* Core file support.  */
   set_gdbarch_regset_from_core_section
     (gdbarch, hppabsd_regset_from_core_section);
 
   /* OpenBSD and NetBSD use ELF.  */
-  tdep->find_global_pointer = hppabsd_find_global_pointer;
   tdep->is_elf = 1;
+  tdep->find_global_pointer = hppabsd_find_global_pointer;
+  tdep->in_solib_call_trampoline = hppa_in_solib_call_trampoline;
+  set_gdbarch_skip_trampoline_code (gdbarch, hppa_skip_trampoline_code);
 
-  /* OpenBSD and NetBSD uses SVR4-style shared libraries.  */
+  /* OpenBSD and NetBSD use SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }

@@ -1,6 +1,6 @@
 /* Find a variable's value in memory, for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005 Free
    Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -433,9 +433,7 @@ read_var_value (struct symbol *var, struct frame_info *frame)
 
     case LOC_CONST_BYTES:
       {
-	char *bytes_addr;
-	bytes_addr = SYMBOL_VALUE_BYTES (var);
-	memcpy (value_contents_raw (v), bytes_addr, len);
+	memcpy (value_contents_raw (v), SYMBOL_VALUE_BYTES (var), len);
 	VALUE_LVAL (v) = not_lval;
 	return v;
       }

@@ -1,6 +1,6 @@
 /* Frame unwinder for frames with DWARF Call Frame Information.
 
-   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
 
    Contributed by Mark Kettenis.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef DWARF2_FRAME_H
 #define DWARF2_FRAME_H 1
@@ -55,7 +55,8 @@ enum dwarf2_frame_reg_rule
      used internally by GDB.  */
   DWARF2_FRAME_REG_RA,		/* Return Address.  */
   DWARF2_FRAME_REG_RA_OFFSET,	/* Return Address with offset.  */
-  DWARF2_FRAME_REG_CFA		/* Call Frame Address.  */
+  DWARF2_FRAME_REG_CFA,		/* Call Frame Address.  */
+  DWARF2_FRAME_REG_CFA_OFFSET	/* Call Frame Address with offset.  */
 };
 
 /* Register state.  */
@@ -78,7 +79,8 @@ struct dwarf2_frame_state_reg
 
 extern void dwarf2_frame_set_init_reg (struct gdbarch *gdbarch,
 				       void (*init_reg) (struct gdbarch *, int,
-					     struct dwarf2_frame_state_reg *));
+					     struct dwarf2_frame_state_reg *,
+					     struct frame_info *));
 
 /* Set the architecture-specific signal trampoline recognition
    function for GDBARCH to SIGNAL_FRAME_P.  */
@@ -87,6 +89,19 @@ extern void
   dwarf2_frame_set_signal_frame_p (struct gdbarch *gdbarch,
 				   int (*signal_frame_p) (struct gdbarch *,
 							  struct frame_info *));
+
+/* Set the architecture-specific mapping of .eh_frame register numbers to
+   DWARF register numbers.  */
+
+extern void
+  dwarf2_frame_set_eh_frame_regnum (struct gdbarch *gdbarch,
+				    int (*eh_frame_regnum) (struct gdbarch *,
+							    int));
+
+/* Translate a .eh_frame register to DWARF register.  */
+
+extern int
+  dwarf2_frame_eh_frame_regnum (struct gdbarch *gdbarch, int regnum);
 
 /* Return the frame unwind methods for the function that contains PC,
    or NULL if it can't be handled by DWARF CFI frame unwinder.  */

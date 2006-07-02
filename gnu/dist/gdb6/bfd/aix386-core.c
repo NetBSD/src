@@ -204,14 +204,7 @@ aix386_core_file_failing_signal (abfd)
   return core_hdr (abfd)->cd_cursig;
 }
 
-static bfd_boolean
-aix386_core_file_matches_executable_p (core_bfd, exec_bfd)
-     bfd *core_bfd;
-     bfd *exec_bfd;
-{
-  /* FIXME: We have no way of telling at this point.  */
-  return TRUE;
-}
+#define aix386_core_file_matches_executable_p generic_core_file_matches_executable_p
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
 

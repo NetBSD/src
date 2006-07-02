@@ -1,6 +1,6 @@
 /* linker.c -- BFD linker routines
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -472,14 +472,15 @@ _bfd_link_hash_table_init
    bfd *abfd,
    struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 				      struct bfd_hash_table *,
-				      const char *))
+				      const char *),
+   unsigned int entsize)
 {
   table->creator = abfd->xvec;
   table->undefs = NULL;
   table->undefs_tail = NULL;
   table->type = bfd_link_generic_hash_table;
 
-  return bfd_hash_table_init (&table->table, newfunc);
+  return bfd_hash_table_init (&table->table, newfunc, entsize);
 }
 
 /* Look up a symbol in a link hash table.  If follow is TRUE, we
@@ -709,7 +710,8 @@ _bfd_generic_link_hash_table_create (bfd *abfd)
   if (ret == NULL)
     return NULL;
   if (! _bfd_link_hash_table_init (&ret->root, abfd,
-				   _bfd_generic_link_hash_newfunc))
+				   _bfd_generic_link_hash_newfunc,
+				   sizeof (struct generic_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -901,9 +903,10 @@ archive_hash_table_init
   (struct archive_hash_table *table,
    struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 				      struct bfd_hash_table *,
-				      const char *))
+				      const char *),
+   unsigned int entsize)
 {
-  return bfd_hash_table_init (&table->table, newfunc);
+  return bfd_hash_table_init (&table->table, newfunc, entsize);
 }
 
 /* Look up an entry in an archive hash table.  */
@@ -981,7 +984,8 @@ _bfd_generic_link_add_archive_symbols
 
   /* In order to quickly determine whether an symbol is defined in
      this archive, we build a hash table of the symbols.  */
-  if (! archive_hash_table_init (&arsym_hash, archive_hash_newfunc))
+  if (! archive_hash_table_init (&arsym_hash, archive_hash_newfunc,
+				 sizeof (struct archive_hash_entry)))
     return FALSE;
   for (arsym = arsyms, indx = 0; arsym < arsym_end; arsym++, indx++)
     {
@@ -2717,11 +2721,10 @@ default_indirect_link_order (bfd *output_bfd,
 
   BFD_ASSERT ((output_section->flags & SEC_HAS_CONTENTS) != 0);
 
-  if (link_order->size == 0)
-    return TRUE;
-
   input_section = link_order->u.indirect.section;
   input_bfd = input_section->owner;
+  if (input_section->size == 0)
+    return TRUE;
 
   BFD_ASSERT (input_section->output_section == output_section);
   BFD_ASSERT (input_section->output_offset == link_order->offset);
@@ -2810,9 +2813,9 @@ default_indirect_link_order (bfd *output_bfd,
     goto error_return;
 
   /* Output the section contents.  */
-  loc = link_order->offset * bfd_octets_per_byte (output_bfd);
+  loc = input_section->output_offset * bfd_octets_per_byte (output_bfd);
   if (! bfd_set_section_contents (output_bfd, output_section,
-				  new_contents, loc, link_order->size))
+				  new_contents, loc, input_section->size))
     goto error_return;
 
   if (contents != NULL)
@@ -2953,7 +2956,9 @@ bfd_boolean
 bfd_section_already_linked_table_init (void)
 {
   return bfd_hash_table_init_n (&_bfd_section_already_linked_table,
-				already_linked_newfunc, 42);
+				already_linked_newfunc,
+				sizeof (struct bfd_section_already_linked_hash_entry),
+				42);
 }
 
 void

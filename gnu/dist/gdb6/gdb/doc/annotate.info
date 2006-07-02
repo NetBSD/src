@@ -8,7 +8,8 @@ END-INFO-DIR-ENTRY
 
    This file documents GDB's obsolete annotations.
 
-   Copyright 1994, 1995, 2000, 2001, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 2000, 2001, 2003 Free Software Foundation,
+Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1 or
@@ -662,7 +663,7 @@ File: annotate.info,  Node: GNU Free Documentation License,  Prev: Source Annota
                       Version 1.2, November 2002
 
      Copyright (C) 2000,2001,2002 Free Software Foundation, Inc.
-     59 Temple Place, Suite 330, Boston, MA  02111-1307, USA
+     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -1088,20 +1089,20 @@ permit their use in free software.
 
 
 Tag Table:
-Node: Top759
-Node: Annotations Overview1858
-Node: Limitations3657
-Node: Migrating to GDB/MI6242
-Node: Server Prefix6625
-Node: Value Annotations7271
-Node: Frame Annotations10441
-Node: Displays14340
-Node: Prompting15371
-Node: Errors16874
-Node: Breakpoint Info17764
-Node: Invalidation18989
-Node: Annotations for Running19468
-Node: Source Annotations20981
-Node: GNU Free Documentation License21938
+Node: Top763
+Node: Annotations Overview1862
+Node: Limitations3661
+Node: Migrating to GDB/MI6246
+Node: Server Prefix6629
+Node: Value Annotations7275
+Node: Frame Annotations10445
+Node: Displays14344
+Node: Prompting15375
+Node: Errors16878
+Node: Breakpoint Info17768
+Node: Invalidation18993
+Node: Annotations for Running19472
+Node: Source Annotations20985
+Node: GNU Free Documentation License21942
 
 End Tag Table

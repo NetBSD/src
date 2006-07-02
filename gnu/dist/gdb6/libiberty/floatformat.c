@@ -1,5 +1,5 @@
 /* IEEE floating point support routines, for GDB, the GNU Debugger.
-   Copyright 1991, 1994, 1999, 2000, 2003, 2005
+   Copyright 1991, 1994, 1999, 2000, 2003, 2005, 2006
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -31,6 +31,11 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 #include <string.h>
 #endif
 
+/* On some platforms, <float.h> provides DBL_QNAN.  */
+#ifdef STDC_HEADERS
+#include <float.h>
+#endif
+
 #include "ansidecl.h"
 #include "libiberty.h"
 #include "floatformat.h"
@@ -44,7 +49,11 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 #endif
 
 #ifndef NAN
+#ifdef DBL_QNAN
+#define NAN DBL_QNAN
+#else
 #define NAN (0.0 / 0.0)
+#endif
 #endif
 
 static unsigned long get_field (const unsigned char *,
@@ -143,7 +152,7 @@ floatformat_i387_ext_is_valid (const struct floatformat *fmt, const void *from)
      nor ~0, the intbit must also be set.  Only if the exponent is
      zero can it be zero, and then it must be zero.  */
   unsigned long exponent, int_bit;
-  const unsigned char *ufrom = from;
+  const unsigned char *ufrom = (const unsigned char *) from;
 
   exponent = get_field (ufrom, fmt->byteorder, fmt->totalsize,
 			fmt->exp_start, fmt->exp_len);
@@ -295,7 +304,7 @@ void
 floatformat_to_double (const struct floatformat *fmt,
                        const void *from, double *to)
 {
-  const unsigned char *ufrom = from;
+  const unsigned char *ufrom = (const unsigned char *) from;
   double dto;
   long exponent;
   unsigned long mant;
@@ -385,7 +394,7 @@ floatformat_to_double (const struct floatformat *fmt,
 
       /* Handle denormalized numbers.  FIXME: What should we do for
 	 non-IEEE formats?  */
-      if (exponent == 0 && mant != 0)
+      if (special_exponent && exponent == 0 && mant != 0)
 	dto += ldexp ((double)mant,
 		      (- fmt->exp_bias
 		       - mant_bits
@@ -471,7 +480,7 @@ floatformat_from_double (const struct floatformat *fmt,
   double mant;
   unsigned int mant_bits, mant_off;
   int mant_bits_left;
-  unsigned char *uto = to;
+  unsigned char *uto = (unsigned char *) to;
 
   dfrom = *from;
   memset (uto, 0, fmt->totalsize / FLOATFORMAT_CHAR_BIT);

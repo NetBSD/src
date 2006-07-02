@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -640,7 +640,6 @@ xtensa_read_table_entries (bfd *abfd,
 	    {
 	      bfd_vma sym_off = get_elf_r_symndx_offset (abfd, r_symndx);
 	      BFD_ASSERT (sym_off == 0);
-	      BFD_ASSERT (rel->r_addend == 0);
 	      blocks[block_count].address =
 		(section_addr + sym_off + rel->r_addend
 		 + bfd_get_32 (abfd, table_data + rel->r_offset));
@@ -2384,7 +2383,7 @@ elf_xtensa_finish_dynamic_symbol (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
+      || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;
@@ -4756,6 +4755,19 @@ offset_with_removed_text (text_action_list *action_list, bfd_vma offset)
 }
 
 
+static unsigned
+action_list_count (text_action_list *action_list)
+{
+  text_action *r = action_list->head;
+  unsigned count = 0;
+  for (r = action_list->head; r != NULL; r = r->next)
+    {
+      count++;
+    }
+  return count;
+}
+
+
 static bfd_vma
 offset_with_removed_text_before_fill (text_action_list *action_list,
 				      bfd_vma offset)
@@ -4995,13 +5007,16 @@ struct elf_xtensa_section_data
 static bfd_boolean
 elf_xtensa_new_section_hook (bfd *abfd, asection *sec)
 {
-  struct elf_xtensa_section_data *sdata;
-  bfd_size_type amt = sizeof (*sdata);
+  if (!sec->used_by_bfd)
+    {
+      struct elf_xtensa_section_data *sdata;
+      bfd_size_type amt = sizeof (*sdata);
 
-  sdata = (struct elf_xtensa_section_data *) bfd_zalloc (abfd, amt);
-  if (sdata == NULL)
-    return FALSE;
-  sec->used_by_bfd = (void *) sdata;
+      sdata = bfd_zalloc (abfd, amt);
+      if (sdata == NULL)
+	return FALSE;
+      sec->used_by_bfd = sdata;
+    }
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -5754,7 +5769,8 @@ static bfd_boolean compute_text_actions
 static bfd_boolean compute_ebb_proposed_actions (ebb_constraint *);
 static bfd_boolean compute_ebb_actions (ebb_constraint *);
 static bfd_boolean check_section_ebb_pcrels_fit
-  (bfd *, asection *, bfd_byte *, Elf_Internal_Rela *, const ebb_constraint *);
+  (bfd *, asection *, bfd_byte *, Elf_Internal_Rela *, const ebb_constraint *,
+   const xtensa_opcode *);
 static bfd_boolean check_section_ebb_reduces (const ebb_constraint *);
 static void text_action_add_proposed
   (text_action_list *, const ebb_constraint *, asection *);
@@ -6290,6 +6306,24 @@ find_associated_l32r_irel (bfd *abfd,
 }
 
 
+static xtensa_opcode *
+build_reloc_opcodes (bfd *abfd,
+		     asection *sec,
+		     bfd_byte *contents,
+		     Elf_Internal_Rela *internal_relocs)
+{
+  unsigned i;
+  xtensa_opcode *reloc_opcodes =
+    (xtensa_opcode *) bfd_malloc (sizeof (xtensa_opcode) * sec->reloc_count);
+  for (i = 0; i < sec->reloc_count; i++)
+    {
+      Elf_Internal_Rela *irel = &internal_relocs[i];
+      reloc_opcodes[i] = get_relocation_opcode (abfd, sec, contents, irel);
+    }
+  return reloc_opcodes;
+}
+
+
 /* The compute_text_actions function will build a list of potential
    transformation actions for code in the extended basic block of each
    longcall that is optimized to a direct call.  From this list we
@@ -6306,6 +6340,7 @@ compute_text_actions (bfd *abfd,
 		      asection *sec,
 		      struct bfd_link_info *link_info)
 {
+  xtensa_opcode *reloc_opcodes = NULL;
   xtensa_relax_info *relax_info;
   bfd_byte *contents;
   Elf_Internal_Rela *internal_relocs;
@@ -6411,11 +6446,17 @@ compute_text_actions (bfd *abfd,
       ebb->start_reloc_idx = i;
       ebb->end_reloc_idx = i;
 
+      /* Precompute the opcode for each relocation.  */
+      if (reloc_opcodes == NULL)
+	reloc_opcodes = build_reloc_opcodes (abfd, sec, contents,
+					     internal_relocs);
+
       if (!extend_ebb_bounds (ebb)
 	  || !compute_ebb_proposed_actions (&ebb_table)
 	  || !compute_ebb_actions (&ebb_table)
 	  || !check_section_ebb_pcrels_fit (abfd, sec, contents,
-					    internal_relocs, &ebb_table)
+					    internal_relocs, &ebb_table,
+					    reloc_opcodes)
 	  || !check_section_ebb_reduces (&ebb_table))
 	{
 	  /* If anything goes wrong or we get unlucky and something does
@@ -6447,6 +6488,8 @@ error_return:
   release_internal_relocs (sec, internal_relocs);
   if (prop_table)
     free (prop_table);
+  if (reloc_opcodes)
+    free (reloc_opcodes);
 
   return ok;
 }
@@ -6851,6 +6894,160 @@ compute_ebb_actions (ebb_constraint *ebb_table)
 }
 
 
+/* The xlate_map is a sorted array of address mappings designed to
+   answer the offset_with_removed_text() query with a binary search instead
+   of a linear search through the section's action_list.  */
+
+typedef struct xlate_map_entry xlate_map_entry_t;
+typedef struct xlate_map xlate_map_t;
+
+struct xlate_map_entry
+{
+  unsigned orig_address;
+  unsigned new_address;
+  unsigned size;
+};
+
+struct xlate_map
+{
+  unsigned entry_count;
+  xlate_map_entry_t *entry;
+};
+
+
+static int 
+xlate_compare (const void *a_v, const void *b_v)
+{
+  const xlate_map_entry_t *a = (const xlate_map_entry_t *) a_v;
+  const xlate_map_entry_t *b = (const xlate_map_entry_t *) b_v;
+  if (a->orig_address < b->orig_address)
+    return -1;
+  if (a->orig_address > (b->orig_address + b->size - 1))
+    return 1;
+  return 0;
+}
+
+
+static bfd_vma
+xlate_offset_with_removed_text (const xlate_map_t *map,
+				text_action_list *action_list,
+				bfd_vma offset)
+{
+  xlate_map_entry_t tmp;
+  void *r;
+  xlate_map_entry_t *e;
+
+  if (map == NULL)
+    return offset_with_removed_text (action_list, offset);
+
+  if (map->entry_count == 0)
+    return offset;
+
+  tmp.orig_address = offset;
+  tmp.new_address = offset;
+  tmp.size = 1;
+
+  r = bsearch (&offset, map->entry, map->entry_count,
+	       sizeof (xlate_map_entry_t), &xlate_compare);
+  e = (xlate_map_entry_t *) r;
+  
+  BFD_ASSERT (e != NULL);
+  if (e == NULL)
+    return offset;
+  return e->new_address - e->orig_address + offset;
+}
+
+
+/* Build a binary searchable offset translation map from a section's
+   action list.  */
+
+static xlate_map_t *
+build_xlate_map (asection *sec, xtensa_relax_info *relax_info)
+{
+  xlate_map_t *map = (xlate_map_t *) bfd_malloc (sizeof (xlate_map_t));
+  text_action_list *action_list = &relax_info->action_list;
+  unsigned num_actions = 0;
+  text_action *r;
+  int removed;
+  xlate_map_entry_t *current_entry;
+
+  if (map == NULL)
+    return NULL;
+
+  num_actions = action_list_count (action_list);
+  map->entry = (xlate_map_entry_t *) 
+    bfd_malloc (sizeof (xlate_map_entry_t) * (num_actions + 1));
+  if (map->entry == NULL)
+    {
+      free (map);
+      return NULL;
+    }
+  map->entry_count = 0;
+  
+  removed = 0;
+  current_entry = &map->entry[0];
+
+  current_entry->orig_address = 0;
+  current_entry->new_address = 0;
+  current_entry->size = 0;
+
+  for (r = action_list->head; r != NULL; r = r->next)
+    {
+      unsigned orig_size = 0;
+      switch (r->action)
+	{
+	case ta_none:
+	case ta_remove_insn:
+	case ta_convert_longcall:
+	case ta_remove_literal:
+	case ta_add_literal:
+	  break;
+	case ta_remove_longcall:
+	  orig_size = 6;
+	  break;
+	case ta_narrow_insn:
+	  orig_size = 3;
+	  break;
+	case ta_widen_insn:
+	  orig_size = 2;
+	  break;
+	case ta_fill:
+	  break;
+	}
+      current_entry->size =
+	r->offset + orig_size - current_entry->orig_address;
+      if (current_entry->size != 0)
+	{
+	  current_entry++;
+	  map->entry_count++;
+	}
+      current_entry->orig_address = r->offset + orig_size;
+      removed += r->removed_bytes;
+      current_entry->new_address = r->offset + orig_size - removed;
+      current_entry->size = 0;
+    }
+
+  current_entry->size = (bfd_get_section_limit (sec->owner, sec)
+			 - current_entry->orig_address);
+  if (current_entry->size != 0)
+    map->entry_count++;
+
+  return map;
+}
+
+
+/* Free an offset translation map.  */
+
+static void 
+free_xlate_map (xlate_map_t *map)
+{
+  if (map && map->entry)
+    free (map->entry);
+  if (map)
+    free (map);
+}
+
+
 /* Use check_section_ebb_pcrels_fit to make sure that all of the
    relocations in a section will fit if a proposed set of actions
    are performed.  */
@@ -6860,13 +7057,23 @@ check_section_ebb_pcrels_fit (bfd *abfd,
 			      asection *sec,
 			      bfd_byte *contents,
 			      Elf_Internal_Rela *internal_relocs,
-			      const ebb_constraint *constraint)
+			      const ebb_constraint *constraint,
+			      const xtensa_opcode *reloc_opcodes)
 {
   unsigned i, j;
   Elf_Internal_Rela *irel;
+  xlate_map_t *xmap = NULL;
+  bfd_boolean ok = TRUE;
   xtensa_relax_info *relax_info;
 
   relax_info = get_xtensa_relax_info (sec);
+
+  if (relax_info && sec->reloc_count > 100)
+    {
+      xmap = build_xlate_map (sec, relax_info);
+      /* NULL indicates out of memory, but the slow version
+	 can still be used.  */
+    }
 
   for (i = 0; i < sec->reloc_count; i++)
     {
@@ -6903,10 +7110,12 @@ check_section_ebb_pcrels_fit (bfd *abfd,
 
       if (relax_info)
 	{
-	  self_offset = offset_with_removed_text (&relax_info->action_list,
-						  orig_self_offset);
-	  target_offset = offset_with_removed_text (&relax_info->action_list,
-						    orig_target_offset);
+	  self_offset =
+	    xlate_offset_with_removed_text (xmap, &relax_info->action_list,
+					    orig_self_offset);
+	  target_offset =
+	    xlate_offset_with_removed_text (xmap, &relax_info->action_list,
+					    orig_target_offset);
 	}
 
       self_removed_bytes = 0;
@@ -6940,20 +7149,35 @@ check_section_ebb_pcrels_fit (bfd *abfd,
 	  xtensa_opcode opcode;
 	  int opnum;
 
-	  opcode = get_relocation_opcode (abfd, sec, contents, irel);
+	  if (reloc_opcodes)
+	    opcode = reloc_opcodes[i];
+	  else
+	    opcode = get_relocation_opcode (abfd, sec, contents, irel);
 	  if (opcode == XTENSA_UNDEFINED)
-	    return FALSE;
+	    {
+	      ok = FALSE;
+	      break;
+	    }
 
 	  opnum = get_relocation_opnd (opcode, ELF32_R_TYPE (irel->r_info));
 	  if (opnum == XTENSA_UNDEFINED)
-	    return FALSE;
+	    {
+	      ok = FALSE;
+	      break;
+	    }
 
 	  if (!pcrel_reloc_fits (opcode, opnum, self_offset, target_offset))
-	    return FALSE;
+	    {
+	      ok = FALSE;
+	      break;
+	    }
 	}
     }
 
-  return TRUE;
+  if (xmap)
+    free_xlate_map (xmap);
+
+  return ok;
 }
 
 
@@ -7625,7 +7849,7 @@ move_shared_literal (asection *sec,
   relocs_fit = check_section_ebb_pcrels_fit (target_sec->owner, target_sec, 
 					     target_sec_cache->contents,
 					     target_sec_cache->relocs,
-					     &ebb_table);
+					     &ebb_table, NULL);
 
   if (!relocs_fit) 
     return FALSE;

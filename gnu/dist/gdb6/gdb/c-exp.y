@@ -1,6 +1,6 @@
 /* YACC parser for C expressions, for GDB.
-   Copyright 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2003, 2004
+   Copyright (C) 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
+   1998, 1999, 2000, 2003, 2004, 2006
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -17,7 +17,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 /* Parse a C expression from text in a string,
    and return the result as a  struct expression  pointer.
@@ -1079,24 +1080,8 @@ parse_number (p, len, parsed_float, putithere)
       char saved_char = p[len];
 
       p[len] = 0;	/* null-terminate the token */
-
-      if (sizeof (putithere->typed_val_float.dval) <= sizeof (float))
-	num = sscanf (p, "%g%s", (float *) &putithere->typed_val_float.dval,s);
-      else if (sizeof (putithere->typed_val_float.dval) <= sizeof (double))
-	num = sscanf (p, "%lg%s", (double *) &putithere->typed_val_float.dval,s);
-      else
-	{
-#ifdef SCANF_HAS_LONG_DOUBLE
-	  num = sscanf (p, "%Lg%s", &putithere->typed_val_float.dval,s);
-#else
-	  /* Scan it into a double, then assign it to the long double.
-	     This at least wins with values representable in the range
-	     of doubles. */
-	  double temp;
-	  num = sscanf (p, "%lg%s", &temp,s);
-	  putithere->typed_val_float.dval = temp;
-#endif
-	}
+      num = sscanf (p, DOUBLEST_SCAN_FORMAT "%s",
+		    &putithere->typed_val_float.dval, s);
       p[len] = saved_char;	/* restore the input stream */
 
       if (num == 1)

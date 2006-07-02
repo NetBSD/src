@@ -33,10 +33,6 @@
 
 #define PTRACE_XFER_TYPE long
 
-/* The alpha does not step over a breakpoint, the manpage is lying again.  */
-
-#define CANNOT_STEP_BREAKPOINT 1
-
 /* Support for shared libraries.  */
 
 #include "solib.h"

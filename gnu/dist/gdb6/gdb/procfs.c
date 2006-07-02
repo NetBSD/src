@@ -1,6 +1,6 @@
 /* Machine independent support for SVR4 /proc (process file system) for GDB.
 
-   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2006 Free Software Foundation,
    Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
@@ -20,7 +20,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software Foundation,
-Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -3374,7 +3375,7 @@ static void remove_dbx_link_breakpoint (void);
    the address of the breakpoint, and the code that was replaced by
    a breakpoint.  */
 static int dbx_link_bpt_addr = 0;
-static char dbx_link_shadow_contents[BREAKPOINT_MAX];
+static void *dbx_link_bpt;
 
 /*
  * Function: procfs_debug_inferior
@@ -4776,6 +4777,14 @@ procfs_mourn_inferior (void)
 	destroy_procinfo (pi);
     }
   unpush_target (&procfs_ops);
+
+  if (dbx_link_bpt != NULL)
+    {
+      deprecated_remove_raw_breakpoint (dbx_link_bpt);
+      dbx_link_bpt_addr = 0;
+      dbx_link_bpt = NULL;
+    }
+
   generic_mourn_inferior ();
 }
 
@@ -4885,7 +4894,6 @@ procfs_init_inferior (int pid)
      has been inserted, the syssgi() notifications are no longer necessary,
      so they should be canceled.  */
   proc_trace_syscalls_1 (pi, SYS_syssgi, PR_SYSEXIT, FLAG_SET, 0);
-  dbx_link_bpt_addr = 0;
 #endif
 }
 
@@ -5102,11 +5110,6 @@ procfs_create_inferior (char *exec_file, char *allargs, char **env,
   proc_trace_syscalls_1 (find_procinfo_or_die (PIDGET (inferior_ptid), 0),
                          SYS_syssgi, PR_SYSEXIT, FLAG_RESET, 0);
 #endif
-  
-  /* We are at the first instruction we care about.  */
-  /* Pedal to the metal... */
-
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
 
 /*
@@ -5575,11 +5578,11 @@ remove_dbx_link_breakpoint (void)
   if (dbx_link_bpt_addr == 0)
     return;
 
-  if (memory_remove_breakpoint (dbx_link_bpt_addr,
-                                dbx_link_shadow_contents) != 0)
+  if (deprecated_remove_raw_breakpoint (dbx_link_bpt) != 0)
     warning (_("Unable to remove __dbx_link breakpoint."));
 
   dbx_link_bpt_addr = 0;
+  dbx_link_bpt = NULL;
 }
 
 /* Return the address of the __dbx_link() function in the file
@@ -5647,7 +5650,8 @@ insert_dbx_link_bpt_in_file (int fd, CORE_ADDR ignored)
     {
       /* Insert the breakpoint.  */
       dbx_link_bpt_addr = sym_addr;
-      if (target_insert_breakpoint (sym_addr, dbx_link_shadow_contents) != 0)
+      dbx_link_bpt = deprecated_insert_raw_breakpoint (sym_addr);
+      if (dbx_link_bpt == NULL)
         {
           warning (_("Failed to insert dbx_link breakpoint."));
           bfd_close (abfd);

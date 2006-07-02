@@ -41,7 +41,7 @@ if [istarget "alpha*-*-*"] then {
     lappend options "additional_flags=-Wl,-taso"
 }
 
-if [istarget "ia64*-*-*"] then {
+if {[istarget "ia64*-*-*"] || [istarget "hppa64-*-*"]} then {
     set is64bitonly "yes"
 }
 

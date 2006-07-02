@@ -1,7 +1,7 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright 1999, 2000, 2001, 2002, 2003, 2005 Free Software
-   Foundation, Inc.
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "target.h"
@@ -31,9 +31,13 @@
 #include "doublest.h"
 #include "solib-svr4.h"
 #include "osabi.h"
+#include "trad-frame.h"
+#include "tramp-frame.h"
 
 #include "arm-tdep.h"
 #include "glibc-tdep.h"
+
+#include "gdb_string.h"
 
 /* Under ARM GNU/Linux the traditional way of performing a breakpoint
    is to execute a particular software interrupt, rather than use a
@@ -75,8 +79,8 @@ static const char arm_linux_thumb_le_breakpoint[] = {0x01, 0xde};
    hidden behind the regcache abstraction.  */
 static void
 arm_linux_extract_return_value (struct type *type,
-				char regbuf[],
-				char *valbuf)
+				gdb_byte regbuf[],
+				gdb_byte *valbuf)
 {
   /* ScottB: This needs to be looked at to handle the different
      floating point emulators on ARM GNU/Linux.  Right now the code
@@ -208,49 +212,6 @@ arm_linux_extract_return_value (struct type *type,
    with.  Before the fixup/resolver code returns, it actually calls
    the requested function and repairs &GOT[n+3].  */
 
-/* Fetch, and possibly build, an appropriate link_map_offsets structure
-   for ARM linux targets using the struct offsets defined in <link.h>.
-   Note, however, that link.h is not actually referred to in this file.
-   Instead, the relevant structs offsets were obtained from examining
-   link.h.  (We can't refer to link.h from this file because the host
-   system won't necessarily have it, or if it does, the structs which
-   it defines will refer to the host system, not the target).  */
-
-static struct link_map_offsets *
-arm_linux_svr4_fetch_link_map_offsets (void)
-{
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = 0;
-
-  if (lmp == 0)
-    {
-      lmp = &lmo;
-
-      lmo.r_debug_size = 8;	/* Actual size is 20, but this is all we
-                                   need.  */
-
-      lmo.r_map_offset = 4;
-      lmo.r_map_size   = 4;
-
-      lmo.link_map_size = 20;	/* Actual size is 552, but this is all we
-                                   need.  */
-
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 4;
-
-      lmo.l_name_offset = 4;
-      lmo.l_name_size   = 4;
-
-      lmo.l_next_offset = 12;
-      lmo.l_next_size   = 4;
-
-      lmo.l_prev_offset = 16;
-      lmo.l_prev_size   = 4;
-    }
-
-    return lmp;
-}
-
 /* The constants below were determined by examining the following files
    in the linux kernel sources:
 
@@ -262,76 +223,97 @@ arm_linux_svr4_fetch_link_map_offsets (void)
 #define ARM_LINUX_SIGRETURN_INSTR	0xef900077
 #define ARM_LINUX_RT_SIGRETURN_INSTR	0xef9000ad
 
-/* arm_linux_in_sigtramp determines if PC points at one of the
-   instructions which cause control to return to the Linux kernel upon
-   return from a signal handler.  FUNC_NAME is unused.  */
+/* For ARM EABI, recognize the pattern that glibc uses...  alternatively,
+   we could arrange to do this by function name, but they are not always
+   exported.  */
+#define ARM_SET_R7_SIGRETURN		0xe3a07077
+#define ARM_SET_R7_RT_SIGRETURN		0xe3a070ad
+#define ARM_EABI_SYSCALL		0xef000000
 
-int
-arm_linux_in_sigtramp (CORE_ADDR pc, char *func_name)
+static void
+arm_linux_sigtramp_cache (struct frame_info *next_frame,
+			  struct trad_frame_cache *this_cache,
+			  CORE_ADDR func, int regs_offset)
 {
-  unsigned long inst;
+  CORE_ADDR sp = frame_unwind_register_unsigned (next_frame, ARM_SP_REGNUM);
+  CORE_ADDR base = sp + regs_offset;
+  int i;
 
-  inst = read_memory_integer (pc, 4);
+  for (i = 0; i < 16; i++)
+    trad_frame_set_reg_addr (this_cache, i, base + i * 4);
 
-  return (inst == ARM_LINUX_SIGRETURN_INSTR
-	  || inst == ARM_LINUX_RT_SIGRETURN_INSTR);
+  trad_frame_set_reg_addr (this_cache, ARM_PS_REGNUM, base + 16 * 4);
 
+  /* The VFP or iWMMXt registers may be saved on the stack, but there's
+     no reliable way to restore them (yet).  */
+
+  /* Save a frame ID.  */
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
 
-/* arm_linux_sigcontext_register_address returns the address in the
-   sigcontext of register REGNO given a stack pointer value SP and
-   program counter value PC.  The value 0 is returned if PC is not
-   pointing at one of the signal return instructions or if REGNO is
-   not saved in the sigcontext struct.  */
-
-CORE_ADDR
-arm_linux_sigcontext_register_address (CORE_ADDR sp, CORE_ADDR pc, int regno)
+static void
+arm_linux_sigreturn_init (const struct tramp_frame *self,
+			  struct frame_info *next_frame,
+			  struct trad_frame_cache *this_cache,
+			  CORE_ADDR func)
 {
-  unsigned long inst;
-  CORE_ADDR reg_addr = 0;
-
-  inst = read_memory_integer (pc, 4);
-
-  if (inst == ARM_LINUX_SIGRETURN_INSTR
-      || inst == ARM_LINUX_RT_SIGRETURN_INSTR)
-    {
-      CORE_ADDR sigcontext_addr;
-
-      /* The sigcontext structure is at different places for the two
-         signal return instructions.  For ARM_LINUX_SIGRETURN_INSTR,
-	 it starts at the SP value.  For ARM_LINUX_RT_SIGRETURN_INSTR,
-	 it is at SP+8.  For the latter instruction, it may also be
-	 the case that the address of this structure may be determined
-	 by reading the 4 bytes at SP, but I'm not convinced this is
-	 reliable.
-
-	 In any event, these magic constants (0 and 8) may be
-	 determined by examining struct sigframe and struct
-	 rt_sigframe in arch/arm/kernel/signal.c in the Linux kernel
-	 sources.  */
-
-      if (inst == ARM_LINUX_RT_SIGRETURN_INSTR)
-	sigcontext_addr = sp + 8;
-      else /* inst == ARM_LINUX_SIGRETURN_INSTR */
-        sigcontext_addr = sp + 0;
-
-      /* The layout of the sigcontext structure for ARM GNU/Linux is
-         in include/asm-arm/sigcontext.h in the Linux kernel sources.
-
-	 There are three 4-byte fields which precede the saved r0
-	 field.  (This accounts for the 12 in the code below.)  The
-	 sixteen registers (4 bytes per field) follow in order.  The
-	 PSR value follows the sixteen registers which accounts for
-	 the constant 19 below. */
-
-      if (0 <= regno && regno <= ARM_PC_REGNUM)
-	reg_addr = sigcontext_addr + 12 + (4 * regno);
-      else if (regno == ARM_PS_REGNUM)
-	reg_addr = sigcontext_addr + 19 * 4;
-    }
-
-  return reg_addr;
+  arm_linux_sigtramp_cache (next_frame, this_cache, func,
+			    0x0c /* Offset to registers.  */);
 }
+
+static void
+arm_linux_rt_sigreturn_init (const struct tramp_frame *self,
+			  struct frame_info *next_frame,
+			  struct trad_frame_cache *this_cache,
+			  CORE_ADDR func)
+{
+  arm_linux_sigtramp_cache (next_frame, this_cache, func,
+			    0x88 /* Offset to ucontext_t.  */
+			    + 0x14 /* Offset to sigcontext.  */
+			    + 0x0c /* Offset to registers.  */);
+}
+
+static struct tramp_frame arm_linux_sigreturn_tramp_frame = {
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { ARM_LINUX_SIGRETURN_INSTR, -1 },
+    { TRAMP_SENTINEL_INSN }
+  },
+  arm_linux_sigreturn_init
+};
+
+static struct tramp_frame arm_linux_rt_sigreturn_tramp_frame = {
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { ARM_LINUX_RT_SIGRETURN_INSTR, -1 },
+    { TRAMP_SENTINEL_INSN }
+  },
+  arm_linux_rt_sigreturn_init
+};
+
+static struct tramp_frame arm_eabi_linux_sigreturn_tramp_frame = {
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { ARM_SET_R7_SIGRETURN, -1 },
+    { ARM_EABI_SYSCALL, -1 },
+    { TRAMP_SENTINEL_INSN }
+  },
+  arm_linux_sigreturn_init
+};
+
+static struct tramp_frame arm_eabi_linux_rt_sigreturn_tramp_frame = {
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { ARM_SET_R7_RT_SIGRETURN, -1 },
+    { ARM_EABI_SYSCALL, -1 },
+    { TRAMP_SENTINEL_INSN }
+  },
+  arm_linux_rt_sigreturn_init
+};
 
 static void
 arm_linux_init_abi (struct gdbarch_info info,
@@ -366,7 +348,7 @@ arm_linux_init_abi (struct gdbarch_info info,
   tdep->jb_elt_size = ARM_LINUX_JB_ELEMENT_SIZE;
 
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, arm_linux_svr4_fetch_link_map_offsets);
+    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
   /* The following override shouldn't be needed.  */
   set_gdbarch_deprecated_extract_return_value (gdbarch, arm_linux_extract_return_value);
@@ -378,6 +360,15 @@ arm_linux_init_abi (struct gdbarch_info info,
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
+
+  tramp_frame_prepend_unwinder (gdbarch,
+				&arm_linux_sigreturn_tramp_frame);
+  tramp_frame_prepend_unwinder (gdbarch,
+				&arm_linux_rt_sigreturn_tramp_frame);
+  tramp_frame_prepend_unwinder (gdbarch,
+				&arm_eabi_linux_sigreturn_tramp_frame);
+  tramp_frame_prepend_unwinder (gdbarch,
+				&arm_eabi_linux_rt_sigreturn_tramp_frame);
 }
 
 void

@@ -1,6 +1,6 @@
 /* Declarations for value printing routines for GDB, the GNU debugger.
 
-   Copyright 1986, 1988, 1989, 1991, 1992, 1993, 1994, 2000, 2005 Free
+   Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993, 1994, 2000, 2005 Free
    Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef VALPRINT_H
 #define VALPRINT_H
@@ -65,6 +65,10 @@ extern void val_print_array_elements (struct type *, const gdb_byte *,
 
 extern void val_print_type_code_int (struct type *, const gdb_byte *,
 				     struct ui_file *);
+
+extern void val_print_type_code_flags (struct type *type,
+				       const gdb_byte *valaddr,
+				       struct ui_file *stream);
 
 extern void print_binary_chars (struct ui_file *, const gdb_byte *,
 				unsigned int);

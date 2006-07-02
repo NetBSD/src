@@ -1183,7 +1183,7 @@ proc skip_altivec_tests {} {
     }
 
     # Make sure we have a compiler that understands altivec.
-    set compile_flags {debug additional_flags=-w}
+    set compile_flags {debug nowarnings}
     if [get_compiler_info not-used] {
        warning "Could not get compiler info"
        return 1
@@ -1495,6 +1495,18 @@ proc gdb_compile {source dest type options} {
 	    [info exists gdb_wrapper_file]} {
 	lappend options "libs=${gdb_wrapper_file}"
 	lappend options "ldflags=${gdb_wrapper_flags}"
+    }
+
+    # Replace the "nowarnings" option with the appropriate additional_flags
+    # to disable compiler warnings.
+    set nowarnings [lsearch -exact $options nowarnings]
+    if {$nowarnings != -1} {
+	if [target_info exists gdb,nowarnings_flag] {
+	    set flag "additional_flags=[target_info gdb,nowarnings_flag]"
+	} else {
+	    set flag "additional_flags=-w"
+	}
+	set options [lreplace $options $nowarnings $nowarnings $flag]
     }
 
     set result [target_compile $source $dest $type $options];

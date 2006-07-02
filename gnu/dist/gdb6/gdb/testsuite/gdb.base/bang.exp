@@ -25,7 +25,7 @@ set testfile "args"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/bang!
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -38,7 +38,7 @@ gdb_load ${binfile}
 
 gdb_run_cmd
 gdb_expect {
-    -re ".*Program exited normally\.\r\n$gdb_prompt $" {
+    -re ".*Program exited normally.*$gdb_prompt $" {
         pass "run program"
     }
     timeout {

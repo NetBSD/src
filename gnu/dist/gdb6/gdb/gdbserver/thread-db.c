@@ -1,5 +1,5 @@
 /* Thread management interface, for the remote server for GDB.
-   Copyright 2002, 2004, 2005
+   Copyright (C) 2002, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "server.h"
 
@@ -31,19 +31,7 @@ extern int debug_threads;
 #include <thread_db.h>
 #endif
 
-/* Correct for all GNU/Linux targets (for quite some time).  */
-#define GDB_GREGSET_T elf_gregset_t
-#define GDB_FPREGSET_T elf_fpregset_t
-
-#ifndef HAVE_ELF_FPREGSET_T
-/* Make sure we have said types.  Not all platforms bring in <linux/elf.h>
-   via <sys/procfs.h>.  */
-#ifdef HAVE_LINUX_ELF_H
-#include <linux/elf.h>
-#endif
-#endif
-
-#include "../gdb_proc_service.h"
+#include "gdb_proc_service.h"
 
 /* Structure that identifies the child process for the
    <proc_service.h> interface.  */

@@ -1346,14 +1346,24 @@ static const template i386_optab[] =
 {"hsubps",    2, 0xf20f7d,  X, CpuPNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
 {"lddqu",     2, 0xf20ff0,  X, CpuPNI, NoSuf|IgnoreSize|Modrm,	{ LLongMem, RegXMM, 0 } },
 {"monitor",   0, 0x0f01, 0xc8, CpuPNI, NoSuf|ImmExt,	{ 0, 0, 0} },
-/* Need to ensure only "monitor %eax,%ecx,%edx" is accepted. */
-{"monitor",   3, 0x0f01, 0xc8, CpuPNI, NoSuf|ImmExt,	{ Reg32, Reg32, Reg32} },
+/* monitor is very special. CX and DX are always 64bits with zero upper
+   32bits in 64bit mode, and 32bits in 16bit and 32bit modes. The
+   address size override prefix can be used to overrride the AX size in
+   all modes.  */
+/* Need to ensure only "monitor %eax/%ax,%ecx,%edx" is accepted. */
+{"monitor",   3, 0x0f01, 0xc8, CpuPNI|CpuNo64, NoSuf|ImmExt,	{ Reg16|Reg32, Reg32, Reg32 } },
+/* Need to ensure only "monitor %rax/%eax,%rcx,%rdx" is accepted. */
+{"monitor",   3, 0x0f01, 0xc8, CpuPNI|Cpu64, NoSuf|ImmExt|NoRex64,	{ Reg32|Reg64, Reg64, Reg64 } },
 {"movddup",   2, 0xf20f12,  X, CpuPNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
 {"movshdup",  2, 0xf30f16,  X, CpuPNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
 {"movsldup",  2, 0xf30f12,  X, CpuPNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
 {"mwait",     0, 0x0f01, 0xc9, CpuPNI, NoSuf|ImmExt,	{ 0, 0, 0} },
+/* mwait is very special. AX and CX are always 64bits with zero upper
+   32bits in 64bit mode, and 32bits in 16bit and 32bit modes.  */
 /* Need to ensure only "mwait %eax,%ecx" is accepted.  */
-{"mwait",     2, 0x0f01, 0xc9, CpuPNI, NoSuf|ImmExt,	{ Reg32, Reg32, 0} },
+{"mwait",     2, 0x0f01, 0xc9, CpuPNI|CpuNo64, NoSuf|ImmExt,	{ Reg32, Reg32, 0} },
+/* Need to ensure only "mwait %rax,%rcx" is accepted.  */
+{"mwait",     2, 0x0f01, 0xc9, CpuPNI|Cpu64, NoSuf|ImmExt|NoRex64,	{ Reg64, Reg64, 0} },
 
 /* VMX instructions.  */
 {"vmcall",    0, 0x0f01, 0xc1, CpuVMX, NoSuf|ImmExt,	{ 0, 0, 0} },
@@ -1368,6 +1378,41 @@ static const template i386_optab[] =
 {"vmwrite",   2, 0x0f79,    X, CpuVMX|Cpu64, q_Suf|Modrm|NoRex64,{ Reg64|LLongMem, Reg64, 0} },
 {"vmxoff",    0, 0x0f01, 0xc4, CpuVMX, NoSuf|ImmExt,	{ 0, 0, 0} },
 {"vmxon",     1, 0xf30fc7,  6, CpuVMX, NoSuf|IgnoreSize|Modrm|NoRex64,	{ LLongMem, 0, 0} },
+
+/* Merom New Instructions.  */
+
+{"phaddw",    2,   0x0f3801,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"phaddw",    2, 0x660f3801,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"phaddd",    2,   0x0f3802,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"phaddd",    2, 0x660f3802,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"phaddsw",   2,   0x0f3803,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"phaddsw",   2, 0x660f3803,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"phsubw",    2,   0x0f3805,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"phsubw",    2, 0x660f3805,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"phsubd",    2,   0x0f3806,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"phsubd",    2, 0x660f3806,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"phsubsw",   2,   0x0f3807,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"phsubsw",   2, 0x660f3807,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"pmaddubsw", 2,   0x0f3804,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"pmaddubsw", 2, 0x660f3804,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"pmulhrsw", 2,    0x0f380b,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"pmulhrsw", 2,  0x660f380b,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"pshufb",   2,    0x0f3800,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"pshufb",   2,  0x660f3800,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"psignb",   2,    0x0f3808,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"psignb",   2,  0x660f3808,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"psignw",   2,    0x0f3809,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"psignw",   2,  0x660f3809,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"psignd",   2,    0x0f380a,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"psignd",   2,  0x660f380a,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"palignr",  3,    0x0f3a0f,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ Imm8, RegMMX|LongMem, RegMMX } },
+{"palignr",  3,  0x660f3a0f,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ Imm8, RegXMM|LLongMem, RegXMM } },
+{"pabsb",    2,    0x0f381c,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"pabsb",    2,  0x660f381c,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"pabsw",    2,    0x0f381d,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"pabsw",    2,  0x660f381d,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"pabsd",    2,    0x0f381e,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"pabsd",    2,  0x660f381e,X, CpuMNI, NoSuf|IgnoreSize|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
 
 /* AMD 3DNow! instructions.  */
 

@@ -1,5 +1,6 @@
 /* S390 native-dependent code for GDB, the GNU debugger.
-   Copyright 2001, 2003, 2004, 2005 Free Software Foundation, Inc
+   Copyright (C) 2001, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -18,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "tm.h"
@@ -310,7 +311,7 @@ s390_fix_watch_points (void)
 }
 
 static int
-s390_insert_watchpoint (CORE_ADDR addr, int len)
+s390_insert_watchpoint (CORE_ADDR addr, int len, int type)
 {
   struct watch_area *area = xmalloc (sizeof (struct watch_area));
   if (!area)
@@ -327,7 +328,7 @@ s390_insert_watchpoint (CORE_ADDR addr, int len)
 }
 
 static int
-s390_remove_watchpoint (CORE_ADDR addr, int len)
+s390_remove_watchpoint (CORE_ADDR addr, int len, int type)
 {
   struct watch_area *area, **parea;
 
@@ -358,7 +359,7 @@ s390_can_use_hw_breakpoint (int type, int cnt, int othertype)
 }
 
 static int
-s390_region_size_ok_for_hw_watchpoint (int cnt)
+s390_region_ok_for_hw_watchpoint (CORE_ADDR addr, int cnt)
 {
   return 1;
 }
@@ -380,12 +381,12 @@ _initialize_s390_nat (void)
 
   /* Add our watchpoint methods.  */
   t->to_can_use_hw_breakpoint = s390_can_use_hw_breakpoint;
-  t->to_region_size_ok_for_hw_watchpoint = s390_region_size_ok_for_hw_watchpoint;
+  t->to_region_ok_for_hw_watchpoint = s390_region_ok_for_hw_watchpoint;
   t->to_have_continuable_watchpoint = 1;
   t->to_stopped_by_watchpoint = s390_stopped_by_watchpoint;
   t->to_insert_watchpoint = s390_insert_watchpoint;
   t->to_remove_watchpoint = s390_remove_watchpoint;
 
   /* Register the target.  */
-  add_target (t);
+  linux_nat_add_target (t);
 }

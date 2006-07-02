@@ -1,6 +1,6 @@
 /* Target-dependent code for the ALPHA architecture, for GDB, the GNU Debugger.
 
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "doublest.h"
@@ -1493,8 +1493,6 @@ void
 alpha_software_single_step (enum target_signal sig, int insert_breakpoints_p)
 {
   static CORE_ADDR next_pc;
-  typedef char binsn_quantum[BREAKPOINT_MAX];
-  static binsn_quantum break_mem;
   CORE_ADDR pc;
 
   if (insert_breakpoints_p)
@@ -1502,11 +1500,11 @@ alpha_software_single_step (enum target_signal sig, int insert_breakpoints_p)
       pc = read_pc ();
       next_pc = alpha_next_pc (pc);
 
-      target_insert_breakpoint (next_pc, break_mem);
+      insert_single_step_breakpoint (next_pc);
     }
   else
     {
-      target_remove_breakpoint (next_pc, break_mem);
+      remove_single_step_breakpoints ();
       write_pc (next_pc);
     }
 }
@@ -1609,6 +1607,7 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_breakpoint_from_pc (gdbarch, alpha_breakpoint_from_pc);
   set_gdbarch_decr_pc_after_break (gdbarch, 4);
+  set_gdbarch_cannot_step_breakpoint (gdbarch, 1);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);

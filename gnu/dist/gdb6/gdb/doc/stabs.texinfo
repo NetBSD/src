@@ -13,7 +13,7 @@
 @ifinfo
 This document describes the stabs debugging symbol tables.
 
-Copyright 1992,1993,1994,1995,1997,1998,2000,2001
+Copyright (C) 1992,1993,1994,1995,1997,1998,2000,2001
    Free Software Foundation, Inc.
 Contributed by Cygnus Support.  Written by Julia Menapace, Jim Kingdon,
 and David MacKenzie.
@@ -35,7 +35,7 @@ Free Documentation License''.
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.1.1.1 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.1.1.2 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par

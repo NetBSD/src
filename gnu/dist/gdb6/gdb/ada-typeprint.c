@@ -1,5 +1,5 @@
 /* Support for printing Ada types for GDB, the GNU debugger.
-   Copyright 1986, 1988, 1989, 1991, 1997, 1998, 1999, 2000, 
+   Copyright (C) 1986, 1988, 1989, 1991, 1997, 1998, 1999, 2000, 
    2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -16,7 +16,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_obstack.h"
@@ -160,7 +161,7 @@ print_range (struct type *type, struct ui_file *stream)
          than 2, just print the type name instead of the range itself.
          This check handles cases such as characters, for example.
 
-         Note that if the name is not defined, then we don't print anything.
+         If the name is not defined, then we don't print anything.
        */
       fprintf_filtered (stream, "%.*s",
 			ada_name_prefix_len (TYPE_NAME (type)),
@@ -379,7 +380,7 @@ print_array_type (struct type *type, struct ui_file *stream, int show,
 	type = ada_coerce_to_simple_array_type (type);
       if (type == NULL)
         {
-          fprintf_filtered (stream, "<undecipherable array type>");
+          fprintf_filtered (stream, _("<undecipherable array type>"));
           return;
         }
       if (ada_is_simple_array_type (type))
@@ -812,7 +813,7 @@ ada_print_type (struct type *type0, char *varstring, struct ui_file *stream,
 	  {
 	    char *name = ada_type_name (type);
 	    if (!ada_is_range_type_name (name))
-	      fprintf_filtered (stream, "<%d-byte integer>",
+	      fprintf_filtered (stream, _("<%d-byte integer>"),
 				TYPE_LENGTH (type));
 	    else
 	      {
@@ -827,7 +828,8 @@ ada_print_type (struct type *type0, char *varstring, struct ui_file *stream,
 	else if (ada_is_vax_floating_type (type))
 	  print_vax_floating_point_type (type, stream);
 	else if (ada_is_modular_type (type))
-	  fprintf_filtered (stream, "mod %ld", (long) ada_modulus (type));
+	  fprintf_filtered (stream, "mod %s", 
+			    int_string (ada_modulus (type), 10, 0, 0, 1));
 	else
 	  {
 	    fprintf_filtered (stream, "range ");
@@ -835,7 +837,7 @@ ada_print_type (struct type *type0, char *varstring, struct ui_file *stream,
 	  }
 	break;
       case TYPE_CODE_FLT:
-	fprintf_filtered (stream, "<%d-byte float>", TYPE_LENGTH (type));
+	fprintf_filtered (stream, _("<%d-byte float>"), TYPE_LENGTH (type));
 	break;
       case TYPE_CODE_ENUM:
 	if (show < 0)
@@ -848,7 +850,7 @@ ada_print_type (struct type *type0, char *varstring, struct ui_file *stream,
 	  print_array_type (type, stream, show, level);
 	else if (ada_is_bogus_array_descriptor (type))
 	  fprintf_filtered (stream,
-			    "array (?) of ? (<mal-formed descriptor>)");
+			    _("array (?) of ? (<mal-formed descriptor>)"));
 	else
 	  print_record_type (type, stream, show, level);
 	break;

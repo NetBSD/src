@@ -1,6 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   Copyright (C) 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
    1997, 1998, 1999, 2000, 2001, 2004, 2005 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Parse an expression from text in a string,
    and return the result as a  struct expression  pointer.
@@ -52,6 +52,7 @@
 #include "doublest.h"
 #include "gdb_assert.h"
 #include "block.h"
+#include "source.h"
 
 /* Standard set of definitions for printing, dumping, prefixifying,
  * and evaluating expressions.  */
@@ -1075,13 +1076,27 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
   old_chain = make_cleanup (free_funcalls, 0 /*ignore*/);
   funcall_chain = 0;
 
+  /* If no context specified, try using the current frame, if any. */
+
+  if (!block)
+    block = get_selected_block (&expression_context_pc);
+
+  /* Fall back to using the current source static context, if any. */
+
+  if (!block)
+    {
+      struct symtab_and_line cursal = get_current_source_symtab_and_line ();
+      if (cursal.symtab)
+	block = BLOCKVECTOR_BLOCK (BLOCKVECTOR (cursal.symtab), STATIC_BLOCK);
+    }
+
+  /* Save the context, if specified by caller, or found above. */
+
   if (block)
     {
       expression_context_block = block;
       expression_context_pc = BLOCK_START (block);
     }
-  else
-    expression_context_block = get_selected_block (&expression_context_pc);
 
   expout_size = 10;
   expout_ptr = 0;

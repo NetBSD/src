@@ -1,6 +1,6 @@
 /* Definitions for values of C expressions, for GDB.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (VALUE_H)
 #define VALUE_H 1
@@ -245,6 +245,7 @@ struct internalvar
   struct internalvar *next;
   char *name;
   struct value *value;
+  int endian;
 };
 
 
@@ -502,9 +503,7 @@ extern void typedef_print (struct type *type, struct symbol *news,
 
 extern char *internalvar_name (struct internalvar *var);
 
-extern void clear_value_history (void);
-
-extern void clear_internalvars (void);
+extern void preserve_values (struct objfile *);
 
 /* From values.c */
 

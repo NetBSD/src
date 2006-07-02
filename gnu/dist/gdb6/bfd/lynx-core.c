@@ -51,6 +51,8 @@ struct lynx_core_struct
 #define core_signal(bfd) (core_hdr(bfd)->sig)
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
+#define lynx_core_file_matches_executable_p generic_core_file_matches_executable_p
+
 /* Handle Lynx core dump file.  */
 
 static asection *
@@ -223,13 +225,6 @@ lynx_core_file_failing_signal (abfd)
      bfd *abfd;
 {
   return core_signal (abfd);
-}
-
-bfd_boolean
-lynx_core_file_matches_executable_p  (core_bfd, exec_bfd)
-     bfd *core_bfd, *exec_bfd;
-{
-  return TRUE;		/* FIXME, We have no way of telling at this point */
 }
 
 #endif /* LYNX_CORE */

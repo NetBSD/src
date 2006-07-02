@@ -1,6 +1,7 @@
 /* GDB CLI commands.
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "readline/readline.h"
@@ -49,6 +50,8 @@
 #ifdef TUI
 #include "tui/tui.h"		/* For tui_active et.al.   */
 #endif
+
+#include <fcntl.h>
 
 /* Prototypes for local command functions */
 
@@ -426,6 +429,8 @@ source_command (char *args, int from_tty)
   FILE *stream;
   struct cleanup *old_cleanups;
   char *file = args;
+  char *full_pathname = NULL;
+  int fd;
 
   if (file == NULL)
     {
@@ -435,8 +440,18 @@ source_command (char *args, int from_tty)
   file = tilde_expand (file);
   old_cleanups = make_cleanup (xfree, file);
 
-  stream = fopen (file, FOPEN_RT);
-  if (!stream)
+  /* Search for and open 'file' on the search path used for source
+     files.  Put the full location in 'full_pathname'.  */
+  fd = openp (source_path, OPF_TRY_CWD_FIRST,
+	      file, O_RDONLY, 0, &full_pathname);
+
+  /* Use the full path name, if it is found.  */
+  if (full_pathname != NULL && fd != -1)
+    {
+      file = full_pathname;
+    }
+
+  if (fd == -1)
     {
       if (from_tty)
 	perror_with_name (file);
@@ -444,6 +459,7 @@ source_command (char *args, int from_tty)
 	return;
     }
 
+  stream = fdopen (fd, FOPEN_RT);
   script_from_file (stream, file);
 
   do_cleanups (old_cleanups);

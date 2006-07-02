@@ -295,6 +295,20 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     FALSE, /* not the default */
     powerpc_compatible,
     bfd_default_scan,
+    &bfd_powerpc_archs[15]
+  },
+  {
+    32, /* 32 bits in a word */
+    32, /* 32 bits in an address */
+    8,  /* 8 bits in a byte */
+    bfd_arch_powerpc,
+    bfd_mach_ppc_750,
+    "powerpc",
+    "powerpc:750",
+    3,
+    FALSE, /* not the default */
+    powerpc_compatible,
+    bfd_default_scan,
     0
   }
 };

@@ -1,7 +1,7 @@
 /* Memory-access and commands for "inferior" process, for GDB.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include <signal.h>
@@ -47,6 +47,7 @@
 #include "solib.h"
 #include <ctype.h>
 #include "gdb_assert.h"
+#include "observer.h"
 
 /* Functions exported for general use, in inferior.h: */
 
@@ -397,6 +398,40 @@ tty_command (char *file, int from_tty)
   set_inferior_io_terminal (file);
 }
 
+/* Common actions to take after creating any sort of inferior, by any
+   means (running, attaching, connecting, et cetera).  The target
+   should be stopped.  */
+
+void
+post_create_inferior (struct target_ops *target, int from_tty)
+{
+  if (exec_bfd)
+    {
+      /* Sometimes the platform-specific hook loads initial shared
+	 libraries, and sometimes it doesn't.  Try to do so first, so
+	 that we can add them with the correct value for FROM_TTY.  */
+#ifdef SOLIB_ADD
+      SOLIB_ADD (NULL, from_tty, target, auto_solib_add);
+#else
+      solib_add (NULL, from_tty, target, auto_solib_add);
+#endif
+
+      /* Create the hooks to handle shared library load and unload
+	 events.  */
+#ifdef SOLIB_CREATE_INFERIOR_HOOK
+      SOLIB_CREATE_INFERIOR_HOOK (PIDGET (inferior_ptid));
+#else
+      solib_create_inferior_hook ();
+#endif
+
+      /* Enable any breakpoints which were disabled when the
+	 underlying shared library was deleted.  */
+      re_enable_breakpoints_in_shlibs ();
+    }
+
+  observer_notify_inferior_created (target, from_tty);
+}
+
 /* Kill the inferior if already running.  This function is designed
    to be called when we are about to start the execution of the program
    from the beginning.  Ask the user to confirm that he wants to restart
@@ -510,6 +545,11 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
      the value now.  */
   target_create_inferior (exec_file, get_inferior_args (),
 			  environ_vector (inferior_environ), from_tty);
+
+  post_create_inferior (&current_target, from_tty);
+
+  /* Start the target running.  */
+  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
 
 
@@ -1883,17 +1923,11 @@ attach_command (char *args, int from_tty)
       reread_symbols ();
     }
 
-#ifdef SOLIB_ADD
-  /* Add shared library symbols from the newly attached process, if any.  */
-  SOLIB_ADD ((char *) 0, from_tty, &current_target, auto_solib_add);
-#else
-  solib_add (NULL, from_tty, &current_target, auto_solib_add);
-#endif
-  re_enable_breakpoints_in_shlibs ();
-
   /* Take any necessary post-attaching actions for this platform.
    */
   target_post_attach (PIDGET (inferior_ptid));
+
+  post_create_inferior (&current_target, from_tty);
 
   /* Install inferior's terminal modes.  */
   target_terminal_inferior ();

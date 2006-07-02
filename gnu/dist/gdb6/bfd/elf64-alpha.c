@@ -1,6 +1,6 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -273,8 +273,9 @@ elf64_alpha_bfd_link_hash_table_create (bfd *abfd)
   if (ret == (struct alpha_elf_link_hash_table *) NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
-				       elf64_alpha_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      elf64_alpha_link_hash_newfunc,
+				      sizeof (struct alpha_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1244,8 +1245,10 @@ elf64_alpha_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 
   /* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the
      .plt section.  */
-  if (!_bfd_elf_define_linkage_sym (abfd, info, s,
-				    "_PROCEDURE_LINKAGE_TABLE_"))
+  h = _bfd_elf_define_linkage_sym (abfd, info, s,
+				   "_PROCEDURE_LINKAGE_TABLE_");
+  elf_hash_table (info)->hplt = h;
+  if (h == NULL)
     return FALSE;
 
   flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY
@@ -4715,8 +4718,8 @@ elf64_alpha_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
 
   /* Mark some specially defined symbols as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0
-      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+      || h == elf_hash_table (info)->hgot
+      || h == elf_hash_table (info)->hplt)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;

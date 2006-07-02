@@ -9,11 +9,11 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Ninth Edition, of `Debugging with GDB: the GNU
-Source-Level Debugger' for GDB Version 6.4.
+Source-Level Debugger' for GDB Version 6.5.
 
    Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
 1998,
-1999, 2000, 2001, 2002, 2003, 2004, 2005
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
@@ -27,6 +27,272 @@ with the Back-Cover Texts as in (a) below.
 freedom to copy and modify this GNU Manual, like GNU software.  Copies
 published by the Free Software Foundation raise funds for GNU
 development."
+
+
+File: gdb.info,  Node: Supported languages,  Next: Unsupported languages,  Prev: Checks,  Up: Languages
+
+12.4 Supported languages
+========================
+
+GDB supports C, C++, Objective-C, Fortran, Java, Pascal, assembly,
+Modula-2, and Ada.  Some GDB features may be used in expressions
+regardless of the language you use: the GDB `@' and `::' operators, and
+the `{type}addr' construct (*note Expressions: Expressions.) can be
+used with the constructs of any supported language.
+
+   The following sections detail to what degree each source language is
+supported by GDB.  These sections are not meant to be language
+tutorials or references, but serve only as a reference guide to what the
+GDB expression parser accepts, and what input and output formats should
+look like for different languages.  There are many good books written
+on each of these languages; please look to these for a language
+reference or tutorial.
+
+* Menu:
+
+* C::                           C and C++
+* Objective-C::                 Objective-C
+* Fortran::                     Fortran
+* Pascal::                      Pascal
+* Modula-2::                    Modula-2
+* Ada::                         Ada
+
+
+File: gdb.info,  Node: C,  Next: Objective-C,  Up: Supported languages
+
+12.4.1 C and C++
+----------------
+
+Since C and C++ are so closely related, many features of GDB apply to
+both languages.  Whenever this is the case, we discuss those languages
+together.
+
+   The C++ debugging facilities are jointly implemented by the C++
+compiler and GDB.  Therefore, to debug your C++ code effectively, you
+must compile your C++ programs with a supported C++ compiler, such as
+GNU `g++', or the HP ANSI C++ compiler (`aCC').
+
+   For best results when using GNU C++, use the DWARF 2 debugging
+format; if it doesn't work on your system, try the stabs+ debugging
+format.  You can select those formats explicitly with the `g++'
+command-line options `-gdwarf-2' and `-gstabs+'.  *Note Options for
+Debugging Your Program or GNU CC: (gcc.info)Debugging Options.
+
+* Menu:
+
+* C Operators::                 C and C++ operators
+* C Constants::                 C and C++ constants
+* C plus plus expressions::     C++ expressions
+* C Defaults::                  Default settings for C and C++
+* C Checks::                    C and C++ type and range checks
+* Debugging C::                 GDB and C
+* Debugging C plus plus::       GDB features for C++
+
+
+File: gdb.info,  Node: C Operators,  Next: C Constants,  Up: C
+
+12.4.1.1 C and C++ operators
+............................
+
+Operators must be defined on values of specific types.  For instance,
+`+' is defined on numbers, but not on structures.  Operators are often
+defined on groups of types.
+
+   For the purposes of C and C++, the following definitions hold:
+
+   * _Integral types_ include `int' with any of its storage-class
+     specifiers; `char'; `enum'; and, for C++, `bool'.
+
+   * _Floating-point types_ include `float', `double', and `long
+     double' (if supported by the target platform).
+
+   * _Pointer types_ include all types defined as `(TYPE *)'.
+
+   * _Scalar types_ include all of the above.
+
+
+The following operators are supported.  They are listed here in order
+of increasing precedence:
+
+`,'
+     The comma or sequencing operator.  Expressions in a
+     comma-separated list are evaluated from left to right, with the
+     result of the entire expression being the last expression
+     evaluated.
+
+`='
+     Assignment.  The value of an assignment expression is the value
+     assigned.  Defined on scalar types.
+
+`OP='
+     Used in an expression of the form `A OP= B', and translated to
+     `A = A OP B'.  `OP=' and `=' have the same precedence.  OP is any
+     one of the operators `|', `^', `&', `<<', `>>', `+', `-', `*',
+     `/', `%'.
+
+`?:'
+     The ternary operator.  `A ? B : C' can be thought of as:  if A
+     then B else C.  A should be of an integral type.
+
+`||'
+     Logical OR.  Defined on integral types.
+
+`&&'
+     Logical AND.  Defined on integral types.
+
+`|'
+     Bitwise OR.  Defined on integral types.
+
+`^'
+     Bitwise exclusive-OR.  Defined on integral types.
+
+`&'
+     Bitwise AND.  Defined on integral types.
+
+`==, !='
+     Equality and inequality.  Defined on scalar types.  The value of
+     these expressions is 0 for false and non-zero for true.
+
+`<, >, <=, >='
+     Less than, greater than, less than or equal, greater than or equal.
+     Defined on scalar types.  The value of these expressions is 0 for
+     false and non-zero for true.
+
+`<<, >>'
+     left shift, and right shift.  Defined on integral types.
+
+`@'
+     The GDB "artificial array" operator (*note Expressions:
+     Expressions.).
+
+`+, -'
+     Addition and subtraction.  Defined on integral types,
+     floating-point types and pointer types.
+
+`*, /, %'
+     Multiplication, division, and modulus.  Multiplication and
+     division are defined on integral and floating-point types.
+     Modulus is defined on integral types.
+
+`++, --'
+     Increment and decrement.  When appearing before a variable, the
+     operation is performed before the variable is used in an
+     expression; when appearing after it, the variable's value is used
+     before the operation takes place.
+
+`*'
+     Pointer dereferencing.  Defined on pointer types.  Same precedence
+     as `++'.
+
+`&'
+     Address operator.  Defined on variables.  Same precedence as `++'.
+
+     For debugging C++, GDB implements a use of `&' beyond what is
+     allowed in the C++ language itself: you can use `&(&REF)' (or, if
+     you prefer, simply `&&REF') to examine the address where a C++
+     reference variable (declared with `&REF') is stored.
+
+`-'
+     Negative.  Defined on integral and floating-point types.  Same
+     precedence as `++'.
+
+`!'
+     Logical negation.  Defined on integral types.  Same precedence as
+     `++'.
+
+`~'
+     Bitwise complement operator.  Defined on integral types.  Same
+     precedence as `++'.
+
+`., ->'
+     Structure member, and pointer-to-structure member.  For
+     convenience, GDB regards the two as equivalent, choosing whether
+     to dereference a pointer based on the stored type information.
+     Defined on `struct' and `union' data.
+
+`.*, ->*'
+     Dereferences of pointers to members.
+
+`[]'
+     Array indexing.  `A[I]' is defined as `*(A+I)'.  Same precedence
+     as `->'.
+
+`()'
+     Function parameter list.  Same precedence as `->'.
+
+`::'
+     C++ scope resolution operator.  Defined on `struct', `union', and
+     `class' types.
+
+`::'
+     Doubled colons also represent the GDB scope operator (*note
+     Expressions: Expressions.).  Same precedence as `::', above.
+
+   If an operator is redefined in the user code, GDB usually attempts
+to invoke the redefined version instead of using the operator's
+predefined meaning.
+
+* Menu:
+
+* C Constants::
+
+
+File: gdb.info,  Node: C Constants,  Next: C plus plus expressions,  Prev: C Operators,  Up: C
+
+12.4.1.2 C and C++ constants
+............................
+
+GDB allows you to express the constants of C and C++ in the following
+ways:
+
+   * Integer constants are a sequence of digits.  Octal constants are
+     specified by a leading `0' (i.e. zero), and hexadecimal constants
+     by a leading `0x' or `0X'.  Constants may also end with a letter
+     `l', specifying that the constant should be treated as a `long'
+     value.
+
+   * Floating point constants are a sequence of digits, followed by a
+     decimal point, followed by a sequence of digits, and optionally
+     followed by an exponent.  An exponent is of the form:
+     `e[[+]|-]NNN', where NNN is another sequence of digits.  The `+'
+     is optional for positive exponents.  A floating-point constant may
+     also end with a letter `f' or `F', specifying that the constant
+     should be treated as being of the `float' (as opposed to the
+     default `double') type; or with a letter `l' or `L', which
+     specifies a `long double' constant.
+
+   * Enumerated constants consist of enumerated identifiers, or their
+     integral equivalents.
+
+   * Character constants are a single character surrounded by single
+     quotes (`''), or a number--the ordinal value of the corresponding
+     character (usually its ASCII value).  Within quotes, the single
+     character may be represented by a letter or by "escape sequences",
+     which are of the form `\NNN', where NNN is the octal representation
+     of the character's ordinal value; or of the form `\X', where `X'
+     is a predefined special character--for example, `\n' for newline.
+
+   * String constants are a sequence of character constants surrounded
+     by double quotes (`"').  Any valid character constant (as described
+     above) may appear.  Double quotes within the string must be
+     preceded by a backslash, so for instance `"a\"b'c"' is a string of
+     five characters.
+
+   * Pointer constants are an integral value.  You can also write
+     pointers to constants using the C operator `&'.
+
+   * Array constants are comma-separated lists surrounded by braces `{'
+     and `}'; for example, `{1,2,3}' is a three-element array of
+     integers, `{{1,2}, {3,4}, {5,6}}' is a three-by-two array, and
+     `{&"hi", &"there", &"fred"}' is a three-element array of pointers.
+
+* Menu:
+
+* C plus plus expressions::
+* C Defaults::
+* C Checks::
+
+* Debugging C::
 
 
 File: gdb.info,  Node: C plus plus expressions,  Next: C Defaults,  Prev: C Constants,  Up: C
@@ -418,6 +684,7 @@ reads in the executable's symbol table.
 * M2 Operators::                Built-in operators
 * Built-In Func/Proc::          Built-in functions and procedures
 * M2 Constants::                Modula-2 constants
+* M2 Types::                    Modula-2 types
 * M2 Defaults::                 Default settings for Modula-2
 * Deviations::                  Deviations from standard Modula-2
 * M2 Checks::                   Modula-2 type and range checks
@@ -528,10 +795,10 @@ increasing precedence:
 `::, .'
      GDB and Modula-2 scope operators.
 
-     _Warning:_ Sets and their operations are not yet supported, so GDB
-     treats the use of the operator `IN', or the use of operators `+',
-     `-', `*', `/', `=', , `<>', `#', `<=', and `>=' on sets as an
-     error.
+     _Warning:_ Set expressions and their operations are not yet
+     supported, so GDB treats the use of the operator `IN', or the use
+     of operators `+', `-', `*', `/', `=', , `<>', `#', `<=', and `>='
+     on sets as an error.
 
 
 File: gdb.info,  Node: Built-In Func/Proc,  Next: M2 Constants,  Prev: M2 Operators,  Up: Modula-2
@@ -643,7 +910,7 @@ below.
      GDB treats the use of procedures `INCL' and `EXCL' as an error.
 
 
-File: gdb.info,  Node: M2 Constants,  Next: M2 Defaults,  Prev: Built-In Func/Proc,  Up: Modula-2
+File: gdb.info,  Node: M2 Constants,  Next: M2 Types,  Prev: Built-In Func/Proc,  Up: Modula-2
 
 12.4.5.3 Constants
 ..................
@@ -682,9 +949,138 @@ ways:
    * Set constants are not yet supported.
 
 
-File: gdb.info,  Node: M2 Defaults,  Next: Deviations,  Prev: M2 Constants,  Up: Modula-2
+File: gdb.info,  Node: M2 Types,  Next: M2 Defaults,  Prev: M2 Constants,  Up: Modula-2
 
-12.4.5.4 Modula-2 defaults
+12.4.5.4 Modula-2 Types
+.......................
+
+Currently GDB can print the following data types in Modula-2 syntax:
+array types, record types, set types, pointer types, procedure types,
+enumerated types, subrange types and base types.  You can also print
+the contents of variables declared using these type.  This section
+gives a number of simple source code examples together with sample GDB
+sessions.
+
+   The first example contains the following section of code:
+
+     VAR
+        s: SET OF CHAR ;
+        r: [20..40] ;
+
+and you can request GDB to interrogate the type and value of `r' and
+`s'.
+
+     (gdb) print s
+     {'A'..'C', 'Z'}
+     (gdb) ptype s
+     SET OF CHAR
+     (gdb) print r
+     21
+     (gdb) ptype r
+     [20..40]
+
+Likewise if your source code declares `s' as:
+
+     VAR
+        s: SET ['A'..'Z'] ;
+
+then you may query the type of `s' by:
+
+     (gdb) ptype s
+     type = SET ['A'..'Z']
+
+Note that at present you cannot interactively manipulate set
+expressions using the debugger.
+
+   The following example shows how you might declare an array in
+Modula-2 and how you can interact with GDB to print its type and
+contents:
+
+     VAR
+        s: ARRAY [-10..10] OF CHAR ;
+
+     (gdb) ptype s
+     ARRAY [-10..10] OF CHAR
+
+   Note that the array handling is not yet complete and although the
+type is printed correctly, expression handling still assumes that all
+arrays have a lower bound of zero and not `-10' as in the example
+above.  Unbounded arrays are also not yet recognized in GDB.
+
+   Here are some more type related Modula-2 examples:
+
+     TYPE
+        colour = (blue, red, yellow, green) ;
+        t = [blue..yellow] ;
+     VAR
+        s: t ;
+     BEGIN
+        s := blue ;
+
+The GDB interaction shows how you can query the data type and value of
+a variable.
+
+     (gdb) print s
+     $1 = blue
+     (gdb) ptype t
+     type = [blue..yellow]
+
+In this example a Modula-2 array is declared and its contents
+displayed.  Observe that the contents are written in the same way as
+their `C' counterparts.
+
+     VAR
+        s: ARRAY [1..5] OF CARDINAL ;
+     BEGIN
+        s[1] := 1 ;
+
+     (gdb) print s
+     $1 = {1, 0, 0, 0, 0}
+     (gdb) ptype s
+     type = ARRAY [1..5] OF CARDINAL
+
+   The Modula-2 language interface to GDB also understands pointer
+types as shown in this example:
+
+     VAR
+        s: POINTER TO ARRAY [1..5] OF CARDINAL ;
+     BEGIN
+        NEW(s) ;
+        s^[1] := 1 ;
+
+and you can request that GDB describes the type of `s'.
+
+     (gdb) ptype s
+     type = POINTER TO ARRAY [1..5] OF CARDINAL
+
+   GDB handles compound types as we can see in this example.  Here we
+combine array types, record types, pointer types and subrange types:
+
+     TYPE
+        foo = RECORD
+                 f1: CARDINAL ;
+                 f2: CHAR ;
+                 f3: myarray ;
+              END ;
+
+        myarray = ARRAY myrange OF CARDINAL ;
+        myrange = [-2..2] ;
+     VAR
+        s: POINTER TO ARRAY myrange OF foo ;
+
+and you can ask GDB to describe the type of `s' as shown below.
+
+     (gdb) ptype s
+     type = POINTER TO ARRAY [-2..2] OF foo = RECORD
+         f1 : CARDINAL;
+         f2 : CHAR;
+         f3 : ARRAY [-2..2] OF CARDINAL;
+     END
+
+
+File: gdb.info,  Node: M2 Defaults,  Next: Deviations,  Prev: M2 Types,  Up: Modula-2
+
+12.4.5.5 Modula-2 defaults
 ..........................
 
 If type and range checking are set automatically by GDB, they both
@@ -700,7 +1096,7 @@ Automatically, for further details.
 
 File: gdb.info,  Node: Deviations,  Next: M2 Checks,  Prev: M2 Defaults,  Up: Modula-2
 
-12.4.5.5 Deviations from standard Modula-2
+12.4.5.6 Deviations from standard Modula-2
 ..........................................
 
 A few changes have been made to make Modula-2 programs easier to debug.
@@ -726,7 +1122,7 @@ This is done primarily via loosening its type strictness:
 
 File: gdb.info,  Node: M2 Checks,  Next: M2 Scope,  Prev: Deviations,  Up: Modula-2
 
-12.4.5.6 Modula-2 type and range checks
+12.4.5.7 Modula-2 type and range checks
 .......................................
 
      _Warning:_ in this release, GDB does not yet perform type or range
@@ -750,7 +1146,7 @@ array index bounds, and all built-in functions and procedures.
 
 File: gdb.info,  Node: M2 Scope,  Next: GDB/M2,  Prev: M2 Checks,  Up: Modula-2
 
-12.4.5.7 The scope operators `::' and `.'
+12.4.5.8 The scope operators `::' and `.'
 .........................................
 
 There are a few subtle differences between the Modula-2 scope operator
@@ -778,7 +1174,7 @@ is not an identifier in MODULE.
 
 File: gdb.info,  Node: GDB/M2,  Prev: M2 Scope,  Up: Modula-2
 
-12.4.5.8 GDB and Modula-2
+12.4.5.9 GDB and Modula-2
 .........................
 
 Some GDB commands have little use when debugging Modula-2 programs.
@@ -904,7 +1300,43 @@ Here are the notable omissions from the subset:
      `xor', `not', and relational tests other than equality) are not
      implemented.
 
-   * There are no record or array aggregates.
+   * There is limited support for array and record aggregates.  They are
+     permitted only on the right sides of assignments, as in these
+     examples:
+
+          set An_Array := (1, 2, 3, 4, 5, 6)
+          set An_Array := (1, others => 0)
+          set An_Array := (0|4 => 1, 1..3 => 2, 5 => 6)
+          set A_2D_Array := ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+          set A_Record := (1, "Peter", True);
+          set A_Record := (Name => "Peter", Id => 1, Alive => True)
+
+     Changing a discriminant's value by assigning an aggregate has an
+     undefined effect if that discriminant is used within the record.
+     However, you can first modify discriminants by directly assigning
+     to them (which normally would not be allowed in Ada), and then
+     performing an aggregate assignment.  For example, given a variable
+     `A_Rec' declared to have a type such as:
+
+          type Rec (Len : Small_Integer := 0) is record
+              Id : Integer;
+              Vals : IntArray (1 .. Len);
+          end record;
+
+     you can assign a value with a different size of `Vals' with two
+     assignments:
+
+          set A_Rec.Len := 4
+          set A_Rec := (Id => 42, Vals => (1, 2, 3, 4))
+
+     As this example also illustrates, GDB is very loose about the usual
+     rules concerning aggregates.  You may leave out some of the
+     components of an array or record aggregate (such as the `Len'
+     component in the assignment to `A_Rec' above); they will retain
+     their original values upon assignment.  You may freely use dynamic
+     values as indices in component associations.  You may even use
+     overlapping or redundant component associations, although which
+     component values are assigned in such cases is not defined.
 
    * Calls to dispatching subprograms are not implemented.
 
@@ -1152,26 +1584,21 @@ looks up the value of `x' in the scope of the file `foo.c'.
      it to find out the name of a variable or a function given its
      address.
 
-`whatis EXPR'
-     Print the data type of expression EXPR.  EXPR is not actually
-     evaluated, and any side-effecting operations (such as assignments
-     or function calls) inside it do not take place.  *Note
+`whatis [ARG]'
+     Print the data type of ARG, which can be either an expression or a
+     data type.  With no argument, print the data type of `$', the last
+     value in the value history.  If ARG is an expression, it is not
+     actually evaluated, and any side-effecting operations (such as
+     assignments or function calls) inside it do not take place.  If
+     ARG is a type name, it may be the name of a type or typedef, or
+     for C code it may have the form `class CLASS-NAME', `struct
+     STRUCT-TAG', `union UNION-TAG' or `enum ENUM-TAG'.  *Note
      Expressions: Expressions.
 
-`whatis'
-     Print the data type of `$', the last value in the value history.
-
-`ptype TYPENAME'
-     Print a description of data type TYPENAME.  TYPENAME may be the
-     name of a type, or for C code it may have the form `class
-     CLASS-NAME', `struct STRUCT-TAG', `union UNION-TAG' or `enum
-     ENUM-TAG'.
-
-`ptype EXPR'
-`ptype'
-     Print a description of the type of expression EXPR.  `ptype'
-     differs from `whatis' by printing a detailed description, instead
-     of just the name of the type.
+`ptype [ARG]'
+     `ptype' accepts the same arguments as `whatis', but prints a
+     detailed description of the type, instead of just the name of the
+     type.  *Note Expressions: Expressions.
 
      For example, for this variable declaration:
 
@@ -1275,7 +1702,7 @@ looks up the value of `x' in the scope of the file `foo.c'.
      fun step' finds all functions whose names include `step'; `info
      fun ^step' finds those whose names start with `step'.  If a
      function name contains characters that conflict with the regular
-     expression language (eg.  `operator*()'), they may be quoted with
+     expression language (e.g.  `operator*()'), they may be quoted with
      a backslash.
 
 `info variables'
@@ -1758,12 +2185,11 @@ files are useful.
      `symbol-file' with no argument clears out GDB information on your
      program's symbol table.
 
-     The `symbol-file' command causes GDB to forget the contents of its
-     convenience variables, the value history, and all breakpoints and
-     auto-display expressions.  This is because they may contain
-     pointers to the internal data recording symbols and data types,
-     which are part of the old symbol table data being discarded inside
-     GDB.
+     The `symbol-file' command causes GDB to forget the contents of
+     some breakpoints and auto-display expressions.  This is because
+     they may contain pointers to the internal data recording symbols
+     and data types, which are part of the old symbol table data being
+     discarded inside GDB.
 
      `symbol-file' does not repeat if you press <RET> again after
      executing it once.
@@ -2473,14 +2899,20 @@ configuration):
      A core dump file.  `target core FILENAME' is the same as
      `core-file FILENAME'.
 
-`target remote DEV'
-     Remote serial target in GDB-specific protocol.  The argument DEV
-     specifies what serial device to use for the connection (e.g.
-     `/dev/ttya'). *Note Remote debugging: Remote.  `target remote'
-     supports the `load' command.  This is only useful if you have some
-     other way of getting the stub to the target system, and you can put
-     it somewhere in memory where it won't get clobbered by the
-     download.
+`target remote MEDIUM'
+     A remote system connected to GDB via a serial line or network
+     connection.  This command tells GDB to use its own remote protocol
+     over MEDIUM for debugging.  *Note Remote Debugging::.
+
+     For example, if you have a board connected to `/dev/ttya' on the
+     machine running GDB, you could say:
+
+          target remote /dev/ttya
+
+     `target remote' supports the `load' command.  This is only useful
+     if you have some other way of getting the stub to the target
+     system, and you can put it somewhere in memory where it won't get
+     clobbered by the download.
 
 `target sim'
      Builtin CPU simulator.  GDB includes simulators for most
@@ -2661,7 +3093,6 @@ File: gdb.info,  Node: Remote Debugging,  Next: Configurations,  Prev: Targets, 
 
 * Connecting::                  Connecting to a remote target
 * Server::	                Using the gdbserver program
-* NetWare::                     Using the gdbserve.nlm program
 * Remote configuration::        Remote configuration
 * remote stub::                 Implementing a remote stub
 
@@ -2676,46 +3107,71 @@ program, since GDB needs symobl and debugging information.  Start up
 GDB as usual, using the name of the local copy of your program as the
 first argument.
 
-   If you're using a serial line, you may want to give GDB the `--baud'
-option, or use the `set remotebaud' command (*note set remotebaud:
-Remote configuration.) before the `target' command.
+   GDB can communicate with the target over a serial line, or over an
+IP network using TCP or UDP.  In each case, GDB uses the same protocol
+for debugging your program; only the medium carrying the debugging
+packets varies.  The `target remote' command establishes a connection
+to the target.  Its arguments indicate which medium to use:
 
-   After that, use `target remote' to establish communications with the
-target machine.  Its argument specifies how to communicate--either via
-a devicename attached to a direct serial line, or a TCP or UDP port
-(possibly to a terminal server which in turn has a serial line to the
-target).  For example, to use a serial line connected to the device
-named `/dev/ttyb':
+`target remote SERIAL-DEVICE'
+     Use SERIAL-DEVICE to communicate with the target.  For example, to
+     use a serial line connected to the device named `/dev/ttyb':
 
-     target remote /dev/ttyb
+          target remote /dev/ttyb
 
-   To use a TCP connection, use an argument of the form `HOST:PORT' or
-`tcp:HOST:PORT'.  For example, to connect to port 2828 on a terminal
-server named `manyfarms':
+     If you're using a serial line, you may want to give GDB the
+     `--baud' option, or use the `set remotebaud' command (*note set
+     remotebaud: Remote configuration.) before the `target' command.
 
-     target remote manyfarms:2828
+`target remote `HOST:PORT''
+`target remote `tcp:HOST:PORT''
+     Debug using a TCP connection to PORT on HOST.  The HOST may be
+     either a host name or a numeric IP address; PORT must be a decimal
+     number.  The HOST could be the target machine itself, if it is
+     directly connected to the net, or it might be a terminal server
+     which in turn has a serial line to the target.
 
-   If your remote target is actually running on the same machine as
-your debugger session (e.g. a simulator of your target running on the
-same host), you can omit the hostname.  For example, to connect to port
-1234 on your local machine:
+     For example, to connect to port 2828 on a terminal server named
+     `manyfarms':
 
-     target remote :1234
-   Note that the colon is still required here.
+          target remote manyfarms:2828
 
-   To use a UDP connection, use an argument of the form
-`udp:HOST:PORT'.  For example, to connect to UDP port 2828 on a
-terminal server named `manyfarms':
+     If your remote target is actually running on the same machine as
+     your debugger session (e.g. a simulator for your target running on
+     the same host), you can omit the hostname.  For example, to
+     connect to port 1234 on your local machine:
 
-     target remote udp:manyfarms:2828
+          target remote :1234
+     Note that the colon is still required here.
 
-   When using a UDP connection for remote debugging, you should keep in
-mind that the `U' stands for "Unreliable".  UDP can silently drop
-packets on busy or unreliable networks, which will cause havoc with
-your debugging session.
+`target remote `udp:HOST:PORT''
+     Debug using UDP packets to PORT on HOST.  For example, to connect
+     to UDP port 2828 on a terminal server named `manyfarms':
 
-   Now you can use all the usual commands to examine and change data
-and to step and continue the remote program.
+          target remote udp:manyfarms:2828
+
+     When using a UDP connection for remote debugging, you should keep
+     in mind that the `U' stands for "Unreliable".  UDP can silently
+     drop packets on busy or unreliable networks, which will cause
+     havoc with your debugging session.
+
+`target remote | COMMAND'
+     Run COMMAND in the background and communicate with it using a
+     pipe.  The COMMAND is a shell command, to be parsed and expanded
+     by the system's command shell, `/bin/sh'; it should expect remote
+     protocol packets on its standard input, and send replies on its
+     standard output.  You could use this to run a stand-alone simulator
+     that speaks the remote debugging protocol, to make net connections
+     using programs like `ssh', or for other similar tricks.
+
+     If COMMAND closes its standard output (perhaps by exiting), GDB
+     will try to send it a `SIGTERM' signal.  (If the program has
+     already exited, this will have no effect.)
+
+
+   Once the connection has been established, you can use all the usual
+commands to examine and change data and to step and continue the remote
+program.
 
    Whenever GDB is waiting for the remote program, if you type the
 interrupt character (often <C-C>), GDB attempts to stop the program.
@@ -2745,11 +3201,14 @@ to connect once more.)  If you type `n', GDB goes back to waiting.
      target.
 
 `monitor CMD'
-     This command allows you to send commands directly to the remote
-     monitor.
+     This command allows you to send arbitrary commands directly to the
+     remote monitor.  Since GDB doesn't care about the commands it
+     sends like this, this command is the way to extend GDB--you can
+     add new commands that only the external monitor will understand
+     and implement.
 
 
-File: gdb.info,  Node: Server,  Next: NetWare,  Prev: Connecting,  Up: Remote Debugging
+File: gdb.info,  Node: Server,  Next: Remote configuration,  Prev: Connecting,  Up: Remote Debugging
 
 17.2 Using the `gdbserver' program
 ==================================
@@ -2848,49 +3307,9 @@ _On the host machine,_
 `gdbserver' prints an error message and exits.
 
 
-File: gdb.info,  Node: NetWare,  Next: Remote configuration,  Prev: Server,  Up: Remote Debugging
+File: gdb.info,  Node: Remote configuration,  Next: remote stub,  Prev: Server,  Up: Remote Debugging
 
-17.3 Using the `gdbserve.nlm' program
-=====================================
-
-`gdbserve.nlm' is a control program for NetWare systems, which allows
-you to connect your program with a remote GDB via `target remote'.
-
-   GDB and `gdbserve.nlm' communicate via a serial line, using the
-standard GDB remote serial protocol.
-
-_On the target machine,_
-     you need to have a copy of the program you want to debug.
-     `gdbserve.nlm' does not need your program's symbol table, so you
-     can strip the program if necessary to save space.  GDB on the host
-     system does all the symbol handling.
-
-     To use the server, you must tell it how to communicate with GDB;
-     the name of your program; and the arguments for your program.  The
-     syntax is:
-
-          load gdbserve [ BOARD=BOARD ] [ PORT=PORT ]
-                        [ BAUD=BAUD ] PROGRAM [ ARGS ... ]
-
-     BOARD and PORT specify the serial line; BAUD specifies the baud
-     rate used by the connection.  PORT and NODE default to 0, BAUD
-     defaults to 9600bps.
-
-     For example, to debug Emacs with the argument `foo.txt'and
-     communicate with GDB over serial port number 2 or board 1 using a
-     19200bps connection:
-
-          load gdbserve BOARD=1 PORT=2 BAUD=19200 emacs foo.txt
-
-__
-     On the GDB host machine, connect to your target (*note Connecting
-     to a remote target: Connecting.).
-
-
-
-File: gdb.info,  Node: Remote configuration,  Next: remote stub,  Prev: NetWare,  Up: Remote Debugging
-
-17.4 Remote configuration
+17.3 Remote configuration
 =========================
 
 This section documents the configuration options available when
@@ -2918,21 +3337,13 @@ system call.
 `set remotebreak'
      If set to on, GDB sends a `BREAK' signal to the remote when you
      press the <Ctrl-C> key to interrupt the program running on the
-     remote.  If set to off, GDB sends the `Strl-C' character instead.
+     remote.  If set to off, GDB sends the `Ctrl-C' character instead.
      The default is off, since most remote systems expect to see
      `Ctrl-C' as the interrupt signal.
 
 `show remotebreak'
      Show whether GDB sends `BREAK' or `Ctrl-C' to interrupt the remote
      program.
-
-`set remotedebug'
-     Control the debugging of the remote protocol.  When enabled, each
-     packet sent to or received from the remote target is displayed.
-     The defaults is off.
-
-`show remotedebug'
-     Show the current setting of the remote protocol debugging.
 
 `set remotedevice DEVICE'
      Set the name of the serial port through which to communicate to the
@@ -3075,7 +3486,7 @@ system call.
 
 File: gdb.info,  Node: remote stub,  Prev: Remote configuration,  Up: Remote Debugging
 
-17.5 Implementing a remote stub
+17.4 Implementing a remote stub
 ===============================
 
 The stub files provided with GDB implement the target side of the
@@ -3156,7 +3567,7 @@ added stubs.
 
 File: gdb.info,  Node: Stub Contents,  Next: Bootstrapping,  Up: remote stub
 
-17.5.1 What the stub can do for you
+17.4.1 What the stub can do for you
 -----------------------------------
 
 The debugging stub for your architecture supplies these three
@@ -3202,7 +3613,7 @@ subroutines:
 
 File: gdb.info,  Node: Bootstrapping,  Next: Debug Session,  Prev: Stub Contents,  Up: remote stub
 
-17.5.2 What you must do for the stub
+17.4.2 What you must do for the stub
 ------------------------------------
 
 The debugging stubs that come with GDB are set up for a particular chip
@@ -3282,7 +3693,7 @@ subroutines which `gcc' generates as inline code.
 
 File: gdb.info,  Node: Debug Session,  Prev: Bootstrapping,  Up: remote stub
 
-17.5.3 Putting it all together
+17.4.3 Putting it all together
 ------------------------------
 
 In summary, when your program is ready to debug, you must follow these
@@ -3681,20 +4092,23 @@ that have no debugging symbols.
      Displays current value of new-group boolean.
 
 `set debugevents'
-     This boolean value adds debug output concerning events seen by the
-     debugger.
+     This boolean value adds debug output concerning kernel events
+     related to the debuggee seen by the debugger.  This includes
+     events that signal thread and process creation and exit, DLL
+     loading and unloading, console interrupts, and debugging messages
+     produced by the Windows `OutputDebugString' API call.
 
 `set debugexec'
      This boolean value adds debug output concerning execute events
-     seen by the debugger.
+     (such as resume thread) seen by the debugger.
 
 `set debugexceptions'
-     This boolean value adds debug ouptut concerning exception events
-     seen by the debugger.
+     This boolean value adds debug output concerning exceptions in the
+     debuggee seen by the debugger.
 
 `set debugmemory'
-     This boolean value adds debug ouptut concerning memory events seen
-     by the debugger.
+     This boolean value adds debug output concerning debuggee memory
+     reads and writes by the debugger.
 
 `set shell'
      This boolean values specifies whether the debuggee is called via a
@@ -4370,7 +4784,7 @@ executable file without downloading, use the GDB commands `file' or
       the conditions.
      There is absolutely no warranty for GDB; type "show warranty"
      for details.
-     GDB 6.4, Copyright 1992 Free Software Foundation, Inc...
+     GDB 6.5, Copyright 1992 Free Software Foundation, Inc...
      (gdb) target hms
      Connected to remote H8/300 HMS system.
      (gdb) load t.x
@@ -5844,7 +6258,7 @@ commands.
 
 `set debug overload'
      Turns on or off display of GDB C++ overload debugging info. This
-     includes info such as ranking of functions, etc. The default is
+     includes info such as ranking of functions, etc.  The default is
      off.
 
 `show debug overload'
@@ -5904,10 +6318,10 @@ execution as a unit: user-defined commands and command files.
 
 * Menu:
 
-* Define::                      User-defined commands
-* Hooks::                       User-defined command hooks
-* Command Files::               Command files
-* Output::                      Commands for controlled output
+* Define::             How to define your own commands
+* Hooks::              Hooks for user-defined commands
+* Command Files::      How to write scripts of commands to be stored in a file
+* Output::             Commands for controlled output
 
 
 File: gdb.info,  Node: Define,  Next: Hooks,  Up: Sequences
@@ -5955,22 +6369,6 @@ been passed.  This expands to a number in the range 0...10.
      lines, which are given following the `define' command.  The end of
      these commands is marked by a line containing `end'.
 
-`if'
-`else'
-     Takes a single argument, which is an expression to evaluate.  It
-     is followed by a series of commands that are executed only if the
-     expression is true (nonzero).  There can then optionally be a line
-     `else', followed by a series of commands that are only executed if
-     the expression was false.  The end of the list is marked by a line
-     containing `end'.
-
-`while'
-     The syntax is similar to `if': the command takes a single argument,
-     which is an expression to evaluate, and must be followed by the
-     commands to execute, one per line, terminated by an `end'.  The
-     commands are executed repeatedly as long as the expression
-     evaluates to true.
-
 `document COMMANDNAME'
      Document the user-defined command COMMANDNAME, so that it can be
      accessed by `help'.  The command COMMANDNAME must already be
@@ -6004,6 +6402,8 @@ been passed.  This expands to a number in the range 0...10.
      levels are allowed in user-defined commands before GDB suspects an
      infinite recursion and aborts the command.
 
+   In addition to the above commands, user-defined commands frequently
+use control flow commands, described in *Note Command Files::.
 
    When user-defined commands are executed, the commands of the
 definition are not printed.  An error in any command stops execution of
@@ -6098,9 +6498,14 @@ command:
 `source FILENAME'
      Execute the command file FILENAME.
 
-   The lines in a command file are executed sequentially.  They are not
-printed as they are executed.  An error in any command terminates
-execution of the command file and control is returned to the console.
+   The lines in a command file are generally executed sequentially,
+unless the order of execution is changed by one of the _flow-control
+commands_ described below.  The commands are not printed as they are
+executed.  An error in any command terminates execution of the command
+file and control is returned to the console.
+
+   GDB searches for FILENAME in the current directory and then on the
+search path (specified with the `directory' command).
 
    Commands that would ask for confirmation if used interactively
 proceed without asking when used in a command file.  Many GDB commands
@@ -6118,6 +6523,48 @@ next command.
    (The syntax above will vary depending on the shell used.) This
 example will execute commands from the file `cmds'. All output and
 errors would be directed to `log'.
+
+   Since commands stored on command files tend to be more general than
+commands typed interactively, they frequently need to deal with
+complicated situations, such as different or unexpected values of
+variables and symbols, changes in how the program being debugged is
+built, etc.  GDB provides a set of flow-control commands to deal with
+these complexities.  Using these commands, you can write complex
+scripts that loop over data structures, execute commands conditionally,
+etc.
+
+`if'
+`else'
+     This command allows to include in your script conditionally
+     executed commands. The `if' command takes a single argument, which
+     is an expression to evaluate.  It is followed by a series of
+     commands that are executed only if the expression is true (its
+     value is nonzero).  There can then optionally be an `else' line,
+     followed by a series of commands that are only executed if the
+     expression was false.  The end of the list is marked by a line
+     containing `end'.
+
+`while'
+     This command allows to write loops.  Its syntax is similar to
+     `if': the command takes a single argument, which is an expression
+     to evaluate, and must be followed by the commands to execute, one
+     per line, terminated by an `end'.  These commands are called the
+     "body" of the loop.  The commands in the body of `while' are
+     executed repeatedly as long as the expression evaluates to true.
+
+`loop_break'
+     This command exits the `while' loop in whose body it is included.
+     Execution of the script continues after that `while's `end' line.
+
+`loop_continue'
+     This command skips the execution of the rest of the body of
+     commands in the `while' loop in whose body it is included.
+     Execution branches to the beginning of the `while' loop, where it
+     evaluates the controlling expression.
+
+`end'
+     Terminate the block of commands that are the body of `if', `else',
+     or `while' flow-control commands.
 
 
 File: gdb.info,  Node: Output,  Prev: Command Files,  Up: Sequences
@@ -7250,7 +7697,8 @@ Example
 
      (gdb)
      -break-insert main
-     ^done,bkpt={number="1",addr="0x000100d0",file="hello.c",line="5"}
+     ^done,bkpt={number="1",addr="0x000100d0",file="hello.c",
+     fullname="/home/foo/hello.c",line="5",times="0"}
      (gdb)
      -break-after 1 3
      ~
@@ -7265,8 +7713,8 @@ Example
      {width="10",alignment="-1",col_name="addr",colhdr="Address"},
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
-     addr="0x000100d0",func="main",file="hello.c",line="5",times="0",
-     ignore="3"}]}
+     addr="0x000100d0",func="main",file="hello.c",fullname="/home/foo/hello.c",
+     line="5",times="0",ignore="3"}]}
      (gdb)
 
 The `-break-condition' Command
@@ -7302,8 +7750,8 @@ Example
      {width="10",alignment="-1",col_name="addr",colhdr="Address"},
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
-     addr="0x000100d0",func="main",file="hello.c",line="5",cond="1",
-     times="0",ignore="3"}]}
+     addr="0x000100d0",func="main",file="hello.c",fullname="/home/foo/hello.c",
+     line="5",cond="1",times="0",ignore="3"}]}
      (gdb)
 
 The `-break-delete' Command
@@ -7372,7 +7820,8 @@ Example
      {width="10",alignment="-1",col_name="addr",colhdr="Address"},
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="2",type="breakpoint",disp="keep",enabled="n",
-     addr="0x000100d0",func="main",file="hello.c",line="5",times="0"}]}
+     addr="0x000100d0",func="main",file="hello.c",fullname="/home/foo/hello.c",
+     line="5",times="0"}]}
      (gdb)
 
 The `-break-enable' Command
@@ -7406,7 +7855,8 @@ Example
      {width="10",alignment="-1",col_name="addr",colhdr="Address"},
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="2",type="breakpoint",disp="keep",enabled="y",
-     addr="0x000100d0",func="main",file="hello.c",line="5",times="0"}]}
+     addr="0x000100d0",func="main",file="hello.c",fullname="/home/foo/hello.c",
+     line="5",times="0"}]}
      (gdb)
 
 The `-break-info' Command
@@ -7452,7 +7902,7 @@ If specified, LINE, can be one of:
    The possible optional parameters of this command are:
 
 `-t'
-     Insert a tempoary breakpoint.
+     Insert a temporary breakpoint.
 
 `-h'
      Insert a hardware breakpoint.
@@ -7473,13 +7923,16 @@ Result
 
 The result is in the form:
 
-      ^done,bkptno="NUMBER",func="FUNCNAME",
-       file="FILENAME",line="LINENO"
+     ^done,bkpt={number="NUMBER",type="TYPE",disp="del"|"keep",
+     enabled="y"|"n",addr="HEX",func="FUNCNAME",file="FILENAME",
+     fullname="FULL_FILENAME",line="LINENO",times="TIMES"}
 
 where NUMBER is the GDB number for this breakpoint, FUNCNAME is the
 name of the function where the breakpoint was inserted, FILENAME is the
-name of the source file which contains this function, and LINENO is the
-source line number within that file.
+name of the source file which contains this function, LINENO is the
+source line number within that file and TIMES the number of times that
+the breakpoint has been hit (always 0 for -break-insert but may be
+greater for -break-info or -break-list which use the same output).
 
    Note: this format is open to change.
 
@@ -7494,10 +7947,12 @@ Example
 
      (gdb)
      -break-insert main
-     ^done,bkpt={number="1",addr="0x0001072c",file="recursive2.c",line="4"}
+     ^done,bkpt={number="1",addr="0x0001072c",file="recursive2.c",
+     fullname="/home/foo/recursive2.c,line="4",times="0"}
      (gdb)
      -break-insert -t foo
-     ^done,bkpt={number="2",addr="0x00010774",file="recursive2.c",line="11"}
+     ^done,bkpt={number="2",addr="0x00010774",file="recursive2.c",
+     fullname="/home/foo/recursive2.c,line="11",times="0"}
      (gdb)
      -break-list
      ^done,BreakpointTable={nr_rows="2",nr_cols="6",
@@ -7508,13 +7963,16 @@ Example
      {width="10",alignment="-1",col_name="addr",colhdr="Address"},
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
-     addr="0x0001072c", func="main",file="recursive2.c",line="4",times="0"},
+     addr="0x0001072c", func="main",file="recursive2.c",
+     fullname="/home/foo/recursive2.c,"line="4",times="0"},
      bkpt={number="2",type="breakpoint",disp="del",enabled="y",
-     addr="0x00010774",func="foo",file="recursive2.c",line="11",times="0"}]}
+     addr="0x00010774",func="foo",file="recursive2.c",
+     fullname="/home/foo/recursive2.c",line="11",times="0"}]}
      (gdb)
      -break-insert -r foo.*
      ~int foo(int, int);
-     ^done,bkpt={number="3",addr="0x00010774",file="recursive2.c",line="11"}
+     ^done,bkpt={number="3",addr="0x00010774",file="recursive2.c,
+     "fullname="/home/foo/recursive2.c",line="11",times="0"}
      (gdb)
 
 The `-break-list' Command
@@ -7574,7 +8032,8 @@ Example
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
      addr="0x000100d0",func="main",file="hello.c",line="5",times="0"},
      bkpt={number="2",type="breakpoint",disp="keep",enabled="y",
-     addr="0x00010114",func="foo",file="hello.c",line="13",times="0"}]}
+     addr="0x00010114",func="foo",file="hello.c",fullname="/home/foo/hello.c",
+     line="13",times="0"}]}
      (gdb)
 
    Here's an example of the result when there are no breakpoints:
@@ -7630,7 +8089,7 @@ Setting a watchpoint on a variable in the `main' function:
      ^done,reason="watchpoint-trigger",wpt={number="2",exp="x"},
      value={old="-268439212",new="55"},
      frame={func="main",args=[],file="recursive2.c",
-     fullname="/home/foo/bar/devo/myproject/recursive2.c",line="5"}
+     fullname="/home/foo/bar/recursive2.c",line="5"}
      (gdb)
 
    Setting a watchpoint on a variable local to a function.  GDB will
@@ -7676,7 +8135,8 @@ is deleted.
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
      addr="0x00010734",func="callee4",
-     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"},
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
+     fullname="/home/foo/devo/gdb/testsuite/gdb.mi/basics.c"line="8",times="1"},
      bkpt={number="2",type="watchpoint",disp="keep",
      enabled="y",addr="",what="C",times="0"}]}
      (gdb)
@@ -7698,7 +8158,8 @@ is deleted.
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
      addr="0x00010734",func="callee4",
-     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"},
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
+     fullname="/home/foo/devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"},
      bkpt={number="2",type="watchpoint",disp="keep",
      enabled="y",addr="",what="C",times="-5"}]}
      (gdb)
@@ -7720,6 +8181,8 @@ is deleted.
      {width="40",alignment="2",col_name="what",colhdr="What"}],
      body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",
      addr="0x00010734",func="callee4",
-     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"}]}
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
+     fullname="/home/foo/devo/gdb/testsuite/gdb.mi/basics.c",line="8",
+     times="1"}]}
      (gdb)
 

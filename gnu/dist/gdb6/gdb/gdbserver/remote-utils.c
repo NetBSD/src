@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright 1986, 1989, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   Copyright (C) 1986, 1989, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "server.h"
 #include "terminal.h"
@@ -681,9 +681,11 @@ prepare_resume_reply (char *buf, char status, unsigned char signo)
 
       if (using_threads)
 	{
+	  unsigned int gdb_id_from_wait;
+
 	  /* FIXME right place to set this? */
 	  thread_from_wait = ((struct inferior_list_entry *)current_inferior)->id;
-	  unsigned int gdb_id_from_wait = thread_to_gdb_id (current_inferior);
+	  gdb_id_from_wait = thread_to_gdb_id (current_inferior);
 
 	  if (debug_threads)
 	    fprintf (stderr, "Writing resume reply for %ld\n\n", thread_from_wait);

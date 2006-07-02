@@ -25,9 +25,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define if <sys/procfs.h> has prfpregset_t. */
-#undef HAVE_PRFPREGSET_T
-
 /* Define if <sys/procfs.h> has prgregset_t. */
 #undef HAVE_PRGREGSET_T
 
@@ -103,9 +100,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* Define if the prfpregset_t type is broken. */
-#undef PRFPREGSET_T_BROKEN
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

@@ -1,5 +1,5 @@
 /* Remote target communications for serial-line targets in custom GDB protocol
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef REMOTE_H
 #define REMOTE_H
@@ -24,11 +24,12 @@
 /* FIXME?: move this interface down to tgt vector) */
 
 /* Read a packet from the remote machine, with error checking, and
-   store it in BUF.  BUF is expected to be of size PBUFSIZ.  If
-   FOREVER, wait forever rather than timing out; this is used while
-   the target is executing user code.  */
+   store it in *BUF.  Resize *BUF using xrealloc if necessary to hold
+   the result, and update *SIZEOF_BUF.  If FOREVER, wait forever
+   rather than timing out; this is used (in synchronous mode) to wait
+   for a target that is is executing user code to stop.  */
 
-extern void getpkt (char *buf, long sizeof_buf, int forever);
+extern void getpkt (char **buf, long *sizeof_buf, int forever);
 
 /* Send a packet to the remote machine, with error checking.  The data
    of the packet is in BUF.  The string in BUF can be at most PBUFSIZ
@@ -54,9 +55,9 @@ extern void remote_cisco_objfile_relocate (bfd_signed_vma text_off,
 
 extern void async_remote_interrupt_twice (void *arg);
 
-extern int remote_write_bytes (CORE_ADDR memaddr, char *myaddr, int len);
+extern int remote_write_bytes (CORE_ADDR memaddr, gdb_byte *myaddr, int len);
 
-extern int remote_read_bytes (CORE_ADDR memaddr, char *myaddr, int len);
+extern int remote_read_bytes (CORE_ADDR memaddr, gdb_byte *myaddr, int len);
 
 extern void (*deprecated_target_resume_hook) (void);
 extern void (*deprecated_target_wait_loop_hook) (void);

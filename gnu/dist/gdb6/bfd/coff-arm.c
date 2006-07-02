@@ -1,6 +1,6 @@
 /* BFD back-end for ARM COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -220,7 +220,7 @@ static reloc_howto_type aoutarm_std_reloc_howto[] =
 	   complain_overflow_dont,
 	   aoutarm_fix_pcrel_26_done,
 	   "ARM_26D",
-	   FALSE,
+	   TRUE, 	/* partial_inplace.  */
 	   0x00ffffff,
 	   0x0,
 	   PCRELOFFSET),
@@ -233,7 +233,7 @@ static reloc_howto_type aoutarm_std_reloc_howto[] =
 	   complain_overflow_bitfield,
 	   coff_arm_reloc,
 	   "ARM_32",
-	   FALSE,
+	   TRUE, 	/* partial_inplace.  */
 	   0xffffffff,
 	   0xffffffff,
 	   PCRELOFFSET),
@@ -246,7 +246,7 @@ static reloc_howto_type aoutarm_std_reloc_howto[] =
 	   complain_overflow_bitfield,
 	   coff_arm_reloc,
 	   "ARM_RVA32",
-	   FALSE,
+	   TRUE, 	/* partial_inplace.  */
 	   0xffffffff,
 	   0xffffffff,
 	   PCRELOFFSET),
@@ -294,7 +294,7 @@ static reloc_howto_type aoutarm_std_reloc_howto[] =
 	   complain_overflow_bitfield,
 	   coff_arm_reloc,
 	   "ARM_SECTION",
-	   FALSE,
+	   TRUE, 	/* partial_inplace.  */
 	   0x0000ffff,
 	   0x0000ffff,
 	   PCRELOFFSET),
@@ -307,7 +307,7 @@ static reloc_howto_type aoutarm_std_reloc_howto[] =
 	   complain_overflow_bitfield,
 	   coff_arm_reloc,
 	   "ARM_SECREL",
-	   FALSE,
+	   TRUE, 	/* partial_inplace.  */
 	   0xffffffff,
 	   0xffffffff,
 	   PCRELOFFSET),
@@ -879,8 +879,10 @@ coff_arm_link_hash_table_create (bfd * abfd)
   if (ret == NULL)
     return NULL;
 
-  if (! _bfd_coff_link_hash_table_init
-      (& ret->root, abfd, _bfd_coff_link_hash_newfunc))
+  if (!_bfd_coff_link_hash_table_init (&ret->root,
+				       abfd,
+				       _bfd_coff_link_hash_newfunc,
+				       sizeof (struct coff_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1207,12 +1209,14 @@ coff_arm_relocate_section (bfd *output_bfd,
                     generation of bl's instruction offset.  */
           addend -= 8;
 #endif
-          howto = &fake_arm26_reloc;
+          howto = & fake_arm26_reloc;
         }
 
 #ifdef ARM_WINCE
       /* MS ARM-CE makes the reloc relative to the opcode's pc, not
 	 the next opcode's pc, so is off by one.  */
+      if (howto->pc_relative && !info->relocatable)
+	addend -= 8;
 #endif
 
       /* If we are doing a relocatable link, then we can just ignore

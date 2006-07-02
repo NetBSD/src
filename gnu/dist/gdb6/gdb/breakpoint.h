@@ -1,5 +1,5 @@
 /* Data structures associated with breakpoints in GDB.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004
    Free Software Foundation, Inc.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (BREAKPOINT_H)
 #define BREAKPOINT_H 1
@@ -185,6 +185,36 @@ enum target_hw_bp_type
     hw_execute = 3		/* Execute HW breakpoint */
   };
 
+
+/* Information used by targets to insert and remove breakpoints.  */
+
+struct bp_target_info
+{
+  /* Address at which the breakpoint was placed.  This is normally the
+     same as ADDRESS from the bp_location, except when adjustment
+     happens in BREAKPOINT_FROM_PC.  The most common form of
+     adjustment is stripping an alternate ISA marker from the PC which
+     is used to determine the type of breakpoint to insert.  */
+  CORE_ADDR placed_address;
+
+  /* If the breakpoint lives in memory and reading that memory would
+     give back the breakpoint, instead of the original contents, then
+     the original contents are cached here.  Only SHADOW_LEN bytes of
+     this buffer are valid, and only when the breakpoint is inserted.  */
+  gdb_byte shadow_contents[BREAKPOINT_MAX];
+
+  /* The length of the data cached in SHADOW_CONTENTS.  */
+  int shadow_len;
+
+  /* The size of the placed breakpoint, according to
+     BREAKPOINT_FROM_PC, when the breakpoint was inserted.  This is
+     generally the same as SHADOW_LEN, unless we did not need
+     to read from the target to implement the memory breakpoint
+     (e.g. if a remote stub handled the details).  We may still
+     need the size to remove the breakpoint safely.  */
+  int placed_size;
+};
+
 /* GDB maintains two types of information about each breakpoint (or
    watchpoint, or other related event).  The first type corresponds
    to struct breakpoint; this is a relatively high-level structure
@@ -242,13 +272,6 @@ struct bp_location
      associated with the address.  Used primarily for overlay debugging.  */
   asection *section;
 
-  /* "Real" contents of byte where breakpoint has been inserted.
-     Valid only when breakpoints are in the program.  Under the complete
-     control of the target insert_breakpoint and remove_breakpoint routines.
-     No other code should assume anything about the value(s) here.
-     Valid only for bp_loc_software_breakpoint.  */
-  gdb_byte shadow_contents[BREAKPOINT_MAX];
-
   /* Address at which breakpoint was requested, either by the user or
      by GDB for internal breakpoints.  This will usually be the same
      as ``address'' (above) except for cases in which
@@ -256,6 +279,12 @@ struct bp_location
      which to place the breakpoint in order to comply with a
      processor's architectual constraints.  */
   CORE_ADDR requested_address;
+
+  /* Details of the placed breakpoint, when inserted.  */
+  struct bp_target_info target_info;
+
+  /* Similarly, for the breakpoint at an overlay's LMA, if necessary.  */
+  struct bp_target_info overlay_target_info;
 };
 
 /* This structure is a collection of function pointers that, if available,
@@ -796,6 +825,16 @@ extern void delete_command (char *arg, int from_tty);
    remove fails. */
 extern int remove_hw_watchpoints (void);
 
+/* Manage a software single step breakpoint (or two).  Insert may be called
+   twice before remove is called.  */
+extern void insert_single_step_breakpoint (CORE_ADDR);
+extern void remove_single_step_breakpoints (void);
+
+/* Manage manual breakpoints, separate from the normal chain of
+   breakpoints.  These functions are used in murky target-specific
+   ways.  Please do not add more uses!  */
+extern void *deprecated_insert_raw_breakpoint (CORE_ADDR);
+extern int deprecated_remove_raw_breakpoint (void *);
 
 /* Indicator of whether exception catchpoints should be nuked between
    runs of a program.  */

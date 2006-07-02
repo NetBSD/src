@@ -1,6 +1,6 @@
 /* Handle lists of commands, their decoding and documentation, for GDB.
 
-   Copyright 1986, 1989, 1990, 1991, 1998, 2000, 2001, 2002, 2004 Free
+   Copyright (c) 1986, 1989, 1990, 1991, 1998, 2000, 2001, 2002, 2004 Free
    Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -478,13 +478,13 @@ add_setshow_filename_cmd (char *name, enum command_class class,
    list for set/show or some sublist thereof).  */
 void
 add_setshow_string_cmd (char *name, enum command_class class,
-			  char **var,
-			  const char *set_doc, const char *show_doc,
-			  const char *help_doc,
-			  cmd_sfunc_ftype *set_func,
-			  show_value_ftype *show_func,
-			  struct cmd_list_element **set_list,
-			  struct cmd_list_element **show_list)
+			char **var,
+			const char *set_doc, const char *show_doc,
+			const char *help_doc,
+			cmd_sfunc_ftype *set_func,
+			show_value_ftype *show_func,
+			struct cmd_list_element **set_list,
+			struct cmd_list_element **show_list)
 {
   add_setshow_cmd_full (name, class, var_string, var,
 			set_doc, show_doc, help_doc,
@@ -538,12 +538,12 @@ add_setshow_optional_filename_cmd (char *name, enum command_class class,
 void
 add_setshow_integer_cmd (char *name, enum command_class class,
 			 int *var,
-			  const char *set_doc, const char *show_doc,
-			  const char *help_doc,
-			  cmd_sfunc_ftype *set_func,
-			  show_value_ftype *show_func,
-			  struct cmd_list_element **set_list,
-			  struct cmd_list_element **show_list)
+			 const char *set_doc, const char *show_doc,
+			 const char *help_doc,
+			 cmd_sfunc_ftype *set_func,
+			 show_value_ftype *show_func,
+			 struct cmd_list_element **set_list,
+			 struct cmd_list_element **show_list)
 {
   add_setshow_cmd_full (name, class, var_integer, var,
 			set_doc, show_doc, help_doc,
@@ -977,6 +977,31 @@ find_cmd (char *command, int len, struct cmd_list_element *clist,
   return found;
 }
 
+static int
+find_command_name_length (const char *text)
+{
+  const char *p = text;
+
+  /* Treating underscores as part of command words is important
+     so that "set args_foo()" doesn't get interpreted as
+     "set args _foo()".  */
+  /* Some characters are only used for TUI specific commands. However, they
+     are always allowed for the sake of consistency.
+     The XDB compatibility characters are only allowed when using the right
+     mode because they clash with other GDB commands - specifically '/' is
+     used as a suffix for print, examine and display.
+     Note that this is larger than the character set allowed when creating
+     user-defined commands.  */
+  while (isalnum (*p) || *p == '-' || *p == '_' ||
+	 /* Characters used by TUI specific commands.  */
+	 *p == '+' || *p == '<' || *p == '>' || *p == '$' ||
+	 /* Characters used for XDB compatibility.  */
+	 (xdb_commands && (*p == '!' || *p == '/' || *p == '?')))
+    p++;
+
+  return p - text;
+}
+
 /* This routine takes a line of TEXT and a CLIST in which to start the
    lookup.  When it returns it will have incremented the text pointer past
    the section of text it matched, set *RESULT_LIST to point to the list in
@@ -1017,7 +1042,7 @@ struct cmd_list_element *
 lookup_cmd_1 (char **text, struct cmd_list_element *clist,
 	      struct cmd_list_element **result_list, int ignore_help_classes)
 {
-  char *p, *command;
+  char *command;
   int len, tmp, nfound;
   struct cmd_list_element *found, *c;
   char *line = *text;
@@ -1025,26 +1050,12 @@ lookup_cmd_1 (char **text, struct cmd_list_element *clist,
   while (**text == ' ' || **text == '\t')
     (*text)++;
 
-  /* Treating underscores as part of command words is important
-     so that "set args_foo()" doesn't get interpreted as
-     "set args _foo()".  */
-  /* NOTE: cagney/2003-02-13 The `tui_active' was previously
-     `tui_version'.  */
-  for (p = *text;
-       *p && (isalnum (*p) || *p == '-' || *p == '_' ||
-#if defined(TUI)
-	      (tui_active &&
-	       (*p == '+' || *p == '<' || *p == '>' || *p == '$')) ||
-#endif
-	      (xdb_commands && (*p == '!' || *p == '/' || *p == '?')));
-       p++)
-    ;
+  /* Identify the name of the command.  */
+  len = find_command_name_length (*text);
 
   /* If nothing but whitespace, return 0.  */
-  if (p == *text)
+  if (len == 0)
     return 0;
-
-  len = p - *text;
 
   /* *text and p now bracket the first command word to lookup (and
      it's length is len).  We copy this into a local temporary */
@@ -1092,7 +1103,7 @@ lookup_cmd_1 (char **text, struct cmd_list_element *clist,
 
   /* We've matched something on this list.  Move text pointer forward. */
 
-  *text = p;
+  *text += len;
 
   if (found->cmd_pointer)
     {
@@ -1194,14 +1205,12 @@ lookup_cmd (char **line, struct cmd_list_element *list, char *cmdtype,
 	    error (_("Lack of needed %scommand"), cmdtype);
 	  else
 	    {
-	      char *p = *line, *q;
+	      char *q;
+	      int len = find_command_name_length (*line);
 
-	      while (isalnum (*p) || *p == '-')
-		p++;
-
-	      q = (char *) alloca (p - *line + 1);
-	      strncpy (q, *line, p - *line);
-	      q[p - *line] = '\0';
+	      q = (char *) alloca (len + 1);
+	      strncpy (q, *line, len);
+	      q[len] = '\0';
 	      undef_cmd_error (cmdtype, q);
 	    }
 	}
@@ -1379,7 +1388,7 @@ lookup_cmd_composition (char *text,
                       struct cmd_list_element **prefix_cmd, 
                       struct cmd_list_element **cmd)
 {
-  char *p, *command;
+  char *command;
   int len, tmp, nfound;
   struct cmd_list_element *cur_list;
   struct cmd_list_element *prev_cmd;
@@ -1399,28 +1408,14 @@ lookup_cmd_composition (char *text,
       while (*text == ' ' || *text == '\t')
       (text)++;
       
-      /* Treating underscores as part of command words is important
-       so that "set args_foo()" doesn't get interpreted as
-       "set args _foo()".  */
-      /* NOTE: cagney/2003-02-13 The `tui_active' was previously
-	 `tui_version'.  */
-      for (p = text;
-         *p && (isalnum (*p) || *p == '-' || *p == '_' ||
-#if defined(TUI)
-                (tui_active &&
-                 (*p == '+' || *p == '<' || *p == '>' || *p == '$')) ||
-#endif
-                (xdb_commands && (*p == '!' || *p == '/' || *p == '?')));
-         p++)
-      ;
+      /* Identify the name of the command.  */
+      len = find_command_name_length (text);
       
       /* If nothing but whitespace, return.  */
-      if (p == text)
-      return 0;
+      if (len == 0)
+	return 0;
       
-      len = p - text;
-      
-      /* text and p now bracket the first command word to lookup (and
+      /* text is the start of the first command word to lookup (and
        it's length is len).  We copy this into a local temporary */
       
       command = (char *) alloca (len + 1);
@@ -1473,7 +1468,7 @@ lookup_cmd_composition (char *text,
       else
       return 1;
       
-      text = p;
+      text += len;
     }
 }
 

@@ -1,8 +1,8 @@
 /* GDB CLI command scripting.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2004, 2005 Free
-   Software Foundation, Inc.
+   Copyright (c) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "value.h"
@@ -54,6 +54,9 @@ static int control_level;
 struct user_args
   {
     struct user_args *next;
+    /* It is necessary to store a malloced copy of the command line to
+       ensure that the arguments are not overwritten before they are used.  */
+    char *command;
     struct
       {
 	char *arg;
@@ -241,9 +244,9 @@ static void
 do_restore_user_call_depth (void * call_depth)
 {	
   int * depth = call_depth;
-  /* We will be returning_to_top_level() at this point, so we want to
-     reset our depth. */
-  (*depth) = 0;
+  (*depth)--;
+  if ((*depth) == 0)
+    in_user_command = 0;
 }
 
 
@@ -266,12 +269,17 @@ execute_user_command (struct cmd_list_element *c, char *args)
   if (++user_call_depth > max_user_call_depth)
     error (_("Max user call depth exceeded -- command aborted."));
 
-  old_chain = make_cleanup (do_restore_user_call_depth, &user_call_depth);
+  make_cleanup (do_restore_user_call_depth, &user_call_depth);
 
   /* Set the instream to 0, indicating execution of a
      user-defined function.  */
-  old_chain = make_cleanup (do_restore_instream_cleanup, instream);
+  make_cleanup (do_restore_instream_cleanup, instream);
   instream = (FILE *) 0;
+
+  /* Also set the global in_user_command, so that NULL instream is
+     not confused with Insight.  */
+  in_user_command = 1;
+
   while (cmdlines)
     {
       ret = execute_control_command (cmdlines);
@@ -283,8 +291,6 @@ execute_user_command (struct cmd_list_element *c, char *args)
       cmdlines = cmdlines->next;
     }
   do_cleanups (old_chain);
-
-  user_call_depth--;
 }
 
 enum command_control_type
@@ -480,6 +486,7 @@ arg_cleanup (void *ignore)
 		    _("arg_cleanup called with no user args.\n"));
 
   user_args = user_args->next;
+  xfree (oargs->command);
   xfree (oargs);
 }
 
@@ -503,6 +510,8 @@ setup_user_args (char *p)
 
   if (p == NULL)
     return old_chain;
+
+  user_args->command = p = xstrdup (p);
 
   while (*p)
     {
@@ -589,6 +598,11 @@ insert_args (char *line)
 {
   char *p, *save_line, *new_line;
   unsigned len, i;
+
+  /* If we are not in a user-defined function, treat $argc, $arg0, et
+     cetera as normal convenience variables.  */
+  if (user_args == NULL)
+    return xstrdup (line);
 
   /* First we need to know how much memory to allocate for the new line.  */
   save_line = line;
@@ -920,15 +934,19 @@ read_command_lines (char *prompt_arg, int from_tty)
   enum misc_command_type val;
 
   control_level = 0;
-  if (deprecated_readline_begin_hook)
+
+  if (from_tty && input_from_terminal_p ())
     {
-      /* Note - intentional to merge messages with no newline */
-      (*deprecated_readline_begin_hook) ("%s  %s\n", prompt_arg, END_MESSAGE);
-    }
-  else if (from_tty && input_from_terminal_p ())
-    {
-      printf_unfiltered ("%s\n%s\n", prompt_arg, END_MESSAGE);
-      gdb_flush (gdb_stdout);
+      if (deprecated_readline_begin_hook)
+	{
+	  /* Note - intentional to merge messages with no newline */
+	  (*deprecated_readline_begin_hook) ("%s  %s\n", prompt_arg, END_MESSAGE);
+	}
+      else
+	{
+	  printf_unfiltered ("%s\n%s\n", prompt_arg, END_MESSAGE);
+	  gdb_flush (gdb_stdout);
+	}
     }
 
   head = tail = NULL;
@@ -989,7 +1007,7 @@ read_command_lines (char *prompt_arg, int from_tty)
 	do_cleanups (old_chain);
     }
 
-  if (deprecated_readline_end_hook)
+  if (deprecated_readline_end_hook && from_tty && input_from_terminal_p ())
     {
       (*deprecated_readline_end_hook) ();
     }

@@ -33,7 +33,7 @@ set testfile "async"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

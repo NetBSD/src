@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef PPC_TDEP_H
 #define PPC_TDEP_H
@@ -56,8 +56,7 @@ CORE_ADDR ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
 					  CORE_ADDR struct_addr);
 CORE_ADDR ppc64_sysv_abi_adjust_breakpoint_address (struct gdbarch *gdbarch,
 						    CORE_ADDR bpaddr);
-int ppc_linux_memory_remove_breakpoint (CORE_ADDR addr,
-					gdb_byte *contents_cache);
+int ppc_linux_memory_remove_breakpoint (struct bp_target_info *bp_tgt);
 struct link_map_offsets *ppc_linux_svr4_fetch_link_map_offsets (void);
 void ppc_linux_supply_gregset (struct regcache *regcache,
 			       int regnum, const void *gregs, size_t size,
@@ -383,5 +382,8 @@ enum
 
 /* Instruction size.  */
 #define PPC_INSN_SIZE 4
+
+/* Estimate for the maximum number of instrctions in a function epilogue.  */
+#define PPC_MAX_EPILOGUE_INSTRUCTIONS  52
 
 #endif /* ppc-tdep.h */

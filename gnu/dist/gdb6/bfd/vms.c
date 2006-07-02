@@ -1,7 +1,7 @@
 /* vms.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
 
@@ -77,7 +77,8 @@ vms_initialize (bfd * abfd)
   if (PRIV (vms_symbol_table) == NULL)
     goto error_ret1;
 
-  if (!bfd_hash_table_init (PRIV (vms_symbol_table), _bfd_vms_hash_newfunc))
+  if (!bfd_hash_table_init (PRIV (vms_symbol_table), _bfd_vms_hash_newfunc,
+			    sizeof (vms_symbol_entry)))
     goto error_ret1;
 
   amt = sizeof (struct location_struct) * LOCATION_SAVE_SIZE;
@@ -486,7 +487,7 @@ vms_new_section_hook (bfd * abfd, asection *section)
   vms_debug (7, "%d: %s\n", section->index, section->name);
 #endif
 
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, section);
 }
 
 /* Read the contents of a section.

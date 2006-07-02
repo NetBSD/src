@@ -1,7 +1,6 @@
-	.LEVEL 1.1
 	.text
-	.align 4
-.globl foo
+	.align 8
+	.globl foo
 	.type	foo, @function
 foo:
 	.PROC
@@ -19,7 +18,7 @@ foo:
 	.EXIT
 	.PROCEND
 
-.globl bar
+	.globl bar
 	.type	bar, @function
 bar:
 	.PROC
@@ -34,7 +33,7 @@ bar:
 	.EXIT
 	.PROCEND
 
-.globl main
+	.globl main
 	.type	main, @function
 main:
 	.PROC

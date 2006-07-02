@@ -33,7 +33,7 @@ set srcfile1 ${testfile1}.c
 # Cygwin needs $EXEEXT.
 set binfile1 ${objdir}/${subdir}/${testfile1}$EXEEXT
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {debug nowarnings}] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -43,7 +43,7 @@ set testfile2 "reread2"
 set srcfile2 ${testfile2}.c
 set binfile2 ${objdir}/${subdir}/${testfile2}$EXEEXT
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug nowarnings}] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

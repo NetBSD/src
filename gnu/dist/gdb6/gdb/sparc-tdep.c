@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,12 +16,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
 #include "dis-asm.h"
+#include "dwarf2-frame.h"
 #include "floatformat.h"
 #include "frame.h"
 #include "frame-base.h"
@@ -170,7 +171,7 @@ sparc_fetch_wcookie (void)
 
 /* Return the contents if register REGNUM as an address.  */
 
-static CORE_ADDR
+CORE_ADDR
 sparc_address_from_register (int regnum)
 {
   ULONGEST addr;
@@ -679,6 +680,23 @@ sparc_frame_cache (struct frame_info *next_frame, void **this_cache)
   return cache;
 }
 
+static int
+sparc32_struct_return_from_sym (struct symbol *sym)
+{
+  struct type *type = check_typedef (SYMBOL_TYPE (sym));
+  enum type_code code = TYPE_CODE (type);
+
+  if (code == TYPE_CODE_FUNC || code == TYPE_CODE_METHOD)
+    {
+      type = check_typedef (TYPE_TARGET_TYPE (type));
+      if (sparc_structure_or_union_p (type)
+	  || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16))
+	return 1;
+    }
+
+  return 0;
+}
+
 struct sparc_frame_cache *
 sparc32_frame_cache (struct frame_info *next_frame, void **this_cache)
 {
@@ -693,16 +711,7 @@ sparc32_frame_cache (struct frame_info *next_frame, void **this_cache)
   sym = find_pc_function (cache->pc);
   if (sym)
     {
-      struct type *type = check_typedef (SYMBOL_TYPE (sym));
-      enum type_code code = TYPE_CODE (type);
-
-      if (code == TYPE_CODE_FUNC || code == TYPE_CODE_METHOD)
-	{
-	  type = check_typedef (TYPE_TARGET_TYPE (type));
-	  if (sparc_structure_or_union_p (type)
-	      || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16))
-	    cache->struct_return_p = 1;
-	}
+      cache->struct_return_p = sparc32_struct_return_from_sym (sym);
     }
   else
     {
@@ -956,9 +965,28 @@ sparc32_return_value (struct gdbarch *gdbarch, struct type *type,
 		      struct regcache *regcache, gdb_byte *readbuf,
 		      const gdb_byte *writebuf)
 {
+  /* The psABI says that "...every stack frame reserves the word at
+     %fp+64.  If a function returns a structure, union, or
+     quad-precision value, this word should hold the address of the
+     object into which the return value should be copied."  This
+     guarantees that we can always find the return value, not just
+     before the function returns.  */
+
   if (sparc_structure_or_union_p (type)
       || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16))
-    return RETURN_VALUE_STRUCT_CONVENTION;
+    {
+      if (readbuf)
+	{
+	  ULONGEST sp;
+	  CORE_ADDR addr;
+
+	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  addr = read_memory_unsigned_integer (sp + 64, 4);
+	  read_memory (addr, readbuf, TYPE_LENGTH (type));
+	}
+
+      return RETURN_VALUE_ABI_PRESERVES_ADDRESS;
+    }
 
   if (readbuf)
     sparc32_extract_return_value (type, regcache, readbuf);
@@ -968,37 +996,53 @@ sparc32_return_value (struct gdbarch *gdbarch, struct type *type,
   return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
-#if 0
-/* NOTE: cagney/2004-01-17: For the moment disable this method.  The
-   architecture and CORE-gdb will need new code (and a replacement for
-   DEPRECATED_EXTRACT_STRUCT_VALUE_ADDRESS) before this can be made to
-   work robustly.  Here is a possible function signature: */
-/* NOTE: cagney/2004-01-17: So far only the 32-bit SPARC ABI has been
-   identifed as having a way to robustly recover the address of a
-   struct-convention return-value (after the function has returned).
-   For all other ABIs so far examined, the calling convention makes no
-   guarenteed that the register containing the return-value will be
-   preserved and hence that the return-value's address can be
-   recovered.  */
-/* Extract from REGCACHE, which contains the (raw) register state, the
-   address in which a function should return its structure value, as a
-   CORE_ADDR.  */
-
-static CORE_ADDR
-sparc32_extract_struct_value_address (struct regcache *regcache)
-{
-  ULONGEST sp;
-
-  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
-  return read_memory_unsigned_integer (sp + 64, 4);
-}
-#endif
-
 static int
 sparc32_stabs_argument_has_addr (struct gdbarch *gdbarch, struct type *type)
 {
   return (sparc_structure_or_union_p (type)
 	  || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16));
+}
+
+static int
+sparc32_dwarf2_struct_return_p (struct frame_info *next_frame)
+{
+  CORE_ADDR pc = frame_unwind_address_in_block (next_frame);
+  struct symbol *sym = find_pc_function (pc);
+
+  if (sym)
+    return sparc32_struct_return_from_sym (sym);
+  return 0;
+}
+
+static void
+sparc32_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
+			       struct dwarf2_frame_state_reg *reg,
+			       struct frame_info *next_frame)
+{
+  int off;
+
+  switch (regnum)
+    {
+    case SPARC_G0_REGNUM:
+      /* Since %g0 is always zero, there is no point in saving it, and
+	 people will be inclined omit it from the CFI.  Make sure we
+	 don't warn about that.  */
+      reg->how = DWARF2_FRAME_REG_SAME_VALUE;
+      break;
+    case SPARC_SP_REGNUM:
+      reg->how = DWARF2_FRAME_REG_CFA;
+      break;
+    case SPARC32_PC_REGNUM:
+    case SPARC32_NPC_REGNUM:
+      reg->how = DWARF2_FRAME_REG_RA_OFFSET;
+      off = 8;
+      if (sparc32_dwarf2_struct_return_p (next_frame))
+	off += 4;
+      if (regnum == SPARC32_NPC_REGNUM)
+	off += 4;
+      reg->loc.offset = off;
+      break;
+    }
 }
 
 
@@ -1007,7 +1051,8 @@ sparc32_stabs_argument_has_addr (struct gdbarch *gdbarch, struct type *type)
    software single-step mechanism.  */
 
 static CORE_ADDR
-sparc_analyze_control_transfer (CORE_ADDR pc, CORE_ADDR *npc)
+sparc_analyze_control_transfer (struct gdbarch *arch,
+				CORE_ADDR pc, CORE_ADDR *npc)
 {
   unsigned long insn = sparc_fetch_instruction (pc);
   int conditional_p = X_COND (insn) & 0x7;
@@ -1045,10 +1090,13 @@ sparc_analyze_control_transfer (CORE_ADDR pc, CORE_ADDR *npc)
       branch_p = 1;
       offset = 4 * X_DISP19 (insn);
     }
+  else if (X_OP (insn) == 2 && X_OP3 (insn) == 0x3a)
+    {
+      /* Trap instruction (TRAP).  */
+      return gdbarch_tdep (arch)->step_trap (insn);
+    }
 
   /* FIXME: Handle DONE and RETRY instructions.  */
-
-  /* FIXME: Handle the Trap instruction.  */
 
   if (branch_p)
     {
@@ -1077,12 +1125,18 @@ sparc_analyze_control_transfer (CORE_ADDR pc, CORE_ADDR *npc)
   return 0;
 }
 
+static CORE_ADDR
+sparc_step_trap (unsigned long insn)
+{
+  return 0;
+}
+
 void
 sparc_software_single_step (enum target_signal sig, int insert_breakpoints_p)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
-  static CORE_ADDR npc, nnpc;
-  static gdb_byte npc_save[4], nnpc_save[4];
+  struct gdbarch *arch = current_gdbarch;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (arch);
+  CORE_ADDR npc, nnpc;
 
   if (insert_breakpoints_p)
     {
@@ -1092,11 +1146,12 @@ sparc_software_single_step (enum target_signal sig, int insert_breakpoints_p)
       orig_npc = npc = sparc_address_from_register (tdep->npc_regnum);
 
       /* Analyze the instruction at PC.  */
-      nnpc = sparc_analyze_control_transfer (pc, &npc);
+      nnpc = sparc_analyze_control_transfer (arch, pc, &npc);
       if (npc != 0)
-	target_insert_breakpoint (npc, npc_save);
+	insert_single_step_breakpoint (npc);
+
       if (nnpc != 0)
-	target_insert_breakpoint (nnpc, nnpc_save);
+	insert_single_step_breakpoint (nnpc);
 
       /* Assert that we have set at least one breakpoint, and that
 	 they're not set at the same spot - unless we're going
@@ -1105,12 +1160,7 @@ sparc_software_single_step (enum target_signal sig, int insert_breakpoints_p)
       gdb_assert (nnpc != npc || orig_npc == 0);
     }
   else
-    {
-      if (npc != 0)
-	target_remove_breakpoint (npc, npc_save);
-      if (nnpc != 0)
-	target_remove_breakpoint (nnpc, nnpc_save);
-    }
+    remove_single_step_breakpoints ();
 }
 
 static void
@@ -1195,6 +1245,7 @@ sparc32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->fpregset = NULL;
   tdep->sizeof_fpregset = 0;
   tdep->plt_entry_size = 0;
+  tdep->step_trap = sparc_step_trap;
 
   set_gdbarch_long_double_bit (gdbarch, 128);
   set_gdbarch_long_double_format (gdbarch, &floatformat_sparc_quad);
@@ -1239,6 +1290,11 @@ sparc32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_unwind_pc (gdbarch, sparc_unwind_pc);
 
   frame_base_set_default (gdbarch, &sparc32_frame_base);
+
+  /* Hook in the DWARF CFI frame unwinder.  */
+  dwarf2_frame_set_init_reg (gdbarch, sparc32_dwarf2_frame_init_reg);
+  /* FIXME: kettenis/20050423: Don't enable the unwinder until the
+     StackGhost issues have been resolved.  */
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);

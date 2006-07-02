@@ -1,6 +1,6 @@
 /* Main code for remote server for GDB.
-   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2002, 2003, 2004,
-   2005
+   Copyright (C) 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2002, 2003, 2004,
+   2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "server.h"
 
@@ -80,6 +80,12 @@ attach_inferior (int pid, char *statusptr, int *sigptr)
 
   *sigptr = mywait (statusptr, 0);
 
+  /* GDB knows to ignore the first SIGSTOP after attaching to a running
+     process using the "attach" command, but this is different; it's
+     just using "target remote".  Pretend it's just starting up.  */
+  if (*statusptr == 'T' && *sigptr == SIGSTOP)
+    *sigptr = SIGTRAP;
+
   return 0;
 }
 
@@ -121,6 +127,20 @@ handle_query (char *own_buf)
 	  sprintf (own_buf, "l");
 	  return;
 	}
+    }
+
+  if (the_target->read_offsets != NULL
+      && strcmp ("qOffsets", own_buf) == 0)
+    {
+      CORE_ADDR text, data;
+      
+      if (the_target->read_offsets (&text, &data))
+	sprintf (own_buf, "Text=%lX;Data=%lX;Bss=%lX",
+		 (long)text, (long)data, (long)data);
+      else
+	write_enn (own_buf);
+      
+      return;
     }
 
   if (the_target->read_auxv != NULL
@@ -309,13 +329,23 @@ myresume (int step, int sig)
 static int attached;
 
 static void
+gdbserver_version (void)
+{
+  printf ("GNU gdbserver %s\n"
+	  "Copyright (C) 2006 Free Software Foundation, Inc.\n"
+	  "gdbserver is free software, covered by the GNU General Public License.\n"
+	  "This gdbserver was configured as \"%s\"\n",
+	  version, host_name);
+}
+
+static void
 gdbserver_usage (void)
 {
-  error ("Usage:\tgdbserver COMM PROG [ARGS ...]\n"
-	 "\tgdbserver COMM --attach PID\n"
-	 "\n"
-	 "COMM may either be a tty device (for serial debugging), or \n"
-	 "HOST:PORT to listen for a TCP connection.\n");
+  printf ("Usage:\tgdbserver COMM PROG [ARGS ...]\n"
+	  "\tgdbserver COMM --attach PID\n"
+	  "\n"
+	  "COMM may either be a tty device (for serial debugging), or \n"
+	  "HOST:PORT to listen for a TCP connection.\n");
 }
 
 int
@@ -330,6 +360,18 @@ main (int argc, char *argv[])
   int bad_attach;
   int pid;
   char *arg_end;
+
+  if (argc >= 2 && strcmp (argv[1], "--version") == 0)
+    {
+      gdbserver_version ();
+      exit (0);
+    }
+
+  if (argc >= 2 && strcmp (argv[1], "--help") == 0)
+    {
+      gdbserver_usage ();
+      exit (0);
+    }
 
   if (setjmp (toplevel))
     {
@@ -354,7 +396,10 @@ main (int argc, char *argv[])
     }
 
   if (argc < 3 || bad_attach)
-    gdbserver_usage();
+    {
+      gdbserver_usage ();
+      exit (1);
+    }
 
   initialize_low ();
 

@@ -1,6 +1,6 @@
 /* BFD back-end data structures for a.out (and similar) files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -575,7 +575,8 @@ extern bfd_boolean NAME (aout, link_hash_table_init)
   (struct aout_link_hash_table *, bfd *,
    struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
 			       struct bfd_hash_table *,
-			       const char *));
+			       const char *),
+   unsigned int);
 
 extern struct bfd_link_hash_table * NAME (aout, link_hash_table_create)
   (bfd *);

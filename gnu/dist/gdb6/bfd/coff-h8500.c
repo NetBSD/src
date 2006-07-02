@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas H8/500 COFF binaries.
-   Copyright 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002, 2003, 2004
+   Copyright 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
@@ -245,9 +245,9 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = link_order->offset
-	  + *dst_ptr
-	    + link_order->u.indirect.section->output_section->vma;
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
+		       + input_section->output_section->vma);
 	int gap = dst - dot - 1; /* -1 since were in the odd byte of the
 				    word and the pc's been incremented.  */
 
@@ -269,9 +269,9 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = link_order->offset
-	  + *dst_ptr
-	    + link_order->u.indirect.section->output_section->vma;
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
+		       + input_section->output_section->vma);
 	int gap = dst - dot - 1; /* -1 since were in the odd byte of the
 				    word and the pc's been incremented.  */
 

@@ -1,6 +1,6 @@
 /* Generic BFD library interface and support routines.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -216,6 +216,11 @@ CODE_FRAGMENT
 #include "libecoff.h"
 #undef obj_symbols
 #include "elf-bfd.h"
+
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
+
 
 /* provide storage for subsystem, stack and heap data which may have been
    passed in on the command line.  Ld puts this data into a bfd_link_info
@@ -437,7 +442,7 @@ _bfd_default_error_handler (const char *fmt, ...)
   /* Reserve enough space for the existing format string.  */
   avail -= strlen (fmt) + 1;
   if (avail > 1000)
-    abort ();
+    _exit (EXIT_FAILURE);
 
   p = fmt;
   while (1)
@@ -775,10 +780,6 @@ bfd_assert (const char *file, int line)
 /* A more or less friendly abort message.  In libbfd.h abort is
    defined to call this function.  */
 
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE 1
-#endif
-
 void
 _bfd_abort (const char *file, int line, const char *fn)
 {
@@ -791,7 +792,7 @@ _bfd_abort (const char *file, int line, const char *fn)
       (_("BFD %s internal error, aborting at %s line %d\n"),
        BFD_VERSION_STRING, file, line);
   (*_bfd_error_handler) (_("Please report this bug.\n"));
-  xexit (EXIT_FAILURE);
+  _exit (EXIT_FAILURE);
 }
 
 /*
@@ -1439,7 +1440,8 @@ bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
   preserve->section_count = abfd->section_count;
   preserve->section_htab = abfd->section_htab;
 
-  if (! bfd_hash_table_init (&abfd->section_htab, bfd_section_hash_newfunc))
+  if (! bfd_hash_table_init (&abfd->section_htab, bfd_section_hash_newfunc,
+			     sizeof (struct section_hash_entry)))
     return FALSE;
 
   abfd->tdata.any = NULL;
@@ -1510,30 +1512,4 @@ bfd_preserve_finish (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_preserve *preserve)
      inside bfd_alloc'd memory.  The section hash is on a separate
      objalloc.  */
   bfd_hash_table_free (&preserve->section_htab);
-}
-
-/*
-FUNCTION
-	bfd_hide_symbol
-
-SYNOPSIS
-	void bfd_hide_symbol (bfd *,
-			      struct bfd_link_info *,
-			      struct bfd_link_hash_entry *,
-			      bfd_boolean);
-
-DESCRIPTION
-	This function hides a symbol so that it won't be exported. 
-
-*/
-
-void
-bfd_hide_symbol (bfd *abfd,
-		 struct bfd_link_info *link_info,
-		 struct bfd_link_hash_entry *h,
-		 bfd_boolean force_local)
-{
-  if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
-    (get_elf_backend_data (abfd)->elf_backend_hide_symbol)
-      (link_info, (struct elf_link_hash_entry *) h, force_local);
 }

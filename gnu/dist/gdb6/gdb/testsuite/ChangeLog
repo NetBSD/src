@@ -1,9 +1,362 @@
+2006-05-11  Fred Fish  <fnf@specifix.com>
+
+	* gdb.base/bang.exp: Ignore unexpected output between the
+	"program exited normally" and the gdb prompt, as many other
+	tests do.
+
+2006-05-07  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.base/help.exp: Make "delete checkpoint" part option for
+	"help d" and "help delete" tests.
+
+2006-05-06  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* gdb.mi/mi-basics.exp: Add missing serial number to 
+	expected output in some mi_gdb_test statements.
+	* gdb.mi/mi2-basics.exp: Likewise.
+
+2006-05-05  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.base/del.c: New file.
+	* gdb.base/del.exp: New testcase.
+
+2006-05-05  David S. Miller  <davem@sunset.davemloft.net>
+
+	* gdb.base/break.exp: Do not assume a breakpoint on
+	main will actually be in $srcfile when optimizing.
+	* gdb.base/savedregs.exp: Do not require that the dummy
+	frame location match up to a symbol and source file location.
+	* gdb.mi/mi-regs.exp (111-data-list-register-values x): "No registers"
+	will get printed without a mi_cmd_data_list_register_values prefix.
+	(*-data-list-register-*): Correct regular expressions to expect the new
+	pseudo d? floating point registers.
+	* gdb.mi/mi2-regs.exp: Likewise.
+	
+2006-05-05  Christophe Lyon  <christophe.lyon@st.com>
+
+	* gdb.cp/m-static.h (class gnu_obj_4): Add dummy member.
+	* gdb.cp/m-static.cc (main): Write to test4.dummy, so that test4
+	is allocated by the compiler.
+	* gdb.mi/var-cmd.c: (do_special_tests): Write to u, anonu, s,
+	anons, e, anone to force their allocation by the compiler.
+
+2006-05-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.base/help.exp: Update expected text for help d and
+	help delete.
+
+2006-05-02  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.asm/asm-source.exp: Add powerpc-*-netbsd* to the list of
+	NetBSD/ELF targets.
+
+2006-04-30  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.base/sigbpt.exp (stepi_out): FAIL when inserting a
+	single-step breakpoint fails; make this a KFAIL on
+	sparc*-*-openbsd*.
+	* gdb.base/siginfo.exp: Likewise.
+	* gdb.base/sigstep.exp (advance, advancei): Likewise.
+
+2006-04-26  Michael Snyder  <msnyder@redhat.com>
+
+	* gdb.base/multi-forks.exp: Modify patterns for "run to exit",
+	which may have to consume output from other forks.
+	Add tests to make sure that "delete fork" succeeded.
+
+2006-04-20  Michael Snyder  <msnyder@redhat.com>
+
+	* 2006-03-22  Jim Blandy  <jimb@redhat.com>
+	Add support for the Renesas M32C and M16C.
+
+	* gdb.asm/asm-source.exp: Add m32c target.
+	* gdb.asm/m32c.inc: Support for m32c target.
+
+2006-04-07  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* gdb.base/commands.exp (recursive_source_test): New test.
+
+2006-04-04  David S. Miller  <davem@sunset.davemloft.net>
+
+	* gdb.base/float.exp: Add pattern for sparc targets.
+
+2006-03-30  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.base/commands.exp (stray_arg0_test): New test.
+
+2006-03-30  Paul Brook  <paul@codesourcery.com>
+
+	* gdb.mi/mi-until.exp: kfail broken until command.
+	* gdb.mi/mi2-until.exp: Ditto.
+
+2006-03-27  Nick Roberts  <nickrob@snap.net.nz>
+
+	* gdb.mi/mi-var-child-f.exp, gdb.mi/array.f: New files.
+
+2006-03-08  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gdb.base/prelink.exp: Anchor tested-for regular expression
+	on gdb prompt.
+
+2006-03-07  Paul Brook  <paul@codesourcery.com>
+
+	* gdb.base/assign.exp: Correct fail message.
+
+2006-03-07  Paul Brook  <paul@codesourcery.com>
+
+	* lib/compiler.c: Extract armcc version number.
+	* lib/compiler.cc: Ditto.
+
+2006-03-07  Paul Brook  <paul@codesourcery.com>
+
+	* gdb.arch/altivec-abi.exp: Use nowarnings instead of
+	additional_flags=-w.
+	* gdb.arch/altivec-regs.exp: Ditto.
+	* gdb.arch/e500-abi.exp: Ditto.
+	* gdb.arch/e500-regs.exp: Ditto.
+	* gdb.base/all-bin.exp: Ditto.
+	* gdb.base/annota1.exp: Ditto.
+	* gdb.base/annota3.exp: Ditto.
+	* gdb.base/args.exp: Ditto.
+	* gdb.base/arithmet.exp: Ditto.
+	* gdb.base/assign.exp: Ditto.
+	* gdb.base/async.exp: Ditto.
+	* gdb.base/bang.exp: Ditto.
+	* gdb.base/break.exp: Ditto.
+	* gdb.base/call-rt-st.exp: Ditto.
+	* gdb.base/completion.exp: Ditto.
+	* gdb.base/cond-expr.exp: Ditto.
+	* gdb.base/condbreak.exp: Ditto.
+	* gdb.base/consecutive.exp: Ditto.
+	* gdb.base/define.exp: Ditto.
+	* gdb.base/display.exp: Ditto.
+	* gdb.base/ena-dis-br.exp: Ditto.
+	* gdb.base/environ.exp: Ditto.
+	* gdb.base/eval-skip.exp: Ditto.
+	* gdb.base/info-proc.exp: Ditto.
+	* gdb.base/jump.exp: Ditto.
+	* gdb.base/logical.exp: Ditto.
+	* gdb.base/long_long.exp: Ditto.
+	* gdb.base/maint.exp: Ditto.
+	* gdb.base/miscexprs.exp: Ditto.
+	* gdb.base/pc-fp.exp: Ditto.
+	* gdb.base/pointers.exp: Ditto.
+	* gdb.base/relational.exp: Ditto.
+	* gdb.base/reread.exp: Ditto.
+	* gdb.base/sect-cmd.exp: Ditto.
+	* gdb.base/sep.exp: Ditto.
+	* gdb.base/sepdebug.exp: Ditto.
+	* gdb.base/until.exp: Ditto.
+	* gdb.base/whatis-exp.exp: Ditto.
+	* gdb.cp/annota2.exp: Ditto.
+	* gdb.cp/annota3.exp: Ditto.
+	* gdb.trace/actions.exp: Ditto.
+	* gdb.trace/backtrace.exp: Ditto.
+	* gdb.trace/circ.exp: Ditto.
+	* gdb.trace/collection.exp: Ditto.
+	* gdb.trace/deltrace.exp: Ditto.
+	* gdb.trace/infotrace.exp: Ditto.
+	* gdb.trace/limits.exp: Ditto.
+	* gdb.trace/packetlen.exp: Ditto.
+	* gdb.trace/passc-dyn.exp: Ditto.
+	* gdb.trace/passcount.exp: Ditto.
+	* gdb.trace/report.exp: Ditto.
+	* gdb.trace/save-trace.exp: Ditto.
+	* gdb.trace/tfind.exp: Ditto.
+	* gdb.trace/tracecmd.exp: Ditto.
+	* gdb.trace/while-dyn.exp: Ditto.
+	* gdb.trace/while-stepping.exp: Ditto.
+	* lib/gdb.exp: Ditto.
+	(gdb_compile): Handle nowarning option.
+
+2006-03-07  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gdb.base/prelink.c, gdb.base/prelink-lib.c: Update FSF address.
+	* gdb.base/prelink.exp: Likewise.  Add -q to prelink runs.
+	Rename executable to prelinkt.  Don't re-prelink if we didn't
+	get a core file.  Test prelink -u exit status to tell whether
+	prelinking failed.  Use gdb_test_multiple.
+
+2006-03-01  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.cp/inherit.exp (test_print_mi_member_types): New function.
+	(do_tests): Call it.
+
+2006-02-28  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gdb.base/prelink.exp: New test.
+	* gdb.base/prelink.c, gdb.base/prelink-lib.c: New sources.
+
+2006-02-24  Wu Zhou  <woodzltc@cn.ibm.com>
+
+	* gdb.fortran/derived-type.f90: New file.
+	* gdb.fortran/derived-type.exp: New testcase.
+
+2006-02-23  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.base/default.exp: Allow ';' as a directory separator.
+
+2006-02-21  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* gdb.base/help.exp (help add-symbol-file): Update.
+
+2006-02-21  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* gdb.base/help.exp (help load): Update expected results.
+
+2006-02-19  Fred Fish  <fnf@specifix.com>
+
+	* gdb.base/pc-fp.exp (get_valueofx): Don't print environment
+	specifix hex value as part of results.
+	* gdb.base/shreloc.exp (get_msym_addrs): Ditto.
+	
+2006-02-16  Fred Fish  <fnf@specifix.com>
+
+	* gdb.base/whatis.c: Define variables using typedefs char_addr,
+	ushort_addr, and slong_addr, so the typedefs are not optimized
+	away.
+	* gdb.base/whatis.exp: Add tests using type name for struct type,
+	union type, enum type, and typedef.
+	
+2006-02-13  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.arch/i386-prologue.exp: Add testcase for PR breakpoints/2080.
+
+2006-02-13  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.base/scope.exp (test_at_main): Remove logic to handle the
+	case where it takes two "next" commands to skip past the init
+	call.
+
+2006-02-12  Fred Fish  <fnf@specifix.com>
+
+	* gdb.base/scope.exp (test_at_main): Use gdb_test_multiple
+	to handle cases where it takes two "next" commands to skip
+	past the init call.
+
+2006-02-07  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.ada/array_return.exp: Mark the last test as expected to fail
+	on hppa32 targets.
+
+2006-02-06  Vladimir Prus  <ghost@cs.msu.su>
+
+	* gdb.mi/mi-break.exp, gdb.mi/mi2-break.exp: Test for the fullname
+	field.
+
+2006-01-29  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.cp/bool.cc, gdb.cp/bool.exp: New files.
+
+2006-01-22  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.arch/powerpc-prologue.c, gdb.arch/powerpc-prologue.exp: New
+	files.
+
+2006-01-20  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.cp/maint.exp: Set complaints to a positive value.
+
+2006-01-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.base/multi-forks.c: Add copyright notice.  Include <stdlib.h>.
+	* gdb.base/multi-forks.exp: Use a loop.  Allow "fork" as a stopped
+	function name.
+
+2006-01-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.base/checkpoint.c: Update copyright notice.  Include
+	<stdlib.h>.
+
+2006-01-04  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.asm/asm-source.exp: Independently provide default values for
+	asm-flags and debug-flags.  Use 'string equal' to do the
+	comparison, not the implicit expr's '==' operator.  Remove
+	now-unneeded assignments to asm-flags.  In h8300 case, place
+	"-gdwarf-2", not "-gdwarf2", in debug-flags, not asm-flags.
+
+2006-01-04  Michael Snyder  <msnyder@redhat.com>
+
+	* gdb.base/checkpoint.c: New file.
+	* gdb.base/checkpoint.exp: New file.
+	* gdb.base/multi-fork.c: New file.
+	* gdb.base/multi-fork.exp: New file.
+	* gdb.base/pi.txt: New file (data for checkpoint.c test).
+
+2006-01-04  Fred Fish  <fnf@specifix.com>
+
+	* gdb.base/ptype.c (foo): Add typedef.
+	(intfoo): Add function.
+	* gdb.base/ptype1.c: New file.
+	* gdb.base/ptype.exp: Handle compilation and linking with two
+	source files.  Test that proper type for "foo" is found based
+	on source context rather than first match found in symtabs.
+
+2005-12-28  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.asm/asm-source.exp (hppa-*-openbsd*): New.
+	* gdb.asm/openbsd.inc: Indent commands.
+
+2005-12-26  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.base/freebpcmd.exp: Increase timeout.
+
+	* gdb.gdb/selftest.exp (test_with_self): Update copyright check.
+
+2005-12-17  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.base/default.exp: Update check for "show version".
+
+2005-12-09  Randolph Chung  <tausq@debian.org>
+
+	* gdb.asm/asm-source.exp (hppa64-*-hpux*): New.
+	* gdb.asm/pa64.inc: New file.
+
+2005-12-09  Randolph Chung  <tausq@debian.org>
+
+	* gdb.asm/common.inc: Indent commands.
+	* gdb.asm/asmsrc1.s: Likewise.
+	* gdb.asm/asmsrc2.s: Likewise.
+
+2005-12-09  Randolph Chung  <tausq@debian.org>
+
+	* gdb.arch/pa-nullify.exp: Handle hppa64-*-* targets.
+	(get_addr_of_sym): Remove duplicate print.
+	(gen_core): xfail hppa*-*-hpux*, update expected output.
+	* gdb.arch/pa-nullify.s: Reformat to also work on HPUX.
+	* gdb.arch/pa64-nullify.s: New file.
+
+2005-12-09  Randolph Chung  <tausq@debian.org>
+
+	* gdb.base/dump.exp: Mark hppa64-*-* as 64-bit target.
+
+2005-12-07  Christophe Lyon  <christophe.lyon@st.com>
+
+	* gdb.cp/printmethod.cc (main): Call virt and nonvirt, to force
+	code generation for these functions.
+	* gdb.cp/printmethod.exp: Expect "&A::nonvirt()" instead of an
+	error message.
+
+2005-12-02  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* gdb.base/help.exp (help b, help br, help bre, help brea)
+	(help break): Update the expected message.
+
 2005-11-11  Stephane Carrez  <stcarrez@nerim.fr>
 
 	* gdb.asm/m68hc11.inc: Setup the data section.
 	* gdb.asm/asm-source.exp (m6811-*-*): Don't use the target board linker
 	script for this test.
 	(m6812-*-*): Likewise.
+
+2005-11-09  Randolph Chung <tausq@debian.org>
+
+	* gdb.base/structs2.exp: Update xfail to only trigger for gcc-3.x.
+
+2005-11-09  Wu Zhou  <woodzltc@cn.ibm.com>
+
+	* gdb.base/break.exp: Fix a comment typo.
 
 2005-11-03  Jim Blandy  <jimb@redhat.com>
 

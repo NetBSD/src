@@ -1,6 +1,5 @@
 # Target: ARM embedded system
-TDEPFILES= arm-tdep.o remote-rdp.o remote-rdi.o
-TDEPLIBS= rdi-share/libangsd.a
+TDEPFILES= arm-tdep.o remote-rdp.o
 DEPRECATED_TM_FILE= tm-embed.h
 
 SIM_OBS = remote-sim.o

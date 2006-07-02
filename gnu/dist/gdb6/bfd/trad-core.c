@@ -65,8 +65,7 @@ struct trad_core_struct
 const bfd_target *trad_unix_core_file_p PARAMS ((bfd *abfd));
 char * trad_unix_core_file_failing_command PARAMS ((bfd *abfd));
 int trad_unix_core_file_failing_signal PARAMS ((bfd *abfd));
-bfd_boolean trad_unix_core_file_matches_executable_p
-  PARAMS ((bfd *core_bfd, bfd *exec_bfd));
+#define trad_unix_core_file_matches_executable_p generic_core_file_matches_executable_p
 static void swap_abort PARAMS ((void));
 
 /* Handle 4.2-style (and perhaps also sysV-style) core dump file.  */
@@ -252,14 +251,6 @@ trad_unix_core_file_failing_signal (ignore_abfd)
 #else
   return -1;		/* FIXME, where is it? */
 #endif
-}
-
-bfd_boolean
-trad_unix_core_file_matches_executable_p  (core_bfd, exec_bfd)
-     bfd *core_bfd ATTRIBUTE_UNUSED;
-     bfd *exec_bfd ATTRIBUTE_UNUSED;
-{
-  return TRUE;		/* FIXME, We have no way of telling at this point */
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */

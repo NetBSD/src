@@ -41,6 +41,8 @@ struct sgi_core_struct
 #define core_signal(bfd) (core_hdr(bfd)->sig)
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
+#define irix_core_core_file_matches_executable_p generic_core_file_matches_executable_p
+
 static asection *make_bfd_asection
   (bfd *, const char *, flagword, bfd_size_type, bfd_vma, file_ptr);
 
@@ -260,13 +262,6 @@ static int
 irix_core_core_file_failing_signal (bfd *abfd)
 {
   return core_signal (abfd);
-}
-
-static bfd_boolean
-irix_core_core_file_matches_executable_p (bfd *core_bfd ATTRIBUTE_UNUSED,
-                                          bfd *exec_bfd ATTRIBUTE_UNUSED)
-{
-  return TRUE;			/* XXX - FIXME */
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */

@@ -1,8 +1,8 @@
 /* Floating point definitions for GDB.
 
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2003, 2005 Free Software
-   Foundation, Inc.
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1997, 1998, 1999, 2000, 2001, 2003, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef DOUBLEST_H
 #define DOUBLEST_H
@@ -48,10 +48,20 @@ struct floatformat;
    host's `long double'.  In general, we'll probably reduce the precision of
    any such values and print a warning.  */
 
-#ifdef HAVE_LONG_DOUBLE
+#if (defined HAVE_LONG_DOUBLE && defined PRINTF_HAS_LONG_DOUBLE \
+     && defined SCANF_HAS_LONG_DOUBLE)
 typedef long double DOUBLEST;
+# define DOUBLEST_PRINT_FORMAT "%Lg"
+# define DOUBLEST_SCAN_FORMAT "%Lg"
 #else
 typedef double DOUBLEST;
+# define DOUBLEST_PRINT_FORMAT "%g"
+# define DOUBLEST_SCAN_FORMAT "%lg"
+/* If we can't scan or print long double, we don't want to use it
+   anywhere.  */
+# undef HAVE_LONG_DOUBLE
+# undef PRINTF_HAS_LONG_DOUBLE
+# undef SCANF_HAS_LONG_DOUBLE
 #endif
 
 extern void floatformat_to_doublest (const struct floatformat *,

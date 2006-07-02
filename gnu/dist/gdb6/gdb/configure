@@ -313,8 +313,6 @@ ac_subdirs_all="$ac_subdirs_all doc testsuite"
 ac_subdirs_all="$ac_subdirs_all gdbtk"
 ac_subdirs_all="$ac_subdirs_all multi-ice"
 ac_subdirs_all="$ac_subdirs_all gdbserver"
-ac_subdirs_all="$ac_subdirs_all rdi-share"
-ac_subdirs_all="$ac_subdirs_all nlm"
 ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os SET_MAKE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT USE_INCLUDED_LIBINTL CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB INCLUDE_LOCALE_H GT_NO GT_YES MKINSTALLDIRS l localedir PACKAGE subdirs AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S YACC AR ac_ct_AR DLLTOOL ac_ct_DLLTOOL WINDRES ac_ct_WINDRES MIG ac_ct_MIG CONFIG_LDFLAGS TARGET_SYSTEM_ROOT TARGET_SYSTEM_ROOT_DEFINE WARN_CFLAGS WERROR_CFLAGS SER_HARDWIRE WIN32LIBS LIBGUI GUI_CFLAGS_X WIN32LDAPP TCL_VERSION TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_CC TCL_DEFS TCL_SHLIB_CFLAGS TCL_SHLIB_LD TCL_SHLIB_LD_LIBS TCL_SHLIB_SUFFIX TCL_DL_LIBS TCL_LD_FLAGS TCL_LD_SEARCH_FLAGS TCL_CC_SEARCH_FLAGS TCL_COMPAT_OBJS TCL_RANLIB TCL_BUILD_LIB_SPEC TCL_LIB_SPEC TCL_LIB_VERSIONS_OK TK_VERSION TK_DEFS TK_BUILD_INCLUDES TK_XINCLUDES TK_XLIBSW TK_BUILD_LIB_SPEC TK_LIB_SPEC TCLHDIR TKHDIR ITCLHDIR ITKHDIR ITCL_VERSION ITCL_DEFS ITCL_BUILD_INCLUDES ITCL_BUILD_LIB_SPEC ITCL_LIB_SPEC ITK_VERSION ITK_DEFS ITK_BUILD_INCLUDES ITK_BUILD_LIB_SPEC ITK_LIB_SPEC X_CFLAGS X_LDFLAGS X_LIBS TCL_DEPS TK_DEPS ITCLLIB ITCL_DEPS ITKLIB ITK_DEPS GDBTKLIBS GDBTK_CFLAGS GDBTK_SRC_DIR IGNORE_SIM IGNORE_SIM_OBS ENABLE_CFLAGS PROFILE_CFLAGS CONFIG_OBS CONFIG_DEPS CONFIG_SRCS CONFIG_ALL CONFIG_CLEAN CONFIG_INSTALL CONFIG_UNINSTALL target_subdir frags xm_h tm_h nm_h LIBICONV LIBOBJS LTLIBOBJS'
 ac_subst_files='host_makefile_frag target_makefile_frag'
 
@@ -868,6 +866,7 @@ Optional Features:
   --enable-tui            enable full-screen terminal user interface (TUI)
   --enable-gdbtk          enable gdbtk graphical user interface (GUI)
   --enable-profiling      enable profiling of GDB
+  --enable-werror    treat compile warnings as errors
   --enable-build-warnings Enable build-time compiler warnings if gcc is used
   --enable-gdb-build-warnings Enable GDB specific build-time compiler warnings if gcc is used
   --enable-sim            Link gdb with simulator
@@ -5942,6 +5941,10 @@ _ACEOF
 
 subdirs="$subdirs doc testsuite"
 
+
+# Provide defaults for some variables set by the per-host and per-target
+# configuration.
+gdb_host_obs=posix-hdep.o
 
 . $srcdir/configure.host
 
@@ -20099,13 +20102,30 @@ fi;
 
 
 
+# Check whether --enable-werror or --disable-werror was given.
+if test "${enable_werror+set}" = set; then
+  enableval="$enable_werror"
+  case "${enableval}" in
+     yes | y) ERROR_ON_WARNING="yes" ;;
+     no | n)  ERROR_ON_WARNING="no" ;;
+     *) { { echo "$as_me:$LINENO: error: bad value ${enableval} for --enable-werror" >&5
+echo "$as_me: error: bad value ${enableval} for --enable-werror" >&2;}
+   { (exit 1); exit 1; }; } ;;
+   esac
+fi;
+
+WERROR_CFLAGS=""
+if test "${ERROR_ON_WARNING}" = yes ; then
+    WERROR_CFLAGS="-Werror"
+fi
+
 # NOTE: Don't add -Wall or -Wunused, they both include
 # -Wunused-parameter which reports bogus warnings.
 # NOTE: If you add to this list, remember to update
 # gdb/doc/gdbint.texinfo.
 build_warnings="-Wimplicit -Wreturn-type -Wcomment -Wtrigraphs \
 -Wformat -Wparentheses -Wpointer-arith -Wformat-nonliteral \
--Wunused-label -Wunused-function"
+-Wunused-label -Wunused-function -Wno-pointer-sign"
 
 # GCC supports -Wuninitialized only with -O or -On, n != 0.
 if test x${CFLAGS+set} = xset; then
@@ -20156,7 +20176,6 @@ if test x"$silent" != x"yes" && test x"$build_warnings" != x""; then
   echo "Setting GDB specific compiler warning flags = $build_warnings" 6>&1
 fi
 fi; WARN_CFLAGS=""
-WERROR_CFLAGS=""
 if test "x${build_warnings}" != x -a "x$GCC" = xyes
 then
     echo "$as_me:$LINENO: checking compiler warning flags" >&5
@@ -20256,7 +20275,7 @@ SER_HARDWIRE="ser-base.o ser-unix.o ser-pipe.o ser-tcp.o"
 case ${host} in
   *go32* ) SER_HARDWIRE=ser-go32.o ;;
   *djgpp* ) SER_HARDWIRE=ser-go32.o ;;
-  *mingw32*) SER_HARDWIRE="ser-base.o ser-tcp.o" ;;
+  *mingw32*) SER_HARDWIRE="ser-base.o ser-tcp.o ser-mingw.o" ;;
 esac
 
 
@@ -20282,6 +20301,9 @@ _ACEOF
     ;;
 esac
 
+
+# Add any host-specific objects to GDB.
+CONFIG_OBS="${CONFIG_OBS} ${gdb_host_obs}"
 
 LIBGUI="../libgui/src/libgui.a"
 GUI_CFLAGS_X="-I${srcdir}/../libgui/src"
@@ -21768,23 +21790,6 @@ subdirs="$subdirs gdbserver"
     echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
   fi
-fi
-
-# We build rdi-share on ARM-based targets, as instructed by configure.tgt.
-if test "x$build_rdi_share" = xyes; then
-
-
-subdirs="$subdirs rdi-share"
-
-fi
-
-# We configure the nlm subdirectory on netware targets, as instructed
-# by configure.tgt.
-if test "x$build_nlm" = xyes; then
-
-
-subdirs="$subdirs nlm"
-
 fi
 
 # If hostfile (XM_FILE) and/or targetfile (DEPRECATED_TM_FILE) and/or

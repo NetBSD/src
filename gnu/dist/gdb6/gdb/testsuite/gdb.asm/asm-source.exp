@@ -65,7 +65,6 @@ switch -glob -- [istarget] {
     }
     "x86_64-*-*" {
         set asm-arch x86_64
-        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
 	set debug-flags "-gdwarf-2"
     }
     "i\[3456\]86-*-*" {
@@ -73,6 +72,9 @@ switch -glob -- [istarget] {
     }
     "m32r*-linux*" {
         set asm-arch m32r-linux
+    }
+    "m32c-*-*" {
+        set asm-arch m32c
     }
     "m32r*-*" {
         set asm-arch m32r
@@ -108,7 +110,6 @@ switch -glob -- [istarget] {
     }
     "sh*-*-*" {
         set asm-arch sh
-        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
 	set debug-flags "-gdwarf-2"
     }
     "sparc-*-*" {
@@ -121,7 +122,6 @@ switch -glob -- [istarget] {
     }
     "xstormy16-*-*" {
         set asm-arch xstormy16
-        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
 	set debug-flags "-gdwarf-2"
     }
     "v850-*-*" {
@@ -133,7 +133,6 @@ switch -glob -- [istarget] {
     }
     "ia64-*-*" {
         set asm-arch ia64
-        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
 	set debug-flags "-gdwarf-2"
     }
     "iq2000-*-*" {
@@ -141,12 +140,19 @@ switch -glob -- [istarget] {
     }
     "hppa*-linux-*" {
         set asm-arch pa
-        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
+    }
+    "hppa-*-openbsd*" {
+        set asm-arch pa
+	set debug-flags "-gdwarf-2"
+    }
+    "hppa64-*-hpux*" {
+        set asm-arch pa64
 	set debug-flags "-gdwarf-2"
     }
     "h83*-*" {
 	set asm-arch h8300
-	set asm-flags "-gdwarf2 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set debug-flags "-gdwarf-2"
     }
 }
 
@@ -157,6 +163,7 @@ if { "${asm-arch}" == "" } {
 # On NetBSD/ELF we need a special NetBSD-identifying note section.
 if { [istarget "*-*-netbsdelf*"]
      || [istarget "mips*-*-netbsd*"]
+     || [istarget "powerpc-*-netbsd*"]
      || [istarget "x86_64-*-netbsd*"] } then {
     set asm-note "netbsd"
 }
@@ -193,8 +200,11 @@ remote_download host ${srcdir}/${subdir}/${asm-arch}.inc ${subdir}/arch.inc
 remote_exec build "rm -f ${subdir}/note.inc"
 remote_download host ${srcdir}/${subdir}/${asm-note}.inc ${subdir}/note.inc
 
-if { "${asm-flags}" == "" } {
+if { [string equal ${asm-flags} ""] } {
     set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+}
+
+if { [string equal ${debug-flags} ""] } {
     set debug-flags "-gstabs"
 }
 

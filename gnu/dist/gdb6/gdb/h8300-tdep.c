@@ -1,6 +1,6 @@
 /* Target-machine dependent code for Renesas H8/300, for GDB.
 
-   Copyright 1988, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
+   Copyright (C) 1988, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
    1999, 2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /*
    Contributed by Steve Chamberlain
@@ -500,7 +500,7 @@ static void
 h8300_frame_prev_register (struct frame_info *next_frame, void **this_cache,
 			   int regnum, int *optimizedp,
 			   enum lval_type *lvalp, CORE_ADDR *addrp,
-			   int *realnump, void *valuep)
+			   int *realnump, gdb_byte *valuep)
 {
   struct h8300_frame_cache *cache =
     h8300_frame_cache (next_frame, this_cache);
@@ -685,7 +685,7 @@ h8300_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       /* Pad the argument appropriately.  */
       int padded_len = align_up (len, wordsize);
-      char *padded = alloca (padded_len);
+      gdb_byte *padded = alloca (padded_len);
 
       memset (padded, 0, padded_len);
       memcpy (len < wordsize ? padded + padded_len - len : padded,
@@ -905,7 +905,7 @@ h8300h_store_return_value (struct type *type, struct regcache *regcache,
 static enum return_value_convention
 h8300_return_value (struct gdbarch *gdbarch, struct type *type,
 		    struct regcache *regcache,
-		    void *readbuf, const void *writebuf)
+		    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (h8300_use_struct_convention (type))
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -919,7 +919,7 @@ h8300_return_value (struct gdbarch *gdbarch, struct type *type,
 static enum return_value_convention
 h8300h_return_value (struct gdbarch *gdbarch, struct type *type,
 		     struct regcache *regcache,
-		     void *readbuf, const void *writebuf)
+		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (h8300h_use_struct_convention (type))
     {
@@ -1145,7 +1145,8 @@ h8300_register_type (struct gdbarch *gdbarch, int regno)
 
 static void
 h8300_pseudo_register_read (struct gdbarch *gdbarch,
-			    struct regcache *regcache, int regno, void *buf)
+			    struct regcache *regcache, int regno,
+			    gdb_byte *buf)
 {
   if (regno == E_PSEUDO_CCR_REGNUM)
     regcache_raw_read (regcache, E_CCR_REGNUM, buf);
@@ -1158,7 +1159,7 @@ h8300_pseudo_register_read (struct gdbarch *gdbarch,
 static void
 h8300_pseudo_register_write (struct gdbarch *gdbarch,
 			     struct regcache *regcache, int regno,
-			     const void *buf)
+			     const gdb_byte *buf)
 {
   if (regno == E_PSEUDO_CCR_REGNUM)
     regcache_raw_write (regcache, E_CCR_REGNUM, buf);

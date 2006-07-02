@@ -1,7 +1,7 @@
 /* Target dependent code for CRIS, for GDB, the GNU debugger.
 
-   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation,
-   Inc.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, and Orjan Friberg.
@@ -20,7 +20,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -44,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "objfiles.h"
 
 #include "solib.h"              /* Support for shared libraries.  */
-#include "solib-svr4.h"         /* For struct link_map_offsets.  */
+#include "solib-svr4.h"
 #include "gdb_string.h"
 #include "dis-asm.h"
 
@@ -556,15 +557,6 @@ struct instruction_environment
   int   xflag_found;
   int   disable_interrupt;
 } inst_env_type;
-
-/* Save old breakpoints in order to restore the state before a single_step. 
-   At most, two breakpoints will have to be remembered.  */
-typedef 
-char binsn_quantum[BREAKPOINT_MAX];
-static binsn_quantum break_mem[2];
-static CORE_ADDR next_pc = 0;
-static CORE_ADDR branch_target_address = 0;
-static unsigned char branch_break_inserted = 0;
 
 /* Machine-dependencies in CRIS for opcodes.  */
 
@@ -1851,7 +1843,8 @@ cris_dwarf2_reg_to_regnum (int reg)
 
 static void
 cris_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
-                            struct dwarf2_frame_state_reg *reg)
+                            struct dwarf2_frame_state_reg *reg,
+			    struct frame_info *next_frame)
 {
   /* The return address column.  */
   if (regnum == PC_REGNUM)
@@ -2128,7 +2121,7 @@ static void
 cris_software_single_step (enum target_signal ignore, int insert_breakpoints)
 {
   inst_env_type inst_env;
-  
+
   if (insert_breakpoints)
     {
       /* Analyse the present instruction environment and insert 
@@ -2144,28 +2137,19 @@ cris_software_single_step (enum target_signal ignore, int insert_breakpoints)
         {
           /* Insert at most two breakpoints.  One for the next PC content
              and possibly another one for a branch, jump, etc.  */
-          next_pc = (CORE_ADDR) inst_env.reg[PC_REGNUM];
-          target_insert_breakpoint (next_pc, break_mem[0]);
+          CORE_ADDR next_pc = (CORE_ADDR) inst_env.reg[PC_REGNUM];
+          insert_single_step_breakpoint (next_pc);
           if (inst_env.branch_found 
               && (CORE_ADDR) inst_env.branch_break_address != next_pc)
             {
-              branch_target_address = 
-                (CORE_ADDR) inst_env.branch_break_address;
-              target_insert_breakpoint (branch_target_address, break_mem[1]);
-              branch_break_inserted = 1;
+              CORE_ADDR branch_target_address
+                = (CORE_ADDR) inst_env.branch_break_address;
+              insert_single_step_breakpoint (branch_target_address);
             }
         }
     }
   else
-    {
-      /* Remove breakpoints.  */
-      target_remove_breakpoint (next_pc, break_mem[0]);
-      if (branch_break_inserted)
-        {
-          target_remove_breakpoint (branch_target_address, break_mem[1]);
-          branch_break_inserted = 0;
-        }
-    }
+    remove_single_step_breakpoints ();
 }
 
 /* Calculates the prefix value for quick offset addressing mode.  */
@@ -3940,50 +3924,6 @@ static struct core_fns cris_elf_core_fns =
   NULL                                  /* next */
 };
 
-/* Fetch (and possibly build) an appropriate link_map_offsets
-   structure for native GNU/Linux CRIS targets using the struct
-   offsets defined in link.h (but without actual reference to that
-   file).
-
-   This makes it possible to access GNU/Linux CRIS shared libraries
-   from a GDB that was not built on an GNU/Linux CRIS host (for cross
-   debugging).
-
-   See gdb/solib-svr4.h for an explanation of these fields.  */
-
-static struct link_map_offsets *
-cris_linux_svr4_fetch_link_map_offsets (void)
-{ 
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = NULL;
-
-  if (lmp == NULL)
-    { 
-      lmp = &lmo;
-
-      lmo.r_debug_size = 8;	/* The actual size is 20 bytes, but
-				   this is all we need.  */
-      lmo.r_map_offset = 4;
-      lmo.r_map_size   = 4;
-
-      lmo.link_map_size = 20;
-
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 4;
-
-      lmo.l_name_offset = 4;
-      lmo.l_name_size   = 4;
-
-      lmo.l_next_offset = 12;
-      lmo.l_next_size   = 4;
-
-      lmo.l_prev_offset = 16;
-      lmo.l_prev_size   = 4;
-    }
-
-  return lmp;
-}
-
 extern initialize_file_ftype _initialize_cris_tdep; /* -Wmissing-prototypes */
 
 void
@@ -4258,9 +4198,8 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   frame_unwind_append_sniffer (gdbarch, cris_frame_sniffer);
   frame_base_set_default (gdbarch, &cris_frame_base);
 
-  /* Use target_specific function to define link map offsets.  */
-  set_solib_svr4_fetch_link_map_offsets 
-    (gdbarch, cris_linux_svr4_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets
+    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
   
   /* FIXME: cagney/2003-08-27: It should be possible to select a CRIS
      disassembler, even when there is no BFD.  Does something like

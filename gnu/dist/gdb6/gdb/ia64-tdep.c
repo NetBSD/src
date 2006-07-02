@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software
    Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -324,7 +324,7 @@ ia64_dwarf_reg_to_regnum (int reg)
 }
 
 static int
-floatformat_valid (const struct floatformat *fmt, const char *from)
+floatformat_valid (const struct floatformat *fmt, const void *from)
 {
   return 1;
 }
@@ -550,8 +550,9 @@ fetch_instruction (CORE_ADDR addr, instruction_type *it, long long *instr)
 #define IA64_BREAKPOINT 0x00003333300LL
 
 static int
-ia64_memory_insert_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
+ia64_memory_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   char bundle[BUNDLE_LEN];
   int slotnum = (int) (addr & 0x0f) / SLOT_MULTIPLIER;
   long long instr;
@@ -574,7 +575,8 @@ ia64_memory_insert_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
     }
 
   instr = slotN_contents (bundle, slotnum);
-  memcpy(contents_cache, &instr, sizeof(instr));
+  memcpy (bp_tgt->shadow_contents, &instr, sizeof (instr));
+  bp_tgt->placed_size = bp_tgt->shadow_len = sizeof (instr);
   replace_slotN_contents (bundle, IA64_BREAKPOINT, slotnum);
   if (val == 0)
     target_write_memory (addr, bundle, BUNDLE_LEN);
@@ -583,8 +585,9 @@ ia64_memory_insert_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
 }
 
 static int
-ia64_memory_remove_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
+ia64_memory_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   char bundle[BUNDLE_LEN];
   int slotnum = (addr & 0x0f) / SLOT_MULTIPLIER;
   long long instr;
@@ -603,7 +606,7 @@ ia64_memory_remove_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
       slotnum = 2;
     }
 
-  memcpy (&instr, contents_cache, sizeof instr);
+  memcpy (&instr, bp_tgt->shadow_contents, sizeof instr);
   replace_slotN_contents (bundle, instr, slotnum);
   if (val == 0)
     target_write_memory (addr, bundle, BUNDLE_LEN);
@@ -2732,7 +2735,8 @@ ia64_libunwind_frame_this_id (struct frame_info *next_frame, void **this_cache,
      and don't want to unwind past this frame.  We return a null frame_id to
      indicate this.  */
   libunwind_frame_prev_register (next_frame, this_cache, IA64_IP_REGNUM, 
-		  		 &optimized, &lval, &addr, &realnum, &prev_ip);
+		  		 &optimized, &lval, &addr, &realnum, buf);
+  prev_ip = extract_unsigned_integer (buf, 8);
 
   if (prev_ip != 0)
     (*this_id) = frame_id_build_special (id.stack_addr, id.code_addr, bsp);
@@ -2892,6 +2896,7 @@ ia64_libunwind_sigtramp_frame_prev_register (struct frame_info *next_frame,
 					     int *realnump, gdb_byte *valuep)
 
 {
+  gdb_byte buf[8];
   CORE_ADDR prev_ip, addr;
   int realnum, optimized;
   enum lval_type lval;
@@ -2900,7 +2905,8 @@ ia64_libunwind_sigtramp_frame_prev_register (struct frame_info *next_frame,
   /* If the previous frame pc value is 0, then we want to use the SIGCONTEXT
      method of getting previous registers.  */
   libunwind_frame_prev_register (next_frame, this_cache, IA64_IP_REGNUM, 
-		  		 &optimized, &lval, &addr, &realnum, &prev_ip);
+		  		 &optimized, &lval, &addr, &realnum, buf);
+  prev_ip = extract_unsigned_integer (buf, 8);
 
   if (prev_ip == 0)
     {

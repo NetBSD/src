@@ -70,14 +70,14 @@ gdb_test "break param_reg" \
     "Breakpoint .* at .*" \
     "structs2 breakpoint set"
 
-if [test_compiler_info gcc-*-*] {
+if [test_compiler_info gcc-3-*] {
   setup_xfail hppa*-* gcc/15860
 }
 gdb_test "continue" \
     ".*pr_char=120.*pr_uchar=130.*pr_short=32000.*pr_ushort=33000.*bkpt = 1.*" \
     "structs2 continue1"
 
-if [test_compiler_info gcc-*-*] {
+if [test_compiler_info gcc-3-*] {
   setup_xfail hppa*-* gcc/15860
 }
 gdb_test "continue" \

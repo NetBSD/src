@@ -1,5 +1,5 @@
 /* Read AIX xcoff symbol tables and convert to internal format, for GDB.
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
    1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Derived from coffread.c, dbxread.c, and a lot of hacking.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "bfd.h"
@@ -868,7 +868,8 @@ xcoff_next_symbol_text (struct objfile *objfile)
   struct internal_syment symbol;
   char *retval;
   /* FIXME: is this the same as the passed arg? */
-  objfile = this_symtab_psymtab->objfile;
+  if (this_symtab_psymtab)
+    objfile = this_symtab_psymtab->objfile;
 
   bfd_coff_swap_sym_in (objfile->obfd, raw_symbol, &symbol);
   if (symbol.n_zeroes)
@@ -2170,6 +2171,7 @@ scan_xcoff_symtab (struct objfile *objfile)
   last_source_file = NULL;
 
   abfd = objfile->obfd;
+  next_symbol_text_func = xcoff_next_symbol_text;
 
   sraw_symbol = ((struct coff_symfile_info *) objfile->deprecated_sym_private)->symtbl;
   nsyms = ((struct coff_symfile_info *) objfile->deprecated_sym_private)->symtbl_num_syms;

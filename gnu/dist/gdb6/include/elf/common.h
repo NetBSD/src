@@ -1,6 +1,6 @@
 /* ELF support for BFD.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004
+   2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
@@ -183,6 +183,7 @@
 #define EM_CR		103	/* National Semiconductor CompactRISC */
 #define EM_MSP430	105	/* TI msp430 micro controller */
 #define EM_BLACKFIN	106	/* ADI Blackfin */
+#define EM_ALTERA_NIOS2	113	/* Altera Nios II soft-core processor */
 #define EM_CRX		114	/* National Semiconductor CRX */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
@@ -197,81 +198,85 @@
    unofficial e_machine number should eventually ask registry@caldera.com for
    an officially blessed number to be added to the list above.	*/
 
-#define EM_PJ_OLD      99	/* picoJava */
-
-/* Cygnus PowerPC ELF backend.  Written in the absence of an ABI.  */
-#define EM_CYGNUS_POWERPC 0x9025
-
-/* Old version of Sparc v9, from before the ABI; this should be
-   removed shortly.  */
-#define EM_OLD_SPARCV9	11
+/* Old version of Sparc v9, from before the ABI;
+   This should be removed shortly.  */
+#define EM_OLD_SPARCV9		11
 
 /* Old version of PowerPC, this should be removed shortly. */
-#define EM_PPC_OLD	17
+#define EM_PPC_OLD		17
 
-/* (Deprecated) Temporary number for the OpenRISC processor.  */
-#define EM_OR32		0x8472
+/* picoJava */
+#define EM_PJ_OLD      		99
 
-/* Renesas M32C and M16C.  */
-#define EM_M32C			0xFEB0
+/* AVR magic number.  Written in the absense of an ABI.  */
+#define EM_AVR_OLD		0x1057
 
-/* Cygnus M32R ELF backend.  Written in the absence of an ABI.  */
-#define EM_CYGNUS_M32R	0x9041
+/* MSP430 magic number.  Written in the absense of everything.  */
+#define EM_MSP430_OLD		0x1059
 
-/* Alpha backend magic number.  Written in the absence of an ABI.  */
-#define EM_ALPHA	0x9026
-
-/* old S/390 backend magic number. Written in the absence of an ABI.  */
-#define EM_S390_OLD	0xa390
-
-/* D10V backend magic number.  Written in the absence of an ABI.  */
-#define EM_CYGNUS_D10V	0x7650
-
-/* D30V backend magic number.  Written in the absence of an ABI.  */
-#define EM_CYGNUS_D30V	0x7676
-
-/* V850 backend magic number.  Written in the absense of an ABI.  */
-#define EM_CYGNUS_V850	0x9080
-
-/* mn10200 and mn10300 backend magic numbers.
-   Written in the absense of an ABI.  */
-#define EM_CYGNUS_MN10200	0xdead
-#define EM_CYGNUS_MN10300	0xbeef
+/* Morpho MT.   Written in the absense of an ABI.  */
+#define EM_MT                   0x2530
 
 /* FR30 magic number - no EABI available.  */
 #define EM_CYGNUS_FR30		0x3330
 
-/* AVR magic number
-   Written in the absense of an ABI.  */
-#define EM_AVR_OLD		0x1057
-
-/* OpenRISC magic number
-   Written in the absense of an ABI.  */
+/* OpenRISC magic number.  Written in the absense of an ABI.  */
 #define EM_OPENRISC_OLD		0x3426
 
-/* DLX magic number
-   Written in the absense of an ABI.  */
+/* DLX magic number.  Written in the absense of an ABI.  */
 #define EM_DLX			0x5aa5
-
-#define EM_XSTORMY16		0xad45
 
 /* FRV magic number - no EABI available??.  */
 #define EM_CYGNUS_FRV		0x5441
 
-/* Ubicom IP2xxx; no ABI */
+/* Infineon Technologies 16-bit microcontroller with C166-V2 core.  */
+#define EM_XC16X   		0x4688
+
+/* D10V backend magic number.  Written in the absence of an ABI.  */
+#define EM_CYGNUS_D10V		0x7650
+
+/* D30V backend magic number.  Written in the absence of an ABI.  */
+#define EM_CYGNUS_D30V		0x7676
+
+/* Ubicom IP2xxx;   Written in the absense of an ABI.  */
 #define EM_IP2K_OLD		0x8217
 
-#define EM_MS1                  0x2530  /* Morpho MS1; no ABI */
+/* (Deprecated) Temporary number for the OpenRISC processor.  */
+#define EM_OR32			0x8472
 
-/* MSP430 magic number
-      Written in the absense everything.  */
-#define EM_MSP430_OLD		0x1059
+/* Cygnus PowerPC ELF backend.  Written in the absence of an ABI.  */
+#define EM_CYGNUS_POWERPC 	0x9025
+
+/* Alpha backend magic number.  Written in the absence of an ABI.  */
+#define EM_ALPHA		0x9026
+
+/* Cygnus M32R ELF backend.  Written in the absence of an ABI.  */
+#define EM_CYGNUS_M32R		0x9041
+
+/* V850 backend magic number.  Written in the absense of an ABI.  */
+#define EM_CYGNUS_V850		0x9080
+
+/* old S/390 backend magic number. Written in the absence of an ABI.  */
+#define EM_S390_OLD		0xa390
+
+/* Old, unofficial value for Xtensa.  */
+#define EM_XTENSA_OLD		0xabc7
+
+#define EM_XSTORMY16		0xad45
+
+/* mn10200 and mn10300 backend magic numbers.
+   Written in the absense of an ABI.  */
+#define EM_CYGNUS_MN10300	0xbeef
+#define EM_CYGNUS_MN10200	0xdead
+
+/* Renesas M32C and M16C.  */
+#define EM_M32C			0xFEB0
 
 /* Vitesse IQ2000.  */
 #define EM_IQ2000		0xFEBA
 
-/* Old, unofficial value for Xtensa.  */
-#define EM_XTENSA_OLD		0xabc7
+/* NIOS magic number - no EABI available.  */
+#define EM_NIOS32		0xFEBB
 
 /* See the above comment before you add a new EM_* value here.  */
 
@@ -572,6 +577,8 @@
 #define DT_VALRNGHI	0x6ffffdff
 
 #define DT_ADDRRNGLO	0x6ffffe00
+#define DT_TLSDESC_PLT	0x6ffffef6
+#define DT_TLSDESC_GOT	0x6ffffef7
 #define DT_GNU_CONFLICT	0x6ffffef8
 #define DT_GNU_LIBLIST	0x6ffffef9
 #define DT_CONFIG	0x6ffffefa

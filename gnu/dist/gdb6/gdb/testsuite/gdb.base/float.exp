@@ -81,6 +81,8 @@ if { [istarget "alpha*-*-*"] } then {
     }
 } elseif [istarget "hppa*-*"] then {
     gdb_test "info float" "fr4.*fr4R.*fr31R.*" "info float"
+} elseif [istarget "sparc*-*-*"] then {
+    gdb_test "info float" "f0.*f1.*f31.*d0.*d30.*" "info float"
 } else {
     gdb_test "info float" "No floating.point info available for this processor." "info float (unknown target)"
 }

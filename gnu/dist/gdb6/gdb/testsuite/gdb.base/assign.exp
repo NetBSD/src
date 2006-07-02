@@ -39,7 +39,7 @@ set testfile "all-types"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
     }
 
@@ -439,7 +439,7 @@ gdb_expect {
             timeout           { fail "(timeout) v_int+=v_double" }    
          }
          }
-    -re ".*$gdb_prompt $" { fail "v_int+=v_signed_long" }
+    -re ".*$gdb_prompt $" { fail "v_int+=v_double" }
     timeout           { fail "(timeout) v_int+=v_double" }    
   }
 

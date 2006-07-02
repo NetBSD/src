@@ -97,6 +97,9 @@ START_RELOC_NUMBERS (elf_mips_reloc_type)
   RELOC_NUMBER (R_MIPS16_HI16, 104)
   RELOC_NUMBER (R_MIPS16_LO16, 105)
   FAKE_RELOC (R_MIPS16_max, 106)
+  /* These relocations are specific to VxWorks.  */
+  RELOC_NUMBER (R_MIPS_COPY, 126)
+  RELOC_NUMBER (R_MIPS_JUMP_SLOT, 127)
   /* This was a GNU extension used by embedded-PIC.  It was co-opted by
      mips-linux for exception-handling data.  It is no longer used, but
      should continue to be supported by the linker for backward
@@ -718,6 +721,13 @@ extern void bfd_mips_elf32_swap_reginfo_out
 
 /* This value is used for a mips16 .text symbol.  */
 #define STO_MIPS16		0xf0
+
+/* This bit is used on Irix to indicate a symbol whose definition
+   is optional - if, at final link time, it cannot be found, no
+   error message should be produced.  */
+#define STO_OPTIONAL		(1 << 2)
+/* A macro to examine the STO_OPTIONAL bit.  */
+#define ELF_MIPS_IS_OPTIONAL(other)	((other) & STO_OPTIONAL)
 
 /* The 64-bit MIPS ELF ABI uses an unusual reloc format.  Each
    relocation entry specifies up to three actual relocations, all at

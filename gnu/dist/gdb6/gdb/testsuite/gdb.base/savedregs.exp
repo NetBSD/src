@@ -81,7 +81,7 @@ proc process_saved_regs { current inner outer } {
 	    dummy {
 		# Dummy frame's do not have saved registers, and do
 		# not print <dummy>.
-		set pat "Stack frame at .* in .*"
+		set pat "Stack frame at .*"
 	    }
 	    sigtramp {
 		# Sigtramp frames don't yet print <signal trampoline>.

@@ -1,19 +1,308 @@
-2005-11-23  Wu Zhou  <woodzltc@cn.ibm.com>
+2006-05-14  Daniel Jacobowitz  <dan@codesourcery.com>
 
-	* gdb.texinfo (Fortran): Add some words about Fortran debugging.
+	* gdb.texinfo (General Query Packets): Recommend not starting
+	new packets with qC and clarify.
 
-2005-11-16  Andrew Stubbs  <andrew.stubbs@st.com>
+2006-05-13  Gaius Mulley  <gaius@glam.ac.uk>
+
+	* gdb.texinfo (M2 Types): New section.
+
+2006-05-10  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* agentexpr.texi: Add a copyright and license notice.
+	* observer.texi: Likewise, with GPL clause for function prototypes.
+	Remove trailing whitespace.
+
+2006-05-05  Jim Blandy  <jimb@codesourcery.com>
+
+	* gdb.texinfo (General Query Packets): Document conventions for
+	terminating packet names, and their violations.
+
+2006-05-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* Makefile.in (GDB_DOC_SOURCE_INCLUDES): Update for readline 5.1.
+	* gdb.texinfo: Likewise.
+
+2006-05-05  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.texinfo (Remote Configuration): Remove "set remotedebug"
+	and "show remotedebug".
+	(Debugging Output): Add additional index entries.
+
+2006-04-27  Michael Snyder  <msnyder@redhat.com>
+
+	* gdb.texinfo (delete-fork): Command renamed to "delete fork".
+
+2006-04-22  Andrew Cagney  <cagney@redhat.com>
+
+	* gdb.texinfo (Contributors): Credit frame unwinder contributors.
+	* gdbint.texinfo (Algorithms): Fix errors in frame documentation.
+
+2006-04-18  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdbint.texinfo (x86 Watchpoints, Target Conditionals): Update insert
+	and remove breakpoint prototypes.
+	(Watchpoints): Move description of target_insert_hw_breakpoint and
+	target_remove_hw_breakpoint ...
+	(Breakpoints): ... to here.  Document target_insert_breakpoint and
+	target_remove_breakpoint.
+
+2006-04-17  Jim Blandy  <jimb@codesourcery.com>
+
+	* gdb.texinfo (Packets): Note that 'addr' arguments to s, S, c,
+	and C packets are optional.
+
+2006-04-14  Frederic Riss  <frederic.riss@st.com>
+
+	* gdb.texinfo (Specifying source directories): Update the description
+	of the source file search to reflect the fact that the source path
+	always contains at least $cdir and $cwd.
+
+2006-03-31  Michael Snyder  <msnyder@redhat.com>
+
+	* gdb.texinfo: Update copyright dates.
+
+2006-03-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Overview): Add an index entry to "empty response".
+
+2006-03-28  Jim Blandy  <jimb@codesourcery.com>
+
+	* gdbint.texinfo (Prologue Analysis): New section.
+
+2006-03-07  Jim Blandy  <jimb@red-bean.com>
+
+	* gdb.texinfo (Connecting): Document 'target remote pipe'.
+
+	* gdb.texinfo (Target Commands): Update text describing how to
+	specify a target.  Refer to the detailed section on remote
+	debugging, not the brief mention.
+
+	* gdb.texinfo (Connecting): Organize the different 'target remote'
+	connection methods into a table.  Add a 'target remote' index
+	entry. (!!!)
+
+2006-02-17  Fred Fish  <fnf@specifix.com>
+
+	* gdb.texinfo (Symbols): Update descriptions of 'whatis' and
+	'ptype' commands to reflect the fact that the only significant
+	difference between them is that ptype prints the complete type
+	description instead of just the name.
+
+2006-02-13  Wu Zhou  <woodzltc@cn.ibm.com>
+
+	* gdbint.texinfo (Watchpoints): Delete
+	TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT.
+
+2006-02-10  Nick Roberts  <nickrob@snap.net.nz>
+
+	* gdb.texinfo (GDB/MI Breakpoint Table Commands): Add fullname and
+	times fields where needed.  Fix typos.  Update general form given
+	for output of -break-insert.
+	(GDB/MI): Abbreviate some unnecessarily long fullnames.
+
+2006-02-06  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdbint.texinfo (Symbol Handling): Add a section
+	on memory management.
+
+2006-02-06  Vladimir Prus  <ghost@cs.msu.su>
+
+	* gdb.texinfo (Breakpoint table commands): Document the fullname
+	field in -break-list output.
+
+2006-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Cygwin Native): Fix typos.  Clarify the types of
+	debugging information produced by the various "set debug..."
+	options.
+
+2006-02-01  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.texinfo (Files): Remove obsolete bits from the description
+	of "symbol-file".
+
+2006-01-25  Jim Blandy  <jimb@redhat.com>
+
+	* gdbint.texinfo (Testsuite): Explain how to run selected tests.
+
+2006-01-24  Jim Blandy  <jimb@redhat.com>
+
+	* gdbint.texinfo (Frames): Document the basics of GDB's register
+	unwinding model, and explain the existence of the "sentinel" frame.
+
+2006-01-23  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* gdb.texinfo (Choosing files): Mention that -directory is used
+	for script files.
+	(Specifying source directories): Likewise.
+	(Command files): Explain how script files are found.
+
+2006-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Backtrace): Describe how to get backtrace of all
+	the threads in a multi-threaded program.
+	(Threads): The threadno argument of "thread apply" can be a range
+	of numbers.
+
+2006-01-18  Jim Blandy  <jimb@redhat.com>
+
+	* gdbint.texinfo (Coding): Add entry for -Wno-pointer-sign to list
+	of warning flags.
+
+2006-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Sequences): Improve menu annotations.
+	(Define): Add index entries for arguments of user-defined
+	commands.  Move the description of flow-control commands...
+	(Command Files): ...to here.  Document loop_break and
+	loop_continue.
+	(Define, Command Files): Document `end' and add index entries for
+	it.
+
+2006-01-04  Michael Snyder  <msnyder@redhat.com>
+
+	* gdb.texinfo: Add documentation for linux-fork.
+	* gdbint.texinfo: Add internal documentation for checkpoints. 
+
+2006-01-02  Paul N. Hilfinger  <hilfinger@gnat.com>
+
+	* gdb.texinfo (Omissions from Ada): Document that there is now
+	limited aggregate support.
+
+2005-12-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Registers): Describe how to refer to SSE and MMX
+	registers and the likes.
+
+2005-12-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Target Commands, Bug Reporting, File Options)
+	(Symbols): Fix usage of "e.g.".
+	(Memory Region Attributes): Fix usage of "etc."
+
+	* gdbint.texinfo (libgdb, Symbol Handling, Native Debugging)
+	(Coding): Fix usage of "e.g.".
+
+2005-12-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* stabs.texinfo: 
+	* refcard.tex: 
+	* gpl.texi:
+	* gdbint.texinfo: 
+	* gdb.texinfo: 
+	* gdb-cfg.texi: 
+	* fdl.texi:
+	* annotate.texinfo: 
+	* all-cfg.texi: 
+	* Makefile.in: Add (C) after Copyright.  Update the FSF
+	address.
+
+2005-12-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Connecting): Explain that `monitor' is a way to
+	extend GDB with commands for external monitor.
+
+2005-12-02  Andrew Stubbs  <andrew.stubbs@st.com>
+
+	* gdb.texinfo (Convenience variables): Add init-if-undefined command.
+
+2005-11-25  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbint.texinfo (Start of New Year Procedure): New chapter.
+
+2005-11-21  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.texinfo (Tracepoint Packets): Document restrictions on
+	placement of 'R' actions in tracepoint action packets; document
+	dependence of 'X' and 'M' actions on a preceding 'R' action for
+	their registers.
+
+2005-11-19  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.texinfo (Tracepoint Packets): New node.
+	(General Query Packets): Add entries for the tracepoint packets,
+	referring to the "Tracepoint Packets" node.
+	(Tracepoints): Add reference to "Tracepoint Packets".
+	
+2005-11-18  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb.texinfo (set remotebreak): Add anchor.
+	(X packet): Likewise.
+	(Remote Protocol): Add new section `Interrupts' and new index
+	entry `interrupts (remote protocol)'.
+
+2005-11-18  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.texinfo (Packets): Move information out of 'q' and 'Q'
+	entries into the General Query Packets section.  Add a
+	cross-reference to that section.  Drop description of replies, as
+	these are covered in the descriptions of each packet.
+	(General Query Packets): Add introductory text.  Explain naming
+	conventions, and how the end of a name is recognized.
+
+2005-11-17  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb.texinfo (Remote configuration): Fix typo in description of
+	"set remotebreak" command.
+
+2005-11-16  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.texinfo (Packets, Stop Reply Packets)
+	(General Query Packets): Various formatting cleanups.
+	- Use @samp for packet contents.
+	- Drop summaries from packet @item lines; the same information appears
+	  immediately below in the description.
+	- Delete paragraph breaks after packet @item commands, so that the
+	  description appears directly to the right of the packet prototype
+	  in the printed manual, if it fits.
+	- Place spaces in packet prototypes between @vars and non-@var
+	  letters, and explain that they're just for formatting.
+	- Use @dots{} instead of '...'.
+	- Fix uses of @code where @var was needed.
+	- Replace "deprecated" markers with English text spelling out the
+	  packet's status and the preferred alternatives.
+	- Remove "(reserved)" markers on 'A' and 'I' packets; it's unclear
+	  what this ever meant.
+	- Remove "(draft)" markers on 'i' packets; nobody has commented on
+	  this for a long time.
+	- Remove "(draft)" markers on 'z' and 'Z' packets; these have been
+	  implemented several times, and have been in use for years.
+
+2005-11-15  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.texinfo (Packets): Add index entries for 'm' packet
+	disclaimers.
+	
+	* gdb.texinfo (Packets): Clarify lack of restrictions on behavior
+	of stub when processing an 'm' packet.
+
+	* gdb.texinfo (Packets): Mention that packets beginning with
+	letters are reserved once, at the top, instead of actually listing
+	them all and saying "reserved".
+
+2005-11-15  Andrew Stubbs  <andrew.stubbs@st.com>
 
 	* gdb.texinfo (User-defined commands): Add $argc. Add missing 'end'.
 	Change @var{$arg0 to @code{$arg0.
 
-2005-11-14  Andrew Stubbs  <andrew.stubbs@st.com>
+2005-11-14  Wu Zhou  <woodzltc@cn.ibm.com>
+
+	* gdb.texinfo (Fortran): Add some words about Fortran debugging.
+
+2005-11-12  Jim Blandy  <jimb@redhat.com>
+
+	* gdb.texinfo (General Query Packets): Put packets in alphabetical
+	order.  Remove extraneous 'z'.
+
+2005-11-07  Andrew Stubbs  <andrew.stubbs@st.com>
 
 	* gdb.texinfo (Choosing files): Add --eval-command.
 
-2005-11-14  Andrew Stubbs  <andrew.stubbs@st.com>
+2005-11-04  Andrew Stubbs  <andrew.stubbs@st.com>
 
 	* gdb.texinfo (Choosing modes): Add --return-child-result.
+
 
 2005-11-01  Andrew Stubbs  <andrew.stubbs@st.com>
 

@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
    1999, 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 
@@ -171,7 +171,7 @@ solib_open (char *in_pathname, char **found_pathname)
 	}
 
       /* Now see if we can open it.  */
-      found_file = open (temp_pathname, O_RDONLY, 0);
+      found_file = open (temp_pathname, O_RDONLY | O_BINARY, 0);
     }
 
   /* If the search in solib_absolute_prefix failed, and the path name is
@@ -192,32 +192,32 @@ solib_open (char *in_pathname, char **found_pathname)
   /* If not found, search the solib_search_path (if any).  */
   if (found_file < 0 && solib_search_path != NULL)
     found_file = openp (solib_search_path, OPF_TRY_CWD_FIRST,
-			in_pathname, O_RDONLY, 0, &temp_pathname);
+			in_pathname, O_RDONLY | O_BINARY, 0, &temp_pathname);
   
   /* If not found, next search the solib_search_path (if any) for the basename
      only (ignoring the path).  This is to allow reading solibs from a path
      that differs from the opened path.  */
   if (found_file < 0 && solib_search_path != NULL)
     found_file = openp (solib_search_path, OPF_TRY_CWD_FIRST,
-                        lbasename (in_pathname), O_RDONLY, 0,
+                        lbasename (in_pathname), O_RDONLY | O_BINARY, 0,
                         &temp_pathname);
 
   /* If not found, try to use target supplied solib search method */
   if (found_file < 0 && ops->find_and_open_solib)
-    found_file = ops->find_and_open_solib (in_pathname, O_RDONLY,
+    found_file = ops->find_and_open_solib (in_pathname, O_RDONLY | O_BINARY,
 					   &temp_pathname);
 
   /* If not found, next search the inferior's $PATH environment variable. */
   if (found_file < 0 && solib_absolute_prefix == NULL)
     found_file = openp (get_in_environ (inferior_environ, "PATH"),
-			OPF_TRY_CWD_FIRST, in_pathname, O_RDONLY, 0,
+			OPF_TRY_CWD_FIRST, in_pathname, O_RDONLY | O_BINARY, 0,
 			&temp_pathname);
 
   /* If not found, next search the inferior's $LD_LIBRARY_PATH 
      environment variable. */
   if (found_file < 0 && solib_absolute_prefix == NULL)
     found_file = openp (get_in_environ (inferior_environ, "LD_LIBRARY_PATH"),
-			OPF_TRY_CWD_FIRST, in_pathname, O_RDONLY, 0,
+			OPF_TRY_CWD_FIRST, in_pathname, O_RDONLY | O_BINARY, 0,
 			&temp_pathname);
 
   /* Done.  If not found, tough luck.  Return found_file and 
@@ -698,16 +698,8 @@ info_sharedlibrary_command (char *ignore, int from_tty)
   int header_done = 0;
   int addr_width;
 
-  if (TARGET_PTR_BIT == 32)
-    addr_width = 8 + 4;
-  else if (TARGET_PTR_BIT == 64)
-    addr_width = 16 + 4;
-  else
-    {
-      internal_error (__FILE__, __LINE__,
-		      _("TARGET_PTR_BIT returned unknown size %d"),
-		      TARGET_PTR_BIT);
-    }
+  /* "0x", a little whitespace, and two hex digits per byte of pointers.  */
+  addr_width = 4 + (TARGET_PTR_BIT / 4);
 
   update_solib_list (from_tty, 0);
 

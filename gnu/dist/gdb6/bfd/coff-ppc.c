@@ -1,6 +1,6 @@
 /* BFD back-end for PowerPC Microsoft Portable Executable files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Original version pieced together by Kim Knuttila (krk@cygnus.com)
@@ -127,11 +127,6 @@ struct ppc_coff_link_hash_table
 static struct bfd_hash_entry *ppc_coff_link_hash_newfunc
   PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *,
 	   const char *));
-static bfd_boolean ppc_coff_link_hash_table_init
-  PARAMS ((struct ppc_coff_link_hash_table *, bfd *,
-	   struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
-				       struct bfd_hash_table *,
-				       const char *)));
 static struct bfd_link_hash_table *ppc_coff_link_hash_table_create
   PARAMS ((bfd *));
 static bfd_boolean coff_ppc_relocate_section
@@ -184,14 +179,14 @@ ppc_coff_link_hash_newfunc (entry, table, string)
 /* Initialize a PE linker hash table.  */
 
 static bfd_boolean
-ppc_coff_link_hash_table_init (table, abfd, newfunc)
-     struct ppc_coff_link_hash_table *table;
-     bfd *abfd;
-     struct bfd_hash_entry *(*newfunc) PARAMS ((struct bfd_hash_entry *,
-						struct bfd_hash_table *,
-						const char *));
+ppc_coff_link_hash_table_init (struct ppc_coff_link_hash_table *table,
+			       bfd *abfd,
+			       struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
+								  struct bfd_hash_table *,
+								  const char *),
+			       unsigned int entsize)
 {
-  return _bfd_coff_link_hash_table_init (&table->root, abfd, newfunc);
+  return _bfd_coff_link_hash_table_init (&table->root, abfd, newfunc, entsize);
 }
 
 /* Create a PE linker hash table.  */
@@ -206,8 +201,9 @@ ppc_coff_link_hash_table_create (abfd)
   ret = (struct ppc_coff_link_hash_table *) bfd_malloc (amt);
   if (ret == NULL)
     return NULL;
-  if (! ppc_coff_link_hash_table_init (ret, abfd,
-					ppc_coff_link_hash_newfunc))
+  if (!ppc_coff_link_hash_table_init (ret, abfd,
+				      ppc_coff_link_hash_newfunc,
+				      sizeof (struct ppc_coff_link_hash_entry)))
     {
       free (ret);
       return (struct bfd_link_hash_table *) NULL;

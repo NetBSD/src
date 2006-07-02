@@ -1,4 +1,4 @@
-# Copyright 2003, 2004 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2004, 2006 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,6 +93,38 @@ gdb_test "info frame" \
 	".*Saved registers:.*ebp at.*edi at.*eip at.*" \
 	"saved registers in standard"
 
+
+# Testcase from breakpoints/2080.
+
+gdb_test "break *(stack_align + 7)" \
+	"Breakpoint \[0-9\]* at $hex"
+
+gdb_test "continue" \
+	"Breakpoint \[0-9\]*.*stack_align.*" \
+	"continue to stack_align + 7"
+
+setup_kfail *-*-* gdb/2080
+gdb_test "backtrace 10" \
+	"#0\[ \t\]*$hex in stack_align.*\r\n#1\[ \t\]*$hex in main.*" \
+	"first backtrace in stack_align"
+
+gdb_test "continue" \
+	"Program received signal SIGTRAP.*" \
+	"continue in stack_align"
+
+skip_breakpoint stack_align
+
+setup_kfail *-*-* gdb/2080
+gdb_test "backtrace 10" \
+	"#0\[ \t\]*$hex in stack_align.*\r\n#1\[ \t\]*$hex in main.*" \
+	"second backtrace in stack_align"
+
+setup_kfail *-*-* gdb/2080
+gdb_test "info frame" \
+	".*Saved registers:.*ecx at.*ebp at.*edi at.*eip at.*" \
+	"saved registers in stack_align"
+
+
 # Testcase from symtab/1253.
 
 gdb_test "continue" "Program received signal SIGTRAP.*" "continue to gdb1253"
@@ -106,6 +138,7 @@ gdb_test "backtrace 10" \
 gdb_test "info frame" \
 	".*Saved registers:.*ebp at.*edi at.*eip at.*" \
 	"saved registers in gdb1253"
+
 
 # Testcase from backtrace/1718.
 
@@ -121,6 +154,7 @@ setup_kfail *-*-* gdb/1718
 gdb_test "info frame" \
 	".*Saved registers:.*esi at.*ebx at.*eip at.*" \
 	"saved registers in gdb1718"
+
 
 # Testcase from backtrace/1338.
 

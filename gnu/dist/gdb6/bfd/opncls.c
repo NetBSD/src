@@ -1,6 +1,6 @@
 /* opncls.c -- open and close a BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003, 2004, 2005
+   2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Written by Cygnus Support.
@@ -71,7 +71,7 @@ _bfd_new_bfd (void)
   nbfd->iostream = NULL;
   nbfd->where = 0;
   if (!bfd_hash_table_init_n (& nbfd->section_htab, bfd_section_hash_newfunc,
-			      251))
+			      sizeof (struct section_hash_entry), 251))
     {
       free (nbfd);
       return NULL;
@@ -115,9 +115,33 @@ _bfd_new_bfd_contained_in (bfd *obfd)
 void
 _bfd_delete_bfd (bfd *abfd)
 {
-  bfd_hash_table_free (&abfd->section_htab);
-  objalloc_free ((struct objalloc *) abfd->memory);
+  if (abfd->memory)
+    {
+      bfd_hash_table_free (&abfd->section_htab);
+      objalloc_free ((struct objalloc *) abfd->memory);
+    }
   free (abfd);
+}
+
+/* Free objalloc memory.  */
+
+bfd_boolean
+_bfd_free_cached_info (bfd *abfd)
+{
+  if (abfd->memory)
+    {
+      bfd_hash_table_free (&abfd->section_htab);
+      objalloc_free ((struct objalloc *) abfd->memory);
+
+      abfd->sections = NULL;
+      abfd->section_last = NULL;
+      abfd->outsymbols = NULL;
+      abfd->tdata.any = NULL;
+      abfd->usrdata = NULL;
+      abfd->memory = NULL;
+    }
+
+  return TRUE;
 }
 
 /*

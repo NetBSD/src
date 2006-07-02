@@ -1,7 +1,8 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
+   1997, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -456,9 +457,9 @@ ppc_linux_skip_trampoline_code (CORE_ADDR pc)
    regard to removing breakpoints in some potentially self modifying
    code.  */
 int
-ppc_linux_memory_remove_breakpoint (CORE_ADDR addr,
-				    gdb_byte *contents_cache)
+ppc_linux_memory_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   const unsigned char *bp;
   int val;
   int bplen;
@@ -475,7 +476,7 @@ ppc_linux_memory_remove_breakpoint (CORE_ADDR addr,
      program modified the code on us, so it is wrong to put back the
      old value */
   if (val == 0 && memcmp (bp, old_contents, bplen) == 0)
-    val = target_write_memory (addr, contents_cache, bplen);
+    val = target_write_memory (addr, bp_tgt->shadow_contents, bplen);
 
   return val;
 }
@@ -499,48 +500,6 @@ ppc_linux_return_value (struct gdbarch *gdbarch, struct type *valtype,
     return ppc_sysv_abi_return_value (gdbarch, valtype, regcache, readbuf,
 				      writebuf);
 }
-
-/* Fetch (and possibly build) an appropriate link_map_offsets
-   structure for GNU/Linux PPC targets using the struct offsets
-   defined in link.h (but without actual reference to that file).
-
-   This makes it possible to access GNU/Linux PPC shared libraries
-   from a GDB that was not built on an GNU/Linux PPC host (for cross
-   debugging).  */
-
-struct link_map_offsets *
-ppc_linux_svr4_fetch_link_map_offsets (void)
-{
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = NULL;
-
-  if (lmp == NULL)
-    {
-      lmp = &lmo;
-
-      lmo.r_debug_size = 8;	/* The actual size is 20 bytes, but
-				   this is all we need.  */
-      lmo.r_map_offset = 4;
-      lmo.r_map_size   = 4;
-
-      lmo.link_map_size = 20;	/* The actual size is 560 bytes, but
-				   this is all we need.  */
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 4;
-
-      lmo.l_name_offset = 4;
-      lmo.l_name_size   = 4;
-
-      lmo.l_next_offset = 12;
-      lmo.l_next_size   = 4;
-
-      lmo.l_prev_offset = 16;
-      lmo.l_prev_size   = 4;
-    }
-
-  return lmp;
-}
-
 
 /* Macros for matching instructions.  Note that, since all the
    operands are masked off before they're or-ed into the instruction,
@@ -1093,7 +1052,7 @@ ppc_linux_init_abi (struct gdbarch_info info,
       set_gdbarch_skip_trampoline_code (gdbarch,
                                         ppc_linux_skip_trampoline_code);
       set_solib_svr4_fetch_link_map_offsets
-        (gdbarch, ppc_linux_svr4_fetch_link_map_offsets);
+        (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
       /* Trampolines.  */
       tramp_frame_prepend_unwinder (gdbarch, &ppc32_linux_sigaction_tramp_frame);

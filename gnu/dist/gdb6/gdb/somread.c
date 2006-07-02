@@ -1,5 +1,5 @@
 /* Read HP PA/Risc object files for GDB.
-   Copyright 1991, 1992, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
+   Copyright (C) 1991, 1992, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
    2004 Free Software Foundation, Inc.
    Written by Fred Fish at Cygnus Support.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "bfd.h"
@@ -353,9 +353,7 @@ som_symfile_read (struct objfile *objfile, int mainline)
   do_cleanups (back_to);
 
   /* Now read information from the stabs debug sections.
-     This is a no-op for SOM.
-     Perhaps it is intended for some kind of mixed STABS/SOM
-     situation? */
+     This is emitted by gcc.  */
   stabsect_build_psymtabs (objfile, mainline,
 			   "$GDB_SYMBOLS$", "$GDB_STRINGS$", "$TEXT$");
 
@@ -364,9 +362,6 @@ som_symfile_read (struct objfile *objfile, int mainline)
      the DNTT, but is now done via the PXDB-built quick-lookup tables
      together with a scan of the GNTT. See hp-psymtab-read.c. */
   hpread_build_psymtabs (objfile, mainline);
-
-  /* Force hppa-tdep.c to re-read the unwind descriptors.  */
-  objfile->deprecated_obj_private = NULL;
 }
 
 /* Initialize anything that needs initializing when a completely new symbol
@@ -442,7 +437,7 @@ som_symfile_offsets (struct objfile *objfile, struct section_addr_info *addrs)
       /* Note: Here is OK to compare with ".text" because this is the
          name that gdb itself gives to that section, not the SOM
          name. */
-      for (i = 0; i < objfile->num_sections && addrs->other[i].name; i++)
+      for (i = 0; i < addrs->num_sections && addrs->other[i].name; i++)
 	if (strcmp (addrs->other[i].name, ".text") == 0)
 	  break;
       text_addr = addrs->other[i].addr;

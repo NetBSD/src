@@ -317,11 +317,7 @@ reloc_processing (relent,reloc, symbols, abfd, section)
     }
   else
     {
-      asymbol *ptr;
       relent->sym_ptr_ptr = symbols + obj_convert (abfd)[reloc->r_symndx];
-
-      ptr = *(relent->sym_ptr_ptr);
-
       relent->addend = 0;
       relent->address-= section->vma;
 

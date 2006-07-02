@@ -1,5 +1,5 @@
 # Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002, 2003,
-# 2004 Free Software Foundation, Inc.
+# 2004, 2006 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -373,6 +373,127 @@ proc test_print_mi_members {} {
     gdb_test "print g_E.E::x" "$vhn = 32"
 }
 
+# Multiple inheritance, print individual member types.
+
+proc test_print_mi_member_types {} {
+    global gdb_prompt
+    global nl
+    global vhn
+
+    # Print the types of some members of g_D without qualifying them.
+    gdb_test "ptype g_D.b" "type = int"
+    gdb_test "ptype g_D.c" "type = int"
+    gdb_test "ptype g_D.d" "type = int"
+
+    # Print the types of qualified members; none of these tests pass today.
+
+    # Print all members of g_A.
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_A.A::a" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_A.A::x" "type = int"
+
+    # Print all members of g_B.
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_B.A::a" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_B.A::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_B.B::b" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_B.B::x" "type = int"
+
+    # Print all members of g_C.
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_C.A::a" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_C.A::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_C.C::c" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_C.C::x" "type = int"
+
+    # Print all members of g_D.
+    #
+    # g_D.A::a and g_D.A::x are ambiguous member accesses, and gdb
+    # should detect these.  There are no ways to PASS these tests
+    # because I don't know what the gdb message will be.  -- chastain
+    # 2004-01-27.
+
+    set name "ptype g_D.A::a"
+    gdb_test_multiple "ptype g_D.A::a" $name {
+	-re "Attempt to take address of non-lval$nl$gdb_prompt $" {
+	    kfail "gdb/2092" "$name"
+	}
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_D.A::a"
+	}
+    }
+
+    set name "ptype g_D.A::x"
+    gdb_test_multiple "ptype g_D.A::x" $name {
+	-re "Attempt to take address of non-lval$nl$gdb_prompt $" {
+	    kfail "gdb/2092" "$name"
+	}
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_D.A::x"
+	}
+    }
+
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_D.B::b" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_D.B::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_D.C::c" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_D.C::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_D.D::d" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_D.D::x" "type = int"
+
+    # Print all members of g_E.
+    # g_E.A::a and g_E.A::x are ambiguous.
+
+    set name "ptype g_E.A::a"
+    gdb_test_multiple "ptype g_E.A::a" $name {
+	-re "Attempt to take address of non-lval$nl$gdb_prompt $" {
+	    kfail "gdb/2092" "$name"
+	}
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_E.A::a"
+	}
+    }
+
+    set name "ptype g_E.A::x"
+    gdb_test_multiple "ptype g_E.A::x" $name {
+	-re "Attempt to take address of non-lval$nl$gdb_prompt $" {
+	    kfail "gdb/2092" "$name"
+	}
+	-re "type = int$nl$gdb_prompt $" {
+	    kfail "gdb/68" "ptype g_E.A::x"
+	}
+    }
+
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.B::b" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.B::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.C::c" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.C::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.D::d" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.D::x" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.E::e" "type = int"
+    setup_kfail "gdb/2092" "*-*-*"
+    gdb_test "ptype g_E.E::x" "type = int"
+}
+
 # Multiple inheritance, print complete classes.
 
 proc test_print_mi_classes { } {
@@ -668,6 +789,7 @@ proc do_tests { } {
     test_print_si_members
     test_print_si_classes
     test_print_mi_members
+    test_print_mi_member_types
     test_print_mi_classes
     test_print_anon_union
 

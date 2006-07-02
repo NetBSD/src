@@ -7,5 +7,8 @@ class gnu_obj_4
   static const int nowhere;
   // At some point, perhaps:
   // static const int everywhere = 317;
+
+  // try to ensure test4 is actually allocated
+  int dummy;
 };
 

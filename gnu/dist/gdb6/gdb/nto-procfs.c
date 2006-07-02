@@ -1,7 +1,7 @@
 /* Machine independent support for QNX Neutrino /proc (process file system)
    for GDB.  Written by Colin Burgess at QNX Software Systems Limited. 
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2006 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 
@@ -75,10 +75,6 @@ static void init_procfs_ops (void);
 static ptid_t do_attach (ptid_t ptid);
 
 static int procfs_can_use_hw_breakpoint (int, int, int);
-
-static int procfs_insert_hw_breakpoint (CORE_ADDR, char *);
-
-static int procfs_remove_hw_breakpoint (CORE_ADDR addr, char *);
 
 static int procfs_insert_hw_watchpoint (CORE_ADDR addr, int len, int type);
 
@@ -812,27 +808,29 @@ procfs_breakpoint (CORE_ADDR addr, int type, int size)
 }
 
 static int
-procfs_insert_breakpoint (CORE_ADDR addr, char *contents_cache)
+procfs_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
-  return procfs_breakpoint (addr, _DEBUG_BREAK_EXEC, 0);
+  return procfs_breakpoint (bp_tgt->placed_address, _DEBUG_BREAK_EXEC, 0);
 }
 
 static int
-procfs_remove_breakpoint (CORE_ADDR addr, char *contents_cache)
+procfs_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
-  return procfs_breakpoint (addr, _DEBUG_BREAK_EXEC, -1);
+  return procfs_breakpoint (bp_tgt->placed_address, _DEBUG_BREAK_EXEC, -1);
 }
 
 static int
-procfs_insert_hw_breakpoint (CORE_ADDR addr, char *contents_cache)
+procfs_insert_hw_breakpoint (struct bp_target_info *bp_tgt)
 {
-  return procfs_breakpoint (addr, _DEBUG_BREAK_EXEC | _DEBUG_BREAK_HW, 0);
+  return procfs_breakpoint (bp_tgt->placed_address,
+			    _DEBUG_BREAK_EXEC | _DEBUG_BREAK_HW, 0);
 }
 
 static int
-procfs_remove_hw_breakpoint (CORE_ADDR addr, char *contents_cache)
+procfs_remove_hw_breakpoint (struct bp_target_info *bp_tgt)
 {
-  return procfs_breakpoint (addr, _DEBUG_BREAK_EXEC | _DEBUG_BREAK_HW, -1);
+  return procfs_breakpoint (bp_tgt->placed_address,
+			    _DEBUG_BREAK_EXEC | _DEBUG_BREAK_HW, -1);
 }
 
 static void
@@ -1093,7 +1091,6 @@ procfs_create_inferior (char *exec_file, char *allargs, char **env,
       || (symfile_objfile != NULL && symfile_objfile->obfd != NULL))
     solib_create_inferior_hook ();
   stop_soon = 0;
-  proceed (-1, TARGET_SIGNAL_DEFAULT, 0);
 }
 
 static void

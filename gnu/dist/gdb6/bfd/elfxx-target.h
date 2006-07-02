@@ -1,6 +1,6 @@
 /* Target definitions for NN-bit ELF
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,7 +29,9 @@
 #ifndef bfd_elfNN_close_and_cleanup
 #define	bfd_elfNN_close_and_cleanup _bfd_elf_close_and_cleanup
 #endif
-#define bfd_elfNN_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
+#ifndef bfd_elfNN_bfd_free_cached_info
+#define bfd_elfNN_bfd_free_cached_info _bfd_free_cached_info
+#endif
 #ifndef bfd_elfNN_get_section_contents
 #define bfd_elfNN_get_section_contents _bfd_generic_get_section_contents
 #endif
@@ -124,6 +126,9 @@
 #endif
 #ifndef elf_backend_want_got_sym
 #define elf_backend_want_got_sym 1
+#endif
+#ifndef elf_backend_gc_mark_dynamic_ref
+#define elf_backend_gc_mark_dynamic_ref	bfd_elf_gc_mark_dynamic_ref_symbol
 #endif
 #ifndef elf_backend_gc_mark_hook
 #define elf_backend_gc_mark_hook	NULL
@@ -417,8 +422,14 @@
 #ifndef elf_backend_hide_symbol
 #define elf_backend_hide_symbol		_bfd_elf_link_hash_hide_symbol
 #endif
+#ifndef elf_backend_fixup_symbol
+#define elf_backend_fixup_symbol		NULL	
+#endif
 #ifndef elf_backend_merge_symbol_attribute
 #define elf_backend_merge_symbol_attribute	NULL
+#endif
+#ifndef elf_backend_ignore_undef_symbol
+#define elf_backend_ignore_undef_symbol		NULL
 #endif
 #ifndef elf_backend_emit_relocs
 #define elf_backend_emit_relocs			_bfd_elf_link_output_relocs
@@ -584,6 +595,7 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_final_write_processing,
   elf_backend_additional_program_headers,
   elf_backend_modify_segment_map,
+  elf_backend_gc_mark_dynamic_ref,
   elf_backend_gc_mark_hook,
   elf_backend_gc_sweep_hook,
   elf_backend_post_process_headers,
@@ -591,7 +603,9 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_output_arch_syms,
   elf_backend_copy_indirect_symbol,
   elf_backend_hide_symbol,
+  elf_backend_fixup_symbol,
   elf_backend_merge_symbol_attribute,
+  elf_backend_ignore_undef_symbol,
   elf_backend_emit_relocs,
   elf_backend_count_relocs,
   elf_backend_grok_prstatus,

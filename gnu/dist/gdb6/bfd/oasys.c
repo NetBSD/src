@@ -1,6 +1,6 @@
 /* BFD back-end for oasys objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001,
-   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -685,9 +685,13 @@ oasys_print_symbol (bfd *abfd, void * afile, asymbol *symbol, bfd_print_symbol_t
 static bfd_boolean
 oasys_new_section_hook (bfd *abfd, asection *newsect)
 {
-  newsect->used_by_bfd = bfd_alloc (abfd, (bfd_size_type) sizeof (oasys_per_section_type));
   if (!newsect->used_by_bfd)
-    return FALSE;
+    {
+      newsect->used_by_bfd
+	= bfd_alloc (abfd, (bfd_size_type) sizeof (oasys_per_section_type));
+      if (!newsect->used_by_bfd)
+	return FALSE;
+    }
   oasys_per_section (newsect)->data = NULL;
   oasys_per_section (newsect)->section = newsect;
   oasys_per_section (newsect)->offset = 0;
@@ -697,7 +701,7 @@ oasys_new_section_hook (bfd *abfd, asection *newsect)
   /* Turn the section string into an index.  */
   sscanf (newsect->name, "%u", &newsect->target_index);
 
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, newsect);
 }
 
 

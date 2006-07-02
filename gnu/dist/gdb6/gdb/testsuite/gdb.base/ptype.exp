@@ -31,9 +31,17 @@ set prms_id 0
 set bug_id 0
 
 set testfile "ptype"
-set srcfile ${testfile}.c
+set srcfile0 ${testfile}.c
+set srcfile1 ${testfile}1.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile0}" "${binfile}0.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -573,6 +581,18 @@ ptype_maybe_prototyped "ffptr" "int (*(*)(char))(short int)" \
                                "int (*(*)())()"
 ptype_maybe_prototyped "fffptr" "int (*(*(*)(char))(short int))(long int)" \
                                 "int (*(*(*)())())()"
+
+# Test printing type of typedefs in different scopes, with same name
+# but different type.
+
+gdb_test "list intfoo" ""
+gdb_test "ptype foo" "type = int" "ptype foo typedef after first list of intfoo"
+gdb_test "list charfoo" ""
+gdb_test "ptype foo" "type = char" "ptype foo typedef after first list of charfoo"
+gdb_test "list intfoo" ""
+gdb_test "ptype foo" "type = int" "ptype foo typedef after second list of intfoo"
+gdb_test "list charfoo" ""
+gdb_test "ptype foo" "type = char" "ptype foo typedef after second list of charfoo"
 
 # Test printing type of string constants and array constants, but
 # requires a running process.  These call malloc, and can take a long

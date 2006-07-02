@@ -1,5 +1,5 @@
 /* SPARC-specific support for ELF
-   Copyright 2005 Free Software Foundation, Inc.
+   Copyright 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,10 +23,12 @@
 #include "sysdep.h"
 #include "bfdlink.h"
 #include "libbfd.h"
+#include "libiberty.h"
 #include "elf-bfd.h"
 #include "elf/sparc.h"
 #include "opcode/sparc.h"
 #include "elfxx-sparc.h"
+#include "elf-vxworks.h"
 
 /* In case we're on a 32-bit machine, construct a 64-bit "-1" value.  */
 #define MINUS_ONE (~ (bfd_vma) 0)
@@ -697,6 +699,50 @@ sparc64_plt_entry_build (bfd *output_bfd, asection *splt, bfd_vma offset,
   return index - 4;
 }
 
+/* The format of the first PLT entry in a VxWorks executable.  */
+static const bfd_vma sparc_vxworks_exec_plt0_entry[] =
+  {
+    0x05000000,	/* sethi  %hi(_GLOBAL_OFFSET_TABLE_+8), %g2 */
+    0x8410a000,	/* or     %g2, %lo(_GLOBAL_OFFSET_TABLE_+8), %g2 */
+    0xc4008000,	/* ld     [ %g2 ], %g2 */
+    0x81c08000,	/* jmp    %g2 */
+    0x01000000	/* nop */
+  };
+
+/* The format of subsequent PLT entries.  */
+static const bfd_vma sparc_vxworks_exec_plt_entry[] =
+  {
+    0x03000000,	/* sethi  %hi(_GLOBAL_OFFSET_TABLE_+f@got), %g1 */
+    0x82106000,	/* or     %g1, %lo(_GLOBAL_OFFSET_TABLE_+f@got), %g1 */
+    0xc2004000,	/* ld     [ %g1 ], %g1 */
+    0x81c04000,	/* jmp    %g1 */
+    0x01000000,	/* nop */
+    0x03000000,	/* sethi  %hi(f@pltindex), %g1 */
+    0x10800000,	/* b      _PLT_resolve */
+    0x82106000	/* or     %g1, %lo(f@pltindex), %g1 */
+  };
+
+/* The format of the first PLT entry in a VxWorks shared object.  */
+static const bfd_vma sparc_vxworks_shared_plt0_entry[] =
+  {
+    0xc405e008,	/* ld     [ %l7 + 8 ], %g2 */
+    0x81c08000,	/* jmp    %g2 */
+    0x01000000	/* nop */
+  };
+
+/* The format of subsequent PLT entries.  */
+static const bfd_vma sparc_vxworks_shared_plt_entry[] =
+  {
+    0x03000000,	/* sethi  %hi(f@got), %g1 */
+    0x82106000,	/* or     %g1, %lo(f@got), %g1 */
+    0xc205c001,	/* ld     [ %l7 + %g1 ], %g1 */
+    0x81c04000,	/* jmp    %g1 */
+    0x01000000,	/* nop */
+    0x03000000,	/* sethi  %hi(f@pltindex), %g1 */
+    0x10800000,	/* b      _PLT_resolve */
+    0x82106000	/* or     %g1, %lo(f@pltindex), %g1 */
+  };
+
 #define SPARC_ELF_PUT_WORD(htab, bfd, val, ptr)	\
 	htab->put_word(bfd, val, ptr)
 
@@ -781,7 +827,6 @@ _bfd_sparc_elf_link_hash_table_create (bfd *abfd)
       ret->append_rela = sparc_elf_append_rela_64;
       ret->r_info = sparc_elf_r_info_64;
       ret->r_symndx = sparc_elf_r_symndx_64;
-      ret->build_plt_entry = sparc64_plt_entry_build;
       ret->dtpoff_reloc = R_SPARC_TLS_DTPOFF64;
       ret->dtpmod_reloc = R_SPARC_TLS_DTPMOD64;
       ret->tpoff_reloc = R_SPARC_TLS_TPOFF64;
@@ -798,7 +843,6 @@ _bfd_sparc_elf_link_hash_table_create (bfd *abfd)
       ret->append_rela = sparc_elf_append_rela_32;
       ret->r_info = sparc_elf_r_info_32;
       ret->r_symndx = sparc_elf_r_symndx_32;
-      ret->build_plt_entry = sparc32_plt_entry_build;
       ret->dtpoff_reloc = R_SPARC_TLS_DTPOFF32;
       ret->dtpmod_reloc = R_SPARC_TLS_DTPMOD32;
       ret->tpoff_reloc = R_SPARC_TLS_TPOFF32;
@@ -810,7 +854,8 @@ _bfd_sparc_elf_link_hash_table_create (bfd *abfd)
       ret->dynamic_interpreter_size = sizeof ELF32_DYNAMIC_INTERPRETER;
     }
 
-  if (! _bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
+				      sizeof (struct _bfd_sparc_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -845,6 +890,14 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
       || ! bfd_set_section_alignment (dynobj, htab->srelgot,
 				      htab->word_align_power))
     return FALSE;
+
+  if (htab->is_vxworks)
+    {
+      htab->sgotplt = bfd_get_section_by_name (dynobj, ".got.plt");
+      if (!htab->sgotplt)
+	return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -870,6 +923,41 @@ _bfd_sparc_elf_create_dynamic_sections (bfd *dynobj,
   htab->sdynbss = bfd_get_section_by_name (dynobj, ".dynbss");
   if (!info->shared)
     htab->srelbss = bfd_get_section_by_name (dynobj, ".rela.bss");
+
+  if (htab->is_vxworks)
+    {
+      if (!elf_vxworks_create_dynamic_sections (dynobj, info, &htab->srelplt2))
+	return FALSE;
+      if (info->shared)
+	{
+	  htab->plt_header_size
+	    = 4 * ARRAY_SIZE (sparc_vxworks_shared_plt0_entry);
+	  htab->plt_entry_size
+	    = 4 * ARRAY_SIZE (sparc_vxworks_shared_plt_entry);
+	}
+      else
+	{
+	  htab->plt_header_size
+	    = 4 * ARRAY_SIZE (sparc_vxworks_exec_plt0_entry);
+	  htab->plt_entry_size
+	    = 4 * ARRAY_SIZE (sparc_vxworks_exec_plt_entry);
+	}
+    }
+  else
+    {
+      if (ABI_64_P (dynobj))
+	{
+	  htab->build_plt_entry = sparc64_plt_entry_build;
+	  htab->plt_header_size = PLT64_HEADER_SIZE;
+	  htab->plt_entry_size = PLT64_ENTRY_SIZE;
+	}
+      else
+	{
+	  htab->build_plt_entry = sparc32_plt_entry_build;
+	  htab->plt_header_size = PLT32_HEADER_SIZE;
+	  htab->plt_entry_size = PLT32_ENTRY_SIZE;
+	}
+    }
 
   if (!htab->splt || !htab->srelplt || !htab->sdynbss
       || (!info->shared && !htab->srelbss))
@@ -1806,10 +1894,15 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	{
 	  asection *s = htab->splt;
 
-	  /* The first four entries in .plt is reserved.  */
+	  /* Allocate room for the header.  */
 	  if (s->size == 0)
-	    s->size = (SPARC_ELF_WORD_BYTES(htab) == 8 ?
-		       PLT64_HEADER_SIZE : PLT32_HEADER_SIZE);
+	    {
+	      s->size = htab->plt_header_size;
+
+	      /* Allocate space for the .rela.plt.unloaded relocations.  */
+	      if (htab->is_vxworks && !info->shared)
+		htab->srelplt2->size = sizeof (Elf32_External_Rela) * 2;
+	    }
 
 	  /* The procedure linkage table size is bounded by the magnitude
 	     of the offset we can describe in the entry.  */
@@ -1846,11 +1939,20 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	    }
 
 	  /* Make room for this entry.  */
-	  s->size += (SPARC_ELF_WORD_BYTES(htab) == 8 ?
-		      PLT64_ENTRY_SIZE : PLT32_ENTRY_SIZE);
+	  s->size += htab->plt_entry_size;
 
 	  /* We also need to make an entry in the .rela.plt section.  */
 	  htab->srelplt->size += SPARC_ELF_RELA_BYTES (htab);
+
+	  if (htab->is_vxworks)
+	    {
+	      /* Allocate space for the .got.plt entry.  */
+	      htab->sgotplt->size += 4;
+
+	      /* ...and for the .rela.plt.unloaded relocations.  */
+	      if (!info->shared)
+		htab->srelplt2->size += sizeof (Elf32_External_Rela) * 3;
+	    }
 	}
       else
 	{
@@ -1933,6 +2035,24 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 		*pp = p->next;
 	      else
 		pp = &p->next;
+	    }
+	}
+
+      /* Also discard relocs on undefined weak syms with non-default
+	 visibility.  */
+      if (eh->dyn_relocs != NULL
+	  && h->root.type == bfd_link_hash_undefweak)
+	{
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	    eh->dyn_relocs = NULL;
+
+	  /* Make sure undefined weak symbols are output as a dynamic
+	     symbol in PIEs.  */
+	  else if (h->dynindx == -1
+		   && !h->forced_local)
+	    {
+	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
+		return FALSE;
 	    }
 	}
     }
@@ -2134,6 +2254,7 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
   elf_link_hash_traverse (&htab->elf, allocate_dynrelocs, (PTR) info);
 
   if (! ABI_64_P (output_bfd)
+      && !htab->is_vxworks
       && elf_hash_table (info)->dynamic_sections_created)
     {
       /* Make space for the trailing nop in .plt.  */
@@ -2160,7 +2281,8 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 
       if (s == htab->splt
 	  || s == htab->sgot
-	  || s == htab->sdynbss)
+	  || s == htab->sdynbss
+	  || s == htab->sgotplt)
 	{
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
@@ -2312,13 +2434,16 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 bfd_boolean
 _bfd_sparc_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  struct _bfd_sparc_elf_section_data *sdata;
-  bfd_size_type amt = sizeof (*sdata);
+  if (!sec->used_by_bfd)
+    {
+      struct _bfd_sparc_elf_section_data *sdata;
+      bfd_size_type amt = sizeof (*sdata);
 
-  sdata = (struct _bfd_sparc_elf_section_data *) bfd_zalloc (abfd, amt);
-  if (sdata == NULL)
-    return FALSE;
-  sec->used_by_bfd = (PTR) sdata;
+      sdata = bfd_zalloc (abfd, amt);
+      if (sdata == NULL)
+	return FALSE;
+      sec->used_by_bfd = sdata;
+    }
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -3357,8 +3482,34 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      {
 		const char *name;
 
+		/* The Solaris native linker silently disregards overflows. 
+		   We don't, but this breaks stabs debugging info, whose
+		   relocations are only 32-bits wide.  Ignore overflows in
+		   this case and also for discarded entries.  */
+		if ((r_type == R_SPARC_32 || r_type == R_SPARC_DISP32)
+		    && (((input_section->flags & SEC_DEBUGGING) != 0
+			 && strcmp (bfd_section_name (input_bfd,
+						      input_section),
+				    ".stab") == 0)
+			|| _bfd_elf_section_offset (output_bfd, info,
+						    input_section,
+						    rel->r_offset)
+			     == (bfd_vma)-1))
+		  break;
+
 		if (h != NULL)
-		  name = NULL;
+		  {
+		    /* Assume this is a call protected by other code that
+		       detect the symbol is undefined.  If this is the case,
+		       we can safely ignore the overflow.  If not, the
+		       program is hosed anyway, and a little warning isn't
+		       going to help.  */
+		    if (h->root.type == bfd_link_hash_undefweak
+			&& howto->pc_relative)
+		      break;
+
+	            name = NULL;
+		  }
 		else
 		  {
 		    name = bfd_elf_string_from_elf_section (input_bfd,
@@ -3383,6 +3534,97 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
   return TRUE;
 }
 
+/* Build a VxWorks PLT entry.  PLT_INDEX is the index of the PLT entry
+   and PLT_OFFSET is the byte offset from the start of .plt.  GOT_OFFSET
+   is the offset of the associated .got.plt entry from
+   _GLOBAL_OFFSET_TABLE_.  */
+
+static void
+sparc_vxworks_build_plt_entry (bfd *output_bfd, struct bfd_link_info *info,
+			       bfd_vma plt_offset, bfd_vma plt_index,
+			       bfd_vma got_offset)
+{
+  bfd_vma got_base;
+  const bfd_vma *plt_entry;
+  struct _bfd_sparc_elf_link_hash_table *htab;
+  bfd_byte *loc;
+  Elf_Internal_Rela rela;
+
+  htab = _bfd_sparc_elf_hash_table (info);
+  if (info->shared)
+    {
+      plt_entry = sparc_vxworks_shared_plt_entry;
+      got_base = 0;
+    }
+  else
+    {
+      plt_entry = sparc_vxworks_exec_plt_entry;
+      got_base = (htab->elf.hgot->root.u.def.value
+		  + htab->elf.hgot->root.u.def.section->output_offset
+		  + htab->elf.hgot->root.u.def.section->output_section->vma);
+    }
+
+  /* Fill in the entry in the procedure linkage table.  */
+  bfd_put_32 (output_bfd, plt_entry[0] + ((got_base + got_offset) >> 10),
+	      htab->splt->contents + plt_offset);
+  bfd_put_32 (output_bfd, plt_entry[1] + ((got_base + got_offset) & 0x3ff),
+	      htab->splt->contents + plt_offset + 4);
+  bfd_put_32 (output_bfd, plt_entry[2],
+	      htab->splt->contents + plt_offset + 8);
+  bfd_put_32 (output_bfd, plt_entry[3],
+	      htab->splt->contents + plt_offset + 12);
+  bfd_put_32 (output_bfd, plt_entry[4],
+	      htab->splt->contents + plt_offset + 16);
+  bfd_put_32 (output_bfd, plt_entry[5] + (plt_index >> 10),
+	      htab->splt->contents + plt_offset + 20);
+  /* PC-relative displacement for a branch to the start of
+     the PLT section.  */
+  bfd_put_32 (output_bfd, plt_entry[6] + (((-plt_offset - 24) >> 2)
+					  & 0x003fffff),
+	      htab->splt->contents + plt_offset + 24);
+  bfd_put_32 (output_bfd, plt_entry[7] + (plt_index & 0x3ff),
+	      htab->splt->contents + plt_offset + 28);
+
+  /* Fill in the .got.plt entry, pointing initially at the
+     second half of the PLT entry.  */
+  BFD_ASSERT (htab->sgotplt != NULL);
+  bfd_put_32 (output_bfd,
+	      htab->splt->output_section->vma
+	      + htab->splt->output_offset
+	      + plt_offset + 20,
+	      htab->sgotplt->contents + got_offset);
+
+  /* Add relocations to .rela.plt.unloaded.  */
+  if (!info->shared)
+    {
+      loc = (htab->srelplt2->contents
+	     + (2 + 3 * plt_index) * sizeof (Elf32_External_Rela));
+
+      /* Relocate the initial sethi.  */
+      rela.r_offset = (htab->splt->output_section->vma
+		       + htab->splt->output_offset
+		       + plt_offset);
+      rela.r_info = ELF32_R_INFO (htab->elf.hgot->indx, R_SPARC_HI22);
+      rela.r_addend = got_offset;
+      bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
+      loc += sizeof (Elf32_External_Rela);
+
+      /* Likewise the following or.  */
+      rela.r_offset += 4;
+      rela.r_info = ELF32_R_INFO (htab->elf.hgot->indx, R_SPARC_LO10);
+      bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
+      loc += sizeof (Elf32_External_Rela);
+
+      /* Relocate the .got.plt entry.  */
+      rela.r_offset = (htab->sgotplt->output_section->vma
+		       + htab->sgotplt->output_offset
+		       + got_offset);
+      rela.r_info = ELF32_R_INFO (htab->elf.hplt->indx, R_SPARC_32);
+      rela.r_addend = plt_offset + 20;
+      bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
+    }
+}
+
 /* Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
 
@@ -3404,7 +3646,7 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
       asection *srela;
       Elf_Internal_Rela rela;
       bfd_byte *loc;
-      bfd_vma r_offset;
+      bfd_vma r_offset, got_offset;
       int rela_index;
 
       /* This symbol has an entry in the PLT.  Set it up.  */
@@ -3415,23 +3657,48 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
       srela = htab->srelplt;
       BFD_ASSERT (splt != NULL && srela != NULL);
 
-      /* Fill in the entry in the procedure linkage table.  */
-      rela_index = SPARC_ELF_BUILD_PLT_ENTRY (htab, output_bfd, splt,
-					      h->plt.offset, splt->size,
-					      &r_offset);
-
       /* Fill in the entry in the .rela.plt section.  */
-      rela.r_offset = r_offset
-	+ (splt->output_section->vma + splt->output_offset);
-      if (! ABI_64_P (output_bfd)
-	  || h->plt.offset < (PLT64_LARGE_THRESHOLD * PLT64_ENTRY_SIZE))
+      if (htab->is_vxworks)
 	{
+	  /* Work out the index of this PLT entry.  */
+	  rela_index = ((h->plt.offset - htab->plt_header_size)
+			/ htab->plt_entry_size);
+
+	  /* Calculate the offset of the associated .got.plt entry.
+	     The first three entries are reserved.  */
+	  got_offset = (rela_index + 3) * 4;
+
+	  sparc_vxworks_build_plt_entry (output_bfd, info, h->plt.offset,
+					 rela_index, got_offset);
+
+
+	  /* On VxWorks, the relocation points to the .got.plt entry,
+	     not the .plt entry.  */
+	  rela.r_offset = (htab->sgotplt->output_section->vma
+			   + htab->sgotplt->output_offset
+			   + got_offset);
 	  rela.r_addend = 0;
 	}
       else
 	{
-	  rela.r_addend = -(h->plt.offset + 4)
-			  -(splt->output_section->vma + splt->output_offset);
+	  /* Fill in the entry in the procedure linkage table.  */
+	  rela_index = SPARC_ELF_BUILD_PLT_ENTRY (htab, output_bfd, splt,
+						  h->plt.offset, splt->size,
+						  &r_offset);
+
+	  rela.r_offset = r_offset
+	    + (splt->output_section->vma + splt->output_offset);
+	  if (! ABI_64_P (output_bfd)
+	      || h->plt.offset < (PLT64_LARGE_THRESHOLD * PLT64_ENTRY_SIZE))
+	    {
+	      rela.r_addend = 0;
+	    }
+	  else
+	    {
+	      rela.r_addend = (-(h->plt.offset + 4)
+			       - splt->output_section->vma
+			       - splt->output_offset);
+	    }
 	}
       rela.r_info = SPARC_ELF_R_INFO (htab, NULL, h->dynindx, R_SPARC_JMP_SLOT);
 
@@ -3532,10 +3799,12 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
       SPARC_ELF_APPEND_RELA (htab, output_bfd, s, &rela);
     }
 
-  /* Mark some specially defined symbols as absolute.  */
+  /* Mark some specially defined symbols as absolute.  On VxWorks,
+     _GLOBAL_OFFSET_TABLE_ is not absolute: it is relative to the
+     ".got" section.  Likewise _PROCEDURE_LINKAGE_TABLE_ and ".plt".  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0
-      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+      || (!htab->is_vxworks
+	  && (h == htab->elf.hgot || h == htab->elf.hplt)))
     sym->st_shndx = SHN_ABS;
 
   return TRUE;
@@ -3603,13 +3872,14 @@ sparc64_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 #endif
 
 static bfd_boolean
-sparc32_finish_dyn (bfd *output_bfd,
-		    struct bfd_link_info *info ATTRIBUTE_UNUSED,
+sparc32_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 		    bfd *dynobj, asection *sdyn,
 		    asection *splt ATTRIBUTE_UNUSED)
 {
   Elf32_External_Dyn *dyncon, *dynconend;
+  struct _bfd_sparc_elf_link_hash_table *htab;
 
+  htab = _bfd_sparc_elf_hash_table (info);
   dyncon = (Elf32_External_Dyn *) sdyn->contents;
   dynconend = (Elf32_External_Dyn *) (sdyn->contents + sdyn->size);
   for (; dyncon < dynconend; dyncon++)
@@ -3620,32 +3890,148 @@ sparc32_finish_dyn (bfd *output_bfd,
 
       bfd_elf32_swap_dyn_in (dynobj, dyncon, &dyn);
 
-      switch (dyn.d_tag)
+      if (htab->is_vxworks && dyn.d_tag == DT_RELASZ)
 	{
-	case DT_PLTGOT:   name = ".plt"; size = FALSE; break;
-	case DT_PLTRELSZ: name = ".rela.plt"; size = TRUE; break;
-	case DT_JMPREL:   name = ".rela.plt"; size = FALSE; break;
-	default:	  name = NULL; size = FALSE; break;
-	}
-
-      if (name != NULL)
-	{
-	  asection *s;
-
-	  s = bfd_get_section_by_name (output_bfd, name);
-	  if (s == NULL)
-	    dyn.d_un.d_val = 0;
-	  else
+	  /* On VxWorks, DT_RELASZ should not include the relocations
+	     in .rela.plt.  */
+	  if (htab->srelplt)
 	    {
-	      if (! size)
-		dyn.d_un.d_ptr = s->vma;
-	      else
-		dyn.d_un.d_val = s->size;
+	      dyn.d_un.d_val -= htab->srelplt->size;
+	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	    }
-	  bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
+	}
+      else if (htab->is_vxworks && dyn.d_tag == DT_PLTGOT)
+	{
+	  /* On VxWorks, DT_PLTGOT should point to the start of the GOT,
+	     not to the start of the PLT.  */
+	  if (htab->sgotplt)
+	    {
+	      dyn.d_un.d_val = (htab->sgotplt->output_section->vma
+				+ htab->sgotplt->output_offset);
+	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
+	    }
+	}
+      else
+	{
+	  switch (dyn.d_tag)
+	    {
+	    case DT_PLTGOT:   name = ".plt"; size = FALSE; break;
+	    case DT_PLTRELSZ: name = ".rela.plt"; size = TRUE; break;
+	    case DT_JMPREL:   name = ".rela.plt"; size = FALSE; break;
+	    default:	  name = NULL; size = FALSE; break;
+	    }
+
+	  if (name != NULL)
+	    {
+	      asection *s;
+
+	      s = bfd_get_section_by_name (output_bfd, name);
+	      if (s == NULL)
+		dyn.d_un.d_val = 0;
+	      else
+		{
+		  if (! size)
+		    dyn.d_un.d_ptr = s->vma;
+		  else
+		    dyn.d_un.d_val = s->size;
+		}
+	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
+	    }
 	}
     }
   return TRUE;
+}
+
+/* Install the first PLT entry in a VxWorks executable and make sure that
+   .rela.plt.unloaded relocations have the correct symbol indexes.  */
+
+static void
+sparc_vxworks_finish_exec_plt (bfd *output_bfd, struct bfd_link_info *info)
+{
+  struct _bfd_sparc_elf_link_hash_table *htab;
+  Elf_Internal_Rela rela;
+  bfd_vma got_base;
+  bfd_byte *loc;
+
+  htab = _bfd_sparc_elf_hash_table (info);
+
+  /* Calculate the absolute value of _GLOBAL_OFFSET_TABLE_.  */
+  got_base = (htab->elf.hgot->root.u.def.section->output_section->vma
+	      + htab->elf.hgot->root.u.def.section->output_offset
+	      + htab->elf.hgot->root.u.def.value);
+
+  /* Install the initial PLT entry.  */
+  bfd_put_32 (output_bfd,
+	      sparc_vxworks_exec_plt0_entry[0] + ((got_base + 8) >> 10),
+	      htab->splt->contents);
+  bfd_put_32 (output_bfd,
+	      sparc_vxworks_exec_plt0_entry[1] + ((got_base + 8) & 0x3ff),
+	      htab->splt->contents + 4);
+  bfd_put_32 (output_bfd,
+	      sparc_vxworks_exec_plt0_entry[2],
+	      htab->splt->contents + 8);
+  bfd_put_32 (output_bfd,
+	      sparc_vxworks_exec_plt0_entry[3],
+	      htab->splt->contents + 12);
+  bfd_put_32 (output_bfd,
+	      sparc_vxworks_exec_plt0_entry[4],
+	      htab->splt->contents + 16);
+
+  loc = htab->srelplt2->contents;
+
+  /* Add an unloaded relocation for the initial entry's "sethi".  */
+  rela.r_offset = (htab->splt->output_section->vma
+		   + htab->splt->output_offset);
+  rela.r_info = ELF32_R_INFO (htab->elf.hgot->indx, R_SPARC_HI22);
+  rela.r_addend = 8;
+  bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
+  loc += sizeof (Elf32_External_Rela);
+
+  /* Likewise the following "or".  */
+  rela.r_offset += 4;
+  rela.r_info = ELF32_R_INFO (htab->elf.hgot->indx, R_SPARC_LO10);
+  bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
+  loc += sizeof (Elf32_External_Rela);
+
+  /* Fix up the remaining .rela.plt.unloaded relocations.  They may have
+     the wrong symbol index for _G_O_T_ or _P_L_T_ depending on the order
+     in which symbols were output.  */
+  while (loc < htab->srelplt2->contents + htab->srelplt2->size)
+    {
+      Elf_Internal_Rela rel;
+
+      /* The entry's initial "sethi" (against _G_O_T_).  */
+      bfd_elf32_swap_reloc_in (output_bfd, loc, &rel);
+      rel.r_info = ELF32_R_INFO (htab->elf.hgot->indx, R_SPARC_HI22);
+      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      loc += sizeof (Elf32_External_Rela);
+
+      /* The following "or" (also against _G_O_T_).  */
+      bfd_elf32_swap_reloc_in (output_bfd, loc, &rel);
+      rel.r_info = ELF32_R_INFO (htab->elf.hgot->indx, R_SPARC_LO10);
+      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      loc += sizeof (Elf32_External_Rela);
+
+      /* The .got.plt entry (against _P_L_T_).  */
+      bfd_elf32_swap_reloc_in (output_bfd, loc, &rel);
+      rel.r_info = ELF32_R_INFO (htab->elf.hplt->indx, R_SPARC_32);
+      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      loc += sizeof (Elf32_External_Rela);
+    }
+}
+
+/* Install the first PLT entry in a VxWorks shared object.  */
+
+static void
+sparc_vxworks_finish_shared_plt (bfd *output_bfd, struct bfd_link_info *info)
+{
+  struct _bfd_sparc_elf_link_hash_table *htab;
+  unsigned int i;
+
+  htab = _bfd_sparc_elf_hash_table (info);
+  for (i = 0; i < ARRAY_SIZE (sparc_vxworks_shared_plt0_entry); i++)
+    bfd_put_32 (output_bfd, sparc_vxworks_shared_plt0_entry[i],
+		htab->splt->contents + i * 4);
 }
 
 bfd_boolean
@@ -3681,18 +4067,24 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
       /* Initialize the contents of the .plt section.  */
       if (splt->size > 0)
 	{
-	  if (ABI_64_P (output_bfd))
-	    memset (splt->contents, 0, 4 * PLT64_ENTRY_SIZE);
+	  if (htab->is_vxworks)
+	    {
+	      if (info->shared)
+		sparc_vxworks_finish_shared_plt (output_bfd, info);
+	      else
+		sparc_vxworks_finish_exec_plt (output_bfd, info);
+	    }
 	  else
 	    {
-	      memset (splt->contents, 0, 4 * PLT32_ENTRY_SIZE);
-	      bfd_put_32 (output_bfd, (bfd_vma) SPARC_NOP,
-			  splt->contents + splt->size - 4);
+	      memset (splt->contents, 0, htab->plt_header_size);
+	      if (!ABI_64_P (output_bfd))
+		bfd_put_32 (output_bfd, (bfd_vma) SPARC_NOP,
+			    splt->contents + splt->size - 4);
 	    }
 	}
 
-      elf_section_data (splt->output_section)->this_hdr.sh_entsize =
-	(ABI_64_P (output_bfd) ? PLT64_ENTRY_SIZE : PLT32_ENTRY_SIZE);
+      elf_section_data (splt->output_section)->this_hdr.sh_entsize
+	= htab->plt_entry_size;
     }
 
   /* Set the first entry in the global offset table to the address of

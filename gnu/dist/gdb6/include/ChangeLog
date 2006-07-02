@@ -1,3 +1,83 @@
+2006-04-11  Jim Blandy  <jimb@codesourcery.com>
+
+	* libiberty.h (pex_input_file, pex_input_pipe): New declarations.
+
+2006-04-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bfdlink.h (bfd_link_info): Replace need_relax_finalize with
+	relax_pass.
+
+2006-03-25  Bernd Schmidt  <bernd.schmidt@analog.com>
+
+	* elf/bfin.h (R_BFIN_GOT17M4, R_BFIN_GOTHI, R_BFIN_GOTLO,
+	R_BFIN_FUNCDESC, R_BFIN_FUNCDESC_GOT17M4,  R_BFIN_FUNCDESC_GOTHI,
+	R_BFIN_FUNCDESC_GOTLO, R_BFIN_FUNCDESC_VALUE,
+	R_BFIN_FUNCDESC_GOTOFF17M4, R_BFIN_FUNCDESC_GOTOFFHI,
+	R_BFIN_FUNCDESC_GOTOFFLO, R_BFIN_GOTOFF17M4, R_BFIN_GOTOFFHI,
+	R_BFIN_GOTOFFLO): New relocs.
+	(EF_BFIN_PIC, EF_BFIN_FDPIC, EF_BFIN_PIC_FLAGS): New macros.
+
+2006-03-23  Michael Matz  <matz@suse.de>
+
+	* elf/x86-64.h: Add the new relocations with their official
+	numbers.
+
+2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
+            Anil Paranjape   <anilp1@kpitcummins.com>
+            Shilin Shakti    <shilins@kpitcummins.com>
+
+	* dis-asm.h (print_insn_xc16c): New prototype.
+
+2006-02-06  Steve Ellcey  <sje@cup.hp.com>
+
+	* elf/ia64.h (SHF_IA_64_HP_TLS): New.
+
+2006-01-18  DJ Delorie  <dj@redhat.com>
+
+	* md5.h: Include ansidecl.h
+
+2006-01-17  Andreas Schwab  <schwab@suse.de>
+
+	PR binutils/1486
+	* dis-asm.h (struct disassemble_info): Add
+	disassembler_needs_relocs.
+
+2006-01-09  Bob Wilson  <bob.wilson@acm.org>
+
+	* xtensa-config.h (XCHAL_HAVE_MUL32_HIGH): Define.
+
+2005-12-30  Bob Wilson  <bob.wilson@acm.org>
+
+	* xtensa-config.h (XCHAL_HAVE_WIDE_BRANCHES): New.
+
+2005-12-16  Nathan Sidwell  <nathan@codesourcery.com>
+
+	Second part of ms1 to mt renaming.
+	* dis-asm.h (print_insn_mt): Renamed.
+
+2005-12-12  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* elf/mt.h: Renamed from ms1.h
+
+2005-12-10  Terry Laurenzo  <tlaurenzo@gmail.com>
+
+	PR java/9861
+	* demangle.h : Add DMGL_RET_POSTFIX define to enable alternative
+	output format for return types
+
+2005-11-07  Nathan Sidwell  <nathan@codesourcery.com>
+
+	Add ms2.
+	* elf/ms1.h (EF_MS1_CPU_MS2): New.
+
+2005-11-06  John David Anglin  <dave.anglin@nrc-crnc.gc.ca>
+
+	* elf/hppa.h (R_PARISC_DIR64WR, R_PARISC_DIR64DR): Remove relocs.
+
+2005-11-03  Alan Modra  <amodra@bigpond.net.au>
+
+	* bfdlink.h (struct bfd_link_order): Tweak comment.
+
 2005-10-31  Mark Kettenis  <kettenis@gnu.org>
 
 	* floatformat.h (enum floatformat_byteorders): Add

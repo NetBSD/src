@@ -1,7 +1,9 @@
 /* Target-dependent code for AMD64.
 
-   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation,
-   Inc.  Contributed by Jiri Smid, SuSE Labs.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
+
+   Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
 
@@ -17,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
@@ -55,8 +57,6 @@ struct amd64_register_info
   struct type **type;
 };
 
-static struct type *amd64_sse_type;
-
 static struct amd64_register_info const amd64_register_info[] =
 {
   { "rax", &builtin_type_int64 },
@@ -78,7 +78,7 @@ static struct amd64_register_info const amd64_register_info[] =
   { "r14", &builtin_type_int64 },
   { "r15", &builtin_type_int64 },
   { "rip", &builtin_type_void_func_ptr },
-  { "eflags", &builtin_type_int32 },
+  { "eflags", &i386_eflags_type },
   { "cs", &builtin_type_int32 },
   { "ss", &builtin_type_int32 },
   { "ds", &builtin_type_int32 },
@@ -105,28 +105,27 @@ static struct amd64_register_info const amd64_register_info[] =
   { "fop", &builtin_type_int32 },
 
   /* %xmm0 is register number 40.  */
-  { "xmm0", &amd64_sse_type },
-  { "xmm1", &amd64_sse_type },
-  { "xmm2", &amd64_sse_type },
-  { "xmm3", &amd64_sse_type },
-  { "xmm4", &amd64_sse_type },
-  { "xmm5", &amd64_sse_type },
-  { "xmm6", &amd64_sse_type },
-  { "xmm7", &amd64_sse_type },
-  { "xmm8", &amd64_sse_type },
-  { "xmm9", &amd64_sse_type },
-  { "xmm10", &amd64_sse_type },
-  { "xmm11", &amd64_sse_type },
-  { "xmm12", &amd64_sse_type },
-  { "xmm13", &amd64_sse_type },
-  { "xmm14", &amd64_sse_type },
-  { "xmm15", &amd64_sse_type },
-  { "mxcsr", &builtin_type_int32 }
+  { "xmm0", &i386_sse_type },
+  { "xmm1", &i386_sse_type },
+  { "xmm2", &i386_sse_type },
+  { "xmm3", &i386_sse_type },
+  { "xmm4", &i386_sse_type },
+  { "xmm5", &i386_sse_type },
+  { "xmm6", &i386_sse_type },
+  { "xmm7", &i386_sse_type },
+  { "xmm8", &i386_sse_type },
+  { "xmm9", &i386_sse_type },
+  { "xmm10", &i386_sse_type },
+  { "xmm11", &i386_sse_type },
+  { "xmm12", &i386_sse_type },
+  { "xmm13", &i386_sse_type },
+  { "xmm14", &i386_sse_type },
+  { "xmm15", &i386_sse_type },
+  { "mxcsr", &i386_mxcsr_type }
 };
 
 /* Total number of registers.  */
-#define AMD64_NUM_REGS \
-  (sizeof (amd64_register_info) / sizeof (amd64_register_info[0]))
+#define AMD64_NUM_REGS	ARRAY_SIZE (amd64_register_info)
 
 /* Return the name of register REGNUM.  */
 
@@ -145,33 +144,9 @@ amd64_register_name (int regnum)
 static struct type *
 amd64_register_type (struct gdbarch *gdbarch, int regnum)
 {
-  struct type *t;
-
   gdb_assert (regnum >= 0 && regnum < AMD64_NUM_REGS);
 
-  /* ??? Unfortunately, amd64_init_abi is called too early, and so we
-     cannot create the amd64_sse_type early enough to avoid any check
-     at this point.  */
-  t = *amd64_register_info[regnum].type;
-  if (t != NULL)
-    return t;
-
-  gdb_assert (amd64_sse_type == NULL);
-
-  t = init_composite_type ("__gdb_builtin_type_vec128i", TYPE_CODE_UNION);
-  append_composite_type_field (t, "v4_float", builtin_type_v4_float);
-  append_composite_type_field (t, "v2_double", builtin_type_v2_double);
-  append_composite_type_field (t, "v16_int8", builtin_type_v16_int8);
-  append_composite_type_field (t, "v8_int16", builtin_type_v8_int16);
-  append_composite_type_field (t, "v4_int32", builtin_type_v4_int32);
-  append_composite_type_field (t, "v2_int64", builtin_type_v2_int64);
-  append_composite_type_field (t, "uint128", builtin_type_int128);
-
-  TYPE_FLAGS (t) |= TYPE_FLAG_VECTOR;
-  TYPE_NAME (t) = "builtin_type_vec128i";
-      
-  amd64_sse_type = t;
-  return t;
+  return *amd64_register_info[regnum].type;
 }
 
 /* DWARF Register Number Mapping as defined in the System V psABI,
@@ -429,7 +404,7 @@ amd64_classify (struct type *type, enum amd64_reg_class class[2])
      range types, used by languages such as Ada, are also in the INTEGER
      class.  */
   if ((code == TYPE_CODE_INT || code == TYPE_CODE_ENUM
-       || code == TYPE_CODE_RANGE
+       || code == TYPE_CODE_BOOL || code == TYPE_CODE_RANGE
        || code == TYPE_CODE_PTR || code == TYPE_CODE_REF)
       && (len == 1 || len == 2 || len == 4 || len == 8))
     class[0] = AMD64_INTEGER;

@@ -1,6 +1,6 @@
 /* BFD back-end for HP PA-RISC ELF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -394,14 +394,16 @@ elf32_hppa_link_hash_table_create (bfd *abfd)
   if (htab == NULL)
     return NULL;
 
-  if (!_bfd_elf_link_hash_table_init (&htab->etab, abfd, hppa_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&htab->etab, abfd, hppa_link_hash_newfunc,
+				      sizeof (struct elf32_hppa_link_hash_entry)))
     {
       free (htab);
       return NULL;
     }
 
   /* Init the stub hash table too.  */
-  if (!bfd_hash_table_init (&htab->bstab, stub_hash_newfunc))
+  if (!bfd_hash_table_init (&htab->bstab, stub_hash_newfunc,
+			    sizeof (struct elf32_hppa_stub_hash_entry)))
     return NULL;
 
   htab->stub_bfd = NULL;
@@ -2020,9 +2022,21 @@ allocate_dynrelocs (struct elf_link_hash_entry *eh, void *inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (ELF_ST_VISIBILITY (eh->other) != STV_DEFAULT
+      if (hh->dyn_relocs != NULL
 	  && eh->root.type == bfd_link_hash_undefweak)
-	hh->dyn_relocs = NULL;
+	{
+	  if (ELF_ST_VISIBILITY (eh->other) != STV_DEFAULT)
+	    hh->dyn_relocs = NULL;
+
+	  /* Make sure undefined weak symbols are output as a dynamic
+	     symbol in PIEs.  */
+	  else if (eh->dynindx == -1
+		   && !eh->forced_local)
+	    {
+	      if (! bfd_elf_link_record_dynamic_symbol (info, eh))
+		return FALSE;
+	    }
+	}
     }
   else
     {
@@ -2347,7 +2361,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 must add the entries now so that we get the correct size for
 	 the .dynamic section.  The DT_DEBUG entry is filled in by the
 	 dynamic linker and used by the debugger.  */
-      if (!info->shared)
+      if (info->executable)
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -4045,7 +4059,7 @@ elf32_hppa_finish_dynamic_symbol (bfd *output_bfd,
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
   if (eh->root.root.string[0] == '_'
       && (strcmp (eh->root.root.string, "_DYNAMIC") == 0
-	  || strcmp (eh->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0))
+	  || eh == htab->etab.hgot))
     {
       sym->st_shndx = SHN_ABS;
     }

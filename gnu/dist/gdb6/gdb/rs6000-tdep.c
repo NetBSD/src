@@ -1,8 +1,8 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software
-   Foundation, Inc.
+   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
+   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -59,7 +59,7 @@
 #include "frame-unwind.h"
 #include "frame-base.h"
 
-#include "reggroups.h"
+#include "rs6000-tdep.h"
 
 /* If the kernel has to deliver a signal, it pushes a sigcontext
    structure on the stack and then calls the signal handler, passing
@@ -100,25 +100,14 @@ struct rs6000_framedata
 struct reg
   {
     char *name;			/* name of register */
-    unsigned char sz32;		/* size on 32-bit arch, 0 if nonextant */
-    unsigned char sz64;		/* size on 64-bit arch, 0 if nonextant */
+    unsigned char sz32;		/* size on 32-bit arch, 0 if nonexistent */
+    unsigned char sz64;		/* size on 64-bit arch, 0 if nonexistent */
     unsigned char fpr;		/* whether register is floating-point */
     unsigned char pseudo;       /* whether register is pseudo */
     int spr_num;                /* PowerPC SPR number, or -1 if not an SPR.
                                    This is an ISA SPR number, not a GDB
                                    register number.  */
   };
-
-/* Breakpoint shadows for the single step instructions will be kept here. */
-
-static struct sstep_breaks
-{
-  /* Address, or 0 if this is not in use.  */
-  CORE_ADDR address;
-  /* Shadow contents.  */
-  gdb_byte data[4];
-}
-stepBreaks[2];
 
 /* Hook for determining the TOC address when calling functions in the
    inferior under AIX. The initialization code in rs6000-nat.c sets
@@ -502,6 +491,108 @@ rs6000_skip_prologue (CORE_ADDR pc)
   return pc;
 }
 
+static int
+insn_changes_sp_or_jumps (unsigned long insn)
+{
+  int opcode = (insn >> 26) & 0x03f;
+  int sd = (insn >> 21) & 0x01f;
+  int a = (insn >> 16) & 0x01f;
+  int subcode = (insn >> 1) & 0x3ff;
+
+  /* Changes the stack pointer.  */
+
+  /* NOTE: There are many ways to change the value of a given register.
+           The ways below are those used when the register is R1, the SP,
+           in a funtion's epilogue.  */
+
+  if (opcode == 31 && subcode == 444 && a == 1)
+    return 1;  /* mr R1,Rn */
+  if (opcode == 14 && sd == 1)
+    return 1;  /* addi R1,Rn,simm */
+  if (opcode == 58 && sd == 1)
+    return 1;  /* ld R1,ds(Rn) */
+
+  /* Transfers control.  */
+
+  if (opcode == 18)
+    return 1;  /* b */
+  if (opcode == 16)
+    return 1;  /* bc */
+  if (opcode == 19 && subcode == 16)
+    return 1;  /* bclr */
+  if (opcode == 19 && subcode == 528)
+    return 1;  /* bcctr */
+
+  return 0;
+}
+
+/* Return true if we are in the function's epilogue, i.e. after the
+   instruction that destroyed the function's stack frame.
+
+   1) scan forward from the point of execution:
+       a) If you find an instruction that modifies the stack pointer
+          or transfers control (except a return), execution is not in
+          an epilogue, return.
+       b) Stop scanning if you find a return instruction or reach the
+          end of the function or reach the hard limit for the size of
+          an epilogue.
+   2) scan backward from the point of execution:
+        a) If you find an instruction that modifies the stack pointer,
+            execution *is* in an epilogue, return.
+        b) Stop scanning if you reach an instruction that transfers
+           control or the beginning of the function or reach the hard
+           limit for the size of an epilogue.  */
+
+static int
+rs6000_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  bfd_byte insn_buf[PPC_INSN_SIZE];
+  CORE_ADDR scan_pc, func_start, func_end, epilogue_start, epilogue_end;
+  unsigned long insn;
+  struct frame_info *curfrm;
+
+  /* Find the search limits based on function boundaries and hard limit.  */
+
+  if (!find_pc_partial_function (pc, NULL, &func_start, &func_end))
+    return 0;
+
+  epilogue_start = pc - PPC_MAX_EPILOGUE_INSTRUCTIONS * PPC_INSN_SIZE;
+  if (epilogue_start < func_start) epilogue_start = func_start;
+
+  epilogue_end = pc + PPC_MAX_EPILOGUE_INSTRUCTIONS * PPC_INSN_SIZE;
+  if (epilogue_end > func_end) epilogue_end = func_end;
+
+  curfrm = get_current_frame ();
+
+  /* Scan forward until next 'blr'.  */
+
+  for (scan_pc = pc; scan_pc < epilogue_end; scan_pc += PPC_INSN_SIZE)
+    {
+      if (!safe_frame_unwind_memory (curfrm, scan_pc, insn_buf, PPC_INSN_SIZE))
+        return 0;
+      insn = extract_signed_integer (insn_buf, PPC_INSN_SIZE);
+      if (insn == 0x4e800020)
+        break;
+      if (insn_changes_sp_or_jumps (insn))
+        return 0;
+    }
+
+  /* Scan backward until adjustment to stack pointer (R1).  */
+
+  for (scan_pc = pc - PPC_INSN_SIZE;
+       scan_pc >= epilogue_start;
+       scan_pc -= PPC_INSN_SIZE)
+    {
+      if (!safe_frame_unwind_memory (curfrm, scan_pc, insn_buf, PPC_INSN_SIZE))
+        return 0;
+      insn = extract_signed_integer (insn_buf, PPC_INSN_SIZE);
+      if (insn_changes_sp_or_jumps (insn))
+        return 1;
+    }
+
+  return 0;
+}
+
 
 /* Fill in fi->saved_regs */
 
@@ -627,7 +718,6 @@ rs6000_software_single_step (enum target_signal signal,
 
   if (insert_breakpoints_p)
     {
-
       loc = read_pc ();
 
       insn = read_memory_integer (loc, 4);
@@ -640,28 +730,17 @@ rs6000_software_single_step (enum target_signal signal,
       if (breaks[1] == breaks[0])
 	breaks[1] = -1;
 
-      stepBreaks[1].address = 0;
-
       for (ii = 0; ii < 2; ++ii)
 	{
-
 	  /* ignore invalid breakpoint. */
 	  if (breaks[ii] == -1)
 	    continue;
-	  target_insert_breakpoint (breaks[ii], stepBreaks[ii].data);
-	  stepBreaks[ii].address = breaks[ii];
+	  insert_single_step_breakpoint (breaks[ii]);
 	}
-
     }
   else
-    {
+    remove_single_step_breakpoints ();
 
-      /* remove step breakpoints. */
-      for (ii = 0; ii < 2; ++ii)
-	if (stepBreaks[ii].address != 0)
-	  target_remove_breakpoint (stepBreaks[ii].address,
-				    stepBreaks[ii].data);
-    }
   errno = 0;			/* FIXME, don't ignore errors! */
   /* What errors?  {read,write}_memory call error().  */
 }
@@ -911,7 +990,7 @@ skip_prologue (CORE_ADDR pc, CORE_ADDR lim_pc, struct rs6000_framedata *fdata)
 
 	     remember just the first one, but skip over additional
 	     ones.  */
-	  if (lr_reg < 0)
+	  if (lr_reg == -1)
 	    lr_reg = (op & 0x03e00000);
           if (lr_reg == 0)
             r0_contains_arg = 0;
@@ -1023,6 +1102,13 @@ skip_prologue (CORE_ADDR pc, CORE_ADDR lim_pc, struct rs6000_framedata *fdata)
 	    }
 	  continue;
 
+	}
+      else if ((op & 0xfe80ffff) == 0x42800005 && lr_reg != -1)
+	{
+	  /* bcl 20,xx,.+4 is used to get the current PC, with or without
+	     prediction bits.  If the LR has already been saved, we can
+	     skip it.  */
+	  continue;
 	}
       else if (op == 0x48000005)
 	{			/* bl .+4 used in 
@@ -3278,6 +3364,8 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
                     _("rs6000_gdbarch_init: "
                     "received unexpected BFD 'arch' value"));
 
+  set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
+
   /* Sanity check on registers.  */
   gdb_assert (strcmp (tdep->regs[tdep->ppc_gp0_regnum].name, "r0") == 0);
 
@@ -3342,6 +3430,8 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_deprecated_extract_struct_value_address (gdbarch, rs6000_extract_struct_value_address);
 
   set_gdbarch_skip_prologue (gdbarch, rs6000_skip_prologue);
+  set_gdbarch_in_function_epilogue_p (gdbarch, rs6000_in_function_epilogue_p);
+
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_breakpoint_from_pc (gdbarch, rs6000_breakpoint_from_pc);
 
@@ -3403,16 +3493,6 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       frame_unwind_append_sniffer (gdbarch, rs6000_frame_sniffer);
       set_gdbarch_unwind_dummy_id (gdbarch, rs6000_unwind_dummy_id);
       frame_base_append_sniffer (gdbarch, rs6000_frame_base_sniffer);
-    }
-
-  if (from_xcoff_exec)
-    {
-      /* NOTE: jimix/2003-06-09: This test should really check for
-	 GDB_OSABI_AIX when that is defined and becomes
-	 available. (Actually, once things are properly split apart,
-	 the test goes away.) */
-       /* RS6000/AIX does not support PT_STEP.  Has to be simulated.  */
-       set_gdbarch_software_single_step (gdbarch, rs6000_software_single_step);
     }
 
   init_sim_regno_table (gdbarch);

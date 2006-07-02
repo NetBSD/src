@@ -1,7 +1,7 @@
 /* TUI data manipulation routines.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-   Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -44,7 +44,7 @@ static int term_height, term_width;
 static struct tui_gen_win_info _locator;
 static struct tui_gen_win_info exec_info[2];
 static struct tui_win_info * src_win_list[2];
-static struct tui_list source_windows = {(void **) src_win_list, 0};
+static struct tui_list source_windows = {src_win_list, 0};
 static int default_tab_len = DEFAULT_TAB_LEN;
 static struct tui_win_info * win_with_focus = (struct tui_win_info *) NULL;
 static struct tui_layout_def layout_def =
@@ -182,7 +182,7 @@ tui_clear_source_windows_detail (void)
   int i;
 
   for (i = 0; i < (tui_source_windows ())->count; i++)
-    tui_clear_win_detail ((struct tui_win_info *) (tui_source_windows ())->list[i]);
+    tui_clear_win_detail ((tui_source_windows ())->list[i]);
 }
 
 
@@ -782,7 +782,7 @@ tui_free_all_source_wins_content (void)
 
   for (i = 0; i < (tui_source_windows ())->count; i++)
     {
-      struct tui_win_info * win_info = (struct tui_win_info *) (tui_source_windows ())->list[i];
+      struct tui_win_info * win_info = (tui_source_windows ())->list[i];
 
       if (win_info != NULL)
 	{

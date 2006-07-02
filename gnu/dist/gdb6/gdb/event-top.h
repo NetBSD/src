@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright 1999, 2001, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2001, 2003 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef EVENT_TOP_H
 #define EVENT_TOP_H
@@ -97,6 +97,7 @@ extern void handle_stop_sig (int sig);
 #endif
 #endif
 extern void handle_sigint (int sig);
+extern void handle_sigterm (int sig);
 extern void pop_prompt (void);
 extern void push_prompt (char *prefix, char *prompt, char *suffix);
 extern void gdb_readline2 (void *client_data);

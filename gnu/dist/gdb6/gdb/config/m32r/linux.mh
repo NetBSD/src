@@ -3,6 +3,6 @@
 NAT_FILE= nm-linux.h
 NATDEPFILES= inf-ptrace.o fork-child.o corelow.o	\
 	m32r-linux-nat.o gcore.o proc-service.o linux-thread-db.o	\
-	linux-nat.o
+	linux-nat.o linux-fork.o
 
 LOADLIBES= -ldl -rdynamic

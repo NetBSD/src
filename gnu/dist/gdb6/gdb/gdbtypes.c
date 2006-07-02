@@ -1,6 +1,8 @@
 /* Support routines for manipulating internal types for GDB.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004 Free Software Foundation, Inc.
+
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
+   2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
    This file is part of GDB.
@@ -17,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -37,6 +39,7 @@
 #include "wrapper.h"
 #include "cp-abi.h"
 #include "gdb_assert.h"
+#include "hashtab.h"
 
 /* These variables point to the objects
    representing the predefined C data types.  */
@@ -847,6 +850,39 @@ create_set_type (struct type *result_type, struct type *domain_type)
   return (result_type);
 }
 
+void
+append_flags_type_flag (struct type *type, int bitpos, char *name)
+{
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_FLAGS);
+  gdb_assert (bitpos < TYPE_NFIELDS (type));
+  gdb_assert (bitpos >= 0);
+
+  if (name)
+    {
+      TYPE_FIELD_NAME (type, bitpos) = xstrdup (name);
+      TYPE_FIELD_BITPOS (type, bitpos) = bitpos;
+    }
+  else
+    {
+      /* Don't show this field to the user.  */
+      TYPE_FIELD_BITPOS (type, bitpos) = -1;
+    }
+}
+
+struct type *
+init_flags_type (char *name, int length)
+{
+  int nfields = length * TARGET_CHAR_BIT;
+  struct type *type;
+
+  type = init_type (TYPE_CODE_FLAGS, length, TYPE_FLAG_UNSIGNED, name, NULL);
+  TYPE_NFIELDS (type) = nfields;
+  TYPE_FIELDS (type) = TYPE_ALLOC (type, nfields * sizeof (struct field));
+  memset (TYPE_FIELDS (type), 0, sizeof (struct field));
+
+  return type;
+}
+
 /* Construct and return a type of the form:
 	struct NAME { ELT_TYPE ELT_NAME[N]; }
    We use these types for SIMD registers.  For example, the type of
@@ -1235,7 +1271,7 @@ lookup_struct_elt_type (struct type *type, char *name, int noerr)
     {
       struct type *t;
 
-      t = lookup_struct_elt_type (TYPE_BASECLASS (type, i), name, noerr);
+      t = lookup_struct_elt_type (TYPE_BASECLASS (type, i), name, 1);
       if (t != NULL)
 	{
 	  return t;
@@ -1822,6 +1858,7 @@ is_integral_type (struct type *t)
     ((t != NULL)
      && ((TYPE_CODE (t) == TYPE_CODE_INT)
 	 || (TYPE_CODE (t) == TYPE_CODE_ENUM)
+	 || (TYPE_CODE (t) == TYPE_CODE_FLAGS)
 	 || (TYPE_CODE (t) == TYPE_CODE_CHAR)
 	 || (TYPE_CODE (t) == TYPE_CODE_RANGE)
 	 || (TYPE_CODE (t) == TYPE_CODE_BOOL)));
@@ -2374,6 +2411,7 @@ rank_one_type (struct type *parm, struct type *arg)
 	  return rank_one_type (TYPE_TARGET_TYPE (parm), arg);
 	case TYPE_CODE_INT:
 	case TYPE_CODE_ENUM:
+	case TYPE_CODE_FLAGS:
 	case TYPE_CODE_CHAR:
 	case TYPE_CODE_RANGE:
 	case TYPE_CODE_BOOL:
@@ -2454,6 +2492,7 @@ rank_one_type (struct type *parm, struct type *arg)
 	  else
 	    return INTEGER_CONVERSION_BADNESS;
 	case TYPE_CODE_ENUM:
+	case TYPE_CODE_FLAGS:
 	case TYPE_CODE_CHAR:
 	case TYPE_CODE_RANGE:
 	case TYPE_CODE_BOOL:
@@ -2888,6 +2927,9 @@ recursive_dump_type (struct type *type, int spaces)
     case TYPE_CODE_ENUM:
       printf_filtered ("(TYPE_CODE_ENUM)");
       break;
+    case TYPE_CODE_FLAGS:
+      printf_filtered ("(TYPE_CODE_FLAGS)");
+      break;
     case TYPE_CODE_FUNC:
       printf_filtered ("(TYPE_CODE_FUNC)");
       break;
@@ -3111,7 +3153,147 @@ recursive_dump_type (struct type *type, int spaces)
     obstack_free (&dont_print_type_obstack, NULL);
 }
 
-static void build_gdbtypes (void);
+/* Trivial helpers for the libiberty hash table, for mapping one
+   type to another.  */
+
+struct type_pair
+{
+  struct type *old, *new;
+};
+
+static hashval_t
+type_pair_hash (const void *item)
+{
+  const struct type_pair *pair = item;
+  return htab_hash_pointer (pair->old);
+}
+
+static int
+type_pair_eq (const void *item_lhs, const void *item_rhs)
+{
+  const struct type_pair *lhs = item_lhs, *rhs = item_rhs;
+  return lhs->old == rhs->old;
+}
+
+/* Allocate the hash table used by copy_type_recursive to walk
+   types without duplicates.  We use OBJFILE's obstack, because
+   OBJFILE is about to be deleted.  */
+
+htab_t
+create_copied_types_hash (struct objfile *objfile)
+{
+  return htab_create_alloc_ex (1, type_pair_hash, type_pair_eq,
+			       NULL, &objfile->objfile_obstack,
+			       hashtab_obstack_allocate,
+			       dummy_obstack_deallocate);
+}
+
+/* Recursively copy (deep copy) TYPE, if it is associated with OBJFILE.
+   Return a new type allocated using malloc, a saved type if we have already
+   visited TYPE (using COPIED_TYPES), or TYPE if it is not associated with
+   OBJFILE.  */
+
+struct type *
+copy_type_recursive (struct objfile *objfile, struct type *type,
+		     htab_t copied_types)
+{
+  struct type_pair *stored, pair;
+  void **slot;
+  struct type *new_type;
+
+  if (TYPE_OBJFILE (type) == NULL)
+    return type;
+
+  /* This type shouldn't be pointing to any types in other objfiles; if
+     it did, the type might disappear unexpectedly.  */
+  gdb_assert (TYPE_OBJFILE (type) == objfile);
+
+  pair.old = type;
+  slot = htab_find_slot (copied_types, &pair, INSERT);
+  if (*slot != NULL)
+    return ((struct type_pair *) *slot)->new;
+
+  new_type = alloc_type (NULL);
+
+  /* We must add the new type to the hash table immediately, in case
+     we encounter this type again during a recursive call below.  */
+  stored = xmalloc (sizeof (struct type_pair));
+  stored->old = type;
+  stored->new = new_type;
+  *slot = stored;
+
+  /* Copy the common fields of types.  */
+  TYPE_CODE (new_type) = TYPE_CODE (type);
+  TYPE_ARRAY_UPPER_BOUND_TYPE (new_type) = TYPE_ARRAY_UPPER_BOUND_TYPE (type);
+  TYPE_ARRAY_LOWER_BOUND_TYPE (new_type) = TYPE_ARRAY_LOWER_BOUND_TYPE (type);
+  if (TYPE_NAME (type))
+    TYPE_NAME (new_type) = xstrdup (TYPE_NAME (type));
+  if (TYPE_TAG_NAME (type))
+    TYPE_TAG_NAME (new_type) = xstrdup (TYPE_TAG_NAME (type));
+  TYPE_FLAGS (new_type) = TYPE_FLAGS (type);
+  TYPE_VPTR_FIELDNO (new_type) = TYPE_VPTR_FIELDNO (type);
+
+  TYPE_INSTANCE_FLAGS (new_type) = TYPE_INSTANCE_FLAGS (type);
+  TYPE_LENGTH (new_type) = TYPE_LENGTH (type);
+
+  /* Copy the fields.  */
+  TYPE_NFIELDS (new_type) = TYPE_NFIELDS (type);
+  if (TYPE_NFIELDS (type))
+    {
+      int i, nfields;
+
+      nfields = TYPE_NFIELDS (type);
+      TYPE_FIELDS (new_type) = xmalloc (sizeof (struct field) * nfields);
+      for (i = 0; i < nfields; i++)
+	{
+	  TYPE_FIELD_ARTIFICIAL (new_type, i) = TYPE_FIELD_ARTIFICIAL (type, i);
+	  TYPE_FIELD_BITSIZE (new_type, i) = TYPE_FIELD_BITSIZE (type, i);
+	  if (TYPE_FIELD_TYPE (type, i))
+	    TYPE_FIELD_TYPE (new_type, i)
+	      = copy_type_recursive (objfile, TYPE_FIELD_TYPE (type, i),
+				     copied_types);
+	  if (TYPE_FIELD_NAME (type, i))
+	    TYPE_FIELD_NAME (new_type, i) = xstrdup (TYPE_FIELD_NAME (type, i));
+	  if (TYPE_FIELD_STATIC_HAS_ADDR (type, i))
+	    SET_FIELD_PHYSADDR (TYPE_FIELD (new_type, i),
+				TYPE_FIELD_STATIC_PHYSADDR (type, i));
+	  else if (TYPE_FIELD_STATIC (type, i))
+	    SET_FIELD_PHYSNAME (TYPE_FIELD (new_type, i),
+				xstrdup (TYPE_FIELD_STATIC_PHYSNAME (type, i)));
+	  else
+	    {
+	      TYPE_FIELD_BITPOS (new_type, i) = TYPE_FIELD_BITPOS (type, i);
+	      TYPE_FIELD_STATIC_KIND (new_type, i) = 0;
+	    }
+	}
+    }
+
+  /* Copy pointers to other types.  */
+  if (TYPE_TARGET_TYPE (type))
+    TYPE_TARGET_TYPE (new_type) = copy_type_recursive (objfile,
+						       TYPE_TARGET_TYPE (type),
+						       copied_types);
+  if (TYPE_VPTR_BASETYPE (type))
+    TYPE_VPTR_BASETYPE (new_type) = copy_type_recursive (objfile,
+							 TYPE_VPTR_BASETYPE (type),
+							 copied_types);
+  /* Maybe copy the type_specific bits.
+
+     NOTE drow/2005-12-09: We do not copy the C++-specific bits like
+     base classes and methods.  There's no fundamental reason why we
+     can't, but at the moment it is not needed.  */
+
+  if (TYPE_CODE (type) == TYPE_CODE_FLT)
+    TYPE_FLOATFORMAT (new_type) == TYPE_FLOATFORMAT (type);
+  else if (TYPE_CODE (type) == TYPE_CODE_STRUCT
+	   || TYPE_CODE (type) == TYPE_CODE_UNION
+	   || TYPE_CODE (type) == TYPE_CODE_TEMPLATE
+	   || TYPE_CODE (type) == TYPE_CODE_NAMESPACE)
+    INIT_CPLUS_SPECIFIC (new_type);
+
+  return new_type;
+}
+
 static void
 build_gdbtypes (void)
 {

@@ -286,7 +286,7 @@ struct external_sparc_core
   int c_magic;				/* Corefile magic number.  */
   int c_len;				/* Sizeof (struct core).  */
 #define	SPARC_CORE_LEN	432
-  int c_regs[19];			/* General purpose registers -- MACHDEP SIZE.  */
+  struct regs c_regs;			/* General purpose registers -- MACHDEP SIZE.  */
   struct external_exec c_aouthdr;	/* A.out header.  */
   int c_signo;				/* Killing signal, if any.  */
   int c_tsize;				/* Text size (bytes).  */
@@ -309,7 +309,7 @@ struct external_solaris_bcp_core
   int c_magic;				/* Corefile magic number.  */
   int c_len;				/* Sizeof (struct core).  */
 #define	SOLARIS_BCP_CORE_LEN	456
-  int c_regs[19];			/* General purpose registers -- MACHDEP SIZE.  */
+  struct regs c_regs;			/* General purpose registers -- MACHDEP SIZE.  */
   int c_exdata_vp;			/* Exdata structure.  */
   int c_exdata_tsize;
   int c_exdata_dsize;
@@ -387,7 +387,7 @@ swapcore_sun3 (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
 
   intcore->c_magic = H_GET_32 (abfd, &extcore->c_magic);
   intcore->c_len = H_GET_32 (abfd, &extcore->c_len);
-  intcore->c_regs_pos = (long) (((struct external_sun3_core *) 0)->c_regs);
+  intcore->c_regs_pos = offsetof (struct external_sun3_core, c_regs);
   intcore->c_regs_size = sizeof (extcore->c_regs);
 #if ARCH_SIZE == 64
   aout_64_swap_exec_header_in
@@ -401,10 +401,10 @@ swapcore_sun3 (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
   intcore->c_data_addr = N_DATADDR (intcore->c_aouthdr);
   intcore->c_ssize = H_GET_32 (abfd, &extcore->c_ssize);
   memcpy (intcore->c_cmdname, extcore->c_cmdname, sizeof (intcore->c_cmdname));
-  intcore->fp_stuff_pos = (long) (((struct external_sun3_core *) 0)->fp_stuff);
+  intcore->fp_stuff_pos = offsetof (struct external_sun3_core, fp_stuff);
   /* FP stuff takes up whole rest of struct, except c_ucode.  */
   intcore->fp_stuff_size = intcore->c_len - (sizeof extcore->c_ucode) -
-    (file_ptr) (((struct external_sun3_core *) 0)->fp_stuff);
+    offsetof (struct external_sun3_core, fp_stuff);
   /* Ucode is the last thing in the struct -- just before the end.  */
   intcore->c_ucode = H_GET_32 (abfd,
 			       (intcore->c_len
@@ -422,7 +422,7 @@ swapcore_sparc (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
 
   intcore->c_magic = H_GET_32 (abfd, &extcore->c_magic);
   intcore->c_len = H_GET_32 (abfd, &extcore->c_len);
-  intcore->c_regs_pos = (long) (((struct external_sparc_core *) 0)->c_regs);
+  intcore->c_regs_pos = offsetof (struct external_sparc_core, c_regs);
   intcore->c_regs_size = sizeof (extcore->c_regs);
 #if ARCH_SIZE == 64
   aout_64_swap_exec_header_in
@@ -436,10 +436,10 @@ swapcore_sparc (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
   intcore->c_data_addr = N_DATADDR (intcore->c_aouthdr);
   intcore->c_ssize = H_GET_32 (abfd, &extcore->c_ssize);
   memcpy (intcore->c_cmdname, extcore->c_cmdname, sizeof (intcore->c_cmdname));
-  intcore->fp_stuff_pos = (long) (((struct external_sparc_core *) 0)->fp_stuff);
+  intcore->fp_stuff_pos = offsetof (struct external_sparc_core, fp_stuff);
   /* FP stuff takes up whole rest of struct, except c_ucode.  */
   intcore->fp_stuff_size = intcore->c_len - (sizeof extcore->c_ucode) -
-    (file_ptr) (((struct external_sparc_core *) 0)->fp_stuff);
+    offsetof (struct external_sparc_core, fp_stuff);
   /* Ucode is the last thing in the struct -- just before the end.  */
   intcore->c_ucode = H_GET_32 (abfd,
 			       (intcore->c_len
@@ -462,7 +462,7 @@ swapcore_sparc (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
 #define SPARC_USRSTACK_SPARC2 ((bfd_vma)0xf8000000)
 #define SPARC_USRSTACK_SPARC10 ((bfd_vma)0xf0000000)
   {
-    bfd_vma sp = H_GET_32 (abfd, &((struct regs *) &extcore->c_regs[0])->r_o6);
+    bfd_vma sp = H_GET_32 (abfd, &extcore->c_regs.r_o6);
     if (sp < SPARC_USRSTACK_SPARC10)
       intcore->c_stacktop = SPARC_USRSTACK_SPARC10;
     else
@@ -480,7 +480,7 @@ swapcore_solaris_bcp (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
 
   intcore->c_magic = H_GET_32 (abfd, &extcore->c_magic);
   intcore->c_len = H_GET_32 (abfd, &extcore->c_len);
-  intcore->c_regs_pos = (long) (((struct external_solaris_bcp_core *) 0)->c_regs);
+  intcore->c_regs_pos = offsetof (struct external_solaris_bcp_core, c_regs);
   intcore->c_regs_size = sizeof (extcore->c_regs);
 
   /* The Solaris BCP exdata structure does not contain an a_syms field,
@@ -501,10 +501,10 @@ swapcore_solaris_bcp (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
   intcore->c_ssize = H_GET_32 (abfd, &extcore->c_ssize);
   memcpy (intcore->c_cmdname, extcore->c_cmdname, sizeof (intcore->c_cmdname));
   intcore->fp_stuff_pos =
-    (long) (((struct external_solaris_bcp_core *) 0)->fp_stuff);
+    offsetof (struct external_solaris_bcp_core, fp_stuff);
   /* FP stuff takes up whole rest of struct, except c_ucode.  */
   intcore->fp_stuff_size = intcore->c_len - (sizeof extcore->c_ucode) -
-    (file_ptr) (((struct external_solaris_bcp_core *) 0)->fp_stuff);
+    offsetof (struct external_solaris_bcp_core, fp_stuff);
   /* Ucode is the last thing in the struct -- just before the end */
   intcore->c_ucode = H_GET_32 (abfd,
 			       (intcore->c_len
@@ -527,7 +527,7 @@ swapcore_solaris_bcp (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
 #define SPARC_USRSTACK_SPARC2 ((bfd_vma)0xf8000000)
 #define SPARC_USRSTACK_SPARC10 ((bfd_vma)0xf0000000)
   {
-    bfd_vma sp = H_GET_32 (abfd, &((struct regs *) &extcore->c_regs[0])->r_o6);
+    bfd_vma sp = H_GET_32 (abfd, &extcore->c_regs.r_o6);
     if (sp < SPARC_USRSTACK_SPARC10)
       intcore->c_stacktop = SPARC_USRSTACK_SPARC10;
     else

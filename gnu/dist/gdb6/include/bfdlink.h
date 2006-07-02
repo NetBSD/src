@@ -301,9 +301,6 @@ struct bfd_link_info
   /* TRUE if global symbols in discarded sections should be stripped.  */
   unsigned int strip_discarded: 1;
 
-  /* TRUE if the final relax pass is needed.  */
-  unsigned int need_relax_finalize: 1;
-
   /* TRUE if generating a position independent executable.  */
   unsigned int pie: 1;
 
@@ -397,6 +394,12 @@ struct bfd_link_info
   /* The function to call when the executable or shared object is
      unloaded.  */
   const char *fini_function;
+
+  /* Number of relaxation passes.  Usually only one relaxation pass
+     is needed.  But a backend can have as many relaxation passes as
+     necessary.  During bfd_relax_section call, it is set to the
+     current pass, starting from 0.  */
+  int relax_pass;
 
   /* Non-zero if auto-import thunks for DATA items in pei386 DLLs
      should be generated/linked against.  Set to 1 if this feature
@@ -554,7 +557,7 @@ enum bfd_link_order_type
 };
 
 /* This is the link_order structure itself.  These form a chain
-   attached to the section whose contents they are describing.  */
+   attached to the output section whose contents they are describing.  */
 
 struct bfd_link_order
 {

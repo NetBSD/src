@@ -1,4 +1,4 @@
-# Copyright 2002, 2003 Free Software Foundation, Inc.
+# Copyright 2002, 2003, 2005 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ gdb_continue_to_breakpoint "end of constructors"
 # The first of these is for PR gdb/653.
 
 gdb_test "print theA->virt" "\\$\[0-9\]* = &A::virt\\((void|)\\)" "print virtual method."
-gdb_test "print theA->nonvirt" "Cannot take address of a method" "print nonvirtual method."
+gdb_test "print theA->nonvirt" "\\$\[0-9\]* = &A::nonvirt\\((void|)\\)" "print nonvirtual method."
 
 gdb_exit
 return 0

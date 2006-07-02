@@ -1,6 +1,6 @@
 /* Remote debugging interface for M32R/SDI.
 
-   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    Contributed by Renesas Technology Co.
    Written by Kei Sakamoto <sakamoto.kei@renesas.com>.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcmd.h"
@@ -31,7 +31,11 @@
 #include "gdb_string.h"
 #include <ctype.h>
 #include <signal.h>
+#ifdef __MINGW32__
+#include <winsock.h>
+#else
 #include <netinet/in.h>
+#endif
 #include <sys/types.h>
 #include <sys/time.h>
 #include <signal.h>
@@ -338,7 +342,7 @@ m32r_create_inferior (char *execfile, char *args, char **env, int from_tty)
   /* Install inferior's terminal modes.  */
   target_terminal_inferior ();
 
-  proceed (entry_pt, TARGET_SIGNAL_DEFAULT, 0);
+  write_pc (entry_pt);
 }
 
 /* Open a connection to a remote debugger.
@@ -1032,7 +1036,7 @@ m32r_files_info (struct target_ops *target)
 
 /* Read/Write memory.  */
 static int
-m32r_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
+m32r_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
 		  int write,
 		  struct mem_attrib *attrib, struct target_ops *target)
 {
@@ -1141,15 +1145,16 @@ m32r_mourn_inferior (void)
 }
 
 static int
-m32r_insert_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
+m32r_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int ib_breakpoints;
   unsigned char buf[13];
   int i, c;
 
   if (remote_debug)
-    fprintf_unfiltered (gdb_stdlog, "m32r_insert_breakpoint(%08lx,\"%s\")\n",
-			addr, shadow);
+    fprintf_unfiltered (gdb_stdlog, "m32r_insert_breakpoint(%08lx,...)\n",
+			addr);
 
   if (use_ib_breakpoints)
     ib_breakpoints = max_ib_breakpoints;
@@ -1183,13 +1188,14 @@ m32r_insert_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
 }
 
 static int
-m32r_remove_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
+m32r_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
 
   if (remote_debug)
-    fprintf_unfiltered (gdb_stdlog, "m32r_remove_breakpoint(%08lx,\"%s\")\n",
-			addr, shadow);
+    fprintf_unfiltered (gdb_stdlog, "m32r_remove_breakpoint(%08lx)\n",
+			addr);
 
   for (i = 0; i < MAX_BREAKPOINTS; i++)
     {

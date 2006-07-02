@@ -1,5 +1,6 @@
 /* Terminal interface definitions for GDB, the GNU Debugger.
-   Copyright 1986, 1989, 1990, 1991, 1992, 1993, 1995, 1996, 1999, 2000
+   Copyright (C) 1986, 1989, 1990, 1991, 1992, 1993, 1995, 1996, 1999, 2000,
+   2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -16,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (TERMINAL_H)
 #define TERMINAL_H 1
@@ -87,5 +88,8 @@ extern int job_control;
 /* Set the process group of the caller to its own pid, or do nothing if
    we lack job control.  */
 extern int gdb_setpgid (void);
+
+/* Set up a serial structure describing standard input.  In inflow.c.  */
+extern void initialize_stdin_serial (void);
 
 #endif /* !defined (TERMINAL_H) */

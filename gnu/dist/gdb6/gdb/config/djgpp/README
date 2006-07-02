@@ -160,7 +160,7 @@ The test suite has been made to work with DJGPP.  If you make a change
 in some of the programs, or want to be sure you have a fully
 functional GDB executable, it is a good idea to run the test suite.
 You cannot use "make check" for that, since it will want to run the
-`dejagnu' utility which GDB doesn't support.  Instead, use the special
+`dejagnu' utility which DJGPP doesn't support.  Instead, use the special
 script gdb/config/djgpp/djcheck.sh, like this:
 
 		cd gdb/testsuite

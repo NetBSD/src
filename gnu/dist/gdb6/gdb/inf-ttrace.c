@@ -1,6 +1,6 @@
 /* Low-level child interface to ttrace.
 
-   Copyright 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 
@@ -29,7 +29,6 @@
 #include "gdbcore.h"
 #include "gdbthread.h"
 #include "inferior.h"
-#include "observer.h"
 #include "target.h"
 
 #include "gdb_assert.h"
@@ -360,7 +359,7 @@ inf_ttrace_can_use_hw_breakpoint (int type, int len, int ot)
 }
 
 static int
-inf_ttrace_region_size_ok_for_hw_watchpoint (int len)
+inf_ttrace_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
   return 1;
 }
@@ -636,12 +635,6 @@ inf_ttrace_create_inferior (char *exec_file, char *allargs, char **env,
 
   fork_inferior (exec_file, allargs, env, inf_ttrace_me, inf_ttrace_him,
 		 inf_ttrace_prepare, NULL);
-
-  /* We are at the first instruction we care about.  */
-  observer_notify_inferior_created (&current_target, from_tty);
-
-  /* Pedal to the metal...  */
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
 
 static void
@@ -727,10 +720,6 @@ inf_ttrace_attach (char *args, int from_tty)
 
   inferior_ptid = pid_to_ptid (pid);
   push_target (ttrace_ops_hack);
-
-  /* Do this first, before anything has had a chance to query the
-     inferior's symbol table or similar.  */
-  observer_notify_inferior_created (&current_target, from_tty);
 }
 
 static void
@@ -952,7 +941,7 @@ inf_ttrace_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
       if (inf_ttrace_num_lwps == 0)
 	{
 	  /* Now that we're going to be multi-threaded, add the
-	     origional thread to the list first.  */
+	     original thread to the list first.  */
 	  add_thread (ptid_build (tts.tts_pid, tts.tts_lwpid, 0));
 	  inf_ttrace_num_lwps++;
 	}
@@ -1132,8 +1121,8 @@ inf_ttrace_target (void)
   t->to_insert_watchpoint = inf_ttrace_insert_watchpoint;
   t->to_remove_watchpoint = inf_ttrace_remove_watchpoint;
   t->to_stopped_by_watchpoint = inf_ttrace_stopped_by_watchpoint;
-  t->to_region_size_ok_for_hw_watchpoint =
-    inf_ttrace_region_size_ok_for_hw_watchpoint;
+  t->to_region_ok_for_hw_watchpoint =
+    inf_ttrace_region_ok_for_hw_watchpoint;
   t->to_kill = inf_ttrace_kill;
   t->to_create_inferior = inf_ttrace_create_inferior;
   t->to_follow_fork = inf_ttrace_follow_fork;

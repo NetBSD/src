@@ -1,5 +1,5 @@
 #   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999,
-#   2000, 2001, 2002, 2003
+#   2000, 2001, 2002, 2003, 2005, 2006
 #   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -149,7 +149,7 @@ gdb_expect {
     -re "Reinitialize source path to empty.*y or n. $"  {
 	send_gdb "y\n"
 	gdb_expect {
-	    -re "Source directories searched: .cdir:.cwd.*$gdb_prompt $"\
+	    -re "Source directories searched: .cdir\[:;\].cwd.*$gdb_prompt $"\
 		    { pass "directory prompt" }
 	    timeout		{ fail "(timeout) directory prompt" }
 	}
@@ -604,7 +604,7 @@ gdb_test "show confirm" "Whether to confirm potentially dangerous operations is 
 #test show convenience
 gdb_test "show convenience" "No debugger convenience variables now defined.(\[^\r\n\]*\[\r\n\])+Convenience variables have names starting with \".\";(\[^\r\n\]*\[\r\n\])+use \"set\" as in \"set .foo = 5\" to define them." "show convenience"
 #test show directories
-gdb_test "show directories" "Source directories searched: .cdir:.cwd" "show directories"
+gdb_test "show directories" "Source directories searched: .cdir\[:;\].cwd" "show directories"
 #test show editing
 gdb_test "show editing" "Editing of command lines as they are typed is o\[a-z\]*." "show editing"
 #test show height
@@ -667,7 +667,7 @@ gdb_test "show values" "" "show values"
 #test show verbose
 gdb_test "show verbose" "Verbose printing of informational messages is o.*|Verbosity is off.*" "show verbose"
 #test show version
-gdb_test "show version" "GNU gdb \[0-9\.\]*(\[^\r\n\]*\[\r\n\])+Copyright \[0-9\]* Free Software Foundation, Inc(\[^\r\n\]*\[\r\n\])+GDB is free software, covered by the GNU General Public License, and you are(\[^\r\n\]*\[\r\n\])+welcome to change it and/or distribute copies of it under certain conditions(\[^\r\n\]*\[\r\n\])+Type \"show copying\" to see the conditions(\[^\r\n\]*\[\r\n\])+There is absolutely no warranty for GDB.  Type \"show warranty\" for details(\[^\r\n\]*\[\r\n\])+This GDB was configured as .*|GDB is free software and you are welcome to distribute copies of it(\[^\r\n\]*\[\r\n\])+ under certain conditions; type \"show copying\" to see the conditions.(\[^\r\n\]*\[\r\n\])+There is absolutely no warranty for GDB; type \"show warranty\" for details.(\[^\r\n\]*\[\r\n\])+GDB.*Copyright \[0-9\]* Free Software Foundation, Inc.*" "show version"
+gdb_test "show version" "GNU gdb \[0-9\.\]*(\[^\r\n\]*\[\r\n\])+Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc(\[^\r\n\]*\[\r\n\])+GDB is free software, covered by the GNU General Public License, and you are(\[^\r\n\]*\[\r\n\])+welcome to change it and/or distribute copies of it under certain conditions(\[^\r\n\]*\[\r\n\])+Type \"show copying\" to see the conditions(\[^\r\n\]*\[\r\n\])+There is absolutely no warranty for GDB.  Type \"show warranty\" for details(\[^\r\n\]*\[\r\n\])+This GDB was configured as .*|GDB is free software and you are welcome to distribute copies of it(\[^\r\n\]*\[\r\n\])+ under certain conditions; type \"show copying\" to see the conditions.(\[^\r\n\]*\[\r\n\])+There is absolutely no warranty for GDB; type \"show warranty\" for details.(\[^\r\n\]*\[\r\n\])+GDB.*Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*" "show version"
 #test show width
 gdb_test "show width" "Number of characters gdb thinks are in a line is.*" "show width"
 #test show write

@@ -719,15 +719,3 @@ This function should be called when the bfd state saved by
 bfd_preserve_save is no longer needed.  ie. when the back-end
 object_p function returns with success.
 
-@findex bfd_hide_symbol
-@subsubsection @code{bfd_hide_symbol}
-@strong{Synopsis}
-@example
-void bfd_hide_symbol (bfd *,
-    struct bfd_link_info *,
-    struct bfd_link_hash_entry *,
-    bfd_boolean);
-@end example
-@strong{Description}@*
-This function hides a symbol so that it won't be exported.
-

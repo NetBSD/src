@@ -50,10 +50,10 @@ static reloc_howto_type elf_d10v_howto_table[] =
   HOWTO (R_D10V_10_PCREL_R,	/* Type.  */
 	 2,	                /* Rightshift.  */
 	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 7,	                /* Bitsize.  */
+	 8,	                /* Bitsize.  */
 	 TRUE,	        	/* PC_relative.  */
 	 0,	                /* Bitpos.  */
-	 complain_overflow_bitfield, /* Complain_on_overflow.  */
+	 complain_overflow_signed, /* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc, /* Special_function.  */
 	 "R_D10V_10_PCREL_R",	/* Name.  */
 	 FALSE,	        	/* Partial_inplace.  */
@@ -65,10 +65,10 @@ static reloc_howto_type elf_d10v_howto_table[] =
   HOWTO (R_D10V_10_PCREL_L,	/* Type.  */
 	 2,	                /* Rightshift.  */
 	 2,	                /* Size (0 = byte, 1 = short, 2 = long).  */
-	 7,	                /* Bitsize.  */
+	 8,	                /* Bitsize.  */
 	 TRUE,	        	/* PC_relative.  */
 	 15,	                /* Bitpos.  */
-	 complain_overflow_bitfield, /* Complain_on_overflow.  */
+	 complain_overflow_signed, /* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc, /* Special_function.  */
 	 "R_D10V_10_PCREL_L",	/* Name.  */
 	 FALSE,	        	/* Partial_inplace.  */
@@ -110,10 +110,10 @@ static reloc_howto_type elf_d10v_howto_table[] =
   HOWTO (R_D10V_18_PCREL,	/* Type.  */
 	 2,			/* Rightshift.  */
 	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
-	 15,			/* Bitsize.  */
+	 16,			/* Bitsize.  */
 	 TRUE,			/* PC_relative.  */
 	 0,			/* Bitpos.  */
-	 complain_overflow_bitfield, /* Complain_on_overflow.  */
+	 complain_overflow_signed, /* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc, /* Special_function.  */
 	 "R_D10V_18_PCREL",	/* Name.  */
 	 FALSE,			/* Partial_inplace.  */

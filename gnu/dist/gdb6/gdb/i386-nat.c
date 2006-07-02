@@ -1,6 +1,6 @@
 /* Native-dependent code for the i386.
 
-   Copyright 2001, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "breakpoint.h"
@@ -625,12 +625,13 @@ i386_stopped_by_hwbp (void)
   return 0;
 }
 
-/* Insert a hardware-assisted breakpoint at address ADDR.  SHADOW is
-   unused.  Return 0 on success, EBUSY on failure.  */
+/* Insert a hardware-assisted breakpoint at BP_TGT->placed_address.
+   Return 0 on success, EBUSY on failure.  */
 int
-i386_insert_hw_breakpoint (CORE_ADDR addr, void *shadow)
+i386_insert_hw_breakpoint (struct bp_target_info *bp_tgt)
 {
   unsigned len_rw = i386_length_and_rw_bits (1, hw_execute);
+  CORE_ADDR addr = bp_tgt->placed_address;
   int retval = i386_insert_aligned_watchpoint (addr, len_rw) ? EBUSY : 0;
 
   if (maint_show_dr)
@@ -639,13 +640,14 @@ i386_insert_hw_breakpoint (CORE_ADDR addr, void *shadow)
   return retval;
 }
 
-/* Remove a hardware-assisted breakpoint at address ADDR.  SHADOW is
-   unused.  Return 0 on success, -1 on failure.  */
+/* Remove a hardware-assisted breakpoint at BP_TGT->placed_address.
+   Return 0 on success, -1 on failure.  */
 
 int
-i386_remove_hw_breakpoint (CORE_ADDR addr, void *shadow)
+i386_remove_hw_breakpoint (struct bp_target_info *bp_tgt)
 {
   unsigned len_rw = i386_length_and_rw_bits (1, hw_execute);
+  CORE_ADDR addr = bp_tgt->placed_address;
   int retval = i386_remove_aligned_watchpoint (addr, len_rw);
 
   if (maint_show_dr)

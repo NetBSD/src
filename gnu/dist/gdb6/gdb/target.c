@@ -1,7 +1,8 @@
 /* Select target systems and architectures at runtime for GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -19,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include <errno.h>
@@ -47,7 +48,7 @@ static void kill_or_be_killed (int);
 
 static void default_terminal_info (char *, int);
 
-static int default_region_size_ok_for_hw_watchpoint (int);
+static int default_region_ok_for_hw_watchpoint (CORE_ADDR, int);
 
 static int nosymbol (char *, CORE_ADDR *);
 
@@ -96,8 +97,6 @@ static void debug_to_attach (char *, int);
 
 static void debug_to_detach (char *, int);
 
-static void debug_to_disconnect (char *, int);
-
 static void debug_to_resume (ptid_t, int, enum target_signal);
 
 static ptid_t debug_to_wait (ptid_t, struct target_waitstatus *);
@@ -110,15 +109,15 @@ static void debug_to_prepare_to_store (void);
 
 static void debug_to_files_info (struct target_ops *);
 
-static int debug_to_insert_breakpoint (CORE_ADDR, gdb_byte *);
+static int debug_to_insert_breakpoint (struct bp_target_info *);
 
-static int debug_to_remove_breakpoint (CORE_ADDR, gdb_byte *);
+static int debug_to_remove_breakpoint (struct bp_target_info *);
 
 static int debug_to_can_use_hw_breakpoint (int, int, int);
 
-static int debug_to_insert_hw_breakpoint (CORE_ADDR, gdb_byte *);
+static int debug_to_insert_hw_breakpoint (struct bp_target_info *);
 
-static int debug_to_remove_hw_breakpoint (CORE_ADDR, gdb_byte *);
+static int debug_to_remove_hw_breakpoint (struct bp_target_info *);
 
 static int debug_to_insert_watchpoint (CORE_ADDR, int, int);
 
@@ -128,7 +127,7 @@ static int debug_to_stopped_by_watchpoint (void);
 
 static int debug_to_stopped_data_address (struct target_ops *, CORE_ADDR *);
 
-static int debug_to_region_size_ok_for_hw_watchpoint (int);
+static int debug_to_region_ok_for_hw_watchpoint (CORE_ADDR, int);
 
 static void debug_to_terminal_init (void);
 
@@ -387,7 +386,7 @@ update_current_target (void)
       INHERIT (to_attach, t);
       INHERIT (to_post_attach, t);
       INHERIT (to_detach, t);
-      INHERIT (to_disconnect, t);
+      /* Do not inherit to_disconnect.  */
       INHERIT (to_resume, t);
       INHERIT (to_wait, t);
       INHERIT (to_fetch_registers, t);
@@ -405,7 +404,7 @@ update_current_target (void)
       INHERIT (to_stopped_data_address, t);
       INHERIT (to_stopped_by_watchpoint, t);
       INHERIT (to_have_continuable_watchpoint, t);
-      INHERIT (to_region_size_ok_for_hw_watchpoint, t);
+      INHERIT (to_region_ok_for_hw_watchpoint, t);
       INHERIT (to_terminal_init, t);
       INHERIT (to_terminal_inferior, t);
       INHERIT (to_terminal_ours_for_output, t);
@@ -482,9 +481,6 @@ update_current_target (void)
   de_fault (to_detach, 
 	    (void (*) (char *, int)) 
 	    target_ignore);
-  de_fault (to_disconnect, 
-	    (void (*) (char *, int)) 
-	    tcomplain);
   de_fault (to_resume, 
 	    (void (*) (ptid_t, int, enum target_signal)) 
 	    noprocess);
@@ -514,10 +510,10 @@ update_current_target (void)
 	    (int (*) (int, int, int))
 	    return_zero);
   de_fault (to_insert_hw_breakpoint,
-	    (int (*) (CORE_ADDR, gdb_byte *))
+	    (int (*) (struct bp_target_info *))
 	    return_minus_one);
   de_fault (to_remove_hw_breakpoint,
-	    (int (*) (CORE_ADDR, gdb_byte *))
+	    (int (*) (struct bp_target_info *))
 	    return_minus_one);
   de_fault (to_insert_watchpoint,
 	    (int (*) (CORE_ADDR, int, int))
@@ -531,8 +527,8 @@ update_current_target (void)
   de_fault (to_stopped_data_address,
 	    (int (*) (struct target_ops *, CORE_ADDR *))
 	    return_zero);
-  de_fault (to_region_size_ok_for_hw_watchpoint,
-	    default_region_size_ok_for_hw_watchpoint);
+  de_fault (to_region_ok_for_hw_watchpoint,
+	    default_region_ok_for_hw_watchpoint);
   de_fault (to_terminal_init, 
 	    (void (*) (void)) 
 	    target_ignore);
@@ -674,7 +670,7 @@ push_target (struct target_ops *t)
     }
 
   /* If there's already targets at this stratum, remove them.  */
-  /* FIXME: cagney/2003-10-15: I think this should be poping all
+  /* FIXME: cagney/2003-10-15: I think this should be popping all
      targets to CUR, and not just those at this stratum level.  */
   while ((*cur) != NULL && t->to_stratum == (*cur)->to_stratum)
     {
@@ -1175,10 +1171,11 @@ target_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len, int write)
 
 /* Perform a partial memory transfer.
 
-   Result is -1 on error, or the number of bytes transfered.  */
+   If we succeed, set *ERR to zero and return the number of bytes transferred.
+   If we fail, set *ERR to a non-zero errno value, and return -1.  */
 
 static int
-target_xfer_memory_partial (CORE_ADDR memaddr, char *myaddr, int len,
+target_xfer_memory_partial (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
 			    int write_p, int *err)
 {
   int res;
@@ -1239,7 +1236,8 @@ target_xfer_memory_partial (CORE_ADDR memaddr, char *myaddr, int len,
 }
 
 int
-target_read_memory_partial (CORE_ADDR memaddr, char *buf, int len, int *err)
+target_read_memory_partial (CORE_ADDR memaddr, gdb_byte *buf,
+			    int len, int *err)
 {
   if (target_xfer_partial_p ())
     {
@@ -1267,7 +1265,8 @@ target_read_memory_partial (CORE_ADDR memaddr, char *buf, int len, int *err)
 }
 
 int
-target_write_memory_partial (CORE_ADDR memaddr, char *buf, int len, int *err)
+target_write_memory_partial (CORE_ADDR memaddr, gdb_byte *buf,
+			     int len, int *err)
 {
   if (target_xfer_partial_p ())
     {
@@ -1420,7 +1419,7 @@ ULONGEST
 get_target_memory_unsigned (struct target_ops *ops,
 			    CORE_ADDR addr, int len)
 {
-  char buf[sizeof (ULONGEST)];
+  gdb_byte buf[sizeof (ULONGEST)];
 
   gdb_assert (len <= sizeof (buf));
   get_target_memory (ops, addr, buf, len);
@@ -1486,7 +1485,19 @@ target_detach (char *args, int from_tty)
 void
 target_disconnect (char *args, int from_tty)
 {
-  (current_target.to_disconnect) (args, from_tty);
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_disconnect != NULL)
+	{
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog, "target_disconnect (%s, %d)\n",
+				args, from_tty);
+	  t->to_disconnect (t, args, from_tty);
+	  return;
+	}
+
+  tcomplain ();
 }
 
 int
@@ -1575,9 +1586,9 @@ find_default_create_inferior (char *exec_file, char *allargs, char **env,
 }
 
 static int
-default_region_size_ok_for_hw_watchpoint (int byte_count)
+default_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
-  return (byte_count <= TYPE_LENGTH (builtin_type_void_data_ptr));
+  return (len <= TYPE_LENGTH (builtin_type_void_data_ptr));
 }
 
 static int
@@ -1903,15 +1914,6 @@ debug_to_detach (char *args, int from_tty)
 }
 
 static void
-debug_to_disconnect (char *args, int from_tty)
-{
-  debug_target.to_disconnect (args, from_tty);
-
-  fprintf_unfiltered (gdb_stdlog, "target_disconnect (%s, %d)\n",
-		      args, from_tty);
-}
-
-static void
 debug_to_resume (ptid_t ptid, int step, enum target_signal siggnal)
 {
   debug_target.to_resume (ptid, step, siggnal);
@@ -2071,29 +2073,29 @@ debug_to_files_info (struct target_ops *target)
 }
 
 static int
-debug_to_insert_breakpoint (CORE_ADDR addr, gdb_byte *save)
+debug_to_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
   int retval;
 
-  retval = debug_target.to_insert_breakpoint (addr, save);
+  retval = debug_target.to_insert_breakpoint (bp_tgt);
 
   fprintf_unfiltered (gdb_stdlog,
 		      "target_insert_breakpoint (0x%lx, xxx) = %ld\n",
-		      (unsigned long) addr,
+		      (unsigned long) bp_tgt->placed_address,
 		      (unsigned long) retval);
   return retval;
 }
 
 static int
-debug_to_remove_breakpoint (CORE_ADDR addr, gdb_byte *save)
+debug_to_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
   int retval;
 
-  retval = debug_target.to_remove_breakpoint (addr, save);
+  retval = debug_target.to_remove_breakpoint (bp_tgt);
 
   fprintf_unfiltered (gdb_stdlog,
 		      "target_remove_breakpoint (0x%lx, xxx) = %ld\n",
-		      (unsigned long) addr,
+		      (unsigned long) bp_tgt->placed_address,
 		      (unsigned long) retval);
   return retval;
 }
@@ -2115,15 +2117,16 @@ debug_to_can_use_hw_breakpoint (int type, int cnt, int from_tty)
 }
 
 static int
-debug_to_region_size_ok_for_hw_watchpoint (int byte_count)
+debug_to_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
   CORE_ADDR retval;
 
-  retval = debug_target.to_region_size_ok_for_hw_watchpoint (byte_count);
+  retval = debug_target.to_region_ok_for_hw_watchpoint (addr, len);
 
   fprintf_unfiltered (gdb_stdlog,
-		      "TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT (%ld) = 0x%lx\n",
-		      (unsigned long) byte_count,
+		      "TARGET_REGION_OK_FOR_HW_WATCHPOINT (%ld, %ld) = 0x%lx\n",
+		      (unsigned long) addr,
+		      (unsigned long) len,
 		      (unsigned long) retval);
   return retval;
 }
@@ -2156,29 +2159,29 @@ debug_to_stopped_data_address (struct target_ops *target, CORE_ADDR *addr)
 }
 
 static int
-debug_to_insert_hw_breakpoint (CORE_ADDR addr, gdb_byte *save)
+debug_to_insert_hw_breakpoint (struct bp_target_info *bp_tgt)
 {
   int retval;
 
-  retval = debug_target.to_insert_hw_breakpoint (addr, save);
+  retval = debug_target.to_insert_hw_breakpoint (bp_tgt);
 
   fprintf_unfiltered (gdb_stdlog,
 		      "target_insert_hw_breakpoint (0x%lx, xxx) = %ld\n",
-		      (unsigned long) addr,
+		      (unsigned long) bp_tgt->placed_address,
 		      (unsigned long) retval);
   return retval;
 }
 
 static int
-debug_to_remove_hw_breakpoint (CORE_ADDR addr, gdb_byte *save)
+debug_to_remove_hw_breakpoint (struct bp_target_info *bp_tgt)
 {
   int retval;
 
-  retval = debug_target.to_remove_hw_breakpoint (addr, save);
+  retval = debug_target.to_remove_hw_breakpoint (bp_tgt);
 
   fprintf_unfiltered (gdb_stdlog,
 		      "target_remove_hw_breakpoint (0x%lx, xxx) = %ld\n",
-		      (unsigned long) addr,
+		      (unsigned long) bp_tgt->placed_address,
 		      (unsigned long) retval);
   return retval;
 }
@@ -2516,7 +2519,6 @@ setup_target_debug (void)
   current_target.to_attach = debug_to_attach;
   current_target.to_post_attach = debug_to_post_attach;
   current_target.to_detach = debug_to_detach;
-  current_target.to_disconnect = debug_to_disconnect;
   current_target.to_resume = debug_to_resume;
   current_target.to_wait = debug_to_wait;
   current_target.to_fetch_registers = debug_to_fetch_registers;
@@ -2533,7 +2535,7 @@ setup_target_debug (void)
   current_target.to_remove_watchpoint = debug_to_remove_watchpoint;
   current_target.to_stopped_by_watchpoint = debug_to_stopped_by_watchpoint;
   current_target.to_stopped_data_address = debug_to_stopped_data_address;
-  current_target.to_region_size_ok_for_hw_watchpoint = debug_to_region_size_ok_for_hw_watchpoint;
+  current_target.to_region_ok_for_hw_watchpoint = debug_to_region_ok_for_hw_watchpoint;
   current_target.to_terminal_init = debug_to_terminal_init;
   current_target.to_terminal_inferior = debug_to_terminal_inferior;
   current_target.to_terminal_ours_for_output = debug_to_terminal_ours_for_output;
@@ -2564,7 +2566,6 @@ setup_target_debug (void)
   current_target.to_enable_exception_callback = debug_to_enable_exception_callback;
   current_target.to_get_current_exception_event = debug_to_get_current_exception_event;
   current_target.to_pid_to_exec_file = debug_to_pid_to_exec_file;
-
 }
 
 

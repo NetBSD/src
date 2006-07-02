@@ -8,8 +8,8 @@
 
 @ifinfo
 This file documents the internals of the GNU debugger @value{GDBN}.
-Copyright 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005
+Copyright (C) 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001,
+   2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 Contributed by Cygnus Solutions.  Written by John Gilmore.
 Second Edition by Stan Shebs.
@@ -39,7 +39,7 @@ Free Documentation License''.
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.1.1.1 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.1.1.2 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Solutions\par
 \hfill \manvers\par
@@ -49,7 +49,7 @@ Free Documentation License''.
 
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1990,1991,1992,1993,1994,1996,1998,1999,2000,2001,
-   2002, 2003, 2004, 2005  Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006  Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1 or
@@ -86,6 +86,7 @@ as the mechanisms that adapt @value{GDBN} to specific hosts and targets.
 * Coding::
 * Porting GDB::
 * Versions and Branches::
+* Start of New Year Procedure::
 * Releasing GDB::
 * Testsuite::
 * Hints::
@@ -230,31 +231,200 @@ they use.
 A frame is a construct that @value{GDBN} uses to keep track of calling
 and called functions.
 
-@findex create_new_frame
-@vindex FRAME_FP
-@code{FRAME_FP} in the machine description has no meaning to the
-machine-independent part of @value{GDBN}, except that it is used when
-setting up a new frame from scratch, as follows:
+@cindex frame, unwind
+@value{GDBN}'s frame model, a fresh design, was implemented with the
+need to support @sc{dwarf}'s Call Frame Information in mind.  In fact,
+the term ``unwind'' is taken directly from that specification.
+Developers wishing to learn more about unwinders, are encouraged to
+read the the @sc{dwarf} specification.
 
-@smallexample
-create_new_frame (read_register (DEPRECATED_FP_REGNUM), read_pc ()));
-@end smallexample
+@findex frame_register_unwind
+@findex get_frame_register
+@value{GDBN}'s model is that you find a frame's registers by
+``unwinding'' them from the next younger frame.  That is,
+@samp{get_frame_register} which returns the value of a register in
+frame #1 (the next-to-youngest frame), is implemented by calling frame
+#0's @code{frame_register_unwind} (the youngest frame).  But then the
+obvious question is: how do you access the registers of the youngest
+frame itself?
 
-@cindex frame pointer register
-Other than that, all the meaning imparted to @code{DEPRECATED_FP_REGNUM}
-is imparted by the machine-dependent code.  So,
-@code{DEPRECATED_FP_REGNUM} can have any value that is convenient for
-the code that creates new frames.  (@code{create_new_frame} calls
-@code{DEPRECATED_INIT_EXTRA_FRAME_INFO} if it is defined; that is where
-you should use the @code{DEPRECATED_FP_REGNUM} value, if your frames are
-nonstandard.)
+@cindex sentinel frame
+@findex get_frame_type
+@vindex SENTINEL_FRAME
+To answer this question, GDB has the @dfn{sentinel} frame, the
+``-1st'' frame.  Unwinding registers from the sentinel frame gives you
+the current values of the youngest real frame's registers.  If @var{f}
+is a sentinel frame, then @code{get_frame_type (@var{f}) ==
+SENTINEL_FRAME}.
 
-@cindex frame chain
-Given a @value{GDBN} frame, define @code{DEPRECATED_FRAME_CHAIN} to
-determine the address of the calling function's frame.  This will be
-used to create a new @value{GDBN} frame struct, and then
-@code{DEPRECATED_INIT_EXTRA_FRAME_INFO} and
-@code{DEPRECATED_INIT_FRAME_PC} will be called for the new frame.
+@section Prologue Analysis
+
+@cindex prologue analysis
+@cindex call frame information
+@cindex CFI (call frame information)
+To produce a backtrace and allow the user to manipulate older frames'
+variables and arguments, @value{GDBN} needs to find the base addresses
+of older frames, and discover where those frames' registers have been
+saved.  Since a frame's ``callee-saves'' registers get saved by
+younger frames if and when they're reused, a frame's registers may be
+scattered unpredictably across younger frames.  This means that
+changing the value of a register-allocated variable in an older frame
+may actually entail writing to a save slot in some younger frame.
+
+Modern versions of GCC emit Dwarf call frame information (``CFI''),
+which describes how to find frame base addresses and saved registers.
+But CFI is not always available, so as a fallback @value{GDBN} uses a
+technique called @dfn{prologue analysis} to find frame sizes and saved
+registers.  A prologue analyzer disassembles the function's machine
+code starting from its entry point, and looks for instructions that
+allocate frame space, save the stack pointer in a frame pointer
+register, save registers, and so on.  Obviously, this can't be done
+accurately in general, but it's tractible to do well enough to be very
+helpful.  Prologue analysis predates the GNU toolchain's support for
+CFI; at one time, prologue analysis was the only mechanism
+@value{GDBN} used for stack unwinding at all, when the function
+calling conventions didn't specify a fixed frame layout.
+
+In the olden days, function prologues were generated by hand-written,
+target-specific code in GCC, and treated as opaque and untouchable by
+optimizers.  Looking at this code, it was usually straightforward to
+write a prologue analyzer for @value{GDBN} that would accurately
+understand all the prologues GCC would generate.  However, over time
+GCC became more aggressive about instruction scheduling, and began to
+understand more about the semantics of the prologue instructions
+themselves; in response, @value{GDBN}'s analyzers became more complex
+and fragile.  Keeping the prologue analyzers working as GCC (and the
+instruction sets themselves) evolved became a substantial task.
+
+@cindex @file{prologue-value.c}
+@cindex abstract interpretation of function prologues
+@cindex pseudo-evaluation of function prologues
+To try to address this problem, the code in @file{prologue-value.h}
+and @file{prologue-value.c} provides a general framework for writing
+prologue analyzers that are simpler and more robust than ad-hoc
+analyzers.  When we analyze a prologue using the prologue-value
+framework, we're really doing ``abstract interpretation'' or
+``pseudo-evaluation'': running the function's code in simulation, but
+using conservative approximations of the values registers and memory
+would hold when the code actually runs.  For example, if our function
+starts with the instruction:
+
+@example
+addi r1, 42     # add 42 to r1
+@end example
+@noindent
+we don't know exactly what value will be in @code{r1} after executing
+this instruction, but we do know it'll be 42 greater than its original
+value.
+
+If we then see an instruction like:
+
+@example
+addi r1, 22     # add 22 to r1
+@end example
+@noindent
+we still don't know what @code{r1's} value is, but again, we can say
+it is now 64 greater than its original value.
+
+If the next instruction were:
+
+@example
+mov r2, r1      # set r2 to r1's value
+@end example
+@noindent
+then we can say that @code{r2's} value is now the original value of
+@code{r1} plus 64.
+
+It's common for prologues to save registers on the stack, so we'll
+need to track the values of stack frame slots, as well as the
+registers.  So after an instruction like this:
+
+@example
+mov (fp+4), r2
+@end example
+@noindent
+then we'd know that the stack slot four bytes above the frame pointer
+holds the original value of @code{r1} plus 64.
+
+And so on.
+
+Of course, this can only go so far before it gets unreasonable.  If we
+wanted to be able to say anything about the value of @code{r1} after
+the instruction:
+
+@example
+xor r1, r3      # exclusive-or r1 and r3, place result in r1
+@end example
+@noindent
+then things would get pretty complex.  But remember, we're just doing
+a conservative approximation; if exclusive-or instructions aren't
+relevant to prologues, we can just say @code{r1}'s value is now
+``unknown''.  We can ignore things that are too complex, if that loss of
+information is acceptable for our application.
+
+So when we say ``conservative approximation'' here, what we mean is an
+approximation that is either accurate, or marked ``unknown'', but
+never inaccurate.
+
+Using this framework, a prologue analyzer is simply an interpreter for
+machine code, but one that uses conservative approximations for the
+contents of registers and memory instead of actual values.  Starting
+from the function's entry point, you simulate instructions up to the
+current PC, or an instruction that you don't know how to simulate.
+Now you can examine the state of the registers and stack slots you've
+kept track of.
+
+@itemize @bullet
+
+@item
+To see how large your stack frame is, just check the value of the
+stack pointer register; if it's the original value of the SP
+minus a constant, then that constant is the stack frame's size.
+If the SP's value has been marked as ``unknown'', then that means
+the prologue has done something too complex for us to track, and
+we don't know the frame size.
+
+@item
+To see where we've saved the previous frame's registers, we just
+search the values we've tracked --- stack slots, usually, but
+registers, too, if you want --- for something equal to the register's
+original value.  If the calling conventions suggest a standard place
+to save a given register, then we can check there first, but really,
+anything that will get us back the original value will probably work.
+@end itemize
+
+This does take some work.  But prologue analyzers aren't
+quick-and-simple pattern patching to recognize a few fixed prologue
+forms any more; they're big, hairy functions.  Along with inferior
+function calls, prologue analysis accounts for a substantial portion
+of the time needed to stabilize a @value{GDBN} port.  So it's
+worthwhile to look for an approach that will be easier to understand
+and maintain.  In the approach described above:
+
+@itemize @bullet
+
+@item
+It's easier to see that the analyzer is correct: you just see
+whether the analyzer properly (albiet conservatively) simulates
+the effect of each instruction.
+
+@item
+It's easier to extend the analyzer: you can add support for new
+instructions, and know that you haven't broken anything that
+wasn't already broken before.
+
+@item
+It's orthogonal: to gather new information, you don't need to
+complicate the code for each instruction.  As long as your domain
+of conservative values is already detailed enough to tell you
+what you need, then all the existing instruction simulations are
+already gathering the right data for you.
+
+@end itemize
+
+The file @file{prologue-value.h} contains detailed comments explaining
+the framework and how to use it.
+
 
 @section Breakpoint Handling
 
@@ -326,6 +496,47 @@ The basic definition of the software breakpoint is the macro
 
 Basic breakpoint object handling is in @file{breakpoint.c}.  However,
 much of the interesting breakpoint action is in @file{infrun.c}.
+
+@table @code
+@cindex insert or remove software breakpoint
+@findex target_remove_breakpoint
+@findex target_insert_breakpoint
+@item target_remove_breakpoint (@var{bp_tgt})
+@itemx target_insert_breakpoint (@var{bp_tgt})
+Insert or remove a software breakpoint at address
+@code{@var{bp_tgt}->placed_address}.  Returns zero for success,
+non-zero for failure.  On input, @var{bp_tgt} contains the address of the
+breakpoint, and is otherwise initialized to zero.  The fields of the
+@code{struct bp_target_info} pointed to by @var{bp_tgt} are updated
+to contain other information about the breakpoint on output.  The field
+@code{placed_address} may be updated if the breakpoint was placed at a
+related address; the field @code{shadow_contents} contains the real
+contents of the bytes where the breakpoint has been inserted,
+if reading memory would return the breakpoint instead of the
+underlying memory; the field @code{shadow_len} is the length of
+memory cached in @code{shadow_contents}, if any; and the field
+@code{placed_size} is optionally set and used by the target, if
+it could differ from @code{shadow_len}.
+
+For example, the remote target @samp{Z0} packet does not require
+shadowing memory, so @code{shadow_len} is left at zero.  However,
+the length reported by @code{BREAKPOINT_FROM_PC} is cached in
+@code{placed_size}, so that a matching @samp{z0} packet can be
+used to remove the breakpoint.
+
+@cindex insert or remove hardware breakpoint
+@findex target_remove_hw_breakpoint
+@findex target_insert_hw_breakpoint
+@item target_remove_hw_breakpoint (@var{bp_tgt})
+@itemx target_insert_hw_breakpoint (@var{bp_tgt})
+Insert or remove a hardware-assisted breakpoint at address
+@code{@var{bp_tgt}->placed_address}.  Returns zero for success,
+non-zero for failure.  See @code{target_insert_breakpoint} for
+a description of the @code{struct bp_target_info} pointed to by
+@var{bp_tgt}; the @code{shadow_contents} and
+@code{shadow_len} members are not used for hardware breakpoints,
+but @code{placed_size} may be.
+@end table
 
 @section Single Stepping
 
@@ -434,13 +645,6 @@ the same time).
 Return non-zero if hardware watchpoints can be used to watch a region
 whose address is @var{addr} and whose length in bytes is @var{len}.
 
-@findex TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT
-@item TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT (@var{size})
-Return non-zero if hardware watchpoints can be used to watch a region
-whose size is @var{size}.  @value{GDBN} only uses this macro as a
-fall-back, in case @code{TARGET_REGION_OK_FOR_HW_WATCHPOINT} is not
-defined.
-
 @cindex insert or remove hardware watchpoint
 @findex target_insert_watchpoint
 @findex target_remove_watchpoint
@@ -463,18 +667,6 @@ defined by @file{breakpoint.h} as follows:
 
 @noindent
 These two macros should return 0 for success, non-zero for failure.
-
-@cindex insert or remove hardware breakpoint
-@findex target_remove_hw_breakpoint
-@findex target_insert_hw_breakpoint
-@item target_remove_hw_breakpoint (@var{addr}, @var{shadow})
-@itemx target_insert_hw_breakpoint (@var{addr}, @var{shadow})
-Insert or remove a hardware-assisted breakpoint at address @var{addr}.
-Returns zero for success, non-zero for failure.  @var{shadow} is the
-real contents of the byte where the breakpoint has been inserted; it
-is generally not valid when hardware breakpoints are used, but since
-no other code touches these values, the implementations of the above
-two macros can use them for their internal purposes.
 
 @findex target_stopped_data_address
 @item target_stopped_data_address (@var{addr_p})
@@ -665,11 +857,13 @@ the count goes to zero.
 
 @findex i386_insert_hw_breakpoint
 @findex i386_remove_hw_breakpoint
-@item i386_insert_hw_breakpoint (@var{addr}, @var{shadow}
-@itemx i386_remove_hw_breakpoint (@var{addr}, @var{shadow})
+@item i386_insert_hw_breakpoint (@var{bp_tgt})
+@itemx i386_remove_hw_breakpoint (@var{bp_tgt})
 These functions insert and remove hardware-assisted breakpoints.  The
 macros @code{target_insert_hw_breakpoint} and
 @code{target_remove_hw_breakpoint} are set to call these functions.
+The argument is a @code{struct bp_target_info *}, as described in
+the documentation for @code{target_insert_breakpoint}.
 These functions work like @code{i386_insert_watchpoint} and
 @code{i386_remove_watchpoint}, respectively, except that they set up
 the debug registers to watch instruction execution, and each
@@ -710,6 +904,38 @@ always sets watchpoints to be locally enabled, since global
 watchpoints might interfere with the underlying OS and are probably
 unavailable in many platforms.
 @end enumerate
+
+@section Checkpoints
+@cindex checkpoints
+@cindex restart
+In the abstract, a checkpoint is a point in the execution history of
+the program, which the user may wish to return to at some later time.
+
+Internally, a checkpoint is a saved copy of the program state, including
+whatever information is required in order to restore the program to that
+state at a later time.  This can be expected to include the state of 
+registers and memory, and may include external state such as the state
+of open files and devices.
+
+There are a number of ways in which checkpoints may be implemented
+in gdb, eg. as corefiles, as forked processes, and as some opaque
+method implemented on the target side.
+
+A corefile can be used to save an image of target memory and register
+state, which can in principle be restored later --- but corefiles do
+not typically include information about external entities such as 
+open files.  Currently this method is not implemented in gdb.
+
+A forked process can save the state of user memory and registers, 
+as well as some subset of external (kernel) state.  This method 
+is used to implement checkpoints on Linux, and in principle might
+be used on other systems.
+
+Some targets, eg.@: simulators, might have their own built-in 
+method for saving checkpoints, and gdb might be able to take
+advantage of that capability without necessarily knowing any
+details of how it is done.
+
 
 @section Observing changes in @value{GDBN} internals
 @cindex observer pattern interface
@@ -1457,7 +1683,7 @@ As a client querying @code{libgdb} (using the @file{ui-out} builder) to
 obtain various status values from @value{GDBN}.
 @end itemize
 
-Since @code{libgdb} could have multiple clients (e.g. a GUI supporting
+Since @code{libgdb} could have multiple clients (e.g., a GUI supporting
 the existing @value{GDBN} CLI), those clients must co-operate when
 controlling @code{libgdb}.  In particular, a client must ensure that
 @code{libgdb} is idle (i.e. no other client is using @code{libgdb})
@@ -1605,7 +1831,7 @@ symbol-file into a set of psymtabs or symtabs.
 @code{@var{xyz}_sym_init} for possible initialization.  @code{addr} is
 the offset between the file's specified start address and its true
 address in memory.  @code{mainline} is 1 if this is the main symbol
-table being read, and 0 if a secondary symbol file (e.g. shared library
+table being read, and 0 if a secondary symbol file (e.g., shared library
 or dynamically loaded file) is being read.@refill
 @end table
 
@@ -1679,7 +1905,7 @@ code in the debugger) to reference a symbol:
 @findex find_pc_function
 @findex find_pc_line
 @item
-By its address (e.g. execution stops at some address which is inside a
+By its address (e.g., execution stops at some address which is inside a
 function in this file).  The address will be noticed to be in the
 range of this psymtab, and the full symtab will be read in.
 @code{find_pc_function}, @code{find_pc_line}, and other
@@ -1688,7 +1914,7 @@ range of this psymtab, and the full symtab will be read in.
 @cindex lookup_symbol
 @item
 By its name
-(e.g. the user asks to print a variable, or set a breakpoint on a
+(e.g., the user asks to print a variable, or set a breakpoint on a
 function).  Global names and file-scope names will be found in the
 psymtab, which will cause the symtab to be pulled in.  Local names will
 have to be qualified by a global name, or a file-scope name, in which
@@ -1921,6 +2147,22 @@ platforms have different sizes and layouts.  Specialized routines that
 will only ever be implemented by one object file format may be called
 directly.  This interface should be described in a file
 @file{bfd/lib@var{xyz}.h}, which is included by @value{GDBN}.
+
+@section Memory Management for Symbol Files
+
+Most memory associated with a loaded symbol file is stored on
+its @code{objfile_obstack}.  This includes symbols, types,
+namespace data, and other information produced by the symbol readers.
+
+Because this data lives on the objfile's obstack, it is automatically
+released when the objfile is unloaded or reloaded.  Therefore one
+objfile must not reference symbol or type data from another objfile;
+they could be unloaded at different times.
+
+User convenience variables, et cetera, have associated types.  Normally
+these types live in the associated objfile.  However, when the objfile
+is unloaded, those types are deep copied to global memory, so that
+the values of the user variables and history items are not lost.
 
 
 @node Language Support
@@ -2988,8 +3230,8 @@ instruction of the architecture.
 
 Replaces all the other @var{BREAKPOINT} macros.
 
-@item MEMORY_INSERT_BREAKPOINT (@var{addr}, @var{contents_cache})
-@itemx MEMORY_REMOVE_BREAKPOINT (@var{addr}, @var{contents_cache})
+@item MEMORY_INSERT_BREAKPOINT (@var{bp_tgt})
+@itemx MEMORY_REMOVE_BREAKPOINT (@var{bp_tgt})
 @findex MEMORY_REMOVE_BREAKPOINT
 @findex MEMORY_INSERT_BREAKPOINT
 Insert or remove memory based breakpoints.  Reasonable defaults
@@ -4321,12 +4563,12 @@ code for parsing your OS's core files, or customize
 machine uses to define the struct of registers that is accessible
 (possibly in the u-area) in a core file (rather than
 @file{machine/reg.h}), and an include file that defines whatever header
-exists on a core file (e.g. the u-area or a @code{struct core}).  Then
+exists on a core file (e.g., the u-area or a @code{struct core}).  Then
 modify @code{trad_unix_core_file_p} to use these values to set up the
 section information for the data segment, stack segment, any other
 segments in the core file (perhaps shared library contents or control
 information), ``registers'' segment, and if there are two discontiguous
-sets of registers (e.g.  integer and float), the ``reg2'' segment.  This
+sets of registers (e.g., integer and float), the ``reg2'' segment.  This
 section information basically delimits areas in the core file in a
 standard way, which the section-reading routines in BFD know how to seek
 around in.
@@ -4727,7 +4969,7 @@ discard_cleanups (old);
 return file;
 @end smallexample
 
-Some functions, e.g. @code{fputs_filtered()} or @code{error()}, specify
+Some functions, e.g., @code{fputs_filtered()} or @code{error()}, specify
 that they ``should not be called when cleanups are not in place''.  This
 means that any actions you need to reverse in the case of an error or
 interruption must be on the cleanup chain before you call these
@@ -4983,6 +5225,15 @@ switch (sched)
 @end smallexample
 
 @item -Wunused-function
+
+@item -Wno-pointer-sign
+In version 4.0, GCC began warning about pointer argument passing or
+assignment even when the source and destination differed only in
+signedness.  However, most @value{GDBN} code doesn't distinguish
+carefully between @code{char} and @code{unsigned char}.  In early 2006
+the @value{GDBN} developers decided correcting these warnings wasn't
+worth the time it would take.
+
 @end table
 
 @emph{Pragmatics: Due to the way that @value{GDBN} is implemented most
@@ -5598,6 +5849,38 @@ merge.
 For further information on @sc{cvs}, see
 @uref{http://www.gnu.org/software/cvs/, Concurrent Versions System}.
  
+@node Start of New Year Procedure
+@chapter Start of New Year Procedure
+@cindex new year procedure
+
+At the start of each new year, the following actions should be performed:
+
+@itemize @bullet
+@item
+Rotate the ChangeLog file
+
+The current @file{ChangeLog} file should be renamed into
+@file{ChangeLog-YYYY} where YYYY is the year that has just passed.
+A new @file{ChangeLog} file should be created, and its contents should
+contain a reference to the previous ChangeLog.  The following should
+also be preserved at the end of the new ChangeLog, in order to provide
+the appropriate settings when editing this file with Emacs:
+@smallexample
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:
+@end smallexample
+
+@item
+Update the copyright year in the startup message
+
+Update the copyright year in file @file{top.c}, function
+@code{print_gdb_version}.
+@end itemize
+
 @node Releasing GDB
 
 @chapter Releasing @value{GDBN}
@@ -6369,6 +6652,13 @@ finished, you'll get a summary that looks like this:
 # of unresolved testcases       3
 # of untested testcases         5
 @end smallexample
+
+To run a specific test script, type:
+@example
+make check RUNTESTFLAGS='@var{tests}'
+@end example
+where @var{tests} is a list of test script file names, separated by
+spaces.
 
 The ideal test run consists of expected passes only; however, reality
 conspires to keep us from this ideal.  Unexpected failures indicate

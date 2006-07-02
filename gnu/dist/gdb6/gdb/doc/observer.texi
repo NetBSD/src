@@ -1,4 +1,19 @@
 @c -*-texinfo-*-
+
+@c This file is part of the GDB manual.
+@c
+@c Copyright (C) 2003, 2004, 2005, 2006
+@c               Free Software Foundation, Inc.
+@c
+@c See the file gdbint.texinfo for copying conditions.
+@c
+@c Also, the @deftypefun lines from this file are processed into a
+@c header file during the GDB build process.  Permission is granted
+@c to redistribute and/or modify those lines under the terms of the
+@c GNU General Public License as published by the Free Software
+@c Foundation; either version 2 of the License, or (at your option)
+@c any later version.
+
 @node GDB Observers
 @appendix @value{GDBN} Currently available observers
 
@@ -47,7 +62,7 @@ internal happenings, gdb, Debugging with @var{GDBN}}).
 @value{GDBN} notifies all @code{normal_stop} observers when the
 inferior execution has just stopped, the associated messages and
 annotations have been printed, and the control is about to be returned
-to the user. 
+to the user.
 
 Note that the @code{normal_stop} notification is not emitted when
 the execution stops due to a breakpoint, and this breakpoint has

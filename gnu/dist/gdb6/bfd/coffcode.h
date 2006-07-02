@@ -1,6 +1,6 @@
 /* Support for the generic parts of most COFF variants, for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -1560,6 +1560,10 @@ coff_new_section_hook (bfd * abfd, asection * section)
     section->alignment_power = bfd_xcoff_data_align_power (abfd);
 #endif
 
+  /* Set up the section symbol.  */
+  if (!_bfd_generic_new_section_hook (abfd, section))
+    return FALSE;
+
   /* Allocate aux records for section symbols, to store size and
      related info.
 
@@ -2528,11 +2532,15 @@ coff_write_relocs (bfd * abfd, int first_undef)
 		else
 		  {
 		    n.r_symndx = get_index ((*(q->sym_ptr_ptr)));
-		    /* Take notice if the symbol reloc points to a symbol
-		       we don't have in our symbol table.  What should we
-		       do for this??  */
+		    /* Check to see if the symbol reloc points to a symbol
+		       we don't have in our symbol table.  */
 		    if (n.r_symndx > obj_conv_table_size (abfd))
-		      abort ();
+		      {
+			bfd_set_error (bfd_error_bad_value);
+			_bfd_error_handler (_("%B: reloc against a non-existant symbol index: %ld"),
+					    abfd, n.r_symndx);
+			return FALSE;
+		      }
 		  }
 	      }
 

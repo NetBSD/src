@@ -1,6 +1,7 @@
 /* Support for printing Pascal values for GDB, the GNU debugger.
 
-   Copyright 2000, 2001, 2003, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001, 2003, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file is derived from c-valprint.c */
 
@@ -356,6 +358,13 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 	{
 	  print_longest (stream, 'd', 0, val);
 	}
+      break;
+
+    case TYPE_CODE_FLAGS:
+      if (format)
+	  print_scalar_formatted (valaddr + embedded_offset, type, format, 0, stream);
+      else
+	val_print_type_code_flags (type, valaddr + embedded_offset, stream);
       break;
 
     case TYPE_CODE_FUNC:

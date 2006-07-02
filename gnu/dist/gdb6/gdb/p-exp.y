@@ -1,5 +1,5 @@
 /* YACC parser for Pascal expressions, for GDB.
-   Copyright 2000
+   Copyright (C) 2000, 2006
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -16,7 +16,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 /* This file is derived from c-exp.y */
 
@@ -798,23 +799,8 @@ parse_number (p, len, parsed_float, putithere)
       char saved_char = p[len];
 
       p[len] = 0;	/* null-terminate the token */
-      if (sizeof (putithere->typed_val_float.dval) <= sizeof (float))
-	num = sscanf (p, "%g%c", (float *) &putithere->typed_val_float.dval,&c);
-      else if (sizeof (putithere->typed_val_float.dval) <= sizeof (double))
-	num = sscanf (p, "%lg%c", (double *) &putithere->typed_val_float.dval,&c);
-      else
-	{
-#ifdef SCANF_HAS_LONG_DOUBLE
-	  num = sscanf (p, "%Lg%c", &putithere->typed_val_float.dval,&c);
-#else
-	  /* Scan it into a double, then assign it to the long double.
-	     This at least wins with values representable in the range
-	     of doubles. */
-	  double temp;
-	  num = sscanf (p, "%lg%c", &temp,&c);
-	  putithere->typed_val_float.dval = temp;
-#endif
-	}
+      num = sscanf (p, DOUBLEST_SCAN_FORMAT "%c",
+		    &putithere->typed_val_float.dval, &c);
       p[len] = saved_char;	/* restore the input stream */
       if (num != 1) 		/* check scanf found ONLY a float ... */
 	return ERROR;

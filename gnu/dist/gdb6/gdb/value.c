@@ -1,8 +1,8 @@
 /* Low level packing and unpacking of values for GDB, the GNU Debugger.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2004, 2005 Free
-   Software Foundation, Inc.
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -653,29 +653,6 @@ access_value_history (int num)
   return value_copy (chunk->values[absnum % VALUE_HISTORY_CHUNK]);
 }
 
-/* Clear the value history entirely.
-   Must be done when new symbol tables are loaded,
-   because the type pointers become invalid.  */
-
-void
-clear_value_history (void)
-{
-  struct value_history_chunk *next;
-  int i;
-  struct value *val;
-
-  while (value_history_chain)
-    {
-      for (i = 0; i < VALUE_HISTORY_CHUNK; i++)
-	if ((val = value_history_chain->values[i]) != NULL)
-	  xfree (val);
-      next = value_history_chain->next;
-      xfree (value_history_chain);
-      value_history_chain = next;
-    }
-  value_history_count = 0;
-}
-
 static void
 show_values (char *num_exp, int from_tty)
 {
@@ -727,6 +704,39 @@ show_values (char *num_exp, int from_tty)
 
 static struct internalvar *internalvars;
 
+/* If the variable does not already exist create it and give it the value given.
+   If no value is given then the default is zero.  */
+static void
+init_if_undefined_command (char* args, int from_tty)
+{
+  struct internalvar* intvar;
+
+  /* Parse the expression - this is taken from set_command().  */
+  struct expression *expr = parse_expression (args);
+  register struct cleanup *old_chain =
+    make_cleanup (free_current_contents, &expr);
+
+  /* Validate the expression.
+     Was the expression an assignment?
+     Or even an expression at all?  */
+  if (expr->nelts == 0 || expr->elts[0].opcode != BINOP_ASSIGN)
+    error (_("Init-if-undefined requires an assignment expression."));
+
+  /* Extract the variable from the parsed expression.
+     In the case of an assign the lvalue will be in elts[1] and elts[2].  */
+  if (expr->elts[1].opcode != OP_INTERNALVAR)
+    error (_("The first parameter to init-if-undefined should be a GDB variable."));
+  intvar = expr->elts[2].internalvar;
+
+  /* Only evaluate the expression if the lvalue is void.
+     This may still fail if the expresssion is invalid.  */
+  if (TYPE_CODE (value_type (intvar->value)) == TYPE_CODE_VOID)
+    evaluate_expression (expr);
+
+  do_cleanups (old_chain);
+}
+
+
 /* Look up an internal variable with name NAME.  NAME should not
    normally include a dollar sign.
 
@@ -745,6 +755,7 @@ lookup_internalvar (char *name)
   var = (struct internalvar *) xmalloc (sizeof (struct internalvar));
   var->name = concat (name, (char *)NULL);
   var->value = allocate_value (builtin_type_void);
+  var->endian = TARGET_BYTE_ORDER;
   release_value (var->value);
   var->next = internalvars;
   internalvars = var;
@@ -755,12 +766,46 @@ struct value *
 value_of_internalvar (struct internalvar *var)
 {
   struct value *val;
+  int i, j;
+  gdb_byte temp;
 
   val = value_copy (var->value);
   if (value_lazy (val))
     value_fetch_lazy (val);
   VALUE_LVAL (val) = lval_internalvar;
   VALUE_INTERNALVAR (val) = var;
+
+  /* Values are always stored in the target's byte order.  When connected to a
+     target this will most likely always be correct, so there's normally no
+     need to worry about it.
+
+     However, internal variables can be set up before the target endian is
+     known and so may become out of date.  Fix it up before anybody sees.
+
+     Internal variables usually hold simple scalar values, and we can
+     correct those.  More complex values (e.g. structures and floating
+     point types) are left alone, because they would be too complicated
+     to correct.  */
+
+  if (var->endian != TARGET_BYTE_ORDER)
+    {
+      gdb_byte *array = value_contents_raw (val);
+      struct type *type = check_typedef (value_enclosing_type (val));
+      switch (TYPE_CODE (type))
+	{
+	case TYPE_CODE_INT:
+	case TYPE_CODE_PTR:
+	  /* Reverse the bytes.  */
+	  for (i = 0, j = TYPE_LENGTH (type) - 1; i < j; i++, j--)
+	    {
+	      temp = array[j];
+	      array[j] = array[i];
+	      array[i] = temp;
+	    }
+	  break;
+	}
+    }
+
   return val;
 }
 
@@ -799,6 +844,7 @@ set_internalvar (struct internalvar *var, struct value *val)
      long.  */
   xfree (var->value);
   var->value = newval;
+  var->endian = TARGET_BYTE_ORDER;
   release_value (newval);
   /* End code which must not call error().  */
 }
@@ -809,22 +855,49 @@ internalvar_name (struct internalvar *var)
   return var->name;
 }
 
-/* Free all internalvars.  Done when new symtabs are loaded,
-   because that makes the values invalid.  */
+/* Update VALUE before discarding OBJFILE.  COPIED_TYPES is used to
+   prevent cycles / duplicates.  */
+
+static void
+preserve_one_value (struct value *value, struct objfile *objfile,
+		    htab_t copied_types)
+{
+  if (TYPE_OBJFILE (value->type) == objfile)
+    value->type = copy_type_recursive (objfile, value->type, copied_types);
+
+  if (TYPE_OBJFILE (value->enclosing_type) == objfile)
+    value->enclosing_type = copy_type_recursive (objfile,
+						 value->enclosing_type,
+						 copied_types);
+}
+
+/* Update the internal variables and value history when OBJFILE is
+   discarded; we must copy the types out of the objfile.  New global types
+   will be created for every convenience variable which currently points to
+   this objfile's types, and the convenience variables will be adjusted to
+   use the new global types.  */
 
 void
-clear_internalvars (void)
+preserve_values (struct objfile *objfile)
 {
+  htab_t copied_types;
+  struct value_history_chunk *cur;
   struct internalvar *var;
+  int i;
 
-  while (internalvars)
-    {
-      var = internalvars;
-      internalvars = var->next;
-      xfree (var->name);
-      xfree (var->value);
-      xfree (var);
-    }
+  /* Create the hash table.  We allocate on the objfile's obstack, since
+     it is soon to be deleted.  */
+  copied_types = create_copied_types_hash (objfile);
+
+  for (cur = value_history_chain; cur; cur = cur->next)
+    for (i = 0; i < VALUE_HISTORY_CHUNK; i++)
+      if (cur->values[i])
+	preserve_one_value (cur->values[i], objfile, copied_types);
+
+  for (var = internalvars; var; var = var->next)
+    preserve_one_value (var->value, objfile, copied_types);
+
+  htab_delete (copied_types);
 }
 
 static void
@@ -840,7 +913,8 @@ show_convenience (char *ignore, int from_tty)
 	  varseen = 1;
 	}
       printf_filtered (("$%s = "), var->name);
-      value_print (var->value, gdb_stdout, 0, Val_pretty_default);
+      value_print (value_of_internalvar (var), gdb_stdout,
+		   0, Val_pretty_default);
       printf_filtered (("\n"));
     }
   if (!varseen)
@@ -1011,6 +1085,7 @@ unpack_long (struct type *type, const gdb_byte *valaddr)
     case TYPE_CODE_TYPEDEF:
       return unpack_long (check_typedef (type), valaddr);
     case TYPE_CODE_ENUM:
+    case TYPE_CODE_FLAGS:
     case TYPE_CODE_BOOL:
     case TYPE_CODE_INT:
     case TYPE_CODE_CHAR:
@@ -1459,6 +1534,7 @@ retry:
     case TYPE_CODE_INT:
     case TYPE_CODE_CHAR:
     case TYPE_CODE_ENUM:
+    case TYPE_CODE_FLAGS:
     case TYPE_CODE_BOOL:
     case TYPE_CODE_RANGE:
       store_signed_integer (value_contents_raw (val), len, num);
@@ -1639,4 +1715,11 @@ A few convenience variables are given values automatically:\n\
   add_cmd ("values", no_class, show_values,
 	   _("Elements of value history around item number IDX (or last ten)."),
 	   &showlist);
+
+  add_com ("init-if-undefined", class_vars, init_if_undefined_command, _("\
+Initialize a convenience variable if necessary.\n\
+init-if-undefined VARIABLE = EXPRESSION\n\
+Set an internal VARIABLE to the result of the EXPRESSION if it does not\n\
+exist or does not contain a value.  The EXPRESSION is not evaluated if the\n\
+VARIABLE is already initialized."));
 }

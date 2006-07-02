@@ -4,7 +4,7 @@ NAT_FILE= nm-linux.h
 NATDEPFILES= inf-ptrace.o fork-child.o corelow.o \
 	core-aout.o i386-nat.o i386-linux-nat.o \
 	proc-service.o linux-thread-db.o gcore.o \
-	linux-nat.o
+	linux-nat.o linux-fork.o
 
 # The dynamically loaded libthread_db needs access to symbols in the
 # gdb executable.

@@ -1,6 +1,6 @@
 /* Unwinder test program.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,7 @@ int
 main (void)
 {
   standard ();
+  stack_align ();
   gdb1253 ();
   gdb1718 ();
   gdb1338 ();
@@ -109,4 +110,21 @@ asm(".text\n"
     ".gdbjump:\n"
     "    movl  %ebp,%esp\n"
     "    popl  %ebp\n"
+    "    ret\n");
+
+asm(".text\n"
+    "    .align 8\n"
+    SYMBOL (stack_align) ":\n"
+    "    leal  4(%esp), %ecx\n"
+    "    andl  $-16, %esp\n"
+    "    pushl -4(%ecx)\n"
+    "    pushl %ebp\n"
+    "    movl  %esp, %ebp\n"
+    "    pushl %edi\n"
+    "    pushl %ecx\n"
+    "    int   $0x03\n"
+    "    popl  %ecx\n"
+    "    popl  %edi\n"
+    "    popl  %ebp\n"
+    "    leal  -4(%ecx), %esp\n"
     "    ret\n");

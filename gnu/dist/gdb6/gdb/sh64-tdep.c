@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /*
    Contributed by Steve Chamberlain
@@ -1228,9 +1228,9 @@ sh64_extract_return_value (struct type *type, struct regcache *regcache,
 	{
 	  /* return value stored in DR0_REGNUM */
 	  DOUBLEST val;
-	  char buf[8];
+	  gdb_byte buf[8];
 
-	  regcache_cooked_read (regcache, DR0_REGNUM, &buf);
+	  regcache_cooked_read (regcache, DR0_REGNUM, buf);
 	  
 	  if (TARGET_BYTE_ORDER == BFD_ENDIAN_LITTLE)
 	    floatformat_to_doublest (&floatformat_ieee_double_littlebyte_bigword,
@@ -1313,7 +1313,7 @@ sh64_store_return_value (struct type *type, struct regcache *regcache,
 static enum return_value_convention
 sh64_return_value (struct gdbarch *gdbarch, struct type *type,
 		   struct regcache *regcache,
-		   void *readbuf, const void *writebuf)
+		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (sh64_use_struct_convention (type))
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -1575,7 +1575,7 @@ sh64_register_convert_to_raw (struct type *type, int regnum,
 
 static void
 sh64_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
-			   int reg_nr, void *buffer)
+			   int reg_nr, gdb_byte *buffer)
 {
   int base_regnum;
   int portion;
@@ -1744,7 +1744,7 @@ sh64_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
 
 static void
 sh64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-			    int reg_nr, const void *buffer)
+			    int reg_nr, const gdb_byte *buffer)
 {
   int base_regnum, portion;
   int offset;
@@ -2290,7 +2290,7 @@ static void
 sh64_frame_prev_register (struct frame_info *next_frame, void **this_cache,
 			  int regnum, int *optimizedp,
 			  enum lval_type *lvalp, CORE_ADDR *addrp,
-			  int *realnump, void *valuep)
+			  int *realnump, gdb_byte *valuep)
 {
   struct sh64_frame_cache *cache = sh64_frame_cache (next_frame, this_cache);
 

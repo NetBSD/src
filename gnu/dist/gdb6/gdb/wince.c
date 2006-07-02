@@ -1,6 +1,6 @@
 /* Target-vector operations for controlling Windows CE child processes, for GDB.
 
-   Copyright 1999, 2000, 2001, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2001, 2004, 2006 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions, A Red Hat Company.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.
  */
 
 /* by Christopher Faylor (cgf@cygnus.com) */
@@ -146,7 +146,6 @@ typedef struct thread_info_struct
     int suspend_count;
     int stepped;		/* True if stepped.  */
     CORE_ADDR step_pc;
-    unsigned long step_prev;
     CONTEXT context;
   }
 thread_info;
@@ -834,7 +833,7 @@ undoSStep (thread_info * th)
 {
   if (th->stepped)
     {
-      memory_remove_breakpoint (th->step_pc, (void *) &th->step_prev);
+      remove_single_step_breakpoints ();
       th->stepped = 0;
     }
 }
@@ -857,8 +856,7 @@ wince_software_single_step (enum target_signal ignore,
   th->stepped = 1;
   pc = read_register (PC_REGNUM);
   th->step_pc = mips_next_pc (pc);
-  th->step_prev = 0;
-  memory_insert_breakpoint (th->step_pc, (void *) &th->step_prev);
+  insert_single_step_breakpoint (th->step_pc);
   return;
 }
 #elif SHx
@@ -971,7 +969,7 @@ undoSStep (thread_info * th)
 {
   if (th->stepped)
     {
-      memory_remove_breakpoint (th->step_pc, (void *) &th->step_prev);
+      remove_single_step_breakpoints ();
       th->stepped = 0;
     }
   return;
@@ -996,8 +994,7 @@ wince_software_single_step (enum target_signal ignore,
 
   th->stepped = 1;
   th->step_pc = sh_get_next_pc (&th->context);
-  th->step_prev = 0;
-  memory_insert_breakpoint (th->step_pc, (void *) &th->step_prev);
+  insert_single_step_breakpoint (th->step_pc);
   return;
 }
 #elif defined (ARM)
@@ -1024,7 +1021,7 @@ undoSStep (thread_info * th)
 {
   if (th->stepped)
     {
-      memory_remove_breakpoint (th->step_pc, (void *) &th->step_prev);
+      remove_single_step_breakpoints ();
       th->stepped = 0;
     }
 }
@@ -1047,8 +1044,7 @@ wince_software_single_step (enum target_signal ignore,
   th->stepped = 1;
   pc = read_register (PC_REGNUM);
   th->step_pc = arm_get_next_pc (pc);
-  th->step_prev = 0;
-  memory_insert_breakpoint (th->step_pc, (void *) &th->step_prev);
+  insert_single_step_breakpoint (th->step_pc);
   return;
 }
 #endif
@@ -1821,8 +1817,6 @@ child_create_inferior (char *exec_file, char *args, char **env,
   while (!get_child_debug_event (PIDGET (inferior_ptid), &dummy,
 				 CREATE_PROCESS_DEBUG_EVENT, &ret))
     continue;
-
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
 
 /* Chile has gone bye-bye.  */

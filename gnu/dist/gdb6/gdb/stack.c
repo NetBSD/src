@@ -1,6 +1,6 @@
 /* Print and select stack frames for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "value.h"
@@ -60,8 +60,6 @@ static void print_frame_local_vars (struct frame_info *, int,
 static void print_frame (struct frame_info *frame, int print_level,
 			 enum print_what print_what,  int print_args,
 			 struct symtab_and_line sal);
-
-static void set_current_sal_from_frame (struct frame_info *, int);
 
 /* Zero means do things normally; we are interacting directly with the
    user.  One means print the full filename and linenumber when a
@@ -373,7 +371,7 @@ print_args_stub (void *args)
    FRAME, if possible.  When CENTER is true, adjust so the relevant
    line is in the center of the next 'list'.  */
 
-static void
+void
 set_current_sal_from_frame (struct frame_info *frame, int center)
 {
   struct symtab_and_line sal;

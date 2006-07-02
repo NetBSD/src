@@ -61,12 +61,12 @@ proc test_at_main {} {
     global subdir
     global hp_cc_compiler
 
-    # skip past init.  There may be a call to __main at the start of
-    # main, so the first next may only get us to the init0 call.
-    if [gdb_test "next" "$decimal.*foo \\(\\);" "next over init0() in main"  "$decimal.*init0 \\(\\);" "next"] { 
-      gdb_suppress_tests ; 
-    }
-
+    # skip past init0.
+    # This used to do an extra "next" if the first one didn't get us
+    # over the call to init0, to handle calls to __main in the
+    # prologue, etc.  But if a breakpoint at main doesn't leave us on
+    # the first line of real code in the function, that's a GDB bug.
+    gdb_test "next" "$decimal.*foo \\(\\);" "next over init0() in main"
 
     # Print scope0.c::filelocal, which is 1
 

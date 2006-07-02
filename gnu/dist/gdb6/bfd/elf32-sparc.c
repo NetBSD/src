@@ -26,6 +26,7 @@
 #include "elf/sparc.h"
 #include "opcode/sparc.h"
 #include "elfxx-sparc.h"
+#include "elf-vxworks.h"
 
 /* Support for core dump NOTE sections.  */
 
@@ -213,5 +214,70 @@ elf32_sparc_reloc_type_class (const Elf_Internal_Rela *rela)
 #define elf_backend_want_plt_sym 1
 #define elf_backend_got_header_size 4
 #define elf_backend_rela_normal 1
+
+#include "elf32-target.h"
+
+/* A wrapper around _bfd_sparc_elf_link_hash_table_create that identifies
+   the target system as VxWorks.  */
+
+static struct bfd_link_hash_table *
+elf32_sparc_vxworks_link_hash_table_create (bfd *abfd)
+{
+  struct bfd_link_hash_table *ret;
+
+  ret = _bfd_sparc_elf_link_hash_table_create (abfd);
+  if (ret)
+    {
+      struct _bfd_sparc_elf_link_hash_table *htab;
+
+      htab = (struct _bfd_sparc_elf_link_hash_table *) ret;
+      htab->is_vxworks = 1;
+    }
+  return ret;
+}
+
+/* A final_write_processing hook that does both the SPARC- and VxWorks-
+   specific handling.  */
+
+static void
+elf32_sparc_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
+{
+  elf32_sparc_final_write_processing (abfd, linker);
+  elf_vxworks_final_write_processing (abfd, linker);
+}
+
+#undef TARGET_BIG_SYM
+#define TARGET_BIG_SYM	bfd_elf32_sparc_vxworks_vec
+#undef TARGET_BIG_NAME
+#define TARGET_BIG_NAME	"elf32-sparc-vxworks"
+
+#undef ELF_MINPAGESIZE
+#define ELF_MINPAGESIZE	0x1000
+
+#undef bfd_elf32_bfd_link_hash_table_create
+#define bfd_elf32_bfd_link_hash_table_create \
+  elf32_sparc_vxworks_link_hash_table_create
+
+#undef elf_backend_want_got_plt
+#define elf_backend_want_got_plt		1
+#undef elf_backend_plt_readonly
+#define elf_backend_plt_readonly		1
+#undef elf_backend_got_header_size
+#define elf_backend_got_header_size		12
+#undef elf_backend_add_symbol_hook
+#define elf_backend_add_symbol_hook \
+  elf_vxworks_add_symbol_hook
+#undef elf_backend_link_output_symbol_hook
+#define elf_backend_link_output_symbol_hook \
+  elf_vxworks_link_output_symbol_hook
+#undef elf_backend_emit_relocs
+#define elf_backend_emit_relocs \
+  elf_vxworks_emit_relocs
+#undef elf_backend_final_write_processing
+#define elf_backend_final_write_processing \
+  elf32_sparc_vxworks_final_write_processing
+
+#undef elf32_bed
+#define elf32_bed				sparc_elf_vxworks_bed
 
 #include "elf32-target.h"

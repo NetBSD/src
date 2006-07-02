@@ -191,7 +191,7 @@ proc get_msym_addrs { var msymfile } {
 	    }
 
 	    -re "$gdb_prompt $" {
-		pass "get_msym_addrs ${var} (${result})"
+		pass "get_msym_addrs ${var}"
 		return "${result}"
 	    }
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for Atmel AVR, for GDB.
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
    2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Contributed by Theodore A. Roth, troth@openavr.org */
 
@@ -279,7 +279,7 @@ avr_convert_saddr_to_raw (CORE_ADDR x)
 /* Convert from address to pointer and vice-versa. */
 
 static void
-avr_address_to_pointer (struct type *type, void *buf, CORE_ADDR addr)
+avr_address_to_pointer (struct type *type, gdb_byte *buf, CORE_ADDR addr)
 {
   /* Is it a code address?  */
   if (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_FUNC
@@ -297,7 +297,7 @@ avr_address_to_pointer (struct type *type, void *buf, CORE_ADDR addr)
 }
 
 static CORE_ADDR
-avr_pointer_to_address (struct type *type, const void *buf)
+avr_pointer_to_address (struct type *type, const gdb_byte *buf)
 {
   CORE_ADDR addr = extract_unsigned_integer (buf, TYPE_LENGTH (type));
 
@@ -823,7 +823,7 @@ avr_breakpoint_from_pc (CORE_ADDR * pcptr, int *lenptr)
 
 static void
 avr_extract_return_value (struct type *type, struct regcache *regcache,
-                          void *valbuf)
+                          gdb_byte *valbuf)
 {
   ULONGEST r24, r25;
   ULONGEST c;
@@ -975,7 +975,7 @@ avr_frame_prev_register (struct frame_info *next_frame,
 			  void **this_prologue_cache,
 			  int regnum, int *optimizedp,
 			  enum lval_type *lvalp, CORE_ADDR *addrp,
-			  int *realnump, void *bufferp)
+			  int *realnump, gdb_byte *bufferp)
 {
   struct avr_unwind_cache *info
     = avr_frame_unwind_cache (next_frame, this_prologue_cache);

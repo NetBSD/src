@@ -1,7 +1,8 @@
 /* Core dump and executable file functions above target vector, for GDB.
 
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1996, 1997,
-   1998, 1999, 2000, 2001, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1996, 1997,
+   1998, 1999, 2000, 2001, 2003, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -295,7 +296,7 @@ safe_read_memory_integer (CORE_ADDR memaddr, int len, LONGEST *return_value)
 LONGEST
 read_memory_integer (CORE_ADDR memaddr, int len)
 {
-  char buf[sizeof (LONGEST)];
+  gdb_byte buf[sizeof (LONGEST)];
 
   read_memory (memaddr, buf, len);
   return extract_signed_integer (buf, len);
@@ -304,7 +305,7 @@ read_memory_integer (CORE_ADDR memaddr, int len)
 ULONGEST
 read_memory_unsigned_integer (CORE_ADDR memaddr, int len)
 {
-  char buf[sizeof (ULONGEST)];
+  gdb_byte buf[sizeof (ULONGEST)];
 
   read_memory (memaddr, buf, len);
   return extract_unsigned_integer (buf, len);
@@ -340,7 +341,7 @@ read_memory_string (CORE_ADDR memaddr, char *buffer, int max_len)
 CORE_ADDR
 read_memory_typed_address (CORE_ADDR addr, struct type *type)
 {
-  char *buf = alloca (TYPE_LENGTH (type));
+  gdb_byte *buf = alloca (TYPE_LENGTH (type));
   read_memory (addr, buf, TYPE_LENGTH (type));
   return extract_typed_address (buf, type);
 }
@@ -350,7 +351,7 @@ void
 write_memory (CORE_ADDR memaddr, const bfd_byte *myaddr, int len)
 {
   int status;
-  bfd_byte *bytes = alloca (len);
+  gdb_byte *bytes = alloca (len);
   
   memcpy (bytes, myaddr, len);
   status = target_write_memory (memaddr, bytes, len);
@@ -362,7 +363,7 @@ write_memory (CORE_ADDR memaddr, const bfd_byte *myaddr, int len)
 void
 write_memory_unsigned_integer (CORE_ADDR addr, int len, ULONGEST value)
 {
-  char *buf = alloca (len);
+  gdb_byte *buf = alloca (len);
   store_unsigned_integer (buf, len, value);
   write_memory (addr, buf, len);
 }
@@ -371,7 +372,7 @@ write_memory_unsigned_integer (CORE_ADDR addr, int len, ULONGEST value)
 void
 write_memory_signed_integer (CORE_ADDR addr, int len, LONGEST value)
 {
-  char *buf = alloca (len);
+  gdb_byte *buf = alloca (len);
   store_signed_integer (buf, len, value);
   write_memory (addr, buf, len);
 }

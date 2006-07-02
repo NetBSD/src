@@ -1,6 +1,6 @@
 /* *INDENT-OFF* */ /* ATTR_FORMAT confuses indent, avoid running it for now */
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
    1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef DEFS_H
 #define DEFS_H
@@ -39,6 +39,8 @@
 #include <unistd.h>
 #endif
 
+#include <fcntl.h>
+
 /* First include ansidecl.h so we can use the various macro definitions
    here and in all subsequent file inclusions.  */
 
@@ -56,6 +58,16 @@
 #endif
 #ifndef SEEK_CUR
 #define SEEK_CUR 1
+#endif
+
+/* The O_BINARY flag is defined in fcntl.h on some non-Posix platforms.
+   It is used as an access modifier in calls to open(), where it acts
+   similarly to the "b" character in fopen()'s MODE argument. On Posix
+   platforms it should be a no-op, so it is defined as 0 here. This 
+   ensures that the symbol may be used freely elsewhere in gdb. */
+
+#ifndef O_BINARY
+#define O_BINARY 0
 #endif
 
 #include <stdarg.h>		/* For va_list.  */
@@ -611,6 +623,8 @@ extern void add_path (char *, char **, int);
 
 extern void directory_command (char *, int);
 
+extern void directory_switch (char *, int);
+
 extern char *source_path;
 
 extern void init_source_path (void);
@@ -963,6 +977,7 @@ enum gdb_osabi
   GDB_OSABI_QNXNTO,
 
   GDB_OSABI_CYGWIN,
+  GDB_OSABI_AIX,
 
   GDB_OSABI_INVALID		/* keep this last */
 };
@@ -1216,5 +1231,10 @@ extern int use_windows;
 
 extern ULONGEST align_up (ULONGEST v, int n);
 extern ULONGEST align_down (ULONGEST v, int n);
+
+/* Allocation and deallocation functions for the libiberty hash table
+   which use obstacks.  */
+void *hashtab_obstack_allocate (void *data, size_t size, size_t count);
+void dummy_obstack_deallocate (void *object, void *data);
 
 #endif /* #ifndef DEFS_H */

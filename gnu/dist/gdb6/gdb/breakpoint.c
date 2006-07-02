@@ -1,7 +1,7 @@
 /* Everything about breakpoints, for GDB.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include <ctype.h>
@@ -663,16 +663,10 @@ deprecated_read_memory_nobpt (CORE_ADDR memaddr, gdb_byte *myaddr,
       continue;
     /* Addresses and length of the part of the breakpoint that
        we need to copy.  */
-    /* XXXX The m68k, sh and h8300 have different local and remote
-       breakpoint values.  BREAKPOINT_FROM_PC still manages to
-       correctly determine the breakpoints memory address and size
-       for these targets. */
-    bp_addr = b->address;
-    bp_size = 0;
-    if (BREAKPOINT_FROM_PC (&bp_addr, &bp_size) == NULL)
-      continue;
+    bp_addr = b->target_info.placed_address;
+    bp_size = b->target_info.shadow_len;
     if (bp_size == 0)
-      /* bp isn't valid */
+      /* bp isn't valid, or doesn't shadow memory.  */
       continue;
     if (bp_addr + bp_size <= memaddr)
       /* The breakpoint is entirely before the chunk of memory we
@@ -703,7 +697,7 @@ deprecated_read_memory_nobpt (CORE_ADDR memaddr, gdb_byte *myaddr,
 	}
 
       memcpy (myaddr + bp_addr - memaddr,
-	      b->shadow_contents + bptoffset, bp_size);
+	      b->target_info.shadow_contents + bptoffset, bp_size);
 
       if (bp_addr > memaddr)
 	{
@@ -793,6 +787,10 @@ insert_bp_location (struct bp_location *bpt,
   if (bpt->inserted || bpt->duplicate)
     return 0;
 
+  /* Initialize the target-specific information.  */
+  memset (&bpt->target_info, 0, sizeof (bpt->target_info));
+  bpt->target_info.placed_address = bpt->address;
+
   if (bpt->loc_type == bp_loc_software_breakpoint
       || bpt->loc_type == bp_loc_hardware_breakpoint)
     {
@@ -804,11 +802,9 @@ insert_bp_location (struct bp_location *bpt,
 	  /* No overlay handling: just set the breakpoint.  */
 
 	  if (bpt->loc_type == bp_loc_hardware_breakpoint)
-	    val = target_insert_hw_breakpoint (bpt->address, 
-					       bpt->shadow_contents);
+	    val = target_insert_hw_breakpoint (&bpt->target_info);
 	  else
-	    val = target_insert_breakpoint (bpt->address,
-					    bpt->shadow_contents);
+	    val = target_insert_breakpoint (&bpt->target_info);
 	}
       else
 	{
@@ -827,7 +823,9 @@ insert_bp_location (struct bp_location *bpt,
 		  CORE_ADDR addr = overlay_unmapped_address (bpt->address,
 							     bpt->section);
 		  /* Set a software (trap) breakpoint at the LMA.  */
-		  val = target_insert_breakpoint (addr, bpt->shadow_contents);
+		  bpt->overlay_target_info = bpt->target_info;
+		  bpt->overlay_target_info.placed_address = addr;
+		  val = target_insert_breakpoint (&bpt->overlay_target_info);
 		  if (val != 0)
 		    fprintf_unfiltered (tmp_error_stream, 
 					"Overlay breakpoint %d failed: in ROM?", 
@@ -839,11 +837,9 @@ insert_bp_location (struct bp_location *bpt,
 	    {
 	      /* Yes.  This overlay section is mapped into memory.  */
 	      if (bpt->loc_type == bp_loc_hardware_breakpoint)
-		val = target_insert_hw_breakpoint (bpt->address, 
-						   bpt->shadow_contents);
+		val = target_insert_hw_breakpoint (&bpt->target_info);
 	      else
-		val = target_insert_breakpoint (bpt->address,
-						bpt->shadow_contents);
+		val = target_insert_breakpoint (&bpt->target_info);
 	    }
 	  else
 	    {
@@ -1045,7 +1041,7 @@ in which its expression is valid.\n"),
       /* If we get here, we must have a callback mechanism for exception
 	 events -- with g++ style embedded label support, we insert
 	 ordinary breakpoints and not catchpoints. */
-      val = target_insert_breakpoint (bpt->address, bpt->shadow_contents);
+      val = target_insert_breakpoint (&bpt->target_info);
       if (val)
 	{
 	  /* Couldn't set breakpoint for some reason */
@@ -1142,6 +1138,12 @@ insert_breakpoints (void)
       if (!breakpoint_enabled (b->owner))
 	continue;
 
+      /* There is no point inserting thread-specific breakpoints if the
+	 thread no longer exists.  */
+      if (b->owner->thread != -1
+	  && !valid_thread_id (b->owner->thread))
+	continue;
+
       /* FIXME drow/2003-10-07: This code should be pushed elsewhere when
 	 hardware watchpoints are split into multiple loc breakpoints.  */
       if ((b->loc_type == bp_loc_hardware_watchpoint
@@ -1234,9 +1236,9 @@ reattach_breakpoints (int pid)
       {
 	remove_breakpoint (b, mark_inserted);
 	if (b->loc_type == bp_loc_hardware_breakpoint)
-	  val = target_insert_hw_breakpoint (b->address, b->shadow_contents);
+	  val = target_insert_hw_breakpoint (&b->target_info);
 	else
-	  val = target_insert_breakpoint (b->address, b->shadow_contents);
+	  val = target_insert_breakpoint (&b->target_info);
 	/* FIXME drow/2003-10-07: This doesn't handle any other kinds of
 	   breakpoints.  It's wrong for watchpoints, for example.  */
 	if (val != 0)
@@ -1440,10 +1442,9 @@ remove_breakpoint (struct bp_location *b, insertion_state_t is)
 	  /* No overlay handling: just remove the breakpoint.  */
 
 	  if (b->loc_type == bp_loc_hardware_breakpoint)
-	    val = target_remove_hw_breakpoint (b->address, 
-					       b->shadow_contents);
+	    val = target_remove_hw_breakpoint (&b->target_info);
 	  else
-	    val = target_remove_breakpoint (b->address, b->shadow_contents);
+	    val = target_remove_breakpoint (&b->target_info);
 	}
       else
 	{
@@ -1454,14 +1455,12 @@ remove_breakpoint (struct bp_location *b, insertion_state_t is)
 		/* Yes -- overlay event support is not active, so we
 		   should have set a breakpoint at the LMA.  Remove it.  
 		*/
-		CORE_ADDR addr = overlay_unmapped_address (b->address, 
-							   b->section);
 		/* Ignore any failures: if the LMA is in ROM, we will
 		   have already warned when we failed to insert it.  */
 		if (b->loc_type == bp_loc_hardware_breakpoint)
-		  target_remove_hw_breakpoint (addr, b->shadow_contents);
+		  target_remove_hw_breakpoint (&b->overlay_target_info);
 		else
-		  target_remove_breakpoint (addr, b->shadow_contents);
+		  target_remove_breakpoint (&b->overlay_target_info);
 	      }
 	  /* Did we set a breakpoint at the VMA? 
 	     If so, we will have marked the breakpoint 'inserted'.  */
@@ -1472,11 +1471,9 @@ remove_breakpoint (struct bp_location *b, insertion_state_t is)
 		 unmapped, but let's not rely on that being safe.  We
 		 don't know what the overlay manager might do.  */
 	      if (b->loc_type == bp_loc_hardware_breakpoint)
-		val = target_remove_hw_breakpoint (b->address, 
-						   b->shadow_contents);
+		val = target_remove_hw_breakpoint (&b->target_info);
 	      else
-		val = target_remove_breakpoint (b->address,
-						b->shadow_contents);
+		val = target_remove_breakpoint (&b->target_info);
 	    }
 	  else
 	    {
@@ -1564,8 +1561,7 @@ remove_breakpoint (struct bp_location *b, insertion_state_t is)
 	   && breakpoint_enabled (b->owner)
 	   && !b->duplicate)
     {
-
-      val = target_remove_breakpoint (b->address, b->shadow_contents);
+      val = target_remove_breakpoint (&b->target_info);
       if (val)
 	return val;
       b->inserted = (is == mark_inserted);
@@ -1575,8 +1571,7 @@ remove_breakpoint (struct bp_location *b, insertion_state_t is)
 	   && breakpoint_enabled (b->owner)
 	   && !b->duplicate)
     {
-
-      val = target_remove_breakpoint (b->address, b->shadow_contents);
+      val = target_remove_breakpoint (&b->target_info);
       if (val)
 	return val;
 
@@ -3426,6 +3421,7 @@ print_one_breakpoint (struct breakpoint *b,
 	    ui_out_field_int (uiout, "what", b->forked_inferior_pid);
 	    ui_out_spaces (uiout, 1);
 	  }
+	break;
 
       case bp_catch_exec:
 	/* Field 4, the address, is omitted (which makes the columns
@@ -3500,6 +3496,16 @@ print_one_breakpoint (struct breakpoint *b,
 	      }
 	    ui_out_field_string (uiout, "file", b->source_file);
 	    ui_out_text (uiout, ":");
+
+            if (ui_out_is_mi_like_p (uiout))
+              {
+                struct symtab_and_line sal = find_pc_line (b->loc->address, 0);
+                char *fullname = symtab_to_fullname (sal.symtab);
+
+                if (fullname)
+                  ui_out_field_string (uiout, "fullname", fullname);
+              }
+
 	    ui_out_field_int (uiout, "line", b->line_number);
 	  }
 	else if (b->pending)
@@ -5791,11 +5797,6 @@ watch_command_1 (char *arg, int accessflag, int from_tty)
    in hardware.  If the watchpoint can not be handled
    in hardware return zero.  */
 
-#if !defined(TARGET_REGION_OK_FOR_HW_WATCHPOINT)
-#define TARGET_REGION_OK_FOR_HW_WATCHPOINT(ADDR,LEN) \
-     (TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT(LEN))
-#endif
-
 static int
 can_use_hardware_watchpoint (struct value *v)
 {
@@ -6840,10 +6841,12 @@ delete_breakpoint (struct breakpoint *bpt)
 			    _("another breakpoint was inserted on top of "
 			    "a permanent breakpoint"));
 
+	  memset (&b->loc->target_info, 0, sizeof (b->loc->target_info));
+	  b->loc->target_info.placed_address = b->loc->address;
 	  if (b->type == bp_hardware_breakpoint)
-	    val = target_insert_hw_breakpoint (b->loc->address, b->loc->shadow_contents);
+	    val = target_insert_hw_breakpoint (&b->loc->target_info);
 	  else
-	    val = target_insert_breakpoint (b->loc->address, b->loc->shadow_contents);
+	    val = target_insert_breakpoint (&b->loc->target_info);
 
 	  /* If there was an error in the insert, print a message, then stop execution.  */
 	  if (val != 0)
@@ -7646,7 +7649,117 @@ decode_line_spec_1 (char *string, int funfirstline)
     error (_("Junk at end of line specification: %s"), string);
   return sals;
 }
+
+/* Create and insert a raw software breakpoint at PC.  Return an
+   identifier, which should be used to remove the breakpoint later.
+   In general, places which call this should be using something on the
+   breakpoint chain instead; this function should be eliminated
+   someday.  */
+
+void *
+deprecated_insert_raw_breakpoint (CORE_ADDR pc)
+{
+  struct bp_target_info *bp_tgt;
+
+  bp_tgt = xmalloc (sizeof (struct bp_target_info));
+  memset (bp_tgt, 0, sizeof (struct bp_target_info));
+
+  bp_tgt->placed_address = pc;
+  if (target_insert_breakpoint (bp_tgt) != 0)
+    {
+      /* Could not insert the breakpoint.  */
+      xfree (bp_tgt);
+      return NULL;
+    }
+
+  return bp_tgt;
+}
+
+/* Remove a breakpoint BP inserted by deprecated_insert_raw_breakpoint.  */
+
+int
+deprecated_remove_raw_breakpoint (void *bp)
+{
+  struct bp_target_info *bp_tgt = bp;
+  int ret;
+
+  ret = target_remove_breakpoint (bp_tgt);
+  xfree (bp_tgt);
+
+  return ret;
+}
+
+/* One (or perhaps two) breakpoints used for software single stepping.  */
+
+static void *single_step_breakpoints[2];
+
+/* Create and insert a breakpoint for software single step.  */
+
+void
+insert_single_step_breakpoint (CORE_ADDR next_pc)
+{
+  void **bpt_p;
+
+  if (single_step_breakpoints[0] == NULL)
+    bpt_p = &single_step_breakpoints[0];
+  else
+    {
+      gdb_assert (single_step_breakpoints[1] == NULL);
+      bpt_p = &single_step_breakpoints[1];
+    }
+
+  /* NOTE drow/2006-04-11: A future improvement to this function would be
+     to only create the breakpoints once, and actually put them on the
+     breakpoint chain.  That would let us use set_raw_breakpoint.  We could
+     adjust the addresses each time they were needed.  Doing this requires
+     corresponding changes elsewhere where single step breakpoints are
+     handled, however.  So, for now, we use this.  */
+
+  *bpt_p = deprecated_insert_raw_breakpoint (next_pc);
+  if (*bpt_p == NULL)
+    error (_("Could not insert single-step breakpoint at 0x%s"),
+	     paddr_nz (next_pc));
+}
+
+/* Remove and delete any breakpoints used for software single step.  */
+
+void
+remove_single_step_breakpoints (void)
+{
+  gdb_assert (single_step_breakpoints[0] != NULL);
+
+  /* See insert_single_step_breakpoint for more about this deprecated
+     call.  */
+  deprecated_remove_raw_breakpoint (single_step_breakpoints[0]);
+  single_step_breakpoints[0] = NULL;
+
+  if (single_step_breakpoints[1] != NULL)
+    {
+      deprecated_remove_raw_breakpoint (single_step_breakpoints[1]);
+      single_step_breakpoints[1] = NULL;
+    }
+}
+
 
+/* This help string is used for the break, hbreak, tbreak and thbreak commands.
+   It is defined as a macro to prevent duplication.
+   COMMAND should be a string constant containing the name of the command.  */
+#define BREAK_ARGS_HELP(command) \
+command" [LOCATION] [thread THREADNUM] [if CONDITION]\n\
+LOCATION may be a line number, function name, or \"*\" and an address.\n\
+If a line number is specified, break at start of code for that line.\n\
+If a function is specified, break at start of code for that function.\n\
+If an address is specified, break at that exact address.\n\
+With no LOCATION, uses current execution address of selected stack frame.\n\
+This is useful for breaking on return to a stack frame.\n\
+\n\
+THREADNUM is the number from \"info threads\".\n\
+CONDITION is a boolean expression.\n\
+\n\
+Multiple breakpoints at one place are permitted, and useful if conditional.\n\
+\n\
+Do \"help breakpoints\" for info on other commands dealing with breakpoints."
+
 void
 _initialize_breakpoint (void)
 {
@@ -7682,22 +7795,28 @@ Usage is `condition N COND', where N is an integer and COND is an\n\
 expression to be evaluated whenever breakpoint N is reached."));
 
   c = add_com ("tbreak", class_breakpoint, tbreak_command, _("\
-Set a temporary breakpoint.  Args like \"break\" command.\n\
+Set a temporary breakpoint.\n\
 Like \"break\" except the breakpoint is only temporary,\n\
 so it will be deleted when hit.  Equivalent to \"break\" followed\n\
-by using \"enable delete\" on the breakpoint number."));
+by using \"enable delete\" on the breakpoint number.\n\
+\n"
+BREAK_ARGS_HELP ("tbreak")));
   set_cmd_completer (c, location_completer);
 
   c = add_com ("hbreak", class_breakpoint, hbreak_command, _("\
-Set a hardware assisted  breakpoint. Args like \"break\" command.\n\
+Set a hardware assisted  breakpoint.\n\
 Like \"break\" except the breakpoint requires hardware support,\n\
-some target hardware may not have this support."));
+some target hardware may not have this support.\n\
+\n"
+BREAK_ARGS_HELP ("hbreak")));
   set_cmd_completer (c, location_completer);
 
   c = add_com ("thbreak", class_breakpoint, thbreak_command, _("\
-Set a temporary hardware assisted breakpoint. Args like \"break\" command.\n\
+Set a temporary hardware assisted breakpoint.\n\
 Like \"hbreak\" except the breakpoint is only temporary,\n\
-so it will be deleted when hit."));
+so it will be deleted when hit.\n\
+\n"
+BREAK_ARGS_HELP ("thbreak")));
   set_cmd_completer (c, location_completer);
 
   add_prefix_cmd ("enable", class_breakpoint, enable_command, _("\
@@ -7776,6 +7895,7 @@ Also a prefix command for deletion of other GDB objects.\n\
 The \"unset\" command is also an alias for \"delete\"."),
 		  &deletelist, "delete ", 1, &cmdlist);
   add_com_alias ("d", "delete", class_breakpoint, 1);
+  add_com_alias ("del", "delete", class_breakpoint, 1);
   if (xdb_commands)
     add_com ("db", class_breakpoint, delete_command, _("\
 Delete some breakpoints.\n\
@@ -7802,17 +7922,8 @@ is executing in.\n\
 See also the \"delete\" command which clears breakpoints by number."));
 
   c = add_com ("break", class_breakpoint, break_command, _("\
-Set breakpoint at specified line or function.\n\
-Argument may be line number, function name, or \"*\" and an address.\n\
-If line number is specified, break at start of code for that line.\n\
-If function is specified, break at start of code for that function.\n\
-If an address is specified, break at that exact address.\n\
-With no arg, uses current execution address of selected stack frame.\n\
-This is useful for breaking on return to a stack frame.\n\
-\n\
-Multiple breakpoints at one place are permitted, and useful if conditional.\n\
-\n\
-Do \"help breakpoints\" for info on other commands dealing with breakpoints."));
+Set breakpoint at specified line or function.\n"
+BREAK_ARGS_HELP ("break")));
   set_cmd_completer (c, location_completer);
 
   add_com_alias ("b", "break", class_run, 1);

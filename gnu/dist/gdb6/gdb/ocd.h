@@ -1,5 +1,5 @@
 /* Definitions for the Macraigor Systems BDM Wiggler
-   Copyright 1996, 1997, 1998, 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef OCD_H
 #define OCD_H
@@ -135,8 +135,8 @@ void ocd_write_bdm_register (int bdm_regno, CORE_ADDR reg);
 
 int ocd_wait (void);
 
-int ocd_insert_breakpoint (CORE_ADDR addr, char *contents_cache);
-int ocd_remove_breakpoint (CORE_ADDR addr, char *contents_cache);
+int ocd_insert_breakpoint (struct bp_target_info *bp_tgt);
+int ocd_remove_breakpoint (struct bp_target_info *bp_tgt);
 
 int ocd_write_bytes (CORE_ADDR memaddr, char *myaddr, int len);
 

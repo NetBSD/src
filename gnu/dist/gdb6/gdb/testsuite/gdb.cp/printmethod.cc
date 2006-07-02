@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 2002, 2004,
+   Copyright 2002, 2004, 2005
    Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@ public:
 int main()
 {
   A *theA = new A;
+  theA->virt ();
+  theA->nonvirt ();
 
   return 0;				// breakpoint: constructs-done
 }

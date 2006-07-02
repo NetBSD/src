@@ -1,7 +1,8 @@
 /* Generic symbol file reading for the GNU debugger, GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -19,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "bfdlink.h"
@@ -59,9 +60,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 int (*deprecated_ui_load_progress_hook) (const char *section, unsigned long num);
 void (*deprecated_show_load_progress) (const char *section,
@@ -475,6 +473,7 @@ place_section (bfd *abfd, asection *sect, void *obj)
   struct place_section_arg *arg = obj;
   CORE_ADDR *offsets = arg->offsets->offsets, start_addr;
   int done;
+  ULONGEST align = ((ULONGEST) 1) << bfd_get_section_alignment (abfd, sect);
 
   /* We are only interested in loadable sections.  */
   if ((bfd_get_section_flags (abfd, sect) & SEC_LOAD) == 0)
@@ -485,11 +484,11 @@ place_section (bfd *abfd, asection *sect, void *obj)
     return;
 
   /* Otherwise, let's try to find a place for the section.  */
+  start_addr = (arg->lowest + align - 1) & -align;
+
   do {
     asection *cur_sec;
-    ULONGEST align = 1 << bfd_get_section_alignment (abfd, sect);
 
-    start_addr = (arg->lowest + align - 1) & -align;
     done = 1;
 
     for (cur_sec = abfd->sections; cur_sec != NULL; cur_sec = cur_sec->next)
@@ -523,7 +522,7 @@ place_section (bfd *abfd, asection *sect, void *obj)
 	    start_addr = offsets[indx] + bfd_get_section_size (cur_sec);
 	    start_addr = (start_addr + align - 1) & -align;
 	    done = 0;
-	    continue;
+	    break;
 	  }
 
 	/* Otherwise, we appear to be OK.  So far.  */
@@ -1085,8 +1084,10 @@ symbol_file_clear (int from_tty)
 {
   if ((have_full_symbols () || have_partial_symbols ())
       && from_tty
-      && !query ("Discard symbol table from `%s'? ",
-		 symfile_objfile->name))
+      && (symfile_objfile
+	  ? !query (_("Discard symbol table from `%s'? "),
+		    symfile_objfile->name)
+	  : !query (_("Discard symbol table? "))))
     error (_("Not confirmed."));
     free_all_objfiles ();
 
@@ -1139,7 +1140,7 @@ separate_debug_file_exists (const char *name, unsigned long crc)
 {
   unsigned long file_crc = 0;
   int fd;
-  char buffer[8*1024];
+  gdb_byte buffer[8*1024];
   int count;
 
   fd = open (name, O_RDONLY | O_BINARY);
@@ -1463,7 +1464,42 @@ static void
 load_command (char *arg, int from_tty)
 {
   if (arg == NULL)
-    arg = get_exec_file (1);
+    {
+      char *parg;
+      int count = 0;
+
+      parg = arg = get_exec_file (1);
+
+      /* Count how many \ " ' tab space there are in the name.  */
+      while ((parg = strpbrk (parg, "\\\"'\t ")))
+	{
+	  parg++;
+	  count++;
+	}
+
+      if (count)
+	{
+	  /* We need to quote this string so buildargv can pull it apart.  */
+	  char *temp = xmalloc (strlen (arg) + count + 1 );
+	  char *ptemp = temp;
+	  char *prev;
+
+	  make_cleanup (xfree, temp);
+
+	  prev = parg = arg;
+	  while ((parg = strpbrk (parg, "\\\"'\t ")))
+	    {
+	      strncpy (ptemp, prev, parg - prev);
+	      ptemp += parg - prev;
+	      prev = parg++;
+	      *ptemp++ = '\\';
+	    }
+	  strcpy (ptemp, prev);
+
+	  arg = temp;
+	}
+    }
+
   target_load (arg, from_tty);
 
   /* After re-loading the executable, we don't really know which
@@ -1521,7 +1557,7 @@ load_section_callback (bfd *abfd, asection *asec, void *data)
       bfd_size_type size = bfd_get_section_size (asec);
       if (size > 0)
 	{
-	  char *buffer;
+	  gdb_byte *buffer;
 	  struct cleanup *old_chain;
 	  CORE_ADDR lma = bfd_section_lma (abfd, asec) + args->load_offset;
 	  bfd_size_type block_size;
@@ -1566,7 +1602,7 @@ load_section_callback (bfd *abfd, asection *asec, void *data)
 		     method to the target vector and then use
 		     that.  remote.c could implement that method
 		     using the ``qCRC'' packet.  */
-		  char *check = xmalloc (len);
+		  gdb_byte *check = xmalloc (len);
 		  struct cleanup *verify_cleanups =
 		    make_cleanup (xfree, check);
 
@@ -1610,33 +1646,40 @@ generic_load (char *args, int from_tty)
   bfd *loadfile_bfd;
   struct timeval start_time, end_time;
   char *filename;
-  struct cleanup *old_cleanups;
-  char *offptr;
+  struct cleanup *old_cleanups = make_cleanup (null_cleanup, 0);
   struct load_section_data cbdata;
   CORE_ADDR entry;
+  char **argv;
 
   cbdata.load_offset = 0;	/* Offset to add to vma for each section. */
   cbdata.write_count = 0;	/* Number of writes needed. */
   cbdata.data_count = 0;	/* Number of bytes written to target memory. */
   cbdata.total_size = 0;	/* Total size of all bfd sectors. */
 
-  /* Parse the input argument - the user can specify a load offset as
-     a second argument. */
-  filename = xmalloc (strlen (args) + 1);
-  old_cleanups = make_cleanup (xfree, filename);
-  strcpy (filename, args);
-  offptr = strchr (filename, ' ');
-  if (offptr != NULL)
+  argv = buildargv (args);
+
+  if (argv == NULL)
+    nomem(0);
+
+  make_cleanup_freeargv (argv);
+
+  filename = tilde_expand (argv[0]);
+  make_cleanup (xfree, filename);
+
+  if (argv[1] != NULL)
     {
       char *endptr;
 
-      cbdata.load_offset = strtoul (offptr, &endptr, 0);
-      if (offptr == endptr)
-	error (_("Invalid download offset:%s."), offptr);
-      *offptr = '\0';
+      cbdata.load_offset = strtoul (argv[1], &endptr, 0);
+
+      /* If the last word was not a valid number then
+         treat it as a file name with spaces in.  */
+      if (argv[1] == endptr)
+        error (_("Invalid download offset:%s."), argv[1]);
+
+      if (argv[2] != NULL)
+	error (_("Too many parameters."));
     }
-  else
-    cbdata.load_offset = 0;
 
   /* Open the file for loading. */
   loadfile_bfd = bfd_openr (filename, gnutarget);
@@ -1765,6 +1808,7 @@ add_symbol_file_command (char *args, int from_tty)
   int i;
   int expecting_sec_name = 0;
   int expecting_sec_addr = 0;
+  char **argv;
 
   struct sect_opt
   {
@@ -1786,28 +1830,15 @@ add_symbol_file_command (char *args, int from_tty)
   if (args == NULL)
     error (_("add-symbol-file takes a file name and an address"));
 
-  /* Make a copy of the string that we can safely write into. */
-  args = xstrdup (args);
+  argv = buildargv (args);
+  make_cleanup_freeargv (argv);
 
-  while (*args != '\000')
+  if (argv == NULL)
+    nomem (0);
+
+  for (arg = argv[0], argcnt = 0; arg != NULL; arg = argv[++argcnt])
     {
-      /* Any leading spaces? */
-      while (isspace (*args))
-	args++;
-
-      /* Point arg to the beginning of the argument. */
-      arg = args;
-
-      /* Move args pointer over the argument. */
-      while ((*args != '\000') && !isspace (*args))
-	args++;
-
-      /* If there are more arguments, terminate arg and
-         proceed past it. */
-      if (*args != '\000')
-	*args++ = '\000';
-
-      /* Now process the argument. */
+      /* Process the argument. */
       if (argcnt == 0)
 	{
 	  /* The first argument is the file name. */
@@ -1870,8 +1901,14 @@ add_symbol_file_command (char *args, int from_tty)
 		    error (_("USAGE: add-symbol-file <filename> <textaddress> [-mapped] [-readnow] [-s <secname> <addr>]*"));
 	      }
 	  }
-      argcnt++;
     }
+
+  /* This command takes at least two arguments.  The first one is a
+     filename, and the second is the address where this file has been
+     loaded.  Abort now if this address hasn't been provided by the
+     user.  */
+  if (section_index < 1)
+    error (_("The address where %s has been loaded is missing"), filename);
 
   /* Print the prompt for the query below. And save the arguments into
      a sect_addr_info structure to be passed around to other
@@ -2009,6 +2046,10 @@ reread_symbols (void)
 			 alloca (SIZEOF_N_SECTION_OFFSETS (num_offsets)));
 	      memcpy (offsets, objfile->section_offsets,
 		      SIZEOF_N_SECTION_OFFSETS (num_offsets));
+
+	      /* Remove any references to this objfile in the global
+		 value lists.  */
+	      preserve_values (objfile);
 
 	      /* Nuke all the state that we will re-read.  Much of the following
 	         code which sets things to NULL really is necessary to tell
@@ -2482,9 +2523,7 @@ clear_symtab_users (void)
      breakpoint_re_set may try to access the current symtab.  */
   clear_current_source_symtab_and_line ();
 
-  clear_value_history ();
   clear_displays ();
-  clear_internalvars ();
   breakpoint_re_set ();
   set_default_breakpoint (0, 0, 0, 0);
   clear_pc_function_cache ();
@@ -3473,7 +3512,7 @@ static void
 read_target_long_array (CORE_ADDR memaddr, unsigned int *myaddr, int len)
 {
   /* FIXME (alloca): Not safe if array is very large. */
-  char *buf = alloca (len * TARGET_LONG_BYTES);
+  gdb_byte *buf = alloca (len * TARGET_LONG_BYTES);
   int i;
 
   read_memory (memaddr, buf, len * TARGET_LONG_BYTES);
@@ -3513,7 +3552,7 @@ simple_read_overlay_table (void)
     = (void *) xmalloc (cache_novlys * sizeof (*cache_ovly_table));
   cache_ovly_table_base = SYMBOL_VALUE_ADDRESS (ovly_table_msym);
   read_target_long_array (cache_ovly_table_base,
-                          (int *) cache_ovly_table,
+                          (unsigned int *) cache_ovly_table,
                           cache_novlys * 4);
 
   return 1;			/* SUCCESS */
@@ -3541,7 +3580,7 @@ simple_read_overlay_region_table (void)
 	{
 	  cache_ovly_region_table_base = SYMBOL_VALUE_ADDRESS (msym);
 	  read_target_long_array (cache_ovly_region_table_base,
-				  (int *) cache_ovly_region_table,
+				  (unsigned int *) cache_ovly_region_table,
 				  cache_novly_regions * 3);
 	}
       else
@@ -3575,7 +3614,7 @@ simple_overlay_update_1 (struct obj_section *osect)
 	/* && cache_ovly_table[i][SIZE] == size */ )
       {
 	read_target_long_array (cache_ovly_table_base + i * TARGET_LONG_BYTES,
-				(int *) cache_ovly_table[i], 4);
+				(unsigned int *) cache_ovly_table[i], 4);
 	if (cache_ovly_table[i][VMA] == bfd_section_vma (obfd, bsect)
 	    && cache_ovly_table[i][LMA] == bfd_section_lma (obfd, bsect)
 	    /* && cache_ovly_table[i][SIZE] == size */ )
@@ -3693,8 +3732,8 @@ to execute."), &cmdlist);
   set_cmd_completer (c, filename_completer);
 
   c = add_cmd ("add-symbol-file", class_files, add_symbol_file_command, _("\
+Load symbols from FILE, assuming FILE has been dynamically loaded.\n\
 Usage: add-symbol-file FILE ADDR [-s <SECT> <SECT_ADDR> -s <SECT> <SECT_ADDR> ...]\n\
-Load the symbols from FILE, assuming FILE has been dynamically loaded.\n\
 ADDR is the starting address of the file's text.\n\
 The optional arguments are section-name section-address pairs and\n\
 should be specified if the data and bss segments are not contiguous\n\
@@ -3711,7 +3750,8 @@ Load the symbols from shared objects in the dynamic linker's link map."),
 
   c = add_cmd ("load", class_files, load_command, _("\
 Dynamically load FILE into the running program, and record its symbols\n\
-for access from GDB."), &cmdlist);
+for access from GDB.\n\
+A load OFFSET may also be given."), &cmdlist);
   set_cmd_completer (c, filename_completer);
 
   add_setshow_boolean_cmd ("symbol-reloading", class_support,

@@ -1,5 +1,5 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
@@ -70,8 +70,9 @@ m68hc11_elf_hash_table_create (bfd *abfd)
     return NULL;
 
   memset (ret, 0, amt);
-  if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
-				       _bfd_elf_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      _bfd_elf_link_hash_newfunc,
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -85,7 +86,8 @@ m68hc11_elf_hash_table_create (bfd *abfd)
       free (ret);
       return NULL;
     }
-  if (!bfd_hash_table_init (ret->stub_hash_table, stub_hash_newfunc))
+  if (!bfd_hash_table_init (ret->stub_hash_table, stub_hash_newfunc,
+			    sizeof (struct elf32_m68hc11_stub_hash_entry)))
     return NULL;
 
   ret->stub_bfd = NULL;

@@ -1,5 +1,5 @@
 /* M16C/M32C specific support for 32-bit ELF.
-   Copyright (C) 2005
+   Copyright (C) 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,7 +40,8 @@ static bfd_boolean m32c_elf_check_relocs
   (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *);
 static bfd_boolean m32c_elf_relax_delete_bytes (bfd *, asection *, bfd_vma, int);
 #ifdef DEBUG
-static char * m32c_get_reloc (long reloc);
+char * m32c_get_reloc (long reloc);
+void dump_symtab (bfd *, void *, void *);
 #endif
 static bfd_boolean m32c_elf_relax_section
 (bfd *abfd, asection *sec, struct bfd_link_info *link_info, bfd_boolean *again);
@@ -74,7 +75,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_16",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
-	 0x0000ffff,		/* dst_mask */
+	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   HOWTO (R_M32C_24,		/* type */
@@ -88,7 +89,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_24",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
-	 0x00ffffff,            /* dst_mask */
+	 0xffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   HOWTO (R_M32C_32,		/* type */
@@ -116,7 +117,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_8_PCREL",	/* name */
 	 FALSE,			/* partial_inplace */
 	 0,     		/* src_mask */
-	 0x000000ff,   		/* dst_mask */
+	 0xff,   		/* dst_mask */
 	 TRUE), 		/* pcrel_offset */
 
   HOWTO (R_M32C_16_PCREL,	/* type */
@@ -130,7 +131,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_16_PCREL",	/* name */
 	 FALSE,			/* partial_inplace */
 	 0,     		/* src_mask */
-	 0,             	/* dst_mask */
+	 0xffff,             	/* dst_mask */
 	 TRUE), 		/* pcrel_offset */
 
   HOWTO (R_M32C_8,		/* type */
@@ -144,7 +145,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_8",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,     		/* src_mask */
-	 0x000000ff,		/* dst_mask */
+	 0xff,			/* dst_mask */
 	 FALSE), 		/* pcrel_offset */
 
   HOWTO (R_M32C_LO16,		/* type */
@@ -158,7 +159,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_LO16",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,     		/* src_mask */
-	 0x0000ffff,		/* dst_mask */
+	 0xffff,		/* dst_mask */
 	 FALSE), 		/* pcrel_offset */
 
   HOWTO (R_M32C_HI8,		/* type */
@@ -172,7 +173,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_HI8",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,     		/* src_mask */
-	 0x000000ff,		/* dst_mask */
+	 0xff,			/* dst_mask */
 	 FALSE), 		/* pcrel_offset */
 
   HOWTO (R_M32C_HI16,		/* type */
@@ -186,8 +187,51 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 "R_M32C_HI16",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,     		/* src_mask */
-	 0x0000ffff,		/* dst_mask */
+	 0xffff,		/* dst_mask */
 	 FALSE), 		/* pcrel_offset */
+
+  HOWTO (R_M32C_RL_JUMP,	/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_M32C_RL_JUMP",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,     		/* src_mask */
+	 0,   			/* dst_mask */
+	 FALSE), 		/* pcrel_offset */
+
+  HOWTO (R_M32C_RL_1ADDR,	/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_M32C_RL_1ADDR",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,     		/* src_mask */
+	 0,   			/* dst_mask */
+	 FALSE), 		/* pcrel_offset */
+
+  HOWTO (R_M32C_RL_2ADDR,	/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_M32C_RL_2ADDR",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,     		/* src_mask */
+	 0,   			/* dst_mask */
+	 FALSE), 		/* pcrel_offset */
+
 };
 
 /* Map BFD reloc types to M32C ELF reloc types.  */
@@ -209,7 +253,10 @@ static const struct m32c_reloc_map m32c_reloc_map [] =
   { BFD_RELOC_8,		R_M32C_8 },
   { BFD_RELOC_LO16,		R_M32C_LO16 },
   { BFD_RELOC_HI16,		R_M32C_HI16 },
-  { BFD_RELOC_M32C_HI8,		R_M32C_HI8 }
+  { BFD_RELOC_M32C_HI8,		R_M32C_HI8 },
+  { BFD_RELOC_M32C_RL_JUMP,	R_M32C_RL_JUMP },
+  { BFD_RELOC_M32C_RL_1ADDR,	R_M32C_RL_1ADDR },
+  { BFD_RELOC_M32C_RL_2ADDR,	R_M32C_RL_2ADDR }
 };
 
 static reloc_howto_type *
@@ -316,6 +363,13 @@ m32c_elf_relocate_section
       int                          r_type;
       
       r_type = ELF32_R_TYPE (rel->r_info);
+
+      /* These are only used for relaxing; we don't actually relocate
+	 anything with them, so skip them.  */
+      if (r_type == R_M32C_RL_JUMP
+	  || r_type == R_M32C_RL_1ADDR
+	  || r_type == R_M32C_RL_2ADDR)
+	continue;
       
       r_symndx = ELF32_R_SYM (rel->r_info);
 
@@ -344,7 +398,7 @@ m32c_elf_relocate_section
       h      = NULL;
       sym    = NULL;
       sec    = NULL;
-      
+
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
@@ -355,7 +409,7 @@ m32c_elf_relocate_section
 	  
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = (sym->st_name == 0) ? bfd_section_name (input_bfd, sec) : name;
 	}
       else
 	{
@@ -429,6 +483,22 @@ m32c_elf_relocate_section
 		relocation = (splt->output_section->vma
 			      + splt->output_offset
 			      + (*plt_offset & -2));
+		if (name)
+		{
+		  char *newname = bfd_malloc (strlen(name)+5);
+		  strcpy (newname, name);
+		  strcat(newname, ".plt");
+		  _bfd_generic_link_add_one_symbol (info,
+						    input_bfd,
+						    newname,
+						    BSF_FUNCTION | BSF_WEAK,
+						    splt,
+						    (*plt_offset & -2),
+						    0,
+						    1,
+						    0,
+						    0);
+		}
 	      }
 	  }
 	  break;
@@ -439,6 +509,18 @@ m32c_elf_relocate_section
 	  break;
 	}
 
+#if 0
+      printf ("relocate %s at %06lx relocation %06lx addend %ld  ",
+	      m32c_elf_howto_table[ELF32_R_TYPE(rel->r_info)].name,
+	      rel->r_offset + input_section->output_section->vma + input_section->output_offset,
+	      relocation, rel->r_addend);
+      {
+	int i;
+	for (i=0; i<4; i++)
+	  printf (" %02x", contents[rel->r_offset+i]);
+	printf ("\n");
+      }
+#endif
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
                                     contents, rel->r_offset, relocation,
                                     rel->r_addend);
@@ -855,7 +937,7 @@ m32c_elf_object_p (bfd *abfd)
  
 
 #ifdef DEBUG
-static void
+void
 dump_symtab (bfd * abfd, void *internal_syms, void *external_syms)
 {
   size_t locsymcount;
@@ -896,7 +978,6 @@ dump_symtab (bfd * abfd, void *internal_syms, void *external_syms)
 	{
 	case STT_FUNC: st_info_str = "STT_FUNC";
 	case STT_SECTION: st_info_str = "STT_SECTION";
-	case STT_SRELC: st_info_str = "STT_SRELC";
 	case STT_FILE: st_info_str = "STT_FILE";
 	case STT_OBJECT: st_info_str = "STT_OBJECT";
 	case STT_TLS: st_info_str = "STT_TLS";
@@ -941,7 +1022,7 @@ dump_symtab (bfd * abfd, void *internal_syms, void *external_syms)
     free (external_syms);
 }
 
-static char *
+char *
 m32c_get_reloc (long reloc)
 {
   if (0 <= reloc && reloc < R_M32C_max)
@@ -1143,169 +1224,169 @@ m32c_elf_relax_plt_section (bfd *dynobj,
   return TRUE;
 }
 
-struct relax_reloc_s
+static int
+compare_reloc (const void *e1, const void *e2)
 {
-  int machine;
-  int opcode_mask;
-  bfd_vma opcode;		/* original opcode or insn part */
-  int relax_backward;		/* lbound */
-  int relax_forward;		/* hbound */
-  int value_shift;
-  int mask;
-  int new_opcode;		/* new opcode */
-  int old_reloc;		/* old relocation */
-  int new_reloc;		/* new relocation  */
-  int use_pcrel;
-  int delete_n;		/* # bytes differ between original and new */
-};
-static struct relax_reloc_s relax_reloc [] =
-  {
-#if 0
+  const Elf_Internal_Rela *i1 = (const Elf_Internal_Rela *) e1;
+  const Elf_Internal_Rela *i2 = (const Elf_Internal_Rela *) e2;
+
+  if (i1->r_offset == i2->r_offset)
+    return 0;
+  else
+    return i1->r_offset < i2->r_offset ? -1 : 1;
+}
+
+#define OFFSET_FOR_RELOC(rel) m32c_offset_for_reloc (abfd, rel, symtab_hdr, shndx_buf, intsyms)
+static bfd_vma
+m32c_offset_for_reloc (bfd *abfd,
+		       Elf_Internal_Rela *rel,
+		       Elf_Internal_Shdr *symtab_hdr,
+		       Elf_External_Sym_Shndx *shndx_buf,
+		       Elf_Internal_Sym *intsyms)
+{
+  bfd_vma symval;
+
+  /* Get the value of the symbol referred to by the reloc.  */
+  if (ELF32_R_SYM (rel->r_info) < symtab_hdr->sh_info)
     {
-      bfd_mach_m16c,
-      0xff,
-      0xfc,			/* jmp.a */
-      -32768,
-      32767,
-      2,
-      0xffffff00,
-      0xf4,			/* jmp.w */
-      R_M32C_8_ELABEL24,
-      R_M32C_8_PCREL16,
-      1,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xff,
-      0xcc,			/* jmp.a */
-      -32768,
-      32767,
-      2,
-      0xffffff00,
-      0xce,			/* jmp.w */
-      R_M32C_8_ELABEL24,
-      R_M32C_8_PCREL16,
-      1,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xff,
-      0xcd,			/* jsr.a */
-      -32768,
-      32767,
-      2,
-      0xffffff00,
-      0xcf,			/* jsr.w */
-      R_M32C_8_ELABEL24,
-      R_M32C_8_PCREL16,
-      1,
-      1,
-    },
-    {
-      bfd_mach_m16c,
-      0xff,
-      0xf4,			/* jmp.w */
-      -128,
-      127,
-      2,
-      0xffffff00,
-      0xfe,			/* jmp.b */
-      R_M32C_8_PCREL16,
-      R_M32C_8_PCREL8,
-      1,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xff,
-      0xce,			/* jmp.w */
-      -128,
-      127,
-      2,
-      0xffffff00,
-      0xbb,			/* jmp.b */
-      R_M32C_8_PCREL16,
-      R_M32C_8_PCREL8,
-      1,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xc0f6,
-      0x8096,			/* dest */
-      0,
-      0xffff,
-      3,
-      0xffff3fff,
-      0xc000,			/* abs16 */
-      R_M32C_24_ABS24,
-      R_M32C_24_ABS16,
-      0,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xc0f6,
-      0x80a6,			/* dest */
-      0,
-      0xffff,
-      4,
-      0xffff3fff,
-      0xc000,			/* abs16 */
-      R_M32C_32_ABS24,
-      R_M32C_32_ABS16,
-      0,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xc0f6,
-      0x80b6,			/* dest */
-      0,
-      0xffff,
-      5,
-      0xffff3fff,
-      0xc000,			/* abs16 */
-      R_M32C_40_ABS24,
-      R_M32C_40_ABS16,
-      0,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0x30f0,
-      0x20b0,			/* src */
-      0,
-      0xffff,
-      2,
-      0xffffcfff,
-      0x3000,			/* abs16 */
-      R_M32C_16_ABS24,
-      R_M32C_16_ABS16,
-      0,
-      1,
-    },
-    {
-      bfd_mach_m32c,
-      0xc086,
-      0x8086,			/* dest */
-      0,
-      0xffff,
-      2,
-      0xffff3fff,
-      0xc000,			/* abs16 */
-      R_M32C_16_ABS24,
-      R_M32C_16_ABS16,
-      0,
-      1,
-    },
-#endif
-    {
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      /* A local symbol.  */
+      Elf_Internal_Sym *isym;
+      Elf_External_Sym_Shndx *shndx;
+      asection *ssec;
+
+
+      isym = intsyms + ELF32_R_SYM (rel->r_info);
+      ssec = bfd_section_from_elf_index (abfd, isym->st_shndx);
+      shndx = shndx_buf + (shndx_buf ? ELF32_R_SYM (rel->r_info) : 0);
+
+      symval = isym->st_value;
+      if (ssec)
+	symval += ssec->output_section->vma
+	  + ssec->output_offset;
     }
-  };
+  else
+    {
+      unsigned long indx;
+      struct elf_link_hash_entry *h;
+
+      /* An external symbol.  */
+      indx = ELF32_R_SYM (rel->r_info) - symtab_hdr->sh_info;
+      h = elf_sym_hashes (abfd)[indx];
+      BFD_ASSERT (h != NULL);
+
+      if (h->root.type != bfd_link_hash_defined
+	  && h->root.type != bfd_link_hash_defweak)
+	/* This appears to be a reference to an undefined
+	   symbol.  Just ignore it--it will be caught by the
+	   regular reloc processing.  */
+	return 0;
+
+      symval = (h->root.u.def.value
+		+ h->root.u.def.section->output_section->vma
+		+ h->root.u.def.section->output_offset);
+    }
+  return symval;
+}
+
+static int bytes_saved = 0;
+
+static int bytes_to_reloc[] = {
+  R_M32C_NONE,
+  R_M32C_8,
+  R_M32C_16,
+  R_M32C_24,
+  R_M32C_32
+};
+
+/* What we use the bits in a relax reloc addend (R_M32C_RL_*) for.  */
+
+/* Mask for the number of relocs associated with this insn.  */
+#define RLA_RELOCS		0x0000000f
+/* Number of bytes gas emitted (before gas's relaxing) */
+#define RLA_NBYTES		0x00000ff0
+
+/* If the displacement is within the given range and the new encoding
+   differs from the old encoding (the index), then the insn can be
+   relaxed to the new encoding.  */
+typedef struct {
+  int bytes;
+  unsigned int max_disp;
+  unsigned char new_encoding;
+} EncodingTable;
+
+static EncodingTable m16c_addr_encodings[] = {
+  { 0,   0,  0 }, /* R0 */
+  { 0,   0,  1 }, /* R1 */
+  { 0,   0,  2 }, /* R2 */
+  { 0,   0,  3 }, /* R3 */
+  { 0,   0,  4 }, /* A0 */
+  { 0,   0,  5 }, /* A1 */
+  { 0,   0,  6 }, /* [A0] */
+  { 0,   0,  7 }, /* [A1] */
+  { 1,   0,  6 }, /* udsp:8[A0] */
+  { 1,   0,  7 }, /* udsp:8[A1] */
+  { 1,   0, 10 }, /* udsp:8[SB] */
+  { 1,   0, 11 }, /* sdsp:8[FB] */
+  { 2, 255,  8 }, /* udsp:16[A0] */
+  { 2, 255,  9 }, /* udsp:16[A1] */
+  { 2, 255, 10 }, /* udsp:16[SB] */
+  { 2,   0, 15 }, /* abs:16 */
+};
+
+static EncodingTable m16c_jmpaddr_encodings[] = {
+  { 0,   0,  0 }, /* R0 */
+  { 0,   0,  1 }, /* R1 */
+  { 0,   0,  2 }, /* R2 */
+  { 0,   0,  3 }, /* R3 */
+  { 0,   0,  4 }, /* A0 */
+  { 0,   0,  5 }, /* A1 */
+  { 0,   0,  6 }, /* [A0] */
+  { 0,   0,  7 }, /* [A1] */
+  { 1,   0,  6 }, /* udsp:8[A0] */
+  { 1,   0,  7 }, /* udsp:8[A1] */
+  { 1,   0, 10 }, /* udsp:8[SB] */
+  { 1,   0, 11 }, /* sdsp:8[FB] */
+  { 3, 255,  8 }, /* udsp:20[A0] */
+  { 3, 255,  9 }, /* udsp:20[A1] */
+  { 2, 255, 10 }, /* udsp:16[SB] */
+  { 2,   0, 15 }, /* abs:16 */
+};
+
+static EncodingTable m32c_addr_encodings[] = {
+  { 0,     0,  0 }, /* [A0] */
+  { 0,     0,  1 }, /* [A1] */
+  { 0,     0,  2 }, /* A0 */
+  { 0,     0,  3 }, /* A1 */
+  { 1,     0,  0 }, /* udsp:8[A0] */
+  { 1,     0,  1 }, /* udsp:8[A1] */
+  { 1,     0,  6 }, /* udsp:8[SB] */
+  { 1,     0,  7 }, /* sdsp:8[FB] */
+  { 2,   255,  4 }, /* udsp:16[A0] */
+  { 2,   255,  5 }, /* udsp:16[A1] */
+  { 2,   255,  6 }, /* udsp:16[SB] */
+  { 2,   127,  7 }, /* sdsp:16[FB] */
+  { 3, 65535, 8 }, /* udsp:24[A0] */
+  { 3, 65535, 9 }, /* udsp:24[A1] */
+  { 3, 65535, 15 }, /* abs24 */
+  { 2,     0, 15 }, /* abs16 */
+  { 0,     0, 16 }, /* R2 */
+  { 0,     0, 17 }, /* R3 */
+  { 0,     0, 18 }, /* R0 */
+  { 0,     0, 19 }, /* R1 */
+  { 0,     0, 20 }, /*  */
+  { 0,     0, 21 }, /*  */
+  { 0,     0, 22 }, /*  */
+  { 0,     0, 23 }, /*  */
+  { 0,     0, 24 }, /*  */
+  { 0,     0, 25 }, /*  */
+  { 0,     0, 26 }, /*  */
+  { 0,     0, 27 }, /*  */
+  { 0,     0, 28 }, /*  */
+  { 0,     0, 29 }, /*  */
+  { 0,     0, 30 }, /*  */
+  { 0,     0, 31 }, /*  */
+};
+
 static bfd_boolean
 m32c_elf_relax_section
     (bfd *                  abfd,
@@ -1317,11 +1398,11 @@ m32c_elf_relax_section
   Elf_Internal_Shdr *shndx_hdr;
   Elf_Internal_Rela *internal_relocs;
   Elf_Internal_Rela *free_relocs = NULL;
-  Elf_Internal_Rela *irel, *irelend;
+  Elf_Internal_Rela *irel, *irelend, *srel;
   bfd_byte * contents = NULL;
   bfd_byte * free_contents = NULL;
-  Elf32_External_Sym *extsyms = NULL;
-  Elf32_External_Sym *free_extsyms = NULL;
+  Elf_Internal_Sym *intsyms = NULL;
+  Elf_Internal_Sym *free_intsyms = NULL;
   Elf_External_Sym_Shndx *shndx_buf = NULL;
   int machine;
 
@@ -1343,11 +1424,42 @@ m32c_elf_relax_section
       || (sec->flags & SEC_CODE) == 0)
     return TRUE;
 
-  /* Relaxing doesn't quite work right yet.  */
-  return TRUE;
-
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   shndx_hdr = &elf_tdata (abfd)->symtab_shndx_hdr;
+
+  /* Get the section contents.  */
+  if (elf_section_data (sec)->this_hdr.contents != NULL)
+    contents = elf_section_data (sec)->this_hdr.contents;
+  /* Go get them off disk.  */
+  else if (!bfd_malloc_and_get_section (abfd, sec, &contents))
+    goto error_return;
+
+  /* Read this BFD's symbols.  */
+  /* Get cached copy if it exists.  */
+  if (symtab_hdr->contents != NULL)
+    {
+      intsyms = (Elf_Internal_Sym *) symtab_hdr->contents;
+    }
+  else
+    {
+      intsyms = bfd_elf_get_elf_syms (abfd, symtab_hdr, symtab_hdr->sh_info, 0, NULL, NULL, NULL);
+      symtab_hdr->contents = (bfd_byte *) intsyms;
+    }
+
+  if (shndx_hdr->sh_size != 0)
+    {
+      bfd_size_type amt;
+
+      amt = symtab_hdr->sh_info;
+      amt *= sizeof (Elf_External_Sym_Shndx);
+      shndx_buf = (Elf_External_Sym_Shndx *) bfd_malloc (amt);
+      if (shndx_buf == NULL)
+	goto error_return;
+      if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0
+	  || bfd_bread ((PTR) shndx_buf, amt, abfd) != amt)
+	goto error_return;
+      shndx_hdr->contents = (bfd_byte *) shndx_buf;
+    }
 
   /* Get a copy of the native relocations.  */
   internal_relocs = (_bfd_elf_link_read_relocs
@@ -1358,188 +1470,389 @@ m32c_elf_relax_section
   if (! link_info->keep_memory)
     free_relocs = internal_relocs;
 
+  /* The RL_ relocs must be just before the operand relocs they go
+     with, so we must sort them to guarantee this.  */
+  qsort (internal_relocs, sec->reloc_count, sizeof (Elf_Internal_Rela),
+         compare_reloc);
+
   /* Walk through them looking for relaxing opportunities.  */
   irelend = internal_relocs + sec->reloc_count;
 
   for (irel = internal_relocs; irel < irelend; irel++)
     {
       bfd_vma symval;
-      bfd_vma insn;
+      unsigned char *insn, *gap, *einsn;
       bfd_vma pc;
-      bfd_signed_vma pcrel_value;
-      bfd_vma addend;
-      int to_delete;
-      int i;
+      bfd_signed_vma pcrel;
+      int relax_relocs;
+      int gap_size;
+      int new_type;
+      int posn;
+      int enc;
+      EncodingTable *enctbl;
+      EncodingTable *e;
 
-      /* Get the section contents.  */
-      if (contents == NULL)
-	{
-	  if (elf_section_data (sec)->this_hdr.contents != NULL)
-	    contents = elf_section_data (sec)->this_hdr.contents;
-	  /* Go get them off disk.  */
-	  else if (!bfd_malloc_and_get_section (abfd, sec, &contents))
-	    goto error_return;
-	}
+      if (ELF32_R_TYPE(irel->r_info) != R_M32C_RL_JUMP
+	  && ELF32_R_TYPE(irel->r_info) != R_M32C_RL_1ADDR
+	  && ELF32_R_TYPE(irel->r_info) != R_M32C_RL_2ADDR)
+	continue;
 
-      /* Read this BFD's symbols if we haven't done so already.  */
-      if (extsyms == NULL)
-	{
-	  /* Get cached copy if it exists.  */
-	  if (symtab_hdr->contents != NULL)
-	    extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
-	  else
-	    {
-	      bfd_size_type amt = symtab_hdr->sh_size;
-
-	      /* Go get them off disk.  */
-	      extsyms = (Elf32_External_Sym *) bfd_malloc (amt);
-	      if (extsyms == NULL)
-		goto error_return;
-	      free_extsyms = extsyms;
-	      if (bfd_seek (abfd, symtab_hdr->sh_offset, SEEK_SET) != 0
-		  || bfd_bread (extsyms, amt, abfd) != amt)
-		goto error_return;
-	      symtab_hdr->contents = (bfd_byte *) extsyms;
-	    }
-
-	  if (shndx_hdr->sh_size != 0)
-	    {
-	      bfd_size_type amt;
-
-	      amt = symtab_hdr->sh_info;
-	      amt *= sizeof (Elf_External_Sym_Shndx);
-	      shndx_buf = (Elf_External_Sym_Shndx *) bfd_malloc (amt);
-	      if (shndx_buf == NULL)
-		goto error_return;
-	      if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0
-		  || bfd_bread ((PTR) shndx_buf, amt, abfd) != amt)
-		goto error_return;
-	      shndx_hdr->contents = (bfd_byte *) shndx_buf;
-	    }
-	}
-
-      /* Get the value of the symbol referred to by the reloc.  */
-      if (ELF32_R_SYM (irel->r_info) < symtab_hdr->sh_info)
-	{
-	  /* A local symbol.  */
-	  Elf32_External_Sym *esym;
-	  Elf_External_Sym_Shndx *shndx;
-	  Elf_Internal_Sym isym;
-
-	  esym = extsyms + ELF32_R_SYM (irel->r_info);
-	  shndx = shndx_buf + (shndx_buf ? ELF32_R_SYM (irel->r_info) : 0);
-	  bfd_elf32_swap_symbol_in (abfd, esym, shndx, &isym);
-
-	  symval = (isym.st_value
-		    + sec->output_section->vma
-		    + sec->output_offset);
-	}
-      else
-	{
-	  unsigned long indx;
-	  struct elf_link_hash_entry *h;
-
-	  /* An external symbol.  */
-	  indx = ELF32_R_SYM (irel->r_info) - symtab_hdr->sh_info;
-	  h = elf_sym_hashes (abfd)[indx];
-	  BFD_ASSERT (h != NULL);
-
-	  if (h->root.type != bfd_link_hash_defined
-	      && h->root.type != bfd_link_hash_defweak)
-	    /* This appears to be a reference to an undefined
-	       symbol.  Just ignore it--it will be caught by the
-	       regular reloc processing.  */
-	    continue;
-
-	  symval = (h->root.u.def.value
-		    + h->root.u.def.section->output_section->vma
-		    + h->root.u.def.section->output_offset);
-	}
+      srel = irel;
 
       /* There will always be room for the relaxed insn, since it is smaller
 	 than the one it would replace.  */
-      BFD_ASSERT (irel->r_offset <= sec->size - 2);
+      BFD_ASSERT (irel->r_offset < sec->size);
 
-      insn = bfd_get_16 (abfd, contents + irel->r_offset + 0);
+      insn = contents + irel->r_offset;
+      relax_relocs = irel->r_addend % 16;
 
-      addend = irel->r_addend;
-      for (i = 0; relax_reloc[i].machine; i++)
+      /* Ok, we only have three relocs we care about, and they're all
+	 fake.  The lower four bits of the addend is always the number
+	 of following relocs (hence the qsort above) that are assigned
+	 to this opcode.  The next 8 bits of the addend indicates the
+	 number of bytes in the insn.  We use the rest of them
+	 ourselves as flags for the more expensive operations (defines
+	 above).  The three relocs are:
+
+	 RL_JUMP: This marks all direct jump insns.  We check the
+		displacement and replace them with shorter jumps if
+		they're in range.  We also use this to find JMP.S
+		insns and manually shorten them when we delete bytes.
+		We have to decode these insns to figure out what to
+		do.
+
+	 RL_1ADDR: This is a :G or :Q insn, which has a single
+		"standard" operand.  We have to extract the type
+		field, see if it's a wide displacement, then figure
+		out if we can replace it with a narrow displacement.
+		We don't have to decode these insns.
+
+	 RL_2ADDR: Similarly, but two "standard" operands.  Note that
+		r_addend may still be 1, as standard operands don't
+		always have displacements.  Gas shouldn't give us one
+		with zero operands, but since we don't know which one
+		has the displacement, we check them both anyway.
+
+	 These all point to the beginning of the insn itself, not the
+	 operands.
+
+	 Note that we only relax one step at a time, relying on the
+	 linker to call us repeatedly.  Thus, there is no code for
+	 JMP.A->JMP.B although that will happen in two steps.
+	 Likewise, for 2ADDR relaxes, we do one operand per cycle.
+      */
+
+      /* Get the value of the symbol referred to by the reloc.  Just
+         in case this is the last reloc in the list, use the RL's
+         addend to choose between this reloc (no addend) or the next
+         (yes addend, which means at least one following reloc).  */
+      srel = irel + (relax_relocs ? 1 : 0);
+      symval = OFFSET_FOR_RELOC (srel);
+
+      /* Setting gap_size nonzero is the flag which means "something
+	 shrunk".  */
+      gap_size = 0;
+      gap = NULL;
+      new_type = ELF32_R_TYPE(srel->r_info);
+
+      pc = sec->output_section->vma + sec->output_offset
+	+ srel->r_offset;
+      pcrel = symval - pc + srel->r_addend;
+
+      if (machine == bfd_mach_m16c)
 	{
-#ifdef DEBUG
-	  _bfd_error_handler ("insn %x %d mask %x opcode %x =%x\n",
-			      insn, i, relax_reloc[i].opcode_mask,
-			      relax_reloc[i].opcode,
-			      (insn & relax_reloc[i].opcode_mask) == relax_reloc[i].opcode);
-#endif
-	  if (!(machine == relax_reloc[i].machine
-		&& (insn & relax_reloc[i].opcode_mask) == relax_reloc[i].opcode
-		&& (relax_reloc[i].old_reloc
-		    == (int) ELF32_R_TYPE(irel->r_info))))
-	    continue;
+	  /* R8C / M16C */
 
-	  /* At this point we've confirmed we have a matching insn.  Now
-	     ensure the operand is in range.  */
-	  if (relax_reloc[i].use_pcrel)
+	  switch (ELF32_R_TYPE(irel->r_info))
 	    {
-	      pc = sec->output_section->vma + sec->output_offset
-		+ irel->r_offset;
-	      pcrel_value = symval - pc;
-#ifndef USE_REL /* put in for learning purposes */
-	      pcrel_value += addend;
-#else
-	      addend = bfd_get_signed_16 (abfd, contents + irel->r_offset + 2);
-	      pcrel_value += addend;
-#endif
-	    }
-	  else
-	    pcrel_value = symval;
 
-	  if (pcrel_value >= relax_reloc[i].relax_backward
-	      && pcrel_value < relax_reloc[i].relax_forward + 2)
+	    case R_M32C_RL_JUMP:
+	      switch (insn[0])
+		{
+		case 0xfe: /* jmp.b */
+		  if (pcrel >= 2 && pcrel <= 9)
+		    {
+		      /* Relax JMP.B -> JMP.S.  We need to get rid of
+			 the following reloc though. */
+		      insn[0] = 0x60 | (pcrel - 2);
+		      new_type = R_M32C_NONE;
+		      irel->r_addend = 0x10;
+		      gap_size = 1;
+		      gap = insn + 1;
+		    }
+		  break;
+
+		case 0xf4: /* jmp.w */
+		  /* 128 is allowed because it will be one byte closer
+		     after relaxing.  Likewise for all other pc-rel
+		     jumps.  */
+		  if (pcrel <= 128 && pcrel >= -128)
+		    {
+		      /* Relax JMP.W -> JMP.B */
+		      insn[0] = 0xfe;
+		      insn[1] = 0;
+		      new_type = R_M32C_8_PCREL;
+		      gap_size = 1;
+		      gap = insn + 2;
+		    }
+		  break;
+
+		case 0xfc: /* jmp.a */
+		  if (pcrel <= 32768 && pcrel >= -32768)
+		    {
+		      /* Relax JMP.A -> JMP.W */
+		      insn[0] = 0xf4;
+		      insn[1] = 0;
+		      insn[2] = 0;
+		      new_type = R_M32C_16_PCREL;
+		      gap_size = 1;
+		      gap = insn + 3;
+		    }
+		  break;
+
+		case 0xfd: /* jsr.a */
+		  if (pcrel <= 32768 && pcrel >= -32768)
+		    {
+		      /* Relax JSR.A -> JSR.W */
+		      insn[0] = 0xf5;
+		      insn[1] = 0;
+		      insn[2] = 0;
+		      new_type = R_M32C_16_PCREL;
+		      gap_size = 1;
+		      gap = insn + 3;
+		    }
+		  break;
+		}
+	      break;
+
+	    case R_M32C_RL_2ADDR:
+	      /* xxxx xxxx srce dest [src-disp] [dest-disp]*/
+
+	      enctbl = m16c_addr_encodings;
+	      posn = 2;
+	      enc = (insn[1] >> 4) & 0x0f;
+	      e = & enctbl[enc];
+
+	      if (srel->r_offset == irel->r_offset + posn
+		  && e->new_encoding != enc
+		  && symval <= e->max_disp)
+		{
+		  insn[1] &= 0x0f;
+		  insn[1] |= e->new_encoding << 4;
+		  gap_size = e->bytes - enctbl[e->new_encoding].bytes;
+		  gap = insn + posn + enctbl[e->new_encoding].bytes;
+		  new_type = bytes_to_reloc[enctbl[e->new_encoding].bytes];
+		  break;
+		}
+	      if (relax_relocs == 2)
+		srel ++;
+	      posn += e->bytes;
+
+	      goto try_1addr_16;
+
+	    case R_M32C_RL_1ADDR:
+	      /* xxxx xxxx xxxx dest [disp] */
+
+	      enctbl = m16c_addr_encodings;
+	      posn = 2;
+	      
+	      /* Check the opcode for jumps.  We know it's safe to
+		 do this because all 2ADDR insns are at least two
+		 bytes long.  */
+	      enc = insn[0] * 256 + insn[1];
+	      enc &= 0xfff0;
+	      if (enc == 0x7d20
+		  || enc == 0x7d00
+		  || enc == 0x7d30
+		  || enc == 0x7d10)
+		{
+		  enctbl = m16c_jmpaddr_encodings;
+		}
+
+	    try_1addr_16:
+	      /* srel, posn, and enc must be set here.  */
+
+	      symval = OFFSET_FOR_RELOC (srel);
+	      enc = insn[1] & 0x0f;
+	      e = & enctbl[enc];
+
+	      if (srel->r_offset == irel->r_offset + posn
+		  && e->new_encoding != enc
+		  && symval <= e->max_disp)
+		{
+		  insn[1] &= 0xf0;
+		  insn[1] |= e->new_encoding;
+		  gap_size = e->bytes - enctbl[e->new_encoding].bytes;
+		  gap = insn + posn + enctbl[e->new_encoding].bytes;
+		  new_type = bytes_to_reloc[enctbl[e->new_encoding].bytes];
+		  break;
+		}
+
+	      break;
+
+	    } /* Ends switch (reloc type) for m16c.  */
+	}
+      else /* machine == bfd_mach_m32c */
+	{
+	  /* M32CM / M32C */
+
+	  switch (ELF32_R_TYPE(irel->r_info))
 	    {
-	      /* We can relax to a shorter operand.  */
-	      insn = (insn & relax_reloc[i].mask) | relax_reloc[i].new_opcode;
 
-	      to_delete = relax_reloc[i].delete_n;
+	    case R_M32C_RL_JUMP:
+	      switch (insn[0])
+		{
+		case 0xbb: /* jmp.b */
+		  if (pcrel >= 2 && pcrel <= 9)
+		    {
+		      int p = pcrel - 2;
+		      /* Relax JMP.B -> JMP.S.  We need to get rid of
+			 the following reloc though. */
+		      insn[0] = 0x4a | ((p << 3) & 0x30) | (p & 1);
+		      new_type = R_M32C_NONE;
+		      irel->r_addend = 0x10;
+		      gap_size = 1;
+		      gap = insn + 1;
+		    }
+		  break;
 
-	      /* Rewrite the insn.  */
-	      bfd_put_16 (abfd, insn, contents + irel->r_offset);
+		case 0xce: /* jmp.w */
+		  if (pcrel <= 128 && pcrel >= -128)
+		    {
+		      /* Relax JMP.W -> JMP.B */
+		      insn[0] = 0xbb;
+		      insn[1] = 0;
+		      new_type = R_M32C_8_PCREL;
+		      gap_size = 1;
+		      gap = insn + 2;
+		    }
+		  break;
 
-	      /* Set the new reloc type.  */
-	      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
-					   relax_reloc[i].new_reloc);
-	      irel->r_addend = pcrel_value;
-	    }
-	  else
-	    continue;
+		case 0xcc: /* jmp.a */
+		  if (pcrel <= 32768 && pcrel >= -32768)
+		    {
+		      /* Relax JMP.A -> JMP.W */
+		      insn[0] = 0xce;
+		      insn[1] = 0;
+		      insn[2] = 0;
+		      new_type = R_M32C_16_PCREL;
+		      gap_size = 1;
+		      gap = insn + 3;
+		    }
+		  break;
 
-#ifdef DEBUG
-	  _bfd_error_handler  ("insn %x pc %x index %d mask %x shift %d delete %d\n"
-			       "old reloc %s new reloc %s",
-			       insn, sec->output_section->vma
-			       + sec->output_offset + irel->r_offset + 2,
-			       i, relax_reloc[i].opcode_mask,
-			       relax_reloc[i].value_shift, to_delete,
-			       m32c_get_reloc (relax_reloc[i].old_reloc),
-			       m32c_get_reloc (relax_reloc[i].new_reloc));
-#endif
+		case 0xcd: /* jsr.a */
+		  if (pcrel <= 32768 && pcrel >= -32768)
+		    {
+		      /* Relax JSR.A -> JSR.W */
+		      insn[0] = 0xcf;
+		      insn[1] = 0;
+		      insn[2] = 0;
+		      new_type = R_M32C_16_PCREL;
+		      gap_size = 1;
+		      gap = insn + 3;
+		    }
+		  break;
+		}
+	      break;
 
-	  /* Note that we've changed the relocs, section contents, etc.  */
-	  elf_section_data (sec)->relocs = internal_relocs;
-	  free_relocs = NULL;
+	    case R_M32C_RL_2ADDR:
+	      /* xSSS DDDx DDSS xxxx [src-disp] [dest-disp]*/
 
-	  elf_section_data (sec)->this_hdr.contents = contents;
-	  free_contents = NULL;
+	      einsn = insn;
+	      posn = 2;
+	      if (einsn[0] == 1)
+		{
+		  /* prefix; remove it as far as the RL reloc is concerned.  */
+		  einsn ++;
+		  posn ++;
+		}
 
-	  symtab_hdr->contents = (bfd_byte *) extsyms;
-	  free_extsyms = NULL;
+	      enctbl = m32c_addr_encodings;
+	      enc = ((einsn[0] & 0x70) >> 2) | ((einsn[1] & 0x30) >> 4);
+	      e = & enctbl[enc];
 
-	  /* Delete TO_DELETE bytes of data.  */
-	  if (! m32c_elf_relax_delete_bytes
-	      (abfd, sec, irel->r_offset + relax_reloc[i].value_shift,
-	       to_delete))
-	    goto error_return;
-	} /* next relax_reloc */
+	      if (srel->r_offset == irel->r_offset + posn
+		  && e->new_encoding != enc
+		  && symval <= e->max_disp)
+		{
+		  einsn[0] &= 0x8f;
+		  einsn[0] |= (e->new_encoding & 0x1c) << 2;
+		  einsn[1] &= 0xcf;
+		  einsn[1] |= (e->new_encoding & 0x03) << 4;
+		  gap_size = e->bytes - enctbl[e->new_encoding].bytes;
+		  gap = insn + posn + enctbl[e->new_encoding].bytes;
+		  new_type = bytes_to_reloc[enctbl[e->new_encoding].bytes];
+		  break;
+		}
+	      if (relax_relocs == 2)
+		  srel ++;
+	      posn += e->bytes;
+
+	      goto try_1addr_32;
+
+	    case R_M32C_RL_1ADDR:
+	      /* xxxx DDDx DDxx xxxx [disp] */
+
+	      einsn = insn;
+	      posn = 2;
+	      if (einsn[0] == 1)
+		{
+		  /* prefix; remove it as far as the RL reloc is concerned.  */
+		  einsn ++;
+		  posn ++;
+		}
+
+	      enctbl = m32c_addr_encodings;
+
+	    try_1addr_32:
+	      /* srel, posn, and enc must be set here.  */
+
+	      symval = OFFSET_FOR_RELOC (srel);
+	      enc = ((einsn[0] & 0x0e) << 1) |  ((einsn[1] & 0xc0) >> 6);
+	      e = & enctbl[enc];
+
+	      if (srel->r_offset == irel->r_offset + posn
+		  && e->new_encoding != enc
+		  && symval <= e->max_disp)
+		{
+		  einsn[0] &= 0xf1;
+		  einsn[0] |= (e->new_encoding & 0x1c) >> 1;
+		  einsn[1] &= 0x3f;
+		  einsn[1] |= (e->new_encoding & 0x03) << 6;
+		  gap_size = e->bytes - enctbl[e->new_encoding].bytes;
+		  gap = insn + posn + enctbl[e->new_encoding].bytes;
+		  new_type = bytes_to_reloc[enctbl[e->new_encoding].bytes];
+		  break;
+		}
+
+	      break;
+
+	    } /* Ends switch (reloc type) for m32c.  */
+	}
+
+      if (gap_size == 0)
+	continue;
+
+      *again = TRUE;
+
+      srel->r_info = ELF32_R_INFO (ELF32_R_SYM (srel->r_info), new_type);
+
+      /* Note that we've changed the relocs, section contents, etc.  */
+      elf_section_data (sec)->relocs = internal_relocs;
+      free_relocs = NULL;
+      
+      elf_section_data (sec)->this_hdr.contents = contents;
+      free_contents = NULL;
+
+      symtab_hdr->contents = (bfd_byte *) intsyms;
+      free_intsyms = NULL;
+
+      bytes_saved += gap_size;
+
+      if (! m32c_elf_relax_delete_bytes(abfd, sec, gap - contents, gap_size))
+	goto error_return;
+
     } /* next relocation */
 
   if (free_relocs != NULL)
@@ -1565,18 +1878,18 @@ m32c_elf_relax_section
       free (shndx_buf);
     }
 
-  if (free_extsyms != NULL)
+  if (free_intsyms != NULL)
     {
       if (! link_info->keep_memory)
-	free (free_extsyms);
+	free (free_intsyms);
       /* Cache the symbols for elf_link_input_bfd.  */
       else
-	symtab_hdr->contents = NULL /* (unsigned char *) extsyms*/;
+	{
+	symtab_hdr->contents = NULL /* (unsigned char *) intsyms*/;
+	}
 
-      free_extsyms = NULL;
+      free_intsyms = NULL;
     }
-  /* elf_link_input_bfd expects internal syms.  */
-  symtab_hdr->contents = NULL;
 
   return TRUE;
 
@@ -1590,8 +1903,8 @@ m32c_elf_relax_section
       shndx_hdr->contents = NULL;
       free (shndx_buf);
     }
-  if (free_extsyms != NULL)
-    free (free_extsyms);
+  if (free_intsyms != NULL)
+    free (free_intsyms);
   return FALSE;
 }
 
@@ -1612,20 +1925,15 @@ m32c_elf_relax_delete_bytes
   Elf_Internal_Rela *irelend;
   Elf_Internal_Rela *irelalign;
   bfd_vma toaddr;
-  Elf32_External_Sym *esym;
-  Elf32_External_Sym *esymend;
-  Elf32_External_Sym *extsyms;
+  Elf_Internal_Sym *isym;
+  Elf_Internal_Sym *isymend;
+  Elf_Internal_Sym *intsyms;
   Elf_External_Sym_Shndx *shndx_buf;
   Elf_External_Sym_Shndx *shndx;
   struct elf_link_hash_entry ** sym_hashes;
   struct elf_link_hash_entry ** end_hashes;
   unsigned int                  symcount;
- 
-  symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
-  extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
-  shndx_hdr  = & elf_tdata (abfd)->symtab_shndx_hdr;
-  shndx_buf  = (Elf_External_Sym_Shndx *) shndx_hdr->contents;
-  sec_shndx  = _bfd_elf_section_from_bfd_section (abfd, sec);
+
   contents   = elf_section_data (sec)->this_hdr.contents;
 
   /* The deletion must stop at the next ALIGN reloc for an aligment
@@ -1646,27 +1954,62 @@ m32c_elf_relax_delete_bytes
       /* Get the new reloc address.  */
       if (irel->r_offset > addr && irel->r_offset < toaddr)
 	irel->r_offset -= count;
-      if (irel->r_addend > addr && irel->r_addend < toaddr)
-	irel->r_addend -= count;
+
+      if (ELF32_R_TYPE(irel->r_info) == R_M32C_RL_JUMP
+	  && irel->r_addend == 0x10 /* one byte insn, no relocs */
+	  && irel->r_offset + 1 < addr
+	  && irel->r_offset + 7 > addr)
+	{
+	  bfd_vma disp;
+	  unsigned char *insn = &contents[irel->r_offset];
+	  disp = *insn;
+	  /* This is a JMP.S, which we have to manually update. */
+	  if (elf32_m32c_machine (abfd) == bfd_mach_m16c)
+	    {
+	      if ((*insn & 0xf8) != 0x60)
+		continue;
+	      disp = (disp & 7);
+	    }
+	  else
+	    {
+	      if ((*insn & 0xce) != 0x4a)
+		continue;
+	      disp = ((disp & 0x30) >> 3) | (disp & 1);
+	    }
+	  if (irel->r_offset + disp + 2 >= addr+count)
+	    {
+	      disp -= count;
+	      if (elf32_m32c_machine (abfd) == bfd_mach_m16c)
+		{
+		  *insn = (*insn & 0xf8) | disp;
+		}
+	      else
+		{
+		  *insn = (*insn & 0xce) | ((disp & 6) << 3) | (disp & 1);
+		}
+	    }
+	}
     }
 
   /* Adjust the local symbols defined in this section.  */
+  symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
+  intsyms = (Elf_Internal_Sym *) symtab_hdr->contents;
+  isym = intsyms;
+  isymend = isym + symtab_hdr->sh_info;
+
+  sec_shndx  = _bfd_elf_section_from_bfd_section (abfd, sec);
+  shndx_hdr  = & elf_tdata (abfd)->symtab_shndx_hdr;
+  shndx_buf  = (Elf_External_Sym_Shndx *) shndx_hdr->contents;
   shndx = shndx_buf;
-  esym = extsyms;
-  esymend = esym + symtab_hdr->sh_info;
-  for (; esym < esymend; esym++, shndx = (shndx ? shndx + 1 : NULL))
+
+  for (; isym < isymend; isym++, shndx = (shndx ? shndx + 1 : NULL))
     {
-      Elf_Internal_Sym isym;
-      Elf_External_Sym_Shndx dummy;
 
-      bfd_elf32_swap_symbol_in (abfd, esym, shndx, &isym);
-
-      if ((int) isym.st_shndx == sec_shndx
-	  && isym.st_value > addr
-	  && isym.st_value < toaddr)
+      if ((int) isym->st_shndx == sec_shndx
+	  && isym->st_value > addr
+	  && isym->st_value < toaddr)
 	{
-	  isym.st_value -= count;
-	  bfd_elf32_swap_symbol_out (abfd, &isym, (PTR) esym, (PTR) & dummy);
+	  isym->st_value -= count;
 	}
     }
 
@@ -1687,7 +2030,9 @@ m32c_elf_relax_delete_bytes
 	  && sym_hash->root.u.def.section == sec
 	  && sym_hash->root.u.def.value > addr
 	  && sym_hash->root.u.def.value < toaddr)
-	sym_hash->root.u.def.value -= count;
+	{
+	  sym_hash->root.u.def.value -= count;
+	}
     }
 
   return TRUE;

@@ -1,7 +1,7 @@
 /* Remote debugging interface for Renesas E7000 ICE, for GDB
 
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   2002, 2003, 2004, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support. 
 
@@ -21,8 +21,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* The E7000 is an in-circuit emulator for the Renesas H8/300-H and
    Renesas-SH processor.  It has serial port and a lan port.  
@@ -405,7 +405,7 @@ e7000_create_inferior (char *execfile, char *args, char **env,
   target_terminal_inferior ();
 
   /* insert_step_breakpoint ();  FIXME, do we need this?  */
-  proceed ((CORE_ADDR) entry_pt, -1, 0);	/* Let 'er rip... */
+  write_pc ((CORE_ADDR) entry_pt);
 }
 
 /* Open a connection to a remote debugger.  NAME is the filename used
@@ -1478,7 +1478,7 @@ fast_but_for_the_pause_e7000_read_inferior_memory (CORE_ADDR memaddr,
    Returns the number of bytes transferred. */
 
 static int
-e7000_xfer_inferior_memory (CORE_ADDR memaddr, char *myaddr, int len,
+e7000_xfer_inferior_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
 			    int write, struct mem_attrib *attrib,
 			    struct target_ops *target)
 {
@@ -1702,8 +1702,9 @@ static CORE_ADDR breakaddr[MAX_BREAKPOINTS] =
 {0};
 
 static int
-e7000_insert_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
+e7000_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
   char buf[200];
 #if 0
@@ -1728,7 +1729,8 @@ e7000_insert_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
 	  }
 #else
 #if 0
-	e7000_read_inferior_memory (addr, shadow, 2);
+	bp_tgt->shadow_len = 2;
+	e7000_read_inferior_memory (addr, bp_tgt->shadow_contents, 2);
 	e7000_write_inferior_memory (addr, nop, 2);
 #endif
 
@@ -1745,8 +1747,9 @@ e7000_insert_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
 }
 
 static int
-e7000_remove_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
+e7000_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
   char buf[200];
 
@@ -1773,7 +1776,8 @@ e7000_remove_breakpoint (CORE_ADDR addr, bfd_byte *shadow)
 
 #if 0
 	/* Replace the insn under the break */
-	e7000_write_inferior_memory (addr, shadow, 2);
+	e7000_write_inferior_memory (addr, bp_tgt->shadow_contents,
+				     bp_tgt->shadow_len);
 #endif
 #endif
 

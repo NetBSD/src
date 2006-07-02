@@ -1,8 +1,8 @@
 /* Intel 386 target-dependent stuff.
 
-   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software
-   Foundation, Inc.
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
@@ -308,6 +308,7 @@ struct i386_frame_cache
   /* Saved registers.  */
   CORE_ADDR saved_regs[I386_NUM_SAVED_REGS];
   CORE_ADDR saved_sp;
+  int stack_align;
   int pc_in_eax;
 
   /* Stack space reserved for local variables.  */
@@ -334,6 +335,7 @@ i386_alloc_frame_cache (void)
   for (i = 0; i < I386_NUM_SAVED_REGS; i++)
     cache->saved_regs[i] = -1;
   cache->saved_sp = 0;
+  cache->stack_align = 0;
   cache->pc_in_eax = 0;
 
   /* Frameless until proven otherwise.  */
@@ -483,6 +485,33 @@ i386_skip_probe (CORE_ADDR pc)
     }
 
   return pc;
+}
+
+/* GCC 4.1 and later, can put code in the prologue to realign the
+   stack pointer.  Check whether PC points to such code, and update
+   CACHE accordingly.  Return the first instruction after the code
+   sequence or CURRENT_PC, whichever is smaller.  If we don't
+   recognize the code, return PC.  */
+
+static CORE_ADDR
+i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
+			  struct i386_frame_cache *cache)
+{
+  static const gdb_byte insns[10] = { 
+    0x8d, 0x4c, 0x24, 0x04,	/* leal  4(%esp), %ecx */
+    0x83, 0xe4, 0xf0,		/* andl  $-16, %esp */
+    0xff, 0x71, 0xfc		/* pushl -4(%ecx) */
+  };
+  gdb_byte buf[10];
+
+  if (target_read_memory (pc, buf, sizeof buf)
+      || memcmp (buf, insns, sizeof buf) != 0)
+    return pc;
+
+  if (current_pc > pc + 4)
+    cache->stack_align = 1;
+
+  return min (pc + 10, current_pc);
 }
 
 /* Maximum instruction length we need to handle.  */
@@ -777,6 +806,7 @@ i386_analyze_prologue (CORE_ADDR pc, CORE_ADDR current_pc,
   pc = i386_follow_jump (pc);
   pc = i386_analyze_struct_return (pc, current_pc, cache);
   pc = i386_skip_probe (pc);
+  pc = i386_analyze_stack_align (pc, current_pc, cache);
   pc = i386_analyze_frame_setup (pc, current_pc, cache);
   return i386_analyze_register_saves (pc, current_pc, cache);
 }
@@ -907,6 +937,13 @@ i386_frame_cache (struct frame_info *next_frame, void **this_cache)
   if (cache->pc != 0)
     i386_analyze_prologue (cache->pc, frame_pc_unwind (next_frame), cache);
 
+  if (cache->stack_align)
+    {
+      /* Saved stack pointer has been saved in %ecx.  */
+      frame_unwind_register (next_frame, I386_ECX_REGNUM, buf);
+      cache->saved_sp = extract_unsigned_integer(buf, 4);
+    }
+
   if (cache->locals < 0)
     {
       /* We didn't find a valid frame, which means that CACHE->base
@@ -917,13 +954,26 @@ i386_frame_cache (struct frame_info *next_frame, void **this_cache)
 	 frame by looking at the stack pointer.  For truly "frameless"
 	 functions this might work too.  */
 
-      frame_unwind_register (next_frame, I386_ESP_REGNUM, buf);
-      cache->base = extract_unsigned_integer (buf, 4) + cache->sp_offset;
+      if (cache->stack_align)
+	{
+	  /* We're halfway aligning the stack.  */
+	  cache->base = ((cache->saved_sp - 4) & 0xfffffff0) - 4;
+	  cache->saved_regs[I386_EIP_REGNUM] = cache->saved_sp - 4;
+
+	  /* This will be added back below.  */
+	  cache->saved_regs[I386_EIP_REGNUM] -= cache->base;
+	}
+      else
+	{
+	  frame_unwind_register (next_frame, I386_ESP_REGNUM, buf);
+	  cache->base = extract_unsigned_integer (buf, 4) + cache->sp_offset;
+	}
     }
 
   /* Now that we have the base address for the stack frame we can
      calculate the value of %esp in the calling frame.  */
-  cache->saved_sp = cache->base + 8;
+  if (cache->saved_sp == 0)
+    cache->saved_sp = cache->base + 8;
 
   /* Adjust all the saved registers such that they contain addresses
      instead of offsets.  */
@@ -1246,7 +1296,7 @@ i386_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	 multiple of [32-bit] words.  This may require tail padding,
 	 depending on the size of the argument."
 
-	 This makes sure the stack says word-aligned.  */
+	 This makes sure the stack stays word-aligned.  */
       sp -= (len + 3) & ~3;
       write_memory (sp, value_contents_all (args[i]), len);
     }
@@ -1524,17 +1574,43 @@ i386_return_value (struct gdbarch *gdbarch, struct type *type,
 }
 
 
-/* Types for the MMX and SSE registers.  */
-static struct type *i386_mmx_type;
-static struct type *i386_sse_type;
+/* Type for %eflags.  */
+struct type *i386_eflags_type;
 
-/* Construct the type for MMX registers.  */
-static struct type *
-i386_build_mmx_type (void)
+/* Types for the MMX and SSE registers.  */
+struct type *i386_mmx_type;
+struct type *i386_sse_type;
+struct type *i386_mxcsr_type;
+
+/* Construct types for ISA-specific registers.  */
+static void
+i386_init_types (void)
 {
+  struct type *type;
+
+  type = init_flags_type ("builtin_type_i386_eflags", 4);
+  append_flags_type_flag (type, 0, "CF");
+  append_flags_type_flag (type, 1, NULL);
+  append_flags_type_flag (type, 2, "PF");
+  append_flags_type_flag (type, 4, "AF");
+  append_flags_type_flag (type, 6, "ZF");
+  append_flags_type_flag (type, 7, "SF");
+  append_flags_type_flag (type, 8, "TF");
+  append_flags_type_flag (type, 9, "IF");
+  append_flags_type_flag (type, 10, "DF");
+  append_flags_type_flag (type, 11, "OF");
+  append_flags_type_flag (type, 14, "NT");
+  append_flags_type_flag (type, 16, "RF");
+  append_flags_type_flag (type, 17, "VM");
+  append_flags_type_flag (type, 18, "AC");
+  append_flags_type_flag (type, 19, "VIF");
+  append_flags_type_flag (type, 20, "VIP");
+  append_flags_type_flag (type, 21, "ID");
+  i386_eflags_type = type;
+
   /* The type we're building is this: */
 #if 0
-  union __gdb_builtin_type_vec64i 
+  union __gdb_builtin_type_vec64i
   {
     int64_t uint64;
     int32_t v2_int32[2];
@@ -1543,49 +1619,57 @@ i386_build_mmx_type (void)
   };
 #endif
 
-  if (! i386_mmx_type)
-    {
-      struct type *t;
+  type = init_composite_type ("__gdb_builtin_type_vec64i", TYPE_CODE_UNION);
+  append_composite_type_field (type, "uint64", builtin_type_int64);
+  append_composite_type_field (type, "v2_int32", builtin_type_v2_int32);
+  append_composite_type_field (type, "v4_int16", builtin_type_v4_int16);
+  append_composite_type_field (type, "v8_int8", builtin_type_v8_int8);
+  TYPE_FLAGS (type) |= TYPE_FLAG_VECTOR;
+  TYPE_NAME (type) = "builtin_type_vec64i";
+  i386_mmx_type = type;
 
-      t = init_composite_type ("__gdb_builtin_type_vec64i", TYPE_CODE_UNION);
-      append_composite_type_field (t, "uint64", builtin_type_int64);
-      append_composite_type_field (t, "v2_int32", builtin_type_v2_int32);
-      append_composite_type_field (t, "v4_int16", builtin_type_v4_int16);
-      append_composite_type_field (t, "v8_int8", builtin_type_v8_int8);
+  /* The type we're building is this: */
+#if 0
+  union __gdb_builtin_type_vec128i
+  {
+    int128_t uint128;
+    int64_t v2_int64[2];
+    int32_t v4_int32[4];
+    int16_t v8_int16[8];
+    int8_t v16_int8[16];
+    double v2_double[2];
+    float v4_float[4];
+  };
+#endif
 
-      TYPE_FLAGS (t) |= TYPE_FLAG_VECTOR;
-      TYPE_NAME (t) = "builtin_type_vec64i";
+  type = init_composite_type ("__gdb_builtin_type_vec128i", TYPE_CODE_UNION);
+  append_composite_type_field (type, "v4_float", builtin_type_v4_float);
+  append_composite_type_field (type, "v2_double", builtin_type_v2_double);
+  append_composite_type_field (type, "v16_int8", builtin_type_v16_int8);
+  append_composite_type_field (type, "v8_int16", builtin_type_v8_int16);
+  append_composite_type_field (type, "v4_int32", builtin_type_v4_int32);
+  append_composite_type_field (type, "v2_int64", builtin_type_v2_int64);
+  append_composite_type_field (type, "uint128", builtin_type_int128);
+  TYPE_FLAGS (type) |= TYPE_FLAG_VECTOR;
+  TYPE_NAME (type) = "builtin_type_vec128i";
+  i386_sse_type = type;
 
-      i386_mmx_type = t;
-    }
-
-  return i386_mmx_type;
-}
-
-/* Construct the type for SSE registers.  */
-static struct type *
-i386_build_sse_type (void)
-{
-  if (! i386_sse_type)
-    {
-      struct type *t;
-
-      t = init_composite_type ("__gdb_builtin_type_vec128i", TYPE_CODE_UNION);
-      append_composite_type_field (t, "v4_float", builtin_type_v4_float);
-      append_composite_type_field (t, "v2_double", builtin_type_v2_double);
-      append_composite_type_field (t, "v16_int8", builtin_type_v16_int8);
-      append_composite_type_field (t, "v8_int16", builtin_type_v8_int16);
-      append_composite_type_field (t, "v4_int32", builtin_type_v4_int32);
-      append_composite_type_field (t, "v2_int64", builtin_type_v2_int64);
-      append_composite_type_field (t, "uint128", builtin_type_int128);
-
-      TYPE_FLAGS (t) |= TYPE_FLAG_VECTOR;
-      TYPE_NAME (t) = "builtin_type_vec128i";
-      
-      i386_sse_type = t;
-    }
-
-  return i386_sse_type;
+  type = init_flags_type ("builtin_type_i386_mxcsr", 4);
+  append_flags_type_flag (type, 0, "IE");
+  append_flags_type_flag (type, 1, "DE");
+  append_flags_type_flag (type, 2, "ZE");
+  append_flags_type_flag (type, 3, "OE");
+  append_flags_type_flag (type, 4, "UE");
+  append_flags_type_flag (type, 5, "PE");
+  append_flags_type_flag (type, 6, "DAZ");
+  append_flags_type_flag (type, 7, "IM");
+  append_flags_type_flag (type, 8, "DM");
+  append_flags_type_flag (type, 9, "ZM");
+  append_flags_type_flag (type, 10, "OM");
+  append_flags_type_flag (type, 11, "UM");
+  append_flags_type_flag (type, 12, "PM");
+  append_flags_type_flag (type, 15, "FZ");
+  i386_mxcsr_type = type;
 }
 
 /* Return the GDB type object for the "standard" data type of data in
@@ -1598,17 +1682,29 @@ i386_register_type (struct gdbarch *gdbarch, int regnum)
   if (regnum == I386_EIP_REGNUM)
     return builtin_type_void_func_ptr;
 
+  if (regnum == I386_EFLAGS_REGNUM)
+    return i386_eflags_type;
+
   if (regnum == I386_EBP_REGNUM || regnum == I386_ESP_REGNUM)
     return builtin_type_void_data_ptr;
 
   if (i386_fp_regnum_p (regnum))
     return builtin_type_i387_ext;
 
-  if (i386_sse_regnum_p (gdbarch, regnum))
-    return i386_build_sse_type ();
-
   if (i386_mmx_regnum_p (gdbarch, regnum))
-    return i386_build_mmx_type ();
+    return i386_mmx_type;
+
+  if (i386_sse_regnum_p (gdbarch, regnum))
+    return i386_sse_type;
+
+#define I387_ST0_REGNUM I386_ST0_REGNUM
+#define I387_NUM_XMM_REGS (gdbarch_tdep (current_gdbarch)->num_xmm_regs)
+
+  if (regnum == I387_MXCSR_REGNUM)
+    return i386_mxcsr_type;
+
+#undef I387_ST0_REGNUM
+#undef I387_NUM_XMM_REGS
 
   return builtin_type_int;
 }
@@ -2407,6 +2503,7 @@ is \"default\"."),
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_NETWARE,
 			  i386_nw_init_abi);
 
-  /* Initialize the i386 specific register groups.  */
+  /* Initialize the i386-specific register groups & types.  */
   i386_init_reggroups ();
+  i386_init_types();
 }

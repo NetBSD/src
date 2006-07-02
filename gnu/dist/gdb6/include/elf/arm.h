@@ -56,6 +56,7 @@
 #define EF_ARM_EABI_VER2     0x02000000
 #define EF_ARM_EABI_VER3     0x03000000
 #define EF_ARM_EABI_VER4     0x04000000
+#define EF_ARM_EABI_VER5     0x05000000
 
 /* Local aliases for some flags to match names used by COFF port.  */
 #define F_INTERWORK	   EF_ARM_INTERWORK
@@ -228,6 +229,7 @@ END_RELOC_NUMBERS (R_ARM_max)
 void elf32_arm_add_eabi_attr_int (bfd *, int, unsigned int);
 void elf32_arm_add_eabi_attr_string (bfd *, int, const char *);
 void elf32_arm_add_eabi_attr_compat (bfd *, unsigned int, const char *);
+int elf32_arm_get_eabi_attr_int (bfd *, int);
 
 void elf32_arm_set_eabi_attr_contents (bfd *, bfd_byte *, bfd_vma);
 bfd_vma elf32_arm_eabi_attr_size (bfd *);

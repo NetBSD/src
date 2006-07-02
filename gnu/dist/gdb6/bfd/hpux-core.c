@@ -101,29 +101,19 @@ struct hpux_core_struct
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 #define core_kernel_thread_id(bfd) (core_hdr(bfd)->lwpid)
 #define core_user_thread_id(bfd) (core_hdr(bfd)->user_tid)
+#define hpux_core_core_file_matches_executable_p generic_core_file_matches_executable_p
 
-static asection *make_bfd_asection
-  PARAMS ((bfd *, const char *, flagword, bfd_size_type, bfd_vma,
-	   unsigned int));
-static const bfd_target *hpux_core_core_file_p
-  PARAMS ((bfd *));
-static char *hpux_core_core_file_failing_command
-  PARAMS ((bfd *));
-static int hpux_core_core_file_failing_signal
-  PARAMS ((bfd *));
-static bfd_boolean hpux_core_core_file_matches_executable_p
-  PARAMS ((bfd *, bfd *));
-static void swap_abort
-  PARAMS ((void));
+static asection *make_bfd_asection (bfd *, const char *, flagword,
+                                    bfd_size_type, bfd_vma, unsigned int);
+static const bfd_target *hpux_core_core_file_p (bfd *);
+static char *hpux_core_core_file_failing_command (bfd *);
+static int hpux_core_core_file_failing_signal (bfd *);
+static void swap_abort (void);
 
 static asection *
-make_bfd_asection (abfd, name, flags, size, vma, alignment_power)
-     bfd *abfd;
-     const char *name;
-     flagword flags;
-     bfd_size_type size;
-     bfd_vma vma;
-     unsigned int alignment_power;
+make_bfd_asection (bfd *abfd, const char *name, flagword flags,
+                   bfd_size_type size, bfd_vma vma,
+                   unsigned int alignment_power)
 {
   asection *asect;
   char *newname;
@@ -155,7 +145,7 @@ thread_section_p (bfd *abfd ATTRIBUTE_UNUSED,
                   asection *sect,
                   void *obj ATTRIBUTE_UNUSED)
 {
-  return (strncmp (bfd_section_name (abfd, sect), ".reg/", 5) == 0);
+  return (strncmp (sect->name, ".reg/", 5) == 0);
 }
 
 /* this function builds a bfd target if the file is a corefile.
@@ -168,8 +158,7 @@ thread_section_p (bfd *abfd ATTRIBUTE_UNUSED,
    (I am just guessing here!)
 */
 static const bfd_target *
-hpux_core_core_file_p (abfd)
-     bfd *abfd;
+hpux_core_core_file_p (bfd *abfd)
 {
   int  good_sections = 0;
   int  unknown_sections = 0;
@@ -361,30 +350,21 @@ hpux_core_core_file_p (abfd)
 }
 
 static char *
-hpux_core_core_file_failing_command (abfd)
-     bfd *abfd;
+hpux_core_core_file_failing_command (bfd *abfd)
 {
   return core_command (abfd);
 }
 
 static int
-hpux_core_core_file_failing_signal (abfd)
-     bfd *abfd;
+hpux_core_core_file_failing_signal (bfd *abfd)
 {
   return core_signal (abfd);
 }
 
-static bfd_boolean
-hpux_core_core_file_matches_executable_p (core_bfd, exec_bfd)
-     bfd *core_bfd ATTRIBUTE_UNUSED;
-     bfd *exec_bfd ATTRIBUTE_UNUSED;
-{
-  return TRUE;			/* FIXME, We have no way of telling at this point */
-}
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
 static void
-swap_abort ()
+swap_abort (void)
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */
 }

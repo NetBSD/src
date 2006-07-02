@@ -1,6 +1,6 @@
 /* bfd back-end for HP PA-RISC SOM objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
@@ -4959,15 +4959,18 @@ extern const bfd_target som_vec;
 static bfd_boolean
 som_new_section_hook (bfd *abfd, asection *newsect)
 {
-  bfd_size_type amt = sizeof (struct som_section_data_struct);
-
-  newsect->used_by_bfd = bfd_zalloc (abfd, amt);
   if (!newsect->used_by_bfd)
-    return FALSE;
+    {
+      bfd_size_type amt = sizeof (struct som_section_data_struct);
+
+      newsect->used_by_bfd = bfd_zalloc (abfd, amt);
+      if (!newsect->used_by_bfd)
+	return FALSE;
+    }
   newsect->alignment_power = 3;
 
   /* We allow more than three sections internally.  */
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, newsect);
 }
 
 /* Copy any private info we understand from the input symbol
@@ -5355,11 +5358,30 @@ som_decode_symclass (asymbol *symbol)
   if (bfd_is_com_section (symbol->section))
     return 'C';
   if (bfd_is_und_section (symbol->section))
-    return 'U';
+    {
+      if (symbol->flags & BSF_WEAK)
+	{
+	  /* If weak, determine if it's specifically an object
+	     or non-object weak.  */
+	  if (symbol->flags & BSF_OBJECT)
+	    return 'v';
+	  else
+	    return 'w';
+	}
+      else
+	 return 'U';
+    }
   if (bfd_is_ind_section (symbol->section))
     return 'I';
   if (symbol->flags & BSF_WEAK)
-    return 'W';
+    {
+      /* If weak, determine if it's specifically an object
+	 or non-object weak.  */
+      if (symbol->flags & BSF_OBJECT)
+	return 'V';
+      else
+	return 'W';
+    }
   if (!(symbol->flags & (BSF_GLOBAL | BSF_LOCAL)))
     return '?';
 

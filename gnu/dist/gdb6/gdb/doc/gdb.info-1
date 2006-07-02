@@ -9,11 +9,11 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Ninth Edition, of `Debugging with GDB: the GNU
-Source-Level Debugger' for GDB Version 6.4.
+Source-Level Debugger' for GDB Version 6.5.
 
    Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
 1998,
-1999, 2000, 2001, 2002, 2003, 2004, 2005
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
@@ -36,9 +36,9 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Ninth Edition, for GDB Version 6.4.
+   This is the Ninth Edition, for GDB Version 6.5.
 
-   Copyright (C) 1988-2005 Free Software Foundation, Inc.
+   Copyright (C) 1988-2006 Free Software Foundation, Inc.
 
 * Menu:
 
@@ -389,6 +389,19 @@ Yoshinori Sato, Michael Snyder, Andreas Schwab, Jason Thorpe, Corinna
 Vinschen, Ulrich Weigand, and Elena Zannoni, helped with the migration
 of old architectures to this new framework.
 
+   Andrew Cagney completely re-designed and re-implemented GDB's
+unwinder framework, this consisting of a fresh new design featuring
+frame IDs, independent frame sniffers, and the sentinel frame.  Mark
+Kettenis implemented the DWARF 2 unwinder, Jeff Johnston the libunwind
+unwinder, and Andrew Cagney the dummy, sentinel, tramp, and trad
+unwinders.  The architecture specific changes, each involving a
+complete rewrite of the architecture's frame code, were carried out by
+Jim Blandy, Joel Brobecker, Kevin Buettner, Andrew Cagney, Stephane
+Carrez, Randolph Chung, Orjan Friberg, Richard Henderson, Daniel
+Jacobowitz, Jeff Johnston, Mark Kettenis, Theodore A. Roth, Kei
+Sakamoto, Yoshinori Sato, Michael Snyder, Corinna Vinschen, and Ulrich
+Weigand.
+
 
 File: gdb.info,  Node: Sample Session,  Next: Invocation,  Prev: Summary,  Up: Top
 
@@ -435,7 +448,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 6.4, Copyright 1999 Free Software Foundation, Inc...
+     GDB 6.5, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -708,7 +721,7 @@ option followed by that argument.)  If the second argument begins with
 a decimal digit, GDB will first attempt to attach to it as a process,
 and if that fails, attempt to open it as a corefile.  If you have a
 corefile whose name begins with a digit, you can prevent GDB from
-treating it as a pid by prefixing it with `./', eg. `./12345'.
+treating it as a pid by prefixing it with `./', e.g. `./12345'.
 
    If GDB has not been configured to included core file support, such
 as for most embedded targets, then it will complain about a second
@@ -761,7 +774,7 @@ them, so long as enough of the option is present to be unambiguous.
 
 `-directory DIRECTORY'
 `-d DIRECTORY'
-     Add DIRECTORY to the path to search for source files.
+     Add DIRECTORY to the path to search for source and script files.
 
 `-r'
 `-readnow'
@@ -1413,6 +1426,7 @@ child process.
 
 * Threads::                     Debugging programs with multiple threads
 * Processes::                   Debugging programs with multiple processes
+* Checkpoint/Restart::          Setting a _bookmark_ to return to later
 
 
 File: gdb.info,  Node: Compilation,  Next: Starting,  Up: Running
@@ -1973,13 +1987,14 @@ a Solaris-specific command:
      `Switching to' depends on your system's conventions for identifying
      threads.
 
-`thread apply [THREADNO] [ALL]  ARGS'
-     The `thread apply' command allows you to apply a command to one or
-     more threads.  Specify the numbers of the threads that you want
-     affected with the command argument THREADNO.  THREADNO is the
-     internal GDB thread number, as shown in the first field of the
-     `info threads' display.  To apply a command to all threads, use
-     `thread apply all' ARGS.
+`thread apply [THREADNO] [ALL] COMMAND'
+     The `thread apply' command allows you to apply the named COMMAND
+     to one or more threads.  Specify the numbers of the threads that
+     you want affected with the command argument THREADNO.  It can be a
+     single thread number, one of the numbers shown in the first field
+     of the `info threads' display; or it could be a range of thread
+     numbers, as in `2-4'.  To apply a command to all threads, type
+     `thread apply all COMMAND'.
 
    Whenever GDB stops your program, due to a breakpoint or a signal, it
 automatically selects the thread where that breakpoint or signal
@@ -1994,7 +2009,7 @@ with multiple threads.
 watchpoints in programs with multiple threads.
 
 
-File: gdb.info,  Node: Processes,  Prev: Threads,  Up: Running
+File: gdb.info,  Node: Processes,  Next: Checkpoint/Restart,  Prev: Threads,  Up: Running
 
 4.10 Debugging programs with multiple processes
 ===============================================
@@ -2045,6 +2060,59 @@ process, use the command `set follow-fork-mode'.
 `show follow-fork-mode'
      Display the current debugger response to a `fork' or `vfork' call.
 
+   On Linux, if you want to debug both the parent and child processes,
+use the command `set detach-on-fork'.
+
+`set detach-on-fork MODE'
+     Tells gdb whether to detach one of the processes after a fork, or
+     retain debugger control over them both.
+
+    `on'
+          The child process (or parent process, depending on the value
+          of `follow-fork-mode') will be detached and allowed to run
+          independently.  This is the default.
+
+    `off'
+          Both processes will be held under the control of GDB.  One
+          process (child or parent, depending on the value of
+          `follow-fork-mode') is debugged as usual, while the other is
+          held suspended.
+
+
+`show detach-on-follow'
+     Show whether detach-on-follow mode is on/off.
+
+   If you choose to set DETACH-ON-FOLLOW mode off, then GDB will retain
+control of all forked processes (including nested forks).  You can list
+the forked processes under the control of GDB by using the `info forks'
+command, and switch from one fork to another by using the `fork'
+command.
+
+`info forks'
+     Print a list of all forked processes under the control of GDB.
+     The listing will include a fork id, a process id, and the current
+     position (program counter) of the process.
+
+`fork FORK-ID'
+     Make fork number FORK-ID the current process.  The argument
+     FORK-ID is the internal fork number assigned by GDB, as shown in
+     the first field of the `info forks' display.
+
+
+   To quit debugging one of the forked processes, you can either detach
+from it by using the `detach-fork' command (allowing it to run
+independently), or delete (and kill) it using the `delete fork' command.
+
+`detach-fork FORK-ID'
+     Detach from the process identified by GDB fork number FORK-ID, and
+     remove it from the fork list.  The process will be allowed to run
+     independently.
+
+`delete fork FORK-ID'
+     Kill the process identified by GDB fork number FORK-ID, and remove
+     it from the fork list.
+
+
    If you ask to debug a child process and a `vfork' is followed by an
 `exec', GDB executes the new target up to the first breakpoint in the
 new target.  If you have a breakpoint set on `main' in your original
@@ -2060,6 +2128,112 @@ command with the parent executable name as its argument.
    You can use the `catch' command to make GDB stop whenever a `fork',
 `vfork', or `exec' call is made.  *Note Setting catchpoints: Set
 Catchpoints.
+
+
+File: gdb.info,  Node: Checkpoint/Restart,  Prev: Processes,  Up: Running
+
+4.11 Setting a _bookmark_ to return to later
+============================================
+
+On certain operating systems(1), GDB is able to save a "snapshot" of a
+program's state, called a "checkpoint", and come back to it later.
+
+   Returning to a checkpoint effectively undoes everything that has
+happened in the program since the `checkpoint' was saved.  This
+includes changes in memory, registers, and even (within some limits)
+system state.  Effectively, it is like going back in time to the moment
+when the checkpoint was saved.
+
+   Thus, if you're stepping thru a program and you think you're getting
+close to the point where things go wrong, you can save a checkpoint.
+Then, if you accidentally go too far and miss the critical statement,
+instead of having to restart your program from the beginning, you can
+just go back to the checkpoint and start again from there.
+
+   This can be especially useful if it takes a lot of time or steps to
+reach the point where you think the bug occurs.
+
+   To use the `checkpoint'/`restart' method of debugging:
+
+`checkpoint'
+     Save a snapshot of the debugged program's current execution state.
+     The `checkpoint' command takes no arguments, but each checkpoint
+     is assigned a small integer id, similar to a breakpoint id.
+
+`info checkpoints'
+     List the checkpoints that have been saved in the current debugging
+     session.  For each checkpoint, the following information will be
+     listed:
+
+    `Checkpoint ID'
+
+    `Process ID'
+
+    `Code Address'
+
+    `Source line, or label'
+
+`restart CHECKPOINT-ID'
+     Restore the program state that was saved as checkpoint number
+     CHECKPOINT-ID.  All program variables, registers, stack frames
+     etc.  will be returned to the values that they had when the
+     checkpoint was saved.  In essence, gdb will "wind back the clock"
+     to the point in time when the checkpoint was saved.
+
+     Note that breakpoints, GDB variables, command history etc.  are
+     not affected by restoring a checkpoint.  In general, a checkpoint
+     only restores things that reside in the program being debugged,
+     not in the debugger.
+
+`delete checkpoint CHECKPOINT-ID'
+     Delete the previously-saved checkpoint identified by CHECKPOINT-ID.
+
+
+   Returning to a previously saved checkpoint will restore the user
+state of the program being debugged, plus a significant subset of the
+system (OS) state, including file pointers.  It won't "un-write" data
+from a file, but it will rewind the file pointer to the previous
+location, so that the previously written data can be overwritten.  For
+files opened in read mode, the pointer will also be restored so that the
+previously read data can be read again.
+
+   Of course, characters that have been sent to a printer (or other
+external device) cannot be "snatched back", and characters received
+from eg. a serial device can be removed from internal program buffers,
+but they cannot be "pushed back" into the serial pipeline, ready to be
+received again.  Similarly, the actual contents of files that have been
+changed cannot be restored (at this time).
+
+   However, within those constraints, you actually can "rewind" your
+program to a previously saved point in time, and begin debugging it
+again -- and you can change the course of events so as to debug a
+different execution path this time.
+
+   Finally, there is one bit of internal program state that will be
+different when you return to a checkpoint -- the program's process id.
+Each checkpoint will have a unique process id (or PID), and each will
+be different from the program's original PID.  If your program has
+saved a local copy of its process id, this could potentially pose a
+problem.
+
+4.11.1 A non-obvious benefit of using checkpoints
+-------------------------------------------------
+
+On some systems such as GNU/Linux, address space randomization is
+performed on new processes for security reasons.  This makes it
+difficult or impossible to set a breakpoint, or watchpoint, on an
+absolute address if you have to restart the program, since the absolute
+location of a symbol will change from one execution to the next.
+
+   A checkpoint, however, is an _identical_ copy of a process.
+Therefore if you create a checkpoint at (eg.) the start of main, and
+simply return to that checkpoint instead of restarting the process, you
+can avoid the effects of address randomization and your symbols will
+all stay in the same place.
+
+   ---------- Footnotes ----------
+
+   (1) Currently, only GNU/Linux.
 
 
 File: gdb.info,  Node: Stopping,  Next: Stack,  Prev: Running,  Up: Top
@@ -3592,6 +3766,13 @@ on up the stack.
    The names `where' and `info stack' (abbreviated `info s') are
 additional aliases for `backtrace'.
 
+   In a multi-threaded program, GDB by default shows the backtrace only
+for the current thread.  To display the backtrace for several or all of
+the threads, use the command `thread apply' (*note thread apply:
+Threads.).  For example, if you type `thread apply all backtrace', GDB
+will display the backtrace for all the threads; this is handy when you
+debug a core dump of a multi-threaded program.
+
    Each line in the backtrace shows the frame number and the function
 name.  The program counter value is also shown--unless you use `set
 print address off'.  The backtrace also shows the source file name and
@@ -4067,8 +4248,7 @@ recorded as `../lib/foo.c', GDB would first try `../lib/foo.c', then
 `/mnt/cross/../lib/foo.c', and after that--`/mnt/cross/foo.c'.
 
    Note that the executable search path is _not_ used to locate the
-source files.  Neither is the current working directory, unless it
-happens to be in the source path.
+source files.
 
    Whenever you reset or rearrange the source path, GDB clears out any
 information it has cached about where source files are found and where
@@ -4076,6 +4256,9 @@ each line is in the file.
 
    When you start GDB, its source path includes only `cdir' and `cwd',
 in that order.  To add other directories, use the `directory' command.
+
+   The search path is used to find both program source files and GDB
+script files (read using the `-command' option and `source' command).
 
 `directory DIRNAME ...'
 
@@ -4095,7 +4278,8 @@ in that order.  To add other directories, use the `directory' command.
      directory at the time you add an entry to the source path.
 
 `directory'
-     Reset the source path to empty again.  This requires confirmation.
+     Reset the source path to its default value (`$cdir:$cwd' on Unix
+     systems).  This requires confirmation.
 
 `show directories'
      Print the source path: show which directories it contains.
@@ -4104,7 +4288,8 @@ in that order.  To add other directories, use the `directory' command.
 of interest, GDB may sometimes cause confusion by finding the wrong
 versions of source.  You can correct the situation as follows:
 
-  1. Use `directory' with no argument to reset the source path to empty.
+  1. Use `directory' with no argument to reset the source path to its
+     default value.
 
   2. Use `directory' with suitable arguments to reinstall the
      directories you want in the source path.  You can add all the
@@ -5165,6 +5350,17 @@ its current value.
      Print a list of convenience variables used so far, and their
      values.  Abbreviated `show conv'.
 
+`init-if-undefined $VARIABLE = EXPRESSION'
+     Set a convenience variable if it has not already been set.  This
+     is useful for user-defined commands that keep some state.  It is
+     similar, in concept, to using local static variables with
+     initializers in C (except that convenience variables are global).
+     It can also be used to allow users to override default values used
+     in a command script.
+
+     If the variable is already defined then the expression is not
+     evaluated so any side-effects do not occur.
+
    One of the ways to use a convenience variable is as a counter to be
 incremented or a pointer to be advanced.  For example, to print a field
 from successive elements of an array of structures:
@@ -5269,6 +5465,29 @@ programs expect to work with "double" (virtual) format.  In such cases,
 GDB normally works with the virtual format only (the format that makes
 sense for your program), but the `info registers' command prints the
 data in both formats.
+
+   Some machines have special registers whose contents can be
+interpreted in several different ways.  For example, modern x86-based
+machines have SSE and MMX registers that can hold several values packed
+together in several different formats.  GDB refers to such registers in
+`struct' notation:
+
+     (gdb) print $xmm1
+     $1 = {
+       v4_float = {0, 3.43859137e-038, 1.54142831e-044, 1.821688e-044},
+       v2_double = {9.92129282474342e-303, 2.7585945287983262e-313},
+       v16_int8 = "\000\000\000\000\3706;\001\v\000\000\000\r\000\000",
+       v8_int16 = {0, 0, 14072, 315, 11, 0, 13, 0},
+       v4_int32 = {0, 20657912, 11, 13},
+       v2_int64 = {88725056443645952, 55834574859},
+       uint128 = 0x0000000d0000000b013b36f800000000
+     }
+
+To set values of such registers, you need to tell GDB which view of the
+register you wish to change, as if you were assigning value to a
+`struct' member:
+
+      (gdb) set $xmm1.uint128 = 0x000000000000000000000000FFFFFFFF
 
    Normally, register values are relative to the selected stack frame
 (*note Selecting a frame: Selection.).  This means that you get the
@@ -6013,7 +6232,8 @@ program's behavior.
 targets.  *Note Targets::.  In addition, your remote target must know
 how to collect trace data.  This functionality is implemented in the
 remote stub; however, none of the stubs distributed with GDB support
-tracepoints as of this writing.
+tracepoints as of this writing.  The format of the remote packets used
+to implement tracepoints are described in *Note Tracepoint Packets::.
 
    This chapter describes the tracepoint commands and features.
 
@@ -7235,270 +7455,4 @@ checker:
 `show range'
      Show the current setting of the range checker, and whether or not
      it is being set automatically by GDB.
-
-
-File: gdb.info,  Node: Supported languages,  Next: Unsupported languages,  Prev: Checks,  Up: Languages
-
-12.4 Supported languages
-========================
-
-GDB supports C, C++, Objective-C, Fortran, Java, Pascal, assembly,
-Modula-2, and Ada.  Some GDB features may be used in expressions
-regardless of the language you use: the GDB `@' and `::' operators, and
-the `{type}addr' construct (*note Expressions: Expressions.) can be
-used with the constructs of any supported language.
-
-   The following sections detail to what degree each source language is
-supported by GDB.  These sections are not meant to be language
-tutorials or references, but serve only as a reference guide to what the
-GDB expression parser accepts, and what input and output formats should
-look like for different languages.  There are many good books written
-on each of these languages; please look to these for a language
-reference or tutorial.
-
-* Menu:
-
-* C::                           C and C++
-* Objective-C::                 Objective-C
-* Fortran::                     Fortran
-* Pascal::                      Pascal
-* Modula-2::                    Modula-2
-* Ada::                         Ada
-
-
-File: gdb.info,  Node: C,  Next: Objective-C,  Up: Supported languages
-
-12.4.1 C and C++
-----------------
-
-Since C and C++ are so closely related, many features of GDB apply to
-both languages.  Whenever this is the case, we discuss those languages
-together.
-
-   The C++ debugging facilities are jointly implemented by the C++
-compiler and GDB.  Therefore, to debug your C++ code effectively, you
-must compile your C++ programs with a supported C++ compiler, such as
-GNU `g++', or the HP ANSI C++ compiler (`aCC').
-
-   For best results when using GNU C++, use the DWARF 2 debugging
-format; if it doesn't work on your system, try the stabs+ debugging
-format.  You can select those formats explicitly with the `g++'
-command-line options `-gdwarf-2' and `-gstabs+'.  *Note Options for
-Debugging Your Program or GNU CC: (gcc.info)Debugging Options.
-
-* Menu:
-
-* C Operators::                 C and C++ operators
-* C Constants::                 C and C++ constants
-* C plus plus expressions::     C++ expressions
-* C Defaults::                  Default settings for C and C++
-* C Checks::                    C and C++ type and range checks
-* Debugging C::                 GDB and C
-* Debugging C plus plus::       GDB features for C++
-
-
-File: gdb.info,  Node: C Operators,  Next: C Constants,  Up: C
-
-12.4.1.1 C and C++ operators
-............................
-
-Operators must be defined on values of specific types.  For instance,
-`+' is defined on numbers, but not on structures.  Operators are often
-defined on groups of types.
-
-   For the purposes of C and C++, the following definitions hold:
-
-   * _Integral types_ include `int' with any of its storage-class
-     specifiers; `char'; `enum'; and, for C++, `bool'.
-
-   * _Floating-point types_ include `float', `double', and `long
-     double' (if supported by the target platform).
-
-   * _Pointer types_ include all types defined as `(TYPE *)'.
-
-   * _Scalar types_ include all of the above.
-
-
-The following operators are supported.  They are listed here in order
-of increasing precedence:
-
-`,'
-     The comma or sequencing operator.  Expressions in a
-     comma-separated list are evaluated from left to right, with the
-     result of the entire expression being the last expression
-     evaluated.
-
-`='
-     Assignment.  The value of an assignment expression is the value
-     assigned.  Defined on scalar types.
-
-`OP='
-     Used in an expression of the form `A OP= B', and translated to
-     `A = A OP B'.  `OP=' and `=' have the same precedence.  OP is any
-     one of the operators `|', `^', `&', `<<', `>>', `+', `-', `*',
-     `/', `%'.
-
-`?:'
-     The ternary operator.  `A ? B : C' can be thought of as:  if A
-     then B else C.  A should be of an integral type.
-
-`||'
-     Logical OR.  Defined on integral types.
-
-`&&'
-     Logical AND.  Defined on integral types.
-
-`|'
-     Bitwise OR.  Defined on integral types.
-
-`^'
-     Bitwise exclusive-OR.  Defined on integral types.
-
-`&'
-     Bitwise AND.  Defined on integral types.
-
-`==, !='
-     Equality and inequality.  Defined on scalar types.  The value of
-     these expressions is 0 for false and non-zero for true.
-
-`<, >, <=, >='
-     Less than, greater than, less than or equal, greater than or equal.
-     Defined on scalar types.  The value of these expressions is 0 for
-     false and non-zero for true.
-
-`<<, >>'
-     left shift, and right shift.  Defined on integral types.
-
-`@'
-     The GDB "artificial array" operator (*note Expressions:
-     Expressions.).
-
-`+, -'
-     Addition and subtraction.  Defined on integral types,
-     floating-point types and pointer types.
-
-`*, /, %'
-     Multiplication, division, and modulus.  Multiplication and
-     division are defined on integral and floating-point types.
-     Modulus is defined on integral types.
-
-`++, --'
-     Increment and decrement.  When appearing before a variable, the
-     operation is performed before the variable is used in an
-     expression; when appearing after it, the variable's value is used
-     before the operation takes place.
-
-`*'
-     Pointer dereferencing.  Defined on pointer types.  Same precedence
-     as `++'.
-
-`&'
-     Address operator.  Defined on variables.  Same precedence as `++'.
-
-     For debugging C++, GDB implements a use of `&' beyond what is
-     allowed in the C++ language itself: you can use `&(&REF)' (or, if
-     you prefer, simply `&&REF') to examine the address where a C++
-     reference variable (declared with `&REF') is stored.
-
-`-'
-     Negative.  Defined on integral and floating-point types.  Same
-     precedence as `++'.
-
-`!'
-     Logical negation.  Defined on integral types.  Same precedence as
-     `++'.
-
-`~'
-     Bitwise complement operator.  Defined on integral types.  Same
-     precedence as `++'.
-
-`., ->'
-     Structure member, and pointer-to-structure member.  For
-     convenience, GDB regards the two as equivalent, choosing whether
-     to dereference a pointer based on the stored type information.
-     Defined on `struct' and `union' data.
-
-`.*, ->*'
-     Dereferences of pointers to members.
-
-`[]'
-     Array indexing.  `A[I]' is defined as `*(A+I)'.  Same precedence
-     as `->'.
-
-`()'
-     Function parameter list.  Same precedence as `->'.
-
-`::'
-     C++ scope resolution operator.  Defined on `struct', `union', and
-     `class' types.
-
-`::'
-     Doubled colons also represent the GDB scope operator (*note
-     Expressions: Expressions.).  Same precedence as `::', above.
-
-   If an operator is redefined in the user code, GDB usually attempts
-to invoke the redefined version instead of using the operator's
-predefined meaning.
-
-* Menu:
-
-* C Constants::
-
-
-File: gdb.info,  Node: C Constants,  Next: C plus plus expressions,  Prev: C Operators,  Up: C
-
-12.4.1.2 C and C++ constants
-............................
-
-GDB allows you to express the constants of C and C++ in the following
-ways:
-
-   * Integer constants are a sequence of digits.  Octal constants are
-     specified by a leading `0' (i.e. zero), and hexadecimal constants
-     by a leading `0x' or `0X'.  Constants may also end with a letter
-     `l', specifying that the constant should be treated as a `long'
-     value.
-
-   * Floating point constants are a sequence of digits, followed by a
-     decimal point, followed by a sequence of digits, and optionally
-     followed by an exponent.  An exponent is of the form:
-     `e[[+]|-]NNN', where NNN is another sequence of digits.  The `+'
-     is optional for positive exponents.  A floating-point constant may
-     also end with a letter `f' or `F', specifying that the constant
-     should be treated as being of the `float' (as opposed to the
-     default `double') type; or with a letter `l' or `L', which
-     specifies a `long double' constant.
-
-   * Enumerated constants consist of enumerated identifiers, or their
-     integral equivalents.
-
-   * Character constants are a single character surrounded by single
-     quotes (`''), or a number--the ordinal value of the corresponding
-     character (usually its ASCII value).  Within quotes, the single
-     character may be represented by a letter or by "escape sequences",
-     which are of the form `\NNN', where NNN is the octal representation
-     of the character's ordinal value; or of the form `\X', where `X'
-     is a predefined special character--for example, `\n' for newline.
-
-   * String constants are a sequence of character constants surrounded
-     by double quotes (`"').  Any valid character constant (as described
-     above) may appear.  Double quotes within the string must be
-     preceded by a backslash, so for instance `"a\"b'c"' is a string of
-     five characters.
-
-   * Pointer constants are an integral value.  You can also write
-     pointers to constants using the C operator `&'.
-
-   * Array constants are comma-separated lists surrounded by braces `{'
-     and `}'; for example, `{1,2,3}' is a three-element array of
-     integers, `{{1,2}, {3,4}, {5,6}}' is a three-by-two array, and
-     `{&"hi", &"there", &"fred"}' is a three-element array of pointers.
-
-* Menu:
-
-* C plus plus expressions::
-* C Defaults::
-* C Checks::
-
-* Debugging C::
 

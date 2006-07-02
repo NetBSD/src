@@ -1,6 +1,6 @@
 /* BFD library support routines for architectures.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Hacked by John Gilmore and Steve Chamberlain of Cygnus Support.
 
@@ -80,16 +80,22 @@ DESCRIPTION
 .#define bfd_mach_m68040 6
 .#define bfd_mach_m68060 7
 .#define bfd_mach_cpu32  8
-.#define bfd_mach_mcf5200  9
-.#define bfd_mach_mcf5206e 10
-.#define bfd_mach_mcf5307  11
-.#define bfd_mach_mcf5407  12
-.#define bfd_mach_mcf528x  13
-.#define bfd_mach_mcfv4e   14
-.#define bfd_mach_mcf521x   15
-.#define bfd_mach_mcf5249   16
-.#define bfd_mach_mcf547x   17
-.#define bfd_mach_mcf548x   18
+.#define bfd_mach_mcf_isa_a_nodiv 9
+.#define bfd_mach_mcf_isa_a 10
+.#define bfd_mach_mcf_isa_a_mac 11
+.#define bfd_mach_mcf_isa_a_emac 12
+.#define bfd_mach_mcf_isa_aplus 13
+.#define bfd_mach_mcf_isa_aplus_mac 14
+.#define bfd_mach_mcf_isa_aplus_emac 15
+.#define bfd_mach_mcf_isa_b_nousp 16
+.#define bfd_mach_mcf_isa_b_nousp_mac 17
+.#define bfd_mach_mcf_isa_b_nousp_emac 18
+.#define bfd_mach_mcf_isa_b 19
+.#define bfd_mach_mcf_isa_b_mac 20
+.#define bfd_mach_mcf_isa_b_emac 21
+.#define bfd_mach_mcf_isa_b_float 22
+.#define bfd_mach_mcf_isa_b_float_mac 23
+.#define bfd_mach_mcf_isa_b_float_emac 24
 .  bfd_arch_vax,       {* DEC Vax *}
 .  bfd_arch_i960,      {* Intel 960 *}
 .    {* The order of the following is important.
@@ -317,9 +323,10 @@ DESCRIPTION
 . bfd_arch_iq2000,     {* Vitesse IQ2000.  *}
 .#define bfd_mach_iq2000        1
 .#define bfd_mach_iq10          2
-.  bfd_arch_ms1,
+.  bfd_arch_mt,
 .#define bfd_mach_ms1           1
 .#define bfd_mach_mrisc2        2
+.#define bfd_mach_ms2           3
 .  bfd_arch_pj,
 .  bfd_arch_avr,       {* Atmel AVR microcontrollers.  *}
 .#define bfd_mach_avr1		1
@@ -351,7 +358,7 @@ DESCRIPTION
 .#define bfd_mach_msp13          13
 .#define bfd_mach_msp14          14
 .#define bfd_mach_msp15          15
-.#define bfd_mach_msp16          16  
+.#define bfd_mach_msp16          16
 .#define bfd_mach_msp21          21
 .#define bfd_mach_msp31          31
 .#define bfd_mach_msp32          32
@@ -360,6 +367,10 @@ DESCRIPTION
 .#define bfd_mach_msp42          42
 .#define bfd_mach_msp43          43
 .#define bfd_mach_msp44          44
+.  bfd_arch_xc16x,     {* Infineon's XC16X Series.               *}
+.#define bfd_mach_xc16x         1
+.#define bfd_mach_xc16xl        2
+.#define bfd_mach_xc16xs         3
 .  bfd_arch_xtensa,    {* Tensilica's Xtensa cores.  *}
 .#define bfd_mach_xtensa	1
 .   bfd_arch_maxq,     {* Dallas MAXQ 10/20 *}
@@ -444,7 +455,7 @@ extern const bfd_arch_info_type bfd_mmix_arch;
 extern const bfd_arch_info_type bfd_mn10200_arch;
 extern const bfd_arch_info_type bfd_mn10300_arch;
 extern const bfd_arch_info_type bfd_msp430_arch;
-extern const bfd_arch_info_type bfd_ms1_arch;
+extern const bfd_arch_info_type bfd_mt_arch;
 extern const bfd_arch_info_type bfd_ns32k_arch;
 extern const bfd_arch_info_type bfd_openrisc_arch;
 extern const bfd_arch_info_type bfd_or32_arch;
@@ -466,6 +477,7 @@ extern const bfd_arch_info_type bfd_we32k_arch;
 extern const bfd_arch_info_type bfd_w65_arch;
 extern const bfd_arch_info_type bfd_xstormy16_arch;
 extern const bfd_arch_info_type bfd_xtensa_arch;
+extern const bfd_arch_info_type bfd_xc16x_arch;
 extern const bfd_arch_info_type bfd_z80_arch;
 extern const bfd_arch_info_type bfd_z8k_arch;
 
@@ -509,7 +521,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_mmix_arch,
     &bfd_mn10200_arch,
     &bfd_mn10300_arch,
-    &bfd_ms1_arch,
+    &bfd_mt_arch,
     &bfd_msp430_arch,
     &bfd_ns32k_arch,
     &bfd_openrisc_arch,
@@ -530,6 +542,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_we32k_arch,
     &bfd_xstormy16_arch,
     &bfd_xtensa_arch,
+    &bfd_xc16x_arch,
     &bfd_z80_arch,
     &bfd_z8k_arch,
 #endif
@@ -1003,23 +1016,23 @@ bfd_default_scan (const bfd_arch_info_type *info, const char *string)
       break;
     case 5200:
       arch = bfd_arch_m68k;
-      number = bfd_mach_mcf5200;
+      number = bfd_mach_mcf_isa_a_nodiv;
       break;
     case 5206:
       arch = bfd_arch_m68k;
-      number = bfd_mach_mcf5206e;
+      number = bfd_mach_mcf_isa_a_mac;
       break;
     case 5307:
       arch = bfd_arch_m68k;
-      number = bfd_mach_mcf5307;
+      number = bfd_mach_mcf_isa_a_mac;
       break;
     case 5407:
       arch = bfd_arch_m68k;
-      number = bfd_mach_mcf5407;
+      number = bfd_mach_mcf_isa_b_nousp_mac;
       break;
     case 5282:
       arch = bfd_arch_m68k;
-      number = bfd_mach_mcf528x;
+      number = bfd_mach_mcf_isa_aplus_emac;
       break;
 
     case 32000:

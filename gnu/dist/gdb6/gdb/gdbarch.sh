@@ -2,7 +2,7 @@
 
 # Architecture commands for GDB, the GNU debugger.
 #
-# Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
+# Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
 # Software Foundation, Inc.
 #
 # This file is part of GDB.
@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301, USA.
 
 # Make certain that the script is running in an internationalized
 # environment.
@@ -548,8 +549,8 @@ f:=:CORE_ADDR:skip_prologue:CORE_ADDR ip:ip:0:0
 f:=:int:inner_than:CORE_ADDR lhs, CORE_ADDR rhs:lhs, rhs:0:0
 f:=:const gdb_byte *:breakpoint_from_pc:CORE_ADDR *pcptr, int *lenptr:pcptr, lenptr::0:
 M::CORE_ADDR:adjust_breakpoint_address:CORE_ADDR bpaddr:bpaddr
-f:=:int:memory_insert_breakpoint:CORE_ADDR addr, gdb_byte *contents_cache:addr, contents_cache:0:default_memory_insert_breakpoint::0
-f:=:int:memory_remove_breakpoint:CORE_ADDR addr, gdb_byte *contents_cache:addr, contents_cache:0:default_memory_remove_breakpoint::0
+f:=:int:memory_insert_breakpoint:struct bp_target_info *bp_tgt:bp_tgt:0:default_memory_insert_breakpoint::0
+f:=:int:memory_remove_breakpoint:struct bp_target_info *bp_tgt:bp_tgt:0:default_memory_remove_breakpoint::0
 v:=:CORE_ADDR:decr_pc_after_break:::0:::0
 
 # A function can be addressed by either it's "pointer" (possibly a
@@ -713,7 +714,7 @@ cat <<EOF
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
    Software Foundation, Inc.
 
    This file is part of GDB.
@@ -730,8 +731,8 @@ cat <<EOF
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file was created with the aid of \`\`gdbarch.sh''.
 
@@ -770,6 +771,7 @@ struct regset;
 struct disassemble_info;
 struct target_ops;
 struct obstack;
+struct bp_target_info;
 
 extern struct gdbarch *current_gdbarch;
 EOF

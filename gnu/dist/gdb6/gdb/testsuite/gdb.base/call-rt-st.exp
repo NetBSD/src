@@ -42,7 +42,7 @@ if { [istarget "sparclet-*-*"] } {
     return 0;
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     untested "couldn't compile ${srcdir}/${subdir}/${srcfile}"
     return -1
 }

@@ -1,7 +1,7 @@
 /* Target-dependent code for PowerPC systems using the SVR4 ABI
    for GDB, the GNU debugger.
 
-   Copyright 2000, 2001, 2002, 2003, 2005
+   Copyright (C) 2000, 2001, 2002, 2003, 2005
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -938,7 +938,7 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct type *valtype,
 	regcache_cooked_read (regcache, tdep->ppc_gp0_regnum + 3, readbuf);
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
-  /* Array type has more than one use.  */
+  /* Array type has more than one use.  */
   if (TYPE_CODE (valtype) == TYPE_CODE_ARRAY)
     {
       /* Small character arrays are returned, right justified, in r3.  */
@@ -947,24 +947,25 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct type *valtype,
         && TYPE_LENGTH (TYPE_TARGET_TYPE (valtype)) == 1)
         {
           int offset = (register_size (gdbarch, tdep->ppc_gp0_regnum + 3)
-		        - TYPE_LENGTH (valtype));
+                       - TYPE_LENGTH (valtype));
           if (writebuf != NULL)
-	    regcache_cooked_write_part (regcache, tdep->ppc_gp0_regnum + 3,
-				       offset, TYPE_LENGTH (valtype), writebuf);
+           regcache_cooked_write_part (regcache, tdep->ppc_gp0_regnum + 3,
+                                      offset, TYPE_LENGTH (valtype), writebuf);
           if (readbuf != NULL)
-	    regcache_cooked_read_part (regcache, tdep->ppc_gp0_regnum + 3,
-				       offset, TYPE_LENGTH (valtype), readbuf);
+           regcache_cooked_read_part (regcache, tdep->ppc_gp0_regnum + 3,
+                                      offset, TYPE_LENGTH (valtype), readbuf);
+          return RETURN_VALUE_REGISTER_CONVENTION;
+	}
+      /* A VMX vector is returned in v2.  */
+      if (TYPE_CODE (valtype) == TYPE_CODE_ARRAY
+        && TYPE_VECTOR (valtype) && tdep->ppc_vr0_regnum >= 0)
+        {
+          if (readbuf)
+            regcache_cooked_read (regcache, tdep->ppc_vr0_regnum + 2, readbuf);
+          if (writebuf)
+            regcache_cooked_write (regcache, tdep->ppc_vr0_regnum + 2, writebuf);
           return RETURN_VALUE_REGISTER_CONVENTION;
         }
-      /* A VMX vector is returned in v2.  */
-      if (TYPE_VECTOR (valtype) && tdep->ppc_vr0_regnum >= 0)
-	{
-	  if (readbuf)
-	    regcache_cooked_read (regcache, tdep->ppc_vr0_regnum + 2, readbuf);
-	  if (writebuf)
-	    regcache_cooked_write (regcache, tdep->ppc_vr0_regnum + 2, writebuf);
-	  return RETURN_VALUE_REGISTER_CONVENTION;
-	}
     }
   /* Big floating point values get stored in adjacent floating
      point registers, starting with F1.  */

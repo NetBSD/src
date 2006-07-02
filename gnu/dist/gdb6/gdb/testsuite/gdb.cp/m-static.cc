@@ -68,5 +68,6 @@ int main()
   gnu_obj_3<long>	test3(greek);
   gnu_obj_4		test4;
 
-  return 0;				// breakpoint: constructs-done
+  test4.dummy = 0;
+  return test4.dummy;	// breakpoint: constructs-done
 }

@@ -1,6 +1,6 @@
 /* BFD back-end for WDC 65816 COFF binaries.
-   Copyright 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004
-   Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -105,7 +105,7 @@ reloc_processing (relent, reloc, symbols, abfd, section)
   if (((int) reloc->r_symndx) > 0)
     relent->sym_ptr_ptr = symbols + obj_convert (abfd)[reloc->r_symndx];
   else
-    relent->sym_ptr_ptr = (asymbol **)&(bfd_abs_symbol);
+    relent->sym_ptr_ptr = (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
 
   relent->addend = reloc->r_offset;
 
@@ -316,9 +316,9 @@ w65_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
       {
 	int gap = bfd_coff_reloc16_get_value (reloc, link_info,
 					      input_section);
-	bfd_vma dot = link_order->offset
-	  + dst_address
-	    + link_order->u.indirect.section->output_section->vma;
+	bfd_vma dot = (dst_address
+		       + input_section->output_offset
+		       + input_section->output_section->vma);
 
 	gap -= dot + 1;
 	if (gap < -128 || gap > 127)
@@ -340,9 +340,9 @@ w65_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
       {
 	bfd_vma gap = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = link_order->offset
-	  + dst_address
-	    + link_order->u.indirect.section->output_section->vma;
+	bfd_vma dot = (dst_address
+		       + input_section->output_offset
+		       + input_section->output_section->vma);
 
 	/* This wraps within the page, so ignore the relativeness, look at the
 	   high part.  */

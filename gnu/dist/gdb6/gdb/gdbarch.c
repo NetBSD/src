@@ -2,7 +2,7 @@
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
    Software Foundation, Inc.
 
    This file is part of GDB.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file was created with the aid of ``gdbarch.sh''.
 
@@ -1250,8 +1250,8 @@ gdbarch_dump (struct gdbarch *current_gdbarch, struct ui_file *file)
 #ifdef MEMORY_INSERT_BREAKPOINT
   fprintf_unfiltered (file,
                       "gdbarch_dump: %s # %s\n",
-                      "MEMORY_INSERT_BREAKPOINT(addr, contents_cache)",
-                      XSTRING (MEMORY_INSERT_BREAKPOINT (addr, contents_cache)));
+                      "MEMORY_INSERT_BREAKPOINT(bp_tgt)",
+                      XSTRING (MEMORY_INSERT_BREAKPOINT (bp_tgt)));
 #endif
   fprintf_unfiltered (file,
                       "gdbarch_dump: memory_insert_breakpoint = <0x%lx>\n",
@@ -1259,8 +1259,8 @@ gdbarch_dump (struct gdbarch *current_gdbarch, struct ui_file *file)
 #ifdef MEMORY_REMOVE_BREAKPOINT
   fprintf_unfiltered (file,
                       "gdbarch_dump: %s # %s\n",
-                      "MEMORY_REMOVE_BREAKPOINT(addr, contents_cache)",
-                      XSTRING (MEMORY_REMOVE_BREAKPOINT (addr, contents_cache)));
+                      "MEMORY_REMOVE_BREAKPOINT(bp_tgt)",
+                      XSTRING (MEMORY_REMOVE_BREAKPOINT (bp_tgt)));
 #endif
   fprintf_unfiltered (file,
                       "gdbarch_dump: memory_remove_breakpoint = <0x%lx>\n",
@@ -2934,13 +2934,13 @@ set_gdbarch_adjust_breakpoint_address (struct gdbarch *gdbarch,
 }
 
 int
-gdbarch_memory_insert_breakpoint (struct gdbarch *gdbarch, CORE_ADDR addr, gdb_byte *contents_cache)
+gdbarch_memory_insert_breakpoint (struct gdbarch *gdbarch, struct bp_target_info *bp_tgt)
 {
   gdb_assert (gdbarch != NULL);
   gdb_assert (gdbarch->memory_insert_breakpoint != NULL);
   if (gdbarch_debug >= 2)
     fprintf_unfiltered (gdb_stdlog, "gdbarch_memory_insert_breakpoint called\n");
-  return gdbarch->memory_insert_breakpoint (addr, contents_cache);
+  return gdbarch->memory_insert_breakpoint (bp_tgt);
 }
 
 void
@@ -2951,13 +2951,13 @@ set_gdbarch_memory_insert_breakpoint (struct gdbarch *gdbarch,
 }
 
 int
-gdbarch_memory_remove_breakpoint (struct gdbarch *gdbarch, CORE_ADDR addr, gdb_byte *contents_cache)
+gdbarch_memory_remove_breakpoint (struct gdbarch *gdbarch, struct bp_target_info *bp_tgt)
 {
   gdb_assert (gdbarch != NULL);
   gdb_assert (gdbarch->memory_remove_breakpoint != NULL);
   if (gdbarch_debug >= 2)
     fprintf_unfiltered (gdb_stdlog, "gdbarch_memory_remove_breakpoint called\n");
-  return gdbarch->memory_remove_breakpoint (addr, contents_cache);
+  return gdbarch->memory_remove_breakpoint (bp_tgt);
 }
 
 void

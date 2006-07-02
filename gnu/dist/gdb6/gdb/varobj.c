@@ -1,6 +1,6 @@
 /* Implementation of the GDB variable objects API.
 
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "exceptions.h"
@@ -817,9 +817,7 @@ varobj_set_value (struct varobj *var, char *expression)
       int i;
 
       input_radix = 10;		/* ALWAYS reset to decimal temporarily */
-      if (!gdb_parse_exp_1 (&s, 0, 0, &exp))
-	/* We cannot proceed without a well-formed expression. */
-	return 0;
+      exp = parse_exp_1 (&s, 0, 0);
       if (!gdb_evaluate_expression (exp, &value))
 	{
 	  /* We cannot proceed without a valid expression. */
@@ -1374,7 +1372,7 @@ free_variable (struct varobj *var)
   /* Free the expression if this is a root variable. */
   if (var->root->rootvar == var)
     {
-      free_current_contents ((char **) &var->root->exp);
+      free_current_contents (&var->root->exp);
       xfree (var->root);
     }
 
@@ -1833,7 +1831,8 @@ c_name_of_child (struct varobj *parent, int index)
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_ARRAY:
-      name = xstrprintf ("%d", index);
+      name = xstrprintf ("%d", index
+			 + TYPE_LOW_BOUND (TYPE_INDEX_TYPE (type)));
       break;
 
     case TYPE_CODE_STRUCT:
@@ -1931,6 +1930,7 @@ c_value_of_child (struct varobj *parent, int index)
   struct value *indval;
   struct type *type, *target;
   char *name;
+  int real_index;
 
   type = get_type (parent);
   target = get_target_type (type);
@@ -1943,13 +1943,14 @@ c_value_of_child (struct varobj *parent, int index)
       switch (TYPE_CODE (type))
 	{
 	case TYPE_CODE_ARRAY:
+	  real_index = index + TYPE_LOW_BOUND (TYPE_INDEX_TYPE (type));
 #if 0
 	  /* This breaks if the array lives in a (vector) register. */
-	  value = value_slice (temp, index, 1);
+	  value = value_slice (temp, real_index, 1);
 	  temp = value_coerce_array (value);
 	  gdb_value_ind (temp, &value);
 #else
-	  indval = value_from_longest (builtin_type_int, (LONGEST) index);
+	  indval = value_from_longest (builtin_type_int, (LONGEST) real_index);
 	  gdb_value_subscript (temp, indval, &value);
 #endif
 	  break;
@@ -2053,10 +2054,16 @@ c_variable_editable (struct varobj *var)
 static char *
 c_value_of_variable (struct varobj *var)
 {
-  /* BOGUS: if val_print sees a struct/class, it will print out its
-     children instead of "{...}" */
+  /* BOGUS: if val_print sees a struct/class, or a reference to one,
+     it will print out its children instead of "{...}".  So we need to
+     catch that case explicitly.  */
+  struct type *type = get_type (var);
 
-  switch (TYPE_CODE (get_type (var)))
+  /* Strip top-level references. */
+  while (TYPE_CODE (type) == TYPE_CODE_REF)
+    type = check_typedef (TYPE_TARGET_TYPE (type));
+
+  switch (TYPE_CODE (type))
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:

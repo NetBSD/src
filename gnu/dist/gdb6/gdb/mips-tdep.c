@@ -1,7 +1,7 @@
 /* Target-dependent code for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin(af@cs.cmu.edu) at CMU
@@ -21,8 +21,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -202,7 +202,7 @@ is_mips16_addr (CORE_ADDR addr)
 static CORE_ADDR
 unmake_mips16_addr (CORE_ADDR addr)
 {
-  return ((addr) & ~1);
+  return ((addr) & ~(CORE_ADDR) 1);
 }
 
 /* Return the contents of register REGNUM as a signed integer.  */
@@ -989,14 +989,14 @@ mips32_next_pc (CORE_ADDR pc)
 	    unsigned long reg;
 	    reg = jtype_target (inst) << 2;
 	    /* Upper four bits get never changed... */
-	    pc = reg + ((pc + 4) & 0xf0000000);
+	    pc = reg + ((pc + 4) & ~(CORE_ADDR) 0x0fffffff);
 	  }
 	  break;
 	  /* FIXME case JALX : */
 	  {
 	    unsigned long reg;
 	    reg = jtype_target (inst) << 2;
-	    pc = reg + ((pc + 4) & 0xf0000000) + 1;	/* yes, +1 */
+	    pc = reg + ((pc + 4) & ~(CORE_ADDR) 0x0fffffff) + 1;	/* yes, +1 */
 	    /* Add 1 to indicate 16 bit mode - Invert ISA mode */
 	  }
 	  break;		/* The new PC will be alternate mode */
@@ -1202,7 +1202,7 @@ unpack_mips16 (CORE_ADDR pc,
 static CORE_ADDR
 add_offset_16 (CORE_ADDR pc, int offset)
 {
-  return ((offset << 2) | ((pc + 2) & (0xf0000000)));
+  return ((offset << 2) | ((pc + 2) & (~(CORE_ADDR) 0x0fffffff)));
 }
 
 static CORE_ADDR
@@ -2188,20 +2188,17 @@ mips_addr_bits_remove (CORE_ADDR addr)
 void
 mips_software_single_step (enum target_signal sig, int insert_breakpoints_p)
 {
-  static CORE_ADDR next_pc;
-  typedef char binsn_quantum[BREAKPOINT_MAX];
-  static binsn_quantum break_mem;
-  CORE_ADDR pc;
+  CORE_ADDR pc, next_pc;
 
   if (insert_breakpoints_p)
     {
       pc = read_register (mips_regnum (current_gdbarch)->pc);
       next_pc = mips_next_pc (pc);
 
-      target_insert_breakpoint (next_pc, break_mem);
+      insert_single_step_breakpoint (next_pc);
     }
   else
-    target_remove_breakpoint (next_pc, break_mem);
+    remove_single_step_breakpoints ();
 }
 
 /* Test whether the PC points to the return instruction at the
@@ -2910,6 +2907,24 @@ mips_n32n64_return_value (struct gdbarch *gdbarch,
       || TYPE_CODE (type) == TYPE_CODE_ARRAY
       || TYPE_LENGTH (type) > 2 * mips_abi_regsize (gdbarch))
     return RETURN_VALUE_STRUCT_CONVENTION;
+  else if (TYPE_CODE (type) == TYPE_CODE_FLT
+	   && TYPE_LENGTH (type) == 16
+	   && tdep->mips_fpu_type != MIPS_FPU_NONE)
+    {
+      /* A 128-bit floating-point value fills both $f0 and $f2.  The
+	 two registers are used in the same as memory order, so the
+	 eight bytes with the lower memory address are in $f0.  */
+      if (mips_debug)
+	fprintf_unfiltered (gdb_stderr, "Return float in $f0 and $f2\n");
+      mips_xfer_register (regcache,
+			  NUM_REGS + mips_regnum (current_gdbarch)->fp0,
+			  8, TARGET_BYTE_ORDER, readbuf, writebuf, 0);
+      mips_xfer_register (regcache,
+			  NUM_REGS + mips_regnum (current_gdbarch)->fp0 + 2,
+			  8, TARGET_BYTE_ORDER, readbuf ? readbuf + 8 : readbuf,
+			  writebuf ? writebuf + 8 : writebuf, 0);
+      return RETURN_VALUE_REGISTER_CONVENTION;
+    }
   else if (TYPE_CODE (type) == TYPE_CODE_FLT
 	   && tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
@@ -3704,26 +3719,9 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		     big endian targets.
 
 		     It does not seem to be necessary to do the
-		     same for integral types.
+		     same for integral types. */
 
-		     Also don't do this adjustment on O64 binaries.
-
-		     cagney/2001-07-23: gdb/179: Also, GCC, when
-		     outputting LE O32 with sizeof (struct) <
-		     mips_abi_regsize(), generates a left shift as
-		     part of storing the argument in a register a
-		     register (the left shift isn't generated when
-		     sizeof (struct) >= mips_abi_regsize()).  Since
-		     it is quite possible that this is GCC
-		     contradicting the LE/O32 ABI, GDB has not been
-		     adjusted to accommodate this.  Either someone
-		     needs to demonstrate that the LE/O32 ABI
-		     specifies such a left shift OR this new ABI gets
-		     identified as such and GDB gets tweaked
-		     accordingly.  */
-
-		  if (mips_abi_regsize (gdbarch) < 8
-		      && TARGET_BYTE_ORDER == BFD_ENDIAN_BIG
+		  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG
 		      && partial_len < mips_abi_regsize (gdbarch)
 		      && (typecode == TYPE_CODE_STRUCT ||
 			  typecode == TYPE_CODE_UNION))
@@ -3773,7 +3771,45 @@ mips_o64_return_value (struct gdbarch *gdbarch,
 		       struct type *type, struct regcache *regcache,
 		       gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  return RETURN_VALUE_STRUCT_CONVENTION;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+
+  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
+      || TYPE_CODE (type) == TYPE_CODE_UNION
+      || TYPE_CODE (type) == TYPE_CODE_ARRAY)
+    return RETURN_VALUE_STRUCT_CONVENTION;
+  else if (fp_register_arg_p (TYPE_CODE (type), type))
+    {
+      /* A floating-point value.  It fits in the least significant
+         part of FP0.  */
+      if (mips_debug)
+	fprintf_unfiltered (gdb_stderr, "Return float in $fp0\n");
+      mips_xfer_register (regcache,
+			  NUM_REGS + mips_regnum (current_gdbarch)->fp0,
+			  TYPE_LENGTH (type),
+			  TARGET_BYTE_ORDER, readbuf, writebuf, 0);
+      return RETURN_VALUE_REGISTER_CONVENTION;
+    }
+  else
+    {
+      /* A scalar extract each part but least-significant-byte
+         justified. */
+      int offset;
+      int regnum;
+      for (offset = 0, regnum = MIPS_V0_REGNUM;
+	   offset < TYPE_LENGTH (type);
+	   offset += mips_stack_argsize (gdbarch), regnum++)
+	{
+	  int xfer = mips_stack_argsize (gdbarch);
+	  if (offset + xfer > TYPE_LENGTH (type))
+	    xfer = TYPE_LENGTH (type) - offset;
+	  if (mips_debug)
+	    fprintf_unfiltered (gdb_stderr, "Return scalar+%d:%d in $%d\n",
+				offset, xfer, regnum);
+	  mips_xfer_register (regcache, NUM_REGS + regnum, xfer,
+			      TARGET_BYTE_ORDER, readbuf, writebuf, offset);
+	}
+      return RETURN_VALUE_REGISTER_CONVENTION;
+    }
 }
 
 /* Floating point register management.
@@ -4037,7 +4073,6 @@ print_gp_register_row (struct ui_file *file, struct frame_info *frame,
   int regnum;
 
   /* For GP registers, we print a separate row of names above the vals */
-  fprintf_filtered (file, "     ");
   for (col = 0, regnum = start_regnum;
        col < ncols && regnum < NUM_REGS + NUM_PSEUDO_REGS; regnum++)
     {
@@ -4046,11 +4081,17 @@ print_gp_register_row (struct ui_file *file, struct frame_info *frame,
       if (TYPE_CODE (gdbarch_register_type (gdbarch, regnum)) ==
 	  TYPE_CODE_FLT)
 	break;			/* end the row: reached FP register */
+      if (col == 0)
+	fprintf_filtered (file, "     ");
       fprintf_filtered (file,
 			mips_abi_regsize (current_gdbarch) == 8 ? "%17s" : "%9s",
 			REGISTER_NAME (regnum));
       col++;
     }
+
+  if (col == 0)
+    return regnum;
+
   /* print the R0 to R31 names */
   if ((start_regnum % NUM_REGS) < MIPS_NUMREGS)
     fprintf_filtered (file, "\n R%-4d", start_regnum % NUM_REGS);
@@ -4740,6 +4781,13 @@ mips_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  break;
 	}
     }
+
+  /* Default 64-bit objects to N64 instead of O32.  */
+  if (found_abi == MIPS_ABI_UNKNOWN
+      && info.abfd != NULL
+      && bfd_get_flavour (info.abfd) == bfd_target_elf_flavour
+      && elf_elfheader (info.abfd)->e_ident[EI_CLASS] == ELFCLASS64)
+    found_abi = MIPS_ABI_N64;
 
   if (gdbarch_debug)
     fprintf_unfiltered (gdb_stdlog, "mips_gdbarch_init: found_abi = %d\n",

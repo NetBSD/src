@@ -1,6 +1,6 @@
 /* Support routines for decoding "stabs" debugging information format.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Support routines for reading and decoding debugging information in
    the "stabs" format.  This format is used with many systems that use
@@ -722,7 +722,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	case 'r':
 	  {
 	    double d = atof (p);
-	    char *dbl_valu;
+	    gdb_byte *dbl_valu;
 
 	    /* FIXME-if-picky-about-floating-accuracy: Should be using
 	       target arithmetic to get the value.  real.c in GCC
@@ -737,7 +737,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 
 	    SYMBOL_TYPE (sym) = lookup_fundamental_type (objfile,
 							 FT_DBL_PREC_FLOAT);
-	    dbl_valu = (char *)
+	    dbl_valu =
 	      obstack_alloc (&objfile->objfile_obstack,
 			     TYPE_LENGTH (SYMBOL_TYPE (sym)));
 	    store_typed_floating (dbl_valu, SYMBOL_TYPE (sym), d);
@@ -1804,6 +1804,8 @@ again:
 
 	  return_type = read_type (pp, objfile);
 	  args = read_args (pp, ';', objfile, &nargs, &varargs);
+	  if (args == NULL)
+	    return error_type (pp, objfile);
 	  type = dbx_alloc_type (typenums, objfile);
 	  smash_to_method_type (type, domain, return_type, args,
 				nargs, varargs);
@@ -3985,8 +3987,8 @@ handle_true_range:
 }
 
 /* Read in an argument list.  This is a list of types, separated by commas
-   and terminated with END.  Return the list of types read in, or (struct type
-   **)-1 if there is an error.  */
+   and terminated with END.  Return the list of types read in, or NULL
+   if there is an error.  */
 
 static struct field *
 read_args (char **pp, int end, struct objfile *objfile, int *nargsp,
@@ -4001,7 +4003,7 @@ read_args (char **pp, int end, struct objfile *objfile, int *nargsp,
     {
       if (**pp != ',')
 	/* Invalid argument list: no ','.  */
-	return (struct field *) -1;
+	return NULL;
       (*pp)++;
       STABS_CONTINUE (pp, objfile);
       types[n++] = read_type (pp, objfile);

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-int ppc_elf_select_plt_layout (bfd *, struct bfd_link_info *, int);
+int ppc_elf_select_plt_layout (bfd *, struct bfd_link_info *, int, int);
 asection *ppc_elf_tls_setup (bfd *, struct bfd_link_info *);
 bfd_boolean ppc_elf_tls_optimize (bfd *, struct bfd_link_info *);
 void ppc_elf_set_sdata_syms (bfd *, struct bfd_link_info *);

@@ -33,7 +33,7 @@ set testfile "annota3"
 set srcfile ${testfile}.cc
 set binfile ${objdir}/${subdir}/${testfile}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++ additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++ nowarnings}] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

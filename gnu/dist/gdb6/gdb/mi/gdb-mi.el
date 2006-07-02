@@ -4,7 +4,7 @@
 ;; Maintainer: Nick Roberts <nickrob@gnu.org>
 ;; Keywords: unix, tools
 
-;; Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+;; Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
 
 ;; This file is part of GNU GDB.
 
@@ -43,8 +43,8 @@
 ;; GUD buffer you must not use run, step, next or continue etc but their MI
 ;; counterparts through gud-run, gud-step etc, e.g clicking on the appropriate
 ;; icon in the toolbar.
-;;
 ;; 2) Some commands send extra prompts to the GUD buffer.
+;; 3) Doesn't list catchpoints in breakpoints buffer.
 ;;
 ;; TODO:
 ;; 1) Prefix MI commands with a token instead of queueing commands.
@@ -58,10 +58,6 @@
 (require 'gud)
 (require 'gdb-ui)
 
-(defvar gdb-source-file-list nil)
-(defvar gdb-register-names nil "List of register names.")
-(defvar gdb-changed-registers nil
-  "List of changed register numbers (strings).")
 (defvar gdb-last-command nil)
 (defvar gdb-prompt-name nil)
 
@@ -119,7 +115,7 @@ detailed description of this mode.
   ;; Let's start with a basic gud-gdb buffer and then modify it a bit.
   (gdb command-line)
   ;;
-  (setq gdb-debug-log nil)
+  (setq gdb-debug-ring nil)
   (set (make-local-variable 'gud-minor-mode) 'gdbmi)
   (set (make-local-variable 'gud-marker-filter) 'gud-gdbmi-marker-filter)
   ;;
@@ -174,14 +170,14 @@ detailed description of this mode.
   (setq comint-input-sender 'gdbmi-send)
   ;;
   ;; (re-)initialise
-  (setq gdb-frame-address (if gdb-show-main "main" nil)
+  (setq gdb-pc-address (if gdb-show-main "main" nil)
         gdb-previous-frame-address nil
         gdb-memory-address "main"
         gdb-previous-frame nil
         gdb-selected-frame nil
         gdb-frame-number nil
         gdb-var-list nil
-        gdb-var-changed nil
+	gdb-force-update t
         gdb-prompting nil
         gdb-input-queue nil
         gdb-current-item nil
@@ -190,7 +186,6 @@ detailed description of this mode.
         gdb-server-prefix nil
         gdb-flush-pending-output nil
         gdb-location-alist nil
-        gdb-find-file-unhook nil
         gdb-source-file-list nil
         gdb-last-command nil
 	gdb-prompt-name nil
@@ -207,7 +202,8 @@ detailed description of this mode.
   ;; find source file and compilation directory here
   (gdb-enqueue-input
    ; Needs GDB 6.2 onwards.
-   (list "-file-list-exec-source-files\n" 'gdb-get-source-file-list))
+   (list "-file-list-exec-source-files\n"
+	 'gdb-set-gud-minor-mode-existing-buffers-1))
   (gdb-enqueue-input
    ; Needs GDB 6.0 onwards.
    (list "-file-list-exec-source-file\n" 'gdb-get-source-file))
@@ -216,71 +212,9 @@ detailed description of this mode.
   (gdb-enqueue-input
    (list "-gdb-show prompt\n" 'gdb-get-prompt))
   ;;
+  (setq gdb-locals-font-lock-keywords gdb-locals-font-lock-keywords-2)
   (run-hooks 'gdbmi-mode-hook))
 
-; Force nil till fixed.
-(defconst gdbmi-use-inferior-io-buffer nil)
-
-; Uses "-var-list-children --all-values".  Needs GDB 6.1 onwards.
-(defun gdbmi-var-list-children (varnum)
-  (gdb-enqueue-input
-   (list (concat "-var-list-children --all-values "  
-		 varnum "\n")
-	     `(lambda () (gdbmi-var-list-children-handler ,varnum)))))
-
-(defconst gdbmi-var-list-children-regexp
-  "name=\"\\(.+?\\)\",exp=\"\\(.+?\\)\",numchild=\"\\(.+?\\)\",\
-value=\\(\".*?\"\\),type=\"\\(.+?\\)\"}")
-
-(defun gdbmi-var-list-children-handler (varnum)
-  (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
-    (goto-char (point-min))
-    (let ((var-list nil))
-     (catch 'child-already-watched
-       (dolist (var gdb-var-list)
-	 (if (string-equal varnum (cadr var))
-	     (progn
-	       (push var var-list)
-	       (while (re-search-forward gdbmi-var-list-children-regexp nil t)
-		 (let ((varchild (list (match-string 2)
-				       (match-string 1)
-				       (match-string 3)
-				       (match-string 5)
-				       (read (match-string 4))
-				       nil)))
-		   (dolist (var1 gdb-var-list)
-		     (if (string-equal (cadr var1) (cadr varchild))
-			 (throw 'child-already-watched nil)))
-		   (push varchild var-list))))
-	   (push var var-list)))
-       (setq gdb-var-changed t)
-       (setq gdb-var-list (nreverse var-list))))))
-
-; Uses "-var-update --all-values".  Needs CVS GDB (6.4+).
-(defun gdbmi-var-update ()
-  (gdb-enqueue-input
-   (list "-var-update --all-values *\n" 'gdbmi-var-update-handler)))
-
-(defconst gdbmi-var-update-regexp "name=\"\\(.*?\\)\",value=\\(\".*\"\\),")
-
-(defun gdbmi-var-update-handler ()
-  (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
-    (goto-char (point-min))
-    (while (re-search-forward gdbmi-var-update-regexp nil t)
-	(let ((varnum (match-string 1)))
-	  (catch 'var-found-1
-	    (let ((num 0))
-	      (dolist (var gdb-var-list)
-		(if (string-equal varnum (cadr var))
-		    (progn
-		      (setcar (nthcdr 5 var) t)
-		      (setcar (nthcdr 4 var) (read (match-string 2)))
-		      (setcar (nthcdr num gdb-var-list) var)
-		      (throw 'var-found-1 nil)))
-		(setq num (+ num 1))))))
-	(setq gdb-var-changed t)))
-  (with-current-buffer gud-comint-buffer
-    (speedbar-timer-fn)))
 
 (defun gdbmi-send (proc string)
   "A comint send filter for gdb."
@@ -291,18 +225,21 @@ value=\\(\".*?\"\\),type=\"\\(.+?\\)\"}")
     (setq gdb-output-sink 'user)
     (setq gdb-prompting nil)
     ;; mimic <RET> key to repeat previous command in GDB
-    (if (string-match "\\S+" string)
+    (if (not (string-match "^\\s+$" string))
 	(setq gdb-last-command string)
       (if gdb-last-command (setq string gdb-last-command)))
-    (if gdb-enable-debug-log 
-	(push (cons 'mi-send (concat string "\n")) gdb-debug-log))
-    (process-send-string
-     proc
+    (if gdb-enable-debug
+	(push (cons 'mi-send (concat string "\n")) gdb-debug-ring))
      (if (string-match "^-" string)
 	 ;; MI command
-	 (concat string "\n")
+	 (process-send-string proc (concat string "\n"))
        ;; CLI command
-       (concat "-interpreter-exec console \"" string "\"\n")))))
+    (if (string-match "\\\\$" string)
+	(setq gdb-continuation (concat gdb-continuation string "\n"))
+      (process-send-string proc
+			   (concat "-interpreter-exec console \""
+				   gdb-continuation string "\"\n"))
+      (setq gdb-continuation nil)))))
 
 (defcustom gud-gdbmi-command-name "gdb -interp=mi"
   "Default command to execute an executable under the GDB-UI debugger."
@@ -331,16 +268,16 @@ value=\\(\".*?\"\\),type=\"\\(.+?\\)\"}")
   "Queue any GDB commands that the user interface needs."
   (unless gdb-pending-triggers
     (when (and (boundp 'speedbar-frame) (frame-live-p speedbar-frame))
-      (setq gdb-var-changed t)   ; force update
+      (setq gdb-force-update t)
       (dolist (var gdb-var-list)
 	(setcar (nthcdr 5 var) nil))
-      (gdbmi-var-update))
+      (gdb-var-update-1))
     (gdbmi-get-selected-frame)
     (gdbmi-invalidate-frames)
     (gdbmi-invalidate-breakpoints)
     (gdb-get-changed-registers)
-    (gdbmi-invalidate-registers)
-    (gdbmi-invalidate-locals)))
+    (gdb-invalidate-registers-1)
+    (gdb-invalidate-locals-1)))
 
 (defun gdbmi-prompt2 ()
   "Handle any output and send next GDB command."
@@ -348,7 +285,7 @@ value=\\(\".*?\"\\),type=\"\\(.+?\\)\"}")
     (when (eq sink 'emacs)
       (let ((handler
 	     (car (cdr gdb-current-item))))
-	(with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
+	(with-current-buffer (gdb-get-buffer-create 'gdb-partial-output-buffer)
 	  (funcall handler)))))
   (let ((input (gdb-dequeue-input)))
     (if input
@@ -362,8 +299,8 @@ value=\\(\".*?\"\\),type=\"\\(.+?\\)\"}")
   "Filter GDB/MI output."
   (if gdb-flush-pending-output
       nil
-    (if gdb-enable-debug-log (push (cons 'recv (list string gdb-output-sink))
-					 gdb-debug-log))
+    (if gdb-enable-debug (push (cons 'recv (list string gdb-output-sink))
+					 gdb-debug-ring))
     ;; Recall the left over gud-marker-acc from last time
     (setq gud-marker-acc (concat gud-marker-acc string))
     ;; Start accumulating output for the GUD buffer
@@ -466,14 +403,16 @@ value=\\(\".*?\"\\),type=\"\\(.+?\\)\"}")
   gdb-break-list-handler)
 
 (defconst gdb-break-list-regexp
-"number=\"\\(.*?\\)\",type=\"\\(.*?\\)\",disp=\"\\(.*?\\)\",enabled=\"\\(.\\)\",\
-addr=\"\\(.*?\\)\",func=\"\\(.*?\\)\",file=\"\\(.*?\\)\",line=\"\\(.*?\\)\"")
+"bkpt={.*?number=\"\\(.*?\\)\",.*?type=\"\\(.*?\\)\",.*?disp=\"\\(.*?\\)\",.*?\
+enabled=\"\\(.\\)\",.*?addr=\"\\(.*?\\)\",\\(?:.*?func=\"\\(.*?\\)\",.*?\
+file=\"\\(.*?\\)\",.*?fullname=\".*?\",.*?line=\"\\(.*?\\)\",\
+\\|\\(?:.*?what=\"\\(.*?\\)\",\\)*\\).*?times=\"\\(.*?\\)\".*?}")
 
 (defun gdb-break-list-handler ()
   (setq gdb-pending-triggers (delq 'gdbmi-invalidate-breakpoints
 				  gdb-pending-triggers))
   (let ((breakpoint) (breakpoints-list))
-    (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
+    (with-current-buffer (gdb-get-buffer-create 'gdb-partial-output-buffer)
       (goto-char (point-min))
       (while (re-search-forward gdb-break-list-regexp nil t)
 	(let ((breakpoint (list (match-string 1)
@@ -483,84 +422,37 @@ addr=\"\\(.*?\\)\",func=\"\\(.*?\\)\",file=\"\\(.*?\\)\",line=\"\\(.*?\\)\"")
 				(match-string 5)
 				(match-string 6)
 				(match-string 7)
-				(match-string 8))))
+				(match-string 8)
+				(match-string 9)
+				(match-string 10))))
 	  (push breakpoint breakpoints-list))))
     (let ((buf (gdb-get-buffer 'gdb-breakpoints-buffer)))
       (and buf (with-current-buffer buf
 		 (let ((p (point))
 		       (buffer-read-only nil))
 		   (erase-buffer)
-		   (insert "Num Type        Disp Enb Func\tFile:Line\tAddr\n")
+		   (insert "Num Type           Disp Enb Hits Addr       What\n")
 		   (dolist (breakpoint breakpoints-list)
-		     (insert (concat
-			      (nth 0 breakpoint) "   "
-			      (nth 1 breakpoint) "  "
-			      (nth 2 breakpoint) "   "
-			      (nth 3 breakpoint) " "
-			      (nth 5 breakpoint) "\t"
-			      (nth 6 breakpoint) ":" (nth 7 breakpoint) "\t" 
-			      (nth 4 breakpoint) "\n")))
+		     (insert
+		      (concat
+		       (nth 0 breakpoint) "   "
+		       (nth 1 breakpoint) "     "
+		       (nth 2 breakpoint) " "
+		       (nth 3 breakpoint) "   "
+		       (nth 9 breakpoint) " "
+		       (nth 4 breakpoint) " "
+		       (if (nth 5 breakpoint)
+			   (concat "in " (nth 5 breakpoint) " at " (nth 6 breakpoint) ":" (nth 7 breakpoint) "\n")
+			 (concat (nth 8 breakpoint) "\n")))))
 		   (goto-char p))))))
-  (gdb-break-list-custom))
-
-;;-put breakpoint icons in relevant margins (even those set in the GUD buffer)
-(defun gdb-break-list-custom ()
-  (let ((flag) (bptno))
-    ;;
-    ;; remove all breakpoint-icons in source buffers but not assembler buffer
-    (dolist (buffer (buffer-list))
-      (with-current-buffer buffer
-	(if (and (eq gud-minor-mode 'gdbmi)
-		 (not (string-match "\\`\\*.+\\*\\'" (buffer-name))))
-	    (gdb-remove-breakpoint-icons (point-min) (point-max)))))
-    (with-current-buffer (gdb-get-buffer 'gdb-breakpoints-buffer)
-      (save-excursion
-	(goto-char (point-min))
-	(while (< (point) (- (point-max) 1))
-	  (forward-line 1)
-	  (if (looking-at
-	       "\\([0-9]+\\)\\s-+\\S-+\\s-+\\S-+\\s-+\\(.\\)\\s-+\\S-+\\s-+\
-\\(\\S-+\\):\\([0-9]+\\)")
-	      (progn
-		(setq bptno (match-string 1))
-		(setq flag (char-after (match-beginning 2)))
-		(let ((line (match-string 4)) (buffer-read-only nil)
-		      (file (match-string 3)))
-		  (add-text-properties (point-at-bol) (point-at-eol)
-		   '(mouse-face highlight
-		     help-echo "mouse-2, RET: visit breakpoint"))
-			(unless (file-exists-p file)
-			   (setq file (cdr (assoc bptno gdb-location-alist))))
-			(if (and file
-				 (not (string-equal file "File not found")))
-			    (with-current-buffer (find-file-noselect file)
-			      (set (make-local-variable 'gud-minor-mode)
-				   'gdbmi)
-			      (set (make-local-variable 'tool-bar-map)
-				   gud-tool-bar-map)
-			      ;; only want one breakpoint icon at each location
-			      (save-excursion
-				(goto-line (string-to-number line))
-				(gdb-put-breakpoint-icon (eq flag ?y) bptno)))
-			  (gdb-enqueue-input
-			   (list (concat "list "
-					 (match-string-no-properties 3) ":1\n")
-				 'ignore))
-			  (gdb-enqueue-input
-			   (list "-file-list-exec-source-file\n"
-				 `(lambda () (gdbmi-get-location
-					      ,bptno ,line ,flag))))))))))
-      (end-of-line)))
-  (if (gdb-get-buffer 'gdb-assembler-buffer) (gdb-assembler-custom)))
-
-(defvar gdb-source-file-regexp "fullname=\"\\(.*?\\)\"")
+  (gdb-info-breakpoints-custom))
 
 (defun gdbmi-get-location (bptno line flag)
   "Find the directory containing the relevant source file.
 Put in buffer and place breakpoint icon."
   (goto-char (point-min))
   (catch 'file-not-found
-    (if (re-search-forward gdb-source-file-regexp nil t)
+    (if (re-search-forward gdb-source-file-regexp-1 nil t)
 	(delete (cons bptno "File not found") gdb-location-alist)
 	(push (cons bptno (match-string 1)) gdb-location-alist)
       (gdb-resync)
@@ -586,37 +478,41 @@ Add directory to search path for source files using the GDB command, dir."))
   "-stack-list-frames\n"
   gdb-stack-list-frames-handler)
 
-
 (defconst gdb-stack-list-frames-regexp
-"level=\"\\(.*?\\)\",addr=\"\\(.*?\\)\",func=\"\\(.*?\\)\",\
-file=\".*?\",fullname=\"\\(.*?\\)\",line=\"\\(.*?\\)\"")
+"{.*?level=\"\\(.*?\\)\",.*?addr=\"\\(.*?\\)\",.*?func=\"\\(.*?\\)\",\
+\\(?:.*?file=\".*?\",.*?fullname=\"\\(.*?\\)\",.*?line=\"\\(.*?\\)\".*?}\\|\
+from=\"\\(.*?\\)\"\\)")
 
 (defun gdb-stack-list-frames-handler ()
   (setq gdb-pending-triggers (delq 'gdbmi-invalidate-frames
 				  gdb-pending-triggers))
   (let ((frame nil)
 	(call-stack nil))
-    (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
+    (with-current-buffer (gdb-get-buffer-create 'gdb-partial-output-buffer)
       (goto-char (point-min))
       (while (re-search-forward gdb-stack-list-frames-regexp nil t)
 	(let ((frame (list (match-string 1)
 			   (match-string 2)
 			   (match-string 3)
 			   (match-string 4)
-			   (match-string 5))))
+			   (match-string 5)
+			   (match-string 6))))
 	  (push frame call-stack))))
     (let ((buf (gdb-get-buffer 'gdb-stack-buffer)))
       (and buf (with-current-buffer buf
 		 (let ((p (point))
 		       (buffer-read-only nil))
 		   (erase-buffer)
-		   (insert "Level\tFunc\tFile:Line\tAddr\n")
+		   (insert "Level\tAddr\tFunc\tFile:Line\n")
 		   (dolist (frame (nreverse call-stack))
-		     (insert (concat
-			      (nth 0 frame) "\t"
-			      (nth 2 frame) "\t"
-			      (nth 3 frame) ":" (nth 4 frame) "\t"
-			      (nth 1 frame) "\n")))
+		     (insert
+		      (concat
+		       (nth 0 frame) "\t"
+		       (nth 1 frame) "\t"
+		       (nth 2 frame) "\t"
+		       (if (nth 3 frame)
+			   (concat "at "(nth 3 frame) ":" (nth 4 frame) "\n")
+			 (concat "from " (nth 5 frame) "\n")))))
 		   (goto-char p))))))
   (gdb-stack-list-frames-custom))
 
@@ -637,156 +533,20 @@ file=\".*?\",fullname=\"\\(.*?\\)\",line=\"\\(.*?\\)\"")
 			       'face '(:inverse-video t)))
 	  (forward-line 1))))))
 
-;; Locals buffer.
-;; uses "-stack-list-locals --simple-values". Needs GDB 6.1 onwards.
-(def-gdb-auto-update-trigger gdbmi-invalidate-locals
-  (gdb-get-buffer 'gdb-locals-buffer)
-  "-stack-list-locals --simple-values\n"
-  gdb-stack-list-locals-handler)
-
-(defconst gdb-stack-list-locals-regexp
-  (concat "name=\"\\(.*?\\)\",type=\"\\(.*?\\)\""))
-
-;; Dont display values of arrays or structures.
-;; These can be expanded using gud-watch.
-(defun gdb-stack-list-locals-handler nil
-  (setq gdb-pending-triggers (delq 'gdbmi-invalidate-locals
-				  gdb-pending-triggers))
-  (let ((local nil)
-	(locals-list nil))
-    (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
-      (goto-char (point-min))
-      (while (re-search-forward gdb-stack-list-locals-regexp nil t)
-	(let ((local (list (match-string 1)
-			   (match-string 2)
-			   nil)))
-	  (if (looking-at ",value=\\(\".*\"\\)}")
-	      (setcar (nthcdr 2 local) (read (match-string 1))))
-	(push local locals-list))))
-    (let ((buf (gdb-get-buffer 'gdb-locals-buffer)))
-      (and buf (with-current-buffer buf
-	      (let* ((window (get-buffer-window buf 0))
-		     (p (window-point window))
-		       (buffer-read-only nil))
-		   (erase-buffer)
-		   (dolist (local locals-list)
-		     (insert 
-		      (concat (car local) "\t" (nth 1 local) "\t"
-			      (or (nth 2 local)
-				  (if (string-match "struct" (nth 1 local))
-				      "(structure)"
-				    "(array)"))
-			      "\n")))
-		   (set-window-point window p)))))))
-
 
-;; Registers buffer.
-;;
-(def-gdb-auto-update-trigger gdbmi-invalidate-registers
-  (gdb-get-buffer 'gdb-registers-buffer)
-  "-data-list-register-values x\n"
-  gdb-data-list-register-values-handler)
-
-(defconst gdb-data-list-register-values-regexp
-  "number=\"\\(.*?\\)\",value=\"\\(.*?\\)\"")
-
-(defun gdb-data-list-register-values-handler ()
-  (setq gdb-pending-triggers (delq 'gdbmi-invalidate-registers
-				   gdb-pending-triggers))
-  (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
-    (goto-char (point-min))
-    (if (re-search-forward gdb-error-regexp nil t)
-	(progn
-	  (let ((match nil))
-	    (setq match (match-string 1))
-	    (with-current-buffer (gdb-get-buffer 'gdb-registers-buffer)
-	      (let ((buffer-read-only nil))
-		(erase-buffer)
-		(insert match)
-		(goto-char (point-min))))))
-      (let ((register-list (reverse gdb-register-names))
-	    (register nil) (register-string nil) (register-values nil))
-	(goto-char (point-min))
-	(while (re-search-forward gdb-data-list-register-values-regexp nil t)
-	  (setq register (pop register-list))
-	  (setq register-string (concat register "\t" (match-string 2) "\n"))
-	  (if (member (match-string 1) gdb-changed-registers)
-	      (put-text-property 0 (length register-string)
-				 'face 'font-lock-warning-face
-				 register-string))
-	  (setq register-values
-		(concat register-values register-string)))
-	(let ((buf (gdb-get-buffer 'gdb-registers-buffer)))
-	  (with-current-buffer buf
-	    (let ((p (window-point (get-buffer-window buf 0)))
-		  (buffer-read-only nil))
-	      (erase-buffer)
-	      (insert register-values)
-	      (set-window-point (get-buffer-window buf 0) p)))))))
-  (gdb-data-list-register-values-custom))
-
-(defun gdb-data-list-register-values-custom ()
-  (with-current-buffer (gdb-get-buffer 'gdb-registers-buffer)
-    (save-excursion
-      (let ((buffer-read-only nil)
-	    bl)
-	(goto-char (point-min))
-	(while (< (point) (point-max))
-	  (setq bl (line-beginning-position))
-	  (when (looking-at "^[^\t]+")
-	    (put-text-property bl (match-end 0)
-			       'face font-lock-variable-name-face))
-	  (forward-line 1))))))
-
-(defun gdb-get-changed-registers ()
-  (if (and (gdb-get-buffer 'gdb-registers-buffer)
-	   (not (member 'gdb-get-changed-registers gdb-pending-triggers)))
-      (progn
-	(gdb-enqueue-input
-	 (list
-	  "-data-list-changed-registers\n"
-	  'gdb-get-changed-registers-handler))
-	(push 'gdb-get-changed-registers gdb-pending-triggers))))
-
-(defconst gdb-data-list-register-names-regexp "\"\\(.*?\\)\"")
-
-(defun gdb-get-changed-registers-handler ()
-  (setq gdb-pending-triggers
-	(delq 'gdb-get-changed-registers gdb-pending-triggers))
-  (setq gdb-changed-registers nil)
-  (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
-    (goto-char (point-min))
-    (while (re-search-forward gdb-data-list-register-names-regexp nil t)
-      (push (match-string 1) gdb-changed-registers))))
-
-(defun gdb-get-register-names ()
-  "Create a list of register names."
-  (goto-char (point-min))
-  (setq gdb-register-names nil)
-  (while (re-search-forward gdb-data-list-register-names-regexp nil t)
-    (push (match-string 1) gdb-register-names)))
-
-;; these functions/variables may go into gdb-ui.el in the near future
-;; (from gdb-nui.el)
-
+;; gdb-ui.el uses "info source" to find out if macro information is present.
 (defun gdb-get-source-file ()
   "Find the source file where the program starts and display it with related
 buffers, if required."
   (goto-char (point-min))
-  (if (re-search-forward gdb-source-file-regexp nil t)
+  (if (re-search-forward gdb-source-file-regexp-1 nil t)
       (setq gdb-main-file (match-string 1)))
  (if gdb-many-windows
       (gdb-setup-windows)
-   (gdb-get-create-buffer 'gdb-breakpoints-buffer)
+   (gdb-get-buffer-create 'gdb-breakpoints-buffer)
    (if gdb-show-main
        (let ((pop-up-windows t))
 	 (display-buffer (gud-find-file gdb-main-file))))))
-
-(defun gdb-get-source-file-list ()
-  "Create list of source files for current GDB session."
-  (goto-char (point-min))
-  (while (re-search-forward gdb-source-file-regexp nil t)
-    (push (match-string 1) gdb-source-file-list)))
 
 (defun gdbmi-get-selected-frame ()
   (if (not (member 'gdbmi-get-selected-frame gdb-pending-triggers))
@@ -799,15 +559,27 @@ buffers, if required."
 (defun gdbmi-frame-handler ()
   (setq gdb-pending-triggers
 	(delq 'gdbmi-get-selected-frame gdb-pending-triggers))
-  (with-current-buffer (gdb-get-create-buffer 'gdb-partial-output-buffer)
+  (with-current-buffer (gdb-get-buffer-create 'gdb-partial-output-buffer)
     (goto-char (point-min))
     (when (re-search-forward gdb-stack-list-frames-regexp nil t)
       (setq gdb-frame-number (match-string 1))
-      (setq gdb-frame-address (match-string 2))
+      (setq gdb-pc-address (match-string 2))
       (setq gdb-selected-frame (match-string 3))
-      (setq gud-last-frame
-	    (cons (match-string 4) (string-to-number (match-string 5))))
-      (gud-display-frame)
+      (when (match-string 4)
+	(setq gud-last-frame
+	      (cons (match-string 4) (string-to-number (match-string 5))))
+	(gud-display-frame)
+	(if gud-overlay-arrow-position
+	    (let ((buffer (marker-buffer gud-overlay-arrow-position))
+		  (position (marker-position gud-overlay-arrow-position)))
+	      (when buffer
+		(with-current-buffer buffer
+		  (setq fringe-indicator-alist
+			(if (string-equal gdb-frame-number "0")
+			    nil
+			  '((overlay-arrow . hollow-right-triangle))))
+		  (setq gud-overlay-arrow-position (make-marker))
+		  (set-marker gud-overlay-arrow-position position))))))
       (if (gdb-get-buffer 'gdb-locals-buffer)
 	  (with-current-buffer (gdb-get-buffer 'gdb-locals-buffer)
 	    (setq mode-name (concat "Locals:" gdb-selected-frame))))

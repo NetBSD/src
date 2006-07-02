@@ -236,11 +236,12 @@ enum complain_overflow
   /* Do not complain on overflow.  */
   complain_overflow_dont,
 
-  /* Complain if the bitfield overflows, whether it is considered
-     as signed or unsigned.  */
+  /* Complain if the value overflows when considered as a signed
+     number one bit larger than the field.  ie. A bitfield of N bits
+     is allowed to represent -2**n to 2**n-1.  */
   complain_overflow_bitfield,
 
-  /* Complain if the value overflows when considered as signed
+  /* Complain if the value overflows when considered as a signed
      number.  */
   complain_overflow_signed,
 
@@ -839,6 +840,10 @@ Relocation against a MIPS literal section.
 @deffnx {} BFD_RELOC_MIPS_TLS_TPREL_LO16
 MIPS ELF relocations.
 @end deffn
+@deffn {} BFD_RELOC_MIPS_COPY
+@deffnx {} BFD_RELOC_MIPS_JUMP_SLOT
+MIPS ELF relocations (VxWorks extensions).
+@end deffn
 @deffn {} BFD_RELOC_FRV_LABEL16
 @deffnx {} BFD_RELOC_FRV_LABEL24
 @deffnx {} BFD_RELOC_FRV_LO16
@@ -927,6 +932,9 @@ Adjust by program base.
 @deffnx {} BFD_RELOC_386_TLS_DTPMOD32
 @deffnx {} BFD_RELOC_386_TLS_DTPOFF32
 @deffnx {} BFD_RELOC_386_TLS_TPOFF32
+@deffnx {} BFD_RELOC_386_TLS_GOTDESC
+@deffnx {} BFD_RELOC_386_TLS_DESC_CALL
+@deffnx {} BFD_RELOC_386_TLS_DESC
 i386/elf relocations
 @end deffn
 @deffn {} BFD_RELOC_X86_64_GOT32
@@ -947,6 +955,14 @@ i386/elf relocations
 @deffnx {} BFD_RELOC_X86_64_TPOFF32
 @deffnx {} BFD_RELOC_X86_64_GOTOFF64
 @deffnx {} BFD_RELOC_X86_64_GOTPC32
+@deffnx {} BFD_RELOC_X86_64_GOT64
+@deffnx {} BFD_RELOC_X86_64_GOTPCREL64
+@deffnx {} BFD_RELOC_X86_64_GOTPC64
+@deffnx {} BFD_RELOC_X86_64_GOTPLT64
+@deffnx {} BFD_RELOC_X86_64_PLTOFF64
+@deffnx {} BFD_RELOC_X86_64_GOTPC32_TLSDESC
+@deffnx {} BFD_RELOC_X86_64_TLSDESC_CALL
+@deffnx {} BFD_RELOC_X86_64_TLSDESC
 x86-64/elf relocations
 @end deffn
 @deffn {} BFD_RELOC_NS32K_IMM_8
@@ -1094,6 +1110,12 @@ Thumb 22 bit pc-relative branch.  The lowest bit must be zero and is
 not stored in the instruction.  The 2nd lowest bit comes from a 1 bit
 field in the instruction.
 @end deffn
+@deffn {} BFD_RELOC_ARM_PCREL_CALL
+ARM 26-bit pc-relative branch for an unconditional BL or BLX instruction.
+@end deffn
+@deffn {} BFD_RELOC_ARM_PCREL_JUMP
+ARM 26-bit pc-relative branch for B or conditional BL instruction.
+@end deffn
 @deffn {} BFD_RELOC_THUMB_PCREL_BRANCH7
 @deffnx {} BFD_RELOC_THUMB_PCREL_BRANCH9
 @deffnx {} BFD_RELOC_THUMB_PCREL_BRANCH12
@@ -1129,6 +1151,16 @@ pc-relative or some form of GOT-indirect relocation.
 @end deffn
 @deffn {} BFD_RELOC_ARM_PREL31
 31-bit PC relative address.
+@end deffn
+@deffn {} BFD_RELOC_ARM_MOVW
+@deffnx {} BFD_RELOC_ARM_MOVT
+@deffnx {} BFD_RELOC_ARM_MOVW_PCREL
+@deffnx {} BFD_RELOC_ARM_MOVT_PCREL
+@deffnx {} BFD_RELOC_ARM_THUMB_MOVW
+@deffnx {} BFD_RELOC_ARM_THUMB_MOVT
+@deffnx {} BFD_RELOC_ARM_THUMB_MOVW_PCREL
+@deffnx {} BFD_RELOC_ARM_THUMB_MOVT_PCREL
+Low and High halfword relocations for MOVW and MOVT instructions.
 @end deffn
 @deffn {} BFD_RELOC_ARM_JUMP_SLOT
 @deffnx {} BFD_RELOC_ARM_GLOB_DAT
@@ -1312,6 +1344,22 @@ ADI Blackfin Call.x not implemented.
 @deffn {} BFD_RELOC_BFIN_24_PCREL_JUMP_L
 ADI Blackfin Long Jump pcrel.
 @end deffn
+@deffn {} BFD_RELOC_BFIN_GOT17M4
+@deffnx {} BFD_RELOC_BFIN_GOTHI
+@deffnx {} BFD_RELOC_BFIN_GOTLO
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_GOT17M4
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_GOTHI
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_GOTLO
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_VALUE
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_GOTOFF17M4
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_GOTOFFHI
+@deffnx {} BFD_RELOC_BFIN_FUNCDESC_GOTOFFLO
+@deffnx {} BFD_RELOC_BFIN_GOTOFF17M4
+@deffnx {} BFD_RELOC_BFIN_GOTOFFHI
+@deffnx {} BFD_RELOC_BFIN_GOTOFFLO
+ADI Blackfin FD-PIC relocations.
+@end deffn
 @deffn {} BFD_RELOC_BFIN_GOT
 ADI Blackfin GOT relocation.
 @end deffn
@@ -1456,6 +1504,9 @@ DLX relocs
 DLX relocs
 @end deffn
 @deffn {} BFD_RELOC_M32C_HI8
+@deffnx {} BFD_RELOC_M32C_RL_JUMP
+@deffnx {} BFD_RELOC_M32C_RL_1ADDR
+@deffnx {} BFD_RELOC_M32C_RL_2ADDR
 Renesas M16C/M32C Relocations.
 @end deffn
 @deffn {} BFD_RELOC_M32R_24
@@ -1721,6 +1772,10 @@ of data memory address) into 8 bit immediate value of LDI insn.
 This is a 16 bit reloc for the AVR that stores 8 bit value (most high 8 bit
 of program memory address) into 8 bit immediate value of LDI insn.
 @end deffn
+@deffn {} BFD_RELOC_AVR_MS8_LDI
+This is a 16 bit reloc for the AVR that stores 8 bit value (most high 8 bit
+of 32 bit value) into 8 bit immediate value of LDI insn.
+@end deffn
 @deffn {} BFD_RELOC_AVR_LO8_LDI_NEG
 This is a 16 bit reloc for the AVR that stores negated 8 bit value
 (usually data memory address) into 8 bit immediate value of SUBI insn.
@@ -1734,6 +1789,10 @@ SUBI insn.
 This is a 16 bit reloc for the AVR that stores negated 8 bit value
 (most high 8 bit of program memory address) into 8 bit immediate value
 of LDI or SUBI insn.
+@end deffn
+@deffn {} BFD_RELOC_AVR_MS8_LDI_NEG
+This is a 16 bit reloc for the AVR that stores negated 8 bit value (msb
+of 32 bit value) into 8 bit immediate value of LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_LO8_LDI_PM
 This is a 16 bit reloc for the AVR that stores 8 bit value (usually
@@ -2220,25 +2279,34 @@ H8 elf Relocations.
 @deffnx {} BFD_RELOC_XSTORMY16_FPTR16
 Sony Xstormy16 Relocations.
 @end deffn
+@deffn {} BFD_RELOC_XC16X_PAG
+@deffnx {} BFD_RELOC_XC16X_POF
+@deffnx {} BFD_RELOC_XC16X_SEG
+@deffnx {} BFD_RELOC_XC16X_SOF
+Infineon Relocations.
+@end deffn
 @deffn {} BFD_RELOC_VAX_GLOB_DAT
 @deffnx {} BFD_RELOC_VAX_JMP_SLOT
 @deffnx {} BFD_RELOC_VAX_RELATIVE
 Relocations used by VAX ELF.
 @end deffn
-@deffn {} BFD_RELOC_MS1_PC16
-Morpho MS1 - 16 bit immediate relocation.
+@deffn {} BFD_RELOC_MT_PC16
+Morpho MT - 16 bit immediate relocation.
 @end deffn
-@deffn {} BFD_RELOC_MS1_HI16
-Morpho MS1 - Hi 16 bits of an address.
+@deffn {} BFD_RELOC_MT_HI16
+Morpho MT - Hi 16 bits of an address.
 @end deffn
-@deffn {} BFD_RELOC_MS1_LO16
-Morpho MS1 - Low 16 bits of an address.
+@deffn {} BFD_RELOC_MT_LO16
+Morpho MT - Low 16 bits of an address.
 @end deffn
-@deffn {} BFD_RELOC_MS1_GNU_VTINHERIT
-Morpho MS1 - Used to tell the linker which vtable entries are used.
+@deffn {} BFD_RELOC_MT_GNU_VTINHERIT
+Morpho MT - Used to tell the linker which vtable entries are used.
 @end deffn
-@deffn {} BFD_RELOC_MS1_GNU_VTENTRY
-Morpho MS1 - Used to tell the linker which vtable entries are used.
+@deffn {} BFD_RELOC_MT_GNU_VTENTRY
+Morpho MT - Used to tell the linker which vtable entries are used.
+@end deffn
+@deffn {} BFD_RELOC_MT_PCINSN8
+Morpho MT - 8 bit immediate relocation.
 @end deffn
 @deffn {} BFD_RELOC_MSP430_10_PCREL
 @deffnx {} BFD_RELOC_MSP430_16_PCREL
@@ -2323,14 +2391,14 @@ Xtensa relocations for backward compatibility.  These have all been
 replaced by BFD_RELOC_XTENSA_SLOT0_OP.
 @end deffn
 @deffn {} BFD_RELOC_XTENSA_ASM_EXPAND
-Xtensa relocation to mark that the assembler expanded the 
+Xtensa relocation to mark that the assembler expanded the
 instructions from an original target.  The expansion size is
 encoded in the reloc size.
 @end deffn
 @deffn {} BFD_RELOC_XTENSA_ASM_SIMPLIFY
-Xtensa relocation to mark that the linker should simplify 
-assembler-expanded instructions.  This is commonly used 
-internally by the linker after analysis of a 
+Xtensa relocation to mark that the linker should simplify
+assembler-expanded instructions.  This is commonly used
+internally by the linker after analysis of a
 BFD_RELOC_XTENSA_ASM_EXPAND.
 @end deffn
 @deffn {} BFD_RELOC_Z80_DISP8

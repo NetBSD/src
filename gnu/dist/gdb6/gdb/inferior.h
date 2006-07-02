@@ -1,8 +1,8 @@
 /* Variables that describe the inferior process running under GDB:
    Where it is, why it stopped, and how to step it.
 
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1998, 1999, 2000, 2001, 2003, 2004, 2005 
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (INFERIOR_H)
 #define INFERIOR_H 1
@@ -213,8 +213,6 @@ extern void store_inferior_registers (int);
 
 extern void fetch_inferior_registers (int);
 
-extern void solib_create_inferior_hook (void);
-
 extern void child_terminal_info (char *, int);
 
 extern void term_info (char *, int);
@@ -295,6 +293,8 @@ extern void follow_inferior_reset_breakpoints (void);
 /* From infcmd.c */
 
 extern void tty_command (char *, int);
+
+extern void post_create_inferior (struct target_ops *, int);
 
 extern void attach_command (char *, int);
 

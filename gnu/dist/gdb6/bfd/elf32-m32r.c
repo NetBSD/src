@@ -1,6 +1,6 @@
 /* M32R-specific support for 32-bit ELF.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1572,8 +1572,9 @@ m32r_elf_link_hash_table_create (bfd *abfd)
   if (ret == NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
-                                       m32r_elf_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      m32r_elf_link_hash_newfunc,
+				      sizeof (struct elf_m32r_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1668,6 +1669,7 @@ m32r_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
       h = (struct elf_link_hash_entry *) bh;
       h->def_regular = 1;
       h->type = STT_OBJECT;
+      htab->root.hplt = h;
 
       if (info->shared
           && ! bfd_elf_link_record_dynamic_symbol (info, h))
@@ -2101,6 +2103,24 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
                 pp = &p->next;
             }
         }
+
+      /* Also discard relocs on undefined weak syms with non-default
+	 visibility.  */
+      if (eh->dyn_relocs != NULL
+	  && h->root.type == bfd_link_hash_undefweak)
+	{
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	    eh->dyn_relocs = NULL;
+
+	  /* Make sure undefined weak symbols are output as a dynamic
+	     symbol in PIEs.  */
+	  else if (h->dynindx == -1
+		   && !h->forced_local)
+	    {
+	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
+		return FALSE;
+	    }
+	}
     }
   else
     {
@@ -2878,6 +2898,7 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
             case R_M32R_24_RELA:
             case R_M32R_32_RELA:
             case R_M32R_REL32:
+	    case R_M32R_10_PCREL_RELA:
             case R_M32R_18_PCREL_RELA:
             case R_M32R_26_PCREL_RELA:
             case R_M32R_HI16_ULO_RELA:
@@ -2885,7 +2906,8 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
               if (info->shared
                   && r_symndx != 0
                   && (input_section->flags & SEC_ALLOC) != 0
-                  && ((r_type != R_M32R_18_PCREL_RELA
+                  && ((   r_type != R_M32R_10_PCREL_RELA
+                       && r_type != R_M32R_18_PCREL_RELA
                        && r_type != R_M32R_26_PCREL_RELA
                        && r_type != R_M32R_REL32)
                       || (h != NULL
@@ -2936,7 +2958,8 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
                   if (skip)
                     memset (&outrel, 0, sizeof outrel);
-                  else if (r_type == R_M32R_18_PCREL_RELA
+                  else if (   r_type == R_M32R_10_PCREL_RELA
+                           || r_type == R_M32R_18_PCREL_RELA
                            || r_type == R_M32R_26_PCREL_RELA
                            || r_type == R_M32R_REL32)
                     {
@@ -2975,8 +2998,11 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
                      an addend for the dynamic reloc.  */
                   if (! relocate)
                     continue;
+		  break;
                 }
-              break;
+	      else if (r_type != R_M32R_10_PCREL_RELA)
+		break;
+	      /* Fall through.  */
 
 	    case (int) R_M32R_10_PCREL :
 	      r = m32r_elf_do_10_pcrel_reloc (input_bfd, howto, input_section,
@@ -3333,7 +3359,7 @@ m32r_elf_finish_dynamic_symbol (bfd *output_bfd,
 
   /* Mark some specially defined symbols as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
+      || h == htab->root.hgot)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;
@@ -3714,6 +3740,7 @@ m32r_elf_gc_sweep_hook (bfd *abfd ATTRIBUTE_UNUSED,
 	case R_M32R_HI16_SLO_RELA:
 	case R_M32R_LO16_RELA:
 	case R_M32R_SDA16_RELA:
+	case R_M32R_10_PCREL_RELA:
 	case R_M32R_18_PCREL_RELA:
 	case R_M32R_26_PCREL_RELA:
 	  if (h != NULL)
@@ -3730,8 +3757,9 @@ m32r_elf_gc_sweep_hook (bfd *abfd ATTRIBUTE_UNUSED,
 	      for (pp = &eh->dyn_relocs; (p = *pp) != NULL; pp = &p->next)
 		if (p->sec == sec)
 		  {
-		    if (ELF32_R_TYPE (rel->r_info) == R_M32R_26_PCREL_RELA
-			|| ELF32_R_TYPE (rel->r_info) == R_M32R_26_PCREL_RELA
+		    if (   ELF32_R_TYPE (rel->r_info) == R_M32R_26_PCREL_RELA
+			|| ELF32_R_TYPE (rel->r_info) == R_M32R_18_PCREL_RELA
+			|| ELF32_R_TYPE (rel->r_info) == R_M32R_10_PCREL_RELA
 			|| ELF32_R_TYPE (rel->r_info) == R_M32R_REL32)
 		      p->pc_count -= 1;
 		    p->count -= 1;
@@ -3897,6 +3925,7 @@ m32r_elf_check_relocs (bfd *abfd,
         case R_M32R_HI16_SLO_RELA:
         case R_M32R_LO16_RELA:
         case R_M32R_SDA16_RELA:
+	case R_M32R_10_PCREL_RELA:
         case R_M32R_18_PCREL_RELA:
         case R_M32R_26_PCREL_RELA:
 
@@ -3927,8 +3956,9 @@ m32r_elf_check_relocs (bfd *abfd,
              symbol.  */
           if ((info->shared
                && (sec->flags & SEC_ALLOC) != 0
-	       && ((r_type != R_M32R_26_PCREL_RELA
+	       && ((   r_type != R_M32R_26_PCREL_RELA
                     && r_type != R_M32R_18_PCREL_RELA
+                    && r_type != R_M32R_10_PCREL_RELA
                     && r_type != R_M32R_REL32)
 	           || (h != NULL
 		       && (! info->symbolic
@@ -4018,9 +4048,10 @@ m32r_elf_check_relocs (bfd *abfd,
                 }
 
               p->count += 1;
-              if (ELF32_R_TYPE (rel->r_info) == R_M32R_26_PCREL_RELA
-		  || ELF32_R_TYPE (rel->r_info) == R_M32R_REL32
-                  || ELF32_R_TYPE (rel->r_info) == R_M32R_18_PCREL_RELA)
+              if (   ELF32_R_TYPE (rel->r_info) == R_M32R_26_PCREL_RELA
+                  || ELF32_R_TYPE (rel->r_info) == R_M32R_18_PCREL_RELA
+		  || ELF32_R_TYPE (rel->r_info) == R_M32R_10_PCREL_RELA
+		  || ELF32_R_TYPE (rel->r_info) == R_M32R_REL32)
                 p->pc_count += 1;
             }
           break;

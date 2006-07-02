@@ -79,8 +79,11 @@ double		v_double_array[2];
    a special case kludge in GDB (Unix system include files like to define
    caddr_t), but for a variety of types.  */
 typedef char *char_addr;
+static char_addr a_char_addr;
 typedef unsigned short *ushort_addr;
+static ushort_addr a_ushort_addr;
 typedef signed long *slong_addr;
+static slong_addr a_slong_addr;
 
 char		*v_char_pointer;
 signed char	*v_signed_char_pointer;

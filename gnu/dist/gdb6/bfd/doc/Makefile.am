@@ -68,7 +68,7 @@ chew.o: chew.c
 
 protos: libbfd.h libcoff.h bfd.h
 
-$(srcdir)/bfd.info bfd.dvi: $(DOCFILES) bfdsumm.texi bfd.texinfo
+$(srcdir)/bfd.info bfd.dvi bfd.html: $(DOCFILES) bfdsumm.texi bfd.texinfo
 
 # We can't replace these rules with an implicit rule, because
 # makes without VPATH support couldn't find the .h files in `..'.
@@ -287,3 +287,28 @@ MAINTAINERCLEANFILES = $(DOCFILES)
 # We want install to imply install-info as per GNU standards, despite the
 # cygnus option.
 install: install-info
+
+html__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+
+install-html: install-html-am
+
+install-html-am: $(HTMLS)
+	@$(NORMAL_INSTALL)
+	test -z "$(htmldir)" || $(mkdir_p) "$(DESTDIR)$(htmldir)"
+	@list='$(HTMLS)'; for p in $$list; do \
+	  if test -f "$$p" || test -d "$$p"; then d=""; else d="$(srcdir)/"; fi; \
+	  f=$(html__strip_dir) \
+	  if test -d "$$d$$p"; then \
+	    echo " $(mkdir_p) '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(mkdir_p) "$(DESTDIR)$(htmldir)/$$f" || exit 1; \
+	    echo " $(INSTALL_DATA) '$$d$$p'/* '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(INSTALL_DATA) "$$d$$p"/* "$(DESTDIR)$(htmldir)/$$f"; \
+	  else \
+	    echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(htmldir)/$$f"; \
+	  fi; \
+	done
+
+
+
+

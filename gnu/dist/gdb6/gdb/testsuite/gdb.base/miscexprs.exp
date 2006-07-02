@@ -39,7 +39,7 @@ if [target_info exists gdb,small_stack_section] {
     set storage "-DSTORAGE=static"
 }
 
-set additional_flags "additional_flags=-w ${storage}"
+set additional_flags "additional_flags=${storage}"
 
 #
 # test running programs
@@ -51,7 +51,7 @@ set testfile "miscexprs"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug ${additional_flags}]] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug ${additional_flags} nowarnings]] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

@@ -217,7 +217,9 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
       const bfd_target *temp;
       bfd_error_type err;
 
-      if (*target == &binary_vec)
+      /* Don't check the default target twice.  */
+      if (*target == &binary_vec
+	  || (!abfd->target_defaulted && *target == save_targ))
 	continue;
 
       abfd->xvec = *target;	/* Change BFD's target temporarily.  */

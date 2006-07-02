@@ -1,7 +1,7 @@
 /* Support for printing Fortran values for GDB, the GNU debugger.
 
-   Copyright 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2003, 2005 Free
-   Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2003, 2005, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com), additionally worked over by Stan Shebs.
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -366,6 +366,7 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
   struct type *elttype;
   LONGEST val;
   CORE_ADDR addr;
+  int index;
 
   CHECK_TYPEDEF (type);
   switch (TYPE_CODE (type))
@@ -483,6 +484,13 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 	}
       break;
 
+    case TYPE_CODE_FLAGS:
+      if (format)
+	  print_scalar_formatted (valaddr, type, format, 0, stream);
+      else
+	val_print_type_code_flags (type, valaddr, stream);
+      break;
+
     case TYPE_CODE_FLT:
       if (format)
 	print_scalar_formatted (valaddr, type, format, 0, stream);
@@ -575,6 +583,22 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
          and no complete type for struct foo in that file.  */
       fprintf_filtered (stream, "<incomplete type>");
       break;
+
+    case TYPE_CODE_STRUCT:
+      /* Starting from the Fortran 90 standard, Fortran supports derived
+         types.  */
+      fprintf_filtered (stream, "{ ");
+      for (index = 0; index < TYPE_NFIELDS (type); index++)
+        {
+          int offset = TYPE_FIELD_BITPOS (type, index) / 8;
+          f_val_print (TYPE_FIELD_TYPE (type, index), valaddr + offset,
+                       embedded_offset, address, stream,
+                       format, deref_ref, recurse, pretty);
+          if (index != TYPE_NFIELDS (type) - 1)
+            fputs_filtered (", ", stream);
+        }
+      fprintf_filtered (stream, "}");
+      break;     
 
     default:
       error (_("Invalid F77 type code %d in symbol table."), TYPE_CODE (type));

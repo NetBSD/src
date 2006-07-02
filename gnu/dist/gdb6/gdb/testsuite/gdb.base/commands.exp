@@ -1,5 +1,5 @@
 #   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1997, 1998, 1999, 2000,
-#   2001, 2002, 2003 Free Software Foundation, Inc.
+#   2001, 2002, 2003, 2005, 2006 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -563,7 +563,60 @@ proc temporary_breakpoint_commands {} {
 	timeout { fail "(timeout) run factorial until temporary breakpoint" }
     }
 }
-  
+
+# Test that GDB can handle $arg0 outside of user functions without
+# crashing.
+proc stray_arg0_test { } {
+    gdb_test "print \$arg0" \
+	"\\\$\[0-9\]* = void" \
+	"stray_arg0_test #1"
+
+    gdb_test "if 1 == 1\nprint \$arg0\nend" \
+	"\\\$\[0-9\]* = void" \
+	"stray_arg0_test #2"
+
+    gdb_test "print \$arg0 = 1" \
+	"\\\$\[0-9\]* = 1" \
+	"stray_arg0_test #3"
+
+    gdb_test "print \$arg0" \
+	"\\\$\[0-9\]* = 1" \
+	"stray_arg0_test #4"
+}
+
+# Test that GDB can handle arguments when sourcing files recursively.
+# If the arguments are overwritten with ####### then the test has failed.
+proc recursive_source_test {} {
+    set fd [open "file1" w]
+    puts $fd \
+{source file2
+abcdef qwerty}
+    close $fd
+
+    set fd [open "file2" w]
+    puts $fd \
+{define abcdef
+  echo 1: <<<$arg0>>>\n
+  source file3
+  echo 2: <<<$arg0>>>\n
+end}
+    close $fd
+
+    set fd [open "file3" w]
+    puts $fd \
+"echo in file3\\n
+#################################################################"
+    close $fd
+
+    gdb_test "source file1" \
+	"1: <<<qwerty>>>\[\r\n]+in file3\[\r\n]+2: <<<qwerty>>>" \
+	"recursive source test"
+
+    file delete file1
+    file delete file2
+    file delete file3
+}
+
 gdbvar_simple_if_test
 gdbvar_simple_while_test
 gdbvar_complex_if_while_test
@@ -579,3 +632,5 @@ test_command_prompt_position
 deprecated_command_test
 bp_deleted_in_command_test
 temporary_breakpoint_commands
+stray_arg0_test
+recursive_source_test

@@ -1,6 +1,6 @@
 /* COFF specific linker code.
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005 Free Software Foundation, Inc.
+   2004, 2005, 2006 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -94,10 +94,11 @@ _bfd_coff_link_hash_table_init (struct coff_link_hash_table *table,
 				bfd *abfd,
 				struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 								   struct bfd_hash_table *,
-								   const char *))
+								   const char *),
+				unsigned int entsize)
 {
   memset (&table->stab_info, 0, sizeof (table->stab_info));
-  return _bfd_link_hash_table_init (&table->root, abfd, newfunc);
+  return _bfd_link_hash_table_init (&table->root, abfd, newfunc, entsize);
 }
 
 /* Create a COFF linker hash table.  */
@@ -113,7 +114,8 @@ _bfd_coff_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (! _bfd_coff_link_hash_table_init (ret, abfd,
-					_bfd_coff_link_hash_newfunc))
+					_bfd_coff_link_hash_newfunc,
+					sizeof (struct coff_link_hash_entry)))
     {
       free (ret);
       return (struct bfd_link_hash_table *) NULL;
@@ -1237,9 +1239,7 @@ process_embedded_commands (bfd *output_bfd,
 	  asection *asec;
 	  int loop = 1;
 	  int had_write = 0;
-	  int had_read = 0;
 	  int had_exec= 0;
-	  int had_shared= 0;
 
 	  s += 5;
 	  s = get_name (s, &name);
@@ -1253,10 +1253,8 @@ process_embedded_commands (bfd *output_bfd,
 		  had_write = 1;
 		  break;
 		case 'R':
-		  had_read = 1;
 		  break;
 		case 'S':
-		  had_shared = 1;
 		  break;
 		case 'X':
 		  had_exec = 1;

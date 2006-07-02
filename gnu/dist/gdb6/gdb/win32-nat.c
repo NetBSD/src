@@ -1,6 +1,7 @@
 /* Target-vector operations for controlling win32 child processes, for GDB.
 
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+   2005, 2006
    Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions, A Red Hat Company.
@@ -19,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Originally by Steve Chamberlain, sac@cygnus.com */
 
@@ -43,6 +44,7 @@
 #include <windows.h>
 #include <imagehlp.h>
 #include <sys/cygwin.h>
+#include <signal.h>
 
 #include "buildsym.h"
 #include "symfile.h"
@@ -61,6 +63,13 @@
 
 static struct target_ops win32_ops;
 static struct target_so_ops win32_so_ops;
+
+/* The starting and ending address of the cygwin1.dll text segment. */
+static bfd_vma cygwin_load_start;
+static bfd_vma cygwin_load_end;
+
+static int have_saved_context;	/* True if we've saved context from a cygwin signal. */
+static CONTEXT saved_context;	/* Containes the saved context from a cygwin signal. */
 
 /* If we're not using the old Cygwin header file set, define the
    following which never should have been in the generic Win32 API
@@ -345,16 +354,29 @@ do_win32_fetch_inferior_registers (int r)
 
   if (current_thread->reload_context)
     {
-      thread_info *th = current_thread;
-      th->context.ContextFlags = CONTEXT_DEBUGGER_DR;
-      GetThreadContext (th->h, &th->context);
-      /* Copy dr values from that thread.  */
-      dr[0] = th->context.Dr0;
-      dr[1] = th->context.Dr1;
-      dr[2] = th->context.Dr2;
-      dr[3] = th->context.Dr3;
-      dr[6] = th->context.Dr6;
-      dr[7] = th->context.Dr7;
+#ifdef __COPY_CONTEXT_SIZE
+      if (have_saved_context)
+	{
+	  /* Lie about where the program actually is stopped since cygwin has informed us that
+	     we should consider the signal to have occurred at another location which is stored
+	     in "saved_context. */
+	  memcpy (&current_thread->context, &saved_context, __COPY_CONTEXT_SIZE);
+	  have_saved_context = 0;
+	}
+      else
+#endif
+	{
+	  thread_info *th = current_thread;
+	  th->context.ContextFlags = CONTEXT_DEBUGGER_DR;
+	  GetThreadContext (th->h, &th->context);
+	  /* Copy dr values from that thread.  */
+	  dr[0] = th->context.Dr0;
+	  dr[1] = th->context.Dr1;
+	  dr[2] = th->context.Dr2;
+	  dr[3] = th->context.Dr3;
+	  dr[6] = th->context.Dr6;
+	  dr[7] = th->context.Dr7;
+	}
       current_thread->reload_context = 0;
     }
 
@@ -595,12 +617,10 @@ get_relocated_section_addrs (bfd *abfd, CORE_ADDR text_load)
     {
       /* Couldn't get the .text section. Weird. */
     }
-
   else if (text_load == (text_vma = bfd_get_section_vma (abfd, text_section)))
     {
       /* DLL wasn't relocated. */
     }
-
   else
     {
       /* Figure out all sections' loaded addresses. The offset here is
@@ -639,6 +659,7 @@ solib_symbols_add (struct so_list *so, CORE_ADDR load_addr)
   static struct objfile *result = NULL;
   char *name = so->so_name;
   bfd *abfd = NULL;
+  char *p;
 
   /* The symbols in a dll are offset by 0x1000, which is the
      the offset from 0 of the first byte in an image - because
@@ -659,8 +680,6 @@ solib_symbols_add (struct so_list *so, CORE_ADDR load_addr)
     {
       if (bfd_check_format (abfd, bfd_object))
 	addrs = get_relocated_section_addrs (abfd, load_addr);
-
-      bfd_close (abfd);
     }
 
   if (addrs)
@@ -682,12 +701,19 @@ solib_symbols_add (struct so_list *so, CORE_ADDR load_addr)
       do_cleanups (my_cleanups);
     }
 
+  p = strchr (so->so_name, '\0') - (sizeof ("/cygwin1.dll") - 1);
+  if (p >= so->so_name && strcasecmp (p, "/cygwin1.dll") == 0)
+    {
+      asection *text = bfd_get_section_by_name (abfd, ".text");
+      cygwin_load_start = bfd_section_vma (abfd, text);
+      cygwin_load_end = cygwin_load_start + bfd_section_size (abfd, text);
+    }
+
+  bfd_close (abfd);
+
   so->symbols_loaded = !!result;
   return;
 }
-
-/* Remember the maximum DLL length for printing in info dll command. */
-static int max_dll_name_len;
 
 static char *
 register_loaded_dll (const char *name, DWORD load_addr, int readsyms)
@@ -732,10 +758,9 @@ register_loaded_dll (const char *name, DWORD load_addr, int readsyms)
   solib_end->next = so;
   solib_end = so;
   len = strlen (so->so_name);
-  if (len > max_dll_name_len)
-    max_dll_name_len = len;
   if (readsyms)
     solib_symbols_add (so, (CORE_ADDR) load_addr);
+
   return so->so_name;
 }
 
@@ -788,7 +813,6 @@ handle_load_dll (void *dummy)
   LOAD_DLL_DEBUG_INFO *event = &current_event.u.LoadDll;
   char dll_buf[MAX_PATH + 1];
   char *dll_name = NULL;
-  char *p;
 
   dll_buf[0] = dll_buf[sizeof (dll_buf) - 1] = '\0';
 
@@ -803,7 +827,6 @@ handle_load_dll (void *dummy)
     return 1;
 
   register_loaded_dll (dll_name, (DWORD) event->lpBaseOfDll + 0x1000, auto_solib_add);
-  solib_add (NULL, 0, NULL, auto_solib_add);
 
   return 1;
 }
@@ -859,7 +882,6 @@ win32_clear_solib (void)
 {
   solib_start.next = NULL;
   solib_end = &solib_start;
-  max_dll_name_len = sizeof ("DLL Name") - 1;
 }
 
 static void
@@ -896,31 +918,51 @@ dll_symbol_command (char *args, int from_tty)
 static int
 handle_output_debug_string (struct target_waitstatus *ourstatus)
 {
-  char *s;
-  int gotasig = FALSE;
+  char *s = NULL;
+  int retval = 0;
 
   if (!target_read_string
     ((CORE_ADDR) current_event.u.DebugString.lpDebugStringData, &s, 1024, 0)
       || !s || !*s)
-    return gotasig;
-
-  if (strncmp (s, _CYGWIN_SIGNAL_STRING, sizeof (_CYGWIN_SIGNAL_STRING) - 1) != 0)
+    /* nothing to do */;
+  else if (strncmp (s, _CYGWIN_SIGNAL_STRING, sizeof (_CYGWIN_SIGNAL_STRING) - 1) != 0)
     {
       if (strncmp (s, "cYg", 3) != 0)
 	warning (("%s"), s);
     }
+#ifdef __COPY_CONTEXT_SIZE
   else
     {
+      /* Got a cygwin signal marker.  A cygwin signal is followed by the signal number
+	 itself and then optionally followed by the thread id and address to saved context
+	 within the DLL.  If these are supplied, then the given thread is assumed to have
+	 issued the signal and the context from the thread is assumed to be stored at the
+	 given address in the inferior.  Tell gdb to treat this like a real signal.  */
       char *p;
       int sig = strtol (s + sizeof (_CYGWIN_SIGNAL_STRING) - 1, &p, 0);
-      gotasig = target_signal_from_host (sig);
+      int gotasig = target_signal_from_host (sig);
       ourstatus->value.sig = gotasig;
       if (gotasig)
-	ourstatus->kind = TARGET_WAITKIND_STOPPED;
+	{
+	  LPCVOID x;
+	  DWORD n;
+	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
+	  retval = strtoul (p, &p, 0);
+	  if (!retval)
+	    retval = main_thread_id;
+	  else if ((x = (LPCVOID) strtoul (p, &p, 0))
+		   && ReadProcessMemory (current_process_handle, x,
+					 &saved_context, __COPY_CONTEXT_SIZE, &n)
+		   && n == __COPY_CONTEXT_SIZE)
+	    have_saved_context = 1;
+	  current_event.dwThreadId = retval;
+	}
     }
+#endif
 
-  xfree (s);
-  return gotasig;
+  if (s)
+    xfree (s);
+  return retval;
 }
 
 static int
@@ -1064,11 +1106,17 @@ handle_exception (struct target_waitstatus *ourstatus)
       DEBUG_EXCEPTION_SIMPLE ("EXCEPTION_ACCESS_VIOLATION");
       ourstatus->value.sig = TARGET_SIGNAL_SEGV;
       {
+	/* See if the access violation happened within the cygwin DLL itself.  Cygwin uses
+	   a kind of exception handling to deal with passed-in invalid addresses. gdb
+	   should not treat these as real SEGVs since they will be silently handled by
+	   cygwin.  A real SEGV will (theoretically) be caught by cygwin later in the process
+	   and will be sent as a cygwin-specific-signal.  So, ignore SEGVs if they show up
+	   within the text segment of the DLL itself. */
 	char *fn;
-	if (find_pc_partial_function ((CORE_ADDR) current_event.u.Exception
-				      .ExceptionRecord.ExceptionAddress,
-				      &fn, NULL, NULL)
-	    && strncmp (fn, "KERNEL32!IsBad", strlen ("KERNEL32!IsBad")) == 0)
+	bfd_vma addr = (bfd_vma) current_event.u.Exception.ExceptionRecord.ExceptionAddress;
+	if ((addr >= cygwin_load_start && addr < cygwin_load_end)
+	    || (find_pc_partial_function (addr, &fn, NULL, NULL)
+		&& strncmp (fn, "KERNEL32!IsBad", strlen ("KERNEL32!IsBad")) == 0))
 	  return 0;
       }
       break;
@@ -1145,8 +1193,9 @@ handle_exception (struct target_waitstatus *ourstatus)
       ourstatus->value.sig = TARGET_SIGNAL_ILL;
       break;
     default:
+      /* Treat unhandled first chance exceptions specially. */
       if (current_event.u.Exception.dwFirstChance)
-	return 0;
+	return -1;
       printf_unfiltered ("gdb: unknown target exception 0x%08lx at 0x%08lx\n",
 		    current_event.u.Exception.ExceptionRecord.ExceptionCode,
 	(DWORD) current_event.u.Exception.ExceptionRecord.ExceptionAddress);
@@ -1174,7 +1223,6 @@ win32_continue (DWORD continue_status, int id)
   res = ContinueDebugEvent (current_event.dwProcessId,
 			    current_event.dwThreadId,
 			    continue_status);
-  continue_status = 0;
   if (res)
     for (th = &thread_head; (th = th->next) != NULL;)
       if (((id == -1) || (id == (int) th->id)) && th->suspend_count)
@@ -1216,6 +1264,87 @@ fake_create_process (void)
   return main_thread_id;
 }
 
+static void
+win32_resume (ptid_t ptid, int step, enum target_signal sig)
+{
+  thread_info *th;
+  DWORD continue_status = DBG_CONTINUE;
+
+  int pid = PIDGET (ptid);
+
+  if (sig != TARGET_SIGNAL_0)
+    {
+      if (current_event.dwDebugEventCode != EXCEPTION_DEBUG_EVENT)
+	{
+	  DEBUG_EXCEPT(("Cannot continue with signal %d here.\n",sig));
+	}
+      else if (sig == last_sig)
+	continue_status = DBG_EXCEPTION_NOT_HANDLED;
+      else
+#if 0
+/* This code does not seem to work, because
+  the kernel does probably not consider changes in the ExceptionRecord
+  structure when passing the exception to the inferior.
+  Note that this seems possible in the exception handler itself.  */
+	{
+	  int i;
+	  for (i = 0; xlate[i].them != -1; i++)
+	    if (xlate[i].us == sig)
+	      {
+		current_event.u.Exception.ExceptionRecord.ExceptionCode =
+		  xlate[i].them;
+		continue_status = DBG_EXCEPTION_NOT_HANDLED;
+		break;
+	      }
+	  if (continue_status == DBG_CONTINUE)
+	    {
+	      DEBUG_EXCEPT(("Cannot continue with signal %d.\n",sig));
+	    }
+	}
+#endif
+	DEBUG_EXCEPT(("Can only continue with recieved signal %d.\n",
+	  last_sig));
+    }
+
+  last_sig = TARGET_SIGNAL_0;
+
+  DEBUG_EXEC (("gdb: win32_resume (pid=%d, step=%d, sig=%d);\n",
+	       pid, step, sig));
+
+  /* Get context for currently selected thread */
+  th = thread_rec (current_event.dwThreadId, FALSE);
+  if (th)
+    {
+      if (step)
+	{
+	  /* Single step by setting t bit */
+	  win32_fetch_inferior_registers (PS_REGNUM);
+	  th->context.EFlags |= FLAG_TRACE_BIT;
+	}
+
+      if (th->context.ContextFlags)
+	{
+	  if (debug_registers_changed)
+	    {
+	      th->context.Dr0 = dr[0];
+	      th->context.Dr1 = dr[1];
+	      th->context.Dr2 = dr[2];
+	      th->context.Dr3 = dr[3];
+	      /* th->context.Dr6 = dr[6];
+	       FIXME: should we set dr6 also ?? */
+	      th->context.Dr7 = dr[7];
+	    }
+	  CHECK (SetThreadContext (th->h, &th->context));
+	  th->context.ContextFlags = 0;
+	}
+    }
+
+  /* Allow continuing with the same signal that interrupted us.
+     Otherwise complain. */
+
+  win32_continue (continue_status, pid);
+}
+
 /* Get the next event from the child.  Return 1 if the event requires
    handling by WFI (or whatever).
  */
@@ -1227,6 +1356,7 @@ get_win32_debug_event (int pid, struct target_waitstatus *ourstatus)
   thread_info *th;
   static thread_info dummy_thread_info;
   int retval = 0;
+  ptid_t ptid = {-1};
 
   last_sig = TARGET_SIGNAL_0;
 
@@ -1239,6 +1369,7 @@ get_win32_debug_event (int pid, struct target_waitstatus *ourstatus)
   event_code = current_event.dwDebugEventCode;
   ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
   th = NULL;
+  have_saved_context = 0;
 
   switch (event_code)
     {
@@ -1352,10 +1483,19 @@ get_win32_debug_event (int pid, struct target_waitstatus *ourstatus)
 		     "EXCEPTION_DEBUG_EVENT"));
       if (saw_create != 1)
 	break;
-      if (handle_exception (ourstatus))
-	retval = current_event.dwThreadId;
-      else
-	continue_status = DBG_EXCEPTION_NOT_HANDLED;
+      switch (handle_exception (ourstatus))
+	{
+	case 0:
+	  continue_status = DBG_EXCEPTION_NOT_HANDLED;
+	  break;
+	case 1:
+	  retval = current_event.dwThreadId;
+	  break;
+	case -1:
+	  last_sig = 1;
+	  continue_status = -1;
+	  break;
+	}
       break;
 
     case OUTPUT_DEBUG_STRING_EVENT:	/* message from the kernel */
@@ -1365,8 +1505,7 @@ get_win32_debug_event (int pid, struct target_waitstatus *ourstatus)
 		     "OUTPUT_DEBUG_STRING_EVENT"));
       if (saw_create != 1)
 	break;
-      if (handle_output_debug_string (ourstatus))
-	retval = main_thread_id;
+      retval = handle_output_debug_string (ourstatus);
       break;
 
     default:
@@ -1381,7 +1520,12 @@ get_win32_debug_event (int pid, struct target_waitstatus *ourstatus)
     }
 
   if (!retval || saw_create != 1)
-    CHECK (win32_continue (continue_status, -1));
+    {
+      if (continue_status == -1)
+	win32_resume (ptid, 0, 1);
+      else
+	CHECK (win32_continue (continue_status, -1));
+    }
   else
     {
       inferior_ptid = pid_to_ptid (retval);
@@ -1697,13 +1841,22 @@ win32_open (char *arg, int from_tty)
   error (_("Use the \"run\" command to start a Unix child process."));
 }
 
+/* Function called by qsort to sort environment strings.  */
+static int
+env_sort (const void *a, const void *b)
+{     
+  const char **p = (const char **) a; 
+  const char **q = (const char **) b;
+  return strcasecmp (*p, *q);
+}
+
 /* Start an inferior win32 child process and sets inferior_ptid to its pid.
    EXEC_FILE is the file to run.
    ALLARGS is a string containing the arguments to the program.
    ENV is the environment vector to pass.  Errors reported with error().  */
 
 static void
-win32_create_inferior (char *exec_file, char *allargs, char **env,
+win32_create_inferior (char *exec_file, char *allargs, char **in_env,
 		       int from_tty)
 {
   char *winenv;
@@ -1783,26 +1936,32 @@ win32_create_inferior (char *exec_file, char *allargs, char **env,
        strings (i.e. two nulls terminate the list).  */
 
     /* Get total size for env strings.  */
-    for (envlen = 0, i = 0; env[i] && *env[i]; i++)
+    for (envlen = 0, i = 0; in_env[i] && *in_env[i]; i++)
       {
 	int j, len;
 
 	for (j = 0; conv_path_names[j]; j++)
 	  {
 	    len = strlen (conv_path_names[j]);
-	    if (strncmp (conv_path_names[j], env[i], len) == 0)
+	    if (strncmp (conv_path_names[j], in_env[i], len) == 0)
 	      {
-		if (cygwin_posix_path_list_p (env[i] + len))
+		if (cygwin_posix_path_list_p (in_env[i] + len))
 		  envlen += len
-		    + cygwin_posix_to_win32_path_list_buf_size (env[i] + len);
+		    + cygwin_posix_to_win32_path_list_buf_size (in_env[i] + len);
 		else
-		  envlen += strlen (env[i]) + 1;
+		  envlen += strlen (in_env[i]) + 1;
 		break;
 	      }
 	  }
 	if (conv_path_names[j] == NULL)
-	  envlen += strlen (env[i]) + 1;
+	  envlen += strlen (in_env[i]) + 1;
       }
+
+    size_t envsize = sizeof (in_env[0]) * (i + 1);
+    char **env = (char **) alloca (envsize);
+    memcpy (env, in_env, envsize);
+    /* Windows programs expect the environment block to be sorted.  */
+    qsort (env, i, sizeof (char *), env_sort);
 
     winenv = alloca (envlen + 1);
 
@@ -1894,7 +2053,6 @@ win32_create_inferior (char *exec_file, char *allargs, char **env,
   do_initial_win32_stuff (pi.dwProcessId);
 
   /* win32_continue (DBG_CONTINUE, -1); */
-  proceed ((CORE_ADDR) - 1, TARGET_SIGNAL_0, 0);
 }
 
 static void
@@ -1964,87 +2122,6 @@ win32_kill_inferior (void)
   if (current_thread && current_thread->h)
     (void) CloseHandle (current_thread->h);
   target_mourn_inferior ();	/* or just win32_mourn_inferior? */
-}
-
-static void
-win32_resume (ptid_t ptid, int step, enum target_signal sig)
-{
-  thread_info *th;
-  DWORD continue_status = DBG_CONTINUE;
-
-  int pid = PIDGET (ptid);
-
-  if (sig != TARGET_SIGNAL_0)
-    {
-      if (current_event.dwDebugEventCode != EXCEPTION_DEBUG_EVENT)
-	{
-	  DEBUG_EXCEPT(("Cannot continue with signal %d here.\n",sig));
-	}
-      else if (sig == last_sig)
-	continue_status = DBG_EXCEPTION_NOT_HANDLED;
-      else
-#if 0
-/* This code does not seem to work, because
-  the kernel does probably not consider changes in the ExceptionRecord
-  structure when passing the exception to the inferior.
-  Note that this seems possible in the exception handler itself.  */
-	{
-	  int i;
-	  for (i = 0; xlate[i].them != -1; i++)
-	    if (xlate[i].us == sig)
-	      {
-		current_event.u.Exception.ExceptionRecord.ExceptionCode =
-		  xlate[i].them;
-		continue_status = DBG_EXCEPTION_NOT_HANDLED;
-		break;
-	      }
-	  if (continue_status == DBG_CONTINUE)
-	    {
-	      DEBUG_EXCEPT(("Cannot continue with signal %d.\n",sig));
-	    }
-	}
-#endif
-	DEBUG_EXCEPT(("Can only continue with recieved signal %d.\n",
-	  last_sig));
-    }
-
-  last_sig = TARGET_SIGNAL_0;
-
-  DEBUG_EXEC (("gdb: win32_resume (pid=%d, step=%d, sig=%d);\n",
-	       pid, step, sig));
-
-  /* Get context for currently selected thread */
-  th = thread_rec (current_event.dwThreadId, FALSE);
-  if (th)
-    {
-      if (step)
-	{
-	  /* Single step by setting t bit */
-	  win32_fetch_inferior_registers (PS_REGNUM);
-	  th->context.EFlags |= FLAG_TRACE_BIT;
-	}
-
-      if (th->context.ContextFlags)
-	{
-	  if (debug_registers_changed)
-	    {
-	      th->context.Dr0 = dr[0];
-	      th->context.Dr1 = dr[1];
-	      th->context.Dr2 = dr[2];
-	      th->context.Dr3 = dr[3];
-	      /* th->context.Dr6 = dr[6];
-	       FIXME: should we set dr6 also ?? */
-	      th->context.Dr7 = dr[7];
-	    }
-	  CHECK (SetThreadContext (th->h, &th->context));
-	  th->context.ContextFlags = 0;
-	}
-    }
-
-  /* Allow continuing with the same signal that interrupted us.
-     Otherwise complain. */
-
-  win32_continue (continue_status, pid);
 }
 
 static void
@@ -2226,7 +2303,7 @@ win32_current_sos (void)
 {
   struct so_list *sop;
   struct so_list *start = NULL;
-  struct so_list *last;
+  struct so_list *last = NULL;
 
   if (!solib_start.next && core_bfd)
     {
@@ -2266,6 +2343,18 @@ fetch_elf_core_registers (char *core_reg_sect,
     }
   for (r = 0; r < NUM_REGS; r++)
     regcache_raw_supply (current_regcache, r, core_reg_sect + mappings[r]);
+}
+
+static int
+open_symbol_file_object (void *from_ttyp)
+{
+  return 0;
+}
+
+static int
+in_dynsym_resolve_code (CORE_ADDR pc)
+{
+  return 0;
 }
 
 static void
@@ -2315,8 +2404,8 @@ init_win32_ops (void)
   win32_so_ops.solib_create_inferior_hook = win32_solib_create_inferior_hook;
   win32_so_ops.special_symbol_handling = win32_special_symbol_handling;
   win32_so_ops.current_sos = win32_current_sos;
-  win32_so_ops.open_symbol_file_object = NULL;
-  win32_so_ops.in_dynsym_resolve_code = NULL;
+  win32_so_ops.open_symbol_file_object = open_symbol_file_object;
+  win32_so_ops.in_dynsym_resolve_code = in_dynsym_resolve_code;
 
   /* FIXME: Don't do this here.  *_gdbarch_init() should set so_ops. */
   current_target_so_ops = &win32_so_ops;

@@ -1,6 +1,6 @@
 /* hash.c -- hash table routines for BFD
-   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -299,6 +299,58 @@ SUBSUBSECTION
 
 /* The default number of entries to use when creating a hash table.  */
 #define DEFAULT_SIZE 4051
+
+/* The following function returns a nearest prime number which is
+   greater than N, and near a power of two.  Copied from libiberty.
+   Returns zero for ridiculously large N to signify an error.  */
+
+static unsigned long
+higher_prime_number (unsigned long n)
+{
+  /* These are primes that are near, but slightly smaller than, a
+     power of two.  */
+  static const unsigned long primes[] = {
+    (unsigned long) 127,
+    (unsigned long) 2039,
+    (unsigned long) 32749,
+    (unsigned long) 65521,
+    (unsigned long) 131071,
+    (unsigned long) 262139,
+    (unsigned long) 524287,
+    (unsigned long) 1048573,
+    (unsigned long) 2097143,
+    (unsigned long) 4194301,
+    (unsigned long) 8388593,
+    (unsigned long) 16777213,
+    (unsigned long) 33554393,
+    (unsigned long) 67108859,
+    (unsigned long) 134217689,
+    (unsigned long) 268435399,
+    (unsigned long) 536870909,
+    (unsigned long) 1073741789,
+    (unsigned long) 2147483647,
+					/* 4294967291L */
+    ((unsigned long) 2147483647) + ((unsigned long) 2147483644),
+  };
+
+  const unsigned long *low = &primes[0];
+  const unsigned long *high = &primes[sizeof (primes) / sizeof (primes[0])];
+
+  while (low != high)
+    {
+      const unsigned long *mid = low + (high - low) / 2;
+      if (n >= *mid)
+	low = mid + 1;
+      else
+	high = mid;
+    }
+
+  if (n >= *low)
+    return 0;
+
+  return *low;
+}
+
 static size_t bfd_default_hash_table_size = DEFAULT_SIZE;
 
 /* Create a new hash table, given a number of entries.  */
@@ -308,6 +360,7 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
 		       struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 							  struct bfd_hash_table *,
 							  const char *),
+		       unsigned int entsize,
 		       unsigned int size)
 {
   unsigned int alloc;
@@ -328,6 +381,8 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
     }
   memset ((void *) table->table, 0, alloc);
   table->size = size;
+  table->entsize = entsize;
+  table->count = 0;
   table->newfunc = newfunc;
   return TRUE;
 }
@@ -338,9 +393,11 @@ bfd_boolean
 bfd_hash_table_init (struct bfd_hash_table *table,
 		     struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 							struct bfd_hash_table *,
-							const char *))
+							const char *),
+		     unsigned int entsize)
 {
-  return bfd_hash_table_init_n (table, newfunc, bfd_default_hash_table_size);
+  return bfd_hash_table_init_n (table, newfunc, entsize,
+				bfd_default_hash_table_size);
 }
 
 /* Free a hash table.  */
@@ -398,6 +455,7 @@ bfd_hash_lookup (struct bfd_hash_table *table,
   if (copy)
     {
       char *new;
+  table->count ++;
 
       new = objalloc_alloc ((struct objalloc *) table->memory, len + 1);
       if (!new)
@@ -412,6 +470,45 @@ bfd_hash_lookup (struct bfd_hash_table *table,
   hashp->hash = hash;
   hashp->next = table->table[index];
   table->table[index] = hashp;
+
+  if (table->count > table->size * 3 / 4)
+    {
+      unsigned long newsize = higher_prime_number (table->size);
+      struct bfd_hash_entry **newtable;
+      unsigned int hi;
+      unsigned long alloc = newsize * sizeof (struct bfd_hash_entry *);
+
+      /* If we can't find a higher prime, or we can't possibly alloc
+	 that much memory, don't try to grow the table.  */
+      if (newsize == 0 || alloc / sizeof (struct bfd_hash_entry *) != newsize)
+	{
+	  /* Lie.  Stops us trying to grow again for a while.  */
+	  table->count = 0;
+	  return hashp;
+	}
+
+      newtable = ((struct bfd_hash_entry **)
+		  objalloc_alloc ((struct objalloc *) table->memory, alloc));
+      memset ((PTR) newtable, 0, alloc);
+
+      for (hi = 0; hi < table->size; hi ++)
+	while (table->table[hi])
+	  {
+	    struct bfd_hash_entry *chain = table->table[hi];
+	    struct bfd_hash_entry *chain_end = chain;
+	    int index;
+
+	    while (chain_end->next && chain_end->next->hash == chain->hash)
+	      chain_end = chain_end->next;
+
+	    table->table[hi] = chain_end->next;
+	    index = chain->hash % newsize;
+	    chain_end->next = newtable[index];
+	    newtable[index] = chain;
+	  }
+      table->table = newtable;
+      table->size = newsize;
+    }
 
   return hashp;
 }
@@ -492,7 +589,7 @@ bfd_hash_set_default_size (bfd_size_type hash_size)
   /* Extend this prime list if you want more granularity of hash table size.  */
   static const bfd_size_type hash_size_primes[] =
     {
-      1021, 4051, 8599, 16699
+      251, 509, 1021, 2039, 4051, 8599, 16699, 32749
     };
   size_t index;
 
@@ -591,7 +688,8 @@ _bfd_stringtab_init (void)
   if (table == NULL)
     return NULL;
 
-  if (! bfd_hash_table_init (& table->table, strtab_hash_newfunc))
+  if (!bfd_hash_table_init (&table->table, strtab_hash_newfunc,
+			    sizeof (struct strtab_hash_entry)))
     {
       free (table);
       return NULL;

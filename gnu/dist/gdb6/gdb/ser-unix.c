@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Un*x like systems
 
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
    2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "serial.h"
@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 
+#include "gdb_select.h"
 #include "gdb_string.h"
 
 #ifdef HAVE_TERMIOS
@@ -365,7 +366,7 @@ hardwire_send_break (struct serial *scb)
        the full length of time.  I think that is OK.  */
     timeout.tv_sec = 0;
     timeout.tv_usec = 250000;
-    select (0, 0, 0, 0, &timeout);
+    gdb_select (0, 0, 0, 0, &timeout);
     status = ioctl (scb->fd, TIOCCBRK, 0);
     return status;
   }
@@ -448,9 +449,9 @@ wait_for (struct serial *scb, int timeout)
       FD_SET (scb->fd, &readfds);
 
       if (timeout >= 0)
-	numfds = select (scb->fd + 1, &readfds, 0, 0, &tv);
+	numfds = gdb_select (scb->fd + 1, &readfds, 0, 0, &tv);
       else
-	numfds = select (scb->fd + 1, &readfds, 0, 0, 0);
+	numfds = gdb_select (scb->fd + 1, &readfds, 0, 0, 0);
 
       if (numfds <= 0)
 	if (numfds == 0)

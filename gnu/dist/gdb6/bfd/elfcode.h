@@ -1,6 +1,6 @@
 /* ELF executable support for BFD.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -139,10 +139,11 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 #define LOG_FILE_ALIGN	2
 #endif
 
-#ifdef DEBUG
+#if DEBUG & 2
 static void elf_debug_section (int, Elf_Internal_Shdr *);
+#endif
+#if DEBUG & 1
 static void elf_debug_file (Elf_Internal_Ehdr *);
-static char *elf_symbol_flags (flagword);
 #endif
 
 /* Structure swapping routines */
@@ -458,6 +459,25 @@ elf_file_p (Elf_External_Ehdr *x_ehdrp)
 	  && (x_ehdrp->e_ident[EI_MAG3] == ELFMAG3));
 }
 
+/* Determines if a given section index is valid.  */
+
+static inline bfd_boolean
+valid_section_index_p (unsigned index, unsigned num_sections)
+{
+  /* Note: We allow SHN_UNDEF as a valid section index.  */
+  if (index < SHN_LORESERVE || index > SHN_HIRESERVE)
+    return index < num_sections;
+  
+  /* We disallow the use of reserved indcies, except for those
+     with OS or Application specific meaning.  The test make use
+     of the knowledge that:
+       SHN_LORESERVE == SHN_LOPROC
+     and
+       SHN_HIPROC == SHN_LOOS - 1  */
+  /* XXX - Should we allow SHN_XINDEX as a valid index here ?  */
+  return (index >= SHN_LOPROC && index <= SHN_HIOS);
+}
+
 /* Check to see if the file associated with ABFD matches the target vector
    that ABFD points to.
 
@@ -545,7 +565,7 @@ elf_object_p (bfd *abfd)
   if (i_ehdrp->e_shoff == 0 && i_ehdrp->e_type == ET_REL)
     goto got_wrong_format_error;
 
-  /* As a simple sanity check, verify that the what BFD thinks is the
+  /* As a simple sanity check, verify that what BFD thinks is the
      size of each section header table entry actually matches the size
      recorded in the file, but only if there are any sections.  */
   if (i_ehdrp->e_shentsize != sizeof (x_shdr) && i_ehdrp->e_shnum != 0)
@@ -606,9 +626,6 @@ elf_object_p (bfd *abfd)
       if (ebd->elf_machine_code != EM_NONE)
 	goto got_no_match;
     }
-
-  /* Remember the entry point specified in the ELF file header.  */
-  bfd_set_start_address (abfd, i_ehdrp->e_entry);
 
   if (i_ehdrp->e_shoff != 0)
     {
@@ -714,17 +731,13 @@ elf_object_p (bfd *abfd)
 	  elf_swap_shdr_in (abfd, &x_shdr, i_shdrp + shindex);
 
 	  /* Sanity check sh_link and sh_info.  */
-	  if (i_shdrp[shindex].sh_link >= num_sec
-	      || (i_shdrp[shindex].sh_link >= SHN_LORESERVE
-		  && i_shdrp[shindex].sh_link <= SHN_HIRESERVE))
+	  if (! valid_section_index_p (i_shdrp[shindex].sh_link, num_sec))
 	    goto got_wrong_format_error;
 
 	  if (((i_shdrp[shindex].sh_flags & SHF_INFO_LINK)
 	       || i_shdrp[shindex].sh_type == SHT_RELA
 	       || i_shdrp[shindex].sh_type == SHT_REL)
-	      && (i_shdrp[shindex].sh_info >= num_sec
-		  || (i_shdrp[shindex].sh_info >= SHN_LORESERVE
-		      && i_shdrp[shindex].sh_info <= SHN_HIRESERVE)))
+	      && ! valid_section_index_p (i_shdrp[shindex].sh_info, num_sec))
 	    goto got_wrong_format_error;
 
 	  /* If the section is loaded, but not page aligned, clear
@@ -742,12 +755,19 @@ elf_object_p (bfd *abfd)
   /* A further sanity check.  */
   if (i_ehdrp->e_shnum != 0)
     {
-      if (i_ehdrp->e_shstrndx >= elf_numsections (abfd)
-	  || (i_ehdrp->e_shstrndx >= SHN_LORESERVE
-	      && i_ehdrp->e_shstrndx <= SHN_HIRESERVE))
-	goto got_wrong_format_error;
+      if (! valid_section_index_p (i_ehdrp->e_shstrndx, elf_numsections (abfd)))
+	{
+	  /* PR 2257:
+	     We used to just goto got_wrong_format_error here
+	     but there are binaries in existance for which this test
+	     will prevent the binutils from working with them at all.
+	     So we are kind, and reset the string index value to 0
+	     so that at least some processing can be done.  */
+	  i_ehdrp->e_shstrndx = SHN_UNDEF;
+	  _bfd_error_handler (_("warning: %s has a corrupt string table index - ignoring"), abfd->filename);
+	}
     }
-  else if (i_ehdrp->e_shstrndx != 0)
+  else if (i_ehdrp->e_shstrndx != SHN_UNDEF)
     goto got_wrong_format_error;
 
   /* Read in the program headers.  */
@@ -803,6 +823,9 @@ elf_object_p (bfd *abfd)
       if (! (*ebd->elf_backend_object_p) (abfd))
 	goto got_wrong_format_error;
     }
+
+  /* Remember the entry point specified in the ELF file header.  */
+  bfd_set_start_address (abfd, i_ehdrp->e_entry);
 
   /* If we have created any reloc sections that are associated with
      debugging sections, mark the reloc sections as debugging as well.  */
@@ -1340,10 +1363,8 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 	}
       else
 	{
-	  asymbol **ps, *s;
-
+	  asymbol **ps;
 	  ps = symbols + ELF_R_SYM (rela.r_info) - 1;
-	  s = *ps;
 
 	  relent->sym_ptr_ptr = ps;
 	}
@@ -1441,7 +1462,7 @@ elf_slurp_reloc_table (bfd *abfd,
   return TRUE;
 }
 
-#ifdef DEBUG
+#if DEBUG & 2
 static void
 elf_debug_section (int num, Elf_Internal_Shdr *hdr)
 {
@@ -1467,7 +1488,9 @@ elf_debug_section (int num, Elf_Internal_Shdr *hdr)
 	   (long) hdr->sh_entsize);
   fflush (stderr);
 }
+#endif
 
+#if DEBUG & 1
 static void
 elf_debug_file (Elf_Internal_Ehdr *ehdrp)
 {
@@ -1478,77 +1501,6 @@ elf_debug_file (Elf_Internal_Ehdr *ehdrp)
   fprintf (stderr, "e_shoff      = %ld\n", (long) ehdrp->e_shoff);
   fprintf (stderr, "e_shnum      = %ld\n", (long) ehdrp->e_shnum);
   fprintf (stderr, "e_shentsize  = %ld\n", (long) ehdrp->e_shentsize);
-}
-
-static char *
-elf_symbol_flags (flagword flags)
-{
-  static char buffer[1024];
-
-  buffer[0] = '\0';
-  if (flags & BSF_LOCAL)
-    strcat (buffer, " local");
-
-  if (flags & BSF_GLOBAL)
-    strcat (buffer, " global");
-
-  if (flags & BSF_DEBUGGING)
-    strcat (buffer, " debug");
-
-  if (flags & BSF_FUNCTION)
-    strcat (buffer, " function");
-
-  if (flags & BSF_KEEP)
-    strcat (buffer, " keep");
-
-  if (flags & BSF_KEEP_G)
-    strcat (buffer, " keep_g");
-
-  if (flags & BSF_WEAK)
-    strcat (buffer, " weak");
-
-  if (flags & BSF_SECTION_SYM)
-    strcat (buffer, " section-sym");
-
-  if (flags & BSF_OLD_COMMON)
-    strcat (buffer, " old-common");
-
-  if (flags & BSF_NOT_AT_END)
-    strcat (buffer, " not-at-end");
-
-  if (flags & BSF_CONSTRUCTOR)
-    strcat (buffer, " constructor");
-
-  if (flags & BSF_WARNING)
-    strcat (buffer, " warning");
-
-  if (flags & BSF_INDIRECT)
-    strcat (buffer, " indirect");
-
-  if (flags & BSF_FILE)
-    strcat (buffer, " file");
-
-  if (flags & DYNAMIC)
-    strcat (buffer, " dynamic");
-
-  if (flags & ~(BSF_LOCAL
-		| BSF_GLOBAL
-		| BSF_DEBUGGING
-		| BSF_FUNCTION
-		| BSF_KEEP
-		| BSF_KEEP_G
-		| BSF_WEAK
-		| BSF_SECTION_SYM
-		| BSF_OLD_COMMON
-		| BSF_NOT_AT_END
-		| BSF_CONSTRUCTOR
-		| BSF_WARNING
-		| BSF_INDIRECT
-		| BSF_FILE
-		| BSF_DYNAMIC))
-    strcat (buffer, " unknown-bits");
-
-  return buffer;
 }
 #endif
 

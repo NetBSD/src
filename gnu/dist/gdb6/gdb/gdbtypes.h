@@ -1,7 +1,7 @@
 /* Internal type definitions for GDB.
 
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+   2001, 2002, 2003, 2004, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -19,11 +19,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (GDBTYPES_H)
 #define GDBTYPES_H 1
+
+#include "hashtab.h"
 
 /* Forward declarations for prototypes.  */
 struct field;
@@ -106,6 +108,7 @@ enum type_code
     TYPE_CODE_STRUCT,		/* C struct or Pascal record */
     TYPE_CODE_UNION,		/* C union or Pascal variant part */
     TYPE_CODE_ENUM,		/* Enumeration type */
+    TYPE_CODE_FLAGS,		/* Bit flags type */
     TYPE_CODE_FUNC,		/* Function type */
     TYPE_CODE_INT,		/* Integer type */
 
@@ -1175,6 +1178,12 @@ extern struct type *builtin_type_f_void;
     ? obstack_alloc (&TYPE_OBJFILE (t) -> objfile_obstack, size) \
     : xmalloc (size))
 
+#define TYPE_ZALLOC(t,size)  \
+   (TYPE_OBJFILE (t) != NULL  \
+    ? memset (obstack_alloc (&TYPE_OBJFILE (t)->objfile_obstack, size),  \
+	      0, size)  \
+    : xzalloc (size))
+
 extern struct type *alloc_type (struct objfile *);
 
 extern struct type *init_type (enum type_code, int, int, char *,
@@ -1189,6 +1198,12 @@ extern struct type *init_type (enum type_code, int, int, char *,
 extern struct type *init_composite_type (char *name, enum type_code code);
 extern void append_composite_type_field (struct type *t, char *name,
 					 struct type *field);
+
+/* Helper functions to construct a bit flags type.  An initially empty
+   type is created using init_flag_type().  Flags are then added using
+   append_flag_type_flag().  */
+extern struct type *init_flags_type (char *name, int length);
+extern void append_flags_type_flag (struct type *type, int bitpos, char *name);
 
 extern struct type *lookup_reference_type (struct type *);
 
@@ -1363,5 +1378,11 @@ extern int can_dereference (struct type *);
 extern int is_integral_type (struct type *);
 
 extern void maintenance_print_type (char *, int);
+
+extern htab_t create_copied_types_hash (struct objfile *objfile);
+
+extern struct type *copy_type_recursive (struct objfile *objfile,
+					 struct type *type,
+					 htab_t copied_types);
 
 #endif /* GDBTYPES_H */

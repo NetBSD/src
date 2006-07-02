@@ -301,6 +301,12 @@ do_special_tests (void)
   int a;
 
   a = 1;   
+  u.integer = a;
+  anonu.a = a;
+  s.integer = a;
+  anons.a = a;
+  e = bar;
+  anone = A;
   incr_a(2);
 }
 

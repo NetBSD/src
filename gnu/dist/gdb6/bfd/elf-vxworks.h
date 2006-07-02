@@ -25,8 +25,11 @@ bfd_boolean elf_vxworks_add_symbol_hook
   (bfd *, struct bfd_link_info *, Elf_Internal_Sym *, const char **,
    flagword *, asection **, bfd_vma *);
 bfd_boolean elf_vxworks_link_output_symbol_hook
-  (const char *, Elf_Internal_Sym *);
+  (struct bfd_link_info *, const char *name, Elf_Internal_Sym *,
+   asection *, struct elf_link_hash_entry *);
 bfd_boolean elf_vxworks_emit_relocs
   (bfd *, asection *, Elf_Internal_Shdr *, Elf_Internal_Rela *,
    struct elf_link_hash_entry **);
 void elf_vxworks_final_write_processing (bfd *, bfd_boolean);
+bfd_boolean elf_vxworks_create_dynamic_sections
+  (bfd *, struct bfd_link_info *, asection **);

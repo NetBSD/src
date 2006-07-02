@@ -1,7 +1,7 @@
 /* TUI display source/assembly window.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-   Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include <ctype.h>
@@ -160,7 +160,7 @@ tui_update_source_windows_with_addr (CORE_ADDR addr)
 
       for (i = 0; i < (tui_source_windows ())->count; i++)
 	{
-	  struct tui_win_info * win_info = (struct tui_win_info *) (tui_source_windows ())->list[i];
+	  struct tui_win_info * win_info = (tui_source_windows ())->list[i];
 
 	  tui_clear_source_content (win_info, EMPTY_SOURCE_PROMPT);
 	  tui_clear_exec_info_content (win_info);
@@ -384,7 +384,7 @@ tui_update_all_breakpoint_info (void)
 
   for (i = 0; i < list->count; i++)
     {
-      struct tui_win_info * win = (struct tui_win_info *) list->list[i];
+      struct tui_win_info * win = list->list[i];
 
       if (tui_update_breakpoint_info (win, FALSE))
         {
