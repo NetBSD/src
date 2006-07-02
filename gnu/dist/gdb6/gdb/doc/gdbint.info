@@ -7,10 +7,10 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
    This file documents the internals of the GNU debugger GDB.
-Copyright 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001,
-2002, 2003, 2004, 2005    Free Software Foundation, Inc.  Contributed
-by Cygnus Solutions.  Written by John Gilmore.  Second Edition by Stan
-Shebs.
+Copyright (C) 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
+2001,    2002, 2003, 2004, 2005, 2006    Free Software Foundation, Inc.
+Contributed by Cygnus Solutions.  Written by John Gilmore.  Second
+Edition by Stan Shebs.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1 or
@@ -21,56 +21,57 @@ Free Documentation License".
 
 
 Indirect:
-gdbint.info-1: 892
-gdbint.info-2: 265215
+gdbint.info-1: 904
+gdbint.info-2: 276726
 
 Tag Table:
 (Indirect)
-Node: Top892
-Node: Requirements1699
-Node: Overall Structure3187
-Node: Algorithms6474
-Node: User Interface27053
-Ref: User Interface-Footnote-150830
-Ref: User Interface-Footnote-250879
-Node: libgdb51114
-Node: Symbol Handling55073
-Node: Language Support69374
-Node: Host Definition74775
-Node: Target Architecture Definition82132
-Ref: BREAKPOINT_FROM_PC108338
-Ref: DEPRECATED_EXTRACT_STRUCT_VALUE_ADDRESS114534
-Ref: frame_align115366
-Ref: DEPRECATED_FRAME_SAVED_PC117745
-Ref: unwind_pc117931
-Ref: unwind_sp118484
-Ref: stabs_argument_has_addr130947
-Ref: push_dummy_call131721
-Ref: push_dummy_code132307
-Ref: DEPRECATED_REG_STRUCT_HAS_ADDR133152
-Ref: SAVE_DUMMY_FRAME_TOS133386
-Ref: gdbarch_return_value134005
-Ref: DEPRECATED_STACK_ALIGN137290
-Ref: TARGET_WRITE_PC139917
-Ref: TARGET_READ_SP139951
-Ref: unwind_dummy_id141624
-Ref: Target Architecture Definition-Footnote-1150177
-Ref: Target Architecture Definition-Footnote-2150420
-Node: Target Vector Definition150539
-Node: Native Debugging153164
-Node: Support Libraries163602
-Node: Coding168426
-Node: Porting GDB193752
-Node: Versions and Branches195661
-Ref: Tags201606
-Ref: experimental branch tags201937
-Node: Releasing GDB202669
-Node: Testsuite221738
-Node: Hints228584
-Node: Getting Started228906
-Node: Debugging GDB233049
-Node: GDB Observers238411
-Node: GNU Free Documentation License242776
-Node: Index265215
+Node: Top904
+Node: Requirements1743
+Node: Overall Structure3231
+Node: Algorithms6518
+Node: User Interface36224
+Ref: User Interface-Footnote-160001
+Ref: User Interface-Footnote-260050
+Node: libgdb60285
+Node: Symbol Handling64245
+Node: Language Support79345
+Node: Host Definition84746
+Node: Target Architecture Definition92103
+Ref: BREAKPOINT_FROM_PC118309
+Ref: DEPRECATED_EXTRACT_STRUCT_VALUE_ADDRESS124477
+Ref: frame_align125309
+Ref: DEPRECATED_FRAME_SAVED_PC127688
+Ref: unwind_pc127874
+Ref: unwind_sp128427
+Ref: stabs_argument_has_addr140890
+Ref: push_dummy_call141664
+Ref: push_dummy_code142250
+Ref: DEPRECATED_REG_STRUCT_HAS_ADDR143095
+Ref: SAVE_DUMMY_FRAME_TOS143329
+Ref: gdbarch_return_value143948
+Ref: DEPRECATED_STACK_ALIGN147233
+Ref: TARGET_WRITE_PC149860
+Ref: TARGET_READ_SP149894
+Ref: unwind_dummy_id151567
+Ref: Target Architecture Definition-Footnote-1160120
+Ref: Target Architecture Definition-Footnote-2160363
+Node: Target Vector Definition160482
+Node: Native Debugging163107
+Node: Support Libraries173546
+Node: Coding178370
+Node: Porting GDB204089
+Node: Versions and Branches205998
+Ref: Tags211957
+Ref: experimental branch tags212288
+Node: Start of New Year Procedure213020
+Node: Releasing GDB214018
+Node: Testsuite233093
+Node: Hints240090
+Node: Getting Started240412
+Node: Debugging GDB244555
+Node: GDB Observers249917
+Node: GNU Free Documentation License254282
+Node: Index276726
 
 End Tag Table

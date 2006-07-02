@@ -37,15 +37,15 @@ set srcfile ${testfile}.c
 set srcfile1 ${testfile}1.c
 set binfile ${objdir}/${subdir}/${testfile}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug nowarnings}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug nowarnings}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug nowarnings}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -67,7 +67,7 @@ if [target_info exists gdb_stub] {
 
 # Test deleting all breakpoints when there are none installed,
 # GDB should not prompt for confirmation.
-# Note that gdb-init.exp provides a "delete_breakpoints" proc
+# Note that lib/gdb.exp provides a "delete_breakpoints" proc
 # for general use elsewhere.
 
 send_gdb "delete breakpoints\n"
@@ -858,15 +858,15 @@ test_next_with_recursion
 
 set binfileo2 ${objdir}/${subdir}/${testfile}o2
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}O0.o" object {debug "additional_flags=-w -O2"}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}O0.o" object {debug nowarnings optimize=-O2}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}O1.o" object {debug "additional_flags=-w -O2"}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}O1.o" object {debug nowarnings optimize=-O2}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if  { [gdb_compile "${binfile}O0.o ${binfile}O1.o" "${binfileo2}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${binfile}O0.o ${binfile}O1.o" "${binfileo2}" executable {debug nowarnings}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -887,7 +887,7 @@ if [target_info exists gdb_stub] {
 # test break at function
 #
 gdb_test "break main" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
+    "Breakpoint.*at.* file .*, line.*" \
     "breakpoint function, optimized file"
 
 #

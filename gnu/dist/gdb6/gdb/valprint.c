@@ -1,8 +1,8 @@
 /* Print values for GDB, the GNU debugger.
 
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2005 Free Software
-   Foundation, Inc.
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -39,7 +39,7 @@
 
 /* Prototypes for local functions */
 
-static int partial_memory_read (CORE_ADDR memaddr, char *myaddr,
+static int partial_memory_read (CORE_ADDR memaddr, gdb_byte *myaddr,
 				int len, int *errnoptr);
 
 static void show_print (char *, int);
@@ -324,6 +324,27 @@ val_print_type_code_int (struct type *type, const gdb_byte *valaddr,
       print_longest (stream, TYPE_UNSIGNED (type) ? 'u' : 'd', 0,
 		     unpack_long (type, valaddr));
     }
+}
+
+void
+val_print_type_code_flags (struct type *type, const gdb_byte *valaddr,
+			   struct ui_file *stream)
+{
+  LONGEST val = unpack_long (type, valaddr);
+  int bitpos, nfields = TYPE_NFIELDS (type);
+
+  fputs_filtered ("[ ", stream);
+  for (bitpos = 0; bitpos < nfields; bitpos++)
+    {
+      if (TYPE_FIELD_BITPOS (type, bitpos) != -1 && (val & (1 << bitpos)))
+	{
+	  if (TYPE_FIELD_NAME (type, bitpos))
+	    fprintf_filtered (stream, "%s ", TYPE_FIELD_NAME (type, bitpos));
+	  else
+	    fprintf_filtered (stream, "#%d ", bitpos);
+	}
+    }
+  fputs_filtered ("]", stream);
 }
 
 /* Print a number according to FORMAT which is one of d,u,x,o,b,h,w,g.
@@ -1038,7 +1059,7 @@ val_print_array_elements (struct type *type, const gdb_byte *valaddr,
    function be eliminated.  */
 
 static int
-partial_memory_read (CORE_ADDR memaddr, char *myaddr, int len, int *errnoptr)
+partial_memory_read (CORE_ADDR memaddr, gdb_byte *myaddr, int len, int *errnoptr)
 {
   int nread;			/* Number of bytes actually read. */
   int errcode;			/* Error from last read. */
@@ -1086,9 +1107,9 @@ val_print_string (CORE_ADDR addr, int len, int width, struct ui_file *stream)
   unsigned int fetchlimit;	/* Maximum number of chars to print. */
   unsigned int nfetch;		/* Chars to fetch / chars fetched. */
   unsigned int chunksize;	/* Size of each fetch, in chars. */
-  char *buffer = NULL;		/* Dynamically growable fetch buffer. */
-  char *bufptr;			/* Pointer to next available byte in buffer. */
-  char *limit;			/* First location past end of fetch buffer. */
+  gdb_byte *buffer = NULL;	/* Dynamically growable fetch buffer. */
+  gdb_byte *bufptr;		/* Pointer to next available byte in buffer. */
+  gdb_byte *limit;		/* First location past end of fetch buffer. */
   struct cleanup *old_chain = NULL;	/* Top of the old cleanup chain. */
   int found_nul;		/* Non-zero if we found the nul char */
 
@@ -1121,7 +1142,7 @@ val_print_string (CORE_ADDR addr, int len, int width, struct ui_file *stream)
 
   if (len > 0)
     {
-      buffer = (char *) xmalloc (len * width);
+      buffer = (gdb_byte *) xmalloc (len * width);
       bufptr = buffer;
       old_chain = make_cleanup (xfree, buffer);
 
@@ -1139,11 +1160,11 @@ val_print_string (CORE_ADDR addr, int len, int width, struct ui_file *stream)
 	  nfetch = min (chunksize, fetchlimit - bufsize);
 
 	  if (buffer == NULL)
-	    buffer = (char *) xmalloc (nfetch * width);
+	    buffer = (gdb_byte *) xmalloc (nfetch * width);
 	  else
 	    {
 	      discard_cleanups (old_chain);
-	      buffer = (char *) xrealloc (buffer, (nfetch + bufsize) * width);
+	      buffer = (gdb_byte *) xrealloc (buffer, (nfetch + bufsize) * width);
 	    }
 
 	  old_chain = make_cleanup (xfree, buffer);
@@ -1196,13 +1217,13 @@ val_print_string (CORE_ADDR addr, int len, int width, struct ui_file *stream)
 
   if (len == -1 && !found_nul)
     {
-      char *peekbuf;
+      gdb_byte *peekbuf;
 
       /* We didn't find a null terminator we were looking for.  Attempt
          to peek at the next character.  If not successful, or it is not
          a null byte, then force ellipsis to be printed.  */
 
-      peekbuf = (char *) alloca (width);
+      peekbuf = (gdb_byte *) alloca (width);
 
       if (target_read_memory (addr, peekbuf, width) == 0
 	  && extract_unsigned_integer (peekbuf, width) != 0)

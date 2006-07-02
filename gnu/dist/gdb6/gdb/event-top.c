@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright 1999, 2000, 2001, 2002, 2004, 2005 Free Software
+   Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005 Free Software
    Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA. */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA. */
 
 #include "defs.h"
 #include "top.h"
@@ -49,16 +49,14 @@ static void command_line_handler_continuation (struct continuation_arg *arg);
 static void change_line_handler (void);
 static void change_annotation_level (void);
 static void command_handler (char *command);
-static void async_do_nothing (gdb_client_data arg);
-static void async_disconnect (gdb_client_data arg);
-static void async_stop_sig (gdb_client_data arg);
-static void async_float_handler (gdb_client_data arg);
 
 /* Signal handlers. */
 #ifdef SIGQUIT
 static void handle_sigquit (int sig);
 #endif
+#ifdef SIGHUP
 static void handle_sighup (int sig);
+#endif
 static void handle_sigfpe (int sig);
 #if defined(SIGWINCH) && defined(SIGWINCH_HANDLER)
 static void handle_sigwinch (int sig);
@@ -66,10 +64,16 @@ static void handle_sigwinch (int sig);
 
 /* Functions to be invoked by the event loop in response to
    signals. */
+#if defined (SIGQUIT) || defined (SIGHUP)
 static void async_do_nothing (gdb_client_data);
+#endif
+#ifdef SIGHUP
 static void async_disconnect (gdb_client_data);
+#endif
 static void async_float_handler (gdb_client_data);
+#ifdef STOP_SIGNAL
 static void async_stop_sig (gdb_client_data);
+#endif
 
 /* Readline offers an alternate interface, via callback
    functions. These are all included in the file callback.c in the
@@ -892,6 +896,7 @@ async_init_signals (void)
   signal (SIGINT, handle_sigint);
   sigint_token =
     create_async_signal_handler (async_request_quit, NULL);
+  signal (SIGTERM, handle_sigterm);
 
   /* If SIGTRAP was set to SIG_IGN, then the SIG_IGN will get passed
      to the inferior and breakpoints will be ignored.  */
@@ -964,6 +969,15 @@ handle_sigint (int sig)
     mark_async_signal_handler_wrapper (sigint_token);
 }
 
+/* Quit GDB if SIGTERM is received.
+   GDB would quit anyway, but this way it will clean up properly.  */
+void
+handle_sigterm (int sig)
+{
+  signal (sig, handle_sigterm);
+  quit_force ((char *) 0, stdin == instream);
+}
+
 /* Do the quit. All the checks have been done by the caller. */
 void
 async_request_quit (gdb_client_data arg)
@@ -983,12 +997,15 @@ handle_sigquit (int sig)
 }
 #endif
 
-/* Called by the event loop in response to a SIGQUIT. */
+#if defined (SIGQUIT) || defined (SIGHUP)
+/* Called by the event loop in response to a SIGQUIT or an
+   ignored SIGHUP.  */
 static void
 async_do_nothing (gdb_client_data arg)
 {
   /* Empty function body. */
 }
+#endif
 
 #ifdef SIGHUP
 /* Tell the event loop what to do if SIGHUP is received. 
@@ -1110,7 +1127,7 @@ gdb_setup_readline (void)
      that the sync setup is ALL done in gdb_init, and we would only
      mess it up here.  The sync stuff should really go away over
      time.  */
-  extern batch_silent;
+  extern int batch_silent;
 
   if (!batch_silent)
     gdb_stdout = stdio_fileopen (stdout);

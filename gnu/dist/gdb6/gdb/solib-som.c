@@ -1,6 +1,6 @@
 /* Handle SOM shared libraries.
 
-   Copyright 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "som.h"
@@ -313,50 +313,6 @@ keep_going:
   clear_symtab_users ();
 }
 
-/* This operation removes the "hook" between GDB and the dynamic linker,
-   which causes the dld to notify GDB of shared library events.
-
-   After this operation completes, the dld will no longer notify GDB of
-   shared library events.  To resume notifications, GDB must call
-   som_solib_create_inferior_hook.
-
-   This operation does not remove any knowledge of shared libraries
-   of which GDB may already have been notified.
- */
-static void
-som_solib_remove_inferior_hook (int pid)
-{
-  CORE_ADDR addr;
-  struct minimal_symbol *msymbol;
-  int status;
-  char dld_flags_buffer[4];
-  unsigned int dld_flags_value;
-  struct cleanup *old_cleanups = save_inferior_ptid ();
-
-  /* Ensure that we're really operating on the specified process. */
-  inferior_ptid = pid_to_ptid (pid);
-
-  /* We won't bother to remove the solib breakpoints from this process.
-
-     In fact, on PA64 the breakpoint is hard-coded into the dld callback,
-     and thus we're not supposed to remove it.
-
-     Rather, we'll merely clear the dld_flags bit that enables callbacks.
-   */
-  msymbol = lookup_minimal_symbol ("__dld_flags", NULL, NULL);
-
-  addr = SYMBOL_VALUE_ADDRESS (msymbol);
-  status = target_read_memory (addr, dld_flags_buffer, 4);
-
-  dld_flags_value = extract_unsigned_integer (dld_flags_buffer, 4);
-
-  dld_flags_value &= ~DLD_FLAGS_HOOKVALID;
-  store_unsigned_integer (dld_flags_buffer, 4, dld_flags_value);
-  status = target_write_memory (addr, dld_flags_buffer, 4);
-
-  do_cleanups (old_cleanups);
-}
-
 static void
 som_special_symbol_handling (void)
 {
@@ -564,7 +520,7 @@ link_map_start (void)
   read_memory (addr, buf, 4);
   addr = extract_unsigned_integer (buf, 4);
   if (addr == 0)
-    error (_("Debugging dynamic executables loaded via the hpux8 dld.sl is not supported."));
+    return 0;
 
   read_memory (addr, buf, 4);
   return extract_unsigned_integer (buf, 4);

@@ -1,6 +1,6 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -32,9 +32,7 @@
 #include "gdb_string.h"
 #include <signal.h>
 #include <fcntl.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
+#include "gdb_select.h"
 
 #include "inflow.h"
 
@@ -129,7 +127,6 @@ gdb_has_a_terminal (void)
 #endif
 
       gdb_has_a_terminal_flag = no;
-      stdin_serial = serial_fdopen (0);
       if (stdin_serial != NULL)
 	{
 	  our_ttystate = serial_get_tty_state (stdin_serial);
@@ -643,7 +640,7 @@ handle_sigio (int signo)
 
   FD_ZERO (&readfds);
   FD_SET (target_activity_fd, &readfds);
-  numfds = select (target_activity_fd + 1, &readfds, NULL, NULL, NULL);
+  numfds = gdb_select (target_activity_fd + 1, &readfds, NULL, NULL, NULL);
   if (numfds >= 0 && FD_ISSET (target_activity_fd, &readfds))
     {
 #ifndef _WIN32
@@ -728,6 +725,18 @@ gdb_setpgid (void)
     }
 
   return retval;
+}
+
+/* Get all the current tty settings (including whether we have a
+   tty at all!).  We can't do this in _initialize_inflow because
+   serial_fdopen() won't work until the serial_ops_list is
+   initialized, but we don't want to do it lazily either, so
+   that we can guarantee stdin_serial is opened if there is
+   a terminal.  */
+void
+initialize_stdin_serial (void)
+{
+  stdin_serial = serial_fdopen (0);
 }
 
 void

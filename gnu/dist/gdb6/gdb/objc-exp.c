@@ -2691,23 +2691,8 @@ parse_number (p, len, parsed_float, putithere)
 
       /* It's a float since it contains a point or an exponent.  */
 
-      if (sizeof (putithere->typed_val_float.dval) <= sizeof (float))
-	sscanf (p, "%g", (float *)&putithere->typed_val_float.dval);
-      else if (sizeof (putithere->typed_val_float.dval) <= sizeof (double))
-	sscanf (p, "%lg", (double *)&putithere->typed_val_float.dval);
-      else
-	{
-#ifdef PRINTF_HAS_LONG_DOUBLE
-	  sscanf (p, "%Lg", &putithere->typed_val_float.dval);
-#else
-	  /* Scan it into a double, then assign it to the long double.
-	     This at least wins with values representable in the range
-	     of doubles.  */
-	  double temp;
-	  sscanf (p, "%lg", &temp);
-	  putithere->typed_val_float.dval = temp;
-#endif
-	}
+      sscanf (p, DOUBLEST_SCAN_FORMAT "%c",
+	      &putithere->typed_val_float.dval, &c);
 
       /* See if it has `f' or `l' suffix (float or long double).  */
 

@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2005
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,13 +17,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "serial.h"
 #include "ser-base.h"
-#include "ser-unix.h"
+#include "ser-tcp.h"
 
 #include <sys/types.h>
 
@@ -56,8 +56,6 @@
 typedef int socklen_t;
 #endif
 
-static int net_open (struct serial *scb, const char *name);
-static void net_close (struct serial *scb);
 void _initialize_ser_tcp (void);
 
 /* seconds to wait for connect */
@@ -67,7 +65,7 @@ void _initialize_ser_tcp (void);
 
 /* Open a tcp socket */
 
-static int
+int
 net_open (struct serial *scb, const char *name)
 {
   char *port_str, hostname[100];
@@ -153,7 +151,7 @@ net_open (struct serial *scb, const char *name)
     {
       /* looks like we need to wait for the connect */
       struct timeval t;
-      fd_set rset, wset;
+      fd_set rset, wset, eset;
       int polls = 0;
       FD_ZERO (&rset);
 
@@ -174,10 +172,19 @@ net_open (struct serial *scb, const char *name)
 	  
 	  FD_SET (scb->fd, &rset);
 	  wset = rset;
+	  eset = rset;
 	  t.tv_sec = 0;
 	  t.tv_usec = 1000000 / POLL_INTERVAL;
 	  
-	  n = select (scb->fd + 1, &rset, &wset, NULL, &t);
+	  /* POSIX systems return connection success or failure by signalling
+	     wset.  Windows systems return success in wset and failure in
+	     eset.
+
+	     We must call select here, rather than gdb_select, because
+	     the serial structure has not yet been initialized - the
+	     MinGW select wrapper will not know that this FD refers
+	     to a socket.  */
+	  n = select (scb->fd + 1, &rset, &wset, &eset, &t);
 	  polls++;
 	} 
       while (n == 0 && polls <= TIMEOUT * POLL_INTERVAL);
@@ -194,7 +201,7 @@ net_open (struct serial *scb, const char *name)
   {
     int res, err;
     socklen_t len;
-    len = sizeof(err);
+    len = sizeof (err);
     /* On Windows, the fourth parameter to getsockopt is a "char *";
        on UNIX systems it is generally "void *".  The cast to "void *"
        is OK everywhere, since in C "void *" can be implicitly
@@ -230,7 +237,7 @@ net_open (struct serial *scb, const char *name)
   return 0;
 }
 
-static void
+void
 net_close (struct serial *scb)
 {
   if (scb->fd < 0)
@@ -240,13 +247,13 @@ net_close (struct serial *scb)
   scb->fd = -1;
 }
 
-static int
+int
 net_read_prim (struct serial *scb, size_t count)
 {
   return recv (scb->fd, scb->buf, count, 0);
 }
 
-static int
+int
 net_write_prim (struct serial *scb, const void *buf, size_t count)
 {
   return send (scb->fd, buf, count, 0);
@@ -255,13 +262,12 @@ net_write_prim (struct serial *scb, const void *buf, size_t count)
 void
 _initialize_ser_tcp (void)
 {
-  struct serial_ops *ops;
 #ifdef USE_WIN32API
-  WSADATA wsa_data;
-  if (WSAStartup (MAKEWORD (1, 0), &wsa_data) != 0)
-    /* WinSock is unavailable.  */
-    return;
-#endif
+  /* Do nothing; the TCP serial operations will be initialized in
+     ser-mingw.c.  */
+  return;
+#else
+  struct serial_ops *ops;
   ops = XMALLOC (struct serial_ops);
   memset (ops, 0, sizeof (struct serial_ops));
   ops->name = "tcp";
@@ -285,4 +291,5 @@ _initialize_ser_tcp (void)
   ops->read_prim = net_read_prim;
   ops->write_prim = net_write_prim;
   serial_add_interface (ops);
+#endif /* USE_WIN32API */
 }

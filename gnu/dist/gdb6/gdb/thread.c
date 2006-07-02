@@ -1,6 +1,6 @@
 /* Multi-process/thread control for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1988, 1993, 1994, 1995, 1996, 1997, 1998,
+   Copyright (C) 1986, 1987, 1988, 1993, 1994, 1995, 1996, 1997, 1998,
    1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
@@ -691,7 +691,7 @@ The new thread ID must be currently known."),
 
   add_prefix_cmd ("apply", class_run, thread_apply_command,
 		  _("Apply a command to a list of threads."),
-		  &thread_apply_list, "apply ", 1, &thread_cmd_list);
+		  &thread_apply_list, "thread apply ", 1, &thread_cmd_list);
 
   add_cmd ("all", class_run, thread_apply_all_command,
 	   _("Apply a command to all threads."), &thread_apply_list);

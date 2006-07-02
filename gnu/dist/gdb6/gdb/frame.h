@@ -1,6 +1,6 @@
 /* Definitions for dealing with stack frames, for GDB, the GNU debugger.
 
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1996,
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1996,
    1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (FRAME_H)
 #define FRAME_H 1
@@ -299,6 +299,12 @@ extern CORE_ADDR get_frame_func (struct frame_info *fi);
    apply to the PC or the adjusted PC.  */
 extern void find_frame_sal (struct frame_info *frame,
 			    struct symtab_and_line *sal);
+
+/* Set the current source and line to the location given by frame
+   FRAME, if possible.  When CENTER is true, adjust so the relevant
+   line is in the center of the next 'list'.  */
+
+void set_current_sal_from_frame (struct frame_info *, int);
 
 /* Return the frame base (what ever that is) (DEPRECATED).
 

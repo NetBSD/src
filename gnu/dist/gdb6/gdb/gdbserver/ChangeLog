@@ -1,3 +1,99 @@
+2006-05-09  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* configure.srv (m68k*-*-uclinux*): New target.
+	* linux-low.c (linux_create_inferior): Use vfork on mmuless systems.
+	(linux_resume_one_process): Remove extraneous cast.
+	(linux_read_offsets): New.
+	(linux_target_op): Add linux_read_offsets on mmuless systems.
+	* server.c (handle_query): Add qOffsets logic.
+	* target.h (struct target_ops): Add read_offsets.
+
+2006-03-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* linux-mips-low.c: Include <sys/ptrace.h> and "gdb_proc_service.h".
+	(PTRACE_GET_THREAD_AREA): Define.
+	(ps_get_thread_area): New function.
+	* Makefile.in (linux-i386-low.o, linux-mips-low.o)
+	(linux-x86-64-low.o): Update.
+
+2006-03-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* configure.ac: Remove checks for prfpregset_t.
+	* gdb_proc_service.h: New file.
+	* linux-i386-low.c, linux-x86-64-low.c, thread-db.c: Use the
+	new "gdb_proc_service.h".
+	* proc-service.c: Likewise.
+	(ps_pglobal_lookup, ps_pdread, ps_pdwrite): Use psaddr_t.
+	(ps_lgetfpregs, ps_lsetfpregs): Use a void* argument.
+	* Makefile.in (gdb_proc_service_h): Updated.
+	* configure, config.in: Regenerated.
+
+2006-03-03  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* remote-utils.c (prepare_resume_reply): Move declaration
+	of gdb_id_from_wait to the top of the block.
+
+2006-02-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* linux-low.c (regsets_store_inferior_registers): Read the regset
+	from the target before filling it.
+
+2006-02-08  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* server.c (attach_inferior): Return SIGTRAP for a successful
+	attach.
+
+2006-02-01  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* Makefile.in (OBS): Add version.o.
+	(STAGESTUFF): Delete.
+	(version.o): Add dependencies.
+	(version.c): Replace rule.
+	(clean): Remove version.c.
+	* server.c (gdbserver_version): New.
+	(gdbserver_usage): Use printf.
+	(main): Handle --version and --help.
+	* server.h (version, host_name): Add declarations.
+
+2005-12-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* linux-arm-low.c: 
+	* linux-arm-low.c: 
+	* inferiors.c: 
+	* i387-fp.h: 
+	* i387-fp.c: 
+	* gdbreplay.c: 
+	* regcache.c: 
+	* proc-service.c: 
+	* mem-break.h: 
+	* mem-break.c: 
+	* linux-x86-64-low.c: 
+	* linux-sh-low.c: 
+	* linux-s390-low.c: 
+	* linux-ppc64-low.c: 
+	* linux-ppc-low.c: 
+	* linux-mips-low.c: 
+	* linux-m68k-low.c: 
+	* linux-m32r-low.c: 
+	* linux-low.h: 
+	* linux-low.c: 
+	* linux-ia64-low.c: 
+	* linux-i386-low.c: 
+	* linux-crisv32-low.c: 
+	* thread-db.c: 
+	* terminal.h: 
+	* target.h: 
+	* target.c: 
+	* server.h: 
+	* server.c: 
+	* remote-utils.c: 
+	* regcache.h: 
+	* utils.c: 
+	* Makefile.in: 
+	* configure.ac: 
+	* gdbserver.1: Add (C) after Copyright.  Update the FSF
+	address.
+
 2005-11-13  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* linux-arm-low.c (arm_eabi_breakpoint): New variable.

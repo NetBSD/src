@@ -25,12 +25,19 @@ set bug_id 0
 
 # Test handling of nullified instructions for the pa target.
 
-if ![istarget "hppa*-*-*"] then {
-    verbose "Skipping hppa nullification tests."
-    return
+switch -glob -- [istarget] {
+    "hppa-*-*" {
+	set testfile "pa-nullify"
+    }
+    "hppa64-*-*" {
+	set testfile "pa64-nullify"
+    }
+    "*" {
+        verbose "Skipping hppa nullification tests."
+        return
+    }
 }
 
-set testfile "pa-nullify"
 set srcfile ${testfile}.s
 set binfile ${objdir}/${subdir}/${testfile}
 set gcorefile ${objdir}/${subdir}/${testfile}.gcore
@@ -78,7 +85,6 @@ proc get_addr_of_sym { sym } {
   global hex
 
   set test "get address of $sym"
-  send_gdb "print $sym\n"
   gdb_test_multiple "print $sym" $test {
     -re ".*($hex) <$sym>.*$gdb_prompt $" {
       set addr $expect_out(1,string)
@@ -93,7 +99,7 @@ if { ! [ runto_main ] } then { gdb_suppress_tests; }
 
 set foo [get_addr_of_sym "foo"]
 set bar [get_addr_of_sym "bar"]
-set foo_last [expr $bar - 4]
+set foo_last "(bar - 4)"
 
 gdb_breakpoint "*$foo_last"
 
@@ -112,13 +118,19 @@ proc gen_core { test } {
   set gcore_works 0
   set escapedfilename [string_to_regexp $gcorefile]
 
+  # gcore is not yet implemented for HPUX
+  setup_xfail hppa*-*-hpux*
+
   gdb_test_multiple "gcore $gcorefile" "$test: gcore" {
     -re "Saved corefile ${escapedfilename}\[\r\n\]+$gdb_prompt $" {
       pass "$test: gcore"
       set gcore_works 1
     }
+    -re "Undefined command.*$gdb_prompt $" {
+      fail "$test: gcore (undefined command)"
+    }
     -re "Can't create a corefile\[\r\n\]+$gdb_prompt $" {
-      fail "$test: gcore"
+      fail "$test: gcore (can't create corefile)"
     }
   }
 

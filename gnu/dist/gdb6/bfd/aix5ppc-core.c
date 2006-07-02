@@ -23,15 +23,15 @@
 
 #include "bfd.h"
 
-#ifdef AIX_5_CORE
-
-#include "sysdep.h"
-#include "libbfd.h"
-
 const bfd_target *xcoff64_core_p (bfd *);
 bfd_boolean xcoff64_core_file_matches_executable_p (bfd *, bfd *);
 char *xcoff64_core_file_failing_command (bfd *);
 int xcoff64_core_file_failing_signal (bfd *);
+
+#ifdef AIX_5_CORE
+
+#include "sysdep.h"
+#include "libbfd.h"
 
 /* Aix 5.1 system include file.  */
 
@@ -318,11 +318,6 @@ xcoff64_core_file_failing_signal (bfd *abfd)
 
 #else /* AIX_5_CORE */
 
-const bfd_target *xcoff64_core_p  (bfd *);
-bfd_boolean xcoff64_core_file_matches_executable_p (bfd *, bfd *);
-char *xcoff64_core_file_failing_command (bfd *);
-int xcoff64_core_file_failing_signal (bfd *);
-
 const bfd_target *
 xcoff64_core_p (bfd *abfd ATTRIBUTE_UNUSED)
 {
@@ -331,10 +326,9 @@ xcoff64_core_p (bfd *abfd ATTRIBUTE_UNUSED)
 }
 
 bfd_boolean
-xcoff64_core_file_matches_executable_p (bfd *core_bfd ATTRIBUTE_UNUSED,
-					bfd *exec_bfd ATTRIBUTE_UNUSED)
+xcoff64_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 {
-  return FALSE;
+  return generic_core_file_matches_executable_p (core_bfd, exec_bfd);
 }
 
 char *

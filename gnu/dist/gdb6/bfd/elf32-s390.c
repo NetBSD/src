@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Contributed by Carl B. Pedersen and Martin Schwidefsky.
 
@@ -771,7 +771,8 @@ elf_s390_link_hash_table_create (abfd)
   if (ret == NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
+				      sizeof (struct elf_s390_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1908,9 +1909,21 @@ allocate_dynrelocs (h, inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
+      if (eh->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
-	eh->dyn_relocs = NULL;
+	{
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	    eh->dyn_relocs = NULL;
+
+	  /* Make sure undefined weak symbols are output as a dynamic
+	     symbol in PIEs.  */
+	  else if (h->dynindx == -1
+		   && !h->forced_local)
+	    {
+	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
+		return FALSE;
+	    }
+	}
     }
   else if (ELIMINATE_COPY_RELOCS)
     {
@@ -2255,6 +2268,7 @@ invalid_tls_insn (input_bfd, input_section, rel)
      input_section,
      (long) rel->r_offset,
      howto->name);
+  bfd_set_error (bfd_error_bad_value);
 }
 
 /* Relocate a 390 ELF section.  */
@@ -2969,16 +2983,44 @@ elf_s390_relocate_section (output_bfd, info, input_bfd, input_section,
 	      unsigned int insn;
 
 	      insn = bfd_get_32 (input_bfd, contents + rel->r_offset);
-	      if ((insn & 0xff000fff) != 0x4d000000)
+	      if ((insn & 0xff000fff) != 0x4d000000 &&
+		  (insn & 0xffff0000) != 0xc0e50000)
 		invalid_tls_insn (input_bfd, input_section, rel);
 	      if (!info->shared && (h == NULL || h->dynindx == -1))
-		/* GD->LE transition.
-		   bas %r14,0(%rx,%r13) -> bc 0,0  */
-		insn = 0x47000000;
+		{
+		  if ((insn & 0xff000000) == 0x4d000000)
+		    {
+		      /* GD->LE transition.
+			 bas %r14,0(%rx,%r13) -> bc 0,0  */
+		      insn = 0x47000000;
+		    }
+		  else
+		    {
+		      /* GD->LE transition.
+			 brasl %r14,_tls_get_addr@plt -> brcl 0,.  */
+		      insn = 0xc0040000;
+		      bfd_put_16 (output_bfd, 0x0000,
+				  contents + rel->r_offset + 4);
+		    }
+		}
 	      else
-		/* GD->IE transition.
-		   bas %r14,0(%rx,%r13) -> l %r2,0(%r2,%r12)  */
-		insn = 0x5822c000;
+		{
+		  if ((insn & 0xff000000) == 0x4d000000)
+		    {
+		      /* GD->IE transition.
+			 bas %r14,0(%rx,%r13) -> l %r2,0(%r2,%r12)  */
+		      insn = 0x5822c000;
+		    }
+		  else
+		    {
+		      /* GD->IE transition.
+			 brasl %r14,__tls_get_addr@plt ->
+			 	l %r2,0(%r2,%r12) ; bcr 0,0 */
+		      insn = 0x5822c000;
+		      bfd_put_16 (output_bfd, 0x0700,
+				  contents + rel->r_offset + 4);
+		    }
+		}
 	      bfd_put_32 (output_bfd, insn, contents + rel->r_offset);
 	    }
 	  else if (r_type == R_390_TLS_LDCALL)
@@ -2988,11 +3030,23 @@ elf_s390_relocate_section (output_bfd, info, input_bfd, input_section,
 		  unsigned int insn;
 
 		  insn = bfd_get_32 (input_bfd, contents + rel->r_offset);
-		  if ((insn & 0xff000fff) != 0x4d000000)
+		  if ((insn & 0xff000fff) != 0x4d000000 &&
+		      (insn & 0xffff0000) != 0xc0e50000)
 		    invalid_tls_insn (input_bfd, input_section, rel);
-		  /* LD->LE transition.
-		     bas %r14,0(%rx,%r13) -> bc 0,0  */
-		  insn = 0x47000000;
+		  if ((insn & 0xff000000) == 0x4d000000)
+		    {
+		      /* LD->LE transition.
+			 bas %r14,0(%rx,%r13) -> bc 0,0  */
+		      insn = 0x47000000;
+		    }
+		  else
+		    {
+		      /* LD->LE transition.
+			 brasl %r14,__tls_get_addr@plt -> brcl 0,. */
+		      insn = 0xc0040000;
+		      bfd_put_16 (output_bfd, 0x0000,
+				  contents + rel->r_offset + 4);
+		    }
 		  bfd_put_32 (output_bfd, insn, contents + rel->r_offset);
 		}
 	    }
@@ -3297,8 +3351,8 @@ elf_s390_finish_dynamic_symbol (output_bfd, info, h, sym)
 
   /* Mark some specially defined symbols as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0
-      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+      || h == htab->elf.hgot
+      || h == htab->elf.hplt)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;

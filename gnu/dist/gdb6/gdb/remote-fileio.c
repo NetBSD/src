@@ -1,6 +1,6 @@
 /* Remote File-I/O communications
 
-   Copyright 2003, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* See the GDB User Guide for details of the GDB remote protocol. */
 
@@ -570,7 +570,7 @@ remote_fileio_return_success (int retcode)
    write only one packet, regardless of the requested number of bytes to
    transfer.  This wrapper calls remote_write_bytes() as often as needed. */
 static int
-remote_fileio_write_bytes (CORE_ADDR memaddr, char *myaddr, int len)
+remote_fileio_write_bytes (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
 {
   int ret = 0, written;
 
@@ -618,7 +618,7 @@ remote_fileio_func_open (char *buf)
 
   /* Request pathname using 'm' packet */
   pathname = alloca (length);
-  retlength = remote_read_bytes (ptrval, pathname, length);
+  retlength = remote_read_bytes (ptrval, (gdb_byte *) pathname, length);
   if (retlength != length)
     {
       remote_fileio_ioerror ();
@@ -688,7 +688,7 @@ remote_fileio_func_read (char *buf)
   LONGEST lnum;
   CORE_ADDR ptrval;
   int fd, ret, retlength;
-  char *buffer;
+  gdb_byte *buffer;
   size_t length;
   off_t old_offset, new_offset;
 
@@ -729,7 +729,7 @@ remote_fileio_func_read (char *buf)
 	  static char *remaining_buf = NULL;
 	  static int remaining_length = 0;
 
-	  buffer = (char *) xmalloc (32768);
+	  buffer = (gdb_byte *) xmalloc (32768);
 	  if (remaining_buf)
 	    {
 	      remote_fio_no_longjmp = 1;
@@ -751,7 +751,7 @@ remote_fileio_func_read (char *buf)
 	    }
 	  else
 	    {
-	      ret = ui_file_read (gdb_stdtargin, buffer, 32767);
+	      ret = ui_file_read (gdb_stdtargin, (char *) buffer, 32767);
 	      remote_fio_no_longjmp = 1;
 	      if (ret > 0 && (size_t)ret > length)
 		{
@@ -764,7 +764,7 @@ remote_fileio_func_read (char *buf)
 	}
 	break;
       default:
-	buffer = (char *) xmalloc (length);
+	buffer = (gdb_byte *) xmalloc (length);
 	/* POSIX defines EINTR behaviour of read in a weird way.  It's allowed
 	   for read() to return -1 even if "some" bytes have been read.  It
 	   has been corrected in SUSv2 but that doesn't help us much...
@@ -806,7 +806,7 @@ remote_fileio_func_write (char *buf)
   LONGEST lnum;
   CORE_ADDR ptrval;
   int fd, ret, retlength;
-  char *buffer;
+  gdb_byte *buffer;
   size_t length;
 
   /* 1. Parameter: file descriptor */
@@ -836,7 +836,7 @@ remote_fileio_func_write (char *buf)
     }
   length = (size_t) num;
     
-  buffer = (char *) xmalloc (length);
+  buffer = (gdb_byte *) xmalloc (length);
   retlength = remote_read_bytes (ptrval, buffer, length);
   if (retlength != length)
     {
@@ -852,8 +852,8 @@ remote_fileio_func_write (char *buf)
 	remote_fileio_badfd ();
 	return;
       case FIO_FD_CONSOLE_OUT:
-	ui_file_write (target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr, buffer,
-		       length);
+	ui_file_write (target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr,
+		       (char *) buffer, length);
 	gdb_flush (target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr);
 	ret = length;
 	break;
@@ -943,7 +943,7 @@ remote_fileio_func_rename (char *buf)
     }
   /* Request oldpath using 'm' packet */
   oldpath = alloca (length);
-  retlength = remote_read_bytes (ptrval, oldpath, length);
+  retlength = remote_read_bytes (ptrval, (gdb_byte *) oldpath, length);
   if (retlength != length)
     {
       remote_fileio_ioerror ();
@@ -957,7 +957,7 @@ remote_fileio_func_rename (char *buf)
     }
   /* Request newpath using 'm' packet */
   newpath = alloca (length);
-  retlength = remote_read_bytes (ptrval, newpath, length);
+  retlength = remote_read_bytes (ptrval, (gdb_byte *) newpath, length);
   if (retlength != length)
     {
       remote_fileio_ioerror ();
@@ -1034,7 +1034,7 @@ remote_fileio_func_unlink (char *buf)
     }
   /* Request pathname using 'm' packet */
   pathname = alloca (length);
-  retlength = remote_read_bytes (ptrval, pathname, length);
+  retlength = remote_read_bytes (ptrval, (gdb_byte *) pathname, length);
   if (retlength != length)
     {
       remote_fileio_ioerror ();
@@ -1076,7 +1076,7 @@ remote_fileio_func_stat (char *buf)
     }
   /* Request pathname using 'm' packet */
   pathname = alloca (length);
-  retlength = remote_read_bytes (ptrval, pathname, length);
+  retlength = remote_read_bytes (ptrval, (gdb_byte *) pathname, length);
   if (retlength != length)
     {
       remote_fileio_ioerror ();
@@ -1110,7 +1110,7 @@ remote_fileio_func_stat (char *buf)
       remote_fileio_to_fio_stat (&st, &fst);
       remote_fileio_to_fio_uint (0, fst.fst_dev);
       
-      retlength = remote_fileio_write_bytes (ptrval, (char *) &fst, sizeof fst);
+      retlength = remote_fileio_write_bytes (ptrval, (gdb_byte *) &fst, sizeof fst);
       if (retlength != sizeof fst)
 	{
 	  remote_fileio_return_errno (-1);
@@ -1193,7 +1193,7 @@ remote_fileio_func_fstat (char *buf)
     {
       remote_fileio_to_fio_stat (&st, &fst);
 
-      retlength = remote_fileio_write_bytes (ptrval, (char *) &fst, sizeof fst);
+      retlength = remote_fileio_write_bytes (ptrval, (gdb_byte *) &fst, sizeof fst);
       if (retlength != sizeof fst)
 	{
 	  remote_fileio_return_errno (-1);
@@ -1245,7 +1245,7 @@ remote_fileio_func_gettimeofday (char *buf)
     {
       remote_fileio_to_fio_timeval (&tv, &ftv);
 
-      retlength = remote_fileio_write_bytes (ptrval, (char *) &ftv, sizeof ftv);
+      retlength = remote_fileio_write_bytes (ptrval, (gdb_byte *) &ftv, sizeof ftv);
       if (retlength != sizeof ftv)
 	{
 	  remote_fileio_return_errno (-1);
@@ -1297,7 +1297,7 @@ remote_fileio_func_system (char *buf)
     }
   /* Request commandline using 'm' packet */
   cmdline = alloca (length);
-  retlength = remote_read_bytes (ptrval, cmdline, length);
+  retlength = remote_read_bytes (ptrval, (gdb_byte *) cmdline, length);
   if (retlength != length)
     {
       remote_fileio_ioerror ();

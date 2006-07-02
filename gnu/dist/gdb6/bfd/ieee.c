@@ -1,6 +1,6 @@
 /* BFD back-end for ieee-695 objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    Written by Steve Chamberlain of Cygnus Support.
@@ -2014,12 +2014,15 @@ ieee_print_symbol (bfd *abfd,
 static bfd_boolean
 ieee_new_section_hook (bfd *abfd, asection *newsect)
 {
-  newsect->used_by_bfd = bfd_alloc (abfd, (bfd_size_type) sizeof (ieee_per_section_type));
   if (!newsect->used_by_bfd)
-    return FALSE;
+    {
+      newsect->used_by_bfd = bfd_alloc (abfd, sizeof (ieee_per_section_type));
+      if (!newsect->used_by_bfd)
+	return FALSE;
+    }
   ieee_per_section (newsect)->data = NULL;
   ieee_per_section (newsect)->section = newsect;
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, newsect);
 }
 
 static long
@@ -3466,11 +3469,22 @@ ieee_write_processor (bfd *abfd)
 	  case bfd_mach_m68040: id = "68040"; break;
 	  case bfd_mach_m68060: id = "68060"; break;
 	  case bfd_mach_cpu32:  id = "cpu32"; break;
-	  case bfd_mach_mcf5200:id = "5200";  break;
-	  case bfd_mach_mcf5206e:id = "5206e"; break;
-	  case bfd_mach_mcf5307:id = "5307";  break;
-	  case bfd_mach_mcf5407:id = "5407";  break;
-	  case bfd_mach_mcf528x:id = "5282";  break;
+	  case bfd_mach_mcf_isa_a_nodiv: id = "isa-a:nodiv"; break;
+	  case bfd_mach_mcf_isa_a: id = "isa-a"; break;
+	  case bfd_mach_mcf_isa_a_mac: id = "isa-a:mac"; break;
+	  case bfd_mach_mcf_isa_a_emac: id = "isa-a:emac"; break;
+	  case bfd_mach_mcf_isa_aplus: id = "isa-aplus"; break;
+	  case bfd_mach_mcf_isa_aplus_mac: id = "isa-aplus:mac"; break;
+	  case bfd_mach_mcf_isa_aplus_emac: id = "isa-aplus:mac"; break;
+	  case bfd_mach_mcf_isa_b_nousp: id = "isa-b:nousp"; break;
+	  case bfd_mach_mcf_isa_b_nousp_mac: id = "isa-b:nousp:mac"; break;
+	  case bfd_mach_mcf_isa_b_nousp_emac: id = "isa-b:nousp:emac"; break;
+	  case bfd_mach_mcf_isa_b: id = "isa-b"; break;
+	  case bfd_mach_mcf_isa_b_mac: id = "isa-b:mac"; break;
+	  case bfd_mach_mcf_isa_b_emac: id = "isa-b:emac"; break;
+	  case bfd_mach_mcf_isa_b_float: id = "isa-b:float"; break;
+	  case bfd_mach_mcf_isa_b_float_mac: id = "isa-b:float:mac"; break;
+	  case bfd_mach_mcf_isa_b_float_emac: id = "isa-b:float:emac"; break;
 	  }
 
 	if (! ieee_write_id (abfd, id))

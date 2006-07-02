@@ -1,5 +1,5 @@
 /* Target operations for the remote server for GDB.
-   Copyright 2002, 2003, 2004, 2005
+   Copyright (C) 2002, 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef TARGET_H
 #define TARGET_H
@@ -156,6 +156,11 @@ struct target_ops
 
   CORE_ADDR (*stopped_data_address) (void);
 
+  /* Reports the text, data offsets of the executable.  This is
+     needed for uclinux where the executable is relocated during load
+     time.  */
+  
+  int (*read_offsets) (CORE_ADDR *text, CORE_ADDR *data);
 };
 
 extern struct target_ops *the_target;

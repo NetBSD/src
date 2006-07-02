@@ -34,6 +34,11 @@ HOWTO (R_IMM32, 0, 1, 32, FALSE, 0,
        complain_overflow_dont, 0, "r_imm32", TRUE, 0xffffffff, 0xffffffff,
        FALSE);
 
+static reloc_howto_type r_imm24 =
+HOWTO (R_IMM24, 0, 1, 24, FALSE, 0,
+       complain_overflow_dont, 0, "r_imm24", TRUE, 0x00ffffff, 0x00ffffff,
+       FALSE);
+
 static reloc_howto_type r_imm16 =
 HOWTO (R_IMM16, 0, 1, 16, FALSE, 0,
        complain_overflow_dont, 0, "r_imm16", TRUE, 0x0000ffff, 0x0000ffff,
@@ -84,6 +89,9 @@ rtype2howto (arelent *internal, struct internal_reloc *dst)
     case R_IMM16:
       internal->howto = &r_imm16;
       break;
+    case R_IMM24:
+      internal->howto = &r_imm24;
+      break;
     case R_IMM32:
       internal->howto = &r_imm32;
       break;
@@ -106,6 +114,7 @@ coff_z80_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     {
     case BFD_RELOC_8:		return & r_imm8;
     case BFD_RELOC_16:		return & r_imm16;
+    case BFD_RELOC_24:		return & r_imm24;
     case BFD_RELOC_32:		return & r_imm32;
     case BFD_RELOC_8_PCREL:	return & r_jr;
     case BFD_RELOC_Z80_DISP8:	return & r_off8;
@@ -173,7 +182,7 @@ extra_case (bfd *in_abfd,
       break;
 
     case R_IMM8:
-      val = bfd_get_16 ( in_abfd, data+*src_ptr)
+      val = bfd_get_8 ( in_abfd, data+*src_ptr)
 	+ bfd_coff_reloc16_get_value (reloc, link_info, input_section);
       bfd_put_8 (in_abfd, val, data + *dst_ptr);
       (*dst_ptr) += 1;
@@ -188,6 +197,16 @@ extra_case (bfd *in_abfd,
       (*src_ptr) += 2;
       break;
 
+    case R_IMM24:
+      val = bfd_get_16 ( in_abfd, data+*src_ptr)
+	+ (bfd_get_8 ( in_abfd, data+*src_ptr+2) << 16)
+	+ bfd_coff_reloc16_get_value (reloc, link_info, input_section);
+      bfd_put_16 (in_abfd, val, data + *dst_ptr);
+      bfd_put_8 (in_abfd, val >> 16, data + *dst_ptr+2);
+      (*dst_ptr) += 3;
+      (*src_ptr) += 3;
+      break;
+
     case R_IMM32:
       val = bfd_get_32 ( in_abfd, data+*src_ptr)
 	+ bfd_coff_reloc16_get_value (reloc, link_info, input_section);
@@ -200,8 +219,8 @@ extra_case (bfd *in_abfd,
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = (link_order->offset
-		       + *dst_ptr
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 1;  /* -1, Since the offset is relative
 				     to the value of PC after reading

@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/amd64.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -103,7 +103,7 @@ amd64obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   /* Read the stack frame, and check its validity.  */
-  read_memory (pcb->pcb_rsp, (char *) &sf, sizeof sf);
+  read_memory (pcb->pcb_rsp, (gdb_byte *) &sf, sizeof sf);
   if (sf.sf_rbp == pcb->pcb_rbp)
     {
       /* Yes, we have a frame that matches cpu_switch().  */

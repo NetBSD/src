@@ -1,3 +1,93 @@
+2006-05-05  Thiemo Seufer  <ths@mips.com>
+            David Ung  <davidu@mips.com>
+
+	* mips.h (enum): Add macro M_CACHE_AB.
+
+2006-05-04  Thiemo Seufer  <ths@mips.com>
+            Nigel Stephens  <nigel@mips.com>
+	    David Ung  <davidu@mips.com>
+
+	* mips.h: Add INSN_SMARTMIPS define.
+
+2006-04-30  Thiemo Seufer  <ths@mips.com>
+            David Ung  <davidu@mips.com>
+
+	* mips.h: Defines udi bits and masks.  Add description of
+	characters which may appear in the args field of udi
+	instructions.
+
+2006-04-26  Thiemo Seufer  <ths@networkno.de>
+
+	* mips.h: Improve comments describing the bitfield instruction
+	fields.
+
+2006-04-26  Julian Brown  <julian@codesourcery.com>
+
+	* arm.h (FPU_VFP_EXT_V3): Define constant.
+	(FPU_NEON_EXT_V1): Likewise.
+	(FPU_VFP_HARD): Update.
+	(FPU_VFP_V3): Define macro.
+	(FPU_ARCH_VFP_V3, FPU_ARCH_VFP_V3_PLUS_NEON_V1): Define macros.
+
+2006-04-07  Joerg Wunsch  <j.gnu@uriah.heep.sax.de>
+
+	* avr.h (AVR_ISA_PWMx): New.
+
+2006-03-28  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* m68k.h (cpu_m68k, cpu_cf, cpu_m68000, cpu_m68008, cpu_m68010,
+	cpu_m68020, cpu_m68ec030, cpu_m68040, cpu_m68060, cpu_m68851,
+	cpu_m68881, cpu_m68882, cpu_cpu32, cpu_cf5200, cpu_cf5206e,
+	cpu_cf5208, cpu_cf521x, cpu_cf5213, cpu_cf5249, cpu_cf528x,
+	cpu_cf5307, cpu_cf5329, cpu_cf5407, cpu_cf547x, cpu_cf548x): Remove.
+
+2006-03-10  Paul Brook  <paul@codesourcery.com>
+
+	* arm.h (ARM_AEXT_V7_ARM): Include v6ZK extensions.
+
+2006-03-04  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* hppa.h (pa_opcodes): Reorder bb opcodes so that pa10 opcodes come
+	first.  Correct mask of bb "B" opcode.
+
+2006-02-27  H.J. Lu <hongjiu.lu@intel.com>
+
+	* i386.h (i386_optab): Support Intel Merom New Instructions.
+
+2006-02-24  Paul Brook  <paul@codesourcery.com>
+
+	* arm.h: Add V7 feature bits.
+
+2006-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ia64.h (ia64_opnd): Add IA64_OPND_IMMU5b.
+
+2006-01-31  Paul Brook  <paul@codesourcery.com>
+	Richard Earnshaw <rearnsha@arm.com>
+
+	* arm.h: Use ARM_CPU_FEATURE.
+	(ARM_AEXT_*, FPU_ENDIAN_PURE, FPU_VFP_HARD): New.
+	(arm_feature_set): Change to a structure.
+	(ARM_CPU_HAS_FEATURE, ARM_MERGE_FEATURE_SETS, ARM_CLEAR_FEATURE,
+	ARM_FEATURE): New macros.
+
+2005-12-07  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.h (MOVE_M_TO_PREG_OPCODE, MOVE_M_TO_PREG_ZBITS)
+	(MOVE_PC_INCR_OPCODE_PREFIX, MOVE_PC_INCR_OPCODE_SUFFIX): New macros.
+	(ADD_PC_INCR_OPCODE): Don't define.
+
+2005-12-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/1874
+	* i386.h (i386_optab): Add 64bit support for monitor and mwait.
+
+2005-11-14  David Ung  <davidu@mips.com>
+
+	* mips.h: Assign 'm'/'M' codes to MIPS16e save/restore
+	instructions.  Define MIPS16_ALL_ARGS and MIPS16_ALL_STATICS for
+	save/restore encoding of the args field.
+
 2005-10-28  Dave Brolley  <brolley@redhat.com>
 
 	Contribute the following changes:
@@ -236,6 +326,14 @@
 	* i386.h (i386_optab): Add x_Suf to fbld and fbstp. Add w_Suf and
 	FloatMF to fldcw, fstcw, fnstcw, and the memory formas of fstsw and
 	fnstsw.
+
+2006-02-07  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* m68k.h (m68008, m68ec030, m68882): Remove.
+	(m68k_mask): New.
+	(cpu_m68k, cpu_cf): New.
+	(mcf5200, mcf5206e, mcf521x, mcf5249, mcf528x, mcf5307, mcf5407,
+	mcf5470, mcf5480): Rename to cpu_<foo>. Add m680x0 variants.
 
 2005-01-25  Alexandre Oliva  <aoliva@redhat.com>
 

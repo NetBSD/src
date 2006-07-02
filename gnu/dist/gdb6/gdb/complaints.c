@@ -1,7 +1,7 @@
 /* Support for complaint handling during symbol reading in GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1995, 1998, 1999, 2000, 2002,
-   2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1995, 1998, 1999, 2000, 2002,
+   2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "complaints.h"
@@ -161,7 +161,7 @@ find_complaint (struct complaints *complaints, const char *file,
    before we stop whining about it?  Default is no whining at all,
    since so many systems have ill-constructed symbol files.  */
 
-static unsigned int stop_whining = 0;
+static int stop_whining = 0;
 
 /* Print a complaint, and link the complaint block into a chain for
    later handling.  */

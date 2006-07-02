@@ -20,7 +20,6 @@ m68hc11*|m6811*)	gdb_target_cpu=m68hc11 ;;
 m68*)			gdb_target_cpu=m68k ;;
 m88*)			gdb_target_cpu=m88k ;;
 mips*)			gdb_target_cpu=mips ;;
-ms1*)			gdb_target_cpu=ms1 ;;
 powerpc*)		gdb_target_cpu=powerpc ;;
 sparc*)			gdb_target_cpu=sparc ;;
 thumb*)			gdb_target_cpu=arm ;;
@@ -97,9 +96,7 @@ i[34567]86-*-linux*)	gdb_target=linux
 			build_gdbserver=yes
 			;;
 i[34567]86-*-gnu*)	gdb_target=i386gnu ;;
-i[34567]86-*-netware*)	gdb_target=i386
-			build_nlm=yes
-			;;
+i[34567]86-*-netware*)	gdb_target=i386 ;;
 i[34567]86-*-cygwin*)	gdb_target=cygwin  ;;
 i[34567]86-*-*)		gdb_target=i386 ;;
 
@@ -109,6 +106,8 @@ ia64-*-linux*)		gdb_target=linux
 ia64*-*-*)		gdb_target=ia64 ;;
 
 iq2000-*-*)		gdb_target=iq2000 ;;
+
+m32c-*-*)		gdb_target=m32c ;;
 
 m32r*-*-linux*)		gdb_target=linux ;;
 m32r*-*-*)		gdb_target=m32r ;;
@@ -145,7 +144,7 @@ mips*-*-*)		gdb_target=embed ;;
 
 mn10300-*-*)		gdb_target=mn10300 ;;
 
-ms1-*-*)		gdb_target=ms1 ;;
+mt-*-*)			gdb_target=mt ;;
 
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_target=nbsd ;;

@@ -1,7 +1,7 @@
 /* Remote debugging interface for Tandem ST2000 phone switch, for GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000,
-   2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000,
+   2001, 2002, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by Jim Kingdon for Cygnus.
 
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file was derived from remote-eb.c, which did a similar job, but for
    an AMD-29K running EBMON.  That file was in turn derived from remote.c
@@ -258,8 +258,7 @@ st2000_create_inferior (char *execfile, char *args, char **env,
   target_terminal_inferior ();
 
   /* insert_step_breakpoint ();  FIXME, do we need this?  */
-  /* Let 'er rip... */
-  proceed ((CORE_ADDR) entry_pt, TARGET_SIGNAL_DEFAULT, 0);
+  write_pc ((CORE_ADDR) entry_pt);
 }
 
 /* Open a connection to a remote debugger.
@@ -600,20 +599,16 @@ static CORE_ADDR breakaddr[MAX_STDEBUG_BREAKPOINTS] =
 {0};
 
 static int
-st2000_insert_breakpoint (CORE_ADDR addr, char *shadow)
+st2000_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
-  CORE_ADDR bp_addr = addr;
-  int bp_size = 0;
-
-  BREAKPOINT_FROM_PC (&bp_addr, &bp_size);
 
   for (i = 0; i <= MAX_STDEBUG_BREAKPOINTS; i++)
     if (breakaddr[i] == 0)
       {
 	breakaddr[i] = addr;
 
-	st2000_read_inferior_memory (bp_addr, shadow, bp_size);
 	printf_stdebug ("BR %x H\r", addr);
 	expect_prompt (1);
 	return 0;
@@ -624,8 +619,9 @@ st2000_insert_breakpoint (CORE_ADDR addr, char *shadow)
 }
 
 static int
-st2000_remove_breakpoint (CORE_ADDR addr, char *shadow)
+st2000_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
 
   for (i = 0; i < MAX_STDEBUG_BREAKPOINTS; i++)
@@ -705,7 +701,7 @@ connect_command (char *args, int fromtty)
 	{
 	  FD_SET (0, &readfds);
 	  FD_SET (deprecated_serial_fd (st2000_desc), &readfds);
-	  numfds = select (sizeof (readfds) * 8, &readfds, 0, 0, 0);
+	  numfds = gdb_select (sizeof (readfds) * 8, &readfds, 0, 0, 0);
 	}
       while (numfds == 0);
 

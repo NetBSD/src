@@ -1,6 +1,6 @@
 /* i370-specific support for 32-bit ELF
-   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004,
+   2005, 2006 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas for i370 linas@linas.org
 
@@ -567,7 +567,7 @@ i370_elf_adjust_dynindx (struct elf_link_hash_entry *h, void * cparg)
 
 #ifdef DEBUG
   fprintf (stderr,
-	   "i370_elf_adjust_dynindx called, h->dynindx = %d, *cp = %d\n",
+	   "i370_elf_adjust_dynindx called, h->dynindx = %ld, *cp = %d\n",
 	   h->dynindx, *cp);
 #endif
 
@@ -1296,7 +1296,7 @@ i370_elf_relocate_section (bfd *output_bfd,
 #ifdef DEBUG
 			  if (indx <= 0)
 			    {
-			      printf ("indx=%d section=%s flags=%08x name=%s\n",
+			      printf ("indx=%ld section=%s flags=%08x name=%s\n",
 				      indx, osec->name, osec->flags,
 				      h->root.root.string);
 			    }

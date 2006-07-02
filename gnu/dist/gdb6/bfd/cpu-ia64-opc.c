@@ -1,4 +1,4 @@
-/* Copyright 1998, 1999, 2000, 2001, 2002, 2003
+/* Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006
    Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
@@ -110,6 +110,29 @@ ext_immu (const struct ia64_operand *self, ia64_insn code, ia64_insn *valuep)
       total += bits;
     }
   *valuep = value;
+  return 0;
+}
+
+static const char*
+ins_immu5b (const struct ia64_operand *self, ia64_insn value,
+	    ia64_insn *code)
+{
+  if (value < 32 || value > 63)
+    return "value must be between 32 and 63";
+  return ins_immu (self, value - 32, code);
+}
+
+static const char*
+ext_immu5b (const struct ia64_operand *self, ia64_insn code,
+	    ia64_insn *valuep)
+{
+  const char *result;
+
+  result = ext_immu (self, code, valuep);
+  if (result)
+    return result;
+
+  *valuep = *valuep + 32;
   return 0;
 }
 
@@ -506,6 +529,8 @@ const struct ia64_operand elf64_ia64_operands[IA64_OPND_COUNT] =
       "a 1-bit integer (-1, 0)" },
     { ABS, ins_immu,  ext_immu,  0, {{ 2, 13}}, UDEC,		/* IMMU2 */
       "a 2-bit unsigned (0-3)" },
+    { ABS, ins_immu5b,  ext_immu5b,  0, {{ 5, 14}}, UDEC,	/* IMMU5b */
+      "a 5-bit unsigned (32 + (0-31))" },
     { ABS, ins_immu,  ext_immu,  0, {{ 7, 13}}, 0,		/* IMMU7a */
       "a 7-bit unsigned (0-127)" },
     { ABS, ins_immu,  ext_immu,  0, {{ 7, 20}}, 0,		/* IMMU7b */

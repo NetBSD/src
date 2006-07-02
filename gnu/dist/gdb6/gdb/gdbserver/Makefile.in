@@ -1,5 +1,6 @@
-# Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-# 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+# Copyright (C) 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+# 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+# Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -15,7 +16,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -134,7 +135,7 @@ SOURCES = $(SFILES)
 TAGFILES = $(SOURCES) ${HFILES} ${ALLPARAM} ${POSSLIBS} 
 
 OBS = inferiors.o regcache.o remote-utils.o server.o signals.o target.o \
-	utils.o \
+	utils.o version.o \
 	mem-break.o \
 	$(DEPFILES)
 GDBSERVER_LIBS = @GDBSERVER_LIBS@
@@ -200,6 +201,7 @@ tags: TAGS
 
 clean:
 	rm -f *.o ${ADD_FILES} *~
+	rm -f version.c
 	rm -f gdbserver gdbreplay core make.log
 	rm -f reg-arm.c reg-i386.c reg-ia64.c reg-m32r.c reg-m68k.c reg-mips.c
 	rm -f reg-ppc.c reg-sh.c reg-x86-64.c reg-i386-linux.c
@@ -208,8 +210,6 @@ clean:
 maintainer-clean realclean distclean: clean
 	rm -f nm.h tm.h xm.h config.status config.h stamp-h config.log
 	rm -f Makefile
-
-STAGESTUFF=${OBS} ${TSOBS} ${NTSOBS} ${ADD_FILES} init.c init.o version.c gdb
 
 config.h: stamp-h ; @true
 stamp-h: config.in config.status
@@ -223,8 +223,13 @@ config.status: configure configure.srv
 
 force:
 
-version.c: Makefile
-	echo 'char *version = "$(VERSION)";' >version.c
+version.c: Makefile $(srcdir)/../version.in
+	rm -f version.c-tmp version.c
+	echo '#include "server.h"' >> version.c-tmp
+	echo 'const char version[] = "'"`sed q ${srcdir}/../version.in`"'";' >> version.c-tmp
+	echo 'const char host_name[] = "$(host_alias)";' >> version.c-tmp
+	mv version.c-tmp version.c
+version.o: version.c $(server_h)
 
 # GNU Make has an annoying habit of putting *all* the Makefile variables
 # into the environment, unless you include this target as a circumvention.
@@ -237,7 +242,7 @@ version.c: Makefile
 # will remove them.
 MAKEOVERRIDES=
 
-gdb_proc_service_h = $(srcdir)/../gdb_proc_service.h $(srcdir)/../gregset.h
+gdb_proc_service_h = $(srcdir)/gdb_proc_service.h
 regdat_sh = $(srcdir)/../regformats/regdat.sh
 regdef_h = $(srcdir)/../regformats/regdef.h
 regcache_h = $(srcdir)/regcache.h
@@ -267,15 +272,18 @@ linux-low.o: linux-low.c $(linux_low_h) $(server_h)
 linux-arm-low.o: linux-arm-low.c $(linux_low_h) $(server_h)
 linux-cris-low.o: linux-cris-low.c $(linux_low_h) $(server_h)
 linux-crisv32-low.o: linux-crisv32-low.c $(linux_low_h) $(server_h)
-linux-i386-low.o: linux-i386-low.c $(linux_low_h) $(server_h)
+linux-i386-low.o: linux-i386-low.c $(linux_low_h) $(server_h) \
+	$(gdb_proc_service_h)
 linux-ia64-low.o: linux-ia64-low.c $(linux_low_h) $(server_h)
 linux-m32r-low.o: linux-m32r-low.c $(linux_low_h) $(server_h)
-linux-mips-low.o: linux-mips-low.c $(linux_low_h) $(server_h)
+linux-mips-low.o: linux-mips-low.c $(linux_low_h) $(server_h) \
+	$(gdb_proc_service_h)
 linux-ppc-low.o: linux-ppc-low.c $(linux_low_h) $(server_h)
 linux-ppc64-low.o: linux-ppc64-low.c $(linux_low_h) $(server_h)
 linux-s390-low.o: linux-s390-low.c $(linux_low_h) $(server_h)
 linux-sh-low.o: linux-sh-low.c $(linux_low_h) $(server_h)
-linux-x86-64-low.o: linux-x86-64-low.c $(linux_low_h) $(server_h)
+linux-x86-64-low.o: linux-x86-64-low.c $(linux_low_h) $(server_h) \
+	$(gdb_proc_service_h)
 
 reg-arm.o : reg-arm.c $(regdef_h)
 reg-arm.c : $(srcdir)/../regformats/reg-arm.dat $(regdat_sh)

@@ -1,6 +1,6 @@
 /* Symbol table definitions for GDB.
 
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
    1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (SYMTAB_H)
 #define SYMTAB_H 1
@@ -110,7 +110,7 @@ struct general_symbol_info
 
     struct block *block;
 
-    char *bytes;
+    gdb_byte *bytes;
 
     CORE_ADDR address;
 
@@ -554,7 +554,7 @@ enum address_class
   LOC_INDIRECT,
 
   /* The variable's address is computed by a set of location
-     functions (see "struct location_funcs" below).  */
+     functions (see "struct symbol_ops" below).  */
   LOC_COMPUTED,
 
   /* Same as LOC_COMPUTED, but for function arguments.  */

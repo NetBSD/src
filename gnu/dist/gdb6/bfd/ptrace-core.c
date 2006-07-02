@@ -51,8 +51,7 @@ struct trad_core_struct
 const bfd_target *ptrace_unix_core_file_p PARAMS ((bfd *abfd));
 char * ptrace_unix_core_file_failing_command PARAMS ((bfd *abfd));
 int ptrace_unix_core_file_failing_signal PARAMS ((bfd *abfd));
-bfd_boolean ptrace_unix_core_file_matches_executable_p
-  PARAMS ((bfd *core_bfd, bfd *exec_bfd));
+#define ptrace_unix_core_file_matches_executable_p generic_core_file_matches_executable_p
 static void swap_abort PARAMS ((void));
 
 const bfd_target *
@@ -150,15 +149,6 @@ ptrace_unix_core_file_failing_signal (abfd)
      bfd *abfd;
 {
   return abfd->tdata.trad_core_data->u.pt_sigframe.sig_num;
-}
-
-bfd_boolean
-ptrace_unix_core_file_matches_executable_p  (core_bfd, exec_bfd)
-     bfd *core_bfd, *exec_bfd;
-{
-  /* FIXME: Use pt_timdat field of the ptrace_user structure to match
-     the date of the executable */
-  return TRUE;
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */

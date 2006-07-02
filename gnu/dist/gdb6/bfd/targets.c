@@ -434,7 +434,6 @@ BFD_JUMP_TABLE macros.
 .  NAME##_bfd_link_split_section, \
 .  NAME##_bfd_gc_sections, \
 .  NAME##_bfd_merge_sections, \
-.  _bfd_generic_match_sections_by_type, \
 .  NAME##_bfd_is_group_section, \
 .  NAME##_bfd_discard_group, \
 .  NAME##_section_already_linked \
@@ -473,12 +472,6 @@ BFD_JUMP_TABLE macros.
 .
 .  {* Attempt to merge SEC_MERGE sections.  *}
 .  bfd_boolean (*_bfd_merge_sections) (bfd *, struct bfd_link_info *);
-.
-.#define bfd_match_sections_by_type(abfd, asec, bbfd, bsec) \
-.  BFD_SEND (abfd, _bfd_match_sections_by_type, (abfd, asec, bbfd, bsec))
-.  {* Return TRUE if 2 section types are compatible.  *}
-.  bfd_boolean (*_bfd_match_sections_by_type)
-.    (bfd *, const asection *, bfd *, const asection *);
 .
 .  {* Is this section a member of a group?  *}
 .  bfd_boolean (*_bfd_is_group_section) (bfd *, const struct bfd_section *);
@@ -561,12 +554,14 @@ extern const bfd_target bfd_efi_app_ia32_vec;
 extern const bfd_target bfd_efi_app_ia64_vec;
 extern const bfd_target bfd_elf32_avr_vec;
 extern const bfd_target bfd_elf32_bfin_vec;
+extern const bfd_target bfd_elf32_bfinfdpic_vec;
 extern const bfd_target bfd_elf32_big_generic_vec;
 extern const bfd_target bfd_elf32_bigarc_vec;
 extern const bfd_target bfd_elf32_bigarm_vec;
 extern const bfd_target bfd_elf32_bigarm_symbian_vec;
 extern const bfd_target bfd_elf32_bigarm_vxworks_vec;
 extern const bfd_target bfd_elf32_bigmips_vec;
+extern const bfd_target bfd_elf32_bigmips_vxworks_vec;
 extern const bfd_target bfd_elf32_cr16c_vec;
 extern const bfd_target bfd_elf32_cris_vec;
 extern const bfd_target bfd_elf32_crx_vec;
@@ -597,6 +592,7 @@ extern const bfd_target bfd_elf32_littlearm_vec;
 extern const bfd_target bfd_elf32_littlearm_symbian_vec;
 extern const bfd_target bfd_elf32_littlearm_vxworks_vec;
 extern const bfd_target bfd_elf32_littlemips_vec;
+extern const bfd_target bfd_elf32_littlemips_vxworks_vec;
 extern const bfd_target bfd_elf32_m32c_vec;
 extern const bfd_target bfd_elf32_m32r_vec;
 extern const bfd_target bfd_elf32_m32rle_vec;
@@ -610,7 +606,7 @@ extern const bfd_target bfd_elf32_mcore_big_vec;
 extern const bfd_target bfd_elf32_mcore_little_vec;
 extern const bfd_target bfd_elf32_mn10200_vec;
 extern const bfd_target bfd_elf32_mn10300_vec;
-extern const bfd_target bfd_elf32_ms1_vec;
+extern const bfd_target bfd_elf32_mt_vec;
 extern const bfd_target bfd_elf32_msp430_vec;
 extern const bfd_target bfd_elf32_nbigmips_vec;
 extern const bfd_target bfd_elf32_nlittlemips_vec;
@@ -638,11 +634,13 @@ extern const bfd_target bfd_elf32_shlin_vec;
 extern const bfd_target bfd_elf32_shlnbsd_vec;
 extern const bfd_target bfd_elf32_shnbsd_vec;
 extern const bfd_target bfd_elf32_sparc_vec;
+extern const bfd_target bfd_elf32_sparc_vxworks_vec;
 extern const bfd_target bfd_elf32_tradbigmips_vec;
 extern const bfd_target bfd_elf32_tradlittlemips_vec;
 extern const bfd_target bfd_elf32_us_cris_vec;
 extern const bfd_target bfd_elf32_v850_vec;
 extern const bfd_target bfd_elf32_vax_vec;
+extern const bfd_target bfd_elf32_xc16x_vec;
 extern const bfd_target bfd_elf32_xstormy16_vec;
 extern const bfd_target bfd_elf32_xtensa_be_vec;
 extern const bfd_target bfd_elf32_xtensa_le_vec;
@@ -858,6 +856,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 #endif
 	&bfd_elf32_avr_vec,
 	&bfd_elf32_bfin_vec,
+	&bfd_elf32_bfinfdpic_vec,
 
 	/* This, and other vectors, may not be used in any *.mt configuration.
 	   But that does not mean they are unnecessary.  If configured with
@@ -869,6 +868,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_bigarm_symbian_vec,
 	&bfd_elf32_bigarm_vxworks_vec,
 	&bfd_elf32_bigmips_vec,
+	&bfd_elf32_bigmips_vxworks_vec,
 	&bfd_elf32_cr16c_vec,
 	&bfd_elf32_cris_vec,
 	&bfd_elf32_crx_vec,
@@ -903,6 +903,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_littlearm_symbian_vec,
 	&bfd_elf32_littlearm_vxworks_vec,
 	&bfd_elf32_littlemips_vec,
+	&bfd_elf32_littlemips_vxworks_vec,
 	&bfd_elf32_m32c_vec,
 	&bfd_elf32_m32r_vec,
         &bfd_elf32_m32rle_vec,
@@ -916,7 +917,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_mcore_little_vec,
 	&bfd_elf32_mn10200_vec,
 	&bfd_elf32_mn10300_vec,
-	&bfd_elf32_ms1_vec,
+	&bfd_elf32_mt_vec,
 	&bfd_elf32_msp430_vec,
 #ifdef BFD64
 	&bfd_elf32_nbigmips_vec,
@@ -948,11 +949,13 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_sh64blin_vec,
 #endif
 	&bfd_elf32_sparc_vec,
+	&bfd_elf32_sparc_vxworks_vec,
 	&bfd_elf32_tradbigmips_vec,
 	&bfd_elf32_tradlittlemips_vec,
 	&bfd_elf32_us_cris_vec,
 	&bfd_elf32_v850_vec,
 	&bfd_elf32_vax_vec,
+	&bfd_elf32_xc16x_vec,
 	&bfd_elf32_xstormy16_vec,
 	&bfd_elf32_xtensa_be_vec,
 	&bfd_elf32_xtensa_le_vec,
@@ -982,7 +985,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf64_tradbigmips_vec,
 	&bfd_elf64_tradlittlemips_vec,
 	&bfd_elf64_x86_64_vec,
-	&bfd_mmo_vec, 
+	&bfd_mmo_vec,
 #endif
 	&bfd_powerpc_pe_vec,
 	&bfd_powerpc_pei_vec,

@@ -1,7 +1,7 @@
 /* Core dump and executable file functions below target vector, for GDB.
 
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005
+   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
+   1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
@@ -43,14 +43,10 @@
 #include "symfile.h"
 #include "exec.h"
 #include "readline/readline.h"
-#include "observer.h"
 #include "gdb_assert.h"
 #include "exceptions.h"
 #include "solib.h"
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 #ifndef O_LARGEFILE
 #define O_LARGEFILE 0
@@ -89,8 +85,6 @@ static void core_close_cleanup (void *ignore);
 static void get_core_registers (int);
 
 static void add_to_thread_list (bfd *, asection *, void *);
-
-static int ignore (CORE_ADDR, bfd_byte *);
 
 static int core_file_thread_alive (ptid_t tid);
 
@@ -236,21 +230,6 @@ core_close_cleanup (void *ignore)
   core_close (0/*ignored*/);
 }
 
-/* Stub function for catch_errors around shared library hacking.  FROM_TTYP
-   is really an int * which points to from_tty.  */
-
-static int
-solib_add_stub (void *from_ttyp)
-{
-#ifdef SOLIB_ADD
-  SOLIB_ADD (NULL, *(int *) from_ttyp, &current_target, auto_solib_add);
-#else
-  solib_add (NULL, *(int *)from_ttyp, &current_target, auto_solib_add);
-#endif
-  re_enable_breakpoints_in_shlibs ();
-  return 0;
-}
-
 /* Look for sections whose names start with `.reg/' so that we can extract the
    list of threads in a core file.  */
 
@@ -372,7 +351,7 @@ core_open (char *filename, int from_tty)
 
   /* This is done first, before anything has a chance to query the
      inferior for information such as symbols.  */
-  observer_notify_inferior_created (&core_ops, from_tty);
+  post_create_inferior (&core_ops, from_tty);
 
   p = bfd_core_file_failing_command (core_bfd);
   if (p)
@@ -397,9 +376,6 @@ core_open (char *filename, int from_tty)
     {
       /* Fetch all registers from core file.  */
       target_fetch_registers (-1);
-
-      /* Add symbols and section mappings for any shared libraries.  */
-      catch_errors (solib_add_stub, &from_tty, (char *) 0, RETURN_MASK_ALL);
 
       /* Now, set up the frame cache, and print the top of stack.  */
       flush_cached_frames ();
@@ -625,7 +601,7 @@ core_xfer_partial (struct target_ops *ops, enum target_object object,
    `gdb internal error' (since generic_mourn calls breakpoint_init_inferior).  */
 
 static int
-ignore (CORE_ADDR addr, bfd_byte *contents)
+ignore (struct bp_target_info *bp_tgt)
 {
   return 0;
 }

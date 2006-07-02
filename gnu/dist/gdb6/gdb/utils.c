@@ -1,8 +1,8 @@
 /* General utility routines for GDB, the GNU debugger.
 
-   Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
-   Software Foundation, Inc.
+   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_assert.h"
@@ -53,6 +53,8 @@
 #include "annotate.h"
 #include "filenames.h"
 #include "symfile.h"
+#include "gdb_obstack.h"
+#include "top.h"
 
 #include "inferior.h"		/* for signed_pointer_to_address */
 
@@ -838,25 +840,6 @@ internal_warning (const char *file, int line, const char *string, ...)
   va_end (ap);
 }
 
-/* The strerror() function can return NULL for errno values that are
-   out of range.  Provide a "safe" version that always returns a
-   printable string. */
-
-char *
-safe_strerror (int errnum)
-{
-  char *msg;
-
-  msg = strerror (errnum);
-  if (msg == NULL)
-    {
-      static char buf[32];
-      xsnprintf (buf, sizeof buf, "(undocumented errno %d)", errnum);
-      msg = buf;
-    }
-  return (msg);
-}
-
 /* Print the system error message for errno, and also mention STRING
    as the file name for which the error was encountered.
    Then return to command level.  */
@@ -1068,14 +1051,12 @@ xstrvprintf (const char *format, va_list ap)
 {
   char *ret = NULL;
   int status = vasprintf (&ret, format, ap);
-  /* NULL is returned when there was a memory allocation problem.  */
-  if (ret == NULL)
-    nomem (0);
-  /* A negative status (the printed length) with a non-NULL buffer
-     should never happen, but just to be sure.  */
-  if (status < 0)
-    internal_error (__FILE__, __LINE__,
-		    _("vasprintf call failed (errno %d)"), errno);
+  /* NULL is returned when there was a memory allocation problem, or
+     any other error (for instance, a bad format string).  A negative
+     status (the printed length) with a non-NULL buffer should never
+     happen, but just to be sure.  */
+  if (ret == NULL || status < 0)
+    internal_error (__FILE__, __LINE__, _("vasprintf call failed"));
   return ret;
 }
 
@@ -1161,15 +1142,16 @@ query (const char *ctlstr, ...)
   int ans2;
   int retval;
 
+  /* Automatically answer "yes" if input is not from the user
+     directly, or if the user did not want prompts.  */
+  if (!input_from_terminal_p () || !caution)
+    return 1;
+
   if (deprecated_query_hook)
     {
       va_start (args, ctlstr);
       return deprecated_query_hook (ctlstr, args);
     }
-
-  /* Automatically answer "yes" if input is not from a terminal.  */
-  if (!input_from_terminal_p ())
-    return 1;
 
   while (1)
     {
@@ -1264,14 +1246,15 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
       n_string = "[n]";
     }
 
+  /* Automatically answer the default value if input is not from the user
+     directly, or if the user did not want prompts.  */
+  if (!input_from_terminal_p () || !caution)
+    return def_value;
+
   if (deprecated_query_hook)
     {
       return deprecated_query_hook (ctlstr, args);
     }
-
-  /* Automatically answer default value if input is not from a terminal.  */
-  if (!input_from_terminal_p ())
-    return def_value;
 
   while (1)
     {
@@ -3123,4 +3106,27 @@ align_down (ULONGEST v, int n)
   /* Check that N is really a power of two.  */
   gdb_assert (n && (n & (n-1)) == 0);
   return (v & -n);
+}
+
+/* Allocation function for the libiberty hash table which uses an
+   obstack.  The obstack is passed as DATA.  */
+
+void *
+hashtab_obstack_allocate (void *data, size_t size, size_t count)
+{
+  unsigned int total = size * count;
+  void *ptr = obstack_alloc ((struct obstack *) data, total);
+  memset (ptr, 0, total);
+  return ptr;
+}
+
+/* Trivial deallocation function for the libiberty splay tree and hash
+   table - don't deallocate anything.  Rely on later deletion of the
+   obstack.  DATA will be the obstack, although it is not needed
+   here.  */
+
+void
+dummy_obstack_deallocate (void *object, void *data)
+{
+  return;
 }

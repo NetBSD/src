@@ -1,6 +1,6 @@
 // OBSOLETE /* Target-dependent code for Renesas D10V, for GDB.
 // OBSOLETE 
-// OBSOLETE    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+// OBSOLETE    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software
 // OBSOLETE    Foundation, Inc.
 // OBSOLETE 
 // OBSOLETE    This file is part of GDB.
@@ -17,8 +17,8 @@
 // OBSOLETE 
 // OBSOLETE    You should have received a copy of the GNU General Public License
 // OBSOLETE    along with this program; if not, write to the Free Software
-// OBSOLETE    Foundation, Inc., 59 Temple Place - Suite 330,
-// OBSOLETE    Boston, MA 02111-1307, USA.  */
+// OBSOLETE    Foundation, Inc., 51 Franklin Street, Fifth Floor,
+// OBSOLETE    Boston, MA 02110-1301, USA.  */
 // OBSOLETE 
 // OBSOLETE /*  Contributed by Martin Hunt, hunt@cygnus.com */
 // OBSOLETE 
