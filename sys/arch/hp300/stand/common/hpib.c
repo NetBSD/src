@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.7 2006/06/25 17:37:43 tsutsui Exp $	*/
+/*	$NetBSD: hpib.c,v 1.8 2006/07/02 11:10:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -52,7 +52,6 @@ struct	hpib_softc hpib_softc[NHPIB];
 void
 hpibinit(void)
 {
-	extern struct hp_hw sc_table[];
 	struct hp_hw *hw;
 	struct hpib_softc *hs;
 	int i;
