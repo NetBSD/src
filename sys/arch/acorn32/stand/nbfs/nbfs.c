@@ -1,8 +1,9 @@
-/* $NetBSD: nbfs.c,v 1.3 2006/04/06 21:39:16 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.4 2006/07/02 22:06:16 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,9 +13,36 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1996
+ *	Matthias Drochner.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -27,20 +55,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/lfs.h>
 #include <lib/libsa/ufs.h>
 #include <riscoscalls.h>
 #include <riscosdisk.h>
 
 #include "nbfs.h"
 
-struct fs_ops file_system[] = { FS_OPS(ffsv1), FS_OPS(ffsv2) };
+struct fs_ops file_system[] = {
+	FS_OPS(ffsv1), FS_OPS(ffsv2), FS_OPS(lfsv1), FS_OPS(lfsv2)
+};
 
 int nfsys = __arraycount(file_system);
 
@@ -257,14 +289,125 @@ fail:
 	return &error;
 }
 
+static int
+nbfs_filename_ok(char const *f)
+{
+
+	while (*f)
+		if (strchr(":*#$&@^%\\", *f++) != NULL)
+			return 0;
+	return 1;
+}
+
+static os_error *
+nbfs_func_dirents(struct nbfs_reg *r)
+{
+	static os_error error = {0, "nbfs_func_dirents"};
+	int reason = r->r0;
+	char const *fname = (char const *)r->r1;
+	char const *special = (char const *)r->r6;
+	struct open_file f;
+	struct stat st;
+	int err;
+	struct fileswitch_dirent *fdp;
+	size_t resid;
+	size_t maxcount = r->r3;
+	size_t count = 0;
+	size_t skip = r->r4;
+	ssize_t off = 0;
+	size_t buflen = r->r5;
+	char dirbuf[DIRBLKSIZ];
+	char *outp = (char *)r->r2;
+
+	err = nbfs_fopen(&f, special, fname);
+	if (err != 0)
+		return &error;
+	err = FS_STAT(f.f_ops)(&f, &st);
+	if (err != 0)
+		goto fail;
+	if (!S_ISDIR(st.st_mode))
+		goto fail;
+	while (FS_READ(f.f_ops)(&f, dirbuf, DIRBLKSIZ, &resid) == 0 &&
+	    resid == 0) {
+		struct direct  *dp, *edp;
+
+		dp = (struct direct *) dirbuf;
+		edp = (struct direct *) (dirbuf + DIRBLKSIZ);
+
+		for (; dp < edp; dp = (void *)((char *)dp + dp->d_reclen)) {
+			size_t entsiz = 0;
+			int i;
+
+			if (dp->d_ino ==  0)
+				continue;
+			/*
+			 * Skip ., .., and names with characters that RISC
+			 * OS doesn't allow.
+			 */
+			if (strcmp(dp->d_name, ".") == 0 ||
+			    strcmp(dp->d_name, "..") == 0 ||
+			    !nbfs_filename_ok(dp->d_name))
+				continue;
+			if (off++ < skip)
+				continue;
+
+			switch (reason) {
+			case 14:
+				entsiz = strlen(dp->d_name) + 1;
+				if (buflen < entsiz) goto out;
+				strcpy(outp, dp->d_name);
+				break;
+			case 15:
+				entsiz = ALIGN(offsetof(
+					  struct fileswitch_dirent, name)
+				    + strlen(dp->d_name) + 1);
+				if (buflen < entsiz) goto out;
+
+				fdp = (struct fileswitch_dirent *)outp;
+				fdp->loadaddr = 0;
+				fdp->execaddr = 0;
+				fdp->length = 0;
+				fdp->attr = 0;
+				fdp->objtype = dp->d_type == DT_DIR ?
+				    fileswitch_IS_DIR : fileswitch_IS_FILE;
+				strcpy(fdp->name, dp->d_name);
+				for (i = 0; fdp->name[i] != '\0'; i++)
+					if (fdp->name[i] == '.')
+						fdp->name[i] = '/';
+				break;
+			}
+			outp += entsiz;
+			buflen -= entsiz;
+			if (++count == maxcount)
+				goto out;
+		}
+	}
+	off = -1;
+out:
+	nbfs_fclose(&f);
+	r->r3 = count;
+	r->r4 = off;
+	return NULL;
+fail:
+	nbfs_fclose(&f);
+	return &error;
+}
+
 os_error *
 nbfs_func(struct nbfs_reg *r)
 {
-	static os_error err = {0, "nbfs_func"};
+	static os_error error = {0, "nbfs_func"};
 	int reason = r->r0;
 
-	/* We do nothing on shutdown */
-	if (reason == 16) return NULL;
+	switch (reason) {
+	case 14:
+	case 15:
+		return nbfs_func_dirents(r);
 
-	return &err;
+	case 16: /* Shut down */
+		return NULL;
+	default:
+		sprintf(error.errmess, "nbfs_func %d not implemented", reason);
+		return &error;
+	}
 }
