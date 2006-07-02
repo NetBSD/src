@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.645 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.646 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -339,6 +339,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	GCC: Switched m68000 to GCC4. [mrg 20060623]
 	GCC: Switched powerpc to GCC4. [garbled 20060623]
 	azalia(4): add support for S/PDIF [kent 20060625]
+	GCC: Switched alpha to GCC4. [drochner 20060626]
 	socket(2): version bump for reasons listed in PR/33676 [mrg 20060627]
 	pppd(8): updated to version 2.4.4. [christos 20060629]
 	kse(4):	Driver for Micrel KSZ8842/8841 PCI Ethernet controller.
