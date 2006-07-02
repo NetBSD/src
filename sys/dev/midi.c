@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.45 2006/07/01 15:22:06 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.46 2006/07/02 01:33:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.45 2006/07/01 15:22:06 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.46 2006/07/02 01:33:55 wiz Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -259,7 +259,7 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	
 	printf(": %s%s\n", mi.name,
 	    (sc->props & (MIDI_PROP_OUT_INTR|MIDI_PROP_NO_OUTPUT)) ?
-	    "" : " (cpu-intensive output)");
+	    "" : " (CPU-intensive output)");
 }
 
 void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw) {
