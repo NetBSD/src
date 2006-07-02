@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.13 2006/07/02 10:40:25 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.14 2006/07/02 11:24:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -106,7 +106,13 @@ void _transfer(char *, int, int, int, char *, char *);
 int tgets(char *);
 
 
-#define DELAY(n)	{ volatile int N = cpuspeed * (n); while (--N > 0); }
+#define DELAY(n)							\
+do {									\
+	register int __N = cpuspeed * (n);				\
+	do {								\
+		__asm("subql #1, %0" : "=r" (__N) : "0" (__N));		\
+	} while (__N > 0);						\
+} while (/* CONSTCOND */ 0)
 
 /* bogon grfinfo structure to keep grf_softc happy */
 struct grfinfo {
