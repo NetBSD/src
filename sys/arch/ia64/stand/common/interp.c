@@ -1,4 +1,4 @@
-/*	$NetBSD: interp.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: interp.c,v 1.3 2006/07/02 17:28:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -112,10 +112,11 @@ interact(void)
     if(include("/boot/loader.rc")!=CMD_OK)
 	include("/boot/boot.conf");
     printf("\n");
+
     /*
-     * Before interacting, we might want to autoboot.
+     * XXX: Before interacting, we might want to autoboot.
      */
-    // XXX disabled for DBG cherry     autoboot_maybe();
+    
     
     /*
      * Not autobooting, go manual
