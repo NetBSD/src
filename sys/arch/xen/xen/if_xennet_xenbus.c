@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.11 2006/07/02 16:29:49 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.11 2006/07/02 16:29:49 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -511,6 +511,7 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	for (i = 0; sc->sc_free_rxreql != 0; i++) {
 		req  = SLIST_FIRST(&sc->sc_rxreq_head);
 		KASSERT(req != NULL);
+		KASSERT(req == &sc->sc_rxreqs[req->rxreq_id]);
 		RING_GET_REQUEST(&sc->sc_rx_ring, req_prod + i)->id =
 		    req->rxreq_id;
 		if (xengnt_grant_transfer(sc->sc_xbusd->xbusd_otherend_id,
@@ -648,6 +649,8 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	struct xennet_rxreq *req = arg;
 	struct xennet_xenbus_softc *sc = req->rxreq_sc;
 
+	int s = splnet();
+
 	SLIST_INSERT_HEAD(&sc->sc_rxreq_head, req, rxreq_next);
 	sc->sc_free_rxreql++;
 
@@ -659,6 +662,7 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	if (m)
 		pool_cache_put(&mbpool_cache, m);
+	splx(s);
 }
 
 
@@ -740,6 +744,7 @@ again:
 		netif_rx_response_t *rx = RING_GET_RESPONSE(&sc->sc_rx_ring, i);
 		req = &sc->sc_rxreqs[rx->id];
 		KASSERT(req->rxreq_gntref != GRANT_INVALID_REF);
+		KASSERT(req->rxreq_id == rx->id);
 		ma = xengnt_revoke_transfer(req->rxreq_gntref);
 		if (ma == 0) {
 			DPRINTFN(XEDB_EVENT, ("xennet_handler ma == 0\n"));
@@ -799,6 +804,7 @@ again:
 			xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE, req);
 			continue;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 		m->m_pkthdr.rcvif = ifp;
 		if (__predict_true(sc->sc_rx_ring.req_prod_pvt != 
@@ -814,7 +820,7 @@ again:
 			 * memory, copy data and push the receive
 			 * buffer back to the hypervisor.
 			 */
-			m->m_len = MHLEN;
+			m->m_len = min(MHLEN, rx->status);
 			m->m_pkthdr.len = 0;
 			m_copyback(m, 0, rx->status, pktp);
 			xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE, req);
@@ -986,6 +992,7 @@ xennet_softstart(void *arg)
 			/* we will be able to send m */
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 
 		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PG_FRAME) == 0);
 
