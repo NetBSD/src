@@ -5625,6 +5625,22 @@ static const CGEN_IFMT ifmt_push16_b_s_rn_Rn16_push_S_derived ATTRIBUTE_UNUSED =
   8, 8, 0xf7, { { F (F_0_4) }, { F (F_4_1) }, { F (F_5_3) }, { 0 } }
 };
 
+static const CGEN_IFMT ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived ATTRIBUTE_UNUSED = {
+  8, 8, 0xfb, { { F (F_0_4) }, { F (F_6_2) }, { F (F_5_1) }, { F (F_4_1) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI ATTRIBUTE_UNUSED = {
+  16, 16, 0xfb00, { { F (F_0_4) }, { F (F_6_2) }, { F (F_DSP_8_U8) }, { F (F_4_1) }, { F (F_DST16_RN_QI_S) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI ATTRIBUTE_UNUSED = {
+  16, 16, 0xfb00, { { F (F_0_4) }, { F (F_6_2) }, { F (F_DSP_8_S8) }, { F (F_4_1) }, { F (F_DST16_RN_QI_S) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI ATTRIBUTE_UNUSED = {
+  24, 24, 0xfb0000, { { F (F_0_4) }, { F (F_6_2) }, { F (F_DSP_8_U16) }, { F (F_4_1) }, { F (F_DST16_RN_QI_S) }, { 0 } }
+};
+
 static const CGEN_IFMT ifmt_not16_b_s_dst16_3_S_R0l_direct_QI ATTRIBUTE_UNUSED = {
   8, 8, 0xff, { { F (F_0_4) }, { F (F_5_3) }, { F (F_4_1) }, { 0 } }
 };
@@ -5647,6 +5663,54 @@ static const CGEN_IFMT ifmt_not16_b_s_dst16_3_S_8_16_absolute_QI ATTRIBUTE_UNUSE
 
 static const CGEN_IFMT ifmt_mulex_dst32_R3_direct_Unprefixed_HI ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_0_4) }, { F (F_4_3) }, { F (F_8_2) }, { F (F_7_1) }, { F (F_10_2) }, { F (F_12_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_Rn_direct_Prefixed_SI ATTRIBUTE_UNUSED = {
+  24, 24, 0xffff3f, { { F (F_0_4) }, { F (F_12_3) }, { F (F_DST32_RN_PREFIXED_SI) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_An_direct_Prefixed_SI ATTRIBUTE_UNUSED = {
+  24, 24, 0xffffbf, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_An_indirect_Prefixed_SI ATTRIBUTE_UNUSED = {
+  24, 24, 0xffffbf, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_8_An_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 32, 0xffffbf00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DSP_24_U8) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_16_An_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 40, 0xffffbf00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DSP_24_U16) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_24_An_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 48, 0xffffbf00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DSP_24_U24) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_8_SB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 32, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U8) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_16_SB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 40, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U16) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_8_FB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 32, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_S8) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_16_FB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 40, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_S16) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_16_absolute_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 40, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U16) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mulu_l_dst32_24_24_absolute_Prefixed_SI ATTRIBUTE_UNUSED = {
+  32, 48, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U24) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_movhh32_src_r0l_dst32_Rn_direct_Prefixed_QI ATTRIBUTE_UNUSED = {
@@ -5947,22 +6011,6 @@ static const CGEN_IFMT ifmt_mov32_w_dst32_2_S_basic_r1_dst32_2_S_R0_direct_HI AT
 
 static const CGEN_IFMT ifmt_mov32_b_dst32_2_S_basic_r1l_dst32_2_S_R0l_direct_QI ATTRIBUTE_UNUSED = {
   8, 8, 0xff, { { F (F_0_2) }, { F (F_2_2) }, { F (F_4_3) }, { F (F_7_1) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mov16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived ATTRIBUTE_UNUSED = {
-  8, 8, 0xfb, { { F (F_0_4) }, { F (F_6_2) }, { F (F_5_1) }, { F (F_4_1) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI ATTRIBUTE_UNUSED = {
-  16, 16, 0xfb00, { { F (F_0_4) }, { F (F_6_2) }, { F (F_DSP_8_U8) }, { F (F_4_1) }, { F (F_DST16_RN_QI_S) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI ATTRIBUTE_UNUSED = {
-  16, 16, 0xfb00, { { F (F_0_4) }, { F (F_6_2) }, { F (F_DSP_8_S8) }, { F (F_4_1) }, { F (F_DST16_RN_QI_S) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI ATTRIBUTE_UNUSED = {
-  24, 24, 0xfb0000, { { F (F_0_4) }, { F (F_6_2) }, { F (F_DSP_8_U16) }, { F (F_4_1) }, { F (F_DST16_RN_QI_S) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_mov32_l_16_8_Unprefixed_24_Unprefixed_src32_16_8_An_relative_Unprefixed_SI_dst32_Rn_direct_Unprefixed_SI ATTRIBUTE_UNUSED = {
@@ -6649,39 +6697,75 @@ static const CGEN_IFMT ifmt_mov32_b_imm4_Q_16_Unprefixed_dst32_16_24_absolute_Un
   32, 40, 0xfff00000, { { F (F_0_3) }, { F (F_4_3) }, { F (F_8_2) }, { F (F_DSP_16_U24) }, { F (F_3_1) }, { F (F_7_1) }, { F (F_10_2) }, { F (F_IMM_12_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_HI ATTRIBUTE_UNUSED = {
   16, 16, 0xff0c, { { F (F_0_4) }, { F (F_12_2) }, { F (F_DST16_RN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_An_direct_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_An_direct_HI ATTRIBUTE_UNUSED = {
   16, 16, 0xff0e, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_HI ATTRIBUTE_UNUSED = {
   16, 16, 0xff0e, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_HI ATTRIBUTE_UNUSED = {
   24, 24, 0xff0e00, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U8) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_HI ATTRIBUTE_UNUSED = {
   32, 32, 0xff0e0000, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U16) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_HI ATTRIBUTE_UNUSED = {
   24, 24, 0xff0f00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U8) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_HI ATTRIBUTE_UNUSED = {
   32, 32, 0xff0f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_HI ATTRIBUTE_UNUSED = {
   24, 24, 0xff0f00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_S8) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_QI ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_HI ATTRIBUTE_UNUSED = {
+  32, 32, 0xff0f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_Rn_direct_QI ATTRIBUTE_UNUSED = {
+  16, 16, 0xff0c, { { F (F_0_4) }, { F (F_12_2) }, { F (F_DST16_RN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_An_direct_QI ATTRIBUTE_UNUSED = {
+  16, 16, 0xff0e, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_An_indirect_QI ATTRIBUTE_UNUSED = {
+  16, 16, 0xff0e, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_16_8_An_relative_QI ATTRIBUTE_UNUSED = {
+  24, 24, 0xff0e00, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U8) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_16_16_An_relative_QI ATTRIBUTE_UNUSED = {
+  32, 32, 0xff0e0000, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U16) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_16_8_SB_relative_QI ATTRIBUTE_UNUSED = {
+  24, 24, 0xff0f00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U8) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_16_16_SB_relative_QI ATTRIBUTE_UNUSED = {
+  32, 32, 0xff0f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_16_8_FB_relative_QI ATTRIBUTE_UNUSED = {
+  24, 24, 0xff0f00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_S8) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_mov16_b_imm4_Q_16_dst16_16_16_absolute_QI ATTRIBUTE_UNUSED = {
   32, 32, 0xff0f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
@@ -6985,6 +7069,18 @@ static const CGEN_IFMT ifmt_stc16_src_dst16_16_16_absolute_HI ATTRIBUTE_UNUSED =
   32, 32, 0xff8f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_4) }, { F (F_8_1) }, { F (F_9_3) }, { 0 } }
 };
 
+static const CGEN_IFMT ifmt_jsri16a_dst16_basic_SI_dst16_Rn_direct_SI ATTRIBUTE_UNUSED = {
+  16, 16, 0xfffc, { { F (F_0_4) }, { F (F_12_2) }, { F (F_DST16_RN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_jsri16a_dst16_basic_SI_dst16_An_direct_SI ATTRIBUTE_UNUSED = {
+  16, 16, 0xfffe, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_jsri16a_dst16_basic_SI_dst16_An_indirect_SI ATTRIBUTE_UNUSED = {
+  16, 16, 0xfffe, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
+};
+
 static const CGEN_IFMT ifmt_jsri16a_dst16_16_16_SI_dst16_16_16_An_relative_SI ATTRIBUTE_UNUSED = {
   32, 32, 0xfffe0000, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U16) }, { F (F_DST16_AN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
 };
@@ -7009,66 +7105,6 @@ static const CGEN_IFMT ifmt_jsri16a_dst16_16_8_SI_dst16_16_8_FB_relative_SI ATTR
   24, 24, 0xffff00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_S8) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_jsri16a_dst16_basic_SI_dst16_Rn_direct_SI ATTRIBUTE_UNUSED = {
-  16, 16, 0xfffc, { { F (F_0_4) }, { F (F_12_2) }, { F (F_DST16_RN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_jsri16a_dst16_basic_SI_dst16_An_direct_SI ATTRIBUTE_UNUSED = {
-  16, 16, 0xfffe, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_jsri16a_dst16_basic_SI_dst16_An_indirect_SI ATTRIBUTE_UNUSED = {
-  16, 16, 0xfffe, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_4) }, { F (F_8_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_Rn_direct_Prefixed_SI ATTRIBUTE_UNUSED = {
-  24, 24, 0xffff3f, { { F (F_0_4) }, { F (F_12_3) }, { F (F_DST32_RN_PREFIXED_SI) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_direct_Prefixed_SI ATTRIBUTE_UNUSED = {
-  24, 24, 0xffffbf, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_indirect_Prefixed_SI ATTRIBUTE_UNUSED = {
-  24, 24, 0xffffbf, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_An_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 32, 0xffffbf00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DSP_24_U8) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_An_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 40, 0xffffbf00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DSP_24_U16) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_An_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 48, 0xffffbf00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_1) }, { F (F_DSP_24_U24) }, { F (F_DST32_AN_PREFIXED) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_SB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 32, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U8) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_SB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 40, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U16) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_FB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 32, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_S8) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_FB_relative_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 40, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_S16) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_absolute_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 40, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U16) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_absolute_Prefixed_SI ATTRIBUTE_UNUSED = {
-  32, 48, 0xffffff00, { { F (F_0_4) }, { F (F_12_3) }, { F (F_16_2) }, { F (F_DSP_24_U24) }, { F (F_4_4) }, { F (F_8_4) }, { F (F_15_1) }, { F (F_18_2) }, { F (F_20_4) }, { 0 } }
-};
-
 static const CGEN_IFMT ifmt_cmp32_w_S_src2_r0_HI_src32_2_S_8_SB_relative_HI ATTRIBUTE_UNUSED = {
   16, 16, 0xff00, { { F (F_0_2) }, { F (F_2_2) }, { F (F_DSP_8_U8) }, { F (F_4_3) }, { F (F_7_1) }, { 0 } }
 };
@@ -7091,42 +7127,6 @@ static const CGEN_IFMT ifmt_cmp32_b_S_src2_r0_QI_src32_2_S_8_FB_relative_QI ATTR
 
 static const CGEN_IFMT ifmt_cmp32_b_S_src2_r0_QI_src32_2_S_16_absolute_QI ATTRIBUTE_UNUSED = {
   24, 24, 0xff0000, { { F (F_0_2) }, { F (F_2_2) }, { F (F_DSP_8_U16) }, { F (F_4_3) }, { F (F_7_1) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_Rn_direct_HI ATTRIBUTE_UNUSED = {
-  16, 16, 0xff0c, { { F (F_0_4) }, { F (F_12_2) }, { F (F_DST16_RN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_An_direct_HI ATTRIBUTE_UNUSED = {
-  16, 16, 0xff0e, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_An_indirect_HI ATTRIBUTE_UNUSED = {
-  16, 16, 0xff0e, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_16_8_An_relative_HI ATTRIBUTE_UNUSED = {
-  24, 24, 0xff0e00, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U8) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_16_16_An_relative_HI ATTRIBUTE_UNUSED = {
-  32, 32, 0xff0e0000, { { F (F_0_4) }, { F (F_12_2) }, { F (F_14_1) }, { F (F_DSP_16_U16) }, { F (F_DST16_AN) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_16_8_SB_relative_HI ATTRIBUTE_UNUSED = {
-  24, 24, 0xff0f00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U8) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_16_16_SB_relative_HI ATTRIBUTE_UNUSED = {
-  32, 32, 0xff0f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_16_8_FB_relative_HI ATTRIBUTE_UNUSED = {
-  24, 24, 0xff0f00, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_S8) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_cmp16_w_imm4_Q_16_dst16_16_16_absolute_HI ATTRIBUTE_UNUSED = {
-  32, 32, 0xff0f0000, { { F (F_0_4) }, { F (F_12_4) }, { F (F_DSP_16_U16) }, { F (F_4_3) }, { F (F_7_1) }, { F (F_IMM_8_S4) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_clip32_w_Imm_24_HI_Imm_40_HI_basic_Prefixed_dst32_Rn_direct_Prefixed_HI ATTRIBUTE_UNUSED = {
@@ -7707,6 +7707,10 @@ static const CGEN_IFMT ifmt_bm32_c ATTRIBUTE_UNUSED = {
 
 static const CGEN_IFMT ifmt_brk16 ATTRIBUTE_UNUSED = {
   8, 8, 0xff, { { F (F_0_4) }, { F (F_4_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_btst_s ATTRIBUTE_UNUSED = {
+  24, 24, 0xce0000, { { F (F_0_2) }, { F (F_IMM3_S) }, { F (F_4_3) }, { F (F_DSP_8_U16) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_dec16_w ATTRIBUTE_UNUSED = {
@@ -24650,113 +24654,137 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
     & ifmt_shl32_b_dst_dst32_16_24_absolute_Unprefixed_QI, { 0xb6af0000 }
   },
-/* pop.w $Dst16RnHI */
+/* pop.w${G} $Dst16RnHI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16RNHI), 0 } },
+    { { MNEM, OP (G), ' ', OP (DST16RNHI), 0 } },
     & ifmt_rorc16_w_16_dst16_Rn_direct_HI, { 0x75d0 }
   },
-/* pop.w $Dst16AnHI */
+/* pop.w${G} $Dst16AnHI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16ANHI), 0 } },
+    { { MNEM, OP (G), ' ', OP (DST16ANHI), 0 } },
     & ifmt_rorc16_w_16_dst16_An_direct_HI, { 0x75d4 }
   },
-/* pop.w [$Dst16An] */
+/* pop.w${G} [$Dst16An] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DST16AN), ']', 0 } },
+    { { MNEM, OP (G), ' ', '[', OP (DST16AN), ']', 0 } },
     & ifmt_rorc16_w_16_dst16_An_indirect_HI, { 0x75d6 }
   },
-/* pop.w ${Dsp-16-u8}[$Dst16An] */
+/* pop.w${G} ${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
     & ifmt_rorc16_w_16_dst16_16_8_An_relative_HI, { 0x75d800 }
   },
-/* pop.w ${Dsp-16-u16}[$Dst16An] */
+/* pop.w${G} ${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
     & ifmt_rorc16_w_16_dst16_16_16_An_relative_HI, { 0x75dc0000 }
   },
-/* pop.w ${Dsp-16-u8}[sb] */
+/* pop.w${G} ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
     & ifmt_rorc16_w_16_dst16_16_8_SB_relative_HI, { 0x75da00 }
   },
-/* pop.w ${Dsp-16-u16}[sb] */
+/* pop.w${G} ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
     & ifmt_rorc16_w_16_dst16_16_16_SB_relative_HI, { 0x75de0000 }
   },
-/* pop.w ${Dsp-16-s8}[fb] */
+/* pop.w${G} ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
     & ifmt_rorc16_w_16_dst16_16_8_FB_relative_HI, { 0x75db00 }
   },
-/* pop.w ${Dsp-16-u16} */
+/* pop.w${G} ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U16), 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U16), 0 } },
     & ifmt_rorc16_w_16_dst16_16_16_absolute_HI, { 0x75df0000 }
   },
-/* pop.b $Dst16RnQI */
+/* pop.b${G} $Dst16RnQI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16RNQI), 0 } },
+    { { MNEM, OP (G), ' ', OP (DST16RNQI), 0 } },
     & ifmt_rorc16_b_16_dst16_Rn_direct_QI, { 0x74d0 }
   },
-/* pop.b $Dst16AnQI */
+/* pop.b${G} $Dst16AnQI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16ANQI), 0 } },
+    { { MNEM, OP (G), ' ', OP (DST16ANQI), 0 } },
     & ifmt_rorc16_b_16_dst16_An_direct_QI, { 0x74d4 }
   },
-/* pop.b [$Dst16An] */
+/* pop.b${G} [$Dst16An] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DST16AN), ']', 0 } },
+    { { MNEM, OP (G), ' ', '[', OP (DST16AN), ']', 0 } },
     & ifmt_rorc16_b_16_dst16_An_indirect_QI, { 0x74d6 }
   },
-/* pop.b ${Dsp-16-u8}[$Dst16An] */
+/* pop.b${G} ${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
     & ifmt_rorc16_b_16_dst16_16_8_An_relative_QI, { 0x74d800 }
   },
-/* pop.b ${Dsp-16-u16}[$Dst16An] */
+/* pop.b${G} ${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
     & ifmt_rorc16_b_16_dst16_16_16_An_relative_QI, { 0x74dc0000 }
   },
-/* pop.b ${Dsp-16-u8}[sb] */
+/* pop.b${G} ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
     & ifmt_rorc16_b_16_dst16_16_8_SB_relative_QI, { 0x74da00 }
   },
-/* pop.b ${Dsp-16-u16}[sb] */
+/* pop.b${G} ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
     & ifmt_rorc16_b_16_dst16_16_16_SB_relative_QI, { 0x74de0000 }
   },
-/* pop.b ${Dsp-16-s8}[fb] */
+/* pop.b${G} ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
     & ifmt_rorc16_b_16_dst16_16_8_FB_relative_QI, { 0x74db00 }
   },
-/* pop.b ${Dsp-16-u16} */
+/* pop.b${G} ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSP_16_U16), 0 } },
+    { { MNEM, OP (G), ' ', OP (DSP_16_U16), 0 } },
     & ifmt_rorc16_b_16_dst16_16_16_absolute_QI, { 0x74df0000 }
+  },
+/* or.b${S} ${SrcDst16-r0l-r0h-S-normal} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (S), ' ', OP (SRCDST16_R0L_R0H_S_NORMAL), 0 } },
+    & ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x18 }
+  },
+/* or.b${S} ${Dsp-8-u8}[sb],${Dst16RnQI-S} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (S), ' ', OP (DSP_8_U8), '[', 's', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x1900 }
+  },
+/* or.b${S} ${Dsp-8-s8}[fb],${Dst16RnQI-S} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (S), ' ', OP (DSP_8_S8), '[', 'f', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x1a00 }
+  },
+/* or.b${S} ${Dsp-8-u16},${Dst16RnQI-S} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, OP (S), ' ', OP (DSP_8_U16), ',', OP (DST16RNQI_S), 0 } },
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0x1b0000 }
   },
 /* or.w${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedHI */
   {
@@ -31346,6 +31374,150 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
     & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xc7be0000 }
   },
+/* mulu.l $Dst32RnPrefixedSI,r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32RNPREFIXEDSI), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_Rn_direct_Prefixed_SI, { 0x1890f }
+  },
+/* mulu.l $Dst32AnPrefixedSI,r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32ANPREFIXEDSI), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_An_direct_Prefixed_SI, { 0x1818f }
+  },
+/* mulu.l [$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_An_indirect_Prefixed_SI, { 0x1810f }
+  },
+/* mulu.l ${Dsp-24-u8}[$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U8), '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_8_An_relative_Prefixed_SI, { 0x1830f00 }
+  },
+/* mulu.l ${Dsp-24-u16}[$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U16), '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_An_relative_Prefixed_SI, { 0x1850f00 }
+  },
+/* mulu.l ${Dsp-24-u24}[$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U24), '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_24_An_relative_Prefixed_SI, { 0x1870f00 }
+  },
+/* mulu.l ${Dsp-24-u8}[sb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U8), '[', 's', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_8_SB_relative_Prefixed_SI, { 0x1838f00 }
+  },
+/* mulu.l ${Dsp-24-u16}[sb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U16), '[', 's', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_SB_relative_Prefixed_SI, { 0x1858f00 }
+  },
+/* mulu.l ${Dsp-24-s8}[fb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_S8), '[', 'f', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_8_FB_relative_Prefixed_SI, { 0x183cf00 }
+  },
+/* mulu.l ${Dsp-24-s16}[fb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_S16), '[', 'f', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_FB_relative_Prefixed_SI, { 0x185cf00 }
+  },
+/* mulu.l ${Dsp-24-u16},r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U16), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_absolute_Prefixed_SI, { 0x187cf00 }
+  },
+/* mulu.l ${Dsp-24-u24},r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U24), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_24_absolute_Prefixed_SI, { 0x1878f00 }
+  },
+/* mul.l $Dst32RnPrefixedSI,r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32RNPREFIXEDSI), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_Rn_direct_Prefixed_SI, { 0x1891f }
+  },
+/* mul.l $Dst32AnPrefixedSI,r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32ANPREFIXEDSI), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_An_direct_Prefixed_SI, { 0x1819f }
+  },
+/* mul.l [$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_An_indirect_Prefixed_SI, { 0x1811f }
+  },
+/* mul.l ${Dsp-24-u8}[$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U8), '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_8_An_relative_Prefixed_SI, { 0x1831f00 }
+  },
+/* mul.l ${Dsp-24-u16}[$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U16), '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_An_relative_Prefixed_SI, { 0x1851f00 }
+  },
+/* mul.l ${Dsp-24-u24}[$Dst32AnPrefixed],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U24), '[', OP (DST32ANPREFIXED), ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_24_An_relative_Prefixed_SI, { 0x1871f00 }
+  },
+/* mul.l ${Dsp-24-u8}[sb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U8), '[', 's', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_8_SB_relative_Prefixed_SI, { 0x1839f00 }
+  },
+/* mul.l ${Dsp-24-u16}[sb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U16), '[', 's', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_SB_relative_Prefixed_SI, { 0x1859f00 }
+  },
+/* mul.l ${Dsp-24-s8}[fb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_S8), '[', 'f', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_8_FB_relative_Prefixed_SI, { 0x183df00 }
+  },
+/* mul.l ${Dsp-24-s16}[fb],r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_S16), '[', 'f', 'b', ']', ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_FB_relative_Prefixed_SI, { 0x185df00 }
+  },
+/* mul.l ${Dsp-24-u16},r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U16), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_16_absolute_Prefixed_SI, { 0x187df00 }
+  },
+/* mul.l ${Dsp-24-u24},r2r0 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSP_24_U24), ',', 'r', '2', 'r', '0', 0 } },
+    & ifmt_mulu_l_dst32_24_24_absolute_Prefixed_SI, { 0x1879f00 }
+  },
 /* mul.w${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
@@ -36534,43 +36706,43 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (SRCDST16_R0L_R0H_S_NORMAL), 0 } },
-    & ifmt_mov16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x8 }
+    & ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x8 }
   },
 /* mov.b${S} ${Dsp-8-u8}[sb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U8), '[', 's', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x900 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x900 }
   },
 /* mov.b${S} ${Dsp-8-s8}[fb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_S8), '[', 'f', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0xa00 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0xa00 }
   },
 /* mov.b${S} ${Dsp-8-u16},${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U16), ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI, { 0xb0000 }
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0xb0000 }
   },
 /* mov.b${S} ${Dst16RnQI-S},${Dsp-8-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DST16RNQI_S), ',', OP (DSP_8_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x100 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x100 }
   },
 /* mov.b${S} ${Dst16RnQI-S},${Dsp-8-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DST16RNQI_S), ',', OP (DSP_8_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x200 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x200 }
   },
 /* mov.b${S} ${Dst16RnQI-S},${Dsp-8-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DST16RNQI_S), ',', OP (DSP_8_U16), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI, { 0x30000 }
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0x30000 }
   },
 /* mov.l${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedSI */
   {
@@ -40376,113 +40548,113 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (Q), ' ', '#', OP (IMM_12_S4), ',', OP (DSP_16_U24), 0 } },
     & ifmt_mov32_b_imm4_Q_16_Unprefixed_dst32_16_24_absolute_Unprefixed_QI, { 0xf6a00000 }
   },
-/* mov.w${Q} #${Imm-8-s4},$Dst16RnQI */
+/* mov.w${Q} #${Imm-8-s4},$Dst16RnHI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_QI, { 0xd900 }
+    { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNHI), 0 } },
+    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_HI, { 0xd900 }
   },
-/* mov.w${Q} #${Imm-8-s4},$Dst16AnQI */
+/* mov.w${Q} #${Imm-8-s4},$Dst16AnHI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_QI, { 0xd904 }
+    { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANHI), 0 } },
+    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_HI, { 0xd904 }
   },
 /* mov.w${Q} #${Imm-8-s4},[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_QI, { 0xd906 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_HI, { 0xd906 }
   },
 /* mov.w${Q} #${Imm-8-s4},${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xd90800 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_HI, { 0xd90800 }
   },
 /* mov.w${Q} #${Imm-8-s4},${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xd90c0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_HI, { 0xd90c0000 }
   },
 /* mov.w${Q} #${Imm-8-s4},${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xd90a00 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_HI, { 0xd90a00 }
   },
 /* mov.w${Q} #${Imm-8-s4},${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xd90e0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_HI, { 0xd90e0000 }
   },
 /* mov.w${Q} #${Imm-8-s4},${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xd90b00 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_HI, { 0xd90b00 }
   },
 /* mov.w${Q} #${Imm-8-s4},${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_QI, { 0xd90f0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_HI, { 0xd90f0000 }
   },
 /* mov.b${Q} #${Imm-8-s4},$Dst16RnQI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_QI, { 0xd800 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_Rn_direct_QI, { 0xd800 }
   },
 /* mov.b${Q} #${Imm-8-s4},$Dst16AnQI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_QI, { 0xd804 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_An_direct_QI, { 0xd804 }
   },
 /* mov.b${Q} #${Imm-8-s4},[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_QI, { 0xd806 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_An_indirect_QI, { 0xd806 }
   },
 /* mov.b${Q} #${Imm-8-s4},${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xd80800 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xd80800 }
   },
 /* mov.b${Q} #${Imm-8-s4},${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xd80c0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xd80c0000 }
   },
 /* mov.b${Q} #${Imm-8-s4},${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xd80a00 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xd80a00 }
   },
 /* mov.b${Q} #${Imm-8-s4},${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xd80e0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xd80e0000 }
   },
 /* mov.b${Q} #${Imm-8-s4},${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xd80b00 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xd80b00 }
   },
 /* mov.b${Q} #${Imm-8-s4},${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_QI, { 0xd80f0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_absolute_QI, { 0xd80f0000 }
   },
 /* mov.b${S} #${Imm-8-QI},r0l */
   {
@@ -45884,6 +46056,42 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
     & ifmt_shl32_l_dst_dst32_16_24_absolute_Unprefixed_SI, { 0x96810000 }
   },
+/* jsri.a $Dst32RnUnprefixedSI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32RNUNPREFIXEDSI), 0 } },
+    & ifmt_shl32_l_dst_dst32_Rn_direct_Unprefixed_SI, { 0x9801 }
+  },
+/* jsri.a $Dst32AnUnprefixedSI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32ANUNPREFIXEDSI), 0 } },
+    & ifmt_exts32_w_16_ExtUnprefixed_dst32_An_direct_Unprefixed_SI, { 0x9081 }
+  },
+/* jsri.a [$Dst32AnUnprefixed] */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
+    & ifmt_shl32_l_dst_dst32_An_indirect_Unprefixed_SI, { 0x9001 }
+  },
+/* jsri.a $Dst16RnSI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST16RNSI), 0 } },
+    & ifmt_jsri16a_dst16_basic_SI_dst16_Rn_direct_SI, { 0x7d10 }
+  },
+/* jsri.a $Dst16AnSI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST16ANSI), 0 } },
+    & ifmt_jsri16a_dst16_basic_SI_dst16_An_direct_SI, { 0x7d14 }
+  },
+/* jsri.a [$Dst16An] */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', '[', OP (DST16AN), ']', 0 } },
+    & ifmt_jsri16a_dst16_basic_SI_dst16_An_indirect_SI, { 0x7d16 }
+  },
 /* jsri.a ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
@@ -45962,42 +46170,6 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
     & ifmt_jsri16a_dst16_16_8_SI_dst16_16_8_FB_relative_SI, { 0x7d1b00 }
   },
-/* jsri.a $Dst32RnUnprefixedSI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST32RNUNPREFIXEDSI), 0 } },
-    & ifmt_shl32_l_dst_dst32_Rn_direct_Unprefixed_SI, { 0x9801 }
-  },
-/* jsri.a $Dst32AnUnprefixedSI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST32ANUNPREFIXEDSI), 0 } },
-    & ifmt_exts32_w_16_ExtUnprefixed_dst32_An_direct_Unprefixed_SI, { 0x9081 }
-  },
-/* jsri.a [$Dst32AnUnprefixed] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_l_dst_dst32_An_indirect_Unprefixed_SI, { 0x9001 }
-  },
-/* jsri.a $Dst16RnSI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16RNSI), 0 } },
-    & ifmt_jsri16a_dst16_basic_SI_dst16_Rn_direct_SI, { 0x7d10 }
-  },
-/* jsri.a $Dst16AnSI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16ANSI), 0 } },
-    & ifmt_jsri16a_dst16_basic_SI_dst16_An_direct_SI, { 0x7d14 }
-  },
-/* jsri.a [$Dst16An] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_jsri16a_dst16_basic_SI_dst16_An_indirect_SI, { 0x7d16 }
-  },
 /* jsri.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
@@ -46009,6 +46181,42 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
     & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xc79f0000 }
+  },
+/* jsri.w $Dst32RnUnprefixedHI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xc91f }
+  },
+/* jsri.w $Dst32AnUnprefixedHI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xc19f }
+  },
+/* jsri.w [$Dst32AnUnprefixed] */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xc11f }
+  },
+/* jsri.w $Dst16RnHI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST16RNHI), 0 } },
+    & ifmt_shl16_w_dst_dst16_Rn_direct_HI, { 0x7d30 }
+  },
+/* jsri.w $Dst16AnHI */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DST16ANHI), 0 } },
+    & ifmt_shl16_w_dst_dst16_An_direct_HI, { 0x7d34 }
+  },
+/* jsri.w [$Dst16An] */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', '[', OP (DST16AN), ']', 0 } },
+    & ifmt_shl16_w_dst_dst16_An_indirect_HI, { 0x7d36 }
   },
 /* jsri.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
@@ -46087,42 +46295,6 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
     & ifmt_shl16_w_dst_dst16_16_8_FB_relative_HI, { 0x7d3b00 }
-  },
-/* jsri.w $Dst32RnUnprefixedHI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xc91f }
-  },
-/* jsri.w $Dst32AnUnprefixedHI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xc19f }
-  },
-/* jsri.w [$Dst32AnUnprefixed] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xc11f }
-  },
-/* jsri.w $Dst16RnHI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16RNHI), 0 } },
-    & ifmt_shl16_w_dst_dst16_Rn_direct_HI, { 0x7d30 }
-  },
-/* jsri.w $Dst16AnHI */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DST16ANHI), 0 } },
-    & ifmt_shl16_w_dst_dst16_An_direct_HI, { 0x7d34 }
-  },
-/* jsri.w [$Dst16An] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_shl16_w_dst_dst16_An_indirect_HI, { 0x7d36 }
   },
 /* jmpi.a $Dst32RnUnprefixedSI */
   {
@@ -46380,73 +46552,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xc933 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xc833 }
   },
 /* indexws.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xc1b3 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xc0b3 }
   },
 /* indexws.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xc133 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xc033 }
   },
 /* indexws.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xc33300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xc23300 }
   },
 /* indexws.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xc5330000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xc4330000 }
   },
 /* indexws.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xc7330000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xc6330000 }
   },
 /* indexws.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xc3b300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xc2b300 }
   },
 /* indexws.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xc5b30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xc4b30000 }
   },
 /* indexws.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xc3f300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xc2f300 }
   },
 /* indexws.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xc5f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xc4f30000 }
   },
 /* indexws.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xc7f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xc6f30000 }
   },
 /* indexws.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xc7b30000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xc6b30000 }
   },
 /* indexws.b $Dst32RnUnprefixedQI */
   {
@@ -46524,73 +46696,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xa933 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xa833 }
   },
 /* indexwd.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xa1b3 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xa0b3 }
   },
 /* indexwd.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xa133 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xa033 }
   },
 /* indexwd.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xa33300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xa23300 }
   },
 /* indexwd.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xa5330000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xa4330000 }
   },
 /* indexwd.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xa7330000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xa6330000 }
   },
 /* indexwd.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xa3b300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xa2b300 }
   },
 /* indexwd.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xa5b30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xa4b30000 }
   },
 /* indexwd.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xa3f300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xa2f300 }
   },
 /* indexwd.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xa5f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xa4f30000 }
   },
 /* indexwd.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xa7f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xa6f30000 }
   },
 /* indexwd.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xa7b30000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xa6b30000 }
   },
 /* indexwd.b $Dst32RnUnprefixedQI */
   {
@@ -46668,73 +46840,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x8933 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x8833 }
   },
 /* indexw.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x81b3 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x80b3 }
   },
 /* indexw.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x8133 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x8033 }
   },
 /* indexw.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x833300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x823300 }
   },
 /* indexw.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x85330000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x84330000 }
   },
 /* indexw.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x87330000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x86330000 }
   },
 /* indexw.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x83b300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x82b300 }
   },
 /* indexw.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x85b30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x84b30000 }
   },
 /* indexw.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x83f300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x82f300 }
   },
 /* indexw.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x85f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x84f30000 }
   },
 /* indexw.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x87f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x86f30000 }
   },
 /* indexw.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x87b30000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x86b30000 }
   },
 /* indexw.b $Dst32RnUnprefixedQI */
   {
@@ -46812,73 +46984,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x9913 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x9813 }
   },
 /* indexls.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x9193 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x9093 }
   },
 /* indexls.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x9113 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x9013 }
   },
 /* indexls.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x931300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x921300 }
   },
 /* indexls.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x95130000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x94130000 }
   },
 /* indexls.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x97130000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x96130000 }
   },
 /* indexls.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x939300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x929300 }
   },
 /* indexls.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x95930000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x94930000 }
   },
 /* indexls.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x93d300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x92d300 }
   },
 /* indexls.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x95d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x94d30000 }
   },
 /* indexls.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x97d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x96d30000 }
   },
 /* indexls.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x97930000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x96930000 }
   },
 /* indexls.b $Dst32RnUnprefixedQI */
   {
@@ -46956,73 +47128,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xb933 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xb833 }
   },
 /* indexld.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xb1b3 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xb0b3 }
   },
 /* indexld.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xb133 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xb033 }
   },
 /* indexld.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xb33300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xb23300 }
   },
 /* indexld.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xb5330000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xb4330000 }
   },
 /* indexld.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xb7330000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xb6330000 }
   },
 /* indexld.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xb3b300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xb2b300 }
   },
 /* indexld.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xb5b30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xb4b30000 }
   },
 /* indexld.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xb3f300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xb2f300 }
   },
 /* indexld.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xb5f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xb4f30000 }
   },
 /* indexld.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xb7f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xb6f30000 }
   },
 /* indexld.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xb7b30000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xb6b30000 }
   },
 /* indexld.b $Dst32RnUnprefixedQI */
   {
@@ -47100,73 +47272,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x9933 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x9833 }
   },
 /* indexl.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x91b3 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x90b3 }
   },
 /* indexl.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x9133 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x9033 }
   },
 /* indexl.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x933300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x923300 }
   },
 /* indexl.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x95330000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x94330000 }
   },
 /* indexl.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x97330000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x96330000 }
   },
 /* indexl.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x93b300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x92b300 }
   },
 /* indexl.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x95b30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x94b30000 }
   },
 /* indexl.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x93f300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x92f300 }
   },
 /* indexl.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x95f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x94f30000 }
   },
 /* indexl.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x97f30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x96f30000 }
   },
 /* indexl.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x97b30000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x96b30000 }
   },
 /* indexl.b $Dst32RnUnprefixedQI */
   {
@@ -47244,73 +47416,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xc913 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xc813 }
   },
 /* indexbs.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xc193 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xc093 }
   },
 /* indexbs.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xc113 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xc013 }
   },
 /* indexbs.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xc31300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xc21300 }
   },
 /* indexbs.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xc5130000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xc4130000 }
   },
 /* indexbs.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xc7130000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xc6130000 }
   },
 /* indexbs.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xc39300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xc29300 }
   },
 /* indexbs.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xc5930000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xc4930000 }
   },
 /* indexbs.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xc3d300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xc2d300 }
   },
 /* indexbs.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xc5d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xc4d30000 }
   },
 /* indexbs.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xc7d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xc6d30000 }
   },
 /* indexbs.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xc7930000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xc6930000 }
   },
 /* indexbs.b $Dst32RnUnprefixedQI */
   {
@@ -47388,73 +47560,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xa913 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0xa813 }
   },
 /* indexbd.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xa193 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0xa093 }
   },
 /* indexbd.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xa113 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0xa013 }
   },
 /* indexbd.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xa31300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0xa21300 }
   },
 /* indexbd.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xa5130000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0xa4130000 }
   },
 /* indexbd.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xa7130000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0xa6130000 }
   },
 /* indexbd.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xa39300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0xa29300 }
   },
 /* indexbd.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xa5930000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0xa4930000 }
   },
 /* indexbd.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xa3d300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0xa2d300 }
   },
 /* indexbd.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xa5d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0xa4d30000 }
   },
 /* indexbd.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xa7d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0xa6d30000 }
   },
 /* indexbd.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xa7930000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0xa6930000 }
   },
 /* indexbd.b $Dst32RnUnprefixedQI */
   {
@@ -47532,73 +47704,73 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNUNPREFIXEDHI), 0 } },
-    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x8913 }
+    & ifmt_shl32_w_dst_dst32_Rn_direct_Unprefixed_HI, { 0x8813 }
   },
 /* indexb.w $Dst32AnUnprefixedHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANUNPREFIXEDHI), 0 } },
-    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x8193 }
+    & ifmt_exts32_b_16_ExtUnprefixed_dst32_An_direct_Unprefixed_HI, { 0x8093 }
   },
 /* indexb.w [$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x8113 }
+    & ifmt_shl32_w_dst_dst32_An_indirect_Unprefixed_HI, { 0x8013 }
   },
 /* indexb.w ${Dsp-16-u8}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x831300 }
+    & ifmt_shl32_w_dst_dst32_16_8_An_relative_Unprefixed_HI, { 0x821300 }
   },
 /* indexb.w ${Dsp-16-u16}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x85130000 }
+    & ifmt_shl32_w_dst_dst32_16_16_An_relative_Unprefixed_HI, { 0x84130000 }
   },
 /* indexb.w ${Dsp-16-u24}[$Dst32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), '[', OP (DST32ANUNPREFIXED), ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x87130000 }
+    & ifmt_shl32_w_dst_dst32_16_24_An_relative_Unprefixed_HI, { 0x86130000 }
   },
 /* indexb.w ${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x839300 }
+    & ifmt_shl32_w_dst_dst32_16_8_SB_relative_Unprefixed_HI, { 0x829300 }
   },
 /* indexb.w ${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x85930000 }
+    & ifmt_shl32_w_dst_dst32_16_16_SB_relative_Unprefixed_HI, { 0x84930000 }
   },
 /* indexb.w ${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x83d300 }
+    & ifmt_shl32_w_dst_dst32_16_8_FB_relative_Unprefixed_HI, { 0x82d300 }
   },
 /* indexb.w ${Dsp-16-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x85d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_FB_relative_Unprefixed_HI, { 0x84d30000 }
   },
 /* indexb.w ${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U16), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x87d30000 }
+    & ifmt_shl32_w_dst_dst32_16_16_absolute_Unprefixed_HI, { 0x86d30000 }
   },
 /* indexb.w ${Dsp-16-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_16_U24), 0 } },
-    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x87930000 }
+    & ifmt_shl32_w_dst_dst32_16_24_absolute_Unprefixed_HI, { 0x86930000 }
   },
 /* indexb.b $Dst32RnUnprefixedQI */
   {
@@ -48834,25 +49006,25 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (SRCDST16_R0L_R0H_S_NORMAL), 0 } },
-    & ifmt_mov16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x28 }
+    & ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x28 }
   },
 /* sub.b${S} ${Dsp-8-u8}[sb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U8), '[', 's', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x2900 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x2900 }
   },
 /* sub.b${S} ${Dsp-8-s8}[fb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_S8), '[', 'f', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x2a00 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x2a00 }
   },
 /* sub.b${S} ${Dsp-8-u16},${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U16), ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI, { 0x2b0000 }
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0x2b0000 }
   },
 /* sub.w${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedHI */
   {
@@ -55584,217 +55756,217 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNPREFIXEDSI), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_Rn_direct_Prefixed_SI, { 0x1a92f }
+    & ifmt_mulu_l_dst32_Rn_direct_Prefixed_SI, { 0x1a92f }
   },
 /* divx.l $Dst32AnPrefixedSI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANPREFIXEDSI), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_direct_Prefixed_SI, { 0x1a1af }
+    & ifmt_mulu_l_dst32_An_direct_Prefixed_SI, { 0x1a1af }
   },
 /* divx.l [$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_indirect_Prefixed_SI, { 0x1a12f }
+    & ifmt_mulu_l_dst32_An_indirect_Prefixed_SI, { 0x1a12f }
   },
 /* divx.l ${Dsp-24-u8}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U8), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_An_relative_Prefixed_SI, { 0x1a32f00 }
+    & ifmt_mulu_l_dst32_24_8_An_relative_Prefixed_SI, { 0x1a32f00 }
   },
 /* divx.l ${Dsp-24-u16}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_An_relative_Prefixed_SI, { 0x1a52f00 }
+    & ifmt_mulu_l_dst32_24_16_An_relative_Prefixed_SI, { 0x1a52f00 }
   },
 /* divx.l ${Dsp-24-u24}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U24), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_An_relative_Prefixed_SI, { 0x1a72f00 }
+    & ifmt_mulu_l_dst32_24_24_An_relative_Prefixed_SI, { 0x1a72f00 }
   },
 /* divx.l ${Dsp-24-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_SB_relative_Prefixed_SI, { 0x1a3af00 }
+    & ifmt_mulu_l_dst32_24_8_SB_relative_Prefixed_SI, { 0x1a3af00 }
   },
 /* divx.l ${Dsp-24-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_SB_relative_Prefixed_SI, { 0x1a5af00 }
+    & ifmt_mulu_l_dst32_24_16_SB_relative_Prefixed_SI, { 0x1a5af00 }
   },
 /* divx.l ${Dsp-24-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_FB_relative_Prefixed_SI, { 0x1a3ef00 }
+    & ifmt_mulu_l_dst32_24_8_FB_relative_Prefixed_SI, { 0x1a3ef00 }
   },
 /* divx.l ${Dsp-24-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_FB_relative_Prefixed_SI, { 0x1a5ef00 }
+    & ifmt_mulu_l_dst32_24_16_FB_relative_Prefixed_SI, { 0x1a5ef00 }
   },
 /* divx.l ${Dsp-24-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_absolute_Prefixed_SI, { 0x1a7ef00 }
+    & ifmt_mulu_l_dst32_24_16_absolute_Prefixed_SI, { 0x1a7ef00 }
   },
 /* divx.l ${Dsp-24-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U24), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_absolute_Prefixed_SI, { 0x1a7af00 }
+    & ifmt_mulu_l_dst32_24_24_absolute_Prefixed_SI, { 0x1a7af00 }
   },
 /* divu.l $Dst32RnPrefixedSI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNPREFIXEDSI), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_Rn_direct_Prefixed_SI, { 0x1a90f }
+    & ifmt_mulu_l_dst32_Rn_direct_Prefixed_SI, { 0x1a90f }
   },
 /* divu.l $Dst32AnPrefixedSI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANPREFIXEDSI), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_direct_Prefixed_SI, { 0x1a18f }
+    & ifmt_mulu_l_dst32_An_direct_Prefixed_SI, { 0x1a18f }
   },
 /* divu.l [$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_indirect_Prefixed_SI, { 0x1a10f }
+    & ifmt_mulu_l_dst32_An_indirect_Prefixed_SI, { 0x1a10f }
   },
 /* divu.l ${Dsp-24-u8}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U8), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_An_relative_Prefixed_SI, { 0x1a30f00 }
+    & ifmt_mulu_l_dst32_24_8_An_relative_Prefixed_SI, { 0x1a30f00 }
   },
 /* divu.l ${Dsp-24-u16}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_An_relative_Prefixed_SI, { 0x1a50f00 }
+    & ifmt_mulu_l_dst32_24_16_An_relative_Prefixed_SI, { 0x1a50f00 }
   },
 /* divu.l ${Dsp-24-u24}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U24), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_An_relative_Prefixed_SI, { 0x1a70f00 }
+    & ifmt_mulu_l_dst32_24_24_An_relative_Prefixed_SI, { 0x1a70f00 }
   },
 /* divu.l ${Dsp-24-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_SB_relative_Prefixed_SI, { 0x1a38f00 }
+    & ifmt_mulu_l_dst32_24_8_SB_relative_Prefixed_SI, { 0x1a38f00 }
   },
 /* divu.l ${Dsp-24-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_SB_relative_Prefixed_SI, { 0x1a58f00 }
+    & ifmt_mulu_l_dst32_24_16_SB_relative_Prefixed_SI, { 0x1a58f00 }
   },
 /* divu.l ${Dsp-24-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_FB_relative_Prefixed_SI, { 0x1a3cf00 }
+    & ifmt_mulu_l_dst32_24_8_FB_relative_Prefixed_SI, { 0x1a3cf00 }
   },
 /* divu.l ${Dsp-24-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_FB_relative_Prefixed_SI, { 0x1a5cf00 }
+    & ifmt_mulu_l_dst32_24_16_FB_relative_Prefixed_SI, { 0x1a5cf00 }
   },
 /* divu.l ${Dsp-24-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_absolute_Prefixed_SI, { 0x1a7cf00 }
+    & ifmt_mulu_l_dst32_24_16_absolute_Prefixed_SI, { 0x1a7cf00 }
   },
 /* divu.l ${Dsp-24-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U24), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_absolute_Prefixed_SI, { 0x1a78f00 }
+    & ifmt_mulu_l_dst32_24_24_absolute_Prefixed_SI, { 0x1a78f00 }
   },
 /* div.l $Dst32RnPrefixedSI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32RNPREFIXEDSI), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_Rn_direct_Prefixed_SI, { 0x1a91f }
+    & ifmt_mulu_l_dst32_Rn_direct_Prefixed_SI, { 0x1a91f }
   },
 /* div.l $Dst32AnPrefixedSI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DST32ANPREFIXEDSI), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_direct_Prefixed_SI, { 0x1a19f }
+    & ifmt_mulu_l_dst32_An_direct_Prefixed_SI, { 0x1a19f }
   },
 /* div.l [$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_An_indirect_Prefixed_SI, { 0x1a11f }
+    & ifmt_mulu_l_dst32_An_indirect_Prefixed_SI, { 0x1a11f }
   },
 /* div.l ${Dsp-24-u8}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U8), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_An_relative_Prefixed_SI, { 0x1a31f00 }
+    & ifmt_mulu_l_dst32_24_8_An_relative_Prefixed_SI, { 0x1a31f00 }
   },
 /* div.l ${Dsp-24-u16}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_An_relative_Prefixed_SI, { 0x1a51f00 }
+    & ifmt_mulu_l_dst32_24_16_An_relative_Prefixed_SI, { 0x1a51f00 }
   },
 /* div.l ${Dsp-24-u24}[$Dst32AnPrefixed] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U24), '[', OP (DST32ANPREFIXED), ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_An_relative_Prefixed_SI, { 0x1a71f00 }
+    & ifmt_mulu_l_dst32_24_24_An_relative_Prefixed_SI, { 0x1a71f00 }
   },
 /* div.l ${Dsp-24-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_SB_relative_Prefixed_SI, { 0x1a39f00 }
+    & ifmt_mulu_l_dst32_24_8_SB_relative_Prefixed_SI, { 0x1a39f00 }
   },
 /* div.l ${Dsp-24-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_SB_relative_Prefixed_SI, { 0x1a59f00 }
+    & ifmt_mulu_l_dst32_24_16_SB_relative_Prefixed_SI, { 0x1a59f00 }
   },
 /* div.l ${Dsp-24-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_8_FB_relative_Prefixed_SI, { 0x1a3df00 }
+    & ifmt_mulu_l_dst32_24_8_FB_relative_Prefixed_SI, { 0x1a3df00 }
   },
 /* div.l ${Dsp-24-s16}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_S16), '[', 'f', 'b', ']', 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_FB_relative_Prefixed_SI, { 0x1a5df00 }
+    & ifmt_mulu_l_dst32_24_16_FB_relative_Prefixed_SI, { 0x1a5df00 }
   },
 /* div.l ${Dsp-24-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U16), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_16_absolute_Prefixed_SI, { 0x1a7df00 }
+    & ifmt_mulu_l_dst32_24_16_absolute_Prefixed_SI, { 0x1a7df00 }
   },
 /* div.l ${Dsp-24-u24} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSP_24_U24), 0 } },
-    & ifmt_divx32_l_dst32_24_Prefixed_SI_dst32_24_24_absolute_Prefixed_SI, { 0x1a79f00 }
+    & ifmt_mulu_l_dst32_24_24_absolute_Prefixed_SI, { 0x1a79f00 }
   },
 /* divx.w $Dst32RnUnprefixedHI */
   {
@@ -57750,25 +57922,25 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (SRCDST16_R0L_R0H_S_NORMAL), 0 } },
-    & ifmt_mov16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x38 }
+    & ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x38 }
   },
 /* cmp.b${S} ${Dsp-8-u8}[sb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U8), '[', 's', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x3900 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x3900 }
   },
 /* cmp.b${S} ${Dsp-8-s8}[fb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_S8), '[', 'f', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x3a00 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x3a00 }
   },
 /* cmp.b${S} ${Dsp-8-u16},${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U16), ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI, { 0x3b0000 }
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0x3b0000 }
   },
 /* cmp.w${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedHI */
   {
@@ -60648,109 +60820,109 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNHI), 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_Rn_direct_HI, { 0xd100 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_HI, { 0xd100 }
   },
 /* cmp.w${Q} #${Imm-8-s4},$Dst16AnHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANHI), 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_An_direct_HI, { 0xd104 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_HI, { 0xd104 }
   },
 /* cmp.w${Q} #${Imm-8-s4},[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_An_indirect_HI, { 0xd106 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_HI, { 0xd106 }
   },
 /* cmp.w${Q} #${Imm-8-s4},${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_8_An_relative_HI, { 0xd10800 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_HI, { 0xd10800 }
   },
 /* cmp.w${Q} #${Imm-8-s4},${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_16_An_relative_HI, { 0xd10c0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_HI, { 0xd10c0000 }
   },
 /* cmp.w${Q} #${Imm-8-s4},${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_8_SB_relative_HI, { 0xd10a00 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_HI, { 0xd10a00 }
   },
 /* cmp.w${Q} #${Imm-8-s4},${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_16_SB_relative_HI, { 0xd10e0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_HI, { 0xd10e0000 }
   },
 /* cmp.w${Q} #${Imm-8-s4},${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_8_FB_relative_HI, { 0xd10b00 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_HI, { 0xd10b00 }
   },
 /* cmp.w${Q} #${Imm-8-s4},${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_16_absolute_HI, { 0xd10f0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_HI, { 0xd10f0000 }
   },
 /* cmp.b${Q} #${Imm-8-s4},$Dst16RnQI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_QI, { 0xd000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_Rn_direct_QI, { 0xd000 }
   },
 /* cmp.b${Q} #${Imm-8-s4},$Dst16AnQI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_QI, { 0xd004 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_An_direct_QI, { 0xd004 }
   },
 /* cmp.b${Q} #${Imm-8-s4},[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_QI, { 0xd006 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_An_indirect_QI, { 0xd006 }
   },
 /* cmp.b${Q} #${Imm-8-s4},${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xd00800 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xd00800 }
   },
 /* cmp.b${Q} #${Imm-8-s4},${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xd00c0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xd00c0000 }
   },
 /* cmp.b${Q} #${Imm-8-s4},${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xd00a00 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xd00a00 }
   },
 /* cmp.b${Q} #${Imm-8-s4},${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xd00e0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xd00e0000 }
   },
 /* cmp.b${Q} #${Imm-8-s4},${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xd00b00 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xd00b00 }
   },
 /* cmp.b${Q} #${Imm-8-s4},${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_QI, { 0xd00f0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_absolute_QI, { 0xd00f0000 }
   },
 /* cmp.w${G} #${Imm-16-HI},$Dst32RnUnprefixedHI */
   {
@@ -61598,76 +61770,76 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (X), ' ', OP (BITBASE16_16_U16), 0 } },
     & ifmt_bxor16_X_bit16_16_bit16_16_16_absolute, { 0x7e0f0000 }
   },
-/* btst${X} $Bitno32Unprefixed,$Bit32RnUnprefixed */
+/* btst${G} $Bitno32Unprefixed,$Bit32RnUnprefixed */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITNO32UNPREFIXED), ',', OP (BIT32RNUNPREFIXED), 0 } },
+    { { MNEM, OP (G), ' ', OP (BITNO32UNPREFIXED), ',', OP (BIT32RNUNPREFIXED), 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_Rn_direct_Unprefixed, { 0xd800 }
   },
-/* btst${X} $Bitno32Unprefixed,$Bit32AnUnprefixed */
+/* btst${G} $Bitno32Unprefixed,$Bit32AnUnprefixed */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITNO32UNPREFIXED), ',', OP (BIT32ANUNPREFIXED), 0 } },
+    { { MNEM, OP (G), ' ', OP (BITNO32UNPREFIXED), ',', OP (BIT32ANUNPREFIXED), 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_An_direct_Unprefixed, { 0xd080 }
   },
-/* btst${X} $Bitno32Unprefixed,[$Bit32AnUnprefixed] */
+/* btst${G} $Bitno32Unprefixed,[$Bit32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITNO32UNPREFIXED), ',', '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITNO32UNPREFIXED), ',', '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_An_indirect_Unprefixed, { 0xd000 }
   },
-/* btst${X} ${BitBase32-16-u11-Unprefixed}[$Bit32AnUnprefixed] */
+/* btst${G} ${BitBase32-16-u11-Unprefixed}[$Bit32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U11_UNPREFIXED), '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U11_UNPREFIXED), '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_11_An_relative_Unprefixed, { 0xd20000 }
   },
-/* btst${X} ${BitBase32-16-u19-Unprefixed}[$Bit32AnUnprefixed] */
+/* btst${G} ${BitBase32-16-u19-Unprefixed}[$Bit32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U19_UNPREFIXED), '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U19_UNPREFIXED), '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_19_An_relative_Unprefixed, { 0xd4000000 }
   },
-/* btst${X} ${BitBase32-16-u27-Unprefixed}[$Bit32AnUnprefixed] */
+/* btst${G} ${BitBase32-16-u27-Unprefixed}[$Bit32AnUnprefixed] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U27_UNPREFIXED), '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U27_UNPREFIXED), '[', OP (BIT32ANUNPREFIXED), ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_27_An_relative_Unprefixed, { 0xd6000000 }
   },
-/* btst${X} ${BitBase32-16-u11-Unprefixed}[sb] */
+/* btst${G} ${BitBase32-16-u11-Unprefixed}[sb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U11_UNPREFIXED), '[', 's', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U11_UNPREFIXED), '[', 's', 'b', ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_11_SB_relative_Unprefixed, { 0xd28000 }
   },
-/* btst${X} ${BitBase32-16-u19-Unprefixed}[sb] */
+/* btst${G} ${BitBase32-16-u19-Unprefixed}[sb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U19_UNPREFIXED), '[', 's', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U19_UNPREFIXED), '[', 's', 'b', ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_19_SB_relative_Unprefixed, { 0xd4800000 }
   },
-/* btst${X} ${BitBase32-16-s11-Unprefixed}[fb] */
+/* btst${G} ${BitBase32-16-s11-Unprefixed}[fb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_S11_UNPREFIXED), '[', 'f', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_S11_UNPREFIXED), '[', 'f', 'b', ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_11_FB_relative_Unprefixed, { 0xd2c000 }
   },
-/* btst${X} ${BitBase32-16-s19-Unprefixed}[fb] */
+/* btst${G} ${BitBase32-16-s19-Unprefixed}[fb] */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_S19_UNPREFIXED), '[', 'f', 'b', ']', 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_S19_UNPREFIXED), '[', 'f', 'b', ']', 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_19_FB_relative_Unprefixed, { 0xd4c00000 }
   },
-/* btst${X} ${BitBase32-16-u19-Unprefixed} */
+/* btst${G} ${BitBase32-16-u19-Unprefixed} */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U19_UNPREFIXED), 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U19_UNPREFIXED), 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_19_absolute_Unprefixed, { 0xd6c00000 }
   },
-/* btst${X} ${BitBase32-16-u27-Unprefixed} */
+/* btst${G} ${BitBase32-16-u27-Unprefixed} */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, OP (X), ' ', OP (BITBASE32_16_U27_UNPREFIXED), 0 } },
+    { { MNEM, OP (G), ' ', OP (BITBASE32_16_U27_UNPREFIXED), 0 } },
     & ifmt_btsts32_X_bit32_16_Unprefixed_bit32_16_27_absolute_Unprefixed, { 0xd6800000 }
   },
 /* btst${G} $Bitno16R,$Bit16Rn */
@@ -63204,25 +63376,25 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (SRCDST16_R0L_R0H_S_NORMAL), 0 } },
-    & ifmt_mov16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x10 }
+    & ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x10 }
   },
 /* and.b${S} ${Dsp-8-u8}[sb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U8), '[', 's', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x1100 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x1100 }
   },
 /* and.b${S} ${Dsp-8-s8}[fb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_S8), '[', 'f', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x1200 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x1200 }
   },
 /* and.b${S} ${Dsp-8-u16},${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U16), ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI, { 0x130000 }
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0x130000 }
   },
 /* and.w${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedHI */
   {
@@ -75018,25 +75190,25 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (SRCDST16_R0L_R0H_S_NORMAL), 0 } },
-    & ifmt_mov16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x20 }
+    & ifmt_or16_b_S_r0l_r0h_srcdst16_r0l_r0h_S_derived, { 0x20 }
   },
 /* add.b${S} ${Dsp-8-u8}[sb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U8), '[', 's', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x2100 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_SB_relative_QI, { 0x2100 }
   },
 /* add.b${S} ${Dsp-8-s8}[fb],${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_S8), '[', 'f', 'b', ']', ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x2200 }
+    & ifmt_or16_b_S_src2_src16_2_S_8_FB_relative_QI, { 0x2200 }
   },
 /* add.b${S} ${Dsp-8-u16},${Dst16RnQI-S} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (S), ' ', OP (DSP_8_U16), ',', OP (DST16RNQI_S), 0 } },
-    & ifmt_mov16_b_S_src2_src16_2_S_16_absolute_QI, { 0x230000 }
+    & ifmt_or16_b_S_src2_src16_2_S_16_absolute_QI, { 0x230000 }
   },
 /* add.w${G} ${Dsp-16-u8}[$Src32AnUnprefixed],$Dst32RnUnprefixedHI */
   {
@@ -77988,109 +78160,109 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNHI), 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_Rn_direct_HI, { 0xc900 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_HI, { 0xc900 }
   },
 /* add.w${Q} #${Imm-8-s4},$Dst16AnHI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANHI), 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_An_direct_HI, { 0xc904 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_HI, { 0xc904 }
   },
 /* add.w${Q} #${Imm-8-s4},[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_An_indirect_HI, { 0xc906 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_HI, { 0xc906 }
   },
 /* add.w${Q} #${Imm-8-s4},${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_8_An_relative_HI, { 0xc90800 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_HI, { 0xc90800 }
   },
 /* add.w${Q} #${Imm-8-s4},${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_16_An_relative_HI, { 0xc90c0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_HI, { 0xc90c0000 }
   },
 /* add.w${Q} #${Imm-8-s4},${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_8_SB_relative_HI, { 0xc90a00 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_HI, { 0xc90a00 }
   },
 /* add.w${Q} #${Imm-8-s4},${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_16_SB_relative_HI, { 0xc90e0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_HI, { 0xc90e0000 }
   },
 /* add.w${Q} #${Imm-8-s4},${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_8_FB_relative_HI, { 0xc90b00 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_HI, { 0xc90b00 }
   },
 /* add.w${Q} #${Imm-8-s4},${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), 0 } },
-    & ifmt_cmp16_w_imm4_Q_16_dst16_16_16_absolute_HI, { 0xc90f0000 }
+    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_HI, { 0xc90f0000 }
   },
 /* add.b${Q} #${Imm-8-s4},$Dst16RnQI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16RNQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_Rn_direct_QI, { 0xc800 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_Rn_direct_QI, { 0xc800 }
   },
 /* add.b${Q} #${Imm-8-s4},$Dst16AnQI */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DST16ANQI), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_direct_QI, { 0xc804 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_An_direct_QI, { 0xc804 }
   },
 /* add.b${Q} #${Imm-8-s4},[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_An_indirect_QI, { 0xc806 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_An_indirect_QI, { 0xc806 }
   },
 /* add.b${Q} #${Imm-8-s4},${Dsp-16-u8}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xc80800 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_An_relative_QI, { 0xc80800 }
   },
 /* add.b${Q} #${Imm-8-s4},${Dsp-16-u16}[$Dst16An] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', OP (DST16AN), ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xc80c0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_An_relative_QI, { 0xc80c0000 }
   },
 /* add.b${Q} #${Imm-8-s4},${Dsp-16-u8}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U8), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xc80a00 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_SB_relative_QI, { 0xc80a00 }
   },
 /* add.b${Q} #${Imm-8-s4},${Dsp-16-u16}[sb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), '[', 's', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xc80e0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_SB_relative_QI, { 0xc80e0000 }
   },
 /* add.b${Q} #${Imm-8-s4},${Dsp-16-s8}[fb] */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_S8), '[', 'f', 'b', ']', 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xc80b00 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_8_FB_relative_QI, { 0xc80b00 }
   },
 /* add.b${Q} #${Imm-8-s4},${Dsp-16-u16} */
   {
     { 0, 0, 0, 0 },
     { { MNEM, OP (Q), ' ', '#', OP (IMM_8_S4), ',', OP (DSP_16_U16), 0 } },
-    & ifmt_mov16_w_imm4_Q_16_dst16_16_16_absolute_QI, { 0xc80f0000 }
+    & ifmt_mov16_b_imm4_Q_16_dst16_16_16_absolute_QI, { 0xc80f0000 }
   },
 /* add.w${G} #${Imm-16-HI},$Dst32RnUnprefixedHI */
   {
@@ -78956,16 +79128,16 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (G), ' ', '#', OP (IMM_16_HI), ',', 's', 'p', 0 } },
     & ifmt_add32_l_imm16_G, { 0xb6130000 }
   },
-/* dadc.b #${Imm-16-QI} */
+/* dadc.b #${Imm-16-QI},r0l */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_QI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_QI), ',', 'r', '0', 'l', 0 } },
     & ifmt_add32_l_imm8_S, { 0x7cee00 }
   },
-/* dadc.w #${Imm-16-HI} */
+/* dadc.w #${Imm-16-HI},r0 */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_HI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_HI), ',', 'r', '0', 0 } },
     & ifmt_add32_l_imm16_G, { 0x7dee0000 }
   },
 /* dadc.b r0h,r0l */
@@ -78980,16 +79152,16 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', 'r', '1', ',', 'r', '0', 0 } },
     & ifmt_dadc16_b_r0h_r0l, { 0x7de6 }
   },
-/* dadd.b #${Imm-16-QI} */
+/* dadd.b #${Imm-16-QI},r0l */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_QI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_QI), ',', 'r', '0', 'l', 0 } },
     & ifmt_add32_l_imm8_S, { 0x7cec00 }
   },
-/* dadd.w #${Imm-16-HI} */
+/* dadd.w #${Imm-16-HI},r0 */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_HI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_HI), ',', 'r', '0', 0 } },
     & ifmt_add32_l_imm16_G, { 0x7dec0000 }
   },
 /* dadd.b r0h,r0l */
@@ -79033,6 +79205,12 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, 0 } },
     & ifmt_brk16, { 0x8 }
+  },
+/* btst:s ${Bit3-S},${Dsp-8-u16} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (BIT3_S), ',', OP (DSP_8_U16), 0 } },
+    & ifmt_btst_s, { 0xa0000 }
   },
 /* dec.w ${Dst16An-S} */
   {
@@ -79112,16 +79290,16 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', '#', OP (IMM_16_HI), 0 } },
     & ifmt_div32_w_Imm_16_HI, { 0xb2530000 }
   },
-/* dsbb.b #${Imm-16-QI} */
+/* dsbb.b #${Imm-16-QI},r0l */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_QI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_QI), ',', 'r', '0', 'l', 0 } },
     & ifmt_add32_l_imm8_S, { 0x7cef00 }
   },
-/* dsbb.w #${Imm-16-HI} */
+/* dsbb.w #${Imm-16-HI},r0 */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_HI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_HI), ',', 'r', '0', 0 } },
     & ifmt_add32_l_imm16_G, { 0x7def0000 }
   },
 /* dsbb.b r0h,r0l */
@@ -79136,16 +79314,16 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', 'r', '1', ',', 'r', '0', 0 } },
     & ifmt_dadc16_b_r0h_r0l, { 0x7de7 }
   },
-/* dsub.b #${Imm-16-QI} */
+/* dsub.b #${Imm-16-QI},r0l */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_QI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_QI), ',', 'r', '0', 'l', 0 } },
     & ifmt_add32_l_imm8_S, { 0x7ced00 }
   },
-/* dsub.w #${Imm-16-HI} */
+/* dsub.w #${Imm-16-HI},r0 */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', OP (IMM_16_HI), 0 } },
+    { { MNEM, ' ', '#', OP (IMM_16_HI), ',', 'r', '0', 0 } },
     & ifmt_add32_l_imm16_G, { 0x7ded0000 }
   },
 /* dsub.b r0h,r0l */
@@ -79562,10 +79740,10 @@ static const CGEN_OPCODE m32c_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, OP (G), ' ', '#', OP (IMM_16_HI), 0 } },
     & ifmt_add32_l_imm16_G, { 0x7de20000 }
   },
-/* push.b #Imm-8-QI */
+/* push.b #${Imm-8-QI} */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', '#', 'I', 'm', 'm', '-', '8', '-', 'Q', 'I', 0 } },
+    { { MNEM, ' ', '#', OP (IMM_8_QI), 0 } },
     & ifmt_jmps16, { 0xae00 }
   },
 /* push.w #${Imm-8-HI} */
@@ -79916,7 +80094,7 @@ static const CGEN_IBASE m32c_cgen_macro_insn_table[] =
 /* add.b:q #${Imm-12-s4},sp */
   {
     -1, "add16-bQ-sp", "add.b:q", 16,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } } } }
+    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }
   },
 };
 

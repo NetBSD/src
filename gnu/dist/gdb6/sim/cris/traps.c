@@ -20,8 +20,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "sim-main.h"
 #include "sim-options.h"
-#include "targ-vals.h"
 #include "bfd.h"
+/* FIXME: get rid of targ-vals.h usage everywhere else.  */
+
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -63,6 +64,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define TARGET_SYS_truncate 92
 #define TARGET_SYS_ftruncate 93
 #define TARGET_SYS_socketcall 102
+#define TARGET_SYS_stat 106
 #define TARGET_SYS_fstat 108
 #define TARGET_SYS_wait4 114
 #define TARGET_SYS_sigreturn 119
@@ -242,7 +244,6 @@ static const CB_TARGET_DEFS_MAP syscall_map[] =
   { CB_SYS_lstat, TARGET_SYS_lstat64 },
   { CB_SYS_stat, TARGET_SYS_stat64 },
   { CB_SYS_pipe, TARGET_SYS_pipe },
-  { CB_SYS_time, TARGET_SYS_time },
   { CB_SYS_rename, TARGET_SYS_rename },
   { CB_SYS_truncate, TARGET_SYS_truncate },
   { CB_SYS_ftruncate, TARGET_SYS_ftruncate },
@@ -260,6 +261,7 @@ static const char stat32_map[] =
 static const CB_TARGET_DEFS_MAP syscall_stat32_map[] =
 {
   { CB_SYS_fstat, TARGET_SYS_fstat },
+  { CB_SYS_stat, TARGET_SYS_stat },
   { 0, -1 }
 };
 
@@ -661,15 +663,22 @@ static const CB_TARGET_DEFS_MAP errno_map[] =
    installation and removing synonyms and unnecessary items.  Don't
    forget the end-marker.  */
 
+/* These we treat specially, as they're used in the fcntl F_GETFL
+   syscall.  For consistency, open_map is also manually edited to use
+   these macros.  */
+#define TARGET_O_ACCMODE 0x3
+#define TARGET_O_RDONLY 0x0
+#define TARGET_O_WRONLY 0x1
+
 static const CB_TARGET_DEFS_MAP open_map[] = {
 #ifdef O_ACCMODE
-  { O_ACCMODE, 0x3 },
+  { O_ACCMODE, TARGET_O_ACCMODE },
 #endif
 #ifdef O_RDONLY
-  { O_RDONLY, 0x0 },
+  { O_RDONLY, TARGET_O_RDONLY },
 #endif
 #ifdef O_WRONLY
-  { O_WRONLY, 0x1 },
+  { O_WRONLY, TARGET_O_WRONLY },
 #endif
 #ifdef O_RDWR
   { O_RDWR, 0x2 },
@@ -1397,8 +1406,9 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
 	case TARGET_SYS_fcntl64:
 	case TARGET_SYS_fcntl:
-	  if (arg2 == 1)
+	  switch (arg2)
 	    {
+	    case 1:
 	      /* F_GETFD.
 		 Glibc checks stdin, stdout and stderr fd:s for
 		 close-on-exec security sanity.  We just need to provide a
@@ -1406,12 +1416,50 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		 close-on-exec flag true, we could just do a real fcntl
 		 here.  */
 	      retval = 0;
-	    }
-	  else if (arg2 == 2)
-	    {
+	      break;
+
+	    case 2:
 	      /* F_SETFD.  Just ignore attempts to set the close-on-exec
 		 flag.  */
 	      retval = 0;
+	      break;
+
+	    case 3:
+	      /* F_GETFL.  Check for the special case for open+fdopen.  */
+	      if (current_cpu->last_syscall == TARGET_SYS_open
+		  && arg1 == current_cpu->last_open_fd)
+		{
+		  retval = current_cpu->last_open_flags & TARGET_O_ACCMODE;
+		  break;
+		}
+	      else if (arg1 == 0)
+		{
+		  /* Because we can't freopen fd:s 0, 1, 2 to mean
+		     something else than stdin, stdout and stderr
+		     (sim/common/syscall.c:cb_syscall special cases fd
+		     0, 1 and 2), we know what flags that we can
+		     sanely return for these fd:s.  */
+		  retval = TARGET_O_RDONLY;
+		  break;
+		}
+	      else if (arg1 == 1 || arg1 == 2)
+		{
+		  retval = TARGET_O_WRONLY;
+		  break;
+		}
+	      /* FALLTHROUGH */
+	    default:
+	      /* Abort for all other cases.  */
+	      sim_io_eprintf (sd, "Unimplemented %s syscall "
+			      "(fd: 0x%lx: cmd: 0x%lx arg: 0x%lx)\n",
+			      callnum == TARGET_SYS_fcntl
+			      ? "fcntl" : "fcntl64",
+			      (unsigned long) (USI) arg1,
+			      (unsigned long) (USI) arg2,
+			      (unsigned long) (USI) arg3);
+	      sim_engine_halt (sd, current_cpu, NULL, pc, sim_stopped,
+			       SIM_SIGILL);
+	      break;
 	    }
 	  break;
 
@@ -1995,6 +2043,17 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    break;
 	  }
 
+	case TARGET_SYS_time:
+	  {
+	    retval = (int) (*cb->time) (cb, 0L);
+
+	    /* At time of this writing, CB_SYSCALL_time doesn't do the
+	       part of setting *arg1 to the return value.  */
+	    if (arg1)
+	      sim_core_write_unaligned_4 (current_cpu, pc, 0, arg1, retval);
+	    break;
+	  }
+
 	case TARGET_SYS_gettimeofday:
 	  if (arg1 != 0)
 	    {
@@ -2324,6 +2383,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	  /* Add case labels here for other syscalls using the 32-bit
 	     "struct stat", provided they have a corresponding simulator
 	     function of course.  */
+	case TARGET_SYS_stat:
 	case TARGET_SYS_fstat:
 	  {
 	    /* As long as the infrastructure doesn't cache anything
@@ -2815,6 +2875,14 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 			   SIM_SIGILL);
 	}
     }
+
+  /* Minimal support for fcntl F_GETFL as used in open+fdopen.  */
+  if (callnum == TARGET_SYS_open)
+    {
+      current_cpu->last_open_fd = retval;
+      current_cpu->last_open_flags = arg2;
+    }
+  current_cpu->last_syscall = callnum;
 
   /* A system call is a rescheduling point.  For the time being, we don't
      reschedule anywhere else.  */

@@ -12,6 +12,7 @@ if test "x$cross_compiling" = "xno"; then
 else
   CC_FOR_BUILD=gcc
 fi
+CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}
 
 dnl We don't use gettext, but bfd does.  So we do the appropriate checks
 dnl to see if there are intl libraries we should link against.
@@ -567,6 +568,16 @@ AC_ARG_PROGRAM
 
 . ${srcdir}/../../bfd/configure.host
 
+case ${host} in
+  *mingw32*)
+    AC_DEFINE(USE_WIN32API, 1,
+              [Define if we should use the Windows API, instead of the 
+	       POSIX API.  On Windows, we use the Windows API when 
+	       building for MinGW, but the POSIX API when building 
+	       for Cygwin.])
+    ;;
+esac	    
+
 AC_CONFIG_HEADER(config.h:config.in)
 
 AC_STRUCT_ST_BLKSIZE
@@ -737,6 +748,7 @@ dnl Check for exe extension
 AC_EXEEXT
 
 AC_SUBST(CC_FOR_BUILD)
+AC_SUBST(CFLAGS_FOR_BUILD)
 AC_SUBST(CFLAGS)
 AC_SUBST(HDEFINES)
 AR=${AR-ar}

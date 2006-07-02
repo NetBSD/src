@@ -1,6 +1,6 @@
 ## -*- text -*- ##
 # Master Makefile for the GNU readline library.
-# Copyright (C) 1994, 1998 Free Software Foundation, Inc.
+# Copyright (C) 1994-2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
 RL_LIBRARY_VERSION = @LIBVERSION@
 RL_LIBRARY_NAME = readline
+
+PACKAGE = @PACKAGE_NAME@
+VERSION = @PACKAGE_VERSION@
+
+PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
+PACKAGE_NAME = @PACKAGE_NAME@
+PACKAGE_STRING = @PACKAGE_STRING@
+PACKAGE_VERSION = @PACKAGE_VERSION@
 
 srcdir = @srcdir@
 VPATH = @srcdir@
@@ -35,6 +43,8 @@ RM = rm -f
 CP = cp
 MV = mv
 
+PURIFY = @PURIFY@
+
 @SET_MAKE@
 SHELL = @MAKE_SHELL@
 
@@ -45,6 +55,8 @@ bindir = @bindir@
 libdir = @libdir@
 mandir = @mandir@
 includedir = @includedir@
+datadir = @datadir@
+localedir = $(datadir)/locale
 
 infodir = @infodir@
 
@@ -61,7 +73,7 @@ CFLAGS = @CFLAGS@
 LOCAL_CFLAGS = @LOCAL_CFLAGS@ -DRL_LIBRARY_VERSION='"$(RL_LIBRARY_VERSION)"'
 CPPFLAGS = @CPPFLAGS@
 
-DEFS = @DEFS@
+DEFS = @DEFS@ @CROSS_COMPILE@
 LOCAL_DEFS = @LOCAL_DEFS@
 
 TERMCAP_LIB = @TERMCAP_LIB@
@@ -211,7 +223,7 @@ uninstall-headers:
 
 maybe-uninstall-headers: uninstall-headers
 
-## CYGNUS LOCAL
+## GDB LOCAL
 ## Don't mess with people's installed readline's.
 ## This tries to install this version of readline over whatever
 ## version is already installed on the system (which could be a
@@ -223,37 +235,41 @@ install:
 
 #install:	$(INSTALL_TARGETS)
 
-install-static: installdirs $(STATIC_LIBS) install-headers
+install-static: installdirs $(STATIC_LIBS) install-headers install-doc
 	-$(MV) $(DESTDIR)$(libdir)/libreadline.a $(DESTDIR)$(libdir)/libreadline.old
 	$(INSTALL_DATA) libreadline.a $(DESTDIR)$(libdir)/libreadline.a
 	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libreadline.a
 	-$(MV) $(DESTDIR)$(libdir)/libhistory.a $(DESTDIR)$(libdir)/libhistory.old
 	$(INSTALL_DATA) libhistory.a $(DESTDIR)$(libdir)/libhistory.a
 	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libhistory.a
+
+installdirs: $(srcdir)/support/mkinstalldirs
+	-$(SHELL) $(srcdir)/support/mkinstalldirs $(DESTDIR)$(includedir) \
+		$(DESTDIR)$(includedir)/readline $(DESTDIR)$(libdir) \
+		$(DESTDIR)$(infodir) $(DESTDIR)$(man3dir)
+
+uninstall: uninstall-headers uninstall-doc
+	-test -n "$(DESTDIR)$(libdir)" && cd $(DESTDIR)$(libdir) && \
+		${RM} libreadline.a libreadline.old libhistory.a libhistory.old $(SHARED_LIBS)
+	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
+
+install-shared: installdirs install-headers shared install-doc
+	-( cd shlib ; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} install )
+	
+uninstall-shared: maybe-uninstall-headers
+	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
+
+install-doc:	installdirs
 	-( if test -d doc ; then \
 		cd doc && \
 		${MAKE} ${MFLAGS} infodir=$(infodir) DESTDIR=${DESTDIR} install; \
 	  fi )
 
-installdirs: $(srcdir)/support/mkdirs
-	-$(SHELL) $(srcdir)/support/mkdirs $(DESTDIR)$(includedir) \
-		$(DESTDIR)$(includedir)/readline $(DESTDIR)$(libdir) \
-		$(DESTDIR)$(infodir) $(DESTDIR)$(man3dir)
-
-uninstall: uninstall-headers
-	-test -n "$(DESTDIR)$(libdir)" && cd $(DESTDIR)$(libdir) && \
-		${RM} libreadline.a libreadline.old libhistory.a libhistory.old $(SHARED_LIBS)
+uninstall-doc:
 	-( if test -d doc ; then \
 		cd doc && \
-		${MAKE} ${MFLAGS} infodir=$(infodir) DESTDIR=${DESTDIR} $@; \
+		${MAKE} ${MFLAGS} infodir=$(infodir) DESTDIR=${DESTDIR} uninstall; \
 	  fi )
-	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
-
-install-shared: installdirs install-headers shared
-	-( cd shlib ; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} install )
-
-uninstall-shared: maybe-uninstall-headers
-	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
 
 TAGS:	force
 	$(ETAGS) $(CSOURCES) $(HSOURCES)

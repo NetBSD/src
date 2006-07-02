@@ -1,5 +1,5 @@
 /* CRIS v32 simulator support code
-   Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -556,3 +556,73 @@ MY (XCONCAT3 (f_model_crisv,BASENUM,
 }
 
 #endif /* WITH_PROFILE_MODEL_P */
+
+int
+MY (deliver_interrupt) (SIM_CPU *current_cpu,
+			enum cris_interrupt_type type,
+			unsigned int vec)
+{
+  unsigned32 old_ccs, shifted_ccs, new_ccs;
+  unsigned char entryaddr_le[4];
+  int was_user;
+  SIM_DESC sd = CPU_STATE (current_cpu);
+  unsigned32 entryaddr;
+
+  /* We haven't implemented other interrupt-types yet.  */
+  if (type != CRIS_INT_INT)
+    abort ();
+
+  /* We're called outside of branch delay slots etc, so we don't check
+     for that.  */
+  if (!GET_H_IBIT_V32 ())
+    return 0;
+
+  old_ccs = GET_H_SR_V32 (H_SR_CCS);
+  shifted_ccs = (old_ccs << 10) & ((1 << 30) - 1);
+
+  /* The M bit is handled by code below and the M bit setter function, but
+     we need to preserve the Q bit.  */
+  new_ccs = shifted_ccs | (old_ccs & (unsigned32) 0x80000000UL);
+  was_user = GET_H_UBIT_V32 ();
+
+  /* We need to force kernel mode since the setter method doesn't allow
+     it.  Then we can use setter methods at will, since they then
+     recognize that we're in kernel mode.  */
+  CPU (h_ubit_v32) = 0;
+
+  SET_H_SR (H_SR_CCS, new_ccs);
+
+  if (was_user)
+    {
+      /* These methods require that user mode is unset.  */
+      SET_H_SR (H_SR_USP, GET_H_GR (H_GR_SP));
+      SET_H_GR (H_GR_SP, GET_H_KERNEL_SP ());
+    }
+
+  /* ERP setting is simplified by not taking interrupts in delay-slots
+     or when halting.  */
+  /* For all other exceptions than guru and NMI, store the return
+     address in ERP and set EXS and EXD here.  */
+  SET_H_SR (H_SR_ERP, GET_H_PC ());
+
+  /* Simplified by not having exception types (fault indications).  */
+  SET_H_SR_V32 (H_SR_EXS, (vec * 256));
+  SET_H_SR_V32 (H_SR_EDA, 0);
+
+  if (sim_core_read_buffer (sd,
+			    current_cpu,
+			    read_map, entryaddr_le,
+			    GET_H_SR (H_SR_EBP) + vec * 4, 4) == 0)
+    {
+      /* Nothing to do actually; either abort or send a signal.  */
+      sim_core_signal (sd, current_cpu, CIA_GET (current_cpu), 0, 4,
+		       GET_H_SR (H_SR_EBP) + vec * 4,
+		       read_transfer, sim_core_unmapped_signal);
+      return 0;
+    }
+
+  entryaddr = bfd_getl32 (entryaddr_le);
+  SET_H_PC (entryaddr);
+
+  return 1;
+}

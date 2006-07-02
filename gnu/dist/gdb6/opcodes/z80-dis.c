@@ -26,7 +26,7 @@ struct buffer
   bfd_vma base;
   int n_fetch;
   int n_used;
-  char data[4];
+  signed char data[4];
 } ;
 
 typedef int (*func)(struct buffer *, disassemble_info *, char *);
@@ -39,7 +39,7 @@ struct tab_elt
   char *        text;
 } ;
 
-#define TXTSIZ 16
+#define TXTSIZ 24
 /* Names of 16-bit registers.  */
 static char * rr_str[] = { "bc", "de", "hl", "sp" };
 /* Names of 8-bit registers.  */
@@ -61,7 +61,7 @@ fetch_data (struct buffer *buf, disassemble_info * info, int n)
     abort ();
 
   r = info->read_memory_func (buf->base + buf->n_fetch,
-			      buf->data + buf->n_fetch,
+			      (unsigned char*) buf->data + buf->n_fetch,
 			      n, info);
   if (r == 0)
     buf->n_fetch += n;
@@ -379,7 +379,7 @@ prt_d (struct buffer *buf, disassemble_info * info, char *txt)
   int d;
   signed char *p;
 
-  p = (unsigned char*) buf->data + buf->n_fetch;
+  p = buf->data + buf->n_fetch;
 
   if (fetch_data (buf, info, 1))
     {
@@ -400,7 +400,7 @@ prt_d_n (struct buffer *buf, disassemble_info * info, char *txt)
   int d;
   signed char *p;
 
-  p = (unsigned char*) buf->data + buf->n_fetch;
+  p = buf->data + buf->n_fetch;
 
   if (fetch_data (buf, info, 1))
     {
@@ -418,7 +418,7 @@ static int
 arit_d (struct buffer *buf, disassemble_info * info, char *txt)
 {
   char mytxt[TXTSIZ];
-  unsigned char c;
+  signed char c;
 
   c = buf->data[buf->n_fetch - 1];
   snprintf (mytxt, TXTSIZ, txt, arit_str[(c >> 3) & 7]);
@@ -429,7 +429,7 @@ static int
 ld_r_d (struct buffer *buf, disassemble_info * info, char *txt)
 {
   char mytxt[TXTSIZ];
-  unsigned char c;
+  signed char c;
 
   c = buf->data[buf->n_fetch - 1];
   snprintf (mytxt, TXTSIZ, txt, r_str[(c >> 3) & 7]);
@@ -440,7 +440,7 @@ static int
 ld_d_r(struct buffer *buf, disassemble_info * info, char *txt)
 {
   char mytxt[TXTSIZ];
-  unsigned char c;
+  signed char c;
 
   c = buf->data[buf->n_fetch - 1];
   snprintf (mytxt, TXTSIZ, txt, r_str[c & 7]);
@@ -461,9 +461,9 @@ pref_xd_cb (struct buffer * buf, disassemble_info * info, char* txt)
       d = p[2];
 
       if (((p[3] & 0xC0) == 0x40) || ((p[3] & 7) == 0x06))
-	snprintf (arg, TXTSIZ, "(%s+%d)", txt, d);
+	snprintf (arg, TXTSIZ, "(%s%+d)", txt, d);
       else
-	snprintf (arg, TXTSIZ, "(%s+%d),%s", txt, d, r_str[p[3] & 7]);
+	snprintf (arg, TXTSIZ, "(%s%+d),%s", txt, d, r_str[p[3] & 7]);
 
       if ((p[3] & 0xc0) == 0)
 	info->fprintf_func (info->stream, "%s %s",
@@ -494,18 +494,18 @@ static struct tab_elt opc_ind[] =
   { 0x2B, 0xFF, prt, "dec %s" },
   { 0x29, 0xFF, addvv, "%s" },
   { 0x09, 0xCF, prt_rr, "add %s," },
-  { 0x34, 0xFF, prt_d, "inc (%s+%%d)" },
-  { 0x35, 0xFF, prt_d, "dec (%s+%%d)" },
-  { 0x36, 0xFF, prt_d_n, "ld (%s+%%d),0x%%02x" },
+  { 0x34, 0xFF, prt_d, "inc (%s%%+d)" },
+  { 0x35, 0xFF, prt_d, "dec (%s%%+d)" },
+  { 0x36, 0xFF, prt_d_n, "ld (%s%%+d),0x%%%%02x" },
 
   { 0x76, 0xFF, dump, "h" },
-  { 0x46, 0xC7, ld_r_d, "ld %%s,(%s+%%%%d)" },
-  { 0x70, 0xF8, ld_d_r, "ld (%s+%%%%d),%%s" },
+  { 0x46, 0xC7, ld_r_d, "ld %%s,(%s%%%%+d)" },
+  { 0x70, 0xF8, ld_d_r, "ld (%s%%%%+d),%%s" },
   { 0x64, 0xF6, ld_v_v, "%s" },
   { 0x60, 0xF0, ld_r_r, "ld %s%%s,%%s" },
   { 0x44, 0xC6, ld_r_r, "ld %%s,%s%%s" },
 
-  { 0x86, 0xC7, arit_d, "%%s(%s+%%%%d)" },
+  { 0x86, 0xC7, arit_d, "%%s(%s%%%%+d)" },
   { 0x84, 0xC6, arit_r, "%%s%s%%s" },
 
   { 0xE1, 0xFF, prt, "pop %s" },

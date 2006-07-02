@@ -85,8 +85,19 @@ static char *v9_priv_reg_names[] =
 {
   "tpc", "tnpc", "tstate", "tt", "tick", "tba", "pstate", "tl",
   "pil", "cwp", "cansave", "canrestore", "cleanwin", "otherwin",
-  "wstate", "fq"
+  "wstate", "fq", "gl"
   /* "ver" - special cased */
+};
+
+/* These are ordered according to there register number in
+   rdhpr and wrhpr insns.  */
+static char *v9_hpriv_reg_names[] =
+{
+  "hpstate", "htstate", "resv2", "hintp", "resv4", "htba", "hver",
+  "resv7", "resv8", "resv9", "resv10", "resv11", "resv12", "resv13", 
+  "resv14", "resv15", "resv16", "resv17", "resv18", "resv19", "resv20",
+  "resv21", "resv22", "resv23", "resv24", "resv25", "resv26", "resv27",
+  "resv28", "resv29", "resv30", "hstick_cmpr"
 };
 
 /* These are ordered according to there register number in
@@ -768,7 +779,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		  case '?':
 		    if (X_RS1 (insn) == 31)
 		      (*info->fprintf_func) (stream, "%%ver");
-		    else if ((unsigned) X_RS1 (insn) < 16)
+		    else if ((unsigned) X_RS1 (insn) < 17)
 		      (*info->fprintf_func) (stream, "%%%s",
 					     v9_priv_reg_names[X_RS1 (insn)]);
 		    else
@@ -776,9 +787,25 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    break;
 
 		  case '!':
-		    if ((unsigned) X_RD (insn) < 15)
+		    if ((unsigned) X_RD (insn) < 17)
 		      (*info->fprintf_func) (stream, "%%%s",
 					     v9_priv_reg_names[X_RD (insn)]);
+		    else
+		      (*info->fprintf_func) (stream, "%%reserved");
+		    break;
+
+		  case '$':
+		    if ((unsigned) X_RS1 (insn) < 32)
+		      (*info->fprintf_func) (stream, "%%%s",
+					     v9_hpriv_reg_names[X_RS1 (insn)]);
+		    else
+		      (*info->fprintf_func) (stream, "%%reserved");
+		    break;
+
+		  case '%':
+		    if ((unsigned) X_RD (insn) < 32)
+		      (*info->fprintf_func) (stream, "%%%s",
+					     v9_hpriv_reg_names[X_RD (insn)]);
 		    else
 		      (*info->fprintf_func) (stream, "%%reserved");
 		    break;

@@ -1,6 +1,6 @@
 /* Print Motorola 68k instructions.
    Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify
@@ -1308,12 +1308,14 @@ match_insn_m68k (bfd_vma memaddr,
 	}
       else
 	{
+	  /* We must restore the print functions before trying to print the
+	     error message.  */
+	  info->fprintf_func = save_printer;
+	  info->print_address_func = save_print_address;
 	  info->fprintf_func (info->stream,
 			      /* xgettext:c-format */
 			      _("<internal error in opcode table: %s %s>\n"),
 			      best->name,  best->args);
-	  info->fprintf_func = save_printer;
-	  info->print_address_func = save_print_address;
 	  return 2;
 	}
     }
@@ -1396,58 +1398,9 @@ print_insn_m68k (bfd_vma memaddr, disassemble_info *info)
     /* Error return.  */
     return -1;
 
-  switch (info->mach)
-    {
-    default:
-    case 0:
-      arch_mask = (unsigned int) -1;
-      break;
-    case bfd_mach_m68000:
-      arch_mask = m68000|m68881|m68851;
-      break;
-    case bfd_mach_m68008:
-      arch_mask = m68008|m68881|m68851;
-      break;
-    case bfd_mach_m68010:
-      arch_mask = m68010|m68881|m68851;
-      break;
-    case bfd_mach_m68020:
-      arch_mask = m68020|m68881|m68851;
-      break;
-    case bfd_mach_m68030:
-      arch_mask = m68030|m68881|m68851;
-      break;
-    case bfd_mach_m68040:
-      arch_mask = m68040|m68881|m68851;
-      break;
-    case bfd_mach_m68060:
-      arch_mask = m68060|m68881|m68851;
-      break;
-    case bfd_mach_mcf5200:
-      arch_mask = mcfisa_a;
-      break;
-    case bfd_mach_mcf521x:
-    case bfd_mach_mcf528x:
-      arch_mask = mcfisa_a|mcfhwdiv|mcfisa_aa|mcfusp|mcfemac;
-      break;
-    case bfd_mach_mcf5206e:
-      arch_mask = mcfisa_a|mcfhwdiv|mcfmac;
-      break;
-    case bfd_mach_mcf5249:
-      arch_mask = mcfisa_a|mcfhwdiv|mcfemac;
-      break;
-    case bfd_mach_mcf5307:
-      arch_mask = mcfisa_a|mcfhwdiv|mcfmac;
-      break;
-    case bfd_mach_mcf5407:
-      arch_mask = mcfisa_a|mcfhwdiv|mcfisa_b|mcfmac;
-      break;
-    case bfd_mach_mcf547x:
-    case bfd_mach_mcf548x:
-    case bfd_mach_mcfv4e:
-      arch_mask = mcfisa_a|mcfhwdiv|mcfisa_b|mcfusp|cfloat|mcfemac;
-      break;
-    }
+  arch_mask = bfd_m68k_mach_to_features (info->mach);
+  if (!arch_mask)
+    arch_mask = ~(unsigned int)0;
 
   FETCH_DATA (info, buffer + 2);
   major_opcode = (buffer[0] >> 4) & 15;
@@ -1494,6 +1447,20 @@ print_insn_m68k (bfd_vma memaddr, disassemble_info *info)
 		    {
 		      val = fetch_arg (buffer, d[1], 3, info);
 		      if ((val & (val - 1)) != 0)
+			break;
+		    }
+		}
+	    }
+
+	  /* Don't match FPU insns with non-default coprocessor ID.  */
+	  if (*d == '\0')
+	    {
+	      for (d = opc->args; *d; d += 2)
+		{
+		  if (d[0] == 'I')
+		    {
+		      val = fetch_arg (buffer, 'd', 3, info);
+		      if (val != 1)
 			break;
 		    }
 		}

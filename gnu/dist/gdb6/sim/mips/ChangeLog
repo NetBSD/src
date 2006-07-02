@@ -1,3 +1,37 @@
+2006-04-18  Nick Clifton  <nickc@redhat.com>
+
+	* dv-tx3904tmr.c (deliver_tx3904tmr_tick): Add missing break
+	statement.
+
+2006-03-29  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate.
+
+2005-12-14  Chao-ying Fu  <fu@mips.com>
+
+	* Makefile.in (SIM_OBJS): Add dsp.o.
+	(dsp.o): New dependency.
+	(IGEN_INCLUDE): Add dsp.igen.
+	* configure.ac (mipsisa32r2*-*-*, mipsisa32*-*-*, mipsisa64r2*-*-*,
+	mipsisa64*-*-*): Add dsp to sim_igen_machine.
+	* configure: Regenerate.
+	* mips.igen: Add dsp model and include dsp.igen.
+	(MFHI, MFLO, MTHI, MTLO): Remove mips32, mips32r2, mips64, mips64r2,
+	because these instructions are extended in DSP ASE.
+	* sim-main.h (LAST_EMBED_REGNUM): Change from 89 to 96 because of
+	adding 6 DSP accumulator registers and 1 DSP control register.
+	(AC0LOIDX, AC0HIIDX, AC1LOIDX, AC1HIIDX, AC2LOIDX, AC2HIIDX, AC3LOIDX,
+	AC3HIIDX, DSPLO, DSPHI, DSPCRIDX, DSPCR, DSPCR_POS_SHIFT,
+	DSPCR_POS_MASK, DSPCR_POS_SMASK, DSPCR_SCOUNT_SHIFT, DSPCR_SCOUNT_MASK,
+	DSPCR_SCOUNT_SMASK, DSPCR_CARRY_SHIFT, DSPCR_CARRY_MASK,
+	DSPCR_CARRY_SMASK, DSPCR_CARRY, DSPCR_EFI_SHIFT, DSPCR_EFI_MASK,
+	DSPCR_EFI_SMASK, DSPCR_EFI, DSPCR_OUFLAG_SHIFT, DSPCR_OUFLAG_MASK,
+	DSPCR_OUFLAG_SMASK, DSPCR_OUFLAG4, DSPCR_OUFLAG5, DSPCR_OUFLAG6,
+	DSPCR_OUFLAG7, DSPCR_CCOND_SHIFT, DSPCR_CCOND_MASK,
+	DSPCR_CCOND_SMASK): New define.
+	(DSPLO_REGNUM, DSPHI_REGNUM): New array for DSP accumulators.
+	* dsp.c, dsp.igen: New files for MIPS DSP ASE.
+
 2005-07-08  Ian Lance Taylor  <ian@airs.com>
 
 	* tconfig.in (SIM_QUIET_NAN_NEGATED): Define.

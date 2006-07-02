@@ -37,14 +37,7 @@
 #include "sim-utils.h"
 #include "run-sim.h"
 #include "gdb/sim-arm.h"
-
-#ifndef SIGTRAP
-#define SIGTRAP 5
-#endif
-
-#ifndef SIGBUS
-#define SIGBUS SIGSEGV
-#endif
+#include "gdb/signals.h"
 
 host_callback *sim_callback;
 
@@ -910,7 +903,7 @@ sim_stop_reason (sd, reason, sigrc)
   if (stop_simulator)
     {
       *reason = sim_stopped;
-      *sigrc = SIGINT;
+      *sigrc = TARGET_SIGNAL_INT;
     }
   else if (state->EndCondition == 0)
     {
@@ -921,10 +914,10 @@ sim_stop_reason (sd, reason, sigrc)
     {
       *reason = sim_stopped;
       if (state->EndCondition == RDIError_BreakpointReached)
-	*sigrc = SIGTRAP;
+	*sigrc = TARGET_SIGNAL_TRAP;
       else if (   state->EndCondition == RDIError_DataAbort
 	       || state->EndCondition == RDIError_AddressException)
-	*sigrc = SIGBUS;
+	*sigrc = TARGET_SIGNAL_BUS;
       else
 	*sigrc = 0;
     }
