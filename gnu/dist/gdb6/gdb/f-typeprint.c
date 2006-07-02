@@ -1,7 +1,7 @@
 /* Support for printing Fortran types for GDB, the GNU debugger.
 
-   Copyright 1986, 1988, 1989, 1991, 1993, 1994, 1995, 1996, 1998,
-   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1988, 1989, 1991, 1993, 1994, 1995, 1996, 1998,
+   2000, 2001, 2002, 2003, 2006 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C version by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_obstack.h"
@@ -41,7 +41,7 @@
 static void f_type_print_args (struct type *, struct ui_file *);
 #endif
 
-static void print_equivalent_f77_float_type (struct type *,
+static void print_equivalent_f77_float_type (int level, struct type *,
 					     struct ui_file *);
 
 static void f_type_print_varspec_suffix (struct type *, struct ui_file *,
@@ -260,13 +260,14 @@ f_type_print_varspec_suffix (struct type *type, struct ui_file *stream,
 }
 
 static void
-print_equivalent_f77_float_type (struct type *type, struct ui_file *stream)
+print_equivalent_f77_float_type (int level, struct type *type,
+				 struct ui_file *stream)
 {
   /* Override type name "float" and make it the
      appropriate real. XLC stupidly outputs -12 as a type
      for real when it really should be outputting -18 */
 
-  fprintf_filtered (stream, "real*%d", TYPE_LENGTH (type));
+  fprintfi_filtered (level, stream, "real*%d", TYPE_LENGTH (type));
 }
 
 /* Print the name of the type (or the ultimate pointer target,
@@ -289,6 +290,8 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
   int retcode;
   int upper_bound;
 
+  int index;
+
   QUIT;
 
   wrap_here ("    ");
@@ -304,7 +307,7 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
   if ((show <= 0) && (TYPE_NAME (type) != NULL))
     {
       if (TYPE_CODE (type) == TYPE_CODE_FLT)
-	print_equivalent_f77_float_type (type, stream);
+	print_equivalent_f77_float_type (level, type, stream);
       else
 	fputs_filtered (TYPE_NAME (type), stream);
       return;
@@ -335,25 +338,25 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
       break;
 
     case TYPE_CODE_VOID:
-      fprintf_filtered (stream, "VOID");
+      fprintfi_filtered (level, stream, "VOID");
       break;
 
     case TYPE_CODE_UNDEF:
-      fprintf_filtered (stream, "struct <unknown>");
+      fprintfi_filtered (level, stream, "struct <unknown>");
       break;
 
     case TYPE_CODE_ERROR:
-      fprintf_filtered (stream, "<unknown type>");
+      fprintfi_filtered (level, stream, "<unknown type>");
       break;
 
     case TYPE_CODE_RANGE:
       /* This should not occur */
-      fprintf_filtered (stream, "<range type>");
+      fprintfi_filtered (level, stream, "<range type>");
       break;
 
     case TYPE_CODE_CHAR:
       /* Override name "char" and make it "character" */
-      fprintf_filtered (stream, "character");
+      fprintfi_filtered (level, stream, "character");
       break;
 
     case TYPE_CODE_INT:
@@ -362,24 +365,24 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
          C-oriented, we must change these to "character" from "char".  */
 
       if (strcmp (TYPE_NAME (type), "char") == 0)
-	fprintf_filtered (stream, "character");
+	fprintfi_filtered (level, stream, "character");
       else
 	goto default_case;
       break;
 
     case TYPE_CODE_COMPLEX:
-      fprintf_filtered (stream, "complex*%d", TYPE_LENGTH (type));
+      fprintfi_filtered (level, stream, "complex*%d", TYPE_LENGTH (type));
       break;
 
     case TYPE_CODE_FLT:
-      print_equivalent_f77_float_type (type, stream);
+      print_equivalent_f77_float_type (level, type, stream);
       break;
 
     case TYPE_CODE_STRING:
       /* Strings may have dynamic upperbounds (lengths) like arrays. */
 
       if (TYPE_ARRAY_UPPER_BOUND_TYPE (type) == BOUND_CANNOT_BE_DETERMINED)
-	fprintf_filtered (stream, "character*(*)");
+	fprintfi_filtered (level, stream, "character*(*)");
       else
 	{
 	  retcode = f77_get_dynamic_upperbound (type, &upper_bound);
@@ -391,6 +394,21 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
 	}
       break;
 
+    case TYPE_CODE_STRUCT:
+      fprintfi_filtered (level, stream, "Type ");
+      fputs_filtered (TYPE_TAG_NAME (type), stream);
+      fputs_filtered ("\n", stream);
+      for (index = 0; index < TYPE_NFIELDS (type); index++)
+	{
+	  f_print_type (TYPE_FIELD_TYPE (type, index), "", stream, show, level + 4);
+	  fputs_filtered (" :: ", stream);
+	  fputs_filtered (TYPE_FIELD_NAME (type, index), stream);
+	  fputs_filtered ("\n", stream);
+	} 
+      fprintfi_filtered (level, stream, "End Type ");
+      fputs_filtered (TYPE_TAG_NAME (type), stream);
+      break;
+
     default_case:
     default:
       /* Handle types not explicitly handled by the other cases,
@@ -398,7 +416,7 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
          the type name is, as recorded in the type itself.  If there
          is no type name, then complain. */
       if (TYPE_NAME (type) != NULL)
-	fputs_filtered (TYPE_NAME (type), stream);
+	fprintfi_filtered (level, stream, "%s", TYPE_NAME (type));
       else
 	error (_("Invalid type code (%d) in symbol table."), TYPE_CODE (type));
       break;

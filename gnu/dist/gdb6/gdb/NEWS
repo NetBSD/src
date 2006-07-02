@@ -1,6 +1,73 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 6.5
+
+* New targets
+
+Renesas M32C/M16C		m32c-elf
+
+Morpho Technologies ms1		ms1-elf
+
+* New commands
+
+init-if-undefined		Initialize a convenience variable, but
+				only if it doesn't already have a value.
+
+The following commands are presently only implemented for native GNU/Linux:
+
+checkpoint			Save a snapshot of the program state.
+
+restart	<n>			Return the program state to a 
+				previously saved state.
+
+info checkpoints		List currently saved checkpoints.
+
+delete-checkpoint <n>		Delete a previously saved checkpoint.
+
+set|show detach-on-fork		Tell gdb whether to detach from a newly
+				forked process, or to keep debugging it.
+
+info forks			List forks of the user program that
+				are available to be debugged.
+
+fork <n>			Switch to debugging one of several
+				forks of the user program that are
+				available to be debugged.
+
+delete-fork <n>			Delete a fork from the list of forks
+				that are available to be debugged (and
+				kill the forked process).
+
+detach-fork <n>			Delete a fork from the list of forks
+				that are available to be debugged (and
+				allow the process to continue).
+
+* New architecture
+
+Morpho Technologies ms2		ms1-elf
+
+* Improved Windows host support
+
+GDB now builds as a cross debugger hosted on i686-mingw32, including
+native console support, and remote communications using either
+network sockets or serial ports.
+
+* Improved Modula-2 language support
+
+GDB can now print most types in the Modula-2 syntax.  This includes:
+basic types, set types, record types, enumerated types, range types,
+pointer types and ARRAY types.  Procedure var parameters are correctly
+printed and hexadecimal addresses and character constants are also
+written in the Modula-2 syntax.  Best results can be obtained by using
+GNU Modula-2 together with the -gdwarf-2 command line option.
+
+* REMOVED features
+
+The ARM rdi-share module.
+
+The Netware NLM debug server.
+
 *** Changes in GDB 6.4
 
 * New native configurations
@@ -54,11 +121,8 @@ are not yet supported.
 * REMOVED configurations and files
 
 VxWorks and the XDR protocol			*-*-vxworks
-Renesas H8/300S					h8300*-*-*
 Motorola MCORE                                  mcore-*-*
-Matsushita MN10300 w/simulator			mn10300-*-*
 National Semiconductor NS32000			ns32k-*-*
-NEC V850					v850-*-*
 
 * New "set print array-indexes" command
 

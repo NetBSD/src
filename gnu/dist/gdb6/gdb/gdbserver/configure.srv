@@ -54,6 +54,12 @@ case "${target}" in
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			;;
+  m68*-*-uclinux*)	srv_regobj=reg-m68k.o
+			srv_tgtobj="linux-low.o linux-m68k-low.o"
+			srv_linux_usrregs=yes
+			srv_linux_regsets=yes
+			srv_linux_thread_db=yes
+			;;
   mips*-*-linux*)	srv_regobj=reg-mips.o
 			srv_tgtobj="linux-low.o linux-mips-low.o"
 			srv_linux_usrregs=yes

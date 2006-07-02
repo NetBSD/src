@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,22 +16,26 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
 #include "frame-unwind.h"
+#include "gdbcore.h"
 #include "osabi.h"
+#include "regcache.h"
 #include "regset.h"
 #include "symtab.h"
 #include "objfiles.h"
-#include "solib-svr4.h"
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
 
+#include "obsd-tdep.h"
 #include "sparc64-tdep.h"
+#include "solib-svr4.h"
+#include "bsd-uthread.h"
 
 /* OpenBSD uses the traditional NetBSD core file format, even for
    ports that use ELF.  The core files don't use multiple register
@@ -199,6 +203,90 @@ sparc64obsd_sigtramp_frame_sniffer (struct frame_info *next_frame)
 }
 
 
+/* Threads support.  */
+
+/* Offset wthin the thread structure where we can find %fp and %i7.  */
+#define SPARC64OBSD_UTHREAD_FP_OFFSET	232
+#define SPARC64OBSD_UTHREAD_PC_OFFSET	240
+
+static void
+sparc64obsd_supply_uthread (struct regcache *regcache,
+			    int regnum, CORE_ADDR addr)
+{
+  CORE_ADDR fp, fp_addr = addr + SPARC64OBSD_UTHREAD_FP_OFFSET;
+  gdb_byte buf[8];
+
+  gdb_assert (regnum >= -1);
+
+  fp = read_memory_unsigned_integer (fp_addr, 8);
+  if (regnum == SPARC_SP_REGNUM || regnum == -1)
+    {
+      store_unsigned_integer (buf, 8, fp);
+      regcache_raw_supply (regcache, SPARC_SP_REGNUM, buf);
+
+      if (regnum == SPARC_SP_REGNUM)
+	return;
+    }
+
+  if (regnum == SPARC64_PC_REGNUM || regnum == SPARC64_NPC_REGNUM
+      || regnum == -1)
+    {
+      CORE_ADDR i7, i7_addr = addr + SPARC64OBSD_UTHREAD_PC_OFFSET;
+
+      i7 = read_memory_unsigned_integer (i7_addr, 8);
+      if (regnum == SPARC64_PC_REGNUM || regnum == -1)
+	{
+	  store_unsigned_integer (buf, 8, i7 + 8);
+	  regcache_raw_supply (regcache, SPARC64_PC_REGNUM, buf);
+	}
+      if (regnum == SPARC64_NPC_REGNUM || regnum == -1)
+	{
+	  store_unsigned_integer (buf, 8, i7 + 12);
+	  regcache_raw_supply (regcache, SPARC64_NPC_REGNUM, buf);
+	}
+
+      if (regnum == SPARC64_PC_REGNUM || regnum == SPARC64_NPC_REGNUM)
+	return;
+    }
+
+  sparc_supply_rwindow (regcache, fp, regnum);
+}
+
+static void
+sparc64obsd_collect_uthread(const struct regcache *regcache,
+			    int regnum, CORE_ADDR addr)
+{
+  CORE_ADDR sp;
+  gdb_byte buf[8];
+
+  gdb_assert (regnum >= -1);
+
+  if (regnum == SPARC_SP_REGNUM || regnum == -1)
+    {
+      CORE_ADDR fp_addr = addr + SPARC64OBSD_UTHREAD_FP_OFFSET;
+
+      regcache_raw_collect (regcache, SPARC_SP_REGNUM, buf);
+      write_memory (fp_addr,buf, 8);
+    }
+
+  if (regnum == SPARC64_PC_REGNUM || regnum == -1)
+    {
+      CORE_ADDR i7, i7_addr = addr + SPARC64OBSD_UTHREAD_PC_OFFSET;
+
+      regcache_raw_collect (regcache, SPARC64_PC_REGNUM, buf);
+      i7 = extract_unsigned_integer (buf, 8) - 8;
+      write_memory_unsigned_integer (i7_addr, 8, i7);
+
+      if (regnum == SPARC64_PC_REGNUM)
+	return;
+    }
+
+  regcache_raw_collect (regcache, SPARC_SP_REGNUM, buf);
+  sp = extract_unsigned_integer (buf, 8);
+  sparc_collect_rwindow (regcache, sp, regnum);
+}
+
+
 static void
 sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -207,14 +295,21 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset = regset_alloc (gdbarch, sparc64obsd_supply_gregset, NULL);
   tdep->sizeof_gregset = 832;
 
+  /* Make sure we can single-step "new" syscalls.  */
+  tdep->step_trap = sparcnbsd_step_trap;
+
   frame_unwind_append_sniffer (gdbarch, sparc64obsd_sigtramp_frame_sniffer);
 
   sparc64_init_abi (info, gdbarch);
 
   /* OpenBSD/sparc64 has SVR4-style shared libraries.  */
-  set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_gdbarch_skip_solib_resolver (gdbarch, obsd_skip_solib_resolver);
+
+  /* OpenBSD provides a user-level threads implementation.  */
+  bsd_uthread_set_supply_uthread (gdbarch, sparc64obsd_supply_uthread);
+  bsd_uthread_set_collect_uthread (gdbarch, sparc64obsd_collect_uthread);
 }
 
 

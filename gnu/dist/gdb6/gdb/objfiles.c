@@ -1,6 +1,6 @@
 /* GDB routines for manipulating objfiles.
 
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
    2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file contains support routines for creating, manipulating, and
    destroying objfile structures. */
@@ -45,6 +45,7 @@
 #include "breakpoint.h"
 #include "block.h"
 #include "dictionary.h"
+#include "source.h"
 
 /* Prototypes for local functions */
 
@@ -392,6 +393,10 @@ free_objfile (struct objfile *objfile)
       objfile->separate_debug_objfile_backlink->separate_debug_objfile = NULL;
     }
   
+  /* Remove any references to this objfile in the global value
+     lists.  */
+  preserve_values (objfile);
+
   /* First do any symbol file specific actions required when we are
      finished with a particular symbol file.  Note that if the objfile
      is using reusable symbol information (via mmalloc) then each of
@@ -432,9 +437,23 @@ free_objfile (struct objfile *objfile)
      is unknown, but we play it safe for now and keep each action until
      it is shown to be no longer needed. */
 
-  /* I *think* all our callers call clear_symtab_users.  If so, no need
-     to call this here.  */
+  /* Not all our callers call clear_symtab_users (objfile_purge_solibs,
+     for example), so we need to call this here.  */
   clear_pc_function_cache ();
+
+  /* Check to see if the current_source_symtab belongs to this objfile,
+     and if so, call clear_current_source_symtab_and_line. */
+
+  {
+    struct symtab_and_line cursal = get_current_source_symtab_and_line ();
+    struct symtab *s;
+
+    ALL_OBJFILE_SYMTABS (objfile, s)
+      {
+	if (s == cursal.symtab)
+	  clear_current_source_symtab_and_line ();
+      }
+  }
 
   /* The last thing we do is free the objfile struct itself. */
 

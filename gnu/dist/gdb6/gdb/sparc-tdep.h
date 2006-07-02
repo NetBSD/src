@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef SPARC_TDEP_H
 #define SPARC_TDEP_H 1
@@ -65,6 +65,9 @@ struct gdbarch_tdep
   /* Size of an Procedure Linkage Table (PLT) entry, 0 if we shouldn't
      treat the PLT special when doing prologue analysis.  */
   size_t plt_entry_size;
+
+  /* Alternative location for trap return.  Used for single-stepping.  */
+  CORE_ADDR (*step_trap) (unsigned long insn);
 };
 
 /* Register numbers of various important registers.  */
@@ -147,6 +150,9 @@ struct sparc_frame_cache
 /* Fetch the instruction at PC.  */
 extern unsigned long sparc_fetch_instruction (CORE_ADDR pc);
 
+/* Return the contents if register REGNUM as an address.  */
+extern CORE_ADDR sparc_address_from_register (int regnum);
+
 /* Fetch StackGhost Per-Process XOR cookie.  */
 extern ULONGEST sparc_fetch_wcookie (void);
 
@@ -197,6 +203,10 @@ extern void sparc32_sol2_init_abi (struct gdbarch_info info,
 
 /* Register offsets for NetBSD.  */
 extern const struct sparc_gregset sparc32nbsd_gregset;
+
+/* Return the address of a system call's alternative return
+   address.  */
+extern CORE_ADDR sparcnbsd_step_trap (unsigned long insn);
 
 extern void sparc32nbsd_elf_init_abi (struct gdbarch_info info,
 				      struct gdbarch *gdbarch);

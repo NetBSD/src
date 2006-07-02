@@ -1,6 +1,6 @@
 /* Generic ECOFF (Extended-COFF) routines.
    Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -140,8 +140,7 @@ _bfd_ecoff_mkobject_hook (bfd *abfd, void * filehdr, void * aouthdr)
 /* Initialize a new section.  */
 
 bfd_boolean
-_bfd_ecoff_new_section_hook (bfd *abfd ATTRIBUTE_UNUSED,
-			     asection *section)
+_bfd_ecoff_new_section_hook (bfd *abfd, asection *section)
 {
   unsigned int i;
   static struct
@@ -181,7 +180,7 @@ _bfd_ecoff_new_section_hook (bfd *abfd ATTRIBUTE_UNUSED,
      uncertain about .init on some systems and I don't know how shared
      libraries work.  */
 
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, section);
 }
 
 /* Determine the machine architecture and type.  This is called from
@@ -3285,8 +3284,9 @@ _bfd_ecoff_bfd_link_hash_table_create (bfd *abfd)
   ret = bfd_malloc (amt);
   if (ret == NULL)
     return NULL;
-  if (! _bfd_link_hash_table_init (&ret->root, abfd,
-				   ecoff_link_hash_newfunc))
+  if (!_bfd_link_hash_table_init (&ret->root, abfd,
+				  ecoff_link_hash_newfunc,
+				  sizeof (struct ecoff_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4002,11 +4002,10 @@ ecoff_indirect_link_order (bfd *output_bfd,
 
   BFD_ASSERT ((output_section->flags & SEC_HAS_CONTENTS) != 0);
 
-  if (link_order->size == 0)
-    return TRUE;
-
   input_section = link_order->u.indirect.section;
   input_bfd = input_section->owner;
+  if (input_section->size == 0)
+    return TRUE;
 
   BFD_ASSERT (input_section->output_section == output_section);
   BFD_ASSERT (input_section->output_offset == link_order->offset);

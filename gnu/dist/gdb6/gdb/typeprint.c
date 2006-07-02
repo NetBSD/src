@@ -1,6 +1,6 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
 
-   Copyright 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1998,
+   Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1998,
    1999, 2000, 2001, 2003 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_obstack.h"
@@ -44,8 +44,6 @@ extern int objectprint;		/* Controls looking up an object's derived type
 extern void _initialize_typeprint (void);
 
 static void ptype_command (char *, int);
-
-static struct type *ptype_eval (struct expression *);
 
 static void whatis_command (char *, int);
 
@@ -182,55 +180,12 @@ whatis_command (char *exp, int from_tty)
   whatis_exp (exp, -1);
 }
 
-/* Simple subroutine for ptype_command.  */
-
-static struct type *
-ptype_eval (struct expression *exp)
-{
-  if (exp->elts[0].opcode == OP_TYPE)
-    {
-      return (exp->elts[1].type);
-    }
-  else
-    {
-      return (NULL);
-    }
-}
-
 /* TYPENAME is either the name of a type, or an expression.  */
 
 static void
 ptype_command (char *typename, int from_tty)
 {
-  struct type *type;
-  struct expression *expr;
-  struct cleanup *old_chain;
-
-  if (typename == NULL)
-    {
-      /* Print type of last thing in value history. */
-      whatis_exp (typename, 1);
-    }
-  else
-    {
-      expr = parse_expression (typename);
-      old_chain = make_cleanup (free_current_contents, &expr);
-      type = ptype_eval (expr);
-      if (type != NULL)
-	{
-	  /* User did "ptype <typename>" */
-	  printf_filtered ("type = ");
-	  type_print (type, "", gdb_stdout, 1);
-	  printf_filtered ("\n");
-	  do_cleanups (old_chain);
-	}
-      else
-	{
-	  /* User did "ptype <symbolname>" */
-	  do_cleanups (old_chain);
-	  whatis_exp (typename, 1);
-	}
-    }
+  whatis_exp (typename, 1);
 }
 
 /* Print integral scalar data VAL, of type TYPE, onto stdio stream STREAM.

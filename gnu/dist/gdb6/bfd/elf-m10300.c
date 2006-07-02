@@ -1,6 +1,6 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -582,10 +582,14 @@ _bfd_mn10300_elf_create_got_section (abfd, info)
 
   /* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the
      .plt section.  */
-  if (bed->want_plt_sym
-      && !_bfd_elf_define_linkage_sym (abfd, info, s,
-				       "_PROCEDURE_LINKAGE_TABLE_"))
-    return FALSE;
+  if (bed->want_plt_sym)
+    {
+      h = _bfd_elf_define_linkage_sym (abfd, info, s,
+				       "_PROCEDURE_LINKAGE_TABLE_");
+      elf_hash_table (info)->hplt = h;
+      if (h == NULL)
+	return FALSE;
+    }
 
   s = bfd_make_section_with_flags (abfd, ".got", flags);
   if (s == NULL
@@ -3691,8 +3695,9 @@ elf32_mn10300_link_hash_table_create (abfd)
   if (ret == (struct elf32_mn10300_link_hash_table *) NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
-				       elf32_mn10300_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      elf32_mn10300_link_hash_newfunc,
+				      sizeof (struct elf32_mn10300_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -3708,8 +3713,9 @@ elf32_mn10300_link_hash_table_create (abfd)
       return NULL;
     }
 
-  if (! _bfd_elf_link_hash_table_init (&ret->static_hash_table->root, abfd,
-				       elf32_mn10300_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->static_hash_table->root, abfd,
+				      elf32_mn10300_link_hash_newfunc,
+				      sizeof (struct elf32_mn10300_link_hash_entry)))
     {
       free (ret->static_hash_table);
       free (ret);
@@ -4498,7 +4504,7 @@ _bfd_mn10300_elf_finish_dynamic_symbol (output_bfd, info, h, sym)
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
+      || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;

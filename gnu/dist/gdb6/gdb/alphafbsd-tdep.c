@@ -1,5 +1,6 @@
-/* Target-dependent code for FreeBSD/Alpha.
-   Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
+/* Target-dependent code for FreeBSD/alpha.
+
+   Copyright (C) 2001, 2002, 2003, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,14 +16,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "value.h"
 #include "osabi.h"
 
 #include "alpha-tdep.h"
+#include "solib-svr4.h"
 
 static int
 alphafbsd_use_struct_convention (int gcc_p, struct type *type)
@@ -98,7 +100,12 @@ alphafbsd_init_abi (struct gdbarch_info info,
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
-  set_gdbarch_deprecated_use_struct_convention (gdbarch, alphafbsd_use_struct_convention);
+  /* FreeBSD/alpha has SVR4-style shared libraries.  */
+  set_solib_svr4_fetch_link_map_offsets
+    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+
+  set_gdbarch_deprecated_use_struct_convention
+    (gdbarch, alphafbsd_use_struct_convention);
 
   tdep->dynamic_sigtramp_offset = alphafbsd_sigtramp_offset;
   tdep->sigcontext_addr = alphafbsd_sigcontext_addr;

@@ -1,6 +1,6 @@
 /* BFD back-end data structures for ELF files.
    Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -377,6 +377,9 @@ struct elf_link_hash_table
 
   /* The _GLOBAL_OFFSET_TABLE_ symbol.  */
   struct elf_link_hash_entry *hgot;
+
+  /* The _PROCEDURE_LINKAGE_TABLE_ symbol.  */
+  struct elf_link_hash_entry *hplt;
 
   /* A pointer to information used to merge SEC_MERGE sections.  */
   void *merge_info;
@@ -830,6 +833,11 @@ struct elf_backend_data
   bfd_boolean (*elf_backend_modify_segment_map)
     (bfd *, struct bfd_link_info *);
 
+  /* This function is called during section garbage collection to
+     mark sections that define global symbols.  */
+  bfd_boolean (*gc_mark_dynamic_ref)
+    (struct elf_link_hash_entry *h, void *inf);
+
   /* This function is called during section gc to discover the section a
      particular relocation refers to.  */
   asection * (*gc_mark_hook)
@@ -878,10 +886,20 @@ struct elf_backend_data
   void (*elf_backend_hide_symbol)
     (struct bfd_link_info *, struct elf_link_hash_entry *, bfd_boolean);
 
+  /* A function to do additional symbol fixup, called by
+     _bfd_elf_fix_symbol_flags.  */
+  bfd_boolean (*elf_backend_fixup_symbol)
+    (struct bfd_link_info *, struct elf_link_hash_entry *);
+
   /* Merge the backend specific symbol attribute.  */
   void (*elf_backend_merge_symbol_attribute)
     (struct elf_link_hash_entry *, const Elf_Internal_Sym *, bfd_boolean,
      bfd_boolean);
+
+  /* Decide whether an undefined symbol is special and can be ignored.
+     This is the case for OPTIONAL symbols on IRIX.  */
+  bfd_boolean (*elf_backend_ignore_undef_symbol)
+    (struct elf_link_hash_entry *);
 
   /* Emit relocations.  Overrides default routine for emitting relocs,
      except during a relocatable link, or if all relocs are being emitted.  */
@@ -1466,18 +1484,19 @@ extern void _bfd_elf_link_hash_copy_indirect
    struct elf_link_hash_entry *);
 extern void _bfd_elf_link_hash_hide_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *, bfd_boolean);
+extern bfd_boolean _bfd_elf_link_hash_fixup_symbol
+  (struct bfd_link_info *, struct elf_link_hash_entry *);
 extern bfd_boolean _bfd_elf_link_hash_table_init
   (struct elf_link_hash_table *, bfd *,
    struct bfd_hash_entry *(*)
-     (struct bfd_hash_entry *, struct bfd_hash_table *, const char *));
+     (struct bfd_hash_entry *, struct bfd_hash_table *, const char *),
+   unsigned int);
 extern bfd_boolean _bfd_elf_slurp_version_tables
   (bfd *, bfd_boolean);
 extern bfd_boolean _bfd_elf_merge_sections
   (bfd *, struct bfd_link_info *);
 extern bfd_boolean _bfd_elf_match_sections_by_type
   (bfd *, const asection *, bfd *, const asection *);
-#define _bfd_generic_match_sections_by_type \
-  _bfd_elf_match_sections_by_type
 extern bfd_boolean bfd_elf_is_group_section
   (bfd *, const struct bfd_section *);
 extern void _bfd_elf_section_already_linked
@@ -1804,6 +1823,9 @@ extern bfd_reloc_status_type _bfd_elf_rel_vtable_reloc_fn
 
 extern bfd_boolean bfd_elf_final_link
   (bfd *, struct bfd_link_info *);
+
+extern bfd_boolean bfd_elf_gc_mark_dynamic_ref_symbol
+  (struct elf_link_hash_entry *h, void *inf);
 
 extern bfd_boolean bfd_elf_gc_sections
   (bfd *, struct bfd_link_info *);

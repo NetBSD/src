@@ -61,6 +61,15 @@ struct _bfd_sparc_elf_link_hash_table
   /* Small local sym to section mapping cache.  */
   struct sym_sec_cache sym_sec;
 
+  /* True if the target system is VxWorks.  */
+  int is_vxworks;
+
+  /* The (unloaded but important) .rela.plt.unloaded section, for VxWorks.  */
+  asection *srelplt2;
+
+  /* .got.plt is only used on VxWorks.  */
+  asection *sgotplt;
+
   void (*put_word) (bfd *, bfd_vma, void *);
   void (*append_rela) (bfd *, asection *, Elf_Internal_Rela *);
   bfd_vma (*r_info) (Elf_Internal_Rela *, bfd_vma, bfd_vma);
@@ -70,6 +79,8 @@ struct _bfd_sparc_elf_link_hash_table
   int dynamic_interpreter_size;
   unsigned int word_align_power;
   unsigned int align_power_max;
+  unsigned int plt_header_size;
+  unsigned int plt_entry_size;
   int bytes_per_word;
   int bytes_per_rela;
   int dtpoff_reloc;

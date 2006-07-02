@@ -230,8 +230,8 @@ extra_case (bfd *in_abfd,
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = (link_order->offset
-		       + *dst_ptr
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 1;  /* -1, since we're in the odd byte of the
                                      word and the pc's been incremented.  */
@@ -258,8 +258,8 @@ extra_case (bfd *in_abfd,
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = (link_order->offset
-		       + *dst_ptr
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 1;  /* -1, since we're in the odd byte of the
                                      word and the pc's been incremented.  */
@@ -289,8 +289,8 @@ extra_case (bfd *in_abfd,
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = (link_order->offset
-		       + *dst_ptr
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 2;
 
@@ -318,8 +318,8 @@ extra_case (bfd *in_abfd,
       {
 	bfd_vma dst = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = (link_order->offset
-		       + *dst_ptr
+	bfd_vma dot = (*dst_ptr
+		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 2;
 

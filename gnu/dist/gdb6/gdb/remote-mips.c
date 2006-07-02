@@ -1,7 +1,7 @@
 /* Remote debugging interface for MIPS remote debugging protocol.
 
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   2002, 2003, 2004, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by Ian Lance Taylor
    <ian@cygnus.com>.
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -2197,7 +2197,7 @@ Can't pass arguments to remote MIPS board; arguments ignored.");
 
   /* FIXME: Should we set inferior_ptid here?  */
 
-  proceed (entry_pt, TARGET_SIGNAL_DEFAULT, 0);
+  write_pc (entry_pt);
 }
 
 /* Clean up after a process.  Actually nothing to do.  */
@@ -2216,27 +2216,28 @@ mips_mourn_inferior (void)
 /* Insert a breakpoint.  On targets that don't have built-in
    breakpoint support, we read the contents of the target location and
    stash it, then overwrite it with a breakpoint instruction.  ADDR is
-   the target location in the target machine.  CONTENTS_CACHE is a
-   pointer to memory allocated for saving the target contents.  It is
-   guaranteed by the caller to be long enough to save the breakpoint
-   length returned by BREAKPOINT_FROM_PC.  */
+   the target location in the target machine.  BPT is the breakpoint
+   being inserted or removed, which contains memory for saving the
+   target contents.  */
 
 static int
-mips_insert_breakpoint (CORE_ADDR addr, char *contents_cache)
+mips_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
   if (monitor_supports_breakpoints)
-    return set_breakpoint (addr, MIPS_INSN32_SIZE, BREAK_FETCH);
+    return set_breakpoint (bp_tgt->placed_address, MIPS_INSN32_SIZE,
+			   BREAK_FETCH);
   else
-    return memory_insert_breakpoint (addr, contents_cache);
+    return memory_insert_breakpoint (bp_tgt);
 }
 
 static int
-mips_remove_breakpoint (CORE_ADDR addr, char *contents_cache)
+mips_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
   if (monitor_supports_breakpoints)
-    return clear_breakpoint (addr, MIPS_INSN32_SIZE, BREAK_FETCH);
+    return clear_breakpoint (bp_tgt->placed_address, MIPS_INSN32_SIZE,
+			     BREAK_FETCH);
   else
-    return memory_remove_breakpoint (addr, contents_cache);
+    return memory_remove_breakpoint (bp_tgt);
 }
 
 /* Tell whether this target can support a hardware breakpoint.  CNT

@@ -1,6 +1,6 @@
 /* IBM RS/6000 native-dependent code for GDB, the GNU debugger.
 
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
+   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
    1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -527,15 +527,15 @@ exec_one_dummy_insn (void)
 {
 #define	DUMMY_INSN_ADDR	(TEXT_SEGMENT_BASE)+0x200
 
-  char shadow_contents[BREAKPOINT_MAX];		/* Stash old bkpt addr contents */
   int ret, status, pid;
   CORE_ADDR prev_pc;
+  void *bp;
 
   /* We plant one dummy breakpoint into DUMMY_INSN_ADDR address. We
      assume that this address will never be executed again by the real
      code. */
 
-  target_insert_breakpoint (DUMMY_INSN_ADDR, shadow_contents);
+  bp = deprecated_insert_raw_breakpoint (DUMMY_INSN_ADDR);
 
   /* You might think this could be done with a single ptrace call, and
      you'd be correct for just about every platform I've ever worked
@@ -559,7 +559,7 @@ exec_one_dummy_insn (void)
   while (pid != PIDGET (inferior_ptid));
 
   write_pc (prev_pc);
-  target_remove_breakpoint (DUMMY_INSN_ADDR, shadow_contents);
+  deprecated_remove_raw_breakpoint (bp);
 }
 
 /* Fetch registers from the register section in core bfd. */

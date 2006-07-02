@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB. 
 
-   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
    1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
    Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -42,9 +42,6 @@
 
 #include <ctype.h>
 #include "gdb_stat.h"
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 #include "xcoffsolib.h"
 
@@ -61,8 +58,6 @@ static void file_command (char *, int);
 static void set_section_command (char *, int);
 
 static void exec_files_info (struct target_ops *);
-
-static int ignore (CORE_ADDR, bfd_byte *);
 
 static void init_exec_ops (void);
 
@@ -694,7 +689,7 @@ exec_set_section_address (const char *filename, int index, CORE_ADDR address)
    breakpoint_init_inferior).  */
 
 static int
-ignore (CORE_ADDR addr, bfd_byte *contents)
+ignore (struct bp_target_info *bp_tgt)
 {
   return 0;
 }

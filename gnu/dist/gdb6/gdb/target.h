@@ -1,7 +1,8 @@
 /* Interface between GDB and target environments, including files and processes
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -19,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #if !defined (TARGET_H)
 #define TARGET_H
@@ -29,6 +30,7 @@ struct objfile;
 struct ui_file;
 struct mem_attrib;
 struct target_ops;
+struct bp_target_info;
 
 /* This include file defines the interface between the main part
    of the debugger, and the part which is target-specific, or
@@ -301,7 +303,7 @@ struct target_ops
     void (*to_attach) (char *, int);
     void (*to_post_attach) (int);
     void (*to_detach) (char *, int);
-    void (*to_disconnect) (char *, int);
+    void (*to_disconnect) (struct target_ops *, char *, int);
     void (*to_resume) (ptid_t, int, enum target_signal);
     ptid_t (*to_wait) (ptid_t, struct target_waitstatus *);
     void (*to_fetch_registers) (int);
@@ -335,17 +337,17 @@ struct target_ops
 				   struct target_ops *target);
 
     void (*to_files_info) (struct target_ops *);
-    int (*to_insert_breakpoint) (CORE_ADDR, gdb_byte *);
-    int (*to_remove_breakpoint) (CORE_ADDR, gdb_byte *);
+    int (*to_insert_breakpoint) (struct bp_target_info *);
+    int (*to_remove_breakpoint) (struct bp_target_info *);
     int (*to_can_use_hw_breakpoint) (int, int, int);
-    int (*to_insert_hw_breakpoint) (CORE_ADDR, gdb_byte *);
-    int (*to_remove_hw_breakpoint) (CORE_ADDR, gdb_byte *);
+    int (*to_insert_hw_breakpoint) (struct bp_target_info *);
+    int (*to_remove_hw_breakpoint) (struct bp_target_info *);
     int (*to_remove_watchpoint) (CORE_ADDR, int, int);
     int (*to_insert_watchpoint) (CORE_ADDR, int, int);
     int (*to_stopped_by_watchpoint) (void);
     int to_have_continuable_watchpoint;
     int (*to_stopped_data_address) (struct target_ops *, CORE_ADDR *);
-    int (*to_region_size_ok_for_hw_watchpoint) (int);
+    int (*to_region_ok_for_hw_watchpoint) (CORE_ADDR, int);
     void (*to_terminal_init) (void);
     void (*to_terminal_inferior) (void);
     void (*to_terminal_ours_for_output) (void);
@@ -554,11 +556,11 @@ extern int child_xfer_memory (CORE_ADDR, gdb_byte *, int, int,
    of bytes actually transfered is not defined) and ERR is set to a
    non-zero error indication.  */
 
-extern int target_read_memory_partial (CORE_ADDR addr, char *buf, int len,
-				       int *err);
+extern int target_read_memory_partial (CORE_ADDR addr, gdb_byte *buf,
+				       int len, int *err);
 
-extern int target_write_memory_partial (CORE_ADDR addr, char *buf, int len,
-					int *err);
+extern int target_write_memory_partial (CORE_ADDR addr, gdb_byte *buf,
+					int len, int *err);
 
 extern char *child_pid_to_exec_file (int);
 
@@ -611,22 +613,17 @@ extern void print_section_info (struct target_ops *, bfd *);
 #define	target_files_info()	\
      (*current_target.to_files_info) (&current_target)
 
-/* Insert a breakpoint at address ADDR in the target machine.  SAVE is
-   a pointer to memory allocated for saving the target contents.  It
-   is guaranteed by the caller to be long enough to save the number of
-   breakpoint bytes indicated by BREAKPOINT_FROM_PC.  Result is 0 for
-   success, or an errno value.  */
+/* Insert a breakpoint at address BP_TGT->placed_address in the target
+   machine.  Result is 0 for success, or an errno value.  */
 
-#define	target_insert_breakpoint(addr, save)	\
-     (*current_target.to_insert_breakpoint) (addr, save)
+#define	target_insert_breakpoint(bp_tgt)	\
+     (*current_target.to_insert_breakpoint) (bp_tgt)
 
-/* Remove a breakpoint at address ADDR in the target machine.
-   SAVE is a pointer to the same save area
-   that was previously passed to target_insert_breakpoint.
-   Result is 0 for success, or an errno value.  */
+/* Remove a breakpoint at address BP_TGT->placed_address in the target
+   machine.  Result is 0 for success, or an errno value.  */
 
-#define	target_remove_breakpoint(addr, save)	\
-     (*current_target.to_remove_breakpoint) (addr, save)
+#define	target_remove_breakpoint(bp_tgt)	\
+     (*current_target.to_remove_breakpoint) (bp_tgt)
 
 /* Initialize the terminal settings we record for the inferior,
    before we actually run the inferior.  */
@@ -679,7 +676,14 @@ extern void print_section_info (struct target_ops *, bfd *);
 
 /* Load an executable file into the target process.  This is expected
    to not only bring new code into the target process, but also to
-   update GDB's symbol tables to match.  */
+   update GDB's symbol tables to match.
+
+   ARG contains command-line arguments, to be broken down with
+   buildargv ().  The first non-switch argument is the filename to
+   load, FILE; the second is a number (as parsed by strtoul (..., ...,
+   0)), which is an offset to apply to the load addresses of FILE's
+   sections.  The target may define switches, or other non-switch
+   arguments, as it pleases.  */
 
 extern void target_load (char *arg, int from_tty);
 
@@ -1030,9 +1034,9 @@ extern void (*deprecated_target_new_objfile_hook) (struct objfile *);
  (*current_target.to_can_use_hw_breakpoint) (TYPE, CNT, OTHERTYPE);
 #endif
 
-#if !defined(TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT)
-#define TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT(byte_count) \
-    (*current_target.to_region_size_ok_for_hw_watchpoint) (byte_count)
+#ifndef TARGET_REGION_OK_FOR_HW_WATCHPOINT
+#define TARGET_REGION_OK_FOR_HW_WATCHPOINT(addr, len) \
+    (*current_target.to_region_ok_for_hw_watchpoint) (addr, len)
 #endif
 
 
@@ -1049,11 +1053,11 @@ extern void (*deprecated_target_new_objfile_hook) (struct objfile *);
 #endif
 
 #ifndef target_insert_hw_breakpoint
-#define target_insert_hw_breakpoint(addr, save) \
-     (*current_target.to_insert_hw_breakpoint) (addr, save)
+#define target_insert_hw_breakpoint(bp_tgt) \
+     (*current_target.to_insert_hw_breakpoint) (bp_tgt)
 
-#define target_remove_hw_breakpoint(addr, save) \
-     (*current_target.to_remove_hw_breakpoint) (addr, save)
+#define target_remove_hw_breakpoint(bp_tgt) \
+     (*current_target.to_remove_hw_breakpoint) (bp_tgt)
 #endif
 
 extern int target_stopped_data_address_p (struct target_ops *);
@@ -1134,13 +1138,13 @@ struct section_table *target_section_by_addr (struct target_ops *target,
 
 /* From mem-break.c */
 
-extern int memory_remove_breakpoint (CORE_ADDR, gdb_byte *);
+extern int memory_remove_breakpoint (struct bp_target_info *);
 
-extern int memory_insert_breakpoint (CORE_ADDR, gdb_byte *);
+extern int memory_insert_breakpoint (struct bp_target_info *);
 
-extern int default_memory_remove_breakpoint (CORE_ADDR, gdb_byte *);
+extern int default_memory_remove_breakpoint (struct bp_target_info *);
 
-extern int default_memory_insert_breakpoint (CORE_ADDR, gdb_byte *);
+extern int default_memory_insert_breakpoint (struct bp_target_info *);
 
 
 /* From target.c */

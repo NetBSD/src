@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux m32r.
 
-   Copyright 2004 Free Software Foundation, Inc.
+   Copyright (C) 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -77,7 +77,7 @@
    to the ones used by the kernel.  Therefore, these trampolines are
    supported too.  */
 
-static const unsigned char linux_sigtramp_code[] = {
+static const gdb_byte linux_sigtramp_code[] = {
   0x67, 0x77, 0x10, 0xf2,
 };
 
@@ -87,7 +87,7 @@ static const unsigned char linux_sigtramp_code[] = {
 static CORE_ADDR
 m32r_linux_sigtramp_start (CORE_ADDR pc, struct frame_info *next_frame)
 {
-  unsigned char buf[4];
+  gdb_byte buf[4];
 
   /* We only recognize a signal trampoline if PC is at the start of
      one of the instructions.  We optimize for finding the PC at the
@@ -125,7 +125,7 @@ m32r_linux_sigtramp_start (CORE_ADDR pc, struct frame_info *next_frame)
 
    The effect is to call the system call rt_sigreturn.  */
 
-static const unsigned char linux_rt_sigtramp_code[] = {
+static const gdb_byte linux_rt_sigtramp_code[] = {
   0x97, 0xf0, 0x00, 0xad, 0x10, 0xf2, 0xf0, 0x00,
 };
 
@@ -135,7 +135,7 @@ static const unsigned char linux_rt_sigtramp_code[] = {
 static CORE_ADDR
 m32r_linux_rt_sigtramp_start (CORE_ADDR pc, struct frame_info *next_frame)
 {
-  unsigned char buf[4];
+  gdb_byte buf[4];
 
   /* We only recognize a signal trampoline if PC is at the start of
      one of the instructions.  We optimize for finding the PC at the
@@ -282,7 +282,7 @@ m32r_linux_sigtramp_frame_prev_register (struct frame_info *next_frame,
 					 int regnum, int *optimizedp,
 					 enum lval_type *lvalp,
 					 CORE_ADDR *addrp,
-					 int *realnump, void *valuep)
+					 int *realnump, gdb_byte *valuep)
 {
   struct m32r_frame_cache *cache =
     m32r_linux_sigtramp_frame_cache (next_frame, this_cache);

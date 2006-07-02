@@ -1,6 +1,6 @@
 /* Evaluate expressions for GDB.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005 Free
    Software Foundation, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -2086,7 +2086,15 @@ evaluate_subexp_standard (struct type *expect_type,
       return value_of_local ("self", 1);
 
     case OP_TYPE:
-      error (_("Attempt to use a type name as an expression"));
+      /* The value is not supposed to be used.  This is here to make it
+         easier to accommodate expressions that contain types.  */
+      (*pos) += 2;
+      if (noside == EVAL_SKIP)
+        goto nosideret;
+      else if (noside == EVAL_AVOID_SIDE_EFFECTS)
+        return allocate_value (exp->elts[pc + 1].type);
+      else
+        error (_("Attempt to use a type name as an expression"));
 
     default:
       /* Removing this case and compiling with gcc -Wall reveals that

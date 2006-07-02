@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux SPARC.
 
-   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,13 +16,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
+#include "dwarf2-frame.h"
 #include "floatformat.h"
 #include "frame.h"
 #include "frame-unwind.h"
+#include "regset.h"
 #include "gdbarch.h"
 #include "gdbcore.h"
 #include "osabi.h"
@@ -91,7 +93,7 @@ sparc32_linux_sigframe_init (const struct tramp_frame *self,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
-  CORE_ADDR base, addr;
+  CORE_ADDR base, addr, sp_addr;
   int regnum;
 
   base = frame_unwind_register_unsigned (next_frame, SPARC_O1_REGNUM);
@@ -107,13 +109,16 @@ sparc32_linux_sigframe_init (const struct tramp_frame *self,
 
   /* Since %g0 is always zero, keep the identity encoding.  */
   addr = base + 20;
+  sp_addr = base + 16 + ((SPARC_SP_REGNUM - SPARC_G0_REGNUM) * 4);
   for (regnum = SPARC_G1_REGNUM; regnum <= SPARC_O7_REGNUM; regnum++)
     {
       trad_frame_set_reg_addr (this_cache, regnum, addr);
       addr += 4;
     }
 
-  base = addr = frame_unwind_register_unsigned (next_frame, SPARC_SP_REGNUM);
+  base = frame_unwind_register_unsigned (next_frame, SPARC_SP_REGNUM);
+  addr = get_frame_memory_unsigned (next_frame, sp_addr, 4);
+
   for (regnum = SPARC_L0_REGNUM; regnum <= SPARC_I7_REGNUM; regnum++)
     {
       trad_frame_set_reg_addr (this_cache, regnum, addr);
@@ -122,11 +127,110 @@ sparc32_linux_sigframe_init (const struct tramp_frame *self,
   trad_frame_set_id (this_cache, frame_id_build (base, func));
 }
 
+/* Return the address of a system call's alternative return
+   address.  */
+
+static CORE_ADDR
+sparc32_linux_step_trap (unsigned long insn)
+{
+  if (insn == 0x91d02010)
+    {
+      ULONGEST sc_num;
+
+      regcache_cooked_read_unsigned (current_regcache,
+				     SPARC_G1_REGNUM, &sc_num);
+
+      /* __NR_rt_sigreturn is 101 and __NR_sigreturn is 216  */
+      if (sc_num == 101 || sc_num == 216)
+	{
+	  ULONGEST sp, pc_offset;
+
+	  regcache_cooked_read_unsigned (current_regcache,
+					 SPARC_SP_REGNUM, &sp);
+
+	  /* The kernel puts the sigreturn registers on the stack,
+	     and this is where the signal unwinding state is take from
+	     when returning from a signal.
+
+	     For __NR_sigreturn, this register area sits 96 bytes from
+	     the base of the stack.  The saved PC sits 4 bytes into the
+	     sigreturn register save area.
+
+	     For __NR_rt_sigreturn a siginfo_t, which is 128 bytes, sits
+	     right before the sigreturn register save area.  */
+
+	  pc_offset = 96 + 4;
+	  if (sc_num == 101)
+	    pc_offset += 128;
+
+	  return read_memory_unsigned_integer (sp + pc_offset, 4);
+	}
+    }
+
+  return 0;
+}
+
+
+const struct sparc_gregset sparc32_linux_core_gregset =
+{
+  32 * 4,			/* %psr */
+  33 * 4,			/* %pc */
+  34 * 4,			/* %npc */
+  35 * 4,			/* %y */
+  -1,				/* %wim */
+  -1,				/* %tbr */
+  1 * 4,			/* %g1 */
+  16 * 4,			/* %l0 */
+  4,				/* y size */
+};
+
+
+static void
+sparc32_linux_supply_core_gregset (const struct regset *regset,
+				   struct regcache *regcache,
+				   int regnum, const void *gregs, size_t len)
+{
+  sparc32_supply_gregset (&sparc32_linux_core_gregset, regcache, regnum, gregs);
+}
+
+static void
+sparc32_linux_collect_core_gregset (const struct regset *regset,
+				    const struct regcache *regcache,
+				    int regnum, void *gregs, size_t len)
+{
+  sparc32_collect_gregset (&sparc32_linux_core_gregset, regcache, regnum, gregs);
+}
+
+static void
+sparc32_linux_supply_core_fpregset (const struct regset *regset,
+				    struct regcache *regcache,
+				    int regnum, const void *fpregs, size_t len)
+{
+  sparc32_supply_fpregset (regcache, regnum, fpregs);
+}
+
+static void
+sparc32_linux_collect_core_fpregset (const struct regset *regset,
+				     const struct regcache *regcache,
+				     int regnum, void *fpregs, size_t len)
+{
+  sparc32_collect_fpregset (regcache, regnum, fpregs);
+}
+
+
 
 static void
 sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  tdep->gregset = regset_alloc (gdbarch, sparc32_linux_supply_core_gregset,
+				sparc32_linux_collect_core_gregset);
+  tdep->sizeof_gregset = 152;
+
+  tdep->fpregset = regset_alloc (gdbarch, sparc32_linux_supply_core_fpregset,
+				 sparc32_linux_collect_core_fpregset);
+  tdep->sizeof_fpregset = 396;
 
   tramp_frame_prepend_unwinder (gdbarch, &sparc32_linux_sigframe);
   tramp_frame_prepend_unwinder (gdbarch, &sparc32_linux_rt_sigframe);
@@ -147,6 +251,12 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
+
+  /* Make sure we can single-step over signal return system calls.  */
+  tdep->step_trap = sparc32_linux_step_trap;
+
+  /* Hook in the DWARF CFI frame unwinder.  */
+  frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

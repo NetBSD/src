@@ -1,6 +1,6 @@
 /* Renesas / SuperH SH specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -3612,8 +3612,9 @@ sh_elf_link_hash_table_create (bfd *abfd)
   if (ret == (struct elf_sh_link_hash_table *) NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
-				       sh_elf_link_hash_newfunc))
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      sh_elf_link_hash_newfunc,
+				      sizeof (struct elf_sh_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -3726,6 +3727,7 @@ sh_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
       h = (struct elf_link_hash_entry *) bh;
       h->def_regular = 1;
       h->type = STT_OBJECT;
+      htab->root.hplt = h;
 
       if (info->shared
 	  && ! bfd_elf_link_record_dynamic_symbol (info, h))
@@ -4160,9 +4162,21 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
+      if (eh->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
-	eh->dyn_relocs = NULL;
+	{
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	    eh->dyn_relocs = NULL;
+
+	  /* Make sure undefined weak symbols are output as a dynamic
+	     symbol in PIEs.  */
+	  else if (h->dynindx == -1
+		   && !h->forced_local)
+	    {
+	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
+		return FALSE;
+	    }
+	}
     }
   else
     {
@@ -4693,7 +4707,8 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			  || !h->def_regular)
 		      && ((r_type == R_SH_DIR32
 			   && !h->forced_local)
-			  || r_type == R_SH_REL32)
+			  || (r_type == R_SH_REL32
+			      && !SYMBOL_CALLS_LOCAL (info, h)))
 		      && ((input_section->flags & SEC_ALLOC) != 0
 			  /* DWARF will emit R_SH_DIR32 relocations in its
 			     sections against symbols defined externally
@@ -7022,7 +7037,7 @@ sh_elf_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
-      || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
+      || h == htab->root.hgot)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;

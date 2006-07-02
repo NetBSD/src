@@ -1,6 +1,6 @@
 /* Target-dependent code for the Sanyo Xstormy16a (LC590000) processor.
 
-   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation,
+   Copyright (C) 2001, 2002, 2003, 2004, 2005 Free Software Foundation,
    Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -202,7 +202,7 @@ xstormy16_store_return_value (struct type *type, struct regcache *regcache,
 static enum return_value_convention
 xstormy16_return_value (struct gdbarch *gdbarch, struct type *type,
 			struct regcache *regcache,
-			void *readbuf, const void *writebuf)
+			gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (xstormy16_use_struct_convention (type))
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -239,7 +239,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
   int argreg = E_1ST_ARG_REGNUM;
   int i, j;
   int typelen, slacklen;
-  char *val;
+  const gdb_byte *val;
   char buf[xstormy16_pc_size];
 
   /* If struct_return is true, then the struct return address will
@@ -278,6 +278,8 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
      wordaligned.  */
   for (j = nargs - 1; j >= i; j--)
     {
+      char *val;
+
       typelen = TYPE_LENGTH (value_enclosing_type (args[j]));
       slacklen = typelen & 1;
       val = alloca (typelen + slacklen);
@@ -588,7 +590,7 @@ xstormy16_skip_trampoline_code (CORE_ADDR pc)
    and vice versa.  */
 
 static CORE_ADDR
-xstormy16_pointer_to_address (struct type *type, const void *buf)
+xstormy16_pointer_to_address (struct type *type, const gdb_byte *buf)
 {
   enum type_code target = TYPE_CODE (TYPE_TARGET_TYPE (type));
   CORE_ADDR addr = extract_unsigned_integer (buf, TYPE_LENGTH (type));
@@ -604,7 +606,7 @@ xstormy16_pointer_to_address (struct type *type, const void *buf)
 }
 
 static void
-xstormy16_address_to_pointer (struct type *type, void *buf, CORE_ADDR addr)
+xstormy16_address_to_pointer (struct type *type, gdb_byte *buf, CORE_ADDR addr)
 {
   enum type_code target = TYPE_CODE (TYPE_TARGET_TYPE (type));
 
@@ -671,10 +673,11 @@ xstormy16_frame_cache (struct frame_info *next_frame, void **this_cache)
 }
 
 static void
-xstormy16_frame_prev_register (struct frame_info *next_frame, void **this_cache,
+xstormy16_frame_prev_register (struct frame_info *next_frame, 
+			       void **this_cache,
 			       int regnum, int *optimizedp,
 			       enum lval_type *lvalp, CORE_ADDR *addrp,
-			       int *realnump, void *valuep)
+			       int *realnump, gdb_byte *valuep)
 {
   struct xstormy16_frame_cache *cache = xstormy16_frame_cache (next_frame,
                                                                this_cache);

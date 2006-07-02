@@ -42,7 +42,7 @@ set testfile "altivec-abi"
 set binfile ${objdir}/${subdir}/${testfile}
 set srcfile ${testfile}.c
 
-set compile_flags {debug additional_flags=-w}
+set compile_flags {debug nowarnings}
 if [get_compiler_info $binfile] {
     warning "get_compiler failed"
     return -1

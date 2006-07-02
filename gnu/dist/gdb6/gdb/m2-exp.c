@@ -152,7 +152,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 41 "m2-exp.y"
+#line 42 "m2-exp.y"
 
 
 #include "defs.h"
@@ -258,7 +258,7 @@ static struct block *modblock=0;
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 137 "m2-exp.y"
+#line 138 "m2-exp.y"
 typedef union YYSTYPE {
     LONGEST lval;
     ULONGEST ulval;
@@ -501,15 +501,15 @@ static const yysigned_char yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short yyrline[] =
 {
-       0,   205,   205,   206,   209,   218,   223,   222,   229,   233,
-     237,   238,   241,   245,   249,   253,   257,   263,   269,   273,
-     279,   283,   287,   291,   296,   300,   306,   310,   316,   322,
-     325,   329,   333,   337,   339,   349,   345,   359,   356,   366,
-     369,   373,   378,   383,   388,   394,   400,   408,   412,   416,
-     420,   424,   428,   432,   436,   440,   442,   446,   450,   454,
-     458,   462,   466,   470,   477,   483,   489,   496,   505,   513,
-     520,   523,   530,   537,   541,   550,   562,   570,   574,   590,
-     641
+       0,   206,   206,   207,   210,   219,   224,   223,   230,   234,
+     238,   239,   242,   246,   250,   254,   258,   264,   270,   274,
+     280,   284,   288,   292,   297,   301,   307,   311,   317,   323,
+     326,   330,   334,   338,   340,   350,   346,   360,   357,   367,
+     370,   374,   379,   384,   389,   395,   401,   409,   413,   417,
+     421,   425,   429,   433,   437,   441,   443,   447,   451,   455,
+     459,   463,   467,   471,   478,   484,   490,   497,   506,   514,
+     521,   524,   531,   538,   542,   551,   563,   571,   575,   591,
+     642
 };
 #endif
 
@@ -1457,7 +1457,7 @@ yyreduce:
   switch (yyn)
     {
         case 4:
-#line 210 "m2-exp.y"
+#line 211 "m2-exp.y"
     { write_exp_elt_opcode(OP_TYPE);
 		  write_exp_elt_type(yyvsp[0].tval);
 		  write_exp_elt_opcode(OP_TYPE);
@@ -1465,317 +1465,317 @@ yyreduce:
     break;
 
   case 5:
-#line 219 "m2-exp.y"
+#line 220 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_IND); }
     break;
 
   case 6:
-#line 223 "m2-exp.y"
+#line 224 "m2-exp.y"
     { number_sign = -1; }
     break;
 
   case 7:
-#line 225 "m2-exp.y"
+#line 226 "m2-exp.y"
     { number_sign = 1;
 			  write_exp_elt_opcode (UNOP_NEG); }
     break;
 
   case 8:
-#line 230 "m2-exp.y"
+#line 231 "m2-exp.y"
     { write_exp_elt_opcode(UNOP_PLUS); }
     break;
 
   case 9:
-#line 234 "m2-exp.y"
+#line 235 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_LOGICAL_NOT); }
     break;
 
   case 12:
-#line 242 "m2-exp.y"
+#line 243 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_CAP); }
     break;
 
   case 13:
-#line 246 "m2-exp.y"
+#line 247 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_ORD); }
     break;
 
   case 14:
-#line 250 "m2-exp.y"
+#line 251 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_ABS); }
     break;
 
   case 15:
-#line 254 "m2-exp.y"
+#line 255 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_HIGH); }
     break;
 
   case 16:
-#line 258 "m2-exp.y"
+#line 259 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_MIN);
 			  write_exp_elt_type (yyvsp[-1].tval);
 			  write_exp_elt_opcode (UNOP_MIN); }
     break;
 
   case 17:
-#line 264 "m2-exp.y"
+#line 265 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_MAX);
 			  write_exp_elt_type (yyvsp[-1].tval);
 			  write_exp_elt_opcode (UNOP_MIN); }
     break;
 
   case 18:
-#line 270 "m2-exp.y"
+#line 271 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_FLOAT); }
     break;
 
   case 19:
-#line 274 "m2-exp.y"
+#line 275 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_VAL);
 			  write_exp_elt_type (yyvsp[-3].tval);
 			  write_exp_elt_opcode (BINOP_VAL); }
     break;
 
   case 20:
-#line 280 "m2-exp.y"
+#line 281 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_CHR); }
     break;
 
   case 21:
-#line 284 "m2-exp.y"
+#line 285 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_ODD); }
     break;
 
   case 22:
-#line 288 "m2-exp.y"
+#line 289 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_TRUNC); }
     break;
 
   case 23:
-#line 292 "m2-exp.y"
+#line 293 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_SIZEOF); }
     break;
 
   case 24:
-#line 297 "m2-exp.y"
+#line 298 "m2-exp.y"
     { write_exp_elt_opcode(UNOP_PREINCREMENT); }
     break;
 
   case 25:
-#line 301 "m2-exp.y"
+#line 302 "m2-exp.y"
     { write_exp_elt_opcode(BINOP_ASSIGN_MODIFY);
 			  write_exp_elt_opcode(BINOP_ADD);
 			  write_exp_elt_opcode(BINOP_ASSIGN_MODIFY); }
     break;
 
   case 26:
-#line 307 "m2-exp.y"
+#line 308 "m2-exp.y"
     { write_exp_elt_opcode(UNOP_PREDECREMENT);}
     break;
 
   case 27:
-#line 311 "m2-exp.y"
+#line 312 "m2-exp.y"
     { write_exp_elt_opcode(BINOP_ASSIGN_MODIFY);
 			  write_exp_elt_opcode(BINOP_SUB);
 			  write_exp_elt_opcode(BINOP_ASSIGN_MODIFY); }
     break;
 
   case 28:
-#line 317 "m2-exp.y"
+#line 318 "m2-exp.y"
     { write_exp_elt_opcode (STRUCTOP_STRUCT);
 			  write_exp_string (yyvsp[0].sval);
 			  write_exp_elt_opcode (STRUCTOP_STRUCT); }
     break;
 
   case 30:
-#line 326 "m2-exp.y"
+#line 327 "m2-exp.y"
     { error("Sets are not implemented.");}
     break;
 
   case 31:
-#line 330 "m2-exp.y"
+#line 331 "m2-exp.y"
     { error("Sets are not implemented.");}
     break;
 
   case 32:
-#line 334 "m2-exp.y"
+#line 335 "m2-exp.y"
     { error("Sets are not implemented.");}
     break;
 
   case 33:
-#line 338 "m2-exp.y"
+#line 339 "m2-exp.y"
     { error("Sets are not implemented.");}
     break;
 
   case 34:
-#line 340 "m2-exp.y"
+#line 341 "m2-exp.y"
     { error("Sets are not implemented.");}
     break;
 
   case 35:
-#line 349 "m2-exp.y"
+#line 350 "m2-exp.y"
     { start_arglist(); }
     break;
 
   case 36:
-#line 351 "m2-exp.y"
+#line 352 "m2-exp.y"
     { write_exp_elt_opcode (MULTI_SUBSCRIPT);
 			  write_exp_elt_longcst ((LONGEST) end_arglist());
 			  write_exp_elt_opcode (MULTI_SUBSCRIPT); }
     break;
 
   case 37:
-#line 359 "m2-exp.y"
+#line 360 "m2-exp.y"
     { start_arglist (); }
     break;
 
   case 38:
-#line 361 "m2-exp.y"
+#line 362 "m2-exp.y"
     { write_exp_elt_opcode (OP_FUNCALL);
 			  write_exp_elt_longcst ((LONGEST) end_arglist ());
 			  write_exp_elt_opcode (OP_FUNCALL); }
     break;
 
   case 40:
-#line 370 "m2-exp.y"
+#line 371 "m2-exp.y"
     { arglist_len = 1; }
     break;
 
   case 41:
-#line 374 "m2-exp.y"
+#line 375 "m2-exp.y"
     { arglist_len++; }
     break;
 
   case 42:
-#line 379 "m2-exp.y"
+#line 380 "m2-exp.y"
     { arglist_len = 1; }
     break;
 
   case 43:
-#line 384 "m2-exp.y"
+#line 385 "m2-exp.y"
     { arglist_len++; }
     break;
 
   case 44:
-#line 389 "m2-exp.y"
+#line 390 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_MEMVAL);
 			  write_exp_elt_type (yyvsp[-2].tval);
 			  write_exp_elt_opcode (UNOP_MEMVAL); }
     break;
 
   case 45:
-#line 395 "m2-exp.y"
+#line 396 "m2-exp.y"
     { write_exp_elt_opcode (UNOP_CAST);
 			  write_exp_elt_type (yyvsp[-3].tval);
 			  write_exp_elt_opcode (UNOP_CAST); }
     break;
 
   case 46:
-#line 401 "m2-exp.y"
+#line 402 "m2-exp.y"
     { }
     break;
 
   case 47:
-#line 409 "m2-exp.y"
+#line 410 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_REPEAT); }
     break;
 
   case 48:
-#line 413 "m2-exp.y"
+#line 414 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_MUL); }
     break;
 
   case 49:
-#line 417 "m2-exp.y"
+#line 418 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_DIV); }
     break;
 
   case 50:
-#line 421 "m2-exp.y"
+#line 422 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_INTDIV); }
     break;
 
   case 51:
-#line 425 "m2-exp.y"
+#line 426 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_REM); }
     break;
 
   case 52:
-#line 429 "m2-exp.y"
+#line 430 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_ADD); }
     break;
 
   case 53:
-#line 433 "m2-exp.y"
+#line 434 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_SUB); }
     break;
 
   case 54:
-#line 437 "m2-exp.y"
+#line 438 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_EQUAL); }
     break;
 
   case 55:
-#line 441 "m2-exp.y"
+#line 442 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_NOTEQUAL); }
     break;
 
   case 56:
-#line 443 "m2-exp.y"
+#line 444 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_NOTEQUAL); }
     break;
 
   case 57:
-#line 447 "m2-exp.y"
+#line 448 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_LEQ); }
     break;
 
   case 58:
-#line 451 "m2-exp.y"
+#line 452 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_GEQ); }
     break;
 
   case 59:
-#line 455 "m2-exp.y"
+#line 456 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_LESS); }
     break;
 
   case 60:
-#line 459 "m2-exp.y"
+#line 460 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_GTR); }
     break;
 
   case 61:
-#line 463 "m2-exp.y"
+#line 464 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_LOGICAL_AND); }
     break;
 
   case 62:
-#line 467 "m2-exp.y"
+#line 468 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_LOGICAL_OR); }
     break;
 
   case 63:
-#line 471 "m2-exp.y"
+#line 472 "m2-exp.y"
     { write_exp_elt_opcode (BINOP_ASSIGN); }
     break;
 
   case 64:
-#line 478 "m2-exp.y"
+#line 479 "m2-exp.y"
     { write_exp_elt_opcode (OP_BOOL);
 			  write_exp_elt_longcst ((LONGEST) yyvsp[0].ulval);
 			  write_exp_elt_opcode (OP_BOOL); }
     break;
 
   case 65:
-#line 484 "m2-exp.y"
+#line 485 "m2-exp.y"
     { write_exp_elt_opcode (OP_BOOL);
 			  write_exp_elt_longcst ((LONGEST) yyvsp[0].ulval);
 			  write_exp_elt_opcode (OP_BOOL); }
     break;
 
   case 66:
-#line 490 "m2-exp.y"
+#line 491 "m2-exp.y"
     { write_exp_elt_opcode (OP_LONG);
 			  write_exp_elt_type (builtin_type_m2_int);
 			  write_exp_elt_longcst ((LONGEST) yyvsp[0].lval);
@@ -1783,7 +1783,7 @@ yyreduce:
     break;
 
   case 67:
-#line 497 "m2-exp.y"
+#line 498 "m2-exp.y"
     {
 			  write_exp_elt_opcode (OP_LONG);
 			  write_exp_elt_type (builtin_type_m2_card);
@@ -1793,7 +1793,7 @@ yyreduce:
     break;
 
   case 68:
-#line 506 "m2-exp.y"
+#line 507 "m2-exp.y"
     { write_exp_elt_opcode (OP_LONG);
 			  write_exp_elt_type (builtin_type_m2_char);
 			  write_exp_elt_longcst ((LONGEST) yyvsp[0].ulval);
@@ -1801,7 +1801,7 @@ yyreduce:
     break;
 
   case 69:
-#line 514 "m2-exp.y"
+#line 515 "m2-exp.y"
     { write_exp_elt_opcode (OP_DOUBLE);
 			  write_exp_elt_type (builtin_type_m2_real);
 			  write_exp_elt_dblcst (yyvsp[0].dval);
@@ -1809,7 +1809,7 @@ yyreduce:
     break;
 
   case 71:
-#line 524 "m2-exp.y"
+#line 525 "m2-exp.y"
     { write_exp_elt_opcode (OP_LONG);
 			  write_exp_elt_type (builtin_type_int);
 			  write_exp_elt_longcst ((LONGEST) TYPE_LENGTH (yyvsp[-1].tval));
@@ -1817,19 +1817,19 @@ yyreduce:
     break;
 
   case 72:
-#line 531 "m2-exp.y"
+#line 532 "m2-exp.y"
     { write_exp_elt_opcode (OP_M2_STRING);
 			  write_exp_string (yyvsp[0].sval);
 			  write_exp_elt_opcode (OP_M2_STRING); }
     break;
 
   case 73:
-#line 538 "m2-exp.y"
+#line 539 "m2-exp.y"
     { yyval.bval = SYMBOL_BLOCK_VALUE(yyvsp[0].sym); }
     break;
 
   case 74:
-#line 542 "m2-exp.y"
+#line 543 "m2-exp.y"
     { struct symbol *sym
 			    = lookup_symbol (copy_name (yyvsp[0].sval), expression_context_block,
 					     VAR_DOMAIN, 0, NULL);
@@ -1837,7 +1837,7 @@ yyreduce:
     break;
 
   case 75:
-#line 551 "m2-exp.y"
+#line 552 "m2-exp.y"
     { struct symbol *tem
 			    = lookup_symbol (copy_name (yyvsp[0].sval), yyvsp[-2].bval,
 					     VAR_DOMAIN, 0, NULL);
@@ -1849,7 +1849,7 @@ yyreduce:
     break;
 
   case 76:
-#line 563 "m2-exp.y"
+#line 564 "m2-exp.y"
     { write_exp_elt_opcode(OP_VAR_VALUE);
 			  write_exp_elt_block (NULL);
 			  write_exp_elt_sym (yyvsp[0].sym);
@@ -1857,7 +1857,7 @@ yyreduce:
     break;
 
   case 78:
-#line 575 "m2-exp.y"
+#line 576 "m2-exp.y"
     { struct symbol *sym;
 			  sym = lookup_symbol (copy_name (yyvsp[0].sval), yyvsp[-2].bval,
 					       VAR_DOMAIN, 0, NULL);
@@ -1873,7 +1873,7 @@ yyreduce:
     break;
 
   case 79:
-#line 591 "m2-exp.y"
+#line 592 "m2-exp.y"
     { struct symbol *sym;
 			  int is_a_field_of_this;
 
@@ -1924,7 +1924,7 @@ yyreduce:
     break;
 
   case 80:
-#line 642 "m2-exp.y"
+#line 643 "m2-exp.y"
     { yyval.tval = lookup_typename (copy_name (yyvsp[0].sval),
 						expression_context_block, 0); }
     break;
@@ -2158,7 +2158,7 @@ yyreturn:
 }
 
 
-#line 647 "m2-exp.y"
+#line 648 "m2-exp.y"
 
 
 #if 0  /* FIXME! */

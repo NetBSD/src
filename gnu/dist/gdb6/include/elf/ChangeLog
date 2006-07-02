@@ -1,3 +1,121 @@
+2006-03-22  Richard Sandiford  <richard@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Phil Edwards  <phil@codesourcery.com>
+	    Zack Weinberg  <zack@codesourcery.com>
+	    Mark Mitchell  <mark@codesourcery.com>
+	    Nathan Sidwell  <nathan@codesourcery.com>
+
+	* mips.h (R_MIPS_COPY, R_MIPS_JUMP_SLOT): New relocs.
+
+2006-03-19  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* hppa.h (SHF_HP_TLS, SHF_HP_NEAR_SHARED, SHF_HP_FAR_SHARED,
+	SHF_HP_COMDAT, SHF_HP_CONST, SHN_TLS_COMMON, SHN_NS_COMMON,
+	SHN_NS_UNDEF, SHN_FS_UNDEF, SHN_HP_EXTERN, SHN_HP_EXTHINT,
+	SHN_HP_UNDEF_BIND_IMM, SHT_HP_OVLBITS, SHT_HP_DLKM, SHT_HP_COMDAT,
+	SHT_HP_OBJDICT, SHT_HP_ANNOT, STB_HP_ALIAS): Define.
+
+2006-03-10  Paul Brook  <paul@codesourcery.com>
+
+	* arm.h (EF_ARM_EABI_VER5): Define.
+
+2006-03-06  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* m68k.h (EF_M68K_ISA_MASK, EF_M68K_ISA_A,
+	EF_M68K_ISA_A_PLUS, EF_M68K_ISA_B, EF_M68K_ISA_C): Adjust.
+	(EF_M68K_ISA_A_NODIV, EF_M68K_ISA_B_NOUSP): New.
+	(EF_M68K_HW_DIV, EF_M68K_USP): Remove.
+	(EF_M68K_MAC, EF_M68K_EMAC, EF_M68K_FLOAT): Adjust.
+	(EF_M68K_EMAC_B): New.
+
+2006-03-03  Bjoern Haase  <bjoern.m.haase@web.de>
+
+	* avr.h (R_AVR_MS8_LDI,R_AVR_MS8_LDI_NEG): Add.
+	(EF_AVR_LINKRELAX_PREPARED): Add.
+
+2006-03-02  Ben Elliston  <bje@au.ibm.com>
+
+	Import from the GCC tree:
+	2006-03-01  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (DW_TAG_condition, DW_TAG_shared_type): New constants
+	from DWARF 3.
+	(DW_AT_description, DW_AT_binary_scale, DW_AT_decimal_scale,
+	DW_AT_small, DW_AT_decimal_sign, DW_AT_digit_count,
+	DW_AT_picture_string, DW_AT_mutable, DW_AT_threads_scaled,
+	DW_AT_explicit, DW_AT_object_pointer, DW_AT_endianity,
+	DW_AT_elemental, DW_AT_pure, DW_AT_recursive): New.
+	(DW_OP_form_tls_address, DW_OP_call_frame_cfa, DW_OP_bit_piece): New.
+	(DW_ATE_packed_decimal, DW_ATE_numeric_string, DW_ATE_edited,
+	DW_ATE_signed_fixed, DW_ATE_unsigned_fixed): New.
+	(DW_DS_unsigned, DW_DS_leading_overpunch, DW_DS_trailing_overpunch,
+	DW_DS_leading_separate, DW_DS_trailing_separate): New.
+	(DW_END_default, DW_END_big, DW_END_little): New.
+	(DW_END_lo_user, DW_END_hi_user): Define.
+	(DW_LNE_lo_user, DW_LNE_hi_user): Define.
+	(DW_CFA_val_offset, DW_CFA_val_offset_sf, DW_CFA_val_expression): New.
+	(DW_LANG_PLI, DW_LANG_ObjC, DW_LANG_ObjC_plus_plus, DW_LANG_UPC,
+	DW_LANG_D): New.
+
+2006-02-24  DJ Delorie  <dj@redhat.com>
+
+	* m32c.h: Add relax relocs.
+
+2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
+            Anil Paranjape   <anilp1@kpitcummins.com>
+            Shilin Shakti    <shilins@kpitcummins.com>
+
+	* common.h (EM_XC16X): New entry for xc16x cpu.
+	Sort other EM_* numbers into numerical order.
+	* xc16x.h: New file.
+   	
+2006-02-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/2258
+	* internal.h (ELF_IS_SECTION_IN_SEGMENT_FILE): New.
+	(ELF_IS_SECTION_IN_SEGMENT_MEMORY): Likewise.
+
+2006-02-07  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* m68k.h (EF_CPU32, EF_M68000, EF_CFV4E): Rename to ...
+	(EF_M68K_CPU32, EF_M68K_M68000, EF_M68K_CFV4E): ... here.
+	(EF_M68K_ISA_MASK, EF_M68K_ISA_A, EF_M68K_M68K_ISA_A_PLUS,
+	EF_M68K_ISA_B, EF_M68K_HW_DIV, EF_M68K_MAC_MASK, EF_M68K_MAC,
+	EF_M68K_EMAC, EF_M68K_USP, EF_M68K_FLOAT): New.
+
+2006-02-06  Steve Ellcey  <sje@cup.hp.com>
+
+	* ia64.h (SHF_IA_64_HP_TLS): New.
+
+2006-01-18  Alexandre Oliva  <aoliva@redhat.com>
+
+	Introduce TLS descriptors for i386 and x86_64.
+	* common.h (DT_TLSDESC_GOT, DT_TLSDESC_PLT): New.
+	* i386.h (R_386_TLS_GOTDESC, R_386_TLS_DESC_CALL, R_386_TLS_DESC):
+	New.
+	* x86-64.h (R_X86_64_GOTPC32_TLSDESC, R_X86_64_TLSDESC_CALL,
+	R_X86_64_TLSDESC): New.
+
+2006-01-09  Mike Frysinger  <vapier@gentoo.org>:
+
+	* common.h (EM_ALTERA_NIOS2, EM_NIOS32) Define.
+
+2005-12-16  Nathan Sidwell  <nathan@codesourcery.com>
+
+	Second part of ms1 to mt renaming.
+	* common.h (EM_MT): Renamed.
+	* mt.h: Rename relocs, cpu & other defines.
+
+2005-12-12  Paul Brook  <paul@codesourcery.com>
+
+	* arm.h (elf32_arm_get_eabi_attr_int): Add prototype.
+
+2005-11-11  Nick Clifton  <nickc@redhat.com>
+
+	PR 1150
+	* mips.h (STO_OPTIONAL): Define.
+	(ELF_MIPS_IS_OPTIONAL): Define.
+
 2005-09-30  Catherine Moore  <clm@cm00re.com>
 
 	* bfin.h: New file.

@@ -1,7 +1,7 @@
 /* Remote debugging interface for boot monitors, for GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001, 2002, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by Rob Savoye for Cygnus.
    Resurrected from the ashes by Stu Grossman.
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This file was derived from various remote-* modules. It is a collection
    of generic support functions so GDB can talk directly to a ROM based
@@ -80,13 +80,11 @@ static ptid_t monitor_wait (ptid_t ptid, struct target_waitstatus *status);
 static void monitor_fetch_registers (int regno);
 static void monitor_store_registers (int regno);
 static void monitor_prepare_to_store (void);
-static int monitor_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
+static int monitor_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
 				int write, 
 				struct mem_attrib *attrib,
 				struct target_ops *target);
 static void monitor_files_info (struct target_ops *ops);
-static int monitor_insert_breakpoint (CORE_ADDR addr, char *shadow);
-static int monitor_remove_breakpoint (CORE_ADDR addr, char *shadow);
 static void monitor_kill (void);
 static void monitor_load (char *file, int from_tty);
 static void monitor_mourn_inferior (void);
@@ -1982,7 +1980,7 @@ monitor_read_memory (CORE_ADDR memaddr, char *myaddr, int len)
    unused. */
 
 static int
-monitor_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len, int write,
+monitor_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len, int write,
 		     struct mem_attrib *attrib, struct target_ops *target)
 {
   int res;
@@ -2008,8 +2006,7 @@ monitor_kill (void)
   return;			/* ignore attempts to kill target system */
 }
 
-/* All we actually do is set the PC to the start address of exec_bfd, and start
-   the program at that point.  */
+/* All we actually do is set the PC to the start address of exec_bfd.  */
 
 static void
 monitor_create_inferior (char *exec_file, char *args, char **env,
@@ -2020,7 +2017,7 @@ monitor_create_inferior (char *exec_file, char *args, char **env,
 
   first_time = 1;
   clear_proceed_status ();
-  proceed (bfd_get_start_address (exec_bfd), TARGET_SIGNAL_0, 0);
+  write_pc (bfd_get_start_address (exec_bfd));
 }
 
 /* Clean up when a program exits.
@@ -2038,8 +2035,9 @@ monitor_mourn_inferior (void)
 /* Tell the monitor to add a breakpoint.  */
 
 static int
-monitor_insert_breakpoint (CORE_ADDR addr, char *shadow)
+monitor_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
   const unsigned char *bp;
   int bplen;
@@ -2053,13 +2051,14 @@ monitor_insert_breakpoint (CORE_ADDR addr, char *shadow)
 
   /* Determine appropriate breakpoint size for this address.  */
   bp = gdbarch_breakpoint_from_pc (current_gdbarch, &addr, &bplen);
+  bp_tgt->placed_address = addr;
+  bp_tgt->placed_size = bplen;
 
   for (i = 0; i < current_monitor->num_breakpoints; i++)
     {
       if (breakaddr[i] == 0)
 	{
 	  breakaddr[i] = addr;
-	  monitor_read_memory (addr, shadow, bplen);
 	  monitor_printf (current_monitor->set_break, addr);
 	  monitor_expect_prompt (NULL, 0);
 	  return 0;
@@ -2072,16 +2071,14 @@ monitor_insert_breakpoint (CORE_ADDR addr, char *shadow)
 /* Tell the monitor to remove a breakpoint.  */
 
 static int
-monitor_remove_breakpoint (CORE_ADDR addr, char *shadow)
+monitor_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int i;
 
   monitor_debug ("MON rmbkpt %s\n", paddr (addr));
   if (current_monitor->clr_break == NULL)
     error (_("No clr_break defined for this monitor"));
-
-  if (current_monitor->flags & MO_ADDR_BITS_REMOVE)
-    addr = ADDR_BITS_REMOVE (addr);
 
   for (i = 0; i < current_monitor->num_breakpoints; i++)
     {

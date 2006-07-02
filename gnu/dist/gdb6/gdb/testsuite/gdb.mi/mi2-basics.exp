@@ -161,11 +161,11 @@ proc test_dir_specification {} {
     set envirodir [string_to_regexp ${srcdir}/${subdir}]
 
     mi_gdb_test "202-environment-directory ${srcdir}/${subdir}" \
-             "\\\^done,source-path=\"${envirodir}.\\\$cdir.\\\$cwd\"" \
+             "202\\\^done,source-path=\"${envirodir}.\\\$cdir.\\\$cwd\"" \
              "environment-directory arg operation"
 
     mi_gdb_test "203-environment-directory" \
-             "\\\^done,source-path=\"${envirodir}.\\\$cdir.\\\$cwd\"" \
+             "203\\\^done,source-path=\"${envirodir}.\\\$cdir.\\\$cwd\"" \
              "environment-directory empty-string operation"
 
     mi_gdb_test "204-environment-directory -r" \
@@ -226,7 +226,7 @@ proc test_path_specification {} {
              "environment-path no-args operation"
 
     mi_gdb_test "208-environment-path $srcdir $objdir" \
-             "\\\^done,path=\"$escapedsrcdir.$escapedobjdir.$orig_path\"" \
+             "208\\\^done,path=\"$escapedsrcdir.$escapedobjdir.$orig_path\"" \
              "environment-path dir1 dir2 operation"
 
     mi_gdb_test "209-environment-path -r $objdir" \

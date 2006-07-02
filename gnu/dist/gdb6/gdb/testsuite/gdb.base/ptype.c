@@ -259,6 +259,15 @@ func_type v_func_type;
 
 /***********/
 
+typedef int foo;
+
+foo intfoo (afoo)
+{
+  return (afoo * 2);
+}
+
+/***********/
+
 int main ()
 {
   /* Ensure that malloc is a pointer type; avoid use of "void" and any include files. */

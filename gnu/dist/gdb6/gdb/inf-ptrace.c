@@ -1,7 +1,7 @@
 /* Low-level child interface to ptrace.
 
-   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1998, 1999, 2000, 2001, 2002, 2004, 2005
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   1998, 1999, 2000, 2001, 2002, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,15 +18,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "command.h"
 #include "inferior.h"
 #include "inflow.h"
 #include "gdbcore.h"
-#include "observer.h"
 #include "regcache.h"
 
 #include "gdb_assert.h"
@@ -138,12 +137,6 @@ inf_ptrace_create_inferior (char *exec_file, char *allargs, char **env,
 {
   fork_inferior (exec_file, allargs, env, inf_ptrace_me, inf_ptrace_him,
 		 NULL, NULL);
-
-  /* We are at the first instruction we care about.  */
-  observer_notify_inferior_created (&current_target, from_tty);
-
-  /* Pedal to the metal...  */
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
 
 #ifdef PT_GET_PROCESS_STATE
@@ -171,9 +164,9 @@ inf_ptrace_mourn_inferior (void)
   int status;
 
   /* Wait just one more time to collect the inferior's exit status.
-     Don not check whether this succeeds though, since we may be
+     Do not check whether this succeeds though, since we may be
      dealing with a process that we attached to.  Such a process will
-     only report its exit status to its origional parent.  */
+     only report its exit status to its original parent.  */
   waitpid (ptid_get_pid (inferior_ptid), &status, 0);
 
   unpush_target (ptrace_ops_hack);
@@ -228,10 +221,6 @@ inf_ptrace_attach (char *args, int from_tty)
 
   inferior_ptid = pid_to_ptid (pid);
   push_target (ptrace_ops_hack);
-
-  /* Do this first, before anything has had a chance to query the
-     inferior's symbol table or similar.  */
-  observer_notify_inferior_created (&current_target, from_tty);
 }
 
 #ifdef PT_GET_PROCESS_STATE
@@ -252,7 +241,7 @@ inf_ptrace_post_attach (int pid)
 #endif
 
 /* Detach from the inferior, optionally passing it the signal
-   specified ARGS.  If FROM_TTY is non-zero, be chatty about it.  */
+   specified by ARGS.  If FROM_TTY is non-zero, be chatty about it.  */
 
 static void
 inf_ptrace_detach (char *args, int from_tty)
@@ -274,7 +263,7 @@ inf_ptrace_detach (char *args, int from_tty)
 
 #ifdef PT_DETACH
   /* We'd better not have left any breakpoints in the program or it'll
-     die when it hits one.  Alsno note that this may only work if we
+     die when it hits one.  Also note that this may only work if we
      previously attached to the inferior.  It *might* work if we
      started the process ourselves.  */
   errno = 0;

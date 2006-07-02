@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /*
    Contributed by Steve Chamberlain
@@ -44,6 +44,7 @@
 #include "regcache.h"
 #include "doublest.h"
 #include "osabi.h"
+#include "reggroups.h"
 
 #include "sh-tdep.h"
 
@@ -1285,7 +1286,7 @@ sh_store_return_value_fpu (struct type *type, struct regcache *regcache,
 static enum return_value_convention
 sh_return_value_nofpu (struct gdbarch *gdbarch, struct type *type,
 		       struct regcache *regcache,
-		       void *readbuf, const void *writebuf)
+		       gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (sh_use_struct_convention (0, type))
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -1299,7 +1300,7 @@ sh_return_value_nofpu (struct gdbarch *gdbarch, struct type *type,
 static enum return_value_convention
 sh_return_value_fpu (struct gdbarch *gdbarch, struct type *type,
 		     struct regcache *regcache,
-		     void *readbuf, const void *writebuf)
+		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (sh_use_struct_convention (0, type))
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -1315,24 +1316,25 @@ sh_return_value_fpu (struct gdbarch *gdbarch, struct type *type,
 static void
 sh_generic_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
+		   (long) read_register (MACH_REGNUM));
+
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
+		   (long) read_register (GBR_REGNUM),
+		   (long) read_register (VBR_REGNUM),
 		   (long) read_register (MACL_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
-		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-
   printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+    ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
      (long) read_register (0), (long) read_register (1),
      (long) read_register (2), (long) read_register (3),
      (long) read_register (4), (long) read_register (5),
      (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
@@ -1342,27 +1344,28 @@ sh_generic_show_regs (void)
 static void
 sh3_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
+		   (long) read_register (MACH_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
 		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-  printf_filtered (" SSR=%08lx SPC=%08lx",
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered ("     SSR %08lx      SPC %08lx\n",
 		   (long) read_register (SSR_REGNUM),
 		   (long) read_register (SPC_REGNUM));
 
   printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+    ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
      (long) read_register (0), (long) read_register (1),
      (long) read_register (2), (long) read_register (3),
      (long) read_register (4), (long) read_register (5),
      (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
@@ -1373,70 +1376,37 @@ sh3_show_regs (void)
 static void
 sh2e_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
+		   (long) read_register (MACH_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
 		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-  printf_filtered (" FPUL=%08lx FPSCR=%08lx",
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered (
+	"     SSR %08lx      SPC %08lx     FPUL %08lx    FPSCR %08lx\n",
+		   (long) read_register (SSR_REGNUM),
+		   (long) read_register (SPC_REGNUM),
 		   (long) read_register (FPUL_REGNUM),
 		   (long) read_register (FPSCR_REGNUM));
 
   printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+    ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
      (long) read_register (0), (long) read_register (1),
      (long) read_register (2), (long) read_register (3),
      (long) read_register (4), (long) read_register (5),
      (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
 		   (long) read_register (14), (long) read_register (15));
 
-  printf_filtered (("FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"), (long) read_register (FP0_REGNUM + 0), (long) read_register (FP0_REGNUM + 1), (long) read_register (FP0_REGNUM + 2), (long) read_register (FP0_REGNUM + 3), (long) read_register (FP0_REGNUM + 4), (long) read_register (FP0_REGNUM + 5), (long) read_register (FP0_REGNUM + 6), (long) read_register (FP0_REGNUM + 7));
-  printf_filtered (("FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"), (long) read_register (FP0_REGNUM + 8), (long) read_register (FP0_REGNUM + 9), (long) read_register (FP0_REGNUM + 10), (long) read_register (FP0_REGNUM + 11), (long) read_register (FP0_REGNUM + 12), (long) read_register (FP0_REGNUM + 13), (long) read_register (FP0_REGNUM + 14), (long) read_register (FP0_REGNUM + 15));
-}
-
-static void
-sh2a_show_regs (void)
-{
-  int pr = read_register (FPSCR_REGNUM) & 0x80000;
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
-		   paddr (read_register (PC_REGNUM)),
-		   (long) read_register (SR_REGNUM),
-		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
-
-  printf_filtered ("GBR=%08lx VBR=%08lx TBR=%08lx",
-		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM),
-		   (long) read_register (TBR_REGNUM));
-  printf_filtered (" FPUL=%08lx FPSCR=%08lx\n",
-		   (long) read_register (FPUL_REGNUM),
-		   (long) read_register (FPSCR_REGNUM));
-
-  printf_filtered ("R0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
-		   (long) read_register (0), (long) read_register (1),
-		   (long) read_register (2), (long) read_register (3),
-		   (long) read_register (4), (long) read_register (5),
-		   (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
-		   (long) read_register (8), (long) read_register (9),
-		   (long) read_register (10), (long) read_register (11),
-		   (long) read_register (12), (long) read_register (13),
-		   (long) read_register (14), (long) read_register (15));
-
-  printf_filtered ((pr
-		    ? "DR0-DR6  %08lx%08lx %08lx%08lx %08lx%08lx %08lx%08lx\n"
-		    :
-		    "FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
+  printf_filtered ("FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (FP0_REGNUM + 0),
 		   (long) read_register (FP0_REGNUM + 1),
 		   (long) read_register (FP0_REGNUM + 2),
@@ -1445,9 +1415,65 @@ sh2a_show_regs (void)
 		   (long) read_register (FP0_REGNUM + 5),
 		   (long) read_register (FP0_REGNUM + 6),
 		   (long) read_register (FP0_REGNUM + 7));
-  printf_filtered ((pr ?
-		    "DR8-DR14 %08lx%08lx %08lx%08lx %08lx%08lx %08lx%08lx\n" :
-		    "FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
+  printf_filtered ("FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+		   (long) read_register (FP0_REGNUM + 8),
+		   (long) read_register (FP0_REGNUM + 9),
+		   (long) read_register (FP0_REGNUM + 10),
+		   (long) read_register (FP0_REGNUM + 11),
+		   (long) read_register (FP0_REGNUM + 12),
+		   (long) read_register (FP0_REGNUM + 13),
+		   (long) read_register (FP0_REGNUM + 14),
+		   (long) read_register (FP0_REGNUM + 15));
+}
+
+static void
+sh2a_show_regs (void)
+{
+  int pr = read_register (FPSCR_REGNUM) & 0x80000;
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
+		   paddr (read_register (PC_REGNUM)),
+		   (long) read_register (SR_REGNUM),
+		   (long) read_register (PR_REGNUM),
+		   (long) read_register (MACH_REGNUM));
+
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx      TBR %08lx     MACL %08lx\n",
+		   (long) read_register (GBR_REGNUM),
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (TBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered (
+	"     SSR %08lx      SPC %08lx     FPUL %08lx    FPSCR %08lx\n",
+		   (long) read_register (SSR_REGNUM),
+		   (long) read_register (SPC_REGNUM),
+		   (long) read_register (FPUL_REGNUM),
+		   (long) read_register (FPSCR_REGNUM));
+
+  printf_filtered ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+		   (long) read_register (0), (long) read_register (1),
+		   (long) read_register (2), (long) read_register (3),
+		   (long) read_register (4), (long) read_register (5),
+		   (long) read_register (6), (long) read_register (7));
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+		   (long) read_register (8), (long) read_register (9),
+		   (long) read_register (10), (long) read_register (11),
+		   (long) read_register (12), (long) read_register (13),
+		   (long) read_register (14), (long) read_register (15));
+
+  printf_filtered (
+	(pr ? "DR0-DR6  %08lx%08lx  %08lx%08lx  %08lx%08lx  %08lx%08lx\n"
+	    : "FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
+		   (long) read_register (FP0_REGNUM + 0),
+		   (long) read_register (FP0_REGNUM + 1),
+		   (long) read_register (FP0_REGNUM + 2),
+		   (long) read_register (FP0_REGNUM + 3),
+		   (long) read_register (FP0_REGNUM + 4),
+		   (long) read_register (FP0_REGNUM + 5),
+		   (long) read_register (FP0_REGNUM + 6),
+		   (long) read_register (FP0_REGNUM + 7));
+  printf_filtered (
+	(pr ? "DR8-DR14 %08lx%08lx  %08lx%08lx  %08lx%08lx  %08lx%08lx\n"
+	    : "FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
 		   (long) read_register (FP0_REGNUM + 8),
 		   (long) read_register (FP0_REGNUM + 9),
 		   (long) read_register (FP0_REGNUM + 10),
@@ -1457,7 +1483,8 @@ sh2a_show_regs (void)
 		   (long) read_register (FP0_REGNUM + 14),
 		   (long) read_register (FP0_REGNUM + 15));
   printf_filtered ("BANK=%-3d\n", (int) read_register (BANK_REGNUM));
-  printf_filtered ("R0b - R7b  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered (
+	"R0b-R7b  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (R0_BANK0_REGNUM + 0),
 		   (long) read_register (R0_BANK0_REGNUM + 1),
 		   (long) read_register (R0_BANK0_REGNUM + 2),
@@ -1466,7 +1493,7 @@ sh2a_show_regs (void)
 		   (long) read_register (R0_BANK0_REGNUM + 5),
 		   (long) read_register (R0_BANK0_REGNUM + 6),
 		   (long) read_register (R0_BANK0_REGNUM + 7));
-  printf_filtered ("R8b - R14b %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8b-R14b %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (R0_BANK0_REGNUM + 8),
 		   (long) read_register (R0_BANK0_REGNUM + 9),
 		   (long) read_register (R0_BANK0_REGNUM + 10),
@@ -1486,34 +1513,39 @@ static void
 sh2a_nofpu_show_regs (void)
 {
   int pr = read_register (FPSCR_REGNUM) & 0x80000;
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
+		   (long) read_register (MACH_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx TBR=%08lx",
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx      TBR %08lx     MACL %08lx\n",
 		   (long) read_register (GBR_REGNUM),
 		   (long) read_register (VBR_REGNUM),
-		   (long) read_register (TBR_REGNUM));
-  printf_filtered (" FPUL=%08lx FPSCR=%08lx\n",
+		   (long) read_register (TBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered (
+	"     SSR %08lx      SPC %08lx     FPUL %08lx    FPSCR %08lx\n",
+		   (long) read_register (SSR_REGNUM),
+		   (long) read_register (SPC_REGNUM),
 		   (long) read_register (FPUL_REGNUM),
 		   (long) read_register (FPSCR_REGNUM));
 
-  printf_filtered ("R0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (0), (long) read_register (1),
 		   (long) read_register (2), (long) read_register (3),
 		   (long) read_register (4), (long) read_register (5),
 		   (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
 		   (long) read_register (14), (long) read_register (15));
 
   printf_filtered ("BANK=%-3d\n", (int) read_register (BANK_REGNUM));
-  printf_filtered ("R0b - R7b  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered (
+	"R0b-R7b  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (R0_BANK0_REGNUM + 0),
 		   (long) read_register (R0_BANK0_REGNUM + 1),
 		   (long) read_register (R0_BANK0_REGNUM + 2),
@@ -1522,7 +1554,7 @@ sh2a_nofpu_show_regs (void)
 		   (long) read_register (R0_BANK0_REGNUM + 5),
 		   (long) read_register (R0_BANK0_REGNUM + 6),
 		   (long) read_register (R0_BANK0_REGNUM + 7));
-  printf_filtered ("R8b - R14b %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8b-R14b %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (R0_BANK0_REGNUM + 8),
 		   (long) read_register (R0_BANK0_REGNUM + 9),
 		   (long) read_register (R0_BANK0_REGNUM + 10),
@@ -1541,66 +1573,83 @@ sh2a_nofpu_show_regs (void)
 static void
 sh3e_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
+		   (long) read_register (MACH_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
 		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-  printf_filtered (" SSR=%08lx SPC=%08lx",
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered (
+	"     SSR %08lx      SPC %08lx     FPUL %08lx    FPSCR %08lx\n",
 		   (long) read_register (SSR_REGNUM),
-		   (long) read_register (SPC_REGNUM));
-  printf_filtered (" FPUL=%08lx FPSCR=%08lx",
+		   (long) read_register (SPC_REGNUM),
 		   (long) read_register (FPUL_REGNUM),
 		   (long) read_register (FPSCR_REGNUM));
 
   printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+    ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
      (long) read_register (0), (long) read_register (1),
      (long) read_register (2), (long) read_register (3),
      (long) read_register (4), (long) read_register (5),
      (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
 		   (long) read_register (14), (long) read_register (15));
 
-  printf_filtered (("FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"), (long) read_register (FP0_REGNUM + 0), (long) read_register (FP0_REGNUM + 1), (long) read_register (FP0_REGNUM + 2), (long) read_register (FP0_REGNUM + 3), (long) read_register (FP0_REGNUM + 4), (long) read_register (FP0_REGNUM + 5), (long) read_register (FP0_REGNUM + 6), (long) read_register (FP0_REGNUM + 7));
-  printf_filtered (("FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"), (long) read_register (FP0_REGNUM + 8), (long) read_register (FP0_REGNUM + 9), (long) read_register (FP0_REGNUM + 10), (long) read_register (FP0_REGNUM + 11), (long) read_register (FP0_REGNUM + 12), (long) read_register (FP0_REGNUM + 13), (long) read_register (FP0_REGNUM + 14), (long) read_register (FP0_REGNUM + 15));
+  printf_filtered ("FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+		   (long) read_register (FP0_REGNUM + 0),
+		   (long) read_register (FP0_REGNUM + 1),
+		   (long) read_register (FP0_REGNUM + 2),
+		   (long) read_register (FP0_REGNUM + 3),
+		   (long) read_register (FP0_REGNUM + 4),
+		   (long) read_register (FP0_REGNUM + 5),
+		   (long) read_register (FP0_REGNUM + 6),
+		   (long) read_register (FP0_REGNUM + 7));
+  printf_filtered ("FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+		   (long) read_register (FP0_REGNUM + 8),
+		   (long) read_register (FP0_REGNUM + 9),
+		   (long) read_register (FP0_REGNUM + 10),
+		   (long) read_register (FP0_REGNUM + 11),
+		   (long) read_register (FP0_REGNUM + 12),
+		   (long) read_register (FP0_REGNUM + 13),
+		   (long) read_register (FP0_REGNUM + 14),
+		   (long) read_register (FP0_REGNUM + 15));
 }
 
 static void
 sh3_dsp_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
+		   (long) read_register (MACH_REGNUM));
+
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
+		   (long) read_register (GBR_REGNUM),
+		   (long) read_register (VBR_REGNUM),
 		   (long) read_register (MACL_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
-		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-
-  printf_filtered (" SSR=%08lx SPC=%08lx",
+  printf_filtered ("     SSR %08lx      SPC %08lx      DSR %08lx\n",
 		   (long) read_register (SSR_REGNUM),
-		   (long) read_register (SPC_REGNUM));
-
-  printf_filtered (" DSR=%08lx", (long) read_register (DSR_REGNUM));
+		   (long) read_register (SPC_REGNUM),
+		   (long) read_register (DSR_REGNUM));
 
   printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+    ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
      (long) read_register (0), (long) read_register (1),
      (long) read_register (2), (long) read_register (3),
      (long) read_register (4), (long) read_register (5),
      (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
@@ -1625,39 +1674,38 @@ static void
 sh4_show_regs (void)
 {
   int pr = read_register (FPSCR_REGNUM) & 0x80000;
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
+		   (long) read_register (MACH_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
 		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-  printf_filtered (" SSR=%08lx SPC=%08lx",
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered (
+	"     SSR %08lx      SPC %08lx     FPUL %08lx    FPSCR %08lx\n",
 		   (long) read_register (SSR_REGNUM),
-		   (long) read_register (SPC_REGNUM));
-  printf_filtered (" FPUL=%08lx FPSCR=%08lx",
+		   (long) read_register (SPC_REGNUM),
 		   (long) read_register (FPUL_REGNUM),
 		   (long) read_register (FPSCR_REGNUM));
 
-  printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
-     (long) read_register (0), (long) read_register (1),
-     (long) read_register (2), (long) read_register (3),
-     (long) read_register (4), (long) read_register (5),
-     (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+     		   (long) read_register (0), (long) read_register (1),
+     		   (long) read_register (2), (long) read_register (3),
+     		   (long) read_register (4), (long) read_register (5),
+     		   (long) read_register (6), (long) read_register (7));
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
 		   (long) read_register (14), (long) read_register (15));
 
-  printf_filtered ((pr
-		    ? "DR0-DR6  %08lx%08lx %08lx%08lx %08lx%08lx %08lx%08lx\n"
-		    :
-		    "FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
+  printf_filtered (
+	(pr ? "DR0-DR6  %08lx%08lx  %08lx%08lx  %08lx%08lx  %08lx%08lx\n"
+	    : "FP0-FP7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
 		   (long) read_register (FP0_REGNUM + 0),
 		   (long) read_register (FP0_REGNUM + 1),
 		   (long) read_register (FP0_REGNUM + 2),
@@ -1666,9 +1714,9 @@ sh4_show_regs (void)
 		   (long) read_register (FP0_REGNUM + 5),
 		   (long) read_register (FP0_REGNUM + 6),
 		   (long) read_register (FP0_REGNUM + 7));
-  printf_filtered ((pr ?
-		    "DR8-DR14 %08lx%08lx %08lx%08lx %08lx%08lx %08lx%08lx\n" :
-		    "FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
+  printf_filtered (
+	(pr ? "DR8-DR14 %08lx%08lx  %08lx%08lx  %08lx%08lx  %08lx%08lx\n"
+	    : "FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"),
 		   (long) read_register (FP0_REGNUM + 8),
 		   (long) read_register (FP0_REGNUM + 9),
 		   (long) read_register (FP0_REGNUM + 10),
@@ -1682,27 +1730,30 @@ sh4_show_regs (void)
 static void
 sh4_nofpu_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
-		   (long) read_register (MACL_REGNUM));
+		   (long) read_register (MACH_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx                       MACL %08lx\n",
 		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-  printf_filtered (" SSR=%08lx SPC=%08lx",
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (MACL_REGNUM));
+  printf_filtered (
+	"     SSR %08lx      SPC %08lx     FPUL %08lx    FPSCR %08lx\n",
 		   (long) read_register (SSR_REGNUM),
-		   (long) read_register (SPC_REGNUM));
+		   (long) read_register (SPC_REGNUM),
+		   (long) read_register (FPUL_REGNUM),
+		   (long) read_register (FPSCR_REGNUM));
 
-  printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
-     (long) read_register (0), (long) read_register (1),
-     (long) read_register (2), (long) read_register (3),
-     (long) read_register (4), (long) read_register (5),
-     (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+     		   (long) read_register (0), (long) read_register (1),
+     		   (long) read_register (2), (long) read_register (3),
+     		   (long) read_register (4), (long) read_register (5),
+     		   (long) read_register (6), (long) read_register (7));
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
@@ -1712,26 +1763,27 @@ sh4_nofpu_show_regs (void)
 static void
 sh_dsp_show_regs (void)
 {
-  printf_filtered ("PC=%s SR=%08lx PR=%08lx MACH=%08lx MACHL=%08lx\n",
+
+  printf_filtered ("      PC %s       SR %08lx       PR %08lx     MACH %08lx\n",
 		   paddr (read_register (PC_REGNUM)),
 		   (long) read_register (SR_REGNUM),
 		   (long) read_register (PR_REGNUM),
-		   (long) read_register (MACH_REGNUM),
+		   (long) read_register (MACH_REGNUM));
+
+  printf_filtered (
+	"     GBR %08lx      VBR %08lx      DSR %08lx     MACL %08lx\n",
+		   (long) read_register (GBR_REGNUM),
+		   (long) read_register (VBR_REGNUM),
+		   (long) read_register (DSR_REGNUM),
 		   (long) read_register (MACL_REGNUM));
 
-  printf_filtered ("GBR=%08lx VBR=%08lx",
-		   (long) read_register (GBR_REGNUM),
-		   (long) read_register (VBR_REGNUM));
-
-  printf_filtered (" DSR=%08lx", (long) read_register (DSR_REGNUM));
-
   printf_filtered
-    ("\nR0-R7  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+    ("R0-R7    %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
      (long) read_register (0), (long) read_register (1),
      (long) read_register (2), (long) read_register (3),
      (long) read_register (4), (long) read_register (5),
      (long) read_register (6), (long) read_register (7));
-  printf_filtered ("R8-R15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
+  printf_filtered ("R8-R15   %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
 		   (long) read_register (8), (long) read_register (9),
 		   (long) read_register (10), (long) read_register (11),
 		   (long) read_register (12), (long) read_register (13),
@@ -1812,6 +1864,47 @@ sh_default_register_type (struct gdbarch *gdbarch, int reg_nr)
   return builtin_type_int;
 }
 
+/* Is a register in a reggroup?
+   The default code in reggroup.c doesn't identify system registers, some
+   float registers or any of the vector registers.
+   TODO: sh2a and dsp registers.  */
+int
+sh_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
+			struct reggroup *reggroup)
+{
+  if (REGISTER_NAME (regnum) == NULL
+      || *REGISTER_NAME (regnum) == '\0')
+    return 0;
+
+  if (reggroup == float_reggroup
+      && (regnum == FPUL_REGNUM
+	  || regnum == FPSCR_REGNUM))
+    return 1;
+
+  if (regnum >= FV0_REGNUM && regnum <= FV_LAST_REGNUM)
+    {
+      if (reggroup == vector_reggroup || reggroup == float_reggroup)
+	return 1;
+      if (reggroup == general_reggroup)
+	return 0;
+    }
+
+  if (regnum == VBR_REGNUM
+      || regnum == SR_REGNUM
+      || regnum == FPSCR_REGNUM
+      || regnum == SSR_REGNUM
+      || regnum == SPC_REGNUM)
+    {
+      if (reggroup == system_reggroup)
+	return 1;
+      if (reggroup == general_reggroup)
+	return 0;
+    }
+
+  /* The default code can cope with any other registers.  */
+  return default_register_reggroup_p (gdbarch, regnum, reggroup);
+}
+
 /* On the sh4, the DRi pseudo registers are problematic if the target
    is little endian. When the user writes one of those registers, for
    instance with 'ser var $dr0=1', we want the double to be stored
@@ -1890,7 +1983,7 @@ dr_reg_base_num (int dr_regnum)
 
 static void
 sh_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
-			 int reg_nr, void *buffer)
+			 int reg_nr, gdb_byte *buffer)
 {
   int base_regnum, portion;
   char temp_buffer[MAX_REGISTER_SIZE];
@@ -1929,7 +2022,7 @@ sh_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
 
 static void
 sh_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-			  int reg_nr, const void *buffer)
+			  int reg_nr, const gdb_byte *buffer)
 {
   int base_regnum, portion;
   char temp_buffer[MAX_REGISTER_SIZE];
@@ -1971,184 +2064,6 @@ sh_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 			    ((char *) buffer
 			     + register_size (gdbarch,
 					      base_regnum) * portion));
-    }
-}
-
-/* Floating point vector of 4 float registers. */
-static void
-do_fv_register_info (struct gdbarch *gdbarch, struct ui_file *file,
-		     int fv_regnum)
-{
-  int first_fp_reg_num = fv_reg_base_num (fv_regnum);
-  fprintf_filtered (file, "fv%d\t0x%08x\t0x%08x\t0x%08x\t0x%08x\n",
-		    fv_regnum - FV0_REGNUM,
-		    (int) read_register (first_fp_reg_num),
-		    (int) read_register (first_fp_reg_num + 1),
-		    (int) read_register (first_fp_reg_num + 2),
-		    (int) read_register (first_fp_reg_num + 3));
-}
-
-/* Double precision registers. */
-static void
-do_dr_register_info (struct gdbarch *gdbarch, struct ui_file *file,
-		     int dr_regnum)
-{
-  int first_fp_reg_num = dr_reg_base_num (dr_regnum);
-
-  fprintf_filtered (file, "dr%d\t0x%08x%08x\n",
-		    dr_regnum - DR0_REGNUM,
-		    (int) read_register (first_fp_reg_num),
-		    (int) read_register (first_fp_reg_num + 1));
-}
-static void
-do_bank_register_info (struct gdbarch *gdbarch, struct ui_file *file)
-{
-  fprintf_filtered (file, "bank           %d\n",
-		    (int) read_register (BANK_REGNUM));
-}
-
-static void
-sh_print_pseudo_register (struct gdbarch *gdbarch, struct ui_file *file,
-			  int regnum)
-{
-  if (regnum < NUM_REGS || regnum >= NUM_REGS + NUM_PSEUDO_REGS)
-    internal_error (__FILE__, __LINE__,
-		    _("Invalid pseudo register number %d\n"), regnum);
-  else if (regnum == PSEUDO_BANK_REGNUM)
-    do_bank_register_info (gdbarch, file);
-  else if (regnum >= DR0_REGNUM && regnum <= DR_LAST_REGNUM)
-    do_dr_register_info (gdbarch, file, regnum);
-  else if (regnum >= FV0_REGNUM && regnum <= FV_LAST_REGNUM)
-    do_fv_register_info (gdbarch, file, regnum);
-}
-
-static void
-sh_do_fp_register (struct gdbarch *gdbarch, struct ui_file *file, int regnum)
-{				/* do values for FP (float) regs */
-  char *raw_buffer;
-  double flt;			/* double extracted from raw hex data */
-  int inv;
-  int j;
-
-  /* Allocate space for the float. */
-  raw_buffer = (char *) alloca (register_size (gdbarch, FP0_REGNUM));
-
-  /* Get the data in raw format.  */
-  if (!frame_register_read (get_selected_frame (NULL), regnum, raw_buffer))
-    error (_("can't read register %d (%s)"), regnum, REGISTER_NAME (regnum));
-
-  /* Get the register as a number */
-  flt = unpack_double (builtin_type_float, raw_buffer, &inv);
-
-  /* Print the name and some spaces. */
-  fputs_filtered (REGISTER_NAME (regnum), file);
-  print_spaces_filtered (15 - strlen (REGISTER_NAME (regnum)), file);
-
-  /* Print the value. */
-  if (inv)
-    fprintf_filtered (file, "<invalid float>");
-  else
-    fprintf_filtered (file, "%-10.9g", flt);
-
-  /* Print the fp register as hex. */
-  fprintf_filtered (file, "\t(raw 0x");
-  for (j = 0; j < register_size (gdbarch, regnum); j++)
-    {
-      int idx = (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG
-		 ? j
-		 : register_size (gdbarch, regnum) - 1 - j);
-      fprintf_filtered (file, "%02x", (unsigned char) raw_buffer[idx]);
-    }
-  fprintf_filtered (file, ")");
-  fprintf_filtered (file, "\n");
-}
-
-static void
-sh_do_register (struct gdbarch *gdbarch, struct ui_file *file, int regnum)
-{
-  char raw_buffer[MAX_REGISTER_SIZE];
-
-  fputs_filtered (REGISTER_NAME (regnum), file);
-  print_spaces_filtered (15 - strlen (REGISTER_NAME (regnum)), file);
-
-  /* Get the data in raw format.  */
-  if (!frame_register_read (get_selected_frame (NULL), regnum, raw_buffer))
-    fprintf_filtered (file, "*value not available*\n");
-
-  val_print (gdbarch_register_type (gdbarch, regnum), raw_buffer, 0, 0,
-	     file, 'x', 1, 0, Val_pretty_default);
-  fprintf_filtered (file, "\t");
-  val_print (gdbarch_register_type (gdbarch, regnum), raw_buffer, 0, 0,
-	     file, 0, 1, 0, Val_pretty_default);
-  fprintf_filtered (file, "\n");
-}
-
-static void
-sh_print_register (struct gdbarch *gdbarch, struct ui_file *file, int regnum)
-{
-  if (regnum < 0 || regnum >= NUM_REGS + NUM_PSEUDO_REGS)
-    internal_error (__FILE__, __LINE__,
-		    _("Invalid register number %d\n"), regnum);
-
-  else if (regnum >= 0 && regnum < NUM_REGS)
-    {
-      if (TYPE_CODE (gdbarch_register_type (gdbarch, regnum)) ==
-	  TYPE_CODE_FLT)
-	sh_do_fp_register (gdbarch, file, regnum);	/* FP regs */
-      else
-	sh_do_register (gdbarch, file, regnum);	/* All other regs */
-    }
-
-  else if (regnum < NUM_REGS + NUM_PSEUDO_REGS)
-    {
-      sh_print_pseudo_register (gdbarch, file, regnum);
-    }
-}
-
-static void
-sh_print_registers_info (struct gdbarch *gdbarch, struct ui_file *file,
-			 struct frame_info *frame, int regnum, int fpregs)
-{
-  if (regnum != -1)		/* do one specified register */
-    {
-      if (*(REGISTER_NAME (regnum)) == '\0')
-	error (_("Not a valid register for the current processor type"));
-
-      sh_print_register (gdbarch, file, regnum);
-    }
-  else
-    /* do all (or most) registers */
-    {
-      for (regnum = 0; regnum < NUM_REGS; ++regnum)
-	{
-	  /* If the register name is empty, it is undefined for this
-	     processor, so don't display anything.  */
-	  if (REGISTER_NAME (regnum) == NULL
-	      || *(REGISTER_NAME (regnum)) == '\0')
-	    continue;
-
-	  if (TYPE_CODE (gdbarch_register_type (gdbarch, regnum)) ==
-	      TYPE_CODE_FLT)
-	    {
-	      /* true for "INFO ALL-REGISTERS" command */
-	      if (fpregs)
-		sh_do_fp_register (gdbarch, file, regnum);	/* FP regs */
-	    }
-	  else
-	    sh_do_register (gdbarch, file, regnum);	/* All other regs */
-	}
-
-      if (regnum == PSEUDO_BANK_REGNUM
-      	  && REGISTER_NAME (regnum)
-	  && *REGISTER_NAME (regnum))
-	sh_print_pseudo_register (gdbarch, file, regnum++);
-
-      if (fpregs)
-	while (regnum < NUM_REGS + NUM_PSEUDO_REGS)
-	  {
-	    sh_print_pseudo_register (gdbarch, file, regnum);
-	    regnum++;
-	  }
     }
 }
 
@@ -2197,6 +2112,58 @@ sh_sh2a_register_sim_regno (int nr)
         break;
     }
   return legacy_register_sim_regno (nr);
+}
+
+/* Set up the register unwinding such that call-clobbered registers are
+   not displayed in frames >0 because the true value is not certain.
+   The 'undefined' registers will show up as 'not available' unless the
+   CFI says otherwise.
+
+   This function is currently set up for SH4 and compatible only.  */
+
+static void
+sh_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
+                          struct dwarf2_frame_state_reg *reg,
+			  struct frame_info *next_frame)
+{
+  /* Mark the PC as the destination for the return address.  */
+  if (regnum == PC_REGNUM)
+    reg->how = DWARF2_FRAME_REG_RA;
+
+  /* Mark the stack pointer as the call frame address.  */
+  else if (regnum == SP_REGNUM)
+    reg->how = DWARF2_FRAME_REG_CFA;
+
+  /* The above was taken from the default init_reg in dwarf2-frame.c
+     while the below is SH specific.  */
+
+  /* Caller save registers.  */
+  else if ((regnum >= R0_REGNUM && regnum <= R0_REGNUM+7)
+	   || (regnum >= FR0_REGNUM && regnum <= FR0_REGNUM+11)
+	   || (regnum >= DR0_REGNUM && regnum <= DR0_REGNUM+5)
+	   || (regnum >= FV0_REGNUM && regnum <= FV0_REGNUM+2)
+	   || (regnum == MACH_REGNUM)
+	   || (regnum == MACL_REGNUM)
+	   || (regnum == FPUL_REGNUM)
+	   || (regnum == SR_REGNUM))
+    reg->how = DWARF2_FRAME_REG_UNDEFINED;
+
+  /* Callee save registers.  */
+  else if ((regnum >= R0_REGNUM+8 && regnum <= R0_REGNUM+15)
+	   || (regnum >= FR0_REGNUM+12 && regnum <= FR0_REGNUM+15)
+	   || (regnum >= DR0_REGNUM+6 && regnum <= DR0_REGNUM+8)
+	   || (regnum == FV0_REGNUM+3))
+    reg->how = DWARF2_FRAME_REG_SAME_VALUE;
+
+  /* Other registers.  These are not in the ABI and may or may not
+     mean anything in frames >0 so don't show them.  */
+  else if ((regnum >= R0_BANK0_REGNUM && regnum <= R0_BANK0_REGNUM+15)
+	   || (regnum == GBR_REGNUM)
+	   || (regnum == VBR_REGNUM)
+	   || (regnum == FPSCR_REGNUM)
+	   || (regnum == SSR_REGNUM)
+	   || (regnum == SPC_REGNUM))
+    reg->how = DWARF2_FRAME_REG_UNDEFINED;
 }
 
 static struct sh_frame_cache *
@@ -2282,7 +2249,7 @@ static void
 sh_frame_prev_register (struct frame_info *next_frame, void **this_cache,
 			int regnum, int *optimizedp,
 			enum lval_type *lvalp, CORE_ADDR *addrp,
-			int *realnump, void *valuep)
+			int *realnump, gdb_byte *valuep)
 {
   struct sh_frame_cache *cache = sh_frame_cache (next_frame, this_cache);
 
@@ -2549,8 +2516,7 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_num_pseudo_regs (gdbarch, 0);
 
   set_gdbarch_register_type (gdbarch, sh_default_register_type);
-
-  set_gdbarch_print_registers_info (gdbarch, sh_print_registers_info);
+  set_gdbarch_register_reggroup_p (gdbarch, sh_register_reggroup_p);
 
   set_gdbarch_breakpoint_from_pc (gdbarch, sh_breakpoint_from_pc);
 
@@ -2577,6 +2543,8 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   frame_base_set_default (gdbarch, &sh_frame_base);
 
   set_gdbarch_in_function_epilogue_p (gdbarch, sh_in_function_epilogue_p);
+
+  dwarf2_frame_set_init_reg (gdbarch, sh_dwarf2_frame_init_reg);
 
   switch (info.bfd_arch_info->mach)
     {
@@ -2627,10 +2595,13 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       break;
 
     case bfd_mach_sh3:
+    case bfd_mach_sh3_nommu:
+    case bfd_mach_sh2a_nofpu_or_sh3_nommu:
       set_gdbarch_register_name (gdbarch, sh_sh3_register_name);
       break;
 
     case bfd_mach_sh3e:
+    case bfd_mach_sh2a_or_sh3e:
       /* doubles on sh2e and sh3e are actually 4 byte. */
       set_gdbarch_double_bit (gdbarch, 4 * TARGET_CHAR_BIT);
 
@@ -2660,6 +2631,9 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
     case bfd_mach_sh4_nofpu:
     case bfd_mach_sh4a_nofpu:
+    case bfd_mach_sh4_nommu_nofpu:
+    case bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu:
+    case bfd_mach_sh2a_or_sh4:
       set_gdbarch_register_name (gdbarch, sh_sh4_nofpu_register_name);
       break;
 

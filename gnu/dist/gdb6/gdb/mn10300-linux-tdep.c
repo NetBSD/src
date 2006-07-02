@@ -1,5 +1,5 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
-   Copyright 2003, 2004, 2005
+   Copyright (C) 2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -30,6 +30,9 @@
 #include "osabi.h"
 #include "regset.h"
 #include "solib-svr4.h"
+#include "frame.h"
+#include "trad-frame.h"
+#include "tramp-frame.h"
 
 #include <stdlib.h>
 
@@ -467,7 +470,240 @@ am33_regset_from_core_section (struct gdbarch *gdbarch,
 			 am33_supply_gregset_method,
 			 am33_collect_gregset_method);
 }
+
+static void
+am33_linux_sigframe_cache_init (const struct tramp_frame *self,
+                                struct frame_info *next_frame,
+			        struct trad_frame_cache *this_cache,
+			        CORE_ADDR func);
 
+static const struct tramp_frame am33_linux_sigframe = {
+  SIGTRAMP_FRAME,
+  1,
+  {
+    /* mov     119,d0 */
+    { 0x2c, -1 },
+    { 0x77, -1 },
+    { 0x00, -1 },
+    /* syscall 0 */
+    { 0xf0, -1 },
+    { 0xe0, -1 },
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  am33_linux_sigframe_cache_init
+};
+
+static const struct tramp_frame am33_linux_rt_sigframe = {
+  SIGTRAMP_FRAME,
+  1,
+  {
+    /* mov     173,d0 */
+    { 0x2c, -1 },
+    { 0xad, -1 },
+    { 0x00, -1 },
+    /* syscall 0 */
+    { 0xf0, -1 },
+    { 0xe0, -1 },
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  am33_linux_sigframe_cache_init
+};
+
+/* Relevant struct definitions for signal handling...
+
+From arch/mn10300/kernel/sigframe.h:
+
+struct sigframe
+{
+	void (*pretcode)(void);
+	int sig;
+	struct sigcontext sc;
+	struct fpucontext fpuctx;
+	unsigned long extramask[_NSIG_WORDS-1];
+	char retcode[8];
+};
+
+struct rt_sigframe
+{
+	void (*pretcode)(void);
+	int sig;
+	struct siginfo *pinfo;
+	void *puc;
+	struct siginfo info;
+	struct ucontext uc;
+	struct fpucontext fpuctx;
+	char retcode[8];
+};
+
+From include/asm-mn10300/ucontext.h:
+
+struct ucontext {
+	unsigned long	  uc_flags;
+	struct ucontext  *uc_link;
+	stack_t		  uc_stack;
+	struct sigcontext uc_mcontext;
+	sigset_t	  uc_sigmask;
+};
+
+From include/asm-mn10300/sigcontext.h:
+
+struct fpucontext {
+	unsigned long	fs[32];
+	unsigned long	fpcr;
+};
+
+struct sigcontext {
+	unsigned long	d0;
+	unsigned long	d1;
+	unsigned long	d2;
+	unsigned long	d3;
+	unsigned long	a0;
+	unsigned long	a1;
+	unsigned long	a2;
+	unsigned long	a3;
+	unsigned long	e0;
+	unsigned long	e1;
+	unsigned long	e2;
+	unsigned long	e3;
+	unsigned long	e4;
+	unsigned long	e5;
+	unsigned long	e6;
+	unsigned long	e7;
+	unsigned long	lar;
+	unsigned long	lir;
+	unsigned long	mdr;
+	unsigned long	mcvf;
+	unsigned long	mcrl;
+	unsigned long	mcrh;
+	unsigned long	mdrq;
+	unsigned long	sp;
+	unsigned long	epsw;
+	unsigned long	pc;
+	struct fpucontext *fpucontext;
+	unsigned long	oldmask;
+}; */
+
+
+#define AM33_SIGCONTEXT_D0 0
+#define AM33_SIGCONTEXT_D1 4
+#define AM33_SIGCONTEXT_D2 8
+#define AM33_SIGCONTEXT_D3 12
+#define AM33_SIGCONTEXT_A0 16
+#define AM33_SIGCONTEXT_A1 20
+#define AM33_SIGCONTEXT_A2 24
+#define AM33_SIGCONTEXT_A3 28
+#define AM33_SIGCONTEXT_E0 32
+#define AM33_SIGCONTEXT_E1 36
+#define AM33_SIGCONTEXT_E2 40
+#define AM33_SIGCONTEXT_E3 44
+#define AM33_SIGCONTEXT_E4 48
+#define AM33_SIGCONTEXT_E5 52
+#define AM33_SIGCONTEXT_E6 56
+#define AM33_SIGCONTEXT_E7 60
+#define AM33_SIGCONTEXT_LAR 64
+#define AM33_SIGCONTEXT_LIR 68
+#define AM33_SIGCONTEXT_MDR 72
+#define AM33_SIGCONTEXT_MCVF 76
+#define AM33_SIGCONTEXT_MCRL 80
+#define AM33_SIGCONTEXT_MCRH 84
+#define AM33_SIGCONTEXT_MDRQ 88
+#define AM33_SIGCONTEXT_SP 92
+#define AM33_SIGCONTEXT_EPSW 96
+#define AM33_SIGCONTEXT_PC 100
+#define AM33_SIGCONTEXT_FPUCONTEXT 104
+
+
+static void
+am33_linux_sigframe_cache_init (const struct tramp_frame *self,
+                                struct frame_info *next_frame,
+			        struct trad_frame_cache *this_cache,
+			        CORE_ADDR func)
+{
+  CORE_ADDR sc_base, fpubase;
+  int i;
+
+  sc_base = frame_unwind_register_unsigned (next_frame, E_SP_REGNUM);
+  if (self == &am33_linux_sigframe)
+    {
+      sc_base += 8;
+    }
+  else
+    {
+      sc_base += 12;
+      sc_base = get_frame_memory_unsigned (next_frame, sc_base, 4);
+      sc_base += 20;
+    }
+
+  trad_frame_set_reg_addr (this_cache, E_D0_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_D0);
+  trad_frame_set_reg_addr (this_cache, E_D1_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_D1);
+  trad_frame_set_reg_addr (this_cache, E_D2_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_D2);
+  trad_frame_set_reg_addr (this_cache, E_D3_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_D3);
+
+  trad_frame_set_reg_addr (this_cache, E_A0_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_A0);
+  trad_frame_set_reg_addr (this_cache, E_A1_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_A1);
+  trad_frame_set_reg_addr (this_cache, E_A2_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_A2);
+  trad_frame_set_reg_addr (this_cache, E_A3_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_A3);
+
+  trad_frame_set_reg_addr (this_cache, E_E0_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E0);
+  trad_frame_set_reg_addr (this_cache, E_E1_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E1);
+  trad_frame_set_reg_addr (this_cache, E_E2_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E2);
+  trad_frame_set_reg_addr (this_cache, E_E3_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E3);
+  trad_frame_set_reg_addr (this_cache, E_E4_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E4);
+  trad_frame_set_reg_addr (this_cache, E_E5_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E5);
+  trad_frame_set_reg_addr (this_cache, E_E6_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E6);
+  trad_frame_set_reg_addr (this_cache, E_E7_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_E7);
+
+  trad_frame_set_reg_addr (this_cache, E_LAR_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_LAR);
+  trad_frame_set_reg_addr (this_cache, E_LIR_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_LIR);
+  trad_frame_set_reg_addr (this_cache, E_MDR_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_MDR);
+  trad_frame_set_reg_addr (this_cache, E_MCVF_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_MCVF);
+  trad_frame_set_reg_addr (this_cache, E_MCRL_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_MCRL);
+  trad_frame_set_reg_addr (this_cache, E_MDRQ_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_MDRQ);
+
+  trad_frame_set_reg_addr (this_cache, E_SP_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_SP);
+  trad_frame_set_reg_addr (this_cache, E_PSW_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_EPSW);
+  trad_frame_set_reg_addr (this_cache, E_PC_REGNUM,
+                           sc_base + AM33_SIGCONTEXT_PC);
+
+  fpubase = get_frame_memory_unsigned (next_frame,
+                                       sc_base + AM33_SIGCONTEXT_FPUCONTEXT, 4);
+  if (fpubase)
+    {
+      for (i = 0; i < 32; i++)
+	{
+	  trad_frame_set_reg_addr (this_cache, E_FS0_REGNUM + i,
+	                           fpubase + 4 * i);
+	}
+      trad_frame_set_reg_addr (this_cache, E_FPCR_REGNUM, fpubase + 4 * 32);
+    }
+
+  trad_frame_set_id (this_cache, frame_id_build (sc_base, func));
+}
+
 /* AM33 Linux osabi has been recognized.
    Now's our chance to register our corefile handling.  */
 
@@ -478,6 +714,9 @@ am33_linux_init_osabi (struct gdbarch_info gdbinfo, struct gdbarch *gdbarch)
 					am33_regset_from_core_section);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+
+  tramp_frame_prepend_unwinder (gdbarch, &am33_linux_sigframe);
+  tramp_frame_prepend_unwinder (gdbarch, &am33_linux_rt_sigframe);
 }
 
 void

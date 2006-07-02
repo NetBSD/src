@@ -1,7 +1,7 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation,
-   Inc.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
@@ -32,8 +32,6 @@
 #include "gdbcore.h"
 #include "gdbcmd.h"
 #include "objfiles.h"
-#include "tm.h"
-#include "../bfd/bfd.h"
 #include "floatformat.h"
 #include "regcache.h"
 #include "trad-frame.h"
@@ -45,7 +43,8 @@
 #include "value.h"
 #include "gdb_assert.h"
 #include "dis-asm.h"
-#include "solib-svr4.h"         /* For struct link_map_offsets.  */
+#include "solib-svr4.h"
+#include "prologue-value.h"
 
 #include "s390-tdep.h"
 
@@ -445,19 +444,41 @@ s390_supply_regset (const struct regset *regset, struct regcache *regcache,
     }
 }
 
+/* Collect register REGNUM from the register cache REGCACHE and store
+   it in the buffer specified by REGS and LEN as described by the
+   general-purpose register set REGSET.  If REGNUM is -1, do this for
+   all registers in REGSET.  */
+static void
+s390_collect_regset (const struct regset *regset,
+		     const struct regcache *regcache,
+		     int regnum, void *regs, size_t len)
+{
+  const int *offset = regset->descr;
+  int i;
+
+  for (i = 0; i < S390_NUM_REGS; i++)
+    {
+      if ((regnum == i || regnum == -1) && offset[i] != -1)
+	regcache_raw_collect (regcache, i, (char *)regs + offset[i]);
+    }
+}
+
 static const struct regset s390_gregset = {
   s390_regmap_gregset, 
-  s390_supply_regset
+  s390_supply_regset,
+  s390_collect_regset
 };
 
 static const struct regset s390x_gregset = {
   s390x_regmap_gregset, 
-  s390_supply_regset
+  s390_supply_regset,
+  s390_collect_regset
 };
 
 static const struct regset s390_fpregset = {
   s390_regmap_fpregset, 
-  s390_supply_regset
+  s390_supply_regset,
+  s390_collect_regset
 };
 
 /* Return the appropriate register set for the core section identified
@@ -475,330 +496,6 @@ s390_regset_from_core_section (struct gdbarch *gdbarch,
     return tdep->fpregset;
 
   return NULL;
-}
-
-
-/* Prologue analysis.  */
-
-/* When we analyze a prologue, we're really doing 'abstract
-   interpretation' or 'pseudo-evaluation': running the function's code
-   in simulation, but using conservative approximations of the values
-   it would have when it actually runs.  For example, if our function
-   starts with the instruction:
-
-      ahi r1, 42     # add halfword immediate 42 to r1
-
-   we don't know exactly what value will be in r1 after executing this
-   instruction, but we do know it'll be 42 greater than its original
-   value.
-
-   If we then see an instruction like:
-
-      ahi r1, 22     # add halfword immediate 22 to r1
-
-   we still don't know what r1's value is, but again, we can say it is
-   now 64 greater than its original value.
-
-   If the next instruction were:
-
-      lr r2, r1      # set r2 to r1's value
-
-   then we can say that r2's value is now the original value of r1
-   plus 64.  And so on.
-
-   Of course, this can only go so far before it gets unreasonable.  If
-   we wanted to be able to say anything about the value of r1 after
-   the instruction:
-
-      xr r1, r3      # exclusive-or r1 and r3, place result in r1
-
-   then things would get pretty complex.  But remember, we're just
-   doing a conservative approximation; if exclusive-or instructions
-   aren't relevant to prologues, we can just say r1's value is now
-   'unknown'.  We can ignore things that are too complex, if that loss
-   of information is acceptable for our application.
-
-   Once you've reached an instruction that you don't know how to
-   simulate, you stop.  Now you examine the state of the registers and
-   stack slots you've kept track of.  For example:
-
-   - To see how large your stack frame is, just check the value of sp;
-     if it's the original value of sp minus a constant, then that
-     constant is the stack frame's size.  If the sp's value has been
-     marked as 'unknown', then that means the prologue has done
-     something too complex for us to track, and we don't know the
-     frame size.
-
-   - To see whether we've saved the SP in the current frame's back
-     chain slot, we just check whether the current value of the back
-     chain stack slot is the original value of the sp.
-
-   Sure, this takes some work.  But prologue analyzers aren't
-   quick-and-simple pattern patching to recognize a few fixed prologue
-   forms any more; they're big, hairy functions.  Along with inferior
-   function calls, prologue analysis accounts for a substantial
-   portion of the time needed to stabilize a GDB port.  So I think
-   it's worthwhile to look for an approach that will be easier to
-   understand and maintain.  In the approach used here:
-
-   - It's easier to see that the analyzer is correct: you just see
-     whether the analyzer properly (albiet conservatively) simulates
-     the effect of each instruction.
-
-   - It's easier to extend the analyzer: you can add support for new
-     instructions, and know that you haven't broken anything that
-     wasn't already broken before.
-
-   - It's orthogonal: to gather new information, you don't need to
-     complicate the code for each instruction.  As long as your domain
-     of conservative values is already detailed enough to tell you
-     what you need, then all the existing instruction simulations are
-     already gathering the right data for you.
-
-   A 'struct prologue_value' is a conservative approximation of the
-   real value the register or stack slot will have.  */
-
-struct prologue_value {
-
-  /* What sort of value is this?  This determines the interpretation
-     of subsequent fields.  */
-  enum {
-
-    /* We don't know anything about the value.  This is also used for
-       values we could have kept track of, when doing so would have
-       been too complex and we don't want to bother.  The bottom of
-       our lattice.  */
-    pv_unknown,
-
-    /* A known constant.  K is its value.  */
-    pv_constant,
-
-    /* The value that register REG originally had *UPON ENTRY TO THE
-       FUNCTION*, plus K.  If K is zero, this means, obviously, just
-       the value REG had upon entry to the function.  REG is a GDB
-       register number.  Before we start interpreting, we initialize
-       every register R to { pv_register, R, 0 }.  */
-    pv_register,
-
-  } kind;
-
-  /* The meanings of the following fields depend on 'kind'; see the
-     comments for the specific 'kind' values.  */
-  int reg;
-  CORE_ADDR k;
-};
-
-
-/* Set V to be unknown.  */
-static void
-pv_set_to_unknown (struct prologue_value *v)
-{
-  v->kind = pv_unknown;
-}
-
-
-/* Set V to the constant K.  */
-static void
-pv_set_to_constant (struct prologue_value *v, CORE_ADDR k)
-{
-  v->kind = pv_constant;
-  v->k = k;
-}
-
-
-/* Set V to the original value of register REG, plus K.  */
-static void
-pv_set_to_register (struct prologue_value *v, int reg, CORE_ADDR k)
-{
-  v->kind = pv_register;
-  v->reg = reg;
-  v->k = k;
-}
-
-
-/* If one of *A and *B is a constant, and the other isn't, swap the
-   pointers as necessary to ensure that *B points to the constant.
-   This can reduce the number of cases we need to analyze in the
-   functions below.  */
-static void
-pv_constant_last (struct prologue_value **a,
-                  struct prologue_value **b)
-{
-  if ((*a)->kind == pv_constant
-      && (*b)->kind != pv_constant)
-    {
-      struct prologue_value *temp = *a;
-      *a = *b;
-      *b = temp;
-    }
-}
-
-
-/* Set SUM to the sum of A and B.  SUM, A, and B may point to the same
-   'struct prologue_value' object.  */
-static void
-pv_add (struct prologue_value *sum,
-        struct prologue_value *a,
-        struct prologue_value *b)
-{
-  pv_constant_last (&a, &b);
-
-  /* We can handle adding constants to registers, and other constants.  */
-  if (b->kind == pv_constant
-      && (a->kind == pv_register
-          || a->kind == pv_constant))
-    {
-      sum->kind = a->kind;
-      sum->reg = a->reg;    /* not meaningful if a is pv_constant, but
-                               harmless */
-      sum->k = a->k + b->k;
-    }
-
-  /* Anything else we don't know how to add.  We don't have a
-     representation for, say, the sum of two registers, or a multiple
-     of a register's value (adding a register to itself).  */
-  else
-    sum->kind = pv_unknown;
-}
-
-
-/* Add the constant K to V.  */
-static void
-pv_add_constant (struct prologue_value *v, CORE_ADDR k)
-{
-  struct prologue_value pv_k;
-
-  /* Rather than thinking of all the cases we can and can't handle,
-     we'll just let pv_add take care of that for us.  */
-  pv_set_to_constant (&pv_k, k);
-  pv_add (v, v, &pv_k);
-}
-
-
-/* Subtract B from A, and put the result in DIFF.
-
-   This isn't quite the same as negating B and adding it to A, since
-   we don't have a representation for the negation of anything but a
-   constant.  For example, we can't negate { pv_register, R1, 10 },
-   but we do know that { pv_register, R1, 10 } minus { pv_register,
-   R1, 5 } is { pv_constant, <ignored>, 5 }.
-
-   This means, for example, that we can subtract two stack addresses;
-   they're both relative to the original SP.  Since the frame pointer
-   is set based on the SP, its value will be the original SP plus some
-   constant (probably zero), so we can use its value just fine.  */
-static void
-pv_subtract (struct prologue_value *diff,
-             struct prologue_value *a,
-             struct prologue_value *b)
-{
-  pv_constant_last (&a, &b);
-
-  /* We can subtract a constant from another constant, or from a
-     register.  */
-  if (b->kind == pv_constant
-      && (a->kind == pv_register
-          || a->kind == pv_constant))
-    {
-      diff->kind = a->kind;
-      diff->reg = a->reg;    /* not always meaningful, but harmless */
-      diff->k = a->k - b->k;
-    }
-
-  /* We can subtract a register from itself, yielding a constant.  */
-  else if (a->kind == pv_register
-           && b->kind == pv_register
-           && a->reg == b->reg)
-    {
-      diff->kind = pv_constant;
-      diff->k = a->k - b->k;
-    }
-
-  /* We don't know how to subtract anything else.  */
-  else
-    diff->kind = pv_unknown;
-}
-
-
-/* Set AND to the logical and of A and B.  */
-static void
-pv_logical_and (struct prologue_value *and,
-                struct prologue_value *a,
-                struct prologue_value *b)
-{
-  pv_constant_last (&a, &b);
-
-  /* We can 'and' two constants.  */
-  if (a->kind == pv_constant
-      && b->kind == pv_constant)
-    {
-      and->kind = pv_constant;
-      and->k = a->k & b->k;
-    }
-
-  /* We can 'and' anything with the constant zero.  */
-  else if (b->kind == pv_constant
-           && b->k == 0)
-    {
-      and->kind = pv_constant;
-      and->k = 0;
-    }
-  
-  /* We can 'and' anything with ~0.  */
-  else if (b->kind == pv_constant
-           && b->k == ~ (CORE_ADDR) 0)
-    *and = *a;
-
-  /* We can 'and' a register with itself.  */
-  else if (a->kind == pv_register
-           && b->kind == pv_register
-           && a->reg == b->reg
-           && a->k == b->k)
-    *and = *a;
-
-  /* Otherwise, we don't know.  */
-  else
-    pv_set_to_unknown (and);
-}
-
-
-/* Return non-zero iff A and B are identical expressions.
-
-   This is not the same as asking if the two values are equal; the
-   result of such a comparison would have to be a pv_boolean, and
-   asking whether two 'unknown' values were equal would give you
-   pv_maybe.  Same for comparing, say, { pv_register, R1, 0 } and {
-   pv_register, R2, 0}.  Instead, this is asking whether the two
-   representations are the same.  */
-static int
-pv_is_identical (struct prologue_value *a,
-                 struct prologue_value *b)
-{
-  if (a->kind != b->kind)
-    return 0;
-
-  switch (a->kind)
-    {
-    case pv_unknown:
-      return 1;
-    case pv_constant:
-      return (a->k == b->k);
-    case pv_register:
-      return (a->reg == b->reg && a->k == b->k);
-    default:
-      gdb_assert (0);
-    }
-}
-
-
-/* Return non-zero if A is the original value of register number R
-   plus K, zero otherwise.  */
-static int
-pv_is_register (struct prologue_value *a, int r, CORE_ADDR k)
-{
-  return (a->kind == pv_register
-          && a->reg == r
-          && a->k == k);
 }
 
 
@@ -1034,50 +731,25 @@ is_rxy (bfd_byte *insn, int op1, int op2,
 }
 
 
-/* Set ADDR to the effective address for an X-style instruction, like:
-
-        L R1, D2(X2, B2)
-
-   Here, X2 and B2 are registers, and D2 is a signed 20-bit
-   constant; the effective address is the sum of all three.  If either
-   X2 or B2 are zero, then it doesn't contribute to the sum --- this
-   means that r0 can't be used as either X2 or B2.
-
-   GPR is an array of general register values, indexed by GPR number,
-   not GDB register number.  */
-static void
-compute_x_addr (struct prologue_value *addr, 
-                struct prologue_value *gpr,
-                int d2, unsigned int x2, unsigned int b2)
-{
-  /* We can't just add stuff directly in addr; it might alias some of
-     the registers we need to read.  */
-  struct prologue_value result;
-
-  pv_set_to_constant (&result, d2);
-  if (x2)
-    pv_add (&result, &result, &gpr[x2]);
-  if (b2)
-    pv_add (&result, &result, &gpr[b2]);
-
-  *addr = result;
-}
-
+/* Prologue analysis.  */
 
 #define S390_NUM_GPRS 16
 #define S390_NUM_FPRS 16
 
 struct s390_prologue_data {
 
+  /* The stack.  */
+  struct pv_area *stack;
+
   /* The size of a GPR or FPR.  */
   int gpr_size;
   int fpr_size;
 
   /* The general-purpose registers.  */
-  struct prologue_value gpr[S390_NUM_GPRS];
+  pv_t gpr[S390_NUM_GPRS];
 
   /* The floating-point registers.  */
-  struct prologue_value fpr[S390_NUM_FPRS];
+  pv_t fpr[S390_NUM_FPRS];
 
   /* The offset relative to the CFA where the incoming GPR N was saved
      by the function prologue.  0 if not saved or unknown.  */
@@ -1091,22 +763,44 @@ struct s390_prologue_data {
   int back_chain_saved_p;
 };
 
-/* Do a SIZE-byte store of VALUE to ADDR.  */
-static void
-s390_store (struct prologue_value *addr,
-            CORE_ADDR size,
-            struct prologue_value *value,
-	    struct s390_prologue_data *data)
+/* Return the effective address for an X-style instruction, like:
+
+        L R1, D2(X2, B2)
+
+   Here, X2 and B2 are registers, and D2 is a signed 20-bit
+   constant; the effective address is the sum of all three.  If either
+   X2 or B2 are zero, then it doesn't contribute to the sum --- this
+   means that r0 can't be used as either X2 or B2.  */
+static pv_t
+s390_addr (struct s390_prologue_data *data,
+	   int d2, unsigned int x2, unsigned int b2)
 {
-  struct prologue_value cfa, offset;
-  int i;
+  pv_t result;
+
+  result = pv_constant (d2);
+  if (x2)
+    result = pv_add (result, data->gpr[x2]);
+  if (b2)
+    result = pv_add (result, data->gpr[b2]);
+
+  return result;
+}
+
+/* Do a SIZE-byte store of VALUE to D2(X2,B2).  */
+static void
+s390_store (struct s390_prologue_data *data,
+	    int d2, unsigned int x2, unsigned int b2, CORE_ADDR size,
+	    pv_t value)
+{
+  pv_t addr = s390_addr (data, d2, x2, b2);
+  pv_t offset;
 
   /* Check whether we are storing the backchain.  */
-  pv_subtract (&offset, &data->gpr[S390_SP_REGNUM - S390_R0_REGNUM], addr);
+  offset = pv_subtract (data->gpr[S390_SP_REGNUM - S390_R0_REGNUM], addr);
 
-  if (offset.kind == pv_constant && offset.k == 0)
+  if (pv_is_constant (offset) && offset.k == 0)
     if (size == data->gpr_size
-	&& pv_is_register (value, S390_SP_REGNUM, 0))
+	&& pv_is_register_k (value, S390_SP_REGNUM, 0))
       {
 	data->back_chain_saved_p = 1;
 	return;
@@ -1114,37 +808,8 @@ s390_store (struct prologue_value *addr,
 
 
   /* Check whether we are storing a register into the stack.  */
-  pv_set_to_register (&cfa, S390_SP_REGNUM, 16 * data->gpr_size + 32);
-  pv_subtract (&offset, &cfa, addr);
-
-  if (offset.kind == pv_constant
-      && offset.k < INT_MAX && offset.k > 0
-      && offset.k % data->gpr_size == 0)
-    {
-      /* If we are storing the original value of a register, we want to
-	 record the CFA offset.  If the same register is stored multiple
-	 times, the stack slot with the highest address counts.  */
-      
-      for (i = 0; i < S390_NUM_GPRS; i++)
-	if (size == data->gpr_size
-	    && pv_is_register (value, S390_R0_REGNUM + i, 0))
-	  if (data->gpr_slot[i] == 0
-	      || data->gpr_slot[i] > offset.k)
-	    {
-	      data->gpr_slot[i] = offset.k;
-	      return;
-	    }
-
-      for (i = 0; i < S390_NUM_FPRS; i++)
-	if (size == data->fpr_size
-	    && pv_is_register (value, S390_F0_REGNUM + i, 0))
-	  if (data->fpr_slot[i] == 0
-	      || data->fpr_slot[i] > offset.k)
-	    {
-	      data->fpr_slot[i] = offset.k;
-	      return;
-	    }
-    }
+  if (!pv_area_store_would_trash (data->stack, addr))
+    pv_area_store (data->stack, addr, size, value);
 
 
   /* Note: If this is some store we cannot identify, you might think we
@@ -1155,60 +820,76 @@ s390_store (struct prologue_value *addr,
      stores.  Thus every store we cannot recognize does not hit our data.  */
 }
 
-/* Do a SIZE-byte load from ADDR into VALUE.  */
-static void
-s390_load (struct prologue_value *addr,
-	   CORE_ADDR size,
-	   struct prologue_value *value,
-	   struct s390_prologue_data *data)
+/* Do a SIZE-byte load from D2(X2,B2).  */
+static pv_t
+s390_load (struct s390_prologue_data *data,
+	   int d2, unsigned int x2, unsigned int b2, CORE_ADDR size)
+	   
 {
-  struct prologue_value cfa, offset;
-  int i;
+  pv_t addr = s390_addr (data, d2, x2, b2);
+  pv_t offset;
 
   /* If it's a load from an in-line constant pool, then we can
      simulate that, under the assumption that the code isn't
      going to change between the time the processor actually
      executed it creating the current frame, and the time when
      we're analyzing the code to unwind past that frame.  */
-  if (addr->kind == pv_constant)
+  if (pv_is_constant (addr))
     {
       struct section_table *secp;
-      secp = target_section_by_addr (&current_target, addr->k);
+      secp = target_section_by_addr (&current_target, addr.k);
       if (secp != NULL
           && (bfd_get_section_flags (secp->bfd, secp->the_bfd_section)
               & SEC_READONLY))
-	{
-          pv_set_to_constant (value, read_memory_integer (addr->k, size));
-	  return;
-	}
+        return pv_constant (read_memory_integer (addr.k, size));
     }
 
   /* Check whether we are accessing one of our save slots.  */
-  pv_set_to_register (&cfa, S390_SP_REGNUM, 16 * data->gpr_size + 32);
-  pv_subtract (&offset, &cfa, addr);
-
-  if (offset.kind == pv_constant
-      && offset.k < INT_MAX && offset.k > 0)
-    {
-      for (i = 0; i < S390_NUM_GPRS; i++)
-	if (offset.k == data->gpr_slot[i])
-	  {
-	    pv_set_to_register (value, S390_R0_REGNUM + i, 0);
-	    return;
-	  }
-
-      for (i = 0; i < S390_NUM_FPRS; i++)
-	if (offset.k == data->fpr_slot[i])
-	  {
-	    pv_set_to_register (value, S390_F0_REGNUM + i, 0);
-	    return;
-	  }
-    }
-
-  /* Otherwise, we don't know the value.  */
-  pv_set_to_unknown (value);
+  return pv_area_fetch (data->stack, addr, size);
 }
-            
+
+/* Function for finding saved registers in a 'struct pv_area'; we pass
+   this to pv_area_scan.
+
+   If VALUE is a saved register, ADDR says it was saved at a constant
+   offset from the frame base, and SIZE indicates that the whole
+   register was saved, record its offset in the reg_offset table in
+   PROLOGUE_UNTYPED.  */
+static void
+s390_check_for_saved (void *data_untyped, pv_t addr, CORE_ADDR size, pv_t value)
+{
+  struct s390_prologue_data *data = data_untyped;
+  int i, offset;
+
+  if (!pv_is_register (addr, S390_SP_REGNUM))
+    return;
+
+  offset = 16 * data->gpr_size + 32 - addr.k;
+
+  /* If we are storing the original value of a register, we want to
+     record the CFA offset.  If the same register is stored multiple
+     times, the stack slot with the highest address counts.  */
+ 
+  for (i = 0; i < S390_NUM_GPRS; i++)
+    if (size == data->gpr_size
+	&& pv_is_register_k (value, S390_R0_REGNUM + i, 0))
+      if (data->gpr_slot[i] == 0
+	  || data->gpr_slot[i] > offset)
+	{
+	  data->gpr_slot[i] = offset;
+	  return;
+	}
+
+  for (i = 0; i < S390_NUM_FPRS; i++)
+    if (size == data->fpr_size
+	&& pv_is_register_k (value, S390_F0_REGNUM + i, 0))
+      if (data->fpr_slot[i] == 0
+	  || data->fpr_slot[i] > offset)
+	{
+	  data->fpr_slot[i] = offset;
+	  return;
+	}
+}
 
 /* Analyze the prologue of the function starting at START_PC,
    continuing at most until CURRENT_PC.  Initialize DATA to
@@ -1240,6 +921,8 @@ s390_analyze_prologue (struct gdbarch *gdbarch,
   {
     int i;
 
+    data->stack = make_pv_area (S390_SP_REGNUM);
+
     /* For the purpose of prologue tracking, we consider the GPR size to
        be equal to the ABI word size, even if it is actually larger
        (i.e. when running a 32-bit binary under a 64-bit kernel).  */
@@ -1247,10 +930,10 @@ s390_analyze_prologue (struct gdbarch *gdbarch,
     data->fpr_size = 8;
 
     for (i = 0; i < S390_NUM_GPRS; i++)
-      pv_set_to_register (&data->gpr[i], S390_R0_REGNUM + i, 0);
+      data->gpr[i] = pv_register (S390_R0_REGNUM + i, 0);
 
     for (i = 0; i < S390_NUM_FPRS; i++)
-      pv_set_to_register (&data->fpr[i], S390_F0_REGNUM + i, 0);
+      data->fpr[i] = pv_register (S390_F0_REGNUM + i, 0);
 
     for (i = 0; i < S390_NUM_GPRS; i++)
       data->gpr_slot[i]  = 0;
@@ -1268,13 +951,17 @@ s390_analyze_prologue (struct gdbarch *gdbarch,
       bfd_byte insn[S390_MAX_INSTR_SIZE];
       int insn_len = s390_readinstruction (insn, pc);
 
+      bfd_byte dummy[S390_MAX_INSTR_SIZE] = { 0 };
+      bfd_byte *insn32 = word_size == 4 ? insn : dummy;
+      bfd_byte *insn64 = word_size == 8 ? insn : dummy;
+
       /* Fields for various kinds of instructions.  */
       unsigned int b2, r1, r2, x2, r3;
       int i2, d2;
 
       /* The values of SP and FP before this instruction,
          for detecting instructions that change them.  */
-      struct prologue_value pre_insn_sp, pre_insn_fp;
+      pv_t pre_insn_sp, pre_insn_fp;
       /* Likewise for the flag whether the back chain was saved.  */
       int pre_insn_back_chain_saved_p;
 
@@ -1291,320 +978,126 @@ s390_analyze_prologue (struct gdbarch *gdbarch,
       pre_insn_fp = data->gpr[S390_FRAME_REGNUM - S390_R0_REGNUM];
       pre_insn_back_chain_saved_p = data->back_chain_saved_p;
 
-      /* LHI r1, i2 --- load halfword immediate */
-      if (word_size == 4
-	  && is_ri (insn, op1_lhi, op2_lhi, &r1, &i2))
-        pv_set_to_constant (&data->gpr[r1], i2);
 
-      /* LGHI r1, i2 --- load halfword immediate (64-bit version) */
-      else if (word_size == 8
-	       && is_ri (insn, op1_lghi, op2_lghi, &r1, &i2))
-        pv_set_to_constant (&data->gpr[r1], i2);
+      /* LHI r1, i2 --- load halfword immediate.  */
+      /* LGHI r1, i2 --- load halfword immediate (64-bit version).  */
+      /* LGFI r1, i2 --- load fullword immediate.  */
+      if (is_ri (insn32, op1_lhi, op2_lhi, &r1, &i2)
+          || is_ri (insn64, op1_lghi, op2_lghi, &r1, &i2)
+          || is_ril (insn, op1_lgfi, op2_lgfi, &r1, &i2))
+	data->gpr[r1] = pv_constant (i2);
 
-      /* LGFI r1, i2 --- load fullword immediate */
-      else if (is_ril (insn, op1_lgfi, op2_lgfi, &r1, &i2))
-        pv_set_to_constant (&data->gpr[r1], i2);
+      /* LR r1, r2 --- load from register.  */
+      /* LGR r1, r2 --- load from register (64-bit version).  */
+      else if (is_rr (insn32, op_lr, &r1, &r2)
+	       || is_rre (insn64, op_lgr, &r1, &r2))
+	data->gpr[r1] = data->gpr[r2];
 
-      /* LR r1, r2 --- load from register */
-      else if (word_size == 4
-	       && is_rr (insn, op_lr, &r1, &r2))
-        data->gpr[r1] = data->gpr[r2];
+      /* L r1, d2(x2, b2) --- load.  */
+      /* LY r1, d2(x2, b2) --- load (long-displacement version).  */
+      /* LG r1, d2(x2, b2) --- load (64-bit version).  */
+      else if (is_rx (insn32, op_l, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn32, op1_ly, op2_ly, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn64, op1_lg, op2_lg, &r1, &d2, &x2, &b2))
+	data->gpr[r1] = s390_load (data, d2, x2, b2, data->gpr_size);
 
-      /* LGR r1, r2 --- load from register (64-bit version) */
-      else if (word_size == 8
-               && is_rre (insn, op_lgr, &r1, &r2))
-        data->gpr[r1] = data->gpr[r2];
+      /* ST r1, d2(x2, b2) --- store.  */
+      /* STY r1, d2(x2, b2) --- store (long-displacement version).  */
+      /* STG r1, d2(x2, b2) --- store (64-bit version).  */
+      else if (is_rx (insn32, op_st, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn32, op1_sty, op2_sty, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn64, op1_stg, op2_stg, &r1, &d2, &x2, &b2))
+	s390_store (data, d2, x2, b2, data->gpr_size, data->gpr[r1]);
 
-      /* L r1, d2(x2, b2) --- load */
-      else if (word_size == 4
-	       && is_rx (insn, op_l, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 4, &data->gpr[r1], data);
-        }
-
-      /* LY r1, d2(x2, b2) --- load (long-displacement version) */
-      else if (word_size == 4
-	       && is_rxy (insn, op1_ly, op2_ly, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 4, &data->gpr[r1], data);
-        }
-
-      /* LG r1, d2(x2, b2) --- load (64-bit version) */
-      else if (word_size == 8
-	       && is_rxy (insn, op1_lg, op2_lg, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 8, &data->gpr[r1], data);
-        }
-
-      /* ST r1, d2(x2, b2) --- store */
-      else if (word_size == 4
-	       && is_rx (insn, op_st, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_store (&addr, 4, &data->gpr[r1], data);
-        }
-
-      /* STY r1, d2(x2, b2) --- store (long-displacement version) */
-      else if (word_size == 4
-	       && is_rxy (insn, op1_sty, op2_sty, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_store (&addr, 4, &data->gpr[r1], data);
-        }
-
-      /* STG r1, d2(x2, b2) --- store (64-bit version) */
-      else if (word_size == 8
-	       && is_rxy (insn, op1_stg, op2_stg, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_store (&addr, 8, &data->gpr[r1], data);
-        }
-
-      /* STD r1, d2(x2,b2) --- store floating-point register  */
+      /* STD r1, d2(x2,b2) --- store floating-point register.  */
       else if (is_rx (insn, op_std, &r1, &d2, &x2, &b2))
-        {
-          struct prologue_value addr;
+	s390_store (data, d2, x2, b2, data->fpr_size, data->fpr[r1]);
 
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-          s390_store (&addr, 8, &data->fpr[r1], data);
+      /* STM r1, r3, d2(b2) --- store multiple.  */
+      /* STMY r1, r3, d2(b2) --- store multiple (long-displacement version).  */
+      /* STMG r1, r3, d2(b2) --- store multiple (64-bit version).  */
+      else if (is_rs (insn32, op_stm, &r1, &r3, &d2, &b2)
+	       || is_rsy (insn32, op1_stmy, op2_stmy, &r1, &r3, &d2, &b2)
+	       || is_rsy (insn64, op1_stmg, op2_stmg, &r1, &r3, &d2, &b2))
+        {
+          for (; r1 <= r3; r1++, d2 += data->gpr_size)
+	    s390_store (data, d2, 0, b2, data->gpr_size, data->gpr[r1]);
         }
 
-      /* STM r1, r3, d2(b2) --- store multiple */
-      else if (word_size == 4
-	       && is_rs (insn, op_stm, &r1, &r3, &d2, &b2))
-        {
-          int regnum;
-          int offset;
-          struct prologue_value addr;
+      /* AHI r1, i2 --- add halfword immediate.  */
+      /* AGHI r1, i2 --- add halfword immediate (64-bit version).  */
+      /* AFI r1, i2 --- add fullword immediate.  */
+      /* AGFI r1, i2 --- add fullword immediate (64-bit version).  */
+      else if (is_ri (insn32, op1_ahi, op2_ahi, &r1, &i2)
+	       || is_ri (insn64, op1_aghi, op2_aghi, &r1, &i2)
+	       || is_ril (insn32, op1_afi, op2_afi, &r1, &i2)
+	       || is_ril (insn64, op1_agfi, op2_agfi, &r1, &i2))
+	data->gpr[r1] = pv_add_constant (data->gpr[r1], i2);
 
-          for (regnum = r1, offset = 0;
-               regnum <= r3;
-               regnum++, offset += 4)
-            {
-              compute_x_addr (&addr, data->gpr, d2 + offset, 0, b2);
-              s390_store (&addr, 4, &data->gpr[regnum], data);
-            }
-        }
+      /* ALFI r1, i2 --- add logical immediate.  */
+      /* ALGFI r1, i2 --- add logical immediate (64-bit version).  */
+      else if (is_ril (insn32, op1_alfi, op2_alfi, &r1, &i2)
+	       || is_ril (insn64, op1_algfi, op2_algfi, &r1, &i2))
+	data->gpr[r1] = pv_add_constant (data->gpr[r1],
+					 (CORE_ADDR)i2 & 0xffffffff);
 
-      /* STMY r1, r3, d2(b2) --- store multiple (long-displacement version) */
-      else if (word_size == 4
-	       && is_rsy (insn, op1_stmy, op2_stmy, &r1, &r3, &d2, &b2))
-        {
-          int regnum;
-          int offset;
-          struct prologue_value addr;
+      /* AR r1, r2 -- add register.  */
+      /* AGR r1, r2 -- add register (64-bit version).  */
+      else if (is_rr (insn32, op_ar, &r1, &r2)
+	       || is_rre (insn64, op_agr, &r1, &r2))
+	data->gpr[r1] = pv_add (data->gpr[r1], data->gpr[r2]);
 
-          for (regnum = r1, offset = 0;
-               regnum <= r3;
-               regnum++, offset += 4)
-            {
-              compute_x_addr (&addr, data->gpr, d2 + offset, 0, b2);
-              s390_store (&addr, 4, &data->gpr[regnum], data);
-            }
-        }
+      /* A r1, d2(x2, b2) -- add.  */
+      /* AY r1, d2(x2, b2) -- add (long-displacement version).  */
+      /* AG r1, d2(x2, b2) -- add (64-bit version).  */
+      else if (is_rx (insn32, op_a, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn32, op1_ay, op2_ay, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn64, op1_ag, op2_ag, &r1, &d2, &x2, &b2))
+	data->gpr[r1] = pv_add (data->gpr[r1],
+				s390_load (data, d2, x2, b2, data->gpr_size));
 
-      /* STMG r1, r3, d2(b2) --- store multiple (64-bit version) */
-      else if (word_size == 8
-	       && is_rsy (insn, op1_stmg, op2_stmg, &r1, &r3, &d2, &b2))
-        {
-          int regnum;
-          int offset;
-          struct prologue_value addr;
+      /* SLFI r1, i2 --- subtract logical immediate.  */
+      /* SLGFI r1, i2 --- subtract logical immediate (64-bit version).  */
+      else if (is_ril (insn32, op1_slfi, op2_slfi, &r1, &i2)
+	       || is_ril (insn64, op1_slgfi, op2_slgfi, &r1, &i2))
+	data->gpr[r1] = pv_add_constant (data->gpr[r1],
+					 -((CORE_ADDR)i2 & 0xffffffff));
 
-          for (regnum = r1, offset = 0;
-               regnum <= r3;
-               regnum++, offset += 8)
-            {
-              compute_x_addr (&addr, data->gpr, d2 + offset, 0, b2);
-              s390_store (&addr, 8, &data->gpr[regnum], data);
-            }
-        }
+      /* SR r1, r2 -- subtract register.  */
+      /* SGR r1, r2 -- subtract register (64-bit version).  */
+      else if (is_rr (insn32, op_sr, &r1, &r2)
+	       || is_rre (insn64, op_sgr, &r1, &r2))
+	data->gpr[r1] = pv_subtract (data->gpr[r1], data->gpr[r2]);
 
-      /* AHI r1, i2 --- add halfword immediate */
-      else if (word_size == 4
-	       && is_ri (insn, op1_ahi, op2_ahi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], i2);
+      /* S r1, d2(x2, b2) -- subtract.  */
+      /* SY r1, d2(x2, b2) -- subtract (long-displacement version).  */
+      /* SG r1, d2(x2, b2) -- subtract (64-bit version).  */
+      else if (is_rx (insn32, op_s, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn32, op1_sy, op2_sy, &r1, &d2, &x2, &b2)
+	       || is_rxy (insn64, op1_sg, op2_sg, &r1, &d2, &x2, &b2))
+	data->gpr[r1] = pv_subtract (data->gpr[r1],
+				s390_load (data, d2, x2, b2, data->gpr_size));
 
-      /* AGHI r1, i2 --- add halfword immediate (64-bit version) */
-      else if (word_size == 8
-               && is_ri (insn, op1_aghi, op2_aghi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], i2);
+      /* LA r1, d2(x2, b2) --- load address.  */
+      /* LAY r1, d2(x2, b2) --- load address (long-displacement version).  */
+      else if (is_rx (insn, op_la, &r1, &d2, &x2, &b2)
+               || is_rxy (insn, op1_lay, op2_lay, &r1, &d2, &x2, &b2))
+	data->gpr[r1] = s390_addr (data, d2, x2, b2);
 
-      /* AFI r1, i2 --- add fullword immediate */
-      else if (word_size == 4
-	       && is_ril (insn, op1_afi, op2_afi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], i2);
-
-      /* AGFI r1, i2 --- add fullword immediate (64-bit version) */
-      else if (word_size == 8
-               && is_ril (insn, op1_agfi, op2_agfi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], i2);
-
-      /* ALFI r1, i2 --- add logical immediate */
-      else if (word_size == 4
-	       && is_ril (insn, op1_alfi, op2_alfi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], (CORE_ADDR)i2 & 0xffffffff);
-
-      /* ALGFI r1, i2 --- add logical immediate (64-bit version) */
-      else if (word_size == 8
-               && is_ril (insn, op1_algfi, op2_algfi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], (CORE_ADDR)i2 & 0xffffffff);
-
-      /* AR r1, r2 -- add register */
-      else if (word_size == 4
-	       && is_rr (insn, op_ar, &r1, &r2))
-        pv_add (&data->gpr[r1], &data->gpr[r1], &data->gpr[r2]);
-
-      /* AGR r1, r2 -- add register (64-bit version) */
-      else if (word_size == 8
-	       && is_rre (insn, op_agr, &r1, &r2))
-        pv_add (&data->gpr[r1], &data->gpr[r1], &data->gpr[r2]);
-
-      /* A r1, d2(x2, b2) -- add */
-      else if (word_size == 4
-	       && is_rx (insn, op_a, &r1, &d2, &x2, &b2))
-	{
-          struct prologue_value addr;
-          struct prologue_value value;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 4, &value, data);
-	
-	  pv_add (&data->gpr[r1], &data->gpr[r1], &value);
-	}
-
-      /* AY r1, d2(x2, b2) -- add (long-displacement version) */
-      else if (word_size == 4
-	       && is_rxy (insn, op1_ay, op2_ay, &r1, &d2, &x2, &b2))
-	{
-          struct prologue_value addr;
-          struct prologue_value value;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 4, &value, data);
-	
-	  pv_add (&data->gpr[r1], &data->gpr[r1], &value);
-	}
-
-      /* AG r1, d2(x2, b2) -- add (64-bit version) */
-      else if (word_size == 8
-	       && is_rxy (insn, op1_ag, op2_ag, &r1, &d2, &x2, &b2))
-	{
-          struct prologue_value addr;
-          struct prologue_value value;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 8, &value, data);
-	
-	  pv_add (&data->gpr[r1], &data->gpr[r1], &value);
-	}
-
-      /* SLFI r1, i2 --- subtract logical immediate */
-      else if (word_size == 4
-	       && is_ril (insn, op1_slfi, op2_slfi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], -((CORE_ADDR)i2 & 0xffffffff));
-
-      /* SLGFI r1, i2 --- subtract logical immediate (64-bit version) */
-      else if (word_size == 8
-               && is_ril (insn, op1_slgfi, op2_slgfi, &r1, &i2))
-        pv_add_constant (&data->gpr[r1], -((CORE_ADDR)i2 & 0xffffffff));
-
-      /* SR r1, r2 -- subtract register */
-      else if (word_size == 4
-	       && is_rr (insn, op_sr, &r1, &r2))
-        pv_subtract (&data->gpr[r1], &data->gpr[r1], &data->gpr[r2]);
-
-      /* SGR r1, r2 -- subtract register (64-bit version) */
-      else if (word_size == 8
-	       && is_rre (insn, op_sgr, &r1, &r2))
-        pv_subtract (&data->gpr[r1], &data->gpr[r1], &data->gpr[r2]);
-
-      /* S r1, d2(x2, b2) -- subtract */
-      else if (word_size == 4
-	       && is_rx (insn, op_s, &r1, &d2, &x2, &b2))
-	{
-          struct prologue_value addr;
-          struct prologue_value value;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 4, &value, data);
-	
-	  pv_subtract (&data->gpr[r1], &data->gpr[r1], &value);
-	}
-
-      /* SY r1, d2(x2, b2) -- subtract (long-displacement version) */
-      else if (word_size == 4
-	       && is_rxy (insn, op1_sy, op2_sy, &r1, &d2, &x2, &b2))
-	{
-          struct prologue_value addr;
-          struct prologue_value value;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 4, &value, data);
-	
-	  pv_subtract (&data->gpr[r1], &data->gpr[r1], &value);
-	}
-
-      /* SG r1, d2(x2, b2) -- subtract (64-bit version) */
-      else if (word_size == 8
-	       && is_rxy (insn, op1_sg, op2_sg, &r1, &d2, &x2, &b2))
-	{
-          struct prologue_value addr;
-          struct prologue_value value;
-
-          compute_x_addr (&addr, data->gpr, d2, x2, b2);
-	  s390_load (&addr, 8, &value, data);
-	
-	  pv_subtract (&data->gpr[r1], &data->gpr[r1], &value);
-	}
-
-      /* NR r1, r2 --- logical and */
-      else if (word_size == 4
-	       && is_rr (insn, op_nr, &r1, &r2))
-        pv_logical_and (&data->gpr[r1], &data->gpr[r1], &data->gpr[r2]);
-
-      /* NGR r1, r2 >--- logical and (64-bit version) */
-      else if (word_size == 8
-               && is_rre (insn, op_ngr, &r1, &r2))
-        pv_logical_and (&data->gpr[r1], &data->gpr[r1], &data->gpr[r2]);
-
-      /* LA r1, d2(x2, b2) --- load address */
-      else if (is_rx (insn, op_la, &r1, &d2, &x2, &b2))
-        compute_x_addr (&data->gpr[r1], data->gpr, d2, x2, b2);
-
-      /* LAY r1, d2(x2, b2) --- load address (long-displacement version) */
-      else if (is_rxy (insn, op1_lay, op2_lay, &r1, &d2, &x2, &b2))
-        compute_x_addr (&data->gpr[r1], data->gpr, d2, x2, b2);
-
-      /* LARL r1, i2 --- load address relative long */
+      /* LARL r1, i2 --- load address relative long.  */
       else if (is_ril (insn, op1_larl, op2_larl, &r1, &i2))
-        pv_set_to_constant (&data->gpr[r1], pc + i2 * 2);
+	data->gpr[r1] = pv_constant (pc + i2 * 2);
 
-      /* BASR r1, 0 --- branch and save
+      /* BASR r1, 0 --- branch and save.
          Since r2 is zero, this saves the PC in r1, but doesn't branch.  */
       else if (is_rr (insn, op_basr, &r1, &r2)
                && r2 == 0)
-        pv_set_to_constant (&data->gpr[r1], next_pc);
+	data->gpr[r1] = pv_constant (next_pc);
 
-      /* BRAS r1, i2 --- branch relative and save */
+      /* BRAS r1, i2 --- branch relative and save.  */
       else if (is_ri (insn, op1_bras, op2_bras, &r1, &i2))
         {
-          pv_set_to_constant (&data->gpr[r1], next_pc);
+          data->gpr[r1] = pv_constant (next_pc);
           next_pc = pc + i2 * 2;
 
           /* We'd better not interpret any backward branches.  We'll
@@ -1638,17 +1131,25 @@ s390_analyze_prologue (struct gdbarch *gdbarch,
          restore instructions.  (The back chain is never restored,
          just popped.)  */
       {
-        struct prologue_value *sp = &data->gpr[S390_SP_REGNUM - S390_R0_REGNUM];
-        struct prologue_value *fp = &data->gpr[S390_FRAME_REGNUM - S390_R0_REGNUM];
+        pv_t sp = data->gpr[S390_SP_REGNUM - S390_R0_REGNUM];
+        pv_t fp = data->gpr[S390_FRAME_REGNUM - S390_R0_REGNUM];
         
-        if ((! pv_is_identical (&pre_insn_sp, sp)
-             && ! pv_is_register (sp, S390_SP_REGNUM, 0))
-            || (! pv_is_identical (&pre_insn_fp, fp)
-                && ! pv_is_register (fp, S390_FRAME_REGNUM, 0))
+        if ((! pv_is_identical (pre_insn_sp, sp)
+             && ! pv_is_register_k (sp, S390_SP_REGNUM, 0)
+	     && sp.kind != pvk_unknown)
+            || (! pv_is_identical (pre_insn_fp, fp)
+                && ! pv_is_register_k (fp, S390_FRAME_REGNUM, 0)
+		&& fp.kind != pvk_unknown)
             || pre_insn_back_chain_saved_p != data->back_chain_saved_p)
           result = next_pc;
       }
     }
+
+  /* Record where all the registers were saved.  */
+  pv_area_scan (data->stack, s390_check_for_saved, data);
+
+  free_pv_area (data->stack);
+  data->stack = NULL;
 
   return result;
 }
@@ -1735,8 +1236,8 @@ s390_prologue_frame_unwind_cache (struct frame_info *next_frame,
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int word_size = gdbarch_ptr_bit (gdbarch) / 8;
   struct s390_prologue_data data;
-  struct prologue_value *fp = &data.gpr[S390_FRAME_REGNUM - S390_R0_REGNUM];
-  struct prologue_value *sp = &data.gpr[S390_SP_REGNUM - S390_R0_REGNUM];
+  pv_t *fp = &data.gpr[S390_FRAME_REGNUM - S390_R0_REGNUM];
+  pv_t *sp = &data.gpr[S390_SP_REGNUM - S390_R0_REGNUM];
   int i;
   CORE_ADDR cfa;
   CORE_ADDR func;
@@ -1763,7 +1264,7 @@ s390_prologue_frame_unwind_cache (struct frame_info *next_frame,
   /* If this was successful, we should have found the instruction that
      sets the stack pointer register to the previous value of the stack 
      pointer minus the frame size.  */
-  if (sp->kind != pv_register || sp->reg != S390_SP_REGNUM)
+  if (!pv_is_register (*sp, S390_SP_REGNUM))
     return 0;
 
   /* A frame size of zero at this point can mean either a real 
@@ -1795,11 +1296,10 @@ s390_prologue_frame_unwind_cache (struct frame_info *next_frame,
 	     Recognize this case by looking ahead a bit ...  */
 
 	  struct s390_prologue_data data2;
-	  struct prologue_value *sp = &data2.gpr[S390_SP_REGNUM - S390_R0_REGNUM];
+	  pv_t *sp = &data2.gpr[S390_SP_REGNUM - S390_R0_REGNUM];
 
 	  if (!(s390_analyze_prologue (gdbarch, func, (CORE_ADDR)-1, &data2)
-	        && sp->kind == pv_register
-	        && sp->reg == S390_SP_REGNUM
+	        && pv_is_register (*sp, S390_SP_REGNUM)
 	        && sp->k != 0))
 	    return 0;
 	}
@@ -1813,7 +1313,7 @@ s390_prologue_frame_unwind_cache (struct frame_info *next_frame,
      as the stack pointer, we're probably using it.  If it holds
      some other value -- even a constant offset -- it is most
      likely used as temp register.  */
-  if (pv_is_identical (sp, fp))
+  if (pv_is_identical (*sp, *fp))
     frame_pointer = S390_FRAME_REGNUM;
   else
     frame_pointer = S390_SP_REGNUM;
@@ -2281,7 +1781,8 @@ s390_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
 
 static void
 s390_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
-                            struct dwarf2_frame_state_reg *reg)
+                            struct dwarf2_frame_state_reg *reg,
+			    struct frame_info *next_frame)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
@@ -2866,76 +2367,6 @@ s390_address_class_name_to_type_flags (struct gdbarch *gdbarch, const char *name
     return 0;
 }
 
-
-/* Link map offsets.  */
-
-static struct link_map_offsets *
-s390_svr4_fetch_link_map_offsets (void)
-{
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = NULL;
-
-  if (lmp == NULL)
-    {
-      lmp = &lmo;
-
-      lmo.r_debug_size = 8;
-
-      lmo.r_map_offset = 4;
-      lmo.r_map_size   = 4;
-
-      lmo.link_map_size = 20;
-
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 4;
-
-      lmo.l_name_offset = 4;
-      lmo.l_name_size   = 4;
-
-      lmo.l_next_offset = 12;
-      lmo.l_next_size   = 4;
-
-      lmo.l_prev_offset = 16;
-      lmo.l_prev_size   = 4;
-    }
-
-  return lmp;
-}
-
-static struct link_map_offsets *
-s390x_svr4_fetch_link_map_offsets (void)
-{
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = NULL;
-
-  if (lmp == NULL)
-    {
-      lmp = &lmo;
-
-      lmo.r_debug_size = 16;   /* All we need.  */
-
-      lmo.r_map_offset = 8;
-      lmo.r_map_size   = 8;
-
-      lmo.link_map_size = 40;   /* All we need.  */
-
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 8;
-
-      lmo.l_name_offset = 8;
-      lmo.l_name_size   = 8;
-
-      lmo.l_next_offset = 24;
-      lmo.l_next_size   = 8;
-
-      lmo.l_prev_offset = 32;
-      lmo.l_prev_size   = 8;
-    }
-
-  return lmp;
-}
-
-
 /* Set up gdbarch struct.  */
 
 static struct gdbarch *
@@ -3017,8 +2448,8 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_addr_bits_remove (gdbarch, s390_addr_bits_remove);
       set_gdbarch_pseudo_register_read (gdbarch, s390_pseudo_register_read);
       set_gdbarch_pseudo_register_write (gdbarch, s390_pseudo_register_write);
-      set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					     s390_svr4_fetch_link_map_offsets);
+      set_solib_svr4_fetch_link_map_offsets
+	(gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
       break;
     case bfd_mach_s390_64:
@@ -3034,8 +2465,8 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_ptr_bit (gdbarch, 64);
       set_gdbarch_pseudo_register_read (gdbarch, s390x_pseudo_register_read);
       set_gdbarch_pseudo_register_write (gdbarch, s390x_pseudo_register_write);
-      set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					     s390x_svr4_fetch_link_map_offsets);
+      set_solib_svr4_fetch_link_map_offsets
+	(gdbarch, svr4_lp64_fetch_link_map_offsets);
       set_gdbarch_address_class_type_flags (gdbarch,
                                             s390_address_class_type_flags);
       set_gdbarch_address_class_type_flags_to_name (gdbarch,

@@ -553,7 +553,6 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
     {
       char hdr[8];
       unsigned int len;
-      bfd_vma addr;
       unsigned int type;
       unsigned int i;
 
@@ -568,7 +567,6 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 	goto error_return;
 
       len = HEX2 (hdr);
-      addr = HEX4 (hdr + 2);
       type = HEX2 (hdr + 6);
 
       /* We should only see type 0 records here.  */

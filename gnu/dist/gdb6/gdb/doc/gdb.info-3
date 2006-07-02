@@ -9,11 +9,11 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Ninth Edition, of `Debugging with GDB: the GNU
-Source-Level Debugger' for GDB Version 6.4.
+Source-Level Debugger' for GDB Version 6.5.
 
    Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
 1998,
-1999, 2000, 2001, 2002, 2003, 2004, 2005
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
@@ -230,7 +230,7 @@ On a PPC MBX board:
 
      (gdb)
      *stopped,reason="breakpoint-hit",bkptno="1",frame={func="main",
-     args=[],file="try.c",fullname="/home/foo/bar/devo/myproject/try.c",line="5"}
+     args=[],file="try.c",fullname="/home/foo/bar/try.c",line="5"}
      (gdb)
      -data-list-changed-registers
      ^done,changed-registers=["0","1","2","4","5","6","7","8","9",
@@ -812,7 +812,7 @@ Example
      (gdb)
      @Hello world
      *stopped,reason="breakpoint-hit",bkptno="2",frame={func="foo",args=[],
-     file="hello.c",fullname="/home/foo/bar/devo/myproject/hello.c",line="13"}
+     file="hello.c",fullname="/home/foo/bar/hello.c",line="13"}
      (gdb)
 
 The `-exec-finish' Command
@@ -842,7 +842,7 @@ Function returning `void'.
      (gdb)
      @hello from foo
      *stopped,reason="function-finished",frame={func="main",args=[],
-     file="hello.c",fullname="/home/foo/bar/devo/myproject/hello.c",line="7"}
+     file="hello.c",fullname="/home/foo/bar/hello.c",line="7"}
      (gdb)
 
    Function returning other than `void'.  The name of the internal GDB
@@ -853,7 +853,7 @@ variable storing the result is printed, together with the value itself.
      (gdb)
      *stopped,reason="function-finished",frame={addr="0x000107b0",func="foo",
      args=[{name="a",value="1"],{name="b",value="9"}},
-     file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+     file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      gdb-result-var="$1",return-value="0"
      (gdb)
 
@@ -890,7 +890,7 @@ Example
      (gdb)
      111*stopped,signal-name="SIGINT",signal-meaning="Interrupt",
      frame={addr="0x00010140",func="foo",args=[],file="try.c",
-     fullname="/home/foo/bar/devo/myproject/try.c",line="13"}
+     fullname="/home/foo/bar/try.c",line="13"}
      (gdb)
 
      (gdb)
@@ -1025,7 +1025,7 @@ Example
      (gdb)
      *stopped,reason="breakpoint-hit",bkptno="1",
      frame={func="main",args=[],file="recursive2.c",
-     fullname="/home/foo/bar/devo/myproject/recursive2.c",line="4"}
+     fullname="/home/foo/bar/recursive2.c",line="4"}
      (gdb)
 
 The `-exec-show-arguments' Command
@@ -1077,7 +1077,7 @@ Stepping into a function:
      *stopped,reason="end-stepping-range",
      frame={func="foo",args=[{name="a",value="10"},
      {name="b",value="0"}],file="recursive2.c",
-     fullname="/home/foo/bar/devo/myproject/recursive2.c",line="11"}
+     fullname="/home/foo/bar/recursive2.c",line="11"}
      (gdb)
 
    Regular stepping:
@@ -1117,7 +1117,7 @@ Example
      (gdb)
      *stopped,reason="end-stepping-range",
      frame={func="foo",args=[],file="try.c",
-     fullname="/home/foo/bar/devo/myproject/try.c",line="10"}
+     fullname="/home/foo/bar/try.c",line="10"}
      (gdb)
      -exec-step-instruction
      ^running
@@ -1125,7 +1125,7 @@ Example
      (gdb)
      *stopped,reason="end-stepping-range",
      frame={addr="0x000100f4",func="foo",args=[],file="try.c",
-     fullname="/home/foo/bar/devo/myproject/try.c",line="10"}
+     fullname="/home/foo/bar/try.c",line="10"}
      (gdb)
 
 The `-exec-until' Command
@@ -1156,7 +1156,7 @@ Example
      (gdb)
      x = 55
      *stopped,reason="location-reached",frame={func="main",args=[],
-     file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="6"}
+     file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="6"}
      (gdb)
 
 The `-file-exec-and-symbols' Command
@@ -1732,29 +1732,29 @@ Full stack backtrace:
      -stack-list-frames
      ^done,stack=
      [frame={level="0",addr="0x0001076c",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="11"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="11"},
      frame={level="1",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="2",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="3",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="4",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="5",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="6",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="7",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="8",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="9",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="10",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="11",addr="0x00010738",func="main",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="4"}]
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="4"}]
      (gdb)
 
    Show frames between LOW_FRAME and HIGH_FRAME:
@@ -1763,11 +1763,11 @@ Full stack backtrace:
      -stack-list-frames 3 5
      ^done,stack=
      [frame={level="3",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="4",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
      frame={level="5",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"}]
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"}]
      (gdb)
 
    Show a single frame:
@@ -1776,7 +1776,7 @@ Full stack backtrace:
      -stack-list-frames 3 3
      ^done,stack=
      [frame={level="3",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/devo/myproject/recursive2.c",line="14"}]
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"}]
      (gdb)
 
 The `-stack-list-locals' Command
@@ -3613,7 +3613,11 @@ Variable Settings
           set editing-mode vi
 
      Variable names and values, where appropriate, are recognized
-     without regard to case.
+     without regard to case.  Unrecognized variable names are ignored.
+
+     Boolean variables (those that can be set to on or off) are set to
+     on if the value is null or empty, ON (case-insensitive), or 1.
+     Any other value results in the variable being set to off.
 
      A great deal of run-time behavior is changeable with the following
      variables.
@@ -3624,6 +3628,11 @@ Variable Settings
           bell.  If set to `visible', Readline uses a visible bell if
           one is available.  If set to `audible' (the default),
           Readline attempts to ring the terminal's bell.
+
+    `bind-tty-special-chars'
+          If set to `on', Readline attempts to bind the control
+          characters treated specially by the kernel's terminal driver
+          to their Readline equivalents.
 
     `comment-begin'
           The string to insert at the beginning of the line when the
@@ -3637,12 +3646,13 @@ Variable Settings
 
     `completion-query-items'
           The number of possible completions that determines when the
-          user is asked whether he wants to see the list of
-          possibilities.  If the number of possible completions is
-          greater than this value, Readline will ask the user whether
-          or not he wishes to view them; otherwise, they are simply
-          listed.  This variable must be set to an integer value
-          greater than or equal to 0.  The default limit is `100'.
+          user is asked whether the list of possibilities should be
+          displayed.  If the number of possible completions is greater
+          than this value, Readline will ask the user whether or not he
+          wishes to view them; otherwise, they are simply listed.  This
+          variable must be set to an integer value greater than or
+          equal to 0.  A negative value means Readline should never ask.
+          The default limit is `100'.
 
     `convert-meta'
           If set to `on', Readline will convert characters with the
@@ -3670,9 +3680,10 @@ Variable Settings
           If set to `on', tilde expansion is performed when Readline
           attempts word completion.  The default is `off'.
 
+    `history-preserve-point'
           If set to `on', the history code attempts to place point at
-          the same location on each history line retrived with
-          `previous-history' or `next-history'.
+          the same location on each history line retrieved with
+          `previous-history' or `next-history'.  The default is `off'.
 
     `horizontal-scroll-mode'
           This variable can be set to either `on' or `off'.  Setting it
@@ -3745,6 +3756,15 @@ Variable Settings
           If set to `on', words which have more than one possible
           completion cause the matches to be listed immediately instead
           of ringing the bell.  The default value is `off'.
+
+    `show-all-if-unmodified'
+          This alters the default behavior of the completion functions
+          in a fashion similar to SHOW-ALL-IF-AMBIGUOUS.  If set to
+          `on', words which have more than one possible completion
+          without any possible partial completion (the possible
+          completions don't share a common prefix) cause the matches to
+          be listed immediately instead of ringing the bell.  The
+          default value is `off'.
 
     `visible-stats'
           If set to `on', a character denoting a file's type is
@@ -4159,14 +4179,17 @@ File: gdb.info,  Node: Commands For History,  Next: Commands For Text,  Prev: Co
      second word on the previous line) at point.  With an argument N,
      insert the Nth word from the previous command (the words in the
      previous command begin with word 0).  A negative argument inserts
-     the Nth word from the end of the previous command.
+     the Nth word from the end of the previous command.  Once the
+     argument N is computed, the argument is extracted as if the `!N'
+     history expansion had been specified.
 
 `yank-last-arg (M-. or M-_)'
      Insert last argument to the previous command (the last word of the
      previous history entry).  With an argument, behave exactly like
      `yank-nth-arg'.  Successive calls to `yank-last-arg' move back
      through the history list, inserting the last argument of each line
-     in turn.
+     in turn.  The history expansion facilities are used to extract the
+     last argument, as if the `!$' history expansion had been specified.
 
 
 
@@ -4268,6 +4291,11 @@ File: gdb.info,  Node: Commands For Killing,  Next: Numeric Arguments,  Prev: Co
 `unix-word-rubout (C-w)'
      Kill the word behind point, using white space as a word boundary.
      The killed text is saved on the kill-ring.
+
+`unix-filename-rubout ()'
+     Kill the word behind point, using white space and the slash
+     character as the word boundaries.  The killed text is saved on the
+     kill-ring.
 
 `delete-horizontal-space ()'
      Delete all spaces and tabs around point.  By default, this is
@@ -4493,7 +4521,9 @@ File: gdb.info,  Node: Using History Interactively,  Next: Installing GDB,  Prev
 ******************************
 
 This chapter describes how to use the GNU History Library interactively,
-from a user's standpoint.  It should be considered a user's guide.
+from a user's standpoint.  It should be considered a user's guide.  For
+information on using the GNU History Library in other programs, see the
+GNU Readline Library Manual.
 
 * Menu:
 
@@ -4542,7 +4572,7 @@ history list.
 
 `!'
      Start a history substitution, except when followed by a space, tab,
-     the end of the line, `=' or `('.
+     the end of the line, or `='.
 
 `!N'
      Refer to command line N.
@@ -4668,8 +4698,12 @@ more of the following modifiers, each preceded by a `:'.
      Repeat the previous substitution.
 
 `g'
+`a'
      Cause changes to be applied over the entire event line.  Used in
      conjunction with `s', as in `gs/OLD/NEW/', or with `&'.
+
+`G'
+     Apply the following `s' modifier once to each word in the event.
 
 
 
@@ -4703,7 +4737,7 @@ and TeX (or `texi2roff') to typeset the printed version.
 
    GDB includes an already formatted copy of the on-line Info version
 of this manual in the `gdb' subdirectory.  The main Info file is
-`gdb-6.4/gdb/gdb.info', and it refers to subordinate files matching
+`gdb-6.5/gdb/gdb.info', and it refers to subordinate files matching
 `gdb.info*' in the same directory.  If necessary, you can print out
 these files, or read them with any editor; but they are easier to read
 using the `info' subsystem in GNU Emacs or the standalone `info'
@@ -4713,7 +4747,7 @@ program, available as part of the GNU Texinfo distribution.
 Info formatting programs, such as `texinfo-format-buffer' or `makeinfo'.
 
    If you have `makeinfo' installed, and are in the top level GDB
-source directory (`gdb-6.4', in the case of version 6.4), you can make
+source directory (`gdb-6.5', in the case of version 6.5), you can make
 the Info file by typing:
 
      cd gdb
@@ -4739,7 +4773,7 @@ format.  On its own, TeX cannot either read or typeset a Texinfo file.
 
    If you have TeX and a DVI printer program installed, you can typeset
 and print this manual.  First switch to the the `gdb' subdirectory of
-the main source directory (for example, to `gdb-6.4/gdb') and type:
+the main source directory (for example, to `gdb-6.5/gdb') and type:
 
      make gdb.dvi
 
@@ -4747,7 +4781,7 @@ the main source directory (for example, to `gdb-6.4/gdb') and type:
 
    ---------- Footnotes ----------
 
-   (1) In `gdb-6.4/gdb/refcard.ps' of the version 6.4 release.
+   (1) In `gdb-6.5/gdb/refcard.ps' of the version 6.5 release.
 
 
 File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Using History Interactively,  Up: Top
@@ -4763,39 +4797,39 @@ preparing GDB for installation; you can then use `make' to build the
 in a single directory, whose name is usually composed by appending the
 version number to `gdb'.
 
-   For example, the GDB version 6.4 distribution is in the `gdb-6.4'
+   For example, the GDB version 6.5 distribution is in the `gdb-6.5'
 directory.  That directory contains:
 
-`gdb-6.4/configure (and supporting files)'
+`gdb-6.5/configure (and supporting files)'
      script for configuring GDB and all its supporting libraries
 
-`gdb-6.4/gdb'
+`gdb-6.5/gdb'
      the source specific to GDB itself
 
-`gdb-6.4/bfd'
+`gdb-6.5/bfd'
      source for the Binary File Descriptor library
 
-`gdb-6.4/include'
+`gdb-6.5/include'
      GNU include files
 
-`gdb-6.4/libiberty'
+`gdb-6.5/libiberty'
      source for the `-liberty' free software library
 
-`gdb-6.4/opcodes'
+`gdb-6.5/opcodes'
      source for the library of opcode tables and disassemblers
 
-`gdb-6.4/readline'
+`gdb-6.5/readline'
      source for the GNU command-line interface
 
-`gdb-6.4/glob'
+`gdb-6.5/glob'
      source for the GNU filename pattern-matching subroutine
 
-`gdb-6.4/mmalloc'
+`gdb-6.5/mmalloc'
      source for the GNU memory-mapped malloc package
 
    The simplest way to configure and build GDB is to run `configure'
 from the `gdb-VERSION-NUMBER' source directory, which in this example
-is the `gdb-6.4' directory.
+is the `gdb-6.5' directory.
 
    First switch to the `gdb-VERSION-NUMBER' source directory if you are
 not already in it; then run `configure'.  Pass the identifier for the
@@ -4803,7 +4837,7 @@ platform on which GDB will run as an argument.
 
    For example:
 
-     cd gdb-6.4
+     cd gdb-6.5
      ./configure HOST
      make
 
@@ -4824,8 +4858,8 @@ you may need to run `sh' on it explicitly:
      sh configure HOST
 
    If you run `configure' from a directory that contains source
-directories for multiple libraries or programs, such as the `gdb-6.4'
-source directory for version 6.4, `configure' creates configuration
+directories for multiple libraries or programs, such as the `gdb-6.5'
+source directory for version 6.5, `configure' creates configuration
 files for every directory level underneath (unless you tell it not to,
 with the `--norecursion' option).
 
@@ -4872,13 +4906,13 @@ directory.  If the path to `configure' would be the same as the
 argument to `--srcdir', you can leave out the `--srcdir' option; it is
 assumed.)
 
-   For example, with version 6.4, you can build GDB in a separate
+   For example, with version 6.5, you can build GDB in a separate
 directory for a Sun 4 like this:
 
-     cd gdb-6.4
+     cd gdb-6.5
      mkdir ../gdb-sun4
      cd ../gdb-sun4
-     ../gdb-6.4/configure sun4
+     ../gdb-6.5/configure sun4
      make
 
    When `configure' builds a configuration using a remote source
@@ -4889,7 +4923,7 @@ directory `gdb-sun4/libiberty', and GDB itself in `gdb-sun4/gdb'.
 
    Make sure that your path to the `configure' script has just one
 instance of `gdb' in it.  If your path to `configure' looks like
-`../gdb-6.4/gdb/configure', you are configuring only one subdirectory
+`../gdb-6.5/gdb/configure', you are configuring only one subdirectory
 of GDB, not the whole package.  This leads to build errors about
 missing include files such as `bfd/bfd.h'.
 
@@ -4905,8 +4939,8 @@ called `configure' (or one of its subdirectories).
 
    The `Makefile' that `configure' generates in each source directory
 also runs recursively.  If you type `make' in a source directory such
-as `gdb-6.4' (or in a separate configured directory configured with
-`--srcdir=DIRNAME/gdb-6.4'), you will build all the required libraries,
+as `gdb-6.5' (or in a separate configured directory configured with
+`--srcdir=DIRNAME/gdb-6.5'), you will build all the required libraries,
 and then build GDB.
 
    When you have multiple hosts or targets configured in separate
@@ -4951,7 +4985,7 @@ you can use it to test your guesses on abbreviations--for example:
      Invalid configuration `i986v': machine `i986v' not recognized
 
 `config.sub' is also distributed in the GDB source directory
-(`gdb-6.4', for version 6.4).
+(`gdb-6.5', for version 6.5).
 
 
 File: gdb.info,  Node: Configure Options,  Prev: Config Names,  Up: Installing GDB
@@ -5283,6 +5317,8 @@ Appendix D GDB Remote Serial Protocol
 * Stop Reply Packets::
 * General Query Packets::
 * Register Packet Format::
+* Tracepoint Packets::
+* Interrupts::
 * Examples::
 * File-I/O remote protocol extension::
 
@@ -5375,7 +5411,21 @@ COMMANDs and their corresponding response DATA.  *Note File-I/O remote
 protocol extension::, for details about the File I/O extension of the
 remote protocol.
 
-`!' -- extended mode
+   Each packet's description has a template showing the packet's overall
+syntax, followed by an explanation of the packet's meaning.  We include
+spaces in some of the templates for clarity; these are not part of the
+packet's syntax.  No GDB packet uses spaces to separate its components.
+For example, a template like `foo BAR BAZ' describes a packet
+beginning with the three ASCII bytes `foo', followed by a BAR, followed
+directly by a BAZ.  GDB does not transmit a space character between the
+`foo' and the BAR, or between the BAR and the BAZ.
+
+   Note that all packet forms beginning with an upper- or lower-case
+letter, other than those described here, are reserved for future use.
+
+   Here are the packet descriptions.
+
+`!'
      Enable extended mode.  In extended mode, the remote server is made
      persistent.  The `R' packet is used to restart the program being
      debugged.
@@ -5384,27 +5434,27 @@ remote protocol.
     `OK'
           The remote target both supports and has enabled extended mode.
 
-`?' -- last signal
+`?'
      Indicate the reason the target halted.  The reply is the same as
      for step and continue.
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
-`a' -- reserved
-     Reserved for future use.
-
-`A'ARGLEN`,'ARGNUM`,'ARG`,...' --  set program arguments *(reserved)*
+`A ARGLEN,ARGNUM,ARG,...'
      Initialized `argv[]' array passed into program. ARGLEN specifies
      the number of bytes in the hex encoded byte stream ARG.  See
      `gdbserver' for more details.
 
      Reply:
     `OK'
+          The arguments were set.
 
-    `ENN'
+    `E NN'
+          An error occurred.
 
-`b'BAUD -- set baud *(deprecated)*
-     Change the serial line speed to BAUD.
+`b BAUD'
+     (Don't use this packet; its behavior is not well-defined.)  Change
+     the serial line speed to BAUD.
 
      JTC: _When does the transport layer state change?  When it's
      received, or after the ACK is transmitted.  In either case, there
@@ -5417,28 +5467,31 @@ remote protocol.
      and have the switch happen "in between" packets, so that from
      remote protocol's point of view, nothing actually happened._
 
-`B'ADDR,MODE -- set breakpoint *(deprecated)*
+`B ADDR,MODE'
      Set (MODE is `S') or clear (MODE is `C') a breakpoint at ADDR.
 
-     This packet has been replaced by the `Z' and `z' packets (*note
+     Don't use this packet.  Use the `Z' and `z' packets instead (*note
      insert breakpoint or watchpoint packet::).
 
-`c'ADDR -- continue
-     ADDR is address to resume.  If ADDR is omitted, resume at current
-     address.
+`c [ADDR]'
+     Continue.  ADDR is address to resume.  If ADDR is omitted, resume
+     at current address.
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
-`C'SIG`;'ADDR -- continue with signal
-     Continue with signal SIG (hex signal number).  If `;'ADDR is
+`C SIG[;ADDR]'
+     Continue with signal SIG (hex signal number).  If `;ADDR' is
      omitted, resume at same address.
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
-`d' -- toggle debug *(deprecated)*
+`d'
      Toggle debug flag.
 
-`D' -- detach
+     Don't use this packet; instead, define a general set packet (*note
+     General Query Packets::).
+
+`D'
      Detach GDB from the remote system.  Sent to the remote target
      before GDB disconnects via the `detach' command.
 
@@ -5446,24 +5499,15 @@ remote protocol.
     `OK'
           for success
 
-    `ENN'
+    `E NN'
           for an error
 
-`e' -- reserved
-     Reserved for future use.
+`F RC,EE,CF;XX'
+     A reply from GDB to an `F' packet sent by the target.  This is
+     part of the File-I/O protocol extension.  *Note File-I/O remote
+     protocol extension::, for the specification.
 
-`E' -- reserved
-     Reserved for future use.
-
-`f' -- reserved
-     Reserved for future use.
-
-`F'RC`,'EE`,'CF`;'XX -- Reply to target's F packet.
-     This packet is send by GDB as reply to a `F' request packet sent
-     by the target.  This is part of the File-I/O protocol extension.
-     *Note File-I/O remote protocol extension::, for the specification.
-
-`g' -- read registers
+`g'
      Read general registers.
 
      Reply:
@@ -5471,224 +5515,182 @@ remote protocol.
           Each byte of register data is described by two hex digits.
           The bytes with the register are transmitted in target byte
           order.  The size of each register and their position within
-          the `g' PACKET are determined by the GDB internal macros
-          DEPRECATED_REGISTER_RAW_SIZE and REGISTER_NAME macros.  The
-          specification of several standard `g' packets is specified
-          below.
+          the `g' packet are determined by the GDB internal macros
+          `DEPRECATED_REGISTER_RAW_SIZE' and `REGISTER_NAME' macros.
+          The specification of several standard `g' packets is
+          specified below.
 
-    `ENN'
+    `E NN'
           for an error.
 
-`G'XX... -- write regs
-     *Note read registers packet::, for a description of the XX...
-     data.
+`G XX...'
+     Write general registers.  *Note read registers packet::, for a
+     description of the XX... data.
 
      Reply:
     `OK'
           for success
 
-    `ENN'
+    `E NN'
           for an error
 
-`h' -- reserved
-     Reserved for future use.
-
-`H'CT... -- set thread
+`H C T'
      Set thread for subsequent operations (`m', `M', `g', `G', et.al.).
      C depends on the operation to be performed: it should be `c' for
      step and continue operations, `g' for other operations.  The
-     thread designator T... may be -1, meaning all the threads, a
-     thread number, or zero which means pick any thread.
+     thread designator T may be `-1', meaning all the threads, a thread
+     number, or `0' which means pick any thread.
 
      Reply:
     `OK'
           for success
 
-    `ENN'
+    `E NN'
           for an error
 
-`i'ADDR`,'NNN -- cycle step *(draft)*
-     Step the remote target by a single clock cycle.  If `,'NNN is
+`i [ADDR[,NNN]]'
+     Step the remote target by a single clock cycle.  If `,NNN' is
      present, cycle step NNN cycles.  If ADDR is present, cycle step
      starting at that address.
 
-`I' -- signal then cycle step *(reserved)*
-     *Note step with signal packet::.  *Note cycle step packet::.
+`I'
+     Signal, then cycle step.  *Note step with signal packet::.  *Note
+     cycle step packet::.
 
-`j' -- reserved
-     Reserved for future use.
+`k'
+     Kill request.
 
-`J' -- reserved
-     Reserved for future use.
-
-`k' -- kill request
      FIXME: _There is no description of how to operate when a specific
      thread context has been selected (i.e. does 'k' kill only that
      thread?)_.
 
-`K' -- reserved
-     Reserved for future use.
+`m ADDR,LENGTH'
+     Read LENGTH bytes of memory starting at address ADDR.  Note that
+     ADDR may not be aligned to any particular boundary.
 
-`l' -- reserved
-     Reserved for future use.
-
-`L' -- reserved
-     Reserved for future use.
-
-`m'ADDR`,'LENGTH -- read memory
-     Read LENGTH bytes of memory starting at address ADDR.  Neither GDB
-     nor the stub assume that sized memory transfers are assumed using
-     word aligned accesses. FIXME: _A word aligned memory transfer
-     mechanism is needed._
+     The stub need not use any particular size or alignment when
+     gathering data from memory for the response; even if ADDR is
+     word-aligned and LENGTH is a multiple of the word size, the stub
+     is free to use byte accesses, or not.  For this reason, this
+     packet may not be suitable for accessing memory-mapped I/O devices.  
 
      Reply:
     `XX...'
-          XX... is mem contents. Can be fewer bytes than requested if
-          able to read only part of the data.  Neither GDB nor the stub
-          assume that sized memory transfers are assumed using word
-          aligned accesses. FIXME: _A word aligned memory transfer
-          mechanism is needed._
+          Memory contents; each byte is transmitted as a two-digit
+          hexidecimal number.  The reply may contain fewer bytes than
+          requested if the server was able to read only part of the
+          region of memory.
 
-    `ENN'
+    `E NN'
           NN is errno
 
-`M'ADDR,LENGTH`:'XX... -- write mem
+`M ADDR,LENGTH:XX...'
      Write LENGTH bytes of memory starting at address ADDR.  XX... is
-     the data.
+     the data; each byte is transmitted as a two-digit hexidecimal
+     number.
 
      Reply:
     `OK'
           for success
 
-    `ENN'
+    `E NN'
           for an error (this includes the case where only part of the
           data was written).
 
-`n' -- reserved
-     Reserved for future use.
-
-`N' -- reserved
-     Reserved for future use.
-
-`o' -- reserved
-     Reserved for future use.
-
-`O' -- reserved
-
-`p'HEX NUMBER OF REGISTER -- read register packet
-     *Note read registers packet::, for a description of how the
-     returned register value is encoded.
+`p N'
+     Read the value of register N; N is in hex.  *Note read registers
+     packet::, for a description of how the returned register value is
+     encoded.
 
      Reply:
     `XX...'
           the register's value
 
-    `ENN'
+    `E NN'
           for an error
 
     `'
           Indicating an unrecognized QUERY.
 
-`P'N...`='R... -- write register
-     Write register N... with value R..., which contains two hex digits
-     for each byte in the register (target byte order).
+`P N...=R...'
+     Write register N... with value R....  The register number N is in
+     hexidecimal, and R... contains two hex digits for each byte in the
+     register (target byte order).
 
      Reply:
     `OK'
           for success
 
-    `ENN'
+    `E NN'
           for an error
 
-`q'QUERY -- general query
-     Request info about QUERY.  In general GDB queries have a leading
-     upper case letter.  Custom vendor queries should use a company
-     prefix (in lower case) ex: `qfsf.var'.  QUERY may optionally be
-     followed by a `,' or `;' separated list.  Stubs must ensure that
-     they match the full QUERY name.
+`q NAME PARAMS...'
+`Q NAME PARAMS...'
+     General query (`q') and set (`Q').  These packets are described
+     fully in *Note General Query Packets::.
 
-     Reply:
-    `XX...'
-          Hex encoded data from query.  The reply can not be empty.
-
-    `ENN'
-          error reply
-
-    `'
-          Indicating an unrecognized QUERY.
-
-`Q'VAR`='VAL -- general set
-     Set value of VAR to VAL.
-
-     *Note general query packet::, for a discussion of naming
-     conventions.
-
-`r' -- reset *(deprecated)*
+`r'
      Reset the entire system.
 
-`R'XX -- remote restart
+     Don't use this packet; use the `R' packet instead.
+
+`R XX'
      Restart the program being debugged.  XX, while needed, is ignored.
      This packet is only available in extended mode.
 
-     Reply:
-    `_no reply_'
-          The `R' packet has no reply.
+     The `R' packet has no reply.
 
-`s'ADDR -- step
-     ADDR is address to resume.  If ADDR is omitted, resume at same
-     address.
+`s [ADDR]'
+     Single step.  ADDR is the address at which to resume.  If ADDR is
+     omitted, resume at same address.
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
-`S'SIG`;'ADDR -- step with signal
-     Like `C' but step not continue.
+`S SIG[;ADDR]'
+     Step with signal.  This is analogous to the `C' packet, but
+     requests a single-step, rather than a normal resumption of
+     execution.
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
-`t'ADDR`:'PP`,'MM -- search
+`t ADDR:PP,MM'
      Search backwards starting at address ADDR for a match with pattern
      PP and mask MM.  PP and MM are 4 bytes.  ADDR must be at least 3
      digits.
 
-`T'XX -- thread alive
+`T XX'
      Find out if the thread XX is alive.
 
      Reply:
     `OK'
           thread is still alive
 
-    `ENN'
+    `E NN'
           thread is dead
 
-`u' -- reserved
-     Reserved for future use.
-
-`U' -- reserved
-     Reserved for future use.
-
-`v' -- verbose packet prefix
+`v'
      Packets starting with `v' are identified by a multi-letter name,
      up to the first `;' or `?' (or the end of the packet).
 
-`vCont'[;ACTION[`:'TID]]... -- extended resume
-     Resume the inferior.  Different actions may be specified for each
-     thread.  If an action is specified with no TID, then it is applied
-     to any threads that don't have a specific action specified; if no
-     default action is specified then other threads should remain
-     stopped.  Specifying multiple default actions is an error;
-     specifying no actions is also an error.  Thread IDs are specified
-     in hexadecimal.  Currently supported actions are:
+`vCont[;ACTION[:TID]]...'
+     Resume the inferior, specifying different actions for each thread.
+     If an action is specified with no TID, then it is applied to any
+     threads that don't have a specific action specified; if no default
+     action is specified then other threads should remain stopped.
+     Specifying multiple default actions is an error; specifying no
+     actions is also an error.  Thread IDs are specified in
+     hexadecimal.  Currently supported actions are:
 
     `c'
           Continue.
 
-    `CSIG'
+    `C SIG'
           Continue with signal SIG.  SIG should be two hex digits.
 
     `s'
           Step.
 
-    `SSIG'
+    `S SIG'
           Step with signal SIG.  SIG should be two hex digits.
 
      The optional ADDR argument normally associated with these packets
@@ -5696,50 +5698,34 @@ remote protocol.
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
-`vCont?' -- extended resume query
-     Query support for the `vCont' packet.
+`vCont?'
+     Request a list of actions supporetd by the `vCont' packet.
 
      Reply:
-    ``vCont'[;ACTION]...'
+    `vCont[;ACTION...]'
           The `vCont' packet is supported.  Each ACTION is a supported
           command in the `vCont' packet.
 
     `'
           The `vCont' packet is not supported.
 
-`V' -- reserved
-     Reserved for future use.
-
-`w' -- reserved
-     Reserved for future use.
-
-`W' -- reserved
-     Reserved for future use.
-
-`x' -- reserved
-     Reserved for future use.
-
-`X'ADDR`,'LENGTH:XX... -- write mem (binary)
-     ADDR is address, LENGTH is number of bytes, XX...  is binary data.
-     The characters `$', `#', and `0x7d' are escaped using `0x7d', and
-     then XORed with `0x20'.  For example, `0x7d' would be transmitted
-     as `0x7d 0x5d'.
+`X ADDR,LENGTH:XX...'
+     Write data to memory, where the data is transmitted in binary.
+     ADDR is address, LENGTH is number of bytes, `XX...' is binary
+     data.  The bytes `0x23' (ASCII `#'), `0x24' (ASCII `$'), and
+     `0x7d' (ASCII `}') are escaped using `0x7d' (ASCII `}'), and then
+     XORed with `0x20'.  For example, the byte `0x7d' would be
+     transmitted as the two bytes `0x7d 0x5d'.
 
      Reply:
     `OK'
           for success
 
-    `ENN'
+    `E NN'
           for an error
 
-`y' -- reserved
-     Reserved for future use.
-
-`Y' reserved
-     Reserved for future use.
-
-`z'TYPE`,'ADDR`,'LENGTH -- remove breakpoint or watchpoint *(draft)*
-`Z'TYPE`,'ADDR`,'LENGTH -- insert breakpoint or watchpoint *(draft)*
+`z TYPE,ADDR,LENGTH'
+`Z TYPE,ADDR,LENGTH'
      Insert (`Z') or remove (`z') a TYPE breakpoint or watchpoint
      starting at address ADDRESS and covering the next LENGTH bytes.
 
@@ -5749,18 +5735,17 @@ remote protocol.
      _Implementation notes: A remote target shall return an empty string
      for an unrecognized breakpoint or watchpoint packet TYPE.  A
      remote target shall support either both or neither of a given
-     `Z'TYPE... and `z'TYPE... packet pair.  To avoid potential
+     `ZTYPE...' and `zTYPE...' packet pair.  To avoid potential
      problems with duplicate packets, the operations should be
      implemented in an idempotent way._
 
-`z'`0'`,'ADDR`,'LENGTH -- remove memory breakpoint *(draft)*
-
-`Z'`0'`,'ADDR`,'LENGTH -- insert memory breakpoint *(draft)*
-     Insert (`Z0') or remove (`z0') a memory breakpoint at address
-     `addr' of size `length'.
+`z0,ADDR,LENGTH'
+`Z0,ADDR,LENGTH'
+     Insert (`Z0') or remove (`z0') a memory breakpoint at address ADDR
+     of size LENGTH.
 
      A memory breakpoint is implemented by replacing the instruction at
-     ADDR with a software breakpoint or trap instruction.  The `length'
+     ADDR with a software breakpoint or trap instruction.  The LENGTH
      is used by targets that indicates the size of the breakpoint (in
      bytes) that should be inserted (e.g., the ARM and MIPS can insert
      either a 2 or 4 byte breakpoint).
@@ -5777,14 +5762,13 @@ remote protocol.
     `'
           not supported
 
-    `ENN'
+    `E NN'
           for an error
 
-`z'`1'`,'ADDR`,'LENGTH -- remove hardware breakpoint *(draft)*
-
-`Z'`1'`,'ADDR`,'LENGTH -- insert hardware breakpoint *(draft)*
+`z1,ADDR,LENGTH'
+`Z1,ADDR,LENGTH'
      Insert (`Z1') or remove (`z1') a hardware breakpoint at address
-     `addr' of size `length'.
+     ADDR of size LENGTH.
 
      A hardware breakpoint is implemented using a mechanism that is not
      dependant on being able to modify the target's memory.
@@ -5799,12 +5783,11 @@ remote protocol.
     `'
           not supported
 
-    `ENN'
+    `E NN'
           for an error
 
-`z'`2'`,'ADDR`,'LENGTH -- remove write watchpoint *(draft)*
-
-`Z'`2'`,'ADDR`,'LENGTH -- insert write watchpoint *(draft)*
+`z2,ADDR,LENGTH'
+`Z2,ADDR,LENGTH'
      Insert (`Z2') or remove (`z2') a write watchpoint.
 
      Reply:
@@ -5814,12 +5797,11 @@ remote protocol.
     `'
           not supported
 
-    `ENN'
+    `E NN'
           for an error
 
-`z'`3'`,'ADDR`,'LENGTH -- remove read watchpoint *(draft)*
-
-`Z'`3'`,'ADDR`,'LENGTH -- insert read watchpoint *(draft)*
+`z3,ADDR,LENGTH'
+`Z3,ADDR,LENGTH'
      Insert (`Z3') or remove (`z3') a read watchpoint.
 
      Reply:
@@ -5829,12 +5811,11 @@ remote protocol.
     `'
           not supported
 
-    `ENN'
+    `E NN'
           for an error
 
-`z'`4'`,'ADDR`,'LENGTH -- remove access watchpoint *(draft)*
-
-`Z'`4'`,'ADDR`,'LENGTH -- insert access watchpoint *(draft)*
+`z4,ADDR,LENGTH'
+`Z4,ADDR,LENGTH'
      Insert (`Z4') or remove (`z4') an access watchpoint.
 
      Reply:
@@ -5844,7 +5825,7 @@ remote protocol.
     `'
           not supported
 
-    `ENN'
+    `E NN'
           for an error
 
 
@@ -5857,42 +5838,57 @@ D.3 Stop Reply Packets
 The `C', `c', `S', `s' and `?' packets can receive any of the below as
 a reply.  In the case of the `C', `c', `S' and `s' packets, that reply
 is only returned when the target halts.  In the below the exact meaning
-of `signal number' is poorly defined.  In general one of the UNIX
-signal numbering conventions is used.
+of "signal number" is poorly defined.  In general one of the UNIX signal
+numbering conventions is used.
 
-`SAA'
-     AA is the signal number
+   As in the description of request packets, we include spaces in the
+reply templates for clarity; these are not part of the reply packet's
+syntax.  No GDB stop reply packet uses spaces to separate its
+components.
 
-``T'AAN...`:'R...`;'N...`:'R...`;'N...`:'R...`;''
-     AA = two hex digit signal number; N... = register number (hex),
-     R...  = target byte ordered register contents, size defined by
-     `DEPRECATED_REGISTER_RAW_SIZE'; N... = `thread', R... = thread
-     process ID, this is a hex integer; N... = (`watch' | `rwatch' |
-     `awatch', R... = data address, this is a hex integer; N... = other
-     string not starting with valid hex digit.  GDB should ignore this
-     N..., R... pair and go on to the next.  This way we can extend the
-     protocol.
+`S AA'
+     The program received signal number AA (a two-digit hexidecimal
+     number).
 
-`WAA'
+`T AA N1:R1;N2:R2;...'
+     The program received signal number AA (a two-digit hexidecimal
+     number).  Single-step and breakpoint traps are reported this way.
+     The `N:R' pairs give the values of important registers or other
+     information:
+       1. If N is a hexidecimal number, it is a register number, and the
+          corresponding R gives that register's value.  R is a series
+          of bytes in target byte order, with each byte given by a
+          two-digit hex number.
+
+       2. If N is `thread', then R is the thread process ID, in hex.
+
+       3. If N is `watch', `rwatch', or `awatch', then the packet
+          indicates a watchpoint hit, and R is the data address, in hex.
+
+       4. Otherwise, GDB should ignore this `N:R' pair and go on to the
+          next; this allows us to extend the protocol in the future.
+
+`W AA'
      The process exited, and AA is the exit status.  This is only
      applicable to certain targets.
 
-`XAA'
+`X AA'
      The process terminated with signal AA.
 
-`OXX...'
-     XX... is hex encoding of ASCII data.  This can happen at any time
-     while the program is running and the debugger should continue to
-     wait for `W', `T', etc.
+`O XX...'
+     `XX...' is hex encoding of ASCII data, to be written as the
+     program's console output.  This can happen at any time while the
+     program is running and the debugger should continue to wait for
+     `W', `T', etc.
 
-`FCALL-ID`,'PARAMETER...'
+`F CALL-ID,PARAMETER...'
      CALL-ID is the identifier which says which host system call should
      be called.  This is just the name of the function.  Translation
      into the correct system call is only applicable as it's defined in
      GDB.  *Note File-I/O remote protocol extension::, for a list of
      implemented system calls.
 
-     PARAMETER... is a list of parameters as defined for this very
+     `PARAMETER...' is a list of parameters as defined for this very
      system call.
 
      The target replies with this packet when it expects GDB to call a
@@ -5909,235 +5905,87 @@ File: gdb.info,  Node: General Query Packets,  Next: Register Packet Format,  Pr
 D.4 General Query Packets
 =========================
 
-The following set and query packets have already been defined.
+Packets starting with `q' are "general query packets"; packets starting
+with `Q' are "general set packets".  General query and set packets are
+a semi-unified form for retrieving and sending information to and from
+the stub.
 
-`q'`C' -- current thread
+   The initial letter of a query or set packet is followed by a name
+indicating what sort of thing the packet applies to.  For example, GDB
+may use a `qSymbol' packet to exchange symbol definitions with the
+stub.  These packet names follow some conventions:
+
+   * The name must not contain commas, colons or semicolons.
+
+   * Most GDB query and set packets have a leading upper case letter.
+
+   * The names of custom vendor packets should use a company prefix, in
+     lower case, followed by a period.  For example, packets designed at
+     the Acme Corporation might begin with `qacme.foo' (for querying
+     foos) or `Qacme.bar' (for setting bars).
+
+   The name of a query or set packet should be separated from any
+parameters by a `:'; the parameters themselves should be separated by
+`,' or `;'.  Stubs must be careful to match the full packet name, and
+check for a separator or the end of the packet, in case two packet
+names share a common prefix.  New packets should not begin with `qC',
+`qP', or `qL'(1).
+
+   Like the descriptions of the other packets, each description here
+has a template showing the packet's overall syntax, followed by an
+explanation of the packet's meaning.  We include spaces in some of the
+templates for clarity; these are not part of the packet's syntax.  No
+GDB packet uses spaces to separate its components.
+
+   Here are the currently defined query and set packets:
+
+`qC'
      Return the current thread id.
 
      Reply:
-    ``QC'PID'
+    `QC PID'
           Where PID is an unsigned hexidecimal process id.
 
-    `*'
+    `(anything else)'
           Any other reply implies the old pid.
 
-`q'`fThreadInfo' - all thread ids
-     `q'`sThreadInfo'
+`qCRC:ADDR,LENGTH'
+     Compute the CRC checksum of a block of memory.  Reply:
+    `E NN'
+          An error (such as memory fault)
 
-     Obtain a list of active thread ids from the target (OS).  Since
-     there may be too many active threads to fit into one reply packet,
-     this query works iteratively: it may require more than one
+    `C CRC32'
+          The specified memory region's checksum is CRC32.
+
+`qfThreadInfo'
+`qsThreadInfo'
+     Obtain a list of all active thread ids from the target (OS).
+     Since there may be too many active threads to fit into one reply
+     packet, this query works iteratively: it may require more than one
      query/reply sequence to obtain the entire list of threads.  The
-     first query of the sequence will be the `qf'`ThreadInfo' query;
-     subsequent queries in the sequence will be the `qs'`ThreadInfo'
+     first query of the sequence will be the `qfThreadInfo' query;
+     subsequent queries in the sequence will be the `qsThreadInfo'
      query.
 
-     NOTE: replaces the `qL' query (see below).
+     NOTE: This packet replaces the `qL' query (see below).
 
      Reply:
-    ``m'ID'
+    `m ID'
           A single thread id
 
-    ``m'ID,ID...'
+    `m ID,ID...'
           a comma-separated list of thread ids
 
-    ``l''
-          (lower case 'el') denotes end of list.
+    `l'
+          (lower case letter `L') denotes end of list.
 
      In response to each query, the target will reply with a list of
      one or more thread ids, in big-endian unsigned hex, separated by
      commas.  GDB will respond to each reply with a request for more
      thread ids (using the `qs' form of the query), until the target
-     responds with `l' (lower-case el, for `'last'').
+     responds with `l' (lower-case el, for "last").
 
-`q'`ThreadExtraInfo'`,'ID -- extra thread info
-     Where ID is a thread-id in big-endian hex.  Obtain a printable
-     string description of a thread's attributes from the target OS.
-     This string may contain anything that the target OS thinks is
-     interesting for GDB to tell the user about the thread.  The string
-     is displayed in GDB's `info threads' display.  Some examples of
-     possible thread extra info strings are "Runnable", or "Blocked on
-     Mutex".
-
-     Reply:
-    `XX...'
-          Where XX... is a hex encoding of ASCII data, comprising the
-          printable string containing the extra information about the
-          thread's attributes.
-
-`q'`L'STARTFLAGTHREADCOUNTNEXTTHREAD -- query LIST or THREADLIST *(deprecated)*
-     Obtain thread information from RTOS.  Where: STARTFLAG (one hex
-     digit) is one to indicate the first query and zero to indicate a
-     subsequent query; THREADCOUNT (two hex digits) is the maximum
-     number of threads the response packet can contain; and NEXTTHREAD
-     (eight hex digits), for subsequent queries (STARTFLAG is zero), is
-     returned in the response as ARGTHREAD.
-
-     NOTE: this query is replaced by the `q'`fThreadInfo' query (see
-     above).
-
-     Reply:
-    ``q'`M'COUNTDONEARGTHREADTHREAD...'
-          Where: COUNT (two hex digits) is the number of threads being
-          returned; DONE (one hex digit) is zero to indicate more
-          threads and one indicates no further threads; ARGTHREADID
-          (eight hex digits) is NEXTTHREAD from the request packet;
-          THREAD...  is a sequence of thread IDs from the target.
-          THREADID (eight hex digits).  See
-          `remote.c:parse_threadlist_response()'.
-
-`q'`CRC:'ADDR`,'LENGTH -- compute CRC of memory block
-     Reply:
-    ``E'NN'
-          An error (such as memory fault)
-
-    ``C'CRC32'
-          A 32 bit cyclic redundancy check of the specified memory
-          region.
-
-`q'`Offsets' -- query sect offs
-     Get section offsets that the target used when re-locating the
-     downloaded image.  _Note: while a `Bss' offset is included in the
-     response, GDB ignores this and instead applies the `Data' offset
-     to the `Bss' section._
-
-     Reply:
-    ``Text='XXX`;Data='YYY`;Bss='ZZZ'
-
-`q'`P'MODETHREADID -- thread info request
-     Returns information on THREADID.  Where: MODE is a hex encoded 32
-     bit mode; THREADID is a hex encoded 64 bit thread ID.
-
-     Reply:
-    `*'
-
-     See `remote.c:remote_unpack_thread_info_response()'.
-
-`q'`Rcmd,'COMMAND -- remote command
-     COMMAND (hex encoded) is passed to the local interpreter for
-     execution.  Invalid commands should be reported using the output
-     string.  Before the final result packet, the target may also
-     respond with a number of intermediate `O'OUTPUT console output
-     packets.  _Implementors should note that providing access to a
-     stubs's interpreter may have security implications_.
-
-     Reply:
-    `OK'
-          A command response with no output.
-
-    `OUTPUT'
-          A command response with the hex encoded output string OUTPUT.
-
-    ``E'NN'
-          Indicate a badly formed request.
-
-    ``''
-          When `q'`Rcmd' is not recognized.
-     z
-
-`qSymbol::' -- symbol lookup
-     Notify the target that GDB is prepared to serve symbol lookup
-     requests.  Accept requests from the target for the values of
-     symbols.
-
-     Reply:
-    ``OK''
-          The target does not need to look up any (more) symbols.
-
-    ``qSymbol:'SYM_NAME'
-          The target requests the value of symbol SYM_NAME (hex
-          encoded).  GDB may provide the value by using the
-          `qSymbol:'SYM_VALUE:SYM_NAME message, described below.
-
-`qSymbol:'SYM_VALUE:SYM_NAME -- symbol value
-     Set the value of SYM_NAME to SYM_VALUE.
-
-     SYM_NAME (hex encoded) is the name of a symbol whose value the
-     target has previously requested.
-
-     SYM_VALUE (hex) is the value for symbol SYM_NAME.  If GDB cannot
-     supply a value for SYM_NAME, then this field will be empty.
-
-     Reply:
-    ``OK''
-          The target does not need to look up any (more) symbols.
-
-    ``qSymbol:'SYM_NAME'
-          The target requests the value of a new symbol SYM_NAME (hex
-          encoded).  GDB will continue to supply the values of symbols
-          (if available), until the target ceases to request them.
-
-`qPart':OBJECT:`read':ANNEX:OFFSET,LENGTH -- read special data
-     Read uninterpreted bytes from the target's special data area
-     identified by the keyword `object'.  Request LENGTH bytes starting
-     at OFFSET bytes into the data.  The content and encoding of ANNEX
-     is specific to the object; it can supply additional details about
-     what data to access.
-
-     Here are the specific requests of this form defined so far.  All
-     ``qPart':OBJECT:`read':...' requests use the same reply formats,
-     listed below.
-
-    `qPart':`auxv':`read'::OFFSET,LENGTH
-          Access the target's "auxiliary vector".  *Note auxiliary
-          vector: OS Information, and see *Note read-aux-vector-packet:
-          Remote configuration.  Note ANNEX must be empty.
-
-     Reply:
-    `OK'
-          The OFFSET in the request is at the end of the data.  There
-          is no more data to be read.
-
-    XX...
-          Hex encoded data bytes read.  This may be fewer bytes than
-          the LENGTH in the request.
-
-    `E00'
-          The request was malformed, or ANNEX was invalid.
-
-    `E'NN
-          The offset was invalid, or there was an error encountered
-          reading the data.  NN is a hex-encoded `errno' value.
-
-    `""' (empty)
-          An empty reply indicates the OBJECT or ANNEX string was not
-          recognized by the stub.
-
-`qPart':OBJECT:`write':ANNEX:OFFSET:DATA...
-     Write uninterpreted bytes into the target's special data area
-     identified by the keyword `object', starting at OFFSET bytes into
-     the data.  DATA... is the hex-encoded data to be written.  The
-     content and encoding of ANNEX is specific to the object; it can
-     supply additional details about what data to access.
-
-     No requests of this form are presently in use.  This specification
-     serves as a placeholder to document the common format that new
-     specific request specifications ought to use.
-
-     Reply:
-    NN
-          NN (hex encoded) is the number of bytes written.  This may be
-          fewer bytes than supplied in the request.
-
-    `E00'
-          The request was malformed, or ANNEX was invalid.
-
-    `E'NN
-          The offset was invalid, or there was an error encountered
-          writing the data.  NN is a hex-encoded `errno' value.
-
-    `""' (empty)
-          An empty reply indicates the OBJECT or ANNEX string was not
-          recognized by the stub, or that the object does not support
-          writing.
-
-`qPart':OBJECT:OPERATION:...
-     Requests of this form may be added in the future.  When a stub does
-     not recognize the OBJECT keyword, or its support for OBJECT does
-     not recognize the OPERATION keyword, the stub must respond with an
-     empty packet.
-
-`qGetTLSAddr':THREAD-ID,OFFSET,LM -- get thread local storage address
+`qGetTLSAddr:THREAD-ID,OFFSET,LM'
      Fetch the address associated with thread local storage specified
      by THREAD-ID, OFFSET, and LM.
 
@@ -6157,14 +6005,14 @@ The following set and query packets have already been defined.
      this parameter will vary.
 
      Reply:
-    XX...
+    `XX...'
           Hex encoded (big endian) bytes representing the address of
           the thread local storage requested.
 
-    `E'NN (where NN are hex digits)
-          An error occurred.
+    `E NN'
+          An error occurred.  NN are hex digits.
 
-    `""' (empty)
+    `'
           An empty reply indicates that `qGetTLSAddr' is not supported
           by the stub.
 
@@ -6172,9 +6020,216 @@ The following set and query packets have already been defined.
      get-thread-local-storage-address' command (*note set remote
      get-thread-local-storage-address: Remote configuration.).
 
+`qL STARTFLAG THREADCOUNT NEXTTHREAD'
+     Obtain thread information from RTOS.  Where: STARTFLAG (one hex
+     digit) is one to indicate the first query and zero to indicate a
+     subsequent query; THREADCOUNT (two hex digits) is the maximum
+     number of threads the response packet can contain; and NEXTTHREAD
+     (eight hex digits), for subsequent queries (STARTFLAG is zero), is
+     returned in the response as ARGTHREAD.
+
+     Don't use this packet; use the `qfThreadInfo' query instead (see
+     above).
+
+     Reply:
+    `qM COUNT DONE ARGTHREAD THREAD...'
+          Where: COUNT (two hex digits) is the number of threads being
+          returned; DONE (one hex digit) is zero to indicate more
+          threads and one indicates no further threads; ARGTHREADID
+          (eight hex digits) is NEXTTHREAD from the request packet;
+          THREAD...  is a sequence of thread IDs from the target.
+          THREADID (eight hex digits).  See
+          `remote.c:parse_threadlist_response()'.
+
+`qOffsets'
+     Get section offsets that the target used when re-locating the
+     downloaded image.  _Note: while a `Bss' offset is included in the
+     response, GDB ignores this and instead applies the `Data' offset
+     to the `Bss' section._
+
+     Reply:
+    `Text=XXX;Data=YYY;Bss=ZZZ'
+
+`qP MODE THREADID'
+     Returns information on THREADID.  Where: MODE is a hex encoded 32
+     bit mode; THREADID is a hex encoded 64 bit thread ID.
+
+     Don't use this packet; use the `qThreadExtraInfo' query instead
+     (see below).
+
+     Reply: see `remote.c:remote_unpack_thread_info_response()'.
+
+`qPart:OBJECT:read:ANNEX:OFFSET,LENGTH'
+     Read uninterpreted bytes from the target's special data area
+     identified by the keyword OBJECT.  Request LENGTH bytes starting
+     at OFFSET bytes into the data.  The content and encoding of ANNEX
+     is specific to the object; it can supply additional details about
+     what data to access.
+
+     Since this packet is ambiguous with the older `qP' packet, we plan
+     to rename it.
+
+     Here are the specific requests of this form defined so far.  All
+     `qPart:OBJECT:read:...' requests use the same reply formats,
+     listed below.
+
+    `qPart:auxv:read::OFFSET,LENGTH'
+          Access the target's "auxiliary vector".  *Note auxiliary
+          vector: OS Information, and see *Note read-aux-vector-packet:
+          Remote configuration.  Note ANNEX must be empty.
+
+     Reply:
+    `OK'
+          The OFFSET in the request is at the end of the data.  There
+          is no more data to be read.
+
+    `XX...'
+          Hex encoded data bytes read.  This may be fewer bytes than
+          the LENGTH in the request.
+
+    `E00'
+          The request was malformed, or ANNEX was invalid.
+
+    `E NN'
+          The offset was invalid, or there was an error encountered
+          reading the data.  NN is a hex-encoded `errno' value.
+
+    `'
+          An empty reply indicates the OBJECT or ANNEX string was not
+          recognized by the stub.
+
+`qPart:OBJECT:write:ANNEX:OFFSET:DATA...'
+     Write uninterpreted bytes into the target's special data area
+     identified by the keyword OBJECT, starting at OFFSET bytes into
+     the data.  `DATA...' is the hex-encoded data to be written.  The
+     content and encoding of ANNEX is specific to the object; it can
+     supply additional details about what data to access.
+
+     No requests of this form are presently in use.  This specification
+     serves as a placeholder to document the common format that new
+     specific request specifications ought to use.
+
+     Reply:
+    `NN'
+          NN (hex encoded) is the number of bytes written.  This may be
+          fewer bytes than supplied in the request.
+
+    `E00'
+          The request was malformed, or ANNEX was invalid.
+
+    `E NN'
+          The offset was invalid, or there was an error encountered
+          writing the data.  NN is a hex-encoded `errno' value.
+
+    `'
+          An empty reply indicates the OBJECT or ANNEX string was not
+          recognized by the stub, or that the object does not support
+          writing.
+
+`qPart:OBJECT:OPERATION:...'
+     Requests of this form may be added in the future.  When a stub does
+     not recognize the OBJECT keyword, or its support for OBJECT does
+     not recognize the OPERATION keyword, the stub must respond with an
+     empty packet.
+
+`qRcmd,COMMAND'
+     COMMAND (hex encoded) is passed to the local interpreter for
+     execution.  Invalid commands should be reported using the output
+     string.  Before the final result packet, the target may also
+     respond with a number of intermediate `OOUTPUT' console output
+     packets.  _Implementors should note that providing access to a
+     stubs's interpreter may have security implications_.
+
+     Reply:
+    `OK'
+          A command response with no output.
+
+    `OUTPUT'
+          A command response with the hex encoded output string OUTPUT.
+
+    `E NN'
+          Indicate a badly formed request.
+
+    `'
+          An empty reply indicates that `qRcmd' is not recognized.
+
+     (Note that the `qRcmd' packet's name is separated from the command
+     by a `,', not a `:', contrary to the naming conventions above.
+     Please don't use this packet as a model for new packets.)
+
+`qSymbol::'
+     Notify the target that GDB is prepared to serve symbol lookup
+     requests.  Accept requests from the target for the values of
+     symbols.
+
+     Reply:
+    `OK'
+          The target does not need to look up any (more) symbols.
+
+    `qSymbol:SYM_NAME'
+          The target requests the value of symbol SYM_NAME (hex
+          encoded).  GDB may provide the value by using the
+          `qSymbol:SYM_VALUE:SYM_NAME' message, described below.
+
+`qSymbol:SYM_VALUE:SYM_NAME'
+     Set the value of SYM_NAME to SYM_VALUE.
+
+     SYM_NAME (hex encoded) is the name of a symbol whose value the
+     target has previously requested.
+
+     SYM_VALUE (hex) is the value for symbol SYM_NAME.  If GDB cannot
+     supply a value for SYM_NAME, then this field will be empty.
+
+     Reply:
+    `OK'
+          The target does not need to look up any (more) symbols.
+
+    `qSymbol:SYM_NAME'
+          The target requests the value of a new symbol SYM_NAME (hex
+          encoded).  GDB will continue to supply the values of symbols
+          (if available), until the target ceases to request them.
+
+`QTDP'
+`QTFrame'
+     *Note Tracepoint Packets::.
+
+`qThreadExtraInfo,ID'
+     Obtain a printable string description of a thread's attributes from
+     the target OS.  ID is a thread-id in big-endian hex.  This string
+     may contain anything that the target OS thinks is interesting for
+     GDB to tell the user about the thread.  The string is displayed in
+     GDB's `info threads' display.  Some examples of possible thread
+     extra info strings are `Runnable', or `Blocked on Mutex'.
+
+     Reply:
+    `XX...'
+          Where `XX...' is a hex encoding of ASCII data, comprising the
+          printable string containing the extra information about the
+          thread's attributes.
+
+     (Note that the `qThreadExtraInfo' packet's name is separated from
+     the command by a `,', not a `:', contrary to the naming
+     conventions above.  Please don't use this packet as a model for new
+     packets.)
+
+`QTStart'
+`QTStop'
+`QTinit'
+`QTro'
+`qTStatus'
+     *Note Tracepoint Packets::.
+
+
+   ---------- Footnotes ----------
+
+   (1) The `qP' and `qL' packets predate these conventions, and have
+arguments without any terminator for the packet name; we suspect they
+are in widespread use in places that are difficult to upgrade.  The
+`qC' packet has no arguments, but some existing stubs (e.g. RedBoot)
+are known to not check for the end of the packet.
 
 
-File: gdb.info,  Node: Register Packet Format,  Next: Examples,  Prev: General Query Packets,  Up: Remote Protocol
+File: gdb.info,  Node: Register Packet Format,  Next: Tracepoint Packets,  Prev: General Query Packets,  Up: Remote Protocol
 
 D.5 Register Packet Format
 ==========================
@@ -6198,9 +6253,194 @@ MIPS64
 
 
 
-File: gdb.info,  Node: Examples,  Next: File-I/O remote protocol extension,  Prev: Register Packet Format,  Up: Remote Protocol
+File: gdb.info,  Node: Tracepoint Packets,  Next: Interrupts,  Prev: Register Packet Format,  Up: Remote Protocol
 
-D.6 Examples
+D.6 Tracepoint Packets
+======================
+
+Here we describe the packets GDB uses to implement tracepoints (*note
+Tracepoints::).
+
+`QTDP:N:ADDR:ENA:STEP:PASS[-]'
+     Create a new tracepoint, number N, at ADDR.  If ENA is `E', then
+     the tracepoint is enabled; if it is `D', then the tracepoint is
+     disabled.  STEP is the tracepoint's step count, and PASS is its
+     pass count.  If the trailing `-' is present, further `QTDP'
+     packets will follow to specify this tracepoint's actions.
+
+     Replies:
+    `OK'
+          The packet was understood and carried out.
+
+    `'
+          The packet was not recognized.
+
+`QTDP:-N:ADDR:[S]ACTION...[-]'
+     Define actions to be taken when a tracepoint is hit.  N and ADDR
+     must be the same as in the initial `QTDP' packet for this
+     tracepoint.  This packet may only be sent immediately after
+     another `QTDP' packet that ended with a `-'.  If the trailing `-'
+     is present, further `QTDP' packets will follow, specifying more
+     actions for this tracepoint.
+
+     In the series of action packets for a given tracepoint, at most one
+     can have an `S' before its first ACTION.  If such a packet is
+     sent, it and the following packets define "while-stepping"
+     actions.  Any prior packets define ordinary actions -- that is,
+     those taken when the tracepoint is first hit.  If no action packet
+     has an `S', then all the packets in the series specify ordinary
+     tracepoint actions.
+
+     The `ACTION...' portion of the packet is a series of actions,
+     concatenated without separators.  Each action has one of the
+     following forms:
+
+    `R MASK'
+          Collect the registers whose bits are set in MASK.  MASK is a
+          hexidecimal number whose I'th bit is set if register number I
+          should be collected.  (The least significant bit is numbered
+          zero.)  Note that MASK may be any number of digits long; it
+          may not fit in a 32-bit word.
+
+    `M BASEREG,OFFSET,LEN'
+          Collect LEN bytes of memory starting at the address in
+          register number BASEREG, plus OFFSET.  If BASEREG is `-1',
+          then the range has a fixed address: OFFSET is the address of
+          the lowest byte to collect.  The BASEREG, OFFSET, and LEN
+          parameters are all unsigned hexidecimal values (the `-1'
+          value for BASEREG is a special case).
+
+    `X LEN,EXPR'
+          Evaluate EXPR, whose length is LEN, and collect memory as it
+          directs.  EXPR is an agent expression, as described in *Note
+          Agent Expressions::.  Each byte of the expression is encoded
+          as a two-digit hex number in the packet; LEN is the number of
+          bytes in the expression (and thus one-half the number of hex
+          digits in the packet).
+
+
+     Any number of actions may be packed together in a single `QTDP'
+     packet, as long as the packet does not exceed the maximum packet
+     length (400 bytes, for many stubs).  There may be only one `R'
+     action per tracepoint, and it must precede any `M' or `X' actions.
+     Any registers referred to by `M' and `X' actions must be
+     collected by a preceding `R' action.  (The "while-stepping"
+     actions are treated as if they were attached to a separate
+     tracepoint, as far as these restrictions are concerned.)
+
+     Replies:
+    `OK'
+          The packet was understood and carried out.
+
+    `'
+          The packet was not recognized.
+
+`QTFrame:N'
+     Select the N'th tracepoint frame from the buffer, and use the
+     register and memory contents recorded there to answer subsequent
+     request packets from GDB.
+
+     A successful reply from the stub indicates that the stub has found
+     the requested frame.  The response is a series of parts,
+     concatenated without separators, describing the frame we selected.
+     Each part has one of the following forms:
+
+    `F F'
+          The selected frame is number N in the trace frame buffer; F
+          is a hexidecimal number.  If F is `-1', then there was no
+          frame matching the criteria in the request packet.
+
+    `T T'
+          The selected trace frame records a hit of tracepoint number T;
+          T is a hexidecimal number.
+
+
+`QTFrame:pc:ADDR'
+     Like `QTFrame:N', but select the first tracepoint frame after the
+     currently selected frame whose PC is ADDR; ADDR is a hexidecimal
+     number.
+
+`QTFrame:tdp:T'
+     Like `QTFrame:N', but select the first tracepoint frame after the
+     currently selected frame that is a hit of tracepoint T; T is a
+     hexidecimal number.
+
+`QTFrame:range:START:END'
+     Like `QTFrame:N', but select the first tracepoint frame after the
+     currently selected frame whose PC is between START (inclusive) and
+     END (exclusive); START and END are hexidecimal numbers.
+
+`QTFrame:outside:START:END'
+     Like `QTFrame:range:START:END', but select the first frame
+     _outside_ the given range of addresses.
+
+`QTStart'
+     Begin the tracepoint experiment.  Begin collecting data from
+     tracepoint hits in the trace frame buffer.
+
+`QTStop'
+     End the tracepoint experiment.  Stop collecting trace frames.
+
+`QTinit'
+     Clear the table of tracepoints, and empty the trace frame buffer.
+
+`QTro:START1,END1:START2,END2:...'
+     Establish the given ranges of memory as "transparent".  The stub
+     will answer requests for these ranges from memory's current
+     contents, if they were not collected as part of the tracepoint hit.
+
+     GDB uses this to mark read-only regions of memory, like those
+     containing program code.  Since these areas never change, they
+     should still have the same contents they did when the tracepoint
+     was hit, so there's no reason for the stub to refuse to provide
+     their contents.
+
+`qTStatus'
+     Ask the stub if there is a trace experiment running right now.
+
+     Replies:
+    `T0'
+          There is no trace experiment running.
+
+    `T1'
+          There is a trace experiment running.
+
+
+
+File: gdb.info,  Node: Interrupts,  Next: Examples,  Prev: Tracepoint Packets,  Up: Remote Protocol
+
+D.7 Interrupts
+==============
+
+When a program on the remote target is running, GDB may attempt to
+interrupt it by sending a `Ctrl-C' or a `BREAK', control of which is
+specified via GDB's `remotebreak' setting (*note set remotebreak::).
+
+   The precise meaning of `BREAK' is defined by the transport mechanism
+and may, in fact, be undefined.  GDB does not currently define a
+`BREAK' mechanism for any of the network interfaces.
+
+   `Ctrl-C', on the other hand, is defined and implemented for all
+transport mechanisms.  It is represented by sending the single byte
+`0x03' without any of the usual packet overhead described in the
+Overview section (*note Overview::).  When a `0x03' byte is transmitted
+as part of a packet, it is considered to be packet data and does _not_
+represent an interrupt.  E.g., an `X' packet (*note X packet::, used
+for binary downloads, may include an unescaped `0x03' as part of its
+packet.
+
+   Stubs are not required to recognize these interrupt mechanisms and
+the precise meaning associated with receipt of the interrupt is
+implementation defined.  If the stub is successful at interrupting the
+running program, it is expected that it will send one of the Stop Reply
+Packets (*note Stop Reply Packets::) to GDB as a result of successfully
+stopping the program.  Interrupts received while the program is stopped
+will be discarded.
+
+
+File: gdb.info,  Node: Examples,  Next: File-I/O remote protocol extension,  Prev: Interrupts,  Up: Remote Protocol
+
+D.8 Examples
 ============
 
 Example sequence of a target being re-started.  Notice how the restart
@@ -6231,7 +6471,7 @@ does not get any direct output:
 
 File: gdb.info,  Node: File-I/O remote protocol extension,  Prev: Examples,  Up: Remote Protocol
 
-D.7 File-I/O remote protocol extension
+D.9 File-I/O remote protocol extension
 ======================================
 
 * Menu:
@@ -6253,7 +6493,7 @@ D.7 File-I/O remote protocol extension
 
 File: gdb.info,  Node: File-I/O Overview,  Next: Protocol basics,  Up: File-I/O remote protocol extension
 
-D.7.1 File-I/O Overview
+D.9.1 File-I/O Overview
 -----------------------
 
 The "File I/O remote protocol extension" (short: File-I/O) allows the
@@ -6298,7 +6538,7 @@ are not supported by this protocol.
 
 File: gdb.info,  Node: Protocol basics,  Next: The F request packet,  Prev: File-I/O Overview,  Up: File-I/O remote protocol extension
 
-D.7.2 Protocol basics
+D.9.2 Protocol basics
 ---------------------
 
 The File-I/O protocol uses the `F' packet, as request as well as as
@@ -6357,7 +6597,7 @@ continues the latest continue or step action.
 
 File: gdb.info,  Node: The F request packet,  Next: The F reply packet,  Prev: Protocol basics,  Up: File-I/O remote protocol extension
 
-D.7.3 The `F' request packet
+D.9.3 The `F' request packet
 ----------------------------
 
 The `F' request packet has the following format:
@@ -6381,7 +6621,7 @@ separated by a slash.
 
 File: gdb.info,  Node: The F reply packet,  Next: Memory transfer,  Prev: The F request packet,  Up: File-I/O remote protocol extension
 
-D.7.4 The `F' reply packet
+D.9.4 The `F' reply packet
 --------------------------
 
 The `F' reply packet has the following format:
@@ -6411,7 +6651,7 @@ The `F' reply packet has the following format:
 
 File: gdb.info,  Node: Memory transfer,  Next: The Ctrl-C message,  Prev: The F reply packet,  Up: File-I/O remote protocol extension
 
-D.7.5 Memory transfer
+D.9.5 Memory transfer
 ---------------------
 
 Structured data which is transferred using a memory read or write as
@@ -6424,7 +6664,7 @@ data should point to the already coerced data at any time.
 
 File: gdb.info,  Node: The Ctrl-C message,  Next: Console I/O,  Prev: Memory transfer,  Up: File-I/O remote protocol extension
 
-D.7.6 The Ctrl-C message
+D.9.6 The Ctrl-C message
 ------------------------
 
 A special case is, if the CTRL-C FLAG is set in the GDB reply packet.
@@ -6460,7 +6700,7 @@ has been completed.
 
 File: gdb.info,  Node: Console I/O,  Next: The isatty call,  Prev: The Ctrl-C message,  Up: File-I/O remote protocol extension
 
-D.7.7 Console I/O
+D.9.7 Console I/O
 -----------------
 
 By default and if not explicitely closed by the target system, the file
@@ -6488,7 +6728,7 @@ stopped on users request.
 
 File: gdb.info,  Node: The isatty call,  Next: The system call,  Prev: Console I/O,  Up: File-I/O remote protocol extension
 
-D.7.8 The `isatty' function call
+D.9.8 The `isatty' function call
 --------------------------------
 
 A special case in this protocol is the library call `isatty' which is
@@ -6500,7 +6740,7 @@ require implementing `ioctl' and would be more complex than needed.
 
 File: gdb.info,  Node: The system call,  Next: List of supported calls,  Prev: The isatty call,  Up: File-I/O remote protocol extension
 
-D.7.9 The `system' function call
+D.9.9 The `system' function call
 --------------------------------
 
 The other special case in this protocol is the `system' call which is
@@ -6526,7 +6766,7 @@ system-call-allowed 1' command.
 
 File: gdb.info,  Node: List of supported calls,  Next: Protocol specific representation of datatypes,  Prev: The system call,  Up: File-I/O remote protocol extension
 
-D.7.10 List of supported calls
+D.9.10 List of supported calls
 ------------------------------
 
 * Menu:
@@ -7003,7 +7243,7 @@ Errors:
 
 File: gdb.info,  Node: Protocol specific representation of datatypes,  Next: Constants,  Prev: List of supported calls,  Up: File-I/O remote protocol extension
 
-D.7.11 Protocol specific representation of datatypes
+D.9.11 Protocol specific representation of datatypes
 ----------------------------------------------------
 
 * Menu:
@@ -7139,7 +7379,7 @@ structure is of size 8 bytes.
 
 File: gdb.info,  Node: Constants,  Next: File-I/O Examples,  Prev: Protocol specific representation of datatypes,  Up: File-I/O remote protocol extension
 
-D.7.12 Constants
+D.9.12 Constants
 ----------------
 
 The following values are used for the constants inside of the protocol.
@@ -7250,7 +7490,7 @@ All values are given in decimal representation.
 
 File: gdb.info,  Node: File-I/O Examples,  Prev: Constants,  Up: File-I/O remote protocol extension
 
-D.7.13 File-I/O Examples
+D.9.13 File-I/O Examples
 ------------------------
 
 Example sequence of a write call, file descriptor 3, buffer is at target
@@ -8083,7 +8323,7 @@ Appendix F GNU GENERAL PUBLIC LICENSE
                          Version 2, June 1991
 
      Copyright (C) 1989, 1991 Free Software Foundation, Inc.
-     59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -8397,8 +8637,8 @@ the "copyright" line and a pointer to where the full notice is found.
 
      You should have received a copy of the GNU General Public License
      along with this program; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place - Suite 330,
-     Boston, MA 02111-1307, USA.
+     Foundation, Inc., 51 Franklin Street, Fifth Floor,
+     Boston, MA 02110-1301, USA.
 
    Also add information on how to contact you by electronic and paper
 mail.
@@ -8433,436 +8673,4 @@ program into proprietary programs.  If your program is a subroutine
 library, you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use the
 GNU Library General Public License instead of this License.
-
-
-File: gdb.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Copying,  Up: Top
-
-Appendix G GNU Free Documentation License
-*****************************************
-
-                      Version 1.2, November 2002
-
-     Copyright (C) 2000,2001,2002 Free Software Foundation, Inc.
-     59 Temple Place, Suite 330, Boston, MA  02111-1307, USA
-
-     Everyone is permitted to copy and distribute verbatim copies
-     of this license document, but changing it is not allowed.
-
-  0. PREAMBLE
-
-     The purpose of this License is to make a manual, textbook, or other
-     functional and useful document "free" in the sense of freedom: to
-     assure everyone the effective freedom to copy and redistribute it,
-     with or without modifying it, either commercially or
-     noncommercially.  Secondarily, this License preserves for the
-     author and publisher a way to get credit for their work, while not
-     being considered responsible for modifications made by others.
-
-     This License is a kind of "copyleft", which means that derivative
-     works of the document must themselves be free in the same sense.
-     It complements the GNU General Public License, which is a copyleft
-     license designed for free software.
-
-     We have designed this License in order to use it for manuals for
-     free software, because free software needs free documentation: a
-     free program should come with manuals providing the same freedoms
-     that the software does.  But this License is not limited to
-     software manuals; it can be used for any textual work, regardless
-     of subject matter or whether it is published as a printed book.
-     We recommend this License principally for works whose purpose is
-     instruction or reference.
-
-  1. APPLICABILITY AND DEFINITIONS
-
-     This License applies to any manual or other work, in any medium,
-     that contains a notice placed by the copyright holder saying it
-     can be distributed under the terms of this License.  Such a notice
-     grants a world-wide, royalty-free license, unlimited in duration,
-     to use that work under the conditions stated herein.  The
-     "Document", below, refers to any such manual or work.  Any member
-     of the public is a licensee, and is addressed as "you".  You
-     accept the license if you copy, modify or distribute the work in a
-     way requiring permission under copyright law.
-
-     A "Modified Version" of the Document means any work containing the
-     Document or a portion of it, either copied verbatim, or with
-     modifications and/or translated into another language.
-
-     A "Secondary Section" is a named appendix or a front-matter section
-     of the Document that deals exclusively with the relationship of the
-     publishers or authors of the Document to the Document's overall
-     subject (or to related matters) and contains nothing that could
-     fall directly within that overall subject.  (Thus, if the Document
-     is in part a textbook of mathematics, a Secondary Section may not
-     explain any mathematics.)  The relationship could be a matter of
-     historical connection with the subject or with related matters, or
-     of legal, commercial, philosophical, ethical or political position
-     regarding them.
-
-     The "Invariant Sections" are certain Secondary Sections whose
-     titles are designated, as being those of Invariant Sections, in
-     the notice that says that the Document is released under this
-     License.  If a section does not fit the above definition of
-     Secondary then it is not allowed to be designated as Invariant.
-     The Document may contain zero Invariant Sections.  If the Document
-     does not identify any Invariant Sections then there are none.
-
-     The "Cover Texts" are certain short passages of text that are
-     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
-     that says that the Document is released under this License.  A
-     Front-Cover Text may be at most 5 words, and a Back-Cover Text may
-     be at most 25 words.
-
-     A "Transparent" copy of the Document means a machine-readable copy,
-     represented in a format whose specification is available to the
-     general public, that is suitable for revising the document
-     straightforwardly with generic text editors or (for images
-     composed of pixels) generic paint programs or (for drawings) some
-     widely available drawing editor, and that is suitable for input to
-     text formatters or for automatic translation to a variety of
-     formats suitable for input to text formatters.  A copy made in an
-     otherwise Transparent file format whose markup, or absence of
-     markup, has been arranged to thwart or discourage subsequent
-     modification by readers is not Transparent.  An image format is
-     not Transparent if used for any substantial amount of text.  A
-     copy that is not "Transparent" is called "Opaque".
-
-     Examples of suitable formats for Transparent copies include plain
-     ASCII without markup, Texinfo input format, LaTeX input format,
-     SGML or XML using a publicly available DTD, and
-     standard-conforming simple HTML, PostScript or PDF designed for
-     human modification.  Examples of transparent image formats include
-     PNG, XCF and JPG.  Opaque formats include proprietary formats that
-     can be read and edited only by proprietary word processors, SGML or
-     XML for which the DTD and/or processing tools are not generally
-     available, and the machine-generated HTML, PostScript or PDF
-     produced by some word processors for output purposes only.
-
-     The "Title Page" means, for a printed book, the title page itself,
-     plus such following pages as are needed to hold, legibly, the
-     material this License requires to appear in the title page.  For
-     works in formats which do not have any title page as such, "Title
-     Page" means the text near the most prominent appearance of the
-     work's title, preceding the beginning of the body of the text.
-
-     A section "Entitled XYZ" means a named subunit of the Document
-     whose title either is precisely XYZ or contains XYZ in parentheses
-     following text that translates XYZ in another language.  (Here XYZ
-     stands for a specific section name mentioned below, such as
-     "Acknowledgements", "Dedications", "Endorsements", or "History".)
-     To "Preserve the Title" of such a section when you modify the
-     Document means that it remains a section "Entitled XYZ" according
-     to this definition.
-
-     The Document may include Warranty Disclaimers next to the notice
-     which states that this License applies to the Document.  These
-     Warranty Disclaimers are considered to be included by reference in
-     this License, but only as regards disclaiming warranties: any other
-     implication that these Warranty Disclaimers may have is void and
-     has no effect on the meaning of this License.
-
-  2. VERBATIM COPYING
-
-     You may copy and distribute the Document in any medium, either
-     commercially or noncommercially, provided that this License, the
-     copyright notices, and the license notice saying this License
-     applies to the Document are reproduced in all copies, and that you
-     add no other conditions whatsoever to those of this License.  You
-     may not use technical measures to obstruct or control the reading
-     or further copying of the copies you make or distribute.  However,
-     you may accept compensation in exchange for copies.  If you
-     distribute a large enough number of copies you must also follow
-     the conditions in section 3.
-
-     You may also lend copies, under the same conditions stated above,
-     and you may publicly display copies.
-
-  3. COPYING IN QUANTITY
-
-     If you publish printed copies (or copies in media that commonly
-     have printed covers) of the Document, numbering more than 100, and
-     the Document's license notice requires Cover Texts, you must
-     enclose the copies in covers that carry, clearly and legibly, all
-     these Cover Texts: Front-Cover Texts on the front cover, and
-     Back-Cover Texts on the back cover.  Both covers must also clearly
-     and legibly identify you as the publisher of these copies.  The
-     front cover must present the full title with all words of the
-     title equally prominent and visible.  You may add other material
-     on the covers in addition.  Copying with changes limited to the
-     covers, as long as they preserve the title of the Document and
-     satisfy these conditions, can be treated as verbatim copying in
-     other respects.
-
-     If the required texts for either cover are too voluminous to fit
-     legibly, you should put the first ones listed (as many as fit
-     reasonably) on the actual cover, and continue the rest onto
-     adjacent pages.
-
-     If you publish or distribute Opaque copies of the Document
-     numbering more than 100, you must either include a
-     machine-readable Transparent copy along with each Opaque copy, or
-     state in or with each Opaque copy a computer-network location from
-     which the general network-using public has access to download
-     using public-standard network protocols a complete Transparent
-     copy of the Document, free of added material.  If you use the
-     latter option, you must take reasonably prudent steps, when you
-     begin distribution of Opaque copies in quantity, to ensure that
-     this Transparent copy will remain thus accessible at the stated
-     location until at least one year after the last time you
-     distribute an Opaque copy (directly or through your agents or
-     retailers) of that edition to the public.
-
-     It is requested, but not required, that you contact the authors of
-     the Document well before redistributing any large number of
-     copies, to give them a chance to provide you with an updated
-     version of the Document.
-
-  4. MODIFICATIONS
-
-     You may copy and distribute a Modified Version of the Document
-     under the conditions of sections 2 and 3 above, provided that you
-     release the Modified Version under precisely this License, with
-     the Modified Version filling the role of the Document, thus
-     licensing distribution and modification of the Modified Version to
-     whoever possesses a copy of it.  In addition, you must do these
-     things in the Modified Version:
-
-       A. Use in the Title Page (and on the covers, if any) a title
-          distinct from that of the Document, and from those of
-          previous versions (which should, if there were any, be listed
-          in the History section of the Document).  You may use the
-          same title as a previous version if the original publisher of
-          that version gives permission.
-
-       B. List on the Title Page, as authors, one or more persons or
-          entities responsible for authorship of the modifications in
-          the Modified Version, together with at least five of the
-          principal authors of the Document (all of its principal
-          authors, if it has fewer than five), unless they release you
-          from this requirement.
-
-       C. State on the Title page the name of the publisher of the
-          Modified Version, as the publisher.
-
-       D. Preserve all the copyright notices of the Document.
-
-       E. Add an appropriate copyright notice for your modifications
-          adjacent to the other copyright notices.
-
-       F. Include, immediately after the copyright notices, a license
-          notice giving the public permission to use the Modified
-          Version under the terms of this License, in the form shown in
-          the Addendum below.
-
-       G. Preserve in that license notice the full lists of Invariant
-          Sections and required Cover Texts given in the Document's
-          license notice.
-
-       H. Include an unaltered copy of this License.
-
-       I. Preserve the section Entitled "History", Preserve its Title,
-          and add to it an item stating at least the title, year, new
-          authors, and publisher of the Modified Version as given on
-          the Title Page.  If there is no section Entitled "History" in
-          the Document, create one stating the title, year, authors,
-          and publisher of the Document as given on its Title Page,
-          then add an item describing the Modified Version as stated in
-          the previous sentence.
-
-       J. Preserve the network location, if any, given in the Document
-          for public access to a Transparent copy of the Document, and
-          likewise the network locations given in the Document for
-          previous versions it was based on.  These may be placed in
-          the "History" section.  You may omit a network location for a
-          work that was published at least four years before the
-          Document itself, or if the original publisher of the version
-          it refers to gives permission.
-
-       K. For any section Entitled "Acknowledgements" or "Dedications",
-          Preserve the Title of the section, and preserve in the
-          section all the substance and tone of each of the contributor
-          acknowledgements and/or dedications given therein.
-
-       L. Preserve all the Invariant Sections of the Document,
-          unaltered in their text and in their titles.  Section numbers
-          or the equivalent are not considered part of the section
-          titles.
-
-       M. Delete any section Entitled "Endorsements".  Such a section
-          may not be included in the Modified Version.
-
-       N. Do not retitle any existing section to be Entitled
-          "Endorsements" or to conflict in title with any Invariant
-          Section.
-
-       O. Preserve any Warranty Disclaimers.
-
-     If the Modified Version includes new front-matter sections or
-     appendices that qualify as Secondary Sections and contain no
-     material copied from the Document, you may at your option
-     designate some or all of these sections as invariant.  To do this,
-     add their titles to the list of Invariant Sections in the Modified
-     Version's license notice.  These titles must be distinct from any
-     other section titles.
-
-     You may add a section Entitled "Endorsements", provided it contains
-     nothing but endorsements of your Modified Version by various
-     parties--for example, statements of peer review or that the text
-     has been approved by an organization as the authoritative
-     definition of a standard.
-
-     You may add a passage of up to five words as a Front-Cover Text,
-     and a passage of up to 25 words as a Back-Cover Text, to the end
-     of the list of Cover Texts in the Modified Version.  Only one
-     passage of Front-Cover Text and one of Back-Cover Text may be
-     added by (or through arrangements made by) any one entity.  If the
-     Document already includes a cover text for the same cover,
-     previously added by you or by arrangement made by the same entity
-     you are acting on behalf of, you may not add another; but you may
-     replace the old one, on explicit permission from the previous
-     publisher that added the old one.
-
-     The author(s) and publisher(s) of the Document do not by this
-     License give permission to use their names for publicity for or to
-     assert or imply endorsement of any Modified Version.
-
-  5. COMBINING DOCUMENTS
-
-     You may combine the Document with other documents released under
-     this License, under the terms defined in section 4 above for
-     modified versions, provided that you include in the combination
-     all of the Invariant Sections of all of the original documents,
-     unmodified, and list them all as Invariant Sections of your
-     combined work in its license notice, and that you preserve all
-     their Warranty Disclaimers.
-
-     The combined work need only contain one copy of this License, and
-     multiple identical Invariant Sections may be replaced with a single
-     copy.  If there are multiple Invariant Sections with the same name
-     but different contents, make the title of each such section unique
-     by adding at the end of it, in parentheses, the name of the
-     original author or publisher of that section if known, or else a
-     unique number.  Make the same adjustment to the section titles in
-     the list of Invariant Sections in the license notice of the
-     combined work.
-
-     In the combination, you must combine any sections Entitled
-     "History" in the various original documents, forming one section
-     Entitled "History"; likewise combine any sections Entitled
-     "Acknowledgements", and any sections Entitled "Dedications".  You
-     must delete all sections Entitled "Endorsements."
-
-  6. COLLECTIONS OF DOCUMENTS
-
-     You may make a collection consisting of the Document and other
-     documents released under this License, and replace the individual
-     copies of this License in the various documents with a single copy
-     that is included in the collection, provided that you follow the
-     rules of this License for verbatim copying of each of the
-     documents in all other respects.
-
-     You may extract a single document from such a collection, and
-     distribute it individually under this License, provided you insert
-     a copy of this License into the extracted document, and follow
-     this License in all other respects regarding verbatim copying of
-     that document.
-
-  7. AGGREGATION WITH INDEPENDENT WORKS
-
-     A compilation of the Document or its derivatives with other
-     separate and independent documents or works, in or on a volume of
-     a storage or distribution medium, is called an "aggregate" if the
-     copyright resulting from the compilation is not used to limit the
-     legal rights of the compilation's users beyond what the individual
-     works permit.  When the Document is included in an aggregate, this
-     License does not apply to the other works in the aggregate which
-     are not themselves derivative works of the Document.
-
-     If the Cover Text requirement of section 3 is applicable to these
-     copies of the Document, then if the Document is less than one half
-     of the entire aggregate, the Document's Cover Texts may be placed
-     on covers that bracket the Document within the aggregate, or the
-     electronic equivalent of covers if the Document is in electronic
-     form.  Otherwise they must appear on printed covers that bracket
-     the whole aggregate.
-
-  8. TRANSLATION
-
-     Translation is considered a kind of modification, so you may
-     distribute translations of the Document under the terms of section
-     4.  Replacing Invariant Sections with translations requires special
-     permission from their copyright holders, but you may include
-     translations of some or all Invariant Sections in addition to the
-     original versions of these Invariant Sections.  You may include a
-     translation of this License, and all the license notices in the
-     Document, and any Warranty Disclaimers, provided that you also
-     include the original English version of this License and the
-     original versions of those notices and disclaimers.  In case of a
-     disagreement between the translation and the original version of
-     this License or a notice or disclaimer, the original version will
-     prevail.
-
-     If a section in the Document is Entitled "Acknowledgements",
-     "Dedications", or "History", the requirement (section 4) to
-     Preserve its Title (section 1) will typically require changing the
-     actual title.
-
-  9. TERMINATION
-
-     You may not copy, modify, sublicense, or distribute the Document
-     except as expressly provided for under this License.  Any other
-     attempt to copy, modify, sublicense or distribute the Document is
-     void, and will automatically terminate your rights under this
-     License.  However, parties who have received copies, or rights,
-     from you under this License will not have their licenses
-     terminated so long as such parties remain in full compliance.
-
- 10. FUTURE REVISIONS OF THIS LICENSE
-
-     The Free Software Foundation may publish new, revised versions of
-     the GNU Free Documentation License from time to time.  Such new
-     versions will be similar in spirit to the present version, but may
-     differ in detail to address new problems or concerns.  See
-     `http://www.gnu.org/copyleft/'.
-
-     Each version of the License is given a distinguishing version
-     number.  If the Document specifies that a particular numbered
-     version of this License "or any later version" applies to it, you
-     have the option of following the terms and conditions either of
-     that specified version or of any later version that has been
-     published (not as a draft) by the Free Software Foundation.  If
-     the Document does not specify a version number of this License,
-     you may choose any version ever published (not as a draft) by the
-     Free Software Foundation.
-
-G.1 ADDENDUM: How to use this License for your documents
-========================================================
-
-To use this License in a document you have written, include a copy of
-the License in the document and put the following copyright and license
-notices just after the title page:
-
-       Copyright (C)  YEAR  YOUR NAME.
-       Permission is granted to copy, distribute and/or modify this document
-       under the terms of the GNU Free Documentation License, Version 1.2
-       or any later version published by the Free Software Foundation;
-       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
-       Texts.  A copy of the license is included in the section entitled ``GNU
-       Free Documentation License''.
-
-   If you have Invariant Sections, Front-Cover Texts and Back-Cover
-Texts, replace the "with...Texts." line with this:
-
-         with the Invariant Sections being LIST THEIR TITLES, with
-         the Front-Cover Texts being LIST, and with the Back-Cover Texts
-         being LIST.
-
-   If you have Invariant Sections without Cover Texts, or some other
-combination of the three, merge those two alternatives to suit the
-situation.
-
-   If your document contains nontrivial examples of program code, we
-recommend releasing these examples in parallel under your choice of
-free software license, such as the GNU General Public License, to
-permit their use in free software.
 

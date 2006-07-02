@@ -5,7 +5,14 @@
 @c @setchapternewpage off
 @c %**end of header
 
-@c Revision: $Id: agentexpr.texi,v 1.1.1.1 2006/05/15 14:12:05 nathanw Exp $
+@c This file is part of the GDB manual.
+@c
+@c Copyright (C) 2003, 2004, 2005, 2006
+@c               Free Software Foundation, Inc.
+@c
+@c See the file gdb.texinfo for copying conditions.
+
+@c Revision: $Id: agentexpr.texi,v 1.1.1.2 2006/07/02 20:15:44 nathanw Exp $
 
 @node Agent Expressions
 @appendix The GDB Agent Expression Mechanism

@@ -274,10 +274,7 @@ MY_swap_std_reloc_out (bfd *abfd,
   int r_index;
   asymbol *sym = *(g->sym_ptr_ptr);
   int r_extern;
-  unsigned int r_addend;
   asection *output_section = sym->section->output_section;
-
-  r_addend = g->addend + (*(g->sym_ptr_ptr))->section->output_section->vma;
 
   /* Name was clobbered by aout_write_syms to be symbol index.  */
 
@@ -341,7 +338,6 @@ _bfd_ns32k_relocate_contents (reloc_howto_type *howto,
     case 2:
       return _bfd_relocate_contents (howto, input_bfd, relocation,
 				    location);
-      break;
     default:
       return bfd_reloc_notsupported;
     }

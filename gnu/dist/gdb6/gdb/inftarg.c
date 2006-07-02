@@ -1,7 +1,7 @@
 /* Target-vector operations for controlling Unix child processes, for GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
-   2000, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+   2000, 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -21,8 +21,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"		/* required by inferior.h */
@@ -34,7 +34,6 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include "observer.h"
 #include "gdb_wait.h"
 #include "inflow.h"
 
@@ -102,7 +101,6 @@ child_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
   int status;
   char *execd_pathname = NULL;
   int exit_status;
-  int related_pid;
   int syscall_id;
   enum target_waitkind kind;
   int pid;
@@ -211,10 +209,6 @@ child_attach (char *args, int from_tty)
   
   inferior_ptid = pid_to_ptid (pid);
   push_target (&deprecated_child_ops);
-
-  /* Do this first, before anything has had a chance to query the
-     inferior's symbol table or similar.  */
-  observer_notify_inferior_created (&current_target, from_tty);
 }
 
 #if !defined(CHILD_POST_ATTACH)
@@ -335,11 +329,6 @@ child_create_inferior (char *exec_file, char *allargs, char **env,
 		       int from_tty)
 {
   fork_inferior (exec_file, allargs, env, ptrace_me, ptrace_him, NULL, NULL);
-
-  /* We are at the first instruction we care about.  */
-  observer_notify_inferior_created (&current_target, from_tty);
-  /* Pedal to the metal... */
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
 
 #if !defined(CHILD_POST_STARTUP_INFERIOR)

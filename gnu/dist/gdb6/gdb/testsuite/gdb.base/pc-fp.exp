@@ -38,7 +38,7 @@ set testfile "pc-fp"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -62,7 +62,7 @@ proc get_valueofx { fmt exp default } {
     gdb_expect {
 	-re "\\$\[0-9\]* = (0x\[0-9a-zA-Z\]+).*$gdb_prompt $" {
 	    set val $expect_out(1,string)
-	    pass "get value of ${exp} ($val)"
+	    pass "get value of ${exp}"
 	}
 	timeout {
 	    set val ${default}
