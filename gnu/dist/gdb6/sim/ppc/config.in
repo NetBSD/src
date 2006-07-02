@@ -398,6 +398,11 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
+/* Define if we should use the Windows API, instead of the POSIX API. On
+   Windows, we use the Windows API when building for MinGW, but the POSIX API
+   when building for Cygwin. */
+#undef USE_WIN32API
+
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN

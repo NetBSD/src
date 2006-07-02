@@ -44,6 +44,7 @@
 #include "bfd.h"
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
+#include "gdb/signals.h"
 
 /* Define the rate at which the simulator should poll the host
    for a quit. */
@@ -197,13 +198,13 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
   case was_continuing:
     *reason = sim_stopped;
     if (status.signal == 0)
-      *sigrc = SIGTRAP;
+      *sigrc = TARGET_SIGNAL_TRAP;
     else
       *sigrc = status.signal;
     break;
   case was_trap:
     *reason = sim_stopped;
-    *sigrc = SIGTRAP;
+    *sigrc = TARGET_SIGNAL_TRAP;
     break;
   case was_exited:
     *reason = sim_exited;

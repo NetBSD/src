@@ -1,5 +1,5 @@
 /* Collection of junk for CRIS.
-   Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -86,6 +86,14 @@ extern USI crisv10f_break_handler (SIM_CPU *, USI, USI);
 extern USI crisv32f_break_handler (SIM_CPU *, USI, USI);
 extern USI cris_break_13_handler (SIM_CPU *, USI, USI, USI, USI, USI, USI,
 				  USI, USI);
+extern char cris_have_900000xxif;
+enum cris_interrupt_type { CRIS_INT_NMI, CRIS_INT_RESET, CRIS_INT_INT };
+extern int crisv10deliver_interrupt (SIM_CPU *,
+				     enum cris_interrupt_type,
+				       unsigned int);
+extern int crisv32deliver_interrupt (SIM_CPU *,
+				     enum cris_interrupt_type,
+				     unsigned int);
 
 /* Using GNU syntax (not C99) so we can compile this on RH 6.2
    (egcs-1.1.2/gcc-2.91.66).  */

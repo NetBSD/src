@@ -18,7 +18,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -1277,59 +1277,9 @@ model_crisv32_move_m_sprv32 (SIM_CPU *current_cpu, void *sem_arg)
 }
 
 static int
-model_crisv32_move_c_sprv32_p0 (SIM_CPU *current_cpu, void *sem_arg)
-{
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
-  const IDESC * UNUSED idesc = abuf->idesc;
-  int cycles = 0;
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    cycles += crisv32f_model_crisv32_u_const32 (current_cpu, idesc, 0, referenced);
-  }
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    INT in_Rs = -1;
-    INT out_Pd = -1;
-    out_Pd = FLD (out_Pd);
-    referenced |= 1 << 1;
-    cycles += crisv32f_model_crisv32_u_exec_to_sr (current_cpu, idesc, 1, referenced, in_Rs, out_Pd);
-  }
-  return cycles;
-#undef FLD
-}
-
-static int
-model_crisv32_move_c_sprv32_p1 (SIM_CPU *current_cpu, void *sem_arg)
-{
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
-  const IDESC * UNUSED idesc = abuf->idesc;
-  int cycles = 0;
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    cycles += crisv32f_model_crisv32_u_const32 (current_cpu, idesc, 0, referenced);
-  }
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    INT in_Rs = -1;
-    INT out_Pd = -1;
-    out_Pd = FLD (out_Pd);
-    referenced |= 1 << 1;
-    cycles += crisv32f_model_crisv32_u_exec_to_sr (current_cpu, idesc, 1, referenced, in_Rs, out_Pd);
-  }
-  return cycles;
-#undef FLD
-}
-
-static int
 model_crisv32_move_c_sprv32_p2 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1354,32 +1304,7 @@ model_crisv32_move_c_sprv32_p2 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p3 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
-  const IDESC * UNUSED idesc = abuf->idesc;
-  int cycles = 0;
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    cycles += crisv32f_model_crisv32_u_const32 (current_cpu, idesc, 0, referenced);
-  }
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    INT in_Rs = -1;
-    INT out_Pd = -1;
-    out_Pd = FLD (out_Pd);
-    referenced |= 1 << 1;
-    cycles += crisv32f_model_crisv32_u_exec_to_sr (current_cpu, idesc, 1, referenced, in_Rs, out_Pd);
-  }
-  return cycles;
-#undef FLD
-}
-
-static int
-model_crisv32_move_c_sprv32_p4 (SIM_CPU *current_cpu, void *sem_arg)
-{
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1404,7 +1329,7 @@ model_crisv32_move_c_sprv32_p4 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p5 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1429,7 +1354,7 @@ model_crisv32_move_c_sprv32_p5 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p6 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1454,32 +1379,7 @@ model_crisv32_move_c_sprv32_p6 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p7 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
-  const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
-  const IDESC * UNUSED idesc = abuf->idesc;
-  int cycles = 0;
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    cycles += crisv32f_model_crisv32_u_const32 (current_cpu, idesc, 0, referenced);
-  }
-  {
-    int referenced = 0;
-    int UNUSED insn_referenced = abuf->written;
-    INT in_Rs = -1;
-    INT out_Pd = -1;
-    out_Pd = FLD (out_Pd);
-    referenced |= 1 << 1;
-    cycles += crisv32f_model_crisv32_u_exec_to_sr (current_cpu, idesc, 1, referenced, in_Rs, out_Pd);
-  }
-  return cycles;
-#undef FLD
-}
-
-static int
-model_crisv32_move_c_sprv32_p8 (SIM_CPU *current_cpu, void *sem_arg)
-{
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1504,7 +1404,7 @@ model_crisv32_move_c_sprv32_p8 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p9 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1529,7 +1429,7 @@ model_crisv32_move_c_sprv32_p9 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p10 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1554,7 +1454,7 @@ model_crisv32_move_c_sprv32_p10 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p11 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1579,7 +1479,7 @@ model_crisv32_move_c_sprv32_p11 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p12 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1604,7 +1504,7 @@ model_crisv32_move_c_sprv32_p12 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p13 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1629,7 +1529,7 @@ model_crisv32_move_c_sprv32_p13 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p14 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -1654,7 +1554,7 @@ model_crisv32_move_c_sprv32_p14 (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_move_c_sprv32_p15 (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -4986,7 +4886,7 @@ model_crisv32_jas_r (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_jas_c (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -5119,7 +5019,7 @@ model_crisv32_jasc_r (SIM_CPU *current_cpu, void *sem_arg)
 static int
 model_crisv32_jasc_c (SIM_CPU *current_cpu, void *sem_arg)
 {
-#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p0.f
+#define FLD(f) abuf->fields.sfmt_move_c_sprv32_p2.f
   const ARGBUF * UNUSED abuf = SEM_ARGBUF ((SEM_ARG) sem_arg);
   const IDESC * UNUSED idesc = abuf->idesc;
   int cycles = 0;
@@ -5827,15 +5727,11 @@ static const INSN_TIMING crisv32_timing[] = {
   { CRISV32F_INSN_MOVE_R_SPRV32, model_crisv32_move_r_sprv32, { { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_SPR_RV32, model_crisv32_move_spr_rv32, { { (int) UNIT_CRISV32_U_EXEC, 1, 1 } } },
   { CRISV32F_INSN_MOVE_M_SPRV32, model_crisv32_move_m_sprv32, { { (int) UNIT_CRISV32_U_MEM, 1, 1 }, { (int) UNIT_CRISV32_U_MEM_R, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
-  { CRISV32F_INSN_MOVE_C_SPRV32_P0, model_crisv32_move_c_sprv32_p0, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
-  { CRISV32F_INSN_MOVE_C_SPRV32_P1, model_crisv32_move_c_sprv32_p1, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P2, model_crisv32_move_c_sprv32_p2, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P3, model_crisv32_move_c_sprv32_p3, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
-  { CRISV32F_INSN_MOVE_C_SPRV32_P4, model_crisv32_move_c_sprv32_p4, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P5, model_crisv32_move_c_sprv32_p5, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P6, model_crisv32_move_c_sprv32_p6, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P7, model_crisv32_move_c_sprv32_p7, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
-  { CRISV32F_INSN_MOVE_C_SPRV32_P8, model_crisv32_move_c_sprv32_p8, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P9, model_crisv32_move_c_sprv32_p9, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P10, model_crisv32_move_c_sprv32_p10, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },
   { CRISV32F_INSN_MOVE_C_SPRV32_P11, model_crisv32_move_c_sprv32_p11, { { (int) UNIT_CRISV32_U_CONST32, 1, 1 }, { (int) UNIT_CRISV32_U_EXEC_TO_SR, 1, 1 } } },

@@ -697,3 +697,224 @@ doc/Makefile.in
 	- new maybe-clean target that removes the generated documentation if
 	  the build directory differs from the source directory
 	- distclean target now depends on maybe-clean
+
+				   7/17
+				   ----
+[readline-4.3 released]
+
+				   7/18
+				   ----
+shlib/Makefile.in
+	- fix bad dependency: text.so: terminal.c, make it depend on text.c
+
+				    8/7
+				    ---
+support/shlib-install
+	- break `linux' out into its own stanza:  it seems that linux
+	  distributions are all moving to the following scheme:
+
+		libreadline.so.4.3	installed version
+		libreadline.so.4 -> libreadline.so.4.3	symlink
+		libreadline.so -> libreadline.so.4	symlink
+
+				   10/29
+				   -----
+support/shlib-install
+	- change INSTALL_LINK[12] to use `&&' instead of `;' so it only
+	  tries the link if the cd succeeds; put ${echo} in there, too
+	- use $LN instead of `ln -s' so it works on machines without symlinks
+	- change special linux stanza to use cd before ln also
+	- change to use $INSTALL_LINK1 and $INSTALL_LINK2 appropriately
+	  instead of explicit commands in various stanzas
+
+				    2/1
+				    ---
+config.h.in
+	- add HAVE_MBRTOWC and HAVE_MBRLEN
+	- add NO_MULTIBYTE_SUPPORT for new configure argument
+	- add STDC_HEADERS
+
+configure.in
+	- new argument --enable-multibyte (enabled by default), allows
+	  multibyte support to be turned off even on systems that support it
+	- add check for ansi stdc headers with call to AC_HEADER_STDC
+
+				    2/3
+				    ---
+configure.in
+	- add call to BASH_FUNC_CTYPE_NONASCII
+
+config.h.in
+	- add CTYPE_NON_ASCII
+
+				   2/20
+				   ----
+
+doc/manvers.texinfo
+        - renamed to version.texi to match other GNU software
+        - UPDATE-MONTH variable is now `UPDATED-MONTH'
+        
+doc/{hist,rlman,rluserman}.texinfo
+        - include version.texi
+        
+doc/{rltech,rluser,hstech,hsuser}.texi
+	- changed the suffix from `texinfo' to `texi'
+
+doc/Makefile.in
+	- made appropriate changes for {{rl,hs}tech,{rl,hs}user}.texi
+
+doc/{rlman,rluserman}.texinfo
+	- changed the suffix from `texinfo' to `texi'
+
+doc/hist.texinfo
+	- renamed to history.texi to be more consistent
+
+				   6/11
+				   ----
+shlib/Makefile.in
+	- have configure substitute value of `@LDFLAGS@' into the assignment
+	  to SHLIB_XLDFLAGS
+
+				   6/16
+				   ----
+configure.in
+	- readline and history libraries are now at version 5.0
+
+				   8/18
+				   ----
+support/shlib-install
+	- support for FreeBSD-gnu (from Robert Millan)
+
+				   12/4
+				   ----
+Makefile.in
+	- add variables for localedir and the PACKAGE_* variables, auto-set
+	  by configure
+
+				   12/9
+				   ----
+Makefile.in
+	- use mkinstalldirs instead of mkdirs
+
+				   4/22
+				   ----
+Makefile.in
+	- separate doc install/uninstall out into two new targets:
+	  install-doc and uninstall-doc
+	- make install-doc and uninstall-doc prerequisites of appropriate
+	  install and uninstall targets
+
+examples/rl-fgets.c
+	- new example from Harold Levy that wraps fgets replacement functions
+	  that call readline in a shared library that can be interposed with
+	  LD_PRELOAD
+
+				   7/27
+				   ----
+[readline-5.0 released]
+
+				   11/15
+				   -----
+examples/rlfe/{ChangeLog,Makefile.in,README,config.h.in,configure,configure.in,extern.h,os.h,pty.c,rlfe.c,screen.h}
+	- new version of rlfe, rlfe-0.4, from Per Bothner; now a standalone
+	  application
+
+				   11/16
+				   -----
+shlib/Makefile.in
+	- substitute TERMCAP_LIB in from configure
+
+configure.in
+	- if SHLIB_LIBS doesn't include a termcap library (curses, ncurses,
+	  termcap, termlib), append the value of $TERMCAP_LIB to it
+
+				   11/30
+				   -----
+configure.in
+	- take out change from 11/16; it doesn't work for some systems (e.g.,
+	  SunOS 4.x and Solaris 2.6)
+	- add support for --enable-purify configure argument
+	- pass TERMCAP_LIB in environment when calling shobj-conf
+
+examples/Makefile.in 
+	- add support for building examples with purify
+
+				 1/23/2005
+				 ---------
+configure.in
+        - set BUILD_DIR to contain backslashes to escape any spaces in the
+          directory name -- this is what make will accept in targets and
+          prerequisites, so it's better than trying to use double quotes
+
+				   2/25
+				   ----
+configure.in
+	- change check for sys/ptem.h to include sys/stream.h if present, to
+	  avoid the `present but cannot be compiled' messages on Solaris and
+	  SVR4.2 (does anyone still use SVR4.2?)
+
+				    5/7
+				    ---
+configure.in
+	- add cross-compiling support from the bash configure.in, which cygwin
+	  and mingw have apparently adopted
+	- add check for pwd.h, fcntl.h
+	- add checks for fcntl, kill system calls
+	- add checks for getpw{ent,nam,uid} C library functions
+	- pass a compile-time option through to Makefiles if cross-compiling
+
+config.h.in
+	- add HAVE_PWD_H for <pwd.h>, HAVE_FCNTL_H for <fcntl.h>
+	- add HAVE_FCNTL, HAVE_KILL for respective system calls
+	- add HAVE_GETPW{ENT,NAM,UID} for passwd functions
+
+Makefile.in,shlib/Makefile.in
+        - @CROSS_COMPILE@ is substituted into DEFS (equal to -DCROSS_COMPILING
+	  if bash is being cross-compiled)
+
+				    8/2
+				    ---
+examples/Makefile.in
+	- use $(READLINE_LIB) instead of -lreadline to get around MacOS X 10.4's
+	  preference for (incompatible) shared libraries over static libraries
+	  in the load path
+
+				   8/11
+				   ----
+support/shobj-conf
+	- new variable: SHLIB_LIBPREF, prefix for shared library name (defaults
+	  to `lib'
+	- new variable: SHLIB_DLLVERSION, used on Cygwin to set the library
+	  version number
+	- new variable: SHLIB_DOT, separator character between library name and
+	  suffix and version information (defaults to `.')
+	- new stanza for cygwin to generate windows-compatible dll
+
+support/shlib-install
+	- add new option `-b bindir' for systems like cygwin/windows that
+	  require it
+	- new stanza for cygwin that installs a dll into $bindir and an implied
+	  link library into $libdir
+
+configure.in
+	- substitute new variables from shobj-conf
+
+shlib/Makefile.in
+	- substitute bindir, SHLIB_DOT, SHLIB_LIBPREF, SHLIB_DLLVERSION from
+	  configure
+	- pass `-b $(bindir)' to shlib-install for install and uninstall targets
+	- library names now use $SHLIB_LIBPREF and $SHLIB_DOT
+
+INSTALL,README
+	- document new SHLIB_DOT, SHLIB_LIBPREF, and SHLIB_DLLVERSION variables
+
+				   10/4
+				   ----
+[readline-5.1-beta1 frozen]
+
+				   12/1
+				   ----
+configure.in
+	- changed release status to `release'
+
+[readline-5.1 frozen]

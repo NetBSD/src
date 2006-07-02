@@ -1,6 +1,6 @@
 /* savestring.c  */
 
-/* Copyright (C) 1998 Free Software Foundation, Inc.
+/* Copyright (C) 1998,2003 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library, a library for
    reading lines of text with interactive input and history editing.
@@ -19,6 +19,7 @@
    is generally kept in a file called COPYING or LICENSE.  If you do not
    have a copy of the license, write to the Free Software Foundation,
    59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+#define READLINE_LIBRARY
 
 #include <config.h>
 #ifdef HAVE_STRING_H
