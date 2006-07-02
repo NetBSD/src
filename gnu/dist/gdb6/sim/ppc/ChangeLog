@@ -1,3 +1,51 @@
+2006-05-05  Andreas Schwab  <schwab@suse.de>
+
+	* configure.ac (CFLAGS_FOR_BUILD): Set and substitute.
+	* configure: Regenerate.
+
+	* Makefile.in (CFLAGS_FOR_BUILD): Define.
+	(BUILD_CFLAGS): Use it instead of hardcoding "-g -O".
+	(gentmap): Fix typo BUILD_FLAGS -> BUILD_CFLAGS.
+
+2006-04-23  Andreas Schwab  <schwab@suse.de>
+
+	* Makefile.in (tmp-ld-decode): Fix dependencies.
+	(tmp-ld-cache): Likewise.
+	(tmp-ld-insn): Likewise.
+
+2006-02-01  Mark Mitchell  <mark@codesourcery.com>
+
+	* emul_netbsd.c (emul_netbsd_create): Quote file-name property.
+	* emul_unix.c (emul_unix_create): Likewise.
+	* tree.c (libiberty.h): Include it.
+	(tree_quote_property): New function.
+	* tree.h (tree_quote_property): Declare.
+
+2006-01-25  Mark Mitchell  <mark@codesourcery.com>
+
+	* words.h (natural32): Define as "int".
+
+2006-01-23  Mark Mitchell  <mark@codesourcery.com>
+
+	* words.h (signed32): Define as "int".
+	(unsigned32): Define as "unsigned int".
+
+2005-11-28 Mark Mitchell  <mark@codesourcery.com>
+
+	* configure.ac (USE_WIN32API): Define it.
+	* configure.in: Regenerate.
+	* config.in: Likewise.
+	* emul_netbsd.c (write_timezone): Guard with HAVE_GETTIMEOFDAY.
+	* emul_unix.c (do_unix_mkdir): Handle Win32 1-argument mkdir.
+
+2005-11-28  Mark Mitchell  <mark@codesourcery.com>
+
+	* psim.c: Include gdb/signals.h.
+	
+	* sim_calls.c (gdb/signals.h): Include it.
+	(sim_stop_reason): Use TARGET_SIGNAL_*.
+	* psim.c (cntrl_c_simulation): Use TARGET_SIGNAL_*.
+
 2005-07-15  Ben Elliston  <bje@au.ibm.com>
 
 	* hw_htab.c (bfd_get_section_lma): Remove macro; use BFD's.

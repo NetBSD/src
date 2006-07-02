@@ -278,6 +278,7 @@ ac_subdirs_all="$ac_subdirs_all d10v"
 ac_subdirs_all="$ac_subdirs_all frv"
 ac_subdirs_all="$ac_subdirs_all h8300"
 ac_subdirs_all="$ac_subdirs_all iq2000"
+ac_subdirs_all="$ac_subdirs_all m32c"
 ac_subdirs_all="$ac_subdirs_all m32r"
 ac_subdirs_all="$ac_subdirs_all m68hc11"
 ac_subdirs_all="$ac_subdirs_all mcore"
@@ -290,7 +291,7 @@ ac_subdirs_all="$ac_subdirs_all v850"
 ac_subdirs_all="$ac_subdirs_all testsuite"
 ac_subdirs_all="$ac_subdirs_all common"
 ac_subdirs_all="$ac_subdirs_all igen"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AR ac_ct_AR RANLIB ac_ct_RANLIB build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os HDEFINES CC_FOR_BUILD subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AR ac_ct_AR RANLIB ac_ct_RANLIB build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os HDEFINES CC_FOR_BUILD CFLAGS_FOR_BUILD subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3386,6 +3387,8 @@ else
   CC_FOR_BUILD=gcc
 fi
 
+CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}
+
 
 # If a cpu ever has more than one simulator to choose from, use
 # --enable-sim=... to choose.
@@ -3458,6 +3461,13 @@ subdirs="$subdirs iq2000"
 	   testsuite=yes
 	   common=yes
 	   ;;
+       m32c-*-*)
+
+
+subdirs="$subdirs m32c"
+
+           common=yes
+           ;;
        m32r-*-*)
 
 
@@ -4215,6 +4225,7 @@ s,@target_vendor@,$target_vendor,;t t
 s,@target_os@,$target_os,;t t
 s,@HDEFINES@,$HDEFINES,;t t
 s,@CC_FOR_BUILD@,$CC_FOR_BUILD,;t t
+s,@CFLAGS_FOR_BUILD@,$CFLAGS_FOR_BUILD,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

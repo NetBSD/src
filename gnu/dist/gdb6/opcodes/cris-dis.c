@@ -651,7 +651,8 @@ format_sup_reg (unsigned int regno,
 static unsigned
 bytes_to_skip (unsigned int insn,
 	       const struct cris_opcode *matchedp,
-	       enum cris_disass_family distype)
+	       enum cris_disass_family distype,
+	       const struct cris_opcode *prefix_matchedp)
 {
   /* Each insn is a word plus "immediate" operands.  */
   unsigned to_skip = 2;
@@ -660,7 +661,8 @@ bytes_to_skip (unsigned int insn,
 
   for (s = template; *s; s++)
     if ((*s == 's' || *s == 'N' || *s == 'Y')
-	&& (insn & 0x400) && (insn & 15) == 15)
+	&& (insn & 0x400) && (insn & 15) == 15
+	&& prefix_matchedp == NULL)
       {
 	/* Immediate via [pc+], so we have to check the size of the
 	   operand.  */
@@ -880,7 +882,7 @@ print_with_operands (const struct cris_opcode *opcodep,
       case 'S':
       case 's':
 	/* Any "normal" memory operand.  */
-	if ((insn & 0x400) && (insn & 15) == 15)
+	if ((insn & 0x400) && (insn & 15) == 15 && prefix_opcodep == NULL)
 	  {
 	    /* We're looking at [pc+], i.e. we need to output an immediate
 	       number, where the size can depend on different things.  */
@@ -1495,7 +1497,7 @@ print_insn_cris_generic (bfd_vma memaddr,
 	      /* If it's a prefix, put it into the prefix vars and get the
 		 main insn.  */
 	      prefix_size = bytes_to_skip (prefix_insn, matchedp,
-					   disdata->distype);
+					   disdata->distype, NULL);
 	      prefix_opcodep = matchedp;
 
 	      insn = bufp[prefix_size] + bufp[prefix_size + 1] * 256;
@@ -1527,7 +1529,9 @@ print_insn_cris_generic (bfd_vma memaddr,
 	    }
 	  else
 	    {
-	      advance += bytes_to_skip (insn, matchedp, disdata->distype);
+	      advance
+		+= bytes_to_skip (insn, matchedp, disdata->distype,
+				  prefix_opcodep);
 
 	      /* The info_type and assorted fields will be set according
 		 to the operands.   */

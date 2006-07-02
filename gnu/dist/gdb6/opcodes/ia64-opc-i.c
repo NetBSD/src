@@ -1,5 +1,6 @@
 /* ia64-opc-i.c -- IA-64 `I' opcode table.
-   Copyright 1998, 1999, 2000, 2002, 2005 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2002, 2005, 2006
+   Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -36,6 +37,7 @@
 #define bWh(x)		(((ia64_insn) ((x) & 0x3)) << 20)
 #define bX(x)		(((ia64_insn) ((x) & 0x1)) << 33)
 #define bXb(x)		(((ia64_insn) ((x) & 0x1)) << 22)
+#define bXc(x)		(((ia64_insn) ((x) & 0x1)) << 19)
 #define bX2(x)		(((ia64_insn) ((x) & 0x3)) << 34)
 #define bX2a(x)		(((ia64_insn) ((x) & 0x3)) << 34)
 #define bX2b(x)		(((ia64_insn) ((x) & 0x3)) << 28)
@@ -58,6 +60,7 @@
 #define mWh	bWh (-1)
 #define mX	bX (-1)
 #define mXb	bXb (-1)
+#define mXc	bXc (-1)
 #define mX2	bX2 (-1)
 #define mX2a	bX2a (-1)
 #define mX2b	bX2b (-1)
@@ -83,6 +86,9 @@
 #define OpX2TaTbYaC(a,b,c,d,e,f) \
 	(bOp (a) | bX2 (b) | bTa (c) | bTb (d) | bYa (e) | bC (f)), \
 	(mOp | mX2 | mTa | mTb | mYa | mC)
+#define OpX2TaTbYaXcC(a,b,c,d,e,f,g) \
+	(bOp (a) | bX2 (b) | bTa (c) | bTb (d) | bYa (e) | bXc (f) | bC (g)), \
+	(mOp | mX2 | mTa | mTb | mYa | mXc | mC)
 #define OpX3(a,b)		(bOp (a) | bX3 (b)), (mOp | mX3)
 #define OpX3X6(a,b,c)		(bOp (a) | bX3 (b) | bX6(c)), \
 				(mOp | mX3 | mX6)
@@ -164,6 +170,28 @@ struct ia64_opcode ia64_opcodes_i[] =
     {"dep.z",	I, OpX2XYb (5, 1, 1, 0), {R1, R2, CPOS6a, LEN6}, EMPTY},
     {"dep.z",	I, OpX2XYb (5, 1, 1, 1), {R1, IMM8, CPOS6a, LEN6}, EMPTY},
     {"dep",	I, OpX2X (5, 3, 1), {R1, IMM1, R3, CPOS6b, LEN6}, EMPTY},
+#define TF(a,b,c) \
+	I2, OpX2TaTbYaXcC (5, 0, a, b, 1, 1, c), {P1, P2, IMMU5b}, EMPTY
+#define TFCM(a,b,c) \
+	I2, OpX2TaTbYaXcC (5, 0, a, b, 1, 1, c), {P2, P1, IMMU5b}, PSEUDO, 0, NULL
+    {"tf.z",		 TF   (0, 0, 0)},
+    {"tf.nz",		 TFCM (0, 0, 0)},
+    {"tf.z.unc",	 TF   (0, 0, 1)},
+    {"tf.nz.unc",	 TFCM (0, 0, 1)},
+    {"tf.z.and",	 TF   (0, 1, 0)},
+    {"tf.nz.andcm",	 TFCM (0, 1, 0)},
+    {"tf.nz.and",	 TF   (0, 1, 1)},
+    {"tf.z.andcm",	 TFCM (0, 1, 1)},
+    {"tf.z.or",		 TF   (1, 0, 0)},
+    {"tf.nz.orcm",	 TFCM (1, 0, 0)},
+    {"tf.nz.or",	 TF   (1, 0, 1)},
+    {"tf.z.orcm",	 TFCM (1, 0, 1)},
+    {"tf.z.or.andcm",	 TF   (1, 1, 0)},
+    {"tf.nz.and.orcm",	 TFCM (1, 1, 0)},
+    {"tf.nz.or.andcm",	 TF   (1, 1, 1)},
+    {"tf.z.and.orcm",	 TFCM (1, 1, 1)},
+#undef TF
+#undef TFCM
 #define TBIT(a,b,c,d) \
         I2, OpX2TaTbYaC (5, 0, a, b, c, d), {P1, P2, R3, POS6}, EMPTY
 #define TBITCM(a,b,c,d)	\

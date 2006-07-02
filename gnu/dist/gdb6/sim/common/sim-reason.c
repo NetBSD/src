@@ -35,21 +35,9 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
     case sim_exited :
       *sigrc = engine->sigrc;
       break;
-    case sim_signalled :
-      /* ??? See the comment below case `sim_signalled' in
-	 gdb/remote-sim.c:gdbsim_wait.
-	 ??? Consider the case of the target requesting that it
-	 kill(2) itself with SIGNAL.  That SIGNAL, being target
-	 specific, will not correspond to either of the SIM_SIGNAL
-	 enum nor the HOST_SIGNAL.  A mapping from TARGET_SIGNAL to
-	 HOST_SIGNAL is needed.  */
-      *sigrc = sim_signal_to_host (sd, engine->sigrc);
-      break;
     case sim_stopped :
-      /* The gdb/simulator interface calls for us to return the host
-	 version of the signal which gdb then converts into the
-	 target's version.  This is obviously a bit clumsy.  */
-      *sigrc = sim_signal_to_host (sd, engine->sigrc);
+    case sim_signalled :
+      *sigrc = sim_signal_to_target (sd, engine->sigrc);
       break;
     default :
       abort ();

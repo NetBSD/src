@@ -139,7 +139,12 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
     case 'h':
       *sym = 1;
       *sym_addr = ((((insn & 1) | ((insn & 0x1f0) >> 3)) << 16) | insn2) * 2;
-      sprintf (buf, "0x");
+      /* See PR binutils/2545.  Ideally we would like to display the hex
+	 value of the address only once, but this would mean recoding
+	 objdump_print_address() which would affect many targets.  */
+      sprintf (buf, "%#lx", (unsigned long ) *sym_addr);      
+      sprintf (comment, "0x");
+
       break;
       
     case 'L':

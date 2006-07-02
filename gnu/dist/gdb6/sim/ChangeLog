@@ -1,3 +1,125 @@
+2006-05-05  Andreas Schwab  <schwab@suse.de>
+
+	* configure.ac (CFLAGS_FOR_BUILD): Set and substitute.
+	* configure: Regenerate.
+
+	* Makefile.in (CFLAGS_FOR_BUILD): Define.
+	(CC_FOR_BUILD): Don't override.
+	(FLAGS_TO_PASS): Pass CFLAGS_FOR_BUILD.
+
+2006-05-04  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* MAINTAINERS: Add an "Authorized committers" section, and list
+	DJ Delorie for v850.
+
+2006-04-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/crisv32f.c (MY (deliver_interrupt)): Set CCS to new_ccs.
+
+2006-04-03  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/dv-cris.c, cris/dv-rv.c, cris/rvdummy.c: New files.
+	* cris/Makefile.in (CONFIG_DEVICES): Remove redundant setting.
+	(dv-cris.o, dv-rv.o rvdummy$(EXEEXT), rvdummy.o): New rules.
+	(all): Depend on rvdummy$(EXEEXT).
+	* cris/configure.ac: Call SIM_AC_OPTION_WARNINGS.  Check for
+	sys/socket.h and sys/select.h.  Call SIM_AC_OPTION_HARDWARE,
+	default off.
+	* cris/configure: Regenerate.
+	* cris/cris-sim.h (cris_have_900000xxif): Declare here.
+	(enum cris_interrupt_type, crisv10deliver_interrupt)
+	(crisv32deliver_interrupt: New declarations.
+	* cris/cris-tmpl.c [WITH_HW] (MY (f_model_insn_after)): Call
+	sim_events_tickn and set state-events member work_pending when it's
+	time for the next event.
+	[WITH_HW] (MY (f_specific_init)): Set CPU-model-specific
+	interrupt-delivery function.
+	* cris/crisv10f.c (MY (deliver_interrupt)): New function.
+	* cris/crisv32f.c (MY (deliver_interrupt)): New function.
+	* cris/devices.c: Include hw-device.h.
+	(device_io_read_buffer) [WITH_HW]: Call hw_io_read_buffer.
+	(device_io_write_buffer): Only perform 0x900000xx-functions if
+	cris_have_900000xxif is nonzero.  Else if WITH_HW defined,
+	call hw_io_write_buffer.  Add return 0 last in function.
+	* cris/sim-if.c (cris_have_900000xxif): Now global.
+	(sim_open) [WITH_HW]: Clear deliver_interrupt cpu member.
+	Force "-model" option, effectively.
+	* cris/sim-main.h (cris_interrupt_delivery_fn): New type.
+	(struct _sim_cpu) [WITH_HW]: New member deliver_interrupt.
+
+2006-04-02  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/Makefile.in (CRISV10F_OBJS): Remove semcrisv10f-switch.o.
+	(CRISV32F_OBJS): Remove semcrisv32f-switch.o.
+	(semcrisv10f-switch.o, semcrisv32f-switch.o: Remove dependency rules.
+
+2006-03-13  DJ Delorie  <dj@redhat.com>
+
+	* MAINTAINERS: Add self as m32c sim maintainer.
+
+2006-02-23  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/traps.c (syscall_map): Remove CB_SYS_time / TARGET_SYS_time
+	mapping.
+	(cris_break_13_handler) <case TARGET_SYS_time>: New case.
+
+2006-01-23  Jim Blandy  <jimb@redhat.com>
+
+	Add simulator for Renesas M32C and M16C.
+
+	* m32c: New directory.
+	* configure.ac: Add entry for Renesas M32C.
+	* configure: Regenerate.
+
+2006-01-10  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/cris-tmpl.c (MY (f_model_insn_before)): Only display basic
+	cycle count for the current insn.
+
+2005-12-06  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/cpuv10.h, cris/cpuv32.h, cris/cris-desc.c, cris/cris-opc.h,
+	cris/decodev10.c, cris/decodev10.h, cris/decodev32.c,
+	cris/decodev32.h, cris/modelv10.c, cris/modelv32.c,
+	cris/semcrisv10f-switch.c, cris/semcrisv32f-switch.c: Regenerate.
+
+2005-12-05  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/arch.c, cris/arch.h, cris/cpuall.h, cris/cpuv10.c,
+	cris/cpuv10.h, cris/cpuv32.c, cris/cpuv32.h, cris/cris-desc.c,
+	cris/cris-desc.h, cris/cris-opc.h, cris/decodev10.c,
+	cris/decodev10.h, cris/decodev32.c, cris/decodev32.h,
+	cris/modelv10.c, cris/modelv32.c, cris/semcrisv10f-switch.c,
+	cris/semcrisv32f-switch.c: Regenerate.
+
+2005-11-20  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/traps.c (TARGET_O_RDONLY, TARGET_O_WRONLY): Define.
+	(open_map): Use TARGET_O_ACCMODE, TARGET_O_RDONLY and
+	TARGET_O_WRONLY.
+	(cris_break_13_handler) <case TARGET_SYS_fcntl>: Add support for
+	F_GETFL on fd 0, 1 and 2.
+
+2005-11-17  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/sim-main.h (struct _sim_cpu): New members last_syscall,
+	last_open_fd, last_open_flags.
+	* cris/traps.c: Don't include targ-vals.h.
+	(TARGET_O_ACCMODE): Define.
+	(cris_break_13_handler): Set new _sim_cpu members.
+	<case TARGET_SYS_fcntl>: Support special case of F_GETFL.
+	Rearrange code as switch.  Emit "unimplemented" abort for
+	unimplemented fcntl calls.
+
+	* cris/traps.c (TARGET_SYS_stat): Define.
+	(syscall_stat32_map): Add entry for TARGET_SYS_stat.
+	(cris_break_13_handler) <case TARGET_SYS_stat>: New case.
+
+2005-11-16  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris/cris-tmpl.c (MY (f_model_insn_before)): Make sure only the
+	low 32 bits are used after an unsigned long cast.
+
 2005-05-28  Hans-Peter Nilsson  <hp@axis.com>
 
 	* cris/Makefile.in (stamp-v32fmloop): Depend on stamp-v10fmloop.

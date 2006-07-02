@@ -4034,129 +4034,47 @@ decode_dsp32shiftimm_0 (TIword iw0, TIword iw1, disassemble_info *outf)
   int HLs      = ((iw1 >> DSP32ShiftImm_HLs_bits) & DSP32ShiftImm_HLs_mask);
 
 
-  if (HLs == 0 && sop == 0 && sopcde == 0)
+  if (sop == 0 && sopcde == 0)
     {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, ">>>");
+      OUTS (outf, (HLs & 2) ? dregs_hi (dst0) : dregs_lo (dst0));
+      OUTS (outf, " = ");
+      OUTS (outf, (HLs & 1) ? dregs_hi (src1) : dregs_lo (src1));
+      OUTS (outf, " >>> ");
       OUTS (outf, uimm4 (newimmag));
     }
-  else if (HLs == 1 && sop == 0 && sopcde == 0)
+  else if (sop == 1 && sopcde == 0 && bit8 == 0)
     {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, ">>>");
+      OUTS (outf, (HLs & 2) ? dregs_hi (dst0) : dregs_lo (dst0));
+      OUTS (outf, " = ");
+      OUTS (outf, (HLs & 1) ? dregs_hi (src1) : dregs_lo (src1));
+      OUTS (outf, " << ");
+      OUTS (outf, uimm4 (immag));
+      OUTS (outf, " (S)");
+    }
+  else if (sop == 1 && sopcde == 0 && bit8 == 1)
+    {
+      OUTS (outf, (HLs & 2) ? dregs_hi (dst0) : dregs_lo (dst0));
+      OUTS (outf, " = ");
+      OUTS (outf, (HLs & 1) ? dregs_hi (src1) : dregs_lo (src1));
+      OUTS (outf, " >>> ");
       OUTS (outf, uimm4 (newimmag));
+      OUTS (outf, " (S)");
     }
-  else if (HLs == 2 && sop == 0 && sopcde == 0)
+  else if (sop == 2 && sopcde == 0 && bit8 == 0)
     {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, ">>>");
-      OUTS (outf, uimm4 (newimmag));
-    }
-  else if (HLs == 3 && sop == 0 && sopcde == 0)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, ">>>");
-      OUTS (outf, uimm4 (newimmag));
-    }
-  else if (HLs == 0 && sop == 1 && sopcde == 0)
-    {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, "<<");
-      OUTS (outf, uimm4 (immag));
-      OUTS (outf, "(S)");
-    }
-  else if (HLs == 1 && sop == 1 && sopcde == 0)
-    {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, "<<");
-      OUTS (outf, uimm4 (immag));
-      OUTS (outf, "(S)");
-    }
-  else if (HLs == 2 && sop == 1 && sopcde == 0)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, "<<");
-      OUTS (outf, uimm4 (immag));
-      OUTS (outf, "(S)");
-    }
-  else if (HLs == 3 && sop == 1 && sopcde == 0)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, "<<");
-      OUTS (outf, uimm4 (immag));
-      OUTS (outf, "(S)");
-    }
-  else if (HLs == 0 && sop == 2 && sopcde == 0 && bit8 == 0)
-    {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, "<<");
+      OUTS (outf, (HLs & 2) ? dregs_hi (dst0) : dregs_lo (dst0));
+      OUTS (outf, " = ");
+      OUTS (outf, (HLs & 1) ? dregs_hi (src1) : dregs_lo (src1));
+      OUTS (outf, " << ");
       OUTS (outf, uimm4 (immag));
     }
-  else if (HLs == 0 && sop == 2 && sopcde == 0 && bit8 == 1)
+  else if (sop == 2 && sopcde == 0 && bit8 == 1)
     {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, ">>");
+      OUTS (outf, (HLs & 2) ? dregs_hi (dst0) : dregs_lo (dst0));
+      OUTS (outf, " = ");
+      OUTS (outf, (HLs & 1) ? dregs_hi (src1) : dregs_lo (src1));
+      OUTS (outf, " >> ");
       OUTS (outf, uimm4 (newimmag));
-    }
-  else if (HLs == 1 && sop == 2 && sopcde == 0)
-    {
-      OUTS (outf, dregs_lo (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, ">>");
-      OUTS (outf, uimm4 (newimmag));
-    }
-  else if (HLs == 2 && sop == 2 && sopcde == 0 && bit8 == 1)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, ">>");
-      OUTS (outf, uimm4 (newimmag));
-    }
-  else if (HLs == 2 && sop == 2 && sopcde == 0 && bit8 == 0)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_lo (src1));
-      OUTS (outf, "<<");
-      OUTS (outf, uimm4 (immag));
-    }
-  else if (HLs == 3 && sop == 2 && sopcde == 0 && bit8 == 1)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, ">>");
-      OUTS (outf, uimm4 (newimmag));
-    }
-  else if (HLs == 3 && sop == 2 && sopcde == 0 && bit8 == 0)
-    {
-      OUTS (outf, dregs_hi (dst0));
-      OUTS (outf, "=");
-      OUTS (outf, dregs_hi (src1));
-      OUTS (outf, "<<");
-      OUTS (outf, uimm4 (immag));
     }
   else if (sop == 2 && sopcde == 3 && HLs == 1)
     {

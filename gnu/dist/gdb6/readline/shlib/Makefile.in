@@ -1,7 +1,7 @@
 ## -*- text -*- ##
 # Makefile for the GNU readline library shared library support.
 #
-# Copyright (C) 1998 Free Software Foundation, Inc.
+# Copyright (C) 1998-2003 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+
+PACKAGE = @PACKAGE_NAME@
+VERSION = @PACKAGE_VERSION@
+
+PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
+PACKAGE_NAME = @PACKAGE_NAME@
+PACKAGE_STRING = @PACKAGE_STRING@
+PACKAGE_VERSION = @PACKAGE_VERSION@
 
 RL_LIBRARY_VERSION = @LIBVERSION@
 RL_LIBRARY_NAME = readline
@@ -45,7 +53,10 @@ host_os = @host_os@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 includedir = @includedir@
+bindir = @bindir@
 libdir = @libdir@
+datadir = @datadir@
+localedir = $(datadir)/locale
 
 # Support an alternate destination root directory for package building
 DESTDIR =
@@ -55,7 +66,7 @@ LOCAL_CFLAGS = @LOCAL_CFLAGS@ -DRL_LIBRARY_VERSION='"$(RL_LIBRARY_VERSION)"'
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@ @LOCAL_LDFLAGS@ @CFLAGS@
 
-DEFS = @DEFS@
+DEFS = @DEFS@ @CROSS_COMPILE@
 LOCAL_DEFS = @LOCAL_DEFS@
 
 #
@@ -72,13 +83,19 @@ SHOBJ_LDFLAGS = @SHOBJ_LDFLAGS@
 SHOBJ_XLDFLAGS = @SHOBJ_XLDFLAGS@
 SHOBJ_LIBS = @SHOBJ_LIBS@
 
-SHLIB_XLDFLAGS = @SHLIB_XLDFLAGS@
+SHLIB_XLDFLAGS = @LDFLAGS@ @SHLIB_XLDFLAGS@
 SHLIB_LIBS = @SHLIB_LIBS@
+
+SHLIB_DOT = @SHLIB_DOT@
+SHLIB_LIBPREF = @SHLIB_LIBPREF@
 SHLIB_LIBSUFF = @SHLIB_LIBSUFF@
 
 SHLIB_LIBVERSION = @SHLIB_LIBVERSION@
+SHLIB_DLLVERSION = @SHLIB_DLLVERSION@
 
 SHLIB_STATUS = @SHLIB_STATUS@
+
+TERMCAP_LIB = @TERMCAP_LIB@
 
 # shared library versioning
 SHLIB_MAJOR=		@SHLIB_MAJOR@
@@ -99,8 +116,8 @@ CCFLAGS = $(DEFS) $(LOCAL_DEFS) $(CPPFLAGS) $(INCLUDES) $(LOCAL_CFLAGS) $(CFLAGS
 
 # The name of the main library target.
 
-SHARED_READLINE = libreadline.$(SHLIB_LIBVERSION)
-SHARED_HISTORY = libhistory.$(SHLIB_LIBVERSION)
+SHARED_READLINE = $(SHLIB_LIBPREF)readline$(SHLIB_DOT)$(SHLIB_LIBVERSION)
+SHARED_HISTORY = $(SHLIB_LIBPREF)history$(SHLIB_DOT)$(SHLIB_LIBVERSION)
 SHARED_LIBS = $(SHARED_READLINE) $(SHARED_HISTORY)
 
 WCWIDTH_OBJ = @WCWIDTH_OBJ@
@@ -117,7 +134,7 @@ CSOURCES = $(topdir)/readline.c $(topdir)/funmap.c $(topdir)/keymaps.c \
 	   $(topdir)/histfile.c $(topdir)/nls.c $(topdir)/search.c \
 	   $(topdir)/shell.c $(topdir)/savestring.c $(topdir)/tilde.c \
 	   $(topdir)/text.c $(topdir)/misc.c $(topdir)/compat.c \
-	   $(topdir)/mbutil.c $(WCWIDTH_SRC)
+	   $(topdir)/mbutil.c $(topdir)/support/wcwidth.c
 
 # The header files for this library.
 HSOURCES = readline.h rldefs.h chardefs.h keymaps.h history.h histlib.h \
@@ -170,13 +187,13 @@ installdirs: $(topdir)/support/mkdirs
 	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(libdir)
 
 install: installdirs $(SHLIB_STATUS)
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -i "$(INSTALL_DATA)" $(SHARED_HISTORY)
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -i "$(INSTALL_DATA)" $(SHARED_READLINE)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_HISTORY)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_READLINE)
 	@echo install: you may need to run ldconfig
 
 uninstall:
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -U $(SHARED_HISTORY)
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -U $(SHARED_READLINE)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_HISTORY)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_READLINE)
 	@echo uninstall: you may need to run ldconfig
 
 clean mostlyclean:	force
@@ -396,7 +413,7 @@ search.so: $(topdir)/search.c
 shell.so: $(topdir)/shell.c
 signals.so: $(topdir)/signals.c
 terminal.so: $(topdir)/terminal.c
-text.so: $(topdir)/terminal.c
+text.so: $(topdir)/text.c
 tilde.so: $(topdir)/tilde.c
 undo.so: $(topdir)/undo.c
 util.so: $(topdir)/util.c
@@ -430,7 +447,7 @@ search.so: search.c
 signals.so: signals.c
 shell.so: shell.c
 terminal.so: terminal.c
-text.so: terminal.c
+text.so: text.c
 tilde.so: tilde.c
 undo.so: undo.c
 util.so: util.c
