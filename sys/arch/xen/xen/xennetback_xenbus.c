@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.7 2006/06/25 19:46:52 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.8 2006/07/02 16:32:49 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -74,6 +74,9 @@
 
 #define NET_TX_RING_SIZE __RING_SIZE((netif_tx_sring_t *)0, PAGE_SIZE)  
 #define NET_RX_RING_SIZE __RING_SIZE((netif_rx_sring_t *)0, PAGE_SIZE)
+
+/* linux wants at last 16 bytes free in front of the packet */
+#define LINUX_REQUESTED_OFFSET 16
 
 /* hash list for TX requests */
 /* descriptor of a packet being handled by the kernel */
@@ -176,8 +179,8 @@ struct pool_cache xmit_pages_pool_cache;
 struct pool_cache *xmit_pages_pool_cachep;
 
 /* arrays used in xennetback_ifstart(), too large to allocate on stack */
-static mmu_update_t xstart_mmu[NB_XMIT_PAGES_BATCH + 1];
-static multicall_entry_t xstart_mcl[NB_XMIT_PAGES_BATCH];
+static mmu_update_t xstart_mmu[NB_XMIT_PAGES_BATCH];
+static multicall_entry_t xstart_mcl[NB_XMIT_PAGES_BATCH + 1];
 static gnttab_transfer_t xstart_gop[NB_XMIT_PAGES_BATCH];
 struct mbuf *mbufs_sent[NB_XMIT_PAGES_BATCH];
 struct _pages_pool_free {
@@ -330,8 +333,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
-	err = xenbus_write(NULL, xbusd->xbusd_path, "hotplug-status",
-	    "connected"); /* XXX userland daemon */
 	if (err) {
 		printf("failed to write %s/hotplug-status: %d\n",
 		    xbusd->xbusd_path, err);
@@ -906,8 +907,8 @@ xennetback_ifsoftstart(void *arg)
 				    "0x%x ma 0x%x\n", (u_int)xmit_va,
 				    (u_int)xmit_ma));
 				m_copydata(m, 0, m->m_pkthdr.len,
-				    (caddr_t)xmit_va);
-				offset = 0;
+				    (caddr_t)xmit_va + LINUX_REQUESTED_OFFSET);
+				offset = LINUX_REQUESTED_OFFSET;
 				pages_pool_free[nppitems].va = xmit_va;
 				pages_pool_free[nppitems].pa = xmit_pa;
 				nppitems++;
@@ -917,12 +918,14 @@ xennetback_ifsoftstart(void *arg)
 			    xneti->xni_rxring.req_cons)->gref;
 			id = RING_GET_REQUEST(&xneti->xni_rxring,
 			    xneti->xni_rxring.req_cons)->id;
+			x86_lfence();
 			xneti->xni_rxring.req_cons++;
 			rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
 			    resp_prod);
 			rxresp->id = id;
 			rxresp->offset = offset;
 			rxresp->status = m->m_pkthdr.len;
+			rxresp->flags = 0;
 			/*
 			 * transfers the page containing the packet to the
 			 * remote domain, and map newp in place.
@@ -942,9 +945,9 @@ xennetback_ifsoftstart(void *arg)
 			mmup++;
 
 			/* done with this packet */
-			resp_prod++;
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			mbufs_sent[i] = m;
+			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
 #if NBPFILTER > 0
@@ -975,9 +978,20 @@ xennetback_ifsoftstart(void *arg)
 				    ifp->if_xname);
 			}
 			for (j = 0; j < i + 1; j++) {
-				if (xstart_mcl[j].result != 0)
-					printf("%s: xstart_mcl[%d] failed (%lu)\n",
-					    ifp->if_xname, j, xstart_mcl[j].result);
+				if (xstart_mcl[j].result != 0) {
+					printf("%s: xstart_mcl[%d] "
+					    "failed (%lu)\n", ifp->if_xname,
+					    j, xstart_mcl[j].result);
+					printf("%s: req_prod %u req_cons "
+					    "%u rsp_prod %u rsp_prod_pvt %u "
+					    "i %u\n",
+					    ifp->if_xname,
+					    xneti->xni_rxring.sring->req_prod,
+					    xneti->xni_rxring.req_cons,
+					    xneti->xni_rxring.sring->rsp_prod,
+					    xneti->xni_rxring.rsp_prod_pvt,
+					    i);
+				}
 			}
 			if (HYPERVISOR_grant_table_op(GNTTABOP_transfer,
 			    xstart_gop, i) != 0) {
@@ -986,20 +1000,29 @@ xennetback_ifsoftstart(void *arg)
 			}
 
 			for (j = 0; j < i; j++) {
-				if (xstart_gop[j].status == GNTST_bad_page)
-					panic("%s: gop[%d] failed",
-					    ifp->if_xname, j);
-				rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
-				    xneti->xni_rxring.rsp_prod_pvt + j);
 				if (xstart_gop[j].status != 0) {
-					printf("GNTTABOP_transfer[%d] %d\n",
+					printf("%s GNTTABOP_transfer[%d] %d\n",
+					    ifp->if_xname,
 					    j, xstart_gop[j].status);
+					printf("%s: req_prod %u req_cons "
+					    "%u rsp_prod %u rsp_prod_pvt %u "
+					    "i %d\n",
+					    ifp->if_xname,
+					    xneti->xni_rxring.sring->req_prod,
+					    xneti->xni_rxring.req_cons,
+					    xneti->xni_rxring.sring->rsp_prod,
+					    xneti->xni_rxring.rsp_prod_pvt,
+					    i);
+					rxresp = RING_GET_RESPONSE(
+					    &xneti->xni_rxring,
+					    xneti->xni_rxring.rsp_prod_pvt + j);
 					rxresp->status = NETIF_RSP_ERROR;
 				}
-				rxresp->flags = 0;
 			}
 					
 			/* update pointer */
+			KASSERT(
+			    xneti->xni_rxring.rsp_prod_pvt + i == resp_prod);
 			xneti->xni_rxring.rsp_prod_pvt = resp_prod;
 			RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(
 			    &xneti->xni_rxring, j);
@@ -1037,10 +1060,13 @@ xennetback_ifsoftstart(void *arg)
 				break;
 			}
 		}
+		/*
+		 * note that we don't use RING_FINAL_CHECK_FOR_REQUESTS()
+		 * here, as the frontend doesn't notify when adding
+		 * requests anyway
+		 */
 		if (__predict_false(
-		    req_prod == xneti->xni_rxring.req_cons ||
-		    xneti->xni_rxring.req_cons - resp_prod == NET_RX_RING_SIZE
-		    )) {
+		    !RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_rxring))) {
 			/* ring full */
 			break;
 		}
