@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.26 2006/06/30 16:18:09 chap Exp $
+.\" $NetBSD: midi.4,v 1.27 2006/07/02 01:34:33 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,14 +58,16 @@ data stream, whether a physical
 or
 .Tn "MIDI OUT"
 jack on a soundcard, cabled to some external synthesizer or input controller,
-an on-board programmable tone generator, or a single jack, synthesizer or
+an on-board programmable tone generator, or a single jack, synthesizer, or
 controller component within a complex
 .Tn USB
 or
 .Tn IEEE1394
 .Tn MIDI
 device that has several
-such components and appears as several MIDI streams.
+such components and appears as several
+.Tn MIDI
+streams.
 .Ss Concepts
 One
 .Tn MIDI
@@ -75,44 +77,49 @@ messages, as could be carried over one
 .Tn MIDI
 cable in the
 .Tn "MIDI 1.0"
-specification. Many
+specification.
+Many
 .Tn MIDI
 messages
 carry a four-bit channel number, creating up to 16
 .Tn MIDI
 channels within a single
 .Tn MIDI
-stream. There may be multiple consumers of a
+stream.
+There may be multiple consumers of a
 .Tn MIDI
 stream, each configured
 to react only to messages on specific channels; the sets of channels different
-consumers react to need not be disjoint. Many modern devices such as
-multitimbral keyboards and tone generators listen on all 16 channels, or may be
-viewed as collections of 16 independent consumers each listening on one
-channel.
+consumers react to need not be disjoint.
+Many modern devices such as multitimbral keyboards and tone generators
+listen on all 16 channels, or may be viewed as collections of 16
+independent consumers each listening on one channel.
 .Tn MIDI
 defines some messages that take no channel number, and
 apply to all consumers of the
-stream on which they are sent. For an inbound stream,
+stream on which they are sent.
+For an inbound stream,
 .Nm
 is a promiscuous
-receiver, capturing all messages regardless of channel number. For an outbound
-stream, the writer can specify a channel number per message; there is no
-notion of binding the stream to one destination channel in advance.
+receiver, capturing all messages regardless of channel number.
+For an outbound stream, the writer can specify a channel number
+per message; there is no notion of binding the stream to one
+destination channel in advance.
 .Pp
 A single
 .Nm
 device instance is the endpoint of one outbound stream, one
-inbound stream, or one of each. In the third case, the write and read sides are
-independent
+inbound stream, or one of each.
+In the third case, the write and read sides are independent
 .Tn MIDI
-streams. For example, a soundcard driver may map its
+streams.
+For example, a soundcard driver may map its
 .Tn "MIDI OUT"
 and
 .Tn "MIDI IN"
 jacks to the write and read sides of a single device instance, but
-those jacks can be cabled to completely different pieces of gear. Information
-from
+those jacks can be cabled to completely different pieces of gear.
+Information from
 .Xr dmesg 8 ,
 and a diagram of any external
 .Tn MIDI
@@ -142,11 +149,11 @@ connections are currently science fiction.
 The
 .Tn MIDI
 protocol permits some forms of message compression such as running
-status and hidden note-off. Received messages on inbound streams are always
-canonicalized by
+status and hidden note-off.
+Received messages on inbound streams are always canonicalized by
 .Nm
-before presentation to higher layers. Messages for
-transmission are accepted by
+before presentation to higher layers.
+Messages for transmission are accepted by
 .Nm
 in any valid form.
 .Ss "Device access"
@@ -169,7 +176,8 @@ and the corresponding
 .Xr kevent 2
 filters,
 and may be opened
-only when it is not already open. It may be opened in
+only when it is not already open.
+It may be opened in
 .Dv O_RDONLY ,
 .Dv O_WRONLY ,
 or
@@ -178,7 +186,7 @@ mode, but a later
 .Xr read 2
 or
 .Xr write 2
-will return -1 if the device has no associated
+will return \-1 if the device has no associated
 input or output stream, respectively.
 .Pp
 Bytes written are passed as quickly as possible to the underlying driver
@@ -210,8 +218,8 @@ messages are the only ones of which some bytes can be delivered before
 all are available.
 .Pp
 System Realtime messages are passed with minimum delay in either direction,
-ahead of any possible buffered incomplete message. As a result, they will never
-interrupt any
+ahead of any possible buffered incomplete message.
+As a result, they will never interrupt any
 .Tn MIDI
 message except possibly System Exclusive.
 .Pp
@@ -219,14 +227,15 @@ A
 .Xr read 2
 with a buffer large enough to accommodate the first complete
 message available will be satisfied with as many complete messages as
-will fit. A buffer too small for the first complete
-message will be filled to capacity. Therefore, an application that reads
-from an
+will fit.
+A buffer too small for the first complete
+message will be filled to capacity.
+Therefore, an application that reads from an
 .Pa rmidi
 device with buffers of three bytes or larger need never parse
 across read boundaries to assemble a received message, except possibly in
-the case of a System Exclusive message. However, if the application reads
-through a buffering layer such as
+the case of a System Exclusive message.
+However, if the application reads through a buffering layer such as
 .Xr fread 3 ,
 this property will not be preserved.
 .Pp
@@ -243,7 +252,8 @@ Underlying devices may support others.
 The value returned for
 .Dv FIONREAD
 reflects the size in bytes of complete messages
-(or System Exclusive chunks) ready to read. If the
+(or System Exclusive chunks) ready to read.
+If the
 .Xr ioctl 2
 returns
 .Va n
@@ -258,7 +268,7 @@ bytes will be read, but if a
 of
 size
 .Va m
-\*(Lt
+\*[Lt]
 .Va n
 is issued, fewer than
 .Va m
@@ -270,15 +280,18 @@ on a message/chunk boundary.
 Raw
 .Tn MIDI
 access can be used to receive bulk dumps from synthesizers, download
-bulk data to them, and so on. Simple patching of one device to another can be
+bulk data to them, and so on.
+Simple patching of one device to another can be
 done at the command line, as with
-.Dl $ cat -u 0<>/dev/rmidi0 1>&0
+.Dl $ cat -u 0\*[Lt]\*[Gt]/dev/rmidi0 1\*[Gt]\*[Am]0
 which will loop all messages received on the input stream of
 .Pa rmidi0
 input stream  back to its output
-stream in real time. However, an attempt to record and play back music with
-.Dl $ cat /dev/rmidiN >foo; cat foo >/dev/rmidiN
-will be disappointing. The file
+stream in real time.
+However, an attempt to record and play back music with
+.Dl $ cat /dev/rmidiN \*[Gt]foo; cat foo \*[Gt]/dev/rmidiN
+will be disappointing.
+The file
 .Pa foo
 will contain all of the notes that were played, but because
 .Tn MIDI
@@ -286,24 +299,27 @@ messages carry
 no explicit timing, the
 .Sq "playback"
 will reproduce them all at once, as fast as
-they can be transmitted. To preserve timing information, the sequencer device
-can be used.
+they can be transmitted.
+To preserve timing information, the sequencer device can be used.
 .Ss "Active Sensing"
 The
 .Tn MIDI
-protocol includes a keepalive function called Active Sensing. In any
-receiver that has
+protocol includes a keepalive function called Active Sensing.
+In any receiver that has
 .Em not
 received at least one Active Sense
 .Tn MIDI
 message, the
-feature is suppressed and no timeout applies. If at least one such message has
+feature is suppressed and no timeout applies.
+If at least one such message has
 been received, the lapse of any subsequent 300 ms interval without receipt of
 any message reflects loss of communication, and the receiver should silence any
-currently sounding notes and return to non-Active-Sensing behavior. A sender
-using Active Sensing generally avoids 300 ms gaps in transmission by sending
-Active Sense messages (which have no other effect) as needed when there is no
-other traffic to send in the interval. This feature can be important for
+currently sounding notes and return to non-Active-Sensing behavior.
+A sender using Active Sensing generally avoids 300 ms gaps in
+transmission by sending Active Sense messages (which have no other
+effect) as needed when there is no other traffic to send in the
+interval.
+This feature can be important for
 .Tn MIDI ,
 which relies on separate Note On and Note Off messages, to avoid notes stuck on
 indefinitely if communication is interrupted before a Note Off
@@ -319,17 +335,19 @@ reading an
 .Pa rmidi
 device will see an end-of-file indication if the input timeout elapses.
 The stream remains open, the driver reverts to enforcing no timeout, and the
-process may continue to read for more input. Subsequent receipt of an
-Active Sense message will re-arm the timeout. As received Active Sense messages
-are handled by
+process may continue to read for more input.
+Subsequent receipt of an
+Active Sense message will re-arm the timeout.
+As received Active Sense messages are handled by
 .Nm ,
 they are not included among messages read from the
 .Pa /dev/rmidiN
 device.
 .Pp
 These rules support end-to-end Active Sensing behavior in simple cases
-without special action in an application. For example, in
-.Dl $ cat -u /dev/rmidi0 >/dev/rmidi1
+without special action in an application.
+For example, in
+.Dl $ cat -u /dev/rmidi0 \*[Gt]/dev/rmidi1
 if the input stream to
 .Pa rmidi0
 is lost, the
@@ -346,7 +364,8 @@ To play music using the raw
 .Tn MIDI
 .Tn API
 would require an application to
-issue many small writes with very precise timing. The sequencer device,
+issue many small writes with very precise timing.
+The sequencer device,
 .Pa /dev/music ,
 can manage the timing of
 .Tn MIDI
@@ -387,14 +406,16 @@ the reader of
 .Pa /dev/music .
 If a measurable time interval passed since the
 last preceding message, a timing event that represents a delay for that interval
-is queued ahead of the received event. The sequencer handles output events by
+is queued ahead of the received event.
+The sequencer handles output events by
 interpreting any timing event, and routing any
 .Tn MIDI
 message event at the proper time to
 an underlying output stream according to its
 .Va device
-index. Therefore
-.Dl $ cat /dev/music >foo; cat foo >/dev/music
+index.
+Therefore
+.Dl $ cat /dev/music \*[Gt]foo; cat foo \*[Gt]/dev/music
 can be expected to capture and reproduce an input performance including
 timing.
 .Pp
@@ -404,7 +425,8 @@ file is illustrated below.
 The file may contain several tracks\(emfour, in this example\(emof
 .Tn MIDI
 events, each marked with a device index and a time stamp, that may
-overlap in time. In the example,
+overlap in time.
+In the example,
 .Va a ,
 .Va b ,
 and
@@ -413,11 +435,11 @@ are device indices of
 the three output
 .Tn MIDI
 streams; the left-hand digit in each input event represents a
-.TN MIDI
+.Tn MIDI
 channel on the selected stream, and the right-hand digit represents
-a time for the event's occurrence. As illustrated, the input tracks are
-not firmly associated with output streams; any track may contain
-events for any stream.
+a time for the event's occurrence.
+As illustrated, the input tracks are not firmly associated with
+output streams; any track may contain events for any stream.
 .Bd -literal
      |      |     a2|4     |
    a0|3     |     c1|3   c0|3
@@ -463,8 +485,8 @@ events for any stream.
 .Pp
 A user process must merge the tracks into a single stream of sequencer
 .Tn MIDI
-and timing events in order by desired timing. The sequencer obeys
-the timing events and distributes the
+and timing events in order by desired timing.
+The sequencer obeys the timing events and distributes the
 .Tn MIDI
 events to the three destinations,
 in this case two external devices connected to a sound card
@@ -491,8 +513,8 @@ The delivery of a realtime message ahead of buffered bytes of an incomplete
 message may cause the realtime message to seem, in a saved byte stream, to have
 arrived up to 640 us earlier than it really did, at
 .Tn MIDI
-1.0 data rates. Higher
-data rates make the effect less significant.
+1.0 data rates.
+Higher data rates make the effect less significant.
 .Pp
 Another sequencer device,
 .Pa /dev/sequencer ,
@@ -500,19 +522,21 @@ is provided only for backward
 compatibility with an obsolete
 .Tn OSS
 interface in which some sequencer events
-were four-byte records. It is not further documented here, and the
+were four-byte records.
+It is not further documented here, and the
 .Pa /dev/music
 .Tn API
-should be used in new code. The
+should be used in new code.
+The
 .Pa /dev/sequencer
 emulation is implemented only for writing, and that might not be complete.
 .Sh IMPLEMENTATION NOTES
 Some hardware devices supporting
 .Nm
 lack transmit-ready interrupts, and some have the capability in
-hardware but currently lack driver support. They can be recognized by the
-annotation
-.Li "(cpu-intensive output)"
+hardware but currently lack driver support.
+They can be recognized by the annotation
+.Li "(CPU-intensive output)"
 in
 .Xr dmesg 8 .
 While suitable for music playback, they may have an objectionable impact on
@@ -544,7 +568,8 @@ While
 .Nm
 accepts messages for transmission in any valid mixture of compressed
 or canonical form, they are always presented to an underlying driver
-in the form it prefers. Drivers for simple
+in the form it prefers.
+Drivers for simple
 .Tn UART Ns -like
 devices
 register their preference for a compressed byte stream, while those like
@@ -552,7 +577,8 @@ register their preference for a compressed byte stream, while those like
 which uses a packet protocol, or
 .Sy midisyn ,
 which interprets complete
-messages, register for intact canonical messages. This design eliminates the
+messages, register for intact canonical messages.
+This design eliminates the
 need for compression and canonicalization logic from all layers above and below
 .Nm
 itself.
@@ -618,9 +644,10 @@ so sources written for OSS can be easily compiled.
 The sequencer blocks (or returns
 .Er EWOULDBLOCK )
 only when its buffer physically fills, which can represent an arbitrary
-latency because of buffered timing events. As a result, interrupting a
-process writing the sequencer may not interrupt music playback for a
-considerable time. The sequencer could enforce a reasonable latency bound
+latency because of buffered timing events.
+As a result, interrupting a process writing the sequencer may not
+interrupt music playback for a considerable time.
+The sequencer could enforce a reasonable latency bound
 by examining timing events as they are enqueued and blocking appropriately.
 .Pp
 .Dv FIOASYNC
@@ -631,10 +658,10 @@ is not supported.
 The sequencer can only be a timing master, but does not send timing messages
 to synchronize any slave device; it cannot be slaved to timing messages
 received on any interface (which would presumably require a PLL algorithm
-similar to NTP's, and expertise in that area to implement it). The sequencer
-ignores timing messages received on any interface and does not pass them along
-to the reading process, and the OSS operations to change that behavior are
-unimplemented.
+similar to NTP's, and expertise in that area to implement it).
+The sequencer ignores timing messages received on any interface
+and does not pass them along to the reading process, and the OSS
+operations to change that behavior are unimplemented.
 .Pp
 The
 .Dv SEQUENCER_TMR_TIMEBASE
@@ -666,15 +693,16 @@ otherwise.
 There is at present no way to make reception nonpromiscuous,
 should anyone have a reason to want to.
 .Pp
-There should be ways to override default Active Sense behavior. As one obvious
+There should be ways to override default Active Sense behavior.
+As one obvious
 case, if an application is seen to send Active Sense explicitly,
 .Nm
 should refrain
-from adding its own. On receive, there should be an option to pass Active
-Sense through
+from adding its own.
+On receive, there should be an option to pass Active Sense through
 rather than interpreting it, for apps that wish to handle or ignore it
 themselves and never see
-.Tn EOF.
+.Dv EOF .
 .Pp
 When a
 .Nm
@@ -696,7 +724,9 @@ OSS-defined sequencer events.
 is too rudimentary at present to get satisfactory results from any
 onboard synth.
 It lacks the required special interpretation of the
-General MIDI percussion channel in GM mode.
+General
+.Tn MIDI
+percussion channel in GM mode.
 More devices should be supported; some sound cards with synthesis
 capability have
 .Nx
@@ -705,20 +735,25 @@ drivers that implement the
 but not the
 .Sy midisyn
 interface.
-Voice stealing algorithm does not follow the General MIDI Developer Guidelines.
+Voice stealing algorithm does not follow the General
+.Tn MIDI
+Developer Guidelines.
 .Pp
 .Tn ALSA
 sequencer compatibility is lacking, but becoming important to applications.
 It would require the function of merging multiple tracks into a single ordered
-stream to be moved from user space into the sequencer. Assuming the
-sequencer driven by periodic interrupts, timing wheels could be used
-as in
+stream to be moved from user space into the sequencer.
+Assuming the sequencer driven by periodic interrupts, timing wheels
+could be used as in
 .Xr hardclock 9
-itself. Similar functionality will be in OSS4; with the right infrastructure
-it should be possible to support both. When merging
+itself.
+Similar functionality will be in OSS4; with the right infrastructure
+it should be possible to support both.
+When merging
 .Tn MIDI
 streams, a notion of transaction
-is needed to group critical message sequences. If
+is needed to group critical message sequences.
+If
 .Tn ALSA
 or
 .Tn OSS4
@@ -736,7 +771,7 @@ succeed and
 .Xr read 2
 or
 .Xr write 2
-return -1, but so help me, the latter seems
+return \-1, but so help me, the latter seems
 the more common
 .Ux
 practice.
