@@ -593,9 +593,8 @@ else
   # remove duplicates
   sim_hw=""
   sim_hw_objs="\$(SIM_COMMON_HW_OBJS)"
-  for i in x $hardware ; do
-    case " $f " in
-      x) ;;
+  for i in $hardware ; do
+    case " $sim_hw " in
       *" $i "*) ;;
       *) sim_hw="$sim_hw $i" ; sim_hw_objs="$sim_hw_objs dv-$i.o";;
     esac

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -294,6 +294,11 @@ union sem_fields {
     UINT f_operand2;
   } sfmt_bcc_b;
   struct { /*  */
+    UINT f_memmode;
+    unsigned char in_h_gr_SI_14;
+    unsigned char out_h_gr_SI_14;
+  } sfmt_move_m_spplus_p8;
+  struct { /*  */
     INT f_s8;
     UINT f_operand2;
     unsigned char in_Rd;
@@ -302,17 +307,12 @@ union sem_fields {
     INT f_indir_pc__dword;
     UINT f_operand2;
     unsigned char out_Pd;
-  } sfmt_move_c_sprv10_p8;
+  } sfmt_move_c_sprv10_p9;
   struct { /*  */
     INT f_indir_pc__word;
     UINT f_operand2;
     unsigned char out_Pd;
-  } sfmt_move_c_sprv10_p4;
-  struct { /*  */
-    INT f_indir_pc__byte;
-    UINT f_operand2;
-    unsigned char out_Pd;
-  } sfmt_move_c_sprv10_p0;
+  } sfmt_move_c_sprv10_p5;
   struct { /*  */
     INT f_s6;
     UINT f_operand2;
@@ -604,9 +604,9 @@ struct scache {
   unsigned int length;
 #define EXTRACT_IFMT_MOVECBR_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__byte = (0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)); \
+  f_indir_pc__byte = (0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
@@ -624,9 +624,9 @@ struct scache {
   unsigned int length;
 #define EXTRACT_IFMT_MOVECWR_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__word = (0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)); \
+  f_indir_pc__word = (0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
@@ -664,9 +664,9 @@ struct scache {
   unsigned int length;
 #define EXTRACT_IFMT_MOVUCBR_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__byte = (0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)); \
+  f_indir_pc__byte = (0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
@@ -684,9 +684,9 @@ struct scache {
   unsigned int length;
 #define EXTRACT_IFMT_MOVUCWR_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__word = (0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)); \
+  f_indir_pc__word = (0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
@@ -784,27 +784,7 @@ struct scache {
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
   f_operand1 = EXTRACT_LSB0_UINT (insn, 16, 3, 4); \
 
-#define EXTRACT_IFMT_MOVE_C_SPRV10_P0_VARS \
-  UINT f_operand2; \
-  INT f_indir_pc__byte; \
-  UINT f_mode; \
-  UINT f_opcode; \
-  UINT f_size; \
-  UINT f_operand1; \
-  /* Contents of trailing part of insn.  */ \
-  UINT word_1; \
-  unsigned int length;
-#define EXTRACT_IFMT_MOVE_C_SPRV10_P0_CODE \
-  length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
-  f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__byte = (0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)); \
-  f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
-  f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
-  f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
-  f_operand1 = EXTRACT_LSB0_UINT (insn, 16, 3, 4); \
-
-#define EXTRACT_IFMT_MOVE_C_SPRV10_P4_VARS \
+#define EXTRACT_IFMT_MOVE_C_SPRV10_P5_VARS \
   UINT f_operand2; \
   INT f_indir_pc__word; \
   UINT f_mode; \
@@ -814,17 +794,17 @@ struct scache {
   /* Contents of trailing part of insn.  */ \
   UINT word_1; \
   unsigned int length;
-#define EXTRACT_IFMT_MOVE_C_SPRV10_P4_CODE \
+#define EXTRACT_IFMT_MOVE_C_SPRV10_P5_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__word = (0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)); \
+  f_indir_pc__word = (0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
   f_operand1 = EXTRACT_LSB0_UINT (insn, 16, 3, 4); \
 
-#define EXTRACT_IFMT_MOVE_C_SPRV10_P8_VARS \
+#define EXTRACT_IFMT_MOVE_C_SPRV10_P9_VARS \
   INT f_indir_pc__dword; \
   UINT f_operand2; \
   UINT f_mode; \
@@ -834,7 +814,7 @@ struct scache {
   /* Contents of trailing part of insn.  */ \
   UINT word_1; \
   unsigned int length;
-#define EXTRACT_IFMT_MOVE_C_SPRV10_P8_CODE \
+#define EXTRACT_IFMT_MOVE_C_SPRV10_P9_CODE \
   length = 6; \
   word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_indir_pc__dword = (0|(EXTRACT_LSB0_UINT (word_1, 32, 31, 32) << 0)); \
@@ -983,9 +963,9 @@ struct scache {
   unsigned int length;
 #define EXTRACT_IFMT_BCC_W_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__word_pcrel = ((EXTHISI (((HI) (UINT) ((0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)))))) + (((pc) + (((GET_H_V32_NON_V32 ()) ? (0) : (4)))))); \
+  f_indir_pc__word_pcrel = ((EXTHISI (((HI) (UINT) ((0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)))))) + (((pc) + (((GET_H_V32_NON_V32 ()) ? (0) : (4)))))); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \
@@ -1003,9 +983,9 @@ struct scache {
   unsigned int length;
 #define EXTRACT_IFMT_BA_W_CODE \
   length = 4; \
-  word_1 = GETIMEMUHI (current_cpu, pc + 2); \
+  word_1 = GETIMEMUSI (current_cpu, pc + 2); \
   f_operand2 = EXTRACT_LSB0_UINT (insn, 16, 15, 4); \
-  f_indir_pc__word_pcrel = ((EXTHISI (((HI) (UINT) ((0|(EXTRACT_LSB0_UINT (word_1, 16, 15, 16) << 0)))))) + (((pc) + (((GET_H_V32_NON_V32 ()) ? (0) : (4)))))); \
+  f_indir_pc__word_pcrel = ((EXTHISI (((HI) (UINT) ((0|(EXTRACT_LSB0_UINT (word_1, 32, 15, 16) << 0)))))) + (((pc) + (((GET_H_V32_NON_V32 ()) ? (0) : (4)))))); \
   f_mode = EXTRACT_LSB0_UINT (insn, 16, 11, 2); \
   f_opcode = EXTRACT_LSB0_UINT (insn, 16, 9, 4); \
   f_size = EXTRACT_LSB0_UINT (insn, 16, 5, 2); \

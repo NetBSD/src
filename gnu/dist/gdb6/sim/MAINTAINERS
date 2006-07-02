@@ -15,9 +15,13 @@ igen		(igen simulators)
 ppc		Andrew Cagney <ac131313@redhat.com>
 m68hc11		Stephane Carrez <stcarrez@nerim.fr>
 sh		(global maintainers)
+m32c		DJ Delorie <dj@redhat.com>
 common		Ben Elliston <bje@gnu.org>
 common		Frank Ch. Eigler <fche@redhat.com>
 *		(target, then global maintainers)
+
+	Authorized committers for particular sims:
+v850		DJ Delorie <dj@redhat.com>
 
 	Past sim maintainers:
 

@@ -77,7 +77,7 @@ sim_signal_to_host (SIM_DESC sd, SIM_SIGNAL sig)
       break;
 
     case SIM_SIGFPE:
-#ifdef SIGXCPU
+#ifdef SIGFPE
       return SIGFPE;
 #endif
       break;
@@ -93,4 +93,43 @@ sim_signal_to_host (SIM_DESC sd, SIM_SIGNAL sig)
 #else
   return 1;
 #endif
+}
+
+enum target_signal 
+sim_signal_to_target (SIM_DESC sd, SIM_SIGNAL sig)
+{
+  switch (sig)
+    {
+    case SIM_SIGINT :
+      return TARGET_SIGNAL_INT;
+
+    case SIM_SIGABRT :
+      return TARGET_SIGNAL_ABRT;
+
+    case SIM_SIGILL :
+      return TARGET_SIGNAL_ILL;
+
+    case SIM_SIGTRAP :
+      return TARGET_SIGNAL_TRAP;
+
+    case SIM_SIGBUS :
+      return TARGET_SIGNAL_BUS;
+
+    case SIM_SIGSEGV :
+      return TARGET_SIGNAL_SEGV;
+
+    case SIM_SIGXCPU :
+      return TARGET_SIGNAL_XCPU;
+
+    case SIM_SIGFPE:
+      return TARGET_SIGNAL_FPE;
+      break;
+
+    case SIM_SIGNONE:
+      return TARGET_SIGNAL_0;
+      break;
+    }
+
+  sim_io_eprintf (sd, "sim_signal_to_host: unknown signal: %d\n", sig);
+  return TARGET_SIGNAL_HUP;
 }

@@ -504,6 +504,24 @@ parse_imm3_S (CGEN_CPU_DESC cd, const char **strp,
 }
 
 static const char *
+parse_bit3_S (CGEN_CPU_DESC cd, const char **strp,
+	     int opindex, signed long *valuep)
+{
+  const char *errmsg = 0;
+  signed long value;
+  
+  errmsg = cgen_parse_signed_integer (cd, strp, opindex, & value);
+  if (errmsg)
+    return errmsg;
+
+  if (value < 0 || value > 7)
+    return _("immediate is out of range 0-7");
+
+  *valuep = value;
+  return 0;
+}
+
+static const char *
 parse_lab_5_3 (CGEN_CPU_DESC cd,
 	       const char **strp,
 	       int opindex ATTRIBUTE_UNUSED,
@@ -560,13 +578,14 @@ parse_Bitno16R (CGEN_CPU_DESC cd, const char **strp,
 static const char *
 parse_unsigned_bitbase (CGEN_CPU_DESC cd, const char **strp,
 			int opindex, unsigned long *valuep,
-			unsigned bits)
+			unsigned bits, int allow_syms)
 {
   const char *errmsg = 0;
   unsigned long bit;
   unsigned long base;
   const char *newp = *strp;
   unsigned long long bitbase;
+  long have_zero = 0;
 
   errmsg = cgen_parse_unsigned_integer (cd, & newp, opindex, & bit);
   if (errmsg)
@@ -576,6 +595,11 @@ parse_unsigned_bitbase (CGEN_CPU_DESC cd, const char **strp,
     return "Missing base for bit,base:8";
 
   ++newp;
+
+  if (strncmp (newp, "0x0", 3) == 0 
+      || (newp[0] == '0' && newp[1] != 'x'))
+    have_zero = 1;
+
   errmsg = cgen_parse_unsigned_integer (cd, & newp, opindex, & base);
   if (errmsg)
     return errmsg;
@@ -585,6 +609,21 @@ parse_unsigned_bitbase (CGEN_CPU_DESC cd, const char **strp,
   if (bitbase >= (1ull << bits))
     return _("bit,base is out of range");
 
+  /* If this field may require a relocation then use larger displacement.  */
+  if (! have_zero && base == 0)
+    {
+      switch (allow_syms) {
+      case 0:
+	return _("bit,base out of range for symbol");
+      case 1:
+	break;
+      case 2:
+	if (strncmp (newp, "[sb]", 4) != 0)
+	  return _("bit,base out of range for symbol");
+	break;
+      }
+    }
+
   *valuep = bitbase;
   *strp = newp;
   return 0;
@@ -593,7 +632,7 @@ parse_unsigned_bitbase (CGEN_CPU_DESC cd, const char **strp,
 static const char *
 parse_signed_bitbase (CGEN_CPU_DESC cd, const char **strp,
 		      int opindex, signed long *valuep,
-		      unsigned bits)
+		      unsigned bits, int allow_syms)
 {
   const char *errmsg = 0;
   unsigned long bit;
@@ -601,6 +640,7 @@ parse_signed_bitbase (CGEN_CPU_DESC cd, const char **strp,
   const char *newp = *strp;
   long long bitbase;
   long long limit;
+  long have_zero = 0;
 
   errmsg = cgen_parse_unsigned_integer (cd, & newp, opindex, & bit);
   if (errmsg)
@@ -610,6 +650,11 @@ parse_signed_bitbase (CGEN_CPU_DESC cd, const char **strp,
     return "Missing base for bit,base:8";
 
   ++newp;
+
+  if (strncmp (newp, "0x0", 3) == 0 
+      || (newp[0] == '0' && newp[1] != 'x'))
+    have_zero = 1;
+
   errmsg = cgen_parse_signed_integer (cd, & newp, opindex, & base);
   if (errmsg)
     return errmsg;
@@ -620,6 +665,10 @@ parse_signed_bitbase (CGEN_CPU_DESC cd, const char **strp,
   if (bitbase < -limit || bitbase >= limit)
     return _("bit,base is out of range");
 
+  /* If this field may require a relocation then use larger displacement.  */
+  if (! have_zero && base == 0 && ! allow_syms)
+    return _("bit,base out of range for symbol");
+
   *valuep = bitbase;
   *strp = newp;
   return 0;
@@ -629,56 +678,56 @@ static const char *
 parse_unsigned_bitbase8 (CGEN_CPU_DESC cd, const char **strp,
 			 int opindex, unsigned long *valuep)
 {
-  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 8);
+  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 8, 0);
 }
 
 static const char *
 parse_unsigned_bitbase11 (CGEN_CPU_DESC cd, const char **strp,
 			 int opindex, unsigned long *valuep)
 {
-  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 11);
+  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 11, 0);
 }
 
 static const char *
 parse_unsigned_bitbase16 (CGEN_CPU_DESC cd, const char **strp,
 			  int opindex, unsigned long *valuep)
 {
-  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 16);
+  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 16, 1);
 }
 
 static const char *
 parse_unsigned_bitbase19 (CGEN_CPU_DESC cd, const char **strp,
 			 int opindex, unsigned long *valuep)
 {
-  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 19);
+  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 19, 2);
 }
 
 static const char *
 parse_unsigned_bitbase27 (CGEN_CPU_DESC cd, const char **strp,
 			 int opindex, unsigned long *valuep)
 {
-  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 27);
+  return parse_unsigned_bitbase (cd, strp, opindex, valuep, 27, 1);
 }
 
 static const char *
 parse_signed_bitbase8 (CGEN_CPU_DESC cd, const char **strp,
 		       int opindex, signed long *valuep)
 {
-  return parse_signed_bitbase (cd, strp, opindex, valuep, 8);
+  return parse_signed_bitbase (cd, strp, opindex, valuep, 8, 1);
 }
 
 static const char *
 parse_signed_bitbase11 (CGEN_CPU_DESC cd, const char **strp,
 		       int opindex, signed long *valuep)
 {
-  return parse_signed_bitbase (cd, strp, opindex, valuep, 11);
+  return parse_signed_bitbase (cd, strp, opindex, valuep, 11, 0);
 }
 
 static const char *
 parse_signed_bitbase19 (CGEN_CPU_DESC cd, const char **strp,
 		       int opindex, signed long *valuep)
 {
-  return parse_signed_bitbase (cd, strp, opindex, valuep, 19);
+  return parse_signed_bitbase (cd, strp, opindex, valuep, 19, 1);
 }
 
 /* Parse the suffix as :<char> or as nothing followed by a whitespace.  */
@@ -932,6 +981,9 @@ m32c_cgen_parse_operand (CGEN_CPU_DESC cd,
       break;
     case M32C_OPERAND_BIT16RN :
       errmsg = cgen_parse_keyword (cd, strp, & m32c_cgen_opval_h_gr_HI, & fields->f_dst16_rn);
+      break;
+    case M32C_OPERAND_BIT3_S :
+      errmsg = parse_bit3_S (cd, strp, M32C_OPERAND_BIT3_S, (long *) (& fields->f_imm3_S));
       break;
     case M32C_OPERAND_BIT32ANPREFIXED :
       errmsg = cgen_parse_keyword (cd, strp, & m32c_cgen_opval_h_ar, & fields->f_dst32_an_prefixed);

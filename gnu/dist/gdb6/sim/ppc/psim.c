@@ -50,7 +50,7 @@
 
 #include "bfd.h"
 #include "libiberty.h"
-
+#include "gdb/signals.h"
 
 /* system structure, actual size of processor array determined at
    runtime */
@@ -572,7 +572,7 @@ cntrl_c_simulation(void *data)
   psim_halt(system,
 	    psim_nr_cpus(system),
 	    was_continuing,
-	    SIGINT);
+	    TARGET_SIGNAL_INT);
 }
 
 INLINE_PSIM\

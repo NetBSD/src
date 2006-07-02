@@ -21,6 +21,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef SIM_SIGNAL_H
 #define SIM_SIGNAL_H
 
+#include "gdb/signals.h"
+
 /* Signals we use.
    This provides a layer between our values and host/target values.  */
 
@@ -45,5 +47,6 @@ typedef enum {
 } SIM_SIGNAL;
 
 int sim_signal_to_host (SIM_DESC sd, SIM_SIGNAL);
+enum target_signal sim_signal_to_target (SIM_DESC sd, SIM_SIGNAL);
 
 #endif /* SIM_SIGNAL_H */

@@ -1,3 +1,9 @@
+2005-12-14  Chao-ying Fu  <fu@mips.com>
+
+	* basic.exp: Run the dsp test.
+	* utils-dsp.inc: New file.
+	* mips32-dsp.s: New test.
+
 2004-04-11  Chris Demetriou  <cgd@broadcom.com>
 
 	* utils-fpu.inc (enable_fpu, ckm_fp_cc): New macros.

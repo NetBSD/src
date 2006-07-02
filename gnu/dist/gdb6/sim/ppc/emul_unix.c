@@ -730,7 +730,11 @@ do_unix_mkdir(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx [%s], 0%3o", (long)path_addr, path, mode);
 
+#ifdef USE_WIN32API
+  status = mkdir(path);
+#else
   status = mkdir(path, mode);
+#endif
   emul_write_status(processor, status, errno);
 }
 #endif
@@ -947,6 +951,7 @@ emul_unix_create(device *root,
   int elf_binary;
   os_emul_data *data;
   device *vm;
+  char *filename;
 
   /* merge any emulation specific entries into the device tree */
 
@@ -975,8 +980,10 @@ emul_unix_create(device *root,
 	     (unsigned long)(top_of_stack - stack_size));
   tree_parse(vm, "./nr-bytes 0x%x", stack_size);
 
+  filename = tree_quote_property (bfd_get_filename(image));
   tree_parse(root, "/openprom/vm/map-binary/file-name %s",
-	     bfd_get_filename(image));
+	     filename);
+  free (filename);
 
   /* finish the init */
   tree_parse(root, "/openprom/init/register/pc 0x%lx",

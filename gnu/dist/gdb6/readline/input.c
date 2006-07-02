@@ -1,6 +1,6 @@
 /* input.c -- character input functions for readline. */
 
-/* Copyright (C) 1994 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2005 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library, a library for
    reading lines of text with interactive input and history editing.
@@ -20,6 +20,10 @@
    have a copy of the license, write to the Free Software Foundation,
    59 Temple Place, Suite 330, Boston, MA 02111 USA. */
 #define READLINE_LIBRARY
+
+#if defined (__TANDEM)
+#  include <floss.h>
+#endif
 
 #if defined (HAVE_CONFIG_H)
 #  include <config.h>
@@ -154,6 +158,12 @@ _rl_unget_char (key)
   return (0);
 }
 
+int
+_rl_pushed_input_available ()
+{
+  return (push_index != pop_index);
+}
+
 /* If a character is available to be read, then read it and stuff it into
    IBUFFER.  Otherwise, just return.  Returns number of characters read
    (0 if none available) and -1 on error (EIO). */
@@ -162,7 +172,7 @@ rl_gather_tyi ()
 {
   int tty;
   register int tem, result;
-  int chars_avail;
+  int chars_avail, k;
   char input;
 #if defined(HAVE_SELECT)
   fd_set readfds, exceptfds;
@@ -202,8 +212,23 @@ rl_gather_tyi ()
       fcntl (tty, F_SETFL, tem);
       if (chars_avail == -1 && errno == EAGAIN)
 	return 0;
+      if (chars_avail == 0)	/* EOF */
+	{
+	  rl_stuff_char (EOF);
+	  return (0);
+	}
     }
 #endif /* O_NDELAY */
+
+#if defined (__MINGW32__)
+  /* We use getch to read console input, so use the same
+     mechanism to check for more.  Otherwise, we don't know.  */
+  if (isatty (fileno (rl_instream)))
+    chars_avail = _kbhit ();
+  else
+    chars_avail = 0;
+  result = 0;
+#endif
 
   /* If there's nothing available, don't waste time trying to read
      something. */
@@ -225,7 +250,12 @@ rl_gather_tyi ()
   if (result != -1)
     {
       while (chars_avail--)
-	rl_stuff_char ((*rl_getc_function) (rl_instream));
+	{
+	  k = (*rl_getc_function) (rl_instream);
+	  rl_stuff_char (k);
+	  if (k == NEWLINE || k == RETURN)
+	    break;
+	}
     }
   else
     {
@@ -283,6 +313,13 @@ _rl_input_available ()
     return (chars_avail);
 #endif
 
+#endif
+
+#if defined (__MINGW32__)
+  /* We use getch to read console input, so use the same
+     mechanism to check for more.  Otherwise, we don't know.  */
+  if (isatty (fileno (rl_instream)))
+    return _kbhit ();
 #endif
 
   return 0;
@@ -424,12 +461,9 @@ rl_getc (stream)
 
   while (1)
     {
-#ifdef __MINGW32__
-      /* On Windows, use a special routine to read a single  character
-	 from the console.  (Otherwise, no characters are available
-	 until the user hits the return key.)  */
+#if defined (__MINGW32__)
       if (isatty (fileno (stream)))
-	return getch ();
+	return (getch ());
 #endif
       result = read (fileno (stream), &c, sizeof (unsigned char));
 
@@ -506,6 +540,12 @@ _rl_read_mbchar (mbchar, size)
 	  ps = ps_back;
 	  continue;
 	} 
+      else if (mbchar_bytes_length == 0)
+	{
+	  mbchar[0] = '\0';	/* null wide character */
+	  mb_len = 1;
+	  break;
+	}
       else if (mbchar_bytes_length > (size_t)(0))
 	break;
     }

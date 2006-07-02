@@ -43,9 +43,9 @@
 #endif /* HAVE_STDLIB_H */
 
 #include <sys/types.h>
-#ifdef HAVE_PWD_H
+#if defined (HAVE_PWD_H)
 #include <pwd.h>
-#endif /* HAVE_PWD_H */
+#endif
 
 #include "tilde.h"
 
@@ -55,10 +55,14 @@ static void *xmalloc (), *xrealloc ();
 #  include "xmalloc.h"
 #endif /* TEST || STATIC_MALLOC */
 
-#if defined (HAVE_GETPWNAM) && !defined (HAVE_GETPW_DECLS)
+#if !defined (HAVE_GETPW_DECLS)
+#  if defined (HAVE_GETPWUID)
 extern struct passwd *getpwuid PARAMS((uid_t));
+#  endif
+#  if defined (HAVE_GETPWNAM)
 extern struct passwd *getpwnam PARAMS((const char *));
-#endif /* defined (HAVE_GETPWNAM) && !HAVE_GETPW_DECLS */
+#  endif
+#endif /* !HAVE_GETPW_DECLS */
 
 #if !defined (savestring)
 #define savestring(x) strcpy ((char *)xmalloc (1 + strlen (x)), (x))
@@ -279,6 +283,39 @@ isolate_tilde_prefix (fname, lenp)
   return ret;
 }
 
+#if 0
+/* Public function to scan a string (FNAME) beginning with a tilde and find
+   the portion of the string that should be passed to the tilde expansion
+   function.  Right now, it just calls tilde_find_suffix and allocates new
+   memory, but it can be expanded to do different things later. */
+char *
+tilde_find_word (fname, flags, lenp)
+     const char *fname;
+     int flags, *lenp;
+{
+  int x;
+  char *r;
+
+  x = tilde_find_suffix (fname);
+  if (x == 0)
+    {
+      r = savestring (fname);
+      if (lenp)
+	*lenp = 0;
+    }
+  else
+    {
+      r = (char *)xmalloc (1 + x);
+      strncpy (r, fname, x);
+      r[x] = '\0';
+      if (lenp)
+	*lenp = x;
+    }
+
+  return r;
+}
+#endif
+
 /* Return a string that is PREFIX concatenated with SUFFIX starting at
    SUFFIND. */
 static char *
@@ -349,8 +386,11 @@ tilde_expand_word (filename)
   /* No preexpansion hook, or the preexpansion hook failed.  Look in the
      password database. */
   dirname = (char *)NULL;
-#ifdef HAVE_GETPWNAM
+#if defined (HAVE_GETPWNAM)
   user_entry = getpwnam (username);
+#else
+  user_entry = 0;
+#endif
   if (user_entry == 0)
     {
       /* If the calling program has a special syntax for expanding tildes,
@@ -370,12 +410,12 @@ tilde_expand_word (filename)
       if (dirname == 0)
 	dirname = savestring (filename);
     }
+#if defined (HAVE_GETPWENT)
   else
     {
       free (username);
       dirname = glue_prefix_and_suffix (user_entry->pw_dir, filename, user_len);
     }
-
   endpwent ();
 #endif
   return (dirname);

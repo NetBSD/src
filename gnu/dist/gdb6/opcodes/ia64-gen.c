@@ -1,5 +1,5 @@
 /* ia64-gen.c -- Generate a shrunk set of opcode tables
-   Copyright 1999, 2000, 2001, 2002, 2004, 2005
+   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2006
    Free Software Foundation, Inc.
    Written by Bob Manson, Cygnus Solutions, <manson@cygnus.com>
 
@@ -53,6 +53,15 @@
 
 #include <libintl.h>
 #define _(String) gettext (String)
+
+/* This is a copy of fprintf_vma from bfd/bfd-in2.h.  We have to use this
+   always, because we might be compiled without BFD64 defined, if configured
+   for a 32-bit target and --enable-targets=all is used.  This will work for
+   both 32-bit and 64-bit hosts.  */
+#define _opcode_int64_low(x) ((unsigned long) (((x) & 0xffffffff)))
+#define _opcode_int64_high(x) ((unsigned long) (((x) >> 32) & 0xffffffff))
+#define opcode_fprintf_vma(s,x) \
+  fprintf ((s), "%08lx%08lx", _opcode_int64_high (x), _opcode_int64_low (x))
 
 const char * program_name = NULL;
 int debug = 0;
@@ -1400,6 +1409,8 @@ lookup_regindex (const char *name, int specifier)
         return 44;
       else if (strstr (name, ".ia"))
         return 45;
+      else if (strstr (name, ".vm"))
+        return 46;
       else
         abort ();
     default:
@@ -1560,7 +1571,20 @@ print_dependency_table ()
               rdeps[i]->name, specifier,
               (int)rdeps[i]->mode, (int)rdeps[i]->semantics, regindex);
       if (rdeps[i]->semantics == IA64_DVS_OTHER)
-        printf ("\"%s\", ", rdeps[i]->extra);
+	{
+	  const char *quote, *rest;
+
+	  putchar ('\"');
+	  rest = rdeps[i]->extra;
+	  quote = strchr (rest, '\"');
+	  while (quote != NULL)
+	    {
+	      printf ("%.*s\\\"", (int) (quote - rest), rest);
+	      rest = quote + 1;
+	      quote = strchr (rest, '\"');
+	    }
+	  printf ("%s\", ", rest);
+	}
       else
 	printf ("NULL, ");
       printf("},\n");
@@ -2701,9 +2725,9 @@ print_main_table (void)
 	      ptr->name->num,
 	      ptr->opcode->type,
 	      ptr->opcode->num_outputs);
-      fprintf_vma (stdout, ptr->opcode->opcode);
+      opcode_fprintf_vma (stdout, ptr->opcode->opcode);
       printf ("ull, 0x");
-      fprintf_vma (stdout, ptr->opcode->mask);
+      opcode_fprintf_vma (stdout, ptr->opcode->mask);
       printf ("ull, { %d, %d, %d, %d, %d }, 0x%x, %d, },\n",
 	      ptr->opcode->operands[0],
 	      ptr->opcode->operands[1],
