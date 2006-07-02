@@ -1,6 +1,7 @@
-# Support for NetBSD PowerPC64 ELF targets (SVR4 ABI).
+# Support for NetBSD PowerPC64 ELF targets (ELF64 ABI).
 
-LIB2FUNCS_EXTRA = tramp.S $(srcdir)/config/rs6000/ppc64-fp.c \
+LIB2FUNCS_EXTRA = $(srcdir)/config/rs6000/tramp.asm \
+	$(srcdir)/config/rs6000/ppc64-fp.c \
 	$(srcdir)/config/rs6000/darwin-ldouble.c
 
 TARGET_LIBGCC2_CFLAGS += -mno-minimal-toc
