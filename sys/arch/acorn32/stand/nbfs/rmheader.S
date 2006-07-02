@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.1 2006/04/05 21:33:26 bjh21 Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.2 2006/07/02 22:03:23 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ben Harris
@@ -41,7 +41,7 @@ rmbase:
 	.word	0			/* Service call handler */
 	.word	rmtitle - rmbase	/* Title string */
 	.word	rmhelp - rmbase		/* Help string */
-	.word	0			/* Help and command keyword table */
+	.word	rmcmdtbl - rmbase	/* Help and command keyword table */
 	.word	0			/* SWI chunk base number */
 	.word	0			/* SWI handler code offset */
 	.word	0			/* SWI decoding table offset */
@@ -167,3 +167,30 @@ fsentry_ret:
 	add	r13, r13, #4
 	ldmfd	r13!, {r1-r7}
 	b	Lerror
+
+rmcmdtbl:
+	.asciz	"NBFS"			/* Command text */
+	.align
+	.word	rmcmd_nbfs - rmbase	/* Command code */
+	.byte	0x00			/* Min 0 parameters */
+	.byte	0x00			/* No GSTransed parameters */
+	.byte	0x00			/* Max 0 parameters */
+	.byte	0x00			/* Normal command */
+	.word	rmcmd_nbfs_syntax - rmbase /* Syntax message */
+	.word	rmcmd_nbfs_help - rmbase /* Help message */
+
+	.byte	0			/* end of list */
+
+rmcmd_nbfs_syntax:
+	.asciz	"Syntax: NBFS"
+rmcmd_nbfs_help:
+	.asciz	"*NBFS selects NBFS as the current filing system."
+	.align
+
+rmcmd_nbfs:
+	/* We're called with r0 -> command tail. */
+	stmfd	r13!, {r14}
+	mov	r0, #OSFSControl_SelectFS
+	adr	r1, rmtitle
+	swi	XOS_FSControl
+	ldmfd	r13!, {pc}
