@@ -108,6 +108,9 @@ if {$i >= [llength $lines]} {
 }
 
 gdb_run_cmd
+
+set timeout 120
+
 gdb_test_multiple "" "run program with breakpoint commands" {
     -re "warning: Invalid control type in command structure" {
         kfail "gdb/1489" "run program with breakpoint commands"

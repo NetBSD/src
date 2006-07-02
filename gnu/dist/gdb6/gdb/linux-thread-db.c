@@ -1,6 +1,6 @@
 /* libthread_db assisted debugging support, generic parts.
 
-   Copyright 1999, 2000, 2001, 2003, 2004, 2005
+   Copyright (C) 1999, 2000, 2001, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 
@@ -37,6 +37,7 @@
 #include "regcache.h"
 #include "solib-svr4.h"
 #include "gdbcore.h"
+#include "linux-nat.h"
 
 #ifdef HAVE_GNU_LIBC_VERSION_H
 #include <gnu/libc-version.h>
@@ -626,59 +627,49 @@ check_thread_signals (void)
 #endif
 }
 
-static void
-thread_db_new_objfile (struct objfile *objfile)
+/* Check whether thread_db is usable.  This function is called when
+   an inferior is created (or otherwise acquired, e.g. attached to)
+   and when new shared libraries are loaded into a running process.  */
+
+void
+check_for_thread_db (void)
 {
   td_err_e err;
+  static int already_loaded;
 
   /* First time through, report that libthread_db was successfuly
      loaded.  Can't print this in in thread_db_load as, at that stage,
-     the interpreter and it's console haven't started.  The real
-     problem here is that libthread_db is loaded too early - it should
-     only be loaded when there is a program to debug.  */
-  {
-    static int dejavu;
-    if (!dejavu)
-      {
-	Dl_info info;
-	const char *library = NULL;
-	/* Try dladdr.  */
-	if (dladdr ((*td_ta_new_p), &info) != 0)
-	  library = info.dli_fname;
-	/* Try dlinfo?  */
-	if (library == NULL)
-	  /* Paranoid - don't let a NULL path slip through.  */
-	  library = LIBTHREAD_DB_SO;
-	printf_unfiltered (_("Using host libthread_db library \"%s\".\n"),
-			   library);
-	dejavu = 1;
-      }
-  }
+     the interpreter and it's console haven't started.  */
 
-  /* Don't attempt to use thread_db on targets which can not run
-     (core files).  */
-  if (objfile == NULL || !target_has_execution)
+  if (!already_loaded)
     {
-      /* All symbols have been discarded.  If the thread_db target is
-         active, deactivate it now.  */
-      if (using_thread_db)
-	{
-	  gdb_assert (proc_handle.pid == 0);
-	  unpush_target (&thread_db_ops);
-	  using_thread_db = 0;
-	}
+      Dl_info info;
+      const char *library = NULL;
+      if (dladdr ((*td_ta_new_p), &info) != 0)
+	library = info.dli_fname;
 
-      goto quit;
+      /* Try dlinfo?  */
+
+      if (library == NULL)
+	/* Paranoid - don't let a NULL path slip through.  */
+	library = LIBTHREAD_DB_SO;
+
+      printf_unfiltered (_("Using host libthread_db library \"%s\".\n"),
+			 library);
+      already_loaded = 1;
     }
 
   if (using_thread_db)
     /* Nothing to do.  The thread library was already detected and the
        target vector was already activated.  */
-    goto quit;
+    return;
 
-  /* Initialize the structure that identifies the child process.  Note
-     that at this point there is no guarantee that we actually have a
-     child process.  */
+  /* Don't attempt to use thread_db on targets which can not run
+     (executables not running yet, core files) for now.  */
+  if (!target_has_execution)
+    return;
+
+  /* Initialize the structure that identifies the child process.  */
   proc_handle.pid = GET_PID (inferior_ptid);
 
   /* Now attempt to open a connection to the thread library.  */
@@ -705,8 +696,14 @@ thread_db_new_objfile (struct objfile *objfile)
 	       thread_db_err_str (err));
       break;
     }
+}
 
-quit:
+static void
+thread_db_new_objfile (struct objfile *objfile)
+{
+  if (objfile != NULL)
+    check_for_thread_db ();
+
   if (target_new_objfile_chain)
     target_new_objfile_chain (objfile);
 }
@@ -1048,9 +1045,9 @@ thread_db_store_registers (int regno)
 
   if (regno != -1)
     {
-      char raw[MAX_REGISTER_SIZE];
+      gdb_byte raw[MAX_REGISTER_SIZE];
 
-      deprecated_read_register_gen (regno, raw);
+      regcache_raw_collect (current_regcache, regno, raw);
       thread_db_fetch_registers (-1);
       regcache_raw_supply (current_regcache, regno, raw);
     }
@@ -1104,13 +1101,15 @@ thread_db_post_startup_inferior (ptid_t ptid)
 static void
 thread_db_mourn_inferior (void)
 {
-  remove_thread_event_breakpoints ();
-
   /* Forget about the child's process ID.  We shouldn't need it
      anymore.  */
   proc_handle.pid = 0;
 
   target_beneath->to_mourn_inferior ();
+
+  /* Delete the old thread event breakpoints.  Do this after mourning
+     the inferior, so that we don't try to uninsert them.  */
+  remove_thread_event_breakpoints ();
 
   /* Detach thread_db target ops.  */
   unpush_target (&thread_db_ops);

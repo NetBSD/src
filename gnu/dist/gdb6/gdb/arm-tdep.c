@@ -1,7 +1,8 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright 1988, 1989, 1991, 1992, 1993, 1995, 1996, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1991, 1992, 1993, 1995, 1996, 1998, 1999,
+   2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include <ctype.h>		/* XXX for isupper () */
 
@@ -50,36 +51,6 @@
 #include "gdb_assert.h"
 
 static int arm_debug;
-
-/* Each OS has a different mechanism for accessing the various
-   registers stored in the sigcontext structure.
-
-   SIGCONTEXT_REGISTER_ADDRESS should be defined to the name (or
-   function pointer) which may be used to determine the addresses
-   of the various saved registers in the sigcontext structure.
-
-   For the ARM target, there are three parameters to this function. 
-   The first is the pc value of the frame under consideration, the
-   second the stack pointer of this frame, and the last is the
-   register number to fetch.  
-
-   If the tm.h file does not define this macro, then it's assumed that
-   no mechanism is needed and we define SIGCONTEXT_REGISTER_ADDRESS to
-   be 0. 
-   
-   When it comes time to multi-arching this code, see the identically
-   named machinery in ia64-tdep.c for an example of how it could be
-   done.  It should not be necessary to modify the code below where
-   this macro is used.  */
-
-#ifdef SIGCONTEXT_REGISTER_ADDRESS
-#ifndef SIGCONTEXT_REGISTER_ADDRESS_P
-#define SIGCONTEXT_REGISTER_ADDRESS_P() 1
-#endif
-#else
-#define SIGCONTEXT_REGISTER_ADDRESS(SP,PC,REG) 0
-#define SIGCONTEXT_REGISTER_ADDRESS_P() 0
-#endif
 
 /* Macros for setting and testing a bit in a minimal symbol that marks
    it as Thumb function.  The MSB of the minimal symbol's "info" field
@@ -389,7 +360,7 @@ arm_skip_prologue (CORE_ADDR pc)
 
   for (skip_pc = pc; skip_pc < func_end; skip_pc += 4)
     {
-      inst = read_memory_integer (skip_pc, 4);
+      inst = read_memory_unsigned_integer (skip_pc, 4);
 
       /* "mov ip, sp" is no longer a required part of the prologue.  */
       if (inst == 0xe1a0c00d)			/* mov ip, sp */
@@ -495,9 +466,9 @@ thumb_scan_prologue (CORE_ADDR prev_pc, struct arm_prologue_cache *cache)
 	prologue_end = sal.end;		/* (probably means no prologue)  */
     }
   else
-    /* We're in the boondocks: allow for 
-       16 pushes, an add, and "mv fp,sp".  */
-    prologue_end = prologue_start + 40;
+    /* We're in the boondocks: we have no idea where the start of the
+       function is.  */
+    return;
 
   prologue_end = min (prologue_end, prev_pc);
 
@@ -1063,84 +1034,6 @@ struct frame_base arm_normal_base = {
   arm_normal_frame_base
 };
 
-static struct arm_prologue_cache *
-arm_make_sigtramp_cache (struct frame_info *next_frame)
-{
-  struct arm_prologue_cache *cache;
-  int reg;
-
-  cache = frame_obstack_zalloc (sizeof (struct arm_prologue_cache));
-
-  cache->prev_sp = frame_unwind_register_unsigned (next_frame, ARM_SP_REGNUM);
-
-  cache->saved_regs = trad_frame_alloc_saved_regs (next_frame);
-
-  for (reg = 0; reg < NUM_REGS; reg++)
-    cache->saved_regs[reg].addr
-      = SIGCONTEXT_REGISTER_ADDRESS (cache->prev_sp,
-				     frame_pc_unwind (next_frame), reg);
-
-  /* FIXME: What about thumb mode?  */
-  cache->framereg = ARM_SP_REGNUM;
-  cache->prev_sp
-    = read_memory_integer (cache->saved_regs[cache->framereg].addr,
-			   register_size (current_gdbarch, cache->framereg));
-
-  return cache;
-}
-
-static void
-arm_sigtramp_this_id (struct frame_info *next_frame,
-		      void **this_cache,
-		      struct frame_id *this_id)
-{
-  struct arm_prologue_cache *cache;
-
-  if (*this_cache == NULL)
-    *this_cache = arm_make_sigtramp_cache (next_frame);
-  cache = *this_cache;
-
-  /* FIXME drow/2003-07-07: This isn't right if we single-step within
-     the sigtramp frame; the PC should be the beginning of the trampoline.  */
-  *this_id = frame_id_build (cache->prev_sp, frame_pc_unwind (next_frame));
-}
-
-static void
-arm_sigtramp_prev_register (struct frame_info *next_frame,
-			    void **this_cache,
-			    int prev_regnum,
-			    int *optimized,
-			    enum lval_type *lvalp,
-			    CORE_ADDR *addrp,
-			    int *realnump,
-			    gdb_byte *valuep)
-{
-  struct arm_prologue_cache *cache;
-
-  if (*this_cache == NULL)
-    *this_cache = arm_make_sigtramp_cache (next_frame);
-  cache = *this_cache;
-
-  trad_frame_get_prev_register (next_frame, cache->saved_regs, prev_regnum,
-				optimized, lvalp, addrp, realnump, valuep);
-}
-
-struct frame_unwind arm_sigtramp_unwind = {
-  SIGTRAMP_FRAME,
-  arm_sigtramp_this_id,
-  arm_sigtramp_prev_register
-};
-
-static const struct frame_unwind *
-arm_sigtramp_unwind_sniffer (struct frame_info *next_frame)
-{
-  if (SIGCONTEXT_REGISTER_ADDRESS_P ()
-      && legacy_pc_in_sigtramp (frame_pc_unwind (next_frame), (char *) 0))
-    return &arm_sigtramp_unwind;
-
-  return NULL;
-}
-
 /* Assuming NEXT_FRAME->prev is a dummy, return the frame ID of that
    dummy frame.  The frame ID's base needs to match the TOS value
    saved by save_dummy_frame_tos() and returned from
@@ -1280,11 +1173,6 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   argreg = ARM_A1_REGNUM;
   nstack = 0;
 
-  /* Some platforms require a double-word aligned stack.  Make sure sp
-     is correctly aligned before we start.  We always do this even if
-     it isn't really needed -- it can never hurt things.  */
-  sp &= ~(CORE_ADDR)(2 * DEPRECATED_REGISTER_SIZE - 1);
-
   /* The struct_return pointer occupies the first parameter
      passing register.  */
   if (struct_return)
@@ -1404,6 +1292,17 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   regcache_cooked_write_unsigned (regcache, ARM_SP_REGNUM, sp);
 
   return sp;
+}
+
+
+/* Always align the frame to an 8-byte boundary.  This is required on
+   some platforms and harmless on the rest.  */
+
+static CORE_ADDR
+arm_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
+{
+  /* Align the stack to eight bytes.  */
+  return sp & ~ (CORE_ADDR) 7;
 }
 
 static void
@@ -1647,7 +1546,7 @@ CORE_ADDR
 thumb_get_next_pc (CORE_ADDR pc)
 {
   unsigned long pc_val = ((unsigned long) pc) + 4;	/* PC after prefetch */
-  unsigned short inst1 = read_memory_integer (pc, 2);
+  unsigned short inst1 = read_memory_unsigned_integer (pc, 2);
   CORE_ADDR nextpc = pc + 2;		/* default is next instruction */
   unsigned long offset;
 
@@ -1659,7 +1558,7 @@ thumb_get_next_pc (CORE_ADDR pc)
          all of the other registers.  */
       offset = bitcount (bits (inst1, 0, 7)) * DEPRECATED_REGISTER_SIZE;
       sp = read_register (ARM_SP_REGNUM);
-      nextpc = (CORE_ADDR) read_memory_integer (sp + offset, 4);
+      nextpc = (CORE_ADDR) read_memory_unsigned_integer (sp + offset, 4);
       nextpc = ADDR_BITS_REMOVE (nextpc);
       if (nextpc == pc)
 	error (_("Infinite loop detected"));
@@ -1677,7 +1576,7 @@ thumb_get_next_pc (CORE_ADDR pc)
     }
   else if ((inst1 & 0xf800) == 0xf000)	/* long branch with link, and blx */
     {
-      unsigned short inst2 = read_memory_integer (pc + 2, 2);
+      unsigned short inst2 = read_memory_unsigned_integer (pc + 2, 2);
       offset = (sbits (inst1, 0, 10) << 12) + (bits (inst2, 0, 10) << 1);
       nextpc = pc_val + offset;
       /* For BLX make sure to clear the low bits.  */
@@ -1711,7 +1610,7 @@ arm_get_next_pc (CORE_ADDR pc)
     return thumb_get_next_pc (pc);
 
   pc_val = (unsigned long) pc;
-  this_instr = read_memory_integer (pc, 4);
+  this_instr = read_memory_unsigned_integer (pc, 4);
   status = read_register (ARM_PS_REGNUM);
   nextpc = (CORE_ADDR) (pc_val + 4);	/* Default case */
 
@@ -1950,16 +1849,18 @@ arm_get_next_pc (CORE_ADDR pc)
 static void
 arm_software_single_step (enum target_signal sig, int insert_bpt)
 {
-  static int next_pc;		 /* State between setting and unsetting.  */
-  static char break_mem[BREAKPOINT_MAX]; /* Temporary storage for mem@bpt */
+  /* NOTE: This may insert the wrong breakpoint instruction when
+     single-stepping over a mode-changing instruction, if the
+     CPSR heuristics are used.  */
 
   if (insert_bpt)
     {
-      next_pc = arm_get_next_pc (read_register (ARM_PC_REGNUM));
-      target_insert_breakpoint (next_pc, break_mem);
+      CORE_ADDR next_pc = arm_get_next_pc (read_register (ARM_PC_REGNUM));
+
+      insert_single_step_breakpoint (next_pc);
     }
   else
-    target_remove_breakpoint (next_pc, break_mem);
+    remove_single_step_breakpoints ();
 }
 
 #include "bfd-in2.h"
@@ -2366,8 +2267,8 @@ arm_store_return_value (struct type *type, struct regcache *regs,
 
 static enum return_value_convention
 arm_return_value (struct gdbarch *gdbarch, struct type *valtype,
-		  struct regcache *regcache, void *readbuf,
-		  const void *writebuf)
+		  struct regcache *regcache, gdb_byte *readbuf,
+		  const gdb_byte *writebuf)
 {
   if (TYPE_CODE (valtype) == TYPE_CODE_STRUCT
       || TYPE_CODE (valtype) == TYPE_CODE_UNION
@@ -2845,6 +2746,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->jb_pc = -1;	/* Longjump support not enabled by default.  */
 
   set_gdbarch_push_dummy_call (gdbarch, arm_push_dummy_call);
+  set_gdbarch_frame_align (gdbarch, arm_frame_align);
 
   set_gdbarch_write_pc (gdbarch, arm_write_pc);
 
@@ -2907,7 +2809,6 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Add some default predicates.  */
   frame_unwind_append_sniffer (gdbarch, arm_stub_unwind_sniffer);
-  frame_unwind_append_sniffer (gdbarch, arm_sigtramp_unwind_sniffer);
   frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
   frame_unwind_append_sniffer (gdbarch, arm_prologue_unwind_sniffer);
 

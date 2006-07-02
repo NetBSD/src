@@ -27,7 +27,7 @@ File: bfd.info,  Node: Top,  Next: Overview,  Prev: (dir),  Up: (dir)
 * BFD front end::		BFD front end
 * BFD back ends::		BFD back ends
 * GNU Free Documentation License::  GNU Free Documentation License
-* Index::			Index
+* BFD Index::		BFD Index
 
 
 File: bfd.info,  Node: Overview,  Next: BFD front end,  Prev: Top,  Up: Top
@@ -941,18 +941,7 @@ This function should be called when the bfd state saved by
 bfd_preserve_save is no longer needed.  ie. when the back-end object_p
 function returns with success.
 
-2.3.1.20 `bfd_hide_symbol'
-..........................
-
-*Synopsis*
-     void bfd_hide_symbol (bfd *,
-         struct bfd_link_info *,
-         struct bfd_link_hash_entry *,
-         bfd_boolean);
-   *Description*
-This function hides a symbol so that it won't be exported.
-
-2.3.1.21 `struct bfd_iovec'
+2.3.1.20 `struct bfd_iovec'
 ...........................
 
 *Description*
@@ -982,7 +971,7 @@ below).
        int (*bstat) (struct bfd *abfd, struct stat *sb);
      };
 
-2.3.1.22 `bfd_get_mtime'
+2.3.1.21 `bfd_get_mtime'
 ........................
 
 *Synopsis*
@@ -991,7 +980,7 @@ below).
 Return the file modification time (as read from the file system, or
 from the archive header for archive members).
 
-2.3.1.23 `bfd_get_size'
+2.3.1.22 `bfd_get_size'
 .......................
 
 *Synopsis*
@@ -1594,11 +1583,6 @@ Here is the section structure:
        || ((SEC) == bfd_com_section_ptr)            \
        || ((SEC) == bfd_ind_section_ptr))
 
-     extern const struct bfd_symbol * const bfd_abs_symbol;
-     extern const struct bfd_symbol * const bfd_com_symbol;
-     extern const struct bfd_symbol * const bfd_und_symbol;
-     extern const struct bfd_symbol * const bfd_ind_symbol;
-
      /* Macros to handle insertion and deletion of a bfd's sections.  These
         only handle the list pointers, ie. do not adjust section_count,
         target_index etc.  */
@@ -1689,7 +1673,7 @@ Here is the section structure:
      #define bfd_section_removed_from_list(ABFD, S) \
        ((S)->next == NULL ? (ABFD)->section_last != (S) : (S)->next->prev != (S))
 
-     #define BFD_FAKE_SECTION(SEC, FLAGS, SYM, SYM_PTR, NAME, IDX)          \
+     #define BFD_FAKE_SECTION(SEC, FLAGS, SYM, NAME, IDX)                   \
        /* name, id,  index, next, prev, flags, user_set_vma,            */  \
        { NAME,  IDX, 0,     NULL, NULL, FLAGS, 0,                           \
                                                                             \
@@ -1720,11 +1704,8 @@ Here is the section structure:
        /* target_index, used_by_bfd, constructor_chain, owner,          */  \
           0,            NULL,        NULL,              NULL,               \
                                                                             \
-       /* symbol,                                                       */  \
-          (struct bfd_symbol *) SYM,                                        \
-                                                                            \
-       /* symbol_ptr_ptr,                                               */  \
-          (struct bfd_symbol **) SYM_PTR,                                   \
+       /* symbol,                    symbol_ptr_ptr,                    */  \
+          (struct bfd_symbol *) SYM, &SEC.symbol,                           \
                                                                             \
        /* map_head, map_tail                                            */  \
           { NULL }, { NULL }                                                \
@@ -2836,11 +2817,12 @@ a relocation.
        /* Do not complain on overflow.  */
        complain_overflow_dont,
 
-       /* Complain if the bitfield overflows, whether it is considered
-          as signed or unsigned.  */
+       /* Complain if the value overflows when considered as a signed
+          number one bit larger than the field.  ie. A bitfield of N bits
+          is allowed to represent -2**n to 2**n-1.  */
        complain_overflow_bitfield,
 
-       /* Complain if the value overflows when considered as signed
+       /* Complain if the value overflows when considered as a signed
           number.  */
        complain_overflow_signed,
 
@@ -3423,6 +3405,10 @@ attributes.
  -- : BFD_RELOC_MIPS_TLS_TPREL_LO16
      MIPS ELF relocations.
 
+ -- : BFD_RELOC_MIPS_COPY
+ -- : BFD_RELOC_MIPS_JUMP_SLOT
+     MIPS ELF relocations (VxWorks extensions).
+
  -- : BFD_RELOC_FRV_LABEL16
  -- : BFD_RELOC_FRV_LABEL24
  -- : BFD_RELOC_FRV_LO16
@@ -3511,6 +3497,9 @@ attributes.
  -- : BFD_RELOC_386_TLS_DTPMOD32
  -- : BFD_RELOC_386_TLS_DTPOFF32
  -- : BFD_RELOC_386_TLS_TPOFF32
+ -- : BFD_RELOC_386_TLS_GOTDESC
+ -- : BFD_RELOC_386_TLS_DESC_CALL
+ -- : BFD_RELOC_386_TLS_DESC
      i386/elf relocations
 
  -- : BFD_RELOC_X86_64_GOT32
@@ -3531,6 +3520,14 @@ attributes.
  -- : BFD_RELOC_X86_64_TPOFF32
  -- : BFD_RELOC_X86_64_GOTOFF64
  -- : BFD_RELOC_X86_64_GOTPC32
+ -- : BFD_RELOC_X86_64_GOT64
+ -- : BFD_RELOC_X86_64_GOTPCREL64
+ -- : BFD_RELOC_X86_64_GOTPC64
+ -- : BFD_RELOC_X86_64_GOTPLT64
+ -- : BFD_RELOC_X86_64_PLTOFF64
+ -- : BFD_RELOC_X86_64_GOTPC32_TLSDESC
+ -- : BFD_RELOC_X86_64_TLSDESC_CALL
+ -- : BFD_RELOC_X86_64_TLSDESC
      x86-64/elf relocations
 
  -- : BFD_RELOC_NS32K_IMM_8
@@ -3679,6 +3676,13 @@ attributes.
      is not stored in the instruction.  The 2nd lowest bit comes from a
      1 bit field in the instruction.
 
+ -- : BFD_RELOC_ARM_PCREL_CALL
+     ARM 26-bit pc-relative branch for an unconditional BL or BLX
+     instruction.
+
+ -- : BFD_RELOC_ARM_PCREL_JUMP
+     ARM 26-bit pc-relative branch for B or conditional BL instruction.
+
  -- : BFD_RELOC_THUMB_PCREL_BRANCH7
  -- : BFD_RELOC_THUMB_PCREL_BRANCH9
  -- : BFD_RELOC_THUMB_PCREL_BRANCH12
@@ -3716,6 +3720,16 @@ attributes.
 
  -- : BFD_RELOC_ARM_PREL31
      31-bit PC relative address.
+
+ -- : BFD_RELOC_ARM_MOVW
+ -- : BFD_RELOC_ARM_MOVT
+ -- : BFD_RELOC_ARM_MOVW_PCREL
+ -- : BFD_RELOC_ARM_MOVT_PCREL
+ -- : BFD_RELOC_ARM_THUMB_MOVW
+ -- : BFD_RELOC_ARM_THUMB_MOVT
+ -- : BFD_RELOC_ARM_THUMB_MOVW_PCREL
+ -- : BFD_RELOC_ARM_THUMB_MOVT_PCREL
+     Low and High halfword relocations for MOVW and MOVT instructions.
 
  -- : BFD_RELOC_ARM_JUMP_SLOT
  -- : BFD_RELOC_ARM_GLOB_DAT
@@ -3899,6 +3913,22 @@ attributes.
  -- : BFD_RELOC_BFIN_24_PCREL_JUMP_L
      ADI Blackfin Long Jump pcrel.
 
+ -- : BFD_RELOC_BFIN_GOT17M4
+ -- : BFD_RELOC_BFIN_GOTHI
+ -- : BFD_RELOC_BFIN_GOTLO
+ -- : BFD_RELOC_BFIN_FUNCDESC
+ -- : BFD_RELOC_BFIN_FUNCDESC_GOT17M4
+ -- : BFD_RELOC_BFIN_FUNCDESC_GOTHI
+ -- : BFD_RELOC_BFIN_FUNCDESC_GOTLO
+ -- : BFD_RELOC_BFIN_FUNCDESC_VALUE
+ -- : BFD_RELOC_BFIN_FUNCDESC_GOTOFF17M4
+ -- : BFD_RELOC_BFIN_FUNCDESC_GOTOFFHI
+ -- : BFD_RELOC_BFIN_FUNCDESC_GOTOFFLO
+ -- : BFD_RELOC_BFIN_GOTOFF17M4
+ -- : BFD_RELOC_BFIN_GOTOFFHI
+ -- : BFD_RELOC_BFIN_GOTOFFLO
+     ADI Blackfin FD-PIC relocations.
+
  -- : BFD_RELOC_BFIN_GOT
      ADI Blackfin GOT relocation.
 
@@ -4034,6 +4064,9 @@ attributes.
      DLX relocs
 
  -- : BFD_RELOC_M32C_HI8
+ -- : BFD_RELOC_M32C_RL_JUMP
+ -- : BFD_RELOC_M32C_RL_1ADDR
+ -- : BFD_RELOC_M32C_RL_2ADDR
      Renesas M16C/M32C Relocations.
 
  -- : BFD_RELOC_M32R_24
@@ -4301,6 +4334,10 @@ attributes.
      high 8 bit of program memory address) into 8 bit immediate value
      of LDI insn.
 
+ -- : BFD_RELOC_AVR_MS8_LDI
+     This is a 16 bit reloc for the AVR that stores 8 bit value (most
+     high 8 bit of 32 bit value) into 8 bit immediate value of LDI insn.
+
  -- : BFD_RELOC_AVR_LO8_LDI_NEG
      This is a 16 bit reloc for the AVR that stores negated 8 bit value
      (usually data memory address) into 8 bit immediate value of SUBI
@@ -4315,6 +4352,10 @@ attributes.
      This is a 16 bit reloc for the AVR that stores negated 8 bit value
      (most high 8 bit of program memory address) into 8 bit immediate
      value of LDI or SUBI insn.
+
+ -- : BFD_RELOC_AVR_MS8_LDI_NEG
+     This is a 16 bit reloc for the AVR that stores negated 8 bit value
+     (msb of 32 bit value) into 8 bit immediate value of LDI insn.
 
  -- : BFD_RELOC_AVR_LO8_LDI_PM
      This is a 16 bit reloc for the AVR that stores 8 bit value (usually
@@ -4798,25 +4839,34 @@ attributes.
  -- : BFD_RELOC_XSTORMY16_FPTR16
      Sony Xstormy16 Relocations.
 
+ -- : BFD_RELOC_XC16X_PAG
+ -- : BFD_RELOC_XC16X_POF
+ -- : BFD_RELOC_XC16X_SEG
+ -- : BFD_RELOC_XC16X_SOF
+     Infineon Relocations.
+
  -- : BFD_RELOC_VAX_GLOB_DAT
  -- : BFD_RELOC_VAX_JMP_SLOT
  -- : BFD_RELOC_VAX_RELATIVE
      Relocations used by VAX ELF.
 
- -- : BFD_RELOC_MS1_PC16
-     Morpho MS1 - 16 bit immediate relocation.
+ -- : BFD_RELOC_MT_PC16
+     Morpho MT - 16 bit immediate relocation.
 
- -- : BFD_RELOC_MS1_HI16
-     Morpho MS1 - Hi 16 bits of an address.
+ -- : BFD_RELOC_MT_HI16
+     Morpho MT - Hi 16 bits of an address.
 
- -- : BFD_RELOC_MS1_LO16
-     Morpho MS1 - Low 16 bits of an address.
+ -- : BFD_RELOC_MT_LO16
+     Morpho MT - Low 16 bits of an address.
 
- -- : BFD_RELOC_MS1_GNU_VTINHERIT
-     Morpho MS1 - Used to tell the linker which vtable entries are used.
+ -- : BFD_RELOC_MT_GNU_VTINHERIT
+     Morpho MT - Used to tell the linker which vtable entries are used.
 
- -- : BFD_RELOC_MS1_GNU_VTENTRY
-     Morpho MS1 - Used to tell the linker which vtable entries are used.
+ -- : BFD_RELOC_MT_GNU_VTENTRY
+     Morpho MT - Used to tell the linker which vtable entries are used.
+
+ -- : BFD_RELOC_MT_PCINSN8
+     Morpho MT - 8 bit immediate relocation.
 
  -- : BFD_RELOC_MSP430_10_PCREL
  -- : BFD_RELOC_MSP430_16_PCREL
@@ -5041,6 +5091,23 @@ the file the BFD ABFD is attached to.
    *Description*
 Return `TRUE' if the core file attached to CORE_BFD was generated by a
 run of the executable file attached to EXEC_BFD, `FALSE' otherwise.
+
+2.11.1.4 `generic_core_file_matches_executable_p'
+.................................................
+
+*Synopsis*
+     bfd_boolean generic_core_file_matches_executable_p
+        (bfd *core_bfd, bfd *exec_bfd);
+   *Description*
+Return TRUE if the core file attached to CORE_BFD was generated by a
+run of the executable file attached to EXEC_BFD.  The match is based on
+executable basenames only.
+
+   Note: When not able to determine the core file failing command or
+the executable name, we still return TRUE even though we're not sure
+that core file and executable match.  This is to avoid generating a
+false warning in situations where we really don't know whether they
+match or not.
 
 
 File: bfd.info,  Node: Targets,  Next: Architectures,  Prev: Core Files,  Up: BFD front end
@@ -5431,7 +5498,6 @@ BFD_JUMP_TABLE macros.
        NAME##_bfd_link_split_section, \
        NAME##_bfd_gc_sections, \
        NAME##_bfd_merge_sections, \
-       _bfd_generic_match_sections_by_type, \
        NAME##_bfd_is_group_section, \
        NAME##_bfd_discard_group, \
        NAME##_section_already_linked \
@@ -5470,12 +5536,6 @@ BFD_JUMP_TABLE macros.
 
        /* Attempt to merge SEC_MERGE sections.  */
        bfd_boolean (*_bfd_merge_sections) (bfd *, struct bfd_link_info *);
-
-     #define bfd_match_sections_by_type(abfd, asec, bbfd, bsec) \
-       BFD_SEND (abfd, _bfd_match_sections_by_type, (abfd, asec, bbfd, bsec))
-       /* Return TRUE if 2 section types are compatible.  */
-       bfd_boolean (*_bfd_match_sections_by_type)
-         (bfd *, const asection *, bfd *, const asection *);
 
        /* Is this section a member of a group?  */
        bfd_boolean (*_bfd_is_group_section) (bfd *, const struct bfd_section *);
@@ -5621,16 +5681,22 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_m68040 6
      #define bfd_mach_m68060 7
      #define bfd_mach_cpu32  8
-     #define bfd_mach_mcf5200  9
-     #define bfd_mach_mcf5206e 10
-     #define bfd_mach_mcf5307  11
-     #define bfd_mach_mcf5407  12
-     #define bfd_mach_mcf528x  13
-     #define bfd_mach_mcfv4e   14
-     #define bfd_mach_mcf521x   15
-     #define bfd_mach_mcf5249   16
-     #define bfd_mach_mcf547x   17
-     #define bfd_mach_mcf548x   18
+     #define bfd_mach_mcf_isa_a_nodiv 9
+     #define bfd_mach_mcf_isa_a 10
+     #define bfd_mach_mcf_isa_a_mac 11
+     #define bfd_mach_mcf_isa_a_emac 12
+     #define bfd_mach_mcf_isa_aplus 13
+     #define bfd_mach_mcf_isa_aplus_mac 14
+     #define bfd_mach_mcf_isa_aplus_emac 15
+     #define bfd_mach_mcf_isa_b_nousp 16
+     #define bfd_mach_mcf_isa_b_nousp_mac 17
+     #define bfd_mach_mcf_isa_b_nousp_emac 18
+     #define bfd_mach_mcf_isa_b 19
+     #define bfd_mach_mcf_isa_b_mac 20
+     #define bfd_mach_mcf_isa_b_emac 21
+     #define bfd_mach_mcf_isa_b_float 22
+     #define bfd_mach_mcf_isa_b_float_mac 23
+     #define bfd_mach_mcf_isa_b_float_emac 24
        bfd_arch_vax,       /* DEC Vax */
        bfd_arch_i960,      /* Intel 960 */
          /* The order of the following is important.
@@ -5858,9 +5924,10 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
       bfd_arch_iq2000,     /* Vitesse IQ2000.  */
      #define bfd_mach_iq2000        1
      #define bfd_mach_iq10          2
-       bfd_arch_ms1,
+       bfd_arch_mt,
      #define bfd_mach_ms1           1
      #define bfd_mach_mrisc2        2
+     #define bfd_mach_ms2           3
        bfd_arch_pj,
        bfd_arch_avr,       /* Atmel AVR microcontrollers.  */
      #define bfd_mach_avr1          1
@@ -5901,6 +5968,10 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_msp42          42
      #define bfd_mach_msp43          43
      #define bfd_mach_msp44          44
+       bfd_arch_xc16x,     /* Infineon's XC16X Series.               */
+     #define bfd_mach_xc16x         1
+     #define bfd_mach_xc16xl        2
+     #define bfd_mach_xc16xs         3
        bfd_arch_xtensa,    /* Tensilica's Xtensa cores.  */
      #define bfd_mach_xtensa        1
         bfd_arch_maxq,     /* Dallas MAXQ 10/20 */

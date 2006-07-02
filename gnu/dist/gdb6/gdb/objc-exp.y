@@ -1,7 +1,7 @@
 /* YACC parser for C expressions, for GDB.
 
-   Copyright 1986, 1989, 1990, 1991, 1993, 1994, 2002 Free Software
-   Foundation, Inc.
+   Copyright (C) 1986, 1989, 1990, 1991, 1993, 1994, 2002, 2006
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* Parse a C expression from text in a string, and return the result
    as a struct expression pointer.  That structure contains arithmetic
@@ -1025,23 +1025,8 @@ parse_number (p, len, parsed_float, putithere)
 
       /* It's a float since it contains a point or an exponent.  */
 
-      if (sizeof (putithere->typed_val_float.dval) <= sizeof (float))
-	sscanf (p, "%g", (float *)&putithere->typed_val_float.dval);
-      else if (sizeof (putithere->typed_val_float.dval) <= sizeof (double))
-	sscanf (p, "%lg", (double *)&putithere->typed_val_float.dval);
-      else
-	{
-#ifdef PRINTF_HAS_LONG_DOUBLE
-	  sscanf (p, "%Lg", &putithere->typed_val_float.dval);
-#else
-	  /* Scan it into a double, then assign it to the long double.
-	     This at least wins with values representable in the range
-	     of doubles.  */
-	  double temp;
-	  sscanf (p, "%lg", &temp);
-	  putithere->typed_val_float.dval = temp;
-#endif
-	}
+      sscanf (p, DOUBLEST_SCAN_FORMAT "%c",
+	      &putithere->typed_val_float.dval, &c);
 
       /* See if it has `f' or `l' suffix (float or long double).  */
 

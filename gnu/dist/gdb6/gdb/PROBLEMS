@@ -1,5 +1,5 @@
 
-			Known problems in GDB 6.3
+			Known problems in GDB 6.5
 
 		See also: http://www.gnu.org/software/gdb/bugs/
 
@@ -98,3 +98,8 @@ to an internal error.
 
 This problem does not occur on newer systems that use the NPTL
 library, and did not occur with GDB 6.1.
+
+threads/2137: Native Solaris Thread Debugging broken.
+
+Use GDB 6.4 if thread debugging is needed on Solaris.
+

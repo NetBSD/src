@@ -1,7 +1,7 @@
 /* ELF executable support for BFD.
 
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -654,8 +654,23 @@ _bfd_elf_setup_sections (bfd *abfd)
 	    }
 	  else
 	    {
+	      asection *link;
+
 	      this_hdr = elf_elfsections (abfd)[elfsec];
-	      elf_linked_to_section (s) = this_hdr->bfd_section;
+
+	      /* PR 1991, 2008:
+		 Some strip/objcopy may leave an incorrect value in
+		 sh_link.  We don't want to proceed.  */
+	      link = this_hdr->bfd_section;
+	      if (link == NULL)
+		{
+		  (*_bfd_error_handler)
+		    (_("%B: sh_link [%d] in section `%A' is incorrect"),
+		     s->owner, s, elfsec);
+		  result = FALSE;
+		}
+
+	      elf_linked_to_section (s) = link;
 	    }
 	}
     }
@@ -1053,6 +1068,28 @@ _bfd_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   return TRUE;
 }
 
+static const char *
+get_segment_type (unsigned int p_type)
+{
+  const char *pt;
+  switch (p_type)
+    {
+    case PT_NULL: pt = "NULL"; break;
+    case PT_LOAD: pt = "LOAD"; break;
+    case PT_DYNAMIC: pt = "DYNAMIC"; break;
+    case PT_INTERP: pt = "INTERP"; break;
+    case PT_NOTE: pt = "NOTE"; break;
+    case PT_SHLIB: pt = "SHLIB"; break;
+    case PT_PHDR: pt = "PHDR"; break;
+    case PT_TLS: pt = "TLS"; break;
+    case PT_GNU_EH_FRAME: pt = "EH_FRAME"; break;
+    case PT_GNU_STACK: pt = "STACK"; break;
+    case PT_GNU_RELRO: pt = "RELRO"; break;
+    default: pt = NULL; break;
+    }
+  return pt;
+}
+
 /* Print out the program headers.  */
 
 bfd_boolean
@@ -1072,23 +1109,13 @@ _bfd_elf_print_private_bfd_data (bfd *abfd, void *farg)
       c = elf_elfheader (abfd)->e_phnum;
       for (i = 0; i < c; i++, p++)
 	{
-	  const char *pt;
+	  const char *pt = get_segment_type (p->p_type);
 	  char buf[20];
 
-	  switch (p->p_type)
+	  if (pt == NULL)
 	    {
-	    case PT_NULL: pt = "NULL"; break;
-	    case PT_LOAD: pt = "LOAD"; break;
-	    case PT_DYNAMIC: pt = "DYNAMIC"; break;
-	    case PT_INTERP: pt = "INTERP"; break;
-	    case PT_NOTE: pt = "NOTE"; break;
-	    case PT_SHLIB: pt = "SHLIB"; break;
-	    case PT_PHDR: pt = "PHDR"; break;
-	    case PT_TLS: pt = "TLS"; break;
-	    case PT_GNU_EH_FRAME: pt = "EH_FRAME"; break;
-	    case PT_GNU_STACK: pt = "STACK"; break;
-	    case PT_GNU_RELRO: pt = "RELRO"; break;
-	    default: sprintf (buf, "0x%lx", p->p_type); pt = buf; break;
+	      sprintf (buf, "0x%lx", p->p_type);
+	      pt = buf;
 	    }
 	  fprintf (f, "%8s off    0x", pt);
 	  bfd_fprintf_vma (abfd, f, p->p_offset);
@@ -1534,7 +1561,8 @@ _bfd_elf_link_hash_table_init
    bfd *abfd,
    struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 				      struct bfd_hash_table *,
-				      const char *))
+				      const char *),
+   unsigned int entsize)
 {
   bfd_boolean ret;
   int can_refcount = get_elf_backend_data (abfd)->can_refcount;
@@ -1561,7 +1589,7 @@ _bfd_elf_link_hash_table_init
   table->loaded = NULL;
   table->is_relocatable_executable = FALSE;
 
-  ret = _bfd_link_hash_table_init (&table->root, abfd, newfunc);
+  ret = _bfd_link_hash_table_init (&table->root, abfd, newfunc, entsize);
   table->root.type = bfd_link_elf_hash_table;
 
   return ret;
@@ -1579,7 +1607,8 @@ _bfd_elf_link_hash_table_create (bfd *abfd)
   if (ret == NULL)
     return NULL;
 
-  if (! _bfd_elf_link_hash_table_init (ret, abfd, _bfd_elf_link_hash_newfunc))
+  if (! _bfd_elf_link_hash_table_init (ret, abfd, _bfd_elf_link_hash_newfunc,
+				       sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2030,15 +2059,16 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	   represent such a section, so at least for now, we don't
 	   try.  We just present it as a normal section.  We also
 	   can't use it as a reloc section if it points to the null
-	   section.  */
-	if (hdr->sh_link != elf_onesymtab (abfd) || hdr->sh_info == SHN_UNDEF)
+	   section, an invalid section, or another reloc section.  */
+	if (hdr->sh_link != elf_onesymtab (abfd)
+	    || hdr->sh_info == SHN_UNDEF
+	    || (hdr->sh_info >= SHN_LORESERVE && hdr->sh_info <= SHN_HIRESERVE)
+	    || hdr->sh_info >= num_sec
+	    || elf_elfsections (abfd)[hdr->sh_info]->sh_type == SHT_REL
+	    || elf_elfsections (abfd)[hdr->sh_info]->sh_type == SHT_RELA)
 	  return _bfd_elf_make_section_from_shdr (abfd, hdr, name,
 						  shindex);
 
-	/* Prevent endless recursion on broken objects.  */
-	if (elf_elfsections (abfd)[hdr->sh_info]->sh_type == SHT_REL
-	    || elf_elfsections (abfd)[hdr->sh_info]->sh_type == SHT_RELA)
-	  return FALSE;
 	if (! bfd_section_from_shdr (abfd, hdr->sh_info))
 	  return FALSE;
 	target_sect = bfd_section_from_elf_index (abfd, hdr->sh_info);
@@ -2083,13 +2113,11 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
       elf_dynversym (abfd) = shindex;
       elf_tdata (abfd)->dynversym_hdr = *hdr;
       return _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex);
-      break;
 
     case SHT_GNU_verneed:
       elf_dynverref (abfd) = shindex;
       elf_tdata (abfd)->dynverref_hdr = *hdr;
       return _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex);
-      break;
 
     case SHT_SHLIB:
       return TRUE;
@@ -2129,8 +2157,43 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 
     default:
       /* Check for any processor-specific section types.  */
-      return bed->elf_backend_section_from_shdr (abfd, hdr, name,
-						 shindex);
+      if (bed->elf_backend_section_from_shdr (abfd, hdr, name, shindex))
+	return TRUE;
+
+      if (hdr->sh_type >= SHT_LOUSER && hdr->sh_type <= SHT_HIUSER)
+	{
+	  if ((hdr->sh_flags & SHF_ALLOC) != 0)
+	    /* FIXME: How to properly handle allocated section reserved
+	       for applications?  */
+	    (*_bfd_error_handler)
+	      (_("%B: don't know how to handle allocated, application "
+		 "specific section `%s' [0x%8x]"),
+	       abfd, name, hdr->sh_type);
+	  else
+	    /* Allow sections reserved for applications.  */
+	    return _bfd_elf_make_section_from_shdr (abfd, hdr, name,
+						    shindex);
+	}
+      else if (hdr->sh_type >= SHT_LOPROC
+	       && hdr->sh_type <= SHT_HIPROC)
+	/* FIXME: We should handle this section.  */
+	(*_bfd_error_handler)
+	  (_("%B: don't know how to handle processor specific section "
+	     "`%s' [0x%8x]"),
+	   abfd, name, hdr->sh_type);
+      else if (hdr->sh_type >= SHT_LOOS && hdr->sh_type <= SHT_HIOS)
+	/* FIXME: We should handle this section.  */
+	(*_bfd_error_handler)
+	  (_("%B: don't know how to handle OS specific section "
+	     "`%s' [0x%8x]"),
+	   abfd, name, hdr->sh_type);
+      else
+	/* FIXME: We should handle this section.  */
+	(*_bfd_error_handler)
+	  (_("%B: don't know how to handle section `%s' [0x%8x]"),
+	   abfd, name, hdr->sh_type);
+
+      return FALSE;
     }
 
   return TRUE;
@@ -2422,10 +2485,13 @@ _bfd_elf_new_section_hook (bfd *abfd, asection *sec)
   bed = get_elf_backend_data (abfd);
   sec->use_rela_p = bed->default_use_rela_p;
 
-  /* When we read a file, we don't need section type and flags unless
-     it is a linker created section.  They will be overridden in
-     _bfd_elf_make_section_from_shdr anyway.  */
-  if (abfd->direction != read_direction
+  /* When we read a file, we don't need to set ELF section type and
+     flags.  They will be overridden in _bfd_elf_make_section_from_shdr
+     anyway.  We will set ELF section type and flags for all linker
+     created sections.  If user specifies BFD section flags, we will
+     set ELF section type and flags based on BFD section flags in
+     elf_fake_sections.  */
+  if ((!sec->flags && abfd->direction != read_direction)
       || (sec->flags & SEC_LINKER_CREATED) != 0)
     {
       ssect = (*bed->get_sec_type_attr) (abfd, sec);
@@ -2436,7 +2502,7 @@ _bfd_elf_new_section_hook (bfd *abfd, asection *sec)
 	}
     }
 
-  return TRUE;
+  return _bfd_generic_new_section_hook (abfd, sec);
 }
 
 /* Create a new bfd section from an ELF program header.
@@ -2764,16 +2830,18 @@ elf_fake_sections (bfd *abfd, asection *asect, void *failedptrarg)
   if ((asect->flags & SEC_THREAD_LOCAL) != 0)
     {
       this_hdr->sh_flags |= SHF_TLS;
-      if (asect->size == 0 && (asect->flags & SEC_HAS_CONTENTS) == 0)
+      if (asect->size == 0
+	  && (asect->flags & SEC_HAS_CONTENTS) == 0)
 	{
-	  struct bfd_link_order *o;
+	  struct bfd_link_order *o = asect->map_tail.link_order;
 
 	  this_hdr->sh_size = 0;
-	  for (o = asect->map_head.link_order; o != NULL; o = o->next)
-	    if (this_hdr->sh_size < o->offset + o->size)
+	  if (o != NULL)
+	    {
 	      this_hdr->sh_size = o->offset + o->size;
-	  if (this_hdr->sh_size)
-	    this_hdr->sh_type = SHT_NOBITS;
+	      if (this_hdr->sh_size != 0)
+		this_hdr->sh_type = SHT_NOBITS;
+	    }
 	}
     }
 
@@ -3051,10 +3119,10 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	  s = elf_linked_to_section (sec);
 	  if (s)
 	    {
+	      /* elf_linked_to_section points to the input section.  */
 	      if (link_info != NULL)
 		{
-		  /* For linker, elf_linked_to_section points to the
-		     input section.  */
+		  /* Check discarded linkonce section.  */
 		  if (elf_discarded_section (s))
 		    {
 		      asection *kept;
@@ -3072,8 +3140,22 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 			}
 		      s = kept;
 		    }
+
 		  s = s->output_section;
 		  BFD_ASSERT (s != NULL);
+		}
+	      else
+		{
+		  /* Handle objcopy. */
+		  if (s->output_section == NULL)
+		    {
+		      (*_bfd_error_handler)
+			(_("%B: sh_link of section `%A' points to removed section `%A' of `%B'"),
+			 abfd, d->this_hdr.bfd_section, s, s->owner);
+		      bfd_set_error (bfd_error_bad_value);
+		      return FALSE;
+		    }
+		  s = s->output_section;
 		}
 	      d->this_hdr.sh_link = elf_section_data (s)->this_idx;
 	    }
@@ -3986,6 +4068,42 @@ vma_page_aligned_bias (bfd_vma vma, ufile_ptr off, bfd_vma maxpagesize)
   return ((vma - off) % maxpagesize);
 }
 
+static void
+print_segment_map (bfd *abfd)
+{
+  struct elf_segment_map *m;
+  unsigned int i, j;
+
+  fprintf (stderr, _(" Section to Segment mapping:\n"));
+  fprintf (stderr, _("  Segment              Sections...\n"));
+
+  for (i= 0, m = elf_tdata (abfd)->segment_map;
+       m != NULL;
+       i++, m = m->next)
+    {
+      const char *pt = get_segment_type (m->p_type);
+      char buf[32];
+
+      if (pt == NULL)
+	{
+	  if (m->p_type >= PT_LOPROC && m->p_type <= PT_HIPROC)
+	    sprintf (buf, "LOPROC+%7.7x",
+		     (unsigned int) (m->p_type - PT_LOPROC));
+	  else if (m->p_type >= PT_LOOS && m->p_type <= PT_HIOS)
+	    sprintf (buf, "LOOS+%7.7x",
+		     (unsigned int) (m->p_type - PT_LOOS));
+	  else
+	    snprintf (buf, sizeof (buf), "%8.8x",
+		      (unsigned int) m->p_type);
+	  pt = buf;
+	}
+      fprintf (stderr, "  %2.2d: %14.14s:  ", i, pt);
+      for (j = 0; j < m->count; j++)
+	fprintf (stderr, "%s ", m->sections [j]->name);
+      putc ('\n',stderr);
+    }
+}
+
 /* Assign file positions to the sections based on the mapping from
    sections to segments.  This function also sets up some fields in
    the file header, and writes out the program headers.  */
@@ -4002,6 +4120,10 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
   bfd_vma filehdr_vaddr, filehdr_paddr;
   bfd_vma phdrs_vaddr, phdrs_paddr;
   Elf_Internal_Phdr *p;
+  Elf_Internal_Shdr **i_shdrpp;
+  Elf_Internal_Shdr **hdrpp;
+  unsigned int i;
+  unsigned int num_sec;
 
   if (elf_tdata (abfd)->segment_map == NULL)
     {
@@ -4019,7 +4141,6 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
 	   m = m->next)
 	{
 	  unsigned int new_count;
-	  unsigned int i;
 
 	  new_count = 0;
 	  for (i = 0; i < m->count; i ++)
@@ -4069,6 +4190,7 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
       ((*_bfd_error_handler)
        (_("%B: Not enough room for program headers (allocated %u, need %u)"),
 	abfd, alloc, count));
+      print_segment_map (abfd);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
     }
@@ -4092,7 +4214,6 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
        m != NULL;
        m = m->next, p++)
     {
-      unsigned int i;
       asection **secpp;
 
       /* If elf_segment_map is not from map_sections_to_segments, the
@@ -4396,14 +4517,9 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
 		  && sec->size == 0
 		  && (sec->flags & SEC_HAS_CONTENTS) == 0)
 		{
-		  struct bfd_link_order *o;
-		  bfd_vma tbss_size = 0;
-
-		  for (o = sec->map_head.link_order; o != NULL; o = o->next)
-		    if (tbss_size < o->offset + o->size)
-		      tbss_size = o->offset + o->size;
-
-		  p->p_memsz += tbss_size;
+		  struct bfd_link_order *o = sec->map_tail.link_order;
+		  if (o != NULL)
+		    p->p_memsz += o->offset + o->size;
 		}
 
 	      if (align > p->p_align
@@ -4422,6 +4538,51 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
 	}
     }
 
+  /* Assign file positions for the other sections.  */
+  i_shdrpp = elf_elfsections (abfd);
+  num_sec = elf_numsections (abfd);
+  for (i = 1, hdrpp = i_shdrpp + 1; i < num_sec; i++, hdrpp++)
+    {
+      struct elf_obj_tdata *tdata = elf_tdata (abfd);
+      Elf_Internal_Shdr *hdr;
+
+      hdr = *hdrpp;
+      if (hdr->bfd_section != NULL
+	  && hdr->bfd_section->filepos != 0)
+	hdr->sh_offset = hdr->bfd_section->filepos;
+      else if ((hdr->sh_flags & SHF_ALLOC) != 0)
+	{
+	  ((*_bfd_error_handler)
+	   (_("%B: warning: allocated section `%s' not in segment"),
+	    abfd,
+	    (hdr->bfd_section == NULL
+	     ? "*unknown*"
+	     : hdr->bfd_section->name)));
+	  if ((abfd->flags & D_PAGED) != 0)
+	    off += vma_page_aligned_bias (hdr->sh_addr, off,
+					  bed->maxpagesize);
+	  else
+	    off += vma_page_aligned_bias (hdr->sh_addr, off,
+					  hdr->sh_addralign);
+	  off = _bfd_elf_assign_file_position_for_section (hdr, off,
+							   FALSE);
+	}
+      else if (((hdr->sh_type == SHT_REL || hdr->sh_type == SHT_RELA)
+		&& hdr->bfd_section == NULL)
+	       || hdr == i_shdrpp[tdata->symtab_section]
+	       || hdr == i_shdrpp[tdata->symtab_shndx_section]
+	       || hdr == i_shdrpp[tdata->strtab_section])
+	hdr->sh_offset = -1;
+      else
+	off = _bfd_elf_assign_file_position_for_section (hdr, off, TRUE);
+
+      if (i == SHN_LORESERVE - 1)
+	{
+	  i += SHN_HIRESERVE + 1 - SHN_LORESERVE;
+	  hdrpp += SHN_HIRESERVE + 1 - SHN_LORESERVE;
+	}
+    }
+
   /* Now that we have set the section file positions, we can set up
      the file positions for the non PT_LOAD segments.  */
   for (m = elf_tdata (abfd)->segment_map, p = phdrs;
@@ -4437,7 +4598,6 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
 	     PT_LOAD segment, so it will not be processed above.  */
 	  if (p->p_type == PT_DYNAMIC && m->sections[0]->filepos == 0)
 	    {
-	      unsigned int i;
 	      Elf_Internal_Shdr ** const i_shdrpp = elf_elfsections (abfd);
 
 	      i = 1;
@@ -4640,16 +4800,16 @@ static bfd_boolean
 assign_file_positions_except_relocs (bfd *abfd,
 				     struct bfd_link_info *link_info)
 {
-  struct elf_obj_tdata * const tdata = elf_tdata (abfd);
-  Elf_Internal_Ehdr * const i_ehdrp = elf_elfheader (abfd);
-  Elf_Internal_Shdr ** const i_shdrpp = elf_elfsections (abfd);
-  unsigned int num_sec = elf_numsections (abfd);
+  struct elf_obj_tdata *tdata = elf_tdata (abfd);
+  Elf_Internal_Ehdr *i_ehdrp = elf_elfheader (abfd);
   file_ptr off;
   const struct elf_backend_data *bed = get_elf_backend_data (abfd);
 
   if ((abfd->flags & (EXEC_P | DYNAMIC)) == 0
       && bfd_get_format (abfd) != bfd_core)
     {
+      Elf_Internal_Shdr ** const i_shdrpp = elf_elfsections (abfd);
+      unsigned int num_sec = elf_numsections (abfd);
       Elf_Internal_Shdr **hdrpp;
       unsigned int i;
 
@@ -4684,57 +4844,12 @@ assign_file_positions_except_relocs (bfd *abfd,
     }
   else
     {
-      unsigned int i;
-      Elf_Internal_Shdr **hdrpp;
-
       /* Assign file positions for the loaded sections based on the
          assignment of sections to segments.  */
       if (! assign_file_positions_for_segments (abfd, link_info))
 	return FALSE;
 
-      /* Assign file positions for the other sections.  */
-
-      off = elf_tdata (abfd)->next_file_pos;
-      for (i = 1, hdrpp = i_shdrpp + 1; i < num_sec; i++, hdrpp++)
-	{
-	  Elf_Internal_Shdr *hdr;
-
-	  hdr = *hdrpp;
-	  if (hdr->bfd_section != NULL
-	      && hdr->bfd_section->filepos != 0)
-	    hdr->sh_offset = hdr->bfd_section->filepos;
-	  else if ((hdr->sh_flags & SHF_ALLOC) != 0)
-	    {
-	      ((*_bfd_error_handler)
-	       (_("%B: warning: allocated section `%s' not in segment"),
-		abfd,
-		(hdr->bfd_section == NULL
-		 ? "*unknown*"
-		 : hdr->bfd_section->name)));
-	      if ((abfd->flags & D_PAGED) != 0)
-		off += vma_page_aligned_bias (hdr->sh_addr, off,
-					      bed->maxpagesize);
-	      else
-		off += vma_page_aligned_bias (hdr->sh_addr, off,
-					      hdr->sh_addralign);
-	      off = _bfd_elf_assign_file_position_for_section (hdr, off,
-							       FALSE);
-	    }
-	  else if (((hdr->sh_type == SHT_REL || hdr->sh_type == SHT_RELA)
-		    && hdr->bfd_section == NULL)
-		   || hdr == i_shdrpp[tdata->symtab_section]
-		   || hdr == i_shdrpp[tdata->symtab_shndx_section]
-		   || hdr == i_shdrpp[tdata->strtab_section])
-	    hdr->sh_offset = -1;
-	  else
-	    off = _bfd_elf_assign_file_position_for_section (hdr, off, TRUE);
-
-	  if (i == SHN_LORESERVE - 1)
-	    {
-	      i += SHN_HIRESERVE + 1 - SHN_LORESERVE;
-	      hdrpp += SHN_HIRESERVE + 1 - SHN_LORESERVE;
-	    }
-	}
+      off = tdata->next_file_pos;
     }
 
   /* Place the section headers.  */
@@ -4742,7 +4857,7 @@ assign_file_positions_except_relocs (bfd *abfd,
   i_ehdrp->e_shoff = off;
   off += i_ehdrp->e_shnum * i_ehdrp->e_shentsize;
 
-  elf_tdata (abfd)->next_file_pos = off;
+  tdata->next_file_pos = off;
 
   return TRUE;
 }
@@ -5018,10 +5133,10 @@ _bfd_elf_symbol_from_bfd_symbol (bfd *abfd, asymbol **asym_ptr_ptr)
   return idx;
 }
 
-/* Copy private BFD data.  This copies any program header information.  */
+/* Rewrite program header information.  */
 
 static bfd_boolean
-copy_private_bfd_data (bfd *ibfd, bfd *obfd)
+rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
 {
   Elf_Internal_Ehdr *iehdr;
   struct elf_segment_map *map;
@@ -5036,13 +5151,6 @@ copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   struct elf_segment_map *phdr_adjust_seg = NULL;
   unsigned int phdr_adjust_num = 0;
   const struct elf_backend_data *bed;
-
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  if (elf_tdata (ibfd)->phdr == NULL)
-    return TRUE;
 
   bed = get_elf_backend_data (ibfd);
   iehdr = elf_elfheader (ibfd);
@@ -5603,6 +5711,185 @@ copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   return TRUE;
 }
 
+/* Copy ELF program header information.  */
+
+static bfd_boolean
+copy_elf_program_header (bfd *ibfd, bfd *obfd)
+{
+  Elf_Internal_Ehdr *iehdr;
+  struct elf_segment_map *map;
+  struct elf_segment_map *map_first;
+  struct elf_segment_map **pointer_to_map;
+  Elf_Internal_Phdr *segment;
+  unsigned int i;
+  unsigned int num_segments;
+  bfd_boolean phdr_included = FALSE;
+
+  iehdr = elf_elfheader (ibfd);
+
+  map_first = NULL;
+  pointer_to_map = &map_first;
+
+  num_segments = elf_elfheader (ibfd)->e_phnum;
+  for (i = 0, segment = elf_tdata (ibfd)->phdr;
+       i < num_segments;
+       i++, segment++)
+    {
+      asection *section;
+      unsigned int section_count;
+      bfd_size_type amt;
+      Elf_Internal_Shdr *this_hdr;
+
+      /* FIXME: Do we need to copy PT_NULL segment?  */
+      if (segment->p_type == PT_NULL)
+	continue;
+
+      /* Compute how many sections are in this segment.  */
+      for (section = ibfd->sections, section_count = 0;
+	   section != NULL;
+	   section = section->next)
+	{
+	  this_hdr = &(elf_section_data(section)->this_hdr);
+	  if (ELF_IS_SECTION_IN_SEGMENT_FILE (this_hdr, segment))
+	    section_count++;
+	}
+
+      /* Allocate a segment map big enough to contain
+	 all of the sections we have selected.  */
+      amt = sizeof (struct elf_segment_map);
+      if (section_count != 0)
+	amt += ((bfd_size_type) section_count - 1) * sizeof (asection *);
+      map = bfd_alloc (obfd, amt);
+      if (map == NULL)
+	return FALSE;
+
+      /* Initialize the fields of the output segment map with the
+	 input segment.  */
+      map->next = NULL;
+      map->p_type = segment->p_type;
+      map->p_flags = segment->p_flags;
+      map->p_flags_valid = 1;
+      map->p_paddr = segment->p_paddr;
+      map->p_paddr_valid = 1;
+
+      /* Determine if this segment contains the ELF file header
+	 and if it contains the program headers themselves.  */
+      map->includes_filehdr = (segment->p_offset == 0
+			       && segment->p_filesz >= iehdr->e_ehsize);
+
+      map->includes_phdrs = 0;
+      if (! phdr_included || segment->p_type != PT_LOAD)
+	{
+	  map->includes_phdrs =
+	    (segment->p_offset <= (bfd_vma) iehdr->e_phoff
+	     && (segment->p_offset + segment->p_filesz
+		 >= ((bfd_vma) iehdr->e_phoff
+		     + iehdr->e_phnum * iehdr->e_phentsize)));
+
+	  if (segment->p_type == PT_LOAD && map->includes_phdrs)
+	    phdr_included = TRUE;
+	}
+
+      if (section_count != 0)
+	{
+	  unsigned int isec = 0;
+
+	  for (section = ibfd->sections;
+	       section != NULL;
+	       section = section->next)
+	    {
+	      this_hdr = &(elf_section_data(section)->this_hdr);
+	      if (ELF_IS_SECTION_IN_SEGMENT_FILE (this_hdr, segment))
+		map->sections[isec++] = section->output_section;
+	    }
+	}
+
+      map->count = section_count;
+      *pointer_to_map = map;
+      pointer_to_map = &map->next;
+    }
+
+  elf_tdata (obfd)->segment_map = map_first;
+  return TRUE;
+}
+
+/* Copy private BFD data.  This copies or rewrites ELF program header
+   information.  */
+
+static bfd_boolean
+copy_private_bfd_data (bfd *ibfd, bfd *obfd)
+{
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return TRUE;
+
+  if (elf_tdata (ibfd)->phdr == NULL)
+    return TRUE;
+
+  if (ibfd->xvec == obfd->xvec)
+    {
+      /* Check if any sections in the input BFD covered by ELF program
+	 header are changed.  */
+      Elf_Internal_Phdr *segment;
+      asection *section, *osec;
+      unsigned int i, num_segments;
+      Elf_Internal_Shdr *this_hdr;
+
+      /* Initialize the segment mark field.  */
+      for (section = obfd->sections; section != NULL;
+	   section = section->next)
+	section->segment_mark = FALSE;
+
+      num_segments = elf_elfheader (ibfd)->e_phnum;
+      for (i = 0, segment = elf_tdata (ibfd)->phdr;
+	   i < num_segments;
+	   i++, segment++)
+	{
+	  for (section = ibfd->sections;
+	       section != NULL; section = section->next)
+	    {
+	      /* We mark the output section so that we know it comes
+		 from the input BFD.  */
+	      osec = section->output_section;
+	      if (osec)
+		osec->segment_mark = TRUE;
+
+	      /* Check if this section is covered by the segment.  */
+	      this_hdr = &(elf_section_data(section)->this_hdr);
+	      if (ELF_IS_SECTION_IN_SEGMENT_FILE (this_hdr, segment))
+		{
+		  /* FIXME: Check if its output section is changed or
+		     removed.  What else do we need to check?  */
+		  if (osec == NULL
+		      || section->flags != osec->flags
+		      || section->lma != osec->lma
+		      || section->vma != osec->vma
+		      || section->size != osec->size
+		      || section->rawsize != osec->rawsize
+		      || section->alignment_power != osec->alignment_power)
+		    goto rewrite;
+		}
+	    }
+	}
+
+      /* Check to see if any output section doesn't come from the
+	 input BFD.  */
+      for (section = obfd->sections; section != NULL;
+	   section = section->next)
+	{
+	  if (section->segment_mark == FALSE)
+	    goto rewrite;
+	  else
+	    section->segment_mark = FALSE;
+	}
+
+      return copy_elf_program_header (ibfd, obfd);
+    }
+
+rewrite:
+  return rewrite_elf_program_header (ibfd, obfd);
+}
+
 /* Initialize private output section information from input section.  */
 
 bfd_boolean
@@ -5620,9 +5907,12 @@ _bfd_elf_init_private_section_data (bfd *ibfd,
       || obfd->xvec->flavour != bfd_target_elf_flavour)
     return TRUE;
 
-  /* FIXME: What if the output ELF section type has been set to
-     something different?  */
-  if (elf_section_type (osec) == SHT_NULL)
+  /* Don't copy the output ELF section type from input if the
+     output BFD section flags has been set to something different.
+     elf_fake_sections will set ELF section type based on BFD
+     section flags.  */
+  if (osec->flags == isec->flags
+      || (osec->flags == 0 && elf_section_type (osec) == SHT_NULL))
     elf_section_type (osec) = elf_section_type (isec);
 
   /* Set things up for objcopy and relocatable link.  The output
@@ -6659,8 +6949,6 @@ elf_find_function (bfd *abfd ATTRIBUTE_UNUSED,
 	  if (state == symbol_seen)
 	    state = file_after_symbol_seen;
 	  continue;
-	case STT_SECTION:
-	  continue;
 	case STT_NOTYPE:
 	case STT_FUNC:
 	  if (bfd_get_section (&q->symbol) == section
@@ -6669,12 +6957,10 @@ elf_find_function (bfd *abfd ATTRIBUTE_UNUSED,
 	    {
 	      func = (asymbol *) q;
 	      low_func = q->symbol.value;
-	      if (file == NULL)
-		filename = NULL;
-	      else if (ELF_ST_BIND (q->internal_elf_sym.st_info) != STB_LOCAL
-		       && state == file_after_symbol_seen)
-		filename = NULL;
-	      else
+	      filename = NULL;
+	      if (file != NULL
+		  && (ELF_ST_BIND (q->internal_elf_sym.st_info) == STB_LOCAL
+		      || state != file_after_symbol_seen))
 		filename = bfd_asymbol_name (file);
 	    }
 	  break;
@@ -6925,7 +7211,7 @@ _bfd_elf_close_and_cleanup (bfd *abfd)
 {
   if (bfd_get_format (abfd) == bfd_object)
     {
-      if (elf_shstrtab (abfd) != NULL)
+      if (elf_tdata (abfd) != NULL && elf_shstrtab (abfd) != NULL)
 	_bfd_elf_strtab_free (elf_shstrtab (abfd));
       _bfd_dwarf2_cleanup_debug_info (abfd);
     }
@@ -7866,8 +8152,8 @@ elfcore_write_pstatus (bfd *abfd,
 		       char *buf,
 		       int *bufsiz,
 		       long pid,
-		       int cursig,
-		       const void *gregs)
+		       int cursig ATTRIBUTE_UNUSED,
+		       const void *gregs ATTRIBUTE_UNUSED)
 {
   pstatus_t pstat;
   char *note_name = "CORE";
@@ -8475,8 +8761,7 @@ done:
 /* It is only used by x86-64 so far.  */
 asection _bfd_elf_large_com_section
   = BFD_FAKE_SECTION (_bfd_elf_large_com_section,
-		      SEC_IS_COMMON, NULL, NULL, "LARGE_COMMON",
-		      0);
+		      SEC_IS_COMMON, NULL, "LARGE_COMMON", 0);
 
 /* Return TRUE if 2 section types are compatible.  */
 

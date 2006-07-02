@@ -1,6 +1,6 @@
-/* Target-dependent code for PowerPC systems running NetBSD.
+/* Target-dependent code for NetBSD/powerpc.
 
-   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -18,237 +18,71 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
-#include "gdbcore.h"
-#include "regcache.h"
-#include "target.h"
-#include "breakpoint.h"
-#include "value.h"
+#include "gdbtypes.h"
 #include "osabi.h"
+#include "regcache.h"
+#include "regset.h"
+#include "trad-frame.h"
+#include "tramp-frame.h"
+
+#include "gdb_assert.h"
+#include "gdb_string.h"
 
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"
-#include "nbsd-tdep.h"
-#include "tramp-frame.h"
-#include "trad-frame.h"
-#include "gdb_assert.h"
 #include "solib-svr4.h"
 
-#define REG_FIXREG_OFFSET(x)	((x) * 4)
-#define REG_LR_OFFSET		(32 * 4)
-#define REG_CR_OFFSET		(33 * 4)
-#define REG_XER_OFFSET		(34 * 4)
-#define REG_CTR_OFFSET		(35 * 4)
-#define REG_PC_OFFSET		(36 * 4)
-#define SIZEOF_STRUCT_REG	(37 * 4)
+/* Register offsets from <machine/reg.h>.  */
+struct ppc_reg_offsets ppcnbsd_reg_offsets;
+
 
-#define FPREG_FPR_OFFSET(x)	((x) * 8)
-#define FPREG_FPSCR_OFFSET	(32 * 8)
-#define SIZEOF_STRUCT_FPREG	(33 * 8)
+/* Core file support.  */
 
-void
-ppcnbsd_supply_reg (char *regs, int regno)
+/* NetBSD/powerpc register set.  */
+
+struct regset ppcnbsd_gregset =
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
-  int i;
-
-  for (i = 0; i < ppc_num_gprs; i++)
-    {
-      if (regno == tdep->ppc_gp0_regnum + i || regno == -1)
-	regcache_raw_supply (current_regcache, tdep->ppc_gp0_regnum + i,
-			     regs + REG_FIXREG_OFFSET (i));
-    }
-
-  if (regno == tdep->ppc_lr_regnum || regno == -1)
-    regcache_raw_supply (current_regcache, tdep->ppc_lr_regnum,
-			 regs + REG_LR_OFFSET);
-
-  if (regno == tdep->ppc_cr_regnum || regno == -1)
-    regcache_raw_supply (current_regcache, tdep->ppc_cr_regnum,
-			 regs + REG_CR_OFFSET);
-
-  if (regno == tdep->ppc_xer_regnum || regno == -1)
-    regcache_raw_supply (current_regcache, tdep->ppc_xer_regnum,
-			 regs + REG_XER_OFFSET);
-
-  if (regno == tdep->ppc_ctr_regnum || regno == -1)
-    regcache_raw_supply (current_regcache, tdep->ppc_ctr_regnum,
-			 regs + REG_CTR_OFFSET);
-
-  if (regno == PC_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, PC_REGNUM,
-			 regs + REG_PC_OFFSET);
-}
-
-void
-ppcnbsd_fill_reg (char *regs, int regno)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
-  int i;
-
-  for (i = 0; i < ppc_num_gprs; i++)
-    {
-      if (regno == tdep->ppc_gp0_regnum + i || regno == -1)
-	regcache_raw_collect (current_regcache, tdep->ppc_gp0_regnum + i,
-			      regs + REG_FIXREG_OFFSET (i));
-    }
-
-  if (regno == tdep->ppc_lr_regnum || regno == -1)
-    regcache_raw_collect (current_regcache, tdep->ppc_lr_regnum,
-			  regs + REG_LR_OFFSET);
-
-  if (regno == tdep->ppc_cr_regnum || regno == -1)
-    regcache_raw_collect (current_regcache, tdep->ppc_cr_regnum,
-			  regs + REG_CR_OFFSET);
-
-  if (regno == tdep->ppc_xer_regnum || regno == -1)
-    regcache_raw_collect (current_regcache, tdep->ppc_xer_regnum,
-			  regs + REG_XER_OFFSET);
-
-  if (regno == tdep->ppc_ctr_regnum || regno == -1)
-    regcache_raw_collect (current_regcache, tdep->ppc_ctr_regnum,
-			  regs + REG_CTR_OFFSET);
-
-  if (regno == PC_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, PC_REGNUM, regs + REG_PC_OFFSET);
-}
-
-void
-ppcnbsd_supply_fpreg (char *fpregs, int regno)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
-  int i;
-
-  /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
-     point registers.  Traditionally, GDB's register set has still
-     listed the floating point registers for such machines, so this
-     code is harmless.  However, the new E500 port actually omits the
-     floating point registers entirely from the register set --- they
-     don't even have register numbers assigned to them.
-
-     It's not clear to me how best to update this code, so this assert
-     will alert the first person to encounter the NetBSD/E500
-     combination to the problem.  */
-  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
-
-  for (i = 0; i < ppc_num_fprs; i++)
-    {
-      if (regno == tdep->ppc_fp0_regnum + i || regno == -1)
-	regcache_raw_supply (current_regcache, tdep->ppc_fp0_regnum + i,
-			     fpregs + FPREG_FPR_OFFSET (i));
-    }
-
-  if (regno == tdep->ppc_fpscr_regnum || regno == -1)
-    regcache_raw_supply (current_regcache, tdep->ppc_fpscr_regnum,
-			 fpregs + FPREG_FPSCR_OFFSET);
-}
-
-void
-ppcnbsd_fill_fpreg (char *fpregs, int regno)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
-  int i;
-
-  /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
-     point registers.  Traditionally, GDB's register set has still
-     listed the floating point registers for such machines, so this
-     code is harmless.  However, the new E500 port actually omits the
-     floating point registers entirely from the register set --- they
-     don't even have register numbers assigned to them.
-
-     It's not clear to me how best to update this code, so this assert
-     will alert the first person to encounter the NetBSD/E500
-     combination to the problem.  */
-  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
-
-  for (i = 0; i < ppc_num_fprs; i++)
-    {
-      if (regno == tdep->ppc_fp0_regnum + i || regno == -1)
-	regcache_raw_collect (current_regcache, tdep->ppc_fp0_regnum + i,
-			      fpregs + FPREG_FPR_OFFSET (i));
-    }
-
-  if (regno == tdep->ppc_fpscr_regnum || regno == -1)
-    regcache_raw_collect (current_regcache, tdep->ppc_fpscr_regnum,
-			  fpregs + FPREG_FPSCR_OFFSET);
-}
-
-static void
-fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
-                      CORE_ADDR ignore)
-{
-  char *regs, *fpregs;
-
-  /* We get everything from one section.  */
-  if (which != 0)
-    return;
-
-  regs = core_reg_sect;
-  fpregs = core_reg_sect + SIZEOF_STRUCT_REG;
-
-  /* Integer registers.  */
-  ppcnbsd_supply_reg (regs, -1);
-
-  /* Floating point registers.  */
-  ppcnbsd_supply_fpreg (fpregs, -1);
-}
-
-static void
-fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size, int which,
-                         CORE_ADDR ignore)
-{
-  switch (which)
-    {
-    case 0:  /* Integer registers.  */
-      if (core_reg_size != SIZEOF_STRUCT_REG)
-	warning (_("Wrong size register set in core file."));
-      else
-	ppcnbsd_supply_reg (core_reg_sect, -1);
-      break;
-
-    case 2:  /* Floating point registers.  */
-      if (core_reg_size != SIZEOF_STRUCT_FPREG)
-	warning (_("Wrong size FP register set in core file."));
-      else
-	ppcnbsd_supply_fpreg (core_reg_sect, -1);
-      break;
-
-    default:
-      /* Don't know what kind of register request this is; just ignore it.  */
-      break;
-    }
-}
-
-static struct core_fns ppcnbsd_core_fns =
-{
-  bfd_target_unknown_flavour,		/* core_flavour */
-  default_check_format,			/* check_format */
-  default_core_sniffer,			/* core_sniffer */
-  fetch_core_registers,			/* core_read_registers */
-  NULL					/* next */
+  &ppcnbsd_reg_offsets,
+  ppc_supply_gregset
 };
 
-static struct core_fns ppcnbsd_elfcore_fns =
+struct regset ppcnbsd_fpregset =
 {
-  bfd_target_elf_flavour,		/* core_flavour */
-  default_check_format,			/* check_format */
-  default_core_sniffer,			/* core_sniffer */
-  fetch_elfcore_registers,		/* core_read_registers */
-  NULL					/* next */
+  &ppcnbsd_reg_offsets,
+  ppc_supply_fpregset
 };
 
-/* NetBSD is confused.  It appears that 1.5 was using the correct SVr4
+/* Return the appropriate register set for the core section identified
+   by SECT_NAME and SECT_SIZE.  */
+
+static const struct regset *
+ppcnbsd_regset_from_core_section (struct gdbarch *gdbarch,
+				  const char *sect_name, size_t sect_size)
+{
+  if (strcmp (sect_name, ".reg") == 0 && sect_size >= 148)
+    return &ppcnbsd_gregset;
+
+  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= 264)
+    return &ppcnbsd_fpregset;
+
+  return NULL;
+}
+
+
+/* NetBSD is confused.  It appears that 1.5 was using the correct SVR4
    convention but, 1.6 switched to the below broken convention.  For
    the moment use the broken convention.  Ulgh!.  */
 
 static enum return_value_convention
 ppcnbsd_return_value (struct gdbarch *gdbarch, struct type *valtype,
-		      struct regcache *regcache, void *readbuf,
-		      const void *writebuf)
+		      struct regcache *regcache, gdb_byte *readbuf,
+		      const gdb_byte *writebuf)
 {
+#if 0
   if ((TYPE_CODE (valtype) == TYPE_CODE_STRUCT
        || TYPE_CODE (valtype) == TYPE_CODE_UNION)
       && !((TYPE_LENGTH (valtype) == 16 || TYPE_LENGTH (valtype) == 8)
@@ -259,9 +93,15 @@ ppcnbsd_return_value (struct gdbarch *gdbarch, struct type *valtype,
 	   || TYPE_LENGTH (valtype) == 8))
     return RETURN_VALUE_STRUCT_CONVENTION;
   else
+#endif
     return ppc_sysv_abi_broken_return_value (gdbarch, valtype, regcache,
 					     readbuf, writebuf);
 }
+
+
+/* Signal trampolines.  */
+
+static const struct tramp_frame ppcnbsd2_sigtramp;
 
 static void
 ppcnbsd_sigtramp_cache_init (const struct tramp_frame *self,
@@ -269,53 +109,72 @@ ppcnbsd_sigtramp_cache_init (const struct tramp_frame *self,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
-  CORE_ADDR base;
-  CORE_ADDR offset;
-  int i;
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  CORE_ADDR addr, base;
+  int i;
 
   base = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
-  offset = base + 0x18 + 2 * tdep->wordsize;
-  for (i = 0; i < ppc_num_gprs; i++)
+  if (self == &ppcnbsd2_sigtramp)
+    addr = base + 0x10 + 2 * tdep->wordsize;
+  else
+    addr = base + 0x18 + 2 * tdep->wordsize;
+  for (i = 0; i < ppc_num_gprs; i++, addr += tdep->wordsize)
     {
       int regnum = i + tdep->ppc_gp0_regnum;
-      trad_frame_set_reg_addr (this_cache, regnum, offset);
-      offset += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, regnum, addr);
     }
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_lr_regnum, offset);
-  offset += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_cr_regnum, offset);
-  offset += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_xer_regnum, offset);
-  offset += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_ctr_regnum, offset);
-  offset += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, PC_REGNUM, offset); /* SRR0? */
-  offset += tdep->wordsize;
+  trad_frame_set_reg_addr (this_cache, tdep->ppc_lr_regnum, addr);
+  addr += tdep->wordsize;
+  trad_frame_set_reg_addr (this_cache, tdep->ppc_cr_regnum, addr);
+  addr += tdep->wordsize;
+  trad_frame_set_reg_addr (this_cache, tdep->ppc_xer_regnum, addr);
+  addr += tdep->wordsize;
+  trad_frame_set_reg_addr (this_cache, tdep->ppc_ctr_regnum, addr);
+  addr += tdep->wordsize;
+  trad_frame_set_reg_addr (this_cache, PC_REGNUM, addr); /* SRR0? */
+  addr += tdep->wordsize;
 
   /* Construct the frame ID using the function start.  */
   trad_frame_set_id (this_cache, frame_id_build (base, func));
 }
 
-/* Given the NEXT frame, examine the instructions at and around this
-   frame's resume address (aka PC) to see of they look like a signal
-   trampoline.  Return the address of the trampolines first
-   instruction, or zero if it isn't a signal trampoline.  */
-
-static const struct tramp_frame ppcnbsd_sigtramp = {
+static const struct tramp_frame ppcnbsd_sigtramp =
+{
   SIGTRAMP_FRAME,
-  4, /* insn size */
-  { /* insn */
-    { 0x38610018, -1 }, /* addi r3,r1,24 */
-    { 0x38000127, -1 }, /* li r0,295 */
-    { 0x44000002, -1 }, /* sc */
-    { 0x38000001, -1 }, /* li r0,1 */
-    { 0x44000002, -1 }, /* sc */
+  4,
+  {
+    { 0x3821fff0, -1 },		/* add r1,r1,-16 */
+    { 0x4e800021, -1 },		/* blrl */
+    { 0x38610018, -1 },		/* addi r3,r1,24 */
+    { 0x38000127, -1 },		/* li r0,295 */
+    { 0x44000002, -1 },		/* sc */
+    { 0x38000001, -1 },		/* li r0,1 */
+    { 0x44000002, -1 },		/* sc */
     { TRAMP_SENTINEL_INSN, -1 }
   },
   ppcnbsd_sigtramp_cache_init
 };
+
+/* NetBSD 2.0 introduced a slightly different signal trampoline.  */
+
+static const struct tramp_frame ppcnbsd2_sigtramp =
+{
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { 0x3821fff0, -1 },		/* add r1,r1,-16 */
+    { 0x4e800021, -1 },		/* blrl */
+    { 0x38610010, -1 },		/* addi r3,r1,16 */
+    { 0x38000127, -1 },		/* li r0,295 */
+    { 0x44000002, -1 },		/* sc */
+    { 0x38000001, -1 },		/* li r0,1 */
+    { 0x44000002, -1 },		/* sc */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  ppcnbsd_sigtramp_cache_init
+};
+
 
 static void
 ppcnbsd_init_abi (struct gdbarch_info info,
@@ -324,10 +183,21 @@ ppcnbsd_init_abi (struct gdbarch_info info,
   /* For NetBSD, this is an on again, off again thing.  Some systems
      do use the broken struct convention, and some don't.  */
   set_gdbarch_return_value (gdbarch, ppcnbsd_return_value);
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-                                nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
+
+  /* NetBSD uses SVR4-style shared libraries.  */
+  set_solib_svr4_fetch_link_map_offsets
+    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+
+  set_gdbarch_regset_from_core_section
+    (gdbarch, ppcnbsd_regset_from_core_section);
+
   tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd_sigtramp);
+  tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd2_sigtramp);
 }
+
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_ppcnbsd_tdep (void);
 
 void
 _initialize_ppcnbsd_tdep (void)
@@ -335,6 +205,27 @@ _initialize_ppcnbsd_tdep (void)
   gdbarch_register_osabi (bfd_arch_powerpc, 0, GDB_OSABI_NETBSD_ELF,
 			  ppcnbsd_init_abi);
 
-  deprecated_add_core_fns (&ppcnbsd_core_fns);
-  deprecated_add_core_fns (&ppcnbsd_elfcore_fns);
+  /* Avoid initializing the register offsets again if they were
+     already initailized by ppcnbsd-nat.c.  */
+  if (ppcnbsd_reg_offsets.pc_offset == 0)
+    {
+      /* General-purpose registers.  */
+      ppcnbsd_reg_offsets.r0_offset = 0;
+      ppcnbsd_reg_offsets.lr_offset = 128;
+      ppcnbsd_reg_offsets.cr_offset = 132;
+      ppcnbsd_reg_offsets.xer_offset = 136;
+      ppcnbsd_reg_offsets.ctr_offset = 140;
+      ppcnbsd_reg_offsets.pc_offset = 144;
+      ppcnbsd_reg_offsets.ps_offset = -1;
+      ppcnbsd_reg_offsets.mq_offset = -1;
+
+      /* Floating-point registers.  */
+      ppcnbsd_reg_offsets.f0_offset = 0;
+      ppcnbsd_reg_offsets.fpscr_offset = 256;
+
+      /* AltiVec registers.  */
+      ppcnbsd_reg_offsets.vr0_offset = 0;
+      ppcnbsd_reg_offsets.vrsave_offset = 512;
+      ppcnbsd_reg_offsets.vscr_offset = 524;
+    }
 }

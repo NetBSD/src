@@ -41,7 +41,7 @@ set testfile "e500-regs"
 set binfile ${objdir}/${subdir}/${testfile}
 set src1 ${srcdir}/${subdir}/${testfile}.c
 
-if  { [gdb_compile ${src1} ${binfile} executable {debug additional_flags=-w}] != "" } {
+if  { [gdb_compile ${src1} ${binfile} executable {debug nowarnings}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

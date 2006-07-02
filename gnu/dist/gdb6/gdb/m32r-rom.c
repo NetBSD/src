@@ -1,7 +1,7 @@
 /* Remote debugging interface to m32r and mon2000 ROM monitors for GDB, 
    the GNU debugger.
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2004, 2005
+   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2004, 2005
    Free Software Foundation, Inc.
 
    Adapted by Michael Snyder of Cygnus Support.
@@ -20,8 +20,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* This module defines communication with the Renesas m32r monitor */
 
@@ -46,11 +46,15 @@
 /*
  * All this stuff just to get my host computer's IP address!
  */
+#ifdef __MINGW32__
+#include <winsock.h>
+#else
 #include <sys/types.h>
 #include <netdb.h>		/* for hostent */
 #include <netinet/in.h>		/* for struct in_addr */
 #if 1
 #include <arpa/inet.h>		/* for inet_ntoa */
+#endif
 #endif
 
 static char *board_addr;	/* user-settable IP address for M32R-EVA */
@@ -435,6 +439,13 @@ m32r_upload_command (char *args, int from_tty)
     }
   if (server_addr == 0)
     {
+#ifdef __MINGW32__
+      WSADATA wd;
+      /* Winsock initialization. */
+      if (WSAStartup (MAKEWORD (1, 1), &wd))
+	error (_("Couldn't initialize WINSOCK."));
+#endif
+
       buf[0] = 0;
       gethostname (buf, sizeof (buf));
       if (buf[0] != 0)

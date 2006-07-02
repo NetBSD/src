@@ -1,7 +1,7 @@
 /* Print values for GNU debugger GDB.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -967,6 +967,8 @@ output_command (char *exp, int from_tty)
   struct value *val;
   struct format_data fmt;
 
+  fmt.size = 0;
+
   if (exp && *exp == '/')
     {
       exp++;
@@ -1834,13 +1836,13 @@ printf_command (char *arg, int from_tty)
 
     enum argclass
       {
-	no_arg, int_arg, string_arg, double_arg, long_long_arg
+	int_arg, long_arg, long_long_arg, ptr_arg, string_arg,
+	double_arg, long_double_arg
       };
     enum argclass *argclass;
     enum argclass this_argclass;
     char *last_arg;
     int nargs_wanted;
-    int lcount;
     int i;
 
     argclass = (enum argclass *) alloca (strlen (s) * sizeof *argclass);
@@ -1850,23 +1852,136 @@ printf_command (char *arg, int from_tty)
     while (*f)
       if (*f++ == '%')
 	{
-	  lcount = 0;
-	  while (strchr ("0123456789.hlL-+ #", *f))
+	  int seen_hash = 0, seen_zero = 0, lcount = 0, seen_prec = 0;
+	  int seen_space = 0, seen_plus = 0;
+	  int seen_big_l = 0, seen_h = 0;
+	  int bad = 0;
+
+	  /* Check the validity of the format specifier, and work
+	     out what argument it expects.  We only accept C89
+	     format strings, with the exception of long long (which
+	     we autoconf for).  */
+
+	  /* Skip over "%%".  */
+	  if (*f == '%')
 	    {
-	      if (*f == 'l' || *f == 'L')
-		lcount++;
+	      f++;
+	      continue;
+	    }
+
+	  /* The first part of a format specifier is a set of flag
+	     characters.  */
+	  while (strchr ("0-+ #", *f))
+	    {
+	      if (*f == '#')
+		seen_hash = 1;
+	      else if (*f == '0')
+		seen_zero = 1;
+	      else if (*f == ' ')
+		seen_space = 1;
+	      else if (*f == '+')
+		seen_plus = 1;
 	      f++;
 	    }
+
+	  /* The next part of a format specifier is a width.  */
+	  while (strchr ("0123456789", *f))
+	    f++;
+
+	  /* The next part of a format specifier is a precision.  */
+	  if (*f == '.')
+	    {
+	      seen_prec = 1;
+	      f++;
+	      while (strchr ("0123456789", *f))
+		f++;
+	    }
+
+	  /* The next part of a format specifier is a length modifier.  */
+	  if (*f == 'h')
+	    {
+	      seen_h = 1;
+	      f++;
+	    }
+	  else if (*f == 'l')
+	    {
+	      f++;
+	      lcount++;
+	      if (*f == 'l')
+		{
+		  f++;
+		  lcount++;
+		}
+	    }
+	  else if (*f == 'L')
+	    {
+	      seen_big_l = 1;
+	      f++;
+	    }
+
 	  switch (*f)
 	    {
+	    case 'u':
+	      if (seen_hash)
+		bad = 1;
+	      /* FALLTHROUGH */
+
+	    case 'o':
+	    case 'x':
+	    case 'X':
+	      if (seen_space || seen_plus)
+		bad = 1;
+	      /* FALLTHROUGH */
+
+	    case 'd':
+	    case 'i':
+	      if (lcount == 0)
+		this_argclass = int_arg;
+	      else if (lcount == 1)
+		this_argclass = long_arg;
+	      else
+		this_argclass = long_long_arg;
+
+	      if (seen_big_l)
+		bad = 1;
+	      break;
+
+	    case 'c':
+	      this_argclass = int_arg;
+	      if (lcount || seen_h || seen_big_l)
+		bad = 1;
+	      if (seen_prec || seen_zero || seen_space || seen_plus)
+		bad = 1;
+	      break;
+
+	    case 'p':
+	      this_argclass = ptr_arg;
+	      if (lcount || seen_h || seen_big_l)
+		bad = 1;
+	      if (seen_prec || seen_zero || seen_space || seen_plus)
+		bad = 1;
+	      break;
+
 	    case 's':
 	      this_argclass = string_arg;
+	      if (lcount || seen_h || seen_big_l)
+		bad = 1;
+	      if (seen_zero || seen_space || seen_plus)
+		bad = 1;
 	      break;
 
 	    case 'e':
 	    case 'f':
 	    case 'g':
-	      this_argclass = double_arg;
+	    case 'E':
+	    case 'G':
+	      if (seen_big_l)
+		this_argclass = long_double_arg;
+	      else
+		this_argclass = double_arg;
+
+	      if (lcount || seen_h)
+		bad = 1;
 	      break;
 
 	    case '*':
@@ -1875,26 +1990,23 @@ printf_command (char *arg, int from_tty)
 	    case 'n':
 	      error (_("Format specifier `n' not supported in printf"));
 
-	    case '%':
-	      this_argclass = no_arg;
-	      break;
+	    case '\0':
+	      error (_("Incomplete format specifier at end of format string"));
 
 	    default:
-	      if (lcount > 1)
-		this_argclass = long_long_arg;
-	      else
-		this_argclass = int_arg;
-	      break;
+	      error (_("Unrecognized format specifier '%c' in printf"), *f);
 	    }
+
+	  if (bad)
+	    error (_("Inappropriate modifiers to format specifier '%c' in printf"),
+		   *f);
+
 	  f++;
-	  if (this_argclass != no_arg)
-	    {
-	      strncpy (current_substring, last_arg, f - last_arg);
-	      current_substring += f - last_arg;
-	      *current_substring++ = '\0';
-	      last_arg = f;
-	      argclass[nargs_wanted++] = this_argclass;
-	    }
+	  strncpy (current_substring, last_arg, f - last_arg);
+	  current_substring += f - last_arg;
+	  *current_substring++ = '\0';
+	  last_arg = f;
+	  argclass[nargs_wanted++] = this_argclass;
 	}
 
     /* Now, parse all arguments and evaluate them.
@@ -1938,7 +2050,7 @@ printf_command (char *arg, int from_tty)
 	  {
 	  case string_arg:
 	    {
-	      char *str;
+	      gdb_byte *str;
 	      CORE_ADDR tem;
 	      int j;
 	      tem = value_as_address (val_args[i]);
@@ -1946,7 +2058,7 @@ printf_command (char *arg, int from_tty)
 	      /* This is a %s argument.  Find the length of the string.  */
 	      for (j = 0;; j++)
 		{
-		  char c;
+		  gdb_byte c;
 		  QUIT;
 		  read_memory (tem + j, &c, 1);
 		  if (c == 0)
@@ -1954,12 +2066,12 @@ printf_command (char *arg, int from_tty)
 		}
 
 	      /* Copy the string contents into a string inside GDB.  */
-	      str = (char *) alloca (j + 1);
+	      str = (gdb_byte *) alloca (j + 1);
 	      if (j != 0)
 		read_memory (tem, str, j);
 	      str[j] = 0;
 
-	      printf_filtered (current_substring, str);
+	      printf_filtered (current_substring, (char *) str);
 	    }
 	    break;
 	  case double_arg:
@@ -1968,6 +2080,16 @@ printf_command (char *arg, int from_tty)
 	      printf_filtered (current_substring, val);
 	      break;
 	    }
+	  case long_double_arg:
+#ifdef HAVE_LONG_DOUBLE
+	    {
+	      long double val = value_as_double (val_args[i]);
+	      printf_filtered (current_substring, val);
+	      break;
+	    }
+#else
+	    error (_("long double not supported in printf"));
+#endif
 	  case long_long_arg:
 #if defined (CC_HAS_LONG_LONG) && defined (PRINTF_HAS_LONG_LONG)
 	    {
@@ -1980,7 +2102,12 @@ printf_command (char *arg, int from_tty)
 #endif
 	  case int_arg:
 	    {
-	      /* FIXME: there should be separate int_arg and long_arg.  */
+	      int val = value_as_long (val_args[i]);
+	      printf_filtered (current_substring, val);
+	      break;
+	    }
+	  case long_arg:
+	    {
 	      long val = value_as_long (val_args[i]);
 	      printf_filtered (current_substring, val);
 	      break;

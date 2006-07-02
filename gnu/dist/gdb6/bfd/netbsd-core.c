@@ -42,6 +42,8 @@
    OpenBSD/sparc64.  */
 #define SPARC64_WCOOKIE_OFFSET	832
 
+#define netbsd_core_file_matches_executable_p generic_core_file_matches_executable_p
+
 struct netbsd_core_struct
 {
   struct core core;
@@ -245,14 +247,6 @@ netbsd_core_file_failing_signal (bfd *abfd)
 {
   /*return core_signal (abfd);*/
   return abfd->tdata.netbsd_core_data->core.c_signo;
-}
-
-static bfd_boolean
-netbsd_core_file_matches_executable_p  (bfd *core_bfd ATTRIBUTE_UNUSED,
-					bfd *exec_bfd ATTRIBUTE_UNUSED)
-{
-  /* FIXME, We have no way of telling at this point.  */
-  return TRUE;
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */

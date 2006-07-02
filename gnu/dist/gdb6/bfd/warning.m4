@@ -1,10 +1,10 @@
 dnl Common configure.in fragment
 
 AC_DEFUN([AM_BINUTILS_WARNINGS],[
-WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
+GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
 
 AC_ARG_ENABLE(werror,
-  [  --enable-werror    treat compile warnings as errors],
+  [  --enable-werror         treat compile warnings as errors],
   [case "${enableval}" in
      yes | y) ERROR_ON_WARNING="yes" ;;
      no | n)  ERROR_ON_WARNING="no" ;;
@@ -18,19 +18,25 @@ fi
 
 NO_WERROR=
 if test "${ERROR_ON_WARNING}" = yes ; then
-    WARN_CFLAGS="$WARN_CFLAGS -Werror"
+    GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Werror"
     NO_WERROR="-Wno-error"
 fi
 		   
+if test "${GCC}" = yes ; then
+  WARN_CFLAGS="${GCC_WARN_CFLAGS}"
+fi
+
 AC_ARG_ENABLE(build-warnings,
-[  --enable-build-warnings Enable build-time compiler warnings],
+[  --enable-build-warnings enable build-time compiler warnings],
 [case "${enableval}" in
-  yes)	;;
-  no)	WARN_CFLAGS="-w";;
+  yes)	WARN_CFLAGS="${GCC_WARN_CFLAGS}";;
+  no)	if test "${GCC}" = yes ; then
+	  WARN_CFLAGS="-w"
+	fi;;
   ,*)   t=`echo "${enableval}" | sed -e "s/,/ /g"`
-        WARN_CFLAGS="${WARN_CFLAGS} ${t}";;
+        WARN_CFLAGS="${GCC_WARN_CFLAGS} ${t}";;
   *,)   t=`echo "${enableval}" | sed -e "s/,/ /g"`
-        WARN_CFLAGS="${t} ${WARN_CFLAGS}";;
+        WARN_CFLAGS="${t} ${GCC_WARN_CFLAGS}";;
   *)    WARN_CFLAGS=`echo "${enableval}" | sed -e "s/,/ /g"`;;
 esac])
 

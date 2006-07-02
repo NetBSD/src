@@ -1,6 +1,6 @@
 /* OS ABI variant handling for GDB.
 
-   Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
   
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 
@@ -74,6 +74,7 @@ static const char * const gdb_osabi_names[] =
   "QNX Neutrino",
 
   "Cygwin",
+  "AIX",
 
   "<invalid>"
 };
@@ -546,7 +547,8 @@ generic_elf_osabi_sniffer (bfd *abfd)
       /* The FreeBSD folks have been naughty; they stored the string
          "FreeBSD" in the padding of the e_ident field of the ELF
          header to "brand" their ELF binaries in FreeBSD 3.x.  */
-      if (strcmp (&elf_elfheader (abfd)->e_ident[8], "FreeBSD") == 0)
+      if (memcmp (&elf_elfheader (abfd)->e_ident[8],
+		  "FreeBSD", sizeof ("FreeBSD")) == 0)
 	osabi = GDB_OSABI_FREEBSD_ELF;
     }
 

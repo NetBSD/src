@@ -1,3 +1,18 @@
+2006-05-11  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* bfd.texinfo: Rename "Index" to "BFD Index"  
+
+2006-04-06  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* Makefile.am: Add install-html and install-html-am targets. 
+	Define datarootdir, docdir and htmldir.
+	* Makefile.in: Regenerate.
+
+2006-02-27  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* Makefile.am: Add html target.
+	* Makefile.in: Regenerate.
+
 2005-07-24  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* chew.c: Include <string.h>.

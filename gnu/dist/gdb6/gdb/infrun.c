@@ -1,7 +1,7 @@
 /* Target-struct-independent code to start (run) and stop an inferior
    process.
 
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
    1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free
    Software Foundation, Inc.
 
@@ -19,8 +19,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -943,6 +943,7 @@ void handle_inferior_event (struct execution_control_state *ecs);
 
 static void step_into_function (struct execution_control_state *ecs);
 static void insert_step_resume_breakpoint_at_frame (struct frame_info *step_frame);
+static void insert_step_resume_breakpoint_at_caller (struct frame_info *);
 static void insert_step_resume_breakpoint_at_sal (struct symtab_and_line sr_sal,
 						  struct frame_id sr_id);
 static void stop_stepping (struct execution_control_state *ecs);
@@ -1100,6 +1101,12 @@ get_last_target_status (ptid_t *ptidp, struct target_waitstatus *status)
 {
   *ptidp = target_last_wait_ptid;
   *status = target_last_waitstatus;
+}
+
+void
+nullify_last_target_wait_ptid (void)
+{
+  target_last_wait_ptid = minus_one_ptid;
 }
 
 /* Switch thread contexts, maintaining "infrun state". */
@@ -2361,9 +2368,13 @@ process_event_stop_test:
       return;
     }
 
+  /* Check for subroutine calls.
+
+     NOTE: frame_id_eq will never report two invalid frame IDs as
+     being equal, so to get into this block, both the current and
+     previous frame must have valid frame IDs.  */
   if (frame_id_eq (frame_unwind_id (get_current_frame ()), step_frame_id))
     {
-      /* It's a subroutine call.  */
       CORE_ADDR real_stop_pc;
 
       if (debug_infrun)
@@ -2390,7 +2401,7 @@ process_event_stop_test:
 	  /* We're doing a "next", set a breakpoint at callee's return
 	     address (the address at which the caller will
 	     resume).  */
-	  insert_step_resume_breakpoint_at_frame (get_prev_frame (get_current_frame ()));
+	  insert_step_resume_breakpoint_at_caller (get_current_frame ());
 	  keep_going (ecs);
 	  return;
 	}
@@ -2453,7 +2464,7 @@ process_event_stop_test:
 
       /* Set a breakpoint at callee's return address (the address at
          which the caller will resume).  */
-      insert_step_resume_breakpoint_at_frame (get_prev_frame (get_current_frame ()));
+      insert_step_resume_breakpoint_at_caller (get_current_frame ());
       keep_going (ecs);
       return;
     }
@@ -2507,8 +2518,11 @@ process_event_stop_test:
          and no line number corresponding to the address where the
          inferior stopped).  Since we want to skip this kind of code,
          we keep going until the inferior returns from this
-         function.  */
-      if (step_stop_if_no_debug)
+         function - unless the user has asked us not to (via
+         set step-mode) or we no longer know how to get back
+         to the call site.  */
+      if (step_stop_if_no_debug
+	  || !frame_id_p (frame_unwind_id (get_current_frame ())))
 	{
 	  /* If we have no line number and the step-stop-if-no-debug
 	     is set, we stop the step so that the user has a chance to
@@ -2522,7 +2536,7 @@ process_event_stop_test:
 	{
 	  /* Set a breakpoint at callee's return address (the address
 	     at which the caller will resume).  */
-	  insert_step_resume_breakpoint_at_frame (get_prev_frame (get_current_frame ()));
+	  insert_step_resume_breakpoint_at_caller (get_current_frame ());
 	  keep_going (ecs);
 	  return;
 	}
@@ -2729,20 +2743,13 @@ insert_step_resume_breakpoint_at_sal (struct symtab_and_line sr_sal,
   if (breakpoints_inserted)
     insert_breakpoints ();
 }
-				      
+
 /* Insert a "step resume breakpoint" at RETURN_FRAME.pc.  This is used
-   to skip a function (next, skip-no-debug) or signal.  It's assumed
-   that the function/signal handler being skipped eventually returns
-   to the breakpoint inserted at RETURN_FRAME.pc.
+   to skip a potential signal handler.
 
-   For the skip-function case, the function may have been reached by
-   either single stepping a call / return / signal-return instruction,
-   or by hitting a breakpoint.  In all cases, the RETURN_FRAME belongs
-   to the skip-function's caller.
-
-   For the signals case, this is called with the interrupted
-   function's frame.  The signal handler, when it returns, will resume
-   the interrupted function at RETURN_FRAME.pc.  */
+   This is called with the interrupted function's frame.  The signal
+   handler, when it returns, will resume the interrupted function at
+   RETURN_FRAME.pc.  */
 
 static void
 insert_step_resume_breakpoint_at_frame (struct frame_info *return_frame)
@@ -2755,6 +2762,38 @@ insert_step_resume_breakpoint_at_frame (struct frame_info *return_frame)
   sr_sal.section = find_pc_overlay (sr_sal.pc);
 
   insert_step_resume_breakpoint_at_sal (sr_sal, get_frame_id (return_frame));
+}
+
+/* Similar to insert_step_resume_breakpoint_at_frame, except
+   but a breakpoint at the previous frame's PC.  This is used to
+   skip a function after stepping into it (for "next" or if the called
+   function has no debugging information).
+
+   The current function has almost always been reached by single
+   stepping a call or return instruction.  NEXT_FRAME belongs to the
+   current function, and the breakpoint will be set at the caller's
+   resume address.
+
+   This is a separate function rather than reusing
+   insert_step_resume_breakpoint_at_frame in order to avoid
+   get_prev_frame, which may stop prematurely (see the implementation
+   of frame_unwind_id for an example).  */
+
+static void
+insert_step_resume_breakpoint_at_caller (struct frame_info *next_frame)
+{
+  struct symtab_and_line sr_sal;
+
+  /* We shouldn't have gotten here if we don't know where the call site
+     is.  */
+  gdb_assert (frame_id_p (frame_unwind_id (next_frame)));
+
+  init_sal (&sr_sal);		/* initialize to zeros */
+
+  sr_sal.pc = ADDR_BITS_REMOVE (frame_pc_unwind (next_frame));
+  sr_sal.section = find_pc_overlay (sr_sal.pc);
+
+  insert_step_resume_breakpoint_at_sal (sr_sal, frame_unwind_id (next_frame));
 }
 
 static void
@@ -3037,6 +3076,12 @@ Further execution is probably impossible.\n"));
     goto done;
 
   target_terminal_ours ();
+
+  /* Set the current source location.  This will also happen if we
+     display the frame below, but the current SAL will be incorrect
+     during a user hook-stop function.  */
+  if (target_has_stack && !stop_stack_dummy)
+    set_current_sal_from_frame (get_current_frame (), 1);
 
   /* Look up the hook_stop and run it (CLI internally handles problem
      of stop_command's pre-hook not existing).  */

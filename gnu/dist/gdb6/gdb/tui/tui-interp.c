@@ -1,6 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright (C) 2003 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "interps.h"
@@ -199,13 +199,13 @@ _initialize_tui_interp (void)
 
   /* Create a default uiout builder for the TUI. */
   tui_out = tui_out_new (gdb_stdout);
-  interp_add (interp_new ("tui", NULL, tui_out, &procs));
-  if (interpreter_p && strcmp (interpreter_p, "tui") == 0)
+  interp_add (interp_new (INTERP_TUI, NULL, tui_out, &procs));
+  if (interpreter_p && strcmp (interpreter_p, INTERP_TUI) == 0)
     tui_start_enabled = 1;
 
   if (interpreter_p && strcmp (interpreter_p, INTERP_CONSOLE) == 0)
     {
       xfree (interpreter_p);
-      interpreter_p = xstrdup ("tui");
+      interpreter_p = xstrdup (INTERP_TUI);
     }
 }

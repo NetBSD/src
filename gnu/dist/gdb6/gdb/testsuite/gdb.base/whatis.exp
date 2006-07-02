@@ -273,6 +273,10 @@ gdb_test "whatis v_struct1" \
     "type = struct t_struct" \
     "whatis named structure"
 
+gdb_test "whatis struct t_struct" \
+    "type = struct t_struct" \
+    "whatis named structure using type name"
+
 gdb_test "whatis v_struct2" \
     "type = struct \{$unstruct\}" \
     "whatis unnamed structure"
@@ -282,6 +286,10 @@ gdb_test "whatis v_struct2" \
 gdb_test "whatis v_union" \
     "type = union t_union" \
     "whatis named union"
+
+gdb_test "whatis union t_union" \
+    "type = union t_union" \
+    "whatis named union using type name"
 
 gdb_test "whatis v_union2" \
     "type = union \{$ununion\}" \
@@ -371,6 +379,10 @@ gdb_test "whatis clunker" \
     "type = enum cars" \
     "whatis enumeration"
 
+gdb_test "whatis enum cars" \
+    "type = enum cars" \
+    "whatis enumeration using type name"
+
 
 # test whatis command with nested struct and union
 gdb_test "whatis nested_su" \
@@ -402,3 +414,13 @@ gdb_test "whatis nested_su.inner_union_instance" \
 gdb_test "whatis nested_su.inner_union_instance.inner_union_int" \
     "type = int" \
     "whatis inner union member"
+
+# test whatis command with typedefs
+
+gdb_test "whatis char_addr" \
+    "type = char \\*" \
+    "whatis using typedef type name"
+
+gdb_test "whatis a_char_addr" \
+    "type = char_addr" \
+    "whatis applied to variable defined by typedef"

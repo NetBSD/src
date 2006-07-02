@@ -203,6 +203,16 @@ Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, US
 #define MDMX_FMTSEL_VEC_QH	0x15
 #define MDMX_FMTSEL_VEC_OB	0x16
 
+/* UDI */
+#define OP_SH_UDI1		6
+#define OP_MASK_UDI1		0x1f
+#define OP_SH_UDI2		6
+#define OP_MASK_UDI2		0x3ff
+#define OP_SH_UDI3		6
+#define OP_MASK_UDI3		0x7fff
+#define OP_SH_UDI4		6
+#define OP_MASK_UDI4		0xfffff
+
 /* This structure holds information for a particular instruction.  */
 
 struct mips_opcode
@@ -268,19 +278,20 @@ struct mips_opcode
    "x" accept and ignore register name
    "z" must be zero register
    "K" 5 bit Hardware Register (rdhwr instruction) (OP_*_RD)
-   "+A" 5 bit ins/ext position, which becomes LSB (OP_*_SHAMT).
+   "+A" 5 bit ins/ext/dins/dext/dinsm/dextm position, which becomes
+        LSB (OP_*_SHAMT).
 	Enforces: 0 <= pos < 32.
-   "+B" 5 bit ins size, which becomes MSB (OP_*_INSMSB).
+   "+B" 5 bit ins/dins size, which becomes MSB (OP_*_INSMSB).
 	Requires that "+A" or "+E" occur first to set position.
 	Enforces: 0 < (pos+size) <= 32.
-   "+C" 5 bit ext size, which becomes MSBD (OP_*_EXTMSBD).
+   "+C" 5 bit ext/dext size, which becomes MSBD (OP_*_EXTMSBD).
 	Requires that "+A" or "+E" occur first to set position.
 	Enforces: 0 < (pos+size) <= 32.
 	(Also used by "dext" w/ different limits, but limits for
 	that are checked by the M_DEXT macro.)
-   "+E" 5 bit dins/dext position, which becomes LSB-32 (OP_*_SHAMT).
+   "+E" 5 bit dinsu/dextu position, which becomes LSB-32 (OP_*_SHAMT).
 	Enforces: 32 <= pos < 64.
-   "+F" 5 bit "dinsm" size, which becomes MSB-32 (OP_*_INSMSB).
+   "+F" 5 bit "dinsm/dinsu" size, which becomes MSB-32 (OP_*_INSMSB).
 	Requires that "+A" or "+E" occur first to set position.
 	Enforces: 32 < (pos+size) <= 64.
    "+G" 5 bit "dextm" size, which becomes MSBD-32 (OP_*_EXTMSBD).
@@ -350,6 +361,12 @@ struct mips_opcode
    "+t" 5 bit coprocessor 0 destination register (OP_*_RT)
    "+T" 5 bit coprocessor 0 destination register (OP_*_RT) - disassembly only
 
+   UDI immediates:
+   "+1" UDI immediate bits 6-10
+   "+2" UDI immediate bits 6-15
+   "+3" UDI immediate bits 6-20
+   "+4" UDI immediate bits 6-25
+
    Other:
    "()" parens surrounding optional value
    ","  separates operands
@@ -364,6 +381,7 @@ struct mips_opcode
 
    Extension character sequences used so far ("+" followed by the
    following), for quick reference when adding more:
+   "1234"
    "ABCDEFGHIT"
    "t"
 */
@@ -467,7 +485,7 @@ struct mips_opcode
 #define INSN_ISA64R2              0x00000100
 
 /* Masks used for MIPS-defined ASEs.  */
-#define INSN_ASE_MASK		  0x0400f000
+#define INSN_ASE_MASK		  0x0c00f000
 
 /* DSP ASE */ 
 #define INSN_DSP                  0x00001000
@@ -500,8 +518,12 @@ struct mips_opcode
 #define INSN_5400		  0x01000000
 /* NEC VR5500 instruction.  */
 #define INSN_5500		  0x02000000
+
 /* MT ASE */
 #define INSN_MT                   0x04000000
+
+/* SmartMIPS ASE.  */
+#define INSN_SMARTMIPS            0x08000000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -624,6 +646,7 @@ enum
   M_BNE,
   M_BNE_I,
   M_BNEL_I,
+  M_CACHE_AB,
   M_DABS,
   M_DADD_I,
   M_DADDU_I,
@@ -928,7 +951,14 @@ extern int bfd_mips_num_opcodes;
    "A" 8 bit PC relative address * 4 (MIPS16OP_*_IMM8)
    "B" 5 bit PC relative address * 8 (MIPS16OP_*_IMM5)
    "E" 5 bit PC relative address * 4 (MIPS16OP_*_IMM5)
-   */
+   "m" 7 bit register list for save instruction (18 bit extended)
+   "M" 7 bit register list for restore instruction (18 bit extended)
+  */
+
+/* Save/restore encoding for the args field when all 4 registers are
+   either saved as arguments or saved/restored as statics.  */
+#define MIPS16_ALL_ARGS    0xe
+#define MIPS16_ALL_STATICS 0xb
 
 /* For the mips16, we use the same opcode table format and a few of
    the same flags.  However, most of the flags are different.  */

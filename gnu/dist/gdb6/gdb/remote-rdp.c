@@ -1,7 +1,7 @@
 /* Remote debugging for the ARM RDP interface.
 
-   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003 Free
-   Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2006
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  
 
 
  */
@@ -172,7 +172,7 @@ static int timeout = 2;
 static char *commandline = NULL;
 
 static int
-remote_rdp_xfer_inferior_memory (CORE_ADDR memaddr, char *myaddr, int len,
+remote_rdp_xfer_inferior_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
 				 int write, 
 				 struct mem_attrib *attrib,
 				 struct target_ops *target);
@@ -791,9 +791,6 @@ argsin;
 #define SWI_GenerateError               0x71
 
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 static int translate_open_mode[] =
 {
@@ -1053,8 +1050,10 @@ rdp_execute (void)
 }
 
 static int
-remote_rdp_insert_breakpoint (CORE_ADDR addr, bfd_byte *save)
+remote_rdp_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
+
   int res;
   if (ds.rdi_level > 0)
     {
@@ -1062,7 +1061,7 @@ remote_rdp_insert_breakpoint (CORE_ADDR addr, bfd_byte *save)
 		RDP_SET_BREAK,
 		addr,
 		RDP_SET_BREAK_TYPE_PC_EQUAL | RDP_SET_BREAK_TYPE_GET_HANDLE,
-		save,
+		bp_tgt->shadow_contents,
 		&res);
     }
   else
@@ -1077,14 +1076,15 @@ remote_rdp_insert_breakpoint (CORE_ADDR addr, bfd_byte *save)
 }
 
 static int
-remote_rdp_remove_breakpoint (CORE_ADDR addr, bfd_byte *save)
+remote_rdp_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int res;
   if (ds.rdi_level > 0)
     {
       send_rdp ("b-p-S-B",
 		RDP_CLEAR_BREAK,
-		save, 4,
+		bp_tgt->shadow_contents, 4,
 		&res);
     }
   else
@@ -1111,12 +1111,12 @@ rdp_step (void)
     }
   else
     {
-      char handle[4];
+      void *b;
       CORE_ADDR pc = read_register (ARM_PC_REGNUM);
       pc = arm_get_next_pc (pc);
-      remote_rdp_insert_breakpoint (pc, handle);
+      b = deprecated_insert_raw_breakpoint (pc);
       rdp_execute ();
-      remote_rdp_remove_breakpoint (pc, handle);
+      deprecated_remove_raw_breakpoint (b);
     }
 }
 
@@ -1264,7 +1264,7 @@ remote_rdp_prepare_to_store (void)
    Returns the number of bytes transferred. */
 
 static int
-remote_rdp_xfer_inferior_memory (CORE_ADDR memaddr, char *myaddr, int len,
+remote_rdp_xfer_inferior_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
 				 int write, struct mem_attrib *attrib,
 				 struct target_ops *target)
 {
@@ -1376,8 +1376,7 @@ remote_rdp_create_inferior (char *exec_file, char *allargs, char **env,
      ** so we don't bother to look for MEMSIZE in the environment.
    */
 
-  /* Let's go! */
-  proceed (entry_point, TARGET_SIGNAL_DEFAULT, 0);
+  write_pc (entry_point);
 }
 
 /* Attach doesn't need to do anything */

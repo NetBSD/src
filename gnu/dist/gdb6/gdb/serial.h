@@ -1,5 +1,6 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
+   2004, 2005, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -16,11 +17,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef SERIAL_H
 #define SERIAL_H
+
+#ifdef USE_WIN32API
+#include <windows.h>
+#endif
 
 struct ui_file;
 
@@ -40,6 +45,10 @@ struct serial;
    added to GDB if necessary.  */
 
 extern struct serial *serial_open (const char *name);
+
+/* Find an already opened serial stream using a file handle.  */
+
+extern struct serial *serial_for_fd (int fd);
 
 /* Open a new serial stream using a file handle.  */
 
@@ -238,6 +247,14 @@ struct serial_ops
     /* Perform a low-level write operation, writing (at most) COUNT
        bytes from BUF.  */
     int (*write_prim)(struct serial *scb, const void *buf, size_t count);
+
+#ifdef USE_WIN32API
+    /* Return a handle to wait on, indicating available data from SCB
+       when signaled, in *READ.  Return a handle indicating errors
+       in *EXCEPT.  */
+    void (*wait_handle) (struct serial *scb, HANDLE *read, HANDLE *except);
+    void (*done_wait_handle) (struct serial *scb);
+#endif /* USE_WIN32API */
   };
 
 /* Add a new serial interface to the interface list */
@@ -247,5 +264,16 @@ extern void serial_add_interface (struct serial_ops * optable);
 /* File in which to record the remote debugging session */
 
 extern void serial_log_command (const char *);
+
+#ifdef USE_WIN32API
+
+/* Windows-only: find or create handles that we can wait on for this
+   serial device.  */
+extern void serial_wait_handle (struct serial *, HANDLE *, HANDLE *);
+
+/* Windows-only: signal that we are done with the wait handles.  */
+extern void serial_done_wait_handle (struct serial *);
+
+#endif /* USE_WIN32API */
 
 #endif /* SERIAL_H */

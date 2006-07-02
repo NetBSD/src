@@ -1,6 +1,6 @@
 /* Target-dependent code for HP-UX on PA-RISC.
 
-   Copyright 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "arch-utils.h"
@@ -48,6 +48,26 @@
 
 #define IS_32BIT_TARGET(_gdbarch) \
 	((gdbarch_tdep (_gdbarch))->bytes_per_address == 4)
+
+/* Bit in the `ss_flag' member of `struct save_state' that indicates
+   that the 64-bit register values are live.  From
+   <machine/save_state.h>.  */
+#define HPPA_HPUX_SS_WIDEREGS		0x40
+
+/* Offsets of various parts of `struct save_state'.  From
+   <machine/save_state.h>.  */
+#define HPPA_HPUX_SS_FLAGS_OFFSET	0
+#define HPPA_HPUX_SS_NARROW_OFFSET	4
+#define HPPA_HPUX_SS_FPBLOCK_OFFSET 	256
+#define HPPA_HPUX_SS_WIDE_OFFSET        640
+
+/* The size of `struct save_state.  */
+#define HPPA_HPUX_SAVE_STATE_SIZE	1152
+
+/* The size of `struct pa89_save_state', which corresponds to PA-RISC
+   1.1, the lowest common denominator that we support.  */
+#define HPPA_HPUX_PA89_SAVE_STATE_SIZE	512
+
 
 /* Forward declarations.  */
 extern void _initialize_hppa_hpux_tdep (void);
@@ -824,52 +844,54 @@ GDB will be unable to intercept exception events."),
       return 0;
     }
 
-#ifndef GDB_TARGET_IS_HPPA_20W
-  /* Check whether the executable is dynamically linked or archive bound */
-  /* With an archive-bound executable we can use the raw addresses we find
-     for the callback function, etc. without modification. For an executable
-     with shared libraries, we have to do more work to find the plabel, which
-     can be the target of a call through $$dyncall from the aCC runtime support
-     library (libCsup) which is linked shared by default by aCC. */
-  /* This test below was copied from somsolib.c/somread.c.  It may not be a very
-     reliable one to test that an executable is linked shared. pai/1997-07-18 */
-  shlib_info = bfd_get_section_by_name (symfile_objfile->obfd, "$SHLIB_INFO$");
-  if (shlib_info && (bfd_section_size (symfile_objfile->obfd, shlib_info) != 0))
+  if (!gdbarch_tdep (current_gdbarch)->is_elf)
     {
-      /* The minsym we have has the local code address, but that's not
-         the plabel that can be used by an inter-load-module call.  */
-      /* Find solib handle for main image (which has end.o), and use
-         that and the min sym as arguments to __d_shl_get() (which
-         does the equivalent of shl_findsym()) to find the plabel.  */
+    /* Check whether the executable is dynamically linked or archive bound */
+    /* With an archive-bound executable we can use the raw addresses we find
+       for the callback function, etc. without modification. For an executable
+       with shared libraries, we have to do more work to find the plabel, which
+       can be the target of a call through $$dyncall from the aCC runtime 
+       support library (libCsup) which is linked shared by default by aCC. */
+    /* This test below was copied from somsolib.c/somread.c.  It may not be a very
+       reliable one to test that an executable is linked shared. 
+       pai/1997-07-18 */
+    shlib_info = bfd_get_section_by_name (symfile_objfile->obfd, "$SHLIB_INFO$");
+    if (shlib_info && (bfd_section_size (symfile_objfile->obfd, shlib_info) != 0))
+      {
+        /* The minsym we have has the local code address, but that's not
+           the plabel that can be used by an inter-load-module call.  */
+        /* Find solib handle for main image (which has end.o), and use
+           that and the min sym as arguments to __d_shl_get() (which
+           does the equivalent of shl_findsym()) to find the plabel.  */
 
-      args_for_find_stub args;
-      static char message[] = "Error while finding exception callback hook:\n";
+        args_for_find_stub args;
 
-      args.solib_handle = gdbarch_tdep (current_gdbarch)->solib_get_solib_by_pc (eh_notify_callback_addr);
-      args.msym = msym;
-      args.return_val = 0;
+        args.solib_handle = gdbarch_tdep (current_gdbarch)->solib_get_solib_by_pc (eh_notify_callback_addr);
+        args.msym = msym;
+        args.return_val = 0;
 
-      recurse++;
-      catch_errors (cover_find_stub_with_shl_get, &args, message,
-		    RETURN_MASK_ALL);
-      eh_notify_callback_addr = args.return_val;
-      recurse--;
+        recurse++;
+        catch_errors (cover_find_stub_with_shl_get, &args,
+		      _("Error while finding exception callback hook:\n"),
+		      RETURN_MASK_ALL);
+        eh_notify_callback_addr = args.return_val;
+        recurse--;
 
-      deprecated_exception_catchpoints_are_fragile = 1;
+        deprecated_exception_catchpoints_are_fragile = 1;
 
-      if (!eh_notify_callback_addr)
-	{
-	  /* We can get here either if there is no plabel in the export list
-	     for the main image, or if something strange happened (?) */
-	  warning (_("\
+        if (!eh_notify_callback_addr)
+	  {
+	    /* We can get here either if there is no plabel in the export list
+	       for the main image, or if something strange happened (?) */
+	    warning (_("\
 Couldn't find a plabel (indirect function label) for the exception callback.\n\
 GDB will not be able to intercept exception events."));
-	  return 0;
-	}
+	    return 0;
+	  }
+      }
+    else
+      deprecated_exception_catchpoints_are_fragile = 0;
     }
-  else
-    deprecated_exception_catchpoints_are_fragile = 0;
-#endif
 
   /* Now, look for the breakpointable routine in end.o */
   /* This should also be available in the SOM symbol dict. if end.o linked in */
@@ -1043,9 +1065,6 @@ Interception of exception events may not work."));
 
 /* Record some information about the current exception event */
 static struct exception_event_record current_ex_event;
-/* Convenience struct */
-static struct symtab_and_line null_symtab_and_line =
-{NULL, 0, 0, 0};
 
 /* Report current exception event.  Returns a pointer to a record
    that describes the kind of the event, where it was thrown from,
@@ -1158,8 +1177,8 @@ hppa_hpux_sigtramp_frame_unwind_cache (struct frame_info *next_frame,
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   struct hppa_hpux_sigtramp_unwind_cache *info;
   unsigned int flag;
-  CORE_ADDR sp, scptr;
-  int i, incr, off, szoff;
+  CORE_ADDR sp, scptr, off;
+  int i, incr, szoff;
 
   if (*this_cache)
     return *this_cache;
@@ -1170,25 +1189,29 @@ hppa_hpux_sigtramp_frame_unwind_cache (struct frame_info *next_frame,
 
   sp = frame_unwind_register_unsigned (next_frame, HPPA_SP_REGNUM);
 
-  scptr = sp - 1352;
+  if (IS_32BIT_TARGET (gdbarch))
+    scptr = sp - 1352;
+  else
+    scptr = sp - 1520;
+
   off = scptr;
 
   /* See /usr/include/machine/save_state.h for the structure of the save_state_t
      structure. */
   
-  flag = read_memory_unsigned_integer(scptr, 4);
-    
-  if (!(flag & 0x40))
+  flag = read_memory_unsigned_integer(scptr + HPPA_HPUX_SS_FLAGS_OFFSET, 4);
+
+  if (!(flag & HPPA_HPUX_SS_WIDEREGS))
     {
       /* Narrow registers. */
-      off = scptr + offsetof (save_state_t, ss_narrow);
+      off = scptr + HPPA_HPUX_SS_NARROW_OFFSET;
       incr = 4;
       szoff = 0;
     }
   else
     {
       /* Wide registers. */
-      off = scptr + offsetof (save_state_t, ss_wide) + 8;
+      off = scptr + HPPA_HPUX_SS_WIDE_OFFSET + 8;
       incr = 8;
       szoff = (tdep->bytes_per_address == 4 ? 4 : 0);
     }
@@ -1203,6 +1226,7 @@ hppa_hpux_sigtramp_frame_unwind_cache (struct frame_info *next_frame,
     {
       if (hppa_hpux_tramp_reg[i] > 0)
         info->saved_regs[hppa_hpux_tramp_reg[i]].addr = off + szoff;
+
       off += incr;
     }
 
@@ -1246,12 +1270,28 @@ static const struct frame_unwind hppa_hpux_sigtramp_frame_unwind = {
 static const struct frame_unwind *
 hppa_hpux_sigtramp_unwind_sniffer (struct frame_info *next_frame)
 {
+  struct unwind_table_entry *u;
   CORE_ADDR pc = frame_pc_unwind (next_frame);
-  char *name;
 
-  find_pc_partial_function (pc, &name, NULL, NULL);
+  u = find_unwind_entry (pc);
 
-  if (name && strcmp(name, "_sigreturn") == 0)
+  /* If this is an export stub, try to get the unwind descriptor for
+     the actual function itself.  */
+  if (u && u->stub_unwind.stub_type == EXPORT)
+    {
+      gdb_byte buf[HPPA_INSN_SIZE];
+      unsigned long insn;
+
+      if (!safe_frame_unwind_memory (next_frame, u->region_start,
+				     buf, sizeof buf))
+	return NULL;
+
+      insn = extract_unsigned_integer (buf, sizeof buf);
+      if ((insn & 0xffe0e000) == 0xe8400000)
+	u = find_unwind_entry(u->region_start + hppa_extract_17 (insn) + 8);
+    }
+
+  if (u && u->HP_UX_interrupt_marker)
     return &hppa_hpux_sigtramp_frame_unwind;
 
   return NULL;
@@ -1618,7 +1658,7 @@ hppa_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
 			   CORE_ADDR *real_pc, CORE_ADDR *bp_addr)
 {
   CORE_ADDR pc, stubaddr;
-  int argreg;
+  int argreg = 0;
 
   pc = read_pc ();
 
@@ -1759,25 +1799,6 @@ hppa_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
 }
 
 
-
-/* Bit in the `ss_flag' member of `struct save_state' that indicates
-   that the 64-bit register values are live.  From
-   <machine/save_state.h>.  */
-#define HPPA_HPUX_SS_WIDEREGS		0x40
-
-/* Offsets of various parts of `struct save_state'.  From
-   <machine/save_state.h>.  */
-#define HPPA_HPUX_SS_FLAGS_OFFSET	0
-#define HPPA_HPUX_SS_NARROW_OFFSET	4
-#define HPPA_HPUX_SS_FPBLOCK_OFFSET 	256
-#define HPPA_HPUX_SS_WIDE_OFFSET        640
-
-/* The size of `struct save_state.  */
-#define HPPA_HPUX_SAVE_STATE_SIZE	1152
-
-/* The size of `struct pa89_save_state', which corresponds to PA-RISC
-   1.1, the lowest common denominator that we support.  */
-#define HPPA_HPUX_PA89_SAVE_STATE_SIZE	512
 
 static void
 hppa_hpux_supply_ss_narrow (struct regcache *regcache,
@@ -2055,6 +2076,24 @@ hppa_hpux_core_osabi_sniffer (bfd *abfd)
 {
   if (strcmp (bfd_get_target (abfd), "hpux-core") == 0)
     return GDB_OSABI_HPUX_SOM;
+  else if (strcmp (bfd_get_target (abfd), "elf64-hppa") == 0)
+    {
+      asection *section;
+      
+      section = bfd_get_section_by_name (abfd, ".kernel");
+      if (section)
+        {
+	  bfd_size_type size;
+	  char *contents;
+
+	  size = bfd_section_size (abfd, section);
+	  contents = alloca (size);
+ 	  if (bfd_get_section_contents (abfd, section, contents, 
+	  				(file_ptr) 0, size)
+	      && strcmp (contents, "HP-UX") == 0)
+	    return GDB_OSABI_HPUX_ELF;
+	}
+    }
 
   return GDB_OSABI_UNKNOWN;
 }
@@ -2066,6 +2105,9 @@ _initialize_hppa_hpux_tdep (void)
      set the architecture either.  */
   gdbarch_register_osabi_sniffer (bfd_arch_unknown,
 				  bfd_target_unknown_flavour,
+				  hppa_hpux_core_osabi_sniffer);
+  gdbarch_register_osabi_sniffer (bfd_arch_hppa,
+                                  bfd_target_elf_flavour,
 				  hppa_hpux_core_osabi_sniffer);
 
   gdbarch_register_osabi (bfd_arch_hppa, 0, GDB_OSABI_HPUX_SOM,

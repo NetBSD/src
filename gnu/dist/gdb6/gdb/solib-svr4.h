@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright 2000, 2004
+   Copyright (C) 2000, 2004, 2006
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #ifndef SOLIB_SVR4_H
 #define SOLIB_SVR4_H
@@ -31,15 +31,14 @@ struct objfile;
 
 struct link_map_offsets
   {
-    /* Size of struct r_debug (or equivalent), or at least enough of it to
-       be able to obtain the r_map field.  */
-    int r_debug_size;
+    /* Offset and size of r_debug.r_version.  */
+    int r_version_offset, r_version_size;
 
-    /* Offset to the r_map field in struct r_debug.  */
+    /* Offset of r_debug.r_map.  */
     int r_map_offset;
 
-    /* Size of the r_map field in struct r_debug.  */
-    int r_map_size;
+    /* Offset of r_debug.r_ldsomap.  */
+    int r_ldsomap_offset;
 
     /* Size of struct link_map (or equivalent), or at least enough of it
        to be able to obtain the fields below.  */
@@ -50,6 +49,12 @@ struct link_map_offsets
 
     /* Size of l_addr field in struct link_map.  */
     int l_addr_size;
+
+    /* Offset to l_ld field in struct link_map.  */
+    int l_ld_offset;
+
+    /* Size of l_ld field in struct link_map.  */
+    int l_ld_size;
 
     /* Offset to l_next field in struct link_map.  */
     int l_next_offset;

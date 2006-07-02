@@ -72,6 +72,14 @@ gdb_test "cont" \
          "Breakpoint \[0-9\]+, pck.create_large \\(\\).*" \
          "Continuing to Create.Large"
 
+# On hppa32, the value returned is too large to be returned via a register.
+# Instead, it is returned using the struct convention, and the debugger
+# unfortunately cannot find the address of the result.  The following
+# test is therefore expected to fail for all hppa targets except hppa64.
+if { ! [istarget "hppa*64*-*-*"] } then {
+  setup_xfail "hppa*-*-*"
+}
+
 gdb_test "finish" \
          "Value returned is \\\$\[0-9\]+ = \\(2, 2, 2, 2\\)" \
          "value printed by finish of Create_Large"

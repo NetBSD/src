@@ -52,13 +52,14 @@ extern int i386_stopped_by_hwbp (void);
    true.  Otherwise, return false.  */
 extern int i386_stopped_data_address (CORE_ADDR *);
 
-/* Insert a hardware-assisted breakpoint at address ADDR.  SHADOW is
-   unused.  Return 0 on success, EBUSY on failure.  */
-extern int i386_insert_hw_breakpoint (CORE_ADDR addr, void *shadow);
+/* Insert a hardware-assisted breakpoint at BP_TGT->placed_address.
+   Return 0 on success, EBUSY on failure.  */
+struct bp_target_info;
+extern int i386_insert_hw_breakpoint (struct bp_target_info *bp_tgt);
 
-/* Remove a hardware-assisted breakpoint at address ADDR.  SHADOW is
-   unused. Return 0 on success, -1 on failure.  */
-extern int  i386_remove_hw_breakpoint (CORE_ADDR addr, void *shadow);
+/* Remove a hardware-assisted breakpoint at BP_TGT->placed_address.
+   Return 0 on success, -1 on failure.  */
+extern int  i386_remove_hw_breakpoint (struct bp_target_info *bp_tgt);
 
 /* Returns the number of hardware watchpoints of type TYPE that we can
    set.  Value is positive if we can set CNT watchpoints, zero if
@@ -105,11 +106,11 @@ extern int i386_stopped_by_watchpoint (void);
 #define target_remove_watchpoint(addr, len, type) \
   i386_remove_watchpoint (addr, len, type)
 
-#define target_insert_hw_breakpoint(addr, shadow) \
-  i386_insert_hw_breakpoint (addr, shadow)
+#define target_insert_hw_breakpoint(bp_tgt) \
+  i386_insert_hw_breakpoint (bp_tgt)
 
-#define target_remove_hw_breakpoint(addr, shadow) \
-  i386_remove_hw_breakpoint (addr, shadow)
+#define target_remove_hw_breakpoint(bp_tgt) \
+  i386_remove_hw_breakpoint (bp_tgt)
 
 /* child_post_startup_inferior used to
    reset all debug registers by calling i386_cleanup_dregs ().  */ 

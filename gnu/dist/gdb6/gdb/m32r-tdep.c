@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas M32R, for GDB.
 
-   Copyright 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
+   Copyright (C) 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free
    Software Foundation, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "frame.h"
@@ -81,16 +81,20 @@ m32r_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
    The following functions take care of this behavior. */
 
 static int
-m32r_memory_insert_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
+m32r_memory_insert_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int val;
-  char buf[4];
-  char bp_entry[] = { 0x10, 0xf1 };	/* dpt */
+  gdb_byte buf[4];
+  gdb_byte *contents_cache = bp_tgt->shadow_contents;
+  gdb_byte bp_entry[] = { 0x10, 0xf1 };	/* dpt */
 
   /* Save the memory contents.  */
   val = target_read_memory (addr & 0xfffffffc, contents_cache, 4);
   if (val != 0)
     return val;			/* return error */
+
+  bp_tgt->placed_size = bp_tgt->shadow_len = 4;
 
   /* Determine appropriate breakpoint contents and size for this address.  */
   if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
@@ -134,10 +138,12 @@ m32r_memory_insert_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
 }
 
 static int
-m32r_memory_remove_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
+m32r_memory_remove_breakpoint (struct bp_target_info *bp_tgt)
 {
+  CORE_ADDR addr = bp_tgt->placed_address;
   int val;
-  char buf[4];
+  gdb_byte buf[4];
+  gdb_byte *contents_cache = bp_tgt->shadow_contents;
 
   buf[0] = contents_cache[0];
   buf[1] = contents_cache[1];
@@ -161,12 +167,12 @@ m32r_memory_remove_breakpoint (CORE_ADDR addr, bfd_byte *contents_cache)
   return val;
 }
 
-static const unsigned char *
+static const gdb_byte *
 m32r_breakpoint_from_pc (CORE_ADDR *pcptr, int *lenptr)
 {
-  static char be_bp_entry[] = { 0x10, 0xf1, 0x70, 0x00 };	/* dpt -> nop */
-  static char le_bp_entry[] = { 0x00, 0x70, 0xf1, 0x10 };	/* dpt -> nop */
-  unsigned char *bp;
+  static gdb_byte be_bp_entry[] = { 0x10, 0xf1, 0x70, 0x00 };	/* dpt -> nop */
+  static gdb_byte le_bp_entry[] = { 0x00, 0x70, 0xf1, 0x10 };	/* dpt -> nop */
+  gdb_byte *bp;
 
   /* Determine appropriate breakpoint.  */
   if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
@@ -250,7 +256,7 @@ m32r_store_return_value (struct type *type, struct regcache *regcache,
 
   if (len > 4)
     {
-      regval = extract_unsigned_integer ((char *) valbuf + 4, len - 4);
+      regval = extract_unsigned_integer ((gdb_byte *) valbuf + 4, len - 4);
       regcache_cooked_write_unsigned (regcache, RET1_REGNUM + 1, regval);
     }
 }
@@ -345,7 +351,7 @@ decode_prologue (CORE_ADDR start_pc, CORE_ADDR scan_limit,
       if ((insn >> 8) == 0x4f)	/* addi sp, xx */
 	/* add 8 bit sign-extended offset */
 	{
-	  int stack_adjust = (char) (insn & 0xff);
+	  int stack_adjust = (gdb_byte) (insn & 0xff);
 
 	  /* there are probably two of these stack adjustments:
 	     1) A negative one in the prologue, and
@@ -574,7 +580,7 @@ m32r_frame_unwind_cache (struct frame_info *next_frame,
       else if ((op & 0xff00) == 0x4f00)
 	{
 	  /* addi sp, xx */
-	  int n = (char) (op & 0xff);
+	  int n = (gdb_byte) (op & 0xff);
 	  info->sp_offset += n;
 	}
       else if (op == 0x1d8f)
@@ -679,8 +685,8 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   struct type *type;
   enum type_code typecode;
   CORE_ADDR regval;
-  char *val;
-  char valbuf[MAX_REGISTER_SIZE];
+  gdb_byte *val;
+  gdb_byte valbuf[MAX_REGISTER_SIZE];
   int len;
   int odd_sized_struct;
 
@@ -726,11 +732,11 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	{
 	  /* value gets right-justified in the register or stack word */
 	  memcpy (valbuf + (register_size (gdbarch, argreg) - len),
-		  (char *) value_contents (args[argnum]), len);
+		  (gdb_byte *) value_contents (args[argnum]), len);
 	  val = valbuf;
 	}
       else
-	val = (char *) value_contents (args[argnum]);
+	val = (gdb_byte *) value_contents (args[argnum]);
 
       while (len > 0)
 	{
@@ -791,8 +797,8 @@ m32r_extract_return_value (struct type *type, struct regcache *regcache,
 
 enum return_value_convention
 m32r_return_value (struct gdbarch *gdbarch, struct type *valtype,
-		   struct regcache *regcache, void *readbuf,
-		   const void *writebuf)
+		   struct regcache *regcache, gdb_byte *readbuf,
+		   const gdb_byte *writebuf)
 {
   if (TYPE_LENGTH (valtype) > 8)
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -852,7 +858,7 @@ m32r_frame_prev_register (struct frame_info *next_frame,
 			  void **this_prologue_cache,
 			  int regnum, int *optimizedp,
 			  enum lval_type *lvalp, CORE_ADDR *addrp,
-			  int *realnump, void *bufferp)
+			  int *realnump, gdb_byte *bufferp)
 {
   struct m32r_unwind_cache *info
     = m32r_frame_unwind_cache (next_frame, this_prologue_cache);
