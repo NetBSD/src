@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.4 2005/06/12 05:21:27 lukem Exp $ */
+/* $NetBSD: fgetwc.c,v 1.5 2006/07/03 17:06:36 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetwc.c,v 1.4 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: fgetwc.c,v 1.5 2006/07/03 17:06:36 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -78,6 +78,7 @@ __fgetwc_unlock(FILE *fp)
 		size = mbrtowc(&wc, &c, 1, st);
 		if (size == (size_t)-1) {
 			errno = EILSEQ;
+			fp->_flags |= __SERR;
 			return WEOF;
 		}
 	} while (size == (size_t)-2);
