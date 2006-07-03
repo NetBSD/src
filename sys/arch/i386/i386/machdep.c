@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.574 2006/06/07 22:37:58 kardel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.575 2006/07/03 01:25:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.574 2006/06/07 22:37:58 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.575 2006/07/03 01:25:33 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -271,9 +271,7 @@ void	dumpsys(void);
 void	init386(paddr_t);
 void	initgdt(union descriptor *);
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
-#endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 extern int time_adjusted;
 
@@ -1339,7 +1337,6 @@ void cpu_init_idt()
 	lidt(&region);
 }
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
 add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
@@ -1419,7 +1416,6 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	physmem += atop(mem_clusters[mem_cluster_cnt].size);
 	mem_cluster_cnt++;
 }
-#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
 
 void
 initgdt(union descriptor *tgdt)
@@ -1460,9 +1456,7 @@ init386(paddr_t first_avail)
 	union descriptor *tgdt;
 	extern void consinit(void);
 	extern struct extent *iomem_ex;
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	struct btinfo_memmap *bim;
-#endif
 	struct region_descriptor region;
 	int x, first16q;
 	uint64_t seg_start, seg_end;
@@ -1555,13 +1549,12 @@ init386(paddr_t first_avail)
 	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
 	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0) {
+	if (biosbasemem == 0 && biosextmem == 0 &&
+	    (bim = lookup_bootinfo(BTINFO_MEMMAP)) != NULL && bim->num > 0) {
 #ifdef DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
@@ -1619,7 +1612,7 @@ init386(paddr_t first_avail)
 				    bim->entry[x].type);
 		}
 	}
-#endif /* ! REALBASEMEM && ! REALEXTMEM */
+
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
 	 * former code.
