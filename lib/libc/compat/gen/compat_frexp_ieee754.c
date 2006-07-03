@@ -1,4 +1,4 @@
-/* $NetBSD: compat_frexp_ieee754.c,v 1.1 2006/06/27 18:16:47 drochner Exp $ */
+/* $NetBSD: compat_frexp_ieee754.c,v 1.2 2006/07/03 13:33:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.1 2006/06/27 18:16:47 drochner Exp $");
+__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.2 2006/07/03 13:33:39 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,6 @@ frexp(double value, int *eptr)
 		/*
 		 * Fractions in [0.5..1.0) have an exponent of 2^-1.
 		 * Leave Inf and NaN alone, however.
-		 * WHAT ABOUT DENORMS?
 		 */
 		u.dblu_d = value;
 		if (u.dblu_dbl.dbl_exp != DBL_EXP_INFNAN) {
