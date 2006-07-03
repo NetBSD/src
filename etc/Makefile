@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.330 2006/06/27 12:34:54 christos Exp $
+#	$NetBSD: Makefile,v 1.331 2006/07/03 05:37:00 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -58,7 +58,7 @@ DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
 MKISOFS_FLAGS+= -J -l -hide-joliet-trans-tbl -r -T \
 		-V ${ISO_VOLID} \
-		-P "The NetBSD Project" \
+		-publisher "The NetBSD Project" \
 		-m "${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom"
 .if ${MKISOFS_FLAGS:N-v}
 MKISOFS_FLAGS+=	-quiet
