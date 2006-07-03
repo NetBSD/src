@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 2006/07/03 17:01:45 cherry Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -157,7 +157,7 @@ label:	ASCIZ msg;				\
 /*
  * System call glue.
  */
-#define	SYSCALLNUM(name)	SYS_ ## name
+#define	SYSCALLNUM(name)	__CONCAT(SYS_, name)
 
 #define	CALLSYS_NOERROR(name)					\
 {	.mmi ;							\
