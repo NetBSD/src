@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_parser.c,v 1.8 2006/03/21 20:47:27 christos Exp $	*/
+/*	$NetBSD: pfctl_parser.c,v 1.9 2006/07/03 20:26:19 peter Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.211 2004/12/07 10:33:41 dhartmei Exp $ */
 
 /*
@@ -54,7 +54,6 @@
 #include <errno.h>
 #include <err.h>
 #include <ifaddrs.h>
-#include <assert.h>
 #ifdef __NetBSD__
 #include <limits.h>
 #endif
@@ -239,6 +238,7 @@ const struct pf_timeout pf_timeouts[] = {
 	{ "adaptive.start",	PFTM_ADAPTIVE_START },
 	{ "adaptive.end",	PFTM_ADAPTIVE_END },
 	{ "src.track",		PFTM_SRC_NODE },
+	{ NULL,			0 }
 };
 
 const struct icmptypeent *
@@ -691,8 +691,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	    "binat-anchor", "rdr-anchor", "rdr-anchor" };
 	int	i, opts;
 
-	assert(PFTM_MAX <= sizeof(pf_timeouts) / sizeof(pf_timeouts[0]));
-
 	if (verbose)
 		printf("@%d ", r->nr);
 	if (r->action > PF_NORDR)
@@ -942,11 +940,12 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 				if (!opts)
 					printf(", ");
 				opts = 0;
-				for (j = 0; j < PFTM_MAX; ++j)
+				for (j = 0; pf_timeouts[j].name; ++j)
 					if (pf_timeouts[j].timeout == i)
 						break;
-				printf("%s %u", j == PFTM_MAX ? "inv.timeout" :
-				    pf_timeouts[j].name, r->timeout[i]);
+				printf("%s %u", pf_timeouts[j].name ?
+				    pf_timeouts[j].name : "inv.timeout",
+				    r->timeout[i]);
 			}
 		printf(")");
 	}
