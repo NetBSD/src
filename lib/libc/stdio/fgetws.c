@@ -1,4 +1,4 @@
-/* $NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
+/* $NetBSD: fgetws.c,v 1.2 2006/07/03 17:06:36 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $");
+__RCSID("$NetBSD: fgetws.c,v 1.2 2006/07/03 17:06:36 tnozaki Exp $");
 #endif
 
 #include <assert.h>
@@ -64,10 +64,10 @@ fgetws(ws, n, fp)
 
 	wsp = ws;
 	while (n-- > 1) {
-		if ((wc = __fgetwc_unlock(fp)) == WEOF && errno == EILSEQ) {
+		wc = __fgetwc_unlock(fp);
+		if (__sferror(fp) != 0)
 			goto error;
-		}
-		if (wc == WEOF) {
+		if (__sfeof(fp) != 0) {
 			if (wsp == ws) {
 				/* EOF/error, no characters read yet. */
 				goto error;
