@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 2006/07/03 19:48:30 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 2006/07/03 19:48:30 skrll Exp $");
 
 #define DDB_DEBUG
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2005/12/24 20:07:04 perry Exp $
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#include <ddb/ddbvar.h>
 
 #include <dev/cons.h>
 
@@ -169,12 +170,14 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	case -1:
 		break;
 	default:
+		if (!db_onpanic && db_recover == 0)
+			return 0;
+
 		kdbprinttrap(type, code);
 		if (db_recover != 0) {
 			db_error("Caught exception in DDB; continuing...\n");
 			/* NOT REACHED */
 		}
-		return (0);
 	}
 
 	/* XXX Should switch to kdb`s own stack here. */
