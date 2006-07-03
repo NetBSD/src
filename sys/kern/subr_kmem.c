@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.2 2006/06/25 08:10:04 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.3 2006/07/03 09:18:35 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2 2006/06/25 08:10:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.3 2006/07/03 09:18:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2 2006/06/25 08:10:04 yamt Exp $");
 
 #include <lib/libkern/libkern.h>
 
-#define	KMEM_QUANTUM_SIZE	sizeof(void *)	/* XXX */
+#define	KMEM_QUANTUM_SIZE	(ALIGNBYTES + 1)
 
 static vmem_t *kmem_arena;
 
