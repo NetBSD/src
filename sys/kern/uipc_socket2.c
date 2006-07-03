@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.73 2006/07/01 15:38:28 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.74 2006/07/03 02:34:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.73 2006/07/01 15:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.74 2006/07/03 02:34:39 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -377,7 +377,20 @@ sb_max_set(u_long new_sbmax)
 int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
+	/*
+	 * there's at least one application (a configure script of screen)
+	 * which expects a fifo is writable even if it has "some" bytes
+	 * in its buffer.
+	 * so we want to make sure (hiwat - lowat) >= (some bytes).
+	 *
+	 * PIPE_BUF here is an arbitrary value chosen as (some bytes) above.
+	 * we expect it's large enough for such applications.
+	 */
+	u_long  lowat = MAX(sock_loan_thresh, MCLBYTES);
+	u_long  hiwat = lowat + PIPE_BUF;
 
+	if (sndcc < hiwat)
+		sndcc = hiwat;
 	if (sbreserve(&so->so_snd, sndcc, so) == 0)
 		goto bad;
 	if (sbreserve(&so->so_rcv, rcvcc, so) == 0)
@@ -385,7 +398,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)
-		so->so_snd.sb_lowat = MCLBYTES;
+		so->so_snd.sb_lowat = lowat;
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
