@@ -1,4 +1,4 @@
-.\"	$NetBSD: modf.3,v 1.10 2006/03/23 19:43:58 wiz Exp $
+.\"	$NetBSD: ldexp.3,v 1.1 2006/07/03 16:03:56 drochner Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,44 +31,59 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)modf.3	8.1 (Berkeley) 6/4/93
+.\"     @(#)ldexp.3	8.2 (Berkeley) 4/19/94
 .\"
 .Dd March 21, 2006
-.Dt MODF 3
+.Dt LDEXP 3
 .Os
 .Sh NAME
-.Nm modf
-.Nd extract signed integral and fractional values from floating-point number
+.Nm ldexp
+.Nd multiply floating-point number by integral power of 2
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
 .In math.h
 .Ft double
-.Fn modf "double value" "double *iptr"
+.Fn ldexp "double x" "int exp"
 .Ft float
-.Fn modff "float value" "float *iptr"
+.Fn ldexpf "float x" "int exp"
 .Sh DESCRIPTION
 The
-.Fn modf
-function breaks the argument
-.Fa value
-into integral and fractional parts, each of which has the
-same sign as the argument.
-It stores the integral part as a
-.Em double
-in the object pointed to by
-.Fa iptr .
+.Fn ldexp
+function multiplies a floating-point number by an integral
+power of 2.
 .Sh RETURN VALUES
 The
-.Fn modf
-function returns the signed fractional part of
-.Fa value .
+.Fn ldexp
+function returns the value of
+.Fa x
+times 2 raised to the power
+.Fa exp .
+.Pp
+If the input
+.Va x
+is a NaN, infinity, or 0.0, it is returned unchanged.
+.Pp
+If the result would cause an overflow,
+the global variable
+.Va errno
+is set to
+.Er ERANGE
+and infinity is returned, with the same sign as
+.Fa x .
+.Pp
+If the result would cause underflow to 0.0,
+the global variable
+.Va errno
+is set to
+.Er ERANGE
+and the value 0.0 is returned.
 .Sh SEE ALSO
 .Xr frexp 3 ,
-.Xr ldexp 3 ,
-.Xr math 3
+.Xr math 3 ,
+.Xr modf 3
 .Sh STANDARDS
 The
-.Fn modf
+.Fn ldexp
 function conforms to
 .St -ansiC .
