@@ -357,7 +357,7 @@
 /* #undef USE_SECUREPLT */
 
 /* Version number of package */
-#define VERSION "2.16.91"
+#define VERSION "2.17.50"
 
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE

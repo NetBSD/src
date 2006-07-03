@@ -17,7 +17,7 @@
 /* #undef C_ALLOCA */
 
 /* Global directory for separate debug files. */
-#define DEBUGDIR "/usr/local/lib/debug"
+#define DEBUGDIR "/usr/lib/debug"
 
 /* Define to BFD's default architecture. */
 #define DEFAULT_BFD_ARCH bfd_arm_arch
