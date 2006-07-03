@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.2 2006/07/03 17:01:45 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -31,6 +31,6 @@
  *	@(#)exec.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	AOUT_LDPGSZ	4096
+#define	AOUT_LDPGSZ	16384
 
 
