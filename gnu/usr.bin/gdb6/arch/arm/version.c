@@ -3,6 +3,6 @@
 /* Generated from: NetBSD: mknative.common,v 1.8 2006/05/26 19:17:21 mrg Exp  */
 
 #include "version.h"
-const char version[] = "6.4";
+const char version[] = "6.5";
 const char host_name[] = "arm--netbsdelf";
 const char target_name[] = "arm--netbsdelf";
