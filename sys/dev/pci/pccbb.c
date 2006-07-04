@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.130 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.131 2006/07/04 00:47:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.130 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.131 2006/07/04 00:47:47 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -526,7 +526,7 @@ pccbbattach(parent, self, aux)
 	 * may well be zero, with the interrupt routed through the apic.
 	 */
 
-#if NIOAPIC == 0 && ACPI == 0
+#if NIOAPIC == 0 && NACPI == 0
 	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
     		printf("%s: NOT USED because of unconfigured interrupt\n",
 		    sc->sc_dev.dv_xname);
