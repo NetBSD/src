@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/29 19:20:05 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2006/07/04 21:48:20 nathanw Exp $
 
 .include "../Makefile.inc"
 
@@ -26,7 +26,6 @@ INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/doc -I${.CURDIR}/..
 
 .include "../../Makefile.inc"
-.include <bsd.prog.mk>
 .include <bsd.info.mk>
 
 LIBOPCODESDIR!= cd ${.CURDIR}/../opcodes   && ${PRINTOBJDIR}
@@ -35,10 +34,12 @@ LIBIBERTYDIR!=  cd ${.CURDIR}/../libiberty && ${PRINTOBJDIR}
 LIBGDBDIR!=	cd ${.CURDIR}/../libgdb    && ${PRINTOBJDIR}
 
 .if ${USE_LIBEDIT} == yes
-LIBEDIT=-ledit
+LIBRL=-ledit
+LIBRLDP=${LIBEDIT}
 .else
-LIBREADLINEDIR!=  cd ${.CURDIR}/../readline && ${PRINTOBJDIR}
-LIBEDIT= -L${LIBREADLINEDIR} -lreadline
+LIBRLDIR!=  cd ${.CURDIR}/../readline && ${PRINTOBJDIR}
+LIBRL=      -L${LIBRLDIR} -lreadline
+LIBRLDP=    ${LIBRLDIR}/libreadline.a
 .endif
 
 LDADD+= -L${LIBGDBDIR} -lgdb
@@ -57,13 +58,13 @@ DPADD+=		${SIMOBJ}/libsim.a
 
 LDADD+= -L${LIBOPCODESDIR} -lopcodes \
 	-L${LIBBFDDIR} -lbfd \
-	${LIBEDIT} \
+	${LIBRL} \
 	-ltermcap \
 	-L${LIBIBERTYDIR} -liberty
 
 DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBBFDDIR}/libbfd.a \
-	${LIBEDIT} \
+	${LIBRLDP} \
 	${LIBTERMCAP} \
 	${LIBIBERTYDIR}/libiberty.a
 
@@ -73,6 +74,8 @@ DPADD+=		${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
 .if ${SRCS:Mnbsd-thread.c} != ""
 LDADD+=                -lpthread_dbg
 .endif
+
+.include <bsd.prog.mk>
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
