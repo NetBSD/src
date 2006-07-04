@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2006/05/28 13:36:28 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 2006/07/04 07:35:28 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2006/05/28 13:36:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2006/07/04 07:35:28 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 	ticks_done = 0;
 	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns()
 	    - processed_system_time);
-	while (delta >= NS_PER_TICK) {
+	while (delta >= (int64_t)NS_PER_TICK) {
 		/* Have hardclock do its thing. */
 		oldtime = time;
 		hardclock((struct clockframe *)regs);
