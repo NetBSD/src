@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.648 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.649 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -300,21 +300,21 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	sendmail: Removed. This removal was planned for post 4.0, but
 		core@ and security-officer@ decided the sooner the
 		better [christos 20060529]
-	GCC: Import GCC 4.1 branch from 20060602 (4.1.2 prerelease.)
+	gcc(1): Import GCC 4.1 branch from 20060602 (4.1.2 prerelease.)
 		[mrg 20060602]
 	gcc(1): Import gcc 3.3.6 release. [skrll 20060605]
 	ath(4): Import HAL 0.9.17.2, which adds support for WiSoC platforms
 		(AR531x devices), and 32-bit SPARC. [gdamore 20060605]
 	ral(4): new driver layout supporting the RT2661 chipset. From
 		OpenBSD. [rpaulo 20060606]
-	timecounter: ported from FreeBSD.
+	timecounter(9): ported from FreeBSD.
 		completely new time-keeping infrastructure along with
 		NTP API 4 nanokernel implementation. was expected after
 		4.0 but core@ voted for early import to facilitate early
 		testing and port conversion. simonb & [kardel 20060607]
 	prep: Add support for PCI cards that have a builtin PCI-PCI bridge.
 		[garbled 20060609]
-	Xen: Renamed kernel config files:
+	xen: Renamed kernel config files:
 		INSTALL_XEN3_U -> INSTALL_XEN3_DOMU
 		INSTALL_XENU   -> INSTALL_XEN2_DOMU
 		XEN0           -> XEN2_DOM0
@@ -324,27 +324,28 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ntp:	Import ntp 4.2.2 (20060606). [kardel 20060611]
 	prep: Add root device detection for Motorola machines.
 		[garbled 20060615]
-	bluetooth: Bluetooth support has enhanced so that bluetooth keyboards,
-		mice, audio devices, and rfcomm networking are supported.
+	bluetooth(9): Bluetooth support has enhanced so that bluetooth
+		keyboards, mice, audio devices, and rfcomm networking are
+		supported.
 		The work was done by Iain Hibbert under sponsorship by
 		Itronix, Inc.  [gdamore 20060619]
-	installboot: Add support for 2nd stage boot loaders on RAID 1
+	installboot(8): Add support for 2nd stage boot loaders on RAID 1
 		partitions.  [jdc 20060620]
 	sparc: Add support to the 2nd stage boot loader for booting from
 		RAID 1 filesystems.  [jdc 20060620]
 	prep: Add timecounter support. [garbled 20060620]
-	GCC: Switched arm, armeb, i386, sparc, sparc64, x86_64 to GCC4.
+	gcc(1): Switched arm, armeb, i386, sparc, sparc64, x86_64 to GCC4.
 		[christos 20060623]
 	cvs(1): Upgrade to 1.11.22. [christos 20060623]
-	GCC: Switched m68000 to GCC4. [mrg 20060623]
-	GCC: Switched powerpc to GCC4. [garbled 20060623]
+	gcc(1): Switched m68000 to GCC4. [mrg 20060623]
+	gcc(1): Switched powerpc to GCC4. [garbled 20060623]
 	azalia(4): add support for S/PDIF [kent 20060625]
-	GCC: Switched alpha to GCC4. [drochner 20060626]
+	gcc(1): Switched alpha to GCC4. [drochner 20060626]
 	socket(2): version bump for reasons listed in PR/33676 [mrg 20060627]
 	pppd(8): updated to version 2.4.4. [christos 20060629]
 	kse(4):	Driver for Micrel KSZ8842/8841 PCI Ethernet controller.
 		[nisimura 20060630]
-	midi: many changes to midi(4): eliminated several cases where
+	midi(4): many changes to midi(4): eliminated several cases where
 		certain message sequences could be mangled in transit;
 		added support for Active Sensing. Altered handling of output
 		to MIDI ports that lack transmit ready interrupts;
