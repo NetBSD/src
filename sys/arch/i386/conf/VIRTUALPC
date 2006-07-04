@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.42 2006/06/16 06:41:13 simonb Exp $
+# $NetBSD: VIRTUALPC,v 1.43 2006/07/04 00:30:22 christos Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.42 $"
+#ident 		"VIRTUALPC-$Revision: 1.43 $"
 
 maxusers	32		# estimated number of users
 
@@ -273,9 +273,7 @@ cpu* at mainbus?
 # To use the I/O APIC(s), enable the ioapic line above.
 #options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-#options 	MPACPI		# configure CPUs and APICs using ACPI
-				# (acpi at mainbus must also be enabled)
-#options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
+#options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
 #acpi0 		at mainbus0
 

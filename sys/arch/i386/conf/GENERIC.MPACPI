@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.58 2006/02/21 15:07:03 thorpej Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.59 2006/07/04 00:30:22 christos Exp $
 #
 #	GENERIC.MP -- Generic, plus enable Multiprocessor support.
 #
@@ -13,8 +13,6 @@ options 	APM_NO_IDLE
 #options 	MPDEBUG
 #options 	MPVERBOSE
 #options 	DEBUG
-options 	MPACPI		# configure CPUs and APICs using ACPI
-				# (acpi at mainbus must also be enabled)
 options 	ACPIVERBOSE
 
 ioapic*		at mainbus? apid ?
