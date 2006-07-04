@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2006/07/04 00:30:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -235,6 +235,7 @@ void intr_add_pcibus(struct pcibus_attach_args *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int, int, int *);
+struct pic *intr_findpic(int);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif

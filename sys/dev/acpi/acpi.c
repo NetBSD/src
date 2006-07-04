@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.92 2006/07/01 21:44:13 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.93 2006/07/04 00:30:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.92 2006/07/01 21:44:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.93 2006/07/04 00:30:23 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -100,10 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.92 2006/07/01 21:44:13 christos Exp $");
 #endif
 
 #if defined(ACPI_PCI_FIXUP)
-#error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP.  Please adjust your kernel configuration file.
+#error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP_DISABLED.  Please adjust your kernel configuration file.
 #endif
 
-#ifdef PCI_INTR_FIXUP
+#ifdef PCI_INTR_FIXUP_DISABLED
 #include <dev/pci/pcidevs.h>
 #endif
 
@@ -139,6 +139,7 @@ CFATTACH_DECL(acpi, sizeof(struct acpi_softc),
  * subsystems that ACPI supercedes) when ACPI is active.
  */
 int	acpi_active;
+int	acpi_force_load;
 
 /*
  * Pointer to the ACPI subsystem's state.  There can be only
@@ -168,12 +169,6 @@ static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
 static void		acpi_enable_fixed_events(struct acpi_softc *);
-#ifdef PCI_INTR_FIXUP
-void			acpi_pci_fixup(struct acpi_softc *);
-#endif
-#if defined(PCI_INTR_FIXUP) || defined(ACPI_ACTIVATE_DEV)
-static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
-#endif
 
 /*
  * acpi_probe:
@@ -221,6 +216,19 @@ acpi_probe(void)
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to load tables: %s\n",
 		    AcpiFormatException(rv));
+		return 0;
+	}
+
+
+	if (!acpi_force_load && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
+		printf("ACPI: BIOS implementation in listed as broken:\n");
+		printf("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
+		       "AslId <%4.4s,%08x>\n",
+			AcpiGbl_XSDT->OemId, AcpiGbl_XSDT->OemTableId,
+		        AcpiGbl_XSDT->OemRevision,
+			AcpiGbl_XSDT->AslCompilerId,
+		        AcpiGbl_XSDT->AslCompilerRevision);
+		printf("ACPI: not used. set acpi_force_load to use anyway.\n");
 		return 0;
 	}
 
@@ -353,14 +361,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	acpi_enable_fixed_events(sc);
 	acpitimer_init();
-
-	/*
-	 * Fix up PCI devices.
-	 */
-#ifdef PCI_INTR_FIXUP
-	if ((sc->sc_quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) == 0)
-		acpi_pci_fixup(sc);
-#endif
 
 	/*
 	 * Scan the namespace and build our device tree.
@@ -1114,204 +1114,15 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	return ret;
 }
 
-#ifdef PCI_INTR_FIXUP
-ACPI_STATUS acpi_pci_fixup_bus(ACPI_HANDLE, UINT32, void *, void **);
-/*
- * acpi_pci_fixup:
- *
- *	Set up PCI devices that BIOS didn't handle right.
- *	Iterate through all devices and try to get the _PTR
- *	(PCI Routing Table).  If it exists then make sure all
- *	interrupt links that it uses are working.
- */
-void
-acpi_pci_fixup(struct acpi_softc *sc)
-{
-	ACPI_HANDLE parent;
-	ACPI_STATUS rv;
-
-#ifdef ACPI_DEBUG
-	printf("acpi_pci_fixup starts:\n");
-#endif
-	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &parent);
-	if (ACPI_FAILURE(rv))
-		return;
-	sc->sc_pci_bus = 0;
-	AcpiWalkNamespace(ACPI_TYPE_DEVICE, parent, 100,
-	    acpi_pci_fixup_bus, sc, NULL);
-}
-
-static uint
-acpi_get_intr(ACPI_HANDLE handle)
-{
-	ACPI_BUFFER ret;
-	ACPI_STATUS rv;
-	ACPI_RESOURCE *res;
-	ACPI_RESOURCE_IRQ *irq;
-	uint intr;
-
-	intr = -1;
-	rv = acpi_get(handle, &ret, AcpiGetCurrentResources);
-	if (ACPI_FAILURE(rv))
-		return intr;
-	for (res = ret.Pointer; res->Type != ACPI_RESOURCE_TYPE_END_TAG;
-	     res = ACPI_NEXT_RESOURCE(res)) {
-		if (res->Type == ACPI_RESOURCE_TYPE_IRQ) {
-			irq = (ACPI_RESOURCE_IRQ *)&res->Data;
-			if (irq->InterruptCount == 1)
-				intr = irq->Interrupts[0];
-			break;
-		}
-	}
-	AcpiOsFree(ret.Pointer);
-	return intr;
-}
-
-static void
-acpi_pci_set_line(int bus, int dev, int pin, int line)
-{
-	ACPI_STATUS err;
-	ACPI_PCI_ID pid;
-	UINT32 intr, id, bhlc;
-	int func, nfunc;
-
-	pid.Bus = bus;
-	pid.Device = dev;
-	pid.Function = 0;
-
-	err = AcpiOsReadPciConfiguration(&pid, PCI_BHLC_REG, &bhlc, 32);
-	if (err)
-		return;
-	if (PCI_HDRTYPE_MULTIFN(bhlc))
-		nfunc = 8;
-	else
-		nfunc = 1;
-
-	for (func = 0; func < nfunc; func++) {
-		pid.Function = func;
-
-		err = AcpiOsReadPciConfiguration(&pid, PCI_ID_REG, &id, 32);
-		if (err || PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
-		    PCI_VENDOR(id) == 0)
-			continue;
-
-		err = AcpiOsReadPciConfiguration(&pid, PCI_INTERRUPT_REG,
-			  &intr, 32);
-		if (err) {
-			printf("AcpiOsReadPciConfiguration failed %d\n", err);
-			return;
-		}
-		if (pin == PCI_INTERRUPT_PIN(intr) &&
-		    line != PCI_INTERRUPT_LINE(intr)) {
-#ifdef ACPI_DEBUG
-			printf("acpi fixup pci intr: %d:%d:%d %c: %d -> %d\n",
-			       bus, dev, func,
-			       pin + '@', PCI_INTERRUPT_LINE(intr),
-			       line);
-#endif
-			intr &= ~(PCI_INTERRUPT_LINE_MASK <<
-				  PCI_INTERRUPT_LINE_SHIFT);
-			intr |= line << PCI_INTERRUPT_LINE_SHIFT;
-			err = AcpiOsWritePciConfiguration(&pid,
-				  PCI_INTERRUPT_REG, intr, 32);
-			if (err) {
-				printf("AcpiOsWritePciConfiguration failed"
-				       " %d\n", err);
-				return;
-			}
-		}
-	}
-}
-
-ACPI_STATUS
-acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
-		   void **status)
-{
-	struct acpi_softc *sc = context;
-	ACPI_STATUS rv;
-	ACPI_BUFFER buf;
-	UINT8 *Buffer;
-	ACPI_PCI_ROUTING_TABLE *PrtElement;
-	ACPI_HANDLE link;
-	uint line;
-	ACPI_INTEGER val;
-
-	rv = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
-	if (ACPI_FAILURE(rv))
-		return AE_OK;
-
-	/*
-	 * If at level 1, this is a PCI root bus. Try the _BBN method
-	 * to get the right PCI bus numbering for the following
-	 * busses (this is a depth-first walk). It may fail,
-	 * for example if there's only one root bus, but that
-	 * case should be ok, so we'll ignore that.
-	 */
-	if (level == 1) {
-		rv = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
-		if (!ACPI_FAILURE(rv)) {
-#ifdef ACPI_DEBUG
-			printf("%s: fixup: _BBN success, bus # was %d now %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_pci_bus,
-			    ACPI_LOWORD(val));
-#endif
-			sc->sc_pci_bus = ACPI_LOWORD(val);
-		}
-	}
-
-
-#ifdef ACPI_DEBUG
-	printf("%s: fixing up PCI bus %d at level %u\n", sc->sc_dev.dv_xname,
-	    sc->sc_pci_bus, level);
-#endif
-
-        for (Buffer = buf.Pointer; ; Buffer += PrtElement->Length) {
-		PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;
-		if (PrtElement->Length == 0)
-			break;
-		if (PrtElement->Source[0] == 0)
-			continue;
-
-		rv = AcpiGetHandle(NULL, PrtElement->Source, &link);
-		if (ACPI_FAILURE(rv))
-			continue;
-		line = acpi_get_intr(link);
-		if (line == (uint)-1 || line == 0) {
-			printf("%s: fixing up intr link %s\n",
-			    sc->sc_dev.dv_xname, PrtElement->Source);
-			rv = acpi_allocate_resources(link);
-			if (ACPI_FAILURE(rv)) {
-				printf("%s: interrupt allocation failed %s\n",
-				    sc->sc_dev.dv_xname, PrtElement->Source);
-				continue;
-			}
-			line = acpi_get_intr(link);
-			if (line == (uint)-1) {
-				printf("%s: get intr failed %s\n",
-				    sc->sc_dev.dv_xname, PrtElement->Source);
-				continue;
-			}
-		}
-
-		acpi_pci_set_line(sc->sc_pci_bus, PrtElement->Address >> 16,
-		    PrtElement->Pin + 1, line);
-	}
-
-	sc->sc_pci_bus++;
-
-	AcpiOsFree(buf.Pointer);
-	return AE_OK;
-}
-#endif /* PCI_INTR_FIXUP */
-
-#if defined(PCI_INTR_FIXUP) || defined(ACPI_ACTIVATE_DEV)
+#if defined(ACPI_ACTIVATE_DEV)
 /* XXX This very incomplete */
-static ACPI_STATUS
+ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
 {
 	ACPI_BUFFER bufp, bufc, bufn;
 	ACPI_RESOURCE *resp, *resc, *resn;
 	ACPI_RESOURCE_IRQ *irq;
+	ACPI_RESOURCE_EXTENDED_IRQ *xirq;
 	ACPI_STATUS rv;
 	uint delta;
 
@@ -1345,6 +1156,22 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 			        Interrupts[irq->InterruptCount-1];
 			irq->InterruptCount = 1;
 			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_IRQ);
+			break;
+		case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+			memcpy(&resn->Data, &resp->Data,
+			       sizeof(ACPI_RESOURCE_EXTENDED_IRQ));
+			xirq = (ACPI_RESOURCE_EXTENDED_IRQ *)&resn->Data;
+#if 0
+			/*
+			 * XXX not duplicating the interrupt logic above
+			 * because its not clear what it accomplishes.
+			 */
+			xirq->Interrupts[0] =
+			    ((ACPI_RESOURCE_EXT_IRQ *)&resp->Data)->
+			    Interrupts[irq->NumberOfInterrupts-1];
+			xirq->NumberOfInterrupts = 1;
+#endif
+			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_EXTENDED_IRQ);
 			break;
 		case ACPI_RESOURCE_TYPE_IO:
 			memcpy(&resn->Data, &resp->Data,
@@ -1390,7 +1217,7 @@ out1:
 out:
 	return rv;
 }
-#endif /* PCI_INTR_FIXUP || ACPI_ACTIVATE_DEV */
+#endif /* ACPI_ACTIVATE_DEV */
 
 SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 {
