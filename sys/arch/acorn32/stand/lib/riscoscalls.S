@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.6 2006/04/01 19:08:08 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.7 2006/07/04 23:06:51 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -338,6 +338,22 @@ ENTRY(osmemory_read_arrangement_table_size)
 	strne	r2, [r4]
 	ldmdb	fp, {r4, fp, sp, pc}
 
+ENTRY(xosmemory_read_arrangement_table_size)
+	mov	ip, sp
+	stmfd	sp!, {r4, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r3, r0
+	mov	r4, r1
+	mov	r0, #OSMemory_ReadArrangementTableSize
+	swi	XOS_Memory
+	ldmvsdb	fp, {r4, fp, sp, pc}
+	cmp	r3, #0
+	strne	r1, [r3]
+	cmp	r4, #0
+	strne	r2, [r4]
+	mov	r0, #0
+	ldmdb	fp, {r4, fp, sp, pc}
+
 ENTRY(osmemory_read_arrangement_table)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
@@ -345,6 +361,16 @@ ENTRY(osmemory_read_arrangement_table)
 	mov	r1, r0
 	mov	r0, #OSMemory_ReadArrangementTable
 	swi	OS_Memory
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xosmemory_read_arrangement_table)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r1, r0
+	mov	r0, #OSMemory_ReadArrangementTable
+	swi	XOS_Memory
+	movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(osmemory_page_op)
