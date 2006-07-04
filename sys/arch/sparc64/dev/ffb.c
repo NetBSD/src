@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.26 2006/04/15 17:48:23 jmmv Exp $	*/
+/*	$NetBSD: ffb.c,v 1.27 2006/07/04 18:14:44 martin Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.26 2006/04/15 17:48:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.27 2006/07/04 18:14:44 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,8 +200,10 @@ ffb_attach(struct ffb_softc *sc)
 	wsfont_init();
 
 	/* we mess with ffb_console_screen only once */
-	if (sc->sc_console) {
+	if (ffb_console_screen.ri.ri_rows == 0)
 		ffb_init_screen(sc, &ffb_console_screen, 1, &defattr);
+
+	if (sc->sc_console) {
 		ffb_console_screen.active = 1;
 		sc->active = &ffb_console_screen;
 	}
