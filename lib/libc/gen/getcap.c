@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.46 2006/05/29 21:55:41 jnemeth Exp $	*/
+/*	$NetBSD: getcap.c,v 1.47 2006/07/04 03:53:54 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.46 2006/05/29 21:55:41 jnemeth Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.47 2006/07/04 03:53:54 jnemeth Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,38 +110,38 @@ cgetset(const char *ent)
 	char *dest;
 
 	if (ent == NULL) {
-		if (toprec)
+		if (toprec != NULL)
 			free(toprec);
                 toprec = NULL;
                 topreclen = 0;
-                return (0);
+                return 0;
         }
         topreclen = strlen(ent);
-        if ((toprec = malloc (topreclen + 1)) == NULL) {
+        if ((toprec = malloc(topreclen + 1)) == NULL) {
 		errno = ENOMEM;
-                return (-1);
+                return -1;
 	}
 	gottoprec = 0;
 
-	source=ent;
-	dest=toprec;
-	while (*source) { /* Strip whitespace */
+	source = ent;
+	dest = toprec;
+	while (*source != '\0') { /* Strip whitespace */
 		*dest++ = *source++; /* Do not check first field */
 		while (*source == ':') {
-			check=source+1;
+			check = source + 1;
 			while (*check && (isspace((unsigned char)*check) ||
 			    (*check=='\\' && isspace((unsigned char)check[1]))))
 				++check;
-			if( *check == ':' )
-				source=check;
+			if (*check == ':')
+				source = check;
 			else
 				break;
 
 		}
 	}
-	*dest=0;
+	*dest = 0;
 
-        return (0);
+        return 0;
 }
 
 /*
@@ -177,10 +177,9 @@ cgetcap(buf, cap, type)
 		 */
 		for (;;)
 			if (*bp == '\0')
-				return (NULL);
-			else
-				if (*bp++ == ':')
-					break;
+				return NULL;
+			else if (*bp++ == ':')
+				break;
 
 		/*
 		 * Try to match (cap, type) in buf.
@@ -190,16 +189,16 @@ cgetcap(buf, cap, type)
 		if (*cp != '\0')
 			continue;
 		if (*bp == '@')
-			return (NULL);
+			return NULL;
 		if (type == ':') {
 			if (*bp != '\0' && *bp != ':')
 				continue;
-			return(bp);
+			return bp;
 		}
 		if (*bp != type)
 			continue;
 		bp++;
-		return (*bp == '@' ? NULL : bp);
+		return *bp == '@' ? NULL : bp;
 	}
 	/* NOTREACHED */
 }
@@ -223,7 +222,7 @@ cgetent(char **buf, const char * const *db_array, const char *name)
 	_DIAGASSERT(db_array != NULL);
 	_DIAGASSERT(name != NULL);
 
-	return (getent(buf, &dummy, db_array, -1, name, 0, NULL));
+	return getent(buf, &dummy, db_array, -1, name, 0, NULL);
 }
 
 /*
@@ -257,9 +256,9 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 	size_t clen;
 #endif
 	char *record, *newrecord;
-	char *r_end, *rp = NULL;	/* pacify gcc */
+	char *r_end, *rp;	/* pacify gcc */
 	const char * const *db_p;
-	int myfd = 0, eof, foundit;
+	int myfd, eof, foundit;
 	int tc_not_resolved;
 	
 	_DIAGASSERT(cap != NULL);
@@ -269,20 +268,23 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 	_DIAGASSERT(name != NULL);
 	/* nfield may be NULL */
 
+	myfd = 0;
+	rp = NULL;
+
 	/*
 	 * Return with ``loop detected'' error if we've recursed more than
 	 * MAX_RECURSION times.
 	 */
 	if (depth > MAX_RECURSION)
-		return (-3);
+		return -3;
 
 	/*
 	 * Check if we have a top record from cgetset().
          */
 	if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
-		if ((record = malloc (topreclen + BFRAG)) == NULL) {
+		if ((record = malloc(topreclen + BFRAG)) == NULL) {
 			errno = ENOMEM;
-			return (-2);
+			return -2;
 		}
 		(void)strcpy(record, toprec);	/* XXX: strcpy is safe */
 		db_p = db_array;
@@ -295,7 +297,7 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 	 */
 	if ((record = malloc(BFRAG)) == NULL) {
 		errno = ENOMEM;
-		return (-2);
+		return -2;
 	}
 	r_end = record + BFRAG;
 	foundit = 0;
@@ -322,14 +324,14 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 				if (retval < 0) {
 					/* no record available */
 					(void)capdbp->close(capdbp);
-					return (retval);
+					return retval;
 				}
 				/* save the data; close frees it */
 				clen = strlen(record);
 				if ((cbuf = malloc(clen + 1)) == NULL) {
 					(void)capdbp->close(capdbp);
 					errno = ENOMEM;
-					return (-2);
+					return -2;
 				}
 				memmove(cbuf, record, clen + 1);
 				if (capdbp->close(capdbp) < 0) {
@@ -337,11 +339,11 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 
 					free(cbuf);
 					errno = serrno;
-					return (-2);
+					return -2;
 				}
 				*len = clen;
 				*cap = cbuf;
-				return (retval);
+				return retval;
 			} else
 #endif
 			{
@@ -372,10 +374,9 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 		 */
 		b_end = buf;
 		bp = buf;
-		cp = 0;
+		cp = NULL;
 		slash = 0;
 		for (;;) {
-
 			/*
 			 * Read in a line implementing (\, newline)
 			 * line continuation.
@@ -394,7 +395,7 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 
 							free(record);
 							errno = serrno;
-							return (-2);
+							return -2;
 						} else {
 							fd = -1;
 							eof = 1;
@@ -425,7 +426,7 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 					 * to the colon (eliminating the
 					 * field).
 					 */
-					if (cp)
+					if (cp != NULL)
 						rp = cp;
 					else
 						cp = rp;
@@ -457,7 +458,7 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 						if (myfd)
 							(void)close(fd);
 						errno = ENOMEM;
-						return (-2);
+						return -2;
 					}
 					record = newrecord;
 					r_end = record + newsize;
@@ -485,20 +486,19 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 			/*
 			 * See if this is the record we want ...
 			 */
-			if (cgetmatch(record, name) == 0) {
+			if (cgetmatch(record, name) == 0)
 				if (nfield == NULL || !nfcmp(nfield, record)) {
 					foundit = 1;
 					break;	/* found it! */
 				}
-			}
 		}
-	}
+		}
 		if (foundit)
 			break;
 	}
 
 	if (!foundit)
-		return (-1);
+		return -1;
 
 	/*
 	 * Got the capability record, but now we have to expand all tc=name
@@ -551,7 +551,7 @@ tc_exp:	{
 					if (myfd)
 						(void)close(fd);
 					free(record);
-					return (iret);
+					return iret;
 				}
 				if (iret == 1)
 					tc_not_resolved = 1;
@@ -569,15 +569,14 @@ tc_exp:	{
 			for (;;)
 				if (*s == '\0')
 					break;
-				else
-					if (*s++ == ':')
-						break;
+				else if (*s++ == ':')
+					break;
 			newilen -= s - newicap;
 			newicap = s;
 
 			/* make sure interpolated record is `:'-terminated */
 			s += newilen;
-			if (*(s-1) != ':') {
+			if (*(s - 1) != ':') {
 				*s = ':';	/* overwrite NUL with : */
 				newilen++;
 			}
@@ -602,7 +601,7 @@ tc_exp:	{
 						(void)close(fd);
 					free(icap);
 					errno = ENOMEM;
-					return (-2);
+					return -2;
 				}
 				record = newrecord;
 				r_end = record + newsize;
@@ -624,7 +623,7 @@ tc_exp:	{
 			 * Start scan on `:' so next cgetcap works properly
 			 * (cgetcap always skips first field).
 			 */
-			scan = s-1;
+			scan = s - 1;
 		}
 	
 	}
@@ -640,15 +639,15 @@ tc_exp:	{
 		     realloc(record, (size_t)(rp - record))) == NULL) {
 			free(record);
 			errno = ENOMEM;
-			return (-2);
+			return -2;
 		}
 		record = newrecord;
 	}
 		
 	*cap = record;
 	if (tc_not_resolved)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }	
 
 #ifndef SMALL
@@ -669,9 +668,9 @@ cdbget(DB *capdbp, char **bp, const char *name)
 		/* Get the reference. */
 		switch(capdbp->get(capdbp, &key, &data, 0)) {
 		case -1:
-			return (-2);
+			return -2;
 		case 1:
-			return (-1);
+			return -1;
 		}
 
 		/* If not an index to another record, leave. */
@@ -683,7 +682,7 @@ cdbget(DB *capdbp, char **bp, const char *name)
 	}
 	
 	*bp = (char *)data.data + 1;
-	return (((char *)(data.data))[0] == TCERR ? 1 : 0);
+	return ((char *)(data.data))[0] == TCERR ? 1 : 0;
 }
 #endif
 
@@ -711,12 +710,11 @@ cgetmatch(const char *buf, const char *name)
 		for (;;)
 			if (*np == '\0') {
 				if (*bp == '|' || *bp == ':' || *bp == '\0')
-					return (0);
+					return 0;
 				else
 					break;
-			} else
-				if (*bp++ != *np++)
-					break;
+			} else if (*bp++ != *np++)
+				break;
 
 		/*
 		 * Match failed, skip to next name in record.
@@ -724,13 +722,12 @@ cgetmatch(const char *buf, const char *name)
 		if (bp > buf)
 			bp--;	/* a '|' or ':' may have stopped the match */
 		else
-			return (-1);
+			return -1;
 		for (;;)
 			if (*bp == '\0' || *bp == ':')
-				return (-1);	/* match failed totally */
-			else
-				if (*bp++ == '|')
-					break;	/* found next name */
+				return -1;	/* match failed totally */
+			else if (*bp++ == '|')
+				break;		/* found next name */
 	}
 }
 
@@ -742,7 +739,7 @@ cgetfirst(char **buf, const char * const *db_array)
 	_DIAGASSERT(db_array != NULL);
 
 	(void)cgetclose();
-	return (cgetnext(buf, db_array));
+	return cgetnext(buf, db_array);
 }
 
 static FILE *pfp;
@@ -759,7 +756,7 @@ cgetclose(void)
 	dbp = NULL;
 	gottoprec = 0;
 	slash = 0;
-	return(0);
+	return 0;
 }
 
 /*
@@ -784,10 +781,10 @@ cgetnext(char **bp, const char * const *db_array)
 
 	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL) {
 		(void)cgetclose();
-		return (-1);
+		return -1;
 	}
-	for(;;) {
-		if (toprec && !gottoprec) {
+	for (;;) {
+		if (toprec != NULL && !gottoprec) {
 			gottoprec = 1;
 			line = toprec;
 		} else {
@@ -797,17 +794,17 @@ cgetnext(char **bp, const char * const *db_array)
 					return -1;
 				if (ferror(pfp)) {
 					(void)cgetclose();
-					return (-1);
+					return -1;
 				} else {
 					(void)fclose(pfp);
 					pfp = NULL;
 					if (*++dbp == NULL) {
 						(void)cgetclose();
-						return (0);
+						return 0;
 					} else if ((pfp =
 					    fopen(*dbp, "r")) == NULL) {
 						(void)cgetclose();
-						return (-1);
+						return -1;
 					} else
 						continue;
 				}
@@ -858,7 +855,7 @@ cgetnext(char **bp, const char * const *db_array)
 				if (line == NULL && pfp) {
 					if (ferror(pfp)) {
 						(void)cgetclose();
-						return (-1);
+						return -1;
 					}
 					(void)fclose(pfp);
 					pfp = NULL;
@@ -871,7 +868,7 @@ cgetnext(char **bp, const char * const *db_array)
 		if (len > sizeof(buf))
 			return -1;
 		rp = buf;
-		for(cp = nbuf; *cp != '\0'; cp++)
+		for (cp = nbuf; *cp != '\0'; cp++)
 			if (*cp == '|' || *cp == ':')
 				break;
 			else
@@ -890,7 +887,7 @@ cgetnext(char **bp, const char * const *db_array)
 		if (status == -2 || status == -3)
 			(void)cgetclose();
 
-		return (status + 1);
+		return status + 1;
 	}
 	/* NOTREACHED */
 }
@@ -922,7 +919,7 @@ cgetstr(char *buf, const char *cap, char **str)
 	 */
 	bp = cgetcap(buf, cap, '=');
 	if (bp == NULL)
-		return (-1);
+		return -1;
 
 	/*
 	 * Conversion / storage allocation loop ...  Allocate memory in
@@ -930,7 +927,7 @@ cgetstr(char *buf, const char *cap, char **str)
 	 */
 	if ((mem = malloc(SFRAG)) == NULL) {
 		errno = ENOMEM;
-		return (-2);	/* couldn't even allocate the first fragment */
+		return -2;	/* couldn't even allocate the first fragment */
 	}
 	m_room = SFRAG;
 	mp = mem;
@@ -1004,7 +1001,7 @@ cgetstr(char *buf, const char *cap, char **str)
 
 			if ((newmem = realloc(mem, size + SFRAG)) == NULL) {
 				free(mem);
-				return (-2);
+				return -2;
 			}
 			mem = newmem;
 			m_room = SFRAG;
@@ -1021,12 +1018,12 @@ cgetstr(char *buf, const char *cap, char **str)
 	if (m_room != 0) {
 		if ((newmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
 			free(mem);
-			return (-2);
+			return -2;
 		}
 		mem = newmem;
 	}
 	*str = mem;
-	return (len);
+	return len;
 }
 
 /*
@@ -1056,7 +1053,7 @@ cgetustr(char *buf, const char *cap, char **str)
 	 * Find string capability cap
 	 */
 	if ((bp = cgetcap(buf, cap, '=')) == NULL)
-		return (-1);
+		return -1;
 
 	/*
 	 * Conversion / storage allocation loop ...  Allocate memory in
@@ -1064,7 +1061,7 @@ cgetustr(char *buf, const char *cap, char **str)
 	 */
 	if ((mem = malloc(SFRAG)) == NULL) {
 		errno = ENOMEM;
-		return (-2);	/* couldn't even allocate the first fragment */
+		return -2;	/* couldn't even allocate the first fragment */
 	}
 	m_room = SFRAG;
 	mp = mem;
@@ -1088,7 +1085,7 @@ cgetustr(char *buf, const char *cap, char **str)
 
 			if ((newmem = realloc(mem, size + SFRAG)) == NULL) {
 				free(mem);
-				return (-2);
+				return -2;
 			}
 			mem = newmem;
 			m_room = SFRAG;
@@ -1105,12 +1102,12 @@ cgetustr(char *buf, const char *cap, char **str)
 	if (m_room != 0) {
 		if ((newmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
 			free(mem);
-			return (-2);
+			return -2;
 		}
 		mem = newmem;
 	}
 	*str = mem;
-	return (len);
+	return len;
 }
 
 /*
@@ -1135,7 +1132,7 @@ cgetnum(char *buf, const char *cap, long *num)
 	 */
 	bp = cgetcap(buf, cap, '#');
 	if (bp == NULL)
-		return (-1);
+		return -1;
 
 	/*
 	 * Look at value and determine numeric base:
@@ -1178,7 +1175,7 @@ cgetnum(char *buf, const char *cap, long *num)
 	 * Return value and success.
 	 */
 	*num = n;
-	return (0);
+	return 0;
 }
 
 
@@ -1195,12 +1192,12 @@ nfcmp(char *nf, char *rec)
 	_DIAGASSERT(rec != NULL);
 
 	for (cp = rec; *cp != ':'; cp++)
-		;
+		continue;
 	
 	tmp = *(cp + 1);
 	*(cp + 1) = '\0';
 	ret = strcmp(nf, rec);
 	*(cp + 1) = tmp;
 
-	return (ret);
+	return ret;
 }
