@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.148 2006/06/27 21:14:11 dogcow Exp $
+$NetBSD: UPDATING,v 1.149 2006/07/04 00:40:43 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20060703:
+	MPACPI is no more. We always configure PCI interrupts using ACPI
+	if we have an ACPI kernel. The option MPACPI_SCANPCI has been renamed
+	to ACPI_SCANPCI. Thanks to work from fvdl.
 
 20060627:
 	socket(2) has changed, and its system call has been versioned.
