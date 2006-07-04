@@ -1,3 +1,4 @@
-$NetBSD: version,v 1.1 2006/04/05 21:33:26 bjh21 Exp $
+$NetBSD: version,v 1.2 2006/07/04 22:34:54 bjh21 Exp $
 
 0.01:	Just about enough code to launch a kernel from it.
+0.02:	Reading directory entries and loading whole files.

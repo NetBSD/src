@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.4 2006/07/02 22:06:16 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.5 2006/07/04 22:34:54 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -255,6 +255,7 @@ nbfs_file(struct nbfs_reg *r)
 	static os_error error = {0, "nbfs_file"};
 	int reason = r->r0;
 	char const *fname = (char const *)r->r1;
+	void *buf = (void *)r->r2;
 	char const *special = (char const *)r->r6;
 	struct open_file f;
 	int err;
@@ -266,6 +267,7 @@ nbfs_file(struct nbfs_reg *r)
 		return &error;
 	switch (reason) {
 	case 5:
+	case 255:
 		if (err == ENOENT)
 			r->r0 = r->r2 = r->r3 = r->r4 = r->r5 = 0;
 		else {
@@ -277,6 +279,13 @@ nbfs_file(struct nbfs_reg *r)
 			r->r4 = st.st_size;
 			r->r5 = fileswitch_ATTR_OWNER_READ |
 			    fileswitch_ATTR_WORLD_READ;
+			if (reason == 255) {
+				err = FS_READ(f.f_ops)
+				    (&f, buf, st.st_size, NULL);
+				if (err != 0) goto fail;
+				/* R6 should really be the leaf name */
+				r->r6 = r->r1;
+			}
 		}
 		break;
 	default:
