@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/11/10 03:55:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.21 2006/07/04 23:30:24 bjh21 Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,6 +13,7 @@ ARCHIVE=BtNetBSD.spk
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 
 BOOTLOADER=	${DESTDIR}/usr/mdec/boot32,ffa
+NBFS=		${DESTDIR}/usr/mdec/nbfs,ffa
 
 all: ${ARCHIVE}
 
@@ -108,6 +109,7 @@ settypes: setup_tmp
 tmp/BtNetBSD: setup_tmp ${UUDECODE_FILES} settypes
 	cp ${KERNOBJDIR}/INSTALL/netbsd tmp/BtNetBSD/InstKern,1a9
 	cp ${BOOTLOADER} 'tmp/BtNetBSD/!BtNetBSD/boot32,ffa'
+	cp ${NBFS} 'tmp/BtNetBSD/!BtNetBSD/nbfs,ffa'
 	${TOOL_MDSETIMAGE} tmp/BtNetBSD/InstKern,1a9 ${RAMDISKDIR}/ramdisk.fs
 	# unixfs is copied into the !BtNetBSD dir at install time
 	cd tmp/BtNetBSD && cp -R '!BtNetBSD/native' unixfs
