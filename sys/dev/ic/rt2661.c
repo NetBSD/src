@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.10 2006/07/04 18:26:29 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.11 2006/07/04 23:05:11 rpaulo Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.10 2006/07/04 18:26:29 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.11 2006/07/04 23:05:11 rpaulo Exp $");
 
 #include "bpfilter.h"
 
@@ -2679,7 +2679,7 @@ rt2661_init(struct ifnet *ifp)
 			printf("%s: could not read microcode %s\n",
 			    sc->sc_dev.dv_xname, name);
 			firmware_free(ucode, 0);
-			firmware_close(fh)
+			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return EIO;
 		}
