@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2006/07/04 06:25:50 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2006/07/04 06:25:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,11 +111,6 @@ typedef struct tlb_info_s {
 volatile tlb_info_t tlb_info[NTLB];
 /* We'll use a modified FIFO replacement policy cause it's cheap */
 volatile int tlbnext = TLB_NRESERVED;
-
-u_long dtlb_miss_count = 0;
-u_long itlb_miss_count = 0;
-u_long ktlb_miss_count = 0;
-u_long utlb_miss_count = 0;
 
 /* Event counters */
 struct evcnt tlbmiss_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
