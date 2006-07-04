@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.2 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.3 2006/07/04 14:53:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.2 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.3 2006/07/04 14:53:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.2 2006/07/04 00:30:23 christo
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
-#if NIOAPIC > 0 || !defined(MPBIOS)
+#if NIOAPIC > 0 || NAPCI > 0
 #include <machine/i82093var.h>
 #include <machine/mpconfig.h>
 #include <machine/mpbiosvar.h>
@@ -124,7 +124,7 @@ pci_intr_map(pa, ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
-#if NIOAPIC > 0 || !defined(MPBIOS)
+#if NIOAPIC > 0 || NACPI > 0
 	int rawpin = pa->pa_rawintrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, dev, func;
@@ -142,7 +142,7 @@ pci_intr_map(pa, ihp)
 		goto bad;
 	}
 
-#if NIOAPIC > 0 || !defined(MPBIOS)
+#if NIOAPIC > 0 || NAPCI > 0
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
@@ -185,7 +185,7 @@ pci_intr_map(pa, ihp)
 			line = 9;
 		}
 	}
-#if NIOAPIC > 0 || !defined(MPBIOS)
+#if NIOAPIC > 0 || NAPCI > 0
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
 			if ((*ihp & 0xff) == 0)
