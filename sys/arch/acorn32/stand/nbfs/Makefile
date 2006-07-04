@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2006/07/02 22:05:07 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.3 2006/07/04 23:08:10 bjh21 Exp $
 
 PROG=		nbfs
 PROGSOURCE=	rmheader.S rmvers.c nbfs.c rmalloc.c
-NEWVERSWHAT=	"RISC OS Boot"
+NEWVERSWHAT=	"Boot Filing System"
 MKMODULE=	yes
 
 CPPFLAGS+=	-DLIBSA_SINGLE_DEVICE=rodisk_ -DLIBSA_NO_TWIDDLE
