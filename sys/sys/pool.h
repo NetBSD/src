@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.51 2006/05/27 08:41:13 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.52 2006/07/04 14:09:37 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ struct link_pool_init {	/* same as args to pool_init() */
 };
 #define	POOL_INIT(pp, size, align, align_offset, flags, wchan, palloc)	\
 struct pool pp;								\
-static const struct link_pool_init _link_ ## pp[1] = {			\
+const struct link_pool_init _link_ ## pp[1] = {				\
 	{ &pp, size, align, align_offset, flags, wchan, palloc }	\
 };									\
 __link_set_add_rodata(pools, _link_ ## pp)
