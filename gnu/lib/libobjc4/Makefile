@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2006/06/23 17:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2006/07/04 18:26:18 tron Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -88,7 +88,7 @@ unwind.h: ${G_UNWIND_H}
 	rm -f ${.TARGET}
 	ln -s ${G_UNWIND_H} ${.TARGET}
 
-CLEANFILES+= tconfig.h unwind.h
+CLEANFILES+= cs-tconfig.h tconfig.h unwind.h
 
 # XXX just while all platforms defs.mk are updated..
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
