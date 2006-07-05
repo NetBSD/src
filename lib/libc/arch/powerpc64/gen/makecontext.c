@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.2 2006/07/05 18:10:36 ross Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1 2006/07/01 16:37:20 ross Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.2 2006/07/05 18:10:36 ross Exp $");
 #endif
 
 #include <inttypes.h>
@@ -56,26 +56,26 @@ void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
 	__greg_t *gr = ucp->uc_mcontext.__gregs;
-	long *sp;
+	__greg_t sp, *spp;
 	int i;
 	va_list ap;
 
-	sp  = (long *)
-	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
+	sp  = (__greg_t) ((uintptr_t)ucp->uc_stack.ss_sp
+	    + ucp->uc_stack.ss_size);
 	sp -= 2 + (argc > 8 ? argc - 8: 0); /* Make room for call frame. */
-	sp  = (int *)
-	    ((uintptr_t)sp & ~0xf);	/* Align on quad-word boundary. */
+	sp  = (__greg_t) ((uintptr_t)sp & ~0xf);
 
 	/*
 	 * Start executing at <func> -- when <func> completes, return to
 	 * <_resumecontext>.
 	 */
-	gr[_REG_R1]  = (__greg_t)sp;
+	gr[_REG_R1]  = sp;
 	gr[_REG_LR] = (__greg_t)_resumecontext;
 	gr[_REG_PC] = (__greg_t)func; // XXX -- this is the descriptor address!
 
 	/* Wipe out stack frame backchain pointer. */
-	*sp = 0;
+	spp = (__greg_t *)sp;
+	*spp = 0;
 
 	/* Construct argument list. */
 	va_start(ap, argc);
@@ -83,7 +83,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	for (i = 0; i < argc && i < 8; i++)
 		gr[_REG_R3 + i] = va_arg(ap, long);
 	/* Pass remaining arguments on the stack above the backchain/lr gap. */
-	for (sp += 2; i < argc; i++)
-		*sp++ = va_arg(ap, long);
+	for (spp += 2; i < argc; i++)
+		*spp++ = va_arg(ap, long);
 	va_end(ap);
 }
