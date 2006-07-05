@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.2 2006/06/04 20:06:14 cube Exp $
+.\" $NetBSD: config.5,v 1.3 2006/07/05 10:11:02 cube Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -58,7 +58,7 @@ The kernel configuration file actually contains the description of all the
 options, drivers and source files involved in the kernel compilation, and the
 logic that binds them.
 The
-.Ic setmachine
+.Ic machine
 statement, usually found in the
 .Pa std.${MACHINE}
 file, hides this from the user by automatically including all the descriptive
@@ -483,9 +483,9 @@ Appends to a definition in the generated
 .El
 .Ss OPTIONS SELECTION
 .Bl -ohang
-.It Ic setmachine Ar machine Op Ar arch Op Ar subarch Op Ar ...
+.It Ic machine Ar machine Op Ar arch Op Ar subarch Op Ar ...
 The
-.Ic setmachine
+.Ic machine
 statement should appear first in the kernel configuration file, with the
 exception of context-neutral statements.
 It makes
