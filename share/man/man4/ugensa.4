@@ -1,6 +1,6 @@
-.\" $NetBSD: ucom.4,v 1.14 2006/07/05 10:17:20 martin Exp $
+.\" $NetBSD: ugensa.4,v 1.1 2006/07/05 10:17:20 martin Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,62 +34,40 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 18, 2005
-.Dt UCOM 4
+.Dd July 5, 2006
+.Dt UBGENSA 4
 .Os
 .Sh NAME
-.Nm ucom
-.Nd USB tty support
+.Nm ugensa
+.Nd USB generic serial adapter
 .Sh SYNOPSIS
-.Cd "ucom* at ubsa?"
-.Cd "ucom* at uftdi?"
-.Cd "ucom* at ugensa?"
-.Cd "ucom* at uipaq?"
-.Cd "ucom* at ukyopon?"
-.Cd "ucom* at umct?"
-.Cd "ucom* at umodem?"
-.Cd "ucom* at uplcom?"
-.Cd "ucom* at uvisor? portno ?"
-.Cd "ucom* at uvscom?"
+.Cd "ugensa*  at uhub?"
+.Cd "ucom*  at ugensa?"
+.Sh HARDWARE
+The
+.Nm
+driver supports the following adapters:
+.Pp
+.Bl -tag -width Dv -offset indent -compact
+.It Airprime PC5220
+.It Qualcom K CDMA MSM K
+.El
 .Sh DESCRIPTION
 The
 .Nm
-driver attaches to USB modems, serial ports, and other devices that need
-to look like a tty.
-The
-.Nm
-driver shows a behaviour like a
-.Xr tty 4 .
-This means that normal programs such as
-.Xr tip 1
-or
-.Xr pppd 8
-can be used to access the device.
+driver provides support for the USB-to-RS-232 Bridge chip used by various
+vendors.
 .Pp
-The
-.Va portno
-locator can be used to decide which port to use for device that have
-multiple external ports.
-.Sh FILES
-.Bl -tag -width Pa
-.It Pa /dev/ttyU?
-.El
+The device is accessed through the
+.Xr ucom 4
+driver which makes it behave like a
+.Xr tty 4 .
 .Sh SEE ALSO
 .Xr tty 4 ,
-.Xr ubsa 4 ,
-.Xr uftdi 4 ,
-.Xr ugensa 4 ,
-.Xr uipaq 4 ,
-.Xr ukyopon 4 ,
-.Xr umct 4 ,
-.Xr umodem 4 ,
-.Xr uplcom 4 ,
-.Xr usb 4 ,
-.Xr uvisor 4 ,
-.Xr uvscom 4
+.Xr ucom 4 ,
+.Xr usb 4
 .Sh HISTORY
 The
 .Nm
-driver
-appeared in
-.Nx 1.5 .
+driver first appeared in
+.Nx 3.0
