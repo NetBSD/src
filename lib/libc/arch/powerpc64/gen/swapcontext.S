@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.2 2006/07/05 18:12:54 ross Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,30 +37,31 @@
  */
 
 #include "SYS.h"
-#include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$NetBSD: swapcontext.S,v 1.1 2006/07/01 16:37:20 ross Exp $"
+	.asciz "$NetBSD: swapcontext.S,v 1.2 2006/07/05 18:12:54 ross Exp $"
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
+	mc_off	= 56				# offset of uc_mcontext
 	stdu	%r1,-SF_SZ(%r1)			# set up new stack frame
 	mflr	%r0
-	std	%r0,SF_SZ+SF_LR(%r1)		# save link register
-	stw	%r3,SF_PARAM(%r1)		# must save oucp (was 8)
-	stw	%r4,SF_PARAM+8(%r1)		# must save ucp (was 12)
-	bl	PIC_PLT(_C_LABEL(_getcontext))	# getcontext(oucp)
+	std	%r0,[SF_SZ+SF_LR](%r1)		# save link register
+	std	%r3,SF_PARAM(%r1)		# must save oucp (was 8)
+	std	%r4,SF_PARAM+8(%r1)		# must save ucp (was 12)
+	bl	._getcontext			# getcontext(oucp)
 	nop
 	cmpdi	%r3,0
 	bne	1f
 	ld	%r11,SF_PARAM(%r1)		# load oucp for adjustment
-	lwz	%r0,SF_SZ+SF_LR(%r1)		# get lr back
-	stw	%r0,(48 + 34 * 4)(%r11)		# pc <- lr
+	ld	%r0,SF_SZ+SF_LR(%r1)		# get LR back
+	std	%r0,mc_off+34*8(%r11)	# 	pc <- lr
 	la	%r0,16(%r1)
-	stw	%r0,(48 +  1 * 4)(%r11)		# adjust sp
-	lwz	%r3,12(%r1)			# load ucp
-	bl	PIC_PLT(_C_LABEL(setcontext))	# setcontext(ucp)
+	std	%r0,mc_off+1*8(%r11)		# adjust sp
+	ld	%r3,SF_PARAM+8(%r1)			# load ucp
+	bl	.setcontext			# setcontext(ucp)
+	nop
 1:
 	ld	%r0,SF_SZ+SF_LR(%r1)
 	mtlr	%r0
