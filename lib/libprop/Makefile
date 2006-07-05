@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/05/18 03:05:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2006/07/05 21:46:11 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,12 @@ LIB=	prop
 
 MAN=	prop_array.3 prop_bool.3 prop_data.3 prop_dictionary.3 \
 	prop_number.3 prop_object.3 prop_string.3 proplib.3
+
+MAN+=	prop_dictionary_copyin_ioctl.9
+MLINKS+= prop_dictionary_copyin_ioctl.9 prop_dictionary_copyout_ioctl.9
+
+MAN+=	prop_dictionary_send_ioctl.3
+MLINKS+= prop_dictionary_send_ioctl.3 prop_dictionary_recv_ioctl.3
 
 MLINKS+= prop_array.3 prop_array_add.3
 MLINKS+= prop_array.3 prop_array_capacity.3
