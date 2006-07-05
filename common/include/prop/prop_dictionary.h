@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.3 2006/07/05 21:46:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -83,6 +83,22 @@ const char *	prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t);
 
 boolean_t	prop_dictionary_keysym_equals(prop_dictionary_keysym_t,
 					      prop_dictionary_keysym_t);
+
+#if defined(__NetBSD__)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+int		prop_dictionary_send_ioctl(prop_dictionary_t, int,
+					   unsigned long);
+int		prop_dictionary_recv_ioctl(int, unsigned long,
+					   prop_dictionary_t *);
+#elif defined(_KERNEL)
+struct plistref;
+
+int		prop_dictionary_copyin_ioctl(const struct plistref *, int,
+					     prop_dictionary_t *);
+int		prop_dictionary_copyout_ioctl(struct plistref *,
+					      prop_dictionary_t, int);
+#endif
+#endif /* __NetBSD__ */
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_DICTIONARY_H_ */
