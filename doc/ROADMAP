@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.8 2006/06/25 17:37:22 agc Exp $
+#	$NetBSD: ROADMAP,v 1.9 2006/07/05 14:41:13 hubertf Exp $
 
 A high-level roadmap for NetBSD
 
@@ -284,7 +284,7 @@ aj. Provide support for binary packages in install
     functional as other free operating systems.  Without sacrificing
     the quick and clean basic installs that we have now.  An extension
     of sysinst might fit the bill.  Or a tool that's both invoked by
-    sysinst and available on a running system.
+    sysinst and available on a running system, e.g. pkgsrc-wip/pkg_select.
 	Responsible: agc and others
 	ETA: 4.0
 
