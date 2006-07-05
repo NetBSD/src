@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.3 2006/07/05 20:29:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,11 @@ struct _prop_bool {
 	boolean_t		pb_value;
 };
 
-_PROP_POOL_INIT(_prop_bool_pool, sizeof(struct _prop_bool), "propbool")
+static struct _prop_bool _prop_bool_true;
+static struct _prop_bool _prop_bool_false;
+
+_PROP_MUTEX_DECL(_prop_bool_initialized_mutex)
+static boolean_t	_prop_bool_initialized;
 
 static void		_prop_bool_free(void *);
 static boolean_t	_prop_bool_externalize(
@@ -66,7 +70,11 @@ static void
 _prop_bool_free(void *v)
 {
 
-	_PROP_POOL_PUT(_prop_bool_pool, v);
+	/*
+	 * This should never happen as we "leak" our initial reference
+	 * count.
+	 */
+	/* XXX forced assertion failure? */
 }
 
 static boolean_t
@@ -87,18 +95,37 @@ _prop_bool_equals(void *v1, void *v2)
 
 	_PROP_ASSERT(prop_object_is_bool(b1));
 	_PROP_ASSERT(prop_object_is_bool(b2));
-	return (b1->pb_value == b2->pb_value);
+
+	/*
+	 * Since we only ever allocate one true and one false,
+	 * save ourselves a couple of memory operations.
+	 */
+	return (b1 == b2);
 }
 
 static prop_bool_t
-_prop_bool_alloc(void)
+_prop_bool_alloc(boolean_t val)
 {
 	prop_bool_t pb;
 
-	pb = _PROP_POOL_GET(_prop_bool_pool);
-	if (pb != NULL) {
-		_prop_object_init(&pb->pb_obj, &_prop_object_type_bool);
+	if (! _prop_bool_initialized) {
+		_PROP_MUTEX_LOCK(_prop_bool_initialized_mutex);
+		if (! _prop_bool_initialized) {
+			_prop_object_init(&_prop_bool_true.pb_obj,
+					  &_prop_object_type_bool);
+			_prop_bool_true.pb_value = TRUE;
+
+			_prop_object_init(&_prop_bool_false.pb_obj,
+					  &_prop_object_type_bool);
+			_prop_bool_false.pb_value = FALSE;
+
+			_prop_bool_initialized = TRUE;
+		}
+		_PROP_MUTEX_UNLOCK(_prop_bool_initialized_mutex);
 	}
+
+	pb = val ? &_prop_bool_true : &_prop_bool_false;
+	prop_object_retain(pb);
 
 	return (pb);
 }
@@ -111,12 +138,8 @@ _prop_bool_alloc(void)
 prop_bool_t
 prop_bool_create(boolean_t val)
 {
-	prop_bool_t pb;
 
-	pb = _prop_bool_alloc();
-	if (pb != NULL)
-		pb->pb_value = val;
-	return (pb);
+	return (_prop_bool_alloc(val));
 }
 
 /*
@@ -126,14 +149,15 @@ prop_bool_create(boolean_t val)
 prop_bool_t
 prop_bool_copy(prop_bool_t opb)
 {
-	prop_bool_t pb;
 
 	_PROP_ASSERT(prop_object_is_bool(opb));
 
-	pb = _prop_bool_alloc();
-	if (pb != NULL)
-		pb->pb_value = opb->pb_value;
-	return (pb);
+	/*
+	 * Because we only ever allocate one true and one false, this
+	 * can be reduced to a simple retain operation.
+	 */
+	prop_object_retain(opb);
+	return (opb);
 }
 
 /*
