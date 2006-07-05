@@ -1,4 +1,4 @@
-/	$NetBSD: fabs.c,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: fabs.c,v 1.2 2006/07/05 18:07:22 ross Exp $	*/
 
 #include <math.h>
 
