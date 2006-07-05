@@ -1,10 +1,10 @@
-/*	$NetBSD: _setjmp.S,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.2 2006/07/05 18:06:47 ross Exp $	*/
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: _setjmp.S,v 1.1 2006/07/01 16:37:20 ross Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.2 2006/07/05 18:06:47 ross Exp $"
 #endif
 
 /*
@@ -22,12 +22,20 @@ ENTRY(_setjmp)
 	mfcr	%r12			/* save condition register */
 	mr	%r10,%r1		/* save stack pointer */
 	mr	%r9,%r2			/* save GPR2 (not needed) */
-	stmd	%r9,16(%r3)		/* save r9..r31 */
+	i = 0
+	.rept	32-9
+	std	9+i,i*8+16(%r3)
+	i = i + 1
+	.endr
 	li	%r3,0			/* indicate success */
 	blr				/* return */
 
 ENTRY(_longjmp)
-	lmd	%r9,16(%r3)		/* save r9..r31 */
+	i = 0
+	.rept	32-9
+	ld	9+i,i*8+16(%r3)
+	i = i + 1
+	.endr
 	mtlr	%r11			/* restore LR */
 	mtcr	%r12			/* restore CR */
 	mr	%r2,%r9			/* restore GPR2 (not needed) */
