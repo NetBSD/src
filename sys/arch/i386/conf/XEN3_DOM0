@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.1 2006/07/02 21:28:39 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.2 2006/07/05 17:00:46 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -6,7 +6,7 @@ include "arch/i386/conf/XEN2_DOM0"
 
 options 	XEN3	#Xen 3.x support
 
-acpi0 		at hypervisor?
+#acpi0 		at hypervisor?
 xenbus*		at hypervisor?		# Xen virtual bus
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
