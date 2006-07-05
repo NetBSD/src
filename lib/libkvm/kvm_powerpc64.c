@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc64.c,v 1.1 2006/07/01 19:21:11 ross Exp $	*/
+/*	$NetBSD: kvm_powerpc64.c,v 1.2 2006/07/05 18:33:18 ross Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -89,12 +89,6 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-static int	_kvm_match_601bat(kvm_t *kd, u_long va, u_long *pa, int *off);
-static int	_kvm_match_bat(kvm_t *kd, u_long va, u_long *pa, int *off);
-static int	_kvm_match_sr(kvm_t *kd, u_long va, u_long *pa, int *off);
-static struct pte *_kvm_scan_pteg(struct pteg *pteg, uint32_t vsid,
-				  uint32_t api, int secondary);
-
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
@@ -114,103 +108,7 @@ _kvm_initvtop(kd)
 
 #define SR_VSID_HASH_MASK	0x0007ffff
 
-static struct pte *
-_kvm_scan_pteg(pteg, vsid, api, secondary)
-	struct pteg *pteg;
-	uint32_t vsid;
-	uint32_t api;
-	int secondary;
-{
-	struct pte	*pte;
-	u_long		ptehi;
-	int		i;
-
-	for (i=0 ; i<8 ; i++) {
-		pte = &pteg->pt[i];
-		ptehi = (u_long) pte->pte_hi;
-		if ((ptehi & PTE_VALID) == 0)
-			continue;
-		if ((ptehi & PTE_HID) != secondary)
-			continue;
-		if (((ptehi & PTE_VSID) >> PTE_VSID_SHFT) != vsid)
-			continue;
-		if (((ptehi & PTE_API) >> PTE_API_SHFT) != api)
-			continue;
-		return pte;
-	}
-	return NULL;
-}
-
 #define HASH_MASK	0x0007ffff
-
-static int
-_kvm_match_sr(kd, va, pa, off)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
-	int *off;
-{
-	cpu_kcore_hdr_t	*cpu_kh;
-	struct pteg	pteg;
-	struct pte	*pte;
-	uint32_t	sr, pgoff, vsid, pgidx, api, hash;
-	uint32_t	htaborg, htabmask, mhash;
-	u_long		pteg_vaddr;
-
-	cpu_kh = kd->cpu_data;
-
-	sr = cpu_kh->sr[(va >> 28) & 0xf];
-	if ((sr & SR_TYPE) != 0) {
-		/* Direct-store segment (shouldn't be) */
-		return 0;
-	}
-
-	pgoff = va & ADDR_POFF;
-	vsid = sr & SR_VSID;
-	pgidx = (va & ADDR_PIDX) >> ADDR_PIDX_SHFT;
-	api = pgidx >> 10;
-	hash = (vsid & HASH_MASK) ^ pgidx;
-
-	htaborg = cpu_kh->sdr1 & 0xffff0000;
-	htabmask = cpu_kh->sdr1 & 0x1ff;
-
-	mhash = (hash >> 10) & htabmask;
-
-	pteg_vaddr = ( htaborg & 0xfe000000) | ((hash & 0x3ff) << 6)
-		   | ((htaborg & 0x01ff0000) | (mhash << 16));
-
-	if (pread(kd->pmfd, (void *) &pteg, sizeof(pteg),
-		  _kvm_pa2off(kd, pteg_vaddr)) != sizeof(pteg)) {
-		_kvm_syserr(kd, 0, "could not read primary PTEG");
-		return 0;
-	}
-
-	if ((pte = _kvm_scan_pteg(&pteg, vsid, api, 0)) != NULL) {
-		*pa = (pte->pte_lo & PTE_RPGN) | pgoff;
-		*off = NBPG - pgoff;
-		return 1;
-	}
-
-	hash = (~hash) & HASH_MASK;
-	mhash = (hash >> 10) & htabmask;
-
-	pteg_vaddr = ( htaborg & 0xfe000000) | ((hash & 0x3ff) << 6)
-		   | ((htaborg & 0x01ff0000) | (mhash << 16));
-
-	if (pread(kd->pmfd, (void *) &pteg, sizeof(pteg),
-		  _kvm_pa2off(kd, pteg_vaddr)) != sizeof(pteg)) {
-		_kvm_syserr(kd, 0, "could not read secondary PTEG");
-		return 0;
-	}
-
-	if ((pte = _kvm_scan_pteg(&pteg, vsid, api, 0)) != NULL) {
-		*pa = (pte->pte_lo & PTE_RPGN) | pgoff;
-		*off = NBPG - pgoff;
-		return 1;
-	}
-
-	return 0;
-}
 
 /*
  * Translate a KVA to a PA
@@ -222,7 +120,6 @@ _kvm_kvatop(kd, va, pa)
 	u_long *pa;
 {
 	cpu_kcore_hdr_t	*cpu_kh;
-	int		offs;
 	uint32_t	pvr;
 
 	if (ISALIVE(kd)) {
@@ -234,10 +131,6 @@ _kvm_kvatop(kd, va, pa)
 
 	pvr = (cpu_kh->pvr >> 16);
 
-	switch (pvr) {
-
-	if (_kvm_match_sr(kd, va, pa, &offs))
-		return offs;
 
 	/* No hit -- no translation */
 	*pa = (u_long)~0UL;
