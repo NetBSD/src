@@ -1,4 +1,4 @@
-# $NetBSD: ISO646.alias,v 1.1 2003/06/27 08:40:56 tshiozak Exp $
+# $NetBSD: ISO646.alias,v 1.2 2006/07/05 15:31:50 tnozaki Exp $
 
 BASIC:1983	iso_646.basic:1983 ref
 IRV:1983	iso-ir-2 irv
@@ -12,7 +12,7 @@ PT		iso646-pt pt iso-ir-16
 ES		iso646-es es iso-ir-17
 DE		iso646-de din_66003 iso-ir-21 de
 FR1		iso646-fr1 nf_z_62-010_(1973) iso-ir-25
-CN		iso646-gb gb_1988-80 iso-ir-57 cn
+CN		iso646-cn gb_1988-80 iso-ir-57 cn
 NO		iso646-no ns_4551-1 iso-ir-60 no
 NO2		iso646-no2 ns_4551-2 iso-ir-61 no2
 FR		iso646-fr nf_z_62-010 iso-ir-69 fr
