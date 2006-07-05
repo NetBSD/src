@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.1 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.2 2006/07/05 18:17:59 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.2 2006/07/05 18:17:59 xtraeme Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
