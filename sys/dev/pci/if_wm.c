@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.123 2006/06/20 01:16:23 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.124 2006/07/05 23:51:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.123 2006/06/20 01:16:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.124 2006/07/05 23:51:50 wrstuden Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2386,9 +2386,11 @@ wm_rxintr(struct wm_softc *sc)
 		m = rxs->rxs_mbuf;
 
 		/*
-		 * Add a new receive buffer to the ring.
+		 * Add a new receive buffer to the ring, unless of
+		 * course the length is zero. Treat the latter as a
+		 * failed mapping.
 		 */
-		if (wm_add_rxbuf(sc, i) != 0) {
+		if ((len == 0) || (wm_add_rxbuf(sc, i) != 0)) {
 			/*
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
