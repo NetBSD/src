@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.88 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.89 2006/07/05 14:26:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.88 2006/05/25 14:27:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.89 2006/07/05 14:26:42 drochner Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -534,6 +534,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	struct vm_page *pg;
 	struct uvm_object *obj;
 	int pgaflags;
+	vm_prot_t prot;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
@@ -591,6 +592,9 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	pgaflags = UVM_PGA_USERESERVE;
 	if (flags & UVM_KMF_ZERO)
 		pgaflags |= UVM_PGA_ZERO;
+	prot = VM_PROT_READ | VM_PROT_WRITE;
+	if (flags & UVM_KMF_EXEC)
+		prot |= VM_PROT_EXECUTE;
 	while (loopsize) {
 		KASSERT(!pmap_extract(pmap_kernel(), loopva, NULL));
 
@@ -620,8 +624,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		 * map it in
 		 */
 
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), prot);
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
 		loopsize -= PAGE_SIZE;
