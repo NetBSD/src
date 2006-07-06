@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.4 2006/07/01 10:12:36 martin Exp $	*/
+/*	$NetBSD: bfs.c,v 1.5 2006/07/06 21:55:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.4 2006/07/01 10:12:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.5 2006/07/06 21:55:06 martin Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ bfs_init2(struct bfs **bfsp, int bfs_sector, struct sector_io_ops *io,
 		bfs_fini(bfs);
 		return err;
 	}
-	DPRINTF(debug, "bfs super block + inode area = %d\n", memsize);
+	DPRINTF(debug, "bfs super block + inode area = %zd\n", memsize);
 	bfs->super_block_size = memsize;
 	if ((p = (void *)__MALLOC(memsize, M_BFS, M_NOWAIT)) == 0) {
 		bfs_fini(bfs);
@@ -119,7 +119,7 @@ bfs_init2(struct bfs **bfsp, int bfs_sector, struct sector_io_ops *io,
 		bfs_fini(bfs);
 		return err;
 	}
-	DPRINTF(debug, "bfs dirent area = %d\n", memsize);
+	DPRINTF(debug, "bfs dirent area = %zd\n", memsize);
 	bfs->dirent_size = memsize;
 	if ((p = (void *)__MALLOC(memsize, M_BFS, M_NOWAIT)) == 0) {
 		bfs_fini(bfs);
@@ -446,13 +446,13 @@ bfs_writeback_dirent(const struct bfs *bfs, struct bfs_dirent *dir,
 {
 	struct bfs_dirent *dir_base = bfs->dirent;
 	struct bfs_inode *root_inode = bfs->root_inode;
-	uint32_t eof;
+	uintptr_t eof;
 	int i;
 
 	i = ((dir - dir_base) * sizeof *dir) >> DEV_BSHIFT;
 
-	eof = (uint32_t)(dir + 1) - 1;
-	eof = eof - (uint32_t)dir_base +
+	eof = (uintptr_t)(dir + 1) - 1;
+	eof = eof - (uintptr_t)dir_base +
 	    (root_inode->start_sector << DEV_BSHIFT);
 
 	/* update root directory inode */
@@ -508,7 +508,7 @@ bfs_file_lookup(const struct bfs *bfs, const char *fname, int *start, int *end,
 	if (size)
 		*size = bfs_file_size(inode);
 
-	DPRINTF(bfs->debug, "%s: %d + %d -> %d (%d)\n",
+	DPRINTF(bfs->debug, "%s: %d + %d -> %d (%zd)\n",
 	    fname, bfs->start_sector, inode->start_sector,
 	    inode->end_sector, *size);
 
@@ -666,7 +666,8 @@ bfs_dump(const struct bfs *bfs)
 	const struct bfs_compaction *compaction;
 	const struct bfs_inode *inode;
 	struct bfs_dirent *file;
-	int i, j, s, e, bytes;
+	int i, j, s, e;
+	size_t bytes;
 
 	if (!bfs_superblock_valid(bfs->super_block)) {
 		DPRINTF(bfs->debug, "invalid bfs super block.\n");
@@ -675,7 +676,7 @@ bfs_dump(const struct bfs *bfs)
 	h = &bfs->super_block->header;
 	compaction = &bfs->super_block->compaction;
 
-	DPRINTF(bfs->debug, "super block %dbyte, inode %dbyte, dirent %dbyte\n",
+	DPRINTF(bfs->debug, "super block %zdbyte, inode %zdbyte, dirent %zdbyte\n",
 	    sizeof *bfs->super_block, sizeof *inode, sizeof *file);
 
 	DPRINTF(bfs->debug, "magic=%x\n", h->magic);
@@ -719,7 +720,7 @@ bfs_dump(const struct bfs *bfs)
 	for (i = j = 0; i < bfs->max_dirent; i++, file++) {
 		if (file->inode != 0) {
 			if (bfs_file_lookup(bfs, file->name, &s, &e, &bytes))
-				DPRINTF(bfs->debug, "%3d %14s %8d %8d %8d\n",
+				DPRINTF(bfs->debug, "%3d %14s %8d %8d %8zd\n",
 				    file->inode, file->name, s, e, bytes);
 			j++;
 		}
