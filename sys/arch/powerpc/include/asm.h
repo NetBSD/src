@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2006/07/01 20:34:49 ross Exp $	*/
+/*	$NetBSD: asm.h,v 1.21 2006/07/06 15:26:51 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,14 @@
 #ifndef _PPC_ASM_H_
 #define _PPC_ASM_H_
 
+#ifdef _LP64
+
+/* ppc64 is always PIC, r2 is always the TOC */
+
+#define	PIC_PLT(x)	.x
+
+#else
+
 #ifdef PIC
 #define PIC_PROLOGUE	XXX
 #define PIC_EPILOGUE	XXX
@@ -53,6 +61,8 @@
 #define PIC_GOTOFF(x)	x
 #endif
 
+#endif
+
 #define	_C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
@@ -69,7 +79,7 @@
 
 #define	SF_HEADER_SZ	48
 #define	SF_PARAM_SZ	64
-#define	SF_SZ		(F_HEADER_SZ + F_PARAM_SZ)
+#define	SF_SZ		(SF_HEADER_SZ + SF_PARAM_SZ)
 
 #define	SF_SP		 0
 #define	SF_CR		 8
@@ -85,9 +95,11 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	.size	y,24;			\
 	.type	.y,@function;		\
 	.globl	.y;			\
+	.align	3;			\
 .y:
+
 #define	CALL(y)				\
-	bl	y;			\
+	bl	.y;			\
 	nop
 
 #define	ENTRY_NOPROFILE(y)	ENTRY(y)
