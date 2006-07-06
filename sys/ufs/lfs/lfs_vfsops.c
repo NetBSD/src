@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.214 2006/06/29 19:28:21 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.215 2006/07/06 22:14:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.214 2006/06/29 19:28:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.215 2006/07/06 22:14:18 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2520,7 +2520,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	fs->lfs_suflags[0] = (u_int32_t *)realloc(fs->lfs_suflags[0],
 						  fs->lfs_nseg * sizeof(u_int32_t),
 						  M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = (u_int32_t *)realloc(fs->lfs_suflags[0],
+	fs->lfs_suflags[1] = (u_int32_t *)realloc(fs->lfs_suflags[1],
 						  fs->lfs_nseg * sizeof(u_int32_t),
 						  M_SEGMENT, M_WAITOK);
 	for (i = oldnsegs; i < newnsegs; i++)
