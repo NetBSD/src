@@ -1,4 +1,4 @@
-.\"	$NetBSD: kse.4,v 1.2 2006/06/30 21:25:59 wiz Exp $
+.\"	$NetBSD: kse.4,v 1.3 2006/07/06 03:00:25 nisimura Exp $
 .\"
 .\" Copyright (c) 2006 Tohru Nishimura.
 .\"
@@ -56,8 +56,8 @@ The 8842 has 2 Ethernet ports which behave as a managed switch to
 bridge each other.
 It works like a T-shape connector of Ethernet data flow in which
 the Ethernet controller sits at the leg of the T.
-Frames can flow between the two of ports while traffic destinated
-to the 8842 reaches the EMAC.
+Frames can flow between the two of ports while traffic destined
+for the 8842 reaches the EMAC.
 The
 .Nm
 driver is not aware of the second port's existence and treats the
@@ -71,3 +71,6 @@ and detailed MIB counters are not implemented and remain uncontrollable
 by the
 .Nm
 driver.
+UDP4CSUM is not very useful since the HW has an implementation
+error for the case when a large UDP datagram is fragmented into
+MTU sized frames.
