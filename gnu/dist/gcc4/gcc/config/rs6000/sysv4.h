@@ -1090,21 +1090,14 @@ extern int fixuplabelno;
 #define LIB_NETBSD_SPEC "\
 %{profile:-lgmon -lc_p} %{!profile:-lc}"
 
-#define	STARTFILE_NETBSD_SPEC "\
-ncrti.o%s crt0.o%s \
-%{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
+#define	STARTFILE_NETBSD_SPEC NETBSD_STARTFILE_SPEC
 
-#define ENDFILE_NETBSD_SPEC "\
-%{!shared:crtend.o%s} %{shared:crtendS.o%s} \
-ncrtn.o%s"
+#define ENDFILE_NETBSD_SPEC NETBSD_ENDFILE_SPEC
 
 #define LINK_START_NETBSD_SPEC "\
 "
 
-#define LINK_OS_NETBSD_SPEC "\
-%{!shared: %{!static: \
-  %{rdynamic:-export-dynamic} \
-  %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}}}"
+#define LINK_OS_NETBSD_SPEC NETBSD_LINK_SPEC_ELF
 
 #define CPP_OS_NETBSD_SPEC "\
 -D__powerpc__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__"
