@@ -357,6 +357,8 @@ distclean-libtool:
 	-rm -f libtool
 
 .texinfo.info:
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_texinfo-info:
 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	am__cwd=`pwd` && cd $(srcdir) && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
