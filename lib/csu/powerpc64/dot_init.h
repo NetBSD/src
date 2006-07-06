@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.2 2006/07/05 18:03:00 ross Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.3 2006/07/06 22:31:55 ross Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ross Harvey
@@ -38,6 +38,8 @@
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)		    \
 		__asm (					    \
+		".globl  " #entry_pt "			\n" \
+		".globl ." #entry_pt "			\n" \
 		".pushsection \".opd\",\"aw\"		\n" \
 		".align 3				\n" \
 		#entry_pt": .quad ." #entry_pt ",.TOC.@tocbase,0\n"	\
