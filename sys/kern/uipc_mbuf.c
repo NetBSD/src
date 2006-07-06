@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.7 2006/07/06 12:18:45 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.8 2006/07/06 12:32:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.7 2006/07/06 12:18:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.8 2006/07/06 12:32:31 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -148,11 +148,34 @@ struct mowner revoked_mowner = { "revoked", "" };
 #define	MEXT_UNLOCK(m)	simple_unlock(&(m)->m_ext.ext_lock)
 #define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
 
-#define	_MCLDEREFERENCE(m)						\
-do {									\
-	KASSERT((m)->m_ext.ext_refcnt > 1);				\
-	(m)->m_ext.ext_refcnt--;					\
-} while (/* CONSTCOND */ 0)
+static inline void
+mcl_inc_reference(struct mbuf *m)
+{
+	int s;
+
+	s = splvm();
+	MEXT_LOCK(o);
+	(o)->m_ext.ext_refcnt++;
+	MEXT_UNLOCK(o);
+	splx(s);
+}
+
+static inline boolean_t
+mcl_dec_and_test_reference(struct mbuf *m)
+{
+	boolean_t isref;
+	int s;
+
+	s = splvm();
+	MEXT_LOCK(m);
+	KASSERT(m->m_ext.ext_refcnt > 1);
+	isref = MCLISREFERENCED(m);
+	m->m_ext.ext_refcnt--;
+	MEXT_UNLOCK(m);
+	splx(s);
+
+	return isref;
+}
 
 #define	_MCLADDREFERENCE(o, n)						\
 do {									\
@@ -160,18 +183,11 @@ do {									\
 	KASSERT(((n)->m_flags & M_EXT) == 0);				\
 	KASSERT((o)->m_ext.ext_refcnt >= 1);				\
 	(n)->m_flags |= ((o)->m_flags & M_EXTCOPYFLAGS);		\
-	(o)->m_ext.ext_refcnt++;					\
+	mcl_inc_reference((o));						\
 	(n)->m_ext_ref = (o)->m_ext_ref;				\
 	_MOWNERREF((n), (n)->m_flags);					\
 	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
 } while (/* CONSTCOND */ 0)
-
-#define	MCLADDREFERENCE(o, n)						\
-	MBUFLOCK(							\
-		MEXT_LOCK(o);						\
-		_MCLADDREFERENCE((o), (n));				\
-		MEXT_UNLOCK(o);						\
-	)
 
 /*
  * Initialize the mbuf allocator.
@@ -1463,17 +1479,13 @@ m_ext_free(struct mbuf *m)
 	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
 	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
 
-	MEXT_LOCK(m);
-	if (MCLISREFERENCED(m)) {
-		_MCLDEREFERENCE(m);
-		MEXT_UNLOCK(m);
+	if (mcl_del_and_test_reference(m)) {
 		if (embedded) {
 			dofree = FALSE;
 		} else {
 			m->m_ext_ref = m;
 		}
 	} else {
-		MEXT_UNLOCK(m);
 		/*
 		 * dropping the last reference
 		 */
