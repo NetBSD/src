@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2006/06/30 12:01:57 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2006/07/06 21:39:44 mrg Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -66,6 +66,7 @@ xfgnulib.c:	${DIST}/gcc/config/m68k/fpgnulib.c
 	cat ${DIST}/gcc/config/m68k/fpgnulib.c >> xfgnulib.c
 CLEANFILES+=	fpgnulib.c xfgnulib.c
 .endif
+
 .if ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sh3eb" || \
@@ -73,6 +74,10 @@ CLEANFILES+=	fpgnulib.c xfgnulib.c
     ${MACHINE_ARCH} == "sh5eb"
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc64"
+COPTS+=	-mlong-double-128
 .endif
 
 ${LIB2FUNCS} ${LIB2FUNCS_ST}: ${.CURDIR}/Makefile
