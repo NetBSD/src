@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.6 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.7 2006/07/06 12:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -519,25 +519,7 @@ do {									\
 #define MCLREFDEBUGO(m, file, line)
 #endif
 
-#define	MCLBUFREF(p)
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_refcnt != 1)
-#define	_MCLDEREFERENCE(m)						\
-do {									\
-	KASSERT((m)->m_ext.ext_refcnt > 1);				\
-	(m)->m_ext.ext_refcnt--;					\
-} while (/* CONSTCOND */ 0)
-
-#define	_MCLADDREFERENCE(o, n)						\
-do {									\
-	KASSERT(((o)->m_flags & M_EXT) != 0);				\
-	KASSERT(((n)->m_flags & M_EXT) == 0);				\
-	KASSERT((o)->m_ext.ext_refcnt >= 1);				\
-	(n)->m_flags |= ((o)->m_flags & M_EXTCOPYFLAGS);		\
-	(o)->m_ext.ext_refcnt++;					\
-	(n)->m_ext_ref = (o)->m_ext_ref;				\
-	_MOWNERREF((n), (n)->m_flags);					\
-	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
-} while (/* CONSTCOND */ 0)
 
 #define	MCLINITREFERENCE(m)						\
 do {									\
@@ -548,14 +530,6 @@ do {									\
 	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
 	MCLREFDEBUGN((m), NULL, 0);					\
 } while (/* CONSTCOND */ 0)
-
-#define	MCLADDREFERENCE(o, n)						\
-	MBUFLOCK(							\
-		MEXT_LOCK(o);						\
-		_MCLADDREFERENCE((o), (n));				\
-		MEXT_UNLOCK(o);						\
-	)
-
 
 /*
  * Macros for mbuf external storage.
@@ -569,10 +543,6 @@ do {									\
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
-
-#define	MEXT_LOCK(m)	simple_lock(&(m)->m_ext.ext_lock)
-#define	MEXT_UNLOCK(m)	simple_unlock(&(m)->m_ext.ext_lock)
-#define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
 
 #define	_MCLGET(m, pool_cache, size, how)				\
 do {									\
