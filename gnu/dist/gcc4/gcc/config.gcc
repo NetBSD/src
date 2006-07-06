@@ -663,8 +663,8 @@ arm*-*-freebsd*|strongarm*-*-freebsd*)
 arm*-*-netbsdelf*)
 	tm_file="dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h arm/netbsd-elf.h"
 	tmake_file="${tmake_file} arm/t-arm arm/t-netbsd"
-	case $machine in
-	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=ARM_FLAG_BIG_END"
+	case ${target} in
+	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=MASK_BIG_END" ;;
 	esac
 	;;
 arm*-*-netbsd*)
