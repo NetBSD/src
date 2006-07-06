@@ -8,6 +8,9 @@
 #ifndef NETBSD_ENABLE_PTHREADS
 # define NETBSD_ENABLE_PTHREADS
 #endif
+#ifndef TARGET_ENDIAN_DEFAULT
+# define TARGET_ENDIAN_DEFAULT MASK_BIG_END
+#endif
 #ifdef IN_GCC
 # include "options.h"
 # include "config/dbxelf.h"

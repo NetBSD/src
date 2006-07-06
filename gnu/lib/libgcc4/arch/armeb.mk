@@ -16,7 +16,7 @@ G_SHLIB_MAPFILES=${GNUHOSTDIST}/gcc/libgcc-std.ver
 G_SHLIB_NM_FLAGS=-pg
 G_EXTRA_HEADERS=${GNUHOSTDIST}/gcc/config/arm/mmintrin.h
 G_xm_defines=
-G_tm_defines=NETBSD_ENABLE_PTHREADS
+G_tm_defines=NETBSD_ENABLE_PTHREADS TARGET_ENDIAN_DEFAULT=MASK_BIG_END
 G_COLLECT2=collect2
 G_UNWIND_H=${GNUHOSTDIST}/gcc/unwind-generic.h
 G_xm_include_list=auto-host.h ansidecl.h
