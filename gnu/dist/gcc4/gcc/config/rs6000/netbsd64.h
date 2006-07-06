@@ -318,6 +318,9 @@ extern int dot_symbols;
 #undef	ENDFILE_DEFAULT_SPEC
 #define ENDFILE_DEFAULT_SPEC "%(endfile_netbsd)"
 
+#undef CRTSAVRES_DEFAULT_SPEC
+#define CRTSAVRES_DEFAULT_SPEC ""
+
 #undef	LINK_START_DEFAULT_SPEC
 #define LINK_START_DEFAULT_SPEC "%(link_start_netbsd)"
 
