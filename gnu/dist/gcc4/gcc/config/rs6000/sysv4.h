@@ -1109,7 +1109,8 @@ ncrtn.o%s"
 #define CPP_OS_NETBSD_SPEC "\
 -D__powerpc__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__"
 
-#define CC1_OS_NETBSD_SPEC	NETBSD_CC1_AND_CC1PLUS_SPEC
+#define CC1_OS_NETBSD_SPEC "\
+%{cxx-isystem}"
 
 /* OpenBSD support.  */
 #ifndef	LIB_OPENBSD_SPEC
