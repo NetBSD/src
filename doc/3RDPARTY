@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.447 2006/06/29 21:55:26 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.448 2006/07/06 15:35:52 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -284,6 +284,7 @@ before importing:
 	- delete all related testsuites
 for GCC4:
 	- delete all fortran and testsuites
+	- update gcc/version.c for the NetBSD GCC date
 
 Package:	gdb
 Version:	5.3/6.4
