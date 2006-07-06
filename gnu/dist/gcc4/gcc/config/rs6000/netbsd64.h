@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler,
    for 64 bit PowerPC NetBSD.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 2006 Free Software Foundation, Inc.
+   Contributed by Matthew Green (mrg@eterna.com.au).
 
    This file is part of GCC.
 
@@ -113,6 +113,11 @@ extern int dot_symbols;
 	{							\
 	  if (!RS6000_BI_ARCH_P)				\
 	    error (INVALID_32BIT, "32");			\
+	  if (TARGET_PROFILE_KERNEL)				\
+	    {							\
+	      target_flags &= ~MASK_PROFILE_KERNEL;		\
+	      error (INVALID_32BIT, "profile-kernel");		\
+	    }							\
 	}							\
     }								\
   while (0)
@@ -152,6 +157,7 @@ extern int dot_symbols;
 %{!mlittle: %{!mlittle-endian: %{!mbig: %{!mbig-endian: \
     %{mcall-freebsd: -mbig} \
     %{mcall-i960-old: -mlittle} \
+    %{mcall-linux: -mbig} \
     %{mcall-netbsd: -mbig} \
     %{mcall-gnu: -mbig} \
     %{mcall-netbsd: -mbig} \
@@ -181,7 +187,7 @@ extern int dot_symbols;
 
 #ifndef RS6000_BI_ARCH
 
-/* 64-bit PowerPC NetBSD is always big-endian.  XXXMRG?  */
+/* 64-bit PowerPC NetBSD is always big-endian.  */
 #undef	TARGET_LITTLE_ENDIAN
 #define TARGET_LITTLE_ENDIAN	0
 
@@ -199,13 +205,6 @@ extern int dot_symbols;
 #undef RELOCATABLE_NEEDS_FIXUP
 #define RELOCATABLE_NEEDS_FIXUP 0
 
-#endif
-
-#if 0 /* XXXMRG? */
-/* We use glibc _mcount for profiling.  */
-#define NO_PROFILE_COUNTERS 1
-#define PROFILE_HOOK(LABEL) \
-  do { if (TARGET_64BIT) output_profile_hook (LABEL); } while (0)
 #endif
 
 /* PowerPC64 NetBSD word-aligns FP doubles when -malign-power is given.  */
@@ -278,22 +277,16 @@ extern int dot_symbols;
    process.  XXXMRG?  */
 #define OS_MISSING_POWERPC64 !TARGET_64BIT
 
-/* glibc has float and long double forms of math functions.  */
-/* XXXMRG?  this true for netbsd?  */
-#undef  TARGET_C99_FUNCTIONS
-#define TARGET_C99_FUNCTIONS 1
-
-/* XXXMRG do we want __PPC__ and __PPC64__???  */
 #undef  TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
   do							\
     {							\
       NETBSD_OS_CPP_BUILTINS_ELF();			\
-      builtin_define ("__powerpc__");			\
       if (TARGET_64BIT)					\
 	{						\
 	  builtin_define ("__PPC__");			\
 	  builtin_define ("__PPC64__");			\
+	  builtin_define ("__powerpc__");		\
 	  builtin_define ("__powerpc64__");		\
 	  builtin_define ("__PIC__");			\
 	  builtin_assert ("cpu=powerpc64");		\
@@ -301,8 +294,11 @@ extern int dot_symbols;
 	}						\
       else						\
 	{						\
+	  builtin_define_std ("PPC");			\
+	  builtin_define_std ("powerpc");		\
 	  builtin_assert ("cpu=powerpc");		\
 	  builtin_assert ("machine=powerpc");		\
+	  TARGET_OS_SYSV_CPP_BUILTINS ();		\
 	}						\
     }							\
   while (0)
@@ -362,7 +358,7 @@ extern int dot_symbols;
 #define	PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
 
 #undef	WCHAR_TYPE
-#define	WCHAR_TYPE "int"
+#define	WCHAR_TYPE (TARGET_64BIT ? "int" : "long int")
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
@@ -374,16 +370,12 @@ extern int dot_symbols;
 #undef  ASM_APP_OFF
 #define ASM_APP_OFF "#NO_APP\n"
 
-#if 1 /* XXXMRG */
 /* PowerPC no-op instruction.  */
 #undef  RS6000_CALL_GLUE
 #define RS6000_CALL_GLUE (TARGET_64BIT ? "nop" : "cror 31,31,31")
-#endif
 
-#if 1 /* XXXMRG */
 #undef  RS6000_MCOUNT
 #define RS6000_MCOUNT "_mcount"
-#endif
 
 #ifdef __powerpc64__
 /* _init and _fini functions are built from bits spread across many
@@ -552,11 +544,6 @@ while (0)
 #define LINK_GCC_C_SEQUENCE_SPEC \
   "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
 
-#if 0 /* XXXMRG */
-/* Use --as-needed -lgcc_s for eh support.  */
-#ifdef HAVE_LD_AS_NEEDED
-#define USE_LD_AS_NEEDED 1
-#endif
-#endif
-
 #define MD_UNWIND_SUPPORT "config/rs6000/linux-unwind.h"
+
+#define POWERPC_NETBSD
