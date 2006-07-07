@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.2 2006/07/06 17:05:04 ross Exp $	*/
+/*	$NetBSD: brk.S,v 1.3 2006/07/07 06:50:06 ross Exp $	*/
 
 #include "SYS.h"
 
@@ -12,11 +12,14 @@ WEAK_ALIAS(brk, _brk)
 
 	.macro  LdAddr  r,sym
 	.pushsection    ".toc","aw"
-100:	.tc sym[TC],sym
+100:	.tc \sym[TC],\sym
 	.popsection
 	ld      \r,100b@toc(2)
 	.endm
 
+        .data
+_C_LABEL(__minbrk):
+	.long   _C_LABEL(_end)      
 	.text
 
 ENTRY(_brk)
