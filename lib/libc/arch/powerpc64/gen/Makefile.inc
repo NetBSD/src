@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/07/03 13:03:49 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2006/07/07 21:07:35 ross Exp $
 
-SRCS+=	_setjmp.S
+SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S
 SRCS+=	bswap16.c bswap32.c bswap64.c
 SRCS+=	fabs.c flt_rounds.c
 SRCS+=	syncicache.c
