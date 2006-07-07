@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.8 2006/07/06 12:32:31 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.9 2006/07/07 12:25:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.8 2006/07/06 12:32:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.9 2006/07/07 12:25:37 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1586,9 +1586,9 @@ nextchain:
 		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);
 	}
 	if ((m->m_flags & M_EXT)) {
-		(*pr)("  shared=%u, ext_buf=%p, ext_size=%zd, "
+		(*pr)("  ext_refcnt=%u, ext_buf=%p, ext_size=%zd, "
 		    "ext_free=%p, ext_arg=%p\n",
-		    (int)MCLISREFERENCED(m),
+		    m->m_ext.ext_refcnt,
 		    m->m_ext.ext_buf, m->m_ext.ext_size,
 		    m->m_ext.ext_free, m->m_ext.ext_arg);
 	}
