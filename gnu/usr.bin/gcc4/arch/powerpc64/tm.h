@@ -9,6 +9,7 @@
 #endif
 #ifdef IN_GCC
 # include "options.h"
+# include "config/rs6000/biarch64.h"
 # include "config/rs6000/rs6000.h"
 # include "config/dbxelf.h"
 # include "config/elfos.h"
@@ -16,8 +17,6 @@
 # include "config/netbsd-elf.h"
 # include "config/freebsd-spec.h"
 # include "config/rs6000/sysv4.h"
-# include "config/rs6000/netbsd.h"
-# include "config/rs6000/biarch64.h"
 # include "config/rs6000/default64.h"
 # include "config/rs6000/netbsd64.h"
 # include "defaults.h"
