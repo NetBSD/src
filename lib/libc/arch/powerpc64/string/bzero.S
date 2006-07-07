@@ -1,3 +1,5 @@
+/*	$NetBSD: bzero.S,v 1.3 2006/07/07 06:53:42 ross Exp $	*/
+
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +54,7 @@ ENTRY(memset)
 3:
 	mtctr	5
 	rldicl	0, 4, 0, 56
-	.p2align 4, , 15
+	.p2align 4,, 15
 2:
 	stb	0, 0(9)		# byte-at-a-time loop
 	addi	9, 9, 1
@@ -73,7 +75,7 @@ ENTRY(memset)
 	srdi	9, 9, 5
 	addi	9, 9, 1
 	mtctr	9
-	.p2align 4, , 15
+	.p2align 4,, 15
 2:
 	std	0, 0(10)	# 8-way + unrolled store loop
 	std	0, 8(10)
@@ -89,7 +91,7 @@ ENTRY(memset)
 	srdi	9, 9, 3
 	addi	9, 9, 1
 	mtctr	9
-	.p2align 4, , 15
+	.p2align 4,, 15
 14:
 	std	0, 0(10)	# 8-way not-unrolled loop
 	addi	5, 5, -8
