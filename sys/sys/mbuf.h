@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.7 2006/07/06 12:18:45 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.8 2006/07/07 12:42:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -519,8 +519,6 @@ do {									\
 #define MCLREFDEBUGO(m, file, line)
 #endif
 
-#define	MCLISREFERENCED(m)	((m)->m_ext.ext_refcnt != 1)
-
 #define	MCLINITREFERENCE(m)						\
 do {									\
 	KDASSERT(((m)->m_flags & M_EXT) == 0);				\
@@ -680,7 +678,7 @@ do {									\
 #define	M_READONLY(m)							\
 	(((m)->m_flags & M_EXT) != 0 &&					\
 	  (((m)->m_flags & (M_EXT_ROMAP|M_EXT_RW)) != M_EXT_RW ||	\
-	  MCLISREFERENCED(m)))
+	  (m)->m_ext.ext_refcnt > 1))
 
 /*
  * Determine if an mbuf's data area is read-only at the MMU.
