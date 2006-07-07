@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.7 2006/05/28 10:15:25 jnemeth Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.8 2006/07/07 17:09:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,6 +40,12 @@
 #include <prop/prop_string.h>
 #include "prop_object_impl.h"
 
+#if defined(__NetBSD__)
+#include <sys/tree.h>
+#else
+#error Need to find a NetBSD sys/tree.h
+#endif
+
 /*
  * We implement these like arrays, but we keep them sorted by key.
  * This allows us to binary-search as well as keep externalized output
@@ -62,6 +68,7 @@
 struct _prop_dictionary_keysym {
 	struct _prop_object		pdk_obj;
 	size_t				pdk_size;
+	RB_ENTRY(_prop_dictionary_keysym) pdk_link;
 	char 				pdk_key[1];
 	/* actually variable length */
 };
@@ -143,67 +150,23 @@ struct _prop_dictionary_iterator {
  * duplicated key symbols.  So, to save memory, we unique'ify key symbols
  * so we only have to have one copy of each string.
  */
-static struct {
-	prop_dictionary_keysym_t	*pdkt_array;
-	unsigned int			 pdkt_count;
-	unsigned int			 pdkt_capacity;
-} _prop_dict_keysym_table;
 
-_PROP_MUTEX_DECL(_prop_dict_keysym_table_mutex)
-
-static boolean_t
-_prop_dict_keysym_table_expand(void)
+static int
+_prop_dict_keysym_tree_cmp(prop_dictionary_keysym_t pdk1,
+			   prop_dictionary_keysym_t pdk2)
 {
-	prop_dictionary_keysym_t *array, *oarray;
-	unsigned int capacity;
 
-	oarray = _prop_dict_keysym_table.pdkt_array;
-	capacity = _prop_dict_keysym_table.pdkt_capacity + EXPAND_STEP;
-
-	array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_DICT);
-	if (array == NULL)
-		return (FALSE);
-	if (oarray != NULL)
-		memcpy(array, oarray,
-		       _prop_dict_keysym_table.pdkt_capacity * sizeof(*array));
-	_prop_dict_keysym_table.pdkt_array = array;
-	_prop_dict_keysym_table.pdkt_capacity = capacity;
-
-	if (oarray != NULL)
-		_PROP_FREE(oarray, M_PROP_DICT);
-
-	return (TRUE);
+	return (strcmp(pdk1->pdk_key, pdk2->pdk_key));
 }
 
-static prop_dictionary_keysym_t
-_prop_dict_keysym_lookup(const char *key, unsigned int *idxp)
-{
-	prop_dictionary_keysym_t pdk;
-	unsigned int base, idx, distance;
-	int res;
+static RB_HEAD(_prop_dict_keysym_tree, _prop_dictionary_keysym)
+    _prop_dict_keysym_tree = RB_INITIALIZER(&_prop_dict_keysym_tree);
+RB_PROTOTYPE(_prop_dict_keysym_tree, _prop_dictionary_keysym, pdk_link,
+	     _prop_dict_keysym_tree_cmp)
+RB_GENERATE(_prop_dict_keysym_tree, _prop_dictionary_keysym, pdk_link,
+	    _prop_dict_keysym_tree_cmp)
 
-	for (idx = 0, base = 0, distance = _prop_dict_keysym_table.pdkt_count;
-	     distance != 0; distance >>= 1) {
-		idx = base + (distance >> 1);
-		pdk = _prop_dict_keysym_table.pdkt_array[idx];
-		_PROP_ASSERT(pdk != NULL);
-		res = strcmp(key, pdk->pdk_key);
-		if (res == 0) {
-			if (idxp != NULL)
-				*idxp = idx;
-			return (pdk);
-		}
-		if (res > 0) {	/* key > pdk_key: move right */
-			base = idx + 1;
-			distance--;
-		}		/* else move left */
-	}
-
-	/* idx points to the slot we look at last. */
-	if (idxp != NULL)
-		*idxp = idx;
-	return (NULL);
-}
+_PROP_MUTEX_DECL(_prop_dict_keysym_tree_mutex)
 
 static void
 _prop_dict_keysym_put(prop_dictionary_keysym_t pdk)
@@ -223,18 +186,10 @@ static void
 _prop_dict_keysym_free(void *v)
 {
 	prop_dictionary_keysym_t pdk = v;
-	prop_dictionary_keysym_t opdk;
-	unsigned int idx;
 
-	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
-	opdk = _prop_dict_keysym_lookup(pdk->pdk_key, &idx);
-	_PROP_ASSERT(pdk == opdk);
-	idx++;
-	memmove(&_prop_dict_keysym_table.pdkt_array[idx - 1],
-		&_prop_dict_keysym_table.pdkt_array[idx],
-		(_prop_dict_keysym_table.pdkt_count - idx) * sizeof(pdk));
-	_prop_dict_keysym_table.pdkt_count--;
-	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
+	RB_REMOVE(_prop_dict_keysym_tree, &_prop_dict_keysym_tree, pdk);
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 
 	_prop_dict_keysym_put(pdk);
 }
@@ -266,9 +221,12 @@ _prop_dict_keysym_equals(void *v1, void *v2)
 
 	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk1));
 	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk2));
-	if (pdk1 == pdk2)
-		return (TRUE);
-	return (strcmp(pdk1->pdk_key, pdk2->pdk_key) == 0);
+
+	/*
+	 * There is only ever one copy of a keysym at any given time,
+	 * so we can reduce this to a simple pointer equality check.
+	 */
+	return (pdk1 == pdk2);
 }
 
 static prop_dictionary_keysym_t
@@ -276,23 +234,11 @@ _prop_dict_keysym_alloc(const char *key)
 {
 	prop_dictionary_keysym_t opdk, pdk;
 	size_t size;
-	unsigned int idx;
 
 	/*
-	 * See if this key is already in the keysym table.  If so,
-	 * retain the existing object and return it.
-	 */
-	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
-	opdk = _prop_dict_keysym_lookup(key, NULL);
-	if (opdk != NULL) {
-		prop_object_retain(opdk);
-		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
-		return (opdk);
-	}
-	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
-
-	/*
-	 * Not in the table.  Create a new one.
+	 * Because of the way our RB trees work, we need to create the
+	 * new keysym in order to check if it's already in the tree.
+	 * Oh well.
 	 */
 
 	size = sizeof(*pdk) + strlen(key) /* pdk_key[1] covers the NUL */;
@@ -304,76 +250,30 @@ _prop_dict_keysym_alloc(const char *key)
 	else if (size <= PDK_SIZE_128)
 		pdk = _PROP_POOL_GET(_prop_dictionary_keysym128_pool);
 	else
-		return (NULL);	/* key too long */
+		pdk = NULL;	/* key too long */
 
-	if (pdk != NULL) {
-		_prop_object_init(&pdk->pdk_obj,
-				  &_prop_object_type_dict_keysym);
+	if (pdk == NULL)
+		return (NULL);
 
-		strcpy(pdk->pdk_key, key);
-		pdk->pdk_size = size;
-	}
+	_prop_object_init(&pdk->pdk_obj, &_prop_object_type_dict_keysym);
+
+	strcpy(pdk->pdk_key, key);
+	pdk->pdk_size = size;
 
 	/*
-	 * Before we return it, we need to insert it into the table.
-	 * But, because we dropped the mutex, we need to see if someone
-	 * beat us to it.
+	 * Now check to see if this already exists in the tree.  If it
+	 * does, we return a reference to the existing one and free the
+	 * new one we just created.
 	 */
-	_PROP_MUTEX_LOCK(_prop_dict_keysym_table_mutex);
-	opdk = _prop_dict_keysym_lookup(key, &idx);
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
+	opdk = RB_INSERT(_prop_dict_keysym_tree, &_prop_dict_keysym_tree, pdk);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
-		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 		_prop_dict_keysym_put(pdk);
 		return (opdk);
 	}
-
-	if (_prop_dict_keysym_table.pdkt_count ==
-	    _prop_dict_keysym_table.pdkt_capacity &&
-	    _prop_dict_keysym_table_expand() == FALSE) {
-		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
-		prop_object_release(pdk);
-		return (NULL);
-	}
-
-	opdk = _prop_dict_keysym_table.pdkt_array[idx];
-
-	if (_prop_dict_keysym_table.pdkt_count == 0) {
-		_prop_dict_keysym_table.pdkt_array[0] = pdk;
-		_prop_dict_keysym_table.pdkt_count++;
-		goto out;
-	}
-
-	if (strcmp(key, opdk->pdk_key) < 0) {
-		/*
-		 * key < opdk->pdk_key: insert to the left.  This is the
-		 * same as inserting to the right, except we decrement
-		 * the current index first.
-		 *
-		 * Because we're unsigned, we have to special case 0
-		 * (grumble).
-		 */
-		if (idx == 0) {
-			memmove(&_prop_dict_keysym_table.pdkt_array[1],
-				&_prop_dict_keysym_table.pdkt_array[0],
-				_prop_dict_keysym_table.pdkt_count *
-				sizeof(pdk));
-			_prop_dict_keysym_table.pdkt_array[0] = pdk;
-			_prop_dict_keysym_table.pdkt_count++;
-			goto out;
-		}
-		idx--;
-	}
-
-	memmove(&_prop_dict_keysym_table.pdkt_array[idx + 2],
-		&_prop_dict_keysym_table.pdkt_array[idx + 1],
-		(_prop_dict_keysym_table.pdkt_count - (idx + 1)) *
-		sizeof(pdk));
-	_prop_dict_keysym_table.pdkt_array[idx + 1] = pdk;
-	_prop_dict_keysym_table.pdkt_count++;
-
- out:
-	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_table_mutex);
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 	return (pdk);
 }
 
