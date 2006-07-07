@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.13 2006/06/25 16:46:59 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.14 2006/07/07 17:59:21 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.13 2006/06/25 16:46:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.14 2006/07/07 17:59:21 yamt Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -587,7 +587,7 @@ xbdsize(dev_t dev)
 		return (ENXIO);
 	sc = xbd_cd.cd_devs[DISKUNIT(dev)];
 
-	if (sc->sc_shutdown)
+	if (sc == NULL || sc->sc_shutdown)
 		return -1;
 	return dk_size(sc->sc_di, &sc->sc_dksc, dev);
 }
