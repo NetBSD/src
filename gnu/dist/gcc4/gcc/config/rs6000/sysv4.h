@@ -1087,8 +1087,7 @@ extern int fixuplabelno;
 -Asystem=gnu -Asystem=unix -Asystem=posix %{pthread:-D_REENTRANT}"
 
 /* NetBSD support.  */
-#define LIB_NETBSD_SPEC "\
-%{profile:-lgmon -lc_p} %{!profile:-lc}"
+#define LIB_NETBSD_SPEC NETBSD_LIB_SPEC
 
 #define	STARTFILE_NETBSD_SPEC NETBSD_STARTFILE_SPEC
 
