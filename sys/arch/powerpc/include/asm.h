@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 2006/07/06 15:26:51 ross Exp $	*/
+/*	$NetBSD: asm.h,v 1.22 2006/07/07 21:26:54 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -320,5 +320,21 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 #define	SZREG	8		/* 8 byte registers */
 
 #endif
+
+.macro	stmd	r,dst
+	i = 0
+    .rept	32-\r
+	std	i+\r, i*8+\dst
+	i = i + 1
+    .endr
+.endm
+
+.macro	lmd	r,dst
+	i = 0
+    .rept	32-\r
+	ld	i+\r, i*8+\dst
+	i = i + 1
+    .endr
+.endm
 
 #endif /* !_PPC_ASM_H_ */
