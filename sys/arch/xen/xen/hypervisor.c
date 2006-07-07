@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.24 2006/04/09 22:14:13 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.25 2006/07/07 18:15:53 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.24 2006/04/09 22:14:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.25 2006/07/07 18:15:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ hypervisor_print(aux, parent)
 	return (UNCONF);
 }
 
-#if defined(DOM0OPS) || defined(XEN3)
+#if defined(DOM0OPS)
 
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 
@@ -400,7 +400,7 @@ xenkernfs_init()
 	kernfs_addentry(NULL, dkt);
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
-#endif /* DOM0OPS || XEN3 */
+#endif /* DOM0OPS */
 
 #ifndef XEN3
 /* handler for the shutdown messages */
