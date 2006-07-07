@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.3 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.4 2006/07/07 12:30:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.3 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.4 2006/07/07 12:30:51 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -320,7 +320,7 @@ sodopendfreel()
 		for (; m != NULL; m = next) {
 			next = m->m_next;
 			KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0);
-			KASSERT(!MCLISREFERENCED(m));
+			KASSERT(m->m_ext.ext_refcnt == 0);
 
 			rv += m->m_ext.ext_size;
 			sodoloanfree(m->m_ext.ext_pgs, m->m_ext.ext_buf,

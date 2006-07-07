@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.9 2006/07/07 12:25:37 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.10 2006/07/07 12:30:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.9 2006/07/07 12:25:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.10 2006/07/07 12:30:51 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -154,30 +154,30 @@ mcl_inc_reference(struct mbuf *m)
 	int s;
 
 	s = splvm();
-	MEXT_LOCK(o);
-	(o)->m_ext.ext_refcnt++;
-	MEXT_UNLOCK(o);
+	MEXT_LOCK(m);
+	m->m_ext.ext_refcnt++;
+	MEXT_UNLOCK(m);
 	splx(s);
 }
 
 static inline boolean_t
 mcl_dec_and_test_reference(struct mbuf *m)
 {
-	boolean_t isref;
+	boolean_t gotzero;
 	int s;
 
 	s = splvm();
 	MEXT_LOCK(m);
-	KASSERT(m->m_ext.ext_refcnt > 1);
-	isref = MCLISREFERENCED(m);
+	KASSERT(m->m_ext.ext_refcnt > 0);
 	m->m_ext.ext_refcnt--;
+	gotzero = (m->m_ext.ext_refcnt == 0);
 	MEXT_UNLOCK(m);
 	splx(s);
 
-	return isref;
+	return gotzero;
 }
 
-#define	_MCLADDREFERENCE(o, n)						\
+#define	MCLADDREFERENCE(o, n)						\
 do {									\
 	KASSERT(((o)->m_flags & M_EXT) != 0);				\
 	KASSERT(((n)->m_flags & M_EXT) == 0);				\
@@ -1479,7 +1479,7 @@ m_ext_free(struct mbuf *m)
 	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
 	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
 
-	if (mcl_del_and_test_reference(m)) {
+	if (!mcl_dec_and_test_reference(m)) {
 		if (embedded) {
 			dofree = FALSE;
 		} else {
@@ -1490,6 +1490,7 @@ m_ext_free(struct mbuf *m)
 		 * dropping the last reference
 		 */
 		if (!embedded) {
+			mcl_inc_reference(m); /* XXX */
 			m_ext_free(m->m_ext_ref);
 			m->m_ext_ref = m;
 		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
