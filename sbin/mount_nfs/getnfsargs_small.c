@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs_small.c,v 1.4 2006/05/20 08:06:48 yamt Exp $	*/
+/*	$NetBSD: getnfsargs_small.c,v 1.5 2006/07/07 17:25:01 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getnfsargs_small.c,v 1.4 2006/05/20 08:06:48 yamt Exp $");
+__RCSID("$NetBSD: getnfsargs_small.c,v 1.5 2006/07/07 17:25:01 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -196,8 +196,7 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	struct iodesc d;
 	int nfs_port;
 
-	strncpy(nam, spec, MNAMELEN);
-	nam[MNAMELEN] = '\0';
+	strlcpy(nam, spec, sizeof(nam));
 	if ((delimp = strchr(spec, '@')) != NULL) {
 		hostp = delimp + 1;
 	} else if ((delimp = strrchr(spec, ':')) != NULL) {

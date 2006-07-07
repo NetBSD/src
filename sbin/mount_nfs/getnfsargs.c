@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.5 2006/05/20 08:06:48 yamt Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.6 2006/07/07 17:25:01 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.5 2006/05/20 08:06:48 yamt Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.6 2006/07/07 17:25:01 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,8 +118,7 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	static struct nfhret nfhret;
 	static char nam[MNAMELEN + 1];
 
-	strncpy(nam, spec, MNAMELEN);
-	nam[MNAMELEN] = '\0';
+	strlcpy(nam, spec, sizeof(nam));
 	if ((delimp = strchr(spec, '@')) != NULL) {
 		hostp = delimp + 1;
 	} else if ((delimp = strrchr(spec, ':')) != NULL) {
