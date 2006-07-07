@@ -1,4 +1,4 @@
-.\"	$NetBSD: proplib.3,v 1.1 2006/04/27 20:11:27 thorpej Exp $
+.\"	$NetBSD: proplib.3,v 1.2 2006/07/07 22:29:55 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ is able to parse base 8, base 10, and base 16
 elements.
 .It
 Internally, integers are always stored as unsigned numbers
-.Pq uintmax_t .
+.Pq uint64_t .
 Therefore, the external representation will never be negative.
 .It
 Because floating point numbers are not supported,
