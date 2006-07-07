@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 2006/07/03 17:01:45 cherry Exp $	*/
+/*	$NetBSD: asm.h,v 1.3 2006/07/07 06:42:32 cherry Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -33,6 +33,16 @@
  *	Some rules to make assembly code understandable by
  *	a debugger are also noted.
  */
+
+/*
+ * Useful stuff.
+ */
+#ifdef __STDC__
+#define	__CONCAT(a,b)	a ## b
+#else
+#define	__CONCAT(a,b)	a/**/b
+#endif
+#define ___CONCAT(a,b)	__CONCAT(a,b)
 
 /*
  * Macro to make a local label name.
@@ -157,7 +167,7 @@ label:	ASCIZ msg;				\
 /*
  * System call glue.
  */
-#define	SYSCALLNUM(name)	__CONCAT(SYS_, name)
+#define	SYSCALLNUM(name)	___CONCAT(SYS_,name)
 
 #define	CALLSYS_NOERROR(name)					\
 {	.mmi ;							\
@@ -177,3 +187,9 @@ label:	ASCIZ msg;				\
 	.weak alias;						\
 	alias = sym
 
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)					\
+	.globl alias;						\
+	alias = sym
