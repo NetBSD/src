@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_number.3,v 1.1 2006/04/27 20:11:27 thorpej Exp $
+.\"	$NetBSD: prop_number.3,v 1.2 2006/07/07 22:29:55 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,27 +52,27 @@
 .In prop/proplib.h
 .\"
 .Ft prop_number_t
-.Fn prop_number_create_integer "uintmax_t val"
+.Fn prop_number_create_integer "uint64_t val"
 .Ft prop_number_t
 .Fn prop_numbery_copy "prop_number_t number"
 .\"
 .Ft int
 .Fn prop_number_size "prop_number_t number"
-.Ft uintmax_t
+.Ft uint64_t
 .Fn prop_number_integer_value "prop_number_t number"
 .\"
 .Ft boolean_t
 .Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
 .Ft boolean_t
-.Fn prop_number_equals_integer "prop_number_t number" "uintmax_t val"
+.Fn prop_number_equals_integer "prop_number_t number" "uint64_t val"
 .Sh DESCRIPTION
 The
 .Nm prop_number
 family of functions operate on a numeric value property object type.
 All values are unsigned and promoted to the type
-.Sq uintmax_t .
+.Sq uint64_t .
 .Bl -tag -width "xxxxx"
-.It Fn prop_number_create_integer "uintmax_t val"
+.It Fn prop_number_create_integer "uint64_t val"
 Create a numeric value object with the value
 .Fa val .
 .It Fn prop_number_copy "prop_number_t number"
@@ -86,7 +86,7 @@ Returns the integer value of the numeric value object.
 Returns
 .Dv TRUE
 if the two numeric value objects are equivalent.
-.It Fn prop_number_equals_integer "prop_number_t number" "uintmax_t val"
+.It Fn prop_number_equals_integer "prop_number_t number" "uint64_t val"
 Returns
 .Dv TRUE
 if the object's value is equivalent to

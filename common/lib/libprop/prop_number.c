@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.3 2006/07/07 22:29:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 struct _prop_number {
 	struct _prop_object	pn_obj;
-	uintmax_t		pn_number;
+	uint64_t		pn_number;
 };
 
 _PROP_POOL_INIT(_prop_number_pool, sizeof(struct _prop_number), "propnmbr")
@@ -88,7 +88,7 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	prop_number_t pn = v;
 	char tmpstr[32];
 
-	sprintf(tmpstr, "0x%" PRIxMAX, pn->pn_number);
+	sprintf(tmpstr, "0x%" PRIx64, pn->pn_number);
 
 	if (_prop_object_externalize_start_tag(ctx, "integer") == FALSE ||
 	    _prop_object_externalize_append_cstring(ctx, tmpstr) == FALSE ||
@@ -110,7 +110,7 @@ _prop_number_equals(void *v1, void *v2)
 }
 
 static prop_number_t
-_prop_number_alloc(uintmax_t val)
+_prop_number_alloc(uint64_t val)
 {
 	prop_number_t pn;
 
@@ -130,7 +130,7 @@ _prop_number_alloc(uintmax_t val)
  *	provided integer value.
  */
 prop_number_t
-prop_number_create_integer(uintmax_t val)
+prop_number_create_integer(uint64_t val)
 {
 
 	return (_prop_number_alloc(val));
@@ -172,7 +172,7 @@ prop_number_size(prop_number_t pn)
  * prop_number_integer_value --
  *	Get the integer value of a prop_number_t.
  */
-uintmax_t
+uint64_t
 prop_number_integer_value(prop_number_t pn)
 {
 
@@ -196,7 +196,7 @@ prop_number_equals(prop_number_t num1, prop_number_t num2)
  *	Return TRUE if the number is equivalent to the specified integer.
  */
 boolean_t
-prop_number_equals_integer(prop_number_t pn, uintmax_t val)
+prop_number_equals_integer(prop_number_t pn, uint64_t val)
 {
 
 	_PROP_ASSERT(prop_object_is_number(pn));
@@ -211,7 +211,7 @@ prop_number_equals_integer(prop_number_t pn, uintmax_t val)
 prop_object_t
 _prop_number_internalize(struct _prop_object_internalize_context *ctx)
 {
-	uintmax_t val = 0;
+	uint64_t val = 0;
 	char *cp;
 
 	/* No attributes, no empty elements. */
