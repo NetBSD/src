@@ -1,10 +1,10 @@
-#	$NetBSD: AP30,v 1.2 2006/06/08 06:15:59 gdamore Exp $
+#	$NetBSD: AP30,v 1.3 2006/07/07 22:03:19 gdamore Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.2 $"
+#ident 		"AP30-$Revision: 1.3 $"
 
 maxusers	32
 
@@ -143,6 +143,8 @@ com*		at arbus? addr ?
 ae*		at arbus? addr ?
 ath*		at arbus? addr ?
 athflash*	at arbus? addr ?
+argpio*		at arbus? addr ?
+gpio*		at argpio?
 
 # no RTC!  so fake with a stub (required to prevent evbmips panic)
 
