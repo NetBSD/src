@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.448 2006/07/06 15:35:52 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.449 2006/07/07 10:45:11 drochner Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -102,7 +102,7 @@ Todo[4]: Re-entrant functions of net/*
 
 Package:	binutils
 Version:	2.16.1
-Current Vers:	2.16.1
+Current Vers:	2.17
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
@@ -184,7 +184,7 @@ I have merged all the changes already.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.3.28
+Current Vers:	1.86/4.4.20
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
 Archive Site:	http://www.sleepycat.com/download/index.shtml
 Home Page:	http://www.sleepycat.com/products/db.shtml
@@ -201,7 +201,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.3
-Current Vers:	3.0.3
+Current Vers:	3.0.4
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/sw/dhcp/
@@ -342,7 +342,7 @@ for import.
 
 Package:	heimdal
 Version:	0.6.2
-Current Vers:	0.7.1
+Current Vers:	0.7.2
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Home Page:	http://www.pdc.kth.se/heimdal/
