@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 2006/07/03 19:48:30 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8 2006/07/07 09:40:54 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,9 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 2006/07/03 19:48:30 skrll Exp $");
-
-#define DDB_DEBUG
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8 2006/07/07 09:40:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
