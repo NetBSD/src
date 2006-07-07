@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.7 2006/05/12 19:33:02 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.8 2006/07/07 18:19:30 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -320,6 +320,9 @@ lfs_ientry(IFILE **ifpp, struct clfs *fs, ino_t ino, struct ubuf **bpp)
 
 	error = bread(fs->lfs_ivnode, ino / fs->lfs_ifpb + fs->lfs_cleansz +
 		      fs->lfs_segtabsz, fs->lfs_bsize, NOCRED, bpp);
+	if (error)
+		syslog(LOG_ERR, "%s: ientry failed for ino %d",
+			fs->lfs_fsmnt, (int)ino);
 	*ifpp = (IFILE *)(*bpp)->b_data + ino % fs->lfs_ifpb;
 	return;
 }
@@ -505,6 +508,8 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				fs->lfs_sumsize - sizeof(nssp->ss_sumsum));
 			bwrite(nbp);
 #endif
+			syslog(LOG_WARNING, "zero-length FINFO at %x (seg %d)",
+			       odaddr, dtosn(fs, odaddr));
 			continue;
 		}
 
@@ -755,6 +760,8 @@ bi_comparator(const void *va, const void *vb)
 		return 1;
 	else
 		return -1;
+
+	return 0;
 }
 
 /*
@@ -1042,6 +1049,9 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 		totbytes = 0;
 		for (i = 0; i < fs->lfs_nseg && totbytes < goal; i++) {
 			if (fs->clfs_segtabp[i]->priority == 0)
+				break;
+			/* Upper bound on number of segments at once */
+			if (ngood * fs->lfs_ssize > 4 * goal)
 				break;
 			sn = (fs->clfs_segtabp[i] - fs->clfs_segtab);
 			dlog("%s: add seg %d prio %" PRIu64
