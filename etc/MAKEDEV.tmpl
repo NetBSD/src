@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.54 2006/07/04 21:39:55 bouyer Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.55 2006/07/07 17:21:19 yamt Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -619,7 +619,7 @@ xenevt)
 	;;
 
 xsd_kva)
-	mkdev xencons c %xenevt_chr% 1
+	mkdev xsd_kva c %xenevt_chr% 1
 	;;
 
 xencons)
