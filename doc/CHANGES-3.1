@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.115 2006/06/30 15:54:19 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.116 2006/07/07 06:27:17 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1909,4 +1909,9 @@ sys/dev/ata/wd.c				1.326
 
 	Add yet another broken 160GB seagate drive (ST3160021A).
 	[gendalia, ticket #1396]
+
+sys/dev/pci/if_wm.c				1.124
+
+	Fix len=-4 issues in wm(4) driver.
+	[lukem, ticket #1400]
 
