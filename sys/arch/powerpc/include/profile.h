@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.6 2002/02/07 05:13:35 briggs Exp $	*/
+/*	$NetBSD: profile.h,v 1.7 2006/07/07 21:28:03 ross Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,55 @@
  */
 
 #define	_MCOUNT_DECL	void __mcount
+
+#ifdef _LP64
+
+#define MCOUNT				\
+__asm("	.globl	_mcount			\n" \
+"	.section \".opd\",\"aw\"	\n" \
+"	.align 3			\n" \
+"_mcount:				\n" \
+"	.quad	._mcount,.TOC.@tocbase,0\n" \
+"	.previous			\n" \
+"	.size	_mcount,24		\n" \
+"	.type	._mcount,@function	\n" \
+"	.globl	._mcount		\n" \
+"	.align	3			\n" \
+"._mcount:				\n" \
+"	frame=128			\n" \
+"	stdu	1,-frame(1)		\n" \
+"	std	2,120(1)		\n" \
+"	std	3,48+0(1)		\n" \
+"	std	4,48+8(1)		\n" \
+"	std	5,48+16(1)		\n" \
+"	std	6,48+24(1)		\n" \
+"	std	7,48+32(1)		\n" \
+"	std	8,48+40(1)		\n" \
+"	std	9,48+48(1)		\n" \
+"	std	10,48+56(1)		\n" \
+"					\n" \
+"	mflr	4			\n" \
+"	std	4,112(1)		\n" \
+"	ld	3,frame+16(1)		\n" \
+"	bl	.__mcount		\n" \
+"	ld	2,120(1)		\n" \
+"	ld	3,frame+16(1)		\n" \
+"	mtlr	3			\n" \
+"	ld	4,112(1)		\n" \
+"	mtctr	4			\n" \
+"					\n" \
+"	ld	3,16(1)			\n" \
+"	ld	4,20(1)			\n" \
+"	ld	5,24(1)			\n" \
+"	ld	6,28(1)			\n" \
+"	ld	7,32(1)			\n" \
+"	ld	8,36(1)			\n" \
+"	ld	9,40(1)			\n" \
+"	ld	10,44(1)		\n" \
+"	addi	1,1,frame		\n" \
+"	bctr");
+
+#else
 
 #ifdef PIC
 #define _PLT "@plt"
@@ -69,6 +118,8 @@ __asm("	.globl	_mcount			\n" \
 "	bctr				\n" \
 "_mcount_end:				\n" \
 "	.size	_mcount,_mcount_end-_mcount");
+
+#endif
 
 #ifdef _KERNEL
 #define MCOUNT_ENTER						\
