@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.63 2006/07/04 00:30:22 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.64 2006/07/08 20:30:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.63 2006/07/04 00:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64 2006/07/08 20:30:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.63 2006/07/04 00:30:22 christos Exp $"
 #include "isa.h"
 #include "isadma.h"
 #include "mca.h"
-#include "apm.h"
+#include "apmbios.h"
 #include "pnpbios.h"
 #include "acpi.h"
 #include "vesabios.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.63 2006/07/04 00:30:22 christos Exp $"
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
 
-#if NAPM > 0
+#if NAPMBIOS > 0
 #include <machine/bioscall.h>
 #include <machine/apmvar.h>
 #endif
@@ -354,7 +354,7 @@ mainbus_attach(parent, self, aux)
 		config_found_ia(self, "isabus", &mba_iba, isabusprint);
 #endif
 
-#if NAPM > 0
+#if NAPMBIOS > 0
 #if NACPI > 0
 	if (acpi_active == 0)
 #endif

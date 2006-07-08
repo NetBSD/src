@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41 2006/07/01 09:21:28 jmmv Exp $	*/
+/*	$NetBSD: locore.S,v 1.42 2006/07/08 20:30:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 
 #include "npx.h"
 #include "assym.h"
-#include "apm.h"
 #include "lapic.h"
 #include "ioapic.h"
 #include "ksyms.h"
