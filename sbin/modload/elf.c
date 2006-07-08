@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.18 2006/03/17 15:53:46 rumble Exp $	*/
+/*	$NetBSD: elf.c,v 1.19 2006/07/08 05:49:01 ross Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,11 +29,17 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.18 2006/03/17 15:53:46 rumble Exp $");
+__RCSID("$NetBSD: elf.c,v 1.19 2006/07/08 05:49:01 ross Exp $");
 
 #include <sys/param.h>
 
 #if defined(__alpha__) || defined(__arch64__) || defined(__x86_64__)
+#ifndef _LP64
+#error Temporary sanity check failed. Tell ross@netbsd.org
+#endif
+#endif
+
+#ifdef _LP64
 #define	ELFSIZE 64
 #else
 #define	ELFSIZE 32
