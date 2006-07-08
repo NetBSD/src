@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.895 2006/07/05 21:46:10 thorpej Exp $
+#	$NetBSD: mi,v 1.896 2006/07/08 17:17:30 skrll Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5292,7 +5292,7 @@
 ./usr/share/man/cat9/cdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/checkalias.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
-./usr/share/man/cat9/chooselwp.0		comp-sys-catman		.cat
+./usr/share/man/cat9/chooselwp.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/chooseproc.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman		.cat
@@ -9414,7 +9414,7 @@
 ./usr/share/man/man9/cdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/checkalias.9		comp-sys-man		.man
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
-./usr/share/man/man9/chooselwp.9		comp-sys-man		.man
+./usr/share/man/man9/chooselwp.9		comp-obsolete		obsolete
 ./usr/share/man/man9/chooseproc.9		comp-obsolete		obsolete
 ./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-sys-man		.man
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man		.man
