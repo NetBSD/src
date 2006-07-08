@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.132 2006/07/08 20:20:27 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.133 2006/07/08 23:02:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.132 2006/07/08 20:20:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.133 2006/07/08 23:02:55 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -444,9 +444,7 @@ pccbbattach(parent, self, aux)
 
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
-#ifdef CBB_DEBUG
-	printf(" (chipflags %x)", flags);
-#endif
+	DPRINTF((" (chipflags %x)", flags));
 	printf("\n");
 
 	TAILQ_INIT(&sc->sc_memwindow);
@@ -1395,6 +1393,12 @@ pccbb_power(ct, command)
 			sc->sc_dev.dv_xname,
 		    	error == EWOULDBLOCK ? " too long" : "",
 		    	diff.tv_sec, diff.tv_usec);
+
+		/*
+		 * Ok, wait a bit longer for things to settle.
+		 */
+		if (sc->sc_chipset == CB_TOPIC95B)
+			DELAY_MS(100, sc);
 	}
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
@@ -2322,7 +2326,7 @@ pccbb_pcmcia_do_io_map(ph, win)
 	}
 	Pcic_write(ph, PCIC_IOCTL, ioctl);
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, enable);
-#if defined CBB_DEBUG
+#if defined(CBB_DEBUG)
 	{
 		u_int8_t start_low =
 		    Pcic_read(ph, regbase_win + PCIC_SIA_START_LOW);
@@ -2332,8 +2336,8 @@ pccbb_pcmcia_do_io_map(ph, win)
 		    Pcic_read(ph, regbase_win + PCIC_SIA_STOP_LOW);
 		u_int8_t stop_high =
 		    Pcic_read(ph, regbase_win + PCIC_SIA_STOP_HIGH);
-		printf
-		    (" start %02x %02x, stop %02x %02x, ioctl %02x enable %02x\n",
+		printf("pccbb_pcmcia_do_io_map start %02x %02x, "
+		    "stop %02x %02x, ioctl %02x enable %02x\n",
 		    start_low, start_high, stop_low, stop_high, ioctl, enable);
 	}
 #endif
@@ -2406,7 +2410,6 @@ pccbb_pcmcia_delay(ph, timo, wmesg)
 	int timo;                       /* in ms.  must not be zero */
 	const char *wmesg;
 {
-
 #ifdef DIAGNOSTIC
 	if (timo <= 0)
 		panic("pccbb_pcmcia_delay: called with timeout %d", timo);
@@ -2457,7 +2460,7 @@ pccbb_pcmcia_socket_enable(pch)
 		DPRINTF(("3V card\n"));
 		voltage = CARDBUS_VCC_3V | CARDBUS_VPP_VCC;
 	} else {
-		printf("?V card, 0x%x\n", spsr);	/* XXX */
+		DPRINTF(("?V card, 0x%x\n", spsr));	/* XXX */
 		return;
 	}
 
@@ -2509,6 +2512,9 @@ pccbb_pcmcia_socket_enable(pch)
 
 	/* wait for the chip to finish initializing */
 	if (pccbb_pcmcia_wait_ready(ph)) {
+#ifdef DIAGNOSTIC
+		printf("pccbb_pcmcia_socket_enable: never became ready\n");
+#endif
 		/* XXX return a failure status?? */
 		pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 		Pcic_write(ph, PCIC_PWRCTL, 0);
@@ -2794,7 +2800,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
 	reg |= ((1 << win) | PCIC_ADDRWIN_ENABLE_MEMCS16);
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, reg);
 
-#if defined CBB_DEBUG
+#if defined(CBB_DEBUG)
 	{
 		int r1, r2, r3, r4, r5, r6, r7 = 0;
 
@@ -2809,13 +2815,13 @@ pccbb_pcmcia_do_mem_map(ph, win)
 			r7 = Pcic_read(ph, 0x40 + win);
 		}
 
-		DPRINTF(("pccbb_pcmcia_do_mem_map window %d: %02x%02x %02x%02x "
-		    "%02x%02x", win, r1, r2, r3, r4, r5, r6));
+		printf("pccbb_pcmcia_do_mem_map window %d: %02x%02x %02x%02x "
+		    "%02x%02x", win, r1, r2, r3, r4, r5, r6);
 		if (((struct pccbb_softc *)(ph->
 		    ph_parent))->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
-			DPRINTF((" %02x", r7));
+			printf(" %02x", r7);
 		}
-		DPRINTF(("\n"));
+		printf("\n");
 	}
 #endif
 }
