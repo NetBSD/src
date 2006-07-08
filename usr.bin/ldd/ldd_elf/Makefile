@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/18 14:00:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2006/07/08 06:51:36 ross Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -10,7 +10,7 @@ MAN=	ldd.1
 .PATH:	${.CURDIR}/..
 
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "x86_64")
+    (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64")
 CPPFLAGS+= -DELFSIZE=64
 .else
 CPPFLAGS+= -DELFSIZE=32
