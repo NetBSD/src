@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.575 2006/07/03 01:25:33 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.576 2006/07/08 20:30:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.575 2006/07/03 01:25:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.576 2006/07/08 20:30:00 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -161,7 +161,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.575 2006/07/03 01:25:33 mrg Exp $");
 #endif
 
 #include "acpi.h"
-#include "apm.h"
+#include "apmbios.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
@@ -174,7 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.575 2006/07/03 01:25:33 mrg Exp $");
 #include <machine/acpi_machdep.h>
 #endif
 
-#if NAPM > 0
+#if NAPMBIOS > 0
 #include <machine/apmvar.h>
 #endif
 
@@ -876,15 +876,15 @@ haltsys:
 			printf("WARNING: ACPI powerdown failed!\n");
 		}
 #endif
-#if NAPM > 0 && !defined(APM_NO_POWEROFF)
+#if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
 		 * wait a bit first--some disk drives are slow to clean up
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+		apm_set_powstate(NULL,  APM_DEV_DISK(0xff), APM_SYS_OFF);
 		delay(500000);
-		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
