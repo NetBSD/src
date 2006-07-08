@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,9 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2006/07/04 00:30:23 christos Exp $");
-
-#define INTRDEBUG
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
