@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.652 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.653 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -368,5 +368,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	xen: Xen3 dom0 support with block and network device backends
 		completed. [bouyer 20060702]
 	proplib(3): Added protocol for sending property lists to/from
-		the kernel using ioctls.
+		the kernel using ioctls. [thorpej 20060705]
 	gcc(1): Switched vax to GCC4. [matt 20060707]
