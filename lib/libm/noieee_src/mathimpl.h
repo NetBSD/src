@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.7 2003/08/07 16:44:49 agc Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.8 2006/07/08 00:28:21 matt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 #    define	cat3t(a,b,c) cat3(a,c,b)
 #  endif
 
-#  define vccast(name) (*(const double *)(cat3(__,name,x)))
+#  define vccast(name) (cat3(__,name,x).d)
 
    /*
     * Define a constant to high precision on a Vax or Tahoe.
@@ -67,13 +67,13 @@
     */
 #ifdef _LIBM_DECLARE
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	const long cat3(__,name,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
+	const union { long l[2]; double d; } cat3(__,name,x) = { .l[0] = cat3t(0x,x1,x2), .l[1] = cat3t(0x,x3,x4)};
 #elif defined(_LIBM_STATIC)
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	static const long cat3(__,name,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
+	static const union { long l[2]; double d; } cat3(__,name,x) = { .l[0] = cat3t(0x,x1,x2), .l[1] = cat3t(0x,x3,x4)};
 #else
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	extern const long cat3(__,name,x)[];
+	extern union { long l[2]; double d; } cat3(__,name,x);
 #endif
 #  define ic(name, value, bexp, xval) ;
 
