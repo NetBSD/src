@@ -181,6 +181,9 @@ Boston, MA 02110-1301, USA.  */
    This is computed in `reload', in reload1.c.  */
 #define FRAME_POINTER_REQUIRED 1
 
+/* Offset from the frame pointer register value to the top of stack.  */
+#define FRAME_POINTER_CFA_OFFSET(FNDECL) 0
+
 /* Base register for access to arguments of the function.  */
 #define ARG_POINTER_REGNUM VAX_AP_REGNUM
 
