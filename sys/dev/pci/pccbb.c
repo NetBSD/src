@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.131 2006/07/04 00:47:47 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.132 2006/07/08 20:20:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,15 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.131 2006/07/04 00:47:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.132 2006/07/08 20:20:27 christos Exp $");
 
 /*
 #define CBB_DEBUG
 #define SHOW_REGS
-#define PCCBB_PCMCIA_POLL
 */
 
 /*
+ * BROKEN!
+#define PCCBB_PCMCIA_POLL
 #define CB_PCMCIA_POLL
 #define CB_PCMCIA_POLL_ONLY
 #define LEVEL2
@@ -1101,6 +1102,7 @@ pccbbintr(arg)
 	}
 
 	if (sockevent & CB_SOCKET_EVENT_POWER) {
+		DPRINTF(("Powercycling because of socket event\n"));
 		/* XXX: Does not happen when attaching a 16-bit card */
 		sc->sc_pwrcycle++;
 		wakeup(&sc->sc_pwrcycle);
@@ -1374,6 +1376,7 @@ pccbb_power(ct, command)
 		int s, error = 0;
 		struct timeval before, after, diff;
 
+		DPRINTF(("Waiting for bridge to power up\n"));
 		microtime(&before);
 		s = splbio();
 		while (pwrcycle == sc->sc_pwrcycle) {
@@ -1396,7 +1399,7 @@ pccbb_power(ct, command)
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 
-	if (on) {
+	if (on && sc->sc_chipset != CB_TOPIC95B) {
 		if ((status & CB_SOCKET_STAT_PWRCYCLE) == 0)
 			printf("%s: power on failed?\n", sc->sc_dev.dv_xname);
 	}
@@ -2482,8 +2485,12 @@ pccbb_pcmcia_socket_enable(pch)
 	 * Vcc Rising Time (Tpr) = 100ms (handled in pccbb_power() above)
 	 * RESET Width (Th (Hi-z RESET)) = 1ms
 	 * RESET Width (Tw (RESET)) = 10us
-	 */
-	pccbb_pcmcia_delay(ph, 1, "pccen1");
+	 *      
+	 * some machines require some more time to be settled
+	 * for example old toshiba topic bridges!
+	 * (100ms is added here).
+	 */             
+	pccbb_pcmcia_delay(ph, 200 + 1, "pccen1");
 
 	/* negate RESET */
 	intr |= PCIC_INTR_RESET;
