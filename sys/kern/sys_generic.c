@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.87 2006/07/08 12:16:09 kardel Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.88 2006/07/08 16:01:25 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.87 2006/07/08 12:16:09 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.88 2006/07/08 16:01:25 kardel Exp $");
 
 #include "opt_ktrace.h"
 
@@ -810,8 +810,8 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		 * based on monotonic time scale
 		 */
 		getmicrouptime(&slepttime);
-		timeradd(tv, &slepttime, tv);
-		timersub(tv, &sleepts, tv);
+		timeradd(tv, &sleepts, tv);
+		timersub(tv, &slepttime, tv);
 		sleepts = slepttime;
 
 		timo = tvtohz(tv);
