@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.9 2004/07/07 18:21:33 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.10 2006/07/08 05:04:49 ross Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -123,7 +123,7 @@ ENTRY(pthread__switch)
 
 	STACK_SWITCH(%r4, %r7, %r6)
 
-2:	mr	%r3, %r7
+	mr	%r3, %r7
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
