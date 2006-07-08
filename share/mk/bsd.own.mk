@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.462 2006/07/01 06:02:01 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.463 2006/07/08 00:32:08 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -44,7 +44,7 @@ TOOLCHAIN_MISSING?=	no
 # Transitional for toolchain upgrade to GCC4.1
 #
 # not working:
-#	sh5, vax
+#	sh5
 #
 .if \
     ${MACHINE_ARCH} == "alpha" || \
@@ -56,13 +56,13 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_GCC?=	4
 .endif
 
 # These ones work (or mostly work), but aren't switched yet
 .if \
-    ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || \
