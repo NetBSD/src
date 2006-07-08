@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.5 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: i82596var.h,v 1.6 2006/07/08 16:07:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -122,7 +122,7 @@ struct iee_rfd {
 	volatile uint32_t rfd_rbd_addr;		/* Address of first free RBD */
 	volatile uint16_t rfd_count;		/* Actual Count */
 	volatile uint16_t rfd_size;		/* Size */
-	volatile uint8_t rfd_dest_addr[6];	/* Destiantion Address */
+	volatile uint8_t rfd_dest_addr[6];	/* Destination Address */
 	volatile uint8_t rfd_src_addr[6];	/* Source Address */
 	volatile uint16_t rfd_length;		/* Length Field */
 	volatile uint16_t rfd_pad;		/* Optional Data */
@@ -151,7 +151,7 @@ struct iee_rbd {
 struct iee_softc {
 	struct device sc_dev;		/* common device data */
 	struct ifmedia sc_ifmedia;	/* media interface */
-	struct ethercom sc_ethercom;	/* ethernet speciffic stuff */
+	struct ethercom sc_ethercom;	/* ethernet specific stuff */
 	enum i82596_types sc_type;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_shmem_map;
