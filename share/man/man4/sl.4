@@ -1,4 +1,4 @@
-.\"	$NetBSD: sl.4,v 1.11 2006/06/17 04:58:14 reed Exp $
+.\"	$NetBSD: sl.4,v 1.12 2006/07/08 16:36:53 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,13 +45,6 @@ interface allows asynchronous serial lines to be used as
 network interfaces using the
 .Tn SLIP
 protocol.
-The
-.Nm
-interface can use Van Jacobson
-.Tn TCP
-header compression and
-.Tn ICMP
-filtering.
 .Pp
 However,
 .Tn SLIP
@@ -69,6 +62,26 @@ This is why
 has been superseded by the Point-to-Point Protocol
 .Pq Tn PPP ,
 which does all of those things, and much more.
+.Pp
+The 
+.Nm
+driver provides Van Jacobson header compression,
+and ICMP filtering, under control of the following options to
+.Xr ifconfig 8 :
+.Pp
+.Bl -tag -width 15n -offset indent -compact
+.It link0
+Apply VJ compression to outgoing packets on this interface, 
+and assume that incoming packets require decompression 
+(default: disabled).
+.It link1
+Filter ICMP to save bandwidth on low-speed lines (default: disabled).
+.It link2
+Check incoming packets for VJ compression; 
+if they appear to be compressed, automatically set 
+link0 (default: enabled).
+.El
+.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
 .It sl%d: af%d not supported .
@@ -80,6 +93,7 @@ family; the packet was dropped.
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr ppp 4 ,
+.Xr ifconfig 8 ,
 .Xr slattach 8 ,
 .Xr sliplogin 8 ,
 .Xr slstats 8
