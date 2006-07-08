@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.37 2006/07/04 00:30:23 christos Exp $
+#	$NetBSD: files.acpi,v 1.38 2006/07/08 20:23:53 christos Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -15,6 +15,10 @@ file	dev/acpi/acpi_madt.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_quirks.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
+
+# ACPI/apm emulation.
+attach  apm at acpi with acpiapm
+file	dev/acpi/acpi_apm.c		acpiapm
 
 # ACPI Embedded Controller
 device	acpiec
