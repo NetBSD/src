@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.26 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.27 2006/07/08 05:54:45 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.26 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.27 2006/07/08 05:54:45 yamt Exp $");
 #endif
 #endif
 
@@ -191,24 +191,30 @@ clnt_perror(rpch, s)
 }
 
 static const char *const rpc_errlist[] = {
-	"RPC: Success",				/*  0 - RPC_SUCCESS */
-	"RPC: Can't encode arguments",		/*  1 - RPC_CANTENCODEARGS */
-	"RPC: Can't decode result",		/*  2 - RPC_CANTDECODERES */
-	"RPC: Unable to send",			/*  3 - RPC_CANTSEND */
-	"RPC: Unable to receive",		/*  4 - RPC_CANTRECV */
-	"RPC: Timed out",			/*  5 - RPC_TIMEDOUT */
-	"RPC: Incompatible versions of RPC",	/*  6 - RPC_VERSMISMATCH */
-	"RPC: Authentication error",		/*  7 - RPC_AUTHERROR */
-	"RPC: Program unavailable",		/*  8 - RPC_PROGUNAVAIL */
-	"RPC: Program/version mismatch",	/*  9 - RPC_PROGVERSMISMATCH */
-	"RPC: Procedure unavailable",		/* 10 - RPC_PROCUNAVAIL */
-	"RPC: Server can't decode arguments",	/* 11 - RPC_CANTDECODEARGS */
-	"RPC: Remote system error",		/* 12 - RPC_SYSTEMERROR */
-	"RPC: Unknown host",			/* 13 - RPC_UNKNOWNHOST */
-	"RPC: Port mapper failure",		/* 14 - RPC_PMAPFAILURE */
-	"RPC: Program not registered",		/* 15 - RPC_PROGNOTREGISTERED */
-	"RPC: Failed (unspecified error)",	/* 16 - RPC_FAILED */
-	"RPC: Unknown protocol"			/* 17 - RPC_UNKNOWNPROTO */
+	[RPC_SUCCESS] =			"RPC: Success",
+	[RPC_CANTENCODEARGS] =		"RPC: Can't encode arguments",
+	[RPC_CANTDECODERES] =		"RPC: Can't decode result",
+	[RPC_CANTSEND] =		"RPC: Unable to send",
+	[RPC_CANTRECV] =		"RPC: Unable to receive",
+	[RPC_TIMEDOUT] =		"RPC: Timed out",
+	[RPC_VERSMISMATCH] =		"RPC: Incompatible versions of RPC",
+	[RPC_AUTHERROR] = 		"RPC: Authentication error",
+	[RPC_PROGUNAVAIL] =		"RPC: Program unavailable",
+	[RPC_PROGVERSMISMATCH] =	"RPC: Program/version mismatch",
+	[RPC_PROCUNAVAIL] =		"RPC: Procedure unavailable",
+	[RPC_CANTDECODEARGS] =		"RPC: Server can't decode arguments",
+	[RPC_SYSTEMERROR] =		"RPC: Remote system error",
+	[RPC_UNKNOWNHOST] =		"RPC: Unknown host",
+	[RPC_PMAPFAILURE] =		"RPC: Port mapper failure",
+	[RPC_PROGNOTREGISTERED] =	"RPC: Program not registered",
+	[RPC_FAILED] =			"RPC: Failed (unspecified error)",
+	[RPC_UNKNOWNPROTO] =		"RPC: Unknown protocol",
+	[RPC_UNKNOWNADDR] =		"RPC: Remote address unknown",
+	[RPC_TLIERROR] =		"RPC: Misc error in the TLI library",
+	[RPC_NOBROADCAST] =		"RPC: Broadcasting not supported",
+	[RPC_N2AXLATEFAILURE] =		"RPC: Name -> addr translation failed",
+	[RPC_INPROGRESS] =		"RPC: In progress",
+	[RPC_STALERACHANDLE] =		"RPC: Stale handle",
 };
 
 
@@ -220,11 +226,16 @@ clnt_sperrno(stat)
 	enum clnt_stat stat;
 {
 	unsigned int errnum = stat;
+	const char *msg;
 
-	if (errnum < (sizeof(rpc_errlist)/sizeof(rpc_errlist[0])))
-		return __UNCONST(rpc_errlist[errnum]);
-
-	return __UNCONST("RPC: (unknown error code)");
+	msg = NULL;
+	if (errnum < (sizeof(rpc_errlist)/sizeof(rpc_errlist[0]))) {
+		msg = rpc_errlist[errnum];
+	}
+	if (msg == NULL) {
+		msg = "RPC: (unknown error code)";
+	}
+	return __UNCONST(msg);
 }
 
 void
