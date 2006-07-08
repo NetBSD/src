@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.907 2006/07/05 10:18:35 martin Exp $
+# $NetBSD: mi,v 1.908 2006/07/08 17:22:14 tsutsui Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1240,6 +1240,7 @@
 ./usr/share/man/cat4/sk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/skc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sl.0			man-sys-catman		.cat
+./usr/share/man/cat4/slip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/slhci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/slide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
@@ -2246,7 +2247,7 @@
 ./usr/share/man/cat8/showq.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/shutdown.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/slattach.0			man-slip-catman		.cat
-./usr/share/man/cat8/slip.0			man-slip-catman		.cat
+./usr/share/man/cat8/slip.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sliplogin.0		man-slip-catman		.cat
 ./usr/share/man/cat8/slstats.0			man-slip-catman		.cat
 ./usr/share/man/cat8/smrsh.0			man-obsolete		obsolete
@@ -3597,6 +3598,7 @@
 ./usr/share/man/man4/sk.4			man-sys-man		.man
 ./usr/share/man/man4/skc.4			man-sys-man		.man
 ./usr/share/man/man4/sl.4			man-sys-man		.man
+./usr/share/man/man4/slip.4			man-sys-man		.man
 ./usr/share/man/man4/slhci.4			man-sys-man		.man
 ./usr/share/man/man4/slide.4			man-sys-man		.man
 ./usr/share/man/man4/sm.4			man-sys-man		.man
@@ -4603,7 +4605,7 @@
 ./usr/share/man/man8/showq.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/shutdown.8			man-sysutil-man		.man
 ./usr/share/man/man8/slattach.8			man-slip-man		.man
-./usr/share/man/man8/slip.8			man-slip-man		.man
+./usr/share/man/man8/slip.8			man-obsolete		obsolete
 ./usr/share/man/man8/sliplogin.8		man-slip-man		.man
 ./usr/share/man/man8/slstats.8			man-slip-man		.man
 ./usr/share/man/man8/smrsh.8			man-obsolete		obsolete
