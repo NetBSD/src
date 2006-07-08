@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.162 2006/06/24 05:23:06 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.163 2006/07/08 00:23:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.162 2006/06/24 05:23:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.163 2006/07/08 00:23:29 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -560,7 +560,7 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	else
 		mi_switch(l, NULL);
 
-#if	defined(DDB) && !defined(GPROF) && !defined(sun2)
+#if	defined(DDB) && !defined(GPROF) && !defined(sun2) && !defined(__vax__)
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
