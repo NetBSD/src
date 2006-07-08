@@ -1,10 +1,10 @@
-/*	$NetBSD: apmio.h,v 1.4 2006/07/08 20:22:19 christos Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.3 2006/07/08 20:22:19 christos Exp $	*/
 /*-
- * Copyright (c) 1995 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John Kohl.
+ * by TAKEMURA Shin.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,38 +34,47 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _DEV_APM_APMIO_H_
-#define _DEV_APM_APMIO_H_
+#ifndef _DEV_APM_APMVAR_H_
+#define _DEV_APM_APMVAR_H_
 
-struct apm_event_info {
-	u_int type;
-	u_int index;
-	u_int spare[8];
+#include <dev/apm/apmbios.h>
+#include <dev/apm/apmio.h>
+
+struct apm_accessops {
+	void	(*aa_disconnect)(void *);
+	void	(*aa_enable)(void *, int);
+	int	(*aa_set_powstate)(void *, u_int, u_int);
+	int	(*aa_get_powstat)(void *, u_int, struct apm_power_info *);
+	int	(*aa_get_event)(void *, u_int *, u_int *);
+	void	(*aa_cpu_busy)(void *);
+	void	(*aa_cpu_idle)(void *);
+	void	(*aa_get_capabilities)(void *, u_int *, u_int *);
 };
 
-struct apm_power_info {
-	u_char battery_state;
-	u_char ac_state;
-	u_char battery_life;
-	u_char minutes_valid;
-	u_int minutes_left;		/* estimate */
-	u_int nbattery;
-	u_int batteryid;
-	u_int battery_flags;
-	u_int spare2[3];
+#define APM_NEVENTS 16
+
+struct apm_softc {
+	struct device sc_dev;
+	struct selinfo sc_rsel;
+	struct selinfo sc_xsel;
+	int	sc_flags;
+	int	sc_event_count;
+	int	sc_event_ptr;
+	int	sc_power_state;
+	struct proc *sc_thread;
+	struct lock sc_lock;
+	struct apm_event_info sc_event_list[APM_NEVENTS];
+	struct apm_accessops *sc_ops;
+	int	sc_hwflags;
+	int	sc_vers;
+	int	sc_detail;
+	void *sc_cookie;
 };
 
-struct apm_ctl {
-	u_int dev;
-	u_int mode;
-};
+#define	APM_F_DONT_RUN_HOOKS	0x01
 
-#define	APM_IOC_REJECT	_IOW('A', 0, struct apm_event_info) /* reject request # */
-#define	APM_IOC_STANDBY	_IO('A', 1)	/* put system into standby */
-#define	APM_IOC_SUSPEND	_IO('A', 2)	/* put system into suspend */
-#define	OAPM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
-#define	APM_IOC_GETPOWER _IOWR('A', 3, struct apm_power_info) /* fetch battery state */
-#define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
-#define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
+int apm_match(void);
+void apm_attach(struct apm_softc *);
+const char *apm_strerror(int);
 
-#endif /* _DEV_APM_APMIO_H_ */
+#endif /* _DEV_APM_APMVAR_H_ */
