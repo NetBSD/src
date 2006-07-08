@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.27 2003/08/07 10:04:40 agc Exp $
+.\"	$NetBSD: slattach.8,v 1.28 2006/07/08 17:22:14 tsutsui Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,12 +29,11 @@
 .\"
 .\"     @(#)slattach.8	8.2 (Berkeley) 4/1/94
 .\"
-.Dd September 3, 1999
+.Dd July 8, 2006
 .Dt SLATTACH 8
 .Os
 .Sh NAME
-.Nm slattach ,
-.Nm slip
+.Nm slattach
 .Nd attach serial lines as network interfaces
 .Sh SYNOPSIS
 .Nm
@@ -44,8 +43,26 @@
 .Ar ttyname
 .Sh DESCRIPTION
 .Nm
-is used to assign a tty line to a network interface,
-and to define the network source and destination addresses.
+is used to assign a tty line to a network interface which uses asynchronous
+serial lines.
+.Pp
+Currently the
+.Nm
+command is used to attach
+.Xr sl 4
+or
+.Xr strip 4
+interfaces.
+These interfaces have to be created using the
+.Xr ifconfig 8
+.Cm create
+subcommand before the
+.Nm
+command.
+The network source and destination addresses and other interface parameters
+are configured via
+.Xr ifconfig 8 .
+.Pp
 The following operands are supported by
 .Nm :
 .Bl -tag -width Ar
@@ -88,25 +105,6 @@ or
 .Ql /dev/ttyXX .
 .El
 .Pp
-In addition, the following flags to
-.Xr ifconfig 8
-control various properties of a SLIP link:
-.Bl -tag -width Ar
-.It Ar link0
-Turn on Van Jacobsen header compression.
-.It Ar -link0
-Turn off header compression.
-.It Ar link1
-Don't pass through ICMP packets.
-.It Ar -link1
-Do pass through ICMP packets.
-.It Ar link2
-If a packet with a compressed header is received, automatically enable
-compression of outgoing packets.
-.It Ar -link2
-Don't auto-enable compression.
-.El
-.Pp
 Only the super-user may attach a network interface.
 .Pp
 To detach the interface, use
@@ -123,9 +121,9 @@ slattach ttyh8
 slattach \-s 4800 /dev/tty01
 .Ed
 .Sh DIAGNOSTICS
-Messages indicating that the specified interface does not exist, the
-requested address is unknown, or that the user is not privileged but
-tried to alter an interface's configuration.
+Messages indicating that the specified interface is not configured or created,
+the requested address is unknown, or that the user is not privileged
+but tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr daemon 3 ,
@@ -133,9 +131,27 @@ tried to alter an interface's configuration.
 .Xr sl 4 ,
 .Xr strip 4 ,
 .Xr ifconfig 8 ,
-.Xr rc 8
+.Xr rc 8 ,
+.Xr sliplogin 8 ,
+.Xr slstats 8
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.3 .
+.Sh BUGS
+There is no way to specify the interface name (sl%d etc.) to be attached by the
+.Nm
+command.
+There is no way to see which interface is assigned to the specified tty by the
+.Nm
+command, either.
+.Pp
+It would be better if the network interfaces were created by the
+.Nm
+command rather than by using the
+.Xr ifconfig 8
+.Cm create
+subcommand before the
+.Nm
+command.

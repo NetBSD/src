@@ -1,4 +1,4 @@
-.\"	$NetBSD: sl.4,v 1.12 2006/07/08 16:36:53 christos Exp $
+.\"	$NetBSD: sl.4,v 1.13 2006/07/08 17:22:14 tsutsui Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd December 5, 2004
+.Dd July 8, 2006
 .Dt SL 4
 .Os
 .Sh NAME
@@ -46,42 +46,47 @@ network interfaces using the
 .Tn SLIP
 protocol.
 .Pp
-However,
-.Tn SLIP
-can only transmit
-.Tn IPv4
-packets between preconfigured hosts on an asynchronous serial link.
-It has no provision for address negotiation,
-carriage of additional protocols (e.g.
-.Tn XNS ,
-.Tn AppleTalk ,
-.Tn DECNET ) ,
-and is not designed for synchronous serial links.
-This is why
-.Tn SLIP
-has been superseded by the Point-to-Point Protocol
-.Pq Tn PPP ,
-which does all of those things, and much more.
-.Pp
-The 
+To use the
 .Nm
-driver provides Van Jacobson header compression,
-and ICMP filtering, under control of the following options to
-.Xr ifconfig 8 :
+interface, the administrator must first create the interface and assign
+a tty line to it.
+The
+.Nm
+interface is created using the
+.Xr ifconfig 8
+.Cm create
+subcommand, and
+.Xr slattach 8
+is used to assign a tty line to the interface.
+Once the interface is attached, network source and destination addresses and
+other parameters are configured via
+.Xr ifconfig 8 .
 .Pp
-.Bl -tag -width 15n -offset indent -compact
-.It link0
-Apply VJ compression to outgoing packets on this interface, 
-and assume that incoming packets require decompression 
-(default: disabled).
-.It link1
-Filter ICMP to save bandwidth on low-speed lines (default: disabled).
-.It link2
-Check incoming packets for VJ compression; 
-if they appear to be compressed, automatically set 
-link0 (default: enabled).
-.El
-.Pp
+The
+.Nm
+interface can use Van Jacobson
+.Tn TCP
+header compression and
+.Tn ICMP
+filtering.
+The following flags to
+.Xr ifconfig 8
+control these properties of a SLIP link:
+.Bl -tag -width Ar
+.It Ar link0
+Turn on Van Jacobsen header compression.
+.It Ar -link0
+Turn off header compression. (default)
+.It Ar link1
+Don't pass through ICMP packets.
+.It Ar -link1
+Do pass through ICMP packets. (default)
+.It Ar link2
+If a packet with a compressed header is received, automatically enable
+compression of outgoing packets. (default)
+.It Ar -link2
+Don't auto-enable compression.
+.El 
 .Sh DIAGNOSTICS
 .Bl -diag
 .It sl%d: af%d not supported .
@@ -93,6 +98,7 @@ family; the packet was dropped.
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr ppp 4 ,
+.Xr strip 4 ,
 .Xr ifconfig 8 ,
 .Xr slattach 8 ,
 .Xr sliplogin 8 ,
@@ -108,3 +114,19 @@ The
 .Nm
 device appeared in
 .Nx 1.0 .
+.Sh BUGS
+.Tn SLIP
+can only transmit
+.Tn IPv4
+packets between preconfigured hosts on an asynchronous serial link.
+It has no provision for address negotiation,
+carriage of additional protocols (e.g.
+.Tn XNS ,
+.Tn AppleTalk ,
+.Tn DECNET ) ,
+and is not designed for synchronous serial links.
+This is why
+.Tn SLIP
+has been superseded by the Point-to-Point Protocol
+.Pq Tn PPP ,
+which does all of those things, and much more.
