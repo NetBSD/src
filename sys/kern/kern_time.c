@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.101 2006/06/07 22:33:40 kardel Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.102 2006/07/08 12:10:33 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.101 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.102 2006/07/08 12:10:33 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -299,7 +299,14 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 		ts.tv_sec = 0;
+#ifdef __HAVE_TIMECOUNTER
+		if (tc_getfrequency() > 1000000000)
+			ts.tv_nsec = 1;
+		else
+			ts.tv_nsec = 1000000000 / tc_getfrequency();
+#else /* !__HAVE_TIMECOUNTER */
 		ts.tv_nsec = 1000000000 / hz;
+#endif /* !__HAVE_TIMECOUNTER */
 		break;
 	default:
 		return (EINVAL);
