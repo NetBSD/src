@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.17 2003/05/13 09:59:27 wiz Exp $
+.\"	$NetBSD: ctxsw.9,v 1.18 2006/07/08 17:17:31 skrll Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,13 +39,16 @@
 .Os
 .Sh NAME
 .Nm mi_switch ,
-.Nm cpu_switch
+.Nm cpu_switch,
+.Nm cpu_switchto
 .Nd switch to another light weight process
 .Sh SYNOPSIS
 .Ft int
-.Fn mi_switch "struct lwp *cur" "struct lwp *new"
+.Fn mi_switch "struct lwp *cur" "struct lwp *newl"
 .Ft int
-.Fn cpu_switch "struct lwp *cur" "struct lwp *new"
+.Fn cpu_switch "struct lwp *cur" "struct lwp *newl"
+.Ft int
+.Fn cpu_switchto "struct lwp *cur" "struct lwp *newl"
 .Sh DESCRIPTION
 The
 .Fn mi_switch
@@ -84,25 +87,27 @@ signal to be posted to the LWP, while exceeding the hard limit will
 cause a
 .Dv SIGKILL .
 If
-.Fa newp
+.Fa newl
 is
 .Dv NULL ,
 .Fn mi_switch
-will invoke
-.Xr chooseproc 9
+will hand over control to the machine-dependent function
+.Fn cpu_switch
 to select a new LWP from the system run queue.
+If a newl LWP is specified
+.Fn mi_switch
+will hand over control to the machine-dependent function
+.Fn cpu_switchto
+to switch to the new LWP.
 If the new LWP is the same as the current LWP, then control is
 returned immediately to the LWP, avoiding any unnecessary overhead
 associated with switching in a new LWP.
-Otherwise,
-.Fn mi_switch
-hands over control to the machine-dependent function
-.Fn cpu_switch ,
-which will perform the actual LWP context switch.
 .Pp
 The
 .Fn cpu_switch
-function switches the new LWP onto the CPU.
+and
+.Fn cpu_switchto
+functions switch the new LWP onto the CPU.
 This procedure is performed by saving the LWP context of the current
 LWP in its process control block (PCB) and restoring the LWP
 context of the new LWP.
@@ -126,7 +131,6 @@ These functions return 1 if a context switch was performed to a different
 LWP, 0 otherwise.
 .Sh SEE ALSO
 .Xr SCHED_LOCK 9 ,
-.Xr chooseproc 9 ,
 .Xr pmap 9 ,
 .Xr ras 9 ,
 .Xr splsched 9 ,
