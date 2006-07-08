@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.651 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.652 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -369,3 +369,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		completed. [bouyer 20060702]
 	proplib(3): Added protocol for sending property lists to/from
 		the kernel using ioctls.
+	gcc(1): Switched vax to GCC4. [matt 20060707]
