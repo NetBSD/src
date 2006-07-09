@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.67 2006/06/07 20:56:19 kardel Exp $	*/
+/*	$NetBSD: savecore.c,v 1.68 2006/07/09 06:45:09 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.67 2006/06/07 20:56:19 kardel Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.68 2006/07/09 06:45:09 kardel Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,39 +76,34 @@ struct nlist current_nl[] = {	/* Namelist for currently running system. */
 #define	X_DUMPLO	1
 	{ "_dumplo" },
 #define	X_TIME_SECOND	2
-#ifdef __HAVE_TIMECOUNTER
 	{ "_time_second" },
-#else
-	{ "_time" },	/* XXX uses same array slot as "X_TIME_SECOND" */
-#endif
-#define	X_DUMPSIZE	3
+#define X_TIME		3
+	{ "_time" },
+#define	X_DUMPSIZE	4
 	{ "_dumpsize" },
-#define	X_VERSION	4
+#define	X_VERSION	5
 	{ "_version" },
-#define	X_DUMPMAG	5
+#define	X_DUMPMAG	6
 	{ "_dumpmag" },
-#define	X_PANICSTR	6
+#define	X_PANICSTR	7
 	{ "_panicstr" },
-#define	X_PANICSTART	7
+#define	X_PANICSTART	8
 	{ "_panicstart" },
-#define	X_PANICEND	8
+#define	X_PANICEND	9
 	{ "_panicend" },
-#define	X_MSGBUF	9
+#define	X_MSGBUF	10
 	{ "_msgbufp" },
 	{ NULL },
 };
 int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, -1 };
-int dumpsyms[] = { X_TIME_SECOND, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG,
+int dumpsyms[] = { X_TIME_SECOND, X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG,
     -1 };
 
 struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ "_dumpdev" },		/* Entries MUST be the same as */
 	{ "_dumplo" },		/*	those in current_nl[].  */
-#ifdef __HAVE_TIMECOUNTER
 	{ "_time_second" },
-#else
-	{ "_time" },	/* XXX uses same array slot as "X_TIME_SECOND" */
-#endif
+	{ "_time" },
 	{ "_dumpsize" },
 	{ "_version" },
 	{ "_dumpmag" },
@@ -272,7 +267,9 @@ kmem_setup(void)
 		    kvm_geterr(kd_kern));
 	
 	for (i = 0; cursyms[i] != -1; i++)
-		if (current_nl[cursyms[i]].n_value == 0) {
+		if (current_nl[cursyms[i]].n_value == 0 &&
+			cursyms[i] != X_TIME_SECOND &&
+		        cursyms[i] != X_TIME) {
 			syslog(LOG_ERR, "%s: %s not in namelist",
 			    kernel, current_nl[cursyms[i]].n_name);
 			exit(1);
@@ -329,7 +326,9 @@ kmem_setup(void)
 		    kvm_geterr(kd_dump));
 
 	for (i = 0; dumpsyms[i] != -1; i++)
-		if (dump_nl[dumpsyms[i]].n_value == 0) {
+		if (dump_nl[dumpsyms[i]].n_value == 0 &&
+			dumpsyms[i] != X_TIME_SECOND &&
+			dumpsyms[i] != X_TIME) {
 			syslog(LOG_ERR, "%s: %s not in namelist",
 			    kernel, dump_nl[dumpsyms[i]].n_name);
 			exit(1);
@@ -690,24 +689,16 @@ int
 get_crashtime(void)
 {
 	time_t dumptime;			/* Time the dump was taken. */
-#ifndef __HAVE_TIMECOUNTER
 	struct timeval dtime;
-#endif
 
-#ifdef __HAVE_TIMECOUNTER
 	if (KREAD(kd_dump, dump_nl[X_TIME_SECOND].n_value, &dumptime) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
-		return (0);
+		if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dtime) != 0) {
+			if (verbose)
+				syslog(LOG_WARNING, "kvm_read: %s (and _time_seconf is not defined also)", kvm_geterr(kd_dump));
+			return (0);
+		}
+		dumptime = dtime.tv_sec;
 	}
-#else
-	if (KREAD(kd_dump, dump_nl[X_TIME_SECOND].n_value, &dtime) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
-		return (0);
-	}
-	dumptime = dtime.tv_sec;
-#endif
 	if (dumptime == 0) {
 		if (verbose)
 			syslog(LOG_ERR, "dump time is zero");
