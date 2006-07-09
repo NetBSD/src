@@ -1,8 +1,13 @@
-/*	$NetBSD: getopt.c,v 1.6 2000/07/03 02:51:18 matt Exp $	*/
+/*	$NetBSD: getopt.c,v 1.7 2006/07/09 21:38:47 wiz Exp $	*/
+
+/*
+ * This material, written by Henry Spencer, was released by him
+ * into the public domain and is thus not subject to any copyright.
+ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getopt.c,v 1.6 2000/07/03 02:51:18 matt Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.7 2006/07/09 21:38:47 wiz Exp $");
 #endif /* not lint */
 
 #include <errno.h>
