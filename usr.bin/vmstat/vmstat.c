@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.146 2006/07/08 14:58:51 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.147 2006/07/09 06:43:16 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.146 2006/07/08 14:58:51 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.147 2006/07/09 06:43:16 kardel Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,12 +158,10 @@ struct nlist namelist[] =
 #define	X_UVMEXP	8
 	{ "_uvmexp" },
 #define	X_TIME_SECOND	9
-#ifdef __HAVE_TIMECOUNTER
 	{ "_time_second" },
-#else
-	{ "_time" },	/* XXX uses same array slot as "X_TIME_SECOND" */
-#endif
-#define	X_NL_SIZE	10
+#define X_TIME		10
+	{ "_time" },
+#define	X_NL_SIZE	11
 	{ NULL },
 };
 
@@ -267,6 +265,7 @@ void	dovmstat(struct timespec *, int);
 void	print_total_hdr(void);
 void	dovmtotal(struct timespec *, int);
 void	kread(struct nlist *, int, void *, size_t);
+int	kreadc(struct nlist *, int, void *, size_t);
 void	needhdr(int);
 long	getuptime(void);
 void	printhdr(void);
@@ -388,14 +387,21 @@ main(int argc, char *argv[])
 		(void)setgid(getgid());
 
 	if ((c = kvm_nlist(kd, namelist)) != 0) {
+		int doexit = 0;
 		if (c == -1)
 			errx(1, "kvm_nlist: %s %s", "namelist", kvm_geterr(kd));
-		(void)fprintf(stderr, "vmstat: undefined symbols:");
 		for (c = 0; c < sizeof(namelist) / sizeof(namelist[0])-1; c++)
-			if (namelist[c].n_type == 0)
+			if (namelist[c].n_type == 0 &&
+			    c != X_TIME_SECOND &&
+			    c != X_TIME) {
+				if (doexit++ == 0)
+					(void)fprintf(stderr, "vmstat: undefined symbols:");
 				fprintf(stderr, " %s", namelist[c].n_name);
-		(void)fputc('\n', stderr);
-		exit(1);
+			}
+		if (doexit) {
+			(void)fputc('\n', stderr);
+			exit(1);
+		}
 	}
 	if (todo & INTRSTAT)
 		(void) kvm_nlist(kd, intrnl);
@@ -539,12 +545,11 @@ getuptime(void)
 
 	if (boottime.tv_sec == 0)
 		kread(namelist, X_BOOTTIME, &boottime, sizeof(boottime));
-#ifdef __HAVE_TIMECOUNTER
-	kread(namelist, X_TIME_SECOND, &now.tv_sec, sizeof(now));
-	now.tv_usec = 0;
-#else
-	kread(namelist, X_TIME_SECOND, &now, sizeof(now));
-#endif
+	if (kreadc(namelist, X_TIME_SECOND, &now.tv_sec, sizeof(now))) {
+		now.tv_usec = 0;
+	} else {
+		kread(namelist, X_TIME, &now, sizeof(now));
+	}
 	uptime = now.tv_sec - boottime.tv_sec;
 	if (uptime <= 0 || uptime > 60*60*24*365*10)
 		errx(1, "time makes no sense; namelist must be wrong.");
@@ -1474,6 +1479,23 @@ dohashstat(int verbose, int todo, const char *hashname)
 		    hashsize, used, used * 100.0 / hashsize,
 		    items, used ? (double)items / used : 0.0, maxchain);
 	}
+}
+
+/*
+ * kreadc like kread but returns 1 if sucessful, 0 otherwise
+ */
+int
+kreadc(struct nlist *nl, int nlx, void *addr, size_t size)
+{
+	const char *sym;
+
+	sym = nl[nlx].n_name;
+	if (*sym == '_')
+		++sym;
+	if (nl[nlx].n_type == 0 || nl[nlx].n_value == 0)
+		return 0;
+	deref_kptr((void *)nl[nlx].n_value, addr, size, sym);
+	return 1;
 }
 
 /*
