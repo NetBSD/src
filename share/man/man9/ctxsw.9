@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.18 2006/07/08 17:17:31 skrll Exp $
+.\"	$NetBSD: ctxsw.9,v 1.19 2006/07/09 09:24:44 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,12 +34,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 13, 2003
+.Dd July 8, 2006
 .Dt CTXSW 9
 .Os
 .Sh NAME
 .Nm mi_switch ,
-.Nm cpu_switch,
+.Nm cpu_switch ,
 .Nm cpu_switchto
 .Nd switch to another light weight process
 .Sh SYNOPSIS
@@ -94,7 +94,7 @@ is
 will hand over control to the machine-dependent function
 .Fn cpu_switch
 to select a new LWP from the system run queue.
-If a newl LWP is specified
+If a new LWP is specified,
 .Fn mi_switch
 will hand over control to the machine-dependent function
 .Fn cpu_switchto
