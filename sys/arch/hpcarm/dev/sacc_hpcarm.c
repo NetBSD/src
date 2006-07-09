@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.7 2006/06/27 13:26:44 peter Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.8 2006/07/09 14:47:30 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.7 2006/06/27 13:26:44 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.8 2006/07/09 14:47:30 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.7 2006/06/27 13:26:44 peter Exp $"
 #include <arm/sa11x0/sa11x0_gpioreg.h>
 #include <arm/sa11x0/sa1111_reg.h>
 #include <arm/sa11x0/sa1111_var.h>
-
-#include "locators.h"
 
 static void	sacc_attach(struct device *, struct device *, void *);
 static int	sacc_intr(void *);
@@ -113,7 +111,7 @@ sacc_attach(struct device *parent, struct device *self, void *aux)
 	skid = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCSBI_SKID);
 
 	printf("%s: SA-1111 rev %d.%d\n", sc->sc_dev.dv_xname,
-	       (skid & 0xf0) >> 3, skid & 0xf);
+	       (skid & 0xf0) >> 4, skid & 0xf);
 
 	for (i = 0; i < SACCIC_LEN; i++)
 		sc->sc_intrhand[i] = NULL;
