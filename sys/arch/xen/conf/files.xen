@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.43 2006/07/02 16:35:24 bouyer Exp $
+#	$NetBSD: files.xen,v 1.44 2006/07/09 01:59:42 christos Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -194,6 +194,8 @@ include "dev/usb/files.usb"
 include "dev/ieee1394/files.ieee1394"
 
 device  fdc {drive = -1} #XXX
+
+include "dev/apm/files.apm"
 
 include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi
