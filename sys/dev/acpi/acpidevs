@@ -1,7 +1,7 @@
-# $NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp $
+# $NetBSD: acpidevs,v 1.11 2006/07/09 19:25:18 christos Exp $
 #
 # Extracted from:
-# http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
+# http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
 # XXX we should rig it up to make importation simpler, though we
 # probably need to add IDs that are not in that file, too. The list is
 # far from comprehensive :(
