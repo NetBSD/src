@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.51 2006/05/25 11:23:11 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.52 2006/07/09 10:13:53 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.51 2006/05/25 11:23:11 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.52 2006/07/09 10:13:53 blymn Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -465,8 +465,13 @@ out:
 		veriexec_report("veriexec_verify: No entry.", name, va,
 		    l, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
 
-		/* Lockdown mode: Deny access to non-monitored files. */
-		if (veriexec_strict >= 3)
+		/* Lockdown mode: Deny access to non-monitored files if
+		 * strict is 3 or higher, make an exception for executables
+		 * since we don't want to run an unverified binary at strict
+		 * 2 or higher.
+		 */
+		if ((veriexec_strict >= 3) ||
+		    ((veriexec_strict >= 2) && (flag != VERIEXEC_FILE)))
 			return (EPERM);
 
 		return (0);
