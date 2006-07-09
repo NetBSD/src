@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary_send_ioctl.3,v 1.2 2006/07/09 19:04:02 wiz Exp $
+.\"	$NetBSD: prop_dictionary_send_ioctl.3,v 1.3 2006/07/09 19:08:23 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ foo_getprops(void)
     if (fd == -1)
 	return (NULL);
 
-    if (prop_dictionary_recv_ioctl(fd, FOOGETPROPS, &dict) != 0)
+    if (prop_dictionary_recv_ioctl(fd, FOOGETPROPS, \*[Am]dict) != 0)
         return (NULL);
 
     (void) close(fd);
@@ -100,8 +100,8 @@ foo_getprops(void)
 .Ed
 .Sh SEE ALSO
 .Xr prop_dictionary 3 ,
-.Xr prop_dictionary_copyin_ioctl 9 ,
-.Xr proplib 3
+.Xr proplib 3 ,
+.Xr prop_dictionary_copyin_ioctl 9
 .Sh HISTORY
 The
 .Nm proplib
