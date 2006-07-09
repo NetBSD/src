@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1 2006/07/08 05:09:44 ross Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.2 2006/07/09 01:07:38 ross Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@ ENTRY(pthread__switch)
 	 * Edit the context to make it continue at switch_return instead of
 	 * here.
 	 */
-	ld	%r6, pthread__common_return@got(%r2)
+	ld	%r6, pthread__switch_return_point@got(%r2)
 	std	%r6, SF_SZ+_REG_PC(%r1)
 	std	%r31, PT_UC(%r3)
 
@@ -226,8 +226,6 @@ ENTRY(pthread__upcall_switch)
  * rounded to a multiple of 16, so it's really 16.
  */
 
-	.type locked_return,@function
-
 ENTRY(pthread__locked_switch)
 
 	init_frame
@@ -302,7 +300,7 @@ ENTRY(pthread__locked_switch)
 	NOTREACHED
 
 
-ENTRY(pthread__common_return)
+ENTRY(pthread__switch_return_point)
 	ld	%r31, saved31(%r1)
 	ld	%r0, frameSize+SF_LR(%r1)
 	la	%r1, frameSize(%r1)
