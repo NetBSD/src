@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.16 2006/05/07 04:45:03 simonb Exp $ */
+/* $NetBSD: com_opb.c,v 1.17 2006/07/10 16:28:44 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.16 2006/05/07 04:45:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.17 2006/07/10 16:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,9 +119,10 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 
 	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0, &sc->sc_ioh);
 
-	freq = prop_dictionary_get(device_properties(&sc->sc_dev), "frequency");
+	freq = prop_dictionary_get(device_properties(&sc->sc_dev),
+	    "clock-frequency");
 	if (freq == NULL) {
-		printf(": unable to get frequency property\n");
+		printf(": unable to get clock-frequency property\n");
 		return;
 	}
 	KASSERT(prop_object_type(freq) == PROP_TYPE_NUMBER);
@@ -173,8 +174,8 @@ com_opb_device_register(struct device *dev, int frequency)
 	KASSERT(pn != NULL);
 
 	if (prop_dictionary_set(device_properties(dev),
-				"frequency", pn) == FALSE) {
-		printf("WARNING: unable to set frequency "
+				"clock-frequency", pn) == FALSE) {
+		printf("WARNING: unable to set clock-frequency "
 			"property for %s\n", dev->dv_xname);
 	}
 	prop_object_release(pn);
