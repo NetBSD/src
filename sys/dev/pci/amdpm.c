@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.15 2006/07/10 20:03:42 christos Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.16 2006/07/10 20:11:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.15 2006/07/10 20:03:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.16 2006/07/10 20:11:29 xtraeme Exp $");
 
 #include "opt_amdpm.h"
 
@@ -154,8 +154,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef __HAVE_TIMECOUNTER
-	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0 &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC) {
+	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0) {
 		aprint_normal("%s: %d-bit timer at %" PRIu64 "Hz\n",
 			      sc->sc_dev.dv_xname,
 			      (confreg & AMDPM_TMR32) ? 32 : 24,
