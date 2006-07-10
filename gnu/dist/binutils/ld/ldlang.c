@@ -4876,14 +4876,13 @@ lang_process (void)
 
   lang_do_assignments (statement_list.head, abs_output_section, NULL, 0);
 
+  ldemul_finish ();
+
   /* Make sure that the section addresses make sense.  */
   if (! link_info.relocatable
       && command_line.check_section_addresses)
     lang_check_section_addresses ();
 
-  /* Final stuffs.  */
-
-  ldemul_finish ();
   lang_finish ();
 }
 
