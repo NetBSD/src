@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 2006/06/30 17:54:51 freza Exp $	*/
+/*	$NetBSD: intr.c,v 1.13 2006/07/10 12:52:13 freza Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2006/06/30 17:54:51 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2006/07/10 12:52:13 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -305,7 +305,7 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
     void *ih_arg)
 {
 	struct intrhand *ih;
-	int s;
+	int msr;
 
 	if (! LEGAL_IRQ(irq))
 		panic("intr_establish: bogus irq %d", irq);
@@ -339,9 +339,10 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 
 	/*
 	 * We're not on critical paths, so just block intrs for a while.
+	 * Note that spl*() at this point would use old (wrong) masks.
 	 */
-	s = splhigh();
-	intr_calculatemasks();
+	msr = mfmsr();
+	wrteei(0);
 
 	/*
 	 * Poke the real handler in now. We deliberately don't preserve order,
@@ -353,8 +354,10 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 	ih->ih_next = intrs[irq].is_head;
 	intrs[irq].is_head = ih;
 
+	intr_calculatemasks();
+
 	eieio();
-	splx(s);
+	mtmsr(msr);
 
 #ifdef IRQ_DEBUG
 	printf("***** intr_establish: irq%d h=%p arg=%p\n",irq, ih_fun, ih_arg);
@@ -370,7 +373,7 @@ intr_disestablish(void *arg)
 {
 	struct intrhand *ih = arg;
 	struct intrhand **p;
-	int i, s;
+	int i, msr;
 
 	/* Lookup the handler. This is expensive, but not run often. */
 	for (i = 0; i < ICU_LEN; i++)
@@ -384,9 +387,10 @@ intr_disestablish(void *arg)
 	*p = ih->ih_next;
 	free(ih, M_DEVBUF);
 
-	s = splhigh();
+	msr = mfmsr();
+	wrteei(0);
 	intr_calculatemasks();
-	splx(s);
+	mtmsr(msr);
 
 	if (intrs[i].is_head == NULL)
 		intrs[i].is_type = IST_NONE;
@@ -396,7 +400,7 @@ intr_disestablish(void *arg)
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
  * would be faster, but the code would be nastier, and we don't expect this to
- * happen very much anyway.
+ * happen very much anyway. We assume PSL_EE is clear when we're called.
  */
 static void
 intr_calculatemasks(void)
