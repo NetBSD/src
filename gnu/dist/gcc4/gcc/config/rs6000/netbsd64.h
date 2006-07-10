@@ -74,6 +74,10 @@ extern int dot_symbols;
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
 
+#ifndef MASK_PROFILE_KERNEL	// XXXHRH
+#define MASK_PROFILE_KERNEL 0	// XXXHRH
+#endif				// XXXHRH
+
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
   do								\
@@ -301,6 +305,26 @@ extern int dot_symbols;
 	  TARGET_OS_SYSV_CPP_BUILTINS ();		\
 	}						\
     }							\
+  while (0)
+
+/* Override the default from rs6000.h to avoid conflicts with macros
+   defined in NetBSD header files.  */
+
+#undef  RS6000_CPU_CPP_ENDIAN_BUILTINS
+#define RS6000_CPU_CPP_ENDIAN_BUILTINS()	\
+  do						\
+    {						\
+      if (BYTES_BIG_ENDIAN)			\
+	{					\
+	  builtin_define ("__BIG_ENDIAN__");	\
+	  builtin_assert ("machine=bigendian");	\
+	}					\
+      else					\
+	{					\
+	  builtin_define ("__LITTLE_ENDIAN__");	\
+	  builtin_assert ("machine=littleendian"); \
+	}					\
+    }						\
   while (0)
 
 #undef  CPP_OS_DEFAULT_SPEC
