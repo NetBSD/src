@@ -29,6 +29,10 @@
 #include <stdlib.h>
 #endif
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 int ppc_trace[nr_trace_options];
 
 typedef struct _trace_option_descriptor {
