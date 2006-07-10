@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/15 19:11:51 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2006/07/10 23:06:51 ross Exp $
 
 NOMAN=	# defined
 
@@ -12,13 +12,14 @@ SRCS=	main.c
 
 HOST_CPPFLAGS+=	-I. \
 		-I${DIST}/sim/ppc -I${DIST}/include \
-		-I${.CURDIR}/../../arch/powerpc \
+		-I${.CURDIR}/../../arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../../bfd/arch/${MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${.CURDIR}/../../gdb \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-DHAVE_COMMON_FPU \
-		-I${.CURDIR}/../arch/powerpc \
+		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/sim/common
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
 		-DDEFAULT_INLINE=PSIM_INLINE_LOCALS \
