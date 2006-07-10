@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4 2006/04/24 00:23:41 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.5 2006/07/10 22:38:28 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1392,7 +1392,7 @@ ndis_return(arg)
 	__stdcall ndis_return_handler	returnfunc;
 	ndis_handle		adapter;
 	ndis_packet		*p;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	p = arg;
 	sc = p->np_softc;
@@ -1750,7 +1750,7 @@ ndis_set_info(arg, oid, buf, buflen)
 	__stdcall ndis_setinfo_handler	setfunc;
 	uint32_t		byteswritten = 0, bytesneeded = 0;
 	int			error;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 #ifdef __NetBSD__
 	int			s;
 #endif
@@ -1847,7 +1847,7 @@ ndis_send_packets(arg, packets, cnt)
 	__stdcall ndis_senddone_func		senddonefunc;
 	int			i;
 	ndis_packet		*p;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
@@ -1890,7 +1890,7 @@ ndis_send_packet(arg, packet)
 	ndis_status		status;
 	__stdcall ndis_sendsingle_handler	sendfunc;
 	__stdcall ndis_senddone_func		senddonefunc;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
@@ -1997,7 +1997,7 @@ ndis_reset_nic(arg)
 	uint8_t			addressing_reset;
 	struct ifnet		*ifp;
 	int			rval;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
 #ifdef __FreeBSD__
@@ -2246,7 +2246,7 @@ ndis_intrhand(dpc, dobj, ip, sc)
 {
 	ndis_handle		adapter;
 	__stdcall ndis_interrupt_handler	intrfunc;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 	intrfunc = sc->ndis_chars->nmc_interrupt_func;
@@ -2284,7 +2284,7 @@ ndis_get_info(arg, oid, buf, buflen)
 #ifdef __FreeBSD__	
 	int			error;
 #endif
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 	
 	//printf("in ndis_get_info\n");
 	
