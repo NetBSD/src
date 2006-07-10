@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.3 2006/07/08 20:22:19 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.4 2006/07/10 22:46:06 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.3 2006/07/08 20:22:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.4 2006/07/10 22:46:06 christos Exp $");
 
 #include "opt_apm.h"
 
@@ -291,11 +291,11 @@ apm_power_print(struct apm_softc *sc, struct apm_power_info *pi)
 				printf(" charging");
 		}
 		printf("\n");
-		if (pi->remaining_valid) {
+		if (pi->minutes_valid) {
 			printf("%s: estimated ", sc->sc_dev.dv_xname);
-			if (pi->remaining_minutes / 60)
-				printf("%dh ", pi->remaining_minutes / 60);
-			printf("%dm\n", pi->remaining_minutes % 60);
+			if (pi->minutes_left / 60)
+				printf("%dh ", pi->minutes_left / 60);
+			printf("%dm\n", pi->minutes_left % 60);
 		}
 	}
 	return;
