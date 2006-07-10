@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.99 2006/03/29 21:13:55 dyoung Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.100 2006/07/10 15:35:39 peter Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.99 2006/03/29 21:13:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.100 2006/07/10 15:35:39 peter Exp $");
 
 #include "opt_ipsec.h"
 
@@ -232,6 +232,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	unsigned oiplen = oip->ip_hl << 2;
 	struct icmp *icp;
 	struct mbuf *m;
+	struct m_tag *mtag;
 	unsigned icmplen, mblen;
 
 #ifdef ICMPPRINTFS
@@ -355,6 +356,12 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
+	/* move PF_GENERATED m_tag to new packet, if it exists */
+	mtag = m_tag_find(n, PACKET_TAG_PF_GENERATED, NULL);
+	if (mtag != NULL) {
+		m_tag_unlink(n, mtag);
+		m_tag_prepend(m, mtag);
+	}
 	icmp_reflect(m);
 
 freeit:
