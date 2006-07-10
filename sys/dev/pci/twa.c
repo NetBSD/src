@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $ */
+/*	$NetBSD: twa.c,v 1.4 2006/07/10 23:20:43 simonb Exp $ */
 /*	$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $	*/
 /*
  * Copyright (c) 2004-2006 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.4 2006/07/10 23:20:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2283,16 +2283,16 @@ fw_passthru_done:
 		s = splbio();
 		if ((sc->twa_ioctl_lock.lock == TWA_LOCK_FREE) ||
 			(twa_lock.force_flag) ||
-			(time.tv_sec >= sc->twa_ioctl_lock.timeout)) {
+			(time_second >= sc->twa_ioctl_lock.timeout)) {
 
 			sc->twa_ioctl_lock.lock = TWA_LOCK_HELD;
-			sc->twa_ioctl_lock.timeout = time.tv_sec +
+			sc->twa_ioctl_lock.timeout = time_second +
 				(twa_lock.timeout_msec / 1000);
 			twa_lock.time_remaining_msec = twa_lock.timeout_msec;
 			user_buf->twa_drvr_pkt.status = 0;
 		} else {
 			twa_lock.time_remaining_msec =
-				(sc->twa_ioctl_lock.timeout - time.tv_sec) *
+				(sc->twa_ioctl_lock.timeout - time_second) *
 				1000;
 			user_buf->twa_drvr_pkt.status =
 					TWA_ERROR_IOCTL_LOCK_ALREADY_HELD;
@@ -2849,7 +2849,7 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 	switch (aen_code) {
 	case TWA_AEN_SYNC_TIME_WITH_HOST:
 
-		sync_time = (time.tv_sec - (3 * 86400)) % 604800;
+		sync_time = (time_second - (3 * 86400)) % 604800;
 		rv = twa_set_param(sc, TWA_PARAM_TIME_TABLE,
 				TWA_PARAM_TIME_SchedulerTime, 4,
 				&sync_time, twa_aen_callback);
@@ -2870,7 +2870,7 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 			sc->twa_aen_queue_overflow = TRUE;
 		event->severity =
 			cmd_hdr->status_block.substatus_block.severity;
-		event->time_stamp_sec = time.tv_sec;
+		event->time_stamp_sec = time_second;
 		event->aen_code = aen_code;
 		event->retrieved = TWA_AEN_NOT_RETRIEVED;
 		event->sequence_id = ++(sc->twa_current_sequence_id);
