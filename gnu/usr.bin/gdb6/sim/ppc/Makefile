@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/15 16:31:37 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2 2006/07/10 23:06:51 ross Exp $
 
 MKPRIVATELIB=	yes
+NOGCCERROR=
 
 .include <bsd.own.mk>
 
@@ -21,13 +22,14 @@ MIC=	${HOST_SH} ${DIST}/move-if-change
 
 HOST_CPPFLAGS+=	-I. \
 		-I${DIST}/sim/ppc -I${DIST}/include \
-		-I${.CURDIR}/../../arch/powerpc \
+		-I${.CURDIR}/../../arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../../bfd/arch/${MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${.CURDIR}/../../gdb \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-DHAVE_COMMON_FPU \
-		-I${.CURDIR}/../arch/powerpc \
+		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/sim/common
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
 		-DDEFAULT_INLINE=PSIM_INLINE_LOCALS \
