@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.9 2005/07/16 08:41:27 rtr Exp $
+# $NetBSD: dhclient-script,v 1.10 2006/07/10 23:07:09 christos Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -79,7 +79,12 @@ delete_old_routes() {
 		shift; shift
 	done
 
-	arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' | sh
+	local name addr rest
+	arp -n -a | while read name addr rest
+	do
+		addr=${addr#(}
+		arp -n -d ${addr%)}
+	done
 }
 
 # Invoke the local dhcp client enter hooks, if they exist.
