@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2006/07/01 15:19:32 nakayama Exp $
+# $NetBSD: GENERIC,v 1.55 2006/07/10 17:54:08 gdamore Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 maxusers	64
 
@@ -829,6 +829,8 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22		# PROM font look-alike
 
 #### Other device configuration
+
+psm*		at ebus?		# Ultrabook IIi microcontroller
 
 ### Other pseudo-devices
 
