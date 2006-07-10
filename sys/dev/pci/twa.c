@@ -1,12 +1,5 @@
-/*	$NetBSD: twa.c,v 1.4 2006/07/10 23:20:43 simonb Exp $ */
+/*	$NetBSD: twa.c,v 1.5 2006/07/10 23:22:28 simonb Exp $ */
 /*	$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $	*/
-/*
- * Copyright (c) 2004-2006 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Your Wasabi Systems License Agreement specifies the terms and
- * conditions for use and redistribution.
- */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -81,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.4 2006/07/10 23:20:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.5 2006/07/10 23:22:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
