@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.4 2006/07/11 00:17:34 simonb Exp $ */
+/*	$NetBSD: twavar.h,v 1.5 2006/07/11 00:25:42 simonb Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -81,22 +81,22 @@ struct twa_softc {
 	uint16_t		working_srl;	/* driver & firmware negotiated srl */
 	uint16_t		working_branch;	/* branch # of the firmware that the driver is compatible with */
 	uint16_t		working_build;	/* build # of the firmware that the driver is compatible with */
-	u_int32_t		twa_operating_mode; /* base mode/current mode */
-	u_int32_t		twa_aen_head;	/* AEN queue head */
-	u_int32_t		twa_aen_tail;	/* AEN queue tail */
-	u_int32_t		twa_current_sequence_id;/* index of the last event + 1 */
-	u_int32_t		twa_aen_queue_overflow;	/* indicates if unretrieved events were overwritten */
-	u_int32_t		twa_aen_queue_wrapped;	/* indicates if AEN queue ever wrapped */
+	uint32_t		twa_operating_mode; /* base mode/current mode */
+	uint32_t		twa_aen_head;	/* AEN queue head */
+	uint32_t		twa_aen_tail;	/* AEN queue tail */
+	uint32_t		twa_current_sequence_id;/* index of the last event + 1 */
+	uint32_t		twa_aen_queue_overflow;	/* indicates if unretrieved events were overwritten */
+	uint32_t		twa_aen_queue_wrapped;	/* indicates if AEN queue ever wrapped */
 	/* Controller state. */
-	u_int32_t		twa_state;
-	u_int32_t		twa_sc_flags;
+	uint32_t		twa_state;
+	uint32_t		twa_sc_flags;
 #ifdef TWA_DEBUG
 	struct twa_q_statistics	twa_qstats[TWAQ_COUNT];	/* queue statistics */
 #endif /* TWA_DEBUG */
 
 	struct _twa_ioctl_lock{
-		u_int32_t	lock;		/* lock state */
-		u_int32_t	timeout;	/* time at which the lock
+		uint32_t	lock;		/* lock state */
+		uint32_t	timeout;	/* time at which the lock
 						 * will become available,
 						 * even if not released
 						 */
@@ -150,7 +150,7 @@ struct twa_softc {
 struct twa_request {
 	struct twa_command_packet *tr_command;
 	/* ptr to cmd pkt submitted to controller */
-	u_int32_t		tr_request_id;
+	uint32_t		tr_request_id;
 	/* request id for tracking with firmware */
 	void			*tr_data;
 	/* ptr to data being passed to firmware */
@@ -167,13 +167,13 @@ struct twa_request {
 	/* to link this request in a list */
 	struct twa_softc	*tr_sc;
 	/* controller that owns us */
-	u_int32_t		tr_status;
+	uint32_t		tr_status;
 	/* command status */
-	u_int32_t		tr_flags;
+	uint32_t		tr_flags;
 	/* request flags */
-	u_int32_t		tr_error;
+	uint32_t		tr_error;
 	/* error encountered before request submission */
-	u_int32_t		tr_cmd_pkt_type;
+	uint32_t		tr_cmd_pkt_type;
 	/* request specific data to use during callback */
 	void			(*tr_callback)(struct twa_request *tr);
 	/* callback handler */
@@ -215,7 +215,7 @@ void	twa_release_request(struct twa_request *);
 
 /* Error/AEN message structure. */
 struct twa_message {
-	u_int32_t	code;
+	uint32_t	code;
 	const char	*message;
 };
 
