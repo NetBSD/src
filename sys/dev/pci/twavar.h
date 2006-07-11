@@ -1,12 +1,5 @@
-/*	$NetBSD: twavar.h,v 1.3 2006/05/25 01:37:08 wrstuden Exp $ */
+/*	$NetBSD: twavar.h,v 1.4 2006/07/11 00:17:34 simonb Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
-/*
- * Copyright (c) 2005-2006 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Your Wasabi Systems License Agreement specifies the terms and
- * conditions for use and redistribution.
- */
 
 /*-
  * Copyright (c) 2003-04 3ware, Inc.
