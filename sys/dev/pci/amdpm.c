@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.17 2006/07/11 14:47:49 drochner Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.18 2006/07/11 17:37:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.17 2006/07/11 14:47:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.18 2006/07/11 17:37:14 drochner Exp $");
 
 #include "opt_amdpm.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.17 2006/07/11 14:47:49 drochner Exp $");
 #include <sys/rnd.h>
 
 #ifdef __HAVE_TIMECOUNTER
+#include <machine/bus.h>
 #include <dev/ic/acpipmtimer.h>
 #endif
 
@@ -138,7 +139,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 #ifdef __HAVE_TIMECOUNTER
 	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0) {
 		acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_ioh,
-			AMDPM_TMR, ((confreg & AMDPM_TMR32) : ACPIPMT_32BIT : 0));
+		  AMDPM_TMR, ((confreg & AMDPM_TMR32) ? ACPIPMT_32BIT : 0));
 	}
 #endif
 
