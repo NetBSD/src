@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.260 2006/06/30 17:17:09 nisimura Exp $
+#	$NetBSD: files.pci,v 1.261 2006/07/11 14:47:49 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -664,8 +664,7 @@ file	dev/pci/piixpm.c		piixpm
 
 # AMD 768MPX power management controller
 defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
-define	amdpm {}
-device	amdpm: i2cbus, amdpm
+device	amdpm: i2cbus, acpipmtimer
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
 file	dev/pci/amdpm_smbus.c		amdpm
