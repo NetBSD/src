@@ -21,6 +21,10 @@
 
 2006-06-16  Mark Mitchell  <mark@codesourcery.com>
 
+	PR c++/28016
+	* decl.c (cp_finsh_decl): Do not emit uninstantiated static data
+	members.
+
 	PR c++/27884
 	* decl.c (have_extern_spec): Remove.
 	(start_decl): Do not check have_extern_spec.
