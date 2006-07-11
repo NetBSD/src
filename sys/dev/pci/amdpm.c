@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.16 2006/07/10 20:11:29 xtraeme Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.17 2006/07/11 14:47:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.16 2006/07/10 20:11:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.17 2006/07/11 14:47:49 drochner Exp $");
 
 #include "opt_amdpm.h"
 
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.16 2006/07/10 20:11:29 xtraeme Exp $");
 #include <sys/rnd.h>
 
 #ifdef __HAVE_TIMECOUNTER
-#include <sys/timetc.h>
-#include <machine/bus.h>
+#include <dev/ic/acpipmtimer.h>
 #endif
 
 #include <dev/i2c/i2cvar.h>
@@ -64,23 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.16 2006/07/10 20:11:29 xtraeme Exp $");
 #include <dev/pci/amdpm_smbusreg.h>
 
 static void	amdpm_rnd_callout(void *);
-
-#ifdef __HAVE_TIMECOUNTER
-uint32_t	amdpm_get_timecount(struct timecounter *);
-
-#ifndef AMDPM_FREQUENCY
-#define AMDPM_FREQUENCY	3579545
-#endif
-
-static struct timecounter amdpm_timecounter = {
-	amdpm_get_timecount,
-	0,
-	0xffffff,
-	AMDPM_FREQUENCY,
-	"amdpm",
-	1000
-};
-#endif
 
 #ifdef AMDPM_RND_COUNTERS
 #define	AMDPM_RNDCNT_INCR(ev)	(ev)->ev_count++
@@ -155,15 +137,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef __HAVE_TIMECOUNTER
 	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0) {
-		aprint_normal("%s: %d-bit timer at %" PRIu64 "Hz\n",
-			      sc->sc_dev.dv_xname,
-			      (confreg & AMDPM_TMR32) ? 32 : 24,
-			      amdpm_timecounter.tc_frequency);
-
-		amdpm_timecounter.tc_priv = sc;
-		if (confreg & AMDPM_TMR32)
-			amdpm_timecounter.tc_counter_mask = 0xffffffffu;
-		tc_init(&amdpm_timecounter);
+		acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_ioh,
+			AMDPM_TMR, ((confreg & AMDPM_TMR32) : ACPIPMT_32BIT : 0));
 	}
 #endif
 
@@ -245,13 +220,3 @@ amdpm_rnd_callout(void *v)
 		AMDPM_RNDCNT_INCR(&sc->sc_rnd_miss);
 	callout_reset(&sc->sc_rnd_ch, 1, amdpm_rnd_callout, sc);
 }
-
-#ifdef __HAVE_TIMECOUNTER
-uint32_t
-amdpm_get_timecount(struct timecounter *tc)
-{
-	struct amdpm_softc *sc = tc->tc_priv;
-
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_TMR);
-}
-#endif
