@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.1 2006/07/08 20:30:00 christos Exp $ */
+/*	$NetBSD: apmbios.c,v 1.2 2006/07/11 02:35:30 perry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.1 2006/07/08 20:30:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.2 2006/07/11 02:35:30 perry Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -383,7 +383,10 @@ apm_get_powstat(void *c, u_int batteryid, struct apm_power_info *pi)
 	pi->battery_state = APM_BATT_STATE(&regs);
 	pi->battery_flags = APM_BATT_FLAGS(&regs);
 	pi->minutes_valid = APM_BATT_REM_VALID(&regs);
-	pi->minutes_left = APM_BATT_REMAINING(&regs);
+	if (pi->minutes_valid)
+		pi->minutes_left = APM_BATT_REMAINING(&regs);
+	else
+		pi->minutes_left = 0;
 	return 0;
 }
 
