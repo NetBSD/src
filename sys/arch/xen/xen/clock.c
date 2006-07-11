@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17.4.6 2006/07/11 12:25:25 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.4.7 2006/07/11 12:26:32 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.4.6 2006/07/11 12:25:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.4.7 2006/07/11 12:26:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,6 @@ inittodr(time_t base)
 {
 	int s;
 	struct cpu_info *ci = curcpu();
-#if defined(XEN3)
-	uint64_t t;
-#endif /* defined(XEN3) */
 
 	/*
 	 * if the file system time is more than a year older than the
@@ -156,15 +153,8 @@ inittodr(time_t base)
 	get_time_values_from_xen();
 	splx(s);
 
-#if defined(XEN3)
-	t = (shadow_tv.tv_sec + rtc_offset * 60) * UINT64_C(1000000) +
-	    shadow_tv.tv_usec + processed_system_time / 1000;
-	time.tv_usec = t % UINT64_C(1000000);
-	time.tv_sec = t / UINT64_C(1000000);
-#else /* defined(XEN3) */
 	time.tv_usec = shadow_tv.tv_usec;
 	time.tv_sec = shadow_tv.tv_sec + rtc_offset * 60;
-#endif /* defined(XEN3) */
 #ifdef XEN_CLOCK_DEBUG
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
