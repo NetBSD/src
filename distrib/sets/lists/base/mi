@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.636 2006/06/27 20:39:01 peter Exp $
+# $NetBSD: mi,v 1.637 2006/07/11 23:18:33 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1783,11 +1783,11 @@
 ./usr/share/i18n/esdb/AST/ARMSCII-8.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/AST/ARMSCII-8A.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5			base-sysutil-share
-./usr/share/i18n/esdb/BIG5/Big5-2003.esdb	base-sysutil-share
-./usr/share/i18n/esdb/BIG5/Big5-E.esdb		base-sysutil-share
-./usr/share/i18n/esdb/BIG5/Big5-ETen.esdb	base-sysutil-share
-./usr/share/i18n/esdb/BIG5/Big5-IBM.esdb	base-sysutil-share
-./usr/share/i18n/esdb/BIG5/Big5-Plus.esdb	base-sysutil-share
+./usr/share/i18n/esdb/BIG5/Big5-2003.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/BIG5/Big5-E.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/BIG5/Big5-ETen.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/BIG5/Big5-IBM.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/BIG5/Big5-Plus.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP			base-sysutil-share
 ./usr/share/i18n/esdb/CP/CP037.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP038.esdb		base-sysutil-share	nls
