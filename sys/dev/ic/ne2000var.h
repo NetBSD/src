@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.17 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.18 2006/07/11 22:48:37 peter Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,5 +66,7 @@ int	ne2000_detach(struct ne2000_softc *, int);
 #ifdef IPKDB_NE
 int	ne2000_ipkdb_attach(struct ipkdb_if *);
 #endif
+
+void	ne2000_power(int, void *);
 
 #endif /* _DEV_IC_NE2000VAR_H_ */
