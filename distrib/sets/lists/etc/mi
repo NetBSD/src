@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.170 2006/06/24 05:11:40 mrg Exp $
+# $NetBSD: mi,v 1.171 2006/07/11 23:19:24 peter Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -167,10 +167,10 @@
 ./etc/rc.d/identd				etc-net-rc
 ./etc/rc.d/ifwatchd				etc-net-rc
 ./etc/rc.d/inetd				etc-net-rc
-./etc/rc.d/ipfilter				etc-ipf-rc		ipfilter
-./etc/rc.d/ipfs					etc-ipf-rc		ipfilter
-./etc/rc.d/ipmon				etc-ipf-rc		ipfilter
-./etc/rc.d/ipnat				etc-ipf-rc		ipfilter
+./etc/rc.d/ipfilter				etc-ipf-rc
+./etc/rc.d/ipfs					etc-ipf-rc
+./etc/rc.d/ipmon				etc-ipf-rc
+./etc/rc.d/ipnat				etc-ipf-rc
 ./etc/rc.d/ipsec				etc-net-rc
 ./etc/rc.d/irdaattach				etc-sys-rc
 ./etc/rc.d/iscsi_target				etc-iscsi-rc
