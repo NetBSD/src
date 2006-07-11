@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.3 2006/07/11 00:17:34 simonb Exp $ */
+/*	$NetBSD: twareg.h,v 1.4 2006/07/11 00:25:42 simonb Exp $ */
 /*	$wasabi: twareg.h,v 1.11 2006/04/27 17:12:39 wrstuden Exp $	*/
 
 /*-
@@ -85,19 +85,19 @@
 
 #if defined(_KERNEL)
 #define TWA_WRITE_REGISTER(sc, offset, val)	\
-	bus_space_write_4(sc->twa_bus_iot, sc->twa_bus_ioh, offset, (u_int32_t)val)
+	bus_space_write_4(sc->twa_bus_iot, sc->twa_bus_ioh, offset, (uint32_t)val)
 
 #define TWA_WRITE_COMMAND_QUEUE(sc, val)				\
 	do {								\
 		if (TWA_64BIT_ADDRESSES) {				\
 			/* First write the low 4 bytes, then the high 4. */  \
 			TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET_LOW, \
-						(u_int32_t)(val));	\
+						(uint32_t)(val));	\
 			TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET_HIGH,\
-					(u_int32_t)(((u_int64_t)val)>>32));  \
+					(uint32_t)(((uint64_t)val)>>32));  \
 		} else							\
 			TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET,\
-						(u_int32_t)(val)); \
+						(uint32_t)(val)); \
 	} while (0)
 #endif
 
@@ -223,157 +223,157 @@ struct twa_sg {
 #if defined(_KERNEL)
 	bus_addr_t	address;
 #else
-	u_int32_t	xx_address_xx;	/* Fail if userland tries to use this */
+	uint32_t	xx_address_xx;	/* Fail if userland tries to use this */
 #endif
-	u_int32_t	length;
+	uint32_t	length;
 } __attribute__ ((packed));
 
 
 /* 7000 structures. */
 struct twa_command_init_connect {
-	u_int8_t	opcode:5;	/* TWA_OP_INITCONNECTION */
-	u_int8_t	res1:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	res2;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int16_t	message_credits;
-	u_int32_t	features;
-	u_int16_t	fw_srl;
-	u_int16_t	fw_arch_id;
-	u_int16_t	fw_branch;
-	u_int16_t	fw_build;
-	u_int32_t	result;
+	uint8_t		opcode:5;	/* TWA_OP_INITCONNECTION */
+	uint8_t		res1:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		res2;
+	uint8_t		status;
+	uint8_t		flags;
+	uint16_t	message_credits;
+	uint32_t	features;
+	uint16_t	fw_srl;
+	uint16_t	fw_arch_id;
+	uint16_t	fw_branch;
+	uint16_t	fw_build;
+	uint32_t	result;
 }__attribute__ ((packed));
 
 struct twa_command_download_firmware {
-	u_int8_t	opcode:5;	/* TWA_DOWNLOAD_FIRMWARE */
-	u_int8_t	sgl_offset:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int16_t	param;
+	uint8_t		opcode:5;	/* TWA_DOWNLOAD_FIRMWARE */
+	uint8_t		sgl_offset:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit;
+	uint8_t		status;
+	uint8_t		flags;
+	uint16_t	param;
 	struct twa_sg	sgl[TWA_MAX_SG_ELEMENTS];
 } __attribute__ ((packed));
 
 
 struct twa_command_reset_firmware {
-	u_int8_t	opcode:5;	/* TWA_OP_RESET_FIRMWARE */
-	u_int8_t	res1:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int8_t	res2;
-	u_int8_t	param;
+	uint8_t		opcode:5;	/* TWA_OP_RESET_FIRMWARE */
+	uint8_t		res1:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit;
+	uint8_t		status;
+	uint8_t		flags;
+	uint8_t		res2;
+	uint8_t		param;
 } __attribute__ ((packed));
 
 
 struct twa_command_io {
-	u_int8_t	opcode:5;	/* TWA_OP_READ/TWA_OP_WRITE */
-	u_int8_t	sgl_offset:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit:4;
-	u_int8_t	host_id:4;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int16_t	block_count;
-	u_int32_t	lba;
+	uint8_t		opcode:5;	/* TWA_OP_READ/TWA_OP_WRITE */
+	uint8_t		sgl_offset:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit:4;
+	uint8_t		host_id:4;
+	uint8_t		status;
+	uint8_t		flags;
+	uint16_t	block_count;
+	uint32_t	lba;
 	struct twa_sg	sgl[TWA_MAX_SG_ELEMENTS];
 } __attribute__ ((packed));
 
 
 struct twa_command_hotswap {
-	u_int8_t	opcode:5;	/* TWA_OP_HOTSWAP */
-	u_int8_t	res1:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit:4;
-	u_int8_t	host_id:4;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int8_t	action;
+	uint8_t		opcode:5;	/* TWA_OP_HOTSWAP */
+	uint8_t		res1:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit:4;
+	uint8_t		host_id:4;
+	uint8_t		status;
+	uint8_t		flags;
+	uint8_t		action;
 #define TWA_OP_HOTSWAP_REMOVE		0x00	/* remove assumed-degraded unit */
 #define TWA_OP_HOTSWAP_ADD_CBOD		0x01	/* add CBOD to empty port */
 #define TWA_OP_HOTSWAP_ADD_SPARE	0x02	/* add spare to empty port */
-	u_int8_t	aport;
+	uint8_t		aport;
 } __attribute__ ((packed));
 
 
 struct twa_command_param {
-	u_int8_t	opcode:5;	/* TWA_OP_GETPARAM, TWA_OP_SETPARAM */
-	u_int8_t	sgl_offset:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit:4;
-	u_int8_t	host_id:4;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int16_t	param_count;
+	uint8_t		opcode:5;	/* TWA_OP_GETPARAM, TWA_OP_SETPARAM */
+	uint8_t		sgl_offset:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit:4;
+	uint8_t		host_id:4;
+	uint8_t		status;
+	uint8_t		flags;
+	uint16_t	param_count;
 	struct twa_sg	sgl[TWA_MAX_SG_ELEMENTS];
 } __attribute__ ((packed));
 
 
 struct twa_command_rebuildunit {
-	u_int8_t	opcode:5;	/* TWA_OP_REBUILDUNIT */
-	u_int8_t	res1:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	src_unit:4;
-	u_int8_t	host_id:4;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int8_t	action:7;
+	uint8_t		opcode:5;	/* TWA_OP_REBUILDUNIT */
+	uint8_t		res1:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		src_unit:4;
+	uint8_t		host_id:4;
+	uint8_t		status;
+	uint8_t		flags;
+	uint8_t		action:7;
 #define TWA_OP_REBUILDUNIT_NOP		0
 #define TWA_OP_REBUILDUNIT_STOP		2	/* stop all rebuilds */
 #define TWA_OP_REBUILDUNIT_START	4	/* start rebuild with lowest unit */
 #define TWA_OP_REBUILDUNIT_STARTUNIT	5	/* rebuild src_unit (not supported) */
-	u_int8_t	cs:1;			/* request state change on src_unit */
-	u_int8_t	logical_subunit;	/* for RAID10 rebuild of logical subunit */
+	uint8_t		cs:1;			/* request state change on src_unit */
+	uint8_t		logical_subunit;	/* for RAID10 rebuild of logical subunit */
 } __attribute__ ((packed));
 
 
 struct twa_command_ata {
-	u_int8_t	opcode:5;	/* TWA_OP_ATA_PASSTHROUGH */
-	u_int8_t	sgl_offset:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit:4;
-	u_int8_t	host_id:4;
-	u_int8_t	status;
-	u_int8_t	flags;
-	u_int16_t	param;
-	u_int16_t	features;
-	u_int16_t	sector_count;
-	u_int16_t	sector_num;
-	u_int16_t	cylinder_lo;
-	u_int16_t	cylinder_hi;
-	u_int8_t	drive_head;
-	u_int8_t	command;
+	uint8_t		opcode:5;	/* TWA_OP_ATA_PASSTHROUGH */
+	uint8_t		sgl_offset:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit:4;
+	uint8_t		host_id:4;
+	uint8_t		status;
+	uint8_t		flags;
+	uint16_t	param;
+	uint16_t	features;
+	uint16_t	sector_count;
+	uint16_t	sector_num;
+	uint16_t	cylinder_lo;
+	uint16_t	cylinder_hi;
+	uint8_t		drive_head;
+	uint8_t		command;
 	struct twa_sg	sgl[TWA_MAX_ATA_SG_ELEMENTS];
 } __attribute__ ((packed));
 
 
 struct twa_command_generic {
-	u_int8_t	opcode:5;
-	u_int8_t	sgl_offset:3;
-	u_int8_t	size;
-	u_int8_t	request_id;
-	u_int8_t	unit:4;
-	u_int8_t	host_id:4;
-	u_int8_t	status;
-	u_int8_t	flags;
+	uint8_t		opcode:5;
+	uint8_t		sgl_offset:3;
+	uint8_t		size;
+	uint8_t		request_id;
+	uint8_t		unit:4;
+	uint8_t		host_id:4;
+	uint8_t		status;
+	uint8_t		flags;
 #define TWA_FLAGS_SUCCESS	0x00
 #define TWA_FLAGS_INFORMATIONAL	0x01
 #define TWA_FLAGS_WARNING	0x02
 #define TWA_FLAGS_FATAL		0x03
 #define TWA_FLAGS_PERCENTAGE	(1<<8)	/* bits 0-6 indicate completion percentage */
-	u_int16_t	count;		/* block count, parameter count, message credits */
+	uint16_t	count;		/* block count, parameter count, message credits */
 } __attribute__ ((packed));
 
 
@@ -396,39 +396,39 @@ union twa_command_7k {
 /* Command Packet. */
 struct twa_command_9k {
 	struct {
-		u_int8_t	opcode:5;
-		u_int8_t	reserved:3;
+		uint8_t		opcode:5;
+		uint8_t		reserved:3;
 	} command;
-	u_int8_t	unit;
-	u_int16_t	request_id;
-	u_int8_t	status;
-	u_int8_t	sgl_offset; /* offset (in bytes) to sg_list, from the end of sgl_entries */
-	u_int16_t	sgl_entries;
-	u_int8_t	cdb[16];
+	uint8_t		unit;
+	uint16_t	request_id;
+	uint8_t		status;
+	uint8_t		sgl_offset; /* offset (in bytes) to sg_list, from the end of sgl_entries */
+	uint16_t	sgl_entries;
+	uint8_t		cdb[16];
 	struct twa_sg	sg_list[TWA_MAX_SG_ELEMENTS];
-	u_int8_t	padding[32];
+	uint8_t		padding[32];
 } __attribute__ ((packed));
 
 
 /* Command packet header. */
 struct twa_command_header {
-	u_int8_t	sense_data[TWA_SENSE_DATA_LENGTH];
+	uint8_t		sense_data[TWA_SENSE_DATA_LENGTH];
 	struct {
 		int8_t		reserved[4];
-		u_int16_t	error;
-		u_int8_t	padding;
+		uint16_t	error;
+		uint8_t		padding;
 		struct {
-			u_int8_t	severity:3;
-			u_int8_t	reserved:5;
+			uint8_t		severity:3;
+			uint8_t		reserved:5;
 		} substatus_block;
 	} status_block;
-	u_int8_t	err_specific_desc[98];
+	uint8_t		err_specific_desc[98];
 	struct {
-		u_int8_t	size_header;
-		u_int16_t	reserved;
-		u_int8_t	size_sense;
+		uint8_t		size_header;
+		uint16_t	reserved;
+		uint8_t		size_sense;
 	} header_desc;
-	u_int8_t	reserved[2];
+	uint8_t		reserved[2];
 } __attribute__ ((packed));
 
 
@@ -445,11 +445,11 @@ struct twa_command_packet {
 /* Response queue entry. */
 union twa_response_queue {
 	struct {
-		u_int32_t	undefined_1:4;
-		u_int32_t	response_id:8;
-		u_int32_t	undefined_2:20;
+		uint32_t	undefined_1:4;
+		uint32_t	response_id:8;
+		uint32_t	undefined_2:20;
 	} u;
-	u_int32_t	value;
+	uint32_t	value;
 } __attribute__ ((packed));
 
 
@@ -492,12 +492,12 @@ union twa_response_queue {
 
 
 struct twa_param_9k {
-	u_int16_t	table_id;
-	u_int8_t	parameter_id;
-	u_int8_t	reserved;
-	u_int16_t	parameter_size_bytes;
-	u_int16_t	parameter_actual_size_bytes;
-	u_int8_t	data[1];
+	uint16_t	table_id;
+	uint8_t		parameter_id;
+	uint8_t		reserved;
+	uint16_t	parameter_size_bytes;
+	uint16_t	parameter_actual_size_bytes;
+	uint8_t		data[1];
 } __attribute__ ((packed));
 
 #endif	/* !_PCI_TWAREG_H_ */
