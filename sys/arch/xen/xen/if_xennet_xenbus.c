@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.12 2006/07/12 15:02:15 yamt Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.13 2006/07/12 15:03:08 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.12 2006/07/12 15:02:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.13 2006/07/12 15:03:08 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -329,6 +329,7 @@ xennet_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_timer = 0;
 	ifp->if_snd.ifq_maxlen = max(ifqmaxlen, NET_TX_RING_SIZE * 2);
+	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -918,6 +919,8 @@ xennet_softstart(void *arg)
 
 	req_prod = sc->sc_tx_ring.req_prod_pvt;
 	while (/*CONSTCOND*/1) {
+		uint16_t txflags;
+
 		req = SLIST_FIRST(&sc->sc_txreq_head);
 		if (__predict_false(req == NULL)) {
 			ifp->if_flags |= IFF_OACTIVE;
@@ -945,6 +948,13 @@ xennet_softstart(void *arg)
 				panic("xennet_start: no pa");
 			}
 			break;
+		}
+
+		if ((m->m_pkthdr.csum_flags &
+		    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+			txflags = NETTXF_csum_blank;
+		} else {
+			txflags = 0;
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
@@ -1024,7 +1034,7 @@ xennet_softstart(void *arg)
 		txreq->gref = req->txreq_gntref;
 		txreq->offset = pa & ~PG_FRAME;
 		txreq->size = m->m_pkthdr.len;
-		txreq->flags = 0;
+		txreq->flags = txflags;
 
 		req_prod++;
 		sc->sc_tx_ring.req_prod_pvt = req_prod;
