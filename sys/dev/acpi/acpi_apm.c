@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.1 2006/07/08 20:23:53 christos Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.2 2006/07/12 11:31:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.1 2006/07/08 20:23:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.2 2006/07/12 11:31:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,14 +228,14 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 			pinfo->battery_flags |= APM_BATT_FLAG_LOW;
 			pinfo->battery_state = APM_BATT_LOW;
 		}
-		if (lastcap != -1)
+		if (lastcap != -1 && lastcap != 0)
 			pinfo->battery_life = 100 * cap / lastcap;
-		else if (descap != -1)
+		else if (descap != -1 && descap != 0)
 			pinfo->battery_life = 100 * cap / descap;
 	}
 
 	if ((pinfo->battery_flags & APM_BATT_FLAG_CHARGING) == 0) {
-		if (discharge != -1 && cap != -1)
+		if (discharge != -1 && cap != -1 && discarge != 0)
 			pinfo->minutes_left = 60 * cap / discharge;
 		if (pinfo->battery_state == APM_BATT_UNKNOWN)
 			pinfo->battery_state = pinfo->ac_state == APM_AC_ON ? 
