@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.116 2006/07/07 06:27:17 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.117 2006/07/12 14:58:29 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1914,4 +1914,25 @@ sys/dev/pci/if_wm.c				1.124
 
 	Fix len=-4 issues in wm(4) driver.
 	[lukem, ticket #1400]
+
+etc/defaults/security.conf			1.18 via patch
+etc/security					1.98
+share/man/man5/security.conf.5			1.30-1.31
+
+	Implement check_devices_ignore_paths, which is a list of paths to
+	avoid traversing during check_devices.
+	[lukem, ticket #1377]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/common/xf86fbman.c 1.2
+
+	Fixes Xvideo on some resolutions and drivers such as 1680x1050 on "nv".
+	[jmmv, ticket #1383]
+
+lib/libc/string/wcscpy.c			1.3
+lib/libc/string/wcsncpy.c			1.3
+regress/lib/libc/string/wcsncpy/Makefile	1.1
+regress/lib/libc/string/wcsncpy/wcsncpy_test.c	1.1
+
+	Fix possible one byte buffer overrun in wcsncpy(3).
+	[tnozaki, ticket #1386]
 
