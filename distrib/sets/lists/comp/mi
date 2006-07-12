@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.896 2006/07/08 17:17:30 skrll Exp $
+#	$NetBSD: mi,v 1.897 2006/07/12 13:39:05 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -13,15 +13,22 @@
 ./usr/bin/crunchide				comp-c-bin
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
+./usr/bin/f77					comp-fortran-bin	gcc=3,gcccmds
+./usr/bin/f77					comp-obsolete		gcc=4,obsolete
 ./usr/bin/fgen					comp-util-bin
 ./usr/bin/flex					comp-c-bin
 ./usr/bin/flex++				comp-cxx-bin
+./usr/bin/fort77				comp-fortran-bin	gcc=3,gcccmds
+./usr/bin/fort77				comp-obsolete		gcc=4,obsolete
 ./usr/bin/fpr					comp-fortran-bin
 ./usr/bin/g++					comp-cxx-bin		gcccmds
+./usr/bin/g77					comp-fortran-bin	gcc=3,gcccmds
+./usr/bin/g77					comp-obsolete		gcc=4,obsolete
 ./usr/bin/gcc					comp-c-bin		gcccmds
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
 ./usr/bin/gdb					comp-debug-bin		gdb
+./usr/bin/gdbtui				comp-debug-bin		gdb,gdb=6
 ./usr/bin/genassym				comp-util-bin
 ./usr/bin/genclass				comp-obsolete		obsolete
 ./usr/bin/gettext				comp-c-bin
@@ -48,8 +55,10 @@
 ./usr/bin/nm					comp-util-bin		bfd
 ./usr/bin/objcopy				comp-util-bin		bfd
 ./usr/bin/objdump				comp-util-bin		bfd
+./usr/bin/protoize				comp-c-bin		gcccmds
 ./usr/bin/ranlib				comp-util-bin		bfd
 ./usr/bin/rcs2log				comp-cvs-bin		cvs
+./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/rpcgen				comp-c-bin
 ./usr/bin/size					comp-util-bin		bfd
 ./usr/bin/strings				comp-util-bin		bfd
@@ -57,6 +66,7 @@
 ./usr/bin/tsort					comp-util-bin
 ./usr/bin/unifdef				comp-util-bin
 ./usr/bin/unifdefall				comp-util-bin
+./usr/bin/unprotoize				comp-c-bin		gcccmds
 ./usr/bin/xgettext				comp-c-bin
 ./usr/bin/xstr					comp-c-bin
 ./usr/bin/yacc					comp-c-bin
@@ -537,6 +547,7 @@
 ./usr/include/g++/Fix.h				comp-obsolete		obsolete
 ./usr/include/g++/Fix16.h			comp-obsolete		obsolete
 ./usr/include/g++/Fix24.h			comp-obsolete		obsolete
+./usr/include/g++/FlexLexer.h			comp-cxx-include
 ./usr/include/g++/Geom.h			comp-obsolete		obsolete
 ./usr/include/g++/GetOpt.h			comp-obsolete		obsolete
 ./usr/include/g++/HypGeom.h			comp-obsolete		obsolete
@@ -548,31 +559,275 @@
 ./usr/include/g++/Normal.h			comp-obsolete		obsolete
 ./usr/include/g++/Obstack.h			comp-obsolete		obsolete
 ./usr/include/g++/Pix.h				comp-obsolete		obsolete
+./usr/include/g++/PlotFile.h			comp-obsolete		obsolete
 ./usr/include/g++/Poisson.h			comp-obsolete		obsolete
 ./usr/include/g++/RNG.h				comp-obsolete		obsolete
 ./usr/include/g++/Random.h			comp-obsolete		obsolete
 ./usr/include/g++/Rational.h			comp-obsolete		obsolete
 ./usr/include/g++/Regex.h			comp-obsolete		obsolete
 ./usr/include/g++/RndInt.h			comp-obsolete		obsolete
+./usr/include/g++/SFile.h			comp-obsolete		obsolete
 ./usr/include/g++/SLList.h			comp-obsolete		obsolete
 ./usr/include/g++/SmplHist.h			comp-obsolete		obsolete
 ./usr/include/g++/SmplStat.h			comp-obsolete		obsolete
 ./usr/include/g++/String.h			comp-obsolete		obsolete
 ./usr/include/g++/Uniform.h			comp-obsolete		obsolete
 ./usr/include/g++/Weibull.h			comp-obsolete		obsolete
+./usr/include/g++/_G_config.h			comp-obsolete		obsolete
+./usr/include/g++/algo.h			comp-obsolete		obsolete
+./usr/include/g++/algobase.h			comp-obsolete		obsolete
+./usr/include/g++/algorithm			comp-cxx-include
+./usr/include/g++/alloc.h			comp-obsolete		obsolete
+./usr/include/g++/backward/algo.h		comp-cxx-include
+./usr/include/g++/backward/algobase.h		comp-cxx-include
+./usr/include/g++/backward/alloc.h		comp-cxx-include
+./usr/include/g++/backward/backward_warning.h	comp-cxx-include
+./usr/include/g++/backward/bvector.h		comp-cxx-include
+./usr/include/g++/backward/complex.h		comp-cxx-include
+./usr/include/g++/backward/defalloc.h		comp-cxx-include
+./usr/include/g++/backward/deque.h		comp-cxx-include
+./usr/include/g++/backward/fstream.h		comp-cxx-include
+./usr/include/g++/backward/function.h		comp-cxx-include
+./usr/include/g++/backward/hash_map.h		comp-cxx-include
+./usr/include/g++/backward/hash_set.h		comp-cxx-include
+./usr/include/g++/backward/hashtable.h		comp-cxx-include
+./usr/include/g++/backward/heap.h		comp-cxx-include
+./usr/include/g++/backward/iomanip.h		comp-cxx-include
+./usr/include/g++/backward/iostream.h		comp-cxx-include
+./usr/include/g++/backward/istream.h		comp-cxx-include
+./usr/include/g++/backward/iterator.h		comp-cxx-include
+./usr/include/g++/backward/list.h		comp-cxx-include
+./usr/include/g++/backward/map.h		comp-cxx-include
+./usr/include/g++/backward/multimap.h		comp-cxx-include
+./usr/include/g++/backward/multiset.h		comp-cxx-include
+./usr/include/g++/backward/new.h		comp-cxx-include
+./usr/include/g++/backward/ostream.h		comp-cxx-include
+./usr/include/g++/backward/pair.h		comp-cxx-include
+./usr/include/g++/backward/queue.h		comp-cxx-include
+./usr/include/g++/backward/rope.h		comp-cxx-include
+./usr/include/g++/backward/set.h		comp-cxx-include
+./usr/include/g++/backward/slist.h		comp-cxx-include
+./usr/include/g++/backward/stack.h		comp-cxx-include
+./usr/include/g++/backward/stream.h		comp-cxx-include
+./usr/include/g++/backward/streambuf.h		comp-cxx-include
+./usr/include/g++/backward/strstream		comp-cxx-include
+./usr/include/g++/backward/tempbuf.h		comp-cxx-include
+./usr/include/g++/backward/tree.h		comp-cxx-include
+./usr/include/g++/backward/vector.h		comp-cxx-include
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
+./usr/include/g++/bits/allocator.h		comp-cxx-include
+./usr/include/g++/bits/atomic_word.h		comp-cxx-include
+./usr/include/g++/bits/atomicity.h		comp-cxx-include
+./usr/include/g++/bits/basic_file.h		comp-cxx-include
+./usr/include/g++/bits/basic_ios.h		comp-cxx-include
+./usr/include/g++/bits/basic_ios.tcc		comp-cxx-include
+./usr/include/g++/bits/basic_string.h		comp-cxx-include
+./usr/include/g++/bits/basic_string.tcc		comp-cxx-include
+./usr/include/g++/bits/boost_concept_check.h	comp-cxx-include
+./usr/include/g++/bits/c++allocator.h		comp-cxx-include
+./usr/include/g++/bits/c++config.h		comp-cxx-include
+./usr/include/g++/bits/c++io.h			comp-cxx-include
+./usr/include/g++/bits/c++locale.h		comp-cxx-include
+./usr/include/g++/bits/char_traits.h		comp-cxx-include
+./usr/include/g++/bits/cmath.tcc		comp-cxx-include
+./usr/include/g++/bits/codecvt.h		comp-cxx-include
+./usr/include/g++/bits/codecvt_specializations.h comp-cxx-include	gcc=3
+./usr/include/g++/bits/codecvt_specializations.h comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/concept_check.h		comp-cxx-include
+./usr/include/g++/bits/concurrence.h		comp-cxx-include
+./usr/include/g++/bits/cpp_type_traits.h	comp-cxx-include
+./usr/include/g++/bits/cpu_defines.h		comp-cxx-include
+./usr/include/g++/bits/ctype_base.h		comp-cxx-include
+./usr/include/g++/bits/ctype_inline.h		comp-cxx-include
+./usr/include/g++/bits/ctype_noninline.h	comp-cxx-include
+./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include
+./usr/include/g++/bits/deque.tcc		comp-cxx-include
+./usr/include/g++/bits/fpos.h			comp-cxx-include	gcc=3
+./usr/include/g++/bits/fpos.h			comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/fstream.tcc		comp-cxx-include
+./usr/include/g++/bits/functexcept.h		comp-cxx-include
+./usr/include/g++/bits/gslice.h			comp-cxx-include
+./usr/include/g++/bits/gslice_array.h		comp-cxx-include
+./usr/include/g++/bits/gthr-default.h		comp-cxx-include
+./usr/include/g++/bits/gthr-posix.h		comp-cxx-include
+./usr/include/g++/bits/gthr-single.h		comp-cxx-include
+./usr/include/g++/bits/gthr-tpf.h		comp-cxx-include
+./usr/include/g++/bits/gthr.h			comp-cxx-include
+./usr/include/g++/bits/indirect_array.h		comp-cxx-include
+./usr/include/g++/bits/ios_base.h		comp-cxx-include
+./usr/include/g++/bits/istream.tcc		comp-cxx-include
+./usr/include/g++/bits/list.tcc			comp-cxx-include
+./usr/include/g++/bits/locale_classes.h		comp-cxx-include
+./usr/include/g++/bits/locale_facets.h		comp-cxx-include
+./usr/include/g++/bits/locale_facets.tcc	comp-cxx-include
+./usr/include/g++/bits/localefwd.h		comp-cxx-include
+./usr/include/g++/bits/mask_array.h		comp-cxx-include
+./usr/include/g++/bits/messages_members.h	comp-cxx-include
+./usr/include/g++/bits/os_defines.h		comp-cxx-include
+./usr/include/g++/bits/ostream.tcc		comp-cxx-include
+./usr/include/g++/bits/postypes.h		comp-cxx-include
+./usr/include/g++/bits/pthread_allocimpl.h	comp-cxx-include	gcc=3
+./usr/include/g++/bits/pthread_allocimpl.h	comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/slice_array.h		comp-cxx-include
+./usr/include/g++/bits/sstream.tcc		comp-cxx-include
+./usr/include/g++/bits/stl_algo.h		comp-cxx-include
+./usr/include/g++/bits/stl_algobase.h		comp-cxx-include
+./usr/include/g++/bits/stl_alloc.h		comp-cxx-include	gcc=3
+./usr/include/g++/bits/stl_alloc.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/stl_bvector.h		comp-cxx-include
+./usr/include/g++/bits/stl_construct.h		comp-cxx-include
+./usr/include/g++/bits/stl_deque.h		comp-cxx-include
+./usr/include/g++/bits/stl_function.h		comp-cxx-include
+./usr/include/g++/bits/stl_heap.h		comp-cxx-include
+./usr/include/g++/bits/stl_iterator.h		comp-cxx-include
+./usr/include/g++/bits/stl_iterator_base_funcs.h comp-cxx-include
+./usr/include/g++/bits/stl_iterator_base_types.h comp-cxx-include
+./usr/include/g++/bits/stl_list.h		comp-cxx-include
+./usr/include/g++/bits/stl_map.h		comp-cxx-include
+./usr/include/g++/bits/stl_multimap.h		comp-cxx-include
+./usr/include/g++/bits/stl_multiset.h		comp-cxx-include
+./usr/include/g++/bits/stl_numeric.h		comp-cxx-include
+./usr/include/g++/bits/stl_pair.h		comp-cxx-include
+./usr/include/g++/bits/stl_pthread_alloc.h	comp-cxx-include	gcc=3
+./usr/include/g++/bits/stl_pthread_alloc.h	comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/stl_queue.h		comp-cxx-include
+./usr/include/g++/bits/stl_raw_storage_iter.h	comp-cxx-include
+./usr/include/g++/bits/stl_relops.h		comp-cxx-include
+./usr/include/g++/bits/stl_set.h		comp-cxx-include
+./usr/include/g++/bits/stl_stack.h		comp-cxx-include
+./usr/include/g++/bits/stl_tempbuf.h		comp-cxx-include
+./usr/include/g++/bits/stl_threads.h		comp-cxx-include	gcc=3
+./usr/include/g++/bits/stl_threads.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/stl_tree.h		comp-cxx-include
+./usr/include/g++/bits/stl_uninitialized.h	comp-cxx-include
+./usr/include/g++/bits/stl_vector.h		comp-cxx-include
+./usr/include/g++/bits/stream_iterator.h	comp-cxx-include
+./usr/include/g++/bits/streambuf.tcc		comp-cxx-include
+./usr/include/g++/bits/streambuf_iterator.h	comp-cxx-include
+./usr/include/g++/bits/stringfwd.h		comp-cxx-include
+./usr/include/g++/bits/time_members.h		comp-cxx-include
+./usr/include/g++/bits/type_traits.h		comp-cxx-include	gcc=3
+./usr/include/g++/bits/type_traits.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/valarray_after.h		comp-cxx-include
+./usr/include/g++/bits/valarray_array.h		comp-cxx-include
+./usr/include/g++/bits/valarray_array.tcc	comp-cxx-include
+./usr/include/g++/bits/valarray_before.h	comp-cxx-include
+./usr/include/g++/bits/valarray_meta.h		comp-cxx-include	gcc=3
+./usr/include/g++/bits/valarray_meta.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/bits/vector.tcc		comp-cxx-include
+./usr/include/g++/bitset			comp-cxx-include
 ./usr/include/g++/bool.h			comp-obsolete		obsolete
 ./usr/include/g++/builtin.h			comp-obsolete		obsolete
+./usr/include/g++/builtinbuf.h			comp-obsolete		obsolete
+./usr/include/g++/bvector.h			comp-obsolete		obsolete
+./usr/include/g++/c++config.h			comp-cxx-include
+./usr/include/g++/cassert			comp-cxx-include
+./usr/include/g++/cctype			comp-cxx-include
+./usr/include/g++/cerrno			comp-cxx-include
+./usr/include/g++/cfloat			comp-cxx-include
+./usr/include/g++/ciso646			comp-cxx-include
+./usr/include/g++/climits			comp-cxx-include
+./usr/include/g++/clocale			comp-cxx-include
+./usr/include/g++/cmath				comp-cxx-include
 ./usr/include/g++/compare.h			comp-obsolete		obsolete
+./usr/include/g++/complex			comp-cxx-include
+./usr/include/g++/complex.h			comp-obsolete		obsolete
+./usr/include/g++/csetjmp			comp-cxx-include
+./usr/include/g++/csignal			comp-cxx-include
+./usr/include/g++/cstdarg			comp-cxx-include
+./usr/include/g++/cstddef			comp-cxx-include
+./usr/include/g++/cstdio			comp-cxx-include
+./usr/include/g++/cstdlib			comp-cxx-include
+./usr/include/g++/cstring			comp-cxx-include
+./usr/include/g++/ctime				comp-cxx-include
+./usr/include/g++/cwchar			comp-cxx-include
+./usr/include/g++/cwctype			comp-cxx-include
+./usr/include/g++/cxxabi.h			comp-cxx-include
+./usr/include/g++/debug/bitset			comp-cxx-include	gcc=4
+./usr/include/g++/debug/debug.h			comp-cxx-include	gcc=4
+./usr/include/g++/debug/deque			comp-cxx-include	gcc=4
+./usr/include/g++/debug/formatter.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/functions.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/hash_map		comp-cxx-include	gcc=4
+./usr/include/g++/debug/hash_map.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/hash_multimap.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/hash_multiset.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/hash_set		comp-cxx-include	gcc=4
+./usr/include/g++/debug/hash_set.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/list			comp-cxx-include	gcc=4
+./usr/include/g++/debug/macros.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/map			comp-cxx-include	gcc=4
+./usr/include/g++/debug/map.h			comp-cxx-include	gcc=4
+./usr/include/g++/debug/multimap.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/multiset.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/safe_base.h		comp-cxx-include		gcc=4
+./usr/include/g++/debug/safe_iterator.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/safe_iterator.tcc	comp-cxx-include	gcc=4
+./usr/include/g++/debug/safe_sequence.h		comp-cxx-include	gcc=4
+./usr/include/g++/debug/set			comp-cxx-include	gcc=4
+./usr/include/g++/debug/set.h			comp-cxx-include	gcc=4
+./usr/include/g++/debug/string			comp-cxx-include	gcc=4
+./usr/include/g++/debug/vector			comp-cxx-include	gcc=4
+./usr/include/g++/defalloc.h			comp-obsolete		obsolete
+./usr/include/g++/deque				comp-cxx-include
+./usr/include/g++/deque.h			comp-obsolete		obsolete
+./usr/include/g++/editbuf.h			comp-obsolete		obsolete
+./usr/include/g++/exception			comp-cxx-include
+./usr/include/g++/exception_defines.h		comp-cxx-include
+./usr/include/g++/ext/algorithm			comp-cxx-include
+./usr/include/g++/ext/array_allocator.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/bitmap_allocator.h	comp-cxx-include	gcc=4
+./usr/include/g++/ext/codecvt_specializations.h	comp-cxx-include	gcc=4
+./usr/include/g++/ext/debug_allocator.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/enc_filebuf.h		comp-cxx-include	gcc=3
+./usr/include/g++/ext/enc_filebuf.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/ext/functional		comp-cxx-include
+./usr/include/g++/ext/hash_fun.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/hash_map			comp-cxx-include
+./usr/include/g++/ext/hash_set			comp-cxx-include
+./usr/include/g++/ext/hashtable.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/iterator			comp-cxx-include
+./usr/include/g++/ext/malloc_allocator.h	comp-cxx-include	gcc=4
+./usr/include/g++/ext/memory			comp-cxx-include
+./usr/include/g++/ext/mt_allocator.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/new_allocator.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/numeric			comp-cxx-include
+./usr/include/g++/ext/pod_char_traits.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/pool_allocator.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/rb_tree			comp-cxx-include
+./usr/include/g++/ext/rc_string_base.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/rope			comp-cxx-include
+./usr/include/g++/ext/ropeimpl.h		comp-cxx-include
+./usr/include/g++/ext/slist			comp-cxx-include
+./usr/include/g++/ext/sso_string_base.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/stdio_filebuf.h		comp-cxx-include
+./usr/include/g++/ext/stdio_sync_filebuf.h	comp-cxx-include	gcc=4
+./usr/include/g++/ext/stl_hash_fun.h		comp-cxx-include	gcc=3
+./usr/include/g++/ext/stl_hash_fun.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/ext/stl_hashtable.h		comp-cxx-include	gcc=3
+./usr/include/g++/ext/stl_hashtable.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/ext/stl_rope.h		comp-cxx-include	gcc=3
+./usr/include/g++/ext/stl_rope.h		comp-obsolete		gcc=4,obsolete
+./usr/include/g++/ext/typelist.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/vstring.h			comp-cxx-include	gcc=4
+./usr/include/g++/ext/vstring.tcc		comp-cxx-include	gcc=4
+./usr/include/g++/ext/vstring_fwd.h		comp-cxx-include	gcc=4
+./usr/include/g++/ext/vstring_util.h		comp-cxx-include	gcc=4
 ./usr/include/g++/faralloc.h			comp-obsolete		obsolete
 ./usr/include/g++/fdeque.h			comp-obsolete		obsolete
 ./usr/include/g++/flist.h			comp-obsolete		obsolete
+./usr/include/g++/floatio.h			comp-obsolete		obsolete
 ./usr/include/g++/fmap.h			comp-obsolete		obsolete
 ./usr/include/g++/fmultmap.h			comp-obsolete		obsolete
 ./usr/include/g++/fmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/fset.h			comp-obsolete		obsolete
+./usr/include/g++/fstream			comp-cxx-include	gcc=4
+./usr/include/g++/fstream.h			comp-obsolete		obsolete
+./usr/include/g++/function.h			comp-obsolete		obsolete
+./usr/include/g++/functional			comp-cxx-include
+./usr/include/g++/gen				comp-obsolete		obsolete
 ./usr/include/g++/gen/AVLMap.ccP		comp-obsolete		obsolete
 ./usr/include/g++/gen/AVLMap.hP			comp-obsolete		obsolete
 ./usr/include/g++/gen/AVLSet.ccP		comp-obsolete		obsolete
@@ -694,7 +949,13 @@
 ./usr/include/g++/gen/intVec.hP			comp-obsolete		obsolete
 ./usr/include/g++/generic.h			comp-obsolete		obsolete
 ./usr/include/g++/getpagesize.h			comp-obsolete		obsolete
+./usr/include/g++/hash_map			comp-obsolete		obsolete
+./usr/include/g++/hash_map.h			comp-obsolete		obsolete
+./usr/include/g++/hash_set			comp-obsolete		obsolete
+./usr/include/g++/hash_set.h			comp-obsolete		obsolete
+./usr/include/g++/hashtable.h			comp-obsolete		obsolete
 ./usr/include/g++/hdeque.h			comp-obsolete		obsolete
+./usr/include/g++/heap.h			comp-obsolete		obsolete
 ./usr/include/g++/hlist.h			comp-obsolete		obsolete
 ./usr/include/g++/hmap.h			comp-obsolete		obsolete
 ./usr/include/g++/hmultmap.h			comp-obsolete		obsolete
@@ -702,31 +963,77 @@
 ./usr/include/g++/hset.h			comp-obsolete		obsolete
 ./usr/include/g++/hugalloc.h			comp-obsolete		obsolete
 ./usr/include/g++/hvector.h			comp-obsolete		obsolete
+./usr/include/g++/indstream.h			comp-obsolete		obsolete
+./usr/include/g++/iolibio.h			comp-obsolete		obsolete
+./usr/include/g++/iomanip			comp-cxx-include
+./usr/include/g++/iomanip.h			comp-obsolete		obsolete
 ./usr/include/g++/ioprivate.h			comp-obsolete		obsolete
+./usr/include/g++/ios				comp-cxx-include
+./usr/include/g++/iosfwd			comp-cxx-include
 ./usr/include/g++/iostdio.h			comp-obsolete		obsolete
+./usr/include/g++/iostream			comp-cxx-include
+./usr/include/g++/iostream.h			comp-obsolete		obsolete
 ./usr/include/g++/iostreamP.h			comp-obsolete		obsolete
+./usr/include/g++/istream			comp-cxx-include
+./usr/include/g++/istream.h			comp-obsolete		obsolete
+./usr/include/g++/iterator			comp-cxx-include
+./usr/include/g++/iterator.h			comp-obsolete		obsolete
 ./usr/include/g++/lbvector.h			comp-obsolete		obsolete
 ./usr/include/g++/ldeque.h			comp-obsolete		obsolete
 ./usr/include/g++/libc.h			comp-obsolete		obsolete
+./usr/include/g++/libio.h			comp-obsolete		obsolete
 ./usr/include/g++/libioP.h			comp-obsolete		obsolete
+./usr/include/g++/limits			comp-cxx-include
+./usr/include/g++/list				comp-cxx-include
+./usr/include/g++/list.h			comp-obsolete		obsolete
 ./usr/include/g++/llist.h			comp-obsolete		obsolete
 ./usr/include/g++/lmap.h			comp-obsolete		obsolete
 ./usr/include/g++/lmultmap.h			comp-obsolete		obsolete
 ./usr/include/g++/lmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/lngalloc.h			comp-obsolete		obsolete
+./usr/include/g++/locale			comp-cxx-include
 ./usr/include/g++/lset.h			comp-obsolete		obsolete
+./usr/include/g++/map				comp-cxx-include
+./usr/include/g++/map.h				comp-obsolete		obsolete
+./usr/include/g++/memory			comp-cxx-include
 ./usr/include/g++/minmax.h			comp-obsolete		obsolete
+./usr/include/g++/multimap.h			comp-obsolete		obsolete
+./usr/include/g++/multiset.h			comp-obsolete		obsolete
 ./usr/include/g++/neralloc.h			comp-obsolete		obsolete
+./usr/include/g++/new				comp-cxx-include	gcc=4
+./usr/include/g++/new.h				comp-obsolete		obsolete
 ./usr/include/g++/nmap.h			comp-obsolete		obsolete
 ./usr/include/g++/nmultmap.h			comp-obsolete		obsolete
 ./usr/include/g++/nmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/nset.h			comp-obsolete		obsolete
+./usr/include/g++/numeric			comp-cxx-include
 ./usr/include/g++/osfcn.h			comp-obsolete		obsolete
+./usr/include/g++/ostream			comp-cxx-include
+./usr/include/g++/ostream.h			comp-obsolete		obsolete
+./usr/include/g++/pair.h			comp-obsolete		obsolete
+./usr/include/g++/parsestream.h			comp-obsolete		obsolete
+./usr/include/g++/pfstream.h			comp-obsolete		obsolete
+./usr/include/g++/procbuf.h			comp-obsolete		obsolete
 ./usr/include/g++/projectn.h			comp-obsolete		obsolete
+./usr/include/g++/pthread_alloc			comp-obsolete		obsolete
+./usr/include/g++/pthread_alloc.h		comp-obsolete		obsolete
+./usr/include/g++/queue				comp-cxx-include
 ./usr/include/g++/random.cc			comp-obsolete		obsolete
 ./usr/include/g++/regex.h			comp-obsolete		obsolete
+./usr/include/g++/rope				comp-obsolete		obsolete
+./usr/include/g++/rope.h			comp-obsolete		obsolete
+./usr/include/g++/ropeimpl.h			comp-obsolete		obsolete
 ./usr/include/g++/rx.h				comp-obsolete		obsolete
+./usr/include/g++/set				comp-cxx-include
+./usr/include/g++/set.h				comp-obsolete		obsolete
+./usr/include/g++/slist				comp-obsolete		obsolete
+./usr/include/g++/slist.h			comp-obsolete		obsolete
+./usr/include/g++/sstream			comp-cxx-include
+./usr/include/g++/stack				comp-cxx-include
+./usr/include/g++/stack.h			comp-obsolete		obsolete
 ./usr/include/g++/std.h				comp-obsolete		obsolete
+./usr/include/g++/std/bastring.cc		comp-obsolete		obsolete
+./usr/include/g++/std/bastring.h		comp-obsolete		obsolete
 ./usr/include/g++/std/bastring_inst.h		comp-obsolete		obsolete
 ./usr/include/g++/std/cassert.h			comp-obsolete		obsolete
 ./usr/include/g++/std/cctype.h			comp-obsolete		obsolete
@@ -738,6 +1045,8 @@
 ./usr/include/g++/std/clocale.h			comp-obsolete		obsolete
 ./usr/include/g++/std/cmath.h			comp-obsolete		obsolete
 ./usr/include/g++/std/complex.h			comp-obsolete		obsolete
+./usr/include/g++/std/complext.cc		comp-obsolete		obsolete
+./usr/include/g++/std/complext.h		comp-obsolete		obsolete
 ./usr/include/g++/std/complext_inst.h		comp-obsolete		obsolete
 ./usr/include/g++/std/csetjmp.h			comp-obsolete		obsolete
 ./usr/include/g++/std/csignal.h			comp-obsolete		obsolete
@@ -749,21 +1058,103 @@
 ./usr/include/g++/std/ctime.h			comp-obsolete		obsolete
 ./usr/include/g++/std/cwchar.h			comp-obsolete		obsolete
 ./usr/include/g++/std/cwctype.h			comp-obsolete		obsolete
+./usr/include/g++/std/dcomplex.h		comp-obsolete		obsolete
 ./usr/include/g++/std/exception.h		comp-obsolete		obsolete
+./usr/include/g++/std/fcomplex.h		comp-obsolete		obsolete
+./usr/include/g++/std/gslice.h			comp-obsolete		obsolete
+./usr/include/g++/std/gslice_array.h		comp-obsolete		obsolete
+./usr/include/g++/std/indirect_array.h		comp-obsolete		obsolete
+./usr/include/g++/std/ldcomplex.h		comp-obsolete		obsolete
+./usr/include/g++/std/mask_array.h		comp-obsolete		obsolete
 ./usr/include/g++/std/new.h			comp-obsolete		obsolete
 ./usr/include/g++/std/sinst.h			comp-obsolete		obsolete
+./usr/include/g++/std/slice.h			comp-obsolete		obsolete
+./usr/include/g++/std/slice_array.h		comp-obsolete		obsolete
+./usr/include/g++/std/std_valarray.h		comp-obsolete		obsolete
 ./usr/include/g++/std/stddef.h			comp-obsolete		obsolete
 ./usr/include/g++/std/stdexcept.h		comp-obsolete		obsolete
+./usr/include/g++/std/straits.h			comp-obsolete		obsolete
 ./usr/include/g++/std/string.h			comp-obsolete		obsolete
 ./usr/include/g++/std/typeinfo.h		comp-obsolete		obsolete
+./usr/include/g++/std/valarray_array.h		comp-obsolete		obsolete
+./usr/include/g++/std/valarray_array.tcc	comp-obsolete		obsolete
+./usr/include/g++/std/valarray_meta.h		comp-obsolete		obsolete
 ./usr/include/g++/stddef			comp-obsolete		obsolete
+./usr/include/g++/stdexcept			comp-cxx-include
+./usr/include/g++/stdiostream.h			comp-obsolete		obsolete
+./usr/include/g++/stl.h				comp-obsolete		obsolete
+./usr/include/g++/stl_algo.h			comp-obsolete		obsolete
+./usr/include/g++/stl_algobase.h		comp-obsolete		obsolete
+./usr/include/g++/stl_alloc.h			comp-obsolete		obsolete
+./usr/include/g++/stl_bvector.h			comp-obsolete		obsolete
+./usr/include/g++/stl_config.h			comp-obsolete		obsolete
+./usr/include/g++/stl_construct.h		comp-obsolete		obsolete
+./usr/include/g++/stl_deque.h			comp-obsolete		obsolete
+./usr/include/g++/stl_function.h		comp-obsolete		obsolete
+./usr/include/g++/stl_hash_fun.h		comp-obsolete		obsolete
+./usr/include/g++/stl_hash_map.h		comp-obsolete		obsolete
+./usr/include/g++/stl_hash_set.h		comp-obsolete		obsolete
+./usr/include/g++/stl_hashtable.h		comp-obsolete		obsolete
+./usr/include/g++/stl_heap.h			comp-obsolete		obsolete
+./usr/include/g++/stl_iterator.h		comp-obsolete		obsolete
+./usr/include/g++/stl_list.h			comp-obsolete		obsolete
+./usr/include/g++/stl_map.h			comp-obsolete		obsolete
+./usr/include/g++/stl_multimap.h		comp-obsolete		obsolete
+./usr/include/g++/stl_multiset.h		comp-obsolete		obsolete
+./usr/include/g++/stl_numeric.h			comp-obsolete		obsolete
+./usr/include/g++/stl_pair.h			comp-obsolete		obsolete
+./usr/include/g++/stl_queue.h			comp-obsolete		obsolete
+./usr/include/g++/stl_raw_storage_iter.h	comp-obsolete		obsolete
+./usr/include/g++/stl_relops.h			comp-obsolete		obsolete
+./usr/include/g++/stl_rope.h			comp-obsolete		obsolete
+./usr/include/g++/stl_set.h			comp-obsolete		obsolete
+./usr/include/g++/stl_slist.h			comp-obsolete		obsolete
+./usr/include/g++/stl_stack.h			comp-obsolete		obsolete
+./usr/include/g++/stl_tempbuf.h			comp-obsolete		obsolete
+./usr/include/g++/stl_tree.h			comp-obsolete		obsolete
+./usr/include/g++/stl_uninitialized.h		comp-obsolete		obsolete
+./usr/include/g++/stl_vector.h			comp-obsolete		obsolete
 ./usr/include/g++/strclass.h			comp-obsolete		obsolete
+./usr/include/g++/stream.h			comp-obsolete		obsolete
+./usr/include/g++/streambuf			comp-cxx-include
+./usr/include/g++/streambuf.h			comp-obsolete		obsolete
+./usr/include/g++/strfile.h			comp-obsolete		obsolete
+./usr/include/g++/string			comp-cxx-include
+./usr/include/g++/strstream			comp-obsolete		obsolete
+./usr/include/g++/strstream.h			comp-obsolete		obsolete
 ./usr/include/g++/swap.h			comp-obsolete		obsolete
 ./usr/include/g++/sysent.h			comp-obsolete		obsolete
 ./usr/include/g++/tempbuf.cc			comp-obsolete		obsolete
+./usr/include/g++/tempbuf.h			comp-obsolete		obsolete
+./usr/include/g++/tr1/array			comp-cxx-include	gcc=4
+./usr/include/g++/tr1/bind_iterate.h		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/bind_repeat.h		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/boost_shared_ptr.h	comp-cxx-include	gcc=4
+./usr/include/g++/tr1/functional		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/functional_iterate.h	comp-cxx-include	gcc=4
+./usr/include/g++/tr1/hashtable			comp-cxx-include	gcc=4
+./usr/include/g++/tr1/memory			comp-cxx-include	gcc=4
+./usr/include/g++/tr1/mu_iterate.h		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/ref_fwd.h			comp-cxx-include	gcc=4
+./usr/include/g++/tr1/ref_wrap_iterate.h	comp-cxx-include	gcc=4
+./usr/include/g++/tr1/repeat.h			comp-cxx-include	gcc=4
+./usr/include/g++/tr1/tuple			comp-cxx-include	gcc=4
+./usr/include/g++/tr1/tuple_iterate.h		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/type_traits		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/type_traits_fwd.h		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/unordered_map		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/unordered_set		comp-cxx-include	gcc=4
+./usr/include/g++/tr1/utility			comp-cxx-include	gcc=4
 ./usr/include/g++/tree.cc			comp-obsolete		obsolete
+./usr/include/g++/tree.h			comp-obsolete		obsolete
+./usr/include/g++/type_traits.h			comp-obsolete		obsolete
+./usr/include/g++/typeinfo			comp-cxx-include
 ./usr/include/g++/typemacros.h			comp-obsolete		obsolete
+./usr/include/g++/utility			comp-cxx-include
+./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/values.h			comp-obsolete		obsolete
+./usr/include/g++/vector			comp-cxx-include
+./usr/include/g++/vector.h			comp-obsolete		obsolete
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
 ./usr/include/grp.h				comp-c-include
@@ -1121,6 +1512,7 @@
 ./usr/include/objc/hash.h			comp-c-include
 ./usr/include/objc/list.h			comp-obsolete		obsolete
 ./usr/include/objc/objc-api.h			comp-c-include
+./usr/include/objc/objc-decls.h			comp-cxx-include	gcc=4
 ./usr/include/objc/objc-list.h			comp-c-include
 ./usr/include/objc/objc.h			comp-c-include
 ./usr/include/objc/sarray.h			comp-c-include
@@ -1310,6 +1702,7 @@
 ./usr/include/soundcard.h			comp-c-include
 ./usr/include/stab.h				comp-c-include
 ./usr/include/stdarg.h				comp-c-include
+./usr/include/stdbool.h				comp-c-include
 ./usr/include/stddef.h				comp-c-include
 ./usr/include/stdint.h				comp-c-include
 ./usr/include/stdio.h				comp-c-include
@@ -1651,10 +2044,17 @@
 ./usr/lib/libfl_p.a				comp-c-proflib		profile
 ./usr/lib/libform.a				comp-c-lib
 ./usr/lib/libform_p.a				comp-c-proflib		profile
+./usr/lib/libfrtbegin.a				comp-c-lib		gcc=3
+./usr/lib/libfrtbegin.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libg++.a				comp-obsolete		obsolete
 ./usr/lib/libg++_p.a				comp-obsolete		obsolete
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
+./usr/lib/libg2c.a				comp-fortran-lib	gcc=3
+./usr/lib/libg2c.a				comp-obsolete		gcc=4,obsolete
+./usr/lib/libg2c_p.a				comp-fortran-proflib	gcc=3,profile
+./usr/lib/libg2c_p.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libgcc.a				comp-c-lib
+./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/libgnumalloc.a			comp-c-lib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
@@ -1741,6 +2141,7 @@
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libstdc++.a				comp-cxx-lib
 ./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile
+./usr/lib/libsupc++.a				comp-cxx-lib
 ./usr/lib/libtelnet.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet.so				comp-obsolete		obsolete
 ./usr/lib/libtelnet_p.a				comp-obsolete		obsolete
@@ -1818,6 +2219,8 @@
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
 ./usr/libexec/collect2				comp-obsolete		obsolete
+./usr/libexec/f771				comp-fortran-bin	gcc=3,gcccmds
+./usr/libexec/f771				comp-obsolete		gcc=4,obsolete
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
 ./usr/sbin/config				comp-obsolete		obsolete
@@ -1982,11 +2385,17 @@
 ./usr/share/man/cat1/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat1/elf2aout.0			comp-sysutil-catman	.cat
 ./usr/share/man/cat1/elf2ecoff.0		comp-sysutil-catman	.cat
+./usr/share/man/cat1/f77.0			comp-fortran-catman	gcc=3,gcccmds,.cat
+./usr/share/man/cat1/f77.0			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/cat1/fgen.0			comp-util-catman	.cat
 ./usr/share/man/cat1/flex.0			comp-c-catman		.cat
 ./usr/share/man/cat1/flexdoc.0			comp-obsolete		obsolete
+./usr/share/man/cat1/fort77.0			comp-fortran-catman	gcc=3,gcccmds,.cat
+./usr/share/man/cat1/fort77.0			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/cat1/fpr.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/g++.0			comp-cxx-catman		gcccmds,.cat
+./usr/share/man/cat1/g77.0			comp-fortran-catman	gcc=3,gcccmds,.cat
+./usr/share/man/cat1/g77.0			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/cat1/gcc.0			comp-c-catman		gcccmds,.cat
 ./usr/share/man/cat1/gcore.0			comp-debug-catman	.cat
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	gcccmds,.cat
@@ -3471,12 +3880,25 @@
 ./usr/share/man/cat3/inchstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/index.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inet.0			comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_append.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_find.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_finish.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_get_val.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_next.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_set_val.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_alloc.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_append.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_find.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_next.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_space.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_getaddr.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_reverse.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_segments.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_space.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_add.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_getaddr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_getflags.0	comp-c-catman		.cat
@@ -3485,19 +3907,6 @@
 ./usr/share/man/cat3/inet6_rthdr_reverse.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_segments.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_space.0	comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_init.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_append.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_finish.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_set_val.0	comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_next.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_find.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_opt_get_val.0	comp-c-catman		.cat
-./usr/share/man/cat3/inet6_rth_space.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_rth_init.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_rth_add.0		comp-c-catman		.cat
-./usr/share/man/cat3/inet6_rth_reverse.0	comp-c-catman		.cat
-./usr/share/man/cat3/inet6_rth_segments.0	comp-c-catman		.cat
-./usr/share/man/cat3/inet6_rth_getaddr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet_addr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet_aton.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet_lnaof.0		comp-c-catman		.cat
@@ -4207,8 +4616,8 @@
 ./usr/share/man/cat3/prop_number_create_integer.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_equals_integer.0 comp-c-catman		.cat
-./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_integer_value.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_iterator_next.0 comp-c-catman		.cat
@@ -5400,8 +5809,8 @@
 ./usr/share/man/cat9/driver.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dumpsys.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dupfdopen.0		comp-sys-catman		.cat
-./usr/share/man/cat9/errno.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/edid.0			comp-sys-catman		.cat
+./usr/share/man/cat9/errno.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_addmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_delmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_ifattach.0		comp-sys-catman		.cat
@@ -6115,10 +6524,16 @@
 ./usr/share/man/man1/cvs.1			comp-cvs-man		cvs,.man
 ./usr/share/man/man1/elf2aout.1			comp-sysutil-man	.man
 ./usr/share/man/man1/elf2ecoff.1		comp-sysutil-man	.man
+./usr/share/man/man1/f77.1			comp-fortran-man	gcc=3,gcccmds,.man
+./usr/share/man/man1/f77.1			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/man1/fgen.1			comp-util-man		.man
 ./usr/share/man/man1/flex.1			comp-c-man		.man
+./usr/share/man/man1/fort77.1			comp-fortran-man	gcc=3,gcccmds,.man
+./usr/share/man/man1/fort77.1			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/man1/fpr.1			comp-fortran-man	.man
 ./usr/share/man/man1/g++.1			comp-cxx-man		gcccmds,.man
+./usr/share/man/man1/g77.1			comp-fortran-man	gcc=3,gcccmds,.man
+./usr/share/man/man1/g77.1			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/man1/gcc.1			comp-c-man		gcccmds,.man
 ./usr/share/man/man1/gcore.1			comp-debug-man		.man
 ./usr/share/man/man1/gcov.1			comp-debug-man		gcccmds,.man
@@ -7600,12 +8015,25 @@
 ./usr/share/man/man3/inchstr.3			comp-c-man		.man
 ./usr/share/man/man3/index.3			comp-c-man		.man
 ./usr/share/man/man3/inet.3			comp-c-man		.man
+./usr/share/man/man3/inet6_opt_append.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_find.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_finish.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_get_val.3	comp-c-man		.man
+./usr/share/man/man3/inet6_opt_init.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_next.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_set_val.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_alloc.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_append.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_find.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_init.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_next.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_space.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_add.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rth_getaddr.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_init.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rth_reverse.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_segments.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_space.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_add.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_getaddr.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_getflags.3	comp-c-man		.man
@@ -7614,19 +8042,6 @@
 ./usr/share/man/man3/inet6_rthdr_reverse.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_segments.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_space.3	comp-c-man		.man
-./usr/share/man/man3/inet6_opt_init.3		comp-c-man		.man
-./usr/share/man/man3/inet6_opt_append.3		comp-c-man		.man
-./usr/share/man/man3/inet6_opt_finish.3		comp-c-man		.man
-./usr/share/man/man3/inet6_opt_set_val.3	comp-c-man		.man
-./usr/share/man/man3/inet6_opt_next.3		comp-c-man		.man
-./usr/share/man/man3/inet6_opt_find.3		comp-c-man		.man
-./usr/share/man/man3/inet6_opt_get_val.3	comp-c-man		.man
-./usr/share/man/man3/inet6_rth_space.3		comp-c-man		.man
-./usr/share/man/man3/inet6_rth_init.3		comp-c-man		.man
-./usr/share/man/man3/inet6_rth_add.3		comp-c-man		.man
-./usr/share/man/man3/inet6_rth_reverse.3	comp-c-man		.man
-./usr/share/man/man3/inet6_rth_segments.3	comp-c-man		.man
-./usr/share/man/man3/inet6_rth_getaddr.3	comp-c-man		.man
 ./usr/share/man/man3/inet_addr.3		comp-c-man		.man
 ./usr/share/man/man3/inet_aton.3		comp-c-man		.man
 ./usr/share/man/man3/inet_lnaof.3		comp-c-man		.man
@@ -8334,8 +8749,8 @@
 ./usr/share/man/man3/prop_number_create_integer.3 comp-c-man		.man
 ./usr/share/man/man3/prop_number_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_number_equals_integer.3 comp-c-man		.man
-./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
 ./usr/share/man/man3/prop_number_integer_value.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
 ./usr/share/man/man3/prop_object.3		comp-c-man		.man
 ./usr/share/man/man3/prop_object_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_iterator_next.3 comp-c-man		.man

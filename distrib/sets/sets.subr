@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.51 2006/06/24 05:11:40 mrg Exp $
+#	$NetBSD: sets.subr,v 1.52 2006/07/12 13:39:04 lukem Exp $
 #
 
 #
@@ -20,6 +20,7 @@
 #	MACHINE_ARCH
 #	MACHINE_CPU
 #	HAVE_GCC
+#	HAVE_GDB
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -32,6 +33,7 @@ MKVARS="\
 	MKCRYPTO_MDC2	\
 	MKCRYPTO_RC5	\
 	MKCVS		\
+	MKGCC		\
 	MKGCCCMDS	\
 	MKDOC		\
 	MKGDB		\
@@ -163,7 +165,7 @@ MKMANPAGES=yes
 .endif
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
-		HAVE_GCC OBJECT_FMT TOOLCHAIN_MISSING \
+		HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
 		${MKVARS}
 	@echo "export \$i=\${\$i}"
 .endfor
@@ -215,7 +217,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.51 2006/06/24 05:11:40 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.52 2006/07/12 13:39:04 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -226,7 +228,7 @@ fi
 # A # in the first column marks a comment.
 #
 # If ${obsolete} != 0, only entries with an "obsolete" keyword will
-# be printed.
+# be printed.  All other keywords must be present.
 #
 # The third field is an optional comma separated list of keywords to
 # control if a record is printed; every keyword listed must be enabled
@@ -243,6 +245,7 @@ fi
 #	crypto_rc5		${MKCRYPTO_RC5} != no
 #	cvs			${MKCVS} != no
 #	doc			${MKDOC} != no
+#	gcc			${MKGCC} != no
 #	gcccmds			${MKGCCCMDS} != no
 #	gdb			${MKGDB} != no
 #	hesiod			${MKHESIOD} != no
@@ -265,6 +268,9 @@ fi
 #	uucp			${MKUUCP} != no
 #	yp			${MKYP} != no
 #
+#	gcc=<n>			<n> = value of ${HAVE_GCC}
+#	gdb=<n>			<n> = value of ${HAVE_GDB}
+#
 #	use_inet6		${USE_INET6} != no
 #	use_kerberos		${USE_KERBEROS} != no
 #	use_yp			${USE_YP} != no
@@ -282,20 +288,26 @@ list_set_files()
 	done | xargs cat | \
 	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
-			if (! obsolete) {
-				split("'"${MKVARS}"'", needvars)
-				for (vi in needvars) {
-					nv = needvars[vi]
-					kw = tolower(nv)
-					sub(/^mk/, "", kw)
-					if (ENVIRON[nv] != "no")
-						wanted[kw] = 1 
-				}
-				if (("man" in wanted) && ("catpages" in wanted))
-					wanted[".cat"] = 1
-				if (("man" in wanted) && ("manpages" in wanted))
-					wanted[".man"] = 1
+			if (obsolete)
+				wanted["obsolete"] = 1
+		
+			split("'"${MKVARS}"'", needvars)
+			for (vi in needvars) {
+				nv = needvars[vi]
+				kw = tolower(nv)
+				sub(/^mk/, "", kw)
+				if (ENVIRON[nv] != "no")
+					wanted[kw] = 1 
 			}
+
+			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
+				wanted["gcc=" "'"${HAVE_GCC}"'"] = 1
+				wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
+			}
+			if (("man" in wanted) && ("catpages" in wanted))
+				wanted[".cat"] = 1
+			if (("man" in wanted) && ("manpages" in wanted))
+				wanted[".man"] = 1
 		}
 
 		/^#/ {
@@ -305,19 +317,19 @@ list_set_files()
 		NF > 2 && $3 != "-" {
 			split($3, keywords, ",")
 			show = 1
+			haveobs = 0
 			for (ki in keywords) {
 				kw = keywords[ki]
-				if (kw == "obsolete") {
-					if (obsolete)
-						print
-					next
-				}
 				if (("manz" in wanted) &&
 				    (kw == ".cat" || kw == ".man"))
 					$1 = $1 ".gz"
 				if (! (kw in wanted))
 					show = 0
+				if (kw == "obsolete")
+					haveobs = 1
 			}
+			if (obsolete && ! haveobs)
+				next
 			if (show)
 				print
 			next
@@ -354,10 +366,6 @@ list_set_files()
 #	shl.mi
 #	shl.shlib
 #	lkm.mi			if ${lkm} != no
-#	gcc.mi
-#	gcc.shl
-#	tc.mi
-#	tc.shl
 #	rescue.shl
 #	rescue.${MACHINE}
 #	rescue.ad.${MACHINE_ARCH}
@@ -410,39 +418,6 @@ list_set_lists()
 	if [ "$lkm" != "no" ]; then
 		if [ -f $setdir/lkm.mi ]; then
 			echo $setdir/lkm.mi
-		fi
-	fi
-	if [ "${TOOLCHAIN_MISSING}" != "yes" ]; then
-		if [ "${HAVE_GCC}" = "3" ]; then
-			if [ -f $setdir/gcc.mi ]; then
-				echo $setdir/gcc.mi
-			fi
-			if [ "$shlib" != "no" ]; then
-				if [ -f $setdir/gcc.shl ]; then
-					echo $setdir/gcc.shl
-				fi
-			fi
-		elif [ "${HAVE_GCC}" = "4" ]; then
-			if [ -f $setdir/gcc4.mi ]; then
-				echo $setdir/gcc4.mi
-			fi
-			if [ -f $setdir/gcc4.ad.${MACHINE_ARCH} ]; then
-				echo $setdir/gcc4.ad.${MACHINE_ARCH}
-			fi
-			if [ "$shlib" != "no" ]; then
-				if [ -f $setdir/gcc4.shl ]; then
-					echo $setdir/gcc4.shl
-				fi
-			fi
-		else
-			if [ -f $setdir/tc.mi ]; then
-				echo $setdir/tc.mi
-			fi
-			if [ "$shlib" != "no" ]; then
-				if [ -f $setdir/tc.shl ]; then
-					echo $setdir/tc.shl
-				fi
-			fi
 		fi
 	fi
 

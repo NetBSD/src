@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.92 2006/05/17 15:07:05 tron Exp $
+# $NetBSD: md.i386,v 1.93 2006/07/12 13:39:05 lukem Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -77,6 +77,7 @@
 ./usr/include/i386/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmintrin.h			comp-c-include		gcccmds
+./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/pmc.h				comp-c-include
 ./usr/include/x86				comp-c-include
 ./usr/include/x86/aout_machdep.h		comp-c-include

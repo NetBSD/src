@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.908 2006/07/08 17:22:14 tsutsui Exp $
+# $NetBSD: mi,v 1.909 2006/07/12 13:39:05 lukem Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -13,6 +13,8 @@
 ./usr/share/info/diff.info			man-util-info		info
 ./usr/share/info/dir				man-info-share		info
 ./usr/share/info/g++FAQ.info			man-obsolete		obsolete
+./usr/share/info/g77.info			man-fortran-info	gcc=3,gcccmds,info
+./usr/share/info/g77.info			comp-obsolete		gcc=4,obsolete
 ./usr/share/info/gcc.info			man-c-info		gcccmds,info
 ./usr/share/info/gdb.info			man-debug-info		gdb,info
 ./usr/share/info/gdbint.info			man-debug-info		gdb,info
@@ -1790,6 +1792,7 @@
 ./usr/share/man/cat8/compat_xenix.0		man-sys-catman		.cat
 ./usr/share/man/cat8/comsat.0			man-man-catman		.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
+./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman	.cat
@@ -4147,6 +4150,7 @@
 ./usr/share/man/man8/compat_xenix.8		man-sys-man		.man
 ./usr/share/man/man8/comsat.8			man-man-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
+./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/dhclient-script.8		man-dhclient-man	.man
