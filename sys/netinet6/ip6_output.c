@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.99 2006/07/08 19:58:40 rpaulo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.100 2006/07/12 13:11:27 tron Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.99 2006/07/08 19:58:40 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.100 2006/07/12 13:11:27 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -187,6 +187,23 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
+
+#ifdef  DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("ip6_output: no HDR");
+
+	if ((m->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) != 0) {
+		panic("ip6_output: IPv4 checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) ==
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+		panic("ip6_output: conflicting checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+#endif
 
 	M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data, sizeof(struct ip6_hdr));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.162 2006/05/15 00:05:17 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.163 2006/07/12 13:11:27 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.162 2006/05/15 00:05:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.163 2006/07/12 13:11:27 tron Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -265,7 +265,19 @@ ip_output(struct mbuf *m0, ...)
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("ip_output no HDR");
+		panic("ip_output: no HDR");
+
+	if ((m->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6|M_CSUM_TSOv6)) != 0) {
+		panic("ip_output: IPv6 checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) ==
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		panic("ip_output: conflicting checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
 #endif
 	if (opt) {
 		m = ip_insertoptions(m, opt, &len);
