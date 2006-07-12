@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.36 2005/12/24 20:47:56 perry Exp $ */
+/* $NetBSD: cgram.y,v 1.37 2006/07/12 20:03:48 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.36 2005/12/24 20:47:56 perry Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.37 2006/07/12 20:03:48 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1157,12 +1157,12 @@ init_by_name:
 		if (!Sflag)
 			warning(321);
 	  }
-	| point T_NAME T_ASSIGN {
+	| point identifier T_ASSIGN {
 		if (!Sflag)
 			warning(313);
 		memberpush($2);
 	  }
-	| T_NAME T_COLON {
+	| identifier T_COLON {
 		gnuism(315);
 		memberpush($1);
 	  }
