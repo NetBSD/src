@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.h,v 1.2 2006/07/07 22:29:55 thorpej Exp $	*/
+/*	$NetBSD: prop_number.h,v 1.3 2006/07/12 13:54:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _PROPLIB_PROP_NUMBER_H_
 #define	_PROPLIB_PROP_NUMBER_H_
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdint.h>
 #endif
 #include <prop/prop_object.h>
