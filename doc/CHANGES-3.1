@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.118 2006/07/12 15:13:08 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.119 2006/07/12 21:28:43 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -2642,4 +2642,10 @@ usr.sbin/postinstall/postinstall		patch
 
 	Update Postfix to version 2.2.10.
 	[ghen, ticket #1398]
+
+sys/arch/sparc/sparc/machdep.c			patch
+
+	Avoid panic in memory management on some SPARC systems with QFE cards.
+	This fixes PR port-sparc/33340 and  PR port-sparc/33894.
+	[fair, ticket #1401]
 
