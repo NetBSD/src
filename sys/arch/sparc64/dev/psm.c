@@ -1,3 +1,4 @@
+/* $NetBSD: psm.c,v 1.2 2006/07/12 15:03:24 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -35,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.1 2006/07/10 17:54:09 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.2 2006/07/12 15:03:24 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +268,7 @@ int
 psm_init(struct psm_softc *sc)
 {
 	int	x;
-	uint8_t	batt;
+	uint8_t	batt = 0xff;	/* keep GCC 4.x happy */
 
 	/* clear interrupts */
 	x = splhigh();
