@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.1 2006/07/12 21:33:07 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.2 2006/07/12 21:34:52 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -9,4 +9,10 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to 3.0.1_STABLE
+
+sys/arch/sparc/sparc/machdep.c			patch
+
+	Avoid panic in memory management on some SPARC systems with QFE cards.
+	This fixes PR port-sparc/33340 and  PR port-sparc/33894.
+	[fair, ticket #1401]
 
