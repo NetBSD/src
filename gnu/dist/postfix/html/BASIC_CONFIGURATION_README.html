@@ -315,7 +315,8 @@ of listing the patterns in the main.cf file. </p>
 <h2> <a name="relay_to"> What destinations to relay mail to </a> </h2>
 
 <p> By default, Postfix will forward mail from strangers (clients outside
-authorized networks) to authorized destinations only.  Authorized
+authorized networks) to authorized remote destinations only.
+Authorized remote
 destinations are defined with the <a href="postconf.5.html#relay_domains">relay_domains</a> configuration
 parameter.  The default is to authorize all domains (and subdomains)
 of the domains listed with the <a href="postconf.5.html#mydestination">mydestination</a> parameter.  </p>
@@ -355,7 +356,9 @@ via a relay host. </p>
 </blockquote>
 
 <p> The form enclosed with <tt>[]</tt> eliminates DNS MX lookups.
-Don't worry if you don't know what that means. </p>
+Don't worry if you don't know what that means. Just be sure to
+specify the <tt>[]</tt> around the mailhub hostname that your ISP
+gave to you, otherwise mail may be mis-delivered. </p>
 
 <p> The <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a> file has more hints and tips
 for firewalled and/or dial-up networks. </p>

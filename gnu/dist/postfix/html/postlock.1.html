@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - postlock(1) </title>
 </head> <body> <pre>
-POSTLOCK(1)                                           POSTLOCK(1)
+POSTLOCK(1)                                                        POSTLOCK(1)
 
 <b>NAME</b>
        postlock - lock mail folder and execute command
@@ -14,9 +14,9 @@ POSTLOCK(1)                                           POSTLOCK(1)
                <b>[-v</b>] <i>file command...</i>
 
 <b>DESCRIPTION</b>
-       The  <b>postlock</b> command locks <i>file</i> for exclusive access, and
-       executes <i>command</i>. The locking method  is  compatible  with
-       the Postfix UNIX-style local delivery agent.
+       The  <a href="postlock.1.html"><b>postlock</b>(1)</a>  command locks <i>file</i> for exclusive access,
+       and executes <i>command</i>. The  locking  method  is  compatible
+       with the Postfix UNIX-style local delivery agent.
 
        Options:
 
@@ -46,9 +46,9 @@ POSTLOCK(1)                                           POSTLOCK(1)
               command interpreter.
 
 <b>DIAGNOSTICS</b>
-       The  result status is 75 (EX_TEMPFAIL) when <b>postlock</b> could
-       not perform the requested operation.  Otherwise, the  exit
-       status is the exit status from the command.
+       The  result  status  is  75 (EX_TEMPFAIL) when <a href="postlock.1.html"><b>postlock</b>(1)</a>
+       could not perform the requested operation.  Otherwise, the
+       exit status is the exit status from the command.
 
 <b>BUGS</b>
        With  remote  file  systems, the ability to acquire a lock
@@ -65,24 +65,24 @@ POSTLOCK(1)                                           POSTLOCK(1)
 <b>CONFIGURATION PARAMETERS</b>
        The  following  <b>main.cf</b> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html">postconf(5)</a> for more details including exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
 <b>LOCKING CONTROLS</b>
        <b><a href="postconf.5.html#deliver_lock_attempts">deliver_lock_attempts</a> (20)</b>
               The maximal number of attempts to acquire an exclu-
-              sive lock on a mailbox file or <a href="bounce.8.html">bounce(8)</a> logfile.
+              sive lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#deliver_lock_delay">deliver_lock_delay</a> (1s)</b>
               The  time  between attempts to acquire an exclusive
-              lock on a mailbox file or <a href="bounce.8.html">bounce(8)</a> logfile.
+              lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#stale_lock_time">stale_lock_time</a> (500s)</b>
               The time after  which  a  stale  exclusive  mailbox
               lockfile is removed.
 
        <b><a href="postconf.5.html#mailbox_delivery_lock">mailbox_delivery_lock</a> (see 'postconf -d' output)</b>
-              How  to  lock  a UNIX-style <a href="local.8.html">local(8)</a> mailbox before
+              How  to  lock  a UNIX-style <a href="local.8.html"><b>local</b>(8)</a> mailbox before
               attempting delivery.
 
 <b>RESOURCE AND RATE CONTROLS</b>
@@ -91,8 +91,8 @@ POSTLOCK(1)                                           POSTLOCK(1)
               process.
 
        <b><a href="postconf.5.html#fork_delay">fork_delay</a> (1s)</b>
-              The  delay  between attempts to fork() a child pro-
-              cess.
+              The  delay  between  attempts  to  fork()  a  child
+              process.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
@@ -112,5 +112,5 @@ POSTLOCK(1)                                           POSTLOCK(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                      POSTLOCK(1)
+                                                                   POSTLOCK(1)
 </pre> </body> </html>

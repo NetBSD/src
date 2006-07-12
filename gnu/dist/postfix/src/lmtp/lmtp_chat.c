@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_chat.c,v 1.1.1.4 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_chat.c,v 1.1.1.4.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -177,6 +177,7 @@ LMTP_RESP *lmtp_chat_resp(LMTP_STATE *state)
     static LMTP_RESP rdata;
     char   *cp;
     int     last_char;
+    int     three_digs = 0;
 
     /*
      * Initialize the response data buffer.
@@ -217,15 +218,32 @@ LMTP_RESP *lmtp_chat_resp(LMTP_STATE *state)
 	 */
 	for (cp = STR(state->buffer); *cp && ISDIGIT(*cp); cp++)
 	     /* void */ ;
-	if (cp - STR(state->buffer) == 3) {
+	if ((three_digs = (cp - STR(state->buffer) == 3)) != 0) {
 	    if (*cp == '-')
 		continue;
 	    if (*cp == ' ' || *cp == 0)
 		break;
 	}
+
+	/*
+	 * XXX Do not ignore garbage when ESMTP command pipelining is turned
+	 * on. After sending ".<CR><LF>QUIT<CR><LF>", Postfix might recognize
+	 * the server's 2XX QUIT reply as a 2XX END-OF-DATA reply after
+	 * garbage, causing mail to be lost. Instead, make a long jump so
+	 * that all recipients of multi-recipient mail get consistent
+	 * treatment.
+	 */
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	if (state->features & LMTP_FEATURE_PIPELINING) {
+	    msg_warn("non-LMTP response from %s: %.100s",
+		     session->namaddr, STR(state->buffer));
+	    vstream_longjmp(session->stream, SMTP_ERR_PROTO);
+	}
     }
-    rdata.code = atoi(STR(state->buffer));
+    if (three_digs != 0)
+	rdata.code = atoi(STR(state->buffer));
+    else
+	rdata.code = 0;
     VSTRING_TERMINATE(rdata.buf);
     rdata.str = STR(rdata.buf);
     return (&rdata);

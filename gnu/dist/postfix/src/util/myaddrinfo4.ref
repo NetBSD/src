@@ -1,0 +1,6 @@
+./myaddrinfo4: === hostname belly.porcupine.org ===
+./myaddrinfo4: belly.porcupine.org -> family=2 sock=1 proto=6 168.100.189.6
+./myaddrinfo4: 168.100.189.6 -> belly.porcupine.org
+./myaddrinfo4: === host address 168.100.189.2 ===
+./myaddrinfo4: 168.100.189.2 -> family=2 sock=1 proto=6 168.100.189.2
+./myaddrinfo4: 168.100.189.2 -> spike.porcupine.org

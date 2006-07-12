@@ -1,4 +1,4 @@
-/*	$NetBSD: listen.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: listen.h,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
 
 #ifndef _LISTEN_H_INCLUDED_
 #define _LISTEN_H_INCLUDED_
@@ -26,9 +26,12 @@ extern int inet_listen(const char *, int, int);
 extern int fifo_listen(const char *, int, int);
 extern int stream_listen(const char *, int, int);
 
+#define upass_listen(path, mode, log) fifo_listen((path), (mode), (log))
+
 extern int inet_accept(int);
 extern int unix_accept(int);
 extern int stream_accept(int);
+extern int upass_accept(int);
 
 /* LICENSE
 /* .ad

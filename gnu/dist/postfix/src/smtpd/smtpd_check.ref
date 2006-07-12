@@ -69,6 +69,16 @@ OK
 >>> helo 123.123.123.123
 ./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 450 <123.123.123.123>: Helo command rejected: Host not found; proto=SMTP helo=<123.123.123.123>
 450 <123.123.123.123>: Helo command rejected: Host not found
+>>> helo [123.123.123.123]
+OK
+>>> helo [::]
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 501 <[::]>: Helo command rejected: invalid ip address; proto=SMTP helo=<[::]>
+501 <[::]>: Helo command rejected: invalid ip address
+>>> helo [ipv6:::]
+OK
+>>> helo [ipv6::::]
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 501 <[ipv6::::]>: Helo command rejected: invalid ip address; proto=SMTP helo=<[ipv6::::]>
+501 <[ipv6::::]>: Helo command rejected: invalid ip address
 >>> helo_restrictions permit_naked_ip_address,reject_invalid_hostname,reject_unknown_hostname
 OK
 >>> helo 123.123.123.123

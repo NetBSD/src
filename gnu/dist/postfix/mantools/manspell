@@ -1,0 +1,7 @@
+#!/bin/sh
+
+for file
+do
+    echo ==== $file ====
+    deroff $file | spell
+done | fgrep -vf proto/stop

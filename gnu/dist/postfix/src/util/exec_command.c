@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_command.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: exec_command.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
 
 /*++
 /* NAME
@@ -102,7 +102,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ" SPACE_TAB;
 #include <vstream.h>
 #include <msg_vstream.h>
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     msg_vstream_init(argv[0], VSTREAM_ERR);
     if (argc != 2)

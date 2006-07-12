@@ -36,10 +36,10 @@ config_directory
 daemon_directory
 default_database_type
 default_rbl_reply
+execution_directory_expansion_filter
 export_environment
 forward_expansion_filter
 forward_path
-hash_queue_names
 html_directory
 import_environment
 mail_release_date
@@ -58,6 +58,7 @@ queue_directory
 readme_directory
 sendmail_path
 smtpd_expansion_filter
+tls_random_source
 virtual_mailbox_lock
 EOF
 

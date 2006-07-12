@@ -104,8 +104,9 @@ Received: from porcupine.org ...
 </pre>
 </blockquote>
 
-<p> Then I know that this is almost certainly forged mail.  Mail
-that is really sent by my systems looks like this:  </p>
+<p> Then I know that this is almost certainly forged mail (almost;
+see next section for the fly in the ointment). Mail that is really
+sent by my systems looks like this: </p>
 
 <blockquote>
 <pre>
@@ -125,6 +126,18 @@ Received: from host.example.com (EHLO porcupine.org) ...
 </pre>
 </blockquote>
 
+<p> Another frequent sign of forgery is the Message-ID: header. My
+systems produce a Message-ID: of
+&lt;<i>stuff</i>@<i>hostname</i>.porcupine.org&gt;.  The following
+are forgeries, especially the first one:
+
+<blockquote>
+<pre>
+Message-ID: &lt;1cb479435d8eb9.2beb1.qmail@porcupine.org&gt;
+Message-ID: &lt;yulszqocfzsficvzzju@porcupine.org&gt;
+</pre>
+</blockquote>
+
 <p> To block such backscatter I use header_checks and body_checks
 patterns like this: </p>
 
@@ -139,12 +152,16 @@ patterns like this: </p>
         reject forged client name in Received: header: $1
     /^Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)(porcupine\.org)\)/
         reject forged client name in Received: header: $2
+    /^Message-ID:.*@(porcupine\.org)/
+	reject forged domain name in Message-ID: header: $1
 
 /etc/postfix/body_checks:
     /^[&gt; ]*Received: +from +(porcupine\.org) /
         reject forged client name in Received: header: $1
     /^[&gt; ]*Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)(porcupine\.org)\)/
         reject forged client name in Received: header: $2
+    /^[&gt; ]*Message-ID:.*@(porcupine\.org)/
+	reject forged domain name in Message-ID: header: $1
 </pre>
 </blockquote>
 
@@ -192,7 +209,8 @@ mapping translates this temporary address into user@porcupine.org.
 that send HELO commands like this, and when you never have to send
 mail to a user on such a host. </p>
 
-<p> An alternative would be to remove the hostname with address
+<p> An alternative would be to remove the hostname from
+"hostname.porcupine.org" with address
 masquerading, as described in the ADDRESS_REWRITING_README document.
 </p>
 
@@ -213,11 +231,11 @@ and is very easy to stop.
 
 /etc/postfix/header_checks:
     /^(From|Return-Path):.*[[:&lt;:]](user@domain\.tld)[[:&gt;:]]/ 
-        reject forged sender address in $1: message header: $2
+        reject forged sender address in $1: header: $2
 
 /etc/postfix/body_checks:
     /^[&gt; ]*(From|Return-Path):.*[[:&lt;:]](user@domain\.tld)[[:&gt;:]]/ 
-        reject forged sender address in $1: message header: $2
+        reject forged sender address in $1: header: $2
 </pre>
 </blockquote>
 
@@ -229,8 +247,10 @@ and is very easy to stop.
 reality, my patterns list multiple email addresses as
 "<tt>(user1@domain1\.tld|user2@domain2\.tld)</tt>".  </p>
 
-<li> <p> The <tt>[[:&lt;:]]</tt> matches the beginning of a word,
-and the <tt>[[:&gt;:]]</tt> matches the end. </p>
+<li> <p> The "<tt>[[:&lt;:]]</tt>" and "<tt>[[:&gt;:]]</tt>" match
+the beginning and end of a word, respectively. On some systems you
+should specify "<tt>\&lt;</tt>" and "<tt>\&gt;</tt>" instead. For
+details see your system documentation.
 
 <li> <p> The "<tt>\.</tt>" matches "<tt>.</tt>" literally. Without
 the "<tt>\</tt>", the "<tt>.</tt>" would match any character. </p>
@@ -261,7 +281,8 @@ above techniques to recognize forgeries.  </p>
 because there is a lot of variation in report formats.  The following
 is only a small example of message header patterns.  For a large
 collection of header and body patterns that recognize virus
-notification email, see http://www.dkuug.dk/keld/virus/.  </p>
+notification email, see http://www.dkuug.dk/keld/virus/
+or http://www.t29.dk/antiantivirus.txt.  </p>
 
 <blockquote>
 <pre>
@@ -275,7 +296,9 @@ notification email, see http://www.dkuug.dk/keld/virus/.  </p>
 
 <p> A plea to virus or spam scanner operators: please do not make
 the problem worse by sending return mail to forged sender addresses.
-You're only harassing innocent people.  </p>
+You're only harassing innocent people. If you must return mail to
+the purported sender, please return the full message headers, so
+that the sender can defend against forgeries. </p>
 
 </body>
 

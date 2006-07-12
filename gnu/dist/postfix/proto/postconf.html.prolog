@@ -46,10 +46,12 @@ that starts with whitespace continues a logical line. </p>
 recursively replaced by the value of the named parameter. </p>
 
 <li> <p> The expression "${name?value}" expands to "value" when
-"$name" is non-empty. </p>
+"$name" is non-empty. This form is supported with Postfix version
+2.2 and later. </p>
 
 <li> <p> The expression "${name:value}" expands to "value" when
-"$name" is empty. </p>
+"$name" is empty. This form is supported with Postfix version 2.2
+and later.  </p>
 
 </ul>
 
@@ -64,7 +66,7 @@ not matter. </p>
 <p> The remainder of this document is a description of all Postfix
 configuration parameters. Default values are shown after the
 parameter name in parentheses, and can be looked up with the
-<b>postconf -d</b> command. </p>
+"<b>postconf -d</b>" command. </p>
 
 <p> Note: this is not an invitation to make changes to Postfix
 configuration parameters. Unnecessary changes are likely to impair
