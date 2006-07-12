@@ -53,8 +53,9 @@ Thus, if returned mail has a Received: message header like this:
 
     Received: from porcupine.org ...
 
-Then I know that this is almost certainly forged mail. Mail that is really sent
-by my systems looks like this:
+Then I know that this is almost certainly forged mail (almost; see next section
+for the fly in the ointment). Mail that is really sent by my systems looks like
+this:
 
     Received: from hostname.porcupine.org ...
 
@@ -65,6 +66,13 @@ result of forgery:
     Received: from [1.2.3.4] (port=12345 helo=porcupine.org) ...
     Received: from host.example.com (HELO porcupine.org) ...
     Received: from host.example.com (EHLO porcupine.org) ...
+
+Another frequent sign of forgery is the Message-ID: header. My systems produce
+a Message-ID: of <stuff@hostname.porcupine.org>. The following are forgeries,
+especially the first one:
+
+    Message-ID: <1cb479435d8eb9.2beb1.qmail@porcupine.org>
+    Message-ID: <yulszqocfzsficvzzju@porcupine.org>
 
 To block such backscatter I use header_checks and body_checks patterns like
 this:
@@ -79,6 +87,8 @@ this:
         /^Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)
     (porcupine\.org)\)/
             reject forged client name in Received: header: $2
+        /^Message-ID:.*@(porcupine\.org)/
+    	reject forged domain name in Message-ID: header: $1
 
     /etc/postfix/body_checks:
         /^[> ]*Received: +from +(porcupine\.org) /
@@ -86,6 +96,8 @@ this:
         /^[> ]*Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)
     (porcupine\.org)\)/
             reject forged client name in Received: header: $2
+        /^[> ]*Message-ID:.*@(porcupine\.org)/
+    	reject forged domain name in Message-ID: header: $1
 
 Notes:
 
@@ -119,8 +131,9 @@ This is of course practical only when you have very few systems that send HELO
 commands like this, and when you never have to send mail to a user on such a
 host.
 
-An alternative would be to remove the hostname with address masquerading, as
-described in the ADDRESS_REWRITING_README document.
+An alternative would be to remove the hostname from "hostname.porcupine.org"
+with address masquerading, as described in the ADDRESS_REWRITING_README
+document.
 
 BBlloocckkiinngg bbaacckkssccaatttteerr mmaaiill wwiitthh ffoorrggeedd sseennddeerr iinnffoorrmmaattiioonn
 
@@ -135,19 +148,20 @@ mail is obviously forged and is very easy to stop.
 
     /etc/postfix/header_checks:
         /^(From|Return-Path):.*[[:<:]](user@domain\.tld)[[:>:]]/
-            reject forged sender address in $1: message header: $2
+            reject forged sender address in $1: header: $2
 
     /etc/postfix/body_checks:
         /^[> ]*(From|Return-Path):.*[[:<:]](user@domain\.tld)[[:>:]]/
-            reject forged sender address in $1: message header: $2
+            reject forged sender address in $1: header: $2
 
 Notes:
 
   * The example is simplified for educational purposes. In reality, my patterns
     list multiple email addresses as "(user1@domain1\.tld|user2@domain2\.tld)".
 
-  * The [[:<:]] matches the beginning of a word, and the [[:>:]] matches the
-    end.
+  * The "[[:<:]]" and "[[:>:]]" match the beginning and end of a word,
+    respectively. On some systems you should specify "\<" and "\>" instead. For
+    details see your system documentation.
 
   * The "\." matches "." literally. Without the "\", the "." would match any
     character.
@@ -171,7 +185,8 @@ techniques to recognize forgeries.
 Recognizing virus scanner mail is an error prone process, because there is a
 lot of variation in report formats. The following is only a small example of
 message header patterns. For a large collection of header and body patterns
-that recognize virus notification email, see http://www.dkuug.dk/keld/virus/.
+that recognize virus notification email, see http://www.dkuug.dk/keld/virus/ or
+http://www.t29.dk/antiantivirus.txt.
 
     /etc/postfix/header_checks:
         /^Subject: *Your email contains VIRUSES/ DISCARD virus notification
@@ -181,5 +196,6 @@ that recognize virus notification email, see http://www.dkuug.dk/keld/virus/.
 
 A plea to virus or spam scanner operators: please do not make the problem worse
 by sending return mail to forged sender addresses. You're only harassing
-innocent people.
+innocent people. If you must return mail to the purported sender, please return
+the full message headers, so that the sender can defend against forgeries.
 

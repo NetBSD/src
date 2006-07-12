@@ -1,7 +1,7 @@
-# CANONICAL(5)                                         CANONICAL(5)
+# CANONICAL(5)                                                      CANONICAL(5)
 # 
 # NAME
-#        canonical - format of Postfix canonical table
+#        canonical - Postfix canonical table format
 # 
 # SYNOPSIS
 #        postmap /etc/postfix/canonical
@@ -11,15 +11,16 @@
 #        postmap -q - /etc/postfix/canonical <inputfile
 # 
 # DESCRIPTION
-#        The  optional canonical table specifies an address mapping
-#        for local and non-local addresses. The mapping is used  by
-#        the  cleanup(8) daemon.  The address mapping is recursive.
+#        The  optional canonical(5) table specifies an address map-
+#        ping for local and non-local  addresses.  The  mapping  is
+#        used  by the cleanup(8) daemon, before mail is stored into
+#        the queue.  The address mapping is recursive.
 # 
-#        Normally, the canonical table is specified as a text  file
-#        that  serves  as  input  to  the  postmap(1) command.  The
+#        Normally, the canonical(5) table is specified  as  a  text
+#        file  that serves as input to the postmap(1) command.  The
 #        result, an indexed file in dbm or db format, is  used  for
 #        fast  searching  by  the  mail system. Execute the command
-#        postmap /etc/postfix/canonical in  order  to  rebuild  the
+#        "postmap /etc/postfix/canonical" in order to  rebuild  the
 #        indexed file after changing the text file.
 # 
 #        When  the  table  is provided via other means such as NIS,
@@ -33,20 +34,30 @@
 #        way  as  described below under "REGULAR EXPRESSION TABLES"
 #        and "TCP-BASED TABLES".
 # 
-#        The  canonical  mapping  affects   both   message   header
-#        addresses (i.e. addresses that appear inside messages) and
-#        message envelope addresses  (for  example,  the  addresses
-#        that  are  used in SMTP protocol commands). Think Sendmail
-#        rule set S3, if you like.
+#        By default the canonical(5) mapping affects  both  message
+#        header  addresses  (i.e. addresses that appear inside mes-
+#        sages) and message envelope addresses  (for  example,  the
+#        addresses  that are used in SMTP protocol commands). Think
+#        Sendmail rule set S3, if you  like.   This  is  controlled
+#        with the canonical_classes parameter.
 # 
-#        Typically, one would use the canonical  table  to  replace
-#        login   names   by  Firstname.Lastname,  or  to  clean  up
+#        NOTE: Postfix versions 2.2 and later rewrite message head-
+#        ers from remote SMTP clients only if  the  client  matches
+#        the  local_header_rewrite_clients  parameter,  or  if  the
+#        remote_header_rewrite_domain configuration parameter spec-
+#        ifies  a non-empty value. To get the behavior before Post-
+#        fix   2.2,   specify    "local_header_rewrite_clients    =
+#        static:all".
+# 
+#        Typically, one would use the canonical(5) table to replace
+#        login  names  by  Firstname.Lastname,  or  to   clean   up
 #        addresses produced by legacy mail systems.
 # 
-#        The canonical mapping is not to be confused  with  virtual
-#        domain support. Use the virtual(5) map for that purpose.
+#        The  canonical(5)  mapping is not to be confused with vir-
+#        tual domain support. Use the virtual(5) map for that  pur-
+#        pose.
 # 
-#        The  canonical  mapping  is  not to be confused with local
+#        The  canonical(5) mapping is not to be confused with local
 #        aliasing.  Use the aliases(5) map for that purpose.
 # 
 # TABLE FORMAT
@@ -66,13 +77,14 @@
 #               line  that starts with whitespace continues a logi-
 #               cal line.
 # 
+# TABLE SEARCH ORDER
 #        With lookups from indexed files such as DB or DBM, or from
 #        networked  tables  such  as NIS, LDAP or SQL, patterns are
 #        tried in the order as listed below:
 # 
 #        user@domain address
-#               user@domain is replaced by address. This  form  has
-#               the highest precedence.
+#               Replace user@domain by address. This form  has  the
+#               highest precedence.
 # 
 #               This  is  useful  to clean up addresses produced by
 #               legacy mail systems.  It can also be used  to  pro-
@@ -80,20 +92,29 @@
 #               below for a simpler solution.
 # 
 #        user address
-#               user@site is replaced by address when site is equal
-#               to  $myorigin,  when  site is listed in $mydestina-
-#               tion, or when it is listed in  $inet_interfaces  or
+#               Replace user@site by address when site is equal  to
+#               $myorigin,  when  site is listed in $mydestination,
+#               or  when  it  is  listed  in  $inet_interfaces   or
 #               $proxy_interfaces.
 # 
 #               This  form  is  useful for replacing login names by
 #               Firstname.Lastname.
 # 
 #        @domain address
-#               Every address in domain  is  replaced  by  address.
-#               This form has the lowest precedence.
+#               Replace other addresses in domain by address.  This
+#               form has the lowest precedence.
 # 
-#        In  all the above forms, when address has the form @other-
-#        domain, the result is the same user in otherdomain.
+# RESULT ADDRESS REWRITING
+#        The lookup result is subject to address rewriting:
+# 
+#        o      When  the  result  has  the  form @otherdomain, the
+#               result becomes the same user in otherdomain.
+# 
+#        o      When "append_at_myorigin=yes", append  "@$myorigin"
+#               to addresses without "@domain".
+# 
+#        o      When "append_dot_mydomain=yes", append ".$mydomain"
+#               to addresses without ".domain".
 # 
 # ADDRESS EXTENSION
 #        When a mail address localpart contains the optional recip-
@@ -117,8 +138,8 @@
 #        constituent parts, nor is user+foo broken up into user and
 #        foo.
 # 
-#        Patterns are applied in the  order  as  specified  in  the
-#        table,  until  a  pattern is found that matches the search
+#        Patterns are applied in the order as specified in the  ta-
+#        ble,  until  a  pattern  is  found that matches the search
 #        string.
 # 
 #        Results are the same as with indexed  file  lookups,  with
@@ -128,9 +149,9 @@
 # TCP-BASED TABLES
 #        This section describes how the table lookups  change  when
 #        lookups are directed to a TCP-based server. For a descrip-
-#        tion  of  the  TCP  client/server  lookup  protocol,   see
-#        tcp_table(5).   This  feature  is not available in Postfix
-#        version 2.1.
+#        tion of the TCP client/server lookup protocol, see tcp_ta-
+#        ble(5).  This feature is not available up to and including
+#        Postfix version 2.2.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain  mail  addresses  are not broken up into their
@@ -147,6 +168,10 @@
 #        The  text  below  provides  only  a parameter summary. See
 #        postconf(5) for more details including examples.
 # 
+#        canonical_classes
+#               What addresses are  subject  to  canonical  address
+#               mapping.
+# 
 #        canonical_maps
 #               List of canonical mapping tables.
 # 
@@ -159,18 +184,27 @@
 #               header sender addresses.
 # 
 #        propagate_unmatched_extensions
-#               A list of address rewriting  or  forwarding  mecha-
-#               nisms  that propagate an address extension from the
-#               original address to the result.   Specify  zero  or
-#               more  of  canonical,  virtual,  alias,  forward, or
-#               include.
+#               A  list  of  address rewriting or forwarding mecha-
+#               nisms that propagate an address extension from  the
+#               original  address  to  the result.  Specify zero or
+#               more  of  canonical,   virtual,   alias,   forward,
+#               include, or generic.
 # 
 #        Other parameters of interest:
 # 
 #        inet_interfaces
-#               The network interface addresses  that  this  system
+#               The  network  interface  addresses that this system
 #               receives mail on.  You need to stop and start Post-
 #               fix when this parameter changes.
+# 
+#        local_header_rewrite_clients
+#               Rewrite message header addresses in mail from these
+#               clients and update incomplete  addresses  with  the
+#               domain name in $myorigin or $mydomain; either don't
+#               rewrite message headers from other clients at  all,
+#               or  rewrite  message  headers and update incomplete
+#               addresses  with  the  domain   specified   in   the
+#               remote_header_rewrite_domain parameter.
 # 
 #        proxy_interfaces
 #               Other interfaces that this machine receives mail on
@@ -178,20 +212,20 @@
 #               tor.
 # 
 #        masquerade_classes
-#               List of address classes  subject  to  masquerading:
-#               zero  or  more of envelope_sender, envelope_recipi-
+#               List  of  address  classes subject to masquerading:
+#               zero or more of  envelope_sender,  envelope_recipi-
 #               ent, header_sender, header_recipient.
 # 
 #        masquerade_domains
-#               List of domains that hide  their  subdomain  struc-
+#               List  of  domains  that hide their subdomain struc-
 #               ture.
 # 
 #        masquerade_exceptions
-#               List  of user names that are not subject to address
+#               List of user names that are not subject to  address
 #               masquerading.
 # 
 #        mydestination
-#               List of domains that  this  mail  system  considers
+#               List  of  domains  that  this mail system considers
 #               local.
 # 
 #        myorigin
@@ -200,6 +234,12 @@
 #        owner_request_special
 #               Give special treatment to owner-xxx and xxx-request
 #               addresses.
+# 
+#        remote_header_rewrite_domain
+#               Don't rewrite message headers from  remote  clients
+#               at all when this parameter is empty; otherwise, re-
+#               write message  headers  and  append  the  specified
+#               domain name to incomplete addresses.
 # 
 # SEE ALSO
 #        cleanup(8), canonicalize and enqueue mail
@@ -223,4 +263,4 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                      CANONICAL(5)
+#                                                                   CANONICAL(5)

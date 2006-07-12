@@ -1,4 +1,4 @@
-/*	$NetBSD: input_transp.c,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: input_transp.c,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,6 +11,10 @@
 /*	int	input_transp_mask(param_name, pattern)
 /*	const char *param_name;
 /*	const char *pattern;
+/*
+/*	int	input_transp_cleanup(cleanup_flags, transp_mask)
+/*	int	cleanup_flags; 
+/*	int	transp_mask;
 /* DESCRIPTION
 /*	This module controls how much processing happens before mail is
 /*	written to the Postfix queue. Each transparency option is either
@@ -24,11 +28,15 @@
 /*	given in parentheses:
 /* .IP "no_unknown_recipient_checks (INPUT_TRANSP_UNKNOWN_RCPT)"
 /*	Do not try to reject unknown recipients.
-/* .IP "no_address_mapping (INPUT_TRANSP_ADDRESS_MAPPING)
+/* .IP "no_address_mappings (INPUT_TRANSP_ADDRESS_MAPPING)
 /*	Disable canonical address mapping, virtual alias map expansion,
 /*	address masquerading, and automatic BCC recipients.
 /* .IP "no_header_body_checkss (INPUT_TRANSP_HEADER_BODY)
 /*	Disable header/body_checks.
+/*
+/*	input_transp_cleanup() takes a bunch of cleanup processing
+/*	flags and updates them according to the settings in the
+/*	specified input transparency mask.
 /* DIAGNOSTICS
 /*	Panic: inappropriate use.
 /* LICENSE
@@ -49,10 +57,12 @@
 /* Utility library. */
 
 #include <name_mask.h>
+#include <msg.h>
 
 /* Global library. */
 
 #include <mail_params.h>
+#include <cleanup_user.h>
 #include <input_transp.h>
 
 /* input_transp_mask - compute mail receive transparency mask */
@@ -62,9 +72,28 @@ int     input_transp_mask(const char *param_name, const char *pattern)
     static NAME_MASK table[] = {
 	"no_unknown_recipient_checks", INPUT_TRANSP_UNKNOWN_RCPT,
 	"no_address_mappings", INPUT_TRANSP_ADDRESS_MAPPING,
- 	"no_header_body_checks", INPUT_TRANSP_HEADER_BODY,
+	"no_header_body_checks", INPUT_TRANSP_HEADER_BODY,
 	0,
     };
 
     return (name_mask(param_name, table, pattern));
+}
+
+/* input_transp_cleanup - adjust cleanup options */
+
+int     input_transp_cleanup(int cleanup_flags, int transp_mask)
+{
+    const char *myname = "input_transp_cleanup";
+
+    if (msg_verbose)
+	msg_info("before %s: cleanup flags = %s",
+		 myname, cleanup_strflags(cleanup_flags));
+    if (transp_mask & INPUT_TRANSP_ADDRESS_MAPPING)
+	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
+    if (transp_mask & INPUT_TRANSP_HEADER_BODY)
+	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
+    if (msg_verbose)
+	msg_info("after %s: cleanup flags = %s",
+		 myname, cleanup_strflags(cleanup_flags));
+    return (cleanup_flags);
 }

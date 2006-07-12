@@ -2,7 +2,7 @@ PPoossttffiixx AAddddrreessss VVeerriiffiiccaattiioonn
 
 -------------------------------------------------------------------------------
 
-WWAARRNNIINNGG WWAARRNNIINNGG WWAARRNNIINNGG
+WWAARRNNIINNGG
 
 The sender/recipient address verification feature described in this document is
 suitable only for low-traffic sites. It performs poorly under high load and may
@@ -15,8 +15,8 @@ Address verification is a feature that allows the Postfix SMTP server to block
 a sender (MAIL FROM) or recipient (RCPT TO) address until the address has been
 verified to be deliverable.
 
-The technique has obvious uses in order to reject junk mail with an unreplyable
-sender address.
+The technique has obvious uses to reject junk mail with an unreplyable sender
+address.
 
 The technique may also be useful to block mail for undeliverable recipients,
 for example on a mail relay host that does not have a list of all the valid
@@ -47,18 +47,18 @@ itself, or it could be a remote MTA (SMTP interruptus). Probe messages are like
 normal mail, except that they are never delivered, deferred or bounced; probe
 messages are always discarded.
 
-                Postfix      Postfix        Address
-    Internet ->   SMTP   <->  verify  <-> verification
-                 server       server        database
+                Postfix         Postfix             Address
+    Internet ->  SMTP   <->     verify      <->   verification
+                server          server              database
 
-                   |            ^
-                 probe       delivery
-                messages      status
-                   v            |
+                                   |    ^
+                               probe    delivery
+                            messages    status
+                                   v    |
 
-                Postfix      Postfix
-                 queue   ->  delivery
-                              agents
+                            Postfix     Postfix
+                             queue   -> delivery
+                                         agents
 
 With Postfix address verification turned on, normal mail will suffer only a
 short delay of up to 6 seconds while an address is being verified for the first
@@ -73,14 +73,17 @@ postconf(5) for details.
 
 LLiimmiittaattiioonnss ooff aaddddrreessss vveerriiffiiccaattiioonn
 
-  * Postfix probes the nearest MTA for the address that is being verified,
-    without actually sending mail to that address. If the nearest MTA accepts
-    the address, then Postfix assumes that the address is deliverable, even
-    when the address will bounce AFTER that MTA accepts it.
+  * When verifying a remote address, Postfix probes the nearest MTA for that
+    address, without actually delivering mail to it. If the nearest MTA accepts
+    the address, then Postfix assumes that the address is deliverable. In
+    reality, mail for a remote address can bounce AFTER the nearest MTA accepts
+    the recipient address.
 
-  * Sites like AOL may blacklist you when you are probing them too often (a
-    probe is an SMTP session that does not deliver mail), or when you are
-    probing them too often for a non-existent address.
+  * Some sites may blacklist you when you are probing them too often (a probe
+    is an SMTP session that does not deliver mail), or when you are probing
+    them too often for a non-existent address. This is one reason why you
+    should use sender address verification sparingly, if at all, when your site
+    receives lots of email.
 
   * Normally, address verification probe messages follow the same path as
     regular mail. However, some sites send mail to the Internet via an

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_api.c,v 1.1.1.6 2004/05/31 00:24:27 heas Exp $	*/
+/*	$NetBSD: cleanup_api.c,v 1.1.1.6.2.1 2006/07/12 15:06:38 tron Exp $	*/
 
 /*++
 /* NAME
@@ -226,6 +226,14 @@ int     cleanup_flush(CLEANUP_STATE *state)
 	    vstream_control(state->handle->stream,
 			    VSTREAM_CTL_PATH, cleanup_path,
 			    VSTREAM_CTL_END);
+
+	    /*
+	     * XXX: When delivering to a non-incoming queue, do not consume
+	     * in_flow tokens. Unfortunately we can't move the code that
+	     * consumes tokens until after the mail is received, because that
+	     * would increase the risk of duplicate deliveries (RFC 1047).
+	     */
+	    (void) mail_flow_put(1);
 	}
 	state->errs = mail_stream_finish(state->handle, (VSTRING *) 0);
     } else {

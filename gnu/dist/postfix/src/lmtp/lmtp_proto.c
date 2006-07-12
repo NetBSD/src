@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_proto.c,v 1.1.1.9 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_proto.c,v 1.1.1.9.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -33,6 +33,7 @@
 /*	accordingly.
 /*
 /*	lmtp_rset() sends a lone RSET command and waits for the response.
+/*	In case of a negative reply it sets the CANT_RSET_THIS_SESSION flag.
 /*
 /*	lmtp_quit() sends a lone QUIT command and waits for the response
 /*	only if waiting for QUIT replies is enabled.
@@ -211,6 +212,7 @@ int     lmtp_lhlo(LMTP_STATE *state)
 	XFORWARD_ADDR, LMTP_FEATURE_XFORWARD_ADDR,
 	XFORWARD_PROTO, LMTP_FEATURE_XFORWARD_PROTO,
 	XFORWARD_HELO, LMTP_FEATURE_XFORWARD_HELO,
+	XFORWARD_DOMAIN, LMTP_FEATURE_XFORWARD_DOMAIN,
 	0, 0,
     };
 
@@ -314,7 +316,7 @@ static int lmtp_loop(LMTP_STATE *state, NOCLOBBER int send_state,
     LMTP_RESP *resp;
     RECIPIENT *rcpt;
     VSTRING *next_command = vstring_alloc(100);
-    int *NOCLOBBER survivors = 0;
+    int    *NOCLOBBER survivors = 0;
     NOCLOBBER int next_state;
     NOCLOBBER int next_rcpt;
     NOCLOBBER int send_rcpt;
@@ -354,6 +356,9 @@ static int lmtp_loop(LMTP_STATE *state, NOCLOBBER int send_state,
 
 #define SENDING_MAIL \
 	(recv_state <= LMTP_STATE_DOT)
+
+#define CANT_RSET_THIS_SESSION \
+	(state->features |= LMTP_FEATURE_RSET_REJECTED)
 
     /*
      * Pipelining support requires two loops: one loop for sending and one
@@ -420,6 +425,12 @@ static int lmtp_loop(LMTP_STATE *state, NOCLOBBER int send_state,
 		vstring_sprintf_append(next_command, " %s=%s",
 		   XFORWARD_HELO, DEL_REQ_ATTR_AVAIL(request->client_helo) ?
 			       request->client_helo : XFORWARD_UNAVAILABLE);
+	    if (state->features & LMTP_FEATURE_XFORWARD_DOMAIN)
+		vstring_sprintf_append(next_command, " %s=%s", XFORWARD_DOMAIN,
+			 DEL_REQ_ATTR_AVAIL(request->rewrite_context) == 0 ?
+				       XFORWARD_UNAVAILABLE :
+		     strcmp(request->rewrite_context, MAIL_ATTR_RWR_LOCAL) ?
+				  XFORWARD_DOM_REMOTE : XFORWARD_DOM_LOCAL);
 	    next_state = LMTP_STATE_MAIL;
 	    break;
 
@@ -729,6 +740,8 @@ static int lmtp_loop(LMTP_STATE *state, NOCLOBBER int send_state,
 		     * Ignore the RSET response.
 		     */
 		case LMTP_STATE_RSET:
+		    if (resp->code / 100 != 2)
+			CANT_RSET_THIS_SESSION;
 		    recv_state = LMTP_STATE_LAST;
 		    break;
 
@@ -808,8 +821,11 @@ static int lmtp_loop(LMTP_STATE *state, NOCLOBBER int send_state,
 		smtp_fputs("", 0, session->stream);
 	    if (vstream_ferror(state->src))
 		msg_fatal("queue file read error");
-	    if (rec_type != REC_TYPE_XTRA)
+	    if (rec_type != REC_TYPE_XTRA) {
+		msg_warn("%s: bad record type: %d in message content",
+			 request->queue_id, rec_type);
 		RETURN(mark_corrupt(state->src));
+	    }
 	}
 
 	/*

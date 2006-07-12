@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.1.1.5.2.1 2006/07/12 15:06:38 tron Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,9 @@
 #include <mail_params.h>
 #include <deliver_pass.h>
 
+#define DELIVER_PASS_DEFER	1
+#define DELIVER_PASS_UNKNOWN	2
+
 /* deliver_pass_initial_reply - retrieve initial delivery process response */
 
 static int deliver_pass_initial_reply(VSTREAM *stream)
@@ -113,6 +116,10 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, request->client_addr,
 	       ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, request->client_proto,
 	       ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, request->client_helo,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, request->sasl_method,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, request->sasl_sender,
+	       ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
 	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, offs,
 	       ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orcpt,
 	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, addr,
@@ -139,9 +146,10 @@ static int deliver_pass_final_reply(VSTREAM *stream, VSTRING *reason)
 		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &stat,
 		  ATTR_TYPE_END) != 2) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
-	stat = -1;
+	return (DELIVER_PASS_UNKNOWN);
+    } else {
+	return (stat ? DELIVER_PASS_DEFER : 0);
     }
-    return (stat);
 }
 
 /* deliver_pass - deliver one per-site queue entry */
@@ -183,10 +191,20 @@ int     deliver_pass(const char *class, const char *service,
      * XXX Can't pass back hop status info because the problem is with a
      * different transport.
      */
-    if ((status = deliver_pass_initial_reply(stream)) == 0
-	&& (status = deliver_pass_send_request(stream, request, nexthop,
-					       orig_addr, addr, offs)) == 0)
-	status = deliver_pass_final_reply(stream, reason);
+    if (deliver_pass_initial_reply(stream) != 0
+	|| deliver_pass_send_request(stream, request, nexthop,
+				     orig_addr, addr, offs) != 0) {
+	status = defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
+			      request->queue_id, orig_addr, addr,
+			      offs, "none", request->arrival_time,
+			      "mail transport unavailable");
+    } else if ((status = deliver_pass_final_reply(stream, reason))
+	       == DELIVER_PASS_UNKNOWN) {
+	status = defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
+			      request->queue_id, orig_addr, addr,
+			      offs, "none", request->arrival_time,
+			      "unknown mail transport error");
+    }
 
     /*
      * Clean up.

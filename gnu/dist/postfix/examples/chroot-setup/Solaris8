@@ -79,6 +79,7 @@ more="
 /etc/netconfig
 /etc/default/init
 /etc/inet/services
+/etc/resolv.conf
 /etc/services
 /usr/lib/ld.so
 /usr/lib/ld.so.1

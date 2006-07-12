@@ -180,7 +180,7 @@ NNootteess aanndd tthhiinnggss ttoo tthhiinnkk aabboouu
   * If you use an LDAP map for lookups other than aliases, you may have to make
     sure the lookup makes sense. In the case of virtual lookups, maildrops
     other than mail addresses are pretty useless, because Postfix can't know
-    how to set the ownership for program or file delivery. Your query_filter
+    how to set the ownership for program or file delivery. Your qquueerryy__ffiilltteerr
     should probably look something like this:
 
         query_filter = (&(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")
@@ -196,7 +196,7 @@ NNootteess aanndd tthhiinnggss ttoo tthhiinnkk aabboouu
     some thought on your part to implement safely, considering the
     ramifications of this type of delivery. You may decide it's not worth the
     bother to allow any of that nonsense in LDAP lookups, ban it in the
-    query_filter, and keep things like majordomo lists in local alias
+    qquueerryy__ffiilltteerr, and keep things like majordomo lists in local alias
     databases.
 
         query_filter = (&(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")
@@ -236,12 +236,17 @@ CCrreeddiittss
     the work on RFC 2254 escaping in queries. Spotted a bug in binding.
   * Sami Haahtinen: Referral chasing and v3 support.
   * Victor Duchovni: ldap_bind() timeout. With fixes from LaMont Jones:
-    OpenLDAP cache deprecation. Limits on recursion, expansion and query
+    OpenLDAP cache deprecation. Limits on recursion, expansion and search
     results size. LDAP connection sharing for maps differing only in the query
     parameters.
   * Liviu Daia: Support for SSL/STARTTLS. Support for storing map definitions
     in external files (ldap:/path/ldap.cf) needed to securely store passwords
     for plain auth.
+  * Liviu Daia revised the configuration interface and added the main.cf
+    configuration feature.
+  * Liviu Daia with further refinements from Jose Luis Tallon and Victor
+    Duchovni developed the common query, result_format, domain and
+    expansion_limit interface for LDAP, MySQL and PosgreSQL.
 
 And of course Wietse.
 

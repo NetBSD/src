@@ -25,8 +25,10 @@ $(PROG): $(OBJS) $(LIBS)
 	 echo "#"; \
 	 ./$(PROG) -d) |egrep -v '^(myhostname|mydomain|mynetworks) ' >$@
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -60,7 +62,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -83,6 +85,7 @@ postconf.o: ../../include/mymalloc.h
 postconf.o: ../../include/split_at.h
 postconf.o: ../../include/vstring_vstream.h
 postconf.o: ../../include/myflock.h
+postconf.o: ../../include/inet_proto.h
 postconf.o: ../../include/mynetworks.h
 postconf.o: ../../include/mail_conf.h
 postconf.o: ../../include/mail_dict.h

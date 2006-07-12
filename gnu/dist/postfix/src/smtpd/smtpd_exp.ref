@@ -107,8 +107,8 @@ OK
 >>> mail sname@sdomain
 OK
 >>> rcpt rname@rdomain
-./smtpd_check: <queue id>: reject: RCPT from spike.porcupine.org[168.100.189.2]: 554 Service unavailable; Helo command [example.tld] blocked using abuse.rfc-ignorant.org; Not supporting abuse@domain; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<example.tld>
-554 Service unavailable; Helo command [example.tld] blocked using abuse.rfc-ignorant.org; Not supporting abuse@domain
+./smtpd_check: <queue id>: reject: RCPT from spike.porcupine.org[168.100.189.2]: 554 Service unavailable; Helo command [example.tld] blocked using abuse.rfc-ignorant.org; Not supporting abuse@example.tld; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<example.tld>
+554 Service unavailable; Helo command [example.tld] blocked using abuse.rfc-ignorant.org; Not supporting abuse@example.tld
 >>> #
 >>> # Check MX access
 >>> #
@@ -123,7 +123,6 @@ OK
 >>> sender_restrictions check_sender_mx_access,hash:smtpd_check_access
 OK
 >>> mail foo@pls.net.au
-./smtpd_check: warning: numeric domain name in resource data of MX record for pls.net.au: 203.3.110.241
 OK
 >>> #mail foo@verisign-wildcard.com
 >>> mail foo@verisign.com

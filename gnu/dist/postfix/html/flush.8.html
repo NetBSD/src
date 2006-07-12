@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - flush(8) </title>
 </head> <body> <pre>
-FLUSH(8)                                                 FLUSH(8)
+FLUSH(8)                                                              FLUSH(8)
 
 <b>NAME</b>
        flush - Postfix fast flush server
@@ -13,7 +13,7 @@ FLUSH(8)                                                 FLUSH(8)
        <b>flush</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  flush  server  maintains a record of deferred mail by
+       The <a href="flush.8.html"><b>flush</b>(8)</a> server maintains a record of deferred mail by
        destination.  This information is used to improve the per-
        formance of the SMTP <b>ETRN</b> request, and of its command-line
        equivalent, "<b>sendmail -qR</b>" or "<b>postqueue -f</b>".   This  pro-
@@ -34,7 +34,7 @@ FLUSH(8)                                                 FLUSH(8)
        This server implements the following requests:
 
        <b>add</b> <i>sitename queueid</i>
-              Inform the fast flush server that the message  with
+              Inform the <a href="flush.8.html"><b>flush</b>(8)</a> server that  the  message  with
               the  specified queue ID is queued for the specified
               destination.
 
@@ -56,10 +56,10 @@ FLUSH(8)                                                 FLUSH(8)
        <b>purge</b>  Do a <b>refresh</b> for all per-destination logfiles.
 
 <b>SECURITY</b>
-       The  fast  flush server is not security-sensitive. It does
-       not talk to the network, and it does  not  talk  to  local
-       users.   The  fast  flush server can run chrooted at fixed
-       low privilege.
+       The <a href="flush.8.html"><b>flush</b>(8)</a> server is not security-sensitive. It does not
+       talk to the network, and it does not talk to local  users.
+       The fast flush server can run chrooted at fixed low privi-
+       lege.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -73,7 +73,7 @@ FLUSH(8)                                                 FLUSH(8)
        setting in the <b>master.cf</b> configuration file.
 
        Upon  receipt of a request to deliver mail for an eligible
-       destination, the <b>flush</b> server  requests  delivery  of  all
+       destination, the <a href="flush.8.html"><b>flush</b>(8)</a> server requests delivery of  all
        messages  that  are  listed in that destination's logfile,
        regardless of the recipients of those  messages.  This  is
        not an issue for mail that is sent to a <b><a href="postconf.5.html#relay_domains">relay_domains</a></b> des-
@@ -81,12 +81,12 @@ FLUSH(8)                                                 FLUSH(8)
        in one domain.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are picked up automatically as <a href="flush.8.html">flush(8)</a>
+       Changes to <b>main.cf</b> are picked up automatically as <a href="flush.8.html"><b>flush</b>(8)</a>
        processes run for only a limited amount of time.  Use  the
        command "<b>postfix reload</b>" to speed up a change.
 
        The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The default location of  the  Postfix  main.cf  and
@@ -131,8 +131,8 @@ FLUSH(8)                                                 FLUSH(8)
               explicit ".domain.tld" pattern.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID of a Postfix command or daemon  pro-
-              cess.
+              The process ID  of  a  Postfix  command  or  daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The  process  name  of  a Postfix command or daemon
@@ -146,8 +146,8 @@ FLUSH(8)                                                 FLUSH(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
@@ -157,6 +157,7 @@ FLUSH(8)                                                 FLUSH(8)
        <a href="smtpd.8.html">smtpd(8)</a>, SMTP server
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
        syslogd(8), system logging
 
@@ -176,5 +177,5 @@ FLUSH(8)                                                 FLUSH(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                         FLUSH(8)
+                                                                      FLUSH(8)
 </pre> </body> </html>

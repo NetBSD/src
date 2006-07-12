@@ -67,7 +67,7 @@ path.
     % export MANPATH; MANPATH="`pwd`/man:$MANPATH"
     % setenv MANPATH "`pwd`/man:$MANPATH"
 
-Of particular interest is the postconf(5) manual page that lists all the 300+
+Of particular interest is the postconf(5) manual page that lists all the 400+
 configuration parameters. The HTML version of this text makes it easy to
 navigate around.
 
@@ -95,7 +95,7 @@ At some point in time, a version of Postfix was supported on:
     OSF1.V3 - OSF1.V5 (Digital UNIX)
     Reliant UNIX 5.x
     Rhapsody 5.x
-    SunOS 4.1.4 (January 2004)
+    SunOS 4.1.4 (February 2005)
     SunOS 5.4 - 5.9 (Solaris 2.4..9)
     Ultrix 4.x (well, that was long ago)
 
@@ -168,10 +168,11 @@ support for extensions:
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
     |SASL authentication               |SASL_README |Postfix 1.0 |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |STARTTLS session encryption       |TLS_README  |Postfix 2.2 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
 
-Note: support for TLS (encrypted SMTP sessions and certificate based
-authentication) and for IP version 6 is still separate from Postfix but is
-expected to be merged soon.
+Note: IP version 6 support is compiled into Postfix on operating systems that
+have IPv6 support. See the IPV6_README file for details.
 
 44..44 -- OOvveerrrriiddiinngg bbuuiilltt--iinn ppaarraammeetteerr ddeeffaauulltt sseettttiinnggss
 
@@ -298,15 +299,6 @@ a group:
 
         /etc/group:
             postfix:*:12345:
-
-    Note: there should be no whitespace before "postfix:".
-
-  * Make sure there is a "postfix" alias in /etc/aliases, or whatever the
-    pathname of your aliases file is; the command "postconf alias_maps" will
-    tell you.
-
-        /etc/aliases:
-            postfix: root
 
     Note: there should be no whitespace before "postfix:".
 
@@ -608,15 +600,28 @@ and/or dial-up networks.
 
 1100..88 -- CCrreeaattee tthhee aalliiaasseess ddaattaabbaassee
 
-Finally, if you haven't used Sendmail prior to using Postfix, you will have to
-build the alias database with one of the following commands:
+Postfix uses a Sendmail-compatible aliases(5) table to redirect mail for local
+(8) recipients. Typically, this information is kept in two files: in a text
+file /etc/aliases and in an indexed file /etc/aliases.db. The command "postconf
+alias_maps" will tell you the exact location of the text file.
+
+First, be sure to update the text file with aliases for root, postmaster and
+"postfix" that forward mail to a real person. Postfix has a sample aliases file
+/etc/postfix/aliases that you can adapt to local conditions.
+
+    /etc/aliases:
+        root: you
+        postmaster: root
+        postfix: root
+        bin: root
+        etcetera...
+
+Note: there should be no whitespace before the ":".
+
+Finally, build the indexed aliases file with one of the following commands:
 
     # newaliases
     # sendmail -bi
-
-Be sure to set up aliases for root and postmaster that forward mail to a real
-person. Postfix has a sample aliases file /etc/postfix/aliases that you can
-adapt to local conditions.
 
 1111 -- TToo cchhrroooott oorr nnoott ttoo cchhrroooott
 
@@ -648,9 +653,15 @@ systems.
 Additionally, you almost certainly need to configure syslogd so that it listens
 on a socket inside the Postfix queue directory. Examples for specific systems:
 
-FreeBSD: syslogd -l /var/spool/postfix/var/run/log
+FreeBSD:
 
-Linux, OpenBSD: syslogd -a /var/spool/postfix/dev/log
+    # mkdir -p /var/spool/postfix/var/run
+    # syslogd -l /var/spool/postfix/var/run/log
+
+Linux, OpenBSD:
+
+    # mkdir -p /var/spool/postfix/dev
+    # syslogd -a /var/spool/postfix/dev/log
 
 1122 -- CCaarree aanndd ffeeeeddiinngg ooff tthhee PPoossttffiixx ssyysstteemm
 

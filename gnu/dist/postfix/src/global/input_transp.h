@@ -1,4 +1,4 @@
-/*	$NetBSD: input_transp.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: input_transp.h,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 #ifndef _EXT_PROP_INCLUDED_
 #define _EXT_PROP_INCLUDED_
@@ -21,6 +21,7 @@
 #define INPUT_TRANSP_HEADER_BODY	(1<<2)
 
 extern int input_transp_mask(const char *, const char *);
+extern int input_transp_cleanup(int, int);
 
 /* LICENSE
 /* .ad

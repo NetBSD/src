@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.8 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.8.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -40,6 +40,10 @@
 /*	The command is specified as an argument vector. This vector is
 /*	passed without further inspection to the \fIexecvp\fR() routine.
 /*	One of PIPE_CMD_COMMAND or PIPE_CMD_ARGV must be specified.
+/* .IP "PIPE_CMD_CWD (char *)"
+/*	Working directory for command execution. A null pointer means
+/*	don't change directory anyway. Failure to change directory
+/*	causes mail delivery to be deferred.
 /* .IP "PIPE_CMD_ENV (char **)"
 /*	Additional environment information, in the form of a null-terminated
 /*	list of name, value, name, value, ... elements. By default only the
@@ -129,6 +133,7 @@
 
 #include <msg.h>
 #include <vstream.h>
+#include <msg_vstream.h>
 #include <vstring.h>
 #include <stringops.h>
 #include <iostuff.h>
@@ -161,6 +166,7 @@ struct pipe_args {
     char  **env;			/* extra environment */
     char  **export;			/* exportable environment */
     char   *shell;			/* command shell */
+    char   *cwd;			/* preferred working directory */
 };
 
 static int pipe_command_timeout;	/* command has timed out */
@@ -188,6 +194,7 @@ static void get_pipe_args(struct pipe_args * args, va_list ap)
     args->env = 0;
     args->export = 0;
     args->shell = 0;
+    args->cwd = 0;
 
     pipe_command_maxtime = var_command_maxtime;
 
@@ -238,6 +245,9 @@ static void get_pipe_args(struct pipe_args * args, va_list ap)
 	    break;
 	case PIPE_CMD_SHELL:
 	    args->shell = va_arg(ap, char *);
+	    break;
+	case PIPE_CMD_CWD:
+	    args->cwd = va_arg(ap, char *);
 	    break;
 	default:
 	    msg_panic("%s: unknown key: %d", myname, key);
@@ -338,7 +348,7 @@ static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig,
 
 int     pipe_command(VSTREAM *src, VSTRING *why,...)
 {
-    char   *myname = "pipe_comand";
+    char   *myname = "pipe_command";
     va_list ap;
     VSTREAM *cmd_in_stream;
     VSTREAM *cmd_out_stream;
@@ -414,6 +424,7 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	 * parent can kill not just the child but also its offspring.
 	 */
     case 0:
+	(void) msg_cleanup((MSG_CLEANUP_FN) 0);
 	set_ugid(args.uid, args.gid);
 	if (setsid() < 0)
 	    msg_warn("setsid failed: %m");
@@ -431,6 +442,16 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	close(cmd_out_pipe[1]);
 
 	/*
+	 * Working directory plumbing.
+	 */
+	if (args.cwd && chdir(args.cwd) < 0) {
+	    msg_warn("cannot change directory to \"%s\" for uid=%lu gid=%lu: %m",
+		     args.cwd, (unsigned long) args.uid,
+		     (unsigned long) args.gid);
+	    exit(EX_TEMPFAIL);
+	}
+
+	/*
 	 * Environment plumbing. Always reset the command search path. XXX
 	 * That should probably be done by clean_env().
 	 */
@@ -445,8 +466,16 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 
 	/*
 	 * Process plumbing. If possible, avoid running a shell.
+	 * 
+	 * As a safety for buggy libraries, we close the syslog socket.
+	 * Otherwise we could leak a file descriptor that was created by a
+	 * privileged process.
+	 * 
+	 * XXX To avoid losing fatal error messages we open a VSTREAM and
+	 * capture the output in the parent process.
 	 */
 	closelog();
+	msg_vstream_init(var_procname, VSTREAM_ERR);
 	if (args.argv) {
 	    execvp(args.argv[0], args.argv);
 	    msg_fatal("%s: execvp %s: %m", myname, args.argv[0]);

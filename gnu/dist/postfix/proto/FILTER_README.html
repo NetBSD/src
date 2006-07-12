@@ -76,25 +76,49 @@ where incoming SMTP mail is filtered BEFORE it is stored into the
 Postfix queue.  </p>
 
 <p> This document describes two approaches to content filter
-all email, as well as several options filter mail selectively: </p>
+all email, as well as several options to filter mail selectively: </p>
 
 <ul>
 
 <li><a href="#principles">Principles of operation</a>
 
+<li>Simple content filter
+
+<ul>
+
 <li><a href="#simple_filter">Simple content filter example</a>
 
+<li><a href="#simple_performance">Simple content filter performance</a>
+
 <li><a href="#simple_limitations">Simple content filter limitations</a>
+
+<li><a href="#simple_turnoff">Turning off the simple content filter</a>
+
+</ul>
+
+<li>Advanced content filter
+
+<ul>
 
 <li><a href="#advanced_filter">Advanced content filter example</a>
 
 <li><a href="#performance">Advanced content filter performance</a>
+
+<li><a href="#advanced_turnoff">Turning off the advanced content filter</a>
+
+</ul>
+
+<li>Selective content filtering
+
+<ul>
 
 <li><a href="#remote_only">Filtering mail from outside users only</a>
 
 <li><a href="#domain_dependent">Different filters for different domains</a>
 
 <li><a href="#dynamic_filter">FILTER actions in access or header/body tables</a>
+
+</ul>
 
 </ul>
 
@@ -359,10 +383,7 @@ as the right-hand side in a Postfix transport table.  </p>
 
 </ul>
 
-<p> To turn off content filtering, edit the master.cf file, remove
-the "-o content_filter=filter:dummy" text from the entry that
-defines the Postfix SMTP server, and execute another "<b>postfix
-reload</b>". </p>
+<h2> <a name="simple_performance">Simple content filter performance</a> </h2>
 
 <p> With the shell script as shown above you will lose a factor of
 four in Postfix performance for transit mail that arrives and leaves
@@ -391,6 +412,21 @@ re-injected with the Postfix sendmail command, resulting in a mail
 filtering loop.  The advanced content filtering method (see below)
 makes it possible to turn off header_checks or body_checks patterns
 for filtered mail. </p>
+
+<h2><a name="simple_turnoff">Turning off the simple content filter</a> </h2>
+
+<p> To turn off "simple" content filtering: </p>
+
+<ul> <li> <p> Edit the master.cf file, remove the "-o
+content_filter=filter:dummy" text from the entry that defines the
+Postfix SMTP server. </p>
+
+<li> <p> Execute "<b>postsuper -r ALL</b>" to remove content
+filter information from existing queue files. </p>
+
+<li> <p> Execute another "<b>postfix reload</b>". </p>
+
+</ul>
 
 <h2><a name="advanced_filter">Advanced content filter example</a></h2>
 
@@ -552,11 +588,6 @@ masquerading, etc. </p>
 
 </ul>
 
-<p> To turn off content filtering, delete or comment out the two
-above main.cf lines. All other changes made for advanced content
-filtering have no effect when content filtering is turned off.
-</p>
-
 <h3> Advanced content filter: sending unfiltered mail to the content
 filter</h3>
 
@@ -716,6 +747,29 @@ unfiltered messages share the same queue.  As mentioned in the
 introduction of this document, content filtering with multiple
 Postfix instances will be covered in a future version.  </p>
 
+<h2><a name="advanced_turnoff">Turning off the advanced content filter</a> </h2>
+
+<p> To turn off "advanced" content filtering: </p>
+
+<ul> <li> <p> Delete or comment out the two following main.cf lines.
+The other changes made for advanced content filtering have no effect
+when content filtering is turned off. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    content_filter = scan:localhost:10025
+    receive_override_options = no_address_mappings
+</pre>
+</blockquote>
+
+<li> <p> Execute "<b>postsuper -r ALL</b>" to remove content
+filter information from existing queue files. </p>
+
+<li> <p> Execute another "<b>postfix reload</b>". </p>
+
+</ul>
+
 <h2><a name="remote_only">Filtering mail from outside users only</a></h2>
 
 <p> The easiest approach is to configure ONE Postfix instance with
@@ -748,7 +802,7 @@ content filtering turned on. </p>
     #                   (yes)   (yes)   (yes)   (never) (100)
     # =================================================================
     1.2.3.5:smtp  inet  n       -       n       -       -       smtpd
-        -o content_filter=foo:bar 
+        -o content_filter=filter-service:filter-destination 
         -o receive_override_options=no_address_mappings
 </pre>
 
@@ -774,14 +828,14 @@ address provides a different content filter service. </p>
     # service     type  private unpriv  chroot  wakeup  maxproc command
     #                   (yes)   (yes)   (yes)   (never) (100)
     # =================================================================
-    # SMTP service for domains that are content filtered with foo:bar
+    # SMTP service for domains that are filtered with service1:dest1
     1.2.3.4:smtp  inet  n       -       n       -       -       smtpd
-        -o content_filter=foo:bar 
+        -o content_filter=service1:dest1 
         -o receive_override_options=no_address_mappings
 
-    # SMTP service for domains that are content filtered with xxx:yyy
+    # SMTP service for domains that are filtered with service2:dest2
     1.2.3.5:smtp  inet  n       -       n       -       -       smtpd
-        -o content_filter=xxx:yyy 
+        -o content_filter=service2:dest2
         -o receive_override_options=no_address_mappings
 </pre>
 </blockquote>

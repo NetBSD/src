@@ -17,7 +17,7 @@
 
 <hr>
 
-<h2>WARNING WARNING WARNING</h2>
+<h2>WARNING</h2>
 
 <p> People who go to the trouble of installing Postfix may have
 the expectation that Postfix is more secure than some other mailers.
@@ -34,7 +34,7 @@ the Postfix SMTP client to a remote SMTP server.  </p>
 
 <p> When receiving mail, Postfix logs the client-provided username,
 authentication method, and sender address to the maillog file, and
-optionally grants mail access via the permit_sasl_authenticated
+optionally grants mail access via the <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>
 UCE restriction. </p>
 
 <p> Postfix does not record the client's SASL authentication
@@ -187,7 +187,7 @@ SMTP server</a></h2>
 <pre>
 /etc/postfix/main.cf:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
-        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> permit_sasl_authenticated ...
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a> ...
 </pre>
 </blockquote>
 
@@ -472,6 +472,13 @@ for example: </p>
 <p> The SASL client password file is opened before the SMTP server
 enters the optional chroot jail, so you can keep the file in
 /etc/postfix. </p>
+
+<p> Note: Some SMTP servers support authentication mechanisms that,
+although available on the client system, may not in practice work or
+possess the appropriate credentials to authenticate to the server. It
+is possible via the <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> parameter to further
+restrict the list of server mechanisms that the <a href="smtp.8.html">smtp(8)</a> client will take
+into consideration.  </p>
 
 <p> The Postfix SMTP client is backwards compatible with SMTP
 servers that use the non-standard "AUTH=method..." syntax in response

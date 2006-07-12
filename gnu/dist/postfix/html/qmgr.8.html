@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - qmgr(8) </title>
 </head> <body> <pre>
-QMGR(8)                                                   QMGR(8)
+QMGR(8)                                                                QMGR(8)
 
 <b>NAME</b>
        qmgr - Postfix queue manager
@@ -13,7 +13,7 @@ QMGR(8)                                                   QMGR(8)
        <b>qmgr</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  <b>qmgr</b>  daemon  awaits the arrival of incoming mail and
+       The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon awaits the arrival of incoming mail and
        arranges for its delivery via Postfix delivery  processes.
        The actual mail routing strategy is delegated to the <a href="trivial-rewrite.8.html"><b>triv-</b></a>
        <a href="trivial-rewrite.8.html"><b>ial-rewrite</b>(8)</a> daemon.  This program  expects  to  be  run
@@ -24,11 +24,12 @@ QMGR(8)                                                   QMGR(8)
        by undeliverable bounce notifications.
 
 <b>MAIL QUEUES</b>
-       The <b>qmgr</b> daemon maintains the following queues:
+       The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon maintains the following queues:
 
        <b>incoming</b>
               Inbound mail from the network, or mail picked up by
-              the local <b>pickup</b> agent from the <b>maildrop</b> directory.
+              the local <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon from the <b>maildrop</b> direc-
+              tory.
 
        <b>active</b> Messages  that  the  queue  manager  has opened for
               delivery. Only a  limited  number  of  messages  is
@@ -49,8 +50,8 @@ QMGR(8)                                                   QMGR(8)
               until someone sets them free.
 
 <b>DELIVERY STATUS REPORTS</b>
-       The  <b>qmgr</b> daemon keeps an eye on per-message delivery sta-
-       tus reports in  the  following  directories.  Each  status
+       The  <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  daemon  keeps an eye on per-message delivery
+       status reports in the following directories.  Each  status
        report file has the same name as the corresponding message
        file:
 
@@ -67,22 +68,23 @@ QMGR(8)                                                   QMGR(8)
               mand.  These files are maintained by  the  <a href="trace.8.html"><b>trace</b>(8)</a>
               daemon.
 
-       The  <b>qmgr</b>  daemon is responsible for asking the <a href="bounce.8.html"><b>bounce</b>(8)</a>,
-       <a href="defer.8.html"><b>defer</b>(8)</a> or <a href="trace.8.html"><b>trace</b>(8)</a> daemons to send delivery reports.
+       The   <a href="qmgr.8.html"><b>qmgr</b>(8)</a>   daemon   is  responsible  for  asking  the
+       <a href="bounce.8.html"><b>bounce</b>(8)</a>, <a href="defer.8.html"><b>defer</b>(8)</a> or <a href="trace.8.html"><b>trace</b>(8)</a> daemons to  send  delivery
+       reports.
 
 <b>STRATEGIES</b>
-       The queue manager implements a variety of  strategies  for
+       The  queue  manager implements a variety of strategies for
        either opening queue files (input) or for message delivery
        (output).
 
        <b>leaky bucket</b>
-              This strategy limits the number of messages in  the
-              <b>active</b>  queue  and  prevents the queue manager from
+              This  strategy limits the number of messages in the
+              <b>active</b> queue and prevents the  queue  manager  from
               running out of memory under heavy load.
 
        <b>fairness</b>
-              When the <b>active</b> queue has room, the  queue  manager
-              takes  one  message from the <a href="QSHAPE_README.html#incoming_queue"><b>incoming</b> queue</a> and one
+              When  the  <b>active</b> queue has room, the queue manager
+              takes one message from the <a href="QSHAPE_README.html#incoming_queue"><b>incoming</b> queue</a>  and  one
               from the <b>deferred</b> queue. This prevents a large mail
               backlog from blocking the delivery of new mail.
 
@@ -93,42 +95,42 @@ QMGR(8)                                                   QMGR(8)
 
        <b>round robin</b>
               The queue manager sorts delivery requests by desti-
-              nation.  Round-robin selection prevents one  desti-
+              nation.   Round-robin selection prevents one desti-
               nation from dominating deliveries to other destina-
               tions.
 
        <b>exponential backoff</b>
               Mail  that  cannot  be  delivered  upon  the  first
-              attempt  is  deferred.   The  time interval between
+              attempt is deferred.   The  time  interval  between
               delivery attempts is doubled after each attempt.
 
        <b>destination status cache</b>
-              The  queue  manager  avoids  unnecessary   delivery
-              attempts  by  maintaining  a  short-term, in-memory
+              The   queue  manager  avoids  unnecessary  delivery
+              attempts by  maintaining  a  short-term,  in-memory
               list of unreachable destinations.
 
        <b>preemptive message scheduling</b>
-              The queue manager attempts to minimize the  average
+              The  queue manager attempts to minimize the average
               per-recipient delay while still preserving the cor-
               rect per-message delays, using a sophisticated pre-
               emptive message scheduling.
 
 <b>TRIGGERS</b>
        On an idle system, the queue manager waits for the arrival
-       of trigger events, or it waits for a timer to  go  off.  A
-       trigger  is  a one-byte message.  Depending on the message
-       received, the queue manager performs one of the  following
-       actions  (the message is followed by the symbolic constant
+       of  trigger  events,  or it waits for a timer to go off. A
+       trigger is a one-byte message.  Depending on  the  message
+       received,  the queue manager performs one of the following
+       actions (the message is followed by the symbolic  constant
        used internally by the software):
 
        <b>D (QMGR_REQ_SCAN_DEFERRED)</b>
-              Start a <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scan.  If a  deferred  queue
-              scan  is  already  in  progress,  that scan will be
+              Start  a  <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scan.  If a deferred queue
+              scan is already in  progress,  that  scan  will  be
               restarted as soon as it finishes.
 
        <b>I (QMGR_REQ_SCAN_INCOMING)</b>
-              Start an <a href="QSHAPE_README.html#incoming_queue">incoming queue</a> scan. If an incoming  queue
-              scan  is  already  in  progress,  that scan will be
+              Start  an <a href="QSHAPE_README.html#incoming_queue">incoming queue</a> scan. If an incoming queue
+              scan is already in  progress,  that  scan  will  be
               restarted as soon as it finishes.
 
        <b>A (QMGR_REQ_SCAN_ALL)</b>
@@ -136,32 +138,33 @@ QMGR(8)                                                   QMGR(8)
               affects the next <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scan.
 
        <b>F (QMGR_REQ_FLUSH_DEAD)</b>
-              Purge  all  information  about  dead transports and
+              Purge all information  about  dead  transports  and
               destinations.
 
        <b>W (TRIGGER_REQ_WAKEUP)</b>
-              Wakeup call, This is used by the master  server  to
-              instantiate  servers  that  should not go away for-
-              ever. The action is  to  start  an  <a href="QSHAPE_README.html#incoming_queue">incoming  queue</a>
+              Wakeup  call,  This is used by the master server to
+              instantiate servers that should not  go  away  for-
+              ever.  The  action  is  to  start an <a href="QSHAPE_README.html#incoming_queue">incoming queue</a>
               scan.
 
-       The  <b>qmgr</b> daemon reads an entire buffer worth of triggers.
-       Multiple identical trigger  requests  are  collapsed  into
-       one,  and trigger requests are sorted so that <b>A</b> and <b>F</b> pre-
-       cede <b>D</b> and <b>I</b>. Thus, in order to  force  a  <a href="QSHAPE_README.html#deferred_queue">deferred  queue</a>
+       The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon reads an entire buffer worth  of  trig-
+       gers.   Multiple  identical trigger requests are collapsed
+       into one, and trigger requests are sorted so that <b>A</b> and  <b>F</b>
+       precede  <b>D</b> and <b>I</b>. Thus, in order to force a <a href="QSHAPE_README.html#deferred_queue">deferred queue</a>
        run, one would request <b>A F D</b>; in order to notify the queue
        manager of the arrival of new mail one would request <b>I</b>.
 
 <b>STANDARDS</b>
-       None. The <b>qmgr</b> daemon does not interact with  the  outside
-       world.
+       None.  The  <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon does not interact with the out-
+       side world.
 
 <b>SECURITY</b>
-       The  <b>qmgr</b>  daemon is not security sensitive. It reads sin-
-       gle-character messages from  untrusted  local  users,  and
-       thus  may be susceptible to denial of service attacks. The
-       <b>qmgr</b> daemon does not talk to the outside world, and it can
-       be run at fixed low privilege in a chrooted environment.
+       The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon is not  security  sensitive.  It  reads
+       single-character  messages from untrusted local users, and
+       thus may be susceptible to denial of service attacks.  The
+       <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  daemon does not talk to the outside world, and it
+       can be run at fixed low privilege in a  chrooted  environ-
+       ment.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to the syslog daemon.
@@ -174,17 +177,17 @@ QMGR(8)                                                   QMGR(8)
 
 <b>BUGS</b>
        A  single  queue  manager  process has to compete for disk
-       access with multiple front-end processes such as <b>smtpd</b>.  A
-       sudden  burst  of  inbound mail can negatively impact out-
-       bound delivery rates.
+       access  with  multiple   front-end   processes   such   as
+       <a href="cleanup.8.html"><b>cleanup</b>(8)</a>.  A sudden burst of inbound mail can negatively
+       impact outbound delivery rates.
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <b>main.cf</b> are  not  picked  up  automatically  as
-       <a href="qmgr.8.html">qmgr(8)</a>  processes  are persistent. Use the <b>postfix reload</b>
+       <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  is a persistent process. Use the "<b>postfix reload</b>"
        command after a configuration change.
 
        The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        In  the text below, <i>transport</i> is the first field in a <b>mas-</b>
        <b>ter.cf</b> entry.
@@ -335,8 +338,8 @@ QMGR(8)                                                   QMGR(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process ID of a Postfix command or daemon pro-
-              cess.
+              The  process  ID  of  a  Postfix  command or daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The process name of a  Postfix  command  or  daemon
@@ -350,8 +353,8 @@ QMGR(8)                                                   QMGR(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system name that is prepended to the  pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
@@ -366,8 +369,9 @@ QMGR(8)                                                   QMGR(8)
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, address routing
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
-       syslogd(8) system logging
+       syslogd(8), system logging
 
 <b>README FILES</b>
        <a href="SCHEDULER_README.html">SCHEDULER_README</a>, scheduling algorithm
@@ -388,5 +392,5 @@ QMGR(8)                                                   QMGR(8)
        Modra 6
        155 00, Prague, Czech Republic
 
-                                                          QMGR(8)
+                                                                       QMGR(8)
 </pre> </body> </html>

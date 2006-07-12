@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.c,v 1.1.1.4 2004/05/31 00:25:02 heas Exp $	*/
+/*	$NetBSD: vstring.c,v 1.1.1.4.2.1 2006/07/12 15:06:45 tron Exp $	*/
 
 /*++
 /* NAME
@@ -21,7 +21,7 @@
 /*	char	*vstring_str(vp)
 /*	VSTRING	*vp;
 /*
-/*	VSTRING	*VSTRING_LEN(vp)
+/*	int	VSTRING_LEN(vp)
 /*	VSTRING	*vp;
 /*
 /*	char	*vstring_end(vp)
@@ -517,7 +517,7 @@ VSTRING *vstring_vsprintf_append(VSTRING *vp, const char *format, va_list ap)
   */
 #include <stdio.h>
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     VSTRING *vp = vstring_alloc(1);
 

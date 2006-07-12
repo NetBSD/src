@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - regexp_table(5) </title>
 </head> <body> <pre>
-REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
+REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
 
 <b>NAME</b>
        regexp_table - format of Postfix regular expression tables
@@ -25,9 +25,9 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        found the corresponding result is returned.
 
        To  find out what types of lookup tables your Postfix sys-
-       tem supports use the <b>postconf -m</b> command.
+       tem supports use the "<b>postconf -m</b>" command.
 
-       To test lookup tables, use  the  <b>postmap  -fq</b>  command  as
+       To test lookup tables, use the "<b>postmap  -fq</b>"  command  as
        described in the SYNOPSIS above.
 
 <b>TABLE FORMAT</b>
@@ -68,8 +68,8 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
 
        Each  pattern  is a POSIX regular expression enclosed by a
        pair of delimiters. The regular expression syntax is docu-
-       mented  in  re_format(7)  with  4.4BSD,  in  regex(5) with
-       Solaris, and in regex(7) with Linux. Other systems may use
+       mented  in  <b>re_format</b>(7)  with  4.4BSD,  in  <b>regex</b>(5) with
+       Solaris, and in <b>regex</b>(7) with Linux. Other systems may use
        other document names.
 
        The  expression  delimiter  can  be  any character, except
@@ -99,8 +99,8 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
               and end of the input string.
 
 <b>TABLE SEARCH ORDER</b>
-       Patterns are applied in the  order  as  specified  in  the
-       table,  until  a  pattern  is found that matches the input
+       Patterns are applied in the order as specified in the  ta-
+       ble,  until  a  pattern  is  found  that matches the input
        string.
 
        Each pattern  is  applied  to  the  entire  input  string.
@@ -172,5 +172,5 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                  REGEXP_TABLE(5)
+                                                               REGEXP_TABLE(5)
 </pre> </body> </html>

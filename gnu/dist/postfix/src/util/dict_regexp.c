@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.1.1.6 2004/05/31 00:24:58 heas Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.1.1.6.2.1 2006/07/12 15:06:44 tron Exp $	*/
 
 /*++
 /* NAME
@@ -259,9 +259,18 @@ static const char *dict_regexp_lookup(DICT *dict, const char *lookup_string)
 	    /*
 	     * Skip $number substitutions when the replacement text contains
 	     * no $number strings (as learned during the pre-scan).
+	     * 
+	     * XXX This is incorrect. Replacement text without $number
+	     * expressions may still require $$ -> $ replacement. Fixing this
+	     * requires that we save the result after pre-scanning the
+	     * replacement text. This change is too invasive for a stable
+	     * release. Since this optimization does not exist in the PCRE
+	     * module, we forego it here too.
 	     */
+#if 0
 	    if (match_rule->max_sub == 0)
 		return (match_rule->replacement);
+#endif
 
 	    /*
 	     * Perform $number substitutions on the replacement text. We
@@ -601,7 +610,7 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	if (prescan_context.max_sub > first_exp->re_nsub) {
 	    msg_warn("regexp map %s, line %d: out of range replacement index \"%d\": "
 		     "skipping this rule", mapname, lineno,
-		     prescan_context.max_sub);
+		     (int) prescan_context.max_sub);
 	    FREE_EXPR_AND_RETURN(first_exp, 0);
 	}
 	if (second_pat.regexp != 0) {

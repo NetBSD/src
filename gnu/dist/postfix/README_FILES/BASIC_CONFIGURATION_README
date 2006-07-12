@@ -210,10 +210,10 @@ the patterns in the main.cf file.
 WWhhaatt ddeessttiinnaattiioonnss ttoo rreellaayy mmaaiill ttoo
 
 By default, Postfix will forward mail from strangers (clients outside
-authorized networks) to authorized destinations only. Authorized destinations
-are defined with the relay_domains configuration parameter. The default is to
-authorize all domains (and subdomains) of the domains listed with the
-mydestination parameter.
+authorized networks) to authorized remote destinations only. Authorized remote
+destinations are defined with the relay_domains configuration parameter. The
+default is to authorize all domains (and subdomains) of the domains listed with
+the mydestination parameter.
 
 Examples (specify only one of the following):
 
@@ -240,7 +240,8 @@ Examples (specify only one of the following):
         relayhost = [mail.isp.tld]    (deliver via provider mailhub)
 
 The form enclosed with [] eliminates DNS MX lookups. Don't worry if you don't
-know what that means.
+know what that means. Just be sure to specify the [] around the mailhub
+hostname that your ISP gave to you, otherwise mail may be mis-delivered.
 
 The STANDARD_CONFIGURATION_README file has more hints and tips for firewalled
 and/or dial-up networks.

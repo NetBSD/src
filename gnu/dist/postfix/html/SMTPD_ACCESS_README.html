@@ -179,6 +179,12 @@ described in the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
 
     # Whitelisting: local clients may specify any destination. Others may not.
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+
+    # Block clients that speak too early.
+    <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> = <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a>
+
+    # Enforce mail volume quota via policy service callouts.
+    <a href="postconf.5.html#smtpd_end_of_data_restrictions">smtpd_end_of_data_restrictions</a> = <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/policy
 </pre>
 
 <p> Each restriction list is evaluated from left to right until
@@ -216,6 +222,9 @@ Reject MAIL FROM information </td> </tr>
 <tr> <td> <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> </td> <td> Optional </td> <td>
 Reject DATA command </td> </tr>
 
+<tr> <td> <a href="postconf.5.html#smtpd_end_of_data_restrictions">smtpd_end_of_data_restrictions</a> </td> <td> Optional </td> <td>
+Reject END-OF-DATA command </td> </tr>
+
 <tr> <td> <a href="postconf.5.html#smtpd_etrn_restrictions">smtpd_etrn_restrictions</a> </td> <td> Optional </td> <td>
 Reject ETRN command </td> </tr>
 
@@ -238,7 +247,8 @@ and so on. This approach turned out to be difficult to use. </p>
 helo and sender restriction lists until the RCPT TO or ETRN command.
 This behavior is controlled by the <a href="postconf.5.html#smtpd_delay_reject">smtpd_delay_reject</a> parameter.
 Restriction lists are still evaluated in the proper order of (client,
-helo, etrn) or (client, helo, sender, recipient, data) restrictions.
+helo, etrn) or (client, helo, sender, recipient, data, or end-of-data)
+restrictions.
 When a restriction list (example: client) evaluates to REJECT or
 DEFER the other restriction lists (example: helo, sender, etc.)
 are skipped.  </p>

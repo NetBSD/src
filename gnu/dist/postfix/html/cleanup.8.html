@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - cleanup(8) </title>
 </head> <body> <pre>
-CLEANUP(8)                                             CLEANUP(8)
+CLEANUP(8)                                                          CLEANUP(8)
 
 <b>NAME</b>
        cleanup - canonicalize and enqueue Postfix message
@@ -13,12 +13,12 @@ CLEANUP(8)                                             CLEANUP(8)
        <b>cleanup</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The <b>cleanup</b> daemon processes inbound mail, inserts it into
-       the <b>incoming</b> mail queue, and informs the queue manager  of
-       its arrival.
+       The  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon processes inbound mail, inserts it
+       into the <b>incoming</b> mail queue, and informs the  queue  man-
+       ager of its arrival.
 
-       The <b>cleanup</b> daemon always performs the following transfor-
-       mations:
+       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon always performs the following trans-
+       formations:
 
        <b>o</b>      Insert missing message  headers:  (<b>Resent-</b>)  <b>From:</b>,
               <b>To:</b>, <b>Message-Id:</b>, and <b>Date:</b>.
@@ -47,12 +47,12 @@ CLEANUP(8)                                             CLEANUP(8)
        <b>o</b>      Optionally, expand envelope recipients according to
               information  found in the <a href="virtual.5.html"><b>virtual</b>(5)</a> lookup tables.
 
-       The <b>cleanup</b> daemon performs sanity checks on  the  content
-       of  each  message.  When it finds a problem, by default it
-       returns a diagnostic status to the client, and  leaves  it
-       up  to the client to deal with the problem. Alternatively,
-       the client can request the <b>cleanup</b> daemon  to  bounce  the
-       message back to the sender in case of trouble.
+       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon performs sanity checks on  the  con-
+       tent  of each message. When it finds a problem, by default
+       it returns a diagnostic status to the client,  and  leaves
+       it  up  to  the  client to deal with the problem. Alterna-
+       tively, the client can request the  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon  to
+       bounce  the message back to the sender in case of trouble.
 
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
@@ -63,31 +63,34 @@ CLEANUP(8)                                             CLEANUP(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       Table-driven  rewriting  rules  make it hard to express <b>if</b>
+       Table-driven rewriting rules make it hard  to  express  <b>if</b>
        <b>then else</b> and other logical relationships.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <b>main.cf</b>  are  picked  up  automatically,   as
-       <a href="cleanup.8.html">cleanup(8)</a>  processes  run  for  only  a limited amount of
-       time. Use the command  "<b>postfix  reload</b>"  to  speed  up  a
+       Changes   to  <b>main.cf</b>  are  picked  up  automatically,  as
+       <a href="cleanup.8.html"><b>cleanup</b>(8)</a> processes run for  only  a  limited  amount  of
+       time.  Use  the  command  "<b>postfix  reload</b>"  to speed up a
        change.
 
-       The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       The text below provides  only  a  parameter  summary.  See
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>COMPATIBILITY CONTROLS</b>
        <b><a href="postconf.5.html#undisclosed_recipients_header">undisclosed_recipients_header</a>   (To:   undisclosed-recipi-</b>
        <b>ents:;)</b>
-              Message header that the Postfix  <a href="cleanup.8.html">cleanup(8)</a>  server
-              inserts  when a message contains no To: or Cc: mes-
+              Message  header  that the Postfix <a href="cleanup.8.html"><b>cleanup</b>(8)</a> server
+              inserts when a message contains no To: or Cc:  mes-
               sage header.
 
-       Available in Postfix version 2.1 and later:
+       Available in Postfix version 2.1 only:
 
-       <b>enable_errors_to (no)</b>
-              Report mail delivery errors to the  address  speci-
-              fied   with  the  non-standard  Errors-To:  message
-              header, instead of the envelope sender address.
+       <b><a href="postconf.5.html#enable_errors_to">enable_errors_to</a> (no)</b>
+              Report  mail  delivery errors to the address speci-
+              fied  with  the  non-standard  Errors-To:   message
+              header,  instead  of  the  envelope  sender address
+              (this feature  is  removed  with  Postfix  2.2,  is
+              turned  off  by  default  with  Postfix 2.1, and is
+              always turned on with older Postfix versions).
 
 <b>BUILT-IN CONTENT FILTERING CONTROLS</b>
        Postfix built-in content filtering  is  meant  to  stop  a
@@ -96,12 +99,12 @@ CLEANUP(8)                                             CLEANUP(8)
 
        <b><a href="postconf.5.html#body_checks">body_checks</a> (empty)</b>
               Optional lookup tables for  content  inspection  as
-              specified in the <a href="header_checks.5.html">body_checks(5)</a> manual page.
+              specified in the <b><a href="postconf.5.html#body_checks">body_checks</a></b>(5) manual page.
 
        <b><a href="postconf.5.html#header_checks">header_checks</a> (empty)</b>
               Optional  lookup  tables  for content inspection of
               primary non-MIME message headers, as  specified  in
-              the <a href="header_checks.5.html">header_checks(5)</a> manual page.
+              the <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
 
        Available in Postfix version 2.0 and later:
 
@@ -113,12 +116,12 @@ CLEANUP(8)                                             CLEANUP(8)
        <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
               Optional  lookup  tables  for content inspection of
               MIME related message headers, as described  in  the
-              <a href="header_checks.5.html">header_checks(5)</a> manual page.
+              <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
 
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
               Optional  lookup  tables  for content inspection of
               non-MIME message headers in attached  messages,  as
-              described in the <a href="header_checks.5.html">header_checks(5)</a> manual page.
+              described in the <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
 
 <b>MIME PROCESSING CONTROLS</b>
        Available in Postfix version 2.0 and later:
@@ -131,8 +134,8 @@ CLEANUP(8)                                             CLEANUP(8)
               strings.
 
        <b><a href="postconf.5.html#mime_nesting_limit">mime_nesting_limit</a> (100)</b>
-              The maximal nesting level of  multipart  mail  that
-              the MIME processor will handle.
+              The maximal recursion level that the MIME processor
+              will handle.
 
        <b><a href="postconf.5.html#strict_8bitmime">strict_8bitmime</a> (no)</b>
               Enable  both  <a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a>  and strict_8bit-
@@ -170,8 +173,8 @@ CLEANUP(8)                                             CLEANUP(8)
               tables, indexed by recipient address.
 
 <b>ADDRESS TRANSFORMATION CONTROLS</b>
-       Address rewriting is delegated to  the  <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>
-       daemon.   The  <a href="cleanup.8.html">cleanup(8)</a>  server  implements table driven
+       Address rewriting is delegated to  the  <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
+       daemon.   The  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  server  implements table driven
        address mapping.
 
        <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a> (MAILER-DAEMON)</b>
@@ -223,11 +226,33 @@ CLEANUP(8)                                             CLEANUP(8)
               addresses or  domains  to  other  local  or  remote
               address.
 
+       Available in Postfix version 2.2 and later:
+
+       <b><a href="postconf.5.html#canonical_classes">canonical_classes</a>   (envelope_sender,  envelope_recipient,</b>
+       <b>header_sender, header_recipient)</b>
+              What   addresses   are  subject  to  <a href="postconf.5.html#canonical_maps">canonical_maps</a>
+              address mapping.
+
+       <b><a href="postconf.5.html#recipient_canonical_classes">recipient_canonical_classes</a>           (envelope_recipient,</b>
+       <b>header_recipient)</b>
+              What addresses  are  subject  to  <a href="postconf.5.html#recipient_canonical_maps">recipient_canoni</a>-
+              <a href="postconf.5.html#recipient_canonical_maps">cal_maps</a> address mapping.
+
+       <b><a href="postconf.5.html#sender_canonical_classes">sender_canonical_classes</a> (envelope_sender, header_sender)</b>
+              What addresses are subject to <a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a>
+              address mapping.
+
+       <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
+              Don't rewrite message headers from  remote  clients
+              at all when this parameter is empty; otherwise, re-
+              write message  headers  and  append  the  specified
+              domain name to incomplete addresses.
+
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#duplicate_filter_limit">duplicate_filter_limit</a> (1000)</b>
               The  maximal  number of addresses remembered by the
-              address duplicate filter  for  <a href="aliases.5.html">aliases(5)</a>  or  vir-
-              tual(5) alias expansion, or for <a href="showq.8.html">showq(8)</a> queue dis-
+              address duplicate filter  for  <a href="aliases.5.html"><b>aliases</b>(5)</a>  or  <a href="virtual.5.html"><b>vir-</b></a>
+              <a href="virtual.5.html"><b>tual</b>(5)</a> alias expansion, or for <a href="showq.8.html"><b>showq</b>(8)</a> queue dis-
               plays.
 
        <b><a href="postconf.5.html#header_size_limit">header_size_limit</a> (102400)</b>
@@ -258,8 +283,8 @@ CLEANUP(8)                                             CLEANUP(8)
               strings.
 
        <b><a href="postconf.5.html#mime_nesting_limit">mime_nesting_limit</a> (100)</b>
-              The  maximal  nesting  level of multipart mail that
-              the MIME processor will handle.
+              The maximal recursion level that the MIME processor
+              will handle.
 
        <b><a href="postconf.5.html#queue_file_attribute_count_limit">queue_file_attribute_count_limit</a> (100)</b>
               The maximal number of (name=value) attributes  that
@@ -306,13 +331,13 @@ CLEANUP(8)                                             CLEANUP(8)
               The internet hostname of this mail system.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The  default  domain  name that locally-posted mail
-              appears to come from, and that locally posted  mail
-              is delivered to.
+              The domain name that locally-posted mail appears to
+              come from, and that locally posted mail  is  deliv-
+              ered to.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process ID of a Postfix command or daemon pro-
-              cess.
+              The  process  ID  of  a  Postfix  command or daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The process name of a  Postfix  command  or  daemon
@@ -330,8 +355,8 @@ CLEANUP(8)                                             CLEANUP(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
        Available in Postfix version 2.1 and later:
@@ -352,6 +377,7 @@ CLEANUP(8)                                             CLEANUP(8)
        <a href="canonical.5.html">canonical(5)</a>, canonical address lookup table format
        <a href="virtual.5.html">virtual(5)</a>, virtual alias lookup table format
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
        syslogd(8), system logging
 
@@ -368,5 +394,5 @@ CLEANUP(8)                                             CLEANUP(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                       CLEANUP(8)
+                                                                    CLEANUP(8)
 </pre> </body> </html>

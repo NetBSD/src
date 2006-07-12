@@ -50,13 +50,13 @@ for hosts in specific environments. </p>
 
 <li><a href="#intranet">Running Postfix behind a firewall</a>
 
-<li><a href="#backup">Configuring Postfix as MX host for a remote
+<li><a href="#backup">Configuring Postfix as primary or backup MX host for a remote
 site</a>
 
 <li><a href="#dialup">Postfix on a dialup machine</a>
 
 <li><a href="#fantasy">Postfix on hosts without a real
-hostname</a>
+Internet hostname</a>
 
 </ul>
 
@@ -67,10 +67,10 @@ machine that has direct Internet access.  At least, that is how
 Postfix installs when you download the Postfix source code via
 http://www.postfix.org/. </p>
 
-<p> You can use the command "postconf -n" to find out what settings
-are overruled by your main.cf. Besides a few pathname settings,
-few parameters should be set on a stand-alone box, beyond what is
-covered in the BASIC_CONFIGURATION_README document: </p>
+<p> You can use the command "<b>postconf -n</b>" to find out what
+settings are overruled by your main.cf. Besides a few pathname
+settings, few parameters should be set on a stand-alone box, beyond
+what is covered in the BASIC_CONFIGURATION_README document: </p>
 
 <blockquote>
 <pre>
@@ -88,7 +88,7 @@ covered in the BASIC_CONFIGURATION_README document: </p>
 </blockquote>
 
 <p> See also the section "<a href="#fantasy">Postfix on hosts without
-a real hostname</a>" if this is applicable to your configuration.
+a real Internet hostname</a>" if this is applicable to your configuration.
 </p>
 
 <h2><a name="null_client">Postfix on a null client</a></h2>
@@ -253,11 +253,11 @@ forwards mail to her preferred machine: </p>
 </blockquote>
 
 <p> On some systems the alias database is not in /etc/aliases.  To
-find out the location for your system, execute the command "postconf
-alias_maps". </p>
+find out the location for your system, execute the command "<b>postconf
+alias_maps</b>". </p>
 
-<p> Execute the command "newaliases" whenever you change the aliases
-file.  </p>
+<p> Execute the command "<b>newaliases</b>" whenever you change
+the aliases file.  </p>
 
 <h2><a name="firewall">Postfix email firewall/gateway</a></h2>
 
@@ -269,8 +269,8 @@ accepts mail for "anything.example.com".  That would not be right.
 </p>
 
 <p> Note: this example requires Postfix version 2.0 and later. To find
-out what Postfix version you have, execute the command "postconf
-mail_version". </p>
+out what Postfix version you have, execute the command "<b>postconf
+mail_version</b>". </p>
 
 <p> The solution is presented in multiple parts. This first part
 gets rid of local mail delivery on the firewall, making the firewall
@@ -381,14 +381,14 @@ gateway machine. The <tt>[]</tt> forces Postfix to do no MX lookup.
 
 </ul>
 
-<p>Specify dbm instead of hash if your system uses
-dbm files instead of db. To find out what lookup tables
-Postfix supports, use the command "postconf -m".  </p>
+<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
 
-<p> Execute the command "postmap /etc/postfix/relay_recipients"
+<p> Execute the command "<b>postmap /etc/postfix/relay_recipients</b>"
 whenever you change the relay_recipients table. </p>
 
-<p> Execute the command "postmap /etc/postfix/transport"
+<p> Execute the command "<b>postmap /etc/postfix/transport</b>"
 whenever you change the transport table. </p>
 
 <h2><a name="some_local">Delivering some but not all accounts
@@ -422,6 +422,22 @@ matches $inet_interfaces or $proxy_interfaces. </p>
 
 </ul>
 
+<p> In some installations, there may be separate instances of Postfix
+processing inbound and outbound mail on a multi-homed firewall. The
+inbound Postfix instance has an SMTP server listening on the external
+firewall interface, and the outbound Postfix instance has an SMTP server
+listening on the internal interface. In such a configuration is it is
+tempting to configure $inet_interfaces in each instance with just the
+corresponding interface address. </p>
+
+<p> In most cases, using inet_interfaces in this way will not work,
+because as documented in the $inet_interfaces reference manual, the
+smtp(8) delivery agent will also use the specified interface address
+as the source address for outbound connections and will be unable to
+reach hosts on "the other side" of the firewall. The symptoms are that
+the firewall is unable to connect to hosts that are in fact up. See the
+inet_interfaces parameter documentation for suggested work-arounds.</p>
+
 <h2><a name="intranet">Running Postfix behind a firewall</a></h2>
 
 <p> The simplest way to set up Postfix on a host behind a firewalled
@@ -433,8 +449,8 @@ mail to the gateway host, and to send intranet mail directly.
 That's what Wietse does at work.  </p>
 
 <p> Note: this example requires Postfix version 2.0 and later. To find
-out what Postfix version you have, execute the command "postconf
-mail_version". </p>
+out what Postfix version you have, execute the command "<b>postconf
+mail_version</b>". </p>
 
 <p> The following example presents additional configuration. You
 need to combine this with basic configuration information as
@@ -476,14 +492,14 @@ directly, and gives undeliverable mail to a gateway.  </p>
 
 </ul>
 
-<p> Specify dbm instead of hash if your system uses dbm files
-instead of db. To find out what lookup tables Postfix supports, use
-the command "postconf -m". </p>
+<p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>". </p>
 
-<p> Execute the command "postmap /etc/postfix/transport" whenever
+<p> Execute the command "<b>postmap /etc/postfix/transport</b>" whenever
 you edit the transport table. </p>
 
-<h2><a name="backup">Configuring Postfix as MX host for a remote site</a></h2>
+<h2><a name="backup">Configuring Postfix as primary or backup MX host for a remote site</a></h2>
 
 <p> This section presents additional configuration. You need to
 combine this with basic configuration information as discussed the
@@ -557,12 +573,32 @@ table. </p>
 
 </ul>
 
-<p> Specify dbm instead of hash if your system uses dbm files
-instead of db files. To find out what lookup tables Postfix supports,
-use the command "postconf -m". </p>
+<p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>". </p>
 
-<p> Execute the command "postmap /etc/postfix/transport" whenever
-you change the transport table. </p>
+<p> Execute the command "<b>postmap /etc/postfix/transport</b>"
+whenever you change the transport table. </p>
+
+<p> NOTE: Do not use the fallback_relay feature when relaying mail 
+for a backup or primary MX domain. Mail would loop between the
+Postfix MX host and the fallback_relay host when the final destination
+is unavailable. </p>
+ 
+<ul>
+
+<li> In main.cf specify "<tt>relay_transport = relay</tt>",
+
+<li> In master.cf specify "<tt>-o fallback_relay =</tt>" at the    
+end of the <tt>relay</tt> entry.
+
+<li> In transport maps, specify "<tt>relay:<i>nexthop...</i></tt>"
+as the right-hand side for backup or primary MX domain entries.
+
+</ul>
+
+<p> These are default settings in Postfix version 2.2 and later.
+</p>
 
 <h2><a name="dialup">Postfix on a dialup machine</a></h2>
 
@@ -574,10 +610,10 @@ href="#local_network">local area network</a> section above.  </p>
 combine this with basic configuration information as discussed the
 first half of this document. </p>
 
-<p> If you do not have your own hostname (as with dynamic IP
-addressing) then you should also study the section on "<a
-href="#fantasy">Postfix on hosts without a real hostname</a>".
-</p>
+<p> If you do not have your own hostname and IP address (usually
+with dialup, cable TV or DSL connections) then you should also
+study the section on "<a href="#fantasy">Postfix on hosts without
+a real Internet hostname</a>".  </p>
 
 <ul>
 
@@ -623,8 +659,8 @@ calls from being placed, disable spontaneous SMTP mail deliveries. </p>
 /usr/sbin/sendmail -q (whenever the Internet link is up)
 </pre>
 
-<p> The exact location of the sendmail command is system-specific.
-Use the command "postconf sendmail_path" to find out where the
+<p> The exact location of the Postfix sendmail command is system-specific.
+Use the command "<b>postconf sendmail_path</b>" to find out where the
 Postfix sendmail command is located on your machine. </p>
 
 <p> In order to find out if the mail queue is flushed, use something
@@ -647,29 +683,77 @@ done
 </pre>
 
 <p> If you have disabled <a href="#spontaneous_smtp">spontaneous
-SMTP mail delivery</a>, you also need to run the "sendmail -q"
+SMTP mail delivery</a>, you also need to run the "<b>sendmail -q</b>"
 command every now and then while the dialup link is up, so that
 newly-posted mail is flushed from the queue. </p>
 
 </ul>
 
-<h2><a name="fantasy">Postfix on hosts without a real hostname</a></h2>
+<h2><a name="fantasy">Postfix on hosts without a real Internet
+hostname</a></h2>
 
-<p> This section is for hosts that don't have an Internet hostname.
-Typically these are systems that get a dynamic IP address via DHCP
-or via dialup. Postfix will let you send and receive mail just fine
-between accounts on a machine with a fantasy name. However, you
-cannot use a fantasy hostname in your email address when sending
+<p> This section is for hosts that don't have their own Internet
+hostname.  Typically these are systems that get a dynamic IP address
+via DHCP or via dialup. Postfix will let you send and receive mail
+just fine between accounts on a machine with a fantasy name. However,
+you cannot use a fantasy hostname in your email address when sending
 mail into the Internet, because no-one would be able to reply to
-your mail. In fact, more and more sites refuse mail from non-existent
-domain names. </p>
+your mail. In fact, more and more sites refuse mail addresses with
+non-existent domain names. </p>
 
-<p> The perfect solution would be for Postfix to do a mapping from
-local fantasy email addresses to valid Internet addresses when mail
-leaves the machine (similar to Sendmail's generics table). This is
-planned for the near future. </p>
+<p> Note: the following information is Postfix version dependent.
+To find out what Postfix version you have, execute the command
+"<b>postconf mail_version</b>". </p>
 
-<p> In the mean time, the solution with Postfix is to use valid
+<h3>Solution 1: Postfix version 2.2 and later </h3>
+
+<p> Postfix 2.2 uses the generic(5) address mapping to replace
+local fantasy email addresses by valid Internet addresses.  This
+mapping happens ONLY when mail leaves the machine; not when you
+send mail between users on the same machine. </p>
+
+<p> The following example presents additional configuration. You
+need to combine this with basic configuration information as
+discussed the first half of this document. </p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/main.cf:
+2     smtp_generic_maps = hash:/etc/postfix/generic
+3 
+4 /etc/postfix/generic:
+5     his@localdomain.local             hisaccount@hisisp.example
+6     her@localdomain.local             heraccount@herisp.example
+7     @localdomain.local                hisaccount+local@hisisp.example
+</pre>
+</blockquote>
+
+<p> When mail is sent to a remote host via SMTP: </p>
+
+<ul>
+
+<li> <p> Line 5 replaces <i>his@localdomain.local</i> by his ISP
+mail address, </p>
+
+<li> <p> Line 6 replaces <i>her@localdomain.local</i> by her ISP
+mail address, and </p>
+
+<li> <p> Line 7 replaces other local addresses by his ISP account,
+with an address extension of +<i>local</i> (this example assumes
+that the ISP supports "+" style address extensions). </p>
+
+</ul>
+
+<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/generic</b>"
+whenever you change the generic table. </p>
+
+<h3>Solution 2: Postfix version 2.1 and earlier </h3>
+
+<p> The solution with older Postfix systems is to use valid
 Internet addresses where possible, and to let Postfix map valid
 Internet addresses to local fantasy addresses. With this, you can
 send mail to the Internet and to local fantasy addresses, including
@@ -716,6 +800,16 @@ locally, instead of sending it to the ISP. This part is not required
 but is convenient.
 
 </ul>
+
+<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/canonical</b>"
+whenever you change the canonical table. </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/virtual</b>"
+whenever you change the virtual table. </p>
 
 </body>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.1.1.2 2004/05/31 00:24:39 heas Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -142,6 +142,8 @@ struct QMGR_ENTRY_LIST {
 };
 
 struct QMGR_QUEUE {
+    int     dflags;			/* delivery request options */
+    time_t  last_done;			/* last delivery completion */
     char   *name;			/* domain name or address */
     char   *nexthop;			/* domain name */
     int     todo_refcount;		/* queue entries (todo list) */
@@ -243,6 +245,10 @@ struct QMGR_MESSAGE {
     char   *client_addr;		/* client address */
     char   *client_proto;		/* client protocol */
     char   *client_helo;		/* helo parameter */
+    char   *sasl_method;		/* SASL method */
+    char   *sasl_username;		/* SASL user name */
+    char   *sasl_sender;		/* SASL sender */
+    char   *rewrite_context;		/* address qualification */
     QMGR_RCPT_LIST rcpt_list;		/* complete addresses */
 };
 

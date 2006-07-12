@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - error(8) </title>
 </head> <body> <pre>
-ERROR(8)                                                 ERROR(8)
+ERROR(8)                                                              ERROR(8)
 
 <b>NAME</b>
        error - Postfix error mail delivery agent
@@ -13,14 +13,14 @@ ERROR(8)                                                 ERROR(8)
        <b>error</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The   Postfix  error  delivery  agent  processes  delivery
+       The  Postfix  <a href="error.8.html"><b>error</b>(8)</a>  delivery  agent processes delivery
        requests from the queue manager. Each request specifies  a
        queue  file,  a sender address, a domain or host name that
        is treated as the reason for non-delivery,  and  recipient
        information.  This program expects to be run from the <a href="master.8.html"><b>mas-</b></a>
        <a href="master.8.html"><b>ter</b>(8)</a> process manager.
 
-       The error delivery agent bounces  all  recipients  in  the
+       The <a href="error.8.html"><b>error</b>(8)</a> delivery agent bounces all recipients in  the
        delivery  request  using  the  "next-hop"  domain  or host
        information as the reason for  non-delivery,  updates  the
        queue file and marks recipients as finished or informs the
@@ -31,7 +31,7 @@ ERROR(8)                                                 ERROR(8)
        <a href="defer.8.html"><b>defer</b>(8)</a> or <a href="trace.8.html"><b>trace</b>(8)</a> daemon as appropriate.
 
 <b>SECURITY</b>
-       The error mailer is not security-sensitive.  It  does  not
+       The <a href="error.8.html"><b>error</b>(8)</a> mailer is not security-sensitive. It does not
        talk  to the network, and can be run chrooted at fixed low
        privilege.
 
@@ -46,12 +46,12 @@ ERROR(8)                                                 ERROR(8)
        ble.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are picked up automatically as <a href="error.8.html">error(8)</a>
+       Changes to <b>main.cf</b> are picked up automatically as <a href="error.8.html"><b>error</b>(8)</a>
        processes  run  for only a limited amount of time. Use the
        command "<b>postfix reload</b>" to speed up a change.
 
        The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#2bounce_notice_recipient">2bounce_notice_recipient</a> (postmaster)</b>
               The  recipient of undeliverable mail that cannot be
@@ -94,8 +94,8 @@ ERROR(8)                                                 ERROR(8)
               postmaster.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID of a Postfix command or daemon  pro-
-              cess.
+              The process ID  of  a  Postfix  command  or  daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The  process  name  of  a Postfix command or daemon
@@ -109,14 +109,16 @@ ERROR(8)                                                 ERROR(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
+       <a href="discard.8.html">discard(8)</a>, Postfix discard delivery agent
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
        syslogd(8), system logging
 
@@ -130,5 +132,5 @@ ERROR(8)                                                 ERROR(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                         ERROR(8)
+                                                                      ERROR(8)
 </pre> </body> </html>

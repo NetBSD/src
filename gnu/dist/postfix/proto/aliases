@@ -2,16 +2,16 @@
 # NAME
 #	aliases 5
 # SUMMARY
-#	format of the Postfix alias database
+#	Postfix local alias database format
 # SYNOPSIS
 # .fi
 #	\fBnewaliases\fR
 # DESCRIPTION
-#	The \fBaliases\fR table provides a system-wide mechanism to
+#	The \fBaliases\fR(5) table provides a system-wide mechanism to
 #	redirect mail for local recipients. The redirections are
 #	processed by the Postfix \fBlocal\fR(8) delivery agent.
 #
-#	Normally, the \fBaliases\fR table is specified as a text file
+#	Normally, the \fBaliases\fR(5) table is specified as a text file
 #	that serves as input to the \fBpostalias\fR(1) command. The
 #	result, an indexed file in \fBdbm\fR or \fBdb\fR format, is
 #	used for fast lookup by the mail system. Execute the command
@@ -25,7 +25,7 @@
 #	Users can control delivery of their own mail by setting
 #	up \fB.forward\fR files in their home directory.
 #	Lines in per-user \fB.forward\fR files have the same syntax
-#	as the right-hand side of \fBaliases\fR entries.
+#	as the right-hand side of \fBaliases\fR(5) entries.
 #
 #	The format of the alias database input file is as follows:
 # .IP \(bu
@@ -86,16 +86,33 @@
 #	When alias database search fails, and the recipient localpart
 #	contains the optional recipient delimiter (e.g., \fIuser+foo\fR),
 #	the search is repeated for the unextended address (e.g., \fIuser\fR).
+#
+#	The \fBpropagate_unmatched_extensions\fR parameter controls
+#	whether an unmatched address extension (\fI+foo\fR) is
+#	propagated to the result of table lookup.
+# SECURITY
+# .ad
+# .fi
+#	The \fBlocal\fR(8) delivery agent disallows regular expression
+#	substitution of $1 etc. in \fBalias_maps\fR, because that
+#	would open a security hole.
+#
+#	The \fBlocal\fR(8) delivery agent will silently ignore
+#	requests to use the \fBproxymap\fR(8) server within
+#	\fBalias_maps\fR. Instead it will open the table directly.
+#	Before Postfix version 2.2, the \fBlocal\fR(8) delivery
+#	agent will terminate with a fatal error.
 # CONFIGURATION PARAMETERS
 # .ad
 # .fi
 #	The following \fBmain.cf\fR parameters are especially relevant.
 #	The text below provides only a parameter summary. See
-#	postconf(5) for more details including examples.
+#	\fBpostconf\fR(5) for more details including examples.
 # .IP \fBalias_database\fR
-#	List of alias databases that are updated by the newaliases(1) command.
+#	List of alias databases that are updated by the
+#	\fBnewaliases\fR(1) command.
 # .IP \fBalias_maps\fR
-#	List of alias databases queried by the local(8) delivery agent.
+#	List of alias databases queried by the \fBlocal\fR(8) delivery agent.
 # .IP \fBallow_mail_to_commands\fR
 #	Restrict the usage of mail delivery to external command.
 # .IP \fBallow_mail_to_files\fR
@@ -104,16 +121,18 @@
 #	When delivering to an alias that has an \fBowner-\fR companion alias,
 #	set the envelope sender address to the right-hand side of the
 #	owner alias, instead using of the left-hand side address.
+# .IP \fBpropagate_unmatched_extensions\fR
+#	A list of address rewriting or forwarding mechanisms that
+#	propagate an address extension from the original address
+#	to the result. Specify zero or more of \fBcanonical\fR,
+#	\fBvirtual\fR, \fBalias\fR, \fBforward\fR, \fBinclude\fR,
+#	or \fBgeneric\fR.
 # .IP \fBowner_request_special\fR
 #	Give special treatment to \fBowner-\fIlistname\fR and
 #	\fIlistname\fB-request\fR
 #	addresses.
 # .IP \fBrecipient_delimiter\fR
 #	Delimiter that separates recipients from address extensions.
-# BUGS
-#	Regular expression alias lookup tables are allowed, but
-#	substitution of $1 etc. is forbidden because that would
-#	open a security loophole.
 # STANDARDS
 #	RFC 822 (ARPA Internet Text Messages)
 # SEE ALSO

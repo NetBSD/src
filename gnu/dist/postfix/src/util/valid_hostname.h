@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.h,v 1.1.1.3 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: valid_hostname.h,v 1.1.1.3.2.1 2006/07/12 15:06:45 tron Exp $	*/
 
 #ifndef _VALID_HOSTNAME_H_INCLUDED_
 #define _VALID_HOSTNAME_H_INCLUDED_
@@ -23,7 +23,8 @@
 
 extern int valid_hostname(const char *, int);
 extern int valid_hostaddr(const char *, int);
-extern int valid_hostliteral(const char *, int);
+extern int valid_ipv4_hostaddr(const char *, int);
+extern int valid_ipv6_hostaddr(const char *, int);
 
 /* LICENSE
 /* .ad

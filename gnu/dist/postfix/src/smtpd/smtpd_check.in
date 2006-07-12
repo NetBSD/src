@@ -34,6 +34,10 @@ helo random.bad.domain
 helo friend.bad.domain
 helo_restrictions reject_invalid_hostname,reject_unknown_hostname
 helo 123.123.123.123
+helo [123.123.123.123]
+helo [::]
+helo [ipv6:::]
+helo [ipv6::::]
 helo_restrictions permit_naked_ip_address,reject_invalid_hostname,reject_unknown_hostname
 helo 123.123.123.123
 #

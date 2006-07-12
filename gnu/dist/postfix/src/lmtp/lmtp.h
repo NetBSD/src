@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp.h,v 1.1.1.5 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp.h,v 1.1.1.5.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -67,6 +67,8 @@ typedef struct LMTP_STATE {
 #define LMTP_FEATURE_XFORWARD_ADDR (1<<7)
 #define LMTP_FEATURE_XFORWARD_PROTO (1<<8)
 #define LMTP_FEATURE_XFORWARD_HELO (1<<9)
+#define LMTP_FEATURE_XFORWARD_DOMAIN (1<<10)
+#define LMTP_FEATURE_RSET_REJECTED (1<<11)
 
  /*
   * lmtp.c

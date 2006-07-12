@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_trouble.c,v 1.1.1.4 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_trouble.c,v 1.1.1.4.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -298,6 +298,10 @@ int     lmtp_stream_except(LMTP_STATE *state, int code, char *description)
 	vstring_sprintf(why, "conversation with %s timed out while %s",
 			session->namaddr, description);
 	break;
+    case SMTP_ERR_PROTO:
+	vstring_sprintf(why, "remote protocol error in reply from %s while %s",
+			session->namaddr, description);
+	break;
     }
 
     /*
@@ -315,6 +319,8 @@ int     lmtp_stream_except(LMTP_STATE *state, int code, char *description)
 				      request->arrival_time,
 				      "%s", vstring_str(why));
     }
+    if (request->hop_status == 0)
+	request->hop_status = mystrdup(vstring_str(why));
 
     /*
      * Cleanup.

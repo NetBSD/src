@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite_clnt.h,v 1.1.1.2 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: rewrite_clnt.h,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 #ifndef _REWRITE_CLNT_H_INCLUDED_
 #define _REWRITE_CLNT_H_INCLUDED_
@@ -19,10 +19,15 @@
 #include <vstring.h>
 
  /*
+  * Global library.
+  */
+#include <mail_proto.h>			/* MAIL_ATTR_RWR_LOCAL */
+
+ /*
   * External interface.
   */
 #define REWRITE_ADDR	"rewrite"
-#define REWRITE_CANON	"canonicalize"
+#define REWRITE_CANON	MAIL_ATTR_RWR_LOCAL	/* backwards compatibility */
 
 extern VSTRING *rewrite_clnt(const char *, const char *, VSTRING *);
 extern VSTRING *rewrite_clnt_internal(const char *, const char *, VSTRING *);

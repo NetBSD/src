@@ -11,8 +11,8 @@ for general use.
 GGeenneerraall ddiissttrriibbuuttiioonnss:: pplleeaassee pprroovviiddee aa ssmmaallll ddeeffaauulltt mmaaiinn..ccff ffiillee
 
 The installed main.cf file must be small. PLEASE resist the temptation to list
-all 300+ parameters in the main.cf file. Postfix is supposed to be easy to
-configure. Listing all 300+ in main.cf defeats the purpose. It is an invitation
+all 400+ parameters in the main.cf file. Postfix is supposed to be easy to
+configure. Listing all 400+ in main.cf defeats the purpose. It is an invitation
 for hobbyists to make random changes without understanding what they do, and
 gets them into endless trouble.
 
@@ -39,7 +39,10 @@ You can build a pre-built Postfix package as an unprivileged user.
 
 First compile Postfix. After successful compilation, execute:
 
-     % sh postfix-install
+     % mmaakkee ppaacckkaaggee
+
+With Postfix versions before 2.2 you must invoke the post-install script
+directly (% sshh ppoosstt--iinnssttaallll).
 
 You will be prompted for installation parameters. Specify an install_root
 directory other than /. The mail_owner and setgid_group installation parameter
@@ -49,8 +52,10 @@ the package is unpacked and installed on the destination machine.
 If you want to fully automate this process, specify all the non-default
 installation parameters on the command line:
 
-     % sh postfix-install -non-interactive
-    install_root=/some/where ...
+     % mmaakkee nnoonn--iinntteerraaccttiivvee--ppaacckkaaggee iinnssttaallll__rroooott==//ssoommee//wwhheerree...
+
+With Postfix versions before 2.2 you must invoke the post-install script
+directly (% sshh ppoosstt--iinnssttaallll --nnoonn--iinntteerraaccttiivvee iinnssttaallll__rroooott......).
 
 BBeeggiinn SSeeccuurriittyy AAlleerrtt
 

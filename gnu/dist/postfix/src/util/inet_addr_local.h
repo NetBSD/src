@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_local.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: inet_addr_local.h,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
 
 #ifndef _INET_ADDR_LOCAL_H_INCLUDED_
 #define _INET_ADDR_LOCAL_H_INCLUDED_
@@ -21,7 +21,7 @@
  /*
   * External interface.
   */
-extern int inet_addr_local(INET_ADDR_LIST *, INET_ADDR_LIST *);
+extern int inet_addr_local(INET_ADDR_LIST *, INET_ADDR_LIST *, unsigned *);
 
 /* LICENSE
 /* .ad
