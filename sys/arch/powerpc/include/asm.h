@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 2006/07/07 21:26:54 ross Exp $	*/
+/*	$NetBSD: asm.h,v 1.23 2006/07/12 23:52:21 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -321,6 +321,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 #endif
 
+#ifdef _LOCORE
 .macro	stmd	r,dst
 	i = 0
     .rept	32-\r
@@ -336,5 +337,6 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	i = i + 1
     .endr
 .endm
+#endif
 
 #endif /* !_PPC_ASM_H_ */
