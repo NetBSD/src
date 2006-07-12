@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.11 2006/07/02 16:29:49 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.12 2006/07/12 15:02:15 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.11 2006/07/02 16:29:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.12 2006/07/12 15:02:15 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.11 2006/07/02 16:29:49 bouyer
 #include <nfs/nfsdiskless.h>
 #include <machine/if_xennetvar.h>
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
+
+#include <machine/xennet_checksum.h>
 
 #include <uvm/uvm.h>
 
@@ -828,6 +830,13 @@ again:
 				/* out of memory, just drop packets */
 				ifp->if_ierrors++;
 				m_freem(m);
+				continue;
+			}
+		}
+		if ((rx->flags & NETRXF_csum_blank) != 0) {
+			xennet_checksum_fill(&m);
+			if (m == NULL) {
+				ifp->if_ierrors++;
 				continue;
 			}
 		}

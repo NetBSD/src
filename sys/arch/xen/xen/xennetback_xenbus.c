@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.9 2006/07/02 18:54:25 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.10 2006/07/12 15:02:15 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,6 +63,7 @@
 #include <machine/xen_shm.h>
 #include <machine/evtchn.h>
 #include <machine/xenbus.h>
+#include <machine/xennet_checksum.h>
 
 #include <uvm/uvm.h>
 
@@ -758,6 +759,13 @@ so always copy for now.
 			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt);
 			m->m_pkthdr.len = m->m_len = txreq->size;
 			m->m_flags |= M_EXT_ROMAP;
+		}
+		if ((txreq->flags & NETTXF_csum_blank) != 0) {
+			xennet_checksum_fill(&m);
+			if (m == NULL) {
+				ifp->if_ierrors++;
+				continue;
+			}
 		}
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
