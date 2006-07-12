@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.253 2005/03/09 19:04:45 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.253.2.1 2006/07/12 21:26:23 tron Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2005/03/09 19:04:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253.2.1 2006/07/12 21:26:23 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1790,8 +1790,10 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	 * First, find a region large enough to contain any aligned chunk
 	 */
 	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
+	sva = vm_map_min(kernel_map);
+	if (uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
+	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, UVM_FLAG_NOWAIT)))
 		return (0);
 
 	/*
