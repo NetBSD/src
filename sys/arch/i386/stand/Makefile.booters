@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.68 2006/06/25 14:49:32 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.69 2006/07/12 13:51:18 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,8 @@ DOSSTART= start_dos.o doscommain.o
 .PATH: ${I386_STAND_DIR}/lib/crt/pxe
 PXESTART= start_pxe.o
 
-CPPFLAGS+= -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
+CPPFLAGS+= -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib \
+	-I${S}/../common/include -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
 LDFLAGS+=  -nostdlib
 
