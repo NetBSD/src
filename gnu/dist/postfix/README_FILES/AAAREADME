@@ -8,6 +8,8 @@ GGeenneerraall ccoonnffiigguurraattiioonn
   * ADDRESS_REWRITING_README: Address rewriting
   * VIRTUAL_README: Virtual domain hosting
   * SASL_README: SASL Authentication
+  * TLS_README: TLS Encryption and authentication
+  * IPV6_README: IP Version 6 Support
   * INSTALL: Installation from source code
 
 PPrroobblleemm ssoollvviinngg
@@ -38,6 +40,7 @@ LLooookkuupp ttaabblleess ((ddaattaabbaasseess))
 
   * DATABASE_README: Lookup table overview
   * DB_README: Berkeley DB Howto
+  * CDB_README: CDB Howto
   * LDAP_README: LDAP Howto
   * MYSQL_README: MySQL Howto
   * PCRE_README: PCRE Howto
@@ -66,6 +69,7 @@ OOtthheerr ttooppiiccss
   * postconf(5): All main.cf parameters
   * LOCAL_RECIPIENT_README: Rejecting Unknown Local Recipients
   * ADDRESS_CLASS_README: Address Classes
+  * CONNECTION_CACHE_README: Connection cache howto
   * PACKAGE_README: Guidelines for Package Builders
   * SCHEDULER_README: Queue Scheduler
   * XCLIENT_README: XCLIENT Command

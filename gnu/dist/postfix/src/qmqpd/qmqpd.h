@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.h,v 1.1.1.3 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: qmqpd.h,v 1.1.1.3.2.1 2006/07/12 15:06:41 tron Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,7 @@ typedef struct {
     char   *name;			/* client name */
     char   *addr;			/* client IP address */
     char   *namaddr;			/* name[addr] */
+    char   *rfc_addr;			/* RFC 2821 client IP address */
     char   *queue_id;			/* queue file ID */
     VSTREAM *cleanup;			/* cleanup server */
     MAIL_STREAM *dest;			/* cleanup server */

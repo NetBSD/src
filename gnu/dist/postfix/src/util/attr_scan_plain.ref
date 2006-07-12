@@ -1,11 +1,13 @@
 ./attr_print_plain: send attr number = 4711
 ./attr_print_plain: send attr long_number = 1234
 ./attr_print_plain: send attr string = whoopee
+./attr_print_plain: send attr data = [data 7 bytes]
 ./attr_print_plain: send attr name foo-name value foo-value
 ./attr_print_plain: send attr name bar-name value bar-value
 ./attr_print_plain: send attr number = 4711
 ./attr_print_plain: send attr long_number = 1234
 ./attr_print_plain: send attr string = whoopee
+./attr_print_plain: send attr data = [data 7 bytes]
 ./attr_scan_plain: unknown_stream: wanted attribute: number
 ./attr_scan_plain: input attribute name: number
 ./attr_scan_plain: input attribute value: 4711
@@ -15,6 +17,9 @@
 ./attr_scan_plain: unknown_stream: wanted attribute: string
 ./attr_scan_plain: input attribute name: string
 ./attr_scan_plain: input attribute value: whoopee
+./attr_scan_plain: unknown_stream: wanted attribute: data
+./attr_scan_plain: input attribute name: data
+./attr_scan_plain: input attribute value: d2hvb3BlZQ==
 ./attr_scan_plain: unknown_stream: wanted attribute: (any attribute name or list terminator)
 ./attr_scan_plain: input attribute name: foo-name
 ./attr_scan_plain: input attribute value: foo-value
@@ -32,15 +37,20 @@
 ./attr_scan_plain: unknown_stream: wanted attribute: string
 ./attr_scan_plain: input attribute name: string
 ./attr_scan_plain: input attribute value: whoopee
+./attr_scan_plain: unknown_stream: wanted attribute: data
+./attr_scan_plain: input attribute name: data
+./attr_scan_plain: input attribute value: d2hvb3BlZQ==
 ./attr_scan_plain: unknown_stream: wanted attribute: (list terminator)
 ./attr_scan_plain: input attribute name: (end)
 number 4711
 long_number 1234
 string whoopee
+data whoopee
 (hash) foo-name foo-value
 (hash) bar-name bar-value
 number 4711
 long_number 1234
 string whoopee
+data whoopee
 (hash) foo-name foo-value
 (hash) bar-name bar-value

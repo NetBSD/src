@@ -12,7 +12,7 @@
 # .fi
 #	\fBqshape\fR [\fB-s\fR] [\fB-p\fR] [\fB-m \fImin_subdomains\fR]
 #		[\fB-b \fIbucket_count\fR] [\fB-t \fIbucket_time\fR]
-#		[\fB-w \fIterminal_width\fR]
+#		[\fB-l\fR] [\fB-w \fIterminal_width\fR]
 #		[\fB-c \fIconfig_directory\fR] [\fIqueue_name\fR ...]
 # DESCRIPTION
 #	The \fBqshape\fR program helps the administrator understand the
@@ -28,7 +28,7 @@
 #	domain distribution.  By default the recipient distribution is
 #	displayed. There can be more recipients than messages, but as
 #	each message has only one sender, the sender distribution is a
-#	a message distribution.
+#	message distribution.
 # .IP \fB-p\fR
 #	Generate aggregate statistics for parent domains. Top level domains
 #	are not shown, nor are domains with fewer than \fImin_subdomains\fR
@@ -43,15 +43,20 @@
 #	or "buckets". Each bucket has a maximum queue age that is twice
 #	as large as that of the previous bucket. The last bucket has no
 #	age limit.
-# .IP "\fB-b \fIbucket_time\fR"
+# .IP "\fB-t \fIbucket_time\fR"
 #	The age limit in minutes for the first time bucket. The default
 #	value is 5, meaning that the first bucket counts messages between
 #	0 and 5 minutes old.
+# .IP "\fB-l\fR"
+#	Instead of using a geometric age sequence, use a linear age sequence,
+#	in other words simple multiples of \fBbucket_time\fR.
+#
+#	This feature is available in Postfix 2.2 and later.
 # .IP "\fB-w \fIterminal_width\fR"
 #	The output is right justified, with the counts for the last
 #	bucket shown on the 80th column, the \fIterminal_width\fR can be
 #	adjusted for wider screens allowing more buckets to be displayed
-#	with truncating the domain names on the left. When a row for a
+#	without truncating the domain names on the left. When a row for a
 #	full domain name and its counters does not fit in the specified
 #	number of columns, only the last 17 bytes of the domain name
 #	are shown with the prefix replaced by a '+' character. Truncated
@@ -76,7 +81,7 @@
 #	absolute path for each queue subdirectory even if you want the
 #	default incoming and active queue distribution.
 # SEE ALSO
-#	mailq(1) List all messages in the queue.
+#	mailq(1), List all messages in the queue.
 #	QSHAPE_README Examples and background material.
 # FILES
 #	$config_directory/main.cf, Postfix installation parameters.
@@ -113,7 +118,7 @@ my @qlist = qw(incoming active);
 do {
     local $SIG{__WARN__} = sub {
     	warn "$0: $_[0]" unless exists($opts{"h"});
-	die "Usage: $0 [ -s ] [ -p ] [ -m <min_subdomains> ]\n".
+	die "Usage: $0 [ -s ] [ -p ] [ -m <min_subdomains> ] [ -l ]\n".
 	    "\t[ -b <bucket_count> ] [ -t <bucket_time> ] [ -w <terminal_width> ]\n".
 	    "\t[ -c <config_directory> ] [ <queue_name> ... ]\n".
 	"The 's' option shows sender domain counts.\n".
@@ -127,7 +132,7 @@ do {
 	"\tthe first bucket is [0, bucket_time) minutes\n".
 	"\tthe second bucket is [bucket_time, 2*bucket_time) minutes\n".
 	"\tthe third bucket is [2*bucket_time, 4*bucket_time) minutes...\n".
-	"The number of buckets shown is <bucket_count>.\n\n".
+	"'-l' makes the ages linear, the number of buckets shown is <bucket_count>\n\n".
 
 	"The default summary is for the incoming and active queues. An explicit\n".
 	"list of queue names can be given on the command line. Non-absolute queue\n".
@@ -137,7 +142,7 @@ do {
 	"not supported. If necessary, use explicit absolute paths for all queues.\n";
     };
 
-    getopts("hc:psw:b:t:m:", \%opts);
+    getopts("lhc:psw:b:t:m:", \%opts);
     warn "Help message" if (exists $opts{"h"});
 
     @qlist = @ARGV if (@ARGV > 0);
@@ -245,7 +250,7 @@ sub bucket {
     my ($qt, $now) = @_;
     my $m = ($now - $qt) / (60 * $tick);
     return 1 if ($m < 1);
-    my $b = 2 + int(log($m) / log(2));
+    my $b = $opts{"l"} ? int($m+1) : 2 + int(log($m) / log(2));
     $b < $bnum ? $b : $bnum;
 }
 
@@ -258,8 +263,9 @@ sub wanted {
 	    ++$q{"TOTAL"}->[0];
 	    ++$q{"TOTAL"}->[$b];
 	    $a = "MAILER-DAEMON" if ($a eq "");
-	    $a =~ s/.*\@\.*(.*[^.])?\.*$/$1/;
+	    $a =~ s/.*\@//;
 	    $a =~ s/\.\././g;
+	    $a =~ s/\.?(.+?)\.?$/$1/;
 	    my $new = 0;
 	    do {
 		my $old = (++$q{$a}->[0] > 1);
@@ -285,7 +291,7 @@ for (my $i = 0, my $t = 0; $i <= $bnum; ) {
     push(@heads, $h);
     $fmt .= sprintf "%%%ds", $l;
     $dw -= $l;
-    if (++$i < $bnum) { $t += $t ? $t : $tick; } else { $t = "$t+"; }
+    if (++$i < $bnum) { $t += ($t && !$opts{"l"}) ? $t : $tick; } else { $t = "$t+"; }
 }
 $dw = $dwidth if ($dw < $dwidth);
 

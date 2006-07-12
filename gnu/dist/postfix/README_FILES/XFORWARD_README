@@ -41,7 +41,7 @@ are in fact case insensitive.
 
     xforward-command = XFORWARD 1*( SP attribute-name"="attribute-value )
 
-    attribute-name = ( NAME | ADDR | PROTO | HELO )
+    attribute-name = ( NAME | ADDR | PROTO | HELO | SOURCE )
 
   * The NAME attribute specifies the up-stream hostname, or [UNAVAILABLE] when
     the information is unavailable. The hostname may be a non-DNS hostname.
@@ -58,6 +58,13 @@ are in fact case insensitive.
     itself with (not necessarily via the SMTP HELO command), or [UNAVAILABLE]
     when the information is unavailable. The hostname may be a non-DNS
     hostname.
+
+  * The SOURCE attribute specifies LOCAL when the message was received from a
+    source that is local with respect to the up-stream host (for example, the
+    message originated from the up-stream host itself), REMOTE for all other
+    mail, or [UNAVAILABLE] when the information is unavailable. The down-stream
+    MTA may decide to enable features such as header munging or address
+    qualification with mail from local sources but not other sources.
 
 Note 1: Attribute values must not be longer than 255 characters (specific
 attributes may impose shorter lengths), must not contain control characters,

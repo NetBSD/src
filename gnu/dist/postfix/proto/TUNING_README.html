@@ -242,11 +242,17 @@ traffic: mail will suffer grotesque delays if you do so. </p>
 simultaneous connections (default: 50). This is half the default
 process limit. </p>
 
+<li> <p> An SMTP client may make up to $smtpd_client_message_rate_limit
+message delivery requests per unit time (default: no limit). </p>
+
+<li> <p> An SMTP client may send up to $smtpd_client_recipient_rate_limit
+recipient addresses per unit time (default: no limit). </p>
+
 <li> <p> An SMTP client may make up to $smtpd_client_connection_rate_limit
 connections per unit time (default: no limit). </p>
 
 <li> <p> These limits are not applied to SMTP clients in the networks
-specified with $smtpd_client_connection_limit_exceptions (default:
+specified with $smtpd_client_event_limit_exceptions (default:
 clients in $mynetworks may make an unlimited number of connections).
 
 <li> <p> The anvil_rate_time_unit parameter specifies the time
@@ -284,7 +290,7 @@ across the upstream network link. </p>
 
 <li> <p> Reduce the smtp_connect_timeout and smtp_helo_timeout
 values so that Postfix does not waste lots of time connecting
-to non-responding smtpd(8) servers. </p>
+to non-responding remote SMTP servers. </p>
 
 <li> <p> Use a dedicated mail delivery transport for problematic
 destinations, with reduced timeouts and with adjusted concurrency.

@@ -131,9 +131,10 @@ Command-line utilities:
 
 Postfix daemons:
 
-    src/anvil/		Connection count/rate limiter (not installed)
+    src/anvil/		Connection count/rate limiter
     src/bounce/		Bounce or defer mail
     src/cleanup/	Canonicalize and enqueue mail
+    src/discard/	Trivial discard mailer
     src/error/		Trivial error mailer
     src/lmtp/		LMTP client
     src/local/		Local delivery

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_stream.h,v 1.1.1.4 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_stream.h,v 1.1.1.4.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 #ifndef _MAIL_STREAM_H_INCLUDED_
 #define _MAIL_STREAM_H_INCLUDED_
@@ -12,6 +12,11 @@
 /*	#include <mail_stream.h>
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <sys/time.h>
 
  /*
   * Utility library.
@@ -36,6 +41,7 @@ struct MAIL_STREAM {
     char   *class;			/* trigger class */
     char   *service;			/* trigger service */
     int     mode;			/* additional permissions */
+    struct timeval ctime;		/* creation time */
 };
 
 extern MAIL_STREAM *mail_stream_file(const char *, const char *, const char *, int);

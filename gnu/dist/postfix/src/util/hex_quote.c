@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_quote.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: hex_quote.c,v 1.1.1.3.2.1 2006/07/12 15:06:44 tron Exp $	*/
 
 /*++
 /* NAME
@@ -128,7 +128,7 @@ static int read_buf(VSTREAM *fp, VSTRING *buf)
     return (len);
 }
 
-main(int unused_argc, char **unused_argv)
+int     main(int unused_argc, char **unused_argv)
 {
     VSTRING *raw = vstring_alloc(BUFLEN);
     VSTRING *hex = vstring_alloc(100);

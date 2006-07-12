@@ -1,4 +1,4 @@
-/*	$NetBSD: host_port.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: host_port.h,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
 
 #ifndef _HOST_PORT_H_INCLUDED_
 #define _HOST_PORT_H_INCLUDED_
@@ -15,7 +15,7 @@
 
  /* External interface. */
 
-extern const char *host_port(char *, char **, char **, char *);
+extern const char *host_port(char *, char **, char *, char **, char *);
 
 /* LICENSE
 /* .ad

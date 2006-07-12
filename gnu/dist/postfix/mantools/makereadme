@@ -4,8 +4,9 @@ sed '
 	s/<\/*table[^>]*>//g
 	s/<\/th[^>]*>//g
 	s/<\/td[^>]*>//g
-	s/"\([A-Z_]*\)\.html">/&\1:/
+	s/"\([A-Z0-9_]*\)\.html">/&\1:/
 	s/All main.cf parameters/postconf(5): &/
+	/All Postfix manual pages/d
 ' "$@"
 
 

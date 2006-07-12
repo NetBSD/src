@@ -1,45 +1,49 @@
-
-@
-@@
-@a.
-@..
-@.@.
-!
-a!
-!b
-a!b
-!@
-a!@
-!b@
-a!b@
-%
-a%
-%b
-a%b
-%@
-a%@
-%b@
-@@
-a@@
-@b@
-a@b@
-a%b@
-a%b@MYHOSTNAME
-a!b@MYHOSTNAME
-a@b@MYHOSTNAME
-a[b]@MYHOSTNAME@MYHOSTNAME
-a[b]%MYHOSTNAME@MYHOSTNAME
-a[b]%MYHOSTNAME%MYHOSTNAME
-MYHOSTNAME!a[b]@MYHOSTNAME
-MYHOSTNAME!a[b]%MYHOSTNAME
-MYHOSTNAME!MYHOSTNAME!a[b]
-user@dom.ain1@dom.ain2
-user%dom.ain1@dom.ain2
-dom.ain1!user@dom.ain2
-user@[1.2.3.4]@dom.ain2
-user%[1.2.3.4]@dom.ain2
-[1.2.3.4]!user@dom.ain2
-user@localhost.MYDOMAIN
-user@[321.1.2.3]
-user@1.2.3
-user@host:port
+resolve 
+resolve @
+resolve @@
+resolve @a.
+resolve @..
+resolve @.@.
+resolve !
+resolve a!
+resolve !b
+resolve a!b
+resolve !@
+resolve a!@
+resolve !b@
+resolve a!b@
+resolve %
+resolve a%
+resolve %b
+resolve a%b
+resolve %@
+resolve a%@
+resolve %b@
+resolve @@
+resolve a@@
+resolve @b@
+resolve a@b@
+resolve a%b@
+resolve a%b@MYHOSTNAME
+resolve a!b@MYHOSTNAME
+resolve a@b@MYHOSTNAME
+resolve a[b]@MYHOSTNAME@MYHOSTNAME
+resolve a[b]%MYHOSTNAME@MYHOSTNAME
+resolve a[b]%MYHOSTNAME%MYHOSTNAME
+resolve MYHOSTNAME!a[b]@MYHOSTNAME
+resolve MYHOSTNAME!a[b]%MYHOSTNAME
+resolve MYHOSTNAME!MYHOSTNAME!a[b]
+resolve user@dom.ain1@dom.ain2
+resolve user%dom.ain1@dom.ain2
+resolve dom.ain1!user@dom.ain2
+resolve user@[1.2.3.4]@dom.ain2
+resolve user%[1.2.3.4]@dom.ain2
+resolve [1.2.3.4]!user@dom.ain2
+resolve user@localhost.MYDOMAIN
+resolve user@[321.1.2.3]
+resolve user@1.2.3
+resolve user@host:port
+resolve user@host
+resolve user@host
+verify user@host
+verify user@host

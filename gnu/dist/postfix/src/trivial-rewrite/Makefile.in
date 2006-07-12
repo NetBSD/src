@@ -20,8 +20,10 @@ all:	$(PROG) $(LIB)
 $(PROG): $(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -52,7 +54,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -73,7 +75,6 @@ resolve.o: ../../include/mail_params.h
 resolve.o: ../../include/mail_proto.h
 resolve.o: ../../include/iostuff.h
 resolve.o: ../../include/attr.h
-resolve.o: ../../include/rewrite_clnt.h
 resolve.o: ../../include/resolve_local.h
 resolve.o: ../../include/mail_conf.h
 resolve.o: ../../include/quote_822_local.h
@@ -89,6 +90,7 @@ resolve.o: ../../include/maps.h
 resolve.o: ../../include/dict.h
 resolve.o: ../../include/argv.h
 resolve.o: ../../include/mail_addr_find.h
+resolve.o: ../../include/valid_mailhost_addr.h
 resolve.o: trivial-rewrite.h
 resolve.o: transport.h
 rewrite.o: rewrite.c
@@ -139,6 +141,7 @@ trivial-rewrite.o: ../../include/split_at.h
 trivial-rewrite.o: ../../include/stringops.h
 trivial-rewrite.o: ../../include/dict.h
 trivial-rewrite.o: ../../include/argv.h
+trivial-rewrite.o: ../../include/events.h
 trivial-rewrite.o: ../../include/mail_params.h
 trivial-rewrite.o: ../../include/mail_proto.h
 trivial-rewrite.o: ../../include/iostuff.h

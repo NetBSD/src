@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - verify(8) </title>
 </head> <body> <pre>
-VERIFY(8)                                               VERIFY(8)
+VERIFY(8)                                                            VERIFY(8)
 
 <b>NAME</b>
        verify - Postfix address verification server
@@ -13,9 +13,9 @@ VERIFY(8)                                               VERIFY(8)
        <b>verify</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The Postfix address verification server maintains a record
-       of what recipient addresses are known to be deliverable or
-       undeliverable.
+       The  <a href="verify.8.html"><b>verify</b>(8)</a>  address  verification  server  maintains a
+       record of what recipient addresses are known to be  deliv-
+       erable or undeliverable.
 
        Addresses  are  verified  by injecting probe messages into
        the Postfix queue. Probe messages are run through all  the
@@ -26,13 +26,13 @@ VERIFY(8)                                               VERIFY(8)
        MTA  for  the  specified  address,  and will therefore not
        detect all undeliverable addresses.
 
-       This server is designed to run under control by the  Post-
-       fix  master  server.  It  maintains an optional persistent
-       database.  To avoid being interrupted by "postfix stop" in
-       the  middle  of  a  database update, the process runs in a
-       separate process group.
+       The <a href="verify.8.html"><b>verify</b>(8)</a> server is designed to run under  control  by
+       the  Postfix  master server. It maintains an optional per-
+       sistent database.  To avoid being interrupted by  "postfix
+       stop" in the middle of a database update, the process runs
+       in a separate process group.
 
-       This server implements the following requests:
+       The <a href="verify.8.html"><b>verify</b>(8)</a> server implements the following requests:
 
        <b>update</b> <i>address status text</i>
               Update  the  status  and  text  of  the   specified
@@ -71,11 +71,11 @@ VERIFY(8)                                               VERIFY(8)
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <b>main.cf</b> are not  picked  up  automatically,  as
-       <a href="verify.8.html">verify(8)</a> processes are persistent. Use the command "<b>post-</b>
+       <a href="verify.8.html"><b>verify</b>(8)</a> processes are persistent. Use the command "<b>post-</b>
        <b>fix reload</b>" after a configuration change.
 
        The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>CACHE CONTROLS</b>
        <b><a href="postconf.5.html#address_verify_map">address_verify_map</a> (empty)</b>
@@ -150,8 +150,8 @@ VERIFY(8)                                               VERIFY(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID of a Postfix command or daemon  pro-
-              cess.
+              The process ID  of  a  Postfix  command  or  daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The  process  name  of  a Postfix command or daemon
@@ -165,8 +165,8 @@ VERIFY(8)                                               VERIFY(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -191,5 +191,5 @@ VERIFY(8)                                               VERIFY(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                        VERIFY(8)
+                                                                     VERIFY(8)
 </pre> </body> </html>

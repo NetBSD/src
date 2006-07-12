@@ -149,7 +149,7 @@ use the Postfix <a href="local.8.html">local(8)</a> delivery agent's <a href="po
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
-    <a href="postconf.5.html#mailbox_command_maps">mailbox_command_maps</a> = /etc/postfix/mailbox_commands
+    <a href="postconf.5.html#mailbox_command_maps">mailbox_command_maps</a> = hash:/etc/postfix/mailbox_commands
 
 /etc/postfix/mailbox_commands:
     you    /path/to/maildrop -d ${USER}

@@ -5,7 +5,9 @@
 #
 # Input format: the leader text is copied verbatim; each paragraph
 # starts with [class, class] where a class specifies one or more
-# categories that the change should be listed under.
+# categories that the change should be listed under. Adding class
+# info is the only manual processing needed to go from a RELEASE_NOTES
+# file to the transformed representation.
 # 
 # Output format: each category is printed with a little header and
 # each paragraph is tagged with [Incompat yyyymmdd] or with [Feature
@@ -39,7 +41,7 @@ while (<>) {
     if (/^\s*\n/) {
 	if ($paragraph) {
 	    for $class (@classes) {
-		${$append_to}{$class} .= $prefix . $paragraph . $_;
+		${$append_to}{$class} .= $paragraph . $_;
 	    }
 	    $paragraph = "";
 	}
@@ -48,16 +50,16 @@ while (<>) {
 	    if ($append_to eq \%leader) {
 		@classes = ("default");
 		$paragraph = $_;
-	    } else {
-		die "No [class] at start of paragraph: $_" 
-		    unless /^\[([^]]+)\]\s*(.*)/s;
-		$paragraph = $2;
+	    } elsif (/^\[([^]]+)\]\s*(.*)/s) {
+		$paragraph = $prefix . $2;
 		($junk = $1) =~ s/\s*,\s*/,/g;
 		$junk =~ s/^\s+//;
 		$junk =~ s/\s+$//;
 		#print "junk >$junk<\n";
 		@classes = split(/,+/, $junk);
 		#print "[", join(', ', @classes), "] ", $paragraph;
+	    } else {
+		$paragraph = $_;
 	    }
 	} else {
 	    $paragraph .= $_;
@@ -75,6 +77,7 @@ print $leader{"default"};
 
 for $class (sort keys %body) {
     print "Major changes - $class\n";
-    print "----------------------\n\n";
+    ($junk = "Major changes - $class") =~ s/./-/g;
+    print $junk, "\n\n";
     print $body{$class};
 }

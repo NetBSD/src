@@ -168,6 +168,7 @@ BACKUP_IFS="$IFS"
 
 USAGE="Usage: $0 [name=value] [option]
     -non-interactive        Do not ask for installation parameters.
+    -package                Build a ready-to-install package.
     name=value              Specify an installation parameter".
 
 # Process command-line options and parameter settings. Work around
@@ -179,6 +180,7 @@ do
     case $arg in
       *=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
 -non-int*) non_interactive=1;;
+ -package) need_install_root=install_root;;
         *) echo "$0: Error: $USAGE" 1>&2; exit 1;;
     esac
     shift
@@ -379,6 +381,11 @@ done
 case $install_root in
 /) install_root=
 esac
+
+test -z "$need_install_root" || test -n "$install_root" || {
+    echo $0: Error: invalid package root directory: \"install_root=/\" 1>&2
+    exit 1
+}
 
 CONFIG_DIRECTORY=$install_root$config_directory
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.1.1.2 2004/05/31 00:24:40 heas Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -145,6 +145,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
     }
 
     flags = message->tflags
+	| entry->queue->dflags
 	| (message->inspect_xport ? DEL_REQ_FLAG_BOUNCE : DEL_REQ_FLAG_DEFLT);
     attr_print(stream, ATTR_FLAG_MORE,
 	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
@@ -162,6 +163,10 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, message->client_addr,
 	       ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, message->client_proto,
 	       ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, message->client_helo,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, message->sasl_method,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, message->sasl_username,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, message->sasl_sender,
+	       ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, message->rewrite_context,
 	       ATTR_TYPE_END);
     if (sender_buf != 0)
 	vstring_free(sender_buf);
@@ -207,6 +212,8 @@ static void qmgr_deliver_update(int unused_event, char *context)
     QMGR_MESSAGE *message = entry->message;
     VSTRING *reason = vstring_alloc(1);
     int     status;
+    QMGR_RCPT *recipient;
+    int     nrcpt;
 
     /*
      * The message transport has responded. Stop the watchdog timer.
@@ -236,6 +243,21 @@ static void qmgr_deliver_update(int unused_event, char *context)
 	qmgr_transport_throttle(transport, "unknown mail transport error");
 	msg_warn("transport %s failure -- see a previous warning/fatal/panic logfile record for the problem description",
 		 transport->name);
+
+	/*
+	 * Assume the worst and write a defer logfile record for each
+	 * recipient. This omission was already present in the first queue
+	 * manager implementation of 199703, and was fixed 200511.
+	 * 
+	 * Don't move this queue entry back to the todo queue so that
+	 * qmgr_defer_transport() can update the defer log. The queue entry
+	 * is still hot, and making it cold would involve duplicating most
+	 * but not all code at the end of this routine. That's too tricky.
+	 */
+	for (nrcpt = 0; nrcpt < entry->rcpt_list.len; nrcpt++) {
+	    recipient = entry->rcpt_list.info + nrcpt;
+	    qmgr_defer_recipient(message, recipient, transport->reason);
+	}
 	qmgr_defer_transport(transport, transport->reason);
     }
 
@@ -261,7 +283,7 @@ static void qmgr_deliver_update(int unused_event, char *context)
      * No problems detected. Mark the transport and queue as alive. The queue
      * itself won't go away before we dispose of the current queue entry.
      */
-    if (VSTRING_LEN(reason) == 0) {
+    if (status != DELIVER_STAT_CRASH && VSTRING_LEN(reason) == 0) {
 	qmgr_transport_unthrottle(transport);
 	qmgr_queue_unthrottle(queue);
     }

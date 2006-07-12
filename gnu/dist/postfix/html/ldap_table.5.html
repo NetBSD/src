@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - ldap_table(5) </title>
 </head> <body> <pre>
-LDAP_TABLE(5)                                       LDAP_TABLE(5)
+LDAP_TABLE(5)                                                    LDAP_TABLE(5)
 
 <b>NAME</b>
        ldap_table - Postfix LDAP client configuration
@@ -54,6 +54,20 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
        Support  for this form will be removed in a future Postfix
        version.
 
+       Postfix 2.2 has enhanced query interfaces  for  MySQL  and
+       PostgreSQL,  these  now include features previously avail-
+       able only in the Postfix LDAP client. This work also  cre-
+       ated  an  opportunity  for improvements in the LDAP inter-
+       face. The primary compatibility issue is that  <b>result_fil-</b>
+       <b>ter</b> (a name that has caused some confusion as to its mean-
+       ing in the past) has been renamed to  <b>result_format</b>.   For
+       backwards  compatibility  with  the  pre  2.2 LDAP client,
+       <b>result_filter</b> can for now be used instead  of  <b>result_for-</b>
+       <b>mat</b>,  when  the latter parameter is not also set.  The new
+       name better reflects the function of the  parameter.  This
+       compatibility   interface  may  be  removed  in  a  future
+       release.
+
 <b>LIST MEMBERSHIP</b>
        When using  LDAP  to  store  lists  such  as  $<a href="postconf.5.html#mynetworks">mynetworks</a>,
        $<a href="postconf.5.html#mydestination">mydestination</a>,   $<a href="postconf.5.html#relay_domains">relay_domains</a>,   $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>,
@@ -88,7 +102,7 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
 
        <b>server_host (default: localhost)</b>
               The name of the host running the LDAP server,  e.g.
-                  server_host = ldap.your.com
+                  server_host = ldap.example.com
 
               Depending  on the LDAP client library you're using,
               it should be possible to specify  multiple  servers
@@ -96,32 +110,75 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
               the first one fail. It should also be  possible  to
               give  each  server  in  the  list  a different port
               (overriding <b>server_port</b> below), by naming them like
-                  server_host = ldap.your.com:1444
+                  server_host = ldap.example.com:1444
 
               With OpenLDAP, a (list of) LDAP URLs can be used to
               specify both the hostname(s) and the port(s):
-                  server_host = <a href="ldap_table.5.html">ldap</a>://ldap.your.com:1444
+                  server_host = <a href="ldap_table.5.html">ldap</a>://ldap.example.com:1444
+                              <a href="ldap_table.5.html">ldap</a>://ldap2.example.com:1444
 
               All LDAP URLs accepted by the OpenLDAP library  are
               supported,  including  connections over UNIX domain
               sockets, and LDAP SSL (the last one  provided  that
               OpenLDAP was compiled with support for SSL):
                   server_host = ldapi://%2Fsome%2Fpath
-                  server_host = ldaps://ldap.your.com:636
+                              ldaps://ldap.example.com:636
 
        <b>server_port (default: 389)</b>
               The port the LDAP server listens on, e.g.
                   server_port = 778
+
+       <b>timeout (default: 10 seconds)</b>
+              The number of seconds a search can take before tim-
+              ing out, e.g.
+                  timeout = 5
 
        <b>search_base (No default; you must configure this)</b>
               The <a href="http://www.faqs.org/rfcs/rfc2253.html">RFC2253</a> base DN at which to conduct the search,
               e.g.
                   search_base = dc=your, dc=com
 
-       <b>timeout (default: 10 seconds)</b>
-              The number of seconds a search can take before tim-
-              ing out, e.g.
-                  timeout = 5
+              With  Postfix 2.2 and later this parameter supports
+              the following '%' expansions:
+
+              <b>%%</b>     This is replaced by a literal '%' character.
+
+              <b>%s</b>     This is replaced by the input key.  <a href="http://www.faqs.org/rfcs/rfc2253.html">RFC 2253</a>
+                     quoting is used to make sure that the  input
+                     key  does not add unexpected metacharacters.
+
+              <b>%u</b>     When the input key is an address of the form
+                     user@domain,  <b>%u</b>  is  replaced  by  the (RFC
+                     2253) quoted  local  part  of  the  address.
+                     Otherwise,  <b>%u</b>  is  replaced  by  the entire
+                     search string.  If the localpart  is  empty,
+                     the  search  is  suppressed  and  returns no
+                     results.
+
+              <b>%d</b>     When the input key is an address of the form
+                     user@domain,  <b>%d</b>  is  replaced  by  the (RFC
+                     2253) quoted domain  part  of  the  address.
+                     Otherwise,  the  search  is  suppressed  and
+                     returns no results.
+
+              <b>%[SUD]</b> For the <b>search_base</b>  parameter,  the  upper-
+                     case  equivalents  of  the  above expansions
+                     behave  identically  to   their   lower-case
+                     counter-parts. With the <b>result_format</b> param-
+                     eter (previously  called  <b>result_filter</b>  see
+                     the  COMPATIBILITY  section and below), they
+                     expand to the  corresponding  components  of
+                     input key rather than the result value.
+
+              <b>%[1-9]</b> The  patterns %1, %2, ... %9 are replaced by
+                     the corresponding most significant component
+                     of  the input key's domain. If the input key
+                     is <i>user@mail.example.com</i>, then %1 is <b>com</b>, %2
+                     is  <b>example</b> and %3 is <b>mail</b>. If the input key
+                     is  unqualified  or  does  not  have  enough
+                     domain  components to satisfy all the speci-
+                     fied patterns, the search is suppressed  and
+                     returns no results.
 
        <b>query_filter (default: mailacceptinggeneralid=%s)</b>
               The  <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC2254</a>  filter  used to search the directory,
@@ -132,67 +189,123 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
               This  parameter  supports  the following '%' expan-
               sions:
 
-              <b>%s</b>     This is replaced by the input key. <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC  2254</a>
-                     quoting  is used to make sure that the input
-                     key does not add unexpected  metacharacters.
+              <b>%%</b>     This is replaced by a literal '%' character.
+                     (Postfix 2.2 and later).
+
+              <b>%s</b>     This is replaced by the input key.  <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC 2254</a>
+                     quoting is used to make sure that the  input
+                     key  does not add unexpected metacharacters.
 
               <b>%u</b>     When the input key is an address of the form
-                     user@domain, <b>%u</b>  is  replaced  by  the  (RFC
-                     2254)  quoted  local part of the address. If
-                     no domain is specified, <b>%u</b>  is  replaced  by
-                     the entire search string.
+                     user@domain,  <b>%u</b>  is  replaced  by  the (RFC
+                     2254) quoted  local  part  of  the  address.
+                     Otherwise,  <b>%u</b>  is  replaced  by  the entire
+                     search string.  If the localpart  is  empty,
+                     the  search  is  suppressed  and  returns no
+                     results.
 
               <b>%d</b>     When the input key is an address of the form
-                     user@domain, <b>%d</b>  is  replaced  by  the  (RFC
-                     2254)  quoted  domain  part  of the address.
-                     When the input key has no domain  qualifier,
-                     <b>%d</b>  is replaced by the entire search string.
+                     user@domain,  <b>%d</b>  is  replaced  by  the (RFC
+                     2254) quoted domain  part  of  the  address.
+                     Otherwise,  the  search  is  suppressed  and
+                     returns no results.
 
-              The "domain" parameter described below  limits  the
-              input  keys  to addresses in matching domains. When
-              the "domain" parameter is non-empty,  LDAP  queries
-              for  unqualified  addresses  or  addresses  in non-
+              <b>%[SUD]</b> The  upper-case  equivalents  of  the  above
+                     expansions behave in the <b>query_filter</b> param-
+                     eter   identically   to   their   lower-case
+                     counter-parts. With the <b>result_format</b> param-
+                     eter (previously  called  <b>result_filter</b>  see
+                     the  COMPATIBILITY  section and below), they
+                     expand to the  corresponding  components  of
+                     input key rather than the result value.
+
+                     The  above  %S,  %U  and  %D  expansions are
+                     available with Postfix 2.2 and later.
+
+              <b>%[1-9]</b> The patterns %1, %2, ... %9 are replaced  by
+                     the corresponding most significant component
+                     of the input key's domain. If the input  key
+                     is <i>user@mail.example.com</i>, then %1 is <b>com</b>, %2
+                     is <b>example</b> and %3 is <b>mail</b>. If the input  key
+                     is  unqualified  or  does  not  have  enough
+                     domain components to satisfy all the  speci-
+                     fied  patterns, the saerch is suppressed and
+                     returns no results.
+
+                     The above %1, ..., %9 expansions are  avail-
+                     able with Postfix 2.2 and later.
+
+              The  "domain"  parameter described below limits the
+              input keys to addresses in matching  domains.  When
+              the  "domain"  parameter is non-empty, LDAP queries
+              for unqualified  addresses  or  addresses  in  non-
               matching  domains  are  suppressed  and  return  no
               results.
 
-              NOTE: DO NOT put quotes around the query filter.
+              NOTE: DO NOT put  quotes  around  the  <b>query_filter</b>
+              parameter.
 
-       <b>result_filter (default: %s</b>)
-              Format  template applied to result attributes. Sup-
-              ports the same expansions as the query_filter,  and
-              can  be  easily  used  to append (or prepend) text.
-              This parameter supports the  following  '%'  expan-
-              sions:
+       <b>result_format (default: %s</b>)
+              Called  <b>result_filter</b>  in Postfix releases prior to
+              2.2.  Format template applied to result attributes.
+              Most  commonly  used to append (or prepend) text to
+              the result. This parameter supports  the  following
+              '%' expansions:
 
-              <b>%s</b>     This  is replaced by the value of the result
-                     attribute.
+              <b>%%</b>     This is replaced by a literal '%' character.
+                     (Postfix 2.2 and later).
 
-              <b>%u</b>     When the result attribute is an  address  of
-                     the  form  user@domain, <b>%u</b> is replaced local
-                     part of the address, if the result attribute
-                     is unqualified, <b>%u</b> is replaced by the entire
-                     attribute value.
+              <b>%s</b>     This is replaced by the value of the  result
+                     attribute.   When  result  is  empty  it  is
+                     skipped.
 
-              <b>%d</b>     When a result attribute is an address of the
-                     form  user@domain,  <b>%d</b>  is  replaced  by the
-                     domain part of the attribute value.   If  an
-                     attribute   value   is   unqualified  <b>%d</b>  is
-                     replaced by the entire attribute value.
+              <b>%u</b>     When  the  result  attribute  value  is   an
+                     address  of  the  form  user@domain,  <b>%u</b>  is
+                     replaced by the local part of  the  address.
+                     When the result has an empty localpart it is
+                     skipped.
 
-              For  example,  using  "result_filter  =  <a href="smtp.8.html">smtp</a>:[%s]"
+              <b>%d</b>     When a result attribute value is an  address
+                     of  the  form user@domain, <b>%d</b> is replaced by
+                     the domain part of the attribute value. When
+                     the result is unqualified it is skipped.
+
+              <b>%[SUD1-9]</b>
+                     The  upper-case and decimal digit expansions
+                     interpolate  the  parts  of  the  input  key
+                     rather  than  the  result. Their behavior is
+                     identical to that described with  <b>query_fil-</b>
+                     <b>ter</b>,  and  in  fact because the input key is
+                     known in advance, lookups whose key does not
+                     contain all the information specified in the
+                     result template are suppressed and return no
+                     results.
+
+                     The  above %S, %U, %D and %1, ..., %9 expan-
+                     sions are available  with  Postfix  2.2  and
+                     later.
+
+              For  example,  using  "result_format  =  <a href="smtp.8.html">smtp</a>:[%s]"
               allows one to use a mailHost attribute as the basis
-              of a <a href="transport.5.html">transport(5)</a> table. After applying the  result
-              filter,  multiple  values are concatenated as comma
-              separated   strings.   The   expansion_limit    and
-              size_limit  parameters explained below allow one to
-              restrict the number of values in the result,  which
-              is  especially useful for maps that should return a
+              of  a <a href="transport.5.html">transport(5)</a> table. After applying the result
+              format, multiple values are concatenated  as  comma
+              separated    strings.   The   expansion_limit   and
+              size_limit parameters explained below allow one  to
+              restrict  the number of values in the result, which
+              is especially useful for maps that should return  a
               single value.
 
-              The default value <b>%s</b> specifies that each  attribute
+              The  default value <b>%s</b> specifies that each attribute
               value should be used as is.
 
-              NOTE: DO NOT put quotes around the result filter!
+              This parameter was called <b>result_filter</b> in  Postfix
+              releases  prior  to  2.2.  If no "result_format" is
+              specified, the value  of  "result_filter"  will  be
+              used instead before resorting to the default value.
+              This provides compatibility with old  configuration
+              files.
+
+              NOTE: DO NOT put quotes around the result format!
 
        <b>domain (default: no domain list)</b>
               This  is a list of domain names, paths to files, or
@@ -215,7 +328,7 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
               The attribute(s) Postfix will read from any  direc-
               tory entries returned by the lookup, to be resolved
               to an email address.
-                  result_attribute = mailbox,maildrop
+                  result_attribute = mailbox, maildrop
 
        <b>special_result_attribute (No default)</b>
               The attribute(s) of directory entries that can con-
@@ -292,7 +405,7 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
 
        <b>size_limit (default: $expansion_limit)</b>
               A limit on the number of LDAP entries  returned  by
-              any  single  LDAP  query  performed  as part of the
+              any  single  LDAP  search  performed as part of the
               lookup. A setting of 0 disables the limit.   Expan-
               sion  of DN and URL references involves nested LDAP
               queries, each of which is separately  subjected  to
@@ -301,10 +414,10 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
               Note:  even a single LDAP entry can generate multi-
               ple lookup results, via multiple result  attributes
               and/or  multi-valued  result attributes. This limit
-              caps the per query resource utilization on the LDAP
-              server,  not  the  final multiplicity of the lookup
-              result. It is  analogous  to  the  "-z"  option  of
-              "ldapsearch".
+              caps the per search  resource  utilization  on  the
+              LDAP  server,  not  the  final  multiplicity of the
+              lookup result. It is analogous to the  "-z"  option
+              of "ldapsearch".
 
        <b>dereference (default: 0)</b>
               When  to  dereference LDAP aliases. (Note that this
@@ -344,7 +457,7 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
 
        LDAP  SSL service can be requested by using a LDAP SSL URL
        in the server_host parameter:
-           server_host = ldaps://ldap.your.com:636
+           server_host = ldaps://ldap.example.com:636
 
        STARTTLS can be turned on with the start_tls parameter:
            start_tls = yes
@@ -452,5 +565,5 @@ LDAP_TABLE(5)                                       LDAP_TABLE(5)
        Mattice,  Prabhat K Singh, Sami Haahtinen, Samuel Tardieu,
        Victor Duchovni, and many others.
 
-                                                    LDAP_TABLE(5)
+                                                                 LDAP_TABLE(5)
 </pre> </body> </html>

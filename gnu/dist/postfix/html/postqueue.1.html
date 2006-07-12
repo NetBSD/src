@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - postqueue(1) </title>
 </head> <body> <pre>
-POSTQUEUE(1)                                         POSTQUEUE(1)
+POSTQUEUE(1)                                                      POSTQUEUE(1)
 
 <b>NAME</b>
        postqueue - Postfix queue control
@@ -15,12 +15,12 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
        <b>postqueue</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-s</b> <i>site</i>
 
 <b>DESCRIPTION</b>
-       The  <b>postqueue</b>  program implements the Postfix user inter-
-       face for queue management. It implements  operations  that
-       are  traditionally  available via the <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command.
-       See the <a href="postsuper.1.html"><b>postsuper</b>(1)</a> command  for  queue  operations  that
-       require  super-user  privileges such as deleting a message
-       from the queue or changing the status of a message.
+       The  <a href="postqueue.1.html"><b>postqueue</b>(1)</a>  command  implements  the  Postfix  user
+       interface for queue management. It  implements  operations
+       that  are traditionally available via the <a href="sendmail.1.html"><b>sendmail</b>(1)</a> com-
+       mand.  See the <a href="postsuper.1.html"><b>postsuper</b>(1)</a> command for  queue  operations
+       that require super-user privileges such as deleting a mes-
+       sage from the queue or changing the status of a message.
 
        The following options are recognized:
 
@@ -33,8 +33,9 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
        <b>-f</b>     Flush  the  queue:  attempt  to  deliver all queued
               mail.
 
-              This option implements the traditional <b>sendmail  -q</b>
-              command,  by contacting the Postfix <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon.
+              This option implements  the  traditional  "<b>sendmail</b>
+              <b>-q</b>" command, by contacting the Postfix <a href="qmgr.8.html"><b>qmgr</b>(8)</a> dae-
+              mon.
 
               Warning:  flushing  undeliverable  mail  frequently
               will  result  in  poor  delivery performance of all
@@ -62,84 +63,96 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
 
        <b>-s</b> <i>site</i>
               Schedule immediate delivery of  all  mail  that  is
-              queued  for the named <i>site</i>. The site must be eligi-
-              ble for the "fast flush" service.  See <a href="flush.8.html"><b>flush</b>(8)</a> for
-              more information about the "fast flush" service.
+              queued for the named <i>site</i>. A numerical site must be
+              specified as  a  valid  <a href="http://www.faqs.org/rfcs/rfc2821.html">RFC  2821</a>  address  literal
+              enclosed  in [], just like in email addresses.  The
+              site must be eligible for the "fast flush" service.
+              See  <a href="flush.8.html"><b>flush</b>(8)</a>  for more information about the "fast
+              flush" service.
 
-              This  option  implements  the  traditional <b>sendmail</b>
-              <b>-qR</b><i>site</i> command, by contacting the Postfix <a href="flush.8.html"><b>flush</b>(8)</a>
-              daemon.
+              This option implements  the  traditional  "<b>sendmail</b>
+              <b>-qR</b><i>site</i>"   command,   by   contacting  the  Postfix
+              <a href="flush.8.html"><b>flush</b>(8)</a> daemon.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple <b>-v</b> options  make  the  software  increasingly
+              tiple  <b>-v</b>  options  make  the software increasingly
               verbose.
 
 <b>SECURITY</b>
-       This  program  is designed to run with set-group ID privi-
+       This program is designed to run with set-group  ID  privi-
        leges, so that it can connect to Postfix daemon processes.
 
 <b>DIAGNOSTICS</b>
-       Problems  are  logged  to  <b>syslogd</b>(8)  and to the standard
+       Problems are logged to  <b>syslogd</b>(8)  and  to  the  standard
        error stream.
 
 <b>ENVIRONMENT</b>
        MAIL_CONFIG
-              Directory with the <b>main.cf</b> file. In order to  avoid
-              exploitation  of  set-group  ID  privileges, a non-
+              Directory  with the <b>main.cf</b> file. In order to avoid
+              exploitation of set-group  ID  privileges,  a  non-
               standard directory is allowed only if:
 
-              <b>o</b>      The name is listed in the  standard  <b>main.cf</b>
-                     file  with  the <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>
+              <b>o</b>      The  name  is listed in the standard <b>main.cf</b>
+                     file with  the  <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>
                      configuration parameter.
 
               <b>o</b>      The command is invoked by the super-user.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
+       The  following  <b>main.cf</b> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary. See <a href="postconf.5.html">postconf(5)</a> for more details including  exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
        <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
-              A  list of non-default Postfix configuration direc-
+              A list of non-default Postfix configuration  direc-
               tories that may be specified with "-c <a href="postconf.5.html#config_directory">config_direc</a>-
-              <a href="postconf.5.html#config_directory">tory</a>"  on  the command line, or via the MAIL_CONFIG
+              <a href="postconf.5.html#config_directory">tory</a>" on the command line, or via  the  MAIL_CONFIG
               environment parameter.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
+              The  default  location  of  the Postfix main.cf and
               master.cf configuration files.
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
-              The  location  of  all  postfix administrative com-
+              The location of  all  postfix  administrative  com-
               mands.
 
        <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
               Optional list of destinations that are eligible for
-              per-destination  logfiles  with mail that is queued
+              per-destination logfiles with mail that  is  queued
               to those destinations.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters that  a  Postfix
-              process  will import from a non-Postfix parent pro-
-              cess.
+              The  list  of environment parameters that a Postfix
+              process  will  import  from  a  non-Postfix  parent
+              process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
-              The  time  limit for sending a trigger to a Postfix
-              daemon (for example, the <a href="pickup.8.html">pickup(8)</a> or <a href="qmgr.8.html">qmgr(8)</a>  dae-
+              The time limit for sending a trigger to  a  Postfix
+              daemon  (for example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a> dae-
               mon).
+
+       Available in Postfix version 2.2 and later:
+
+       <b><a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a> (static:anyone)</b>
+              List of users  who  are  authorized  to  flush  the
+              queue.
+
+       <b><a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a> (static:anyone)</b>
+              List of users who are authorized to view the queue.
 
 <b>FILES</b>
        /var/spool/postfix, mail queue
@@ -155,11 +168,11 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
        <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>HISTORY</b>
-       The  postqueue command was introduced with Postfix version
+       The postqueue command was introduced with Postfix  version
        1.1.
 
 <b>AUTHOR(S)</b>
@@ -168,5 +181,5 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                     POSTQUEUE(1)
+                                                                  POSTQUEUE(1)
 </pre> </body> </html>

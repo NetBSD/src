@@ -15,8 +15,10 @@ LIBS	= ../../lib/libglobal.a ../../lib/libutil.a
 $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 update: ../../bin/$(PROG)
 
@@ -25,7 +27,7 @@ update: ../../bin/$(PROG)
 
 tests:	test1 test2
 
-test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-ABC1.ref
+test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-uABC1.ref
 	./$(PROG) map.in
 	for key in abc ghi; \
 	do \
@@ -34,11 +36,11 @@ test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-ABC1.ref
 	./$(PROG) -f map.in
 	for key in ABC; \
 	do \
-	    ./$(PROG) -fq $${key} map.in | diff map-$${key}1.ref -; \
+	    ./$(PROG) -fq $${key} map.in | diff map-u$${key}1.ref -; \
 	done
 	rm -f map.in.db
 
-test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-ABC2.ref
+test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-uABC2.ref
 	./$(PROG) map.in
 	for key in abc ghi; \
 	do \
@@ -47,7 +49,7 @@ test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-ABC2.ref
 	./$(PROG) -f map.in
 	for key in ABC; \
 	do \
-	    echo $${key} | ./$(PROG) -fq - map.in | diff map-$${key}2.ref -; \
+	    echo $${key} | ./$(PROG) -fq - map.in | diff map-u$${key}2.ref -; \
 	done
 	rm -f map.in.db
 
@@ -70,7 +72,7 @@ tidy:	clean
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
