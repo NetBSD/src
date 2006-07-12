@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.760 2006/07/04 00:30:22 christos Exp $
+# $NetBSD: GENERIC,v 1.761 2006/07/12 18:45:51 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.760 $"
+#ident 		"GENERIC-$Revision: 1.761 $"
 
 maxusers	32		# estimated number of users
 
@@ -177,6 +177,8 @@ file-system	PTYFS		# /dev/ptm support
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
