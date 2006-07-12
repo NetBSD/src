@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.637 2006/07/11 23:18:33 peter Exp $
+# $NetBSD: mi,v 1.638 2006/07/12 13:39:04 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -868,6 +868,7 @@
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
 ./usr/libexec/cpp				base-obsolete		obsolete
+./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftp-proxy				base-pf-bin		pf
@@ -980,6 +981,7 @@
 ./usr/sbin/cnwctl				base-netutil-bin
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
+./usr/sbin/dbsym				base-sysutil-bin	bfd
 ./usr/sbin/dev_mkdb				base-sysutil-bin
 ./usr/sbin/dhcpd				base-dhcpd-bin
 ./usr/sbin/dhcrelay				base-dhcpd-bin
