@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2006/07/04 06:25:50 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2006/07/12 06:22:17 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2006/07/04 06:25:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2006/07/12 06:22:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1315,17 +1315,6 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	: "=&r" (msr), "=&r" (pid)
 	: "r" (ctx), "r" (idx), "r" (tl), "r" (th));
 	splx(s);
-}
-
-void
-ppc4xx_tlb_unpin(int i)
-{
-
-	if (i == -1)
-		for (i = 0; i < TLB_NRESERVED; i++)
-			tlb_info[i].ti_flags &= ~TLBF_LOCKED;
-	else
-		tlb_info[i].ti_flags &= ~TLBF_LOCKED;
 }
 
 void
