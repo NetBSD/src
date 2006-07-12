@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.10 2006/07/12 15:02:15 yamt Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.11 2006/07/12 15:03:08 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -314,6 +314,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
 	    max(ifqmaxlen, /*NETIF_RX_RING_SIZE XXX*/0 * 2);
+	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
 	ifp->if_watchdog = xennetback_ifwatchdog;
@@ -933,7 +934,12 @@ xennetback_ifsoftstart(void *arg)
 			rxresp->id = id;
 			rxresp->offset = offset;
 			rxresp->status = m->m_pkthdr.len;
-			rxresp->flags = 0;
+			if ((m->m_pkthdr.csum_flags &
+			    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+				rxresp->flags = NETRXF_csum_blank;
+			} else {
+				rxresp->flags = 0;
+			}
 			/*
 			 * transfers the page containing the packet to the
 			 * remote domain, and map newp in place.
