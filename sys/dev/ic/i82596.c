@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.13 2006/07/08 16:24:08 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.14 2006/07/12 05:12:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,17 +30,20 @@
  */
 
 /*
- * Driver for the Intel i82596 10MBit/s Ethernet chip.
+ * Driver for the Intel i82596CA and i82596DX/SX 10MBit/s Ethernet chips.
+ *
  * It operates the i82596 in 32-Bit Linear Mode, opposed to the old i82586
  * ie(4) driver (src/sys/dev/ic/i82586.c), that degrades the i82596 to
  * i82586 compatibility mode.
  *
- * Documentation about this chip can be found on http://www.openpa.net/
- * file names 29021806.pdf and 29021906.pdf
+ * Documentation about these chips can be found at
+ *
+ *	http://developer.intel.com/design/network/datashts/290218.htm
+ *	http://developer.intel.com/design/network/datashts/290219.htm
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.13 2006/07/08 16:24:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.14 2006/07/12 05:12:06 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
