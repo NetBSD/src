@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2006/06/22 20:03:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.100 2006/07/12 10:49:11 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -126,7 +126,7 @@ PREVIOUSTOOLDIR=
 
 CLEANFILES+=	PREVIOUSTOOLDIR
 
-realall realdepend: .MAKE
+realall realdepend: .MAKE .WAIT
 .if "${PREVIOUSTOOLDIR}" != "${TOOLDIR}"
 	@echo "*** WARNING: TOOLDIR has moved?"
 	@echo "*** PREVIOUSTOOLDIR '${PREVIOUSTOOLDIR}'"
