@@ -15,4 +15,4 @@ const char version_string[] = "3.3.6 (NetBSD nb1 20060605)";
    forward us bugs reported to you, if you determine that they are
    not bugs in your modifications.)  */
 
-const char bug_report_url[] = "<URL:http://www.netbsd.org/Misc/send-pr.html>";
+const char bug_report_url[] = "<URL:http://www.NetBSD.org/Misc/send-pr.html>";
