@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.163 2006/07/12 13:11:27 tron Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.164 2006/07/12 14:07:02 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.163 2006/07/12 13:11:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.164 2006/07/12 14:07:02 tron Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -267,8 +267,7 @@ ip_output(struct mbuf *m0, ...)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ip_output: no HDR");
 
-	if ((m->m_pkthdr.csum_flags &
-	    (M_CSUM_TCPv6|M_CSUM_UDPv6|M_CSUM_TSOv6)) != 0) {
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) != 0) {
 		panic("ip_output: IPv6 checksum offload flags: %d",
 		    m->m_pkthdr.csum_flags);
 	}
