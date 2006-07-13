@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 2006/06/26 21:23:57 mrg Exp $
+	$NetBSD: syscalls.master,v 1.18 2006/07/13 23:44:34 pavel Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -445,11 +445,7 @@
 #endif
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-161	NOARGS		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
-#else
-161	EXCL		getfh
-#endif
+161	NOARGS		{ int compat_30_sys_getfh(const char *fname, fhandle_t *fhp); }
 #if defined(COMPAT_09) || !defined(_KERNEL)
 162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
 			    int len); } ogetdomainname
