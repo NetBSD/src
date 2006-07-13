@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.785 2006/06/30 13:56:25 chap Exp $
+#	$NetBSD: files,v 1.786 2006/07/13 16:28:38 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -81,8 +81,18 @@ defparam opt_pax.h		PAX_MPROTECT
 
 # compatibility options
 #
+defflag	opt_compat_netbsd.h	COMPAT_30
+defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
+defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
+defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
+defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
+defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
+defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
+defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
+defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
+defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_FREEBSD
+defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
@@ -100,16 +110,6 @@ defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
-defflag	opt_compat_netbsd.h	COMPAT_30
-defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
-defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
-defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
-defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
-defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
-defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
-defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
-defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
-defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 #
