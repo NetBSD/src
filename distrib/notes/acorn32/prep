@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 2006/07/13 13:53:45 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.9 2006/07/13 14:50:27 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -6,7 +6,7 @@ of any data on your hard disk that you
 wish to keep.
 Repartitioning your hard disk is an excellent way to destroy important data.
 .Ss2 Software requirements
-You will need the following RiscOS software:
+You will need the following RISC OS software:
 .Bl -bullet
 .It
 A program that will unpack sparchives.
@@ -62,7 +62,7 @@ An installation kernel for your platform:
 .Pp
 RiscPC/A7000(+)/NC's  : INSTALL kernel
 .It
-The Bootloader and RiscOS tools:
+The Bootloader and RISC OS tools:
 .Pa BtNetBSD.spk
 as found in the
 .Pa installation/misc
@@ -90,7 +90,7 @@ A section of a device.
 .It File system
 A structured partition that is able to hold files.
 .It Disc
-A RiscOS file system in a partition.
+A RISC OS file system in a partition.
 There can be more than one Disc per Device.
 .El
 .Pp
@@ -113,10 +113,10 @@ It is still recommended that if you decide to dedicate a device to
 .Nx
 that you set aside a small RISC OS partition at the beginning
 of the device.
-This is a useful place to store the RiscOS side of
+This is a useful place to store the RISC OS side of
 .Nx ,
 and will make the use of UnixFS easier to configure.
-If you do decide to create a minimal RiscOS partition at the beginning of
+If you do decide to create a minimal RISC OS partition at the beginning of
 the device, a size of 10-20 MB is recommended (some partitioning
 software has problems with partitions smaller than this).
 .Pp
@@ -421,13 +421,9 @@ can be non-trivial to put it back.
 .Ss2 Booting
 .Pp
 Now that your device is ready for the installation you need to
-unpack the bootloader archive.
-Pick either
-.Pa BtNetBSD.tgz
-or
-.Pa BtNetBSD.zip
-depending on which type of archive you can extract easiest.
-(If you're installing from CD-ROM then this should be unpacked already),
+unpack the bootloader archive,
+.Pa BtNetBSD.spk ,
+(If you're installing from CD-ROM then this should be unpacked already) and
 copy the directory to your hard disk.
 In the archive you'll find the tools
 mentioned in this document as well as the bootloader
