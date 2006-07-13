@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2006/02/05 05:01:56 cube Exp $
+# $NetBSD: GENERIC,v 1.58.10.1 2006/07/13 17:48:58 gdamore Exp $
 #
 # GENERIC machine description file
 # 
@@ -173,6 +173,7 @@ pseudo-device	tun			# Network "tunnel" device
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated and striped disks

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_single.h,v 1.5 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: asm_single.h,v 1.5.16.1 2006/07/13 17:48:56 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.

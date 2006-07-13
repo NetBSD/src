@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.12 2005/12/11 12:20:26 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.12.16.1 2006/07/13 17:49:15 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.12 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.12.16.1 2006/07/13 17:49:15 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,5 +215,5 @@ svr4_sys_socket(l, v, retval)
 	default:
 		return EINVAL;
 	}
-	return sys_socket(l, uap, retval);
+	return sys___socket30(l, uap, retval);
 }

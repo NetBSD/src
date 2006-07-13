@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.2 2006/02/18 05:04:11 thorpej Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.2.10.1 2006/07/13 17:48:46 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.2 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.2.10.1 2006/07/13 17:48:46 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_read_byte = armadillo9iic_read_byte;
 	sc->sc_i2c.ic_write_byte = armadillo9iic_write_byte;
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
 
 	epgpio_in(sc->sc_gpio, sc->sc_port, sc->sc_sda);
@@ -125,7 +124,7 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	config_found(&sc->sc_dev, &iba, iicbus_print);
+	config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
 #if NSEEPROM > 0
 	/* read mac address */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.92 2006/06/07 22:37:59 kardel Exp $	*/
+/*	$NetBSD: clock.c,v 1.92.2.1 2006/07/13 17:48:53 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.92 2006/06/07 22:37:59 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.92.2.1 2006/07/13 17:48:53 gdamore Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -804,7 +804,7 @@ inittodr(time_t base)
 	ts.tv_nsec = 0;
 	tc_setclock(&ts);
 #ifdef DEBUG_CLOCK
-	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
+	printf("readclock: %ld (%ld)\n", time_second, base);
 #endif
 
 	if (base != 0 && base < time_second - 5*SECYR)

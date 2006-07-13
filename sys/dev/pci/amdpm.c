@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.11 2006/02/19 02:24:20 tls Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.11.10.1 2006/07/13 17:49:26 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.11 2006/02/19 02:24:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.11.10.1 2006/07/13 17:49:26 gdamore Exp $");
 
 #include "opt_amdpm.h"
 
@@ -47,6 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.11 2006/02/19 02:24:20 tls Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/rnd.h>
+
+#ifdef __HAVE_TIMECOUNTER
+#include <machine/bus.h>
+#include <dev/ic/acpipmtimer.h>
+#endif
 
 #include <dev/i2c/i2cvar.h>
 
@@ -89,7 +94,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
-	pcireg_t reg;
+	pcireg_t confreg, pmptrreg;
 	u_int32_t pmreg;
 	int i;
 
@@ -107,36 +112,43 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 #endif
 
-	/* enable random # generation and pm i/o space for AMD-8111 */
-	if (PCI_PRODUCT(pa->pa_id)  == PCI_PRODUCT_AMD_PBC8111_ACPI) {
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, reg|
-		    AMDPM_RNGEN|AMDPM_PMIOEN);
-	}
+	confreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+	/* enable pm i/o space for AMD-8111 */
+	if (PCI_PRODUCT(pa->pa_id)  == PCI_PRODUCT_AMD_PBC8111_ACPI)
+		confreg |= AMDPM_PMIOEN;
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	if ((reg & AMDPM_PMIOEN) == 0) {
+	/* Enable random number generation for everyone */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG,
+	    confreg | AMDPM_RNGEN);
+	confreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+
+	if ((confreg & AMDPM_PMIOEN) == 0) {
 		aprint_error("%s: PMxx space isn't enabled\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
-	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
+
+	pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
+	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(pmptrreg), AMDPM_PMSIZE,
 	    0, &sc->sc_ioh)) {
 		aprint_error("%s: failed to map PMxx space\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
+#ifdef __HAVE_TIMECOUNTER
+	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0) {
+		acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_ioh,
+		  AMDPM_TMR, ((confreg & AMDPM_TMR32) ? ACPIPMT_32BIT : 0));
+	}
+#endif
+
 	/* try to attach devices on the smbus */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI) {
 		amdpm_smbus_attach(sc);
 	}
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, reg | AMDPM_RNGEN);
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	if (reg & AMDPM_RNGEN) {
+	if (confreg & AMDPM_RNGEN) {
 		/* Check to see if we can read data from the RNG. */
 		(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    AMDPM_RNGDATA);
@@ -189,20 +201,21 @@ static void
 amdpm_rnd_callout(void *v)
 {
 	struct amdpm_softc *sc = v;
-	u_int32_t reg;
+	u_int32_t rngreg;
 #ifdef AMDPM_RND_COUNTERS
 	int i;
 #endif
 
 	if ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_RNGSTAT) &
 	    AMDPM_RNGDONE) != 0) {
-		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_RNGDATA);
-		rnd_add_data(&sc->sc_rnd_source, &reg,
-		    sizeof(reg), sizeof(reg) * NBBY);
+		rngreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    AMDPM_RNGDATA);
+		rnd_add_data(&sc->sc_rnd_source, &rngreg,
+		    sizeof(rngreg), sizeof(rngreg) * NBBY);
 #ifdef AMDPM_RND_COUNTERS
 		AMDPM_RNDCNT_INCR(&sc->sc_rnd_hits);
-		for (i = 0; i < sizeof(reg); i++, reg >>= NBBY)
-			AMDPM_RNDCNT_INCR(&sc->sc_rnd_data[reg & 0xff]);
+		for (i = 0; i < sizeof(rngreg); i++, rngreg >>= NBBY)
+			AMDPM_RNDCNT_INCR(&sc->sc_rnd_data[rngreg & 0xff]);
 #endif
 	} else
 		AMDPM_RNDCNT_INCR(&sc->sc_rnd_miss);

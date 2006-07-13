@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 2006/02/15 15:23:18 manu Exp $
+	$NetBSD: syscalls.master,v 1.2.14.1 2006/07/13 17:49:14 gdamore Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -92,7 +92,7 @@
 18	OBSOL	ostat
 19	NOARGS	{ netbsd32_long compat_43_netbsd32_olseek(int fd, \
 		    netbsd32_long offset, int chence); }
-20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+20	STD	{ pid_t linux_sys_getpid(void); }
 21	UNIMPL	mount
 22	UNIMPL	umount
 23	NOARGS	linux_setuid16 { int sys_setuid(uid_t uid); }
@@ -143,7 +143,7 @@
 61	NOARGS	chroot { int netbsd32_chroot(netbsd32_charp path); }
 62	UNIMPL	ustat
 63	NOARGS	{ int netbsd32_dup2(u_int from, u_int to); }
-64	NOARGS	{ pid_t sys_getppid(void); }
+64	STD	{ pid_t linux_sys_getppid(void); }
 65	NOARGS	{ int sys_getpgrp(void); }
 66	NOARGS	{ int sys_setsid(void); }
 67	UNIMPL	sigaction
@@ -188,8 +188,8 @@
 93	NOARGS	{ int compat_43_sys_ftruncate(int fd, long length); }
 94	NOARGS	{ int sys_fchmod(int fd, int mode); }
 95	STD	{ int linux32_sys_fchown16(int fd, int uid, int gid); }
-96	NOARGS	{ int sys_getpriority(int which, int who); }
-97	NOARGS	{ int sys_setpriority(int which, int who, int prio); }
+96	STD	{ int linux32_sys_getpriority(int which, int who); }
+97	STD	{ int linux32_sys_setpriority(int which, int who, int prio); }
 98	UNIMPL	profil
 99	UNIMPL	statfs
 100	UNIMPL	fstatfs
@@ -352,7 +352,7 @@
 		    int cmd, netbsd32_voidp arg); }
 222	UNIMPL	/*	unused	*/
 223	UNIMPL	/*	unused	*/
-224	UNIMPL	gettid
+224	STD	{ pid_t linux_sys_gettid(void); }
 225	UNIMPL	readahead
 226	UNIMPL	setxattr
 227	UNIMPL	lsetxattr

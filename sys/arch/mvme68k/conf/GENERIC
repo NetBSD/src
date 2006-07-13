@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: GENERIC,v 1.66.4.1 2006/07/13 17:48:58 gdamore Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.66.4.1 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -132,6 +132,7 @@ pseudo-device	ppp
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	loop
 pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

@@ -1,6 +1,6 @@
-/*	$NetBSD: boot.h,v 1.7 2006/04/13 18:46:46 garbled Exp $	*/
+/*	$NetBSD: boot.h,v 1.7.4.1 2006/07/13 17:49:02 gdamore Exp $	*/
 
-#define TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
+#define TICKS_PER_SEC	(66666667 / 4)		/* 66MHz */
 #define NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
 
 /*

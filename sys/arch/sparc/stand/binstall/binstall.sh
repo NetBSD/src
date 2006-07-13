@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.14 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: binstall.sh,v 1.14.16.1 2006/07/13 17:49:04 gdamore Exp $
 #
 
 vecho () {
@@ -52,7 +52,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 : ${INSTALLBOOT:=/usr/sbin/installboot}
 : ${BOOTPROG:=boot}
 : ${OFWBOOTBLK:=ofwboot}
-if [ "`sysctl -n hw.machine`" = sparc64 ]; then
+if [ "`sysctl -n machdep.cpu_arch`" = 9 ]; then
 	ULTRASPARC=1
 else
 	ULTRASPARC=0
@@ -100,12 +100,14 @@ fi
 if [ "$ULTRASPARC" = "1" ]; then
 	machine=sparc64
 	targ=ofwboot
+	stage2=""
 	netboot=ofwboot
 	BOOTPROG=$OFWBOOTBLK
 	BOOTXX=${MDEC}/bootblk
 else
 	machine=sparc
 	targ=boot
+	stage2=${targ}
 	netboot=boot.net
 	BOOTXX=${MDEC}/bootxx
 fi
@@ -141,8 +143,8 @@ case $WHAT in
 
 	$DOIT cp -p -f ${MDEC}/${BOOTPROG} $DEST/$targ
 	sync; sync; sync
-	vecho ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $targ
-	$DOIT ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $targ
+	vecho ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $stage2
+	$DOIT ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $stage2
 	;;
 
 "net")

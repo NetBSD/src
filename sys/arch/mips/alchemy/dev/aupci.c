@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.5 2006/02/27 21:10:27 gdamore Exp $ */
+/* $NetBSD: aupci.c,v 1.5.12.1 2006/07/13 17:48:57 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5 2006/02/27 21:10:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.12.1 2006/07/13 17:48:57 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,7 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	    AUPCI_CONFIG_SM | AUPCI_CONFIG_ST | AUPCI_CONFIG_SIC_DATA;
 #else
 	cfg = AUPCI_CONFIG_CH | AUPCI_CONFIG_R1H |
-	    AUPCI_CONFIG_R2H | AUPCI_CONFIG_AEN;
+	    AUPCI_CONFIG_R2H | AUPCI_CONFIG_AEN | AUPCI_CONFIG_DR;
 #endif
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, AUPCI_CONFIG, cfg);
 

@@ -1,12 +1,5 @@
-/*	$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $ */
+/*	$NetBSD: twa.c,v 1.3.4.1 2006/07/13 17:49:29 gdamore Exp $ */
 /*	$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $	*/
-/*
- * Copyright (c) 2004-2006 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Your Wasabi Systems License Agreement specifies the terms and
- * conditions for use and redistribution.
- */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -81,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3.4.1 2006/07/13 17:49:29 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,15 +115,15 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3 2006/05/25 01:37:08 wrstuden Exp $");
 
 static int	twa_fetch_aen(struct twa_softc *);
 static void	twa_aen_callback(struct twa_request *);
-static int	twa_find_aen(struct twa_softc *sc, u_int16_t);
+static int	twa_find_aen(struct twa_softc *sc, uint16_t);
 static uint16_t	twa_enqueue_aen(struct twa_softc *sc,
 			struct twa_command_header *);
 
 static void	twa_attach(struct device *, struct device *, void *);
 static void	twa_shutdown(void *);
-static int	twa_init_connection(struct twa_softc *, u_int16_t, u_int32_t,
-				    u_int16_t, u_int16_t, u_int16_t, u_int16_t, u_int16_t *,
-					u_int16_t *, u_int16_t *, u_int16_t *, u_int32_t *);
+static int	twa_init_connection(struct twa_softc *, uint16_t, uint32_t,
+				    uint16_t, uint16_t, uint16_t, uint16_t, uint16_t *,
+					uint16_t *, uint16_t *, uint16_t *, uint32_t *);
 static int	twa_intr(void *);
 static int 	twa_match(struct device *, struct cfdata *, void *);
 static int	twa_reset(struct twa_softc *);
@@ -138,14 +131,14 @@ static int	twa_reset(struct twa_softc *);
 static int	twa_print(void *, const char *);
 static int	twa_soft_reset(struct twa_softc *);
 
-static int	twa_check_ctlr_state(struct twa_softc *, u_int32_t);
+static int	twa_check_ctlr_state(struct twa_softc *, uint32_t);
 static int	twa_get_param(struct twa_softc *, int, int, size_t,
 				void (* callback)(struct twa_request *),
 				struct twa_param_9k **);
 static int 	twa_set_param(struct twa_softc *, int, int, int, void *,
 				void (* callback)(struct twa_request *));
 static void	twa_describe_controller(struct twa_softc *);
-static int	twa_wait_status(struct twa_softc *, u_int32_t, u_int32_t);
+static int	twa_wait_status(struct twa_softc *, uint32_t, uint32_t);
 static int	twa_done(struct twa_softc *);
 #if 0
 static int	twa_flash_firmware(struct twa_softc *sc);
@@ -415,16 +408,17 @@ static const struct twa_pci_identity pci_twa_products[] = {
 
 
 static inline void
-twa_outl(struct twa_softc *sc, int off, u_int32_t val)
+twa_outl(struct twa_softc *sc, int off, uint32_t val)
 {
+
 	bus_space_write_4(sc->twa_bus_iot, sc->twa_bus_ioh, off, val);
 	bus_space_barrier(sc->twa_bus_iot, sc->twa_bus_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-
-static inline u_int32_t	twa_inl(struct twa_softc *sc, int off)
+static inline uint32_t	twa_inl(struct twa_softc *sc, int off)
 {
+
 	bus_space_barrier(sc->twa_bus_iot, sc->twa_bus_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
 	return (bus_space_read_4(sc->twa_bus_iot, sc->twa_bus_ioh, off));
@@ -433,9 +427,9 @@ static inline u_int32_t	twa_inl(struct twa_softc *sc, int off)
 void
 twa_request_wait_handler(struct twa_request *tr)
 {
+
 	wakeup(tr);
 }
-
 
 static int
 twa_match(struct device *parent, struct cfdata *cfdata, void *aux)
@@ -457,9 +451,8 @@ twa_match(struct device *parent, struct cfdata *cfdata, void *aux)
 	return (0);
 }
 
-
 static const char *
-twa_find_msg_string(const struct twa_message *table, u_int16_t code)
+twa_find_msg_string(const struct twa_message *table, uint16_t code)
 {
 	int	i;
 
@@ -469,7 +462,6 @@ twa_find_msg_string(const struct twa_message *table, u_int16_t code)
 
 	return(table[i].message);
 }
-
 
 void
 twa_release_request(struct twa_request *tr)
@@ -492,12 +484,11 @@ twa_release_request(struct twa_request *tr)
 		tr->tr_flags &= ~TWA_CMD_AEN_BUSY;
 }
 
-
 static void
 twa_unmap_request(struct twa_request *tr)
 {
 	struct twa_softc	*sc = tr->tr_sc;
-	u_int8_t		cmd_status;
+	uint8_t			cmd_status;
 
 	/* If the command involved data, unmap that too. */
 	if (tr->tr_data != NULL) {
@@ -535,7 +526,6 @@ twa_unmap_request(struct twa_request *tr)
 	}
 }
 
-
 /*
  * Function name:	twa_wait_request
  * Description:		Sends down a firmware cmd, and waits for the completion,
@@ -548,7 +538,7 @@ twa_unmap_request(struct twa_request *tr)
  *			non-zero-- failure
  */
 static int
-twa_wait_request(struct twa_request *tr, u_int32_t timeout)
+twa_wait_request(struct twa_request *tr, uint32_t timeout)
 {
 	time_t	end_time;
 	struct timeval	t1;
@@ -589,7 +579,8 @@ twa_wait_request(struct twa_request *tr, u_int32_t timeout)
 			else {
 				/* Request was never submitted.  Clean up. */
 				s = splbio();
-				TAILQ_REMOVE(&tr->tr_sc->twa_pending, tr, tr_link);
+				TAILQ_REMOVE(&tr->tr_sc->twa_pending, tr,
+				    tr_link);
 				splx(s);
 
 				twa_unmap_request(tr);
@@ -602,7 +593,8 @@ twa_wait_request(struct twa_request *tr, u_int32_t timeout)
 		}
 		/*
 		 * Either the request got completed, or we were woken up by a
-		 * signal.  Calculate the new timeout, in case it was the latter.
+		 * signal.  Calculate the new timeout, in case it was the
+		 * latter.
 		 */
 		microtime(&t1);
 
@@ -611,7 +603,6 @@ twa_wait_request(struct twa_request *tr, u_int32_t timeout)
 	twa_unmap_request(tr);
 	return(error);
 }
-
 
 /*
  * Function name:	twa_immediate_request
@@ -625,7 +616,7 @@ twa_wait_request(struct twa_request *tr, u_int32_t timeout)
  *			non-zero-- failure
  */
 static int
-twa_immediate_request(struct twa_request *tr, u_int32_t timeout)
+twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 {
 	struct timeval t1;
 	int	s = 0, error = 0;
@@ -677,7 +668,6 @@ twa_immediate_request(struct twa_request *tr, u_int32_t timeout)
 	return(ETIMEDOUT);
 }
 
-
 static int
 twa_inquiry(struct twa_request *tr, int lunid)
 {
@@ -723,9 +713,9 @@ twa_inquiry(struct twa_request *tr, int lunid)
 }
 
 static int
-twa_print_inquiry_data(struct twa_softc *sc,
-	struct scsipi_inquiry_data *scsipi)
+twa_print_inquiry_data(struct twa_softc *sc, struct scsipi_inquiry_data *scsipi)
 {
+
     printf("%s: %s\n", sc->twa_dv.dv_xname, scsipi->vendor);
 
     return (1);
@@ -810,8 +800,6 @@ twa_request_sense(struct twa_request *tr, int lunid)
 
 	return (error);
 }
-
-
 
 static int
 twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
@@ -912,7 +900,6 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 	return(0);
 }
 
-
 static void
 twa_recompute_openings(struct twa_softc *sc)
 {
@@ -940,7 +927,6 @@ twa_recompute_openings(struct twa_softc *sc)
 				sc->sc_openings);
 	}
 }
-
 
 static int
 twa_request_bus_scan(struct twa_softc *sc)
@@ -971,7 +957,6 @@ twa_request_bus_scan(struct twa_softc *sc)
 		td = &sc->sc_units[unit];
 
 		if (twa_inquiry(tr, unit) == 0) {
-
 			if (td->td_dev == NULL) {
             			twa_print_inquiry_data(sc,
 				   ((struct scsipi_inquiry_data *)tr->tr_data));
@@ -988,12 +973,11 @@ twa_request_bus_scan(struct twa_softc *sc)
 				locs[TWACF_UNIT] = unit;
 
 				sc->sc_units[unit].td_dev =
-				    	config_found_sm_loc(&sc->twa_dv, "twa", locs,
-					    &twaa, twa_print, config_stdsubmatch);
+				    config_found_sm_loc(&sc->twa_dv, "twa",
+				    locs, &twaa, twa_print, config_stdsubmatch);
 			}
 		} else {
 			if (td->td_dev != NULL) {
-
 				sc->sc_nunits--;
 
 				(void) config_detach(td->td_dev, DETACH_FORCE);
@@ -1012,12 +996,11 @@ twa_request_bus_scan(struct twa_softc *sc)
 	return (0);
 }
 
-
 static int
 twa_start(struct twa_request *tr)
 {
 	struct twa_softc	*sc = tr->tr_sc;
-	u_int32_t		status_reg;
+	uint32_t		status_reg;
 	int			s;
 	int			error;
 
@@ -1056,12 +1039,11 @@ out:
 	return(error);
 }
 
-
 static int
 twa_drain_response_queue(struct twa_softc *sc)
 {
 	union twa_response_queue	rq;
-	u_int32_t			status_reg;
+	uint32_t			status_reg;
 
 	for (;;) {
 		status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
@@ -1069,10 +1051,10 @@ twa_drain_response_queue(struct twa_softc *sc)
 			return(1);
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			return(0); /* no more response queue entries */
-		rq = (union twa_response_queue)twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
+		rq = (union twa_response_queue)twa_inl(sc,
+		    TWA_RESPONSE_QUEUE_OFFSET);
 	}
 }
-
 
 static void
 twa_drain_busy_queue(struct twa_softc *sc)
@@ -1099,7 +1081,6 @@ twa_drain_busy_queue(struct twa_softc *sc)
 		}
 	}
 }
-
 
 static int
 twa_drain_pending_queue(struct twa_softc *sc)
@@ -1137,7 +1118,6 @@ twa_drain_pending_queue(struct twa_softc *sc)
 	return(error);
 }
 
-
 static int
 twa_drain_aen_queue(struct twa_softc *sc)
 {
@@ -1145,7 +1125,7 @@ twa_drain_aen_queue(struct twa_softc *sc)
 	struct twa_request		*tr;
 	struct twa_command_header	*cmd_hdr;
 	struct timeval	t1;
-	u_int32_t		timeout;
+	uint32_t		timeout;
 
 	for (;;) {
 		if ((tr = twa_get_request(sc, 0)) == NULL) {
@@ -1207,14 +1187,13 @@ out:
 	return(error);
 }
 
-
 static int
 twa_done(struct twa_softc *sc)
 {
 	union twa_response_queue	rq;
 	struct twa_request		*tr;
 	int				s, error = 0;
-	u_int32_t			status_reg;
+	uint32_t			status_reg;
 
 	for (;;) {
 		status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
@@ -1261,11 +1240,11 @@ twa_done(struct twa_softc *sc)
 static int
 twa_init_ctlr(struct twa_softc *sc)
 {
-	u_int16_t	fw_on_ctlr_srl = 0;
-	u_int16_t	fw_on_ctlr_arch_id = 0;
-	u_int16_t	fw_on_ctlr_branch = 0;
-	u_int16_t	fw_on_ctlr_build = 0;
-	u_int32_t	init_connect_result = 0;
+	uint16_t	fw_on_ctlr_srl = 0;
+	uint16_t	fw_on_ctlr_arch_id = 0;
+	uint16_t	fw_on_ctlr_branch = 0;
+	uint16_t	fw_on_ctlr_build = 0;
+	uint32_t	init_connect_result = 0;
 	int		error = 0;
 #if 0
 	int8_t		fw_flashed = FALSE;
@@ -1297,12 +1276,14 @@ twa_init_ctlr(struct twa_softc *sc)
 		 * The bundled firmware is safe to flash, and the firmware
 		 * on the controller recommends a flash.  So, flash!
 		 */
-		printf("%s: flashing bundled firmware...\n", sc->twa_dv.dv_xname);
+		printf("%s: flashing bundled firmware...\n",
+		    sc->twa_dv.dv_xname);
 
 		if ((error = twa_flash_firmware(sc))) {
 			fw_flash_failed = TRUE;
 
-			printf("%s: unable to flash bundled firmware.\n", sc->twa_dv.dv_xname);
+			printf("%s: unable to flash bundled firmware.\n",
+			    sc->twa_dv.dv_xname);
 		} else {
 			printf("%s: successfully flashed bundled firmware.\n",
 				 sc->twa_dv.dv_xname);
@@ -1341,16 +1322,17 @@ twa_init_ctlr(struct twa_softc *sc)
 			 * it in the base mode.  We should never come here
 			 * if firmware has just been flashed.
 			 */
-			printf("%s: Driver/Firmware mismatch.  Negotiating for base level.\n",
-					sc->twa_dv.dv_xname);
-			if ((error = twa_init_connection(sc, TWA_INIT_MESSAGE_CREDITS,
-					TWA_EXTENDED_INIT_CONNECT, TWA_BASE_FW_SRL,
-					TWA_9000_ARCH_ID, TWA_BASE_FW_BRANCH,
-					TWA_BASE_FW_BUILD, &fw_on_ctlr_srl,
-					&fw_on_ctlr_arch_id, &fw_on_ctlr_branch,
-					&fw_on_ctlr_build, &init_connect_result))) {
-						printf("%s: can't initialize connection in base mode.\n",
-							sc->twa_dv.dv_xname);
+			printf("%s: Driver/Firmware mismatch.  Negotiating "
+			    "for base level.\n", sc->twa_dv.dv_xname);
+			if ((error = twa_init_connection(sc,
+			    TWA_INIT_MESSAGE_CREDITS,
+			    TWA_EXTENDED_INIT_CONNECT, TWA_BASE_FW_SRL,
+			    TWA_9000_ARCH_ID, TWA_BASE_FW_BRANCH,
+			    TWA_BASE_FW_BUILD, &fw_on_ctlr_srl,
+			    &fw_on_ctlr_arch_id, &fw_on_ctlr_branch,
+			    &fw_on_ctlr_build, &init_connect_result))) {
+				printf("%s: can't initialize connection in "
+				    "base mode.\n", sc->twa_dv.dv_xname);
 				return(error);
 			}
 			if (!(init_connect_result & TWA_CTLR_FW_COMPATIBLE)) {
@@ -1362,13 +1344,18 @@ twa_init_ctlr(struct twa_softc *sc)
 				printf("Incompatible firmware on controller\n");
 #ifdef TWA_FLASH_FIRMWARE
 				if (fw_flash_failed)
-					printf("...and could not flash bundled firmware.\n");
+					printf("...and could not flash bundled "
+					    "firmware.\n");
 				else
-					printf("...and bundled firmware not safe to flash.\n");
+					printf("...and bundled firmware not "
+					    "safe to flash.\n");
 #endif /* TWA_FLASH_FIRMWARE */
 				return(1);
 			}
-			/* We can work with this firmware, but only in base mode. */
+			/*
+			 * We can work with this firmware, but only in
+			 * base mode.
+			 */
 			sc->working_srl = TWA_BASE_FW_SRL;
 			sc->working_branch = TWA_BASE_FW_BRANCH;
 			sc->working_build = TWA_BASE_FW_BUILD;
@@ -1382,7 +1369,6 @@ twa_init_ctlr(struct twa_softc *sc)
 	sc->twa_state &= ~TWA_STATE_SHUTDOWN;
 	return(0);
 }
-
 
 static int
 twa_setup(struct twa_softc *sc)
@@ -1405,8 +1391,8 @@ twa_setup(struct twa_softc *sc)
 	}
 
 	/* Allocate memory for the AEN queue. */
-	if ((aen_queue = malloc(sizeof(struct tw_cl_event_packet) * TWA_Q_LENGTH,
-					M_DEVBUF, M_WAITOK)) == NULL) {
+	if ((aen_queue = malloc(sizeof(struct tw_cl_event_packet) *
+	    TWA_Q_LENGTH, M_DEVBUF, M_WAITOK)) == NULL) {
 		/*
 		 * This should not cause us to return error.  We will only be
 		 * unable to support AEN's.  But then, we will have to check
@@ -1428,8 +1414,8 @@ twa_setup(struct twa_softc *sc)
 	if ((error = twa_init_ctlr(sc))) {
 		/* Soft reset the controller, and try one more time. */
 
-		printf("%s: controller initialization failed. Retrying initialization\n",
-			 sc->twa_dv.dv_xname);
+		printf("%s: controller initialization failed. "
+		    "Retrying initialization\n", sc->twa_dv.dv_xname);
 
 		if ((error = twa_soft_reset(sc)) == 0)
 			error = twa_init_ctlr(sc);
@@ -1524,7 +1510,6 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
-
 static void
 twa_shutdown(void *arg)
 {
@@ -1551,7 +1536,6 @@ twa_shutdown(void *arg)
 	}
 }
 
-
 void
 twa_register_callbacks(struct twa_softc *sc, int unit,
     const struct twa_callbacks *tcb)
@@ -1559,7 +1543,6 @@ twa_register_callbacks(struct twa_softc *sc, int unit,
 
 	sc->sc_units[unit].td_callbacks = tcb;
 }
-
 
 /*
  * Print autoconfiguration message for a sub-device
@@ -1577,17 +1560,15 @@ twa_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-
 static void
 twa_fillin_sgl(struct twa_sg *sgl, bus_dma_segment_t *segs, int nsegments)
 {
 	int	i;
 	for (i = 0; i < nsegments; i++) {
 		sgl[i].address = segs[i].ds_addr;
-		sgl[i].length = (u_int32_t)(segs[i].ds_len);
+		sgl[i].length = (uint32_t)(segs[i].ds_len);
 	}
 }
-
 
 static int
 twa_submit_io(struct twa_request *tr)
@@ -1603,7 +1584,6 @@ twa_submit_io(struct twa_request *tr)
 	}
 	return(error);
 }
-
 
 /*
  * Function name:	twa_setup_data_dmamap
@@ -1621,14 +1601,14 @@ twa_submit_io(struct twa_request *tr)
  * Return value:	None
  */
 static int
-twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs,
-					int nsegments, int error)
+twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs, int nsegments,
+    int error)
 {
 	struct twa_request		*tr = (struct twa_request *)arg;
 	struct twa_command_packet	*cmdpkt = tr->tr_command;
 	struct twa_command_9k		*cmd9k;
 	union twa_command_7k		*cmd7k;
-	u_int8_t			sgl_offset;
+	uint8_t				sgl_offset;
 
 	if (error == EFBIG) {
 		tr->tr_error = error;
@@ -1644,7 +1624,7 @@ twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs,
 		cmd7k = &(cmdpkt->command.cmd_pkt_7k);
 		if ((sgl_offset = cmdpkt->command.cmd_pkt_7k.generic.sgl_offset))
 			twa_fillin_sgl((struct twa_sg *)
-					(((u_int32_t *)cmd7k) + sgl_offset),
+					(((uint32_t *)cmd7k) + sgl_offset),
 					segs, nsegments);
 		/* Modify the size field, based on sg address size. */
 		cmd7k->generic.size +=
@@ -1681,7 +1661,6 @@ out:
 	}
 	return (error);
 }
-
 
 /*
  * Function name:	twa_map_request
@@ -1815,8 +1794,10 @@ twa_flash_firmware(struct twa_softc *sc)
 		tr->tr_command->cmd_hdr.header_desc.size_header = 128;
 
 		cmd->opcode = TWA_OP_DOWNLOAD_FIRMWARE;
-		cmd->sgl_offset = 2;/* offset in dwords, to the beginning of sg list */
-		cmd->size = 2;	/* this field will be updated at data map time */
+		cmd->sgl_offset = 2;	/* offset in dwords, to the beginning
+					   of sg list */
+		cmd->size = 2;		/* this field will be updated at data
+					   map time */
 		cmd->request_id = tr->tr_request_id;
 		cmd->unit = 0;
 		cmd->status = 0;
@@ -1845,20 +1826,24 @@ twa_flash_firmware(struct twa_softc *sc)
 
 		if (error) {
 			if (error == ETIMEDOUT)
-				return(error); /* clean-up done by twa_immediate_request */
+				/* clean-up done by twa_immediate_request */
+				return(error);
 			break;
 		}
 		error = cmd->status;
 
 		if (i != (count - 1)) {
 
-			/* XXX FreeBSD code doesn't check for no error condition
+			/*
+			 * XXX FreeBSD code doesn't check for no error condition
 			 * but based on observation, error seems to return 0
 			 */
-			if ((error = tr->tr_command->cmd_hdr.status_block.error) == 0) {
+			if ((error =
+			    tr->tr_command->cmd_hdr.status_block.error) == 0) {
 				continue;
-			} else if ((error = tr->tr_command->cmd_hdr.status_block.error) ==
-				TWA_ERROR_MORE_DATA) {
+			} else if ((error =
+			    tr->tr_command->cmd_hdr.status_block.error) ==
+			    TWA_ERROR_MORE_DATA) {
 				    continue;
 			} else {
 				twa_hard_reset(sc);
@@ -1866,11 +1851,12 @@ twa_flash_firmware(struct twa_softc *sc)
 			}
 		} else	 /* last chunk */
 			if (error) {
-				printf("%s: firmware flash request failed. error = 0x%x\n",
-					 sc->twa_dv.dv_xname, error);
+				printf("%s: firmware flash request failed. "
+				    "error = 0x%x\n", sc->twa_dv.dv_xname,
+				    error);
 				twa_hard_reset(sc);
 			}
-	} /* for */
+	}
 
 	if (tr->tr_data) {
 		s = splvm();
@@ -1920,10 +1906,11 @@ twa_hard_reset(struct twa_softc *sc)
 
 	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
 	if (error) {
-		printf("%s: hard reset request could not "
-			" be posted. error = 0x%x\n", sc->twa_dv.dv_xname, error);
+		printf("%s: hard reset request could not be posted. "
+		    "error = 0x%x\n", sc->twa_dv.dv_xname, error);
 		if (error == ETIMEDOUT)
-			return(error); /* clean-up done by twa_immediate_request */
+			/* clean-up done by twa_immediate_request */
+			return(error);
 		goto out;
 	}
 	if ((error = cmd->status)) {
@@ -1953,7 +1940,7 @@ twa_intr(void *arg)
 {
 	int	caught, rv;
 	struct twa_softc *sc;
-	u_int32_t	status_reg;
+	uint32_t	status_reg;
 	sc = (struct twa_softc *)arg;
 
 	caught = 0;
@@ -1995,7 +1982,6 @@ bail:
 	return (caught);
 }
 
-
 /*
  * Accept an open operation on the control device.
  */
@@ -2014,7 +2000,6 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-
 /*
  * Accept the last close on the control device.
  */
@@ -2027,7 +2012,6 @@ twaclose(dev_t dev, int flag, int mode, struct lwp *l)
 	twa->twa_sc_flags &= ~TWA_STATE_OPEN;
 	return (0);
 }
-
 
 /*
  * Function name:	twaioctl
@@ -2059,7 +2043,7 @@ twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TW_OSL_IOCTL_FIRMWARE_PASS_THROUGH:
 	{
 		struct twa_command_packet	*cmdpkt;
-		u_int32_t			data_buf_size_adjusted;
+		uint32_t			data_buf_size_adjusted;
 
 		/* Get a request packet */
 		tr = twa_get_request_wait(sc, 0);
@@ -2147,14 +2131,12 @@ fw_passthru_done:
 			event_index = sc->twa_aen_tail;	/* = 0 */
 		}
 		if ((error = copyout(sc->twa_aen_queue[event_index],
-			user_buf->pdata, sizeof(struct tw_cl_event_packet))) != 0)
-				(sc->twa_aen_queue[event_index])->retrieved =
-					TWA_AEN_RETRIEVED;
+		    user_buf->pdata, sizeof(struct tw_cl_event_packet))) != 0)
+			(sc->twa_aen_queue[event_index])->retrieved =
+			    TWA_AEN_RETRIEVED;
 		break;
 
-
 	case TW_CL_IOCTL_GET_LAST_EVENT:
-
 		if (sc->twa_aen_queue_wrapped) {
 			if (sc->twa_aen_queue_overflow) {
 				/*
@@ -2175,17 +2157,15 @@ fw_passthru_done:
 			}
 			user_buf->twa_drvr_pkt.status = 0;
 		}
-		event_index = (sc->twa_aen_head - 1 + TWA_Q_LENGTH) % TWA_Q_LENGTH;
-		if ((error = copyout(sc->twa_aen_queue[event_index], user_buf->pdata,
-					sizeof(struct tw_cl_event_packet))) != 0)
-
-		(sc->twa_aen_queue[event_index])->retrieved =
-			TWA_AEN_RETRIEVED;
+		event_index =
+		    (sc->twa_aen_head - 1 + TWA_Q_LENGTH) % TWA_Q_LENGTH;
+		if ((error = copyout(sc->twa_aen_queue[event_index],
+		    user_buf->pdata, sizeof(struct tw_cl_event_packet))) != 0)
+			(sc->twa_aen_queue[event_index])->retrieved =
+			    TWA_AEN_RETRIEVED;
 		break;
 
-
 	case TW_CL_IOCTL_GET_NEXT_EVENT:
-
 		user_buf->twa_drvr_pkt.status = 0;
 		if (sc->twa_aen_queue_wrapped) {
 
@@ -2212,27 +2192,25 @@ fw_passthru_done:
 				sizeof(struct tw_cl_event_packet));
 
 		event_index = (start_index + event_buf.sequence_id -
-				(sc->twa_aen_queue[start_index])->sequence_id + 1)
-				% TWA_Q_LENGTH;
+		    (sc->twa_aen_queue[start_index])->sequence_id + 1)
+		    % TWA_Q_LENGTH;
 
-		if (! ((sc->twa_aen_queue[event_index])->sequence_id >
-						event_buf.sequence_id)) {
-			if (user_buf->twa_drvr_pkt.status == TWA_ERROR_AEN_OVERFLOW)
-				sc->twa_aen_queue_overflow = TRUE; /* so we report the overflow next time */
-			user_buf->twa_drvr_pkt.status =
-				TWA_ERROR_AEN_NO_EVENTS;
+		if (!((sc->twa_aen_queue[event_index])->sequence_id >
+		    event_buf.sequence_id)) {
+			if (user_buf->twa_drvr_pkt.status ==
+			    TWA_ERROR_AEN_OVERFLOW)
+				/* so we report the overflow next time */
+				sc->twa_aen_queue_overflow = TRUE;
+			user_buf->twa_drvr_pkt.status = TWA_ERROR_AEN_NO_EVENTS;
 			break;
 		}
-		if ((error = copyout(sc->twa_aen_queue[event_index], user_buf->pdata,
-					sizeof(struct tw_cl_event_packet))) != 0)
-
-		(sc->twa_aen_queue[event_index])->retrieved =
-			TWA_AEN_RETRIEVED;
+		if ((error = copyout(sc->twa_aen_queue[event_index],
+		    user_buf->pdata, sizeof(struct tw_cl_event_packet))) != 0)
+			(sc->twa_aen_queue[event_index])->retrieved =
+			    TWA_AEN_RETRIEVED;
 		break;
 
-
 	case TW_CL_IOCTL_GET_PREVIOUS_EVENT:
-
 		user_buf->twa_drvr_pkt.status = 0;
 		if (sc->twa_aen_queue_wrapped) {
 			if (sc->twa_aen_queue_overflow) {
@@ -2258,19 +2236,23 @@ fw_passthru_done:
 				sizeof(struct tw_cl_event_packet))) != 0)
 
 		event_index = (start_index + event_buf.sequence_id -
-			(sc->twa_aen_queue[start_index])->sequence_id - 1) % TWA_Q_LENGTH;
-		if (! ((sc->twa_aen_queue[event_index])->sequence_id <
-			event_buf.sequence_id)) {
-			if (user_buf->twa_drvr_pkt.status == TWA_ERROR_AEN_OVERFLOW)
-				sc->twa_aen_queue_overflow = TRUE; /* so we report the overflow next time */
+		    (sc->twa_aen_queue[start_index])->sequence_id - 1)
+		    % TWA_Q_LENGTH;
+		if (!((sc->twa_aen_queue[event_index])->sequence_id <
+		    event_buf.sequence_id)) {
+			if (user_buf->twa_drvr_pkt.status ==
+			    TWA_ERROR_AEN_OVERFLOW)
+				/* so we report the overflow next time */
+				sc->twa_aen_queue_overflow = TRUE;
 			user_buf->twa_drvr_pkt.status =
 				TWA_ERROR_AEN_NO_EVENTS;
 			break;
 		}
-		if ((error = copyout(sc->twa_aen_queue [event_index], user_buf->pdata,
- 				sizeof(struct tw_cl_event_packet))) != 0)
-				aprint_error("%s: get_previous: Could not copyout to "
-					"event_buf. error = %x\n", sc->twa_dv.dv_xname, error);
+		if ((error = copyout(sc->twa_aen_queue [event_index],
+		    user_buf->pdata, sizeof(struct tw_cl_event_packet))) != 0)
+			aprint_error("%s: get_previous: Could not copyout to "
+			    "event_buf. error = %x\n", sc->twa_dv.dv_xname,
+			    error);
 		(sc->twa_aen_queue[event_index])->retrieved = TWA_AEN_RETRIEVED;
 		break;
 
@@ -2283,16 +2265,16 @@ fw_passthru_done:
 		s = splbio();
 		if ((sc->twa_ioctl_lock.lock == TWA_LOCK_FREE) ||
 			(twa_lock.force_flag) ||
-			(time.tv_sec >= sc->twa_ioctl_lock.timeout)) {
+			(time_second >= sc->twa_ioctl_lock.timeout)) {
 
 			sc->twa_ioctl_lock.lock = TWA_LOCK_HELD;
-			sc->twa_ioctl_lock.timeout = time.tv_sec +
+			sc->twa_ioctl_lock.timeout = time_second +
 				(twa_lock.timeout_msec / 1000);
 			twa_lock.time_remaining_msec = twa_lock.timeout_msec;
 			user_buf->twa_drvr_pkt.status = 0;
 		} else {
 			twa_lock.time_remaining_msec =
-				(sc->twa_ioctl_lock.timeout - time.tv_sec) *
+				(sc->twa_ioctl_lock.timeout - time_second) *
 				1000;
 			user_buf->twa_drvr_pkt.status =
 					TWA_ERROR_IOCTL_LOCK_ALREADY_HELD;
@@ -2359,12 +2341,10 @@ fw_passthru_done:
 	return(error);
 }
 
-
 const struct cdevsw twa_cdevsw = {
 	twaopen, twaclose, noread, nowrite, twaioctl,
 	nostop, notty, nopoll, nommap,
 };
-
 
 /*
  * Function name:	twa_get_param
@@ -2382,8 +2362,8 @@ const struct cdevsw twa_cdevsw = {
  */
 static int
 twa_get_param(struct twa_softc *sc, int table_id, int param_id,
-		size_t param_size, void (* callback)(struct twa_request *tr),
-		struct twa_param_9k **param)
+    size_t param_size, void (* callback)(struct twa_request *tr),
+    struct twa_param_9k **param)
 {
 	int			rv = 0;
 	struct twa_request	*tr;
@@ -2452,7 +2432,6 @@ out:
 	return(rv);
 }
 
-
 /*
  * Function name:	twa_set_param
  * Description:		Set a firmware parameter.
@@ -2468,9 +2447,8 @@ out:
  *			non-zero-- failure
  */
 static int
-twa_set_param(struct twa_softc *sc, int table_id,
-			int param_id, int param_size, void *data,
-			void (* callback)(struct twa_request *tr))
+twa_set_param(struct twa_softc *sc, int table_id, int param_id, int param_size,
+    void *data, void (* callback)(struct twa_request *tr))
 {
 	struct twa_request	*tr;
 	union twa_command_7k	*cmd;
@@ -2515,11 +2493,16 @@ twa_set_param(struct twa_softc *sc, int table_id,
 		/* There's no call back;  wait till the command completes. */
 		error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
 		if (error == ETIMEDOUT)
-			return(error); /* clean-up done by twa_immediate_request */
+			/* clean-up done by twa_immediate_request */
+			return(error);
 		if (error)
 			goto out;
 		if ((error = cmd->param.status)) {
-			goto out; /* twa_drain_complete_queue will have done the unmapping */
+			/*
+			 * twa_drain_complete_queue will have done the
+			 * unmapping.
+			 */
+			goto out;
 		}
 		free(param, M_DEVBUF);
 		twa_release_request(tr);
@@ -2539,7 +2522,6 @@ out:
 		twa_release_request(tr);
 	return(error);
 }
-
 
 /*
  * Function name:	twa_init_connection
@@ -2574,12 +2556,12 @@ out:
  *			non-zero-- failure
  */
 static int
-twa_init_connection(struct twa_softc *sc, u_int16_t message_credits,
-			u_int32_t set_features, u_int16_t current_fw_srl,
-			u_int16_t current_fw_arch_id, u_int16_t current_fw_branch,
-			u_int16_t current_fw_build, u_int16_t *fw_on_ctlr_srl,
-			u_int16_t *fw_on_ctlr_arch_id, u_int16_t *fw_on_ctlr_branch,
-			u_int16_t *fw_on_ctlr_build, u_int32_t *init_connect_result)
+twa_init_connection(struct twa_softc *sc, uint16_t message_credits,
+    uint32_t set_features, uint16_t current_fw_srl,
+    uint16_t current_fw_arch_id, uint16_t current_fw_branch,
+    uint16_t current_fw_build, uint16_t *fw_on_ctlr_srl,
+    uint16_t *fw_on_ctlr_arch_id, uint16_t *fw_on_ctlr_branch,
+    uint16_t *fw_on_ctlr_build, uint32_t *init_connect_result)
 {
 	struct twa_request		*tr;
 	struct twa_command_init_connect	*init_connect;
@@ -2621,7 +2603,8 @@ twa_init_connection(struct twa_softc *sc, u_int16_t message_credits,
 	if (error)
 		goto out;
 	if ((error = init_connect->status)) {
-		goto out; /* twa_drain_complete_queue will have done the unmapping */
+		/* twa_drain_complete_queue will have done the unmapping */
+		goto out;
 	}
 	if (set_features & TWA_EXTENDED_INIT_CONNECT) {
 		*fw_on_ctlr_srl = init_connect->fw_srl;
@@ -2638,7 +2621,6 @@ out:
 		twa_release_request(tr);
 	return(error);
 }
-
 
 static int
 twa_reset(struct twa_softc *sc)
@@ -2684,11 +2666,10 @@ out:
 	return(error);
 }
 
-
 static int
 twa_soft_reset(struct twa_softc *sc)
 {
-	u_int32_t	status_reg;
+	uint32_t	status_reg;
 
 	twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 			TWA_CONTROL_ISSUE_SOFT_RESET |
@@ -2708,11 +2689,13 @@ twa_soft_reset(struct twa_softc *sc)
 		TWA_CONTROL_CLEAR_ATTENTION_INTERRUPT);
 
 	if (twa_drain_response_queue(sc)) {
-		aprint_error("%s: cannot drain response queue.\n",sc->twa_dv.dv_xname);
+		aprint_error("%s: cannot drain response queue.\n",
+		    sc->twa_dv.dv_xname);
 		return(1);
 	}
 	if (twa_drain_aen_queue(sc)) {
-		aprint_error("%s: cannot drain AEN queue.\n", sc->twa_dv.dv_xname);
+		aprint_error("%s: cannot drain AEN queue.\n",
+		    sc->twa_dv.dv_xname);
 		return(1);
 	}
 	if (twa_find_aen(sc, TWA_AEN_SOFT_RESET)) {
@@ -2722,20 +2705,20 @@ twa_soft_reset(struct twa_softc *sc)
 	}
 	status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
 	if (TWA_STATUS_ERRORS(status_reg) ||
-				twa_check_ctlr_state(sc, status_reg)) {
-		aprint_error("%s: controller errors detected.\n", sc->twa_dv.dv_xname);
+	    twa_check_ctlr_state(sc, status_reg)) {
+		aprint_error("%s: controller errors detected.\n",
+		    sc->twa_dv.dv_xname);
 		return(1);
 	}
 	return(0);
 }
 
-
 static int
-twa_wait_status(struct twa_softc *sc, u_int32_t status, u_int32_t timeout)
+twa_wait_status(struct twa_softc *sc, uint32_t status, uint32_t timeout)
 {
 	struct timeval		t1;
 	time_t		end_time;
-	u_int32_t	status_reg;
+	uint32_t	status_reg;
 
 	timeout = (timeout * 1000 * 100);
 
@@ -2745,7 +2728,8 @@ twa_wait_status(struct twa_softc *sc, u_int32_t status, u_int32_t timeout)
 
 	do {
 		status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
-		if ((status_reg & status) == status)/* got the required bit(s)? */
+		/* got the required bit(s)? */
+		if ((status_reg & status) == status)
 			return(0);
 		DELAY(100000);
 		microtime(&t1);
@@ -2753,7 +2737,6 @@ twa_wait_status(struct twa_softc *sc, u_int32_t status, u_int32_t timeout)
 
 	return(1);
 }
-
 
 static int
 twa_fetch_aen(struct twa_softc *sc)
@@ -2778,8 +2761,6 @@ twa_fetch_aen(struct twa_softc *sc)
 
 	return(error);
 }
-
-
 
 /*
  * Function name:	twa_aen_callback
@@ -2824,7 +2805,6 @@ twa_aen_callback(struct twa_request *tr)
 		twa_fetch_aen(sc);
 }
 
-
 /*
  * Function name:	twa_enqueue_aen
  * Description:		Queues AEN's to be supplied to user-space tools on request.
@@ -2849,7 +2829,7 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 	switch (aen_code) {
 	case TWA_AEN_SYNC_TIME_WITH_HOST:
 
-		sync_time = (time.tv_sec - (3 * 86400)) % 604800;
+		sync_time = (time_second - (3 * 86400)) % 604800;
 		rv = twa_set_param(sc, TWA_PARAM_TIME_TABLE,
 				TWA_PARAM_TIME_SchedulerTime, 4,
 				&sync_time, twa_aen_callback);
@@ -2870,7 +2850,7 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 			sc->twa_aen_queue_overflow = TRUE;
 		event->severity =
 			cmd_hdr->status_block.substatus_block.severity;
-		event->time_stamp_sec = time.tv_sec;
+		event->time_stamp_sec = time_second;
 		event->aen_code = aen_code;
 		event->retrieved = TWA_AEN_NOT_RETRIEVED;
 		event->sequence_id = ++(sc->twa_current_sequence_id);
@@ -2898,8 +2878,6 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 	return (aen_code);
 }
 
-
-
 /*
  * Function name:	twa_find_aen
  * Description:		Reports whether a given AEN ever occurred.
@@ -2911,9 +2889,9 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
  *			non-zero-- failure
  */
 static int
-twa_find_aen(struct twa_softc *sc, u_int16_t aen_code)
+twa_find_aen(struct twa_softc *sc, uint16_t aen_code)
 {
-	u_int32_t	last_index;
+	uint32_t	last_index;
 	int		s;
 	int		i;
 
@@ -2985,7 +2963,6 @@ twa_get_request_wait(struct twa_softc *sc, int flags)
 	return(tr);
 }
 
-
 struct twa_request *
 twa_get_request(struct twa_softc *sc, int flags)
 {
@@ -3017,7 +2994,6 @@ twa_get_request(struct twa_softc *sc, int flags)
 
 	return(tr);
 }
-
 
 /*
  * Print some information about the controller
@@ -3059,7 +3035,7 @@ twa_describe_controller(struct twa_softc *sc)
 		goto bail;
 	}
 
-	ports = *(u_int8_t *)(p[0]->data);
+	ports = *(uint8_t *)(p[0]->data);
 
 	aprint_normal("%s: %d ports, Firmware %.16s, BIOS %.16s\n",
 		sc->twa_dv.dv_xname, ports,
@@ -3124,8 +3100,6 @@ bail:
 		free(p[6], M_DEVBUF);
 }
 
-
-
 /*
  * Function name:	twa_check_ctlr_state
  * Description:		Makes sure that the fw status register reports a
@@ -3138,7 +3112,7 @@ bail:
  *			non-zero-- errors
  */
 static int
-twa_check_ctlr_state(struct twa_softc *sc, u_int32_t status_reg)
+twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 {
 	int		result = 0;
 	struct timeval	t1;
@@ -3211,5 +3185,3 @@ twa_check_ctlr_state(struct twa_softc *sc, u_int32_t status_reg)
 	}
 	return(result);
 }
-
-

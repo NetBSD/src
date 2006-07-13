@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.268.2.1 2006/07/13 17:49:50 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.268.2.1 2006/07/13 17:49:50 gdamore Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.268 2006/06/09 22:47:56 kardel Exp $
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kcont.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -228,6 +229,8 @@ main(void)
 
 	uvm_init();
 
+	kmem_init();
+
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
@@ -293,9 +296,7 @@ main(void)
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
-#ifdef NTP
 	ntp_init();
-#endif
 #endif /* __HAVE_TIMECOUNTER */
 
 	/* Configure the system hardware.  This will enable interrupts. */

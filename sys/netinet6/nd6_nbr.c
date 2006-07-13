@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.64 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.64.4.1 2006/07/13 17:50:06 gdamore Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.64 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.64.4.1 2006/07/13 17:50:06 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1388,6 +1388,7 @@ nd6_dad_ns_output(dp, ifa)
 		return;
 	}
 
+	dp->dad_ns_tcount = 0;
 	dp->dad_ns_ocount++;
 	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
 }

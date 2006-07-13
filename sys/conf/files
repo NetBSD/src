@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.781 2006/06/07 22:33:34 kardel Exp $
+#	$NetBSD: files,v 1.781.2.1 2006/07/13 17:49:16 gdamore Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -81,8 +81,18 @@ defparam opt_pax.h		PAX_MPROTECT
 
 # compatibility options
 #
+defflag	opt_compat_netbsd.h	COMPAT_30
+defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
+defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
+defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
+defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
+defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
+defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
+defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
+defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
+defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_FREEBSD
+defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
@@ -100,16 +110,6 @@ defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
-defflag	opt_compat_netbsd.h	COMPAT_30
-defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
-defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
-defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
-defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
-defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
-defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
-defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
-defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
-defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 #
@@ -139,6 +139,7 @@ include "dev/sysmon/files.sysmon"
 #
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
+include "netbt/files.netbt"
 include "netccitt/files.netccitt"
 include "netinet/files.netinet"
 include "netinet/files.ipfilter"
@@ -261,9 +262,6 @@ include "dev/i2c/files.i2c"
 
 # IR device support
 include	"dev/ir/files.ir"
-
-# Bluetooth device support
-include "dev/bluetooth/files.bluetooth"
 
 # Parallel Port Bus support
 include "dev/ppbus/files.ppbus"
@@ -729,7 +727,8 @@ file	dev/ic/ne2000.c			ne | ipkdb_ne
 #
 defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
-defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0
+defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0 COM_AU1X00
+				COM_REGMAP
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
 
@@ -914,6 +913,11 @@ define	tea5757
 file	dev/ic/tea5757.c		tea5757
 define	lm700x
 file	dev/ic/lm700x.c			lm700x
+
+# ACPI power management timer (hardware access, independent of ACPI)
+#
+define acpipmtimer
+file	dev/ic/acpipmtimer.c	acpipmtimer
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1190,6 +1194,7 @@ file	dev/firmload.c			firmload
 file	dev/fss.c			fss			needs-count
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
+file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
 file	dev/mm.c
 file	dev/mulaw.c			mulaw			needs-flag
@@ -1265,6 +1270,7 @@ file	kern/subr_disk.c
 file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
+file	kern/subr_kmem.c
 file	kern/subr_log.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
@@ -1272,6 +1278,7 @@ file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_userconf.c		userconf
+file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
 file	kern/sys_generic.c

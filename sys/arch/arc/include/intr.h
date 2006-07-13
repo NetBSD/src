@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.16.1 2006/07/13 17:48:45 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,13 +81,13 @@
 
 extern const uint32_t *ipl_sr_bits;
 
-extern int _splraise(int);
-extern int _spllower(int);
-extern int _splset(int);
-extern int _splget(void);
-extern void _splnone(void);
-extern void _setsoftintr(int);
-extern void _clrsoftintr(int);
+int _splraise(int);
+int _spllower(int);
+int _splset(int);
+int _splget(void);
+void _splnone(void);
+void _setsoftintr(int);
+void _clrsoftintr(int);
 
 #define splhigh()	_splraise(ipl_sr_bits[IPL_HIGH])
 #define spl0()		(void)_spllower(0)
@@ -116,6 +116,12 @@ extern void _clrsoftintr(int);
 struct clockframe;
 void arc_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *), int);
 extern uint32_t cpu_int_mask;
+
+/* priority order to handle each CPU INT line specified via set_intr() */
+#define ARC_INTPRI_TIMER_INT	0	/* independent CPU INT for timer */
+#define ARC_INTPRI_JAZZ		1	/* CPU INT for JAZZ local bus */
+#define ARC_INTPRI_PCIISA	2	/* CPU INT for PCI/EISA/ISA */
+#define ARC_NINTPRI		3	/* number of total used CPU INTs */
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

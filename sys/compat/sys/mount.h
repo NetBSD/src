@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.3 2006/05/04 17:56:22 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.3.4.1 2006/07/13 17:49:16 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -77,6 +77,17 @@ struct vfsconf {
 	int	vfc_flags;		/* permanent flags */
 	int	(*vfc_mountroot)(void);	/* if != NULL, routine to mount root */
 	struct	vfsconf *vfc_next; 	/* next in list */
+};
+
+/* Old, fixed size filehandle structures (used upto (including) 3.x) */
+struct compat_30_fid{
+	unsigned short	fid_len;
+	unsigned short	fid_reserved;
+	char		fid_data[16];
+};
+struct compat_30_fhandle {
+	fsid_t	fh_fsid;
+	struct compat_30_fid fh_fid;
 };
 
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.237 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.237.2.1 2006/07/13 17:50:06 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.237 2006/06/07 22:34:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.237.2.1 2006/07/13 17:50:06 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -239,6 +239,8 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
 
+static int nfs_linkrpc(struct vnode *, struct vnode *, const char *,
+    size_t, kauth_cred_t, struct lwp *);
 static void nfs_writerpc_extfree(struct mbuf *, caddr_t, size_t, void *);
 
 /*
@@ -1775,7 +1777,10 @@ again:
 #endif
 	nfsm_reqdone;
 	if (error) {
-		if (v3 && (fmode & O_EXCL) && error == NFSERR_NOTSUPP) {
+		/*
+		 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
+		 */
+		if (v3 && (fmode & O_EXCL) && error == ENOTSUP) {
 			fmode &= ~O_EXCL;
 			goto again;
 		}
@@ -1877,7 +1882,7 @@ nfs_remove(v)
 			error = nfs_removerpc(dvp, cnp->cn_nameptr,
 				cnp->cn_namelen, cnp->cn_cred, cnp->cn_lwp);
 	} else if (!np->n_sillyrename)
-		error = nfs_sillyrename(dvp, vp, cnp);
+		error = nfs_sillyrename(dvp, vp, cnp, FALSE);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	if (!error && nfs_getattrcache(vp, &vattr) == 0 &&
 	    vattr.va_nlink == 1) {
@@ -1994,9 +1999,13 @@ nfs_rename(v)
 	/*
 	 * If the tvp exists and is in use, sillyrename it before doing the
 	 * rename of the new file over it.
+	 *
+	 * Have sillyrename use link instead of rename if possible,
+	 * so that we don't lose the file if the rename fails, and so
+	 * that there's no window when the "to" file doesn't exist.
 	 */
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
-		tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp)) {
+	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp, TRUE)) {
 		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		tvp = NULL;
@@ -2102,6 +2111,59 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, l)
 }
 
 /*
+ * NFS link RPC, called from nfs_link.
+ * Assumes dvp and vp locked, and leaves them that way.
+ */
+
+static int
+nfs_linkrpc(struct vnode *dvp, struct vnode *vp, const char *name,
+    size_t namelen, kauth_cred_t cred, struct lwp *l)
+{
+	u_int32_t *tl;
+	caddr_t cp;
+#ifndef NFS_V2_ONLY
+	int32_t t1;
+	caddr_t cp2;
+#endif
+	int32_t t2;
+	caddr_t bpos, dpos;
+	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
+	struct mbuf *mreq, *mrep, *md, *mb;
+	const int v3 = NFS_ISV3(dvp);
+	int rexmit = 0;
+	struct nfsnode *np = VTONFS(vp);
+
+	nfsstats.rpccnt[NFSPROC_LINK]++;
+	nfsm_reqhead(np, NFSPROC_LINK,
+	    NFSX_FH(v3)*2 + NFSX_UNSIGNED + nfsm_rndup(namelen));
+	nfsm_fhtom(np, v3);
+	nfsm_fhtom(VTONFS(dvp), v3);
+	nfsm_strtom(name, namelen, NFS_MAXNAMLEN);
+	nfsm_request1(np, NFSPROC_LINK, l, cred, &rexmit);
+#ifndef NFS_V2_ONLY
+	if (v3) {
+		nfsm_postop_attr(vp, attrflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
+	}
+#endif
+	nfsm_reqdone;
+
+	VTONFS(dvp)->n_flag |= NMODIFIED;
+	if (!attrflag)
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(vp));
+	if (!wccflag)
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
+
+	/*
+	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
+	 */
+	if (rexmit && error == EEXIST)
+		error = 0;
+
+	return error;
+}
+
+/*
  * nfs hard link create call
  */
 int
@@ -2116,20 +2178,7 @@ nfs_link(v)
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	u_int32_t *tl;
-	caddr_t cp;
-#ifndef NFS_V2_ONLY
-	int32_t t1;
-	caddr_t cp2;
-#endif
-	int32_t t2;
-	caddr_t bpos, dpos;
-	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
-	struct mbuf *mreq, *mrep, *md, *mb;
-	/* XXX Should be const and initialised? */
-	int v3;
-	int rexmit = 0;
-	struct nfsnode *np;
+	int error = 0;
 
 	if (dvp->v_mount != vp->v_mount) {
 		VOP_ABORTOP(dvp, cnp);
@@ -2152,40 +2201,17 @@ nfs_link(v)
 	 */
 	VOP_FSYNC(vp, cnp->cn_cred, FSYNC_WAIT, 0, 0, cnp->cn_lwp);
 
-	v3 = NFS_ISV3(vp);
-	nfsstats.rpccnt[NFSPROC_LINK]++;
-	np = VTONFS(vp);
-	nfsm_reqhead(np, NFSPROC_LINK,
-		NFSX_FH(v3)*2 + NFSX_UNSIGNED + nfsm_rndup(cnp->cn_namelen));
-	nfsm_fhtom(np, v3);
-	nfsm_fhtom(VTONFS(dvp), v3);
-	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
-	nfsm_request1(np, NFSPROC_LINK, cnp->cn_lwp, cnp->cn_cred, &rexmit);
-#ifndef NFS_V2_ONLY
-	if (v3) {
-		nfsm_postop_attr(vp, attrflag, 0);
-		nfsm_wcc_data(dvp, wccflag, 0, !error);
-	}
-#endif
-	nfsm_reqdone;
-	if (error == 0 || error == EEXIST)
+	error = nfs_linkrpc(dvp, vp, cnp->cn_nameptr, cnp->cn_namelen,
+	    cnp->cn_cred, cnp->cn_lwp);
+
+	if (error == 0)
 		cache_purge1(dvp, cnp, 0);
 	PNBUF_PUT(cnp->cn_pnbuf);
-	VTONFS(dvp)->n_flag |= NMODIFIED;
-	if (!attrflag)
-		NFS_INVALIDATE_ATTRCACHE(VTONFS(vp));
-	if (!wccflag)
-		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0);
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
-	/*
-	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
-	 */
-	if (rexmit && error == EEXIST)
-		error = 0;
 	return (error);
 }
 
@@ -2994,9 +3020,10 @@ nfsmout:
  * nfs_rename() completes, but...
  */
 int
-nfs_sillyrename(dvp, vp, cnp)
+nfs_sillyrename(dvp, vp, cnp, dolink)
 	struct vnode *dvp, *vp;
 	struct componentname *cnp;
+	boolean_t dolink;
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;
@@ -3033,7 +3060,18 @@ nfs_sillyrename(dvp, vp, cnp)
 			goto bad;
 		}
 	}
-	error = nfs_renameit(dvp, cnp, sp);
+	if (dolink) {
+		error = nfs_linkrpc(dvp, vp, sp->s_name, sp->s_namlen,
+		    sp->s_cred, cnp->cn_lwp);
+		/*
+		 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
+		 */
+		if (error == ENOTSUP) {
+			error = nfs_renameit(dvp, cnp, sp);
+		}
+	} else {
+		error = nfs_renameit(dvp, cnp, sp);
+	}
 	if (error)
 		goto bad;
 	error = nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.128 2006/04/05 22:16:42 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.128.4.1 2006/07/13 17:49:27 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,15 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.128 2006/04/05 22:16:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.128.4.1 2006/07/13 17:49:27 gdamore Exp $");
 
 /*
 #define CBB_DEBUG
 #define SHOW_REGS
-#define PCCBB_PCMCIA_POLL
 */
 
 /*
+ * BROKEN!
+#define PCCBB_PCMCIA_POLL
 #define CB_PCMCIA_POLL
 #define CB_PCMCIA_POLL_ONLY
 #define LEVEL2
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.128 2006/04/05 22:16:42 dyoung Exp $");
 
 #if defined(__i386__)
 #include "ioapic.h"
+#include "acpi.h"
 #endif
 
 #ifndef __NetBSD_Version__
@@ -442,9 +444,7 @@ pccbbattach(parent, self, aux)
 
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
-#ifdef CBB_DEBUG
-	printf(" (chipflags %x)", flags);
-#endif
+	DPRINTF((" (chipflags %x)", flags));
 	printf("\n");
 
 	TAILQ_INIT(&sc->sc_memwindow);
@@ -525,9 +525,7 @@ pccbbattach(parent, self, aux)
 	 * may well be zero, with the interrupt routed through the apic.
 	 */
 
-#if NIOAPIC > 0
-	printf("%s: using ioapic for interrupt\n", sc->sc_dev.dv_xname);
-#else
+#if NIOAPIC == 0 && NACPI == 0
 	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
     		printf("%s: NOT USED because of unconfigured interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -1102,6 +1100,7 @@ pccbbintr(arg)
 	}
 
 	if (sockevent & CB_SOCKET_EVENT_POWER) {
+		DPRINTF(("Powercycling because of socket event\n"));
 		/* XXX: Does not happen when attaching a 16-bit card */
 		sc->sc_pwrcycle++;
 		wakeup(&sc->sc_pwrcycle);
@@ -1375,6 +1374,7 @@ pccbb_power(ct, command)
 		int s, error = 0;
 		struct timeval before, after, diff;
 
+		DPRINTF(("Waiting for bridge to power up\n"));
 		microtime(&before);
 		s = splbio();
 		while (pwrcycle == sc->sc_pwrcycle) {
@@ -1393,11 +1393,17 @@ pccbb_power(ct, command)
 			sc->sc_dev.dv_xname,
 		    	error == EWOULDBLOCK ? " too long" : "",
 		    	diff.tv_sec, diff.tv_usec);
+
+		/*
+		 * Ok, wait a bit longer for things to settle.
+		 */
+		if (sc->sc_chipset == CB_TOPIC95B)
+			DELAY_MS(100, sc);
 	}
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 
-	if (on) {
+	if (on && sc->sc_chipset != CB_TOPIC95B) {
 		if ((status & CB_SOCKET_STAT_PWRCYCLE) == 0)
 			printf("%s: power on failed?\n", sc->sc_dev.dv_xname);
 	}
@@ -2320,7 +2326,7 @@ pccbb_pcmcia_do_io_map(ph, win)
 	}
 	Pcic_write(ph, PCIC_IOCTL, ioctl);
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, enable);
-#if defined CBB_DEBUG
+#if defined(CBB_DEBUG)
 	{
 		u_int8_t start_low =
 		    Pcic_read(ph, regbase_win + PCIC_SIA_START_LOW);
@@ -2330,8 +2336,8 @@ pccbb_pcmcia_do_io_map(ph, win)
 		    Pcic_read(ph, regbase_win + PCIC_SIA_STOP_LOW);
 		u_int8_t stop_high =
 		    Pcic_read(ph, regbase_win + PCIC_SIA_STOP_HIGH);
-		printf
-		    (" start %02x %02x, stop %02x %02x, ioctl %02x enable %02x\n",
+		printf("pccbb_pcmcia_do_io_map start %02x %02x, "
+		    "stop %02x %02x, ioctl %02x enable %02x\n",
 		    start_low, start_high, stop_low, stop_high, ioctl, enable);
 	}
 #endif
@@ -2404,7 +2410,6 @@ pccbb_pcmcia_delay(ph, timo, wmesg)
 	int timo;                       /* in ms.  must not be zero */
 	const char *wmesg;
 {
-
 #ifdef DIAGNOSTIC
 	if (timo <= 0)
 		panic("pccbb_pcmcia_delay: called with timeout %d", timo);
@@ -2455,7 +2460,7 @@ pccbb_pcmcia_socket_enable(pch)
 		DPRINTF(("3V card\n"));
 		voltage = CARDBUS_VCC_3V | CARDBUS_VPP_VCC;
 	} else {
-		printf("?V card, 0x%x\n", spsr);	/* XXX */
+		DPRINTF(("?V card, 0x%x\n", spsr));	/* XXX */
 		return;
 	}
 
@@ -2483,8 +2488,12 @@ pccbb_pcmcia_socket_enable(pch)
 	 * Vcc Rising Time (Tpr) = 100ms (handled in pccbb_power() above)
 	 * RESET Width (Th (Hi-z RESET)) = 1ms
 	 * RESET Width (Tw (RESET)) = 10us
-	 */
-	pccbb_pcmcia_delay(ph, 1, "pccen1");
+	 *      
+	 * some machines require some more time to be settled
+	 * for example old toshiba topic bridges!
+	 * (100ms is added here).
+	 */             
+	pccbb_pcmcia_delay(ph, 200 + 1, "pccen1");
 
 	/* negate RESET */
 	intr |= PCIC_INTR_RESET;
@@ -2503,6 +2512,9 @@ pccbb_pcmcia_socket_enable(pch)
 
 	/* wait for the chip to finish initializing */
 	if (pccbb_pcmcia_wait_ready(ph)) {
+#ifdef DIAGNOSTIC
+		printf("pccbb_pcmcia_socket_enable: never became ready\n");
+#endif
 		/* XXX return a failure status?? */
 		pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 		Pcic_write(ph, PCIC_PWRCTL, 0);
@@ -2788,7 +2800,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
 	reg |= ((1 << win) | PCIC_ADDRWIN_ENABLE_MEMCS16);
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, reg);
 
-#if defined CBB_DEBUG
+#if defined(CBB_DEBUG)
 	{
 		int r1, r2, r3, r4, r5, r6, r7 = 0;
 
@@ -2803,13 +2815,13 @@ pccbb_pcmcia_do_mem_map(ph, win)
 			r7 = Pcic_read(ph, 0x40 + win);
 		}
 
-		DPRINTF(("pccbb_pcmcia_do_mem_map window %d: %02x%02x %02x%02x "
-		    "%02x%02x", win, r1, r2, r3, r4, r5, r6));
+		printf("pccbb_pcmcia_do_mem_map window %d: %02x%02x %02x%02x "
+		    "%02x%02x", win, r1, r2, r3, r4, r5, r6);
 		if (((struct pccbb_softc *)(ph->
 		    ph_parent))->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
-			DPRINTF((" %02x", r7));
+			printf(" %02x", r7);
 		}
-		DPRINTF(("\n"));
+		printf("\n");
 	}
 #endif
 }
@@ -3419,8 +3431,12 @@ pccbb_powerhook(why, arg)
 
 		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
 
-		/* ToDo: deactivate or suspend child devices */
+		if (sc->sc_chipset == CB_RX5C47X)
+			sc->sc_ricoh_misc_ctrl = pci_conf_read(sc->sc_pc,
+						     sc->sc_tag,
+						     RICOH_PCI_MISC_CTRL);
 
+		/* ToDo: deactivate or suspend child devices */
 	}
 
 	if (why == PWR_RESUME) {
@@ -3450,8 +3466,13 @@ pccbb_powerhook(why, arg)
 				goto norestore;
 			}
 		}
-		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+
 norestore:
+		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		if (sc->sc_chipset == CB_RX5C47X) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    RICOH_PCI_MISC_CTRL, sc->sc_ricoh_misc_ctrl);
+		}
 
 		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */

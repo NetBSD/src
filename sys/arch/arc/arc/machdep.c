@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2006/04/09 01:18:14 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.4.1 2006/07/13 17:48:44 gdamore Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2006/04/09 01:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.1 2006/07/13 17:48:44 gdamore Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -569,8 +569,7 @@ cpu_startup(void)
 	arc_bus_space_malloc_set_safe();
 }
 
-int	waittime = -1;
-struct user dumppcb;	/* Actually, struct pcb would do. */
+static int waittime = -1;
 
 void
 cpu_reboot(int howto, char *bootstr)

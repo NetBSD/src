@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2006/06/13 18:24:37 freza Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49.2.1 2006/07/13 17:49:01 gdamore Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -72,9 +72,9 @@ struct cpu_info {
 	int ci_want_resched;
 	volatile u_long ci_lasttb;
 	volatile int ci_tickspending;
-	int ci_cpl;
-	int ci_iactive;
-	int ci_ipending;
+	volatile int ci_cpl;
+	volatile int ci_iactive;
+	volatile int ci_ipending;
 	int ci_intrdepth;
 	char *ci_intstk;
 #define	CPUSAVE_LEN	8
@@ -96,6 +96,7 @@ struct cpu_info {
 	void (*ci_idlespin)(void);
 	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
+	struct evcnt ci_ev_statclock; 	/* stat clock */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
 	struct evcnt ci_ev_softserial;	/* softserial intrs */

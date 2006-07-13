@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43 2006/06/01 21:16:05 garbled Exp $
+#	$NetBSD: INSTALL,v 1.43.2.1 2006/07/13 17:49:01 gdamore Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -12,7 +12,7 @@ makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=3800	# save space
+options 	MEMORY_DISK_ROOT_SIZE=4096	# 2mb
 options		MEMORY_DISK_SERVER=0	# don't need for install
 
 maxusers	8
@@ -100,10 +100,10 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 isa*	at pceb?
 
 # PCMCIA bus support
-#pcmcia* at pcic? controller ? socket ?
+pcmcia* at pcic? controller ? socket ?
 
 # ISA PCMCIA controllers
-#pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 
 #options 	PCIC_ISA_INTR_ALLOC_MASK=0x4a00 # free irq 9,11,14
 #options 	PCIC_ISA_ALLOC_IOBASE=0x0400
@@ -126,9 +126,9 @@ wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
-mcclock0 at isa? port 0x70		# mc146818 and compatible
-mkclock0 at isa? port 0x74		# mk48t18 and compatible
-
+mcclock* at pnpbus?			# mc146818 and compatible
+mkclock* at pnpbus?			# mk48t18 and compatible
+nvram* at pnpbus?
 
 # Serial Devices
 
@@ -211,15 +211,15 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 # Network Interfaces
 
 # PCI network interfaces
-#ep*	at pci? dev ? function ?	# 3Com 3c59x
-#ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
-#fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-#rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-#sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-#vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA network interfaces
 #ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
@@ -230,15 +230,22 @@ we1	at isa? port 0x300 iomem 0xe4000 irq 11	# WD/SMC Ethernet
 #ne*	at isapnp?			# NE2000-compatible Ethernet
 
 # PCMCIA network interfaces
-#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
-#exphy*	at mii? phy ?			# 3Com internal PHYs
-#inphy*	at mii? phy ?			# Intel 82555 PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # Pull in optional local configuration
@@ -249,6 +256,8 @@ include "arch/prep/conf/INSTALL.local"
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	fss		4	# file system snapshot device
+pseudo-device	raid		8	# RAIDframe disk driver
+options		RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback

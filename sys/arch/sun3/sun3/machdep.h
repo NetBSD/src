@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.34 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: machdep.h,v 1.34.16.1 2006/07/13 17:49:04 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -157,8 +157,6 @@ void	cache_enable(void);
 extern vaddr_t virtual_avail, virtual_end;
 /* Physical address space available: */
 extern paddr_t avail_start, avail_end;
-/* The "hole" (used to skip the Sun3/50 video RAM) */
-extern paddr_t hole_start, hole_size;
 
 /* cache.c */
 void	cache_enable(void);

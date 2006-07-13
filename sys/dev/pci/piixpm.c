@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.2 2006/05/07 01:54:39 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.2.12.1 2006/07/13 17:49:29 gdamore Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -21,9 +21,6 @@
  * Intel PIIX and compatible Power Management controller driver.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.2 2006/05/07 01:54:39 jmcneill Exp $");
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -41,6 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.2 2006/05/07 01:54:39 jmcneill Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
+#ifdef __HAVE_TIMECOUNTER
+#include <dev/ic/acpipmtimer.h>
+#endif
+
 #ifdef PIIXPM_DEBUG
 #define DPRINTF(x) printf x
 #else
@@ -53,10 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.2 2006/05/07 01:54:39 jmcneill Exp $");
 struct piixpm_softc {
 	struct device		sc_dev;
 
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	void *			sc_ih;
+	bus_space_tag_t		sc_smb_iot;
+	bus_space_handle_t	sc_smb_ioh;
+	void *			sc_smb_ih;
 	int			sc_poll;
+
+	bus_space_tag_t		sc_pm_iot;
+	bus_space_handle_t	sc_pm_ioh;
+
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_pcitag;
 
 	struct i2c_controller	sc_i2c_tag;
 	struct lock		sc_i2c_lock;
@@ -67,10 +74,16 @@ struct piixpm_softc {
 		int          flags;
 		volatile int error;
 	}			sc_i2c_xfer;
+
+	void *			sc_powerhook;
+	struct pci_conf_state	sc_pciconf;
+	pcireg_t		sc_devact[2];
 };
 
 int	piixpm_match(struct device *, struct cfdata *, void *);
 void	piixpm_attach(struct device *, struct device *, void *);
+
+void	piixpm_powerhook(int, void *);
 
 int	piixpm_i2c_acquire_bus(void *, int);
 void	piixpm_i2c_release_bus(void *, int);
@@ -114,47 +127,95 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t base, conf;
+#ifdef __HAVE_TIMECOUNTER
+	pcireg_t pmmisc;
+#endif
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
+
+	aprint_naive("\n");
+	aprint_normal(": Power Management Controller\n");
+
+	sc->sc_powerhook = powerhook_establish(piixpm_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
 	DPRINTF((": conf 0x%x", conf));
 
+#ifdef __HAVE_TIMECOUNTER
+	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
+	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
+		goto nopowermanagement;
+
+	/* check whether I/O access to PM regs is enabled */
+	pmmisc = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PMREGMISC);
+	if (!(pmmisc & 1))
+		goto nopowermanagement;
+
+	sc->sc_pm_iot = pa->pa_iot;
+	/* Map I/O space */
+	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
+	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
+	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
+		aprint_error("%s: can't map power management I/O space\n",
+		    sc->sc_dev.dv_xname);
+		goto nopowermanagement;
+	}
+
+	/*
+	 * Revision 0 and 1 are PIIX4, 2 is PIIX4E, 3 is PIIX4M.
+	 * PIIX4 and PIIX4E have a bug in the timer latch, see Errata #20
+	 * in the "Specification update" (document #297738).
+	 */
+	acpipmtimer_attach(&sc->sc_dev, sc->sc_pm_iot, sc->sc_pm_ioh,
+			   PIIX_PM_PMTMR,
+		(PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0 );
+
+nopowermanagement:
+#endif
+
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
-		printf(": SMBus disabled\n");
+		aprint_normal("%s: SMBus disabled\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* Map I/O space */
-	sc->sc_iot = pa->pa_iot;
+	sc->sc_smb_iot = pa->pa_iot;
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
-	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(base),
-	    PIIX_SMB_SIZE, 0, &sc->sc_ioh)) {
-		printf(": can't map I/O space\n");
+	if (bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base),
+	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
+		aprint_error("%s: can't map smbus I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->sc_poll = 1;
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		/* No PCI IRQ */
-		printf(": SMI");
+		aprint_normal("%s: interrupting at SMI", sc->sc_dev.dv_xname);
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
 			intrstr = pci_intr_string(pa->pa_pc, ih);
-			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    piixpm_intr, sc);
-			if (sc->sc_ih != NULL) {
-				printf(": %s", intrstr);
+			if (sc->sc_smb_ih != NULL) {
+				aprint_normal("%s: interrupting at %s",
+				    sc->sc_dev.dv_xname, intrstr);
 				sc->sc_poll = 0;
 			}
 		}
 		if (sc->sc_poll)
-			printf(": polling");
+			aprint_normal("%s: polling", sc->sc_dev.dv_xname);
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Attach I2C bus */
 	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
@@ -164,9 +225,31 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
 
 	bzero(&iba, sizeof(iba));
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
-	config_found(self, &iba, iicbus_print);
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+
+	return;
+}
+
+void
+piixpm_powerhook(int why, void *cookie)
+{
+	struct piixpm_softc *sc = cookie;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+		sc->sc_devact[0] = pci_conf_read(pc, tag, PIIX_DEVACTA);
+		sc->sc_devact[1] = pci_conf_read(pc, tag, PIIX_DEVACTB);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+		pci_conf_write(pc, tag, PIIX_DEVACTA, sc->sc_devact[0]);
+		pci_conf_write(pc, tag, PIIX_DEVACTB, sc->sc_devact[1]);
+		break;
+	}
 
 	return;
 }
@@ -207,7 +290,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
-		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+		st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    PIIX_SMB_HS);
 		if (!(st & PIIX_SMB_HS_BUSY))
 			break;
 		DELAY(PIIXPM_DELAY);
@@ -231,23 +315,24 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.error = 0;
 
 	/* Set slave address and transfer direction */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_TXSLVA,
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_TXSLVA,
 	    PIIX_SMB_TXSLVA_ADDR(addr) |
 	    (I2C_OP_READ_P(op) ? PIIX_SMB_TXSLVA_READ : 0));
 
 	b = cmdbuf;
 	if (cmdlen > 0)
 		/* Set command byte */
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HCMD, b[0]);
+		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    PIIX_SMB_HCMD, b[0]);
 
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data */
 		b = buf;
 		if (len > 0)
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD0, b[0]);
 		if (len > 1)
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD1, b[1]);
 	}
 
@@ -264,13 +349,13 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	/* Start transaction */
 	ctl |= PIIX_SMB_HC_START;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HC, ctl);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HC, ctl);
 
 	if (flags & I2C_F_POLL) {
 		/* Poll for completion */
 		DELAY(PIIXPM_DELAY);
 		for (retries = 1000; retries > 0; retries--) {
-			st = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HS);
 			if ((st & PIIX_SMB_HS_BUSY) == 0)
 				break;
@@ -294,15 +379,15 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	printf("%s: timeout, status 0x%x\n", sc->sc_dev.dv_xname, st);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HC,
+	aprint_error("%s: timeout, status 0x%x\n", sc->sc_dev.dv_xname, st);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HC,
 	    PIIX_SMB_HC_KILL);
 	DELAY(PIIXPM_DELAY);
-	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+	st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_FAILED) == 0)
-		printf("%s: transaction abort failed, status 0x%x\n",
+		aprint_error("%s: transaction abort failed, status 0x%x\n",
 		    sc->sc_dev.dv_xname, st);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS, st);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 	return (1);
 }
 
@@ -315,7 +400,7 @@ piixpm_intr(void *arg)
 	size_t len;
 
 	/* Read status */
-	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+	st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_BUSY) != 0 || (st & (PIIX_SMB_HS_INTR |
 	    PIIX_SMB_HS_DEVERR | PIIX_SMB_HS_BUSERR |
 	    PIIX_SMB_HS_FAILED)) == 0)
@@ -326,7 +411,7 @@ piixpm_intr(void *arg)
 	    PIIX_SMB_HS_BITS));
 
 	/* Clear status bits */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS, st);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 
 	/* Check for errors */
 	if (st & (PIIX_SMB_HS_DEVERR | PIIX_SMB_HS_BUSERR |
@@ -343,10 +428,10 @@ piixpm_intr(void *arg)
 		b = sc->sc_i2c_xfer.buf;
 		len = sc->sc_i2c_xfer.len;
 		if (len > 0)
-			b[0] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			b[0] = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD0);
 		if (len > 1)
-			b[1] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			b[1] = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD1);
 	}
 

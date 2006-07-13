@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.83 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.83.16.1 2006/07/13 17:49:13 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.83 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.83.16.1 2006/07/13 17:49:13 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,8 @@ linux_e_proc_init(p, parent, forkflags)
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
 
+	e->proc = p;
+
 	if (parent)
 		ep = parent->p_emuldata;
 
@@ -214,9 +216,19 @@ linux_e_proc_init(p, parent, forkflags)
 		 * here
 		 */
 		s->group_pid = p->p_pid;
+
+		/*
+		 * Initialize the list of threads in the group
+		 */
+		LIST_INIT(&s->threads);
 	}
 
 	e->s = s;
+
+	/*
+	 * Add this thread in the group thread list
+	 */
+	LIST_INSERT_HEAD(&s->threads, e, threads);
 
 #ifdef LINUX_NPTL
 	/* 
@@ -274,10 +286,11 @@ linux_e_proc_exit(p)
 		register_t retval;
 		struct lwp *l;
 
-		if ((error = copyout(&null, 
-		    e->clear_tid, 
-		    sizeof(null))) != 0)
+		error = copyout(&null, e->clear_tid, sizeof(null));
+#ifdef DEBUG_LINUX
+		if (error != 0)
 			printf("linux_e_proc_exit: cannot clear TID\n");
+#endif
 
 		l = proc_representative_lwp(p);
 		SCARG(&cup, uaddr) = e->clear_tid;
@@ -290,6 +303,9 @@ linux_e_proc_exit(p)
 			printf("linux_e_proc_exit: linux_sys_futex failed\n");
 	}
 #endif /* LINUX_NPTL */
+
+	/* Remove the thread for the group thread list */
+	LIST_REMOVE(e, threads);
 
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;

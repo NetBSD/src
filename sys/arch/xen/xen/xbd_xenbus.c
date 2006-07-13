@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.12 2006/05/23 21:07:56 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.12.2.1 2006/07/13 17:49:07 gdamore Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.12 2006/05/23 21:07:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.12.2.1 2006/07/13 17:49:07 gdamore Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -435,22 +435,22 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	int err;
 
 	err = xenbus_read_ul(NULL,
-	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle);
+	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
 	if (err)
 		panic("%s: can't read number from %s/virtual-device\n", 
 		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
-	    sc->sc_xbusd->xbusd_otherend, "sectors", &sc->sc_sectors);
+	    sc->sc_xbusd->xbusd_otherend, "sectors", &sc->sc_sectors, 10);
 	if (err)
 		panic("%s: can't read number from %s/sectors\n", 
 		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
-	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info);
+	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info, 10);
 	if (err)
 		panic("%s: can't read number from %s/info\n", 
 		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
-	    sc->sc_xbusd->xbusd_otherend, "sector-size", &sc->sc_secsize);
+	    sc->sc_xbusd->xbusd_otherend, "sector-size", &sc->sc_secsize, 10);
 	if (err)
 		panic("%s: can't read number from %s/sector-size\n", 
 		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
@@ -587,7 +587,7 @@ xbdsize(dev_t dev)
 		return (ENXIO);
 	sc = xbd_cd.cd_devs[DISKUNIT(dev)];
 
-	if (sc->sc_shutdown)
+	if (sc == NULL || sc->sc_shutdown)
 		return -1;
 	return dk_size(sc->sc_di, &sc->sc_dksc, dev);
 }

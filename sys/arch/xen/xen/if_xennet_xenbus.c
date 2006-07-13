@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.10.2.1 2006/07/13 17:49:06 gdamore Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.2.1 2006/07/13 17:49:06 gdamore Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10 2006/05/27 19:54:59 bouyer
 #include <nfs/nfsdiskless.h>
 #include <machine/if_xennetvar.h>
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
+
+#include <machine/xennet_checksum.h>
 
 #include <uvm/uvm.h>
 
@@ -327,6 +329,7 @@ xennet_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_timer = 0;
 	ifp->if_snd.ifq_maxlen = max(ifqmaxlen, NET_TX_RING_SIZE * 2);
+	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -511,6 +514,7 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	for (i = 0; sc->sc_free_rxreql != 0; i++) {
 		req  = SLIST_FIRST(&sc->sc_rxreq_head);
 		KASSERT(req != NULL);
+		KASSERT(req == &sc->sc_rxreqs[req->rxreq_id]);
 		RING_GET_REQUEST(&sc->sc_rx_ring, req_prod + i)->id =
 		    req->rxreq_id;
 		if (xengnt_grant_transfer(sc->sc_xbusd->xbusd_otherend_id,
@@ -648,6 +652,8 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	struct xennet_rxreq *req = arg;
 	struct xennet_xenbus_softc *sc = req->rxreq_sc;
 
+	int s = splnet();
+
 	SLIST_INSERT_HEAD(&sc->sc_rxreq_head, req, rxreq_next);
 	sc->sc_free_rxreql++;
 
@@ -659,6 +665,7 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	if (m)
 		pool_cache_put(&mbpool_cache, m);
+	splx(s);
 }
 
 
@@ -740,6 +747,7 @@ again:
 		netif_rx_response_t *rx = RING_GET_RESPONSE(&sc->sc_rx_ring, i);
 		req = &sc->sc_rxreqs[rx->id];
 		KASSERT(req->rxreq_gntref != GRANT_INVALID_REF);
+		KASSERT(req->rxreq_id == rx->id);
 		ma = xengnt_revoke_transfer(req->rxreq_gntref);
 		if (ma == 0) {
 			DPRINTFN(XEDB_EVENT, ("xennet_handler ma == 0\n"));
@@ -799,6 +807,7 @@ again:
 			xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE, req);
 			continue;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 		m->m_pkthdr.rcvif = ifp;
 		if (__predict_true(sc->sc_rx_ring.req_prod_pvt != 
@@ -814,7 +823,7 @@ again:
 			 * memory, copy data and push the receive
 			 * buffer back to the hypervisor.
 			 */
-			m->m_len = MHLEN;
+			m->m_len = min(MHLEN, rx->status);
 			m->m_pkthdr.len = 0;
 			m_copyback(m, 0, rx->status, pktp);
 			xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE, req);
@@ -822,6 +831,13 @@ again:
 				/* out of memory, just drop packets */
 				ifp->if_ierrors++;
 				m_freem(m);
+				continue;
+			}
+		}
+		if ((rx->flags & NETRXF_csum_blank) != 0) {
+			xennet_checksum_fill(&m);
+			if (m == NULL) {
+				ifp->if_ierrors++;
 				continue;
 			}
 		}
@@ -903,6 +919,8 @@ xennet_softstart(void *arg)
 
 	req_prod = sc->sc_tx_ring.req_prod_pvt;
 	while (/*CONSTCOND*/1) {
+		uint16_t txflags;
+
 		req = SLIST_FIRST(&sc->sc_txreq_head);
 		if (__predict_false(req == NULL)) {
 			ifp->if_flags |= IFF_OACTIVE;
@@ -930,6 +948,13 @@ xennet_softstart(void *arg)
 				panic("xennet_start: no pa");
 			}
 			break;
+		}
+
+		if ((m->m_pkthdr.csum_flags &
+		    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+			txflags = NETTXF_csum_blank;
+		} else {
+			txflags = 0;
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
@@ -986,6 +1011,7 @@ xennet_softstart(void *arg)
 			/* we will be able to send m */
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 
 		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PG_FRAME) == 0);
 
@@ -1008,7 +1034,7 @@ xennet_softstart(void *arg)
 		txreq->gref = req->txreq_gntref;
 		txreq->offset = pa & ~PG_FRAME;
 		txreq->size = m->m_pkthdr.len;
-		txreq->flags = 0;
+		txreq->flags = txflags;
 
 		req_prod++;
 		sc->sc_tx_ring.req_prod_pvt = req_prod;

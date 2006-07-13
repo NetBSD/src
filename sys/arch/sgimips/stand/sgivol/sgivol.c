@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.12 2006/05/05 17:59:41 thorpej Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.12.4.1 2006/07/13 17:49:03 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -203,8 +203,8 @@ main(int argc, char *argv[])
 		perror("File open");
 		exit(1);
 #else
-		sprintf(buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
-		fd = open(buf, (opt_i | opt_w | opt_d | opt_p) 
+		sprintf((char *)buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
+		fd = open((char *)buf, (opt_i | opt_w | opt_d | opt_p) 
 				? O_RDWR : O_RDONLY);
 		if (fd < 0) {
 			printf("Error opening device %s: %s\n",

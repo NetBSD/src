@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $	*/
+/*	$NetBSD: extintr.c,v 1.23.4.1 2006/07/13 17:49:02 gdamore Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23.4.1 2006/07/13 17:49:02 gdamore Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $")
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/platform.h>
+#include <machine/residual.h>
 
 #if defined(OPENPIC)
 #include <powerpc/openpic.h>
@@ -152,21 +153,80 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $")
 static void intr_calculatemasks(void);
 static int fakeintr(void *);
 static void ext_intr_ivr(void);
+static void ext_intr_i8259(void);
 #if defined(OPENPIC)
 static void ext_intr_openpic(void);
 #endif /* OPENPIC */
 static void install_extint(void (*)(void));
 
+struct intrsource intrsources[ICU_LEN];
 int imen = 0xffffffff;
 int imask[NIPL];
 
-struct intrsource intrsources[ICU_LEN];
+extern struct platform_quirkdata platform_quirks[];
 
 static int
 fakeintr(void *arg)
 {
 
 	return 0;
+}
+
+
+/*
+ * On some machines, specifically the Powerstack E1, we cannot trust the 
+ * IVR register.  It returns values offset by 120 for PCI devices, and if
+ * an interrupt is unhandled, you cannot EOI it in any way.  With one of those
+ * machines with the keyboard removed, we get a single mouse interrupt at
+ * startup which cannot be handled and the entire machine stops processing
+ * interrupts.
+ * This routine is identical to ext_intr_ivr() other than how we get the irq.
+ */
+
+static void
+ext_intr_i8259(void)
+{
+	u_int8_t irq;
+	int r_imen, pcpl, msr;
+	struct cpu_info *ci = curcpu();
+	struct intrhand *ih;
+	struct intrsource *is;
+
+	pcpl = ci->ci_cpl;
+	msr = mfmsr();
+
+	irq = isa_intr();
+	is = &intrsources[irq];
+	r_imen = 1 << irq;
+
+	if ((pcpl & r_imen) != 0) {
+		ci->ci_ipending |= r_imen; /* Masked! Mark this as pending */
+		imen |= r_imen;
+		isa_intr_mask(imen);
+	} else {
+		splraise(is->is_mask);
+		mtmsr(msr | PSL_EE);
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		ih = is->is_hand;
+		if (ih == NULL)
+			printf("spurious interrupt %d\n", irq);
+		while (ih) {
+			(*ih->ih_fun)(ih->ih_arg);
+			ih = ih->ih_next;
+		}
+		KERNEL_UNLOCK();
+		mtmsr(msr);
+		ci->ci_cpl = pcpl;
+
+		isa_intr_clr(irq);
+
+		uvmexp.intrs++;
+		is->is_ev.ev_count++;
+	}
+
+	mtmsr(msr | PSL_EE);
+	splx(pcpl);	/* Process pendings. */
+	mtmsr(msr);
 }
 
 /*
@@ -627,6 +687,11 @@ openpic_init(unsigned char *baseaddr)
 
 	openpic_base = baseaddr;
 
+	x = openpic_read(OPENPIC_FEATURE);
+	aprint_normal("OpenPIC Version 1.%d: "
+	    "Supports %d CPUs and %d interrupt sources.\n",
+	    x & 0xff, ((x & 0x1f00) >> 8) + 1, ((x & 0x07ff0000) >> 16) + 1);
+
 	openpic_set_priority(0, 0x0f);
 
 	/* disable all interrupts */
@@ -656,56 +721,22 @@ openpic_init(unsigned char *baseaddr)
 
 	install_extint(ext_intr_openpic);
 }
+
 #endif /* OPENPIC */
 
 void
 init_intr(void)
 {
-#if defined(OPENPIC)
-	unsigned char *baseaddr = (unsigned char *)0xC0006800;	/* XXX */
-#if NPCI > 0
-	struct prep_pci_chipset pc;
-	pcitag_t tag;
-	pcireg_t id, address;
-
-	prep_pci_get_chipset_tag(&pc);
-
-	tag = pci_make_tag(&pc, 0, 13, 0);
-	id = pci_conf_read(&pc, tag, PCI_ID_REG);
-
-	if (PCI_VENDOR(id) == PCI_VENDOR_IBM
-	    && (PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC ||
-		PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2)) {
-		address = pci_conf_read(&pc, tag, 0x10);
-		if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
-			address &= PCI_MAPREG_MEM_ADDR_MASK;
-			/*
-			 * PReP PCI memory space is from 0xc0000000 to
-			 * 0xffffffff but machdep.c maps only 0xc0000000 to
-			 * 0xcfffffff of PCI memory space. So look if the 
-			 * address offset is bigger then 0xfffffff. If it is
-			 * we are outside the already mapped region and we need
-			 * to add an additional mapping for the OpenPIC.
-			 * The OpenPIC register window is always 256kB.
-			 */
-			if (address > 0xfffffff)
-				baseaddr = (unsigned char *) mapiodev(
-				    PREP_BUS_SPACE_MEM | address, 0x40000);
-			else
-				baseaddr = (unsigned char *)
-				    (PREP_BUS_SPACE_MEM | address);
-		} else if ((address & PCI_MAPREG_TYPE_MASK) ==
-		    PCI_MAPREG_TYPE_IO) {
-			address &= PCI_MAPREG_IO_ADDR_MASK;
-			baseaddr = (unsigned char *) mapiodev(
-			    PREP_BUS_SPACE_IO | address, 0x40000);
-		}
-		openpic_init(baseaddr);
-		return;
-	}
-#endif /* NPCI */
+	int i;
 	openpic_base = 0;
-#endif
+
+	i = find_platform_quirk(res->VitalProductData.PrintableModel);
+	if (i != -1)
+		if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
+		    platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
+			install_extint(ext_intr_i8259);
+			return;
+		}
 	install_extint(ext_intr_ivr);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.8 2006/02/04 03:18:10 gdamore Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.8.10.1 2006/07/13 17:48:57 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.8 2006/02/04 03:18:10 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.8.10.1 2006/07/13 17:48:57 gdamore Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -938,7 +938,7 @@ __BS(barrier)(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 {
 
 	/* XXX XXX XXX */
-	if ((f & BUS_SPACE_BARRIER_WRITE) != 0)
+	//if ((f & BUS_SPACE_BARRIER_WRITE) != 0)
 		wbflush();
 }
 
@@ -1036,6 +1036,7 @@ __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 
 	ptr = (void *)(h + CHIP_OFF8(off));
 	*ptr = val;
+	wbflush();
 }
 
 inline void
@@ -1049,6 +1050,7 @@ __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 
 	ptr = (void *)(h + CHIP_OFF16(off));
 	*ptr = CHIP_SWAP16(val);
+	wbflush();
 }
 
 inline void
@@ -1062,6 +1064,7 @@ __BS(write_4)(void *v, bus_space_handle_t h, bus_size_t off, uint32_t val)
 
 	ptr = (void *)(h + CHIP_OFF32(off));
 	*ptr = CHIP_SWAP32(val);
+	wbflush();
 }
 
 inline void
@@ -1071,6 +1074,7 @@ __BS(write_8)(void *v, bus_space_handle_t h, bus_size_t off, uint64_t val)
 
 	ptr = (void *)(h + CHIP_OFF64(off));
 	*ptr = CHIP_SWAP64(val);
+	wbflush();
 }
 
 #define CHIP_write_multi_N(BYTES,TYPE)					\
@@ -1258,6 +1262,7 @@ __BS(write_stream_1)(void *v, bus_space_handle_t h, bus_size_t off,
 
 	ptr = (void *)(h + CHIP_OFF8(off));
 	*ptr = val;
+	wbflush();
 }
 
 inline void
@@ -1272,6 +1277,7 @@ __BS(write_stream_2)(void *v, bus_space_handle_t h, bus_size_t off,
 
 	ptr = (void *)(h + CHIP_OFF16(off));
 	*ptr = val;
+	wbflush();
 }
 
 inline void
@@ -1286,6 +1292,7 @@ __BS(write_stream_4)(void *v, bus_space_handle_t h, bus_size_t off,
 
 	ptr = (void *)(h + CHIP_OFF32(off));
 	*ptr = val
+	wbflush();
 }
 
 inline void
@@ -1296,6 +1303,7 @@ __BS(write_stream_8)(void *v, bus_space_handle_t h, bus_size_t off,
 
 	ptr = (void *)(h + CHIP_OFF64(off));
 	*ptr = val;
+	wbflush();
 }
 
 #define CHIP_write_multi_stream_N(BYTES,TYPE)				\

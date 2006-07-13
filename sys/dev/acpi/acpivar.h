@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.25 2005/12/12 15:04:50 cube Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.25.16.1 2006/07/13 17:49:17 gdamore Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -276,8 +276,19 @@ ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
+ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
 
 ACPI_STATUS	acpi_pwr_switch_consumer(ACPI_HANDLE, int);
+
+void *		acpi_pci_link_devbyhandle(ACPI_HANDLE);
+void		acpi_pci_link_add_reference(void *, int, int, int, int);
+int		acpi_pci_link_route_interrupt(void *, int, int *, int *, int *);
+char *		acpi_pci_link_name(void *);
+ACPI_HANDLE	acpi_pci_link_handle(void *);
+void		acpi_pci_link_state(void);
+
+
+
 
 #if defined(_KERNEL_OPT)
 #include "acpiec.h"
@@ -305,12 +316,22 @@ ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int);
  * quirk handling
  */
 struct acpi_quirk {
-	const char *aq_oemid;	/* compared against the X/RSDT OemId */
-	int aq_oemrev;		/* compared against the X/RSDT OemRev */
+	uint32_t aq_tabletype;	/* what type of table (FADT, DSDT, etc) */
+	const char *aq_oemid;	/* compared against the table OemId */
+	int aq_oemrev;		/* compared against the table OemRev */
+	int aq_cmpop;		/* how to compare the oemrev number */
+	const char *aq_tabid;	/* compared against the table TableId */
 	int aq_quirks;		/* the actual quirks */
 };
 
-#define ACPI_QUIRK_BADPCI	0x00000001	/* bad PCI hierarchy */
-#define ACPI_QUIRK_BADIRQ	0x00000002	/* bad IRQ information */
+#define AQ_GT		0	/* > */
+#define AQ_LT		1	/* < */
+#define AQ_GTE		2	/* >= */
+#define AQ_LTE		3	/* <= */
+#define AQ_EQ		4	/* == */
+
+#define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
+#define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */
+#define ACPI_QUIRK_BADBBN	0x00000004	/* _BBN broken */
 
 int acpi_find_quirks(void);

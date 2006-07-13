@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2005/12/11 12:19:44 christos Exp $
+#	$NetBSD: Makefile,v 1.11.16.1 2006/07/13 17:49:05 gdamore Exp $
 
 NOMAN=		# defined
 
@@ -30,6 +30,7 @@ COMMONDIR=	$M/stand/common
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
@@ -39,9 +40,9 @@ CPPFLAGS+=	-DTEXTADDR="0x${TEXT}"
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CFLAGS=		-Wno-main -Os -m68020-60
 .if ${OBJECT_FMT} == "ELF"
-LDFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
+LINKFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 .else
-LDFLAGS=	-N -static -Ttext ${TEXT}
+LINKFLAGS=	-N -static -Ttext ${TEXT}
 .endif
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
@@ -51,7 +52,8 @@ LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
 
 realall: machine-links ${PROG}
 ${PROG}:	${OBJS}
-	${LD} ${LDFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
 	${STRIP} -F ${BFDNAME} -o ${PROG} ${PROG}.sym
 
 CLEANFILES+=	${PROG}.sym

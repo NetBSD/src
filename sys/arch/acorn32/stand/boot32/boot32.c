@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.27 2006/03/25 15:09:00 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.27.4.1 2006/07/13 17:48:43 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -709,10 +709,10 @@ create_configuration(int argc, char **argv, int start_args)
 	kernel_free_vm_start += nbpp;
 
 	/* get some miscelanious info for the bootblock */
-	os_readsysinfo_monitor_info(NULL, &monitor_type, &monitor_sync);
-	os_readsysinfo_chip_presence(&ioeb_flags, &superio_flags, &lcd_flags);
-	os_readsysinfo_superio_features(&superio_flags_basic,
-	    &superio_flags_extra);
+	os_readsysinfo_monitor_info(NULL, (int *)&monitor_type, (int *)&monitor_sync);
+	os_readsysinfo_chip_presence((int *)&ioeb_flags, (int *)&superio_flags, (int *)&lcd_flags);
+	os_readsysinfo_superio_features((int *)&superio_flags_basic,
+	    (int *)&superio_flags_extra);
 	os_readsysinfo_unique_id(&id_low, &id_high);
 
 	/* fill in the bootconfig *bconfig structure : generic version II */

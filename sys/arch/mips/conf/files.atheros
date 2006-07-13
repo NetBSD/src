@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.3.2.1 2006/06/15 16:36:23 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.3.2.2 2006/07/13 17:48:57 gdamore Exp $
 
 file	arch/mips/atheros/ar531x_intr.c
 file	arch/mips/atheros/ar531x_timer.c
@@ -29,7 +29,6 @@ attach	athflash at arbus
 file	arch/mips/atheros/dev/athflash.c	athflash
 
 # On-chip GPIO
-#device	argpio: gpiobus
-#attach	argpio at arbus
-#file	arch/mips/atheros/dev/argpio.c		argpio
-
+device	argpio: gpiobus, sysmon_power, sysmon_taskq
+attach	argpio at arbus
+file	arch/mips/atheros/dev/argpio.c		argpio

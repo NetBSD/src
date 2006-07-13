@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.53 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.53.4.1 2006/07/13 17:50:13 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -122,7 +122,7 @@ int	ffs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	ffs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	ffs_vget(struct mount *, ino_t, struct vnode **);
 int	ffs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	ffs_vptofh(struct vnode *, struct fid *);
+int	ffs_vptofh(struct vnode *, struct fid *, size_t *);
 int	ffs_extattrctl(struct mount *, int, struct vnode *, int,
 		       const char *, struct lwp *);
 int	ffs_sbupdate(struct ufsmount *, int);

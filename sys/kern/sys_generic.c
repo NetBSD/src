@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.86 2006/06/07 22:33:40 kardel Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.86.2.1 2006/07/13 17:49:51 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.86 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.86.2.1 2006/07/13 17:49:51 gdamore Exp $");
 
 #include "opt_ktrace.h"
 
@@ -753,6 +753,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
+	struct timeval  sleepts;
 
 	error = 0;
 	if (nd < 0)
@@ -780,9 +781,14 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 #undef	getbits
 
 	timo = 0;
-	if (tv && itimerfix(tv)) {
-		error = EINVAL;
-		goto done;
+	timerclear(&sleepts);
+
+	if (tv) {
+		if (itimerfix(tv)) {
+			error = EINVAL;
+			goto done;
+		}
+		getmicrouptime(&sleepts);
 	}
 	if (mask)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
@@ -798,6 +804,16 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
+		struct timeval slepttime;
+		/*
+		 * reduce tv by elapsed time
+		 * based on monotonic time scale
+		 */
+		getmicrouptime(&slepttime);
+		timeradd(tv, &sleepts, tv);
+		timersub(tv, &slepttime, tv);
+		sleepts = slepttime;
+
 		timo = tvtohz(tv);
 		if (timo <= 0)
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.30 2006/05/14 21:45:00 elad Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.30.4.1 2006/07/13 17:49:26 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.30 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.30.4.1 2006/07/13 17:49:26 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
 	if (isc->chiptype == CHIP_I810) {
+		caddr_t virtual;
 		int dummyseg;
+
 		/* Some i810s have on-chip memory called dcache */
 		if (READ1(AGP_I810_DRT) & AGP_I810_DRT_POPULATED)
 			isc->dcache_size = 4 * 1024 * 1024;
@@ -258,12 +260,13 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 		/* According to the specs the gatt on the i810 must be 64k */
 		if (agp_alloc_dmamem(sc->as_dmat, 64 * 1024,
-		    0, &gatt->ag_dmamap, (caddr_t *)&gatt->ag_virtual,
-		    &gatt->ag_physical, &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
+		    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
+		    &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
 			free(gatt, M_AGP);
 			agp_generic_detach(sc);
 			return ENOMEM;
 		}
+		gatt->ag_virtual = (uint32_t *)virtual;
 
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
 		memset(gatt->ag_virtual, 0, gatt->ag_size);

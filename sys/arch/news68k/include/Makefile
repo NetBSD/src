@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.18 2005/12/11 12:18:23 christos Exp $
+#	$NetBSD: Makefile,v 1.18.16.1 2006/07/13 17:48:58 gdamore Exp $
 
 INCSDIR= /usr/include/news68k
 
-INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
+INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \

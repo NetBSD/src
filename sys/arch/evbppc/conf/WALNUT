@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.31 2006/05/14 21:55:10 elad Exp $
+#	$NetBSD: WALNUT,v 1.31.4.1 2006/07/13 17:48:46 gdamore Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -277,4 +277,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	kttcp			# kernel ttcp

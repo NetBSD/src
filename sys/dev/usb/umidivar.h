@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.16.1 2006/07/13 17:49:44 gdamore Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,23 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* pending MUX-MIDI packet */
-typedef enum {
-	PS_EXCL_0=-2,	/* put, and next state is PS_EXCL_0 */
-	PS_END=-1,	/* put, and next state is PS_INITIAL */
-	PS_INITIAL=0,	/* 0>= : not put, and state is keeped */
-	PS_NORMAL_1OF3=1,
-	PS_NORMAL_2OF3=2,
-	PS_NORMAL_1OF2=3,
-	PS_EXCL_1=4,
-	PS_EXCL_2=5
-} packet_state_t;
-
 #define UMIDI_PACKET_SIZE 4
-struct umidi_packet {
-	char		buffer[UMIDI_PACKET_SIZE];
-	packet_state_t	state;
-};
 
 /*
  * hierarchie
@@ -70,6 +54,7 @@ struct umidi_mididev {
 	/* */
 	struct umidi_jack	*in_jack;
 	struct umidi_jack	*out_jack;
+	char			*label;
 	/* */
 	int			opened;
 	int			flags;
@@ -80,14 +65,13 @@ struct umidi_jack {
 	struct umidi_endpoint	*endpoint;
 	/* */
 	int			cable_number;
-	struct umidi_packet	packet;
 	void			*arg;
 	int			binded;
 	int			opened;
+	unsigned char		*midiman_ppkt;
 	union {
 		struct {
 			void			(*intr)(void *);
-			LIST_ENTRY(umidi_jack)	queue_entry;
 		} out;
 		struct {
 			void			(*intr)(void *, int);
@@ -96,6 +80,7 @@ struct umidi_jack {
 };
 
 #define UMIDI_MAX_EPJACKS	16
+typedef unsigned char (*umidi_packet_bufp)[UMIDI_PACKET_SIZE];
 /* endpoint data */
 struct umidi_endpoint {
 	struct umidi_softc	*sc;
@@ -103,12 +88,20 @@ struct umidi_endpoint {
 	int			addr;
 	usbd_pipe_handle	pipe;
 	usbd_xfer_handle	xfer;
-	unsigned char		*buffer;
+	umidi_packet_bufp	buffer;
+	umidi_packet_bufp	next_slot;
+	u_int32_t               buffer_size;
+	int			num_scheduled;
 	int			num_open;
 	int			num_jacks;
+	int			soliciting;
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void			*solicit_cookie;
+#endif
+	int			armed;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
-	LIST_HEAD(, umidi_jack)	queue_head;
-	struct umidi_jack	*queue_tail;
+	u_int16_t		this_schedule; /* see UMIDI_MAX_EPJACKS */
+	u_int16_t		next_schedule;
 };
 
 /* software context */
@@ -134,4 +127,5 @@ struct umidi_softc {
 	int			sc_in_num_endpoints;
 	struct umidi_endpoint	*sc_in_ep;
 	struct umidi_endpoint	*sc_endpoints;
+	int			cblnums_global;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: j720lcd.c,v 1.1 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: j720lcd.c,v 1.1.12.1 2006/07/13 17:48:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 LCD screen driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720lcd.c,v 1.1 2006/03/04 14:09:36 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720lcd.c,v 1.1.12.1 2006/07/13 17:48:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ j720lcd_param(void *ctx, int type, long id, void *msg)
 	struct j720lcd_softc *sc = ctx;
 	struct j720ssp_softc *ssp = sc->sc_ssp;
 	uint32_t data[2], len;
+	const int maxval = 255;
 	int i, s;
 
 	switch (type) {
@@ -143,16 +144,16 @@ j720lcd_param(void *ctx, int type, long id, void *msg)
 		switch (id) {
 		case CONFIG_HOOK_BRIGHTNESS_MAX:
 		case CONFIG_HOOK_CONTRAST_MAX:
-			*(int *)msg = 255;
+			*(int *)msg = maxval;
 			return 1;
 		case CONFIG_HOOK_BRIGHTNESS:
-			data[0] = 0x6b00;
-			data[1] = 0x8800;
+			data[0] = 0xd6;
+			data[1] = 0x11;
 			len = 2;
 			break;
 		case CONFIG_HOOK_CONTRAST:
-			data[0] = 0x2b00;
-			data[1] = 0x8800;
+			data[0] = 0xd4;
+			data[1] = 0x11;
 			len = 2;
 			break;
 		default:
@@ -164,22 +165,18 @@ j720lcd_param(void *ctx, int type, long id, void *msg)
 		switch (id) {
 		case CONFIG_HOOK_BRIGHTNESS:
 			if (*(int *)msg >= 0) {
-				data[0] = 0xcb00;
-				data[1] = *(int *)msg;
-				J720SSP_INVERT(data[1]);
-				data[1] <<= 8;
+				data[0] = 0xd3;
+				data[1] = maxval - *(int *)msg;
 				len = 2;
 			} else {
 				/* XXX hack */
-				data[0] = 0xfb00;
+				data[0] = 0xdf;
 				len = 1;
 			}
 			break;
 		case CONFIG_HOOK_CONTRAST:
-			data[0] = 0x8b00;
-			data[1] = *(int *)msg;
-			J720SSP_INVERT(data[1]);
-			data[1] <<= 8;
+			data[0] = 0xd1;
+			data[1] = maxval - *(int *)msg;
 			len = 2;
 			break;
 		default:
@@ -204,8 +201,7 @@ j720lcd_param(void *ctx, int type, long id, void *msg)
 	if (type == CONFIG_HOOK_SET)
 		return 1;
 
-	J720SSP_INVERT(data[1]);
-	*(int *)msg = data[1];
+	*(int *)msg = maxval - data[1];
 
 	return 1;
 

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.431 2006/06/08 17:56:20 rjs Exp $
+$NetBSD: usbdevs,v 1.431.2.1 2006/07/13 17:49:44 gdamore Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -226,6 +226,7 @@ vendor APEX		0x0624	Apex
 vendor VIVITAR		0x0636	Vivitar
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
+vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor SGI		0x065e	Silicon Graphics
 vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
@@ -452,6 +453,7 @@ vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
+vendor MOSCHIP		0x9710	MosChip Semiconductor
 vendor HP2		0xf003	Hewlett Packard
 vendor USRP		0xfffe	GNU Radio USRP
 
@@ -1333,6 +1335,7 @@ product MICROTEK V6UL		0x80ac	ScanMaker V6UL
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
+product MIDIMAN MIDISPORT2X4	0x1041	Midisport 2x4
 
 /* Minds At Work LLC products */
 product MINDSATWORK DW		0x0001	Digital Wallet
@@ -1355,6 +1358,9 @@ product MITSUMI FDD		0x6901	FDD
 
 /* Mobility products */
 product MOBILITY EA		0x0204	Ethernet Adapter
+
+/* MosChip Semiconductor */
+product MOSCHIP MCS7830		0x7830	Ethernet Adapter
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
@@ -1671,6 +1677,9 @@ product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
 /* Sealevel products */
 product SEALEVEL USBSERIAL	0x2101	USB-Serial converter
+
+/* ArkMicroChips products */
+product ARKMICROCHIPS USBSERIAL	0x0232	USB-UART Controller
 
 /* SGI products */
 product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller

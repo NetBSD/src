@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.83 2006/05/18 23:15:09 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.83.4.1 2006/07/13 17:50:13 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ void lfs_segunlock(struct lfs *);
 void lfs_segunlock_relock(struct lfs *);
 int lfs_writer_enter(struct lfs *, const char *);
 void lfs_writer_leave(struct lfs *);
+void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
@@ -226,7 +227,7 @@ int lfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int lfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int lfs_vptofh(struct vnode *, struct fid *);
+int lfs_vptofh(struct vnode *, struct fid *, size_t *);
 void lfs_vinit(struct mount *, struct vnode **);
 int lfs_resize_fs(struct lfs *, int);
 

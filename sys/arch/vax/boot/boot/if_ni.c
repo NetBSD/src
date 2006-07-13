@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.2 2000/07/10 10:40:38 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.2.68.1 2006/07/13 17:49:05 gdamore Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -99,7 +99,7 @@ static int *syspte, allocbase, niaddr;
 static struct ni_gvppqb *gvppqb;
 static struct ni_fqb *fqb;
 static struct ni_bbd *bbd;
-static char enaddr[6];
+static u_char enaddr[6];
 static int beenhere = 0;
 
 struct netif_driver ni_driver = {

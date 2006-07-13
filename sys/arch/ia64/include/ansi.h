@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: ansi.h,v 1.1.12.1 2006/07/13 17:48:55 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -92,7 +92,8 @@
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
-
+#define _BSD_WCTRANS_T_	void *			/* wctrans_t */
+#define _BSD_WCTYPE_T_	void *			/* wctype_t */
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte
  * stream conversions.  The content must not be referenced by user programs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15.16.1 2006/07/13 17:48:49 gdamore Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15.16.1 2006/07/13 17:48:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,8 @@ swapdisklabel(struct disklabel *dlp)
 	int i;
 	struct partition *pp;
 
-#define	swap32 bswap32
-#define	swap16 bswap16
+#define	swap32(x) x = bswap32(x)
+#define	swap16(x) x = bswap16(x)
 	swap32(dlp->d_magic);
 	swap16(dlp->d_type);
 	swap16(dlp->d_subtype);

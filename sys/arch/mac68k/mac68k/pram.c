@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.21 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: pram.c,v 1.21.16.1 2006/07/13 17:48:57 gdamore Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.21 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.21.16.1 2006/07/13 17:48:57 gdamore Exp $");
 
 #include "opt_adb.h"
 
@@ -148,14 +148,14 @@ pram_readtime(void)
 }
 
 void
-pram_settime(unsigned long time)
+pram_settime(unsigned long curtime)
 {
 #ifdef MRG_ADB
    if (0 == jClkNoMem)
 	return;
    else
 #endif
-	return setPramTime(time);
+	return setPramTime(curtime);
 }
 
 #ifndef MRG_ADB
@@ -176,20 +176,20 @@ extern int adbHardware;	/* from adb_direct.c */
 unsigned long
 getPramTime(void)
 {
-	unsigned long time;
+	unsigned long curtime;
 
 	switch (adbHardware) {
 	case ADB_HW_IOP:
 	case ADB_HW_II:		/* access PRAM via VIA interface */
-		time = (long)getPramTimeII();
-		return time;
+		curtime = (long)getPramTimeII();
+		return curtime;
 
 	case ADB_HW_IISI:	/* access PRAM via pseudo-adb functions */
 	case ADB_HW_CUDA:
-		if (0 != adb_read_date_time(&time))
+		if (0 != adb_read_date_time(&curtime))
 			return 0;
 		else
-			return time;
+			return curtime;
 
 	case ADB_HW_PB:		/* don't know how to access this yet */
 		return 0;
@@ -208,17 +208,17 @@ getPramTime(void)
  * added later.)
  */
 void
-setPramTime(unsigned long time)
+setPramTime(unsigned long curtime)
 {
 	switch (adbHardware) {
 	case ADB_HW_IOP:
 	case ADB_HW_II:		/* access PRAM via ADB interface */
-		setPramTimeII(time);
+		setPramTimeII(curtime);
 		return;
 
 	case ADB_HW_IISI:	/* access PRAM via pseudo-adb functions */
 	case ADB_HW_CUDA:
-		adb_set_date_time(time);
+		adb_set_date_time(curtime);
 		return;
 
 	case ADB_HW_PB:		/* don't know how to access this yet */

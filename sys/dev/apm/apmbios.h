@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.h,v 1.3 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: apmbios.h,v 1.3.16.1 2006/07/13 17:49:22 gdamore Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,8 +34,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __DEV_APM_APMBIOS_H__
-#define __DEV_APM_APMBIOS_H__
+#ifndef _DEV_APM_APMBIOS_H_
+#define _DEV_APM_APMBIOS_H_
 
 /* Advanced Power Management (v1.0 and v1.1 specification)
  * functions/defines/etc.
@@ -246,4 +246,12 @@
 #define APM_BIOS_PM_DISABLED	(APM_DISABLED << 16)
 #define APM_BIOS_PM_DISENGAGED	(APM_DISENGAGED << 16)
 
-#endif /* __DEV_APM_APMBIOS_H__ */
+#define	APMDEBUG_INFO		0x01
+#define	APMDEBUG_APMCALLS	0x02
+#define	APMDEBUG_EVENTS		0x04
+#define	APMDEBUG_PROBE		0x10
+#define	APMDEBUG_ATTACH		0x40
+#define	APMDEBUG_DEVICE		0x20
+#define	APMDEBUG_ANOM		0x40
+
+#endif /* _DEV_APM_APMBIOS_H_ */

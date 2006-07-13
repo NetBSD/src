@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 2006/05/31 09:52:27 drochner Exp $
+	$NetBSD: syscalls.master,v 1.47.2.1 2006/07/13 17:49:15 gdamore Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -169,7 +169,7 @@
 94	UNIMPL		setdopt
 95	STD		{ int netbsd32_fsync(int fd); }
 96	STD		{ int netbsd32_setpriority(int which, int who, int prio); }
-97	STD		{ int netbsd32_socket(int domain, int type, int protocol); }
+97	COMPAT_30	{ int netbsd32_socket(int domain, int type, int protocol); }
 98	STD		{ int netbsd32_connect(int s, const netbsd32_sockaddrp_t name, int namelen); }
 99	COMPAT_43	{ int netbsd32_oaccept(int s, netbsd32_caddr_t name, netbsd32_intp anamelen); }
 100	STD		{ int netbsd32_getpriority(int which, int who); }
@@ -256,7 +256,7 @@
 159	UNIMPL
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-161	STD		{ int netbsd32_getfh(const netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
+161	COMPAT_30		{ int netbsd32_getfh(const netbsd32_charp fname, netbsd32_compat_30_fhandlep_t fhp); }
 #else
 161	EXCL		netbsd32_getfh
 #endif
@@ -675,3 +675,9 @@
 			    const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }
 393	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
+394	STD		{ int netbsd32_sys___socket30(int domain, int type, int protocol); }
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+395	STD		{ int netbsd32___getfh30(const netbsd32_charp fname, netbsd32_fhandlep_t fhp, netbsd32_size_tp fh_size); }
+#else
+395	EXCL		netbsd32_getfh
+#endif

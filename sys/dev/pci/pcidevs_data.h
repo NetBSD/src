@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.792 2006/06/14 02:33:28 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.792.2.1 2006/07/13 17:49:28 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.794 2006/06/14 02:33:01 grant Exp
+ *	NetBSD: pcidevs,v 1.806 2006/07/13 03:59:29 kent Exp
  */
 
 /*
@@ -2184,6 +2184,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "SafeNet",
 	},
 	{
+	    PCI_VENDOR_MICREL,
+	    "Micrel",
+	},
+	{
 	    PCI_VENDOR_LINKSYS,
 	    "Linksys",
 	},
@@ -2344,6 +2348,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Netmos",
 	},
 	{
+	    PCI_VENDOR_PARALLELS,
+	    "Parallels",
+	},
+	{
 	    PCI_VENDOR_CHRYSALIS,
 	    "Chrysalis-ITS",
 	},
@@ -2360,7 +2368,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 580;
+const int pci_nvendors = 582;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -2742,6 +2750,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
 	    "M1531 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1533,
+	    "M1533 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
@@ -3600,8 +3612,16 @@ static const struct pci_product pci_products[] = {
 	    "SB200 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
+	    "SB200 IXP IDE Controller",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA,
 	    "SB200 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_MODEM,
+	    "SB200 Modem",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB,
@@ -3612,16 +3632,16 @@ static const struct pci_product pci_products[] = {
 	    "IXP AC'97 Audio Controller",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400,
-	    "IXP AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
-	    "IXP IDE Controller",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_SMB,
+	    "SB300 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
-	    "IXP IDE Controller",
+	    "SB300 IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400,
+	    "IXP AC'97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_PPB,
@@ -3629,7 +3649,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SMB,
-	    "SB400 SMB Controller",
+	    "SB400 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_EHCI,
@@ -3652,12 +3672,28 @@ static const struct pci_product pci_products[] = {
 	    "SB400 PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_MODEM,
+	    "SB400 Modem",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SATA_1,
 	    "SB400 SATA Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SATA_2,
 	    "SB400 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_1,
+	    "SB600 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_2,
+	    "SB600 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600,
+	    "SB600 IXP IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -7464,6 +7500,10 @@ static const struct pci_product pci_products[] = {
 	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2,
+	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
 	    "80310 ATU",
 	},
@@ -7652,8 +7692,12 @@ static const struct pci_product pci_products[] = {
 	    "IT8152 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8211,
+	    "IT8211 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8212,
-	    "IT8212 IDE controller",
+	    "IT8212 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
@@ -7956,6 +8000,14 @@ static const struct pci_product pci_products[] = {
 	    "MN-120 10/100 Ethernet Notebook Adapter",
 	},
 	{
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8841,
+	    "10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8842,
+	    "Switched 2-port 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA,
 	    "Weasel Virtual VGA",
 	},
@@ -8240,6 +8292,54 @@ static const struct pci_product pci_products[] = {
 	    "53c1030R",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030ZC,
+	    "53c1030ZC",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1035,
+	    "53c1035",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1035ZC,
+	    "53c1035ZC",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064,
+	    "SAS1064",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068,
+	    "SAS1068",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E,
+	    "SAS1064E",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E,
+	    "SAS1068E",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066E,
+	    "SAS1066E",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064A,
+	    "SAS1064A",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066,
+	    "SAS1066",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078,
+	    "SAS1078 PCI",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078_PCIE,
+	    "SAS1078 PCI Express",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
 	    "53c875J",
 	},
@@ -8276,6 +8376,18 @@ static const struct pci_product pci_products[] = {
 	    "FC919X",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC949X,
+	    "FC949X",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC939X,
+	    "FC939X",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC949E,
+	    "FC949E",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC,
 	    "PERC 4/SC",
 	},
@@ -8294,6 +8406,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
 	    "Packet Engines G-NIC Ethernet",
+	},
+	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS,
+	    "Tools",
+	},
+	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO,
+	    "Video",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
@@ -9041,7 +9161,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
-	    "HD Audio",
+	    "MCP55 High Definition Audio Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1,
@@ -9268,6 +9388,14 @@ static const struct pci_product pci_products[] = {
 	    "PDC40718 SATA/300 IDE controller",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40518,
+	    "PDC40518 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20775,
+	    "PDC20775 SATA/300 IDE controller",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40719,
 	    "PDC40719 SATA/300 IDE controller",
 	},
@@ -9366,6 +9494,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 	    "8139 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
+	    "8168 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
@@ -9920,6 +10052,14 @@ static const struct pci_product pci_products[] = {
 	    "180 SATA controller",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_181_SATA,
+	    "181 SATA controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_182_SATA,
+	    "182 SATA controller",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190,
 	    "190 Ethernet",
 	},
@@ -10008,6 +10148,10 @@ static const struct pci_product pci_products[] = {
 	    "658 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_661,
+	    "661 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
 	    "730 Host Bridge",
 	},
@@ -10054,6 +10198,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755,
 	    "755 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760,
+	    "760 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_761,
+	    "761 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
@@ -11072,6 +11224,10 @@ static const struct pci_product pci_products[] = {
 	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HDA,
+	    "VT8237A/VT8251 High Definition Audio Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
 	    "KT880 CPU to PCI Bridge",
 	},
@@ -11608,4 +11764,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2311;
+const int pci_nproducts = 2348;

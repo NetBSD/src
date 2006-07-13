@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.27 2006/04/16 07:10:45 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.27.4.1 2006/07/13 17:48:45 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.27 2006/04/16 07:10:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.27.4.1 2006/07/13 17:48:45 gdamore Exp $");
 
 #include "opt_pci.h"
 
@@ -259,7 +259,7 @@ necpbattach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < 4; i++)
 		necpb_inttbl[i] = NULL;
 
-	(*platform->set_intr)(MIPS_INT_MASK_2, necpb_intr, 3);
+	(*platform->set_intr)(MIPS_INT_MASK_2, necpb_intr, ARC_INTPRI_PCIISA);
 
 	pba.pba_iot = &sc->sc_ncp->nc_iot;
 	pba.pba_memt = &sc->sc_ncp->nc_memt;

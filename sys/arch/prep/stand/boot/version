@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 2006/04/13 18:46:46 garbled Exp $
+$NetBSD: version,v 1.10.4.1 2006/07/13 17:49:02 gdamore Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,5 @@ is taken as the current.
 		KNF.
 1.7:		Rewrite vreset.c, make it work and allways run it. Stop using
 		cd9660 and ufs, replace with nullfs because we don't need one.
+1.8:		Do not allways run vreset.  When resetting, only do the pci
+		stuff when we find an actual pci card.

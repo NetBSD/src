@@ -1,4 +1,4 @@
-/* $NetBSD: splash.h,v 1.1 2006/02/18 19:00:23 jmcneill Exp $ */
+/* $NetBSD: splash.h,v 1.1.14.1 2006/07/13 17:49:43 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,6 +50,18 @@ struct splash_info {
 	int	si_stride;
 
 	void	(*si_fillrect)(struct splash_info *, int, int, int, int, int);
+
+	/*
+	 * These are optional and will default if zero. Meaningless
+	 * on depths other than 15, 16, 24 and 32 bits per pel. On
+	 * 24 bit displays, ri_{r,g,b}num must be 8.
+	 */
+	uint8_t	si_rnum;	/* number of bits for red */
+	uint8_t	si_gnum;	/* number of bits for green */
+	uint8_t	si_bnum;	/* number of bits for blue */
+	uint8_t	si_rpos;	/* which bit red starts at */
+	uint8_t	si_gpos;	/* which bit green starts at */
+	uint8_t	si_bpos;	/* which bit blue starts at */
 };
 
 #ifdef SPLASHSCREEN_PROGRESS

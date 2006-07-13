@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.67 2006/02/15 01:16:19 uwe Exp $
+# $NetBSD: GENERIC,v 1.67.10.1 2006/07/13 17:48:50 gdamore Exp $
 #
 # GENERIC machine description file
 #
@@ -321,6 +321,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

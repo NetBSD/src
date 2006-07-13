@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.12 2006/05/05 18:04:41 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.12.4.1 2006/07/13 17:48:46 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2006/05/05 18:04:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.4.1 2006/07/13 17:48:46 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,23 @@ device_register(struct device *dev, void *aux)
 				    "property for %s\n", dev->dv_xname);
 			}
 			prop_object_release(pd);
+		}
+	}
+
+	/* YAMON environment can override videomode */
+	if (device_is_a(dev, "radeonfb")) {
+		char	*cp;
+		prop_string_t ps;
+		cp = yamon_getenv("videomode");
+		if (cp != NULL) {
+			ps = prop_string_create_cstring(cp);
+			KASSERT(ps != NULL);
+			if (prop_dictionary_set(device_properties(dev),
+						"videomode", cp) == FALSE) {
+				printf("WARNING: unable to set videomode "
+				    "property for %s\n", device_xname(dev));
+			}
+			prop_object_release(ps);
 		}
 	}
 }

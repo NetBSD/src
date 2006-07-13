@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.1 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.1.12.1 2006/07/13 17:48:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.1 2006/03/04 14:09:36 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.1.12.1 2006/07/13 17:48:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,15 +263,14 @@ j720tp_get_rawxy(struct j720tp_softc *sc, int *rawx, int *rawy)
 	bus_space_write_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_PCR, 0x2000000);
 
 	/* Send read touch-panel command. */
-	if (j720ssp_readwrite(ssp, 1, 0x500, &data, 100) < 0 || data != 0x88) {
+	if (j720ssp_readwrite(ssp, 1, 0xa0, &data, 100) < 0 || data != 0x11) {
 		DPRINTF(("j720tp_get_rawxy: no dummy received\n"));
 		goto out;
 	}
 
 	for (i = 0; i < 8; i++) {
-		if (j720ssp_readwrite(ssp, 0, 0x8800, &data, 100) < 0)
+		if (j720ssp_readwrite(ssp, 0, 0x11, &data, 100) < 0)
 			goto out;
-		J720SSP_INVERT(data);
 		buf[i] = data;
 	}
 

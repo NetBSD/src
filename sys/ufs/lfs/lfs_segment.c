@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.182 2006/06/07 22:34:43 kardel Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.182.2.1 2006/07/13 17:50:13 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.182 2006/06/07 22:34:43 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.182.2.1 2006/07/13 17:50:13 gdamore Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.182 2006/06/07 22:34:43 kardel Exp
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -178,7 +179,7 @@ lfs_imtime(struct lfs *fs)
 	struct inode *ip;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	getnanotime(&ts);
+	vfs_timestamp(&ts);
 	ip = VTOI(fs->lfs_ivnode);
 	ip->i_ffs1_mtime = ts.tv_sec;
 	ip->i_ffs1_mtimensec = ts.tv_nsec;
@@ -1571,7 +1572,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 	}
 	if (sn == fs->lfs_nseg)
 		panic("lfs_rewind: no clean segments");
-	if (sn >= newsn)
+	if (newsn >= 0 && sn >= newsn)
 		return ENOENT;
 	fs->lfs_nextseg = sn;
 	lfs_newseg(fs);
@@ -1604,8 +1605,7 @@ lfs_initseg(struct lfs *fs)
 		fs->lfs_avail -= fs->lfs_fsbpseg - (fs->lfs_offset -
 						   fs->lfs_curseg);
 		/* Wake up any cleaning procs waiting on this file system. */
-		wakeup(&lfs_allclean_wakeup);
-		wakeup(&fs->lfs_nextseg);
+		lfs_wakeup_cleaner(fs);
 		lfs_newseg(fs);
 		repeat = 1;
 		fs->lfs_offset = fs->lfs_curseg;
@@ -1727,6 +1727,7 @@ lfs_newseg(struct lfs *fs)
 	/* Honor LFCNWRAPSTOP */
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		log(LOG_NOTICE, "%s: waiting on log wrap\n", fs->lfs_fsmnt);
 		wakeup(&fs->lfs_nowrap);
 		ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
 			&fs->lfs_interlock);

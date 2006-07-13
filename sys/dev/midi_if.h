@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.16.1 2006/07/13 17:49:17 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ struct midi_info {
 };
 #define MIDI_PROP_OUT_INTR  1
 #define MIDI_PROP_CAN_INPUT 2
+#define MIDI_PROP_NO_OUTPUT 4
 
 struct midi_softc;
 
@@ -58,6 +59,36 @@ struct midi_hw_if {
 	void	(*getinfo)(void *, struct midi_info *);
 	int	(*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
 };
+
+/*
+ * The extended hardware interface is for use by drivers that are better off
+ * getting messages whole to transmit, rather than byte-by-byte through
+ * output().  Two examples are midisyn (which interprets MIDI messages in
+ * software to drive synth chips) and umidi (which has to send messages in the
+ * packet-based USB MIDI protocol).  It is silly for them to have to reassemble
+ * messages midi had to split up to poke through the single-byte interface.
+ *
+ * To register use of the extended interface, a driver will call back midi's
+ * midi_register_hw_if_ext() function during getinfo(); thereafter midi will
+ * deliver channel messages, system common messages other than sysex, and sysex
+ * messages, respectively, through these methods, and use the original output
+ * method only for system realtime messages (all of which are single byte).
+ * Other drivers that have no reason to change from the single-byte interface
+ * simply don't call the register function, and nothing changes for them.
+ *
+ * IMPORTANT: any code that provides a midi_hw_if_ext struct MUST initialize
+ * its members BY NAME (typically with a C99-style initializer with designators)
+ * and assure that any unused members contain zeroes (which is what C99
+ * initializers will do), and make no assumptions about the size or order of
+ * the struct, to allow for further extension of this interface as needed.
+ */
+struct midi_hw_if_ext {
+	int	(*channel)(void *, int, int, u_char *, int);
+	int	(*common)(void *, int, u_char *, int);
+	int	(*sysex)(void *, u_char *, int);
+	int	compress:1; /* if hw wants channel msgs in compressed form */
+};
+void midi_register_hw_if_ext(struct midi_hw_if_ext *);
 
 void	midi_attach(struct midi_softc *, struct device *);
 struct device *midi_attach_mi(const struct midi_hw_if *, void *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.5.16.1 2006/07/13 17:48:47 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -144,7 +144,6 @@ int	ite_scode[NITE] = { 0 };
 static void
 iteconfig(void)
 {
-	extern struct hp_hw sc_table[];
 	int dtype, fboff, i;
 	struct hp_hw *hw;
 	struct grfreg *gr;

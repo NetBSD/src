@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:55 tv Exp $
+#	$NetBSD: Makefile,v 1.6.58.1 2006/07/13 17:49:05 gdamore Exp $
 
 LIB=	dos
 
@@ -49,14 +49,14 @@ OBJS+=	${ASM}
 MAKECALL=${.CURDIR}/makedoscalls.awk
 
 ${ASM}: ${.CURDIR}/dos.h ${MAKECALL}
-	@echo creating ${.TARGET}
+	${_MKTARGET_COMPILE}
 	@grep -i 'DOS_${.PREFIX} ' ${.CURDIR}/dos.h | \
 	    ${AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | ${AS} -o ${.TARGET}
 
 MAKESTRERR=${.CURDIR}/makestrerror.awk
 
 dos_strerror.S: ${.CURDIR}/dos_errno.h ${MAKESTRERR}
-	@echo generating ${.TARGET}
+	${_MKTARGET_CREATE}
 	@${AWK} -f ${MAKESTRERR} ${.CURDIR}/dos_errno.h > ${.TARGET}\
 		|| ( rm -f ${.TARGET}; exit 1 )
 

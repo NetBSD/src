@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.55 2006/05/05 18:04:42 thorpej Exp $
+ * $Id: ahc_pci.c,v 1.55.4.1 2006/07/13 17:49:26 gdamore Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.55 2006/05/05 18:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.55.4.1 2006/07/13 17:49:26 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1053,7 +1053,7 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 			 */ 
 			usetd = prop_dictionary_get(
 					device_properties(&ahc->sc_dev),
-					"use-target-defaults");
+					"aic7xxx-use-target-defaults");
 			if (usetd != NULL) {
 				KASSERT(prop_object_type(usetd) ==
 					PROP_TYPE_BOOL);

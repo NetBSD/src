@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.51 2006/05/27 08:41:13 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.51.2.1 2006/07/13 17:50:06 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.

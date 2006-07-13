@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.9 2006/06/12 00:18:06 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.9.2.1 2006/07/13 17:49:50 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.9 2006/06/12 00:18:06 christos Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.9.2.1 2006/07/13 17:49:50 gdamore Exp $");
 #endif /* not lint */
 
 
@@ -2100,8 +2100,8 @@ udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp)
 	uint8_t	 *outchp;
 	int       ucode_chars, nice_uchars;
 
-	raw_name = malloc(2048, M_UDFTEMP, M_WAITOK);
-	unix_name = raw_name + 1024;
+	raw_name = malloc(2048 * sizeof(uint16_t), M_UDFTEMP, M_WAITOK);
+	unix_name = raw_name + 1024;			/* split space in half */
 	assert(sizeof(char) == sizeof(uint8_t));
 	outchp = (uint8_t *) result;
 	if ((chsp->type == 0) && (strcmp((char*) chsp->inf, "OSTA Compressed Unicode") == 0)) {
@@ -2600,7 +2600,7 @@ void
 udf_read_filebuf(struct udf_node *node, struct buf *buf)
 {
 	struct buf *nestbuf;
-	uint64_t    mapping[FILEBUFSECT];
+	uint64_t   *mapping;
 	uint64_t    run_start;
 	uint32_t    sector_size;
 	uint32_t    buf_offset, sector, rbuflen, rblk;
@@ -2627,6 +2627,8 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		return;
 	}
 
+	mapping = malloc(sizeof(*mapping) * FILEBUFSECT, M_TEMP, M_WAITOK);
+
 	error = 0;
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
 	error = udf_translate_file_extent(node, from, sectors, mapping);
@@ -2634,7 +2636,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		buf->b_error  = error;
 		buf->b_flags |= B_ERROR;
 		biodone(buf);
-		return;
+		goto out;
 	}
 	DPRINTF(READ, ("\ttranslate extent went OK\n"));
 
@@ -2646,7 +2648,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			buf->b_flags |= B_ERROR;
 		}
 		biodone(buf);
-		return;
+		goto out;
 	}
 	DPRINTF(READ, ("\tnot intern\n"));
 
@@ -2698,7 +2700,10 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			VOP_STRATEGY(node->ump->devvp, nestbuf);
 		}
 	}
+out:
 	DPRINTF(READ, ("\tend of read_filebuf\n"));
+	free(mapping, M_TEMP);
+	return;
 }
 #undef FILEBUFSECT
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.6 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.6.16.1 2006/07/13 17:49:17 gdamore Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.6 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.6.16.1 2006/07/13 17:49:17 gdamore Exp $");
 
 #include "opt_acpi.h"
 
@@ -52,19 +52,48 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.6 2005/12/11 12:21:02 christos Exp
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+static int acpi_rev_cmp(uint32_t, uint32_t, int);
+
+/*
+ * XXX add more
+ */
 static struct acpi_quirk acpi_quirks[] = {
-	/*
-	 * This implementation seems to be in widespread use, but
-	 * unfortunately, on some systems, it constructs a PCI hierarchy
-	 * that doesn't match reality at all (like on SuperMicro boards).
-	 */
-	{ "PTLTD ", 0x06040000, ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ },
-	/*
-	 * This is on my Appro 1224 Xi. It does not find all the busses
-	 * in the ACPI tables.
-	 */
-	{ "A M I ", 0x02000304, ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ },
+	{ ACPI_TABLE_FADT, "PTLTD ", 0x06040000, AQ_LTE, "  FACP  ",
+	  ACPI_QUIRK_BROKEN },
 };
+
+static int
+acpi_rev_cmp(uint32_t tabval, uint32_t wanted, int op)
+{
+	switch (op) {
+	case AQ_GT:
+		if (tabval > wanted)
+			return 0;
+		else
+			return 1;
+	case AQ_LT:
+		if (tabval < wanted)
+			return 0;
+		else
+			return 1;
+	case AQ_LTE:
+		if (tabval <= wanted)
+			return 0;
+		else
+			return 1;
+	case AQ_GTE:
+		if (tabval >= wanted)
+			return 0;
+		else
+			return 1;
+	case AQ_EQ:
+		if (tabval == wanted)
+			return 0;
+		else
+			return 1;
+	}
+	return 1;
+}
 
 /*
  * Simple function to search the quirk table. Only to be used after
@@ -75,14 +104,35 @@ acpi_find_quirks(void)
 {
 	int i, nquirks;
 	struct acpi_quirk *aqp;
+	ACPI_TABLE_HEADER *hdr;
 
 	nquirks = sizeof(acpi_quirks) / sizeof(struct acpi_quirk);
 
 	for (i = 0; i < nquirks; i++) {
 		aqp = &acpi_quirks[i];
-		if (!strncmp(aqp->aq_oemid, AcpiGbl_XSDT->OemId, strlen(aqp->aq_oemid)) &&
-		    aqp->aq_oemrev == AcpiGbl_XSDT->OemRevision)
-			return aqp->aq_quirks;
+		/* XXX AcpiGetTableHeader doesn't work for some reason */
+		switch (aqp->aq_tabletype) {
+		case ACPI_TABLE_DSDT:
+			hdr = (ACPI_TABLE_HEADER *)AcpiGbl_DSDT;
+			break;
+		case ACPI_TABLE_XSDT:
+			hdr = (ACPI_TABLE_HEADER *)AcpiGbl_XSDT;
+			break;
+		case ACPI_TABLE_FADT:
+			hdr = (ACPI_TABLE_HEADER *)AcpiGbl_FADT;
+			break;
+		default:
+			continue;
+		}
+		if (strncmp(aqp->aq_oemid, hdr->OemId, strlen(aqp->aq_oemid)))
+			continue;
+		if (acpi_rev_cmp(aqp->aq_oemrev, hdr->OemRevision,
+		    aqp->aq_cmpop))
+			continue;
+		if (strncmp(aqp->aq_tabid, hdr->OemTableId,
+		    strlen(aqp->aq_tabid)))
+			continue;
+		return aqp->aq_quirks;
 	}
 	return 0;
 }

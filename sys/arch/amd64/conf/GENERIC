@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.94 2006/04/27 20:16:01 jonathan Exp $
+# $NetBSD: GENERIC,v 1.94.4.1 2006/07/13 17:48:44 gdamore Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.94 $"
+#ident 		"GENERIC-$Revision: 1.94.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -228,9 +228,7 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 #acpi0 		at mainbus0
-#options 	MPACPI			# configure CPUs and APICs using ACPI
-					# (acpi at mainbus must also be enabled)
-#options 	MPACPI_SCANPCI		# find PCI roots using MPACPI
+#options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
@@ -367,6 +365,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+
+# iTE IT87xxF and compatible hardware monitors
+#it0 	at isa? port 0x290 		# other ports: 0xc00, 0xd00.
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -844,6 +845,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol

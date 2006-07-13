@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.36 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: macros.h,v 1.36.10.1 2006/07/13 17:49:05 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -41,7 +41,7 @@ void	__blkcpy(const void *, void *, size_t);
 /* Here general macros are supposed to be stored */
 
 static __inline int __attribute__((__unused__))
-ffs(int reg)
+vax_ffs(int reg)
 {
 	register int val;
 
@@ -54,91 +54,74 @@ ffs(int reg)
 			: "r" (reg) );
 	return	val;
 }
+#define ffs vax_ffs
 
 static __inline void __attribute__((__unused__))
-_remque(void *p)
+vax_remque(void *p)
 {
 	__asm volatile ("remque (%0),%0;clrl 4(%0)"
 			:
 			: "r" (p)
 			: "memory" );
 }
+#define _remque vax_remque
 
 static __inline void  __attribute__((__unused__))
-_insque(void *p, void *q)
+vax_insque(void *p, void *q)
 {
 	__asm volatile ("insque (%0),(%1)"
 			:
 			: "r" (p),"r" (q)
 			: "memory" );
 }
+#define _insque vax_insque
 
+#if 0
 static __inline void * __attribute__((__unused__))
-memcpy(void *to, const void *from, size_t len)
+vax_memcpy(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
 		__blkcpy(from, to, len);
 	} else {
-		__asm volatile ("movc3 %0,%1,%2"
-			:
-			: "g" (len), "m" (*(const char *)from), "m" (*(char *)to)
+		__asm volatile ("movc3 %1,(%2),%0"
+			: "=m" (*(char *)to)
+			: "g" (len), "r" (*(const char *)from)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 	return to;
 }
+#define memcpy vax_memcpy
+
 static __inline void * __attribute__((__unused__))
-memmove(void *to, const void *from, size_t len)
+vax_memmove(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
 		__blkcpy(from, to, len);
 	} else {
-		__asm volatile ("movc3 %0,%1,%2"
-			:
-			: "g" (len), "m" (*(const char *)from), "m" (*(char *)to)
+		__asm volatile ("movc3 %1,%2,%0"
+			: "=m" (*(char *)to)
+			: "g" (len), "mo" (*(const char *)from)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 	return to;
 }
-
-#ifdef notdef /* bcopy() is obsoleted in kernel */
-static __inline void __attribute__((__unused__))
-bcopy(const void *from, void *to, size_t len)
-{
-	__asm volatile ("movc3 %0,%1,%2"
-			:
-			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-}
+#define memmove vax_memmove
 #endif
 
 static __inline void * __attribute__((__unused__))
-memset(void *block, int c, size_t len)
+vax_memset(void *block, int c, size_t len)
 {
 	if (len > 65535) {
 		__blkset(block, c, len);
 	} else {
 		__asm volatile ("movc5 $0,(%%sp),%2,%1,%0"
-			:
-			: "m" (*(char *)block), "g" (len), "g" (c)
+			: "=m" (*(char *)block)
+			:  "g" (len), "g" (c)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 	return block;
 }
-
-#ifdef notdef /* bzero() is obsoleted in kernel */
-static __inline void __attribute__((__unused__))
-bzero(void *block, size_t len)
-{
-	if (len > 65535)
-		__blkset(block, 0, len);
-	else {
-		__asm volatile ("movc5 $0,(%%sp),$0,%1,%0"
-			:
-			: "m" (*(char *)block), "g" (len)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	}
-}
-#endif
+#define memset vax_memset
 
 #ifdef notdef 
 /* XXX - the return syntax of memcmp is wrong */
@@ -291,7 +274,7 @@ locc(int mask, char *cp, size_t size){
 #endif
 
 static __inline int __attribute__((__unused__))
-scanc(u_int size, const u_char *cp, const u_char *table, int mask)
+vax_scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 {
 	register int ret;
 
@@ -302,9 +285,10 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 			: "r0","r1","r2","r3" );
 	return ret;
 }
+#define scanc vax_scanc
 
 static __inline int __attribute__((__unused__))
-skpc(int mask, size_t size, u_char *cp)
+vax_skpc(int mask, size_t size, u_char *cp)
 {
 	register int ret;
 
@@ -315,6 +299,7 @@ skpc(int mask, size_t size, u_char *cp)
 			: "r0","r1" );
 	return	ret;
 }
+#define skpc vax_skpc
 
 /*
  * Set/clear a bit at a memory position; interlocked.

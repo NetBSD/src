@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.178 2006/05/18 23:15:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.178.4.1 2006/07/13 17:50:13 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.178 2006/05/18 23:15:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.178.4.1 2006/07/13 17:50:13 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.178 2006/05/18 23:15:09 perseant Exp
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -928,11 +929,38 @@ lfs_setattr(void *v)
 }
 
 /*
+ * Release the block we hold on lfs_newseg wrapping.  Called on file close,
+ * or explicitly from LFCNWRAPGO.
+ */
+static int
+lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
+{
+	if ((ip->i_lfs_iflags & LFSI_WRAPBLOCK) == 0)
+		return EBUSY;
+
+	ip->i_lfs_iflags &= ~LFSI_WRAPBLOCK;
+
+	KASSERT(fs->lfs_nowrap > 0);
+	if (fs->lfs_nowrap <= 0) {
+		simple_unlock(&fs->lfs_interlock);
+		return 0;
+	}
+
+	if (--fs->lfs_nowrap == 0) {
+		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
+		wakeup(&fs->lfs_nowrap);
+		lfs_wakeup_cleaner(fs);
+	}
+	if (waitfor) {
+		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER,
+			"segment", 0, &fs->lfs_interlock);
+	}
+
+	return 0;
+}
+
+/*
  * Close called
- *
- * XXX -- we were using ufs_close, but since it updates the
- * times on the inode, we might need to bump the uinodes
- * count.
  */
 /* ARGSUSED */
 int
@@ -946,6 +974,13 @@ lfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
+
+	if (ip->i_lfs_iflags & LFSI_WRAPBLOCK) {
+		simple_lock(&fs->lfs_interlock);
+		lfs_wrapgo(fs, ip, 0);
+		simple_unlock(&fs->lfs_interlock);
+	}
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
@@ -1347,6 +1382,7 @@ lfs_fcntl(void *v)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	int blkcnt, error, oclean;
+	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
 	struct proc *p;
 	fsid_t *fsidp;
@@ -1460,7 +1496,9 @@ lfs_fcntl(void *v)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
-		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid));
+		fh_size = sizeof(union lfs_fhandle) -
+		    offsetof(fhandle_t, fh_fid);
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 
 	    case LFCNREWIND:
 		/* Move lfs_offset to the lowest-numbered segment */
@@ -1483,34 +1521,46 @@ lfs_fcntl(void *v)
 		return lfs_resize_fs(fs, *(int *)ap->a_data);
 
 	    case LFCNWRAPSTOP:
+	    case LFCNWRAPSTOP_COMPAT:
 		/*
-		 * Hold lfs_newseg at segment 0; sleep until the filesystem
-		 * wraps around.  For debugging purposes, so an external
-		 * agent can log every segment in the filesystem as it
-		 * was written, and we can regression-test checkpoint
-		 * validity in the general case.
+		 * Hold lfs_newseg at segment 0; if requested, sleep until
+		 * the filesystem wraps around.  To support external agents
+		 * (dump, fsck-based regression test) that need to look at
+		 * a snapshot of the filesystem, without necessarily
+		 * requiring that all fs activity stops.
 		 */
+		if (VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPBLOCK)
+			return EALREADY;
+
 		simple_lock(&fs->lfs_interlock);
-		fs->lfs_nowrap = 1;
-		error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER | PNORELOCK,
-			"segwrap", 0, &fs->lfs_interlock);
-		if (error) {
-			fs->lfs_nowrap = 0;
-			wakeup(&fs->lfs_nowrap);
+		VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPBLOCK;
+		if (fs->lfs_nowrap == 0)
+			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
+		++fs->lfs_nowrap;
+		if (*(int *)ap->a_data == 1 ||
+		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
+			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
+				"segwrap", 0, &fs->lfs_interlock);
+			if (error) {
+				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
+			}
 		}
+		simple_unlock(&fs->lfs_interlock);
 		return 0;
 
 	    case LFCNWRAPGO:
+	    case LFCNWRAPGO_COMPAT:
 		/*
 		 * Having done its work, the agent wakes up the writer.
-		 * It sleeps until a new segment is selected.
+		 * If the argument is 1, it sleeps until a new segment
+		 * is selected.
 		 */
 		simple_lock(&fs->lfs_interlock);
-		fs->lfs_nowrap = 0;
-		wakeup(&fs->lfs_nowrap);
-		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
-			"segment", 0, &fs->lfs_interlock);
-		return 0;
+		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
+				   (ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
+				    *((int *)ap->a_data)));
+		simple_unlock(&fs->lfs_interlock);
+		return error;
 
 	    default:
 		return ufs_fcntl(v);
@@ -2048,6 +2098,7 @@ again:
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
 			/*

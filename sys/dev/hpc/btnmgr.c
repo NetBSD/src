@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.16 2006/03/29 06:37:35 thorpej Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.16.4.1 2006/07/13 17:49:22 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.16 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.16.4.1 2006/07/13 17:49:22 gdamore Exp $");
 
 #define BTNMGRDEBUG
 
@@ -116,7 +116,7 @@ const struct wskbd_accessops btnmgr_wskbd_accessops = {
 	btnmgr_wskbd_ioctl,
 };
 
-/* button config: index by buttun event id */
+/* button config: index by button event id */
 static const struct {
 	int  kevent;
 	int  keycode;
