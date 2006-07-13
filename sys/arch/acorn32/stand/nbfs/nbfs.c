@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.5 2006/07/04 22:34:54 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.6 2006/07/13 15:51:54 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -84,6 +84,8 @@ struct nbfs_open_file {
 
 static LIST_HEAD(, nbfs_open_file) nbfs_open_files;
 
+static os_error const *maperr(int saerr);
+
 /*
  * Given a RISC OS special field and pathname, open the relevant
  * device and return a pointer to the remainder of the pathname.
@@ -165,10 +167,9 @@ nbfs_fclose(struct open_file *f)
 	return ferr != 0 ? ferr : derr;
 }
 
-os_error *
+os_error const *
 nbfs_open(struct nbfs_reg *r)
 {
-	static os_error error = {0, "nbfs_open"};
 	int reason = r->r0;
 	char const *fname = (char const *)r->r1;
 	int fh = r->r3;
@@ -177,7 +178,10 @@ nbfs_open(struct nbfs_reg *r)
 	struct nbfs_open_file *nof = NULL;
 	struct stat st;
 
-	if (reason == 0) {
+	switch (reason) {
+	case 0: /* Open for read */
+	case 1: /* Create and open for update */
+	case 2: /* Open for update */
 		nof = alloc(sizeof(*nof));
 		memset(nof, 0, sizeof(*nof));
 		err = nbfs_fopen(&nof->f, special, fname);
@@ -193,17 +197,19 @@ nbfs_open(struct nbfs_reg *r)
 		r->r3 = st.st_size;
 		r->r4 = st.st_size;
 		return NULL;
+	default:
+		err = EINVAL;
+		goto fail;
 	}
 fail:
 	if (nof != NULL)
 		dealloc(nof, sizeof(*nof));
-	return &error;
+	return maperr(err);
 }
 
-os_error *
+os_error const *
 nbfs_getbytes(struct nbfs_reg *r)
 {
-	static os_error error = {0, "nbfs_getbytes"};
 	struct nbfs_open_file *nof = (struct nbfs_open_file *)r->r1;
 	void *buf = (void *)r->r2;
 	size_t size = r->r3;
@@ -211,29 +217,29 @@ nbfs_getbytes(struct nbfs_reg *r)
 	int err;
 
 	err = FS_SEEK(nof->f.f_ops)(&nof->f, off, SEEK_SET);
-	if (err == -1) return &error;
+	if (err == -1) return maperr(err);
 	err = FS_READ(nof->f.f_ops)(&nof->f, buf, size, NULL);
-	if (err != 0) return &error;
+	if (err != 0) return maperr(err);
 	return NULL;
 }
 
-os_error *
+os_error const *
 nbfs_putbytes(struct nbfs_reg *r)
 {
-	static os_error err = {0, "nbfs_putbytes"};
+	static os_error const err = {0, "nbfs_putbytes"};
 
 	return &err;
 }
 
-os_error *
+os_error const *
 nbfs_args(struct nbfs_reg *r)
 {
-	static os_error err = {0, "nbfs_args"};
+	static os_error const err = {0, "nbfs_args"};
 
 	return &err;
 }
 
-os_error *
+os_error const *
 nbfs_close(struct nbfs_reg *r)
 {
 	static os_error error = {0, "nbfs_close"};
@@ -249,10 +255,9 @@ nbfs_close(struct nbfs_reg *r)
 	return NULL;
 }
 
-os_error *
+os_error const *
 nbfs_file(struct nbfs_reg *r)
 {
-	static os_error error = {0, "nbfs_file"};
 	int reason = r->r0;
 	char const *fname = (char const *)r->r1;
 	void *buf = (void *)r->r2;
@@ -264,10 +269,21 @@ nbfs_file(struct nbfs_reg *r)
 	memset(&f, 0, sizeof(f));
 	err = nbfs_fopen(&f, special, fname);
 	if (err != 0 && err != ENOENT)
-		return &error;
+		return maperr(err);
 	switch (reason) {
-	case 5:
-	case 255:
+	case 0: /* Save file */
+	case 1: /* Write catalogue information */
+	case 2: /* Write load address */
+	case 3: /* Write execution address */
+	case 4: /* Write attributes */
+	case 6: /* Delete object */
+	case 7: /* Create file */
+	case 8: /* Create directory */
+		nbfs_fclose(&f);
+		err = EROFS;
+		goto fail;
+	case 5: /* Read catalogue information */
+	case 255: /* Load file */
 		if (err == ENOENT)
 			r->r0 = r->r2 = r->r3 = r->r4 = r->r5 = 0;
 		else {
@@ -289,13 +305,15 @@ nbfs_file(struct nbfs_reg *r)
 		}
 		break;
 	default:
+		nbfs_fclose(&f);
+		err = EINVAL;
 		goto fail;
 	}
 	nbfs_fclose(&f);
 	return NULL;
 fail:
 	nbfs_fclose(&f);
-	return &error;
+	return maperr(err);
 }
 
 static int
@@ -308,10 +326,9 @@ nbfs_filename_ok(char const *f)
 	return 1;
 }
 
-static os_error *
+static os_error const *
 nbfs_func_dirents(struct nbfs_reg *r)
 {
-	static os_error error = {0, "nbfs_func_dirents"};
 	int reason = r->r0;
 	char const *fname = (char const *)r->r1;
 	char const *special = (char const *)r->r6;
@@ -330,12 +347,14 @@ nbfs_func_dirents(struct nbfs_reg *r)
 
 	err = nbfs_fopen(&f, special, fname);
 	if (err != 0)
-		return &error;
+		return maperr(err);
 	err = FS_STAT(f.f_ops)(&f, &st);
 	if (err != 0)
 		goto fail;
-	if (!S_ISDIR(st.st_mode))
+	if (!S_ISDIR(st.st_mode)) {
+		err = ENOTDIR;
 		goto fail;
+	}
 	while (FS_READ(f.f_ops)(&f, dirbuf, DIRBLKSIZ, &resid) == 0 &&
 	    resid == 0) {
 		struct direct  *dp, *edp;
@@ -399,10 +418,10 @@ out:
 	return NULL;
 fail:
 	nbfs_fclose(&f);
-	return &error;
+	return maperr(err);
 }
 
-os_error *
+os_error const *
 nbfs_func(struct nbfs_reg *r)
 {
 	static os_error error = {0, "nbfs_func"};
@@ -419,4 +438,33 @@ nbfs_func(struct nbfs_reg *r)
 		sprintf(error.errmess, "nbfs_func %d not implemented", reason);
 		return &error;
 	}
+}
+
+#define FSERR(x) (0x10000 | (NBFS_FSNUM << 8) | (x))
+
+static struct {
+	int saerr;
+	os_error roerr;
+} const errmap[] = {
+	{ ECTLR,   { FSERR(ECTLR),   "Bad parent filing system" } },
+	{ EUNIT,   { FSERR(0xAC),    "Bad drive number" } },
+	{ EPART,   { FSERR(EPART),   "Bad partition" } },
+	{ ERDLAB,  { FSERR(ERDLAB),  "Can't read disk label" } },
+	{ EUNLAB,  { FSERR(EUNLAB),  "Unlabeled" } },
+	{ ENOENT,  { FSERR(0xD6),    "No such file or directory" } },
+	{ EIO,     { FSERR(EIO),     "Input/output error" } },
+	{ EINVAL,  { FSERR(EINVAL),  "Invalid argument" } },
+	{ ENOTDIR, { FSERR(ENOTDIR), "Not a directory" } },
+	{ EROFS,   { FSERR(0xC9),    "Read-only file system" } },
+};
+
+static os_error const *maperr(int err)
+{
+	int i;
+	static const os_error defaulterr = { FSERR(0), "Unknown NBFS error" };
+
+	for (i = 0; i < sizeof(errmap) / sizeof(errmap[0]); i++)
+		if (err == errmap[i].saerr)
+			return &errmap[i].roerr;
+	return &defaulterr;
 }
