@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.32 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.33 2006/07/13 12:00:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.32 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.33 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -665,17 +665,21 @@ cd9660_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	struct ifid *ifhp = (struct ifid *)fhp;
+	struct ifid ifh;
 	struct iso_node *ip;
 	struct vnode *nvp;
 	int error;
 
+	if (fhp->fid_len != sizeof(ifh))
+		return EINVAL;
+
+	memcpy(&ifh, fhp, sizeof(ifh));
 #ifdef	ISOFS_DBG
 	printf("fhtovp: ino %d, start %ld\n",
-	    ifhp->ifid_ino, ifhp->ifid_start);
+	    ifh.ifid_ino, ifh.ifid_start);
 #endif
 
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -925,22 +929,29 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
  */
 /* ARGSUSED */
 int
-cd9660_vptofh(vp, fhp)
+cd9660_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct iso_node *ip = VTOI(vp);
-	struct ifid *ifhp;
+	struct ifid ifh;
 
-	ifhp = (struct ifid *)fhp;
-	ifhp->ifid_len = sizeof(struct ifid);
+	if (*fh_size < sizeof(struct ifid)) {
+		*fh_size = sizeof(struct ifid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ifid);
 
-	ifhp->ifid_ino = ip->i_number;
-	ifhp->ifid_start = ip->iso_start;
+	memset(&ifh, 0, sizeof(ifh));
+	ifh.ifid_len = sizeof(struct ifid);
+	ifh.ifid_ino = ip->i_number;
+	ifh.ifid_start = ip->iso_start;
+	memcpy(fhp, &ifh, sizeof(ifh));
 
 #ifdef	ISOFS_DBG
 	printf("vptofh: ino %d, start %ld\n",
-	    ifhp->ifid_ino,ifhp->ifid_start);
+	    ifh.ifid_ino,ifh.ifid_start);
 #endif
 	return 0;
 }

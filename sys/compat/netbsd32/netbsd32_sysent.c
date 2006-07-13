@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.54 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.55 2006/07/13 12:00:25 martin Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.54 2006/06/26 21:30:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.55 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -449,8 +449,8 @@ struct sysent netbsd32_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-	{ 2, s(struct netbsd32_getfh_args), 0,
-	    netbsd32_getfh },			/* 161 = netbsd32_getfh */
+	{ 2, s(struct compat_30_netbsd32_getfh_args), 0,
+	    compat_30(netbsd32_getfh) },	/* 161 = compat_30 netbsd32_getfh */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 161 = excluded netbsd32_getfh */
@@ -1046,8 +1046,13 @@ struct sysent netbsd32_sysent[] = {
 	    netbsd32_ntp_gettime },		/* 393 = netbsd32_ntp_gettime */
 	{ 3, s(struct netbsd32_sys___socket30_args), 0,
 	    netbsd32_sys___socket30 },		/* 394 = __socket30 */
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+	{ 3, s(struct netbsd32___getfh30_args), 0,
+	    netbsd32___getfh30 },		/* 395 = netbsd32___getfh30 */
+#else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 395 = filler */
+	    sys_nosys },			/* 395 = excluded netbsd32_getfh */
+#endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 396 = filler */
 	{ 0, 0, 0,

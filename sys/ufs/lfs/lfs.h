@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.108 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.109 2006/07/13 12:00:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1080,7 +1080,12 @@ struct lfs_fcntl_markv {
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
-#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 5, struct fhandle)
+
+union lfs_fhandle {
+	struct fhandle fh;
+	char space[32];
+};
+#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 5, union lfs_fhandle)
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)

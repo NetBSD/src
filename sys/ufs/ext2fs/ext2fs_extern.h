@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.33 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.34 2006/07/13 12:00:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -151,7 +151,7 @@ int ext2fs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int ext2fs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int ext2fs_vget(struct mount *, ino_t, struct vnode **);
 int ext2fs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int ext2fs_vptofh(struct vnode *, struct fid *);
+int ext2fs_vptofh(struct vnode *, struct fid *, size_t *);
 int ext2fs_sbupdate(struct ufsmount *, int);
 int ext2fs_cgupdate(struct ufsmount *, int);
 

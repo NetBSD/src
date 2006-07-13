@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.180 2006/06/29 19:28:21 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.181 2006/07/13 12:00:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.180 2006/06/29 19:28:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.181 2006/07/13 12:00:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1382,6 +1382,7 @@ lfs_fcntl(void *v)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	int blkcnt, error, oclean;
+	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
 	struct proc *p;
 	fsid_t *fsidp;
@@ -1495,7 +1496,9 @@ lfs_fcntl(void *v)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
-		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid));
+		fh_size = sizeof(union lfs_fhandle) -
+		    offsetof(fhandle_t, fh_fid);
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 
 	    case LFCNREWIND:
 		/* Move lfs_offset to the lowest-numbered segment */

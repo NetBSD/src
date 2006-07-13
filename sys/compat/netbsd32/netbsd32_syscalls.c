@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.54 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.55 2006/07/13 12:00:25 martin Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.54 2006/06/26 21:30:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.55 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -216,7 +216,7 @@ const char *const netbsd32_syscallnames[] = {
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-	"netbsd32_getfh",			/* 161 = netbsd32_getfh */
+	"compat_30_netbsd32_getfh",	/* 161 = compat_30 netbsd32_getfh */
 #else
 	"#161 (excluded netbsd32_getfh)",		/* 161 = excluded netbsd32_getfh */
 #endif
@@ -535,4 +535,9 @@ const char *const netbsd32_syscallnames[] = {
 	"__fhstat30",			/* 392 = __fhstat30 */
 	"netbsd32_ntp_gettime",			/* 393 = netbsd32_ntp_gettime */
 	"__socket30",			/* 394 = __socket30 */
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+	"netbsd32___getfh30",			/* 395 = netbsd32___getfh30 */
+#else
+	"#395 (excluded netbsd32_getfh)",		/* 395 = excluded netbsd32_getfh */
+#endif
 };

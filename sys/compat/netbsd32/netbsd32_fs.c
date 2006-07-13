@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.27 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.28 2006/07/13 12:00:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.27 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.28 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.27 2006/05/14 21:24:50 elad Exp $"
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/sys/mount.h>
 
 
 static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
@@ -549,7 +550,7 @@ netbsd32_fhstatvfs1(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
-	fhandle_t fh;
+	struct compat_30_fhandle fh;
 	struct mount *mp;
 	struct vnode *vp;
 	int error;
@@ -561,12 +562,12 @@ netbsd32_fhstatvfs1(l, v, retval)
 		return error;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fhandle_t))) != 0)
+	    sizeof(fh))) != 0)
 		return error;
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return ESTALE;
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return error;
 
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
@@ -784,7 +785,7 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	struct stat sb;
 	struct netbsd32_stat sb32;
 	int error;
-	fhandle_t fh;
+	struct compat_30_fhandle fh;
 	struct mount *mp;
 	struct vnode *vp;
 
@@ -796,14 +797,14 @@ int netbsd32_sys___fhstat30(l, v, retval)
 		return (error);
 
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fhandle_t))) != 0)
+	    sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
 	if (mp->mnt_op->vfs_fhtovp == NULL)
 		return EOPNOTSUPP;
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	error = vn_stat(vp, &sb, l);
 	vput(vp);

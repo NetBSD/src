@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.150 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: syscallargs.h,v 1.151 2006/07/13 12:00:26 martin Exp $ */
 
 /*
  * System call argument lists.
@@ -723,9 +723,9 @@ struct compat_20_sys_fstatfs_args {
 	syscallarg(struct statfs12 *) buf;
 };
 
-struct sys_getfh_args {
+struct compat_30_sys_getfh_args {
 	syscallarg(const char *) fname;
-	syscallarg(fhandle_t *) fhp;
+	syscallarg(struct compat_30_fhandle *) fhp;
 };
 
 struct compat_09_sys_getdomainname_args {
@@ -1709,6 +1709,12 @@ struct sys___socket30_args {
 	syscallarg(int) protocol;
 };
 
+struct sys___getfh30_args {
+	syscallarg(const char *) fname;
+	syscallarg(fhandle_t *) fhp;
+	syscallarg(size_t *) fh_size;
+};
+
 /*
  * System call prototypes.
  */
@@ -2020,7 +2026,7 @@ int	compat_20_sys_statfs(struct lwp *, void *, register_t *);
 
 int	compat_20_sys_fstatfs(struct lwp *, void *, register_t *);
 
-int	sys_getfh(struct lwp *, void *, register_t *);
+int	compat_30_sys_getfh(struct lwp *, void *, register_t *);
 
 int	compat_09_sys_getdomainname(struct lwp *, void *, register_t *);
 
@@ -2411,5 +2417,7 @@ int	sys___fhstat30(struct lwp *, void *, register_t *);
 int	sys___ntp_gettime30(struct lwp *, void *, register_t *);
 
 int	sys___socket30(struct lwp *, void *, register_t *);
+
+int	sys___getfh30(struct lwp *, void *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */
