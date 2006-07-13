@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.3 2006/07/13 15:51:54 bjh21 Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.4 2006/07/13 16:09:58 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ben Harris
@@ -40,7 +40,7 @@ rmbase:
 	.word	0			/* Start code */
 	.word	rminit - rmbase		/* Initialisation code */
 	.word	rmfinal - rmbase	/* Finalisation code */
-	.word	0			/* Service call handler */
+	.word	rmservice - rmbase	/* Service call handler */
 	.word	rmtitle - rmbase	/* Title string */
 	.word	rmhelp - rmbase		/* Help string */
 	.word	rmcmdtbl - rmbase	/* Help and command keyword table */
@@ -90,6 +90,11 @@ rminit:
 	bl	relocate_self		/* Call the relocation code */
 	cmp	r0, #0
 	bne	Lerror
+	bl	Laddfs
+	ldmfd	r13!, {pc}
+
+Laddfs:
+	stmfd	r13!, {r14}
 	mov	r0, #OSFSControl_AddFS
 	adr	r1, rmbase
 	mov	r2, #(fsib - rmbase)
@@ -105,6 +110,13 @@ rmfinal:
 	cmp	r0, r0			/* Clear V flag */
 	ldmfd	r13!, {pc}
 
+rmservice:
+	cmp	r1, #Service_FSRedeclare
+	movne	pc, r14
+	stmfd	r13!, {r0-r3, r14}
+	bl	Laddfs
+	ldmfd	r13!, {r0-r3, pc}
+	
 Lerror:
 	teq	pc, pc			/* In 26-bit mode? */
 	ldmneia	r13!, {r14}		/* If so, load up return address */
