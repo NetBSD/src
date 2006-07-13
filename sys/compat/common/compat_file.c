@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.17 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: compat_file.c,v 1.18 2006/07/13 23:52:55 pavel Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.17 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.18 2006/07/13 23:52:55 pavel Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -736,7 +736,7 @@ bsd_sys_getfh(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
-	return sys_getfh(l, uap, retval);
+	return compat_30_sys_getfh(l, uap, retval);
 }
 #endif /* NFS || NFSSERVER */
 
