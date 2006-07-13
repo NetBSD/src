@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2006/05/22 13:44:53 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.44.2.1 2006/07/13 17:48:52 gdamore Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,9 +104,9 @@ include <machine/types.h>
 
 if defined(_KERNEL) && !defined(_LKM)
 include "ioapic.h"
-include "apm.h"
+include "apmbios.h"
 endif
-if NAPM > 0
+if NAPMBIOS > 0
 include <machine/bioscall.h>
 include <machine/apmvar.h>
 endif
@@ -259,7 +259,7 @@ define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
 
-if NAPM > 0
+if NAPMBIOS > 0
 define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
 define	APM_CODE16		offsetof(struct apm_connect_info, apm_code16_seg_base)
 define	APM_DATA		offsetof(struct apm_connect_info, apm_data_seg_base)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2006/05/12 04:26:40 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.34.4.1 2006/07/13 17:48:50 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2006/05/12 04:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.4.1 2006/07/13 17:48:50 gdamore Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1140,7 +1140,7 @@ syscall(struct trapframe *frame, int *args)
 
 #ifdef USERTRACE
 	if (0) {
-		user_backtrace(frame, p, -1);
+		user_backtrace(frame, l, -1);
 		frame->tf_ipsw |= PSW_R;
 		frame->tf_rctr = 0;
 		printf("r %08x", frame->tf_iioq_head);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/04/18 19:12:01 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16.44.1 2006/07/13 17:48:59 gdamore Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -15,8 +15,8 @@ COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 CLEANFILES+= ${PROG}.elf ${PROG}.tmp
 
-LDFLAGS= -x -N -Ttext a0700000 -e _start
-LDFLAGS+= -T ${S}/arch/mips/conf/stand.ldscript
+LINKFLAGS= -x -N -Ttext a0700000 -e _start
+LINKFLAGS+= -T ${S}/arch/mips/conf/stand.ldscript
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
@@ -33,7 +33,8 @@ LIBS+= ${COMMON}/lib/z/libz.a
 LIBS+= ${COMMON}/lib/kern/libkern.a
 
 ${PROG}: ${OBJS}
-	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}.elf
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
 

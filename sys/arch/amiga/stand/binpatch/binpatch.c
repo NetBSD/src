@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.10 2002/12/10 17:14:05 thorpej Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.10.48.1 2006/07/13 17:48:44 gdamore Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -74,7 +74,7 @@ static char desusage[] =
 extern char *optarg;
 extern int optind;
 
-volatile void error (char *);
+void error (char *) __attribute__((__noreturn__));
 static void Synopsis(char *program_name);
 static void Usage(char *program_name);
 static u_long FindAssign(char *symbol,u_long *rvalue);
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 
 
 
-volatile void error (char *str)
+void error (char *str)
 {
   fprintf (stderr, "%s\n", str);
   exit (1);

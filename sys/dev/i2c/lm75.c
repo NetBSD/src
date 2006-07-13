@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.10 2006/06/12 16:07:33 kiyohara Exp $	*/
+/*	$NetBSD: lm75.c,v 1.10.2.1 2006/07/13 17:49:22 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
 	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
-				   "description");
+				   "envsys-description");
 	if (desc != NULL &&
 	    prop_object_type(desc) == PROP_TYPE_STRING &&
 	    prop_string_size(desc) > 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.23 2006/06/07 22:37:14 kardel Exp $
+#	$NetBSD: files.amd64,v 1.23.2.1 2006/07/13 17:48:44 gdamore Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -32,6 +32,7 @@ file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
+file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
 
@@ -196,7 +197,7 @@ include	"dev/pcmcia/files.pcmcia"
 include	"dev/usb/files.usb"
 
 include	"dev/ieee1394/files.ieee1394"
-
+include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
 

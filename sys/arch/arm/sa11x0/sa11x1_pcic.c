@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.12 2006/03/04 17:22:06 peter Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.12.10.1 2006/07/13 17:48:45 gdamore Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.12 2006/03/04 17:22:06 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.12.10.1 2006/07/13 17:48:45 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
 
-	for(i = 0; i < 2; i++) {
+	for (i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
 		sc->sc_socket[i].pcictag_cookie = psc;
@@ -117,7 +117,8 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 int
 sacpcic_print(void *aux, const char *name)
 {
-	return (UNCONF);
+
+	return UNCONF;
 }
 
 int
@@ -218,8 +219,8 @@ sacpcic_intr_establish(struct sapcic_socket *so, int level,
 	int irq;
 
 	irq = so->socket ? IRQ_S1_READY : IRQ_S0_READY;
-	return (sacc_intr_establish((sacc_chipset_tag_t)so->pcictag_cookie, irq,
-				    IST_EDGE_FALL, level, ih_fun, ih_arg));
+	return sacc_intr_establish((sacc_chipset_tag_t)so->pcictag_cookie, irq,
+				    IST_EDGE_FALL, level, ih_fun, ih_arg);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: j720pwr.c,v 1.1 2006/03/04 14:09:36 peter Exp $	*/
+/*	$NetBSD: j720pwr.c,v 1.1.12.1 2006/07/13 17:48:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 power management. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.1 2006/03/04 14:09:36 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.1.12.1 2006/07/13 17:48:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,15 +217,14 @@ j720pwr_get_battery(struct j720pwr_softc *sc)
 
 	bus_space_write_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_PCR, 0x2000000);
 
-	if (j720ssp_readwrite(ssp, 1, 0x300, &data, 500) < 0 || data != 0x88) {
+	if (j720ssp_readwrite(ssp, 1, 0xc0, &data, 500) < 0 || data != 0x11) {
 		DPRINTF(("j720pwr_get_battery: no dummy received\n"));
 		goto out;
 	}
 
 	for (i = 0; i < 3; i++) {
-		if (j720ssp_readwrite(ssp, 0, 0x8800, &pmdata[i], 100) < 0)
+		if (j720ssp_readwrite(ssp, 0, 0x11, &pmdata[i], 100) < 0)
 			goto out;
-		J720SSP_INVERT(pmdata[i]);
 	}
 
 	bus_space_write_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_PSR, 0x2000000);

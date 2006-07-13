@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.24 2005/11/24 13:33:33 he Exp $ */
+/*	$NetBSD: ebus.c,v 1.24.16.1 2006/07/13 17:49:03 gdamore Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.24 2005/11/24 13:33:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.24.16.1 2006/07/13 17:49:03 gdamore Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -149,6 +149,10 @@ static const struct msiiep_ebus_intr_wiring krups_ebus_intr_wiring[] = {
 	{ "su", 0 }, { "8042", 0 }, { "sound", 3 }
 };
 
+static const struct msiiep_ebus_intr_wiring espresso_ebus_intr_wiring[] = {
+	{ "su", 0 }, { "8042", 0 }, { "sound", 3 }, { "parallel", 4 }
+};
+
 
 struct msiiep_known_ebus_wiring {
 	const char *model;
@@ -161,6 +165,7 @@ struct msiiep_known_ebus_wiring {
 
 static const struct msiiep_known_ebus_wiring known_models[] = {
 	MSIIEP_MODEL_WIRING("SUNW,501-4267", krups_ebus_intr_wiring),
+	MSIIEP_MODEL_WIRING("SUNW,375-0059", espresso_ebus_intr_wiring),
 	{ NULL, NULL, 0}
 };
 

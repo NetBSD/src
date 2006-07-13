@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.26 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: majors.sparc64,v 1.26.16.1 2006/07/13 17:49:04 gdamore Exp $
 #
 # Device majors for sparc64
 #
@@ -116,6 +116,7 @@ device-major	sysmon		char 135		sysmon_envsys | sysmon_wdog | sysmon_power
 device-major	ksyms		char 136		ksyms
 
 device-major	joy		char 137		joy
+#device-major	psm		char 138		psm
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

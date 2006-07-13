@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/11/22 16:38:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8.48.1 2006/07/13 17:48:59 gdamore Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -12,7 +12,7 @@ SIZE?= size
 
 COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
-LDFLAGS= -x -N -Ttext a0004000 -e _start
+LINKFLAGS= -x -N -Ttext a0004000 -e _start
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 
 CPPFLAGS+= -D_STANDALONE #-DBOOTXX_DEBUG
@@ -27,7 +27,8 @@ LIBS=  ${COMMON}/romcalls.o
 LIBS+= ${COMMON}/lib/sa/libsa.a ${COMMON}/lib/kern/libkern.a
 
 ${PROG}: ${OBJS}
-	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	${SIZE} ${.TARGET}.sym
 # XXX objcopy does not work for prog at KSEG
 #	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}

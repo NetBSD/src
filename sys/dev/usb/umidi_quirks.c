@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.10 2006/03/26 17:58:19 christos Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.10.4.1 2006/07/13 17:49:44 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10 2006/03/26 17:58:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.4.1 2006/07/13 17:49:44 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,6 +451,40 @@ UMQ_DEF(ROLAND, ROLAND_UM3, 0) = {
 };
 
 /*
+ * Midiman Midisport 2x4. This has 2 physical MIDI IN jacks that are read
+ * on endpoint 0x81 (descriptor index 0). It has 4 physical MIDI OUT jacks
+ * that can be written on endpoints 2 or 4 (at descriptor index 2 or 4,
+ * coincidentally) interchangeably: either endpoint will accept a Cable Number
+ * field of 0 to 3, and data for a given CN will be routed to the same
+ * physical output regardless of the endpoint used for the transfer. But
+ * there's a catch: flow-control feedback only goes to endpoint 2 for
+ * CN 0 and 2, and only to endpoint 4 for CN 1 and 3. If you send output at
+ * high rates for CN 0 or 2 over endpoint 4, or for CN 1 or 3 over endpoint 2,
+ * the USB transfers complete as fast as possible, giving you an apparent data
+ * rate much higher than MIDI's 3125 cps (easy to measure using dd to blast a
+ * bunch of midi data to the rmidi device). Of course that isn't a way to make
+ * MIDI faster, just a way to overrun the device buffer and spray bits on the
+ * floor. So this device needs the fixed endpoint quirk, the fixed cable number
+ * quirk (to make sure CNs 0 and 2 are put on the first endpoint and 1 and 3
+ * on the other), and then the fixed mididev-assignment quirk (to match jacks
+ * to mididevs so the rmidi devices match the order of the blinkenlights).
+ */
+UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
+	/* out: ep# jacks */
+	{ 2, 2 },
+	{ 4, 2 },
+	/* in: ep# jacks */
+	{ 0, 2 }
+};
+UMQ_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
+	UMQ_FIXED_EP_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
+	UMQ_CN_FIXED_REG(0, 2, 1, 3, 0, 1),
+	UMQ_MD_FIXED_REG(0, 0, 2, 1, 1, -1, 3, -1),
+	UMQ_TYPE(MIDIMAN_GARBLE),
+	UMQ_TERMINATOR
+};
+
+/*
  * quirk list
  */
 struct umidi_quirk umidi_quirklist[] = {
@@ -479,6 +513,7 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_FANTOMX, 0),
 	UMQ_REG(ROLAND, ROLAND_PCR, 0),
 	UMQ_REG(ROLAND, ROLAND_UM3, 0),
+	UMQ_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
 	UMQ_TERMINATOR
 };
 
@@ -519,6 +554,11 @@ static const char *quirk_name[] = {
 	"NULL",
 	"Fixed Endpoint",
 	"Yamaha Specific",
+	"Midiman Packet Garbling",
+	"Cable Numbers per Endpoint",
+	"Cable Numbers Global",
+	"Cable Numbers Fixed",
+	"Unit Mapping Fixed",
 };
 
 void

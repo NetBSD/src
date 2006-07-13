@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:56 tv Exp $
+#	$NetBSD: Makefile,v 1.7.58.1 2006/07/13 17:49:05 gdamore Exp $
 
 LIB=	iocs
 
@@ -52,7 +52,7 @@ OBJS+=	${ASM}
 MAKECALL=${.CURDIR}/makeiocscalls.awk
 
 ${ASM}: ${.CURDIR}/iocs.h ${MAKECALL}
-	@echo creating ${.TARGET}
+	${_MKTARGET_COMPILE}
 	@grep -i 'IOCS_${.PREFIX} ' ${.CURDIR}/iocs.h | \
 	    ${AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | ${AS} -o ${.TARGET}
 

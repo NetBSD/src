@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.4 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.4.16.1 2006/07/13 17:48:47 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -61,22 +61,22 @@ extern int internalhpib;
 void hpibinit(void);
 int hpibalive(int);
 int hpibid(int, int);
-int hpibsend(int, int, int, char *, int);
-int hpibrecv(int, int, int, char *, int);
+int hpibsend(int, int, int, uint8_t *, int);
+int hpibrecv(int, int, int, uint8_t *, int);
 int hpibswait(int, int);
-void hpibgo(int, int, int, char *, int, int);
+void hpibgo(int, int, int, uint8_t *, int, int);
 
 /* fhpib.c */
 int fhpibinit(int);
 void fhpibreset(int);
-int fhpibsend(int, int, int, char *, int);
-int fhpibrecv(int, int, int, char *, int);
+int fhpibsend(int, int, int, uint8_t *, int);
+int fhpibrecv(int, int, int, uint8_t *, int);
 int fhpibppoll(int);
 
 /* nhpib.c */
 int nhpibinit(int);
 void nhpibreset(int);
-int nhpibsend(int, int, int, char *, int);
-int nhpibrecv(int, int, int, char *, int);
+int nhpibsend(int, int, int, uint8_t *, int);
+int nhpibrecv(int, int, int, uint8_t *, int);
 int nhpibppoll(int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.62 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.62.4.1 2006/07/13 17:49:14 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.62 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.62.4.1 2006/07/13 17:49:14 gdamore Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -306,7 +306,7 @@ linux_sys_socket(l, v, retval)
 		syscallarg(int)	type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args bsa;
+	struct compat_30_sys_socket_args bsa;
 	int error;
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
@@ -314,7 +314,7 @@ linux_sys_socket(l, v, retval)
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	error = sys_socket(l, &bsa, retval);
+	error = sys___socket30(l, &bsa, retval);
 
 #ifdef INET6
 	/*

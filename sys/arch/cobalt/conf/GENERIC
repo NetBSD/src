@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2006/05/18 14:45:28 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.98.4.1 2006/07/13 17:48:46 gdamore Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.98.4.1 $"
 
 maxusers	32
 
@@ -328,6 +328,7 @@ pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.120 2006/06/10 14:26:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.120.2.1 2006/07/13 17:49:27 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.120 2006/06/10 14:26:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.120.2.1 2006/07/13 17:49:27 gdamore Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -230,6 +230,10 @@ struct wm_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
+	void *sc_powerhook;		/* power hook */
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
+	struct pci_conf_state sc_pciconf;
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
@@ -466,6 +470,7 @@ static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 
 static void	wm_shutdown(void *);
+static void	wm_powerhook(int, void *);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -788,7 +793,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin;
 	pcireg_t preg, memtype;
 	uint32_t reg;
-	int pmreg;
 
 	callout_init(&sc->sc_tick_ch);
 
@@ -797,6 +801,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		panic("wm_attach: impossible");
 	}
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
 
 	if (pci_dma64_available(pa))
 		sc->sc_dmat = pa->pa_dmat64;
@@ -887,25 +894,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		preg &= ~PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, preg);
 
-	/* Get it out of power save mode, if needed. */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		preg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
-		    PCI_PMCSR_STATE_MASK;
-		if (preg == PCI_PMCSR_STATE_D3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			aprint_error("%s: unable to wake from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-		if (preg != PCI_PMCSR_STATE_D0) {
-			aprint_normal("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, preg);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*
@@ -1200,9 +1194,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Toggle the LSB of the MAC address on the second port
-	 * of the i82546.
+	 * of the dual port controller.
 	 */
-	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3) {
+	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3
+	    || sc->sc_type ==  WM_T_82571) {
 		if ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1)
 			enaddr[5] ^= 1;
 	}
@@ -1438,6 +1433,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_sdhook == NULL)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
+
+	sc->sc_powerhook = powerhook_establish(wm_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -1479,6 +1479,35 @@ wm_shutdown(void *arg)
 	struct wm_softc *sc = arg;
 
 	wm_stop(&sc->sc_ethercom.ec_if, 1);
+}
+
+static void
+wm_powerhook(int why, void *arg)
+{
+	struct wm_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+		wm_shutdown(sc);
+		break;
+	case PWR_SOFTRESUME:
+		ifp->if_flags &= ~IFF_RUNNING;
+		wm_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			wm_start(ifp);
+		break;
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+		break;
+	}
+
+	return;
 }
 
 /*
@@ -2357,9 +2386,11 @@ wm_rxintr(struct wm_softc *sc)
 		m = rxs->rxs_mbuf;
 
 		/*
-		 * Add a new receive buffer to the ring.
+		 * Add a new receive buffer to the ring, unless of
+		 * course the length is zero. Treat the latter as a
+		 * failed mapping.
 		 */
-		if (wm_add_rxbuf(sc, i) != 0) {
+		if ((len == 0) || (wm_add_rxbuf(sc, i) != 0)) {
 			/*
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.

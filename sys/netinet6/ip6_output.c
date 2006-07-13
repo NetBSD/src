@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.98 2006/05/14 21:19:34 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.98.4.1 2006/07/13 17:50:06 gdamore Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.98 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.98.4.1 2006/07/13 17:50:06 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -187,6 +187,23 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
+
+#ifdef  DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("ip6_output: no HDR");
+
+	if ((m->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) != 0) {
+		panic("ip6_output: IPv4 checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) ==
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+		panic("ip6_output: conflicting checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+#endif
 
 	M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data, sizeof(struct ip6_hdr));
 
@@ -946,8 +963,10 @@ skip_ipsec2:;
 		struct ip6_frag *ip6f;
 		u_int32_t id = htonl(ip6_randomid());
 		u_char nextproto;
+#if 0				/* see below */
 		struct ip6ctlparam ip6cp;
 		u_int32_t mtu32;
+#endif
 
 		/*
 		 * Too large for the destination or interface;
@@ -958,12 +977,24 @@ skip_ipsec2:;
 		if (mtu > IPV6_MAXPACKET)
 			mtu = IPV6_MAXPACKET;
 
+#if 0
+		/*
+		 * It is believed this code is a leftover from the
+		 * development of the IPV6_RECVPATHMTU sockopt and
+		 * associated work to implement RFC3542.
+		 * It's not entirely clear what the intent of the API
+		 * is at this point, so disable this code for now.
+		 * The IPV6_RECVPATHMTU sockopt and/or IPV6_DONTFRAG
+		 * will send notifications if the application requests.
+		 */
+
 		/* Notify a proper path MTU to applications. */
 		mtu32 = (u_int32_t)mtu;
 		bzero(&ip6cp, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
 		pfctlinput2(PRC_MSGSIZE, (struct sockaddr *)&ro_pmtu->ro_dst,
 		    (void *)&ip6cp);
+#endif
 
 		len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
 		if (len < 8) {

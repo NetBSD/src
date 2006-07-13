@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.24 2006/05/26 12:59:24 blymn Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.24.2.1 2006/07/13 17:49:23 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1428,7 +1428,7 @@ re_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 	re_rxeof(sc);
 	re_txeof(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		(*ifp->if_start)(ifp);
 
 	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
@@ -1513,7 +1513,7 @@ re_intr(void *arg)
 	}
 
 	if (ifp->if_flags & IFF_UP) /* kludge for interrupt during re_init() */
-		if (ifp->if_snd.ifq_head != NULL)
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 			(*ifp->if_start)(ifp);
 
 #ifdef DEVICE_POLLING

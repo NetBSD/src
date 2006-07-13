@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 2006/02/07 20:38:43 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.14.10.1 2006/07/13 17:49:06 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2006/02/07 20:38:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14.10.1 2006/07/13 17:49:06 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,16 +103,19 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2006/02/07 20:38:43 bouyer Exp 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include "acpi.h"
 #include "opt_mpbios.h"
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>
 #endif
 
-#ifdef MPACPI
+#if NACPI > 0
 #include <machine/mpacpi.h>
 #endif
+
+#include <machine/mpconfig.h>
 
 #include "opt_pci_conf_mode.h"
 
@@ -162,6 +165,9 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
 	/* Connectix Virtual PC 5 has a 440BX */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
+	/* Parallels Desktop for Mac */
+	_qe(0, 2, 0, PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO),
+	_qe(0, 3, 0, PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS),
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	{0, 0xffffffff} /* patchable */
@@ -237,7 +243,7 @@ pci_attach_hook(parent, self, pba)
 #ifdef MPBIOS
 	mpbios_pci_attach_hook(parent, self, pba);
 #endif
-#ifdef MPACPI
+#if NACPI > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
 }

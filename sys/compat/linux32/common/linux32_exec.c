@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.1.14.1 2006/07/13 17:49:14 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1994-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.14.1 2006/07/13 17:49:14 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,12 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1 2006/02/09 19:18:57 manu Exp $"
 #include <machine/reg.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_emuldata.h>
 
 #include <compat/linux32/common/linux32_exec.h>
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_machdep.h>
-#include <compat/linux32/common/linux32_emuldata.h>
 
 #include <compat/linux32/linux32_syscallargs.h>
 #include <compat/linux32/linux32_syscall.h>
@@ -127,13 +127,13 @@ linux32_e_proc_init(p, parent, forkflags)
 	struct proc *p, *parent;
 	int forkflags;
 {
-	struct linux32_emuldata *e = p->p_emuldata;
-	struct linux32_emuldata_shared *s;
-	struct linux32_emuldata *ep = NULL;
+	struct linux_emuldata *e = p->p_emuldata;
+	struct linux_emuldata_shared *s;
+	struct linux_emuldata *ep = NULL;
 
 	if (!e) {
 		/* allocate new Linux emuldata */
-		MALLOC(e, void *, sizeof(struct linux32_emuldata),
+		MALLOC(e, void *, sizeof(struct linux_emuldata),
 			M_EMULDATA, M_WAITOK);
 	} else  {
 		e->s->refs--;
@@ -141,7 +141,9 @@ linux32_e_proc_init(p, parent, forkflags)
 			FREE(e->s, M_EMULDATA);
 	}
 
-	memset(e, '\0', sizeof(struct linux32_emuldata));
+	memset(e, '\0', sizeof(struct linux_emuldata));
+
+	e->proc = p;
 
 	if (parent)
 		ep = parent->p_emuldata;
@@ -158,7 +160,7 @@ linux32_e_proc_init(p, parent, forkflags)
 	} else {
 		struct vmspace *vm;
 
-		MALLOC(s, void *, sizeof(struct linux32_emuldata_shared),
+		MALLOC(s, void *, sizeof(struct linux_emuldata_shared),
 			M_EMULDATA, M_WAITOK);
 		s->refs = 1;
 
@@ -179,9 +181,19 @@ linux32_e_proc_init(p, parent, forkflags)
 		 * here
 		 */
 		s->group_pid = p->p_pid;
+
+		/*
+		 * Initialize the list of threads in the group
+		 */
+		LIST_INIT(&s->threads);	
 	}
 
 	e->s = s;
+
+	/*
+	 * Add this thread in the group thread list
+	 */
+	LIST_INSERT_HEAD(&s->threads, e, threads);
 
 #ifdef LINUX32_NPTL
 	/* 
@@ -228,7 +240,7 @@ static void
 linux32_e_proc_exit(p)
 	struct proc *p;
 {
-	struct linux32_emuldata *e = p->p_emuldata;
+	struct linux_emuldata *e = p->p_emuldata;
 
 #ifdef LINUX32_NPTL
 	/* Emulate LINUX_CLONE_CHILD_CLEARTID */
@@ -239,10 +251,11 @@ linux32_e_proc_exit(p)
 		register_t retval;
 		struct lwp *l;
 
-		if ((error = copyout(&null, 
-		    e->clear_tid, 
-		    sizeof(null))) != 0)
+		error = copyout(&null, e->clear_tid, sizeof(null));
+#ifdef DEBUG_LINUX
+		if (error != 0)
 			printf("linux32_e_proc_exit: cannot clear TID\n");
+#endif
 
 		l = proc_representative_lwp(p);
 		SCARG(&cup, uaddr) = e->clear_tid;
@@ -255,6 +268,9 @@ linux32_e_proc_exit(p)
 			printf("linux32_e_proc_exit: linux_sys_futex failed\n");
 	}
 #endif /* LINUX32_NPTL */
+
+	/* Remove the thread for the group thread list */
+	LIST_REMOVE(e, threads);
 
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
@@ -273,7 +289,7 @@ linux32_e_proc_fork(p, parent, forkflags)
 	int forkflags;
 {
 #ifdef LINUX32_NPTL
-	struct linux32_emuldata *e;
+	struct linux_emuldata *e;
 #endif
 
 	/*
@@ -306,7 +322,7 @@ linux32_userret(l, arg)
 	void *arg;
 {
 	struct proc *p = l->l_proc;
-	struct linux32_emuldata *led = p->p_emuldata;
+	struct linux_emuldata *led = p->p_emuldata;
 	int error;
 
 	p->p_userret = NULL;

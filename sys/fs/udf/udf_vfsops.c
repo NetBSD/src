@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.6 2006/06/12 00:20:21 christos Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.6.2.1 2006/07/13 17:49:50 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.6 2006/06/12 00:20:21 christos Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.6.2.1 2006/07/13 17:49:50 gdamore Exp $");
 #endif /* not lint */
 
 
@@ -94,7 +94,7 @@ int udf_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int udf_vget(struct mount *, ino_t, struct vnode **);
 int udf_fhtovp(struct mount *, struct fid *, struct vnode **);
 int udf_checkexp(struct mount *, struct mbuf *, int *, kauth_cred_t *);
-int udf_vptofh(struct vnode *, struct fid *);
+int udf_vptofh(struct vnode *, struct fid *, size_t *);
 int udf_snapshot(struct mount *, struct vnode *, struct timespec *);
 
 void udf_init(void);
@@ -734,7 +734,7 @@ udf_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  * have been recycled.
  */
 int
-udf_vptofh(struct vnode *vp, struct fid *fid)
+udf_vptofh(struct vnode *vp, struct fid *fid, size_t *fh_size)
 {
 	DPRINTF(NOTIMPL, ("udf_vptofh called\n"));
 	return EOPNOTSUPP;
@@ -753,5 +753,3 @@ udf_snapshot(struct mount *mp, struct vnode *vp, struct timespec *tm)
 	DPRINTF(NOTIMPL, ("udf_snapshot called\n"));
 	return EOPNOTSUPP;
 }
-
-

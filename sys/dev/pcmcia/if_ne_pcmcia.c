@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.142 2006/03/23 02:14:42 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.142.4.1 2006/07/13 17:49:43 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.142 2006/03/23 02:14:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.142.4.1 2006/07/13 17:49:43 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ struct ne_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	int sc_state;
 #define	NE_PCMCIA_ATTACHED	3
+	void *sc_powerhook;			/* power management hook */
 };
 
 u_int8_t *ne_pcmcia_get_enaddr(struct ne_pcmcia_softc *, int,
@@ -723,6 +724,11 @@ found:
 	if (ne2000_attach(nsc, enaddr))
 		goto fail2;
 
+	psc->sc_powerhook = powerhook_establish(ne2000_power, nsc);
+	if (psc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    self->dv_xname);
+
 	psc->sc_state = NE_PCMCIA_ATTACHED;
 	ne_pcmcia_disable(dsc);
 	return;
@@ -744,6 +750,9 @@ ne_pcmcia_detach(self, flags)
 
 	if (psc->sc_state != NE_PCMCIA_ATTACHED)
 		return (0);
+
+	if (psc->sc_powerhook != NULL)
+		powerhook_disestablish(psc->sc_powerhook);
 
 	error = ne2000_detach(&psc->sc_ne2000, flags);
 	if (error)

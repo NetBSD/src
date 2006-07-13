@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.9 2006/06/12 00:46:50 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.9.2.1 2006/07/13 17:49:07 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.9 2006/06/12 00:46:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.9.2.1 2006/07/13 17:49:07 gdamore Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -225,11 +225,11 @@ compat_20_sys_getfsstat(l, v, retval)
 	size_t count, maxcount;
 	int error = 0;
 
+	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	maxcount = (size_t)SCARG(uap, bufsize) / sizeof(struct statfs12);
 	sfsp = SCARG(uap, buf);
 	simple_lock(&mountlist_slock);
 	count = 0;
-	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
@@ -262,8 +262,8 @@ compat_20_sys_getfsstat(l, v, retval)
 		/*
 		 * fake a root entry
 		 */
-		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount, sbuf, l,
-		    SCARG(uap, flags), 1)) != 0)
+		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount,
+				       sbuf, l, SCARG(uap, flags), 1)) != 0)
 			goto out;
 		if (sfsp)
 			error = vfs2fs(sfsp, sbuf);
@@ -285,12 +285,12 @@ compat_20_sys_fhstatfs(l, v, retval)
 	register_t *retval;
 {
 	struct compat_20_sys_fhstatfs_args /*
-		syscallarg(const fhandle_t *) fhp;
+		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
-	fhandle_t fh;
+	struct compat_30_fhandle fh;
 	struct mount *mp;
 	struct vnode *vp;
 	int error;
@@ -298,15 +298,16 @@ compat_20_sys_fhstatfs(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					     &p->p_acflag)))
 		return (error);
 
-	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);

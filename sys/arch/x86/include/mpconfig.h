@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.8 2005/05/29 21:37:02 christos Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.8.24.1 2006/07/13 17:49:06 gdamore Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -53,7 +53,7 @@ struct mp_intr_map
 	struct mp_intr_map *next;
 	struct mp_bus *bus;
 	int bus_pin;
-	struct ioapic_softc *ioapic;
+	struct pic *ioapic;
 	int ioapic_pin;
 	int ioapic_ih;		/* int handle, for apic_intr_est */
 	int type;		/* from mp spec intr record */
@@ -62,6 +62,8 @@ struct mp_intr_map
 	int cpu_id;
 	int global_int;		/* ACPI global interrupt number */
 	int sflags;		/* other, software flags (see below) */
+	void *linkdev;
+	int sourceindex;
 };
 
 #define MPI_OVR		0x0001	/* Was overridden by an ACPI OVR */

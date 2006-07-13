@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.1 2001/06/13 06:01:50 simonb Exp $	*/
+/*	$NetBSD: tlb.h,v 1.1.66.1 2006/07/13 17:49:01 gdamore Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,7 +102,6 @@ void	ppc4xx_tlb_flush(vaddr_t, int);
 void	ppc4xx_tlb_flush_all(void);
 void	ppc4xx_tlb_init(void);
 int	ppc4xx_tlb_new_pid(struct pmap *);
-void	ppc4xx_tlb_unpin(int);
 
 #endif
 

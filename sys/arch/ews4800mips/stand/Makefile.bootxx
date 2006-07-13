@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.1 2005/12/29 15:20:09 tsutsui Exp $
+#	$NetBSD: Makefile.bootxx,v 1.1.16.1 2006/07/13 17:48:46 gdamore Exp $
 
 NOMAN		=
 
@@ -15,7 +15,7 @@ SRCS		+= boot_device.c floppy_2d.c floppy_2hd_ibmpc.c
 #SRCS		+= floppy_2hc.c
 BINMODE		= 444
 
-LDFLAGS		= -T ${COMMON}/bootxx.ldscript -S -N
+LINKFLAGS	= -T ${COMMON}/bootxx.ldscript -S -N
 MIPSFLAGS	= -mips1 -G 0 -mno-abicalls
 DEBUGFLAGS	= -Wall -Werror
 DEBUGFLAGS	+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
@@ -45,7 +45,8 @@ LIBS		= ${LIBKERN}
 .endif
 
 ${PROG}: ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
 	${OBJCOPY} -O binary ${PROG}.elf ${BASE}.bin
 	ls -al ${BASE}.bin
 	dd if=${BASE}.bin of=${PROG}.tmp bs=4096 conv=sync

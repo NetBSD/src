@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.63 2006/05/14 21:47:00 elad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.63.4.1 2006/07/13 17:49:44 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.63 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.63.4.1 2006/07/13 17:49:44 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,9 +392,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * present, because otherwise we'd have to use TIOCSDTR
 		 * immediately after setting CLOCAL, which applications do not
 		 * expect.  We always assert DTR while the device is open
-		 * unless explicitly requested to deassert it.
+		 * unless explicitly requested to deassert it.  Ditto RTS.
 		 */
 		ucom_dtr(sc, 1);
+		ucom_rts(sc, 1);		
 
 		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
 		ucom_hwiflow(sc);

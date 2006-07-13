@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.5 2006/02/22 00:23:52 gavan Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.5.10.1 2006/07/13 17:48:56 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.5 2006/02/22 00:23:52 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.5.10.1 2006/07/13 17:48:56 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -567,7 +567,7 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_pa = kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
