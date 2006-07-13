@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.25 2006/06/29 17:16:59 garbled Exp $	*/
+/*	$NetBSD: extintr.c,v 1.26 2006/07/13 17:50:37 garbled Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.25 2006/06/29 17:16:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.26 2006/07/13 17:50:37 garbled Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -244,7 +244,7 @@ ext_intr_ivr(void)
 	pcpl = ci->ci_cpl;
 	msr = mfmsr();
 
-	irq = *((u_char *)prep_intr_reg + INTR_VECTOR_REG);
+	irq = inb(prep_intr_reg + prep_intr_reg_off);
 	is = &intrsources[irq];
 	r_imen = 1 << irq;
 
@@ -295,7 +295,7 @@ ext_intr_openpic(void)
 	realirq = openpic_read_irq(0);
 	while (realirq < OPENPIC_INTR_NUM) {
 		if (realirq == 0)
-			irq = *((u_char *)prep_intr_reg + INTR_VECTOR_REG);
+			irq = inb(prep_intr_reg + prep_intr_reg_off);
 		else
 			irq = realirq + I8259_INTR_NUM;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2006/06/29 17:16:59 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2006/07/13 17:50:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2006/06/29 17:16:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2006/07/13 17:50:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -104,6 +104,7 @@ char bootinfo[BOOTINFO_MAXSIZE];
 char bootpath[256];
 
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
+uint32_t prep_intr_reg_off;		/* IVR offset within the mapped page */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
@@ -242,13 +243,6 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 void
 cpu_startup(void)
 {
-	/*
-	 * Mapping PReP interrput vector register.
-	 */
-	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
-	if (!prep_intr_reg)
-		panic("startup: no room for interrupt register");
-
 	/*
 	 * Do common startup.
 	 */
@@ -505,6 +499,45 @@ setup_openpic(PPC_DEVICE *dev)
 
 #endif /* OPENPIC */
 
+/*
+ * Locate and setup the isa_ivr.
+ */
+
+static void
+setup_ivr(PPC_DEVICE *dev)
+{
+	uint32_t l, addr;
+	uint8_t *p;
+	void *v;
+	int tag, size, item;
+
+	l = be32toh(dev->AllocatedOffset);
+	p = res->DevicePnPHeap + l;
+
+	/* Find the IVR vector's Generic Address in a LVI */
+	for (; p[0] != END_TAG; p += size) {
+		struct _L4_Pack *pack = (void *)p;
+		struct _L4_PPCPack *pa = &pack->L4_Data.L4_PPCPack;
+
+		tag = *p;
+		v = p;
+		if (tag_type(p[0]) == PNP_SMALL) {
+			size = tag_small_count(tag) + 1;
+			continue;
+		}
+		size = (p[1] | (p[2] << 8)) + 3 /* tag + length */;
+		item = tag_large_item_name(tag);
+		if (item != LargeVendorItem || pa->Type != LV_GenericAddress)
+			continue;
+		/* otherwise we have a memory packet */
+		addr = le64dec(&pa->PPCData[4]) & ~(PAGE_SIZE-1);
+		prep_intr_reg_off = le64dec(&pa->PPCData[4]) & (PAGE_SIZE-1); 
+		prep_intr_reg = (vaddr_t)mapiodev(addr, PAGE_SIZE);
+		if (!prep_intr_reg)
+			panic("startup: no room for interrupt register");
+		return;
+	}
+}
 
 /*
  * There are a few things that need setting up early on in the prep 
@@ -524,8 +557,11 @@ prep_init()
 	ndev = be32toh(res->ActualNumDevices);
 	ppc_dev = res->Devices;
 	foundmpic = 0;
+	prep_intr_reg = 0;
 
 	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
+		if (ppc_dev[i].DeviceId.DevId == 0x41d00000) /* ISA_PIC */
+			setup_ivr(&ppc_dev[i]);
 #if defined(OPENPIC)
 		if (ppc_dev[i].DeviceId.DevId == 0x244d000d) { /* MPIC */
 			foundmpic = setup_openpic(&ppc_dev[i]);
@@ -534,6 +570,17 @@ prep_init()
 		;
 #endif
 
+	}
+	if (!prep_intr_reg) {
+		/*
+		 * For some reason we never found one, this is known to
+		 * occur on certain motorola VME boards.  Instead we need
+		 * to just hardcode it.
+		 */
+		prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
+		if (!prep_intr_reg)
+			panic("startup: no room for interrupt register");
+		prep_intr_reg_off = INTR_VECTOR_REG;
 	}
 	if (!foundmpic)
 		init_intr();
