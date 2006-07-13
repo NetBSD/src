@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.81 2005/12/13 10:02:04 wiz Exp $	*/
+/*	$NetBSD: gzip.c,v 1.82 2006/07/13 11:51:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.81 2005/12/13 10:02:04 wiz Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.82 2006/07/13 11:51:39 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -1256,7 +1256,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	ssize_t rbytes;
 	unsigned char header1[4];
 	enum filetype method;
-	int fd, ofd, zfd = -1;
+	int rv, fd, ofd, zfd = -1;
 #ifndef SMALL
 	time_t timestamp = 0;
 	unsigned char name[PATH_MAX + 1];
@@ -1286,7 +1286,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		if (rbytes == -1)
 			maybe_warn("can't read %s", file);
 		else
-			maybe_warnx("%s: unexpected end of file", file);
+			goto unexpected_EOF;
 		goto lose;
 	}
 
@@ -1304,11 +1304,13 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	if (method == FT_GZIP && Nflag) {
 		unsigned char ts[4];	/* timestamp */
 
-		if (pread(fd, ts, sizeof ts, GZIP_TIMESTAMP) != sizeof ts) {
-			if (!fflag)
+		if ((rv = pread(fd, ts, sizeof ts, GZIP_TIMESTAMP)) !=
+		    sizeof ts) {
+			if (rv == -1 && !fflag)
 				maybe_warn("can't read %s", file);
 			goto lose;
-		}
+		} else if (rv == 0)
+			goto unexpected_EOF;
 		timestamp = ts[3] << 24 | ts[2] << 16 | ts[1] << 8 | ts[0];
 
 		if (header1[3] & ORIG_NAME) {
@@ -1487,6 +1489,8 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	close(ofd);
 	return size;
 
+    unexpected_EOF:
+	maybe_warnx("%s: unexpected end of file", file);
     lose:
 	if (fd != -1)
 		close(fd);
@@ -1568,7 +1572,7 @@ handle_stdin(void)
 		maybe_warn("can't read stdin");
 		return;
 	} else if (bytes_read != sizeof(header1)) {
-		maybe_warnx("unexpected EOF");
+		maybe_warnx("(stdin): unexpected end of file");
 		return;
 	}
 
@@ -1889,13 +1893,21 @@ print_list(int fd, off_t out, const char *outfile, time_t ts)
 			unsigned char buf[8];
 			uint32_t usize;
 
-			if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
+			rv = read(fd, (char *)buf, sizeof(buf));
+			if (rv == -1)
 				maybe_warn("read of uncompressed size");
-			usize = buf[4] | buf[5] << 8 | buf[6] << 16 | buf[7] << 24;
-			in = (off_t)usize;
+			else if (rv != sizeof(buf))
+				maybe_warnx("read of uncompressed size");
+
+			else {
+				usize = buf[4] | buf[5] << 8 |
+					buf[6] << 16 | buf[7] << 24;
+				in = (off_t)usize;
 #ifndef SMALL
-			crc = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+				crc = buf[0] | buf[1] << 8 |
+				      buf[2] << 16 | buf[3] << 24;
 #endif
+			}
 		}
 	}
 
