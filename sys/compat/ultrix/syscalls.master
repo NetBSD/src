@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2006/06/26 21:23:58 mrg Exp $
+	$NetBSD: syscalls.master,v 1.42 2006/07/13 23:47:17 pavel Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -264,7 +264,7 @@
 162	UNIMPL		umount
 #ifdef NFS
 163	NOARGS		{ int async_daemon(void); }
-164	NOARGS		{ int sys_getfh(char *fname, fhandle_t *fhp); }
+164	NOARGS		{ int compat_30_sys_getfh(char *fname, fhandle_t *fhp); }
 #else
 163	UNIMPL		async_daemon
 164	UNIMPL		getfh
