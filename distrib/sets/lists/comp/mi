@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.897 2006/07/12 13:39:05 lukem Exp $
+#	$NetBSD: mi,v 1.898 2006/07/13 11:43:54 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -617,8 +617,8 @@
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
-./usr/include/g++/bits/allocator.h		comp-cxx-include
-./usr/include/g++/bits/atomic_word.h		comp-cxx-include
+./usr/include/g++/bits/allocator.h		comp-cxx-include	gcc=4
+./usr/include/g++/bits/atomic_word.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/atomicity.h		comp-cxx-include
 ./usr/include/g++/bits/basic_file.h		comp-cxx-include
 ./usr/include/g++/bits/basic_ios.h		comp-cxx-include
@@ -626,7 +626,7 @@
 ./usr/include/g++/bits/basic_string.h		comp-cxx-include
 ./usr/include/g++/bits/basic_string.tcc		comp-cxx-include
 ./usr/include/g++/bits/boost_concept_check.h	comp-cxx-include
-./usr/include/g++/bits/c++allocator.h		comp-cxx-include
+./usr/include/g++/bits/c++allocator.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/c++config.h		comp-cxx-include
 ./usr/include/g++/bits/c++io.h			comp-cxx-include
 ./usr/include/g++/bits/c++locale.h		comp-cxx-include
@@ -636,13 +636,13 @@
 ./usr/include/g++/bits/codecvt_specializations.h comp-cxx-include	gcc=3
 ./usr/include/g++/bits/codecvt_specializations.h comp-obsolete		gcc=4,obsolete
 ./usr/include/g++/bits/concept_check.h		comp-cxx-include
-./usr/include/g++/bits/concurrence.h		comp-cxx-include
+./usr/include/g++/bits/concurrence.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/cpp_type_traits.h	comp-cxx-include
-./usr/include/g++/bits/cpu_defines.h		comp-cxx-include
+./usr/include/g++/bits/cpu_defines.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/ctype_base.h		comp-cxx-include
 ./usr/include/g++/bits/ctype_inline.h		comp-cxx-include
 ./usr/include/g++/bits/ctype_noninline.h	comp-cxx-include
-./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include
+./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/deque.tcc		comp-cxx-include
 ./usr/include/g++/bits/fpos.h			comp-cxx-include	gcc=3
 ./usr/include/g++/bits/fpos.h			comp-obsolete		gcc=4,obsolete
@@ -653,7 +653,7 @@
 ./usr/include/g++/bits/gthr-default.h		comp-cxx-include
 ./usr/include/g++/bits/gthr-posix.h		comp-cxx-include
 ./usr/include/g++/bits/gthr-single.h		comp-cxx-include
-./usr/include/g++/bits/gthr-tpf.h		comp-cxx-include
+./usr/include/g++/bits/gthr-tpf.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/gthr.h			comp-cxx-include
 ./usr/include/g++/bits/indirect_array.h		comp-cxx-include
 ./usr/include/g++/bits/ios_base.h		comp-cxx-include
@@ -667,7 +667,7 @@
 ./usr/include/g++/bits/messages_members.h	comp-cxx-include
 ./usr/include/g++/bits/os_defines.h		comp-cxx-include
 ./usr/include/g++/bits/ostream.tcc		comp-cxx-include
-./usr/include/g++/bits/postypes.h		comp-cxx-include
+./usr/include/g++/bits/postypes.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/pthread_allocimpl.h	comp-cxx-include	gcc=3
 ./usr/include/g++/bits/pthread_allocimpl.h	comp-obsolete		gcc=4,obsolete
 ./usr/include/g++/bits/slice_array.h		comp-cxx-include
@@ -710,10 +710,10 @@
 ./usr/include/g++/bits/time_members.h		comp-cxx-include
 ./usr/include/g++/bits/type_traits.h		comp-cxx-include	gcc=3
 ./usr/include/g++/bits/type_traits.h		comp-obsolete		gcc=4,obsolete
-./usr/include/g++/bits/valarray_after.h		comp-cxx-include
+./usr/include/g++/bits/valarray_after.h		comp-cxx-include	gcc=4
 ./usr/include/g++/bits/valarray_array.h		comp-cxx-include
 ./usr/include/g++/bits/valarray_array.tcc	comp-cxx-include
-./usr/include/g++/bits/valarray_before.h	comp-cxx-include
+./usr/include/g++/bits/valarray_before.h	comp-cxx-include	gcc=4
 ./usr/include/g++/bits/valarray_meta.h		comp-cxx-include	gcc=3
 ./usr/include/g++/bits/valarray_meta.h		comp-obsolete		gcc=4,obsolete
 ./usr/include/g++/bits/vector.tcc		comp-cxx-include
@@ -823,7 +823,7 @@
 ./usr/include/g++/fmultmap.h			comp-obsolete		obsolete
 ./usr/include/g++/fmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/fset.h			comp-obsolete		obsolete
-./usr/include/g++/fstream			comp-cxx-include	gcc=4
+./usr/include/g++/fstream			comp-cxx-include	gcc
 ./usr/include/g++/fstream.h			comp-obsolete		obsolete
 ./usr/include/g++/function.h			comp-obsolete		obsolete
 ./usr/include/g++/functional			comp-cxx-include
@@ -1000,7 +1000,7 @@
 ./usr/include/g++/multimap.h			comp-obsolete		obsolete
 ./usr/include/g++/multiset.h			comp-obsolete		obsolete
 ./usr/include/g++/neralloc.h			comp-obsolete		obsolete
-./usr/include/g++/new				comp-cxx-include	gcc=4
+./usr/include/g++/new				comp-cxx-include	gcc
 ./usr/include/g++/new.h				comp-obsolete		obsolete
 ./usr/include/g++/nmap.h			comp-obsolete		obsolete
 ./usr/include/g++/nmultmap.h			comp-obsolete		obsolete
