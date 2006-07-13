@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.16 2006/06/14 19:56:49 uwe Exp $ */
+/*	$NetBSD: bootxx.c,v 1.17 2006/07/13 20:03:34 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,15 +68,15 @@ struct shared_bbinfo bbinfo = {
 	{ 0 }
 };
 
-int	main __P((void));
-void	loadboot __P((struct open_file *, caddr_t));
+int	main(void);
+void	loadboot(struct open_file *, caddr_t);
 
 int
-main()
+main(void)
 {
 	char	*dummy1;
 	const char	*dummy;
-	void (*entry)__P((void *)) = (void (*)__P((void *)))PROM_LOADADDR;
+	void (*entry)(void *) = (void (*)(void *))PROM_LOADADDR;
 	void	*arg;
 
 #ifdef HEAP_VARIABLE
@@ -104,9 +104,7 @@ main()
 }
 
 void
-loadboot(f, addr)
-	struct open_file	*f;
-	char			*addr;
+loadboot(struct open_file *f, char *addr)
 {
 	int	i;
 	char	*buf;
@@ -155,10 +153,7 @@ loadboot(f, addr)
  * of bcopy() provides. We DO need code compactness..
  */
 void
-bcopy(src, dst, n)
-	const void *src;
-	void *dst;
-	size_t n;
+bcopy(const void *src, void *dst, size_t n)
 {
 	const char *p = src;
 	char *q = dst;
