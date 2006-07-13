@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_sysent.c,v 1.17 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: sunos32_sysent.c,v 1.18 2006/07/13 17:39:48 martin Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_sysent.c,v 1.17 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_sysent.c,v 1.18 2006/07/13 17:39:48 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -361,8 +361,8 @@ struct sysent sunos32_sysent[] = {
 #ifdef NFS
 	{ 0, 0, 0,
 	    async_daemon },			/* 160 = async_daemon */
-	{ 2, s(struct sys_getfh_args), 0,
-	    sys_getfh },			/* 161 = getfh */
+	{ 2, s(struct compat_30_sys_getfh_args), 0,
+	    compat_30_sys_getfh },		/* 161 = getfh */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
@@ -573,4 +573,3 @@ struct sysent sunos32_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 255 = filler */
 };
-
