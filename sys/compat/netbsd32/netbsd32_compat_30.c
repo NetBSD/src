@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.9 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.10 2006/07/13 23:22:30 pavel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.9 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.10 2006/07/13 23:22:30 pavel Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -265,7 +265,6 @@ compat_30_netbsd32_socket(l, v, retval)
 	return (compat_30_sys_socket(l, &ua, retval));
 }
 
-#if defined(NFS) || defined(NFSSERVER)
 int
 compat_30_netbsd32_getfh(l, v, retval)
 	struct lwp *l;
@@ -283,4 +282,3 @@ compat_30_netbsd32_getfh(l, v, retval)
 	/* Lucky for us a fhandle_t doesn't change sizes */
 	return (compat_30_sys_getfh(l, &ua, retval));
 }
-#endif
