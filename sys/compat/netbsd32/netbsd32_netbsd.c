@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.106 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.107 2006/07/13 23:22:35 pavel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.106 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.107 2006/07/13 23:22:35 pavel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1475,7 +1475,6 @@ netbsd32_nfssvc(l, v, retval)
 }
 #endif
 
-#if defined(NFS) || defined(NFSSERVER)
 int
 netbsd32___getfh30(l, v, retval)
 	struct lwp *l;
@@ -1531,7 +1530,6 @@ netbsd32___getfh30(l, v, retval)
 	free(fh, M_TEMP);
 	return (error);
 }
-#endif
 
 int
 netbsd32_pread(l, v, retval)

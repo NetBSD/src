@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2006/07/13 12:00:25 martin Exp $
+	$NetBSD: syscalls.master,v 1.50 2006/07/13 23:22:40 pavel Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -255,11 +255,7 @@
 158	COMPAT_20	{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 161	COMPAT_30		{ int netbsd32_getfh(const netbsd32_charp fname, netbsd32_compat_30_fhandlep_t fhp); }
-#else
-161	EXCL		netbsd32_getfh
-#endif
 162	COMPAT_09	{ int netbsd32_ogetdomainname(netbsd32_charp domainname, int len); }
 163	COMPAT_09	{ int netbsd32_osetdomainname(netbsd32_charp domainname, int len); }
 164	COMPAT_09	{ int netbsd32_uname(netbsd32_outsnamep_t name); }
@@ -676,8 +672,4 @@
 			    netbsd32_statp_t sb); }
 393	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
 394	STD		{ int netbsd32_sys___socket30(int domain, int type, int protocol); }
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 395	STD		{ int netbsd32___getfh30(const netbsd32_charp fname, netbsd32_fhandlep_t fhp, netbsd32_size_tp fh_size); }
-#else
-395	EXCL		netbsd32_getfh
-#endif
