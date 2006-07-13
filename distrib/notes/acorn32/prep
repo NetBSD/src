@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 2006/07/13 13:45:47 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.8 2006/07/13 13:53:45 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -63,9 +63,7 @@ An installation kernel for your platform:
 RiscPC/A7000(+)/NC's  : INSTALL kernel
 .It
 The Bootloader and RiscOS tools:
-.Pa BtNetBSD.tar.gz
-or
-.Pa BtNetBSD.zip
+.Pa BtNetBSD.spk
 as found in the
 .Pa installation/misc
 directory.
@@ -81,17 +79,7 @@ ftp site).
 A hardcopy of this document
 .El
 .Ss2 Preliminary steps
-Unpack your BtNetBSD archive in whatever way, set the type of the
-.Pa Settype
-file in the
-.Pa BtNetBSD
-directory to
-.Ql Obey
-and run it.
-This will make the files RISC OS typed correctly.
-This is also explained in a bit more detail in the enclosed
-.Pa README
-file.
+Unpack your BtNetBSD archive in whatever way.
 .Ss2 Preparing your hard disk
 Terms:
 .Bl -tag -width "File system"
