@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.2 2006/07/02 22:03:23 bjh21 Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.3 2006/07/13 15:51:54 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ben Harris
@@ -34,6 +34,8 @@
 #include <arm/armreg.h>
 #include <riscoscalls.h>
 
+#include "nbfs.h"
+
 rmbase:
 	.word	0			/* Start code */
 	.word	rminit - rmbase		/* Initialisation code */
@@ -58,8 +60,7 @@ fsib:	/* Filing system information block */
 	.word	fsentry_args - rmbase
 	.word	fsentry_close - rmbase
 	.word	fsentry_file - rmbase
-	.word	fileswitch_SUPPORTS_SPECIAL | fileswitch_READ_ONLY | \
-		0xf0 /* borrow UnixFS's number for now */
+	.word	fileswitch_SUPPORTS_SPECIAL | fileswitch_READ_ONLY | NBFS_FSNUM
 	.word	fsentry_func - rmbase
 	.word	0			/* FSEntry_GBPB */
 	.word	0			/* Extra information word */
