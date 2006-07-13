@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.10 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.11 2006/07/13 23:04:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.10 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.11 2006/07/13 23:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
-	fhandle_t fh;
+	struct compat_30_fhandle fh;
 	int error;
 	struct nameidata nd;
 	size_t sz;
@@ -383,7 +383,7 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	vp = nd.ni_vp;
 	sz = sizeof(struct compat_30_fhandle);
-	error = vfs_composefh(vp, &fh, &sz);
+	error = vfs_composefh(vp, (void *)&fh, &sz);
 	vput(vp);
 	if (error)
 		return (error);
