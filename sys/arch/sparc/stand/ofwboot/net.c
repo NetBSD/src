@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 2002/05/14 14:27:34 lukem Exp $	*/
+/*	$NetBSD: net.c,v 1.3 2006/07/13 20:03:34 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -63,8 +63,11 @@
 
 #include <lib/libkern/libkern.h>
 
-static int net_mountroot_bootparams __P((void));
-static int net_mountroot_bootp __P((void));
+#include "ofdev.h"
+
+
+static int net_mountroot_bootparams(void);
+static int net_mountroot_bootp(void);
 
 char	rootpath[FNAME_SIZE];
 
@@ -76,8 +79,7 @@ static	int open_count;
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-net_open(op)
-	struct of_dev *op;
+net_open(struct of_dev *op)
 {
 	int error = 0;
 	
@@ -103,9 +105,9 @@ bad:
 }
 
 int
-net_close(op)
-	struct of_dev *op;
+net_close(struct of_dev *op)
 {
+
 	/*
 	 * On last close, do netif close, etc.
 	 */
@@ -117,8 +119,9 @@ net_close(op)
 }
 
 int
-net_mountroot_bootparams()
+net_mountroot_bootparams(void)
 {
+
 	/* Get our IP address.  (rarp.c) */
 	if (rarp_getipaddress(netdev_sock) == -1)
 		return (errno);
@@ -140,8 +143,9 @@ net_mountroot_bootparams()
 }
 
 int
-net_mountroot_bootp()
+net_mountroot_bootp(void)
 {
+
 	bootp(netdev_sock);
 
 	if (myip.s_addr == 0)
@@ -162,7 +166,7 @@ net_mountroot_bootp()
 }
 
 int
-net_mountroot()
+net_mountroot(void)
 {
 	int error;
 

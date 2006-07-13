@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 2006/01/27 18:31:11 cdi Exp $	*/
+/*	$NetBSD: Locore.c,v 1.8 2006/07/13 20:03:34 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,6 +51,7 @@ extern int openfirmware(void *);
 __dead void
 _rtt(void)
 {
+
 	OF_exit();
 }
 
@@ -69,12 +70,12 @@ OF_exit(void)
 	openfirmware(&args);
 
 	printf("OF_exit failed");
-	for(;;)
-		;
+	for (;;)
+		continue;
 }
 
 void
-OF_enter()
+OF_enter(void)
 {
 	struct {
 		cell_t name;
@@ -89,8 +90,7 @@ OF_enter()
 }
 
 int
-OF_finddevice(name)
-	const char *name;
+OF_finddevice(const char *name)
 {
 	struct {
 		cell_t name;
@@ -110,8 +110,7 @@ OF_finddevice(name)
 }
 
 int
-OF_instance_to_package(ihandle)
-	int ihandle;
+OF_instance_to_package(int ihandle)
 {
 	struct {
 		cell_t name;
@@ -131,11 +130,7 @@ OF_instance_to_package(ihandle)
 }
 
 int
-OF_getprop(handle, prop, buf, buflen)
-	int handle;
-	const char *prop;
-	void *buf;
-	int buflen;
+OF_getprop(int handle, const char *prop, void *buf, int buflen)
 {
 	struct {
 		cell_t name;
@@ -162,11 +157,7 @@ OF_getprop(handle, prop, buf, buflen)
 
 #ifdef	__notyet__	/* Has a bug on FirePower */
 int
-OF_setprop(handle, prop, buf, len)
-	u_int handle;
-	char *prop;
-	void *buf;
-	int len;
+OF_setprop(u_int handle, char *prop, void *buf, int len)
 {
 	struct {
 		cell_t name;
@@ -193,8 +184,7 @@ OF_setprop(handle, prop, buf, len)
 #endif
 
 int
-OF_open(dname)
-	const char *dname;
+OF_open(const char *dname)
 {
 	struct {
 		cell_t name;
@@ -215,8 +205,7 @@ OF_open(dname)
 }
 
 void
-OF_close(handle)
-	int handle;
+OF_close(int handle)
 {
 	struct {
 		cell_t name;
@@ -233,10 +222,7 @@ OF_close(handle)
 }
 
 int
-OF_write(handle, addr, len)
-	int handle;
-	const void *addr;
-	int len;
+OF_write(int handle, const void *addr, int len)
 {
 	struct {
 		cell_t name;
@@ -260,10 +246,7 @@ OF_write(handle, addr, len)
 }
 
 int
-OF_read(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_read(int handle, void *addr, int len)
 {
 	struct {
 		cell_t name;
@@ -288,9 +271,7 @@ OF_read(handle, addr, len)
 }
 
 int
-OF_seek(handle, pos)
-	int handle;
-	u_quad_t pos;
+OF_seek(int handle, u_quad_t pos)
 {
 	struct {
 		cell_t name;
@@ -315,9 +296,7 @@ OF_seek(handle, pos)
 }
 
 void
-OF_release(virt, size)
-	void *virt;
-	u_int size;
+OF_release(void *virt, u_int size)
 {
 	struct {
 		cell_t name;
@@ -336,7 +315,7 @@ OF_release(virt, size)
 }
 
 int
-OF_milliseconds()
+OF_milliseconds(void)
 {
 	struct {
 		cell_t name;
@@ -418,9 +397,7 @@ OF_initialize(void)
  * Only works while the prom is actively mapping us.
  */
 vaddr_t
-OF_claim_virt(vaddr, len)
-vaddr_t vaddr;
-int len;
+OF_claim_virt(vaddr_t vaddr, int len)
 {
 	struct {
 		cell_t name;
@@ -460,9 +437,7 @@ int len;
  * Only works while the prom is actively mapping us.
  */
 vaddr_t
-OF_alloc_virt(len, align)
-int len;
-int align;
+OF_alloc_virt(int len, int align)
 {
 	int retaddr=-1;
 	struct {
@@ -502,9 +477,7 @@ int align;
  * Only works while the prom is actively mapping us.
  */
 int
-OF_free_virt(vaddr, len)
-vaddr_t vaddr;
-int len;
+OF_free_virt(vaddr_t vaddr, int len)
 {
 	struct {
 		cell_t name;
@@ -539,9 +512,7 @@ int len;
  * Only works while the prom is actively mapping us.
  */
 int
-OF_unmap_virt(vaddr, len)
-vaddr_t vaddr;
-int len;
+OF_unmap_virt(vaddr_t vaddr, int len)
 {
 	struct {
 		cell_t name;
@@ -575,11 +546,7 @@ int len;
  * Only works while the prom is actively mapping us.
  */
 vaddr_t
-OF_map_phys(paddr, size, vaddr, mode)
-paddr_t paddr;
-off_t size;
-vaddr_t vaddr;
-int mode;
+OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 {
 	struct {
 		cell_t name;
@@ -627,9 +594,7 @@ int mode;
  * Only works while the prom is actively mapping us.
  */
 paddr_t
-OF_alloc_phys(len, align)
-int len;
-int align;
+OF_alloc_phys(int len, int align)
 {
 	paddr_t paddr;
 	struct {
@@ -670,9 +635,7 @@ int align;
  * Only works while the prom is actively mapping us.
  */
 paddr_t
-OF_claim_phys(phys, len)
-paddr_t phys;
-int len;
+OF_claim_phys(paddr_t phys, int len)
 {
 	paddr_t paddr;
 	struct {
@@ -718,9 +681,7 @@ int len;
  * Only works while the prom is actively mapping us.
  */
 int
-OF_free_phys(phys, len)
-paddr_t phys;
-int len;
+OF_free_phys(paddr_t phys, int len)
 {
 	struct {
 		cell_t name;
@@ -756,10 +717,7 @@ int len;
  */
 
 void *
-OF_claim(virt, size, align)
-	void *virt;
-	u_int size;
-	u_int align;
+OF_claim(void *virt, u_int size, u_int align)
 {
 #define SUNVMOF
 #ifndef SUNVMOF
