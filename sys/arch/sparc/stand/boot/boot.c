@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.23 2006/07/13 20:03:34 uwe Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,9 +45,9 @@
 
 #include "bootinfo.h"
 
-extern void	prom_patch __P((void));	/* prompatch.c */
+extern void	prom_patch(void);	/* prompatch.c */
 
-static int	bootoptions __P((const char *));
+static int	bootoptions(const char *);
 
 int	boothowto;
 int	debug;
@@ -61,8 +61,8 @@ u_long	loadaddrmask = -1UL;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
-int	main __P((void));
-typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
+int	main(void);
+typedef void (*entry_t)(caddr_t, int, int, int, long, long);
 
 /*
  * Boot device is derived from ROM provided information, or if there is none,
@@ -86,8 +86,7 @@ char *kernels[] = {
 };
 
 int
-bootoptions(ap)
-	const char *ap;
+bootoptions(const char *ap)
 {
 	int v = 0;
 	if (ap == NULL || *ap++ != '-')
@@ -106,7 +105,8 @@ bootoptions(ap)
 	return (v);
 }
 
-static paddr_t getphysmem(u_long size)
+static paddr_t
+getphysmem(u_long size)
 {
 	struct	memarr *pmemarr;	/* physical memory regions */
 	int	npmemarr;		/* number of entries in pmemarr */
@@ -232,7 +232,7 @@ out:
 }
 
 int
-main()
+main(void)
 {
 	int	error, i;
 	char	kernel[MAX_PROM_PATH];

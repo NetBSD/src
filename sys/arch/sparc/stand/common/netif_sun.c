@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.8 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.9 2006/07/13 20:03:34 uwe Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -62,9 +62,9 @@ int netif_debug;
 struct iodesc sockets[SOPEN_MAX];
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
+
 	if (sock != 0) {
 		return(NULL);
 	}
@@ -72,8 +72,7 @@ socktodesc(sock)
 }
 
 int
-netif_open(machdep_hint)
-	void *machdep_hint;
+netif_open(void *machdep_hint)
 {
 	struct promdata *pd = machdep_hint;
 	struct iodesc *io;
@@ -109,8 +108,7 @@ netif_open(machdep_hint)
 }
 
 int
-netif_close(fd)
-	int fd;
+netif_close(int fd)
 {
 	struct iodesc *io;
 	struct netif *ni;
@@ -134,10 +132,7 @@ netif_close(fd)
  * Return the length sent (or -1 on error).
  */
 ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct promdata *pd;
 	ssize_t rv;
@@ -181,11 +176,7 @@ netif_put(desc, pkt, len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 {
 	struct promdata *pd;
 	int tick0;
