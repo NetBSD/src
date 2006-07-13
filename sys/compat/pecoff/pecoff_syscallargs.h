@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.22 2006/06/29 06:02:42 pavel Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.23 2006/07/13 21:31:31 martin Exp $ */
 
 /*
  * System call argument lists.
@@ -136,11 +136,14 @@ struct pecoff_sys_statfs_args {
 #ifdef COMPAT_20
 #else
 #endif
+#ifdef COMPAT_30
 
-struct pecoff_sys_getfh_args {
+struct pecoff_compat_30_sys_getfh_args {
 	syscallarg(const char *) fname;
-	syscallarg(fhandle_t *) fhp;
+	syscallarg(struct commpat_30_fhandle *) fhp;
 };
+#else
+#endif
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 #else
 #endif
@@ -271,6 +274,12 @@ struct pecoff_sys___stat30_args {
 struct pecoff_sys___lstat30_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat *) ub;
+};
+
+struct pecoff_sys___getfh30_args {
+	syscallarg(const char *) fname;
+	syscallarg(fhandle_t *) fhp;
+	syscallarg(size_t *) fh_size;
 };
 
 /*
@@ -506,8 +515,11 @@ int	compat_20_sys_fstatfs(struct lwp *, void *, register_t *);
 
 #else
 #endif
-int	pecoff_sys_getfh(struct lwp *, void *, register_t *);
+#ifdef COMPAT_30
+int	pecoff_compat_30_sys_getfh(struct lwp *, void *, register_t *);
 
+#else
+#endif
 int	sys_sysarch(struct lwp *, void *, register_t *);
 
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
@@ -885,5 +897,7 @@ int	sys___fhstat30(struct lwp *, void *, register_t *);
 int	sys___ntp_gettime30(struct lwp *, void *, register_t *);
 
 int	sys___socket30(struct lwp *, void *, register_t *);
+
+int	pecoff_sys___getfh30(struct lwp *, void *, register_t *);
 
 #endif /* _PECOFF_SYS_SYSCALLARGS_H_ */

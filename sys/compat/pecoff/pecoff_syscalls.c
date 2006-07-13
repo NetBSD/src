@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscalls.c,v 1.21 2006/06/29 06:02:42 pavel Exp $ */
+/* $NetBSD: pecoff_syscalls.c,v 1.22 2006/07/13 21:31:31 martin Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.21 2006/06/29 06:02:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.22 2006/07/13 21:31:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -223,7 +223,11 @@ const char *const pecoff_syscallnames[] = {
 #endif
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
+#ifdef COMPAT_30
 	"getfh",			/* 161 = getfh */
+#else
+	"#161 (excluded compat_30_sys_getfh)",		/* 161 = excluded compat_30_sys_getfh */
+#endif
 	"#162 (excluded { int sys_getdomainname ( char * domainname , int len ) ; } ogetdomainname)",		/* 162 = excluded { int sys_getdomainname ( char * domainname , int len ) ; } ogetdomainname */
 	"#163 (excluded { int sys_setdomainname ( char * domainname , int len ) ; } osetdomainname)",		/* 163 = excluded { int sys_setdomainname ( char * domainname , int len ) ; } osetdomainname */
 	"#164 (excluded { int sys_uname ( struct outsname * name ) ; } ouname)",		/* 164 = excluded { int sys_uname ( struct outsname * name ) ; } ouname */
@@ -563,4 +567,5 @@ const char *const pecoff_syscallnames[] = {
 	"__fhstat30",			/* 392 = __fhstat30 */
 	"__ntp_gettime30",			/* 393 = __ntp_gettime30 */
 	"__socket30",			/* 394 = __socket30 */
+	"__getfh30",			/* 395 = __getfh30 */
 };

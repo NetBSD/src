@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.22 2006/06/29 06:02:42 pavel Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.23 2006/07/13 21:31:31 martin Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.22 2006/06/29 06:02:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.23 2006/07/13 21:31:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -391,8 +391,13 @@ struct sysent pecoff_sysent[] = {
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
-	{ 2, s(struct pecoff_sys_getfh_args), 0,
-	    pecoff_sys_getfh },			/* 161 = getfh */
+#ifdef COMPAT_30
+	{ 2, s(struct pecoff_compat_30_sys_getfh_args), 0,
+	    pecoff_compat_30_sys_getfh },	/* 161 = getfh */
+#else
+	{ 0, 0, 0,
+	    sys_nosys },			/* 161 = excluded compat_30_sys_getfh */
+#endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 162 = excluded { int sys_getdomainname ( char * domainname , int len ) ; } ogetdomainname */
 	{ 0, 0, 0,
@@ -1013,8 +1018,8 @@ struct sysent pecoff_sysent[] = {
 	    sys___ntp_gettime30 },		/* 393 = __ntp_gettime30 */
 	{ 3, s(struct sys___socket30_args), 0,
 	    sys___socket30 },			/* 394 = __socket30 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 395 = filler */
+	{ 3, s(struct pecoff_sys___getfh30_args), 0,
+	    pecoff_sys___getfh30 },		/* 395 = __getfh30 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 396 = filler */
 	{ 0, 0, 0,
