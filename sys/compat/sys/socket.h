@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.3 2005/12/11 12:20:29 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.3.16.1 2006/07/13 17:49:16 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -61,6 +61,8 @@ struct socket;
 struct proc;
 int compat_ifioctl(struct socket *, u_long, caddr_t, struct lwp *);
 __END_DECLS
+#else
+int	__socket30(int, int, int);
 #endif
 
 #endif

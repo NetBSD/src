@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2005/12/29 06:49:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.15.16.1 2006/07/13 17:48:59 gdamore Exp $
 
 NOMAN= # defined
 
@@ -20,7 +20,7 @@ OBJCOPY?= objcopy
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
-LDFLAGS= -x -N -Ttext 0 -e start
+LINKFLAGS= -x -N -Ttext 0 -e start
 CFLAGS= -Os -Wall
 
 CPPFLAGS+= -D_STANDALONE # -DBOOTXX_DEBUG
@@ -46,7 +46,8 @@ m68k::
 .endif
 
 ${PROG}: ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
 

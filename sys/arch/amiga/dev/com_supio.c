@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.20.16.4 2006/06/17 03:32:17 gdamore Exp $ */
+/*	$NetBSD: com_supio.c,v 1.20.16.5 2006/07/13 17:48:44 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.4 2006/06/17 03:32:17 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.20.16.5 2006/07/13 17:48:44 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	COM_INIT_REGS(csc->sc_regs, iot, ioh, iobase);
 
 	csc->sc_frequency = supa->supio_arg;
 

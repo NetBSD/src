@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.114 2006/05/19 15:08:14 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.114.4.1 2006/07/13 17:50:13 gdamore Exp $	*/
 
 /*
  *
@@ -167,6 +167,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define	UVM_KMF_TYPEMASK (UVM_KMF_VAONLY | UVM_KMF_PAGEABLE | UVM_KMF_WIRED)
 #define UVM_KMF_CANFAIL	0x8			/* caller handles failure */
 #define UVM_KMF_ZERO	0x10			/* want zero filled memory */
+#define UVM_KMF_EXEC	0x20			/* need executable mapping */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 #define UVM_KMF_NOWAIT	UVM_FLAG_NOWAIT		/* not allowed to sleep */
 #define UVM_KMF_WAITVA	UVM_FLAG_WAITVA		/* sleep for va */

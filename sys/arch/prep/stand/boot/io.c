@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.3 2006/04/13 18:46:46 garbled Exp $	*/
+/*	$NetBSD: io.c,v 1.3.4.1 2006/07/13 17:49:02 gdamore Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -97,10 +97,12 @@ unlockVideo(int slot)
 
 	ppci = (u_int8_t *)PCI_slots[slot].config_addr;
 	ppci[4] = 0x0003;	/* enable memory and IO Access */
+#if 0
 	ppci[0x10] = 0x00000;	/* Turn off memory mapping */
 	ppci[0x11] = 0x00000;	/* mem base = 0 */
 	ppci[0x12] = 0x00000;
 	ppci[0x13] = 0x00000;
+#endif
 	__asm__ volatile("eieio");
 
 	outb(0x3d4, 0x11);

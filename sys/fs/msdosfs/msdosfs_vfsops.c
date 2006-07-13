@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.31 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.31.4.1 2006/07/13 17:49:50 gdamore Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.31 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.31.4.1 2006/07/13 17:49:50 gdamore Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,7 +96,7 @@ int msdosfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int msdosfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int msdosfs_vget(struct mount *, ino_t, struct vnode **);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int msdosfs_vptofh(struct vnode *, struct fid *);
+int msdosfs_vptofh(struct vnode *, struct fid *, size_t *fh_size);
 
 int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
     struct msdosfs_args *);
@@ -965,11 +965,15 @@ msdosfs_fhtovp(mp, fhp, vpp)
 	struct vnode **vpp;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct defid *defhp = (struct defid *) fhp;
+	struct defid defh;
 	struct denode *dep;
 	int error;
 
-	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
+	if (fhp->fid_len != sizeof(struct defid))
+		return EINVAL;
+
+	memcpy(&defh, fhp, sizeof(defh));
+	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, &dep);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
@@ -979,19 +983,26 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp)
+msdosfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct denode *dep;
-	struct defid *defhp;
+	struct defid defh;
 
+	if (*fh_size < sizeof(struct defid)) {
+		*fh_size = sizeof(struct defid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct defid);
 	dep = VTODE(vp);
-	defhp = (struct defid *)fhp;
-	defhp->defid_len = sizeof(struct defid);
-	defhp->defid_dirclust = dep->de_dirclust;
-	defhp->defid_dirofs = dep->de_diroffset;
-	/* defhp->defid_gen = dep->de_gen; */
+	memset(&defh, 0, sizeof(defh));
+	defh.defid_len = sizeof(struct defid);
+	defh.defid_dirclust = dep->de_dirclust;
+	defh.defid_dirofs = dep->de_diroffset;
+	/* defh.defid_gen = dep->de_gen; */
+	memcpy(fhp, &defh, sizeof(defh));
 	return (0);
 }
 

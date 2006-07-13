@@ -1,4 +1,4 @@
-/* $NetBSD: chpidpnp.h,v 1.1 2006/05/29 22:11:15 garbled Exp $ */
+/* $NetBSD: chpidpnp.h,v 1.1.4.1 2006/07/13 17:49:02 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,12 @@
 #define _CHPIDPNP_H_
 
 #define ChipID_Packet	0x70	/* tag for ChipIdPack without size */
+
+/* the words MOT and IBM are made from these two bytes */
+#define CHIP_VENDOR_IBM0	0x24
+#define CHIP_VENDOR_IBM1	0x4d
+#define CHIP_VENDOR_MOT0	0x35
+#define CHIP_VENDOR_MOT1	0xf4
 
 /*
  * The chipid is the vendor id followed by 4 hex digits, e.g. for IBM
@@ -117,6 +123,7 @@ DallasRTC = 0x8F00,		/* IBM8F00: Dallas 1385 compatible */
 Dallas1585 = 0x8F01,		/* IBM8F01: Dallas 1585 compatible */
 Timer8254 = 0x8F10,		/* IBM8F10: 8254-compatible timer */
 HarddiskLt = 0x8FF0,		/* IBM8FF0: Op Panel HD light */
+MOTmk48 = 0x3040,		/* MOT3040: mk48txx compatible */
 } Chip_ID;
 
 /* small tag = 0x7n with n bytes.  Type == 1 for ChipID 

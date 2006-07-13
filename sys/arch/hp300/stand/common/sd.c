@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.7 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.7.16.1 2006/07/13 17:48:47 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -255,12 +255,12 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
     size_t *rsize)
 {
 	struct sd_softc *ss = devdata;
-	char *buf = v_buf;
+	uint8_t *buf = v_buf;
 	int ctlr = ss->sc_ctlr;
 	int unit = ss->sc_unit;
 	u_int nblk = size >> ss->sc_blkshift;
 	daddr_t blk;
-	char stat;
+	int stat;
 
 	if (size == 0)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.98 2006/06/07 22:33:43 kardel Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.98.2.1 2006/07/13 17:49:57 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.98 2006/06/07 22:33:43 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.98.2.1 2006/07/13 17:49:57 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -182,10 +182,10 @@ static LIST_HEAD(, sl_softc) sl_softc_list;
 struct if_clone sl_cloner =
     IF_CLONE_INITIALIZER("sl", sl_clone_create, sl_clone_destroy);
 
-#define FRAME_END	 	0xc0		/* Frame End */
+#define FRAME_END		0xc0		/* Frame End */
 #define FRAME_ESCAPE		0xdb		/* Frame Esc */
-#define TRANS_FRAME_END	 	0xdc		/* transposed frame end */
-#define TRANS_FRAME_ESCAPE 	0xdd		/* transposed frame esc */
+#define TRANS_FRAME_END		0xdc		/* transposed frame end */
+#define TRANS_FRAME_ESCAPE	0xdd		/* transposed frame esc */
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	slnetisr(void);
@@ -222,6 +222,7 @@ void	slattach(void);
 void
 slattach(void)
 {
+
 	if (ttyldisc_attach(&slip_disc) != 0)
 		panic("slattach");
 	LIST_INIT(&sl_softc_list);
@@ -282,16 +283,16 @@ slinit(struct sl_softc *sc)
 		sc->sc_mbuf = m_gethdr(M_WAIT, MT_DATA);
 		m_clget(sc->sc_mbuf, M_WAIT);
 	}
-	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	sc->sc_ep = (u_char *)sc->sc_mbuf->m_ext.ext_buf +
 	    sc->sc_mbuf->m_ext.ext_size;
-	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	sc->sc_mp = sc->sc_pktstart = (u_char *)sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
 
 #ifdef INET
 	sl_compress_init(&sc->sc_comp);
 #endif
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -307,11 +308,12 @@ slopen(dev_t dev, struct tty *tp)
 	int error;
 	int s;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-		return (error);
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)) != 0)
+		return error;
 
 	if (tp->t_linesw == &slip_disc)
-		return (0);
+		return 0;
 
 	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
 		if (sc->sc_ttyp == NULL) {
@@ -319,13 +321,13 @@ slopen(dev_t dev, struct tty *tp)
 			sc->sc_si = softintr_establish(IPL_SOFTNET,
 			    slintr, sc);
 			if (sc->sc_si == NULL)
-				return (ENOMEM);
+				return ENOMEM;
 #endif
 			if (slinit(sc) == 0) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 				softintr_disestablish(sc->sc_si);
 #endif
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 			tp->t_sc = (caddr_t)sc;
 			sc->sc_ttyp = tp;
@@ -344,12 +346,12 @@ slopen(dev_t dev, struct tty *tp)
 			 * ends.
 			 */
 			s = spltty();
-			if (tp->t_outq.c_cn < 2*SLMAX+2) {
+			if (tp->t_outq.c_cn < 2 * SLMAX + 2) {
 				sc->sc_oldbufsize = tp->t_outq.c_cn;
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
 				clfree(&tp->t_outq);
-				error = clalloc(&tp->t_outq, 2*SLMAX+2, 0);
+				error = clalloc(&tp->t_outq, 2 * SLMAX + 2, 0);
 				if (error) {
 					splx(s);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -360,15 +362,15 @@ slopen(dev_t dev, struct tty *tp)
 					 * is no good, so we need to return
 					 * something else.
 					 */
-					return (ENOMEM); /* XXX ?! */
+					return ENOMEM; /* XXX ?! */
 				}
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
 			splx(s);
 #endif /* __NetBSD__ */
-			return (0);
+			return 0;
 		}
-	return (ENXIO);
+	return ENXIO;
 }
 
 /*
@@ -418,7 +420,7 @@ slclose(struct tty *tp, int flag)
 		splx(s);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -437,9 +439,9 @@ sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -469,24 +471,24 @@ sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		    dst->sa_family);
 		m_freem(m);
 		sc->sc_if.if_noproto++;
-		return (EAFNOSUPPORT);
+		return EAFNOSUPPORT;
 	}
 
 	if (sc->sc_ttyp == NULL) {
 		m_freem(m);
-		return (ENETDOWN);	/* sort of */
+		return ENETDOWN;	/* sort of */
 	}
 	if ((sc->sc_ttyp->t_state & TS_CARR_ON) == 0 &&
 	    (sc->sc_ttyp->t_cflag & CLOCAL) == 0) {
 		m_freem(m);
 		printf("%s: no carrier and not local\n", sc->sc_if.if_xname);
-		return (EHOSTUNREACH);
+		return EHOSTUNREACH;
 	}
 	ip = mtod(m, struct ip *);
 #ifdef INET
 	if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
-		return (ENETRESET);		/* XXX ? */
+		return ENETRESET;		/* XXX ? */
 	}
 #endif
 
@@ -522,7 +524,7 @@ sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		slstart(sc->sc_ttyp);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -543,14 +545,14 @@ slstart(struct tty *tp)
 	if (tp->t_outq.c_cc != 0) {
 		(*tp->t_oproc)(tp);
 		if (tp->t_outq.c_cc > SLIP_HIWAT)
-			return (0);
+			return 0;
 	}
 
 	/*
 	 * This happens briefly when the line shuts down.
 	 */
 	if (sc == NULL)
-		return (0);
+		return 0;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
@@ -560,7 +562,7 @@ slstart(struct tty *tp)
 	splx(s);
     }
 #endif
-	return (0);
+	return 0;
 }
 
 /*
@@ -578,22 +580,22 @@ sl_btom(struct sl_softc *sc, int len)
 	MGETHDR(sc->sc_mbuf, M_DONTWAIT, MT_DATA);
 	if (sc->sc_mbuf == NULL) {
 		sc->sc_mbuf = m;
-		return (NULL);
+		return NULL;
 	}
 	MCLGET(sc->sc_mbuf, M_DONTWAIT);
 	if ((sc->sc_mbuf->m_flags & M_EXT) == 0) {
 		m_freem(sc->sc_mbuf);
 		sc->sc_mbuf = m;
-		return (NULL);
+		return NULL;
 	}
-	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	sc->sc_ep = (u_char *)sc->sc_mbuf->m_ext.ext_buf +
 	    sc->sc_mbuf->m_ext.ext_size;
 
 	m->m_data = sc->sc_pktstart;
 
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = &sc->sc_if;
-	return (m);
+	return m;
 }
 
 /*
@@ -609,11 +611,11 @@ slinput(int c, struct tty *tp)
 	tk_nin++;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc == NULL)
-		return (0);
+		return 0;
 	if ((c & TTY_ERRORMASK) || ((tp->t_state & TS_CARR_ON) == 0 &&
 	    (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
-		return (0);
+		return 0;
 	}
 	c &= TTY_CHARMASK;
 
@@ -637,7 +639,7 @@ slinput(int c, struct tty *tp)
 					sc->sc_starttime = time_second;
 				if (sc->sc_abortcount >= ABT_COUNT) {
 					slclose(tp, 0);
-					return (0);
+					return 0;
 				}
 			}
 		} else
@@ -659,10 +661,10 @@ slinput(int c, struct tty *tp)
 
 	case FRAME_ESCAPE:
 		sc->sc_escape = 1;
-		return (0);
+		return 0;
 
 	case FRAME_END:
-		if(sc->sc_flags & SC_ERROR) {
+		if (sc->sc_flags & SC_ERROR) {
 			sc->sc_flags &= ~SC_ERROR;
 			goto newpack;
 		}
@@ -690,7 +692,7 @@ slinput(int c, struct tty *tp)
 	if (sc->sc_mp < sc->sc_ep) {
 		*sc->sc_mp++ = c;
 		sc->sc_escape = 0;
-		return (0);
+		return 0;
 	}
 
 	/* can't put lower; would miss an extra frame */
@@ -699,11 +701,11 @@ slinput(int c, struct tty *tp)
 error:
 	sc->sc_if.if_ierrors++;
 newpack:
-	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	sc->sc_mp = sc->sc_pktstart = (u_char *)sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
 	sc->sc_escape = 0;
 
-	return (0);
+	return 0;
 }
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -757,7 +759,7 @@ slintr(void *arg)
 		 */
 		s = spltty();
 		if (tp->t_outq.c_cn - tp->t_outq.c_cc <
-		    2*sc->sc_if.if_mtu+2) {
+		    2 * sc->sc_if.if_mtu + 2) {
 			splx(s);
 			break;
 		}
@@ -802,8 +804,7 @@ slintr(void *arg)
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
 			if (sc->sc_if.if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |=
-				    sl_compress_tcp(m, ip,
-				    &sc->sc_comp, 1);
+				    sl_compress_tcp(m, ip, &sc->sc_comp, 1);
 		}
 #endif
 #if NBPFILTER > 0
@@ -823,7 +824,7 @@ slintr(void *arg)
 		 */
 		if (tp->t_outq.c_cc == 0) {
 			sc->sc_if.if_obytes++;
-			(void) putc(FRAME_END, &tp->t_outq);
+			(void)putc(FRAME_END, &tp->t_outq);
 		}
 
 		while (m) {
@@ -851,8 +852,7 @@ slintr(void *arg)
 					 * Put N characters at once
 					 * into the tty output queue.
 					 */
-					if (b_to_q(bp, cp - bp,
-					    &tp->t_outq))
+					if (b_to_q(bp, cp - bp, &tp->t_outq))
 						break;
 					sc->sc_if.if_obytes += cp - bp;
 				}
@@ -863,15 +863,13 @@ slintr(void *arg)
 				 * form.
 				 */
 				if (cp < ep) {
-					if (putc(FRAME_ESCAPE,
-					    &tp->t_outq))
+					if (putc(FRAME_ESCAPE, &tp->t_outq))
 						break;
 					if (putc(*cp++ == FRAME_ESCAPE ?
 					    TRANS_FRAME_ESCAPE :
 					    TRANS_FRAME_END,
 					    &tp->t_outq)) {
-						(void)
-						   unputc(&tp->t_outq);
+						(void)unputc(&tp->t_outq);
 						break;
 					}
 					sc->sc_if.if_obytes += 2;
@@ -891,8 +889,8 @@ slintr(void *arg)
 			 * enough clists and you should increase
 			 * "nclist" in param.c
 			 */
-			(void) unputc(&tp->t_outq);
-			(void) putc(FRAME_END, &tp->t_outq);
+			(void)unputc(&tp->t_outq);
+			(void)putc(FRAME_END, &tp->t_outq);
 			sc->sc_if.if_collisions++;
 		} else {
 			sc->sc_if.if_obytes++;
@@ -1102,5 +1100,5 @@ slioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = EINVAL;
 	}
 	splx(s);
-	return (error);
+	return error;
 }

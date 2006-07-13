@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.12 2005/12/11 12:20:03 christos Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.12.16.1 2006/07/13 17:49:11 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.12 2005/12/11 12:20:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.12.16.1 2006/07/13 17:49:11 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ ibcs2_socksys(l, v, retval)
 	case SOCKSYS_SHUTDOWN:
 		return sys_shutdown(l, realargs + 1, retval);
 	case SOCKSYS_SOCKET:
-		return sys_socket(l, realargs + 1, retval);
+		return compat_30_sys_socket(l, realargs + 1, retval);
 	case SOCKSYS_SELECT:
 		return sys_select(l, realargs + 1, retval);
 	case SOCKSYS_GETIPDOMAIN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.13 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.13.4.1 2006/07/13 17:50:06 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.13 2006/05/18 12:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.13.4.1 2006/07/13 17:50:06 gdamore Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -223,7 +223,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct netexport *ne;
 	struct nameidata nd;
 	struct vnode *vp;
-	struct fid fid;
+	struct fid *fid;
+	size_t fid_size;
 
 	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &l->l_proc->p_acflag) != 0)
@@ -239,12 +240,22 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 	/* The selected file system may not support NFS exports, so ensure
 	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL ||
-	    VFS_VPTOFH(vp, &fid) != 0) {
+	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL) {
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
-	KASSERT(fid.fid_len <= _VFS_MAXFIDSZ);
+	fid_size = 0;
+	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) == E2BIG) {
+		fid = malloc(fid_size, M_TEMP, M_NOWAIT);
+		if (fid != NULL) {
+			error = VFS_VPTOFH(vp, fid, &fid_size);
+			free(fid, M_TEMP);
+		}
+	}
+	if (error != 0) {
+		error = EOPNOTSUPP;
+		goto out_locked;
+	}
 	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
 	    mp->mnt_op->vfs_fhtovp != NULL);
 
@@ -717,6 +728,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	char *cp;
 	int error;
 	struct vnode *rvp;
+	size_t fhsize;
 
 	/*
 	 * mp == NULL -> invalidate the current info, the FS is
@@ -726,6 +738,10 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	if (mp == NULL) {
 		if (nfs_pub.np_valid) {
 			nfs_pub.np_valid = 0;
+			if (nfs_pub.np_handle != NULL) {
+				free(nfs_pub.np_handle, M_TEMP);
+				nfs_pub.np_handle = NULL;
+			}
 			if (nfs_pub.np_index != NULL) {
 				FREE(nfs_pub.np_index, M_TEMP);
 				nfs_pub.np_index = NULL;
@@ -743,17 +759,22 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	/*
 	 * Get real filehandle for root of exported FS.
 	 */
-	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
-	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
-
 	if ((error = VFS_ROOT(mp, &rvp)))
 		return error;
 
-	if ((error = VFS_VPTOFH(rvp, &nfs_pub.np_handle.fh_fid)))
+	fhsize = 0;
+	error = vfs_composefh(rvp, NULL, &fhsize);
+	if (error != E2BIG)
+		return error;
+	nfs_pub.np_handle = malloc(fhsize, M_TEMP, M_NOWAIT);
+	if (nfs_pub.np_handle == NULL)
+		error = ENOMEM;
+	else
+		error = vfs_composefh(rvp, nfs_pub.np_handle, &fhsize);
+	if (error)
 		return error;
 
 	vput(rvp);
-	KASSERT(nfs_pub.np_handle.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 
 	/*
 	 * If an indexfile was specified, pull it in.

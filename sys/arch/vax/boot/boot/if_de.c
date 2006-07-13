@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.3 2006/06/08 07:03:11 he Exp $	*/
+/*	$NetBSD: if_de.c,v 1.3.2.1 2006/07/13 17:49:05 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -93,7 +93,7 @@ int
 deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	int i, cdata, *map, npgs;
-	char eaddr[6];
+	u_char eaddr[6];
 
 	/* point to the device in memory */
 	if (askname == 0) /* Override if autoboot */

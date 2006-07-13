@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.92 2006/06/07 22:33:43 kardel Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.92.2.1 2006/07/13 17:49:57 gdamore Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.92 2006/06/07 22:33:43 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.92.2.1 2006/07/13 17:49:57 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1069,9 +1069,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFADDR:
-		if_up(ifp);
 		/* fall through... */
-
 	case SIOCSIFFLAGS:
 		going_up = ifp->if_flags & IFF_UP &&
 			(ifp->if_flags & IFF_RUNNING) == 0;

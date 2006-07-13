@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2006/02/10 20:52:57 gdamore Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6.10.1 2006/07/13 17:48:46 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2006/02/10 20:52:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6.10.1 2006/07/13 17:48:46 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -205,8 +205,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NUL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
+	/* Make sure it looks sane, intr_establish does the real check. */
+	if (ih < 0 || ih > 99)
+		panic("pci_intr_string: handle %d won't fit two digits", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -225,10 +226,6 @@ void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 		   int (*func)(void *), void *arg)
 {
-
-	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
 	return intr_establish(ih, IST_LEVEL, level, func, arg);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39.16.1 2006/07/13 17:49:00 gdamore Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39.16.1 2006/07/13 17:49:00 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,11 +111,6 @@ typedef struct tlb_info_s {
 volatile tlb_info_t tlb_info[NTLB];
 /* We'll use a modified FIFO replacement policy cause it's cheap */
 volatile int tlbnext = TLB_NRESERVED;
-
-u_long dtlb_miss_count = 0;
-u_long itlb_miss_count = 0;
-u_long ktlb_miss_count = 0;
-u_long utlb_miss_count = 0;
 
 /* Event counters */
 struct evcnt tlbmiss_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
@@ -1320,17 +1315,6 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	: "=&r" (msr), "=&r" (pid)
 	: "r" (ctx), "r" (idx), "r" (tl), "r" (th));
 	splx(s);
-}
-
-void
-ppc4xx_tlb_unpin(int i)
-{
-
-	if (i == -1)
-		for (i = 0; i < TLB_NRESERVED; i++)
-			tlb_info[i].ti_flags &= ~TLBF_LOCKED;
-	else
-		tlb_info[i].ti_flags &= ~TLBF_LOCKED;
 }
 
 void

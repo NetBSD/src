@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2006/05/14 21:56:33 elad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.4.1 2006/07/13 17:49:02 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2006/05/14 21:56:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.4.1 2006/07/13 17:49:02 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,82 +115,54 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	struct device *parent, *d;
-	char devpath[256], dtmp[256];
+	struct device *parent;
+	char devpath[256];
 	prop_string_t str1;
-	int found = 0;
 
 	/* Certain devices will *never* be bootable.  short circuit them. */
 
 	if (device_is_a(dev, "com") || device_is_a(dev, "attimer") ||
 	    device_is_a(dev, "pcppi") || device_is_a(dev, "mcclock") ||
-	    device_is_a(dev, "mkclock") || device_is_a(dev, "lpt"))
+	    device_is_a(dev, "mkclock") || device_is_a(dev, "lpt") ||
+	    device_is_a(dev, "pckbc") || device_is_a(dev, "pckbd") ||
+	    device_is_a(dev, "vga") || device_is_a(dev, "wsdisplay") ||
+	    device_is_a(dev, "wskbd") || device_is_a(dev, "wsmouse") ||
+	    device_is_a(dev, "pms") || device_is_a(dev, "cpu"))
 		return;
 
 	if (device_is_a(dev, "mainbus")) {
 		str1 = prop_string_create_cstring("/");
 		KASSERT(str1 != NULL);
 		(void) prop_dictionary_set(device_properties(dev),
-					   "fw-path", str1);
+					   "prep-fw-path-component", str1);
 		prop_object_release(str1);
 		return;
 	}
-
 	parent = device_parent(dev);
-	str1 = prop_dictionary_get(device_properties(parent), "fw-path");
-	if (str1 == NULL)
-		return;
-	KASSERT(prop_string_size(str1) < sizeof(dtmp));
-	strcpy(dtmp, prop_string_cstring_nocopy(str1));
 
 	if (device_is_a(dev, "pci")) {
 		if (device_is_a(parent, "ppb"))
-			sprintf(devpath, "%s/", dtmp);
+			sprintf(devpath, "");
 		else
-			sprintf(devpath, "%spci@%x/", dtmp,
+			sprintf(devpath, "pci@%x",
 			    prep_io_space_tag.pbs_offset);
-		found++;
 	}
 	if (device_is_a(parent, "pci")) {
 		struct pci_attach_args *pa = aux;
 
-		sprintf(devpath, "%spci%x,%x@%x,%x", dtmp,
+		sprintf(devpath, "pci%x,%x@%x,%x",
 		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
 		    pa->pa_device, pa->pa_function);
-		found++;
-	}
-	if (device_is_a(dev, "pnpbus")) {
-		/* because the pnpbus attaches at mainbus, we need to manually
-		 * grab it's parent device components.  We grab them from
-		 * ISA because thats the most likely attachment. 
-		 */
-		str1 = NULL;
-		TAILQ_FOREACH(d, &alldevs, dv_list) {
-			if (device_is_a(d, "isa")) {
-				str1 = prop_dictionary_get(
-				    device_properties(d), "fw-path");
-				break;
-			}
-		}
-		if (str1 != NULL) {
-			KASSERT(prop_string_size(str1) < sizeof(devpath));
-			strcpy(devpath, prop_string_cstring_nocopy(str1));
-			found++;
-		}
 	}
 	if (device_is_a(parent, "pnpbus")) {
 		struct pnpbus_dev_attach_args *pna = aux;
 		struct pnpbus_io *io;
 
-		sprintf(devpath, "%s/%s@", dtmp, pna->pna_devid);
+		sprintf(devpath, "%s@", pna->pna_devid);
 		io = SIMPLEQ_FIRST(&pna->pna_res.io);
 		if (io != NULL)
 			sprintf(devpath, "%s%x", devpath, io->minbase);
-		found++;
 	}
-
-	if (!found)
-		strcpy(devpath, dtmp);
 
 	/* we can't trust the device tag on the ethernet, because
 	 * the spec lies about how it is formed.  Therefore we will leave it
@@ -198,13 +170,13 @@ device_register(struct device *dev, void *aux)
 	if (device_class(dev) == DV_IFNET)
 		sprintf(devpath, "%s:", devpath);
 	else if (device_is_a(dev, "cd"))
-		sprintf(devpath, "%s/cdrom@", devpath);
+		sprintf(devpath, "cdrom@");
 	else if (device_class(dev) == DV_DISK)
-		sprintf(devpath, "%s/harddisk@", devpath);
+		sprintf(devpath, "harddisk@");
 	else if (device_class(dev) == DV_TAPE)
-		sprintf(devpath, "%s/tape@", devpath);
+		sprintf(devpath, "tape@");
 	else if (device_is_a(dev, "fd"))
-		sprintf(devpath, "%s/floppy@", devpath);
+		sprintf(devpath, "floppy@");
 
 	if (device_is_a(parent, "scsibus") || device_is_a(parent, "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
@@ -226,12 +198,99 @@ device_register(struct device *dev, void *aux)
 
 	str1 = prop_string_create_cstring(devpath);
 	KASSERT(str1 != NULL);
-	(void) prop_dictionary_set(device_properties(dev), "fw-path", str1);
+	(void)prop_dictionary_set(device_properties(dev),
+	    "prep-fw-path-component", str1);
 	prop_object_release(str1);
-#if defined(NVRAM_DUMP)
-	printf("prop %s\n", devpath);
-#endif
 }
+
+static void
+gen_fwpath(struct device *dev)
+{
+	struct device *parent;
+	prop_string_t str1, str2, str3;
+
+	parent = device_parent(dev);
+	str1 = prop_dictionary_get(device_properties(dev),
+	    "prep-fw-path-component");
+	if (str1 == NULL)
+		return;
+	if (parent == NULL) {
+		prop_dictionary_set(device_properties(dev), "prep-fw-path",
+		    str1);
+		return;
+	}
+	str2 = prop_dictionary_get(device_properties(parent), "prep-fw-path");
+	if (str2 == NULL) {
+		prop_dictionary_set(device_properties(dev), "prep-fw-path",
+		    str1);
+		return;
+	}
+	str3 = prop_string_copy(str2);
+	KASSERT(str3 != NULL);
+	if (!(prop_string_equals_cstring(str3, "/") ||
+	      prop_string_equals_cstring(str1, "")))
+		prop_string_append_cstring(str3, "/");
+	if (!prop_string_equals_cstring(str1, "/"))
+		prop_string_append(str3, str1);
+#if defined(NVRAM_DUMP)
+	printf("%s devpath: %s+%s == %s\n", device_xname(dev),
+	    prop_string_cstring_nocopy(str2),
+	    prop_string_cstring_nocopy(str1),
+	    prop_string_cstring_nocopy(str3));
+#endif
+	(void)prop_dictionary_set(device_properties(dev),
+	    "prep-fw-path", str3);
+	prop_object_release(str3);
+}
+
+/*
+ * Generate properties for each device by totaling up it's parent device
+ */
+static void
+build_fwpath(void)
+{
+	struct device *dev, *d;
+	prop_string_t str1;
+
+	/* First, find all the PCI busses */
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (device_is_a(dev, "pci") || device_is_a(dev, "mainbus") ||
+		    device_is_a(dev, "pcib") || device_is_a(dev, "pceb") ||
+		    device_is_a(dev, "ppb"))
+			gen_fwpath(dev);
+		else
+			continue;
+	}
+	/* Now go find the ISA bus and fix it up */
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (device_is_a(dev, "isa"))
+			gen_fwpath(dev);
+		else
+			continue;
+	}
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		/* skip the ones we allready computed above */
+		if (device_is_a(dev, "pci") || device_is_a(dev, "pcib") ||
+		    device_is_a(dev, "pceb") || device_is_a(dev, "isa") ||
+		    device_is_a(dev, "ppb"))
+			continue;
+		/* patch in the properties for the pnpbus */
+		if (device_is_a(dev, "pnpbus")) {
+			TAILQ_FOREACH(d, &alldevs, dv_list) {
+				if (!device_is_a(d, "isa"))
+					continue;
+				str1 = prop_dictionary_get(device_properties(d),
+					"prep-fw-path");
+				if (str1 == NULL)
+					continue;
+				prop_dictionary_set(device_properties(dev),
+					"prep-fw-path", str1);
+			}
+		} else
+			gen_fwpath(dev);
+	}
+}
+
 
 /*
  * This routine looks at each device, and tries to match them to the bootpath
@@ -245,7 +304,10 @@ findroot(void)
 	prop_string_t str;
 	size_t len;
 
-	/* first trim the ethernet crap off the bootpath */
+	/* first rebuild all the device paths */
+	build_fwpath();
+
+	/* now trim the ethernet crap off the bootpath */
 	cp = strchr(bootpath, ':');
 	if (cp != NULL) {
 		cp++;
@@ -256,7 +318,7 @@ findroot(void)
 	printf("Modified bootpath: %s\n", bootpath);
 #endif
 	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		str = prop_dictionary_get(device_properties(d), "fw-path");
+		str = prop_dictionary_get(device_properties(d), "prep-fw-path");
 		if (str == NULL)
 			continue;
 #if defined(NVRAM_DUMP)

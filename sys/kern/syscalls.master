@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.153 2006/05/29 09:57:55 drochner Exp $
+	$NetBSD: syscalls.master,v 1.153.2.1 2006/07/13 17:49:51 gdamore Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -219,7 +219,7 @@
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
 96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
-97	STD		{ int sys_socket(int domain, int type, int protocol); }
+97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
@@ -323,7 +323,8 @@
 158	COMPAT_20	{ int sys_fstatfs(int fd, struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
-161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
+161	COMPAT_30	{ int sys_getfh(const char *fname, \
+			    struct compat_30_fhandle *fhp); }
 162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
 			    ogetdomainname
 163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
@@ -787,3 +788,5 @@
 392	STD		{ int sys___fhstat30(const fhandle_t *fhp, \
 			    struct stat *sb); }
 393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
+394	STD		{ int sys___socket30(int domain, int type, int protocol); }
+395	STD		{ int sys___getfh30(const char *fname, fhandle_t *fhp, size_t *fh_size); }

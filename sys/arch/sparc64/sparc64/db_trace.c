@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.31 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: db_trace.c,v 1.31.10.1 2006/07/13 17:49:04 gdamore Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31.10.1 2006/07/13 17:49:04 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -82,7 +82,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	if (!have_addr)
 		frame = (vaddr_t)DDB_TF->tf_out[6];
 	else {
-#if 0
 		if (trace_thread) {
 			struct proc *p;
 			struct lwp *l;
@@ -104,9 +103,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		} else {
 			frame = (vaddr_t)addr;
 		}
-#else
-		return;
-#endif
 	}
 
 	while (count--) {

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.27 2006/05/13 12:02:54 lukem Exp $
+# $NetBSD: Makefile.boot,v 1.27.4.1 2006/07/13 17:48:54 gdamore Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -29,7 +29,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -N -e boot_start
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 # CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
@@ -39,7 +39,7 @@ CPPFLAGS+= -I ${.OBJDIR}
 COPTS=  -Os
 
 .if ${MACHINE} == "amd64"
-LD+=  -m elf_i386
+LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
 CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
@@ -141,7 +141,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # explicitely pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
-	bb="$$( ${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0 -cref \
+	bb="$$( ${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
@@ -157,8 +157,8 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0 \
-		-Map ${PROG}.map -cref ${OBJS} $$bb ${LIBLIST}
+	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 \
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp
 

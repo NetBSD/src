@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2006/02/05 05:02:01 cube Exp $
+# $NetBSD: GENERIC,v 1.25.10.1 2006/07/13 17:49:00 gdamore Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.25.10.1 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -145,6 +145,7 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	loop	1
 #pseudo-device	pty			# pseudo-terminals
 #pseudo-device	bpfilter 		# Not supported by de yet.
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	
 #pseudo-device	ppp	

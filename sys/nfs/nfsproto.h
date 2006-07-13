@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.13 2006/03/14 03:23:23 yamt Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.13.6.1 2006/07/13 17:50:06 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -113,7 +113,7 @@
 #define NFSX_V2STATFS	20
 
 /* specific to NFS Version 3 */
-#define NFSX_V3FH		(sizeof (fhandle_t)) /* size this server uses */
+#define NFSX_V3FH		(sizeof(fhandle_t)+16)
 #define	NFSX_V3FHMAX		64	/* max. allowed by protocol */
 #define NFSX_V3FATTR		84
 #define NFSX_V3SATTR		60	/* max. all fields filled in */

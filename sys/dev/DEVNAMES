@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.199 2006/05/14 21:42:26 elad Exp $
+#	$NetBSD: DEVNAMES,v 1.199.4.1 2006/07/13 17:49:16 gdamore Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -169,9 +169,15 @@ boca			MI
 bonito			algor
 bpp			MI
 brgphy			MI
+bt3c			MI
 bt_dac			sparc		Attribute
 bt_dac			sparc64		Attribute
+bthidev			MI
+bthub			MI
+bthset			MI
+btkbd			MI
 btl			arc
+btms			MI
 btnmgr			hpcmips
 btvmei			MI
 btvmeii			MI
@@ -637,6 +643,7 @@ isdntel			MI
 isdntrc			MI
 isic			MI
 isp			MI
+it			MI
 it8368e			hpcmips
 ite			amiga
 ite			amigappc
@@ -678,6 +685,7 @@ kbd			sun3
 kbd			x68k
 kdb			MI
 kft			alpha
+kse			MI
 kue			MI
 latches			acorn26
 lc			MI
@@ -1282,6 +1290,8 @@ uaudio			MI
 uba			MI
 ubsa			MI
 ubsec			MI
+ubt			MI
+ubtbcmfw		MI
 ucb			hpcmips
 ucbif			hpcmips
 ucbio			hpcmips

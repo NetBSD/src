@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.12.1 2006/07/13 17:48:55 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -686,14 +686,42 @@ ia64_init(void)
 	lwp0.l_addr = proc0paddr =
 	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
+
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make proc0's trapframe pointer point to it for sanity.
 	 */
-	proc0paddr->u_pcb.pcb_special.sp =
-	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
-	lwp0.l_md.md_tf =
-	    (struct trapframe *)proc0paddr->u_pcb.pcb_special.sp;
+
+	/*
+	 * Process u-area is organised as follows:
+	 * 
+	 *  -----------------------------------------------------------
+	 * |  P  |                  |                    | 16Bytes | T |
+	 * |  C  | Register Stack   |      Memory Stack  | <-----> | F |
+	 * |  B  | ------------->   |       <----------  |         |   |
+	 *  -----------------------------------------------------------
+	 *        ^                                      ^
+	 *        |___ bspstore                          |___ sp
+	 *
+	 *                 --------------------------->
+         *                       Higher Addresses
+	 *
+	 *	PCB: struct user;    TF: struct trapframe;		    
+	 */
+
+
+	lwp0.l_md.md_tf = (struct trapframe *) 
+		((u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe));
+
+	proc0paddr->u_pcb.pcb_special.sp = 
+		(u_int64_t)lwp0.l_md.md_tf - 16; /* 16 bytes is the 
+						  * scratch area defined 
+						  * by the ia64 ABI 
+						  */
+
+	proc0paddr->u_pcb.pcb_special.bspstore = 
+		(u_int64_t) proc0paddr + sizeof(struct user);
+
 	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
 
 
@@ -761,6 +789,85 @@ setregs(l, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
+	struct trapframe *tf;
+	uint64_t *ksttop, *kst, regstkp;
+
+	tf = l->l_md.md_tf;
+	regstkp = (uint64_t) (l->l_addr) + sizeof(struct user);
+
+	ksttop = (uint64_t*) (regstkp + tf->tf_special.ndirty + 
+			      (tf->tf_special.bspstore & 0x1ffUL)); 
+
+	/* XXX: tf_special.ndirty on a new stack frame ??? */
+
+	/*
+	 * We can ignore up to 8KB of dirty registers by masking off the
+	 * lower 13 bits in exception_restore() or epc_syscall(). This
+	 * should be enough for a couple of years, but if there are more
+	 * than 8KB of dirty registers, we lose track of the bottom of
+	 * the kernel stack. The solution is to copy the active part of
+	 * the kernel stack down 1 page (or 2, but not more than that)
+	 * so that we always have less than 8KB of dirty registers.
+	 */
+	KASSERT((tf->tf_special.ndirty & ~PAGE_MASK) == 0);
+
+	bzero(&tf->tf_special, sizeof(tf->tf_special));
+	if ((tf->tf_flags & FRAME_SYSCALL) == 0) {	/* break syscalls. */
+		bzero(&tf->tf_scratch, sizeof(tf->tf_scratch));
+		bzero(&tf->tf_scratch_fp, sizeof(tf->tf_scratch_fp));
+		tf->tf_special.cfm = (1UL<<63) | (3UL<<7) | 3UL;
+		tf->tf_special.bspstore = IA64_BACKINGSTORE;
+		/*
+		 * Copy the arguments onto the kernel register stack so that
+		 * they get loaded by the loadrs instruction. Skip over the
+		 * NaT collection points.
+		 */
+		kst = ksttop - 1;
+		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
+			*kst-- = 0;
+		*kst-- = (u_int64_t)l->l_proc->p_psstr;	/* in3 = ps_strings */
+		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
+			*kst-- = 0;
+		*kst-- = 0;				/* in2 = *obj */
+		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
+			*kst-- = 0;
+		*kst-- = 0;				/* in1 = *cleanup */
+		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
+			*kst-- = 0;
+		*kst = stack; /* in0 = sp */
+		tf->tf_special.ndirty = (ksttop - kst) << 3;
+	} else {				/* epc syscalls (default). */
+		tf->tf_special.cfm = (3UL<<62) | (3UL<<7) | 3UL;
+		tf->tf_special.bspstore = IA64_BACKINGSTORE + 24;
+		/*
+		 * Write values for out0, out1, out2 and out3 to the user's backing
+		 * store and arrange for them to be restored into the user's
+		 * initial register frame.
+		 * Assumes that (bspstore & 0x1f8) < 0x1e0.
+		 */
+
+		/* in0 = sp */
+		suword((caddr_t)tf->tf_special.bspstore - 32, stack);
+
+		/* in1 == *cleanup */
+		suword((caddr_t)tf->tf_special.bspstore -  24, 0);
+
+		/* in2 == *obj */
+		suword((caddr_t)tf->tf_special.bspstore -  16, 0);
+
+		/* in3 = ps_strings */		
+		suword((caddr_t)tf->tf_special.bspstore - 8, 
+		       (u_int64_t)l->l_proc->p_psstr); 
+
+	}
+
+	tf->tf_special.iip = pack->ep_entry;
+	tf->tf_special.sp = (stack & ~15) - 16;
+	tf->tf_special.rsc = 0xf;
+	tf->tf_special.fpsr = IA64_FPSR_DEFAULT;
+	tf->tf_special.psr = IA64_PSR_IC | IA64_PSR_I | IA64_PSR_IT |
+	    IA64_PSR_DT | IA64_PSR_RT | IA64_PSR_DFH | IA64_PSR_BN |
+	    IA64_PSR_CPL_USER;
 	return;
 }
 

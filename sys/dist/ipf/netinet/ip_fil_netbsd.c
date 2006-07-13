@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.19 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.19.4.1 2006/07/13 17:49:49 gdamore Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1581,7 +1581,7 @@ struct in_addr *inp, *inpmask;
 #endif
 
 	ifa = ifp->if_addrlist.tqh_first;
-	sock = ifa->ifa_addr;
+	sock = ifa ? ifa->ifa_addr : NULL;
 	while (sock != NULL && ifa != NULL) {
 		sin = (struct sockaddr_in *)sock;
 		if ((v == 4) && (sin->sin_family == AF_INET))

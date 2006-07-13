@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.28 2006/05/15 01:29:02 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.28.4.1 2006/07/13 17:49:49 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.28 2006/05/15 01:29:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.28.4.1 2006/07/13 17:49:49 gdamore Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int adosfs_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int adosfs_vptofh __P((struct vnode *, struct fid *));
+int adosfs_vptofh __P((struct vnode *, struct fid *, size_t *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
@@ -708,18 +708,23 @@ adosfs_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	struct ifid *ifhp = (struct ifid *)fhp;
+	struct ifid ifh;
 #if 0
 	struct anode *ap;
 #endif
 	struct vnode *nvp;
 	int error;
 
+	if (fhp->fid_len != sizeof(struct ifid))
+		return EINVAL;
+
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
 
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	memcpy(&ifh, fhp, sizeof(ifh));
+
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -736,18 +741,25 @@ adosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-adosfs_vptofh(vp, fhp)
+adosfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct anode *ap = VTOA(vp);
-	struct ifid *ifhp;
+	struct ifid ifh;
 
-	ifhp = (struct ifid *)fhp;
-	ifhp->ifid_len = sizeof(struct ifid);
+	if (*fh_size < sizeof(struct ifid)) {
+		*fh_size = sizeof(struct ifid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ifid);
 
-	ifhp->ifid_ino = ap->block;
-	ifhp->ifid_start = ap->block;
+	memset(&ifh, 0, sizeof(ifh));
+	ifh.ifid_len = sizeof(struct ifid);
+	ifh.ifid_ino = ap->block;
+	ifh.ifid_start = ap->block;
+	memcpy(fhp, &ifh, sizeof(ifh));
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("advptofh(%x, %x)\n", vp, fhp);

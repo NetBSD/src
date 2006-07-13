@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.7 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7.16.1 2006/07/13 17:48:47 gdamore Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -99,13 +99,13 @@
 #include <hp300/stand/common/samachdep.h>
 
 static void scsireset(int);
-static int issue_select(volatile struct scsidevice *, u_char, u_char);
+static int issue_select(volatile struct scsidevice *, uint8_t, uint8_t);
 static int wait_for_select(volatile struct scsidevice *hd);
-static int ixfer_start(volatile struct scsidevice *, int, u_char, int);
-static int ixfer_out(volatile struct scsidevice *, int, u_char *);
-static int ixfer_in(volatile struct scsidevice *hd, int, u_char *);
-static int scsiicmd(struct scsi_softc *, int, u_char *, int, u_char *, int,
-    u_char);
+static int ixfer_start(volatile struct scsidevice *, int, uint8_t, int);
+static int ixfer_out(volatile struct scsidevice *, int, uint8_t *);
+static int ixfer_in(volatile struct scsidevice *hd, int, uint8_t *);
+static int scsiicmd(struct scsi_softc *, int, uint8_t *, int, uint8_t *, int,
+    uint8_t);
 
 struct	scsi_softc scsi_softc[NSCSI];
 
@@ -208,7 +208,7 @@ scsiabort(struct scsi_softc *hs, volatile struct scsidevice *hd)
 }
 
 static int
-issue_select(volatile struct scsidevice *hd, u_char target, u_char our_addr)
+issue_select(volatile struct scsidevice *hd, uint8_t target, uint8_t our_addr)
 {
 
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
@@ -232,7 +232,7 @@ static int
 wait_for_select(volatile struct scsidevice *hd)
 {
 	int wait;
-	u_char ints;
+	uint8_t ints;
 
 	wait = scsi_data_wait;
 	while ((ints = hd->scsi_ints) == 0) {
@@ -245,7 +245,7 @@ wait_for_select(volatile struct scsidevice *hd)
 }
 
 static int
-ixfer_start(volatile struct scsidevice *hd, int len, u_char phase, int wait)
+ixfer_start(volatile struct scsidevice *hd, int len, uint8_t phase, int wait)
 {
 
 	hd->scsi_tch = len >> 16;
@@ -265,7 +265,7 @@ ixfer_start(volatile struct scsidevice *hd, int len, u_char phase, int wait)
 }
 
 static int
-ixfer_out(volatile struct scsidevice *hd, int len, u_char *buf)
+ixfer_out(volatile struct scsidevice *hd, int len, uint8_t *buf)
 {
 	int wait = scsi_data_wait;
 
@@ -281,7 +281,7 @@ ixfer_out(volatile struct scsidevice *hd, int len, u_char *buf)
 }
 
 static int
-ixfer_in(volatile struct scsidevice *hd, int len, u_char *buf)
+ixfer_in(volatile struct scsidevice *hd, int len, uint8_t *buf)
 {
 	int wait = scsi_data_wait;
 
@@ -302,11 +302,11 @@ ixfer_in(volatile struct scsidevice *hd, int len, u_char *buf)
 }
 
 static int
-scsiicmd(struct scsi_softc *hs, int target, u_char *cbuf, int clen,
-    u_char *buf, int len, u_char xferphase)
+scsiicmd(struct scsi_softc *hs, int target, uint8_t *cbuf, int clen,
+    uint8_t *buf, int len, uint8_t xferphase)
 {
 	volatile struct scsidevice *hd = (void *)hs->sc_addr;
-	u_char phase, ints;
+	uint8_t phase, ints;
 	int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
@@ -355,7 +355,8 @@ scsiicmd(struct scsi_softc *hs, int target, u_char *cbuf, int clen,
 			wait = scsi_data_wait;
 			if (ixfer_start(hd, sizeof(hs->sc_stat), phase, wait) ||
 			    !(hd->scsi_ssts & SSTS_DREG_EMPTY))
-				ixfer_in(hd, sizeof(hs->sc_stat), &hs->sc_stat);
+				ixfer_in(hd, sizeof(hs->sc_stat),
+				    (uint8_t *)&hs->sc_stat);
 			phase = MESG_IN_PHASE;
 			break;
 
@@ -363,7 +364,7 @@ scsiicmd(struct scsi_softc *hs, int target, u_char *cbuf, int clen,
 			if (ixfer_start(hd, sizeof(hs->sc_msg), phase, wait) ||
 			    !(hd->scsi_ssts & SSTS_DREG_EMPTY)) {
 				ixfer_in(hd, sizeof(hs->sc_msg),
-				    (u_char *)&hs->sc_msg);
+				    (uint8_t *)&hs->sc_msg);
 				hd->scsi_scmd = SCMD_RST_ACK;
 			}
 			phase = BUS_FREE_PHASE;
@@ -412,33 +413,33 @@ scsi_test_unit_rdy(int ctlr, int slave)
 	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
 
-	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), NULL, 0,
+	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), NULL, 0,
 	    STATUS_PHASE);
 }
 
 int
-scsi_request_sense(int ctlr, int slave, u_char *buf, unsigned int len)
+scsi_request_sense(int ctlr, int slave, uint8_t *buf, unsigned int len)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
 
 	cdb.len = len;
-	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), buf, len,
 	    DATA_IN_PHASE);
 }
 
 int
-scsi_read_capacity(int ctlr, int slave, u_char *buf, unsigned int len)
+scsi_read_capacity(int ctlr, int slave, uint8_t *buf, unsigned int len)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb10 cdb = { CMD_READ_CAPACITY };
 
-	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), buf, len,
 	    DATA_IN_PHASE);
 }
 
 int
-scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
+scsi_tt_read(int ctlr, int slave, uint8_t *buf, u_int len, daddr_t blk,
     u_int nblk)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];
@@ -452,12 +453,12 @@ scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), buf, len,
 	    DATA_IN_PHASE);
 }
 
 int
-scsi_tt_write(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
+scsi_tt_write(int ctlr, int slave, uint8_t *buf, u_int len, daddr_t blk,
     u_int nblk)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];
@@ -471,6 +472,6 @@ scsi_tt_write(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), buf, len,
 	    DATA_OUT_PHASE);
 }

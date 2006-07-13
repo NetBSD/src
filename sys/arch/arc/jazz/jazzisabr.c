@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzisabr.c,v 1.10 2006/04/15 08:49:47 tsutsui Exp $	*/
+/*	$NetBSD: jazzisabr.c,v 1.10.4.1 2006/07/13 17:48:45 gdamore Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzisabr.c,v 1.10 2006/04/15 08:49:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzisabr.c,v 1.10.4.1 2006/07/13 17:48:45 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ jazzisabrattach(struct device *parent, struct device *self, void *aux)
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 
 	jazz_bus_dma_tag_init(&sc->sc_dmat);
-	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, 3);
+	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, ARC_INTPRI_PCIISA);
 
 	isabrattach(sc);
 }

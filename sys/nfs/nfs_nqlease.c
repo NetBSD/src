@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.65 2006/06/07 22:34:17 kardel Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.65.2.1 2006/07/13 17:50:06 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.65 2006/06/07 22:34:17 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.65.2.1 2006/07/13 17:50:06 gdamore Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -186,7 +186,11 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 	struct nqlease *tlp;
 	struct nqm **lphp;
 	struct vattr vattr;
-	fhandle_t fh;
+	union {
+		fhandle_t fh;
+		char space[LC_MAXFIDSIZ + offsetof(fhandle_t, fh_fid)];
+	} fh;
+	size_t fh_size;
 	int i, ok, error, s;
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK)
@@ -208,19 +212,18 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 		/*
 		 * Find the lease by searching the hash list.
 		 */
-		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fh.fh_fid);
+		fh_size = sizeof(fh);
+		error = vfs_composefh(vp, &fh.fh, &fh_size);
 		if (error) {
 			splx(s);
 			return (error);
 		}
-		KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
-		lpp = NQFHHASH(fh.fh_fid.fid_data);
+		lpp = NQFHHASH(fh.fh.fh_fid.fid_data);
 		LIST_FOREACH (lp, lpp, lc_hash) {
-			if (fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
-			    fh.fh_fsid.__fsid_val[1] == lp->lc_fsid.__fsid_val[1] &&
-			    !memcmp(fh.fh_fid.fid_data, lp->lc_fiddata,
-				  fh.fh_fid.fid_len - sizeof (int32_t))) {
+			if (fh.fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
+			    fh.fh.fh_fsid.__fsid_val[1] == lp->lc_fsid.__fsid_val[1] &&
+			    !memcmp(fh.fh.fh_fid.fid_data, lp->lc_fiddata,
+				  fh.fh.fh_fid.fid_len - sizeof (int32_t))) {
 				/* Found it */
 				lp->lc_vp = vp;
 				vp->v_lease = lp;
@@ -296,8 +299,9 @@ doreply:
 		return (0);
 	}
 	splx(s);
-	if (flags & ND_CHECK)
+	if (flags & ND_CHECK) {
 		return (0);
+	}
 
 	/*
 	 * Allocate new lease
@@ -317,9 +321,9 @@ doreply:
 		lp->lc_flag |= (LC_WRITE | LC_WRITTEN);
 	nqsrv_addhost(&lp->lc_host, slp, nam);
 	lp->lc_vp = vp;
-	lp->lc_fsid = fh.fh_fsid;
-	memcpy(lp->lc_fiddata, fh.fh_fid.fid_data,
-	    fh.fh_fid.fid_len - sizeof (int32_t));
+	lp->lc_fsid = fh.fh.fh_fsid;
+	memcpy(lp->lc_fiddata, fh.fh.fh_fid.fid_data,
+	    fh.fh.fh_fid.fid_len - sizeof (int32_t));
 	if(!lpp)
 		panic("nfs_nqlease.c: Phoney lpp");
 	LIST_INSERT_HEAD(lpp, lp, lc_hash);
@@ -475,6 +479,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 	struct sockaddr_in *saddr;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
+	size_t fh_size;
 	caddr_t bpos, cp;
 	u_int32_t xid, *tl;
 	int len = 1, ok = 1, i = 0;
@@ -518,11 +523,10 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 				solockp = (int *)0;
 			nfsm_reqhead((struct nfsnode *)0, NQNFSPROC_EVICTED,
 				NFSX_V3FH + NFSX_UNSIGNED);
+			memset(&nfh, 0, sizeof(nfh));
 			fhp = &nfh.fh_generic;
-			memset((caddr_t)fhp, 0, sizeof(nfh));
-			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
-			VFS_VPTOFH(vp, &fhp->fh_fid);
-			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
+			fh_size = NFS_SMALLFH;
+			vfs_composefh(vp, fhp, &fh_size);
 			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;
@@ -804,7 +808,7 @@ nqnfsrv_vacated(nfsd, slp, lwp, mrq)
 		if (fhp->fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
 		    fhp->fh_fsid.__fsid_val[1] == lp->lc_fsid.__fsid_val[1] &&
 		    !memcmp(fhp->fh_fid.fid_data, lp->lc_fiddata,
-			  VFS_MAXFIDSZ)) {
+			  LC_MAXFIDSIZ)) {
 			/* Found it */
 			tlp = lp;
 			break;

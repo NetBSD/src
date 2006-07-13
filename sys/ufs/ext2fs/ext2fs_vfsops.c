@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.98 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.98.2.1 2006/07/13 17:50:13 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.98 2006/06/07 22:34:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.98.2.1 2006/07/13 17:50:13 gdamore Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1044,22 +1044,25 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	struct inode *ip;
 	struct vnode *nvp;
 	int error;
-	struct ufid *ufhp;
+	struct ufid ufh;
 	struct m_ext2fs *fs;
 
-	ufhp = (struct ufid *)fhp;
+	if (fhp->fid_len != sizeof(struct ufid))
+		return EINVAL;
+
+	memcpy(&ufh, fhp, sizeof(struct ufid));
 	fs = VFSTOUFS(mp)->um_e2fs;
-	if ((ufhp->ufid_ino < EXT2_FIRSTINO && ufhp->ufid_ino != EXT2_ROOTINO) ||
-		ufhp->ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
+	if ((ufh.ufid_ino < EXT2_FIRSTINO && ufh.ufid_ino != EXT2_ROOTINO) ||
+		ufh.ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
 		return (ESTALE);
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufh.ufid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
 	ip = VTOI(nvp);
 	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 ||
-		ip->i_e2fs_gen != ufhp->ufid_gen) {
+		ip->i_e2fs_gen != ufh.ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);
@@ -1073,16 +1076,23 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-ext2fs_vptofh(struct vnode *vp, struct fid *fhp)
+ext2fs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct inode *ip;
-	struct ufid *ufhp;
+	struct ufid ufh;
+
+	if (*fh_size < sizeof(struct ufid)) {
+		*fh_size = sizeof(struct ufid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ufid);
 
 	ip = VTOI(vp);
-	ufhp = (struct ufid *)fhp;
-	ufhp->ufid_len = sizeof(struct ufid);
-	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_e2fs_gen;
+	memset(&ufh, 0, sizeof(ufh));
+	ufh.ufid_len = sizeof(struct ufid);
+	ufh.ufid_ino = ip->i_number;
+	ufh.ufid_gen = ip->i_e2fs_gen;
+	memcpy(fhp, &ufh, sizeof(ufh));
 	return (0);
 }
 

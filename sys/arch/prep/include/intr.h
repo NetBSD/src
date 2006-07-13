@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2006/05/08 17:08:34 garbled Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.4.1 2006/07/13 17:49:02 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ void do_pending_int(void);
 void init_intr(void);
 void init_intr_ivr(void);
 void init_intr_openpic(void);
+void openpic_init(unsigned char *);
 
 void enable_intr(void);
 void disable_intr(void);

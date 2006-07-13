@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.6 2006/03/25 07:28:20 gdamore Exp $ */
+/* $NetBSD: dbau1550.c,v 1.6.6.1 2006/07/13 17:48:46 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.6 2006/03/25 07:28:20 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.6.6.1 2006/07/13 17:48:46 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,6 +133,9 @@ dbau1550_init(void)
 		printf("no daughtercard\n");
 
 	/* leave console and clocks alone -- YAMON should have got it right! */
+
+	/* set CONFIG0 OD (overlap access disable) bit */
+	mips3_cp0_config_write(mips3_cp0_config_read() | (1 << 19));
 }
 
 int

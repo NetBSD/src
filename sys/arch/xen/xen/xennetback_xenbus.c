@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.3 2006/05/27 13:54:35 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.3.4.1 2006/07/13 17:49:07 gdamore Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,6 +63,7 @@
 #include <machine/xen_shm.h>
 #include <machine/evtchn.h>
 #include <machine/xenbus.h>
+#include <machine/xennet_checksum.h>
 
 #include <uvm/uvm.h>
 
@@ -74,6 +75,9 @@
 
 #define NET_TX_RING_SIZE __RING_SIZE((netif_tx_sring_t *)0, PAGE_SIZE)  
 #define NET_RX_RING_SIZE __RING_SIZE((netif_rx_sring_t *)0, PAGE_SIZE)
+
+/* linux wants at last 16 bytes free in front of the packet */
+#define LINUX_REQUESTED_OFFSET 16
 
 /* hash list for TX requests */
 /* descriptor of a packet being handled by the kernel */
@@ -176,8 +180,8 @@ struct pool_cache xmit_pages_pool_cache;
 struct pool_cache *xmit_pages_pool_cachep;
 
 /* arrays used in xennetback_ifstart(), too large to allocate on stack */
-static mmu_update_t xstart_mmu[NB_XMIT_PAGES_BATCH + 1];
-static multicall_entry_t xstart_mcl[NB_XMIT_PAGES_BATCH];
+static mmu_update_t xstart_mmu[NB_XMIT_PAGES_BATCH];
+static multicall_entry_t xstart_mcl[NB_XMIT_PAGES_BATCH + 1];
 static gnttab_transfer_t xstart_gop[NB_XMIT_PAGES_BATCH];
 struct mbuf *mbufs_sent[NB_XMIT_PAGES_BATCH];
 struct _pages_pool_free {
@@ -189,7 +193,7 @@ struct _pages_pool_free {
 static inline void
 xni_pkt_unmap(struct xni_pkt *pkt, vaddr_t pkt_va)
 {
-	xen_shm_unmap(pkt_va, 1, pkt->pkt_handle);
+	xen_shm_unmap(pkt_va, 1, &pkt->pkt_handle);
 	pool_put(&xni_pkt_pool, pkt);
 }
 
@@ -243,13 +247,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	int i, err;
 
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "frontend-id", &domid)) != 0) {
+	    "frontend-id", &domid, 10)) != 0) {
 		aprint_error("xvif: can' read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "handle", &handle)) != 0) {
+	    "handle", &handle, 10)) != 0) {
 		aprint_error("xvif: can' read %s/handle: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
@@ -310,6 +314,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
 	    max(ifqmaxlen, /*NETIF_RX_RING_SIZE XXX*/0 * 2);
+	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
 	ifp->if_watchdog = xennetback_ifwatchdog;
@@ -330,8 +335,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
-	err = xenbus_write(NULL, xbusd->xbusd_path, "hotplug-status",
-	    "connected"); /* XXX userland daemon */
 	if (err) {
 		printf("failed to write %s/hotplug-status: %d\n",
 		    xbusd->xbusd_path, err);
@@ -416,21 +419,21 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateConnected:
 		/* read comunication informations */
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "tx-ring-ref", &tx_ring_ref);
+		    "tx-ring-ref", &tx_ring_ref, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/tx-ring-ref",
 			    xbusd->xbusd_otherend);
 			break;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "rx-ring-ref", &rx_ring_ref);
+		    "rx-ring-ref", &rx_ring_ref, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/rx-ring-ref",
 			    xbusd->xbusd_otherend);
 			break;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "event-channel", &revtchn);
+		    "event-channel", &revtchn, 10);
 		if (err) {
 			xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
 			    xbusd->xbusd_otherend);
@@ -439,13 +442,19 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		/* allocate VA space and map rings */
 		xneti->xni_tx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
-		if (xneti->xni_tx_ring_va == 0)
+		if (xneti->xni_tx_ring_va == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get VA for tx ring", xbusd->xbusd_otherend);
 			break;
+		}
 		tx_ring = (void *)xneti->xni_tx_ring_va;
 		xneti->xni_rx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
-		if (xneti->xni_rx_ring_va == 0)
+		if (xneti->xni_rx_ring_va == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get VA for rx ring", xbusd->xbusd_otherend);
 			goto err1;
+		}
 		rx_ring = (void *)xneti->xni_rx_ring_va;
 		op.host_addr = xneti->xni_tx_ring_va;
 		op.flags = GNTMAP_host_map;
@@ -622,6 +631,7 @@ xennetback_evthandler(void *arg)
 		x86_lfence();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq->size));
+		req_cons++;
 		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 		    (IFF_UP | IFF_RUNNING))) {
 			/* interface not up, drop */
@@ -629,7 +639,6 @@ xennetback_evthandler(void *arg)
 			    NETIF_RSP_DROPPED);
 			continue;
 		}
-		req_cons++;
 		/*
 		 * Do some sanity checks, and map the packet's page.
 		 */
@@ -681,7 +690,7 @@ xennetback_evthandler(void *arg)
 			m_freem(m);
 			continue;
 		}
-		err = xen_shm_map(1, xneti->xni_domid, txreq->gref, &pkt_va,
+		err = xen_shm_map(1, xneti->xni_domid, &txreq->gref, &pkt_va,
 		    &pkt->pkt_handle, XSHM_RO);
 		if (__predict_false(err == ENOMEM)) {
 			xennetback_tx_response(xneti, txreq->id,
@@ -751,6 +760,13 @@ so always copy for now.
 			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt);
 			m->m_pkthdr.len = m->m_len = txreq->size;
 			m->m_flags |= M_EXT_ROMAP;
+		}
+		if ((txreq->flags & NETTXF_csum_blank) != 0) {
+			xennet_checksum_fill(&m);
+			if (m == NULL) {
+				ifp->if_ierrors++;
+				continue;
+			}
 		}
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
@@ -827,7 +843,7 @@ xennetback_ifsoftstart(void *arg)
 	vaddr_t xmit_va;
 	paddr_t xmit_pa;
 	paddr_t xmit_ma;
-	paddr_t newp_ma;
+	paddr_t newp_ma = 0; /* XXX gcc */
 	int i, j, nppitems;
 	mmu_update_t *mmup;
 	multicall_entry_t *mclp;
@@ -900,8 +916,8 @@ xennetback_ifsoftstart(void *arg)
 				    "0x%x ma 0x%x\n", (u_int)xmit_va,
 				    (u_int)xmit_ma));
 				m_copydata(m, 0, m->m_pkthdr.len,
-				    (caddr_t)xmit_va);
-				offset = 0;
+				    (caddr_t)xmit_va + LINUX_REQUESTED_OFFSET);
+				offset = LINUX_REQUESTED_OFFSET;
 				pages_pool_free[nppitems].va = xmit_va;
 				pages_pool_free[nppitems].pa = xmit_pa;
 				nppitems++;
@@ -911,12 +927,19 @@ xennetback_ifsoftstart(void *arg)
 			    xneti->xni_rxring.req_cons)->gref;
 			id = RING_GET_REQUEST(&xneti->xni_rxring,
 			    xneti->xni_rxring.req_cons)->id;
+			x86_lfence();
 			xneti->xni_rxring.req_cons++;
 			rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
 			    resp_prod);
 			rxresp->id = id;
 			rxresp->offset = offset;
 			rxresp->status = m->m_pkthdr.len;
+			if ((m->m_pkthdr.csum_flags &
+			    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+				rxresp->flags = NETRXF_csum_blank;
+			} else {
+				rxresp->flags = 0;
+			}
 			/*
 			 * transfers the page containing the packet to the
 			 * remote domain, and map newp in place.
@@ -936,9 +959,9 @@ xennetback_ifsoftstart(void *arg)
 			mmup++;
 
 			/* done with this packet */
-			resp_prod++;
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			mbufs_sent[i] = m;
+			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
 #if NBPFILTER > 0
@@ -969,9 +992,20 @@ xennetback_ifsoftstart(void *arg)
 				    ifp->if_xname);
 			}
 			for (j = 0; j < i + 1; j++) {
-				if (xstart_mcl[j].result != 0)
-					printf("%s: xstart_mcl[%d] failed (%lu)\n",
-					    ifp->if_xname, j, xstart_mcl[j].result);
+				if (xstart_mcl[j].result != 0) {
+					printf("%s: xstart_mcl[%d] "
+					    "failed (%lu)\n", ifp->if_xname,
+					    j, xstart_mcl[j].result);
+					printf("%s: req_prod %u req_cons "
+					    "%u rsp_prod %u rsp_prod_pvt %u "
+					    "i %u\n",
+					    ifp->if_xname,
+					    xneti->xni_rxring.sring->req_prod,
+					    xneti->xni_rxring.req_cons,
+					    xneti->xni_rxring.sring->rsp_prod,
+					    xneti->xni_rxring.rsp_prod_pvt,
+					    i);
+				}
 			}
 			if (HYPERVISOR_grant_table_op(GNTTABOP_transfer,
 			    xstart_gop, i) != 0) {
@@ -980,20 +1014,29 @@ xennetback_ifsoftstart(void *arg)
 			}
 
 			for (j = 0; j < i; j++) {
-				if (xstart_gop[j].status == GNTST_bad_page)
-					panic("%s: gop[%d] failed",
-					    ifp->if_xname, j);
-				rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
-				    xneti->xni_rxring.rsp_prod_pvt + j);
 				if (xstart_gop[j].status != 0) {
-					printf("GNTTABOP_transfer[%d] %d\n",
+					printf("%s GNTTABOP_transfer[%d] %d\n",
+					    ifp->if_xname,
 					    j, xstart_gop[j].status);
+					printf("%s: req_prod %u req_cons "
+					    "%u rsp_prod %u rsp_prod_pvt %u "
+					    "i %d\n",
+					    ifp->if_xname,
+					    xneti->xni_rxring.sring->req_prod,
+					    xneti->xni_rxring.req_cons,
+					    xneti->xni_rxring.sring->rsp_prod,
+					    xneti->xni_rxring.rsp_prod_pvt,
+					    i);
+					rxresp = RING_GET_RESPONSE(
+					    &xneti->xni_rxring,
+					    xneti->xni_rxring.rsp_prod_pvt + j);
 					rxresp->status = NETIF_RSP_ERROR;
 				}
-				rxresp->flags = 0;
 			}
 					
 			/* update pointer */
+			KASSERT(
+			    xneti->xni_rxring.rsp_prod_pvt + i == resp_prod);
 			xneti->xni_rxring.rsp_prod_pvt = resp_prod;
 			RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(
 			    &xneti->xni_rxring, j);
@@ -1031,9 +1074,13 @@ xennetback_ifsoftstart(void *arg)
 				break;
 			}
 		}
+		/*
+		 * note that we don't use RING_FINAL_CHECK_FOR_REQUESTS()
+		 * here, as the frontend doesn't notify when adding
+		 * requests anyway
+		 */
 		if (__predict_false(
-		    xneti->xni_rxring.req_cons - resp_prod ==
-		    NET_RX_RING_SIZE)) {
+		    !RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_rxring))) {
 			/* ring full */
 			break;
 		}

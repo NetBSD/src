@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.45 2006/04/14 19:33:12 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.45.4.1 2006/07/13 17:49:27 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.45 2006/04/14 19:33:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.45.4.1 2006/07/13 17:49:27 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -398,6 +398,7 @@ emuxki_match(struct device *parent, struct cfdata *match, void *aux)
 	case PCI_PRODUCT_CREATIVELABS_SBLIVE:
 	case PCI_PRODUCT_CREATIVELABS_SBLIVE2:
 	case PCI_PRODUCT_CREATIVELABS_AUDIGY:
+	case PCI_PRODUCT_CREATIVELABS_SBAUDIGY4:
 		return 1;
 	default:
 		return 0;
@@ -453,7 +454,8 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	}
 
  /* XXX it's unknown whether APS is made from Audigy as well */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBAUDIGY4)) {
 		sc->sc_type = EMUXKI_AUDIGY;
 		if (PCI_REVISION(pa->pa_class) == 0x04) {
 			sc->sc_type |= EMUXKI_AUDIGY2;
@@ -461,6 +463,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		} else {
 			strlcpy(sc->sc_audv.name, "Audigy", sizeof sc->sc_audv.name);
 		}
+
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
 		sc->sc_type = EMUXKI_APS;

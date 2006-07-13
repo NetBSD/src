@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 2006/06/10 21:15:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.11.2.1 2006/07/13 17:49:13 gdamore Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -131,7 +131,7 @@
 37	STD		{ int linux_sys_alarm(unsigned int secs); }
 38	NOARGS		{ int sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
-39	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+39	STD		{ pid_t linux_sys_getpid(void); }
 40	UNIMPL		sendfile
 41	STD		{ int linux_sys_socket(int domain, \
 			    int type, int protocol); }
@@ -256,7 +256,7 @@
 107	NOARGS		{ uid_t sys_geteuid(void); }
 108	NOARGS		{ gid_t sys_getegid(void); }
 109	NOARGS		{ int sys_setpgid(int pid, int pgid); }
-110	NOARGS		{ pid_t sys_getppid(void); }
+110	STD		{ pid_t linux_sys_getppid(void); }
 111	NOARGS		{ int sys_getpgrp(void); }
 112	NOARGS		{ int sys_setsid(void); }
 113	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
