@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.28 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: ucred.h,v 1.29 2006/07/13 11:07:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,6 +35,7 @@
 #define	_SYS_UCRED_H_
 
 #include <sys/lock.h>
+#include <sys/param.h>
 
 /*
  * Credentials.
