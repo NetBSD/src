@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.786 2006/07/13 16:28:38 martin Exp $
+#	$NetBSD: files,v 1.787 2006/07/13 17:39:47 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -99,7 +99,7 @@ defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX
 defflag				COMPAT_LINUX32
 defflag				COMPAT_OSF1
-defflag				COMPAT_SUNOS
+defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
 defflag				COMPAT_ULTRIX
 defflag				COMPAT_NETBSD32
