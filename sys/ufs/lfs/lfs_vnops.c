@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.181 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.182 2006/07/13 22:05:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.181 2006/07/13 12:00:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.182 2006/07/13 22:05:52 martin Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1487,6 +1489,19 @@ lfs_fcntl(void *v)
 #endif
 
 		return 0;
+
+#ifdef COMPAT_30
+	    case LFCNIFILEFH_COMPAT:
+		/* Return the filehandle of the Ifile */
+		if ((error = kauth_authorize_generic(ap->a_l->l_proc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &ap->a_l->l_proc->p_acflag)) != 0)
+			return (error);
+		fhp = (struct fhandle *)ap->a_data;
+		fhp->fh_fsid = *fsidp;
+		fh_size = 16;	/* former VFS_MAXFIDSIZ */
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
+#endif
 
 	    case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
