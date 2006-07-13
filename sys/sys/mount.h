@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.143 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: mount.h,v 1.144 2006/07/13 13:43:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -311,7 +311,7 @@ extern struct vfs_list_head vfs_list;
 
 __BEGIN_DECLS
 #if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
-int	getfh(const char *, fhandle_t *, size_t *fh_size)
+int	getfh(const char *, fhandle_t *, size_t *)
 	__RENAME(__getfh30);
 #endif
 
