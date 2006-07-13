@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.107 2006/07/13 12:00:26 martin Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.108 2006/07/13 23:18:59 yamt Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.107 2006/07/13 12:00:26 martin Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.108 2006/07/13 23:18:59 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -595,7 +595,8 @@ mntsrv(rqstp, transp)
 			/* Get the file handle */
 			(void)memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
 			fh_size = sizeof(nfsfh_t);
-			if (getfh(dirpath, (fhandle_t *) &fhr.fhr_fh, &fh_size) < 0) {
+			if (getfh(dirpath, (fhandle_t *) &fhr.fhr_fh,
+			    &fh_size) < 0) {
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
 				if (!svc_sendreply(transp, xdr_long,
