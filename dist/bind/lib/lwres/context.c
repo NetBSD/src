@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.1 2004/05/17 23:45:09 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.1.2.1 2006/07/13 22:02:29 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.41.2.1.2.3 2004/03/06 08:15:30 marka Exp */
+/* Id: context.c,v 1.41.2.1.2.4 2004/09/17 05:50:31 marka Exp */
 
 #include <config.h>
 
@@ -348,13 +348,12 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is long, so make sure the unsigned long timeout
-	 * does not overflow it.
+	 * Type of tv_sec is 32 bits long. 
 	 */
-	if (ctx->timeout <= (unsigned int)LONG_MAX)
-		timeout.tv_sec = (long)ctx->timeout;
+	if (ctx->timeout <= 0x7FFFFFFFU)
+		timeout.tv_sec = (int)ctx->timeout;
 	else
-		timeout.tv_sec = LONG_MAX;
+		timeout.tv_sec = 0x7FFFFFFF;
 
 	timeout.tv_usec = 0;
 

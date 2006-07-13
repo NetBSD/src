@@ -1,7 +1,7 @@
-/*	$NetBSD: client.h,v 1.1.1.2 2004/11/06 23:53:37 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.2.2.1 2006/07/13 22:02:05 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.h,v 1.60.2.2.10.8 2004/07/23 02:56:52 marka Exp */
+/* Id: client.h,v 1.60.2.2.10.10 2005/07/29 00:13:08 marka Exp */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1
@@ -324,10 +324,16 @@ ns_client_aclmsg(const char *msg, dns_name_t *name, dns_rdatatype_t type,
 	 DNS_RDATACLASS_FORMATSIZE + sizeof(x) + sizeof("'/'"))
 
 void
-ns_client_recursing(ns_client_t *client, isc_boolean_t killoldest);
-/*
+ns_client_recursing(ns_client_t *client);
+/*%
  * Add client to end of recursing list.  If 'killoldest' is true
  * kill the oldest recursive client (list head). 
+ */
+
+void
+ns_client_killoldestquery(ns_client_t *client);
+/*%
+ * Kill the oldest recursive query (recursing list head).
  */
 
 void

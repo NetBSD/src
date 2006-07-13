@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.1.1.1 2004/05/17 23:43:19 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.1.2.1 2006/07/13 22:02:03 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.76.2.5.2.9 2004/04/13 03:00:06 marka Exp */
+/* Id: host.c,v 1.76.2.5.2.13 2005/07/04 03:29:45 marka Exp */
 
 #include <config.h>
 #include <limits.h>
@@ -41,21 +41,6 @@
 #include <dns/rdatatype.h>
 
 #include <dig/dig.h>
-
-extern ISC_LIST(dig_lookup_t) lookup_list;
-extern dig_serverlist_t server_list;
-extern ISC_LIST(dig_searchlist_t) search_list;
-
-extern isc_boolean_t have_ipv4, have_ipv6;
-extern isc_boolean_t usesearch;
-extern isc_boolean_t debugging;
-extern unsigned int timeout;
-extern isc_mem_t *mctx;
-extern int ndots;
-extern int tries;
-extern char *progname;
-extern isc_task_t *global_task;
-extern int fatalexit;
 
 static isc_boolean_t short_form = ISC_TRUE, listed_server = ISC_FALSE;
 static isc_boolean_t default_lookups = ISC_TRUE;
@@ -388,7 +373,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		char sockstr[ISC_SOCKADDR_FORMATSIZE];
 
 		printf("Using domain server:\n");
-		printf("Name: %s\n", query->servname);
+		printf("Name: %s\n", query->userarg);
 		isc_sockaddr_format(&query->sockaddr, sockstr,
 				    sizeof(sockstr));
 		printf("Address: %s\n", sockstr);
@@ -606,6 +591,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			} else
 				list_type = rdtype;
 			list_addresses = ISC_FALSE;
+			default_lookups = ISC_FALSE;
 			break;
 		case 'c':
 			tr.base = isc_commandline_argument;

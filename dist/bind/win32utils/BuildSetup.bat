@@ -1,6 +1,6 @@
 echo off
 rem
-rem Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+rem Copyright (C) 2004,2005  Internet Systems Consortium, Inc. ("ISC")
 rem Copyright (C) 2001-2002  Internet Software Consortium.
 rem 
 rem Permission to use, copy, modify, and distribute this software for any
@@ -45,6 +45,7 @@ echo Copying the ARM and the Installation Notes.
 copy ..\COPYRIGHT ..\Build\Release
 copy readme1st.txt ..\Build\Release
 copy ..\doc\arm\*.html ..\Build\Release
+copy ..\doc\arm\Bv9ARM.pdf ..\Build\Release
 copy ..\CHANGES ..\Build\Release
 copy ..\FAQ ..\Build\Release
 

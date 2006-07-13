@@ -1,7 +1,7 @@
-/*	$NetBSD: db_test.c,v 1.1.1.1 2004/05/17 23:43:26 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db_test.c,v 1.56.12.4 2004/03/08 04:04:25 marka Exp */
+/* Id: db_test.c,v 1.56.12.6 2005/03/17 03:58:27 marka Exp */
 
 /*
  * Principal Author: Bob Halley
@@ -78,8 +78,8 @@ print_result(const char *message, isc_result_t result) {
 		message = "";
 	}
 	len = strlen(message);
-	printf("%s%sresult %08x: %s\n", message, (len == 0) ? "" : " ", result,
-	       isc_result_totext(result));
+	printf("%s%sresult %08x: %s\n", message, (len == 0U) ? "" : " ",
+	       result, isc_result_totext(result));
 }
 
 static void
@@ -479,7 +479,7 @@ main(int argc, char *argv[]) {
 			continue;
 		}
 		len = strlen(s);
-		if (len > 0 && s[len - 1] == '\n') {
+		if (len > 0U && s[len - 1] == '\n') {
 			s[len - 1] = '\0';
 			len--;
 		}

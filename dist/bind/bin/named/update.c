@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.1.1.2 2004/11/06 23:53:36 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.2.2.1 2006/07/13 22:02:05 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.88.2.5.2.23 2004/07/23 02:56:52 marka Exp */
+/* Id: update.c,v 1.88.2.5.2.27 2005/10/08 00:21:06 marka Exp */
 
 #include <config.h>
 
@@ -710,7 +710,7 @@ ssu_checkrule(void *data, dns_rdataset_t *rrset) {
 	 */
 	if (rrset->type == dns_rdatatype_rrsig ||
 	    rrset->type == dns_rdatatype_nsec)
-		return (ISC_TRUE);
+		return (ISC_R_SUCCESS);
 	result = dns_ssutable_checkrules(ssuinfo->table, ssuinfo->signer,
 					 ssuinfo->name, rrset->type);
 	return (result == ISC_TRUE ? ISC_R_SUCCESS : ISC_R_FAILURE);
@@ -967,13 +967,27 @@ typedef struct {
  */
 
 /*
- * Return true iff 'update_rr' is neither a SOA nor an NS RR.
+ * Return true iff 'db_rr' is neither a SOA nor an NS RR nor
+ * an RRSIG nor a NSEC.
  */
 static isc_boolean_t
 type_not_soa_nor_ns_p(dns_rdata_t *update_rr, dns_rdata_t *db_rr) {
 	UNUSED(update_rr);
 	return ((db_rr->type != dns_rdatatype_soa &&
-		 db_rr->type != dns_rdatatype_ns) ?
+		 db_rr->type != dns_rdatatype_ns &&
+		 db_rr->type != dns_rdatatype_rrsig &&
+		 db_rr->type != dns_rdatatype_nsec) ?
+		ISC_TRUE : ISC_FALSE);
+}
+
+/*
+ * Return true iff 'db_rr' is neither a RRSIG nor a NSEC.
+ */
+static isc_boolean_t
+type_not_dnssec(dns_rdata_t *update_rr, dns_rdata_t *db_rr) {
+	UNUSED(update_rr);
+	return ((db_rr->type != dns_rdatatype_rrsig &&
+		 db_rr->type != dns_rdatatype_nsec) ?
 		ISC_TRUE : ISC_FALSE);
 }
 
@@ -2516,7 +2530,8 @@ update_action(isc_task_t *task, isc_event_t *event) {
 							dns_rdatatype_any, 0,
 							&rdata, &diff));
 				} else {
-					CHECK(delete_if(true_p, db, ver, name,
+					CHECK(delete_if(type_not_dnssec,
+							db, ver, name,
 							dns_rdatatype_any, 0,
 							&rdata, &diff));
 				}
@@ -2710,8 +2725,8 @@ updatedone_action(isc_task_t *task, isc_event_t *event) {
 	INSIST(client->nupdates > 0);
 	client->nupdates--;
 	respond(client, uev->result);
-	ns_client_detach(&client);
 	isc_event_free(&event);
+	ns_client_detach(&client);
 }
 
 /*
@@ -2727,8 +2742,8 @@ forward_fail(isc_task_t *task, isc_event_t *event) {
 	INSIST(client->nupdates > 0);
 	client->nupdates--;
 	respond(client, DNS_R_SERVFAIL);
-	ns_client_detach(&client);
 	isc_event_free(&event);
+	ns_client_detach(&client);
 }
 
 

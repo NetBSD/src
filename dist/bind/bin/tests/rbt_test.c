@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt_test.c,v 1.42.12.3 2004/03/08 04:04:26 marka Exp */
+/* Id: rbt_test.c,v 1.42.12.5 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -226,7 +226,7 @@ iterate(dns_rbt_t *rbt, isc_boolean_t forward) {
 		printf("start not found!\n");
 
 	else {
-		while (1) {
+		for (;;) {
 			if (result == DNS_R_NEWORIGIN) {
 				printf("  new origin: ");
 				print_name(origin);
@@ -316,8 +316,8 @@ main(int argc, char **argv) {
 		length = strlen(buffer);
 
 		if (buffer[length - 1] != '\n') {
-			printf("line to long (%d max), ignored\n",
-			       sizeof(buffer) - 2);
+			printf("line to long (%lu max), ignored\n",
+			       (unsigned long)sizeof(buffer) - 2);
 			continue;
 		}
 

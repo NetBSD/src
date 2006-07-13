@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.1.1.1 2004/05/17 23:44:44 christos Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

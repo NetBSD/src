@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.c,v 1.1.1.1 2004/05/17 23:45:03 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.c,v 1.64.12.9 2004/03/08 09:04:50 marka Exp */
+/* Id: timer.c,v 1.64.12.11 2005/10/27 00:27:29 marka Exp */
 
 #include <config.h>
 
@@ -489,7 +489,7 @@ isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
 	return (result);
 }
 
-isc_result_t
+isc_timertype_t
 isc_timer_gettype(isc_timer_t *timer) {
 	isc_timertype_t t;
 

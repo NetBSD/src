@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.c,v 1.1.1.1 2004/05/17 23:44:49 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.1.2.1 2006/07/13 22:02:18 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.c,v 1.45.2.4.8.7 2004/03/08 02:07:52 marka Exp */
+/* Id: cache.c,v 1.45.2.4.8.9 2005/03/17 03:58:30 marka Exp */
 
 #include <config.h>
 
@@ -1023,27 +1023,10 @@ dns_cache_flushname(dns_cache_t *cache, dns_name_t *name) {
 		dns_rdataset_init(&rdataset);
 
 		dns_rdatasetiter_current(iter, &rdataset);
-
-		for (result = dns_rdataset_first(&rdataset);
-		     result == ISC_R_SUCCESS;
-		     result = dns_rdataset_next(&rdataset))
-		{
-			dns_rdata_t rdata = DNS_RDATA_INIT;
-			dns_rdatatype_t covers;
-
-			dns_rdataset_current(&rdataset, &rdata);
-			if (rdata.type == dns_rdatatype_rrsig)
-				covers = dns_rdata_covers(&rdata);
-			else
-				covers = 0;
-			result = dns_db_deleterdataset(cache->db, node, NULL,
-						       rdata.type, covers);
-			if (result != ISC_R_SUCCESS &&
-			    result != DNS_R_UNCHANGED)
-				break;
-		}
+		result = dns_db_deleterdataset(cache->db, node, NULL,
+					       rdataset.type, rdataset.covers);
 		dns_rdataset_disassociate(&rdataset);
-		if (result != ISC_R_NOMORE)
+		if (result != ISC_R_SUCCESS && result != DNS_R_UNCHANGED)
 			break;
 	}
 	if (result == ISC_R_NOMORE)

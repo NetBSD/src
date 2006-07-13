@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.1.1.1 2004/05/17 23:43:39 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.1.1.1.2.1 2006/07/13 22:02:08 tron Exp $	*/
 
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
@@ -58,6 +58,8 @@
 #define IDS_CREATEACCOUNT_FAILED        55
 #define IDS_ERR_PASSWORD                56
 #define IDS_ERR_UPDATE_SERVICE          57
+#define IDS_ERR_NULLPASSWORD            58
+#define IDS_ERR_WHITESPACE              59
 #define IDD_BINDINSTALL_DIALOG          102
 #define IDR_MAINFRAME                   128
 #define IDD_BROWSE                      129

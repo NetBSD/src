@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ttl.c,v 1.1.1.1 2004/05/17 23:44:46 christos Exp $	*/
+/*	$NetBSD: ns_ttl.c,v 1.1.1.1.2.1 2006/07/13 22:02:16 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_ttl.c,v 1.1.206.1 2004/03/09 08:33:45 marka Exp";
+static const char rcsid[] = "Id: ns_ttl.c,v 1.1.206.2 2005/07/28 07:43:21 marka Exp";
 #endif
 
 /* Import. */
@@ -135,7 +135,8 @@ ns_parse_ttl(const char *src, u_long *dst) {
 			goto einval;
 		else
 			ttl += tmp;
-	}
+	} else if (!dirty)
+		goto einval;
 	*dst = ttl;
 	return (0);
 

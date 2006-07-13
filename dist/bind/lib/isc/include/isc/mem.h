@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.1 2004/05/17 23:45:04 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.54.12.3 2004/03/08 09:04:52 marka Exp */
+/* Id: mem.h,v 1.54.12.4 2004/10/11 05:55:51 marka Exp */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1
@@ -60,7 +60,7 @@ typedef void (*isc_memfree_t)(void *, void *);
  * the requested space.  This will increase the size of each allocation.
  */
 #ifndef ISC_MEM_CHECKOVERRUN
-#define ISC_MEM_CHECKOVERRUN 0
+#define ISC_MEM_CHECKOVERRUN 1
 #endif
 
 /*

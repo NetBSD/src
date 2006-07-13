@@ -1,7 +1,7 @@
-/*	$NetBSD: t_tasks.c,v 1.1.1.2 2004/11/06 23:54:09 christos Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.1.1.2.2.1 2006/07/13 22:02:07 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,13 +17,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_tasks.c,v 1.29.12.5 2004/06/21 06:57:59 marka Exp */
+/* Id: t_tasks.c,v 1.29.12.9 2005/07/19 07:08:36 marka Exp */
 
 #include <config.h>
 
 #include <stdlib.h>
 #include <unistd.h>
-
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h> 	/* uintptr_t */
+#endif
 #include <isc/condition.h>
 #include <isc/mem.h>
 #include <isc/platform.h>
@@ -34,11 +36,14 @@
 
 #include <tests/t_api.h>
 
+
 #ifdef ISC_PLATFORM_USETHREADS
 isc_boolean_t threaded = ISC_TRUE;
 #else
 isc_boolean_t threaded = ISC_FALSE;
 #endif
+
+static int senders[4];
 
 static void
 require_threads(void) {
@@ -442,7 +447,7 @@ t2_callback(isc_task_t *task, isc_event_t *event) {
 
 	if (event->ev_arg) {
 
-		event->ev_arg = (void *)(((int) event->ev_arg) - 1);
+		event->ev_arg = (void *)(((uintptr_t) event->ev_arg) - 1);
 
 		/*
 		 * Create a new task and forward the message.
@@ -475,7 +480,7 @@ t2_callback(isc_task_t *task, isc_event_t *event) {
 
 static int
 t_tasks2(void) {
-	int			ntasks;
+	uintptr_t		ntasks;
 	int			result;
 	char			*p;
 	isc_event_t		*event;
@@ -502,12 +507,13 @@ t_tasks2(void) {
 		ntasks = atoi(p);
 	else
 		ntasks = T2_NTASKS;
-	if (ntasks == 0) {
-		t_info("Bad config value for ISC_TASKS_MIN, %d\n", ntasks);
+	if (ntasks == 0U) {
+		t_info("Bad config value for ISC_TASKS_MIN, %lu\n",
+		       (unsigned long)ntasks);
 		return(T_UNRESOLVED);
 	}
 
-	t_info("Testing with %d tasks\n", ntasks);
+	t_info("Testing with %lu tasks\n", (unsigned long)ntasks);
 
 	isc_result = isc_mutex_init(&T2_mx);
 	if (isc_result != ISC_R_SUCCESS) {
@@ -667,7 +673,6 @@ t_tasks3(void) {
 	unsigned int	workers;
 	isc_event_t	*event;
 	isc_result_t	isc_result;
-	void		*sender;
 	isc_eventtype_t	event_type;
 
 	T3_flag = 0;
@@ -676,7 +681,6 @@ t_tasks3(void) {
 	T3_nfails = 0;
 	T3_nprobs = 0;
 
-	sender = (void *) 1;
 	event_type = 3;
 
 	workers = 2;
@@ -740,15 +744,15 @@ t_tasks3(void) {
 	/*
 	 * This event causes the task to wait on T3_cv.
 	 */
-	event = isc_event_allocate(mctx, sender, event_type, t3_event1, NULL,
-				   sizeof(*event));
+	event = isc_event_allocate(mctx, &senders[1], event_type, t3_event1,
+				   NULL, sizeof(*event));
 	isc_task_send(task, &event);
 
 	/*
 	 * Now we fill up the task's event queue with some events.
 	 */
 	for (cnt = 0; cnt < T3_NEVENTS; ++cnt) {
-		event = isc_event_allocate(mctx, sender, event_type,
+		event = isc_event_allocate(mctx, &senders[1], event_type,
 					   t3_event2, NULL, sizeof(*event));
 		isc_task_send(task, &event);
 	}
@@ -888,7 +892,6 @@ t_tasks4(void) {
 	isc_task_t	*task;
 	unsigned int	workers;
 	isc_result_t	isc_result;
-	void		*sender;
 	isc_eventtype_t	event_type;
 	isc_event_t	*event;
 
@@ -897,7 +900,6 @@ t_tasks4(void) {
 	T4_flag = 0;
 
 	result = T_UNRESOLVED;
-	sender = (void *)1;
 	event_type = 4;
 
 	workers = 2;
@@ -967,8 +969,8 @@ t_tasks4(void) {
 	/*
 	 * This event causes the task to wait on T4_cv.
 	 */
-	event = isc_event_allocate(mctx, sender, event_type, t4_event1, NULL,
-				   sizeof(*event));
+	event = isc_event_allocate(mctx, &senders[1], event_type, t4_event1,
+				   NULL, sizeof(*event));
 	isc_task_send(task, &event);
 
 	isc_task_shutdown(task);
@@ -1087,7 +1089,6 @@ t_tasks7(void) {
 	isc_task_t	*task;
 	unsigned int	workers;
 	isc_result_t	isc_result;
-	void		*sender;
 	isc_eventtype_t	event_type;
 	isc_event_t	*event;
 	isc_time_t	now;
@@ -1099,7 +1100,6 @@ t_tasks7(void) {
 	T7_eflag = 0;
 
 	result = T_UNRESOLVED;
-	sender = (void *)1;
 	event_type = 7;
 
 	workers = 2;
@@ -1178,8 +1178,8 @@ t_tasks7(void) {
 		return(T_UNRESOLVED);
 	}
 
-	event = isc_event_allocate(mctx, sender, event_type, t7_event1, NULL,
-				   sizeof(*event));
+	event = isc_event_allocate(mctx, &senders[1], event_type, t7_event1,
+				   NULL, sizeof(*event));
 	isc_task_send(task, &event);
 
 	isc_task_shutdown(task);
@@ -1326,7 +1326,7 @@ t10_event2(isc_task_t *task, isc_event_t *event) {
 		       "NP" : "P");
 	}
 
-	if ((T10_purge_sender == 0) ||
+	if ((T10_purge_sender == NULL) ||
 	    (T10_purge_sender == event->ev_sender)) {
 		sender_match = 1;
 	}
@@ -1396,7 +1396,7 @@ t10_sde(isc_task_t *task, isc_event_t *event) {
 }
 
 static void
-t_taskpurge_x(int sender, int type, int tag, int purge_sender,
+t_taskpurge_x(int sender, int type, int tag, void *purge_sender,
 	      int purge_type_first, int purge_type_last, void *purge_tag,
 	      int exp_nevents, int *nfails, int *nprobs, int testrange)
 {
@@ -1421,7 +1421,7 @@ t_taskpurge_x(int sender, int type, int tag, int purge_sender,
 	T10_startflag = 0;
 	T10_shutdownflag = 0;
 	T10_eventcnt = 0;
-	T10_purge_sender = (void *) purge_sender;
+	T10_purge_sender = purge_sender;
 	T10_purge_type_first = (isc_eventtype_t) purge_type_first;
 	T10_purge_type_last = (isc_eventtype_t) purge_type_last;
 	T10_purge_tag = purge_tag;
@@ -1517,12 +1517,12 @@ t_taskpurge_x(int sender, int type, int tag, int purge_sender,
 			for (tag_cnt = 0; tag_cnt < T10_TAGCNT; ++tag_cnt) {
 				eventtab[event_cnt] =
 					isc_event_allocate(mctx,
-					    (void *)(sender + sender_cnt),
+					    &senders[sender + sender_cnt],
 					    (isc_eventtype_t)(type + type_cnt),
 					    t10_event2, NULL, sizeof(*event));
 
 				eventtab[event_cnt]->ev_tag =
-					(void *)((int)tag + tag_cnt);
+					(void *)((uintptr_t)tag + tag_cnt);
 
 				/*
 				 * Make all odd message non-purgable.
@@ -1546,7 +1546,7 @@ t_taskpurge_x(int sender, int type, int tag, int purge_sender,
 		/*
 		 * We're testing isc_task_purge.
 		 */
-		nevents = isc_task_purge(task, (void *)purge_sender,
+		nevents = isc_task_purge(task, purge_sender,
 					(isc_eventtype_t)purge_type_first,
 					purge_tag);
 		if (nevents != exp_nevents) {
@@ -1559,7 +1559,7 @@ t_taskpurge_x(int sender, int type, int tag, int purge_sender,
 		/*
 		 * We're testing isc_task_purgerange.
 		 */
-		nevents = isc_task_purgerange(task, (void *)purge_sender,
+		nevents = isc_task_purgerange(task, purge_sender,
 					     (isc_eventtype_t)purge_type_first,
 					     (isc_eventtype_t)purge_type_last,
 					     purge_tag);
@@ -1665,34 +1665,36 @@ t_tasks10(void) {
 	 * Try purging on a specific sender.
 	 */
 	t_info("testing purge on 2,4,8 expecting 1\n");
-	t_taskpurge_x(1, 4, 7, 2, 4, 4, (void *)8, 1, &T10_nfails,
+	t_taskpurge_x(1, 4, 7, &senders[2], 4, 4, (void *)8, 1, &T10_nfails,
 		      &T10_nprobs, 0);
 
 	/*
 	 * Try purging on all senders.
 	 */
 	t_info("testing purge on 0,4,8 expecting 3\n");
-	t_taskpurge_x(1, 4, 7, 0, 4, 4, (void *)8, 3, &T10_nfails,
+	t_taskpurge_x(1, 4, 7, NULL, 4, 4, (void *)8, 3, &T10_nfails,
 		      &T10_nprobs, 0);
 
 	/*
 	 * Try purging on all senders, specified type, all tags.
 	 */
 	t_info("testing purge on 0,4,0 expecting 15\n");
-	t_taskpurge_x(1, 4, 7, 0, 4, 4, NULL, 15, &T10_nfails, &T10_nprobs, 0);
+	t_taskpurge_x(1, 4, 7, NULL, 4, 4, NULL, 15, &T10_nfails,
+		      &T10_nprobs, 0);
 
 	/*
 	 * Try purging on a specified tag, no such type.
 	 */
 	t_info("testing purge on 0,99,8 expecting 0\n");
-	t_taskpurge_x(1, 4, 7, 0, 99, 99, (void *)8, 0, &T10_nfails,
+	t_taskpurge_x(1, 4, 7, NULL, 99, 99, (void *)8, 0, &T10_nfails,
 		      &T10_nprobs, 0);
 
 	/*
 	 * Try purging on specified sender, type, all tags.
 	 */
 	t_info("testing purge on 0,5,0 expecting 5\n");
-	t_taskpurge_x( 1, 4, 7, 3, 5, 5, NULL, 5, &T10_nfails, &T10_nprobs, 0);
+	t_taskpurge_x(1, 4, 7, &senders[3], 5, 5, NULL, 5, &T10_nfails,
+		      &T10_nprobs, 0);
 
 	result = T_UNRESOLVED;
 
@@ -2044,68 +2046,69 @@ t_tasks13(void) {
 	 * Try purging on a specific sender.
 	 */
 	t_info("testing purge on 2,4,8 expecting 1\n");
-	t_taskpurge_x(1, 4, 7, 2, 4, 4, (void *)8, 1,
+	t_taskpurge_x(1, 4, 7, &senders[2], 4, 4, (void *)8, 1,
 		      &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on all senders.
 	 */
 	t_info("testing purge on 0,4,8 expecting 3\n");
-	t_taskpurge_x(1, 4, 7, 0, 4, 4, (void *)8, 3,
+	t_taskpurge_x(1, 4, 7, NULL, 4, 4, (void *)8, 3,
 		      &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on all senders, specified type, all tags.
 	 */
 	t_info("testing purge on 0,4,0 expecting 15\n");
-	t_taskpurge_x(1, 4, 7, 0, 4, 4, NULL, 15, &T13_nfails, &T13_nprobs, 1);
+	t_taskpurge_x(1, 4, 7, NULL, 4, 4, NULL, 15, &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on a specified tag, no such type.
 	 */
 	t_info("testing purge on 0,99,8 expecting 0\n");
-	t_taskpurge_x(1, 4, 7, 0, 99, 99, (void *)8, 0,
+	t_taskpurge_x(1, 4, 7, NULL, 99, 99, (void *)8, 0,
 		      &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on specified sender, type, all tags.
 	 */
 	t_info("testing purge on 3,5,0 expecting 5\n");
-	t_taskpurge_x(1, 4, 7, 3, 5, 5, 0, 5, &T13_nfails, &T13_nprobs, 1);
+	t_taskpurge_x(1, 4, 7, &senders[3], 5, 5, 0, 5, &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Now let's try some ranges.
 	 */
 
 	t_info("testing purgerange on 2,4-5,8 expecting 2\n");
-	t_taskpurge_x(1, 4, 7, 2, 4, 5, (void *)8, 1,
+	t_taskpurge_x(1, 4, 7, &senders[2], 4, 5, (void *)8, 1,
 		      &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on all senders.
 	 */
 	t_info("testing purge on 0,4-5,8 expecting 5\n");
-	t_taskpurge_x(1, 4, 7, 0, 4, 5, (void *)8, 5,
+	t_taskpurge_x(1, 4, 7, NULL, 4, 5, (void *)8, 5,
 		      &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on all senders, specified type, all tags.
 	 */
 	t_info("testing purge on 0,5-6,0 expecting 28\n");
-	t_taskpurge_x(1, 4, 7, 0, 5, 6, NULL, 28, &T13_nfails, &T13_nprobs, 1);
+	t_taskpurge_x(1, 4, 7, NULL, 5, 6, NULL, 28, &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on a specified tag, no such type.
 	 */
 	t_info("testing purge on 0,99-101,8 expecting 0\n");
-	t_taskpurge_x(1, 4, 7, 0, 99, 101, (void *)8, 0,
+	t_taskpurge_x(1, 4, 7, NULL, 99, 101, (void *)8, 0,
 		      &T13_nfails, &T13_nprobs, 1);
 
 	/*
 	 * Try purging on specified sender, type, all tags.
 	 */
 	t_info("testing purge on 3,5-6,0 expecting 10\n");
-	t_taskpurge_x(1, 4, 7, 3, 5, 6, NULL, 10, &T13_nfails, &T13_nprobs, 1);
+	t_taskpurge_x(1, 4, 7, &senders[3], 5, 6, NULL, 10, &T13_nfails,
+		      &T13_nprobs, 1);
 
 	result = T_UNRESOLVED;
 
@@ -2139,7 +2142,8 @@ int t14_active[T14_NTASKS];
 
 static void
 t14_callback(isc_task_t *task, isc_event_t *event) {
-	int taskno = (int) event->ev_arg;
+	int taskno = *(int *)(event->ev_arg);
+
 
 	t_info("task enter %d\n", taskno);	
 	if (taskno == T14_EXCLTASK) {
@@ -2160,6 +2164,7 @@ t14_callback(isc_task_t *task, isc_event_t *event) {
 	}
 	t_info("task exit %d\n", taskno);
 	if (t14_done) {
+		isc_mem_put(event->ev_destroy_arg, event->ev_arg, sizeof (int));
 		isc_event_free(&event);
 	} else {
 		isc_task_send(task, &event);
@@ -2216,6 +2221,7 @@ t_tasks14(void) {
 
 	for (i = 0; i < T14_NTASKS; i++) {
 		isc_event_t *event;
+		int *v;
 
 		isc_result = isc_task_create(manager, 0, &tasks[i]);
 		if (isc_result != ISC_R_SUCCESS) {
@@ -2223,9 +2229,18 @@ t_tasks14(void) {
 			return(T_FAIL);
 		}
 
+		v = isc_mem_get(mctx, sizeof *v);
+		if (v == NULL) {
+			isc_task_detach(&tasks[i]);
+			t_info("isc_mem_get failed\n");
+			return(T_FAIL);
+		}
+		*v = i;
+
 		event = isc_event_allocate(mctx, NULL, 1, t14_callback,
-					   (void *)i, sizeof(*event));
+					   v, sizeof(*event));
 		if (event == NULL) {
+			isc_mem_put(mctx, v, sizeof *v);
 			t_info("isc_event_allocate failed\n");
 			return(T_UNRESOLVED);
 		}

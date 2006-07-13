@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.1.1.2 2004/11/06 23:55:34 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.1.1.2.2.1 2006/07/13 22:02:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -54,7 +54,7 @@
  */
 
 /*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.5 2004/08/10 02:19:56 marka Exp";
+static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.7 2005/08/15 02:04:41 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -105,6 +105,13 @@ static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.5 2004/08/10 02:19:56 ma
 
 #include "port_after.h"
 
+#ifdef USE_POLL
+#ifdef HAVE_STROPTS_H
+#include <stropts.h>
+#endif
+#include <poll.h>
+#endif /* USE_POLL */
+
 /* Options.  Leave them on. */
 #define DEBUG
 #include "res_debug.h"
@@ -112,7 +119,11 @@ static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.5 2004/08/10 02:19:56 ma
 
 #define EXT(res) ((res)->_u._ext)
 
+#ifndef USE_POLL
 static const int highestFD = FD_SETSIZE - 1;
+#else
+static int highestFD = 0;
+#endif
 
 /* Forward. */
 
@@ -127,7 +138,7 @@ static void		Aerror(const res_state, FILE *, const char *, int,
 			       const struct sockaddr *, int);
 static void		Perror(const res_state, FILE *, const char *, int);
 static int		sock_eq(struct sockaddr *, struct sockaddr *);
-#ifdef NEED_PSELECT
+#if defined(NEED_PSELECT) && !defined(USE_POLL)
 static int		pselect(int, void *, void *, void *,
 				struct timespec *,
 				const sigset_t *);
@@ -281,6 +292,10 @@ res_nsend(res_state statp,
 {
 	int gotsomewhere, terrno, try, v_circuit, resplen, ns, n;
 	char abuf[NI_MAXHOST];
+
+#ifdef USE_POLL
+	highestFD = sysconf(_SC_OPEN_MAX) - 1;
+#endif
 
 	if (statp->nscount == 0) {
 		errno = ESRCH;
@@ -762,10 +777,15 @@ send_dg(res_state statp,
 	const struct sockaddr *nsap;
 	int nsaplen;
 	struct timespec now, timeout, finish;
-	fd_set dsmask;
 	struct sockaddr_storage from;
 	ISC_SOCKLEN_T fromlen;
 	int resplen, seconds, n, s;
+#ifdef USE_POLL
+	int     polltimeout;
+	struct pollfd   pollfd;
+#else
+	fd_set dsmask;
+#endif
 
 	nsap = get_nsaddr(statp, ns);
 	nsaplen = get_salen(nsap);
@@ -843,6 +863,7 @@ send_dg(res_state statp,
  wait:
 	now = evNowTime();
  nonow:
+#ifndef USE_POLL
 	FD_ZERO(&dsmask);
 	FD_SET(s, &dsmask);
 	if (evCmpTime(finish, now) > 0)
@@ -850,6 +871,17 @@ send_dg(res_state statp,
 	else
 		timeout = evConsTime(0, 0);
 	n = pselect(s + 1, &dsmask, NULL, NULL, &timeout, NULL);
+#else
+	timeout = evSubTime(finish, now);
+	if (timeout.tv_sec < 0)
+		timeout = evConsTime(0, 0);
+	polltimeout = 1000*timeout.tv_sec +
+		timeout.tv_nsec/1000000;
+	pollfd.fd = s;
+	pollfd.events = POLLRDNORM;
+	n = poll(&pollfd, 1, polltimeout);
+#endif /* USE_POLL */
+
 	if (n == 0) {
 		Dprint(statp->options & RES_DEBUG, (stdout, ";; timeout\n"));
 		*gotsomewhere = 1;
@@ -858,7 +890,11 @@ send_dg(res_state statp,
 	if (n < 0) {
 		if (errno == EINTR)
 			goto wait;
+#ifndef USE_POLL
 		Perror(statp, stderr, "select", errno);
+#else
+		Perror(statp, stderr, "poll", errno);
+#endif /* USE_POLL */
 		res_nclose(statp);
 		return (0);
 	}
@@ -1027,7 +1063,7 @@ sock_eq(struct sockaddr *a, struct sockaddr *b) {
 	}
 }
 
-#ifdef NEED_PSELECT
+#if defined(NEED_PSELECT) && !defined(USE_POLL)
 /* XXX needs to move to the porting library. */
 static int
 pselect(int nfds, void *rfds, void *wfds, void *efds,

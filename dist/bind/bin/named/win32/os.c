@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2004/05/17 23:43:25 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.1.2.1 2006/07/13 22:02:05 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.5.2.3.8.9 2004/03/08 04:04:22 marka Exp */
+/* Id: os.c,v 1.5.2.3.8.12 2005/03/17 03:58:26 marka Exp */
 
 #include <config.h>
 #include <stdarg.h>
@@ -210,7 +210,7 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
 
 	cleanup_pidfile();
 
-	if (strcmp(filename, "none") == 0)
+	if (filename == NULL)
 		return;
 	len = strlen(filename);
 	pidfile = malloc(len + 1);
@@ -283,4 +283,8 @@ ns_os_tzset(void) {
 #ifdef HAVE_TZSET
 	tzset();
 #endif
+}
+
+void
+ns_os_started(void) {
 }

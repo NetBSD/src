@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.2 2004/11/06 23:53:33 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.2.2.1 2006/07/13 22:02:04 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.11.2.4.8.28 2004/08/28 05:41:42 marka Exp */
+/* Id: config.c,v 1.11.2.4.8.29 2004/10/05 02:52:26 marka Exp */
 
 #include <config.h>
 
@@ -557,8 +557,8 @@ ns_config_getipandkeylist(cfg_obj_t *config, cfg_obj_t *list, isc_mem_t *mctx,
 			if (new == NULL)
 				goto cleanup;
 			if (keycount != 0) {
-				memcpy(new, keys, newsize);
-				isc_mem_put(mctx, keys, newsize);
+				memcpy(new, keys, oldsize);
+				isc_mem_put(mctx, keys, oldsize);
 			}
 			keys = new;
 			keycount = newlen;

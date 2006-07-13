@@ -1,7 +1,7 @@
-/*	$NetBSD: res_findzonecut.c,v 1.1.1.1 2004/05/17 23:44:47 christos Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.1.1.1.2.1 2006/07/13 22:02:17 tron Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_findzonecut.c,v 1.2.2.3.4.2 2004/03/16 12:34:18 marka Exp";
+static const char rcsid[] = "Id: res_findzonecut.c,v 1.2.2.3.4.4 2005/10/11 00:48:16 marka Exp";
 #endif /* not lint */
 
 /*
@@ -321,7 +321,6 @@ get_soa(res_state statp, const char *dname, ns_class class, int opts,
 		for (i = 0; i < n; i++) {
 			const char *t;
 			const u_char *rdata;
-			int rdlen;
 			ns_rr rr;
 
 			if (ns_parserr(&msg, sect, i, &rr) < 0) {
@@ -362,14 +361,14 @@ get_soa(res_state statp, const char *dname, ns_class class, int opts,
 				abort();
 			}
 			if (strlen(t) + 1 > zsize) {
-				DPRINTF(("get_soa: zname(%d) too small (%d)",
-					 zsize, strlen(t) + 1));
+				DPRINTF(("get_soa: zname(%lu) too small (%lu)",
+					 (unsigned long)zsize,
+					 (unsigned long)strlen(t) + 1));
 				errno = EMSGSIZE;
 				goto cleanup;
 			}
 			strcpy(zname, t);
 			rdata = ns_rr_rdata(rr);
-			rdlen = ns_rr_rdlen(rr);
 			if (ns_name_uncompress(resp, ns_msg_end(msg), rdata,
 					       mname, msize) < 0) {
 				DPRINTF(("get_soa: ns_name_uncompress failed")
@@ -527,7 +526,6 @@ save_ns(res_state statp, ns_msg *msg, ns_sect sect,
 		const u_char *rdata;
 		rr_ns *nsrr;
 		ns_rr rr;
-		int rdlen;
 
 		if (ns_parserr(msg, sect, i, &rr) < 0) {
 			DPRINTF(("save_ns: ns_parserr(%s, %d) failed",
@@ -546,7 +544,6 @@ save_ns(res_state statp, ns_msg *msg, ns_sect sect,
 				return (-1);
 			}
 			rdata = ns_rr_rdata(rr);
-			rdlen = ns_rr_rdlen(rr);
 			if (ns_name_uncompress(ns_msg_base(*msg),
 					       ns_msg_end(*msg), rdata,
 					       tname, sizeof tname) < 0) {

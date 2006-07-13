@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_connects.c,v 1.1.1.1 2004/05/17 23:44:45 christos Exp $	*/
+/*	$NetBSD: ev_connects.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_connects.c,v 1.4.206.1 2004/03/09 08:33:40 marka Exp";
+static const char rcsid[] = "Id: ev_connects.c,v 1.4.206.2 2005/07/08 04:52:54 marka Exp";
 #endif
 
 /* Import. */
@@ -170,10 +170,10 @@ evCancelConn(evContext opaqueCtx, evConnID id) {
 				return (-1);
 		} else {
 #ifdef USE_FIONBIO_IOCTL
-			int on = 1;
-			OK(ioctl(this->fd, FIONBIO, (char *)&on));
+			int off = 0;
+			OK(ioctl(this->fd, FIONBIO, (char *)&off));
 #else
-			OK(fcntl(this->fd, F_SETFL, mode | PORT_NONBLOCK));
+			OK(fcntl(this->fd, F_SETFL, mode & ~PORT_NONBLOCK));
 #endif
 		}
 	}

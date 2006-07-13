@@ -1,4 +1,4 @@
-/*	$NetBSD: res_sendsigned.c,v 1.1.1.1 2004/05/17 23:44:48 christos Exp $	*/
+/*	$NetBSD: res_sendsigned.c,v 1.1.1.1.2.1 2006/07/13 22:02:17 tron Exp $	*/
 
 #include "port_before.h"
 #include "fd_setsize.h"
@@ -124,8 +124,16 @@ retry:
 			(stdout, "%s", ""),
 			answer, (anslen > len) ? len : anslen);
 
-		Dprint(statp->pfcode & RES_PRF_REPLY,
-		       (stdout, ";; TSIG invalid (%s)\n", p_rcode(ret)));
+		if (ret > 0) {
+			Dprint(statp->pfcode & RES_PRF_REPLY,
+			       (stdout, ";; server rejected TSIG (%s)\n",
+				p_rcode(ret)));
+		} else {
+			Dprint(statp->pfcode & RES_PRF_REPLY,
+			       (stdout, ";; TSIG invalid (%s)\n",
+				p_rcode(-ret)));
+		}
+
 		free (nstatp);
 		free (newmsg);
 		dst_free_key(dstkey);

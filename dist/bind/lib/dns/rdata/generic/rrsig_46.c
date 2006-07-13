@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.1.1.2 2004/11/06 23:55:47 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.1.1.2.2.1 2006/07/13 22:02:25 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")

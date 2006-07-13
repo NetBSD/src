@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.1 2004/05/17 23:44:41 christos Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,10 @@ gai_strerror(int ecode) {
 #ifndef DO_PTHREADS
 	static char buf[EAI_BUFSIZE];
 #else	/* DO_PTHREADS */
-	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+#ifndef LIBBIND_MUTEX_INITIALIZER
+#define LIBBIND_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#endif
+	static pthread_mutex_t lock = LIBBIND_MUTEX_INITIALIZER;
 	static pthread_key_t key;
 	static int once = 0;
 	char *buf;

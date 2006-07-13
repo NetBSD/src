@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.h,v 1.1.1.1 2004/05/17 23:45:05 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.h,v 1.28.12.4 2004/03/08 09:04:53 marka Exp */
+/* Id: timer.h,v 1.28.12.6 2005/10/27 00:27:30 marka Exp */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -279,8 +279,15 @@ isc_timer_detach(isc_timer_t **timerp);
  *		timer event callbacks will run after the call.
  */
 
-isc_result_t
+isc_timertype_t
 isc_timer_gettype(isc_timer_t *timer);
+/*%<
+ * Return the timer type.
+ *
+ * Requires:
+ *
+ *\li	'timer' to be a valid timer.
+ */
 
 isc_result_t
 isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);

@@ -1,7 +1,7 @@
-/*	$NetBSD: hesiod.c,v 1.1.1.2 2004/11/06 23:55:27 christos Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.1.1.2.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: hesiod.c,v 1.1.2.1.4.3 2004/05/17 07:48:56 marka Exp";
+static const char rcsid[] = "Id: hesiod.c,v 1.1.2.1.4.4 2005/07/28 07:43:19 marka Exp";
 #endif
 
 /*
@@ -85,9 +85,7 @@ hesiod_init(void **context) {
 		return (-1);
 	}
 
-	ctx->LHS = NULL;
-	ctx->RHS = NULL;
-	ctx->res = NULL;
+	memset(ctx, 0, sizeof (*ctx));
 
 	if (parse_config_file(ctx, _PATH_HESIOD_CONF) < 0) {
 #ifdef DEF_RHS

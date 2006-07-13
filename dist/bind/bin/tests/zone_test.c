@@ -1,7 +1,7 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone_test.c,v 1.26.2.2.8.3 2004/03/08 04:04:28 marka Exp */
+/* Id: zone_test.c,v 1.26.2.2.8.5 2005/03/17 03:58:29 marka Exp */
 
 #include <config.h>
 
@@ -122,7 +122,7 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	region.base = classname;
 	region.length = strlen(classname);
 	result = dns_rdataclass_fromtext(&rdclass,
-					 (isc_textregion_t *)&region);
+					 (isc_textregion_t *)(void *)&region);
 	ERRRET(result, "dns_rdataclass_fromtext");
 
 	dns_zone_setclass(zone, rdclass);
@@ -202,7 +202,7 @@ query(void) {
 			dns_zone_dumptostream(zone, stdout);
 			continue;
 		}
-		if (strlen(buf) == 0)
+		if (strlen(buf) == 0U)
 			continue;
 		dns_fixedname_init(&name);
 		isc_buffer_init(&buffer, buf, strlen(buf));

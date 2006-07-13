@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_nw.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
+/*	$NetBSD: dns_nw.c,v 1.1.1.2.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_nw.c,v 1.3.2.4.4.3 2004/05/17 07:48:56 marka Exp";
+static const char rcsid[] = "Id: dns_nw.c,v 1.3.2.4.4.4 2004/09/16 00:57:34 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */
@@ -571,7 +571,7 @@ normalize_name(char *name) {
 	/* Make lower case. */
 	for (t = name; *t; t++)
 		if (isascii((unsigned char)*t) && isupper((unsigned char)*t))
-			*t = tolower(*t);
+			*t = tolower((*t)&0xff);
 
 	/* Remove trailing dots. */
 	while (t > name && t[-1] == '.')

@@ -1,7 +1,7 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.1 2004/05/17 23:43:51 christos Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.1.2.1 2006/07/13 22:02:09 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,12 +17,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.12.4.2.8.4 2004/03/08 09:04:22 marka Exp */
+/* Id: zonetodb.c,v 1.12.4.2.8.6 2005/09/06 02:12:40 marka Exp */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <isc/buffer.h>
+#include <isc/entropy.h>
+#include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/result.h>
@@ -142,6 +144,7 @@ main(int argc, char **argv) {
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_mem_t *mctx = NULL;
+	isc_entropy_t *ectx = NULL;
 	isc_buffer_t b;
 	isc_result_t result;
 	PGresult *res;
@@ -162,6 +165,12 @@ main(int argc, char **argv) {
 	mctx = NULL;
 	result = isc_mem_create(0, 0, &mctx);
 	check_result(result, "isc_mem_create");
+
+	result = isc_entropy_create(mctx, &ectx);
+	result_check (result, "isc_entropy_create");
+
+	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
+	check_result (result, "isc_hash_create");
 
 	isc_buffer_init(&b, porigin, strlen(porigin));
 	isc_buffer_add(&b, strlen(porigin));
@@ -277,6 +286,8 @@ main(int argc, char **argv) {
 	PQclear(res);
 	dns_dbiterator_destroy(&dbiter);
 	dns_db_detach(&db);
+	isc_hash_destroy();
+	isc_entropy_detach(&ectx);
 	isc_mem_destroy(&mctx);
 	closeandexit(0);
 	exit(0);

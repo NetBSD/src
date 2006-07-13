@@ -1,7 +1,7 @@
-/*	$NetBSD: lfsr.c,v 1.1.1.1 2004/05/17 23:45:02 christos Exp $	*/
+/*	$NetBSD: lfsr.c,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lfsr.c,v 1.11.2.2.2.3 2004/03/08 09:04:49 marka Exp */
+/* Id: lfsr.c,v 1.11.2.2.2.6 2005/10/14 01:38:50 marka Exp */
 
 #include <config.h>
 
+#include <stddef.h>
 #include <stdlib.h>
 
 #include <isc/assertions.h>
@@ -57,9 +58,6 @@ isc_lfsr_init(isc_lfsr_t *lfsr, isc_uint32_t state, unsigned int bits,
 static inline isc_uint32_t
 lfsr_generate(isc_lfsr_t *lfsr)
 {
-	unsigned int highbit;
-
-	highbit = 1 << (lfsr->bits - 1);
 
 	/*
 	 * If the previous state is zero, we must fill it with something

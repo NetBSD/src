@@ -1,4 +1,4 @@
-/*	$NetBSD: os-irix5.h,v 1.1.1.1 2004/05/17 23:43:53 christos Exp $	*/
+/*	$NetBSD: os-irix5.h,v 1.1.1.1.2.1 2006/07/13 22:02:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996

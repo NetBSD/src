@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2004/05/17 23:43:22 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.1.2.1 2006/07/13 22:02:04 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.33.2.1.10.4 2004/03/08 09:04:14 marka Exp */
+/* Id: log.c,v 1.33.2.1.10.6 2005/05/24 23:58:17 marka Exp */
 
 #include <config.h>
 
@@ -156,6 +156,9 @@ ns_log_setdefaultchannels(isc_logconfig_t *lcfg) {
 isc_result_t
 ns_log_setsafechannels(isc_logconfig_t *lcfg) {
 	isc_result_t result;
+#if ISC_FACILITY != LOG_DAEMON
+	isc_logdestination_t destination;
+#endif
 
 	if (! ns_g_logstderr) {
 		result = isc_log_createchannel(lcfg, "default_debug",
@@ -173,6 +176,15 @@ ns_log_setsafechannels(isc_logconfig_t *lcfg) {
 	} else {
 		isc_log_setdebuglevel(ns_g_lctx, ns_g_debuglevel);
 	}
+
+#if ISC_FACILITY != LOG_DAEMON
+	destination.facility = ISC_FACILITY;
+	result = isc_log_createchannel(lcfg, "default_syslog",
+				       ISC_LOG_TOSYSLOG, ISC_LOG_INFO,
+				       &destination, 0);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+#endif
 
 	result = ISC_R_SUCCESS;
 

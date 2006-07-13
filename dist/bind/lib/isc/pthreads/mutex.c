@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.c,v 1.1.1.1 2004/05/17 23:45:06 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutex.c,v 1.6.26.3 2004/03/08 09:04:55 marka Exp */
+/* Id: mutex.c,v 1.6.26.5 2005/03/17 03:58:32 marka Exp */
 
 #include <config.h>
 
@@ -128,19 +128,6 @@ isc_mutex_lock_profile(isc_mutex_t *mp, const char *file, int line) {
 	isc_mutexlocker_t *locker = NULL;
 	int i;
 
-	for (i = 0; i < ISC_MUTEX_MAX_LOCKERS; i++) {
-		if (mp->stats->lockers[i].file == NULL) {
-			locker = &mp->stats->lockers[i];
-			locker->file = file;
-			locker->line = line;
-			break;
-		} else if (mp->stats->lockers[i].file == file &&
-			   mp->stats->lockers[i].line == line) {
-			locker = &mp->stats->lockers[i];
-			break;
-		}
-	}
-
 	gettimeofday(&prelock_t, NULL);
 
 	if (pthread_mutex_lock(&mp->mutex) != 0)
@@ -153,6 +140,19 @@ isc_mutex_lock_profile(isc_mutex_t *mp, const char *file, int line) {
 
 	mp->stats->count++;
 	timevaladd(&mp->stats->wait_total, &postlock_t);
+
+	for (i = 0; i < ISC_MUTEX_MAX_LOCKERS; i++) {
+		if (mp->stats->lockers[i].file == NULL) {
+			locker = &mp->stats->lockers[i];
+			locker->file = file;
+			locker->line = line;
+			break;
+		} else if (mp->stats->lockers[i].file == file &&
+			   mp->stats->lockers[i].line == line) {
+			locker = &mp->stats->lockers[i];
+			break;
+		}
+	}
 
 	if (locker != NULL) {
 		locker->count++;

@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.2 2004/11/06 23:53:33 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2.2.1 2006/07/13 22:02:04 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.176.2.13.4.22 2004/07/23 02:56:51 marka Exp */
+/* Id: client.c,v 1.176.2.13.4.26 2005/07/27 02:53:14 marka Exp */
 
 #include <config.h>
 
@@ -179,23 +179,29 @@ static void client_request(isc_task_t *task, isc_event_t *event);
 static void ns_client_dumpmessage(ns_client_t *client, const char *reason);
 
 void
-ns_client_recursing(ns_client_t *client, isc_boolean_t killoldest) {
+ns_client_recursing(ns_client_t *client) {
+	REQUIRE(NS_CLIENT_VALID(client));
+
+	LOCK(&client->manager->lock);
+	ISC_LIST_UNLINK(*client->list, client, link);
+	ISC_LIST_APPEND(client->manager->recursing, client, link);
+	client->list = &client->manager->recursing;
+	UNLOCK(&client->manager->lock);
+}
+
+void
+ns_client_killoldestquery(ns_client_t *client) {
 	ns_client_t *oldest;
 	REQUIRE(NS_CLIENT_VALID(client));
 
 	LOCK(&client->manager->lock);
-	if (killoldest) {
-		oldest = ISC_LIST_HEAD(client->manager->recursing);
-		if (oldest != NULL) {
-			ns_query_cancel(oldest);
-			ISC_LIST_UNLINK(*oldest->list, oldest, link);
-			ISC_LIST_APPEND(client->manager->active, oldest, link);
-			oldest->list = &client->manager->active;
-		}
+	oldest = ISC_LIST_HEAD(client->manager->recursing);
+	if (oldest != NULL) {
+		ns_query_cancel(oldest);
+		ISC_LIST_UNLINK(*oldest->list, oldest, link);
+		ISC_LIST_APPEND(client->manager->active, oldest, link);
+		oldest->list = &client->manager->active;
 	}
-	ISC_LIST_UNLINK(*client->list, client, link);
-	ISC_LIST_APPEND(client->manager->recursing, client, link);
-	client->list = &client->manager->recursing;
 	UNLOCK(&client->manager->lock);
 }
 
@@ -1605,8 +1611,7 @@ client_timeout(isc_task_t *task, isc_event_t *event) {
 }
 
 static isc_result_t
-client_create(ns_clientmgr_t *manager, ns_client_t **clientp)
-{
+client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	ns_client_t *client;
 	isc_result_t result;
 
@@ -1940,7 +1945,7 @@ client_udprecv(ns_client_t *client) {
 				  client->task, client->recvevent, 0);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_socket_recv() failed: %s",
+				 "isc_socket_recv2() failed: %s",
 				 isc_result_totext(result));
 		/*
 		 * This cannot happen in the current implementation, since

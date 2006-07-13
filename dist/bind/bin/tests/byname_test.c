@@ -1,7 +1,7 @@
-/*	$NetBSD: byname_test.c,v 1.1.1.1 2004/05/17 23:43:26 christos Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byname_test.c,v 1.25.206.1 2004/03/06 10:21:35 marka Exp */
+/* Id: byname_test.c,v 1.25.206.3 2005/06/26 23:17:52 marka Exp */
 
 /*
  * Principal Author: Bob Halley
@@ -30,6 +30,8 @@
 
 #include <isc/app.h>
 #include <isc/commandline.h>
+#include <isc/entropy.h>
+#include <isc/hash.h>
 #include <isc/netaddr.h>
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -45,6 +47,7 @@
 #include <dns/result.h>
 
 static isc_mem_t *mctx = NULL;
+static isc_entropy_t *ectx = NULL;
 static isc_taskmgr_t *taskmgr;
 static dns_view_t *view = NULL;
 static dns_adbfind_t *find = NULL;
@@ -213,6 +216,10 @@ main(int argc, char *argv[]) {
 	mctx = NULL;
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
+	RUNTIME_CHECK(isc_entropy_create(mctx, &ectx) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE)
+		      == ISC_R_SUCCESS);
+
 	while ((ch = isc_commandline_parse(argc, argv, "d:vw:")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -356,6 +363,9 @@ main(int argc, char *argv[]) {
 	isc_timermgr_destroy(&timermgr);
 
 	isc_log_destroy(&lctx);
+
+	isc_hash_destroy();
+	isc_entropy_detach(&ectx);
 
 	if (verbose)
 		isc_mem_stats(mctx, stdout);
