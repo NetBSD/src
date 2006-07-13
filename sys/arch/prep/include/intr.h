@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2006/06/29 17:16:59 garbled Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2006/07/13 17:50:37 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ extern int imen;
 extern int imask[];
 extern struct intrhand *intrhand[];
 extern vaddr_t prep_intr_reg;
+extern uint32_t prep_intr_reg_off;
 
 #define	ICU_LEN			32
 extern struct intrsource intrsources[ICU_LEN];
