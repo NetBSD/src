@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.1.1.1 2004/05/17 23:45:04 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 
 /* Id: sha1.h,v 1.8.206.1 2004/03/06 08:14:48 marka Exp */
 
-/*	$NetBSD: sha1.h,v 1.1.1.1 2004/05/17 23:45:04 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
  * SHA-1 in C

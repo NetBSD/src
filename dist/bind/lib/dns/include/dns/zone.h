@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.1.1.1 2004/05/17 23:44:59 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.1.2.1 2006/07/13 22:02:20 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.106.2.7.4.14 2004/03/06 08:14:01 marka Exp */
+/* Id: zone.h,v 1.106.2.7.4.15 2004/10/26 02:08:43 marka Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -973,6 +973,13 @@ dns_zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump);
  *
  * Requires:
  *	'zone' to be a valid zone.
+ *
+ * Returns:
+ *	DNS_R_SUCCESS
+ *	DNS_R_BADZONE	zone failed basic consistancy checks:
+ *			* a single SOA must exist
+ *			* some NS records must exist.
+ *	Others
  */
 
 isc_uint32_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.c,v 1.1.1.2 2004/11/06 23:56:02 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.2.2.1 2006/07/13 22:02:30 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.48.2.1.2.6 2004/08/28 06:25:27 marka Exp */
+/* Id: t_api.c,v 1.48.2.1.2.8 2005/06/18 01:03:24 marka Exp */
 
 #include <config.h>
 
@@ -37,6 +37,7 @@
 #include <isc/commandline.h>
 #include <isc/print.h>
 #include <isc/string.h>
+#include <isc/mem.h>
 
 #include <dns/compress.h>
 #include <dns/result.h>
@@ -121,6 +122,7 @@ main(int argc, char **argv) {
 	testspec_t		*pts;
 	struct sigaction	sa;
 
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 	first = ISC_TRUE;
 	subprocs = 1;
 	T_timeout = T_TCTOUT;

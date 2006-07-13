@@ -1,7 +1,7 @@
-/*	$NetBSD: lwres_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: lwres_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwres_test.c,v 1.25.12.3 2004/03/08 04:04:26 marka Exp */
+/* Id: lwres_test.c,v 1.25.12.5 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -49,7 +49,7 @@ hexdump(const char *msg, void *base, size_t len) {
 	p = base;
 	cnt = 0;
 
-	printf("*** %s (%u bytes @ %p)\n", msg, len, base);
+	printf("*** %s (%lu bytes @ %p)\n", msg, (unsigned long)len, base);
 
 	while (cnt < len) {
 		if (cnt % 16 == 0)

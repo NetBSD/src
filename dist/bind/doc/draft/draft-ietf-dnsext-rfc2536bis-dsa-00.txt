@@ -1,0 +1,404 @@
+INTERNET-DRAFT                              DSA KEYs and SIGs in the DNS
+OBSOLETES: RFC 2536                                  Donald Eastlake 3rd
+                                                                Motorola
+Expires: January 2002                                          July 2001
+
+
+
+
+
+           DSA KEYs and SIGs in the Domain Name System (DNS)
+           --- ---- --- ---- -- --- ------ ---- ------ -----
+               <draft-ietf-dnsext-rfc2536bis-dsa-00.txt>
+
+                         Donald E. Eastlake 3rd
+
+
+Status of This Document
+
+   This draft is intended to be become a Draft Standard RFC.
+   Distribution of this document is unlimited. Comments should be sent
+   to the DNS extensions working group mailing list
+   <namedroppers@ops.ietf.org> or to the author.
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC 2026.  Internet-Drafts are
+   working documents of the Internet Engineering Task Force (IETF), its
+   areas, and its working groups.  Note that other groups may also
+   distribute working documents as Internet-Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet- Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+
+
+Abstract
+
+   A standard method for storing US Government Digital Signature
+   Algorithm keys and signatures in the Domain Name System is described
+   which utilizes DNS KEY and SIG resource records.
+
+
+
+
+
+
+
+Donald Eastlake 3rd                                             [Page 1]
+
+
+INTERNET-DRAFT                                            DSA in the DNS
+
+
+Table of Contents
+
+      Status of This Document....................................1
+      Abstract...................................................1
+
+      Table of Contents..........................................2
+
+      1. Introduction............................................3
+      2. DSA KEY Resource Records................................3
+      3. DSA SIG Resource Records................................4
+      4. Performance Considerations..............................4
+      5. Security Considerations.................................5
+      6. IANA Considerations.....................................5
+
+      References.................................................6
+      Author's Address...........................................6
+      Expiration and File Name...................................7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Donald Eastlake 3rd                                             [Page 2]
+
+
+INTERNET-DRAFT                                            DSA in the DNS
+
+
+1. Introduction
+
+   The Domain Name System (DNS) is the global hierarchical replicated
+   distributed database system for Internet addressing, mail proxy, and
+   other information. The DNS has been extended to include digital
+   signatures and cryptographic keys as described in [RFC 2535].  Thus
+   the DNS can now be secured and can be used for secure key
+   distribution.
+
+   This document describes how to store US Government Digital Signature
+   Algorithm (DSA) keys and signatures in the DNS.  Familiarity with the
+   US Digital Signature Algorithm is assumed [FIPS 186-2, Schneier].
+
+
+
+2. DSA KEY Resource Records
+
+   DSA public keys are stored in the DNS as KEY RRs using algorithm
+   number 3 [RFC 2535].  The structure of the algorithm specific portion
+   of the RDATA part of this RR is as shown below.  These fields, from Q
+   through Y are the "public key" part of the DSA KEY RR.
+
+   The period of key validity is not in the KEY RR but is indicated by
+   the SIG RR(s) which signs and authenticates the KEY RR(s) at that
+   domain name.
+
+        Field     Size
+        -----     ----
+         T         1  octet
+         Q        20  octets
+         P        64 + T*8  octets
+         G        64 + T*8  octets
+         Y        64 + T*8  octets
+
+   As described in [FIPS 186-2] and [Schneier]: T is a key size
+   parameter chosen such that 0 <= T <= 8.  (The meaning for algorithm 3
+   if the T octet is greater than 8 is reserved and the remainder of the
+   RDATA portion may have a different format in that case.)  Q is a
+   prime number selected at key generation time such that 2**159 < Q <
+   2**160 so Q is always 20 octets long and, as with all other fields,
+   is stored in "big-endian" network order.  P, G, and Y are calculated
+   as directed by the [FIPS 186-2] key generation algorithm [Schneier].
+   P is in the range 2**(511+64T) < P < 2**(512+64T) and so is 64 + 8*T
+   octets long.  G and Y are quantities modulo P and so can be up to the
+   same length as P and are allocated fixed size fields with the same
+   number of octets as P.
+
+   During the key generation process, a random number X must be
+   generated such that 1 <= X <= Q-1.  X is the private key and is used
+   in the final step of public key generation where Y is computed as
+
+
+Donald Eastlake 3rd                                             [Page 3]
+
+
+INTERNET-DRAFT                                            DSA in the DNS
+
+
+        Y = G**X mod P
+
+
+
+3. DSA SIG Resource Records
+
+   The signature portion of the SIG RR RDATA area, when using the US
+   Digital Signature Algorithm, is shown below with fields in the order
+   they occur.  See [RFC 2535] for fields in the SIG RR RDATA which
+   precede the signature itself.
+
+        Field     Size
+        -----     ----
+         T         1 octet
+         R        20 octets
+         S        20 octets
+
+   The data signed is determined as specified in [RFC 2535].  Then the
+   following steps are taken, as specified in [FIPS 186-2], where Q, P,
+   G, and Y are as specified in the public key [Schneier]:
+
+        hash = SHA-1 ( data )
+
+        Generate a random K such that 0 < K < Q.
+
+        R = ( G**K mod P ) mod Q
+
+        S = ( K**(-1) * (hash + X*R) ) mod Q
+
+   For infromation on the SHA-1 has funcation see [FIPS 180-1] and
+   [draft-sha1].
+
+   Since Q is 160 bits long, R and S can not be larger than 20 octets,
+   which is the space allocated.
+
+   T is copied from the public key.  It is not logically necessary in
+   the SIG but is present so that values of T > 8 can more conveniently
+   be used as an escape for extended versions of DSA or other algorithms
+   as later specified.
+
+
+
+4. Performance Considerations
+
+   General signature generation speeds are roughly the same for RSA [RFC
+   3110] and DSA.  With sufficient pre-computation, signature generation
+   with DSA is faster than RSA.  Key generation is also faster for DSA.
+   However, signature verification is an order of magnitude slower than
+   RSA when the RSA public exponent is chosen to be small as is
+   recommended for KEY RRs used in domain name system (DNS) data
+
+
+Donald Eastlake 3rd                                             [Page 4]
+
+
+INTERNET-DRAFT                                            DSA in the DNS
+
+
+   authentication.
+
+   Current DNS implementations are optimized for small transfers,
+   typically less than 512 bytes including DNS overhead.  Larger
+   transfers will perform correctly and extensions have been
+   standardized [RFC 2671] to make larger transfers more efficient, it
+   is still advisable at this time to make reasonable efforts to
+   minimize the size of KEY RR sets stored within the DNS consistent
+   with adequate security.  Keep in mind that in a secure zone, at least
+   one authenticating SIG RR will also be returned.
+
+
+
+5. Security Considerations
+
+   Many of the general security consideration in [RFC 2535] apply.  Keys
+   retrieved from the DNS should not be trusted unless (1) they have
+   been securely obtained from a secure resolver or independently
+   verified by the user and (2) this secure resolver and secure
+   obtainment or independent verification conform to security policies
+   acceptable to the user.  As with all cryptographic algorithms,
+   evaluating the necessary strength of the key is essential and
+   dependent on local policy.
+
+   The key size limitation of a maximum of 1024 bits ( T = 8 ) in the
+   current DSA standard may limit the security of DSA.  For particularly
+   critical applications, implementors are encouraged to consider the
+   range of available algorithms and key sizes.
+
+   DSA assumes the ability to frequently generate high quality random
+   numbers.  See [RFC 1750] for guidance.  DSA is designed so that if
+   manipulated rather than random numbers are used, very high bandwidth
+   covert channels are possible.  See [Schneier] and more recent
+   research.  The leakage of an entire DSA private key in only two DSA
+   signatures has been demonstrated.  DSA provides security only if
+   trusted implementations, including trusted random number generation,
+   are used.
+
+
+
+6. IANA Considerations
+
+   Allocation of meaning to values of the T parameter that are not
+   defined herein requires an IETF standards actions.  It is intended
+   that values unallocated herein be used to cover future extensions of
+   the DSS standard.
+
+
+
+
+
+
+Donald Eastlake 3rd                                             [Page 5]
+
+
+INTERNET-DRAFT                                            DSA in the DNS
+
+
+References
+
+   [FIPS 180-1] - U.S. Federal Information Processing Standard: Secure
+   Hash Standard, April 1995.
+
+   [FIPS 186-2] - U.S. Federal Information Processing Standard: Digital
+   Signature Standard, January 2000.
+
+   [RFC 1034] - P. Mockapetris, "Domain names - concepts and
+   facilities", 11/01/1987.
+
+   [RFC 1035] - P. Mockapetris, "Domain names - implementation and
+   specification", 11/01/1987.
+
+   [RFC 1750] - D. Eastlake, S. Crocker, J. Schiller, "Randomness
+   Recommendations for Security", December 1994.
+
+   [RFC 2535] - Domain Name System Security Extensions, D. Eastlake,
+   March 1999.
+
+   [RFC 2671] - Extension Mechanisms for DNS (EDNS0), P. Vixie, August
+   1999.
+
+   [RFC 3110] - RSA/SHA-1 SIGs and RSA KEYs in the Domain Name System
+   (DNS), D.  Eastlake 3rd. May 2001.
+
+   [draft-sha1] - US Secure Hash Algorithm 1 (SHA1), draft-eastlake-
+   sha1-02.txt, work in progress, D. Eastlake, in IESG queue for
+   approval as an Informational RFC.
+
+   [Schneier] - Bruce Schneier, "Applied Cryptography Second Edition:
+   protocols, algorithms, and source code in C", 1996, John Wiley and
+   Sons, ISBN 0-471-11709-9.
+
+
+
+
+Author's Address
+
+   Donald E. Eastlake 3rd
+   Motorola
+   155 Beaver Street
+   Milford, MA 01757 USA
+
+   Telephone:   +1-508-261-5434(w)
+                +1-508-634-2066(h)
+   FAX:         +1-508-261-4447(w)
+   EMail:       Donald.Eastlake@motorola.com
+
+
+
+
+Donald Eastlake 3rd                                             [Page 6]
+
+
+INTERNET-DRAFT                                            DSA in the DNS
+
+
+Expiration and File Name
+
+   This draft expires in January 2002.
+
+   Its file name is draft-ietf-dnsext-rfc2536bis-dsa-00.txt.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Donald Eastlake 3rd                                             [Page 7]
+

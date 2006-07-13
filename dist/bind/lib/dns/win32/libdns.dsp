@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.6k/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../dns/sec/dst/include" /I "../../../../openssl-0.9.6k/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.6k/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../../../openssl-0.9.6k/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../dns/sec/dst/include" /I "../../../../openssl-0.9.6k/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../../../openssl-0.9.6k/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -439,15 +439,6 @@ SOURCE=..\diff.c
 # Begin Source File
 
 SOURCE=..\dispatch.c
-
-!IF  "$(CFG)" == "libdns - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
-
-# ADD CPP /I "../sec/dst/include"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -647,51 +638,51 @@ SOURCE=..\zt.c
 # PROP Default_Filter "c"
 # Begin Source File
 
-SOURCE=..\sec\dst\dst_api.c
+SOURCE=..\dst_api.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\dst_lib.c
+SOURCE=..\dst_lib.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\dst_parse.c
+SOURCE=..\dst_parse.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\dst_result.c
+SOURCE=..\dst_result.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\gssapi_link.c
+SOURCE=..\gssapi_link.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\gssapictx.c
+SOURCE=..\gssapictx.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\hmac_link.c
+SOURCE=..\hmac_link.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\key.c
+SOURCE=..\key.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\openssl_link.c
+SOURCE=..\openssl_link.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\openssldh_link.c
+SOURCE=..\openssldh_link.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\openssldsa_link.c
+SOURCE=..\openssldsa_link.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\sec\dst\opensslrsa_link.c
+SOURCE=..\opensslrsa_link.c
 # End Source File
 # End Group
 # Begin Source File

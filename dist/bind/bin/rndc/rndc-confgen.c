@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.1 2004/05/17 23:43:26 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.9.2.6.2.4 2004/03/06 10:21:31 marka Exp */
+/* Id: rndc-confgen.c,v 1.9.2.6.2.5 2004/09/28 07:14:57 marka Exp */
 
 #include <config.h>
 
@@ -275,7 +275,8 @@ main(int argc, char **argv) {
 			buf = isc_mem_get(mctx, len);
 			if (buf == NULL)
 				fatal("isc_mem_get(%d) failed\n", len);
-			snprintf(buf, len, "%s/%s", chrootdir, keyfile);
+			snprintf(buf, len, "%s%s%s", chrootdir,
+				 (*keyfile != '/') ? "/" : "", keyfile);
 			
 			write_key_file(buf, user, keyname, &key_txtbuffer);
 			isc_mem_put(mctx, buf, len);

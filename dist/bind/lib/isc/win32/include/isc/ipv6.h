@@ -1,7 +1,7 @@
-/*	$NetBSD: ipv6.h,v 1.1.1.1 2004/05/17 23:45:08 christos Exp $	*/
+/*	$NetBSD: ipv6.h,v 1.1.1.1.2.1 2006/07/13 22:02:28 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ipv6.h,v 1.9.2.2.2.5 2004/04/19 06:39:55 marka Exp */
+/* Id: ipv6.h,v 1.9.2.2.2.7 2005/02/09 05:13:03 marka Exp */
 
 #ifndef ISC_IPV6_H
 #define ISC_IPV6_H 1
@@ -63,7 +63,7 @@ LIBISC_EXTERNAL_DATA extern const struct in6_addr isc_in6addr_loopback;
  * Unspecified
  */
 #ifndef IN6_IS_ADDR_UNSPECIFIED
-#define IN6_IS_ADDR_UNSPECIFIED(a)      \
+#define IN6_IS_ADDR_UNSPECIFIED(a) (\
 *((u_long *)((a)->s6_addr)    ) == 0 && \
 *((u_long *)((a)->s6_addr) + 1) == 0 && \
 *((u_long *)((a)->s6_addr) + 2) == 0 && \

@@ -177,24 +177,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "makekeyset"="..\bin\dnssec\win32\makekeyset.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libdns
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libisc
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "named"="..\bin\named\win32\named.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -338,24 +320,6 @@ Package=<5>
 
 Package=<4>
 {{{
-}}}
-
-###############################################################################
-
-Project: "signkey"="..\bin\dnssec\win32\signkey.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libdns
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libisc
-    End Project Dependency
 }}}
 
 ###############################################################################

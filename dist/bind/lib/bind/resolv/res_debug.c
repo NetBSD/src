@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.2 2004/11/06 23:55:33 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.2.2.1 2006/07/13 22:02:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -97,7 +97,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.5 2004/07/28 20:16:46 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.6 2005/07/28 07:43:22 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -115,6 +115,7 @@ static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.5 2004/07/28 20:16:46 m
 #include <math.h>
 #include <netdb.h>
 #include <resolv.h>
+#include <resolv_mt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -506,7 +507,7 @@ sym_ston(const struct res_sym *syms, const char *name, int *success) {
 
 const char *
 sym_ntos(const struct res_sym *syms, int number, int *success) {
-	static char unname[20];
+	char *unname = sym_ntos_unname;
 
 	for ((void)NULL; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -524,7 +525,7 @@ sym_ntos(const struct res_sym *syms, int number, int *success) {
 
 const char *
 sym_ntop(const struct res_sym *syms, int number, int *success) {
-	static char unname[20];
+	char *unname = sym_ntop_unname;
 
 	for ((void)NULL; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -598,7 +599,7 @@ p_class(int class) {
  */
 const char *
 p_option(u_long option) {
-	static char nbuf[40];
+	char *nbuf = p_option_nbuf;
 
 	switch (option) {
 	case RES_INIT:		return "init";
@@ -641,7 +642,7 @@ p_option(u_long option) {
  */
 const char *
 p_time(u_int32_t value) {
-	static char nbuf[40];		/* XXX nonreentrant */
+	char *nbuf = p_time_nbuf;
 
 	if (ns_format_ttl(value, nbuf, sizeof nbuf) < 0)
 		sprintf(nbuf, "%u", value);
@@ -697,7 +698,7 @@ static const char *
 precsize_ntoa(prec)
 	u_int8_t prec;
 {
-	static char retbuf[sizeof "90000000.00"];	/* XXX nonreentrant */
+	char *retbuf = precsize_ntoa_retbuf;
 	unsigned long val;
 	int mantissa, exponent;
 
@@ -1099,8 +1100,7 @@ dn_count_labels(const char *name) {
  */
 char *
 p_secstodate (u_long secs) {
-	/* XXX nonreentrant */
-	static char output[15];		/* YYYYMMDDHHMMSS and null */
+	char *output = p_secstodate_output;
 	time_t clock = secs;
 	struct tm *time;
 #ifdef HAVE_TIME_R

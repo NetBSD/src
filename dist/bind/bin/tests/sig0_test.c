@@ -1,7 +1,7 @@
-/*	$NetBSD: sig0_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sig0_test.c,v 1.9.12.3 2004/03/08 04:04:27 marka Exp */
+/* Id: sig0_test.c,v 1.9.12.5 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -70,7 +70,7 @@ isc_buffer_t qbuffer, rbuffer;
 isc_taskmgr_t *taskmgr;
 isc_entropy_t *ent = NULL;
 isc_task_t *task1;
-isc_log_t *log = NULL;
+isc_log_t *lctx = NULL;
 isc_logconfig_t *logconfig = NULL;
 isc_socket_t *s;
 isc_sockaddr_t address;
@@ -252,7 +252,7 @@ main(int argc, char *argv[]) {
 	socketmgr = NULL;
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 
-	RUNTIME_CHECK(isc_log_create(mctx, &log, &logconfig) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_log_create(mctx, &lctx, &logconfig) == ISC_R_SUCCESS);
 
 	s = NULL;
 	RUNTIME_CHECK(isc_socket_create(socketmgr, PF_INET,
@@ -293,7 +293,7 @@ main(int argc, char *argv[]) {
 
 	isc_entropy_detach(&ent);
 
-	isc_log_destroy(&log);
+	isc_log_destroy(&lctx);
 
 	if (verbose)
 		isc_mem_stats(mctx, stdout);

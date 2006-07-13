@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.1 2004/05/17 23:43:24 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.1.2.1 2006/07/13 22:02:05 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.c,v 1.101.2.5.2.10 2004/04/02 06:08:17 marka Exp */
+/* Id: xfrout.c,v 1.101.2.5.2.12 2005/10/14 02:13:05 marka Exp */
 
 #include <config.h>
 
@@ -870,7 +870,7 @@ xfrout_log1(ns_client_t *client, dns_name_t *zonename,
 	    const char *fmt, ...) ISC_FORMAT_PRINTF(5, 6);
 
 static void
-xfrout_log(xfrout_ctx_t *xfr, unsigned int level, const char *fmt, ...)
+xfrout_log(xfrout_ctx_t *xfr, int level, const char *fmt, ...)
 	   ISC_FORMAT_PRINTF(3, 4);
 
 /**************************************************************************/
@@ -1712,7 +1712,7 @@ xfrout_log1(ns_client_t *client, dns_name_t *zonename,
  * Logging function for use when there is a xfrout_ctx_t.
  */
 static void
-xfrout_log(xfrout_ctx_t *xfr, unsigned int level, const char *fmt, ...) {
+xfrout_log(xfrout_ctx_t *xfr, int level, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	xfrout_logv(xfr->client, xfr->qname, xfr->qclass, level, fmt, ap);

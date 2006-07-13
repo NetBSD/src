@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.1.1.1 2004/05/17 23:45:06 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: thread.c,v 1.9.2.2.2.1 2004/03/06 08:14:54 marka Exp */
+/* Id: thread.c,v 1.9.2.2.2.2 2004/12/04 06:50:03 marka Exp */
 
 #include <config.h>
 
@@ -49,6 +49,12 @@ isc_thread_create(isc_threadfunc_t func, isc_threadarg_t arg,
 		if (ret != 0)
 			return (ISC_R_UNEXPECTED);
 	}
+#endif
+
+#if defined(PTHREAD_SCOPE_SYSTEM) && defined(NEED_PTHREAD_SCOPE_SYSTEM)
+	ret = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+	if (ret != 0)
+		return (ISC_R_UNEXPECTED);
 #endif
 
 	ret = pthread_create(thread, &attr, func, arg);

@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock_test.c,v 1.1.1.2 2004/11/06 23:53:39 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.1.1.2.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rwlock_test.c,v 1.20.206.2 2004/08/28 06:25:31 marka Exp */
+/* Id: rwlock_test.c,v 1.20.206.4 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -138,7 +138,7 @@ main(int argc, char *argv[]) {
 	UNUSED(argc);
 	UNUSED(argv);
 	fprintf(stderr, "This test requires threads.\n");
-	exit(1);
+	return(1);
 }
 
 #endif

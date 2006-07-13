@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddrinfo.c,v 1.2 2004/05/19 19:19:58 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.2.2.1 2006/07/13 22:02:29 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * This code is derived from software contributed to ISC by
@@ -20,21 +20,17 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddrinfo.c,v 1.41.206.1 2004/03/06 08:15:30 marka Exp */
+/* Id: getaddrinfo.c,v 1.41.206.3 2005/06/09 23:54:33 marka Exp */
 
 #include <config.h>
 
 #include <string.h>
 #include <errno.h>
-#include <stdlib.h>
 
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/netdb.h>
-
-#ifdef __KAME__
-#include <net/if.h>
-#endif
+#include <lwres/stdlib.h>
 
 #define SA(addr)	((struct sockaddr *)(addr))
 #define SIN(addr)	((struct sockaddr_in *)(addr))
@@ -258,18 +254,14 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 			p = strchr(ntmp, '%');
 			ep = NULL;
 
-#ifdef __KAME__
-			if (p != NULL) {
-				scopeid = if_nametoindex(p + 1);
-				if (scopeid)
-					p = NULL;
-			}
-#endif
+			/*
+			 * Vendors may want to support non-numeric
+			 * scopeid around here.
+			 */
 
-			if (p != NULL) {
+			if (p != NULL)
 				scopeid = (lwres_uint32_t)strtoul(p + 1,
 								  &ep, 10);
-			}
 			if (p != NULL && ep != NULL && ep[0] == '\0')
 				*p = '\0';
 			else {

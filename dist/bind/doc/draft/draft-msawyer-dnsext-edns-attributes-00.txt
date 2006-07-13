@@ -1,0 +1,283 @@
+
+
+
+
+
+
+INTERNET-DRAFT                                                 M. Sawyer
+                                                           A. Gustafsson
+                                                                M. Graff
+                                                                 Nominum
+<draft-msawyer-dnsext-edns-attributes-00.txt>           15 November 2000
+
+                  Handling of unknown EDNS0 attributes
+
+Status of this Memo
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC2026.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its areas, and its working groups.  Note that
+   other groups may also distribute working documents as Internet-
+   Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as ``work in progress.''
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html
+
+   This draft expires on May 15, 2001.
+
+Abstract
+
+   This document provides a clarification of the EDNS0 protocol,
+   specifying the behavior of servers when they receive unknown EDNS
+   options.
+
+1.1 - Introduction
+
+   Familiarity with DNS [RFC1034, RFC1035] and DNS Extension Mechanisms
+   [RFC2671] is helpful.
+
+   EDNS0 [RFC2671] specifies a general framework for extending the
+   packet format used by the Domain Name System protocol.  The framework
+   provides for a series of additional options, identified by a 16 bit
+   attribute ID and arbitrary sized payload.  Any number of these
+   additional options can be specified in the DNS packet.  As specified,
+   the current scheme has drawbacks:
+
+
+
+Expires May 2001                                               [Page 1]
+
+INTERNET-DRAFT     Handling of unknown EDNS attributes      October 2000
+
+
+   - It provides no way for implementers to deploy test systems with
+   experimental features prior to approval of the feature and assignment
+   of an attribute ID.
+
+   - It provides no specification on what an application should do when
+   receiving unrecognized options.
+
+   This draft proposes to clarify the original EDNS0 draft [RFC2671],
+   addressing these drawbacks.
+
+1.2 - Requirements
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [RFC2119].
+
+2 - Protocol changes:
+
+   This document updates [RFC2671].  Conformance to this specification
+   is claimed by specifying EDNS version 1.
+
+2.1 - Advisory and Required Options:
+
+
+   Some potential uses of EDNS options are advisory in nature,  For
+   example, a hypothetical option indicating that "I understand frobozz
+   compression in responses" can be safely ignored by the recipient,
+   which will then simply not use frobozz compression.  Others uses of
+   options, such as a hypothetical "send only cryptographically verified
+   data in responses" option, cannot be safely ignored, and should cause
+   the request to fail if not understood by the receiver.
+
+   This suggests that we need two types of options, "advisory" options
+   (that can be ignored) and "required" options (that can not).  Because
+   a server needs to classify options as advisory or required even if
+   they were not yet defined when the server was implemented, the type
+   of an option must be evident without knowing its internal structure.
+   This is achieved by splitting the option type codes into two ranges:
+   options with type code 0x0000-0x7FFF are considered "advisory", and
+   options with type code 0x8000-0xFFFF are considered "required".
+
+2.2 - Handling of Unknown and Unsupported EDNS Option Types
+
+   When a server receives an unknown or unsupported advisory option in a
+   request or response message, it MUST ignore the unknown option and
+   process the message as if the option was not present.  In the reply,
+   it SHOULD include an advisory UNSUPPORTED option (TBD).
+
+
+
+
+Expires May 2001                                               [Page 2]
+
+INTERNET-DRAFT     Handling of unknown EDNS attributes      October 2000
+
+
+   When a server receives an unknown or unsupported required option in a
+   request message, it MUST NOT act on the request, and it MUST return
+   an error response with the extended result code BADOPT (TBD).  In the
+   reply, it SHOULD include an advisory UNSUPPORTED option.
+
+   When a server receives an unknown or unsupported required option in a
+   response message, it MUST ignore the response.  The server SHOULD
+   continue to parse options after the unknown option, including a list
+   of all unsupported options in the UNSUPPORTED option in the reply.
+
+   Servers MAY include SUPPORTED options in replies to messages, listing
+   option codes which they understand.  This message SHOULD contain all
+   option codes the server understands.  This facility MAY NOT be used
+   in place of the UNSUPPORTED option to identify unsupported options in
+   replies.
+
+   Clients MAY include SUPPORTED or UNSUPPORTED options in queries.
+   UNSUPPORTED options SHOULD only list those option codes which the
+   client has received in previous replies from the server, not an
+   inclusive list of all unsupported option codes.
+
+2.3 - Use of Reserved Options for Development
+
+   Option codes in the range of 0x7FF0 to 0x7FFF and 0xFFF0 to 0xFFFF
+   are considered "reserved" and shall not be assigned to new protocols.
+   Software vendors SHOULD use these options for testing of protocols
+   under development, provided the following conditions are met:
+
+   - Vendors MUST NOT ship any versions of the software which use option
+   codes in this range.  They MUST delay shipping software with the new
+   options until IANA has assigned permanent option codes.
+
+   - Vendors MUST NOT place development servers on the live internet
+   which send options in this range to remote servers or which
+   understand options in this range as having any meaning.
+
+3.1 - SUPPORTED and UNSUPPORTED options
+
+   The SUPPORTED and UNSUPPORTED options contain a list of option codes
+   which the server or client does or doesn't support.  The list
+   contains, in network byte order, the supported or unsupported 16 bit
+   option codes:
+
+                                     1  1  1  1  1  1
+       0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+     +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+     |        SUPPORTED or UNSUPPORTED (TBD)         |
+     +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+
+
+Expires May 2001                                               [Page 3]
+
+INTERNET-DRAFT     Handling of unknown EDNS attributes      October 2000
+
+
+     |        LENGTH (number of options * 2)         |
+     +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+     /               OPTION CODE(s)                  /
+     /                                               /
+     +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+   Sending a SUPPORTED option with a zero-length payload indicates that
+   the server or client supports no EDNS options, so none should be
+   used.  UNSUPPORTED options with zero-length payloads SHOULD NOT be
+   sent, as such a message is meaningless.
+
+4 - IANA considerations
+
+   When allocating EDNS Option Codes, the IANA shall henceforth require
+   the RFC defining the new option to specify whether the option is an
+   "advisory" or a "required" option.  The option code for an advisory
+   option shall be allocated from the range 0x0000-0x7FEF, and the code
+   for a required option shall be allocated from the range
+   0x8000-0xFFEF.
+
+   Option codes in the ranges of 0x7FF0 to 0x7FFF and 0xFFF0 to 0xFFFF
+   are considered "reserved."
+
+   The IANA is hereby requested to assign EDNS Version Number 1 to this
+   specification, to assign a new extended RCODE value for BADOPT, and
+   to assign advisory option codes for UNSUPPORTED and SUPPORTED.
+
+
+5 - Security considerations
+
+   This document provides a mechanism for users to override the default
+   behavior of the server when accessing data from its internal zone
+   databases.  Software developers and administrators should use some
+   care when enabling these options, as they may provide outside users
+   the ability to retrieve information otherwise not available.
+
+6 - Acknowledgments
+
+   The authors would like to thank Olafur Gudmundsson for his input on
+   this draft.
+
+7 - References
+
+   [RFC2119] S. Brander, ``Key words for use in RFCs to Indicate
+   Requirement Levels,'' RFC 2119, ISI, November 1997.
+
+   [RFC2671]   P. Vixie, ``Extension Mechanisms for DNS (EDNS0),'' RFC
+   2671, ISI, August, 1999
+
+
+
+Expires May 2001                                               [Page 4]
+
+INTERNET-DRAFT     Handling of unknown EDNS attributes      October 2000
+
+
+Author's Address
+
+   Michael Sawyer
+   Nominum, Inc.
+   950 Charter St.
+   Redwood City, CA  94063
+   Phone: +1-650-779-6021
+   michael.sawyer@nominum.com
+
+   Andreas Gustafsson
+   Nominum, Inc.
+   950 Charter St.
+   Redwood City, CA  94063
+   Phone: +1-650-779-6004
+   andreas.gustafsson@nominum.com
+
+   Michael Graff
+   Nominum, Inc.
+   950 Charter St.
+   Redwood City, CA  94063
+   Phone: +1-650-779-6034
+   michael.graff@nominum.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Expires May 2001                                               [Page 5]
+
