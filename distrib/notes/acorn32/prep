@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2006/07/13 14:50:27 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.10 2006/07/13 15:07:47 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -436,12 +436,12 @@ application and edit the
 .Pa fastboot
 file to specify
 the installation kernel location; an example is already given.
-.Pa
+.Pp
 You can also set other details like tweaking with the amount of memory in
 the WimpSlot of the bootloader when this is too much.
 Remember however that this shouldn't be set too low for it can crash
 the bootloader.
-.Pa
+.Pp
 When you think you've filled in the proper details save the file again
 and proceed.
 .Ss2 Running !BtNetBSD
