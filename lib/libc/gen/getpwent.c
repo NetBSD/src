@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.66.2.2 2005/07/11 21:24:36 tron Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.66.2.3 2006/07/13 09:29:40 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.66.2.2 2005/07/11 21:24:36 tron Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.66.2.3 2006/07/13 09:29:40 ghen Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1935,10 +1935,9 @@ _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 			switch (state->mode) {
 
 			case COMPAT_FULL:
-					/* get next user */
+					/* get next user or lookup by key */
 				rv = _passwdcompat_pwscan(&cpw,
-				    cbuf, sizeof(cbuf),
-				    _PW_KEYBYNUM, NULL, 0);
+				    cbuf, sizeof(cbuf), search, name, uid);
 				if (rv != NS_SUCCESS)
 					state->mode = COMPAT_NONE;
 				break;
