@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.13 2006/02/09 01:08:40 gdamore Exp $ */
+/* $NetBSD: com_aubus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.13 2006/02/09 01:08:40 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,30 +44,36 @@ __KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.13 2006/02/09 01:08:40 gdamore Exp
 #include <sys/tty.h>
 
 #include <machine/bus.h>
+#include <dev/ic/comvar.h>
 
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
+#include <mips/alchemy/dev/com_aubus_reg.h>
 
-#include <mips/alchemy/dev/aucomreg.h>
-#include <mips/alchemy/dev/aucomvar.h>
-
-struct aucom_aubus_softc {
+struct com_aubus_softc {
 	struct com_softc sc_com;
 	int sc_irq;
 	void *sc_ih;
 };
 
-static int	aucom_aubus_probe(struct device *, struct cfdata *, void *);
-static void	aucom_aubus_attach(struct device *, struct device *, void *);
-static int	aucom_aubus_enable(struct com_softc *);
-static void	aucom_aubus_disable(struct com_softc *);
+static int	com_aubus_probe(struct device *, struct cfdata *, void *);
+static void	com_aubus_attach(struct device *, struct device *, void *);
+static int	com_aubus_enable(struct com_softc *);
+static void	com_aubus_disable(struct com_softc *);
+static void	com_aubus_initmap(struct com_regs *);
 
-CFATTACH_DECL(aucom_aubus, sizeof(struct aucom_aubus_softc),
-    aucom_aubus_probe, aucom_aubus_attach, NULL, NULL);
+CFATTACH_DECL(com_aubus, sizeof(struct com_aubus_softc),
+    com_aubus_probe, com_aubus_attach, NULL, NULL);
+
+#define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+
+#ifndef	COM_REGMAP
+#error	COM_REGMAP not defined!
+#endif
 
 int
-aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
+com_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -79,23 +85,24 @@ aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
+com_aubus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct aucom_aubus_softc *asc = (void *)self;
+	struct com_aubus_softc *asc = (void *)self;
 	struct com_softc *sc = &asc->sc_com;
 	struct aubus_attach_args *aa = aux;
 	int addr = aa->aa_addr;
 	
-	sc->sc_iot = aa->aa_st;
-	sc->sc_iobase = sc->sc_ioh = addr;
+	sc->sc_regs.cr_iot = aa->aa_st;
+	sc->sc_regs.cr_iobase = addr;
 	asc->sc_irq = aa->aa_irq[0];
 
-	if (aucom_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-			  &sc->sc_ioh) != 0) {
+	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.cr_ioh) == 0 &&
+	    bus_space_map(aa->aa_st, addr, AUCOM_NPORTS, 0,
+		&sc->sc_regs.cr_ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+	com_aubus_initmap(&sc->sc_regs);
 
 	/*
 	 * The input to the clock divider is the internal pbus clock (1/4 the
@@ -106,39 +113,40 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
 	sc->sc_type = COM_TYPE_AU1x00;
-	sc->enable = aucom_aubus_enable;
-	sc->disable = aucom_aubus_disable;
+
+	sc->enable = com_aubus_enable;
+	sc->disable = com_aubus_disable;
 
 	/* Enable UART so we can access it. */
-	aucom_aubus_enable(sc);
+	com_aubus_enable(sc);
 	sc->enabled = 1;
 
 	/* Attach MI com driver. */
-	aucom_attach_subr(sc);
+	com_attach_subr(sc);
 
 	/* Disable UART if it's not the console. (XXX kgdb?) */
 	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		aucom_aubus_disable(sc);
+		com_aubus_disable(sc);
 		sc->enabled = 0;
 	}
 }
 
 int
-aucom_aubus_enable(struct com_softc *sc)
+com_aubus_enable(struct com_softc *sc)
 {
-	struct aucom_aubus_softc *asc = (void *)sc; /* XXX mi prototype */
+	struct com_aubus_softc *asc = (void *)sc; /* XXX mi prototype */
 
 	/* Ignore requests to enable an already enabled console. */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) && (asc->sc_ih != NULL))
 		return (0);
 
 	/* Enable the UART module. */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_modctl,
+	bus_space_write_1(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh, AUCOM_MODCTL,
 	    UMC_ME | UMC_CE);
 
 	/* Establish the interrupt. */
 	asc->sc_ih = au_intr_establish(asc->sc_irq, 0, IPL_SERIAL, IST_LEVEL,
-	    aucomintr, sc);
+	    comintr, sc);
 	if (asc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -149,9 +157,9 @@ aucom_aubus_enable(struct com_softc *sc)
 }
 
 void
-aucom_aubus_disable(struct com_softc *sc)
+com_aubus_disable(struct com_softc *sc)
 {
-	struct aucom_aubus_softc *asc = (void *)sc; /* XXX mi prototype */
+	struct com_aubus_softc *asc = (void *)sc; /* XXX mi prototype */
 
 	/* Ignore requests to disable the console. */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
@@ -161,5 +169,40 @@ aucom_aubus_disable(struct com_softc *sc)
 	au_intr_disestablish(asc->sc_ih);
 
 	/* Disable the UART module. */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_modctl, 0);
+	bus_space_write_1(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh,
+	    AUCOM_MODCTL, 0);
+}
+
+void
+com_aubus_initmap(struct com_regs *regsp)
+{
+	regsp->cr_nports = AUCOM_NPORTS;
+	regsp->cr_map[COM_REG_RXDATA] = AUCOM_RXDATA;
+	regsp->cr_map[COM_REG_TXDATA] = AUCOM_TXDATA;
+	regsp->cr_map[COM_REG_DLBL] = AUCOM_DLB;
+	regsp->cr_map[COM_REG_DLBH] = AUCOM_DLB;
+	regsp->cr_map[COM_REG_IER] = AUCOM_IER;
+	regsp->cr_map[COM_REG_IIR] = AUCOM_IIR;
+	regsp->cr_map[COM_REG_FIFO] = AUCOM_FIFO;
+	regsp->cr_map[COM_REG_EFR] = 0;
+	regsp->cr_map[COM_REG_LCR] = AUCOM_LCTL;
+	regsp->cr_map[COM_REG_MCR] = AUCOM_MCR;
+	regsp->cr_map[COM_REG_LSR] = AUCOM_LSR;
+	regsp->cr_map[COM_REG_MSR] = AUCOM_MSR;
+}
+
+int
+com_aubus_cnattach(bus_addr_t addr, int baud)
+{
+	struct com_regs		regs;
+	uint32_t		sysfreq;
+
+	regs.cr_iot = aubus_st;
+	regs.cr_iobase = addr;
+	regs.cr_nports = AUCOM_NPORTS;
+	com_aubus_initmap(&regs);
+
+	sysfreq = curcpu()->ci_cpu_freq / 4;
+
+	return comcnattach1(&regs, baud, sysfreq, COM_TYPE_AU1x00, CONMODE);
 }

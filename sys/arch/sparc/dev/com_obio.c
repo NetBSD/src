@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.18 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.18 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ struct com_obio_softc {
 
 static int com_obio_match(struct device *, struct cfdata *, void *);
 static void com_obio_attach(struct device *, struct device *, void *);
-static void com_obio_cleanup(void *);
 
 CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
     com_obio_match, com_obio_attach, NULL, NULL);
@@ -173,6 +172,9 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &osc->osc_com;
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
 
 	if (strcmp("modem", sa->sa_name) == 0) {
 		osc->osc_tadpole = 1;
@@ -181,8 +183,8 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We're living on an obio that looks like an sbus slot.
 	 */
-	sc->sc_iot = sa->sa_bustag;
-	sc->sc_iobase = sa->sa_offset;
+	iot = sa->sa_bustag;
+	iobase = sa->sa_offset;
 	sc->sc_frequency = COM_FREQ;
 
 	/*
@@ -191,35 +193,35 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	 * console if PROM stdin is on serial (so that we can use DDB).
 	 */
 	if (prom_instance_to_package(prom_stdin()) == sa->sa_node)
-		comcnattach(sc->sc_iot, sc->sc_iobase,
-			    B9600, sc->sc_frequency, COM_TYPE_NORMAL,
-			    (CLOCAL | CREAD | CS8));
+		comcnattach(iot, iobase, B9600, sc->sc_frequency,
+		    COM_TYPE_NORMAL, (CLOCAL | CREAD | CS8));
 
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    sbus_bus_map(sc->sc_iot,
-			 sa->sa_slot, sc->sc_iobase, sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_ioh) != 0) {
+	if (!com_is_console(iot, iobase, &ioh) &&
+	    sbus_bus_map(iot, sa->sa_slot, iobase, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	if (osc->osc_tadpole) {
 		*AUXIO4M_REG |= (AUXIO4M_LED|AUXIO4M_LTE);
 		do {
 			DELAY(100);
-		} while (!comprobe1(sc->sc_iot, sc->sc_ioh));
+		} while (!com_probe_subr(&sc->sc_regs));
 #if 0
 		printf("modem: attach: lcr=0x%02x iir=0x%02x\n",
-			bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3),
-			bus_space_read_1(sc->sc_iot, sc->sc_ioh, 2));
+			bus_space_read_1(sc->sc_regs.iot, sc->sc_regs.ioh, 3),
+			bus_space_read_1(sc->sc_regs.iot, sc->sc_regs.ioh, 2));
 #endif
 	}
 
 	com_attach_subr(sc);
 
 	if (sa->sa_nintr != 0) {
-		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri, IPL_SERIAL,
-					 comintr, sc);
+		(void)bus_intr_establish(sc->sc_regs.cr_iot, sa->sa_pri,
+		    IPL_SERIAL, comintr, sc);
 		evcnt_attach_dynamic(&osc->osc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    osc->osc_com.sc_dev.dv_xname, "intr");
 	}
@@ -228,16 +230,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_obio_cleanup, sc) == NULL) {
+	if (shutdownhook_establish(com_cleanup, sc) == NULL) {
 		panic("com_obio_attach: could not establish shutdown hook");
 	}
-}
-
-static void
-com_obio_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
 }
