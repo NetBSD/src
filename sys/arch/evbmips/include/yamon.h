@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.h,v 1.5 2006/03/21 21:49:47 gdamore Exp $	*/
+/*	$NetBSD: yamon.h,v 1.6 2006/07/13 21:06:18 gdamore Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -86,7 +86,7 @@ typedef struct {
 #define	SYSCON_BOARD_BUS_CLOCK_FREQ_ID	35		/* UINT32 */
 #define	SYSCON_BOARD_PCI_FREQ_KHZ_ID	36		/* UINT32 */
 
-const char *yamon_getenv(const char *);
+char *yamon_getenv(const char *);
 void yamon_print(const char *);
 void yamon_exit(uint32_t);
 int yamon_setcpufreq(int);
