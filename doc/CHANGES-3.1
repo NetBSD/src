@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.119 2006/07/12 21:28:43 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.120 2006/07/13 09:30:59 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -2648,4 +2648,12 @@ sys/arch/sparc/sparc/machdep.c			patch
 	Avoid panic in memory management on some SPARC systems with QFE cards.
 	This fixes PR port-sparc/33340 and  PR port-sparc/33894.
 	[fair, ticket #1401]
+
+lib/libc/gen/getpwent.c				1.72 via patch
+
+	Fix YP lookup latency reported by Stephen M. Jones on tech-net.  This is a
+	performance regression between 2.0 and 3.0.  The passwd compat method was
+	incorrectly querying the NIS server with yp_first()/yp_next() rather than
+	using yp_match() with the correct key.
+	[ginsbach, ticket #1399]
 
