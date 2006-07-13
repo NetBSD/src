@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.118 2006/04/20 01:22:56 uwe Exp $
+.\"	$NetBSD: contents,v 1.119 2006/07/13 13:14:36 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,6 +172,19 @@ It has a RAM-disk installer.
 .			It Pa netbsd-FOURMEG.gz
 A somewhat smaller kernel, intended to be usable on systems with
 four megabytes of RAM.
+.\}
+.
+.if \n[acorn32] \{\
+.			It Pa netbsd-RPC_WSCONS.gz
+A kernel for Acorn Risc PCs that uses the
+.Xr wscons 4
+console system.
+.			It Pa netbsd-NC.gz
+A kernel intended for Acorn Network Computers.
+.			It Pa netbsd-NC_WSCONS.gz
+A kernel for Acorn Network Computers that uses the
+.Xr wscons 4
+console system.
 .\}
 .
 .if \n[atari] \{\
