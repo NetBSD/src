@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.1.1.2.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*	$KAME: getaddrinfo.c,v 1.14 2001/01/06 09:41:15 jinmei Exp $	*/
 
@@ -246,6 +246,7 @@ do { \
 		goto free; \
 } while (/*CONSTCOND*/0)
 
+#ifndef SOLARIS2
 #define ERR(err) \
 do { \
 	/* external reference: error, and label bad */ \
@@ -253,6 +254,16 @@ do { \
 	goto bad; \
 	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
+#else
+#define ERR(err) \
+do { \
+	/* external reference: error, and label bad */ \
+	error = (err); \
+	if (error == error) \
+		goto bad; \
+} while (/*CONSTCOND*/0)
+#endif
+
 
 #define MATCH_FAMILY(x, y, w) \
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
@@ -323,6 +334,15 @@ getaddrinfo(hostname, servname, hints, res)
 	pai->ai_family = PF_UNSPEC;
 	pai->ai_socktype = ANY;
 	pai->ai_protocol = ANY;
+#ifdef __sparcv9
+	/*
+	 * clear _ai_pad to preserve binary
+	 * compatibility with previously compiled 64-bit
+	 * applications in a pre-SUSv3 environment by
+	 * guaranteeing the upper 32-bits are empty.
+	 */
+	pai->_ai_pad = 0;
+#endif /* __sparcv9 */
 	pai->ai_addrlen = 0;
 	pai->ai_canonname = NULL;
 	pai->ai_addr = NULL;
@@ -347,6 +367,13 @@ getaddrinfo(hostname, servname, hints, res)
 		}
 		memcpy(pai, hints, sizeof(*pai));
 
+#ifdef __sparcv9
+		/*
+		 * We need to clear _ai_pad to preserve binary
+		 * compatibility.  See prior comment.
+		 */
+		pai->_ai_pad = 0;
+#endif
 		/*
 		 * if both socktype/protocol are specified, check if they
 		 * are meaningful combination.

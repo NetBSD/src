@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.h,v 1.1.1.1 2004/05/17 23:44:48 christos Exp $	*/
+/*	$NetBSD: res_mkupdate.h,v 1.1.1.1.2.1 2006/07/13 22:02:17 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

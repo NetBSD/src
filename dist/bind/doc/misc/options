@@ -16,6 +16,7 @@ options {
         has-old-clients <boolean>; // obsolete
         heartbeat-interval <integer>;
         host-statistics <boolean>; // not implemented
+        host-statistics-max <integer>; // not implemented
         hostname ( <quoted_string> | none );
         interface-interval <integer>;
         listen-on [ port <integer> ] { <address_match_element>; ... };
@@ -48,6 +49,7 @@ options {
         use-id-pool <boolean>; // obsolete
         use-ixfr <boolean>;
         version ( <quoted_string> | none );
+        flush-zones-on-shutdown <boolean>;
         allow-recursion { <address_match_element>; ... };
         allow-v6-synthesis { <address_match_element>; ... }; // obsolete
         sortlist { <address_match_element>; ... };

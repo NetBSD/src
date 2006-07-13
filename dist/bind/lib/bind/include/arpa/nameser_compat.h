@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.1.1.2 2004/11/06 23:55:25 christos Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.1.1.2.2.1 2006/07/13 22:02:14 tron Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.

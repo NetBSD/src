@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.1 2004/05/17 23:44:41 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.1.1.1.2.1 2006/07/13 22:02:14 tron Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,7 +88,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.12.2.1.4.4 2004/03/16 02:19:19 marka Exp
+ *	Id: netdb.h,v 1.12.2.1.4.5 2004/11/30 01:15:42 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -528,6 +528,9 @@ void		endservent_r __P((void));
 
 #ifdef __GLIBC__
 int		getnetgrent_r __P((char **, char **, char **, char *, size_t));
+#endif
+#ifdef _AIX
+int		setnetgrent_r __P((char *, void **));
 #endif
 
 #endif

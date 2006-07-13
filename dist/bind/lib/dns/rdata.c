@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata.c,v 1.1.1.1 2004/05/17 23:44:53 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.1.2.1 2006/07/13 22:02:18 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.c,v 1.147.2.11.2.15 2004/03/12 10:31:25 marka Exp */
+/* Id: rdata.c,v 1.147.2.11.2.20 2005/07/22 05:27:52 marka Exp */
 
 #include <config.h>
 #include <ctype.h>
@@ -988,11 +988,15 @@ txt_totext(isc_region_t *source, isc_buffer_t *target) {
 		if (*sp < 0x20 || *sp >= 0x7f) {
 			if (tl < 4)
 				return (ISC_R_NOSPACE);
-			snprintf(tp, 5, "\\%03u", *sp++);
-			tp += 4;
+			*tp++ = 0x5c;
+			*tp++ = 0x30 + ((*sp / 100) % 10);
+			*tp++ = 0x30 + ((*sp / 10) % 10);
+			*tp++ = 0x30 + (*sp % 10);
+			sp++;
 			tl -= 4;
 			continue;
 		}
+		/* double quote, semi-colon, backslash */
 		if (*sp == 0x22 || *sp == 0x3b || *sp == 0x5c) {
 			if (tl < 2)
 				return (ISC_R_NOSPACE);
@@ -1215,7 +1219,7 @@ name_tobuffer(dns_name_t *name, isc_buffer_t *target) {
 
 static isc_uint32_t
 uint32_fromregion(isc_region_t *region) {
-	unsigned long value;
+	isc_uint32_t value;
 
 	REQUIRE(region->length >= 4);
 	value = region->base[0] << 24;
@@ -1590,7 +1594,7 @@ warn_badname(dns_name_t *name, isc_lex_t *lexer,
 		file = isc_lex_getsourcename(lexer);
 		line = isc_lex_getsourceline(lexer);
 		dns_name_format(name, namebuf, sizeof(namebuf));
-		(*callbacks->warn)(callbacks, "%s:%u: %s: %s", 
+		(*callbacks->warn)(callbacks, "%s:%u: warning: %s: %s", 
 				   file, line, namebuf,
 				   dns_result_totext(DNS_R_BADNAME));
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.c,v 1.1.1.1 2004/05/17 23:45:02 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.c,v 1.98.2.7.2.5 2004/03/16 05:50:24 marka Exp */
+/* Id: mem.c,v 1.98.2.7.2.7 2005/03/17 03:58:32 marka Exp */
 
 #include <config.h>
 
@@ -719,6 +719,15 @@ isc_mem_createx(size_t init_max_size, size_t target_size,
 	if (ctx == NULL)
 		return (ISC_R_NOMEMORY);
 
+	if (isc_mutex_init(&ctx->lock) != ISC_R_SUCCESS) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "isc_mutex_init() %s",
+				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
+						ISC_MSG_FAILED, "failed"));
+		(memfree)(arg, ctx);
+		return (ISC_R_UNEXPECTED);
+	}
+
 	if (init_max_size == 0U)
 		ctx->max_size = DEF_MAX_SIZE;
 	else
@@ -777,15 +786,6 @@ isc_mem_createx(size_t init_max_size, size_t target_size,
 	ctx->highest = NULL;
 #endif /* ISC_MEM_USE_INTERNAL_MALLOC */
 
-	if (isc_mutex_init(&ctx->lock) != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() %s",
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-						ISC_MSG_FAILED, "failed"));
-		result = ISC_R_UNEXPECTED;
-		goto error;
-	}
-
 #if ISC_MEM_TRACKLINES
 	if ((isc_mem_debugging & ISC_MEM_DEBUGRECORD) != 0) {
 		unsigned int i;
@@ -807,17 +807,18 @@ isc_mem_createx(size_t init_max_size, size_t target_size,
 	return (ISC_R_SUCCESS);
 
   error:
-	if (ctx) {
-		if (ctx->stats)
+	if (ctx != NULL) {
+		if (ctx->stats != NULL)
 			(memfree)(arg, ctx->stats);
 #if ISC_MEM_USE_INTERNAL_MALLOC
-		if (ctx->freelists)
+		if (ctx->freelists != NULL)
 			(memfree)(arg, ctx->freelists);
 #endif /* ISC_MEM_USE_INTERNAL_MALLOC */
 #if ISC_MEM_TRACKLINES
-		if (ctx->debuglist)
+		if (ctx->debuglist != NULL)
 			(ctx->memfree)(ctx->arg, ctx->debuglist);
 #endif /* ISC_MEM_TRACKLINES */
+		DESTROYLOCK(&ctx->lock);
 		(memfree)(arg, ctx);
 	}
 

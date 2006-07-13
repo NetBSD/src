@@ -1,8 +1,8 @@
-Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: readme1st.txt,v 1.7.2.4.4.2 2004/08/19 05:10:41 marka Exp
+Id: readme1st.txt,v 1.7.2.4.4.4 2005/09/06 02:12:43 marka Exp
 
 	   Release of BIND 9.3 for Window NT/2000/XP/2003
 
@@ -117,11 +117,11 @@ BIND 9 applications.
 
 	DNS Tools
 
-The following tools have been built for Windows NT: dig, nslookup, host,
-nsupdate, rndc, rndc-confgen, named-checkconf, named-checkzone, dnssec-keygen,
-dnssec-makekeyset, dnssec-signkey, dnssec-signzone. The tools will NOT run on
-Win9x, only WinNT and Win2000. The latter tools are for use with DNSSEC. All
-tools are installed in the dns/bin directory.
+The following tools have been built for Windows NT: dig, nslookup,
+host, nsupdate, rndc, rndc-confgen, named-checkconf, named-checkzone,
+dnssec-keygen, dnssec-signzone. The tools will NOT run on Win9x,
+only WinNT and Win2000. The latter tools are for use with DNSSEC.
+All tools are installed in the dns/bin directory.
 
 IMPORTANT NOTE ON USING THE TOOLS:
 

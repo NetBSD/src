@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.3 2004/11/07 00:16:59 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.3.2.1 2006/07/13 22:02:27 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.11.12.4 2004/05/18 01:39:20 marka Exp */
+/* Id: os.c,v 1.11.12.6 2005/10/14 02:13:07 marka Exp */
 
 #include <config.h>
 
@@ -28,6 +28,7 @@
 
 #include <unistd.h>
 
+#ifndef __hpux
 static inline long
 sysconf_ncpus(void) {
 #if defined(_SC_NPROCESSORS_ONLN)
@@ -38,6 +39,7 @@ sysconf_ncpus(void) {
 	return (0);
 #endif
 }
+#endif
 #endif /* HAVE_SYSCONF */
 
 

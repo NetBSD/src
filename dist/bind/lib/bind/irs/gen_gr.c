@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_gr.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
+/*	$NetBSD: gen_gr.c,v 1.1.1.2.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

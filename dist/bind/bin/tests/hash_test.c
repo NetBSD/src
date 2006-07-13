@@ -1,7 +1,7 @@
-/*	$NetBSD: hash_test.c,v 1.1.1.1 2004/05/17 23:43:26 christos Exp $	*/
+/*	$NetBSD: hash_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash_test.c,v 1.8.12.3 2004/03/08 04:04:26 marka Exp */
+/* Id: hash_test.c,v 1.8.12.7 2005/03/17 03:58:28 marka Exp */
 
 #include <config.h>
 
@@ -31,12 +31,12 @@
 #include <isc/string.h>
 
 static void
-print_digest(char *s, const char *hash, unsigned char *d,
+print_digest(unsigned char *s, const char *hash, unsigned char *d,
 	     unsigned int words)
 {
 	unsigned int i, j;
 
-	printf("hash (%s) %s:\n\t", hash, s);
+	printf("hash (%s) %s:\n\t", hash, (char *)s);
 	for (i = 0; i < words; i++) {
 		printf(" ");
 		for (j = 0; j < 4; j++)
@@ -52,7 +52,7 @@ main(int argc, char **argv) {
 	isc_hmacmd5_t hmacmd5;
 	unsigned char digest[20];
 	unsigned char buffer[1024];
-	const unsigned char *s;
+	const char *s;
 	unsigned char key[20];
 
 	UNUSED(argc);
@@ -60,21 +60,21 @@ main(int argc, char **argv) {
 
 	s = "abc";
 	isc_sha1_init(&sha1);
-	strcpy(buffer, s);
+	memcpy(buffer, s, strlen(s));
 	isc_sha1_update(&sha1, buffer, strlen(s));
 	isc_sha1_final(&sha1, digest);
 	print_digest(buffer, "sha1", digest, 5);
 
 	s = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 	isc_sha1_init(&sha1);
-	strcpy(buffer, s);
+	memcpy(buffer, s, strlen(s));
 	isc_sha1_update(&sha1, buffer, strlen(s));
 	isc_sha1_final(&sha1, digest);
 	print_digest(buffer, "sha1", digest, 5);
 
 	s = "abc";
 	isc_md5_init(&md5);
-	strcpy(buffer, s);
+	memcpy(buffer, s, strlen(s));
 	isc_md5_update(&md5, buffer, strlen(s));
 	isc_md5_final(&md5, digest);
 	print_digest(buffer, "md5", digest, 4);
@@ -85,15 +85,15 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 16);
 	isc_hmacmd5_init(&hmacmd5, key, 16);
-	strcpy(buffer, s);
+	memcpy(buffer, s, strlen(s));
 	isc_hmacmd5_update(&hmacmd5, buffer, strlen(s));
 	isc_hmacmd5_sign(&hmacmd5, digest);
 	print_digest(buffer, "hmacmd5", digest, 4);
 
 	s = "what do ya want for nothing?";
-	strcpy(key, "Jefe");
+	strcpy((char *)key, "Jefe");
 	isc_hmacmd5_init(&hmacmd5, key, 4);
-	strcpy(buffer, s);
+	memcpy(buffer, s, strlen(s));
 	isc_hmacmd5_update(&hmacmd5, buffer, strlen(s));
 	isc_hmacmd5_sign(&hmacmd5, digest);
 	print_digest(buffer, "hmacmd5", digest, 4);
@@ -105,7 +105,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 16);
 	isc_hmacmd5_init(&hmacmd5, key, 16);
-	strcpy(buffer, s);
+	memcpy(buffer, s, strlen(s));
 	isc_hmacmd5_update(&hmacmd5, buffer, strlen(s));
 	isc_hmacmd5_sign(&hmacmd5, digest);
 	print_digest(buffer, "hmacmd5", digest, 4);

@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.h,v 1.1.1.1 2004/05/17 23:45:04 christos Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.h,v 1.35.12.6 2004/03/08 09:04:53 marka Exp */
+/* Id: sockaddr.h,v 1.35.12.8 2005/07/29 00:13:10 marka Exp */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -194,7 +194,7 @@ isc_sockaddr_issitelocal(isc_sockaddr_t *sa);
  */
 
 #define ISC_SOCKADDR_FORMATSIZE \
-	sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX#YYYYY")
+	sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX#YYYYY%SSSSSSSSSS")
 /*
  * Minimum size of array to pass to isc_sockaddr_format().
  */

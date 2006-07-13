@@ -1,7 +1,7 @@
-/*	$NetBSD: nslookup.c,v 1.1.1.2 2004/11/06 23:53:31 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.1.1.2.2.1 2006/07/13 22:02:03 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nslookup.c,v 1.90.2.4.2.7 2004/08/18 23:25:58 marka Exp */
+/* Id: nslookup.c,v 1.90.2.4.2.10 2005/07/12 05:47:42 marka Exp */
 
 #include <config.h>
 
@@ -45,19 +45,6 @@
 #include <dns/byaddr.h>
 
 #include <dig/dig.h>
-
-extern ISC_LIST(dig_lookup_t) lookup_list;
-extern dig_serverlist_t server_list;
-extern ISC_LIST(dig_searchlist_t) search_list;
-
-extern isc_boolean_t usesearch, debugging;
-extern in_port_t port;
-extern unsigned int timeout;
-extern isc_mem_t *mctx;
-extern int tries;
-extern int lookup_counter;
-extern isc_task_t *global_task;
-extern char *progname;
 
 static isc_boolean_t short_form = ISC_TRUE,
 	tcpmode = ISC_FALSE,
@@ -404,7 +391,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	debug("printmessage()");
 
 	isc_sockaddr_format(&query->sockaddr, servtext, sizeof(servtext));
-	printf("Server:\t\t%s\n", query->servname);
+	printf("Server:\t\t%s\n", query->userarg);
 	printf("Address:\t%s\n", servtext);
 	
 	puts("");
@@ -463,7 +450,7 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 		get_address(srv->servername, port, &sockaddr);
 		isc_sockaddr_format(&sockaddr, sockstr, sizeof(sockstr));
 		printf("Default server: %s\nAddress: %s\n",
-			srv->servername, sockstr);
+			srv->userarg, sockstr);
 		if (!full)
 			return;
 		srv = ISC_LIST_NEXT(srv, link);
@@ -740,7 +727,9 @@ get_next_command(void) {
 		setoption(arg);
 	else if ((strcasecmp(ptr, "server") == 0) ||
 		 (strcasecmp(ptr, "lserver") == 0)) {
+		isc_app_block();
 		set_nameserver(arg);
+		isc_app_unblock();
 		show_settings(ISC_TRUE, ISC_TRUE);
 	} else if (strcasecmp(ptr, "exit") == 0) {
 		in_use = ISC_FALSE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.2 2004/10/29 20:21:15 dsl Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.2.2.1 2006/07/13 22:02:25 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: wks_11.c,v 1.44.12.7 2004/03/08 09:04:44 marka Exp */
+/* Id: wks_11.c,v 1.44.12.8 2004/09/16 01:00:58 marka Exp */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -109,7 +109,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		service[sizeof(service)-1] = '\0';
 		for (i = strlen(service) - 1; i >= 0; i--)
 			if (isupper(service[i]&0xff))
-				service[i] = tolower((unsigned char)service[i]);
+				service[i] = tolower(service[i]&0xff);
 
 		port = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e == 0)

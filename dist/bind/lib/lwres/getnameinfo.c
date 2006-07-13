@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.3 2004/11/07 00:16:59 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.3.2.1 2006/07/13 22:02:29 tron Exp $	*/
 
 /*
  * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -64,10 +64,6 @@
 #include <lwres/net.h>
 #include <lwres/netdb.h>
 #include "print_p.h"
-
-#ifdef __KAME__
-#include <net/if.h>
-#endif
 
 #include "assert_p.h"
 
@@ -217,11 +213,13 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		    ((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
 			char *p = numaddr + strlen(numaddr);
 			const char *stringscope = NULL;
-
-#ifdef __KAME__
+#if 0
 			if ((flags & NI_NUMERICSCOPE) == 0) {
-				stringscope = if_indextoname(
-				    ((const struct sockaddr_in6 *)sa)->sin6_scope_id);
+				/*
+				 * Vendors may want to add support for
+				 * non-numeric scope identifier.
+				 */
+				stringscope = foo;
 			}
 #endif
 			if (stringscope == NULL) {

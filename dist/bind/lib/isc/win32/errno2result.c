@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.1 2004/05/17 23:45:06 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.c,v 1.4.2.5.2.3 2004/03/08 09:04:59 marka Exp */
+/* Id: errno2result.c,v 1.4.2.5.2.6 2005/09/01 03:16:12 marka Exp */
 
 #include <config.h>
 
@@ -34,7 +34,7 @@
  * not already there.
  */
 isc_result_t
-isc__errno2result(int posixerrno) {
+isc__errno2resultx(int posixerrno, const char *file, int line) {
 	char strbuf[ISC_STRERRORSIZE];
 
 	switch (posixerrno) {
@@ -63,12 +63,28 @@ isc__errno2result(int posixerrno) {
 	case EMFILE:
 	case WSAEMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
+	case ERROR_OPERATION_ABORTED:
+		return (ISC_R_CONNECTIONRESET);
+	case ERROR_PORT_UNREACHABLE:
+		return (ISC_R_HOSTUNREACH);
+	case ERROR_HOST_UNREACHABLE:
+		return (ISC_R_HOSTUNREACH);
+	case ERROR_NETWORK_UNREACHABLE:
+		return (ISC_R_NETUNREACH);
+	case WSAEADDRNOTAVAIL:
+		return (ISC_R_ADDRNOTAVAIL);
+	case WSAEHOSTUNREACH:
+		return (ISC_R_HOSTUNREACH);
+	case WSAEHOSTDOWN:
+		return (ISC_R_HOSTUNREACH);
+	case WSAENETUNREACH:
+		return (ISC_R_NETUNREACH);
+	case WSAENOBUFS:
+		return (ISC_R_NORESOURCES);
 	default:
 		isc__strerror(posixerrno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "unable to convert errno "
-				 "to isc_result: %d: %s",
-				 posixerrno, strbuf);
+		UNEXPECTED_ERROR(file, line, "unable to convert errno "
+				 "to isc_result: %d: %s", posixerrno, strbuf);
 		/*
 		 * XXXDCL would be nice if perhaps this function could
 		 * return the system's error string, so the caller
@@ -78,4 +94,3 @@ isc__errno2result(int posixerrno) {
 		return (ISC_R_UNEXPECTED);
 	}
 }
-

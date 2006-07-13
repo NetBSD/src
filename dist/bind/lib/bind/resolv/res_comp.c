@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.1.1.1 2004/05/17 23:44:47 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.1.1.1.2.1 2006/07/13 22:02:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_comp.c,v 1.1.2.1.4.1 2004/03/09 08:33:54 marka Exp";
+static const char rcsid[] = "Id: res_comp.c,v 1.1.2.1.4.2 2005/07/28 07:43:22 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -244,6 +244,18 @@ res_dnok(const char *dn) {
  *	__getshort
  * Note that one _ comes from C and the others come from us.
  */
+
+#ifdef SOLARIS2
+#ifdef  __putlong
+#undef  __putlong
+#endif
+#ifdef  __putshort
+#undef  __putshort
+#endif
+#pragma weak    putlong         =       __putlong
+#pragma weak    putshort        =       __putshort
+#endif /* SOLARIS2 */
+
 void __putlong(u_int32_t src, u_char *dst) { ns_put32(src, dst); }
 void __putshort(u_int16_t src, u_char *dst) { ns_put16(src, dst); }
 #ifndef __ultrix__

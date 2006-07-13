@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.1.1.2 2004/11/06 23:53:37 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.1.1.2.2.1 2006/07/13 22:02:05 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.h,v 1.6.2.2.2.6.6.1 2004/09/20 01:00:01 marka Exp */
+/* Id: control.h,v 1.6.2.2.2.7 2004/09/03 03:43:32 marka Exp */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1

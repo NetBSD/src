@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.1 2004/05/17 23:44:44 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_ntop.c,v 1.1.2.1.8.1 2004/03/09 08:33:33 marka Exp";
+static const char rcsid[] = "Id: inet_ntop.c,v 1.1.2.1.8.2 2005/11/03 23:08:40 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -139,7 +139,9 @@ inet_ntop6(src, dst, size)
 	for (i = 0; i < NS_IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
+	best.len = 0;
 	cur.base = -1;
+	cur.len = 0;
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++) {
 		if (words[i] == 0) {
 			if (cur.base == -1)

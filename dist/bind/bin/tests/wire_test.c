@@ -1,7 +1,7 @@
-/*	$NetBSD: wire_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: wire_test.c,v 1.60.12.5 2004/03/08 04:04:28 marka Exp */
+/* Id: wire_test.c,v 1.60.12.7 2005/03/17 03:58:29 marka Exp */
 
 #include <config.h>
 
@@ -142,10 +142,10 @@ main(int argc, char *argv[]) {
 			}
 			rp++;
 		}
-		if (len == 0)
+		if (len == 0U)
 			break;
-		if (len % 2 != 0) {
-			printf("bad input format: %d\n", len);
+		if (len % 2 != 0U) {
+			printf("bad input format: %lu\n", (unsigned long)len);
 			exit(1);
 		}
 		if (len > sizeof(b) * 2) {

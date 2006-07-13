@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_dgst.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: md5_dgst.c,v 1.1.1.1.2.1 2006/07/13 22:02:14 tron Exp $	*/
 
 /* crypto/md/md5_dgst.c */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -60,6 +60,7 @@
 
 #ifdef USE_MD5 /* Added by ogud@tis.com 1998/1/26 */
 #include <port_before.h>
+#ifndef HAVE_MD5
 #include <stdio.h>
 #include "md5_locl.h"
 #include <port_after.h>
@@ -369,4 +370,5 @@ unsigned long *l;
 		}
 	}
 #endif
+#endif /* HAVE_MD5 */
 #endif /* USE_MD5 */
