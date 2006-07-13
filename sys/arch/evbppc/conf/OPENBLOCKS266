@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.32 2006/04/02 17:04:24 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.33 2006/07/13 04:52:04 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.32 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -228,3 +228,4 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
