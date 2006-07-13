@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.7 2006/07/04 23:06:51 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.8 2006/07/13 16:03:23 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -327,6 +327,7 @@ struct fileswitch_dirent {
 extern os_error *xosfscontrol_shutdown(void);
 #endif
 
+#define Service_FSRedeclare	0x40
 #define Service_PreReset	0x45
 
 #ifndef __ASSEMBLER__
