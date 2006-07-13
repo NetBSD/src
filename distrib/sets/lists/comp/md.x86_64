@@ -1,2 +1,0 @@
-# $NetBSD: md.x86_64,v 1.7 2006/07/12 13:39:05 lukem Exp $
-./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
