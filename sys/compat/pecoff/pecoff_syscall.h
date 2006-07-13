@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscall.h,v 1.21 2006/06/29 06:02:42 pavel Exp $ */
+/* $NetBSD: pecoff_syscall.h,v 1.22 2006/07/13 21:31:31 martin Exp $ */
 
 /*
  * System call numbers.
@@ -401,9 +401,13 @@
 #else
 				/* 158 is excluded compat_20_sys_fstatfs */
 #endif
-/* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
+#ifdef COMPAT_30
+/* syscall: "getfh" ret: "int" args: "const char *" "struct commpat_30_fhandle *" */
 #define	PECOFF_SYS_getfh	161
 
+#else
+				/* 161 is excluded compat_30_sys_getfh */
+#endif
 				/* 162 is excluded { int sys_getdomainname ( char * domainname , int len ) ; } ogetdomainname */
 				/* 163 is excluded { int sys_setdomainname ( char * domainname , int len ) ; } osetdomainname */
 				/* 164 is excluded { int sys_uname ( struct outsname * name ) ; } ouname */
@@ -1003,6 +1007,9 @@
 /* syscall: "__socket30" ret: "int" args: "int" "int" "int" */
 #define	PECOFF_SYS___socket30	394
 
-#define	PECOFF_SYS_MAXSYSCALL	395
+/* syscall: "__getfh30" ret: "int" args: "const char *" "fhandle_t *" "size_t *" */
+#define	PECOFF_SYS___getfh30	395
+
+#define	PECOFF_SYS_MAXSYSCALL	396
 #define	PECOFF_SYS_NSYSENT	512
 #endif /* _PECOFF_SYS_SYSCALL_H_ */

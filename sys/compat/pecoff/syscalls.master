@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2006/06/29 05:58:00 pavel Exp $
+	$NetBSD: syscalls.master,v 1.22 2006/07/13 21:31:31 martin Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -341,8 +341,12 @@
 #endif
 159	UNIMPL
 160	UNIMPL
-161	STD		{ int pecoff_sys_getfh(const char *fname, \
-			    fhandle_t *fhp); }
+#ifdef COMPAT_30
+161	STD		{ int pecoff_compat_30_sys_getfh(const char *fname, \
+			    struct commpat_30_fhandle *fhp); }
+#else
+161	EXCL		compat_30_sys_getfh
+#endif
 162	EXCL		{ int sys_getdomainname(char *domainname, int len); } \
 			    ogetdomainname
 163	EXCL		{ int sys_setdomainname(char *domainname, int len); } \
@@ -828,3 +832,5 @@
 			    struct stat *sb); }
 393	NOARGS		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
 394	NOARGS		{ int sys___socket30(int domain, int type, int protocol); }
+395	STD		{ int pecoff_sys___getfh30(const char *fname, \
+			    fhandle_t *fhp, size_t *fh_size); }
