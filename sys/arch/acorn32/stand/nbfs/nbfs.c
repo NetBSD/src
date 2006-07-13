@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.6 2006/07/13 15:51:54 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.7 2006/07/13 16:11:41 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -242,14 +242,13 @@ nbfs_args(struct nbfs_reg *r)
 os_error const *
 nbfs_close(struct nbfs_reg *r)
 {
-	static os_error error = {0, "nbfs_close"};
 	struct nbfs_open_file *nof = (struct nbfs_open_file *)r->r1;
 	/* uint32_t loadaddr = r->r2; */
 	/* uint32_t execaddr = r->r3; */
 	int err;
 
 	err = nbfs_fclose(&nof->f);
-	if (err != 0) return &error;
+	if (err != 0) return maperr(err);
 	LIST_REMOVE(nof, link);
 	dealloc(nof, sizeof(*nof));
 	return NULL;
