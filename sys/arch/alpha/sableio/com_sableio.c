@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: com_sableio.c,v 1.5 2006/07/13 22:56:00 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.5 2006/07/13 22:56:00 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ struct com_sableio_softc {
 
 int	com_sableio_match(struct device *, struct cfdata *, void *);
 void	com_sableio_attach(struct device *, struct device *, void *);
-void	com_sableio_cleanup(void *);
 
 CFATTACH_DECL(com_sableio, sizeof(struct com_sableio_softc),
     com_sableio_match, com_sableio_attach, NULL, NULL);
@@ -99,16 +98,15 @@ com_sableio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &ssc->sc_com;
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = sa->sa_iot;
-	sc->sc_iobase = sa->sa_ioaddr;
-
-	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-			  &sc->sc_ioh) != 0) {
+	if (com_is_console(sa->sa_iot, sa->sa_ioaddr, &ioh) == 0 &&
+	    bus_space_map(sa->sa_iot, sa->sa_ioaddr, COM_NPORTS, 0,
+		&ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, sa->sa_iot, ioh, sa->sa_ioaddr);
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -131,15 +129,6 @@ com_sableio_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_sableio_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_sableio_attach: could not establish shutdown hook");
-}
-
-void
-com_sableio_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
 }

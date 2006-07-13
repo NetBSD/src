@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.14 2006/03/29 06:58:14 thorpej Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.15 2006/07/13 22:56:02 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.14 2006/03/29 06:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.15 2006/07/13 22:56:02 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ struct com_mca_softc {
 
 int com_mca_probe(struct device *, struct cfdata *, void *);
 void com_mca_attach(struct device *, struct device *, void *);
-void com_mca_cleanup(void *);
 
 static int ibm_modem_getcfg(struct mca_attach_args *, int *, int *);
 static int neocom1_getcfg(struct mca_attach_args *, int *, int *);
@@ -167,6 +166,7 @@ com_mca_attach(parent, self, aux)
 	int iobase, irq;
 	struct mca_attach_args *ma = aux;
 	const struct com_mca_product *cpp;
+	bus_space_handle_t ioh;
 
 	cpp = com_mca_lookup(ma->ma_id);
 
@@ -174,14 +174,13 @@ com_mca_attach(parent, self, aux)
 	if ((*cpp->cp_getcfg)(ma, &iobase, &irq))
 		return;
 
-	if (bus_space_map(ma->ma_iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
+	if (bus_space_map(ma->ma_iot, iobase, COM_NPORTS, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
+	COM_INIT_REGS(sc->sc_regs, ma->ma_iot, ioh, iobase);
 	sc->sc_frequency = COM_FREQ;
-	sc->sc_iot = ma->ma_iot;
-	sc->sc_iobase = iobase;
 
 	printf(" slot %d i/o %#x-%#x irq %d", ma->ma_slot + 1,
 		iobase, iobase + COM_NPORTS - 1, irq);
@@ -203,18 +202,8 @@ com_mca_attach(parent, self, aux)
 	 * without a disabled FIFO.
 	 * XXX is this necessary on MCA ? --- jdolecek
 	 */
-	if (shutdownhook_establish(com_mca_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_mca_attach: could not establish shutdown hook");
-}
-
-void
-com_mca_cleanup(arg)
-	void *arg;
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
 }
 
 /* map serial_X to iobase and irq */
