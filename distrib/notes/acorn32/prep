@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 2002/06/29 08:57:21 lukem Exp $
+.\"	$NetBSD: prep,v 1.5 2006/07/13 13:15:04 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -311,7 +311,6 @@ run
 You can only have one RISC OS partition with this card.
 The rest has to be set aside for
 .Nx .
-
 This card does not have a friendly WIMP-based interface on the SCSI
 management program, but the command line version is very good.
 You should run this in a task window (press
@@ -500,7 +499,7 @@ application again and edit the
 file again to fill in the normal kernel name.
 .Pp
 Specify the device
-.Nx NetBSD
+.Nx
 should be looking for its kernel in.
 This is the
 .Ql "Run <BtNetBSD$Dir>.native.mountufs ADFS 4"
