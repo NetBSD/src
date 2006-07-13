@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2006/07/13 15:07:47 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.11 2006/07/13 15:19:58 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -434,19 +434,18 @@ Open the
 .Pa !BtNetBSD
 application and edit the
 .Pa fastboot
-file to specify
-the installation kernel location; an example is already given.
+file.
 .Pp
-You can also set other details like tweaking with the amount of memory in
+You can set details like tweaking with the amount of memory in
 the WimpSlot of the bootloader when this is too much.
 Remember however that this shouldn't be set too low for it can crash
 the bootloader.
 .Pp
 When you think you've filled in the proper details save the file again
 and proceed.
-.Ss2 Running !BtNetBSD
+.Ss2 Booting the installation kernel
 .Pp
-Double click on the !BtNetBSD icon (or the !Run file in it) to start it
+Double click on the InstKern icon to start it
 up.
 .Pp
 .Nx
@@ -464,7 +463,7 @@ Open the
 .Pa !BtNetBSD
 application again and edit the
 .Pa fastboot
-file again to fill in the normal kernel name.
+file to fill in the normal kernel name.
 .Pp
 Specify the device
 .Nx
