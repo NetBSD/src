@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2006/03/20 04:03:23 christos Exp $
+#	$NetBSD: Makefile,v 1.45 2006/07/13 18:18:09 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ CPPFLAGS+=-DLOGIN_CAP
 
 .if ${USE_PAM} != "no"
 
-CPPFLAGS+=-DUSE_PAM -DPAM_DEBUG
+CPPFLAGS+=-DUSE_PAM
 # XXX: Need libcrypt here, because libcrypto defines it too.
 DPADD+=	${LIBPAM} ${LIBCRYPT} ${LIBUTIL} ${PAM_STATIC_DPADD}
 LDADD+= -lpam -lcrypt -lutil ${PAM_STATIC_LDADD}
