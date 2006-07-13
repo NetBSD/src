@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.244 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.245 2006/07/13 21:51:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.244 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.245 2006/07/13 21:51:50 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1338,8 +1338,8 @@ sys_fhopen(struct lwp *l, void *v, register_t *retval)
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	fp = malloc(tempfh.fh_fid.fid_len, M_TEMP, M_NOWAIT);
-	if (fp == NULL) {
+	fh = malloc(tempfh.fh_fid.fid_len, M_TEMP, M_NOWAIT);
+	if (fh == NULL) {
 		error = ENOMEM;
 		goto bad;
 	}
