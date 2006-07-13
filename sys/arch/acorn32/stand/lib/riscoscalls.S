@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.7 2006/07/04 23:06:51 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.8 2006/07/13 16:29:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -212,7 +212,7 @@ ENTRY(xosmodule_free)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r0, r2
+	mov	r2, r0
 	mov	r0, #OSModule_Free
 	swi	XOS_Module
 	movvc	r0, #0
