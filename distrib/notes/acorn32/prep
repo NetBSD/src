@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 2006/07/13 13:15:04 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.6 2006/07/13 13:25:17 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -14,25 +14,6 @@ We recommend that you get David Pilling's !SparkPlug.
 A self-extracting version of this
 can be found at David Pilling's W3 site
 .Pq Lk http://pilling.users.netlink.co.uk/free.html .
-.It
-A program that can uncompress gzip files, because the current bootloader
-can't read gzip'ed kernels (yet!).
-.Bl -bullet
-.It
-The included command line gzip program
-.Pa installation/misc/gzip_ff8
-(!) which is a mirror a version
-that Laurent Domisse has patched to work on SA.
-This is also available from:
-.Lk http://www.users.dircon.co.uk/~arcangel/files/index.html .
-Just set the type of the file to
-.Ql ff8 .
-.It
-SparkFS from David Pilling (commercial) (v1.28 for SA-110).
-.It
-!Gzip from HENSA (micros.hensa.ac.uk); is it still alive
-though?
-.El
 .It
 A program to report your disk's geometry:
 .Bl -bullet
