@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.35 2006/03/25 23:23:26 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.36 2006/07/13 22:56:02 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.35 2006/03/25 23:23:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.36 2006/07/13 22:56:02 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -697,12 +697,13 @@ com_mhzc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	sc->sc_iot = msc->sc_modem_pcioh.iot;
-	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
+	COM_INIT_REGS(sc->sc_regs, 
+	    msc->sc_modem_pcioh.iot,
+	    msc->sc_modem_pcioh.ioh,
+	    -1);
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_mhzc_enable;
