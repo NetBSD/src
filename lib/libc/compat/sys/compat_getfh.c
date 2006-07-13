@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getfh.c,v 1.1 2006/07/13 13:07:31 martin Exp $	*/
+/*	$NetBSD: compat_getfh.c,v 1.2 2006/07/13 19:09:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getfh.c,v 1.1 2006/07/13 13:07:31 martin Exp $");
+__RCSID("$NetBSD: compat_getfh.c,v 1.2 2006/07/13 19:09:06 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -76,5 +76,5 @@ getfh(const char *path, struct compat_30_fhandle *fhp)
 {
 	size_t fh_size = sizeof(*fhp);
 
-	return __getfh30(path, (fhandle_t *)fhp, &fh_size);
+	return __getfh30(path, (void*)fhp, &fh_size);
 }
