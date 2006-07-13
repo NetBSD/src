@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.54 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.55 2006/07/13 12:00:25 martin Exp $ */
 
 /*
  * System call argument lists.
@@ -724,9 +724,9 @@ struct compat_20_netbsd32_fstatfs_args {
 };
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 
-struct netbsd32_getfh_args {
+struct compat_30_netbsd32_getfh_args {
 	syscallarg(const netbsd32_charp) fname;
-	syscallarg(netbsd32_fhandlep_t) fhp;
+	syscallarg(netbsd32_compat_30_fhandlep_t) fhp;
 };
 #else
 #endif
@@ -1691,6 +1691,15 @@ struct netbsd32_sys___socket30_args {
 	syscallarg(int) type;
 	syscallarg(int) protocol;
 };
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+
+struct netbsd32___getfh30_args {
+	syscallarg(const netbsd32_charp) fname;
+	syscallarg(netbsd32_fhandlep_t) fhp;
+	syscallarg(netbsd32_size_tp) fh_size;
+};
+#else
+#endif
 
 /*
  * System call prototypes.
@@ -1998,7 +2007,7 @@ int	compat_20_netbsd32_statfs(struct lwp *, void *, register_t *);
 int	compat_20_netbsd32_fstatfs(struct lwp *, void *, register_t *);
 
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-int	netbsd32_getfh(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_getfh(struct lwp *, void *, register_t *);
 
 #else
 #endif
@@ -2385,4 +2394,9 @@ int	netbsd32_ntp_gettime(struct lwp *, void *, register_t *);
 
 int	netbsd32_sys___socket30(struct lwp *, void *, register_t *);
 
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+int	netbsd32___getfh30(struct lwp *, void *, register_t *);
+
+#else
+#endif
 #endif /* _netbsd32_SYS_SYSCALLARGS_H_ */

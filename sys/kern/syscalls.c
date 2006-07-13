@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.169 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: syscalls.c,v 1.170 2006/07/13 12:00:25 martin Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.169 2006/06/26 21:30:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.170 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -210,7 +210,7 @@ const char *const syscallnames[] = {
 	"compat_20_fstatfs",	/* 158 = compat_20 fstatfs */
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
-	"getfh",			/* 161 = getfh */
+	"compat_30_getfh",	/* 161 = compat_30 getfh */
 	"compat_09_ogetdomainname",	/* 162 = compat_09 ogetdomainname */
 	"compat_09_osetdomainname",	/* 163 = compat_09 osetdomainname */
 	"compat_09_ouname",	/* 164 = compat_09 ouname */
@@ -530,4 +530,5 @@ const char *const syscallnames[] = {
 	"__fhstat30",			/* 392 = __fhstat30 */
 	"__ntp_gettime30",			/* 393 = __ntp_gettime30 */
 	"__socket30",			/* 394 = __socket30 */
+	"__getfh30",			/* 395 = __getfh30 */
 };

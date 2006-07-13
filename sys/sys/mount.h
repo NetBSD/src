@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.142 2006/06/17 07:06:50 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.143 2006/07/13 12:00:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -199,7 +199,7 @@ struct vfsops {
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
 				    struct vnode **);
-	int	(*vfs_vptofh)	(struct vnode *, struct fid *);
+	int	(*vfs_vptofh)	(struct vnode *, struct fid *, size_t *);
 	void	(*vfs_init)	(void);
 	void	(*vfs_reinit)	(void);
 	void	(*vfs_done)	(void);
@@ -226,7 +226,7 @@ struct vfsops {
 #define VFS_SYNC(MP, WAIT, C, L)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, L)
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
-#define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
+#define	VFS_VPTOFH(VP, FIDP, FIDSZP)  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP, FIDSZP)
 #define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
 #define	VFS_EXTATTRCTL(MP, C, VP, AS, AN, L) \
 	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN, L)
@@ -272,7 +272,7 @@ MALLOC_DECLARE(M_MOUNT);
  * exported VFS interface (see vfssubr(9))
  */
 struct	mount *vfs_getvfs(fsid_t *);    /* return vfs given fsid */
-int	vfs_composefh(struct vnode *, fhandle_t *);
+int	vfs_composefh(struct vnode *, fhandle_t *, size_t *fh_size);
 int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
@@ -310,7 +310,11 @@ extern struct vfs_list_head vfs_list;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getfh(const char *, fhandle_t *);
+#if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
+int	getfh(const char *, fhandle_t *, size_t *fh_size)
+	__RENAME(__getfh30);
+#endif
+
 int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)

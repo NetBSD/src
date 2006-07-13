@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.54 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.55 2006/07/13 12:00:25 martin Exp $ */
 
 /*
  * System call numbers.
@@ -473,8 +473,8 @@
 #define	netbsd32_SYS_compat_20_netbsd32_fstatfs	158
 
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-/* syscall: "netbsd32_getfh" ret: "int" args: "const netbsd32_charp" "netbsd32_fhandlep_t" */
-#define	netbsd32_SYS_netbsd32_getfh	161
+/* syscall: "compat_30_netbsd32_getfh" ret: "int" args: "const netbsd32_charp" "netbsd32_compat_30_fhandlep_t" */
+#define	netbsd32_SYS_compat_30_netbsd32_getfh	161
 
 #else
 				/* 161 is excluded netbsd32_getfh */
@@ -1077,6 +1077,13 @@
 /* syscall: "__socket30" ret: "int" args: "int" "int" "int" */
 #define	netbsd32_SYS___socket30	394
 
-#define	netbsd32_SYS_MAXSYSCALL	395
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+/* syscall: "netbsd32___getfh30" ret: "int" args: "const netbsd32_charp" "netbsd32_fhandlep_t" "netbsd32_size_tp" */
+#define	netbsd32_SYS_netbsd32___getfh30	395
+
+#else
+				/* 395 is excluded netbsd32_getfh */
+#endif
+#define	netbsd32_SYS_MAXSYSCALL	396
 #define	netbsd32_SYS_NSYSENT	512
 #endif /* _netbsd32_SYS_SYSCALL_H_ */
