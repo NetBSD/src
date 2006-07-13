@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.2 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.3 2006/07/13 12:00:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ int sysvbfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int sysvbfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int sysvbfs_vget(struct mount *, ino_t, struct vnode **);
 int sysvbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int sysvbfs_vptofh(struct vnode *, struct fid *);
+int sysvbfs_vptofh(struct vnode *, struct fid *, size_t *);
 void sysvbfs_init(void);
 void sysvbfs_reinit(void);
 void sysvbfs_done(void);

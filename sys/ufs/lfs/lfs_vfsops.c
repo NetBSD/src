@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.215 2006/07/06 22:14:18 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.216 2006/07/13 12:00:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.215 2006/07/06 22:14:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.216 2006/07/13 12:00:26 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1727,34 +1727,37 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 int
 lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	struct lfid *lfhp;
+	struct lfid lfh;
 	struct buf *bp;
 	IFILE *ifp;
 	int32_t daddr;
 	struct lfs *fs;
 
-	lfhp = (struct lfid *)fhp;
-	if (lfhp->lfid_ino < LFS_IFILE_INUM)
+	if (fhp->fid_len != sizeof(struct lfid))
+		return EINVAL;
+
+	memcpy(&lfh, fhp, sizeof(lfh));
+	if (lfh.lfid_ino < LFS_IFILE_INUM)
 		return ESTALE;
 
 	fs = VFSTOUFS(mp)->um_lfs;
-	if (lfhp->lfid_ident != fs->lfs_ident)
+	if (lfh.lfid_ident != fs->lfs_ident)
 		return ESTALE;
 
-	if (lfhp->lfid_ino >
+	if (lfh.lfid_ino >
 	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> fs->lfs_bshift) -
 	     fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb)
 		return ESTALE;
 
-	if (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfhp->lfid_ino) == NULLVP) {
-		LFS_IENTRY(ifp, fs, lfhp->lfid_ino, bp);
+	if (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfh.lfid_ino) == NULLVP) {
+		LFS_IENTRY(ifp, fs, lfh.lfid_ino, bp);
 		daddr = ifp->if_daddr;
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR)
 			return ESTALE;
 	}
 
-	return (ufs_fhtovp(mp, &lfhp->lfid_ufid, vpp));
+	return (ufs_fhtovp(mp, &lfh.lfid_ufid, vpp));
 }
 
 /*
@@ -1762,17 +1765,23 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-lfs_vptofh(struct vnode *vp, struct fid *fhp)
+lfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct inode *ip;
-	struct lfid *lfhp;
+	struct lfid lfh;
 
+	if (*fh_size < sizeof(struct lfid)) {
+		*fh_size = sizeof(struct lfid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct lfid);
 	ip = VTOI(vp);
-	lfhp = (struct lfid *)fhp;
-	lfhp->lfid_len = sizeof(struct lfid);
-	lfhp->lfid_ino = ip->i_number;
-	lfhp->lfid_gen = ip->i_gen;
-	lfhp->lfid_ident = ip->i_lfs->lfs_ident;
+	memset(&lfh, 0, sizeof(lfh));
+	lfh.lfid_len = sizeof(struct lfid);
+	lfh.lfid_ino = ip->i_number;
+	lfh.lfid_gen = ip->i_gen;
+	lfh.lfid_ident = ip->i_lfs->lfs_ident;
+	memcpy(fhp, &lfh, sizeof(lfh));
 	return (0);
 }
 

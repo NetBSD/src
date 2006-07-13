@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.168 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: syscall.h,v 1.169 2006/07/13 12:00:26 martin Exp $ */
 
 /*
  * System call numbers.
@@ -477,8 +477,8 @@
 /* syscall: "compat_20_fstatfs" ret: "int" args: "int" "struct statfs12 *" */
 #define	SYS_compat_20_fstatfs	158
 
-/* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
-#define	SYS_getfh	161
+/* syscall: "compat_30_getfh" ret: "int" args: "const char *" "struct compat_30_fhandle *" */
+#define	SYS_compat_30_getfh	161
 
 /* syscall: "compat_09_ogetdomainname" ret: "int" args: "char *" "int" */
 #define	SYS_compat_09_ogetdomainname	162
@@ -1088,6 +1088,9 @@
 /* syscall: "__socket30" ret: "int" args: "int" "int" "int" */
 #define	SYS___socket30	394
 
-#define	SYS_MAXSYSCALL	395
+/* syscall: "__getfh30" ret: "int" args: "const char *" "fhandle_t *" "size_t *" */
+#define	SYS___getfh30	395
+
+#define	SYS_MAXSYSCALL	396
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

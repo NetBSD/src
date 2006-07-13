@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.167 2006/06/26 21:23:57 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.168 2006/07/13 12:00:24 martin Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -55,7 +55,7 @@ ASM=	access.S acct.S \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
 		fhopen.S __fhstat30.S fhstatvfs1.S fktrace.S \
 		flock.S fpathconf.S __fstat30.S fstatvfs1.S futimes.S \
-	__getcwd.S __getdents30.S getfh.S getvfsstat.S getgroups.S getitimer.S \
+	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S getitimer.S \
 		__getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
 		getsockopt.S gettimeofday.S \

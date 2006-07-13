@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.10 2006/06/30 15:50:46 drochner Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.11 2006/07/13 12:00:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.10 2006/06/30 15:50:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.11 2006/07/13 12:00:24 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -285,12 +285,12 @@ compat_20_sys_fhstatfs(l, v, retval)
 	register_t *retval;
 {
 	struct compat_20_sys_fhstatfs_args /*
-		syscallarg(const fhandle_t *) fhp;
+		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
-	fhandle_t fh;
+	struct compat_30_fhandle fh;
 	struct mount *mp;
 	struct vnode *vp;
 	int error;
@@ -302,12 +302,12 @@ compat_20_sys_fhstatfs(l, v, retval)
 					     &p->p_acflag)))
 		return (error);
 
-	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);

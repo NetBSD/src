@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.12 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.13 2006/07/13 12:00:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.12 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.13 2006/07/13 12:00:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,7 +74,7 @@ static int	tmpfs_quotactl(struct mount *, int, uid_t, void *,
 		    struct lwp *);
 static int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 static int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-static int	tmpfs_vptofh(struct vnode *, struct fid *);
+static int	tmpfs_vptofh(struct vnode *, struct fid *, size_t *);
 static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 static int	tmpfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 static void	tmpfs_init(void);
@@ -305,23 +305,24 @@ static int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	boolean_t found;
-	struct tmpfs_fid *tfhp;
+	struct tmpfs_fid tfh;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 
 	tmp = VFS_TO_TMPFS(mp);
 
-	tfhp = (struct tmpfs_fid *)fhp;
-	if (tfhp->tf_len != sizeof(struct tmpfs_fid))
+	if (fhp->fid_len != sizeof(struct tmpfs_fid))
 		return EINVAL;
 
-	if (tfhp->tf_id >= tmp->tm_nodes_max)
+	memcpy(&tfh, fhp, sizeof(struct tmpfs_fid));
+
+	if (tfh.tf_id >= tmp->tm_nodes_max)
 		return EINVAL;
 
 	found = FALSE;
 	LIST_FOREACH(node, &tmp->tm_nodes_used, tn_entries) {
-		if (node->tn_id == tfhp->tf_id &&
-		    node->tn_gen == tfhp->tf_gen) {
+		if (node->tn_id == tfh.tf_id &&
+		    node->tn_gen == tfh.tf_gen) {
 			found = TRUE;
 			break;
 		}
@@ -333,17 +334,23 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_vptofh(struct vnode *vp, struct fid *fhp)
+tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
-	struct tmpfs_fid *tfhp;
+	struct tmpfs_fid tfh;
 	struct tmpfs_node *node;
 
-	tfhp = (struct tmpfs_fid *)fhp;
+	if (*fh_size < sizeof(struct tmpfs_fid)) {
+		*fh_size = sizeof(struct tmpfs_fid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct tmpfs_fid);
 	node = VP_TO_TMPFS_NODE(vp);
 
-	tfhp->tf_len = sizeof(struct tmpfs_fid);
-	tfhp->tf_id = node->tn_id;
-	tfhp->tf_gen = node->tn_gen;
+	memset(&tfh, 0, sizeof(tfh));
+	tfh.tf_len = sizeof(struct tmpfs_fid);
+	tfh.tf_gen = node->tn_gen;
+	tfh.tf_id = node->tn_id;
+	memcpy(fhp, &tfh, sizeof(tfh));
 
 	return 0;
 }

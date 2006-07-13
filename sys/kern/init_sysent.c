@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.174 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: init_sysent.c,v 1.175 2006/07/13 12:00:25 martin Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.174 2006/06/26 21:30:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.175 2006/07/13 12:00:25 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -442,8 +442,8 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
-	{ 2, s(struct sys_getfh_args), 0,
-	    sys_getfh },			/* 161 = getfh */
+	{ 2, s(struct compat_30_sys_getfh_args), 0,
+	    compat_30(sys_getfh) },		/* 161 = compat_30 getfh */
 	{ 2, s(struct compat_09_sys_getdomainname_args), 0,
 	    compat_09(sys_getdomainname) },	/* 162 = compat_09 ogetdomainname */
 	{ 2, s(struct compat_09_sys_setdomainname_args), 0,
@@ -1040,8 +1040,8 @@ struct sysent sysent[] = {
 	    sys___ntp_gettime30 },		/* 393 = __ntp_gettime30 */
 	{ 3, s(struct sys___socket30_args), 0,
 	    sys___socket30 },			/* 394 = __socket30 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 395 = filler */
+	{ 3, s(struct sys___getfh30_args), 0,
+	    sys___getfh30 },			/* 395 = __getfh30 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 396 = filler */
 	{ 0, 0, 0,

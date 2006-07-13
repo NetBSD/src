@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.182 2006/06/07 22:34:19 kardel Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.183 2006/07/13 12:00:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.182 2006/06/07 22:34:19 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.183 2006/07/13 12:00:26 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1532,15 +1532,18 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 int
 ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	struct ufid *ufhp;
+	struct ufid ufh;
 	struct fs *fs;
 
-	ufhp = (struct ufid *)fhp;
+	if (fhp->fid_len != sizeof(struct ufid))
+		return EINVAL;
+
+	memcpy(&ufh, fhp, sizeof(ufh));
 	fs = VFSTOUFS(mp)->um_fs;
-	if (ufhp->ufid_ino < ROOTINO ||
-	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
+	if (ufh.ufid_ino < ROOTINO ||
+	    ufh.ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
-	return (ufs_fhtovp(mp, ufhp, vpp));
+	return (ufs_fhtovp(mp, &ufh, vpp));
 }
 
 /*
@@ -1548,16 +1551,22 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-ffs_vptofh(struct vnode *vp, struct fid *fhp)
+ffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct inode *ip;
-	struct ufid *ufhp;
+	struct ufid ufh;
 
+	if (*fh_size < sizeof(struct ufid)) {
+		*fh_size = sizeof(struct ufid);
+		return E2BIG;
+	}
 	ip = VTOI(vp);
-	ufhp = (struct ufid *)fhp;
-	ufhp->ufid_len = sizeof(struct ufid);
-	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_gen;
+	*fh_size = sizeof(struct ufid);
+	memset(&ufh, 0, sizeof(ufh));
+	ufh.ufid_len = sizeof(struct ufid);
+	ufh.ufid_ino = ip->i_number;
+	ufh.ufid_gen = ip->i_gen;
+	memcpy(fhp, &ufh, sizeof(ufh));
 	return (0);
 }
 

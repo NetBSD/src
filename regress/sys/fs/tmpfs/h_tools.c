@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tools.c,v 1.3 2006/03/18 17:09:35 jmmv Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.4 2006/07/13 12:00:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,22 +69,46 @@ int
 getfh_main(int argc, char **argv)
 {
 	int error;
-	fhandle_t fh;
+	fhandle_t *fh;
+	size_t fh_size;
 
 	if (argc < 2)
 		return EXIT_FAILURE;
 
-	error = getfh(argv[1], &fh);
-	if (error != 0) {
-		perror("getfh");
-		return EXIT_FAILURE;
+	fh_size = 0;
+	fh = NULL;
+	for (;;) {
+		if (fh_size) {
+			fh = malloc(fh_size);
+			if (fh == NULL) {
+				fprintf(stderr, "out of memory");
+				return EXIT_FAILURE;
+			}
+		}
+		/*
+		 * The kernel provides the necessary size in fh_size -
+		 * but it may change if someone moves things around,
+		 * so retry untill we have enough memory.
+		 */
+		error = getfh(argv[1], fh, &fh_size);
+		if (error == 0) {
+			break;
+		} else {
+			if (fh != NULL)
+				free(fh);
+			if (errno != E2BIG) {
+				perror("getfh");
+				return EXIT_FAILURE;
+			}
+		}
 	}
 
-	error = write(STDOUT_FILENO, &fh, sizeof(fh));
+	error = write(STDOUT_FILENO, fh, fh_size);
 	if (error == -1) {
 		perror("write");
 		return EXIT_FAILURE;
 	}
+	free(fh);
 
 	return 0;
 }

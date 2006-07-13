@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.4 2006/05/15 11:16:16 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.5 2006/07/13 12:00:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.4 2006/05/15 11:16:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.5 2006/07/13 12:00:25 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -404,7 +404,7 @@ sysvbfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 }
 
 int
-sysvbfs_vptofh(struct vnode *vpp, struct fid *fid)
+sysvbfs_vptofh(struct vnode *vpp, struct fid *fid, size_t *fh_size)
 {
 
 	DPRINTF("%s:\n", __FUNCTION__);

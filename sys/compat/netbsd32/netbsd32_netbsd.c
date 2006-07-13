@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.105 2006/06/26 21:23:57 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.106 2006/07/13 12:00:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.105 2006/06/26 21:23:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.106 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1099,25 +1099,6 @@ netbsd32_setpriority(l, v, retval)
 }
 
 int
-compat_30_netbsd32_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct compat_30_netbsd32_socket_args /* {
-		syscallarg(int) domain;
-		syscallarg(int) type;
-		syscallarg(int) protocol;
-	} */ *uap = v;
-	struct compat_30_sys_socket_args ua;
-
-	NETBSD32TO64_UAP(domain);
-	NETBSD32TO64_UAP(type);
-	NETBSD32TO64_UAP(protocol);
-	return (compat_30_sys_socket(l, &ua, retval));
-}
-
-int
 netbsd32_sys___socket30(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -1496,21 +1477,59 @@ netbsd32_nfssvc(l, v, retval)
 
 #if defined(NFS) || defined(NFSSERVER)
 int
-netbsd32_getfh(l, v, retval)
+netbsd32___getfh30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_getfh_args /* {
+	struct netbsd32___getfh30_args /* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_size_tp) fh_size;
 	} */ *uap = v;
-	struct sys_getfh_args ua;
+	struct proc *p = l->l_proc;
+	struct vnode *vp;
+	fhandle_t *fh;
+	int error;
+	struct nameidata nd;
+	netbsd32_size_t sz32;
+	size_t sz;
 
-	NETBSD32TOP_UAP(fname, const char);
-	NETBSD32TOP_UAP(fhp, struct fhandle);
-	/* Lucky for us a fhandlep_t doesn't change sizes */
-	return (sys_getfh(l, &ua, retval));
+	/*
+	 * Must be super user
+	 */
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				  &p->p_acflag);
+	if (error)
+		return (error);
+	fh = NULL;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    (char *)NETBSD32PTR64(SCARG(uap, fname)), l);
+	error = namei(&nd);
+	if (error)
+		return (error);
+	vp = nd.ni_vp;
+	error = copyin(NETBSD32PTR64(SCARG(uap, fh_size)), &sz32,
+	    sizeof(netbsd32_size_t));
+	if (!error) {
+		fh = malloc(sz32, M_TEMP, M_WAITOK);
+		if (fh == NULL) 
+			return EINVAL;
+		sz = sz32;
+		error = vfs_composefh(vp, fh, &sz);
+		sz32 = sz;
+	}
+	vput(vp);
+	if (error == E2BIG)
+		copyout(&sz, NETBSD32PTR64(SCARG(uap, fh_size)), sizeof(size_t));
+	if (error == 0) {
+		error = copyout(&sz32, NETBSD32PTR64(SCARG(uap, fh_size)),
+		    sizeof(netbsd32_size_t));
+		if (!error)
+			error = copyout(fh, NETBSD32PTR64(SCARG(uap, fhp)), sz);
+	}
+	free(fh, M_TEMP);
+	return (error);
 }
 #endif
 

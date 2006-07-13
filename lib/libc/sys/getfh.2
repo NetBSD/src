@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfh.2,v 1.17 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: getfh.2,v 1.18 2006/07/13 12:00:24 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd July 7, 2006
 .Dt GETFH 2
 .Os
 .Sh NAME
@@ -41,13 +41,25 @@
 .In sys/types.h
 .In sys/mount.h
 .Ft int
-.Fn getfh "const char *path" "fhandle_t *fhp"
+.Fn getfh "const char *path" "fhandle_t *fhp" "size_t *fh_size"
 .Sh DESCRIPTION
 .Fn getfh
 returns a file handle for the specified file or directory
 in the file handle pointed to by
 .Fa fhp .
+The variable pointed to by
+.Fa fh_size
+has to be initialized to the memory allocated for the variable sized file
+handle.
+On return the value will be replaced by the actual size
+needed (which will vary depending on the filesystem the path is on).
 This system call is restricted to the superuser.
+To query the necessary size for the filehandle, a NULL pointer may
+be passed as
+.Fa fhp ,
+and the value pointed to by
+.Fa fh_size
+should be initialized to zero.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, \-1 is returned and the global variable
@@ -88,6 +100,13 @@ points to an invalid address.
 An
 .Tn I/O
 error occurred while reading from or writing to the file system.
+.It Bq Er E2BIG
+the memory allocated for the file handle is too small.
+The size needed has been written to the variable pointed to by
+.Fa fh_size .
+.It Bq Er ENOMEM
+The kernel failed to allocate temporary memory to create a filehandle of the
+requested size.
 .El
 .Sh HISTORY
 The

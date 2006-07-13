@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.22 2005/08/19 02:09:50 christos Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.23 2006/07/13 12:00:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -53,10 +53,16 @@
 LIST_HEAD(lcklst_head, file_lock);
 struct lcklst_head lcklst_head = LIST_HEAD_INITIALIZER(lcklst_head);
 
+#define NFS_FILEHANDLE	64	/* could use <nfs/nfsproto.h> NFSX_V3FHMAX */
+typedef union {
+	fhandle_t fh;
+	u_char space[NFS_FILEHANDLE];
+} nfs_fhandle_t;
+
 /* struct describing a lock */
 struct file_lock {
 	LIST_ENTRY(file_lock) lcklst;
-	fhandle_t filehandle; /* NFS filehandle */
+	nfs_fhandle_t filehandle; /* NFS filehandle */
 	struct sockaddr *addr;
 	struct nlm4_holder client; /* lock holder */
 	netobj client_cookie; /* cookie sent by the client */
@@ -120,7 +126,7 @@ lock_lookup(newfl, flags)
 			continue;
 		if ((flags & LL_FH) != 0 &&
 		    memcmp(&newfl->filehandle, &fl->filehandle,
-		    sizeof(fhandle_t)) != 0)
+		    sizeof(newfl->filehandle)) != 0)
 			continue;
 		/* found */
 		break;
@@ -141,7 +147,7 @@ testlock(lock, flags)
 	int flags;
 {
 	struct file_lock *fl;
-	fhandle_t filehandle;
+	nfs_fhandle_t filehandle;
 
 	/* convert lock to a local filehandle */
 	memcpy(&filehandle, lock->fh.n_bytes, sizeof(filehandle));
@@ -181,6 +187,7 @@ getlock(lckarg, rqstp, flags)
 	struct file_lock *fl, *newfl;
 	enum nlm_stats retval;
 	struct sockaddr *addr;
+	size_t newsize;
 
 	if (grace_expired == 0 && lckarg->reclaim == 0)
 		return (flags & LOCK_V4) ?
@@ -194,11 +201,13 @@ getlock(lckarg, rqstp, flags)
 		return (flags & LOCK_V4) ?
 		    nlm4_denied_nolock : nlm_denied_nolocks;
 	}
-	if (lckarg->alock.fh.n_len != sizeof(fhandle_t)) {
-		syslog(LOG_DEBUG, "received fhandle size %d, local size %d",
-		    lckarg->alock.fh.n_len, (int)sizeof(fhandle_t));
+	newsize = lckarg->alock.fh.n_len;
+	if (lckarg->alock.fh.n_len > sizeof(nfs_fhandle_t)) {
+		syslog(LOG_DEBUG, "received fhandle size %d, max supported size %d",
+		    lckarg->alock.fh.n_len, (int)sizeof(nfs_fhandle_t));
+		newsize = sizeof(nfs_fhandle_t);
 	}
-	memcpy(&newfl->filehandle, lckarg->alock.fh.n_bytes, sizeof(fhandle_t));
+	memcpy(&newfl->filehandle, lckarg->alock.fh.n_bytes, newsize);
 	addr = (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf;
 	newfl->addr = malloc(addr->sa_len);
 	if (newfl->addr == NULL) {
@@ -326,14 +335,14 @@ unlock(lck, flags)
 	int flags;
 {
 	struct file_lock *fl;
-	fhandle_t filehandle;
+	nfs_fhandle_t filehandle;
 	int err = (flags & LOCK_V4) ? nlm4_granted : nlm_granted;
 
-	memcpy(&filehandle, lck->fh.n_bytes, sizeof(fhandle_t));
+	memcpy(&filehandle, lck->fh.n_bytes, sizeof(filehandle));
 	siglock();
 	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (strcmp(fl->client_name, lck->caller_name) ||
-		    memcmp(&filehandle, &fl->filehandle, sizeof(fhandle_t)) ||
+		    memcmp(&filehandle, &fl->filehandle, sizeof(filehandle)) ||
 		    fl->client.oh.n_len != lck->oh.n_len ||
 		    memcmp(fl->client.oh.n_bytes, lck->oh.n_bytes,
 			fl->client.oh.n_len) != 0 ||
@@ -469,7 +478,7 @@ do_lock(fl, block)
 	int lflags, error;
 	struct stat st;
 
-	fl->fd = fhopen(&fl->filehandle, O_RDWR);
+	fl->fd = fhopen(&fl->filehandle.fh, O_RDWR);
 	if (fl->fd < 0) {
 		switch (errno) {
 		case ESTALE:
@@ -597,7 +606,7 @@ send_granted(fl, opcode)
 		res.cookie = fl->client_cookie;
 		res.exclusive = fl->client.exclusive;
 		res.alock.caller_name = fl->client_name;
-		res.alock.fh.n_len = sizeof(fhandle_t);
+		res.alock.fh.n_len = sizeof(nfs_fhandle_t);
 		res.alock.fh.n_bytes = (char*)&fl->filehandle;
 		res.alock.oh = fl->client.oh;
 		res.alock.svid = fl->client.svid;
@@ -619,7 +628,7 @@ send_granted(fl, opcode)
 		res.cookie = fl->client_cookie;
 		res.exclusive = fl->client.exclusive;
 		res.alock.caller_name = fl->client_name;
-		res.alock.fh.n_len = sizeof(fhandle_t);
+		res.alock.fh.n_len = sizeof(nfs_fhandle_t);
 		res.alock.fh.n_bytes = (char*)&fl->filehandle;
 		res.alock.oh = fl->client.oh;
 		res.alock.svid = fl->client.svid;
@@ -671,7 +680,7 @@ do_unlock(rfl)
 	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (fl->status != LKST_WAITING ||
 		    memcmp(&rfl->filehandle, &fl->filehandle,
-		    sizeof(fhandle_t)) != 0)
+		    sizeof(rfl->filehandle)) != 0)
 			continue;
 
 		lockst = do_lock(fl, 1); /* If it's LKST_WAITING we can block */
