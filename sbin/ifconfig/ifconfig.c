@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.172 2006/06/16 23:48:35 elad Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.173 2006/07/13 14:02:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.172 2006/06/16 23:48:35 elad Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.173 2006/07/13 14:02:03 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = -1;
 int	conflicting = 0;
+int	check_up_state = -1;
 int	af;
 int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
 int	hflag;
@@ -150,6 +151,7 @@ void 	notrailers(const char *, int);
 void 	setifaddr(const char *, int);
 void 	setifdstaddr(const char *, int);
 void 	setifflags(const char *, int);
+void	check_ifflags_up(const char *);
 void	setifcaps(const char *, int);
 void 	setifbroadaddr(const char *, int);
 void 	setifipdst(const char *, int);
@@ -623,6 +625,8 @@ main(int argc, char *argv[])
 		estrlcpy(afp->af_addreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) == -1)
 			warn("SIOCAIFADDR");
+		else if (check_up_state < 0)
+			check_up_state = 1;
 	}
 
 	if (g_ifcr_updated) {
@@ -631,6 +635,9 @@ main(int argc, char *argv[])
 		if (ioctl(s, SIOCSIFCAP, &g_ifcr) == -1)
 			err(EXIT_FAILURE, "SIOCSIFCAP");
 	}
+
+	if (check_up_state == 1)
+		check_ifflags_up(name);
 
 	exit(0);
 }
@@ -903,6 +910,21 @@ setifdstaddr(const char *addr, int param)
 }
 
 void
+check_ifflags_up(const char *vname)
+{
+	struct ifreq ifreq;
+
+	estrlcpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+ 	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
+		err(EXIT_FAILURE, "SIOCGIFFLAGS");
+	if (ifreq.ifr_flags & IFF_UP)
+		return;
+	ifreq.ifr_flags |= IFF_UP;
+	if (ioctl(s, SIOCSIFFLAGS, &ifreq) == -1)
+		err(EXIT_FAILURE, "SIOCSIFFLAGS");
+}
+
+void
 setifflags(const char *vname, int value)
 {
 	struct ifreq ifreq;
@@ -914,6 +936,8 @@ setifflags(const char *vname, int value)
 
 	if (value < 0) {
 		value = -value;
+		if (value == IFF_UP)
+			check_up_state = 0;
 		flags &= ~value;
 	} else
 		flags |= value;
