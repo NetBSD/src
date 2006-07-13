@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.9 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.10 2006/07/13 12:00:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.10 2006/07/13 12:00:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9 2006/05/14 21:24:49 elad Exp
 #include <compat/common/compat_util.h>
 #include <compat/sys/stat.h>
 #include <compat/sys/dirent.h>
+#include <compat/sys/mount.h>
 
 static void cvtstat(struct stat13 *, const struct stat *);
 
@@ -152,14 +153,14 @@ int
 compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys_fhstat_args /* {
-		syscallarg(const fhandle_t *) fhp;
+		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct stat13 *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat13 osb;
 	int error;
-	fhandle_t fh;
+	struct compat_30_fhandle fh;
 	struct mount *mp;
 	struct vnode *vp;
 
@@ -170,14 +171,14 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
 	    &p->p_acflag)))
 		return (error);
 
-	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
 	if (mp->mnt_op->vfs_fhtovp == NULL)
 		return EOPNOTSUPP;
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	error = vn_stat(vp, &sb, l);
 	vput(vp);
@@ -349,4 +350,44 @@ out:
 out1:
 	FILE_UNUSE(fp, l);
 	return error;
+}
+
+/*
+ * Get file handle system call
+ */
+int
+compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_getfh_args /* {
+		syscallarg(char *) fname;
+		syscallarg(struct compat_30_fhandle *) fhp;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct vnode *vp;
+	fhandle_t fh;
+	int error;
+	struct nameidata nd;
+	size_t sz;
+
+	/*
+	 * Must be super user
+	 */
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				  &p->p_acflag);
+	if (error)
+		return (error);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, fname), l);
+	error = namei(&nd);
+	if (error)
+		return (error);
+	vp = nd.ni_vp;
+	sz = sizeof(struct compat_30_fhandle);
+	error = vfs_composefh(vp, &fh, &sz);
+	vput(vp);
+	if (error)
+		return (error);
+	error = copyout(&fh, (caddr_t)SCARG(uap, fhp),
+	    sizeof(struct compat_30_fhandle));
+	return (error);
 }

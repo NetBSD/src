@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.25 2006/05/15 01:29:02 christos Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.26 2006/07/13 12:00:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.25 2006/05/15 01:29:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.26 2006/07/13 12:00:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -545,12 +545,16 @@ filecore_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	struct ifid *ifhp = (struct ifid *)fhp;
+	struct ifid ifh;
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	if (fhp->fid_len != sizeof(struct ifid))
+		return EINVAL;
+
+	memcpy(&ifh, fhp, sizeof(ifh));
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -695,16 +699,22 @@ filecore_vget(mp, ino, vpp)
  */
 /* ARGSUSED */
 int
-filecore_vptofh(vp, fhp)
+filecore_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct filecore_node *ip = VTOI(vp);
-	struct ifid *ifhp;
+	struct ifid ifh;
 
-	ifhp = (struct ifid *)fhp;
-	ifhp->ifid_len = sizeof(struct ifid);
-	ifhp->ifid_ino = ip->i_number;
+	if (*fh_size < sizeof(struct ifid)) {
+		*fh_size = sizeof(struct ifid);
+		return E2BIG;
+	}
+	memset(&ifh, 0, sizeof(ifh));
+	ifh.ifid_len = sizeof(struct ifid);
+	ifh.ifid_ino = ip->i_number;
+	memcpy(fhp, &ifh, sizeof(ifh));
        	return 0;
 }
 

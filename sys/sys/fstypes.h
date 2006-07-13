@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.8 2006/02/12 01:32:07 chs Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.9 2006/07/13 12:00:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -40,17 +40,11 @@ typedef struct { int32_t __fsid_val[2]; } fsid_t; /* file system id type */
  * File identifier.
  * These are unique per filesystem on a single machine.
  */
-#define	_VFS_MAXFIDSZ	16
-
 struct fid {
 	unsigned short	fid_len;		/* length of data in bytes */
 	unsigned short	fid_reserved;		/* force longword alignment */
-	char		fid_data[_VFS_MAXFIDSZ];/* data (variable length) */
+	char		fid_data[];		/* data (variable length) */
 };
-
-#if defined(_NETBSD_SOURCE)
-#define	VFS_MAXFIDSZ	_VFS_MAXFIDSZ
-#endif
 
 /*
  * Generic file handle

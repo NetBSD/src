@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.106 2006/05/25 00:37:03 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.107 2006/07/13 12:00:26 martin Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.106 2006/05/25 00:37:03 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.107 2006/07/13 12:00:26 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -508,6 +508,7 @@ mntsrv(rqstp, transp)
 	sigset_t        sighup_mask;
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in *sin;
+	size_t fh_size;
 
 	(void)sigemptyset(&sighup_mask);
 	(void)sigaddset(&sighup_mask, SIGHUP);
@@ -593,7 +594,8 @@ mntsrv(rqstp, transp)
 			fhr.fhr_vers = rqstp->rq_vers;
 			/* Get the file handle */
 			(void)memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
-			if (getfh(dirpath, (fhandle_t *) &fhr.fhr_fh) < 0) {
+			fh_size = sizeof(nfsfh_t);
+			if (getfh(dirpath, (fhandle_t *) &fhr.fhr_fh, &fh_size) < 0) {
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
 				if (!svc_sendreply(transp, xdr_long,

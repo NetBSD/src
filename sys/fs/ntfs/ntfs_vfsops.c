@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.41 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.42 2006/07/13 12:00:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.41 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.42 2006/07/13 12:00:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static int	ntfs_vget(struct mount *mp, ino_t ino,
 			       struct vnode **vpp);
 static int	ntfs_mountfs(struct vnode *, struct mount *,
 				  struct ntfs_args *, struct lwp *);
-static int	ntfs_vptofh(struct vnode *, struct fid *);
+static int	ntfs_vptofh(struct vnode *, struct fid *, size_t *);
 
 #if defined(__FreeBSD__)
 static int	ntfs_init(struct vfsconf *);
@@ -795,13 +795,16 @@ ntfs_fhtovp(
 	struct ucred **credanonp)
 #endif
 {
-	struct ntfid *ntfhp = (struct ntfid *)fhp;
+	struct ntfid ntfh;
 	int error;
 
+	if (fhp->fid_len != sizeof(struct ntfid))
+		return EINVAL;
+	memcpy(&ntfh, fhp, sizeof(ntfh));
 	ddprintf(("ntfs_fhtovp(): %s: %llu\n", mp->mnt_stat.f_mntonname,
-	    (unsigned long long)ntfhp->ntfid_ino));
+	    (unsigned long long)ntfh.ntfid_ino));
 
-	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
+	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
@@ -816,24 +819,32 @@ ntfs_fhtovp(
 static int
 ntfs_vptofh(
 	struct vnode *vp,
-	struct fid *fhp)
+	struct fid *fhp,
+	size_t *fh_size)
 {
 	struct ntnode *ntp;
-	struct ntfid *ntfhp;
+	struct ntfid ntfh;
 	struct fnode *fn;
+
+	if (*fh_size < sizeof(struct ntfid)) {
+		*fh_size = sizeof(struct ntfid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ntfid);
 
 	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat.f_mntonname,
 		vp));
 
 	fn = VTOF(vp);
 	ntp = VTONT(vp);
-	ntfhp = (struct ntfid *)fhp;
-	ntfhp->ntfid_len = sizeof(struct ntfid);
-	ntfhp->ntfid_ino = ntp->i_number;
-	ntfhp->ntfid_attr = fn->f_attrtype;
+	memset(&ntfh, 0, sizeof(ntfh));
+	ntfh.ntfid_len = sizeof(struct ntfid);
+	ntfh.ntfid_ino = ntp->i_number;
+	ntfh.ntfid_attr = fn->f_attrtype;
 #ifdef notyet
-	ntfhp->ntfid_gen = ntp->i_gen;
+	ntfh.ntfid_gen = ntp->i_gen;
 #endif
+	memcpy(fhp, &ntfh, sizeof(ntfh));
 	return (0);
 }
 
