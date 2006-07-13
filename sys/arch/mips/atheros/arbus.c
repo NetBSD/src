@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.7 2006/06/05 05:14:38 gdamore Exp $ */
+/* $Id: arbus.c,v 1.8 2006/07/13 21:38:24 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.7 2006/06/05 05:14:38 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.8 2006/07/13 21:38:24 gdamore Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -154,16 +154,14 @@ static struct {
 	    0,
 	    0,
     },
-#if 0
     {
 	    "argpio",
 	    AR531X_GPIO_BASE,
-	    -1,
+	    ARBUS_IRQ_GPIO,
 	    0,
 	    0,
 	    0
     },
-#endif
     { NULL }
 };
 
