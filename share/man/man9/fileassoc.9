@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.1 2006/07/14 18:41:41 elad Exp $
+.\" $NetBSD: fileassoc.9,v 1.2 2006/07/14 22:12:16 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -43,7 +43,7 @@ KPI allows association of meta-data with files independent of file-system
 support for such elaborate meta-data.
 .Pp
 A system can have a maximum number of
-.Dq FILEASSOC_NHOOKS
+.Dv FILEASSOC_NHOOKS
 fileassocs associated with each file.
 .Pp
 When plugging a new fileassoc to the system, a developer can specify private
@@ -63,7 +63,7 @@ Describing a mount on which to take action.
 .It Ft struct vnode * Ar vp
 Describing a file on which to take action.
 .It Ft fileassoc_t Ar id
-Describing a id, as returned from a successful call to
+Describing an id, as returned from a successful call to
 .Fn fileassoc_register .
 .It Ft void * Ar data
 Describing a custom private data block, attached to either a file or a mount.
@@ -85,7 +85,6 @@ routine to
 .Fn fileassoc_register
 (see below)
 to be called whenever an entry for a file or a mount is deleted.
-.Pp
 .Ss Fileassoc Registration and Deregistration Routines
 These routines allow a developer to allocate a
 .Nm
@@ -98,12 +97,12 @@ and returns an
 .Ft int
 to be used as a metahhook-id in subsequent calls to the
 .Nm
-subsystem to identify the fileassoc, or -1 on failure.
+subsystem to identify the fileassoc, or \-1 on failure.
 .Pp
 If
 .Ar cleanup_cb
 is not
-.Dq NULL ,
+.Dv NULL ,
 it will be called during delete/clear operations (see routines below) with
 indication whether the passed data is file- or mount-specific.
 .Pp
@@ -114,7 +113,9 @@ and an
 .Ft int ,
 returning
 .Ft void .
-See EXAMPLES section for illustration.
+See the
+.Sx EXAMPLES
+section for illustration.
 .Pp
 .It Ft int Fn fileassoc_deregister "fileassoc_t id"
 Deregisters a
@@ -138,7 +139,7 @@ mounts, files, and private data attached to them.
 Return the fileassoc table for
 .Ar mp
 or
-.Dq NULL
+.Dv NULL
 if not found.
 .Pp
 .It Ft void * Fn fileassoc_tabledata_lookup "struct mount *mp" "fileassoc_t id"
@@ -151,13 +152,13 @@ for
 Return the fileassoc file entry for
 .Ar vp
 or
-.Dq NULL
+.Dv NULL
 if not found.
 .Pp
 .It Ft void * Fn fileassoc_lookup "struct vnode *vp" "fileassoc_t id"
 Returns the private data for the file/id combination
 or
-.Dq NULL
+.Dv NULL
 if not found.
 .El
 .Ss Mount-wide Routines
@@ -176,7 +177,7 @@ Deletes a fileassoc table for
 If specified, the fileassoc's
 .Dq cleanup routine
 will be called with a pointer to the private data-structure and indication of
-.Dq FILEASSOC_CLEANUP_TABLE .
+.Dv FILEASSOC_CLEANUP_TABLE .
 .Pp
 .It Ft int Fn fileassoc_table_clear "struct mount *mp" "fileassoc_t id"
 Clear all table entries for
@@ -188,9 +189,9 @@ If specified, the fileassoc's
 .Dq cleanup routine
 will be called with a pointer to the private data-structure and indication of
 either
-.Dq FILEASSOC_CLEANUP_FILE
+.Dv FILEASSOC_CLEANUP_FILE
 or
-.Dq FILEASSOC_CLEANUP_TABLE
+.Dv FILEASSOC_CLEANUP_TABLE
 as appropriate.
 .Pp
 .It Ft int Fn fileassoc_tabledata_add "struct mount *mp" "fileassoc_t id" "void *data"
@@ -214,7 +215,7 @@ Add a
 .Nm
 entry for the file.
 All fileassoc-specific slots for the file are set to
-.Dq NULL .
+.Dv NULL .
 .Pp
 .It Ft int Fn fileassoc_file_delete "struct vnode *vp"
 Delete the fileassoc entry for
@@ -223,7 +224,7 @@ Delete the fileassoc entry for
 If specified, the fileassoc's
 .Dq cleanup routine
 will be called with a pointer to the private data-structure and indication of
-.Dq FILEASSOC_CLEANUP_FILE .
+.Dv FILEASSOC_CLEANUP_FILE .
 .El
 .Ss Fileassoc-specific Routines
 .Bl -tag -width "123456"
@@ -244,7 +245,7 @@ for the fileassoc specified by
 If specified, the fileassoc's
 .Dq cleanup routine
 will be called with a pointer to the private data-structure and indication of
-.Dq FILEASSOC_CLEANUP_FILE .
+.Dv FILEASSOC_CLEANUP_FILE .
 .El
 .Ss Misc. Routines
 .Bl -tag -width "123456"
@@ -291,7 +292,7 @@ myhook_cleanup(void *data, int what)
 }
 .Ed
 .Pp
-Another useful thing would be to add our private data to an file.
+Another useful thing would be to add our private data to a file.
 For example, let's assume we keep a custom ACL with each file:
 .Bd -literal -offset indent
 int
@@ -299,7 +300,7 @@ myhook_acl_add(struct vattr *va, struct myhook_acl *acl)
 {
 	int error;
 
-	error = fileassoc_add(va->va_fsid, va->va_fileid, myhook_id, acl);
+	error = fileassoc_add(va-\*[Gt]va_fsid, va-\*[Gt]va_fileid, myhook_id, acl);
 	if (error) {
 		printf("Myhook: Could not add ACL.\n");
 		...handle error...
@@ -313,12 +314,12 @@ myhook_acl_add(struct vattr *va, struct myhook_acl *acl)
 .Pp
 Adding an entry will override any entry that previously exists.
 .Pp
-The above can fail, normally, when there is no table for the mount.
+The above can fail, usually when there is no table for the mount.
 Creating a new table is simple:
 .Bd -literal -offset indent
 int error;
 
-error = fileassoc_table_add(va->va_fsid, nentries);
+error = fileassoc_table_add(va-\*[Gt]va_fsid, nentries);
 if (error)
 	...handle error...
 .Ed
@@ -327,7 +328,7 @@ The second argument,
 .Ar nentries ,
 should be approximately the number of files it is predicted that will
 have entries in the table, although you can provide a pseudo-safe constant
-value. (like 128, for example)
+value (like 128, for example).
 .Pp
 Whatever your plug is, eventually you'll want to access the private data you
 store with each file.
@@ -338,7 +339,7 @@ myhook_acl_access(struct vattr *va, int access_flags)
 {
 	struct myhook_acl *acl;
 
-	acl = fileassoc_lookup(va->va_fsid, va->va_fileid, myhook_id);
+	acl = fileassoc_lookup(va-\*[Gt]va_fsid, va-\*[Gt]va_fileid, myhook_id);
 	if (acl == NULL)
 		return (0);
 
@@ -357,7 +358,7 @@ an file:
 .Bd -literal -offset indent
 int error;
 
-error = fileassoc_clear(va->va_fsid, va->va_fileid, myhook_id);
+error = fileassoc_clear(va-\*[Gt]va_fsid, va-\*[Gt]va_fileid, myhook_id);
 if (error) {
 	printf("Myhook: Error occured during fileassoc removal.\n");
 	...handle error...
@@ -382,7 +383,7 @@ see the Veriexec code.
 The
 .Nm
 KPI first appeared in
-.Nx 5.0 .
+.Nx 4.0 .
 .Sh AUTHOR
 .An Elad Efrat Aq elad@NetBSD.org
 designed and implemented the
