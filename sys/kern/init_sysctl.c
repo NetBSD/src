@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.74 2006/06/21 13:46:17 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.75 2006/07/14 21:55:19 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.74 2006/06/21 13:46:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.75 2006/07/14 21:55:19 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -277,6 +277,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	extern int kern_logsigexit;	/* defined in kern/kern_sig.c */
 	extern fixpt_t ccpu;		/* defined in kern/kern_synch.c */
 	extern int dumponpanic;		/* defined in kern/subr_prf.c */
+	const struct sysctlnode *rnode;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -804,6 +805,55 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Mapping of CPU number to CPU id"),
 		       sysctl_kern_cpid, 0, NULL, 0,
 		       CTL_KERN, KERN_CP_ID, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "coredump",
+		       SYSCTL_DESCR("Coredump settings."),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "setid",
+		       SYSCTL_DESCR("Set-id processes' coredump settings."),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dump",
+		       SYSCTL_DESCR("Allow set-id processes to dump core."),
+		       sysctl_security_setidcore, 0, &security_setidcore_dump,
+		       sizeof(security_setidcore_dump),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "path",
+		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
+		       sysctl_security_setidcorename, 0,
+		       &security_setidcore_path,
+		       sizeof(security_setidcore_path),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "owner",
+		       SYSCTL_DESCR("Owner id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_owner,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "group",
+		       SYSCTL_DESCR("Group id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_group,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mode",
+		       SYSCTL_DESCR("Mode for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_mode,
+		       0,
+		       CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -1036,49 +1086,6 @@ SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
 		       SYSCTL_DESCR("Curtain information about objects"
 				    " to users not owning them."),
 		       NULL, 0, &security_curtain, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "setid_core",
-		       SYSCTL_DESCR("Set-id processes' coredump settings."),
-		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "dump",
-		       SYSCTL_DESCR("Allow set-id processes to dump core."),
-		       sysctl_security_setidcore, 0, &security_setidcore_dump,
-		       sizeof(security_setidcore_dump),
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "path",
-		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
-		       sysctl_security_setidcorename, 0,
-		       &security_setidcore_path,
-		       sizeof(security_setidcore_path),
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "owner",
-		       SYSCTL_DESCR("Owner id for set-id processes' cores."),
-		       sysctl_security_setidcore, 0, &security_setidcore_owner,
-		       0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "group",
-		       SYSCTL_DESCR("Group id for set-id processes' cores."),
-		       sysctl_security_setidcore, 0, &security_setidcore_group,
-		       0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mode",
-		       SYSCTL_DESCR("Mode for set-id processes' cores."),
-		       sysctl_security_setidcore, 0, &security_setidcore_mode,
-		       0,
 		       CTL_CREATE, CTL_EOL);
 }
 
