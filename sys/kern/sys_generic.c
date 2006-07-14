@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.90 2006/07/14 16:02:45 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.91 2006/07/14 22:33:27 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.90 2006/07/14 16:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.91 2006/07/14 22:33:27 kardel Exp $");
 
 #include "opt_ktrace.h"
 
@@ -717,7 +717,7 @@ sys_pselect(struct lwp *l, void *v, register_t *retval)
 	    SCARG(uap, ou), SCARG(uap, ex), tv, mask);
 }
 
-static int
+int
 inittimeleft(struct timeval *tv, struct timeval *sleeptv)
 {
 	if (itimerfix(tv))
@@ -726,7 +726,7 @@ inittimeleft(struct timeval *tv, struct timeval *sleeptv)
 	return 0;
 }
 
-static int
+int
 gettimeleft(struct timeval *tv, struct timeval *sleeptv)
 {
 	/*
