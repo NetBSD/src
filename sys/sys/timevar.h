@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.4 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: timevar.h,v 1.5 2006/07/14 22:33:50 kardel Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -192,6 +192,8 @@ void	timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
 int	tstohz(struct timespec *);
 int	tvtohz(struct timeval *);
+int	inittimeleft(struct timeval *, struct timeval *);
+int	gettimeleft(struct timeval *, struct timeval *);
 
 #ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */
