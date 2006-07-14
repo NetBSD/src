@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.170 2006/05/16 00:08:24 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.171 2006/07/14 18:41:40 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 26, 2006
+.Dd July 14, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -953,16 +953,12 @@ The variables are as follows:
 Returns a string with the supported algorithms in Verified Exec.
 .It Li VERIEXEC_COUNT
 Variables are added to this node as new hash tables are created to
-contain Verified Exec data for a new device.
-Each variable in the node
-will have a name in the form of
-.No dev_ Ns Aq id
-where
-.Aq id
-is the device id.
-For example, the variable for the root device may be dev_0.
-The value of this
-variable will be the amount of fingerprinted files on the device.
+contain Veriexec data for a new mount.
+Each mount will be under its own
+.No tableN
+node.
+Under each node there will be three variables, indicating the mount
+point, the file-system type, and the number of entries.
 .It Li VERIEXEC_STRICT
 Controls the strict level of Verified Exec.
 The strict level defines how

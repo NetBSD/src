@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.270 2006/07/01 05:41:10 kardel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.271 2006/07/14 18:41:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.270 2006/07/01 05:41:10 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.271 2006/07/14 18:41:40 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.270 2006/07/01 05:41:10 kardel Exp $
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_verified_exec.h"
+#include "opt_fileassoc.h"
 
 #include "rnd.h"
 
@@ -149,6 +150,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.270 2006/07/01 05:41:10 kardel Exp $
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#ifdef FILEASSOC
+#include <sys/fileassoc.h>
+#endif /* FILEASSOC */
 
 #include <ufs/ufs/quota.h>
 
@@ -329,6 +334,10 @@ main(void)
 
 	/* Initialize kauth. */
 	kauth_init();
+
+#ifdef FILEASSOC
+	fileassoc_init();
+#endif /* FILEASSOC */
 
 #ifdef VERIFIED_EXEC
 	  /*

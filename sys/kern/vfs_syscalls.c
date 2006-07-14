@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.250 2006/07/14 18:30:35 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.251 2006/07/14 18:41:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.250 2006/07/14 18:30:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.251 2006/07/14 18:41:40 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_ktrace.h"
 #include "opt_verified_exec.h"
 #include "fss.h"
+#include "opt_fileassoc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.250 2006/07/14 18:30:35 yamt Exp 
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#ifdef FILEASSOC
+#include <sys/fileassoc.h>
+#endif /* FILEASSOC */
 #ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
 #endif /* VERIFIED_EXEC */
@@ -545,6 +549,35 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	int error;
 	int async;
 	int used_syncer;
+
+#ifdef VERIFIED_EXEC
+	if (!doing_shutdown) {
+		if (veriexec_strict >= 3) {
+			printf("Veriexec: Lockdown mode, preventing unmount of"
+			    " \"%s\". (uid=%u)\n", mp->mnt_stat.f_mntonname,
+			    kauth_cred_getuid(l->l_proc->p_cred));
+			return (EPERM);
+		}
+
+		if (veriexec_strict == 2) {
+			struct veriexec_table_entry *vte;
+
+			/* Check if we have fingerprints on mount. */
+			vte = fileassoc_tabledata_lookup(mp, veriexec_hook);
+			if ((vte != NULL) && (vte->vte_count > 0)) {
+				printf("Veriexec: IPS mode, preventing unmount"
+				    " of \"%s\" with monitored files. "
+				    "(uid=%u)\n", mp->mnt_stat.f_mntonname,
+				    kauth_cred_getuid(l->l_proc->p_cred));
+				return (EPERM);
+			}
+		}
+	}
+#endif /* VERIFIED_EXEC */
+
+#ifdef FILEASSOC
+	(void)fileassoc_table_delete(mp);
+#endif /* FILEASSOC */
 
 	simple_lock(&mountlist_slock);
 	vfs_unbusy(mp);
@@ -2019,6 +2052,10 @@ restart:
 	VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	vn_finished_write(mp, 0);
+#ifdef FILEASSOC
+	if (!error)
+		(void)fileassoc_file_delete(nd.ni_vp);
+#endif /* FILEASSOC */
 out:
 	return (error);
 }
