@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.9 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.10 2006/07/14 15:58:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -54,6 +54,12 @@ struct fhandle {
 	struct	fid fh_fid;	/* File sys specific id */
 };
 typedef struct fhandle	fhandle_t;
+
+#if defined(_KERNEL)
+#define	FHANDLE_FSID(fh)	(&(fh)->fh_fsid)
+#define	FHANDLE_FILEID(fh)	(&(fh)->fh_fid)
+#define	FHANDLE_SIZE(fh)	(sizeof(*(fh)) + FHANDLE_FILEID(fh)->fid_len)
+#endif /* defined(_KERNEL) */
 
 /*
  * Mount flags.  XXX BEWARE: these are not in numerical order!
