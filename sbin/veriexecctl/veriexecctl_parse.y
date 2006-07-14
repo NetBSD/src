@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.13 2005/10/05 13:48:48 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.14 2006/07/14 18:41:40 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -71,6 +71,7 @@ statement	:	/* empty */
 		goto phase_2_end;
 	}
 
+#if 1
 	if (stat(params.file, &sb) == -1) {
 		warnx("Line %lu: Can't stat `%s'",
 		    (unsigned long)line, params.file);
@@ -83,8 +84,10 @@ statement	:	/* empty */
 		    (unsigned long)line, params.file);
 		goto phase_2_end;
 	}
+#endif
 
-	if ((p = dev_lookup(sb.st_dev)) != NULL) {
+	/* if ((p = dev_lookup(sb.st_dev)) != NULL) { */
+	if ((p = dev_lookup(params.file)) != NULL) {
 	    (p->vu_param.hash_size)++;
 	    goto phase_2_end;
 	}
@@ -97,7 +100,7 @@ statement	:	/* empty */
 		(void)printf( " => Adding device ID %d. (%s)\n",
 		    sb.st_dev, sf.f_mntonname);
 	}
-	dev_add(sb.st_dev);
+	dev_add(sb.st_dev, params.file);
 phase_2_end:
 	(void)memset(&params, 0, sizeof(params));
 }
