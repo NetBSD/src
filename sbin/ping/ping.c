@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.81 2006/06/03 18:19:55 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.82 2006/07/14 05:43:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.81 2006/06/03 18:19:55 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.82 2006/07/14 05:43:49 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -1304,7 +1304,7 @@ summary(int header)
 static void
 prtsig(int dummy)
 {
-abort();
+
 	summary(0);
 #ifndef SIGINFO
 	(void)signal(SIGQUIT, prtsig);
