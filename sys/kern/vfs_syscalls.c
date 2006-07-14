@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.245 2006/07/13 21:51:50 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.246 2006/07/14 14:00:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.245 2006/07/13 21:51:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.246 2006/07/14 14:00:46 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1263,7 +1263,7 @@ sys___getfh30(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	error = copyin((size_t*)SCARG(uap, fh_size), &sz, sizeof(size_t));
+	error = copyin(SCARG(uap, fh_size), &sz, sizeof(size_t));
 	if (!error) {
 		fh = malloc(sz, M_TEMP, M_WAITOK);
 		if (fh == NULL)
@@ -1272,12 +1272,11 @@ sys___getfh30(struct lwp *l, void *v, register_t *retval)
 	}
 	vput(vp);
 	if (error == E2BIG)
-		copyout(&sz, (size_t*)SCARG(uap, fh_size), sizeof(size_t));
+		copyout(&sz, SCARG(uap, fh_size), sizeof(size_t));
 	if (error == 0) {
-		error = copyout(&sz, (size_t*)SCARG(uap, fh_size),
-		    sizeof(size_t));
+		error = copyout(&sz, SCARG(uap, fh_size), sizeof(size_t));
 		if (!error)
-			error = copyout(fh, (caddr_t)SCARG(uap, fhp), sz);
+			error = copyout(fh, SCARG(uap, fhp), sz);
 	}
 	free(fh, M_TEMP);
 	return (error);
