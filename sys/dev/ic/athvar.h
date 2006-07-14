@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.18 2006/06/05 05:15:31 gdamore Exp $	*/
+/*	$NetBSD: athvar.h,v 1.19 2006/07/14 13:37:25 seanb Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -288,7 +288,6 @@ struct ath_softc {
 	HAL_NODE_STATS		sc_halstats;	/* station-mode rssi stats */
 	struct callout		sc_scan_ch;	/* callout handle for scan */
 	struct callout		sc_dfs_ch;	/* callout handle for dfs */
-	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
 	u_int			sc_flags;	/* misc flags */
 };
