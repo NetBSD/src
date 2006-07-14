@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.102 2006/07/08 12:10:33 kardel Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.103 2006/07/14 22:45:20 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.102 2006/07/08 12:10:33 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.103 2006/07/14 22:45:20 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -177,16 +177,18 @@ settime(struct proc *p, struct timespec *ts)
 		return (EPERM);
 	}
 #endif
+
 #ifdef __HAVE_TIMECOUNTER
-	ts1.tv_sec = tv.tv_sec;
-	ts1.tv_nsec = tv.tv_usec * 1000;
+	TIMEVAL_TO_TIMESPEC(&tv, &ts1);
 	tc_setclock(&ts1);
-	(void) spllowersoftclock();
 #else /* !__HAVE_TIMECOUNTER */
 	time = tv;
-	(void) spllowersoftclock();
-	timeradd(&boottime, &delta, &boottime);
 #endif /* !__HAVE_TIMECOUNTER */
+
+	(void) spllowersoftclock();
+
+	timeradd(&boottime, &delta, &boottime);
+
 	/*
 	 * XXXSMP
 	 * This is wrong.  We should traverse a list of all
