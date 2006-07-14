@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.21 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.22 2006/07/14 22:42:05 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -256,7 +256,6 @@ print_query(struct veriexec_query_params *qp, char *file)
 	int i;
 
 	printf("Filename: %s\n", file);
-	printf("Device: %d, inode: %" PRIu64 "\n", qp->dev, qp->ino);
 	printf("Entry flags: ");
 	print_flags(qp->type);
 	printf("Entry status: %s\n", STATUS_STRING(qp->status));
@@ -323,7 +322,6 @@ main(int argc, char **argv)
 		memset(&qp, 0, sizeof(qp));
 		qp.uaddr = &qp;
 
-		/* Get device and inode */
 		if (stat(argv[1], &sb) == -1)
 			err(1, "Can't stat `%s'", argv[1]);
 		if (!S_ISREG(sb.st_mode))
@@ -331,8 +329,6 @@ main(int argc, char **argv)
 
 		strlcpy(qp.file, argv[1], sizeof(qp.file));
 
-		qp.ino = sb.st_ino;
-		qp.dev = sb.st_dev;
 		memset(fp, 0, sizeof(fp));
 		qp.fp = &fp[0];
 		qp.fp_bufsize = sizeof(fp);
