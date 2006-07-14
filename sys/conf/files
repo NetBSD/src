@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.788 2006/07/13 22:56:02 gdamore Exp $
+#	$NetBSD: files,v 1.789 2006/07/14 18:41:40 elad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -78,6 +78,9 @@ defflag	opt_verified_exec.h 	VERIFIED_EXEC
 				VERIFIED_EXEC_FP_RMD160
 
 defparam opt_pax.h		PAX_MPROTECT
+
+defflag	opt_fileassoc.h		FILEASSOC
+defparam opt_fileassoc.h	FILEASSOC_NHOOKS
 
 # compatibility options
 #
@@ -1133,8 +1136,8 @@ file	dev/kttcp.c			kttcp		needs-flag
 
 # Verified exec fingerprint loader pseudo-device
 defpseudo veriexec
-file	kern/kern_verifiedexec.c	veriexec		needs-flag
-file	dev/verified_exec.c		veriexec		needs-flag
+file	kern/kern_verifiedexec.c	veriexec & fileassoc	needs-flag
+file	dev/verified_exec.c		veriexec & fileassoc	needs-flag
 
 # isochronous pseudo device for IEEE 1394, i.LINK or FireWire
 defpseudo fwiso:	ieee1394
@@ -1241,6 +1244,7 @@ file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
+file	kern/kern_fileassoc.c		fileassoc		needs-flag
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect
 file	kern/kern_physio.c

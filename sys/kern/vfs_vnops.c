@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.112 2006/05/27 23:46:49 simonb Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.113 2006/07/14 18:41:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.112 2006/05/27 23:46:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.113 2006/07/14 18:41:40 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -105,7 +105,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vattr va;
 	int error;
 #ifdef VERIFIED_EXEC
-	struct veriexec_hash_entry *vhe = NULL;
+	struct veriexec_file_entry *vfe = NULL;
 	char pathbuf[MAXPATHLEN];
 	size_t pathlen;
 	int (*copyfun)(const void *, void *, size_t, size_t *) =
@@ -208,8 +208,8 @@ restart:
 
 	if ((fmode & O_CREAT) == 0) {
 #ifdef VERIFIED_EXEC
-		if ((error = veriexec_verify(l, vp, &va, pathbuf,
-					     VERIEXEC_FILE, &vhe)) != 0)
+		if ((error = veriexec_verify(l, vp, pathbuf,
+					     VERIEXEC_FILE, &vfe)) != 0)
 			goto bad;
 #endif
 
@@ -227,7 +227,7 @@ restart:
 			    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
 				goto bad;
 #ifdef VERIFIED_EXEC
-			if (vhe != NULL) {
+			if (vfe != NULL) {
 				veriexec_report("Write access request.",
 						pathbuf, &va, l,
 						REPORT_NOVERBOSE,
@@ -239,7 +239,7 @@ restart:
 					error = EPERM;
 					goto bad;
 				} else {
-					vhe->status = FINGERPRINT_NOTEVAL;
+					vfe->status = FINGERPRINT_NOTEVAL;
 				}
 			}
 #endif
