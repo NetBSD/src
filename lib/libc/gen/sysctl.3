@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.171 2006/07/14 18:41:40 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.172 2006/07/14 21:55:19 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -999,6 +999,29 @@ Each element of the array contains the kernel address of a vnode
 .Va struct vnode *
 followed by the vnode itself
 .Va struct vnode .
+.It Li kern.coredump.setid
+Settings related to set-id processes coredumps.
+By default, set-id processes do not dump core in situations where
+other processes would.
+The settings in this node allows an administrator to change this
+behavior.
+.Pp
+.Bl -tag -width "123456"
+.It Li kern.coredump.setid.dump
+If non-zero, set-id processes will dump core.
+.It Li kern.coredump.setid.group
+The group-id for the set-id processes' coredump.
+.It Li kern.coredump.setid.mode
+The mode for the set-id processes' coredump.
+See
+.Xr chmod 1 .
+.It Li kern.coredump.setid.owner
+The user-id that will be used as the owner of the set-id processes'
+coredump.
+.It Li kern.coredump.setid.path
+The path to which set-id processes' coredumps will be saved to.
+Same syntax as kern.defcorename.
+.El
 .El
 .Sh CTL_MACHDEP
 The set of variables defined is architecture dependent.
@@ -2012,29 +2035,6 @@ except those exempted with
 Otherwise, all programs will not get the PaX MPROTECT restrictions,
 except those specifically marked as such with
 .Xr paxctl 1.
-.El
-.It Li security.setid_core
-Settings related to set-id processes coredumps.
-By default, set-id processes do not dump core in situations where
-other processes would.
-The settings in this node allows an administrator to change this
-behavior.
-.Pp
-.Bl -tag -width "123456"
-.It Li security.setid_core.dump
-If non-zero, set-id processes will dump core.
-.It Li security.setid_core.group
-The group-id for the set-id processes' coredump.
-.It Li security.setid_core.mode
-The mode for the set-id processes' coredump.
-See
-.Xr chmod 1 .
-.It Li security.setid_core.owner
-The user-id that will be used as the owner of the set-id processes'
-coredump.
-.It Li security.setid_core.path
-The path to which set-id processes' coredumps will be saved to.
-Same syntax as kern.defcorename.
 .El
 .El
 .Sh CTL_VENDOR

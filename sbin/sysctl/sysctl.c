@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.115 2006/03/30 08:02:40 jnemeth Exp $ */
+/*	$NetBSD: sysctl.c,v 1.116 2006/07/14 21:55:19 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.115 2006/03/30 08:02:40 jnemeth Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.116 2006/07/14 21:55:19 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,8 @@ static const struct handlespec {
 	{ "/kern/sysvipc_info",			printother, NULL, "ipcs" },
 	{ "/kern/cp_id(/[0-9]+)?",		kern_cp_id },
 
+	{ "/kern/coredump/setid/mode",		mode_bits, mode_bits },
+
 	{ "/vm/vmmeter",			printother, NULL,
 						"vmstat' or 'systat" },
 	{ "/vm/loadavg",			vm_loadavg },
@@ -222,8 +224,6 @@ static const struct handlespec {
 #endif /* CPU_CONSDEV */
 
 	{ "/proc/[^/]+/rlimit/[^/]+/[^/]+",	proc_limit, proc_limit },
-
-	{ "/security/setid_core/mode",		mode_bits, mode_bits },
 
 	/*
 	 * these will only be called when the given node has no children

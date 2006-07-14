@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.148 2006/07/14 18:41:40 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.149 2006/07/14 21:55:19 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -287,6 +287,13 @@ privilege can change the value.
 .It kern.ccpu	integer	no
 .It kern.clockrate	struct	no
 .It kern.consdev	integer	no
+.It kern.coredump	node	not applicable
+.It kern.coredump.setid	node	not applicable
+.It kern.coredump.setid.dump	integer	yes
+.It kern.coredump.setid.group	integer	yes
+.It kern.coredump.setid.mode	integer	yes
+.It kern.coredump.setid.owner	integer	yes
+.It kern.coredump.setid.path	string	yes
 .It kern.cp_id	struct	no
 .It kern.cp_time	struct	no
 .It kern.cryptodevallowsoft	int	yes
@@ -542,12 +549,6 @@ privilege can change the value.
 .It security.curtain	integer	yes
 .It security.pax.mprotect.enabled	integer	yes
 .It security.pax.mprotect.global_protection	integer	yes
-.It security.setid_core	node	not applicable
-.It security.setid_core.dump	integer	yes
-.It security.setid_core.group	integer	yes
-.It security.setid_core.mode	integer	yes
-.It security.setid_core.owner	integer	yes
-.It security.setid_core.path	string	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
