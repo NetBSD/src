@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.4 2006/06/05 05:14:38 gdamore Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.5 2006/07/14 13:37:25 seanb Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4 2006/06/05 05:14:38 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.5 2006/07/14 13:37:25 seanb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ struct ath_arbus_softc {
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
 	struct ar531x_config	sc_config;
+	void			*sc_sdhook;
 };
 
 static int	ath_arbus_match(struct device *, struct cfdata *, void *);
@@ -102,7 +103,6 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	struct ath_softc *sc;
 	struct arbus_attach_args *aa;
 	const char *name;
-	void *hook;
 	int rv;
 	uint16_t devid;
 	uint32_t rev;
@@ -156,8 +156,8 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 		goto err;
 	}
 
-	hook = shutdownhook_establish(ath_arbus_shutdown, asc);
-	if (hook == NULL) {
+	asc->sc_sdhook = shutdownhook_establish(ath_arbus_shutdown, asc);
+	if (asc->sc_sdhook == NULL) {
 		aprint_error("%s: couldn't establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
@@ -174,6 +174,7 @@ ath_arbus_detach(struct device *self, int flags)
 {
 	struct ath_arbus_softc *asc = (struct ath_arbus_softc *)self;
 
+	shutdownhook_disestablish(asc->sc_sdhook);
 	ath_detach(&asc->sc_ath);
 	arbus_intr_disestablish(asc->sc_ih);
 
