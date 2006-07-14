@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.6 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.7 2006/07/14 23:00:09 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -56,12 +56,8 @@ int yywrap(void);
 int yylex(void);
 int yyparse(void);
 void yyerror(const char *);
-#if 0
-struct veriexec_up *dev_lookup(dev_t);
-struct veriexec_up *dev_add(dev_t);
-#endif
 struct veriexec_up *dev_lookup(char *);
-struct veriexec_up *dev_add(dev_t, char *);
+struct veriexec_up *dev_add(char *);
 void phase2_load(void);
 
 #endif /* _VERIEXECCTL_H_ */
