@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.69 2006/06/09 07:07:28 elad Exp $
+$NetBSD: acronyms.comp,v 1.70 2006/07/14 13:54:50 wiz Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -17,12 +17,12 @@ APIC	advanced programmable interrupt controller
 ARP	address resolution protocol
 ARQ	automatic repeat request
 AS	autonomous system
-ASN	autonomous system number
 ASCII	american standard code for information interchange
+ASN	autonomous system number
 AT	advanced technology
 ATA	advanced technology attachment
-ATC	address translation cache
 ATAPI	advanced technology attachment packet interface
+ATC	address translation cache
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
 BEDO	burst extended data output
@@ -32,8 +32,8 @@ BGP	border gateway protocol
 BIOS	basic input/output system
 BLOB	binary large object
 BPS	bits per second
-BSD	berkeley software distribution
 BQS	berkeley quality software
+BSD	berkeley software distribution
 CAD	computer-aided design
 CAV	constant angular velocity (as opposed to CLV)
 CCD	charge coupled device
@@ -87,6 +87,7 @@ DTE	data terminal equipment
 DTE	dumb terminal emulator
 DVD	digital versatile disc
 DVI	digital visual interface
+E-XER	extended XML encoding rules
 ECP	enhanced capability port
 EDID	extended display identification data
 EDO	extended data out
@@ -102,7 +103,6 @@ EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
-E-XER	extended XML encoding rules
 FAT	file allocation table
 FBRAM	frame buffer random access memory
 FCS	frame check sequence
@@ -141,10 +141,10 @@ IGP	interior gateway protocol
 IKE	internet key exchange
 IMAP	internet mail access protocol
 INCITS	international committee on information technology standards
-IPC	interprocess communication
 IO	input/output
 IOCTL	input/output control
 IP	internet protocol
+IPC	interprocess communication
 IPNG	internet protocol, next generation
 IPSEC	internet protocol security
 IRC	internet relay chat
@@ -212,8 +212,8 @@ PC	personal computer
 PCI	peripheral component interconnect
 PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
-PDU	protocol data unit
 PDP	page descriptor page
+PDU	protocol data unit
 PER	packed encoding rules
 PERL	practical extraction [and] report language
 PFS	perfect forward secrecy
@@ -234,10 +234,10 @@ PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
 PRML	partial response, maximum likelihood
 PROM	programmable read only memory
+PSTN	public switched telephone network
 PTE	page table entry
 PTLA	pseudo top level aggregator
 PTP	page table page
-PSTN	public switched telephone network
 PWM	pulse width modulation
 QOS	quality of service
 RAID	redundant array of inexpensive disks
@@ -261,6 +261,8 @@ SAD	security association database
 SAM	serial access memory
 SASI	shugart associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
+SCM	software configuration management
+SCM	source code management
 SCSI	small computer system interface
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
