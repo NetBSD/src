@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockstat.1,v 1.5 2005/09/11 23:26:35 wiz Exp $
+.\"	$NetBSD: sockstat.1,v 1.6 2006/07/14 21:14:24 peter Exp $
 .\"-
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .\"
 .\" FreeBSD: src/usr.bin/sockstat/sockstat.1,v 1.19 2004/08/25 16:36:17 roam Exp
 .\"
-.Dd March 9, 2005
+.Dd July 14, 2006
 .Dt SOCKSTAT 1
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@
 .Nd list open sockets
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46clu
+.Op Fl 46clnu
 .Op Fl f Ar address_family
 .Op Fl p Ar ports
 .Sh DESCRIPTION
@@ -107,6 +107,10 @@ for
 .Dv AF_LOCAL .
 .It Fl l
 Show listening sockets.
+.It Fl n
+Numeric output only.
+No attempt will be made to look up symbolic names for addresses
+and ports.
 .It Fl p Ar ports
 Only show Internet sockets if either the local or foreign port number
 is on the specified list.
