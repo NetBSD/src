@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.20 2005/12/13 10:56:16 dsl Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.21 2006/07/14 18:41:40 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -73,27 +73,29 @@ openlock(const char *path)
 }
 
 struct veriexec_up *
-dev_lookup(dev_t d)
+/* dev_lookup(dev_t d) */
+dev_lookup(char *vfs)
 {
 	struct veriexec_up *p;
 
 	CIRCLEQ_FOREACH(p, &params_list, vu_list)
-		if (p->vu_param.dev == d)
+		if (strcmp(p->vu_param.file, vfs) == 0)
 			return (p);
 
 	return NULL;
 }
 
 struct veriexec_up *
-dev_add(dev_t d)
+/* dev_add(dev_t d) */
+dev_add(dev_t d, char *vfs)
 {
 	struct veriexec_up *up;
 
 	if ((up = calloc((size_t)1, sizeof(*up))) == NULL)
 		err(1, "No memory");
 
-	up->vu_param.dev = d;
 	up->vu_param.hash_size = 1;
+	strlcpy(up->vu_param.file, vfs, sizeof(up->vu_param.file));
 
 	CIRCLEQ_INSERT_TAIL(&params_list, up, vu_list);
 
@@ -115,13 +117,13 @@ phase1_preload(void)
 		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) == -1) {
 			if (errno != EEXIST)
 				err(1, "Error in phase 1: Can't "
-				    "set hash table size for device %d",
-				    vup->vu_param.dev);
+				    "set hash table size for mount %s",
+				    vup->vu_param.file);
 		}
 
 		if (verbose) {
-			printf(" => Hash table sizing successful for device "
-			    "%d. (%zu entries)\n", vup->vu_param.dev,
+			printf(" => Hash table sizing successful for mount "
+			    "%s. (%zu entries)\n", vup->vu_param.file,
 			    vup->vu_param.hash_size);
 		}
 
@@ -302,18 +304,14 @@ main(int argc, char **argv)
 		if (stat(argv[1], &sb) == -1)
 			err(1, "Can't stat `%s'", argv[1]);
 
+		strlcpy(dp.file, argv[1], sizeof(dp.file));
+
 		/*
 		 * If it's a regular file, remove it. If it's a directory,
 		 * remove the entire table. If it's neither, abort.
 		 */
-		if (S_ISDIR(sb.st_mode))
-			dp.ino = 0;
-		else if (S_ISREG(sb.st_mode))
-			dp.ino = sb.st_ino;
-		else
+		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
 			errx(1, "`%s' is not a regular file or directory.", argv[1]);
-
-		dp.dev = sb.st_dev;
 
 		if (ioctl(gfd, VERIEXEC_DELETE, &dp) == -1)
 			err(1, "Error deleting `%s'", argv[1]);
@@ -330,6 +328,8 @@ main(int argc, char **argv)
 			err(1, "Can't stat `%s'", argv[1]);
 		if (!S_ISREG(sb.st_mode))
 			errx(1, "`%s' is not a regular file.", argv[1]);
+
+		strlcpy(qp.file, argv[1], sizeof(qp.file));
 
 		qp.ino = sb.st_ino;
 		qp.dev = sb.st_dev;
