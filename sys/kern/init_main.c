@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.271 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.272 2006/07/14 22:44:28 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.271 2006/07/14 18:41:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.272 2006/07/14 22:44:28 kardel Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -181,9 +181,7 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
-#ifndef __HAVE_TIMECOUNTER
-struct timeval boottime;
-#endif
+struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 time_t	rootfstime;			/* recorded root fs time, if known */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
