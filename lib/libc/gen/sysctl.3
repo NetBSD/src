@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.172 2006/07/14 21:55:19 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.173 2006/07/14 22:04:42 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2031,10 +2031,10 @@ explicit enable/disable flag.
 .Pp
 When non-zero, all programs will get the PaX MPROTECT restrictions,
 except those exempted with
-.Xr paxctl 1 .
+.Xr paxctl 1  .
 Otherwise, all programs will not get the PaX MPROTECT restrictions,
 except those specifically marked as such with
-.Xr paxctl 1.
+.Xr paxctl 1 .
 .El
 .El
 .Sh CTL_VENDOR
