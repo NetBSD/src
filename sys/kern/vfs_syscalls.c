@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.249 2006/07/14 18:29:40 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.250 2006/07/14 18:30:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.249 2006/07/14 18:29:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.250 2006/07/14 18:30:35 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1223,24 +1223,32 @@ int
 vfs_composefh(struct vnode *vp, fhandle_t *fhp, size_t *fh_size)
 {
 	struct mount *mp;
+	struct fid *fidp;
 	int error;
-	size_t sz;
+	size_t needfhsize;
+	size_t fidsize;
 
 	mp = vp->v_mount;
 	if (mp->mnt_op->vfs_vptofh == NULL) {
 		return EOPNOTSUPP;
 	}
-	if (fhp != NULL && *fh_size >= offsetof(fhandle_t, fh_fid)) {
-		memset(fhp, 0, *fh_size);
-		sz = *fh_size - offsetof(fhandle_t, fh_fid);
-		fhp->fh_fsid = mp->mnt_stat.f_fsidx;
-		error = VFS_VPTOFH(vp, &fhp->fh_fid, &sz);
+	fidp = NULL;
+	if (*fh_size <= FHANDLE_SIZE_MIN) {
+		fidsize = 0;
 	} else {
-		/* just query the size */
-		sz = 0;
-		error = VFS_VPTOFH(vp, NULL, &sz);
+		fidsize = *fh_size - offsetof(fhandle_t, fh_fid);
+		if (fhp != NULL) {
+			memset(fhp, 0, *fh_size);
+			fhp->fh_fsid = mp->mnt_stat.f_fsidx;
+			fidp = &fhp->fh_fid;
+		}
 	}
-	*fh_size = sz + offsetof(fhandle_t, fh_fid);
+	error = VFS_VPTOFH(vp, fidp, &fidsize);
+	needfhsize = FHANDLE_SIZE_FROM_FILEID_SIZE(fidsize);
+	if (error == 0 && *fh_size < needfhsize) {
+		error = E2BIG;
+	}
+	*fh_size = needfhsize;
 	return error;
 }
 
@@ -1265,7 +1273,7 @@ vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
 	if (error != E2BIG) {
 		goto out;
 	}
-	fhsize = offsetof(fhandle_t, fh_fid) + fidsize;
+	fhsize = FHANDLE_SIZE_FROM_FILEID_SIZE(fidsize);
 	fhp = kmem_zalloc(fhsize, KM_SLEEP);
 	if (fhp == NULL) {
 		error = ENOMEM;
@@ -1334,6 +1342,9 @@ vfs_copyinfh_alloc(const void *ufhp, fhandle_t **fhpp)
 		return error;
 	}
 	fhsize = FHANDLE_SIZE(&tempfh);
+	if (fhsize > FHANDLE_SIZE_MAX) {
+		return EINVAL;
+	}
 	fhp = kmem_alloc(fhsize, KM_SLEEP);
 	if (fhp == NULL) {
 		return ENOMEM;

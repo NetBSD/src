@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.11 2006/07/14 17:31:42 yamt Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.12 2006/07/14 18:30:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -56,10 +56,21 @@ struct fhandle {
 typedef struct fhandle	fhandle_t;
 
 #if defined(_KERNEL)
+/*
+ * FHANDLE_SIZE_MAX: arbitrary value to prevent unreasonable allocation.
+ *
+ * FHANDLE_SIZE_MIN: chosen for compatibility.  smaller handles are zero-padded.
+ */
+
+#define	FHANDLE_SIZE_MAX	1024
+#define	FHANDLE_SIZE_MIN	28
+
 #define	FHANDLE_FSID(fh)	(&(fh)->fh_fsid)
 #define	FHANDLE_FILEID(fh)	(&(fh)->fh_fid)
-#define	FHANDLE_SIZE(fh)	\
-	(offsetof(fhandle_t, fh_fid) + FHANDLE_FILEID(fh)->fid_len)
+#define	FHANDLE_SIZE_FROM_FILEID_SIZE(fidsize) \
+	MAX(FHANDLE_SIZE_MIN, (offsetof(fhandle_t, fh_fid) + (fidsize)))
+#define	FHANDLE_SIZE(fh) \
+	FHANDLE_SIZE_FROM_FILEID_SIZE(FHANDLE_FILEID(fh)->fid_len)
 #endif /* defined(_KERNEL) */
 
 /*
