@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.28 2006/06/07 22:33:39 kardel Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.29 2006/07/14 22:35:15 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.28 2006/06/07 22:33:39 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.29 2006/07/14 22:35:15 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -907,7 +907,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	struct proc	*p = l->l_proc;
 	struct kqueue	*kq;
 	struct kevent	*kevp;
-	struct timeval	atv;
+	struct timeval	atv, sleeptv;
 	struct knote	*kn, *marker=NULL;
 	size_t		count, nkev, nevents;
 	int		s, timeout, error;
@@ -920,13 +920,13 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	if (tsp) {				/* timeout supplied */
 		TIMESPEC_TO_TIMEVAL(&atv, tsp);
-		if (itimerfix(&atv)) {
+		if (inittimeleft(&atv, &sleeptv) == -1) {
 			error = EINVAL;
 			goto done;
 		}
 		timeout = tvtohz(&atv);
 		if (timeout <= 0)
-			timeout = -1;		/* do poll */
+			timeout = -1;           /* do poll */
 	} else {
 		/* no timeout, wait forever */
 		timeout = 0;
@@ -938,13 +938,8 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	goto start;
 
  retry:
-	if (tsp) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timeout = hzto(&atv);
-		if (timeout <= 0)
-			goto done;
+	if (tsp && (timeout = gettimeleft(&atv, &sleeptv)) <= 0) {
+		goto done;
 	}
 
  start:
