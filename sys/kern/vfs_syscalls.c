@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.248 2006/07/14 15:59:29 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.249 2006/07/14 18:29:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.248 2006/07/14 15:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.249 2006/07/14 18:29:40 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1203,6 +1203,18 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+static void
+vfs__fhfree(fhandle_t *fhp)
+{
+	size_t fhsize;
+
+	if (fhp == NULL) {
+		return;
+	}
+	fhsize = FHANDLE_SIZE(fhp);
+	kmem_free(fhp, fhsize);
+}
+
 /*
  * vfs_composefh: compose a filehandle.
  */
@@ -1230,6 +1242,53 @@ vfs_composefh(struct vnode *vp, fhandle_t *fhp, size_t *fh_size)
 	}
 	*fh_size = sz + offsetof(fhandle_t, fh_fid);
 	return error;
+}
+
+int
+vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
+{
+	struct mount *mp;
+	fhandle_t *fhp;
+	size_t fhsize;
+	size_t fidsize;
+	int error;
+
+	*fhpp = NULL;
+	mp = vp->v_mount;
+	if (mp->mnt_op->vfs_vptofh == NULL) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
+	fhsize = 0;
+	error = VFS_VPTOFH(vp, NULL, &fidsize);
+	KASSERT(error != 0);
+	if (error != E2BIG) {
+		goto out;
+	}
+	fhsize = offsetof(fhandle_t, fh_fid) + fidsize;
+	fhp = kmem_zalloc(fhsize, KM_SLEEP);
+	if (fhp == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	fhp->fh_fsid = mp->mnt_stat.f_fsidx;
+	error = VFS_VPTOFH(vp, &fhp->fh_fid, &fidsize);
+	if (error == 0) {
+		KASSERT((FHANDLE_SIZE(fhp) == fhsize &&
+		    FHANDLE_FILEID(fhp)->fid_len == fidsize));
+		*fhpp = fhp;
+	} else {
+		kmem_free(fhp, fhsize);
+	}
+out:
+	return error;
+}
+
+void
+vfs_composefh_free(fhandle_t *fhp)
+{
+
+	vfs__fhfree(fhp);
 }
 
 /*
@@ -1262,7 +1321,7 @@ out:
  */
 
 int
-vfs_copyinfh(const void *ufhp, fhandle_t **fhpp)
+vfs_copyinfh_alloc(const void *ufhp, fhandle_t **fhpp)
 {
 	fhandle_t *fhp;
 	fhandle_t tempfh;
@@ -1291,13 +1350,8 @@ vfs_copyinfh(const void *ufhp, fhandle_t **fhpp)
 void
 vfs_copyinfh_free(fhandle_t *fhp)
 {
-	size_t fhsize;
 
-	if (fhp == NULL) {
-		return;
-	}
-	fhsize = FHANDLE_SIZE(fhp);
-	kmem_free(fhp, fhsize);
+	vfs__fhfree(fhp);
 }
 
 /*
@@ -1317,6 +1371,7 @@ sys___getfh30(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 	size_t sz;
+	size_t usz;
 
 	/*
 	 * Must be super user
@@ -1325,29 +1380,33 @@ sys___getfh30(struct lwp *l, void *v, register_t *retval)
 				  &p->p_acflag);
 	if (error)
 		return (error);
-	fh = NULL;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, fname), l);
 	error = namei(&nd);
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	error = copyin(SCARG(uap, fh_size), &sz, sizeof(size_t));
+	error = vfs_composefh_alloc(vp, &fh);
 	vput(vp);
-	if (!error) {
-		fh = malloc(sz, M_TEMP, M_WAITOK);
-		if (fh == NULL)
-			return EINVAL;
-		error = vfs_composefh(vp, fh, &sz);
+	if (error != 0) {
+		goto out;
 	}
-	if (error == E2BIG)
-		copyout(&sz, SCARG(uap, fh_size), sizeof(size_t));
-	if (error == 0) {
-		error = copyout(&sz, SCARG(uap, fh_size), sizeof(size_t));
-		if (!error)
-			error = copyout(fh, SCARG(uap, fhp), sz);
+	error = copyin(SCARG(uap, fh_size), &usz, sizeof(size_t));
+	if (error != 0) {
+		goto out;
 	}
-	free(fh, M_TEMP);
+	sz = FHANDLE_SIZE(fh);
+	error = copyout(&sz, SCARG(uap, fh_size), sizeof(size_t));
+	if (error != 0) {
+		goto out;
+	}
+	if (usz >= sz) {
+		error = copyout(fh, SCARG(uap, fhp), sz);
+	} else {
+		error = E2BIG;
+	}
+out:
+	vfs_composefh_free(fh);
 	return (error);
 }
 
@@ -1393,7 +1452,7 @@ sys_fhopen(struct lwp *l, void *v, register_t *retval)
 	if ((error = falloc(p, &nfp, &indx)) != 0)
 		return (error);
 	fp = nfp;
-	error = vfs_copyinfh(SCARG(uap, fhp), &fh);
+	error = vfs_copyinfh_alloc(SCARG(uap, fhp), &fh);
 	if (error != 0) {
 		goto bad;
 	}
@@ -1511,7 +1570,7 @@ sys___fhstat30(struct lwp *l, void *v, register_t *retval)
 				       &p->p_acflag)))
 		return (error);
 
-	error = vfs_copyinfh(SCARG(uap, fhp), &fh);
+	error = vfs_copyinfh_alloc(SCARG(uap, fhp), &fh);
 	if (error != 0) {
 		goto bad;
 	}
@@ -1553,7 +1612,7 @@ sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 				       &p->p_acflag)) != 0)
 		return error;
 
-	error = vfs_copyinfh(SCARG(uap, fhp), &fh);
+	error = vfs_copyinfh_alloc(SCARG(uap, fhp), &fh);
 	if (error != 0) {
 		goto out;
 	}
