@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $ */
+/* $NetBSD: com_acpi.c,v 1.20 2006/07/14 05:02:00 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.20 2006/07/14 05:02:00 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (!com_is_console(aa->aa_iot, io->ar_base, &ioh)) {
-		if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
+		if (bus_space_map(sc->sc_regs.cr_iot, io->ar_base, io->ar_length,
 		    0, &ioh)) {
 			aprint_error("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
