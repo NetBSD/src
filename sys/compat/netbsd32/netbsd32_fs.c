@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.28 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.29 2006/07/14 22:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.28 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.29 2006/07/14 22:09:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -550,8 +550,7 @@ netbsd32_fhstatvfs1(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
-	struct compat_30_fhandle fh;
-	struct mount *mp;
+	fhandle_t *fh;
 	struct vnode *vp;
 	int error;
 
@@ -561,23 +560,18 @@ netbsd32_fhstatvfs1(l, v, retval)
 	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
-	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fh))) != 0)
-		return error;
-
-	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return ESTALE;
-	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
-		return error;
+	if ((error = vfs_copyinfh((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh))
+	   != 0)
+		goto bad;
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
 
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
 	    M_WAITOK);
-	mp = vp->v_mount;
-	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0) {
-		vput(vp);
-		goto out;
-	}
+	error = dostatvfs(vp->v_mount, sbuf, l, SCARG(uap, flags), 1);
 	vput(vp);
+	if (error != 0)
+		goto out;
 
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
@@ -588,6 +582,8 @@ netbsd32_fhstatvfs1(l, v, retval)
 
 out:
 	free(sbuf, M_TEMP);
+bad:
+	vfs_copyinfh_free(fh);
 	return (error);
 }
 
@@ -785,8 +781,7 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	struct stat sb;
 	struct netbsd32_stat sb32;
 	int error;
-	struct compat_30_fhandle fh;
-	struct mount *mp;
+	fhandle_t *fh;
 	struct vnode *vp;
 
 	/*
@@ -794,25 +789,23 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	 */
 	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 	    &p->p_acflag)))
-		return (error);
+		return error;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fh))) != 0)
-		return (error);
+	if ((error = vfs_copyinfh(NETBSD32PTR64(SCARG(uap, fhp)), &fh)) != 0)
+		goto bad;
 
-	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return (ESTALE);
-	if (mp->mnt_op->vfs_fhtovp == NULL)
-		return EOPNOTSUPP;
-	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
-		return (error);
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
+
 	error = vn_stat(vp, &sb, l);
 	vput(vp);
 	if (error)
-		return (error);
+		goto bad;
 	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
-	return (error);
+bad:
+	vfs_copyinfh_free(fh);
+	return error;
 }
 
 int
