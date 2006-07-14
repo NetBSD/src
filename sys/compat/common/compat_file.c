@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.18 2006/07/13 23:52:55 pavel Exp $ */
+/*	$NetBSD: compat_file.c,v 1.19 2006/07/14 20:06:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.18 2006/07/13 23:52:55 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.19 2006/07/14 20:06:57 christos Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -728,7 +728,7 @@ bsd_sys_getfh(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_getfh_args /* {
+	struct compat_30_sys_getfh_args /* {
 		syscallarg(char *) fname;
 		syscallarg(fhandle_t *) fhp;
 	} */ *uap = v;
