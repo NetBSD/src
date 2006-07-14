@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_zalloc.9,v 1.2 2006/06/25 13:24:45 wiz Exp $
+.\"	$NetBSD: kmem_zalloc.9,v 1.3 2006/07/14 15:49:58 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 "size_t size" "km_flag_t kmflags"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
-.Fn kmem_alloc
+.Fn kmem_zalloc
 is the equivalent of
 .Fn kmem_alloc ,
 except that it initializes the memory to zero.
