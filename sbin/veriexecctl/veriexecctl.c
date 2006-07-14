@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.22 2006/07/14 22:42:05 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.23 2006/07/14 23:00:09 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/verified_exec.h>
+#include <sys/statvfs.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +74,6 @@ openlock(const char *path)
 }
 
 struct veriexec_up *
-/* dev_lookup(dev_t d) */
 dev_lookup(char *vfs)
 {
 	struct veriexec_up *p;
@@ -86,8 +86,7 @@ dev_lookup(char *vfs)
 }
 
 struct veriexec_up *
-/* dev_add(dev_t d) */
-dev_add(dev_t d, char *vfs)
+dev_add(char *vfs)
 {
 	struct veriexec_up *up;
 
@@ -111,19 +110,23 @@ phase1_preload(void)
 
 	while (!CIRCLEQ_EMPTY(&params_list)) {
 		struct veriexec_up *vup;
+		struct statvfs sv;
 
 		vup = CIRCLEQ_FIRST(&params_list);
+
+		if (statvfs(vup->vu_param.file, &sv) != 0)
+			err(1, "Can't statvfs() `%s'", vup->vu_param.file);
 
 		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) == -1) {
 			if (errno != EEXIST)
 				err(1, "Error in phase 1: Can't "
-				    "set hash table size for mount %s",
-				    vup->vu_param.file);
+				    "set hash table size for mount `%s'",
+				    sv.f_mntonname);
 		}
 
 		if (verbose) {
 			printf(" => Hash table sizing successful for mount "
-			    "%s. (%zu entries)\n", vup->vu_param.file,
+			    "`%s'. (%zu entries)\n", sv.f_mntonname,
 			    vup->vu_param.hash_size);
 		}
 
@@ -253,9 +256,14 @@ print_flags(unsigned char flags)
 static void
 print_query(struct veriexec_query_params *qp, char *file)
 {
+	struct statvfs sv;
 	int i;
 
+	if (statvfs(file, &sv) != 0)
+		err(1, "Can't statvfs() `%s'\n", file);
+
 	printf("Filename: %s\n", file);
+	printf("Mount: %s\n", sv.f_mntonname);
 	printf("Entry flags: ");
 	print_flags(qp->type);
 	printf("Entry status: %s\n", STATUS_STRING(qp->status));
@@ -299,7 +307,6 @@ main(int argc, char **argv)
 		struct veriexec_delete_params dp;
 		struct stat sb;
 
-		/* Get device and inode */
 		if (stat(argv[1], &sb) == -1)
 			err(1, "Can't stat `%s'", argv[1]);
 
