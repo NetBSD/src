@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.14 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.15 2006/07/14 23:00:09 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -97,10 +97,10 @@ statement	:	/* empty */
 		if (statvfs(params.file, &sf) == -1)
 			err(1, "Cannot statvfs `%s'", params.file);
 
-		(void)printf( " => Adding device ID %d. (%s)\n",
-		    sb.st_dev, sf.f_mntonname);
+		(void)printf( " => Adding mount `%s'.\n",
+		    sf.f_mntonname);
 	}
-	dev_add(sb.st_dev, params.file);
+	dev_add(params.file);
 phase_2_end:
 	(void)memset(&params, 0, sizeof(params));
 }
