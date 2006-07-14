@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.181 2006/06/24 05:14:01 mrg Exp $
+#	$NetBSD: bsd.README,v 1.182 2006/07/14 21:37:10 peter Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -216,7 +216,7 @@ MKOBJDIRS	If "no", don't create objdirs during a "make build".
 
 MKPAM		If "no", disables building of PAM authentication
 		infrastructure (libraries and support programs).
-		Default: no
+		Default: yes
 
 MKPF		If "no", don't build or install the pf programs and LKM.
 		Default: yes
