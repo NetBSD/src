@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.37 2006/07/15 16:43:35 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.37 2006/07/15 16:43:35 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $\n$NetBSD: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.37 2006/07/15 16:43:35 elad Exp $\n$NetBSD: verified_exec.c,v 1.37 2006/07/15 16:43:35 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -347,27 +347,6 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
  out:
 	vrele(nid.ni_vp);
 	return (error);
-}
-
-void
-veriexec_clear(void *data, int file_specific)
-{
-	if (file_specific) {
-		struct veriexec_file_entry *vfe = data;
-
-		if (vfe != NULL) {
-			if (vfe->fp != NULL)
-				free(vfe->fp, M_TEMP);
-			if (vfe->page_fp != NULL)
-				free(vfe->page_fp, M_TEMP);
-			free(vfe, M_TEMP);
-		}
-	} else {
-		struct veriexec_table_entry *vte = data;
-
-		if (vte != NULL)
-			free(vte, M_TEMP);
-	}
 }
 
 int
