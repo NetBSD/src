@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.136 2006/06/30 09:55:06 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.137 2006/07/15 05:54:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.136 2006/06/30 09:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.137 2006/07/15 05:54:10 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2032,10 +2032,10 @@ nfs_getreq(nd, nfsd, has_header)
 		uid = fxdr_unsigned(uid_t, *tl++);
 		gid = fxdr_unsigned(gid_t, *tl++);
 		kauth_cred_setuid(nd->nd_cr, uid);
-		kauth_cred_setgid(nd->nd_cr, gid);
 		kauth_cred_seteuid(nd->nd_cr, uid);
-		kauth_cred_setsvuid(nd->nd_cr, gid);
-		kauth_cred_setegid(nd->nd_cr, uid);
+		kauth_cred_setsvuid(nd->nd_cr, uid);
+		kauth_cred_setgid(nd->nd_cr, gid);
+		kauth_cred_setegid(nd->nd_cr, gid);
 		kauth_cred_setsvgid(nd->nd_cr, gid);
 
 		len = fxdr_unsigned(int, *tl);
