@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.60 2006/05/11 17:15:54 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.61 2006/07/15 20:52:59 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.60 2006/05/11 17:15:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61 2006/07/15 20:52:59 gdamore Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1154,7 +1154,7 @@ netbsd32_md_ioctl(fp, cmd, data32, l)
 	struct lwp *l;
 {
 	u_int size;
-	caddr_t data, memp = NULL;
+	caddr_t data;
 #define STK_PARAMS	128
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 	int error;
@@ -1179,8 +1179,6 @@ netbsd32_md_ioctl(fp, cmd, data32, l)
 	default:
 		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data32, l);
 	}
-	if (memp)
-		free(memp, M_IOCTLOPS);
 	return (error);
 }
 
