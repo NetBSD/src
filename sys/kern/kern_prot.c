@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.89 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.90 2006/07/15 06:31:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.89 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.90 2006/07/15 06:31:34 yamt Exp $");
 
 #include "opt_compat_43.h"
 
@@ -320,35 +320,41 @@ sys_setpgid(struct lwp *l, void *v, register_t *retval)
 int
 do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 {
-	int error;
 	struct proc *p = l->l_proc;
 	kauth_cred_t cred = p->p_cred;
 
-	/* Superuser can do anything it wants to.... */
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
-	if (error) {
-		/* Otherwise check new value is one of the allowed
-		   existing values. */
-		if (r != -1 && !((flags & ID_R_EQ_R) && r == kauth_cred_getuid(cred))
-			    && !((flags & ID_R_EQ_E) && r == kauth_cred_geteuid(cred))
-			    && !((flags & ID_R_EQ_S) && r == kauth_cred_getsvuid(cred)))
+	/*
+	 * check new value is one of the allowed existing values.
+	 * otherwise, check if we have root privilege.
+	 */
+	if ((r != -1
+	    && !((flags & ID_R_EQ_R) && r == kauth_cred_getuid(cred))
+	    && !((flags & ID_R_EQ_E) && r == kauth_cred_geteuid(cred))
+	    && !((flags & ID_R_EQ_S) && r == kauth_cred_getsvuid(cred))) ||
+	    (e != -1
+	    && !((flags & ID_E_EQ_R) && e == kauth_cred_getuid(cred))
+	    && !((flags & ID_E_EQ_E) && e == kauth_cred_geteuid(cred))
+	    && !((flags & ID_E_EQ_S) && e == kauth_cred_getsvuid(cred))) ||
+	    (sv != -1
+	    && !((flags & ID_S_EQ_R) && sv == kauth_cred_getuid(cred))
+	    && !((flags & ID_S_EQ_E) && sv == kauth_cred_geteuid(cred))
+	    && !((flags & ID_S_EQ_S) && sv == kauth_cred_getsvuid(cred)))) {
+		int error;
+
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &p->p_acflag);
+		if (error != 0) {
 			return error;
-		if (e != -1 && !((flags & ID_E_EQ_R) && e == kauth_cred_getuid(cred))
-			    && !((flags & ID_E_EQ_E) && e == kauth_cred_geteuid(cred))
-			    && !((flags & ID_E_EQ_S) && e == kauth_cred_getsvuid(cred)))
-			return error;
-		if (sv != -1 && !((flags & ID_S_EQ_R) && sv == kauth_cred_getuid(cred))
-			    && !((flags & ID_S_EQ_E) && sv == kauth_cred_geteuid(cred))
-			    && !((flags & ID_S_EQ_S) && sv == kauth_cred_getsvuid(cred)))
-			return error;
+		}
 	}
 
 	/* If nothing has changed, short circuit the request */
 	if ((r == -1 || r == kauth_cred_getuid(cred))
 	    && (e == -1 || e == kauth_cred_geteuid(cred))
-	    && (sv == -1 || sv == kauth_cred_getsvuid(cred)))
+	    && (sv == -1 || sv == kauth_cred_getsvuid(cred))) {
 		/* nothing to do */
 		return 0;
+	}
 
 	/* The pcred structure is not actually shared... */
 	if (r != -1 && r != kauth_cred_getuid(cred)) {
@@ -381,35 +387,41 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 int
 do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 {
-	int error;
 	struct proc *p = l->l_proc;
 	kauth_cred_t cred = p->p_cred;
 
-	/* Superuser can do anything it wants to.... */
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
-	if (error) {
-		/* Otherwise check new value is one of the allowed
-		   existing values. */
-		if (r != -1 && !((flags & ID_R_EQ_R) && r == kauth_cred_getgid(cred))
-			    && !((flags & ID_R_EQ_E) && r == kauth_cred_getegid(cred))
-			    && !((flags & ID_R_EQ_S) && r == kauth_cred_getsvgid(cred)))
+	/*
+	 * check new value is one of the allowed existing values.
+	 * otherwise, check if we have root privilege.
+	 */
+	if ((r != -1
+	    && !((flags & ID_R_EQ_R) && r == kauth_cred_getgid(cred))
+	    && !((flags & ID_R_EQ_E) && r == kauth_cred_getegid(cred))
+	    && !((flags & ID_R_EQ_S) && r == kauth_cred_getsvgid(cred))) ||
+	    (e != -1
+	    && !((flags & ID_E_EQ_R) && e == kauth_cred_getgid(cred))
+	    && !((flags & ID_E_EQ_E) && e == kauth_cred_getegid(cred))
+	    && !((flags & ID_E_EQ_S) && e == kauth_cred_getsvgid(cred))) ||
+	    (sv != -1
+	    && !((flags & ID_S_EQ_R) && sv == kauth_cred_getgid(cred))
+	    && !((flags & ID_S_EQ_E) && sv == kauth_cred_getegid(cred))
+	    && !((flags & ID_S_EQ_S) && sv == kauth_cred_getsvgid(cred)))) {
+		int error;
+
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &p->p_acflag);
+		if (error != 0) {
 			return error;
-		if (e != -1 && !((flags & ID_E_EQ_R) && e == kauth_cred_getgid(cred))
-			    && !((flags & ID_E_EQ_E) && e == kauth_cred_getegid(cred))
-			    && !((flags & ID_E_EQ_S) && e == kauth_cred_getsvgid(cred)))
-			return error;
-		if (sv != -1 && !((flags & ID_S_EQ_R) && sv == kauth_cred_getgid(cred))
-			    && !((flags & ID_S_EQ_E) && sv == kauth_cred_getegid(cred))
-			    && !((flags & ID_S_EQ_S) && sv == kauth_cred_getsvgid(cred)))
-			return error;
+		}
 	}
 
 	/* If nothing has changed, short circuit the request */
 	if ((r == -1 || r == kauth_cred_getgid(cred))
 	    && (e == -1 || e == kauth_cred_getegid(cred))
-	    && (sv == -1 || sv == kauth_cred_getsvgid(cred)))
+	    && (sv == -1 || sv == kauth_cred_getsvgid(cred))) {
 		/* nothing to do */
 		return 0;
+	}
 
 	/* The pcred structure is not actually shared... */
 	if (r != -1)
