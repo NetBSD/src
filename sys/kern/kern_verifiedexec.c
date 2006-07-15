@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.56 2006/07/15 16:48:51 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.57 2006/07/15 20:07:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.56 2006/07/15 16:48:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.57 2006/07/15 20:07:36 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -220,8 +220,9 @@ veriexec_find_ops(u_char *name)
  */
 int
 veriexec_fp_calc(struct lwp *l, struct vnode *vp,
-		 struct veriexec_file_entry *vfe, uint64_t size, u_char *fp)
+    struct veriexec_file_entry *vfe, u_char *fp)
 {
+	struct vattr va;
 	void *ctx, *page_ctx;
 	u_char *buf, *page_fp;
 	off_t offset, len;
@@ -230,6 +231,10 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 
 	if (vfe->ops == NULL)
 		panic("Veriexec: Operations vector is NULL");
+
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
+	if (error)
+		return (error);
 
 #if 0 /* XXX - for now */
 	if ((vfe->type & VERIEXEC_UNTRUSTED) &&
@@ -246,7 +251,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	page_fp = NULL;
 	npages = 0;
 	if (do_perpage) {
-		npages = (size >> PAGE_SHIFT) + 1;
+		npages = (va.va_size >> PAGE_SHIFT) + 1;
 		page_fp = (u_char *) malloc(vfe->ops->hash_len * npages,
 						 M_TEMP, M_WAITOK|M_ZERO);
 		vfe->page_fp = page_fp;
@@ -259,9 +264,9 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	len = 0;
 	error = 0;
 	pagen = 0;
-	for (offset = 0; offset < size; offset += PAGE_SIZE) {
-		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
-						    : PAGE_SIZE;
+	for (offset = 0; offset < va.va_size; offset += PAGE_SIZE) {
+		len = ((va.va_size - offset) < PAGE_SIZE) ?
+		    (va.va_size - offset) : PAGE_SIZE;
 
 		error = vn_rdwr(UIO_READ, vp, buf, len, offset,
 				UIO_SYSSPACE,
@@ -392,16 +397,11 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
     struct veriexec_file_entry **ret)
 {
 	struct veriexec_file_entry *vfe;
-	struct vattr va;
 	u_char *digest;
 	int error;
 
 	if (vp->v_type != VREG)
 		return (0);
-
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
-	if (error)
-		return (error);
 
 	/* Lookup veriexec table entry, save pointer if requested. */
 	vfe = veriexec_lookup(vp);
@@ -418,7 +418,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		/* Calculate fingerprint for on-disk file. */
 		digest = (u_char *) malloc(vfe->ops->hash_len, M_TEMP,
 					   M_WAITOK);
-		error = veriexec_fp_calc(l, vp, vfe, va.va_size, digest);
+		error = veriexec_fp_calc(l, vp, vfe, digest);
 		if (error) {
 			veriexec_report("Fingerprint calculation error.",
 					name, NULL, REPORT_NOVERBOSE,
@@ -504,8 +504,8 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
  * Evaluate per-page fingerprints.
  */
 int
-veriexec_page_verify(struct veriexec_file_entry *vfe, struct vattr *va,
-		     struct vm_page *pg, size_t idx, struct lwp *l)
+veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
+    size_t idx, struct lwp *l)
 {
 	void *ctx;
 	u_char *fp;
@@ -578,12 +578,6 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 {
 	struct veriexec_file_entry *vfe;
 	struct veriexec_table_entry *vte;
-	struct vattr va;
-	int error;
-
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
-	if (error)
-		return (error);
 
 	vfe = veriexec_lookup(vp);
 	if (vfe == NULL) {
@@ -611,7 +605,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 
 	vte->vte_count--;
 
-	return (error);
+	return (0);
 }
 
 /*
@@ -622,12 +616,6 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 		   struct lwp *l)
 {
 	struct veriexec_file_entry *vfe;
-	struct vattr va;
-	int error;
-
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
-	if (error)
-		return (error);
 
 	if (veriexec_strict >= 3) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
