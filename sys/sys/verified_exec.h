@@ -1,7 +1,7 @@
-/*	$NetBSD: verified_exec.h,v 1.30 2006/07/15 16:33:17 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.31 2006/07/15 16:48:51 elad Exp $	*/
 
 /*-
- * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Elad Efrat <elad@NetBSD.org>
  * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * This code is derived from software contributed to The NetBSD Foundation

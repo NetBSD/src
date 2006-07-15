@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.55 2006/07/15 16:43:35 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.56 2006/07/15 16:48:51 elad Exp $	*/
 
 /*-
- * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Elad Efrat <elad@NetBSD.org>
  * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.55 2006/07/15 16:43:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.56 2006/07/15 16:48:51 elad Exp $");
 
 #include "opt_verified_exec.h"
 
