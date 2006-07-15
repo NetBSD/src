@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.251 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.252 2006/07/15 16:32:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.251 2006/07/14 18:41:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.252 2006/07/15 16:32:29 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1266,7 +1266,7 @@ vfs_composefh(struct vnode *vp, fhandle_t *fhp, size_t *fh_size)
 		return EOPNOTSUPP;
 	}
 	fidp = NULL;
-	if (*fh_size <= FHANDLE_SIZE_MIN) {
+	if (*fh_size < FHANDLE_SIZE_MIN) {
 		fidsize = 0;
 	} else {
 		fidsize = *fh_size - offsetof(fhandle_t, fh_fid);
