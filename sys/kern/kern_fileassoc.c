@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.1 2006/07/14 18:41:40 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.2 2006/07/15 16:42:12 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -223,7 +223,9 @@ fileassoc_table_delete(struct mount *mp)
 
 			for (j = 0; j < fileassoc_nhooks; j++)
 				if (fileassoc_hooks[j].hook_cleanup_cb != NULL)
-					(fileassoc_hooks[j].hook_cleanup_cb)(mhe->hooks[j], 1);
+					(fileassoc_hooks[j].hook_cleanup_cb)
+					    (mhe->hooks[j],
+					    FILEASSOC_CLEANUP_FILE);
 
 			free(mhe, M_TEMP);
 		}
@@ -231,7 +233,8 @@ fileassoc_table_delete(struct mount *mp)
 
 	for (j = 0; j < fileassoc_nhooks; j++)
 		if (fileassoc_hooks[j].hook_cleanup_cb != NULL)
-			(fileassoc_hooks[j].hook_cleanup_cb)(tbl->tables[j], 0);
+			(fileassoc_hooks[j].hook_cleanup_cb)(tbl->tables[j],
+			    FILEASSOC_CLEANUP_TABLE);
 
 	/* Remove hash table and sysctl node */
 	hashdone(tbl->hash_tbl, M_TEMP);
@@ -263,7 +266,8 @@ fileassoc_table_clear(struct mount *mp, fileassoc_t id)
 
 		LIST_FOREACH(mhe, &hh[i], entries) {
 			if ((mhe->hooks[id] != NULL) && cleanup_cb != NULL)
-				cleanup_cb(mhe->hooks[id], FILEASSOC_CLEANUP_FILE);
+				cleanup_cb(mhe->hooks[id],
+				    FILEASSOC_CLEANUP_FILE);
 
 			mhe->hooks[id] = NULL;
 		}
