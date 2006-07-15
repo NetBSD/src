@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.31 2006/07/15 16:48:51 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.32 2006/07/15 20:07:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -175,16 +175,16 @@ struct veriexec_table_entry {
 int veriexec_add_fp_ops(struct veriexec_fp_ops *);
 void veriexec_init_fp_ops(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
-int veriexec_fp_calc(struct lwp *, struct vnode *,
-    struct veriexec_file_entry *, uint64_t, u_char *);
+int veriexec_fp_calc(struct lwp *, struct vnode *, struct veriexec_file_entry *,
+    u_char *);
 int veriexec_fp_cmp(struct veriexec_fp_ops *, u_char *, u_char *);
 struct veriexec_table_entry *veriexec_tblfind(struct vnode *);
 struct veriexec_file_entry *veriexec_lookup(struct vnode *);
 int veriexec_hashadd(struct vnode *, struct veriexec_file_entry *);
 int veriexec_verify(struct lwp *, struct vnode *,
     const u_char *, int, struct veriexec_file_entry **);
-int veriexec_page_verify(struct veriexec_file_entry *, struct vattr *,
-    struct vm_page *, size_t, struct lwp *);
+int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *, size_t,
+    struct lwp *);
 int veriexec_removechk(struct lwp *, struct vnode *, const char *);
 int veriexec_renamechk(struct vnode *, const char *, const char *,
     struct lwp *);
