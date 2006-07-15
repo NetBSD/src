@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.54 2006/07/15 16:33:16 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.55 2006/07/15 16:43:35 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.54 2006/07/15 16:33:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.55 2006/07/15 16:43:35 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -685,4 +685,25 @@ veriexec_report(const u_char *msg, const u_char *filename,
 
 	if (die)
 		panic("Veriexec: Unrecoverable error.");
+}
+
+void
+veriexec_clear(void *data, int file_specific)
+{
+	if (file_specific) {
+		struct veriexec_file_entry *vfe = data;
+
+		if (vfe != NULL) {
+			if (vfe->fp != NULL)
+				free(vfe->fp, M_TEMP);
+			if (vfe->page_fp != NULL)
+				free(vfe->page_fp, M_TEMP);
+			free(vfe, M_TEMP);
+		}
+	} else {
+		struct veriexec_table_entry *vte = data;
+
+		if (vte != NULL)
+			free(vte, M_TEMP);
+	}
 }
