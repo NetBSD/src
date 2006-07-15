@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.2 2006/07/14 22:12:16 wiz Exp $
+.\" $NetBSD: fileassoc.9,v 1.3 2006/07/15 07:19:51 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 14, 2006
+.Dd July 15, 2006
 .Dt FILEASSOC 9
 .Os
 .Sh NAME
@@ -296,11 +296,11 @@ Another useful thing would be to add our private data to a file.
 For example, let's assume we keep a custom ACL with each file:
 .Bd -literal -offset indent
 int
-myhook_acl_add(struct vattr *va, struct myhook_acl *acl)
+myhook_acl_add(struct vnode *vp, struct myhook_acl *acl)
 {
 	int error;
 
-	error = fileassoc_add(va-\*[Gt]va_fsid, va-\*[Gt]va_fileid, myhook_id, acl);
+	error = fileassoc_add(vp, myhook_id, acl);
 	if (error) {
 		printf("Myhook: Could not add ACL.\n");
 		...handle error...
@@ -319,12 +319,13 @@ Creating a new table is simple:
 .Bd -literal -offset indent
 int error;
 
-error = fileassoc_table_add(va-\*[Gt]va_fsid, nentries);
+error = fileassoc_table_add(vp->v_mount, nentries);
 if (error)
 	...handle error...
 .Ed
 .Pp
-The second argument,
+The second argument to
+.Fn fileassoc_table_add ,
 .Ar nentries ,
 should be approximately the number of files it is predicted that will
 have entries in the table, although you can provide a pseudo-safe constant
@@ -335,11 +336,11 @@ store with each file.
 To do that you can use the following:
 .Bd -literal -offset indent
 int
-myhook_acl_access(struct vattr *va, int access_flags)
+myhook_acl_access(struct vnode *vp, int access_flags)
 {
 	struct myhook_acl *acl;
 
-	acl = fileassoc_lookup(va-\*[Gt]va_fsid, va-\*[Gt]va_fileid, myhook_id);
+	acl = fileassoc_lookup(vp, myhook_id);
 	if (acl == NULL)
 		return (0);
 
@@ -358,7 +359,7 @@ an file:
 .Bd -literal -offset indent
 int error;
 
-error = fileassoc_clear(va-\*[Gt]va_fsid, va-\*[Gt]va_fileid, myhook_id);
+error = fileassoc_clear(vp, myhook_id);
 if (error) {
 	printf("Myhook: Error occured during fileassoc removal.\n");
 	...handle error...
