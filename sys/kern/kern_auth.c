@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.8 2006/06/13 22:56:46 dyoung Exp $ */
+/* $NetBSD: kern_auth.c,v 1.9 2006/07/15 05:54:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -336,7 +336,7 @@ int
 kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(len < sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]));
+	KASSERT(len <= sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]));
 
 	simple_lock(&cred->cr_lock);
 
