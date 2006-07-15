@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.35 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.35 2006/07/14 18:41:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.35 2006/07/14 18:41:40 elad Exp $\n$NetBSD: verified_exec.c,v 1.35 2006/07/14 18:41:40 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $\n$NetBSD: verified_exec.c,v 1.36 2006/07/15 16:33:16 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ __RCSID("$Id: verified_exec.c,v 1.35 2006/07/14 18:41:40 elad Exp $\n$NetBSD: ve
 #include <sys/kauth.h>
 
 #include <sys/fileassoc.h>
+#include <sys/syslog.h>
 
 /* count of number of times device is open (we really only allow one open) */
 static unsigned int veriexec_dev_usage;
@@ -113,14 +114,12 @@ int     veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		       struct lwp *l);
 
 void
-veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
-		   void *aux)
+veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self, void *aux)
 {
 	veriexec_dev_usage = 0;
 
 	if (veriexec_verbose >= 2)
-		printf("Veriexec: veriexecattach: Veriexec pseudo-device"
-		       "attached.\n");
+		log(LOG_DEBUG, "Veriexec: Pseudo-device attached.\n");
 }
 
 int
@@ -128,19 +127,20 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 		 int fmt __unused, struct lwp *l __unused)
 {
 	if (veriexec_verbose >= 2) {
-		printf("Veriexec: veriexecopen: Veriexec load device "
-		       "open attempt by uid=%u, pid=%u. (dev=%u)\n",
-		       kauth_cred_geteuid(l->l_proc->p_cred),
-		       l->l_proc->p_pid, dev);
+		log(LOG_DEBUG, "Veriexec: Pseudo-device open attempt by "
+		    "uid=%u, pid=%u. (dev=%u)\n",
+		    kauth_cred_geteuid(l->l_proc->p_cred), l->l_proc->p_pid,
+		    dev);
 	}
 
 	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-			      &l->l_proc->p_acflag) != 0)
+	    &l->l_proc->p_acflag) != 0)
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
 		if (veriexec_verbose >= 2)
-			printf("Veriexec: load device already in use.\n");
+			log(LOG_ERR, "Veriexec: pseudo-device already in "
+			    "use.\n");
 
 		return(EBUSY);
 	}
@@ -150,8 +150,8 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 }
 
 int
-veriexecclose(dev_t dev __unused, int flags __unused,
-		  int fmt __unused, struct lwp *l __unused)
+veriexecclose(dev_t dev __unused, int flags __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	if (veriexec_dev_usage > 0)
 		veriexec_dev_usage--;
@@ -159,14 +159,14 @@ veriexecclose(dev_t dev __unused, int flags __unused,
 }
 
 int
-veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
-		  int flags __unused, struct lwp *l)
+veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flags __unused,
+    struct lwp *l)
 {
 	int error = 0;
 
 	if (veriexec_strict > 0) {
-		printf("Veriexec: veriexecioctl: Strict mode, modifying "
-		       "veriexec tables is not permitted.\n");
+		log(LOG_WARNING, "Veriexec: Strict mode, modifying tables not "
+		    "permitted.\n");
 
 		return (EPERM);
 	}
@@ -174,7 +174,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 	switch (cmd) {
 	case VERIEXEC_TABLESIZE:
 		error = veriexec_newtable((struct veriexec_sizing_params *)
-					  data, l);
+		    data, l);
 		break;
 
 	case VERIEXEC_LOAD:
@@ -182,7 +182,8 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		break;
 
 	case VERIEXEC_DELETE:
-		error = veriexec_delete((struct veriexec_delete_params *)data, l);
+		error = veriexec_delete((struct veriexec_delete_params *)data,
+		    l);
 		break;
 
 	case VERIEXEC_QUERY:
@@ -203,7 +204,7 @@ static void
 veriexec_drvinit(void *unused __unused)
 {
 	make_dev(&verifiedexec_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
-		 "veriexec");
+	    "veriexec");
 	verifiedexecattach(0, 0, 0);
 }
 
@@ -244,10 +245,12 @@ veriexec_newtable(struct veriexec_sizing_params *params, struct lwp *l)
 
 	sysctl_createv(NULL, 0, &vte->vte_node, NULL,
 		       CTLFLAG_READONLY, CTLTYPE_STRING, "mntpt",
-		       NULL, NULL, 0, nid.ni_vp->v_mount->mnt_stat.f_mntonname, 0, CTL_CREATE, CTL_EOL);
+		       NULL, NULL, 0, nid.ni_vp->v_mount->mnt_stat.f_mntonname,
+		       0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(NULL, 0, &vte->vte_node, NULL,
 		       CTLFLAG_READONLY, CTLTYPE_STRING, "fstype",
-		       NULL, NULL, 0, nid.ni_vp->v_mount->mnt_stat.f_fstypename, 0, CTL_CREATE, CTL_EOL);
+		       NULL, NULL, 0, nid.ni_vp->v_mount->mnt_stat.f_fstypename,
+		       0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(NULL, 0, &vte->vte_node, NULL,
 		       CTLFLAG_READONLY, CTLTYPE_QUAD, "nentries",
 		       NULL, NULL, 0, &vte->vte_count, 0, CTL_CREATE, CTL_EOL);
@@ -262,7 +265,6 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 {
 	struct veriexec_file_entry *hh, *e;
 	struct nameidata nid;
-	struct vattr va;
 	int error;
 
 	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
@@ -272,21 +274,11 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 
 	/* Add only regular files. */
 	if (nid.ni_vp->v_type != VREG) {
-		printf("Veriexec: veriexecioctl: Not adding \"%s\": "
-		    "Not a regular file.\n", params->file);
-		vrele(nid.ni_vp);
-		return (EINVAL);
+		log(LOG_ERR, "Veriexec: Not adding `%s': Not a regular file.\n",
+		    params->file);
+		error = EINVAL;
+		goto out;
 	}
-
-	/* Get attributes for device and fileid. */
-	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_cred, l);
-	if (error) {
-		vrele(nid.ni_vp);
-		return (error);
-	}
-
-	/* Release our reference to the vnode. (namei) */
-	vrele(nid.ni_vp);
 
 	hh = veriexec_lookup(nid.ni_vp);
 	if (hh != NULL) {
@@ -295,20 +287,18 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		 * the signature file. Just give collision info
 		 * and return.
 		 */
-		printf("veriexec: Duplicate entry. [%s, %ld:%llu] "
-		       "old[type=0x%02x, algorithm=%s], "
-		       "new[type=0x%02x, algorithm=%s] "
-		       "(%s fingerprint)\n",
-		       params->file, va.va_fsid,
-		       (unsigned long long)va.va_fileid,
-		       hh->type, hh->ops->type,
-		       params->type, params->fp_type,
-		       (((hh->ops->hash_len != params->size) ||
-			(memcmp(hh->fp, params->fingerprint,
-				min(hh->ops->hash_len, params->size))
-				!= 0)) ? "different" : "same"));
+		log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s': "
+		    "old[type=0x%02x, algorithm=%s], "
+		    "new[type=0x%02x, algorithm=%s] (%s fingerprint)\n",
+		    params->file, hh->type, hh->ops->type,
+		    params->type, params->fp_type,
+		    (((hh->ops->hash_len != params->size) ||
+		     (memcmp(hh->fp, params->fingerprint,
+		      min(hh->ops->hash_len, params->size))
+		      != 0)) ? "different" : "same"));
 
-			return (0);
+			error = 0;
+			goto out;
 	}
 
 	e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
@@ -320,12 +310,10 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	e->last_page_size = 0;
 	if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
 		free(e, M_TEMP);
-		printf("Veriexec: veriexecioctl: Invalid or unknown "
-		       "fingerprint type \"%s\" for file \"%s\" "
-		       "(dev=%ld, fileid=%llu)\n", params->fp_type,
-		       params->file, va.va_fsid,
-		       (unsigned long long)va.va_fileid);
-		return(EINVAL);
+		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
+		    "`%s' for file `%s'.\n", params->fp_type, params->file);
+		error = EINVAL;
+		goto out;
 	}
 
 	/*
@@ -337,30 +325,27 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	 * string.
 	 */
 	if (e->ops->hash_len != params->size) {
-		printf("Veriexec: veriexecioctl: Inconsistent "
-		       "fingerprint size for type \"%s\" for file "
-		       "\"%s\" (dev=%ld, fileid=%llu), size was %u "
-		       "was expecting %zu\n", params->fp_type,
-		       params->file, va.va_fsid,
-		       (unsigned long long)va.va_fileid,
-		       params->size, e->ops->hash_len);
+		log(LOG_ERR, "Veriexec: Inconsistent fingerprint size for "
+		    "type `%s' for file `%s': Size was %u, should be %zu.\n",
+		    params->fp_type, params->file, params->size,
+		    e->ops->hash_len);
 
 		free(e, M_TEMP);
-		return(EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
 	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
 
-	veriexec_report("New entry.", params->file, &va, NULL,
-			REPORT_VERBOSE_HIGH, REPORT_NOALARM,
-			REPORT_NOPANIC);
+	veriexec_report("New entry.", params->file, NULL,
+	    REPORT_VERBOSE_HIGH, REPORT_NOALARM, REPORT_NOPANIC);
 
 
 	error = veriexec_hashadd(nid.ni_vp, e);
-	if (error)
-		return (error);
 
+ out:
+	vrele(nid.ni_vp);
 	return (error);
 }
 
@@ -370,15 +355,18 @@ veriexec_clear(void *data, int file_specific)
 	if (file_specific) {
 		struct veriexec_file_entry *vfe = data;
 
-		if (vfe->fp != NULL)
-			free(vfe->fp, M_TEMP);
-		if (vfe->page_fp != NULL)
-			free(vfe->page_fp, M_TEMP);
-		free(vfe, M_TEMP);
+		if (vfe != NULL) {
+			if (vfe->fp != NULL)
+				free(vfe->fp, M_TEMP);
+			if (vfe->page_fp != NULL)
+				free(vfe->page_fp, M_TEMP);
+			free(vfe, M_TEMP);
+		}
 	} else {
 		struct veriexec_table_entry *vte = data;
 
-		free(vte, M_TEMP);
+		if (vte != NULL)
+			free(vte, M_TEMP);
 	}
 }
 
