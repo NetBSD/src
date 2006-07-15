@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2006/04/18 12:26:45 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23 2006/07/15 08:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2006/04/18 12:26:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2006/07/15 08:08:23 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2006/04/18 12:26:45 tsutsui Exp
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
+#include <dev/pci/pciide_apollo_reg.h>
 
 #include <cobalt/dev/gtreg.h>
 
@@ -235,10 +236,22 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 	    PCI_PRODUCT(id) == PCI_PRODUCT_GALILEO_GT64011)
 	        return 0;
 
-	/* Don't configure on-board VIA VT82C586 (pcib, viaide, uhci) */
-	if (bus == 0 && dev == 9)
+	/* Don't configure on-board VIA VT82C586 (pcib, uhci) */
+	if (bus == 0 && dev == 9 && (func == 0 || func == 2))
 		return 0;
 
+	/* Enable viaide secondary port. Some firmware doesn't enable it. */
+	if (bus == 0 && dev == 9 && func == 1) {
+		pcitag_t tag;
+		pcireg_t csr;
+
+#define	APO_VIAIDECONF	(APO_VIA_REGBASE + 0x00)
+
+		tag = pci_make_tag(pc, bus, dev, func);
+		csr = pci_conf_read(pc, tag, APO_VIAIDECONF);
+		pci_conf_write(pc, tag, APO_VIAIDECONF,
+		    csr | APO_IDECONF_EN(1));
+	}
 	return PCI_CONF_DEFAULT & ~(PCI_COMMAND_SERR_ENABLE |
 	    PCI_COMMAND_PARITY_ENABLE);
 }
