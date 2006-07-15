@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.42 2006/07/15 02:09:47 jschauma Exp $ */
+/* $NetBSD: cp.c,v 1.43 2006/07/15 20:42:55 jschauma Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.42 2006/07/15 02:09:47 jschauma Exp $");
+__RCSID("$NetBSD: cp.c,v 1.43 2006/07/15 20:42:55 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char empty[] = "";
 PATH_T to = { to.p_path, empty };
 
 uid_t myuid;
-int Hflag, Lflag, Rflag, Pflag, fflag, iflag, pflag, rflag, vflag, Nflag;
+int Rflag, fflag, iflag, pflag, rflag, vflag, Nflag;
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 {
 	struct stat to_stat, tmp_stat;
 	enum op type;
-	int ch, fts_options, r, have_trailing_slash;
+	int Hflag, Lflag, Pflag, ch, fts_options, r, have_trailing_slash;
 	char *target, **src;
 
 	(void)setlocale(LC_ALL, "");
@@ -168,7 +168,6 @@ main(int argc, char *argv[])
 		fts_options &= ~FTS_PHYSICAL;
 		fts_options |= FTS_LOGICAL;
 	}
-
 	if (Rflag) {
 		if (Hflag)
 			fts_options |= FTS_COMFOLLOW;
@@ -176,7 +175,7 @@ main(int argc, char *argv[])
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
-	} else if (!Pflag) {
+	} else {
 		fts_options &= ~FTS_PHYSICAL;
 		fts_options |= FTS_LOGICAL | FTS_COMFOLLOW;
 	}
@@ -214,10 +213,7 @@ main(int argc, char *argv[])
 	 *
 	 * In (2), the real target is not directory, but "directory/source".
 	 */
-	if (rflag || (Rflag && (Lflag || Hflag)))
-		r = stat(to.p_path, &to_stat);
-	else
-		r = lstat(to.p_path, &to_stat);
+	r = stat(to.p_path, &to_stat);
 	if (r == -1 && errno != ENOENT) {
 		err(EXIT_FAILURE, "%s", to.p_path);
 		/* NOTREACHED */
@@ -286,11 +282,10 @@ copy(char *argv[], enum op type, int fts_options)
 	struct stat to_stat;
 	FTS *ftsp;
 	FTSENT *curr;
-	int base, dne, rval, sval;
+	int base, dne, rval;
 	size_t nlen;
 	char *p, *target_mid;
 
-	dne = 0;
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
@@ -375,10 +370,8 @@ copy(char *argv[], enum op type, int fts_options)
 			STRIP_TRAILING_SLASH(to);
 		}
 
-		sval = (rflag || (Rflag && (Lflag || Hflag))) ?
-				stat(to.p_path, &to_stat) : lstat(to.p_path, &to_stat);
 		/* Not an error but need to remember it happened */
-		if (sval == -1)
+		if (stat(to.p_path, &to_stat) == -1)
 			dne = 1;
 		else {
 			if (to_stat.st_dev == curr->fts_statp->st_dev &&
@@ -397,8 +390,7 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 				continue;
 			}
-			if (!S_ISDIR(curr->fts_statp->st_mode))
-				dne = 0;
+			dne = 0;
 		}
 
 		switch (curr->fts_statp->st_mode & S_IFMT) {
