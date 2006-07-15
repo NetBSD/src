@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97 2006/07/04 00:30:22 christos Exp $
+# $NetBSD: GENERIC,v 1.98 2006/07/15 07:55:20 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 maxusers	32		# estimated number of users
 
@@ -880,6 +880,9 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec
+#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #options VERIFIED_EXEC
