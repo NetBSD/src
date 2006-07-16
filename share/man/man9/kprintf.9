@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.19 2006/01/15 21:45:50 rillig Exp $
+.\"     $NetBSD: kprintf.9,v 1.20 2006/07/16 08:25:07 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,6 +176,7 @@ and
 .Fn vsnprintf
 functions return the number of characters placed in the buffer
 .Fa buf .
+This is different to the user-space functions of the same name.
 .Pp
 The
 .Fn tprintf_open
