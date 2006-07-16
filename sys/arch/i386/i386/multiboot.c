@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.5 2006/07/16 21:16:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.5 2006/07/16 21:16:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,6 +279,7 @@ copy_syms(struct multiboot_info *mi)
 	int i;
 	Elf32_Shdr *symtabp, *strtabp;
 	struct symbols_image *si;
+	extern void start(void);
 
 	/*
 	 * Check if the Multiboot information header has symbols or not.
@@ -340,8 +341,12 @@ copy_syms(struct multiboot_info *mi)
 	 */
 	memcpy(si->i_ehdr.e_ident, ELFMAG, SELFMAG);
 	si->i_ehdr.e_ident[EI_CLASS] = ELFCLASS32;
+	si->i_ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
+	si->i_ehdr.e_ident[EI_VERSION] = EV_CURRENT;
 	si->i_ehdr.e_type = ET_EXEC;
+	si->i_ehdr.e_machine = EM_386;
 	si->i_ehdr.e_version = 1;
+	si->i_ehdr.e_entry = (Elf32_Addr)start;
 	si->i_ehdr.e_shoff = offsetof(struct symbols_image, i_shdr);
 	si->i_ehdr.e_ehsize = sizeof(si->i_ehdr);
 	si->i_ehdr.e_shentsize = sizeof(si->i_shdr[0]);
