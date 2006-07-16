@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.31 2006/07/15 20:42:55 jschauma Exp $ */
+/* $NetBSD: utils.c,v 1.32 2006/07/16 16:22:24 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.31 2006/07/15 20:42:55 jschauma Exp $");
+__RCSID("$NetBSD: utils.c,v 1.32 2006/07/16 16:22:24 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ copy_file(FTSENT *entp, int dne)
 {
 	static char buf[MAXBSIZE];
 	struct stat to_stat, *fs;
-	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
+	int ch, checkch, from_fd, rcount, rval, to_fd, tolnk, wcount;
 	char *p;
 	
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
@@ -82,7 +82,9 @@ copy_file(FTSENT *entp, int dne)
 		return (1);
 	}
 
+	to_fd = -1;
 	fs = entp->fts_statp;
+	tolnk = ((Rflag && !(Lflag || Hflag)) || Pflag);
 
 	/*
 	 * If the file exists and we're interactive, verify with the user.
@@ -93,6 +95,9 @@ copy_file(FTSENT *entp, int dne)
 	 * modified by the umask.)
 	 */
 	if (!dne) {
+		struct stat sb;
+		int sval;
+
 		if (iflag) {
 			(void)fprintf(stderr, "overwrite %s? ", to.p_path);
 			checkch = ch = getchar();
@@ -103,13 +108,21 @@ copy_file(FTSENT *entp, int dne)
 				return (0);
 			}
 		}
-		/* overwrite existing destination file name */
-		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
+
+		sval = tolnk ?
+			lstat(to.p_path, &sb) : stat(to.p_path, &sb);
+		if (sval == -1) {
+			warn("stat: %s", to.p_path);
+			return (1);
+		}
+
+		if (!(tolnk && S_ISLNK(sb.st_mode)))
+			to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
 	} else
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
 		    fs->st_mode & ~(S_ISUID | S_ISGID));
 
-	if (to_fd == -1 && fflag) {
+	if (to_fd == -1 && (fflag || tolnk)) {
 		/*
 		 * attempt to remove existing destination file name and
 		 * create a new file
