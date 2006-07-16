@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.28 2006/07/15 20:42:55 jschauma Exp $
+.\"	$NetBSD: cp.1,v 1.29 2006/07/16 16:22:24 jschauma Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,18 +42,18 @@
 .Nm
 .Oo
 .Fl R
-.Op Fl H | Fl L | Fl P
+.Op Fl H | Fl L
 .Oc
 .Op Fl f | i
-.Op Fl Npv
+.Op Fl NpPv
 .Ar source_file target_file
 .Nm cp
 .Oo
 .Fl R
-.Op Fl H | Fl L | Fl P
+.Op Fl H | Fl L
 .Oc
 .Op Fl f | i
-.Op Fl Npv
+.Op Fl NpPv
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
@@ -105,9 +105,7 @@ When used with
 .Fl p ,
 don't copy file flags.
 .It Fl P
-If the
-.Fl R
-option is specified, no symbolic links are followed.
+No symbolic links are followed.
 .It Fl p
 Causes
 .Nm
@@ -138,7 +136,7 @@ indirected through, and for
 .Nm
 to create special files rather than copying them as normal files.
 Created directories have the same mode as the corresponding source
-directory, unmodified by the process' umask.
+directory, unmodified by the process's umask.
 .It Fl v
 Cause
 .Nm
@@ -182,12 +180,13 @@ or
 .Fl L
 flags (in conjunction with the
 .Fl R
-flag) cause symbolic links to be followed as described above.
-The
-.Fl H ,
-.Fl L
-and
+flag), as well as the
 .Fl P
+flag cause symbolic links to be followed as described above.
+The
+.Fl H
+and
+.Fl L
 options are ignored unless the
 .Fl R
 option is specified.
