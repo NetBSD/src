@@ -1,4 +1,4 @@
-/* $NetBSD: sleeptest.c,v 1.1 2006/07/16 19:19:39 kardel Exp $ */
+/* $NetBSD: sleeptest.c,v 1.2 2006/07/16 22:18:46 kardel Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -26,16 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/event.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
 #include <sys/signal.h>
 #include <string.h>
+#include <err.h>
 
-#define FUZZ 30000000LL		/* scheduling fuzz accepted - 30 ms */
-#define MAXSLEEP 32000000000LL	/* 32 seconds */
-#define ALARM 11		/* SIGALRM after this time */
+#define FUZZ		30000000LL	/* scheduling fuzz accepted - 30 ms */
+#define MAXSLEEP	32000000000LL	/* 32 seconds */
+#define ALARM		11		/* SIGALRM after this time */
+#define KEVNT_TIMEOUT	13200
 
 static int sig, sigs;
 
@@ -43,7 +46,8 @@ static char *sleepers[] = {
 	"nanosleep",
 	"select",
 	"poll",
-	"sleep"
+	"sleep",
+	"kevent"
 };
 
 #define N_SLEEPERS (sizeof(sleepers)/sizeof(sleepers[0]))
@@ -60,13 +64,14 @@ main(int argc, char *argv[])
 	struct timespec tsa, tsb, tslp, tslplast, tremain;
 	struct timeval tv;
 	int64_t delta1, delta2, delta3, round;
-	int err = 0, i;
+	int errors = 0, i;
 	char *rtype;
 
 	printf("Testing sleep/timeout implementations\n");
 	printf("accepted scheduling delta %lld ms\n", FUZZ/ 1000000LL);
 	printf("testing up to %lld ms for %d interfaces\n", MAXSLEEP / 1000000LL, N_SLEEPERS);
 	printf("ALARM interrupt after %d sec once per run\n", ALARM);
+	printf("kevent timer will fire after %d ms\n", KEVNT_TIMEOUT);
 
 	signal(SIGALRM, sigalrm);
 
@@ -104,7 +109,7 @@ main(int argc, char *argv[])
 				rtype = "returned";
 				if (nanosleep(&tslp, &tremain) == -1) {
 					if (errno != EINTR)
-						err++;
+						errors++;
 					printf("- errno=%s (%s) - ", strerror(errno), (errno == EINTR) ? "OK" : "ERROR");
 				}
 				clock_gettime(CLOCK_REALTIME, &tsb);
@@ -114,7 +119,7 @@ main(int argc, char *argv[])
 				TIMESPEC_TO_TIMEVAL(&tv, &tslp);
 				if (select(0, NULL, NULL, NULL, &tv) == -1) {
 					if (errno != EINTR)
-						err++;
+						errors++;
 					printf("- errno=%s (%s) - ", strerror(errno), (errno == EINTR) ? "OK" : "ERROR");
 				}
 				/* simulate remaining time */
@@ -127,7 +132,7 @@ main(int argc, char *argv[])
 				TIMESPEC_TO_TIMEVAL(&tv, &tslp);
 				if (pollts(NULL, 0, &tslp, NULL) == -1) {
 					if (errno != EINTR)
-						err++;
+						errors++;
 					printf("- errno=%s (%s) - ", strerror(errno), (errno == EINTR) ? "OK" : "ERROR");
 				}
 				/* simulate remaining time */
@@ -143,9 +148,45 @@ main(int argc, char *argv[])
 				clock_gettime(CLOCK_REALTIME, &tsb);
 				break;
 
+			case 4:	/* kevent */
+			{
+				struct kevent ktimer;
+				struct kevent kresult;
+				int rtc, timeout = KEVNT_TIMEOUT;
+				int kq = kqueue();
+				
+				if (kq == -1) {
+					err(EXIT_FAILURE, "kqueue");
+				}
+
+				EV_SET(&ktimer, 1, EVFILT_TIMER, EV_ADD, 0, timeout, 0);
+
+				rtc = kevent(kq, &ktimer, 1, &kresult, 1, &tslp);
+				if (rtc == -1) {
+					if (errno != EINTR)
+						errors++;
+					printf("- errno=%s (%s) - ", strerror(errno), (errno == EINTR) ? "OK" : "ERROR");
+				}
+				clock_gettime(CLOCK_REALTIME, &tsb);
+				if (rtc == 0) {
+					printf("- not fired");
+					if (tslp.tv_sec * 1000000000LL + tslp.tv_nsec -
+					    timeout * 1000000LL > 0) {
+						printf(" - TIMING ERROR");
+						errors++;
+					}
+					printf(" - ");
+				} else if (rtc > 0) {
+					printf("- fired - ");
+				}
+				timespecsub(&tsb, &tsa, &tremain);
+				timespecsub(&tslp, &tremain, &tremain);
+				(void)close(kq);
+			}
+			break;
+
 			default:
-				fprintf(stderr, "programming error - sleep method to test not implemented\n");
-				abort();
+				errx(EXIT_FAILURE, "programming error - sleep method to test not implemented\n");
 			}
 
 			delta1 = ((int64_t)tsb.tv_sec - (int64_t)tsa.tv_sec) * 1000000000LL + (int64_t)tsb.tv_nsec - (int64_t)tsa.tv_nsec;
@@ -157,7 +198,7 @@ main(int argc, char *argv[])
 			delta3 /= round;
 			delta3 *= round;
 			if (delta3 > FUZZ || delta3 < -FUZZ) {
-				err++;
+				errors++;
 				printf(" ERROR\n");
 				delta3 = ((int64_t)tslp.tv_sec + (int64_t)tslplast.tv_sec) * 1000000000LL + (int64_t)tslplast.tv_nsec 
 					+ (int64_t)tslp.tv_nsec;
@@ -178,8 +219,8 @@ main(int argc, char *argv[])
 	}
 	sigs += sig;
 
-	if (err || sigs != N_SLEEPERS) {
-		printf("TEST FAIL (%d errs, %d alarms, %d interfaces)\n", err, sigs, N_SLEEPERS);
+	if (errors || sigs != N_SLEEPERS) {
+		printf("TEST FAIL (%d errors, %d alarms, %d interfaces)\n", errors, sigs, N_SLEEPERS);
 		return 1;
 	} else {
 		printf("TEST SUCCESSFUL\n");
