@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/07/16 19:54:21 tron Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -95,6 +95,11 @@ basic_file.cc: ${GLIBCXX_SRCDIR}/${G_BASIC_FILE_CC}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	ln -s ${GLIBCXX_SRCDIR}/${G_BASIC_FILE_CC} ${.TARGET}
+
+
+CLEANFILES+=	atomicity.cc basic_file.cc c++locale.cc codecvt_members.cc
+CLEANFILES+=	collate_members.cc ctype_members.cc messages_members.cc
+CLEANFILES+=	monetary_members.cc numeric_members.cc time_members.cc
 
 ${SRCS}: unwind.h
 unwind.h: ${G_UNWIND_H}
