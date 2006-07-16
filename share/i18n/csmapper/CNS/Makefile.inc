@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2005/03/27 22:30:06 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2006/07/16 06:13:30 tnozaki Exp $
 
 .PATH: ${.CURDIR}/CNS
 
@@ -7,8 +7,10 @@ SRCS_charset.pivot+=	charset.pivot.CNS
 CLEANFILES+=		mapper.dir.CNS charset.pivot.CNS
 MAPS_CNS=		CNS11643-1%UCS.mps \
 			CNS11643-2%UCS.mps \
+			CNS11643-3%UCS.mps \
 			UCS%CNS11643-1.mps \
-			UCS%CNS11643-2.mps
+			UCS%CNS11643-2.mps \
+			UCS%CNS11643-3.mps
 
 mapper.dir.CNS: ${.CURDIR}/CNS/mapper.dir.CNS.src
 	${_MKTARGET_CREATE}
