@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.2 2006/07/12 21:34:52 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.3 2006/07/16 12:23:40 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -15,4 +15,11 @@ sys/arch/sparc/sparc/machdep.c			patch
 	Avoid panic in memory management on some SPARC systems with QFE cards.
 	This fixes PR port-sparc/33340 and  PR port-sparc/33894.
 	[fair, ticket #1401]
+
+sys/nfs/nfs_vnops.c				1.239-1.240 via patch
+sys/nfs/nfs_var.h				1.62 via patch
+
+	Fix race condition in NFS renaming that could cause the renamed file to be
+	deleted.
+	[jld, ticket #1424]
 
