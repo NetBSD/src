@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.3 2006/07/15 07:19:51 elad Exp $
+.\" $NetBSD: fileassoc.9,v 1.4 2006/07/16 19:37:55 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 15, 2006
+.Dd July 16, 2006
 .Dt FILEASSOC 9
 .Os
 .Sh NAME
@@ -135,25 +135,11 @@ These routines allow lookup of
 .Nm
 mounts, files, and private data attached to them.
 .Bl -tag -width "123456"
-.It Ft struct fileassoc_table * Fn fileassoc_table_lookup "struct mount *mp"
-Return the fileassoc table for
-.Ar mp
-or
-.Dv NULL
-if not found.
-.Pp
 .It Ft void * Fn fileassoc_tabledata_lookup "struct mount *mp" "fileassoc_t id"
 Return table-wide private data in
 .Ar mp
 for
 .Ar id .
-.Pp
-.It Ft struct fileassoc_hash_entry * Fn fileassoc_file_lookup "struct vnode *vp"
-Return the fileassoc file entry for
-.Ar vp
-or
-.Dv NULL
-if not found.
 .Pp
 .It Ft void * Fn fileassoc_lookup "struct vnode *vp" "fileassoc_t id"
 Returns the private data for the file/id combination
@@ -210,13 +196,6 @@ for
 .El
 .Ss File-specific Routines
 .Bl -tag -width "123456"
-.It Ft struct fileassoc_hash_entry * Fn fileassoc_file_add "struct vnode *vp"
-Add a
-.Nm
-entry for the file.
-All fileassoc-specific slots for the file are set to
-.Dv NULL .
-.Pp
 .It Ft int Fn fileassoc_file_delete "struct vnode *vp"
 Delete the fileassoc entry for
 .Ar vp .
