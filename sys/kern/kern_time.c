@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.103 2006/07/14 22:45:20 kardel Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.104 2006/07/16 19:23:11 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.103 2006/07/14 22:45:20 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.104 2006/07/16 19:23:11 kardel Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -347,6 +347,8 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (timo == 0)
 		timo = 1;
 
+	getnanouptime(&rmt);
+
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
 	if (error == ERESTART)
 		error = EINTR;
@@ -355,9 +357,11 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 
 	if (SCARG(uap, rmtp)) {
 		int error1;
+		struct timespec rmtend;
 
-		getnanotime(&rmt);
+		getnanouptime(&rmtend);
 
+		timespecsub(&rmtend, &rmt, &rmt);
 		timespecsub(&rqt, &rmt, &rmt);
 		if (rmt.tv_sec < 0)
 			timespecclear(&rmt);
