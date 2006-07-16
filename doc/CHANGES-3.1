@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.121 2006/07/13 22:21:09 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.122 2006/07/16 12:22:32 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4041,4 +4041,11 @@ usr.sbin/bind/Makefile.inc			1.21,1.23
 
 	Enable SSL support in BIND.
 	[ghen, ticket #1427]
+
+sys/nfs/nfs_vnops.c				1.239-1.240 via patch
+sys/nfs/nfs_var.h				1.62 via patch
+
+	Fix race condition in NFS renaming that could cause the renamed file to be
+	deleted.
+	[jld, ticket #1424]
 
