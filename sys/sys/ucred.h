@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.30 2006/07/15 06:33:40 yamt Exp $	*/
+/*	$NetBSD: ucred.h,v 1.31 2006/07/16 21:13:00 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,13 +81,6 @@ struct ucred {
 int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
 int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
 
-/*
- * Check if we need to curtain information when a user requests information
- * about an object.
- */
-#define	CURTAIN(user_id, object_id)	(security_curtain && 		\
-					 (user_id) != 0 &&		\
-					 (user_id) != (object_id))
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */
