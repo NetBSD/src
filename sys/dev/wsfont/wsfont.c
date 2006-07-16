@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.41 2006/03/17 03:21:57 chris Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.42 2006/07/16 06:32:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.41 2006/03/17 03:21:57 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.42 2006/07/16 06:32:42 rillig Exp $");
 
 #include "opt_wsfont.h"
 
@@ -238,9 +238,9 @@ static struct	font *wsfont_find0(int, int);
 static struct	font *wsfont_add0(struct wsdisplay_font *, int);
 static void	wsfont_revbit(struct wsdisplay_font *);
 static void	wsfont_revbyte(struct wsdisplay_font *);
-static int inline wsfont_make_cookie(int, int, int);
+static inline int wsfont_make_cookie(int, int, int);
 
-static int inline
+static inline int
 wsfont_make_cookie(int cident, int bito, int byteo)
 {
 
