@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.3 2006/05/28 06:49:27 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.4 2006/07/16 20:10:12 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -74,6 +74,7 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
  * Generic scope - actions.
  */
 #define	KAUTH_GENERIC_ISSUSER	1	/* check for super-user */
+#define	KAUTH_GENERIC_CANSEE	2	/* check if can see other cred */
 
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
