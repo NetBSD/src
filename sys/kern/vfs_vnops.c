@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.113 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.114 2006/07/16 18:49:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.113 2006/07/14 18:41:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.114 2006/07/16 18:49:29 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -229,10 +229,8 @@ restart:
 #ifdef VERIFIED_EXEC
 			if (vfe != NULL) {
 				veriexec_report("Write access request.",
-						pathbuf, &va, l,
-						REPORT_NOVERBOSE,
-						REPORT_ALARM,
-						REPORT_NOPANIC);
+						pathbuf, l, REPORT_NOVERBOSE,
+						REPORT_ALARM, REPORT_NOPANIC);
 
 				/* IPS mode: Deny writing to monitored files. */
 				if (veriexec_strict >= 2) {
