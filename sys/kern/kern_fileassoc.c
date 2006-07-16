@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.2 2006/07/15 16:42:12 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.3 2006/07/16 19:37:55 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -41,10 +41,37 @@
 #include <sys/inttypes.h>
 #include <sys/errno.h>
 #include <sys/fileassoc.h>
+#include <sys/hash.h>
 
 struct fileassoc_hook fileassoc_hooks[FILEASSOC_NHOOKS];
 int fileassoc_nhooks;
 
+/*
+ * Hook entry.
+ * Includes the hook name for identification and private hook clear callback.
+ */
+struct fileassoc_hook {
+	const char *hook_name;			/* Hook name. */
+	fileassoc_cleanup_cb_t hook_cleanup_cb;	/* Hook clear callback. */
+};
+
+/* An entry in the per-device hash table. */
+struct fileassoc_hash_entry {
+	ino_t fileid;					/* File id. */
+	void *hooks[FILEASSOC_NHOOKS];			/* Hooks. */
+	LIST_ENTRY(fileassoc_hash_entry) entries;	/* List pointer. */
+};
+
+LIST_HEAD(fileassoc_hashhead, fileassoc_hash_entry);
+
+struct fileassoc_table {
+	struct fileassoc_hashhead *hash_tbl;
+	size_t hash_size;				/* Number of slots. */
+	struct mount *tbl_mntpt;
+	u_long hash_mask;
+	void *tables[FILEASSOC_NHOOKS];
+	LIST_ENTRY(fileassoc_table) hash_list;		/* List pointer. */
+};
  
 /* Global list of hash tables, one per device. */
 LIST_HEAD(, fileassoc_table) fileassoc_tables;
@@ -110,7 +137,7 @@ fileassoc_deregister(fileassoc_t id)
 /*
  * Get the hash table for the specified device.
  */
-struct fileassoc_table *
+static struct fileassoc_table *
 fileassoc_table_lookup(struct mount *mp)
 {
 	struct fileassoc_table *tbl;
@@ -126,7 +153,7 @@ fileassoc_table_lookup(struct mount *mp)
 /*
  * Perform a lookup on a hash table.
  */
-struct fileassoc_hash_entry *
+static struct fileassoc_hash_entry *
 fileassoc_file_lookup(struct vnode *vp)
 {
 	struct fileassoc_table *tbl;
@@ -333,7 +360,7 @@ fileassoc_tabledata_lookup(struct mount *mp, fileassoc_t id)
 /*
  * Add a file entry to a table.
  */
-struct fileassoc_hash_entry *
+static struct fileassoc_hash_entry *
 fileassoc_file_add(struct vnode *vp)
 {
 	struct fileassoc_table *tbl;
