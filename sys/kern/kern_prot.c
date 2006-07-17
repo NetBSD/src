@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.90 2006/07/15 06:31:34 yamt Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.91 2006/07/17 15:29:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.90 2006/07/15 06:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.91 2006/07/17 15:29:06 ad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -356,7 +356,9 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 		return 0;
 	}
 
-	/* The pcred structure is not actually shared... */
+	cred = kauth_cred_copy(cred);
+	p->p_cred = cred;
+
 	if (r != -1 && r != kauth_cred_getuid(cred)) {
 		/* Update count of processes for this user */
 		(void)chgproccnt(kauth_cred_getuid(cred), -1);
@@ -365,12 +367,8 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	}
 	if (sv != -1)
 		kauth_cred_setsvuid(cred, sv);
-	if (e != -1 && e != kauth_cred_geteuid(cred)) {
-		/* Update a clone of the current credentials */
-		cred = kauth_cred_copy(cred);
+	if (e != -1)
 		kauth_cred_seteuid(cred, e);
-		p->p_cred = cred;
-	}
 
 	/* Mark process as having changed credentials, stops tracing etc */
 	p_sugid(p);
@@ -423,17 +421,15 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 		return 0;
 	}
 
-	/* The pcred structure is not actually shared... */
+	cred = kauth_cred_copy(cred);
+	p->p_cred = cred;
+
 	if (r != -1)
 		kauth_cred_setgid(cred, r);
 	if (sv != -1)
 		kauth_cred_setsvgid(cred, sv);
-	if (e != -1 && e != kauth_cred_getegid(cred)) {
-		/* Update a clone of the current credentials */
-		cred = kauth_cred_copy(cred);
+	if (e != -1)
 		kauth_cred_setegid(cred, e);
-		p->p_cred = cred;
-	}
 
 	/* Mark process as having changed credentials, stops tracing etc */
 	p_sugid(p);
@@ -626,8 +622,7 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 
 	pc = kauth_cred_copy(pc);
 	p->p_cred = pc;
-
-	kauth_cred_setgroups(p->p_cred, grp, ngrp, -1);
+	kauth_cred_setgroups(pc, grp, ngrp, -1);
 
 	p_sugid(p);
 	return (0);
