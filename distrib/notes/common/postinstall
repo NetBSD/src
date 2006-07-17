@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.60 2006/03/09 18:07:31 wiz Exp $
+.\"	$NetBSD: postinstall,v 1.61 2006/07/17 14:21:19 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -404,7 +404,7 @@ You can install them with the following commands under
 .Ic # pkg_add -v perl
 .Ic # pkg_add -v apache
 .Ic # pkg_add -v kde
-.Ic # pkg_add -v mozilla
+.Ic # pkg_add -v firefox
 \&...
 .Ed
 .Pp
@@ -419,7 +419,7 @@ then replace the first two lines with the following:
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shell,
 the Perl programming language, Apache web server, KDE desktop
-environment and the Mozilla web browser 
+environment and the Firefox web browser 
 as well as all the packages they depend on.
 .It
 Package sources for compiling packages on your own can be obtained by
