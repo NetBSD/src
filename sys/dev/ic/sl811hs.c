@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.8 2006/07/17 19:29:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.7 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.8 2006/07/17 19:29:31 christos Exp $");
 
 #include "opt_slhci.h"
 
@@ -1147,7 +1147,7 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	struct slhci_softc *sc = (struct slhci_softc *)pipe->device->bus;
 	usbd_status status =  USBD_NORMAL_COMPLETION;
-	void *buf;
+	u_char *buf;
 	int pid = SL11_PID_OUT;
 	int len, actlen, size;
 	int s;
@@ -1179,7 +1179,7 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 			if (slhci_transaction(sc, pipe, pid, size, buf, toggle) == -1)
 				break;
 			toggle ^= SL11_EPCTRL_DATATOGGLE;
-			(u_char*)buf += size;
+			buf += size;
 			actlen += size;
 		}
 	}
