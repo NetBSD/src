@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.4 2006/07/16 20:10:12 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.5 2006/07/17 14:37:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -115,8 +115,8 @@ gid_t kauth_cred_getgid(kauth_cred_t);
 gid_t kauth_cred_getegid(kauth_cred_t);
 gid_t kauth_cred_getsvgid(kauth_cred_t);
 int kauth_cred_ismember_gid(kauth_cred_t, gid_t, int *);
-uint16_t kauth_cred_ngroups(kauth_cred_t);
-gid_t kauth_cred_group(kauth_cred_t, uint16_t);
+u_int kauth_cred_ngroups(kauth_cred_t);
+gid_t kauth_cred_group(kauth_cred_t, u_int);
 
 void kauth_cred_setuid(kauth_cred_t, uid_t);
 void kauth_cred_seteuid(kauth_cred_t, uid_t);
@@ -126,7 +126,7 @@ void kauth_cred_setegid(kauth_cred_t, gid_t);
 void kauth_cred_setsvgid(kauth_cred_t, gid_t);
 
 void kauth_cred_hold(kauth_cred_t);
-uint32_t kauth_cred_getrefcnt(kauth_cred_t);
+u_int kauth_cred_getrefcnt(kauth_cred_t);
 
 int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
 int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
