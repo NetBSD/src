@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.7 2006/07/17 15:14:14 ad Exp $
+.\" $NetBSD: kauth.9,v 1.8 2006/07/17 17:17:58 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 16, 2006
+.Dd July 17, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -189,11 +189,8 @@ of the process the signal is posted to, respectively.
 is the signal to be posted.
 .It Dv KAUTH_PROCESS_CANSEE
 Checks whether an object with one set of credentials can access
-information about another object, possibly with a different set of
+information about another process, possibly with a different set of
 credentials.
-.Pp
-.Ar arg1
-contains the credentials of the process looked at.
 .El
 .Ss Credentials Accessors and Mutators
 .Nm
