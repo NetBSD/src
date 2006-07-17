@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.219 2006/07/14 18:41:40 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.220 2006/07/17 15:29:06 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.219 2006/07/14 18:41:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.220 2006/07/17 15:29:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -409,7 +409,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct nameidata	nid;
 	struct vattr		attr;
 	struct proc		*p;
-	kauth_cred_t		cred;
 	char			*argp;
 	char			*dp, *sp;
 	long			argc, envc;
@@ -443,7 +442,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	p->p_flag |= P_INEXEC;
 
-	cred = p->p_cred;
 	base_vcp = NULL;
 	/*
 	 * Init the namei data to point the file user's program name.
@@ -687,7 +685,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, p->p_cred, l);
 	vput(pack.ep_vp);
 
 	/* if an error happened, deallocate and punt */
@@ -797,8 +795,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			goto exec_abort;
 		}
 
-		p->p_cred = kauth_cred_copy(cred);
-		cred = p->p_cred;
+		/*
+		 * Copy the credential so other references don't see our
+		 * changes.
+		 */
+		p->p_cred = kauth_cred_copy(p->p_cred);
+
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
@@ -816,8 +818,18 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    kauth_cred_getegid(p->p_cred) == kauth_cred_getgid(p->p_cred))
 			p->p_flag &= ~P_SUGID;
 	}
-	kauth_cred_setsvuid(p->p_cred, kauth_cred_geteuid(p->p_cred));
-	kauth_cred_setsvgid(p->p_cred, kauth_cred_getegid(p->p_cred));
+
+	/*
+	 * Copy the credential so other references don't see our changes.
+	 * Test to see if this is necessary first, since in the common case
+	 * we won't need a private reference.
+	 */
+	if (kauth_cred_geteuid(p->p_cred) != kauth_cred_getsvuid(p->p_cred) ||
+	    kauth_cred_getegid(p->p_cred) != kauth_cred_getsvgid(p->p_cred)) {
+		p->p_cred = kauth_cred_copy(p->p_cred);
+		kauth_cred_setsvuid(p->p_cred, kauth_cred_geteuid(p->p_cred));
+		kauth_cred_setsvgid(p->p_cred, kauth_cred_getegid(p->p_cred));
+	}
 
 #if defined(__HAVE_RAS)
 	/*
@@ -924,7 +936,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, p->p_cred, l);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
