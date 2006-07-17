@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.11 2006/07/17 14:37:20 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.12 2006/07/17 14:47:02 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -459,8 +459,7 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 }
 
 /*
- * Make a struct ucred out of a kauth_cred_t.
- * XXX: For sysctl.
+ * Make a struct ucred out of a kauth_cred_t.  For compatibility.
  */
 void
 kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
@@ -468,6 +467,7 @@ kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
 	KASSERT(cred != NULL);
 	KASSERT(uc != NULL);
 
+	uc->cr_ref = cred->cr_refcnt;
 	uc->cr_uid = cred->cr_euid;
 	uc->cr_gid = cred->cr_egid;
 	uc->cr_ngroups = min(cred->cr_ngroups,
@@ -477,8 +477,7 @@ kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
 }
 
 /*
- * Make a struct pcred out of a kauth_cred_t.
- * XXX: For sysctl.
+ * Make a struct pcred out of a kauth_cred_t.  For compatibility.
  */
 void
 kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
@@ -486,7 +485,7 @@ kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
 	KASSERT(cred != NULL);
 	KASSERT(pc != NULL);
 
-	pc->pc_ucred = (struct ucred *)cred; /* XXX this is just wrong */
+	pc->pc_ucred = NULL;
 	pc->p_ruid = cred->cr_uid;
 	pc->p_svuid = cred->cr_svuid;
 	pc->p_rgid = cred->cr_gid;
