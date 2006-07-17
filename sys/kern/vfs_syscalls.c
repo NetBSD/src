@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.252 2006/07/15 16:32:29 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.253 2006/07/17 19:05:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.252 2006/07/15 16:32:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.253 2006/07/17 19:05:36 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2050,12 +2050,11 @@ restart:
 	}
 	VOP_LEASE(nd.ni_dvp, l, p->p_cred, LEASE_WRITE);
 	VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
+#ifdef FILEASSOC
+	(void)fileassoc_file_delete(nd.ni_vp);
+#endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	vn_finished_write(mp, 0);
-#ifdef FILEASSOC
-	if (!error)
-		(void)fileassoc_file_delete(nd.ni_vp);
-#endif /* FILEASSOC */
 out:
 	return (error);
 }
