@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.122 2006/07/16 12:22:32 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.123 2006/07/17 11:24:16 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4048,4 +4048,10 @@ sys/nfs/nfs_var.h				1.62 via patch
 	Fix race condition in NFS renaming that could cause the renamed file to be
 	deleted.
 	[jld, ticket #1424]
+
+share/man/man4/bce.4				1.3
+share/man/man4/bce.4				1.4
+
+	Note the 1GB problem with bce(4), and a workaround.
+	[dogcow, ticket #1429]
 
