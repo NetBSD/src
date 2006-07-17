@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.6 2006/07/16 20:10:11 elad Exp $
+.\" $NetBSD: kauth.9,v 1.7 2006/07/17 15:14:14 ad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -253,7 +253,7 @@ Sets the saved group-id in
 .Ar cred
 to
 .Ar gid .
-.It Ft uint16_t Fn kauth_cred_getrefcnt "kauth_cred_t cred"
+.It Ft u_int Fn kauth_cred_getrefcnt "kauth_cred_t cred"
 Return the reference count for
 .Ar cred .
 .El
@@ -274,10 +274,10 @@ If it is,
 will be set to one, otherwise, to zero.
 .Pp
 The return value is an error code, or zero for success.
-.It Ft uint16_t Fn kauth_cred_ngroups "kauth_cred_t cred"
+.It Ft u_int Fn kauth_cred_ngroups "kauth_cred_t cred"
 Return the number of groups in the group list of
 .Ar cred .
-.It Ft int Fn kauth_cred_group "kauth_cred_t cred" "uint16_t idx"
+.It Ft int Fn kauth_cred_group "kauth_cred_t cred" "u_int idx"
 Return the group-id of the group at index
 .Ar idx
 in the group list of
@@ -380,13 +380,13 @@ Convert a
 to a
 .Ft struct pcred .
 .Pp
-This includes real and saved user- and group-ids, a kernel-space pointer
-to a
-.Ft struct ucred
-(the address of
-.Ar cred
-is used for this), and reference count, copied from
+This includes real and saved user- and group-ids and reference count, copied
+from
 .Ar cred .
+The
+.Ar pc_ucred
+field in the destination is set to
+.Dv NULL .
 .It Ft void Fn kauth_cred_toucred "kauth_cred_t cred" "struct ucred *ucred"
 Convert a
 .Ft kauth_cred_t
