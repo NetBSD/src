@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.76 2006/07/16 20:21:42 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.77 2006/07/17 14:47:02 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.76 2006/07/16 20:21:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.77 2006/07/17 14:47:02 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -3074,15 +3074,11 @@ fill_eproc(struct proc *p, struct eproc *ep)
 {
 	struct tty *tp;
 	struct lwp *l;
-	struct pcred pc;
-	struct ucred uc;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
-	kauth_cred_topcred(p->p_cred, &pc);
-	kauth_cred_toucred(p->p_cred, &uc);
-	ep->e_pcred = pc;
-	ep->e_ucred = uc;
+	kauth_cred_topcred(p->p_cred, &ep->e_pcred);
+	kauth_cred_toucred(p->p_cred, &ep->e_ucred);
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ep->e_vm.vm_rssize = 0;
 		ep->e_vm.vm_tsize = 0;
