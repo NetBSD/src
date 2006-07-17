@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.2 2006/07/11 02:35:30 perry Exp $ */
+/*	$NetBSD: apmbios.c,v 1.3 2006/07/17 21:04:17 salo Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.2 2006/07/11 02:35:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.3 2006/07/17 21:04:17 salo Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -133,9 +133,6 @@ extern int apm_v11_enabled;
 
 static void	apm_perror(const char *, struct bioscallregs *, ...)
 		    __attribute__((__format__(__printf__,1,3)));
-#ifdef APM_POWER_PRINT
-static void	apm_power_print(struct apm_softc *, struct bioscallregs *);
-#endif
 static void	apm_powmgt_enable(int);
 static void	apm_powmgt_engage(int, u_int);
 static int	apm_get_ver(struct apm_softc *);
