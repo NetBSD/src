@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.12 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.13 2006/07/18 23:47:44 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -574,6 +574,7 @@ pass6(void)
 	nnewfiles = ndelfiles = nmvfiles = nnewblocks = 0;
 	daddr = fs->lfs_offset;
 	nextseg = fs->lfs_nextseg;
+	hassuper = 0;
 	while (daddr != lastgood) {
 		seg_table[dtosn(fs, daddr)].su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), sbp);
