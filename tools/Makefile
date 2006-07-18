@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 2006/07/17 13:54:46 tron Exp $
+#	$NetBSD: Makefile,v 1.103 2006/07/18 04:24:52 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,7 @@ SUBDIR+=	groff
 .endif
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
-SUBDIR+=	autoconf gettext
+SUBDIR+=	autoconf .WAIT gettext
 .endif
 
 .if ${MACHINE} == "hp700"
