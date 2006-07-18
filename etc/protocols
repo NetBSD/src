@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.15 2006/05/18 09:05:49 liamjfoy Exp $
+#	$NetBSD: protocols,v 1.16 2006/07/18 20:52:39 reed Exp $
 #
 # Internet (IP) protocols
 #
@@ -41,7 +41,7 @@ merit-inp	32	MERIT-INP	# MERIT Internodal Protocol
 sep	33	SEP		# Sequential Exchange Protocol
 3pc	34	3PC		# Third Party Connect Protocol
 idpr	35	IDPR		# Inter-Domain Policy Routing Protocol
-xtp	36	XTP		# Xpress Tranfer Protocol
+xtp	36	XTP		# Xpress Transfer Protocol
 ddp	37	DDP		# Datagram Delivery Protocol
 idpr-cmtp	38	IDPR-CMTP	# IDPR Control Message Transport
 tp++	39	TP++		# TP++ Transport Protocol
