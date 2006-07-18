@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.1 2005/09/13 04:14:17 christos Exp $ */
+/* $NetBSD: lfs_user.h,v 1.2 2006/07/18 23:37:13 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,3 +91,4 @@ void call_panic(const char *, ...);
 void my_vpanic(int, const char *, va_list);
 int extend_ifile(struct lfs *);
 struct uvnode *lfs_valloc(struct lfs *, ino_t);
+int lfs_balloc(struct uvnode *, off_t, int, struct ubuf **);

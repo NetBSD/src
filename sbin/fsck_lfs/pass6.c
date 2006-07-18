@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.11 2006/04/17 19:05:16 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.12 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ extern u_int32_t lfs_sb_cksum(struct dlfs *);
 extern ufs_daddr_t badblk;
 extern SEGUSE *seg_table;
 
+static int nnewblocks;
+
 /*
  * Our own copy of lfs_update_single so we can account in seg_table
  * as well as the Ifile; and so we can add the blocks to their new
@@ -93,6 +95,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	u_int32_t oldsn, sn;
 
 	ip = VTOI(vp);
+	ip->i_flag |= IN_MODIFIED;
 
 	error = ufs_bmaparray(fs, vp, lbn, &daddr, a, &num);
 	if (error)
@@ -153,6 +156,14 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 			clrbmap(daddr + i);
 	}
 
+	/* If block is beyond EOF, update size */
+	if (lbn >= 0 && ip->i_ffs1_size <= (lbn << fs->lfs_bshift)) {
+		ip->i_ffs1_size = (lbn << fs->lfs_bshift) + 1;
+	}
+
+	/* Count for the user */
+	++nnewblocks;
+
 	/* Add block to its new segment */
 	sn = dtosn(fs, ndaddr);
 	LFS_SEGENTRY(sup, fs, sn, bp);
@@ -190,14 +201,24 @@ remove_ino(struct uvnode *vp, ino_t ino)
 {
 	IFILE *ifp;
 	SEGUSE *sup;
-	struct ubuf *bp, *sbp;
+	CLEANERINFO *cip;
+	struct ubuf *bp, *sbp, *cbp;
 	struct inodesc idesc;
 	ufs_daddr_t daddr;
 	int obfree;
 
+	if (debug)
+		pwarn("remove ino %d\n", (int)ino);
+
 	obfree = fs->lfs_bfree;
 	LFS_IENTRY(ifp, fs, ino, bp);
 	daddr = ifp->if_daddr;
+	if (daddr > 0) {
+		ifp->if_daddr = 0x0;
+		LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
+		sbdirty();
+	}
 	brelse(bp);
 
 	if (vp == NULL && daddr > 0) {
@@ -252,6 +273,10 @@ pass6check(struct inodesc * idesc)
 {
 	int i, sn, anyout, anynew;
 
+	/* Brand new blocks are always OK */
+	if (idesc->id_blkno == UNWRITTEN)
+		return KEEPON;
+
 	/* Check that the blocks do not lie within clean segments. */
 	anyout = anynew = 0;
 	for (i = 0; i < fragstofsb(fs, idesc->id_numfrags); i++) {
@@ -289,6 +314,88 @@ pass6check(struct inodesc * idesc)
 	return pass1check(idesc);
 }
 
+static void
+account_indir(struct uvnode *vp, struct ufs1_dinode *dp, daddr_t ilbn, daddr_t daddr, int lvl)
+{
+	struct ubuf *bp;
+	int32_t *dap, *odap, *buf, *obuf;
+	daddr_t lbn;
+
+	if (lvl == 0)
+		lbn = -ilbn;
+	else
+		lbn = ilbn + 1;
+	bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_bsize, NULL, &bp);
+	buf = (int32_t *)malloc(fs->lfs_bsize);
+	memcpy(buf, bp->b_data, fs->lfs_bsize);
+	brelse(bp);
+
+	obuf = (int32_t *)malloc(fs->lfs_bsize);
+	if (vp) {
+		bread(vp, ilbn, fs->lfs_bsize, NULL, &bp);
+		memcpy(obuf, bp->b_data, fs->lfs_bsize);
+		brelse(bp);
+	} else
+		memset(obuf, 0, fs->lfs_bsize);
+
+	for (dap = buf, odap = obuf;
+	     dap < (int32_t *)((char *)buf + fs->lfs_bsize);
+	     ++dap, ++odap) {
+		if (*dap > 0 && *dap != *odap) {
+			rfw_update_single(vp, lbn, *dap, dblksize(fs, dp, lbn));
+			if (lvl > 0)
+				account_indir(vp, dp, lbn, *dap, lvl - 1);
+		}
+		if (lvl == 0)
+			++lbn;
+		else if (lvl == 1)
+			lbn -= NINDIR(fs);
+		else if (lvl == 2)
+			lbn -= NINDIR(fs) * NINDIR(fs);
+	}
+
+	free(obuf);
+	free(buf);
+}
+
+/*
+ * Account block changes between new found inode and existing inode.
+ */
+static void
+account_block_changes(struct ufs1_dinode *dp)
+{
+	int i;
+	daddr_t lbn, off, odaddr;
+	struct uvnode *vp;
+	struct inode *ip;
+
+	vp = vget(fs, dp->di_inumber);
+	ip = (vp ? VTOI(vp) : NULL);
+
+	/* Check direct block holdings between existing and new */
+	for (i = 0; i < NDADDR; i++) {
+		odaddr = (ip ? ip->i_ffs1_db[i] : 0x0);
+		if (dp->di_db[i] > 0 && dp->di_db[i] != odaddr)
+			rfw_update_single(vp, i, dp->di_db[i],
+					  dblksize(fs, dp, i));
+	}
+
+	/* Check indirect block holdings between existing and new */
+	off = 0;
+	for (i = 0; i < NIADDR; i++) {
+		odaddr = (ip ? ip->i_ffs1_ib[i] : 0x0);
+		if (dp->di_ib[i] > 0 && dp->di_ib[i] != odaddr) {
+			lbn = -(NDADDR + off + i);
+			rfw_update_single(vp, i, dp->di_ib[i], fs->lfs_bsize);
+			account_indir(vp, dp, lbn, dp->di_ib[i], i);
+		}
+		if (off == 0)
+			off = NINDIR(fs);
+		else
+			off *= NINDIR(fs);
+	}
+}
+
 /*
  * Give a previously allocated inode a new address; do segment
  * accounting if necessary.
@@ -297,19 +404,36 @@ pass6check(struct inodesc * idesc)
  * free list accounting is done.
  */
 static void
-readdress_inode(ino_t thisino, ufs_daddr_t daddr)
+readdress_inode(struct ufs1_dinode *dp, ufs_daddr_t daddr)
 {
 	IFILE *ifp;
 	SEGUSE *sup;
 	struct ubuf *bp;
 	int sn;
 	ufs_daddr_t odaddr;
+	ino_t thisino = dp->di_inumber;
+	struct uvnode *vp;
 
+	/* Recursively check all block holdings, account changes */
+	account_block_changes(dp);
+
+	/* Move ifile pointer to this location */
 	LFS_IENTRY(ifp, fs, thisino, bp);
 	odaddr = ifp->if_daddr;
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
 
+	if (debug)
+		pwarn("readdress ino %d from 0x%x to 0x%x\n",
+			(int)dp->di_inumber,
+			(unsigned)odaddr,
+			(unsigned)daddr);
+
+	/* Copy over preexisting in-core inode, if any */
+	vp = vget(fs, thisino);
+	memcpy(VTOI(vp)->i_din.ffs1_din, dp, sizeof(*dp));
+
+	/* Finally account the inode itself */
 	sn = dtosn(fs, odaddr);
 	LFS_SEGENTRY(sup, fs, sn, bp);
 	sup->su_nbytes -= DINODE1_SIZE;
@@ -329,42 +453,48 @@ readdress_inode(ino_t thisino, ufs_daddr_t daddr)
 static void
 alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 {
-	ino_t ino, nextfree;
+	ino_t ino, nextfree, oldhead;
 	IFILE *ifp;
 	SEGUSE *sup;
-	struct ubuf *bp;
+	struct ubuf *bp, *cbp;
+	CLEANERINFO *cip;
 
+	if (debug)
+		pwarn("allocating ino %d at 0x%x\n", (int)thisino,
+			(unsigned)daddr);
 	while (thisino >= maxino) {
 		extend_ifile(fs);
-		reset_maxino(((VTOI(fs->lfs_ivnode)->i_ffs1_size >>
-			       fs->lfs_bsize) - fs->lfs_segtabsz -
-			      fs->lfs_cleansz) * fs->lfs_ifpb);
 	}
 
 	LFS_IENTRY(ifp, fs, thisino, bp);
+	if (ifp->if_daddr != 0) {
+		brelse(bp);
+		pwarn("allocated inode %lld already allocated\n",
+			(long long)thisino);
+	}
 	nextfree = ifp->if_nextfree;
 	ifp->if_nextfree = 0;
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
 
-	if (fs->lfs_freehd == thisino) {
-		fs->lfs_freehd = nextfree;
+	LFS_GET_HEADFREE(fs, cip, cbp, &oldhead);
+	if (oldhead == thisino) {
+		LFS_PUT_HEADFREE(fs, cip, cbp, nextfree);
 		sbdirty();
 		if (nextfree == 0) {
 			extend_ifile(fs);
-			reset_maxino(((VTOI(fs->lfs_ivnode)->i_ffs1_size >>
-				       fs->lfs_bsize) - fs->lfs_segtabsz -
-				      fs->lfs_cleansz) * fs->lfs_ifpb);
 		}
 	} else {
 		/* Search the free list for this inode */
-		ino = fs->lfs_freehd;
+		ino = oldhead;
 		while (ino) {
 			LFS_IENTRY(ifp, fs, ino, bp);
 			assert(ifp->if_nextfree != ino);
 			if (ifp->if_nextfree == thisino) {
 				ifp->if_nextfree = nextfree;
 				VOP_BWRITE(bp);
+				if (nextfree == 0)
+					LFS_PUT_TAILFREE(fs, cip, cbp, ino);
 				break;
 			} else
 				ino = ifp->if_nextfree;
@@ -407,10 +537,18 @@ pass6(void)
 	struct ubuf *bp, *ibp, *sbp, *cbp;
 	struct ufs1_dinode *dp;
 	struct inodesc idesc;
-	int i, j, bc;
-	ufs_daddr_t hassuper;
+	int i, j, bc, hassuper;
+	int nnewfiles, ndelfiles, nmvfiles;
+	char *ibbuf;
 
 	devvp = fs->lfs_devvp;
+
+	/* If we can't roll forward because of created files, don't try */
+	if (no_roll_forward) {
+		if (debug)
+			pwarn("not rolling forward due to possible allocation conflict\n");
+		return;
+	}
 
 	/* Find last valid partial segment */
 	lastgood = try_verify(fs, devvp, 0, debug);
@@ -421,7 +559,7 @@ pass6(void)
 	}
 
 	if (debug)
-		pwarn("could roll forward from %" PRIx32 " to %" PRIx32 "\n",
+		pwarn("could roll forward from 0x%" PRIx32 " to 0x%" PRIx32 "\n",
 			fs->lfs_offset, lastgood);
 
 	if (!preen && reply("ROLL FORWARD") == 0)
@@ -431,6 +569,9 @@ pass6(void)
 	 * changes to any other inode.
 	 */
 
+	ibbuf = malloc(fs->lfs_ibsize);
+	assert(ibbuf != NULL);
+	nnewfiles = ndelfiles = nmvfiles = nnewblocks = 0;
 	daddr = fs->lfs_offset;
 	nextseg = fs->lfs_nextseg;
 	while (daddr != lastgood) {
@@ -438,22 +579,22 @@ pass6(void)
 		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), sbp);
 		sup->su_flags |= SEGUSE_DIRTY;
 		VOP_BWRITE(sbp);
-		hassuper = 0;
-	  oncemore:
+
+		/* Could be a superblock */
+		if (sntod(fs, dtosn(fs, daddr)) == daddr) {
+			for (i = 0; i < LFS_MAXNUMSB; i++) {
+				if (daddr == fs->lfs_sboffs[i]) {
+					hassuper = 1;
+					daddr += btofsb(fs, LFS_SBPAD);	
+				}
+				if (daddr < fs->lfs_sboffs[i])
+					break;
+			}
+		}
+		
 		/* Read in summary block */
 		bread(devvp, fsbtodb(fs, daddr), fs->lfs_sumsize, NULL, &bp);
 		sp = (SEGSUM *)bp->b_data;
-
-		/* Could be a superblock instead of a segment summary. */
-		if (sntod(fs, dtosn(fs, daddr)) == daddr &&
-		    (sp->ss_magic != SS_MAGIC ||
-		     sp->ss_sumsum != cksum(&sp->ss_datasum, fs->lfs_sumsize -
-			sizeof(sp->ss_sumsum)))) {
-			brelse(bp);
-			daddr += btofsb(fs, LFS_SBPAD);
-			hassuper = 1;
-			goto oncemore;
-		}
 
 		/* We have verified that this is a good summary. */
 		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), sbp);
@@ -490,9 +631,12 @@ pass6(void)
 			sbdirty();
 			bread(devvp, fsbtodb(fs, ibdaddr), fs->lfs_ibsize,
 			      NOCRED, &ibp);
+			memcpy(ibbuf, ibp->b_data, fs->lfs_ibsize);
+			brelse(ibp);
+
 			j = 0;
-			for (dp = (struct ufs1_dinode *)ibp->b_data;
-			     dp < (struct ufs1_dinode *)ibp->b_data + INOPB(fs);
+			for (dp = (struct ufs1_dinode *)ibbuf;
+			     dp < (struct ufs1_dinode *)ibbuf + INOPB(fs);
 			     ++dp) {
 				if (dp->di_u.inumber == 0 ||
 				    dp->di_u.inumber == fs->lfs_ifile)
@@ -503,7 +647,6 @@ pass6(void)
 				    dp->di_size < 0) {
 					pwarn("BAD INODE AT 0x%" PRIx32 "\n",
 						ibdaddr);
-					brelse(ibp);
 					brelse(bp);
 					goto out;
 				}
@@ -517,6 +660,7 @@ pass6(void)
 				 */
 				if (dp->di_nlink == 0) {
 					remove_ino(vp, dp->di_u.inumber);
+					++ndelfiles;
 					continue;
 				}
 				/*
@@ -527,6 +671,7 @@ pass6(void)
 				 */
 				if (vp == NULL) {
 					inums[j++] = dp->di_u.inumber;
+					nnewfiles++;
 					continue;
 				}
 				/*
@@ -537,6 +682,8 @@ pass6(void)
 				if (vp && VTOI(vp)->i_ffs1_gen < dp->di_gen) {
 					remove_ino(vp, dp->di_u.inumber);
 					inums[j++] = dp->di_u.inumber;
+					ndelfiles++;
+					nnewfiles++;
 					continue;
 				}
 				/*
@@ -547,7 +694,8 @@ pass6(void)
 				 *     blocks when we do the block pass.
 				 */
 				if (vp && VTOI(vp)->i_ffs1_gen == dp->di_gen) {
-					readdress_inode(dp->di_u.inumber, ibdaddr);
+					nmvfiles++;
+					readdress_inode(dp, ibdaddr);
 
 					/* Update with new info */
 					VTOD(vp)->di_mode = dp->di_mode;
@@ -566,7 +714,6 @@ pass6(void)
 					inodirty(VTOI(vp));
 				}
 			}
-			brelse(ibp);
 			for (j = 0; inums[j]; j++) {
 				alloc_inode(inums[j], ibdaddr);
 				vp = lfs_raw_vget(fs, inums[j],
@@ -583,9 +730,13 @@ pass6(void)
 
 		bc = check_summary(fs, sp, daddr, debug, devvp, NULL);
 		if (bc == 0) {
+			pwarn("unexpected bad seg ptr at 0x%x with serial=%d\n",
+				(int)daddr, (int)sp->ss_serial);
 			brelse(bp);
 			break;
-		}
+		} else if (debug)
+			pwarn("good seg ptr at 0x%x with serial=%d\n",
+				(int)daddr, (int)sp->ss_serial);
 		odaddr = daddr;
 		daddr += btofsb(fs, fs->lfs_sumsize + bc);
 		if (dtosn(fs, odaddr) != dtosn(fs, daddr) ||
@@ -595,7 +746,9 @@ pass6(void)
 		}
 		brelse(bp);
 	}
+
     out:
+	free(ibbuf);
 
 	/*
 	 * Check our new vnodes.  Any blocks must lie in segments that
@@ -627,23 +780,26 @@ pass6(void)
 			sup->su_flags |= SEGUSE_DIRTY;
 			VOP_BWRITE(sbp);
 		}
-	  oncemore2:
+
+		/* Could be a superblock */
+		if (sntod(fs, dtosn(fs, daddr)) == daddr) {
+			for (i = 0; i < LFS_MAXNUMSB; i++) {
+				if (daddr == fs->lfs_sboffs[i]) {
+					hassuper = 1;
+					daddr += btofsb(fs, LFS_SBPAD);	
+				}
+				if (daddr < fs->lfs_sboffs[i])
+					break;
+			}
+		}
+		
 		/* Read in summary block */
 		bread(devvp, fsbtodb(fs, daddr), fs->lfs_sumsize, NULL, &bp);
 		sp = (SEGSUM *)bp->b_data;
-
-		/* Could be a superblock instead of a segment summary. */
-		if (sntod(fs, dtosn(fs, daddr)) == daddr &&
-		    (sp->ss_magic != SS_MAGIC ||
-		     sp->ss_sumsum != cksum(&sp->ss_datasum, fs->lfs_sumsize -
-			sizeof(sp->ss_sumsum)))) {
-			brelse(bp);
-			daddr += btofsb(fs, LFS_SBPAD);
-			goto oncemore2;
-		}
-
 		bc = check_summary(fs, sp, daddr, debug, devvp, pass6harvest);
 		if (bc == 0) {
+			pwarn("unexpected bad seg ptr [2] at 0x%x with serial=%d\n",
+				(int)daddr, (int)sp->ss_serial);
 			brelse(bp);
 			break;
 		}
@@ -662,10 +818,38 @@ pass6(void)
 		brelse(bp);
 	}
 
+	/* Final address could also be a superblock */
+	if (sntod(fs, dtosn(fs, lastgood)) == lastgood) {
+		for (i = 0; i < LFS_MAXNUMSB; i++) {
+			if (lastgood == fs->lfs_sboffs[i])
+				lastgood += btofsb(fs, LFS_SBPAD);	
+			if (lastgood < fs->lfs_sboffs[i])
+				break;
+		}
+	}
+		
 	/* Update offset to point at correct location */
 	fs->lfs_offset = lastgood;
 	fs->lfs_curseg = sntod(fs, dtosn(fs, lastgood));
 	fs->lfs_nextseg = nextseg;
+
+	if (preen) {
+		if (ndelfiles)
+			pwarn("roll forward deleted %d file%s\n", ndelfiles,
+				(ndelfiles > 1 ? "s" : ""));
+		if (nnewfiles)
+			pwarn("roll forward added %d file%s\n", nnewfiles,
+				(nnewfiles > 1 ? "s" : ""));
+		if (nmvfiles)
+			pwarn("roll forward relocated %d inode%s\n", nmvfiles,
+				(nmvfiles > 1 ? "s" : ""));
+		if (nnewblocks)
+			pwarn("roll forward verified %d data block%s\n", nnewblocks,
+				(nnewblocks > 1 ? "s" : ""));
+		if (ndelfiles == 0 && nnewfiles == 0 && nmvfiles == 0 &&
+		    nnewblocks == 0)
+			pwarn("roll forward produced nothing new\n");
+	}
 
 	if (!preen) {
 		/* Run pass 5 again (it's quick anyway). */

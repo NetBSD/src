@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.28 2006/04/17 19:05:16 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.29 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -189,10 +189,12 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		 */
 		printf("** Phase 0 - Check Inode Free List\n");
 	}
-	if (idaddr)
-		pwarn("-i given, skipping free list check\n");
-	else
-		pass0();
+
+	/*
+	 * Check inode free list - we do this even if idaddr is set,
+	 * since if we're writing we don't want to write a bad list.
+	 */
+	pass0();
 
 	if (preen == 0) {
 		/*

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.24 2006/04/28 00:07:54 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.25 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -118,6 +118,9 @@ reply(const char *question)
 static void
 write_superblocks(void)
 {
+	if (debug)
+		pwarn("writing superblocks with lfs_idaddr = 0x%x\n",
+			(int)fs->lfs_idaddr);
 	lfs_writesuper(fs, fs->lfs_sboffs[0]);
 	lfs_writesuper(fs, fs->lfs_sboffs[1]);
 	fsmodified = 1;
@@ -141,7 +144,7 @@ ckfini(int markclean)
 		fsmodified = 1;
 	}
 
-	if (fsmodified && (preen || reply("UPDATE STANDARD SUPERBLOCK"))) {
+	if (fsmodified && (preen || reply("UPDATE SUPERBLOCKS"))) {
 		sbdirty();
 		write_superblocks();
 	}
