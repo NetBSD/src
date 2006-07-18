@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.806 2006/07/13 03:59:29 kent Exp $
+$NetBSD: pcidevs,v 1.807 2006/07/18 14:19:14 itohy Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -826,6 +826,7 @@ product ADMTEK AL981	0x0981	AL981 10/100 Ethernet
 product ADMTEK AN985	0x0985	AN985 10/100 Ethernet
 product ADMTEK AN985_2	0x1985	AN985 10/100 Ethernet (OEM)
 product ADMTEK ADM8211	0x8201	ADM8211 11Mbps 802.11b WLAN
+product ADMTEK AN983B	0x9511	AN983B 10/100 Ethernet
 
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
