@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.24 2006/03/17 15:53:46 rumble Exp $	 */
+/* $NetBSD: pass1.c,v 1.25 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -186,7 +186,6 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		dp = NULL;
 
 	if (dp == NULL) {
-		/* pwarn("Could not find inode %ld\n",(long)inumber); */
 		statemap[inumber] = USTATE;
 		return;
 	}
@@ -251,7 +250,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	for (j = ndb; j < NDADDR; j++)
 		if (dp->di_db[j] != 0) {
 			if (debug)
-				printf("bad direct addr: %d\n", dp->di_db[j]);
+				printf("bad direct addr for size %lld lbn %d: 0x%x\n",
+					(long long)dp->di_size, j, (unsigned)dp->di_db[j]);
 			goto unknown;
 		}
 	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
@@ -259,9 +259,9 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	for (; j < NIADDR; j++)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
-				printf("bad indirect addr: %d\n",
-				    dp->di_ib[j]);
-			/* goto unknown; */
+				printf("bad indirect addr for size %lld # %d: 0x%x\n",
+					(long long)dp->di_size, j, (unsigned)dp->di_ib[j]);
+			goto unknown;
 		}
 	if (ftypeok(dp) == 0)
 		goto unknown;
@@ -292,7 +292,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	idesc->id_number = inumber;
 	(void) ckinode(VTOD(vp), idesc);
 	if (dp->di_blocks != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%d SHOULD BE %d)",
 		    (unsigned long long)inumber, dp->di_blocks,
 		    idesc->id_entryno);
 		if (preen)
