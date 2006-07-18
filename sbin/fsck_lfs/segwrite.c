@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.12 2006/05/23 22:35:20 jnemeth Exp $ */
+/* $NetBSD: segwrite.c,v 1.13 2006/07/18 23:37:13 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -335,6 +335,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	if (ino == LFS_IFILE_INUM) {
 		daddr = fs->lfs_idaddr;
 		fs->lfs_idaddr = dbtofsb(fs, bp->b_blkno);
+		sbdirty();
 	} else {
 		LFS_IENTRY(ifp, fs, ino, ibp);
 		daddr = ifp->if_daddr;
@@ -746,19 +747,26 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	 * and it is not a checkpoint, don't do anything.  On a checkpoint,
 	 * even if there aren't any buffers, you need to write the superblock.
 	 */
-	if ((nblocks = sp->cbpp - sp->bpp) == 1)
+	nblocks = sp->cbpp - sp->bpp;
+#if 0
+	printf("write %d blocks at 0x%x\n",
+		nblocks, (int)dbtofsb(fs, (*sp->bpp)->b_blkno));
+#endif
+	if (nblocks == 1)
 		return 0;
 
 	devvp = fs->lfs_devvp;
 
 	/* Update the segment usage information. */
 	LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
+	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 
 	/* Loop through all blocks, except the segment summary. */
 	for (bpp = sp->bpp; ++bpp < sp->cbpp;) {
 		if ((*bpp)->b_vp != devvp) {
 			sup->su_nbytes += (*bpp)->b_bcount;
 		}
+		assert(dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)) == sp->seg_number);
 	}
 
 	ssp = (SEGSUM *) sp->segsum;

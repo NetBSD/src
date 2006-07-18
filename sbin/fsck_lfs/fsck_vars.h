@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.10 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.11 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -76,3 +76,5 @@ extern daddr_t n_blks;		/* number of blocks in use */
 extern ino_t n_files;		/* number of files in use */
 
 extern struct ufs1_dinode zino;
+
+extern int no_roll_forward;	/* Don't roll forward */

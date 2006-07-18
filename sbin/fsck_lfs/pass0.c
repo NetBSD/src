@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.27 2006/04/17 19:05:16 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.28 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 #include <ufs/lfs/lfs.h>
 #undef vnode
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,29 +110,30 @@ pass0(void)
 	CLEANERINFO *cip;
 	IFILE *ifp;
 	struct ubuf *bp, *cbp;
-	ino_t ino, plastino, nextino, *visited, lowfreeino;
+	ino_t ino, plastino, nextino, lowfreeino, freehd;
+	char *visited;
 	int writeit = 0;
 
 	/*
-         * Check the inode free list for inuse inodes, and cycles.
+	 * Check the inode free list for inuse inodes, and cycles.
 	 * Make sure that all free inodes are in fact on the list.
-         */
-	visited = (ino_t *) malloc(maxino * sizeof(ino_t));
+	 */
+	visited = (char *) malloc(maxino * sizeof(*visited));
 	if (visited == NULL)
 		err(1, NULL);
-	memset(visited, 0, maxino * sizeof(ino_t));
+	memset(visited, 0, maxino * sizeof(*visited));
 
 	plastino = 0;
 	lowfreeino = maxino;
 	LFS_CLEANERINFO(cip, fs, cbp);
-	ino = cip->free_head;
+	freehd = ino = cip->free_head;
 	brelse(cbp);
 
 	while (ino) {
 		if (lowfreeino > ino)
 			lowfreeino = ino;
 		if (ino >= maxino) {
-			printf("OUT OF RANGE INO %llu ON FREE LIST\n",
+			pwarn("OUT OF RANGE INO %llu ON FREE LIST\n",
 			    (unsigned long long)ino);
 			break;
 		}
@@ -146,7 +148,7 @@ pass0(void)
 			}
 			break;
 		}
-		++visited[ino];
+		visited[ino] = 1;
 		LFS_IENTRY(ifp, fs, ino, bp);
 		nextino = ifp->if_nextfree;
 		daddr = ifp->if_daddr;
@@ -156,7 +158,7 @@ pass0(void)
 			    (unsigned long long)ino, (long long) daddr);
 			if (preen || reply("FIX") == 1) {
 				if (plastino == 0) {
-					fs->lfs_freehd = nextino;
+					freehd = nextino;
 					sbdirty();
 				} else {
 					LFS_IENTRY(ifp, fs, plastino, bp);
@@ -187,14 +189,11 @@ pass0(void)
 		pwarn("INO %llu FREE BUT NOT ON FREE LIST\n",
 		    (unsigned long long)ino);
 		if (preen || reply("FIX") == 1) {
-			ifp->if_nextfree = fs->lfs_freehd;
+			assert(ino != freehd);
+			ifp->if_nextfree = freehd;
 			VOP_BWRITE(bp);
 
-			LFS_CLEANERINFO(cip, fs, cbp);
-			cip->free_head = ino;
-			LFS_SYNC_CLEANERINFO(cip, fs, cbp, 1);
-
-			fs->lfs_freehd = ino;
+			freehd = ino;
 			sbdirty();
 
 			/* If freelist was empty, this is the tail */
@@ -205,11 +204,16 @@ pass0(void)
 	}
 
 	LFS_CLEANERINFO(cip, fs, cbp);
-	if (cip->free_head != fs->lfs_freehd) {
+	if (cip->free_head != freehd) {
+		/* They've already given us permission for this change */
+		cip->free_head = freehd;
+		writeit = 1;
+	}
+	if (freehd != fs->lfs_freehd) {
 		pwarn("FREE LIST HEAD IN SUPERBLOCK SHOULD BE %d (WAS %d)\n",
-			fs->lfs_freehd, cip->free_head);
+			(int)fs->lfs_freehd, (int)freehd);
 		if (preen || reply("FIX")) {
-			fs->lfs_freehd = cip->free_head;
+			fs->lfs_freehd = freehd;
 			sbdirty();
 		}
 	}
@@ -222,6 +226,7 @@ pass0(void)
 			writeit = 1;
 		}
 	}
+
 	if (writeit)
 		LFS_SYNC_CLEANERINFO(cip, fs, cbp, writeit);
 	else
@@ -229,12 +234,7 @@ pass0(void)
 
 	if (fs->lfs_freehd == 0) {
 		pwarn("%sree list head is 0x0\n", preen ? "f" : "F");
-		if (preen || reply("FIX")) {
+		if (preen || reply("FIX"))
 			extend_ifile(fs);
-			reset_maxino(((VTOI(fs->lfs_ivnode)->i_ffs1_size >>
-				       fs->lfs_bsize) -
-				      fs->lfs_segtabsz - fs->lfs_cleansz) *
-				     fs->lfs_ifpb);
-		}
 	}
 }
