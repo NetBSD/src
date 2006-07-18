@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.83 2006/07/18 14:00:40 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.84 2006/07/18 15:55:55 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.83 2006/07/18 14:00:40 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.84 2006/07/18 15:55:55 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -86,6 +86,8 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.83 2006/07/18 14:00:40 christos Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #endif
+
+#include "servent.h"
 
 #ifdef __weak_alias
 __weak_alias(getaddrinfo,_getaddrinfo)
@@ -919,6 +921,8 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 			return EAI_SERVICE;
 		port = htons(port);
 	} else {
+		struct servent_data svd;
+		struct servent sv;
 		if (ai->ai_flags & AI_NUMERICSERV)
 			return EAI_NONAME;
 
@@ -934,7 +938,8 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 			break;
 		}
 
-		if ((sp = getservbyname(servname, proto)) == NULL)
+		(void)memset(&svd, 0, sizeof(svd));
+		if ((sp = getservbyname_r(servname, proto, &sv, &svd)) == NULL)
 			return EAI_SERVICE;
 		port = sp->s_port;
 	}
