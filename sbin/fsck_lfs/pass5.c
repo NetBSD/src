@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.18 2006/04/17 19:05:16 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.19 2006/07/18 23:37:13 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ pass5(void)
 		if (!preen && !(su->su_flags & SEGUSE_DIRTY) &&
 		    seg_table[i].su_nbytes > 0) {
 			pwarn("CLEAN SEGMENT %d CLAIMS %d BYTES\n",
-			    seg_table[i].su_nbytes, i);
+			    i, seg_table[i].su_nbytes);
 			if (reply("MARK SEGMENT DIRTY")) {
 				su->su_flags |= SEGUSE_DIRTY;
 				++diddirty;
