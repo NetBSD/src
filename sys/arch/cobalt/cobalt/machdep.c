@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2006/06/10 12:35:01 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2006/07/18 12:51:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2006/06/10 12:35:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2006/07/18 12:51:01 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -128,6 +128,10 @@ int cpuspeed;
 
 struct evcnt hardclock_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "hardclock");
+#ifdef ENABLE_INT5_STATCLOCK
+struct evcnt statclock_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "statclock");
+#endif
 
 u_int cobalt_id;
 static const char * const cobalt_model[] =
@@ -673,12 +677,14 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		mips3_cp0_compare_write(mips3_cp0_count_read()); /* XXX */
-#if 0
+#ifdef ENABLE_INT5_STATCLOCK
 		cf.pc = pc;
 		cf.sr = status;
 
-		statclock(&cf);
+		statclockintr(&cf);
+		statclock_ev.ev_count++;
+#else
+		mips3_cp0_compare_write(0);
 #endif
 
 		cause &= ~MIPS_INT_MASK_5;
