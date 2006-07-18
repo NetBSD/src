@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.805 2006/07/13 04:00:13 kent Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.806 2006/07/18 14:21:02 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.806 2006/07/13 03:59:29 kent Exp
+ *	NetBSD: pcidevs,v 1.807 2006/07/18 14:19:14 itohy Exp
  */
 
 /*
@@ -833,6 +833,7 @@
 #define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* AN985 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_AN985_2	0x1985		/* AN985 10/100 Ethernet (OEM) */
 #define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 11Mbps 802.11b WLAN */
+#define	PCI_PRODUCT_ADMTEK_AN983B	0x9511		/* AN983B 10/100 Ethernet */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100

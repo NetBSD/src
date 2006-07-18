@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.804 2006/07/13 04:00:13 kent Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.805 2006/07/18 14:21:02 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.806 2006/07/13 03:59:29 kent Exp
+ *	NetBSD: pcidevs,v 1.807 2006/07/18 14:19:14 itohy Exp
  */
 
 /*
@@ -3018,6 +3018,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
 	    "ADM8211 11Mbps 802.11b WLAN",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983B,
+	    "AN983B 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
@@ -11764,4 +11768,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2348;
+const int pci_nproducts = 2349;
