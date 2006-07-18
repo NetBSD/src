@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2006/07/02 17:15:22 cherry Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2006/07/18 21:18:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -36,13 +36,6 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 #include <machine/asm.h>
 
-
-#define	INIT_FALLTHRU_DECL void init_fallthru(void)
-#define	FINI_FALLTHRU_DECL void fini_fallthru(void)
-
-#define	INIT_FALLTHRU()	init_fallthru()
-#define	FINI_FALLTHRU()	fini_fallthru()
-
 /*-
  * $FreeBSD: src/lib/csu/ia64/crti.S,v 1.3 2001/11/03 06:31:27 peter Exp $
  */
@@ -51,6 +44,7 @@
 		__asm (						\
 		".section "#sect",\"ax\",@progbits	\n"	\
 		".proc "#entry_pt"			\n"	\
+		".global "#entry_pt"			\n"	\
 		#entry_pt":				\n"	\
 		".regstk	0,2,0,0			\n"	\
 		".prologue 12,loc0			\n"	\
@@ -72,8 +66,8 @@
 		"br.ret.sptk.many b0			\n"	\
 		".previous")
 
-#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
-#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
+#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
+#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
