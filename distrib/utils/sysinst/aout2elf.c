@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.12 2006/05/18 18:45:48 mrg Exp $
+/*	$NetBSD: aout2elf.c,v 1.13 2006/07/18 12:05:03 jnemeth Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -97,7 +97,6 @@ is_aout_shared_lib(const char *name)
 
 	fd = open(name, O_RDONLY);
 	if (fd < 0) {
-		close(fd);
 		return 0;
 	}
 	if (read(fd, &ex, sizeof ex) < sizeof ex) {
