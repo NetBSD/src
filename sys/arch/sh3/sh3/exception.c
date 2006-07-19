@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.26 2006/03/16 15:10:06 he Exp $	*/
+/*	$NetBSD: exception.c,v 1.27 2006/07/19 21:11:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.26 2006/03/16 15:10:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.27 2006/07/19 21:11:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,6 +158,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
+		LWP_CACHE_CREDS(l, l->l_proc);
 	}
 
 	switch (expevt) {
@@ -280,6 +281,7 @@ do {									\
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf);
+		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
 		KDASSERT(l == NULL ||		/* idle */
 		    l == &lwp0 ||		/* kthread */

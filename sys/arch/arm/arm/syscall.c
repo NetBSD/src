@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.33 2006/03/07 07:21:50 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.34 2006/07/19 21:11:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2006/03/07 07:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34 2006/07/19 21:11:40 ad Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -200,6 +200,7 @@ swi_handler(trapframe_t *frame)
 
 	uvmexp.syscalls++;
 
+	LWP_CACHE_CREDS(l, p);
 	(*(void(*)(struct trapframe *, struct lwp *, u_int32_t))
 	    (p->p_md.md_syscall))(frame, l, insn);
 }

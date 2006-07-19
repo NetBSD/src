@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.109 2006/05/15 09:32:15 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.110 2006/07/19 21:11:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2006/05/15 09:32:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2006/07/19 21:11:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,6 +253,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		l->l_md.md_tf = framep;
 		p = l->l_proc;
 		(void)memset(&ksi, 0, sizeof(ksi));
+		LWP_CACHE_CREDS(l, p);
 	} else {
 		p = NULL;
 	}

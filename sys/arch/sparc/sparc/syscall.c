@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.11 2006/06/29 16:12:27 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.12 2006/07/19 21:11:46 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2006/06/29 16:12:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2006/07/19 21:11:46 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sparc_arch.h"
@@ -220,6 +220,7 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	uvmexp.syscalls++;	/* XXXSMP */
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;
@@ -301,6 +302,7 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	uvmexp.syscalls++;	/* XXXSMP */
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;

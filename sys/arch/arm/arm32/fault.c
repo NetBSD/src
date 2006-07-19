@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.60 2006/05/15 09:11:28 yamt Exp $	*/
+/*	$NetBSD: fault.c,v 1.61 2006/07/19 21:11:40 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.60 2006/05/15 09:11:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.61 2006/07/19 21:11:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,8 @@ data_abort_handler(trapframe_t *tf)
 	    tf->tf_pc, l, far, fsr);
 
 	/* Data abort came from user mode? */
-	user = TRAP_USERMODE(tf);
+	if ((user = TRAP_USERMODE(tf)) != 0)
+		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* Grab the current pcb */
 	pcb = &l->l_addr->u_pcb;
@@ -769,12 +770,17 @@ prefetch_abort_handler(trapframe_t *tf)
 	struct vm_map *map;
 	vaddr_t fault_pc, va;
 	ksiginfo_t ksi;
-	int error;
+	int error, user;
 
 	UVMHIST_FUNC("prefetch_abort_handler"); UVMHIST_CALLED(maphist);
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
+
+	l = curlwp;
+
+	if ((user = TRAP_USERMODE(tf)) != 0)
+		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes
@@ -794,7 +800,6 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)(intptr_t) tf->tf_pc;
-		l = curlwp;
 		l->l_addr->u_pcb.pcb_tf = tf;
 		goto do_trapsignal;
 	default:
@@ -802,7 +807,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 
 	/* Prefetch aborts cannot happen in kernel mode */
-	if (__predict_false(!TRAP_USERMODE(tf)))
+	if (__predict_false(!user))
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 
 	/* Get fault address */

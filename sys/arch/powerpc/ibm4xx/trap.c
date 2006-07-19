@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2006/05/15 09:21:21 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 2006/07/19 21:11:45 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2006/05/15 09:21:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2006/07/19 21:11:45 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -133,8 +133,10 @@ trap(struct trapframe *frame)
 
 	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
-	if (frame->srr1 & PSL_PR)
+	if (frame->srr1 & PSL_PR) {
+		LWP_CACHE_CREDS(l, p);
 		type |= EXC_USER;
+	}
 
 	ftype = VM_PROT_READ;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.11 2006/03/16 15:10:06 he Exp $ */
+/* $NetBSD: except.c,v 1.12 2006/07/19 21:11:39 ad Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.11 2006/03/16 15:10:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.12 2006/07/19 21:11:39 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,8 +112,10 @@ prefetch_abort_handler(struct trapframe *tf)
 		l = &lwp0;
 	p = l->l_proc;
 
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, p);
+	}
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
 #ifdef DDB
@@ -166,8 +168,10 @@ data_abort_handler(struct trapframe *tf)
 	if (l == NULL)
 		l = &lwp0;
 	p = l->l_proc;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, p);
+	}
 	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
@@ -437,8 +441,10 @@ address_exception_handler(struct trapframe *tf)
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, l->l_proc);
+	}
 
 	if (curpcb->pcb_onfault != NULL) {
 		tf->tf_r0 = EFAULT;

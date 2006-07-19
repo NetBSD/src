@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.37 2006/05/22 13:43:54 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.38 2006/07/19 21:11:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@ struct	lwp {
 	int	l_flag;
 	int	l_stat;
 	lwpid_t	l_lid;		/* LWP identifier; local to process. */
+
+	struct kauth_cred *l_cred;	/* Cached credentials */
+	int	l_acflag;		/* Accounting flags */
 
 #define l_startzero l_swtime
 	u_int	l_swtime;	/* Time swapped in or out. */
@@ -152,6 +155,11 @@ do {									\
 } while (/* CONSTCOND */ 0)
 #define	PRELE(l)	(--(l)->l_holdcnt)
 
+#define	LWP_CACHE_CREDS(l, p)						\
+do {									\
+	if ((l)->l_cred != (p)->p_cred)					\
+		lwp_update_creds(l);					\
+} while (/* CONSTCOND */ 0)
 
 void	preempt (int);
 int	mi_switch (struct lwp *, struct lwp *);
@@ -189,6 +197,8 @@ void	lwp_exit2 (struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *);
 __inline int lwp_suspend(struct lwp *, struct lwp *);
 int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
+void	lwp_update_creds(struct lwp *);
+void	lwp_broadcast_creds(struct lwp *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
@@ -198,4 +208,3 @@ int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
 #define __LWP_ASLWP     0x00000100 /* XXX more icky signal semantics */
 
 #endif	/* !_SYS_LWP_H_ */
-

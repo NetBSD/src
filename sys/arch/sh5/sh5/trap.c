@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2006/05/15 20:55:47 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 2006/07/19 21:11:45 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2006/05/15 20:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2006/07/19 21:11:45 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -177,13 +177,15 @@ trap(struct lwp *l, struct trapframe *tf)
 		KDASSERT(l != NULL);
 		traptype |= T_USER;
 		l->l_md.md_regs = tf;
-	} else
-	if (l == NULL)
+		p = l->l_proc;
+		LWP_CACHE_CREDS(l, p);
+	} else if (l == NULL) {
 		l = &lwp0;
+		p = l->l_proc;
+	}
 
 	pcb_onfault = l->l_addr->u_pcb.pcb_onfault;
 	l->l_addr->u_pcb.pcb_onfault = NULL;
-	p = l->l_proc;
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
 
 	switch (traptype) {
@@ -544,6 +546,7 @@ trapa(struct lwp *l, struct trapframe *tf)
 			/*NOTREACHED*/
 		}
 #endif
+		LWP_CACHE_CREDS(l, l->l_proc);
 		(l->l_proc->p_md.md_syscall)(l, tf);
 		userret(l);
 		break;

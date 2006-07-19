@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.8 2006/03/07 07:21:50 thorpej Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.9 2006/07/19 21:11:39 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.8 2006/03/07 07:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2006/07/19 21:11:39 ad Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -99,6 +99,7 @@ linux_syscall_plain(struct trapframe *frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -183,6 +184,7 @@ linux_syscall_fancy(struct trapframe *frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
