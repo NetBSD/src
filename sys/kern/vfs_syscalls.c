@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.253 2006/07/17 19:05:36 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.254 2006/07/19 12:45:19 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.253 2006/07/17 19:05:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.254 2006/07/19 12:45:19 blymn Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2035,7 +2035,7 @@ restart:
 		goto out;
 	}
 #endif /* VERIFIED_EXEC */
-	
+
 	if (vn_start_write(nd.ni_dvp, &mp, V_NOWAIT) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
@@ -3357,7 +3357,8 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 
 #ifdef VERIFIED_EXEC
 	if (!error)
-		error = veriexec_renamechk(fvp, fromnd.ni_dirp, tond.ni_dirp, l);
+		error = veriexec_renamechk(fvp, tvp, fromnd.ni_dirp,
+					   tond.ni_dirp, l);
 #endif /* VERIFIED_EXEC */
 
 out:
