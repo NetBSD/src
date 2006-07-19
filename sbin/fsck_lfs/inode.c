@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.33 2006/07/19 02:45:10 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.34 2006/07/19 22:48:11 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -483,6 +483,7 @@ clearinode(ino_t inumber)
 		SEGUSE *sup;
 		u_int32_t oldsn = dtosn(fs, daddr);
 
+		seg_table[oldsn].su_nbytes -= DINODE1_SIZE;
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
 		sup->su_nbytes -= DINODE1_SIZE;
 		LFS_WRITESEGENTRY(sup, fs, oldsn, bp);	/* Ifile */

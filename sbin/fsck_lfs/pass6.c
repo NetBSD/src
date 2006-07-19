@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.14 2006/07/19 02:45:10 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.15 2006/07/19 22:48:11 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -224,10 +224,10 @@ remove_ino(struct uvnode *vp, ino_t ino)
 		if (vp == NULL)
 			vp = lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 
-		LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), sbp);
+		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), sbp);
 		sup->su_nbytes -= DINODE1_SIZE;
 		VOP_BWRITE(sbp);
-		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes -= DINODE1_SIZE;
+		seg_table[dtosn(fs, daddr)].su_nbytes -= DINODE1_SIZE;
 	} else
 		brelse(bp);
 
