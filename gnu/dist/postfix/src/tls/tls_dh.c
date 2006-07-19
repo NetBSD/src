@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dh.c,v 1.1.1.1 2005/08/18 21:11:06 rpaulo Exp $	*/
+/*	$NetBSD: tls_dh.c,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -228,6 +228,7 @@ int main(int unused_argc, char **unused_argv)
     tls_tmp_dh_cb(0, 1, 1024);
     tls_tmp_dh_cb(0, 1, 2048);
     tls_tmp_dh_cb(0, 0, 512);
+    return (0);
 }
 
 #endif

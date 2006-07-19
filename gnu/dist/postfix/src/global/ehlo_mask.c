@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.c,v 1.1.1.1 2005/08/18 21:07:12 rpaulo Exp $	*/
+/*	$NetBSD: ehlo_mask.c,v 1.1.1.2 2006/07/19 01:17:23 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,9 @@
 /*	#define EHLO_MASK_STARTTLS	(1<<7)
 /*	#define EHLO_MASK_XCLIENT	(1<<8)
 /*	#define EHLO_MASK_XFORWARD	(1<<9)
-/*	#define EHLO_MASK_SILENT	(1<<10)
+/*	#define EHLO_MASK_ENHANCEDSTATUSCODES	(1<<10)
+/*	#define EHLO_MASK_DSN		(1<<11)
+/*	#define EHLO_MASK_SILENT	(1<<15)
 /*
 /*	int	ehlo_mask(keyword_list)
 /*	const char *keyword_list;
@@ -73,6 +75,8 @@ static NAME_MASK ehlo_mask_table[] = {
     "XCLIENT", EHLO_MASK_XCLIENT,
     "XFORWARD", EHLO_MASK_XFORWARD,
     "STARTTLS", EHLO_MASK_STARTTLS,
+    "ENHANCEDSTATUSCODES", EHLO_MASK_ENHANCEDSTATUSCODES,
+    "DSN", EHLO_MASK_DSN,
     "SILENT-DISCARD", EHLO_MASK_SILENT,	/* XXX In-band signaling */
     0,
 };
@@ -108,6 +112,7 @@ const char *str_ehlo_mask(int mask_bits)
  /*
   * Stand-alone test program.
   */
+#include <stdlib.h>
 #include <vstream.h>
 #include <vstring.h>
 #include <vstring_vstream.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_flow.c,v 1.1.1.2 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: master_flow.c,v 1.1.1.3 2006/07/19 01:17:31 rpaulo Exp $	*/
 
 /* System library. */
 
@@ -22,7 +22,7 @@ int     master_flow_pipe[2];
 
 void    master_flow_init(void)
 {
-    char   *myname = "master_flow_init";
+    const char *myname = "master_flow_init";
 
     if (pipe(master_flow_pipe) < 0)
 	msg_fatal("%s: pipe: %m", myname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pgsql.c,v 1.1.1.4 2005/12/01 21:43:11 rpaulo Exp $	*/
+/*	$NetBSD: dict_pgsql.c,v 1.1.1.5 2006/07/19 01:17:23 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -169,6 +169,7 @@
 #include "find_inet.h"
 #include "myrand.h"
 #include "events.h"
+#include "stringops.h"
 
 /* Global library. */
 
@@ -210,7 +211,6 @@ typedef struct {
     CFG_PARSER *parser;
     char   *query;
     char   *result_format;
-    STRING_LIST *domain;
     void   *ctx;
     int     expansion_limit;
     char   *username;
@@ -219,6 +219,7 @@ typedef struct {
     char   *table;
     ARGV   *hosts;
     PLPGSQL *pldb;
+    HOST   *active_host;
 } DICT_PGSQL;
 
 
@@ -227,7 +228,8 @@ typedef struct {
 
 /* internal function declarations */
 static PLPGSQL *plpgsql_init(ARGV *);
-static PGSQL_RES *plpgsql_query(PLPGSQL *, const char *, char *, char *, char *);
+static PGSQL_RES *plpgsql_query(DICT_PGSQL *, const char *, VSTRING *, char *,
+				char *, char *);
 static void plpgsql_dealloc(PLPGSQL *);
 static void plpgsql_close_host(HOST *);
 static void plpgsql_down_host(HOST *);
@@ -237,48 +239,90 @@ DICT   *dict_pgsql_open(const char *, int, int);
 static void dict_pgsql_close(DICT *);
 static HOST *host_init(const char *);
 
-
 /* dict_pgsql_quote - escape SQL metacharacters in input string */
 
-static void dict_pgsql_quote(DICT *unused, const char *name, VSTRING *result)
+static void dict_pgsql_quote(DICT *dict, const char *name, VSTRING *result)
 {
-    const char *sub;
+    DICT_PGSQL *dict_pgsql = (DICT_PGSQL *) dict;
+    HOST  *active_host = dict_pgsql->active_host;
+    char  *myname = "dict_pgsql_quote";
+    size_t len = strlen(name);
+    size_t buflen = 2*len + 1;
+    int err = 1;
+
+    if (active_host == 0)
+	msg_panic("%s: bogus dict_pgsql->active_host", myname);
 
     /*
-     * XXX We really should be using an escaper that is provided by the PGSQL
-     * library. The code below seems to be over-kill (see RUS-CERT Advisory
-     * 2001-08:01), but it's better to be safe than to be sorry -- Wietse
+     * We won't get arithmetic overflows in 2*len + 1, because Postfix
+     * input keys have reasonable size limits, better safe than sorry.
      */
-     for (sub = name; *sub; sub++) {
-        switch(*sub) {
-	case '\n':
-            vstring_strcat(result, "\\n");
-	    break;
-	case '\r':
-	    vstring_strcat(result, "\\r");
-	    break;
-	case '\'':
-	    vstring_strcat(result, "\\'");
-	    break;
-	case '"':
-	    vstring_strcat(result, "\\\"");
-	    break;
-	case 0:
-	    vstring_strcat(result, "\\0");
-	    break;
-	default:
-	    VSTRING_ADDCH(result, *sub);
-	    break;
-	}
+    if (buflen <= len)
+	msg_panic("%s: arithmetic overflow in 2*%lu+1", 
+		  myname, (unsigned long) len);
+
+    /*
+     * XXX Workaround: stop further processing when PQescapeStringConn()
+     * (below) fails. A more proper fix requires invasive changes, not
+     * suitable for a stable release.
+     */
+    if (active_host->stat == STATFAIL)
+	return;
+
+    /*
+     * Escape the input string, using PQescapeStringConn(), because
+     * the older PQescapeString() is not safe anymore, as stated by the
+     * documentation.
+     *
+     * From current libpq (8.1.4) documentation:
+     *
+     * PQescapeStringConn writes an escaped version of the from string 
+     * to the to buffer, escaping special characters so that they cannot
+     * cause any harm, and adding a terminating zero byte.
+     *
+     * ...
+     *
+     * The parameter from points to the first character of the string 
+     * that is to be escaped, and the length parameter gives the number 
+     * of bytes in this string. A terminating zero byte is not required,
+     * and should not be counted in length.
+     *
+     * ...
+     *
+     * (The parameter) to shall point to a buffer that is able to hold 
+     * at least one more byte than twice the value of length, otherwise
+     * the behavior is undefined.
+     *
+     * ...
+     *
+     * If the error parameter is not NULL, then *error is set to zero on
+     * success, nonzero on error ... The output string is still generated
+     * on error, but it can be expected that the server will reject it as
+     * malformed. On error, a suitable message is stored in the conn 
+     * object, whether or not error is NULL.
+     */
+    VSTRING_SPACE(result, buflen);
+    PQescapeStringConn(active_host->db, vstring_end(result), name, len, &err);
+    if (err == 0) {
+	VSTRING_SKIP(result);
+    } else {
+	/* 
+	 * PQescapeStringConn() failed. According to the docs, we still 
+	 * have a valid, null-terminated output string, but we need not
+	 * rely on this behavior.
+	 */
+	msg_warn("dict pgsql: (host %s) cannot escape input string: %s", 
+		 active_host->hostname, PQerrorMessage(active_host->db));
+	active_host->stat = STATFAIL;
+	VSTRING_TERMINATE(result);
     }
-    VSTRING_TERMINATE(result);
 }
 
 /* dict_pgsql_lookup - find database entry */
 
 static const char *dict_pgsql_lookup(DICT *dict, const char *name)
 {
-    char   *myname = "dict_pgsql_lookup";
+    const char *myname = "dict_pgsql_lookup";
     PGSQL_RES *query_res;
     DICT_PGSQL *dict_pgsql;
     PLPGSQL *pldb;
@@ -305,26 +349,40 @@ static const char *dict_pgsql_lookup(DICT *dict, const char *name)
     INIT_VSTR(result, 10);
 
     dict_errno = 0;
+
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
+
     /*
      * If there is a domain list for this map, then only search for
      * addresses in domains on the list. This can significantly reduce
-     * the load on the server. Do not try "@domain" keys.
+     * the load on the server.
      */
-    if (db_common_check_domain(dict_pgsql->domain, name) == 0) {
+    if (db_common_check_domain(dict_pgsql->ctx, name) == 0) {
         if (msg_verbose)
 	    msg_info("%s: Skipping lookup of '%s'", myname, name);
         return (0);
     }
 
     /*
-     * Suppress the actual lookup if the expansion is empty
+     * Suppress the actual lookup if the expansion is empty.
+     * 
+     * This initial expansion is outside the context of any
+     * specific host connection, we just want to check the
+     * key pre-requisites, so when quoting happens separately
+     * for each connection, we don't bother with quoting...
      */
     if (!db_common_expand(dict_pgsql->ctx, dict_pgsql->query,
-    			  name, 0, query, dict_pgsql_quote))
+			  name, 0, query, 0))
 	return (0);
     
     /* do the query - set dict_errno & cleanup if there's an error */
-    if ((query_res = plpgsql_query(pldb, vstring_str(query),
+    if ((query_res = plpgsql_query(dict_pgsql, name, query,
 				   dict_pgsql->dbname,
 				   dict_pgsql->username,
 				   dict_pgsql->password)) == 0) {
@@ -395,7 +453,7 @@ static HOST *dict_pgsql_find_host(PLPGSQL *PLDB, unsigned stat, unsigned type)
 
 	for (i = 0; i < PLDB->len_hosts; i++) {
 	    if (dict_pgsql_check_stat(PLDB->db_hosts[i], stat, type, t) &&
-				      --idx == 0)
+		--idx == 0)
 		return PLDB->db_hosts[i];
 	}
     }
@@ -459,28 +517,104 @@ static void dict_pgsql_event(int unused_event, char *context)
  *			close unnecessary active connections
  */
 
-static PGSQL_RES *plpgsql_query(PLPGSQL *PLDB,
-				        const char *query,
+static PGSQL_RES *plpgsql_query(DICT_PGSQL *dict_pgsql,
+				        const char *name,
+				        VSTRING *query,
 				        char *dbname,
 				        char *username,
 				        char *password)
 {
+    PLPGSQL *PLDB = dict_pgsql->pldb;
     HOST   *host;
     PGSQL_RES *res = 0;
+    ExecStatusType status;
 
     while ((host = dict_pgsql_get_active(PLDB, dbname, username, password)) != NULL) {
-	if ((res = PQexec(host->db, query)) == 0) {
-	    msg_warn("pgsql query failed: %s", PQerrorMessage(host->db));
+	/*
+	 * The active host is used to escape strings in the
+	 * context of the active connection's character encoding.
+	 */
+	dict_pgsql->active_host = host;
+	VSTRING_RESET(query);
+	VSTRING_TERMINATE(query);
+	db_common_expand(dict_pgsql->ctx, dict_pgsql->query,
+			 name, 0, query, dict_pgsql_quote);
+	dict_pgsql->active_host = 0;
+
+	/* Check for potential dict_pgsql_quote() failure. */
+	if (host->stat == STATFAIL) {
 	    plpgsql_down_host(host);
-	} else {
-	    if (msg_verbose)
-		msg_info("dict_pgsql: successful query from host %s", host->hostname);
-	    event_request_timer(dict_pgsql_event, (char *) host, IDLE_CONN_INTV);
-	    break;
+	    continue;
 	}
+
+	/* 
+	 * Submit a command to the server. Be paranoid when processing
+	 * the result set: try to enumerate every successful case, and
+	 * reject everything else.
+	 *
+	 * From PostgreSQL 8.1.4 docs: (PQexec) returns a PGresult
+	 * pointer or possibly a null pointer. A non-null pointer will
+	 * generally be returned except in out-of-memory conditions or
+	 * serious errors such as inability to send the command to the
+	 * server.
+	 */
+	if ((res = PQexec(host->db, vstring_str(query))) != 0) {
+	    /*
+	     * XXX Because non-null result pointer does not imply success,
+	     * we need to check the command's result status.
+	     *
+	     * Section 28.3.1: A result of status PGRES_NONFATAL_ERROR
+	     * will never be returned directly by PQexec or other query
+	     * execution functions; results of this kind are instead 
+	     * passed to the notice processor.
+	     *
+	     * PGRES_EMPTY_QUERY is being sent by the server when the
+	     * query string is empty. The sanity-checking done by
+	     * the Postfix infrastructure makes this case impossible,
+	     * so we need not handle this situation explicitly.
+	     */
+	    switch ((status = PQresultStatus(res))) {
+	    case PGRES_TUPLES_OK:
+	    case PGRES_COMMAND_OK:
+		/* Success. */
+		if (msg_verbose)
+		    msg_info("dict_pgsql: successful query from host %s", 
+			     host->hostname);
+		event_request_timer(dict_pgsql_event, (char *) host, 
+				    IDLE_CONN_INTV);
+		return (res);
+	    case PGRES_FATAL_ERROR:
+		msg_warn("pgsql query failed: fatal error from host %s: %s",
+			 host->hostname, PQresultErrorMessage(res));
+		break;
+	    case PGRES_BAD_RESPONSE:
+		msg_warn("pgsql query failed: protocol error, host %s",
+			 host->hostname);
+		break;
+	    default:
+		msg_warn("pgsql query failed: unknown code 0x%lx from host %s",
+			 (unsigned long) status, host->hostname);
+		break;
+	    }
+	} else {
+	    /* 
+	     * This driver treats null pointers like fatal, non-null
+	     * result pointer errors, as suggested by the PostgreSQL 
+	     * 8.1.4 documentation.
+	     */
+	    msg_warn("pgsql query failed: fatal error from host %s: %s",
+		     host->hostname, PQerrorMessage(host->db));
+	}
+
+	/* 
+	 * XXX An error occurred. Clean up memory and skip this connection.
+	 */
+	if (res != 0)
+	    PQclear(res);
+	plpgsql_down_host(host);
     }
 
-    return res;
+    return (0);
 }
 
 /*
@@ -491,22 +625,33 @@ static PGSQL_RES *plpgsql_query(PLPGSQL *PLDB,
 static void plpgsql_connect_single(HOST *host, char *dbname, char *username, char *password)
 {
     if ((host->db = PQsetdbLogin(host->name, host->port, NULL, NULL,
-				 dbname, username, password)) != NULL) {
-	if (PQstatus(host->db) == CONNECTION_OK) {
-	    if (msg_verbose)
-		msg_info("dict_pgsql: successful connection to host %s",
-			 host->hostname);
-	    host->stat = STATACTIVE;
-	} else {
-	    msg_warn("connect to pgsql server %s: %s",
-		     host->hostname, PQerrorMessage(host->db));
-	    plpgsql_down_host(host);
-	}
-    } else {
+				 dbname, username, password)) == NULL
+	|| PQstatus(host->db) != CONNECTION_OK) {
 	msg_warn("connect to pgsql server %s: %s",
 		 host->hostname, PQerrorMessage(host->db));
 	plpgsql_down_host(host);
+	return;
     }
+
+    if (msg_verbose)
+	msg_info("dict_pgsql: successful connection to host %s",
+		 host->hostname);
+
+    /*
+     * XXX Postfix does not send multi-byte characters. The following
+     * piece of code is an explicit statement of this fact, and the 
+     * database server should not accept multi-byte information after
+     * this point.
+     */
+    if (PQsetClientEncoding(host->db, "LATIN1") != 0) {
+	msg_warn("dict_pgsql: cannot set the encoding to LATIN1, skipping %s",
+		 host->hostname);
+	plpgsql_down_host(host);
+	return;
+    }
+
+    /* Success. */
+    host->stat = STATACTIVE;
 }
 
 /* plpgsql_close_host - close an established PostgreSQL connection */
@@ -539,11 +684,9 @@ static void pgsql_parse_config(DICT_PGSQL *dict_pgsql, const char *pgsqlcf)
 {
     const char *myname = "pgsql_parse_config";
     CFG_PARSER *p;
-    int     i;
     char   *hosts;
     VSTRING *query;
     char   *select_function;
-    char   *domain;
 
     p = dict_pgsql->parser = cfg_parser_alloc(pgsqlcf);
     dict_pgsql->username = cfg_get_str(p, "user", "", 0, 0);
@@ -579,21 +722,18 @@ static void pgsql_parse_config(DICT_PGSQL *dict_pgsql, const char *pgsqlcf)
     (void) db_common_parse(&dict_pgsql->dict, &dict_pgsql->ctx,
 			   dict_pgsql->query, 1);
     (void) db_common_parse(0, &dict_pgsql->ctx, dict_pgsql->result_format, 0);
+    db_common_parse_domain(p, dict_pgsql->ctx);
 
-    domain = cfg_get_str(p, "domain", "", 0, 0);
-    if (*domain) {
-        if (!(dict_pgsql->domain = string_list_init(MATCH_FLAG_NONE, domain)))
-	    /*
-	     * The "domain" optimization skips input keys that may in fact
-	     * have unwanted matches in the database, so failure to create
-	     * the match list is fatal.
-	     */
-	    msg_fatal("%s: %s: domain match list creation using '%s' failed",
-		      myname, pgsqlcf, domain);
-    }
+    /*
+     * Maps that use substring keys should only be used with the full
+     * input key.
+     */
+    if (db_common_dict_partial(dict_pgsql->ctx))
+	dict_pgsql->dict.flags |= DICT_FLAG_PATTERN;
     else
-        dict_pgsql->domain = 0;
-    myfree(domain);
+	dict_pgsql->dict.flags |= DICT_FLAG_FIXED;
+    if (dict_pgsql->dict.flags & DICT_FLAG_FOLD_FIX)
+	dict_pgsql->dict.fold_buf = vstring_alloc(10);
 
     hosts = cfg_get_str(p, "hosts", "", 0, 0);
 
@@ -622,9 +762,10 @@ DICT   *dict_pgsql_open(const char *name, int open_flags, int dict_flags)
 					   sizeof(DICT_PGSQL));
     dict_pgsql->dict.lookup = dict_pgsql_lookup;
     dict_pgsql->dict.close = dict_pgsql_close;
+    dict_pgsql->dict.flags = dict_flags;
     pgsql_parse_config(dict_pgsql, name);
+    dict_pgsql->active_host = 0;
     dict_pgsql->pldb = plpgsql_init(dict_pgsql->hosts);
-    dict_pgsql->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if (dict_pgsql->pldb == NULL)
 	msg_fatal("couldn't intialize pldb!\n");
     return &dict_pgsql->dict;
@@ -686,7 +827,6 @@ static HOST *host_init(const char *hostname)
 
 static void dict_pgsql_close(DICT *dict)
 {
-    int     i;
     DICT_PGSQL *dict_pgsql = (DICT_PGSQL *) dict;
 
     plpgsql_dealloc(dict_pgsql->pldb);
@@ -696,12 +836,12 @@ static void dict_pgsql_close(DICT *dict)
     myfree(dict_pgsql->dbname);
     myfree(dict_pgsql->query);
     myfree(dict_pgsql->result_format);
-    if (dict_pgsql->domain)
-        string_list_free(dict_pgsql->domain);
     if (dict_pgsql->hosts)
     	argv_free(dict_pgsql->hosts);
     if (dict_pgsql->ctx)
 	db_common_free_ctx(dict_pgsql->ctx);
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 

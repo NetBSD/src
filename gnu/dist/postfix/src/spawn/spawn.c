@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.1.1.7 2005/08/18 21:09:42 rpaulo Exp $	*/
+/*	$NetBSD: spawn.c,v 1.1.1.8 2006/07/19 01:17:48 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -175,7 +175,7 @@ typedef struct {
 
 static void get_service_attr(SPAWN_ATTR *attr, char *service, char **argv)
 {
-    char   *myname = "get_service_attr";
+    const char *myname = "get_service_attr";
     struct passwd *pwd;
     struct group *grp;
     char   *user;			/* user name */
@@ -267,7 +267,7 @@ static void get_service_attr(SPAWN_ATTR *attr, char *service, char **argv)
 
 static void spawn_service(VSTREAM *client_stream, char *service, char **argv)
 {
-    char   *myname = "spawn_service";
+    const char *myname = "spawn_service";
     static SPAWN_ATTR attr;
     WAIT_STATUS_T status;
     ARGV   *export_env;

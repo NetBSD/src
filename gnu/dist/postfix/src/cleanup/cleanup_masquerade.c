@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.5 2005/08/18 21:05:54 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.6 2006/07/19 01:17:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -83,10 +83,10 @@
 int     cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
 {
     char   *domain;
-    int     domain_len;
+    ssize_t domain_len;
     char  **masqp;
     char   *masq;
-    int     masq_len;
+    ssize_t masq_len;
     char   *parent;
     int     truncate;
     int     did_rewrite = 0;

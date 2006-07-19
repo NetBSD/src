@@ -58,6 +58,8 @@ CLEANUP(8)                                                          CLEANUP(8)
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
        <a href="http://www.faqs.org/rfcs/rfc2045.html">RFC 2045</a> (MIME: Format of Internet Message Bodies)
        <a href="http://www.faqs.org/rfcs/rfc2046.html">RFC 2046</a> (MIME: Media Types)
+       <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a> (Enhanced Status Codes)
+       <a href="http://www.faqs.org/rfcs/rfc3464.html">RFC 3464</a> (Delivery status notifications)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -67,7 +69,7 @@ CLEANUP(8)                                                          CLEANUP(8)
        <b>then else</b> and other logical relationships.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes   to  <b>main.cf</b>  are  picked  up  automatically,  as
+       Changes   to  <a href="postconf.5.html"><b>main.cf</b></a>  are  picked  up  automatically,  as
        <a href="cleanup.8.html"><b>cleanup</b>(8)</a> processes run for  only  a  limited  amount  of
        time.  Use  the  command  "<b>postfix  reload</b>"  to speed up a
        change.
@@ -88,40 +90,126 @@ CLEANUP(8)                                                          CLEANUP(8)
               Report  mail  delivery errors to the address speci-
               fied  with  the  non-standard  Errors-To:   message
               header,  instead  of  the  envelope  sender address
-              (this feature  is  removed  with  Postfix  2.2,  is
-              turned  off  by  default  with  Postfix 2.1, and is
-              always turned on with older Postfix versions).
+              (this feature is removed with Postfix version  2.2,
+              is  turned off by default with Postfix version 2.1,
+              and is always turned on  with  older  Postfix  ver-
+              sions).
 
 <b>BUILT-IN CONTENT FILTERING CONTROLS</b>
-       Postfix built-in content filtering  is  meant  to  stop  a
-       flood  of  worms  or  viruses. It is not a general content
+       Postfix  built-in  content  filtering  is  meant to stop a
+       flood of worms or viruses. It is  not  a  general  content
        filter.
 
        <b><a href="postconf.5.html#body_checks">body_checks</a> (empty)</b>
-              Optional lookup tables for  content  inspection  as
+              Optional  lookup  tables  for content inspection as
               specified in the <b><a href="postconf.5.html#body_checks">body_checks</a></b>(5) manual page.
 
        <b><a href="postconf.5.html#header_checks">header_checks</a> (empty)</b>
-              Optional  lookup  tables  for content inspection of
-              primary non-MIME message headers, as  specified  in
+              Optional lookup tables for  content  inspection  of
+              primary  non-MIME  message headers, as specified in
               the <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#body_checks_size_limit">body_checks_size_limit</a> (51200)</b>
               How much text in a message body segment (or attach-
-              ment, if you prefer to use that term) is  subjected
+              ment,  if you prefer to use that term) is subjected
               to <a href="postconf.5.html#body_checks">body_checks</a> inspection.
 
        <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
-              Optional  lookup  tables  for content inspection of
-              MIME related message headers, as described  in  the
+              Optional lookup tables for  content  inspection  of
+              MIME  related  message headers, as described in the
               <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
 
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
-              Optional  lookup  tables  for content inspection of
-              non-MIME message headers in attached  messages,  as
+              Optional lookup tables for  content  inspection  of
+              non-MIME  message  headers in attached messages, as
               described in the <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
+
+       Available in Postfix version 2.3 and later:
+
+       <b><a href="postconf.5.html#message_reject_characters">message_reject_characters</a> (empty)</b>
+              The set of characters that Postfix will  reject  in
+              message content.
+
+       <b><a href="postconf.5.html#message_strip_characters">message_strip_characters</a> (empty)</b>
+              The set of characters that Postfix will remove from
+              message content.
+
+<b>BEFORE QUEUE MILTER CONTROLS</b>
+       As of version 2.3, Postfix supports the Sendmail version 8
+       Milter  (mail  filter) protocol. When mail is not received
+       via the <a href="smtpd.8.html">smtpd(8)</a> server, the <a href="cleanup.8.html">cleanup(8)</a> server will  simu-
+       late  SMTP events to the extent that this is possible. For
+       details see the <a href="MILTER_README.html">MILTER_README</a> document.
+
+       <b><a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a> (empty)</b>
+              A list of Milter (mail filter) applications for new
+              mail  that does not arrive via the Postfix <a href="smtpd.8.html"><b>smtpd</b>(8)</a>
+              server.
+
+       <b><a href="postconf.5.html#milter_protocol">milter_protocol</a> (2)</b>
+              The mail filter protocol version and optional  pro-
+              tocol  extensions  for  communication with a Milter
+              (mail filter) application.
+
+       <b><a href="postconf.5.html#milter_default_action">milter_default_action</a> (tempfail)</b>
+              The default action  when  a  Milter  (mail  filter)
+              application is unavailable or mis-configured.
+
+       <b><a href="postconf.5.html#milter_macro_daemon_name">milter_macro_daemon_name</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
+              The {daemon_name} macro value for Milter (mail fil-
+              ter) applications.
+
+       <b><a href="postconf.5.html#milter_macro_v">milter_macro_v</a> ($<a href="postconf.5.html#mail_name">mail_name</a> $<a href="postconf.5.html#mail_version">mail_version</a>)</b>
+              The {v} macro value for Milter (mail filter) appli-
+              cations.
+
+       <b><a href="postconf.5.html#milter_connect_timeout">milter_connect_timeout</a> (30s)</b>
+              The  time  limit  for  connecting to a Milter (mail
+              filter) application, and for  negotiating  protocol
+              options.
+
+       <b><a href="postconf.5.html#milter_command_timeout">milter_command_timeout</a> (30s)</b>
+              The  time  limit  for  sending an SMTP command to a
+              Milter (mail filter) application, and for receiving
+              the response.
+
+       <b><a href="postconf.5.html#milter_content_timeout">milter_content_timeout</a> (300s)</b>
+              The  time  limit  for  sending message content to a
+              Milter (mail filter) application, and for receiving
+              the response.
+
+       <b><a href="postconf.5.html#milter_connect_macros">milter_connect_macros</a> (see postconf -n output)</b>
+              The  macros  that  are sent to Milter (mail filter)
+              applications after completion of  an  SMTP  connec-
+              tion.
+
+       <b><a href="postconf.5.html#milter_helo_macros">milter_helo_macros</a> (see postconf -n output)</b>
+              The  macros  that  are sent to Milter (mail filter)
+              applications after the SMTP HELO or EHLO command.
+
+       <b><a href="postconf.5.html#milter_mail_macros">milter_mail_macros</a> (see postconf -n output)</b>
+              The macros that are sent to  Milter  (mail  filter)
+              applications after the SMTP MAIL FROM command.
+
+       <b><a href="postconf.5.html#milter_rcpt_macros">milter_rcpt_macros</a> (see postconf -n output)</b>
+              The  macros  that  are sent to Milter (mail filter)
+              applications after the SMTP RCPT TO command.
+
+       <b><a href="postconf.5.html#milter_data_macros">milter_data_macros</a> (see postconf -n output)</b>
+              The macros that are sent to  version  4  or  higher
+              Milter  (mail  filter)  applications after the SMTP
+              DATA command.
+
+       <b><a href="postconf.5.html#milter_unknown_command_macros">milter_unknown_command_macros</a> (see postconf -n output)</b>
+              The macros that are sent to  version  3  or  higher
+              Milter  (mail filter) applications after an unknown
+              SMTP command.
+
+       <b><a href="postconf.5.html#milter_end_of_data_macros">milter_end_of_data_macros</a> (see postconf -n output)</b>
+              The macros that are sent to  Milter  (mail  filter)
+              applications after the message end-of-data.
 
 <b>MIME PROCESSING CONTROLS</b>
        Available in Postfix version 2.0 and later:
@@ -302,16 +390,20 @@ CLEANUP(8)                                                          CLEANUP(8)
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix main.cf and
-              master.cf configuration files.
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
               How much time a Postfix daemon process may take  to
               handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
+       <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
+              The maximal number  of  digits  after  the  decimal
+              point when logging sub-second delay values.
+
        <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a> (0h)</b>
-              The time after which the sender receives  the  mes-
+              The  time  after which the sender receives the mes-
               sage headers of mail that is still queued.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -319,12 +411,12 @@ CLEANUP(8)                                                          CLEANUP(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits for the next service request
+              The  maximum  amount  of  time that an idle Postfix
+              daemon process waits for the next  service  request
               before exiting.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of connection requests before  a
+              The  maximal number of connection requests before a
               Postfix daemon process terminates.
 
        <b><a href="postconf.5.html#myhostname">myhostname</a> (see 'postconf -d' output)</b>
@@ -332,19 +424,19 @@ CLEANUP(8)                                                          CLEANUP(8)
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The domain name that locally-posted mail appears to
-              come from, and that locally posted mail  is  deliv-
+              come  from,  and that locally posted mail is deliv-
               ered to.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
+              The process ID  of  a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
+              The  process  name  of  a Postfix command or daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
+              The location of the Postfix top-level queue  direc-
               tory.
 
        <b><a href="postconf.5.html#soft_bounce">soft_bounce</a> (no)</b>
@@ -355,14 +447,14 @@ CLEANUP(8)                                                          CLEANUP(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
-              Enable   support   for  the  X-Original-To  message
+              Enable  support  for  the   X-Original-To   message
               header.
 
 <b>FILES</b>
@@ -383,9 +475,10 @@ CLEANUP(8)                                                          CLEANUP(8)
 
 <b>README FILES</b>
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a> Postfix address manipulation
+       <a href="CONTENT_INSPECTION_README.html">CONTENT_INSPECTION_README</a> content inspection
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

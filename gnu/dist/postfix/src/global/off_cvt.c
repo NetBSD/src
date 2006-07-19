@@ -1,4 +1,4 @@
-/*	$NetBSD: off_cvt.c,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: off_cvt.c,v 1.1.1.4 2006/07/19 01:17:27 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -154,6 +154,7 @@ int     main(int unused_argc, char **unused_argv)
 	vstream_fflush(VSTREAM_OUT);
     }
     vstring_free(buf);
+    return (0);
 }
 
 #endif

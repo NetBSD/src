@@ -1,4 +1,4 @@
-/*	$NetBSD: rec2stream.c,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: rec2stream.c,v 1.1.1.4 2006/07/19 01:17:28 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -45,4 +45,5 @@ int     main(void)
     while ((type = rec_get(VSTREAM_IN, buf, 0)) > 0)
 	REC_STREAMLF_PUT_BUF(VSTREAM_OUT, type, buf);
     vstream_fflush(VSTREAM_OUT);
+    return (0);
 }

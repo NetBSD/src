@@ -44,6 +44,13 @@
 #	can be directed to TCP-based server. In that case, the lookups are
 #	done in a slightly different way as described below under
 #	"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+# CASE FOLDING
+# .ad
+# .fi
+#	The search string is folded to lowercase before database
+#	lookup. As of Postfix 2.3, the search string is not case
+#	folded with database types such as regexp: or pcre: whose
+#	lookup fields can match both upper and lower case.
 # TABLE FORMAT
 # .ad
 # .fi
@@ -123,7 +130,7 @@
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available up to and including Postfix version 2.2.
+#	This feature is not available up to and including Postfix version 2.3.
 #	
 #	Each lookup operation uses the entire address once.  Thus,
 #	\fIuser@domain\fR mail addresses are not broken up into their
