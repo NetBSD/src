@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/08/21 22:56:05 he Exp $
+#	$NetBSD: Makefile,v 1.9 2006/07/19 02:04:44 rpaulo Exp $
 
 NOMAN=	# defined
 
@@ -14,6 +14,8 @@ BINDIR=	${PFIX_LIBEXECDIR}
 SRCS=	smtp.c smtp_connect.c smtp_proto.c smtp_chat.c smtp_session.c \
 	smtp_addr.c smtp_trouble.c smtp_state.c smtp_rcpt.c \
 	smtp_sasl_proto.c smtp_sasl_glue.c smtp_reuse.c smtp_map11.c
+
+LINKS+=	 ${PFIX_LIBEXECDIR}/smtp ${PFIX_LIBEXECDIR}/lmtp
 
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
