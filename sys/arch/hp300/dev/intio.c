@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.22 2006/07/19 17:21:23 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.23 2006/07/19 18:25:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.22 2006/07/19 17:21:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.23 2006/07/19 18:25:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,8 @@ intioattach(struct device *parent, struct device *self, void *aux)
 		if (ib[i].ib_offset == HPIB_BASE && !internalhpib)
 			continue;
 
-		strncpy(ia.ia_modname, ib[i].ib_modname, INTIO_MOD_LEN);
-		ia.ia_modname[INTIO_MOD_LEN] = '\0';
+		strlcpy(ia.ia_modname, ib[i].ib_modname,
+		    sizeof(ia.ia_modename));
 		ia.ia_bst = bst;
 		ia.ia_iobase = ib[i].ib_offset;
 		ia.ia_addr = (bus_addr_t)(intiobase + ib[i].ib_offset);
