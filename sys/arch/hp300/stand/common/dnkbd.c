@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.9 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.10 2006/07/19 19:23:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 
 #include <hp300/dev/frodoreg.h>		/* for apci offsets */
+#include <hp300/dev/intioreg.h>		/* for frodo offsets */
 
 #include <hp300/stand/common/dcareg.h>	/* for the register bit definitions */
 #include <hp300/stand/common/apcireg.h>	/* for the apci registers */
