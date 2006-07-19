@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2005/08/18 22:30:36 rpaulo Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2006/07/19 02:04:43 rpaulo Exp $
 
 .include <bsd.own.mk>
 
@@ -6,10 +6,11 @@ WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/gnu/dist/postfix
 
-CPPFLAGS+= -DNETBSD1 -I${DIST} \
+CPPFLAGS+= -DNETBSD3 -I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
-	-I${PFIX_DISTDIR}/src/tls
+	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
+	-I${PFIX_DISTDIR}/src/xsasl
 
 # TLS support.
 .if ${MKCRYPTO} != "no"
@@ -22,7 +23,8 @@ CPPFLAGS+=	-DNO_IPV6
 .endif
 
 PFIX_SRCDIR=	${NETBSDSRCDIR}/gnu/usr.sbin/postfix
-PFIX_LIBSDIRS=	dns dns masterlib master global global util util
+PFIX_LIBSDIRS=	dns dns masterlib master global global util util \
+		milter milter xsasl xsasl
 
 .if ${MKCRYPTO} != "no" 
 PFIX_LIBSDIRS+=	tls tls
