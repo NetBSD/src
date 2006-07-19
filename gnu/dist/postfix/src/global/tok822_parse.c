@@ -1,4 +1,4 @@
-/*	$NetBSD: tok822_parse.c,v 1.9 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: tok822_parse.c,v 1.10 2006/07/19 01:35:40 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,7 @@
 /*	tok822_scan_addr() converts the external-form string in
 /*	\fIstr\fR to an address token tree. This is just string to
 /*	token list conversion; no parsing is done. This routine is
-/*	suitable for data should contain just one address and no
+/*	suitable for data that should contain just one address and no
 /*	other information.
 /*
 /*	tok822_externalize() converts a token list to external form.
@@ -245,13 +245,14 @@ VSTRING *tok822_internalize(VSTRING *vp, TOK822 *tree, int flags)
 
 /* strip_address - strip non-address text from address expression */
 
-static void strip_address(VSTRING *vp, int start, TOK822 *addr)
+static void strip_address(VSTRING *vp, ssize_t start, TOK822 *addr)
 {
     VSTRING *tmp;
 
     /*
      * Emit plain <address>. Discard any comments or phrases.
      */
+    VSTRING_TERMINATE(vp);
     msg_warn("stripping too many comments from address: %.100s...",
 	     printable(vstring_str(vp) + start, '?'));
     vstring_truncate(vp, start);
@@ -272,9 +273,9 @@ VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 {
     VSTRING *tmp;
     TOK822 *tp;
-    int     start;
+    ssize_t start;
     TOK822 *addr;
-    int     addr_len;
+    ssize_t addr_len;
 
     /*
      * Guard against a Sendmail buffer overflow (CERT advisory CA-2003-07).
