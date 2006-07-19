@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2006/05/15 09:26:18 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.109 2006/07/19 21:11:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2006/05/15 09:26:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2006/07/19 21:11:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,6 +576,7 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = frame.f_regs;
+		LWP_CACHE_CREDS(l, p);
 	}
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.33 2006/03/07 07:21:50 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.34 2006/07/19 21:11:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.33 2006/03/07 07:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.34 2006/07/19 21:11:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -94,6 +94,7 @@ ibcs2_syscall_plain(frame)
 
 	uvmexp.syscalls++;
 	l = curlwp;
+	LWP_CACHE_CREDS(l, l->l_proc);
 
 	code = frame->tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
@@ -175,6 +176,7 @@ ibcs2_syscall_fancy(frame)
 
 	uvmexp.syscalls++;
 	l = curlwp;
+	LWP_CACHE_CREDS(l, l->l_proc);
 
 	code = frame->tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))

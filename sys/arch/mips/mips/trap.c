@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.203 2006/05/15 09:14:42 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.204 2006/07/19 21:11:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.203 2006/05/15 09:14:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.204 2006/07/19 21:11:43 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -219,8 +219,10 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
-	if (USERMODE(status))
+	if (USERMODE(status)) {
 		type |= T_USER;
+		LWP_CACHE_CREDS(l, p);
+	}
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
 		if (type != T_BREAK) {

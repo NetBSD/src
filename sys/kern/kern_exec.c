@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.220 2006/07/17 15:29:06 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.221 2006/07/19 21:11:37 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.220 2006/07/17 15:29:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.221 2006/07/19 21:11:37 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -779,10 +779,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if ((p->p_flag & P_TRACED) == 0 &&
 
 	    (((attr.va_mode & S_ISUID) != 0 &&
-	      kauth_cred_geteuid(p->p_cred) != attr.va_uid) ||
+	      kauth_cred_geteuid(l->l_cred) != attr.va_uid) ||
 
 	     ((attr.va_mode & S_ISGID) != 0 &&
-	      kauth_cred_getegid(p->p_cred) != attr.va_gid))) {
+	      kauth_cred_getegid(l->l_cred) != attr.va_gid))) {
 		/*
 		 * Mark the process as SUGID before we do
 		 * anything that might block.
@@ -799,8 +799,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * Copy the credential so other references don't see our
 		 * changes.
 		 */
-		p->p_cred = kauth_cred_copy(p->p_cred);
-
+		l->l_cred = kauth_cred_copy(l->l_cred);
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
@@ -810,12 +809,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			ktrderef(p);
 #endif
 		if (attr.va_mode & S_ISUID)
-			kauth_cred_seteuid(p->p_cred, attr.va_uid);
+			kauth_cred_seteuid(l->l_cred, attr.va_uid);
 		if (attr.va_mode & S_ISGID)
-			kauth_cred_setegid(p->p_cred, attr.va_gid);
+			kauth_cred_setegid(l->l_cred, attr.va_gid);
 	} else {
-		if (kauth_cred_geteuid(p->p_cred) == kauth_cred_getuid(p->p_cred) &&
-		    kauth_cred_getegid(p->p_cred) == kauth_cred_getgid(p->p_cred))
+		if (kauth_cred_geteuid(l->l_cred) ==
+		    kauth_cred_getuid(l->l_cred) &&
+		    kauth_cred_getegid(l->l_cred) ==
+		    kauth_cred_getgid(l->l_cred))
 			p->p_flag &= ~P_SUGID;
 	}
 
@@ -824,12 +825,16 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * Test to see if this is necessary first, since in the common case
 	 * we won't need a private reference.
 	 */
-	if (kauth_cred_geteuid(p->p_cred) != kauth_cred_getsvuid(p->p_cred) ||
-	    kauth_cred_getegid(p->p_cred) != kauth_cred_getsvgid(p->p_cred)) {
-		p->p_cred = kauth_cred_copy(p->p_cred);
-		kauth_cred_setsvuid(p->p_cred, kauth_cred_geteuid(p->p_cred));
-		kauth_cred_setsvgid(p->p_cred, kauth_cred_getegid(p->p_cred));
+	if (kauth_cred_geteuid(l->l_cred) != kauth_cred_getsvuid(l->l_cred) ||
+	    kauth_cred_getegid(l->l_cred) != kauth_cred_getsvgid(l->l_cred)) {
+		l->l_cred = kauth_cred_copy(l->l_cred);
+		kauth_cred_setsvuid(l->l_cred, kauth_cred_geteuid(l->l_cred));
+		kauth_cred_setsvgid(l->l_cred, kauth_cred_getegid(l->l_cred));
 	}
+
+	/* Update the master credentials. */
+	if (l->l_cred != p->p_cred)
+		lwp_broadcast_creds(l);
 
 #if defined(__HAVE_RAS)
 	/*

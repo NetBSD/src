@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2006/05/15 20:56:34 yamt Exp $     */
+/*	$NetBSD: trap.c,v 1.104 2006/07/19 21:11:47 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2006/05/15 20:56:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2006/07/19 21:11:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -130,6 +130,7 @@ trap(struct trapframe *frame)
 		type |= T_USER;
 		oticks = p->p_sticks;
 		l->l_addr->u_pcb.framep = frame; 
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	type&=~(T_WRITE|T_PTEFETCH);

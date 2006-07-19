@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.19 2006/03/07 07:21:50 thorpej Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.20 2006/07/19 21:11:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.19 2006/03/07 07:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.20 2006/07/19 21:11:42 ad Exp $");
 
 #include "opt_vm86.h"
 
@@ -91,6 +91,7 @@ mach_syscall_plain(frame)
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
 	params = (caddr_t)frame->tf_esp + sizeof(int);
@@ -178,6 +179,7 @@ mach_syscall_fancy(frame)
 	register_t code, realcode, args[8], rval[2];
 
 	uvmexp.syscalls++;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
 	realcode = code;

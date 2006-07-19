@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.5 2006/03/07 07:21:50 thorpej Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.6 2006/07/19 21:11:39 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5 2006/03/07 07:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.6 2006/07/19 21:11:39 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -59,6 +59,7 @@ linux32_syscall_plain(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -171,6 +172,7 @@ linux32_syscall_fancy(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
