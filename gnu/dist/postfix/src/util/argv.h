@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.1.1.4 2005/08/18 21:09:54 rpaulo Exp $	*/
+/*	$NetBSD: argv.h,v 1.1.1.5 2006/07/19 01:17:50 rpaulo Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -17,16 +17,16 @@
   * External interface.
   */
 typedef struct ARGV {
-    int     len;			/* number of array elements */
-    int     argc;			/* array elements in use */
+    ssize_t len;			/* number of array elements */
+    ssize_t argc;			/* array elements in use */
     char  **argv;			/* string array */
 } ARGV;
 
-extern ARGV *argv_alloc(int);
+extern ARGV *argv_alloc(ssize_t);
 extern void argv_add(ARGV *,...);
 extern void argv_addn(ARGV *,...);
 extern void argv_terminate(ARGV *);
-extern void argv_truncate(ARGV *, int);
+extern void argv_truncate(ARGV *, ssize_t);
 extern ARGV *argv_free(ARGV *);
 
 extern ARGV *argv_split(const char *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_connect.c,v 1.1.1.3 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: timed_connect.c,v 1.1.1.4 2006/07/19 01:17:56 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /*	int	timed_connect(fd, buf, buf_len, timeout)
 /*	int	fd;
 /*	struct sockaddr	*buf;
-/*	unsigned buf_len;
+/*	int	buf_len;
 /*	int	timeout;
 /* DESCRIPTION
 /*	timed_connect() implement a BSD socket connect() operation that is

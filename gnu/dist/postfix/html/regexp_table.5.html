@@ -50,11 +50,19 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
               Note: do not prepend whitespace to patterns  inside
               <b>if</b>..<b>endif</b>.
 
+              This feature is available in Postfix 2.1 and later.
+
        <b>if !/</b><i>pattern</i><b>/</b><i>flags</i>
 
        <b>endif</b>  Match the input string against the patterns between
               <b>if</b> and <b>endif</b>, if and only if that same input string
-              does <b>not</b> match <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+              does <b>not</b> match <i>pattern</i>.  The  <b>if</b>..<b>endif</b>  can  nest.
+              matches <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+
+              Note:  do not prepend whitespace to patterns inside
+              <b>if</b>..<b>endif</b>.
+
+              This feature is available in Postfix 2.1 and later.
 
        blank lines and comments
               Empty  lines and whitespace-only lines are ignored,
@@ -113,11 +121,12 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
 
 <b>TEXT SUBSTITUTION</b>
        Substitution of substrings  from  the  matched  expression
-       into the result string is possible using $1, $2, etc.. The
-       macros in the result string may need to be written as ${n}
-       or $(n) if they aren't followed by whitespace.
+       into  the  result  string  is possible using $1, $2, etc.;
+       specify $$ to produce a $ character as output.  The macros
+       in  the  result  string  may need to be written as ${n} or
+       $(n) if they aren't followed by whitespace.
 
-       Note:  since negated patterns (those preceded by <b>!</b>) return
+       Note: since negated patterns (those preceded by <b>!</b>)  return
        a result when the expression does not match, substitutions
        are not available for negated patterns.
 

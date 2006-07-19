@@ -66,14 +66,17 @@ Note: Do not use the postfix user as the maildrop user.
 
     /etc/postfix/master.cf:
         maildrop  unix  -       n       n       -       -       pipe
-          flags=DRhu user=vmail argv=/path/to/maildrop -d ${recipient}
+          flags=ODRhu user=vmail argv=/path/to/maildrop -d ${recipient}
+
+The pipe(8) manual page gives a detailed description of the above command line
+arguments, and more.
 
 If you want to support user+extension@domain style addresses, use the following
 instead:
 
     /etc/postfix/master.cf:
         maildrop  unix  -       n       n       -       -       pipe
-          flags=DRhu user=vmail argv=/path/to/maildrop
+          flags=ODRhu user=vmail argv=/path/to/maildrop
           -d ${user}@${nexthop} ${extension} ${recipient} ${user} ${nexthop}
 
 The mail is delivered to ${user}@${nexthop} (match key for maildrop userdb

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.c,v 1.1.1.1 2005/08/18 21:10:54 rpaulo Exp $	*/
+/*	$NetBSD: inet_proto.c,v 1.1.1.2 2006/07/19 01:17:53 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -251,7 +251,7 @@ INET_PROTO_INFO *inet_proto_init(const char *context, const char *protocols)
   */
 int     main(int argc, char **argv)
 {
-    char   *myname = argv[0];
+    const char *myname = argv[0];
     INET_PROTO_INFO *pf;
 
     if (argc < 2)

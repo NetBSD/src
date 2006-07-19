@@ -1,4 +1,4 @@
-.\"	$NetBSD: postdrop.1,v 1.1.1.7 2005/08/18 21:03:47 rpaulo Exp $
+.\"	$NetBSD: postdrop.1,v 1.1.1.8 2006/07/19 01:16:44 rpaulo Exp $
 .\"
 .TH POSTDROP 1 
 .ad
@@ -28,7 +28,8 @@ standard input, and for reporting status information on standard
 output. This is currently the only supported method.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
-options make the software increasingly verbose.
+options make the software increasingly verbose. As of Postfix 2.3,
+this option is available for the super-user only.
 .SH "SECURITY"
 .na
 .nf

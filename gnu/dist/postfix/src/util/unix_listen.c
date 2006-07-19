@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_listen.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: unix_listen.c,v 1.1.1.3 2006/07/19 01:17:56 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -89,7 +90,8 @@ int     unix_listen(const char *addr, int backlog, int block_mode)
      */
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 	msg_fatal("socket: %m");
-    (void) unlink(addr);
+    if (unlink(addr) < 0 && errno != ENOENT)
+	msg_fatal("remove %s: %m", addr);
     if (bind(sock, (struct sockaddr *) & sun, sizeof(sun)) < 0)
 	msg_fatal("bind: %s: %m", addr);
 #ifdef FCHMOD_UNIX_SOCKETS

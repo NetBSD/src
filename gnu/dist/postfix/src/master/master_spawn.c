@@ -1,4 +1,4 @@
-/*	$NetBSD: master_spawn.c,v 1.1.1.4 2005/08/18 21:07:42 rpaulo Exp $	*/
+/*	$NetBSD: master_spawn.c,v 1.1.1.5 2006/07/19 01:17:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -135,7 +135,7 @@ static void master_throttle(MASTER_SERV *serv)
 
 void    master_spawn(MASTER_SERV *serv)
 {
-    char   *myname = "master_spawn";
+    const char *myname = "master_spawn";
     MASTER_PROC *proc;
     MASTER_PID pid;
     int     n;
@@ -221,7 +221,6 @@ void    master_spawn(MASTER_SERV *serv)
 
 	execvp(serv->path, serv->args->argv);
 	msg_fatal("%s: exec %s: %m", myname, serv->path);
-	exit(1);
 	/* NOTREACHED */
 
 	/*
@@ -294,10 +293,8 @@ void    master_reap_child(void)
 	if (msg_verbose)
 	    msg_info("master_reap_child: pid %d", pid);
 	if ((proc = (MASTER_PROC *) binhash_find(master_child_table,
-					(char *) &pid, sizeof(pid))) == 0) {
+					  (char *) &pid, sizeof(pid))) == 0)
 	    msg_panic("master_reap: unknown pid: %d", pid);
-	    continue;
-	}
 	serv = proc->serv;
 	if (!NORMAL_EXIT_STATUS(status)) {
 	    if (WIFEXITED(status))

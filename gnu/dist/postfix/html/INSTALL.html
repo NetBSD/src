@@ -156,7 +156,7 @@ OPENSTEP 4.x <br>
 OSF1.V3 - OSF1.V5 (Digital UNIX) <br>
 Reliant UNIX 5.x <br>
 Rhapsody 5.x <br>
-SunOS 4.1.4 (February 2005) <br>
+SunOS 4.1.4 (July 2006) <br>
 SunOS 5.4 - 5.9 (Solaris 2.4..9) <br>
 Ultrix 4.x (well, that was long ago) <br>
 </p>
@@ -478,13 +478,13 @@ one of the following commands as the super-user:</p>
 <ul>
 
 <li> <p> The non-interactive version ("make upgrade") needs the
-/etc/postfix/main.cf file from a previous installation. If the file
+/etc/postfix/<a href="postconf.5.html">main.cf</a> file from a previous installation. If the file
 does not exist, use interactive installation ("make install")
 instead. </p>
 
 <li> <p> The interactive version offers suggestions for pathnames
 that you can override interactively, and stores your preferences
-in /etc/postfix/main.cf for convenient future upgrades. </p>
+in /etc/postfix/<a href="postconf.5.html">main.cf</a> for convenient future upgrades. </p>
 
 </ul>
 
@@ -520,13 +520,13 @@ configuration file edits</a>" in section 10, and review the "<a
 href="#hamlet">To chroot or not to chroot</a>" text in section
 11. </p>
 
-<p> You MUST comment out the "smtp inet" entry in /etc/postfix/master.cf,
+<p> You MUST comment out the "smtp inet" entry in /etc/postfix/<a href="master.5.html">master.cf</a>,
 in order to avoid conflicts with the real sendmail. Put a "#"
 character in front of the line that defines the smtpd service: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     #smtp      inet  n       -       n       -       -       smtpd
 </pre>
 </blockquote>
@@ -585,11 +585,11 @@ receive mail while leaving your Sendmail setup intact, by running
 Postfix on a virtual interface address.  Simply configure your mail
 user agent to directly invoke the Postfix sendmail program.  </p>
 
-<p> In the /etc/postfix/main.cf file, I would specify </p>
+<p> In the /etc/postfix/<a href="postconf.5.html">main.cf</a> file, I would specify </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#myhostname">myhostname</a> = virtual.host.tld
     <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = $<a href="postconf.5.html#myhostname">myhostname</a>
     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a>
@@ -722,12 +722,12 @@ presented below is targeted at experienced system administrators.
 <h3>10.1 - Postfix configuration files</h3>
 
 <p> By default, Postfix configuration files are in /etc/postfix.
-The two most important files are main.cf and master.cf; these files
+The two most important files are <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a>; these files
 must be owned by root.  Giving someone else write permission to
-main.cf or master.cf (or to their parent directories) means giving
+<a href="postconf.5.html">main.cf</a> or <a href="master.5.html">master.cf</a> (or to their parent directories) means giving
 root privileges to that person. </p>
 
-<p> In /etc/postfix/main.cf, you will have to set up a minimal number
+<p> In /etc/postfix/<a href="postconf.5.html">main.cf</a>, you will have to set up a minimal number
 of configuration parameters.  Postfix configuration parameters  
 resemble shell variables, with two important differences: the first  
 one is that Postfix does not know about quotes like the UNIX shell
@@ -737,7 +737,7 @@ does.</p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     parameter = value
 </pre>
 </blockquote>
@@ -746,7 +746,7 @@ does.</p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     other_parameter = $parameter
 </pre>
 </blockquote>
@@ -756,7 +756,7 @@ second main difference with UNIX shell variables). The Postfix
 configuration language uses lazy evaluation, and does not look at
 a parameter value until it is needed at runtime.  </p>
 
-<p> Whenever you make a change to the main.cf or master.cf file,
+<p> Whenever you make a change to the <a href="postconf.5.html">main.cf</a> or <a href="master.5.html">master.cf</a> file,
 execute the following command in order to refresh a running mail
 system: </p>
 
@@ -777,7 +777,7 @@ probably OK only for very small sites.  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#myhostname">myhostname</a>    (send mail as "user@$<a href="postconf.5.html#myhostname">myhostname</a>")
     <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>      (send mail as "user@$<a href="postconf.5.html#mydomain">mydomain</a>")
 </pre>
@@ -792,7 +792,7 @@ locally. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost
     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost, $<a href="postconf.5.html#mydomain">mydomain</a>
     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a>
@@ -819,7 +819,7 @@ mail delivery loops will happen when the primary MX host is down.
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> = 1.2.3.4 (the proxy/NAT external network address)
 </pre>
 </blockquote>
@@ -834,7 +834,7 @@ permission to too many clients.  My own settings are: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#mynetworks">mynetworks</a> = 168.100.189.0/28, 127.0.0.0/8
 </pre>
 </blockquote>
@@ -849,7 +849,7 @@ too many destinations.  Recommended settings (use only one): </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#relay_domains">relay_domains</a> =            (do not forward mail from strangers)
     <a href="postconf.5.html#relay_domains">relay_domains</a> = $<a href="postconf.5.html#mydomain">mydomain</a>  (my domain and subdomains)
     <a href="postconf.5.html#relay_domains">relay_domains</a> = $<a href="postconf.5.html#mydomain">mydomain</a>, other.domain.tld, ...
@@ -868,7 +868,7 @@ a hard-coded hostname.  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#relayhost">relayhost</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.$<a href="postconf.5.html#mydomain">mydomain</a>]
 </pre>
@@ -877,12 +877,12 @@ a hard-coded hostname.  </p>
 <p> The form enclosed with <tt>[]</tt> eliminates DNS MX lookups. </p>
 
 <p> By default, the SMTP client will do DNS lookups even when you
-specify a relay host. If your machine has no access to a DNS server,
+specify a <a href="postconf.5.html#relayhost">relay host</a>. If your machine has no access to a DNS server,
 turn off SMTP client DNS lookups like this: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#disable_dns_lookups">disable_dns_lookups</a> = yes
 </pre>
 </blockquote>
@@ -928,7 +928,7 @@ following commands: </p>
 
 <h2><a name="hamlet">11 - To chroot or not to chroot</a></h2>
 
-<p> Postfix daemon processes can be configured (via master.cf) to
+<p> Postfix daemon processes can be configured (via <a href="master.5.html">master.cf</a>) to
 run in a chroot jail.  The processes run at a fixed low privilege
 and with access only to the Postfix queue directories (/var/spool/postfix).
 This provides a significant barrier against intrusion. The barrier
@@ -944,9 +944,9 @@ processes, and perhaps also the <a href="lmtp.8.html">lmtp(8)</a> client. The au
 porcupine.org mail server runs all daemons chrooted that can be
 chrooted. </p>
 
-<p> The default /etc/postfix/master.cf file specifies that no
+<p> The default /etc/postfix/<a href="master.5.html">master.cf</a> file specifies that no
 Postfix daemon runs chrooted.  In order to enable chroot operation,
-edit the file /etc/postfix/master.cf. Instructions are in the file.
+edit the file /etc/postfix/<a href="master.5.html">master.cf</a>. Instructions are in the file.
 </p>
 
 <p> Note that a chrooted daemon resolves all filenames relative to

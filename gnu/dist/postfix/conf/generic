@@ -1,4 +1,4 @@
-# GENERIC(5)                                             GENERIC(5)
+# GENERIC(5)                                                          GENERIC(5)
 # 
 # NAME
 #        generic - Postfix generic table format
@@ -47,36 +47,42 @@
 #        way as described below under "REGULAR  EXPRESSION  TABLES"
 #        and "TCP-BASED TABLES".
 # 
+# CASE FOLDING
+#        The  search  string is folded to lowercase before database
+#        lookup. As of Postfix 2.3, the search string is  not  case
+#        folded  with database types such as regexp: or pcre: whose
+#        lookup fields can match both upper and lower case.
+# 
 # TABLE FORMAT
 #        The input format for the postmap(1) command is as follows:
 # 
 #        pattern result
-#               When pattern matches a mail address, replace it  by
+#               When  pattern matches a mail address, replace it by
 #               the corresponding result.
 # 
 #        blank lines and comments
-#               Empty  lines and whitespace-only lines are ignored,
-#               as are lines whose first  non-whitespace  character
+#               Empty lines and whitespace-only lines are  ignored,
+#               as  are  lines whose first non-whitespace character
 #               is a `#'.
 # 
 #        multi-line text
-#               A  logical  line starts with non-whitespace text. A
-#               line that starts with whitespace continues a  logi-
+#               A logical line starts with non-whitespace  text.  A
+#               line  that starts with whitespace continues a logi-
 #               cal line.
 # 
 # TABLE SEARCH ORDER
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or  SQL,  patterns  are
+#        networked  tables  such  as NIS, LDAP or SQL, patterns are
 #        tried in the order as listed below:
 # 
 #        user@domain address
-#               Replace  user@domain  by address. This form has the
+#               Replace user@domain by address. This form  has  the
 #               highest precedence.
 # 
 #        user address
-#               Replace user@site by address when site is equal  to
-#               $myorigin,  when  site is listed in $mydestination,
-#               or  when  it  is  listed  in  $inet_interfaces   or
+#               Replace  user@site by address when site is equal to
+#               $myorigin, when site is listed  in  $mydestination,
+#               or   when  it  is  listed  in  $inet_interfaces  or
 #               $proxy_interfaces.
 # 
 #        @domain address
@@ -86,10 +92,10 @@
 # RESULT ADDRESS REWRITING
 #        The lookup result is subject to address rewriting:
 # 
-#        o      When the result  has  the  form  @otherdomain,  the
+#        o      When  the  result  has  the  form @otherdomain, the
 #               result becomes the same user in otherdomain.
 # 
-#        o      When  "append_at_myorigin=yes", append "@$myorigin"
+#        o      When "append_at_myorigin=yes", append  "@$myorigin"
 #               to addresses without "@domain".
 # 
 #        o      When "append_dot_mydomain=yes", append ".$mydomain"
@@ -97,55 +103,55 @@
 # 
 # ADDRESS EXTENSION
 #        When a mail address localpart contains the optional recip-
-#        ient delimiter (e.g., user+foo@domain), the  lookup  order
+#        ient  delimiter  (e.g., user+foo@domain), the lookup order
 #        becomes: user+foo@domain, user@domain, user+foo, user, and
 #        @domain.
 # 
-#        The  propagate_unmatched_extensions   parameter   controls
-#        whether  an  unmatched  address extension (+foo) is propa-
+#        The   propagate_unmatched_extensions   parameter  controls
+#        whether an unmatched address extension  (+foo)  is  propa-
 #        gated to the result of table lookup.
 # 
 # REGULAR EXPRESSION TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        the table is given in the form of regular expressions. For
-#        a description of regular expression lookup  table  syntax,
+#        a  description  of regular expression lookup table syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each  pattern  is  a regular expression that is applied to
+#        Each pattern is a regular expression that  is  applied  to
 #        the entire address being looked up. Thus, user@domain mail
-#        addresses  are  not  broken up into their user and @domain
+#        addresses are not broken up into their  user  and  @domain
 #        constituent parts, nor is user+foo broken up into user and
 #        foo.
 # 
-#        Patterns  are  applied  in  the  order as specified in the
-#        table, until a pattern is found that  matches  the  search
+#        Patterns are applied in the order as specified in the  ta-
+#        ble,  until  a  pattern  is  found that matches the search
 #        string.
 # 
-#        Results  are  the  same as with indexed file lookups, with
-#        the additional feature that parenthesized substrings  from
+#        Results are the same as with indexed  file  lookups,  with
+#        the  additional feature that parenthesized substrings from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
 # TCP-BASED TABLES
-#        This  section  describes how the table lookups change when
+#        This section describes how the table lookups  change  when
 #        lookups are directed to a TCP-based server. For a descrip-
-#        tion   of  the  TCP  client/server  lookup  protocol,  see
-#        tcp_table(5).  This feature is not  available  up  to  and
-#        including Postfix version 2.2.
+#        tion of the TCP client/server lookup protocol, see tcp_ta-
+#        ble(5).  This feature is not available up to and including
+#        Postfix version 2.3.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
-#        user@domain mail addresses are not broken  up  into  their
+#        user@domain  mail  addresses  are not broken up into their
 #        user and @domain constituent parts, nor is user+foo broken
 #        up into user and foo.
 # 
 #        Results are the same as with indexed file lookups.
 # 
 # EXAMPLE
-#        The following shows a  generic  mapping  with  an  indexed
-#        file.   When  mail is sent to a remote host via SMTP, this
-#        replaces his@localdomain.local by his  ISP  mail  address,
-#        replaces  her@localdomain.local  by  her ISP mail address,
-#        and replaces other local addresses  by  his  ISP  account,
-#        with  an address extension of +local (this example assumes
+#        The  following  shows  a  generic  mapping with an indexed
+#        file.  When mail is sent to a remote host via  SMTP,  this
+#        replaces  his@localdomain.local  by  his ISP mail address,
+#        replaces her@localdomain.local by her  ISP  mail  address,
+#        and  replaces  other  local  addresses by his ISP account,
+#        with an address extension of +local (this example  assumes
 #        that the ISP supports "+" style address extensions).
 # 
 #        /etc/postfix/main.cf:
@@ -156,35 +162,35 @@
 #                her@localdomain.local   heraccount@herisp.example
 #                @localdomain.local      hisaccount+local@hisisp.example
 # 
-#        Execute the command "postmap  /etc/postfix/generic"  when-
-#        ever  the table is changed.  Instead of hash, some systems
-#        use dbm database files. To find out what tables your  sys-
+#        Execute  the  command "postmap /etc/postfix/generic" when-
+#        ever the table is changed.  Instead of hash, some  systems
+#        use  dbm database files. To find out what tables your sys-
 #        tem supports use the command "postconf -m".
 # 
 # BUGS
-#        The  table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
 # 
 # CONFIGURATION PARAMETERS
-#        The following main.cf parameters are especially  relevant.
-#        The  text  below  provides  only  a parameter summary. See
+#        The  following main.cf parameters are especially relevant.
+#        The text below provides  only  a  parameter  summary.  See
 #        postconf(5) for more details including examples.
 # 
 #        smtp_generic_maps
 #               Address  mapping  lookup  table  for  envelope  and
-#               header  sender and recipient addresses while deliv-
+#               header sender and recipient addresses while  deliv-
 #               ering mail via SMTP.
 # 
 #        propagate_unmatched_extensions
-#               A list of address rewriting  or  forwarding  mecha-
-#               nisms  that propagate an address extension from the
-#               original address to the result.   Specify  zero  or
-#               more   of   canonical,   virtual,  alias,  forward,
+#               A  list  of  address rewriting or forwarding mecha-
+#               nisms that propagate an address extension from  the
+#               original  address  to  the result.  Specify zero or
+#               more  of  canonical,   virtual,   alias,   forward,
 #               include, or generic.
 # 
 #        Other parameters of interest:
 # 
 #        inet_interfaces
-#               The network interface addresses  that  this  system
+#               The  network  interface  addresses that this system
 #               receives mail on.  You need to stop and start Post-
 #               fix when this parameter changes.
 # 
@@ -194,7 +200,7 @@
 #               tor.
 # 
 #        mydestination
-#               List of domains that  this  mail  system  considers
+#               List  of  domains  that  this mail system considers
 #               local.
 # 
 #        myorigin
@@ -210,14 +216,14 @@
 #        smtp(8), Postfix SMTP client
 # 
 # README FILES
-#        Use  "postconf  readme_directory" or "postconf html_direc-
+#        Use "postconf readme_directory" or  "postconf  html_direc-
 #        tory" to locate this information.
 #        ADDRESS_REWRITING_README, address rewriting guide
 #        DATABASE_README, Postfix lookup table overview
 #        STANDARD_CONFIGURATION_README, configuration examples
 # 
 # LICENSE
-#        The Secure Mailer license must be  distributed  with  this
+#        The  Secure  Mailer  license must be distributed with this
 #        software.
 # 
 # HISTORY
@@ -231,4 +237,4 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                        GENERIC(5)
+#                                                                     GENERIC(5)

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_conf.c,v 1.1.1.3 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: master_conf.c,v 1.1.1.4 2006/07/19 01:17:31 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -133,6 +133,7 @@ void    master_config(void)
 	    serv->wakeup_time = entry->wakeup_time;
 	    serv->max_proc = entry->max_proc;
 	    serv->throttle_delay = entry->throttle_delay;
+	    SWAP(char *, serv->ext_name, entry->ext_name);
 	    SWAP(char *, serv->path, entry->path);
 	    SWAP(ARGV *, serv->args, entry->args);
 	    master_restart_service(serv);

@@ -117,7 +117,8 @@ Examples of simple restriction lists are:
     smtpd_client_restrictions = permit_mynetworks, reject
 
     # Don't talk to mail systems that don't know their own hostname.
-    smtpd_helo_restrictions = reject_unknown_hostname
+    # With Postfix < 2.3, specify reject_unknown_hostname.
+    smtpd_helo_restrictions = reject_unknown_helo_hostname
 
     # Don't accept mail from domains that don't exist.
     smtpd_sender_restrictions = reject_unknown_sender_domain
@@ -221,15 +222,16 @@ access permission:
 2     smtpd_recipient_restrictions =
 3         permit_mynetworks
 4         check_helo_access hash:/etc/postfix/helo_access
-5         reject_unknown_hostname
+5         reject_unknown_helo_hostname
 6         reject_unauth_destination
 7
 8 /etc/postfix/helo_access:
 9     localhost.localdomain PERMIT
 
 Line 5 rejects mail from hosts that don't specify a proper hostname in the HELO
-command. Lines 4 and 9 make an exception to allow mail from some machine that
-announces itself with "HELO localhost.localdomain".
+command (with Postfix < 2.3, specify reject_unknown_hostname). Lines 4 and 9
+make an exception to allow mail from some machine that announces itself with
+"HELO localhost.localdomain".
 
 The problem with this configuration is that smtpd_recipient_restrictions
 evaluates to PERMIT for EVERY host that announces itself as
