@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.24 2006/07/19 17:18:03 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.25 2006/07/19 17:32:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.24 2006/07/19 17:18:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.25 2006/07/19 17:32:15 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -124,7 +124,7 @@ static const struct frodo_device frodo_subdevs[] = {
 	{ "com",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
 	{ "com",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
 	{ "com",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
-	{ NULL,		0,			0 },
+	{ NULL,		0,			0 }
 };
 
 static int
@@ -135,16 +135,16 @@ frodomatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* only allow one instance */
 	if (frodo_matched)
-		return (0);
+		return 0;
 
 	if (strcmp(ia->ia_modname, "frodo") != 0)
-		return (0);
+		return 0;
 
 	if (badaddr((caddr_t)ia->ia_addr))
-		return (0);
+		return 0;
 
 	frodo_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -208,7 +208,7 @@ frodoattach(struct device *parent, struct device *self, void *aux)
 		fa.fa_offset = fd->fd_offset;
 		fa.fa_line = fd->fd_line;
 		config_found_sm_loc(self, "frodo", NULL, &fa, frodoprint,
-				    frodosubmatch);
+		    frodosubmatch);
 	}
 }
 
@@ -220,9 +220,9 @@ frodosubmatch(struct device *parent, struct cfdata *cf,
 
 	if (cf->frodocf_offset != FRODO_UNKNOWN_OFFSET &&
 	    cf->frodocf_offset != fa->fa_offset)
-		return (0);
+		return 0;
 
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 static int
@@ -233,7 +233,7 @@ frodoprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", fa->fa_name, pnp);
 	aprint_normal(" offset 0x%x", fa->fa_offset);
-	return (UNCONF);
+	return UNCONF;
 }
 
 void
@@ -322,7 +322,7 @@ frodointr(void *arg)
 
 	/* Any interrupts pending? */
 	if (FRODO_GETPEND(sc) == 0)
-		return (0);
+		return 0;
 
 	do {
 		/*
@@ -338,7 +338,7 @@ frodointr(void *arg)
 			panic("frodointr: looping!");
 	} while (FRODO_GETPEND(sc) != 0);
 
-	return (1);
+	return 1;
 }
 
 static void
