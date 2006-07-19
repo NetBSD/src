@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2006/05/14 21:55:09 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2006/07/19 21:11:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 2006/05/14 21:55:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2006/07/19 21:11:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -212,6 +212,7 @@ trap(frame)
 	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	switch (type) {

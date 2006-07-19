@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 2006/05/15 12:42:04 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 2006/07/19 21:11:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2006/05/15 12:42:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2006/07/19 21:11:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -355,6 +355,7 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = frame.f_regs;
+		LWP_CACHE_CREDS(l, p);
 	}
 	switch (type) {
 

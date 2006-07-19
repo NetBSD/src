@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2006/05/14 21:57:13 elad Exp $ */
+/*	$NetBSD: trap.c,v 1.132 2006/07/19 21:11:46 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2006/07/19 21:11:46 ad Exp $");
 
 #define NEW_FPSTATE
 
@@ -553,6 +553,7 @@ extern void db_printf(const char * , ...);
 	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = &l->l_addr->u_pcb;
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
@@ -1043,6 +1044,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 
@@ -1308,6 +1310,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	uvmexp.traps++;
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
+	LWP_CACHE_CREDS(l, l->l_proc);
 	sticks = l->l_proc->p_sticks;
 
 	pc = tf->tf_pc;
@@ -1453,6 +1456,7 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 	va = trunc_page(pc);
@@ -1597,6 +1601,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;

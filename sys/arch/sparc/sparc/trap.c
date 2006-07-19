@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.168 2006/06/29 15:05:07 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.169 2006/07/19 21:11:46 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168 2006/06/29 15:05:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.169 2006/07/19 21:11:46 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -305,6 +305,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = &l->l_addr->u_pcb;
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
@@ -794,6 +795,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 	if ((psr & PSR_PS) == 0)
@@ -1000,6 +1002,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 #ifdef FPU_DEBUG
