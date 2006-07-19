@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.79 2006/03/21 01:15:03 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.80 2006/07/19 17:21:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79 2006/03/21 01:15:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.80 2006/07/19 17:21:23 tsutsui Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -190,7 +190,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79 2006/03/21 01:15:03 tsutsui Exp $"
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
+#include <hp300/dev/intioreg.h>
 #include <hp300/dev/dmavar.h>
+#include <hp300/dev/frodoreg.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>
@@ -818,7 +820,7 @@ hp300_cninit(void)
 	 * Look for serial consoles first.
 	 */
 #if NCOM_FRODO > 0
-	if (!com_frodo_cnattach(bst, 0x1c020, -1))
+	if (!com_frodo_cnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(1), -1))
 		return;
 #endif
 #if NCOM_DIO > 0
@@ -836,19 +838,19 @@ hp300_cninit(void)
 	 * Look for internal framebuffers.
 	 */
 #if NDVBOX > 0
-	if (!dvboxcnattach(bst, 0x160000,-1))
+	if (!dvboxcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #if NGBOX > 0
-	if (!gboxcnattach(bst, 0x160000,-1))
+	if (!gboxcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #if NRBOX > 0
-	if (!rboxcnattach(bst, 0x160000,-1))
+	if (!rboxcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #if NTOPCAT > 0
-	if (!topcatcnattach(bst, 0x160000,-1))
+	if (!topcatcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #endif	/* CONSCODE */
@@ -880,11 +882,11 @@ hp300_cninit(void)
 find_kbd:
 
 #if NDNKBD > 0
-	dnkbdcnattach(bst, 0x1c000)
+	dnkbdcnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(0))
 #endif
 
 #if NHIL > 0
-	hilkbdcnattach(bst, 0x28000);
+	hilkbdcnattach(bst, HIL_BASE);
 #endif
 #endif	/* NITE */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.21 2006/07/19 16:23:41 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.22 2006/07/19 17:21:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.21 2006/07/19 16:23:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.22 2006/07/19 17:21:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,22 +68,22 @@ CFATTACH_DECL(intio, sizeof(struct intio_softc),
     defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \
     defined(HP380) || defined(HP385)
 static const struct intio_builtins intio_3xx_builtins[] = {
-	{ "rtc",	0x020000,	-1},
-	{ "hil",	0x028000,	1},
-	{ "hpib",	0x078000,	3},
-	{ "dma",	0x100000,	1},
-	{ "fb",		0x160000,	-1},
+	{ "rtc",	RTC_BASE,	-1},
+	{ "hil",	HIL_BASE,	1},
+	{ "hpib",	HPIB_BASE,	3},
+	{ "dma",	DMA_BASE,	1},
+	{ "fb",		FB_BASE,	-1},
 };
 #define nintio_3xx_builtins	__arraycount(intio_3xx_builtins)
 #endif
 
 #if defined(HP400) || defined(HP425) || defined(HP433)
 static const struct intio_builtins intio_4xx_builtins[] = {
-	{ "rtc",	0x020000,	-1},
-	{ "frodo",	0x01c000,	5},
-	{ "hil",	0x028000,	1},
-	{ "hpib",	0x078000,	3},
-	{ "dma",	0x100000,	1},
+	{ "rtc",	RTC_BASE,	-1},
+	{ "frodo",	FRODO_BASE,	5},
+	{ "hil",	HIL_BASE,	1},
+	{ "hpib",	HPIB_BASE,	3},
+	{ "dma",	DMA_BASE,	1},
 };
 #define nintio_4xx_builtins	__arraycount(intio_4xx_builtins)
 #endif
@@ -155,7 +155,7 @@ intioattach(struct device *parent, struct device *self, void *aux)
 		 * Internal HP-IB doesn't always return a device ID,
 		 * so we rely on the sysflags.
 		 */
-		if (ib[i].ib_offset == 0x078000 && !internalhpib)
+		if (ib[i].ib_offset == HPIB_BASE && !internalhpib)
 			continue;
 
 		strncpy(ia.ia_modname, ib[i].ib_modname, INTIO_MOD_LEN);
