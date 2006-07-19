@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/07/04 23:30:24 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.22 2006/07/19 22:54:57 bjh21 Exp $
 #
 
 .include <bsd.own.mk>
@@ -102,6 +102,11 @@ setup_tmp:
 .PHONY: settypes
 settypes: setup_tmp
 .for file in ${SETTYPE_FILES}
+. if ${SETTYPE_FILE_${file}} == ffb
+	${AWK} '{ printf "%5d %s\n", FNR * 10, $$0 }' \
+	    < tmp/BtNetBSD/${file} > tmp/BtNetBSD/${file}.tmp
+	mv tmp/BtNetBSD/${file}.tmp tmp/BtNetBSD/${file}
+. endif
 	mv tmp/BtNetBSD/${file} tmp/BtNetBSD/${file},${SETTYPE_FILE_${file}}
 .endfor
 
