@@ -54,7 +54,7 @@ available from http://www.corpit.ru/mjt/tinycdb.html. </p>
 <p>  Tinycdb is preferred, since it is a bit faster, has additional
 useful functionality and is much simpler to use. </p>
 
-<p>To build Postfix after you have installed CDB, use something
+<p>To build Postfix after you have installed tinycdb, use something
 like: </p>
 
 <blockquote>
@@ -65,7 +65,11 @@ like: </p>
     "AUXLIBS=$CDB/libcdb.a"
 % make
 </pre>
-for tinycdb, or alternatively, for the D.J.B. version:<br>
+</blockquote>
+
+<p> Alternatively, for the D.J.B. version of CDB:<p>
+
+<blockquote>
 <pre>
 % make tidy
 % CDB=../../../cdb-0.75

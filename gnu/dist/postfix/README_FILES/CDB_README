@@ -33,7 +33,7 @@ Postfix is compatible with two CDB implementations:
 Tinycdb is preferred, since it is a bit faster, has additional useful
 functionality and is much simpler to use.
 
-To build Postfix after you have installed CDB, use something like:
+To build Postfix after you have installed tinycdb, use something like:
 
     % make tidy
     % CDB=../../../tinycdb-0.5
@@ -41,7 +41,7 @@ To build Postfix after you have installed CDB, use something like:
         "AUXLIBS=$CDB/libcdb.a"
     % make
 
-    for tinycdb, or alternatively, for the D.J.B. version:
+Alternatively, for the D.J.B. version of CDB:
 
     % make tidy
     % CDB=../../../cdb-0.75

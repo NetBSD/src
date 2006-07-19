@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.1 2005/08/18 21:08:59 rpaulo Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.2 2006/07/19 01:17:43 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -20,7 +20,7 @@
 /*
 /*	SMTP_SESSION *smtp_reuse_addr(state, addr, port)
 /*	SMTP_STATE *state;
-/*	DNS_RR	*addr;
+/*	const char *addr;
 /*	unsigned port;
 /* DESCRIPTION
 /*	This module implements the SMTP client specific interface to
@@ -37,6 +37,8 @@
 /*
 /*	smtp_reuse_addr() looks up a cached session by its server
 /*	address, and verifies that the session is still alive.
+/*	This operation is disabled when the legacy tls_per_site
+/*	or smtp_sasl_password_maps features are enabled.
 /*	The result is null in case of failure.
 /*
 /*	Arguments:
@@ -48,7 +50,7 @@
 /* .IP domain
 /*	Domain name or bare numerical address.
 /* .IP addr
-/*	The remote server name and address.
+/*	The remote server address as printable text.
 /* .IP port
 /*	The remote server port, network byte order.
 /* LICENSE
@@ -99,8 +101,6 @@
 
 #define SMTP_SCACHE_LABEL(mx_lookup_flag) \
 	((mx_lookup_flag) ? "%s:%s:%u" : "%s:[%s]:%u")
-
-#define STR(x)	vstring_str(x)
 
 /* smtp_save_session - save session under next-hop name and server address */
 
@@ -179,6 +179,33 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     state->session = session;
 
     /*
+     * XXX Temporary fix.
+     * 
+     * Cached connections are always plaintext. They must never be reused when
+     * TLS encryption is required.
+     * 
+     * As long as we support the legacy smtp_tls_per_site feature, we must
+     * search the connection cache before making TLS policy decisions. This
+     * is because the policy can depend on the server name. For example, a
+     * site could have a global policy that requires encryption, with
+     * per-server exceptions that allow plaintext.
+     * 
+     * With the newer smtp_tls_policy_maps feature, the policy depends on the
+     * next-hop destination only. We can avoid unnecessary connection cache
+     * lookups, because we can compute the TLS policy much earlier.
+     */
+#ifdef USE_TLS
+    if (session->tls_level >= TLS_LEV_ENCRYPT) {
+	if (msg_verbose)
+	    msg_info("%s: skipping plain-text cached session to %s",
+		     myname, label);
+	smtp_quit(state);			/* Close politely */
+	smtp_session_free(session);		/* And avoid leaks */
+	return (state->session = 0);
+    }
+#endif
+
+    /*
      * Send an RSET probe to verify that the session is still good.
      */
     if (smtp_rset(state) < 0
@@ -225,11 +252,22 @@ SMTP_SESSION *smtp_reuse_domain(SMTP_STATE *state, int lookup_mx,
 
 /* smtp_reuse_addr - reuse session cached under numerical address */
 
-SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, DNS_RR *addr, unsigned port)
+SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, const char *addr,
+			              unsigned port)
 {
-    MAI_HOSTADDR_STR hostaddr;
     SMTP_SESSION *session;
     int     fd;
+
+    /*
+     * XXX Disable connection cache lookup by server IP address when the
+     * tls_per_site policy or smtp_sasl_password_maps features are enabled.
+     * This connection may have been created under a different hostname that
+     * resolves to the same IP address. We don't want to use the wrong SASL
+     * credentials or the wrong TLS policy.
+     */
+    if ((var_smtp_tls_per_site && *var_smtp_tls_per_site)
+	|| (var_smtp_sasl_passwd && *var_smtp_sasl_passwd))
+	return (0);
 
     /*
      * Look up the session by its IP address. This means that we have no
@@ -238,10 +276,8 @@ SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, DNS_RR *addr, unsigned port)
      * Note: if the label needs to be made more specific (with e.g., SASL login
      * information), just append the text with vstring_sprintf_append().
      */
-    if (dns_rr_to_pa(addr, &hostaddr) == 0)
-	return (0);
     vstring_sprintf(state->endp_label, SMTP_SCACHE_LABEL(NO_MX_LOOKUP),
-		    state->service, hostaddr.buf, ntohs(port));
+		    state->service, addr, ntohs(port));
     if ((fd = scache_find_endp(smtp_scache, STR(state->endp_label),
 			       state->endp_prop)) < 0)
 	return (0);

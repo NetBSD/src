@@ -1,4 +1,4 @@
-/*	$NetBSD: dup2_pass_on_exec.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: dup2_pass_on_exec.c,v 1.1.1.3 2006/07/19 01:17:51 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,8 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #define DO(s)	if (s < 0) { perror(#s); exit(1); }
 

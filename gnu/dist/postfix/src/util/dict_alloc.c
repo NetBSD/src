@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_alloc.c,v 1.1.1.4 2005/08/18 21:10:08 rpaulo Exp $	*/
+/*	$NetBSD: dict_alloc.c,v 1.1.1.5 2006/07/19 01:17:50 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -11,13 +11,14 @@
 /*	DICT	*dict_alloc(dict_type, dict_name, size)
 /*	const char *dict_type;
 /*	const char *dict_name;
-/*	int	size;
+/*	ssize_t	size;
 /*
 /*	void	dict_free(dict)
 /*	DICT	*ptr;
 /* DESCRIPTION
 /*	dict_alloc() allocates memory for a dictionary structure of
-/*	\fIsize\fR bytes, initializes all properties to default settings,
+/*	\fIsize\fR bytes, initializes all generic dictionary
+/*	properties to default settings,
 /*	and installs default methods that do not support any operation.
 /*	The caller is supposed to override the default methods with
 /*	ones that it supports.
@@ -101,12 +102,12 @@ static int dict_default_sequence(DICT *dict, int unused_function,
 static void dict_default_close(DICT *dict)
 {
     msg_fatal("%s table %s: close operation is not supported",
-              dict->type, dict->name);
+	      dict->type, dict->name);
 }
 
 /* dict_alloc - allocate dictionary object, initialize super-class */
 
-DICT   *dict_alloc(const char *dict_type, const char *dict_name, int size)
+DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
 {
     DICT   *dict = (DICT *) mymalloc(size);
 
@@ -121,6 +122,7 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, int size)
     dict->lock_fd = -1;
     dict->stat_fd = -1;
     dict->mtime = 0;
+    dict->fold_buf = 0;
     return dict;
 }
 

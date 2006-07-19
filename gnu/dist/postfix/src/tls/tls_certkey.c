@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_certkey.c,v 1.1.1.1 2005/08/18 21:11:03 rpaulo Exp $	*/
+/*	$NetBSD: tls_certkey.c,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -138,10 +138,17 @@ int     tls_set_my_certificate_key_info(SSL_CTX *ctx,
 			        const char *cert_file, const char *key_file,
 		              const char *dcert_file, const char *dkey_file)
 {
+
+    /*
+     * Lack of certificates is fine so long as we are prepared to use
+     * anonymous ciphers.
+     */
+#if 0
     if (*cert_file == 0 && *dcert_file == 0) {
 	msg_warn("need an RSA or DSA certificate/key pair");
 	return (-1);
     }
+#endif
     if (*cert_file) {
 	if (!set_cert_stuff(ctx, cert_file, *key_file ? key_file : cert_file)) {
 	    msg_info("cannot load RSA certificate and key data");

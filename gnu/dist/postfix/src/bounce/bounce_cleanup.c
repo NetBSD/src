@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_cleanup.c,v 1.1.1.2 2004/05/31 00:24:26 heas Exp $	*/
+/*	$NetBSD: bounce_cleanup.c,v 1.1.1.3 2006/07/19 01:17:17 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -106,7 +106,7 @@ static void bounce_cleanup_callback(void)
 
 void    bounce_cleanup_log(void)
 {
-    char   *myname = "bounce_cleanup_log";
+    const char *myname = "bounce_cleanup_log";
 
     /*
      * Sanity checks.
@@ -138,7 +138,7 @@ static void bounce_cleanup_sig(int sig)
 
 void    bounce_cleanup_register(char *service, char *queue_id)
 {
-    char   *myname = "bounce_cleanup_register";
+    const char *myname = "bounce_cleanup_register";
 
     /*
      * Sanity checks.
@@ -160,7 +160,7 @@ void    bounce_cleanup_register(char *service, char *queue_id)
 
 void    bounce_cleanup_unregister(void)
 {
-    char   *myname = "bounce_cleanup_unregister";
+    const char *myname = "bounce_cleanup_unregister";
 
     /*
      * Sanity checks.

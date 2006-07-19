@@ -1,4 +1,4 @@
-/*	$NetBSD: mark_corrupt.c,v 1.1.1.3 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mark_corrupt.c,v 1.1.1.4 2006/07/19 01:17:26 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -48,7 +48,7 @@
 
 int     mark_corrupt(VSTREAM *src)
 {
-    char   *myname = "mark_corrupt";
+    const char *myname = "mark_corrupt";
     uid_t   saved_uid;
     gid_t   saved_gid;
 

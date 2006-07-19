@@ -1,4 +1,4 @@
-/*	$NetBSD: dir_forest.c,v 1.1.1.3 2004/05/31 00:24:58 heas Exp $	*/
+/*	$NetBSD: dir_forest.c,v 1.1.1.4 2006/07/19 01:17:52 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -63,7 +63,7 @@
 
 char   *dir_forest(VSTRING *buf, const char *path, int depth)
 {
-    char   *myname = "dir_forest";
+    const char *myname = "dir_forest";
     static VSTRING *private_buf = 0;
     int     n;
     const char *cp;

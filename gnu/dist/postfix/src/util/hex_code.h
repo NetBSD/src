@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.h,v 1.1.1.1 2005/08/18 21:10:54 rpaulo Exp $	*/
+/*	$NetBSD: hex_code.h,v 1.1.1.2 2006/07/19 01:17:53 rpaulo Exp $	*/
 
 #ifndef _HEX_CODE_H_INCLUDED_
 #define _HEX_CODE_H_INCLUDED_
@@ -21,8 +21,8 @@
  /*
   * External interface.
   */
-extern VSTRING *hex_encode(VSTRING *, const char *, int);
-extern VSTRING *hex_decode(VSTRING *, const char *, int);
+extern VSTRING *hex_encode(VSTRING *, const char *, ssize_t);
+extern VSTRING *hex_decode(VSTRING *, const char *, ssize_t);
 
 /* LICENSE
 /* .ad

@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.h,v 1.1.1.1 2005/08/18 21:07:13 rpaulo Exp $	*/
+/*	$NetBSD: scache.h,v 1.1.1.2 2006/07/19 01:17:28 rpaulo Exp $	*/
 
 #ifndef _SCACHE_H_INCLUDED_
 #define _SCACHE_H_INCLUDED_
@@ -112,7 +112,7 @@ struct SCACHE {
 };
 
 extern SCACHE *scache_single_create(void);
-extern SCACHE *scache_clnt_create(const char *, int, int);
+extern SCACHE *scache_clnt_create(const char *, int, int, int);
 extern SCACHE *scache_multi_create(void);
 
 #define scache_save_endp(scache, ttl, endp_label, endp_prop, fd) \

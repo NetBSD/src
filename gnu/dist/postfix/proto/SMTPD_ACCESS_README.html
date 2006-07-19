@@ -172,7 +172,8 @@ described in the postconf(5) manual page. </p>
     smtpd_client_restrictions = permit_mynetworks, reject
 
     # Don't talk to mail systems that don't know their own hostname.
-    smtpd_helo_restrictions = reject_unknown_hostname
+    # With Postfix &lt; 2.3, specify reject_unknown_hostname.
+    smtpd_helo_restrictions = reject_unknown_helo_hostname
 
     # Don't accept mail from domains that don't exist.
     smtpd_sender_restrictions = reject_unknown_sender_domain
@@ -307,7 +308,7 @@ in too much access permission: </p>
 2     smtpd_recipient_restrictions = 
 3         permit_mynetworks
 4         check_helo_access hash:/etc/postfix/helo_access
-5         reject_unknown_hostname
+5         reject_unknown_helo_hostname
 6         reject_unauth_destination
 7 
 8 /etc/postfix/helo_access:
@@ -315,7 +316,8 @@ in too much access permission: </p>
 </pre>
 
 <p> Line 5 rejects mail from hosts that don't specify a proper
-hostname in the HELO command. Lines 4 and 9 make an exception to
+hostname in the HELO command (with Postfix &lt; 2.3, specify
+reject_unknown_hostname). Lines 4 and 9 make an exception to
 allow mail from some machine that announces itself with "HELO
 localhost.localdomain".  </p>
 

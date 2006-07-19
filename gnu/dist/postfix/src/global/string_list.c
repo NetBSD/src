@@ -1,4 +1,4 @@
-/*	$NetBSD: string_list.c,v 1.1.1.4 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: string_list.c,v 1.1.1.5 2006/07/19 01:17:29 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -107,6 +107,7 @@ int     main(int argc, char **argv)
 		   "YES" : "NO");
     vstream_fflush(VSTREAM_OUT);
     string_list_free(list);
+    return (0);
 }
 
 #endif

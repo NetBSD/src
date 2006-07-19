@@ -1,4 +1,4 @@
-/*	$NetBSD: binhash.c,v 1.1.1.3 2005/08/18 21:10:06 rpaulo Exp $	*/
+/*	$NetBSD: binhash.c,v 1.1.1.4 2006/07/19 01:17:50 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -136,9 +136,9 @@ static unsigned binhash_hash(const char *key, int len, unsigned size)
      */
 
     while (len-- > 0) {
-	h = (h << 4) + *key++;
+	h = (h << 4U) + *key++;
 	if ((g = (h & 0xf0000000)) != 0) {
-	    h ^= (g >> 24);
+	    h ^= (g >> 24U);
 	    h ^= g;
 	}
     }

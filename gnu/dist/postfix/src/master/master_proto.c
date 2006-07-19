@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.c,v 1.1.1.3 2005/08/18 21:07:41 rpaulo Exp $	*/
+/*	$NetBSD: master_proto.c,v 1.1.1.4 2006/07/19 01:17:31 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@
 
 int     master_notify(int pid, unsigned generation, int status)
 {
-    char   *myname = "master_notify";
+    const char *myname = "master_notify";
     MASTER_STATUS stat;
 
     /*

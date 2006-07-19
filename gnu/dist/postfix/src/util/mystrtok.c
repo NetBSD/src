@@ -1,4 +1,4 @@
-/*	$NetBSD: mystrtok.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: mystrtok.c,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -89,6 +89,7 @@ int     main(void)
 	vstream_fflush(VSTREAM_OUT);
     }
     vstring_free(vp);
+    return (0);
 }
 
 #endif

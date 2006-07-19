@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.h,v 1.1.1.1 2005/08/18 21:07:12 rpaulo Exp $	*/
+/*	$NetBSD: ehlo_mask.h,v 1.1.1.2 2006/07/19 01:17:23 rpaulo Exp $	*/
 
 #ifndef _EHLO_MASK_H_INCLUDED_
 #define _EHLO_MASK_H_INCLUDED_
@@ -27,7 +27,9 @@
 
 #define EHLO_MASK_XCLIENT	(1<<8)	/* start of second byte */
 #define EHLO_MASK_XFORWARD	(1<<9)
-#define EHLO_MASK_SILENT	(1<<10)
+#define EHLO_MASK_ENHANCEDSTATUSCODES	(1<<10)
+#define EHLO_MASK_DSN		(1<<11)
+#define EHLO_MASK_SILENT	(1<<15)
 
 extern int ehlo_mask(const char *);
 extern const char *str_ehlo_mask(int);

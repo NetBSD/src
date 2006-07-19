@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.h,v 1.1.1.5 2005/08/18 21:06:55 rpaulo Exp $	*/
+/*	$NetBSD: pipe_command.h,v 1.1.1.6 2006/07/19 01:17:27 rpaulo Exp $	*/
 
 #ifndef _PIPE_COMMAND_H_INCLUDED_
 #define _PIPE_COMMAND_H_INCLUDED_
@@ -23,6 +23,7 @@
   * Global library.
   */
 #include <mail_copy.h>
+#include <dsn_buf.h>
 
  /*
   * Request arguments.
@@ -42,6 +43,7 @@
 #define PIPE_CMD_EXPORT		12	/* exportable environment */
 #define PIPE_CMD_ORIG_RCPT	13	/* mail_copy() original recipient */
 #define PIPE_CMD_CWD		14	/* working directory */
+#define PIPE_CMD_CHROOT		15	/* chroot() before exec() */
 
  /*
   * Command completion status.
@@ -51,7 +53,7 @@
 #define PIPE_STAT_BOUNCE	2	/* failed */
 #define PIPE_STAT_CORRUPT	3	/* corrupted file */
 
-extern int pipe_command(VSTREAM *, VSTRING *,...);
+extern int pipe_command(VSTREAM *, DSN_BUF *,...);
 
 /* LICENSE
 /* .ad

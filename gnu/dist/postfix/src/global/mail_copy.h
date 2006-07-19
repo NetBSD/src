@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_copy.h,v 1.1.1.4 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_copy.h,v 1.1.1.5 2006/07/19 01:17:24 rpaulo Exp $	*/
 
 #ifndef _MAIL_COPY_H_INCLUDED_
 #define _MAIL_COPY_H_INCLUDED_
@@ -20,11 +20,16 @@
 #include <vstring.h>
 
  /*
+  * Global library.
+  */
+#include <dsn_buf.h>
+
+ /*
   * External interface.
   */
 extern int mail_copy(const char *, const char *, const char *,
 		             VSTREAM *, VSTREAM *,
-		             int, const char *, VSTRING *);
+		             int, const char *, DSN_BUF *);
 
 #define MAIL_COPY_QUOTE		(1<<0)	/* prepend > to From_ */
 #define MAIL_COPY_TOFILE	(1<<1)	/* fsync, ftruncate() */

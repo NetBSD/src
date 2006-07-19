@@ -137,8 +137,19 @@ mechanisms:
 
   * The Postfix smtp(8) client reuses a session for only a limited number of
     times. This avoids triggering bugs in implementations that do not correctly
-    handle multiple deliveries per session. The use count is limited with the
-    smtp_connection_cache_reuse_limit configuration parameter.
+    handle multiple deliveries per session.
+
+    With Postfix 2.2 the use count is limited with the
+    smtp_connection_cache_reuse_limit configuration parameter. With Postfix 2.3
+    this is replaced by a time limit which is specified with the
+    smtp_connection_reuse_time_limit parameter. In addition, Postfix 2.3 logs
+    the use count of multiply-used connections, as shown in the following
+    example:
+
+        Nov  3 16:04:31 myname postfix/smtp[30840]: 19B6B2900FE:
+        to=<wietse@test.example.com>, orig_to=<wietse@test>,
+        relay=mail.example.com[1.2.3.4], ccoonnnn__uussee==22, delay=0.22,
+        delays=0.04/0.01/0.05/0.1, dsn=2.0.0, status=sent (250 2.0.0 Ok)
 
   * The connection cache explicitly labels each cached connection with
     destination domain and IP address information. A connection cache lookup

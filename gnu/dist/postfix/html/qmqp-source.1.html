@@ -51,6 +51,11 @@ QMQP-SOURCE(1)                                                  QMQP-SOURCE(1)
        <b>-m</b> <i>message</i><b>_</b><i>count</i>
               Send the specified number of messages (default: 1).
 
+       <b>-M</b> <i><a href="postconf.5.html#myhostname">myhostname</a></i>
+              Use  the  specified  hostname  or  [address] in the
+              default sender and recipient addresses, instead  of
+              the machine hostname.
+
        <b>-r</b> <i>recipient</i><b>_</b><i>count</i>
               Send  the specified number of recipients per trans-
               action (default: 1).  Recipient names are generated
@@ -68,6 +73,9 @@ QMQP-SOURCE(1)                                                  QMQP-SOURCE(1)
               between messages.  Suspending one thread  does  not
               affect other delivery threads.
 
+       <b>-v</b>     Make  the  program more verbose, for debugging pur-
+              poses.
+
        <b>-w</b> <i>interval</i>
               Wait a fixed time between messages.  Suspending one
               thread does not affect other delivery threads.
@@ -76,7 +84,7 @@ QMQP-SOURCE(1)                                                  QMQP-SOURCE(1)
        <a href="qmqp-sink.1.html">qmqp-sink(1)</a>, QMQP message dump
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

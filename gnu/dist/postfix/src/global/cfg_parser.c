@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_parser.c,v 1.1.1.2 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: cfg_parser.c,v 1.1.1.3 2006/07/19 01:17:21 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -86,6 +86,10 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 /* Utility library. */
 

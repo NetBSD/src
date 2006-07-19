@@ -21,8 +21,8 @@ IPv6 Support</h1>
 <h2>Introduction</h2>
 
 <p> Postfix 2.2 introduces support for the IPv6 (IP version 6)
-protocol. IPv6 support older Postfix versions was available as an
-add-on patch. The section "<a href="#compat">Compatibility with
+protocol. IPv6 support for older Postfix versions was available as
+an add-on patch. The section "<a href="#compat">Compatibility with
 Postfix &lt;2.2 IPv6 support</a>" below discusses the differences
 between these implementations. </p>
 
@@ -30,7 +30,8 @@ between these implementations. </p>
 addresses instead of the 32-bit addresses used by IPv4. It can
 therefore accommodate a much larger number of hosts and networks
 without ugly kluges such as NAT. A side benefit of the much larger
-address space is that it makes network scanning unpractical.  </p>
+address space is that it makes random network scanning impractical.
+</p>
 
 <p> Postfix uses the same SMTP protocol over IPv6 as it already
 uses over the older IPv4 network, and does AAAA record lookups in
@@ -82,7 +83,7 @@ IPv6 support to other environments.  </p>
 
 <h2><a name="configuration">Configuration</a></h2>
 
-<p> Postfix IPv6 support introduces two new main.cf configuration
+<p> Postfix IPv6 support introduces two new <a href="postconf.5.html">main.cf</a> configuration
 parameters, and introduces an important change in address syntax
 notation in match lists such as <a href="postconf.5.html#mynetworks">mynetworks</a> or
 <a href="postconf.5.html#debug_peer_list">debug_peer_list</a>. </p>
@@ -97,8 +98,8 @@ related configuration work with Postfix.  </p>
 <ul>
 
 <li> <p> Instead of hard-coding 127.0.0.1 and ::1 loopback addresses
-in master.cf, specify "<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback-only" in main.cf.
-This way you can use the same master.cf file regardless of whether
+in <a href="master.5.html">master.cf</a>, specify "<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback-only" in <a href="postconf.5.html">main.cf</a>.
+This way you can use the same <a href="master.5.html">master.cf</a> file regardless of whether
 or not Postfix will run on an IPv6-enabled system. </p>
 
 <li> <p> The first new parameter is called <a href="postconf.5.html#inet_protocols">inet_protocols</a>.  This
@@ -108,7 +109,7 @@ will use when it makes network connections.  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # You must stop/start Postfix after changing this parameter.
     <a href="postconf.5.html#inet_protocols">inet_protocols</a> = ipv4       (DEFAULT: enable IPv4 only)
     <a href="postconf.5.html#inet_protocols">inet_protocols</a> = all        (enable IPv4, and IPv6 if supported)
@@ -161,32 +162,32 @@ does for IPv4: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtp_bind_address6">smtp_bind_address6</a> = 2001:240:5c7:0:250:56ff:fe89:1
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_bind_address6">smtp_bind_address6</a> = 2001:240:587:0:250:56ff:fe89:1
 </pre>
 </blockquote>
 
 <li> <p> If you left the value of the <a href="postconf.5.html#mynetworks">mynetworks</a> parameter at its
-default (i.e. no <a href="postconf.5.html#mynetworks">mynetworks</a> setting in main.cf) Postfix will figure
+default (i.e. no <a href="postconf.5.html#mynetworks">mynetworks</a> setting in <a href="postconf.5.html">main.cf</a>) Postfix will figure
 out by itself what its network addresses are. This is what a typical
 setting looks like: </p>
 
 <blockquote>
 <pre>
 % postconf <a href="postconf.5.html#mynetworks">mynetworks</a>
-<a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [fe80::]/10 [2001:240:5c7::]/64 
+<a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [fe80::]/10 [2001:240:587::]/64 
 </pre>
 </blockquote>
 
 <p> If you did specify the <a href="postconf.5.html#mynetworks">mynetworks</a> parameter value in
-main.cf, you need update the <a href="postconf.5.html#mynetworks">mynetworks</a> value to include
+<a href="postconf.5.html">main.cf</a>, you need update the <a href="postconf.5.html#mynetworks">mynetworks</a> value to include
 the IPv6 networks the system is in. Be sure to specify IPv6 address
 information inside "<tt>[]</tt>", like this: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#mynetworks">mynetworks</a> = ...<i>IPv4 networks</i>... [::1]/128 [2001:240:5c7::]/64 ...
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mynetworks">mynetworks</a> = ...<i>IPv4 networks</i>... [::1]/128 [2001:240:587::]/64 ...
 </pre>
 </blockquote>
 
@@ -194,7 +195,7 @@ information inside "<tt>[]</tt>", like this: </p>
 
 <p> <b> NOTE: when configuring Postfix match lists such as
 <a href="postconf.5.html#mynetworks">mynetworks</a> or <a href="postconf.5.html#debug_peer_list">debug_peer_list</a>, you must specify
-IPv6 address information inside "<tt>[]</tt>" in the main.cf parameter
+IPv6 address information inside "<tt>[]</tt>" in the <a href="postconf.5.html">main.cf</a> parameter
 value and in files specified with a "<i>/file/name</i>" pattern.
 IPv6 addresses contain the ":" character, and would otherwise be
 confused with a "<i><a href="DATABASE_README.html">type:table</a></i>" pattern. </b>  </p>
@@ -219,7 +220,7 @@ same effect as the setting "<a href="postconf.5.html#mynetworks_style">mynetwork
 subnet mask
 and always assumes a /128 network. This is a problem only with
 "<a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = subnet" and no explicit <a href="postconf.5.html#mynetworks">mynetworks</a>
-setting in main.cf. </p>
+setting in <a href="postconf.5.html">main.cf</a>. </p>
 
 </ul>
 
@@ -231,22 +232,22 @@ by Dean Strik and others, but differs in a few minor ways. </p>
 
 <ul>
 
-<li> <p> main.cf: The <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> parameter does not support
+<li> <p> <a href="postconf.5.html">main.cf</a>: The <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> parameter does not support
 the notation  "ipv6:all" or "ipv4:all". Use the
 <a href="postconf.5.html#inet_protocols">inet_protocols</a> parameter instead. </p>
 
-<li> <p> main.cf: Specify "<a href="postconf.5.html#inet_protocols">inet_protocols</a> = all" or
+<li> <p> <a href="postconf.5.html">main.cf</a>: Specify "<a href="postconf.5.html#inet_protocols">inet_protocols</a> = all" or
 "<a href="postconf.5.html#inet_protocols">inet_protocols</a> = ipv4, ipv6" in order to enable both IPv4
 and IPv6 support. </p>
 
-<li> <p> main.cf: The <a href="postconf.5.html#inet_protocols">inet_protocols</a> parameter also controls
+<li> <p> <a href="postconf.5.html">main.cf</a>: The <a href="postconf.5.html#inet_protocols">inet_protocols</a> parameter also controls
 what DNS lookups Postfix will attempt to make when delivering or
 receiving mail. </p>
 
-<li> <p> main.cf: Specify "<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback-only"
+<li> <p> <a href="postconf.5.html">main.cf</a>: Specify "<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback-only"
 to listen on loopback network interfaces only. </p>
 
-<li> <p> The lmtp_bind_address and lmtp_bind_address6
+<li> <p> The <a href="postconf.5.html#lmtp_bind_address">lmtp_bind_address</a> and <a href="postconf.5.html#lmtp_bind_address6">lmtp_bind_address6</a>
 features were omitted. The Postfix LMTP client will be absorbed
 into the SMTP client, so there is no reason to keep adding features
 to the LMTP client. </p>
@@ -333,7 +334,7 @@ and network masks, for example: </p>
 168.100.189.2/255.255.255.224
 127.0.0.1/255.0.0.0
 fe80:1::2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
-2001:240:5c7:0:2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
+2001:240:587:0:2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
 fe80:5::1/ffff:ffff:ffff:ffff::
 ::1/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 </pre>

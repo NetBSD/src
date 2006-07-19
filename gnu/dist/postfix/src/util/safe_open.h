@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_open.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: safe_open.h,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
 
 #ifndef _SAFE_OPEN_H_INCLUDED_
 #define _SAFE_OPEN_H_INCLUDED_
@@ -28,7 +28,7 @@
  /*
   * External interface.
   */
-extern VSTREAM *safe_open(const char *, int, int, struct stat *, uid_t, gid_t, VSTRING *);
+extern VSTREAM *safe_open(const char *, int, mode_t, struct stat *, uid_t, gid_t, VSTRING *);
 
 /* LICENSE
 /* .ad

@@ -1,4 +1,4 @@
-/*	$NetBSD: biff_notify.c,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: biff_notify.c,v 1.1.1.3 2006/07/19 01:17:29 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /*
 /*	void	biff_notify(text, len)
 /*	const char *text;
-/*	int	len;
+/*	ssize_t	len;
 /* DESCRIPTION
 /*	biff_notify() sends a \fBBIFF\fR notification request to the
 /*	\fBcomsat\fR daemon.
@@ -52,7 +52,7 @@
 
 /* biff_notify - notify recipient via the biff "protocol" */
 
-void    biff_notify(const char *text, int len)
+void    biff_notify(const char *text, ssize_t len)
 {
     static struct sockaddr_in sin;
     static int sock = -1;

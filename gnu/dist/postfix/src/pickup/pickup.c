@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.11 2005/12/01 21:45:05 rpaulo Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.12 2006/07/19 01:17:35 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -126,6 +126,7 @@
 #include <set_ugid.h>
 #include <safe_open.h>
 #include <watchdog.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -141,6 +142,7 @@
 #include <rec_type.h>
 #include <lex_822.h>
 #include <input_transp.h>
+#include <rec_attr_map.h>
 
 /* Single-threaded server skeleton. */
 
@@ -184,14 +186,24 @@ static int file_read_error(PICKUP_INFO *info, int type)
     return (REMOVE_MESSAGE_FILE);
 }
 
-/* cleanup_service_error - handle error writing to cleanup service. */
+/* cleanup_service_error_reason - handle error writing to cleanup service. */
 
-static int cleanup_service_error(PICKUP_INFO *info, int status)
+static int cleanup_service_error_reason(PICKUP_INFO *info, int status,
+					        const char *reason)
 {
-    msg_warn("%s: %s", info->path, cleanup_strerror(status));
+
+    /*
+     * XXX If the cleanup server gave a reason, then it was already logged.
+     * Don't bother logging it another time.
+     */
+    if (reason == 0)
+	msg_warn("%s: %s", info->path, cleanup_strerror(status));
     return ((status & CLEANUP_STAT_BAD) ?
 	    REMOVE_MESSAGE_FILE : KEEP_MESSAGE_FILE);
 }
+
+#define cleanup_service_error(info, status) \
+	cleanup_service_error_reason((info), (status), (char *) 0)
 
 /* copy_segment - copy a record group */
 
@@ -200,18 +212,22 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 {
     int     type;
     int     check_first = (*expected == REC_TYPE_CONTENT[0]);
+    int     time_seen = 0;
+    char   *attr_name;
+    char   *attr_value;
+    char   *saved_attr;
+    int     skip_attr;
 
     /*
      * Limit the input record size. All front-end programs should protect the
      * mail system against unreasonable inputs. This also requires that we
      * limit the size of envelope records written by the local posting agent.
      * 
-     * As time stamp we use the scrutinized queue file modification time, and
-     * ignore the time stamp embedded in the queue file.
-     * 
      * Allow attribute records if the queue file is owned by the mail system
      * (postsuper -r) or if the attribute specifies the MIME body type
      * (sendmail -B).
+     * 
+     * We must allow PTR records here because of "postsuper -r".
      */
     for (;;) {
 	if ((type = rec_get(qfile, buf, var_line_limit)) < 0
@@ -221,12 +237,16 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	    msg_info("%s: read %c %s", info->id, type, vstring_str(buf));
 	if (type == *expected)
 	    break;
-	if (type == REC_TYPE_FROM)
+	if (type == REC_TYPE_FROM) {
 	    if (info->sender == 0)
 		info->sender = mystrdup(vstring_str(buf));
+	    /* Compatibility with Postfix < 2.3. */
+	    if (time_seen == 0)
+		rec_fprintf(cleanup, REC_TYPE_TIME, "%ld",
+			    (long) info->st.st_mtime);
+	}
 	if (type == REC_TYPE_TIME)
-	    /* Use our own arrival time record instead. */
-	    continue;
+	    time_seen = 1;
 
 	/*
 	 * XXX Workaround: REC_TYPE_FILT (used in envelopes) == REC_TYPE_CONT
@@ -247,9 +267,16 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	    if (type == REC_TYPE_ERTO)
 		/* Discard errors-to record after "postsuper -r". */
 		continue;
-	    if (type == REC_TYPE_ATTR)
+	    if (type == REC_TYPE_ATTR) {
+		saved_attr = mystrdup(vstring_str(buf));
+		skip_attr = (split_nameval(saved_attr,
+					   &attr_name, &attr_value) == 0
+			     && rec_attr_map(attr_name) == 0);
+		myfree(saved_attr);
 		/* Discard other/header/body action after "postsuper -r". */
-		continue;
+		if (skip_attr)
+		    continue;
+	    }
 	}
 
 	/*
@@ -293,13 +320,8 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 	info->st.st_mtime = now;
     } else if (info->st.st_mtime < now - DAY_SECONDS) {
 	msg_warn("%s: message has been queued for %d days",
-		 info->id, (int) (now - info->st.st_mtime) / DAY_SECONDS);
+		 info->id, (int) ((now - info->st.st_mtime) / DAY_SECONDS));
     }
-
-    /*
-     * Make sure the message has a posting-time record.
-     */
-    rec_fprintf(cleanup, REC_TYPE_TIME, "%ld", (long) info->st.st_mtime);
 
     /*
      * Add content inspection transport.
@@ -327,7 +349,7 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
     if (info->st.st_uid == var_owner_uid) {
 	msg_info("%s: uid=%d from=<%s> orig_id=%s", info->id,
 		 (int) info->st.st_uid, info->sender,
-		 ((name = strrchr(info->path, '/')) ?
+		 ((name = strrchr(info->path, '/')) != 0 ?
 		  name + 1 : info->path));
     } else {
 	msg_info("%s: uid=%d from=<%s>", info->id,
@@ -369,8 +391,9 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      */
     rec_fputs(cleanup, REC_TYPE_END, "");
     if (attr_scan(cleanup, ATTR_FLAG_MISSING,
-		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
-		  ATTR_TYPE_END) != 1)
+		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+		  ATTR_TYPE_STR, MAIL_ATTR_WHY, buf,
+		  ATTR_TYPE_END) != 2)
 	return (cleanup_service_error(info, CLEANUP_STAT_WRITE));
 
     /*
@@ -380,7 +403,7 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      * now and then.
      */
     if (status) {
-	return (cleanup_service_error(info, status));
+	return (cleanup_service_error_reason(info, status, vstring_str(buf)));
     } else {
 	return (REMOVE_MESSAGE_FILE);
     }
@@ -434,7 +457,7 @@ static int pickup_file(PICKUP_INFO *info)
 		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buf,
 		  ATTR_TYPE_END) != 1
 	|| attr_print(cleanup, ATTR_FLAG_NONE,
-		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, cleanup_flags,
+		      ATTR_TYPE_INT, MAIL_ATTR_FLAGS, cleanup_flags,
 		      ATTR_TYPE_END) != 0) {
 	status = KEEP_MESSAGE_FILE;
     } else {

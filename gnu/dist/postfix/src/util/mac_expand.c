@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.c,v 1.1.1.4 2005/08/18 21:10:29 rpaulo Exp $	*/
+/*	$NetBSD: mac_expand.c,v 1.1.1.5 2006/07/19 01:17:53 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -118,13 +118,12 @@ typedef struct {
 
 static int mac_expand_callback(int type, VSTRING *buf, char *ptr)
 {
-    char   *myname = "mac_expand_callback";
     MAC_EXP *mc = (MAC_EXP *) ptr;
     int     lookup_mode;
     const char *text;
     char   *cp;
     int     ch;
-    int     len;
+    ssize_t len;
 
     /*
      * Sanity check.
@@ -246,6 +245,7 @@ int     mac_expand(VSTRING *result, const char *pattern, int flags,
  /*
   * This code certainly deserves a stand-alone test program.
   */
+#include <stdlib.h>
 #include <stringops.h>
 #include <htable.h>
 #include <vstream.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rand_sleep.c,v 1.1.1.5 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: rand_sleep.c,v 1.1.1.6 2006/07/19 01:17:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -50,7 +50,7 @@
 
 void    rand_sleep(unsigned delay, unsigned variation)
 {
-    char   *myname = "rand_sleep";
+    const char *myname = "rand_sleep";
     unsigned usec;
 
     /*

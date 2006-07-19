@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_rename.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: sane_rename.c,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 
 int     sane_rename(const char *from, const char *to)
 {
-    char   *myname = "sane_rename";
+    const char *myname = "sane_rename";
     int     saved_errno;
     struct stat st;
 

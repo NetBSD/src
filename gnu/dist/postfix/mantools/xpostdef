@@ -60,6 +60,13 @@ sendmail_path
 smtpd_expansion_filter
 tls_random_source
 virtual_mailbox_lock
+milter_connect_macros
+milter_helo_macros
+milter_mail_macros
+milter_rcpt_macros
+milter_data_macros
+milter_unknown_command_macros
+milter_end_of_data_macros
 EOF
 
 for $name (split(/\s+/, $censored)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: readlline.c,v 1.1.1.5 2005/08/18 21:10:35 rpaulo Exp $	*/
+/*	$NetBSD: readlline.c,v 1.1.1.6 2006/07/19 01:17:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -74,7 +74,7 @@ VSTRING *readlline(VSTRING *buf, VSTREAM *fp, int *lineno)
 {
     int     ch;
     int     next;
-    int     start;
+    ssize_t start;
     char   *cp;
 
     VSTRING_RESET(buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.h,v 1.1.1.6 2005/08/18 21:09:26 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_check.h,v 1.1.1.7 2006/07/19 01:17:47 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -21,6 +21,7 @@ extern char *smtpd_check_client(SMTPD_STATE *);
 extern char *smtpd_check_helo(SMTPD_STATE *, char *);
 extern char *smtpd_check_mail(SMTPD_STATE *, char *);
 extern char *smtpd_check_size(SMTPD_STATE *, off_t);
+extern char *smtpd_check_queue(SMTPD_STATE *);
 extern char *smtpd_check_rcpt(SMTPD_STATE *, char *);
 extern char *smtpd_check_etrn(SMTPD_STATE *, char *);
 extern char *smtpd_check_data(SMTPD_STATE *);

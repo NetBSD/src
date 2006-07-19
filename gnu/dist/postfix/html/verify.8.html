@@ -70,7 +70,7 @@ VERIFY(8)                                                            VERIFY(8)
        This violates a basic Postfix principle.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are not  picked  up  automatically,  as
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are not  picked  up  automatically,  as
        <a href="verify.8.html"><b>verify</b>(8)</a> processes are persistent. Use the command "<b>post-</b>
        <b>fix reload</b>" after a configuration change.
 
@@ -137,8 +137,8 @@ VERIFY(8)                                                            VERIFY(8)
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
               How  much time a Postfix daemon process may take to

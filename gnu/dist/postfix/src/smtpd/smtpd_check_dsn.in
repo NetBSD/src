@@ -1,0 +1,60 @@
+#
+# Initialize.
+#
+#! ../bin/postmap smtpd_check_access
+#msg_verbose 1
+smtpd_delay_reject 0
+mynetworks 127.0.0.0/8,168.100.189.0/28
+#
+# Test the client restrictions.
+#
+client_restrictions hash:./smtpd_check_access
+client 4.1.1_dsn 1.2.3.4
+client 4.1.2_dsn 1.2.3.4
+client 4.1.3_dsn 1.2.3.4
+client 4.1.4_dsn 1.2.3.4
+client 4.1.5_dsn 1.2.3.4
+client 4.1.6_dsn 1.2.3.4
+client 4.1.7_dsn 1.2.3.4
+client 4.1.8_dsn 1.2.3.4
+client 4.4.0_dsn 1.2.3.4
+client dummy dummy
+#
+# Test the helo restrictions
+#
+helo_restrictions hash:./smtpd_check_access
+helo 4.1.1_dsn
+helo 4.1.2_dsn
+helo 4.1.3_dsn
+helo 4.1.4_dsn
+helo 4.1.5_dsn
+helo 4.1.6_dsn
+helo 4.1.7_dsn
+helo 4.1.8_dsn
+helo 4.4.0_dsn
+#
+# Test the sender restrictions
+#
+sender_restrictions hash:./smtpd_check_access
+mail user@4.1.1_dsn
+mail user@4.1.2_dsn
+mail user@4.1.3_dsn
+mail user@4.1.4_dsn
+mail user@4.1.5_dsn
+mail user@4.1.6_dsn
+mail user@4.1.7_dsn
+mail user@4.1.8_dsn
+mail user@4.4.0_dsn
+#
+# Test the recipient restrictions
+#
+recipient_restrictions hash:./smtpd_check_access
+rcpt user@4.1.1_dsn
+rcpt user@4.1.2_dsn
+rcpt user@4.1.3_dsn
+rcpt user@4.1.4_dsn
+rcpt user@4.1.5_dsn
+rcpt user@4.1.6_dsn
+rcpt user@4.1.7_dsn
+rcpt user@4.1.8_dsn
+rcpt user@4.4.0_dsn

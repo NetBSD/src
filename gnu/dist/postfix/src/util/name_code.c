@@ -1,4 +1,4 @@
-/*	$NetBSD: name_code.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: name_code.c,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -38,7 +38,7 @@
 /*	For convenience the constant NAME_CODE_FLAG_NONE requests
 /*	no special processing.
 /*
-/*	str_name_code() translates a number to its equivalend string.
+/*	str_name_code() translates a number to its equivalent string.
 /* DIAGNOSTICS
 /*	When the search fails, the result is the "name not found" code
 /*	or the null pointer, respectively.
