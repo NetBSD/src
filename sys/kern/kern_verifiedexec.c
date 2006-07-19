@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.57 2006/07/15 20:07:36 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.58 2006/07/19 12:45:20 blymn Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.57 2006/07/15 20:07:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.58 2006/07/19 12:45:20 blymn Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -612,10 +612,10 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
  * Veriexe rename policy.
  */
 int
-veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
-		   struct lwp *l)
+veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
+		   const char *to, struct lwp *l)
 {
-	struct veriexec_file_entry *vfe;
+	struct veriexec_file_entry *vfe, *tvfe;
 
 	if (veriexec_strict >= 3) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
@@ -625,7 +625,11 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 	}
 
 	vfe = veriexec_lookup(vp);
-	if (vfe != NULL) {
+	tvfe = NULL;
+	if (tvp != NULL)
+		tvfe = veriexec_lookup(tvp);
+
+	if ((vfe != NULL) || (tvfe != NULL)) {
 		if (veriexec_strict >= 2) {
 			log(LOG_ALERT, "Veriexec: Preventing rename of `%s' "
 			    "to `%s', uid=%u, pid=%u: IPS mode, file "
