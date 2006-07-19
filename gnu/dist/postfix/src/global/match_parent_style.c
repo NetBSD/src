@@ -1,4 +1,4 @@
-/*	$NetBSD: match_parent_style.c,v 1.1.1.3 2005/08/18 21:06:35 rpaulo Exp $	*/
+/*	$NetBSD: match_parent_style.c,v 1.1.1.4 2006/07/19 01:17:24 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -60,7 +60,7 @@ int     match_parent_style(const char *name)
     /*
      * Initialize on the fly.
      */
-    if (match_par_dom_list == 0) 
+    if (match_par_dom_list == 0)
 	match_par_dom_list =
 	    string_list_init(MATCH_FLAG_NONE, var_par_dom_match);
 

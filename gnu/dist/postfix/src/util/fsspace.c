@@ -1,4 +1,4 @@
-/*	$NetBSD: fsspace.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: fsspace.c,v 1.1.1.3 2006/07/19 01:17:52 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -69,7 +69,7 @@
 
 void    fsspace(const char *path, struct fsspace * sp)
 {
-    char   *myname = "fsspace";
+    const char *myname = "fsspace";
 
 #ifdef USE_STATFS
 #ifdef USE_STRUCT_FS_DATA			/* Ultrix */

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_move.c,v 1.1.1.2 2004/05/31 00:24:40 heas Exp $	*/
+/*	$NetBSD: qmgr_move.c,v 1.1.1.3 2006/07/19 01:17:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@
 void    qmgr_move(const char *src_queue, const char *dst_queue,
 		          time_t time_stamp)
 {
-    char   *myname = "qmgr_move";
+    const char *myname = "qmgr_move";
     SCAN_DIR *queue_dir;
     char   *queue_id;
     struct utimbuf tbuf;

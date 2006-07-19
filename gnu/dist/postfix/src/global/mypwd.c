@@ -1,4 +1,4 @@
-/*	$NetBSD: mypwd.c,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mypwd.c,v 1.1.1.3 2006/07/19 01:17:27 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -230,6 +230,7 @@ int     main(int argc, char **argv)
     }
 
     myfree((char *) mypwd);
+    return (0);
 }
 
 #endif

@@ -36,7 +36,7 @@ abuse:		postmaster
 # trap decode to catch security attacks
 decode:		root
 
-# ALIASES(5)                                             ALIASES(5)
+# ALIASES(5)                                                          ALIASES(5)
 # 
 # NAME
 #        aliases - Postfix local alias database format
@@ -87,38 +87,39 @@ decode:		root
 # 
 #        In addition, when an alias exists for owner-name, delivery
 #        diagnostics  are  directed  to that address, instead of to
-#        the originator.  This is typically used to direct delivery
-#        errors  to the owner of a mailing list, who is in a better
-#        position to deal with mailing list delivery problems  than
-#        the originator of the undelivered mail.
+#        the originator of the message.  This is typically used  to
+#        direct  delivery  errors  to  the  maintainer of a mailing
+#        list, who is in a better position  to  deal  with  mailing
+#        list delivery problems than the originator of the undeliv-
+#        ered mail.
 # 
 #        The value contains one or more of the following:
 # 
 #        address
-#               Mail  is  forwarded to address, which is compatible
+#               Mail is forwarded to address, which  is  compatible
 #               with the RFC 822 standard.
 # 
 #        /file/name
-#               Mail is appended to /file/name.  See  local(8)  for
-#               details  of delivery to file.  Delivery is not lim-
-#               ited to regular files.  For example, to dispose  of
+#               Mail  is  appended  to /file/name. See local(8) for
+#               details of delivery to file.  Delivery is not  lim-
+#               ited  to regular files.  For example, to dispose of
 #               unwanted mail, deflect it to /dev/null.
 # 
 #        |command
-#               Mail  is  piped into command. Commands that contain
-#               special characters, such as whitespace,  should  be
-#               enclosed  between  double  quotes. See local(8) for
+#               Mail is piped into command. Commands  that  contain
+#               special  characters,  such as whitespace, should be
+#               enclosed between double quotes.  See  local(8)  for
 #               details of delivery to command.
 # 
 #               When the command fails, a limited amount of command
-#               output  is  mailed  back  to  the sender.  The file
-#               /usr/include/sysexits.h defines the  expected  exit
-#               status  codes. For example, use |"exit 67" to simu-
-#               late a "user  unknown"  error,  and  |"exit  0"  to
+#               output is mailed back  to  the  sender.   The  file
+#               /usr/include/sysexits.h  defines  the expected exit
+#               status codes. For example, use |"exit 67" to  simu-
+#               late  a  "user  unknown"  error,  and  |"exit 0" to
 #               implement an expensive black hole.
 # 
 #        :include:/file/name
-#               Mail  is  sent  to  the  destinations listed in the
+#               Mail is sent to  the  destinations  listed  in  the
 #               named file.  Lines in :include: files have the same
 #               syntax as the right-hand side of alias entries.
 # 
@@ -130,13 +131,17 @@ decode:		root
 # 
 # ADDRESS EXTENSION
 #        When alias database search fails, and the recipient local-
-#        part contains  the  optional  recipient  delimiter  (e.g.,
-#        user+foo),  the  search  is  repeated  for  the unextended
+#        part  contains  the  optional  recipient  delimiter (e.g.,
+#        user+foo), the  search  is  repeated  for  the  unextended
 #        address (e.g., user).
 # 
-#        The  propagate_unmatched_extensions   parameter   controls
-#        whether  an  unmatched  address extension (+foo) is propa-
+#        The   propagate_unmatched_extensions   parameter  controls
+#        whether an unmatched address extension  (+foo)  is  propa-
 #        gated to the result of table lookup.
+# 
+# CASE FOLDING
+#        The local(8) delivery agent always folds the search string
+#        to lowercase before database lookup.
 # 
 # SECURITY
 #        The local(8) delivery agent disallows  regular  expression
@@ -191,6 +196,15 @@ decode:		root
 #               Delimiter that separates  recipients  from  address
 #               extensions.
 # 
+#        Available in Postfix version 2.3 and later:
+# 
+#        frozen_delivered_to
+#               Update  the local(8) delivery agent's Delivered-To:
+#               address (see prepend_delivered_header)  only  once,
+#               at  the  start  of  a  delivery;  do not update the
+#               Delivered-To: address while  expanding  aliases  or
+#               .forward files.
+# 
 # STANDARDS
 #        RFC 822 (ARPA Internet Text Messages)
 # 
@@ -215,4 +229,4 @@ decode:		root
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                        ALIASES(5)
+#                                                                     ALIASES(5)

@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.1.1.1 2005/08/18 21:10:56 rpaulo Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.1.1.2 2006/07/19 01:17:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -179,6 +179,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>			/* sprintf() */
 
 /* Utility library. */
 
@@ -538,7 +539,7 @@ int     sockaddr_to_hostaddr(const struct sockaddr * sa, SOCKADDR_SIZE salen,
 {
 #ifdef EMULATE_IPV4_ADDRINFO
     char    portbuf[sizeof("65535")];
-    int     len;
+    ssize_t len;
 
     /*
      * Emulated getnameinfo(3) version. The buffer length includes the space

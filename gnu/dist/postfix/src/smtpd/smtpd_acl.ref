@@ -16,8 +16,8 @@ OK
 OK
 >>> # Expect: REJECT
 >>> helo foo.dunno.com
-./smtpd_check: <queue id>: reject: HELO from localhost[127.0.0.1]: 554 <foo.dunno.com>: Helo command rejected: Access denied; proto=SMTP helo=<foo.dunno.com>
-554 <foo.dunno.com>: Helo command rejected: Access denied
+./smtpd_check: <queue id>: reject: HELO from localhost[127.0.0.1]: 554 5.7.1 <foo.dunno.com>: Helo command rejected: Access denied; proto=SMTP helo=<foo.dunno.com>
+554 5.7.1 <foo.dunno.com>: Helo command rejected: Access denied
 >>> # Expect: OK
 >>> helo bar.dunno.com
 OK
@@ -31,8 +31,8 @@ OK
 OK
 >>> # Expect: REJECT
 >>> client foo.dunno.com 131.155.210.17
-./smtpd_check: <queue id>: reject: CONNECT from foo.dunno.com[131.155.210.17]: 554 <foo.dunno.com[131.155.210.17]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
-554 <foo.dunno.com[131.155.210.17]>: Client host rejected: Access denied
+./smtpd_check: <queue id>: reject: CONNECT from foo.dunno.com[131.155.210.17]: 554 5.7.1 <foo.dunno.com[131.155.210.17]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <foo.dunno.com[131.155.210.17]>: Client host rejected: Access denied
 >>> # Expect: OK
 >>> client bar.dunno.com 131.155.210.17
 OK
@@ -47,19 +47,19 @@ OK
 OK
 >>> # Expect: REJECT
 >>> client bar.duno.com 131.155.210.19
-./smtpd_check: <queue id>: reject: CONNECT from bar.duno.com[131.155.210.19]: 554 <bar.duno.com[131.155.210.19]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
-554 <bar.duno.com[131.155.210.19]>: Client host rejected: Access denied
+./smtpd_check: <queue id>: reject: CONNECT from bar.duno.com[131.155.210.19]: 554 5.7.1 <bar.duno.com[131.155.210.19]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <bar.duno.com[131.155.210.19]>: Client host rejected: Access denied
 >>> # Expect: REJECT
 >>> client bar.duno.com 44.33.22.11
-./smtpd_check: <queue id>: reject: CONNECT from bar.duno.com[44.33.22.11]: 554 <bar.duno.com[44.33.22.11]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
-554 <bar.duno.com[44.33.22.11]>: Client host rejected: Access denied
+./smtpd_check: <queue id>: reject: CONNECT from bar.duno.com[44.33.22.11]: 554 5.7.1 <bar.duno.com[44.33.22.11]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <bar.duno.com[44.33.22.11]>: Client host rejected: Access denied
 >>> # Expect: OK
 >>> client bar.duno.com 44.33.22.55
 OK
 >>> # Expect: REJECT
 >>> client bar.duno.com 44.33.44.33
-./smtpd_check: <queue id>: reject: CONNECT from bar.duno.com[44.33.44.33]: 554 <bar.duno.com[44.33.44.33]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
-554 <bar.duno.com[44.33.44.33]>: Client host rejected: Access denied
+./smtpd_check: <queue id>: reject: CONNECT from bar.duno.com[44.33.44.33]: 554 5.7.1 <bar.duno.com[44.33.44.33]>: Client host rejected: Access denied; proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <bar.duno.com[44.33.44.33]>: Client host rejected: Access denied
 >>> #
 >>> # Test check_mail_access()
 >>> #
@@ -67,8 +67,8 @@ OK
 OK
 >>> # Expect: REJECT
 >>> mail reject@dunno.domain
-./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 <reject@dunno.domain>: Sender address rejected: Access denied; from=<reject@dunno.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject@dunno.domain>: Sender address rejected: Access denied
+./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject@dunno.domain>: Sender address rejected: Access denied; from=<reject@dunno.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject@dunno.domain>: Sender address rejected: Access denied
 >>> # Expect: OK
 >>> mail ok@dunno.domain
 OK
@@ -83,26 +83,26 @@ OK
 >>> #
 >>> # Expect: REJECT  
 >>> mail reject@reject.domain
-./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 <reject@reject.domain>: Sender address rejected: Access denied; from=<reject@reject.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject@reject.domain>: Sender address rejected: Access denied
+./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject@reject.domain>: Sender address rejected: Access denied; from=<reject@reject.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject@reject.domain>: Sender address rejected: Access denied
 >>> # Expect: OK
 >>> mail ok@reject.domain
 OK
 >>> # Expect: REJECT
 >>> mail anyone@reject.domain
-./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 <anyone@reject.domain>: Sender address rejected: Access denied; from=<anyone@reject.domain> proto=SMTP helo=<foo.duuno.com>
-554 <anyone@reject.domain>: Sender address rejected: Access denied
+./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 5.7.1 <anyone@reject.domain>: Sender address rejected: Access denied; from=<anyone@reject.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <anyone@reject.domain>: Sender address rejected: Access denied
 >>> # Expect: REJECT
 >>> mail good-sender@reject.domain
-./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 <good-sender@reject.domain>: Sender address rejected: Access denied; from=<good-sender@reject.domain> proto=SMTP helo=<foo.duuno.com>
-554 <good-sender@reject.domain>: Sender address rejected: Access denied
+./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 5.7.1 <good-sender@reject.domain>: Sender address rejected: Access denied; from=<good-sender@reject.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <good-sender@reject.domain>: Sender address rejected: Access denied
 >>> #
 >>> # Again, with a domain that accepts by default
 >>> #
 >>> # Expect: REJECT
 >>> mail reject@ok.domain
-./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 <reject@ok.domain>: Sender address rejected: Access denied; from=<reject@ok.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject@ok.domain>: Sender address rejected: Access denied
+./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject@ok.domain>: Sender address rejected: Access denied; from=<reject@ok.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject@ok.domain>: Sender address rejected: Access denied
 >>> # Expect: OK
 >>> mail ok@ok.domain
 OK
@@ -119,14 +119,14 @@ OK
 OK
 >>> # Expect: REJECT
 >>> rcpt reject@dunno.domain
-./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 <reject@dunno.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject@dunno.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject@dunno.domain>: Recipient address rejected: Access denied
+./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject@dunno.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject@dunno.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject@dunno.domain>: Recipient address rejected: Access denied
 >>> # Expect: REJECT
 >>> recipient_delimiter +
 OK
 >>> rcpt reject+ext@dunno.domain
-./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 <reject+ext@dunno.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject+ext@dunno.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject+ext@dunno.domain>: Recipient address rejected: Access denied
+./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject+ext@dunno.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject+ext@dunno.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject+ext@dunno.domain>: Recipient address rejected: Access denied
 >>> recipient_delimiter |
 OK
 >>> # Expect: OK
@@ -150,26 +150,26 @@ OK
 >>> #
 >>> # Expect: REJECT  
 >>> rcpt reject@reject.domain
-./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 <reject@reject.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject@reject.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject@reject.domain>: Recipient address rejected: Access denied
+./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject@reject.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject@reject.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject@reject.domain>: Recipient address rejected: Access denied
 >>> # Expect: OK
 >>> rcpt ok@reject.domain
 OK
 >>> # Expect: REJECT
 >>> rcpt anyone@reject.domain
-./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 <anyone@reject.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<anyone@reject.domain> proto=SMTP helo=<foo.duuno.com>
-554 <anyone@reject.domain>: Recipient address rejected: Access denied
+./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 5.7.1 <anyone@reject.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<anyone@reject.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <anyone@reject.domain>: Recipient address rejected: Access denied
 >>> # Expect: REJECT
 >>> rcpt good-sender@reject.domain
-./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 <good-sender@reject.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<good-sender@reject.domain> proto=SMTP helo=<foo.duuno.com>
-554 <good-sender@reject.domain>: Recipient address rejected: Access denied
+./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 5.7.1 <good-sender@reject.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<good-sender@reject.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <good-sender@reject.domain>: Recipient address rejected: Access denied
 >>> #
 >>> # Again, with a domain that accepts by default
 >>> #
 >>> # Expect: REJECT
 >>> rcpt reject@ok.domain
-./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 <reject@ok.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject@ok.domain> proto=SMTP helo=<foo.duuno.com>
-554 <reject@ok.domain>: Recipient address rejected: Access denied
+./smtpd_check: <queue id>: reject: RCPT from bar.duno.com[44.33.44.33]: 554 5.7.1 <reject@ok.domain>: Recipient address rejected: Access denied; from=<bad-sender@ok.domain> to=<reject@ok.domain> proto=SMTP helo=<foo.duuno.com>
+554 5.7.1 <reject@ok.domain>: Recipient address rejected: Access denied
 >>> # Expect: OK
 >>> rcpt ok@ok.domain
 OK
@@ -183,5 +183,5 @@ OK
 >>> # check_sender_access specific
 >>> #
 >>> mail <>
-./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 550 <>: Sender address rejected: Go away postmaster; from=<> proto=SMTP helo=<foo.duuno.com>
-550 <>: Sender address rejected: Go away postmaster
+./smtpd_check: <queue id>: reject: MAIL from bar.duno.com[44.33.44.33]: 550 5.7.1 <>: Sender address rejected: Go away postmaster; from=<> proto=SMTP helo=<foo.duuno.com>
+550 5.7.1 <>: Sender address rejected: Go away postmaster
