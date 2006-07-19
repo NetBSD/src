@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.23 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: frodo.c,v 1.24 2006/07/19 17:18:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.23 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.24 2006/07/19 17:18:03 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -204,7 +204,7 @@ frodoattach(struct device *parent, struct device *self, void *aux)
 			continue;
 		fa.fa_name = fd->fd_name;
 		fa.fa_bst = bst;
-		fa.fa_base = FRODO_BASE;
+		fa.fa_base = ia->ia_iobase;
 		fa.fa_offset = fd->fd_offset;
 		fa.fa_line = fd->fd_line;
 		config_found_sm_loc(self, "frodo", NULL, &fa, frodoprint,
