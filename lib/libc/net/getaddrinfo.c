@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.84 2006/07/18 15:55:55 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.85 2006/07/19 13:16:12 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.84 2006/07/18 15:55:55 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.85 2006/07/19 13:16:12 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -939,7 +939,9 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 		}
 
 		(void)memset(&svd, 0, sizeof(svd));
-		if ((sp = getservbyname_r(servname, proto, &sv, &svd)) == NULL)
+		sp = getservbyname_r(servname, proto, &sv, &svd);
+		endservent_r(&svd);
+		if (sp == NULL)
 			return EAI_SERVICE;
 		port = sp->s_port;
 	}
