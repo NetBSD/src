@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.7 2006/07/19 01:35:39 rpaulo Exp $
+#	$NetBSD: postfix-files,v 1.8 2006/07/19 17:43:37 rpaulo Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -110,12 +110,12 @@ $sample_directory/access:f:root:-:644:p
 $sample_directory/aliases:f:root:-:644:p
 $sample_directory/canonical:f:root:-:644:p
 $config_directory/cidr_table:f:root:-:644:o
-$config_directory/generic:f:root:-:644:p
+#$config_directory/generic:f:root:-:644:p
 $config_directory/generics:f:root:-:644:o
 $sample_directory/generic:f:root:-:644:p
 $sample_directory/header_checks:f:root:-:644:p
 $config_directory/install.cf:f:root:-:644:o
-$config_directory/main.cf.default:f:root:-:644
+#$config_directory/main.cf.default:f:root:-:644
 $config_directory/main.cf:f:root:-:644:p
 #$config_directory/makedefs.out:f:root:-:644
 $config_directory/master.cf:f:root:-:644:p
@@ -145,7 +145,7 @@ $manpage_directory/man1/postqueue.1:f:root:-:644
 $manpage_directory/man1/postsuper.1:f:root:-:644
 #$manpage_directory/man1/sendmail.1:f:root:-:644
 $manpage_directory/man5/access.5:f:root:-:644
-$manpage_directory/man5/aliases.5:f:root:-:644
+#$manpage_directory/man5/aliases.5:f:root:-:644
 $manpage_directory/man5/body_checks.5:f:root:-:644
 $manpage_directory/man5/bounce.5:f:root:-:644
 $manpage_directory/man5/canonical.5:f:root:-:644
@@ -162,7 +162,7 @@ $manpage_directory/man5/pcre_table.5:f:root:-:644
 $manpage_directory/man5/postconf.5:f:root:-:644
 $manpage_directory/man5/regexp_table.5:f:root:-:644
 $manpage_directory/man5/relocated.5:f:root:-:644
-$manpage_directory/man5/tcp_table.5:f:root:-:644
+#$manpage_directory/man5/tcp_table.5:f:root:-:644
 $manpage_directory/man5/transport.5:f:root:-:644
 $manpage_directory/man5/virtual.5:f:root:-:644
 $manpage_directory/man8/bounce.8:f:root:-:644
@@ -378,7 +378,7 @@ $html_directory/smtp-source.1.html:f:root:-:644
 $html_directory/smtp.8.html:f:root:-:644
 $html_directory/smtpd.8.html:f:root:-:644
 $html_directory/spawn.8.html:f:root:-:644
-$html_directory/tcp_table.5.html:f:root:-:644
+#$html_directory/tcp_table.5.html:f:root:-:644
 $html_directory/trace.8.html:f:root:-:644
 $html_directory/transport.5.html:f:root:-:644
 $html_directory/trivial-rewrite.8.html:f:root:-:644
