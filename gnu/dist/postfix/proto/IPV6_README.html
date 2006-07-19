@@ -21,8 +21,8 @@ IPv6 Support</h1>
 <h2>Introduction</h2>
 
 <p> Postfix 2.2 introduces support for the IPv6 (IP version 6)
-protocol. IPv6 support older Postfix versions was available as an
-add-on patch. The section "<a href="#compat">Compatibility with
+protocol. IPv6 support for older Postfix versions was available as
+an add-on patch. The section "<a href="#compat">Compatibility with
 Postfix &lt;2.2 IPv6 support</a>" below discusses the differences
 between these implementations. </p>
 
@@ -30,7 +30,8 @@ between these implementations. </p>
 addresses instead of the 32-bit addresses used by IPv4. It can
 therefore accommodate a much larger number of hosts and networks
 without ugly kluges such as NAT. A side benefit of the much larger
-address space is that it makes network scanning unpractical.  </p>
+address space is that it makes random network scanning impractical.
+</p>
 
 <p> Postfix uses the same SMTP protocol over IPv6 as it already
 uses over the older IPv4 network, and does AAAA record lookups in
@@ -162,7 +163,7 @@ does for IPv4: </p>
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
-    smtp_bind_address6 = 2001:240:5c7:0:250:56ff:fe89:1
+    smtp_bind_address6 = 2001:240:587:0:250:56ff:fe89:1
 </pre>
 </blockquote>
 
@@ -174,7 +175,7 @@ setting looks like: </p>
 <blockquote>
 <pre>
 % postconf mynetworks
-mynetworks = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [fe80::]/10 [2001:240:5c7::]/64 
+mynetworks = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [fe80::]/10 [2001:240:587::]/64 
 </pre>
 </blockquote>
 
@@ -186,7 +187,7 @@ information inside "<tt>[]</tt>", like this: </p>
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
-    mynetworks = ...<i>IPv4 networks</i>... [::1]/128 [2001:240:5c7::]/64 ...
+    mynetworks = ...<i>IPv4 networks</i>... [::1]/128 [2001:240:587::]/64 ...
 </pre>
 </blockquote>
 
@@ -333,7 +334,7 @@ and network masks, for example: </p>
 168.100.189.2/255.255.255.224
 127.0.0.1/255.0.0.0
 fe80:1::2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
-2001:240:5c7:0:2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
+2001:240:587:0:2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
 fe80:5::1/ffff:ffff:ffff:ffff::
 ::1/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 </pre>

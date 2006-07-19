@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.c,v 1.1.1.4 2005/08/18 21:10:05 rpaulo Exp $	*/
+/*	$NetBSD: base64_code.c,v 1.1.1.5 2006/07/19 01:17:50 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -11,18 +11,18 @@
 /*	VSTRING	*base64_encode(result, in, len)
 /*	VSTRING	*result;
 /*	const char *in;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	VSTRING	*base64_decode(result, in, len)
 /*	VSTRING	*result;
 /*	const char *in;
-/*	int	len;
+/*	ssize_t	len;
 /* DESCRIPTION
 /*	base64_encode() takes a block of len bytes and encodes it as one
 /*	null-terminated string.  The result value is the result argument.
 /*
 /*	base64_decode() performs the opposite transformation. The result
-/*	value is the result argument. The result is null terminated, whether 
+/*	value is the result argument. The result is null terminated, whether
 /*	or not that makes sense.
 /* DIAGNOSTICS
 /*	base64_decode () returns a null pointer when the input contains
@@ -65,10 +65,10 @@ static unsigned char to_b64[] =
 
 /* base64_encode - raw data to encoded */
 
-VSTRING *base64_encode(VSTRING *result, const char *in, int len)
+VSTRING *base64_encode(VSTRING *result, const char *in, ssize_t len)
 {
     const unsigned char *cp;
-    int     count;
+    ssize_t count;
 
     /*
      * Encode 3 -> 4.
@@ -99,11 +99,11 @@ VSTRING *base64_encode(VSTRING *result, const char *in, int len)
 
 /* base64_decode - encoded data to raw */
 
-VSTRING *base64_decode(VSTRING *result, const char *in, int len)
+VSTRING *base64_decode(VSTRING *result, const char *in, ssize_t len)
 {
     static unsigned char *un_b64 = 0;
     const unsigned char *cp;
-    int     count;
+    ssize_t count;
     unsigned int ch0;
     unsigned int ch1;
     unsigned int ch2;

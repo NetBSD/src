@@ -5,8 +5,8 @@ PPoossttffiixx PPeerr--CClliieenntt//UUsseerr//eettcc.
 PPoossttffiixx rreessttrriiccttiioonn ccllaasssseess
 
 The Postfix SMTP server supports access restrictions such as reject_rbl_client
-or reject_unknown_client on the right-hand side of SMTP server access(5)
-tables. This allows you to implement different junk mail restrictions for
+or reject_unknown_client_hostname on the right-hand side of SMTP server access
+(5) tables. This allows you to implement different junk mail restrictions for
 different clients or users.
 
 Having to specify lists of access restrictions for every recipient becomes
@@ -23,13 +23,15 @@ Example:
 
     /etc/postfix/main.cf:
         smtpd_restriction_classes = restrictive, permissive
-        restrictive = reject_unknown_sender_domain reject_unknown_client ...
+        # With Postfix < 2.3 specify reject_unknown_client.
+        restrictive = reject_unknown_sender_domain
+    reject_unknown_client_hostname ...
         permissive = permit
 
         smtpd_recipient_restrictions =
     	permit_mynetworks
     	reject_unauth_destination
-    	hash:/etc/postfix/recipient_access
+    	check_recipient_access hash:/etc/postfix/recipient_access
 
     /etc/postfix/recipient_access:
         joe@my.domain	permissive
@@ -61,7 +63,7 @@ SMTP client IP address, and therefore is subject to IP spoofing.
 
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
-            hash:/etc/postfix/access
+            check_recipient_access hash:/etc/postfix/access
             ...the usual stuff...
 
     /etc/postfix/access:
@@ -86,7 +88,7 @@ subject to SMTP sender spoofing.
 
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
-            hash:/etc/postfix/protected_destinations
+            check_recipient_access hash:/etc/postfix/protected_destinations
             ...the usual stuff...
 
         smtpd_restriction_classes = insiders_only

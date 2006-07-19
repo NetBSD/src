@@ -194,8 +194,12 @@ http://www.t29.dk/antiantivirus.txt.
             DISCARD virus notification
         /^Content-Disposition:.*VirusWarning.txt/ DISCARD virus notification
 
+Note: these documents haven't been updated since 2004, so they are useful only
+as a starting point.
+
 A plea to virus or spam scanner operators: please do not make the problem worse
 by sending return mail to forged sender addresses. You're only harassing
 innocent people. If you must return mail to the purported sender, please return
-the full message headers, so that the sender can defend against forgeries.
+the full message headers, so that the sender can filter out the obvious
+forgeries.
 

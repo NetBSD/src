@@ -49,12 +49,20 @@ POSTMAP(1)                                                          POSTMAP(1)
        rounding white space is stripped off. Unlike with  Postfix
        alias  databases,  quotes cannot be used to protect lookup
        keys that contain special characters such as `#' or white-
-       space.  The  <i>key</i>  is  mapped  to lowercase to make mapping
-       lookups case insensitive.
+       space.
+
+       By  default  the lookup key is mapped to lowercase to make
+       the lookups case insensitive; as of Postfix 2.3 this  case
+       folding  happens  only  with  tables whose lookup keys are
+       fixed-case strings such as btree:,  dbm:  or  hash:.  With
+       earlier  versions,  the  lookup  key  is  folded even with
+       tables where a lookup field can match both upper and lower
+       case  text,  such  as  <a href="regexp_table.5.html">regexp</a>: and <a href="pcre_table.5.html">pcre</a>:. This resulted in
+       loss of information with $<i>number</i> substitutions.
 
 <b>COMMAND-LINE ARGUMENTS</b>
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              Read the <b>main.cf</b> configuration file  in  the  named
+              Read the <a href="postconf.5.html"><b>main.cf</b></a> configuration file  in  the  named
               directory  instead  of  the  default  configuration
               directory.
 
@@ -68,7 +76,7 @@ POSTMAP(1)                                                          POSTMAP(1)
               keys was found.
 
        <b>-f</b>     Do not fold the lookup key to lower case while cre-
-              ating or querying a map.
+              ating or querying a table.
 
        <b>-i</b>     Incremental mode. Read entries from standard  input
               and  do  not  truncate  an  existing  database.  By
@@ -183,7 +191,7 @@ POSTMAP(1)                                                          POSTMAP(1)
               Enable verbose logging for debugging purposes.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
        to this program.  The text below provides only a parameter
        summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
@@ -197,8 +205,8 @@ POSTMAP(1)                                                          POSTMAP(1)
               read Berkeley DB hash or btree tables.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
               The default database type for use in <a href="newaliases.1.html"><b>newaliases</b>(1)</a>,

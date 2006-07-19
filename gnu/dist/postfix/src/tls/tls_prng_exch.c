@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_prng_exch.c,v 1.1.1.1 2005/08/18 21:11:07 rpaulo Exp $	*/
+/*	$NetBSD: tls_prng_exch.c,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -135,10 +135,10 @@ void    tls_prng_exch_close(TLS_PRNG_SRC *eh)
 
     if (close(eh->fd) < 0)
 	msg_fatal("close PRNG exchange file %s: %m", eh->name);
-    myfree(eh->name);
-    myfree((char *) eh);
     if (msg_verbose)
 	msg_info("%s: closed PRNG exchange file %s", myname, eh->name);
+    myfree(eh->name);
+    myfree((char *) eh);
 }
 
 #endif

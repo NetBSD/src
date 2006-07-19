@@ -155,15 +155,15 @@ QMGR(8)                                                                QMGR(8)
        manager of the arrival of new mail one would request <b>I</b>.
 
 <b>STANDARDS</b>
-       None.  The  <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon does not interact with the out-
-       side world.
+       <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a> (Enhanced status codes)
+       <a href="http://www.faqs.org/rfcs/rfc3464.html">RFC 3464</a> (Delivery status notifications)
 
 <b>SECURITY</b>
-       The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon is not  security  sensitive.  It  reads
-       single-character  messages from untrusted local users, and
-       thus may be susceptible to denial of service attacks.  The
-       <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  daemon does not talk to the outside world, and it
-       can be run at fixed low privilege in a  chrooted  environ-
+       The  <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  daemon  is  not security sensitive. It reads
+       single-character messages from untrusted local users,  and
+       thus  may be susceptible to denial of service attacks. The
+       <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon does not talk to the outside world, and  it
+       can  be  run at fixed low privilege in a chrooted environ-
        ment.
 
 <b>DIAGNOSTICS</b>
@@ -171,35 +171,35 @@ QMGR(8)                                                                QMGR(8)
        Corrupted message files are saved to the <b>corrupt</b> queue for
        further inspection.
 
-       Depending  on the setting of the <b><a href="postconf.5.html#notify_classes">notify_classes</a></b> parameter,
-       the postmaster is notified of bounces and of  other  trou-
+       Depending on the setting of the <b><a href="postconf.5.html#notify_classes">notify_classes</a></b>  parameter,
+       the  postmaster  is notified of bounces and of other trou-
        ble.
 
 <b>BUGS</b>
-       A  single  queue  manager  process has to compete for disk
-       access  with  multiple   front-end   processes   such   as
-       <a href="cleanup.8.html"><b>cleanup</b>(8)</a>.  A sudden burst of inbound mail can negatively
+       A single queue manager process has  to  compete  for  disk
+       access   with   multiple   front-end   processes  such  as
+       <a href="cleanup.8.html"><b>cleanup</b>(8)</a>. A sudden burst of inbound mail can  negatively
        impact outbound delivery rates.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are  not  picked  up  automatically  as
-       <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  is a persistent process. Use the "<b>postfix reload</b>"
+       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are  not  picked up automatically as
+       <a href="qmgr.8.html"><b>qmgr</b>(8)</a> is a persistent process. Use the "<b>postfix  reload</b>"
        command after a configuration change.
 
-       The text below provides  only  a  parameter  summary.  See
+       The  text  below  provides  only  a parameter summary. See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
-       In  the text below, <i>transport</i> is the first field in a <b>mas-</b>
+       In the text below, <i>transport</i> is the first field in a  <b>mas-</b>
        <b>ter.cf</b> entry.
 
 <b>COMPATIBILITY CONTROLS</b>
        <b><a href="postconf.5.html#allow_min_user">allow_min_user</a> (no)</b>
-              Allow a recipient address to have `-' as the  first
+              Allow  a recipient address to have `-' as the first
               character.
 
 <b>ACTIVE QUEUE CONTROLS</b>
        <b><a href="postconf.5.html#qmgr_clog_warn_time">qmgr_clog_warn_time</a> (300s)</b>
-              The  minimal delay between warnings that a specific
+              The minimal delay between warnings that a  specific
               destination  is  clogging  up  the  Postfix  active
               queue.
 
@@ -207,13 +207,13 @@ QMGR(8)                                                                QMGR(8)
               The maximal number of messages in the <a href="QSHAPE_README.html#active_queue">active queue</a>.
 
        <b><a href="postconf.5.html#qmgr_message_recipient_limit">qmgr_message_recipient_limit</a> (20000)</b>
-              The maximal number of recipients held in memory  by
-              the  Postfix queue manager, and the maximal size of
+              The  maximal number of recipients held in memory by
+              the Postfix queue manager, and the maximal size  of
               the size of the short-term, in-memory "dead" desti-
               nation status cache.
 
        <b><a href="postconf.5.html#qmgr_message_recipient_minimum">qmgr_message_recipient_minimum</a> (10)</b>
-              The  minimal number of in-memory recipients for any
+              The minimal number of in-memory recipients for  any
               message.
 
        <b><a href="postconf.5.html#default_recipient_limit">default_recipient_limit</a> (10000)</b>
@@ -233,11 +233,11 @@ QMGR(8)                                                                QMGR(8)
 
 <b>DELIVERY CONCURRENCY CONTROLS</b>
        <b><a href="postconf.5.html#initial_destination_concurrency">initial_destination_concurrency</a> (5)</b>
-              The initial per-destination concurrency  level  for
+              The  initial  per-destination concurrency level for
               parallel delivery to the same destination.
 
        <b><a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concurrency_limit</a> (20)</b>
-              The  default  maximal number of parallel deliveries
+              The default maximal number of  parallel  deliveries
               to the same destination.
 
        <i>transport</i><b>_destination_concurrency_limit ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
@@ -246,7 +246,7 @@ QMGR(8)                                                                QMGR(8)
 
 <b>RECIPIENT SCHEDULING CONTROLS</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipient_limit</a> (50)</b>
-              The  default  maximal number of recipients per mes-
+              The default maximal number of recipients  per  mes-
               sage delivery.
 
        <i>transport</i><b>_destination_recipient_limit   ($<a href="postconf.5.html#default_destination_recipient_limit">default_destina</a>-</b>
@@ -255,8 +255,8 @@ QMGR(8)                                                                QMGR(8)
 
 <b>MESSAGE SCHEDULING CONTROLS</b>
        <b><a href="postconf.5.html#default_delivery_slot_cost">default_delivery_slot_cost</a> (5)</b>
-              How  often the Postfix queue manager's scheduler is
-              allowed to preempt delivery  of  one  message  with
+              How often the Postfix queue manager's scheduler  is
+              allowed  to  preempt  delivery  of one message with
               another.
 
        <i>transport</i><b>_delivery_slot_cost ($<a href="postconf.5.html#default_delivery_slot_cost">default_delivery_slot_cost</a>)</b>
@@ -272,7 +272,7 @@ QMGR(8)                                                                QMGR(8)
               Idem, for delivery via the named message <i>transport</i>.
 
        <b><a href="postconf.5.html#default_delivery_slot_discount">default_delivery_slot_discount</a> (50)</b>
-              The  default  value  for transport-specific _deliv-
+              The default value  for  transport-specific  _deliv-
               ery_slot_discount settings.
 
        <i>transport</i><b>_delivery_slot_discount          ($<a href="postconf.5.html#default_delivery_slot_discount">default_deliv</a>-</b>
@@ -280,7 +280,7 @@ QMGR(8)                                                                QMGR(8)
               Idem, for delivery via the named message <i>transport</i>.
 
        <b><a href="postconf.5.html#default_delivery_slot_loan">default_delivery_slot_loan</a> (3)</b>
-              The  default  value  for transport-specific _deliv-
+              The default value  for  transport-specific  _deliv-
               ery_slot_loan settings.
 
        <i>transport</i><b>_delivery_slot_loan ($<a href="postconf.5.html#default_delivery_slot_loan">default_delivery_slot_loan</a>)</b>
@@ -288,46 +288,50 @@ QMGR(8)                                                                QMGR(8)
 
 <b>OTHER RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (1000s)</b>
-              The  minimal  time  between  attempts  to deliver a
+              The minimal time  between  attempts  to  deliver  a
               deferred message.
 
        <b><a href="postconf.5.html#maximal_backoff_time">maximal_backoff_time</a> (4000s)</b>
-              The maximal time  between  attempts  to  deliver  a
+              The  maximal  time  between  attempts  to deliver a
               deferred message.
 
        <b><a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a> (5d)</b>
-              The  maximal  time a message is queued before it is
+              The maximal time a message is queued before  it  is
               sent back as undeliverable.
 
        <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (1000s)</b>
-              The time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the  queue
+              The  time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue
               manager.
 
        <b><a href="postconf.5.html#transport_retry_time">transport_retry_time</a> (60s)</b>
               The time between attempts by the Postfix queue man-
-              ager to contact a malfunctioning  message  delivery
+              ager  to  contact a malfunctioning message delivery
               transport.
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a> (5d)</b>
-              The  maximal time a bounce message is queued before
+              The maximal time a bounce message is queued  before
               it is considered undeliverable.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#defer_transports">defer_transports</a> (empty)</b>
               The  names  of  message  delivery  transports  that
-              should not be delivered to  unless  someone  issues
+              should  not  deliver  mail  unless  someone  issues
               "<b>sendmail -q</b>" or equivalent.
+
+       <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
+              The maximal number  of  digits  after  the  decimal
+              point when logging sub-second delay values.
 
        <b><a href="postconf.5.html#helpful_warnings">helpful_warnings</a> (yes)</b>
               Log  warnings  about problematic configuration set-

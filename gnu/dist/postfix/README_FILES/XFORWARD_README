@@ -14,12 +14,12 @@ The XFORWARD command targets the following problem:
     information through the content filter to MTA2, so that the information
     could be logged as part of mail handling transactions.
 
-This extension is implemented as a separate command, and can be used to
+This extension is implemented as a separate EMSTP command, and can be used to
 transmit client or message attributes incrementally. It is not implemented by
 passing additional parameters via the MAIL FROM command, because doing so would
 require extending the MAIL FROM command length limit by another 600 or more
-characters beyond the space that is already needed in order to support other
-extensions such as AUTH.
+characters beyond the space that is already needed to support other extensions
+such as AUTH.
 
 XXFFOORRWWAARRDD CCoommmmaanndd ssyynnttaaxx
 
@@ -43,6 +43,10 @@ are in fact case insensitive.
 
     attribute-name = ( NAME | ADDR | PROTO | HELO | SOURCE )
 
+    attribute-value = xtext
+
+  * Attribute values are xtext encoded as per RFC 1891.
+
   * The NAME attribute specifies the up-stream hostname, or [UNAVAILABLE] when
     the information is unavailable. The hostname may be a non-DNS hostname.
 
@@ -51,7 +55,7 @@ are in fact case insensitive.
     not enclosed with []. The address may be a non-IP address.
 
   * The PROTO attribute specifies the mail protocol for receiving mail from the
-    up-stream host. This may be an SMTP non-SMTP protocol name of up to 64
+    up-stream host. This may be an SMTP or non-SMTP protocol name of up to 64
     characters, or [UNAVAILABLE] when the information is unavailable.
 
   * The HELO attribute specifies the hostname that the up-stream host announced
@@ -66,11 +70,10 @@ are in fact case insensitive.
     MTA may decide to enable features such as header munging or address
     qualification with mail from local sources but not other sources.
 
-Note 1: Attribute values must not be longer than 255 characters (specific
-attributes may impose shorter lengths), must not contain control characters,
-non-ASCII characters, whitespace, or other characters that are special in
-message headers. Future attributes that may violate this should use xtext
-encoding as described in RFC 1891.
+Note 1: an attribute-value element must not be longer than 255 characters
+(specific attributes may impose shorter lengths). After xtext decoding,
+attribute values must not contain control characters, non-ASCII characters,
+whitespace, or other characters that are special in message headers.
 
 Note 2: DNS hostnames can be up to 255 characters long. The XFORWARD client
 implementation must not send XFORWARD commands that exceed the 512 character
@@ -81,18 +84,31 @@ Note 3: [UNAVAILABLE] may be specified in upper case, lower case or mixed case.
 Note 4: the XFORWARD server implementation must not mix information from the
 current SMTP session with forwarded information from an up-stream session.
 
-The XFORWARD server reply codes are as follows:
+Note 5: Postfix implementations prior to version 2.3 do not xtext encode
+attribute values. Servers that wish to interoperate with these older
+implementations should be prepared to receive unencoded information.
+
+XXFFOORRWWAARRDD SSeerrvveerr rreessppoonnssee
+
+Upon receipt of a correctly formatted XFORWARD command, the server stores the
+specified attribute values, and erases the attributes whose value was specified
+as [UNAVAILABLE]. All XFORWARD attributes are reset to the real client
+information after the MAIL FROM command completes.
+
+XXFFOORRWWAARRDD SSeerrvveerr rreeppllyy ccooddeess
 
      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     |CCooddee|MMeeaanniinngg                         |
     |_ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |250 |success                         |
     |_ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |421 |unable to proceed, disconnecting|
+    |_ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |501 |bad command parameter syntax    |
     |_ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |503 |mail transaction in progress    |
     |_ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |421 |unable to proceed, disconnecting|
+    |550 |insufficient authorization      |
     |_ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 XXFFOORRWWAARRDD EExxaammppllee
@@ -134,4 +150,9 @@ SSMMTTPP ccoonnnneeccttiioonn ccaacchhiinngg
 SMTP connection caching makes it possible to deliver multiple messages within
 the same SMTP session. The XFORWARD attributes are reset after the MAIL FROM
 command completes, so there is no risk of information leakage.
+
+RReeffeerreenncceess
+
+Moore, K, "SMTP Service Extension for Delivery Status Notifications", RFC 1891,
+January 1996.
 

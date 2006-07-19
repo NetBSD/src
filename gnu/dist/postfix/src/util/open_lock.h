@@ -1,4 +1,4 @@
-/*	$NetBSD: open_lock.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: open_lock.h,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
 
 #ifndef _OPEN_LOCK_H_INCLUDED_
 #define _OPEN_LOCK_H_INCLUDED_
@@ -27,7 +27,7 @@
  /*
   * External interface.
   */
-extern VSTREAM *open_lock(const char *, int, int, VSTRING *);
+extern VSTREAM *open_lock(const char *, int, mode_t, VSTRING *);
 
 /* LICENSE
 /* .ad

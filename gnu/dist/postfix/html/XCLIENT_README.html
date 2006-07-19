@@ -52,17 +52,19 @@
 
 <h2>XCLIENT Command syntax</h2>
 
-<p> Examples of client-server conversations are given at the end
+<p> An example client-server conversation is given at the end
 of this document. </p>
 
 <p> In SMTP server EHLO replies, the keyword associated with this
 extension is XCLIENT. It is followed by the names of the attributes
 that the XCLIENT implementation supports.  </p>
 
-<p> The XCLIENT command may be sent at any time except in the middle
-of a mail delivery transaction (i.e.  between MAIL and DOT).  The
-XCLIENT command may be pipelined when the server supports ESMTP
-command pipelining.  </p>
+<p> The XCLIENT command may be sent at any time, except in the
+middle of a mail delivery transaction (i.e.  between MAIL and DOT,
+or MAIL and RSET).  The XCLIENT command may be pipelined when the
+server supports ESMTP command pipelining. To avoid triggering
+spamware detectors, the command should be sent at the end of a
+command group.  </p>
 
 <p> The syntax of XCLIENT requests is described below.  Upper case
 and quoted strings specify terminals, lowercase strings specify
@@ -77,9 +79,15 @@ names are shown in upper case, they are in fact case insensitive.
 <p>
     attribute-name = ( NAME | ADDR | PROTO | HELO )
 </p>
+<p>
+    attribute-value = xtext
+</p>
 </blockquote>
 
 <ul>
+
+    <li> <p> Attribute values are xtext encoded as per <a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>.
+    </p>
 
     <li> <p> The NAME attribute specifies an SMTP client hostname
     (not an SMTP client address), [UNAVAILABLE] when client hostname
@@ -100,16 +108,52 @@ names are shown in upper case, they are in fact case insensitive.
 
 </ul>
 
-<p> Note 1: syntactically valid NAME and HELO attributes can be up
-to 255 characters long. The client must not send XCLIENT commands
-that exceed the 512 character limit for SMTP commands. To avoid
-exceeding the limit the client should send the information in
-multiple XCLIENT commands. </p>
+<p> Note 1: syntactically valid NAME and HELO attribute-value
+elements can be up to 255 characters long. The client must not send
+XCLIENT commands that exceed the 512 character limit for SMTP
+commands. To avoid exceeding the limit the client should send the
+information in multiple XCLIENT commands; for example, send NAME
+and ADDR first, then HELO and PROTO. </p>
 
 <p> Note 2: [UNAVAILABLE], [TEMPUNAVAIL] and IPV6:  may be specified
 in upper case, lower case or mixed case. </p>
 
-<p> The XCLIENT server reply codes are as follows: </p>
+<p> Note 3: Postfix implementations prior to version 2.3 do not
+xtext encode attribute values. Servers that wish to interoperate
+with these older implementations should be prepared to receive
+unencoded information. </p>
+
+<h2>XCLIENT Server response</h2>
+
+<p> Upon receipt of a correctly formatted XCLIENT command, the
+server resets state to the initial SMTP greeting protocol stage.
+Depending on the outcome of optional access decisions, the server
+responds with 220 or with a suitable rejection code.
+
+<p> For practical reasons it is not always possible to reset the
+complete server state to the initial SMTP greeting protocol stage:
+</p>
+
+<ul>
+
+<li> <p> TLS session information may not be reset, because turning off
+TLS leaves the connection in an undefined state.  Consequently, the
+server may not announce STARTTLS when TLS is already active, and
+access decisions may be influenced by client certificate information
+that was received prior to the XCLIENT command. </p>
+
+<li> <p> The SMTP server must not reset attributes that were received
+with the last XCLIENT command. This includes HELO or PROTO attributes.
+</p>
+
+</ul>
+
+<p> NOTE: Postfix implementations prior to version 2.3 do not jump
+back to the initial SMTP greeting protocol stage.  These older
+implementations will not correctly simulate connection-level access
+decisions under some conditions.  </p>
+
+<h2> XCLIENT server reply codes </h2>
 
 <blockquote>
 
@@ -117,23 +161,28 @@ in upper case, lower case or mixed case. </p>
 
 <tr> <th> Code </th> <th> Meaning </th> </tr>
 
-<tr> <td> 250 </td> <td> success  </td> </tr>
+<tr> <td> 220 </td> <td> success  </td> </tr>
+
+<tr> <td> 421 </td> <td> unable to proceed, disconnecting </td> </tr>
 
 <tr> <td> 501 </td> <td> bad command parameter syntax </td> </tr>
 
 <tr> <td> 503 </td> <td> mail transaction in progress </td> </tr>
 
-<tr> <td> 421 </td> <td> unable to proceed, disconnecting </td> </tr>
+<tr> <td> 550 </td> <td> insufficient authorization </td> </tr>
+
+<tr> <td> other </td> <td> connection rejected by connection-level
+access decision </td> </tr>
 
 </table>
 
 </blockquote>
 
-<h2>XCLIENT Examples</h2>
+<h2>XCLIENT Example</h2>
 
-<p> In the first example, the client impersonates a mail originating
-system by passing all SMTP session information via XCLIENT commands.
-Information sent by the client is shown in bold font.
+<p> In the example, the client impersonates a mail originating
+system by passing all SMTP client information via the XCLIENT
+command.  Information sent by the client is shown in bold font.
 </p>
 
 <blockquote>
@@ -147,10 +196,16 @@ Information sent by the client is shown in bold font.
 250-ETRN
 250-XCLIENT NAME ADDR PROTO HELO
 250 8BITMIME
-<b>XCLIENT NAME=spike.porcupine.org ADDR=168.100.189.2 PROTO=ESMTP </b>
-250 Ok
-<b>XCLIENT HELO=spike.porcupine.org</b>
-250 Ok
+<b>XCLIENT NAME=spike.porcupine.org ADDR=168.100.189.2</b>
+220 server.example.com ESMTP Postfix
+<b>EHLO spike.porcupine.org</b>
+250-server.example.com
+250-PIPELINING
+250-SIZE 10240000
+250-VRFY
+250-ETRN
+250-XCLIENT NAME ADDR PROTO HELO
+250 8BITMIME
 <b>MAIL FROM:&lt;wietse@porcupine.org&gt;</b>
 250 Ok
 <b>RCPT TO:&lt;user@example.com&gt;</b>
@@ -165,39 +220,11 @@ Information sent by the client is shown in bold font.
 </pre>
 </blockquote>
 
-<p> In the second example, the client impersonates a mail originating
-system by sending the XCLIENT command before the EHLO or HELO command.
-This increases the realism of impersonation, but requires that the
-client knows ahead of time what XCLIENT options the server supports.
-</p>
-
-<blockquote>
-<pre>
-220 server.example.com ESMTP Postfix
-<b>XCLIENT NAME=spike.porcupine.org ADDR=168.100.189.2</b>
-250 Ok
-<b>HELO spike.porcupine.org</b>
-250 server.example.com
-<b>MAIL FROM:&lt;wietse@porcupine.org&gt;</b>
-250 Ok
-<b>RCPT TO:&lt;user@example.com&gt;</b>
-250 Ok
-<b>DATA</b>
-354 End data with &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;
-<b>. . .<i>message content</i>. . .</b>
-<b>.</b>
-250 Ok: queued as CF1E52AAE7
-<b>QUIT</b>
-221 Bye
-</pre>
-</blockquote>
-
 <h2>Security</h2>
 
 <p> The XCLIENT command changes audit trails and/or SMTP client
 access permissions. Use of this command must be restricted to
-authorized SMTP clients. However, the XCLIENT command should not
-override its own access control mechanism. </p>
+authorized SMTP clients. </p>
 
 <h2>SMTP connection caching</h2>
 
@@ -205,6 +232,11 @@ override its own access control mechanism. </p>
 If one session is used to deliver mail on behalf of different SMTP
 clients, the XCLIENT attributes need to be reset as appropriate 
 before each MAIL FROM command. </p>
+
+<h2> References </h2>
+
+<p> Moore, K, "SMTP Service Extension for Delivery Status Notifications",
+<a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>, January 1996. </p>
 
 </body>
 

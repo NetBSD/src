@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_open.c,v 1.1.1.5 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: safe_open.c,v 1.1.1.6 2006/07/19 01:17:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*	VSTREAM	*safe_open(path, flags, mode, st, user, group, why)
 /*	const char *path;
 /*	int	flags;
-/*	int	mode;
+/*	mode_t	mode;
 /*	struct stat *st;
 /*	uid_t	user;
 /*	gid_t	group;
@@ -176,8 +176,8 @@ static VSTREAM *safe_open_exist(const char *path, int flags,
 
 /* safe_open_create - create new file */
 
-static VSTREAM *safe_open_create(const char *path, int flags, int mode,
-	            struct stat * st, uid_t user, uid_t group, VSTRING *why)
+static VSTREAM *safe_open_create(const char *path, int flags, mode_t mode,
+	            struct stat * st, uid_t user, gid_t group, VSTRING *why)
 {
     VSTREAM *fp;
 
@@ -191,6 +191,12 @@ static VSTREAM *safe_open_create(const char *path, int flags, int mode,
     }
 
     /*
+     * Optionally look up the file attributes.
+     */
+    if (st != 0 && fstat(vstream_fileno(fp), st) < 0)
+	msg_fatal("%s: bad open file status: %m", path);
+
+    /*
      * Optionally change ownership after creating a new file. If there is a
      * problem we should not attempt to delete the file. Something else may
      * have opened the file in the mean time.
@@ -201,12 +207,6 @@ static VSTREAM *safe_open_create(const char *path, int flags, int mode,
 	&& fchown(vstream_fileno(fp), user, group) < 0) {
 	msg_warn("%s: cannot change file ownership: %m", path);
     }
-
-    /*
-     * Optionally look up the file attributes.
-     */
-    if (st != 0 && fstat(vstream_fileno(fp), st) < 0)
-	msg_fatal("%s: bad open file status: %m", path);
 
     /*
      * We are almost there...
@@ -224,7 +224,7 @@ static VSTREAM *safe_open_create(const char *path, int flags, int mode,
 
 /* safe_open - safely open or create file */
 
-VSTREAM *safe_open(const char *path, int flags, int mode,
+VSTREAM *safe_open(const char *path, int flags, mode_t mode,
 	            struct stat * st, uid_t user, gid_t group, VSTRING *why)
 {
     VSTREAM *fp;

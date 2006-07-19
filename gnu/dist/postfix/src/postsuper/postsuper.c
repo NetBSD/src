@@ -1,4 +1,4 @@
-/*	$NetBSD: postsuper.c,v 1.1.1.9 2005/08/18 21:08:24 rpaulo Exp $	*/
+/*	$NetBSD: postsuper.c,v 1.1.1.10 2006/07/19 01:17:37 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -38,7 +38,7 @@
 /*	queue IDs from standard input. For example, to delete all mail
 /*	with exactly one recipient \fBuser@example.com\fR:
 /* .sp
-/*	mailq | tail +2 | awk  \'BEGIN { RS = "" }
+/*	mailq | tail +2 | grep -v '^ *(' | awk  \'BEGIN { RS = "" }
 /* .ti +4
 /*	# $7=sender, $8=recipient1, $9=recipient2
 /* .ti +4

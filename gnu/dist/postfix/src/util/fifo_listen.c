@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_listen.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: fifo_listen.c,v 1.1.1.3 2006/07/19 01:17:52 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -54,7 +54,7 @@ int     fifo_listen(const char *path, int permissions, int block_mode)
 {
     char    buf[BUF_LEN];
     static int open_mode = 0;
-    char   *myname = "fifo_listen";
+    const char *myname = "fifo_listen";
     struct stat st;
     int     fd;
     int     count;

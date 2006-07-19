@@ -35,13 +35,13 @@
 
 </ul>
 
-<p> This extension is implemented as a separate command, and can
-be used to transmit client or message attributes incrementally.
+<p> This extension is implemented as a separate EMSTP command, and
+can be used to transmit client or message attributes incrementally.
 It is not implemented by passing additional parameters via the MAIL
 FROM command, because doing so would require extending the MAIL
 FROM command length limit by another 600 or more characters beyond
-the space that is already needed in order to support other extensions
-such as AUTH. </p>
+the space that is already needed to support other extensions such
+as AUTH. </p>
 
 <h2>XFORWARD Command syntax</h2>
 
@@ -71,9 +71,15 @@ names are shown in upper case, they are in fact case insensitive.
 <p>
     attribute-name = ( NAME | ADDR | PROTO | HELO | SOURCE )
 </p>
+<p>
+    attribute-value = xtext
+</p>
 </blockquote>
 
 <ul>
+
+    <li> <p> Attribute values are xtext encoded as per <a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>.
+    </p>
 
     <li> <p> The NAME attribute specifies the up-stream hostname,
     or [UNAVAILABLE] when the information is unavailable. The
@@ -85,7 +91,7 @@ names are shown in upper case, they are in fact case insensitive.
     be a non-IP address. </p>
 
     <li> <p> The PROTO attribute specifies the mail protocol for
-    receiving mail from the up-stream host. This may be an SMTP
+    receiving mail from the up-stream host. This may be an SMTP or
     non-SMTP protocol name of up to 64 characters, or [UNAVAILABLE]
     when the information is unavailable. </p>
 
@@ -105,12 +111,11 @@ names are shown in upper case, they are in fact case insensitive.
 
 </ul>
 
-<p> Note 1: Attribute values must not be longer than 255 characters
-(specific attributes may impose shorter lengths), must not contain
-control characters, non-ASCII characters, whitespace, or other
-characters that are special in message headers. Future attributes
-that may violate this should use xtext encoding as described in
-<a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>.  </p>
+<p> Note 1: an attribute-value element must not be longer than
+255 characters (specific attributes may impose shorter lengths).
+After xtext decoding, attribute values must not contain control
+characters, non-ASCII characters, whitespace, or other characters
+that are special in message headers.  </p>
 
 <p> Note 2: DNS hostnames can be up to 255 characters long. The
 XFORWARD client implementation must not send XFORWARD commands that
@@ -123,7 +128,20 @@ case or mixed case. </p>
 information from the current SMTP session with forwarded information
 from an up-stream session. </p>
 
-<p> The XFORWARD server reply codes are as follows: </p>
+<p> Note 5: Postfix implementations prior to version 2.3 do not
+xtext encode attribute values. Servers that wish to interoperate
+with these older implementations should be prepared to receive
+unencoded information. </p>
+
+<h2> XFORWARD Server response </h2>
+
+<p> Upon receipt of a correctly formatted XFORWARD command, the
+server stores the specified attribute values, and erases the
+attributes whose value was specified as [UNAVAILABLE]. All XFORWARD
+attributes are reset to the real client information after the MAIL
+FROM command completes. </p>
+
+<h2> XFORWARD Server reply codes </h2>
 
 <blockquote>
 
@@ -133,11 +151,13 @@ from an up-stream session. </p>
 
 <tr> <td> 250 </td> <td> success  </td> </tr>
 
+<tr> <td> 421 </td> <td> unable to proceed, disconnecting </td> </tr>
+
 <tr> <td> 501 </td> <td> bad command parameter syntax </td> </tr>
 
 <tr> <td> 503 </td> <td> mail transaction in progress </td> </tr>
 
-<tr> <td> 421 </td> <td> unable to proceed, disconnecting </td> </tr>
+<tr> <td> 550 </td> <td> insufficient authorization </td> </tr>
 
 </table>
 
@@ -188,6 +208,11 @@ must be restricted to authorized clients. </p>
 messages within the same SMTP session. The XFORWARD attributes are
 reset after the MAIL FROM command completes, so there is no risk
 of information leakage. </p>
+
+<h2> References </h2>
+
+<p> Moore, K, "SMTP Service Extension for Delivery Status Notifications",
+<a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>, January 1996. </p>
 
 </body>
 
