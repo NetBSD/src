@@ -1,4 +1,4 @@
-/*	$NetBSD: intioreg.h,v 1.3 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: intioreg.h,v 1.4 2006/07/19 17:21:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,3 +69,12 @@
 /* Valid "service request" status codes */
 #define INTIO_DEV_SR_DATAAVAIL	0x04
 /* the specific wired device will overload the remaining bits */
+
+
+/* Base address offsets from intiobase of each device */
+#define FRODO_BASE	0x01c000
+#define RTC_BASE	0x020000
+#define HIL_BASE	0x028000
+#define HPIB_BASE	0x078000
+#define DMA_BASE	0x100000
+#define FB_BASE		0x160000

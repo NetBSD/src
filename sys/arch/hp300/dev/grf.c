@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.58 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.59 2006/07/19 17:21:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.59 2006/07/19 17:21:23 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58 2005/12/11 12:17:13 christos Exp $");
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
+#include <hp300/dev/intioreg.h>
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
@@ -592,7 +593,7 @@ grfdevno(dev_t dev)
 	/* magic major number */
 	newdev = 12 << 24;
 	/* now construct minor number */
-	if (gp->g_display.gd_regaddr != (caddr_t)GRFIADDR)
+	if (gp->g_display.gd_regaddr != (caddr_t)(INTIOBASE + FB_BASE))
 		newdev |= (sc->sc_scode << 16) | 0x200;
 	if (dev & GRFIMDEV)
 		newdev |= 0x02;
