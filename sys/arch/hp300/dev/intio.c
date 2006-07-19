@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.20 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: intio.c,v 1.21 2006/07/19 16:23:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.20 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.21 2006/07/19 16:23:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ static const struct intio_builtins intio_3xx_builtins[] = {
 	{ "dma",	0x100000,	1},
 	{ "fb",		0x160000,	-1},
 };
-#define nintio_3xx_builtins \
-	(sizeof(intio_3xx_builtins) / sizeof(intio_3xx_builtins[0]))
+#define nintio_3xx_builtins	__arraycount(intio_3xx_builtins)
 #endif
 
 #if defined(HP400) || defined(HP425) || defined(HP433)
@@ -86,8 +85,7 @@ static const struct intio_builtins intio_4xx_builtins[] = {
 	{ "hpib",	0x078000,	3},
 	{ "dma",	0x100000,	1},
 };
-#define nintio_4xx_builtins \
-	(sizeof(intio_4xx_builtins) / sizeof(intio_4xx_builtins[0]))
+#define nintio_4xx_builtins	__arraycount(intio_4xx_builtins)
 #endif
 
 static int intio_matched = 0;
@@ -98,10 +96,10 @@ intiomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	/* Allow only one instance. */
 	if (intio_matched)
-		return (0);
+		return 0;
 
 	intio_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -182,5 +180,5 @@ intioprint(void *aux, const char *pnp)
 		if (ia->ia_ipl != -1)
 			aprint_normal(" ipl %d", ia->ia_ipl);
 	}
-	return (UNCONF);
+	return UNCONF;
 }
