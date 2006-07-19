@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.13 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: srt0.S,v 1.14 2006/07/19 19:29:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -146,12 +146,12 @@ ASENTRY_NOPROFILE(begin)
 	tstl	%d0			/* zero? */
 	jeq	not68030		/* yes, we have 68020/68040 */
 
-	movl	#0x808,%d0
-	movc	%d0,%cacr		/* clear data freeze bit again */
-
 	/*
 	 * 68030 models
 	 */
+
+	movl	#0x808,%d0
+	movc	%d0,%cacr		/* clear data freeze bit again */
 
 	movl	#0x80,MMUCMD		/* set magic cookie */
 	movl	MMUCMD,%d0		/* read it back */
@@ -199,6 +199,11 @@ not68030:
 	movc	%cacr,%d0		/* read it back */
 	tstl	%d0			/* zero? */
 	beq	is68020			/* yes, we have 68020 */
+
+	/*
+	 * 68040 models
+	 */
+
 	moveq	#0,%d0			/* now turn it back off */
 	movec	%d0,%cacr		/*   before we access any data */
 
@@ -207,10 +212,6 @@ not68030:
 	.long	0x4e7b0006		/* movc %d0,%dtt0 */
 	.long	0x4e7b0007		/* movc %d0,%dtt1 */
 	.word	0xf4d8			/* cinva bc */
-
-	/*
-	 * 68040 models
-	 */
 
 	lea	_C_LABEL(mmuid),%a0
 	movl	MMUCMD,%d0		/* get MMU ID */
