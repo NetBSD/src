@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2006/05/15 20:50:05 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 2006/07/19 21:11:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2006/05/15 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2006/07/19 21:11:44 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -194,6 +194,7 @@ trap(struct trapframe frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = &frame.tf_regs;
+		LWP_CACHE_CREDS(l, p);
 	} else
 		sticks = 0;
 

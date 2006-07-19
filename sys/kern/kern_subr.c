@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.136 2006/06/11 07:32:18 rjs Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.137 2006/07/19 21:11:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.136 2006/06/11 07:32:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.137 2006/07/19 21:11:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1372,7 +1372,7 @@ trace_enter(struct lwp *l, register_t code,
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		return systrace_enter(p, code, args);
+		return systrace_enter(l, code, args);
 #endif
 	return 0;
 }
@@ -1408,7 +1408,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
 		KERNEL_PROC_LOCK(l);
-		systrace_exit(p, code, args, rval, error);
+		systrace_exit(l, code, args, rval, error);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

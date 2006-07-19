@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2006/05/15 00:55:29 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2006/07/19 21:11:48 ad Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2006/05/15 00:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2006/07/19 21:11:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,6 +248,7 @@ trap(frame)
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;		
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	switch (type) {

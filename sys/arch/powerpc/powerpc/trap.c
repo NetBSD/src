@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2006/05/15 09:27:44 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.113 2006/07/19 21:11:45 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2006/05/15 09:27:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2006/07/19 21:11:45 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -97,6 +97,7 @@ trap(struct trapframe *frame)
 			panic("trap: user trap %d with lwp = %p, proc = %p",
 			    type, l, p);
 #endif
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	uvmexp.traps++;
