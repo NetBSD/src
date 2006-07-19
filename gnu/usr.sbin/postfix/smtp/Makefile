@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/07/19 02:04:44 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.10 2006/07/19 23:53:11 rpaulo Exp $
 
 NOMAN=	# defined
 
@@ -17,8 +17,8 @@ SRCS=	smtp.c smtp_connect.c smtp_proto.c smtp_chat.c smtp_session.c \
 
 LINKS+=	 ${PFIX_LIBEXECDIR}/smtp ${PFIX_LIBEXECDIR}/lmtp
 
-DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
-LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
+DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
+LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
 
 .if ${MKCRYPTO} != "no"
 DPADD+=	${LIBPTLS} ${LIBSSL} ${LIBCRYPTO}
