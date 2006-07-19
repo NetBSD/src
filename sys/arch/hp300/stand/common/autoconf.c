@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2006/07/19 19:23:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -87,6 +87,7 @@
 #include <hp300/stand/common/scsivar.h>
 
 #include <hp300/dev/grfreg.h>
+#include <hp300/dev/intioreg.h>
 
 /*
  * Mapping of ROM MSUS types to BSD major device numbers
@@ -204,7 +205,7 @@ sctoaddr(int sc)
 {
 
 	if (sc == -1)
-		return GRFIADDR ;
+		return INTIOBASE + FB_BASE;
 	if (sc == 7 && internalhpib)
 		return internalhpib ;
 	if (sc < 32)
