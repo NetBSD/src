@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.32 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.33 2006/07/19 02:45:10 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -466,6 +466,10 @@ clearinode(ino_t inumber)
 
 	LFS_IENTRY(ifp, fs, inumber, bp);
 	daddr = ifp->if_daddr;
+	if (daddr == LFS_UNUSED_DADDR) {
+		brelse(bp);
+		return;
+	}
 	ifp->if_daddr = LFS_UNUSED_DADDR;
 	ifp->if_nextfree = fs->lfs_freehd;
 	fs->lfs_freehd = inumber;

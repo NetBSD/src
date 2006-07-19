@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.13 2006/07/18 23:47:44 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.14 2006/07/19 02:45:10 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -215,22 +215,21 @@ remove_ino(struct uvnode *vp, ino_t ino)
 	daddr = ifp->if_daddr;
 	if (daddr > 0) {
 		ifp->if_daddr = 0x0;
+
 		LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+		VOP_BWRITE(bp);
 		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 		sbdirty();
-	}
-	brelse(bp);
 
-	if (vp == NULL && daddr > 0) {
-		vp = lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
-	}
+		if (vp == NULL)
+			vp = lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 
-	if (daddr > 0) {
 		LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), sbp);
 		sup->su_nbytes -= DINODE1_SIZE;
 		VOP_BWRITE(sbp);
 		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes -= DINODE1_SIZE;
-	}
+	} else
+		brelse(bp);
 
 	/* Do on-disk accounting */
 	if (vp) {
@@ -420,6 +419,7 @@ readdress_inode(struct ufs1_dinode *dp, ufs_daddr_t daddr)
 	/* Move ifile pointer to this location */
 	LFS_IENTRY(ifp, fs, thisino, bp);
 	odaddr = ifp->if_daddr;
+	assert(odaddr != 0);
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
 
