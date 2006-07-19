@@ -1,4 +1,4 @@
-/*	$NetBSD: grfreg.h,v 1.4 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: grfreg.h,v 1.5 2006/07/19 17:21:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,9 +78,6 @@
 
 /* 300 bitmapped display hardware primary id */
 #define GRFHWID		0x39
-
-/* 300 internal bitmapped display address */
-#define GRFIADDR	0x560000
 
 /* 300 hardware secondary ids */
 #define GID_GATORBOX	1
