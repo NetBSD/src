@@ -569,6 +569,7 @@ login (argc, argv)
     memset (typed_password, 0, strlen (typed_password));
     free (typed_password);
 
+    memset (cvs_password, 0, strlen (cvs_password));
     free (cvs_password);
     free (cvsroot_canonical);
     cvs_password = NULL;
