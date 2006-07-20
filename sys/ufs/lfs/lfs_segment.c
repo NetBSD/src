@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.185 2006/06/29 19:28:21 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.186 2006/07/20 23:12:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.185 2006/06/29 19:28:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.186 2006/07/20 23:12:26 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -137,9 +137,10 @@ static void lfs_cluster_callback(struct buf *);
  * an ordinary write.
  */
 #define LFS_SHOULD_CHECKPOINT(fs, flags) \
-	(fs->lfs_nactive > LFS_MAX_ACTIVE ||				\
-	 (flags & SEGM_CKP) ||						\
-	 fs->lfs_nclean < LFS_MAX_ACTIVE)
+        ((flags & SEGM_CLEAN) == 0 &&					\
+	  ((fs->lfs_nactive > LFS_MAX_ACTIVE ||				\
+	    (flags & SEGM_CKP) ||					\
+	    fs->lfs_nclean < LFS_MAX_ACTIVE)))
 
 int	 lfs_match_fake(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
