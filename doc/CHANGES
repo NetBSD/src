@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.654 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.655 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -372,3 +372,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	gcc(1): Switched vax to GCC4. [matt 20060707]
 	kernel: Add fileassoc(9), in-kernel and file-system independent file
 		meta-data association interface. [elad 20060714]
+	postfix(1): Updated to 2.3.0. Dovecot server side SASL support
+		activated.
