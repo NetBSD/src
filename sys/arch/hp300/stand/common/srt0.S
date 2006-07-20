@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.14 2006/07/19 19:29:02 tsutsui Exp $	*/
+/*	$NetBSD: srt0.S,v 1.15 2006/07/20 13:21:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -156,7 +156,7 @@ ASENTRY_NOPROFILE(begin)
 	movl	#0x80,MMUCMD		/* set magic cookie */
 	movl	MMUCMD,%d0		/* read it back */
 	btst	#7,%d0			/* cookie still on? */
-	jeq	not370			/* no, 360 or 375 */
+	jeq	not370			/* no, 360, 362 or 375 */
 	movl	#HP_370,%a0@		/* consider a 370 for now */
 	movl	#0,MMUCMD		/* clear magic cookie */
 	movl	MMUCMD,%d0		/* read it back */
@@ -170,7 +170,7 @@ not370:
 	movl	#0,MMUCMD		/* clear magic cookie2 */
 	movl	MMUCMD,%d0		/* read it back */
 	btst	#16,%d0			/* still on? */
-	jeq	ihpibcheck		/* no, a 360 */
+	jeq	isa36x			/* no, a 360 or a 362 */
 	lea	_C_LABEL(mmuid),%a0
 	lsrl	#MMUID_SHIFT,%d0	/* save MMU ID */
 	andl	#MMUID_MASK,%d0
@@ -181,6 +181,15 @@ not370:
 	cmpb	#MMUID_375,%d0		/* how about a 375? */
 	jeq	isa375
 	movl	#HP_400,%a0@		/* must be a 400 */
+	jra	ihpibcheck
+isa36x:
+	movl	#0x41c000,%sp@-		/* check (INTIOBASE + FRODO_BASE) */
+	jbsr	_C_LABEL(badaddr)
+	addql	#4,%sp
+	tstl	%d0
+	jne	ihpibcheck
+	lea	_C_LABEL(machineid),%a0
+	movl	#HP_362,%a0@
 	jra	ihpibcheck
 isa345:
 	movl	#HP_345,%a0@
@@ -231,6 +240,8 @@ not68030:
 	jeq	isa433
 	cmpb	#MMUID_385,%d0		/* or a 385? */
 	jeq	isa385
+	cmpb	#MMUID_382,%d0		/* or a 382? */
+	jeq	isa382
 	movl	#HP_380,%a0@		/* guess we are a 380 */
 	jra	ihpibcheck
 isa425:
@@ -241,6 +252,9 @@ isa433:
 	jra	ihpibcheck
 isa385:
 	movl	#HP_385,%a0@
+	jra	ihpibcheck
+isa382:
+	movl	#HP_382,%a0@
 	jra	ihpibcheck
 
 	/*

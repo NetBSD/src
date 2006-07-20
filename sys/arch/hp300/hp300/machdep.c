@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.186 2006/03/26 01:49:09 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.187 2006/07/20 13:21:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 2006/03/26 01:49:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2006/07/20 13:21:38 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -433,9 +433,11 @@ static const struct hp300_model hp300_models[] = {
 	{ HP_345,	-1,		"345",		"50"	},
 	{ HP_350,	-1,		"350",		"25"	},
 	{ HP_360,	-1,		"360",		"25"	},
+	{ HP_362,	-1,		"362",		"25"	},
 	{ HP_370,	-1,		"370",		"33.33"	},
 	{ HP_375,	-1,		"375",		"50"	},
 	{ HP_380,	-1,		"380",		"25"	},
+	{ HP_382,	-1,		"382",		"25"	},
 	{ HP_385,	-1,		"385",		"33"	},
 	{ HP_400,	-1,		"400",		"50"	},
 	{ HP_425,	MMUID_425_T,	"425t",		"25"	},
@@ -584,6 +586,9 @@ identifycpu(void)
 #if !defined(HP360)
 	case HP_360:
 #endif
+#if !defined(HP362)
+	case HP_362:
+#endif
 #if !defined(HP370)
 	case HP_370:
 #endif
@@ -592,6 +597,9 @@ identifycpu(void)
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP382)
+	case HP_382:
 #endif
 #if !defined(HP385)
 	case HP_385:
