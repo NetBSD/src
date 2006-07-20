@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2006/06/28 15:19:27 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.132 2006/07/20 13:21:38 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131 $"
+#ident 		"GENERIC-$Revision: 1.132 $"
 
 maxusers	32		# estimated number of users
 
@@ -33,9 +33,11 @@ options 	HP340
 options 	HP345
 options 	HP350
 options 	HP360
+options 	HP362
 options 	HP370
 options 	HP375
 options 	HP380
+options 	HP382
 options 	HP385
 options 	HP400
 options 	HP425
@@ -194,7 +196,7 @@ dma* 		at intio?		# DMA controller
 hil*		at intio?		# Human Interface Loop
 options 	UK_KEYBOARD		# include United Kingdom HIL keymap
 options 	SE_KEYBOARD		# include Swedish HIL keymap
-frodo*		at intio?		# Frodo utility chip found on 4xx's
+frodo*		at intio?		# Frodo utility chip found on 3x2, 4xx
 nhpib*		at intio?		# slow internal HP-IB
 
 # 8250-like serial ports found on Frodo ASIC

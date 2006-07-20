@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2006/07/19 19:25:48 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2006/07/20 13:21:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -135,6 +135,7 @@ configure(void)
 		break;
 	case HP_350:
 	case HP_360:
+	case HP_362:
 		cpuspeed = MHZ_25;
 		break;
 	case HP_370:
@@ -145,6 +146,7 @@ configure(void)
 		cpuspeed = MHZ_50;
 		break;
 	case HP_380:
+	case HP_382:
 	case HP_425:
 		cpuspeed = MHZ_25 * 2;	/* XXX */
 		break;
