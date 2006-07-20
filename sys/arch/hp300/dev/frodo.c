@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.25 2006/07/19 17:32:15 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.26 2006/07/20 13:21:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -63,11 +63,12 @@
 
 /*
  * Support for the "Frodo" (a.k.a. "Apollo Utility") chip found
- * in HP Apollo 9000/4xx workstations.
+ * in HP Apollo 9000/4xx workstations, as well as
+ * HP 9000/362 and 9000/382 controllers.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.25 2006/07/19 17:32:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.26 2006/07/20 13:21:38 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
