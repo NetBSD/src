@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.39 2006/07/19 22:06:09 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.40 2006/07/20 00:17:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,9 +62,8 @@ struct	lwp {
 	int	l_stat;
 	lwpid_t	l_lid;		/* LWP identifier; local to process. */
 
+#define l_startzero l_cred
 	struct kauth_cred *l_cred;	/* Cached credentials */
-
-#define l_startzero l_swtime
 	u_short	l_acflag;	/* Accounting flags */
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
