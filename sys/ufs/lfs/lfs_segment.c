@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.186 2006/07/20 23:12:26 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.187 2006/07/20 23:15:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.186 2006/07/20 23:12:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.187 2006/07/20 23:15:39 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1727,7 +1727,7 @@ lfs_newseg(struct lfs *fs)
 
 	/* Honor LFCNWRAPSTOP */
 	simple_lock(&fs->lfs_interlock);
-	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+	while (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
 		log(LOG_NOTICE, "%s: waiting on log wrap\n", fs->lfs_fsmnt);
 		wakeup(&fs->lfs_nowrap);
 		ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
