@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.110 2006/07/13 22:05:52 martin Exp $	*/
+/*	$NetBSD: lfs.h,v 1.111 2006/07/20 23:16:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -592,6 +592,7 @@ struct segsum_v1 {
 
 #define	SS_DIROP	0x01		/* segment begins a dirop */
 #define	SS_CONT		0x02		/* more partials to finish this write*/
+#define	SS_CLEAN	0x04		/* written by the cleaner */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
 	u_int16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
