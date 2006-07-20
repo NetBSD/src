@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.655 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.656 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -373,4 +373,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: Add fileassoc(9), in-kernel and file-system independent file
 		meta-data association interface. [elad 20060714]
 	postfix(1): Updated to 2.3.0. Dovecot server side SASL support
-		activated.
+		activated. [rpaulo 20060720]
