@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.1 2006/07/20 23:49:07 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.2 2006/07/20 23:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,57 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef LFS_KERNEL_RFW
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.2 2006/07/20 23:56:27 perseant Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_quota.h"
+#endif
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/kthread.h>
+#include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/mbuf.h>
+#include <sys/file.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/pool.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
+#include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>
+#include <sys/conf.h>
+#include <sys/kauth.h>
+
+#include <miscfs/specfs/specdev.h>
+
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_extern.h>
+
+#include <uvm/uvm.h>
+#include <uvm/uvm_stat.h>
+#include <uvm/uvm_pager.h>
+#include <uvm/uvm_pdaemon.h>
+
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_extern.h>
+
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/genfs_node.h>
 
 /*
  * Roll-forward code.
@@ -100,7 +151,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
 		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz)
 		<< fs->lfs_bshift) {
-		extend_ifile(fs, NOCRED);
+		lfs_extend_ifile(fs, NOCRED);
 	}
 
 	LFS_IENTRY(ifp, fs, ino, bp);
@@ -545,7 +596,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 }
 
 void
-lfs_roll_forward(struct lfs *fs)
+lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 {
         int flags, dirty;
         daddr_t offset, oldoffset, lastgoodpseg;
@@ -653,3 +704,4 @@ lfs_roll_forward(struct lfs *fs)
 		DLOG((DLOG_RF, "LFS roll forward complete\n"));
 	}
 }
+#endif /* LFS_KERNEL_RFW */
