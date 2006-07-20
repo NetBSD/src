@@ -1,4 +1,4 @@
-.\"	$NetBSD: gio.4,v 1.8 2006/03/05 00:08:32 rumble Exp $
+.\"	$NetBSD: gio.4,v 1.9 2006/07/20 13:07:16 rumble Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,3 +70,14 @@ The
 .Nm
 driver first appeared in
 .Nx 1.5 .
+.Sh BUGS
+On Challenge-S systems only one
+.Nm
+expansion slot may be used with a DMA-capable device. This is due to 
+the fact that the IOPLUS board uses one of the slots' DMA channels for
+the additional sq(4) ethernet. Which slot to use with a DMA-capable card
+depends on the card in question. HPC1.5-based cards, such as the E++
+Ethernet Adapter and GIO32 SCSI Adapter, must be placed in slot #1 (next
+to the memory banks). All other DMA-capable boards must be placed in slot
+#0 (closest to the edge of the case). In either case the other slot may
+only accomodate a PIO card.
