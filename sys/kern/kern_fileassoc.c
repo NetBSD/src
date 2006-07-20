@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.3 2006/07/16 19:37:55 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.4 2006/07/20 09:00:41 cube Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -43,9 +43,6 @@
 #include <sys/fileassoc.h>
 #include <sys/hash.h>
 
-struct fileassoc_hook fileassoc_hooks[FILEASSOC_NHOOKS];
-int fileassoc_nhooks;
-
 /*
  * Hook entry.
  * Includes the hook name for identification and private hook clear callback.
@@ -73,6 +70,9 @@ struct fileassoc_table {
 	LIST_ENTRY(fileassoc_table) hash_list;		/* List pointer. */
 };
  
+struct fileassoc_hook fileassoc_hooks[FILEASSOC_NHOOKS];
+int fileassoc_nhooks;
+
 /* Global list of hash tables, one per device. */
 LIST_HEAD(, fileassoc_table) fileassoc_tables;
  
