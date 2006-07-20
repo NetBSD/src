@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.183 2006/07/13 22:08:00 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.184 2006/07/20 23:14:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.183 2006/07/13 22:08:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.184 2006/07/20 23:14:09 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1406,7 +1406,13 @@ lfs_fcntl(void *v)
 		return ESHUTDOWN;
 	}
 
+	/* LFS control and monitoring fcntls are available only to root */
 	p = ap->a_l->l_proc;
+	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
+		return (error);
+
 	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
@@ -1432,9 +1438,6 @@ lfs_fcntl(void *v)
 
 	    case LFCNBMAPV:
 	    case LFCNMARKV:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
-			return (error);
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
 		blkcnt = blkvp.blkcnt;
@@ -1507,10 +1510,6 @@ lfs_fcntl(void *v)
 
 	    case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
-		if ((error = kauth_authorize_generic(ap->a_l->l_proc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &ap->a_l->l_proc->p_acflag)) != 0)
-			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
 		fh_size = sizeof(union lfs_fhandle) -
