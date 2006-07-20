@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.85 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.86 2006/07/20 23:49:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,11 +125,12 @@ extern int lfs_debug_log_subsys[];
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
-int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 int lfs_vfree(struct vnode *, ino_t, int);
 void lfs_order_freelist(struct lfs *);
+int lfs_extend_ifile(struct lfs *, kauth_cred_t);
+int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **);
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, kauth_cred_t, int, struct buf **);
@@ -167,6 +168,10 @@ int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
+
+/* lfs_rfw.c */
+int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
+void lfs_roll_forward(struct lfs *, struct mount *, struct lwp *);
 
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
