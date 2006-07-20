@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.37 2006/07/19 21:11:37 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.38 2006/07/20 00:17:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.37 2006/07/19 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.38 2006/07/20 00:17:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -503,7 +503,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_flag = inmem ? L_INMEM : 0;
 	l2->l_flag |= (flags & LWP_DETACHED) ? L_DETACHED : 0;
 
-	l2->l_cred = NULL;
 	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
 
