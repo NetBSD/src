@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.8 2006/07/13 16:29:46 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.9 2006/07/20 23:35:20 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -63,7 +63,7 @@ ENTRY(xos_cli)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	swi	OS_CLI
+	swi	XOS_CLI
 	movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
