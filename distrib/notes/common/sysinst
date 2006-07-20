@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.75 2006/04/20 01:32:48 uwe Exp $
+.\"	$NetBSD: sysinst,v 1.76 2006/07/20 19:38:17 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[atari]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
+.if !\n[acorn26]:\n[acorn32]\n[atari]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -729,7 +729,7 @@ Further information can be found on
 .To 2 "Booting NetBSD"
 .Em Booting NetBSD
 .
-.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
+.if !\n[acorn26]:\n[acorn32]\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
@@ -933,7 +933,7 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
+.if !\n[acorn26]:\n[acorn32]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
