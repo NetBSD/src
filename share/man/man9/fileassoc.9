@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.5 2006/07/20 18:47:22 elad Exp $
+.\" $NetBSD: fileassoc.9,v 1.6 2006/07/20 18:50:46 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -298,7 +298,7 @@ Creating a new table is simple:
 .Bd -literal -offset indent
 int error;
 
-error = fileassoc_table_add(vp->v_mount, nentries);
+error = fileassoc_table_add(vp-\*[Gt]v_mount, nentries);
 if (error)
 	...handle error...
 .Ed
@@ -364,7 +364,7 @@ The
 .Nm
 KPI first appeared in
 .Nx 4.0 .
-.Sh AUTHOR
+.Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org
 designed and implemented the
 .Nm
