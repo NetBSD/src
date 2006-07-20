@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.187 2006/07/20 23:15:39 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.188 2006/07/20 23:16:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.187 2006/07/20 23:15:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.188 2006/07/20 23:16:50 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1841,6 +1841,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 #endif
 
 	ASSERT_SEGLOCK(fs);
+
+	/* Note if partial segment is being written by the cleaner */
+	if (sp->seg_flags & SEGM_CLEAN)
+		((SEGSUM *)(sp->segsum))->ss_flags |= SS_CLEAN;
+
 	/*
 	 * If there are no buffers other than the segment summary to write
 	 * and it is not a checkpoint, don't do anything.  On a checkpoint,
