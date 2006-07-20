@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2006/07/19 02:04:43 rpaulo Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2006/07/20 01:00:52 rpaulo Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,8 @@ WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/gnu/dist/postfix
 
-CPPFLAGS+= -DNETBSD3 -I${DIST} \
+CPPFLAGS+= -DNETBSD3 -DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
+	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
