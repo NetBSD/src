@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,13 +172,13 @@ fhpibattach(struct device *parent, struct device *self, void *aux)
 	struct fhpib_softc *sc = (struct fhpib_softc *)self;
 	struct dio_attach_args *da = aux;
 	struct hpibdev_attach_args ha;
+	bus_space_handle_t bsh;
 
-	sc->sc_regs = (struct fhpibdevice *)iomap(dio_scodetopa(da->da_scode),
-	    da->da_size);
-	if (sc->sc_regs == NULL) {
+	if (bus_space_map(da->da_bst, da->da_addr, da->da_size, 0, &bsh)) {
 		printf("\n%s: can't map registers\n", self->dv_xname);
 		return;
 	}
+	sc->sc_regs = bus_space_vaddr(da->da_bst, bsh);
 
 	printf(": %s\n", DIO_DEVICE_DESC_FHPIB);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: dio.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -103,8 +103,10 @@ dioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dio_softc *sc = (struct dio_softc *)self;
 	struct dio_attach_args da;
-	caddr_t pa, va;
+	bus_addr_t pa;
+	caddr_t va;
 	bus_space_tag_t bst = &sc->sc_tag;
+	bus_space_handle_t bsh;
 	int scode, scmax, scodesize;
 
 	printf("\n");
@@ -124,18 +126,18 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		 * Temporarily map the space corresponding to
 		 * the current select code unless:
 		 */
-		pa = dio_scodetopa(scode);
-		va = iomap(pa, PAGE_SIZE);
-		if (va == NULL) {
+		pa = (bus_addr_t)dio_scodetopa(scode);
+		if (bus_space_map(bst, pa, PAGE_SIZE, 0, &bsh)) {
 			printf("%s: can't map scode %d\n",
 			    self->dv_xname, scode);
 			scode++;
 			continue;
 		}
+		va = bus_space_vaddr(bst, bsh);
 
 		/* Check for hardware. */
 		if (badaddr(va)) {
-			iounmap(va, PAGE_SIZE);
+			bus_space_unmap(bst, bsh, PAGE_SIZE);
 			scode++;
 			continue;
 		}
@@ -148,7 +150,7 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		da.da_id = DIO_ID(va);
 		if (DIO_ISFRAMEBUFFER(da.da_id))
 			da.da_secid = DIO_SECID(va);
-		da.da_addr = (bus_addr_t)dio_scodetopa(scode);
+		da.da_addr = pa;
 		da.da_size = DIO_SIZE(scode, va);
 		scodesize = dio_scodesize(&da);
 		if (DIO_ISDIO(scode))
@@ -156,7 +158,7 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		da.da_ipl = DIO_IPL(va);
 
 		/* No longer need the device to be mapped. */
-		iounmap(va, PAGE_SIZE);
+		bus_space_unmap(bst, bsh, PAGE_SIZE);
 
 		/* Attach matching device. */
 		config_found_sm_loc(self, "dio", NULL, &da, dioprint,
