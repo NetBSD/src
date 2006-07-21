@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2006/01/31 17:36:56 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2006/07/21 17:49:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -32,6 +32,7 @@
  */
 
 extern  int     f;			/* the opened socket */
+extern  int     mf;			/* the opened multicast socket */
 extern  int     trace;
 extern  int     verbose;
 extern  unsigned int     def_rexmtval;
@@ -41,6 +42,9 @@ extern	int	tsize;
 extern	int	tout;
 extern	size_t	def_blksize;
 extern	size_t	blksize;
+extern	in_addr_t	mcaddr;
+extern	uint16_t	mcport;
+extern	ushort	mcmasterslave;
 extern  struct	sockaddr_storage peeraddr; /* filled in by main */
 
 void	recvfile __P((int, char *, char *));
