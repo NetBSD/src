@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2006/07/20 13:21:38 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2006/07/21 15:14:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -86,6 +86,7 @@
 #include <hp300/stand/common/scsireg.h>
 #include <hp300/stand/common/scsivar.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/intioreg.h>
 
@@ -214,8 +215,8 @@ sctoaddr(int sc)
 		return internalhpib ;
 	if (sc < 32)
 		return DIOBASE + sc * DIOCSIZE ;
-	if (sc >= 132)
-		return DIOIIBASE + (sc - 132) * DIOIICSIZE ;
+	if (sc >= DIOII_SCBASE)
+		return DIOIIBASE + (sc - DIOII_SCBASE) * DIOIICSIZE ;
 	return sc;
 }
 
@@ -234,22 +235,22 @@ find_devs(void)
 	struct hp_hw *hw;
 
 	hw = sc_table;
-	sctop = machineid == HP_320 ? 32 : 256;
+	sctop = DIO_SCMAX(machineid);
 	for (sc = -1; sc < sctop; sc++) {
-		if (sc >= 32 && sc < 132)
+		if (DIO_INHOLE(sc))
 			continue;
-		addr = (caddr_t) sctoaddr(sc);
+		addr = (caddr_t)sctoaddr(sc);
 		if (badaddr(addr))
 			continue;
 
-		id_reg = (u_char *) addr;
+		id_reg = (u_char *)addr;
 		hw->hw_pa = 0;	/* XXX used to pass back LUN from driver */
-		if (sc >= 132)
-			hw->hw_size = (id_reg[0x101] + 1) * 0x100000;
+		if (sc >= DIOII_SCBASE)
+			hw->hw_size = DIOII_SIZE(id_reg);
 		else
 			hw->hw_size = DIOCSIZE;
 		hw->hw_kva = addr;
-		hw->hw_id = id_reg[1];
+		hw->hw_id = DIO_ID(id_reg);
 		hw->hw_sc = sc;
 
 		/*
