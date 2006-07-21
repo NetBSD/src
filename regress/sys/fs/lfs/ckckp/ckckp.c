@@ -1,4 +1,4 @@
-/*	$NetBSD: ckckp.c,v 1.4 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: ckckp.c,v 1.5 2006/07/21 00:29:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 	int fd, e, sno;
 	char cmd[BUFSIZ], s[BUFSIZ];
 	FILE *pp;
-	int waitfor = 1;
+	int dowait = 1;
 
 	if (argc < 5)
 		errx(1, "usage: %s <fs-root> <raw-dev> <save-filename> "
@@ -60,14 +60,14 @@ int main(int argc, char **argv)
 	if (fd < 0)
 		err(1, argv[1]);
 
-	fcntl(fd, LFCNWRAPGO, &waitfor);
+	/* Give the writer a head start */
 	sleep(5);
 
 	/* Loop forever calling LFCNWRAP{STOP,GO} */
 	sno = 0;
 	while(1) {
 		printf("Waiting until fs wraps\n");
-		fcntl(fd, LFCNWRAPSTOP, &waitfor);
+		fcntl(fd, LFCNWRAPSTOP, &dowait);
 
 		/*
 		 * When the fcntl exits, the wrap is about to occur (but
@@ -89,13 +89,14 @@ int main(int argc, char **argv)
 		}
 		sscanf(s, "%d %d", &e, &sno);
 		if (e) {
-			return 0;
+			printf("Script exited with error code %d\n", e);
+			return 1;
 		}
 		pclose(pp);
 
 		++sno;
 		printf("Waiting until fs continues\n");
-		fcntl(fd, LFCNWRAPGO, &waitfor);
+		fcntl(fd, LFCNWRAPGO, &dowait);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanalot_async.c,v 1.5 2006/05/05 19:42:07 perseant Exp $	*/
+/*	$NetBSD: cleanalot_async.c,v 1.6 2006/07/21 00:29:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 void dirname(int n, char *s)
@@ -67,7 +68,7 @@ int write_file(int gen, int n, int plex, char *buf, int size)
 	dirname(n, s);
 	strcat(s, ".file");
 
-	// printf("write file %d.%d.%x: %s\n", gen, plex, n, s);
+	/* printf("write file %d.%d.%x: %s\n", gen, plex, n, s); */
 
 	fp = fopen(s, "wb");
 	if (fp == NULL)
