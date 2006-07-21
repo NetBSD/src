@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.42 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.43 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.42 2005/12/11 12:17:18 christos Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.43 2006/07/21 10:01:39 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ hpux_cpu_makecmds(struct lwp *l, struct exec_package *epp)
 	/* set up command for exec header */
 	NEW_VMCMD(&epp->ep_vmcmds, hpux_cpu_vmcmd,
 	    sizeof(struct hpux_exec), (long)epp->ep_hdr, NULLVP, 0, 0);
-	return (0);
+	return 0;
 }
 
 /*
@@ -236,7 +236,7 @@ hpux_cpu_vmcmd(struct lwp *l, struct exec_vmcmd *ev)
 			l->l_proc->p_md.mdp_flags &= ~MDP_CCBSTACK;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -248,13 +248,13 @@ hpux_cpu_sysconf_arch(void)
 
 	switch (cputype) {
 	case CPU_68020:
-		return (HPUX_SYSCONF_CPUM020);
+		return HPUX_SYSCONF_CPUM020;
 
 	case CPU_68030:
-		return (HPUX_SYSCONF_CPUM030);
+		return HPUX_SYSCONF_CPUM030;
 
 	default:
-		return (HPUX_SYSCONF_CPUM040);
+		return HPUX_SYSCONF_CPUM040;
 	}
 	/* NOTREACHED */
 }
@@ -286,7 +286,7 @@ hpux_sys_advise(struct lwp *l, void *v, register_t *retval)
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -302,7 +302,7 @@ hpux_sys_getcontext(struct lwp *lp, void *v, register_t *retval)
 	int len;
 
 	if (SCARG(uap, len) <= 0)
-		return (EINVAL);
+		return EINVAL;
 
 	for (i = 0; context_table[i].str != NULL; i++)
 		if (context_table[i].val == fputype)
@@ -320,7 +320,7 @@ hpux_sys_getcontext(struct lwp *lp, void *v, register_t *retval)
 		error = copyout(str, SCARG(uap, buf), len);
 	if (error == 0)
 		*retval = l;
-	return (0);
+	return 0;
 }
 
 #if 0 /* XXX This really, really doesn't work anymore. --scottr */
@@ -340,7 +340,7 @@ hpux_to_bsd_uoff(int *off, int *isps, struct lwp *l)
 
 	/* u_ar0 field; procxmt puts in U_ar0 */
 	if ((int)off == HPUOFF(hpuxu_ar0))
-		return(UOFF(U_ar0));
+		return UOFF(U_ar0);
 
 	if (fputype) {
 		/* FP registers from PCB */
@@ -348,10 +348,10 @@ hpux_to_bsd_uoff(int *off, int *isps, struct lwp *l)
 		bp = (struct bsdfp *)UOFF(u_pcb.pcb_fpregs);
 
 		if (off >= hp->hpfp_ctrl && off < &hp->hpfp_ctrl[3])
-			return((int)&bp->ctrl[off - hp->hpfp_ctrl]);
+			return (int)&bp->ctrl[off - hp->hpfp_ctrl];
 
 		if (off >= hp->hpfp_reg && off < &hp->hpfp_reg[24])
-			return((int)&bp->reg[off - hp->hpfp_reg]);
+			return (int)&bp->reg[off - hp->hpfp_reg];
 	}
 
 	/*
@@ -397,11 +397,11 @@ hpux_to_bsd_uoff(int *off, int *isps, struct lwp *l)
 		 */
 		else
 			raddr = (u_int) &ar0[(int)(off - ar0)];
-		return((int)(raddr - (u_int)l->l_addr));	/* XXX */
+		return (int)(raddr - (u_int)l->l_addr);	/* XXX */
 	}
 
 	/* everything else */
-	return (-1);
+	return -1;
 }
 #endif
 
@@ -603,15 +603,15 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
-		return (EINVAL);
+		return EINVAL;
 
 	if (copyin(scp, &tsigc, sizeof(tsigc)))
-		return (EFAULT);
+		return EFAULT;
 	scp = &tsigc;
 
 	/* Make sure the user isn't pulling a fast one on us! */
 	if ((scp->hsc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Restore register context. */
 	frame = (struct frame *) l->l_md.md_regs;
@@ -638,7 +638,7 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	 * fuword failed (bogus _hsc_ap value).
 	 */
 	if (flags == -1)
-		return (EINVAL);
+		return EINVAL;
 
 	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
 		goto restore;
@@ -660,7 +660,7 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 		sz = tstate.hss_frame.f_format;
 		if (sz > 15 || (sz = exframesize[sz]) < 0 ||
 		    frame->f_stackadj < sz)
-			return (EINVAL);
+			return EINVAL;
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.hss_frame.f_format;
 		frame->f_vector = tstate.hss_frame.f_vector;
@@ -714,7 +714,7 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	    ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 }
 
 /*

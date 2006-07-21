@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.15 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: rtc.c,v 1.16 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,9 +120,9 @@ rtcmatch(struct device *parent, struct cfdata *match, void *aux)
 	struct intio_attach_args *ia = aux;
 
 	if (strcmp("rtc", ia->ia_modname) != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -192,11 +192,11 @@ rtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	/* simple sanity checks */
 	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
 	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return (1);
+		return 1;
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
 	tv->tv_usec = 0;
-	return (0);
+	return 0;
 }
 
 static int
@@ -236,20 +236,22 @@ rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	for (i = 0; i < NUM_RTC_REGS; i++)
 		if (rtc_registers[i] !=
 		    rtc_writereg(sc, i, rtc_registers[i]))
-			return (1);
-	return (0);
+			return 1;
+	return 0;
 }
 
 static int
 rtc_getcal(todr_chip_handle_t handle, int *vp)
 {
-	return (EOPNOTSUPP);
+
+	return EOPNOTSUPP;
 }
 
 static int
 rtc_setcal(todr_chip_handle_t handle, int v)
 {
-	return (EOPNOTSUPP);
+
+	return EOPNOTSUPP;
 }
 
 static uint8_t
@@ -265,7 +267,7 @@ rtc_readreg(struct rtc_softc *sc, int reg)
 	intio_device_readcmd(bst, bsh, RTC_READ_REG, &data);
 
 	splx(s);
-	return (data);
+	return data;
 }
 
 static uint8_t
@@ -282,5 +284,5 @@ rtc_writereg(struct rtc_softc *sc, int reg, uint8_t data)
 	intio_device_readcmd(bst, bsh, RTC_READ_REG, &tmp);
 
 	splx(s);
-	return (tmp);
+	return tmp;
 }
