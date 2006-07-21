@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.25 2006/04/09 18:45:19 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.26 2006/07/21 17:49:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.25 2006/04/09 18:45:19 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.26 2006/07/21 17:49:00 jmcneill Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: tftp.c,v 1.25 2006/04/09 18:45:19 christos Exp $");
 #include <netinet/in.h>
 
 #include <arpa/tftp.h>
+#include <arpa/inet.h>
 
 #include <err.h>
 #include <errno.h>
@@ -81,6 +82,8 @@ static void tpacket __P((const char *, struct tftphdr *, int));
 static int cmpport __P((struct sockaddr *, struct sockaddr *));
 
 static void get_options(struct tftphdr *, int);
+static int tftp_igmp_join(void);
+static void tftp_igmp_leave(int);
 
 static void
 get_options(struct tftphdr *ap, int size)
@@ -93,18 +96,22 @@ get_options(struct tftphdr *ap, int size)
 	opt = ap->th_stuff;
 	endp = opt + size - 1;
 	*endp = '\0';
-	
+
 	while (opt < endp) {
+		int ismulticast;
 		l = strlen(opt) + 1;
 		valp = opt + l;
+		ismulticast = !strcasecmp(opt, "multicast");
 		if (valp < endp) {
 			val = strtoul(valp, NULL, 10);
 			l = strlen(valp) + 1;
 			nextopt = valp + l;
-			if (val == ULONG_MAX && errno == ERANGE) {
-				/* Report illegal value */
-				opt = nextopt;
-				continue;
+			if (!ismulticast) {
+				if (val == ULONG_MAX && errno == ERANGE) {
+					/* Report illegal value */
+					opt = nextopt;
+					continue;
+				}
 			}
 		} else {
 			/* Badly formed OACK */
@@ -124,11 +131,87 @@ get_options(struct tftphdr *ap, int size)
 			} else {
 				/* Report error? */
 			}
+		} else if (ismulticast) {
+			char multicast[24];
+			char *pmulticast;
+			char *addr;
+
+			strlcpy(multicast, valp, sizeof(multicast));
+			pmulticast = multicast;
+			addr = strsep(&pmulticast, ",");
+			if (multicast == NULL)
+				continue; /* Report error? */
+			mcport = atoi(strsep(&pmulticast, ","));
+			if (multicast == NULL)
+				continue; /* Report error? */
+			mcmasterslave = atoi(multicast);
+			mcaddr = inet_addr(addr);
+			if (mcaddr == INADDR_NONE)
+				continue; /* Report error? */
 		} else {
 			/* unknown option */
 		}
 		opt = nextopt;
 	}
+}
+
+static int
+tftp_igmp_join(void)
+{
+	struct ip_mreq req;
+	struct sockaddr_in s;
+	int fd, rv;
+
+	memset(&req, 0, sizeof(struct ip_mreq));
+	req.imr_multiaddr.s_addr = mcaddr;
+	req.imr_interface.s_addr = INADDR_ANY;
+
+	fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (fd < 0) {
+		perror("socket");
+		return fd;
+	}
+
+	memset(&s, 0, sizeof(struct sockaddr_in));
+	s.sin_family = AF_INET;
+	s.sin_port = htons(mcport);
+	s.sin_len = sizeof(struct sockaddr_in);
+	rv = bind(fd, (struct sockaddr *)&s, sizeof(struct sockaddr_in));
+	if (rv < 0) {
+		perror("bind");
+		close(fd);
+		return rv;
+	}
+
+	rv = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &req,
+	    sizeof(struct ip_mreq));
+	if (rv < 0) {
+		perror("setsockopt");
+		close(fd);
+		return rv;
+	}
+
+	return fd;
+}
+
+static void
+tftp_igmp_leave(int fd)
+{
+	struct ip_mreq req;
+	int rv;
+
+	memset(&req, 0, sizeof(struct ip_mreq));
+	req.imr_multiaddr.s_addr = mcaddr;
+	req.imr_interface.s_addr = INADDR_ANY;
+
+	rv = setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &req,
+	    sizeof(struct ip_mreq));
+	if (rv < 0)
+		perror("setsockopt");
+
+	close(fd);
+
+	return;
 }
 
 /*
@@ -201,8 +284,13 @@ send_data:
 		for ( ; ; ) {
 			(void)alarm(rexmtval);
 			do {
+				int curf;
 				fromlen = sizeof(from);
-				n = recvfrom(f, ackbuf, sizeof(ackbuf), 0,
+				if (mcaddr != INADDR_NONE)
+					curf = mf;
+				else
+					curf = f;
+				n = recvfrom(curf, ackbuf, sizeof(ackbuf), 0,
 				    (struct sockaddr *)(void *)&from, &fromlen);
 			} while (n <= 0);
 			(void)alarm(0);
@@ -236,10 +324,11 @@ send_data:
 					 * the server just refused 'em all.
 					 * The only one that _really_
 					 * matters is blksize, but we'll
-					 * clear timeout, too.
+					 * clear timeout and mcaddr, too.
 					 */
 					blksize = def_blksize;
 					rexmtval = def_rexmtval;
+					mcaddr = INADDR_NONE;
 				}
 				if (ap->th_block == block) {
 					break;
@@ -260,6 +349,7 @@ send_data:
 				if (block == 0) {
 					blksize = def_blksize;
 					rexmtval = def_rexmtval;
+					mcaddr = INADDR_NONE;
 					get_options(ap, n);
 					break;
 				}
@@ -335,13 +425,19 @@ send_ack:
 			warn("sendto");
 			goto abort;
 		}
+skip_ack:
 		if (write_behind(file, convert) == -1)
 			goto abort;
 		for ( ; ; ) {
 			(void)alarm(rexmtval);
 			do  {
+				int readfd;
+				if (mf > 0)
+					readfd = mf;
+				else
+					readfd = f;
 				fromlen = sizeof(from);
-				n = recvfrom(f, dp, readlen, 0,
+				n = recvfrom(readfd, dp, readlen, 0,
 				    (struct sockaddr *)(void *)&from, &fromlen);
 			} while (n <= 0);
 			(void)alarm(0);
@@ -398,6 +494,11 @@ send_ack:
 					ap->th_block = 0;
 					readlen = blksize+4;
 					size = 4;
+					if (mcaddr != INADDR_NONE) {
+						mf = tftp_igmp_join();
+						if (mcmasterslave == 0)
+							goto skip_ack;
+					}
 					goto send_ack;
 				}
 			}
@@ -413,6 +514,10 @@ send_ack:
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
+	if (mcaddr != INADDR_NONE) {
+		tftp_igmp_leave(mf);
+		mf = -1;
+	}
 	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)(void *)&peer,
 	    (socklen_t)peer.ss_len);
 	/*

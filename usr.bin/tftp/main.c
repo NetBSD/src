@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2006/04/09 18:47:49 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2006/07/21 17:49:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2006/04/09 18:47:49 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2006/07/21 17:49:00 jmcneill Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,12 +72,16 @@ __RCSID("$NetBSD: main.c,v 1.23 2006/04/09 18:47:49 christos Exp $");
 
 struct	sockaddr_storage peeraddr;
 int	f;
+int	mf;
 int	trace;
 int	verbose;
 int	tsize=0;
 int	tout=0;
 size_t	def_blksize=SEGSIZE;
 size_t	blksize=SEGSIZE;
+in_addr_t	mcaddr = INADDR_NONE;
+uint16_t	mcport;
+ushort	mcmasterslave;
 int	connected;
 char	mode[32];
 char	line[LBUFLEN];
@@ -167,7 +171,7 @@ main(argc, argv)
 {
 	int	c;
 
-	f = -1;
+	f = mf = -1;
 	(void)strlcpy(mode, "netascii", sizeof(mode));
 	(void)signal(SIGINT, intr);
 
