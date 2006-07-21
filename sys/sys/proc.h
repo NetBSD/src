@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.223 2006/07/19 21:11:38 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.224 2006/07/21 10:07:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -42,6 +42,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_kstack.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
@@ -528,6 +529,13 @@ _proclist_skipmarker(struct proc *p0)
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
 		(var) = LIST_NEXT(var, p_list))
+
+#if defined(LOCKDEBUG)
+void assert_sleepable(struct simplelock *, const char *);
+#define	ASSERT_SLEEPABLE(lk, msg)	assert_sleepable((lk), (msg))
+#else /* defined(LOCKDEBUG) */
+#define	ASSERT_SLEEPABLE(lk, msg)	/* nothing */
+#endif /* defined(LOCKDEBUG) */
 
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\
