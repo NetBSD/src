@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.33 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.34 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.33 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.34 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -174,10 +174,10 @@ dmamatch(struct device *parent, struct cfdata *match, void *aux)
 	static int dmafound = 0;                /* can only have one */
 
 	if (strcmp("dma", ia->ia_modname) != 0 || dmafound)
-		return (0);
+		return 0;
 
 	dmafound = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -311,7 +311,7 @@ dmareq(struct dmaqueue *dq)
 		sc->sc_chan[i].dm_job = dq;
 		dq->dq_chan = i;
 		splx(s);
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -319,7 +319,7 @@ dmareq(struct dmaqueue *dq)
 	 */
 	TAILQ_INSERT_TAIL(&sc->sc_queue, dq, dq_list);
 	splx(s);
-	return (0);
+	return 0;
 }
 
 void
@@ -628,7 +628,7 @@ dmaintr(void *arg)
 		} else
 			dmastop(i);
 	}
-	return(found);
+	return found;
 }
 
 #ifdef DEBUG

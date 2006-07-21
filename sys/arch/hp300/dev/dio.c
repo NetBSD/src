@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.32 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: dio.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.32 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -92,10 +92,10 @@ diomatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* Allow only one instance. */
 	if (dio_matched)
-		return (0);
+		return 0;
 
 	dio_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -173,9 +173,9 @@ diosubmatch(struct device *parent, struct cfdata *cf,
 
 	if (cf->diocf_scode != DIOCF_SCODE_DEFAULT &&
 	    cf->diocf_scode != da->da_scode)
-		return (0);
+		return 0;
 
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 static int
@@ -188,7 +188,7 @@ dioprint(void *aux, const char *pnp)
 		aprint_normal("%s at %s",
 		    dio_devinfo(da, buf, sizeof(buf)), pnp);
 	aprint_normal(" scode %d ipl %d", da->da_scode, da->da_ipl);
-	return (UNCONF);
+	return UNCONF;
 }
 
 /*
@@ -206,7 +206,7 @@ dio_scodetopa(int scode)
 	else
 		rval = 0;
 
-	return ((void *)rval);
+	return (void *)rval;
 }
 
 /*
@@ -230,7 +230,7 @@ dio_scodesize(struct dio_attach_args *da)
 				}
 			} else {
 			foundit:
-				return (dio_devdatas[i].dd_nscode);
+				return dio_devdatas[i].dd_nscode;
 			}
 		}
 	}
@@ -240,7 +240,7 @@ dio_scodesize(struct dio_attach_args *da)
 	 */
 	printf("WARNING: select code size unknown for id = 0x%x secid = 0x%x\n",
 	    da->da_id, da->da_secid);
-	return (1);
+	return 1;
 }
 
 /*
@@ -269,7 +269,7 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 			} else {
 			foundit:
 				sprintf(buf, "%s", dio_devdescs[i].dd_desc);
-				return (buf);
+				return buf;
 			}
 		}
 	}
@@ -280,7 +280,7 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 	 */
 	sprintf(buf, "device id = 0x%x secid = 0x%x",
 	    da->da_id, da->da_secid);
-	return (buf);
+	return buf;
 }
 
 /*
@@ -296,7 +296,7 @@ dio_intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
 	if (priority == IPL_BIO)
 		dmacomputeipl();
 
-	return (ih);
+	return ih;
 }
 
 /*
