@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.247 2006/07/13 22:56:02 gdamore Exp $	*/
+/*	$NetBSD: com.c,v 1.248 2006/07/21 16:48:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.247 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.248 2006/07/21 16:48:48 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -796,9 +796,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		kauth_authorize_generic(l->l_proc->p_cred,
-				  KAUTH_GENERIC_ISSUSER,
-				  &l->l_proc->p_acflag) != 0)
+		kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1006,7 +1005,6 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
@@ -1048,9 +1046,8 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

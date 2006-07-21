@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.35 2006/06/09 21:58:57 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.36 2006/07/21 16:48:51 ad Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.35 2006/06/09 21:58:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.36 2006/07/21 16:48:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -219,14 +219,12 @@ irframetopen(dev_t dev, struct tty *tp)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct irframet_softc *sc;
-	struct proc *p;
 	int error, s;
 
-	p = l->l_proc;
 	DPRINTF(("%s\n", __FUNCTION__));
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	s = spltty();

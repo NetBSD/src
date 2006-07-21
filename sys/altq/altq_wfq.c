@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.12 2006/05/15 00:05:39 christos Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.13 2006/07/21 16:48:46 ad Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.12 2006/05/15 00:05:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.13 2006/07/21 16:48:46 ad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -677,7 +677,6 @@ wfqioctl(dev, cmd, addr, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int	error = 0;
 	int 	s;
 
@@ -690,9 +689,8 @@ wfqioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 #endif
 			return (error);
 		break;

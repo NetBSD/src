@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.12 2006/05/14 21:47:00 elad Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.13 2006/07/21 16:48:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.12 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.13 2006/07/21 16:48:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ Static int
 ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 		   const char *filename)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *vp;
 	size_t resid, offs, size;
@@ -247,7 +247,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	for (offs = 0; ; offs += size) {
 		size = sizeof buf;
 		error = vn_rdwr(UIO_READ, vp, buf, size, offs, UIO_SYSSPACE,
-		    IO_NODELOCKED | IO_SYNC, p->p_cred, &resid, NULL);
+		    IO_NODELOCKED | IO_SYNC, l->l_cred, &resid, NULL);
 		size -= resid;
 		if (error || size == 0)
 			break;
@@ -258,7 +258,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	}
 
 out:
-	vn_close(vp, FREAD, p->p_cred, p);
+	vn_close(vp, FREAD, l->l_cred, p);
 	return error;
 }
 
