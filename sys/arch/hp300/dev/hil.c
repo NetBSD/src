@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.70 2006/05/15 12:47:13 yamt Exp $	*/
+/*	$NetBSD: hil.c,v 1.71 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.70 2006/05/15 12:47:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.71 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -186,9 +186,9 @@ hilmatch(struct device *parent, struct cfdata *match, void *aux)
 	struct intio_attach_args *ia = aux;
 
 	if (strcmp("hil", ia->ia_modname) != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -287,17 +287,17 @@ hilopen(dev_t dev, int flags, int mode, struct lwp *l)
 #endif
 
 	if ((hilp->hl_device[HILLOOPDEV].hd_flags & HIL_ALIVE) == 0)
-		return(ENXIO);
+		return ENXIO;
 
 	dptr = &hilp->hl_device[HILUNIT(dev)];
 	if ((dptr->hd_flags & HIL_ALIVE) == 0)
-		return(ENODEV);
+		return ENODEV;
 
 	/*
 	 * Pseudo-devices cannot be read, nothing more to do.
 	 */
 	if (dptr->hd_flags & HIL_PSEUDO)
-		return(0);
+		return 0;
 
 	/*
 	 * Open semantics:
@@ -310,13 +310,13 @@ hilopen(dev_t dev, int flags, int mode, struct lwp *l)
 #ifdef COMPAT_HPUX
 	if (l->l_proc->p_emul == &emul_hpux) {
 		if (dptr->hd_flags & (HIL_READIN|HIL_QUEUEIN))
-			return(EBUSY);
+			return EBUSY;
 		dptr->hd_flags |= HIL_READIN;
 	} else
 #endif
 	{
 		if (dptr->hd_flags & HIL_READIN)
-			return(EBUSY);
+			return EBUSY;
 		dptr->hd_flags |= HIL_QUEUEIN;
 	}
 	if (flags & FNONBLOCK)
@@ -345,7 +345,7 @@ hilopen(dev_t dev, int flags, int mode, struct lwp *l)
 #endif
 	}
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -371,7 +371,7 @@ hilclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 	dptr = &hilp->hl_device[HILUNIT(dev)];
 	if (HILUNIT(dev) && (dptr->hd_flags & HIL_PSEUDO))
-		return (0);
+		return 0;
 
 	if (l && l->l_proc->p_emul == &emul_netbsd) {
 		/*
@@ -428,7 +428,7 @@ hilclose(dev_t dev, int flags, int mode, struct lwp *l)
 		hilkbdenable(hilp);
 	}
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -454,24 +454,24 @@ hilread(dev_t dev, struct uio *uio, int flag)
 	 * This check is necessary since loop can reconfigure.
 	 */
 	if (HILUNIT(dev) > hilp->hl_maxdev)
-		return(ENODEV);
+		return ENODEV;
 #endif
 
 	dptr = &hilp->hl_device[HILUNIT(dev)];
 	if ((dptr->hd_flags & HIL_READIN) == 0)
-		return(ENODEV);
+		return ENODEV;
 
 	s = splhil();
 	while (dptr->hd_queue.c_cc == 0) {
 		if (dptr->hd_flags & HIL_NOBLOCK) {
 			spl0();
-			return(EWOULDBLOCK);
+			return EWOULDBLOCK;
 		}
 		dptr->hd_flags |= HIL_ASLEEP;
 		if ((error = tsleep((caddr_t)dptr,
 		    TTIPRI | PCATCH, hilin, 0))) {
-			(void) spl0();
-			return (error);
+			(void)spl0();
+			return error;
 		}
 	}
 	splx(s);
@@ -484,7 +484,7 @@ hilread(dev_t dev, struct uio *uio, int flag)
 			break;
 		error = uiomove(buf, cc, uio);
 	}
-	return(error);
+	return error;
 }
 
 static int
@@ -506,7 +506,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	dptr = &hilp->hl_device[HILUNIT(dev)];
 	if ((dptr->hd_flags & HIL_ALIVE) == 0)
-		return (ENODEV);
+		return ENODEV;
 
 	/*
 	 * Don't allow hardware ioctls on virtual devices.
@@ -521,7 +521,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		case HILIOCRN:
 		case HILIOCRS:
 		case HILIOCED:
-			return(ENODEV);
+			return ENODEV;
 
 		/*
 		 * XXX: should also return ENODEV but HP-UX compat
@@ -541,7 +541,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 #ifdef COMPAT_HPUX
 	if (l->l_proc->p_emul == &emul_hpux)
-		return(hpuxhilioctl(dev, cmd, data, flag));
+		return hpuxhilioctl(dev, cmd, data, flag);
 #endif
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
@@ -658,7 +658,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	}
 	hilp->hl_cmddev = 0;
-	return(error);
+	return error;
 }
 
 #ifdef COMPAT_HPUX
@@ -781,10 +781,10 @@ hpuxhilioctl(dev_t dev, int cmd, caddr_t data, int flag)
 
 	default:
 		hilp->hl_cmddev = 0;
-		return(EINVAL);
+		return EINVAL;
 	}
 	hilp->hl_cmddev = 0;
-	return(0);
+	return 0;
 }
 #endif
 
@@ -804,7 +804,7 @@ hilpoll(dev_t dev, int events, struct lwp *l)
 
 	/* Attempt to save some work. */
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
-		return (revents);
+		return revents;
 
 	/*
 	 * Read interface.
@@ -818,7 +818,7 @@ hilpoll(dev_t dev, int events, struct lwp *l)
 		else
 			selrecord(l, &dptr->hd_selr);
 		splx(s);
-		return (revents);
+		return revents;
 	}
 
 	/*
@@ -828,7 +828,7 @@ hilpoll(dev_t dev, int events, struct lwp *l)
 	 */
 	if (HILUNIT(dev) &&
 	    (dptr->hd_flags & (HIL_ALIVE|HIL_PSEUDO)) != HIL_ALIVE)
-		return (revents | (events & (POLLIN | POLLRDNORM)));
+		return revents | (events & (POLLIN | POLLRDNORM));
 
 	/*
 	 * Select on loop device is special.
@@ -848,12 +848,12 @@ hilpoll(dev_t dev, int events, struct lwp *l)
 		    qp->hq_eventqueue->hil_evqueue.head !=
 		    qp->hq_eventqueue->hil_evqueue.tail) {
 			splx(s);
-			return (revents | (events & (POLLIN | POLLRDNORM)));
+			return revents | (events & (POLLIN | POLLRDNORM));
 		}
 
 	selrecord(l, &dptr->hd_selr);
 	splx(s);
-	return (revents);
+	return revents;
 }
 
 static void
@@ -881,7 +881,7 @@ filt_hilread(struct knote *kn, long hint)
 
 	if (dptr->hd_flags & HIL_READIN) {
 		kn->kn_data = dptr->hd_queue.c_cc;
-		return (kn->kn_data > 0);
+		return kn->kn_data > 0;
 	}
 
 	/*
@@ -891,7 +891,7 @@ filt_hilread(struct knote *kn, long hint)
 	 */
 	if (device && (dptr->hd_flags & (HIL_ALIVE|HIL_PSEUDO)) != HIL_ALIVE) {
 		kn->kn_data = 0; /* XXXLUKEM (thorpej): what to put here? */
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -914,11 +914,11 @@ filt_hilread(struct knote *kn, long hint)
 		    qp->hq_eventqueue->hil_evqueue.tail) {
 			/* XXXLUKEM (thorpej): what to put here? */
 			kn->kn_data = 0;
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static const struct filterops hilread_filtops =
@@ -947,7 +947,7 @@ hilkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return 1;
 	}
 
 	kn->kn_hook = (void *)(intptr_t) dev; /* XXX yuck */
@@ -956,7 +956,7 @@ hilkqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -973,7 +973,7 @@ hilint(void *v)
 #if NRND > 0
 	rnd_add_uint32(&hilp->rnd_source, (stat<<8)|c);
 #endif
-	return (1);
+	return 1;
 }
 
 static void
@@ -1201,7 +1201,7 @@ hilqalloc(struct hil_softc *hilp, struct hilqinfo *qip, struct proc *p)
 	if (hildebug & HDB_FOLLOW)
 		printf("hilqalloc(%d): addr %p\n", p->p_pid, qip->addr);
 #endif
-	return(EINVAL);
+	return EINVAL;
 }
 
 static int
@@ -1212,7 +1212,7 @@ hilqfree(struct hil_softc *hilp, int qnum, struct proc *p)
 	if (hildebug & HDB_FOLLOW)
 		printf("hilqfree(%d): qnum %d\n", p->p_pid, qnum);
 #endif
-	return(EINVAL);
+	return EINVAL;
 }
 
 static int
@@ -1227,12 +1227,12 @@ hilqmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
 		    p->p_pid, qnum, device);
 #endif
 	if (qnum >= NHILQ || hilp->hl_queue[qnum].hq_procp != p)
-		return(EINVAL);
+		return EINVAL;
 	if ((dptr->hd_flags & HIL_QUEUEIN) == 0)
-		return(EINVAL);
+		return EINVAL;
 	if (dptr->hd_qmask && kauth_cred_geteuid(p->p_cred) &&
 	    kauth_cred_geteuid(p->p_cred) != dptr->hd_uid)
-		return(EPERM);
+		return EPERM;
 
 	hilp->hl_queue[qnum].hq_devmask |= hildevmask(device);
 	if (dptr->hd_qmask == 0)
@@ -1245,7 +1245,7 @@ hilqmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
 		printf("hilqmap(%d): devmask %x qmask %x\n",
 		    p->p_pid, hilp->hl_queue[qnum].hq_devmask, dptr->hd_qmask);
 #endif
-	return(0);
+	return 0;
 }
 
 static int
@@ -1260,7 +1260,7 @@ hilqunmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
 #endif
 
 	if (qnum >= NHILQ || hilp->hl_queue[qnum].hq_procp != p)
-		return(EINVAL);
+		return EINVAL;
 
 	hilp->hl_queue[qnum].hq_devmask &= ~hildevmask(device);
 	s = splhil();
@@ -1272,7 +1272,7 @@ hilqunmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
 		    p->p_pid, hilp->hl_queue[qnum].hq_devmask,
 		    hilp->hl_device[device].hd_qmask);
 #endif
-	return(0);
+	return 0;
 }
 
 /*
@@ -1343,7 +1343,7 @@ hilkbdcngetc(int *statp)
 	int s;
 
 	if (hilkbd_cn_device == NULL)
-		return (0);
+		return 0;
 
 	/*
 	 * XXX needs to be splraise because we could be called
@@ -1355,7 +1355,7 @@ hilkbdcngetc(int *statp)
 	c = READHILDATA(hilkbd_cn_device);
 	splx(s);
 	*statp = stat;
-	return (c);
+	return c;
 }
 
 /*
@@ -1371,7 +1371,7 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 	u_char lang;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
-		return (1);
+		return 1;
 
 	va = bus_space_vaddr(bst, bsh);
 	hilkbd_cn_device = (struct hil_dev *)va;
@@ -1402,7 +1402,7 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 	hilkbd_cn_ops.arg = NULL;
 	itekbdcnattach(&hilkbd_cn_ops, &hilkbd_cn_map);
 
-	return (0);
+	return 0;
 }
 
 #endif /* End of HIL console keyboard code. */
@@ -1422,14 +1422,14 @@ kbdnmi(void)
 	struct hil_dev *hl_addr = HILADDR;
 
 	if ((*KBDNMISTAT & KBDNMI) == 0)
-		return(0);
+		return 0;
 
 	HILWAIT(hl_addr);
 	WRITEHILCMD(hl_addr, HIL_CNMT);
 	HILWAIT(hl_addr);
 	WRITEHILCMD(hl_addr, HIL_CNMT);
 	HILWAIT(hl_addr);
-	return(1);
+	return 1;
 }
 
 #define HILSECURITY	0x33
@@ -1711,7 +1711,7 @@ hiliddev(struct hil_softc *hilp)
 			printf("not found\n");
 	}
 #endif
-	return(i <= hilp->hl_maxdev ? i : 0);
+	return i <= hilp->hl_maxdev ? i : 0;
 }
 
 #ifdef COMPAT_HPUX
@@ -1734,7 +1734,7 @@ hildevno(dev_t dev)
 	else
 #endif
 	newdev |= (HILLOOP(dev) << 8) | (HILUNIT(dev) << 4);
-	return(newdev);
+	return newdev;
 }
 #endif
 

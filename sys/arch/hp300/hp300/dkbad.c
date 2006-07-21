@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.10 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.11 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.10 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.11 2006/07/21 10:01:39 tsutsui Exp $");
 
 #ifndef NOBADSECT
 #include <sys/param.h>
@@ -55,10 +55,10 @@ isbad(struct dkbad *bt, int cyl, int trk, int sec)
 	for (i = 0; i < 126; i++) {
 		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) + bt->bt_bad[i].bt_trksec;
 		if (blk == bblk)
-			return (i);
+			return i;
 		if (blk < bblk || bblk < 0)
 			break;
 	}
-	return (-1);
+	return -1;
 }
 #endif

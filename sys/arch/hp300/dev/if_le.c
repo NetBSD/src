@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.58 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.59 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.58 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.59 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -159,7 +159,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 		val = bus_space_read_2(bst, bsh1, LER1_RDP);
 	} while ((bus_space_read_1(bst, bsh0, LER0_STATUS) & LE_ACK) == 0);
 
-	return (val);
+	return val;
 }
 
 static int
@@ -168,8 +168,8 @@ lematch(struct device *parent, struct cfdata *match, void *aux)
 	struct dio_attach_args *da = aux;
 
 	if (da->da_id == DIO_DEVICE_ID_LAN)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 /*
@@ -259,7 +259,7 @@ leintr(void *arg)
 	isr = lerdcsr(sc, LE_CSR0);
 
 	if ((isr & LE_C0_INTR) == 0)
-		return (0);
+		return 0;
 
 	if (isr & LE_C0_RINT)
 		ledcontrol(0, 0, LED_LANRCV);
@@ -268,7 +268,7 @@ leintr(void *arg)
 		ledcontrol(0, 0, LED_LANXMT);
 #endif /* USELEDS */
 
-	return (am7990_intr(sc));
+	return am7990_intr(sc);
 }
 
 static void

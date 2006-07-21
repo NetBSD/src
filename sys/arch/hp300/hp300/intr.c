@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2006/03/19 06:13:43 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.28 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2006/03/19 06:13:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2006/07/21 10:01:39 tsutsui Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -251,7 +251,7 @@ intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
  compute:
 	/* Compute new interrupt levels. */
 	intr_computeipl();
-	return (newih);
+	return newih;
 }
 
 /*

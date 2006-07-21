@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.32 2006/03/28 17:38:25 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.32 2006/03/28 17:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.33 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,9 +161,9 @@ fhpibmatch(struct device *parent, struct cfdata *match, void *aux)
 	struct dio_attach_args *da = aux;
 
 	if (da->da_id == DIO_DEVICE_ID_FHPIB)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -183,7 +183,7 @@ fhpibattach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", DIO_DEVICE_DESC_FHPIB);
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(fhpibintr, sc, da->da_ipl, IPL_BIO);
+	(void)dio_intr_establish(fhpibintr, sc, da->da_ipl, IPL_BIO);
 
 	callout_init(&sc->sc_dmadone_ch);
 	callout_init(&sc->sc_ppwatch_ch);
@@ -222,7 +222,6 @@ fhpibreset(struct hpibbus_softc *hs)
 		if (fhpibdebug & FDB_DMA)
 			printf("fhpibtype: %s has word DMA\n",
 			    sc->sc_dev.dv_xname);
-
 #endif
 	}
 }
@@ -230,6 +229,7 @@ fhpibreset(struct hpibbus_softc *hs)
 static void
 fhpibifc(struct fhpibdevice *hd)
 {
+
 	hd->hpib_cmd |= CT_IFC;
 	hd->hpib_cmd |= CT_INITFIFO;
 	DELAY(100);
@@ -285,7 +285,7 @@ fhpibsend(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 		(void) fhpibwait(hd, IM_IDLE);
 	}
 	hd->hpib_imask = 0;
-	return (origcnt);
+	return origcnt;
 
 senderr:
 	hd->hpib_imask = 0;
@@ -297,7 +297,7 @@ senderr:
 		printf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
-	return (origcnt - cnt - 1);
+	return origcnt - cnt - 1;
 }
 
 static int
@@ -346,7 +346,7 @@ fhpibrecv(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 		(void) fhpibwait(hd, IM_IDLE);
 	}
 	hd->hpib_imask = 0;
-	return (origcnt);
+	return origcnt;
 
 recverror:
 	fhpibifc(hd);
@@ -359,7 +359,7 @@ recvbyteserror:
 		printf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
-	return (origcnt - cnt - 1);
+	return origcnt - cnt - 1;
 }
 
 static void
@@ -544,13 +544,13 @@ fhpibintr(void *arg)
 			sc->sc_dev.dv_xname, stat0);
 		/* fhpibbadint[0]++;			XXX */
 #endif
-		return(0);
+		return 0;
 	}
 	if ((hs->sc_flags & (HPIBF_IO|HPIBF_DONE)) == HPIBF_IO) {
 #ifdef DEBUG
 		/* fhpibbadint[1]++;			XXX */
 #endif
-		return(0);
+		return 0;
 	}
 #ifdef DEBUG
 	if ((fhpibdebug & FDB_DMA) &&
@@ -603,7 +603,7 @@ fhpibintr(void *arg)
 		hs->sc_flags &= ~HPIBF_PPOLL;
 		(hq->hq_intr)(hq->hq_softc);
 	}
-	return(1);
+	return 1;
 }
 
 static int
@@ -626,7 +626,7 @@ fhpibppoll(struct hpibbus_softc *hs)
 	hd->hpib_imask = 0;
 	hd->hpib_pmask = 0;
 	hd->hpib_stat = ST_IENAB;
-	return(ppoll);
+	return ppoll;
 }
 
 static int
@@ -641,9 +641,9 @@ fhpibwait(struct fhpibdevice *hd, int x)
 		if (fhpibdebug & FDB_FAIL)
 			printf("fhpibwait(%p, %x) timeout\n", hd, x);
 #endif
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
