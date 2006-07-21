@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.32 2006/05/10 18:47:45 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.33 2006/07/21 00:20:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.32 2006/05/10 18:47:45 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.33 2006/07/21 00:20:29 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -505,12 +505,13 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	}
 
 	(void)printf("Segment Summary Info at 0x%llx\n", (long long)addr);
-	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c\n    %s0x%x\t%s0x%x",
+	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c%c\n    %s0x%x\t%s0x%x",
 		"next     ", sp->ss_next,
 		"nfinfo   ", sp->ss_nfinfo,
 		"ninos    ", sp->ss_ninos,
 		"flags    ", (sp->ss_flags & SS_DIROP) ? 'D' : '-',
 			     (sp->ss_flags & SS_CONT)  ? 'C' : '-',
+			     (sp->ss_flags & SS_CLEAN)  ? 'L' : '-',
 		"sumsum   ", sp->ss_sumsum,
 		"datasum  ", sp->ss_datasum );
 	if (lfsp->lfs_version == 1) {
