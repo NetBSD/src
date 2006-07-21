@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.15 2006/05/15 12:39:05 yamt Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.16 2006/07/21 16:48:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.15 2006/05/15 12:39:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.16 2006/07/21 16:48:48 ad Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -183,8 +183,8 @@ biconsdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				     &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.38 2006/07/15 16:48:51 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.38 2006/07/15 16:48:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.38 2006/07/15 16:48:51 elad Exp $\n$NetBSD: verified_exec.c,v 1.38 2006/07/15 16:48:51 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $\n$NetBSD: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -129,12 +129,12 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 	if (veriexec_verbose >= 2) {
 		log(LOG_DEBUG, "Veriexec: Pseudo-device open attempt by "
 		    "uid=%u, pid=%u. (dev=%u)\n",
-		    kauth_cred_geteuid(l->l_proc->p_cred), l->l_proc->p_pid,
+		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid,
 		    dev);
 	}
 
-	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
