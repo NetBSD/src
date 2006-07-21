@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.10 2006/06/04 17:00:13 tsutsui Exp $
+#	$NetBSD: install.md,v 1.11 2006/07/21 19:02:27 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,8 +94,7 @@ md_installboot() {
 	# $1 is the root disk
 
 	echo -n "Installing boot block..."
-	disklabel -W ${1}
-	disklabel -B ${1}
+	/usr/sbin/installboot -v /dev/r${1}c  /usr/mdec/uboot.lif
 	echo "done."
 }
 
