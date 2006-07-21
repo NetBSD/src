@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.209 2006/06/12 22:49:35 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.210 2006/07/21 16:48:52 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.209 2006/06/12 22:49:35 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.210 2006/07/21 16:48:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2105,13 +2105,11 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
-	struct proc *p;
 	struct vattr va;
 	int     error;
 
 	if (l == NULL)
 		return(ESRCH);	/* Is ESRCH the best choice? */
-	p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
@@ -2120,18 +2118,18 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 	vp = nd.ni_vp;
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		return (EBUSY);
 	}
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		return (error);
 	}
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		return (ENOTBLK);
 	}
 	VOP_UNLOCK(vp, 0);

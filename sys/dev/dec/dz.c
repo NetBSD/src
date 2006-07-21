@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.20 2006/05/15 20:48:19 yamt Exp $	*/
+/*	$NetBSD: dz.c,v 1.21 2006/07/21 16:48:48 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.20 2006/05/15 20:48:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.21 2006/07/21 16:48:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,8 +360,8 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		(void) dzparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)

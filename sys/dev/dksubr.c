@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.22 2006/05/14 21:42:26 elad Exp $ */
+/* $NetBSD: dksubr.c,v 1.23 2006/07/21 16:48:47 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.22 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.23 2006/07/21 16:48:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,10 +643,8 @@ dk_lookup(path, l, vpp)
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr va;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
@@ -657,22 +655,22 @@ dk_lookup(path, l, vpp)
 
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
+		(void)vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 		return (EBUSY);
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: getattr error = %d\n", error));
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
+		(void)vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 		return (error);
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
+		(void)vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 		return (ENOTBLK);
 	}
 

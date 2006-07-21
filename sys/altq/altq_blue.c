@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.16 2006/05/15 00:05:39 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.16 2006/05/15 00:05:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -166,7 +166,6 @@ blueioctl(dev, cmd, addr, flag, l)
 	blue_queue_t *rqp;
 	struct blue_interface *ifacep;
 	struct ifnet *ifp;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -178,9 +177,8 @@ blueioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 #endif
 		break;

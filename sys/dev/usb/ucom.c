@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.64 2006/07/12 07:36:25 gson Exp $	*/
+/*	$NetBSD: ucom.c,v 1.65 2006/07/21 16:48:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.64 2006/07/12 07:36:25 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.65 2006/07/21 16:48:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
-	struct proc *p = l->l_proc;
 	struct ucom_softc *sc;
 	struct tty *tp;
 	int s;
@@ -329,7 +328,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -608,7 +608,6 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 	      int flag, struct lwp *l)
 {
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
@@ -659,7 +658,8 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.49 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.50 2006/07/21 16:48:47 ad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.49 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.50 2006/07/21 16:48:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1981,7 +1981,7 @@ coda_getpages(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct cnode *cp = VTOC(vp);
 	struct lwp *l = curlwp;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	int error;
 
 	/* Check for control object. */

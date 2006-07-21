@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.53 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.54 2006/07/21 16:48:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.53 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.54 2006/07/21 16:48:49 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -172,7 +172,7 @@ static void eshstart_cleanup(struct esh_softc *, u_int16_t, int);
 static struct esh_dmainfo *esh_new_dmainfo(struct esh_softc *);
 static void esh_free_dmainfo(struct esh_softc *, struct esh_dmainfo *);
 static int esh_generic_ioctl(struct esh_softc *, u_long, caddr_t, u_long,
-				  struct proc *);
+				  struct lwp *);
 
 #ifdef ESH_PRINTF
 static int esh_check(struct esh_softc *);
@@ -3085,7 +3085,7 @@ ioctl_done:
 
 static int
 esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
-		  u_long len, struct proc *p)
+		  u_long len, struct lwp *l)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct rr_eeprom rr_eeprom;
@@ -3101,11 +3101,11 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 	int i;
 
 	/*
-	 * If we have a proc pointer, check to make sure that the
+	 * If we have a LWP pointer, check to make sure that the
 	 * user is privileged before performing any destruction operations.
 	 */
 
-	if (p != NULL) {
+	if (l != NULL) {
 		switch (cmd) {
 		case EIOCGTUNE:
 		case EIOCGEEPROM:
@@ -3113,9 +3113,8 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			break;
 
 		default:
-			error = kauth_authorize_generic(p->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &p->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				return (error);
 		}

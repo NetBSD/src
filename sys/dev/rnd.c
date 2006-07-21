@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.51 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.52 2006/07/21 16:48:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.51 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.52 2006/07/21 16:48:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -489,11 +489,9 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
-	struct proc *p;
 	int ret, s;
 
 	ret = 0;
-	p = l->l_proc;
 
 	switch (cmd) {
 
@@ -512,7 +510,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETPOOLSTAT:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		s = splsoftclock();
@@ -521,7 +520,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNUM:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		rst = (rndstat_t *)addr;
@@ -564,7 +564,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNAME:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -587,7 +588,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDCTL:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -631,7 +633,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDADDDATA:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;

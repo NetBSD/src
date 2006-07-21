@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.34 2006/05/15 11:17:55 yamt Exp $	*/
+/*	$NetBSD: magma.c,v 1.35 2006/07/21 16:48:52 ad Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.34 2006/05/15 11:17:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.35 2006/07/21 16:48:52 ad Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -927,7 +927,8 @@ mttyopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1165,7 +1166,8 @@ mttyioctl(dev, cmd, data, flags, l)
 		break;
 
 	case TIOCSFLAGS:
-		if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) )
+		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag) )
 			error = EPERM;
 		else
 			mp->mp_openflags = *((int *)data) &

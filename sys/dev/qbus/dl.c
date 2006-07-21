@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.34 2006/05/15 20:44:04 yamt Exp $	*/
+/*	$NetBSD: dl.c,v 1.35 2006/07/21 16:48:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.34 2006/05/15 20:44:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.35 2006/07/21 16:48:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,6 @@ dlxint(void *arg)
 int
 dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	struct tty *tp;
 	struct dl_softc *sc;
 	int unit;
@@ -357,8 +356,8 @@ dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EBUSY;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));

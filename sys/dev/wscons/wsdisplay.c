@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.99 2006/06/28 16:19:01 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.100 2006/07/21 16:48:53 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.99 2006/06/28 16:19:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.100 2006/07/21 16:48:53 ad Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -757,8 +757,8 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-					     &l->l_proc->p_acflag) != 0)
+		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag) != 0)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 
