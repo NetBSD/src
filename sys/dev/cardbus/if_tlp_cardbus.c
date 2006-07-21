@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.49 2006/03/29 06:22:38 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.50 2006/07/21 17:20:21 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.49 2006/03/29 06:22:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.50 2006/07/21 17:20:21 gdamore Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -142,7 +142,7 @@ const struct tulip_cardbus_product {
 	{ PCI_VENDOR_XIRCOM,	PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	  TULIP_CHIP_X3201_3 },
 
-	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN983,
 	  TULIP_CHIP_AN985 },
 
 	{ PCI_VENDOR_ACCTON,	PCI_PRODUCT_ACCTON_EN2242,
@@ -160,7 +160,7 @@ const struct tulip_cardbus_product {
 	{ PCI_VENDOR_HAWKING,	PCI_PRODUCT_HAWKING_PN672TX,
 	  TULIP_CHIP_AN985 },
 
-	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985_2,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985,
 	  TULIP_CHIP_AN985 },
 
 	{ PCI_VENDOR_MICROSOFT,	PCI_PRODUCT_MICROSOFT_MN120,

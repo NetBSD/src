@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.806 2006/07/18 14:21:02 itohy Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.807 2006/07/21 17:20:20 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -829,11 +829,12 @@
 #define	PCI_PRODUCT_ADDTRON_RHINEII	0x1320		/* Rhine II 10/100 Ethernet */
 
 /* ADMtek products */
-#define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 10/100 Ethernet */
-#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* AN985 10/100 Ethernet */
-#define	PCI_PRODUCT_ADMTEK_AN985_2	0x1985		/* AN985 10/100 Ethernet (OEM) */
+#define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 (Comet) 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_AN983	0x0985		/* AN983 (Centaur-P) 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 (Centaur-C) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 11Mbps 802.11b WLAN */
-#define	PCI_PRODUCT_ADMTEK_AN983B	0x9511		/* AN983B 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_ADM9511	0x9511		/* ADM9511 (Centaur-II) 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_ADM9513	0x9513		/* ADM9513 (Centaur-II) 10/100 Ethernet */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100
