@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.805 2006/07/18 14:21:02 itohy Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.806 2006/07/21 17:20:20 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3005,23 +3005,27 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
-	    "AL981 10/100 Ethernet",
+	    "AL981 (Comet) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983,
+	    "AN983 (Centaur-P) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
-	    "AN985 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985_2,
-	    "AN985 10/100 Ethernet (OEM)",
+	    "AN985 (Centaur-C) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
 	    "ADM8211 11Mbps 802.11b WLAN",
 	},
 	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983B,
-	    "AN983B 10/100 Ethernet",
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9511,
+	    "ADM9511 (Centaur-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9513,
+	    "ADM9513 (Centaur-II) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
@@ -11768,4 +11772,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2349;
+const int pci_nproducts = 2350;
