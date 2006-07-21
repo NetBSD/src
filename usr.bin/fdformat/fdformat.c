@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.12 2004/04/23 15:04:27 christos Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.13 2006/07/21 23:05:14 mishka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.12 2004/04/23 15:04:27 christos Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.13 2006/07/21 23:05:14 mishka Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,7 +76,6 @@ static const char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
 static int	confirm(int);
 static void	usage(void) __attribute__((__noreturn__));
 static int	verify_track(int, int, int, struct fdformat_parms *, char *);
-static int	wincolsize(void);
 
 int	main(int, char **);
 
@@ -111,14 +110,13 @@ verify_track(int fd, int cyl, int trk, struct fdformat_parms *parms, char *buf)
 	offset = tracksize * (cyl * parms->ntrk + trk); /* track offset */
 
 	if (lseek(fd, offset, SEEK_SET) == (off_t) -1) {
-		(void)putchar('E');
+		(void)printf("- SEEK ERROR\n");
 		return 1;
 	}
 	if (read(fd, buf, tracksize) != tracksize) {
-		(void)putchar('E');
+		(void)printf("- VERIFY ERROR\n");
 		return 1;
-	} else
-		(void)putchar('V');
+	}
 	return 0;
 }
 
@@ -130,18 +128,6 @@ usage(void)
 	    "\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n"
 	    "\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", getprogname());
 	exit(1);
-}
-
-static int
-wincolsize(void)
-{
-	struct winsize win;
-
-	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1) {
-		warn("TIOCGWINSZ");
-		return 80;
-	}
-	return win.ws_col;
 }
 
 #define numarg(which, maskn, op) 				\
@@ -190,8 +176,6 @@ main(int argc, char *argv[])
 	const char *filename = _PATH_FLOPPY_DEV;
 	int fd;
 	int trk, cyl;
-        int colcnt = 0;
-        int colsize = wincolsize();
 
 	while ((ch = getopt(argc, argv, "f:t:nB:C:S:T:P:G:F:X:I:")) != -1)
 		switch (ch) {
@@ -313,18 +297,9 @@ main(int argc, char *argv[])
 		cmd.cylinder = cyl;
 		for (trk = 0; trk < parms.ntrk; trk++) {
 			cmd.head = trk;
+			(void)printf("\rFormatting track %i / head %i ", cyl, trk);
+			(void)fflush(stdout);
 			if (ioctl(fd, FDIOCFORMAT_TRACK, &cmd) == 0) {
-                                if (verify && colsize) {
-                                        colcnt++;
-                                        if (colcnt % colsize == 0) {
-                                                (void)putchar('\n');
-                                                colcnt++;
-                                        }
-                                }
-				(void)putchar('F');
-				if (verify)
-					(void)putchar('\b');
-				(void)fflush(stdout);
 				if (verify)
 					errcnt += verify_track(fd, cyl, trk,
 					    &parms, trackbuf);
@@ -333,13 +308,13 @@ main(int argc, char *argv[])
 				errx(1, "Formatting botch at <%d,%d>",
 				     cyl, trk);
 			} else if (errno == EIO) {
-				(void)putchar('E');
-				(void)fflush(stdout);
+				(void)printf("- IO ERROR\n");
 				errcnt++;
 			}
 		}
 	}
-	(void)putchar('\n');
+	(void)printf("\rFormatting %i tracks total complete.\n",
+		parms.ncyl * parms.ntrk);
 	if (errcnt)
 		errx(1, "%d track formatting error%s",
 		    errcnt, errcnt == 1 ? "" : "s");
