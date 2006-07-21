@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/07/02 22:15:14 nathanw Exp $
+#	$NetBSD: Makefile,v 1.5 2006/07/21 11:23:02 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -42,6 +42,7 @@ native-gdb: .native/.configure_done
 			ac_cv_func_strcoll_works=yes \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
+			--with-separate-debug-dir=/usr/libdata/debug \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
