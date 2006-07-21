@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.31 2006/07/21 18:11:01 tsutsui Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.32 2006/07/21 18:40:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.31 2006/07/21 18:11:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.32 2006/07/21 18:40:58 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -210,18 +210,20 @@ hyper_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
+	bus_space_handle_t bsh;
 	caddr_t grf;
 
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == hyperconscode)
 		grf = hyperconaddr;
 	else {
-		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
-		if (grf == 0) {
+		if (bus_space_map(da->da_bst, da->da_addr, da->da_size,
+		    0, &bsh)) {
 			printf("%s: can't map framebuffer\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+		grf = bus_space_vaddr(da->da_bst, bsh);
 	}
 
 	sc->sc_isconsole = (sc->sc_scode == hyperconscode);
