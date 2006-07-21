@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.147 2006/07/09 06:43:16 kardel Exp $ */
+/* $NetBSD: vmstat.c,v 1.148 2006/07/21 05:26:53 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.147 2006/07/09 06:43:16 kardel Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.148 2006/07/21 05:26:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1096,7 +1096,7 @@ domem(void)
 	(void)printf(
 	    "\nMemory statistics by type                           Type  Kern\n");
 	(void)printf(
-"         Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
+"         Type  InUse MemUse HighUse  Limit  Requests Limit Limit Size(s)\n");
 	for (kread(namelist, X_KMEMSTAT, &ksp, sizeof(ksp));
 	     ksp != NULL; ksp = ks.ks_next) {
 		deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
@@ -1104,7 +1104,7 @@ domem(void)
 			continue;
 		deref_kptr(ks.ks_shortdesc, memname,
 		    sizeof(memname), "malloc type name");
-		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
+		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%10ld%5u%6u",
 		    memname,
 		    ks.ks_inuse, (ks.ks_memuse + 1023) / 1024,
 		    (ks.ks_maxused + 1023) / 1024,
@@ -1162,7 +1162,7 @@ dopool(int verbose, int wide)
 			    wide ? 12 : 9, "Requests",
 			    "Fail",
 			    wide ? 12 : 9, "Releases",
-			    wide ? " InUse" : "",
+			    wide ? "  InUse" : "",
 			    wide ? " Avail" : "",
 			    wide ? 7 : 6, "Pgreq",
 			    wide ? 7 : 6, "Pgrel",
@@ -1204,7 +1204,7 @@ dopool(int verbose, int wide)
 		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
 		PRWORD(ovflw, " %*lu", wide ? 12 : 9, 1, pp->pr_nput);
 		if (wide)
-			PRWORD(ovflw, " %*u", 6, 1, pp->pr_nout);
+			PRWORD(ovflw, " %*u", 7, 1, pp->pr_nout);
 		if (wide)
 			PRWORD(ovflw, " %*u", 6, 1, pp->pr_nitems);
 		PRWORD(ovflw, " %*lu", wide ? 7 : 6, 1, pp->pr_npagealloc);
