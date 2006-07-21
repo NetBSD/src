@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.29 2006/05/31 09:32:11 tsutsui Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.30 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.29 2006/05/31 09:32:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.30 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -200,9 +200,9 @@ hyper_dio_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    da->da_secid == DIO_DEVICE_SECID_HYPERION)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -279,7 +279,7 @@ hy_init(struct grf_data *gp, int scode, caddr_t addr)
 		gi->gd_planes = hy->num_planes;
 		gi->gd_colors = 1 << gi->gd_planes;
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -351,7 +351,7 @@ hy_mode(struct grf_data *gp, int cmd, caddr_t data)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return error;
 }
 
 #if NITE > 0
@@ -761,14 +761,14 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
 	if (badaddr(va) ||
 	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 
 	if (DIO_ISDIOII(scode))
@@ -778,7 +778,7 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);
 	if (bus_space_map(bst, addr, size, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 
 	/*
@@ -799,7 +799,7 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	 * Initialize the terminal emulator.
 	 */
 	itedisplaycnattach(gp, &hyper_itesw);
-	return (0);
+	return 0;
 }
 
 #endif /* NITE > 0 */

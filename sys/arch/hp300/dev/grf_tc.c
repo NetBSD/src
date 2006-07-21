@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.34 2006/05/31 09:32:11 tsutsui Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.34 2006/05/31 09:32:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -218,10 +218,10 @@ topcat_intio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct grfreg *grf;
 
 	if (strcmp("fb",ia->ia_modname) != 0)
-		return (0);
+		return 0;
 
 	if (badaddr((caddr_t)ia->ia_addr))
-		return (0);
+		return 0;
 
 	grf = (struct grfreg *)ia->ia_addr;
 
@@ -234,11 +234,11 @@ topcat_intio_match(struct device *parent, struct cfdata *match, void *aux)
 #if 0
 		case DIO_DEVICE_SECID_XXXCATSEYE:
 #endif
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -269,11 +269,11 @@ topcat_dio_match(struct device *parent, struct cfdata *match, void *aux)
 #if 0
 		case DIO_DEVICE_SECID_XXXCATSEYE:
 #endif
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -397,7 +397,7 @@ tc_init(struct grf_data *gp, int scode, caddr_t addr)
 			*fbp = save;
 		}
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -494,7 +494,7 @@ tc_mode(struct grf_data *gp, int cmd, caddr_t data)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return error;
 }
 
 #if NITE > 0
@@ -721,13 +721,13 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
 	if (badaddr(va) || grf->gr_id != GRFHWID) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 
 	switch (grf->gr_id2) {
@@ -749,7 +749,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 
 	default:
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 
 	if (DIO_ISDIOII(scode))
@@ -759,7 +759,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);
 	if (bus_space_map(bst, addr, size, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 
 	/*
@@ -779,7 +779,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	 * Initialize the terminal emulator.
 	 */
 	itedisplaycnattach(gp, &topcat_itesw);
-	return (0);
+	return 0;
 }
 
 #endif /* NITE > 0 */

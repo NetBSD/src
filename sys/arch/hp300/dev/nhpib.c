@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.34 2006/03/19 06:47:35 tsutsui Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.34 2006/03/19 06:47:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,9 +177,9 @@ nhpib_intio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct intio_attach_args *ia = aux;
 
 	if (strcmp("hpib", ia->ia_modname) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -188,9 +188,9 @@ nhpib_dio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct dio_attach_args *da = aux;
 
 	if (da->da_id == DIO_DEVICE_ID_NHPIB)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -213,7 +213,7 @@ nhpib_intio_attach(struct device *parent, struct device *self, void *aux)
 	nhpib_common_attach(sc, desc);
 
 	/* establish the interrupt handler */
-	(void) intio_intr_establish(nhpibintr, sc, ia->ia_ipl, IPL_BIO);
+	(void)intio_intr_establish(nhpibintr, sc, ia->ia_ipl, IPL_BIO);
 }
 
 static void
@@ -289,6 +289,7 @@ nhpibreset(struct hpibbus_softc *hs)
 static void
 nhpibifc(struct nhpibdevice *hd)
 {
+
 	hd->hpib_acr = AUX_TCA;
 	hd->hpib_acr = AUX_CSRE;
 	hd->hpib_acr = AUX_SSIC;
@@ -346,11 +347,11 @@ nhpibsend(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 		(void) nhpibwait(hd, MIS_BO);
 #endif
 	}
-	return(origcnt);
+	return origcnt;
 
 senderror:
 	nhpibifc(hd);
-	return(origcnt - cnt - 1);
+	return origcnt - cnt - 1;
 }
 
 static int
@@ -396,12 +397,12 @@ nhpibrecv(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 		hd->hpib_data = (slave == 31) ? C_UNA_P : C_UNT_P;
 		(void) nhpibwait(hd, MIS_BO);
 	}
-	return(origcnt);
+	return origcnt;
 
 recverror:
 	nhpibifc(hd);
 recvbyteserror:
-	return(origcnt - cnt - 1);
+	return origcnt - cnt - 1;
 }
 
 static void
@@ -519,10 +520,11 @@ nhpibintr(void *arg)
 	int stat1;
 
 #ifdef lint
-	if (stat1 = unit) return(1);
+	if (stat1 = unit)
+		return 1;
 #endif
 	if ((hd->hpib_ids & IDS_IR) == 0)
-		return(0);
+		return 0;
 	stat0 = hd->hpib_mis;
 	stat1 = hd->hpib_lis;
 
@@ -553,7 +555,7 @@ nhpibintr(void *arg)
 			       hs->sc_dev.dv_xname, stat0);
 #endif
 	}
-	return(1);
+	return 1;
 }
 
 static int
@@ -568,7 +570,7 @@ nhpibppoll(struct hpibbus_softc *hs)
 	DELAY(25);
 	ppoll = hd->hpib_cpt;
 	hd->hpib_acr = AUX_CPP;
-	return(ppoll);
+	return ppoll;
 }
 
 #ifdef DEBUG
@@ -587,9 +589,9 @@ nhpibwait(struct nhpibdevice *hd, int x)
 		if (nhpibreporttimo)
 			printf("hpib0: %s timo\n", x==MIS_BO?"OUT":"IN");
 #endif
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 static void

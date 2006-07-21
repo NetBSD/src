@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.80 2006/07/19 17:21:23 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.81 2006/07/21 10:01:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.80 2006/07/19 17:21:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.81 2006/07/21 10:01:39 tsutsui Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -303,10 +303,10 @@ mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* Allow only one instance. */
 	if (mainbus_matched)
-		return (0);
+		return 0;
 
 	mainbus_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -326,7 +326,7 @@ mainbussearch(struct device *parent, struct cfdata *cf,
 
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
-	return (0);
+	return 0;
 }
 
 /*
@@ -753,7 +753,7 @@ dev_data_lookup(struct device *dev)
 
 	for (dd = dev_data_list.lh_first; dd != NULL; dd = dd->dd_list.le_next)
 		if (dd->dd_dev == dev)
-			return (dd);
+			return dd;
 
 	panic("dev_data_lookup");
 }
@@ -902,14 +902,14 @@ dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int))
 		if (DIO_INHOLE(scode) || ((scode == 7) && internalhpib))
 			continue;
 		if (!dio_scode_probe(scode, func))
-			return (0);
+			return 0;
 	}
 #else
 		if (!dio_scode_probe(CONSCODE, func))
-			return (0);
+			return 0;
 #endif
 
-	return (1);
+	return 1;
 }
 
 static int
@@ -926,14 +926,14 @@ dio_scode_probe(int scode,
 	pa = dio_scodetopa(scode);
 	va = iomap(pa, PAGE_SIZE);
 	if (va == 0)
-		return (1);
+		return 1;
 	if (badaddr(va)) {
 		iounmap(va, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 	iounmap(va, PAGE_SIZE);
 
-	return ((*func)(bst, (bus_addr_t)pa, scode));
+	return (*func)(bst, (bus_addr_t)pa, scode);
 }
 
 
@@ -974,10 +974,10 @@ iomap(caddr_t pa, int size)
 	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
 	    &kva);
 	if (error)
-		return (0);
+		return 0;
 
 	physaccess((caddr_t) kva, pa, size, PG_RW|PG_CI);
-	return ((caddr_t) kva);
+	return (caddr_t)kva;
 }
 
 /*

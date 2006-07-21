@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 2006/07/20 13:21:38 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 2006/07/21 10:01:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2006/07/20 13:21:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2006/07/21 10:01:40 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -801,7 +801,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
-	return (error);
+	return error;
 }
 
 /*
@@ -987,11 +987,11 @@ badaddr(caddr_t addr)
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return 1;
 	}
 	i = *(volatile short *)addr;
 	nofault = (int *) 0;
-	return(0);
+	return 0;
 }
 
 int
@@ -1003,11 +1003,11 @@ badbaddr(caddr_t addr)
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return 1;
 	}
 	i = *(volatile char *)addr;
 	nofault = (int *) 0;
-	return(0);
+	return 0;
 }
 
 /*
@@ -1023,17 +1023,17 @@ lookup_bootinfo(int type)
 
 	/* Check for a bootinfo record first. */
 	if (help == NULL)
-		return (NULL);
+		return NULL;
 
 	do {
 		bt = (struct btinfo_common *)help;
 		if (bt->type == type)
-			return (help);
+			return help;
 		help += bt->next;
 	} while (bt->next != 0 &&
 		 (size_t)help < (size_t)bootinfo_va + BOOTINFO_SIZE);
 
-	return (NULL);
+	return NULL;
 }
 
 #if defined(PANICBUTTON) && !defined(DDB)
@@ -1158,13 +1158,13 @@ static int
 parityerror(struct frame *fp)
 {
 	if (!gotparmem)
-		return(0);
+		return 0;
 	*PARREG = 0;
 	DELAY(10);
 	*PARREG = 1;
 	if (panicstr) {
 		printf("parity error after panic ignored\n");
-		return(1);
+		return 1;
 	}
 	if (!parityerrorfind())
 		printf("WARNING: transient parity error ignored\n");
@@ -1181,7 +1181,7 @@ parityerror(struct frame *fp)
 		regdump((struct trapframe *)fp, 128);
 		panic("kernel parity error");
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -1199,7 +1199,9 @@ parityerrorfind(void)
 	int found;
 
 #ifdef lint
-	i = o = pg = 0; if (i) return(0);
+	i = o = pg = 0;
+	if (i)
+		return 0;
 #endif
 	/*
 	 * If looking is true we are searching for a known parity error
@@ -1246,7 +1248,7 @@ done:
 	pmap_update(pmap_kernel());
 	ecacheon();
 	splx(s);
-	return(found);
+	return found;
 }
 
 /*
@@ -1280,12 +1282,12 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(l, epp);
-		return(error);
+		return error;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(l, epp);
-		return(error);
+		return error;
 #endif
 	}
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
