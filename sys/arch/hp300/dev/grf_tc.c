@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.36 2006/07/21 18:11:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.36 2006/07/21 18:11:01 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -752,10 +752,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 		return 1;
 	}
 
-	if (DIO_ISDIOII(scode))
-		size = DIOII_SIZE(va);
-	else
-		size = DIOCSIZE;
+	size = DIO_SIZE(scode, va);
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);
 	if (bus_space_map(bst, addr, size, 0, &bsh))
