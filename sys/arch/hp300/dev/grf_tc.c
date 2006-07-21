@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.36 2006/07/21 18:11:01 tsutsui Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.37 2006/07/21 18:40:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.36 2006/07/21 18:11:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.37 2006/07/21 18:40:58 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -282,17 +282,19 @@ topcat_dio_attach(struct device *parent, struct device *self, void *aux)
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
 	caddr_t grf;
+	bus_space_handle_t bsh;
 
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == tcconscode)
 		grf = tcconaddr;
 	else {
-		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
-		if (grf == 0) {
+		if (bus_space_map(da->da_bst, da->da_addr, da->da_size, 0,
+		    &bsh)) {
 			printf("%s: can't map framebuffer\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+		grf = bus_space_vaddr(da->da_bst, bsh);
 	}
 
 	topcat_common_attach(sc, grf, da->da_secid);
