@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.31 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.32 2006/07/21 14:04:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,7 +148,7 @@ message fs_isize
 {Durchschnittliche Dateigröße (in Bytes)}
 
 message mountpoint
-{Mountpoint (oder 'kein'))}
+{Mountpoint (oder 'kein(e)'))}
 
 message cylname
 {Zyl}
@@ -225,8 +225,7 @@ message add_another_ptn
 {Hinzufügen einer benutzerdefinierten Partition}
 
 message fssizesok
-{Akzeptieren der Partitionsgrößen. Freier Speicherplatz %d %s, %d freie
-Partitionen.}
+{Akzeptieren. Freier Speicherplatz %d %s, %d freie Partitionen.}
 
 message fssizesbad
 {Reduzieren der Partitionsgrößen um %d %s (%d Sektoren).}
