@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.255 2006/07/20 16:18:14 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.256 2006/07/22 10:34:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.255 2006/07/20 16:18:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.256 2006/07/22 10:34:26 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -69,9 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.255 2006/07/20 16:18:14 christos 
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -550,7 +550,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	int async;
 	int used_syncer;
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	if (!doing_shutdown) {
 		if (veriexec_strict >= 3) {
 			printf("Veriexec: Lockdown mode, preventing unmount of"
@@ -573,7 +573,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			}
 		}
 	}
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 #ifdef FILEASSOC
 	(void)fileassoc_table_delete(mp);
@@ -2023,7 +2023,7 @@ restart:
 		goto out;
 	}
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	/* Handle remove requests for veriexec entries. */
 	if ((error = veriexec_removechk(l, vp, nd.ni_dirp)) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -2034,8 +2034,8 @@ restart:
 		vput(vp);
 		goto out;
 	}
-#endif /* VERIFIED_EXEC */
-
+#endif /* NVERIEXEC > 0 */
+	
 	if (vn_start_write(nd.ni_dvp, &mp, V_NOWAIT) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
@@ -3355,11 +3355,11 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 		error = -1;
 	}
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	if (!error)
 		error = veriexec_renamechk(fvp, tvp, fromnd.ni_dirp,
 					   tond.ni_dirp, l);
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 out:
 	p = l->l_proc;
