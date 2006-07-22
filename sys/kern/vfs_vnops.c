@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.115 2006/07/22 10:34:26 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.116 2006/07/22 10:40:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.115 2006/07/22 10:34:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.116 2006/07/22 10:40:49 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -201,15 +201,10 @@ restart:
 		goto bad;
 	}
 
-#if NVERIEXEC > 0
-	if ((error = VOP_GETATTR(vp, &va, cred, l)) != 0)
-		goto bad;
-#endif /* NVERIEXEC > 0 */
-
 	if ((fmode & O_CREAT) == 0) {
 #if NVERIEXEC > 0
-		if ((error = veriexec_verify(l, vp, pathbuf,
-					     VERIEXEC_FILE, &vfe)) != 0)
+		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
+		    &vfe)) != 0)
 			goto bad;
 #endif /* NVERIEXEC > 0 */
 
