@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446xintc.c,v 1.4 2005/12/18 21:20:48 uwe Exp $	*/
+/*	$NetBSD: hd6446xintc.c,v 1.5 2006/07/22 01:34:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.4 2005/12/18 21:20:48 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.5 2006/07/22 01:34:55 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,23 +129,19 @@ hd6446x_intr_priority(int irq, int level)
 static void
 hd6446x_intr_priority_update(void)
 {
-	struct hd6446x_intrhand *hh;
 	int irq, ipl;
-	uint16_t mask;
-	
-	/* I assume interrupt level is splhigh */
+
 	for (ipl = 0; ipl < _IPL_N; ipl++) {
-		hh = hd6446x_intrhand;
-		mask = 0;
-		for (irq = 0; irq < _HD6446X_INTR_N; irq++, hh++) {
-			if (hh->hh_func == NULL)
-				continue;
-			if (hh->hh_ipl == (ipl << 4))
+		uint16_t mask = ~hd6446x_ienable; /* mask disabled */
+
+		/* mask sources interrupting at <= ipl */
+		for (irq = 0; irq < _HD6446X_INTR_N; irq++) {
+			struct hd6446x_intrhand *hh = &hd6446x_intrhand[irq];
+
+			if (hh->hh_func != NULL && hh->hh_ipl <= (ipl << 4))
 				mask |= 1 << irq;
 		}
-		hd6446x_imask[ipl] = mask | ~hd6446x_ienable;
-	}
 
-	for (ipl = 1; ipl < _IPL_N; ipl++)
-		hd6446x_imask[ipl] |= hd6446x_imask[ipl - 1];
+		hd6446x_imask[ipl] = mask;
+	}
 }
