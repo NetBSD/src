@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.657 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.658 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -376,3 +376,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		activated. [rpaulo 20060720]
 	tftp(1): Add support for the multicast TFTP option; open-loop mode
 		only for now. [jmcneill 20060721]
+	arc: Make bootloader pass kernel symbol info via bootinfo properly
+		so that options SYMTAB_SPACE is no longer required for
+		ksyms(4) or ddb(4). [tsutsui 20060722]
