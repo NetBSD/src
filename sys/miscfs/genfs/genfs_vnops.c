@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.126 2006/07/22 08:47:56 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.127 2006/07/22 08:49:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.126 2006/07/22 08:47:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.127 2006/07/22 08:49:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -408,7 +408,7 @@ genfs_rel_pages(struct vm_page **pgs, int npages)
 	for (i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 
-		if (pg == NULL)
+		if (pg == NULL || pg == PGO_DONTCARE)
 			continue;
 		if (pg->flags & PG_FAKE) {
 			pg->flags |= PG_RELEASED;
@@ -537,9 +537,38 @@ startover:
 	 */
 
 	if (flags & PGO_LOCKED) {
-		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
-		    UFP_NOWAIT|UFP_NOALLOC| (write ? UFP_NORDONLY : 0));
+		int nfound;
 
+		npages = *ap->a_count;
+#if defined(DEBUG)
+		for (i = 0; i < npages; i++) {
+			pg = ap->a_m[i];
+			KASSERT(pg == NULL || pg == PGO_DONTCARE);
+		}
+#endif /* defined(DEBUG) */
+		nfound = uvn_findpages(uobj, origoffset, &npages,
+		    ap->a_m, UFP_NOWAIT|UFP_NOALLOC|(write ? UFP_NORDONLY : 0));
+		KASSERT(npages == *ap->a_count);
+		if (nfound == 0) {
+			return EBUSY;
+		}
+		if (lockmgr(&gp->g_glock, LK_SHARED | LK_NOWAIT, NULL)) {
+			genfs_rel_pages(ap->a_m, npages);
+
+			/*
+			 * restore the array.
+			 */
+
+			for (i = 0; i < npages; i++) {
+				pg = ap->a_m[i];
+
+				if (pg != NULL || pg != PGO_DONTCARE) {
+					ap->a_m[i] = NULL;
+				}
+			}
+		} else {
+			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+		}
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
 	simple_unlock(&uobj->vmobjlock);
