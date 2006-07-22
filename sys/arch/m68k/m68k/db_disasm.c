@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.34 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.35 2006/07/22 06:34:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.34 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.35 2006/07/22 06:34:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ db_disasm(db_addr_t loc, boolean_t moto_syntax)
 		db_printf("\t[%s]\n",info_buffer);
 	else
 		db_printf("\n");
-	return (loc + sizeof(short)*dbuf.used);
+	return loc + sizeof(short) * dbuf.used;
 }
 /*
  * Bit manipulation/MOVEP/Immediate.
@@ -2903,7 +2903,7 @@ get_fpustdGEN(dis_buffer_t *dbuf, u_short ext, const char *name)
 static u_long
 get_areg_val(int reg)
 {
-	return (0);
+	return 0;
 }
 #endif
 

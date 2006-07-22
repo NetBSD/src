@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.19 2006/05/14 21:55:38 elad Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.20 2006/07/22 06:34:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.19 2006/05/14 21:55:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.20 2006/07/22 06:34:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 		m68881_restore(&fpf);
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -296,19 +296,20 @@ svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_SETNAME:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			return (error);
+		if ((error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+			return error;
 		if ((error = copyinstr(SCARG(uap, a1), tmp, sizeof (tmp), &len))
 		    != 0)
-			return (error);
+			return error;
 		name[0] = CTL_KERN;
 		name[1] = KERN_HOSTNAME;
-		return (old_sysctl(&name[0], 2, NULL, NULL, tmp, len, NULL));
+		return old_sysctl(&name[0], 2, NULL, NULL, tmp, len, NULL);
 	default:
 		printf("uninplemented svr4_sysarch(%d), a1 %p\n",
 		    SCARG(uap, op), SCARG(uap, a1));
 		error = EINVAL;
 	}
 
-	return (error);
+	return error;
 }

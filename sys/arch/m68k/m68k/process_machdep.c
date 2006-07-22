@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.25 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26 2006/07/22 06:34:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2006/07/22 06:34:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,14 +71,14 @@ process_frame(struct lwp *l)
 	void *ptr;
 
 	ptr = l->l_md.md_regs;
-	return (ptr);
+	return ptr;
 }
 
 static inline struct fpframe *
 process_fpframe(struct lwp *l)
 {
 
-	return (&l->l_addr->u_pcb.pcb_fpregs);
+	return &l->l_addr->u_pcb.pcb_fpregs;
 }
 
 int
@@ -90,7 +90,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	regs->r_sr = frame->f_sr;
 	regs->r_pc = frame->f_pc;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -103,7 +103,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	regs->r_fpsr = frame->fpf_fpsr;
 	regs->r_fpiar = frame->fpf_fpiar;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -134,7 +134,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	frame->f_sr = regs->r_sr;
 	frame->f_pc = regs->r_pc;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -147,7 +147,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 	frame->fpf_fpsr = regs->r_fpsr;
 	frame->fpf_fpiar = regs->r_fpiar;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -160,7 +160,7 @@ process_sstep(struct lwp *l, int sstep)
 	else
 		frame->f_sr &= ~PSL_T;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -179,5 +179,5 @@ process_set_pc(struct lwp *l, caddr_t addr)
 	 */
 	frame->f_pc = (u_int)addr;
 
-	return (0);
+	return 0;
 }
