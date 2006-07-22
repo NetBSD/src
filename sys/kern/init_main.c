@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.272 2006/07/14 22:44:28 kardel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.273 2006/07/22 10:34:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.272 2006/07/14 22:44:28 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.273 2006/07/22 10:34:26 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -141,9 +141,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.272 2006/07/14 22:44:28 kardel Exp $
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif
+#endif /* NVERIEXEC > 0 */
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
@@ -337,13 +337,13 @@ main(void)
 	fileassoc_init();
 #endif /* FILEASSOC */
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	  /*
 	   * Initialise the fingerprint operations vectors before
 	   * fingerprints can be loaded.
 	   */
 	veriexec_init_fp_ops();
-#endif
+#endif /* NVERIEXEC > 0 */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
