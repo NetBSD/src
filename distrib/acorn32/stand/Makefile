@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2006/07/19 22:54:57 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.23 2006/07/22 22:38:54 bjh21 Exp $
 #
 
 .include <bsd.own.mk>
@@ -78,11 +78,6 @@ SETTYPE_FILE_!BtNetBSD/src/Banner/resutil=ffb
 SETTYPE_FILES+=misc/bb_netbsd
 
 SETTYPE_FILE_misc/bb_netbsd=ffb
-
-SETTYPE_FILES+=misc/Mkrel/MkRelease misc/Mkrel/MkRelScr
-
-SETTYPE_FILE_misc/Mkrel/MkRelease=feb
-SETTYPE_FILE_misc/Mkrel/MkRelScr=feb
 
 .PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD
 .PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD/native 
