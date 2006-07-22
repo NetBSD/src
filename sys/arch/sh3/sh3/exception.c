@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.27 2006/07/19 21:11:45 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.28 2006/07/22 03:06:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.27 2006/07/19 21:11:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.28 2006/07/22 03:06:56 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,13 +172,13 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			ksi.ksi_addr = (void *)tf->tf_spc;
 			goto trapsignal;
 		} else {
+			/* XXX: we shouldn't treat *any* TRAPA as a syscall */
 			(*l->l_proc->p_md.md_syscall)(l, tf);
 			return;
 		}
 		break;
 
-	case EXPEVT_ADDR_ERR_LD:
-		/*FALLTHROUGH*/
+	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
 		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
 		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
@@ -186,8 +186,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			goto do_panic;
 		break;
 
-	case EXPEVT_ADDR_ERR_LD | EXP_USER:
-		/*FALLTHROUGH*/
+	case EXPEVT_ADDR_ERR_LD | EXP_USER: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST | EXP_USER:
 		KSI_INIT_TRAP(&ksi);
 		if (((int)va) < 0) {
@@ -200,8 +199,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		ksi.ksi_addr = (void *)va;
 		goto trapsignal;
 
-	case EXPEVT_RES_INST | EXP_USER:
-		/*FALLTHROUGH*/
+	case EXPEVT_RES_INST | EXP_USER: /* FALLTHROUGH */
 	case EXPEVT_SLOT_INST | EXP_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
@@ -249,9 +247,10 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	printf(" spc %x ssr %x \n", tf->tf_spc, tf->tf_ssr);
 
 	panic("general_exception");
-	while (/*CONSTCOND*/1)
-			;
-	/*NOTREACHED*/
+
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }
 
 
