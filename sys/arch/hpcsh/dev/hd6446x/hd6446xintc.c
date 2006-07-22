@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446xintc.c,v 1.5 2006/07/22 01:34:55 uwe Exp $	*/
+/*	$NetBSD: hd6446xintc.c,v 1.6 2006/07/22 01:53:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.5 2006/07/22 01:34:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.6 2006/07/22 01:53:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ hd6446x_intr_establish(int irq, int mode, int level,
     int (*func)(void *), void *arg)
 {
 	struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(irq) - 1];
-	uint16_t r;
 	int s;
 
 	s = splhigh();
@@ -81,11 +80,6 @@ hd6446x_intr_establish(int irq, int mode, int level,
 	/* Update interrupt priority masks. */
 	hd6446x_intr_priority_update();
 
-	/* Enable interrupt */
-	r = _reg_read_2(HD6446X_NIMR);
-	r &= ~hh->hh_imask;
-	_reg_write_2(HD6446X_NIMR, r);
-
 	splx(s);
 
 	return (hh);
@@ -95,15 +89,9 @@ void
 hd6446x_intr_disestablish(void *handle)
 {
 	struct hd6446x_intrhand *hh = handle;
-	uint16_t r;
 	int s;
 	
 	s = splhigh();
-
-	/* Disable interrupt */
-	r = _reg_read_2(HD6446X_NIMR);
-	r |= hh->hh_imask;
-	_reg_write_2(HD6446X_NIMR, r);
 
 	/* Update interrupt priority masks */
 	hd6446x_ienable &= ~hh->hh_imask;
