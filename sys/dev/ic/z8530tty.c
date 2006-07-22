@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.109 2006/07/21 16:48:51 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.110 2006/07/22 15:09:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.109 2006/07/21 16:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.110 2006/07/22 15:09:09 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -803,7 +803,6 @@ zsioctl(dev, cmd, data, flag, l)
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
