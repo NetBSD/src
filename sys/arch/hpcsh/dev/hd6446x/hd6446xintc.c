@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446xintc.c,v 1.6 2006/07/22 01:53:49 uwe Exp $	*/
+/*	$NetBSD: hd6446xintc.c,v 1.7 2006/07/22 02:13:06 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.6 2006/07/22 01:53:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd6446xintc.c,v 1.7 2006/07/22 02:13:06 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,17 +117,17 @@ hd6446x_intr_priority(int irq, int level)
 static void
 hd6446x_intr_priority_update(void)
 {
-	int irq, ipl;
+	int ipl, src;
 
 	for (ipl = 0; ipl < _IPL_N; ipl++) {
 		uint16_t mask = ~hd6446x_ienable; /* mask disabled */
 
 		/* mask sources interrupting at <= ipl */
-		for (irq = 0; irq < _HD6446X_INTR_N; irq++) {
-			struct hd6446x_intrhand *hh = &hd6446x_intrhand[irq];
+		for (src = 0; src < _HD6446X_INTR_N; ++src) {
+			struct hd6446x_intrhand *hh = &hd6446x_intrhand[src];
 
 			if (hh->hh_func != NULL && hh->hh_ipl <= (ipl << 4))
-				mask |= 1 << irq;
+				mask |= 1 << src;
 		}
 
 		hd6446x_imask[ipl] = mask;
