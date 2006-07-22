@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.30 2006/07/22 21:58:29 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.31 2006/07/22 22:43:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.30 2006/07/22 21:58:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.31 2006/07/22 22:43:43 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -263,19 +263,21 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 void
 tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
-#define	TLB_ASSERT(assert, msg)						\
-do {									\
-	if (!(assert)) {						\
-		panic_msg =  msg;					\
-		goto tlb_panic;						\
-	}								\
-} while(/*CONSTCOND*/0)
 	struct vm_map *map;
 	pmap_t pmap;
 	ksiginfo_t ksi;
 	boolean_t usermode;
 	int err, track, ftype;
 	const char *panic_msg;
+
+#define TLB_ASSERT(assert, msg)				\
+		do {					\
+			if (!(assert)) {		\
+				panic_msg =  msg;	\
+				goto tlb_panic;		\
+			}				\
+		} while(/*CONSTCOND*/0)
+
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
@@ -423,11 +425,13 @@ do {									\
 	return;
 
  tlb_panic:
-	panic("tlb_handler: %s va=0x%08x, ssr=0x%08x, spc=0x%08x"
-	    "  lwp=%p onfault=%p", panic_msg, va, tf->tf_ssr, tf->tf_spc,
-	    l, l ? l->l_md.md_pcb->pcb_onfault : 0);
+	panic("tlb_exception: %s\n"
+	      "expevt=%x va=%08x ssr=%08x spc=%08x lwp=%p onfault=%p",
+	      panic_msg, tf->tf_expevt, va, tf->tf_ssr, tf->tf_spc,
+	      l, l ? l->l_md.md_pcb->pcb_onfault : NULL);
 #undef	TLB_ASSERT
 }
+
 
 /*
  * void ast(struct lwp *l, struct trapframe *tf):
