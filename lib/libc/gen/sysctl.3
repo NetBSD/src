@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.173 2006/07/14 22:04:42 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.174 2006/07/22 10:47:53 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 14, 2006
+.Dd July 22, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -934,10 +934,10 @@ The number of raw input characters.
 .It Li KERN_URND
 Random integer value.
 .It Li KERN_VERIEXEC
-Tunings for Verified Exec.
-Third level names for the veriexec variables are detailed below.
-The changeable column shows whether a process with appropriate
-privilege may change the value or only raise it.
+Tunings for Verixec.
+Third level names for the Veriexec variables are detailed below.
+The changeable column shows whether a process with appropriate privilege may
+change the value or only raise it.
 Only the superuser can modify these variables.
 .Bl -column "VERIEXECXALGORITHMSXXX" "struct integerXXX" -offset indent
 .It Sy Third level name	Type	Changeable
@@ -950,19 +950,18 @@ Only the superuser can modify these variables.
 The variables are as follows:
 .Bl -tag -width "123456"
 .It Li VERIEXEC_ALGORITHMS
-Returns a string with the supported algorithms in Verified Exec.
+Returns a string with the supported algorithms in Veriexec.
 .It Li VERIEXEC_COUNT
-Variables are added to this node as new hash tables are created to
-contain Veriexec data for a new mount.
+Sub-nodes are added to this node as new mounts are monitored by Veriexec.
 Each mount will be under its own
 .No tableN
 node.
 Under each node there will be three variables, indicating the mount
 point, the file-system type, and the number of entries.
 .It Li VERIEXEC_STRICT
-Controls the strict level of Verified Exec.
+Controls the strict level of Veriexec.
 The strict level defines how
-Verified Exec will treat various situations.
+Veriexec will treat various situations.
 In strict level 0, the system is in learning mode and will only warn about
 fingerprint mismatches, aswell as allow removal of fingerprinted files.
 It is the only level where fingerprints can be loaded.
@@ -978,7 +977,7 @@ strict level 2, but it will also prevent access to non-monitored files.
 Furthermore, it will prevent addition of new files to the system, and
 allow writing only to files opened before the strict level was raised.
 .It Li VERIEXEC_VERBOSE
-Controls the verbosity level of Verified Exec.
+Controls the verbosity level of Veriexec.
 If 0, only the minimal
 indication required will be given about what's happening - fingerprint
 mismatches, removal of entries from the tables, modification of a
