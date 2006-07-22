@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.656 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.657 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -374,3 +374,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		meta-data association interface. [elad 20060714]
 	postfix(1): Updated to 2.3.0. Dovecot server side SASL support
 		activated. [rpaulo 20060720]
+	tftp(1): Add support for the multicast TFTP option; open-loop mode
+		only for now. [jmcneill 20060721]
