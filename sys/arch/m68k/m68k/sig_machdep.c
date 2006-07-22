@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.29 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.30 2006/07/22 06:40:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.29 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.30 2006/07/22 06:40:20 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -101,9 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.29 2005/12/11 12:17:59 christos Ex
 #include <machine/reg.h>
 #include <machine/frame.h>
 
+#include <m68k/m68k.h>
 #include <m68k/saframe.h>
 
-extern int fputype;
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
 void	m68881_save(struct fpframe *);
@@ -164,6 +164,7 @@ void
 buildcontext(struct lwp *l, void *catcher, void *fp)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
+
 	/*
 	 * Set up the registers to return to the signal handler.  The
 	 * handler will then return to the signal trampoline.
@@ -229,6 +230,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
 		sendsig_sigcontext(ksi, mask);
@@ -464,5 +466,5 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 	if (flags & _UC_CLRSTACK)
 		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	return (0);
+	return 0;
 }
