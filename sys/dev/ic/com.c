@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.248 2006/07/21 16:48:48 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.249 2006/07/22 09:22:21 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.248 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.249 2006/07/22 09:22:21 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1020,6 +1020,18 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (error);
 
 	error = 0;
+	switch (cmd) {
+	case TIOCSFLAGS:
+		error = kauth_authorize_generic(p->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+	if (error) {
+		return error;
+	}
 
 	s = splserial();
 	COM_LOCK(sc);
@@ -1046,10 +1058,6 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
-		if (error)
-			break;
 		sc->sc_swflags = *(int *)data;
 		break;
 
