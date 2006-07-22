@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.32 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.33 2006/07/22 21:58:29 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33 2006/07/22 21:58:29 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -47,9 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2005/12/24 23:24:02 perry Exp 
 #include <ddb/db_sym.h>
 
 #include <sh3/ubcreg.h>
-
-extern char *exp_type[];
-extern int exp_types;
 
 db_regs_t ddb_regs;		/* register state */
 
