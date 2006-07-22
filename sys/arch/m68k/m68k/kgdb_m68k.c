@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_m68k.c,v 1.6 2006/07/22 06:36:06 tsutsui Exp $	*/
+/*	$NetBSD: kgdb_m68k.c,v 1.7 2006/07/22 06:58:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.6 2006/07/22 06:36:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.7 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.6 2006/07/22 06:36:06 tsutsui Exp $"
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(int type)
 {
 	int sigval;

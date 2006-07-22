@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 2006/07/22 06:42:41 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 2006/07/22 06:58:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2006/07/22 06:42:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}	
+}
 
 void
 cpu_lwp_free(struct lwp *l, int proc)

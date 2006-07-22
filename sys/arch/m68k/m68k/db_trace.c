@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.43 2006/07/22 06:34:42 tsutsui Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.44 2006/07/22 06:58:17 tsutsui Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2006/07/22 06:34:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -208,7 +208,7 @@ nextframe(struct stackpos *sp, struct pcb *pcb, int kerneltrace,
 	sp->k_pc = calladdr;
 	sp->k_fp = get(sp->k_fp + FR_SAVFP, DSP);
 
-	/* 
+	/*
 	 * Now that we have assumed the identity of our caller, find
 	 * how many longwords of argument WE were called with.
 	 */
@@ -231,8 +231,8 @@ nextframe(struct stackpos *sp, struct pcb *pcb, int kerneltrace,
 
 static void
 findentry(struct stackpos *sp, void (*pr)(const char *, ...))
-{ 
-	/* 
+{
+	/*
 	 * Set the k_nargs and k_entry fields in the stackpos structure.  This
 	 * is called from stacktop() and from nextframe().  Our caller will do
 	 * an addq or addl or addw to sp just after we return to pop off our
