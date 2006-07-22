@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.29 2006/07/22 03:22:15 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.30 2006/07/22 21:58:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.29 2006/07/22 03:22:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.30 2006/07/22 21:58:29 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.29 2006/07/22 03:22:15 uwe Exp $");
 #include <sh3/exception.h>
 #include <sh3/userret.h>
 
-const char *exp_type[] = {
+const char * const exp_type[] = {
 	"--",					/* 0x000 (reset vector) */
 	"--",					/* 0x020 (reset vector) */
 	"TLB miss/invalid (load)",		/* 0x040 EXPEVT_TLB_MISS_LD */
