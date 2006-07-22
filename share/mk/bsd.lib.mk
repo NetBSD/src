@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.267 2006/05/11 23:47:34 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.268 2006/07/22 05:29:03 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -346,7 +346,7 @@ STOBJS+=${OBJS}
 libinstall::
 .else	# ${MKPRIVATELIB} == "no"					# {
 
-.if ${MKDEBUG} != "no"
+.if ${MKDEBUGLIB} != "no"
 _LIBS+=lib${LIB}_g.a
 GOBJS+=${OBJS:.o=.go}
 DEBUGFLAGS?=-DDEBUG
@@ -535,7 +535,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 .endif
 
-.if ${MKDEBUG} != "no"
+.if ${MKDEBUGLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_g.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_g.a
 
