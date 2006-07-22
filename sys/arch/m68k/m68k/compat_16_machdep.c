@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.7 2006/07/22 06:34:41 tsutsui Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.8 2006/07/22 06:58:17 tsutsui Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2006/07/22 06:34:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -141,7 +141,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
-		       p->p_pid, sig, &onstack, fp, &fp->sf_sc, ft);
+		    p->p_pid, sig, &onstack, fp, &fp->sf_sc, ft);
 #endif
 
 	/* Build stack frame for signal trampoline. */
@@ -197,7 +197,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
 			printf("sendsig(%d): copy out %d of frame %d\n",
-			       p->p_pid, exframesize[ft], ft);
+			    p->p_pid, exframesize[ft], ft);
 #endif
 	}
 
@@ -208,8 +208,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kf.sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %p\n",
-		       p->p_pid, *(u_int *)&kf.sf_state.ss_fpstate,
-		       &kf.sf_state.ss_fpstate);
+		    p->p_pid, *(u_int *)&kf.sf_state.ss_fpstate,
+		    &kf.sf_state.ss_fpstate);
 #endif
 
 	/* Build the signal context to be used by sigreturn. */
@@ -239,7 +239,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): copyout failed on sig %d\n",
-			       p->p_pid, sig);
+			    p->p_pid, sig);
 #endif
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -251,8 +251,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
-		       p->p_pid, sig, kf.sf_scp, fp,
-		       kf.sf_sc.sc_sp, kf.sf_sc.sc_ap);
+		    p->p_pid, sig, kf.sf_scp, fp,
+		    kf.sf_sc.sc_sp, kf.sf_sc.sc_ap);
 #endif
 
 	buildcontext(l, catcher, fp);
@@ -264,7 +264,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
+		    p->p_pid, sig);
 #endif
 }
 #endif
@@ -332,7 +332,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn(%d): sc_ap %x flags %x\n",
-		       p->p_pid, rf, flags);
+		    p->p_pid, rf, flags);
 #endif
 	/* fuword failed (bogus sc_ap value). */
 	if (flags == -1)
@@ -343,8 +343,8 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
-		       (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+		    p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
+		    (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
 	 * Restore long stack frames.  Note that we do not copy
@@ -366,7 +366,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
-			       p->p_pid, sz, tstate.ss_frame.f_format);
+			    p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
 
@@ -409,8 +409,8 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
-		       &tstate.ss_fpstate);
+		    p->p_pid, *(u_int *)&tstate.ss_fpstate,
+		    &tstate.ss_fpstate);
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.30 2006/07/22 06:40:20 tsutsui Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.31 2006/07/22 06:58:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.30 2006/07/22 06:40:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -255,7 +255,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	sf.sa_events = nevents;
 	sf.sa_interrupted = ninterrupted;
 	sf.sa_arg = ap;
-	
+
 	sfp = (struct saframe *)sp - 1;
 	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
@@ -309,7 +309,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 		mcp->__mc_pad.__mc_frame.__mcf_vector = frame->f_vector;
 		(void)memcpy(&mcp->__mc_pad.__mc_frame.__mcf_exframe,
 		    &frame->F_u, (size_t)exframesize[format]);
-		
+
 		/* Leave indicators, see above. */
 		frame->f_stackadj += exframesize[format];
 		frame->f_format = frame->f_vector = 0;
