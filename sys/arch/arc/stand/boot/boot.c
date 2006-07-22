@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2006/07/22 18:15:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@ static char **environment;
 struct btinfo_symtab bi_syms;
 struct btinfo_bootpath bi_bpath;
 
+static char bootinfo[BOOTINFO_SIZE];
+
 extern const struct arcbios_fv *ARCBIOS;
 
 int main(int, char **);
@@ -139,7 +141,7 @@ main(int argc, char **argv)
 	const char     *kernel = NULL;
 	const char     *bootpath = NULL;
 	char            bootfile[PATH_MAX];
-	void            (*entry)(int, char *[], int, void *);
+	void            (*entry)(int, char *[], u_int, void *);
 	u_long          marks[MARK_MAX];
 	int             win = 0;
 	int             i;
@@ -153,7 +155,7 @@ main(int argc, char **argv)
 	memset(marks, 0, sizeof marks);
 
 	/* initialise bootinfo structure early */
-	bi_init();
+	bi_init(bootinfo);
 
 #ifdef BOOT_DEBUG
 	for (i = 0; i < argc; i++)
@@ -240,15 +242,14 @@ main(int argc, char **argv)
 		return 0;
 	}
 
-#if 0
-	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
-	bi_add(&bi_bpath, BTINFO_BOOTPATH);
+	strlcpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
+	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
 	bi_syms.esym = marks[MARK_END];
-	bi_add(&bi_syms, BTINFO_SYMTAB);
-#endif
+	bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
+
 	entry = (void *)marks[MARK_ENTRY];
 
 	if (debug) {
@@ -256,7 +257,7 @@ main(int argc, char **argv)
 		printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
 		       marks[MARK_SYM], marks[MARK_END]);
 	}
-	(*entry)(argc, argv, 0 /* BOOTINFO_MAGIC */, NULL);
+	(*entry)(argc, argv, BOOTINFO_MAGIC, bootinfo);
 
 	printf("Kernel returned!  Halting...\n");
 	return 0;
