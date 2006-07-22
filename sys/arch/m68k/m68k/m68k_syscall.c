@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.24 2006/07/19 21:11:42 ad Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.25 2006/07/22 06:58:17 tsutsui Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.24 2006/07/19 21:11:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.25 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
@@ -456,7 +456,7 @@ child_return(void *arg)
 #endif
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void
