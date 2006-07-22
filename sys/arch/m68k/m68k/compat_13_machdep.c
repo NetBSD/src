@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.9 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10 2006/07/22 06:32:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2006/07/22 06:32:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2005/12/11 12:17:59 christ
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-
-extern int fputype;
-extern short exframesize[];
-void	m68881_restore(struct fpframe *);
 
 /*
  * System call to cleanup state after a signal
@@ -128,18 +124,18 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	 */
 	scp = SCARG(uap, sigcntxp);
 	if ((int)scp & 1)
-		return (EINVAL);
+		return EINVAL;
 
 	if (copyin(scp, &tsigc, sizeof(tsigc)) != 0)
-		return (EFAULT);
+		return EFAULT;
 	scp = &tsigc;
 
 	/* Make sure the user isn't pulling a fast one on us! */
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Restore register context. */
-	frame = (struct frame *) l->l_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 
 	/*
 	 * We only support restoring the sigcontext13 in this call.
@@ -147,7 +143,7 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	 * we will not have a sigstate to restore.
 	 */
 	if (scp->sc_ap != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Restore the user supplied information.
@@ -169,7 +165,7 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 }
