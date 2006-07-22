@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2006/06/25 16:29:14 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2006/07/22 18:15:05 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2006/06/25 16:29:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2006/07/22 18:15:05 tsutsui Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2006/06/25 16:29:14 tsutsui Exp $")
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 #endif
 
-
+#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pio.h>
@@ -180,6 +180,10 @@ vsize_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
 struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
 
+char *bootinfo;			/* pointer to bootinfo structure */
+static char bi_buf[BOOTINFO_SIZE]; /* buffer to store bootinfo data */
+static const char *bootinfo_msg = NULL;
+
 #if NCOM > 0
 int	com_freq = COM_FREQ;	/* unusual clock frequency of dev/ic/com.c */
 int	com_console = COMCONSOLE;
@@ -200,7 +204,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-void mach_init(int, char **argv, char **);
+void mach_init(int, char *[], u_int, void *);
 
 const char *firmware_getenv(const char *env);
 void arc_sysreset(bus_addr_t, bus_size_t);
@@ -231,16 +235,55 @@ extern struct user *proc0paddr;
  * Return the first page address following the system.
  */
 void
-mach_init(int argc, char *argv[], char *envv[])
+mach_init(int argc, char *argv[], u_int bim, void *bip)
 {
 	const char *cp;
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	caddr_t kernend, v;
+#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+	char *ssym = NULL;
+	char *esym = NULL;
+	struct btinfo_symtab *bi_syms;
+#endif
+
+	/* set up bootinfo structures */
+	if (bim == BOOTINFO_MAGIC && bip != NULL) {
+		struct btinfo_magic *bi_magic;
+
+		memcpy(bi_buf, bip, BOOTINFO_SIZE);
+		bootinfo = bi_buf;
+		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+			bootinfo_msg =
+			    "invalid magic number in bootinfo structure.\n";
+		else
+			bootinfo_msg = "bootinfo found.\n";
+	} else
+		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
 	/* clear the BSS segment in kernel code */
-	kernend = (caddr_t)mips_round_page(end);
-	memset(edata, 0, kernend - edata);
+#if NKSYM > 0 || defined(DDB) || defined(LKM)
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+
+	/* check whether there is valid bootinfo symtab info */
+	if (bi_syms != NULL) {
+		ssym = (char *)bi_syms->ssym;
+		esym = (char *)bi_syms->esym;
+		kernend = (void *)mips_round_page(esym);
+#if 0	
+		/*
+		 * Don't clear BSS here since bi_buf[] is allocated in BSS
+		 * and it has been cleared by the bootloader in this case.
+		 */
+		memset(edata, 0, end - edata);
+#endif
+	} else
+#endif
+	{
+		kernend = (caddr_t)mips_round_page(end);
+		memset(edata, 0, kernend - edata);
+	}
 
 	environment = &argv[1];
 
@@ -382,14 +425,12 @@ mach_init(int argc, char *argv[], char *envv[])
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-#if 0 /* XXX */
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(1000, &end, (int*)esym);
-#else
+		ksyms_init(esym - ssym, ssym, esym);
 #ifdef SYMTAB_SPACE
-	ksyms_init(0, NULL, NULL);
-#endif
+	else
+		ksyms_init(0, NULL, NULL);
 #endif
 #endif
 
@@ -529,6 +570,12 @@ cpu_startup(void)
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
+
+#endif
+
+#ifdef BOOTINFO_DEBUG
+	if (bootinfo_msg)
+		printf(bootinfo_msg);
 #endif
 
 	/*
@@ -567,6 +614,29 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 
 	arc_bus_space_malloc_set_safe();
+}
+
+void *
+lookup_bootinfo(int type)
+{
+	struct btinfo_common *bt;
+	char *bip;
+
+	/* check for a bootinfo record first */
+	if (bootinfo == NULL)
+		return NULL;
+
+	bip = bootinfo;
+	do {
+		bt = (struct btinfo_common *)bip;
+		if (bt->type == type)
+			return (void *)bt;
+		bip += bt->next;
+	} while (bt->next != 0 &&
+	    bt->next < BOOTINFO_SIZE /* sanity */ &&
+	    (size_t)bip < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return NULL;
 }
 
 static int waittime = -1;
