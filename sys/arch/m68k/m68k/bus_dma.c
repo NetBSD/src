@@ -1,10 +1,10 @@
-/* $NetBSD: bus_dma.c,v 1.18 2006/07/22 06:27:00 tsutsui Exp $ */
+/* $NetBSD: bus_dma.c,v 1.19 2006/07/22 06:58:17 tsutsui Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
  * should probably be re-synced when needed.
  * Darrin B. Jewell <dbj@NetBSD.org> Sat Jul 31 06:11:33 UTC 1999
- * original cvs id: NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp 
+ * original cvs id: NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp
  */
 
 /*-
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2006/07/22 06:27:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2006/07/22 06:58:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 	extern paddr_t avail_start, avail_end;
 	paddr_t curaddr, lastaddr, high;
-	struct vm_page *m;    
+	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
 
