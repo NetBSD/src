@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.42 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.43 2006/07/22 06:34:42 tsutsui Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.42 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2006/07/22 06:34:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,16 +71,18 @@ const struct db_variable db_regs[] = {
 	{ "pc",	(long *)&ddb_regs.tf_pc, 	FCN_NULL },
 	{ "sr",	(long *)&ddb_regs.tf_sr,	db_var_short }
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs =
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 static int
 db_var_short(const struct db_variable *varp, db_expr_t *valp, int op)
 {
+
     if (op == DB_VAR_GET)
-	*valp = (db_expr_t) *((short*)varp->valuep);
+	*valp = (db_expr_t)*((short*)varp->valuep);
     else
 	*((short*)varp->valuep) = (short) *valp;
-    return(0);
+    return 0;
 }
 
 #define	MAXINT	0x7fffffff
@@ -224,7 +226,7 @@ nextframe(struct stackpos *sp, struct pcb *pcb, int kerneltrace,
 
 	if (sp->k_fp == 0 || oldfp == sp->k_fp)
 		return 0;
-	return (sp->k_fp);
+	return sp->k_fp;
 }
 
 static void

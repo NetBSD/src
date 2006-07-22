@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.6 2005/12/11 12:17:59 christos Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.7 2006/07/22 06:34:41 tsutsui Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2006/07/22 06:34:41 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -304,15 +304,15 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
-		return (EINVAL);
+		return EINVAL;
 
 	if (copyin(scp, &tsigc, sizeof(tsigc)) != 0)
-		return (EFAULT);
+		return EFAULT;
 	scp = &tsigc;
 
 	/* Make sure the user isn't pulling a fast one on us! */
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Restore register context. */
 	frame = (struct frame *) l->l_md.md_regs;
@@ -336,7 +336,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 #endif
 	/* fuword failed (bogus sc_ap value). */
 	if (flags == -1)
-		return (EINVAL);
+		return EINVAL;
 
 	if (flags == 0 || copyin((caddr_t)rf, &tstate, sizeof(tstate)) != 0)
 		goto restore;
@@ -358,7 +358,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 		sz = tstate.ss_frame.f_format;
 		if (sz > 15 || (sz = exframesize[sz]) < 0
 				|| frame->f_stackadj < sz)
-			return (EINVAL);
+			return EINVAL;
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.ss_frame.f_format;
 		frame->f_vector = tstate.ss_frame.f_vector;
@@ -415,6 +415,6 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 }
 #endif
