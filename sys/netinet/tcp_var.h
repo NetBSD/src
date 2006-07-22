@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.134 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.135 2006/07/22 17:39:48 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -226,7 +226,7 @@ struct tcpcb {
 	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
- * See RFC783, Dec. 1981, page 21.
+ * See RFC793, Dec. 1981, page 21.
  */
 /* send sequence variables */
 	tcp_seq	snd_una;		/* send unacknowledged */
@@ -675,7 +675,8 @@ struct	tcpstat {
 #define	TCPCTL_STATS		30	/* TCP statistics */
 #define	TCPCTL_DEBUG		31	/* TCP debug sockets */
 #define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
-#define	TCPCTL_MAXID		33
+#define TCPCTL_ECN		33	/* TCP ECN */
+#define	TCPCTL_MAXID		34
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -711,6 +712,7 @@ struct	tcpstat {
 	{ "stats", CTLTYPE_STRUCT }, \
 	{ "debug", CTLTYPE_STRUCT }, \
 	{ "debx", CTLTYPE_INT }, \
+	{ "ecn", CTLTYPE_NODE }, \
 }
 
 #ifdef _KERNEL
