@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.221 2006/07/19 21:11:37 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.222 2006/07/22 10:34:26 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.221 2006/07/19 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.222 2006/07/22 10:34:26 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.221 2006/07/19 21:11:37 ad Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif
+#endif /* NVERIEXEC > 0 */
 
 #ifdef SYSTRACE
 #include <sys/systrace.h>
@@ -285,11 +285,11 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 	VOP_UNLOCK(vp, 0);
 
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
         if ((error = veriexec_verify(l, vp, epp->ep_ndp->ni_dirp, flag,
 	    NULL)) != 0)
                 goto bad2;
-#endif
+#endif /* NVERIEXEC > 0 */
 
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
@@ -487,11 +487,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	/* see if we can run it. */
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
         if ((error = check_exec(l, &pack, VERIEXEC_DIRECT)) != 0)
 #else
         if ((error = check_exec(l, &pack, 0)) != 0)
-#endif
+#endif /* NVERIEXEC > 0 */
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.114 2006/07/16 18:49:29 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.115 2006/07/22 10:34:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.114 2006/07/16 18:49:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.115 2006/07/22 10:34:26 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.114 2006/07/16 18:49:29 elad Exp $")
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 #endif
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif
+#endif /* NVERIEXEC > 0 */
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
 	    kauth_cred_t cred, int flags);
@@ -104,15 +104,15 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	kauth_cred_t cred = l->l_proc->p_cred;
 	struct vattr va;
 	int error;
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	struct veriexec_file_entry *vfe = NULL;
 	char pathbuf[MAXPATHLEN];
 	size_t pathlen;
 	int (*copyfun)(const void *, void *, size_t, size_t *) =
 	    ndp->ni_segflg == UIO_SYSSPACE ? copystr : copyinstr;
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	error = (*copyfun)(ndp->ni_dirp, pathbuf, sizeof(pathbuf), &pathlen);
 	if (error) {
 		if (veriexec_verbose >= 1)
@@ -121,7 +121,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 
 		return (error);
 	}
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 restart:
 	if (fmode & O_CREAT) {
@@ -133,7 +133,7 @@ restart:
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		if (ndp->ni_vp == NULL) {
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 			/* Lockdown mode: Prevent creation of new files. */
 			if (veriexec_strict >= 3) {
 				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
@@ -146,7 +146,7 @@ restart:
 				error = EPERM;
 				goto bad;
 			}
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 			VATTR_NULL(&va);
 			va.va_type = VREG;
@@ -201,17 +201,17 @@ restart:
 		goto bad;
 	}
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	if ((error = VOP_GETATTR(vp, &va, cred, l)) != 0)
 		goto bad;
-#endif
+#endif /* NVERIEXEC > 0 */
 
 	if ((fmode & O_CREAT) == 0) {
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 		if ((error = veriexec_verify(l, vp, pathbuf,
 					     VERIEXEC_FILE, &vfe)) != 0)
 			goto bad;
-#endif
+#endif /* NVERIEXEC > 0 */
 
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, l)) != 0)
@@ -226,7 +226,7 @@ restart:
 			if ((error = vn_writechk(vp)) != 0 ||
 			    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
 				goto bad;
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 			if (vfe != NULL) {
 				veriexec_report("Write access request.",
 						pathbuf, l, REPORT_NOVERBOSE,
@@ -240,7 +240,7 @@ restart:
 					vfe->status = FINGERPRINT_NOTEVAL;
 				}
 			}
-#endif
+#endif /* NVERIEXEC > 0 */
 		}
 	}
 
