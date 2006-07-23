@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.183 2006/07/22 05:29:03 lukem Exp $
+#	$NetBSD: bsd.README,v 1.184 2006/07/23 11:41:27 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -125,6 +125,10 @@ MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
 
 MKCVS		If "no", don't build or install cvs(1).
 		Default: yes
+
+MKDEBUG		If "no", don't build and install separate debugging symbols
+		into /usr/libdata/debug.
+		Default: no
 
 MKDEBUGLIB	Build debugging libraries.
 		Default: no

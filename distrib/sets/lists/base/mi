@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.639 2006/07/16 06:13:29 tnozaki Exp $
+# $NetBSD: mi,v 1.640 2006/07/23 11:41:24 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -861,6 +861,22 @@
 ./usr/lib/runemodule/libUTF8.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3.0		base-obsolete		obsolete
 ./usr/libdata					base-sys-usr
+./usr/libdata/debug				base-sys-usr
+./usr/libdata/debug/bin				base-sys-usr
+./usr/libdata/debug/libexec			base-sys-usr
+./usr/libdata/debug/sbin			base-sys-usr
+./usr/libdata/debug/usr				base-sys-usr
+./usr/libdata/debug/usr/X11R6			base-sys-usr
+./usr/libdata/debug/usr/X11R6/bin		base-sys-usr
+./usr/libdata/debug/usr/X11R6/libexec		base-sys-usr
+./usr/libdata/debug/usr/bin			base-sys-usr
+./usr/libdata/debug/usr/games			base-sys-usr
+./usr/libdata/debug/usr/libexec			base-sys-usr
+./usr/libdata/debug/usr/libexec/ching		base-sys-usr
+./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
+./usr/libdata/debug/usr/libexec/postfix		base-sys-usr
+./usr/libdata/debug/usr/libexec/uucp		base-sys-usr
+./usr/libdata/debug/usr/sbin			base-sys-usr
 ./usr/libdata/firmware				base-sys-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr

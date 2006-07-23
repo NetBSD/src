@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.214 2006/06/19 15:44:44 gdamore Exp $
+#	$NetBSD: bsd.prog.mk,v 1.215 2006/07/23 11:41:27 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -129,12 +129,14 @@ CLEANFILES+=strings
 	@rm -f x.cc
 .endif
 
-.if defined(PROG)
+.if defined(PROG)							# {
 .if defined(PROG_CXX)
 SRCS?=		${PROG}.cc
 .else
 SRCS?=		${PROG}.c
 .endif
+
+PROGNAME?=	${PROG}
 
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
@@ -150,7 +152,7 @@ OBJS+=		${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
-.if defined(OBJS) && !empty(OBJS)
+.if defined(OBJS) && !empty(OBJS)					# {
 .NOPATH: ${OBJS} ${PROG} ${_YPSRCS}
 
 _PROGLDOPTS=
@@ -177,6 +179,10 @@ _SUPCXX=	-lstdc++ -lm
 .endif
 .else
 _CCLINK=	${CC}
+.endif
+
+.if ${MKDEBUG} != "no" && ${OBJECT_FMT} == "ELF" && !commands(${PROG})
+_PROGDEBUG=	${PROGNAME}.debug
 .endif
 
 .gdbinit:
@@ -210,17 +216,25 @@ ${PROG}.ro: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${LD} -r -dc -o ${.TARGET} ${OBJS}
 
-.endif	# defined(OBJS) && !empty(OBJS)
+.if defined(_PROGDEBUG)
+${_PROGDEBUG}: ${PROG}
+	${_MKTARGET_CREATE}
+	${OBJCOPY} --only-keep-debug ${PROG} ${_PROGDEBUG}
+	${OBJCOPY} -R .gnu_debuglink --add-gnu-debuglink=${_PROGDEBUG} ${PROG} \
+	    || rm -f ${_PROGDEBUG}
+.endif
+
+.endif	# defined(OBJS) && !empty(OBJS)					# }
 
 .if !defined(MAN)
 MAN=	${PROG}.1
 .endif	# !defined(MAN)
-.endif	# defined(PROG)
+.endif	# defined(PROG)							# }
 
-realall: ${PROG} ${SCRIPTS}
+realall: ${PROG} ${_PROGDEBUG} ${SCRIPTS}
 
 cleanprog: .PHONY cleanobjs cleanextra
-	rm -f a.out [Ee]rrs mklog core *.core .gdbinit ${PROG}
+	rm -f a.out [Ee]rrs mklog core *.core .gdbinit ${PROG} ${_PROGDEBUG}
 
 cleanobjs: .PHONY
 .if defined(OBJS) && !empty(OBJS)
@@ -232,36 +246,53 @@ cleanextra: .PHONY
 	rm -f ${CLEANFILES}
 .endif
 
-.if defined(PROG) && !target(proginstall)
-PROGNAME?=${PROG}
+.if defined(PROG) && !target(proginstall)				# {
 
-proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
-.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
+proginstall::	${DESTDIR}${BINDIR}/${PROGNAME} ${_PROGDEBUG:D${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}}
+.PRECIOUS:	${DESTDIR}${BINDIR}/${PROGNAME} ${_PROGDEBUG:D${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}}
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
 
+__progdebuginstall: .USE
+	${_MKTARGET_INSTALL}
+	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
+		${.ALLSRC} ${.TARGET}
+
 .if ${MKUPDATE} == "no"
 ${DESTDIR}${BINDIR}/${PROGNAME}! ${PROG} __proginstall
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}! .MADE
 .endif
-.else
+.if defined(_PROGDEBUG)
+${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}! ${_PROGDEBUG} __progdebuginstall
+.if !defined(BUILD) && !make(all) && !make(${PROG})
+${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}! .MADE
+.endif
+.endif	#  define(_PROGDEBUG)
+.else	# MKUPDATE != no
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG} __proginstall
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
+.if defined(_PROGDEBUG)
+${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}: ${_PROGDEBUG} __progdebuginstall
+.if !defined(BUILD) && !make(all) && !make(${PROG})
+${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}: .MADE
 .endif
-.endif
+.endif	#  defined(_PROGDEBUG)
+.endif	# MKUPDATE != no
+
+.endif	# defined(PROG) && !target(proginstall)				# }
 
 .if !target(proginstall)
 proginstall::
 .endif
 .PHONY:		proginstall
 
-.if defined(SCRIPTS) && !target(scriptsinstall)
+.if defined(SCRIPTS) && !target(scriptsinstall)				# {
 SCRIPTSDIR?=${BINDIR}
 SCRIPTSOWN?=${BINOWN}
 SCRIPTSGRP?=${BINGRP}
@@ -291,7 +322,7 @@ ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U$
 .endif
 .endif
 .endfor
-.endif
+.endif									# }
 
 .if !target(scriptsinstall)
 scriptsinstall::
