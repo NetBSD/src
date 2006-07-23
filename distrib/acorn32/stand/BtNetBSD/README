@@ -1,9 +1,10 @@
-$NetBSD: README,v 1.2 2006/03/21 22:16:43 bjh21 Exp $
+$NetBSD: README,v 1.3 2006/07/23 13:33:53 bjh21 Exp $
 
 Welcome to NetBSD for the Acorn RiscPC/A7000/NC !
 
-To read more about installing the bootloader, read the FBInstall file.
+For information about the boot loader, click Menu on !BtNetBSD and
+choose "Help" from the "App. '!BtNetBSD'" submenu.  For information
+about installing NetBSD, see the INSTALL document in the NetBSD
+distribution.
 
 Enjoy your installation !
-
-Reinoud Zandijk

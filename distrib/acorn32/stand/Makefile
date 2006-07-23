@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2006/07/22 22:38:54 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.24 2006/07/23 13:33:53 bjh21 Exp $
 #
 
 .include <bsd.own.mk>
@@ -41,11 +41,13 @@ UUDECODE_FILES_RENAME_pling.Sprites=tmp/BtNetBSD/!BtNetBSD/!Sprites,ff9
 UUDECODE_FILES_RENAME_pling.Sprites22=tmp/BtNetBSD/!BtNetBSD/!Sprites22,ff9
 UUDECODE_FILES_RENAME_MemFix=tmp/BtNetBSD/!BtNetBSD/MemFix,ffa
 
-SETTYPE_FILES=!BtNetBSD/!Boot !BtNetBSD/!Edit !BtNetBSD/!Run !BtNetBSD/BtNetBSD
-SETTYPE_FILES+=!BtNetBSD/PreBoot !BtNetBSD/TestBoot !BtNetBSD/checkro403
+SETTYPE_FILES=!BtNetBSD/!Boot !BtNetBSD/!Edit !BtNetBSD/!Help !BtNetBSD/!Run
+SETTYPE_FILES+=!BtNetBSD/BtNetBSD !BtNetBSD/PreBoot !BtNetBSD/TestBoot
+SETTYPE_FILES+=!BtNetBSD/checkro403
 
 SETTYPE_FILE_!BtNetBSD/!Boot=feb
 SETTYPE_FILE_!BtNetBSD/!Edit=feb
+SETTYPE_FILE_!BtNetBSD/!Help=feb
 SETTYPE_FILE_!BtNetBSD/!Run=feb
 SETTYPE_FILE_!BtNetBSD/BtNetBSD=ffb
 SETTYPE_FILE_!BtNetBSD/PreBoot=feb

@@ -1,4 +1,4 @@
-$NetBSD: FBInstall,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+$NetBSD: FBInstall,v 1.1 2006/07/23 13:33:53 bjh21 Exp $
 
 Note of FastBoot/AutoBoot Installation for !BtNetBSD V0.90
 based on !BtRiscBSD
