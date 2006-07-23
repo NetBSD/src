@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.67 2006/03/25 13:00:11 rtr Exp $	*/
+/*	$NetBSD: readline.c,v 1.68 2006/07/23 20:21:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.67 2006/03/25 13:00:11 rtr Exp $");
+__RCSID("$NetBSD: readline.c,v 1.68 2006/07/23 20:21:45 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -66,6 +66,9 @@ __RCSID("$NetBSD: readline.c,v 1.67 2006/03/25 13:00:11 rtr Exp $");
 #include "histedit.h"
 #include "readline/readline.h"
 #include "filecomplete.h"
+
+void rl_prep_terminal(int);
+void rl_deprep_terminal(void);
 
 /* for rl_complete() */
 #define TAB		'\r'
@@ -117,8 +120,8 @@ int rl_catch_signals = 1;
 VFunction *rl_redisplay_function = NULL;
 Function *rl_startup_hook = NULL;
 VFunction *rl_completion_display_matches_hook = NULL;
-VFunction *rl_prep_term_function = NULL;
-VFunction *rl_deprep_term_function = NULL;
+VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
+VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
 
 /*
  * The current prompt string.
@@ -1711,7 +1714,7 @@ rl_prep_terminal(int meta_flag)
 }
 
 void
-rl_deprep_terminal()
+rl_deprep_terminal(void)
 {
 	el_set(e, EL_PREP_TERM, 0);
 }
