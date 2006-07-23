@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.464 2006/07/22 05:29:03 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.465 2006/07/23 11:41:27 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -394,6 +394,11 @@ FIRMWAREGRP?=	wheel
 FIRMWAREOWN?=	root
 FIRMWAREMODE?=	${NONBINMODE}
 
+DEBUGDIR?=	/usr/libdata/debug
+DEBUGGRP?=	wheel
+DEBUGOWN?=	root
+DEBUGMODE?=	${NONBINMODE}
+
 #
 # Data-driven table using make variables to control how
 # toolchain-dependent targets and shared libraries are built
@@ -612,7 +617,7 @@ MK${var}?=	yes
 # MK* options which default to "no".
 #
 .for var in \
-	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 DEBUGLIB \
+	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 DEBUG DEBUGLIB \
 	MANZ OBJDIRS PRIVATELIB SOFTFLOAT UNPRIVED UPDATE X11
 MK${var}?=	no
 .endfor

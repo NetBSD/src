@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.321 2006/06/27 14:59:38 peter Exp $
+#	$NetBSD: NetBSD.dist,v 1.322 2006/07/23 11:41:27 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -307,6 +307,22 @@
 ./usr/lib/i18n
 ./usr/lib/security
 ./usr/libdata
+./usr/libdata/debug
+./usr/libdata/debug/bin
+./usr/libdata/debug/libexec
+./usr/libdata/debug/sbin
+./usr/libdata/debug/usr
+./usr/libdata/debug/usr/X11R6
+./usr/libdata/debug/usr/X11R6/bin
+./usr/libdata/debug/usr/X11R6/libexec
+./usr/libdata/debug/usr/bin
+./usr/libdata/debug/usr/games
+./usr/libdata/debug/usr/libexec
+./usr/libdata/debug/usr/libexec/ching
+./usr/libdata/debug/usr/libexec/lpr
+./usr/libdata/debug/usr/libexec/postfix
+./usr/libdata/debug/usr/libexec/uucp
+./usr/libdata/debug/usr/sbin
 ./usr/libdata/firmware
 ./usr/libdata/lint
 ./usr/libexec
