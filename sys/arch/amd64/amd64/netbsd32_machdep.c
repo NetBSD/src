@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.23 2006/05/14 21:55:09 elad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.24 2006/07/23 22:06:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.23 2006/05/14 21:55:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.24 2006/07/23 22:06:04 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -607,14 +607,14 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	int32_t n;
 	struct mtrr32 *m32p, m32;
 	struct mtrr *m64p, *mp;
-	struct proc *p = l->l_proc;
 
 	m64p = NULL;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
 	if (error != 0)
 		return error;
 
@@ -639,7 +639,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 		error = ENOMEM;
 		goto fail;
 	}
-	error = mtrr_get(m64p, &n, p, 0);
+	error = mtrr_get(m64p, &n, l->l_proc, 0);
 	if (error != 0)
 		goto fail;
 	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
@@ -674,14 +674,14 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	struct mtrr *m64p, *mp;
 	int error, i;
 	int32_t n;
-	struct proc *p = l->l_proc;
 
 	m64p = NULL;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
 	if (error != 0)
 		return error;
 
@@ -718,7 +718,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 		mp++;
 	}
 
-	error = mtrr_set(m64p, &n, p, 0);
+	error = mtrr_set(m64p, &n, l->l_proc, 0);
 fail:
 	if (m64p != NULL)
 		free(m64p, M_TEMP);

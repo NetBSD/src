@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.13 2006/05/14 21:24:50 elad Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.14 2006/07/23 22:06:09 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.13 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.14 2006/07/23 22:06:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,11 +191,8 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	struct ecoff_exechdr ldr_exechdr;
 	struct nameidata nd;
 	struct vnode *ldr_vp;
-	struct proc *p;
         size_t resid;
 	int error;
-
-	p = l->l_proc;
 
 	strncpy(emul_arg->loader_name, OSF1_LDR_EXEC_DEFAULT_LOADER,
 		MAXPATHLEN + 1);
@@ -204,7 +201,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * locate the loader
 	 * includes /emul/osf1 if appropriate
 	 */
-	error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+	error = emul_find_interp(LIST_FIRST(&l->l_proc->p_lwps),
 	    epp->ep_esch->es_emul->e_path, emul_arg->loader_name);
 	if (error)
 		return error;
@@ -237,7 +234,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto badunlock;
 	}
 
-	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_cred, l)) != 0)
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, l->l_cred, l)) != 0)
 		goto badunlock;
 
         if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {
@@ -258,7 +255,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * read the header, and make sure we got all of it.
 	 */
         if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
-	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_cred,
+	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, l->l_cred,
 	    &resid, NULL)) != 0)
                 goto bad;
         if (resid != 0) {

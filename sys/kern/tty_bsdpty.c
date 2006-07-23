@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.8 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.9 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.8 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.9 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_ptm.h"
 
@@ -81,7 +81,7 @@ static int pty_makename(struct ptm_pty *, struct lwp *, char *, size_t, dev_t,
     char);
 static int pty_allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
-static void pty_getvattr(struct ptm_pty *, struct proc *, struct vattr *);
+static void pty_getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
 
 struct ptm_pty ptm_bsdpty = {
 	pty_allocvp,
@@ -143,11 +143,11 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 
 static void
 /*ARGSUSED*/
-pty_getvattr(struct ptm_pty *ptm, struct proc *p, struct vattr *vattr)
+pty_getvattr(struct ptm_pty *ptm, struct lwp *l, struct vattr *vattr)
 {
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = kauth_cred_getuid(p->p_cred);
+	vattr->va_uid = kauth_cred_getuid(l->l_cred);
 	vattr->va_gid = TTY_GID;
 	vattr->va_mode = TTY_PERM;
 }

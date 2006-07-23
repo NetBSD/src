@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.19 2006/05/14 21:25:21 elad Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.20 2006/07/23 22:06:10 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.19 2006/05/14 21:25:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.20 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,7 +607,6 @@ svr4_32_sys_systeminfo(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_systeminfo_args *uap = v;
-	struct proc *p = l->l_proc;
 	const char *str = NULL;
 	int name[2];
 	int error;
@@ -687,13 +686,15 @@ svr4_32_sys_systeminfo(l, v, retval)
 		break;
 
 	case SVR4_SI_SET_HOSTNAME:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return error;
 		name[1] = KERN_HOSTNAME;
 		break;
 
 	case SVR4_SI_SET_SRPC_DOMAIN:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return error;
 		name[1] = KERN_DOMAINNAME;
 		break;

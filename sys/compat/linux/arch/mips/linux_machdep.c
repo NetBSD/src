@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.26 2006/05/15 13:11:29 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.27 2006/07/23 22:06:09 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.26 2006/05/15 13:11:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.27 2006/07/23 22:06:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,6 @@ linux_sys_sysmips(l, v, retval)
 		syscallarg(int) arg2;
 		syscallarg(int) arg3;
 	} *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
 	switch (SCARG(uap, cmd)) {
@@ -429,7 +428,8 @@ linux_sys_sysmips(l, v, retval)
 		int name[2];
 		size_t len;
 
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return error;
 		if ((error = copyinstr((char *)SCARG(uap, arg1), nodename,
 		    LINUX___NEW_UTS_LEN, &len)) != 0)

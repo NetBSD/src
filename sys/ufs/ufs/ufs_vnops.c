@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.141 2006/06/07 22:34:44 kardel Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.142 2006/07/23 22:06:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.141 2006/06/07 22:34:44 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.142 2006/07/23 22:06:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -79,9 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.141 2006/06/07 22:34:44 kardel Exp $
 
 #include <uvm/uvm.h>
 
-static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct proc *);
+static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
-    struct proc *);
+    struct lwp *);
 
 /*
  * A virgin directory (no blushing please).
@@ -389,7 +389,7 @@ ufs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					       &l->l_proc->p_acflag)))
+		    &l->l_acflag)))
 			return (error);
 		if (kauth_cred_geteuid(cred) == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -424,7 +424,7 @@ ufs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
+		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 		if (error)
 			return (error);
 	}
@@ -463,7 +463,7 @@ ufs_setattr(void *v)
 			return (EPERM);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					       &l->l_proc->p_acflag)) &&
+		    &l->l_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -489,7 +489,7 @@ ufs_setattr(void *v)
 		    (vap->va_mode & (S_IXUSR | S_IWUSR | S_IXGRP | S_IWGRP |
 		     S_IXOTH | S_IWOTH)))
 			return (EPERM);
-		error = ufs_chmod(vp, (int)vap->va_mode, cred, l->l_proc);
+		error = ufs_chmod(vp, (int)vap->va_mode, cred, l);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
@@ -500,7 +500,7 @@ ufs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
+ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode	*ip;
 	int		error, ismember = 0;
@@ -508,7 +508,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 	ip = VTOI(vp);
 	if (kauth_cred_geteuid(cred) != ip->i_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)))
+	    &l->l_acflag)))
 		return (error);
 	if (kauth_cred_geteuid(cred)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -530,7 +530,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
  */
 static int
 ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
-    	struct proc *p)
+    	struct lwp *l)
 {
 	struct inode	*ip;
 	int		error, ismember = 0;
@@ -555,11 +555,11 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 */
 	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
 	    (gid != ip->i_gid &&
-	     !(kauth_cred_getegid(cred) == gid ||
-	      (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
-	      ismember)))) &&
+	    !(kauth_cred_getegid(cred) == gid ||
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
+	    ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					&p->p_acflag)) != 0))
+	    &l->l_acflag)) != 0))
 		return (error);
 
 #ifdef QUOTA

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2006/05/14 21:56:33 elad Exp $ */
+/*	$NetBSD: mem.c,v 1.23 2006/07/23 22:06:06 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2006/05/14 21:56:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2006/07/23 22:06:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -162,13 +162,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (atop(off) >= physmem &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if (atop(off) >= physmem && kauth_authorize_generic(l-l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return (-1);
 	return (trunc_page((paddr_t)off));
 }

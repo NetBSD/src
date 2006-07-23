@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.158 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.159 2006/07/23 22:06:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.158 2006/07/13 12:00:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.159 2006/07/23 22:06:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -369,7 +369,7 @@ nfs_mountroot()
 	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
-	error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l);
+	error = VOP_GETATTR(vp, &attr, l->l_cred, l);
 	if (error)
 		panic("nfs_mountroot: getattr for root");
 	n = attr.va_atime.tv_sec;
@@ -799,7 +799,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		goto bad;
 	*vpp = NFSTOV(np);
 	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
-	VOP_GETATTR(*vpp, attrs, l->l_proc->p_cred, l);
+	VOP_GETATTR(*vpp, attrs, l->l_cred, l);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = kauth_cred_alloc();
 		kauth_cred_setuid(cr, attrs->va_uid);

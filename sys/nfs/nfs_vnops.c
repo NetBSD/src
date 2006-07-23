@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.240 2006/07/01 11:30:44 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.241 2006/07/23 22:06:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.240 2006/07/01 11:30:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.241 2006/07/23 22:06:14 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -3394,7 +3394,7 @@ nfs_pathconf(v)
 		nfsm_reqhead(np, NFSPROC_PATHCONF, NFSX_FH(1));
 		nfsm_fhtom(np, 1);
 		nfsm_request(np, NFSPROC_PATHCONF,
-		    curlwp, curlwp->l_proc->p_cred);	/* XXX */
+		    curlwp, curlwp->l_cred);	/* XXX */
 		nfsm_postop_attr(vp, attrflag, 0);
 		if (!error) {
 			nfsm_dissect(pcp, struct nfsv3_pathconf *,
@@ -3426,7 +3426,7 @@ nfs_pathconf(v)
 			nmp = VFSTONFS(vp->v_mount);
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 				if ((error = nfs_fsinfo(nmp, vp,
-				    curproc->p_cred, curlwp)) != 0) /* XXX */
+				    curlwp->l_cred, curlwp)) != 0) /* XXX */
 					break;
 			for (l = 0, maxsize = nmp->nm_maxfilesize;
 			    (maxsize >> l) > 0; l++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.71 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.72 2006/07/23 22:06:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.71 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.72 2006/07/23 22:06:05 ad Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -171,7 +171,7 @@ static void	hpuxhilevent(struct hil_softc *, struct hilloopdev *);
 
 static int	hilqalloc(struct hil_softc *, struct hilqinfo *, struct proc *);
 static int	hilqfree(struct hil_softc *, int, struct proc *);
-static int	hilqmap(struct hil_softc *, int, int, struct proc *);
+static int	hilqmap(struct hil_softc *, int, int, struct lwp *);
 static int	hilqunmap(struct hil_softc *, int, int, struct proc *);
 
 #ifdef DEBUG
@@ -629,7 +629,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case HILIOCMAPQ:
-		error = hilqmap(hilp, *(int *)data, HILUNIT(dev), l->l_proc);
+		error = hilqmap(hilp, *(int *)data, HILUNIT(dev), l);
 		break;
 
 	case HILIOCUNMAPQ:
@@ -1216,7 +1216,7 @@ hilqfree(struct hil_softc *hilp, int qnum, struct proc *p)
 }
 
 static int
-hilqmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
+hilqmap(struct hil_softc *hilp, int qnum, int device, struct lwp *l)
 {
 	struct hilloopdev *dptr = &hilp->hl_device[device];
 	int s;
@@ -1226,17 +1226,17 @@ hilqmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
 		printf("hilqmap(%d): qnum %d device %x\n",
 		    p->p_pid, qnum, device);
 #endif
-	if (qnum >= NHILQ || hilp->hl_queue[qnum].hq_procp != p)
+	if (qnum >= NHILQ || hilp->hl_queue[qnum].hq_procp != l->l_proc)
 		return EINVAL;
 	if ((dptr->hd_flags & HIL_QUEUEIN) == 0)
 		return EINVAL;
-	if (dptr->hd_qmask && kauth_cred_geteuid(p->p_cred) &&
-	    kauth_cred_geteuid(p->p_cred) != dptr->hd_uid)
+	if (dptr->hd_qmask && kauth_cred_geteuid(l->l_cred) &&
+	    kauth_cred_geteuid(l->l_cred) != dptr->hd_uid)
 		return EPERM;
 
 	hilp->hl_queue[qnum].hq_devmask |= hildevmask(device);
 	if (dptr->hd_qmask == 0)
-		dptr->hd_uid = kauth_cred_geteuid(p->p_cred);
+		dptr->hd_uid = kauth_cred_geteuid(l->l_cred);
 	s = splhil();
 	dptr->hd_qmask |= hilqmask(qnum);
 	splx(s);

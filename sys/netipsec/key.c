@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.27 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: key.c,v 1.28 2006/07/23 22:06:13 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.27 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.28 2006/07/23 22:06:13 ad Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -5976,8 +5976,8 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		/* XXX is it correct? */
-		if (curproc && curproc->p_cred)
-			id->sadb_ident_id = curproc->p_cred->p_ruid;
+		if (curlwp)
+			id->sadb_ident_id = kauth_cred_getuid(curlwp->l_cred);
 		if (userfqdn && userfqdnlen)
 			bcopy(userfqdn, id + 1, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);

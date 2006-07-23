@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.72 2006/05/14 21:56:32 elad Exp $	*/
+/*	$NetBSD: dtop.c,v 1.73 2006/07/23 22:06:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.72 2006/05/14 21:56:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.73 2006/07/23 22:06:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -335,8 +335,9 @@ dtopopen(dev, flag, mode, l)
 		}
 		(void) dtopparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE)
-	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&

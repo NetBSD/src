@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.116 2006/07/22 10:40:49 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.117 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.116 2006/07/22 10:40:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.117 2006/07/23 22:06:12 ad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -101,7 +101,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vnode *vp;
 	struct mount *mp = NULL;	/* XXX: GCC */
 	struct lwp *l = ndp->ni_cnd.cn_lwp;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
 #if NVERIEXEC > 0
@@ -541,7 +541,7 @@ vn_stat(struct vnode *vp, struct stat *sb, struct lwp *l)
 	int error;
 	mode_t mode;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
+	error = VOP_GETATTR(vp, &va, l->l_cred, l);
 	if (error)
 		return (error);
 	/*
@@ -601,7 +601,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
 
-	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_proc->p_cred, l);
+	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_cred, l);
 	return (error);
 }
 
@@ -621,7 +621,7 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	case VREG:
 	case VDIR:
 		if (com == FIONREAD) {
-			error = VOP_GETATTR(vp, &vattr, l->l_proc->p_cred, l);
+			error = VOP_GETATTR(vp, &vattr, l->l_cred, l);
 			if (error)
 				return (error);
 			*(int *)data = vattr.va_size - fp->f_offset;
@@ -661,7 +661,7 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	case VCHR:
 	case VBLK:
 		error = VOP_IOCTL(vp, com, data, fp->f_flag,
-		    l->l_proc->p_cred, l);
+		    l->l_cred, l);
 		if (error == 0 && com == TIOCSCTTY) {
 			if (p->p_session->s_ttyvp)
 				vrele(p->p_session->s_ttyvp);

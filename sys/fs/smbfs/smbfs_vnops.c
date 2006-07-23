@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.52 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.53 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.52 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,8 +453,7 @@ smbfs_setattr(v)
                 if (kauth_cred_geteuid(ap->a_cred) !=
 		    VTOSMBFS(vp)->sm_args.uid &&
                     (error = kauth_authorize_generic(ap->a_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &ap->a_l->l_proc->p_acflag)) &&
+		    KAUTH_GENERIC_ISSUSER, &ap->a_l->l_acflag)) &&
                     ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
                     (error = VOP_ACCESS(ap->a_vp, VWRITE, ap->a_cred, ap->a_l))))
                         return (error);
@@ -967,7 +966,7 @@ smbfs_strategy(v)
 		cr = NULL;
 	} else {
 		l = curlwp;	/* XXX */
-		cr = l->l_proc->p_cred;
+		cr = l->l_cred;
 	}
 
 	if ((bp->b_flags & B_ASYNC) == 0)
@@ -1038,7 +1037,6 @@ smbfs_advlock(v)
 	struct smbnode *np = VTOSMB(vp);
 	struct flock *fl = ap->a_fl;
 	struct lwp *l = curlwp;
-	struct proc *p;
 	struct smb_cred scred;
 	u_quad_t size;
 	off_t start, end, oadd;
@@ -1093,8 +1091,7 @@ smbfs_advlock(v)
 #endif
 		end = start + oadd;
 	}
-	p = l ? l->l_proc : NULL;
-	smb_makescred(&scred, l, p ? p->p_cred : NULL);
+	smb_makescred(&scred, l, l ? l->l_cred : NULL);
 	switch (ap->a_op) {
 	case F_SETLK:
 		switch (fl->l_type) {
