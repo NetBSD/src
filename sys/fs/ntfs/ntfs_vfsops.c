@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.42 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.43 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.42 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.43 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	 * Flush out any old buffers remaining from a previous use.
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.33 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.34 2006/07/23 22:06:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.33 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.34 2006/07/23 22:06:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,6 @@ linux_sys_getdents64(l, v, retval)
 		syscallarg(struct linux_dirent64 *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, tbuf;		/* BSD-format */
@@ -426,7 +425,7 @@ linux_sys_getdents64(l, v, retval)
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -440,7 +439,7 @@ linux_sys_getdents64(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);

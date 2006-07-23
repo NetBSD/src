@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.10 2006/07/13 23:22:30 pavel Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.11 2006/07/23 22:06:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.10 2006/07/13 23:22:30 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.11 2006/07/23 22:06:09 ad Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -212,7 +212,6 @@ compat_30_netbsd32_fhstat(l, v, retval)
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_stat13p_t) sb);
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct netbsd32_stat13 sb32;
 	int error;
@@ -223,8 +222,8 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 		return (error);
 
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,

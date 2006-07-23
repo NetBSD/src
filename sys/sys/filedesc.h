@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.35 2006/03/07 17:13:53 pooka Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.36 2006/07/23 22:06:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -131,7 +131,7 @@ struct filedesc0 {
 int	dupfdopen(struct lwp *, int, int, int, int);
 int	fdalloc(struct proc *, int, int *);
 void	fdexpand(struct proc *);
-int	falloc(struct proc *, struct file **, int *);
+int	falloc(struct lwp *, struct file **, int *);
 void	ffree(struct file *);
 struct filedesc *fdcopy(struct proc *);
 struct filedesc *fdinit(struct proc *);

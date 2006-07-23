@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.127 2006/07/22 08:49:13 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.128 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.127 2006/07/22 08:49:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.128 2006/07/23 22:06:12 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -454,7 +454,7 @@ genfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
-	kauth_cred_t cred = curproc->p_cred;		/* XXXUBC curlwp */
+	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;
@@ -1630,7 +1630,7 @@ genfs_compat_getpages(void *v)
 	int i, error, orignpages, npages;
 	struct iovec iov;
 	struct uio uio;
-	kauth_cred_t cred = curproc->p_cred;
+	kauth_cred_t cred = curlwp->l_cred;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	error = 0;
@@ -1709,7 +1709,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	off_t offset;
 	struct iovec iov;
 	struct uio uio;
-	kauth_cred_t cred = curproc->p_cred;
+	kauth_cred_t cred = curlwp->l_cred;
 	struct buf *bp;
 	vaddr_t kva;
 	int s, error;

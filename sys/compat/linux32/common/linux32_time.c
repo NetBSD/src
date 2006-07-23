@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.4 2006/06/13 16:23:57 skd Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.5 2006/07/23 22:06:09 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.4 2006/06/13 16:23:57 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.5 2006/07/23 22:06:09 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,12 +197,12 @@ linux32_sys_stime(l, v, retval)
 	struct linux32_sys_stime_args /* {
 		syscallarg(linux32_timep_t) t;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timespec ts;
 	linux32_time_t tt32;
 	int error;
 	
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(&tt32, 
@@ -212,7 +212,7 @@ linux32_sys_stime(l, v, retval)
 	ts.tv_sec = (long)tt32;
 	ts.tv_nsec = 0;
 
-	return settime(p, &ts);
+	return settime(l->l_proc, &ts);
 }
 
 int

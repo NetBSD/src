@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.166 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if.c,v 1.167 2006/07/23 22:06:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.166 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.167 2006/07/23 22:06:12 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -1386,9 +1386,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
 		if (l) {
-			error = kauth_authorize_generic(l->l_proc->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				return error;
 		}
@@ -1426,9 +1425,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 		if (l) {
-			error = kauth_authorize_generic(l->l_proc->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				return error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.61 2006/07/19 21:11:40 ad Exp $	*/
+/*	$NetBSD: fault.c,v 1.62 2006/07/23 22:06:04 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.61 2006/07/19 21:11:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.62 2006/07/23 22:06:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,7 @@ data_abort_handler(trapframe_t *tf)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
-		    l->l_proc->p_cred ? kauth_cred_geteuid(l->l_proc->p_cred) : -1);
+		    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else
 		ksi.ksi_signo = SIGSEGV;
@@ -868,7 +868,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
-		    l->l_proc->p_cred ? kauth_cred_geteuid(l->l_proc->p_cred) : -1);
+		    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else
 		ksi.ksi_signo = SIGSEGV;

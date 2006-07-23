@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.64 2006/05/14 21:56:32 elad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.65 2006/07/23 22:06:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.64 2006/05/14 21:56:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.65 2006/07/23 22:06:06 ad Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
@@ -337,7 +337,8 @@ rconsopen(dev, flag, mode, l)
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		   &l->l_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);

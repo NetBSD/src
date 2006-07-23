@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.32 2006/05/14 21:31:53 elad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.33 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.32 2006/05/14 21:31:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.33 2006/07/23 22:06:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,10 @@ procfs_control(curl, l, op, sig)
 		 *      (3) it's not owned by you, or is set-id on exec
 		 *          (unless you're root), or...
 		 */
-		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curp->p_cred) ||
-			ISSET(p->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(curp->p_cred, KAUTH_GENERIC_ISSUSER,
-					       &curp->p_acflag)) != 0)
+		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
+		    ISSET(p->p_flag, P_SUGID)) &&
+		    (error = kauth_authorize_generic(curl->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &curl->l_acflag)) != 0)
 			return (error);
 
 		/*

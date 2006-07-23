@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.7 2006/05/15 13:12:13 yamt Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.8 2006/07/23 22:06:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.7 2006/05/15 13:12:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.8 2006/07/23 22:06:08 ad Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -130,7 +130,6 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 	struct linux_extra_stack_data64 *esdp, esd;
 	struct elf_args *ap;
 	struct vattr *vap;
-	struct proc *p = l->l_proc;
 	Elf_Ehdr *eh;
 	Elf_Phdr *ph;
 	u_long phsize;
@@ -206,18 +205,18 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 	esd.ai[i++].a_v = (ap ? ap->arg_entry : eh->e_entry);
 
 	esd.ai[i].a_type = LINUX_AT_EGID;
-	esd.ai[i++].a_v =
-	    ((vap->va_mode & S_ISGID) ? vap->va_gid : kauth_cred_getegid(p->p_cred));
+	esd.ai[i++].a_v = ((vap->va_mode & S_ISGID) ?
+	    vap->va_gid : kauth_cred_getegid(l->l_cred));
 
 	esd.ai[i].a_type = LINUX_AT_GID;
-	esd.ai[i++].a_v = kauth_cred_getgid(p->p_cred);
+	esd.ai[i++].a_v = kauth_cred_getgid(l->l_cred);
 
 	esd.ai[i].a_type = LINUX_AT_EUID;
-	esd.ai[i++].a_v = 
-	    ((vap->va_mode & S_ISUID) ? vap->va_uid : kauth_cred_geteuid(p->p_cred));
+	esd.ai[i++].a_v = ((vap->va_mode & S_ISUID) ? 
+	    vap->va_uid : kauth_cred_geteuid(l->l_cred));
 
 	esd.ai[i].a_type = LINUX_AT_UID;
-	esd.ai[i++].a_v = kauth_cred_getuid(p->p_cred);
+	esd.ai[i++].a_v = kauth_cred_getuid(l->l_cred);
 
 	esd.ai[i].a_type = LINUX_AT_SECURE;
 	esd.ai[i++].a_v = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.9 2005/11/10 18:43:32 christos Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.10 2006/07/23 22:06:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.9 2005/11/10 18:43:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.10 2006/07/23 22:06:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ compat_14_sys___semctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	union __semun arg;
 	struct semid_ds sembuf;
 	struct semid_ds14 osembuf;
@@ -132,7 +131,7 @@ compat_14_sys___semctl(struct lwp *l, void *v, register_t *retval)
 		}
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {

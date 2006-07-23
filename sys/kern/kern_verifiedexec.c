@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.58 2006/07/19 12:45:20 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.59 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.58 2006/07/19 12:45:20 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.59 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -232,7 +232,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	if (vfe->ops == NULL)
 		panic("Veriexec: Operations vector is NULL");
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
+	error = VOP_GETATTR(vp, &va, l->l_cred, l);
 	if (error)
 		return (error);
 
@@ -275,7 +275,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 #else
 				0,
 #endif
-				l->l_proc->p_cred, &resid, NULL);
+				l->l_cred, &resid, NULL);
 
 		if (error) {
 			if (do_perpage) {
@@ -620,7 +620,7 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
 	if (veriexec_strict >= 3) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
 		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", from, to,
-		    kauth_cred_geteuid(l->l_proc->p_cred), l->l_proc->p_pid);
+		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 		return (EPERM);
 	}
 
@@ -634,14 +634,14 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
 			log(LOG_ALERT, "Veriexec: Preventing rename of `%s' "
 			    "to `%s', uid=%u, pid=%u: IPS mode, file "
 			    "monitored.\n", from, to,
-			    kauth_cred_geteuid(l->l_proc->p_cred),
+			    kauth_cred_geteuid(l->l_cred),
 			    l->l_proc->p_pid);
 			return (EPERM);
 		}
 
 		log(LOG_NOTICE, "Veriexec: Monitored file `%s' renamed to "
 		    "`%s', uid=%u, pid=%u.\n", from, to,
-		    kauth_cred_geteuid(l->l_proc->p_cred), l->l_proc->p_pid);
+		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 	}
 
 	return (0);
@@ -671,8 +671,8 @@ veriexec_report(const u_char *msg, const u_char *filename,
 		else
 			log(LOG_NOTICE, "Veriexec: %s [%s, pid=%u, uid=%u, "
 			    "gid=%u]\n", msg, filename, l->l_proc->p_pid,
-			    kauth_cred_getuid(l->l_proc->p_cred),
-			    kauth_cred_getgid(l->l_proc->p_cred));
+			    kauth_cred_getuid(l->l_cred),
+			    kauth_cred_getgid(l->l_cred));
 	}
 
 	if (die)

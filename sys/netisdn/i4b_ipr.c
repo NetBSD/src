@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.20 2006/05/14 21:19:34 elad Exp $
+ *	$Id: i4b_ipr.c,v 1.21 2006/07/23 22:06:14 ad Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.20 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.21 2006/07/23 22:06:14 ad Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -636,14 +636,15 @@ iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef IPR_VJ
 		case IPRIOCSMAXCID:
 			{
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 400005
 			struct proc *p = curproc;	/* XXX */
 
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 400005
 			if((error = suser(p)) != 0)
 #else
-			if((error = kauth_authorize_generic(p->p_cred,
-						      KAUTH_GENERIC_ISSUSER,
-						      &p->p_acflag)) != 0)
+			struct lwp *l = curlwp;		/* XXX */
+
+			if((error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 #endif
 				break;
 		        sl_compress_setup(sc->sc_compr, *(int *)data);

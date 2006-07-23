@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.41 2006/05/15 00:05:16 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.42 2006/07/23 22:06:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.41 2006/05/15 00:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.42 2006/07/23 22:06:08 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -913,7 +913,7 @@ static int
 darwin_sysctl_procargs(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
-	struct proc *p, *up = l->l_proc;
+	struct proc *p;
 	size_t len, upper_bound, xlen, i;
 	struct uio auio;
 	struct iovec aiov;
@@ -932,9 +932,11 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* only root or same user change look at the environment */
-	if (kauth_cred_geteuid(up->p_cred) != 0) {
-		if (kauth_cred_getuid(up->p_cred) != kauth_cred_getuid(p->p_cred) ||
-		    kauth_cred_getuid(up->p_cred) != kauth_cred_getsvuid(p->p_cred))
+	if (kauth_cred_geteuid(l->l_cred) != 0) {
+		if (kauth_cred_getuid(l->l_cred) !=
+		    kauth_cred_getuid(p->p_cred) ||
+		    kauth_cred_getuid(l->l_cred) !=
+		    kauth_cred_getsvuid(p->p_cred))
 			return (EPERM);
 	}
 

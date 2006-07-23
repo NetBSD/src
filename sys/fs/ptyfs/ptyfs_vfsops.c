@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.17 2006/06/20 09:17:14 tron Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.18 2006/07/23 22:06:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.17 2006/06/20 09:17:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.18 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
 static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
     dev_t, char);
-static void ptyfs__getvattr(struct ptm_pty *, struct proc *, struct vattr *);
+static void ptyfs__getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
 
 /*
  * ptm glue: When we mount, we make ptm point to us.
@@ -173,13 +173,13 @@ ptyfs__allocvp(struct ptm_pty *pt, struct lwp *l, struct vnode **vpp,
 
 
 static void
-ptyfs__getvattr(struct ptm_pty *pt, struct proc *p, struct vattr *vattr)
+ptyfs__getvattr(struct ptm_pty *pt, struct lwp *l, struct vattr *vattr)
 {
 	struct mount *mp = pt->arg;
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = kauth_cred_getuid(p->p_cred);
+	vattr->va_uid = kauth_cred_getuid(l->l_cred);
 	vattr->va_gid = pmnt->pmnt_gid;
 	vattr->va_mode = pmnt->pmnt_mode;
 }

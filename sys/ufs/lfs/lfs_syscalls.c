@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.114 2006/06/07 22:34:43 kardel Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.115 2006/07/23 22:06:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.114 2006/06/07 22:34:43 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.115 2006/07/23 22:06:15 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -120,14 +120,13 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
 	BLOCK_INFO *blkiov;
-	struct proc *p = l->l_proc;
 	int blkcnt, error;
 	fsid_t fsid;
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -164,14 +163,13 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	BLOCK_INFO *blkiov;
 	BLOCK_INFO_15 *blkiov15;
-	struct proc *p = l->l_proc;
 	int i, blkcnt, error;
 	fsid_t fsid;
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -201,7 +199,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_markv(p, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_markv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -552,15 +550,14 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	BLOCK_INFO *blkiov;
 	int blkcnt, error;
 	fsid_t fsid;
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -594,7 +591,6 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	BLOCK_INFO *blkiov;
 	BLOCK_INFO_15 *blkiov15;
 	int i, blkcnt, error;
@@ -602,8 +598,8 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -632,7 +628,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_bmapv(p, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_bmapv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -835,10 +831,9 @@ sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 	fsid_t fsid;
 	int error;
 	unsigned long segnum;
-	struct proc *p = l->l_proc;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -971,16 +966,14 @@ sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timeval atv;
 	fsid_t fsid;
 	int error;
 
 	/* XXX need we be su to segwait? */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0) {
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
-	}
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.6 2003/01/18 07:36:57 thorpej Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.7 2006/07/23 22:06:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.6 2003/01/18 07:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.7 2006/07/23 22:06:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -252,7 +252,7 @@ hpux_sys_omsgctl(l, v, retval)
 		hpux_to_bsd_omsqid_ds(&hmsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -287,7 +287,7 @@ hpux_sys_msgctl(l, v, retval)
 		hpux_to_bsd_msqid_ds(&hmsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -401,7 +401,7 @@ hpux_sys_osemctl(l, v, retval)
 		hpux_to_bsd_osemid_ds(&hsembuf, &sembuf);
 	}
 
-	error = semctl1(l->l_proc, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -451,7 +451,7 @@ hpux_sys_semctl(l, v, retval)
 		hpux_to_bsd_semid_ds(&hsembuf, &sembuf);
 	}
 
-	error = semctl1(l->l_proc, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -568,7 +568,7 @@ hpux_sys_oshmctl(l, v, retval)
 		hpux_to_bsd_oshmid_ds(&hshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
+	error = shmctl1(l, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -603,7 +603,7 @@ hpux_sys_shmctl(l, v, retval)
 		hpux_to_bsd_shmid_ds(&hshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
+	error = shmctl1(l, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

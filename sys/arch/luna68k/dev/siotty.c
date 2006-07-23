@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.17 2006/05/14 21:55:38 elad Exp $ */
+/* $NetBSD: siotty.c,v 1.18 2006/07/23 22:06:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.17 2006/05/14 21:55:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.18 2006/07/23 22:06:05 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -380,7 +380,8 @@ sioopen(dev, flag, mode, l)
 		tty_attach(tp);
 	}		
 	else if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
-	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EBUSY;
 
 	tp->t_oproc = siostart;

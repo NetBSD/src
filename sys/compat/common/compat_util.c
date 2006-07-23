@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.31 2006/05/14 21:24:49 elad Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.32 2006/07/23 22:06:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.31 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.32 2006/07/23 22:06:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 	const char	**pbuf;
 	int		  sflag;
 {
-	struct proc *p;
 	struct nameidata	 nd;
 	struct nameidata	 ndroot;
 	struct vattr		 vat;
@@ -90,7 +89,6 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 	const char		*pr;
 	size_t			 sz, len;
 
-	p = l->l_proc;
 	tbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	*pbuf = path;
 
@@ -170,10 +168,10 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 		if ((error = namei(&ndroot)) != 0)
 			goto bad2;
 
-		if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_cred, l)) != 0)
+		if ((error = VOP_GETATTR(nd.ni_vp, &vat, l->l_cred, l)) != 0)
 			goto bad3;
 
-		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_cred, l))
+		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, l->l_cred, l))
 		    != 0)
 			goto bad3;
 
@@ -195,7 +193,7 @@ good:
 		*pbuf = tbuf;
 	else {
 		sz = &ptr[len] - tbuf;
-		*pbuf = stackgap_alloc(p, sgp, sz + 1);
+		*pbuf = stackgap_alloc(l->l_proc, sgp, sz + 1);
 		if (*pbuf == NULL) {
 			error = ENAMETOOLONG;
 			goto bad;

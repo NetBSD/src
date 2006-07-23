@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.27 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.28 2006/07/23 22:06:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.27 2006/05/14 21:33:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.28 2006/07/23 22:06:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -107,23 +107,21 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 	return (EOPNOTSUPP);
 #else
 	int cmd, type, error;
-	struct proc *p;
 
-	p = l->l_proc;
 	if (uid == -1)
-		uid = kauth_cred_getuid(p->p_cred);
+		uid = kauth_cred_getuid(l->l_cred);
 	cmd = cmds >> SUBCMDSHIFT;
 
 	switch (cmd) {
 	case Q_SYNC:
 		break;
 	case Q_GETQUOTA:
-		if (uid == kauth_cred_getuid(p->p_cred))
+		if (uid == kauth_cred_getuid(l->l_cred))
 			break;
 		/* fall through */
 	default:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag)) != 0)
 			return (error);
 	}
 

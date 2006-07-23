@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.29 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.30 2006/07/23 22:06:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.29 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.30 2006/07/23 22:06:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -102,11 +102,9 @@ adosfs_mount(mp, path, data, ndp, l)
 	struct vnode *devvp;
 	struct adosfs_args args;
 	struct adosfsmount *amp;
-	struct proc *p;
 	int error;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = VFSTOADOSFS(mp);
 		if (amp == NULL)
@@ -148,12 +146,12 @@ adosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_cred_geteuid(p->p_cred) != 0) {
+	if (kauth_cred_geteuid(l->l_cred) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		if (error) {
 			vput(devvp);
 			return (error);
@@ -199,7 +197,7 @@ adosfs_mountfs(devvp, mp, l)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
 	    != 0)
 		return (error);
 

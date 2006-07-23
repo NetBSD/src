@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.9 2006/05/21 22:51:27 cube Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.10 2006/07/23 22:06:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.9 2006/05/21 22:51:27 cube Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.10 2006/07/23 22:06:15 ad Exp $");
 
 #include "opt_ffs.h"
 
@@ -225,7 +225,7 @@ ufs_extattr_start(struct mount *mp, struct lwp *l)
 
 	ump->um_extattr.uepm_flags |= UFS_EXTATTR_UEPM_STARTED;
 
-	ump->um_extattr.uepm_ucred = l->l_proc->p_cred;
+	ump->um_extattr.uepm_ucred = l->l_cred;
 	kauth_cred_hold(ump->um_extattr.uepm_ucred);
 
  unlock:
@@ -258,7 +258,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	cnp.cn_nameiop = LOOKUP;
 	cnp.cn_flags = ISLASTCN | lockparent;
 	cnp.cn_lwp = l;
-	cnp.cn_cred = l->l_proc->p_cred;
+	cnp.cn_cred = l->l_cred;
 	cnp.cn_pnbuf = PNBUF_GET();
 	cnp.cn_nameptr = cnp.cn_pnbuf;
 	error = copystr(dirname, cnp.cn_pnbuf, MAXPATHLEN,
@@ -330,7 +330,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 {
 	int error;
 
-	error = VOP_OPEN(vp, FREAD|FWRITE, l->l_proc->p_cred, l);
+	error = VOP_OPEN(vp, FREAD|FWRITE, l->l_cred, l);
 	if (error) {
 		printf("ufs_extattr_enable_with_open.VOP_OPEN(): failed "
 		    "with %d\n", error);
@@ -346,7 +346,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 
 	error = ufs_extattr_enable(ump, attrnamespace, attrname, vp, l);
 	if (error != 0)
-		vn_close(vp, FREAD|FWRITE, l->l_proc->p_cred, l);
+		vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 	return (error);
 }
 
@@ -384,7 +384,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	vargs.a_desc = NULL;
 	vargs.a_vp = dvp;
 	vargs.a_uio = &auio;
-	vargs.a_cred = l->l_proc->p_cred;
+	vargs.a_cred = l->l_cred;
 	vargs.a_eofflag = &eofflag;
 	vargs.a_ncookies = NULL;
 	vargs.a_cookies = NULL;
@@ -636,7 +636,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 
-	VOP_LEASE(backing_vnode, l, l->l_proc->p_cred, LEASE_WRITE);
+	VOP_LEASE(backing_vnode, l, l->l_cred, LEASE_WRITE);
 	vn_lock(backing_vnode, LK_SHARED | LK_RETRY);
 	error = VOP_READ(backing_vnode, &auio, IO_NODELOCKED,
 	    ump->um_extattr.uepm_ucred);
@@ -713,7 +713,7 @@ ufs_extattr_disable(struct ufsmount *ump, int attrnamespace,
 	LIST_REMOVE(uele, uele_entries);
 
 	error = vn_close(uele->uele_backing_vnode, FREAD|FWRITE,
-	    l->l_proc->p_cred, l);
+	    l->l_cred, l);
 
 	free(uele, M_UFS_EXTATTR);
 
@@ -735,8 +735,8 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 	/*
 	 * Only privileged processes can configure extended attributes.
 	 */
-	if ((error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &l->l_proc->p_acflag)) != 0) {
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0) {
 		if (filename_vp != NULL)
 			VOP_UNLOCK(filename_vp, 0);
 		return (error);
@@ -1318,7 +1318,7 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 
 	LIST_FOREACH(uele, &ump->um_extattr.uepm_list, uele_entries)
 		ufs_extattr_rm(vp, uele->uele_attrnamespace,
-		    uele->uele_attrname, proc0.p_cred, l);
+		    uele->uele_attrname, lwp0.l_cred, l);
 
 	ufs_extattr_uepm_unlock(ump);
 }

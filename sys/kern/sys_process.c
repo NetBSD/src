@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.103 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.104 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.103 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.104 2006/07/23 22:06:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,10 +177,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
-		if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
-			ISSET(t->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(p->p_cred,
-				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((kauth_cred_getuid(t->p_cred) !=
+		    kauth_cred_getuid(l->l_cred) ||
+		    ISSET(t->p_flag, P_SUGID)) &&
+		    (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 
 		/*
@@ -793,7 +794,6 @@ process_domem(struct lwp *curl /*tracer*/,
 int
 process_checkioperm(struct lwp *l, struct proc *t)
 {
-	struct proc *p = l->l_proc;
 	int error;
 
 	/*
@@ -808,10 +808,10 @@ process_checkioperm(struct lwp *l, struct proc *t)
 	 *	(2) it's not owned by you, or is set-id on exec
 	 *	    (unless you're root), or...
 	 */
-	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
-		ISSET(t->p_flag, P_SUGID)) &&
-	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-			&p->p_acflag)) != 0)
+	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
+	    ISSET(t->p_flag, P_SUGID)) &&
+	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	/*

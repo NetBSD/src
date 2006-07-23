@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.29 2006/05/14 21:20:13 elad Exp $	*/
+/*	$NetBSD: ns.c,v 1.30 2006/07/23 22:06:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.29 2006/05/14 21:20:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.30 2006/07/23 22:06:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ int ns_interfaces;
 /* ARGSUSED */
 int
 ns_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
-	struct proc *p)
+	struct lwp *l)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ns_ifaddr *ia = 0;
@@ -92,9 +92,8 @@ ns_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-							 KAUTH_GENERIC_ISSUSER,
-							 &p->p_acflag)))
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return (EPERM);
 
 		if (ifp == 0)

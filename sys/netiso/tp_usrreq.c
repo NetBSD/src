@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.28 2006/06/07 22:34:04 kardel Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.29 2006/07/23 22:06:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.28 2006/06/07 22:34:04 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.29 2006/07/23 22:06:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,14 +380,12 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct tp_pcb *tpcb;
-	struct proc *p;
 	int             s;
 	int             error = 0;
 	int             flags, *outflags = &flags;
 	u_long          eotsdu = 0;
 	struct tp_event E;
 
-	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
 		printf("usrreq(%p,%d,%p,%p,%p)\n", so, req, m, nam, outflags);
@@ -448,7 +446,7 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		error = tp_pcbbind(tpcb, nam, p);
+		error = tp_pcbbind(tpcb, nam, l);
 		break;
 
 	case PRU_LISTEN:
@@ -486,7 +484,7 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 		if (tpcb->tp_lsuffixlen == 0) {
 			error = tp_pcbbind(tpcb, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_CONN]) {

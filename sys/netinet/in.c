@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.108 2006/05/14 21:19:34 elad Exp $	*/
+/*	$NetBSD: in.c,v 1.109 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.108 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.109 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -139,7 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.108 2006/05/14 21:19:34 elad Exp $");
 static u_int in_mask2len(struct in_addr *);
 static void in_len2mask(struct in_addr *, u_int);
 static int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
-	struct ifnet *, struct proc *);
+	struct ifnet *, struct lwp *);
 
 static int in_addprefix(struct in_ifaddr *, int);
 static int in_scrubprefix(struct in_ifaddr *);
@@ -309,7 +309,7 @@ in_len2mask(struct in_addr *mask, u_int len)
 /* ARGSUSED */
 int
 in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
-    struct proc *p)
+    struct lwp *l)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = 0;
@@ -321,14 +321,14 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	switch (cmd) {
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-					KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return (EPERM);
 		/*fall through*/
 	case SIOCGLIFADDR:
 		if (!ifp)
 			return EINVAL;
-		return in_lifaddr_ioctl(so, cmd, data, ifp, p);
+		return in_lifaddr_ioctl(so, cmd, data, ifp, l);
 	}
 
 	/*
@@ -377,8 +377,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		    (cmd == SIOCSIFNETMASK || cmd == SIOCSIFDSTADDR))
 			return (EADDRNOTAVAIL);
 
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-						KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return (EPERM);
 
 		if (ia == 0) {
@@ -407,8 +407,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		break;
 
 	case SIOCSIFBRDADDR:
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-					KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return (EPERM);
 		/* FALLTHROUGH */
 
@@ -615,7 +615,7 @@ in_purgeif(struct ifnet *ifp)
  */
 static int
 in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
-    struct ifnet *ifp, struct proc *p)
+    struct ifnet *ifp, struct lwp *l)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -685,7 +685,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		ifra.ifra_mask.sin_len = sizeof(struct sockaddr_in);
 		in_len2mask(&ifra.ifra_mask.sin_addr, iflr->prefixlen);
 
-		return in_control(so, SIOCAIFADDR, (caddr_t)&ifra, ifp, p);
+		return in_control(so, SIOCAIFADDR, (caddr_t)&ifra, ifp, l);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -772,7 +772,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 				ia->ia_sockmask.sin_len);
 
 			return in_control(so, SIOCDIFADDR, (caddr_t)&ifra,
-				ifp, p);
+				ifp, l);
 		}
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.6 2006/05/14 21:15:12 elad Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.7 2006/07/23 22:06:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.6 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.7 2006/07/23 22:06:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ extattr_check_cred(struct vnode *vp, int attrnamespace,
 		 * these requests come from kernel code (NOCRED case above)?
 		 */
 		return (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					  &l->l_proc->p_acflag));
+		    &l->l_acflag));
 
 	case EXTATTR_NAMESPACE_USER:
 		return (VOP_ACCESS(vp, access, cred, l));
@@ -233,7 +233,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH);
 	if (error)
 		return (error);
-	VOP_LEASE(vp, l, l->l_proc->p_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	aiov.iov_base = __UNCONST(data);	/* XXXUNCONST kills const */
@@ -252,7 +252,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	cnt = nbytes;
 
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio,
-	    l->l_proc->p_cred, l);
+	    l->l_cred, l);
 	cnt -= auio.uio_resid;
 	retval[0] = cnt;
 
@@ -277,7 +277,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	size_t size, *sizep;
 	int error;
 
-	VOP_LEASE(vp, l, l->l_proc->p_cred, LEASE_READ);
+	VOP_LEASE(vp, l, l->l_cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
@@ -307,7 +307,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		sizep = &size;
 
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, auiop, sizep,
-	    l->l_proc->p_cred, l);
+	    l->l_cred, l);
 
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
@@ -335,13 +335,13 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH);
 	if (error)
 		return (error);
-	VOP_LEASE(vp, l, l->l_proc->p_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, l->l_proc->p_cred, l);
+	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, l->l_cred, l);
 	if (error == EOPNOTSUPP)
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
-		    l->l_proc->p_cred, l);
+		    l->l_cred, l);
 
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
@@ -363,7 +363,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	ssize_t cnt;
 	int error;
 
-	VOP_LEASE(vp, l, l->l_proc->p_cred, LEASE_READ);
+	VOP_LEASE(vp, l, l->l_cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	auiop = NULL;
@@ -388,7 +388,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		sizep = &size;
 
 	error = VOP_LISTEXTATTR(vp, attrnamespace, auiop, sizep,
-	    l->l_proc->p_cred, l);
+	    l->l_cred, l);
 
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;

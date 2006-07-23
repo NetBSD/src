@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.51 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.52 2006/07/23 22:06:12 ad Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.51 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.52 2006/07/23 22:06:12 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -683,7 +683,7 @@ stf_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 static int
 stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc 		*p = curproc;	/* XXX */
+	struct lwp		*l = curlwp;	/* XXX */
 	struct ifaddr		*ifa;
 	struct ifreq		*ifr;
 	struct sockaddr_in6	*sin6;
@@ -717,7 +717,8 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			break;
 		ifr = (struct ifreq *)data;
 		mtu = ifr->ifr_mtu;

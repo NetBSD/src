@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.14 2006/05/14 21:15:12 elad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.15 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.14 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -242,16 +242,16 @@ ksem_drop_proc(struct ksem_proc *kp, struct ksem *ks)
 }
 
 static int
-ksem_perm(struct proc *p, struct ksem *ks)
+ksem_perm(struct lwp *l, struct ksem *ks)
 {
 	kauth_cred_t uc;
 
 	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
-	uc = p->p_cred;
+	uc = l->l_cred;
 	if ((kauth_cred_geteuid(uc) == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
 	    (kauth_cred_getegid(uc) == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
 	    (ks->ks_mode & S_IWOTH) != 0 ||
-	    kauth_authorize_generic(uc, KAUTH_GENERIC_ISSUSER, &p->p_acflag) == 0)
+	    kauth_authorize_generic(uc, KAUTH_GENERIC_ISSUSER, &l->l_acflag) == 0)
 		return (0);
 	return (EPERM);
 }
@@ -285,14 +285,14 @@ ksem_lookup_byname(const char *name)
 }
 
 static int
-ksem_create(struct proc *p, const char *name, struct ksem **ksret,
+ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
     mode_t mode, unsigned int value)
 {
 	struct ksem *ret;
 	kauth_cred_t uc;
 	size_t len;
 
-	uc = p->p_cred;
+	uc = l->l_cred;
 	if (value > SEM_VALUE_MAX)
 		return (EINVAL);
 	ret = malloc(sizeof(*ret), M_SEM, M_WAITOK | M_ZERO);
@@ -362,7 +362,7 @@ do_ksem_init(struct lwp *l, unsigned int value, semid_t *idp,
 	int error;
 
 	/* Note the mode does not matter for anonymous semaphores. */
-	error = ksem_create(l->l_proc, NULL, &ks, 0, value);
+	error = ksem_create(l, NULL, &ks, 0, value);
 	if (error)
 		return (error);
 	id = SEM_TO_ID(ks);
@@ -425,7 +425,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		 * this process's reference.
 		 */
 		LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
-		error = ksem_perm(l->l_proc, ks);
+		error = ksem_perm(l, ks);
 		if (error == 0)
 			ksem_addref(ks);
 		simple_unlock(&ks->ks_interlock);
@@ -458,7 +458,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 	 * We may block during creation, so drop the lock.
 	 */
 	simple_unlock(&ksem_slock);
-	error = ksem_create(l->l_proc, name, &ksnew, mode, value);
+	error = ksem_create(l, name, &ksnew, mode, value);
 	if (error != 0)
 		return (error);
 

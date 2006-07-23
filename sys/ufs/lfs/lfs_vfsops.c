@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.217 2006/07/20 23:49:07 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.218 2006/07/23 22:06:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.217 2006/07/20 23:49:07 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.218 2006/07/23 22:06:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -362,11 +362,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct lfs *fs = NULL;				/* LFS */
-	struct proc *p;
 	int error, update;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
@@ -424,14 +422,14 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
+	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -529,7 +527,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct vnode *vp;
 	struct buf *bp, *abp;
 	struct partinfo dpart;
-	struct proc *p;
 	dev_t dev;
 	int error, i, ronly, secsize, fsbsize;
 	kauth_cred_t cred;
@@ -537,8 +534,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	SEGUSE *sup;
 	daddr_t sb_addr;
 
-	p = l ? l->l_proc : NULL;
-	cred = p ? p->p_cred : NOCRED;
+	cred = l ? l->l_cred : NOCRED;
 
 	/*
 	 * Flush out any old buffers remaining from a previous use.
@@ -687,9 +683,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 
 	/* Before rolling forward, lock so vget will sleep for other procs */
-	if (p) {
+	if (l != NULL) {
 		fs->lfs_flags = LFS_NOTYET;
-		fs->lfs_rfpid = p->p_pid;
+		fs->lfs_rfpid = l->l_proc->p_pid;
 	}
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
@@ -929,7 +925,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
 		return (error);
-	if ((error = VFS_SYNC(mp, 1, l->l_proc->p_cred, l)) != 0)
+	if ((error = VFS_SYNC(mp, 1, l->l_cred, l)) != 0)
 		return (error);
 	s = splbio();
 	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))

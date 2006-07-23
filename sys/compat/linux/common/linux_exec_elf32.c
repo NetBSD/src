@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.72 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.73 2006/07/23 22:06:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.72 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.73 2006/07/23 22:06:09 ad Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -340,7 +340,6 @@ int
 ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	struct proc *p = l->l_proc;
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
@@ -398,25 +397,25 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	vap = pack->ep_vap;
 
 	a->a_type = LINUX_AT_UID;
-	a->a_v = kauth_cred_getuid(p->p_cred);
+	a->a_v = kauth_cred_getuid(l->l_cred);
 	a++;
 
 	a->a_type = LINUX_AT_EUID;
 	if (vap->va_mode & S_ISUID)
 		a->a_v = vap->va_uid;
 	else
-		a->a_v = kauth_cred_geteuid(p->p_cred);
+		a->a_v = kauth_cred_geteuid(l->l_cred);
 	a++;
 
 	a->a_type = LINUX_AT_GID;
-	a->a_v = kauth_cred_getgid(p->p_cred);
+	a->a_v = kauth_cred_getgid(l->l_cred);
 	a++;
 
 	a->a_type = LINUX_AT_EGID;
 	if (vap->va_mode & S_ISGID)
 		a->a_v = vap->va_gid;
 	else
-		a->a_v = kauth_cred_getegid(p->p_cred);
+		a->a_v = kauth_cred_getegid(l->l_cred);
 	a++;
 
 	a->a_type = AT_NULL;

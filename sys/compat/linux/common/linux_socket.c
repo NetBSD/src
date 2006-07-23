@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.64 2006/06/27 09:09:40 pavel Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.65 2006/07/23 22:06:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.64 2006/06/27 09:09:40 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.65 2006/07/23 22:06:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1530,7 +1530,7 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
 			sin6->sin6_scope_id = 0;
 		} else {
-			int uid = p->p_cred ? kauth_cred_geteuid(p->p_cred) : -1;
+			int uid = l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1;
 
 			log(LOG_DEBUG,
 			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "

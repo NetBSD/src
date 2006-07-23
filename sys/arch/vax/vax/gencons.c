@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.43 2006/05/14 21:57:13 elad Exp $	*/
+/*	$NetBSD: gencons.c,v 1.44 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.43 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.44 2006/07/23 22:06:07 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -98,7 +98,6 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	struct tty *tp;
-	struct proc *p = l->l_proc;
 
 	unit = minor(dev);
 	if (unit >= maxttys)
@@ -124,7 +123,8 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		gencnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE &&
-		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_cred,
+		   KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.9 2005/12/11 12:20:26 christos Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.10 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.9 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.10 2006/07/23 22:06:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -244,7 +244,7 @@ svr4_32_semctl(l, v, retval)
 		svr4_32_to_bsd_semid_ds(&ssembuf, &sembuf);
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {

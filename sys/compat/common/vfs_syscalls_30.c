@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.11 2006/07/13 23:04:02 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.12 2006/07/23 22:06:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.11 2006/07/13 23:04:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.12 2006/07/23 22:06:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,6 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct stat13 *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat13 osb;
 	int error;
@@ -167,8 +166,8 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
@@ -362,7 +361,6 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) fname;
 		syscallarg(struct compat_30_fhandle *) fhp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct compat_30_fhandle fh;
 	int error;
@@ -372,8 +370,8 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				  &p->p_acflag);
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,

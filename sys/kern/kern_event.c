@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.29 2006/07/14 22:35:15 kardel Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.30 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.29 2006/07/14 22:35:15 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.30 2006/07/23 22:06:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,11 @@ filt_kqueue(struct knote *kn, long hint)
 static int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p;
+	struct proc *p, *curp;
+	struct lwp *curl;
+
+	curl = curlwp;
+	curp = curl->l_proc;
 
 	p = pfind(kn->kn_id);
 	if (p == NULL)
@@ -369,10 +373,9 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
-		(p->p_flag & P_SUGID))
-	    && kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
-				 &curproc->p_acflag) != 0)
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
+	    (p->p_flag & P_SUGID)) && kauth_authorize_generic(curl->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &curl->l_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -604,12 +607,10 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
 	struct filedesc	*fdp;
 	struct kqueue	*kq;
 	struct file	*fp;
-	struct proc	*p;
 	int		fd, error;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
-	error = falloc(p, &fp, &fd);	/* setup a new file descriptor */
+	fdp = l->l_proc->p_fd;
+	error = falloc(l, &fp, &fd);	/* setup a new file descriptor */
 	if (error)
 		return (error);
 	fp->f_flag = FREAD | FWRITE;

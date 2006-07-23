@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.13 2006/07/22 09:24:25 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.14 2006/07/23 22:06:10 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -494,12 +494,12 @@ kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
 }
 
 /*
- * Return kauth_cred_t for the current process.
+ * Return kauth_cred_t for the current LWP.
  */
 kauth_cred_t
 kauth_cred_get(void)
 {
-	return (curproc->p_cred);
+	return (curlwp->l_cred);
 }
 
 /*
@@ -795,7 +795,6 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DEFER;
-
 		break;
 		}
 

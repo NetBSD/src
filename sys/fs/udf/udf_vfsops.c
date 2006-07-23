@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.7 2006/07/13 12:00:25 martin Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.8 2006/07/23 22:06:10 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.7 2006/07/13 12:00:25 martin Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.8 2006/07/23 22:06:10 ad Exp $");
 #endif /* not lint */
 
 
@@ -246,12 +246,10 @@ udf_mount(struct mount *mp, const char *path,
 	struct udf_args args;
 	struct udf_mount *ump;
 	struct vnode *devvp;
-	struct proc *p;
 	int openflags, accessmode, error;
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		/* request for the mount arguments */
 		ump = VFSTOUDF(mp);
@@ -308,11 +306,11 @@ udf_mount(struct mount *mp, const char *path,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_cred_geteuid(p->p_cred) != 0) {
+	if (kauth_cred_geteuid(l->l_cred) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		if (error) {
 			vput(devvp);
 			return (error);
@@ -484,7 +482,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	int    num_anchors, error, lst;
 
 	/* flush out any old buffers remaining from a previous use. */
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
 	if (error)
 		return error;
 

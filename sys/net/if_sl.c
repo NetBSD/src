@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.99 2006/07/08 18:32:53 tsutsui Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.100 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.99 2006/07/08 18:32:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.100 2006/07/23 22:06:12 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -303,13 +303,13 @@ slinit(struct sl_softc *sc)
 static int
 slopen(dev_t dev, struct tty *tp)
 {
-	struct proc *p = curproc;		/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct sl_softc *sc;
 	int error;
 	int s;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return error;
 
 	if (tp->t_linesw == &slip_disc)

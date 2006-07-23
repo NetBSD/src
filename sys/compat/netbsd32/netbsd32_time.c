@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.22 2006/06/07 22:33:33 kardel Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.23 2006/07/23 22:06:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.22 2006/06/07 22:33:33 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.23 2006/07/23 22:06:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -132,7 +132,6 @@ netbsd32_ntp_adjtime(l, v, retval)
 	struct timex ntv;
 	int error = 0;
 	int modes;
-	struct proc *p = l->l_proc;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tp)),
 	    (caddr_t)&ntv32, sizeof(ntv32))))
@@ -146,7 +145,8 @@ netbsd32_ntp_adjtime(l, v, retval)
 	 * the assumption the superuser should know what it is doing.
 	 */
 	modes = ntv.modes;
-	if (modes != 0 && (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+	if (modes != 0 && (error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 		return (error);
 
 	ntp_adjtime1(&ntv);
@@ -308,7 +308,8 @@ netbsd32_settimeofday(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	/* Verify all parameters before changing time. */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return error;
 
 	/*
@@ -343,10 +344,11 @@ netbsd32_adjtime(l, v, retval)
 	} */ *uap = v;
 	struct netbsd32_timeval atv;
 	int error;
-	struct proc *p = l->l_proc;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
+
 #ifdef __HAVE_TIMECOUNTER
 	{
 		extern int time_adjusted;     /* in kern_ntptime.c */
@@ -467,9 +469,9 @@ netbsd32_clock_settime(l, v, retval)
 	clockid_t clock_id;
 	struct timespec ats;
 	int error;
-	struct proc *p = l->l_proc;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);
@@ -481,7 +483,7 @@ netbsd32_clock_settime(l, v, retval)
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &ats);
-	return settime(p, &ats);
+	return settime(l->l_proc, &ats);
 }
 
 int
@@ -603,7 +605,7 @@ netbsd32_timer_create(struct lwp *l, void *v, register_t *retval)
 
 	return timer_create1(NETBSD32PTR64(SCARG(uap, timerid)),
 	    SCARG(uap, clock_id), NETBSD32PTR64(SCARG(uap, evp)),
-	    netbsd32_timer_create_fetch, l->l_proc);
+	    netbsd32_timer_create_fetch, l);
 }
 
 int

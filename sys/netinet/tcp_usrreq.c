@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.118 2006/07/16 21:13:00 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.119 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.118 2006/07/16 21:13:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.119 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -175,7 +175,6 @@ tcp_usrreq(struct socket *so, int req,
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp = NULL;
-	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef TCP_DEBUG
@@ -183,7 +182,6 @@ tcp_usrreq(struct socket *so, int req,
 #endif
 	int family;	/* family of the socket */
 
-	p = l ? l->l_proc : NULL;
 	family = so->so_proto->pr_domain->dom_family;
 
 	if (req == PRU_CONTROL) {
@@ -191,12 +189,12 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		case PF_INET:
 			return (in_control(so, (long)m, (caddr_t)nam,
-			    (struct ifnet *)control, p));
+			    (struct ifnet *)control, l));
 #endif
 #ifdef INET6
 		case PF_INET6:
 			return (in6_control(so, (long)m, (caddr_t)nam,
-			    (struct ifnet *)control, p));
+			    (struct ifnet *)control, l));
 #endif
 		default:
 			return EAFNOSUPPORT;
@@ -331,12 +329,12 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			error = in_pcbbind(inp, nam, p);
+			error = in_pcbbind(inp, nam, l);
 			break;
 #endif
 #ifdef INET6
 		case PF_INET6:
-			error = in6_pcbbind(in6p, nam, p);
+			error = in6_pcbbind(in6p, nam, l);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
@@ -356,7 +354,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		if (inp && inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}
@@ -364,7 +362,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET6
 		if (in6p && in6p->in6p_lport == 0) {
 			error = in6_pcbbind(in6p, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}
@@ -384,22 +382,22 @@ tcp_usrreq(struct socket *so, int req,
 		if (inp) {
 			if (inp->inp_lport == 0) {
 				error = in_pcbbind(inp, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (error)
 					break;
 			}
-			error = in_pcbconnect(inp, nam, p);
+			error = in_pcbconnect(inp, nam, l);
 		}
 #endif
 #ifdef INET6
 		if (in6p) {
 			if (in6p->in6p_lport == 0) {
 				error = in6_pcbbind(in6p, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (error)
 					break;
 			}
-			error = in6_pcbconnect(in6p, nam, p);
+			error = in6_pcbconnect(in6p, nam, l);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
@@ -1259,8 +1257,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 		/* XXX elad - should be done better */
 		if (security_curtain &&
-		    (kauth_cred_geteuid(l->l_proc->p_cred) != 0) &&
-		    (kauth_cred_geteuid(l->l_proc->p_cred) !=
+		    (kauth_cred_geteuid(l->l_cred) != 0) &&
+		    (kauth_cred_geteuid(l->l_cred) !=
 		     inph->inph_socket->so_uidinfo->ui_uid))
 			continue;
 

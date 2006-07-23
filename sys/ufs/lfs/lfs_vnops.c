@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.184 2006/07/20 23:14:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.185 2006/07/23 22:06:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.184 2006/07/20 23:14:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.185 2006/07/23 22:06:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -317,7 +317,7 @@ lfs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-				  ap->a_l->l_proc->p_cred, ap->a_l);
+				  ap->a_l->l_cred, ap->a_l);
 	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
@@ -1388,7 +1388,7 @@ lfs_fcntl(void *v)
 	int blkcnt, error, oclean;
 	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
-	struct proc *p;
+	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
 	struct buf *bp;
@@ -1407,10 +1407,10 @@ lfs_fcntl(void *v)
 	}
 
 	/* LFS control and monitoring fcntls are available only to root */
-	p = ap->a_l->l_proc;
+	l = ap->a_l;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
-	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;
@@ -1454,9 +1454,9 @@ lfs_fcntl(void *v)
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(p, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(l->l_proc, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
-			error = lfs_markv(p, fsidp, blkiov, blkcnt);
+			error = lfs_markv(l->l_proc, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
@@ -1498,9 +1498,8 @@ lfs_fcntl(void *v)
 #ifdef COMPAT_30
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
-		if ((error = kauth_authorize_generic(ap->a_l->l_proc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &ap->a_l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;

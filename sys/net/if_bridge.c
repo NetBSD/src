@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.39 2006/06/07 22:33:42 kardel Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.40 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.39 2006/06/07 22:33:42 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.40 2006/07/23 22:06:12 ad Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -451,7 +451,7 @@ static int
 bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bridge_softc *sc = ifp->if_softc;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	union {
 		struct ifbreq ifbreq;
 		struct ifbifconf ifbifconf;
@@ -486,9 +486,8 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (bc->bc_flags & BC_F_SUSER) {
-			error = kauth_authorize_generic(p->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &p->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				break;
 		}

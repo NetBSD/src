@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.10 2006/07/17 14:49:16 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.11 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.10 2006/07/17 14:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.11 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_ptm.h"
 
@@ -120,7 +120,7 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 		return EINVAL;
 	}
 
-	error = VOP_OPEN(vp, FREAD|FWRITE, proc0.p_cred, l);
+	error = VOP_OPEN(vp, FREAD|FWRITE, lwp0.l_cred, l);
 
 	if (error) {
 		vput(vp);
@@ -138,10 +138,9 @@ pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
 	int error;
 	struct file *fp;
 	struct vnode *vp;
-	struct proc *p = l->l_proc;
 	int md;
 
-	if ((error = falloc(p, &fp, fd)) != 0) {
+	if ((error = falloc(l, &fp, fd)) != 0) {
 		DPRINTF(("falloc %d\n", error));
 		return error;
 	}
@@ -183,7 +182,7 @@ retry:
 	return 0;
 bad:
 	FILE_UNUSE(fp, l);
-	fdremove(p->p_fd, *fd);
+	fdremove(l->l_proc->p_fd, *fd);
 	ffree(fp);
 	return error;
 }
@@ -211,9 +210,9 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
-		(*ptm->getvattr)(ptm, l->l_proc, &vattr);
+		(*ptm->getvattr)(ptm, l, &vattr);
 		/* Do the VOP_SETATTR() as root. */
-		error = VOP_SETATTR(vp, &vattr, proc0.p_cred, l);
+		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred, l);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
 			VOP_UNLOCK(vp, 0);
@@ -239,10 +238,9 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	int error;
 	struct file *fp;
 	struct vnode *vp;
-	struct proc *p = l->l_proc;
 
 	/* Grab a filedescriptor for the slave */
-	if ((error = falloc(p, &fp, fd)) != 0) {
+	if ((error = falloc(l, &fp, fd)) != 0) {
 		DPRINTF(("falloc %d\n", error));
 		return error;
 	}
@@ -267,7 +265,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	return 0;
 bad:
 	FILE_UNUSE(fp, l);
-	fdremove(p->p_fd, *fd);
+	fdremove(l->l_proc->p_fd, *fd);
 	ffree(fp);
 	return error;
 }

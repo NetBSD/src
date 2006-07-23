@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.62 2006/06/07 22:33:41 kardel Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.63 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.62 2006/06/07 22:33:41 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.63 2006/07/23 22:06:11 ad Exp $");
 
 #define SYSVSEM
 
@@ -288,7 +288,6 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg;
@@ -323,7 +322,7 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 		}
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT)
@@ -333,10 +332,10 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
+semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
     register_t *retval)
 {
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	union __semun *arg = v;
 	struct semid_ds *sembuf = v, *semaptr;
 	int i, error, ix;
@@ -477,7 +476,7 @@ sys_semget(struct lwp *l, void *v, register_t *retval)
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
 	int semflg = SCARG(uap, semflg);
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 
 	SEM_PRINTF(("semget(0x%x, %d, 0%o)\n", key, nsems, semflg));
 
@@ -572,7 +571,7 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 	struct sembuf *sopptr = NULL;
 	struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	int i, eval;
 	int do_wakeup, do_undos;
 

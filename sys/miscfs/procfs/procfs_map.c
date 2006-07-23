@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.24 2006/05/14 21:31:53 elad Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.25 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.24 2006/05/14 21:31:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.25 2006/07/23 22:06:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			if (UVM_ET_ISOBJ(entry) &&
 			    UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
 				vp = (struct vnode *)entry->object.uvm_obj;
-				error = VOP_GETATTR(vp, &va, curl->l_proc->p_cred,
+				error = VOP_GETATTR(vp, &va, curl->l_cred,
 				    curl);
 				if (error == 0 && vp != pfs->pfs_vnode) {
 					fileid = va.va_fileid;

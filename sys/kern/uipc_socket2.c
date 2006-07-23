@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.74 2006/07/03 02:34:39 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.75 2006/07/23 22:06:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.74 2006/07/03 02:34:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.75 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -416,7 +416,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 int
 sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 {
-	struct proc *p = curproc; /* XXX */
+	struct lwp *l = curlwp; /* XXX */
 	rlim_t maxcc;
 	struct uidinfo *uidinfo;
 
@@ -424,8 +424,8 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (p && kauth_cred_geteuid(p->p_cred) == so->so_uidinfo->ui_uid)
-			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+		if (l && kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
 		uidinfo = so->so_uidinfo;

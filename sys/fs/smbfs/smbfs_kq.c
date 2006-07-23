@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.10 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.11 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.10 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.11 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ smbfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
-	(void) VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l);
+	(void) VOP_GETATTR(vp, &attr, l->l_cred, l);
 
 	/* ensure the handler is running */
 	if (!smbkqp) {

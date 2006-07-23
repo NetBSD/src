@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.30 2006/05/14 21:55:11 elad Exp $ */
+/*	$NetBSD: txcom.c,v 1.31 2006/07/23 22:06:05 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.30 2006/05/14 21:55:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.31 2006/07/23 22:06:05 ad Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -797,7 +797,8 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -987,7 +988,8 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
 		if (err) {
 			break;
 		}

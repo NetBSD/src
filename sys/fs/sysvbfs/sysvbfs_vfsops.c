@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.5 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.6 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.5 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.6 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,6 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	struct sysvbfs_args args;
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
-	struct proc *p = l->l_proc;
 	int error;
 	boolean_t update;
 
@@ -134,14 +133,14 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
+	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
 		int accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -166,7 +165,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 int
 sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct sysvbfs_mount *bmp;
 	struct partinfo dpart;
 	int error;

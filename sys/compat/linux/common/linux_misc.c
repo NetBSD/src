@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.157 2006/06/13 16:54:56 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.158 2006/07/23 22:06:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.157 2006/06/13 16:54:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.158 2006/07/23 22:06:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -826,7 +826,6 @@ linux_sys_getdents(l, v, retval)
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, tbuf;		/* BSD-format */
@@ -844,7 +843,7 @@ linux_sys_getdents(l, v, retval)
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -858,7 +857,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -1243,7 +1242,7 @@ linux_sys_getgroups16(l, v, retval)
 	struct sys_getgroups_args bsa;
 	gid_t *bset, *kbset;
 	linux_gid_t *lset;
-	kauth_cred_t pc = p->p_cred;
+	kauth_cred_t pc = l->l_cred;
 
 	n = SCARG(uap, gidsetsize);
 	if (n < 0)
@@ -1351,11 +1350,10 @@ linux_sys_setfsuid(l, v, retval)
 	 struct linux_sys_setfsuid_args /* {
 		 syscallarg(uid_t) uid;
 	 } */ *uap = v;
-	 struct proc *p = l->l_proc;
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
-	 if (kauth_cred_getuid(p->p_cred) != uid)
+	 if (kauth_cred_getuid(l->l_cred) != uid)
 		 return sys_nosys(l, v, retval);
 	 else
 		 return (0);
@@ -1409,8 +1407,7 @@ linux_sys_getresuid(l, v, retval)
 		syscallarg(uid_t *) euid;
 		syscallarg(uid_t *) suid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	kauth_cred_t pc = p->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int error;
 	uid_t uid;
 
@@ -1507,10 +1504,10 @@ linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
 	} */ sra;
-	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return(error);
 
 	if (SCARG(uap, magic1) != LINUX_REBOOT_MAGIC1)

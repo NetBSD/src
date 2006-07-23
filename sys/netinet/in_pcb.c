@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.102 2006/05/14 21:19:34 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.103 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.102 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.103 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -212,7 +212,7 @@ in_pcballoc(struct socket *so, void *v)
 }
 
 int
-in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
+in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct in_ifaddr *ia = NULL;
 	struct inpcb *inp = v;
@@ -267,7 +267,8 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 #ifndef IPNOPRIVPORTS
 		/* GROSS */
 		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		    (l == 0 || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return (EACCES);
 #endif
 #ifdef INET6
@@ -308,8 +309,8 @@ noname:
 
 		if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-			if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-							&p->p_acflag))
+			if (l == 0 || kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 				return (EACCES);
 #endif
 			mymin = lowportmin;
@@ -359,7 +360,7 @@ noname:
  * then pick one.
  */
 int
-in_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
+in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = v;
 	struct in_ifaddr *ia = NULL;
@@ -429,7 +430,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL, p);
+			error = in_pcbbind(inp, NULL, l);
 			/*
 			 * This used to ignore the return value
 			 * completely, but we need to check for

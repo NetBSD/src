@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.26 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.27 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -880,10 +880,10 @@ in6_selecthlim(in6p, ifp)
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(laddr, in6p, p)
+in6_pcbsetport(laddr, in6p, l)
 	struct in6_addr *laddr;
 	struct in6pcb *in6p;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct socket *so = in6p->in6p_socket;
 	struct inpcbtable *table = in6p->in6p_table;
@@ -901,8 +901,8 @@ in6_pcbsetport(laddr, in6p, p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (p == 0 || (kauth_authorize_generic(p->p_cred,
-					KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0))
+		if (l == 0 || (kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0))
 			return (EACCES);
 #endif
 		minport = ip6_lowportmin;
