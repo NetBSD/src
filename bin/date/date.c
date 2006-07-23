@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.42 2005/07/22 14:27:08 peter Exp $ */
+/* $NetBSD: date.c,v 1.43 2006/07/23 20:39:10 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.42 2005/07/22 14:27:08 peter Exp $");
+__RCSID("$NetBSD: date.c,v 1.43 2006/07/23 20:39:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,8 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
-	char buf[1024];
+	char *buf;
+	size_t bufsiz;
 	const char *format;
 	int ch;
 
@@ -123,10 +124,16 @@ main(int argc, char *argv[])
 	if (*argv && **argv == '+')
 		format = *argv + 1;
 
-	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
+	if ((buf = malloc(bufsiz = 1024)) == NULL)
+		goto bad;
+	while (strftime(buf, bufsiz, format, localtime(&tval)) == 0)
+		if ((buf = realloc(buf, bufsiz <<= 1)) == NULL)
+			goto bad;
 	(void)printf("%s\n", buf);
-	exit(retval);
-	/* NOTREACHED */
+	free(buf);
+	return 0;
+bad:
+	err(1, "Cannot allocate format buffer");
 }
 
 static void
