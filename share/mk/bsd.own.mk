@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.465 2006/07/23 11:41:27 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.466 2006/07/23 12:31:29 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -568,6 +568,9 @@ dependall:	.NOTMAIN realdepend .MAKE
 # to set in /etc/mk.conf and override in the make environment.
 # These should be tested with `== "no"' or `!= "no"'.
 # The NOxxx variables should only be set by Makefiles.
+#
+# Please keep etc/Makefile and share/man/man5/mk.conf.5 in sync
+# with changes to the MK* variables here.
 #
 
 #
