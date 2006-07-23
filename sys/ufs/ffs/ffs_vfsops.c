@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.183 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.184 2006/07/23 22:06:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.183 2006/07/13 12:00:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.184 2006/07/23 22:06:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -189,12 +189,10 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	struct vnode *devvp = NULL;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	struct proc *p;
 	struct fs *fs;
 	int error, flags, update;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
@@ -255,14 +253,14 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
+	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -402,7 +400,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ffs_reload(mp, p->p_cred, l);
+			error = ffs_reload(mp, l->l_cred, l);
 			if (error)
 				return (error);
 		}
@@ -416,7 +414,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			fs->fs_fmod = 1;
 			if ((fs->fs_flags & FS_DOSOFTDEP)) {
 				error = softdep_mount(devvp, mp, fs,
-				    p->p_cred);
+				    l->l_cred);
 				if (error)
 					return (error);
 			}
@@ -701,7 +699,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	dev_t dev;
 	struct partinfo dpart;
 	void *space;
-	struct proc *p;
 	daddr_t sblockloc, fsblockloc;
 	int blks, fstype;
 	int error, i, size, ronly;
@@ -713,8 +710,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
 
 	dev = devvp->v_rdev;
-	p = l ? l->l_proc : NULL;
-	cred = p ? p->p_cred : NOCRED;
+	cred = l ? l->l_cred : NOCRED;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -1247,7 +1243,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 	 * Flush filesystem metadata.
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(ump->um_devvp, l->l_proc->p_cred, FSYNC_WAIT, 0, 0, l);
+	error = VOP_FSYNC(ump->um_devvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
 	VOP_UNLOCK(ump->um_devvp, 0);
 	return (error);
 }

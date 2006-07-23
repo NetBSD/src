@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.65 2006/06/12 00:22:47 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.66 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.65 2006/06/12 00:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,11 +297,10 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct nameidata nd;
 	int error;
-	struct proc *p = l->l_proc;
 
 	/* Make sure that the caller is root. */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-			&p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	/*
@@ -320,7 +319,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 			error = EACCES;
 			goto bad;
 		}
-		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_cred, l)) != 0) {
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred, l)) != 0) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto bad;
 		}
@@ -334,7 +333,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 #endif
 			VATTR_NULL(&va);
 			va.va_size = size;
-			error = VOP_SETATTR(nd.ni_vp, &va, p->p_cred, l);
+			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred, l);
 			if (error != 0) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto bad;
@@ -360,7 +359,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	 */
 	acct_state = ACCT_ACTIVE;
 	acct_vp = nd.ni_vp;
-	acct_cred = p->p_cred;
+	acct_cred = l->l_cred;
 	kauth_cred_hold(acct_cred);
 
 	error = acct_chkfree();		/* Initial guess. */
@@ -380,7 +379,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	ACCT_UNLOCK();
 	return (error);
  bad:
-	vn_close(nd.ni_vp, FWRITE, p->p_cred, l);
+	vn_close(nd.ni_vp, FWRITE, l->l_cred, l);
 	return error;
 }
 
@@ -449,8 +448,8 @@ acct_process(struct lwp *l)
 	acct.ac_io = encode_comp_t(r->ru_inblock + r->ru_oublock, 0);
 
 	/* (6) The UID and GID of the process */
-	acct.ac_uid = kauth_cred_getuid(p->p_cred);
-	acct.ac_gid = kauth_cred_getgid(p->p_cred);
+	acct.ac_uid = kauth_cred_getuid(l->l_cred);
+	acct.ac_gid = kauth_cred_getgid(l->l_cred);
 
 	/* (7) The terminal from which the process was started */
 	if ((p->p_flag & P_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
@@ -464,7 +463,7 @@ acct_process(struct lwp *l)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, l, p->p_cred, LEASE_WRITE);
+	VOP_LEASE(acct_vp, l, l->l_cred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_cred, NULL, NULL);

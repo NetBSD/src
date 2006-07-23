@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.2 2006/07/23 22:06:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.2 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
@@ -349,16 +349,13 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;
-	struct proc *p;
 	int err = 0, flags;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
 
-	p = (l == NULL) ? NULL : l->l_proc;
-
 	switch(req) {
 	case PRU_CONTROL:
-		return hci_ioctl((unsigned long)m, (void *)nam, p);
+		return hci_ioctl((unsigned long)m, (void *)nam, l);
 
 	case PRU_PURGEIF:
 		return EOPNOTSUPP;
@@ -368,9 +365,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 			return EINVAL;
 
 		flags = 0;
-		if (p != NULL && kauth_authorize_generic(p->p_cred,
-					    KAUTH_GENERIC_ISSUSER,
-					    &p->p_acflag)) {
+		if (l != NULL && kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) {
 			err = hci_security_init();
 			if (err)
 				return err;
@@ -542,8 +538,10 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 release:
-	if (m) m_freem(m);
-	if (ctl) m_freem(ctl);
+	if (m)
+		m_freem(m);
+	if (ctl)
+		m_freem(ctl);
 	return err;
 }
 

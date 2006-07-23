@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.55 2006/07/19 21:11:38 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.56 2006/07/23 22:06:11 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.55 2006/07/19 21:11:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.56 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -573,13 +573,12 @@ systrace_init(void)
 int
 systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	struct fsystrace *fst;
 	struct file *fp;
 	int error, fd;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
+	if ((error = falloc(l, &fp, &fd)) != 0)
 		return (error);
 
 	MALLOC(fst, struct fsystrace *, sizeof(*fst), M_XDATA, M_WAITOK);
@@ -591,11 +590,11 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 	TAILQ_INIT(&fst->messages);
 	TAILQ_INIT(&fst->policies);
 
-	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-			      &p->p_acflag) == 0)
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) == 0)
 		fst->issuser = 1;
-	fst->p_ruid = kauth_cred_getuid(p->p_cred);
-	fst->p_rgid = kauth_cred_getgid(p->p_cred);
+	fst->p_ruid = kauth_cred_getuid(l->l_cred);
+	fst->p_rgid = kauth_cred_getgid(l->l_cred);
 
 	return fdclone(l, fp, fd, flag, &systracefops, fst);
 }

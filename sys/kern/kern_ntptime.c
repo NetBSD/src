@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.34 2006/07/01 05:44:26 kardel Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.35 2006/07/23 22:06:11 ad Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.34 2006/07/01 05:44:26 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.35 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -240,24 +240,23 @@ sys_ntp_adjtime(l, v, retval)
 	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timex ntv;
 	int error = 0;
 
-	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
-			sizeof(ntv))) != 0)
+	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
+	if (error != 0)
 		return (error);
 
-	if (ntv.modes != 0 && (error = kauth_authorize_generic(p->p_cred,
-				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if (ntv.modes != 0 && (error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	ntp_adjtime1(&ntv);
 
 	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
-	if (!error) {
+	if (!error)
 		*retval = ntp_timestatus();
-	}
+
 	return error;
 }
 
@@ -904,7 +903,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.34 2006/07/01 05:44:26 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.35 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -1010,25 +1009,22 @@ sys_ntp_adjtime(l, v, retval)
 	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timex ntv;
 	int error = 0;
 
-	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
-			sizeof(ntv))) != 0)
+	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
+	if (error != 0)
 		return (error);
 
-	if (ntv.modes != 0 && (error = kauth_authorize_generic(p->p_cred,
-				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if (ntv.modes != 0 && (error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	ntp_adjtime1(&ntv);
 
 	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
-
-	if (error == 0) {
+	if (error == 0)
 		*retval = ntp_timestatus();
-	}
 
 	return error;
 }

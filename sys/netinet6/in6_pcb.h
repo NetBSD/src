@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.29 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.30 2006/07/23 22:06:13 ad Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ struct	in6pcb {
 void	in6_losing(struct in6pcb *);
 void	in6_pcbinit(struct inpcbtable *, int, int);
 int	in6_pcballoc(struct socket *, void *);
-int	in6_pcbbind(void *, struct mbuf *, struct proc *);
-int	in6_pcbconnect(void *, struct mbuf *, struct proc *);
+int	in6_pcbbind(void *, struct mbuf *, struct lwp *);
+int	in6_pcbconnect(void *, struct mbuf *, struct lwp *);
 void	in6_pcbdetach(struct in6pcb *);
 void	in6_pcbdisconnect(struct in6pcb *);
 struct	in6pcb *in6_pcblookup_port(struct inpcbtable *, struct in6_addr *,
@@ -170,7 +170,7 @@ void	in6_setsockaddr(struct in6pcb *, struct mbuf *);
 
 /* in in6_src.c */
 int	in6_selecthlim(struct in6pcb *, struct ifnet *);
-int	in6_pcbsetport(struct in6_addr *, struct in6pcb *, struct proc *);
+int	in6_pcbsetport(struct in6_addr *, struct in6pcb *, struct lwp *);
 
 extern struct rtentry *
 	in6_pcbrtentry(struct in6pcb *);

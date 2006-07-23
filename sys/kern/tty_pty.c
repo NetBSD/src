@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.90 2006/06/03 18:18:26 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.91 2006/07/23 22:06:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.90 2006/06/03 18:18:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.91 2006/07/23 22:06:11 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -312,7 +312,6 @@ ptsopen(dev, flag, devtype, l)
 	int flag, devtype;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -333,7 +332,8 @@ ptsopen(dev, flag, devtype, l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && kauth_cred_geteuid(p->p_cred) != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
+	    kauth_cred_geteuid(l->l_cred) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.164 2006/07/12 14:07:02 tron Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.165 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.164 2006/07/12 14:07:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1280,7 +1280,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 	int optval = 0;
 	int error = 0;
 #if defined(IPSEC) || defined(FAST_IPSEC)
-	struct proc *p = curproc;	/*XXX*/
+	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
 	if (level != IPPROTO_IP) {
@@ -1384,8 +1384,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			int priv = 0;
 
 #ifdef __NetBSD__
-			if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-							&p->p_acflag))
+			if (l == 0 || kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 				priv = 0;
 			else
 				priv = 1;

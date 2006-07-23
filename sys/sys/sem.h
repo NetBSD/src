@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.21 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.22 2006/07/23 22:06:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ __END_DECLS
 void	seminit(void);
 void	semexit(struct proc *, void *);
 
-int	semctl1(struct proc *, int, int, int, void *, register_t *);
+int	semctl1(struct lwp *, int, int, int, void *, register_t *);
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SEM_H_ */

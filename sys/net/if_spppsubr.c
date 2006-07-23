@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.94 2006/07/13 23:43:13 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.95 2006/07/23 22:06:12 ad Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.94 2006/07/13 23:43:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.95 2006/07/23 22:06:12 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1143,9 +1143,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETDNSOPTS:
 	case SPPPSETKEEPALIVE:
 	{
-		struct proc *p = curproc;		/* XXX */
+		struct lwp *l = curlwp;		/* XXX */
 
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			break;
 	}
 	/* FALLTHROUGH */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.23 2006/06/07 22:34:00 kardel Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.24 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.23 2006/06/07 22:34:00 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.24 2006/07/23 22:06:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ pk_accton(path)
 	struct nameidata nd;
 	struct vnode *oacctp = pkacctp;
 	struct lwp *l = curlwp;		/* XXX */
-	struct proc *p;
 	int error;
 
 	if (path == 0)
@@ -125,8 +124,7 @@ pk_accton(path)
 	pkacctp = vp;
 	if (oacctp) {
 	close:
-		p = l->l_proc;
-		error = vn_close (oacctp, FWRITE, p->p_cred, l);
+		error = vn_close (oacctp, FWRITE, l->l_cred, l);
 	}
 	return (error);
 }
@@ -160,7 +158,7 @@ pk_acct(lcp)
 		acbuf.x25acct_revcharge = 1;
 	acbuf.x25acct_stime = lcp -> lcd_stime;
 	acbuf.x25acct_etime = time_second - acbuf.x25acct_stime;
-	acbuf.x25acct_uid = kauth_cred_getuid(curproc->p_cred);
+	acbuf.x25acct_uid = kauth_cred_getuid(curlwp->l_cred);
 	acbuf.x25acct_psize = sa -> x25_opts.op_psize;
 	acbuf.x25acct_net = sa -> x25_net;
 	/*
@@ -182,6 +180,6 @@ pk_acct(lcp)
 
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
-		curproc -> p_cred, (size_t *)0,
+		curlwp -> l_cred, (size_t *)0,
 		NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.72 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.73 2006/07/23 22:06:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.72 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.73 2006/07/23 22:06:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ linux_sys_fcntl(l, v, retval)
 			break;
 		}
 
-		error = VOP_GETATTR(vp, &va, p->p_cred, l);
+		error = VOP_GETATTR(vp, &va, l->l_cred, l);
 
 		FILE_UNUSE(fp, l);
 

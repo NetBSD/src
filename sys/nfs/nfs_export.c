@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.15 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.16 2006/07/23 22:06:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.15 2006/07/13 12:00:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.16 2006/07/23 22:06:14 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -226,8 +226,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct fid *fid;
 	size_t fid_size;
 
-	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-			      &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
