@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.89 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.90 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.89 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.90 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -275,12 +275,12 @@ tun_clone_destroy(struct ifnet *ifp)
 static int
 tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc 	*p = l->l_proc;
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
 	int	s, error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	s = splnet();

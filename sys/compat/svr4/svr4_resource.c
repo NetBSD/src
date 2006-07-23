@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.9 2005/12/24 20:45:08 perry Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.10 2006/07/23 22:06:10 ad Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.9 2005/12/24 20:45:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.10 2006/07/23 22:06:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,6 @@ svr4_sys_setrlimit(l, v, retval)
 {
 	struct svr4_sys_setrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct proc *p = l->l_proc;
 	struct rlimit blim, *limp;
 	struct svr4_rlimit slim;
 	int error;
@@ -158,7 +157,7 @@ svr4_sys_setrlimit(l, v, retval)
 	if (rl == -1)
 		return EINVAL;
 
-	limp = &p->p_rlimit[rl];
+	limp = &l->l_proc->p_rlimit[rl];
 
 	if ((error = copyin(SCARG(uap, rlp), &slim, sizeof(slim))) != 0)
 		return error;
@@ -190,7 +189,7 @@ svr4_sys_setrlimit(l, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(l, l->l_proc, rl, &blim);
 }
 
 
@@ -250,7 +249,6 @@ svr4_sys_setrlimit64(l, v, retval)
 {
 	struct svr4_sys_setrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct proc *p = l->l_proc;
 	struct rlimit blim, *limp;
 	struct svr4_rlimit64 slim;
 	int error;
@@ -258,7 +256,7 @@ svr4_sys_setrlimit64(l, v, retval)
 	if (rl == -1)
 		return EINVAL;
 
-	limp = &p->p_rlimit[rl];
+	limp = &l->l_proc->p_rlimit[rl];
 
 	if ((error = copyin(SCARG(uap, rlp), &slim, sizeof(slim))) != 0)
 		return error;
@@ -290,5 +288,5 @@ svr4_sys_setrlimit64(l, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(l, l->l_proc, rl, &blim);
 }

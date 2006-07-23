@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.118 2006/06/27 10:45:09 tron Exp $	*/
+/*	$NetBSD: bpf.c,v 1.119 2006/07/23 22:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.118 2006/06/27 10:45:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.119 2006/07/23 22:06:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error, fd;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
+	if ((error = falloc(l, &fp, &fd)) != 0)
 		return error;
 
 	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK);
@@ -1703,9 +1703,8 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (namelen != 2)
 		return (EINVAL);
 
-	if ((error = kauth_authorize_generic(l->l_proc->p_cred,
-				       KAUTH_GENERIC_ISSUSER,
-				       &l->l_proc->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 		return (error);
 
 	len = (oldp != NULL) ? *oldlenp : 0;

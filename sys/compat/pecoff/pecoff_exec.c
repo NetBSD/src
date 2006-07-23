@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.31 2006/05/14 21:25:21 elad Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.32 2006/07/23 22:06:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.31 2006/05/14 21:25:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.32 2006/07/23 22:06:09 ad Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -195,11 +195,11 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 		error = EACCES;
 		goto badunlock;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, l->l_cred, l)) != 0)
 		goto badunlock;
 
 	/*

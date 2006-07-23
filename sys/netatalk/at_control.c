@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.14 2006/06/07 22:34:00 kardel Exp $	 */
+/*	$NetBSD: at_control.c,v 1.15 2006/07/23 22:06:13 ad Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.14 2006/06/07 22:34:00 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.15 2006/07/23 22:06:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,11 @@ static void aa_clean __P((void));
 			 (a)->sat_addr.s_node == (b)->sat_addr.s_node )
 
 int
-at_control(cmd, data, ifp, p)
+at_control(cmd, data, ifp, l)
 	u_long          cmd;
 	caddr_t         data;
 	struct ifnet   *ifp;
-	struct proc    *p;
+	struct lwp     *l;
 {
 	struct ifreq   *ifr = (struct ifreq *) data;
 	struct sockaddr_at *sat;
@@ -128,8 +128,8 @@ at_control(cmd, data, ifp, p)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (p && kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				      &p->p_acflag))
+		if (l && kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 			return (EPERM);
 
 		sat = satosat(&ifr->ifr_addr);

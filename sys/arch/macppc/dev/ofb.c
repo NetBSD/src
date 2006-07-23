@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.49 2006/05/14 21:55:38 elad Exp $	*/
+/*	$NetBSD: ofb.c,v 1.50 2006/07/23 22:06:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.49 2006/05/14 21:55:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.50 2006/07/23 22:06:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -415,7 +415,7 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct ofb_softc *sc = vd->cookie;
 	struct rasops_info *ri;
 	u_int32_t *ap = sc->sc_addrs;
-	struct proc *me;
+	struct lwp *me;
 	int i;
 
 	if (vd->active == NULL) {
@@ -433,9 +433,10 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = __curproc();
+	me = curlwp;
 	if (me != NULL) {
-		if (kauth_authorize_generic(me->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
 			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
 			return -1;
 		}

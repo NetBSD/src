@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.147 2006/02/23 01:35:19 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.148 2006/07/23 22:06:13 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.147 2006/02/23 01:35:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148 2006/07/23 22:06:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1179,14 +1179,12 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
-	struct proc *p;
 	int s;
 	int error = 0;
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
@@ -1239,7 +1237,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		error = in_pcbbind(inp, nam, p);
+		error = in_pcbbind(inp, nam, l);
 		break;
 
 	case PRU_LISTEN:
@@ -1247,7 +1245,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		error = in_pcbconnect(inp, nam, p);
+		error = in_pcbconnect(inp, nam, l);
 		if (error)
 			break;
 		soisconnected(so);
@@ -1289,7 +1287,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = in_pcbconnect(inp, nam, p);
+			error = in_pcbconnect(inp, nam, l);
 			if (error)
 				goto die;
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.11 2006/07/13 12:00:24 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.12 2006/07/23 22:06:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.11 2006/07/13 12:00:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.12 2006/07/23 22:06:08 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -288,7 +288,6 @@ compat_20_sys_fhstatfs(l, v, retval)
 		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
 	struct compat_30_fhandle fh;
 	struct mount *mp;
@@ -298,8 +297,8 @@ compat_20_sys_fhstatfs(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					     &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)

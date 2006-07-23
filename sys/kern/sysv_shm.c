@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.88 2006/06/07 22:33:41 kardel Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.89 2006/07/23 22:06:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.88 2006/06/07 22:33:41 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89 2006/07/23 22:06:11 ad Exp $");
 
 #define SYSVSHM
 
@@ -127,9 +127,9 @@ static int shm_find_segment_by_key(key_t);
 static void shm_deallocate_segment(struct shmid_ds *);
 static void shm_delete_mapping(struct vmspace *, struct shmmap_state *,
 			       struct shmmap_entry *);
-static int shmget_existing(struct proc *, struct sys_shmget_args *,
+static int shmget_existing(struct lwp *, struct sys_shmget_args *,
 			   int, int, register_t *);
-static int shmget_allocate_segment(struct proc *, struct sys_shmget_args *,
+static int shmget_allocate_segment(struct lwp *, struct sys_shmget_args *,
 				   int, register_t *);
 static struct shmmap_state *shmmap_getprivate(struct proc *);
 static struct shmmap_entry *shm_find_mapping(struct shmmap_state *, vaddr_t);
@@ -308,7 +308,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error, flags;
 	struct proc *p = l->l_proc;
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct shmid_ds *shmseg;
 	struct shmmap_state *shmmap_s;
 	struct uvm_object *uobj;
@@ -382,7 +382,6 @@ sys___shmctl13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct shmid_ds shmbuf;
 	int cmd, error;
 
@@ -394,7 +393,7 @@ sys___shmctl13(struct lwp *l, void *v, register_t *retval)
 			return (error);
 	}
 
-	error = shmctl1(p, SCARG(uap, shmid), cmd,
+	error = shmctl1(l, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT)
@@ -404,9 +403,9 @@ sys___shmctl13(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-shmctl1(struct proc *p, int shmid, int cmd, struct shmid_ds *shmbuf)
+shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 {
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct shmid_ds *shmseg;
 	int error = 0;
 
@@ -448,11 +447,11 @@ shmctl1(struct proc *p, int shmid, int cmd, struct shmid_ds *shmbuf)
 }
 
 static int
-shmget_existing(struct proc *p, struct sys_shmget_args *uap, int mode,
+shmget_existing(struct lwp *l, struct sys_shmget_args *uap, int mode,
     int segnum, register_t *retval)
 {
 	struct shmid_ds *shmseg;
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	int error;
 
 	shmseg = &shmsegs[segnum];
@@ -480,11 +479,11 @@ shmget_existing(struct proc *p, struct sys_shmget_args *uap, int mode,
 }
 
 static int
-shmget_allocate_segment(struct proc *p, struct sys_shmget_args *uap, int mode,
+shmget_allocate_segment(struct lwp *l, struct sys_shmget_args *uap, int mode,
     register_t *retval)
 {
 	int i, segnum, shmid, size;
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct shmid_ds *shmseg;
 	int error = 0;
 
@@ -524,7 +523,7 @@ shmget_allocate_segment(struct proc *p, struct sys_shmget_args *uap, int mode,
 	shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED) |
 	    (mode & (ACCESSPERMS|SHMSEG_RMLINGER)) | SHMSEG_ALLOCATED;
 	shmseg->shm_segsz = SCARG(uap, size);
-	shmseg->shm_cpid = p->p_pid;
+	shmseg->shm_cpid = l->l_proc->p_pid;
 	shmseg->shm_lpid = shmseg->shm_nattch = 0;
 	shmseg->shm_atime = shmseg->shm_dtime = 0;
 	shmseg->shm_ctime = time_second;
@@ -551,7 +550,6 @@ sys_shmget(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) size;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;
@@ -567,7 +565,7 @@ sys_shmget(struct lwp *l, void *v, register_t *retval)
 again:
 		segnum = shm_find_segment_by_key(SCARG(uap, key));
 		if (segnum >= 0) {
-			error = shmget_existing(p, uap, mode, segnum, retval);
+			error = shmget_existing(l, uap, mode, segnum, retval);
 			if (error == EAGAIN)
 				goto again;
 			return error;
@@ -575,7 +573,7 @@ again:
 		if ((SCARG(uap, shmflg) & IPC_CREAT) == 0)
 			return ENOENT;
 	}
-	return shmget_allocate_segment(p, uap, mode, retval);
+	return shmget_allocate_segment(l, uap, mode, retval);
 }
 
 void

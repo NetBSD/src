@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.33 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.34 2006/07/23 22:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.33 2006/07/13 12:00:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.34 2006/07/23 22:06:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,11 +169,9 @@ cd9660_mount(mp, path, data, ndp, l)
 {
 	struct vnode *devvp;
 	struct iso_args args;
-	struct proc *p;
 	int error;
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		if (imp == NULL)
 			return EIO;
@@ -212,9 +210,9 @@ cd9660_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_cred, l);
+		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -327,7 +325,7 @@ iso_mountfs(devvp, mp, l, argp)
 		return EROFS;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	/* This is the "logical sector size".  The standard says this

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2006/07/19 21:11:44 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 2006/07/23 22:06:06 ad Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2006/07/19 21:11:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2006/07/23 22:06:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -730,8 +730,8 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred ?
-			       kauth_cred_geteuid(p->p_cred) : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
@@ -823,7 +823,7 @@ writeback(struct frame *fp, int docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, kauth_cred_geteuid(p->p_cred));
+			       p->p_pid, p->p_comm, kauth_cred_geteuid(l->l_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.

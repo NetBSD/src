@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.4 2006/07/20 09:00:41 cube Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.5 2006/07/23 22:06:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -163,7 +163,7 @@ fileassoc_file_lookup(struct vnode *vp)
 	size_t indx;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, curlwp->l_proc->p_cred, curlwp);
+	error = VOP_GETATTR(vp, &va, curlwp->l_cred, curlwp);
 	if (error)
 		return (NULL);
 
@@ -370,7 +370,7 @@ fileassoc_file_add(struct vnode *vp)
 	size_t indx;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, curlwp->l_proc->p_cred, curlwp);
+	error = VOP_GETATTR(vp, &va, curlwp->l_cred, curlwp);
 	if (error)
 		return (NULL);
 

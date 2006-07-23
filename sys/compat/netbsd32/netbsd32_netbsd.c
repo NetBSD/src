@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.107 2006/07/13 23:22:35 pavel Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.108 2006/07/23 22:06:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.107 2006/07/13 23:22:35 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.108 2006/07/23 22:06:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -968,7 +968,7 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	kauth_cred_t pc = l->l_proc->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int ngrp;
 	int error;
 	gid_t *grbuf;
@@ -1486,7 +1486,6 @@ netbsd32___getfh30(l, v, retval)
 		syscallarg(netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_size_tp) fh_size;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	fhandle_t *fh;
 	int error;
@@ -1497,8 +1496,8 @@ netbsd32___getfh30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				  &p->p_acflag);
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
 	if (error)
 		return (error);
 	fh = NULL;
@@ -1745,7 +1744,6 @@ netbsd32_setrlimit(l, v, retval)
 		int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
-	struct proc *p = l->l_proc;
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
 	    sizeof(struct rlimit));
@@ -1769,7 +1767,7 @@ netbsd32_setrlimit(l, v, retval)
 		break;
 	}
 
-	return (dosetrlimit(p, p->p_cred, which, &alim));
+	return (dosetrlimit(l, l->l_proc, which, &alim));
 }
 
 int

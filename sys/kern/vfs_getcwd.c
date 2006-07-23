@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.31 2006/05/14 21:15:12 elad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.32 2006/07/23 22:06:12 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.31 2006/05/14 21:15:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.32 2006/07/23 22:06:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	struct vattr va;
 	struct vnode *uvp = NULL;
 	struct vnode *lvp = *lvpp;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct componentname cn;
 	int len, reclen;
 	tries = 0;
@@ -358,7 +358,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
     int limit, int flags, struct lwp *l)
 {
 	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct vnode *uvp = NULL;
 	char *bp = NULL;
 	int error;

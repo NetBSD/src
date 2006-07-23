@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.7 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.8 2006/07/23 22:06:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.7 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.8 2006/07/23 22:06:08 ad Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -53,10 +53,10 @@ compat_12_sys_reboot(struct lwp *l, void *v, register_t *retval)
 	struct compat_12_sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 	cpu_reboot(SCARG(uap, opt), NULL);
 	return (0);

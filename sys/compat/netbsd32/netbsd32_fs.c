@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.30 2006/07/16 07:52:02 yamt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.31 2006/07/23 22:06:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.30 2006/07/16 07:52:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.31 2006/07/23 22:06:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -350,7 +350,6 @@ change_utimes32(vp, tptr, l)
 {
 	struct netbsd32_timeval tv32[2];
 	struct timeval tv[2];
-	struct proc *p = l->l_proc;
 	struct vattr vattr;
 	int error;
 
@@ -367,13 +366,13 @@ change_utimes32(vp, tptr, l)
 		netbsd32_to_timeval(&tv32[0], &tv[0]);
 		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
 	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
 	vattr.va_mtime.tv_sec = tv[1].tv_sec;
 	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, p->p_cred, l);
+	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -547,7 +546,6 @@ netbsd32_fhstatvfs1(l, v, retval)
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
 	fhandle_t *fh;
@@ -557,7 +555,8 @@ netbsd32_fhstatvfs1(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return error;
 
 	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), &fh))
@@ -777,7 +776,6 @@ int netbsd32_sys___fhstat30(l, v, retval)
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_statp_t) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct netbsd32_stat sb32;
 	int error;
@@ -787,8 +785,8 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		return error;
 
 	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), &fh))
