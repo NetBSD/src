@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.640 2006/07/23 11:41:24 lukem Exp $
+# $NetBSD: mi,v 1.641 2006/07/23 12:01:25 bouyer Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -111,6 +111,7 @@
 ./rescue					base-sys-root
 ./root						base-sys-root
 ./sbin						base-sys-root
+./sbin/amrctl					base-sysutil-root
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/brconfig					base-netutil-root
