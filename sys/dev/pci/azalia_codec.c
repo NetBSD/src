@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.23 2006/07/21 14:40:12 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.24 2006/07/23 16:05:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.23 2006/07/21 14:40:12 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.24 2006/07/23 16:05:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,6 +116,7 @@ static int	alc882_mixer_init(codec_t *);
 static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc882_get_port(codec_t *, mixer_ctrl_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
+static int	ad1981hd_mixer_init(codec_t *);
 static int	cmi9880_init_dacgroup(codec_t *);
 static int	cmi9880_mixer_init(codec_t *);
 static int	stac9221_init_dacgroup(codec_t *);
@@ -164,6 +165,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
 		this->name = "Analog Devices AD1981HD";
 		this->init_widget = ad1981hd_init_widget;
+		this->mixer_init = ad1981hd_mixer_init;
 		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
@@ -2359,6 +2361,8 @@ alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
+#define AD1981HD_THINKPAD	0x201017aa
+
 static int
 ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
@@ -2393,6 +2397,24 @@ ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x1d:
 		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
 		break;
+	}
+	return 0;
+}
+
+static int
+ad1981hd_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+	int err;
+
+	err = generic_mixer_init(this);
+	if (err)
+		return err;
+	if (this->subid == AD1981HD_THINKPAD) {
+		mc.dev = -1;
+		mc.type = AUDIO_MIXER_ENUM;
+		mc.un.ord = 1;
+		generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
 	}
 	return 0;
 }
