@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.55 2006/07/07 17:21:19 yamt Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.56 2006/07/23 12:01:25 bouyer Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -223,6 +223,7 @@
 #	ad*	UNIBUS interface to Data Translation A/D converter
 #	agp*	AGP GART devices
 #	altq	ALTQ control interface
+#	amr*	AMI MegaRaid control device
 #	apm	power management device
 #	audio*	audio devices
 #	bell*	OPM bell device (x68k)
@@ -1009,6 +1010,11 @@ radio*)
 	unit=${i#radio}
 	: ${unit:-0}
 	mkdev radio$unit c %radio_chr% $unit 666
+	;;
+
+amr*)
+	unit=${i#amr}
+	mkdev amr$unit c %amr_chr% $unit
 	;;
 
 apm)

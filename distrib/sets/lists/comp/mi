@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.900 2006/07/23 11:41:24 lukem Exp $
+#	$NetBSD: mi,v 1.901 2006/07/23 12:01:25 bouyer Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -380,6 +380,8 @@
 ./usr/include/dev/ofw/ofw_pci.h			comp-obsolete		obsolete
 ./usr/include/dev/ofw/openfirm.h		comp-obsolete		obsolete
 ./usr/include/dev/ofw/openfirmio.h		comp-c-include
+./usr/include/dev/pci/amrio.h			comp-c-include
+./usr/include/dev/pci/amrreg.h			comp-c-include
 ./usr/include/dev/pci/if_devar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete
