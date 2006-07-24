@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.11 2006/07/13 10:53:08 drochner Exp $ */
+/* $NetBSD: cpu.c,v 1.12 2006/07/24 10:57:13 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2006/07/13 10:53:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2006/07/24 10:57:13 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -249,8 +249,7 @@ cpu_attach(parent, self, aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = (struct cpu_info *)uvm_km_alloc(kernel_map, sizeof(*ci),
-			0, UVM_KMF_WIRED | UVM_KMF_EXEC);
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL)
@@ -290,8 +289,7 @@ cpu_attach(parent, self, aux)
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-	kstack = uvm_km_alloc(kernel_map, USPACE, 0,
-			      UVM_KMF_WIRED | UVM_KMF_EXEC);
+	kstack = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED);
 	if (kstack == 0) {
 		if (caa->cpu_role != CPU_ROLE_AP) {
 			panic("cpu_attach: unable to allocate idle stack for"
