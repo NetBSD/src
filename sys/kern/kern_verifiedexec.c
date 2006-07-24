@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.62 2006/07/24 21:15:05 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.63 2006/07/24 21:32:39 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.62 2006/07/24 21:15:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.63 2006/07/24 21:32:39 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -441,7 +441,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		    REPORT_ALWAYS|REPORT_ALARM);
 
 		/* IPS mode: Enforce access type. */
-		if (veriexec_strict >= 2)
+		if (veriexec_strict >= VERIEXEC_IPS)
 			return (EPERM);
 	}
 
@@ -451,13 +451,13 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		veriexec_report("veriexec_verify: No entry.", name,
 		    l, REPORT_VERBOSE);
 
-		/* Lockdown mode: Deny access to non-monitored files if
-		 * strict is 3 or higher, make an exception for executables
-		 * since we don't want to run an unverified binary at strict
-		 * 2 or higher.
+		/*
+		 * Lockdown mode: Deny access to non-monitored files.
+		 * IPS mode: Deny execution of non-monitored files.
 		 */
-		if ((veriexec_strict >= 3) ||
-		    ((veriexec_strict >= 2) && (flag != VERIEXEC_FILE)))
+		if ((veriexec_strict >= VERIEXEC_LOCKDOWN) ||
+		    ((veriexec_strict >= VERIEXEC_IPS) &&
+		     (flag != VERIEXEC_FILE)))
 			return (EPERM);
 
 		return (0);
@@ -483,7 +483,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		    NULL, REPORT_ALWAYS|REPORT_ALARM);
 
 		/* IDS mode: Deny access on fingerprint mismatch. */
-		if (veriexec_strict >= 1)
+		if (veriexec_strict >= VERIEXEC_IDS)
 			error = EPERM;
 
 		break;
@@ -538,7 +538,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 	if (error) {
 		const char *msg;
 
-		if (veriexec_strict > 0) {
+		if (veriexec_strict > VERIEXEC_LEARNING) {
 			msg = "Pages modified: Killing process.";
 		} else {
 			msg = "Pages modified.";
@@ -578,7 +578,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	vfe = veriexec_lookup(vp);
 	if (vfe == NULL) {
 		/* Lockdown mode: Deny access to non-monitored files. */
-		if (veriexec_strict >= 3)
+		if (veriexec_strict >= VERIEXEC_LOCKDOWN)
 			return (EPERM);
 
 		return (0);
@@ -587,7 +587,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	veriexec_report("Remove request.", pathbuf, l, REPORT_ALWAYS|REPORT_ALARM);
 
 	/* IDS mode: Deny removal of monitored files. */
-	if (veriexec_strict >= 1)
+	if (veriexec_strict >= VERIEXEC_IDS)
 		return (EPERM);
 
 	fileassoc_clear(vp, veriexec_hook);
@@ -612,7 +612,7 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
-	if (veriexec_strict >= 3) {
+	if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
 		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", from, to,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
@@ -625,7 +625,7 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
 		tvfe = veriexec_lookup(tvp);
 
 	if ((vfe != NULL) || (tvfe != NULL)) {
-		if (veriexec_strict >= 2) {
+		if (veriexec_strict >= VERIEXEC_IPS) {
 			log(LOG_ALERT, "Veriexec: Preventing rename of `%s' "
 			    "to `%s', uid=%u, pid=%u: IPS mode, file "
 			    "monitored.\n", from, to,
