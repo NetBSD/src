@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.12 2006/07/19 01:35:39 rpaulo Exp $
+#	$NetBSD: master.cf,v 1.13 2006/07/24 16:11:45 rpaulo Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
@@ -41,8 +41,8 @@ discard   unix  -       -       n       -       -       discard
 local     unix  -       n       n       -       -       local
 virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       n       -       -       lmtp
-#anvil     unix  -       -       n       -       1       anvil
-#scache	  unix	-	-	n	-	1	scache
+anvil     unix  -       -       n       -       1       anvil
+scache	  unix	-	-	n	-	1	scache
 #
 # ====================================================================
 # Interfaces to non-Postfix software. Be sure to examine the manual
