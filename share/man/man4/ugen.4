@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.22 2006/07/24 14:24:48 gdt Exp $
+.\" $NetBSD: ugen.4,v 1.23 2006/07/24 17:00:52 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 22, 2005
+.Dd July 24, 2006
 .Dt UGEN 4
 .Os
 .Sh NAME
@@ -42,11 +42,13 @@
 .Nd USB generic device support
 .Sh SYNOPSIS
 .Cd "ugen* at uhub? flags N"
+.Cd options UGEN_BULK_RA_WB
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for all USB devices that do not have
-a special driver.  It supports access to all parts of the device,
+a special driver.
+It supports access to all parts of the device,
 but not in a way that is as convenient as a special purpose driver.
 .Pp
 Normally the
@@ -67,10 +69,11 @@ driver to be used for a certain
 device.
 .Pp
 There can be up to 127 USB devices connected to a USB bus.
-Each USB device can have up to 16 endpoints.  Each of these endpoints
-will communicate in one of four different modes: control, isochronous,
-bulk, or interrupt.  Each of the endpoints will have a different
-device node.  The four least significant bits in the minor device
+Each USB device can have up to 16 endpoints.
+Each of these endpoints will communicate in one of four different
+modes: control, isochronous, bulk, or interrupt.
+Each of the endpoints will have a different device node.
+The four least significant bits in the minor device
 number determines which endpoint the device accesses and the rest
 of the bits determines which USB device.
 .Pp
@@ -83,27 +86,31 @@ operations on the control endpoint that return the USB descriptors
 of the device, configurations, interfaces, and endpoints.
 .Pp
 The control transfer mode can only happen on the control endpoint
-which is always endpoint 0.  The control endpoint accepts requests
-and may respond with an answer to such requests.  Control requests
-are issued by
+which is always endpoint 0.
+The control endpoint accepts requests
+and may respond with an answer to such requests.
+Control requests are issued by
 .Xr ioctl 2
 calls.
 .\" .Pp
 .\" The isochronous transfer mode can be in or out depending on the
-.\" endpoint.  To perform IO on an isochronous endpoint
+.\" endpoint.
+.\" To perform IO on an isochronous endpoint
 .\" .Xr read 2
 .\" and
 .\" .Xr write 2
 .\" should be used.
 .\" Before any IO operations can take place the transfer rate in
-.\" bytes/second has to be set.  This is done with
+.\" bytes/second has to be set.
+.\" This is done with
 .\" .Xr ioctl 2
 .\" .Dv USB_SET_ISO_RATE .
 .\" Performing this call sets up a buffer corresponding to
 .\" about 1 second of data.
 .Pp
 The bulk transfer mode can be in or out depending on the
-endpoint.  To perform IO on a bulk endpoint
+endpoint.
+To perform IO on a bulk endpoint
 .Xr read 2
 and
 .Xr write 2
@@ -114,9 +121,9 @@ Buffering can be enabled using a
 or
 .Dv USB_SET_BULK_WB
 .Xr ioctl 2
-call, to enable read-ahead and write-behind respectively.  When
-read-ahead or write-behind are enabled, the file descriptor may
-be set to use non-blocking IO.
+call, to enable read-ahead and write-behind respectively.
+When read-ahead or write-behind are enabled, the file descriptor
+may be set to use non-blocking IO.
 .Pp
 The interrupt transfer mode can be in or out depending on the
 endpoint.
@@ -134,13 +141,13 @@ calls:
 .Pp
 .Bl -tag -width indent -compact
 .It Dv USB_SET_SHORT_XFER (int)
-Allow short read transfer.  Normally a transfer from the device
-which is shorter than the request specified is reported as an
-error.
+Allow short read transfer.
+Normally a transfer from the device which is shorter than the
+request specified is reported as an error.
 .It Dv USB_SET_TIMEOUT (int)
 Set the timeout on the device operations, the time is specified
-in milliseconds.  The value 0 is used to indicate that there is
-no timeout.
+in milliseconds.
+The value 0 is used to indicate that there is no timeout.
 .El
 .Pp
 The control endpoint (endpoint 0) handles the following
@@ -232,7 +239,8 @@ The
 .Dv ufd_data
 field should point to a memory area of the size given in the
 .Dv ufd_size
-field.  The proper size can be determined by first issuing a
+field.
+The proper size can be determined by first issuing a
 .Dv USB_GET_CONFIG_DESC
 and inspecting the
 .Dv wTotalLength
@@ -273,11 +281,12 @@ struct usb_ctl_request {
 };
 .Ed
 This is a dangerous operation in that it can perform arbitrary operations
-on the device.  Some of the most dangerous (e.g., changing the device
+on the device.
+Some of the most dangerous (e.g., changing the device
 address) are not allowed.
 .It Dv USB_GET_DEVICEINFO (struct usb_device_info)
-Get an information summary for the device.  This call will not
-issue any USB transactions.
+Get an information summary for the device.
+This call will not issue any USB transactions.
 .El
 .Pp
 Bulk endpoints handle the following
@@ -286,37 +295,43 @@ calls:
 .Pp
 .Bl -tag -width indent -compact
 .It Dv USB_SET_BULK_RA (int)
-Enable or disable bulk read-ahead.  When enabled, the driver will
-begin to read data from the device into a buffer.  The 
+Enable or disable bulk read-ahead.
+When enabled, the driver will
+begin to read data from the device into a buffer.
+The
 .Xr read 2
 call will read data from this buffer, blocking if necessary until
-there is enough data to read the length of data requested.  The
-buffer size and the read request length can be set by the
+there is enough data to read the length of data requested.
+The buffer size and the read request length can be set by the
 .Dv USB_SET_BULK_RA_OPT
 .Xr ioctl 2
 call.
 .It Dv USB_SET_BULK_WB (int)
-Enable or disable bulk write-behind.  When enabled, the driver will
-buffer data from the
+Enable or disable bulk write-behind.
+When enabled, the driver will buffer data from the
 .Xr write 2
-call before writing it to the device.  
+call before writing it to the device.
 .Xr write 2
 will block if there is not enough room in the buffer for all
-the data.  The buffer size and the write request length can be set
-by the
+the data.
+The buffer size and the write request length can be set by the
 .Dv USB_SET_BULK_WB_OPT
 .Xr ioctl 2
 call.
 .It Dv USB_SET_BULK_RA_OPT (struct usb_bulk_ra_wb_opt)
 Set the size of the buffer and the length of the read requests used by
-the driver when bulk read-ahead is enabled.  The changes do not take
-effect until the next time bulk read-ahead is enabled.  Read requests
+the driver when bulk read-ahead is enabled.
+The changes do not take
+effect until the next time bulk read-ahead is enabled.
+Read requests
 are made for the length specified, and the host controller driver
 (i.e.,
 .Xr ehci 4 ,
-.Xr ohci 4 , and
-.Xr uhci 4 ) will perform as many bus transfers as required.  If
-transfers from the device should be smaller than the maximum length,
+.Xr ohci 4 ,
+and
+.Xr uhci 4 )
+will perform as many bus transfers as required.
+If transfers from the device should be smaller than the maximum length,
 .Dv ra_wb_request_size
 must be set to the required length.
 .Bd -literal
@@ -327,15 +342,18 @@ struct usb_bulk_ra_wb_opt {
 .Ed
 .It Dv USB_SET_BULK_WB_OPT (struct usb_bulk_ra_wb_opt)
 Set the size of the buffer and the length of the write requests used
-by the driver when bulk write-behind is enabled.  The changes do not
+by the driver when bulk write-behind is enabled.
+The changes do not
 take effect until the next time bulk write-behind is enabled.
 .El
 .Pp
 Note that there are two different ways of addressing configurations, interfaces,
 alternatives, and endpoints: by index or by number.
 The index is the ordinal number (starting from 0) of the descriptor
-as presented by the device.  The number is the respective number of
-the entity as found in its descriptor.  Enumeration of descriptors
+as presented by the device.
+The number is the respective number of
+the entity as found in its descriptor.
+Enumeration of descriptors
 use the index, getting and setting typically uses numbers.
 .Pp
 Example:
