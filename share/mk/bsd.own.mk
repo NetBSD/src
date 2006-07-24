@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.466 2006/07/23 12:31:29 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.467 2006/07/24 23:54:15 uwe Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -54,6 +54,8 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "powerpc64" || \
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "vax" || \
@@ -66,9 +68,7 @@ HAVE_GCC?=	4
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "sh3el"
+    ${MACHINE_ARCH} == "mipseb"
 #HAVE_GCC?=	4
 .endif
 
