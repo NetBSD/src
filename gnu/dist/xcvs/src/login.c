@@ -569,7 +569,6 @@ login (argc, argv)
     memset (typed_password, 0, strlen (typed_password));
     free (typed_password);
 
-    memset (cvs_password, 0, strlen (cvs_password));
     free (cvs_password);
     free (cvsroot_canonical);
     cvs_password = NULL;
@@ -592,7 +591,7 @@ get_cvs_password ()
        context, then assume they have supplied the correct, scrambled
        password. */
     if (cvs_password)
-	return cvs_password;
+	return xstrdup (cvs_password);
 
     if (getenv ("CVS_PASSWORD") != NULL)
     {
