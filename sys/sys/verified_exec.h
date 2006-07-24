@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.33 2006/07/19 12:44:11 blymn Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.34 2006/07/24 21:15:05 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -152,13 +152,12 @@ struct veriexec_table_entry {
 };
 
 /* Readable values for veriexec_report(). */
-#define	REPORT_NOVERBOSE	0	/* Always print */
-#define	REPORT_VERBOSE		1	/* Print when verbose >= 1 */
-#define	REPORT_VERBOSE_HIGH	2	/* Print when verbose >= 2 (debug) */
-#define	REPORT_NOPANIC		0	/* Normal report */
-#define	REPORT_PANIC		1	/* Use panic() */
-#define	REPORT_NOALARM		0	/* Normal report */
-#define	REPORT_ALARM		1	/* Alarm - also print pid/uid/.. */
+#define	REPORT_ALWAYS		0x01	/* Always print */
+#define	REPORT_VERBOSE		0x02	/* Print when verbose >= 1 */
+#define	REPORT_DEBUG		0x04	/* Print when verbose >= 2 (debug) */
+#define	REPORT_PANIC		0x08	/* Call panic() */
+#define	REPORT_ALARM		0x10	/* Alarm - also print pid/uid/.. */
+#define	REPORT_LOGMASK		(REPORT_ALWAYS|REPORT_VERBOSE|REPORT_DEBUG)
 
 /* Initialize a fingerprint ops struct. */
 #define	VERIEXEC_OPINIT(ops, fp_type, hashlen, ctx_size, init_fn, \
@@ -189,8 +188,7 @@ int veriexec_removechk(struct lwp *, struct vnode *, const char *);
 int veriexec_renamechk(struct vnode *, struct vnode *, const char *,
 		       const char *, struct lwp *);
 void veriexec_init_fp_ops(void);
-void veriexec_report(const u_char *, const u_char *,
-    struct lwp *, int, int, int);
+void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
 int veriexec_newtable(struct veriexec_sizing_params *, struct lwp *);
 int veriexec_load(struct veriexec_params *, struct lwp *);
 int veriexec_delete(struct veriexec_delete_params *, struct lwp *);
