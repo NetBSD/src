@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.78 2006/07/23 22:06:10 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.79 2006/07/24 16:37:28 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.78 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.79 2006/07/24 16:37:28 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
-#include "opt_verified_exec.h"
+#include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -70,10 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.78 2006/07/23 22:06:10 ad Exp $");
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #define	VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 #include <sys/stat.h>
 #include <sys/kauth.h>
 
@@ -153,9 +153,9 @@ static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
-#endif
+#endif /* NVERIEXEC > 0 */
 static int sysctl_security_setidcore(SYSCTLFN_PROTO);
 static int sysctl_security_setidcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cpid(SYSCTLFN_PROTO);
@@ -765,7 +765,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System open file table"),
 		       sysctl_kern_file2, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE2, CTL_EOL);
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "veriexec",
@@ -798,7 +798,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Number of fingerprints on device(s)"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_COUNT, CTL_EOL);
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cp_id",
@@ -2555,7 +2555,7 @@ out_locked:
 /*
  * Sysctl helper routine for Verified Exec.
  */
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 static int
 sysctl_kern_veriexec(SYSCTLFN_ARGS)
 {
@@ -2593,7 +2593,7 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 
 	return (error);
 }
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 static int
 sysctl_security_setidcore(SYSCTLFN_ARGS)

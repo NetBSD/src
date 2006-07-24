@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.273 2006/07/22 10:34:26 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.274 2006/07/24 16:37:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.273 2006/07/22 10:34:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.274 2006/07/24 16:37:28 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -81,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.273 2006/07/22 10:34:26 elad Exp $")
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
-#include "opt_verified_exec.h"
 #include "opt_fileassoc.h"
 
 #include "rnd.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
