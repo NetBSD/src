@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.223 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.224 2006/07/24 16:37:28 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,12 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.223 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.224 2006/07/24 16:37:28 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
-#include "opt_verified_exec.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
