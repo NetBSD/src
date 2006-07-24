@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.258 2006/07/24 16:37:28 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.259 2006/07/24 21:32:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.258 2006/07/24 16:37:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.259 2006/07/24 21:32:39 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -548,14 +548,14 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 #if NVERIEXEC > 0
 	if (!doing_shutdown) {
-		if (veriexec_strict >= 3) {
+		if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 			printf("Veriexec: Lockdown mode, preventing unmount of"
 			    " \"%s\". (uid=%u)\n", mp->mnt_stat.f_mntonname,
 			    kauth_cred_getuid(l->l_cred));
 			return (EPERM);
 		}
 
-		if (veriexec_strict == 2) {
+		if (veriexec_strict == VERIEXEC_IPS) {
 			struct veriexec_table_entry *vte;
 
 			/* Check if we have fingerprints on mount. */
