@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.6 2006/07/09 18:51:28 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.7 2006/07/24 19:01:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.6 2006/07/09 18:51:28 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7 2006/07/24 19:01:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -212,7 +212,7 @@ linux_sys_futex(l, v, retval)
 		    SCARG(uap, op));
 		break;
 	default:
-		printf("linux_sys_futex: unkonwn op %d\n", 
+		printf("linux_sys_futex: unknown op %d\n", 
 		    SCARG(uap, op));
 		break;
 	}
