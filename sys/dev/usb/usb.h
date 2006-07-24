@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.73 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.74 2006/07/24 14:24:50 gdt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -630,6 +630,11 @@ struct usb_device_stats {
 	u_long	uds_requests[4];	/* indexed by transfer type UE_* */
 };
 
+struct usb_bulk_ra_wb_opt {
+	u_int	ra_wb_buffer_size;
+	u_int	ra_wb_request_size;
+};
+
 /* Events that can be read from /dev/usb */
 struct usb_event {
 	int			ue_type;
@@ -684,6 +689,10 @@ struct usb_event {
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
 #define USB_SET_TIMEOUT		_IOW ('U', 114, int)
+#define USB_SET_BULK_RA		_IOW ('U', 115, int)
+#define USB_SET_BULK_WB		_IOW ('U', 116, int)
+#define USB_SET_BULK_RA_OPT	_IOW ('U', 117, struct usb_bulk_ra_wb_opt)
+#define USB_SET_BULK_WB_OPT	_IOW ('U', 118, struct usb_bulk_ra_wb_opt)
 
 /* Modem device */
 #define USB_GET_CM_OVER_DATA	_IOR ('U', 130, int)

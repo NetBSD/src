@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.762 2006/07/15 07:55:20 elad Exp $
+# $NetBSD: GENERIC,v 1.763 2006/07/24 14:24:48 gdt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.762 $"
+#ident 		"GENERIC-$Revision: 1.763 $"
 
 maxusers	32		# estimated number of users
 
@@ -1105,6 +1105,8 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+options	UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices
