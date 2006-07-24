@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.190 2006/07/08 20:28:06 christos Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.191 2006/07/24 14:24:48 gdt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.190 $"
+#ident 		"GENERIC-$Revision: 1.191 $"
 
 maxusers	32		# estimated number of users
 
@@ -760,6 +760,8 @@ uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+options	UGEN_BULK_RA_WB
 
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?

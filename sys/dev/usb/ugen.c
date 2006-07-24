@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.83 2006/06/09 21:34:19 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.84 2006/07/24 14:24:50 gdt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -7,6 +7,11 @@
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
+ *
+ * Copyright (c) 2006 BBN Technologies Corp.  All rights reserved.
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and the Department of the Interior National Business
+ * Center under agreement number NBCHC050166.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +44,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.83 2006/06/09 21:34:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.84 2006/07/24 14:24:50 gdt Exp $");
+
+#include "opt_ugen_bulk_ra_wb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +92,9 @@ int	ugendebug = 0;
 #define UGEN_NISOREQS	6	/* number of outstanding xfer requests */
 #define UGEN_NISORFRMS	4	/* number of frames (miliseconds) per req */
 
+#define UGEN_BULK_RA_WB_BUFSIZE	16384		/* default buffer size */
+#define UGEN_BULK_RA_WB_BUFMAX	(1 << 20)	/* maximum allowed buffer */
+
 struct ugen_endpoint {
 	struct ugen_softc *sc;
 	usb_endpoint_descriptor_t *edesc;
@@ -92,6 +102,9 @@ struct ugen_endpoint {
 	int state;
 #define	UGEN_ASLP	0x02	/* waiting for data */
 #define UGEN_SHORT_OK	0x04	/* short xfers are OK */
+#define UGEN_BULK_RA	0x08	/* in bulk read-ahead mode */
+#define UGEN_BULK_WB	0x10	/* in bulk write-behind mode */
+#define UGEN_RA_WB_STOP	0x20	/* RA/WB xfer is stopped (buffer full/empty) */
 	usbd_pipe_handle pipeh;
 	struct clist q;
 	struct selinfo rsel;
@@ -100,6 +113,13 @@ struct ugen_endpoint {
 	u_char *limit;		/* end of circular buffer (isoc) */
 	u_char *cur;		/* current read location (isoc) */
 	u_int32_t timeout;
+#ifdef UGEN_BULK_RA_WB
+	u_int32_t ra_wb_bufsize; /* requested size for RA/WB buffer */
+	u_int32_t ra_wb_reqsize; /* requested xfer length for RA/WB */
+	u_int32_t ra_wb_used;	 /* how much is in buffer */
+	u_int32_t ra_wb_xferlen; /* current xfer length for RA/WB */
+	usbd_xfer_handle ra_wb_xfer;
+#endif
 	struct isoreq {
 		struct ugen_endpoint *sce;
 		usbd_xfer_handle xfer;
@@ -169,6 +189,12 @@ Static void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		     usbd_status status);
 Static void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 			    usbd_status status);
+#ifdef UGEN_BULK_RA_WB
+Static void ugen_bulkra_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
+			     usbd_status status);
+Static void ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
+			     usbd_status status);
+#endif
 Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_ioctl(struct ugen_softc *, int, u_long,
@@ -396,6 +422,14 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				  edesc->bEndpointAddress, 0, &sce->pipeh);
 			if (err)
 				return (EIO);
+#ifdef UGEN_BULK_RA_WB
+			sce->ra_wb_bufsize = UGEN_BULK_RA_WB_BUFSIZE;
+			/* 
+			 * Use request size for non-RA/WB transfers
+			 * as the default.
+			 */
+			sce->ra_wb_reqsize = UGEN_BBSIZE;
+#endif
 			break;
 		case UE_ISOCHRONOUS:
 			if (dir == OUT)
@@ -500,7 +534,14 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		case UE_ISOCHRONOUS:
 			for (i = 0; i < UGEN_NISOREQS; ++i)
 				usbd_free_xfer(sce->isoreqs[i].xfer);
-
+			break;
+#ifdef UGEN_BULK_RA_WB
+		case UE_BULK:
+			if (sce->state & (UGEN_BULK_RA | UGEN_BULK_WB))
+				/* ibuf freed below */
+				usbd_free_xfer(sce->ra_wb_xfer);
+			break;
+#endif
 		default:
 			break;
 		}
@@ -584,6 +625,80 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		}
 		break;
 	case UE_BULK:
+#ifdef UGEN_BULK_RA_WB
+		if (sce->state & UGEN_BULK_RA) {
+			DPRINTFN(5, ("ugenread: BULK_RA req: %d used: %d\n",
+				     uio->uio_resid, sce->ra_wb_used));
+			xfer = sce->ra_wb_xfer;
+
+			s = splusb();
+			if (sce->ra_wb_used == 0 && flag & IO_NDELAY) {
+				splx(s);
+				return (EWOULDBLOCK);
+			}
+			while (uio->uio_resid > 0 && !error) {
+				while (sce->ra_wb_used == 0) {
+					sce->state |= UGEN_ASLP;
+					DPRINTFN(5,
+						 ("ugenread: sleep on %p\n",
+						  sce));
+					error = tsleep(sce, PZERO | PCATCH,
+						       "ugenrb", 0);
+					DPRINTFN(5,
+						 ("ugenread: woke, error=%d\n",
+						  error));
+					if (sc->sc_dying)
+						error = EIO;
+					if (error) {
+						sce->state &= ~UGEN_ASLP;
+						break;
+					}
+				}
+
+				/* Copy data to the process. */
+				while (uio->uio_resid > 0
+				       && sce->ra_wb_used > 0) {
+					n = min(uio->uio_resid,
+						sce->ra_wb_used);
+					n = min(n, sce->limit - sce->cur);
+					error = uiomove(sce->cur, n, uio);
+					if (error)
+						break;
+					sce->cur += n;
+					sce->ra_wb_used -= n;
+					if (sce->cur == sce->limit)
+						sce->cur = sce->ibuf;
+				}
+
+				/* 
+				 * If the transfers stopped because the
+				 * buffer was full, restart them.
+				 */
+				if (sce->state & UGEN_RA_WB_STOP &&
+				    sce->ra_wb_used < sce->limit - sce->ibuf) {
+					n = (sce->limit - sce->ibuf)
+					    - sce->ra_wb_used;
+					usbd_setup_xfer(xfer,
+					    sce->pipeh, sce, NULL,
+					    min(n, sce->ra_wb_xferlen),
+					    USBD_NO_COPY, USBD_NO_TIMEOUT,
+					    ugen_bulkra_intr);
+					sce->state &= ~UGEN_RA_WB_STOP;
+					err = usbd_transfer(xfer);
+					if (err != USBD_IN_PROGRESS)
+						/*
+						 * The transfer has not been
+						 * queued.  Setting STOP
+						 * will make us try
+						 * again at the next read.
+						 */
+						sce->state |= UGEN_RA_WB_STOP;
+				}
+			}
+			splx(s);
+			break;
+		}
+#endif
 		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
 			return (ENOMEM);
@@ -678,6 +793,11 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	u_int32_t n;
 	int error = 0;
+#ifdef UGEN_BULK_RA_WB
+	int s;
+	u_int32_t tn;
+	char *dbuf;
+#endif
 	usbd_xfer_handle xfer;
 	usbd_status err;
 
@@ -702,6 +822,89 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_BULK:
+#ifdef UGEN_BULK_RA_WB
+		if (sce->state & UGEN_BULK_WB) {
+			DPRINTFN(5, ("ugenwrite: BULK_WB req: %d used: %d\n",
+				     uio->uio_resid, sce->ra_wb_used));
+			xfer = sce->ra_wb_xfer;
+
+			s = splusb();
+			if (sce->ra_wb_used == sce->limit - sce->ibuf &&
+			    flag & IO_NDELAY) {
+				splx(s);
+				return (EWOULDBLOCK);
+			}
+			while (uio->uio_resid > 0 && !error) {
+				while (sce->ra_wb_used == 
+				       sce->limit - sce->ibuf) {
+					sce->state |= UGEN_ASLP;
+					DPRINTFN(5,
+						 ("ugenwrite: sleep on %p\n",
+						  sce));
+					error = tsleep(sce, PZERO | PCATCH,
+						       "ugenwb", 0);
+					DPRINTFN(5,
+						 ("ugenwrite: woke, error=%d\n",
+						  error));
+					if (sc->sc_dying)
+						error = EIO;
+					if (error) {
+						sce->state &= ~UGEN_ASLP;
+						break;
+					}
+				}
+
+				/* Copy data from the process. */
+				while (uio->uio_resid > 0 &&
+				    sce->ra_wb_used < sce->limit - sce->ibuf) {
+					n = min(uio->uio_resid,
+						(sce->limit - sce->ibuf)
+						 - sce->ra_wb_used);
+					n = min(n, sce->limit - sce->fill);
+					error = uiomove(sce->fill, n, uio);
+					if (error)
+						break;
+					sce->fill += n;
+					sce->ra_wb_used += n;
+					if (sce->fill == sce->limit)
+						sce->fill = sce->ibuf;
+				}
+
+				/*
+				 * If the transfers stopped because the
+				 * buffer was empty, restart them.
+				 */
+				if (sce->state & UGEN_RA_WB_STOP &&
+				    sce->ra_wb_used > 0) {
+					dbuf = (char *)usbd_get_buffer(xfer);
+					n = min(sce->ra_wb_used,
+						sce->ra_wb_xferlen);
+					tn = min(n, sce->limit - sce->cur);
+					memcpy(dbuf, sce->cur, tn);
+					dbuf += tn;
+					if (n - tn > 0)
+						memcpy(dbuf, sce->ibuf,
+						       n - tn);
+					usbd_setup_xfer(xfer,
+					    sce->pipeh, sce, NULL, n,
+					    USBD_NO_COPY, USBD_NO_TIMEOUT,
+					    ugen_bulkwb_intr);
+					sce->state &= ~UGEN_RA_WB_STOP;
+					err = usbd_transfer(xfer);
+					if (err != USBD_IN_PROGRESS)
+						/*
+						 * The transfer has not been
+						 * queued.  Setting STOP
+						 * will make us try again
+						 * at the next read.
+						 */
+						sce->state |= UGEN_RA_WB_STOP;
+				}
+			}
+			splx(s);
+			break;
+		}
+#endif
 		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
 			return (EIO);
@@ -940,6 +1143,140 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	selnotify(&sce->rsel, 0);
 }
 
+#ifdef UGEN_BULK_RA_WB
+Static void
+ugen_bulkra_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
+		 usbd_status status)
+{
+	struct ugen_endpoint *sce = addr;
+	u_int32_t count, n;
+	char const *tbuf;
+	usbd_status err;
+
+	/* Return if we are aborting. */
+	if (status == USBD_CANCELLED)
+		return;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("ugen_bulkra_intr: status=%d\n", status));
+		sce->state |= UGEN_RA_WB_STOP;
+		if (status == USBD_STALLED)
+		    usbd_clear_endpoint_stall_async(sce->pipeh);
+		return;
+	}
+
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+
+	/* Keep track of how much is in the buffer. */
+	sce->ra_wb_used += count;
+
+	/* Copy data to buffer. */
+	tbuf = (char const *)usbd_get_buffer(sce->ra_wb_xfer);
+	n = min(count, sce->limit - sce->fill);
+	memcpy(sce->fill, tbuf, n);
+	tbuf += n;
+	count -= n;
+	sce->fill += n;
+	if (sce->fill == sce->limit)
+		sce->fill = sce->ibuf;
+	if (count > 0) {
+		memcpy(sce->fill, tbuf, count);
+		sce->fill += count;
+	}
+
+	/* Set up the next request if necessary. */
+	n = (sce->limit - sce->ibuf) - sce->ra_wb_used;
+	if (n > 0) {
+		usbd_setup_xfer(xfer, sce->pipeh, sce, NULL,
+		    min(n, sce->ra_wb_xferlen), USBD_NO_COPY,
+		    USBD_NO_TIMEOUT, ugen_bulkra_intr);
+		err = usbd_transfer(xfer);
+		if (err != USBD_IN_PROGRESS) {
+			printf("usbd_bulkra_intr: error=%d\n", err);
+			/*
+			 * The transfer has not been queued.  Setting STOP
+			 * will make us try again at the next read.
+			 */
+			sce->state |= UGEN_RA_WB_STOP;
+		}
+	}
+	else
+		sce->state |= UGEN_RA_WB_STOP;
+
+	if (sce->state & UGEN_ASLP) {
+		sce->state &= ~UGEN_ASLP;
+		DPRINTFN(5, ("ugen_bulkra_intr: waking %p\n", sce));
+		wakeup(sce);
+	}
+	selnotify(&sce->rsel, 0);
+}
+
+Static void
+ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
+		 usbd_status status)
+{
+	struct ugen_endpoint *sce = addr;
+	u_int32_t count, n;
+	char *tbuf;
+	usbd_status err;
+
+	/* Return if we are aborting. */
+	if (status == USBD_CANCELLED)
+		return;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("ugen_bulkwb_intr: status=%d\n", status));
+		sce->state |= UGEN_RA_WB_STOP;
+		if (status == USBD_STALLED)
+		    usbd_clear_endpoint_stall_async(sce->pipeh);
+		return;
+	}
+
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+
+	/* Keep track of how much is in the buffer. */
+	sce->ra_wb_used -= count;
+
+	/* Update buffer pointers. */
+	sce->cur += count;
+	if (sce->cur >= sce->limit)
+		sce->cur = sce->ibuf + (sce->cur - sce->limit); 
+
+	/* Set up next request if necessary. */
+	if (sce->ra_wb_used > 0) {
+		/* copy data from buffer */
+		tbuf = (char *)usbd_get_buffer(sce->ra_wb_xfer);
+		count = min(sce->ra_wb_used, sce->ra_wb_xferlen);
+		n = min(count, sce->limit - sce->cur);
+		memcpy(tbuf, sce->cur, n);
+		tbuf += n;
+		if (count - n > 0)
+			memcpy(tbuf, sce->ibuf, count - n);
+
+		usbd_setup_xfer(xfer, sce->pipeh, sce, NULL,
+		    count, USBD_NO_COPY, USBD_NO_TIMEOUT, ugen_bulkwb_intr);
+		err = usbd_transfer(xfer);
+		if (err != USBD_IN_PROGRESS) {
+			printf("usbd_bulkwb_intr: error=%d\n", err);
+			/*
+			 * The transfer has not been queued.  Setting STOP
+			 * will make us try again at the next write.
+			 */
+			sce->state |= UGEN_RA_WB_STOP;
+		}
+	}
+	else
+		sce->state |= UGEN_RA_WB_STOP;
+
+	if (sce->state & UGEN_ASLP) {
+		sce->state &= ~UGEN_ASLP;
+		DPRINTFN(5, ("ugen_bulkwb_intr: waking %p\n", sce));
+		wakeup(sce);
+	}
+	selnotify(&sce->rsel, 0);
+}
+#endif
+
 Static usbd_status
 ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 {
@@ -1089,6 +1426,169 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			return (EINVAL);
 		sce->timeout = *(int *)addr;
 		return (0);
+	case USB_SET_BULK_RA:
+#ifdef UGEN_BULK_RA_WB
+		if (endpt == USB_CONTROL_ENDPOINT)
+			return (EINVAL);
+		sce = &sc->sc_endpoints[endpt][IN];
+		if (sce == NULL || sce->pipeh == NULL)
+			return (EINVAL);
+		edesc = sce->edesc;
+		if ((edesc->bmAttributes & UE_XFERTYPE) != UE_BULK)
+			return (EINVAL);
+
+		if (*(int *)addr) {
+			/* Only turn RA on if it's currently off. */
+			if (sce->state & UGEN_BULK_RA)
+				return (0);
+
+			if (sce->ra_wb_bufsize == 0 || sce->ra_wb_reqsize == 0)
+				/* shouldn't happen */
+				return (EINVAL);
+			sce->ra_wb_xfer = usbd_alloc_xfer(sc->sc_udev);
+			if (sce->ra_wb_xfer == NULL)
+				return (ENOMEM);
+			sce->ra_wb_xferlen = sce->ra_wb_reqsize;
+			/*
+			 * Set up a dmabuf because we reuse the xfer with
+			 * the same (max) request length like isoc.
+			 */
+			if (usbd_alloc_buffer(sce->ra_wb_xfer,
+					      sce->ra_wb_xferlen) == 0) {
+				usbd_free_xfer(sce->ra_wb_xfer);
+				return (ENOMEM);
+			}
+			sce->ibuf = malloc(sce->ra_wb_bufsize,
+					   M_USBDEV, M_WAITOK);
+			sce->fill = sce->cur = sce->ibuf;
+			sce->limit = sce->ibuf + sce->ra_wb_bufsize;
+			sce->ra_wb_used = 0;
+			sce->state |= UGEN_BULK_RA;
+			sce->state &= ~UGEN_RA_WB_STOP;
+			/* Now start reading. */
+			usbd_setup_xfer(sce->ra_wb_xfer, sce->pipeh, sce,
+			    NULL,
+			    min(sce->ra_wb_xferlen, sce->ra_wb_bufsize),
+			    USBD_NO_COPY, USBD_NO_TIMEOUT,
+			    ugen_bulkra_intr);
+			err = usbd_transfer(sce->ra_wb_xfer);
+			if (err != USBD_IN_PROGRESS) {
+				sce->state &= ~UGEN_BULK_RA;
+				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
+				usbd_free_xfer(sce->ra_wb_xfer);
+				return (EIO);
+			}
+		} else {
+			/* Only turn RA off if it's currently on. */
+			if (!(sce->state & UGEN_BULK_RA))
+				return (0);
+
+			sce->state &= ~UGEN_BULK_RA;
+			usbd_abort_pipe(sce->pipeh);
+			usbd_free_xfer(sce->ra_wb_xfer);
+			/*
+			 * XXX Discard whatever's in the buffer, but we
+			 * should keep it around and drain the buffer
+			 * instead.
+			 */
+			free(sce->ibuf, M_USBDEV);
+			sce->ibuf = NULL;
+		}
+		return (0);
+#else
+		return (EOPNOTSUPP);
+#endif
+	case USB_SET_BULK_WB:
+#ifdef UGEN_BULK_RA_WB
+		if (endpt == USB_CONTROL_ENDPOINT)
+			return (EINVAL);
+		sce = &sc->sc_endpoints[endpt][OUT];
+		if (sce == NULL || sce->pipeh == NULL)
+			return (EINVAL);
+		edesc = sce->edesc;
+		if ((edesc->bmAttributes & UE_XFERTYPE) != UE_BULK)
+			return (EINVAL);
+
+		if (*(int *)addr) {
+			/* Only turn WB on if it's currently off. */
+			if (sce->state & UGEN_BULK_WB)
+				return (0);
+
+			if (sce->ra_wb_bufsize == 0 || sce->ra_wb_reqsize == 0)
+				/* shouldn't happen */
+				return (EINVAL);
+			sce->ra_wb_xfer = usbd_alloc_xfer(sc->sc_udev);
+			if (sce->ra_wb_xfer == NULL)
+				return (ENOMEM);
+			sce->ra_wb_xferlen = sce->ra_wb_reqsize;
+			/*
+			 * Set up a dmabuf because we reuse the xfer with
+			 * the same (max) request length like isoc.
+			 */
+			if (usbd_alloc_buffer(sce->ra_wb_xfer,
+					      sce->ra_wb_xferlen) == 0) {
+				usbd_free_xfer(sce->ra_wb_xfer);
+				return (ENOMEM);
+			}
+			sce->ibuf = malloc(sce->ra_wb_bufsize,
+					   M_USBDEV, M_WAITOK);
+			sce->fill = sce->cur = sce->ibuf;
+			sce->limit = sce->ibuf + sce->ra_wb_bufsize;
+			sce->ra_wb_used = 0;
+			sce->state |= UGEN_BULK_WB | UGEN_RA_WB_STOP;
+		} else {
+			/* Only turn WB off if it's currently on. */
+			if (!(sce->state & UGEN_BULK_WB))
+				return (0);
+
+			sce->state &= ~UGEN_BULK_WB;
+			/*
+			 * XXX Discard whatever's in the buffer, but we
+			 * should keep it around and keep writing to 
+			 * drain the buffer instead.
+			 */
+			usbd_abort_pipe(sce->pipeh);
+			usbd_free_xfer(sce->ra_wb_xfer);
+			free(sce->ibuf, M_USBDEV);
+			sce->ibuf = NULL;
+		}
+		return (0);
+#else
+		return (EOPNOTSUPP);
+#endif
+	case USB_SET_BULK_RA_OPT:
+	case USB_SET_BULK_WB_OPT:
+#ifdef UGEN_BULK_RA_WB
+	{
+		struct usb_bulk_ra_wb_opt *opt;
+
+		if (endpt == USB_CONTROL_ENDPOINT)
+			return (EINVAL);
+		opt = (struct usb_bulk_ra_wb_opt *)addr;
+		if (cmd == USB_SET_BULK_RA_OPT)
+			sce = &sc->sc_endpoints[endpt][IN];
+		else
+			sce = &sc->sc_endpoints[endpt][OUT];
+		if (sce == NULL || sce->pipeh == NULL)
+			return (EINVAL);
+		if (opt->ra_wb_buffer_size < 1 ||
+		    opt->ra_wb_buffer_size > UGEN_BULK_RA_WB_BUFMAX ||
+		    opt->ra_wb_request_size < 1 ||
+		    opt->ra_wb_request_size > opt->ra_wb_buffer_size)
+			return (EINVAL);
+		/* 
+		 * XXX These changes do not take effect until the
+		 * next time RA/WB mode is enabled but they ought to
+		 * take effect immediately.
+		 */
+		sce->ra_wb_bufsize = opt->ra_wb_buffer_size;
+		sce->ra_wb_reqsize = opt->ra_wb_request_size;
+		return (0);
+	}
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		break;
 	}
@@ -1330,7 +1830,7 @@ int
 ugenpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ugen_softc *sc;
-	struct ugen_endpoint *sce;
+	struct ugen_endpoint *sce_in, *sce_out;
 	int revents = 0;
 	int s;
 
@@ -1339,50 +1839,87 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 	if (sc->sc_dying)
 		return (POLLHUP);
 
-	/* XXX always IN */
-	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
-	if (sce == NULL)
+	sce_in = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
+	sce_out = &sc->sc_endpoints[UGENENDPOINT(dev)][OUT];
+	if (sce_in == NULL && sce_out == NULL)
 		return (POLLERR);
 #ifdef DIAGNOSTIC
-	if (!sce->edesc) {
+	if (!sce_in->edesc && !sce_out->edesc) {
 		printf("ugenpoll: no edesc\n");
 		return (POLLERR);
 	}
-	if (!sce->pipeh) {
+	/* It's possible to have only one pipe open. */
+	if (!sce_in->pipeh && !sce_out->pipeh) {
 		printf("ugenpoll: no pipe\n");
 		return (POLLERR);
 	}
 #endif
 	s = splusb();
-	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
-	case UE_INTERRUPT:
-		if (events & (POLLIN | POLLRDNORM)) {
-			if (sce->q.c_cc > 0)
+	if (sce_in && sce_in->pipeh && (events & (POLLIN | POLLRDNORM)))
+		switch (sce_in->edesc->bmAttributes & UE_XFERTYPE) {
+		case UE_INTERRUPT:
+			if (sce_in->q.c_cc > 0)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
-				selrecord(l, &sce->rsel);
-		}
-		break;
-	case UE_ISOCHRONOUS:
-		if (events & (POLLIN | POLLRDNORM)) {
-			if (sce->cur != sce->fill)
+				selrecord(l, &sce_in->rsel);
+			break;
+		case UE_ISOCHRONOUS:
+			if (sce_in->cur != sce_in->fill)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
-				selrecord(l, &sce->rsel);
+				selrecord(l, &sce_in->rsel);
+			break;
+		case UE_BULK:
+#ifdef UGEN_BULK_RA_WB
+			if (sce_in->state & UGEN_BULK_RA) {
+				if (sce_in->ra_wb_used > 0)
+					revents |= events &
+					    (POLLIN | POLLRDNORM);
+				else
+					selrecord(l, &sce_in->rsel);
+				break;
+			}
+#endif
+			/*
+			 * We have no easy way of determining if a read will
+			 * yield any data or a write will happen.
+			 * Pretend they will.
+			 */
+			 revents |= events & (POLLIN | POLLRDNORM);
+			 break;
+		default:
+			break;
 		}
-		break;
-	case UE_BULK:
-		/*
-		 * We have no easy way of determining if a read will
-		 * yield any data or a write will happen.
-		 * Pretend they will.
-		 */
-		revents |= events &
-			   (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM);
-		break;
-	default:
-		break;
-	}
+	if (sce_out && sce_out->pipeh && (events & (POLLOUT | POLLWRNORM)))
+		switch (sce_out->edesc->bmAttributes & UE_XFERTYPE) {
+		case UE_INTERRUPT:
+		case UE_ISOCHRONOUS:
+			/* XXX unimplemented */
+			break;
+		case UE_BULK:
+#ifdef UGEN_BULK_RA_WB
+			if (sce_out->state & UGEN_BULK_WB) {
+				if (sce_out->ra_wb_used <
+				    sce_out->limit - sce_out->ibuf)
+					revents |= events &
+					    (POLLOUT | POLLWRNORM);
+				else
+					selrecord(l, &sce_out->rsel);
+				break;
+			}
+#endif
+			/*
+			 * We have no easy way of determining if a read will
+			 * yield any data or a write will happen.
+			 * Pretend they will.
+			 */
+			 revents |= events & (POLLOUT | POLLWRNORM);
+			 break;
+		default:
+			break;
+		}
+
+
 	splx(s);
 	return (revents);
 }
@@ -1424,14 +1961,66 @@ filt_ugenread_isoc(struct knote *kn, long hint)
 	return (1);
 }
 
+#ifdef UGEN_BULK_RA_WB
+static int
+filt_ugenread_bulk(struct knote *kn, long hint)
+{
+	struct ugen_endpoint *sce = kn->kn_hook;
+
+	if (!(sce->state & UGEN_BULK_RA))
+		/*
+		 * We have no easy way of determining if a read will
+		 * yield any data or a write will happen.
+		 * So, emulate "seltrue".
+		 */
+		return (filt_seltrue(kn, hint));
+
+	if (sce->ra_wb_used == 0)
+		return (0);
+
+	kn->kn_data = sce->ra_wb_used;
+
+	return (1);
+}
+
+static int
+filt_ugenwrite_bulk(struct knote *kn, long hint)
+{
+	struct ugen_endpoint *sce = kn->kn_hook;
+
+	if (!(sce->state & UGEN_BULK_WB))
+		/*
+		 * We have no easy way of determining if a read will
+		 * yield any data or a write will happen.
+		 * So, emulate "seltrue".
+		 */
+		return (filt_seltrue(kn, hint));
+
+	if (sce->ra_wb_used == sce->limit - sce->ibuf)
+		return (0);
+
+	kn->kn_data = (sce->limit - sce->ibuf) - sce->ra_wb_used;
+
+	return (1);
+}
+#endif
+
 static const struct filterops ugenread_intr_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_ugenread_intr };
 
 static const struct filterops ugenread_isoc_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_ugenread_isoc };
 
+#ifdef UGEN_BULK_RA_WB
+static const struct filterops ugenread_bulk_filtops =
+	{ 1, NULL, filt_ugenrdetach, filt_ugenread_bulk };
+
+static const struct filterops ugenwrite_bulk_filtops =
+	{ 1, NULL, filt_ugenrdetach, filt_ugenwrite_bulk };
+#else
 static const struct filterops ugen_seltrue_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_seltrue };
+#endif
 
 int
 ugenkqfilter(dev_t dev, struct knote *kn)
@@ -1446,13 +2035,12 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	if (sc->sc_dying)
 		return (1);
 
-	/* XXX always IN */
-	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
-	if (sce == NULL)
-		return (1);
-
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
+		sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
+		if (sce == NULL)
+			return (1);
+
 		klist = &sce->rsel.sel_klist;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
@@ -1462,12 +2050,17 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			kn->kn_fop = &ugenread_isoc_filtops;
 			break;
 		case UE_BULK:
+#ifdef UGEN_BULK_RA_WB
+			kn->kn_fop = &ugenread_bulk_filtops;
+			break;
+#else
 			/*
 			 * We have no easy way of determining if a read will
 			 * yield any data or a write will happen.
 			 * So, emulate "seltrue".
 			 */
 			kn->kn_fop = &ugen_seltrue_filtops;
+#endif
 			break;
 		default:
 			return (1);
@@ -1475,6 +2068,10 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	case EVFILT_WRITE:
+		sce = &sc->sc_endpoints[UGENENDPOINT(dev)][OUT];
+		if (sce == NULL)
+			return (1);
+
 		klist = &sce->rsel.sel_klist;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
@@ -1483,12 +2080,16 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			return (1);
 
 		case UE_BULK:
+#ifdef UGEN_BULK_RA_WB
+			kn->kn_fop = &ugenwrite_bulk_filtops;
+#else
 			/*
 			 * We have no easy way of determining if a read will
 			 * yield any data or a write will happen.
 			 * So, emulate "seltrue".
 			 */
 			kn->kn_fop = &ugen_seltrue_filtops;
+#endif
 			break;
 		default:
 			return (1);
