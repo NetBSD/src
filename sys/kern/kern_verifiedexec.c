@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.61 2006/07/24 16:37:28 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.62 2006/07/24 21:15:05 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.61 2006/07/24 16:37:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.62 2006/07/24 21:15:05 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -421,8 +421,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		error = veriexec_fp_calc(l, vp, vfe, digest);
 		if (error) {
 			veriexec_report("Fingerprint calculation error.",
-					name, NULL, REPORT_NOVERBOSE,
-					REPORT_NOALARM, REPORT_NOPANIC);
+			    name, NULL, REPORT_ALWAYS);
 			free(digest, M_TEMP);
 			return (error);
 		}
@@ -439,8 +438,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 
 	if (!(vfe->type & flag)) {
 		veriexec_report("Incorrect access type.", name, l,
-				REPORT_NOVERBOSE, REPORT_ALARM,
-				REPORT_NOPANIC);
+		    REPORT_ALWAYS|REPORT_ALARM);
 
 		/* IPS mode: Enforce access type. */
 		if (veriexec_strict >= 2)
@@ -451,7 +449,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	/* No entry in the veriexec tables. */
 	if (vfe == NULL) {
 		veriexec_report("veriexec_verify: No entry.", name,
-		    l, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
+		    l, REPORT_VERBOSE);
 
 		/* Lockdown mode: Deny access to non-monitored files if
 		 * strict is 3 or higher, make an exception for executables
@@ -470,19 +468,19 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		/* Should not happen. */
 		veriexec_report("veriexec_verify: Not-evaluated status "
 		    "post evaluation; inconsistency detected.", name,
-		    NULL, REPORT_NOVERBOSE, REPORT_NOALARM, REPORT_PANIC);
+		    NULL, REPORT_ALWAYS|REPORT_PANIC);
 
 	case FINGERPRINT_VALID:
 		/* Valid fingerprint. */
 		veriexec_report("veriexec_verify: Match.", name, NULL,
-		    REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
+		    REPORT_VERBOSE);
 
 		break;
 
 	case FINGERPRINT_NOMATCH:
 		/* Fingerprint mismatch. */
 		veriexec_report("veriexec_verify: Mismatch.", name,
-		    NULL, REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
+		    NULL, REPORT_ALWAYS|REPORT_ALARM);
 
 		/* IDS mode: Deny access on fingerprint mismatch. */
 		if (veriexec_strict >= 1)
@@ -493,8 +491,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	default:
 		/* Should never happen. */
 		veriexec_report("veriexec_verify: Invalid status "
-		    "post evaluation.", name, NULL, REPORT_NOVERBOSE,
-		    REPORT_NOALARM, REPORT_PANIC);
+		    "post evaluation.", name, NULL, REPORT_ALWAYS|REPORT_PANIC);
         }
 
 	return (error);
@@ -548,8 +545,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 			error = 0;
 		}
 
-		veriexec_report(msg, "[page_in]", l, REPORT_NOVERBOSE,
-				REPORT_ALARM, REPORT_NOPANIC);
+		veriexec_report(msg, "[page_in]", l, REPORT_ALWAYS|REPORT_ALARM);
 
 		if (error) {
 			ksiginfo_t ksi;
@@ -588,8 +584,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 		return (0);
 	}
 
-	veriexec_report("Remove request.", pathbuf, l,
-			REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
+	veriexec_report("Remove request.", pathbuf, l, REPORT_ALWAYS|REPORT_ALARM);
 
 	/* IDS mode: Deny removal of monitored files. */
 	if (veriexec_strict >= 1)
@@ -658,14 +653,13 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
  * 'die' - if 1, the system will panic.
  */
 void
-veriexec_report(const u_char *msg, const u_char *filename,
-		struct lwp *l, int verbose, int alarm, int die)
+veriexec_report(const u_char *msg, const u_char *filename, struct lwp *l, int f)
 {
 	if (msg == NULL || filename == NULL)
 		return;
 
-	if (!verbose || (verbose <= veriexec_verbose)) {
-		if (!alarm || l == NULL)
+	if (((f & REPORT_LOGMASK) >> 1) <= veriexec_verbose) {
+		if ((f & REPORT_ALARM) || l == NULL)
 			log(LOG_NOTICE, "Veriexec: %s [%s]\n", msg,
 			    filename);
 		else
@@ -675,7 +669,7 @@ veriexec_report(const u_char *msg, const u_char *filename,
 			    kauth_cred_getgid(l->l_cred));
 	}
 
-	if (die)
+	if (f & REPORT_PANIC)
 		panic("Veriexec: Unrecoverable error.");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $\n$NetBSD: verified_exec.c,v 1.39 2006/07/21 16:48:48 ad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $\n$NetBSD: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -338,9 +338,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
 	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
 
-	veriexec_report("New entry.", params->file, NULL,
-	    REPORT_VERBOSE_HIGH, REPORT_NOALARM, REPORT_NOPANIC);
-
+	veriexec_report("New entry.", params->file, NULL, REPORT_DEBUG);
 
 	error = veriexec_hashadd(nid.ni_vp, e);
 
