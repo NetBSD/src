@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.23 2006/07/24 17:00:52 wiz Exp $
+.\" $NetBSD: ugen.4,v 1.24 2006/07/24 18:13:42 gdt Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,14 +116,30 @@ and
 .Xr write 2
 should be used.
 All IO operations on a bulk endpoint are normally unbuffered.
-Buffering can be enabled using a
+On kernels built with the
+.Dv UGEN_BULK_RA_WB
+option, the
 .Dv USB_SET_BULK_RA
-or
+and
 .Dv USB_SET_BULK_WB
 .Xr ioctl 2
-call, to enable read-ahead and write-behind respectively.
+calls are available, and enable read-ahead and write-behind buffering
+respectively.
 When read-ahead or write-behind are enabled, the file descriptor
 may be set to use non-blocking IO.
+.Pp
+When in a
+.Dv UGEN_BULK_RA_WB
+mode,
+.Xr select 2
+for read and write operates normally, returning true if there is data
+in the read buffer and space in the write buffer, respectively.
+When not in a
+.Dv UGEN_BULK_RA_WB
+mode,
+.Xr select 2
+always returns true, because there is no way to predict how the device
+will respond to a read or write request.
 .Pp
 The interrupt transfer mode can be in or out depending on the
 endpoint.
@@ -296,8 +312,9 @@ calls:
 .Bl -tag -width indent -compact
 .It Dv USB_SET_BULK_RA (int)
 Enable or disable bulk read-ahead.
-When enabled, the driver will
-begin to read data from the device into a buffer.
+When enabled, the driver will begin to read data from the device into
+a buffer, and will perform reads from the device whenever there is
+room in the buffer.
 The
 .Xr read 2
 call will read data from this buffer, blocking if necessary until
@@ -310,7 +327,9 @@ call.
 Enable or disable bulk write-behind.
 When enabled, the driver will buffer data from the
 .Xr write 2
-call before writing it to the device.
+call before writing it to the device, enabling the
+.Xr write 2
+call to return immediately.
 .Xr write 2
 will block if there is not enough room in the buffer for all
 the data.
