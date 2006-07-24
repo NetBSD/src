@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.59 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.60 2006/07/24 16:27:15 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.59 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.60 2006/07/24 16:27:15 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -591,8 +591,8 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	veriexec_report("Remove request.", pathbuf, l,
 			REPORT_NOVERBOSE, REPORT_ALARM, REPORT_NOPANIC);
 
-	/* IPS mode: Deny removal of monitored files. */
-	if (veriexec_strict >= 2)
+	/* IDS mode: Deny removal of monitored files. */
+	if (veriexec_strict >= 1)
 		return (EPERM);
 
 	fileassoc_clear(vp, veriexec_hook);
