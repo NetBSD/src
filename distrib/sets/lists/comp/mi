@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.901 2006/07/23 12:01:25 bouyer Exp $
+#	$NetBSD: mi,v 1.902 2006/07/24 05:09:19 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2198,6 +2198,7 @@
 ./usr/libdata/debug/bin/sync.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/systrace.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
+./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/badsect.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
