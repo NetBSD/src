@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.176 2006/07/24 21:44:52 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.177 2006/07/24 21:48:13 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -967,8 +967,8 @@ fingerprint mismatches, aswell as allow removal of fingerprinted files.
 It is the only level where fingerprints can be loaded.
 In strict level 1, the system is in IDS mode.
 It will deny access to files with mismatched fingerprints.
-Write access to monitored files will be permitted, but once modified further
-to access to them will be denied.
+Write access to monitored files will be permitted, but once modified, further
+access to them will be denied.
 Monitored files cannot be removed.
 In strict level 2, the system is in IPS mode.
 It has all effects of
