@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $\n$NetBSD: verified_exec.c,v 1.40 2006/07/24 21:15:05 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $\n$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flags __unused,
 {
 	int error = 0;
 
-	if (veriexec_strict > 0) {
+	if (veriexec_strict > VERIEXEC_LEARNING) {
 		log(LOG_WARNING, "Veriexec: Strict mode, modifying tables not "
 		    "permitted.\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.34 2006/07/24 21:15:05 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.35 2006/07/24 21:32:39 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -150,6 +150,12 @@ struct veriexec_table_entry {
 	uint64_t vte_count;			/* Number of Veriexec entries. */
 	const struct sysctlnode *vte_node;
 };
+
+/* Veriexec modes (strict levels). */
+#define	VERIEXEC_LEARNING	0	/* Learning mode. */
+#define	VERIEXEC_IDS		1	/* Intrusion detection mode. */
+#defien	VERIEXEC_IPS		2	/* Intrusion prevention mode. */
+#define	VERIEXEC_LOCKDOWN	3	/* Lockdown mode. */
 
 /* Readable values for veriexec_report(). */
 #define	REPORT_ALWAYS		0x01	/* Always print */
