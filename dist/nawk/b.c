@@ -82,10 +82,10 @@ resize_state(fa *fa, int state)
 	void *p;
 	int i, new_count;
 
-	if (state < fa->state_count)
+	if (++state < fa->state_count)
 		return;
 
-	new_count = state * 5 / 4 + 10; /* needs to be tuned */
+	new_count = state + 10; /* needs to be tuned */
 
 	p = realloc(fa->gototab, new_count * sizeof(fa->gototab[0]));
 	if (p == NULL)
@@ -942,7 +942,7 @@ void freefa(fa *f)	/* free a finite automaton */
 
 	if (f == NULL)
 		return;
-	for (i = 0; i <= f->state_count; i++) {
+	for (i = 0; i < f->state_count; i++) {
 		xfree(f->gototab[i])
 		xfree(f->posns[i]);
 	}
