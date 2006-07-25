@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.36 2006/07/25 00:10:42 dogcow Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.37 2006/07/25 19:33:35 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -193,7 +193,6 @@ int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *, size_t,
 int veriexec_removechk(struct lwp *, struct vnode *, const char *);
 int veriexec_renamechk(struct vnode *, struct vnode *, const char *,
 		       const char *, struct lwp *);
-void veriexec_init_fp_ops(void);
 void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
 int veriexec_newtable(struct veriexec_sizing_params *, struct lwp *);
 int veriexec_load(struct veriexec_params *, struct lwp *);
