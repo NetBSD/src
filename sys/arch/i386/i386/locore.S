@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.42 2006/07/08 20:30:00 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.43 2006/07/25 00:23:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -232,10 +232,12 @@ _C_LABEL(Multiboot_Header):
 	cmpl	$MULTIBOOT_INFO_MAGIC,%eax
 	jne	1f
 
-	/* Indeed, a multiboot-compliat boot loader executed us.  We copy
+	/*
+	 * Indeed, a multiboot-compliant boot loader executed us.  We copy
 	 * the received Multiboot information structure into kernel's data
 	 * space to process it later -- after we are relocated.  It will
-	 * be safer to run complex C code than doing it at this point. */
+	 * be safer to run complex C code than doing it at this point.
+	 */
 	pushl	%ebx		# Address of Multiboot information
 	call	_C_LABEL(multiboot_pre_reloc)
 	addl	$4,%esp
