@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.902 2006/07/24 05:09:19 lukem Exp $
+#	$NetBSD: mi,v 1.903 2006/07/25 21:21:25 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7182,6 +7182,7 @@
 ./usr/share/man/cat9/vcons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vcount.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vdevgone.0			comp-sys-catman		.cat
+./usr/share/man/cat9/veriexec.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfinddev.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflush.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflushbuf.0		comp-sys-catman		.cat
@@ -11311,6 +11312,7 @@
 ./usr/share/man/man9/vcons.9			comp-sys-man		.man
 ./usr/share/man/man9/vcount.9			comp-sys-man		.man
 ./usr/share/man/man9/vdevgone.9			comp-sys-man		.man
+./usr/share/man/man9/veriexec.9			comp-sys-man		.man
 ./usr/share/man/man9/vfinddev.9			comp-sys-man		.man
 ./usr/share/man/man9/vflush.9			comp-sys-man		.man
 ./usr/share/man/man9/vflushbuf.9		comp-sys-man		.man
