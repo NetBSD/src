@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.35 2006/07/24 21:32:39 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.36 2006/07/25 00:10:42 dogcow Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -154,7 +154,7 @@ struct veriexec_table_entry {
 /* Veriexec modes (strict levels). */
 #define	VERIEXEC_LEARNING	0	/* Learning mode. */
 #define	VERIEXEC_IDS		1	/* Intrusion detection mode. */
-#defien	VERIEXEC_IPS		2	/* Intrusion prevention mode. */
+#define	VERIEXEC_IPS		2	/* Intrusion prevention mode. */
 #define	VERIEXEC_LOCKDOWN	3	/* Lockdown mode. */
 
 /* Readable values for veriexec_report(). */
