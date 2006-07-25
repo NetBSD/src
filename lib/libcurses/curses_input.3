@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.18 2004/12/13 23:51:11 yamt Exp $
+.\"	$NetBSD: curses_input.3,v 1.19 2006/07/25 21:45:00 christos Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -334,6 +334,9 @@ was available, then
 will be returned.
 Note that for a positive number, the timeout is only accurate to the nearest
 tenth of a second.
+Also, the maximum value of
+.Fa delay
+is 25500 milliseconds.
 The
 .Fn wtimeout
 function does the same as
