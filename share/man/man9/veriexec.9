@@ -1,0 +1,260 @@
+.\" $NetBSD: veriexec.9,v 1.1 2006/07/25 21:16:16 elad Exp $
+.\"
+.\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
+.\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Brett Lymn and Elad Efrat
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 26, 2006
+.Dt VERIEXEC 9
+.Os
+.Sh NAME
+.Nm veriexec
+.Nd in-kernel file integrity subsystem KPI
+.Sh SYNOPSIS
+.In sys/verified_exec.h
+.Sh DESCRIPTION
+.Nm
+is the KPI for Veriexec,
+the
+.Nx
+in-kernel file integrity subsystem.
+It is responsible for managing the supported hashing algorithms, fingerprint
+calculation and comparison, file monitoring tables, and relevant hooks to
+enforce the Veriexec policy.
+.Pp
+This manual divides the
+.Nm
+KPI to four main areas: core, fingerprint related, table management, and hook
+handlers.
+.Ss Core Routines
+.Bl -tag -width "123456"
+.It Ft "struct veriexec_file_entry *vfe" Fn veriexec_lookup "struct vnode *vp"
+Lookup private Veriexec data associated with
+.Ar vp .
+Returns NULL if file is not monitored by Veriexec.
+.It Ft int Fn veriexec_verify "struct lwp *l" "struct vnode *vp" \
+"u_char *name" "int flag" "struct veriexec_file_entry **vfep"
+Verifies the digital fingerprint of
+.Ar vp .
+.Ar name
+is the filename, and
+.Ar flag
+is the access flag.
+The access flag can be one of:
+.Bl -tag -width "123456"
+.It VERIEXEC_DIRECT
+The file was executed directly via
+.Xr execve 2 .
+.It VERIEXEC_INDIRECT
+The file was executed indirectly, most likely as an interpreter for a script.
+.It VERIEXEC_FILE
+The file was opened, most chances are by
+.Xr open 2 .
+.El
+.Pp
+.Ar l
+is the LWP for the request context.
+.Pp
+An optional argument,
+.Ar vfep ,
+is a pointer to return the Veriexec file entry, if one was found.
+.It Ft void Fn veriexec_report "const u_char *msg" "u_char *name" \
+"struct lwp *l" "int flags"
+Log a Veriexec message in
+.Ar msg
+for file
+.Ar name .
+.Ar l
+is optionally the LWP context in question.
+.Pp
+.Ar flags
+control how the message will be formatted, where will it be logged to, and
+whether the system should panic after posting it.
+Flags can be binary-OR'd together.
+Available flags include:
+.Bl -tag -width "123456"
+.It REPORT_ALWAYS
+The message should always be printed.
+This is a synonym for 0.
+.It REPORT_VERBOSE
+The message should be printed only if Veriexec is in verbose mode.
+.It REPORT_DEBUG
+The message should be printed only if Veriexec is in debug verbosity.
+.It REPORT_ALARM
+The message is an alarm.
+If
+.Ar l
+is not NULL, user and process ids will be printed.
+The log will be sent to the
+.Em LOG_ALERT
+syslog facility.
+.It REPORT_PANIC
+The system should
+.Xr panic 9
+after posting the message.
+.El
+.El
+.Ss Fingerprint Related Routines
+These routines manage the supported fingerprinting algorithms, as well as
+fingerprint calculation and comparison.
+.Bl -tag -width "123456"
+.It Ft void Fn veriexec_init_fp_ops "void"
+Initialize the supported fingerprinting algorithms database.
+Should be called only once during system startup.
+.It Ft Fn veriexec_add_fp_ops "struct veriexec_fp_ops *ops"
+Add fingerprinting ops
+.Ar ops .
+.It Ft "struct veriexec_fp_ops *" Fn veriexec_find_ops "u_char *name"
+Lookup fingerprinting ops for algorithm
+.Ar name .
+.It Ft int Fn veriexec_fp_calc "struct lwp *l" "struct vnode *vp" \
+"u_char *name" "struct veriexec_file_entry *vfe"
+Calculate fingerprint and store evaluation for
+.Ar vp .
+.Ar name
+is the filename,
+.Ar vfe
+is the Veriexec-private data for the file.
+.It Ft int Fn veriexec_fp_cmp "struct veriexec_fp_ops *ops" "u_char *fp1" \
+"u_char *fp2"
+Compare two fingerprints in
+.Ar fp1
+and
+.Ar fp2
+using the common fingerprint ops in
+.Ar ops.
+.Pp
+Two fingerprints must have been generated by the same algorithm.
+.El
+.Ss Table Management Routines
+.Bl -tag -width "123456"
+.It Ft int Fn veriexec_hashadd "struct vnode *vp" \
+"struct veriexec_file_entry *vfe"
+Add a Veriexec entry for
+.Ar vp
+with data in
+.Ar vfe .
+.It Ft "struct veriexec_table_entry *vte" Fn veriexec_tblfind "struct vnode *vp"
+Lookup table data for the mount
+.Ar vp
+is on.
+.\" .It Ft Fn veriexec_newtable
+.\" .It Ft Fn veriexec_load
+.\" .It Ft Fn veriexec_delete
+.\" .It Ft Fn veriexec_query
+.El
+.Ss Hook Handlers
+Below are the routines called from code where Veriexec policy enforcement is
+required.
+.Bl -tag -width "123456"
+.It Ft int Fn veriexec_renamechk "struct vnode *fromvp" \
+"const char *fromname" "struct vnode *tovp" "const char *toname" \
+"struct lwp *l"
+Called when a file is renamed.
+.Pp
+.Ar fromvp
+and
+.Ar fromname
+are the vnode and filename of the file being renamed.
+.Ar tovp
+and
+.Ar toname
+are the vnode and filename of the target file.
+.Ar l
+is the LWP renaming the file.
+.Pp
+Depending on the strict level,
+.Nm
+will either track changes appropriately or prevent the rename.
+.It Ft int Fn veriexec_removechk "struct vnode *vp" "const char *name" \
+"struct lwp *l" 
+Called when a file is removed.
+.Pp
+.Ar vp
+is the vnode of the file being removed, and
+.Ar name
+is the filename.
+.Ar l
+is the LWP removing the file,
+.Pp
+Depending on the strict level,
+.Nm
+will either clean-up after the file or prevent its removal.
+.It Ft int Fn veriexec_clear "void *data" "int what"
+Passed as the
+.Xr fileassoc 9
+clean-up callback routine,
+.Fn veriexec_clear
+is responsible for garbage collection of unnecessary
+.Nm
+objects.
+It is not meant to be called directly.
+.El
+.Sh FILES
+.Pa src/sys/dev/verified_exec.c
+.Pa src/sys/kern/kern_verifiedexec.c
+.Pa src/sys/sys/verified_exec.h
+.Sh SEE ALSO
+.Xr sysctl 3
+.Xr veriexec 4
+.Xr sysctl 8
+.Xr veriexecctl 8
+.Xr fileassoc 9
+.Sh AUTHORS
+.An Brett Lymn Aq blymn@NetBSD.org
+.An Elad Efrat Aq elad@NetBSD.org
+.Sh CAVEATS
+There are two known issues with Veriexec that should be considered when
+using it.
+.Ss Remote File-systems
+There is an issue providing protection for files residing on mounts from
+remote hosts.
+Because access to the file-system does not necessarily go through
+.Nm ,
+there is no way to track on-disk changes.
+While it is possible to minimize the effect by evaluating the file's
+fingerprint on each access without caching the result, a problem arises when
+a file is overwritten after its fingerprint has been evaluated and it is
+running on the local host.
+.Pp
+An attacker could potentially overwrite the file contents in the remote host
+at that point, and force a flush on the local host, resulting in paging in
+of the files from the disk, introducing malicious code into a supposedly
+safe address space.
+.Pp
+There is a fix for this issue, however due to dependencies on other work
+that is still in progress it has not been commited yet.
+.Ss Layered File-systems
+Due to VFS limitations,
+.Nm
+cannot track the same on-disk file across multiple layers of overlay
+file-systems.
+Therefore, you cannot expect changes to files on overlay mounts will be
+detected simply because the underlying mount is monitored by
+.Nm .
+.Pp
+A workaround for this issue is listing all files, under all mounts, you want
+monitored in the signature file.
