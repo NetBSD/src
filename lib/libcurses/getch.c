@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.45 2006/03/19 01:58:48 christos Exp $	*/
+/*	$NetBSD: getch.c,v 1.46 2006/07/25 21:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.45 2006/03/19 01:58:48 christos Exp $");
+__RCSID("$NetBSD: getch.c,v 1.46 2006/07/25 21:45:00 christos Exp $");
 #endif
 #endif					/* not lint */
 
@@ -594,6 +594,9 @@ inkey(int to, int delay)
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
+#ifdef DEBUG
+	__CTRACE("inkey (%d, %d)\n", to, delay);
+#endif
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
 		if (state == INKEY_NORM) {
@@ -890,6 +893,10 @@ wgetch(WINDOW *win)
 		switch (win->delay)
 		{
 		case -1:
+			if (__delay() == ERR) {
+				__restore_termios();
+				return ERR;
+			}
 			break;
 		case 0:
 			if (__nodelay() == ERR) {

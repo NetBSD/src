@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.36 2004/01/20 08:30:55 wiz Exp $	*/
+/*	$NetBSD: tty.c,v 1.37 2006/07/25 21:45:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.36 2004/01/20 08:30:55 wiz Exp $");
+__RCSID("$NetBSD: tty.c,v 1.37 2006/07/25 21:45:00 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -286,6 +286,9 @@ halfdelay(int duration)
 int
 __delay(void)
  {
+#ifdef DEBUG
+	__CTRACE("__delay()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -306,6 +309,9 @@ __delay(void)
 int
 __nodelay(void)
 {
+#ifdef DEBUG
+	__CTRACE("__nodelay()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -356,6 +362,9 @@ __restore_termios(void)
 int
 __timeout(int delay)
 {
+#ifdef DEBUG
+	__CTRACE("__timeout()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -379,6 +388,9 @@ __timeout(int delay)
 int
 __notimeout(void)
 {
+#ifdef DEBUG
+	__CTRACE("__notimeout()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
