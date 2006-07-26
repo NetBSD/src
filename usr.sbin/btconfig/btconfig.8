@@ -1,4 +1,4 @@
-.\" $NetBSD: btconfig.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $NetBSD: btconfig.8,v 1.2 2006/07/26 10:00:43 tron Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -129,6 +129,8 @@ Peform device Discovery from the specified device and print details.
 Perform a hard reset on the device and re-initialise system state.
 .It Cm voice
 Set Voice Setting. [This should be 0x0060 for now]
+.It Cm pto
+Set Page Timeout value. This is a decimal value in milliseconds.
 .El
 .Pp
 All parameters are parsed before any device operations take place. Each
