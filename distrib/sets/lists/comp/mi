@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.904 2006/07/26 10:43:01 tron Exp $
+#	$NetBSD: mi,v 1.905 2006/07/26 11:11:04 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3965,14 +3965,14 @@
 ./usr/share/man/cat3/bswap32.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bswap64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bt_aton.0			comp-c-catman		.cat
-./usr/share/man/cat3/bt_closeconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_closeconfig.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/bt_devaddr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_devname.0		comp-c-catman		.cat
-./usr/share/man/cat3/bt_eachconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_eachconfig.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/bt_endhostent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_endprotoent.0		comp-c-catman		.cat
-./usr/share/man/cat3/bt_freeconfig.0		comp-c-catman		.cat
-./usr/share/man/cat3/bt_getconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_freeconfig.0		comp-obsolete		obsolete
+./usr/share/man/cat3/bt_getconfig.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/bt_gethostbyaddr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_gethostbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_gethostent.0		comp-c-catman		.cat
@@ -3980,8 +3980,8 @@
 ./usr/share/man/cat3/bt_getprotobynumber.0	comp-c-catman		.cat
 ./usr/share/man/cat3/bt_getprotoent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_ntoa.0			comp-c-catman		.cat
-./usr/share/man/cat3/bt_openconfig.0		comp-c-catman		.cat
-./usr/share/man/cat3/bt_printconfig.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_openconfig.0		comp-obsolete		obsolete
+./usr/share/man/cat3/bt_printconfig.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/bt_sethostent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_setprotoent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/btowc.0			comp-c-catman		.cat
@@ -8102,14 +8102,14 @@
 ./usr/share/man/man3/bswap32.3			comp-c-man		.man
 ./usr/share/man/man3/bswap64.3			comp-c-man		.man
 ./usr/share/man/man3/bt_aton.3			comp-c-man		.man
-./usr/share/man/man3/bt_closeconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_closeconfig.3		comp-obsolete		obsolete
 ./usr/share/man/man3/bt_devaddr.3		comp-c-man		.man
 ./usr/share/man/man3/bt_devname.3		comp-c-man		.man
-./usr/share/man/man3/bt_eachconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_eachconfig.3		comp-obsolete		obsolete
 ./usr/share/man/man3/bt_endhostent.3		comp-c-man		.man
 ./usr/share/man/man3/bt_endprotoent.3		comp-c-man		.man
-./usr/share/man/man3/bt_freeconfig.3		comp-c-man		.man
-./usr/share/man/man3/bt_getconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_freeconfig.3		comp-obsolete		obsolete
+./usr/share/man/man3/bt_getconfig.3		comp-obsolete		obsolete
 ./usr/share/man/man3/bt_gethostbyaddr.3		comp-c-man		.man
 ./usr/share/man/man3/bt_gethostbyname.3		comp-c-man		.man
 ./usr/share/man/man3/bt_gethostent.3		comp-c-man		.man
@@ -8117,8 +8117,8 @@
 ./usr/share/man/man3/bt_getprotobynumber.3	comp-c-man		.man
 ./usr/share/man/man3/bt_getprotoent.3		comp-c-man		.man
 ./usr/share/man/man3/bt_ntoa.3			comp-c-man		.man
-./usr/share/man/man3/bt_openconfig.3		comp-c-man		.man
-./usr/share/man/man3/bt_printconfig.3		comp-c-man		.man
+./usr/share/man/man3/bt_openconfig.3		comp-obsolete		obsolete
+./usr/share/man/man3/bt_printconfig.3		comp-obsolete		obsolete
 ./usr/share/man/man3/bt_sethostent.3		comp-c-man		.man
 ./usr/share/man/man3/bt_setprotoent.3		comp-c-man		.man
 ./usr/share/man/man3/btowc.3			comp-c-man		.man
