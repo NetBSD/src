@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: btdev.h,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,63 +34,8 @@
 #ifndef _DEV_BLUETOOTH_BTDEV_H_
 #define _DEV_BLUETOOTH_BTDEV_H_
 
-/*
- * Bluetooth Device attach arguments (from userland)
- */
-struct btdev_attach_args {
-	bdaddr_t	bd_laddr;	/* local address */
-	bdaddr_t	bd_raddr;	/* remote address */
-	uint16_t	bd_type;	/* device type */
-
-	union {
-		struct {	/* HID arguments */
-			uint16_t  hid_flags;/* HID flags */
-			uint16_t  hid_ctl;  /* control PSM */
-			uint16_t  hid_int;  /* interrupt PSM */
-			void	 *hid_desc; /* HID descriptor */
-			uint16_t  hid_dlen; /* descriptor length */
-		} bdd_hid;
-
-		struct {	/* HSET arguments */
-			uint8_t   hset_channel; /* RFCOMM channel */
-			uint8_t   hset_mtu;	/* SCO mtu */
-		} bdd_hset;
-
-		struct {	/* Advance Audio arguments */
-		} bdd_a2dp;
-	} bdd;
-};
-
-#define	bd_hid		bdd.bdd_hid
-#define bd_hset		bdd.bdd_hset
-#define bd_a2dp		bdd.bdd_a2dp
-
-/* btdev type */
-#define BTDEV_HID		0x0001
-#define BTDEV_HSET		0x0002
-
-/* bthid flags */
-#define BTHID_INITIATE		(1 << 0)	/* normally initiate */
-#define BTHID_CONNECT		(1 << 1)	/* initiate connect */
-
 /* btdev attach/detach ioctl's */
-#define BTDEV_ATTACH		_IOW('b', 14, struct btdev_attach_args)
-#define BTDEV_DETACH		_IOW('b', 15, bdaddr_t)
-
-#ifdef _KERNEL
-
-/*
- * Bluetooth device header
- */
-struct btdev {
-	struct device		sc_dev;		/* system device */
-	bdaddr_t		sc_addr;	/* device bdaddr */
-
-	LIST_ENTRY(btdev)	sc_next;
-};
-
-#define btdev_name(d)		(((struct btdev *)(d))->sc_dev.dv_xname)
-
-#endif /* _KERNEL */
+#define BTDEV_ATTACH		_IOW('b', 14, struct plistref)
+#define BTDEV_DETACH		_IOW('b', 15, struct plistref)
 
 #endif /* _DEV_BLUETOOTH_BTDEV_H_ */

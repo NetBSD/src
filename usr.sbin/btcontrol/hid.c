@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,59 +55,55 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hid.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/hid.c,v 1.1 2004/04/10 00:18:00 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hid.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
-
-#include <bluetooth.h>
-#include <err.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <usbhid.h>
-#include <unistd.h>
-
-#include <dev/bluetooth/btdev.h>
+__RCSID("$NetBSD: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+#include <prop/proplib.h>
+
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <usbhid.h>
 
 #include "btcontrol.h"
 
 static void hid_dump_item	(char const *, struct hid_item *);
 
 int
-hid_parse(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char **argv)
+hid_parse(int ac, char **av)
 {
-	bt_cfgentry_t	*cfg;
-	bt_handle_t	 handle;
-	report_desc_t	 r;
-	hid_data_t	 d;
-	struct hid_item	 h;
+	prop_dictionary_t	 cfg, dev;
+	prop_object_t		 desc;
+	report_desc_t		 r;
+	hid_data_t		 d;
+	struct hid_item		 h;
 
 	hid_init(NULL);
 
-	handle = bt_openconfig(config_file);
-	if (handle == NULL)
-		err(EXIT_FAILURE, "Could not open config file");
-
-	cfg = bt_getconfig(handle, raddr);
+	cfg = read_config();
 	if (cfg == NULL)
-		errx(EXIT_FAILURE, "Config entry not found");
+		err(EXIT_FAILURE, "%s", config_file);
 
-	if (cfg->hid_descriptor == NULL)
-		errx(EXIT_FAILURE, "No HID descriptor");
+	dev = prop_dictionary_get(cfg, control_file);
+	if (dev == NULL)
+		errx(EXIT_FAILURE, "%s: no config entry", control_file);
 
-	if (cfg->type != BTDEV_HID)
-		warnx("Config entry type is not HID");
+	if (prop_object_type(dev) != PROP_TYPE_DICTIONARY)
+		errx(EXIT_FAILURE, "%s: not a dictionary", control_file);
 
-	r = hid_use_report_desc(cfg->hid_descriptor, cfg->hid_length);
+	desc = prop_dictionary_get(dev, "descriptor");
+	if (desc == NULL || prop_object_type(desc) != PROP_TYPE_DATA)
+		errx(EXIT_FAILURE, "%s: no HID descriptor", control_file);
+
+	r = hid_use_report_desc((unsigned char *)prop_data_data_nocopy(desc), prop_data_size(desc));
 	if (r == NULL)
-		errx(EXIT_FAILURE, "Can't use hid_descriptor");
+		errx(EXIT_FAILURE, "%s: Can't use HID descriptor", control_file);
 
 	d = hid_start_parse(r, ~0, -1);
 	while (hid_get_item(d, &h)) {
@@ -138,10 +134,7 @@ hid_parse(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char **argv)
 
 	hid_end_parse(d);
 	hid_dispose_report_desc(r);
-
-	bt_freeconfig(cfg);
-	bt_closeconfig(handle);
-
+	prop_object_release(cfg);
 	return EXIT_SUCCESS;
 }
 

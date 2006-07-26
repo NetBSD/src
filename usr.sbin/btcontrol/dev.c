@@ -1,4 +1,4 @@
-/*	$NetBSD: dev.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: dev.c,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,120 +30,108 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dev.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: dev.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
 
 #include <sys/ioctl.h>
-#include <bluetooth.h>
+#include <sys/param.h>
+#include <prop/proplib.h>
+#include <dev/bluetooth/btdev.h>
+
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-
-#include <dev/bluetooth/btdev.h>
 
 #include "btcontrol.h"
 
 int
-dev_attach(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char **argv)
+dev_attach(int ac, char **av)
 {
-	struct btdev_attach_args	 bda;
-	bt_cfgentry_t			*cfg;
-	bt_handle_t			 handle;
-	int				 fd, ch;
+	prop_dictionary_t	 cfg, dev;
+	char			 path[MAXPATHLEN];
+	int			 fd, ch, quiet;
 
-	handle = bt_openconfig(config_file);
-	if (handle == NULL)
-		err(EXIT_FAILURE, "Could not open config file");
+	quiet = 0;
 
-	cfg = bt_getconfig(handle, raddr);
-	if (cfg == NULL)
-		errx(EXIT_FAILURE, "Config entry not found");
+	while ((ch = getopt(ac, av, "q")) != -1) {
+		switch(ch) {
+		case 'q':
+			quiet = 1;
+			break;
 
-	memset(&bda, 0, sizeof(bda));
-	bdaddr_copy(&bda.bd_laddr, laddr);
-	bdaddr_copy(&bda.bd_raddr, raddr);
-	bda.bd_type = cfg->type;
-
-	switch (cfg->type) {
-	case BTDEV_HID:
-		while ((ch = getopt(argc, argv, "C")) != -1) {
-			switch (ch) {
-			case 'C':
-				bda.bd_hid.hid_flags |= BTHID_CONNECT;
-				break;
-
-			default:
-				errx(EXIT_FAILURE, "Unknown option");
-			}
+		default:
+			errx(EXIT_FAILURE, "unkown option -%c", ch);
 		}
-
-		if (cfg->control_psm == 0)
-			bda.bd_hid.hid_ctl = L2CAP_PSM_HID_CNTL;
-		else
-			bda.bd_hid.hid_ctl = cfg->control_psm;
-
-		if (cfg->interrupt_psm == 0)
-			bda.bd_hid.hid_ctl = L2CAP_PSM_HID_INTR;
-		else
-			bda.bd_hid.hid_int = cfg->interrupt_psm;
-
-		bda.bd_hid.hid_desc = cfg->hid_descriptor;
-		bda.bd_hid.hid_dlen = cfg->hid_length;
-
-		if (!cfg->reconnect_initiate)
-			bda.bd_hid.hid_flags |= BTHID_INITIATE;
-
-		break;
-
-	case BTDEV_HSET:
-		while ((ch = getopt(argc, argv, "m:")) != -1) {
-			switch (ch) {
-			case 'm':
-				bda.bd_hset.hset_mtu = atoi(optarg);
-				break;
-
-			default:
-				errx(EXIT_FAILURE, "Unknown option");
-			}
-		}
-
-		bda.bd_hset.hset_channel = cfg->control_channel;
-		break;
-
-	default:
-		errx(EXIT_FAILURE, "Unknown Device type");
 	}
 
-	bt_freeconfig(cfg);
-	bt_closeconfig(handle);
+	cfg = read_config();
+	if (cfg == NULL)
+		err(EXIT_FAILURE, "%s", config_file);
 
-	fd = open(control_file, O_WRONLY, 0);
+	dev = prop_dictionary_get(cfg, control_file);
+	if (dev == NULL || prop_object_type(dev) != PROP_TYPE_DICTIONARY) {
+		if (quiet)
+			exit(EXIT_FAILURE);
+
+		errx(EXIT_FAILURE, "%s: no config entry", control_file);
+	}
+
+	snprintf(path, sizeof(path), "/dev/%s", control_file);
+	fd = open(path, O_WRONLY, 0);
 	if (fd < 0)
-		err(EXIT_FAILURE, "%s", control_file);
+		err(EXIT_FAILURE, "%s", path);
 
-	if (ioctl(fd, BTDEV_ATTACH, &bda) < 0)
-		err(EXIT_FAILURE, "BTDEV_ATTACH");
+	if (prop_dictionary_send_ioctl(dev, fd, BTDEV_ATTACH)) {
+		if (quiet && errno == ENXIO)
+			exit(EXIT_FAILURE);
+
+		errx(EXIT_FAILURE, "%s", path);
+	}
 
 	close(fd);
-
+	prop_object_release(cfg);
 	return EXIT_SUCCESS;
 }
 
 int
-dev_detach(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char **argv)
+dev_detach(int ac, char **av)
 {
-	int fd;
+	prop_dictionary_t	 dev;
+	char			 path[MAXPATHLEN];
+	int			 fd, ch, quiet;
 
-	fd = open(control_file, O_WRONLY, 0);
+	quiet = 0;
+
+	while ((ch = getopt(ac, av, "q")) != -1) {
+		switch(ch) {
+		case 'q':
+			quiet = 1;
+			break;
+
+		default:
+			errx(EXIT_FAILURE, "unkown option -%c", ch);
+		}
+	}
+
+	dev = prop_dictionary_create();
+	if (dev == NULL)
+		err(EXIT_FAILURE, "prop_dictionary_create");
+
+	snprintf(path, sizeof(path), "/dev/%s", control_file);
+	fd = open(path, O_WRONLY, 0);
 	if (fd < 0)
-		err(EXIT_FAILURE, "%s", control_file);
+		err(EXIT_FAILURE, "%s", path);
 
-	if (ioctl(fd, BTDEV_DETACH, raddr) < 0)
-		err(EXIT_FAILURE, "BTDEV_DETACH");
+	if (prop_dictionary_send_ioctl(dev, fd, BTDEV_DETACH)) {
+		if (quiet && errno == ENXIO)
+			exit(EXIT_FAILURE);
+
+		err(EXIT_FAILURE, "%s", path);
+	}
 
 	close(fd);
-
+	prop_object_release(dev);
 	return EXIT_SUCCESS;
 }

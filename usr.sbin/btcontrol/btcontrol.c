@@ -1,4 +1,4 @@
-/*	$NetBSD: btcontrol.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: btcontrol.c,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,12 +34,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btcontrol.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: btcontrol.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
 
-#include <assert.h>
-#include <bluetooth.h>
+#include <prop/proplib.h>
+
 #include <err.h>
-#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,18 +47,20 @@ __RCSID("$NetBSD: btcontrol.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
 
 #include "btcontrol.h"
 
-const char *config_file = NULL;
-const char *control_file = "/dev/bthubctl";
+const char *config_file = "/var/db/btdev.xml";
+const char *control_file = NULL;
 
 struct command {
 	const char	*command;
-	int		(*handler)(bdaddr_t *, bdaddr_t *, int, char **);
+	int		(*handler)(int, char **);
 	const char	*description;
 } commands[] = {
 	{ "Attach",	dev_attach,	"attach device"		},
 	{ "Detach",	dev_detach,	"detach device"		},
 	{ "Parse",	hid_parse,	"parse HID descriptor"	},
 	{ "Print",	cfg_print,	"print config entry"	},
+	{ "Query",	cfg_query,	"make config entry"	},
+	{ "Remove",	cfg_remove,	"remove config entry"	},
 	{ NULL }
 };
 
@@ -67,17 +69,9 @@ usage(void)
 {
 	struct command *cmd;
 
-	fprintf(stderr,
-		"Usage: %s [-c file] [-d device] [-f path] -a bdaddr <command>\n"
-		"Where:\n"
-		"\t-a bdaddr    remote address\n"
-		"\t-c file      the bluetooth config file\n"
-		"\t-d device    local device address\n"
-		"\t-f path      path of control file\n"
-		"\t-h           display usage and quit\n"
-		"\n"
-		"Commands:\n"
-		"", getprogname());
+	fprintf(stderr, "Usage: %s <btdev> <command> [parameters]\n"
+			"Commands:\n",
+			getprogname());
 
 	for (cmd = commands ; cmd->command != NULL ; cmd++)
 		fprintf(stderr, "\t%-13s%s\n", cmd->command, cmd->description);
@@ -88,61 +82,86 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	bdaddr_t	laddr, raddr;
 	struct command *cmd;
-	int		ch;
 
-	bdaddr_copy(&laddr, BDADDR_ANY);
-	bdaddr_copy(&raddr, BDADDR_ANY);
-
-	while ((ch = getopt(argc, argv, "a:c:d:f:h")) != -1) {
-		switch (ch) {
-		case 'a': /* remote address */
-			if (!bt_aton(optarg, &raddr)) {
-				struct hostent  *he = NULL;
-
-				if ((he = bt_gethostbyname(optarg)) == NULL)
-					errx(EXIT_FAILURE, "%s: %s",
-						optarg, hstrerror(h_errno));
-
-				bdaddr_copy(&raddr, (bdaddr_t *)he->h_addr);
-			}
-			break;
-
-		case 'c': /* config file */
-			config_file = optarg;
-			break;
-
-		case 'd': /* local device address */
-			if (!bt_devaddr(optarg, &laddr))
-				err(EXIT_FAILURE, "%s", optarg);
-
-			break;
-
-		case 'f': /* control file */
-			control_file = optarg;
-			break;
-
-		case 'h':
-		default:
-			usage();
-			/* NOT REACHED */
-		}
-	}
-
-	argc -= optind;
-	argv += optind;
-
-	optind = 0;
-	optreset = 1;
-
-	if (argc == 0)
+	if (argc < 3)
 		usage();
 
-	for (cmd = commands ; cmd->command != NULL; cmd++) {
-		if (strcasecmp(*argv, cmd->command) == 0)
-			return (cmd->handler)(&laddr, &raddr, --argc, ++argv);
+	control_file = argv[1];
+
+	for (cmd = commands ; cmd->command != NULL ; cmd++) {
+		if (strcasecmp(argv[2], cmd->command) == 0)
+			return (cmd->handler)(argc - 2, argv + 2);
 	}
 
-	errx(EXIT_FAILURE, "%s: unknown command", *argv);
+	errx(EXIT_FAILURE, "%s: unknown command", argv[2]);
+}
+
+prop_dictionary_t
+read_config(void)
+{
+	prop_dictionary_t dict;
+	char *xml;
+	off_t len;
+	int fd;
+
+	fd = open(config_file, O_RDONLY, 0);
+	if (fd < 0)
+		return NULL;
+
+	len = lseek(fd, 0, SEEK_END);
+	if (len == 0) {
+		close(fd);
+		return NULL;
+	}
+
+	xml = malloc(len);
+	if (xml == NULL) {
+		close(fd);
+		return NULL;
+	}
+
+	(void)lseek(fd, 0, SEEK_SET);
+	if (read(fd, xml, len) != len) {
+		close(fd);
+		free(xml);
+		return NULL;
+	}
+
+	dict = prop_dictionary_internalize(xml);
+
+	free(xml);
+	close(fd);
+
+	return dict;
+}
+
+int
+write_config(prop_dictionary_t dict)
+{
+	char *xml;
+	size_t len;
+	int fd;
+
+	fd = open(config_file, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+	if (fd < 0)
+		return 0;
+
+	xml = prop_dictionary_externalize(dict);
+	if (xml == NULL) {
+		close(fd);
+		return 0;
+	}
+
+	len = strlen(xml);
+	if (write(fd, xml, len) != len) {
+		free(xml);
+		close(fd);
+		return 0;
+	}
+
+	free(xml);
+	close(fd);
+
+	return 1;
 }
