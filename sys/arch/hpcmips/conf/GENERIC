@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.187 2006/06/28 15:19:27 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.188 2006/07/26 07:00:24 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.187 $"
+#ident 		"GENERIC-$Revision: 1.188 $"
 
 maxusers	16
 
@@ -578,7 +578,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
