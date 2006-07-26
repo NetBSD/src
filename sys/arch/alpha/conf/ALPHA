@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.216 2006/03/28 20:58:39 pavel Exp $
+# $NetBSD: ALPHA,v 1.217 2006/07/26 07:00:23 cube Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.216 $"
+ident		"ALPHA-$Revision: 1.217 $"
 
 maxusers 32
 
@@ -527,8 +527,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
-scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?

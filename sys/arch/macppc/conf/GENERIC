@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.229 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: GENERIC,v 1.230 2006/07/26 07:00:23 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.229 $"
+#ident 		"GENERIC-$Revision: 1.230 $"
 
 maxusers	32
 
@@ -437,8 +437,6 @@ umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
 
 umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
-atapibus* at umass?
-scsibus* at umass? channel ?
 
 uaudio*	at uhub? port ? configuration ?			# USB audio
 
@@ -474,7 +472,6 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?
-scsibus* at sbp?
 
 # Audio Devices
 

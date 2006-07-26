@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.38 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: VR41XX,v 1.39 2006/07/26 07:00:24 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -446,7 +446,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
